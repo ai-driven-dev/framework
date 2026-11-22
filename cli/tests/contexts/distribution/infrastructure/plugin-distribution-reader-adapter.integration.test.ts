@@ -13,14 +13,20 @@ import {
 } from "../../../../src/shared/domain/shared.error.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
-import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { syntheticToolId } from "../../../shared/testing/synthetic-tool-id.builder.js";
 import { manifestProbes } from "../testing/manifest-probes.builder.js";
 
 const FIXTURE_DIR = join(process.cwd(), "tests/fixtures/plugins");
 const IN_MEMORY_ROOT = "/plugins/in-memory";
 const IN_MEMORY_MANIFEST = ".claude-plugin/plugin.json";
 
-const MANIFEST_PROBES = manifestProbes(TOOL);
+const FORMAT = {
+  claude: syntheticToolId("claude"),
+  cursor: syntheticToolId("cursor"),
+  codex: syntheticToolId("codex"),
+  copilot: syntheticToolId("copilot"),
+};
+const MANIFEST_PROBES = manifestProbes(FORMAT);
 
 function makeAdapter(): PluginDistributionReaderAdapter {
   return new PluginDistributionReaderAdapter(new FileAdapter(), MANIFEST_PROBES);
@@ -52,10 +58,10 @@ describe("PluginDistributionReaderAdapter", () => {
     });
 
     const dist = await new PluginDistributionReaderAdapter(fs, [
-      { format: TOOL.cursor, relativePath: "custom/plugin.json" },
+      { format: FORMAT.cursor, relativePath: "custom/plugin.json" },
     ]).read(IN_MEMORY_ROOT);
 
-    expect(dist.format).toBe("cursor");
+    expect(dist.format).toBe(FORMAT.cursor);
     await expect(
       new PluginDistributionReaderAdapter(fs, []).read(IN_MEMORY_ROOT)
     ).rejects.toBeInstanceOf(InvalidPluginManifestError);
@@ -65,7 +71,7 @@ describe("PluginDistributionReaderAdapter", () => {
     it("detects claude format", async () => {
       const adapter = makeAdapter();
       const dist = await adapter.read(join(FIXTURE_DIR, "claude-format/sample-plugin"));
-      expect(dist.format).toBe("claude");
+      expect(dist.format).toBe(FORMAT.claude);
     });
 
     it("includes all hooks/ files including companion scripts", async () => {
@@ -129,7 +135,7 @@ describe("PluginDistributionReaderAdapter", () => {
     it("detects cursor format", async () => {
       const adapter = makeAdapter();
       const dist = await adapter.read(join(FIXTURE_DIR, "cursor-format/sample-plugin"));
-      expect(dist.format).toBe("cursor");
+      expect(dist.format).toBe(FORMAT.cursor);
     });
   });
 
@@ -137,7 +143,7 @@ describe("PluginDistributionReaderAdapter", () => {
     it("detects codex format", async () => {
       const adapter = makeAdapter();
       const dist = await adapter.read(join(FIXTURE_DIR, "codex-format/sample-plugin"));
-      expect(dist.format).toBe("codex");
+      expect(dist.format).toBe(FORMAT.codex);
     });
   });
 
@@ -145,7 +151,7 @@ describe("PluginDistributionReaderAdapter", () => {
     it("detects copilot format", async () => {
       const adapter = makeAdapter();
       const dist = await adapter.read(join(FIXTURE_DIR, "copilot-format/sample-plugin"));
-      expect(dist.format).toBe("copilot");
+      expect(dist.format).toBe(FORMAT.copilot);
     });
   });
 
@@ -171,7 +177,7 @@ describe("PluginDistributionReaderAdapter", () => {
 
         const dist = await makeAdapter().read(root);
 
-        expect(dist.format).toBe("codex");
+        expect(dist.format).toBe(FORMAT.codex);
       } finally {
         await rm(root, { recursive: true, force: true });
       }

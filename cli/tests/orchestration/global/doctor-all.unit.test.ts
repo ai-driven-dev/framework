@@ -9,17 +9,21 @@ import {
   initAndInstall,
   installTool,
 } from "../../shared/testing/installation-deps.builder.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_IDE_TOOL,
+  SYNTHETIC_TOOL,
+  syntheticMixedCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import { buildRunDoctor } from "../testing/build-run-doctor.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const NO_MANIFEST = expect.any(ManifestUnavailableError);
-const PLUGIN_FILE = ".claude/plugins/sample/agents/reviewer.md";
+const PLUGIN_FILE = `.${SYNTHETIC_TOOL}/plugins/sample/agents/reviewer.md`;
 
 async function depsWithBothCategories() {
-  const deps = await buildInstallationDeps({ tools: registeredTools() });
-  await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
-  await installTool(deps, PROJECT_ROOT, TOOL.vscode);
+  const deps = await buildInstallationDeps({ tools: syntheticMixedCatalog() });
+  await initAndInstall(deps, PROJECT_ROOT, SYNTHETIC_TOOL);
+  await installTool(deps, PROJECT_ROOT, SYNTHETIC_IDE_TOOL);
   const manifest = await deps.manifestRepo.load();
   if (manifest === null) throw new Error("manifest missing");
   return { deps, manifest };
@@ -57,7 +61,7 @@ function doctorAllOver(deps: Awaited<ReturnType<typeof buildInstallationDeps>>) 
 
 describe("doctorAll", () => {
   it("records one error per scope, and no report, when no manifest exists", async () => {
-    const deps = await buildInstallationDeps({ tools: registeredTools() });
+    const deps = await buildInstallationDeps({ tools: syntheticMixedCatalog() });
     const useCase = doctorAllOver(deps);
 
     const result = await useCase.execute(PROJECT_ROOT);
@@ -83,13 +87,13 @@ describe("doctorAll", () => {
     expect(result).toStrictEqual({
       ai: {
         healthy: true,
-        toolHealth: [healthOf(manifest, TOOL.claude)],
+        toolHealth: [healthOf(manifest, SYNTHETIC_TOOL)],
         issues: [],
         pluginIssues: [],
       },
       ide: {
         healthy: true,
-        toolHealth: [healthOf(manifest, TOOL.vscode)],
+        toolHealth: [healthOf(manifest, SYNTHETIC_IDE_TOOL)],
         issues: [],
         pluginIssues: [],
       },
@@ -101,7 +105,7 @@ describe("doctorAll", () => {
 
   it("is not healthy when the ai scope alone found a fault", async () => {
     const { deps, manifest } = await depsWithBothCategories();
-    await deleteOneTrackedFile(deps, manifest, TOOL.claude);
+    await deleteOneTrackedFile(deps, manifest, SYNTHETIC_TOOL);
     const useCase = doctorAllOver(deps);
 
     const result = await useCase.execute(PROJECT_ROOT);
@@ -111,7 +115,7 @@ describe("doctorAll", () => {
 
   it("is not healthy when the ide scope alone found a fault", async () => {
     const { deps, manifest } = await depsWithBothCategories();
-    await deleteOneTrackedFile(deps, manifest, TOOL.vscode);
+    await deleteOneTrackedFile(deps, manifest, SYNTHETIC_IDE_TOOL);
     const useCase = doctorAllOver(deps);
 
     const result = await useCase.execute(PROJECT_ROOT);
@@ -143,7 +147,7 @@ describe("doctorAll", () => {
   it("carries the ai scope's plugin issues", async () => {
     const { deps, manifest } = await depsWithBothCategories();
     manifest.addPlugin(
-      TOOL.claude,
+      SYNTHETIC_TOOL,
       RecordedPlugin.fromJSON({
         name: "sample",
         source: { kind: "local", path: "/some/path" },
@@ -159,7 +163,7 @@ describe("doctorAll", () => {
     const result = await useCase.execute(PROJECT_ROOT);
 
     const missing = {
-      toolId: TOOL.claude,
+      toolId: SYNTHETIC_TOOL,
       pluginName: "sample",
       issue: "missing",
       filePath: PLUGIN_FILE,
@@ -174,7 +178,7 @@ describe("doctorAll", () => {
   it("is not healthy when the named plugin has issues", async () => {
     const { deps, manifest } = await depsWithBothCategories();
     manifest.addPlugin(
-      TOOL.claude,
+      SYNTHETIC_TOOL,
       RecordedPlugin.fromJSON({
         name: "sample",
         source: { kind: "local", path: "/some/path" },
@@ -193,7 +197,7 @@ describe("doctorAll", () => {
 
   it("judges health on plugin issues alone when a plugin is named", async () => {
     const { deps, manifest } = await depsWithBothCategories();
-    await deleteOneTrackedFile(deps, manifest, TOOL.claude);
+    await deleteOneTrackedFile(deps, manifest, SYNTHETIC_TOOL);
     const useCase = doctorAllOver(deps);
 
     const result = await useCase.execute(PROJECT_ROOT, "sample");

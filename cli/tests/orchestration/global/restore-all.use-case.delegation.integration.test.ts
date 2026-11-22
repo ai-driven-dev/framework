@@ -19,8 +19,12 @@ import {
   initProject,
 } from "../../shared/testing/installation-deps.builder.js";
 import { loadDistributionOf } from "../../shared/testing/load-distribution.builder.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { OverwritePrompter } from "../../shared/testing/scripted-prompter.fake.js";
+import {
+  SYNTHETIC_IDE_TOOL,
+  SYNTHETIC_TOOL,
+  syntheticMixedCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -48,16 +52,20 @@ describe("RestoreAll - consent to overwrite", () => {
   }
 
   async function askedWith(interactive: boolean, force: boolean): Promise<RestoreRequest> {
-    const deps = await buildInstallationDeps({ tools: registeredTools() });
-    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+    const deps = await buildInstallationDeps({ tools: syntheticMixedCatalog() });
+    await initAndInstall(deps, PROJECT_ROOT, SYNTHETIC_TOOL);
     const prompter = new OverwritePrompter();
     const statusUseCase = new ReportStatus(
       {
         fs: deps.fs,
         manifestRepo: deps.manifestRepo,
-        detectPluginDrift: new DetectPluginDrift(deps.fs, registeredTools(), () => "/home/dev"),
+        detectPluginDrift: new DetectPluginDrift(
+          deps.fs,
+          syntheticMixedCatalog(),
+          () => "/home/dev"
+        ),
       },
-      registeredTools()
+      syntheticMixedCatalog()
     );
     const restoreUseCase = restoreOf({
       ...deps,
@@ -94,16 +102,20 @@ describe("RestoreAll - consent to overwrite", () => {
 
 describe("RestoreAll - native-only tools", () => {
   it("forwards the native-only tool ids the restore it delegates to found", async () => {
-    const deps = await buildInstallationDeps({ tools: registeredTools() });
-    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+    const deps = await buildInstallationDeps({ tools: syntheticMixedCatalog() });
+    await initAndInstall(deps, PROJECT_ROOT, SYNTHETIC_TOOL);
     const prompter = new OverwritePrompter();
     const statusUseCase = new ReportStatus(
       {
         fs: deps.fs,
         manifestRepo: deps.manifestRepo,
-        detectPluginDrift: new DetectPluginDrift(deps.fs, registeredTools(), () => "/home/dev"),
+        detectPluginDrift: new DetectPluginDrift(
+          deps.fs,
+          syntheticMixedCatalog(),
+          () => "/home/dev"
+        ),
       },
-      registeredTools()
+      syntheticMixedCatalog()
     );
     const restoreUseCase = restoreOf({
       ...deps,
@@ -121,7 +133,7 @@ describe("RestoreAll - native-only tools", () => {
       totalPluginFilesRestored: 0,
       restoredPluginNames: [],
       unrestorable: [],
-      nativeOnlyToolIds: [TOOL.claude],
+      nativeOnlyToolIds: [SYNTHETIC_TOOL],
     });
 
     const result = await new RestoreAll(
@@ -130,7 +142,7 @@ describe("RestoreAll - native-only tools", () => {
       new RestoreGlobal(deps.manifestRepo, restoreUseCase)
     ).execute(PROJECT_ROOT, true, false);
 
-    expect(result.nativeOnlyToolIds).toEqual(["claude"]);
+    expect(result.nativeOnlyToolIds).toEqual([SYNTHETIC_TOOL]);
   });
 });
 
@@ -156,9 +168,9 @@ function restoreAllDelegatingTo(
     {
       fs: deps.fs,
       manifestRepo: deps.manifestRepo,
-      detectPluginDrift: new DetectPluginDrift(deps.fs, registeredTools(), () => "/home/dev"),
+      detectPluginDrift: new DetectPluginDrift(deps.fs, syntheticMixedCatalog(), () => "/home/dev"),
     },
-    registeredTools()
+    syntheticMixedCatalog()
   );
   const restoreUseCase = restoreOf({
     ...deps,
@@ -193,7 +205,7 @@ function recordingDelegate(): {
 
 describe("RestoreAll - before delegating", () => {
   it("refuses a project that has no manifest", async () => {
-    const deps = await buildInstallationDeps({ tools: registeredTools() });
+    const deps = await buildInstallationDeps({ tools: syntheticMixedCatalog() });
     const useCase = restoreAllDelegatingTo(
       deps,
       new OverwritePrompter(),
@@ -210,8 +222,8 @@ describe("RestoreAll - before delegating", () => {
     ["non-interactive", false],
     ["interactive", true],
   ])("reads the manifest once for the whole %s run", async (_mode, interactive) => {
-    const deps = await buildInstallationDeps({ tools: registeredTools() });
-    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+    const deps = await buildInstallationDeps({ tools: syntheticMixedCatalog() });
+    await initAndInstall(deps, PROJECT_ROOT, SYNTHETIC_TOOL);
     let reads = 0;
     const load = deps.manifestRepo.load.bind(deps.manifestRepo);
     deps.manifestRepo.load = async () => {
@@ -229,8 +241,8 @@ describe("RestoreAll - before delegating", () => {
   });
 
   it("hands the restore the version of the first installed tool", async () => {
-    const deps = await buildInstallationDeps({ tools: registeredTools() });
-    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+    const deps = await buildInstallationDeps({ tools: syntheticMixedCatalog() });
+    await initAndInstall(deps, PROJECT_ROOT, SYNTHETIC_TOOL);
     const { asked, delegate } = recordingDelegate();
 
     await restoreAllDelegatingTo(deps, new OverwritePrompter(), delegate).execute(
@@ -243,7 +255,7 @@ describe("RestoreAll - before delegating", () => {
   });
 
   it("hands the restore an unknown version when no tool is installed", async () => {
-    const deps = await buildInstallationDeps({ tools: registeredTools() });
+    const deps = await buildInstallationDeps({ tools: syntheticMixedCatalog() });
     await initProject(deps, PROJECT_ROOT);
     const { asked, delegate } = recordingDelegate();
 
@@ -257,8 +269,8 @@ describe("RestoreAll - before delegating", () => {
   });
 
   it("reports a failing restore as a config-restore error with nothing restored", async () => {
-    const deps = await buildInstallationDeps({ tools: registeredTools() });
-    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+    const deps = await buildInstallationDeps({ tools: syntheticMixedCatalog() });
+    await initAndInstall(deps, PROJECT_ROOT, SYNTHETIC_TOOL);
     const useCase = restoreAllDelegatingTo(deps, new OverwritePrompter(), async () => {
       throw new Error("disk on fire");
     });
@@ -278,20 +290,20 @@ describe("RestoreAll - before delegating", () => {
 });
 
 describe("RestoreAll - the interactive file picker", () => {
-  const KEYBINDINGS = ".vscode/keybindings.json";
-  const SETTINGS = ".vscode/settings.json";
+  const KEYBINDINGS = ".syntheticide/keybindings.json";
+  const SETTINGS = ".syntheticide/settings.json";
 
-  async function vscodeProject(): Promise<Deps> {
-    const deps = await buildInstallationDeps({ tools: registeredTools() });
-    await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
+  async function syntheticIdeProject(): Promise<Deps> {
+    const deps = await buildInstallationDeps({ tools: syntheticMixedCatalog() });
+    await initAndInstall(deps, PROJECT_ROOT, SYNTHETIC_IDE_TOOL);
     return deps;
   }
 
   it("offers the modified and deleted tracked entries, never a file the user added", async () => {
-    const deps = await vscodeProject();
+    const deps = await syntheticIdeProject();
     await deps.fs.writeFile(join(PROJECT_ROOT, KEYBINDINGS), "[]");
-    await deps.fs.deleteFile(join(PROJECT_ROOT, ".vscode/extensions.json"));
-    await deps.fs.writeFile(join(PROJECT_ROOT, ".vscode/user-added.json"), "{}");
+    await deps.fs.deleteFile(join(PROJECT_ROOT, ".syntheticide/extensions.json"));
+    await deps.fs.writeFile(join(PROJECT_ROOT, ".syntheticide/user-added.json"), "{}");
     const prompter = new CheckboxRecordingPrompter();
 
     await restoreAllDelegatingTo(deps, prompter, recordingDelegate().delegate).execute(
@@ -305,15 +317,15 @@ describe("RestoreAll - the interactive file picker", () => {
         message: "Select files to restore:",
         offered: [
           KEYBINDINGS,
-          ".vscode/extensions.json > recommendations",
-          ".vscode/extensions.json > unwantedRecommendations",
+          ".syntheticide/extensions.json > recommendations",
+          ".syntheticide/extensions.json > unwantedRecommendations",
         ],
       },
     ]);
   });
 
   it("forwards exactly the entries the user ticked", async () => {
-    const deps = await vscodeProject();
+    const deps = await syntheticIdeProject();
     await deps.fs.writeFile(join(PROJECT_ROOT, KEYBINDINGS), "[]");
     await deps.fs.deleteFile(join(PROJECT_ROOT, SETTINGS));
     const { asked, delegate } = recordingDelegate();
@@ -328,7 +340,7 @@ describe("RestoreAll - the interactive file picker", () => {
   });
 
   it("never delegates when the user ticked nothing: an empty selection is a decision", async () => {
-    const deps = await vscodeProject();
+    const deps = await syntheticIdeProject();
     await deps.fs.writeFile(join(PROJECT_ROOT, KEYBINDINGS), "[]");
     const { asked, delegate } = recordingDelegate();
 
@@ -342,7 +354,7 @@ describe("RestoreAll - the interactive file picker", () => {
   });
 
   it("asks nothing and delegates with no selection when no tracked entry drifted", async () => {
-    const deps = await vscodeProject();
+    const deps = await syntheticIdeProject();
     const prompter = new CheckboxRecordingPrompter([KEYBINDINGS]);
     const { asked, delegate } = recordingDelegate();
 

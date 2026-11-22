@@ -8,9 +8,23 @@ import {
   UserScopePluginModeError,
   UserScopeUnsupportedAiToolsError,
 } from "../../../src/orchestration/orchestration.error.js";
-import { flowTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SECOND_SYNTHETIC_TOOL,
+  SYNTHETIC_IDE_TOOL,
+  SYNTHETIC_TOOL,
+  syntheticMixedCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
 const ROOT = "/project";
+
+function flowTools() {
+  const tools = syntheticMixedCatalog();
+  return {
+    registeredToolIds: tools.idsInCanonicalOrder(),
+    aiToolIds: tools.idsInCanonicalOrder("ai"),
+    ideToolIds: tools.idsInCanonicalOrder("ide"),
+  };
+}
 
 function makeFlow(overrides: Partial<ConstructorParameters<typeof SetupFlow>[0]> = {}): SetupFlow {
   return new SetupFlow({
@@ -28,16 +42,7 @@ describe("SetupFlow", () => {
       expect(() => makeFlow({ aiTools: ["unknown-tool"] })).toThrow(
         expect.objectContaining({
           id: "unknown-tool",
-          validIds: [
-            "claude",
-            "cursor",
-            "copilot",
-            "opencode",
-            "kilo",
-            "codex",
-            "antigravity",
-            "vscode",
-          ],
+          validIds: [SYNTHETIC_TOOL, SECOND_SYNTHETIC_TOOL, SYNTHETIC_IDE_TOOL],
         })
       );
     });
@@ -49,9 +54,9 @@ describe("SetupFlow", () => {
     });
 
     it("constructs successfully with valid params", () => {
-      const flow = makeFlow({ aiTools: [TOOL.claude], pluginMode: "none" });
+      const flow = makeFlow({ aiTools: [SYNTHETIC_TOOL], pluginMode: "none" });
       expect(flow.projectRoot).toBe(ROOT);
-      expect(flow.aiTools).toEqual(["claude"]);
+      expect(flow.aiTools).toEqual([SYNTHETIC_TOOL]);
     });
 
     it("accepts mode 'named' once a plugin is named, carrying the names through", () => {
@@ -124,17 +129,17 @@ describe("SetupFlow", () => {
     });
 
     it("carries user through when asked", () => {
-      expect(makeFlow({ scope: "user", aiTools: [TOOL.claude] }).scope).toBe("user");
+      expect(makeFlow({ scope: "user", aiTools: [SYNTHETIC_TOOL] }).scope).toBe("user");
     });
 
     it("refuses an IDE tool at user scope - an IDE tool has no user scope to install at", () => {
-      expect(() => makeFlow({ scope: "user", ideTools: [TOOL.vscode] })).toThrow(
+      expect(() => makeFlow({ scope: "user", ideTools: [SYNTHETIC_IDE_TOOL] })).toThrow(
         UserScopeIdeToolsError
       );
     });
 
     it("accepts an IDE tool at project scope, unaffected", () => {
-      expect(() => makeFlow({ scope: "project", ideTools: [TOOL.vscode] })).not.toThrow();
+      expect(() => makeFlow({ scope: "project", ideTools: [SYNTHETIC_IDE_TOOL] })).not.toThrow();
     });
 
     it("refuses --scope user with no --ai - nothing would be registered for any tool", () => {
@@ -149,19 +154,21 @@ describe("SetupFlow", () => {
       expect(() =>
         makeFlow({
           scope: "user",
-          aiTools: [TOOL.kilo, TOOL.claude],
-          supportsUserScopeActivation: (id) => id !== "kilo",
+          aiTools: [SECOND_SYNTHETIC_TOOL, SYNTHETIC_TOOL],
+          supportsUserScopeActivation: (id) => id !== SECOND_SYNTHETIC_TOOL,
         })
       ).toThrow(UserScopeUnsupportedAiToolsError);
     });
 
     it("accepts AI tools the answer says have a user-scope activation", () => {
-      expect(() => makeFlow({ scope: "user", aiTools: [TOOL.kilo, TOOL.claude] })).not.toThrow();
+      expect(() =>
+        makeFlow({ scope: "user", aiTools: [SECOND_SYNTHETIC_TOOL, SYNTHETIC_TOOL] })
+      ).not.toThrow();
     });
 
     it("refuses an interactive plugin pick at --scope user - there is no project to ask in", () => {
       expect(() =>
-        makeFlow({ scope: "user", aiTools: [TOOL.claude], pluginMode: "interactive" })
+        makeFlow({ scope: "user", aiTools: [SYNTHETIC_TOOL], pluginMode: "interactive" })
       ).toThrow(UserScopePluginModeError);
     });
 
@@ -169,7 +176,7 @@ describe("SetupFlow", () => {
       "accepts --plugins %s at --scope user",
       (pluginMode) => {
         expect(() =>
-          makeFlow({ scope: "user", aiTools: [TOOL.opencode], pluginMode })
+          makeFlow({ scope: "user", aiTools: [SECOND_SYNTHETIC_TOOL], pluginMode })
         ).not.toThrow();
       }
     );
