@@ -1,10 +1,8 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ProjectHooksMaterializer } from "../../../../../src/contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
 import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.use-case.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import {
   buildInstallationDeps,
   initAndInstall,
@@ -13,7 +11,7 @@ import { loadDistributionOf } from "../../../../shared/testing/load-distribution
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
-import { fakeBuildSources, translateDistribution } from "../../testing/fake-build-sources.fake.js";
+import { fakeBuildSources, fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
@@ -51,14 +49,7 @@ function makeUpdateUseCase(deps: Deps, registry: FakeMarketplaceRegistry): Updat
       loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
       replacePluginFiles: new ReplacePluginFiles(
         deps.fs,
-        {
-          ensureBuilt: fakeEnsureBuiltMarketplace(),
-          marketplaceRegistry: registry,
-          platform: process.platform,
-          homedir: () => HOME,
-          translate: translateDistribution,
-          projectHooks: new ProjectHooksMaterializer(deps.fs),
-        },
+        fakeBuiltDeps(deps.fs, { marketplaceRegistry: registry, homedir: () => HOME }),
         registeredTools()
       ),
     },

@@ -3,13 +3,11 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { placeBuiltTreePlugin } from "../../../../../src/contexts/installation/application/materialize/place-built-tree-plugin.js";
-import { ProjectHooksMaterializer } from "../../../../../src/contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { translateDistribution } from "../../testing/fake-build-sources.fake.js";
+import { fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
 
 const PROJECT_ROOT = "/proj";
@@ -66,14 +64,7 @@ describe("placeBuiltTreePlugin - cursor marketplace hooks (Phase 7)", () => {
     manifest.addTool(TOOL.cursor, "test", []);
     const translator = {
       fs: fs,
-      built: {
-        platform: process.platform,
-        homedir: () => HOME,
-        ensureBuilt: fakeEnsureBuiltMarketplace(),
-        marketplaceRegistry: await makeRegistry(),
-        translate: translateDistribution,
-        projectHooks: new ProjectHooksMaterializer(fs),
-      },
+      built: fakeBuiltDeps(fs, { homedir: () => HOME, marketplaceRegistry: await makeRegistry() }),
     };
 
     const { skipped } = await placeBuiltTreePlugin(
@@ -103,14 +94,7 @@ describe("placeBuiltTreePlugin - cursor marketplace hooks (Phase 7)", () => {
     manifest.addTool(TOOL.cursor, "test", []);
     const translator = {
       fs: fs,
-      built: {
-        platform: process.platform,
-        homedir: () => HOME,
-        ensureBuilt: fakeEnsureBuiltMarketplace(),
-        marketplaceRegistry: await makeRegistry(),
-        translate: translateDistribution,
-        projectHooks: new ProjectHooksMaterializer(fs),
-      },
+      built: fakeBuiltDeps(fs, { homedir: () => HOME, marketplaceRegistry: await makeRegistry() }),
     };
 
     await placeBuiltTreePlugin(

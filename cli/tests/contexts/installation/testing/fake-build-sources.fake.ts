@@ -1,4 +1,5 @@
-import { ProjectHooksMaterializer } from "../../../../src/contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
+import { builtMaterializationDepsOf } from "../../../../src/composition/installation.js";
+import type { FlatPlacementDeps } from "../../../../src/contexts/installation/application/materialize/place-flat-plugin.js";
 import type { BuiltMaterializationDeps } from "../../../../src/contexts/installation/application/shared/built-materialization-deps.js";
 import { TranslateDistribution } from "../../../../src/contexts/translate/application/translate-distribution.use-case.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
@@ -18,13 +19,25 @@ export function fakeBuildSources() {
   };
 }
 
-/** What re-materializing a plugin reaches for, faked where it touches a host. */
-export function fakeBuiltDeps(fs: FileReader & FileWriter): BuiltMaterializationDeps {
-  return {
+/** What a placement reaches for, faked where it touches a host; `parts` fixes what a test cares about. */
+export function fakeBuiltDeps(
+  fs: FileReader & FileWriter,
+  parts: Partial<Omit<BuiltMaterializationDeps, "projectHooks">> = {}
+): BuiltMaterializationDeps {
+  return builtMaterializationDepsOf(fs, {
     ...fakeBuildSources(),
     marketplaceRegistry: new InMemoryMarketplaceRegistry(),
     platform: process.platform,
     homedir: () => "/stub-home",
-    projectHooks: new ProjectHooksMaterializer(fs),
-  };
+    ...parts,
+  });
+}
+
+/** What a flat placement reaches for, over a test's own filesystem. */
+export function fakeFlatDeps(
+  fs: FileReader & FileWriter,
+  homedir: () => string = () => "/stub-home"
+): FlatPlacementDeps {
+  const { translate, projectHooks } = fakeBuiltDeps(fs);
+  return { fs, homedir, translate, projectHooks };
 }

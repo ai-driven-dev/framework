@@ -1,12 +1,11 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { placeFlatPlugin } from "../../../../../src/contexts/installation/application/materialize/place-flat-plugin.js";
-import { ProjectHooksMaterializer } from "../../../../../src/contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { translateDistribution } from "../../testing/fake-build-sources.fake.js";
+import { fakeFlatDeps } from "../../testing/fake-build-sources.fake.js";
 
 const STUB_HOME = "/tmp/test-home";
 const PROJECT_ROOT = "/test-project";
@@ -34,12 +33,7 @@ function buildDist(name = "aidd-context"): PluginDistribution {
 describe("install cursor plugin via Mode B (integration)", () => {
   it("does not write any file under projectRoot", async () => {
     const fs = new InMemoryFileAdapter();
-    const adapter = {
-      fs: fs,
-      homedir: () => STUB_HOME,
-      translate: translateDistribution,
-      projectHooks: new ProjectHooksMaterializer(fs),
-    };
+    const adapter = fakeFlatDeps(fs, () => STUB_HOME);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
 
@@ -60,12 +54,7 @@ describe("install cursor plugin via Mode B (integration)", () => {
 
   it("stores base-relative keys in Plugin.files (not absolute paths)", async () => {
     const fs = new InMemoryFileAdapter();
-    const adapter = {
-      fs: fs,
-      homedir: () => STUB_HOME,
-      translate: translateDistribution,
-      projectHooks: new ProjectHooksMaterializer(fs),
-    };
+    const adapter = fakeFlatDeps(fs, () => STUB_HOME);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
 
@@ -93,12 +82,7 @@ describe("install cursor plugin via Mode B (integration)", () => {
 
   it("join(resolvedBase, key) matches the written absolute path", async () => {
     const fs = new InMemoryFileAdapter();
-    const adapter = {
-      fs: fs,
-      homedir: () => STUB_HOME,
-      translate: translateDistribution,
-      projectHooks: new ProjectHooksMaterializer(fs),
-    };
+    const adapter = fakeFlatDeps(fs, () => STUB_HOME);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
 

@@ -1,12 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { placeBuiltTreePlugin } from "../../../../../src/contexts/installation/application/materialize/place-built-tree-plugin.js";
-import { ProjectHooksMaterializer } from "../../../../../src/contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { translateDistribution } from "../../testing/fake-build-sources.fake.js";
+import { fakeBuiltDeps, translateDistribution } from "../../testing/fake-build-sources.fake.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
 
 const PROJECT_ROOT = "/proj";
@@ -38,14 +36,7 @@ describe("placeBuiltTreePlugin - cursor", () => {
     fs.setFile(`${BUILT}/plugins/sample-plugin/skills/demo/SKILL.md`, "built skill");
     const translator = {
       fs: fs,
-      built: {
-        platform: process.platform,
-        homedir: () => HOME,
-        ensureBuilt: fakeEnsureBuiltMarketplace(),
-        marketplaceRegistry: await makeRegistry(),
-        translate: translateDistribution,
-        projectHooks: new ProjectHooksMaterializer(fs),
-      },
+      built: fakeBuiltDeps(fs, { homedir: () => HOME, marketplaceRegistry: await makeRegistry() }),
     };
     const install = () => {
       const restored = Manifest.create();
@@ -83,14 +74,11 @@ describe("placeBuiltTreePlugin - cursor", () => {
     const execute = vi.fn(translateDistribution.execute.bind(translateDistribution));
     const translator = {
       fs: fs,
-      built: {
-        platform: process.platform,
+      built: fakeBuiltDeps(fs, {
         homedir: () => HOME,
-        ensureBuilt: fakeEnsureBuiltMarketplace(),
         marketplaceRegistry: await makeRegistry(),
         translate: { execute },
-        projectHooks: new ProjectHooksMaterializer(fs),
-      },
+      }),
     };
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
@@ -124,14 +112,7 @@ describe("placeBuiltTreePlugin - cursor", () => {
     manifest.addTool(TOOL.cursor, "test", []);
     const translator = {
       fs: fs,
-      built: {
-        platform: process.platform,
-        homedir: () => HOME,
-        ensureBuilt: fakeEnsureBuiltMarketplace(),
-        marketplaceRegistry: await makeRegistry(),
-        translate: translateDistribution,
-        projectHooks: new ProjectHooksMaterializer(fs),
-      },
+      built: fakeBuiltDeps(fs, { homedir: () => HOME, marketplaceRegistry: await makeRegistry() }),
     };
 
     await placeBuiltTreePlugin(
@@ -165,14 +146,7 @@ describe("placeBuiltTreePlugin - cursor", () => {
     manifest.addTool(TOOL.cursor, "test", []);
     const translator = {
       fs: fs,
-      built: {
-        platform: process.platform,
-        homedir: () => HOME,
-        ensureBuilt: fakeEnsureBuiltMarketplace(),
-        marketplaceRegistry: await makeRegistry(),
-        translate: translateDistribution,
-        projectHooks: new ProjectHooksMaterializer(fs),
-      },
+      built: fakeBuiltDeps(fs, { homedir: () => HOME, marketplaceRegistry: await makeRegistry() }),
     };
 
     const result = await placeBuiltTreePlugin(
@@ -199,14 +173,7 @@ describe("placeBuiltTreePlugin - cursor", () => {
     manifest.addTool(TOOL.cursor, "test", []);
     const translator = {
       fs: fs,
-      built: {
-        platform: process.platform,
-        homedir: () => HOME,
-        ensureBuilt: fakeEnsureBuiltMarketplace(),
-        marketplaceRegistry: await makeRegistry(),
-        translate: translateDistribution,
-        projectHooks: new ProjectHooksMaterializer(fs),
-      },
+      built: fakeBuiltDeps(fs, { homedir: () => HOME, marketplaceRegistry: await makeRegistry() }),
     };
     const result = await placeBuiltTreePlugin(
       {
@@ -249,14 +216,7 @@ describe("placeBuiltTreePlugin - when no built tree applies", () => {
     manifest.addTool(TOOL.cursor, "test", []);
     const translator = {
       fs: fs,
-      built: {
-        platform: process.platform,
-        homedir: () => HOME,
-        ensureBuilt: fakeEnsureBuiltMarketplace(),
-        marketplaceRegistry: await makeRegistry(),
-        translate: translateDistribution,
-        projectHooks: new ProjectHooksMaterializer(fs),
-      },
+      built: fakeBuiltDeps(fs, { homedir: () => HOME, marketplaceRegistry: await makeRegistry() }),
     };
     await placeBuiltTreePlugin(
       {

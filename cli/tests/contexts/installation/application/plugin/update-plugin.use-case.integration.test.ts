@@ -1,12 +1,10 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ProjectHooksMaterializer } from "../../../../../src/contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
 import type { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.use-case.js";
 import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.use-case.js";
 import type { BuiltMaterializationDeps } from "../../../../../src/contexts/installation/application/shared/built-materialization-deps.js";
 import type { PluginSource } from "../../../../../src/shared/domain/source.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { FixturePluginFetcher } from "../../../../shared/testing/fixture-plugin-fetcher.fake.js";
 import {
   buildInstallationDeps,
@@ -17,11 +15,7 @@ import { registeredTools, TOOL } from "../../../../shared/testing/registered-too
 import { saying } from "../../../../shared/testing/saying.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
-import {
-  fakeBuildSources,
-  fakeBuiltDeps,
-  translateDistribution,
-} from "../../testing/fake-build-sources.fake.js";
+import { fakeBuildSources, fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const EXTRA_PLUGIN_FIXTURE = join(
@@ -283,14 +277,10 @@ describe("UpdatePlugin", () => {
       const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const { addUseCase, updateUseCase } = await setup(deps, {
-        builtDeps: {
-          ensureBuilt: fakeEnsureBuiltMarketplace(),
+        builtDeps: fakeBuiltDeps(deps.fs, {
           marketplaceRegistry: deps.marketplaceRegistry,
-          platform: process.platform,
           homedir: () => "/home/u",
-          translate: translateDistribution,
-          projectHooks: new ProjectHooksMaterializer(deps.fs),
-        },
+        }),
       });
       await addLocal(addUseCase);
       await recordVersion(deps, "sample-plugin", "0.0.1");

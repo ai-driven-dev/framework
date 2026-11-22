@@ -1,13 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { ProjectHooksMaterializer } from "../../../../../src/contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 import { readTranslatedBuiltTree } from "../../../../../src/contexts/installation/application/materialize/read-translated-built-tree.js";
 import type { BuiltMaterializationDeps } from "../../../../../src/contexts/installation/application/shared/built-materialization-deps.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { translateDistribution } from "../../testing/fake-build-sources.fake.js";
+import { fakeBuiltDeps, translateDistribution } from "../../testing/fake-build-sources.fake.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
 
 async function readBuilt(
@@ -33,14 +31,11 @@ async function readBuilt(
     {
       deps: {
         fs,
-        built: {
-          platform: process.platform,
+        built: fakeBuiltDeps(fs, {
           homedir: () => "/home/u",
-          ensureBuilt: fakeEnsureBuiltMarketplace(),
           marketplaceRegistry: new FakeMarketplaceRegistry(),
           translate,
-          projectHooks: new ProjectHooksMaterializer(fs),
-        },
+        }),
       },
       marketplace: {
         name: "aidd-framework",

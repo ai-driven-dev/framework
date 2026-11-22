@@ -2,13 +2,12 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createOutput } from "../../../../../src/composition/shared.js";
 import { placeFlatPlugin } from "../../../../../src/contexts/installation/application/materialize/place-flat-plugin.js";
-import { ProjectHooksMaterializer } from "../../../../../src/contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { translateDistribution } from "../../testing/fake-build-sources.fake.js";
+import { fakeFlatDeps } from "../../testing/fake-build-sources.fake.js";
 import { pluginRemover } from "../../testing/plugin-remover.builder.js";
 
 const PROJECT_ROOT = "/test-project";
@@ -45,12 +44,7 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
   it("removes only plugin-contributed servers; preserves user-added servers", async () => {
     const existingJson = JSON.stringify({ mcp: { "user-server": USER_SERVER } }, null, 2);
     const fs = new InMemoryFileAdapter({ [OPENCODE_JSON]: existingJson });
-    const adapter = {
-      fs: fs,
-      homedir: () => STUB_HOME,
-      translate: translateDistribution,
-      projectHooks: new ProjectHooksMaterializer(fs),
-    };
+    const adapter = fakeFlatDeps(fs, () => STUB_HOME);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
     const manifestRepo = new InMemoryManifestRepository(manifest);
@@ -85,12 +79,7 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
 
   it("removes the plugin from the manifest after unmerge", async () => {
     const fs = new InMemoryFileAdapter();
-    const adapter = {
-      fs: fs,
-      homedir: () => STUB_HOME,
-      translate: translateDistribution,
-      projectHooks: new ProjectHooksMaterializer(fs),
-    };
+    const adapter = fakeFlatDeps(fs, () => STUB_HOME);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
     const manifestRepo = new InMemoryManifestRepository(manifest);
@@ -122,12 +111,7 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
 
   it("is safe to call when opencode.json does not exist (first install never completed)", async () => {
     const fs = new InMemoryFileAdapter();
-    const adapter = {
-      fs: fs,
-      homedir: () => STUB_HOME,
-      translate: translateDistribution,
-      projectHooks: new ProjectHooksMaterializer(fs),
-    };
+    const adapter = fakeFlatDeps(fs, () => STUB_HOME);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
     const manifestRepo = new InMemoryManifestRepository(manifest);
@@ -158,12 +142,7 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
 
   it("refuses reinstall when a previously contributed MCP server was user-edited", async () => {
     const fs = new InMemoryFileAdapter();
-    const translator = {
-      fs: fs,
-      homedir: () => STUB_HOME,
-      translate: translateDistribution,
-      projectHooks: new ProjectHooksMaterializer(fs),
-    };
+    const translator = fakeFlatDeps(fs, () => STUB_HOME);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
     await placeFlatPlugin(

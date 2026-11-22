@@ -2,7 +2,6 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-distribution-reader-adapter.js";
-import { ProjectHooksMaterializer } from "../../../src/contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 import { ReportStatus } from "../../../src/contexts/installation/application/report-status.use-case.js";
 import { RestoreGlobal } from "../../../src/contexts/installation/application/restore/project/restore-global.use-case.js";
 import { DetectPluginDrift } from "../../../src/contexts/installation/application/shared/detect-plugin-drift.use-case.js";
@@ -16,9 +15,8 @@ import {
 } from "../../contexts/installation/testing/build-restore.builder.js";
 import {
   fakeBuildSources,
-  translateDistribution,
+  fakeBuiltDeps,
 } from "../../contexts/installation/testing/fake-build-sources.fake.js";
-import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import {
   buildInstallationDeps,
   initAndInstall,
@@ -39,14 +37,10 @@ const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format
 type Deps = Awaited<ReturnType<typeof buildInstallationDeps>>;
 
 function builtDeps(deps: Deps) {
-  return {
-    ensureBuilt: fakeEnsureBuiltMarketplace(),
+  return fakeBuiltDeps(deps.fs, {
     marketplaceRegistry: deps.marketplaceRegistry,
     homedir: () => "/home/test",
-    platform: process.platform,
-    translate: translateDistribution,
-    projectHooks: new ProjectHooksMaterializer(deps.fs),
-  };
+  });
 }
 
 async function installPlugin(

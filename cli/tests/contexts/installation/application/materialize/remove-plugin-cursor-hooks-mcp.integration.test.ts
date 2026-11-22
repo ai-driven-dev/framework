@@ -1,4 +1,3 @@
-import { ProjectHooksMaterializer } from "../../../../../src/contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 /**
  * hooks.json is not tracked in Plugin.files: hooksDestination:"project" merges its entries
  * into the project's own .cursor/hooks.json, which baseDir-relative deletion cannot find.
@@ -15,7 +14,7 @@ import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-a
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../../../shared/testing/saying.builder.js";
-import { translateDistribution } from "../../testing/fake-build-sources.fake.js";
+import { fakeFlatDeps } from "../../testing/fake-build-sources.fake.js";
 import { pluginRemover } from "../../testing/plugin-remover.builder.js";
 
 const STUB_HOME = "/tmp/test-home";
@@ -91,12 +90,7 @@ async function installPlugin(
   name: string,
   previous?: ProjectHooksProvenance
 ) {
-  const adapter = {
-    fs: fs,
-    homedir: () => STUB_HOME,
-    translate: translateDistribution,
-    projectHooks: new ProjectHooksMaterializer(fs),
-  };
+  const adapter = fakeFlatDeps(fs, () => STUB_HOME);
   await placeFlatPlugin(
     {
       dist: buildDist(name),
@@ -180,12 +174,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     await installPlugin(fs, manifest, PLUGIN_NAME);
     const previous = manifest.getPlugins(TOOL.cursor)[0].projectHooks;
     manifest.removePlugin(TOOL.cursor, PLUGIN_NAME);
-    const translator = {
-      fs: fs,
-      homedir: () => STUB_HOME,
-      translate: translateDistribution,
-      projectHooks: new ProjectHooksMaterializer(fs),
-    };
+    const translator = fakeFlatDeps(fs, () => STUB_HOME);
     await placeFlatPlugin(
       {
         dist: buildWithoutHooks(PLUGIN_NAME),

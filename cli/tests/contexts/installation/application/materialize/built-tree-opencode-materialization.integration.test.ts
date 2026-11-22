@@ -1,14 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { placeBuiltTreePlugin } from "../../../../../src/contexts/installation/application/materialize/place-built-tree-plugin.js";
-import { ProjectHooksMaterializer } from "../../../../../src/contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { translateDistribution } from "../../testing/fake-build-sources.fake.js";
+import { fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
 
 const PROJECT_ROOT = "/proj";
@@ -70,14 +68,10 @@ describe("placeBuiltTreePlugin - opencode (integration)", () => {
     manifest.addTool(TOOL.opencode, "test", []);
     const translator = {
       fs: fs,
-      built: {
-        platform: process.platform,
+      built: fakeBuiltDeps(fs, {
         homedir: () => "/home/u",
-        ensureBuilt: fakeEnsureBuiltMarketplace(),
         marketplaceRegistry: await makeRegistry(),
-        translate: translateDistribution,
-        projectHooks: new ProjectHooksMaterializer(fs),
-      },
+      }),
     };
 
     await placeBuiltTreePlugin(
@@ -114,14 +108,10 @@ describe("placeBuiltTreePlugin - opencode (integration)", () => {
     manifest.addTool(TOOL.opencode, "test", []);
     const translator = {
       fs: fs,
-      built: {
-        platform: process.platform,
+      built: fakeBuiltDeps(fs, {
         homedir: () => "/home/u",
-        ensureBuilt: fakeEnsureBuiltMarketplace(),
         marketplaceRegistry: await makeRegistry(),
-        translate: translateDistribution,
-        projectHooks: new ProjectHooksMaterializer(fs),
-      },
+      }),
     };
 
     await placeBuiltTreePlugin(
@@ -156,14 +146,10 @@ describe("placeBuiltTreePlugin - what the opencode flat tree never yields", () =
     manifest.addTool(TOOL.opencode, "test", []);
     const translator = {
       fs: fs,
-      built: {
-        platform: process.platform,
+      built: fakeBuiltDeps(fs, {
         homedir: () => "/home/u",
-        ensureBuilt: fakeEnsureBuiltMarketplace(),
         marketplaceRegistry: await makeRegistry(),
-        translate: translateDistribution,
-        projectHooks: new ProjectHooksMaterializer(fs),
-      },
+      }),
     };
     return placeBuiltTreePlugin(
       {
@@ -235,14 +221,10 @@ describe("placeBuiltTreePlugin - kilo (integration)", () => {
     ]);
     const translator = {
       fs: fs,
-      built: {
-        platform: process.platform,
+      built: fakeBuiltDeps(fs, {
         homedir: () => "/home/u",
-        ensureBuilt: fakeEnsureBuiltMarketplace(),
         marketplaceRegistry: await makeRegistry(),
-        translate: translateDistribution,
-        projectHooks: new ProjectHooksMaterializer(fs),
-      },
+      }),
     };
     const distribution = new PluginDistribution({
       manifest: { name: "aidd-vcs", version: "1.0.0" },
