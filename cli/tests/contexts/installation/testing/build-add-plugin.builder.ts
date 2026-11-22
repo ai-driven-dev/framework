@@ -10,6 +10,7 @@ import type { BuiltMarketplaceEnsurer } from "../../../../src/contexts/installat
 import type { InstallationMarketplaceRegistry } from "../../../../src/contexts/installation/ports/marketplace-sources.js";
 import type { LoadDistribution } from "../../../../src/contexts/installation/ports/plugin/load-plugin-distribution.js";
 import type { PluginTranslation } from "../../../../src/contexts/installation/ports/plugin/plugin-translation.js";
+import { userScopeOwnership } from "../../../../src/contexts/machine-claims/application/ownership/user-scope-ownership.js";
 import type { ToolCatalog } from "../../../../src/contexts/tools/contract/tool-catalog.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
@@ -48,6 +49,7 @@ export function buildAddPlugin(
   return new AddPlugin(
     {
       fs: host.fs,
+      ownership: userScopeOwnership(host.fs),
       manifests,
       source: new ResolveAddedPluginSource(
         { loadDistribution: sources.loadDistribution, fs: host.fs, built },

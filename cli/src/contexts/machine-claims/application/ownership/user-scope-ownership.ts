@@ -1,46 +1,57 @@
-import { ToolNotInManifestError } from "../../../../../shared/domain/shared.error.js";
-import type { AiToolId } from "../../../../../shared/domain/tool.js";
-import type { FileReader } from "../../../../../shared/ports/file-reader.js";
-import type { Manifest } from "../../../domain/manifest.js";
-import type { RecordedPlugin } from "../../../domain/plugins/recorded-plugin.js";
+import { ToolNotInManifestError } from "../../../../shared/domain/shared.error.js";
+import type { AiToolId } from "../../../../shared/domain/tool.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type {
+  MachineUserPlugin,
+  OwnershipMachineManifest,
+  OwnershipProjectManifest,
+  ProjectUserPlugin,
+} from "../../ports/machine-manifest.js";
 
-/** The `tool/plugin` keys the project manifest held before this add. */
+/** The `tool/plugin` keys the project manifest held before an add. */
 export type PluginsInstalledBefore = ReadonlySet<string>;
 
 export interface UserScopeClaim {
-  readonly project: Manifest;
-  readonly machine: Manifest;
+  readonly project: OwnershipProjectManifest;
+  readonly machine: OwnershipMachineManifest;
   readonly toolIds: readonly AiToolId[];
   readonly projectRoot: string;
   readonly installedBefore: PluginsInstalledBefore;
 }
 
 interface PluginClaim {
-  readonly project: Manifest;
-  readonly machine: Manifest;
+  readonly project: OwnershipProjectManifest;
+  readonly machine: OwnershipMachineManifest;
   readonly toolId: AiToolId;
-  readonly plugin: RecordedPlugin;
+  readonly plugin: ProjectUserPlugin;
   readonly root: string;
   readonly installedBefore: PluginsInstalledBefore;
-}
-
-export function pluginsInstalledBefore(
-  manifest: Manifest,
-  toolIds: readonly AiToolId[]
-): PluginsInstalledBefore {
-  return new Set(
-    toolIds.flatMap((toolId) =>
-      manifest.getPlugins(toolId).map((p) => installedKey(toolId, p.name))
-    )
-  );
 }
 
 function installedKey(toolId: AiToolId, pluginName: string): string {
   return `${toolId}/${pluginName}`;
 }
 
+/** Who holds the user-scope plugins an add leaves with the machine: which the project already had,
+ * and which the add moves over. */
+export function userScopeOwnership(fs: Pick<FileReader, "realpath">) {
+  return {
+    installedBefore(
+      manifest: OwnershipProjectManifest,
+      toolIds: readonly AiToolId[]
+    ): PluginsInstalledBefore {
+      return new Set(
+        toolIds.flatMap((toolId) =>
+          manifest.getPlugins(toolId).map((p) => installedKey(toolId, p.name))
+        )
+      );
+    },
+    record: (claim: UserScopeClaim) => recordUserScopeOwnership(fs, claim),
+  };
+}
+
 /** Moves every newly user-scoped plugin's ownership to the machine manifest. True when one moved. */
-export async function recordUserScopeOwnership(
+async function recordUserScopeOwnership(
   fs: Pick<FileReader, "realpath">,
   claim: UserScopeClaim
 ): Promise<boolean> {
@@ -75,7 +86,7 @@ function claimUserPlugin(claim: PluginClaim): boolean {
 }
 
 /** An unowned plugin is claimed only when this add installed it and it carries files. */
-function isClaimable(claim: PluginClaim, owned: RecordedPlugin | undefined): boolean {
+function isClaimable(claim: PluginClaim, owned: MachineUserPlugin | undefined): boolean {
   const { toolId, installedBefore } = claim;
   const { plugin } = claim.plugin;
   if (plugin.scope !== "user") return false;

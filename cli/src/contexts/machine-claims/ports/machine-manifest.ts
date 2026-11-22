@@ -31,6 +31,27 @@ export interface ClaimingMachineManifest extends MachineManifest {
   addTool(toolId: ToolId, version: string, files: []): void;
 }
 
+/** The machine-wide record as an add hands it a plugin: recorded again, or recorded new. */
+export interface OwnershipMachineManifest extends ClaimingMachineManifest {
+  withPlugin(toolId: AiToolId, plugin: MachineUserPlugin): void;
+}
+
+/** A plugin a project records, as far as moving its ownership to the machine needs. */
+export interface ProjectUserPlugin extends MachineUserPlugin {
+  readonly plugin: MachineUserPlugin["plugin"] & { readonly files: ReadonlyMap<string, string> };
+  withFiles(files: ReadonlyMap<string, string>): ProjectUserPlugin;
+  withMcpEntries(entries: ReadonlyMap<string, string>): MachineUserPlugin;
+}
+
+/** The project record, narrowed to what an add reads and rewrites to hand a plugin's ownership
+ * to the machine. */
+export interface OwnershipProjectManifest {
+  getPlugins(toolId: string): readonly { readonly name: string }[];
+  getRecordedPlugins(toolId: string): readonly ProjectUserPlugin[];
+  updatePlugin(toolId: AiToolId, plugin: ProjectUserPlugin): void;
+  getToolVersion(toolId: string): string | undefined;
+}
+
 /** A plugin's recorded files, as far as the user-scope containment proof needs them. `P` is the
  * caller's own plugin type: a rewrite hands back the same kind it was given. */
 export interface UserScopePluginFiles<P> {

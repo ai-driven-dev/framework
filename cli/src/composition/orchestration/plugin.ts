@@ -26,6 +26,7 @@ import type {
   UserPluginMaterialization,
   UserScopeFileGuard,
 } from "../../contexts/installation/ports/plugin/user-plugin-materialization.js";
+import { userScopeOwnership } from "../../contexts/machine-claims/application/ownership/user-scope-ownership.js";
 import { pluginRemovalClaims } from "../../contexts/machine-claims/application/plugin-removal-claims.js";
 import { PurgeDeclaredCache } from "../../contexts/machine-claims/application/purge-declared-cache.js";
 import {
@@ -203,6 +204,7 @@ function pluginAddOf(base: Base, inst: Installation) {
   return new AddPlugin(
     {
       fs,
+      ownership: userScopeOwnership(fs),
       manifests: { project: manifestRepo, user: userManifestRepo },
       source: new ResolveAddedPluginSource(
         {

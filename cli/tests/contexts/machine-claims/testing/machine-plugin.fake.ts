@@ -26,12 +26,21 @@ export class MachinePlugin implements MachineUserPlugin, UserScopePluginFiles<Ma
   }
 
   /** The plugin itself: the fake is its own plugin, as the claims read one. */
-  get plugin(): { readonly name: string; readonly scope: string } {
+  get plugin(): {
+    readonly name: string;
+    readonly scope: string;
+    readonly files: ReadonlyMap<string, string>;
+  } {
     return this;
   }
 
   withDependents(dependents: readonly string[]): MachinePlugin {
     return new MachinePlugin({ ...this.fields(), dependents });
+  }
+
+  /** The fake keeps no per-entry provenance, so recording none changes nothing. */
+  withMcpEntries(_entries: ReadonlyMap<string, string>): MachinePlugin {
+    return this;
   }
 
   withFiles(files: ReadonlyMap<string, string>): MachinePlugin {

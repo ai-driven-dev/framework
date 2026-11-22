@@ -8,6 +8,7 @@ import {
 } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import { userScopeOwnership } from "../../../../../src/contexts/machine-claims/application/ownership/user-scope-ownership.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { VersionMismatchError } from "../../../../../src/shared/domain/shared.error.js";
@@ -34,6 +35,7 @@ function addTo(manifest: Manifest, options: { scope?: Scope } = {}) {
   const add = new AddPlugin(
     {
       fs,
+      ownership: userScopeOwnership(fs),
       manifests: { project, user },
       source: {
         execute: async () => ({ isGithubMarketplace: false, distribution: DISTRIBUTION }),

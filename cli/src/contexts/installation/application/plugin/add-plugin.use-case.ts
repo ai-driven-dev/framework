@@ -17,13 +17,27 @@ import type {
   ResolveAddedPluginSource,
 } from "./add/resolve-added-plugin-source.use-case.js";
 import { supersedeExisting } from "./add/supersede-existing.js";
-import { pluginsInstalledBefore, recordUserScopeOwnership } from "./add/user-scope-claims.js";
 import { resolvePluginToolIds } from "./plugin-target-resolution.js";
 
 /** The two manifests an add touches: the project's, and the machine's, which guards the lock. */
 export interface AddPluginManifests {
   project: ManifestRepository;
   user: ManifestRepository & Lock;
+}
+
+/** The user-scope plugins an add moves from the project to the machine, and who holds them. The
+ * machine claims decide; an add only calls them inside its lock. */
+export interface UserScopeOwnership {
+  /** The `tool/plugin` keys the project manifest holds for these tools before the add. */
+  installedBefore(manifest: Manifest, toolIds: readonly AiToolId[]): ReadonlySet<string>;
+  /** Moves what the add left user-scoped to the machine manifest. True when something moved. */
+  record(claim: {
+    project: Manifest;
+    machine: Manifest;
+    toolIds: readonly AiToolId[];
+    projectRoot: string;
+    installedBefore: ReadonlySet<string>;
+  }): Promise<boolean>;
 }
 
 /** The tools one add targets, with the project and machine manifests it edits. */
@@ -39,6 +53,7 @@ export interface AddPluginDeps {
   readonly manifests: AddPluginManifests;
   readonly source: Pick<ResolveAddedPluginSource, "execute">;
   readonly place: Pick<PlacePlugin, "execute">;
+  readonly ownership: UserScopeOwnership;
 }
 
 export class AddPlugin implements PluginAdd {
@@ -57,7 +72,7 @@ export class AddPlugin implements PluginAdd {
     const { toolIds, projectRoot, githubMarketplace } = options;
     const { manifest, machine } = await loadAddManifests(manifests, this.tools);
     const resolvedToolIds = resolvePluginToolIds(toolIds, manifest, this.tools);
-    const installedBefore = pluginsInstalledBefore(manifest, resolvedToolIds);
+    const installedBefore = this.deps.ownership.installedBefore(manifest, resolvedToolIds);
     if (githubMarketplace) await this.prepareGithubAdd(options, resolvedToolIds, manifest);
     const added = await source.execute({
       source: options.source,
@@ -75,7 +90,7 @@ export class AddPlugin implements PluginAdd {
         machine,
       });
     }
-    const claimed = await recordUserScopeOwnership(this.deps.fs, {
+    const claimed = await this.deps.ownership.record({
       project: manifest,
       machine,
       toolIds: resolvedToolIds,
