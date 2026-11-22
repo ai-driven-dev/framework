@@ -79,7 +79,7 @@ describe("clean releases a project's claims only once its local cleanup succeeds
       const machineRepo = new InMemoryManifestRepository(machine, undefined, machineRecords);
       const gitignore = new UpdateGitignore(fs);
       if (outcome === "fails")
-        gitignore.remove = async () => {
+        gitignore.execute = async () => {
           throw new Error("gitignore cleanup failed");
         };
       fs.setFile(`${OTHER_PROJECT}/plugin-content.md`, OTHER_PROJECT_BYTES);

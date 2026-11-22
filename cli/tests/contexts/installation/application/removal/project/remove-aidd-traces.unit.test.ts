@@ -41,8 +41,9 @@ describe("removing AIDD's traces from a project", () => {
     const repo = new InMemoryManifestRepository(manifest, ROOT);
     const gitignore = new UpdateGitignore(fs);
     const manifestWhenGitignoreIsTouched: Array<Manifest | null> = [];
-    gitignore.remove = async () => {
+    gitignore.execute = async () => {
       manifestWhenGitignoreIsTouched.push(await repo.load());
+      return true;
     };
 
     await tracesOver(fs, repo, gitignore).remove(manifest, ROOT);

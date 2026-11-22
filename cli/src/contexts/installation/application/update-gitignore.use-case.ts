@@ -6,9 +6,18 @@ const GITIGNORE_FILENAME = ".gitignore";
 export class UpdateGitignore {
   constructor(private readonly fs: FileReader & FileWriter) {}
 
-  /** `true` when at least one of `entries` was newly appended, `false` when every one was already
-   * there. */
-  async execute(projectRoot: string, entries: string[]): Promise<boolean> {
+  /** Appends the missing `entries`, or removes every one of them. `true` when the file changed. */
+  execute(
+    projectRoot: string,
+    entries: string[],
+    change: "append" | "remove" = "append"
+  ): Promise<boolean> {
+    return change === "append"
+      ? this.append(projectRoot, entries)
+      : this.remove(projectRoot, entries);
+  }
+
+  private async append(projectRoot: string, entries: string[]): Promise<boolean> {
     const gitignorePath = `${projectRoot}/${GITIGNORE_FILENAME}`;
 
     const existing = (await this.fs.fileExists(gitignorePath))
@@ -25,10 +34,10 @@ export class UpdateGitignore {
     return true;
   }
 
-  async remove(projectRoot: string, entries: string[]): Promise<void> {
+  private async remove(projectRoot: string, entries: string[]): Promise<boolean> {
     const gitignorePath = `${projectRoot}/${GITIGNORE_FILENAME}`;
 
-    if (!(await this.fs.fileExists(gitignorePath))) return;
+    if (!(await this.fs.fileExists(gitignorePath))) return false;
     const existing = await this.fs.readFile(gitignorePath);
 
     const entrySet = new Set(entries);
@@ -37,13 +46,14 @@ export class UpdateGitignore {
       .filter((line) => !entrySet.has(line.trim()))
       .join("\n");
 
-    if (filtered === existing) return;
+    if (filtered === existing) return false;
 
     const trimmed = filtered.replace(/^\n+|\n+$/g, "");
     if (trimmed === "") {
       await this.fs.deleteFile(gitignorePath);
-      return;
+    } else {
+      await this.fs.writeFile(gitignorePath, `${trimmed}\n`);
     }
-    await this.fs.writeFile(gitignorePath, `${trimmed}\n`);
+    return true;
   }
 }

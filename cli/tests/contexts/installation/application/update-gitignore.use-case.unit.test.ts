@@ -65,7 +65,7 @@ describe("updating a project's gitignore", () => {
     it("does nothing when there is no file", async () => {
       const { fs, useCase } = build();
 
-      await expect(useCase.remove(ROOT, ["a/"])).resolves.toBeUndefined();
+      await expect(useCase.execute(ROOT, ["a/"], "remove")).resolves.toBe(false);
 
       expect(fs.has(GITIGNORE)).toBe(false);
     });
@@ -73,7 +73,7 @@ describe("updating a project's gitignore", () => {
     it("drops the entry and keeps the other lines in order", async () => {
       const { fs, useCase } = build("a/\nb/\nc/\n");
 
-      await useCase.remove(ROOT, ["b/"]);
+      expect(await useCase.execute(ROOT, ["b/"], "remove")).toBe(true);
 
       expect(fs.getFile(GITIGNORE)).toBe("a/\nc/\n");
     });
@@ -81,7 +81,7 @@ describe("updating a project's gitignore", () => {
     it("drops an entry written with surrounding whitespace", async () => {
       const { fs, useCase } = build("  b/  \nc/\n");
 
-      await useCase.remove(ROOT, ["b/"]);
+      await useCase.execute(ROOT, ["b/"], "remove");
 
       expect(fs.getFile(GITIGNORE)).toBe("c/\n");
     });
@@ -89,7 +89,7 @@ describe("updating a project's gitignore", () => {
     it("leaves the file byte-identical when no entry matches", async () => {
       const { fs, useCase } = build("\na/\n\n");
 
-      await useCase.remove(ROOT, ["z/"]);
+      expect(await useCase.execute(ROOT, ["z/"], "remove")).toBe(false);
 
       expect(fs.getFile(GITIGNORE)).toBe("\na/\n\n");
     });
@@ -97,7 +97,7 @@ describe("updating a project's gitignore", () => {
     it("leaves an empty file in place when no entry matches", async () => {
       const { fs, useCase } = build("");
 
-      await useCase.remove(ROOT, ["z/"]);
+      await useCase.execute(ROOT, ["z/"], "remove");
 
       expect(fs.getFile(GITIGNORE)).toBe("");
     });
@@ -105,7 +105,7 @@ describe("updating a project's gitignore", () => {
     it("collapses the blank lines around what remains", async () => {
       const { fs, useCase } = build("\n\nb/\na/\nc/\n\n");
 
-      await useCase.remove(ROOT, ["b/"]);
+      await useCase.execute(ROOT, ["b/"], "remove");
 
       expect(fs.getFile(GITIGNORE)).toBe("a/\nc/\n");
     });
@@ -113,7 +113,7 @@ describe("updating a project's gitignore", () => {
     it("deletes the file once its last entry is removed", async () => {
       const { fs, useCase } = build("a/\n");
 
-      await useCase.remove(ROOT, ["a/"]);
+      await useCase.execute(ROOT, ["a/"], "remove");
 
       expect(fs.has(GITIGNORE)).toBe(false);
     });

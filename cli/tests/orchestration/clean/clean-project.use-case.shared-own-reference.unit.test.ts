@@ -108,7 +108,7 @@ describe("clean: shared source own reference", () => {
         await references.addReference("1.0.0", PROJECT_ROOT);
         await references.addReference("1.0.0", OTHER_PROJECT_ROOT);
         const gitignore = new UpdateGitignore(fs);
-        gitignore.remove = async () => {
+        gitignore.execute = async () => {
           throw new Error("gitignore cleanup failed");
         };
         const useCase = new CleanWithKnownHostSource(
