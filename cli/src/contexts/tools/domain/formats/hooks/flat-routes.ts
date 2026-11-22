@@ -8,11 +8,7 @@ import type {
 } from "../../../contract/build-contract.js";
 import type { ProjectHooksFormat } from "../../../contract/tool-vocabulary.js";
 import { mergeHooks } from "../../hooks/hooks-merge.js";
-import type {
-  BridgeDelivery,
-  HooksFlatPart,
-  ProjectMergeDelivery,
-} from "../../sections/hooks-section.js";
+import type { BridgeDelivery, ProjectMergeDelivery } from "../../sections/hooks-section.js";
 import {
   type FlatHooksRoute,
   type HooksFileMerge,
@@ -108,22 +104,9 @@ function hooksBridge(
 
 /** A flat tool's hooks, as far as plugins go: a loader reads them from its own directory. */
 export function flatHooksSupport(
-  descriptor: HooksRouting & { readonly flat: FlatHooksRoute },
-  bridge?: FlatHooksBridge["generate"]
+  descriptor: HooksRouting & { readonly flat: FlatHooksRoute }
 ): BridgeDelivery {
-  const route = descriptor.flat;
-  const { loaderEntry } = route;
-  return {
-    kind: "bridge",
-    flat: {
-      dir: route.scriptsDir,
-      ...(loaderEntry === undefined ? {} : { loaderEntry }),
-      ...(loaderEntry !== undefined && bridge !== undefined
-        ? { bridge: hooksBridge(loaderEntry, bridge) }
-        : {}),
-    },
-    ...withHookScript(descriptor),
-  };
+  return { kind: "bridge", ...withHookScript(descriptor) };
 }
 
 /** A flat tool's hooks that `plugin install` merges into its route's shared file. */
@@ -131,11 +114,11 @@ export function flatProjectHooksDelivery(
   bridge: BridgeDelivery,
   route: FlatHooksRoute & { readonly sharedFile: string },
   format: ProjectHooksFormat
-): ProjectMergeDelivery & { readonly flat: HooksFlatPart } {
+): ProjectMergeDelivery & { readonly flat: true } {
   return {
     kind: "project-merge",
     project: { relativePath: route.sharedFile, format },
-    flat: bridge.flat,
+    flat: true,
     ...(bridge.hookScript === undefined ? {} : { hookScript: bridge.hookScript }),
   };
 }

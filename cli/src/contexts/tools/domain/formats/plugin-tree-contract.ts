@@ -35,8 +35,6 @@ function pluginTreeArtifacts(
       placement: { kind: "file", at: ".mcp.json" },
     },
     hooks: pluginTreeHooksArtifact(hooks),
-    rules: { supported: false },
-    commands: { supported: false },
   };
 }
 

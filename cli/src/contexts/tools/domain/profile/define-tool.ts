@@ -44,7 +44,7 @@ function bind(directory: string, suffix: ToolSuffix): BoundTool {
     installUnder: (subdirectory) => (fileName) =>
       `${directory}${subdirectory}${suffix.strip(fileName)}`,
     agents: (params) => new AgentsSection({ directory, toolSuffix, ...params }),
-    skills: (params) => new SkillsSection({ directory, toolSuffix, ...params }),
+    skills: (params) => new SkillsSection({ directory, ...params }),
     commands: (params) => new CommandsSection({ toolSuffix, ...params }),
     rules: (params) => new RulesSection({ toolSuffix, ...params }),
   };
@@ -76,7 +76,7 @@ function capabilityAnswers(spec: AiToolSpec<ProfileSections>, capabilities: Prof
     plugins: () => plugins,
     supportsUserScopeActivation: () => plugins?.supportsUserScopeActivation() ?? false,
     markdownSection: (kind: "commands" | "agents" | "rules") => capabilities[kind] ?? null,
-    skillsSection: () => capabilities.skills ?? null,
+    declaresSkills: () => capabilities.skills !== undefined,
     nativeActivation: () => nativeActivationOf(capabilities),
     agentModels: () => models,
     hostRefInUse: (enabled: boolean) =>

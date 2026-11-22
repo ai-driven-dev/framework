@@ -148,7 +148,7 @@ export function aProfile(toolId: AiToolId = TOOL.claude): ProfileBuilder {
   return new ProfileBuilder(toolId);
 }
 
-export type InstallKind = "skills" | "agents" | "commands" | "rules";
+export type InstallKind = "agents" | "commands" | "rules";
 type Installs = { buildInstallPath(fileName: string): string | null };
 
 /** Where a profile installs one built file of a kind, or null when it installs none. */

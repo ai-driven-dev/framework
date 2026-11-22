@@ -7,6 +7,8 @@ import type {
   PluginTranslationSkip,
   ReadonlySkipList,
 } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
+import { artifactPath } from "../../../tools/contract/artifact-path.js";
+import type { SupportedArtifact } from "../../../tools/contract/build-contract.js";
 import type { FlatPluginAnswers } from "../../../tools/contract/tool-profile.js";
 import { basename, isProse } from "../plugin-paths.js";
 import type { ComponentPlan } from "../rules/component-pipeline.js";
@@ -36,12 +38,14 @@ export function flatInstallPlan(
 ): { plans: ComponentPlan[]; flatHookPaths: ReadonlySet<string>; skipped: ReadonlySkipList } {
   const pluginName = dist.manifest.name;
   const at = { tool, pluginName };
-  const { namespacePrefix, hooksBridge } = plugins.flatLayout();
+  const { namespacePrefix } = plugins.flatLayout();
   const commands = tool.markdownSection("commands") === null ? [] : dist.components.commands;
+  const hooksArtifact = flatHooksArtifact(tool);
   const hooks = flatHookPlans(dist, {
-    place: (relativePath) => plugins.hooksInstallPath(pluginName, relativePath),
+    place: (relativePath) =>
+      hooksArtifact === null ? null : artifactPath(hooksArtifact, pluginName, relativePath),
     script: (relativePath, content) => plugins.hookScript(relativePath, content),
-    bridge: hooksBridge,
+    bridge: hooksArtifact?.hooksBridge ?? null,
     bridgeFirst: false,
     needsManifest: false,
   });
@@ -57,6 +61,11 @@ export function flatInstallPlan(
     flatHookPaths: new Set(hooks.map((plan) => plan.path)),
     skipped: hooksSkips(dist, { tool, plugins }),
   };
+}
+
+function flatHooksArtifact(tool: TranslatedAiTool): SupportedArtifact | null {
+  const hooks = tool.buildContract("flat")?.artifacts.hooks;
+  return hooks?.supported ? hooks : null;
 }
 
 function commandPlan(file: PluginComponentFile, at: FlatAt, prefix: string): ComponentPlan {
@@ -79,7 +88,7 @@ function sectionPlan(
   const { tool, pluginName } = at;
   const { relativePath: source, content } = file;
   const declared =
-    section === "skills" ? tool.skillsSection() !== null : tool.markdownSection(section) !== null;
+    section === "skills" ? tool.declaresSkills() : tool.markdownSection(section) !== null;
   if (!declared && (section !== "agents" || !isProse(source))) return null;
   // Same rule as the native path: prose is rewritten, an artefact is carried. Rewriting every
   // flat file left a script intact only where a tool's own rewrite happened to spare it.

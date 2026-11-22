@@ -1,4 +1,4 @@
-import { reshapeFrontmatter } from "../../../../shared/domain/markdown.js";
+import { reshapeFrontmatter, serializeFrontmatter } from "../../../../shared/domain/markdown.js";
 import type {
   PluginComponentFile,
   PluginDistribution,
@@ -92,7 +92,8 @@ function markdownPlan(
     shape: (text) =>
       reshapeFrontmatter(text, {
         frontmatter: (fm) => section.convertFrontmatter(fm, fileName),
-        serialize: (fm, body) => section.serialize(fm, body),
+        serialize: (fm, body) =>
+          section.serialize ? section.serialize(fm, body) : serializeFrontmatter(fm, body),
       }),
     rootToken: plugins.rootToken(),
   };
@@ -103,8 +104,7 @@ function markdownPlan(
 function skillPlan(file: PluginComponentFile, at: NativeAt): ComponentPlan | null {
   const { relativePath: source, content } = file;
   const { tool, plugins, pluginRoot } = at;
-  const section = tool.skillsSection();
-  if (section === null) return null;
+  if (!tool.declaresSkills()) return null;
   const path = `${pluginRoot}${source}`;
   if (!isProse(source)) return { source, path, content };
   return {
@@ -112,13 +112,17 @@ function skillPlan(file: PluginComponentFile, at: NativeAt): ComponentPlan | nul
     path,
     content,
     links: linksOf(source, tool),
-    shape: (text) =>
-      reshapeFrontmatter(text, {
-        frontmatter: (fm) => section.convertFrontmatter(fm),
-        serialize: (fm, body) => section.serialize(fm, body),
-      }),
+    shape: (text) => reshapeFrontmatter(text, { frontmatter: skillFrontmatterOf(tool) }),
     rootToken: plugins.rootToken(),
   };
+}
+
+/** The tool's own shape for a skill's frontmatter, the one its marketplace build applies. */
+function skillFrontmatterOf(
+  tool: TranslatedAiTool
+): (fm: Record<string, unknown>) => Record<string, unknown> {
+  const skills = tool.buildContract("marketplace")?.artifacts.skills;
+  return (skills?.supported ? skills.skillFrontmatter : undefined) ?? ((fm) => fm);
 }
 
 function toPluginRelativePath(fullPath: string, toolDirectory: string): string {

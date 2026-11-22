@@ -56,7 +56,7 @@ export function flatPlugins(
     typeof hooks !== "string"
       ? hooks
       : hooks === "accepts"
-        ? { kind: "bridge", flat: { dir: ".fake/hooks/" } }
+        ? { kind: "bridge" }
         : { kind: "none", reason: "synthetic" };
   return {
     layout: flatPlacement({

@@ -66,8 +66,6 @@ function contractOf(
       agents: NONE,
       mcp: NONE,
       hooks: NONE,
-      rules: NONE,
-      commands: NONE,
       ...artifacts,
     },
     buildMarketplaceCatalog: null,

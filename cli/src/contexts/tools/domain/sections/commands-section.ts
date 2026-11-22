@@ -1,5 +1,3 @@
-import { serializeFrontmatter } from "../../../../shared/domain/markdown.js";
-
 type CommandsSectionParams = {
   toolSuffix: string;
   buildInstallPath: (fileName: string) => string | null;
@@ -25,9 +23,5 @@ export class CommandsSection {
     relativeFileName: string
   ): Record<string, unknown> {
     return this.#params.convertFrontmatter(fm, relativeFileName);
-  }
-
-  serialize(frontmatter: Record<string, unknown>, body: string): string {
-    return serializeFrontmatter(frontmatter, body);
   }
 }

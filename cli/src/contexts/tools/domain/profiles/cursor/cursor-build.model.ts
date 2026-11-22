@@ -67,8 +67,6 @@ export function buildCursorFlatContract(hooks: FlatHooks): ToolBuildContract {
         mcpServersKey: "mcpServers",
       },
       hooks: flatHooksArtifact(hooks, { tool: "cursor" }),
-      rules: { supported: false },
-      commands: { supported: false },
     },
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,

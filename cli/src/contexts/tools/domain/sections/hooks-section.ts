@@ -1,7 +1,5 @@
 import { FileHash } from "../../../../shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../shared/domain/installation-file.js";
-import type { FlatHooksLoaderEntry } from "../../../../shared/domain/materialization/flat-paths.js";
-import type { FlatHooksBridge } from "../../contract/build-contract.js";
 import type { ConfigFilePlace } from "../../contract/tool-profile.js";
 import type { HookScript, ProjectHooksFormat } from "../../contract/tool-vocabulary.js";
 import { CapabilityConfigError } from "../tools.error.js";
@@ -63,13 +61,6 @@ export interface ProjectHooksPlacement {
 
 export const AS_SHIPPED: HookScript = (_pluginPath, content) => content;
 
-/** Where a flat tool keeps a plugin's hooks, and the loader module it is read through, if any. */
-export interface HooksFlatPart {
-  readonly dir: string;
-  readonly loaderEntry?: FlatHooksLoaderEntry;
-  readonly bridge?: FlatHooksBridge;
-}
-
 /** The hook script as this tool runs it, and what a person must still do before it fires. */
 interface HooksDeliveryShared {
   readonly hookScript?: HookScript;
@@ -87,13 +78,13 @@ export interface ProjectMergeDelivery extends HooksDeliveryShared {
   readonly project: { readonly relativePath: string; readonly format: ProjectHooksFormat };
   /** The hooks file as the plugin tree holds it, relative to the plugin's root. */
   readonly pluginFile?: string;
-  readonly flat?: HooksFlatPart;
+  /** Set where the same hooks also install into a flat tool. */
+  readonly flat?: true;
 }
 
 /** A flat tool whose loader reads the hooks through a module generated per plugin. */
 export interface BridgeDelivery extends HooksDeliveryShared {
   readonly kind: "bridge";
-  readonly flat: HooksFlatPart;
 }
 
 /** A tool that runs no hook a plugin ships. */

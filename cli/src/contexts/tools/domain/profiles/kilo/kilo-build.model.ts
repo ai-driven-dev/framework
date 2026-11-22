@@ -82,8 +82,6 @@ export function buildKiloFlatContract(hooks: KiloHooks): ToolBuildContract {
       },
       mcp: { supported: false },
       hooks: flatHooksArtifact(hooks, { bridge: generateKiloHooksBridge }),
-      rules: { supported: false },
-      commands: { supported: false },
     },
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,

@@ -40,19 +40,14 @@ describe("defineAiTool", () => {
     expect(tool.markdownSection("agents")).toBeNull();
   });
 
-  it("answers its skills section, and null when it declares none", () => {
+  it("answers whether it declares skills", () => {
     const tool = defineAiTool({
       ...aiSpec,
-      capabilities: (bound) => ({
-        skills: bound.skills({
-          buildInstallPath: bound.installUnder("skills/"),
-          convertFrontmatter: (frontmatter) => frontmatter,
-        }),
-      }),
+      capabilities: (bound) => ({ skills: bound.skills({}) }),
     });
 
-    expect(tool.skillsSection()?.convertFrontmatter({ a: 1 })).toStrictEqual({ a: 1 });
-    expect(defineAiTool(aiSpec).skillsSection()).toBeNull();
+    expect(tool.declaresSkills()).toBe(true);
+    expect(defineAiTool(aiSpec).declaresSkills()).toBe(false);
   });
 
   it("answers a declared section, and null for one it does not declare", () => {

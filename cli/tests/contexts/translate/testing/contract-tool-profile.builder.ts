@@ -5,7 +5,6 @@ import type {
   FlatInstallSection,
   MarkdownSectionAnswers,
   PluginAnswers,
-  SkillsSectionAnswers,
 } from "../../../../src/contexts/tools/contract/tool-profile.js";
 
 /** The sections a stand-in declares in place of its base's: `null` drops one, absent keeps it. */
@@ -13,7 +12,8 @@ export interface SectionAnswers {
   readonly commands?: MarkdownSectionAnswers | null;
   readonly agents?: MarkdownSectionAnswers | null;
   readonly rules?: MarkdownSectionAnswers | null;
-  readonly skills?: SkillsSectionAnswers | null;
+  /** `null` drops the skills section the base declares. */
+  readonly skills?: null;
 }
 
 /** What a stand-in answers differently from its base, everything the translator asks of a tool. */
@@ -24,6 +24,8 @@ export interface ProfileAnswers {
   readonly sections?: SectionAnswers;
   /** `null` is a tool declaring no flat contract; absent keeps the base's. */
   readonly flatContract?: ToolBuildContract | null;
+  /** The marketplace contract a stand-in answers; absent keeps the base's. */
+  readonly marketplaceContract?: ToolBuildContract;
   readonly flatInstallPath?: (
     section: FlatInstallSection,
     pluginName: string,
@@ -47,17 +49,19 @@ export function contractToolProfile(
   base: AiToolProfile,
   answers: ProfileAnswers = {}
 ): AiToolProfile {
-  const { sections = {}, plugins, flatContract } = answers;
+  const { sections = {}, plugins, flatContract, marketplaceContract } = answers;
   const overrides = {
     directory: answers.directory ?? base.directory,
     plugins: () => (plugins === undefined ? base.plugins() : plugins),
     markdownSection: (kind) =>
       sections[kind] === undefined ? base.markdownSection(kind) : sections[kind],
-    skillsSection: () => (sections.skills === undefined ? base.skillsSection() : sections.skills),
-    buildContract: (mode, provider) =>
-      mode === "flat" && flatContract !== undefined
-        ? flatContract
-        : base.buildContract(mode, provider),
+    declaresSkills: () =>
+      sections.skills === undefined ? base.declaresSkills() : sections.skills !== null,
+    buildContract: (mode, provider) => {
+      if (mode === "flat" && flatContract !== undefined) return flatContract;
+      if (mode === "marketplace" && marketplaceContract !== undefined) return marketplaceContract;
+      return base.buildContract(mode, provider);
+    },
     flatInstallPath:
       answers.flatInstallPath ??
       ((section, pluginName, fileName) => base.flatInstallPath(section, pluginName, fileName)),
@@ -67,7 +71,7 @@ export function contractToolProfile(
     | "directory"
     | "plugins"
     | "markdownSection"
-    | "skillsSection"
+    | "declaresSkills"
     | "buildContract"
     | "flatInstallPath"
     | "linkSyntax"

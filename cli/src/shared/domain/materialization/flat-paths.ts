@@ -166,6 +166,8 @@ export function flatHooksRoutePath(
       hooksRelativePath: relPath,
     });
   }
+  // Limit: a flat tool without a loader entry places `hooks/<plugin>.hooks.json` at
+  // `<dir><plugin>.hooks.json`; real plugins ship only `hooks/hooks.json`.
   if (relPath === `hooks/${plugin}.hooks.json`) return genericFlatHooksFile(scriptsDir, plugin);
   return genericFlatHooksScriptPath(scriptsDir, plugin, relPath.replace(/^hooks\//, ""));
 }

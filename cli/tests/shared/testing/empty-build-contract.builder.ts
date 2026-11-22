@@ -11,8 +11,6 @@ export function anEmptyContract(overrides: Partial<ToolBuildContract> = {}): Too
       agents: { supported: false },
       mcp: { supported: false },
       hooks: { supported: false },
-      rules: { supported: false },
-      commands: { supported: false },
     },
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,

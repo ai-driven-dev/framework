@@ -135,8 +135,6 @@ export interface ToolBuildContract {
     readonly agents: ArtifactContract;
     readonly mcp: ArtifactContract;
     readonly hooks: ArtifactContract;
-    readonly rules: ArtifactContract;
-    readonly commands: ArtifactContract;
   };
 
   /** The tool's own config file (Codex's config.toml, opencode.json), built once every plugin

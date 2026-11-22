@@ -6,7 +6,6 @@ import type {
 } from "../../../../../src/contexts/tools/contract/build-contract.js";
 import { MCP_CONFIG_REF } from "../../../../../src/contexts/tools/contract/config-refs.js";
 import type {
-  FlatPluginAnswers,
   McpConfigAnswers,
   NativePluginAnswers,
   SettingsFileAnswers,
@@ -78,12 +77,6 @@ function subjectOf(
 function native(profile: AiTool): NativePluginAnswers {
   const plugins = profile.plugins();
   if (plugins?.kind !== "native") throw new Error(`${profile.toolId} is not native`);
-  return plugins;
-}
-
-function flat(profile: AiTool): FlatPluginAnswers {
-  const plugins = profile.plugins();
-  if (plugins?.kind !== "flat") throw new Error(`${profile.toolId} is not flat`);
   return plugins;
 }
 
@@ -169,12 +162,17 @@ const OTHER_TOKEN = "${ANOTHER_PLUGIN_ROOT}";
 const NOT_A_VARIABLE = "/opt/plugins";
 
 function withBridgeGeneratingNothing(profile: AiTool): AiTool {
-  const plugins = flat(profile);
-  const layout = plugins.flatLayout();
-  const bridge = layout.hooksBridge;
-  if (bridge == null) throw new Error(`${profile.toolId} ships no hooks bridge`);
-  const flatLayout = () => ({ ...layout, hooksBridge: { ...bridge, generate: () => null } });
-  return { ...profile, plugins: () => ({ ...plugins, flatLayout }) };
+  const contract = profile.buildContract("flat");
+  const hooks = contract?.artifacts.hooks;
+  const bridge = hooks?.supported ? hooks.hooksBridge : undefined;
+  if (contract == null || hooks?.supported !== true || bridge == null) {
+    throw new Error(`${profile.toolId} ships no hooks bridge`);
+  }
+  const artifacts = {
+    ...contract.artifacts,
+    hooks: { ...hooks, hooksBridge: { ...bridge, generate: () => null } },
+  };
+  return { ...profile, buildContract: () => ({ ...contract, artifacts }) };
 }
 
 function withoutEvent(profile: AiTool, event: string): FileConformanceSubject["hooks"] {
@@ -236,12 +234,6 @@ const BROKEN: Readonly<Record<string, () => FileConformanceSubject>> = {
           commands: commandsWith(NATIVE, { buildInstallPath: () => "/x.md" }),
         })
       ),
-  "builds neither rules nor commands from the plugin tree": () =>
-    subjectOf(
-      withMarketplace(NATIVE, {
-        artifacts: { ...marketplaceOf(NATIVE).artifacts, rules: supported("x.md") },
-      })
-    ),
   "gives every supported artifact a non-empty path": () =>
     subjectOf(
       withMarketplace(NATIVE, {

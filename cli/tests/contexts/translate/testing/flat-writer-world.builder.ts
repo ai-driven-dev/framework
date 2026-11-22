@@ -93,8 +93,6 @@ export function stubContract(over: Partial<ToolBuildContract> = {}): ToolBuildCo
       skills: supportedArtifact(skillsIn(STUB_LAYOUT)),
       hooks: supportedArtifact(STUB_HOOKS),
       mcp: { supported: false },
-      rules: { supported: false },
-      commands: { supported: false },
     },
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,
