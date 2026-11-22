@@ -3,7 +3,7 @@ import type { FileReader } from "../../../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../../domain/manifest.js";
 import { assertProjectMcpEntriesRemovable } from "../../removal/remove-project-plugin.js";
-import { assertProjectHooksRemovable } from "../../shared/remove-project-hooks.use-case.js";
+import { assertProjectHooksRemovable } from "../../shared/remove-project-hooks.js";
 
 /** An add that replaces a plugin may not clobber MCP entries or hooks the user edited since. */
 export async function assertExistingContributionsUnchanged(

@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { RemoveToolFiles } from "../../../../../../src/contexts/installation/application/removal/project/remove-tool-files.js";
+import { RemoveToolFiles } from "../../../../../../src/contexts/installation/application/removal/project/remove-tool-files.use-case.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../../../src/shared/domain/file-hash.js";
@@ -42,7 +42,7 @@ function removal(
   allToolIds: ToolId[],
   logger = new CapturingLogger()
 ): Promise<string[]> {
-  return new RemoveToolFiles(target.fs, logger, registeredTools(), () => "/home/dev").remove({
+  return new RemoveToolFiles(target.fs, logger, registeredTools(), () => "/home/dev").execute({
     toolId,
     allToolIds,
     manifest: target.manifest,

@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import type { RemoveProjectFiles } from "../../../../../../src/contexts/installation/application/removal/project/remove-project-files.js";
+import type { RemoveProjectFiles } from "../../../../../../src/contexts/installation/application/removal/project/remove-project-files.use-case.js";
 import { UpdateGitignore } from "../../../../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import type { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
@@ -34,7 +34,7 @@ function removalOver(
 
 describe("removing a project's files", () => {
   it("removes nothing from a project that installed nothing", async () => {
-    await expect(removalOver(null, new InMemoryFileAdapter()).remove(ROOT, true)).resolves.toBe(0);
+    await expect(removalOver(null, new InMemoryFileAdapter()).execute(ROOT, true)).resolves.toBe(0);
   });
 
   it("counts the machine-local files it removes with the tracked ones", async () => {
@@ -43,7 +43,7 @@ describe("removing a project's files", () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(join(ROOT, settings ?? ""), "{}");
 
-    await expect(removalOver(manifest, fs).remove(ROOT, true)).resolves.toBe(1);
+    await expect(removalOver(manifest, fs).execute(ROOT, true)).resolves.toBe(1);
   });
 
   describe("over a hook script edited after install", () => {
@@ -74,13 +74,13 @@ describe("removing a project's files", () => {
     it("removes it when forced", async () => {
       const fs = editedScript();
 
-      await removalOver(manifest, fs).remove(ROOT, true);
+      await removalOver(manifest, fs).execute(ROOT, true);
 
       expect(fs.has(join(ROOT, script))).toBe(false);
     });
 
     it("refuses to remove it unless forced", async () => {
-      await expect(removalOver(manifest, editedScript()).remove(ROOT, false)).rejects.toThrow(
+      await expect(removalOver(manifest, editedScript()).execute(ROOT, false)).rejects.toThrow(
         saying("edited after install")
       );
     });
@@ -91,7 +91,7 @@ describe("removing a project's files", () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(join(ROOT, ".gitignore"), "node_modules\n.aidd/cache/\n");
 
-    await removalOver(manifest, fs).remove(ROOT, true);
+    await removalOver(manifest, fs).execute(ROOT, true);
 
     expect(await fs.readFile(join(ROOT, ".gitignore"))).toBe("node_modules\n");
   });

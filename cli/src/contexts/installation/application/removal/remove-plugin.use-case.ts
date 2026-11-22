@@ -12,10 +12,7 @@ import type {
   RegistrationRecords,
 } from "../../ports/record/registration-records.js";
 import { resolvePluginToolIds, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
-import {
-  assertProjectHooksRemovable,
-  removeProjectHooks,
-} from "../shared/remove-project-hooks.use-case.js";
+import { assertProjectHooksRemovable, removeProjectHooks } from "../shared/remove-project-hooks.js";
 import { requireManifest } from "../shared/require-manifest.js";
 import type { ProjectPluginWithdrawalSteps } from "./project-plugin-withdrawal.js";
 import { removeFlatMcpEntries } from "./remove-flat-mcp-entries.js";

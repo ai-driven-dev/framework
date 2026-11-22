@@ -27,7 +27,7 @@ export class ProveUserScopeWithdrawals {
     private readonly tools: ToolCatalog
   ) {}
 
-  async prove(): Promise<UserRegistrationWithdrawal[]> {
+  async execute(): Promise<UserRegistrationWithdrawal[]> {
     const manifest = await this.deps.userManifestRepo.load();
     if (manifest === null) return [];
     await this.assertTrackedUserPluginFilesSafe(manifest);

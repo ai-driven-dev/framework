@@ -23,7 +23,7 @@ export class RemoveAiddTraces {
     private readonly tools: ToolCatalog
   ) {}
 
-  async remove(manifest: Manifest, projectRoot: string): Promise<void> {
+  async execute(manifest: Manifest, projectRoot: string): Promise<void> {
     const { fs, manifestRepo, logger, updateGitignore } = this.deps;
     await removeAiddState({ fs, manifestRepo, logger }, projectRoot);
     // Exactly what the pipeline added on install, never a subset of it.

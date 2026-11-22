@@ -21,7 +21,7 @@ export class PurgeUserScopeMachine {
     private readonly tools: ToolCatalog
   ) {}
 
-  async purge(projectRoot: string): Promise<void> {
+  async execute(projectRoot: string): Promise<void> {
     const manifest = await this.deps.userManifestRepo.load();
     if (manifest !== null) await this.purgeUserPluginFiles(manifest, projectRoot);
     await this.deps.purgeMachineState.purge();

@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { ProjectHooksMaterializer } from "../../../../../src/contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
-import { removeRecordedProjectHooks } from "../../../../../src/contexts/installation/application/shared/remove-project-hooks.use-case.js";
+import { removeRecordedProjectHooks } from "../../../../../src/contexts/installation/application/shared/remove-project-hooks.js";
 import {
   type PluginComponentFile,
   PluginDistribution,

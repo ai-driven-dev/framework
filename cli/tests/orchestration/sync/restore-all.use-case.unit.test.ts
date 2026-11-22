@@ -42,7 +42,7 @@ function build(options: {
   const prompter = new CheckboxRecordingPrompter(options.selection);
   const reportStatus = { execute: vi.fn(async () => options.report ?? drift()) };
   const useCase = new RestoreAll(prompter, reportStatus, {
-    open: async () => ({ manifest: Manifest.create(), execute }),
+    execute: async () => ({ manifest: Manifest.create(), execute }),
   });
   return { useCase, execute, prompter, reportStatus };
 }

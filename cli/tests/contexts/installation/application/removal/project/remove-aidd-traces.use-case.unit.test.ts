@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { RemoveAiddTraces } from "../../../../../../src/contexts/installation/application/removal/project/remove-aidd-traces.js";
+import { RemoveAiddTraces } from "../../../../../../src/contexts/installation/application/removal/project/remove-aidd-traces.use-case.js";
 import { UpdateGitignore } from "../../../../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { CapturingLogger } from "../../../../../shared/testing/capturing-logger.fake.js";
@@ -29,7 +29,7 @@ describe("removing AIDD's traces from a project", () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(join(ROOT, ".gitignore"), `node_modules\n.aidd/cache/\n${machineLocal}\n`);
 
-    await tracesOver(fs).remove(manifest, ROOT);
+    await tracesOver(fs).execute(manifest, ROOT);
 
     expect(await fs.readFile(join(ROOT, ".gitignore"))).toBe("node_modules\n");
   });
@@ -45,7 +45,7 @@ describe("removing AIDD's traces from a project", () => {
       manifestWhenGitignoreIsTouched.push(await repo.load());
     };
 
-    await tracesOver(fs, repo, gitignore).remove(manifest, ROOT);
+    await tracesOver(fs, repo, gitignore).execute(manifest, ROOT);
 
     expect(manifestWhenGitignoreIsTouched).toEqual([null]);
   });

@@ -7,13 +7,13 @@ import { AssertProjectRemovable } from "../../../src/contexts/installation/appli
 import type { ProjectCleanAsks } from "../../../src/contexts/installation/application/clean/clean-project-files.use-case.js";
 import { CleanProjectFiles } from "../../../src/contexts/installation/application/clean/clean-project-files.use-case.js";
 import { PlanProjectClean } from "../../../src/contexts/installation/application/clean/plan-project-clean.use-case.js";
-import { DeleteTrackedProjectFiles } from "../../../src/contexts/installation/application/removal/project/delete-tracked-project-files.js";
+import { DeleteTrackedProjectFiles } from "../../../src/contexts/installation/application/removal/project/delete-tracked-project-files.use-case.js";
 import {
   type AiddTracesDeps,
   RemoveAiddTraces,
-} from "../../../src/contexts/installation/application/removal/project/remove-aidd-traces.js";
-import { RemoveMachineLocalFiles } from "../../../src/contexts/installation/application/removal/project/remove-machine-local-files.js";
-import { RemoveProjectFiles } from "../../../src/contexts/installation/application/removal/project/remove-project-files.js";
+} from "../../../src/contexts/installation/application/removal/project/remove-aidd-traces.use-case.js";
+import { RemoveMachineLocalFiles } from "../../../src/contexts/installation/application/removal/project/remove-machine-local-files.use-case.js";
+import { RemoveProjectFiles } from "../../../src/contexts/installation/application/removal/project/remove-project-files.use-case.js";
 import { assertProjectMcpEntriesRemovable } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import type { RecordsBesideManifest } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { PurgeDeclaredCache } from "../../../src/contexts/machine-claims/application/purge-declared-cache.js";

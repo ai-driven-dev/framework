@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { DeleteTrackedProjectFiles } from "../../../../../../src/contexts/installation/application/removal/project/delete-tracked-project-files.js";
+import { DeleteTrackedProjectFiles } from "../../../../../../src/contexts/installation/application/removal/project/delete-tracked-project-files.use-case.js";
 import { RecordedPlugin } from "../../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../../../src/shared/domain/file-hash.js";
 import { CapturingLogger } from "../../../../../shared/testing/capturing-logger.fake.js";
@@ -39,7 +39,7 @@ describe("deleting the tracked files of a project", () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(join(ROOT, "skills", "x.md"), "x");
 
-    const count = await deleterOver(fs).delete(manifest, ROOT);
+    const count = await deleterOver(fs).execute(manifest, ROOT);
 
     expect(fs.has(join(ROOT, "skills", "x.md"))).toBe(false);
     expect(count).toBe(1);
@@ -51,6 +51,6 @@ describe("deleting the tracked files of a project", () => {
       .withPlugin(TOOL.vscode, localPlugin("ide-plugin"))
       .build();
 
-    await expect(deleterOver(new InMemoryFileAdapter()).delete(manifest, ROOT)).resolves.toBe(0);
+    await expect(deleterOver(new InMemoryFileAdapter()).execute(manifest, ROOT)).resolves.toBe(0);
   });
 });

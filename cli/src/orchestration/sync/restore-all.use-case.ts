@@ -36,7 +36,7 @@ export class RestoreAll {
   constructor(
     private readonly prompter: Prompter,
     private readonly reportStatus: Pick<ReportStatus, "execute">,
-    private readonly restoreGlobal: Pick<RestoreGlobal, "open">
+    private readonly restoreGlobal: Pick<RestoreGlobal, "execute">
   ) {}
 
   async execute(
@@ -44,7 +44,7 @@ export class RestoreAll {
     force: boolean,
     interactive: boolean
   ): Promise<RestoreAllResult> {
-    const restore = await this.restoreGlobal.open();
+    const restore = await this.restoreGlobal.execute();
     const files = interactive
       ? await this.promptForFiles(projectRoot, restore.manifest)
       : undefined;

@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { RemoveMachineLocalFiles } from "../../../../../../src/contexts/installation/application/removal/project/remove-machine-local-files.js";
+import { RemoveMachineLocalFiles } from "../../../../../../src/contexts/installation/application/removal/project/remove-machine-local-files.use-case.js";
 import { RecordedPlugin } from "../../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../../../src/shared/domain/file-hash.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
@@ -29,7 +29,7 @@ describe("removing the machine-local files of a project", () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(join(ROOT, settings ?? ""), "{}");
 
-    const count = await new RemoveMachineLocalFiles(fs, tools).remove(manifest, ROOT, {
+    const count = await new RemoveMachineLocalFiles(fs, tools).execute(manifest, ROOT, {
       overwriteEdited: false,
     });
 
@@ -59,7 +59,7 @@ describe("removing the machine-local files of a project", () => {
     it("removes it when forced", async () => {
       const fs = editedScript();
 
-      await new RemoveMachineLocalFiles(fs, registeredTools()).remove(manifest, ROOT, {
+      await new RemoveMachineLocalFiles(fs, registeredTools()).execute(manifest, ROOT, {
         overwriteEdited: true,
       });
 
@@ -70,7 +70,7 @@ describe("removing the machine-local files of a project", () => {
       const fs = editedScript();
 
       await expect(
-        new RemoveMachineLocalFiles(fs, registeredTools()).remove(manifest, ROOT, {
+        new RemoveMachineLocalFiles(fs, registeredTools()).execute(manifest, ROOT, {
           overwriteEdited: false,
         })
       ).rejects.toThrow(saying("edited after install"));
@@ -84,7 +84,7 @@ describe("removing the machine-local files of a project", () => {
       .build();
 
     await expect(
-      new RemoveMachineLocalFiles(new InMemoryFileAdapter(), registeredTools()).remove(
+      new RemoveMachineLocalFiles(new InMemoryFileAdapter(), registeredTools()).execute(
         manifest,
         ROOT,
         { overwriteEdited: false }

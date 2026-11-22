@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ProveUserScopeWithdrawals } from "../../../../../src/contexts/installation/application/clean/prove-user-scope-withdrawals.js";
+import { ProveUserScopeWithdrawals } from "../../../../../src/contexts/installation/application/clean/prove-user-scope-withdrawals.use-case.js";
 import type { RegistrationRecords } from "../../../../../src/contexts/installation/ports/record/registration-records.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { aManifest } from "../../testing/manifest.builder.js";
@@ -19,13 +19,13 @@ function fixture(options: Parameters<typeof userScopeParts>[0] = {}) {
 
 describe("proving a user-scope withdrawal is safe", () => {
   it("answers none when the machine has no manifest", async () => {
-    await expect(fixture({ manifest: null }).prove.prove()).resolves.toEqual([]);
+    await expect(fixture({ manifest: null }).prove.execute()).resolves.toEqual([]);
   });
 
   it("refuses while a tracked file escaped its user-scope boundary", async () => {
     const { prove } = fixture({ proven: ["a.md"] });
 
-    await expect(prove.prove()).rejects.toThrow("User clean refused");
+    await expect(prove.execute()).rejects.toThrow("User clean refused");
   });
 
   it("answers the host registration each tool recorded, with its claimed refs", async () => {
@@ -43,7 +43,7 @@ describe("proving a user-scope withdrawal is safe", () => {
     ]);
     const { prove } = fixture({ manifest, records });
 
-    const withdrawals = await prove.prove();
+    const withdrawals = await prove.execute();
 
     expect(withdrawals.map((w) => [w.tool.toolId, w.claimedRefs])).toEqual([[TOOL.codex, ["p@c"]]]);
   });
@@ -55,7 +55,7 @@ describe("proving a user-scope withdrawal is safe", () => {
     ]);
     const { prove } = fixture({ manifest, records });
 
-    const [withdrawal] = await prove.prove();
+    const [withdrawal] = await prove.execute();
 
     expect(withdrawal?.cacheRoot).toBe(join(USER_SCOPE_HOME, ".codex", "plugins", "cache"));
   });

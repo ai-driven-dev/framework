@@ -24,7 +24,7 @@ export class DeleteTrackedProjectFiles {
   ) {}
 
   /** Deletes them and returns how many files that was. */
-  async delete(manifest: Manifest, projectRoot: string): Promise<number> {
+  async execute(manifest: Manifest, projectRoot: string): Promise<number> {
     let deleted = 0;
     for (const toolId of manifest.getInstalledToolIds()) {
       this.deps.logger.info(`Removing ${toolId} files...`);

@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { removeProjectHooks } from "../../../../../src/contexts/installation/application/shared/remove-project-hooks.use-case.js";
+import { removeProjectHooks } from "../../../../../src/contexts/installation/application/shared/remove-project-hooks.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";

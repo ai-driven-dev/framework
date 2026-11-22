@@ -6,12 +6,12 @@ import type { MarketplaceRegistry } from "../../../src/contexts/distribution/por
 import { WithdrawFromHost } from "../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import type { HostPorts } from "../../../src/contexts/host-registration/ports/host-ports.js";
 import { InspectUserScopeFiles } from "../../../src/contexts/installation/application/clean/inspect-user-scope-files.use-case.js";
-import { ProveUserScopeWithdrawals } from "../../../src/contexts/installation/application/clean/prove-user-scope-withdrawals.js";
+import { ProveUserScopeWithdrawals } from "../../../src/contexts/installation/application/clean/prove-user-scope-withdrawals.use-case.js";
 import {
   PurgeUserScopeFiles,
   type PurgeUserScopeFilesDeps,
 } from "../../../src/contexts/installation/application/clean/purge-user-scope-files.js";
-import { PurgeUserScopeMachine } from "../../../src/contexts/installation/application/clean/purge-user-scope-machine.js";
+import { PurgeUserScopeMachine } from "../../../src/contexts/installation/application/clean/purge-user-scope-machine.use-case.js";
 import type { MachineStateGuards } from "../../../src/contexts/installation/application/removal/purge-machine-state.js";
 import {
   PurgeMachineState,

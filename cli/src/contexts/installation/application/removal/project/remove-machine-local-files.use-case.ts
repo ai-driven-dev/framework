@@ -5,7 +5,7 @@ import type { FileWriter } from "../../../../../shared/ports/file-writer.js";
 import type { ToolCatalog } from "../../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../../domain/manifest.js";
 import type { ProjectHooksGuard } from "../../shared/assert-project-hooks-unchanged.js";
-import { removeProjectHooks } from "../../shared/remove-project-hooks.use-case.js";
+import { removeProjectHooks } from "../../shared/remove-project-hooks.js";
 
 /** The files a tool writes that `plugins[].files` never tracks: a machine-local settings file
  * (`.claude/settings.local.json`) and, for a tool merging a plugin's hooks into its own project
@@ -21,7 +21,7 @@ export class RemoveMachineLocalFiles {
   }
 
   /** Removes them from every installed tool and returns how many that was. */
-  async remove(
+  async execute(
     manifest: Manifest,
     projectRoot: string,
     hooksGuard: ProjectHooksGuard

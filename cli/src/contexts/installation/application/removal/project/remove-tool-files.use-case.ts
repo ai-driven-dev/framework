@@ -31,7 +31,7 @@ export class RemoveToolFiles {
   ) {}
 
   /** The paths deleted, relative to the project. */
-  async remove(removal: ToolRemoval): Promise<string[]> {
+  async execute(removal: ToolRemoval): Promise<string[]> {
     const { toolId, manifest, projectRoot } = removal;
     this.logger.info(`Removing ${toolId} files...`);
     const deletedFiles = await this.deleteToolFiles(removal);

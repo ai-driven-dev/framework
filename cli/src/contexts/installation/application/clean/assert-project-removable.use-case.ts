@@ -1,7 +1,7 @@
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import { assertProjectHooksRemovable } from "../shared/remove-project-hooks.use-case.js";
+import { assertProjectHooksRemovable } from "../shared/remove-project-hooks.js";
 import type { ProjectCleanAsks } from "./clean-project-files.use-case.js";
 
 /** What AssertProjectRemovable is built from. */

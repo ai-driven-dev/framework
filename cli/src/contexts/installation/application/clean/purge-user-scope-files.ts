@@ -7,8 +7,8 @@ import type {
 } from "../../ports/user-scope/user-scope-purge.js";
 import { assertNothingDepends } from "./assert-nothing-depends.js";
 import type { InspectUserScopeFiles } from "./inspect-user-scope-files.use-case.js";
-import type { ProveUserScopeWithdrawals } from "./prove-user-scope-withdrawals.js";
-import type { PurgeUserScopeMachine } from "./purge-user-scope-machine.js";
+import type { ProveUserScopeWithdrawals } from "./prove-user-scope-withdrawals.use-case.js";
+import type { PurgeUserScopeMachine } from "./purge-user-scope-machine.use-case.js";
 
 /** What PurgeUserScopeFiles is built from. */
 export interface PurgeUserScopeFilesDeps {
@@ -37,11 +37,11 @@ export class PurgeUserScopeFiles implements UserScopePurge {
   }
 
   proveWithdrawals(): Promise<UserRegistrationWithdrawal[]> {
-    return this.deps.withdrawals.prove();
+    return this.deps.withdrawals.execute();
   }
 
   purge(projectRoot: string): Promise<void> {
-    return this.deps.machinePurge.purge(projectRoot);
+    return this.deps.machinePurge.execute(projectRoot);
   }
 
   async deleteManifest(): Promise<void> {
