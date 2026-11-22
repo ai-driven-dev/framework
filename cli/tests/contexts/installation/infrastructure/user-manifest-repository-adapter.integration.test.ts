@@ -31,6 +31,20 @@ describe("UserManifestRepositoryAdapter", () => {
     expect(adapter.path).toBe(join(userConfigDir, "manifest.json"));
   });
 
+  describe("loadIfReadable()", () => {
+    it("answers none, rather than rejecting, when manifest.json is truncated", async () => {
+      await writeFile(join(userConfigDir, "manifest.json"), '{"version": 8, "tools": {');
+
+      expect(await adapter.loadIfReadable()).toBeNull();
+    });
+
+    it("answers the manifest when it is readable", async () => {
+      await adapter.save(Manifest.create());
+
+      expect(await adapter.loadIfReadable()).not.toBeNull();
+    });
+  });
+
   describe("load()", () => {
     it("returns null when manifest.json does not exist", async () => {
       expect(await adapter.load()).toBeNull();

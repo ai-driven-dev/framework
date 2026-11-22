@@ -157,6 +157,7 @@ for (const toolId of [TOOL.codex]) {
               ? null
               : Manifest.fromJSON(current.toJSON(), resolveRegisteredToolId);
           },
+          loadIfReadable: async () => null,
           save: (manifest) => f.repo.save(manifest),
           delete: () => f.repo.delete(),
           withExclusiveAccess: (action) => action(),

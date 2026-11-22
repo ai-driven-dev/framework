@@ -40,6 +40,10 @@ export class UserManifestRepositoryAdapter implements ManifestRepository, Lock {
     );
   }
 
+  async loadIfReadable(): Promise<Manifest | null> {
+    return this.load().catch(() => null);
+  }
+
   async save(manifest: Manifest): Promise<void> {
     await mkdir(dirname(this.path), { recursive: true });
     await this.atomicWriter(this.path, JSON.stringify(manifest.toJSON(), null, 2));

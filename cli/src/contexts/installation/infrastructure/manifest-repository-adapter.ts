@@ -32,6 +32,10 @@ export class ManifestRepositoryAdapter implements ManifestRepository {
     );
   }
 
+  async loadIfReadable(): Promise<Manifest | null> {
+    return this.load().catch(() => null);
+  }
+
   async save(manifest: Manifest): Promise<void> {
     await writeManifestFile(this.path, manifest);
   }

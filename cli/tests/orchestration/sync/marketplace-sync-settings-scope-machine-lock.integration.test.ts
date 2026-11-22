@@ -52,6 +52,7 @@ describe("settings synchronization under the machine ownership lock", () => {
       userManifestRepo: {
         path: machineRepo.path,
         load: () => machineRepo.load(),
+        loadIfReadable: () => machineRepo.loadIfReadable(),
         save: (manifest) => machineRepo.save(manifest),
         delete: () => machineRepo.delete(),
         withExclusiveAccess,

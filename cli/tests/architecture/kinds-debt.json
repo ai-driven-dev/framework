@@ -14,7 +14,6 @@
       "src/contexts/installation/application/agents/main-session-models.use-case.ts": 2,
       "src/contexts/installation/application/doctor/load-manifest.use-case.ts": 1,
       "src/contexts/installation/application/plugin/update-user-plugin-files.use-case.ts": 1,
-      "src/contexts/installation/application/sync/load-sync-context.use-case.ts": 1,
       "src/contexts/machine-claims/application/purge-declared-cache.ts": 1,
       "src/contexts/machine-claims/application/shared-source-reference-support.ts": 1
     }

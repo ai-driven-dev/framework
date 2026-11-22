@@ -31,6 +31,7 @@ export function manifestRepositoryLoading(
   return {
     path: "manifest.json",
     load,
+    loadIfReadable: refuse("manifestRepo.loadIfReadable"),
     save: refuse("manifestRepo.save"),
     delete: refuse("manifestRepo.delete"),
     withExclusiveAccess: refuse("manifestRepo.withExclusiveAccess"),

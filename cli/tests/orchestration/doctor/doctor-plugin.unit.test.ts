@@ -64,6 +64,7 @@ function makeManifestRepo(manifest: Manifest): ManifestRepository {
   return {
     path: "/proj/.aidd/manifest.json",
     load: async () => manifest,
+    loadIfReadable: async () => null,
     save: async () => {},
     delete: async () => {},
   };
