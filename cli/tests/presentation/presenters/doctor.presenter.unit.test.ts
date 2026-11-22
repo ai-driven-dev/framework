@@ -11,7 +11,11 @@ import {
   printUserScopeTools,
 } from "../../../src/presentation/presenters/doctor.presenter.js";
 import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SECOND_SYNTHETIC_TOOL,
+  SYNTHETIC_IDE_TOOL,
+  SYNTHETIC_TOOL,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
 describe("printPluginIssues", () => {
   it("prints nothing when there are no issues", () => {
@@ -26,13 +30,17 @@ describe("printPluginIssues", () => {
     const output = new CapturingOutput(false);
 
     printPluginIssues(output, [
-      { toolId: TOOL.cursor, pluginName: "aidd-context", issue: "not-installed-on-machine" },
-      { toolId: TOOL.cursor, pluginName: "aidd-test", issue: "not-installed-on-machine" },
+      {
+        toolId: SECOND_SYNTHETIC_TOOL,
+        pluginName: "aidd-context",
+        issue: "not-installed-on-machine",
+      },
+      { toolId: SECOND_SYNTHETIC_TOOL, pluginName: "aidd-test", issue: "not-installed-on-machine" },
     ]);
 
     expect(output.lines).toEqual([
       "\nPlugins:",
-      "  cursor: plugins not installed on this machine, run `aidd sync`",
+      `  ${SECOND_SYNTHETIC_TOOL}: plugins not installed on this machine, run \`aidd sync\``,
     ]);
   });
 
@@ -41,7 +49,7 @@ describe("printPluginIssues", () => {
 
     printPluginIssues(output, [
       {
-        toolId: TOOL.claude,
+        toolId: SYNTHETIC_TOOL,
         pluginName: "my-plugin",
         issue: "missing",
         filePath: "commands/cmd.md",
@@ -50,7 +58,7 @@ describe("printPluginIssues", () => {
 
     expect(output.lines).toEqual([
       "\nPlugins:",
-      "  Plugin my-plugin (claude): missing — commands/cmd.md\n    Fix: Run `aidd sync`",
+      `  Plugin my-plugin (${SYNTHETIC_TOOL}): missing — commands/cmd.md\n    Fix: Run \`aidd sync\``,
     ]);
   });
 });
@@ -79,23 +87,27 @@ describe("printScopeIssues", () => {
       issues: [
         {
           severity: "error",
-          message: "claude is not registered",
+          message: `${SYNTHETIC_TOOL} is not registered`,
           fix: { code: "sync-reregister" },
         },
         {
           severity: "info",
-          message: "claude never ran",
-          fix: "The plugin does not load until claude's own CLI has run and answered this.",
+          message: `${SYNTHETIC_TOOL} never ran`,
+          fix: `The plugin does not load until ${SYNTHETIC_TOOL}'s own CLI has run and answered this.`,
         },
-        { severity: "warning", message: "codex is ahead", fix: { code: "update-cli" } },
+        {
+          severity: "warning",
+          message: `${SECOND_SYNTHETIC_TOOL} is ahead`,
+          fix: { code: "update-cli" },
+        },
       ],
     });
 
     expect(output.lines).toEqual([
       "\nAI:",
-      "  claude never ran\n    Fix: The plugin does not load until claude's own CLI has run and answered this.",
-      "  claude is not registered\n    Fix: Run `aidd sync` to re-register it.",
-      "  codex is ahead\n    Fix: Run `aidd update` to bring this project's CLI to at least the version the host already follows.",
+      `  ${SYNTHETIC_TOOL} never ran\n    Fix: The plugin does not load until ${SYNTHETIC_TOOL}'s own CLI has run and answered this.`,
+      `  ${SYNTHETIC_TOOL} is not registered\n    Fix: Run \`aidd sync\` to re-register it.`,
+      `  ${SECOND_SYNTHETIC_TOOL} is ahead\n    Fix: Run \`aidd update\` to bring this project's CLI to at least the version the host already follows.`,
     ]);
   });
 
@@ -106,18 +118,22 @@ describe("printScopeIssues", () => {
       issues: [
         {
           severity: "error",
-          message: "claude is not registered",
+          message: `${SYNTHETIC_TOOL} is not registered`,
           fix: { code: "sync-reregister" },
         },
-        { severity: "warning", message: "codex is ahead", fix: { code: "update-cli" } },
+        {
+          severity: "warning",
+          message: `${SECOND_SYNTHETIC_TOOL} is ahead`,
+          fix: { code: "update-cli" },
+        },
       ],
     });
 
     expect(output.at("error")).toEqual([
-      "  claude is not registered\n    Fix: Run `aidd sync` to re-register it.",
+      `  ${SYNTHETIC_TOOL} is not registered\n    Fix: Run \`aidd sync\` to re-register it.`,
     ]);
     expect(output.at("warn")).toEqual([
-      "  codex is ahead\n    Fix: Run `aidd update` to bring this project's CLI to at least the version the host already follows.",
+      `  ${SECOND_SYNTHETIC_TOOL} is ahead\n    Fix: Run \`aidd update\` to bring this project's CLI to at least the version the host already follows.`,
     ]);
   });
 });
@@ -137,7 +153,7 @@ describe("printInventory", () => {
     printInventory(output, {
       label: "AI",
       doctorReport: null,
-      statusTools: [{ toolId: TOOL.claude, version: "7.0.0" }],
+      statusTools: [{ toolId: SYNTHETIC_TOOL, version: "7.0.0" }],
     });
 
     expect(output.lines).toEqual([]);
@@ -148,14 +164,17 @@ describe("printInventory", () => {
 
     printInventory(output, {
       label: "AI",
-      doctorReport: { toolHealth: [{ toolId: TOOL.claude, fileCount: 12, mergeFileCount: 2 }] },
+      doctorReport: { toolHealth: [{ toolId: SYNTHETIC_TOOL, fileCount: 12, mergeFileCount: 2 }] },
       statusTools: [
-        { toolId: TOOL.cursor, version: "6.0.0" },
-        { toolId: TOOL.claude, version: "7.0.0" },
+        { toolId: SECOND_SYNTHETIC_TOOL, version: "6.0.0" },
+        { toolId: SYNTHETIC_TOOL, version: "7.0.0" },
       ],
     });
 
-    expect(output.lines).toEqual(["\nAI tools:", "  claude (v7.0.0): 12 files, 2 merge files"]);
+    expect(output.lines).toEqual([
+      "\nAI tools:",
+      `  ${SYNTHETIC_TOOL} (v7.0.0): 12 files, 2 merge files`,
+    ]);
   });
 
   it("calls a version the status report never named unknown", () => {
@@ -163,11 +182,16 @@ describe("printInventory", () => {
 
     printInventory(output, {
       label: "IDE",
-      doctorReport: { toolHealth: [{ toolId: TOOL.vscode, fileCount: 1, mergeFileCount: 0 }] },
+      doctorReport: {
+        toolHealth: [{ toolId: SYNTHETIC_IDE_TOOL, fileCount: 1, mergeFileCount: 0 }],
+      },
       statusTools: [],
     });
 
-    expect(output.lines).toEqual(["\nIDE tools:", "  vscode (vunknown): 1 files, 0 merge files"]);
+    expect(output.lines).toEqual([
+      "\nIDE tools:",
+      `  ${SYNTHETIC_IDE_TOOL} (vunknown): 1 files, 0 merge files`,
+    ]);
   });
 });
 
@@ -183,9 +207,9 @@ describe("printReportErrors", () => {
   it("warns each error under the scope it came from", () => {
     const output = new CapturingOutput(false);
 
-    printReportErrors(output, [{ scope: "claude", error: "settings unreadable" }]);
+    printReportErrors(output, [{ scope: SYNTHETIC_TOOL, error: "settings unreadable" }]);
 
-    expect(output.at("warn")).toEqual(["[claude] settings unreadable"]);
+    expect(output.at("warn")).toEqual([`[${SYNTHETIC_TOOL}] settings unreadable`]);
   });
 });
 
@@ -194,7 +218,7 @@ describe("printAllToolsDrift", () => {
     const output = new CapturingOutput(false);
 
     printAllToolsDrift(output, {
-      aiTools: { tools: [{ toolId: TOOL.claude, version: "7.0.0", drifted: [] }] },
+      aiTools: { tools: [{ toolId: SYNTHETIC_TOOL, version: "7.0.0", drifted: [] }] },
       ideTools: { tools: [] },
       pluginDrift: [],
     });
@@ -202,7 +226,7 @@ describe("printAllToolsDrift", () => {
     expect(output.lines).toEqual([
       "\nDrift:",
       "AI tools:",
-      "  claude (v7.0.0): in sync",
+      `  ${SYNTHETIC_TOOL} (v7.0.0): in sync`,
       "IDE tools:",
       "  (none installed)",
       "Plugins:",
@@ -216,13 +240,13 @@ describe("printToolDrift", () => {
     const output = new CapturingOutput(false);
 
     printToolDrift(output, {
-      tools: [{ toolId: TOOL.claude, version: "7.0.0", drifted: [] }],
+      tools: [{ toolId: SYNTHETIC_TOOL, version: "7.0.0", drifted: [] }],
       pluginDrift: [],
     });
 
     expect(output.lines).toEqual([
       "\nDrift:",
-      "  claude (v7.0.0): in sync",
+      `  ${SYNTHETIC_TOOL} (v7.0.0): in sync`,
       "Plugins:",
       "  (all in sync)",
     ]);
@@ -242,14 +266,22 @@ describe("printUserScopeTools", () => {
     const output = new CapturingOutput(false);
 
     printUserScopeTools(output, [
-      { toolId: TOOL.claude, version: "7.0.0", settings: "/home/me/.claude/settings.json" },
-      { toolId: TOOL.codex, version: "unknown", settings: "no user-scope settings file" },
+      {
+        toolId: SYNTHETIC_TOOL,
+        version: "7.0.0",
+        settings: `/home/me/.${SYNTHETIC_TOOL}/settings.json`,
+      },
+      {
+        toolId: SECOND_SYNTHETIC_TOOL,
+        version: "unknown",
+        settings: "no user-scope settings file",
+      },
     ]);
 
     expect(output.lines).toEqual([
       "User-scope tools:",
-      "  claude (v7.0.0): expects activation in /home/me/.claude/settings.json",
-      "  codex (vunknown): expects activation in no user-scope settings file",
+      `  ${SYNTHETIC_TOOL} (v7.0.0): expects activation in /home/me/.${SYNTHETIC_TOOL}/settings.json`,
+      `  ${SECOND_SYNTHETIC_TOOL} (vunknown): expects activation in no user-scope settings file`,
     ]);
   });
 });
@@ -290,10 +322,13 @@ describe("the words of what a person does about a doctor issue", () => {
       "Run `aidd update` to bring this project's CLI to at least the version the host already follows.",
     ],
     [{ code: "authenticate" }, "Run aidd auth login"],
-    [{ code: "install-framework", tool: "claude" }, "Run `aidd framework install --tool claude`."],
+    [
+      { code: "install-framework", tool: SYNTHETIC_TOOL },
+      `Run \`aidd framework install --tool ${SYNTHETIC_TOOL}\`.`,
+    ],
     [
       { code: "replace-conflicting-source", name: "m" },
-      "Run `claude plugin marketplace remove m`, then `aidd sync` to re-register it for this project — or rename this project's marketplace if it is meant to point elsewhere.",
+      `Run \`claude plugin marketplace remove m\`, then \`aidd sync\` to re-register it for this project — or rename this project's marketplace if it is meant to point elsewhere.`,
     ],
     [
       { code: "refresh-marketplace", file: "f.json" },

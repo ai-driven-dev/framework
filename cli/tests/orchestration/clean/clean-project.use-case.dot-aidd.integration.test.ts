@@ -8,7 +8,11 @@ import { FileAdapter } from "../../../src/shared/infrastructure/file-adapter.js"
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_IDE_TOOL,
+  SYNTHETIC_TOOL,
+  syntheticMixedCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import { projectCleaner } from "../testing/project-cleaner.builder.js";
 
 let projectRoot: string;
@@ -23,9 +27,12 @@ afterEach(async () => {
 
 function buildUseCase(logger: CapturingLogger): CleanProject {
   const fs = new FileAdapter(logger);
-  const manifest = aManifest().withTool(TOOL.claude, []).withTool(TOOL.vscode, []).build();
+  const manifest = aManifest()
+    .withTool(SYNTHETIC_TOOL, [])
+    .withTool(SYNTHETIC_IDE_TOOL, [])
+    .build();
   return projectCleaner({
-    tools: registeredTools(),
+    tools: syntheticMixedCatalog(),
     fs,
     manifestRepo: new InMemoryManifestRepository(manifest, projectRoot),
     logger,
@@ -56,8 +63,8 @@ describe("clean and the .aidd/ directory itself", () => {
 
     expect(await exists(aiddDir)).toBe(false);
     expect(logger.infoMessages).toStrictEqual([
-      "Removing claude files...",
-      "Removing vscode files...",
+      `Removing ${SYNTHETIC_TOOL} files...`,
+      `Removing ${SYNTHETIC_IDE_TOOL} files...`,
     ]);
   });
 

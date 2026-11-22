@@ -4,15 +4,19 @@ import { bindOutput } from "../../../src/presentation/controllers/global-options
 import { registerToolConfigCommand } from "../../../src/presentation/controllers/tool-config.controller.js";
 import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";
 import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_IDE_TOOL,
+  SYNTHETIC_TOOL,
+  syntheticMixedCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import { toolConfigHarness } from "../../shared/testing/tool-config-command.builder.js";
 
 const PROJECT_ROOT = process.cwd();
-const CATALOG = registeredTools();
+const CATALOG = syntheticMixedCatalog();
 const { listInstalledRules, createDeps, errors, run } = toolConfigHarness({
   tools: CATALOG,
-  ideTool: TOOL.vscode,
-  aiTool: TOOL.claude,
+  ideTool: SYNTHETIC_IDE_TOOL,
+  aiTool: SYNTHETIC_TOOL,
 });
 
 describe("aidd framework rules", () => {
@@ -25,11 +29,18 @@ describe("aidd framework rules", () => {
 
   it("prints the inventory as text a person reads", async () => {
     listInstalledRules.mockResolvedValue({
-      rules: [{ tool: TOOL.claude, path: ".claude/rules/a.md", description: "", paths: undefined }],
+      rules: [
+        {
+          tool: SYNTHETIC_TOOL,
+          path: `.${SYNTHETIC_TOOL}/rules/a.md`,
+          description: "",
+          paths: undefined,
+        },
+      ],
     });
 
     expect(await run("rules")).toEqual([
-      "claude  .claude/rules/a.md",
+      `${SYNTHETIC_TOOL}  .${SYNTHETIC_TOOL}/rules/a.md`,
       "  (no description)",
       "  applies to: every file",
     ]);
@@ -37,7 +48,12 @@ describe("aidd framework rules", () => {
 
   it("prints the same inventory as the JSON a program reads", async () => {
     const rules = [
-      { tool: TOOL.claude, path: ".claude/rules/a.md", description: "a rule", paths: ["src/**"] },
+      {
+        tool: SYNTHETIC_TOOL,
+        path: `.${SYNTHETIC_TOOL}/rules/a.md`,
+        description: "a rule",
+        paths: ["src/**"],
+      },
     ];
     listInstalledRules.mockResolvedValue({ rules });
 
@@ -47,8 +63,8 @@ describe("aidd framework rules", () => {
 
 describe("aidd framework - how every subcommand builds its graph and reports a failure", () => {
   it.each([
-    ["install", "--tool", "claude"],
-    ["remove", "--tool", "claude"],
+    ["install", "--tool", SYNTHETIC_TOOL],
+    ["remove", "--tool", SYNTHETIC_TOOL],
     ["update"],
     ["rules"],
     ["validate-recipes", "recipe.md"],
