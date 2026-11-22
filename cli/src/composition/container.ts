@@ -62,14 +62,14 @@ function scenariosOf({ shared, installation, marketplace, plugin }: Foundation) 
       global: global(),
     })
   );
-  const agentModels = memoized(() => ({
-    setAgentModels: wireAgentModels({
+  const agentModels = memoized(() =>
+    wireAgentModels({
       base: shared(),
       installation: installation(),
       plugin: plugin(),
       marketplace: marketplace(),
-    }),
-  }));
+    })
+  );
   const doctor = memoized(() => wireDoctor(shared(), installation()));
   const clean = memoized(() => wireClean(shared(), installation()));
   const recipes = memoized(() => wireRecipes());

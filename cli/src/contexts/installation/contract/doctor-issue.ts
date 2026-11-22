@@ -41,10 +41,3 @@ export interface PluginIssueEntry {
    * plugin, not one path per tracked file. */
   filePath?: string;
 }
-
-export interface DoctorReport {
-  healthy: boolean;
-  toolHealth: ToolHealth[];
-  issues: DoctorIssue[];
-  pluginIssues: PluginIssueEntry[];
-}

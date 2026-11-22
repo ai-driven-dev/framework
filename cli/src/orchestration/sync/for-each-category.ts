@@ -1,3 +1,4 @@
+import { InputRequiredError } from "../../shared/domain/shared.error.js";
 import type { ToolCategory } from "../../shared/domain/tool.js";
 import type { GlobalExecutionError } from "../domain/global-execution.model.js";
 
@@ -10,7 +11,8 @@ export interface CategoryRuns<T> {
 }
 
 /** Runs one step per category, ai then ide. A category that throws is reported and the other
- * still runs, so one that cannot be checked never hides the rest. */
+ * still runs, so one that cannot be checked never hides the rest. A question nobody can answer
+ * is no category's failure: it stops the run. */
 export async function forEachCategory<T>(
   run: (category: ToolCategory) => Promise<T>
 ): Promise<CategoryRuns<T>> {
@@ -20,6 +22,7 @@ export async function forEachCategory<T>(
     try {
       results[category] = await run(category);
     } catch (err) {
+      if (err instanceof InputRequiredError) throw err;
       errors.push({ scope: category, error: err });
     }
   }
