@@ -6,7 +6,7 @@ import {
 } from "../../../../src/contexts/telemetry/contract/report-filter.js";
 import { printUsageReport } from "../../../../src/presentation/presenters/telemetry/telemetry-report.presenter.js";
 import { CapturingOutput } from "../../../shared/testing/capturing-output.fake.js";
-import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { SYNTHETIC_TOOL } from "../../../shared/testing/synthetic-tool-id.builder.js";
 import {
   BOTH,
   NOT_STORED,
@@ -186,14 +186,14 @@ describe("printing a usage report", () => {
       session: "a1b2c3d4-0000-4000-8000-000000000001",
       repository: "f".repeat(64),
       agent: "subagent",
-      tool: TOOL.codex,
+      tool: SYNTHETIC_TOOL,
       absent: "model",
       person: "p-1",
     };
     const lines = printed(result("day", [[value("2026-10-02"), one]], one, {}, BOTH, filters));
     expect(lines.slice(0, 3)).toEqual([
       "Usage, 2026-10-01 to 2026-10-07, by day",
-      "Selected: task = auth refactor, ticket = PROJ-1, person = p-1, agent = subagent, session = a1b2c3d4, repository = ffffffff, tool = codex, model = unknown model",
+      "Selected: task = auth refactor, ticket = PROJ-1, person = p-1, agent = subagent, session = a1b2c3d4, repository = ffffffff, tool = synthetic, model = unknown model",
       "",
     ]);
     const absentOf = (absent: ReportFilters["absent"]) =>

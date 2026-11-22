@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { printNativeActivation } from "../../../src/presentation/presenters/restore.presenter.js";
 import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SECOND_SYNTHETIC_TOOL,
+  SYNTHETIC_TOOL,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
 describe("printNativeActivation", () => {
   it("prints nothing when every tool's CLI ran", () => {
@@ -16,13 +19,13 @@ describe("printNativeActivation", () => {
     const output = new CapturingOutput(false);
 
     printNativeActivation(output, [
-      { toolId: TOOL.claude, binary: "claude" },
-      { toolId: TOOL.codex, binary: "codex" },
+      { toolId: SYNTHETIC_TOOL, binary: "claude" },
+      { toolId: SECOND_SYNTHETIC_TOOL, binary: "codex" },
     ]);
 
     expect(output.lines).toEqual([
-      "claude: the plugin will not load until the claude CLI has run.",
-      "codex: the plugin will not load until the codex CLI has run.",
+      "synthetic: the plugin will not load until the claude CLI has run.",
+      "syntheticb: the plugin will not load until the codex CLI has run.",
     ]);
   });
 });

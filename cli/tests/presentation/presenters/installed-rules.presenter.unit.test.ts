@@ -4,7 +4,10 @@ import {
   printInstalledRulesJson,
 } from "../../../src/presentation/presenters/installed-rules.presenter.js";
 import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SECOND_SYNTHETIC_TOOL,
+  SYNTHETIC_TOOL,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
 describe("printInstalledRulesJson", () => {
   it("prints an empty inventory as an empty array, not as nothing", () => {
@@ -20,7 +23,7 @@ describe("printInstalledRulesJson", () => {
 
     printInstalledRulesJson(output, [
       {
-        tool: TOOL.claude,
+        tool: SYNTHETIC_TOOL,
         path: ".claude/rules/a.md",
         name: "a",
         description: "a rule",
@@ -29,7 +32,7 @@ describe("printInstalledRulesJson", () => {
     ]);
 
     expect(output.at("print")).toEqual([
-      '[\n  {\n    "tool": "claude",\n    "path": ".claude/rules/a.md",\n    "name": "a",\n    "description": "a rule",\n    "paths": [\n      "src/**"\n    ]\n  }\n]',
+      '[\n  {\n    "tool": "synthetic",\n    "path": ".claude/rules/a.md",\n    "name": "a",\n    "description": "a rule",\n    "paths": [\n      "src/**"\n    ]\n  }\n]',
     ]);
   });
 });
@@ -50,7 +53,7 @@ describe("printInstalledRules", () => {
 
     printInstalledRules(output, [
       {
-        tool: TOOL.claude,
+        tool: SYNTHETIC_TOOL,
         path: ".claude/rules/a.md",
         name: "a",
         description: "a rule",
@@ -59,7 +62,7 @@ describe("printInstalledRules", () => {
     ]);
 
     expect(output.at("print")).toEqual([
-      "claude  .claude/rules/a.md",
+      "synthetic  .claude/rules/a.md",
       "  a rule",
       "  applies to: src/**, tests/**",
     ]);
@@ -69,11 +72,16 @@ describe("printInstalledRules", () => {
     const output = new CapturingOutput(false);
 
     printInstalledRules(output, [
-      { tool: TOOL.cursor, path: ".cursor/rules/a.mdc", name: "a", description: "a rule" },
+      {
+        tool: SECOND_SYNTHETIC_TOOL,
+        path: ".cursor/rules/a.mdc",
+        name: "a",
+        description: "a rule",
+      },
     ]);
 
     expect(output.at("print")).toEqual([
-      "cursor  .cursor/rules/a.mdc",
+      "syntheticb  .cursor/rules/a.mdc",
       "  a rule",
       "  applies to: every file",
     ]);
@@ -83,11 +91,11 @@ describe("printInstalledRules", () => {
     const output = new CapturingOutput(false);
 
     printInstalledRules(output, [
-      { tool: TOOL.claude, path: ".claude/rules/a.md", name: "a", description: "", paths: [] },
+      { tool: SYNTHETIC_TOOL, path: ".claude/rules/a.md", name: "a", description: "", paths: [] },
     ]);
 
     expect(output.at("print")).toEqual([
-      "claude  .claude/rules/a.md",
+      "synthetic  .claude/rules/a.md",
       "  (no description)",
       "  applies to: ",
     ]);

@@ -5,7 +5,10 @@ import {
   printScopeReport,
 } from "../../../src/presentation/presenters/status.presenter.js";
 import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SECOND_SYNTHETIC_TOOL,
+  SYNTHETIC_TOOL,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
 describe("printScopeReport", () => {
   it("says nothing is installed when the scope carries no tool", () => {
@@ -19,9 +22,11 @@ describe("printScopeReport", () => {
   it("names a tool and its version as in sync when no file drifted", () => {
     const output = new CapturingOutput(false);
 
-    printScopeReport(output, { tools: [{ toolId: TOOL.claude, version: "7.0.0", drifted: [] }] });
+    printScopeReport(output, {
+      tools: [{ toolId: SYNTHETIC_TOOL, version: "7.0.0", drifted: [] }],
+    });
 
-    expect(output.lines).toEqual(["  claude (v7.0.0): in sync"]);
+    expect(output.lines).toEqual(["  synthetic (v7.0.0): in sync"]);
   });
 
   it("marks a modified file '~', a deleted one '-' and an added one '+', then counts them", () => {
@@ -30,7 +35,7 @@ describe("printScopeReport", () => {
     printScopeReport(output, {
       tools: [
         {
-          toolId: TOOL.claude,
+          toolId: SYNTHETIC_TOOL,
           version: "7.0.0",
           drifted: [
             { status: "modified", relativePath: "a.md" },
@@ -42,7 +47,7 @@ describe("printScopeReport", () => {
     });
 
     expect(output.lines).toEqual([
-      "  claude (v7.0.0):",
+      "  synthetic (v7.0.0):",
       "    ~ a.md",
       "    - b.md",
       "    + c.md",
@@ -56,7 +61,7 @@ describe("printScopeReport", () => {
     printScopeReport(output, {
       tools: [
         {
-          toolId: TOOL.cursor,
+          toolId: SECOND_SYNTHETIC_TOOL,
           version: "7.0.0",
           drifted: [{ status: "renamed", relativePath: "d.md" }],
         },
@@ -64,7 +69,7 @@ describe("printScopeReport", () => {
     });
 
     expect(output.lines).toEqual([
-      "  cursor (v7.0.0):",
+      "  syntheticb (v7.0.0):",
       "    ? d.md",
       "  0 modified, 0 deleted, 0 added",
     ]);
@@ -103,7 +108,7 @@ describe("printPluginDrift", () => {
     printPluginDrift(output, {
       pluginDrift: [
         {
-          toolId: TOOL.cursor,
+          toolId: SECOND_SYNTHETIC_TOOL,
           pluginName: "aidd-test",
           driftedFiles: [],
           notInstalledOnMachine: true,
@@ -112,7 +117,7 @@ describe("printPluginDrift", () => {
     });
 
     expect(output.lines).toEqual([
-      "  cursor: plugins not installed on this machine, run `aidd sync`",
+      "  syntheticb: plugins not installed on this machine, run `aidd sync`",
     ]);
   });
 
@@ -122,7 +127,7 @@ describe("printPluginDrift", () => {
     printPluginDrift(output, {
       pluginDrift: [
         {
-          toolId: TOOL.claude,
+          toolId: SYNTHETIC_TOOL,
           pluginName: "my-plugin",
           driftedFiles: ["commands/cmd.md"],
           notInstalledOnMachine: false,
@@ -130,6 +135,6 @@ describe("printPluginDrift", () => {
       ],
     });
 
-    expect(output.lines).toEqual(["  plugin my-plugin (claude):", "    ~ commands/cmd.md"]);
+    expect(output.lines).toEqual(["  plugin my-plugin (synthetic):", "    ~ commands/cmd.md"]);
   });
 });
