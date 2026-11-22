@@ -63,7 +63,7 @@ const createDeps = vi.fn(async () => {
       { execute: activation },
       { execute: setupMachineScope }
     ),
-    setAgentModels: { execute: setAgentModel, reset: vi.fn() },
+    setAgentModels: { execute: setAgentModel },
   };
 });
 

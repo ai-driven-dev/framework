@@ -149,6 +149,27 @@ describe("updating tools", () => {
     ).rejects.toThrow("manifest corrupted");
   });
 
+  it("reports the category whose installed tools cannot be listed and updates the other", async () => {
+    const deps = await installed(SYNTHETIC_TOOL, SYNTHETIC_IDE_TOOL);
+    const listInstalledTools = new ListInstalledTools(deps.manifestRepo, syntheticMixedCatalog());
+    const list = listInstalledTools.execute.bind(listInstalledTools);
+    vi.spyOn(listInstalledTools, "execute").mockImplementation(async (query) => {
+      if (query.category === "ai") throw new Error("ai list failed");
+      return list(query);
+    });
+    const useCase = new UpdateTools({
+      listInstalledTools,
+      updateTool: buildUpdateTool(deps),
+      resolveUpdateDecision: new ResolveUpdateDecision(promptingWith("overwrite-all").prompter),
+      version: CURRENT_VERSION,
+    });
+
+    const result = await useCase.execute({ projectRoot: PROJECT_ROOT, ...NO_FORCE_NO_TTY });
+
+    expect(result.updatedTools.map((t) => t.toolId)).toStrictEqual([SYNTHETIC_IDE_TOOL]);
+    expect(result.errors).toStrictEqual([{ scope: "ai", error: new Error("ai list failed") }]);
+  });
+
   it("reports neither an update nor an error for a tool the update skipped", async () => {
     const deps = await installed(SYNTHETIC_TOOL);
     const { useCase, updateTool } = build(deps);

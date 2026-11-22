@@ -1,8 +1,8 @@
 import { homedir } from "node:os";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import type { HostRefusal } from "../../../src/contexts/host-registration/domain/native-refusal.js";
 import type { HostMarketplaceRegistryReading } from "../../../src/contexts/host-registration/domain/reading/marketplace-registry-reading.js";
 import { HostRegistryMarketplaceSourceReaderAdapter } from "../../../src/contexts/host-registration/infrastructure/marketplace/host-registry-marketplace-source-reader-adapter.js";
-import type { HostRefusal } from "../../../src/contexts/host-registration/ports/host-actions.js";
 import type { HostMarketplaceRegistry } from "../../../src/contexts/host-registration/ports/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";

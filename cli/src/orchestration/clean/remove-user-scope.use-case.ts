@@ -49,7 +49,7 @@ export class RemoveUserScope {
       kind: "withdraw-user-registrations",
       withdrawals,
       resolveCacheCandidate: (cacheRoot, relativeSegments, label) =>
-        this.deps.claims.purgeCache.resolveCandidate(cacheRoot, relativeSegments, label),
+        this.deps.claims.purgeCache.execute(cacheRoot, relativeSegments, label),
     });
     await this.deps.purgeFiles.purge(projectRoot);
     await this.deps.removeMarketplace.execute({

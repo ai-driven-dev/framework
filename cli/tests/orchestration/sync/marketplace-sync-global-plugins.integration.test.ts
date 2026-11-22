@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import type { HostRefusal } from "../../../src/contexts/host-registration/domain/native-refusal.js";
 import type { HostPluginRegistryEntry } from "../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
-import type { HostRefusal } from "../../../src/contexts/host-registration/ports/host-actions.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";

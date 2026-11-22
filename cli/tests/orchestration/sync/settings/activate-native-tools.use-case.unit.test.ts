@@ -74,7 +74,7 @@ function activatorOf(register: Register["execute"]) {
   };
   const useCase = new ActivateNativeTools({
     registerPluginWithHost: { execute: register },
-    buildMarketplace: { forTool: vi.fn() },
+    buildMarketplace: { execute: vi.fn() },
     logger,
     marketplace: { name: "framework", userCacheRoot: () => "/cache" },
     records,

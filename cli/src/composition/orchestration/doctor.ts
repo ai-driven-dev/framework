@@ -3,7 +3,6 @@ import { InspectDeclaredMarketplaces } from "../../contexts/host-registration/ap
 import { InspectHostMarketplaceSources } from "../../contexts/host-registration/application/inspect/inspect-host-marketplace-sources.use-case.js";
 import { InspectHostPlugins } from "../../contexts/host-registration/application/inspect/inspect-host-plugins.use-case.js";
 import { InspectHostRegistration } from "../../contexts/host-registration/application/inspect/inspect-host-registration.use-case.js";
-import { catalogIdentityReader } from "../../contexts/host-registration/infrastructure/marketplace/marketplace-registry-reader.js";
 import { CheckFileReferences } from "../../contexts/installation/application/doctor/check-file-references.use-case.js";
 import { CheckMergeFiles } from "../../contexts/installation/application/doctor/check-merge-files.use-case.js";
 import { CheckPluginDrift } from "../../contexts/installation/application/doctor/check-plugin-drift.use-case.js";
@@ -18,6 +17,7 @@ import { doctorAll } from "../../orchestration/doctor/doctor-all.js";
 import { ResolveRegisteredBuilds } from "../../orchestration/doctor/resolve-registered-builds.use-case.js";
 import { RunDoctor } from "../../orchestration/doctor/run-doctor.use-case.js";
 import { RunUserScopeDoctor } from "../../orchestration/doctor/run-user-scope-doctor.use-case.js";
+import { catalogReaders } from "../host-registration.js";
 import type { Installation } from "../installation.js";
 import type { Base } from "../shared.js";
 import { userConfigDir } from "../user-config-dir.js";
@@ -54,8 +54,8 @@ function registrationCheckOver(base: Base, inst: Installation, manifests: LoadMa
       inspectHost: new InspectHostRegistration(
         new InspectHostPlugins(base.hostPluginRegistries, tools),
         new InspectHostMarketplaceSources(
-          fs,
-          catalogIdentityReader(fs),
+          catalogReaders(fs).identities,
+          catalogReaders(fs).checkSource,
           base.hostMarketplaceRegistries,
           process.platform,
           tools

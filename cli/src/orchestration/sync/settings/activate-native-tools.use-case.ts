@@ -48,7 +48,7 @@ export interface ActivationMarketplace {
 
 export interface ActivateNativeToolsDeps {
   readonly registerPluginWithHost: Pick<RegisterPluginWithHost, "execute">;
-  readonly buildMarketplace: Pick<BuildMarketplaceForTool, "forTool">;
+  readonly buildMarketplace: Pick<BuildMarketplaceForTool, "execute">;
   readonly logger: Logger;
   readonly marketplace: ActivationMarketplace;
   readonly records: RefRules;
@@ -126,7 +126,7 @@ export class ActivateNativeTools {
 
   /** Each catalogue's tree, built for one tool the moment its registration asks for it. */
   private builtFor(toolId: ToolId, projectRoot: string): BuiltCatalogs<SyncedMarketplaces[number]> {
-    return (marketplace) => this.deps.buildMarketplace.forTool(toolId, marketplace, projectRoot);
+    return (marketplace) => this.deps.buildMarketplace.execute(toolId, marketplace, projectRoot);
   }
 
   /** The refs this run enables: the manifest's own, plus the framework plugins a caller asked

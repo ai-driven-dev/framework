@@ -23,8 +23,8 @@ import { assertProjectMcpEntriesRemovable } from "../../contexts/installation/ap
 import { UserScopePluginFiles } from "../../contexts/installation/application/removal/user-scope-plugin-files.js";
 import { UninstallTools } from "../../contexts/installation/application/uninstall-tools.use-case.js";
 import { userScopeFilesSafeToDelete } from "../../contexts/machine-claims/application/ownership/user-scope-plugin-files.js";
-import { PurgeDeclaredCache } from "../../contexts/machine-claims/application/purge-declared-cache.js";
 import { detachProjectClaims } from "../../contexts/machine-claims/application/removal/detach-project-claims.js";
+import { ResolvePurgeCandidate } from "../../contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
 import type { CleanClaims } from "../../orchestration/clean/clean-claims.js";
 import { CleanProject } from "../../orchestration/clean/clean-project.use-case.js";
 import { CleanUserScope } from "../../orchestration/clean/clean-user-scope.use-case.js";
@@ -44,7 +44,7 @@ import { wireCleanClaims } from "./clean-claims.js";
 function wireCleanUserScope(
   base: Base,
   inst: Installation,
-  wired: { purgeCache: PurgeDeclaredCache; claims: CleanClaims }
+  wired: { purgeCache: ResolvePurgeCandidate; claims: CleanClaims }
 ) {
   const { purgeCache, claims } = wired;
   const { fs, logger, prompter, userManifestRepo, marketplaceRegistry, withdrawFromHost, tools } =
@@ -52,7 +52,7 @@ function wireCleanUserScope(
   const guards: MachineStateGuards = {
     userConfigDir,
     resolveCacheCandidate: (cacheRoot, segments, label) =>
-      purgeCache.resolveCandidate(cacheRoot, segments, label),
+      purgeCache.execute(cacheRoot, segments, label),
     frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
   };
   const userScopeParts = {
@@ -142,7 +142,7 @@ export function wireClean(base: Base, inst: Installation) {
     ),
     inst.registrationRecordRules
   );
-  const purgeCache = new PurgeDeclaredCache(fs, logger);
+  const purgeCache = new ResolvePurgeCandidate(fs, logger);
   const claims = wireCleanClaims({
     fs,
     logger,

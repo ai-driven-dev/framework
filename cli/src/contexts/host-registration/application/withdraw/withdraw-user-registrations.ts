@@ -1,9 +1,10 @@
 import { RegistrationRefusedError } from "../../domain/host-registration.error.js";
+import type { HostRefusal } from "../../domain/native-refusal.js";
 import {
   type RegistrationRecord,
   recordedRegistrations,
 } from "../../domain/record/registration-record.js";
-import type { HostActions, HostRefusal } from "../../ports/host-actions.js";
+import type { HostActions } from "../../ports/host-actions.js";
 import { reachableActivator } from "../reachable-activator.js";
 import { callHost, survivingCachePaths } from "./host-call.js";
 import type { RemovedFromHost, UserRegistrationWithdrawal, WithdrawalDeps } from "./withdrawal.js";

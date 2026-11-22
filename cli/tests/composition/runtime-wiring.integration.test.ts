@@ -279,7 +279,11 @@ describe("resolving a purge candidate", () => {
   it("resolves a candidate through the purge that owns the rule", async () => {
     const resolveCandidate = vi.fn().mockResolvedValue("/cache/x");
 
-    const resolved = await purgeCandidateResolverOf({ resolveCandidate })("/cache", "x", "label");
+    const resolved = await purgeCandidateResolverOf({ execute: resolveCandidate })(
+      "/cache",
+      "x",
+      "label"
+    );
 
     expect(resolved).toBe("/cache/x");
     expect(resolveCandidate).toHaveBeenCalledWith("/cache", "x", "label");

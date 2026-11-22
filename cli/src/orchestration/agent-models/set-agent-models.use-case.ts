@@ -4,7 +4,6 @@ import type {
 } from "../../contexts/installation/application/agents/main-session-models.use-case.js";
 import type { RecordAgentProviders } from "../../contexts/installation/application/agents/record-agent-providers.use-case.js";
 import type { RestoreAgentProviders } from "../../contexts/installation/application/agents/restore-agent-providers.use-case.js";
-import type { RestoreMainSessionModels } from "../../contexts/installation/application/agents/restore-main-session-models.use-case.js";
 import type { Scope } from "../../shared/domain/scope.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
 import type { RefreshAgentPlugins } from "./refresh-agent-plugins.use-case.js";
@@ -24,16 +23,10 @@ export interface SetAgentModelsResult extends MainSessionModelsResult {
   readonly reinstalled: readonly string[];
 }
 
-export interface ResetAgentModelsResult extends MainSessionModelsResult {
-  /** The hosts whose agents' provider was forgotten. */
-  readonly providers: readonly string[];
-}
-
 export interface SetAgentModelsDeps {
   readonly recordProviders: Pick<RecordAgentProviders, "execute">;
   readonly restoreProviders: Pick<RestoreAgentProviders, "execute">;
   readonly mainSessions: Pick<MainSessionModels, "execute">;
-  readonly restoreMainSessions: Pick<RestoreMainSessionModels, "execute">;
   readonly refresh: Pick<RefreshAgentPlugins, "execute">;
 }
 
@@ -60,16 +53,5 @@ export class SetAgentModels {
       reinstalled,
       ...(await this.deps.mainSessions.execute({ hosts: options.hosts, chosen })),
     };
-  }
-
-  /** `clean --global`: forgets every host's provider and gives each main session back what it
-   * held before aidd, machine-wide. `dryRun` says what it would restore and changes nothing. */
-  async reset(options: { readonly dryRun: boolean }): Promise<ResetAgentModelsResult> {
-    const restored = await this.deps.restoreMainSessions.execute(options);
-    const providers = await this.deps.restoreProviders.execute({
-      providers: {},
-      dryRun: options.dryRun,
-    });
-    return { ...restored, providers };
   }
 }

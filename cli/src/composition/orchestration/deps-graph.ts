@@ -31,6 +31,7 @@ type Passthrough = Exclude<keyof Graph, "homedir" | "telemetry" | "frameworkBuil
 /** The context that wires each member. A member its context does not carry fails to compile. */
 const OWNER: { [Member in Passthrough]: OwnerOf<Member> } = {
   setAgentModels: "agentModels",
+  resetAgentModels: "agentModels",
   cleanUseCase: "clean",
   cleanUserScopeUseCase: "clean",
   uninstallTools: "clean",

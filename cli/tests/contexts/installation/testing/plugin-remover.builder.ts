@@ -12,11 +12,11 @@ import type { ManifestRepository } from "../../../../src/contexts/installation/p
 import type { InstallationMarketplaceRegistry } from "../../../../src/contexts/installation/ports/marketplace-sources.js";
 import type { RecordsBesideManifest } from "../../../../src/contexts/installation/ports/record/registration-records.js";
 import { userScopeFilesSafeToDelete } from "../../../../src/contexts/machine-claims/application/ownership/user-scope-plugin-files.js";
-import { PurgeDeclaredCache } from "../../../../src/contexts/machine-claims/application/purge-declared-cache.js";
 import {
   type PluginRemovalClaimsDeps,
   pluginRemovalClaims,
 } from "../../../../src/contexts/machine-claims/application/removal/plugin-removal-claims.js";
+import { ResolvePurgeCandidate } from "../../../../src/contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
 import type { ToolCatalog } from "../../../../src/contexts/tools/contract/tool-catalog.js";
 import { RemoveMachinePlugin } from "../../../../src/orchestration/plugin/remove-machine-plugin.use-case.js";
 import { RemovePlugin } from "../../../../src/orchestration/plugin/remove-plugin.use-case.js";
@@ -70,7 +70,7 @@ export function pluginRemover(parts: PluginRemoverParts) {
     userSourceReferences: parts.userSourceReferences,
     marketplaceRegistry: parts.marketplaceRegistry,
     resolveCacheCandidate: (cacheRoot, relativeSegments, label) =>
-      new PurgeDeclaredCache(fs, logger).resolveCandidate(cacheRoot, relativeSegments, label),
+      new ResolvePurgeCandidate(fs, logger).execute(cacheRoot, relativeSegments, label),
   });
   return new RemovePlugin({
     remove: new RemoveProjectPluginFiles(

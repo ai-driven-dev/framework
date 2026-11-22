@@ -1,7 +1,7 @@
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
-import type { PurgeDeclaredCache } from "../../contexts/machine-claims/application/purge-declared-cache.js";
 import { detachProjectClaims } from "../../contexts/machine-claims/application/removal/detach-project-claims.js";
 import { readMachineClaims } from "../../contexts/machine-claims/application/removal/read-machine-claims.js";
+import type { ResolvePurgeCandidate } from "../../contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
 import { dropSourceClaim } from "../../contexts/machine-claims/application/shared-source/drop-source-claim.js";
 import { readSharedSourceClaim } from "../../contexts/machine-claims/application/shared-source/read-shared-source-claim.js";
 import type { MachineManifestRepository } from "../../contexts/machine-claims/ports/machine-manifest.js";
@@ -18,7 +18,7 @@ export function wireCleanClaims(parts: {
   logger: Logger;
   userManifestRepo: MachineManifestRepository & Lock;
   userSourceReferences?: UserSourceReferences;
-  purgeCache: PurgeDeclaredCache;
+  purgeCache: ResolvePurgeCandidate;
 }): CleanClaims {
   const { fs, logger, userManifestRepo, userSourceReferences, purgeCache } = parts;
   return {

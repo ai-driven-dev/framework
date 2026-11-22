@@ -83,6 +83,7 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 825 KB: 824.5 KB, the kind rollout reading foreign suffixes and the tool list from the registered catalog, and one dual-config error; 0.1% measured headroom.
 // 830 KB: 828.7 KB, manifest v9 moving the host registrations and the plugin claims into their own files, with the atomic v8 split at load; 0.2% measured headroom.
 // 834 KB: 832.8 KB, the kind rollout splitting every use case over five dependencies by question, and the folders over ten files by responsibility; 0.1% measured headroom.
+// 850 KB: 834.1 KB, the kind rollout building every use case in composition and injecting it, so no free function reads a port; one raise for the remaining waves, expected to shrink in the final size pass; 1.9% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

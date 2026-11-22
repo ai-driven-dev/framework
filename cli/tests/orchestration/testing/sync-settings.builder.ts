@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import type { HostRefusal } from "../../../src/contexts/host-registration/ports/host-actions.js";
+import type { HostRefusal } from "../../../src/contexts/host-registration/domain/native-refusal.js";
 import { registerMarketplacePlugin } from "../../../src/contexts/installation/application/materialize/register-marketplace-plugin.js";
 import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/contract/built-marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";

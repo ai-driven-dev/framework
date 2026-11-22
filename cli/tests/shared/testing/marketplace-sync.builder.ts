@@ -6,7 +6,6 @@ import {
   type RegisterPluginWithHostDeps,
 } from "../../../src/contexts/host-registration/application/register/register-plugin-with-host.use-case.js";
 import { ResolveNativeHost } from "../../../src/contexts/host-registration/application/register/resolve-native-host.use-case.js";
-import { catalogIdentityReader } from "../../../src/contexts/host-registration/infrastructure/marketplace/marketplace-registry-reader.js";
 import type { HostActions } from "../../../src/contexts/host-registration/ports/host-actions.js";
 import {
   LoadSyncContext,
@@ -15,8 +14,8 @@ import {
 import { RecordActivation } from "../../../src/contexts/installation/application/sync/record-activation.use-case.js";
 import { trackedSharedSettings } from "../../../src/contexts/installation/application/sync/tracked-shared-settings.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { PurgeDeclaredCache } from "../../../src/contexts/machine-claims/application/purge-declared-cache.js";
 import { RecordMachineClaims } from "../../../src/contexts/machine-claims/application/record/record-machine-claims.use-case.js";
+import { ResolvePurgeCandidate } from "../../../src/contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
 import {
   RecordSourceReference,
   type RecordSourceReferenceDeps,
@@ -34,6 +33,7 @@ import { BuildMarketplaceForTool } from "../../../src/orchestration/sync/setting
 import { RecordSyncActivation } from "../../../src/orchestration/sync/settings/record-sync-activation.use-case.js";
 import { SyncSettings } from "../../../src/orchestration/sync/settings/sync-settings.use-case.js";
 import { SyncToolSettingsFiles } from "../../../src/orchestration/sync/settings/sync-tool-settings-files.use-case.js";
+import { catalogReadersOver } from "./catalog-readers.builder.js";
 
 type Deps = RegisterPluginWithHostDeps;
 type Loader = LoadSyncContextDeps;
@@ -79,7 +79,7 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
     activateNativeTools: new ActivateNativeTools({
       registerPluginWithHost: new RegisterPluginWithHost({
         fs: parts.fs,
-        identities: catalogIdentityReader(parts.fs),
+        catalogs: catalogReadersOver(parts.fs),
         nativeHosts: new ResolveNativeHost(parts.activators ?? new Map(), parts.tools),
         hosts: {
           marketplaceRegistries: parts.hostMarketplaceRegistries ?? new Map(),
@@ -117,7 +117,7 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
           frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
           userSourceReferences: parts.userSourceReferences,
         }),
-        purgeCache: new PurgeDeclaredCache(parts.fs, parts.logger),
+        purgeCache: new ResolvePurgeCandidate(parts.fs, parts.logger),
         frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
       }),
       records: registrationRecordRules,

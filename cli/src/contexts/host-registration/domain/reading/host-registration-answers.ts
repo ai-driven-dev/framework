@@ -4,6 +4,24 @@ import type {
   HostPluginRegistryReading,
 } from "./plugin-registry-reading.js";
 
+/** Whether a host's registry records one ref, and when it could not say, `unanswerable`. */
+export type RegistrationAnswer =
+  | "registered"
+  | "registered-disabled"
+  | "not-registered"
+  | "unanswerable";
+
+/** What `answeredRegistry` hands over: the refs a registry produced, or why nothing did. */
+export type RegistryAnswer = ReturnType<typeof answeredRegistry>;
+
+/** What the registry answers about `ref`. */
+export function registrationAnswer(answered: RegistryAnswer, ref: string): RegistrationAnswer {
+  if (!("refs" in answered)) return "unanswerable";
+  const entry = answered.refs.get(ref);
+  if (entry === undefined) return "not-registered";
+  return entry.enabled ? "registered" : "registered-disabled";
+}
+
 /**
  * Either the refs a registry actually produced, or the reason nothing did: one value, so no
  * branch can reach a lookup against a registry that never opened.

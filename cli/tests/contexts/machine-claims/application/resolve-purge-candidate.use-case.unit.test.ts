@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { PurgeDeclaredCache } from "../../../../src/contexts/machine-claims/application/purge-declared-cache.js";
+import { ResolvePurgeCandidate } from "../../../../src/contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import {
   errnoError,
@@ -18,11 +18,7 @@ describe("resolving a cache directory to purge", () => {
     fs.failOn("realpath", CACHE_ROOT, errnoError("ENOENT"));
     const logger = new CapturingLogger();
 
-    const candidate = await new PurgeDeclaredCache(fs, logger).resolveCandidate(
-      CACHE_ROOT,
-      "mkt",
-      LABEL
-    );
+    const candidate = await new ResolvePurgeCandidate(fs, logger).execute(CACHE_ROOT, "mkt", LABEL);
 
     expect(candidate).toBeNull();
     expect(logger.allMessages).toStrictEqual([]);
@@ -33,27 +29,19 @@ describe("resolving a cache directory to purge", () => {
     fs.failOn("realpath", CANDIDATE, errnoError("ENOENT"));
     const logger = new CapturingLogger();
 
-    const candidate = await new PurgeDeclaredCache(fs, logger).resolveCandidate(
-      CACHE_ROOT,
-      "mkt",
-      LABEL
-    );
+    const candidate = await new ResolvePurgeCandidate(fs, logger).execute(CACHE_ROOT, "mkt", LABEL);
 
     expect(candidate).toBeNull();
     expect(logger.allMessages).toStrictEqual([]);
   });
 });
 
-describe("PurgeDeclaredCache.resolveCandidate on a filesystem that rejects a missing path", () => {
+describe("ResolvePurgeCandidate on a filesystem that rejects a missing path", () => {
   it("answers nothing, silently, when the cache root does not exist", async () => {
     const fs = new InMemoryFileAdapter();
     const logger = new CapturingLogger();
 
-    const candidate = await new PurgeDeclaredCache(fs, logger).resolveCandidate(
-      CACHE_ROOT,
-      "mkt",
-      LABEL
-    );
+    const candidate = await new ResolvePurgeCandidate(fs, logger).execute(CACHE_ROOT, "mkt", LABEL);
 
     expect(candidate).toBeNull();
     expect(logger.allMessages).toStrictEqual([]);
@@ -65,11 +53,7 @@ describe("PurgeDeclaredCache.resolveCandidate on a filesystem that rejects a mis
     });
     const logger = new CapturingLogger();
 
-    const candidate = await new PurgeDeclaredCache(fs, logger).resolveCandidate(
-      CACHE_ROOT,
-      "mkt",
-      LABEL
-    );
+    const candidate = await new ResolvePurgeCandidate(fs, logger).execute(CACHE_ROOT, "mkt", LABEL);
 
     expect(candidate).toBeNull();
     expect(logger.allMessages).toStrictEqual([]);
@@ -79,11 +63,22 @@ describe("PurgeDeclaredCache.resolveCandidate on a filesystem that rejects a mis
     const fs = new InMemoryFileAdapter({ [join(CANDIDATE, "f")]: "x" });
 
     expect(
-      await new PurgeDeclaredCache(fs, new CapturingLogger()).resolveCandidate(
-        CACHE_ROOT,
-        "mkt",
-        LABEL
-      )
+      await new ResolvePurgeCandidate(fs, new CapturingLogger()).execute(CACHE_ROOT, "mkt", LABEL)
     ).toBe(CANDIDATE);
+  });
+});
+
+describe("ResolvePurgeCandidate on a candidate that escaped its root", () => {
+  it("answers nothing and names the path it leaves in place", async () => {
+    const fs = new InMemoryFileAdapter({ "/elsewhere/f": "x" }, [CACHE_ROOT]);
+    fs.setSymlink(CANDIDATE, "/elsewhere");
+    const logger = new CapturingLogger();
+
+    const candidate = await new ResolvePurgeCandidate(fs, logger).execute(CACHE_ROOT, "mkt", LABEL);
+
+    expect(candidate).toBeNull();
+    expect(logger.allMessages).toStrictEqual([
+      `${LABEL} does not resolve inside ${CACHE_ROOT}; left in place: ${CANDIDATE}`,
+    ]);
   });
 });

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { CheckMarketplaceSource } from "../../../../../src/contexts/host-registration/application/check-marketplace-source.use-case.js";
 import { InspectHostMarketplaceSources } from "../../../../../src/contexts/host-registration/application/inspect/inspect-host-marketplace-sources.use-case.js";
 import { InspectHostPlugins } from "../../../../../src/contexts/host-registration/application/inspect/inspect-host-plugins.use-case.js";
 import { InspectHostRegistration } from "../../../../../src/contexts/host-registration/application/inspect/inspect-host-registration.use-case.js";
@@ -32,8 +33,8 @@ describe("inspecting a host's registries together", () => {
         tools
       ),
       new InspectHostMarketplaceSources(
-        fs,
         catalogIdentityReader(fs),
+        new CheckMarketplaceSource(fs, catalogIdentityReader(fs)),
         new Map([
           [
             TOOL.claude,

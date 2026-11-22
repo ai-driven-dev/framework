@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { answeredRegistry } from "../../../../../src/contexts/host-registration/domain/reading/host-registration-answers.js";
+import {
+  answeredRegistry,
+  registrationAnswer,
+} from "../../../../../src/contexts/host-registration/domain/reading/host-registration-answers.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 const { claude } = TOOL;
@@ -64,5 +67,33 @@ describe("what a host's registry lets a caller ask", () => {
 
     expect(answeredRegistry(TOOL.cursor, undefined, false)).toStrictEqual(expected);
     expect(answeredRegistry(TOOL.cursor, undefined, undefined)).toStrictEqual(expected);
+  });
+});
+
+describe("what a registry answers about one ref", () => {
+  const answered = {
+    location: REGISTRY,
+    refs: new Map([
+      ["on@aidd-framework", { enabled: true }],
+      ["off@aidd-framework", { enabled: false }],
+    ]),
+  };
+
+  it("says registered for a ref the host records enabled", () => {
+    expect(registrationAnswer(answered, "on@aidd-framework")).toBe("registered");
+  });
+
+  it("says registered-disabled for a ref the host records disabled", () => {
+    expect(registrationAnswer(answered, "off@aidd-framework")).toBe("registered-disabled");
+  });
+
+  it("says not-registered for a ref the registry does not carry", () => {
+    expect(registrationAnswer(answered, "x@aidd-framework")).toBe("not-registered");
+  });
+
+  it("says unanswerable when the registry never answered", () => {
+    expect(
+      registrationAnswer({ answer: "unanswerable", detail: "no registry" }, "on@aidd-framework")
+    ).toBe("unanswerable");
   });
 });

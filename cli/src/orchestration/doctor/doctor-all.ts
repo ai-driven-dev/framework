@@ -1,4 +1,4 @@
-import type { DoctorReport } from "../../contexts/installation/contract/doctor-issue.js";
+import type { DoctorReport } from "../domain/doctor-report.model.js";
 import type { GlobalExecutionError } from "../domain/global-execution.model.js";
 import { forEachCategory } from "../sync/for-each-category.js";
 import type { RunDoctor } from "./run-doctor.use-case.js";
