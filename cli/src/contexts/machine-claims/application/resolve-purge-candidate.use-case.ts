@@ -1,6 +1,4 @@
 import { join } from "node:path";
-import { describeError } from "../../../shared/domain/describe-error.js";
-import { whenAbsent } from "../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../shared/ports/logger.js";
 import { isStrictlyWithinUserScope } from "../domain/user-scope-containment.js";
@@ -8,7 +6,7 @@ import { isStrictlyWithinUserScope } from "../domain/user-scope-containment.js";
 /**
  * Proves a path a manifest names sits inside the cache that owns it, before anything deletes it.
  */
-export class PurgeDeclaredCache {
+export class ResolvePurgeCandidate {
   constructor(
     private readonly fs: FileReader,
     private readonly logger: Logger
@@ -18,29 +16,25 @@ export class PurgeDeclaredCache {
    * Returns `<cacheRoot>/<relativeSegments>` once its real, `realpath`-resolved location is proven
    * to sit strictly inside `cacheRoot`: never on the manifest's word alone, since
    * `relativeSegments` is data a corrupted entry could carry a `..` segment in, or a path a
-   * symlink could have escaped through after install. `null` for a root or candidate that does
-   * not exist (silent), a `realpath` that failed for any other reason (named and kept), or one
-   * resolving outside it (named and kept).
+   * symlink could have escaped through after install. `null` for a root or candidate that does not
+   * exist (silent), a candidate present but unresolvable (named and kept), or one resolving
+   * outside it (named and kept).
    */
-  async resolveCandidate(
+  async execute(
     cacheRoot: string,
     relativeSegments: string,
     label: string
   ): Promise<string | null> {
     const candidate = join(cacheRoot, relativeSegments);
-    let resolvedBoundary: string | null;
-    let resolvedCandidate: string | null;
-    try {
-      resolvedBoundary = await this.tryRealpath(cacheRoot);
-      if (resolvedBoundary === null) return null;
-      resolvedCandidate = await this.tryRealpath(candidate);
-    } catch (error) {
-      this.logger.warn(
-        `${label} could not be resolved, ${candidate}: ${describeError(error)}; left in place.`
-      );
+    const resolvedBoundary = await this.fs.realpathIfResolvable(cacheRoot);
+    if (resolvedBoundary === undefined) return null;
+    const resolvedCandidate = await this.fs.realpathIfResolvable(candidate);
+    if (resolvedCandidate === undefined) {
+      if (await this.fs.isDirectory(candidate)) {
+        this.logger.warn(`${label} could not be resolved, ${candidate}; left in place.`);
+      }
       return null;
     }
-    if (resolvedCandidate === null) return null;
     if (!isStrictlyWithinUserScope(resolvedCandidate, resolvedBoundary)) {
       this.logger.warn(
         `${label} does not resolve inside ${cacheRoot}; left in place: ${candidate}`
@@ -48,9 +42,5 @@ export class PurgeDeclaredCache {
       return null;
     }
     return candidate;
-  }
-
-  private async tryRealpath(path: string): Promise<string | null> {
-    return whenAbsent(() => this.fs.realpath(path), null);
   }
 }

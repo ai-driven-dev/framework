@@ -1,4 +1,6 @@
 import { join } from "node:path";
+import { CheckMarketplaceSource } from "../contexts/host-registration/application/check-marketplace-source.use-case.js";
+import type { CatalogReaders } from "../contexts/host-registration/application/register/registration-run.js";
 import {
   withEnabledPlugins,
   withoutMarketplaces,
@@ -6,7 +8,10 @@ import {
 import { HostCliAdapter } from "../contexts/host-registration/infrastructure/host-cli-adapter.js";
 import { HostRegistryMarketplaceSourceReaderAdapter } from "../contexts/host-registration/infrastructure/marketplace/host-registry-marketplace-source-reader-adapter.js";
 import { marketplaceListContract } from "../contexts/host-registration/infrastructure/marketplace/marketplace-list-parsers.js";
-import { InstallLocationsByNameReader } from "../contexts/host-registration/infrastructure/marketplace/marketplace-registry-reader.js";
+import {
+  catalogIdentityReader,
+  InstallLocationsByNameReader,
+} from "../contexts/host-registration/infrastructure/marketplace/marketplace-registry-reader.js";
 import { NativeMarketplaceSourceReaderAdapter } from "../contexts/host-registration/infrastructure/marketplace/native-marketplace-source-reader-adapter.js";
 import { EnabledPluginsMapReader } from "../contexts/host-registration/infrastructure/plugin-registry/enabled-plugins-map-reader.js";
 import { PluginEntriesByScopeReader } from "../contexts/host-registration/infrastructure/plugin-registry/plugin-entries-by-scope-reader.js";
@@ -33,6 +38,7 @@ import {
   ToolKeyedJsonFile,
   type ToolKeyedJsonFileDeps,
 } from "../shared/infrastructure/tool-keyed-json-file.js";
+import type { FileReader } from "../shared/ports/file-reader.js";
 import { REGISTERED_PROFILES } from "./tool-profiles.composition.js";
 
 /** The new content of a tool's shared settings file, answered by the host registration that owns it. */
@@ -40,6 +46,12 @@ export const settingsDeclaration: SettingsDeclarationRules = {
   withoutMarketplaces,
   withEnabledPlugins,
 };
+
+/** What reads a catalogue: its declared identity, and whether a host holds a different one. */
+export function catalogReaders(fs: FileReader): CatalogReaders {
+  const identities = catalogIdentityReader(fs);
+  return { identities, checkSource: new CheckMarketplaceSource(fs, identities) };
+}
 
 /** One line per layout: a layout declared in a profile with no line here fails to compile. */
 const PLUGIN_READERS = {

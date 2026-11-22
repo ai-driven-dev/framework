@@ -1,5 +1,4 @@
 import type { AiToolId } from "../../../../shared/domain/tool.js";
-import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type {
   InspectedHost,
@@ -11,7 +10,7 @@ import type { HostMarketplaceSourceCheck } from "../../domain/source/marketplace
 import type { CatalogIdentityReader } from "../../ports/catalog-identity-reader.js";
 import type { HostMarketplaceRegistry } from "../../ports/host-marketplace-registry.js";
 import type { CatalogProbeTool } from "../../ports/host-tool.js";
-import { hostMarketplaceSourceConflict } from "../check-marketplace-source.use-case.js";
+import type { CheckMarketplaceSource } from "../check-marketplace-source.use-case.js";
 import { sourceFinding } from "./host-registration-findings.js";
 
 /**
@@ -25,8 +24,8 @@ import { sourceFinding } from "./host-registration-findings.js";
  */
 export class InspectHostMarketplaceSources {
   constructor(
-    private readonly fs: FileReader,
     private readonly identities: CatalogIdentityReader,
+    private readonly source: Pick<CheckMarketplaceSource, "execute">,
     private readonly marketplaceRegistries: ReadonlyMap<AiToolId, HostMarketplaceRegistry>,
     private readonly platform: string,
     private readonly tools: ToolCatalog
@@ -69,11 +68,11 @@ export class InspectHostMarketplaceSources {
     marketplace: InspectedMarketplace
   ): Promise<HostMarketplaceSourceCheck | undefined> {
     const { command, tool, profile, reader } = scene;
-    const { fs, identities, platform } = this;
+    const { identities, platform } = this;
     const requestedIdentity = await identities.read(profile, marketplace.builtDir);
     if (requestedIdentity === undefined) return undefined;
-    return hostMarketplaceSourceConflict(
-      { fs, identities, tool: profile, reader },
+    return this.source.execute(
+      { tool: profile, reader },
       {
         requestedSource: marketplace.builtDir,
         requestedIdentity,

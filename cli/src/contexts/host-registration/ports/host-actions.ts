@@ -1,10 +1,5 @@
 import type { Scope } from "../../../shared/domain/scope.js";
-import type { NativeRefusal } from "../domain/native-refusal.js";
-
-/** What a call into the host's own CLI answers: `undefined` when it ran to completion, else the
- * refusal naming why not. Returned, never thrown: a caller that lets it travel says so with
- * `throwRefusal`. */
-export type HostRefusal = NativeRefusal | undefined;
+import type { HostRefusal } from "../domain/native-refusal.js";
 
 /**
  * Drives a tool's native plugin CLI, so the tool writes its own configuration.

@@ -16,7 +16,7 @@ import { RemoveMachineLocalFiles } from "../../../src/contexts/installation/appl
 import { RemoveProjectFiles } from "../../../src/contexts/installation/application/removal/project/remove-project-files.js";
 import { assertProjectMcpEntriesRemovable } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import type { RecordsBesideManifest } from "../../../src/contexts/installation/ports/record/registration-records.js";
-import { PurgeDeclaredCache } from "../../../src/contexts/machine-claims/application/purge-declared-cache.js";
+import { ResolvePurgeCandidate } from "../../../src/contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import {
@@ -48,7 +48,7 @@ export interface ProjectCleanerParts extends Partial<HostPorts> {
 }
 
 export function projectCleanerDeps(parts: ProjectCleanerParts): CleanProjectDeps {
-  const purgeCache = new PurgeDeclaredCache(parts.fs, parts.logger);
+  const purgeCache = new ResolvePurgeCandidate(parts.fs, parts.logger);
   const asks: ProjectCleanAsks = {
     homeDir: parts.homeDir ?? homedir,
     assertMcpRemovable: (plugin, tool, projectRoot) =>

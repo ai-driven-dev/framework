@@ -10,6 +10,7 @@ import type { HostMarketplaceRegistry } from "../../ports/host-marketplace-regis
 import type { HostMarketplaceSources } from "../../ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../ports/host-plugin-registry.js";
 import type { CatalogProbeTool, NativeHostTool } from "../../ports/host-tool.js";
+import type { CheckMarketplaceSource } from "../check-marketplace-source.use-case.js";
 
 /** A marketplace as the host sees it: aidd's own local name and the scope it lives at. */
 export interface RegistrationSubject {
@@ -24,7 +25,7 @@ export interface RegistrationRun {
   readonly profile: NativeHostTool & CatalogProbeTool;
   readonly activator: HostActions;
   readonly fs: FileReader;
-  readonly identities: CatalogIdentityReader;
+  readonly catalogs: CatalogReaders;
   readonly hosts: HostRegistries;
   readonly projectRoot: string;
   readonly claims: ClaimsView;
@@ -32,6 +33,13 @@ export interface RegistrationRun {
   readonly platform: string;
   readonly logger: Logger;
   readonly warnings: (string | HintedMessage)[];
+}
+
+/** What reads a catalogue: its own declared identity, and whether a host already holds another
+ * one under its name. */
+export interface CatalogReaders {
+  readonly identities: CatalogIdentityReader;
+  readonly checkSource: Pick<CheckMarketplaceSource, "execute">;
 }
 
 /** The per-tool registries a host's native state is read and written through. */

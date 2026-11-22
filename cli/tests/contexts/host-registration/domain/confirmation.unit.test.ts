@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   bestEffortNativeCall,
   skippedWarning,
-} from "../../../../src/contexts/host-registration/application/confirm-native-call.use-case.js";
+} from "../../../../src/contexts/host-registration/domain/confirmation.js";
 
 const refused = () => ({ detail: "exit 1" });
 

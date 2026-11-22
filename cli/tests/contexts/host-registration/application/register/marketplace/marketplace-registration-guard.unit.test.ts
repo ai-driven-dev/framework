@@ -7,8 +7,8 @@ import type { NativeCatalogProof } from "../../../../../../src/contexts/host-reg
 import type { RegistrationRun } from "../../../../../../src/contexts/host-registration/application/register/registration-run.js";
 import type { HostMarketplaceRegistryReading } from "../../../../../../src/contexts/host-registration/domain/reading/marketplace-registry-reading.js";
 import type { NativeMarketplaceSource } from "../../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
-import { catalogIdentityReader } from "../../../../../../src/contexts/host-registration/infrastructure/marketplace/marketplace-registry-reader.js";
 import { CapturingLogger } from "../../../../../shared/testing/capturing-logger.fake.js";
+import { catalogReadersOver } from "../../../../../shared/testing/catalog-readers.builder.js";
 import { FakeHostActions } from "../../../../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
@@ -32,7 +32,7 @@ function runWith(registry: HostMarketplaceRegistryReading): RegistrationRun {
     profile,
     activator: new FakeHostActions({ available: true }),
     fs,
-    identities: catalogIdentityReader(fs),
+    catalogs: catalogReadersOver(fs),
     hosts: {
       marketplaceRegistries: new Map([[TOOL.claude, new FakeHostMarketplaceRegistry(registry)]]),
       pluginRegistries: new Map(),

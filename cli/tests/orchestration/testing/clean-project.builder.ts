@@ -1,9 +1,7 @@
 import { join } from "node:path";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import type {
-  HostActions,
-  HostRefusal,
-} from "../../../src/contexts/host-registration/ports/host-actions.js";
+import type { HostRefusal } from "../../../src/contexts/host-registration/domain/native-refusal.js";
+import type { HostActions } from "../../../src/contexts/host-registration/ports/host-actions.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";

@@ -31,45 +31,51 @@ async function resolvedOrSelf(fs: FileReader, path: string): Promise<string> {
  * them: the drift parsers compare spelling, not identity, so a `userConfigDir()` reached through a
  * symlink (`/var` → `/private/var` on macOS) would fail every containment check silently.
  */
-export async function hostMarketplaceSourceConflict(
-  host: {
-    readonly fs: FileReader;
-    readonly identities: CatalogIdentityReader;
-    readonly tool: CatalogProbeTool;
-    readonly reader: HostMarketplaceRegistry;
-  },
-  request: {
-    readonly requestedSource: string;
-    readonly requestedIdentity: MarketplaceCatalogIdentity;
-    /** Present only for a caller that wants the version/migration drift decided before falling
-     * back to the catalog-identity check: computed for every `aidd-framework` entry regardless of
-     * its own `scope`, since an unmigrated project-scope registration is exactly what it decides. */
-    readonly driftContext?: MarketplaceSourceDriftContext;
-  }
-): Promise<HostMarketplaceSourceCheck> {
-  const { fs, identities, tool, reader } = host;
-  const { requestedSource, requestedIdentity, driftContext } = request;
-  const reading = await reader.read();
-  const registeredSource = reading.entries?.get(requestedIdentity.name);
-  if (registeredSource === undefined) return undefined;
-  if (driftContext !== undefined) {
-    const drift = await resolvedDrift(fs, { registeredSource, requestedSource }, driftContext);
-    if (drift !== undefined) {
-      return {
-        name: requestedIdentity.name,
-        registeredSource,
-        requestedSource,
-        location: reading.location,
-        drift,
-      };
+export class CheckMarketplaceSource {
+  constructor(
+    private readonly fs: FileReader,
+    private readonly identities: CatalogIdentityReader
+  ) {}
+
+  async execute(
+    host: { readonly tool: CatalogProbeTool; readonly reader: HostMarketplaceRegistry },
+    request: {
+      readonly requestedSource: string;
+      readonly requestedIdentity: MarketplaceCatalogIdentity;
+      /** Present only for a caller that wants the version/migration drift decided before falling
+       * back to the catalog-identity check: computed for every `aidd-framework` entry regardless of
+       * its own `scope`, since an unmigrated project-scope registration is exactly what it decides. */
+      readonly driftContext?: MarketplaceSourceDriftContext;
     }
+  ): Promise<HostMarketplaceSourceCheck> {
+    const { tool, reader } = host;
+    const { requestedSource, requestedIdentity, driftContext } = request;
+    const reading = await reader.read();
+    const registeredSource = reading.entries?.get(requestedIdentity.name);
+    if (registeredSource === undefined) return undefined;
+    if (driftContext !== undefined) {
+      const drift = await resolvedDrift(
+        this.fs,
+        { registeredSource, requestedSource },
+        driftContext
+      );
+      if (drift !== undefined) {
+        return {
+          name: requestedIdentity.name,
+          registeredSource,
+          requestedSource,
+          location: reading.location,
+          drift,
+        };
+      }
+    }
+    const registeredIdentity = await this.identities.read(tool, registeredSource);
+    return marketplaceSourceConflict(reading, requestedIdentity.name, {
+      requestedSource,
+      registeredIdentity,
+      requestedIdentity,
+    });
   }
-  const registeredIdentity = await identities.read(tool, registeredSource);
-  return marketplaceSourceConflict(reading, requestedIdentity.name, {
-    requestedSource,
-    registeredIdentity,
-    requestedIdentity,
-  });
 }
 
 async function resolvedDrift(

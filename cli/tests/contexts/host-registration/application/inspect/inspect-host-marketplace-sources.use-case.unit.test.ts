@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { CheckMarketplaceSource } from "../../../../../src/contexts/host-registration/application/check-marketplace-source.use-case.js";
 import { InspectHostMarketplaceSources } from "../../../../../src/contexts/host-registration/application/inspect/inspect-host-marketplace-sources.use-case.js";
 import type { InspectedHost } from "../../../../../src/contexts/host-registration/contract/inspect-host-registration-request.js";
 import { catalogIdentityReader } from "../../../../../src/contexts/host-registration/infrastructure/marketplace/marketplace-registry-reader.js";
@@ -20,8 +21,8 @@ function inspector(
 ) {
   const fs = parts.fs ?? new InMemoryFileAdapter();
   return new InspectHostMarketplaceSources(
-    fs,
     catalogIdentityReader(fs),
+    new CheckMarketplaceSource(fs, catalogIdentityReader(fs)),
     parts.marketplaceRegistries ?? new Map(),
     "linux",
     registeredTools()

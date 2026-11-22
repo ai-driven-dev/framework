@@ -10,7 +10,6 @@ import { RemoveMarketplace } from "../../contexts/distribution/application/remov
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
 import { RegisterPluginWithHost } from "../../contexts/host-registration/application/register/register-plugin-with-host.use-case.js";
 import { ResolveNativeHost } from "../../contexts/host-registration/application/register/resolve-native-host.use-case.js";
-import { catalogIdentityReader } from "../../contexts/host-registration/infrastructure/marketplace/marketplace-registry-reader.js";
 import { ListPluginSources } from "../../contexts/installation/application/marketplace/list-plugin-sources.use-case.js";
 import { PurgeMarketplacePlugins } from "../../contexts/installation/application/marketplace/purge-marketplace-plugins.use-case.js";
 import { RemovePluginsFromMarketplace } from "../../contexts/installation/application/marketplace/remove-plugins-from-marketplace.use-case.js";
@@ -21,9 +20,9 @@ import { RecordActivation } from "../../contexts/installation/application/sync/r
 import { trackedSharedSettings } from "../../contexts/installation/application/sync/tracked-shared-settings.js";
 import { Manifest } from "../../contexts/installation/domain/manifest.js";
 import { userScopeFilesSafeToDelete } from "../../contexts/machine-claims/application/ownership/user-scope-plugin-files.js";
-import { PurgeDeclaredCache } from "../../contexts/machine-claims/application/purge-declared-cache.js";
 import { RecordMachineClaims } from "../../contexts/machine-claims/application/record/record-machine-claims.use-case.js";
 import { removalClaims } from "../../contexts/machine-claims/application/removal/removal-claims.js";
+import { ResolvePurgeCandidate } from "../../contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
 import { RecordSourceReference } from "../../contexts/machine-claims/application/shared-source/record-source-reference.use-case.js";
 import { SharedFrameworkSource } from "../../contexts/machine-claims/application/shared-source/shared-framework-source.use-case.js";
 import { AddMarketplace } from "../../orchestration/marketplace/add-marketplace.use-case.js";
@@ -46,7 +45,7 @@ import { SyncNativeActivation } from "../../orchestration/sync/settings/sync-nat
 import { SyncSettings } from "../../orchestration/sync/settings/sync-settings.use-case.js";
 import { SyncToolSettingsFiles } from "../../orchestration/sync/settings/sync-tool-settings-files.use-case.js";
 import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
-import { settingsDeclaration } from "../host-registration.js";
+import { catalogReaders, settingsDeclaration } from "../host-registration.js";
 import type { Installation } from "../installation.js";
 import type { Base } from "../shared.js";
 import { userConfigDir } from "../user-config-dir.js";
@@ -146,7 +145,7 @@ function nativeActivationOf(
   return new ActivateNativeTools({
     registerPluginWithHost: new RegisterPluginWithHost({
       fs,
-      identities: catalogIdentityReader(fs),
+      catalogs: catalogReaders(fs),
       nativeHosts: new ResolveNativeHost(base.nativePluginActivators, tools),
       hosts: {
         marketplaceRegistries: base.hostMarketplaceRegistries,
@@ -212,7 +211,7 @@ function syncSettingsOf(base: Base, inst: Installation, sources: SyncSources): S
         fs,
         logger,
         recordReference: recordSourceReference,
-        purgeCache: new PurgeDeclaredCache(fs, logger),
+        purgeCache: new ResolvePurgeCandidate(fs, logger),
         frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
       }),
       records: registrationRecordRules,

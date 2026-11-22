@@ -5,7 +5,7 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ListedMarketplace } from "../../ports/marketplace-listing.js";
-import type { PurgeDeclaredCache } from "../purge-declared-cache.js";
+import type { ResolvePurgeCandidate } from "../resolve-purge-candidate.use-case.js";
 import { frameworkSourceIsShared } from "../shared-source-reference-support.js";
 import type { RecordSourceReference } from "./record-source-reference.use-case.js";
 
@@ -44,7 +44,7 @@ export interface SharedFrameworkSourceDeps {
   /** Records this project against the running version's shared source, when the machine keeps
    * that record. */
   readonly recordReference: Pick<RecordSourceReference, "execute">;
-  readonly purgeCache: Pick<PurgeDeclaredCache, "resolveCandidate">;
+  readonly purgeCache: Pick<ResolvePurgeCandidate, "execute">;
   /** The name the framework marketplace is registered under; the distribution owns it and
    * composition hands it over. */
   readonly frameworkMarketplaceName: string;
@@ -94,7 +94,7 @@ export class SharedFrameworkSource {
       });
       return;
     }
-    const candidate = await this.deps.purgeCache.resolveCandidate(
+    const candidate = await this.deps.purgeCache.execute(
       projectRoot,
       join(BUILT_CACHE_SUBDIR, this.deps.frameworkMarketplaceName),
       "This project's own pre-migration framework cache"

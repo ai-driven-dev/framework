@@ -14,7 +14,7 @@ function source(recorded: unknown[]) {
     fs: new InMemoryFileAdapter(),
     logger: new CapturingLogger(),
     recordReference: { execute: async (request) => void recorded.push(request) },
-    purgeCache: { resolveCandidate: async () => null },
+    purgeCache: { execute: async () => null },
     frameworkMarketplaceName: "aidd-framework",
   });
 }

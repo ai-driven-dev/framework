@@ -1,8 +1,9 @@
 import { type SpawnSyncReturns, spawnSync } from "node:child_process";
 import { homedir } from "node:os";
 import type { Scope } from "../../../shared/domain/scope.js";
+import type { HostRefusal } from "../domain/native-refusal.js";
 import { isRefOnHost } from "../domain/record/host-ref.js";
-import type { HostActions, HostRefusal } from "../ports/host-actions.js";
+import type { HostActions } from "../ports/host-actions.js";
 import type { HostCliShape } from "../ports/host-cli-shape.js";
 import {
   hostExecutableLookup,
