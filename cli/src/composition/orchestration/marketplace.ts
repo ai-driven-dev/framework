@@ -179,10 +179,7 @@ function syncSettingsOf(base: Base, inst: Installation, sources: SyncSources): S
       tools
     ),
     activateNativeTools: nativeActivationOf(base, inst, buildMarketplaceForTool),
-    recordActivation: new RecordActivation(
-      { fs, records: registrationRecordRules, userManifestRepo },
-      tools
-    ),
+    recordActivation: new RecordActivation({ fs, userManifestRepo }, tools),
     sharedSource: new SharedFrameworkSource({
       fs,
       logger,
@@ -190,6 +187,7 @@ function syncSettingsOf(base: Base, inst: Installation, sources: SyncSources): S
       purgeCache: new PurgeDeclaredCache(fs, logger),
       frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
     }),
+    records: registrationRecordRules,
   });
 }
 

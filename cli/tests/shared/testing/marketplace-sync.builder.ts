@@ -91,7 +91,7 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
       records: registrationRecordRules,
     }),
     recordActivation: new RecordActivation(
-      { fs: parts.fs, records: registrationRecordRules, userManifestRepo: parts.userManifestRepo },
+      { fs: parts.fs, userManifestRepo: parts.userManifestRepo },
       registeredTools()
     ),
     sharedSource: new SharedFrameworkSource({
@@ -107,5 +107,6 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
       purgeCache: new PurgeDeclaredCache(parts.fs, parts.logger),
       frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
     }),
+    records: registrationRecordRules,
   });
 }

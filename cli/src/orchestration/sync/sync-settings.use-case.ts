@@ -1,3 +1,4 @@
+import type { RegistrationRecordRules } from "../../contexts/host-registration/contract/registration-record-rules.js";
 import type { LoadSyncContext } from "../../contexts/installation/application/sync/load-sync-context.use-case.js";
 import type { RecordActivation } from "../../contexts/installation/application/sync/record-activation.use-case.js";
 import type { SyncToolSettingsFiles } from "../../contexts/installation/application/sync/sync-tool-settings-files.use-case.js";
@@ -30,6 +31,7 @@ export interface SyncSettingsDeps {
   readonly activateNativeTools: ActivateNativeTools;
   readonly recordActivation: RecordActivation;
   readonly sharedSource: SharedFrameworkSource;
+  readonly records: Pick<RegistrationRecordRules, "afterActivation" | "mergeCatalogueClaims">;
 }
 
 function resultOf(activation: ActivationRecording["activation"]): SyncSettingsResult {
@@ -132,6 +134,7 @@ export class SyncSettings {
       manifest,
       activated: activation.outcomes,
       narrowed: options.marketplaceNames !== undefined,
+      afterActivation: this.deps.records.afterActivation,
     });
     if (wroteHashes || wroteRegistrations) await context.save();
     await this.recordMachineClaims(run);
@@ -148,6 +151,7 @@ export class SyncSettings {
       marketplaces,
       scope,
       projectRoot: scope === "project" ? projectRoot : undefined,
+      mergeClaims: this.deps.records.mergeCatalogueClaims,
     });
     if (options.recreateFrameworkIfMissing === true && scope === "project") {
       await this.deps.sharedSource.execute({

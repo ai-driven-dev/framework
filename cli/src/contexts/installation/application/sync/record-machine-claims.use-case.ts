@@ -4,10 +4,29 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import type {
+  NativePluginClaim,
+  NativeRegistrations,
+} from "../../domain/manifest/native-registrations.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { DeclaredMarketplace } from "../../ports/marketplace-sources.js";
-import type { HostRegistrationOutcome, RegistrationRecordRules } from "../../ports/native-host.js";
+import type { HostRegistrationOutcome, RegisteredMarketplace } from "../../ports/native-host.js";
+
+/** A machine's record with one run's claims merged in, and whether that changed it: the host
+ * registration's to answer. */
+export type MachineClaimsMerge = (
+  existing: NativeRegistrations | undefined,
+  claimed: {
+    readonly marketplaces: readonly RegisteredMarketplace[];
+    readonly refs: readonly string[];
+    readonly dependent: string | undefined;
+  },
+  fallbackBinary: string
+) => {
+  readonly record: NativeRegistrations & { readonly pluginClaims: readonly NativePluginClaim[] };
+  readonly changed: boolean;
+};
 
 /** Which plugins and marketplaces a project's activation claimed on the machine, and for whom. */
 export interface RecordMachineClaimsRequest {
@@ -17,6 +36,7 @@ export interface RecordMachineClaimsRequest {
   readonly marketplaces: readonly DeclaredMarketplace[];
   readonly scope: Scope;
   readonly projectRoot?: string;
+  readonly mergeClaims: MachineClaimsMerge;
 }
 
 interface MachineClaim {
@@ -28,7 +48,6 @@ interface MachineClaim {
 /** What RecordMachineClaims is built from. */
 export interface RecordMachineClaimsDeps {
   readonly fs: FileReader & FileWriter;
-  readonly records: RegistrationRecordRules;
   readonly userManifestRepo?: ManifestRepository & Lock;
 }
 
@@ -66,7 +85,7 @@ export class RecordMachineClaims {
     const claims = this.machineClaimsOf(toolId, outcome, request);
     if (claims.refs.length === 0 && claims.marketplaces.length === 0) return null;
     if (!this.machineTracks(machine, request.project, toolId)) return null;
-    return this.deps.records.mergeCatalogueClaims(
+    return request.mergeClaims(
       machine.getNativeRegistrations(toolId),
       { ...claims, dependent: root },
       this.nativeActivationBinary(toolId) ?? toolId
