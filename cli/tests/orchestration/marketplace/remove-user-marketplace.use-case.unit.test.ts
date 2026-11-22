@@ -1,21 +1,46 @@
 import { describe, expect, it, vi } from "vitest";
+import type { NativeHostRegistrationGate } from "../../../src/contexts/host-registration/application/native-host-registration-gate.js";
 import type { PurgeMarketplacePlugins } from "../../../src/contexts/installation/application/marketplace/purge-marketplace-plugins.use-case.js";
 import { RemoveUserMarketplace } from "../../../src/orchestration/marketplace/remove-user-marketplace.use-case.js";
+import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 type PurgeCommand = Parameters<PurgeMarketplacePlugins["execute"]>[0];
 
 const FOUND = { name: "market", scope: "user", fingerprint: "fp" } as const;
+const REGISTRATION = { alias: "market", hostName: "aidd-market" };
+const TARGET: Parameters<PurgeCommand["hostRemoval"]["plan"]>[0] = {
+  tool: registeredTools().aiProfile(TOOL.claude),
+  registrations: {
+    marketplaces: [REGISTRATION],
+    pluginClaims: [
+      { ref: "scoped@aidd-market", dependents: [] },
+      { ref: "unscoped@aidd-market", dependents: [] },
+    ],
+  },
+  registration: REGISTRATION,
+};
 
 function removerWith(purge: (command: PurgeCommand) => Promise<number>) {
   const find = { execute: vi.fn().mockResolvedValue(FOUND) };
   const remove = { execute: vi.fn().mockResolvedValue(undefined) };
+  const activator = new FakeHostActions();
+  const hostGate: Pick<NativeHostRegistrationGate, "planMarketplaceRemoval"> = {
+    planMarketplaceRemoval: async (_tool, registrations) => ({
+      activator,
+      refs: registrations.pluginClaims ?? [],
+      scopes: new Map([["scoped@aidd-market", "project"]]),
+    }),
+  };
+  const plan = vi.spyOn(hostGate, "planMarketplaceRemoval");
   const useCase = new RemoveUserMarketplace({
     find,
     purge: { execute: purge },
     remove,
+    hostGate,
     home: "/home",
   });
-  return { useCase, find, remove };
+  return { useCase, find, remove, plan, activator };
 }
 
 describe("RemoveUserMarketplace", () => {
@@ -62,6 +87,45 @@ describe("RemoveUserMarketplace", () => {
     await useCase.execute({ name: "market", projectRoot: "/project", autoConfirm: true });
 
     expect(remove.execute).toHaveBeenCalledWith({ projectRoot: "/project", marketplace: FOUND });
+  });
+
+  it("plans the host removal of a recorded catalogue for this project", async () => {
+    const purge = vi.fn(async (command: PurgeCommand) => {
+      await command.hostRemoval.plan(TARGET);
+      return 0;
+    });
+    const { useCase, plan, activator } = removerWith(purge);
+
+    await useCase.execute({ name: "market", projectRoot: "/project", autoConfirm: true });
+
+    expect(plan).toHaveBeenCalledWith(TARGET.tool, TARGET.registrations, {
+      registration: REGISTRATION,
+      projectRoot: "/project",
+    });
+    expect(activator.uninstalledPlugins).toStrictEqual([]);
+  });
+
+  it("uninstalls each planned ref at its host scope, the user scope when unnamed, then the catalogue", async () => {
+    const calls: string[] = [];
+    const purge = vi.fn(async (command: PurgeCommand) => {
+      command.hostRemoval.apply(await command.hostRemoval.plan(TARGET));
+      return 0;
+    });
+    const { useCase, activator } = removerWith(purge);
+    vi.spyOn(activator, "uninstallPlugin").mockImplementation((ref, scope) => {
+      calls.push(`${ref}:${scope}`);
+    });
+    vi.spyOn(activator, "removeMarketplace").mockImplementation((name, scope) => {
+      calls.push(`${name}:${scope}`);
+    });
+
+    await useCase.execute({ name: "market", projectRoot: "/project", autoConfirm: true });
+
+    expect(calls).toStrictEqual([
+      "scoped@aidd-market:project",
+      "unscoped@aidd-market:user",
+      "aidd-market:user",
+    ]);
   });
 
   it("purges nothing when the marketplace is not found", async () => {

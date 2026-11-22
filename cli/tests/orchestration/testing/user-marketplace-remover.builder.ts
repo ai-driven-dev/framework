@@ -20,7 +20,7 @@ export function userMarketplaceRemover(
   fs: FileReader & FileWriter,
   repo: ManifestRepository & Lock,
   registry: MarketplaceRegistry,
-  nativeHost: NativeHostRegistrationGate,
+  hostGate: NativeHostRegistrationGate,
   records: RegistrationRecordRules = registrationRecordRules
 ): RemoveUserMarketplace {
   return new RemoveUserMarketplace({
@@ -28,13 +28,13 @@ export function userMarketplaceRemover(
     purge: new PurgeMarketplacePlugins(
       {
         repo,
-        nativeHost,
         userScopePluginFiles: new UserScopePluginFiles(fs, quietUserScopeFilesSafeToDelete(fs)),
         records,
       },
       registeredTools()
     ),
     remove: new RemoveMarketplace(registry),
+    hostGate,
     home: resolveHomeDir(),
   });
 }

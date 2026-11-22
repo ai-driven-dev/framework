@@ -1,6 +1,7 @@
 import type { FindUserMarketplace } from "../../contexts/distribution/application/remove/find-user-marketplace.use-case.js";
 import type { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.use-case.js";
 import type { MarketplaceRemovalResult } from "../../contexts/distribution/contract/marketplace-removal.js";
+import type { NativeHostRegistrationGate } from "../../contexts/host-registration/application/native-host-registration-gate.js";
 import type { PurgeMarketplacePlugins } from "../../contexts/installation/application/marketplace/purge-marketplace-plugins.use-case.js";
 import type { Scope } from "../../shared/domain/scope.js";
 
@@ -15,7 +16,17 @@ export interface RemoveUserMarketplaceDeps {
   readonly find: Pick<FindUserMarketplace, "execute">;
   readonly purge: Pick<PurgeMarketplacePlugins, "execute">;
   readonly remove: Pick<RemoveMarketplace, "execute">;
+  readonly hostGate: Pick<NativeHostRegistrationGate, "planMarketplaceRemoval">;
   readonly home: string;
+}
+
+type HostRemovalPlan = Awaited<ReturnType<NativeHostRegistrationGate["planMarketplaceRemoval"]>>;
+
+/** Uninstalls each plugin ref the plan kept at the scope the host holds it, the user scope when
+ * the host names none, then the catalogue itself at the user scope. */
+function withdrawFromHost(hostName: string, { activator, refs, scopes }: HostRemovalPlan): void {
+  for (const claim of refs) activator.uninstallPlugin(claim.ref, scopes.get(claim.ref) ?? "user");
+  activator.removeMarketplace(hostName, "user");
 }
 
 /** Removes a user-scope marketplace: finds it, and under the machine lock proves it is unchanged,
@@ -38,6 +49,16 @@ export class RemoveUserMarketplace {
         });
       },
       forget: () => this.deps.remove.execute({ projectRoot, marketplace }),
+      hostRemoval: {
+        plan: async ({ tool, registrations, registration }) => ({
+          hostName: registration.hostName,
+          plan: await this.deps.hostGate.planMarketplaceRemoval(tool, registrations, {
+            registration,
+            projectRoot,
+          }),
+        }),
+        apply: ({ hostName, plan }) => withdrawFromHost(hostName, plan),
+      },
     });
     return { marketplace, removedPluginCount, orphanCount: 0 };
   }

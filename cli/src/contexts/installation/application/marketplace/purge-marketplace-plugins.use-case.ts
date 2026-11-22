@@ -6,10 +6,8 @@ import type { NativeRegistrations } from "../../domain/manifest/native-registrat
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type {
-  MarketplaceRemovalPlanner,
-  RegistrationRecordRules,
-} from "../../ports/native-host.js";
+import type { RegistrationRecordRules } from "../../ports/native-host.js";
+import type { HostRefCountingTool } from "../../ports/tool-sections.js";
 import type { UserScopePluginFileRemoval } from "../../ports/user-scope-plugin-files.js";
 
 type PluginOf = { toolId: AiToolId; plugin: InstalledPlugin };
@@ -19,7 +17,21 @@ type NativeOf = {
   registration: NonNullable<ReturnType<RegistrationRecordRules["marketplaceOf"]>>;
 };
 
-export interface PurgeMarketplacePluginsRequest {
+/** One tool's record of the catalogue being removed. */
+export interface MarketplaceHostTarget {
+  readonly tool: HostRefCountingTool;
+  readonly registrations: NativeRegistrations;
+  readonly registration: NativeOf["registration"];
+}
+
+/** The host's side of a catalogue removal, the caller's: every plan is made before any is
+ * applied, so a host that refuses stops the removal before anything is withdrawn. */
+export interface MarketplaceHostRemoval<Plan> {
+  plan(target: MarketplaceHostTarget): Promise<Plan>;
+  apply(plan: Plan): void;
+}
+
+export interface PurgeMarketplacePluginsRequest<Plan> {
   marketplace: string;
   projectRoot: string;
   home: string;
@@ -27,23 +39,14 @@ export interface PurgeMarketplacePluginsRequest {
   whileLocked: () => Promise<void>;
   /** Runs once the plugins and host claims are gone, before the user record is saved. */
   forget: () => Promise<void>;
+  hostRemoval: MarketplaceHostRemoval<Plan>;
 }
 
 /** What PurgeMarketplacePlugins is built from. */
 export interface PurgeMarketplacePluginsDeps {
   readonly repo: ManifestRepository & Lock;
-  readonly nativeHost: MarketplaceRemovalPlanner;
   readonly userScopePluginFiles: UserScopePluginFileRemoval;
   readonly records: RegistrationRecordRules;
-}
-
-function applyNativeRemovals(
-  calls: readonly Awaited<ReturnType<PurgeMarketplacePlugins["planNativeRemovals"]>>[number][]
-): void {
-  for (const { registration, activator, refs, scopes } of calls) {
-    for (const claim of refs) activator.uninstallPlugin(claim.ref, scopes.get(claim.ref) ?? "user");
-    activator.removeMarketplace(registration.hostName, "user");
-  }
 }
 
 /** Who still depends on the plugins or the native references about to be removed, once each. */
@@ -68,11 +71,11 @@ export class PurgeMarketplacePlugins {
   ) {}
 
   /** The count of plugins and host plugin references removed. */
-  async execute(command: PurgeMarketplacePluginsRequest): Promise<number> {
+  async execute<Plan>(command: PurgeMarketplacePluginsRequest<Plan>): Promise<number> {
     return this.deps.repo.withExclusiveAccess(() => this.purgeLocked(command));
   }
 
-  private async purgeLocked(command: PurgeMarketplacePluginsRequest): Promise<number> {
+  private async purgeLocked<Plan>(command: PurgeMarketplacePluginsRequest<Plan>): Promise<number> {
     const { marketplace, projectRoot, home } = command;
     await command.whileLocked();
     const manifest = await this.deps.repo.load();
@@ -85,14 +88,13 @@ export class PurgeMarketplacePlugins {
     if (dependents.length > 0)
       throw new ActiveMachineDependentsError(`user-scope marketplace '${marketplace}'`, dependents);
     const safeFiles = await this.proveFiles(plugins, home);
-    const nativeCalls = await this.planNativeRemovals(native, projectRoot);
-    applyNativeRemovals(nativeCalls);
+    await this.withdrawFromHosts(native, command.hostRemoval);
     const where = { projectRoot, home };
     for (const { toolId, plugin, files } of safeFiles) {
       await this.deps.userScopePluginFiles.remove(files, this.tools.aiProfile(toolId), where);
       manifest.removePlugin(toolId, plugin.name);
     }
-    for (const { toolId, registrations, registration } of nativeCalls) {
+    for (const { toolId, registrations, registration } of native) {
       manifest.setNativeRegistrations(
         toolId,
         this.deps.records.withoutMarketplace(registrations, registration.alias)
@@ -101,6 +103,18 @@ export class PurgeMarketplacePlugins {
     await command.forget();
     await this.deps.repo.save(manifest);
     return plugins.length + nativeRefs.length;
+  }
+
+  private async withdrawFromHosts<Plan>(
+    native: readonly NativeOf[],
+    hostRemoval: MarketplaceHostRemoval<Plan>
+  ): Promise<void> {
+    const plans = await Promise.all(
+      native.map(({ toolId, registrations, registration }) =>
+        hostRemoval.plan({ tool: this.tools.aiProfile(toolId), registrations, registration })
+      )
+    );
+    for (const plan of plans) hostRemoval.apply(plan);
   }
 
   private claimsOn(manifest: Manifest, marketplace: string) {
@@ -141,21 +155,6 @@ export class PurgeMarketplacePlugins {
           );
         return { toolId, plugin, files };
       })
-    );
-  }
-
-  private planNativeRemovals(native: readonly NativeOf[], projectRoot: string) {
-    return Promise.all(
-      native.map(async ({ toolId, registrations, registration }) => ({
-        toolId,
-        registrations,
-        registration,
-        ...(await this.deps.nativeHost.planMarketplaceRemoval(
-          this.tools.aiProfile(toolId),
-          registrations,
-          { registration, projectRoot }
-        )),
-      }))
     );
   }
 }

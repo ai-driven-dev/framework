@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  type MarketplaceHostTarget,
   PurgeMarketplacePlugins,
   type PurgeMarketplacePluginsRequest,
 } from "../../../../../src/contexts/installation/application/marketplace/purge-marketplace-plugins.use-case.js";
 import { ActiveMachineDependentsError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import type { MarketplaceRemovalPlanner } from "../../../../../src/contexts/installation/ports/native-host.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
@@ -70,6 +70,8 @@ interface Seed {
   native?: ReturnType<typeof record>;
   /** A plugin whose proven files fall short of what it tracks. */
   partial?: string;
+  /** A second tool whose host records the same catalogue and refuses its removal plan. */
+  refusingCodex?: boolean;
 }
 
 function setup(seed: Seed = {}) {
@@ -77,19 +79,13 @@ function setup(seed: Seed = {}) {
   manifest.addTool(TOOL.claude, "1.0.0", []);
   for (const p of seed.plugins ?? [plugin("one")]) manifest.addPlugin(TOOL.claude, p);
   if (seed.native !== undefined) manifest.setNativeRegistrations(TOOL.claude, seed.native);
+  if (seed.refusingCodex) {
+    manifest.addTool(TOOL.codex, "1.0.0", []);
+    manifest.setNativeRegistrations(TOOL.codex, record());
+  }
   const events: string[] = [];
   const repo = new LockedRepository(manifest, events);
-  const uninstallPlugin = vi.fn();
-  const removeMarketplace = vi.fn();
-  const planner: MarketplaceRemovalPlanner = {
-    planMarketplaceRemoval: async (_tool, registrations, { registration }) => ({
-      activator: { uninstallPlugin, removeMarketplace },
-      refs: (registrations.pluginClaims ?? []).filter((claim) =>
-        claim.ref.endsWith(`@${registration.hostName}`)
-      ),
-      scopes: new Map([[`one@${HOST_NAME}`, "project" as const]]),
-    }),
-  };
+  const withdraw = vi.fn();
   const proven = new Map(
     (seed.plugins ?? [plugin("one")]).map((p) => [
       p.name,
@@ -99,10 +95,10 @@ function setup(seed: Seed = {}) {
   const files = new FakeUserScopePluginFiles(proven);
   const { rules, withoutMarketplace } = spiedRecordRules();
   const purge = new PurgeMarketplacePlugins(
-    { repo, nativeHost: planner, userScopePluginFiles: files, records: rules },
+    { repo, userScopePluginFiles: files, records: rules },
     registeredTools()
   );
-  const command: PurgeMarketplacePluginsRequest = {
+  const command: PurgeMarketplacePluginsRequest<MarketplaceHostTarget> = {
     marketplace: MARKET,
     projectRoot: PROJECT,
     home: HOME,
@@ -112,6 +108,13 @@ function setup(seed: Seed = {}) {
     forget: async () => {
       events.push("forget");
     },
+    hostRemoval: {
+      plan: async (target) => {
+        if (target.tool.toolId === TOOL.codex) throw new Error("plan refused");
+        return target;
+      },
+      apply: (target) => withdraw(target.registration.hostName),
+    },
   };
   return {
     purge,
@@ -119,8 +122,7 @@ function setup(seed: Seed = {}) {
     repo,
     files,
     events,
-    uninstallPlugin,
-    removeMarketplace,
+    withdraw,
     withoutMarketplace,
   };
 }
@@ -162,7 +164,7 @@ describe("PurgeMarketplacePlugins", () => {
     });
 
     await expect(s.purge.execute(s.command)).rejects.toThrow(saying("/other"));
-    expect(s.removeMarketplace).not.toHaveBeenCalled();
+    expect(s.withdraw).not.toHaveBeenCalled();
   });
 
   it("refuses a partial removal when a tracked file is not proven, removing nothing", async () => {
@@ -188,22 +190,40 @@ describe("PurgeMarketplacePlugins", () => {
     expect(removed).toBe(2);
     expect(s.files.provenHomes).toStrictEqual([HOME]);
     expect(s.files.removed).toHaveLength(1);
-    expect(s.uninstallPlugin).toHaveBeenCalledWith(`one@${HOST_NAME}`, "project");
-    expect(s.removeMarketplace).toHaveBeenCalledWith(HOST_NAME, "user");
+    expect(s.withdraw).toHaveBeenCalledWith(HOST_NAME);
     expect(saved?.getPlugins(TOOL.claude).map((p) => p.name)).toStrictEqual(["two"]);
     expect(s.withoutMarketplace).toHaveBeenCalledWith(expect.anything(), MARKET);
     expect(saved?.getNativeRegistrations(TOOL.claude)).toMatchObject({ binary: REWRITTEN_BINARY });
   });
 
-  it("uninstalls a host ref the plan names no scope for from the user scope", async () => {
+  it("plans every host removal before it withdraws from any host", async () => {
     const s = setup({
       plugins: [],
-      native: record({ ref: `unscoped@${HOST_NAME}`, dependents: [] }),
+      native: record({ ref: `one@${HOST_NAME}`, dependents: [] }),
+      refusingCodex: true,
+    });
+
+    await expect(s.purge.execute(s.command)).rejects.toThrow("plan refused");
+    expect(s.withdraw).not.toHaveBeenCalled();
+  });
+
+  it("withdraws from the host before it removes any plugin file", async () => {
+    const s = setup({ native: record({ ref: `one@${HOST_NAME}`, dependents: [] }) });
+    s.withdraw.mockImplementation(() => s.events.push("withdraw"));
+    vi.spyOn(s.files, "remove").mockImplementation(async () => {
+      s.events.push("removeFiles");
     });
 
     await s.purge.execute(s.command);
 
-    expect(s.uninstallPlugin).toHaveBeenCalledWith(`unscoped@${HOST_NAME}`, "user");
+    expect(s.events).toStrictEqual([
+      "whileLocked",
+      "load",
+      "withdraw",
+      "removeFiles",
+      "forget",
+      "save",
+    ]);
   });
 
   it("proves the marketplace under the lock before reading the manifest, and forgets it before saving", async () => {

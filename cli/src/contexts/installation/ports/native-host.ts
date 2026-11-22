@@ -4,7 +4,7 @@ import type {
   NativePluginClaim,
   NativeRegistrations,
 } from "../domain/manifest/native-registrations.js";
-import type { HostRefCountingTool, NativeHostTool } from "./tool-sections.js";
+import type { NativeHostTool } from "./tool-sections.js";
 
 /** What a clean announces of one tool's recorded registration. */
 export interface RegistrationPreview {
@@ -113,26 +113,6 @@ export interface HostWithdrawal<Proof> {
   readonly uninstallProven: (proof: Proof) => Promise<void>;
   /** `undefined` when nothing was registered, else whether the host confirmed. */
   readonly execute: (command: WithdrawFromHostRequest) => Promise<boolean | undefined>;
-}
-
-/** What installation does to a host once a catalogue removal is proven. */
-export interface MarketplaceRemovalActions {
-  readonly uninstallPlugin: (pluginRef: string, scope?: Scope) => void;
-  readonly removeMarketplace: (name: string, scope: Scope) => void;
-}
-
-/** What installation asks of a host to plan a catalogue removal. */
-export interface MarketplaceRemovalPlanner {
-  /** The claims on the refs come back as given, narrowed to the catalogue. */
-  readonly planMarketplaceRemoval: <Claim extends { readonly ref: string }>(
-    tool: HostRefCountingTool,
-    registrations: ClaimedRecord<Claim>,
-    removal: { readonly registration: RegisteredMarketplace; readonly projectRoot: string }
-  ) => Promise<{
-    activator: MarketplaceRemovalActions;
-    refs: readonly Claim[];
-    scopes: ReadonlyMap<string, Scope | undefined>;
-  }>;
 }
 
 /** An installed plugin to withdraw, by this project's marketplace alias. */
