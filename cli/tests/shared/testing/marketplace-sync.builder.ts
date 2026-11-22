@@ -5,7 +5,9 @@ import {
   RegisterPluginWithHost,
   type RegisterPluginWithHostDeps,
 } from "../../../src/contexts/host-registration/application/register/register-plugin-with-host.use-case.js";
-import { catalogIdentityReader } from "../../../src/contexts/host-registration/infrastructure/marketplace-registry-reader.js";
+import { ResolveNativeHost } from "../../../src/contexts/host-registration/application/register/resolve-native-host.use-case.js";
+import { catalogIdentityReader } from "../../../src/contexts/host-registration/infrastructure/marketplace/marketplace-registry-reader.js";
+import type { HostActions } from "../../../src/contexts/host-registration/ports/host-actions.js";
 import {
   LoadSyncContext,
   type LoadSyncContextDeps,
@@ -18,7 +20,7 @@ import { RecordMachineClaims } from "../../../src/contexts/machine-claims/applic
 import {
   RecordSourceReference,
   type RecordSourceReferenceDeps,
-} from "../../../src/contexts/machine-claims/application/record-source-reference.use-case.js";
+} from "../../../src/contexts/machine-claims/application/shared-source/record-source-reference.use-case.js";
 import {
   SharedFrameworkSource,
   type SharedFrameworkSourceDeps,
@@ -48,7 +50,7 @@ export interface MarketplaceSyncParts {
   userSourceReferences?: RecordSourceReferenceDeps["userSourceReferences"];
   currentVersion?: RecordSourceReferenceDeps["currentVersion"];
   userManifestRepo?: Loader["userManifestRepo"];
-  activators?: Deps["activators"];
+  activators?: ReadonlyMap<string, HostActions>;
   hostMarketplaceRegistries?: Deps["hosts"]["marketplaceRegistries"];
   hostPluginRegistries?: Deps["hosts"]["pluginRegistries"];
   nativeSources?: Deps["hosts"]["sources"];
@@ -74,20 +76,17 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
       parts.tools
     ),
     activateNativeTools: new ActivateNativeTools({
-      registerPluginWithHost: new RegisterPluginWithHost(
-        {
-          fs: parts.fs,
-          identities: catalogIdentityReader(parts.fs),
-          activators: parts.activators ?? new Map(),
-          hosts: {
-            marketplaceRegistries: parts.hostMarketplaceRegistries ?? new Map(),
-            pluginRegistries: parts.hostPluginRegistries ?? new Map(),
-            sources: parts.nativeSources ?? new Map(),
-          },
-          platform: process.platform,
+      registerPluginWithHost: new RegisterPluginWithHost({
+        fs: parts.fs,
+        identities: catalogIdentityReader(parts.fs),
+        nativeHosts: new ResolveNativeHost(parts.activators ?? new Map(), parts.tools),
+        hosts: {
+          marketplaceRegistries: parts.hostMarketplaceRegistries ?? new Map(),
+          pluginRegistries: parts.hostPluginRegistries ?? new Map(),
+          sources: parts.nativeSources ?? new Map(),
         },
-        parts.tools
-      ),
+        platform: process.platform,
+      }),
       buildMarketplace: build,
       logger: parts.logger,
       marketplace: {

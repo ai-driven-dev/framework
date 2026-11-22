@@ -3,7 +3,7 @@ import type { ClaimsView } from "../../../../src/contexts/host-registration/cont
 import type { HostMarketplaceRegistryReading } from "../../../../src/contexts/host-registration/domain/reading/marketplace-registry-reading.js";
 import type { HostPluginRegistryReading } from "../../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { NativeMarketplaceSource } from "../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
-import { catalogIdentityReader } from "../../../../src/contexts/host-registration/infrastructure/marketplace-registry-reader.js";
+import { catalogIdentityReader } from "../../../../src/contexts/host-registration/infrastructure/marketplace/marketplace-registry-reader.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";

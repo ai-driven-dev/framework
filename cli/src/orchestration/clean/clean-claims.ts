@@ -1,8 +1,8 @@
-import type { detachProjectClaims } from "../../contexts/machine-claims/application/detach-project-claims.js";
-import type { dropSourceClaim } from "../../contexts/machine-claims/application/drop-source-claim.js";
 import type { PurgeDeclaredCache } from "../../contexts/machine-claims/application/purge-declared-cache.js";
-import type { readMachineClaims } from "../../contexts/machine-claims/application/read-machine-claims.js";
-import type { readSharedSourceClaim } from "../../contexts/machine-claims/application/read-shared-source-claim.js";
+import type { detachProjectClaims } from "../../contexts/machine-claims/application/removal/detach-project-claims.js";
+import type { readMachineClaims } from "../../contexts/machine-claims/application/removal/read-machine-claims.js";
+import type { dropSourceClaim } from "../../contexts/machine-claims/application/shared-source/drop-source-claim.js";
+import type { readSharedSourceClaim } from "../../contexts/machine-claims/application/shared-source/read-shared-source-claim.js";
 import type { Lock } from "../../shared/ports/lock.js";
 
 /** What a clean asks of the machine record: who still references the shared source, this

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import { detachUserPlugin } from "../../src/contexts/machine-claims/application/user-plugin-ownership.js";
+import { detachUserPlugin } from "../../src/contexts/machine-claims/application/ownership/user-plugin-ownership.js";
 import type {
   MachineManifest,
   MachineUserPlugin,

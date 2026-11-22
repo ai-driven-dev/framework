@@ -1,4 +1,4 @@
-import type { InspectHostRegistrationDeps } from "../../../src/contexts/host-registration/application/inspect/inspect-host-registration.use-case.js";
+import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { CheckFileReferences } from "../../../src/contexts/installation/application/doctor/check-file-references.use-case.js";
 import { CheckMergeFiles } from "../../../src/contexts/installation/application/doctor/check-merge-files.use-case.js";
 import { CheckPluginDrift } from "../../../src/contexts/installation/application/doctor/check-plugin-drift.use-case.js";
@@ -8,13 +8,14 @@ import { LoadManifest } from "../../../src/contexts/installation/application/doc
 import { LoadManifestForDoctor } from "../../../src/contexts/installation/application/doctor/load-manifest-for-doctor.use-case.js";
 import { DetectPluginDrift } from "../../../src/contexts/installation/application/shared/detect-plugin-drift.use-case.js";
 import { RunDoctor } from "../../../src/orchestration/doctor/run-doctor.use-case.js";
+import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { hostInspector } from "../../shared/testing/host-inspector.builder.js";
 import type { buildInstallationDeps } from "../../shared/testing/installation-deps.builder.js";
 import { checkRegistrationOver } from "./build-check-registration.builder.js";
 
 export function buildRunDoctor(
   deps: Awaited<ReturnType<typeof buildInstallationDeps>>,
-  hostRegistries: InspectHostRegistrationDeps["pluginRegistries"] = new Map()
+  hostRegistries: ReadonlyMap<AiToolId, HostPluginRegistry> = new Map()
 ): RunDoctor {
   const loadManifest = new LoadManifest(deps.manifestRepo);
   return new RunDoctor(

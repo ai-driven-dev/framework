@@ -2,8 +2,8 @@ import type { BuiltCatalogs } from "../../contract/built-catalogs.js";
 import type { ClaimsView } from "../../contract/claims-view.js";
 import { judgeRegistration } from "../../domain/policy/registration-policy.js";
 import { recordedMarketplaces } from "../../domain/record/registration-record.js";
+import { registerMarketplace, registrationOf } from "./marketplace/register-marketplace.js";
 import { nativeCatalogProof } from "./native-catalog-proof.js";
-import { registerMarketplace, registrationOf } from "./register-marketplace.js";
 import type { RegisteredMarketplace } from "./registration-outcome.js";
 import type { RegistrationRun, RegistrationSubject } from "./registration-run.js";
 

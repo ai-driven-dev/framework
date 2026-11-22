@@ -9,7 +9,8 @@ import { FindUserMarketplace } from "../../contexts/distribution/application/rem
 import { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.use-case.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
 import { RegisterPluginWithHost } from "../../contexts/host-registration/application/register/register-plugin-with-host.use-case.js";
-import { catalogIdentityReader } from "../../contexts/host-registration/infrastructure/marketplace-registry-reader.js";
+import { ResolveNativeHost } from "../../contexts/host-registration/application/register/resolve-native-host.use-case.js";
+import { catalogIdentityReader } from "../../contexts/host-registration/infrastructure/marketplace/marketplace-registry-reader.js";
 import { ListPluginSources } from "../../contexts/installation/application/marketplace/list-plugin-sources.use-case.js";
 import { PurgeMarketplacePlugins } from "../../contexts/installation/application/marketplace/purge-marketplace-plugins.use-case.js";
 import { RemovePluginsFromMarketplace } from "../../contexts/installation/application/marketplace/remove-plugins-from-marketplace.use-case.js";
@@ -19,12 +20,12 @@ import { LoadSyncContext } from "../../contexts/installation/application/sync/lo
 import { RecordActivation } from "../../contexts/installation/application/sync/record-activation.use-case.js";
 import { trackedSharedSettings } from "../../contexts/installation/application/sync/tracked-shared-settings.js";
 import { Manifest } from "../../contexts/installation/domain/manifest.js";
+import { userScopeFilesSafeToDelete } from "../../contexts/machine-claims/application/ownership/user-scope-plugin-files.js";
 import { PurgeDeclaredCache } from "../../contexts/machine-claims/application/purge-declared-cache.js";
 import { RecordMachineClaims } from "../../contexts/machine-claims/application/record/record-machine-claims.use-case.js";
-import { RecordSourceReference } from "../../contexts/machine-claims/application/record-source-reference.use-case.js";
-import { removalClaims } from "../../contexts/machine-claims/application/removal-claims.js";
+import { removalClaims } from "../../contexts/machine-claims/application/removal/removal-claims.js";
+import { RecordSourceReference } from "../../contexts/machine-claims/application/shared-source/record-source-reference.use-case.js";
 import { SharedFrameworkSource } from "../../contexts/machine-claims/application/shared-source/shared-framework-source.use-case.js";
-import { userScopeFilesSafeToDelete } from "../../contexts/machine-claims/application/user-scope-plugin-files.js";
 import { AddMarketplace } from "../../orchestration/marketplace/add-marketplace.use-case.js";
 import { CheckMarketplaceUpstream } from "../../orchestration/marketplace/check-marketplace-upstream.use-case.js";
 import { ListMarketplaceCatalogs } from "../../orchestration/marketplace/list-marketplace-catalogs.use-case.js";
@@ -136,20 +137,17 @@ function nativeActivationOf(
 ): ActivateNativeTools {
   const { tools, fs, logger } = base;
   return new ActivateNativeTools({
-    registerPluginWithHost: new RegisterPluginWithHost(
-      {
-        fs,
-        identities: catalogIdentityReader(fs),
-        activators: base.nativePluginActivators,
-        hosts: {
-          marketplaceRegistries: base.hostMarketplaceRegistries,
-          pluginRegistries: base.hostPluginRegistries,
-          sources: base.nativeSources,
-        },
-        platform: process.platform,
+    registerPluginWithHost: new RegisterPluginWithHost({
+      fs,
+      identities: catalogIdentityReader(fs),
+      nativeHosts: new ResolveNativeHost(base.nativePluginActivators, tools),
+      hosts: {
+        marketplaceRegistries: base.hostMarketplaceRegistries,
+        pluginRegistries: base.hostPluginRegistries,
+        sources: base.nativeSources,
       },
-      tools
-    ),
+      platform: process.platform,
+    }),
     buildMarketplace: build,
     logger,
     marketplace: { name: FRAMEWORK_MARKETPLACE_NAME, userCacheRoot: userConfigDir },

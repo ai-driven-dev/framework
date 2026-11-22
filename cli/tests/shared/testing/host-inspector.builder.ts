@@ -1,17 +1,30 @@
-import {
-  InspectHostRegistration,
-  type InspectHostRegistrationDeps,
-} from "../../../src/contexts/host-registration/application/inspect/inspect-host-registration.use-case.js";
-import { catalogIdentityReader } from "../../../src/contexts/host-registration/infrastructure/marketplace-registry-reader.js";
+import { InspectHostMarketplaceSources } from "../../../src/contexts/host-registration/application/inspect/inspect-host-marketplace-sources.use-case.js";
+import { InspectHostPlugins } from "../../../src/contexts/host-registration/application/inspect/inspect-host-plugins.use-case.js";
+import { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect/inspect-host-registration.use-case.js";
+import { catalogIdentityReader } from "../../../src/contexts/host-registration/infrastructure/marketplace/marketplace-registry-reader.js";
+import type { HostMarketplaceRegistry } from "../../../src/contexts/host-registration/ports/host-marketplace-registry.js";
+import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
+import type { AiToolId } from "../../../src/shared/domain/tool.js";
+import type { FileReader } from "../../../src/shared/ports/file-reader.js";
 
 /** The host registration inspection wired over the catalog's tools, as composition wires it. */
 export function hostInspector(
   tools: ToolCatalog,
-  deps: Omit<InspectHostRegistrationDeps, "platform" | "identities">
+  deps: {
+    fs: FileReader;
+    pluginRegistries: ReadonlyMap<AiToolId, HostPluginRegistry>;
+    marketplaceRegistries: ReadonlyMap<AiToolId, HostMarketplaceRegistry>;
+  }
 ): InspectHostRegistration {
   return new InspectHostRegistration(
-    { ...deps, identities: catalogIdentityReader(deps.fs), platform: process.platform },
-    tools
+    new InspectHostPlugins(deps.pluginRegistries, tools),
+    new InspectHostMarketplaceSources(
+      deps.fs,
+      catalogIdentityReader(deps.fs),
+      deps.marketplaceRegistries,
+      process.platform,
+      tools
+    )
   );
 }
