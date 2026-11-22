@@ -1,6 +1,6 @@
 # distribution
 
-Where a plugin's content comes from: which marketplaces are registered, trusted and cached, how a catalog or release is fetched, how a fetched distribution is read. Language: `src/contexts/distribution/glossary.md`. Internals: `aidd_docs/memory/internal/distribution.md`.
+Where a plugin's content comes from: which marketplaces are registered, trusted and cached, how a catalog or release is fetched, how a fetched distribution is read. Language: `src/contexts/distribution/glossary.md`. Internals: [distribution.md](../../../../../cli/aidd_docs/memory/internal/distribution.md).
 
 ## Ports
 
@@ -18,5 +18,4 @@ Where a plugin's content comes from: which marketplaces are registered, trusted 
 - Import any context but auth: callers ask distribution, it never asks back.
 - Branch on a catalog's origin above the domain: each foreign shape has a parser in `domain/catalog-parsers/` yielding the one catalog shape.
 - Put a technical constant (base URL, TTL, error pattern) in a port, a command or the domain.
-- Change what a command prints or writes: use-case tests, contract kits and the marketplace e2e suites freeze it.
-- Fix `marketplace add --overwrite` in passing: `tests/orchestration/marketplace/add-marketplace.use-case.unit.test.ts` pins it, and `aidd_docs/memory/internal/distribution.md` says how.
+- Fix `marketplace add --overwrite` in passing: `tests/orchestration/marketplace/add-marketplace.use-case.unit.test.ts` pins it, and `distribution.md` says how.

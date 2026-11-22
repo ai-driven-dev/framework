@@ -22,8 +22,7 @@ What the project records as installed, and how a tool's files are written, resto
 ## Never
 
 - Import `orchestration/`, `telemetry/` or `presentation/`.
-- Name a tool in `application/`: a profile declares what it consumes (`tool-addition-cost.arch.test.ts`).
-- Change what a command prints or writes: use-case tests, e2e and goldens freeze it.
+- Name a tool in `application/`: a profile declares what it consumes.
 
 ## Exceptions
 

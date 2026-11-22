@@ -1,6 +1,6 @@
 # telemetry
 
-What a tool's own transcripts say a model call consumed, and how it is stored, attributed and reported. Language: `src/contexts/telemetry/glossary.md`. Code map: `aidd_docs/memory/internal/telemetry.md`. Mutation floor applies: `aidd_docs/memory/testing.md`.
+What a tool's own transcripts say a model call consumed, and how it is stored, attributed and reported. Language: `src/contexts/telemetry/glossary.md`. Code map: [telemetry.md](../../../../../cli/aidd_docs/memory/internal/telemetry.md). Mutation floor applies: [testing.md](../../../../../cli/aidd_docs/memory/testing.md).
 
 ## Ports
 
@@ -17,7 +17,6 @@ What a tool's own transcripts say a model call consumed, and how it is stored, a
 
 - Count a running total: only a call's own usage is a record.
 - Keep state in a source between two lines: what a later line needs travels as the returned context.
-- Name a tool in a store, the attribution or the report.
 - Pin a line format without a real record: one fixture per observed format change; the grouping rule is `tests/fixtures/codex-usage/README.md`.
 - Leave a line no reader classifies: the replay fails a Claude line by its unrecognised note and a Codex line by the declared list of line types.
 

@@ -1,29 +1,41 @@
 ---
 name: working-on-cli
-description: Governs any change under cli/ (a tool, a command, a business rule, a failure path, a test, a context). Use before editing cli/src, cli/tests, cli/assets or cli/biome-plugins. Not for plugins/.
+description: Guides any change under cli/, whether a tool, a command, a business rule, a failure path, a test or a context. Use when the user wants to edit cli/src, cli/tests, cli/assets or cli/biome-plugins. Not for plugins/.
+argument-hint: tool | command | rule | failure | test | context
 ---
 
 # Working on the CLI
 
-Paths are rooted at `cli/`. Read the action for the change, then what it loads.
+```mermaid
+flowchart LR
+  addTool([new tool or host format]) --> tool
+  newCommand([command]) --> command --> domain
+  rule([business rule]) --> domain
+  domain --> failure
+  error([error or partial failure]) --> failure
+  command --> test
+  domain --> test
+  tool --> test
+  newContext([context]) --> context --> test
+  test --> green([gates green])
+  failure --> test
+```
 
-| The change | Action |
-| --- | --- |
-| Add an AI tool, or follow a host's format change | `actions/01-tool.md` |
-| Add or change a command | `actions/02-command.md` |
-| Change a business rule inside a context | `actions/03-domain.md` |
-| Handle an error, a missing or unreadable file, a partial failure | `actions/04-failure.md` |
-| Write or fix a test | `actions/05-test.md` |
-| Create, split or move a context | `actions/06-context.md` |
+## Actions
 
-Shared by every action: `references/architecture.md`, and `references/contexts/<ctx>.md` for each context touched (`auth`, `distribution`, `host-registration`, `installation`, `machine-claims`, `recipes`, `telemetry`, `tools`, `translate`, `update`).
+Run the flow above. Read only the action for the change, then what it loads.
 
-## Always
+| Action  | Does                                                      |
+| ------- | --------------------------------------------------------- |
+| tool    | add an AI tool or follow a host's format change           |
+| command | add or change a command                                   |
+| domain  | change a business rule inside a context                   |
+| failure | handle an error, a missing file or a partial failure      |
+| test    | write or fix a test                                       |
+| context | create, split or move a context                           |
 
-- Write the test first and see it fail for the reason its name gives: `aidd_docs/memory/coding-assertions.md`.
-- Done means the gates in `aidd_docs/memory/coding-assertions.md` are green. A red gate is fixed at its cause, never by an exemption, a wider allow-list or a raised debt count.
-- `tests/architecture/kinds-debt.json` only shrinks: an entry is lowered when its code is fixed, never added or raised.
-- A change to a golden, an e2e output or a fixture is a product change: say so in the commit.
-- Never run `setup`, `marketplace add` or `plugin install` at the repository root, nor a real AI host binary in a test: `aidd_docs/memory/testing.md`.
-- Commit and push only when the user asks: `AGENTS.md`.
-- Memory states a fact once: point to `aidd_docs/memory/` instead of restating it here.
+## Transversal rules
+
+- Paths are rooted at `cli/`.
+- A red gate is fixed at its cause, never by an exemption, a wider allow-list or a `tests/architecture/kinds-debt.json` entry added or raised. An entry is lowered when its code is fixed.
+- A golden, an e2e output or a fixture is a frozen surface: change it only for a deliberate product change, and say so in the commit.

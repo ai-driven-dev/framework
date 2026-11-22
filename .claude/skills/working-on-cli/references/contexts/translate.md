@@ -14,14 +14,14 @@ How a canon plugin is rewritten for one tool in memory, and how the result is wr
 ## Rules
 
 - Outside callers import `contract/` and `application/` only.
-- The layouts read each profile's `linkSyntax` and never name a tool: a branch on a tool is a question its profile answers.
+- The layouts read each profile's `linkSyntax`.
 - The engine writes nothing; `DiskSink` writes every artifact kind through the contract and, on top of the engine, rewrites only relative links and the plugin-root token and path.
 - A rewrite is proven on a fixture carrying the marker it rewrites.
 
 ## Tests
 
 - `tests/contexts/translate/` follows the source folders; `testing/` holds the kit (`engine-kit.builder.ts`, `declared-tool-catalog.builder.ts`, `synthetic-tool-profile.builder.ts`).
-- `tests/golden/framework-build.golden.test.ts` freezes a full build per target; machine independence: `references/test/golden-machine-independence.md`.
+- `tests/golden/framework-build.golden.test.ts` freezes a full build per target.
 
 ## Exceptions
 

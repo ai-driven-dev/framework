@@ -1,6 +1,6 @@
 # tools
 
-What a tool declares: where its files land, how it takes plugins, what its plugin CLI says, what `aidd translate` builds for it. Language: `src/contexts/tools/glossary.md`. Procedure: `actions/01-tool.md`.
+What a tool declares: where its files land, how it takes plugins, what its plugin CLI says, what `aidd translate` builds for it. Language: `src/contexts/tools/glossary.md`. Procedure: [01-tool.md](../../actions/01-tool.md).
 
 ## Ports
 
@@ -19,7 +19,6 @@ What a tool declares: where its files land, how it takes plugins, what its plugi
 ## Tests
 
 - `tests/contexts/tools/` mirrors the source, except the `hooks-runtime-*.integration.test.ts` suites at its root, which run each tool's hook runtime end to end. `profile-conformance.contract.ts` and `profile-file-conformance.contract.ts` in `testing/` hold what every profile must pass.
-- `ProfileBuilder` (`testing/profiles.builder.ts`, `aProfile()`) builds a synthetic profile. New tests take tools from `registeredTools()`; one over every tool walks `REGISTERED_PROFILES`.
 
 ## Exceptions
 

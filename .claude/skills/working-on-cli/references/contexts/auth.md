@@ -1,6 +1,6 @@
 # auth
 
-One GitHub credential: kept, found, checked, removed, never used for a business call. Language: `src/contexts/auth/glossary.md`. Where a 401 surfaces and the source order (`sourcesInOrder`): `aidd_docs/memory/internal/auth.md`.
+One GitHub credential: kept, found, checked, removed, never used for a business call. Language: `src/contexts/auth/glossary.md`. Where a 401 surfaces and the source order (`sourcesInOrder`): [auth.md](../../../../../cli/aidd_docs/memory/internal/auth.md).
 
 ## Ports
 
@@ -15,7 +15,7 @@ One GitHub credential: kept, found, checked, removed, never used for a business 
 
 - Read the token variable or `auth.json` outside the context (`token-owner.grit`).
 - Refuse a command for a missing token.
-- Restate the source order outside `aidd_docs/memory/internal/auth.md`.
+- Restate the source order outside `auth.md`.
 
 ## Exceptions
 

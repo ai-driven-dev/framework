@@ -1,13 +1,33 @@
-# Add or change a command
+# 02 - Add or change a command
 
-Load `references/architecture.md` and the `references/contexts/<ctx>.md` of each context the command reaches.
+Add a command as a thin controller over one scenario or use case.
 
-1. Write `register<Name>Command(program, createDeps)` in `src/presentation/controllers/<name>.controller.ts`, typed `DepsSliceFactory<Keys>` over the members of `Deps` it reads (`src/orchestration/deps.ts`), and add it to `register-commands.controller.ts`. Model: `update.controller.ts`.
-2. The controller parses options, calls one scenario or one use case through `createDeps`, and prints with a presenter from `src/presentation/presenters/`. It decides nothing.
-3. Logic coordinating several contexts is a scenario in `src/orchestration/<area>/`: no business rule, no file read, no process.
-4. Logic of one concept is a use case in the context that owns it: `actions/03-domain.md`. One file, one class named by a verb, a public `execute` taking an `XRequest` and returning an `XResult` declared in the same file. Model: `src/contexts/auth/application/log-in.use-case.ts`.
-5. Add the new member to `Deps` and wire it in `src/composition/<ctx>.ts`, or `src/composition/orchestration/` for a scenario. `src/cli.ts` builds the factory.
-6. Channels and exit codes: `references/architecture.md`, Process. A refusal before the use case runs (missing flag, no TTY) exits in the controller.
-7. Errors: `actions/04-failure.md`.
-8. A new or renamed subcommand changes `tests/golden/snapshots/help/surface.json`: `pnpm golden:update help-surface`, read the diff, say so in the commit.
-9. Tests: one test file per command under `tests/presentation/controllers/`, one e2e per command under `tests/e2e/`. Levels: `actions/05-test.md`.
+## Input
+
+The command and the contexts it reaches.
+
+## Output
+
+A registered controller, its wiring, and its controller and e2e tests.
+
+## Process
+
+1. **Load.** Read [architecture.md](../references/architecture.md) and the `references/contexts/<ctx>.md` of each context the command reaches.
+2. **Controller.** Write `register<Name>Command(program, createDeps)` in `src/presentation/controllers/<name>.controller.ts`, typed `DepsSliceFactory<Keys>` over the members of `Deps` it reads (`src/orchestration/deps.ts`), and add it to `register-commands.controller.ts`. Model: `update.controller.ts`.
+   - It parses options, calls one scenario or one use case through `createDeps`, and prints with a presenter from `src/presentation/presenters/`. It decides nothing.
+3. **Scenario.** Logic coordinating several contexts is a scenario in `src/orchestration/<area>/`, with no business rule, file read or process.
+4. **Use case.** Logic of one concept is a use case in its owning context ([03-domain.md](03-domain.md)): one file, one class named by a verb, a public `execute` taking an `XRequest` and returning an `XResult` declared in the same file. Model: `src/contexts/auth/application/log-in.use-case.ts`.
+5. **Wire.** Add the member to `Deps` and wire it in `src/composition/<ctx>.ts`, or `src/composition/orchestration/` for a scenario. `src/cli.ts` builds the factory.
+6. **Output.** Follow `architecture.md`, Process, for channels and exit codes.
+7. **Failure.** Follow [04-failure.md](04-failure.md).
+8. **Gate.** Run `pnpm lint`: a new command passes the Biome gate and adds no `kinds-debt.json` entry (router rule).
+9. **Help surface.** A new or renamed subcommand changes `tests/golden/snapshots/help/surface.json`: run `pnpm golden:update help-surface` and read the diff.
+10. **Tests.** Write one test file per command under `tests/presentation/controllers/` and one e2e per command under `tests/e2e/`, at the levels of [05-test.md](05-test.md).
+
+## Test
+
+| Case | Pass |
+| --- | --- |
+| `pnpm lint` | exits 0 with no new `kinds-debt.json` entry |
+| `pnpm test:golden` | the help surface matches the regenerated snapshot |
+| `pnpm test:e2e` for the command | exit code, output and files as specified |

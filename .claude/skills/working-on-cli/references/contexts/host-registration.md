@@ -1,6 +1,6 @@
 # host-registration
 
-What a host (Claude Code, Codex, Copilot) says it has registered, and the CLI calls that change it. Language: `src/contexts/host-registration/glossary.md`. Readers: `aidd_docs/memory/internal/host-registration.md`.
+What a host (Claude Code, Codex, Copilot) says it has registered, and the CLI calls that change it. Language: `src/contexts/host-registration/glossary.md`. Readers: [host-registration.md](../../../../../cli/aidd_docs/memory/internal/host-registration.md).
 
 ## Ports
 
@@ -19,4 +19,3 @@ What a host (Claude Code, Codex, Copilot) says it has registered, and the CLI ca
 ## Never
 
 - Name a tool id in the context: a new layout is a union member, a reader and a table line, forced by `tsc`.
-- Spawn a host binary in a test: use a stub on a narrowed `PATH`.

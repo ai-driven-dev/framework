@@ -1,55 +1,22 @@
-# Reference: Golden / Snapshot Machine Independence
+# Golden machine independence
 
-## Rule
+A golden or snapshot never holds a value derived, even indirectly, from an absolute path.
 
-Golden and snapshot tests must be machine-independent. Never snapshot values
-that are derived, even indirectly, from absolute paths.
+## Cause
 
-## Symptom
-
-Test passes locally, fails on CI with a different hash or value. The value looks
-deterministic (a hex digest, a size, a timestamp) but is actually derived from
-path-bearing content that differs between machines.
-
-## Root cause pattern
-
-The production code computes a hash (or any deterministic function) over file
-content. The file content includes an absolute path (config entry, marketplace
-source URL, tool path). On a different machine the path differs, so the hash
-differs, even though the behavior is identical.
-
-The normalize() pass over the snapshot JSON replaces the path string in visible
-fields, but the hash was already derived from the pre-normalization bytes and
-stored as a plain hex string. normalize() cannot reverse a one-way hash.
+| Step | What happens |
+| --- | --- |
+| symptom | green locally, a different hash or value on CI |
+| origin | code hashes file content that carries an absolute path (config entry, marketplace source, tool path) |
+| why the snapshot misses it | `normalize()` rewrites visible paths, but the hash came from the pre-normalization bytes and is a one-way hex string |
 
 ## Fix
 
-Normalize the source content BEFORE computing or recording any derived value.
-Two acceptable approaches:
+- Preferred: write the file, re-read it, run it through the same `normalize()` as visible content, then compute the hash from that string. A real change still flips the hash; the fingerprint is path-independent, and the snapshot shape is unchanged.
+- Alternative: replace the hash with `<HASH>` and add a normalized-content field, so a real content change is still detected.
+- A bare `<HASH>` with no content capture empties the test.
 
-1. Recompute over normalized content (preferred): at capture time, after
-   writing the file, re-read it, run it through the same normalize() function
-   used on visible content, then compute the hash from that normalized string.
-   Store the normalized hash in the snapshot. The snapshot remains a meaningful
-   fingerprint of content shape: a real change still flips the hash, but the
-   fingerprint is path-independent.
+## Proof
 
-2. Placeholder the derived value and capture normalized content separately:
-   Replace the hash with `<HASH>` and add a normalized-content field so the
-   test still detects real content changes.
-
-Approach 1 requires no snapshot shape change and is simpler.
-
-## Proof of machine independence
-
-After regenerating the snapshot:
-
-- grep the snapshot file for `/Users/` and `/home/`: both must be absent.
-- Run the "two captures byte-identical" sub-test; it exercises two different
-  temp directories on the same machine, catching any remaining non-determinism.
-
-## What to preserve
-
-The hash value still signals a real change. Replacing it with a path-independent
-digest does NOT gut the test; it merely makes the baseline stable. Only a
-pure `<HASH>` placeholder with no content capture guts the signal.
+- Grep the snapshot for `/Users/` and `/home/`: both absent.
+- The "two captures byte-identical" sub-test passes across two temp directories.
