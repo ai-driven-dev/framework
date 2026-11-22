@@ -37,13 +37,21 @@ describe("the machine record is saved once any tool of the run changed it", () =
       .withTool(claude, [], { version: "test" })
       .withTool(codex, [], { version: "test" })
       .build();
-    machine.setNativeRegistrations(codex, {
-      binary: codex,
-      marketplaces: [],
-      pluginRefs: [],
-      pluginClaims: [{ ref: HELD_REF, dependents: [] }],
-    });
-    const repo = new InMemoryManifestRepository(machine);
+    const repo = new InMemoryManifestRepository(
+      machine,
+      undefined,
+      new Map([
+        [
+          codex,
+          {
+            binary: codex,
+            marketplaces: [],
+            pluginRefs: [],
+            pluginClaims: [{ ref: HELD_REF, dependents: [] }],
+          },
+        ],
+      ])
+    );
     const record = new RecordMachineClaims(
       {
         fs: new InMemoryFileAdapter(),
@@ -65,8 +73,7 @@ describe("the machine record is saved once any tool of the run changed it", () =
     });
 
     expect(repo.saveCount).toBe(1);
-    expect(repo.getCurrent()?.getNativeRegistrations(claude)?.pluginClaims).toEqual([
-      { ref: CLAIMED_REF, dependents: [] },
-    ]);
+    expect(repo.recordSaveCount).toBe(1);
+    expect(repo.records.get(claude)?.pluginClaims).toEqual([{ ref: CLAIMED_REF, dependents: [] }]);
   });
 });

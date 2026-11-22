@@ -20,13 +20,18 @@ const MARKETPLACE_NAME = "aidd-framework";
 function ownedMachineCatalog(): InMemoryManifestRepository {
   const machine = Manifest.create();
   machine.addTool(TOOL.copilot, "test", []);
-  machine.setNativeRegistrations(TOOL.copilot, {
-    binary: "copilot",
-    marketplaces: [{ alias: MARKETPLACE_NAME, hostName: MARKETPLACE_NAME }],
-    pluginRefs: [],
-    pluginClaims: [],
-  });
-  return new InMemoryManifestRepository(machine);
+  const records = new Map([
+    [
+      TOOL.copilot,
+      {
+        binary: "copilot",
+        marketplaces: [{ alias: MARKETPLACE_NAME, hostName: MARKETPLACE_NAME }],
+        pluginRefs: [],
+        pluginClaims: [],
+      },
+    ],
+  ]);
+  return new InMemoryManifestRepository(machine, undefined, records);
 }
 
 function readableHostPlugins() {

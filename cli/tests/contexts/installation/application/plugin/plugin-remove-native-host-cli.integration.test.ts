@@ -24,7 +24,7 @@ describe("RemovePlugin drives the host CLI the way install did", () => {
     const { removeUseCase, manifestRepo } = buildRemoveUseCase(activator, logger);
     const manifest = Manifest.create();
     manifest.addTool(claude, "test", []);
-    await installViaModeA(manifest);
+    await installViaModeA(manifest, manifestRepo.records);
     await manifestRepo.save(manifest);
 
     await removeUseCase.execute({
@@ -43,7 +43,7 @@ describe("RemovePlugin drives the host CLI the way install did", () => {
     const { removeUseCase, manifestRepo } = buildRemoveUseCase(activator, logger);
     const manifest = Manifest.create();
     manifest.addTool(claude, "test", []);
-    await installViaModeA(manifest);
+    await installViaModeA(manifest, manifestRepo.records);
     await manifestRepo.save(manifest);
 
     await removeUseCase.execute({
@@ -58,7 +58,7 @@ describe("RemovePlugin drives the host CLI the way install did", () => {
     ).toBe(true);
     const loaded = await manifestRepo.load();
     expect(loaded?.getPlugins(claude).some((p) => p.name === PLUGIN_NAME)).toBe(false);
-    expect(loaded?.getNativeRegistrations(claude)?.pluginRefs).toEqual([REF]);
+    expect(manifestRepo.records.get(claude)?.pluginRefs).toEqual([REF]);
   });
 
   it("warns naming the host and message when the host CLI reports the plugin already absent", async () => {
@@ -70,7 +70,7 @@ describe("RemovePlugin drives the host CLI the way install did", () => {
     const { removeUseCase, manifestRepo } = buildRemoveUseCase(activator, logger);
     const manifest = Manifest.create();
     manifest.addTool(claude, "test", []);
-    await installViaModeA(manifest);
+    await installViaModeA(manifest, manifestRepo.records);
     await manifestRepo.save(manifest);
 
     await expect(
@@ -123,7 +123,7 @@ describe("RemovePlugin drives the host CLI the way install did", () => {
     const { removeUseCase, manifestRepo } = buildRemoveUseCase(activator, logger, "user");
     const manifest = Manifest.create();
     manifest.addTool(claude, "test", []);
-    await installViaModeA(manifest);
+    await installViaModeA(manifest, manifestRepo.records);
     await manifestRepo.save(manifest);
 
     await removeUseCase.execute({
@@ -146,7 +146,7 @@ describe("RemovePlugin drives the host CLI the way install did", () => {
     const { removeUseCase, manifestRepo } = buildRemoveUseCase(activator, logger);
     const manifest = Manifest.create();
     manifest.addTool(claude, "test", []);
-    await installViaModeA(manifest);
+    await installViaModeA(manifest, manifestRepo.records);
     await manifestRepo.save(manifest);
 
     await removeUseCase.execute({
@@ -166,7 +166,7 @@ describe("RemovePlugin drives the host CLI the way install did", () => {
     const { removeUseCase, manifestRepo } = buildRemoveUseCase(activator, logger);
     const manifest = Manifest.create();
     manifest.addTool(claude, "test", []);
-    await installViaModeA(manifest);
+    await installViaModeA(manifest, manifestRepo.records);
     await manifestRepo.save(manifest);
 
     await expect(

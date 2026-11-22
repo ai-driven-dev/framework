@@ -50,16 +50,18 @@ function plugin(name: string, marketplace: string): RecordedPlugin {
 
 function contextOf(
   manifest: SyncContext["manifest"],
-  toolIds: SyncContext["toolIds"] = [SYNTHETIC_TOOL]
+  toolIds: SyncContext["toolIds"] = [SYNTHETIC_TOOL],
+  records: SyncContext["records"] = new Map()
 ): SyncContext {
   return {
     manifest,
+    records,
     marketplaces: [MARKETPLACE],
     toolIds,
     save: async () => {},
-    machineManifest: async () => undefined,
+    machineRecords: async () => new Map(),
     machineKept: false,
-    persistedProject: async () => undefined,
+    persistedProject: async () => new Map(),
   };
 }
 
@@ -147,7 +149,8 @@ describe("ActivateNativeTools", () => {
     async function refsAsked(
       manifest: SyncContext["manifest"],
       scope: Scope,
-      enablePlugins: string[]
+      enablePlugins: string[],
+      held: SyncContext["records"] = new Map()
     ) {
       let asked: string[] = [];
       const { useCase, records } = activatorOf(async (command) => {
@@ -159,7 +162,9 @@ describe("ActivateNativeTools", () => {
         );
         return { status: "activated", outcome: OUTCOME };
       });
-      await useCase.execute(request(contextOf(manifest), scope, enablePlugins));
+      await useCase.execute(
+        request(contextOf(manifest, [SYNTHETIC_TOOL], held), scope, enablePlugins)
+      );
       return { asked, records };
     }
 
@@ -188,14 +193,15 @@ describe("ActivateNativeTools", () => {
 
     it("recovers the refs a machine-scope record holds, at user scope only", async () => {
       const manifest = emptyManifest();
-      manifest.setNativeRegistrations(SYNTHETIC_TOOL, {
-        binary: "claude",
-        marketplaces: [],
-        pluginRefs: ["recorded@host-market"],
-      });
+      const held = new Map([
+        [
+          SYNTHETIC_TOOL,
+          { binary: "claude", marketplaces: [], pluginRefs: ["recorded@host-market"] },
+        ],
+      ]);
 
-      const user = await refsAsked(manifest, "user", []);
-      const project = await refsAsked(manifest, "project", []);
+      const user = await refsAsked(manifest, "user", [], held);
+      const project = await refsAsked(manifest, "project", [], held);
 
       expect(user.asked).toEqual(["recorded@host-market"]);
       expect(user.records.refsOnHosts).toHaveBeenCalledWith(

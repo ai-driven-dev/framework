@@ -4,6 +4,7 @@ import { Marketplace } from "../../../src/contexts/distribution/domain/marketpla
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
@@ -38,7 +39,10 @@ describe("clean: native registration undo order", () => {
       const CLAUDE_MARKETPLACE = "aidd-framework";
       const CLAUDE_REF = "aidd-context@aidd-framework";
 
-      function seedClaudeManifest(pluginScope: Scope): Manifest {
+      function seedClaudeManifest(pluginScope: Scope): {
+        manifest: Manifest;
+        records: RegistrationRecords;
+      } {
         const manifest = Manifest.create();
         manifest.addTool(HOST.claude, "1.0.0", []);
         manifest.addPlugin(
@@ -52,7 +56,8 @@ describe("clean: native registration undo order", () => {
             marketplace: CLAUDE_MARKETPLACE,
           })
         );
-        manifest.setNativeRegistrations(HOST.claude, {
+        const records: RegistrationRecords = new Map();
+        records.set(HOST.claude, {
           binary: CLAUDE_BINARY,
           marketplaces: [
             {
@@ -63,7 +68,7 @@ describe("clean: native registration undo order", () => {
           ],
           pluginRefs: [CLAUDE_REF],
         });
-        return manifest;
+        return { manifest, records };
       }
 
       function seedClaudeMarketplaceRegistry(): InMemoryMarketplaceRegistry {
@@ -83,9 +88,9 @@ describe("clean: native registration undo order", () => {
       // A real `claude` binary registers at its own implicit default `"user"` whatever the
       // manifest recorded, so a `"project"`-only uninstall left the plugin behind silently.
       it("falls back to the other scope when the manifest's own scope does not match what was actually registered, with no host registry to ask", async () => {
-        const manifest = seedClaudeManifest("project");
+        const { manifest, records } = seedClaudeManifest("project");
         const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-        const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
+        const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT, records);
         const activator = new FakeHostActions({
           available: true,
           installedAtScope: new Map([[CLAUDE_REF, "user"]]),
@@ -107,9 +112,9 @@ describe("clean: native registration undo order", () => {
     });
 
     it("warns and leaves the registration in place when the tool's CLI is not on PATH", async () => {
-      const manifest = seedManifestWithNativeRegistrations(HOST);
+      const { manifest, records } = seedManifestWithNativeRegistrations(HOST);
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-      const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
+      const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT, records);
       const activator = new FakeHostActions({ available: false });
       const logger = new CapturingLogger();
       const useCase = new CleanWithKnownHostSource(
@@ -130,9 +135,9 @@ describe("clean: native registration undo order", () => {
     });
 
     it("uninstalls the plugin ref before removing the marketplace, for the same tool", async () => {
-      const manifest = seedClaudeNativeRegistrations(HOST);
+      const { manifest, records } = seedClaudeNativeRegistrations(HOST);
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-      const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
+      const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT, records);
       const calls: string[] = [];
       const activator = new OrderRecordingActivator(calls);
       const useCase = new CleanWithKnownHostSource(
@@ -155,7 +160,7 @@ describe("clean: native registration undo order", () => {
     });
 
     it("undoes the native registration before the built marketplace tree it points at is deleted", async () => {
-      const manifest = seedManifestWithNativeRegistrations(HOST);
+      const { manifest, records } = seedManifestWithNativeRegistrations(HOST);
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const builtPath = join(
         PROJECT_ROOT,
@@ -167,7 +172,7 @@ describe("clean: native registration undo order", () => {
         "x.json"
       );
       await fs.writeFile(builtPath, "{}");
-      const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
+      const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT, records);
       let builtTreeExistedAtRemoveMarketplace: boolean | null = null;
       const activator = new AssertingActivator(async () => {
         builtTreeExistedAtRemoveMarketplace = fs.has(builtPath);
@@ -187,9 +192,9 @@ describe("clean: native registration undo order", () => {
     });
 
     it("names the native registration a dry-run preview will undo, without touching it", async () => {
-      const manifest = seedManifestWithNativeRegistrations(HOST);
+      const { manifest, records } = seedManifestWithNativeRegistrations(HOST);
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-      const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
+      const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT, records);
       const activator = new FakeHostActions({ available: true });
       const useCase = new CleanWithKnownHostSource(
         fs,

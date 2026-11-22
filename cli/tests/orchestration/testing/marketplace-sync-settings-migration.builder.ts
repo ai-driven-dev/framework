@@ -4,6 +4,7 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import type { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
+import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { FakeHostMarketplaceSources } from "./fake-host-marketplace-sources.fake.js";
 import { FakeHostPluginRegistry } from "./fake-host-plugin-registry.fake.js";
 
@@ -12,16 +13,21 @@ export const CLAUDE_BUILT_DIR = "/shared/built/claude";
 export const CODEX_BUILT_DIR = "/shared/built/codex";
 export const CATALOG_RELATIVE = ".claude-plugin/marketplace.json";
 
-export function canonicallyOwned(toolId: AiToolId): Manifest {
+export function canonicallyOwned(toolId: AiToolId): InMemoryManifestRepository {
   const machine = Manifest.create();
   machine.addTool(toolId, "test", []);
-  machine.setNativeRegistrations(toolId, {
-    binary: toolId,
-    marketplaces: [{ alias: FRAMEWORK_MARKETPLACE_NAME, hostName: FRAMEWORK_MARKETPLACE_NAME }],
-    pluginRefs: [],
-    pluginClaims: [],
-  });
-  return machine;
+  const records = new Map([
+    [
+      toolId,
+      {
+        binary: toolId,
+        marketplaces: [{ alias: FRAMEWORK_MARKETPLACE_NAME, hostName: FRAMEWORK_MARKETPLACE_NAME }],
+        pluginRefs: [],
+        pluginClaims: [],
+      },
+    ],
+  ]);
+  return new InMemoryManifestRepository(machine, undefined, records);
 }
 
 export function readableHostPlugins(toolId: AiToolId) {

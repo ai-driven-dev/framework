@@ -1,7 +1,7 @@
 import type {
   MachineManifest,
   MachineManifestRepository,
-  MachineNativeRegistrations,
+  MachineRecords,
   MachineUserPlugin,
 } from "../../../../src/contexts/machine-claims/ports/machine-manifest.js";
 import { ToolNotInManifestError } from "../../../../src/shared/domain/shared.error.js";
@@ -12,28 +12,14 @@ import {
   loadsOnlyUnderLock,
 } from "../../../shared/testing/in-memory-repository.fake.js";
 
-/** A registration as the record keeps it: the fields a claim reads, plus whatever else travels
- * through a rewrite untouched. */
-type RecordedRegistrations = MachineNativeRegistrations & Readonly<Record<string, unknown>>;
-
 /** The machine-wide record as the real one answers it: a tool is written to only once the record
  * holds it. */
 export class InMemoryMachineManifest implements MachineManifest {
   private readonly installedTools: ReadonlySet<ToolId>;
-  private readonly registrations = new Map<ToolId, RecordedRegistrations>();
   private readonly plugins = new Map<string, MachineUserPlugin[]>();
 
   constructor(...installedTools: readonly ToolId[]) {
     this.installedTools = new Set(installedTools);
-  }
-
-  getNativeRegistrations(toolId: ToolId): RecordedRegistrations | undefined {
-    return this.registrations.get(toolId);
-  }
-
-  setNativeRegistrations(toolId: ToolId, registrations: RecordedRegistrations): void {
-    this.requireInstalled(toolId);
-    this.registrations.set(toolId, registrations);
   }
 
   getRecordedPlugins(toolId: string): readonly MachineUserPlugin[] {
@@ -62,7 +48,27 @@ export class InMemoryMachineManifest implements MachineManifest {
 
 export class InMemoryMachineManifestRepository
   extends InMemoryRepository<InMemoryMachineManifest>
-  implements MachineManifestRepository {}
+  implements MachineManifestRepository
+{
+  /** The records as last saved. A test seeds them here and reads them back here. */
+  records: MachineRecords;
+  /** Counted apart from `saveCount`: a test proving nothing was written asserts both. */
+  recordSaveCount = 0;
+
+  constructor(seed: InMemoryMachineManifest | null = null, records: MachineRecords = new Map()) {
+    super(seed);
+    this.records = new Map(records);
+  }
+
+  async loadRecords(): Promise<MachineRecords> {
+    return new Map(this.records);
+  }
+
+  async saveRecords(records: MachineRecords): Promise<void> {
+    this.recordSaveCount += 1;
+    this.records = new Map(records);
+  }
+}
 
 /** The repository, failing any `load` made outside its `withExclusiveAccess`. */
 export function loadingOnlyUnderLock(
@@ -71,5 +77,7 @@ export function loadingOnlyUnderLock(
   return {
     ...loadsOnlyUnderLock(repo),
     save: (manifest: InMemoryMachineManifest) => repo.save(manifest),
+    loadRecords: () => repo.loadRecords(),
+    saveRecords: (records) => repo.saveRecords(records),
   };
 }

@@ -6,7 +6,7 @@ import type { ToolId } from "../../shared/domain/tool.js";
 /** What a sync run knows about the records, before any host registration asks for them. */
 export type RecordFacts = Pick<
   SyncContext,
-  "manifest" | "machineManifest" | "machineKept" | "persistedProject"
+  "records" | "machineRecords" | "machineKept" | "persistedProject"
 >;
 
 /** What a host registration is checked against for one tool: the manifest's own record, the
@@ -17,14 +17,14 @@ export function claimsViewOf(
   rules: Pick<RecordClaimRules, "claimedRefs">
 ): ClaimsView {
   return {
-    recorded: facts.manifest.getNativeRegistrations(toolId),
+    recorded: facts.records.get(toolId),
     machine: async () => {
-      const registrations = (await facts.machineManifest())?.getNativeRegistrations(toolId);
+      const registrations = (await facts.machineRecords()).get(toolId);
       return registrations === undefined
         ? undefined
         : { ...registrations, claimedRefs: rules.claimedRefs(registrations) };
     },
     machineKept: facts.machineKept,
-    persistedProject: async () => (await facts.persistedProject())?.getNativeRegistrations(toolId),
+    persistedProject: async () => (await facts.persistedProject()).get(toolId),
   };
 }

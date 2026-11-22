@@ -4,6 +4,7 @@ import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/c
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.fake.js";
@@ -86,7 +87,12 @@ describe("clean --scope user: report", () => {
       const fs = new RecordingFileAdapter(order);
       seedClaudeCache(fs);
       const activator = new RecordingActivator(order);
-      const manifestRepo = new InMemoryManifestRepository(manifestWithClaude(HOST));
+      const claude = manifestWithClaude(HOST);
+      const manifestRepo = new InMemoryManifestRepository(
+        claude.manifest,
+        undefined,
+        claude.records
+      );
       const useCase = userScopeCleaner({
         tools: hostCatalog(),
         fs,
@@ -102,7 +108,7 @@ describe("clean --scope user: report", () => {
           ],
         ]),
         sources: provenClaudeSources(HOST),
-        pluginRegistries: provenHostPlugins(HOST, manifestWithClaude(HOST)),
+        pluginRegistries: provenHostPlugins(HOST, claude.records),
       });
 
       await useCase.execute({
@@ -168,23 +174,31 @@ describe("clean --scope user: report", () => {
       toolId: ToolId,
       marketplaces: ReadonlyArray<{ alias: string; hostName: string }>,
       pluginRefs: readonly string[]
-    ): Manifest {
+    ): { manifest: Manifest; records: RegistrationRecords } {
       const manifest = Manifest.create();
       manifest.addTool(toolId, "1.0.0", []);
-      manifest.setNativeRegistrations(toolId, {
-        binary: toolId,
-        marketplaces: [...marketplaces],
-        pluginRefs: [...pluginRefs],
-        pluginClaims: pluginRefs.map((ref) => ({ ref, dependents: [] })),
-      });
-      return manifest;
+      const records: RegistrationRecords = new Map([
+        [
+          toolId,
+          {
+            binary: toolId,
+            marketplaces: [...marketplaces],
+            pluginRefs: [...pluginRefs],
+            pluginClaims: pluginRefs.map((ref) => ({ ref, dependents: [] })),
+          },
+        ],
+      ]);
+      return { manifest, records };
     }
 
-    async function errorsFor(manifest: Manifest): Promise<readonly string[]> {
+    async function errorsFor(seed: {
+      manifest: Manifest;
+      records: RegistrationRecords;
+    }): Promise<readonly string[]> {
       const logger = new CapturingLogger();
       const useCase = userScopeCleaner({
         tools: hostCatalog(),
-        repo: new InMemoryManifestRepository(manifest),
+        repo: new InMemoryManifestRepository(seed.manifest, undefined, seed.records),
         logger,
       });
       try {

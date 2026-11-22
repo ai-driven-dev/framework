@@ -45,7 +45,7 @@ describe("clean purges a host's own plugin cache: paths", () => {
     const useCase = buildUseCase({
       tools: hostCatalog(),
       fs,
-      manifest: seedManifest(HOST.claude, MARKETPLACE, MARKETPLACE),
+      ...seedManifest(HOST.claude, MARKETPLACE, MARKETPLACE),
       activator,
       binary: HOST.claude,
       logger,
@@ -86,7 +86,7 @@ describe("clean purges a host's own plugin cache: paths", () => {
     const useCase = buildUseCase({
       tools: hostCatalog(),
       fs,
-      manifest: seedManifest(HOST.claude, MARKETPLACE, MARKETPLACE),
+      ...seedManifest(HOST.claude, MARKETPLACE, MARKETPLACE),
       activator,
       binary: HOST.claude,
       logger,
@@ -118,7 +118,7 @@ describe("clean purges a host's own plugin cache: paths", () => {
     const useCase = buildUseCase({
       tools: hostCatalog(),
       fs,
-      manifest: seedManifest(HOST.claude, MARKETPLACE, MARKETPLACE),
+      ...seedManifest(HOST.claude, MARKETPLACE, MARKETPLACE),
       activator,
       binary: HOST.claude,
       logger: new CapturingLogger(),
@@ -149,7 +149,7 @@ describe("clean purges a host's own plugin cache: paths", () => {
     const useCase = buildUseCase({
       tools: hostCatalog(),
       fs,
-      manifest: seedManifest(HOST.claude, MARKETPLACE, MARKETPLACE),
+      ...seedManifest(HOST.claude, MARKETPLACE, MARKETPLACE),
       activator,
       binary: HOST.claude,
       logger,
@@ -194,7 +194,7 @@ describe("clean purges a host's own plugin cache: paths", () => {
     const useCase = buildUseCase({
       tools: hostCatalog(),
       fs,
-      manifest: seedManifest(HOST.claude, MARKETPLACE, MARKETPLACE),
+      ...seedManifest(HOST.claude, MARKETPLACE, MARKETPLACE),
       activator,
       binary: HOST.claude,
       logger: new CapturingLogger(),
@@ -231,7 +231,7 @@ describe("clean purges a host's own plugin cache: paths", () => {
     const useCase = buildUseCase({
       tools: hostCatalog(),
       fs,
-      manifest: seedManifest(HOST.claude, hostName, "safe-alias"),
+      ...seedManifest(HOST.claude, hostName, "safe-alias"),
       activator,
       binary: HOST.claude,
       logger,
@@ -265,7 +265,7 @@ describe("clean purges a host's own plugin cache: paths", () => {
     const useCase = buildUseCase({
       tools: hostCatalog(),
       fs,
-      manifest: seedManifest(HOST.claude, MARKETPLACE, MARKETPLACE),
+      ...seedManifest(HOST.claude, MARKETPLACE, MARKETPLACE),
       activator,
       binary: HOST.claude,
       logger,
@@ -298,7 +298,7 @@ describe("clean purges a host's own plugin cache: paths", () => {
     const useCase = buildUseCase({
       tools: hostCatalog(),
       fs,
-      manifest: seedManifest(HOST.claude, MARKETPLACE, MARKETPLACE),
+      ...seedManifest(HOST.claude, MARKETPLACE, MARKETPLACE),
       activator,
       binary: HOST.claude,
       logger,
@@ -323,15 +323,15 @@ describe("clean purges a host's own plugin cache: paths", () => {
     const activator = new FakeHostActions({ available: true });
     const manifest = Manifest.create();
     manifest.addTool(HOST.copilot, "1.0.0", []);
-    manifest.setNativeRegistrations(HOST.copilot, {
-      binary: HOST.copilot,
-      marketplaces: [{ alias: MARKETPLACE, hostName: MARKETPLACE }],
-      pluginRefs: [REF],
-    });
     const useCase = buildUseCase({
       tools: hostCatalog(),
       fs,
       manifest,
+      records: new Map().set(HOST.copilot, {
+        binary: HOST.copilot,
+        marketplaces: [{ alias: MARKETPLACE, hostName: MARKETPLACE }],
+        pluginRefs: [REF],
+      }),
       activator,
       binary: HOST.copilot,
       logger: new CapturingLogger(),
@@ -364,7 +364,7 @@ describe("clean purges a host's own plugin cache: paths", () => {
     const useCase = buildUseCase({
       tools: hostCatalog(),
       fs,
-      manifest: seedManifest(HOST.claude, hostName, alias),
+      ...seedManifest(HOST.claude, hostName, alias),
       activator,
       binary: HOST.claude,
       logger: new CapturingLogger(),
@@ -390,7 +390,7 @@ describe("clean purges a host's own plugin cache: paths", () => {
     const useCase = buildUseCase({
       tools: hostCatalog(),
       fs,
-      manifest: seedManifest(HOST.codex, MARKETPLACE, MARKETPLACE),
+      ...seedManifest(HOST.codex, MARKETPLACE, MARKETPLACE),
       activator,
       binary: HOST.codex,
       logger: new CapturingLogger(),
@@ -419,7 +419,7 @@ describe("clean purges a host's own plugin cache: paths", () => {
     const useCase = buildUseCase({
       tools: hostCatalog(),
       fs,
-      manifest: seedManifest(HOST.codex, MARKETPLACE, MARKETPLACE),
+      ...seedManifest(HOST.codex, MARKETPLACE, MARKETPLACE),
       activator,
       binary: HOST.codex,
       logger,
@@ -448,7 +448,7 @@ describe("clean purges a host's own plugin cache: paths", () => {
     const useCase = buildUseCase({
       tools: hostCatalog(),
       fs,
-      manifest: seedManifest(HOST.codex, MARKETPLACE, MARKETPLACE),
+      ...seedManifest(HOST.codex, MARKETPLACE, MARKETPLACE),
       activator,
       binary: HOST.codex,
       logger,

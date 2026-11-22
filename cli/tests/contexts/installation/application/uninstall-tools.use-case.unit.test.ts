@@ -247,13 +247,13 @@ async function seedSharedClaims(deps: Awaited<ReturnType<typeof buildInstallatio
     marketplaces: [{ alias: "aidd", hostName: "aidd" }],
     pluginRefs: ["native@aidd"],
   };
-  project.setNativeRegistrations(TOOL.codex, registration);
+  deps.manifestRepo.records.set(TOOL.codex, registration);
   const machine = Manifest.create();
   machine.addTool(TOOL.cursor, "1.0.0", []);
   for (const name of ["shared", "local-only"])
     machine.addPlugin(TOOL.cursor, record(name, "user").withMachineClaim([PROJECT_ROOT, "/B"]));
   machine.addTool(TOOL.codex, "1.0.0", []);
-  machine.setNativeRegistrations(TOOL.codex, {
+  deps.userManifestRepo.records.set(TOOL.codex, {
     ...registration,
     pluginClaims: [{ ref: "native@aidd", dependents: [PROJECT_ROOT, "/B"] }],
   });
@@ -266,7 +266,7 @@ function userPluginDependents(deps: Awaited<ReturnType<typeof buildInstallationD
 }
 
 function codexClaims(deps: Awaited<ReturnType<typeof buildInstallationDeps>>) {
-  return deps.userManifestRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.pluginClaims;
+  return deps.userManifestRepo.records.get(TOOL.codex)?.pluginClaims;
 }
 
 describe("UninstallTools - a project's tools", () => {
@@ -291,6 +291,7 @@ describe("UninstallTools - a project's tools", () => {
 
       expect(deps.manifestRepo.getCurrent()?.hasTool(selected)).toBe(false);
       expect(deps.manifestRepo.getCurrent()?.hasTool(retainedTool)).toBe(true);
+      expect(deps.manifestRepo.records.has(TOOL.codex)).toBe(selected !== TOOL.codex);
       expect(userPluginDependents(deps)).toEqual([
         { name: "shared", dependents: selected === "cursor" ? ["/B"] : [PROJECT_ROOT, "/B"] },
         { name: "local-only", dependents: [PROJECT_ROOT, "/B"] },

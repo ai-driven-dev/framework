@@ -6,6 +6,7 @@ import type { HostMarketplaceRegistry } from "../../../src/contexts/host-registr
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../src/shared/domain/installation-file.js";
@@ -92,7 +93,6 @@ class MissingDirectories extends InMemoryFileAdapter {
 }
 
 function ownedProject(options: RecoveryOptions) {
-  const source = options.source ?? OLD;
   const settings = options.settings ?? "{}";
   const manifest = Manifest.create();
   manifest.addTool(options.toolId, "1.0.0", [
@@ -113,12 +113,21 @@ function ownedProject(options: RecoveryOptions) {
       marketplace: ALIAS,
     })
   );
-  manifest.setNativeRegistrations(options.toolId, {
-    binary: options.toolId,
-    marketplaces: [{ alias: ALIAS, hostName: HOST, provenance: { kind: "registry", source } }],
-    pluginRefs: options.ownRefs ?? [],
-  });
   return manifest;
+}
+
+function ownedRecords(options: RecoveryOptions): RegistrationRecords {
+  const source = options.source ?? OLD;
+  return new Map([
+    [
+      options.toolId,
+      {
+        binary: options.toolId,
+        marketplaces: [{ alias: ALIAS, hostName: HOST, provenance: { kind: "registry", source } }],
+        pluginRefs: options.ownRefs ?? [],
+      },
+    ],
+  ]);
 }
 
 function recoveryFiles(options: RecoveryOptions) {
@@ -187,7 +196,7 @@ function pluginsReadInTurn(readings: readonly HostPluginRegistryReading[]) {
 export async function recovery(options: RecoveryOptions) {
   const source = options.source ?? OLD;
   const manifest = ownedProject(options);
-  const repo = new InMemoryManifestRepository(manifest, ROOT);
+  const repo = new InMemoryManifestRepository(manifest, ROOT, ownedRecords(options));
   const registry = new InMemoryMarketplaceRegistry();
   await registry.save(
     ROOT,

@@ -58,20 +58,25 @@ async function sync(options: {
   manifest.addTool(tool, "test", []);
   const machine = Manifest.create();
   machine.addTool(tool, "test", []);
-  machine.setNativeRegistrations(tool, {
-    binary: tool,
-    marketplaces: [
+  const machineRecords = new Map([
+    [
+      tool,
       {
-        alias: name,
-        hostName: name,
-        ...(options.registeredPath === undefined
-          ? {}
-          : { provenance: { kind: "registry" as const, source: options.registeredPath } }),
+        binary: tool,
+        marketplaces: [
+          {
+            alias: name,
+            hostName: name,
+            ...(options.registeredPath === undefined
+              ? {}
+              : { provenance: { kind: "registry" as const, source: options.registeredPath } }),
+          },
+        ],
+        pluginRefs: [],
+        pluginClaims: [],
       },
     ],
-    pluginRefs: [],
-    pluginClaims: [],
-  });
+  ]);
   await manifestRepo.save(manifest);
   await registry.save(
     PROJECT_ROOT,
@@ -119,7 +124,7 @@ async function sync(options: {
         }),
       ],
     ]),
-    userManifestRepo: new InMemoryManifestRepository(machine),
+    userManifestRepo: new InMemoryManifestRepository(machine, undefined, machineRecords),
     nativeSources: new Map([
       [
         tool,
@@ -215,7 +220,7 @@ describe("the sync write path refuses to roll a host back to an older aidd-frame
       registeredVersion: "2.0.0",
     });
 
-    expect((await manifestRepo.load())?.getNativeRegistrations(tool)).toStrictEqual({
+    expect(manifestRepo.records.get(tool)).toStrictEqual({
       binary: tool,
       marketplaces: [
         {

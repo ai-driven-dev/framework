@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
@@ -31,13 +32,20 @@ describe("clean --scope user: canonical claims", () => {
         sourceType: "local",
         source: "/built/copilot",
       };
-      manifest.setNativeRegistrations(HOST.copilot, {
-        binary: HOST.copilot,
-        marketplaces: [{ alias: "aidd-framework", hostName: "aidd-framework", provenance: source }],
-        pluginRefs: ["aidd-dev@aidd-framework"],
-        pluginClaims: [{ ref: "aidd-dev@aidd-framework", dependents: [] }],
-      });
-      const repo = new InMemoryManifestRepository(manifest);
+      const records: RegistrationRecords = new Map([
+        [
+          HOST.copilot,
+          {
+            binary: HOST.copilot,
+            marketplaces: [
+              { alias: "aidd-framework", hostName: "aidd-framework", provenance: source },
+            ],
+            pluginRefs: ["aidd-dev@aidd-framework"],
+            pluginClaims: [{ ref: "aidd-dev@aidd-framework", dependents: [] }],
+          },
+        ],
+      ]);
+      const repo = new InMemoryManifestRepository(manifest, undefined, records);
       const hostRefs = new Map([
         ["aidd-dev@aidd-framework", { enabled: true }],
         ["aidd-pm@aidd-framework", { enabled: foreignEnabled }],
@@ -83,20 +91,20 @@ describe("clean --scope user: canonical claims", () => {
   );
 
   it("reads canonical dependents after acquiring the machine lock", async () => {
-    const machine = manifestWithClaude(HOST);
+    const { manifest: machine, records } = manifestWithClaude(HOST);
     class LockedRepository extends InMemoryManifestRepository {
       async withExclusiveAccess<T>(action: () => Promise<T>): Promise<T> {
         // A concurrent install completed while clean was waiting for the lock.
-        const registration = machine.getNativeRegistrations(HOST.claude);
+        const registration = this.records.get(HOST.claude);
         if (registration === undefined) throw new Error("fixture missing native registration");
-        machine.setNativeRegistrations(HOST.claude, {
+        this.records.set(HOST.claude, {
           ...registration,
           pluginClaims: [{ ref: "aidd-context@aidd-framework", dependents: ["/project-b"] }],
         });
         return action();
       }
     }
-    const repo = new LockedRepository(machine);
+    const repo = new LockedRepository(machine, undefined, records);
     const fs = new RecordingFileAdapter();
     const cacheMarker = join(seedClaudeCache(fs), "marker.json");
     const sourceMarker = join(USER_CONFIG_DIR, "cache", "built", "1.0.0", "catalogue.json");
@@ -118,7 +126,7 @@ describe("clean --scope user: canonical claims", () => {
       repo,
       activators: new Map([[HOST.claude, activator]]),
       sources: provenClaudeSources(HOST),
-      pluginRegistries: provenHostPlugins(HOST, machine),
+      pluginRegistries: provenHostPlugins(HOST, records),
     });
 
     await expect(useCase.execute({ projectRoot: "/wherever", force: true })).rejects.toThrow(
@@ -131,14 +139,14 @@ describe("clean --scope user: canonical claims", () => {
     expect(fs.getFile(cacheMarker)).toBe("{}");
     expect(fs.getFile(fetched)).toBe("framework clone");
     expect(fs.getFile(plugins)).toBe("plugin clone");
-    expect(repo.getCurrent()?.getNativeRegistrations(HOST.claude)?.pluginClaims).toEqual([
+    expect(repo.records.get(HOST.claude)?.pluginClaims).toEqual([
       { ref: "aidd-context@aidd-framework", dependents: ["/project-b"] },
     ]);
   });
 
   it("refuses an owned catalogue with a foreign enabled plugin ref before any global clean effect", async () => {
-    const machine = manifestWithClaude(HOST);
-    const repo = new InMemoryManifestRepository(machine);
+    const { manifest: machine, records } = manifestWithClaude(HOST);
+    const repo = new InMemoryManifestRepository(machine, undefined, records);
     const fs = new RecordingFileAdapter();
     const foreignCache = join(CLAUDE_CACHE, "aidd-framework", "foreign-payload", "bytes");
     fs.setFile(foreignCache, "foreign bytes");
@@ -164,6 +172,6 @@ describe("clean --scope user: canonical claims", () => {
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(activator.removedMarketplaces).toEqual([]);
     expect(await fs.readFile(foreignCache)).toBe("foreign bytes");
-    expect(repo.getCurrent()?.getNativeRegistrations(HOST.claude)?.pluginClaims).toHaveLength(1);
+    expect(repo.records.get(HOST.claude)?.pluginClaims).toHaveLength(1);
   });
 });

@@ -150,18 +150,16 @@ describe("native activation: recorded refs", () => {
       const activator = new FakeHostActions({ available: true });
       const { useCase, registry, manifestRepo } = buildLiveSync(activator);
       await registry.save(PROJECT_ROOT, liveMarketplace());
-      const staleManifest = await manifestRepo.load();
-      staleManifest?.setNativeRegistrations(tool, {
+      manifestRepo.records.set(tool, {
         binary: tool,
         marketplaces: [{ alias: "market-dead", hostName: "host-dead" }],
         pluginRefs: ["plugin-dead@host-dead"],
       });
-      if (staleManifest) await manifestRepo.save(staleManifest);
 
       // Unnarrowed - no `marketplaceNames`, the shape `sync` and `setup` both run.
       await useCase.execute({ projectRoot: PROJECT_ROOT });
 
-      const recorded = (await manifestRepo.load())?.getNativeRegistrations(tool);
+      const recorded = manifestRepo.records.get(tool);
       expect(recorded?.pluginRefs).not.toContain("plugin-dead@host-dead");
       expect(recorded?.marketplaces).not.toContainEqual({
         alias: "market-dead",
@@ -258,7 +256,7 @@ describe("native activation: recorded refs", () => {
       await registry.save(PROJECT_ROOT, aliasMarketplace(ALIAS_Y));
 
       await useCase.execute({ projectRoot: PROJECT_ROOT });
-      const beforeNarrow = (await manifestRepo.load())?.getNativeRegistrations(tool);
+      const beforeNarrow = manifestRepo.records.get(tool);
       expect(beforeNarrow?.pluginRefs, "both refs recorded before the narrowed run").toEqual(
         expect.arrayContaining([
           `${PLUGIN_X}@${SHARED_HOST_NAME}`,
@@ -271,7 +269,7 @@ describe("native activation: recorded refs", () => {
         marketplaceNames: [ALIAS_X],
       });
 
-      const recorded = (await manifestRepo.load())?.getNativeRegistrations(tool);
+      const recorded = manifestRepo.records.get(tool);
       expect(recorded?.pluginRefs).toContain(`${PLUGIN_Y}@${SHARED_HOST_NAME}`);
       expect(recorded?.marketplaces).toContainEqual({
         alias: ALIAS_Y,

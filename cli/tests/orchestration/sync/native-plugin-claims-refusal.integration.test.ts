@@ -27,7 +27,8 @@ for (const [toolId, catalogPath] of [
       const ref = "test-plugin@real-catalog";
       const machine = Manifest.create();
       machine.addTool(toolId, "1.0.0", []);
-      machine.setNativeRegistrations(toolId, {
+      const repo = new InMemoryManifestRepository(machine);
+      repo.records.set(toolId, {
         binary: toolId,
         marketplaces: [
           {
@@ -44,7 +45,6 @@ for (const [toolId, catalogPath] of [
         pluginRefs: [ref],
         pluginClaims: [{ ref, dependents: ["/B"] }],
       });
-      const repo = new InMemoryManifestRepository(machine);
       const fs = new InMemoryFileAdapter(
         {
           [`/built/${toolId}/${catalogPath}`]: JSON.stringify({
@@ -83,22 +83,17 @@ for (const [toolId, catalogPath] of [
         saying(/active projects.*\/B/)
       );
       expect(failing.uninstalledPlugins).toEqual([]);
-      expect(
-        claimsRecorded(repo.getCurrent()?.getNativeRegistrations(toolId))[0]?.dependents
-      ).toEqual(["/B"]);
-      const registrations = machine.getNativeRegistrations(toolId);
+      expect(claimsRecorded(repo.records.get(toolId))[0]?.dependents).toEqual(["/B"]);
+      const registrations = repo.records.get(toolId);
       if (registrations === undefined) throw new Error("seeded machine claim missing");
-      machine.setNativeRegistrations(toolId, {
+      repo.records.set(toolId, {
         ...registrations,
         pluginClaims: [{ ref, dependents: [] }],
       });
-      await repo.save(machine);
       await expect(clean.execute({ projectRoot: "/B", force: true })).rejects.toThrow(
         /uninstall.*failed.*claims retained/
       );
-      expect(repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
-        { ref, dependents: [] },
-      ]);
+      expect(repo.records.get(toolId)?.pluginClaims).toEqual([{ ref, dependents: [] }]);
       const working = new FakeHostActions({ available: true });
       const finish = userScopeCleaner({
         tools: syntheticSyncCatalog(),

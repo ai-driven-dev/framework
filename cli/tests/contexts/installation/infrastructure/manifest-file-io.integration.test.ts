@@ -1,89 +1,41 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { InvalidManifestDataError } from "../../../../src/contexts/installation/domain/installation.error.js";
-import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
-import {
-  readManifestFile,
-  writeManifestFile,
-} from "../../../../src/contexts/installation/infrastructure/manifest-file-io.js";
-import { resolveRegisteredToolId, TOOL } from "../../../shared/testing/registered-tools.builder.js";
-import { saying } from "../../../shared/testing/saying.builder.js";
+import { ManifestRepositoryAdapter } from "../../../../src/contexts/installation/infrastructure/manifest-repository-adapter.js";
+import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { aManifest } from "../testing/manifest.builder.js";
+import { manifestFileDeps } from "../testing/manifest-file-deps.builder.js";
 
-describe("manifest file io", () => {
-  let dir: string;
-  let path: string;
-  const contextOf = (file: string) => ({
-    path: file,
-    location: "in this project",
-    scope: "project" as const,
-  });
+// What every scope's manifest file shares and the repository contract does not state: how a write
+// replaces the file, and that only a missing file reads as none.
+describe("manifest file", () => {
+  let root: string;
+  let file: ManifestRepositoryAdapter;
 
   beforeEach(async () => {
-    dir = await mkdtemp(join(tmpdir(), "aidd-manifest-io-"));
-    path = join(dir, ".aidd", "manifest.json");
+    root = await mkdtemp(join(tmpdir(), "aidd-manifest-io-"));
+    file = new ManifestRepositoryAdapter(
+      root,
+      manifestFileDeps(() => join(root, ".aidd"))
+    );
   });
 
   afterEach(async () => {
-    await rm(dir, { recursive: true, force: true });
-  });
-
-  it("reads a missing file as no manifest", async () => {
-    expect(await readManifestFile(contextOf(path), resolveRegisteredToolId)).toBeNull();
-  });
-
-  it("creates the parent directory on write, so a manifest round-trips through the file", async () => {
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.claude, "1.0.0", []);
-
-    await writeManifestFile(path, manifest);
-    const loaded = await readManifestFile(contextOf(path), resolveRegisteredToolId);
-
-    expect(loaded?.getInstalledToolIds()).toStrictEqual([TOOL.claude]);
-  });
-
-  it("writes the manifest as indented JSON", async () => {
-    await writeManifestFile(path, Manifest.create());
-
-    expect(await readFile(path, "utf-8")).toBe(JSON.stringify(Manifest.create().toJSON(), null, 2));
+    await rm(root, { recursive: true, force: true });
   });
 
   it("overwrites what a previous write left", async () => {
-    const first = Manifest.create();
-    first.addTool(TOOL.claude, "1.0.0", []);
-    await writeManifestFile(path, first);
+    await file.save(aManifest().withTool(TOOL.claude, []).build());
 
-    await writeManifestFile(path, Manifest.create());
+    await file.save(aManifest().build());
 
-    const loaded = await readManifestFile(contextOf(path), resolveRegisteredToolId);
-    expect(loaded?.getInstalledToolIds()).toStrictEqual([]);
-  });
-
-  it("names the file when its content is not JSON", async () => {
-    await mkdir(join(dir, ".aidd"));
-    await writeFile(path, '{"version": 8, "tools": {');
-
-    const read = readManifestFile(contextOf(path), resolveRegisteredToolId);
-
-    await expect(read).rejects.toThrow(InvalidManifestDataError);
-    await expect(read).rejects.toThrow(saying(`${path} is not valid JSON`));
-  });
-
-  it("names the file and the reinstall command when its version is refused", async () => {
-    await mkdir(join(dir, ".aidd"));
-    await writeFile(path, '{"version": 1, "tools": {}}');
-
-    await expect(readManifestFile(contextOf(path), resolveRegisteredToolId)).rejects.toThrow(
-      saying("aidd setup")
-    );
+    expect((await file.load())?.getInstalledToolIds()).toStrictEqual([]);
   });
 
   it("rethrows a read failure other than a missing file", async () => {
-    await mkdir(path, { recursive: true });
+    await mkdir(file.path, { recursive: true });
 
-    await expect(readManifestFile(contextOf(path), resolveRegisteredToolId)).rejects.toThrow(
-      "EISDIR"
-    );
+    await expect(file.load()).rejects.toThrow("EISDIR");
   });
 });

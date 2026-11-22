@@ -10,6 +10,7 @@ import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
 import { ManifestRepositoryAdapter } from "../../src/contexts/installation/infrastructure/manifest-repository-adapter.js";
 import type { Output } from "../../src/orchestration/domain/output.js";
 import type { Scope } from "../../src/shared/domain/scope.js";
+import { manifestFileDeps } from "../contexts/installation/testing/manifest-file-deps.builder.js";
 import { catalogOf } from "../shared/testing/catalog-of.builder.js";
 import { registeredTools, TOOL } from "../shared/testing/registered-tools.builder.js";
 
@@ -136,7 +137,10 @@ describe("the graph a container hands the commands", () => {
   it("offers the menu, not setup, once the manifest at the project root lists a tool", async () => {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "1.0.0", []);
-    await new ManifestRepositoryAdapter(root, (raw) => catalogOf().toolId(raw)).save(manifest);
+    await new ManifestRepositoryAdapter(
+      root,
+      manifestFileDeps(() => join(root, ".aidd"))
+    ).save(manifest);
     const ran: string[][] = [];
     const runner = {
       run: async (argv: string[]) => {

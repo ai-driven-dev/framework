@@ -172,7 +172,7 @@ describe("settings migration: legacy host entries", () => {
         }),
       });
       const machine = canonicallyOwned(tool);
-      machine.setNativeRegistrations(tool, {
+      machine.records.set(tool, {
         binary: tool,
         marketplaces: [
           {
@@ -197,7 +197,7 @@ describe("settings migration: legacy host entries", () => {
         marketplaceRegisterFrameworkUseCase: new RegisterFrameworkMarketplace(registry),
         currentVersion: CURRENT_VERSION,
         hostPluginRegistries: readableHostPlugins(tool),
-        userManifestRepo: new InMemoryManifestRepository(machine),
+        userManifestRepo: machine,
         nativeSources: new Map([
           [
             tool,

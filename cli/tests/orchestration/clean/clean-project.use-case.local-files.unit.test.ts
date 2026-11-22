@@ -4,6 +4,7 @@ import { Marketplace } from "../../../src/contexts/distribution/domain/marketpla
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import { pluginScriptDir } from "../../../src/contexts/tools/domain/hooks/hooks-merge.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
@@ -186,7 +187,8 @@ describe("clean: local files", () => {
         })
       );
       manifest.addTool(HOST.codex, "1.0.0", []);
-      manifest.setNativeRegistrations(HOST.codex, {
+      const records: RegistrationRecords = new Map();
+      records.set(HOST.codex, {
         binary: HOST.codex,
         marketplaces: [
           {
@@ -243,7 +245,7 @@ describe("clean: local files", () => {
           })
         );
       }
-      const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
+      const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT, records);
       const activator = new FakeHostActions({ available: true });
       const useCase = new CleanWithKnownHostSource(
         fs,
@@ -295,7 +297,8 @@ describe("clean: local files", () => {
       })
     );
     manifest.addTool(HOST.codex, "1.0.0", []);
-    manifest.setNativeRegistrations(HOST.codex, {
+    const records: RegistrationRecords = new Map();
+    records.set(HOST.codex, {
       binary: HOST.codex,
       marketplaces: [
         {
@@ -322,7 +325,7 @@ describe("clean: local files", () => {
     const activator = new FakeHostActions({ available: true });
     const useCase = new CleanWithKnownHostSource(
       fs,
-      new InMemoryManifestRepository(manifest, PROJECT_ROOT),
+      new InMemoryManifestRepository(manifest, PROJECT_ROOT, records),
       new CapturingLogger(),
       new UpdateGitignore(fs),
       new Map([[HOST.codex, activator]]),

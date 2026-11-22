@@ -7,6 +7,7 @@ import {
 import { ActiveMachineDependentsError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import type { RegistrationRecords } from "../../../../../src/contexts/installation/ports/record/registration-records.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { holdersRecorded } from "../../../../shared/testing/host-record-reading.builder.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
@@ -25,9 +26,10 @@ class LockedRepository extends InMemoryManifestRepository {
   locked = 0;
   constructor(
     seed: Manifest,
-    private readonly events: string[]
+    private readonly events: string[],
+    records: RegistrationRecords
   ) {
-    super(seed, PROJECT);
+    super(seed, PROJECT, records);
   }
   override async load(): Promise<Manifest | null> {
     this.events.push("load");
@@ -79,13 +81,14 @@ function setup(seed: Seed = {}) {
   const manifest = Manifest.create();
   manifest.addTool(TOOL.claude, "1.0.0", []);
   for (const p of seed.plugins ?? [plugin("one")]) manifest.addPlugin(TOOL.claude, p);
-  if (seed.native !== undefined) manifest.setNativeRegistrations(TOOL.claude, seed.native);
+  const records: RegistrationRecords = new Map();
+  if (seed.native !== undefined) records.set(TOOL.claude, seed.native);
   if (seed.refusingCodex) {
     manifest.addTool(TOOL.codex, "1.0.0", []);
-    manifest.setNativeRegistrations(TOOL.codex, record());
+    records.set(TOOL.codex, record());
   }
   const events: string[] = [];
-  const repo = new LockedRepository(manifest, events);
+  const repo = new LockedRepository(manifest, events, records);
   const withdraw = vi.fn();
   const proven = new Map(
     (seed.plugins ?? [plugin("one")]).map((p) => [
@@ -200,7 +203,7 @@ describe("PurgeMarketplacePlugins", () => {
     expect(s.withdraw).toHaveBeenCalledWith(HOST_NAME);
     expect(saved?.getPlugins(TOOL.claude).map((p) => p.name)).toStrictEqual(["two"]);
     expect(s.withoutMarketplace).toHaveBeenCalledWith(expect.anything(), MARKET);
-    expect(saved?.getNativeRegistrations(TOOL.claude)).toMatchObject({ binary: REWRITTEN_BINARY });
+    expect(s.repo.records.get(TOOL.claude)).toMatchObject({ binary: REWRITTEN_BINARY });
   });
 
   it("plans every host removal before it withdraws from any host", async () => {

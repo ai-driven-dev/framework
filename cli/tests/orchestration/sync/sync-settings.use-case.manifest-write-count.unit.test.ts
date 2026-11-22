@@ -32,6 +32,7 @@ describe("how many times the manifest is written back", () => {
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(manifestRepo.saves).toBe(0);
+    expect(manifestRepo.recordSaveCount).toBe(0);
     expect(fs.listUnder(resolve(PROJECT_ROOT))).toStrictEqual([]);
   });
 
@@ -48,12 +49,13 @@ describe("how many times the manifest is written back", () => {
   });
 
   it("once when only the host registration changed", async () => {
-    const { useCase, manifestRepo, manifest } = await build();
+    const { useCase, manifestRepo } = await build();
 
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(manifestRepo.saves).toBe(1);
-    expect(recorded(manifest)).toStrictEqual(FRAMEWORK_ONLY);
+    expect(manifestRepo.recordSaveCount).toBe(1);
+    expect(recorded(manifestRepo)).toStrictEqual(FRAMEWORK_ONLY);
   });
 
   it("once across two identical runs: the second finds nothing to record", async () => {
@@ -70,14 +72,14 @@ describe("how many times the manifest is written back", () => {
 
   it("never on a second run that enables the same plugin ref again", async () => {
     const activator = new FakeHostActions({ available: true });
-    const { useCase, manifestRepo, manifest } = await build({ withPlugin: true, activator });
+    const { useCase, manifestRepo } = await build({ withPlugin: true, activator });
     await useCase.execute({ projectRoot: PROJECT_ROOT });
     const afterFirstRun = manifestRepo.saves;
 
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(manifestRepo.saves).toBe(afterFirstRun);
-    expect(recorded(manifest)?.pluginRefs).toStrictEqual([`${PLUGIN}@${MARKETPLACE}`]);
+    expect(recorded(manifestRepo)?.pluginRefs).toStrictEqual([`${PLUGIN}@${MARKETPLACE}`]);
   });
 
   it("once when only the tracked settings hash moved under the host's own write", async () => {

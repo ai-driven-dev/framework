@@ -9,7 +9,6 @@ import {
   DEFAULT_MANIFEST_CONTEXT,
   type ManifestFileContext,
 } from "./manifest/assert-supported-version.js";
-import type { NativeRegistrations } from "./manifest/native-registrations.js";
 import { type Ownership, ownerOf } from "./manifest/ownership.js";
 import {
   addPluginToEntry,
@@ -119,14 +118,6 @@ export class Manifest {
   /** Drops the plugin of that name. There is nothing to drop when the plugin or its tool is absent. */
   withoutPlugin(toolId: ToolId, name: string): void {
     if (this.getPlugins(toolId).some((p) => p.name === name)) this.removePlugin(toolId, name);
-  }
-
-  getNativeRegistrations(toolId: ToolId): NativeRegistrations | undefined {
-    return this._tools.get(toolId)?.nativeRegistrations;
-  }
-
-  setNativeRegistrations(toolId: ToolId, registrations: NativeRegistrations): void {
-    this.changeEntry(toolId, (entry) => ({ ...entry, nativeRegistrations: registrations }));
   }
 
   private changeEntry(toolId: ToolId, change: (entry: ToolEntry) => ToolEntry): void {

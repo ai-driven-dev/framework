@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
@@ -227,7 +228,8 @@ describe("clean: confirmation and preview", () => {
     it("announces no cache path for a host whose profile declares no cache directory (copilot)", async () => {
       const manifest = Manifest.create();
       manifest.addTool(HOST.copilot, "1.0.0", []);
-      manifest.setNativeRegistrations(HOST.copilot, {
+      const records: RegistrationRecords = new Map();
+      records.set(HOST.copilot, {
         binary: HOST.copilot,
         marketplaces: [{ alias: "aidd-framework", hostName: "aidd-framework" }],
         pluginRefs: ["aidd-context@aidd-framework"],
@@ -235,7 +237,7 @@ describe("clean: confirmation and preview", () => {
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const useCase = new CleanWithKnownHostSource(
         fs,
-        new InMemoryManifestRepository(manifest, PROJECT_ROOT),
+        new InMemoryManifestRepository(manifest, PROJECT_ROOT, records),
         new CapturingLogger(),
         new UpdateGitignore(fs)
       );
@@ -256,7 +258,8 @@ describe("clean: confirmation and preview", () => {
     it("announces no cache path for a tool that drives no native CLI (cursor)", async () => {
       const manifest = Manifest.create();
       manifest.addTool(HOST.cursor, "1.0.0", []);
-      manifest.setNativeRegistrations(HOST.cursor, {
+      const records: RegistrationRecords = new Map();
+      records.set(HOST.cursor, {
         binary: HOST.cursor,
         marketplaces: [{ alias: "aidd-framework", hostName: "aidd-framework" }],
         pluginRefs: [],
@@ -264,7 +267,7 @@ describe("clean: confirmation and preview", () => {
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const useCase = new CleanWithKnownHostSource(
         fs,
-        new InMemoryManifestRepository(manifest, PROJECT_ROOT),
+        new InMemoryManifestRepository(manifest, PROJECT_ROOT, records),
         new CapturingLogger(),
         new UpdateGitignore(fs)
       );

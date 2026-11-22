@@ -37,7 +37,7 @@ describe("clean releases a project's claims only once its local cleanup succeeds
       const ref = "aidd-vcs@aidd-framework";
       const otherRef = "plugin-b@other-mkt";
       const registration = provenRegistration(SYNTHETIC_TOOL, "aidd-framework", "aidd-framework");
-      const project = seedManifest(SYNTHETIC_TOOL, [registration], [ref]);
+      const { manifest: project, records } = seedManifest(SYNTHETIC_TOOL, [registration], [ref]);
       project.addTool(SECOND_SYNTHETIC_TOOL, "1.0.0", []);
       const record = (name: string, scope: Scope = "user") =>
         RecordedPlugin.fromJSON({
@@ -56,19 +56,27 @@ describe("clean releases a project's claims only once its local cleanup succeeds
       );
       const machine = Manifest.create();
       machine.addTool(SYNTHETIC_TOOL, "1.0.0", []);
-      machine.setNativeRegistrations(SYNTHETIC_TOOL, {
-        binary: SYNTHETIC_TOOL,
-        marketplaces: [registration, provenRegistration(SYNTHETIC_TOOL, "other-mkt", "other-mkt")],
-        pluginRefs: [ref, otherRef],
-        pluginClaims: [ref, otherRef].map((ref) => ({
-          ref,
-          dependents: [PROJECT_ROOT, OTHER_PROJECT],
-        })),
-      });
+      const machineRecords = new Map([
+        [
+          SYNTHETIC_TOOL,
+          {
+            binary: SYNTHETIC_TOOL,
+            marketplaces: [
+              registration,
+              provenRegistration(SYNTHETIC_TOOL, "other-mkt", "other-mkt"),
+            ],
+            pluginRefs: [ref, otherRef],
+            pluginClaims: [ref, otherRef].map((ref) => ({
+              ref,
+              dependents: [PROJECT_ROOT, OTHER_PROJECT],
+            })),
+          },
+        ],
+      ]);
       machine.addTool(SECOND_SYNTHETIC_TOOL, "1.0.0", []);
       for (const name of ["shared", "local-only", "unrelated"])
         machine.addPlugin(SECOND_SYNTHETIC_TOOL, record(name));
-      const machineRepo = new InMemoryManifestRepository(machine);
+      const machineRepo = new InMemoryManifestRepository(machine, undefined, machineRecords);
       const gitignore = new UpdateGitignore(fs);
       if (outcome === "fails")
         gitignore.remove = async () => {
@@ -82,6 +90,7 @@ describe("clean releases a project's claims only once its local cleanup succeeds
         tools: syntheticCatalog(),
         fs,
         manifest: project,
+        records,
         activator,
         binary: SYNTHETIC_TOOL,
         logger: new CapturingLogger(),
@@ -104,16 +113,11 @@ describe("clean releases a project's claims only once its local cleanup succeeds
         });
 
       const dependents = outcome === "succeeds" ? [OTHER_PROJECT] : [PROJECT_ROOT, OTHER_PROJECT];
-      expect(
-        machineRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_TOOL)?.pluginClaims
-      ).toEqual([
+      expect(machineRepo.records.get(SYNTHETIC_TOOL)?.pluginClaims).toEqual([
         { ref, dependents },
         { ref: otherRef, dependents: [PROJECT_ROOT, OTHER_PROJECT] },
       ]);
-      expect(machineRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_TOOL)?.pluginRefs).toEqual([
-        ref,
-        otherRef,
-      ]);
+      expect(machineRepo.records.get(SYNTHETIC_TOOL)?.pluginRefs).toEqual([ref, otherRef]);
       expect(
         machineRepo
           .getCurrent()

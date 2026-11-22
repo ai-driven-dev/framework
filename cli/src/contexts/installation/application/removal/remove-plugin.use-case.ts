@@ -7,6 +7,7 @@ import { PluginNotFoundError } from "../../domain/installation.error.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import type { RegistrationRecords } from "../../ports/record/registration-records.js";
 import { resolvePluginToolIds, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import {
   assertProjectHooksRemovable,
@@ -40,28 +41,32 @@ export class RemovePlugin {
   async execute(options: RemovePluginRequest): Promise<void> {
     const { pluginName, toolIds, projectRoot, withdrawal } = options;
     const manifest = await requireManifest(this.deps.projectRepo);
+    const registered = await this.deps.projectRepo.loadRecords();
     const resolvedToolIds = resolvePluginToolIds(toolIds, manifest, this.tools);
     const named = resolvedToolIds.flatMap((toolId) => {
       const plugin = manifest.getRecordedPlugins(toolId).find((p) => p.plugin.name === pluginName);
       return plugin === undefined ? [] : [{ toolId, plugin }];
     });
-    await this.assertRemovable(manifest, named, { projectRoot, withdrawal });
+    await this.assertRemovable(registered, named, { projectRoot, withdrawal });
     const userTools = resolvedToolIds.filter((toolId) =>
       manifest.getPlugins(toolId).some((p) => p.name === pluginName && p.scope === "user")
     );
     const nativeRefs = new Map<ToolId, readonly string[]>();
     for (const { toolId, plugin } of named) {
-      const registrations = manifest.getNativeRegistrations(toolId);
-      const ref = withdrawal.recordedRef(registrations, plugin);
+      const ref = withdrawal.recordedRef(registered.get(toolId), plugin);
       if (ref !== undefined) nativeRefs.set(toolId, [ref]);
     }
-    const removed = await this.removeFromTools(manifest, {
-      pluginName,
-      toolIds: resolvedToolIds,
-      projectRoot,
-      withdrawal,
-    });
+    const removed = await this.removeFromTools(
+      { manifest, registered },
+      {
+        pluginName,
+        toolIds: resolvedToolIds,
+        projectRoot,
+        withdrawal,
+      }
+    );
     if (!removed) throw new PluginNotFoundError(pluginName);
+    await this.deps.projectRepo.saveRecords(registered);
     await this.deps.projectRepo.save(manifest);
     await withdrawal.detachNativeRefs(projectRoot, nativeRefs);
     for (const toolId of userTools) {
@@ -70,7 +75,7 @@ export class RemovePlugin {
   }
 
   private async assertRemovable(
-    manifest: Manifest,
+    registered: RegistrationRecords,
     named: readonly { toolId: AiToolId; plugin: RecordedPlugin }[],
     { projectRoot, withdrawal }: Pick<RemovePluginRequest, "projectRoot" | "withdrawal">
   ): Promise<void> {
@@ -83,13 +88,13 @@ export class RemovePlugin {
         tool,
         plugin,
         projectRoot,
-        registrations: manifest.getNativeRegistrations(toolId),
+        registrations: registered.get(toolId),
       });
     }
   }
 
   private async removeFromTools(
-    manifest: Manifest,
+    { manifest, registered }: { manifest: Manifest; registered: RegistrationRecords },
     removal: Omit<RemovePluginRequest, "toolIds"> & { toolIds: AiToolId[] }
   ): Promise<boolean> {
     const { pluginName, toolIds, projectRoot, withdrawal } = removal;
@@ -99,7 +104,7 @@ export class RemovePlugin {
       const entry = manifest.getRecordedPlugins(toolId).find((p) => p.plugin.name === pluginName);
       if (entry === undefined) continue;
       const { plugin } = entry;
-      const registrations = manifest.getNativeRegistrations(toolId);
+      const registrations = registered.get(toolId);
       const baseDir = scopeBaseOf(tool, {
         scope: plugin.scope,
         projectRoot: projectRoot,
@@ -120,7 +125,7 @@ export class RemovePlugin {
         registrations !== undefined &&
         (await withdrawal.canDetachRef({ toolId, tool, confirmed, ref }))
       ) {
-        manifest.setNativeRegistrations(toolId, withdrawal.withoutRef(registrations, ref));
+        registered.set(toolId, withdrawal.withoutRef(registrations, ref));
       }
       manifest.removePlugin(toolId, pluginName);
       removed = true;

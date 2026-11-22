@@ -13,6 +13,7 @@ import {
   InvalidManifestToolIdError,
   InvalidPluginScopeError,
   MalformedPluginScopeError,
+  ManifestMigrationError,
   ManifestUnavailableError,
   MissingPluginMetadataError,
   PluginNotFoundError,
@@ -90,17 +91,21 @@ const cases: [() => Error, string][] = [
   [
     () =>
       new UnsupportedManifestVersionError(
-        "manifest version 9 was written by a newer CLI than this one."
+        "manifest version 10 was written by a newer CLI than this one."
       ),
-    "Invalid manifest data: manifest version 9 was written by a newer CLI than this one. Run `aidd update` to update this CLI, then try again.",
+    "Invalid manifest data: manifest version 10 was written by a newer CLI than this one. Run `aidd update` to update this CLI, then try again.",
   ],
   [
     () =>
       new UnsupportedManifestVersionError(
-        "manifest version 5 predates version 8, the only one this CLI reads. No published CLI can write this version: delete m on this machine",
+        "manifest version 5 predates version 8, the oldest one this CLI reads. No published CLI can write this version: delete m on this machine",
         "user"
       ),
-    "Invalid manifest data: manifest version 5 predates version 8, the only one this CLI reads. No published CLI can write this version: delete m on this machine, then run `aidd setup --global` to reinstall the framework.",
+    "Invalid manifest data: manifest version 5 predates version 8, the oldest one this CLI reads. No published CLI can write this version: delete m on this machine, then run `aidd setup --global` to reinstall the framework.",
+  ],
+  [
+    () => new ManifestMigrationError("m", "disk full"),
+    "Cannot move the host registrations out of m: disk full. The manifest is unchanged; run the command again once the file can be written.",
   ],
   [() => new DuplicatePluginError("p"), "Plugin 'p' is already installed."],
   [() => new InvalidManifestDataError(), "Invalid manifest data."],

@@ -25,10 +25,11 @@ export class ListRegisteredPlugins {
 
   async execute(command: ListRegisteredPluginsRequest): Promise<RegisteredPlugins> {
     const manifest = await this.loadManifest.execute();
+    const registered = await this.loadManifest.records();
     const tools: { toolId: ToolId; expectedPlugins: readonly RegisteredPlugin[] }[] = [];
     for (const toolId of manifest.getInstalledToolIds()) {
       if (command.allowedIds && !command.allowedIds.has(toolId)) continue;
-      const recorded = manifest.getNativeRegistrations(toolId);
+      const recorded = registered.get(toolId);
       const expectedPlugins =
         recorded !== undefined
           ? command.records.pluginRefsOf(recorded).map((ref) => ({ plugin: ref, ref }))

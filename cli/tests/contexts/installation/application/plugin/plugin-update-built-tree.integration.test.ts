@@ -88,11 +88,11 @@ describe("UpdatePlugin - built-tree materialization", () => {
       await installStalePlugin(deps, registry);
       const { machine, activator, nativeHost } = attachFutureSupportedNativeClaim(deps);
       const owned = recordedNamed(machine, "sample-plugin");
-      const native = machine.getNativeRegistrations(copilot);
+      const native = deps.userManifestRepo.records.get(copilot);
       if (owned === undefined || native === undefined)
         throw new Error("fixture missing selected claims");
       machine.updatePlugin(cursor, owned.withMachineClaim(dependents));
-      machine.setNativeRegistrations(copilot, {
+      deps.userManifestRepo.records.set(copilot, {
         ...native,
         pluginClaims: [{ ref: "native-plugin@aidd-catalog", dependents }],
       });
@@ -120,7 +120,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
       );
       expect(activator.updatedPlugins).toStrictEqual(["native-plugin@aidd-catalog"]);
       const after = deps.userManifestRepo.getCurrent();
-      expect(after?.getNativeRegistrations(copilot)?.pluginClaims).toStrictEqual([
+      expect(deps.userManifestRepo.records.get(copilot)?.pluginClaims).toStrictEqual([
         { ref: "native-plugin@aidd-catalog", dependents },
       ]);
       expect(recordedNamed(after, "sample-plugin")?.machineClaim).toStrictEqual(dependents);
@@ -136,10 +136,10 @@ describe("UpdatePlugin - built-tree materialization", () => {
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
     const { machine, activator, nativeHost } = attachFutureSupportedNativeClaim(deps);
-    const native = machine.getNativeRegistrations(copilot);
+    const native = deps.userManifestRepo.records.get(copilot);
     if (native === undefined) throw new Error("fixture missing native registrations");
     const otherRef = "native-plugin@other-catalog";
-    machine.setNativeRegistrations(copilot, {
+    deps.userManifestRepo.records.set(copilot, {
       ...native,
       pluginClaims: [...claimsRecorded(native), { ref: otherRef, dependents: ["/B"] }],
     });
@@ -162,7 +162,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
     const owned = recordedNamed(machine, "sample-plugin");
     if (owned === undefined) throw new Error("fixture missing user plugin");
     machine.updatePlugin(cursor, owned.withMachineClaim([PROJECT_ROOT, "/B"]));
-    const claimsBefore = machine.getNativeRegistrations(copilot)?.pluginClaims;
+    const claimsBefore = deps.userManifestRepo.records.get(copilot)?.pluginClaims;
     deps.fs.setFile(BUILT_SKILL, "# Selected update");
     const otherPath = join(USER_PLUGINS_DIR, "unselected-plugin/skills/demo/SKILL.md");
     deps.fs.setFile(otherPath, "unselected user bytes");
@@ -178,7 +178,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
 
     expect(activator.updatedPlugins).toEqual(["native-plugin@aidd-catalog"]);
     const after = deps.userManifestRepo.getCurrent();
-    expect(after?.getNativeRegistrations(copilot)?.pluginClaims).toEqual(claimsBefore);
+    expect(deps.userManifestRepo.records.get(copilot)?.pluginClaims).toEqual(claimsBefore);
     expect(recordedNamed(after, "unselected-plugin")).toEqual(unselected);
     expect(recordedNamed(after, "project-only")).toEqual(projectOnly);
     expect(recordedNamed(after, "sample-plugin")?.machineClaim).toEqual([PROJECT_ROOT, "/B"]);
@@ -194,9 +194,9 @@ describe("UpdatePlugin - built-tree materialization", () => {
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
     const { machine, activator, nativeHost } = attachFutureSupportedNativeClaim(deps);
-    const native = machine.getNativeRegistrations(copilot);
+    const native = deps.userManifestRepo.records.get(copilot);
     if (native === undefined) throw new Error("fixture missing native registrations");
-    machine.setNativeRegistrations(copilot, {
+    deps.userManifestRepo.records.set(copilot, {
       ...native,
       pluginClaims: [
         ...claimsRecorded(native),

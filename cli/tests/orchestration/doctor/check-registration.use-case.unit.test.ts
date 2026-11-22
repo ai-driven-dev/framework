@@ -9,6 +9,7 @@ import { ListRegisteredPlugins } from "../../../src/contexts/installation/applic
 import { LoadManifest } from "../../../src/contexts/installation/application/doctor/load-manifest.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { CheckRegistration } from "../../../src/orchestration/doctor/check-registration.use-case.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
@@ -26,7 +27,10 @@ import {
   syntheticNativeFamilyCatalog,
 } from "../../shared/testing/synthetic-native-tool.builder.js";
 import { SYNTHETIC_IDE_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
-import { buildCheckRegistration } from "../testing/build-check-registration.builder.js";
+import {
+  buildCheckRegistration,
+  checkRegistrationOver,
+} from "../testing/build-check-registration.builder.js";
 
 const PROJECT_ROOT = "/project";
 const LOCAL_SETTINGS = `${PROJECT_ROOT}/.${SYNTHETIC_NATIVE_TOOL}/settings.local.json`;
@@ -168,21 +172,19 @@ function manifestWithNativeRegistrations(
   marketplaces: { alias: string; hostName: string }[] = [
     { alias: "aidd-framework", hostName: "aidd-framework" },
   ]
-): Manifest {
+): { manifest: Manifest; records: RegistrationRecords } {
   const manifest = Manifest.create();
   manifest.addTool(SYNTHETIC_NATIVE_TOOL, "test", []);
-  manifest.setNativeRegistrations(SYNTHETIC_NATIVE_TOOL, {
-    binary: SYNTHETIC_NATIVE_TOOL,
-    marketplaces,
-    pluginRefs,
-  });
-  return manifest;
+  const records: RegistrationRecords = new Map([
+    [SYNTHETIC_NATIVE_TOOL, { binary: SYNTHETIC_NATIVE_TOOL, marketplaces, pluginRefs }],
+  ]);
+  return { manifest, records };
 }
 
 function manifestWithPlugin(
   marketplace?: string,
   toolId: AiToolId = SYNTHETIC_NATIVE_TOOL
-): Manifest {
+): { manifest: Manifest; records: RegistrationRecords } {
   const manifest = aManifest()
     .withTool(toolId, [], { version: "test" })
     .withPlugin(
@@ -197,11 +199,11 @@ function manifestWithPlugin(
       })
     )
     .build();
-  return manifest;
+  return { manifest, records: new Map() };
 }
 
 async function nativeIssuesFor(
-  manifest: Manifest,
+  { manifest, records }: { manifest: Manifest; records: RegistrationRecords },
   reading: HostPluginRegistryReading | "unreachable",
   registered?: Marketplace
 ) {
@@ -215,7 +217,8 @@ async function nativeIssuesFor(
   if (reading !== "unreachable") {
     hostRegistries.set(SYNTHETIC_NATIVE_TOOL, new FakeHostPluginRegistry(reading));
   }
-  return buildCheckRegistration(
+  return checkRegistrationOver(
+    new LoadManifest(new InMemoryManifestRepository(manifest, undefined, records)),
     fs,
     registry,
     (binary) => activators.get(binary)?.isAvailable() ?? false,
@@ -228,7 +231,6 @@ async function nativeIssuesFor(
     "1.0.0",
     syntheticNativeFamilyCatalog()
   ).execute({
-    manifest,
     projectRoot: PROJECT_ROOT,
     allowedIds: null,
   });

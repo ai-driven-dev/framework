@@ -114,19 +114,24 @@ function ownedMachineManifest(
 ) {
   const machine = Manifest.create();
   machine.addTool(toolId, "test", []);
-  machine.setNativeRegistrations(toolId, {
-    binary: toolId,
-    marketplaces: [
+  const records = new Map([
+    [
+      toolId,
       {
-        alias: aiddName,
-        hostName: catalogName,
-        ...(currentSource === undefined ? {} : { provenance: currentSource }),
+        binary: toolId,
+        marketplaces: [
+          {
+            alias: aiddName,
+            hostName: catalogName,
+            ...(currentSource === undefined ? {} : { provenance: currentSource }),
+          },
+        ],
+        pluginRefs: [],
+        pluginClaims: [],
       },
     ],
-    pluginRefs: [],
-    pluginClaims: [],
-  });
-  return machine;
+  ]);
+  return new InMemoryManifestRepository(machine, undefined, records);
 }
 
 function nativeSourceReader(
@@ -210,7 +215,7 @@ async function sync(setup: Setup = {}) {
         }),
       ],
     ]),
-    userManifestRepo: machine && new InMemoryManifestRepository(machine),
+    userManifestRepo: machine,
     nativeSources: new Map([
       [
         toolId,
@@ -346,7 +351,7 @@ describe("the sync guard against a marketplace name a host already holds", () =>
 
     expect(activator.addedMarketplaces).toEqual([`/built/${tool}`]);
     expect(result.errors).toEqual([]);
-    const registrations = (await manifestRepo.load())?.getNativeRegistrations(tool);
+    const registrations = manifestRepo.records.get(tool);
     expect(registrations?.marketplaces).toEqual([
       expect.objectContaining({ alias: "mon-nom", hostName: "upstream" }),
     ]);
@@ -417,7 +422,6 @@ describe("when the catalog this project just built cannot be read back", () => {
     expect(render(result.errors[0]?.error)).toContain(join(builtDir, catalogRelative));
     // Never written as `hostName` - a manifest that guessed the alias would go on
     // claiming a registration the host was never asked to hold.
-    const reloaded = await manifestRepo.load();
-    expect(reloaded?.getNativeRegistrations(tool)).toBeUndefined();
+    expect(manifestRepo.records.get(tool)).toBeUndefined();
   });
 });

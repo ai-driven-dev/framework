@@ -68,11 +68,12 @@ export class UninstallTools {
             .map((plugin) => ({ toolId, name: plugin.name }))
         : []
     );
+    const registered = await this.deps.manifestRepo.loadRecords();
     const nativeRefs = new Map<ToolId, readonly string[]>();
     for (const toolId of toolIds) {
-      const recorded = manifest.getNativeRegistrations(toolId);
-      const refs = command.records.pluginRefsOf(recorded);
+      const refs = command.records.pluginRefsOf(registered.get(toolId));
       if (refs.length > 0) nativeRefs.set(toolId, refs);
+      registered.delete(toolId);
     }
 
     const results: UninstallToolsResult[] = [];
@@ -82,6 +83,7 @@ export class UninstallTools {
       );
     }
 
+    await this.deps.manifestRepo.saveRecords(registered);
     await this.deps.manifestRepo.save(manifest);
     await this.deps.detachClaims(projectRoot, userPlugins, nativeRefs);
     return results;

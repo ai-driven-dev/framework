@@ -7,6 +7,7 @@ import type { HostMarketplaceRegistry } from "../../../src/contexts/host-registr
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import type { CleanProject } from "../../../src/orchestration/clean/clean-project.use-case.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
@@ -139,10 +140,15 @@ export class RegistryMirroringActivatorState implements HostMarketplaceRegistry 
   }
 }
 
-export function seedManifest(toolId: AiToolId, hostName: string, alias: string): Manifest {
+export function seedManifest(
+  toolId: AiToolId,
+  hostName: string,
+  alias: string
+): { manifest: Manifest; records: RegistrationRecords } {
   const manifest = Manifest.create();
   manifest.addTool(toolId, "1.0.0", []);
-  manifest.setNativeRegistrations(toolId, {
+  const records: RegistrationRecords = new Map();
+  records.set(toolId, {
     binary: toolId,
     marketplaces: [
       {
@@ -161,7 +167,7 @@ export function seedManifest(toolId: AiToolId, hostName: string, alias: string):
     ],
     pluginRefs: [REF],
   });
-  return manifest;
+  return { manifest, records };
 }
 
 export function seedAiddMarketplaceRegistry(alias: string, scope: Scope = "project") {
@@ -182,6 +188,7 @@ export function buildUseCase(deps: {
   tools: ToolCatalog;
   fs: InMemoryFileAdapter;
   manifest: Manifest;
+  records?: RegistrationRecords;
   activator: FakeHostActions;
   binary: AiToolId;
   logger: CapturingLogger;
@@ -190,7 +197,7 @@ export function buildUseCase(deps: {
   homeDir?: () => string;
   userManifestRepo?: InMemoryManifestRepository;
 }): CleanProject {
-  const manifestRepo = new InMemoryManifestRepository(deps.manifest, PROJECT_ROOT);
+  const manifestRepo = new InMemoryManifestRepository(deps.manifest, PROJECT_ROOT, deps.records);
   const claudeHostRegistry = deps.hostMarketplaceRegistries?.get(deps.binary);
   const nativeReader: HostMarketplaceSources | undefined =
     deps.binary === HOST.codex

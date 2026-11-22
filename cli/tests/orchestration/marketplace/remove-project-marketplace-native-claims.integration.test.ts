@@ -5,6 +5,7 @@ import { Marketplace } from "../../../src/contexts/distribution/domain/marketpla
 import { RemoveProjectPlugin } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { removalClaims } from "../../../src/contexts/machine-claims/application/removal-claims.js";
 import type { RemoveProjectMarketplace } from "../../../src/orchestration/marketplace/remove-project-marketplace.use-case.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
@@ -72,8 +73,9 @@ async function fixture(options: { nativeMapping?: "absent" | "unrelated" } = {})
       })
     )
     .build();
+  const projectRecords: RegistrationRecords = new Map();
   if (options.nativeMapping !== "absent")
-    project.setNativeRegistrations(SYNTHETIC_NATIVE_TOOL, {
+    projectRecords.set(SYNTHETIC_NATIVE_TOOL, {
       binary: SYNTHETIC_NATIVE_TOOL,
       marketplaces: [
         { alias: "other-alias", hostName: "other-catalog" },
@@ -85,14 +87,19 @@ async function fixture(options: { nativeMapping?: "absent" | "unrelated" } = {})
     });
   const machine = Manifest.create();
   machine.addTool(SYNTHETIC_NATIVE_TOOL, "1.0.0", []);
-  machine.setNativeRegistrations(SYNTHETIC_NATIVE_TOOL, {
-    binary: SYNTHETIC_NATIVE_TOOL,
-    marketplaces: [{ alias: NAME, hostName: "real-catalog" }],
-    pluginRefs: [REF],
-    pluginClaims: [{ ref: REF, dependents: ["/A", "/B"] }],
-  });
-  const projectRepo = new InMemoryManifestRepository(project);
-  const machineRepo = new InMemoryManifestRepository(machine);
+  const machineRecords: RegistrationRecords = new Map([
+    [
+      SYNTHETIC_NATIVE_TOOL,
+      {
+        binary: SYNTHETIC_NATIVE_TOOL,
+        marketplaces: [{ alias: NAME, hostName: "real-catalog" }],
+        pluginRefs: [REF],
+        pluginClaims: [{ ref: REF, dependents: ["/A", "/B"] }],
+      },
+    ],
+  ]);
+  const projectRepo = new InMemoryManifestRepository(project, undefined, projectRecords);
+  const machineRepo = new InMemoryManifestRepository(machine, undefined, machineRecords);
   const registry = new InMemoryMarketplaceRegistry();
   await registry.save(
     "/A",
@@ -119,16 +126,15 @@ describe("project marketplace removal against machine native claims", () => {
     "removes a local orphan with %s native mapping without guessing or detaching machine refs",
     async (nativeMapping) => {
       const f = await fixture({ nativeMapping });
-      const before = f.projectRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_NATIVE_TOOL);
+      const before = structuredClone(f.projectRepo.records.get(SYNTHETIC_NATIVE_TOOL));
       expect(await remove(f.useCase)).toMatchObject({ removedPluginCount: 1, orphanCount: 1 });
       expect(f.projectRepo.getCurrent()?.getRecordedPlugins(SYNTHETIC_NATIVE_TOOL)).toEqual([]);
-      expect(f.projectRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_NATIVE_TOOL)).toEqual(
-        before
-      );
-      expect(
-        f.machineRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_NATIVE_TOOL)?.pluginClaims
-      ).toEqual([{ ref: REF, dependents: ["/A", "/B"] }]);
+      expect(f.projectRepo.records.get(SYNTHETIC_NATIVE_TOOL)).toEqual(before);
+      expect(f.machineRepo.records.get(SYNTHETIC_NATIVE_TOOL)?.pluginClaims).toEqual([
+        { ref: REF, dependents: ["/A", "/B"] },
+      ]);
       expect(f.machineRepo.saveCount).toBe(0);
+      expect(f.machineRepo.recordSaveCount).toBe(0);
       expect(await f.registry.list("/A")).toEqual([]);
     }
   );
@@ -136,16 +142,16 @@ describe("project marketplace removal against machine native claims", () => {
   it("does not detach machine claims when removing a project catalogue without orphans", async () => {
     const f = await fixture();
     f.projectRepo.getCurrent()?.removePlugin(SYNTHETIC_NATIVE_TOOL, "sample-plugin");
-    const before = f.projectRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_NATIVE_TOOL);
+    const before = structuredClone(f.projectRepo.records.get(SYNTHETIC_NATIVE_TOOL));
     expect(await remove(f.useCase)).toMatchObject({ removedPluginCount: 0, orphanCount: 0 });
-    expect(f.projectRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_NATIVE_TOOL)).toEqual(
-      before
-    );
+    expect(f.projectRepo.records.get(SYNTHETIC_NATIVE_TOOL)).toEqual(before);
     expect(f.projectRepo.saveCount).toBe(0);
+    expect(f.projectRepo.recordSaveCount).toBe(0);
     expect(f.machineRepo.saveCount).toBe(0);
-    expect(
-      f.machineRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_NATIVE_TOOL)?.pluginClaims
-    ).toEqual([{ ref: REF, dependents: ["/A", "/B"] }]);
+    expect(f.machineRepo.recordSaveCount).toBe(0);
+    expect(f.machineRepo.records.get(SYNTHETIC_NATIVE_TOOL)?.pluginClaims).toEqual([
+      { ref: REF, dependents: ["/A", "/B"] },
+    ]);
     expect(await f.registry.list("/A")).toEqual([]);
   });
 
@@ -216,6 +222,7 @@ describe("project marketplace removal against machine native claims", () => {
     await expect(remove(useCase)).rejects.toThrow(/EACCES/);
 
     expect(projectRepo.saveCount).toBe(0);
+    expect(projectRepo.recordSaveCount).toBe(0);
     expect(projectRepo.getCurrent()?.getRecordedPlugins(SYNTHETIC_USER_TOOL)).toHaveLength(1);
     expect(
       machineRepo.getCurrent()?.getRecordedPlugins(SYNTHETIC_USER_TOOL)[0]?.machineClaim
@@ -231,9 +238,9 @@ describe("project marketplace removal against machine native claims", () => {
       /User-scope marketplace removal requires/
     );
     expect((await f.registry.list("/A")).find((entry) => entry.name === NAME)).toBeDefined();
-    expect(
-      f.machineRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_NATIVE_TOOL)?.pluginClaims
-    ).toEqual([{ ref: REF, dependents: ["/A", "/B"] }]);
+    expect(f.machineRepo.records.get(SYNTHETIC_NATIVE_TOOL)?.pluginClaims).toEqual([
+      { ref: REF, dependents: ["/A", "/B"] },
+    ]);
   });
 
   it("removes only the project catalogue when its project manifest is absent", async () => {
@@ -247,24 +254,20 @@ describe("project marketplace removal against machine native claims", () => {
     );
     expect(await remove(useCase)).toMatchObject({ removedPluginCount: 0, orphanCount: 0 });
     expect((await f.registry.list("/A")).find((entry) => entry.name === NAME)).toBeUndefined();
-    expect(
-      f.machineRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_NATIVE_TOOL)?.pluginClaims
-    ).toEqual([{ ref: REF, dependents: ["/A", "/B"] }]);
+    expect(f.machineRepo.records.get(SYNTHETIC_NATIVE_TOOL)?.pluginClaims).toEqual([
+      { ref: REF, dependents: ["/A", "/B"] },
+    ]);
   });
 
   it("deletes A's exact orphan projection but preserves B and a different host catalogue", async () => {
     const f = await fixture();
     expect(await remove(f.useCase)).toMatchObject({ removedPluginCount: 1, orphanCount: 1 });
     expect(f.projectRepo.getCurrent()?.getRecordedPlugins(SYNTHETIC_NATIVE_TOOL)).toEqual([]);
-    expect(
-      f.projectRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_NATIVE_TOOL)?.pluginRefs
-    ).toEqual([OTHER]);
-    expect(
-      f.machineRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_NATIVE_TOOL)?.pluginClaims
-    ).toEqual([{ ref: REF, dependents: ["/B"] }]);
-    expect(
-      f.machineRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_NATIVE_TOOL)?.pluginRefs
-    ).toEqual([REF]);
+    expect(f.projectRepo.records.get(SYNTHETIC_NATIVE_TOOL)?.pluginRefs).toEqual([OTHER]);
+    expect(f.machineRepo.records.get(SYNTHETIC_NATIVE_TOOL)?.pluginClaims).toEqual([
+      { ref: REF, dependents: ["/B"] },
+    ]);
+    expect(f.machineRepo.records.get(SYNTHETIC_NATIVE_TOOL)?.pluginRefs).toEqual([REF]);
     expect((await f.registry.list("/A")).find((entry) => entry.name === NAME)).toBeUndefined();
   });
 
@@ -294,9 +297,9 @@ describe("project marketplace removal against machine native claims", () => {
       new KeepPrompter()
     );
     await expect(remove(useCase)).rejects.toThrow(/local file delete failed/);
-    expect(
-      f.machineRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_NATIVE_TOOL)?.pluginClaims
-    ).toEqual([{ ref: REF, dependents: ["/A", "/B"] }]);
+    expect(f.machineRepo.records.get(SYNTHETIC_NATIVE_TOOL)?.pluginClaims).toEqual([
+      { ref: REF, dependents: ["/A", "/B"] },
+    ]);
     expect((await f.registry.list("/A")).find((entry) => entry.name === NAME)).toBeDefined();
   });
 
@@ -315,9 +318,9 @@ describe("project marketplace removal against machine native claims", () => {
       orphanCount: 1,
     });
     expect(f.projectRepo.getCurrent()?.getRecordedPlugins(SYNTHETIC_NATIVE_TOOL)).toHaveLength(1);
-    expect(
-      f.machineRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_NATIVE_TOOL)?.pluginClaims
-    ).toEqual([{ ref: REF, dependents: ["/A", "/B"] }]);
+    expect(f.machineRepo.records.get(SYNTHETIC_NATIVE_TOOL)?.pluginClaims).toEqual([
+      { ref: REF, dependents: ["/A", "/B"] },
+    ]);
   });
 
   it("releases only A's user-scope file claim, leaving B's user bytes intact", async () => {

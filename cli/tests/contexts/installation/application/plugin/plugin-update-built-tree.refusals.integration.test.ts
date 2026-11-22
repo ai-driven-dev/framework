@@ -128,12 +128,12 @@ describe("UpdatePlugin - built-tree materialization", () => {
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
-    const { machine, activator, nativeHost } = attachFutureSupportedNativeClaim(deps);
+    const { activator, nativeHost } = attachFutureSupportedNativeClaim(deps);
     const newRelativePath = "sample-plugin/skills/demo/new.md";
     const destination = join(USER_PLUGINS_DIR, newRelativePath);
     deps.fs.setFile(join("/built/cursor/plugins", newRelativePath), "# Built v2\n");
     deps.fs.setFile(destination, "# User-created\n");
-    const claimBefore = machine.getNativeRegistrations(copilot)?.pluginClaims;
+    const claimBefore = deps.userManifestRepo.records.get(copilot)?.pluginClaims;
     const savesBefore = deps.userManifestRepo.saveCount;
 
     await expect(
@@ -147,7 +147,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
     expect(activator.updatedPlugins).toEqual([]);
     expect(deps.fs.getFile(destination)).toBe("# User-created\n");
     expect(deps.userManifestRepo.saveCount).toBe(savesBefore);
-    expect(machine.getNativeRegistrations(copilot)?.pluginClaims).toEqual(claimBefore);
+    expect(deps.userManifestRepo.records.get(copilot)?.pluginClaims).toEqual(claimBefore);
   });
 
   it("refuses a tracked old path redirected outside the user boundary between plan and apply", async () => {
@@ -227,7 +227,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
     expect(activator.updatedPlugins).toEqual(["native-plugin@aidd-catalog"]);
     expect(deps.userManifestRepo.saveCount).toBe(savesBefore);
     expect(machine.getRecordedPlugins(cursor)[0]?.plugin.version).toBe("0.0.1");
-    expect(machine.getNativeRegistrations(copilot)?.pluginClaims).toEqual([
+    expect(deps.userManifestRepo.records.get(copilot)?.pluginClaims).toEqual([
       { ref: "native-plugin@aidd-catalog", dependents: [PROJECT_ROOT] },
     ]);
   });

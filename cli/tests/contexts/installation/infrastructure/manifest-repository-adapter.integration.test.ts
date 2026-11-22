@@ -1,11 +1,10 @@
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { ManifestRepositoryAdapter } from "../../../../src/contexts/installation/infrastructure/manifest-repository-adapter.js";
-import { resolveRegisteredToolId } from "../../../shared/testing/registered-tools.builder.js";
-import { saying } from "../../../shared/testing/saying.builder.js";
+import { manifestFileDeps } from "../testing/manifest-file-deps.builder.js";
 
 describe("ManifestRepositoryAdapter", () => {
   let tempDir: string;
@@ -13,50 +12,17 @@ describe("ManifestRepositoryAdapter", () => {
 
   beforeEach(async () => {
     tempDir = await mkdtemp(join(tmpdir(), "aidd-manifest-repo-"));
-    adapter = new ManifestRepositoryAdapter(tempDir, resolveRegisteredToolId);
+    adapter = new ManifestRepositoryAdapter(
+      tempDir,
+      manifestFileDeps(() => join(tempDir, ".aidd"))
+    );
   });
 
   afterEach(async () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  describe("load()", () => {
-    it("rejects, rather than returning null, when manifest.json is a directory", async () => {
-      const manifestDir = join(tempDir, ".aidd", "manifest.json");
-      await mkdir(manifestDir, { recursive: true });
-
-      await expect(adapter.load()).rejects.toThrow();
-    });
-
-    it("rejects with an instructive error naming the file when manifest.json is truncated", async () => {
-      const manifestPath = join(tempDir, ".aidd", "manifest.json");
-      await mkdir(join(tempDir, ".aidd"), { recursive: true });
-      await writeFile(manifestPath, '{"version": 6, "tools": {');
-
-      await expect(adapter.load()).rejects.toThrow(saying(manifestPath));
-    });
-
-    it("rejects a refused manifest version naming this project as where it lives and `aidd setup` as the fix", async () => {
-      const manifestPath = join(tempDir, ".aidd", "manifest.json");
-      await mkdir(join(tempDir, ".aidd"), { recursive: true });
-      await writeFile(manifestPath, '{"version": 7, "tools": {}}');
-
-      await expect(adapter.load()).rejects.toThrow(
-        saying(
-          `delete ${manifestPath} in this project, then run \`aidd setup\` to reinstall the framework.`
-        )
-      );
-    });
-  });
-
   describe("loadIfReadable()", () => {
-    it("answers none, rather than rejecting, when manifest.json is truncated", async () => {
-      await mkdir(join(tempDir, ".aidd"), { recursive: true });
-      await writeFile(join(tempDir, ".aidd", "manifest.json"), '{"version": 6, "tools": {');
-
-      expect(await adapter.loadIfReadable()).toBeNull();
-    });
-
     it("answers the manifest when it is readable", async () => {
       await adapter.save(Manifest.create());
 

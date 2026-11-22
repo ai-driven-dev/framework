@@ -4,7 +4,6 @@ import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plu
 import { FileHash } from "../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../src/shared/domain/installation-file.js";
 import type { MergeFileEntry } from "../../../../src/shared/domain/merge.js";
-import { ToolNotInManifestError } from "../../../../src/shared/domain/shared.error.js";
 import { resolveRegisteredToolId, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../../shared/testing/saying.builder.js";
 
@@ -159,10 +158,10 @@ describe("Manifest", () => {
       expect(restoredMerge[0].entries.playwright.value).toBe(`aabb11${"0".repeat(26)}`);
     });
 
-    it("toJSON produces version 7", () => {
+    it("toJSON produces version 9", () => {
       const manifest = Manifest.create();
       manifest.addTool(TOOL.claude, "3.0.0", claudeFiles);
-      expect(manifest.toJSON().version).toBe(8);
+      expect(manifest.toJSON().version).toBe(9);
     });
   });
 
@@ -226,77 +225,6 @@ describe("Manifest", () => {
   describe("a tool that is not installed", () => {
     it("has no tracked files", () => {
       expect(Manifest.create().getToolFiles(TOOL.claude)).toStrictEqual([]);
-    });
-
-    it("has no native registrations", () => {
-      expect(Manifest.create().getNativeRegistrations(TOOL.claude)).toBeUndefined();
-    });
-
-    it("refuses native registrations, naming the tool", () => {
-      const manifest = Manifest.create();
-
-      expect(() =>
-        manifest.setNativeRegistrations(TOOL.claude, {
-          binary: "claude",
-          marketplaces: [],
-          pluginRefs: [],
-        })
-      ).toThrow(new ToolNotInManifestError("claude").message);
-      expect(() =>
-        manifest.setNativeRegistrations(TOOL.claude, {
-          binary: "claude",
-          marketplaces: [],
-          pluginRefs: [],
-        })
-      ).toThrow(ToolNotInManifestError);
-    });
-  });
-
-  describe("native registrations", () => {
-    it("survive a round trip through the document", () => {
-      const manifest = Manifest.create();
-      manifest.addTool(TOOL.claude, "3.0.0", claudeFiles);
-      manifest.setNativeRegistrations(TOOL.claude, {
-        binary: "claude",
-        marketplaces: [{ alias: "aidd-framework", hostName: "ai-driven-dev" }],
-        pluginRefs: ["aidd-context@ai-driven-dev"],
-      });
-
-      const restored = Manifest.fromJSON(manifest.toJSON(), resolveRegisteredToolId);
-
-      expect(restored.getNativeRegistrations(TOOL.claude)).toStrictEqual({
-        binary: "claude",
-        marketplaces: [{ alias: "aidd-framework", hostName: "ai-driven-dev" }],
-        pluginRefs: ["aidd-context@ai-driven-dev"],
-      });
-    });
-  });
-
-  describe("re-adding a tool", () => {
-    it("keeps its plugins and drops its native registrations", () => {
-      const manifest = Manifest.create();
-      manifest.addTool(TOOL.claude, "3.0.0", claudeFiles);
-      manifest.addPlugin(
-        TOOL.claude,
-        RecordedPlugin.fromJSON({
-          name: "aidd-context",
-          source: { kind: "local", path: "/fixture" },
-          version: "1.0.0",
-          strict: false,
-          files: {},
-          scope: "project",
-        })
-      );
-      manifest.setNativeRegistrations(TOOL.claude, {
-        binary: "claude",
-        marketplaces: [],
-        pluginRefs: ["aidd-context@ai-driven-dev"],
-      });
-
-      manifest.addTool(TOOL.claude, "3.1.0", claudeFiles);
-
-      expect(manifest.getPlugins(TOOL.claude)).toHaveLength(1);
-      expect(manifest.getNativeRegistrations(TOOL.claude)).toBeUndefined();
     });
   });
 

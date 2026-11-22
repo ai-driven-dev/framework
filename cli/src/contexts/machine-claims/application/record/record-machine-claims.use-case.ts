@@ -9,11 +9,13 @@ import type { RecordClaimRules } from "../../contract/record-claim-rules.js";
 import type {
   ClaimingMachineManifest,
   MachineManifestRepository,
+  MachineRecords,
 } from "../../ports/machine-manifest.js";
 import type { ClaimingTools } from "../../ports/user-scope-tool.js";
 
 interface MachineClaim {
   machine: ClaimingMachineManifest;
+  records: MachineRecords;
   request: RecordMachineClaimsRequest;
   root: string | undefined;
 }
@@ -37,18 +39,22 @@ export class RecordMachineClaims implements MachineClaimsRecording {
   /** True when the machine record changed; false without a machine manifest to write to. */
   async execute(request: RecordMachineClaimsRequest): Promise<boolean> {
     if (this.deps.userManifestRepo === undefined) return false;
-    const machine = (await this.deps.userManifestRepo.load()) ?? this.deps.emptyManifest();
+    const repo = this.deps.userManifestRepo;
+    const machine = (await repo.load()) ?? this.deps.emptyManifest();
+    const records = await repo.loadRecords();
     const root = await this.realRootOf(request.projectRoot);
-    const claim: MachineClaim = { machine, request, root };
+    const claim: MachineClaim = { machine, records, request, root };
     let changed = false;
     for (const [toolId, outcome] of request.outcomes) {
       const merged = this.mergeInto(claim, toolId, outcome);
       if (merged === null) continue;
       changed ||= merged.changed;
-      if (changed) machine.setNativeRegistrations(toolId, merged.record);
+      if (changed) records.set(toolId, merged.record);
     }
-    if (changed) await this.deps.userManifestRepo.save(machine);
-    return changed;
+    if (!changed) return false;
+    await repo.saveRecords(records);
+    await repo.save(machine);
+    return true;
   }
 
   private async realRootOf(projectRoot: string | undefined): Promise<string | undefined> {
@@ -57,12 +63,12 @@ export class RecordMachineClaims implements MachineClaimsRecording {
 
   /** The tool's claims merged into the machine record; null when it has none to add. */
   private mergeInto(claim: MachineClaim, toolId: ToolId, outcome: ClaimedOutcome) {
-    const { machine, request, root } = claim;
+    const { machine, records, request, root } = claim;
     const claims = this.machineClaimsOf(toolId, outcome, request);
     if (claims.refs.length === 0 && claims.marketplaces.length === 0) return null;
     if (!this.machineTracks(machine, request.project, toolId)) return null;
     return this.deps.mergeClaims(
-      machine.getNativeRegistrations(toolId),
+      records.get(toolId),
       { ...claims, dependent: root },
       this.nativeActivationBinary(toolId) ?? toolId
     );

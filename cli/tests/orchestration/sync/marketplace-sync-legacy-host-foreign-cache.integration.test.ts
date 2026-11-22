@@ -96,7 +96,7 @@ describe("settings migration: legacy host entries", () => {
         userSourceReferences: noSourceReferences(added),
         currentVersion: CURRENT_VERSION,
         hostPluginRegistries: readableHostPlugins(tool),
-        userManifestRepo: new InMemoryManifestRepository(canonicallyOwned(tool)),
+        userManifestRepo: canonicallyOwned(tool),
       });
 
       const before = await fs.readFile(`${foreignProjectCache}/${CATALOG_RELATIVE}`);
@@ -157,7 +157,7 @@ describe("settings migration: legacy host entries", () => {
         userSourceReferences: noSourceReferences(added),
         currentVersion: CURRENT_VERSION,
         hostPluginRegistries: readableHostPlugins(tool),
-        userManifestRepo: new InMemoryManifestRepository(canonicallyOwned(tool)),
+        userManifestRepo: canonicallyOwned(tool),
       });
 
       const before = await fs.readFile(`${sharedBuiltDir()}/${CATALOG_RELATIVE}`);
@@ -228,7 +228,7 @@ describe("settings migration: legacy host entries", () => {
         hostMarketplaceRegistries: new Map([[tool, hostReader]]),
         userCacheRoot: () => USER_CACHE_ROOT,
         hostPluginRegistries: readableHostPlugins(tool),
-        userManifestRepo: new InMemoryManifestRepository(canonicallyOwned(tool)),
+        userManifestRepo: canonicallyOwned(tool),
       });
 
       const result = await useCase.execute({
@@ -256,7 +256,7 @@ describe("settings migration: legacy host entries", () => {
         userCacheRoot: () => USER_CACHE_ROOT,
         userSourceReferences: noSourceReferences(added),
         hostPluginRegistries: readableHostPlugins(tool),
-        userManifestRepo: new InMemoryManifestRepository(canonicallyOwned(tool)),
+        userManifestRepo: canonicallyOwned(tool),
       });
 
       const result = await useCase.execute({

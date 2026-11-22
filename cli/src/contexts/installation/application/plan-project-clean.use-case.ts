@@ -4,7 +4,10 @@ import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { RecordedPlugin } from "../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
-import type { RegistrationRecordData } from "../ports/record/registration-records.js";
+import type {
+  RegistrationRecordData,
+  RegistrationRecords,
+} from "../ports/record/registration-records.js";
 import type {
   CleanNativeRegistrationPreview,
   ProjectCleanPlan,
@@ -32,6 +35,13 @@ function refScopesOf(
   return refScopes;
 }
 
+/** What this project installed, the records beside it, and the home its caches live under. */
+interface Installed {
+  readonly manifest: Manifest;
+  readonly registered: RegistrationRecords;
+  readonly home: string;
+}
+
 /** Reads what this project installed and what a clean would undo, touching nothing. */
 export class PlanProjectClean {
   constructor(
@@ -43,7 +53,11 @@ export class PlanProjectClean {
   async execute(records: ProjectCleanRecords): Promise<ProjectCleanPlan | null> {
     const manifest = await this.deps.manifestRepo.load();
     if (manifest === null) return null;
-    const home = this.deps.asks.homeDir();
+    const installed: Installed = {
+      manifest,
+      registered: await this.deps.manifestRepo.loadRecords(),
+      home: this.deps.asks.homeDir(),
+    };
     const toolFiles = manifest.getInstalledToolIds().map((toolId) => ({
       toolId,
       fileCount: manifest.getToolFiles(toolId).length + manifest.getMergeFiles(toolId).length,
@@ -51,20 +65,20 @@ export class PlanProjectClean {
     return {
       tools: toolFiles,
       totalFileCount: toolFiles.reduce((sum, t) => sum + t.fileCount, 0),
-      nativeRegistrations: this.previewNativeRegistrations(manifest, home, records),
-      withdrawals: this.projectWithdrawals(manifest, home, records),
-      nativeRefs: this.nativeRefs(manifest, records),
+      nativeRegistrations: this.previewNativeRegistrations(installed, records),
+      withdrawals: this.projectWithdrawals(installed, records),
+      nativeRefs: this.nativeRefs(installed, records),
       userPlugins: this.userPlugins(manifest),
     };
   }
 
   private nativeRefs(
-    manifest: Manifest,
+    { manifest, registered }: Installed,
     records: ProjectCleanRecords
   ): ReadonlyMap<ToolId, readonly string[]> {
     const nativeRefs = new Map<ToolId, readonly string[]>();
     for (const toolId of manifest.getInstalledToolIds()) {
-      const recorded = manifest.getNativeRegistrations(toolId);
+      const recorded = registered.get(toolId);
       const refs = records.pluginRefsOf(recorded);
       if (refs.length > 0) nativeRefs.set(toolId, refs);
     }
@@ -83,12 +97,11 @@ export class PlanProjectClean {
   }
 
   private projectWithdrawals(
-    manifest: Manifest,
-    home: string,
+    { manifest, registered, home }: Installed,
     records: ProjectCleanRecords
   ): ProjectRegistrationWithdrawal[] {
     return manifest.getInstalledToolIds().flatMap((toolId) => {
-      const registrations = manifest.getNativeRegistrations(toolId);
+      const registrations = registered.get(toolId);
       if (registrations === undefined || !this.tools.isAiTool(toolId)) return [];
       const tool = this.tools.aiProfile(toolId);
       return [
@@ -103,13 +116,12 @@ export class PlanProjectClean {
   }
 
   private previewNativeRegistrations(
-    manifest: Manifest,
-    home: string,
+    { manifest, registered, home }: Installed,
     records: ProjectCleanRecords
   ): CleanNativeRegistrationPreview[] {
     const preview: CleanNativeRegistrationPreview[] = [];
     for (const toolId of manifest.getInstalledToolIds()) {
-      const registrations = manifest.getNativeRegistrations(toolId);
+      const registrations = registered.get(toolId);
       if (registrations === undefined) continue;
       const cacheRoot = this.tools.isAiTool(toolId)
         ? this.tools.aiProfile(toolId).nativeActivation()?.pluginCacheRoot(home)

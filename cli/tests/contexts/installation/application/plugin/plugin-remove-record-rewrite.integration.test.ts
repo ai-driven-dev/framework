@@ -21,10 +21,11 @@ describe("the record a project plugin removal writes", () => {
     const spy = spiedRecordRules();
     const manifest = Manifest.create();
     manifest.addTool(claude, "test", []);
-    await installViaModeA(manifest);
-    const before = structuredClone(manifest.getNativeRegistrations(claude));
+    const repo = new InMemoryManifestRepository(manifest);
+    await installViaModeA(manifest, repo.records);
+    const before = structuredClone(repo.records.get(claude));
     const remove = pluginRemover({
-      manifestRepo: new InMemoryManifestRepository(manifest),
+      manifestRepo: repo,
       activators: new Map([[claude, new FakeHostActions({ available: true })]]),
       hostPluginRegistries: new Map([
         [
@@ -46,7 +47,7 @@ describe("the record a project plugin removal writes", () => {
     });
 
     expect(spy.withoutRef).toHaveBeenCalledExactlyOnceWith(before, REF);
-    expect(manifest.getNativeRegistrations(claude)).toStrictEqual({
+    expect(repo.records.get(claude)).toStrictEqual({
       ...before,
       binary: REWRITTEN_BINARY,
     });

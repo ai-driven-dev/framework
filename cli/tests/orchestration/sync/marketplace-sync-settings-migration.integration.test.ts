@@ -124,7 +124,7 @@ describe("settings migration", () => {
         activators: new Map([[SYNTHETIC_LISTED_TOOL, activator]]),
         ensureBuilt: fakeEnsureBuiltMarketplace(() => CODEX_BUILT_DIR),
         hostPluginRegistries: readableHostPlugins(SYNTHETIC_LISTED_TOOL),
-        userManifestRepo: new InMemoryManifestRepository(canonicallyOwned(SYNTHETIC_LISTED_TOOL)),
+        userManifestRepo: canonicallyOwned(SYNTHETIC_LISTED_TOOL),
         nativeSources: new Map([
           [
             SYNTHETIC_LISTED_TOOL,

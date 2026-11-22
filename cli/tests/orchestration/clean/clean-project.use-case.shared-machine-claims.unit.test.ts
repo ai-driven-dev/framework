@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
@@ -27,11 +28,11 @@ import { HOST, hostCacheRoot, hostCatalog } from "../testing/synthetic-hosts.bui
 const AT_PROJECT = atProject(hostCatalog());
 const CleanWithKnownHostSource = knownHostSourceCleaner(hostCatalog(), HOST);
 
-function addUnclaimedCatalogueToCodex(manifest: Manifest): void {
-  manifest.setNativeRegistrations(HOST.codex, {
+function addUnclaimedCatalogueToCodex(records: RegistrationRecords): void {
+  records.set(HOST.codex, {
     binary: BINARY,
     marketplaces: [
-      ...(hostRecord(manifest.getNativeRegistrations(HOST.codex))?.marketplaces ?? []),
+      ...(hostRecord(records.get(HOST.codex))?.marketplaces ?? []),
       {
         alias: "other",
         hostName: "other-host",
@@ -76,8 +77,8 @@ describe("clean: shared source machine claims", () => {
   describe("undoing a host's own native registration", () => {
     describe("machine claims survive project cleanup", () => {
       it("names shared-source dependents only on refs belonging to that source", async () => {
-        const manifest = seedManifestWithNativeRegistrations(HOST);
-        addUnclaimedCatalogueToCodex(manifest);
+        const { manifest, records } = seedManifestWithNativeRegistrations(HOST);
+        addUnclaimedCatalogueToCodex(records);
         const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const references = await referencesFromProjects(fs, [
           PROJECT_ROOT,
@@ -107,7 +108,7 @@ describe("clean: shared source machine claims", () => {
         const logger = new CapturingLogger();
         const useCase = new CleanWithKnownHostSource(
           fs,
-          new InMemoryManifestRepository(manifest, PROJECT_ROOT),
+          new InMemoryManifestRepository(manifest, PROJECT_ROOT, records),
           logger,
           new UpdateGitignore(fs),
           new Map([[BINARY, activator]]),
@@ -134,7 +135,7 @@ describe("clean: shared source machine claims", () => {
       it("keeps canonical refs and reports remaining dependents", async () => {
         const others = ["/project-b", "/project-c"];
         const suffix = " Still needed by /project-b, /project-c.";
-        const manifest = seedManifestWithNativeRegistrations(HOST);
+        const { manifest, records } = seedManifestWithNativeRegistrations(HOST);
         const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         fs.setFile(join(PROJECT_ROOT, "marker"), "project");
         const cachePath = join(
@@ -146,9 +147,10 @@ describe("clean: shared source machine claims", () => {
         const extraRef = "another@aidd-framework";
         const machine = Manifest.create();
         machine.addTool(HOST.codex, "1.0.0", []);
-        machine.setNativeRegistrations(HOST.codex, {
+        const machineRecords: RegistrationRecords = new Map();
+        machineRecords.set(HOST.codex, {
           binary: BINARY,
-          marketplaces: manifest.getNativeRegistrations(HOST.codex)?.marketplaces ?? [],
+          marketplaces: records.get(HOST.codex)?.marketplaces ?? [],
           pluginRefs: [REF, extraRef],
           pluginClaims: [
             { ref: REF, dependents: [PROJECT_ROOT, ...others] },
@@ -156,8 +158,8 @@ describe("clean: shared source machine claims", () => {
             { ref: "unrelated@other-host", dependents: ["/unrelated"] },
           ],
         });
-        const machineRepo = new InMemoryManifestRepository(machine, "/fake-home");
-        const projectRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
+        const machineRepo = new InMemoryManifestRepository(machine, "/fake-home", machineRecords);
+        const projectRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT, records);
         const activator = new FakeHostActions({ available: true });
         const logger = new CapturingLogger();
         const hostRefs = new FakeHostPluginRegistry({
@@ -188,7 +190,7 @@ describe("clean: shared source machine claims", () => {
         expect(activator.removedMarketplaces).toEqual([]);
         expect(fs.getFile(cachePath)).toBe("cache");
         expect(projectRepo.getCurrent()).toBeNull();
-        expect(machineRepo.getCurrent()?.getNativeRegistrations(HOST.codex)?.pluginClaims).toEqual([
+        expect(machineRepo.records.get(HOST.codex)?.pluginClaims).toEqual([
           { ref: REF, dependents: others },
           { ref: extraRef, dependents: [PROJECT_ROOT, ...others] },
           { ref: "unrelated@other-host", dependents: ["/unrelated"] },
@@ -205,14 +207,16 @@ describe("clean: shared source machine claims", () => {
         async (machineRegistrations) => {
           const machine = Manifest.create();
           machine.addTool(HOST.codex, "1.0.0", []);
+          const machineRecords: RegistrationRecords = new Map();
           if (machineRegistrations !== undefined)
-            machine.setNativeRegistrations(HOST.codex, machineRegistrations);
+            machineRecords.set(HOST.codex, machineRegistrations);
+          const { manifest, records } = seedManifestWithNativeRegistrations(HOST);
           const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
           const logger = new CapturingLogger();
           const activator = new FakeHostActions({ available: true });
           const useCase = new CleanWithKnownHostSource(
             fs,
-            new InMemoryManifestRepository(seedManifestWithNativeRegistrations(HOST), PROJECT_ROOT),
+            new InMemoryManifestRepository(manifest, PROJECT_ROOT, records),
             logger,
             new UpdateGitignore(fs),
             new Map([[BINARY, activator]]),
@@ -222,7 +226,7 @@ describe("clean: shared source machine claims", () => {
             () => "/fake-home",
             undefined,
             undefined,
-            new InMemoryManifestRepository(machine, "/fake-home")
+            new InMemoryManifestRepository(machine, "/fake-home", machineRecords)
           );
 
           await useCase.execute({ ...AT_PROJECT, force: true });
@@ -251,10 +255,10 @@ describe("clean: shared source machine claims", () => {
       }
 
       it("warns about a ref whose host catalogue was not recorded", async () => {
-        const manifest = seedClaudeNativeRegistrations(HOST);
-        manifest.setNativeRegistrations(HOST.claude, {
+        const { manifest, records } = seedClaudeNativeRegistrations(HOST);
+        records.set(HOST.claude, {
           binary: HOST.claude,
-          marketplaces: manifest.getNativeRegistrations(HOST.claude)?.marketplaces ?? [],
+          marketplaces: records.get(HOST.claude)?.marketplaces ?? [],
           pluginRefs: ["orphan@unrecorded"],
         });
         const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
@@ -262,7 +266,7 @@ describe("clean: shared source machine claims", () => {
         const activator = new FakeHostActions({ available: true });
         const useCase = new CleanWithKnownHostSource(
           fs,
-          new InMemoryManifestRepository(manifest, PROJECT_ROOT),
+          new InMemoryManifestRepository(manifest, PROJECT_ROOT, records),
           logger,
           new UpdateGitignore(fs),
           new Map([[HOST.claude, activator]]),
@@ -285,12 +289,14 @@ describe("clean: shared source machine claims", () => {
           fs.setFile(join(PROJECT_ROOT, "marker"), "project");
           const machine = Manifest.create();
           machine.addTool(HOST.claude, "1.0.0", []);
-          machine.setNativeRegistrations(HOST.claude, {
+          const machineRecords: RegistrationRecords = new Map();
+          machineRecords.set(HOST.claude, {
             binary: HOST.claude,
             marketplaces: [],
             pluginRefs: [extraRef],
             pluginClaims: claimed ? [{ ref: extraRef, dependents: ["/other-project"] }] : [],
           });
+          const { manifest, records } = seedClaudeNativeRegistrations(HOST);
           const hostRefs = new FakeHostPluginRegistry({
             location: "Claude refs fixture",
             refs: new Map([
@@ -302,7 +308,7 @@ describe("clean: shared source machine claims", () => {
           const activator = new FakeHostActions({ available: true });
           const useCase = new CleanWithKnownHostSource(
             fs,
-            new InMemoryManifestRepository(seedClaudeNativeRegistrations(HOST), PROJECT_ROOT),
+            new InMemoryManifestRepository(manifest, PROJECT_ROOT, records),
             logger,
             new UpdateGitignore(fs),
             new Map([[HOST.claude, activator]]),
@@ -312,7 +318,7 @@ describe("clean: shared source machine claims", () => {
             () => "/fake-home",
             undefined,
             new Map([[HOST.claude, hostRefs]]),
-            new InMemoryManifestRepository(machine, "/fake-home")
+            new InMemoryManifestRepository(machine, "/fake-home", machineRecords)
           );
 
           await useCase.execute({ ...AT_PROJECT, force: true });

@@ -83,7 +83,7 @@ export class ActivateNativeTools {
     warnings: (string | HintedMessage)[]
   ) {
     const { projectRoot, context, claims, scope, enablePlugins } = request;
-    const { manifest, marketplaces } = context;
+    const { manifest, records, marketplaces } = context;
     return this.deps.registerPluginWithHost.execute({
       toolId,
       projectRoot,
@@ -95,6 +95,7 @@ export class ActivateNativeTools {
         this.refsToEnableOn({
           toolId,
           manifest,
+          records,
           marketplaces,
           hostNameByAlias,
           scope,
@@ -162,7 +163,7 @@ export class ActivateNativeTools {
   // Claims also recover a selection an older sync dropped from its projection.
   private nativeRefs(run: PluginRefsRun): string[] {
     if (run.scope !== "user") return [];
-    const native = run.manifest.getNativeRegistrations(run.toolId);
+    const native = run.records.get(run.toolId);
     if (native === undefined) return [];
     return this.deps.records.refsOnHosts(native, this.deps.records.claimedRefs(native), [
       ...run.hostNameByAlias.values(),

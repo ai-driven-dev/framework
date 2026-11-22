@@ -4,6 +4,9 @@ import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
  * by machine-claims alone; whatever else the record holds travels through a rewrite untouched. */
 export type MachineNativeRegistrations = Readonly<Record<string, unknown>>;
 
+/** Each tool's host registration on the machine. */
+export type MachineRecords = Map<ToolId, MachineNativeRegistrations>;
+
 /** A user-scope plugin the machine-wide record holds, as far as a claim over it needs to know. */
 export interface MachineUserPlugin {
   readonly plugin: { readonly name: string; readonly scope: string };
@@ -15,8 +18,6 @@ export interface MachineUserPlugin {
 /** The machine-wide record, narrowed to what the claims read and rewrite. The installation owns
  * the record and hands over the real one, which satisfies this shape. */
 export interface MachineManifest {
-  getNativeRegistrations(toolId: ToolId): MachineNativeRegistrations | undefined;
-  setNativeRegistrations(toolId: ToolId, registrations: MachineNativeRegistrations): void;
   getRecordedPlugins(toolId: string): readonly MachineUserPlugin[];
   updatePlugin(toolId: AiToolId, plugin: MachineUserPlugin): void;
 }
@@ -24,6 +25,8 @@ export interface MachineManifest {
 export interface MachineManifestRepository<M extends MachineManifest = MachineManifest> {
   load(): Promise<M | null>;
   save(manifest: M): Promise<void>;
+  loadRecords(): Promise<MachineRecords>;
+  saveRecords(records: MachineRecords): Promise<void>;
 }
 
 /** The machine-wide record as a run's claims grow it: a tool the project tracks joins it. */

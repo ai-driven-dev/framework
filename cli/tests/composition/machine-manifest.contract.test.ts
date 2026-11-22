@@ -1,11 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import { detachNativePluginRefs } from "../../src/contexts/machine-claims/application/native-plugin-ownership.js";
 import { detachUserPlugin } from "../../src/contexts/machine-claims/application/user-plugin-ownership.js";
 import type {
   MachineManifest,
-  MachineNativeRegistrations,
   MachineUserPlugin,
 } from "../../src/contexts/machine-claims/ports/machine-manifest.js";
 import { ToolNotInManifestError } from "../../src/shared/domain/shared.error.js";
@@ -54,29 +52,13 @@ const real: MachineManifestKind = {
     }).withMachineClaim(dependents),
 };
 
-const REGISTRATIONS: MachineNativeRegistrations & Record<string, unknown> = {
-  binary: "codex",
-  marketplaces: [],
-  pluginRefs: ["sample-plugin@catalog"],
-  pluginClaims: [{ ref: "sample-plugin@catalog", dependents: ["/A", "/B"] }],
-};
-
 describe.each([fake, real])("the machine-wide record, as $name answers it", (kind) => {
-  const { cursor, codex } = TOOL;
+  const { cursor } = TOOL;
 
   it("answers nothing for a tool it does not hold", () => {
     const record = kind.recordHolding();
 
-    expect(record.getNativeRegistrations(codex)).toBeUndefined();
     expect(record.getRecordedPlugins(cursor)).toEqual([]);
-  });
-
-  it("refuses a registration written for a tool it does not hold", () => {
-    const record = kind.recordHolding();
-
-    expect(() => record.setNativeRegistrations(codex, REGISTRATIONS)).toThrow(
-      ToolNotInManifestError
-    );
   });
 
   it("refuses a plugin added for a tool it does not hold", () => {
@@ -95,13 +77,11 @@ describe.each([fake, real])("the machine-wide record, as $name answers it", (kin
     );
   });
 
-  it("keeps the registration and the plugin written for a tool it holds", () => {
-    const record = kind.recordHolding(codex, cursor);
-    record.setNativeRegistrations(codex, REGISTRATIONS);
+  it("keeps the plugin written for a tool it holds", () => {
+    const record = kind.recordHolding(cursor);
     record.addPlugin(cursor, kind.aUserPlugin("sample-plugin", ["/A"]));
     record.updatePlugin(cursor, kind.aUserPlugin("sample-plugin", ["/B"]));
 
-    expect(record.getNativeRegistrations(codex)?.pluginClaims).toEqual(REGISTRATIONS.pluginClaims);
     expect(record.getRecordedPlugins(cursor).map((plugin) => plugin.machineClaim)).toEqual([
       ["/B"],
     ]);
@@ -110,7 +90,10 @@ describe.each([fake, real])("the machine-wide record, as $name answers it", (kin
   it("releases only the detaching project from a user plugin", async () => {
     const record = kind.recordHolding(cursor);
     record.addPlugin(cursor, kind.aUserPlugin("sample-plugin", ["/A", "/B"]));
-    const repo = new InMemoryRepository<MachineManifest>(record);
+    const repo = Object.assign(new InMemoryRepository<MachineManifest>(record), {
+      loadRecords: async () => new Map(),
+      saveRecords: async () => undefined,
+    });
 
     await detachUserPlugin({
       repo,
@@ -121,25 +104,6 @@ describe.each([fake, real])("the machine-wide record, as $name answers it", (kin
     });
 
     expect(repo.getCurrent()?.getRecordedPlugins(cursor)[0]?.machineClaim).toEqual(["/B"]);
-    expect(repo.saveCount).toBe(1);
-  });
-
-  it("releases only the detaching project from a native plugin ref", async () => {
-    const record = kind.recordHolding(codex);
-    record.setNativeRegistrations(codex, REGISTRATIONS);
-    const repo = new InMemoryRepository<MachineManifest>(record);
-    const refs = new Map([[codex, ["sample-plugin@catalog"]]]);
-
-    await detachNativePluginRefs({
-      repo,
-      fs: new InMemoryFileAdapter({}, ["/A", "/B", "/C"]),
-      projectRoot: "/A",
-      refsByTool: refs,
-    });
-
-    expect(repo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
-      { ref: "sample-plugin@catalog", dependents: ["/B"] },
-    ]);
     expect(repo.saveCount).toBe(1);
   });
 });

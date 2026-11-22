@@ -71,19 +71,19 @@ describe("Manifest read from a document", () => {
   });
 
   describe("version guard", () => {
-    it("v8 manifest loads without error", () => {
+    it("v9 manifest loads without error", () => {
       const manifest = Manifest.create();
       manifest.addTool(TOOL.copilot, "1.0.0", []);
       const json = manifest.toJSON();
-      expect(json.version).toBe(8);
+      expect(json.version).toBe(9);
       expect(() => Manifest.fromJSON(json, resolveRegisteredToolId)).not.toThrow();
     });
 
-    it("v8 round-trip is stable", () => {
+    it("v9 round-trip is stable", () => {
       const manifest = Manifest.create();
       manifest.addTool(TOOL.claude, "3.0.0", claudeFiles);
       const restored = Manifest.fromJSON(manifest.toJSON(), resolveRegisteredToolId);
-      expect(restored.toJSON().version).toBe(8);
+      expect(restored.toJSON().version).toBe(9);
     });
 
     // No published CLI has ever written v7, and every write path loads through this same guard
@@ -150,7 +150,7 @@ describe("Manifest read from a document", () => {
       );
     });
 
-    it("rejects a version above 8 by pointing at update, not a downgrade", () => {
+    it("rejects a version above 9 by pointing at update, not a downgrade", () => {
       const v99 = { version: 99, tools: {} };
       expect(() => Manifest.fromJSON(v99, resolveRegisteredToolId)).toThrow(saying(/version/));
       expect(() => Manifest.fromJSON(v99, resolveRegisteredToolId)).toThrow(saying(/aidd update/));
@@ -162,7 +162,7 @@ describe("Manifest read from a document", () => {
 
   describe("malformed tool entry", () => {
     it("throws an instructive, typed error naming the field when files is missing", () => {
-      const data = { version: 8, tools: { claude: { toolId: TOOL.claude, version: "1.0.0" } } };
+      const data = { version: 9, tools: { claude: { toolId: TOOL.claude, version: "1.0.0" } } };
       expect(() => Manifest.fromJSON(data, resolveRegisteredToolId)).toThrow(
         saying(/tools\.claude\.files/)
       );
@@ -170,7 +170,7 @@ describe("Manifest read from a document", () => {
 
     it("throws an instructive, typed error naming the field when files is the wrong type", () => {
       const data = {
-        version: 8,
+        version: 9,
         tools: { claude: { toolId: TOOL.claude, version: "1.0.0", files: "nope" } },
       };
       expect(() => Manifest.fromJSON(data, resolveRegisteredToolId)).toThrow(
@@ -179,7 +179,7 @@ describe("Manifest read from a document", () => {
     });
 
     it("throws an instructive, typed error when a tool entry is not an object", () => {
-      const data = { version: 8, tools: { claude: "nope" } };
+      const data = { version: 9, tools: { claude: "nope" } };
       expect(() => Manifest.fromJSON(data, resolveRegisteredToolId)).toThrow(
         saying(/tools\.claude/)
       );
@@ -187,9 +187,9 @@ describe("Manifest read from a document", () => {
 
     // `scope` is mandatory since v7: a default would guess exactly what the field exists to stop
     // guessing. Naming the plugin is what lets a person find the entry among several.
-    it("rejects a v8 plugin entry carrying no scope, naming the plugin", () => {
+    it("rejects a plugin entry carrying no scope, naming the plugin", () => {
       const data = {
-        version: 8,
+        version: 9,
         tools: {
           claude: {
             toolId: TOOL.claude,
@@ -212,9 +212,9 @@ describe("Manifest read from a document", () => {
       );
     });
 
-    it("rejects a v8 plugin entry whose scope is neither project nor user", () => {
+    it("rejects a plugin entry whose scope is neither project nor user", () => {
       const data = {
-        version: 8,
+        version: 9,
         tools: {
           claude: {
             toolId: TOOL.claude,
@@ -241,7 +241,7 @@ describe("Manifest read from a document", () => {
 
   describe("a manifest written while the CLI still recorded MCP exclusions", () => {
     const written = {
-      version: 8,
+      version: 9,
       tools: {
         claude: {
           toolId: TOOL.claude,
@@ -292,7 +292,7 @@ describe("Manifest read from a document", () => {
     it("spells out the 5.2.2 remedy, then the deletion, for a version 6 document", () => {
       expect(() => Manifest.fromJSON({ version: 6, tools: {} }, resolveRegisteredToolId)).toThrow(
         saying(
-          "Invalid manifest data: manifest version 6 predates version 8, the only one this CLI reads. " +
+          "Invalid manifest data: manifest version 6 predates version 8, the oldest one this CLI reads. " +
             "5.2.2, a published CLI, wrote this version. Before deleting it, run " +
             "`npx @ai-driven-dev/cli@5.2.2 clean --force` in this project so it unregisters " +
             "what it registered and clears its own cache — once the manifest naming those " +
@@ -305,7 +305,7 @@ describe("Manifest read from a document", () => {
     it("spells out the deletion alone for a version 7 document", () => {
       expect(() => Manifest.fromJSON({ version: 7, tools: {} }, resolveRegisteredToolId)).toThrow(
         saying(
-          "Invalid manifest data: manifest version 7 predates version 8, the only one this CLI reads. " +
+          "Invalid manifest data: manifest version 7 predates version 8, the oldest one this CLI reads. " +
             "No published CLI can write this version: delete .aidd/manifest.json in this project, " +
             "then run `aidd setup` to reinstall the framework."
         )

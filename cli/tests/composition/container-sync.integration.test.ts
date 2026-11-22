@@ -151,12 +151,16 @@ describe("the settings sync a container wires", () => {
     await base.manifestRepo.save(manifest);
     await syncSettingsUseCase.execute({ projectRoot: root, enablePlugins: ["aidd-test"] });
     const projectSaves = vi.spyOn(base.manifestRepo, "save");
+    const projectRecordSaves = vi.spyOn(base.manifestRepo, "saveRecords");
     const machineSaves = vi.spyOn(base.userManifestRepo, "save");
+    const machineRecordSaves = vi.spyOn(base.userManifestRepo, "saveRecords");
 
     await syncSettingsUseCase.execute({ projectRoot: root, enablePlugins: ["aidd-test"] });
 
     expect(projectSaves).not.toHaveBeenCalled();
+    expect(projectRecordSaves).not.toHaveBeenCalled();
     expect(machineSaves).not.toHaveBeenCalled();
+    expect(machineRecordSaves).not.toHaveBeenCalled();
   });
 
   it("replaces a recorded source that no longer matches what the host holds", async () => {
@@ -172,25 +176,22 @@ describe("the settings sync a container wires", () => {
     manifest.addTool(TOOL.claude, "1.0.0", []);
     await base.manifestRepo.save(manifest);
     await syncSettingsUseCase.execute({ projectRoot: root, enablePlugins: ["aidd-test"] });
-    const recorded = hostRecord(
-      (await base.manifestRepo.load())?.getNativeRegistrations(TOOL.claude)
-    );
+    const records = await base.manifestRepo.loadRecords();
+    const recorded = hostRecord(records.get(TOOL.claude));
     if (recorded === undefined) throw new Error("the first sync recorded nothing");
-    const staled = await base.manifestRepo.load();
-    if (staled === null) throw new Error("the first sync saved no manifest");
-    staled.setNativeRegistrations(TOOL.claude, {
+    records.set(TOOL.claude, {
       ...recorded,
       marketplaces: recorded.marketplaces.map((entry) => ({
         ...entry,
         provenance: { kind: "registry", source: "elsewhere" },
       })),
     });
-    await base.manifestRepo.save(staled);
+    await base.manifestRepo.saveRecords(records);
 
     await syncSettingsUseCase.execute({ projectRoot: root, enablePlugins: ["aidd-test"] });
 
-    expect(
-      (await base.manifestRepo.load())?.getNativeRegistrations(TOOL.claude)?.marketplaces
-    ).toEqual(recorded.marketplaces);
+    expect((await base.manifestRepo.loadRecords()).get(TOOL.claude)?.marketplaces).toEqual(
+      recorded.marketplaces
+    );
   });
 });

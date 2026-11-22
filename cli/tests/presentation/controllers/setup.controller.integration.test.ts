@@ -69,7 +69,7 @@ describe("setup from the local framework fixture", () => {
     expect(exitCode).toBe(0);
     expect(stdout).toContain("Installed");
     const manifest = await readManifest();
-    expect(manifest.version).toBe(8);
+    expect(manifest.version).toBe(9);
     expect(manifest.tools).toHaveProperty("claude");
     // The framework marketplace is machine-scope: every project on this machine shares one
     // registration, so it lives under the user config dir, never under the project's `.aidd/`.

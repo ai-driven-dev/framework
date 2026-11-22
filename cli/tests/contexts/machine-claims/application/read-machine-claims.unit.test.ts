@@ -14,8 +14,8 @@ describe("reading the machine-wide claims on a tool's refs", () => {
   ];
   const readerOf = (pluginClaims?: typeof held) => {
     const manifest = new InMemoryMachineManifest(TOOL.claude);
-    if (pluginClaims) manifest.setNativeRegistrations(TOOL.claude, { pluginClaims });
-    return readMachineClaims(new InMemoryMachineManifestRepository(manifest));
+    const records = pluginClaims ? new Map([[TOOL.claude, { pluginClaims }]]) : undefined;
+    return readMachineClaims(new InMemoryMachineManifestRepository(manifest, records));
   };
 
   it("names the refs the record claims for the tool", async () => {

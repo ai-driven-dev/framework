@@ -10,6 +10,7 @@ import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type {
   NativeRefClaim,
   RegistrationRecordData,
+  RegistrationRecords,
 } from "../../ports/record/registration-records.js";
 import type { HostRefCountingTool } from "../../ports/tool-sections.js";
 import type { UserScopePluginFileRemoval } from "../../ports/user-scope-plugin-files.js";
@@ -88,7 +89,8 @@ export class PurgeMarketplacePlugins {
       throw new Error(
         `Cannot prove AIDD ownership of user-scope marketplace '${marketplace}': no user manifest.`
       );
-    const { plugins, native, nativeRefs } = this.claimsOn(manifest, marketplace, records);
+    const held = { manifest, registered: await this.deps.repo.loadRecords() };
+    const { plugins, native, nativeRefs } = this.claimsOn(held, marketplace, records);
     const holders = records.holdersOf(
       plugins.map(({ recorded }) => recorded),
       nativeRefs
@@ -103,12 +105,10 @@ export class PurgeMarketplacePlugins {
       manifest.removePlugin(toolId, plugin.name);
     }
     for (const { toolId, registrations, registration } of native) {
-      manifest.setNativeRegistrations(
-        toolId,
-        records.withoutMarketplace(registrations, registration.alias)
-      );
+      held.registered.set(toolId, records.withoutMarketplace(registrations, registration.alias));
     }
     await command.forget();
+    await this.deps.repo.saveRecords(held.registered);
     await this.deps.repo.save(manifest);
     return plugins.length + nativeRefs.length;
   }
@@ -125,7 +125,11 @@ export class PurgeMarketplacePlugins {
     for (const plan of plans) await hostRemoval.apply(plan);
   }
 
-  private claimsOn(manifest: Manifest, marketplace: string, records: MarketplaceRecords) {
+  private claimsOn(
+    { manifest, registered }: { manifest: Manifest; registered: RegistrationRecords },
+    marketplace: string,
+    records: MarketplaceRecords
+  ) {
     const plugins: PluginOf[] = this.tools.idsInCanonicalOrder("ai").flatMap((toolId) =>
       manifest
         .getRecordedPlugins(toolId)
@@ -133,7 +137,7 @@ export class PurgeMarketplacePlugins {
         .map((recorded) => ({ toolId, recorded, plugin: recorded.plugin }))
     );
     const native = this.tools.idsInCanonicalOrder("ai").flatMap((toolId) => {
-      const registrations = manifest.getNativeRegistrations(toolId);
+      const registrations = registered.get(toolId);
       if (registrations === undefined) return [];
       const registration = records.registrationOf(registrations, marketplace);
       return registration === undefined ? [] : [{ toolId, registrations, registration }];

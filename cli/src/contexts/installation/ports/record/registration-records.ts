@@ -1,3 +1,5 @@
+import type { ToolId } from "../../../../shared/domain/tool.js";
+
 /**
  * What is recorded for a tool's host registration, as it came. The record is opaque here: host
  * registration reads its host data and machine claims the claims block it keeps beside it, so
@@ -11,6 +13,15 @@
  * record has been seen to hold either.
  */
 export type RegistrationRecordData = Readonly<Record<string, unknown>>;
+
+/** Each tool's record, beside the manifest of the same scope. A tool without one is absent. */
+export type RegistrationRecords = Map<ToolId, RegistrationRecordData>;
+
+/** Where one scope's records are kept. Saving none removes what was kept. */
+export interface RegistrationRecordStore {
+  load(): Promise<RegistrationRecords>;
+  save(records: ReadonlyMap<ToolId, RegistrationRecordData>): Promise<void>;
+}
 
 /** A claim on a native ref, with the project roots still holding it. */
 export interface NativeRefClaim {

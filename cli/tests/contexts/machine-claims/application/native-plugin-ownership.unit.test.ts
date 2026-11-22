@@ -19,20 +19,25 @@ const OTHER = "sample-plugin@other-catalog";
 
 function fixture() {
   const machine = new InMemoryMachineManifest(codex);
-  machine.setNativeRegistrations(codex, {
-    binary: "codex",
-    marketplaces: [
-      { alias: "real-catalog", hostName: "real-catalog" },
-      { alias: "other-catalog", hostName: "other-catalog" },
+  const records = new Map([
+    [
+      codex,
+      {
+        binary: "codex",
+        marketplaces: [
+          { alias: "real-catalog", hostName: "real-catalog" },
+          { alias: "other-catalog", hostName: "other-catalog" },
+        ],
+        pluginRefs: [TARGET, OTHER],
+        pluginClaims: [
+          { ref: TARGET, dependents: ["/A", "/B"] },
+          { ref: OTHER, dependents: ["/A", "/C"] },
+        ],
+      },
     ],
-    pluginRefs: [TARGET, OTHER],
-    pluginClaims: [
-      { ref: TARGET, dependents: ["/A", "/B"] },
-      { ref: OTHER, dependents: ["/A", "/C"] },
-    ],
-  });
+  ]);
   return {
-    repo: new InMemoryMachineManifestRepository(machine),
+    repo: new InMemoryMachineManifestRepository(machine, records),
     fs: new InMemoryFileAdapter({}, ["/A", "/B", "/C"]),
   };
 }
@@ -51,14 +56,14 @@ describe("one project's exact native host ref claim", () => {
 
   it("recognizes no claim on a registration that records none", async () => {
     const machine = new InMemoryMachineManifest(codex);
-    machine.setNativeRegistrations(codex, {
-      binary: "codex",
-      marketplaces: [],
-      pluginRefs: [TARGET],
-    });
+    const records = new Map([[codex, { binary: "codex", marketplaces: [], pluginRefs: [TARGET] }]]);
 
     expect(
-      await isMachineOwnedNativeRef(new InMemoryMachineManifestRepository(machine), codex, TARGET)
+      await isMachineOwnedNativeRef(
+        new InMemoryMachineManifestRepository(machine, records),
+        codex,
+        TARGET
+      )
     ).toBe(false);
   });
 
@@ -71,12 +76,12 @@ describe("one project's exact native host ref claim", () => {
       projectRoot: "/link-to-A",
       refsByTool: new Map([[codex, [TARGET]]]),
     });
-    expect(f.repo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
+    expect(f.repo.records.get(codex)?.pluginClaims).toEqual([
       { ref: TARGET, dependents: ["/B"] },
       { ref: OTHER, dependents: ["/A", "/C"] },
     ]);
-    expect(f.repo.getCurrent()?.getNativeRegistrations(codex)?.pluginRefs).toEqual([TARGET, OTHER]);
-    expect(f.repo.saveCount).toBe(1);
+    expect(f.repo.records.get(codex)?.pluginRefs).toEqual([TARGET, OTHER]);
+    expect(f.repo.recordSaveCount).toBe(1);
   });
 
   it("does not invent a claim or save for an unrelated project or foreign ref", async () => {
@@ -91,11 +96,12 @@ describe("one project's exact native host ref claim", () => {
         projectRoot: root,
         refsByTool: new Map([[codex, [ref]]]),
       });
-      expect(f.repo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
+      expect(f.repo.records.get(codex)?.pluginClaims).toEqual([
         { ref: TARGET, dependents: ["/A", "/B"] },
         { ref: OTHER, dependents: ["/A", "/C"] },
       ]);
       expect(f.repo.saveCount).toBe(0);
+      expect(f.repo.recordSaveCount).toBe(0);
     }
   });
 
@@ -127,6 +133,7 @@ describe("one project's exact native host ref claim", () => {
       refsByTool: new Map([[TOOL.copilot, [TARGET]]]),
     });
     expect(f.repo.saveCount).toBe(0);
+    expect(f.repo.recordSaveCount).toBe(0);
   });
 
   it("holds exclusive access while loading the latest machine claims", async () => {
@@ -138,9 +145,6 @@ describe("one project's exact native host ref claim", () => {
       projectRoot: "/A",
       refsByTool: new Map([[codex, [TARGET]]]),
     });
-    expect(
-      readHeldClaims(f.repo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims)[0]
-        ?.dependents
-    ).toEqual(["/B"]);
+    expect(readHeldClaims(f.repo.records.get(codex)?.pluginClaims)[0]?.dependents).toEqual(["/B"]);
   });
 });

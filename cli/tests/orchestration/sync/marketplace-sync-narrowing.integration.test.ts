@@ -93,12 +93,10 @@ function manifestWithTwoPlugins(): Manifest {
 function build(activator: FakeHostActions) {
   const registry = new InMemoryMarketplaceRegistry();
   const fs = seededCatalogs();
-  const manifest = manifestWithTwoPlugins();
-  const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
+  const manifestRepo = new InMemoryManifestRepository(manifestWithTwoPlugins(), PROJECT_ROOT);
   return {
     registry,
     fs,
-    manifest,
     manifestRepo,
     useCase: marketplaceSync({
       tools: syntheticNativeCatalog(tool),
@@ -166,8 +164,7 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
       marketplaceNames: ["market-b"],
     });
 
-    const reloaded = await manifestRepo.load();
-    const registrations = reloaded?.getNativeRegistrations(tool);
+    const registrations = manifestRepo.records.get(tool);
     expect(registrations?.marketplaces).toEqual(
       expect.arrayContaining([
         {
@@ -182,8 +179,8 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
 
   it("drops a stale ref for the touched marketplace by its hostName suffix, keeping the untouched marketplace's own refs", async () => {
     const activator = new FakeHostActions({ available: true });
-    const { useCase, registry, manifest, manifestRepo } = build(activator);
-    manifest.setNativeRegistrations(tool, {
+    const { useCase, registry, manifestRepo } = build(activator);
+    manifestRepo.records.set(tool, {
       binary: tool,
       marketplaces: [
         { alias: "market-a", hostName: "market-a" },
@@ -191,7 +188,6 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
       ],
       pluginRefs: ["plugin-a@market-a", "plugin-b-old@market-b"],
     });
-    await manifestRepo.save(manifest);
     await registry.save(PROJECT_ROOT, marketplace("market-a"));
     await registry.save(PROJECT_ROOT, marketplace("market-b"));
 
@@ -200,8 +196,7 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
       marketplaceNames: ["market-b"],
     });
 
-    const reloaded = await manifestRepo.load();
-    const registrations = reloaded?.getNativeRegistrations(tool);
+    const registrations = manifestRepo.records.get(tool);
     expect(registrations?.pluginRefs).toContain("plugin-a@market-a");
     expect(registrations?.pluginRefs).toContain("plugin-b@market-b");
     expect(registrations?.pluginRefs).not.toContain("plugin-b-old@market-b");
@@ -252,7 +247,7 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
       marketplaceNames: ["market-b"],
     });
 
-    expect((await manifestRepo.load())?.getNativeRegistrations(tool)).toStrictEqual({
+    expect(manifestRepo.records.get(tool)).toStrictEqual({
       binary: tool,
       marketplaces: [
         {
@@ -267,8 +262,8 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
 
   it("drops a stale ref of either touched marketplace when narrowed to both", async () => {
     const activator = new FakeHostActions({ available: true });
-    const { useCase, registry, manifest, manifestRepo } = build(activator);
-    manifest.setNativeRegistrations(tool, {
+    const { useCase, registry, manifestRepo } = build(activator);
+    manifestRepo.records.set(tool, {
       binary: tool,
       marketplaces: [
         {
@@ -284,7 +279,6 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
       ],
       pluginRefs: ["plugin-a@market-a", "plugin-b-old@market-b"],
     });
-    await manifestRepo.save(manifest);
     await registry.save(PROJECT_ROOT, marketplace("market-a"));
     await registry.save(PROJECT_ROOT, marketplace("market-b"));
 
@@ -293,7 +287,7 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
       marketplaceNames: ["market-a", "market-b"],
     });
 
-    expect((await manifestRepo.load())?.getNativeRegistrations(tool)).toStrictEqual({
+    expect(manifestRepo.records.get(tool)).toStrictEqual({
       binary: tool,
       marketplaces: [
         {

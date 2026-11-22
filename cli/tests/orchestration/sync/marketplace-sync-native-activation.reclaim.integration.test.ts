@@ -276,7 +276,7 @@ describe("native activation: reclaim", () => {
       expect(activator.addedMarketplaces).toEqual([]);
       expect(result.warnings.join("\n")).toContain(`foreign host ref '${REF}'`);
       expect(logger.warnMessages).toEqual(result.warnings);
-      const recorded = (await manifestRepo.load())?.getNativeRegistrations(tool);
+      const recorded = manifestRepo.records.get(tool);
       expect(recorded?.pluginRefs).toEqual([]);
     });
 
@@ -294,7 +294,7 @@ describe("native activation: reclaim", () => {
       await useCase.execute({ projectRoot: PROJECT_ROOT });
       await useCase.execute({ projectRoot: PROJECT_ROOT });
 
-      const recorded = (await manifestRepo.load())?.getNativeRegistrations(tool);
+      const recorded = manifestRepo.records.get(tool);
       expect(recorded?.pluginRefs).toEqual([REF]);
     });
 
@@ -322,7 +322,7 @@ describe("native activation: reclaim", () => {
           describeMessage(warning).includes("registration left untouched")
         )
       ).toBe(true);
-      const recorded = (await manifestRepo.load())?.getNativeRegistrations(tool);
+      const recorded = manifestRepo.records.get(tool);
       expect(recorded?.pluginRefs).toEqual([]);
     });
   });

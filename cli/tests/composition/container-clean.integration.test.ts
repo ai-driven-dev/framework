@@ -94,11 +94,9 @@ describe("the doctor and clean commands a container wires", () => {
     );
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "1.0.0", []);
-    manifest.setNativeRegistrations(TOOL.claude, {
-      binary: "claude",
-      marketplaces: [],
-      pluginRefs: [],
-    });
+    await userManifestRepo.saveRecords(
+      new Map([[TOOL.claude, { binary: "claude", marketplaces: [], pluginRefs: [] }]])
+    );
     await userManifestRepo.save(manifest);
 
     await expect(cleanUserScopeUseCase.execute({ projectRoot: root, force: true })).rejects.toThrow(

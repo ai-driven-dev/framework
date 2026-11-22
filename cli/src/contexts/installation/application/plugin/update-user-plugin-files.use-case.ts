@@ -56,9 +56,30 @@ export class UpdateUserPluginFiles {
     const toolIds = resolvePluginToolIds(options.toolIds, manifest, this.tools);
     const targets = this.fileTargets(manifest, toolIds, options);
     const { refSelection } = options;
-    const natives = nativeTargets(refSelection, manifest, { toolIds, options });
+    const natives = nativeTargets(refSelection, await this.deps.repo.loadRecords(), {
+      toolIds,
+      options,
+    });
     assertSelectionResolves(refSelection, options, { files: targets.length, native: natives });
-    // One plan at a time: plans for one tool share its built tree, which the first one builds.
+    const filePlans = await this.planFiles(targets, options);
+    const updated = await refreshNativeRefs(this.deps.logger, this.tools, {
+      targets: natives,
+      options,
+    });
+    for (const { toolId, plugin, plan } of filePlans) {
+      if (plan === null) continue;
+      manifest.updatePlugin(toolId, await this.applyFilePlan({ toolId, plugin, plan }, options));
+      updated.push(plugin.plugin.name);
+    }
+    if (updated.length > 0) await this.deps.repo.save(manifest);
+    return updated;
+  }
+
+  /** One plan at a time: plans for one tool share its built tree, which the first one builds. */
+  private async planFiles(
+    targets: ReturnType<UpdateUserPluginFiles["fileTargets"]>,
+    options: UpdateUserPluginFilesRequest
+  ) {
     const filePlans = [];
     for (const { toolId, plugin } of targets) {
       const plan = await this.deps.materializer.planUpdate({
@@ -71,17 +92,7 @@ export class UpdateUserPluginFiles {
       });
       filePlans.push({ toolId, plugin, plan });
     }
-    const updated = await refreshNativeRefs(this.deps.logger, this.tools, {
-      targets: natives,
-      options,
-    });
-    for (const { toolId, plugin, plan } of filePlans) {
-      if (plan === null) continue;
-      manifest.updatePlugin(toolId, await this.applyFilePlan({ toolId, plugin, plan }, options));
-      updated.push(plugin.plugin.name);
-    }
-    if (updated.length > 0) await this.deps.repo.save(manifest);
-    return updated;
+    return filePlans;
   }
 
   private fileTargets(

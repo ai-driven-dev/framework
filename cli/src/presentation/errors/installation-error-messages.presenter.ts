@@ -29,6 +29,9 @@ export const INSTALLATION: MessagesOf<InstallationOwners> = {
     `Re-run with --scope ${error.supported} or omit the flag.`,
   "malformed-plugin-scope": (error) =>
     `Plugin "${error.pluginName}" carries an invalid scope: ${JSON.stringify(error.scope)}. Expected "project" or "user".`,
+  "manifest-migration-failed": (error) =>
+    `Cannot move the host registrations out of ${error.path}: ${error.detail}. ` +
+    "The manifest is unchanged; run the command again once the file can be written.",
   "manifest-missing": () => "No AIDD manifest found. Run `aidd setup` to initialize your project.",
   "manifest-corrupted": () =>
     "Manifest is corrupted (invalid JSON). Run `aidd clean --force` and re-initialize.",

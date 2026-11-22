@@ -4,6 +4,7 @@ import type { HostMarketplaceSources } from "../../../src/contexts/host-registra
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
@@ -35,7 +36,7 @@ export class NamedActivator extends FakeHostActions {
 }
 
 export interface SyncOptions {
-  machine?: Manifest;
+  machine?: InMemoryManifestRepository;
   hostRefs?: ReadonlyMap<string, { enabled: boolean }>;
   conflictOnAdd?: boolean;
   projectNativePluginRefs?: readonly string[];
@@ -58,7 +59,7 @@ function seededFiles(builtDir: string, hostCatalogBytes: string) {
   );
 }
 
-function projectManifestOf(toolId: AiToolId, nativePluginRefs: readonly string[] | undefined) {
+function projectManifestOf(toolId: AiToolId) {
   const project = Manifest.create();
   project.addTool(toolId, "test", []);
   project.addPlugin(
@@ -72,14 +73,15 @@ function projectManifestOf(toolId: AiToolId, nativePluginRefs: readonly string[]
       marketplace: CATALOG,
     })
   );
-  if (nativePluginRefs !== undefined) {
-    project.setNativeRegistrations(toolId, {
-      binary: toolId,
-      marketplaces: [],
-      pluginRefs: nativePluginRefs,
-    });
-  }
   return project;
+}
+
+function projectRecordsOf(
+  toolId: AiToolId,
+  nativePluginRefs: readonly string[] | undefined
+): RegistrationRecords {
+  if (nativePluginRefs === undefined) return new Map();
+  return new Map([[toolId, { binary: toolId, marketplaces: [], pluginRefs: nativePluginRefs }]]);
 }
 
 function currentSourceOf(
@@ -114,10 +116,11 @@ export function makeSync(toolId: AiToolId, options: SyncOptions = {}) {
     : FOREIGN_CATALOG_BYTES;
   const fs = seededFiles(builtDir, hostCatalogBytes);
   const projectRepo = new InMemoryManifestRepository(
-    projectManifestOf(toolId, options.projectNativePluginRefs),
-    PROJECT_ROOT
+    projectManifestOf(toolId),
+    PROJECT_ROOT,
+    projectRecordsOf(toolId, options.projectNativePluginRefs)
   );
-  const machineRepo = new InMemoryManifestRepository(options.machine ?? null);
+  const machineRepo = options.machine ?? new InMemoryManifestRepository();
   const registry = new InMemoryMarketplaceRegistry();
   registry.seed(
     PROJECT_ROOT,
@@ -161,25 +164,30 @@ export function makeSync(toolId: AiToolId, options: SyncOptions = {}) {
   return { useCase, fs, projectRepo, machineRepo, registry, activator, logger, hostCatalogBytes };
 }
 
-export function canonicallyOwned(toolId: AiToolId): Manifest {
+export function canonicallyOwned(toolId: AiToolId): InMemoryManifestRepository {
   const machine = Manifest.create();
   machine.addTool(toolId, "1.0.0", []);
-  machine.setNativeRegistrations(toolId, {
-    binary: toolId,
-    marketplaces: [
+  const records = new Map([
+    [
+      toolId,
       {
-        alias: CATALOG,
-        hostName: CATALOG,
-        provenance: {
-          kind: "effective-list",
-          root: `/built/${toolId}`,
-          sourceType: "local",
-          source: `/built/${toolId}`,
-        },
+        binary: toolId,
+        marketplaces: [
+          {
+            alias: CATALOG,
+            hostName: CATALOG,
+            provenance: {
+              kind: "effective-list",
+              root: `/built/${toolId}`,
+              sourceType: "local",
+              source: `/built/${toolId}`,
+            },
+          },
+        ],
+        pluginRefs: [],
+        pluginClaims: [{ ref: PLUGIN_REF, dependents: [PROJECT_ROOT] }],
       },
     ],
-    pluginRefs: [],
-    pluginClaims: [{ ref: PLUGIN_REF, dependents: [PROJECT_ROOT] }],
-  });
-  return machine;
+  ]);
+  return new InMemoryManifestRepository(machine, undefined, records);
 }

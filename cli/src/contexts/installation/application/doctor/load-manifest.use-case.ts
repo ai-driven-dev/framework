@@ -1,6 +1,7 @@
 import { ManifestUnavailableError } from "../../domain/installation.error.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import type { RegistrationRecords } from "../../ports/record/registration-records.js";
 import { requireManifest } from "../shared/require-manifest.js";
 
 /** Reads the installation's manifest for a doctor check, naming what is wrong when it cannot.
@@ -17,5 +18,10 @@ export class LoadManifest {
       if (error instanceof ManifestUnavailableError) throw error;
       throw new ManifestUnavailableError("manifest-corrupted", { cause: error });
     }
+  }
+
+  /** The records kept beside the manifest. */
+  records(): Promise<RegistrationRecords> {
+    return this.manifestRepo.loadRecords();
   }
 }

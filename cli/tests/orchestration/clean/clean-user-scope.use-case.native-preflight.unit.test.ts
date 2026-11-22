@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
@@ -26,9 +27,9 @@ const homedir = (): string => "/home/dev";
 
 describe("clean --scope user: native preflight", () => {
   it("preflights every native source before uninstalling any other catalogue", async () => {
-    const machine = manifestWithClaude(HOST);
+    const { manifest: machine, records } = manifestWithClaude(HOST);
     machine.addTool(HOST.codex, "1.0.0", []);
-    machine.setNativeRegistrations(HOST.codex, {
+    records.set(HOST.codex, {
       binary: HOST.codex,
       marketplaces: [
         {
@@ -42,7 +43,7 @@ describe("clean --scope user: native preflight", () => {
     });
     const claude = new RecordingActivator([]);
     const codex = new RecordingActivator([]);
-    const repo = new InMemoryManifestRepository(machine);
+    const repo = new InMemoryManifestRepository(machine, undefined, records);
     const fs = new RecordingFileAdapter();
     const claudeSource = provenClaudeSources(HOST).get(HOST.claude);
     if (claudeSource === undefined) throw new Error("fixture missing Claude source reader");
@@ -77,7 +78,7 @@ describe("clean --scope user: native preflight", () => {
         [HOST.codex, codex],
       ]),
       sources,
-      pluginRegistries: provenHostPlugins(HOST, machine),
+      pluginRegistries: provenHostPlugins(HOST, records),
     });
     await expect(useCase.execute({ projectRoot: "/A", force: true })).rejects.toThrow(
       /current host source differs.*reconcile manually/
@@ -86,12 +87,13 @@ describe("clean --scope user: native preflight", () => {
     expect(claude.removedMarketplaces).toEqual([]);
     expect(codex.uninstalledPlugins).toEqual([]);
     expect(codex.removedMarketplaces).toEqual([]);
-    expect(repo.getCurrent()?.getNativeRegistrations(HOST.claude)).toBeDefined();
+    expect(repo.records.get(HOST.claude)).toBeDefined();
   });
   it("refuses all native host mutations when a stale canonical source points at a foreign Codex catalogue", async () => {
     const machine = Manifest.create();
     machine.addTool(HOST.codex, "1.0.0", []);
-    machine.setNativeRegistrations(HOST.codex, {
+    const records: RegistrationRecords = new Map();
+    records.set(HOST.codex, {
       binary: HOST.codex,
       marketplaces: [
         {
@@ -103,7 +105,7 @@ describe("clean --scope user: native preflight", () => {
       pluginRefs: ["plugin@foreign-name"],
       pluginClaims: [{ ref: "plugin@foreign-name", dependents: [] }],
     });
-    const repo = new InMemoryManifestRepository(machine);
+    const repo = new InMemoryManifestRepository(machine, undefined, records);
     const fs = new RecordingFileAdapter();
     const activator = new RecordingActivator([]);
     const source: HostMarketplaceSources = {
@@ -129,17 +131,17 @@ describe("clean --scope user: native preflight", () => {
     );
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(activator.removedMarketplaces).toEqual([]);
-    expect(repo.getCurrent()?.getNativeRegistrations(HOST.codex)?.marketplaces).toHaveLength(1);
+    expect(repo.records.get(HOST.codex)?.marketplaces).toHaveLength(1);
   });
   it("refuses an active B native ref even with force, then succeeds only after B detaches", async () => {
-    const machine = manifestWithClaude(HOST);
-    const registrations = machine.getNativeRegistrations(HOST.claude);
+    const { manifest: machine, records } = manifestWithClaude(HOST);
+    const registrations = records.get(HOST.claude);
     if (registrations === undefined) throw new Error("fixture missing native registration");
-    machine.setNativeRegistrations(HOST.claude, {
+    records.set(HOST.claude, {
       ...registrations,
       pluginClaims: [{ ref: "aidd-context@aidd-framework", dependents: ["/B"] }],
     });
-    const repo = new InMemoryManifestRepository(machine);
+    const repo = new InMemoryManifestRepository(machine, undefined, records);
     const fs = new RecordingFileAdapter();
     const activator = new RecordingActivator([]);
     const useCase = userScopeCleaner({
@@ -157,17 +159,17 @@ describe("clean --scope user: native preflight", () => {
         ],
       ]),
       sources: provenClaudeSources(HOST),
-      pluginRegistries: provenHostPlugins(HOST, machine),
+      pluginRegistries: provenHostPlugins(HOST, records),
     });
     await expect(useCase.execute({ projectRoot: "/A", force: true })).rejects.toThrow(
       saying(/active projects.*\/B/)
     );
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(activator.removedMarketplaces).toEqual([]);
-    expect(repo.getCurrent()?.getNativeRegistrations(HOST.claude)?.pluginClaims).toEqual([
+    expect(repo.records.get(HOST.claude)?.pluginClaims).toEqual([
       { ref: "aidd-context@aidd-framework", dependents: ["/B"] },
     ]);
-    machine.setNativeRegistrations(HOST.claude, {
+    repo.records.set(HOST.claude, {
       ...registrations,
       pluginClaims: [{ ref: "aidd-context@aidd-framework", dependents: [] }],
     });

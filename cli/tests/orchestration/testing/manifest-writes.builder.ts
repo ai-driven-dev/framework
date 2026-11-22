@@ -126,9 +126,6 @@ function projectManifestOf(setup: Setup, toolIds: readonly ToolId[]): Manifest {
   const tracked = trackedFilesOf(setup);
   for (const toolId of toolIds) manifest.addTool(toolId, "test", toolId === claude ? tracked : []);
   if (setup.withPlugin === true) manifest.addPlugin(claude, installedPlugin());
-  if (setup.existingRegistrations !== undefined) {
-    manifest.setNativeRegistrations(claude, setup.existingRegistrations);
-  }
   return manifest;
 }
 
@@ -158,8 +155,7 @@ function machineRepoOf(
   if (registrations === undefined) return undefined;
   const machine = Manifest.create();
   machine.addTool(claude, "test", []);
-  machine.setNativeRegistrations(claude, registrations);
-  return new SaveCountingManifestRepository(machine);
+  return new SaveCountingManifestRepository(machine, undefined, new Map([[claude, registrations]]));
 }
 
 function hostMarketplaceRegistriesOf(claude: AiToolId, source: string | undefined) {
@@ -207,7 +203,13 @@ async function buildWith(setup: Setup) {
   const fs = builtCatalogs(names, toolIds);
   if (setup.settingsOnDisk !== undefined) fs.setFile(SETTINGS_ABSOLUTE, setup.settingsOnDisk);
   const manifest = projectManifestOf(setup, toolIds);
-  const manifestRepo = new SaveCountingManifestRepository(manifest);
+  const manifestRepo = new SaveCountingManifestRepository(
+    manifest,
+    undefined,
+    setup.existingRegistrations === undefined
+      ? undefined
+      : new Map([[claude, setup.existingRegistrations]])
+  );
   const registry = await registeredMarketplaces(names, setup.marketplaceScope ?? "project");
   const activator = setup.activator ?? new FakeHostActions({ available: true });
   const machineRepo = machineRepoOf(claude, setup.existingMachineRegistrations);
@@ -239,8 +241,8 @@ async function buildWith(setup: Setup) {
 export function manifestWrites(tools: ToolCatalog, claude: AiToolId) {
   return {
     build: (setup: Omit<Setup, "tools" | "claude"> = {}) => buildWith({ ...setup, tools, claude }),
-    recorded: (manifest: Manifest | null | undefined): RegistrationRecordData | undefined =>
-      manifest?.getNativeRegistrations(claude),
+    recorded: (repo: InMemoryManifestRepository): RegistrationRecordData | undefined =>
+      repo.records.get(claude),
     trackedSettingsHash: (manifest: Manifest): string | undefined =>
       manifest.getToolFiles(claude).find((file) => file.relativePath === SETTINGS_PATH)?.hash.value,
   };

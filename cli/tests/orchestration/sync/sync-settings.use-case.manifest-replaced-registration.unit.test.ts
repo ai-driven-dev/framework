@@ -18,7 +18,7 @@ const { build, recorded } = manifestWrites(syntheticSyncCatalog(), SYNTHETIC_NAT
 
 describe("when a recorded registration is replaced", () => {
   it("once its marketplaces differ, same binary and same refs", async () => {
-    const { useCase, manifest } = await build({
+    const { useCase, manifestRepo } = await build({
       existingRegistrations: {
         binary: SYNTHETIC_NATIVE_TOOL,
         marketplaces: [{ alias: "stale", hostName: "stale" }],
@@ -28,11 +28,11 @@ describe("when a recorded registration is replaced", () => {
 
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
-    expect(recorded(manifest)).toStrictEqual(FRAMEWORK_ONLY);
+    expect(recorded(manifestRepo)).toStrictEqual(FRAMEWORK_ONLY);
   });
 
   it("once a marketplace's hostName alone moved", async () => {
-    const { useCase, manifest } = await build({
+    const { useCase, manifestRepo } = await build({
       existingRegistrations: {
         binary: SYNTHETIC_NATIVE_TOOL,
         marketplaces: [{ alias: MARKETPLACE, hostName: "old-host" }],
@@ -42,12 +42,12 @@ describe("when a recorded registration is replaced", () => {
 
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
-    expect(recorded(manifest)).toStrictEqual(FRAMEWORK_ONLY);
+    expect(recorded(manifestRepo)).toStrictEqual(FRAMEWORK_ONLY);
   });
 
   it("once a plugin ref appears where none was recorded", async () => {
     const activator = new FakeHostActions({ available: true });
-    const { useCase, manifest } = await build({
+    const { useCase, manifestRepo } = await build({
       withPlugin: true,
       activator,
       existingRegistrations: FRAMEWORK_ONLY,
@@ -55,14 +55,14 @@ describe("when a recorded registration is replaced", () => {
 
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
-    expect(recorded(manifest)).toStrictEqual({
+    expect(recorded(manifestRepo)).toStrictEqual({
       ...FRAMEWORK_ONLY,
       pluginRefs: [`${PLUGIN}@${MARKETPLACE}`],
     });
   });
 
   it("compares every recorded marketplace, not only the first", async () => {
-    const { useCase, manifest } = await build({
+    const { useCase, manifestRepo } = await build({
       marketplaceNames: ["market-a", "market-b"],
       existingRegistrations: {
         binary: SYNTHETIC_NATIVE_TOOL,
@@ -76,7 +76,7 @@ describe("when a recorded registration is replaced", () => {
 
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
-    expect(recorded(manifest)).toStrictEqual({
+    expect(recorded(manifestRepo)).toStrictEqual({
       binary: SYNTHETIC_NATIVE_TOOL,
       marketplaces: [
         {
@@ -95,7 +95,7 @@ describe("when a recorded registration is replaced", () => {
   });
 
   it("records no marketplace whose build failed, this run having registered nothing for it", async () => {
-    const { useCase, manifest } = await build({
+    const { useCase, manifestRepo } = await build({
       marketplaceNames: [MARKETPLACE, "broken"],
       failingBuilds: ["broken"],
       existingRegistrations: {
@@ -107,11 +107,13 @@ describe("when a recorded registration is replaced", () => {
 
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
-    expect(hostRecord(recorded(manifest))?.marketplaces).toStrictEqual(FRAMEWORK_ONLY.marketplaces);
+    expect(hostRecord(recorded(manifestRepo))?.marketplaces).toStrictEqual(
+      FRAMEWORK_ONLY.marketplaces
+    );
   });
 
   it("keeps a marketplace an earlier run registered when its build now fails", async () => {
-    const { useCase, manifest } = await build({
+    const { useCase, manifestRepo } = await build({
       marketplaceNames: [MARKETPLACE, "broken"],
       failingBuilds: ["broken"],
       existingMachineRegistrations: ownedMachineEntry("broken", "broken-catalog"),
@@ -124,7 +126,7 @@ describe("when a recorded registration is replaced", () => {
 
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
-    expect(hostRecord(recorded(manifest))?.marketplaces).toStrictEqual([
+    expect(hostRecord(recorded(manifestRepo))?.marketplaces).toStrictEqual([
       ...FRAMEWORK_ONLY.marketplaces,
       { alias: "broken", hostName: "broken-catalog" },
     ]);

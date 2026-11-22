@@ -52,6 +52,8 @@ function makeManifestRepo(manifest: Manifest): ManifestRepository {
     load: async () => manifest,
     loadIfReadable: async () => null,
     save: async () => {},
+    loadRecords: async () => new Map(),
+    saveRecords: async () => {},
     delete: async () => {},
   };
 }

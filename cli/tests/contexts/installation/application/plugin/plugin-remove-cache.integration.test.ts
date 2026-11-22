@@ -41,7 +41,7 @@ function buildDist(): PluginDistribution {
   });
 }
 
-async function seedManifest(): Promise<Manifest> {
+async function seededRepository(): Promise<InMemoryManifestRepository> {
   const manifest = Manifest.create();
   manifest.addTool(TOOL.claude, "test", []);
   await registerMarketplacePlugin({
@@ -54,18 +54,23 @@ async function seedManifest(): Promise<Manifest> {
   });
   // hostName differs from this project's own local alias - the same divergence
   // `clean`'s own marketplace cache purge already addresses by hostName, never alias.
-  manifest.setNativeRegistrations(TOOL.claude, {
-    binary: "claude",
-    marketplaces: [
+  const records = new Map([
+    [
+      TOOL.claude,
       {
-        alias: ALIAS,
-        hostName: HOST_NAME,
-        provenance: { kind: "registry", source: "/plugin-source" },
+        binary: "claude",
+        marketplaces: [
+          {
+            alias: ALIAS,
+            hostName: HOST_NAME,
+            provenance: { kind: "registry", source: "/plugin-source" },
+          },
+        ],
+        pluginRefs: [REF],
       },
     ],
-    pluginRefs: [REF],
-  });
-  return manifest;
+  ]);
+  return new InMemoryManifestRepository(manifest, PROJECT_ROOT, records);
 }
 
 function verifiedClaudeRemoval(
@@ -122,7 +127,7 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
     );
     await fs.writeFile(cacheEntry, "{}");
     await fs.writeFile(foreignCacheEntry, "foreign bytes");
-    const manifestRepo = new InMemoryManifestRepository(await seedManifest(), PROJECT_ROOT);
+    const manifestRepo = await seededRepository();
     const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
     const removeUseCase = verifiedClaudeRemoval(fs, manifestRepo, logger, activator);
@@ -142,7 +147,7 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
     const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const cacheEntry = join(CLAUDE_CACHE_ROOT, HOST_NAME, PLUGIN_NAME, "1.0.0", "plugin.json");
     await fs.writeFile(cacheEntry, "{}");
-    const manifestRepo = new InMemoryManifestRepository(await seedManifest(), PROJECT_ROOT);
+    const manifestRepo = await seededRepository();
     const activator = new FakeHostActions({ available: false });
     const logger = new CapturingLogger();
     const removeUseCase = verifiedClaudeRemoval(fs, manifestRepo, logger, activator);
@@ -163,7 +168,7 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
     const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const cacheEntry = join(CLAUDE_CACHE_ROOT, HOST_NAME, PLUGIN_NAME, "1.0.0", "plugin.json");
     await fs.writeFile(cacheEntry, "{}");
-    const manifestRepo = new InMemoryManifestRepository(await seedManifest(), PROJECT_ROOT);
+    const manifestRepo = await seededRepository();
     const activator = new FakeHostActions({ available: true, failOnUninstall: [REF] });
     const logger = new CapturingLogger();
     const removeUseCase = verifiedClaudeRemoval(fs, manifestRepo, logger, activator);
@@ -192,18 +197,23 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
       manifest,
       marketplace: ALIAS,
     });
-    manifest.setNativeRegistrations(TOOL.claude, {
-      binary: "claude",
-      marketplaces: [
+    const records = new Map([
+      [
+        TOOL.claude,
         {
-          alias: ALIAS,
-          hostName: evilHostName,
-          provenance: { kind: "registry", source: "/plugin-source" },
+          binary: "claude",
+          marketplaces: [
+            {
+              alias: ALIAS,
+              hostName: evilHostName,
+              provenance: { kind: "registry", source: "/plugin-source" },
+            },
+          ],
+          pluginRefs: [`${PLUGIN_NAME}@${evilHostName}`],
         },
       ],
-      pluginRefs: [`${PLUGIN_NAME}@${evilHostName}`],
-    });
-    const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
+    ]);
+    const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT, records);
     const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
     const removeUseCase = verifiedClaudeRemoval(fs, manifestRepo, logger, activator);
@@ -224,7 +234,7 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
       join(CLAUDE_CACHE_ROOT, HOST_NAME, PLUGIN_NAME, "1.0.0", "plugin.json"),
       "{}"
     );
-    const manifestRepo = new InMemoryManifestRepository(await seedManifest(), PROJECT_ROOT);
+    const manifestRepo = await seededRepository();
     const logger = new CapturingLogger();
     const removeUseCase = verifiedClaudeRemoval(
       fs,
@@ -248,7 +258,7 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
     const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const cacheEntry = join(CLAUDE_CACHE_ROOT, HOST_NAME, PLUGIN_NAME, "1.0.0", "plugin.json");
     await fs.writeFile(cacheEntry, "{}");
-    const manifestRepo = new InMemoryManifestRepository(await seedManifest(), PROJECT_ROOT);
+    const manifestRepo = await seededRepository();
     const logger = new CapturingLogger();
     const removeUseCase = pluginRemover({ fs, manifestRepo, logger });
 
@@ -274,18 +284,23 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
       manifest,
       marketplace: ALIAS,
     });
-    manifest.setNativeRegistrations(TOOL.copilot, {
-      binary: "copilot",
-      marketplaces: [
+    const records = new Map([
+      [
+        TOOL.copilot,
         {
-          alias: ALIAS,
-          hostName: HOST_NAME,
-          provenance: { kind: "registry", source: "/plugin-source" },
+          binary: "copilot",
+          marketplaces: [
+            {
+              alias: ALIAS,
+              hostName: HOST_NAME,
+              provenance: { kind: "registry", source: "/plugin-source" },
+            },
+          ],
+          pluginRefs: [REF],
         },
       ],
-      pluginRefs: [REF],
-    });
-    const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
+    ]);
+    const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT, records);
     const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
     const removeUseCase = pluginRemover({
@@ -305,8 +320,6 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
 
     expect(activator.uninstalledPlugins).toStrictEqual([]);
     expect(manifestRepo.getCurrent()?.getPlugins(TOOL.copilot)).toHaveLength(1);
-    expect(manifestRepo.getCurrent()?.getNativeRegistrations(TOOL.copilot)?.pluginRefs).toEqual([
-      REF,
-    ]);
+    expect(manifestRepo.records.get(TOOL.copilot)?.pluginRefs).toEqual([REF]);
   });
 });

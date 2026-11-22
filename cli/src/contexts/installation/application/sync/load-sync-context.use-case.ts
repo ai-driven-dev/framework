@@ -8,6 +8,7 @@ import type {
   FrameworkMarketplaceRegistrar,
   InstallationMarketplaceRegistry,
 } from "../../ports/marketplace-sources.js";
+import type { RegistrationRecords } from "../../ports/record/registration-records.js";
 
 export interface LoadSyncContextRequest {
   projectRoot: string;
@@ -18,19 +19,21 @@ export interface LoadSyncContextRequest {
   marketplaceNames?: readonly string[];
 }
 
-/** What one sync run works on: the loaded manifest, the marketplaces it covers, the tools it
- * touches, and the way to persist the manifest to the repository it was read from. */
+/** What one sync run works on: the loaded manifest and the records kept beside it, the
+ * marketplaces it covers, the tools it touches, and the way to persist both to the repository
+ * they were read from. */
 export interface SyncContext {
   manifest: Manifest;
+  records: RegistrationRecords;
   marketplaces: readonly DeclaredMarketplace[];
   toolIds: readonly ToolId[];
   save(): Promise<void>;
-  /** The machine-wide manifest, absent when it is empty or not kept. */
-  machineManifest(): Promise<Manifest | undefined>;
+  /** The machine-wide records, none when no machine-wide manifest is kept. */
+  machineRecords(): Promise<RegistrationRecords>;
   /** Whether a machine-wide manifest is kept at all. */
   readonly machineKept: boolean;
-  /** The manifest as last saved, not the one this run is changing. */
-  persistedProject(): Promise<Manifest | undefined>;
+  /** The project's records as last saved, not the ones this run is changing. */
+  persistedProject(): Promise<RegistrationRecords>;
 }
 
 /** What LoadSyncContext is built from. */
@@ -79,14 +82,19 @@ export class LoadSyncContext {
         ? recreatedMarketplaces
         : recreatedMarketplaces.filter((m) => request.marketplaceNames?.includes(m.name));
     if (marketplaces.length === 0) return null;
+    const records = await manifestRepo.loadRecords();
     return {
       manifest,
+      records,
       marketplaces,
       toolIds: this.selectToolIds(manifest, request.toolIds),
-      save: () => manifestRepo.save(manifest),
-      machineManifest: async () => (await this.deps.userManifestRepo?.load()) ?? undefined,
+      save: async () => {
+        await manifestRepo.saveRecords(records);
+        await manifestRepo.save(manifest);
+      },
+      machineRecords: async () => (await this.deps.userManifestRepo?.loadRecords()) ?? new Map(),
       machineKept: this.deps.userManifestRepo !== undefined,
-      persistedProject: async () => (await this.deps.manifestRepo.load()) ?? undefined,
+      persistedProject: () => this.deps.manifestRepo.loadRecords(),
     };
   }
 

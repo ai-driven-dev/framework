@@ -7,6 +7,7 @@ import type {
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { CleanProject as ProductionCleanUseCase } from "../../../src/orchestration/clean/clean-project.use-case.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
@@ -142,10 +143,14 @@ export const BINARY = HOST.codex;
 export const MARKETPLACE = "aidd-framework";
 export const REF = "aidd-context@aidd-framework";
 
-export function seedManifestWithNativeRegistrations(ids: NamedTools<"codex">): Manifest {
+export function seedManifestWithNativeRegistrations(ids: NamedTools<"codex">): {
+  manifest: Manifest;
+  records: RegistrationRecords;
+} {
   const manifest = Manifest.create();
   manifest.addTool(ids.codex, "1.0.0", []);
-  manifest.setNativeRegistrations(ids.codex, {
+  const records: RegistrationRecords = new Map();
+  records.set(ids.codex, {
     binary: BINARY,
     marketplaces: [
       {
@@ -161,13 +166,17 @@ export function seedManifestWithNativeRegistrations(ids: NamedTools<"codex">): M
     ],
     pluginRefs: [REF],
   });
-  return manifest;
+  return { manifest, records };
 }
 
-export function seedClaudeNativeRegistrations(ids: NamedTools<"claude">): Manifest {
+export function seedClaudeNativeRegistrations(ids: NamedTools<"claude">): {
+  manifest: Manifest;
+  records: RegistrationRecords;
+} {
   const manifest = Manifest.create();
   manifest.addTool(ids.claude, "1.0.0", []);
-  manifest.setNativeRegistrations(ids.claude, {
+  const records: RegistrationRecords = new Map();
+  records.set(ids.claude, {
     binary: HOST.claude,
     marketplaces: [
       {
@@ -178,7 +187,7 @@ export function seedClaudeNativeRegistrations(ids: NamedTools<"claude">): Manife
     ],
     pluginRefs: [REF],
   });
-  return manifest;
+  return { manifest, records };
 }
 
 /** Explicit host ref evidence for Claude positives, separate from the AIDD manifest. */

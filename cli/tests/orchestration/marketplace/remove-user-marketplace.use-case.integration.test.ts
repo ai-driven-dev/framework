@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import {
   REWRITTEN_BINARY,
   spiedRecordRules,
@@ -47,6 +48,7 @@ for (const toolId of [SYNTHETIC_TOOL]) {
       expect(f.activator.uninstalledPlugins).toEqual([]);
       expect(f.activator.removedMarketplaces).toEqual([]);
       expect(f.repo.saveCount).toBe(0);
+      expect(f.repo.recordSaveCount).toBe(0);
     });
 
     it("selects the requested user catalogue rather than the first unrelated catalogue", async () => {
@@ -81,18 +83,18 @@ for (const toolId of [SYNTHETIC_TOOL]) {
       await f.useCase.execute(options());
       expect(f.activator.uninstalledPlugins).toEqual([REF]);
       expect(f.activator.uninstalledPluginScopes).toEqual(["user"]);
-      expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([]);
+      expect(f.repo.records.get(toolId)?.pluginClaims).toEqual([]);
     });
 
     it("writes the record the host rewrote once the catalogue is withdrawn", async () => {
       const spy = spiedRecordRules();
       const f = await fixture(enabled(), { records: spy.rules });
-      const before = structuredClone(f.repo.getCurrent()?.getNativeRegistrations(toolId));
+      const before = structuredClone(f.repo.records.get(toolId));
 
       await f.useCase.execute(options());
 
       expect(spy.withoutMarketplace).toHaveBeenCalledExactlyOnceWith(before, ALIAS);
-      expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)).toStrictEqual({
+      expect(f.repo.records.get(toolId)).toStrictEqual({
         ...before,
         binary: REWRITTEN_BINARY,
       });
@@ -100,7 +102,7 @@ for (const toolId of [SYNTHETIC_TOOL]) {
 
     it("removes a proven empty catalogue without inventing missing plugin claims", async () => {
       const f = await fixture(new Map());
-      f.repo.getCurrent()?.setNativeRegistrations(toolId, {
+      f.repo.records.set(toolId, {
         binary: toolId,
         marketplaces: [{ alias: ALIAS, hostName: HOST, provenance: proofFor() }],
         pluginRefs: [],
@@ -108,7 +110,7 @@ for (const toolId of [SYNTHETIC_TOOL]) {
       expect(await f.useCase.execute(options())).toMatchObject({ removedPluginCount: 0 });
       expect(f.activator.uninstalledPlugins).toEqual([]);
       expect(f.activator.removedMarketplaces).toEqual([HOST]);
-      expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)).toMatchObject({
+      expect(f.repo.records.get(toolId)).toMatchObject({
         marketplaces: [],
         pluginRefs: [],
         pluginClaims: [],
@@ -125,6 +127,7 @@ for (const toolId of [SYNTHETIC_TOOL]) {
       expect(f.activator.removedMarketplaces).toEqual([]);
       expect(await f.registry.list("/A")).toEqual(before);
       expect(f.repo.saveCount).toBe(0);
+      expect(f.repo.recordSaveCount).toBe(0);
     });
 
     it("refuses B's live claim, including with autoConfirm", async () => {
@@ -133,9 +136,7 @@ for (const toolId of [SYNTHETIC_TOOL]) {
         saying(/user-scope marketplace 'project-alias'.*active projects.*\/B/)
       );
       expect(f.activator.uninstalledPlugins).toEqual([]);
-      expect(
-        claimsRecorded(f.repo.getCurrent()?.getNativeRegistrations(toolId))[0]?.dependents
-      ).toEqual(["/B"]);
+      expect(claimsRecorded(f.repo.records.get(toolId))[0]?.dependents).toEqual(["/B"]);
     });
 
     it("never treats a project-scope catalogue with the same alias as a user-scope target", async () => {
@@ -154,9 +155,7 @@ for (const toolId of [SYNTHETIC_TOOL]) {
       );
       expect(f.activator.uninstalledPlugins).toEqual([]);
       expect(f.activator.removedMarketplaces).toEqual([]);
-      expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
-        { ref: REF, dependents: [] },
-      ]);
+      expect(f.repo.records.get(toolId)?.pluginClaims).toEqual([{ ref: REF, dependents: [] }]);
     });
 
     it("rechecks the user catalogue source after taking the machine lock", async () => {
@@ -167,6 +166,8 @@ for (const toolId of [SYNTHETIC_TOOL]) {
         loadIfReadable: () => f.repo.loadIfReadable(),
         save: (manifest: Manifest) => f.repo.save(manifest),
         delete: () => f.repo.delete(),
+        loadRecords: () => f.repo.loadRecords(),
+        saveRecords: (records: RegistrationRecords) => f.repo.saveRecords(records),
         withExclusiveAccess: async <T>(action: () => Promise<T>): Promise<T> => {
           await f.registry.save(
             "/A",
@@ -191,9 +192,7 @@ for (const toolId of [SYNTHETIC_TOOL]) {
         /changed while waiting for the machine lock/
       );
       expect(f.activator.uninstalledPlugins).toEqual([]);
-      expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
-        { ref: REF, dependents: [] },
-      ]);
+      expect(f.repo.records.get(toolId)?.pluginClaims).toEqual([{ ref: REF, dependents: [] }]);
     });
   });
 }

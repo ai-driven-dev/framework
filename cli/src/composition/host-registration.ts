@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import {
   withEnabledPlugins,
   withoutMarketplaces,
@@ -14,6 +15,7 @@ import type { HostActions } from "../contexts/host-registration/ports/host-actio
 import type { HostMarketplaceRegistry } from "../contexts/host-registration/ports/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../contexts/host-registration/ports/host-plugin-registry.js";
+import type { RegistrationRecordRepository } from "../contexts/host-registration/ports/registration-record-repository.js";
 import type {
   MarketplaceRegistryLayout,
   PluginRegistryLayout,
@@ -23,9 +25,14 @@ import type { NativeActivation } from "../contexts/tools/domain/native-registrat
 import type { BuiltToolConfig } from "../contexts/tools/domain/profile/define-tool.js";
 import { DuplicateToolIdError } from "../contexts/tools/domain/tools.error.js";
 import type { SettingsDeclarationRules } from "../orchestration/sync/sync-tool-settings-files.use-case.js";
+import { asPlainObject } from "../shared/domain/reading/plain-object.js";
 import { UnregisteredToolError } from "../shared/domain/shared.error.js";
 import type { AiToolId, ToolId } from "../shared/domain/tool.js";
 import { resolveHomeDir } from "../shared/infrastructure/home-dir.js";
+import {
+  ToolKeyedJsonFile,
+  type ToolKeyedJsonFileDeps,
+} from "../shared/infrastructure/tool-keyed-json-file.js";
 import { REGISTERED_PROFILES } from "./tool-profiles.composition.js";
 
 /** The new content of a tool's shared settings file, answered by the host registration that owns it. */
@@ -130,4 +137,19 @@ function marketplaceRegistryOf(
   const registry = MARKETPLACE_READERS[declared.layout](declared.path);
   wiring.marketplaceRegistries.set(aiId, registry);
   return registry;
+}
+
+/** The host data of every tool's record, in one file beside the manifest of its scope. */
+export function registrationRecordFile(
+  dir: () => string,
+  deps: ToolKeyedJsonFileDeps
+): RegistrationRecordRepository {
+  return new ToolKeyedJsonFile(
+    () => join(dir(), "host-registrations.json"),
+    deps,
+    (value) => {
+      const record = asPlainObject(value);
+      return record === null ? null : { ...record };
+    }
+  );
 }

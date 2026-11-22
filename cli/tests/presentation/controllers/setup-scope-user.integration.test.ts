@@ -35,7 +35,7 @@ describe("setup --scope user in a git-tracked project", () => {
     expect(await gitStatusPorcelain(project)).toBe("");
 
     const manifest = await readJson(join(home, ".config", "aidd", "manifest.json"));
-    expect(manifest.version).toBe(8);
+    expect(manifest.version).toBe(9);
     expect(Object.keys(manifest.tools as Record<string, unknown>)).toContain("claude");
 
     const marketplaces = await readJson(join(home, ".config", "aidd", "marketplaces.json"));

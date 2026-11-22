@@ -6,6 +6,7 @@ import type { Manifest } from "../domain/manifest.js";
 import type { InstalledPlugin } from "../domain/plugins/installed-plugin.js";
 import type { MachineClaimsReading } from "../ports/machine-claims-reading.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
+import type { RegistrationRecords } from "../ports/record/registration-records.js";
 import type { UserScopePluginFileRemoval } from "../ports/user-scope-plugin-files.js";
 import type {
   MachineStatePurge,
@@ -48,7 +49,10 @@ export class PurgeUserScopeFiles implements UserScopePurge {
     return {
       manifestFound: manifest !== null,
       toolIds: manifest?.getInstalledToolIds() ?? [],
-      activePluginDependents: this.activeDependents(manifest),
+      activePluginDependents: this.activeDependents(
+        manifest,
+        await this.deps.userManifestRepo.loadRecords()
+      ),
       builtVersions: await this.deps.purgeMachineState.builtVersions(),
       referencingProjects: await referencingProjects(),
     };
@@ -60,7 +64,7 @@ export class PurgeUserScopeFiles implements UserScopePurge {
     const manifest = await this.deps.userManifestRepo.load();
     if (manifest === null) return [];
     await this.assertTrackedUserPluginFilesSafe(manifest);
-    return this.withdrawalsOf(manifest);
+    return this.withdrawalsOf(manifest, await this.deps.userManifestRepo.loadRecords());
   }
 
   async purge(projectRoot: string): Promise<void> {
@@ -91,16 +95,17 @@ export class PurgeUserScopeFiles implements UserScopePurge {
     }
   }
 
-  private activeDependents(manifest: Manifest | null): readonly string[] {
+  private activeDependents(
+    manifest: Manifest | null,
+    records: RegistrationRecords
+  ): readonly string[] {
     if (manifest === null) return [];
     const toolIds = manifest.getInstalledToolIds().filter((toolId) => this.tools.isAiTool(toolId));
     return this.deps.claims.holdersOf(
       toolIds.flatMap((toolId) =>
         manifest.getRecordedPlugins(toolId).filter(({ plugin }) => plugin.scope === "user")
       ),
-      toolIds.flatMap((toolId) =>
-        this.deps.claims.claimsOf(manifest.getNativeRegistrations(toolId))
-      )
+      toolIds.flatMap((toolId) => this.deps.claims.claimsOf(records.get(toolId)))
     );
   }
 
@@ -135,10 +140,13 @@ export class PurgeUserScopeFiles implements UserScopePurge {
   /** The host registrations this machine recorded, one per tool, each with the refs a canonical
    * machine claim owns. A tool that is not an AI tool never records one, so a manifest naming one
    * is corrupt, not something to guess a host for. */
-  private withdrawalsOf(manifest: Manifest): UserRegistrationWithdrawal[] {
+  private withdrawalsOf(
+    manifest: Manifest,
+    records: RegistrationRecords
+  ): UserRegistrationWithdrawal[] {
     const home = this.deps.homeDir();
     return manifest.getInstalledToolIds().flatMap((toolId) => {
-      const registrations = manifest.getNativeRegistrations(toolId);
+      const registrations = records.get(toolId);
       if (registrations === undefined) return [];
       if (!this.tools.isAiTool(toolId))
         throw new Error(

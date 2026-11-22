@@ -37,7 +37,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
   it.each(["project", "user"] as const)(
     "reclaims an owned dead catalogue at its marketplace's %s scope",
     async (scope) => {
-      const { activator, result, manifest, logger } = await recovery({ ...REAL, scope });
+      const { activator, result, repo, logger } = await recovery({ ...REAL, scope });
       expect(activator).toBeInstanceOf(RecoveringActivator);
       if (!(activator instanceof RecoveringActivator))
         throw new Error("expected recovery activator");
@@ -55,7 +55,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
         failed: false,
       });
       expect(logger.warnMessages).toEqual([RECLAIM]);
-      expect(manifest.getNativeRegistrations(tool)).toEqual({
+      expect(repo.records.get(tool)).toEqual({
         binary: tool,
         marketplaces: [
           { alias: ALIAS, hostName: HOST, provenance: { kind: "registry", source: BUILT } },
@@ -119,13 +119,13 @@ describe("marketplace sync recovery preserves public ownership and failure outco
   ])(
     "refuses force removal for a source outside this catalogue's recognized cache: %s",
     async (source) => {
-      const { activator, result, manifest } = await recovery({ ...REAL, source });
+      const { activator, result, repo } = await recovery({ ...REAL, source });
       expect(activator.removedMarketplaces).toEqual([]);
       expect(activator.enabledPlugins).toEqual([REF]);
       expect(result.warnings).toEqual([
         `Native plugin activation — catalogue '${HOST}' host catalogue source is unproven; host registration left untouched. ${ADD_ERROR}`,
       ]);
-      expect(firstSourceOf(manifest.getNativeRegistrations(tool))).toEqual({
+      expect(firstSourceOf(repo.records.get(tool))).toEqual({
         kind: "registry",
         source,
       });
@@ -133,7 +133,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
   );
 
   it("keeps a failed remove recoverable and records the still-owned original source", async () => {
-    const { activator, result, manifest, logger } = await recovery({ ...REAL, failure: "remove" });
+    const { activator, result, repo, logger } = await recovery({ ...REAL, failure: "remove" });
     expect(activator.removedMarketplaces).toEqual([]);
     expect(activator.addedMarketplaces).toEqual([]);
     expect(result.warnings).toEqual([
@@ -142,7 +142,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
     ]);
     expect(logger.warnMessages).toEqual(result.warnings);
     expect(result.errors).toEqual([]);
-    expect(firstSourceOf(manifest.getNativeRegistrations(tool))).toEqual({
+    expect(firstSourceOf(repo.records.get(tool))).toEqual({
       kind: "registry",
       source: OLD,
     });
@@ -162,7 +162,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
   });
 
   it("returns a retry crash as a hard tool error and preserves earlier manifest ownership", async () => {
-    const { activator, result, manifest } = await recovery({ ...REAL, failure: "crash" });
+    const { activator, result, repo } = await recovery({ ...REAL, failure: "crash" });
     expect(activator.removedMarketplaces).toEqual([HOST]);
     expect(activator.enabledPlugins).toEqual([]);
     expect(result).toEqual({
@@ -172,7 +172,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
       errors: [{ scope: tool, error: new Error("retry crashed") }],
       failed: true,
     });
-    expect(firstSourceOf(manifest.getNativeRegistrations(tool))).toEqual({
+    expect(firstSourceOf(repo.records.get(tool))).toEqual({
       kind: "registry",
       source: OLD,
     });
@@ -181,13 +181,13 @@ describe("marketplace sync recovery preserves public ownership and failure outco
   it.each(["absent", "foreign"] as const)(
     "does not reclaim when the source becomes %s between the failed add and recovery",
     async (sourceAfterCollision) => {
-      const { activator, result, manifest } = await recovery({ ...REAL, sourceAfterCollision });
+      const { activator, result, repo } = await recovery({ ...REAL, sourceAfterCollision });
       expect(activator.removedMarketplaces).toEqual([]);
       expect(activator.enabledPlugins).toEqual([]);
       expect(result.warnings).toEqual([
         `Native plugin activation — catalogue '${HOST}' collides with unproven AIDD ownership; host registration left untouched. ${ADD_ERROR}`,
       ]);
-      expect(manifest.getNativeRegistrations(tool)?.marketplaces).toEqual([
+      expect(repo.records.get(tool)?.marketplaces).toEqual([
         { alias: ALIAS, hostName: HOST, provenance: { kind: "registry", source: OLD } },
       ]);
       expect(result.errors).toEqual([]);
@@ -228,14 +228,14 @@ describe("marketplace sync recovery preserves public ownership and failure outco
   });
 
   it("preserves an enabled project-owned ref without a machine manifest or another install", async () => {
-    const { activator, result, manifest } = await recovery({
+    const { activator, result, repo } = await recovery({
       ...REAL,
       ownRefs: [REF],
       plugins: [{ location: "host plugins", refs: new Map([[REF, { enabled: true }]]) }],
     });
     expect(activator.removedMarketplaces).toEqual([HOST]);
     expect(activator.enabledPlugins).toEqual([]);
-    expect(manifest.getNativeRegistrations(tool)?.pluginRefs).toEqual([REF]);
+    expect(repo.records.get(tool)?.pluginRefs).toEqual([REF]);
     expect(result.errors).toEqual([]);
   });
 

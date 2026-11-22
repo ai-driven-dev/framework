@@ -62,13 +62,21 @@ describe("RemovePlugin proves the native source before undoing activation", () =
     const manifestRepo = new InMemoryManifestRepository();
     const machine = Manifest.create();
     machine.addTool(claude, "test", []);
-    machine.setNativeRegistrations(claude, {
-      binary: "claude",
-      marketplaces: [],
-      pluginRefs: [REF],
-      pluginClaims: [{ ref: REF, dependents: [PROJECT_ROOT] }],
-    });
-    const userRepo = new InMemoryManifestRepository(machine);
+    const userRepo = new InMemoryManifestRepository(
+      machine,
+      undefined,
+      new Map([
+        [
+          claude,
+          {
+            binary: "claude",
+            marketplaces: [],
+            pluginRefs: [REF],
+            pluginClaims: [{ ref: REF, dependents: [PROJECT_ROOT] }],
+          },
+        ],
+      ])
+    );
     const removeUseCase = pluginRemover({
       fs,
       manifestRepo,
@@ -91,8 +99,8 @@ describe("RemovePlugin proves the native source before undoing activation", () =
     });
     const manifest = Manifest.create();
     manifest.addTool(claude, "test", []);
-    await installViaModeA(manifest);
-    manifest.setNativeRegistrations(claude, {
+    await installViaModeA(manifest, manifestRepo.records);
+    manifestRepo.records.set(claude, {
       binary: "claude",
       marketplaces: [
         {
@@ -106,6 +114,8 @@ describe("RemovePlugin proves the native source before undoing activation", () =
     await manifestRepo.save(manifest);
     const savesBefore = manifestRepo.saveCount;
     const machineSavesBefore = userRepo.saveCount;
+    const recordSavesBefore = manifestRepo.recordSaveCount;
+    const machineRecordSavesBefore = userRepo.recordSaveCount;
 
     await expect(
       removeUseCase.execute({
@@ -118,14 +128,16 @@ describe("RemovePlugin proves the native source before undoing activation", () =
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(manifestRepo.saveCount).toBe(savesBefore);
     expect(userRepo.saveCount).toBe(machineSavesBefore);
+    expect(manifestRepo.recordSaveCount).toBe(recordSavesBefore);
+    expect(userRepo.recordSaveCount).toBe(machineRecordSavesBefore);
     expect(
       manifestRepo
         .getCurrent()
         ?.getPlugins(claude)
         .map((plugin) => plugin.name)
     ).toEqual([PLUGIN_NAME]);
-    expect(manifestRepo.getCurrent()?.getNativeRegistrations(claude)?.pluginRefs).toEqual([REF]);
-    expect(userRepo.getCurrent()?.getNativeRegistrations(claude)?.pluginClaims).toEqual([
+    expect(manifestRepo.records.get(claude)?.pluginRefs).toEqual([REF]);
+    expect(userRepo.records.get(claude)?.pluginClaims).toEqual([
       { ref: REF, dependents: [PROJECT_ROOT] },
     ]);
   });
@@ -146,7 +158,7 @@ describe("RemovePlugin proves the native source before undoing activation", () =
       manifest,
       marketplace: "local",
     });
-    manifest.setNativeRegistrations(claude, {
+    manifestRepo.records.set(claude, {
       binary: "claude",
       marketplaces: [
         {
@@ -174,8 +186,8 @@ describe("RemovePlugin proves the native source before undoing activation", () =
     const { removeUseCase, manifestRepo } = buildRemoveUseCase(activator, logger);
     const manifest = Manifest.create();
     manifest.addTool(claude, "test", []);
-    await installViaModeA(manifest);
-    manifest.setNativeRegistrations(claude, {
+    await installViaModeA(manifest, manifestRepo.records);
+    manifestRepo.records.set(claude, {
       binary: "claude",
       marketplaces: [{ alias: "some-other-marketplace", hostName: "other" }],
       pluginRefs: [],
@@ -200,16 +212,14 @@ describe("RemovePlugin proves the native source before undoing activation", () =
     const { removeUseCase, manifestRepo } = buildRemoveUseCase(activator, logger);
     const manifest = Manifest.create();
     manifest.addTool(claude, "test", []);
-    await installViaModeA(manifest);
-    manifest.setNativeRegistrations(claude, {
+    await installViaModeA(manifest, manifestRepo.records);
+    manifestRepo.records.set(claude, {
       binary: "claude",
       marketplaces: [{ alias: "some-other-marketplace", hostName: "other" }],
       pluginRefs: [],
     });
     await manifestRepo.save(manifest);
-    const stored = await manifestRepo.load();
-    if (stored === null) throw new Error("unreachable - just saved");
-    const spy = vi.spyOn(stored, "getNativeRegistrations");
+    const spy = vi.spyOn(manifestRepo, "loadRecords");
 
     await expect(
       removeUseCase.execute({
@@ -228,8 +238,8 @@ describe("RemovePlugin proves the native source before undoing activation", () =
     const { removeUseCase, manifestRepo } = buildRemoveUseCase(activator, logger);
     const manifest = Manifest.create();
     manifest.addTool(claude, "test", []);
-    await installViaModeA(manifest);
-    manifest.setNativeRegistrations(claude, {
+    await installViaModeA(manifest, manifestRepo.records);
+    manifestRepo.records.set(claude, {
       binary: "claude",
       marketplaces: [
         {

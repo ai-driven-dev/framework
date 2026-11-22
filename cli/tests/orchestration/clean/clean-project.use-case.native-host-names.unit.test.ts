@@ -4,6 +4,7 @@ import { Marketplace } from "../../../src/contexts/distribution/domain/marketpla
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
@@ -32,7 +33,8 @@ describe("clean: native registration host names", () => {
       const HOST_NAME = "user-mkt";
       const manifest = Manifest.create();
       manifest.addTool(HOST.codex, "1.0.0", []);
-      manifest.setNativeRegistrations(HOST.codex, {
+      const records: RegistrationRecords = new Map();
+      records.set(HOST.codex, {
         binary: BINARY,
         marketplaces: [
           {
@@ -49,7 +51,7 @@ describe("clean: native registration host names", () => {
         pluginRefs: [],
       });
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-      const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
+      const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT, records);
       const activator = new FakeHostActions({ available: true });
       const registry = new InMemoryMarketplaceRegistry();
       registry.seed(
@@ -88,7 +90,7 @@ describe("clean: native registration host names", () => {
       function seedClaudeScopeManifest(
         marketplaces: ReadonlyArray<{ alias: string; hostName: string }>,
         plugins: ReadonlyArray<{ name: string; scope: Scope; marketplace: string }>
-      ): Manifest {
+      ): { manifest: Manifest; records: RegistrationRecords } {
         const manifest = Manifest.create();
         manifest.addTool(HOST.claude, "1.0.0", []);
         for (const plugin of plugins) {
@@ -104,7 +106,8 @@ describe("clean: native registration host names", () => {
             })
           );
         }
-        manifest.setNativeRegistrations(HOST.claude, {
+        const records: RegistrationRecords = new Map();
+        records.set(HOST.claude, {
           binary: HOST.claude,
           marketplaces: marketplaces.map(({ alias, hostName }) => ({
             alias,
@@ -113,10 +116,13 @@ describe("clean: native registration host names", () => {
           })),
           pluginRefs: [CLAUDE_REF],
         });
-        return manifest;
+        return { manifest, records };
       }
 
-      async function uninstallScopesFor(manifest: Manifest): Promise<readonly string[]> {
+      async function uninstallScopesFor(seed: {
+        manifest: Manifest;
+        records: RegistrationRecords;
+      }): Promise<readonly string[]> {
         const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const activator = new FakeHostActions({
           available: true,
@@ -124,7 +130,7 @@ describe("clean: native registration host names", () => {
         });
         const useCase = new CleanWithKnownHostSource(
           fs,
-          new InMemoryManifestRepository(manifest, PROJECT_ROOT),
+          new InMemoryManifestRepository(seed.manifest, PROJECT_ROOT, seed.records),
           new CapturingLogger(),
           new UpdateGitignore(fs),
           new Map([[HOST.claude, activator]]),
@@ -173,9 +179,10 @@ describe("clean: native registration host names", () => {
 
     it("previews no shared-source fact when the references port is wired in but no marketplace registry is", async () => {
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
+      const { manifest, records } = seedManifestWithNativeRegistrations(HOST);
       const useCase = new CleanWithKnownHostSource(
         fs,
-        new InMemoryManifestRepository(seedManifestWithNativeRegistrations(HOST), PROJECT_ROOT),
+        new InMemoryManifestRepository(manifest, PROJECT_ROOT, records),
         new CapturingLogger(),
         new UpdateGitignore(fs),
         new Map(),

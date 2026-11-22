@@ -38,19 +38,31 @@ const REGISTRATION = {
   provenance: { kind: "registry" as const, source: `/built/${tool}` },
 };
 
-function seedExistingProof(project: Manifest, machine: Manifest, mode: Mode) {
+function existingProofRecords(mode: Mode) {
   const projectHolds = mode === "existing project proof";
-  project.setNativeRegistrations(tool, {
-    binary: tool,
-    marketplaces: projectHolds ? [OTHER_REGISTRATION, REGISTRATION] : [],
-    pluginRefs: [REF],
-  });
-  machine.setNativeRegistrations(tool, {
-    binary: tool,
-    marketplaces: projectHolds ? [OTHER_REGISTRATION] : [OTHER_REGISTRATION, REGISTRATION],
-    pluginRefs: [OTHER_REF],
-    pluginClaims: [{ ref: OTHER_REF, dependents: ["/B"] }],
-  });
+  return {
+    project: new Map([
+      [
+        tool,
+        {
+          binary: tool,
+          marketplaces: projectHolds ? [OTHER_REGISTRATION, REGISTRATION] : [],
+          pluginRefs: [REF],
+        },
+      ],
+    ]),
+    machine: new Map([
+      [
+        tool,
+        {
+          binary: tool,
+          marketplaces: projectHolds ? [OTHER_REGISTRATION] : [OTHER_REGISTRATION, REGISTRATION],
+          pluginRefs: [OTHER_REF],
+          pluginClaims: [{ ref: OTHER_REF, dependents: ["/B"] }],
+        },
+      ],
+    ]),
+  };
 }
 
 /** The host's own record, as it reads once a catalogue and plugins already exist there. */
@@ -81,9 +93,9 @@ async function catalogueScope(mode: Mode) {
   const fresh = mode === "fresh";
   const project = projectWithPlugin(tool, ALIAS);
   const machine = fresh ? Manifest.create() : manifestWithTool(tool);
-  if (!fresh) seedExistingProof(project, machine, mode);
-  const projectRepo = new InMemoryManifestRepository(project);
-  const machineRepo = new InMemoryManifestRepository(machine);
+  const seeded = fresh ? undefined : existingProofRecords(mode);
+  const projectRepo = new InMemoryManifestRepository(project, undefined, seeded?.project);
+  const machineRepo = new InMemoryManifestRepository(machine, undefined, seeded?.machine);
   const activator = new FakeHostActions({ available: true });
   const existing = existingHostRecord();
   const sync = wireSync({
@@ -118,7 +130,7 @@ function expectHostWrites({ activator }: CatalogueScope, fresh: boolean) {
 }
 
 function expectMachineRecord({ machineRepo }: CatalogueScope, fresh: boolean) {
-  const recorded = machineRepo.getCurrent()?.getNativeRegistrations(tool);
+  const recorded = machineRepo.records.get(tool);
   expect(recorded?.marketplaces).toEqual(
     fresh ? [REGISTRATION] : [OTHER_REGISTRATION, REGISTRATION]
   );
@@ -140,9 +152,7 @@ describe("native plugin ownership follows the host's Claude activation scope", (
       expect(result.errors).toStrictEqual([]);
       expect(result.warnings).toStrictEqual([]);
       expectHostWrites(fixture, mode === "fresh");
-      expect(fixture.projectRepo.getCurrent()?.getNativeRegistrations(tool)?.pluginRefs).toEqual([
-        REF,
-      ]);
+      expect(fixture.projectRepo.records.get(tool)?.pluginRefs).toEqual([REF]);
       expectMachineRecord(fixture, mode === "fresh");
     }
   );
@@ -176,17 +186,17 @@ describe("native plugin ownership follows the host's Claude activation scope", (
     expect(result.errors).toEqual([]);
     expect(activator.enabledPlugins).toEqual(["test-plugin@real-catalog"]);
     expect(activator.enabledPluginScopes).toEqual(["user"]);
-    expect(userRepo.getCurrent()?.getNativeRegistrations(tool)?.marketplaces).toEqual([
+    expect(userRepo.records.get(tool)?.marketplaces).toEqual([
       {
         alias,
         hostName: "real-catalog",
         provenance: { kind: "registry", source: `/built/${tool}` },
       },
     ]);
-    expect(userRepo.getCurrent()?.getNativeRegistrations(tool)?.pluginClaims).toEqual([
+    expect(userRepo.records.get(tool)?.pluginClaims).toEqual([
       { ref: "test-plugin@real-catalog", dependents: [] },
     ]);
-    expect(projectRepo.getCurrent()?.getNativeRegistrations(tool)).toBeUndefined();
+    expect(projectRepo.records.get(tool)).toBeUndefined();
   });
 
   it("records only the user-scope marketplace in the machine manifest when a project syncs both scopes", async () => {
@@ -224,9 +234,7 @@ describe("native plugin ownership follows the host's Claude activation scope", (
     const result = await sync.execute({ projectRoot: "/project" });
 
     expect(result.errors).toEqual([]);
-    const projectMarketplaces = projectRepo
-      .getCurrent()
-      ?.getNativeRegistrations(tool)?.marketplaces;
+    const projectMarketplaces = projectRepo.records.get(tool)?.marketplaces;
     expect(projectMarketplaces).toHaveLength(2);
     expect(projectMarketplaces).toEqual(
       expect.arrayContaining([
@@ -242,7 +250,7 @@ describe("native plugin ownership follows the host's Claude activation scope", (
         },
       ])
     );
-    expect(machineRepo.getCurrent()?.getNativeRegistrations(tool)?.marketplaces).toEqual([
+    expect(machineRepo.records.get(tool)?.marketplaces).toEqual([
       {
         alias: "user-alias",
         hostName: "real-user",

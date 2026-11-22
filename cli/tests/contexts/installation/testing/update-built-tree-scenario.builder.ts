@@ -128,7 +128,7 @@ export function attachFutureSupportedNativeClaim(deps: Deps) {
   const machine = deps.userManifestRepo.getCurrent();
   if (machine === null) throw new Error("fixture missing machine manifest");
   machine.addTool(copilot, "future-supported", []);
-  machine.setNativeRegistrations(copilot, {
+  deps.userManifestRepo.records.set(copilot, {
     binary: "copilot",
     marketplaces: [
       {

@@ -7,7 +7,8 @@ export function readMachineClaims(userManifestRepo: MachineManifestRepository) {
   const claimsOf = async (toolId: AiToolId) => {
     const machine = await userManifestRepo.load();
     if (machine === null) return undefined;
-    return readHeldClaims(machine.getNativeRegistrations(toolId)?.pluginClaims);
+    const records = await userManifestRepo.loadRecords();
+    return readHeldClaims(records.get(toolId)?.pluginClaims);
   };
   return {
     /** The refs claimed on the machine; `undefined` when no machine record exists. */

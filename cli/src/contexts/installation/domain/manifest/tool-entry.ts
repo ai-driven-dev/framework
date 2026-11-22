@@ -10,11 +10,6 @@ import {
   toMergeFileEntryData,
 } from "./merge-files.js";
 import {
-  type NativeRegistrations,
-  parseNativeRegistrations,
-  serializeNativeRegistrations,
-} from "./native-registrations.js";
-import {
   parseTrackedFiles,
   type TrackedFile,
   type TrackedFileData,
@@ -28,9 +23,6 @@ export interface ToolEntry {
   readonly files: readonly TrackedFile[];
   readonly mergeFiles: readonly MergeFileEntry[];
   readonly plugins: readonly RecordedPlugin[];
-  /** What this tool's own CLI was asked to register, or `undefined` for a tool with
-   * no `nativeActivation`: see {@link NativeRegistrations}. */
-  readonly nativeRegistrations?: NativeRegistrations;
 }
 
 export interface ToolEntryData {
@@ -39,7 +31,6 @@ export interface ToolEntryData {
   files: TrackedFileData[];
   mergeFiles?: MergeFileEntryData[];
   plugins?: PluginEntryData[];
-  nativeRegistrations?: unknown;
 }
 
 export function createToolEntry(params: {
@@ -90,9 +81,6 @@ export function serializeToolEntry(entry: ToolEntry): ToolEntryData {
     files: toTrackedFileData(entry.files),
     mergeFiles: toMergeFileEntryData(entry.mergeFiles),
     ...(entry.plugins.length > 0 && { plugins: entry.plugins.map((p) => p.toJSON()) }),
-    ...(entry.nativeRegistrations !== undefined && {
-      nativeRegistrations: serializeNativeRegistrations(entry.nativeRegistrations),
-    }),
   };
 }
 
@@ -111,6 +99,5 @@ export function parseToolEntry(toolId: ToolId, data: ToolEntryData): ToolEntry {
     files: parseTrackedFiles(data.files),
     mergeFiles: parseMergeFileEntries(data.mergeFiles ?? []),
     plugins,
-    nativeRegistrations: parseNativeRegistrations(data.nativeRegistrations),
   };
 }

@@ -59,7 +59,7 @@ export async function seedEmptyManifest(projectDir: string): Promise<void> {
   await mkdir(join(projectDir, ".aidd"), { recursive: true });
   await writeFile(
     join(projectDir, ".aidd", "manifest.json"),
-    JSON.stringify({ version: 8, tools: {} }),
+    JSON.stringify({ version: 9, tools: {} }),
     "utf-8"
   );
 }

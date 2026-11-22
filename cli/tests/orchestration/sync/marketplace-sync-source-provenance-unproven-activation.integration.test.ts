@@ -72,13 +72,9 @@ describe("native catalogue activation refused until the host source is proven", 
       );
       expect(activator.addedMarketplaces).toEqual([`/built/${SYNTHETIC_LISTED_TOOL}`]);
       expect(activator.enabledPlugins).toEqual([]);
-      expect(machineRepo.getCurrent()?.getNativeRegistrations(codex)).toBeUndefined();
-      expect(
-        projectRepo.getCurrent()?.getNativeRegistrations(codex)?.marketplaces ?? []
-      ).toStrictEqual([]);
-      expect(
-        projectRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginRefs ?? []
-      ).toStrictEqual([]);
+      expect(machineRepo.records.get(codex)).toBeUndefined();
+      expect(projectRepo.records.get(codex)?.marketplaces ?? []).toStrictEqual([]);
+      expect(projectRepo.records.get(codex)?.pluginRefs ?? []).toStrictEqual([]);
       expect(activator.removedMarketplaces).toStrictEqual([]);
       expect(activator.upgradeCount).toBe(0);
       expect(await fs.readFile("/foreign/cache/marker.json")).toBe("foreign bytes");
@@ -145,7 +141,7 @@ describe("native catalogue activation refused until the host source is proven", 
       expect(activator.addedMarketplaces).toEqual([]);
       expect(activator.enabledPlugins).toEqual([]);
       expect(activator.upgradeCount).toBe(0);
-      expect(machineRepo.getCurrent()?.getNativeRegistrations(copilot)).toBeUndefined();
+      expect(machineRepo.records.get(copilot)).toBeUndefined();
       expect(await fs.readFile(settingsPath)).toBe(foreignSettings);
     }
   );
@@ -178,10 +174,9 @@ describe("native catalogue activation refused until the host source is proven", 
     expect(result.errors).toEqual([]);
     expect(activator.addedMarketplaces).toEqual([`/built/${SYNTHETIC_LISTED_TOOL}`]);
     expect(activator.enabledPlugins).toEqual([ENABLED_REF]);
-    expect(
-      hostRecord(machineRepo.getCurrent()?.getNativeRegistrations(codex))?.marketplaces[0]
-        .provenance
-    ).toEqual(CODEX_SOURCE);
+    expect(hostRecord(machineRepo.records.get(codex))?.marketplaces[0].provenance).toEqual(
+      CODEX_SOURCE
+    );
     const { projectRepo: projectB, registry: registryB } = await codexProject("/B");
     const syncB = syncOfDeclaredPlugin({
       tools: syntheticSyncCatalog(),
@@ -196,7 +191,7 @@ describe("native catalogue activation refused until the host source is proven", 
     });
     await syncB.execute({ projectRoot: "/B" });
     expect(activator.addedMarketplaces).toEqual([`/built/${SYNTHETIC_LISTED_TOOL}`]);
-    expect(machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
+    expect(machineRepo.records.get(codex)?.pluginClaims).toEqual([
       { ref: ENABLED_REF, dependents: ["/A", "/B"] },
     ]);
   });

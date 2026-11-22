@@ -7,7 +7,10 @@ import {
 } from "../../domain/installation.error.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { RegistrationRecordData } from "../../ports/record/registration-records.js";
+import type {
+  RegistrationRecordData,
+  RegistrationRecords,
+} from "../../ports/record/registration-records.js";
 import type { UserScopePluginFileRemoval } from "../../ports/user-scope-plugin-files.js";
 import { resolvePluginToolIds } from "../plugin/plugin-target-resolution.js";
 import type { RefSelection } from "../plugin/update-native-refs.js";
@@ -53,13 +56,14 @@ export class RemoveUserPlugin<Proof> {
     const manifest = await requireManifest(this.deps.userRepo);
     const toolIds = resolvePluginToolIds(options.toolIds, manifest, this.tools);
     const targets = this.fileTargets(manifest, toolIds, options);
-    const nativeTargets = this.nativeTargets(manifest, toolIds, options);
+    const registered = await this.deps.userRepo.loadRecords();
+    const nativeTargets = this.nativeTargets(registered, toolIds, options);
     this.assertRemovable(options, targets, nativeTargets);
     const safeFiles = await this.proveFiles(targets, options);
     const nativeRemoval = await this.proveNativeRefs(nativeTargets, options);
     for (const target of nativeRemoval) {
       await this.deps.withdrawFromHost.uninstallProven(target.proven);
-      manifest.setNativeRegistrations(
+      registered.set(
         target.toolId,
         options.records.withoutClaimedRef(target.registrations, target.claim.ref)
       );
@@ -71,6 +75,7 @@ export class RemoveUserPlugin<Proof> {
       });
       manifest.removePlugin(toolId, plugin.name);
     }
+    await this.deps.userRepo.saveRecords(registered);
     await this.deps.userRepo.save(manifest);
   }
 
@@ -88,12 +93,12 @@ export class RemoveUserPlugin<Proof> {
   }
 
   private nativeTargets(
-    manifest: Manifest,
+    registered: RegistrationRecords,
     toolIds: readonly AiToolId[],
     options: RemoveUserPluginRequest
   ) {
     return toolIds.flatMap((toolId) => {
-      const registrations = manifest.getNativeRegistrations(toolId);
+      const registrations = registered.get(toolId);
       if (registrations === undefined) return [];
       return options.records
         .claimsOf(registrations)
