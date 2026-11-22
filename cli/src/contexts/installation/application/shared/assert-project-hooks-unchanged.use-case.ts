@@ -5,6 +5,7 @@ import { tryParseJson, whenAbsent } from "../../../../shared/domain/reading/json
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { ProjectHooksFormat } from "../../../tools/contract/tool-vocabulary.js";
 import { ProjectHooksEditedError } from "../../domain/installation.error.js";
+import { driftOf } from "../../domain/manifest/drift.js";
 import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.js";
 import { digestEntry } from "../../domain/project-hooks.model.js";
 import type { ProjectHooksSection } from "../../ports/tool-sections.js";
@@ -121,7 +122,7 @@ async function assertScriptDigest(
       `${toolName} hook script '${relativePath}' has an unproven install digest; detach refused.`
     );
   }
-  if (!overwriteEdited && (await fs.readFileHash(path)).value !== digest) {
+  if (!overwriteEdited && driftOf(digest, await fs.readFileHash(path)) !== "ok") {
     throw new ProjectHooksEditedError(
       `${toolName} hook script '${relativePath}' was edited after install; detach refused.`
     );

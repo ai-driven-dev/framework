@@ -12,7 +12,6 @@ import { PurgeMarketplacePlugins } from "../../contexts/installation/application
 import { RemovePluginsFromMarketplace } from "../../contexts/installation/application/marketplace/remove-plugins-from-marketplace.use-case.js";
 import { RemoveProjectPlugin } from "../../contexts/installation/application/removal/remove-project-plugin.js";
 import { UserScopePluginFiles } from "../../contexts/installation/application/removal/user-scope-plugin-files.js";
-import { userScopeFilesSafeToDelete } from "../../contexts/machine-claims/application/ownership/user-scope-plugin-files.js";
 import { removalClaims } from "../../contexts/machine-claims/application/removal/removal-claims.js";
 import type { RecordSourceReference } from "../../contexts/machine-claims/application/shared-source/record-source-reference.use-case.js";
 import { AddMarketplace } from "../../orchestration/marketplace/add-marketplace.use-case.js";
@@ -29,6 +28,7 @@ import { AskMarketplaceSource } from "../../orchestration/setup/ask-marketplace-
 import { ResolveSetupSource } from "../../orchestration/setup/resolve-setup-source.use-case.js";
 import type { RegisterFrameworkSource } from "../../orchestration/setup/setup-flow.js";
 import type { Installation } from "../installation.js";
+import { machineOwnership, userScopeFilesSafeToDelete } from "../machine-claims.js";
 import type { Base } from "../shared.js";
 import { wireMarketplaceSync } from "./marketplace-sync.js";
 
@@ -98,12 +98,13 @@ function wireUserMarketplaceRemoval(base: Base, inst: Installation) {
 function wireMarketplaceRemoval(base: Base, inst: Installation) {
   const { tools, fs, prompter, manifestRepo, userManifestRepo, marketplaceRegistry } = base;
   const { registrationRecordRules } = inst;
+  const ownership = machineOwnership(userManifestRepo, fs);
   const projectCleanup = new RemoveProjectPlugin({
     fs,
     homedir: inst.builtMaterializationDeps.homedir,
     assertIntegration: inst.projectIntegration.assertIntegration,
     removeIntegration: inst.projectIntegration.removeIntegration,
-    claims: removalClaims(userManifestRepo, fs),
+    claims: removalClaims(ownership.detachNativePluginRefs, ownership.detachUserPlugin),
   });
   const marketplaceRemoveUseCase = new RemoveProjectMarketplace({
     find: new FindMarketplaceToRemove(marketplaceRegistry),

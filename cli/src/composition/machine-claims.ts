@@ -1,16 +1,26 @@
 import { join } from "node:path";
 import type { ManifestRepository } from "../contexts/installation/ports/manifest-repository.js";
+import type { UserScopeFileGuard } from "../contexts/installation/ports/plugin/user-plugin-materialization.js";
 import type {
   RecordsBesideManifest,
   RegistrationRecordStore,
   RegistrationRecords,
 } from "../contexts/installation/ports/record/registration-records.js";
+import { AssertUserScopeWriteBoundary } from "../contexts/machine-claims/application/ownership/assert-user-scope-write-boundary.use-case.js";
+import { DetachNativePluginRefs } from "../contexts/machine-claims/application/ownership/detach-native-plugin-refs.use-case.js";
+import { DetachUserPlugin } from "../contexts/machine-claims/application/ownership/detach-user-plugin.use-case.js";
+import { DropMissingUserScopeFiles } from "../contexts/machine-claims/application/ownership/drop-missing-user-scope-files.use-case.js";
+import { IsMachineOwnedNativeRef } from "../contexts/machine-claims/application/ownership/is-machine-owned-native-ref.use-case.js";
+import { ResolveSafeUserScopeFiles } from "../contexts/machine-claims/application/ownership/resolve-safe-user-scope-files.use-case.js";
+import { OtherProjectsReferencing } from "../contexts/machine-claims/application/shared-source/other-projects-referencing.use-case.js";
+import { ResolveReferenceRoot } from "../contexts/machine-claims/application/shared-source/resolve-reference-root.use-case.js";
 import {
   joinPluginClaims,
   splitPluginClaims,
 } from "../contexts/machine-claims/domain/plugin-claim.model.js";
 import { UserScopeLockAdapter } from "../contexts/machine-claims/infrastructure/lock.js";
 import { UserSourceReferencesAdapter } from "../contexts/machine-claims/infrastructure/user-source-references-adapter.js";
+import type { MachineManifestRepository } from "../contexts/machine-claims/ports/machine-manifest.js";
 import type { PluginClaimsRepository } from "../contexts/machine-claims/ports/plugin-claims-repository.js";
 import type { UserSourceReferences } from "../contexts/machine-claims/ports/user-source-references.js";
 import {
@@ -30,6 +40,51 @@ export interface MachineClaimsDeps {
 /** Wires the machine-wide claims over the file system and the user directory. */
 export function wireMachineClaims(fs: FileReader & FileWriter): MachineClaimsDeps {
   return { userSourceReferences: new UserSourceReferencesAdapter(fs, userConfigDir) };
+}
+
+/** The files of a user-scope plugin safe to delete, read through the one use case that proves it. */
+export function userScopeFilesSafeToDelete(
+  reach: ConstructorParameters<typeof ResolveSafeUserScopeFiles>[0],
+  plugin: Parameters<ResolveSafeUserScopeFiles["execute"]>[0],
+  tool: Parameters<ResolveSafeUserScopeFiles["execute"]>[1]
+) {
+  return new ResolveSafeUserScopeFiles(reach).execute(plugin, tool);
+}
+
+// One writer for a machine-scope plugin's files, whether setup installs it or update rebuilds it.
+export const userScopeFileGuard: UserScopeFileGuard = {
+  safeToDelete: userScopeFilesSafeToDelete,
+  withoutMissing: (reach, plugin, tool) =>
+    new DropMissingUserScopeFiles(reach).execute(plugin, tool),
+  assertWriteBoundary: (reach, tool, write) =>
+    new AssertUserScopeWriteBoundary(reach).execute(tool, write),
+};
+
+/** The use cases that read and release the claims a project holds on the machine manifest. */
+export function machineOwnership(
+  repo: (MachineManifestRepository & Lock) | undefined,
+  fs: FileReader
+) {
+  return {
+    isMachineOwnedNativeRef: new IsMachineOwnedNativeRef(repo),
+    detachNativePluginRefs: new DetachNativePluginRefs(repo, fs),
+    detachUserPlugin: new DetachUserPlugin(repo, fs),
+  };
+}
+
+/** The reads of the shared source's references; the other-projects read is absent without the references. */
+export function sharedSourceReads(parts: {
+  fs: FileReader;
+  platform: string;
+  references?: UserSourceReferences;
+}) {
+  return {
+    resolveReferenceRoot: new ResolveReferenceRoot(parts.fs),
+    otherProjectsReferencing:
+      parts.references === undefined
+        ? undefined
+        : new OtherProjectsReferencing(parts.references, parts.platform),
+  };
 }
 
 /** The user scope's repository, its mutations held one at a time across the machine by the lock

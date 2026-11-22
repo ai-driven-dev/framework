@@ -2,9 +2,9 @@ import { mkdir, mkdtemp, realpath, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { createOutput } from "../../../../src/composition/shared.js";
-import { resolveReferenceRoot } from "../../../../src/contexts/machine-claims/application/shared-source-reference-support.js";
-import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
+import { createOutput } from "../../../../../src/composition/shared.js";
+import { ResolveReferenceRoot } from "../../../../../src/contexts/machine-claims/application/shared-source/resolve-reference-root.use-case.js";
+import { FileAdapter } from "../../../../../src/shared/infrastructure/file-adapter.js";
 
 let root: string;
 
@@ -26,7 +26,7 @@ describe("resolveReferenceRoot against a real symlink", () => {
     await symlink(real, link);
     const fs = new FileAdapter(createOutput(false));
 
-    const resolved = await resolveReferenceRoot(fs, link);
+    const resolved = await new ResolveReferenceRoot(fs).execute(link);
 
     expect(resolved).toBe(real);
     expect(resolved).not.toBe(link);
@@ -36,7 +36,7 @@ describe("resolveReferenceRoot against a real symlink", () => {
     const vanished = join(root, "gone");
     const fs = new FileAdapter(createOutput(false));
 
-    const resolved = await resolveReferenceRoot(fs, vanished);
+    const resolved = await new ResolveReferenceRoot(fs).execute(vanished);
 
     expect(resolved).toBe(vanished);
   });

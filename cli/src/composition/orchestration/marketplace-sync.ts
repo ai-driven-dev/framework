@@ -10,6 +10,7 @@ import { Manifest } from "../../contexts/installation/domain/manifest.js";
 import { RecordMachineClaims } from "../../contexts/machine-claims/application/record/record-machine-claims.use-case.js";
 import { ResolvePurgeCandidate } from "../../contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
 import { RecordSourceReference } from "../../contexts/machine-claims/application/shared-source/record-source-reference.use-case.js";
+import { ResolveReferenceRoot } from "../../contexts/machine-claims/application/shared-source/resolve-reference-root.use-case.js";
 import { SharedFrameworkSource } from "../../contexts/machine-claims/application/shared-source/shared-framework-source.use-case.js";
 import { ActivateNativeTools } from "../../orchestration/sync/settings/activate-native-tools.use-case.js";
 import { BuildMarketplaceForTool } from "../../orchestration/sync/settings/build-marketplace-for-tool.use-case.js";
@@ -118,7 +119,7 @@ export function wireMarketplaceSync(base: Base, inst: Installation) {
     tools
   );
   const recordSourceReference = new RecordSourceReference({
-    fs,
+    resolveReferenceRoot: new ResolveReferenceRoot(fs),
     currentVersion,
     logger,
     frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,

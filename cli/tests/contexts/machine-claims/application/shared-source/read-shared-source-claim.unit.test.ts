@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { OtherProjectsReferencing } from "../../../../../src/contexts/machine-claims/application/shared-source/other-projects-referencing.use-case.js";
 import { readSharedSourceClaim } from "../../../../../src/contexts/machine-claims/application/shared-source/read-shared-source-claim.js";
+import { ResolveReferenceRoot } from "../../../../../src/contexts/machine-claims/application/shared-source/resolve-reference-root.use-case.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
@@ -9,11 +11,10 @@ const SHARED: { name: string; scope: Scope } = { name: "aidd-framework", scope: 
 
 function reader(references?: RecordingSourceReferences) {
   return readSharedSourceClaim({
-    fs: new InMemoryFileAdapter(),
     logger: new CapturingLogger(),
     frameworkMarketplaceName: "aidd-framework",
-    platform: "linux",
-    references,
+    resolveReferenceRoot: new ResolveReferenceRoot(new InMemoryFileAdapter()),
+    otherProjectsReferencing: references && new OtherProjectsReferencing(references, "linux"),
   });
 }
 

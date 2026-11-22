@@ -11,6 +11,7 @@ import type { FileReader } from "../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../shared/ports/file-writer.js";
 import type { Lock } from "../../shared/ports/lock.js";
 import type { Logger } from "../../shared/ports/logger.js";
+import { machineOwnership, sharedSourceReads } from "../machine-claims.js";
 
 /** What a clean asks of the machine record, over the user manifest and the shared source's references. */
 export function wireCleanClaims(parts: {
@@ -21,17 +22,16 @@ export function wireCleanClaims(parts: {
   purgeCache: ResolvePurgeCandidate;
 }): CleanClaims {
   const { fs, logger, userManifestRepo, userSourceReferences, purgeCache } = parts;
+  const ownership = machineOwnership(userManifestRepo, fs);
   return {
     referencingProjects: userSourceReferences,
     sharedClaim: readSharedSourceClaim({
-      fs,
       logger,
       frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-      platform: process.platform,
-      references: userSourceReferences,
+      ...sharedSourceReads({ fs, platform: process.platform, references: userSourceReferences }),
     }),
     dropClaim: dropSourceClaim(logger, userSourceReferences),
-    detach: detachProjectClaims(userManifestRepo, fs),
+    detach: detachProjectClaims(ownership.detachNativePluginRefs, ownership.detachUserPlugin),
     machineClaims: readMachineClaims(userManifestRepo),
     exclusive: userManifestRepo,
     purgeCache,

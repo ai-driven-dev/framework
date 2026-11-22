@@ -1,13 +1,9 @@
 import type { Scope } from "../../../../shared/domain/scope.js";
-import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import type { UserSourceReferences } from "../../ports/user-source-references.js";
-import {
-  frameworkSourceIsShared,
-  otherProjectsReferencing,
-  resolveReferenceRoot,
-  toleratingUnreadableRefs,
-} from "../shared-source-reference-support.js";
+import { frameworkSourceIsShared } from "../../domain/shared-source-reference.model.js";
+import { toleratingUnreadableRefs } from "../shared-source-reference-support.js";
+import type { OtherProjectsReferencing } from "./other-projects-referencing.use-case.js";
+import type { ResolveReferenceRoot } from "./resolve-reference-root.use-case.js";
 
 /** Where a project's own claim on the shared source stands, read before any host cleanup. */
 export interface SharedSourceClaim {
@@ -29,26 +25,26 @@ export interface ReadSharedSourceClaimRequest {
  * key, so a dry-run and a `--force` run see the same fact.
  */
 export function readSharedSourceClaim(parts: {
-  fs: FileReader;
   logger: Logger;
   frameworkMarketplaceName: string;
-  /** The platform whose path rules compare two project roots. */
-  platform: string;
-  references?: UserSourceReferences;
+  resolveReferenceRoot: ResolveReferenceRoot;
+  /** Absent when the references port was never wired in. */
+  otherProjectsReferencing?: OtherProjectsReferencing;
 }) {
-  const { fs, logger, frameworkMarketplaceName, platform, references } = parts;
+  const { logger, frameworkMarketplaceName, resolveReferenceRoot, otherProjectsReferencing } =
+    parts;
   return async (request: ReadSharedSourceClaimRequest): Promise<SharedSourceClaim | undefined> => {
-    if (references === undefined) return undefined;
+    if (otherProjectsReferencing === undefined) return undefined;
     const shared = (await request.list()).find((m) =>
       frameworkSourceIsShared(m.name, m.scope, frameworkMarketplaceName)
     );
     if (shared === undefined) return undefined;
     return toleratingUnreadableRefs(logger, undefined, async () => {
-      const resolvedRoot = await resolveReferenceRoot(fs, request.projectRoot);
+      const resolvedRoot = await resolveReferenceRoot.execute(request.projectRoot);
       return {
         alias: shared.name,
         resolvedRoot,
-        otherProjects: await otherProjectsReferencing(references, resolvedRoot, platform),
+        otherProjects: await otherProjectsReferencing.execute(resolvedRoot),
       };
     });
   };

@@ -9,7 +9,6 @@ import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/c
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { removalClaims } from "../../../src/contexts/machine-claims/application/removal/removal-claims.js";
 import { AddMarketplace } from "../../../src/orchestration/marketplace/add-marketplace.use-case.js";
 import { RemoveRegisteredMarketplace } from "../../../src/orchestration/marketplace/remove/remove-registered-marketplace.use-case.js";
 import { TrustDeniedError } from "../../../src/orchestration/orchestration.error.js";
@@ -19,6 +18,7 @@ import {
   InvalidMarketplaceNameError,
   InvalidPluginManifestError,
 } from "../../../src/shared/domain/shared.error.js";
+import { removalClaimsOf } from "../../contexts/machine-claims/testing/claims-release.builder.js";
 import { FixturePluginFetcher } from "../../shared/testing/fixture-plugin-fetcher.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
@@ -86,7 +86,7 @@ async function marketplaceAdd(makePrompter: (events: string[]) => Prompter) {
   const manifestRepo = new InMemoryManifestRepository(Manifest.create());
   const remove = projectMarketplaceRemover(
     syntheticCatalog(),
-    removeProjectPluginOf(fs, removalClaims(manifestRepo, fs)),
+    removeProjectPluginOf(fs, removalClaimsOf(manifestRepo, fs)),
     manifestRepo,
     registry,
     prompter
