@@ -20,7 +20,7 @@ export class UpdateUserPlugin {
       RegistrationRecordRules,
       "isQualifiedRef" | "refSelectedBy"
     > &
-      Pick<RecordClaimRules, "claimsOf" | "dependentsOf">
+      Pick<RecordClaimRules, "claimsOf" | "holdersOf">
   ) {}
 
   async execute(command: UpdateUserPluginRequest): Promise<string[]> {

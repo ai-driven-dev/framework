@@ -9,7 +9,7 @@ describe("RemoveMachinePlugin", () => {
       isQualifiedRef: () => false,
       refSelectedBy: () => true,
       claimsOf: () => [],
-      dependentsOf: () => [],
+      holdersOf: () => [],
       withoutClaimedRef: <R>(record: R) => ({ ...record, pluginClaims: [] }),
     };
     const asked: RemoveUserPluginRequest[] = [];

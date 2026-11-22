@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   dependentsClaim,
+  holdersOf,
   readDependents,
 } from "../../../../src/contexts/machine-claims/domain/plugin-dependents.js";
 
@@ -23,5 +24,26 @@ describe("a plugin's dependents claim", () => {
 
   it.each([["/A"], [["/A", 1]]])("refuses a claim that is not a list of paths: %j", (claim) => {
     expect(() => readDependents(claim)).toThrow("expected a list of project roots");
+  });
+});
+
+describe("the projects holding plugins and refs", () => {
+  it("lists each project root once over the plugins' claims and the refs' claims", () => {
+    expect(
+      holdersOf(
+        [{ machineClaim: ["/A", "/B"] }, { machineClaim: ["/B"] }, {}],
+        [{ dependents: ["/C", "/A"] }]
+      )
+    ).toEqual(["/A", "/B", "/C"]);
+  });
+
+  it("is none when nothing is held", () => {
+    expect(holdersOf([{}], [{ dependents: [] }])).toEqual([]);
+  });
+
+  it("refuses a plugin claim it did not write", () => {
+    expect(() => holdersOf([{ machineClaim: "/A" }], [])).toThrow(
+      "expected a list of project roots"
+    );
   });
 });

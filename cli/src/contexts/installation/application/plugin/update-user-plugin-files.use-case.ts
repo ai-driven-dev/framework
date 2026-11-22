@@ -106,7 +106,7 @@ export class UpdateUserPluginFiles {
     options: UpdateUserPluginFilesRequest
   ): Promise<RecordedPlugin> {
     const { toolId, plugin, plan } = planned;
-    const dependents = options.refSelection.dependentsOf(plugin);
+    const dependents = options.refSelection.holdersOf([plugin], []);
     if (dependents.length > 0)
       this.deps.logger.warn(
         `${toolId}: updating user-scope '${plugin.plugin.name}' affects ${dependents.join(", ")}; each project must refresh its own integration afterward.`

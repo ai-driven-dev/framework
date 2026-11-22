@@ -1,7 +1,6 @@
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { PluginPlacement } from "../../ports/tool-sections.js";
-import type { UserPluginFileProof } from "../../ports/user-plugin-file-proof.js";
 import type { UserScopePluginFileRemoval } from "../../ports/user-scope-plugin-files.js";
 import { deletePluginFilesForTool } from "../plugin/delete-plugin-files.js";
 
@@ -10,7 +9,7 @@ import { deletePluginFilesForTool } from "../plugin/delete-plugin-files.js";
 export class UserScopePluginFiles implements UserScopePluginFileRemoval {
   constructor(
     private readonly fs: FileWriter,
-    private readonly prove: UserPluginFileProof
+    private readonly prove: UserScopePluginFileRemoval["proven"]
   ) {}
 
   /** The plugin's tracked files proven to sit inside the user scope and to be unedited since

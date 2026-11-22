@@ -9,7 +9,7 @@ describe("UpdateUserPlugin", () => {
       isQualifiedRef: () => false,
       refSelectedBy: () => true,
       claimsOf: () => [],
-      dependentsOf: () => [],
+      holdersOf: () => [],
     };
     let seen: unknown;
     const update = new UpdateUserPlugin(
@@ -56,7 +56,7 @@ describe("UpdateUserPlugin", () => {
         isQualifiedRef: () => false,
         refSelectedBy: () => false,
         claimsOf: () => [],
-        dependentsOf: () => [],
+        holdersOf: () => [],
       }
     );
 

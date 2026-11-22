@@ -2,9 +2,9 @@ import type { AiToolId } from "../../../shared/domain/tool.js";
 import type { Lock } from "../../../shared/ports/lock.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import { ActiveMachineDependentsError } from "../domain/installation.error.js";
-import type { MachineClaimsReading } from "../domain/manifest/native-registrations.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { InstalledPlugin } from "../domain/plugins/installed-plugin.js";
+import type { MachineClaimsReading } from "../ports/machine-claims-reading.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
 import type { UserScopePluginFileRemoval } from "../ports/user-scope-plugin-files.js";
 import type {
@@ -92,23 +92,16 @@ export class PurgeUserScopeFiles implements UserScopePurge {
   }
 
   private activeDependents(manifest: Manifest | null): readonly string[] {
-    return [
-      ...new Set(
-        manifest?.getInstalledToolIds().flatMap((toolId) =>
-          this.tools.isAiTool(toolId)
-            ? [
-                ...manifest
-                  .getRecordedPlugins(toolId)
-                  .filter(({ plugin }) => plugin.scope === "user")
-                  .flatMap((recorded) => this.deps.claims.dependentsOf(recorded)),
-                ...this.deps.claims
-                  .claimsOf(manifest.getNativeRegistrations(toolId))
-                  .flatMap((claim) => claim.dependents),
-              ]
-            : []
-        ) ?? []
+    if (manifest === null) return [];
+    const toolIds = manifest.getInstalledToolIds().filter((toolId) => this.tools.isAiTool(toolId));
+    return this.deps.claims.holdersOf(
+      toolIds.flatMap((toolId) =>
+        manifest.getRecordedPlugins(toolId).filter(({ plugin }) => plugin.scope === "user")
       ),
-    ];
+      toolIds.flatMap((toolId) =>
+        this.deps.claims.claimsOf(manifest.getNativeRegistrations(toolId))
+      )
+    );
   }
 
   private async assertTrackedUserPluginFilesSafe(manifest: Manifest): Promise<void> {

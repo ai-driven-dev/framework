@@ -8,7 +8,7 @@ import { ActiveMachineDependentsError } from "../../../../../src/contexts/instal
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
-import { dependentsRecorded } from "../../../../shared/testing/host-record-reading.builder.js";
+import { holdersRecorded } from "../../../../shared/testing/host-record-reading.builder.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../../../shared/testing/saying.builder.js";
@@ -118,7 +118,7 @@ function setup(seed: Seed = {}) {
     },
     records: {
       registrationOf: rules.marketplaceOf,
-      dependentsOf: dependentsRecorded,
+      holdersOf: holdersRecorded,
       claimsOn: rules.claimsOnMarketplace,
       withoutMarketplace: rules.withoutMarketplace,
     },

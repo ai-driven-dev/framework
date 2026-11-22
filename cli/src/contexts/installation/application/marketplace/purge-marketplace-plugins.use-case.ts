@@ -8,12 +8,14 @@ import type {
 } from "../../domain/manifest/native-registrations.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
+import type { MachineClaimsReading } from "../../ports/machine-claims-reading.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { HostRefCountingTool } from "../../ports/tool-sections.js";
 import type { UserScopePluginFileRemoval } from "../../ports/user-scope-plugin-files.js";
 import type { RegisteredMarketplace } from "../sync/record-activation.use-case.js";
 
-type PluginOf = { toolId: AiToolId; plugin: InstalledPlugin; dependents: readonly string[] };
+type PluginOf = { toolId: AiToolId; plugin: InstalledPlugin; recorded: RecordedPlugin };
 type NativeOf = {
   toolId: AiToolId;
   registrations: NativeRegistrations;
@@ -35,13 +37,12 @@ export interface MarketplaceHostRemoval<Plan> {
 }
 
 /** What a catalogue removal asks of a tool's record, the caller's to answer. */
-export interface MarketplaceRecords {
+export interface MarketplaceRecords extends Pick<MachineClaimsReading, "holdersOf"> {
   /** The registration the alias stands for, `undefined` when it was never registered. */
   registrationOf(
     registrations: NativeRegistrations,
     alias: string
   ): RegisteredMarketplace | undefined;
-  dependentsOf(plugin: { readonly machineClaim?: unknown }): readonly string[];
   /** The claims on the refs sitting on the host name the alias was registered under. */
   claimsOn(registrations: NativeRegistrations, alias: string): readonly NativeRefClaim[];
   /** The record without the marketplace, nor any ref or claim on its host name. */
@@ -66,11 +67,6 @@ export interface PurgeMarketplacePluginsDeps {
   readonly userScopePluginFiles: UserScopePluginFileRemoval;
 }
 
-/** Who still depends on the plugins or the native references about to be removed, once each. */
-function dependentsOf(...claims: readonly { dependents: readonly string[] }[][]): string[] {
-  return [...new Set(claims.flat().flatMap((claim) => claim.dependents))];
-}
-
 /** Removes everything the machine holds on behalf of one user-scope marketplace: the plugins
  * installed from it, and the host's catalogue and plugin claims, once none is still in use. */
 export class PurgeMarketplacePlugins {
@@ -93,9 +89,12 @@ export class PurgeMarketplacePlugins {
         `Cannot prove AIDD ownership of user-scope marketplace '${marketplace}': no user manifest.`
       );
     const { plugins, native, nativeRefs } = this.claimsOn(manifest, marketplace, records);
-    const dependents = dependentsOf(plugins, nativeRefs);
-    if (dependents.length > 0)
-      throw new ActiveMachineDependentsError(`user-scope marketplace '${marketplace}'`, dependents);
+    const holders = records.holdersOf(
+      plugins.map(({ recorded }) => recorded),
+      nativeRefs
+    );
+    if (holders.length > 0)
+      throw new ActiveMachineDependentsError(`user-scope marketplace '${marketplace}'`, holders);
     const safeFiles = await this.proveFiles(plugins, home);
     await this.withdrawFromHosts(native, command.hostRemoval);
     const where = { projectRoot, home };
@@ -131,11 +130,7 @@ export class PurgeMarketplacePlugins {
       manifest
         .getRecordedPlugins(toolId)
         .filter((p) => p.plugin.scope === "user" && p.marketplace === marketplace)
-        .map((recorded) => ({
-          toolId,
-          plugin: recorded.plugin,
-          dependents: records.dependentsOf(recorded),
-        }))
+        .map((recorded) => ({ toolId, recorded, plugin: recorded.plugin }))
     );
     const native = this.tools.idsInCanonicalOrder("ai").flatMap((toolId) => {
       const registrations = manifest.getNativeRegistrations(toolId);

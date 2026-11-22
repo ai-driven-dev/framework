@@ -83,9 +83,7 @@ export class RemoveUserPlugin<Proof> {
       const recorded = manifest
         .getRecordedPlugins(toolId)
         .find((p) => p.plugin.name === options.pluginName && p.plugin.scope === "user");
-      return recorded === undefined
-        ? []
-        : [{ toolId, plugin: recorded.plugin, dependents: options.records.dependentsOf(recorded) }];
+      return recorded === undefined ? [] : [{ toolId, recorded, plugin: recorded.plugin }];
     });
   }
 
@@ -116,17 +114,12 @@ export class RemoveUserPlugin<Proof> {
         `Native plugin '${options.pluginName}' has multiple catalogues; use the exact <plugin>@<catalogue> ref.`
       );
     }
-    const dependents = [
-      ...new Set([
-        ...targets.flatMap((target) => target.dependents),
-        ...nativeTargets.flatMap(({ claim }) => claim.dependents),
-      ]),
-    ];
-    if (dependents.length > 0) {
-      throw new ActiveMachineDependentsError(
-        `user-scope plugin '${options.pluginName}'`,
-        dependents
-      );
+    const holders = options.records.holdersOf(
+      targets.map((target) => target.recorded),
+      nativeTargets.map(({ claim }) => claim)
+    );
+    if (holders.length > 0) {
+      throw new ActiveMachineDependentsError(`user-scope plugin '${options.pluginName}'`, holders);
     }
   }
 

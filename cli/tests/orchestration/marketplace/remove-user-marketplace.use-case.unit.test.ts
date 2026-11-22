@@ -27,7 +27,7 @@ const TARGET: Parameters<PurgeCommand["hostRemoval"]["plan"]>[0] = {
 function removerWith(purge: (command: PurgeCommand) => Promise<number>) {
   const records: RemoveUserMarketplaceDeps["records"] = {
     marketplaceOf: vi.fn(() => REGISTRATION),
-    dependentsOf: vi.fn(() => []),
+    holdersOf: vi.fn(() => []),
     claimsOnMarketplace: vi.fn(() => []),
     withoutMarketplace: vi.fn((record) => ({ ...record, pluginClaims: [] })),
   };

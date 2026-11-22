@@ -21,13 +21,6 @@ export interface NativeRefClaim {
   readonly dependents: readonly string[];
 }
 
-/** What the manifest carries and machine claims read: the claims a tool's record keeps on its
- * native refs, and the project roots a plugin's own claim lists. */
-export interface MachineClaimsReading {
-  claimsOf(registrations: NativeRegistrations | undefined): readonly NativeRefClaim[];
-  dependentsOf(plugin: { readonly machineClaim?: unknown }): readonly string[];
-}
-
 /** The record as it came, copied so the manifest owns its top level. */
 export function serializeNativeRegistrations(
   registrations: NativeRegistrations

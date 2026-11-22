@@ -1,5 +1,5 @@
 import type { CatalogueClaimsView, RecordClaimRules } from "../../contract/record-claim-rules.js";
-import { readDependents } from "../../domain/plugin-dependents.js";
+import { holdersOf } from "../../domain/plugin-dependents.js";
 import { claimsKeeping, mergeRefClaims, readHeldClaims } from "../../domain/ref-claims.js";
 import type { HostRecordRules } from "../../ports/host-record.js";
 
@@ -41,7 +41,7 @@ function mergeCatalogue(
 export function recordClaimRules(host: HostRecordRules): RecordClaimRules {
   return {
     claimsOf: (record) => readHeldClaims(record?.pluginClaims),
-    dependentsOf: (plugin) => readDependents(plugin.machineClaim),
+    holdersOf,
     claimsOnMarketplace: (record, alias) => {
       const off = offMarketplace(host, record, alias);
       return claimsKeeping(readHeldClaims(record.pluginClaims), (ref) => !off(ref));
