@@ -15,6 +15,7 @@ import { LoadManifestForDoctor } from "../../contexts/installation/application/d
 import { CheckAuthentication } from "../../orchestration/doctor/check-authentication.use-case.js";
 import { CheckRegistration } from "../../orchestration/doctor/check-registration.use-case.js";
 import { doctorAll } from "../../orchestration/doctor/doctor-all.js";
+import { ResolveRegisteredBuilds } from "../../orchestration/doctor/resolve-registered-builds.use-case.js";
 import { RunDoctor } from "../../orchestration/doctor/run-doctor.use-case.js";
 import { RunUserScopeDoctor } from "../../orchestration/doctor/run-user-scope-doctor.use-case.js";
 import type { Installation } from "../installation.js";
@@ -34,14 +35,17 @@ function registrationCheckOver(base: Base, inst: Installation, manifests: LoadMa
   const { fs, tools } = base;
   return new CheckRegistration(
     {
-      listPlugins: new ListRegisteredPlugins(manifests),
-      records: inst.registrationRecordRules,
-      builds: new ResolveBuiltMarketplaces({
-        fs,
-        registry: base.marketplaceRegistry,
-        userCacheRoot: userConfigDir,
-        currentVersion: base.currentVersion,
-      }),
+      resolve: new ResolveRegisteredBuilds(
+        new ListRegisteredPlugins(manifests),
+        inst.registrationRecordRules,
+        new ResolveBuiltMarketplaces({
+          fs,
+          registry: base.marketplaceRegistry,
+          userCacheRoot: userConfigDir,
+          currentVersion: base.currentVersion,
+        }),
+        tools
+      ),
       declared: new InspectDeclaredMarketplaces(
         fs,
         hostBinaryAvailableIn(base.nativePluginActivators),
