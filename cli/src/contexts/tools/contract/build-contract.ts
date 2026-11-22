@@ -1,5 +1,8 @@
 import type { ConfigAsset, SchemaName } from "../../../shared/domain/config-asset.js";
-import type { FlatArtifactLayout } from "../../../shared/domain/materialization/flat-paths.js";
+import type {
+  FlatArtifactLayout,
+  FlatHooksLoaderEntry,
+} from "../../../shared/domain/materialization/flat-paths.js";
 
 /** All a marketplace builder reads of the output tree. */
 export interface BuildFileReader {
@@ -15,8 +18,9 @@ export interface FlatHooksBridge {
   /** Raw (unrewritten) hooks.json content + plugin name -> the generated bridge module's
    * full text, or `null` when nothing in it named an event the bridge maps. */
   readonly generate: (rawHooksJson: string, plugin: string) => string | null;
-  /** Output path for the generated bridge module, relative to the project root. */
-  readonly path: (plugin: string) => string;
+  /** The directory, relative to the project root, the generated bridge module lands in, named
+   * `<plugin>-hooks.js`. */
+  readonly dir: string;
   /** A hooks/ file whose presence in this plugin's own source means it ships its own bridge
    * already: generate nothing for it. */
   readonly skipIfSourceHas: string;
@@ -45,15 +49,30 @@ export interface AgentMarkdown {
   readonly quote?: "double";
 }
 
+/** Where an artifact's files land, as data: a skills or agents layout, the path a file has in its
+ * plugin (under a directory when one is named), one shared file, or a hooks route. */
+export type ArtifactPlacement =
+  | {
+      readonly kind: "layout";
+      readonly layout: FlatArtifactLayout;
+      readonly of: "skill" | "agent";
+    }
+  | { readonly kind: "relative"; readonly under?: string }
+  | { readonly kind: "file"; readonly at: string }
+  | { readonly kind: "agentFiles"; readonly dir: string; readonly ext: string }
+  | {
+      readonly kind: "hooks";
+      readonly scriptsDir: string;
+      readonly loaderEntry?: FlatHooksLoaderEntry;
+    };
+
 export type ArtifactContract =
   | { readonly supported: false }
   | {
       readonly supported: true;
       readonly source: ArtifactSource;
-      /** Where a file lands. Absent for a skills or agents artifact that declares `layout`. */
-      readonly path?: (plugin: string, relPath: string) => string;
-      /** A flat skills or agents artifact's placement, as data the engine reads. */
-      readonly layout?: FlatArtifactLayout;
+      /** Where a file lands. */
+      readonly placement: ArtifactPlacement;
       /** An agent's markdown, as the tool keeps it. Wins over `transform` for an agent. */
       readonly agentMarkdown?: AgentMarkdown;
       /** A skill entry's frontmatter, as the tool keeps it: absent, the entry is a byte-copy. */
@@ -65,15 +84,15 @@ export type ArtifactContract =
        * SKILL.md's `name` frontmatter to match. Meaningless outside a flat skill artifact. */
       readonly rewriteSkillName?: boolean;
       /** Present for an mcp artifact every plugin's servers are merged into, one shared file at
-       * `path`: the property holding the server map, `servers` for VS Code, `mcpServers` for
+       * `placement`: the property holding the server map, `servers` for VS Code, `mcpServers` for
        * Claude and Cursor. */
       readonly mcpServersKey?: string;
       /** The hooks file a plugin's hooks.json becomes: one every plugin shares, merged into,
        * or one of the plugin's own, written whole. Warnings are surfaced to the user. */
       readonly hooksFile?: {
-        /** Relative to the output root. */
-        readonly path: (plugin: string) => string;
-        readonly shared: boolean;
+        /** Relative to the output root: `shared`, the one file every plugin merges into, or
+         * `own`, the directory of a file of the plugin's own, `<plugin>.hooks.json`. */
+        readonly at: { readonly shared: string } | { readonly own: string };
         /** The existing file, `null` for a plugin's own, and the plugin's raw hooks.json;
          * `locate` names, in a command, a path the plugin ships outside `hooks/`. */
         readonly merge: (

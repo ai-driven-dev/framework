@@ -9,7 +9,7 @@ import {
 } from "../../testing/stub-build-contract.builder.js";
 
 function stepFor(over: Parameters<typeof aSupportedArtifact>[0] = {}) {
-  const artifact = aSupportedArtifact({ path: (_p, rel) => `flat/${rel}`, ...over });
+  const artifact = aSupportedArtifact({ placement: { kind: "relative", under: "flat/" }, ...over });
   if (!artifact.supported) throw new Error("stub artifact is supported");
   return {
     target: aDiskTarget(aStubBuildContract(), { mode: "flat", force: false }),
@@ -20,8 +20,7 @@ function stepFor(over: Parameters<typeof aSupportedArtifact>[0] = {}) {
 }
 
 const OWN_FILE = {
-  path: (plugin: string) => `flat/${plugin}.json`,
-  shared: false,
+  at: { own: "flat/" },
   merge: (_existing: string | null, shipped: { json: string }) => ({
     content: `merged:${shipped.json}`,
     warnings: [],
@@ -35,7 +34,7 @@ function seeded(extra: Record<string, string> = {}): InMemoryFileAdapter {
 describe("one plugin's flat hooks file", () => {
   it("writes the merged hooks file of a tool every plugin shares", async () => {
     const fs = seeded();
-    const shared = { ...OWN_FILE, path: () => "flat/all.json", shared: true };
+    const shared = { ...OWN_FILE, at: { shared: "flat/all.json" } };
     const count = await writeFlatHooks(fs, new CapturingLogger(), stepFor({ hooksFile: shared }));
     expect(count).toBe(1);
     expect(fs.getFile("/out/flat/all.json")).toBe("merged:{}");

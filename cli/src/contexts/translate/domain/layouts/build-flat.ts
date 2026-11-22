@@ -2,7 +2,7 @@ import type {
   PluginComponentFile,
   PluginDistribution,
 } from "../../../../shared/domain/plugin/plugin-distribution.js";
-import { artifactPath } from "../../../tools/contract/artifact-path.js";
+import { artifactPath, hooksFilePath } from "../../../tools/contract/artifact-path.js";
 import type {
   SupportedArtifact,
   ToolBuildContract,
@@ -114,11 +114,11 @@ export function flatOwnHooksFile(
   const { hooks } = contract.artifacts;
   const file = hooks.supported && !hooks.skipHooksJson ? hooks.hooksFile : undefined;
   const manifest = canon.components.hooks.find((f) => f.relativePath === PLUGIN_HOOKS_RELATIVE);
-  if (file === undefined || file.shared || manifest === undefined) return null;
+  if (file === undefined || "shared" in file.at || manifest === undefined) return null;
   const plugin = canon.manifest.name;
   const { content, warnings } = mergeFlatHooks({ file, contract }, null, {
     json: manifest.content,
     plugin,
   });
-  return { plan: { source: "", path: file.path(plugin), content }, warnings };
+  return { plan: { source: "", path: hooksFilePath(file, plugin), content }, warnings };
 }

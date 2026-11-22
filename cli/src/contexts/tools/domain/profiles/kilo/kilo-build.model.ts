@@ -6,6 +6,7 @@ import {
   type FlatArtifactLayout,
   flatArtifactLayout,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
+import { agentsIn, skillsIn } from "../../../contract/artifact-path.js";
 import type {
   AgentMarkdown,
   ConfigArtifactFile,
@@ -70,13 +71,13 @@ export function buildKiloFlatContract(hooks: KiloHooks): ToolBuildContract {
       skills: {
         supported: true,
         source: { kind: "fullTree", srcDir: "skills" },
-        layout: KILO_FLAT_LAYOUT,
+        placement: skillsIn(KILO_FLAT_LAYOUT),
         rewriteSkillName: true,
       },
       agents: {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        layout: KILO_FLAT_LAYOUT,
+        placement: agentsIn(KILO_FLAT_LAYOUT),
         agentMarkdown: kiloAgentMarkdown,
       },
       mcp: { supported: false },

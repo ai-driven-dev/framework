@@ -1,10 +1,13 @@
 import { resolve } from "node:path";
+import { agentsIn, skillsIn } from "../../../../src/contexts/tools/contract/artifact-path.js";
 import type {
   ArtifactContract,
+  ArtifactPlacement,
   ToolBuildContract,
 } from "../../../../src/contexts/tools/contract/build-contract.js";
 import { JsonSchemaValidationError } from "../../../../src/contexts/translate/domain/translate.error.js";
 import type { JsonSchemaValidator } from "../../../../src/contexts/translate/ports/json-schema-validator.js";
+import { flatArtifactLayout } from "../../../../src/shared/domain/materialization/flat-paths.js";
 import type { AssetProvider } from "../../../../src/shared/ports/asset-provider.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import type { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
@@ -62,15 +65,20 @@ export function makeAssetProvider(): AssetProvider {
 // Posix on every platform: the adapter keys writes that way and expectations concatenate on it.
 export const STUB_OUT = resolve("/tmp/aidd-flat-stub-test").replaceAll("\\", "/");
 export const STUB_PLUGIN_SRC = "/src/plugins/aidd-test";
+export const STUB_LAYOUT = flatArtifactLayout(".stub/", {
+  skills: "nested",
+  agent: { ext: ".md" },
+});
+export const STUB_HOOKS = { kind: "hooks", scriptsDir: ".stub/hooks/" } as const;
 
 export function supportedArtifact(
-  path: (plugin: string, relPath: string) => string,
+  placement: ArtifactPlacement,
   extra: Partial<Extract<ArtifactContract, { supported: true }>> = {}
 ): ArtifactContract {
   return {
     supported: true,
     source: { kind: "fullTree", srcDir: "." },
-    path,
+    placement,
     ...extra,
   };
 }
@@ -81,9 +89,9 @@ export function stubContract(over: Partial<ToolBuildContract> = {}): ToolBuildCo
     synthesizeManifest: null,
     manifestSchemaName: null,
     artifacts: {
-      agents: supportedArtifact((plugin, rel) => `.stub/agents/${plugin}-${rel.slice(7)}`),
-      skills: supportedArtifact((plugin, rel) => `.stub/skills/${plugin}/${rel.slice(7)}`),
-      hooks: supportedArtifact((plugin, rel) => `.stub/hooks/${plugin}/${rel.slice(6)}`),
+      agents: supportedArtifact(agentsIn(STUB_LAYOUT)),
+      skills: supportedArtifact(skillsIn(STUB_LAYOUT)),
+      hooks: supportedArtifact(STUB_HOOKS),
       mcp: { supported: false },
       rules: { supported: false },
       commands: { supported: false },

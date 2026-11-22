@@ -1,6 +1,9 @@
 import { isAbsolute } from "node:path";
 import { describe, expect, it } from "vitest";
-import { artifactPath } from "../../../../src/contexts/tools/contract/artifact-path.js";
+import {
+  artifactPath,
+  hooksFilePath,
+} from "../../../../src/contexts/tools/contract/artifact-path.js";
 import type {
   ArtifactContract,
   ToolBuildContract,
@@ -91,7 +94,7 @@ function flatPathsUnderDirectory(contract: ToolBuildContract): string[] {
   return [
     agents.supported ? artifactPath(agents, "plug", SAMPLE_PATHS.agents) : "",
     hooks.supported ? artifactPath(hooks, "plug", SAMPLE_PATHS.hooks) : "",
-    hooks.supported && hooks.hooksFile !== undefined ? hooks.hooksFile.path("plug") : "",
+    hooks.supported && hooks.hooksFile !== undefined ? hooksFilePath(hooks.hooksFile, "plug") : "",
   ].filter((path) => path !== "");
 }
 

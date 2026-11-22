@@ -104,11 +104,11 @@ describe("present(cursor.buildContracts.flat)()", () => {
     expect({
       declaration: artifactPath(hooks, "aidd-dev", "hooks/aidd-dev.hooks.json"),
       script: artifactPath(hooks, "aidd-dev", "hooks/journal.cjs"),
-      file: [hooks.hooksFile?.path("aidd-dev"), hooks.hooksFile?.shared],
+      file: hooks.hooksFile?.at,
     }).toStrictEqual({
       declaration: ".cursor/hooks/aidd-dev.hooks.json",
       script: ".cursor/hooks/aidd-dev/journal.cjs",
-      file: [".cursor/hooks.json", true],
+      file: { shared: ".cursor/hooks.json" },
     });
   });
 

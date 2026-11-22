@@ -7,6 +7,7 @@ import { FlatTargetExistsError } from "../../../../../src/contexts/translate/dom
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import {
+  STUB_HOOKS,
   STUB_OUT,
   STUB_PLUGIN_SRC,
   stubContract,
@@ -26,10 +27,9 @@ describe("the hooks a flat layout writes", () => {
   }
 
   function fileArtifact(shared: boolean): ArtifactContract {
-    return supportedArtifact((plugin, rel) => `.stub/hooks/${plugin}/${rel.slice(6)}`, {
+    return supportedArtifact(STUB_HOOKS, {
       hooksFile: {
-        path: (plugin) => (shared ? ".stub/settings.json" : `.stub/hooks/${plugin}.hooks.json`),
-        shared,
+        at: shared ? { shared: ".stub/settings.json" } : { own: ".stub/hooks/" },
         merge: (existing, { json, plugin }) => ({
           content: `${existing ?? "none"}+${plugin}:${json}`,
           warnings: ["one event has no equivalent"],
@@ -88,11 +88,11 @@ describe("the hooks a flat layout writes", () => {
     const contract = stubContract({
       artifacts: {
         ...stubContract().artifacts,
-        hooks: supportedArtifact((plugin, rel) => `.stub/hooks/${plugin}/${rel.slice(6)}`, {
+        hooks: supportedArtifact(STUB_HOOKS, {
           skipHooksJson: true,
           hooksBridge: {
             generate: (raw, plugin) => `bridge(${plugin}):${raw}`,
-            path: (plugin) => `.stub/plugin/${plugin}.js`,
+            dir: ".stub/plugin/",
             skipIfSourceHas: "own-plugin.js",
           },
         }),
@@ -100,7 +100,7 @@ describe("the hooks a flat layout writes", () => {
     });
     expect(await stubWrite(memFs, contract)).toBe(2);
     expect(writtenUnder(memFs, STUB_OUT)).toEqual({
-      [`${STUB_OUT}/.stub/plugin/aidd-test.js`]: `bridge(aidd-test):${hooksJson}`,
+      [`${STUB_OUT}/.stub/plugin/aidd-test-hooks.js`]: `bridge(aidd-test):${hooksJson}`,
       [`${STUB_OUT}/.stub/hooks/aidd-test/lib/check.sh`]: "#!/bin/sh\n",
     });
   });
@@ -110,11 +110,11 @@ describe("the hooks a flat layout writes", () => {
     const contract = stubContract({
       artifacts: {
         ...stubContract().artifacts,
-        hooks: supportedArtifact((plugin, rel) => `.stub/hooks/${plugin}/${rel.slice(6)}`, {
+        hooks: supportedArtifact(STUB_HOOKS, {
           skipHooksJson: true,
           hooksBridge: {
             generate: () => null,
-            path: (plugin) => `.stub/plugin/${plugin}.js`,
+            dir: ".stub/plugin/",
             skipIfSourceHas: "own-plugin.js",
           },
         }),
@@ -132,18 +132,18 @@ describe("the hooks a flat layout writes", () => {
     const contract = stubContract({
       artifacts: {
         ...stubContract().artifacts,
-        hooks: supportedArtifact((plugin, rel) => `.stub/hooks/${plugin}/${rel.slice(6)}`, {
+        hooks: supportedArtifact(STUB_HOOKS, {
           skipHooksJson: true,
           hooksBridge: {
             generate: (raw, plugin) => `bridge(${plugin}):${raw}`,
-            path: (plugin) => `.stub/plugin/${plugin}.js`,
+            dir: ".stub/plugin/",
             skipIfSourceHas: "own-plugin.js",
           },
         }),
       },
     });
     expect(await stubWrite(memFs, contract)).toBe(2);
-    expect(memFs.has(`${STUB_OUT}/.stub/plugin/aidd-test.js`)).toBe(false);
+    expect(memFs.has(`${STUB_OUT}/.stub/plugin/aidd-test-hooks.js`)).toBe(false);
   });
 
   it("writes nothing for a plugin shipping no hooks manifest", async () => {

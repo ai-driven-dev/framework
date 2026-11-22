@@ -16,10 +16,9 @@ function translated(shared: boolean) {
       artifacts: {
         ...contract.artifacts,
         hooks: aSupportedArtifact({
-          path: (plugin, rel) => `.stub/${plugin}/${rel}`,
+          placement: { kind: "hooks", scriptsDir: ".stub/" },
           hooksFile: {
-            path: (plugin) => (shared ? ".stub/shared.json" : `.stub/${plugin}.hooks.json`),
-            shared,
+            at: shared ? { shared: ".stub/shared.json" } : { own: ".stub/" },
             merge: (existing, { json, plugin }) => ({
               content: `${existing ?? "none"}+${plugin}:${json}`,
               warnings: ["no equivalent"],
@@ -44,7 +43,7 @@ describe("a flat plugin's hooks file", () => {
 
   it("is left to the sink's merge when every plugin shares it", () => {
     const { files, hooks, warnings } = translated(true);
-    expect(files.map((file) => file.relativePath)).toEqual([".stub/plug/hooks/run.sh"]);
+    expect(files.map((file) => file.relativePath)).toEqual([".stub/plug/run.sh"]);
     expect(hooks).toBe(HOOKS);
     expect(warnings).toEqual([]);
   });

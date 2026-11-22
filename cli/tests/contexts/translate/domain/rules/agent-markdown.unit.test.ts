@@ -11,7 +11,7 @@ const SOURCE = "---\nname: x\nmodel: opus\n---\nSee @./y.md\n";
 const base: Supported = {
   supported: true,
   source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-  path: (_plugin, rel) => rel,
+  placement: { kind: "relative" },
 };
 const at = { plugin: "p", outName: "x.md", from: "agents/x.md" };
 

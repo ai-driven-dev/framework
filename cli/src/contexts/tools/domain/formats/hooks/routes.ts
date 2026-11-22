@@ -42,7 +42,7 @@ export function pluginTreeHooksArtifact(descriptor: HooksRouting): ArtifactContr
   return {
     supported: true,
     source: PLUGIN_HOOKS_SOURCE,
-    path: (_plugin, rel) => rel,
+    placement: { kind: "relative" },
     script: hookScript(descriptor),
   };
 }

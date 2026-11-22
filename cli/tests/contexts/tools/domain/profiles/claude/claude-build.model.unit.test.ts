@@ -90,11 +90,11 @@ describe("present(claude.buildContracts.flat)()", () => {
     expect({
       declaration: artifactPath(hooks, "aidd-dev", "hooks/aidd-dev.hooks.json"),
       script: artifactPath(hooks, "aidd-dev", "hooks/journal.cjs"),
-      file: [hooks.hooksFile?.path("aidd-dev"), hooks.hooksFile?.shared],
+      file: hooks.hooksFile?.at,
     }).toStrictEqual({
       declaration: ".claude/hooks/aidd-dev.hooks.json",
       script: ".claude/hooks/aidd-dev/journal.cjs",
-      file: [".claude/settings.json", true],
+      file: { shared: ".claude/settings.json" },
     });
   });
 

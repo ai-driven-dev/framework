@@ -35,11 +35,12 @@ const ASSETS: AssetProvider = {
   },
 };
 
+const COPY_DIR = ".out/";
 const NONE: ArtifactContract = { supported: false };
 const COPY: ArtifactContract = {
   supported: true,
   source: { kind: "fullTree", srcDir: "" },
-  path: (plugin, rel) => `.out/${plugin}/${rel}`,
+  placement: { kind: "relative", under: COPY_DIR },
 };
 
 function contractOf(
@@ -202,7 +203,7 @@ describe("a flat MCP artifact", () => {
       hooks: COPY,
       mcp: {
         ...COPY,
-        path: () => "mcp.json",
+        placement: { kind: "file", at: "mcp.json" },
         mcpServersKey: "mcpServers",
       },
     });
@@ -211,7 +212,7 @@ describe("a flat MCP artifact", () => {
     await write(fs, targetOf(contract, "flat", outDir));
 
     const written = fs.getFile(`${outDir}/mcp.json`) ?? "";
-    expect(written).toContain(`${OUT.replace(/\\/g, "/")}/nested/.out/${PLUGIN}/hooks/server.js`);
+    expect(written).toContain(`${OUT.replace(/\\/g, "/")}/nested/${COPY_DIR}hooks/server.js`);
   });
 });
 
@@ -260,19 +261,16 @@ describe("a source path a Windows host reports with backslashes", () => {
 
     await write(fs, targetOf(contract, "flat"));
 
-    expect(writtenPaths(fs)).toEqual([`.out/${PLUGIN}/hooks/sub/run.js`]);
+    expect(writtenPaths(fs)).toEqual([`${COPY_DIR}hooks/sub/run.js`]);
     expect(script).toHaveBeenCalledWith("hooks/sub/run.js", "run");
   });
 
   it("lands a flat skill file under its folder", async () => {
     const fs = windowsSeeded({ [`${PLUGIN_SRC}/skills/plan/SKILL.md`]: "Plan." });
 
-    const path = vi.fn(COPY.path);
+    await write(fs, targetOf(contractOf({ skills: COPY }), "flat"));
 
-    await write(fs, targetOf(contractOf({ skills: { ...COPY, path } }), "flat"));
-
-    expect(writtenPaths(fs)).toEqual([`.out/${PLUGIN}/skills/plan/SKILL.md`]);
-    expect(path).toHaveBeenCalledWith(PLUGIN, "skills/plan/SKILL.md");
+    expect(writtenPaths(fs)).toEqual([`${COPY_DIR}skills/plan/SKILL.md`]);
   });
 
   it("names a flat agent with the placeholder by its forward-slash path", async () => {
@@ -293,8 +291,7 @@ describe("a source path a Windows host reports with backslashes", () => {
       hooks: {
         ...COPY,
         hooksFile: {
-          path: () => "cfg\\hooks.json",
-          shared: true,
+          at: { shared: "cfg\\hooks.json" },
           merge: () => ({ content: "{}", warnings: [] }),
         },
       },
@@ -330,8 +327,7 @@ describe("a flat hooks file that names a script the plugin ships", () => {
       hooks: {
         ...COPY,
         hooksFile: {
-          path: () => "hooks-out.json",
-          shared: false,
+          at: { shared: "hooks-out.json" },
           merge: (_existing, { locate }) => ({
             content: locate?.("hooks/run.js") ?? "",
             warnings: [],
@@ -342,7 +338,7 @@ describe("a flat hooks file that names a script the plugin ships", () => {
 
     await write(fs, targetOf(contract, "flat"));
 
-    expect(fs.getFile(`${OUT}/hooks-out.json`)).toBe(`./.out/${PLUGIN}/hooks/run.js`);
+    expect(fs.getFile(`${OUT}/hooks-out.json`)).toBe(`./${COPY_DIR}hooks/run.js`);
   });
 });
 

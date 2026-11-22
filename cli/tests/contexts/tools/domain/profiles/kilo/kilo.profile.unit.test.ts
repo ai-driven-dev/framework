@@ -68,9 +68,7 @@ describe("kilo", () => {
       plugins.hooksAcceptance().accepts,
       plugins.flatLayout().hooksDir,
     ]).toStrictEqual(["flat", true, ".kilo/hooks/"]);
-    expect(plugins.flatLayout().hooksBridge?.path("aidd-context")).toBe(
-      ".kilo/plugin/aidd-context-hooks.js"
-    );
+    expect(plugins.flatLayout().hooksBridge?.dir).toBe(".kilo/plugin/");
     expect(
       flatHooksPathWithLoaderEntry({
         perPluginHooksDir: plugins.flatLayout().hooksDir ?? "",

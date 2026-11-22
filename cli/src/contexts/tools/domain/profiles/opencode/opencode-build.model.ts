@@ -7,6 +7,7 @@ import {
   type FlatArtifactLayout,
   flatArtifactLayout,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
+import { agentsIn, skillsIn } from "../../../contract/artifact-path.js";
 import type {
   AgentMarkdown,
   ConfigArtifactFile,
@@ -86,13 +87,13 @@ export function buildOpencodeFlatContract(hooks: OpencodeHooks): ToolBuildContra
       skills: {
         supported: true,
         source: { kind: "fullTree", srcDir: "skills" },
-        layout: OPENCODE_FLAT_LAYOUT,
+        placement: skillsIn(OPENCODE_FLAT_LAYOUT),
         rewriteSkillName: true,
       },
       agents: {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        layout: OPENCODE_FLAT_LAYOUT,
+        placement: agentsIn(OPENCODE_FLAT_LAYOUT),
         agentMarkdown: opencodeAgentMarkdown,
       },
       mcp: { supported: false }, // handled by configArtifact (opencode.json mcp)

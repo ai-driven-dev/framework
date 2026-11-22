@@ -15,7 +15,7 @@ function flatSkills(
   over: Parameters<typeof aSupportedArtifact>[0] = {}
 ) {
   const contract = aStubBuildContract();
-  const skills = aSupportedArtifact({ path: (_p, rel) => `flat/${rel}`, ...over });
+  const skills = aSupportedArtifact({ placement: { kind: "relative", under: "flat/" }, ...over });
   const built = translateBuildLayout(
     aCanon(PLUGIN, files),
     {

@@ -48,7 +48,7 @@ describe("buildKiloFlatContract", () => {
     expect(artifactPath(hooks, "aidd-context", "hooks/kilo-plugin.js")).toBe(
       ".kilo/plugin/aidd-context.js"
     );
-    expect(hooks.hooksBridge?.path("aidd-context")).toBe(".kilo/plugin/aidd-context-hooks.js");
+    expect(hooks.hooksBridge?.dir).toBe(".kilo/plugin/");
   });
 
   it("drops the name from a flat agent: Kilo names it after its file", () => {

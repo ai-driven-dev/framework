@@ -124,8 +124,12 @@ function withSections(profile: AiTool, replaced: ProfileSections): AiTool {
 
 const UNSUPPORTED: ArtifactContract = { supported: false };
 
-function supported(path: () => string): ArtifactContract {
-  return { supported: true, source: { kind: "configFile", srcPath: "x" }, path };
+function supported(at: string): ArtifactContract {
+  return {
+    supported: true,
+    source: { kind: "configFile", srcPath: "x" },
+    placement: { kind: "file", at },
+  };
 }
 
 function convertedLike(profile: AiTool): CommandsSection["convertFrontmatter"] {
@@ -235,13 +239,13 @@ const BROKEN: Readonly<Record<string, () => FileConformanceSubject>> = {
   "builds neither rules nor commands from the plugin tree": () =>
     subjectOf(
       withMarketplace(NATIVE, {
-        artifacts: { ...marketplaceOf(NATIVE).artifacts, rules: supported(() => "x.md") },
+        artifacts: { ...marketplaceOf(NATIVE).artifacts, rules: supported("x.md") },
       })
     ),
   "gives every supported artifact a non-empty path": () =>
     subjectOf(
       withMarketplace(NATIVE, {
-        artifacts: { ...marketplaceOf(NATIVE).artifacts, skills: supported(() => "") },
+        artifacts: { ...marketplaceOf(NATIVE).artifacts, skills: supported("") },
       })
     ),
   "is reachable by at least one build": () => subjectOf({ ...NATIVE, buildContracts: {} }),

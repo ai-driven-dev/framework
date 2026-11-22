@@ -1,5 +1,5 @@
 import { basename } from "node:path";
-import { artifactPath } from "../../tools/contract/artifact-path.js";
+import { artifactPath, hooksBridgeFilePath } from "../../tools/contract/artifact-path.js";
 import type {
   FlatHooksBridge,
   SupportedArtifact,
@@ -26,7 +26,7 @@ export function flatHooksBridgeFile({
   if (sourceShipsItsOwn) return null;
   const content = bridge.generate(rawHooksJson, pluginName);
   if (content === null) return null;
-  return { relativePath: bridge.path(pluginName), content };
+  return { relativePath: hooksBridgeFilePath(bridge, pluginName), content };
 }
 
 /** Whether a plugin's own hooks already carry the file a bridge would replace, in any folder. */

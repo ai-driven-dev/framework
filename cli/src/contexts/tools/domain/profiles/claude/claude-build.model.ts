@@ -8,6 +8,7 @@ import {
   type FlatArtifactLayout,
   flatArtifactLayout,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
+import { agentsIn, skillsIn } from "../../../contract/artifact-path.js";
 import type { AgentMarkdown, ToolBuildContract } from "../../../contract/build-contract.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
@@ -53,19 +54,19 @@ export function buildClaudeFlatContract(hooks: FlatHooks): ToolBuildContract {
       skills: {
         supported: true,
         source: { kind: "fullTree", srcDir: "skills" },
-        layout: CLAUDE_FLAT_LAYOUT,
+        placement: skillsIn(CLAUDE_FLAT_LAYOUT),
         rewriteSkillName: true,
       },
       agents: {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        layout: CLAUDE_FLAT_LAYOUT,
+        placement: agentsIn(CLAUDE_FLAT_LAYOUT),
         agentMarkdown: claudeFlatAgentMarkdown,
       },
       mcp: {
         supported: true,
         source: { kind: "configFile", srcPath: ".mcp.json" },
-        path: () => ".mcp.json",
+        placement: { kind: "file", at: ".mcp.json" },
         mcpServersKey: "mcpServers",
       },
       hooks: flatHooksArtifact(hooks, { tool: "claude" }),

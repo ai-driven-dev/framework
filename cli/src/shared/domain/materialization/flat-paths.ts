@@ -148,3 +148,24 @@ export function flatHooksPathWithLoaderEntry({
   }
   return genericFlatHooksScriptPath(perPluginHooksDir, plugin, rest);
 }
+
+/** Where a file of a plugin's hooks lands, given its path in the plugin: the loader's own module
+ * beside the loader, the plugin's hooks file in the plugin's own, every other script in a folder
+ * of the plugin's under `scriptsDir`. */
+export function flatHooksRoutePath(
+  route: { readonly scriptsDir: string; readonly loaderEntry?: FlatHooksLoaderEntry },
+  plugin: string,
+  relPath: string
+): string {
+  const { scriptsDir, loaderEntry } = route;
+  if (loaderEntry !== undefined) {
+    return flatHooksPathWithLoaderEntry({
+      perPluginHooksDir: scriptsDir,
+      loaderEntry,
+      plugin,
+      hooksRelativePath: relPath,
+    });
+  }
+  if (relPath === `hooks/${plugin}.hooks.json`) return genericFlatHooksFile(scriptsDir, plugin);
+  return genericFlatHooksScriptPath(scriptsDir, plugin, relPath.replace(/^hooks\//, ""));
+}

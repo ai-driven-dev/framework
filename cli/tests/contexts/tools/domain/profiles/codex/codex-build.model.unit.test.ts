@@ -219,7 +219,7 @@ describe("present(codex.buildContracts.flat)()", () => {
 
     expect({
       script: artifactPath(hooks, "aidd-dev", "hooks/journal.cjs"),
-      file: [hooks.hooksFile?.path("aidd-dev"), hooks.hooksFile?.shared],
+      file: hooks.hooksFile?.at,
       merged: hooks.hooksFile?.merge(null, {
         json: HOOKS_JSON,
         plugin: "aidd-dev",
@@ -227,7 +227,7 @@ describe("present(codex.buildContracts.flat)()", () => {
       }),
     }).toStrictEqual({
       script: ".codex/hooks/aidd-dev/journal.cjs",
-      file: [".codex/hooks.json", true],
+      file: { shared: ".codex/hooks.json" },
       merged: {
         content: `${JSON.stringify(
           {

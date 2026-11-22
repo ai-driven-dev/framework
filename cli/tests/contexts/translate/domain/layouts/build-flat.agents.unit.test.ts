@@ -9,7 +9,7 @@ import {
 } from "../../testing/stub-build-contract.builder.js";
 
 const PLUGIN = "plug";
-const FLAT = { path: (_plugin: string, rel: string) => `flat/${rel}` };
+const FLAT = { placement: { kind: "relative", under: "flat/" } } as const;
 
 function flatAgents(
   files: Record<string, string>,

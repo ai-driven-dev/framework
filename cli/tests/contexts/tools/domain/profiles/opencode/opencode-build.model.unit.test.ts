@@ -161,13 +161,13 @@ describe("present(opencode.buildContracts.flat)()", () => {
       loaderEntry: artifactPath(hooks, "aidd-dev", "hooks/opencode-plugin.js"),
       script: artifactPath(hooks, "aidd-dev", "hooks/journal.cjs"),
       skipHooksJson: hooks.skipHooksJson,
-      bridgePath: hooks.hooksBridge?.path("aidd-dev"),
+      bridgeDir: hooks.hooksBridge?.dir,
       skipIfSourceHas: hooks.hooksBridge?.skipIfSourceHas,
     }).toStrictEqual({
       loaderEntry: ".opencode/plugin/aidd-dev.js",
       script: ".opencode/hooks/aidd-dev/journal.cjs",
       skipHooksJson: true,
-      bridgePath: ".opencode/plugin/aidd-dev-hooks.js",
+      bridgeDir: ".opencode/plugin/",
       skipIfSourceHas: "opencode-plugin.js",
     });
   });

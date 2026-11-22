@@ -13,7 +13,10 @@ const OUT = resolve("/tmp/flat-mcp-writer");
 const SERVERS = { "plug-db": { command: "run" } };
 
 function stepOf(over: Partial<FlatMcpStep["target"]> = {}): FlatMcpStep {
-  const mcp = aSupportedArtifact({ path: () => ".tool/mcp.json", mcpServersKey: "servers" });
+  const mcp = aSupportedArtifact({
+    placement: { kind: "file", at: ".tool/mcp.json" },
+    mcpServersKey: "servers",
+  });
   if (!mcp.supported) throw new Error("stub mcp is supported");
   return {
     target: { contract: aStubBuildContract(), force: false, outDir: OUT, ...over },

@@ -32,10 +32,7 @@ describe("buildAntigravityFlatContract", () => {
     expect(artifactPath(hooks, "aidd-context", "hooks/update_memory.js")).toBe(
       ".agents/hooks/aidd-context/update_memory.js"
     );
-    expect([hooks.hooksFile?.path("aidd-context"), hooks.hooksFile?.shared]).toEqual([
-      ".agents/hooks.json",
-      true,
-    ]);
+    expect(hooks.hooksFile?.at).toEqual({ shared: ".agents/hooks.json" });
     expect(
       JSON.parse(
         hooks.hooksFile?.merge(null, {

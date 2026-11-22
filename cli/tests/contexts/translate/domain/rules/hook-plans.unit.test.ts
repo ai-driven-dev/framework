@@ -10,7 +10,7 @@ import {
 const MANIFEST = "hooks/hooks.json";
 
 function bridge(generate: FlatHooksBridge["generate"] = () => "bridge"): FlatHooksBridge {
-  return { path: (plugin) => `flat/${plugin}-bridge.js`, skipIfSourceHas: "own.js", generate };
+  return { dir: "flat/", skipIfSourceHas: "own.js", generate };
 }
 
 function flatHooks(
@@ -24,7 +24,7 @@ function flatHooks(
       ...contract,
       artifacts: {
         ...contract.artifacts,
-        hooks: aSupportedArtifact({ path: (_p, rel) => `flat/${rel}`, ...over }),
+        hooks: aSupportedArtifact({ placement: { kind: "relative", under: "flat/" }, ...over }),
         agents: { supported: false },
         skills: { supported: false },
         mcp: { supported: false },
@@ -67,7 +67,7 @@ describe("the flat layout of a plugin's hooks", () => {
     const hooksBridge = bridge((raw, plugin) => `${plugin}:${raw}`);
     expect(
       flatHooks({ [MANIFEST]: "{raw}", "hooks/run.sh": "a" }, { skipHooksJson: true, hooksBridge })
-    ).toEqual({ "flat/plug-bridge.js": "plug:{raw}", "flat/hooks/run.sh": "a" });
+    ).toEqual({ "flat/plug-hooks.js": "plug:{raw}", "flat/hooks/run.sh": "a" });
   });
 
   it("builds no bridge when the plugin ships the file the bridge replaces, wherever it sits", () => {

@@ -11,7 +11,7 @@ export function aSupportedArtifact(over: Partial<Supported> = {}): ArtifactContr
   return {
     supported: true,
     source: { kind: "fullTree", srcDir: "." },
-    path: (_p, rel) => rel,
+    placement: { kind: "relative" },
     ...over,
   };
 }

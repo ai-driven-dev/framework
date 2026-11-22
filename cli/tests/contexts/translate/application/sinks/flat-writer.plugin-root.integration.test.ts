@@ -68,10 +68,13 @@ describe("what a flat layout writes once every plugin is built", () => {
 describe("where a flat layout points a plugin-root reference", () => {
   const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
   const mcp = (over: Partial<Extract<ArtifactContract, { supported: true }>> = {}) =>
-    supportedArtifact(() => ".stub/mcp.json", {
-      mcpServersKey: "mcpServers",
-      ...over,
-    });
+    supportedArtifact(
+      { kind: "file", at: ".stub/mcp.json" },
+      {
+        mcpServersKey: "mcpServers",
+        ...over,
+      }
+    );
   const args = [
     `${ROOT}/agents/rev.md`,
     `${ROOT}/skills/hello/x.md`,

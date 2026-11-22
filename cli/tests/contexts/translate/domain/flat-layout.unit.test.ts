@@ -18,7 +18,7 @@ function supportedAt(folder: string): Extract<ArtifactContract, { supported: tru
   return {
     supported: true,
     source: { kind: "configFile", srcPath: folder },
-    path: (plugin, relPath) => `${folder}/${plugin}-${relPath}`,
+    placement: { kind: "relative", under: `${folder}/` },
   };
 }
 
@@ -48,7 +48,7 @@ const HOOKS = supportedAt("H");
 describe("flatHooksBridgeFile", () => {
   const bridge: FlatHooksBridge = {
     skipIfSourceHas: "own.js",
-    path: (plugin) => `bridge/${plugin}.js`,
+    dir: "bridge/",
     generate: (raw) => (raw === "{}" ? null : `bridge of ${raw}`),
   };
 
@@ -60,7 +60,7 @@ describe("flatHooksBridgeFile", () => {
         pluginName: "p",
         sourceShipsItsOwn: false,
       })
-    ).toEqual({ relativePath: "bridge/p.js", content: "bridge of [1]" });
+    ).toEqual({ relativePath: "bridge/p-hooks.js", content: "bridge of [1]" });
   });
 
   it("yields nothing when the source ships its own", () => {
@@ -88,7 +88,7 @@ describe("flatHooksBridgeFile", () => {
 
 describe("flatAgentPath", () => {
   it("drops the folders under agents/ so every nesting lands at one path", () => {
-    expect(flatAgentPath(AGENTS, "p", "agents/team/a.md")).toBe("A/p-agents/a.md");
+    expect(flatAgentPath(AGENTS, "p", "agents/team/a.md")).toBe("A/agents/a.md");
   });
 });
 
@@ -96,9 +96,9 @@ describe("flatPathOfPluginSuffix", () => {
   const contract = contractWith({ agents: AGENTS, skills: SKILLS, hooks: HOOKS });
 
   it.each([
-    ["agents/team/a.md", "A/p-agents/a.md"],
-    ["skills/x/SKILL.md", "S/p-skills/x/SKILL.md"],
-    ["hooks/run.js", "H/p-hooks/run.js"],
+    ["agents/team/a.md", "A/agents/a.md"],
+    ["skills/x/SKILL.md", "S/skills/x/SKILL.md"],
+    ["hooks/run.js", "H/hooks/run.js"],
     ["README.md", "README.md"],
   ])("moves %s to %s", (suffix, expected) => {
     expect(flatPathOfPluginSuffix(contract, suffix, "p")).toBe(expected);
@@ -114,8 +114,8 @@ describe("flatLinkTarget", () => {
 
   it("moves an agent and a skill, and nothing else", () => {
     const at = (pluginRelPath: string) => flatLinkTarget(contract, "p", pluginRelPath);
-    expect(at("agents/team/a.md")).toBe("A/p-agents/a.md");
-    expect(at("skills/x/SKILL.md")).toBe("S/p-skills/x/SKILL.md");
+    expect(at("agents/team/a.md")).toBe("A/agents/a.md");
+    expect(at("skills/x/SKILL.md")).toBe("S/skills/x/SKILL.md");
     expect(at("hooks/run.js")).toBe("hooks/run.js");
   });
 });
@@ -123,7 +123,7 @@ describe("flatLinkTarget", () => {
 describe("sourceShipsHooksBridge", () => {
   const bridge: FlatHooksBridge = {
     skipIfSourceHas: "bridge.js",
-    path: (plugin) => `bridge/${plugin}.js`,
+    dir: "bridge/",
     generate: () => "generated",
   };
 
