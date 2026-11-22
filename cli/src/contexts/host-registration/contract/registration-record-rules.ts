@@ -1,5 +1,15 @@
 import type { RegistrationRecordView } from "./claims-view.js";
 
+/** A marketplace the host registered: the record's reader needs only the two names. */
+export type RegisteredMarketplaceView = Readonly<Record<string, unknown>> & {
+  readonly alias: string;
+  readonly hostName: string;
+};
+
+/** A record with the claims kept on its refs. */
+type ClaimedRecordView<Claim extends { readonly ref: string } = { readonly ref: string }> =
+  RegistrationRecordView & { readonly pluginClaims?: readonly Claim[] };
+
 /** What the host registration answers over a record another context keeps for it, without that
  * context reading the record's shape. */
 export interface RegistrationRecordRules {
@@ -9,6 +19,22 @@ export interface RegistrationRecordRules {
     plugin: string,
     alias: string | undefined
   ) => string | undefined;
+  /** The registration an alias stands for, `undefined` when it was never registered. */
+  readonly marketplaceOf: (
+    record: RegistrationRecordView,
+    alias: string | undefined
+  ) => RegisteredMarketplaceView | undefined;
+  /** The claims on the refs sitting on the host name the alias was registered under. */
+  readonly claimsOnMarketplace: <Claim extends { readonly ref: string }>(
+    record: ClaimedRecordView<Claim>,
+    alias: string
+  ) => readonly Claim[];
+  /** The record without a marketplace, nor any ref or claim on the host name it was registered
+   * under, its claims list always written. */
+  readonly withoutMarketplace: <R extends ClaimedRecordView>(
+    record: R,
+    alias: string
+  ) => R & { readonly pluginClaims: readonly { readonly ref: string }[] };
   /** The record without one ref, every other entry untouched. */
   readonly withoutRef: <R extends RegistrationRecordView>(record: R, ref: string) => R;
 }

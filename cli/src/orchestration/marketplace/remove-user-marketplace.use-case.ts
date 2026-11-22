@@ -2,7 +2,11 @@ import type { FindUserMarketplace } from "../../contexts/distribution/applicatio
 import type { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.use-case.js";
 import type { MarketplaceRemovalResult } from "../../contexts/distribution/contract/marketplace-removal.js";
 import type { NativeHostRegistrationGate } from "../../contexts/host-registration/application/native-host-registration-gate.js";
-import type { PurgeMarketplacePlugins } from "../../contexts/installation/application/marketplace/purge-marketplace-plugins.use-case.js";
+import type { RegistrationRecordRules } from "../../contexts/host-registration/contract/registration-record-rules.js";
+import type {
+  MarketplaceRecords,
+  PurgeMarketplacePlugins,
+} from "../../contexts/installation/application/marketplace/purge-marketplace-plugins.use-case.js";
 import type { Scope } from "../../shared/domain/scope.js";
 
 export interface RemoveUserMarketplaceRequest {
@@ -18,6 +22,10 @@ export interface RemoveUserMarketplaceDeps {
   readonly remove: Pick<RemoveMarketplace, "execute">;
   readonly hostGate: Pick<NativeHostRegistrationGate, "planMarketplaceRemoval">;
   readonly home: string;
+  readonly records: Pick<
+    RegistrationRecordRules,
+    "marketplaceOf" | "claimsOnMarketplace" | "withoutMarketplace"
+  >;
 }
 
 type HostRemovalPlan = Awaited<ReturnType<NativeHostRegistrationGate["planMarketplaceRemoval"]>>;
@@ -27,6 +35,15 @@ type HostRemovalPlan = Awaited<ReturnType<NativeHostRegistrationGate["planMarket
 function withdrawFromHost(hostName: string, { activator, refs, scopes }: HostRemovalPlan): void {
   for (const claim of refs) activator.uninstallPlugin(claim.ref, scopes.get(claim.ref) ?? "user");
   activator.removeMarketplace(hostName, "user");
+}
+
+/** A catalogue's place in a tool's record, as the host registration reads and drops it. */
+function marketplaceRecordsOf(records: RemoveUserMarketplaceDeps["records"]): MarketplaceRecords {
+  return {
+    registrationOf: (registrations, alias) => records.marketplaceOf(registrations, alias),
+    claimsOn: (registrations, alias) => records.claimsOnMarketplace(registrations, alias),
+    withoutMarketplace: (registrations, alias) => records.withoutMarketplace(registrations, alias),
+  };
 }
 
 /** Removes a user-scope marketplace: finds it, and under the machine lock proves it is unchanged,
@@ -59,6 +76,7 @@ export class RemoveUserMarketplace {
         }),
         apply: ({ hostName, plan }) => withdrawFromHost(hostName, plan),
       },
+      records: marketplaceRecordsOf(this.deps.records),
     });
     return { marketplace, removedPluginCount, orphanCount: 0 };
   }

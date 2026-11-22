@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import type { NativeHostRegistrationGate } from "../../../src/contexts/host-registration/application/native-host-registration-gate.js";
 import type { PurgeMarketplacePlugins } from "../../../src/contexts/installation/application/marketplace/purge-marketplace-plugins.use-case.js";
-import { RemoveUserMarketplace } from "../../../src/orchestration/marketplace/remove-user-marketplace.use-case.js";
+import {
+  RemoveUserMarketplace,
+  type RemoveUserMarketplaceDeps,
+} from "../../../src/orchestration/marketplace/remove-user-marketplace.use-case.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 
@@ -22,6 +25,11 @@ const TARGET: Parameters<PurgeCommand["hostRemoval"]["plan"]>[0] = {
 };
 
 function removerWith(purge: (command: PurgeCommand) => Promise<number>) {
+  const records: RemoveUserMarketplaceDeps["records"] = {
+    marketplaceOf: vi.fn(() => REGISTRATION),
+    claimsOnMarketplace: vi.fn(() => []),
+    withoutMarketplace: vi.fn((record) => ({ ...record, pluginClaims: [] })),
+  };
   const find = { execute: vi.fn().mockResolvedValue(FOUND) };
   const remove = { execute: vi.fn().mockResolvedValue(undefined) };
   const activator = new FakeHostActions();
@@ -39,8 +47,9 @@ function removerWith(purge: (command: PurgeCommand) => Promise<number>) {
     remove,
     hostGate,
     home: "/home",
+    records,
   });
-  return { useCase, find, remove, plan, activator };
+  return { useCase, find, remove, plan, activator, records };
 }
 
 describe("RemoveUserMarketplace", () => {
@@ -126,6 +135,27 @@ describe("RemoveUserMarketplace", () => {
       "unscoped@aidd-market:user",
       "aidd-market:user",
     ]);
+  });
+
+  it("reads and drops the catalogue in each record through the host registration's rules", async () => {
+    let records: PurgeCommand["records"] | undefined;
+    const { useCase, records: rules } = removerWith(async (command) => {
+      records = command.records;
+      return 0;
+    });
+
+    await useCase.execute({ name: "market", projectRoot: "/project", autoConfirm: true });
+    const record = { marketplaces: [REGISTRATION] };
+
+    expect(records?.registrationOf(record, "market")).toStrictEqual(REGISTRATION);
+    expect(records?.claimsOn(record, "market")).toStrictEqual([]);
+    expect(records?.withoutMarketplace(record, "market")).toStrictEqual({
+      ...record,
+      pluginClaims: [],
+    });
+    expect(rules.marketplaceOf).toHaveBeenCalledWith(record, "market");
+    expect(rules.claimsOnMarketplace).toHaveBeenCalledWith(record, "market");
+    expect(rules.withoutMarketplace).toHaveBeenCalledWith(record, "market");
   });
 
   it("purges nothing when the marketplace is not found", async () => {

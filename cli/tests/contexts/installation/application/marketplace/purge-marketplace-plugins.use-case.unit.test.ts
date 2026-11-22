@@ -95,7 +95,7 @@ function setup(seed: Seed = {}) {
   const files = new FakeUserScopePluginFiles(proven);
   const { rules, withoutMarketplace } = spiedRecordRules();
   const purge = new PurgeMarketplacePlugins(
-    { repo, userScopePluginFiles: files, records: rules },
+    { repo, userScopePluginFiles: files },
     registeredTools()
   );
   const command: PurgeMarketplacePluginsRequest<MarketplaceHostTarget> = {
@@ -114,6 +114,11 @@ function setup(seed: Seed = {}) {
         return target;
       },
       apply: (target) => withdraw(target.registration.hostName),
+    },
+    records: {
+      registrationOf: rules.marketplaceOf,
+      claimsOn: rules.claimsOnMarketplace,
+      withoutMarketplace: rules.withoutMarketplace,
     },
   };
   return {

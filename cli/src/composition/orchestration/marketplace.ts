@@ -96,13 +96,13 @@ function wireUserMarketplaceRemoval(base: Base, inst: Installation) {
       {
         repo: userManifestRepo,
         userScopePluginFiles: new UserScopePluginFiles(fs, quietUserScopeFilesSafeToDelete(fs)),
-        records: inst.registrationRecordRules,
       },
       tools
     ),
     remove: new RemoveMarketplace(marketplaceRegistry),
     hostGate: nativeHostRegistrationGate,
     home: resolveHomeDir(),
+    records: inst.registrationRecordRules,
   });
 }
 

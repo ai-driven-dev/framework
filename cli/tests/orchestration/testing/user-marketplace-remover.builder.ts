@@ -7,7 +7,7 @@ import type { NativeHostRegistrationGate } from "../../../src/contexts/host-regi
 import { PurgeMarketplacePlugins } from "../../../src/contexts/installation/application/marketplace/purge-marketplace-plugins.use-case.js";
 import { UserScopePluginFiles } from "../../../src/contexts/installation/application/removal/user-scope-plugin-files.js";
 import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
-import type { RegistrationRecordRules } from "../../../src/contexts/installation/ports/native-host.js";
+import type { RemoveUserMarketplaceDeps } from "../../../src/orchestration/marketplace/remove-user-marketplace.use-case.js";
 import { RemoveUserMarketplace } from "../../../src/orchestration/marketplace/remove-user-marketplace.use-case.js";
 import { resolveHomeDir } from "../../../src/shared/infrastructure/home-dir.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
@@ -21,7 +21,7 @@ export function userMarketplaceRemover(
   repo: ManifestRepository & Lock,
   registry: MarketplaceRegistry,
   hostGate: NativeHostRegistrationGate,
-  records: RegistrationRecordRules = registrationRecordRules
+  records: RemoveUserMarketplaceDeps["records"] = registrationRecordRules
 ): RemoveUserMarketplace {
   return new RemoveUserMarketplace({
     find: new FindUserMarketplace(registry),
@@ -29,12 +29,12 @@ export function userMarketplaceRemover(
       {
         repo,
         userScopePluginFiles: new UserScopePluginFiles(fs, quietUserScopeFilesSafeToDelete(fs)),
-        records,
       },
       registeredTools()
     ),
     remove: new RemoveMarketplace(registry),
     hostGate,
     home: resolveHomeDir(),
+    records,
   });
 }
