@@ -1,4 +1,5 @@
 import type { AiToolId } from "../../../shared/domain/tool.js";
+import { RegistrationRefusedError } from "../domain/host-registration.error.js";
 import { judgeRegistration } from "../domain/policy/registration-policy.js";
 import { isRefOnHost } from "../domain/record/host-ref.js";
 import {
@@ -41,14 +42,14 @@ export class RefreshHostPlugin {
     const { toolId } = tool;
     const activation = tool.nativeActivation();
     if (activation?.refreshesOnePlugin() !== true) {
-      throw new Error(
+      throw new RegistrationRefusedError(
         `${toolId} does not support targeted native plugin update for '${ref}'; use marketplace refresh or framework update instead.`
       );
     }
     const activator = reachableActivator(this.activators, activation.hostBinary());
     const reader = this.registries.get(toolId);
     if (activator === undefined || reader === undefined) {
-      throw new Error(
+      throw new RegistrationRefusedError(
         `${toolId}: cannot update AIDD-owned ref '${ref}' without its CLI and readable host registry; canonical claims retained.`
       );
     }
@@ -58,7 +59,8 @@ export class RefreshHostPlugin {
       refEnabled,
       source: await this.sourceProofOf(tool, ref, command),
     });
-    if (verdict.outcome === "refuse") throw new Error(refusalMessage(toolId, ref, verdict));
+    if (verdict.outcome === "refuse")
+      throw new RegistrationRefusedError(refusalMessage(toolId, ref, verdict));
     return { apply: () => throwRefusal(activator.updatePlugin(ref)) };
   }
 

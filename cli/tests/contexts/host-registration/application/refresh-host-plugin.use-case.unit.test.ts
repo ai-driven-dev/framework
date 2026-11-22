@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { RefreshHostPlugin } from "../../../../src/contexts/host-registration/application/refresh-host-plugin.use-case.js";
+import { RegistrationRefusedError } from "../../../../src/contexts/host-registration/domain/host-registration.error.js";
 import type { RegistrationRecord } from "../../../../src/contexts/host-registration/domain/record/registration-record.js";
 import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { FakeHostActions } from "../../../shared/testing/fake-host-actions.fake.js";
@@ -64,6 +65,15 @@ describe("refresh host plugin", () => {
       /does not support targeted native plugin update/
     );
     expect(activator.updatedPlugins).toEqual([]);
+  });
+
+  it("refuses with a typed registration refusal, not a bare error", async () => {
+    const command = new RefreshHostPlugin(
+      new Map([[codex, new FakeHostActions({ available: true })]]),
+      new Map([[codex, reader(enabled())]])
+    );
+    await expect(refresh(codex, command)).rejects.toBeInstanceOf(RegistrationRefusedError);
+    await expect(refresh(codex, command)).rejects.toMatchObject({ code: "registration-refused" });
   });
 
   it("requires each independent Copilot update capability and keeps the claim on refusal", async () => {

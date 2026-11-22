@@ -1,3 +1,4 @@
+import { RegistrationRefusedError } from "../domain/host-registration.error.js";
 import { judgeRegistration, type SourceProof } from "../domain/policy/registration-policy.js";
 import type { HostPluginRegistryEntry } from "../domain/reading/plugin-registry-reading.js";
 import { isRefOnHost } from "../domain/record/host-ref.js";
@@ -51,7 +52,9 @@ function provenanceDisproof(
 type HostPluginRefs = ReadonlyMap<string, HostPluginRegistryEntry>;
 
 /** What the host's plugin registry lets a mutation do: its refs, or the refusal naming why not. */
-export type HostRefsVerdict = { readonly refs: HostPluginRefs } | { readonly refusal: Error };
+export type HostRefsVerdict =
+  | { readonly refs: HostPluginRefs }
+  | { readonly refusal: RegistrationRefusedError };
 
 /** A source may be AIDD-owned while the host still carries somebody else's plugin from it. */
 export async function inspectNativeRefs(
@@ -77,7 +80,7 @@ export async function inspectNativeRefs(
   )?.[0];
   if (foreign === undefined) return read;
   return {
-    refusal: new Error(
+    refusal: new RegistrationRefusedError(
       `Catalogue '${hostName}' includes foreign host ref '${foreign}'; no host mutation made.`
     ),
   };
@@ -99,7 +102,9 @@ async function readPluginRefs(
   projectRoot: string
 ): Promise<HostRefsVerdict> {
   const refuse = (why: string): HostRefsVerdict => ({
-    refusal: new Error(`Catalogue '${hostName}': ${why}; no host mutation made.`),
+    refusal: new RegistrationRefusedError(
+      `Catalogue '${hostName}': ${why}; no host mutation made.`
+    ),
   });
   if (reader === undefined) return refuse("host plugin registry reader unavailable");
   const reading = await reader.read(projectRoot);
@@ -114,7 +119,8 @@ export function assertSourceOwned(
   unproven: string
 ): void {
   const verdict = judgeCatalogueWithdrawal(proof);
-  if (verdict.outcome === "refuse") throw new Error(verdict.reconcile ?? unproven);
+  if (verdict.outcome === "refuse")
+    throw new RegistrationRefusedError(verdict.reconcile ?? unproven);
 }
 
 /** A catalogue withdrawal's verdict: the source must be owned and, when named, `unenabledClaim` is a

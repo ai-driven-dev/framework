@@ -1,4 +1,5 @@
 import type { AiToolId } from "../../../../shared/domain/tool.js";
+import { RegistrationRefusedError } from "../../domain/host-registration.error.js";
 import { judgeRegistration, type SourceProof } from "../../domain/policy/registration-policy.js";
 import type { NativeMarketplaceRegistration } from "../../domain/record/native-marketplace-source.js";
 import { readRegistrationRecord } from "../../domain/record/registration-record.js";
@@ -40,7 +41,7 @@ function recordedCatalogue(
     (entry) => entry.alias === plugin.marketplace
   );
   if (registration === undefined)
-    throw new Error(
+    throw new RegistrationRefusedError(
       `${tool.toolId}: '${plugin.name}' has no recorded native catalogue source for '${plugin.marketplace}'; reconcile manually before removal.`
     );
   return registration;
@@ -57,11 +58,11 @@ async function assertRefOwned(
   const { tool } = command;
   const { ref, enabledByProject } = held;
   if (tool.pluginEnablementIsMachineGlobal() && !(await command.isMachineOwned(ref)))
-    throw new Error(
+    throw new RegistrationRefusedError(
       `${tool.toolId}: '${ref}' is an unclaimed machine-global host ref; canonical machine claim required before removal.`
     );
   if (!enabledByProject)
-    throw new Error(
+    throw new RegistrationRefusedError(
       `${tool.toolId}: '${ref}' is not a ref this project enabled; reconcile manually before removal.`
     );
 }
@@ -78,7 +79,7 @@ async function assertRefEnabled(deps: WithdrawalDeps, request: RefEnabledRequest
   const { toolId, ref, projectRoot, proof } = request;
   const reader = deps.ports.pluginRegistries.get(toolId);
   if (reader === undefined)
-    throw new Error(
+    throw new RegistrationRefusedError(
       `${toolId}: '${ref}' has no readable host plugin registry; uninstall refused before project changes.`
     );
   const reading = await reader.read(projectRoot);
@@ -92,7 +93,7 @@ async function assertRefEnabled(deps: WithdrawalDeps, request: RefEnabledRequest
     source: proof,
   });
   if (verdict.outcome === "refuse")
-    throw new Error(
+    throw new RegistrationRefusedError(
       `${toolId}: '${ref}' is not provably enabled with an exact host scope (${reading.unreadable ?? reading.location}); uninstall refused.`
     );
 }

@@ -1,3 +1,4 @@
+import { RegistrationRefusedError } from "../../domain/host-registration.error.js";
 import {
   type RegistrationRecord,
   recordedRegistrations,
@@ -16,7 +17,7 @@ export function reachableUserActivator(
 ): HostActions {
   const activator = reachableActivator(deps.ports.activators, registrations.binary);
   if (activator === undefined)
-    throw new Error(
+    throw new RegistrationRefusedError(
       `${describeBinaryAbsent(withdrawal, registrations)} User clean refused; canonical claims retained.`
     );
   return activator;
@@ -67,7 +68,7 @@ function withdrawUserTool(
   ];
   for (const [step, call] of steps) {
     if (!callHost(deps, call, `${binary} ${step}`))
-      throw new Error(
+      throw new RegistrationRefusedError(
         `${binary}: user clean refused after ${step} failed; canonical claims retained.`
       );
   }

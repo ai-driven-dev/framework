@@ -4,6 +4,7 @@ import {
   assertSourceOwned,
   inspectHostSource,
 } from "../../../../src/contexts/host-registration/application/native-marketplace-source-proof.js";
+import { RegistrationRefusedError } from "../../../../src/contexts/host-registration/domain/host-registration.error.js";
 import type {
   NativeMarketplaceRegistration,
   NativeMarketplaceSource,
@@ -209,5 +210,8 @@ describe("asserting a catalogue source is owned", () => {
 
   it("falls back to the caller's message when the proof names no reason", () => {
     expect(() => assertSourceOwned({ status: "absent" }, "fallback")).toThrow("fallback");
+    expect(() => assertSourceOwned({ status: "absent" }, "fallback")).toThrow(
+      RegistrationRefusedError
+    );
   });
 });

@@ -1,5 +1,6 @@
 import type { Scope } from "../../../shared/domain/scope.js";
 import type { AiToolId } from "../../../shared/domain/tool.js";
+import { RegistrationRefusedError } from "../domain/host-registration.error.js";
 import { isRefOnHost } from "../domain/record/host-ref.js";
 import type { NativeMarketplaceRegistration } from "../domain/record/native-marketplace-source.js";
 import {
@@ -53,7 +54,8 @@ export class NativeHostRegistrationGate {
       proof,
       refs.find((ref) => hostRefs.get(ref)?.enabled !== true)
     );
-    if (verdict.outcome === "refuse") throw new Error(refusalMessage(toolId, verdict));
+    if (verdict.outcome === "refuse")
+      throw new RegistrationRefusedError(refusalMessage(toolId, verdict));
     return {
       activator,
       refs,
@@ -70,7 +72,7 @@ export class NativeHostRegistrationGate {
     const activator = reachableActivator(this.activators, binary);
     const reader = this.registries.get(tool.toolId);
     if (activator === undefined || reader === undefined) {
-      throw new Error(
+      throw new RegistrationRefusedError(
         `Cannot prove/remove AIDD-owned catalogue '${registration.hostName}': ${binary} CLI or host registry unavailable.`
       );
     }

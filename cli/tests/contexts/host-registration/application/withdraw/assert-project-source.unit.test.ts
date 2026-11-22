@@ -4,6 +4,7 @@ import type {
   ProjectSourceRequest,
   WithdrawalDeps,
 } from "../../../../../src/contexts/host-registration/application/withdraw/withdrawal.js";
+import { RegistrationRefusedError } from "../../../../../src/contexts/host-registration/domain/host-registration.error.js";
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
 import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
@@ -66,6 +67,12 @@ describe("proving a project removal safe before any change", () => {
   it("refuses a plugin whose catalogue has no recorded source", async () => {
     await expect(assertProjectSource(depsOf(), commandOf(false))).rejects.toThrow(
       /no recorded native catalogue source/
+    );
+  });
+
+  it("refuses with a typed registration refusal, not a bare error", async () => {
+    await expect(assertProjectSource(depsOf(), commandOf(false))).rejects.toBeInstanceOf(
+      RegistrationRefusedError
     );
   });
 

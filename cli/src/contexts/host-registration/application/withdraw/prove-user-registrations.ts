@@ -1,4 +1,5 @@
 import type { AiToolId } from "../../../../shared/domain/tool.js";
+import { RegistrationRefusedError } from "../../domain/host-registration.error.js";
 import type { SourceProof } from "../../domain/policy/registration-policy.js";
 import { isRefOnHost } from "../../domain/record/host-ref.js";
 import {
@@ -56,7 +57,7 @@ async function proveUserTool(
 }
 
 const refuseClean = (toolId: AiToolId, reason: string): never => {
-  throw new Error(`${toolId}: ${reason}; user clean refused.`);
+  throw new RegistrationRefusedError(`${toolId}: ${reason}; user clean refused.`);
 };
 
 /** Every ref filed under the one catalogue that owns it, refusing a record that names none, or

@@ -28,3 +28,15 @@ export class UnreadableBuiltCatalogError extends AiddError {
     super();
   }
 }
+
+/** A registration, refresh or withdrawal refused to touch a host catalogue or ref, or to go on
+ * without a host that could not answer. `detail` is the sentence naming what a person must
+ * reconcile. It is also the `message`: a clean reports each refusal it collected by its message,
+ * so the sentence must survive there as it did before the refusal was typed. */
+export class RegistrationRefusedError extends AiddError {
+  readonly code = "registration-refused";
+  constructor(readonly detail: string) {
+    super();
+    this.message = detail;
+  }
+}
