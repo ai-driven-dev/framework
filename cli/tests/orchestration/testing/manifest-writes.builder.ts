@@ -195,8 +195,7 @@ export async function build(setup: Setup = {}) {
   const manifest = projectManifestOf(setup, toolIds);
   const manifestRepo = new SaveCountingManifestRepository(manifest);
   const registry = await registeredMarketplaces(names, setup.marketplaceScope ?? "project");
-  const activator =
-    setup.activator ?? new FakeHostActions({ available: true, enablesPlugins: false });
+  const activator = setup.activator ?? new FakeHostActions({ available: true });
   const machineRepo = machineRepoOf(setup.existingMachineRegistrations);
   const useCase = marketplaceSync({
     fs,

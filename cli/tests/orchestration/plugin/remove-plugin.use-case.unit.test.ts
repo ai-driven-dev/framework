@@ -10,11 +10,13 @@ import type {
 import type { ProjectPluginWithdrawalSteps } from "../../../src/contexts/installation/application/removal/project-plugin-withdrawal.js";
 import type { RemovePluginRequest } from "../../../src/contexts/installation/application/removal/remove-plugin.use-case.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import { defineAiTool } from "../../../src/contexts/tools/domain/profile/define-tool.js";
 import {
   RemovePlugin,
   type RemovePluginDeps,
 } from "../../../src/orchestration/plugin/remove-plugin.use-case.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { nativePlugins, sectionsOf } from "../../contexts/tools/testing/plugin-mode.builder.js";
+import { anEmptyContract } from "../../shared/testing/empty-build-contract.builder.js";
 
 const ROOT = "/project";
 const HOME = "/home/someone";
@@ -73,22 +75,49 @@ async function stepsOf(owned: (toolId: string, ref: string) => boolean = () => f
   return { steps, host, claims };
 }
 
-const claude = registeredTools().aiProfile(TOOL.claude);
-const cursor = registeredTools().aiProfile(TOOL.cursor);
+/** A tool that enables plugins through its own CLI, per project or machine-wide. */
+function activatingTool(toolId: string, scoped: boolean) {
+  return defineAiTool({
+    toolId,
+    directory: ".fake/",
+    toolSuffix: ".fake.md",
+    signalDir: null,
+    displayName: "Fake",
+    buildContracts: { flat: () => anEmptyContract() },
+    capabilities: () =>
+      sectionsOf(
+        nativePlugins({
+          nativeActivation: {
+            binary: "fake",
+            enableVerb: "add",
+            disableVerb: "remove",
+            pluginCacheDir: (home) => `${home}/.fake/cache`,
+            ...(scoped ? { scopeArgs: { project: ["--local"], user: ["--user"] } } : {}),
+          },
+        })
+      ),
+    linkSyntax: [],
+  });
+}
+
+const claude = activatingTool("project-wide", true);
+const cursor = activatingTool("machine-wide", false);
+const CLAUDE = claude.toolId;
+const CURSOR = cursor.toolId;
 
 describe("RemovePlugin", () => {
   it("asks nothing of the host about a plugin that carries no marketplace", async () => {
     const { steps, host } = await stepsOf();
     const reach = { tool: claude, plugin: plugin(undefined), projectRoot: ROOT, registrations: {} };
 
-    await steps.assertSource({ ...reach, toolId: TOOL.claude });
+    await steps.assertSource({ ...reach, toolId: CLAUDE });
 
     expect(await steps.withdraw(reach)).toBeUndefined();
     expect(host.requests).toStrictEqual([]);
   });
 
   it("proves the source against the machine claims of the tool being removed", async () => {
-    const { steps, host } = await stepsOf((toolId) => toolId === TOOL.claude);
+    const { steps, host } = await stepsOf((toolId) => toolId === CLAUDE);
     const reach = {
       tool: claude,
       plugin: plugin("framework"),
@@ -96,7 +125,7 @@ describe("RemovePlugin", () => {
       registrations: {},
     };
 
-    await steps.assertSource({ ...reach, toolId: TOOL.claude });
+    await steps.assertSource({ ...reach, toolId: CLAUDE });
 
     const [request] = host.requests;
     expect(request).toMatchObject({
@@ -130,15 +159,15 @@ describe("RemovePlugin", () => {
     const { steps } = await stepsOf();
 
     expect(
-      await steps.canDetachRef({ toolId: TOOL.claude, tool: claude, confirmed: true, ref: "r" })
+      await steps.canDetachRef({ toolId: CLAUDE, tool: claude, confirmed: true, ref: "r" })
     ).toBe(true);
   });
 
   it("lets an unconfirmed ref of a machine-wide tool go only when a machine claim owns it", async () => {
     // Cursor enables a plugin machine-wide, so only a machine claim could let its ref go.
     const unowned = await stepsOf();
-    const owned = await stepsOf((toolId, ref) => toolId === TOOL.cursor && ref === "r");
-    const ask = { toolId: TOOL.cursor, tool: cursor, confirmed: false, ref: "r" };
+    const owned = await stepsOf((toolId, ref) => toolId === CURSOR && ref === "r");
+    const ask = { toolId: CURSOR, tool: cursor, confirmed: false, ref: "r" };
 
     expect(await unowned.steps.canDetachRef(ask)).toBe(false);
     expect(await owned.steps.canDetachRef(ask)).toBe(true);
@@ -148,18 +177,18 @@ describe("RemovePlugin", () => {
     const { steps } = await stepsOf(() => true);
 
     expect(
-      await steps.canDetachRef({ toolId: TOOL.claude, tool: claude, confirmed: false, ref: "r" })
+      await steps.canDetachRef({ toolId: CLAUDE, tool: claude, confirmed: false, ref: "r" })
     ).toBe(false);
   });
 
   it("lets go of the machine claims the removal held", async () => {
     const { steps, claims } = await stepsOf();
-    const refs = new Map([[TOOL.claude, ["r"]]]);
+    const refs = new Map([[CLAUDE, ["r"]]]);
 
     await steps.detachNativeRefs(ROOT, refs);
-    await steps.detachUserPlugin(TOOL.claude, "aidd-dev", ROOT);
+    await steps.detachUserPlugin(CLAUDE, "aidd-dev", ROOT);
 
     expect(claims.detachNativeRefs).toHaveBeenCalledWith(ROOT, refs);
-    expect(claims.detachUserPlugin).toHaveBeenCalledWith(TOOL.claude, "aidd-dev", ROOT);
+    expect(claims.detachUserPlugin).toHaveBeenCalledWith(CLAUDE, "aidd-dev", ROOT);
   });
 });

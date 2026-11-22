@@ -5,15 +5,15 @@ import {
   RemoveUserMarketplace,
   type RemoveUserMarketplaceDeps,
 } from "../../../src/orchestration/marketplace/remove-user-marketplace.use-case.js";
+import { syntheticToolProfile } from "../../contexts/translate/testing/synthetic-tool-profile.builder.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 type PurgeCommand = Parameters<PurgeMarketplacePlugins["execute"]>[0];
 
 const FOUND = { name: "market", scope: "user", fingerprint: "fp" } as const;
 const REGISTRATION = { alias: "market", hostName: "aidd-market" };
 const TARGET: Parameters<PurgeCommand["hostRemoval"]["plan"]>[0] = {
-  tool: registeredTools().aiProfile(TOOL.claude),
+  tool: syntheticToolProfile(),
   registrations: {
     marketplaces: [REGISTRATION],
     pluginClaims: [

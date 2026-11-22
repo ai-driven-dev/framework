@@ -220,9 +220,6 @@ export class CrashingUninstallActivator implements HostActions {
     return true;
   }
   addMarketplace(): void {}
-  enablesPlugins(): boolean {
-    return false;
-  }
   removeMarketplace(): void {}
   registrationState(): "live" | "dead" | "unknown" {
     return "live";
@@ -242,9 +239,6 @@ export class OrderRecordingActivator implements HostActions {
     return true;
   }
   addMarketplace(): void {}
-  enablesPlugins(): boolean {
-    return false;
-  }
   removeMarketplace(name: string): void {
     this.calls.push(`removeMarketplace:${name}`);
   }
@@ -267,9 +261,6 @@ export class AssertingActivator implements HostActions {
     return true;
   }
   addMarketplace(): void {}
-  enablesPlugins(): boolean {
-    return false;
-  }
   removeMarketplace(): void {
     void this.onRemoveMarketplace();
   }

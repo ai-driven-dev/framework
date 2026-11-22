@@ -36,8 +36,6 @@ export interface SyncSetup {
   /** Marketplaces to register; the first is the one plugins are attached to. */
   readonly marketplaceNames?: readonly string[];
   readonly ensureBuilt?: BuiltMarketplaceEnsurer;
-  /** Whether the tool's own CLI enables plugins, which decides what it registers. */
-  readonly enablesPlugins?: boolean;
   /** Whether claude's own CLI is on PATH. Defaults to available. */
   readonly available?: boolean;
   /** Makes the activator crash on `addMarketplace` with a plain `Error`. */
@@ -149,7 +147,6 @@ function activatorOf(setup: SyncSetup): FakeHostActions {
     setup.activator ??
     new FakeHostActions({
       available: setup.available ?? true,
-      enablesPlugins: setup.enablesPlugins ?? false,
       crashOnAddMarketplace: setup.crashOnAddMarketplace ?? false,
       failOnPlugins: setup.failOnPlugins ?? [],
     })

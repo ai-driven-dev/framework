@@ -144,7 +144,7 @@ describe("a project whose manifest also lists a tool with no plugin system", () 
         addedAt: "2026-01-01T00:00:00Z",
       })
     );
-    const activator = new FakeHostActions({ available: true, enablesPlugins: false });
+    const activator = new FakeHostActions({ available: true });
     const useCase = marketplaceSync({
       fs,
       manifestRepo: new InMemoryManifestRepository(manifest),

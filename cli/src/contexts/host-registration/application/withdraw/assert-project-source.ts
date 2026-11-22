@@ -23,11 +23,7 @@ export async function assertProjectSource(
   const registration = recordedCatalogue(command, registrations);
   const ref = `${plugin.name}@${registration.hostName}`;
   const enabledByProject = registrations?.pluginRefs.includes(ref) === true;
-  await assertRefOwned(command, {
-    ref,
-    enabledByProject,
-    enablesPlugins: activator.enablesPlugins() === true,
-  });
+  await assertRefOwned(command, { ref, enabledByProject });
   const proof = await inspectHostSource(deps.ports.sources.get(toolId), projectRoot, registration);
   assertSourceOwned(
     proof,
@@ -58,16 +54,15 @@ async function assertRefOwned(
   held: {
     readonly ref: string;
     readonly enabledByProject: boolean;
-    readonly enablesPlugins: boolean;
   }
 ): Promise<void> {
   const { tool } = command;
-  const { ref, enabledByProject, enablesPlugins } = held;
+  const { ref, enabledByProject } = held;
   if (tool.pluginEnablementIsMachineGlobal() && !(await command.isMachineOwned(ref)))
     throw new Error(
       `${tool.toolId}: '${ref}' is an unclaimed machine-global host ref; canonical machine claim required before removal.`
     );
-  if (!enabledByProject && !enablesPlugins)
+  if (!enabledByProject)
     throw new Error(
       `${tool.toolId}: '${ref}' is not a ref this project enabled; reconcile manually before removal.`
     );

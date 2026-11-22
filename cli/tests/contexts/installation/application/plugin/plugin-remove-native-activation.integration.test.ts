@@ -45,7 +45,7 @@ describe("RemovePlugin undoes native activation", () => {
         manifest.setNativeRegistrations(claude, { ...registrations, pluginRefs: [] });
       }
       const before = manifest.toJSON();
-      const activator = new FakeHostActions({ available: true, enablesPlugins: false });
+      const activator = new FakeHostActions({ available: true });
       const repo = new InMemoryManifestRepository(manifest);
       const remove = pluginRemover({
         manifestRepo: repo,
@@ -260,15 +260,6 @@ describe("RemovePlugin undoes only the activation this project made", () => {
     });
     return { activator, logger, manifestRepo };
   }
-
-  it("leaves enabled, and names, a ref the host already had before this project", async () => {
-    const { activator, logger, manifestRepo } = await removeWithRecordedRefs([]);
-
-    expect(activator.uninstalledPlugins).toEqual([]);
-    expect(logger.warnMessages.join("\n")).toContain(REF);
-    const loaded = await manifestRepo.load();
-    expect(loaded?.getPlugins(claude).some((p) => p.name === PLUGIN_NAME)).toBe(false);
-  });
 
   it("uninstalls a ref this project's own activation enabled", async () => {
     const { activator } = await removeWithRecordedRefs([REF]);

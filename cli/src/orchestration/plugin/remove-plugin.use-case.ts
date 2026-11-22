@@ -8,14 +8,14 @@ import type {
   RemovePluginRequest,
   RemovePlugin as RemoveProjectPluginFiles,
 } from "../../contexts/installation/application/removal/remove-plugin.use-case.js";
-import type { pluginRemovalClaims } from "../../contexts/machine-claims/application/plugin-removal-claims.js";
+import type { PluginRemovalClaims } from "../../contexts/machine-claims/contract/plugin-removal-claims.js";
 import { pluginRefRecords } from "./plugin-ref-records.js";
 import { withdrawalClaimsOf } from "./withdrawal-claims.js";
 
 export interface RemovePluginDeps {
   readonly remove: Pick<RemoveProjectPluginFiles, "execute">;
   readonly withdrawFromHost: Pick<WithdrawFromHost, "execute">;
-  readonly claims: ReturnType<typeof pluginRemovalClaims>;
+  readonly claims: PluginRemovalClaims;
   readonly records: Pick<RegistrationRecordRules, "refOf" | "withoutRef">;
 }
 

@@ -59,7 +59,7 @@ describe("settings migration: legacy host entries", () => {
       );
       const manifest = Manifest.create();
       manifest.addTool(TOOL.claude, "test", []);
-      const activator = new FakeHostActions({ available: true, enablesPlugins: false });
+      const activator = new FakeHostActions({ available: true });
       const fs = fsAt(PROJECT_ROOT, {
         [`${sharedBuiltDir()}/${CATALOG_RELATIVE}`]: JSON.stringify({
           name: FRAMEWORK_MARKETPLACE_NAME,
@@ -124,7 +124,7 @@ describe("settings migration: legacy host entries", () => {
       );
       const manifest = Manifest.create();
       manifest.addTool(TOOL.claude, "test", []);
-      const activator = new FakeHostActions({ available: true, enablesPlugins: false });
+      const activator = new FakeHostActions({ available: true });
       // Nothing is seeded under `foreignProjectCache` at all - the directory a real
       // `rm -rf` would have removed after the fact.
       const fs = fsAt(PROJECT_ROOT, {
@@ -205,7 +205,7 @@ describe("settings migration: legacy host entries", () => {
         location: "/home/.claude/plugins/known_marketplaces.json",
         entries: new Map([[FRAMEWORK_MARKETPLACE_NAME, foreignProjectCache]]),
       });
-      const activator = new FakeHostActions({ available: true, enablesPlugins: false });
+      const activator = new FakeHostActions({ available: true });
       return { fs, hostReader, registry, manifest, activator };
     }
 

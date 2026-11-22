@@ -9,9 +9,9 @@ import type {
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { RegisteredMarketplace } from "../../ports/native-host.js";
 import type { HostRefCountingTool } from "../../ports/tool-sections.js";
 import type { UserScopePluginFileRemoval } from "../../ports/user-scope-plugin-files.js";
+import type { RegisteredMarketplace } from "../sync/record-activation.use-case.js";
 
 type PluginOf = { toolId: AiToolId; plugin: InstalledPlugin; dependents: readonly string[] };
 type NativeOf = {

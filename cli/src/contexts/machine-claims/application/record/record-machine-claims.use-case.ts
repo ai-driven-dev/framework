@@ -1,28 +1,16 @@
-import type { Scope } from "../../../../shared/domain/scope.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type {
+  ClaimedOutcome,
+  MachineClaimsRecording,
+  RecordMachineClaimsRequest,
+} from "../../contract/machine-claims-recording.js";
 import type { RecordClaimRules } from "../../contract/record-claim-rules.js";
-import type { ClaimedMarketplace } from "../../ports/host-record.js";
 import type {
   ClaimingMachineManifest,
   MachineManifestRepository,
 } from "../../ports/machine-manifest.js";
 import type { ClaimingTools } from "../../ports/user-scope-tool.js";
-
-/** What one tool's host registration claimed, as far as the machine record keeps it. */
-interface ClaimedOutcome {
-  readonly catalogClaims: readonly ClaimedMarketplace[];
-  readonly pluginRefs: readonly string[];
-}
-
-/** Which plugins and marketplaces a project's activation claimed on the machine, and for whom. */
-export interface RecordMachineClaimsRequest {
-  readonly project: { getToolVersion(toolId: ToolId): string | undefined };
-  readonly outcomes: ReadonlyMap<ToolId, ClaimedOutcome>;
-  readonly marketplaces: readonly { readonly name: string; readonly scope: Scope }[];
-  readonly scope: Scope;
-  readonly projectRoot?: string;
-}
 
 interface MachineClaim {
   machine: ClaimingMachineManifest;
@@ -40,7 +28,7 @@ export interface RecordMachineClaimsDeps {
 }
 
 /** The machine-wide record of the plugins and marketplaces a project's host registration claimed. */
-export class RecordMachineClaims {
+export class RecordMachineClaims implements MachineClaimsRecording {
   constructor(
     private readonly deps: RecordMachineClaimsDeps,
     private readonly tools: ClaimingTools

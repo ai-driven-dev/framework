@@ -223,23 +223,15 @@ describe("register plugin with host", () => {
     expect(await run()).toMatchObject({ outcome: { buildFailed: true, [key]: [EARLIER] } });
   });
 
-  it.each([
-    [
-      "enables nothing when the host takes no plugin",
-      { activator: new FakeHostActions({ available: true, enablesPlugins: false }) },
-      [],
-    ],
-    [
-      "warns about a plugin the host refuses",
-      { activator: new FakeHostActions({ available: true, failOnPlugins: [REF] }) },
-      [
-        "Native plugin activation \u2014 enable plugin 'p@aidd' skipped: plugin `p@aidd` was not found in marketplace",
-      ],
-    ],
-  ])("%s", async (_case, options, expectedWarnings) => {
-    const { warnings, run } = setup({ ...options, refs: [REF] });
+  it("warns about a plugin the host refuses", async () => {
+    const { warnings, run } = setup({
+      activator: new FakeHostActions({ available: true, failOnPlugins: [REF] }),
+      refs: [REF],
+    });
     expect(await run()).toMatchObject({ outcome: { pluginRefs: [] } });
-    expect(warnings).toEqual(expectedWarnings);
+    expect(warnings).toEqual([
+      "Native plugin activation \u2014 enable plugin 'p@aidd' skipped: plugin `p@aidd` was not found in marketplace",
+    ]);
   });
 
   describe("a ref the host already lists enabled", () => {

@@ -83,8 +83,6 @@ export class RegisterPluginWithHost {
     const settled = await settleMarketplaces(run, command);
     const { marketplaces, preservedMarketplaces, catalogClaims, buildFailed } = settled;
     const outcome = { marketplaces, preservedMarketplaces, catalogClaims, buildFailed };
-    if (!activator.enablesPlugins())
-      return { status: "activated", outcome: { ...outcome, pluginRefs: [] } };
     const proven = await upgradeProven(run, settled);
     const pluginRefs = await enableRefs(run, command, proven);
     return { status: "activated", outcome: { ...outcome, pluginRefs } };

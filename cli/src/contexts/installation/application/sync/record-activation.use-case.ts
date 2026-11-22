@@ -7,7 +7,22 @@ import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/too
 import { driftOf } from "../../domain/manifest/drift.js";
 import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import type { Manifest } from "../../domain/manifest.js";
-import type { HostRegistrationOutcome } from "../../ports/native-host.js";
+
+/** A marketplace the host registered: the manifest reads the two names and keeps the rest. */
+export type RegisteredMarketplace = Readonly<Record<string, unknown>> & {
+  readonly alias: string;
+  readonly hostName: string;
+};
+
+/** What the manifest records after one tool's registration. */
+export type HostRegistrationOutcome = {
+  readonly marketplaces: readonly RegisteredMarketplace[];
+  readonly preservedMarketplaces: readonly RegisteredMarketplace[];
+  readonly catalogClaims: readonly RegisteredMarketplace[];
+  readonly pluginRefs: readonly string[];
+  /** True when a build failed, so the host keeps its earlier registration for it. */
+  readonly buildFailed: boolean;
+};
 
 /** The record a tool's activation leaves, `undefined` when it equals the one recorded: the host
  * registration's to answer. */

@@ -3,11 +3,8 @@ import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { RecordedPlugin } from "../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
 import type { ProjectPluginIntegration } from "../ports/tool-sections.js";
-import type {
-  PlanProjectClean,
-  ProjectCleanPlan,
-  ProjectCleanRecords,
-} from "./plan-project-clean.use-case.js";
+import type { ProjectCleanPlan, ProjectCleanRecords } from "./clean/project-clean-plan.js";
+import type { PlanProjectClean } from "./plan-project-clean.use-case.js";
 import type { RemoveProjectFiles } from "./removal/remove-project-files.js";
 import { assertProjectHooksRemovable } from "./shared/remove-project-hooks.js";
 

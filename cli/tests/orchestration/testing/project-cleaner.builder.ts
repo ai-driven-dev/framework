@@ -1,5 +1,5 @@
 import { registrationRecordRules } from "../../../src/composition/installation.js";
-import { wireCleanClaims } from "../../../src/composition/orchestration/clean.js";
+import { wireCleanClaims } from "../../../src/composition/orchestration/clean-claims.js";
 import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.use-case.js";
 import { WithdrawFromHost } from "../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import type { HostPorts } from "../../../src/contexts/host-registration/ports/host-ports.js";

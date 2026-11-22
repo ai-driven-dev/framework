@@ -37,7 +37,7 @@ describe("SyncSettings - purging this project's own pre-migration cache", () => 
     );
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "test", []);
-    const activator = new FakeHostActions({ available: true, enablesPlugins: false });
+    const activator = new FakeHostActions({ available: true });
     const fs = fsAt(PROJECT_ROOT, {
       [OLD_CACHE_FILE]: "stale content",
       [`${CLAUDE_BUILT_DIR}/${CATALOG_RELATIVE}`]: JSON.stringify({
@@ -157,7 +157,6 @@ describe("SyncSettings - purging this project's own pre-migration cache", () => 
     manifest.addTool(TOOL.claude, "test", []);
     const activator = new FakeHostActions({
       available: true,
-      enablesPlugins: false,
       crashOnAddMarketplace: false,
     });
     // No catalog seeded at the built dir, so `registerMarketplace` throws
@@ -186,7 +185,7 @@ describe("SyncSettings - purging this project's own pre-migration cache", () => 
     const registry = projectWithMigratableEntry();
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "test", []);
-    const activator = new FakeHostActions({ available: true, enablesPlugins: false });
+    const activator = new FakeHostActions({ available: true });
     const escapedFile = "/etc/evil/still-here.txt";
     const fs = fsAt(PROJECT_ROOT, {
       [escapedFile]: "not aidd's to delete",

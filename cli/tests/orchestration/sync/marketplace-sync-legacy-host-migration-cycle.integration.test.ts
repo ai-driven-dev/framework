@@ -45,9 +45,6 @@ describe("settings migration: legacy host entries", () => {
       isAvailable(): boolean {
         return true;
       }
-      enablesPlugins(): boolean {
-        return false;
-      }
       addMarketplace(source: string): void {
         this.hostEntries.set(FRAMEWORK_MARKETPLACE_NAME, source);
       }

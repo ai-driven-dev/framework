@@ -151,8 +151,8 @@ describe("shared framework references follow any successful native tool outcome"
         ["/real/project"]
       );
       fs.setSymlink(ROOT, "/real/project");
-      const claude = new FakeHostActions({ available: true, enablesPlugins: false });
-      const codex = new FakeHostActions({ available: true, enablesPlugins: false });
+      const claude = new FakeHostActions({ available: true });
+      const codex = new FakeHostActions({ available: true });
       const recorded: Array<{ version: string; projectRoot: string }> = [];
       const references: UserSourceReferences = {
         addReference: async (version, projectRoot) => {

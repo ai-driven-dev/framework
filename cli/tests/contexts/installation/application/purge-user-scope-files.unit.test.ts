@@ -6,7 +6,7 @@ import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plu
 import type { UserScopeInspection } from "../../../../src/contexts/installation/ports/user-scope-purge.js";
 import { InMemoryManifestRepository } from "../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
-import { FakeMachineStatePurge } from "../testing/fake-machine-state-purge.fake.js";
+import { FakeMachineState } from "../testing/fake-machine-state.fake.js";
 import { FakeUserScopePluginFiles } from "../testing/fake-user-scope-plugin-files.fake.js";
 import { aManifest } from "../testing/manifest.builder.js";
 
@@ -40,7 +40,7 @@ function fixture(
   const files = new FakeUserScopePluginFiles(
     new Map([[NAME, new Map((options.proven ?? ["a.md", "b.md"]).map((f) => [f, "h"]))]])
   );
-  const machine = new FakeMachineStatePurge(["1.0.0"]);
+  const machine = new FakeMachineState(["1.0.0"]);
   const purge = new PurgeUserScopeFiles(
     {
       userManifestRepo: repo,

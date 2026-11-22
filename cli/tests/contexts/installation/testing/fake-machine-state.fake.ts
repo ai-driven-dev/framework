@@ -1,7 +1,7 @@
 import type { MachineStatePurge } from "../../../../src/contexts/installation/ports/user-scope-purge.js";
 
 /** Machine state told as built versions, counting each purge. */
-export class FakeMachineStatePurge implements MachineStatePurge {
+export class FakeMachineState implements MachineStatePurge {
   purgeCount = 0;
 
   constructor(private readonly versions: readonly string[] = []) {}

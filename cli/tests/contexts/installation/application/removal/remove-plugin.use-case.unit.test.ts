@@ -8,7 +8,7 @@ import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { FakeProjectPluginWithdrawal } from "../../testing/fake-project-plugin-withdrawal.fake.js";
+import { FakePluginRemovalSteps } from "../../testing/fake-plugin-removal-steps.fake.js";
 import { aManifest } from "../../testing/manifest.builder.js";
 
 const homedir = (): string => "/home/dev";
@@ -33,7 +33,7 @@ function fixture(
   options: {
     scope?: Scope;
     toolId?: AiToolId;
-    answers?: ConstructorParameters<typeof FakeProjectPluginWithdrawal>[0];
+    answers?: ConstructorParameters<typeof FakePluginRemovalSteps>[0];
   } = {}
 ) {
   const toolId = options.toolId ?? TOOL.claude;
@@ -51,7 +51,7 @@ function fixture(
     [join(ROOT, "skills/a.md")]: "a",
     [join(ROOT, "keep.md")]: "k",
   });
-  const withdrawal = new FakeProjectPluginWithdrawal(options.answers);
+  const withdrawal = new FakePluginRemovalSteps(options.answers);
   const remove = new RemovePlugin(
     {
       fs,

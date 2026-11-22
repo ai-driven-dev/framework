@@ -106,10 +106,6 @@ export class HostCliAdapter implements HostActions {
     return listsOtherScopeUse(result.stdout, name);
   }
 
-  enablesPlugins(): boolean {
-    return true;
-  }
-
   /** A tool that cannot tell a dead registration from a live one answers `"unknown"`, which
    * keeps callers from taking over a name that may belong to a live project. */
   registrationState(name: string): "live" | "dead" | "unknown" {

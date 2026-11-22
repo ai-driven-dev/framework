@@ -13,7 +13,7 @@ interface Answers {
 }
 
 /** A host that lets a plugin go as told, recording what a removal asked of it and in what order. */
-export class FakeProjectPluginWithdrawal implements ProjectPluginWithdrawalSteps {
+export class FakePluginRemovalSteps implements ProjectPluginWithdrawalSteps {
   readonly calls: string[] = [];
   readonly detachedRefs: ReadonlyMap<ToolId, readonly string[]>[] = [];
   readonly detachedUserPlugins: [AiToolId, string][] = [];

@@ -160,25 +160,6 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
     }
   );
 
-  it("leaves an unclaimed enabled plugin on the host while removing only local files", async () => {
-    const f = fixture({ enabled: false });
-
-    await f.remove.execute({
-      pluginName: SELECTED_PLUGIN,
-      toolIds: [claude],
-      projectRoot: SELECTION_ROOT,
-    });
-
-    expect(f.activator.uninstalledPlugins).toEqual([]);
-    expect(f.record.getNativeRegistrations(claude)?.pluginRefs).toEqual([FOREIGN]);
-    expect(f.fs.getFile(f.cache)).toBe("target cache");
-    expect(f.logger.warnMessages).toEqual([
-      `claude: '${REF}' is not a ref this project enabled — left enabled.`,
-    ]);
-    expect(f.logger.infoMessages).toEqual([]);
-    expect(await f.fs.fileExists(join(SELECTION_ROOT, "owned.md"))).toBe(false);
-  });
-
   it("names the local alias when an unavailable host has no recorded catalogue", async () => {
     const f = fixture({ available: false, registrations: false });
 

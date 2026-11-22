@@ -189,7 +189,7 @@ describe("native plugin ownership follows the host's Claude activation scope", (
   it("records only the user-scope marketplace in the machine manifest when a project syncs both scopes", async () => {
     const projectRepo = new InMemoryManifestRepository(manifestWithTool(claude));
     const machineRepo = new InMemoryManifestRepository(Manifest.create());
-    const activator = new FakeHostActions({ available: true, enablesPlugins: false });
+    const activator = new FakeHostActions({ available: true });
     const sync = wireSync({
       toolId: claude,
       fs: fsWithProjects({

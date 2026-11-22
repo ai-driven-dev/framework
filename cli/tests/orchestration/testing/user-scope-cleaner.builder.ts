@@ -1,4 +1,4 @@
-import { wireCleanClaims } from "../../../src/composition/orchestration/clean.js";
+import { wireCleanClaims } from "../../../src/composition/orchestration/clean-claims.js";
 import { RemoveMarketplace } from "../../../src/contexts/distribution/application/remove/remove-marketplace.use-case.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import type { MarketplaceRegistry } from "../../../src/contexts/distribution/ports/marketplace-registry.js";

@@ -24,7 +24,7 @@ import {
 
 describe("SyncSettings - the activation scope a caller asks for", () => {
   it("enables at project scope by default, never claude's own implicit default", async () => {
-    const activator = new FakeHostActions({ available: true, enablesPlugins: false });
+    const activator = new FakeHostActions({ available: true });
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
     const proof = freshHostProof(activator);
@@ -132,7 +132,7 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
   }
 
   it("writes no project file at all when the caller asks for user scope - the full project delta, not one named path", async () => {
-    const activator = new FakeHostActions({ available: true, enablesPlugins: false });
+    const activator = new FakeHostActions({ available: true });
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
     const { fs, manifestRepo } = await pluginFixture();
@@ -208,7 +208,7 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
   });
 
   it("writes .claude/settings.json for that same fixture at project scope - proof the fixture is not inert", async () => {
-    const activator = new FakeHostActions({ available: true, enablesPlugins: false });
+    const activator = new FakeHostActions({ available: true });
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
     const { fs, manifestRepo } = await pluginFixture();
@@ -230,7 +230,7 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
   });
 
   it("loads and saves the machine manifest at user scope, never the project's", async () => {
-    const activator = new FakeHostActions({ available: true, enablesPlugins: false });
+    const activator = new FakeHostActions({ available: true });
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
     const constructedRepo = manifestWithTool();
@@ -256,7 +256,7 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
   });
 
   it("records no shared-source reference at user scope - no project-scope manifest exists for a later clean to ever decrement it from", async () => {
-    const activator = new FakeHostActions({ available: true, enablesPlugins: false });
+    const activator = new FakeHostActions({ available: true });
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
     const added: Array<{ version: string; projectRoot: string }> = [];
@@ -287,7 +287,7 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
   });
 
   it("still records a shared-source reference at project scope, unaffected", async () => {
-    const activator = new FakeHostActions({ available: true, enablesPlugins: false });
+    const activator = new FakeHostActions({ available: true });
     const proof = freshHostProof(activator);
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());

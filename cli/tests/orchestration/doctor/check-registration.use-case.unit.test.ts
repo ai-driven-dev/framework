@@ -60,7 +60,7 @@ async function issuesFor(
   const manifest = Manifest.create();
   manifest.addTool(toolId, "test", []);
   const activators = new Map<string, FakeHostActions>([
-    [TOOL.claude, new FakeHostActions({ available: toolInstalled, enablesPlugins: false })],
+    [TOOL.claude, new FakeHostActions({ available: toolInstalled })],
   ]);
   return buildCheckRegistration(
     fs,
@@ -183,7 +183,7 @@ async function nativeIssuesFor(
   const registry = new InMemoryMarketplaceRegistry();
   if (registered) await registry.save(PROJECT_ROOT, registered);
   const activators = new Map<string, FakeHostActions>([
-    [TOOL.claude, new FakeHostActions({ available: true, enablesPlugins: true })],
+    [TOOL.claude, new FakeHostActions({ available: true })],
   ]);
   const hostRegistries = new Map<AiToolId, HostPluginRegistry>();
   if (reading !== "unreachable") {

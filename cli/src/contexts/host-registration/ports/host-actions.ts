@@ -13,8 +13,6 @@ export interface HostActions {
   isAvailable(): boolean;
   /** Registers a marketplace source (local path, `owner/repo[@ref]`, or git URL). Idempotent. */
   addMarketplace(source: string, scope: Scope): void;
-  /** True when this tool enables plugins through its CLI rather than through a file. */
-  enablesPlugins(): boolean;
   /** Unregisters a marketplace by name, in the scope it was added to. May throw when absent. */
   removeMarketplace(name: string, scope: Scope, options?: { force?: boolean }): void;
   /** Whether the registration under this name still resolves to something. `"unknown"` where

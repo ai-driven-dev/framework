@@ -39,6 +39,7 @@ src/
 │   ├── installation/    # the installation record and what installs, restores and materializes it
 │   │   ├── application/
 │   │   │   ├── agents/
+│   │   │   ├── clean/
 │   │   │   ├── doctor/
 │   │   │   ├── install/
 │   │   │   │   └── config/
