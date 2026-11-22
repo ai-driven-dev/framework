@@ -70,7 +70,6 @@
       "tests/orchestration/setup/setup-auth-guard.unit.test.ts": 1,
       "tests/orchestration/setup/setup-machine-scope.use-case.unit.test.ts": 1,
       "tests/orchestration/setup/setup-marketplace-conflict.integration.test.ts": 1,
-      "tests/orchestration/sync/machine-record-activation.integration.test.ts": 1,
       "tests/orchestration/sync/marketplace-source-conflict.integration.test.ts": 1,
       "tests/orchestration/sync/marketplace-sync-global-plugins.integration.test.ts": 1,
       "tests/orchestration/sync/marketplace-sync-legacy-host-foreign-cache.integration.test.ts": 1,
