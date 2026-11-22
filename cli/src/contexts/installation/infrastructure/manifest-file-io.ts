@@ -4,7 +4,11 @@ import { errorMessage } from "../../../shared/domain/describe-error.js";
 import { tryParseJson, whenAbsent } from "../../../shared/domain/reading/json-file.js";
 import type { ToolIdResolver } from "../../../shared/domain/tool.js";
 import type { AtomicWrite } from "../../../shared/ports/file-writer.js";
-import { InvalidManifestDataError, ManifestMigrationError } from "../domain/installation.error.js";
+import {
+  InvalidManifestDataError,
+  ManifestMigrationError,
+  ManifestUnavailableError,
+} from "../domain/installation.error.js";
 import type { ManifestFileContext } from "../domain/manifest/assert-supported-version.js";
 import { isV8Manifest, splitV8Manifest } from "../domain/manifest/v8-manifest.js";
 import { Manifest } from "../domain/manifest.js";
@@ -74,6 +78,10 @@ export abstract class ManifestFile {
     return this.load().catch(noneUnlessMigrationFailed);
   }
 
+  async loadForDiagnosis(): Promise<Manifest | null> {
+    return this.load().catch(refusedAsCorrupted);
+  }
+
   async save(manifest: Manifest): Promise<void> {
     await this.splitIfV8();
     await this.write(manifest);
@@ -97,6 +105,10 @@ export abstract class ManifestFile {
     await mkdir(dirname(this.path), { recursive: true });
     await this.deps.atomicWriter(this.path, JSON.stringify(manifest.toJSON(), null, 2));
   }
+}
+
+function refusedAsCorrupted(cause: unknown): never {
+  throw new ManifestUnavailableError("manifest-corrupted", { cause });
 }
 
 function noneUnlessMigrationFailed(error: unknown): null {

@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   InvalidManifestDataError,
   ManifestMigrationError,
+  ManifestUnavailableError,
 } from "../../../../src/contexts/installation/domain/installation.error.js";
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
 import type {
@@ -69,6 +70,18 @@ export function describeManifestRepositoryContract(
 
     it("loads null when no manifest was saved", async () => {
       expect(await subject.repository.load()).toBeNull();
+    });
+
+    it("loads null for a diagnosis when no manifest was saved", async () => {
+      expect(await subject.repository.loadForDiagnosis()).toBeNull();
+    });
+
+    it("loads back for a diagnosis what was saved", async () => {
+      const saved = aManifest().withTool(TOOL.claude, [installedFile]).build();
+
+      await subject.repository.save(saved);
+
+      expect((await subject.repository.loadForDiagnosis())?.toJSON()).toStrictEqual(saved.toJSON());
     });
 
     it("loads back what was saved", async () => {
@@ -188,6 +201,26 @@ export function describeManifestFileContract(
       await expect(load).rejects.toThrow(InvalidManifestDataError);
       await expect(load).rejects.toThrow(saying(`${subject.manifestPath} is not valid JSON`));
       expect(await subject.repository.loadIfReadable()).toBeNull();
+    });
+
+    it("refuses a corrupted document for a diagnosis as a corrupted manifest", async () => {
+      await write('{"version": 9, "tools": {');
+
+      const failure = await subject.repository.loadForDiagnosis().catch((e: unknown) => e);
+
+      expect(failure).toBeInstanceOf(ManifestUnavailableError);
+      expect(failure).toMatchObject({
+        code: "manifest-corrupted",
+        cause: expect.any(InvalidManifestDataError),
+      });
+    });
+
+    it("refuses a file it cannot read for a diagnosis as a corrupted manifest", async () => {
+      await mkdir(subject.manifestPath, { recursive: true });
+
+      await expect(subject.repository.loadForDiagnosis()).rejects.toMatchObject({
+        code: "manifest-corrupted",
+      });
     });
 
     describe("a version 8 document", () => {

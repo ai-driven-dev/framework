@@ -3,7 +3,6 @@ import { Marketplace } from "../../../src/contexts/distribution/domain/marketpla
 import { InspectDeclaredMarketplaces } from "../../../src/contexts/host-registration/application/inspect/inspect-declared-marketplaces.use-case.js";
 import type { HostPluginRegistryReading } from "../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
-import { LoadManifest } from "../../../src/contexts/installation/application/doctor/load-manifest.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
@@ -216,7 +215,7 @@ async function nativeIssuesFor(
     hostRegistries.set(SYNTHETIC_NATIVE_TOOL, new FakeHostPluginRegistry(reading));
   }
   return checkRegistrationOver(
-    new LoadManifest(new InMemoryManifestRepository(manifest, undefined, records)),
+    new InMemoryManifestRepository(manifest, undefined, records),
     fs,
     registry,
     (binary) => activators.get(binary)?.isAvailable() ?? false,
@@ -374,7 +373,7 @@ describe("the hosts handed to the registry inspection", () => {
     const check = new CheckRegistration(
       {
         resolve: resolveRegisteredBuildsOver(
-          new LoadManifest(new InMemoryManifestRepository(manifest)),
+          new InMemoryManifestRepository(manifest),
           {
             execute: async () => ({
               registeredNames: [],

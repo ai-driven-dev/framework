@@ -11,6 +11,8 @@ import { CheckTrackedFiles } from "../../contexts/installation/application/docto
 import { ListRegisteredPlugins } from "../../contexts/installation/application/doctor/list-registered-plugins.use-case.js";
 import { LoadManifest } from "../../contexts/installation/application/doctor/load-manifest.use-case.js";
 import { LoadManifestForDoctor } from "../../contexts/installation/application/doctor/load-manifest-for-doctor.use-case.js";
+import type { ManifestRepository } from "../../contexts/installation/ports/manifest-repository.js";
+import type { RecordsBesideManifest } from "../../contexts/installation/ports/record/registration-records.js";
 import { CheckAuthentication } from "../../orchestration/doctor/check-authentication.use-case.js";
 import { CheckRegistration } from "../../orchestration/doctor/check-registration.use-case.js";
 import { doctorAll } from "../../orchestration/doctor/doctor-all.js";
@@ -31,12 +33,16 @@ export function hostBinaryAvailableIn(
 }
 
 /** The registration check, over whichever manifest the scope reads. */
-function registrationCheckOver(base: Base, inst: Installation, manifests: LoadManifest) {
+function registrationCheckOver(
+  base: Base,
+  inst: Installation,
+  manifests: ManifestRepository & RecordsBesideManifest
+) {
   const { fs, tools } = base;
   return new CheckRegistration(
     {
       resolve: new ResolveRegisteredBuilds(
-        new ListRegisteredPlugins(manifests),
+        new ListRegisteredPlugins(new LoadManifest(manifests), manifests),
         inst.registrationRecordRules,
         new ResolveBuiltMarketplaces({
           fs,
@@ -80,7 +86,7 @@ export function wireDoctor(base: Base, inst: Installation) {
         layout: new CheckProjectLayout(loadManifest, fs, tools),
         plugin: new CheckPluginDrift(loadManifest, inst.detectPluginDriftUseCase),
       },
-      registration: registrationCheckOver(base, inst, loadManifest),
+      registration: registrationCheckOver(base, inst, base.manifestRepo),
       authentication: new CheckAuthentication(base.tokenProvider),
     },
     tools
@@ -88,7 +94,7 @@ export function wireDoctor(base: Base, inst: Installation) {
   // `doctor --scope user` checks the same registrations against the machine-wide manifest.
   const runUserScopeDoctor = new RunUserScopeDoctor(
     inst.readMachineInstallation,
-    registrationCheckOver(base, inst, new LoadManifest(base.userManifestRepo))
+    registrationCheckOver(base, inst, base.userManifestRepo)
   );
   const doctorAllUseCase = {
     execute: (projectRoot: string, pluginName?: string) =>

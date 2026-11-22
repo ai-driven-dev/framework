@@ -1,6 +1,9 @@
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { RegisteredPlugin, RegisteredPlugins } from "../../contract/registered-plugins.js";
-import type { RegistrationRecordData } from "../../ports/record/registration-records.js";
+import type {
+  RecordsBesideManifest,
+  RegistrationRecordData,
+} from "../../ports/record/registration-records.js";
 import type { InstallationScope } from "./installation-scope.js";
 import type { LoadManifest } from "./load-manifest.use-case.js";
 
@@ -21,11 +24,14 @@ export interface ListRegisteredPluginsRequest extends Pick<InstallationScope, "a
  * assembles the same shape.
  */
 export class ListRegisteredPlugins {
-  constructor(private readonly loadManifest: LoadManifest) {}
+  constructor(
+    private readonly loadManifest: Pick<LoadManifest, "execute">,
+    private readonly recordsRepo: Pick<RecordsBesideManifest, "loadRecords">
+  ) {}
 
   async execute(command: ListRegisteredPluginsRequest): Promise<RegisteredPlugins> {
     const manifest = await this.loadManifest.execute();
-    const registered = await this.loadManifest.records();
+    const registered = await this.recordsRepo.loadRecords();
     const tools: { toolId: ToolId; expectedPlugins: readonly RegisteredPlugin[] }[] = [];
     for (const toolId of manifest.getInstalledToolIds()) {
       if (command.allowedIds && !command.allowedIds.has(toolId)) continue;

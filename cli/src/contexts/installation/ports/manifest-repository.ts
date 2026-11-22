@@ -8,6 +8,9 @@ export interface ManifestRepository {
   /** `load`, with any failure to read or parse answered as none, for a best-effort caller that
    * treats an unreadable manifest as absent. */
   loadIfReadable(): Promise<Manifest | null>;
+  /** `load`, with any failure to read or parse refused as a corrupted manifest, for a diagnosis
+   * that names what is wrong. Limit: EACCES included, every such failure reads as corruption. */
+  loadForDiagnosis(): Promise<Manifest | null>;
   save(manifest: Manifest): Promise<void>;
   /** Removes the manifest and the records kept beside it. */
   delete(): Promise<void>;

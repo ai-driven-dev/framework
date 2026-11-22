@@ -6,6 +6,8 @@ import type { InspectHostRegistration } from "../../../src/contexts/host-registr
 import { ListRegisteredPlugins } from "../../../src/contexts/installation/application/doctor/list-registered-plugins.use-case.js";
 import { LoadManifest } from "../../../src/contexts/installation/application/doctor/load-manifest.use-case.js";
 import type { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
+import type { RecordsBesideManifest } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import type { CheckRegistrationRequest } from "../../../src/orchestration/doctor/check-registration.use-case.js";
 import { CheckRegistration } from "../../../src/orchestration/doctor/check-registration.use-case.js";
@@ -15,12 +17,12 @@ import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manif
 
 /** The registered tools and their built marketplaces, over the manifest and builds given. */
 export function resolveRegisteredBuildsOver(
-  loadManifest: LoadManifest,
+  manifests: ManifestRepository & RecordsBesideManifest,
   builds: Pick<ResolveBuiltMarketplaces, "execute">,
   tools: ToolCatalog
 ): ResolveRegisteredBuilds {
   return new ResolveRegisteredBuilds(
-    new ListRegisteredPlugins(loadManifest),
+    new ListRegisteredPlugins(new LoadManifest(manifests), manifests),
     registrationRecordRules,
     builds,
     tools
@@ -29,7 +31,7 @@ export function resolveRegisteredBuildsOver(
 
 /** The registration check wired as the composition root wires it. */
 export function checkRegistrationOver(
-  loadManifest: LoadManifest,
+  manifests: ManifestRepository & RecordsBesideManifest,
   fs: FileReader,
   registry: MarketplaceRegistry,
   hostAvailable: (binary: string) => boolean,
@@ -41,7 +43,7 @@ export function checkRegistrationOver(
   return new CheckRegistration(
     {
       resolve: resolveRegisteredBuildsOver(
-        loadManifest,
+        manifests,
         new ResolveBuiltMarketplaces({ fs, registry, userCacheRoot, currentVersion }),
         tools
       ),
@@ -59,9 +61,6 @@ export function buildCheckRegistration(
 ) {
   return {
     execute: ({ manifest, ...command }: CheckRegistrationRequest & { manifest: Manifest }) =>
-      checkRegistrationOver(
-        new LoadManifest(new InMemoryManifestRepository(manifest)),
-        ...wiring
-      ).execute(command),
+      checkRegistrationOver(new InMemoryManifestRepository(manifest), ...wiring).execute(command),
   };
 }

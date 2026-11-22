@@ -3,7 +3,6 @@ import { RefreshHostPlugin } from "../../../src/contexts/host-registration/appli
 import type { HostPluginRegistryReading } from "../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { RegistrationRecord } from "../../../src/contexts/host-registration/domain/record/registration-record.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
-import { LoadManifest } from "../../../src/contexts/installation/application/doctor/load-manifest.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { RegistrationRecordData } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
@@ -132,9 +131,7 @@ async function doctorSays(registry: HostPluginRegistryReading): Promise<string> 
   const manifest = Manifest.create();
   manifest.addTool(tool, "test", []);
   const issues = await checkRegistrationOver(
-    new LoadManifest(
-      new InMemoryManifestRepository(manifest, undefined, new Map([[tool, registrations]]))
-    ),
+    new InMemoryManifestRepository(manifest, undefined, new Map([[tool, registrations]])),
     new InMemoryFileAdapter(),
     new InMemoryMarketplaceRegistry(),
     () => false,

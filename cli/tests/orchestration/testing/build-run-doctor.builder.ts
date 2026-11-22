@@ -32,7 +32,7 @@ export function buildRunDoctor(
         ),
       },
       registration: checkRegistrationOver(
-        loadManifest,
+        deps.manifestRepo,
         deps.fs,
         deps.marketplaceRegistry,
         (binary) =>
