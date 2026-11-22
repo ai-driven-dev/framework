@@ -27,10 +27,10 @@ export class UserScopePluginFiles implements UserScopePluginFileRemoval {
   async remove(
     files: ReadonlyMap<string, string>,
     tool: PluginPlacement,
-    projectRoot: string
+    { projectRoot, home }: { projectRoot: string; home: string }
   ): Promise<void> {
     await deletePluginFilesForTool(
-      { files, scope: "user", tool, projectRoot, ownerScope: "user" },
+      { files, scope: "user", tool, projectRoot, ownerScope: "user", homedir: () => home },
       this.fs
     );
   }

@@ -1,10 +1,11 @@
-import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { UserScopePluginFiles } from "../../../../../src/contexts/installation/application/removal/user-scope-plugin-files.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+
+const homedir = (): string => "/home/dev";
 
 const HOME = "/fake-home";
 const tool = registeredTools().aiProfile(TOOL.cursor);
@@ -39,7 +40,7 @@ describe("UserScopePluginFiles.remove", () => {
     await new UserScopePluginFiles(fs, async () => new Map()).remove(
       new Map([["skills/x.md", "digest"]]),
       tool,
-      "/project"
+      { projectRoot: "/project", home: homedir() }
     );
 
     expect(fs.has(target)).toBe(false);

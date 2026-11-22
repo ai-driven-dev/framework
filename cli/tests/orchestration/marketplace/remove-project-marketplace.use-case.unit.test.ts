@@ -106,7 +106,7 @@ describe("RemoveProjectMarketplace", () => {
   it("removes a project marketplace's orphan projection without deleting shared Cursor files", async () => {
     const { registry, manifestRepo, fs } = buildUseCase();
     const useCase = projectMarketplaceRemover(
-      new RemoveProjectPlugin(fs),
+      new RemoveProjectPlugin(fs, () => "/home/dev"),
       manifestRepo,
       registry,
       new KeepPrompter()
@@ -154,7 +154,7 @@ describe("RemoveProjectMarketplace", () => {
   it("removes a cursor orphan's file under projectRoot, not ~/.cursor/plugins/local, when the manifest says scope: project", async () => {
     const { registry, manifestRepo, fs } = buildUseCase();
     const useCase = projectMarketplaceRemover(
-      new RemoveProjectPlugin(fs),
+      new RemoveProjectPlugin(fs, () => "/home/dev"),
       manifestRepo,
       registry,
       new KeepPrompter()

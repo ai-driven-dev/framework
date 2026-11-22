@@ -49,7 +49,7 @@ describe("DetectPluginDrift - user-scope tool never installed on this machine", 
     const files = { "a/one.md": HASH_A, "a/two.md": HASH_B };
     const manifest = cursorManifestWithFiles(files);
     const fs = makeFs(new Set(["one.md", "two.md"]));
-    const useCase = new DetectPluginDrift(fs, registeredTools());
+    const useCase = new DetectPluginDrift(fs, registeredTools(), () => "/home/dev");
 
     const drifts = await useCase.execute({
       manifest,
@@ -66,7 +66,7 @@ describe("DetectPluginDrift - user-scope tool never installed on this machine", 
     const files = { "a/one.md": HASH_A, "a/two.md": HASH_B };
     const manifest = cursorManifestWithFiles(files);
     const fs = makeFs(new Set(["one.md"]));
-    const useCase = new DetectPluginDrift(fs, registeredTools());
+    const useCase = new DetectPluginDrift(fs, registeredTools(), () => "/home/dev");
 
     const drifts = await useCase.execute({
       manifest,
@@ -96,7 +96,7 @@ describe("DetectPluginDrift - user-scope tool never installed on this machine", 
       )
       .build();
     const fs = makeFs(new Set(["one.md", "two.md"]));
-    const useCase = new DetectPluginDrift(fs, registeredTools());
+    const useCase = new DetectPluginDrift(fs, registeredTools(), () => "/home/dev");
 
     const drifts = await useCase.execute({
       manifest,
@@ -140,7 +140,7 @@ describe("DetectPluginDrift - the manifest's recorded scope wins over the profil
       listDirectory: async () => [],
       listFilesRecursive: async () => [],
     };
-    const useCase = new DetectPluginDrift(fs, registeredTools());
+    const useCase = new DetectPluginDrift(fs, registeredTools(), () => "/home/dev");
 
     const drifts = await useCase.execute({
       manifest,
@@ -171,7 +171,7 @@ describe("DetectPluginDrift - the manifest's recorded scope wins over the profil
       )
       .build();
     const fs = makeFs(new Set(["one.md", "two.md"]));
-    const useCase = new DetectPluginDrift(fs, registeredTools());
+    const useCase = new DetectPluginDrift(fs, registeredTools(), () => "/home/dev");
 
     const drifts = await useCase.execute({
       manifest,

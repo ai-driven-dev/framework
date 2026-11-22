@@ -96,6 +96,8 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 | `STORED_ANSWERS` in `kind-rules.ts` lists the stored values a plugin variant answers verbatim | each has a caller that needs the raw value across a file boundary, recorded beside its entry | none, deliberate: a value a method can answer is asked, not listed |
 | `STORED_VOCABULARY` in `tool-addition-cost.arch.test.ts` admits `usage-record.ts` naming `codex` | `USAGE_TOOLS` is the vocabulary of tools stored in a user's ledger, kept by telemetry apart from `tools` | none, deliberate: stored data, not a branch on the name |
 | `no-swallowed-catch.grit` does not see the empty catches written inside the template text of `opencode-hooks-bridge.ts`, nor a dynamic `import()` of `seed-from-directory` or a `vi.importActual` of a closed folder | those catches are text, not syntax; no unit test imports the helper dynamically | none, a written limit |
+| `token-owner.grit` does not see an aliased import of `TOKEN_VARIABLE`, a re-export of it, the name inside a template literal, or a destructured `process.env` | no `src` file outside `auth` writes one | none, a written limit |
+| Biome's filename convention does not check `.md` files (the `glossary.md` of each context) | Biome lints source files only | none, a written limit |
 | `Prompter` has no contract suite | it answers a person at a terminal, and a prompt has nothing to read back: the doubles script answers, and the real adapter is checked by the e2e journeys that drive it | none, accepted: an interactive port is not a store |
 
 ### Migration state

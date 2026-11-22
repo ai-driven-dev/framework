@@ -54,7 +54,7 @@ describe("RestoreAll - consent to overwrite", () => {
       {
         fs: deps.fs,
         manifestRepo: deps.manifestRepo,
-        detectPluginDrift: new DetectPluginDrift(deps.fs, registeredTools()),
+        detectPluginDrift: new DetectPluginDrift(deps.fs, registeredTools(), () => "/home/dev"),
       },
       registeredTools()
     );
@@ -96,7 +96,7 @@ describe("RestoreAll - native-only tools", () => {
       {
         fs: deps.fs,
         manifestRepo: deps.manifestRepo,
-        detectPluginDrift: new DetectPluginDrift(deps.fs, registeredTools()),
+        detectPluginDrift: new DetectPluginDrift(deps.fs, registeredTools(), () => "/home/dev"),
       },
       registeredTools()
     );
@@ -147,7 +147,7 @@ function restoreAllDelegatingTo(
     {
       fs: deps.fs,
       manifestRepo: deps.manifestRepo,
-      detectPluginDrift: new DetectPluginDrift(deps.fs, registeredTools()),
+      detectPluginDrift: new DetectPluginDrift(deps.fs, registeredTools(), () => "/home/dev"),
     },
     registeredTools()
   );

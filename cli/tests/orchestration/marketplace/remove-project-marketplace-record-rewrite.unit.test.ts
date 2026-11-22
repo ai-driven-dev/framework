@@ -24,7 +24,7 @@ describe("the record a project marketplace removal writes", () => {
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new InMemoryMarketplaceRegistry();
     const useCase = projectMarketplaceRemover(
-      new RemoveProjectPlugin(fs),
+      new RemoveProjectPlugin(fs, () => "/home/dev"),
       manifestRepo,
       registry,
       new KeepPrompter(),

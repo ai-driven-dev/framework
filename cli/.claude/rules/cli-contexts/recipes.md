@@ -29,4 +29,4 @@ paths:
 
 - Read the disk in `application/` or `domain/`: files arrive through `RecipeFiles`.
 - Import another context: recipes knows none.
-- Change a finding's `fix` text or the report layout: the domain tests, `validate-recipes.use-case.unit.test.ts` and `tests/presentation/controllers/tool-config-validate-recipes.integration.test.ts` freeze the findings, the display test freezes the table and the goldens hold help text only.
+- Change a finding's `fix` text or the report layout: the domain tests, `validate-recipes.use-case.unit.test.ts` and `tests/presentation/controllers/tool-config-validate-recipes.integration.test.ts` freeze the findings, `tool-config.presenter.recipes.unit.test.ts` freezes the table and the goldens hold help text only.

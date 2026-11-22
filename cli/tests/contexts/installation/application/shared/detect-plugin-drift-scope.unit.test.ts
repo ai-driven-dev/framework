@@ -1,4 +1,3 @@
-import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { DetectPluginDrift } from "../../../../../src/contexts/installation/application/shared/detect-plugin-drift.use-case.js";
@@ -7,6 +6,8 @@ import { InstalledPlugin } from "../../../../../src/contexts/installation/domain
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+
+const homedir = (): string => "/home/dev";
 
 const PROJECT_ROOT = "/proj";
 const USER_PLUGINS_DIR = join(homedir(), ".cursor", "plugins", "local");
@@ -38,7 +39,7 @@ describe("DetectPluginDrift", () => {
       "aidd-one": { "aidd-one/a.md": HASH_OF_ONE },
       "aidd-two": { "aidd-two/a.md": HASH_OF_ONE },
     });
-    const useCase = new DetectPluginDrift(new InMemoryFileAdapter({}), registeredTools());
+    const useCase = new DetectPluginDrift(new InMemoryFileAdapter({}), registeredTools(), homedir);
 
     const drifts = await useCase.execute({
       manifest,
@@ -59,7 +60,7 @@ describe("DetectPluginDrift", () => {
     const fs = new InMemoryFileAdapter({
       [join(USER_PLUGINS_DIR, "aidd-one", "changed.md")]: "two",
     });
-    const useCase = new DetectPluginDrift(fs, registeredTools());
+    const useCase = new DetectPluginDrift(fs, registeredTools(), homedir);
 
     const drifts = await useCase.execute({
       manifest,

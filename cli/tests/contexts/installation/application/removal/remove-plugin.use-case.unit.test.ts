@@ -1,4 +1,3 @@
-import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { registrationRecordRules } from "../../../../../src/composition/installation.js";
@@ -12,6 +11,8 @@ import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { FakeProjectPluginWithdrawal } from "../../testing/fake-project-plugin-withdrawal.fake.js";
 import { aManifest } from "../../testing/manifest.builder.js";
+
+const homedir = (): string => "/home/dev";
 
 const ROOT = "/project";
 const NAME = "aidd-dev";
@@ -53,7 +54,13 @@ function fixture(
   });
   const withdrawal = new FakeProjectPluginWithdrawal(options.answers);
   const remove = new RemovePlugin(
-    { fs, projectRepo: repo, withdrawal, records: registrationRecordRules },
+    {
+      fs,
+      projectRepo: repo,
+      withdrawal,
+      records: registrationRecordRules,
+      homedir: () => "/home/dev",
+    },
     registeredTools()
   );
   const run = (pluginName = NAME) =>

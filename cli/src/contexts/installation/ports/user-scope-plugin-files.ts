@@ -15,6 +15,6 @@ export interface UserScopePluginFileRemoval {
   remove(
     files: ReadonlyMap<string, string>,
     tool: PluginPlacement,
-    projectRoot: string
+    where: { projectRoot: string; home: string }
   ): Promise<void>;
 }

@@ -1,4 +1,3 @@
-import { homedir as nodeHomedir } from "node:os";
 import { dirname, join } from "node:path";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
@@ -28,6 +27,7 @@ export interface RemovePluginDeps {
   readonly projectRepo: ManifestRepository;
   readonly withdrawal: ProjectPluginWithdrawalSteps;
   readonly records: RegistrationRecordRules;
+  readonly homedir: () => string;
 }
 
 export class RemovePlugin {
@@ -101,7 +101,7 @@ export class RemovePlugin {
       const baseDir = scopeBaseOf(tool, {
         scope: plugin.scope,
         projectRoot: projectRoot,
-        homedir: nodeHomedir,
+        homedir: this.deps.homedir,
       });
       const confirmed = await this.deps.withdrawal.withdraw({
         tool,

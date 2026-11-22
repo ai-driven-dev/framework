@@ -1,4 +1,4 @@
-import { homedir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { mergeCatalogueClaims } from "../contexts/host-registration/domain/record/catalogue-claims.js";
 import {
   refOnAnyHost,
@@ -170,6 +170,7 @@ function wireBuiltMarketplace(base: Base, assetProvider: BundledAssetProviderAda
     builds: frameworkBuildsOf(tools, frameworkBuildFor, agentModelStore),
     version: currentVersionProvider,
     userCacheRoot: userConfigDir,
+    tmpdir,
   });
   const ensureBuiltMarketplaceUseCase = new EnsureBuiltMarketplace(
     resolveMarketplaceUseCase,
@@ -202,7 +203,7 @@ export function wireInstallation(base: Base) {
     readMachineInstallation: new ReadMachineInstallation(userManifestRepo),
     pluginListUseCase: new ListPlugins(manifestRepo, tools),
     builtMaterializationDeps,
-    detectPluginDriftUseCase: new DetectPluginDrift(fs, tools),
+    detectPluginDriftUseCase: new DetectPluginDrift(fs, tools, homedir),
     registrationRecordRules,
   };
 }

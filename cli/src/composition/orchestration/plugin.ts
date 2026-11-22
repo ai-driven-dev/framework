@@ -165,6 +165,7 @@ function wirePluginRemoval(base: Base, inst: Installation) {
         removalClaims
       ),
       records: registrationRecordRules,
+      homedir: inst.builtMaterializationDeps.homedir,
     },
     tools
   );

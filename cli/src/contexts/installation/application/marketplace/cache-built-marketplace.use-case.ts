@@ -1,4 +1,3 @@
-import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import {
   builtMarketplaceDir,
@@ -69,6 +68,8 @@ export interface CacheBuiltMarketplaceDeps {
    * of them: delete that project and the global registration points at nothing.
    */
   readonly userCacheRoot: () => string;
+  /** Where a build is staged before it replaces the cache. */
+  readonly tmpdir: () => string;
 }
 
 /**
@@ -168,7 +169,7 @@ export class CacheBuiltMarketplace {
 
   private async buildViaTemp(job: BuildJob): Promise<void> {
     const { target, mode, builtDir } = job;
-    const temp = join(tmpdir(), `aidd-built-${target}-${mode}`);
+    const temp = join(this.deps.tmpdir(), `aidd-built-${target}-${mode}`);
     await this.deps.fs.deleteDirectory(temp);
     await this.runBuild({ ...job, outDir: temp });
     await this.deps.fs.deleteDirectory(builtDir);

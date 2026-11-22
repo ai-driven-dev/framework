@@ -1,4 +1,3 @@
-import { homedir as nodeHomedir } from "node:os";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
@@ -40,7 +39,7 @@ export class ReplacePluginFiles {
     const baseDir = scopeBaseOf(tool, {
       scope: plugin.scope,
       projectRoot: projectRoot,
-      homedir: nodeHomedir,
+      homedir: this.builtDeps.homedir,
     });
     await deleteOldFiles(plugin.files, baseDir, this.fs);
     const translator = this.resolveTranslator(tool);

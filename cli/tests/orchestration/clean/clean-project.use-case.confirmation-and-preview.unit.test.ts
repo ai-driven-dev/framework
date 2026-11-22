@@ -1,4 +1,3 @@
-import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
@@ -20,6 +19,8 @@ import {
   RecordingFileAdapter,
   seedTrackedFiles,
 } from "../testing/clean-project.builder.js";
+
+const homedir = (): string => "/home/dev";
 
 describe("clean: confirmation and preview", () => {
   describe("user-scope files belong to machine cleanup", () => {

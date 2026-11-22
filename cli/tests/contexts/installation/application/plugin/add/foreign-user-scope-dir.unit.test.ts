@@ -1,4 +1,3 @@
-import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { foreignUserScopeDir } from "../../../../../../src/contexts/installation/application/plugin/add/foreign-user-scope-dir.js";
@@ -12,6 +11,8 @@ import { InstalledPlugin } from "../../../../../../src/contexts/installation/dom
 import { PluginDistribution } from "../../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
+
+const homedir = (): string => "/home/dev";
 
 const ROOT = "/test-project";
 
@@ -45,7 +46,12 @@ describe("foreignUserScopeDir", () => {
     const tool = tools.aiProfile(TOOL.claude);
 
     expect(
-      await foreignUserScopeDir(new InMemoryFileAdapter(), command(Manifest.create()), tool)
+      await foreignUserScopeDir({
+        fs: new InMemoryFileAdapter(),
+        command: command(Manifest.create()),
+        tool,
+        homedir,
+      })
     ).toBeUndefined();
   });
 
@@ -56,7 +62,9 @@ describe("foreignUserScopeDir", () => {
       const dir = join(scopeBaseOf(tool, { scope: "user", projectRoot: ROOT, homedir }), "sample");
       const fs = new InMemoryFileAdapter({ [join(dir, "a.md")]: "x" });
 
-      expect(await foreignUserScopeDir(fs, command(Manifest.create()), tool)).toBe(dir);
+      expect(
+        await foreignUserScopeDir({ fs, command: command(Manifest.create()), tool, homedir })
+      ).toBe(dir);
     }
   );
 
@@ -79,7 +87,9 @@ describe("foreignUserScopeDir", () => {
       );
       const fs = new InMemoryFileAdapter({ [join(dir, "a.md")]: "x" });
 
-      expect(await foreignUserScopeDir(fs, command(machine), tool)).toBeUndefined();
+      expect(
+        await foreignUserScopeDir({ fs, command: command(machine), tool, homedir })
+      ).toBeUndefined();
     }
   );
 });

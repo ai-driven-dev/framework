@@ -60,6 +60,7 @@ export interface RemovalClaims {
 export class RemoveProjectPlugin implements ProjectIntegrationCleanup {
   constructor(
     private readonly fs: FileReader & FileWriter,
+    private readonly homedir: () => string,
     private readonly claims?: RemovalClaims
   ) {}
 
@@ -91,7 +92,7 @@ export class RemoveProjectPlugin implements ProjectIntegrationCleanup {
     projectRoot: string
   ): Promise<void> {
     await deletePluginFilesForTool(
-      { files: plugin.files, scope: plugin.scope, tool, projectRoot },
+      { files: plugin.files, scope: plugin.scope, tool, projectRoot, homedir: this.homedir },
       this.fs
     );
   }

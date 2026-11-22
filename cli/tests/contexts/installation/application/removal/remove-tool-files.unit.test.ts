@@ -1,4 +1,3 @@
-import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { RemoveToolFiles } from "../../../../../src/contexts/installation/application/removal/remove-tool-files.js";
@@ -11,6 +10,8 @@ import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+
+const homedir = (): string => "/home/dev";
 
 const ROOT = "/test-project";
 const AGENTS = "AGENTS.md";
@@ -41,7 +42,7 @@ function removal(
   allToolIds: ToolId[],
   logger = new CapturingLogger()
 ): Promise<string[]> {
-  return new RemoveToolFiles(target.fs, logger, registeredTools()).remove({
+  return new RemoveToolFiles(target.fs, logger, registeredTools(), () => "/home/dev").remove({
     toolId,
     allToolIds,
     manifest: target.manifest,

@@ -35,6 +35,7 @@ function cleanOver(manifest: Manifest | null, fs: InMemoryFileAdapter): CleanPro
           manifestRepo: repo,
           logger: new CapturingLogger(),
           updateGitignore: new UpdateGitignore(fs),
+          homedir: () => "/home/dev",
         },
         registeredTools()
       ),

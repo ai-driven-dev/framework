@@ -43,7 +43,7 @@ function checkerOver(disk: Record<string, string>) {
     .build();
   return new CheckPluginDrift(
     new LoadManifest(new InMemoryManifestRepository(manifest)),
-    new DetectPluginDrift(readerOf(disk), registeredTools())
+    new DetectPluginDrift(readerOf(disk), registeredTools(), () => "/home/dev")
   );
 }
 

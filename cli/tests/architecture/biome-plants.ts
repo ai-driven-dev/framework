@@ -2,8 +2,11 @@
  * The files `biome-guards-bite.arch.test.ts` plants in a throwaway tree: one row per file, naming
  * the rule that must fire on it and how many times. `times` 0 is a file the rule must spare.
  */
+import { PLUGIN_PLANTS } from "./plugin-plants.js";
+
 const IMPORT = "lint/style/noRestrictedImports";
 const GLOBAL = "lint/style/noRestrictedGlobals";
+const FILE_NAME = "lint/style/useFilenamingConvention";
 const FLOATING = "lint/nursery/noFloatingPromises";
 const PROFILE_MODULE = "../../../tools/contract/tool-profile.js";
 const OF_INSTALLATION = "tests/contexts/installation/application";
@@ -20,7 +23,6 @@ const imports = (specifier: string): string =>
 const reaches = (specifier: string): string =>
   `import type { X } from "${specifier}";\nexport type Reached = X;\n`;
 const defaults = "const value = 1;\nexport default value;\n";
-const githubUrl = 'export const url = "https://api.github.com/repos/a/b/releases";\n';
 
 const AUTH_FOLDERS = ["domain", "ports", "application", "infrastructure", "contract"] as const;
 const AUTH_FILES: Readonly<Record<(typeof AUTH_FOLDERS)[number], string>> = {
@@ -37,6 +39,7 @@ const ASKS_FOR_THE_PROMPTER = ["application", "infrastructure"];
 
 /** `times` is how many diagnostics of `rule` the planted file must draw; 0 is a file the rule spares. */
 export const PLANTS: readonly Plant[] = [
+  ...PLUGIN_PLANTS,
   ["src/contexts/auth/ports/token-reader.port.ts", "export class TokenReader {}\n", "plugin", 1],
   [
     "src/contexts/auth/ports/token-name.port.ts",
@@ -51,14 +54,6 @@ export const PLANTS: readonly Plant[] = [
     0,
   ],
   ["src/contexts/auth/ports/token-store.ts", "export class TokenStore {}\n", "plugin", 0],
-  ["src/shared/domain/swallows.ts", "try { f(); } catch {}", "plugin", 1],
-  ["tests/shared/domain/swallows.ts", "try { f(); } catch (e) { /* later */ }", "plugin", 1],
-  [
-    "tests/shared/domain/best-effort.ts",
-    "// biome-ignore lint/plugin: why\ntry { f(); } catch {}",
-    "plugin",
-    0,
-  ],
   ["src/shared/domain/re-exports.ts", 'export type { A } from "./a.js";', "plugin", 1],
   [
     "tests/shared/testing/launders.ts",
@@ -146,14 +141,10 @@ export const PLANTS: readonly Plant[] = [
   ["src/shared/domain/default.ts", defaults, "lint/style/noDefaultExport", 1],
   ["tests/shared/domain/default.ts", defaults, "lint/style/noDefaultExport", 1],
   ["src/shared/domain/clean.ts", "export const one = 1;\n", "lint/style/noDefaultExport", 0],
-  // A GitHub API URL is written by the GitHub adapter only.
-  ["src/contexts/update/infrastructure/builds-github-url.ts", githubUrl, "plugin", 1],
-  [
-    "src/shared/infrastructure/github-adapter.ts",
-    `// biome-ignore lint/plugin: the one place the GitHub API base is written\n${githubUrl}`,
-    "plugin",
-    0,
-  ],
+  // A file is named in kebab-case, each dot-separated part.
+  ["src/shared/domain/BadName.ts", "export const one = 1;\n", FILE_NAME, 1],
+  ["src/shared/domain/bad_name.ts", "export const one = 1;\n", FILE_NAME, 1],
+  ["tests/shared/domain/good-name.unit.test.ts", "export const one = 1;\n", FILE_NAME, 0],
   // The process global, in the layers that hold no I/O.
   ["src/contexts/installation/domain/env.ts", readsEnv, GLOBAL, 1],
   ["src/contexts/installation/application/env.ts", readsEnv, GLOBAL, 1],
@@ -384,6 +375,24 @@ export const PLANTS: readonly Plant[] = [
     'export const load = () => import("node:child_process");\n',
     IMPORT,
     1,
+  ],
+  [
+    "tests/shared/domain/homes.unit.test.ts",
+    'import { homedir } from "node:os";\nexport const home = homedir;\n',
+    IMPORT,
+    1,
+  ],
+  [
+    "tests/shared/domain/homes-bare.unit.test.ts",
+    'import { homedir } from "os";\nexport const home = homedir;\n',
+    IMPORT,
+    1,
+  ],
+  [
+    "tests/shared/domain/homes.integration.test.ts",
+    'import { homedir } from "node:os";\nexport const home = homedir;\n',
+    IMPORT,
+    0,
   ],
   [
     "tests/shared/domain/reads.integration.test.ts",

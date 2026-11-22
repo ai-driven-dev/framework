@@ -15,10 +15,11 @@ import {
   CleanProject,
   type CleanProjectDeps,
 } from "../../../src/orchestration/clean/clean-project.use-case.js";
-import { resolveHomeDir } from "../../../src/shared/infrastructure/home-dir.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { registeredTools } from "../../shared/testing/registered-tools.builder.js";
+
+const homedir = (): string => "/home/dev";
 
 type Files = RemoveProjectFilesDeps;
 
@@ -43,7 +44,7 @@ export function projectCleanerDeps(parts: ProjectCleanerParts): CleanProjectDeps
         fs: parts.fs,
         manifestRepo: parts.manifestRepo,
         asks: {
-          homeDir: parts.homeDir ?? resolveHomeDir,
+          homeDir: parts.homeDir ?? homedir,
           assertMcpRemovable: (plugin, tool, projectRoot) =>
             assertProjectMcpEntriesRemovable(parts.fs, { plugin, tool, projectRoot }),
           records: registrationRecordRules,
@@ -54,6 +55,7 @@ export function projectCleanerDeps(parts: ProjectCleanerParts): CleanProjectDeps
             manifestRepo: parts.manifestRepo,
             logger: parts.logger,
             updateGitignore: parts.gitignore,
+            homedir,
           },
           registeredTools()
         ),

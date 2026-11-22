@@ -48,7 +48,7 @@ function uninstaller(
       manifestRepo,
       detachClaims,
       records: registrationRecordRules,
-      removeToolFiles: new RemoveToolFiles(fs, logger, registeredTools()),
+      removeToolFiles: new RemoveToolFiles(fs, logger, registeredTools(), () => "/home/dev"),
     },
     registeredTools()
   );

@@ -10,7 +10,7 @@ const TOOLING_TESTS = [
   "tests/mutation/stryker-filter.integration.test.ts",
   "tests/shared/testing/realpath-windows.unit.test.ts",
   "tests/mutation/mutation-sequencer.integration.test.ts",
-  "tests/setup/throwaway-profile.unit.test.ts",
+  "tests/setup/throwaway-profile.integration.test.ts",
   "tests/mutation/unloadable-file-as-failed-test.integration.test.ts",
   "tests/mutation/unloadable-file-as-failed-test.unit.test.ts",
 ];
@@ -115,19 +115,6 @@ export default defineConfig({
           environment: "node",
           testTimeout: 60000,
           globalSetup: ["./tests/setup/global-setup.ts", "./tests/setup/sweep-stale-temp-dirs.ts"],
-        },
-      },
-      {
-        // The presenters' and errors' goldens render in process: no binary to build.
-        extends: false,
-        plugins: [textLoader(TEXT_EXTENSIONS)],
-        test: {
-          name: "display",
-          include: ["tests/presentation/**/*.golden.test.ts"],
-          globals: false,
-          environment: "node",
-          testTimeout: 60000,
-          globalSetup: ["./tests/setup/sweep-stale-temp-dirs.ts"],
         },
       },
     ],

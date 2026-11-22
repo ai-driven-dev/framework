@@ -84,7 +84,7 @@ async function marketplaceAdd(makePrompter: (events: string[]) => Prompter) {
   const prompter = makePrompter(events);
   const manifestRepo = new InMemoryManifestRepository(Manifest.create());
   const remove = projectMarketplaceRemover(
-    new RemoveProjectPlugin(fs, removalClaims(manifestRepo, fs)),
+    new RemoveProjectPlugin(fs, () => "/home/dev", removalClaims(manifestRepo, fs)),
     manifestRepo,
     registry,
     prompter
