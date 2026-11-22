@@ -9,7 +9,6 @@ import type { InstallIdeTool } from "../contexts/installation/application/instal
 import type { ListInstalledRules } from "../contexts/installation/application/list-installed-rules.use-case.js";
 import type { ListPlugins } from "../contexts/installation/application/plugin/list-plugins.use-case.js";
 import type { UpdatePlugin } from "../contexts/installation/application/plugin/update-plugin.use-case.js";
-import type { RemovePlugin } from "../contexts/installation/application/removal/remove-plugin.use-case.js";
 import type { RemoveUserPluginRequest } from "../contexts/installation/application/removal/remove-user-plugin.use-case.js";
 import type { ReportStatus } from "../contexts/installation/application/report-status.use-case.js";
 import type { UninstallTools } from "../contexts/installation/application/uninstall-tools.use-case.js";
@@ -53,6 +52,7 @@ import type { CheckMarketplaceUpstream } from "./marketplace/check-marketplace-u
 import type { RemoveProjectMarketplace } from "./marketplace/remove-project-marketplace.use-case.js";
 import type { RemoveUserMarketplace } from "./marketplace/remove-user-marketplace.use-case.js";
 import type { InstallPlugin } from "./plugin/install-plugin.use-case.js";
+import type { RemovePlugin } from "./plugin/remove-plugin.use-case.js";
 import type { UpdateUserPlugin } from "./plugin/update-user-plugin.use-case.js";
 import type { Prompter } from "./ports/prompter.js";
 import type { RunSetup } from "./setup/run-setup.use-case.js";

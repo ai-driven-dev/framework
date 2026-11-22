@@ -15,8 +15,7 @@ import { PluginDistributionLoader } from "../../contexts/installation/applicatio
 import { PluginMaterializer } from "../../contexts/installation/application/plugin/plugin-materializer.js";
 import { UpdatePlugin } from "../../contexts/installation/application/plugin/update-plugin.use-case.js";
 import { UpdateUserPluginFiles } from "../../contexts/installation/application/plugin/update-user-plugin-files.use-case.js";
-import { ProjectPluginWithdrawal } from "../../contexts/installation/application/removal/project-plugin-withdrawal.js";
-import { RemovePlugin } from "../../contexts/installation/application/removal/remove-plugin.use-case.js";
+import { RemovePlugin as RemoveProjectPluginFiles } from "../../contexts/installation/application/removal/remove-plugin.use-case.js";
 import {
   RemoveUserPlugin,
   type RemoveUserPluginRequest,
@@ -40,8 +39,8 @@ import { ConfirmPluginSourceTrust } from "../../orchestration/plugin/confirm-plu
 import { InstallFromMarketplace } from "../../orchestration/plugin/install-from-marketplace.use-case.js";
 import { InstallPlugin } from "../../orchestration/plugin/install-plugin.use-case.js";
 import { PickPlugins } from "../../orchestration/plugin/pick-plugins.use-case.js";
+import { RemovePlugin } from "../../orchestration/plugin/remove-plugin.use-case.js";
 import { UpdateUserPlugin } from "../../orchestration/plugin/update-user-plugin.use-case.js";
-import { withdrawalClaimsOf } from "../../orchestration/plugin/withdrawal-claims.js";
 import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
 import type { Installation } from "../installation.js";
 import type { Base } from "../shared.js";
@@ -92,29 +91,6 @@ export function claimedRefWithdrawal(
   };
 }
 
-/** The host withdrawal a project removal calls: the host's own, checked against the machine's
- * claims for the tool and project at hand. */
-export function projectHostWithdrawal(
-  withdrawFromHost: WithdrawFromHost,
-  removalClaims: Parameters<typeof withdrawalClaimsOf>[0]
-): HostWithdrawal<ProvenHostRef> {
-  return {
-    assertProjectSource: (command) =>
-      withdrawFromHost.execute({ kind: "prove-project-source", ...command }),
-    ...claimedRefWithdrawal(withdrawFromHost),
-    execute: (command) =>
-      withdrawFromHost.execute({
-        kind: "withdraw-plugin",
-        ...command,
-        claims: withdrawalClaimsOf(removalClaims, {
-          toolId: command.tool.toolId,
-          tool: command.tool,
-          projectRoot: command.projectRoot,
-        }),
-      }),
-  };
-}
-
 /** A user-scope removal under the machine's home directory, which the command line does not know. */
 export function underMachineHome(removal: Pick<RemoveUserPlugin<unknown>, "execute">) {
   return {
@@ -156,19 +132,19 @@ function wirePluginRemoval(base: Base, inst: Installation) {
     marketplaceRegistry: base.marketplaceRegistry,
     resolveCacheCandidate: purgeCandidateResolverOf(new PurgeDeclaredCache(fs, logger)),
   });
-  const pluginRemoveUseCase = new RemovePlugin(
-    {
-      fs,
-      projectRepo: manifestRepo,
-      withdrawal: new ProjectPluginWithdrawal(
-        projectHostWithdrawal(withdrawFromHost, removalClaims),
-        removalClaims
-      ),
-      records: registrationRecordRules,
-      homedir: inst.builtMaterializationDeps.homedir,
-    },
-    tools
-  );
+  const pluginRemoveUseCase = new RemovePlugin({
+    remove: new RemoveProjectPluginFiles(
+      {
+        fs,
+        projectRepo: manifestRepo,
+        records: registrationRecordRules,
+        homedir: inst.builtMaterializationDeps.homedir,
+      },
+      tools
+    ),
+    withdrawFromHost,
+    claims: removalClaims,
+  });
   const userPluginRemove = wireUserPluginRemoval(base, inst);
   return { pluginRemoveUseCase, userPluginRemove };
 }

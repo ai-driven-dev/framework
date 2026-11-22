@@ -1,13 +1,11 @@
 import { registrationRecordRules } from "../../../../src/composition/installation.js";
 import {
   claimedRefWithdrawal,
-  projectHostWithdrawal,
   underMachineHome,
 } from "../../../../src/composition/orchestration/plugin.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../src/contexts/distribution/contract/marketplace.js";
 import { WithdrawFromHost } from "../../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
-import { ProjectPluginWithdrawal } from "../../../../src/contexts/installation/application/removal/project-plugin-withdrawal.js";
-import { RemovePlugin } from "../../../../src/contexts/installation/application/removal/remove-plugin.use-case.js";
+import { RemovePlugin as RemoveProjectPluginFiles } from "../../../../src/contexts/installation/application/removal/remove-plugin.use-case.js";
 import { RemoveUserPlugin } from "../../../../src/contexts/installation/application/removal/remove-user-plugin.use-case.js";
 import { UserScopePluginFiles } from "../../../../src/contexts/installation/application/removal/user-scope-plugin-files.js";
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
@@ -19,6 +17,7 @@ import {
 } from "../../../../src/contexts/machine-claims/application/plugin-removal-claims.js";
 import { PurgeDeclaredCache } from "../../../../src/contexts/machine-claims/application/purge-declared-cache.js";
 import { userScopeFilesSafeToDelete } from "../../../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
+import { RemovePlugin } from "../../../../src/orchestration/plugin/remove-plugin.use-case.js";
 import { resolveHomeDir } from "../../../../src/shared/infrastructure/home-dir.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
@@ -68,19 +67,19 @@ export function pluginRemover(parts: PluginRemoverParts) {
     resolveCacheCandidate: (cacheRoot, relativeSegments, label) =>
       new PurgeDeclaredCache(fs, logger).resolveCandidate(cacheRoot, relativeSegments, label),
   });
-  return new RemovePlugin(
-    {
-      fs,
-      projectRepo: parts.manifestRepo,
-      withdrawal: new ProjectPluginWithdrawal(
-        projectHostWithdrawal(withdrawing({ ...parts, logger }, fs), removalClaims),
-        removalClaims
-      ),
-      records: parts.records ?? registrationRecordRules,
-      homedir: () => "/home/dev",
-    },
-    registeredTools()
-  );
+  return new RemovePlugin({
+    remove: new RemoveProjectPluginFiles(
+      {
+        fs,
+        projectRepo: parts.manifestRepo,
+        records: parts.records ?? registrationRecordRules,
+        homedir: () => "/home/dev",
+      },
+      registeredTools()
+    ),
+    withdrawFromHost: withdrawing({ ...parts, logger }, fs),
+    claims: removalClaims,
+  });
 }
 
 /** The user-scope removal, under the machine home exactly as the composition binds it. */

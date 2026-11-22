@@ -57,14 +57,13 @@ function fixture(
     {
       fs,
       projectRepo: repo,
-      withdrawal,
       records: registrationRecordRules,
       homedir: () => "/home/dev",
     },
     registeredTools()
   );
   const run = (pluginName = NAME) =>
-    remove.execute({ pluginName, toolIds: [toolId], projectRoot: ROOT });
+    remove.execute({ pluginName, toolIds: [toolId], projectRoot: ROOT, withdrawal });
   return { repo, fs, withdrawal, run };
 }
 

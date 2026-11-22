@@ -1,7 +1,7 @@
 import type {
   PluginHostReach,
   ProjectPluginWithdrawalSteps,
-} from "../../../../src/contexts/installation/ports/project-plugin-withdrawal.js";
+} from "../../../../src/contexts/installation/application/removal/project-plugin-withdrawal.js";
 import type { AiToolId, ToolId } from "../../../../src/shared/domain/tool.js";
 
 interface Answers {
