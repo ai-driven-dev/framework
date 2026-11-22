@@ -3,7 +3,7 @@ import {
   detachNativePluginRefs,
   isMachineOwnedNativeRef,
 } from "../../../../../src/contexts/machine-claims/application/ownership/native-plugin-ownership.js";
-import { readHeldClaims } from "../../../../../src/contexts/machine-claims/domain/ref-claims.js";
+import { readHeldClaims } from "../../../../../src/contexts/machine-claims/domain/plugin-claim.model.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import {

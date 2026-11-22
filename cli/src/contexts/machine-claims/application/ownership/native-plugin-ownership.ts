@@ -1,7 +1,7 @@
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
-import { type HeldRefClaim, readHeldClaims } from "../../domain/ref-claims.js";
+import { type HeldRefClaim, readHeldClaims } from "../../domain/plugin-claim.model.js";
 import type { MachineManifestRepository, MachineRecords } from "../../ports/machine-manifest.js";
 
 export async function machineNativePluginClaim(

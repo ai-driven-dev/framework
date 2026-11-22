@@ -3,6 +3,7 @@ import { ListPlugins } from "../../../../../src/contexts/installation/applicatio
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../../../../src/contexts/installation/ports/manifest-repository.js";
+import type { RecordsBesideManifest } from "../../../../../src/contexts/installation/ports/record/registration-records.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { aManifest } from "../../testing/manifest.builder.js";
 
@@ -21,7 +22,7 @@ function makeManifestWithPlugin(): Manifest {
   return manifest;
 }
 
-function makeManifestRepository(manifest: Manifest): ManifestRepository {
+function makeManifestRepository(manifest: Manifest): ManifestRepository & RecordsBesideManifest {
   return {
     path: "/test-project/.aidd/manifest.json",
     load: async () => manifest,

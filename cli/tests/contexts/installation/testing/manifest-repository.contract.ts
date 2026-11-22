@@ -6,7 +6,10 @@ import {
   ManifestMigrationError,
 } from "../../../../src/contexts/installation/domain/installation.error.js";
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
-import type { RegistrationRecords } from "../../../../src/contexts/installation/ports/record/registration-records.js";
+import type {
+  RecordsBesideManifest,
+  RegistrationRecords,
+} from "../../../../src/contexts/installation/ports/record/registration-records.js";
 import { FileHash } from "../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../src/shared/domain/installation-file.js";
 import { atomicWriteFile } from "../../../../src/shared/infrastructure/atomic-write.js";
@@ -17,7 +20,7 @@ import { aManifest } from "./manifest.builder.js";
 
 /** What a contract run needs from one implementation of the repository. */
 export interface ManifestRepositorySubject {
-  readonly repository: ManifestRepository;
+  readonly repository: ManifestRepository & RecordsBesideManifest;
   /** The manifest file this implementation names. */
   readonly manifestPath: string;
   dispose(): Promise<void>;
@@ -28,7 +31,7 @@ export interface ManifestFileSubject extends ManifestRepositorySubject {
   /** How a version refusal names where the file is, and the command reinstalling it. */
   readonly refusal: { readonly location: string; readonly reinstall: string };
   /** The same file, its manifest and its records, written through `atomicWriter`. */
-  reopen(atomicWriter: AtomicWrite): ManifestRepository;
+  reopen(atomicWriter: AtomicWrite): ManifestRepository & RecordsBesideManifest;
 }
 
 const installedFile = new InstallationFile({
@@ -211,12 +214,13 @@ export function describeManifestFileContract(
         expect((await onDisk()).version).toBe(9);
       });
 
-      it("is split before records are saved over it, so the manifest is not lost", async () => {
-        await subject.repository.saveRecords(new Map());
+      it("is split before records are saved over it, so neither the manifest nor the save is lost", async () => {
+        await subject.repository.saveRecords(records);
 
         expect((await subject.repository.load())?.getInstalledToolIds()).toStrictEqual([
           TOOL.claude,
         ]);
+        expect(await subject.repository.loadRecords()).toStrictEqual(records);
       });
 
       it("writes the records before the manifest", async () => {

@@ -18,6 +18,7 @@ import {
   type PurgeMachineStateDeps,
 } from "../../../src/contexts/installation/application/removal/purge-machine-state.js";
 import { UserScopePluginFiles } from "../../../src/contexts/installation/application/removal/user-scope-plugin-files.js";
+import type { RecordsBesideManifest } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { userScopeFilesSafeToDelete } from "../../../src/contexts/machine-claims/application/ownership/user-scope-plugin-files.js";
 import { PurgeDeclaredCache } from "../../../src/contexts/machine-claims/application/purge-declared-cache.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
@@ -36,7 +37,7 @@ import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-mark
 /** What a test names; everything else is the empty or in-memory default. */
 export interface UserScopeCleanerParts extends Partial<HostPorts> {
   tools: ToolCatalog;
-  repo: PurgeUserScopeFilesDeps["userManifestRepo"];
+  repo: PurgeUserScopeFilesDeps["userManifestRepo"] & RecordsBesideManifest;
   fs?: PurgeMachineStateDeps["fs"];
   logger?: PurgeMachineStateDeps["logger"];
   marketplaceRegistry?: MarketplaceRegistry;

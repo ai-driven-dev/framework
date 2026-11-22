@@ -1,7 +1,10 @@
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { RegistrationRecords } from "../../ports/record/registration-records.js";
+import type {
+  RecordsBesideManifest,
+  RegistrationRecords,
+} from "../../ports/record/registration-records.js";
 import type { MachineClaimsReading } from "../../ports/user-scope/machine-claims-reading.js";
 import type { UserScopePluginFileRemoval } from "../../ports/user-scope/user-scope-plugin-files.js";
 import type { UserRegistrationWithdrawal } from "../../ports/user-scope/user-scope-purge.js";
@@ -9,7 +12,7 @@ import { userPluginsOf } from "./user-plugins-of.js";
 
 /** What ProveUserScopeWithdrawals is built from. */
 export interface ProveUserScopeWithdrawalsDeps {
-  readonly userManifestRepo: ManifestRepository;
+  readonly userManifestRepo: ManifestRepository & RecordsBesideManifest;
   readonly claims: MachineClaimsReading;
   /** The one resolver for the OS home directory a user-scope plugin's files sit under. */
   readonly homeDir: () => string;

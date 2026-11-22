@@ -1,5 +1,5 @@
 import type { AiToolId } from "../../../../shared/domain/tool.js";
-import { readHeldClaims } from "../../domain/ref-claims.js";
+import { readHeldClaims } from "../../domain/plugin-claim.model.js";
 import type { MachineManifestRepository } from "../../ports/machine-manifest.js";
 
 /** What the machine-wide record says about the claims on a tool's refs. */

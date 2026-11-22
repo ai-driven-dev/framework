@@ -3,9 +3,10 @@ import { LoadManifest } from "../../../../../src/contexts/installation/applicati
 import { ManifestUnavailableError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../../../src/contexts/installation/ports/manifest-repository.js";
+import type { RecordsBesideManifest } from "../../../../../src/contexts/installation/ports/record/registration-records.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 
-function failingWith(error: Error): ManifestRepository {
+function failingWith(error: Error): ManifestRepository & RecordsBesideManifest {
   return new (class extends InMemoryManifestRepository {
     async load(): Promise<never> {
       throw error;

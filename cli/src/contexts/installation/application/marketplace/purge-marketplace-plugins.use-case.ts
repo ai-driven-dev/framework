@@ -8,6 +8,7 @@ import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type {
   NativeRefClaim,
+  RecordsBesideManifest,
   RegistrationRecordData,
   RegistrationRecords,
 } from "../../ports/record/registration-records.js";
@@ -64,7 +65,7 @@ export interface PurgeMarketplacePluginsRequest<Plan> {
 
 /** What PurgeMarketplacePlugins is built from. */
 export interface PurgeMarketplacePluginsDeps {
-  readonly repo: ManifestRepository & Lock;
+  readonly repo: ManifestRepository & RecordsBesideManifest & Lock;
   readonly userScopePluginFiles: UserScopePluginFileRemoval;
 }
 

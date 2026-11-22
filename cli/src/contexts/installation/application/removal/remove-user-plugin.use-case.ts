@@ -8,6 +8,7 @@ import {
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type {
+  RecordsBesideManifest,
   RegistrationRecordData,
   RegistrationRecords,
 } from "../../ports/record/registration-records.js";
@@ -36,7 +37,7 @@ type NativeTargets = ReturnType<RemoveUserPlugin<unknown>["nativeTargets"]>;
 
 /** What RemoveUserPlugin is built from. */
 export interface RemoveUserPluginDeps<Proof> {
-  readonly userRepo: ManifestRepository & Lock;
+  readonly userRepo: ManifestRepository & RecordsBesideManifest & Lock;
   readonly withdrawFromHost: ClaimedRefWithdrawal<Proof>;
   readonly userScopePluginFiles: UserScopePluginFileRemoval;
 }

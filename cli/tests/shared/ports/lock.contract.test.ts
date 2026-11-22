@@ -1,7 +1,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { UserManifestRepositoryAdapter } from "../../../src/contexts/installation/infrastructure/user-manifest-repository-adapter.js";
+import { UserScopeLockAdapter } from "../../../src/contexts/machine-claims/infrastructure/lock.js";
 import { InMemoryRepository } from "../testing/in-memory-repository.fake.js";
 import { describeLockContract, type LockSubject } from "../testing/run-lock.contract.js";
 
@@ -13,14 +13,10 @@ describeLockContract(
   })
 );
 
-describeLockContract("the user manifest lock on a temp dir", async (): Promise<LockSubject> => {
+describeLockContract("the machine lock on a temp dir", async (): Promise<LockSubject> => {
   const root = await mkdtemp(join(tmpdir(), "aidd-lock-contract-"));
   return {
-    lock: new UserManifestRepositoryAdapter(() => root, {
-      atomicWriter: async () => undefined,
-      resolveToolId: () => null,
-      records: { load: async () => new Map(), save: async () => undefined },
-    }),
+    lock: new UserScopeLockAdapter(() => join(root, "manifest.json.lock")),
     dispose: () => rm(root, { recursive: true, force: true }),
   };
 });

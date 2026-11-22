@@ -1,5 +1,6 @@
 import type { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
+import type { RecordsBesideManifest } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import type { Prompter } from "../../../src/orchestration/ports/prompter.js";
 import type { Lock } from "../../../src/shared/ports/lock.js";
 
@@ -27,7 +28,7 @@ export function prompterAnswering(answers: Partial<Prompter>): Prompter {
 /** A full `ManifestRepository` and `Lock` that serves `load` and fails on a write the test did not expect. */
 export function manifestRepositoryLoading(
   load: () => Promise<Manifest | null>
-): ManifestRepository & Lock {
+): ManifestRepository & RecordsBesideManifest & Lock {
   return {
     path: "manifest.json",
     load,

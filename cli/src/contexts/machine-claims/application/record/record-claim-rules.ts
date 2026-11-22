@@ -4,8 +4,12 @@ import type {
   MergedCatalogueClaimsView,
   RecordClaimRules,
 } from "../../contract/record-claim-rules.js";
-import { holdersOf } from "../../domain/plugin-dependents.js";
-import { claimsKeeping, mergeRefClaims, readHeldClaims } from "../../domain/ref-claims.js";
+import {
+  claimsKeeping,
+  holdersOf,
+  mergeRefClaims,
+  readHeldClaims,
+} from "../../domain/plugin-claim.model.js";
 import type { HostRecordRules } from "../../ports/host-record.js";
 
 /** Whether a ref stays once the alias's marketplace goes: every ref stays for an alias that was

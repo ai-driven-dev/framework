@@ -6,6 +6,7 @@ import type { MarketplaceRegistry } from "../../../src/contexts/distribution/por
 import { PurgeMarketplacePlugins } from "../../../src/contexts/installation/application/marketplace/purge-marketplace-plugins.use-case.js";
 import { UserScopePluginFiles } from "../../../src/contexts/installation/application/removal/user-scope-plugin-files.js";
 import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
+import type { RecordsBesideManifest } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import type {
   MarketplaceRemovalHost,
@@ -22,7 +23,7 @@ import type { Lock } from "../../../src/shared/ports/lock.js";
 export function userMarketplaceRemover(
   tools: ToolCatalog,
   fs: FileReader & FileWriter,
-  repo: ManifestRepository & Lock,
+  repo: ManifestRepository & RecordsBesideManifest & Lock,
   registry: MarketplaceRegistry,
   host: MarketplaceRemovalHost,
   records: PurgeUserMarketplaceDeps["records"] = registrationRecordRules
