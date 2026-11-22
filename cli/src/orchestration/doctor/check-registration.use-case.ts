@@ -1,11 +1,9 @@
 import type { ResolveBuiltMarketplaces } from "../../contexts/distribution/application/resolve-built-marketplaces.use-case.js";
 import type { MarketplaceBuilds } from "../../contexts/distribution/contract/built-marketplaces.js";
 import type { InspectDeclaredMarketplaces } from "../../contexts/host-registration/application/inspect/inspect-declared-marketplaces.use-case.js";
-import type {
-  InspectedHost,
-  InspectHostRegistration,
-} from "../../contexts/host-registration/application/inspect/inspect-host-registration.use-case.js";
+import type { InspectHostRegistration } from "../../contexts/host-registration/application/inspect/inspect-host-registration.use-case.js";
 import type { InspectDeclaredMarketplacesResult } from "../../contexts/host-registration/contract/inspect-declared-marketplaces-result.js";
+import type { InspectedHost } from "../../contexts/host-registration/contract/inspect-host-registration-request.js";
 import type { RegistrationRecordRules } from "../../contexts/host-registration/contract/registration-record-rules.js";
 import type { ListRegisteredPlugins } from "../../contexts/installation/application/doctor/list-registered-plugins.use-case.js";
 import type { DoctorIssue } from "../../contexts/installation/contract/doctor-issue.js";

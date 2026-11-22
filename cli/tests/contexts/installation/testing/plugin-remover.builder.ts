@@ -10,12 +10,12 @@ import { RemoveUserPlugin } from "../../../../src/contexts/installation/applicat
 import { UserScopePluginFiles } from "../../../../src/contexts/installation/application/removal/user-scope-plugin-files.js";
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
 import type { InstallationMarketplaceRegistry } from "../../../../src/contexts/installation/ports/marketplace-sources.js";
+import { userScopeFilesSafeToDelete } from "../../../../src/contexts/machine-claims/application/ownership/user-scope-plugin-files.js";
+import { PurgeDeclaredCache } from "../../../../src/contexts/machine-claims/application/purge-declared-cache.js";
 import {
   type PluginRemovalClaimsDeps,
   pluginRemovalClaims,
-} from "../../../../src/contexts/machine-claims/application/plugin-removal-claims.js";
-import { PurgeDeclaredCache } from "../../../../src/contexts/machine-claims/application/purge-declared-cache.js";
-import { userScopeFilesSafeToDelete } from "../../../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
+} from "../../../../src/contexts/machine-claims/application/removal/plugin-removal-claims.js";
 import type { ToolCatalog } from "../../../../src/contexts/tools/contract/tool-catalog.js";
 import { RemoveMachinePlugin } from "../../../../src/orchestration/plugin/remove-machine-plugin.use-case.js";
 import { RemovePlugin } from "../../../../src/orchestration/plugin/remove-plugin.use-case.js";

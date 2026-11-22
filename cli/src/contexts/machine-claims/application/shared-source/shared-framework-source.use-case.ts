@@ -6,8 +6,8 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ListedMarketplace } from "../../ports/marketplace-listing.js";
 import type { PurgeDeclaredCache } from "../purge-declared-cache.js";
-import type { RecordSourceReference } from "../record-source-reference.use-case.js";
 import { frameworkSourceIsShared } from "../shared-source-reference-support.js";
+import type { RecordSourceReference } from "./record-source-reference.use-case.js";
 
 /** What one tool's host registration observed, as far as the shared source is concerned. */
 interface RegistrationEvidence {

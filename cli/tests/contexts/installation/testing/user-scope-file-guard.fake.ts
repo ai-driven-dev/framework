@@ -3,7 +3,7 @@ import {
   assertUserScopeWriteBoundary,
   userScopeFilesSafeToDelete,
   withoutMissingFiles,
-} from "../../../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
+} from "../../../../src/contexts/machine-claims/application/ownership/user-scope-plugin-files.js";
 
 export const userScopeFileGuard: UserScopeFileGuard = {
   safeToDelete: userScopeFilesSafeToDelete,

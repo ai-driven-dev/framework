@@ -1,9 +1,9 @@
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
-import { detachProjectClaims } from "../../contexts/machine-claims/application/detach-project-claims.js";
-import { dropSourceClaim } from "../../contexts/machine-claims/application/drop-source-claim.js";
 import type { PurgeDeclaredCache } from "../../contexts/machine-claims/application/purge-declared-cache.js";
-import { readMachineClaims } from "../../contexts/machine-claims/application/read-machine-claims.js";
-import { readSharedSourceClaim } from "../../contexts/machine-claims/application/read-shared-source-claim.js";
+import { detachProjectClaims } from "../../contexts/machine-claims/application/removal/detach-project-claims.js";
+import { readMachineClaims } from "../../contexts/machine-claims/application/removal/read-machine-claims.js";
+import { dropSourceClaim } from "../../contexts/machine-claims/application/shared-source/drop-source-claim.js";
+import { readSharedSourceClaim } from "../../contexts/machine-claims/application/shared-source/read-shared-source-claim.js";
 import type { MachineManifestRepository } from "../../contexts/machine-claims/ports/machine-manifest.js";
 import type { UserSourceReferences } from "../../contexts/machine-claims/ports/user-source-references.js";
 import type { CleanClaims } from "../../orchestration/clean/clean-claims.js";

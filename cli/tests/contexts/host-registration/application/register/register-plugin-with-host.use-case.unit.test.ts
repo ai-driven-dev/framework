@@ -1,11 +1,12 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { RegisterPluginWithHost } from "../../../../../src/contexts/host-registration/application/register/register-plugin-with-host.use-case.js";
+import { ResolveNativeHost } from "../../../../../src/contexts/host-registration/application/register/resolve-native-host.use-case.js";
 import type { ClaimsView } from "../../../../../src/contexts/host-registration/contract/claims-view.js";
 import type { HostMarketplaceRegistryReading } from "../../../../../src/contexts/host-registration/domain/reading/marketplace-registry-reading.js";
 import type { HostPluginRegistryReading } from "../../../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
-import { catalogIdentityReader } from "../../../../../src/contexts/host-registration/infrastructure/marketplace-registry-reader.js";
+import { catalogIdentityReader } from "../../../../../src/contexts/host-registration/infrastructure/marketplace/marketplace-registry-reader.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
@@ -41,45 +42,42 @@ function setup(
   const logger = new CapturingLogger();
   const warnings: string[] = [];
   const fs = new InMemoryFileAdapter({ [CATALOG]: JSON.stringify({ name: "aidd", plugins: [] }) });
-  const command = new RegisterPluginWithHost(
-    {
-      fs,
-      identities: catalogIdentityReader(fs),
-      activators: new Map([["claude", activator]]),
-      hosts: {
-        marketplaceRegistries: new Map([
-          [
-            TOOL.claude,
-            new FakeHostMarketplaceRegistry(
-              options.registry ?? { location: "r", entries: new Map() }
-            ),
-          ],
-        ]),
-        pluginRegistries: new Map([
-          [
-            TOOL.claude,
-            new FakeHostPluginRegistry(options.plugins ?? { location: "p", refs: new Map() }),
-          ],
-        ]),
-        sources:
-          options.sources === "absent"
-            ? new Map()
-            : new Map([
-                [
-                  TOOL.claude,
-                  new FakeHostMarketplaceSources(
-                    activator,
-                    "registry",
-                    () => "aidd",
-                    options.sources ?? new Map()
-                  ),
-                ],
-              ]),
-      },
-      platform: PLATFORM,
+  const command = new RegisterPluginWithHost({
+    fs,
+    identities: catalogIdentityReader(fs),
+    nativeHosts: new ResolveNativeHost(new Map([["claude", activator]]), registeredTools()),
+    hosts: {
+      marketplaceRegistries: new Map([
+        [
+          TOOL.claude,
+          new FakeHostMarketplaceRegistry(
+            options.registry ?? { location: "r", entries: new Map() }
+          ),
+        ],
+      ]),
+      pluginRegistries: new Map([
+        [
+          TOOL.claude,
+          new FakeHostPluginRegistry(options.plugins ?? { location: "p", refs: new Map() }),
+        ],
+      ]),
+      sources:
+        options.sources === "absent"
+          ? new Map()
+          : new Map([
+              [
+                TOOL.claude,
+                new FakeHostMarketplaceSources(
+                  activator,
+                  "registry",
+                  () => "aidd",
+                  options.sources ?? new Map()
+                ),
+              ],
+            ]),
     },
-    registeredTools()
-  );
+    platform: PLATFORM,
+  });
   const run = (toolId: ToolId = TOOL.claude) =>
     command.execute({
       toolId,
@@ -114,20 +112,17 @@ describe("register plugin with host", () => {
 
   it("is unconfigured when no activator serves the binary", async () => {
     const fs = new InMemoryFileAdapter();
-    const command = new RegisterPluginWithHost(
-      {
-        fs,
-        identities: catalogIdentityReader(fs),
-        activators: new Map(),
-        hosts: {
-          marketplaceRegistries: new Map(),
-          pluginRegistries: new Map(),
-          sources: new Map(),
-        },
-        platform: PLATFORM,
+    const command = new RegisterPluginWithHost({
+      fs,
+      identities: catalogIdentityReader(fs),
+      nativeHosts: new ResolveNativeHost(new Map(), registeredTools()),
+      hosts: {
+        marketplaceRegistries: new Map(),
+        pluginRegistries: new Map(),
+        sources: new Map(),
       },
-      registeredTools()
-    );
+      platform: PLATFORM,
+    });
     const result = await command.execute({
       toolId: TOOL.claude,
       projectRoot: "/p",

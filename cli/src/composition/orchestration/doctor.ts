@@ -1,7 +1,9 @@
 import { ResolveBuiltMarketplaces } from "../../contexts/distribution/application/resolve-built-marketplaces.use-case.js";
 import { InspectDeclaredMarketplaces } from "../../contexts/host-registration/application/inspect/inspect-declared-marketplaces.use-case.js";
+import { InspectHostMarketplaceSources } from "../../contexts/host-registration/application/inspect/inspect-host-marketplace-sources.use-case.js";
+import { InspectHostPlugins } from "../../contexts/host-registration/application/inspect/inspect-host-plugins.use-case.js";
 import { InspectHostRegistration } from "../../contexts/host-registration/application/inspect/inspect-host-registration.use-case.js";
-import { catalogIdentityReader } from "../../contexts/host-registration/infrastructure/marketplace-registry-reader.js";
+import { catalogIdentityReader } from "../../contexts/host-registration/infrastructure/marketplace/marketplace-registry-reader.js";
 import { CheckFileReferences } from "../../contexts/installation/application/doctor/check-file-references.use-case.js";
 import { CheckMergeFiles } from "../../contexts/installation/application/doctor/check-merge-files.use-case.js";
 import { CheckPluginDrift } from "../../contexts/installation/application/doctor/check-plugin-drift.use-case.js";
@@ -46,14 +48,14 @@ function registrationCheckOver(base: Base, inst: Installation, manifests: LoadMa
         tools
       ),
       inspectHost: new InspectHostRegistration(
-        {
+        new InspectHostPlugins(base.hostPluginRegistries, tools),
+        new InspectHostMarketplaceSources(
           fs,
-          identities: catalogIdentityReader(fs),
-          pluginRegistries: base.hostPluginRegistries,
-          marketplaceRegistries: base.hostMarketplaceRegistries,
-          platform: process.platform,
-        },
-        tools
+          catalogIdentityReader(fs),
+          base.hostMarketplaceRegistries,
+          process.platform,
+          tools
+        )
       ),
     },
     tools

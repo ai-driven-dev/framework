@@ -15,9 +15,9 @@ import { assertProjectMcpEntriesRemovable } from "../../contexts/installation/ap
 import { RemoveToolFiles } from "../../contexts/installation/application/removal/remove-tool-files.js";
 import { UserScopePluginFiles } from "../../contexts/installation/application/removal/user-scope-plugin-files.js";
 import { UninstallTools } from "../../contexts/installation/application/uninstall-tools.use-case.js";
-import { detachProjectClaims } from "../../contexts/machine-claims/application/detach-project-claims.js";
+import { userScopeFilesSafeToDelete } from "../../contexts/machine-claims/application/ownership/user-scope-plugin-files.js";
 import { PurgeDeclaredCache } from "../../contexts/machine-claims/application/purge-declared-cache.js";
-import { userScopeFilesSafeToDelete } from "../../contexts/machine-claims/application/user-scope-plugin-files.js";
+import { detachProjectClaims } from "../../contexts/machine-claims/application/removal/detach-project-claims.js";
 import type { CleanClaims } from "../../orchestration/clean/clean-claims.js";
 import { CleanProject } from "../../orchestration/clean/clean-project.use-case.js";
 import { CleanUserScope } from "../../orchestration/clean/clean-user-scope.use-case.js";

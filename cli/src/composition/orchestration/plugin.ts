@@ -27,13 +27,13 @@ import type {
   UserScopeFileGuard,
 } from "../../contexts/installation/ports/plugin/user-plugin-materialization.js";
 import { userScopeOwnership } from "../../contexts/machine-claims/application/ownership/user-scope-ownership.js";
-import { pluginRemovalClaims } from "../../contexts/machine-claims/application/plugin-removal-claims.js";
-import { PurgeDeclaredCache } from "../../contexts/machine-claims/application/purge-declared-cache.js";
 import {
   assertUserScopeWriteBoundary,
   userScopeFilesSafeToDelete,
   withoutMissingFiles,
-} from "../../contexts/machine-claims/application/user-scope-plugin-files.js";
+} from "../../contexts/machine-claims/application/ownership/user-scope-plugin-files.js";
+import { PurgeDeclaredCache } from "../../contexts/machine-claims/application/purge-declared-cache.js";
+import { pluginRemovalClaims } from "../../contexts/machine-claims/application/removal/plugin-removal-claims.js";
 import { isStrictlyWithinUserScope } from "../../contexts/machine-claims/domain/user-scope-containment.js";
 import { ConfirmPluginSourceTrust } from "../../orchestration/plugin/confirm-plugin-source-trust.use-case.js";
 import { InstallFromMarketplace } from "../../orchestration/plugin/install-from-marketplace.use-case.js";

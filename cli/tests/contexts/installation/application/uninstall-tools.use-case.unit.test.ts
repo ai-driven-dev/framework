@@ -13,7 +13,7 @@ import {
 } from "../../../../src/contexts/installation/domain/installation.error.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import { detachProjectClaims } from "../../../../src/contexts/machine-claims/application/detach-project-claims.js";
+import { detachProjectClaims } from "../../../../src/contexts/machine-claims/application/removal/detach-project-claims.js";
 import { FileHash } from "../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../src/shared/domain/installation-file.js";
 import type { MergeFileEntry } from "../../../../src/shared/domain/merge.js";

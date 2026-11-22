@@ -15,8 +15,8 @@ import {
   type PurgeMachineStateDeps,
 } from "../../../src/contexts/installation/application/removal/purge-machine-state.js";
 import { UserScopePluginFiles } from "../../../src/contexts/installation/application/removal/user-scope-plugin-files.js";
+import { userScopeFilesSafeToDelete } from "../../../src/contexts/machine-claims/application/ownership/user-scope-plugin-files.js";
 import { PurgeDeclaredCache } from "../../../src/contexts/machine-claims/application/purge-declared-cache.js";
-import { userScopeFilesSafeToDelete } from "../../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import {

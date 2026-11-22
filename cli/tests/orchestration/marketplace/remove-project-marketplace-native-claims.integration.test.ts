@@ -6,7 +6,7 @@ import { RemoveProjectPlugin } from "../../../src/contexts/installation/applicat
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
-import { removalClaims } from "../../../src/contexts/machine-claims/application/removal-claims.js";
+import { removalClaims } from "../../../src/contexts/machine-claims/application/removal/removal-claims.js";
 import type { RemoveProjectMarketplace } from "../../../src/orchestration/marketplace/remove-project-marketplace.use-case.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";

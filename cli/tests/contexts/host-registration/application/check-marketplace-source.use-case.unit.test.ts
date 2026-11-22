@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { hostMarketplaceSourceConflict } from "../../../../src/contexts/host-registration/application/check-marketplace-source.use-case.js";
 import { isDriftFound } from "../../../../src/contexts/host-registration/domain/source/marketplace-source-drift.js";
-import { catalogIdentityReader } from "../../../../src/contexts/host-registration/infrastructure/marketplace-registry-reader.js";
+import { catalogIdentityReader } from "../../../../src/contexts/host-registration/infrastructure/marketplace/marketplace-registry-reader.js";
 import { userBuiltMarketplaceDir } from "../../../../src/shared/domain/layout/aidd-layout.js";
 import {
   errnoError,
