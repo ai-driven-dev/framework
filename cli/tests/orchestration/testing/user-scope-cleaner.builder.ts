@@ -8,7 +8,7 @@ import type { HostPorts } from "../../../src/contexts/host-registration/ports/ho
 import {
   PurgeUserScopeFiles,
   type PurgeUserScopeFilesDeps,
-} from "../../../src/contexts/installation/application/purge-user-scope-files.js";
+} from "../../../src/contexts/installation/application/clean/purge-user-scope-files.js";
 import type { MachineStateGuards } from "../../../src/contexts/installation/application/removal/purge-machine-state.js";
 import {
   PurgeMachineState,

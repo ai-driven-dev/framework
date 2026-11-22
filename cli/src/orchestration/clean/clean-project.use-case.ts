@@ -2,11 +2,11 @@ import type { ListMarketplaces } from "../../contexts/distribution/application/l
 import type { WithdrawFromHost } from "../../contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import type { ProjectCleanFacts } from "../../contexts/host-registration/application/withdraw/withdrawal.js";
 import type { RegistrationRecordRules } from "../../contexts/host-registration/contract/registration-record-rules.js";
+import type { CleanProjectFiles } from "../../contexts/installation/application/clean/clean-project-files.use-case.js";
 import type {
   CleanNativeRegistrationPreview,
   ProjectCleanPlan,
 } from "../../contexts/installation/application/clean/project-clean-plan.js";
-import type { CleanProjectFiles } from "../../contexts/installation/application/clean-project-files.use-case.js";
 import type { ToolId } from "../../shared/domain/tool.js";
 import type { Prompter } from "../ports/prompter.js";
 import type { CleanClaims } from "./clean-claims.js";

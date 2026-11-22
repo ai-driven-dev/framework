@@ -1,8 +1,8 @@
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { PluginPlacement } from "../../ports/tool-sections.js";
-import type { UserScopePluginFileRemoval } from "../../ports/user-scope-plugin-files.js";
-import { deletePluginFilesForTool } from "../plugin/delete-plugin-files.js";
+import type { UserScopePluginFileRemoval } from "../../ports/user-scope/user-scope-plugin-files.js";
+import { deletePluginFilesForTool } from "../plugin/files/delete-plugin-files.js";
 
 /** The files a user-scope plugin keeps under the OS home: which of them are safe to delete, and
  * their deletion. Nothing is deleted that `proven` did not first return. */

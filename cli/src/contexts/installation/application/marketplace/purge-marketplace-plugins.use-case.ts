@@ -5,7 +5,6 @@ import { ActiveMachineDependentsError } from "../../domain/installation.error.js
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
-import type { MachineClaimsReading } from "../../ports/machine-claims-reading.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type {
   NativeRefClaim,
@@ -13,7 +12,8 @@ import type {
   RegistrationRecords,
 } from "../../ports/record/registration-records.js";
 import type { HostRefCountingTool } from "../../ports/tool-sections.js";
-import type { UserScopePluginFileRemoval } from "../../ports/user-scope-plugin-files.js";
+import type { MachineClaimsReading } from "../../ports/user-scope/machine-claims-reading.js";
+import type { UserScopePluginFileRemoval } from "../../ports/user-scope/user-scope-plugin-files.js";
 import type { RegisteredMarketplace } from "../sync/record-activation.use-case.js";
 
 type PluginOf = { toolId: AiToolId; plugin: InstalledPlugin; recorded: RecordedPlugin };

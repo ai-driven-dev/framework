@@ -12,8 +12,8 @@ import type {
   PluginTranslation,
   PluginTranslationResult,
 } from "../../ports/plugin/plugin-translation.js";
+import { writeChangedPluginFiles } from "../plugin/files/write-changed-plugin-files.js";
 import { resolveScopeForInstall, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
-import { writeChangedPluginFiles } from "../plugin/write-changed-plugin-files.js";
 import { hashOutputFiles } from "../shared/hash-output-files.js";
 import type { AddPluginRequest, AddPluginResult } from "./add-plugin-request.js";
 import { materializeRequestedMcp } from "./flat-mcp-materializer.js";

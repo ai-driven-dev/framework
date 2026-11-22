@@ -1,6 +1,6 @@
 import type { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { PluginPlacement } from "../../../../src/contexts/installation/ports/tool-sections.js";
-import type { UserScopePluginFileRemoval } from "../../../../src/contexts/installation/ports/user-scope-plugin-files.js";
+import type { UserScopePluginFileRemoval } from "../../../../src/contexts/installation/ports/user-scope/user-scope-plugin-files.js";
 
 /** User-scope plugin files proven as told and removals recorded, nothing touching a disk. */
 export class FakeUserScopePluginFiles implements UserScopePluginFileRemoval {

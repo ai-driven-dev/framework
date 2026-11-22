@@ -11,7 +11,7 @@ import type {
   RegistrationRecordData,
   RegistrationRecords,
 } from "../../ports/record/registration-records.js";
-import type { UserScopePluginFileRemoval } from "../../ports/user-scope-plugin-files.js";
+import type { UserScopePluginFileRemoval } from "../../ports/user-scope/user-scope-plugin-files.js";
 import { resolvePluginToolIds } from "../plugin/plugin-target-resolution.js";
 import type { RefSelection } from "../plugin/update-native-refs.js";
 import { requireManifest } from "../shared/require-manifest.js";

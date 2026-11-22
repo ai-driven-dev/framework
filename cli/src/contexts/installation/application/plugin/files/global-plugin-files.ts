@@ -1,0 +1,128 @@
+import { dirname, join, posix } from "node:path";
+import { FileHash } from "../../../../../shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../../shared/domain/installation-file.js";
+import type { PluginDistribution } from "../../../../../shared/domain/plugin/plugin-distribution.js";
+import { whenAbsent } from "../../../../../shared/domain/reading/json-file.js";
+import type { FileReader } from "../../../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../../../shared/ports/file-writer.js";
+import type { InstalledPlugin } from "../../../domain/plugins/installed-plugin.js";
+import type { ContainmentCheck } from "../../../ports/plugin/user-plugin-materialization.js";
+import type { PluginPlacement } from "../../../ports/tool-sections.js";
+
+/**
+ * A plugin's machine-scope files, read from the tool's built tree and keyed by their path under
+ * the tool's user configuration directory. Empty for a tool that copies none.
+ */
+export async function readGlobalPluginFiles(
+  fs: FileReader,
+  built: { builtDir: string; tool: PluginPlacement; dist: PluginDistribution }
+): Promise<InstallationFile[]> {
+  const { builtDir, tool, dist } = built;
+  const machine = tool.plugins()?.globalFiles() ?? null;
+  if (machine === null) return [];
+  const plugin = {
+    name: dist.manifest.name,
+    agents: new Set(dist.components.agents.map((file) => posix.basename(file.relativePath, ".md"))),
+  };
+  const files: InstallationFile[] = [];
+  for (const abs of await fs.listFilesRecursive(builtDir)) {
+    const builtPath = posix.normalize(
+      abs
+        .slice(builtDir.length + 1)
+        .split("\\")
+        .join("/")
+    );
+    const relativePath = machine.map(builtPath, plugin);
+    if (relativePath === null) continue;
+    const content = await fs.readFile(abs);
+    files.push(new InstallationFile({ relativePath, content, hash: FileHash.of(content) }));
+  }
+  return files.sort((a, b) => a.relativePath.localeCompare(b.relativePath));
+}
+
+/**
+ * Refuses a machine-scope write before any byte lands: every path must stay a normalized relative
+ * path, its nearest existing parent must resolve strictly inside the tool's user directory, and a
+ * file already there that this plugin does not own is never overwritten. Creates the user
+ * directory itself when the host has not yet.
+ */
+export async function assertGlobalFilesWritable(write: {
+  readonly fs: FileReader & FileWriter;
+  readonly tool: PluginPlacement;
+  readonly plugin: Pick<InstalledPlugin, "name" | "files"> | undefined;
+  readonly pluginName: string;
+  readonly files: readonly InstallationFile[];
+  readonly homedir: string;
+  readonly isWithinUserScope: ContainmentCheck;
+}): Promise<string> {
+  const { fs, tool, plugin, pluginName, files, homedir, isWithinUserScope } = write;
+  const { toolId } = tool;
+  const machine = tool.plugins()?.globalFiles() ?? null;
+  if (machine === null) throw new Error(`${toolId}: no machine-scope directory is declared.`);
+  const boundary = machine.dir(homedir);
+  await fs.createDirectory(boundary);
+  const resolvedBoundary = await fs.realpath(boundary);
+  for (const file of files) {
+    await assertFileWritable(
+      { fs, tool, plugin, pluginName, file, boundary, resolvedBoundary },
+      isWithinUserScope
+    );
+  }
+  return boundary;
+}
+
+async function realpathWhenPresent(fs: FileReader, path: string): Promise<string | null> {
+  return whenAbsent(() => fs.realpath(path), null);
+}
+
+/** The nearest existing parent of the file must resolve inside the boundary; nothing to check
+ * above a parent that does not exist yet. */
+async function assertParentWithin(
+  write: {
+    fs: FileReader;
+    tool: PluginPlacement;
+    pluginName: string;
+    file: InstallationFile;
+    boundary: string;
+    resolvedBoundary: string;
+  },
+  isWithinUserScope: ContainmentCheck
+): Promise<void> {
+  const { fs, tool, pluginName, file, boundary, resolvedBoundary } = write;
+  let parent = dirname(join(boundary, file.relativePath));
+  while (parent !== boundary) {
+    const resolved = await realpathWhenPresent(fs, parent);
+    if (resolved !== null) {
+      if (isWithinUserScope(resolved, resolvedBoundary)) return;
+      throw new Error(`${tool.toolId}: '${pluginName}' parent '${parent}' escapes ${boundary}.`);
+    }
+    parent = dirname(parent);
+  }
+}
+
+async function assertFileWritable(
+  write: {
+    readonly fs: FileReader & FileWriter;
+    readonly tool: PluginPlacement;
+    readonly plugin: Pick<InstalledPlugin, "name" | "files"> | undefined;
+    readonly pluginName: string;
+    readonly file: InstallationFile;
+    readonly boundary: string;
+    readonly resolvedBoundary: string;
+  },
+  isWithinUserScope: ContainmentCheck
+): Promise<void> {
+  const { fs, tool, plugin, pluginName, file, boundary } = write;
+  const { toolId } = tool;
+  const rel = file.relativePath;
+  if (posix.isAbsolute(rel) || rel.includes("\\") || posix.normalize(rel) !== rel) {
+    throw new Error(`${toolId}: '${pluginName}' path '${rel}' escapes ${boundary}.`);
+  }
+  await assertParentWithin(write, isWithinUserScope);
+  if (plugin?.files.has(rel) === true) return;
+  const target = join(boundary, rel);
+  if (!(await fs.fileExists(target))) return;
+  throw new Error(
+    `${toolId}: '${target}' already exists and was not installed by aidd; move or delete it, then rerun.`
+  );
+}

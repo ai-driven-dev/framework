@@ -14,11 +14,6 @@ const OVER_THE_CAP: Readonly<Record<string, number>> = {
   composition: 14,
   "contexts/host-registration/application/withdraw": 13,
   "contexts/host-registration/infrastructure": 11,
-  "contexts/installation/application": 11,
-  "contexts/installation/application/materialize": 12,
-  "contexts/installation/application/plugin": 15,
-  "contexts/installation/application/removal": 11,
-  "contexts/installation/ports": 11,
   "contexts/machine-claims/application": 12,
 };
 

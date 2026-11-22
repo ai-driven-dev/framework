@@ -10,8 +10,8 @@ import { ReplacePluginFiles } from "../../contexts/installation/application/mate
 import { PlacePlugin } from "../../contexts/installation/application/plugin/add/place-plugin.use-case.js";
 import { ResolveAddedPluginSource } from "../../contexts/installation/application/plugin/add/resolve-added-plugin-source.use-case.js";
 import { AddPlugin } from "../../contexts/installation/application/plugin/add-plugin.use-case.js";
+import { PluginMaterializer } from "../../contexts/installation/application/plugin/files/plugin-materializer.js";
 import { PlanPluginInstall } from "../../contexts/installation/application/plugin/plan-plugin-install.use-case.js";
-import { PluginMaterializer } from "../../contexts/installation/application/plugin/plugin-materializer.js";
 import { UpdatePlugin } from "../../contexts/installation/application/plugin/update-plugin.use-case.js";
 import { UpdateUserPluginFiles } from "../../contexts/installation/application/plugin/update-user-plugin-files.use-case.js";
 import type { ClaimedRefWithdrawal } from "../../contexts/installation/application/removal/project-plugin-withdrawal.js";

@@ -2,7 +2,7 @@
  * a built tree's plugin-scoped `hooks/hooks.json` lands in a directory Cursor never reads. */
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { placeBuiltTreePlugin } from "../../../../../src/contexts/installation/application/materialize/place-built-tree-plugin.js";
+import { placeBuiltTreePlugin } from "../../../../../src/contexts/installation/application/materialize/built/place-built-tree-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";

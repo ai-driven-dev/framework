@@ -15,13 +15,13 @@ import type { Manifest } from "../../../domain/manifest.js";
 import type { ProjectHooksProvenance } from "../../../domain/plugins/plugin-entry.js";
 import { RecordedPlugin } from "../../../domain/plugins/recorded-plugin.js";
 import type { InstallRuntimeConfig } from "../../install/config/install-runtime-config.use-case.js";
-import { placeBuiltTreePlugin } from "../../materialize/place-built-tree-plugin.js";
+import { placeBuiltTreePlugin } from "../../materialize/built/place-built-tree-plugin.js";
 import { placementModeOf } from "../../materialize/plugin-placement.js";
 import { registerMarketplacePlugin } from "../../materialize/register-marketplace-plugin.js";
 import type { BuiltMaterializationDeps } from "../../shared/built-materialization-deps.js";
 import { hashOutputFiles } from "../../shared/hash-output-files.js";
+import { writePluginFiles } from "../files/write-plugin-files.js";
 import { resolveScopeForInstall } from "../plugin-target-resolution.js";
-import { writePluginFiles } from "../write-plugin-files.js";
 import { foreignUserScopeDir } from "./foreign-user-scope-dir.js";
 import { reportInstallNotices, reportSkipWarnings } from "./report-placement.js";
 

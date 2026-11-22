@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { PluginMaterializer } from "../../../../../src/contexts/installation/application/plugin/plugin-materializer.js";
+import { PluginMaterializer } from "../../../../../src/contexts/installation/application/plugin/files/plugin-materializer.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import {
   buildInstallationDeps,

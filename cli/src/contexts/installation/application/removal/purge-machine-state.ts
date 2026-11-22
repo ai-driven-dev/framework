@@ -6,7 +6,7 @@ import { whenAbsent } from "../../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import type { MachineStatePurge } from "../../ports/user-scope-purge.js";
+import type { MachineStatePurge } from "../../ports/user-scope/user-scope-purge.js";
 
 /** The path under `cacheRoot` when it stays inside it, else `null`. */
 export type CacheCandidateResolver = (

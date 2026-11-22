@@ -2,12 +2,12 @@ import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { PluginNotFoundError } from "../../domain/installation.error.js";
-import type { MachineClaimsReading } from "../../ports/machine-claims-reading.js";
 import type {
   RegistrationRecordData,
   RegistrationRecords,
 } from "../../ports/record/registration-records.js";
 import type { ActivatedTool } from "../../ports/tool-sections.js";
+import type { MachineClaimsReading } from "../../ports/user-scope/machine-claims-reading.js";
 import type { UpdatePluginRequest } from "./update-plugin.use-case.js";
 
 /** How a plugin selection reads a native ref: the host registration's to answer, and the claims

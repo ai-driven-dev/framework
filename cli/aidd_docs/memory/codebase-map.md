@@ -45,10 +45,13 @@ src/
 │   │   │   │   └── config/
 │   │   │   ├── marketplace/
 │   │   │   ├── materialize/
+│   │   │   │   └── built/
 │   │   │   ├── ownership/
 │   │   │   ├── plugin/
-│   │   │   │   └── add/
+│   │   │   │   ├── add/
+│   │   │   │   └── files/
 │   │   │   ├── removal/
+│   │   │   │   └── project/
 │   │   │   ├── restore/
 │   │   │   │   └── project/
 │   │   │   ├── shared/
@@ -63,7 +66,8 @@ src/
 │   │   │   └── assets/
 │   │   └── ports/
 │   │       ├── plugin/
-│   │       └── record/
+│   │       ├── record/
+│   │       └── user-scope/
 │   ├── machine-claims/    # which projects claim a machine-wide plugin or source
 │   │   ├── application/
 │   │   │   ├── ownership/

@@ -3,13 +3,13 @@ import { wireCleanClaims } from "../../../src/composition/orchestration/clean-cl
 import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.use-case.js";
 import { WithdrawFromHost } from "../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import type { HostPorts } from "../../../src/contexts/host-registration/ports/host-ports.js";
-import type { ProjectCleanAsks } from "../../../src/contexts/installation/application/clean-project-files.use-case.js";
-import { CleanProjectFiles } from "../../../src/contexts/installation/application/clean-project-files.use-case.js";
-import { PlanProjectClean } from "../../../src/contexts/installation/application/plan-project-clean.use-case.js";
+import type { ProjectCleanAsks } from "../../../src/contexts/installation/application/clean/clean-project-files.use-case.js";
+import { CleanProjectFiles } from "../../../src/contexts/installation/application/clean/clean-project-files.use-case.js";
+import { PlanProjectClean } from "../../../src/contexts/installation/application/clean/plan-project-clean.use-case.js";
 import {
   RemoveProjectFiles,
   type RemoveProjectFilesDeps,
-} from "../../../src/contexts/installation/application/removal/remove-project-files.js";
+} from "../../../src/contexts/installation/application/removal/project/remove-project-files.js";
 import { assertProjectMcpEntriesRemovable } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { PurgeDeclaredCache } from "../../../src/contexts/machine-claims/application/purge-declared-cache.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";

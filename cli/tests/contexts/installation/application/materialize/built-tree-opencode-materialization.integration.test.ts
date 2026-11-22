@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { placeBuiltTreePlugin } from "../../../../../src/contexts/installation/application/materialize/place-built-tree-plugin.js";
+import { placeBuiltTreePlugin } from "../../../../../src/contexts/installation/application/materialize/built/place-built-tree-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";

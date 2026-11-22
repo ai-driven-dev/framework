@@ -1,4 +1,4 @@
-import type { MachineStatePurge } from "../../../../src/contexts/installation/ports/user-scope-purge.js";
+import type { MachineStatePurge } from "../../../../src/contexts/installation/ports/user-scope/user-scope-purge.js";
 
 /** Machine state told as built versions, counting each purge. */
 export class FakeMachineState implements MachineStatePurge {

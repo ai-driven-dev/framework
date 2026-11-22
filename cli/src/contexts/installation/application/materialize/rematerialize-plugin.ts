@@ -6,7 +6,7 @@ import type { Manifest } from "../../domain/manifest.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ProjectHooksGuard } from "../shared/assert-project-hooks-unchanged.js";
 import type { PlacementDeps } from "./add-plugin-request.js";
-import { placeBuiltTreePlugin } from "./place-built-tree-plugin.js";
+import { placeBuiltTreePlugin } from "./built/place-built-tree-plugin.js";
 import { registerMarketplacePlugin } from "./register-marketplace-plugin.js";
 
 export interface PluginRematerialization {

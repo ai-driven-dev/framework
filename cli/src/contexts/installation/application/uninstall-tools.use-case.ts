@@ -5,7 +5,7 @@ import { ToolNotInstalledError } from "../domain/installation.error.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
 import type { RegistrationRecordData } from "../ports/record/registration-records.js";
-import type { RemoveToolFiles, ToolRemoval } from "./removal/remove-tool-files.js";
+import type { RemoveToolFiles, ToolRemoval } from "./removal/project/remove-tool-files.js";
 import { requireManifest } from "./shared/require-manifest.js";
 
 /** How a removal reads the refs a tool's host registration recorded: the host registration's to answer. */

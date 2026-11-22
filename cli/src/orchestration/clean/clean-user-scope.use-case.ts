@@ -1,6 +1,6 @@
 import type { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.use-case.js";
 import type { WithdrawFromHost } from "../../contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
-import type { PurgeUserScopeFiles } from "../../contexts/installation/application/purge-user-scope-files.js";
+import type { PurgeUserScopeFiles } from "../../contexts/installation/application/clean/purge-user-scope-files.js";
 import type { HintedMessage } from "../../shared/domain/describe-error.js";
 import type { ToolId } from "../../shared/domain/tool.js";
 import type { Logger } from "../../shared/ports/logger.js";

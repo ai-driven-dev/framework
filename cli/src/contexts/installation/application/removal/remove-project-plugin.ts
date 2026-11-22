@@ -9,7 +9,7 @@ import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ProjectIntegrationCleanup } from "../../ports/project-integration-cleanup.js";
 import type { FlatMcpSection, ProjectPluginIntegration } from "../../ports/tool-sections.js";
 import { assertProjectPathWithinRoot } from "../ownership/project-path-boundary.js";
-import { deletePluginFilesForTool } from "../plugin/delete-plugin-files.js";
+import { deletePluginFilesForTool } from "../plugin/files/delete-plugin-files.js";
 import {
   assertProjectHooksRemovable,
   removeProjectHooks,

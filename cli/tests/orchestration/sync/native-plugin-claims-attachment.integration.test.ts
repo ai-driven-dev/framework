@@ -5,7 +5,7 @@ import { Marketplace } from "../../../src/contexts/distribution/domain/marketpla
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-distribution-reader-adapter.js";
 import { RefreshHostPlugin } from "../../../src/contexts/host-registration/application/refresh-host-plugin.use-case.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
-import { PluginMaterializer } from "../../../src/contexts/installation/application/plugin/plugin-materializer.js";
+import { PluginMaterializer } from "../../../src/contexts/installation/application/plugin/files/plugin-materializer.js";
 import { UpdateUserPluginFiles } from "../../../src/contexts/installation/application/plugin/update-user-plugin-files.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";

@@ -5,14 +5,14 @@ import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract
 import {
   CleanProjectFiles,
   type ProjectCleanAsks,
-} from "../../contexts/installation/application/clean-project-files.use-case.js";
-import { PlanProjectClean } from "../../contexts/installation/application/plan-project-clean.use-case.js";
-import { PurgeUserScopeFiles } from "../../contexts/installation/application/purge-user-scope-files.js";
+} from "../../contexts/installation/application/clean/clean-project-files.use-case.js";
+import { PlanProjectClean } from "../../contexts/installation/application/clean/plan-project-clean.use-case.js";
+import { PurgeUserScopeFiles } from "../../contexts/installation/application/clean/purge-user-scope-files.js";
+import { RemoveProjectFiles } from "../../contexts/installation/application/removal/project/remove-project-files.js";
+import { RemoveToolFiles } from "../../contexts/installation/application/removal/project/remove-tool-files.js";
 import type { MachineStateGuards } from "../../contexts/installation/application/removal/purge-machine-state.js";
 import { PurgeMachineState } from "../../contexts/installation/application/removal/purge-machine-state.js";
-import { RemoveProjectFiles } from "../../contexts/installation/application/removal/remove-project-files.js";
 import { assertProjectMcpEntriesRemovable } from "../../contexts/installation/application/removal/remove-project-plugin.js";
-import { RemoveToolFiles } from "../../contexts/installation/application/removal/remove-tool-files.js";
 import { UserScopePluginFiles } from "../../contexts/installation/application/removal/user-scope-plugin-files.js";
 import { UninstallTools } from "../../contexts/installation/application/uninstall-tools.use-case.js";
 import { detachProjectClaims } from "../../contexts/machine-claims/application/detach-project-claims.js";
