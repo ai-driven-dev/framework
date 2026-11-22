@@ -19,9 +19,9 @@ export function marketplace(): Marketplace {
   });
 }
 
-export function manifestWithTool(claude: AiToolId): InMemoryManifestRepository {
+export function manifestWithTool(tool: AiToolId): InMemoryManifestRepository {
   const manifest = Manifest.create();
-  manifest.addTool(claude, "test", []);
+  manifest.addTool(tool, "test", []);
   return new InMemoryManifestRepository(manifest);
 }
 
@@ -39,11 +39,24 @@ export function seededBuiltCatalog(toolId?: AiToolId): InMemoryFileAdapter {
   );
 }
 
-export function freshHostProof(claude: AiToolId, activator: FakeHostActions) {
+export function seededBuiltCatalogOf(tool: AiToolId): InMemoryFileAdapter {
+  return new InMemoryFileAdapter(
+    {
+      [`/built/${tool}/.plugin/marketplace.json`]: JSON.stringify({
+        name: MARKETPLACE,
+        version: "1.0.0",
+        plugins: [],
+      }),
+    },
+    [PROJECT_ROOT]
+  );
+}
+
+export function freshHostProof(tool: AiToolId, activator: FakeHostActions) {
   return {
     plugins: new Map([
       [
-        claude,
+        tool,
         new FakeHostPluginRegistry({
           location: "/host/installed_plugins.json",
           refs: new Map(),
@@ -52,11 +65,11 @@ export function freshHostProof(claude: AiToolId, activator: FakeHostActions) {
     ]),
     sources: new Map([
       [
-        claude,
+        tool,
         new FakeHostMarketplaceSources(
           activator,
           "registry",
-          (path) => (path === `/built/${claude}` ? MARKETPLACE : undefined),
+          (path) => (path === `/built/${tool}` ? MARKETPLACE : undefined),
           new Map()
         ),
       ],

@@ -5,12 +5,15 @@ import {
   userBuiltMarketplaceDir,
 } from "../../../src/shared/domain/layout/aidd-layout.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
-import { registeredAiId, registeredCatalog } from "../../shared/testing/catalog-of.builder.js";
 import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
+import {
+  SYNTHETIC_TOOL,
+  syntheticNativeCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   hostReadingOf,
   MARKETPLACE,
@@ -20,8 +23,9 @@ import {
   REF,
 } from "../testing/marketplace-sync-native-activation.builder.js";
 
-const { buildSyncReadingHost, claude, manifestWithPlugin, nativeSource, ownedMachineCatalog } =
-  nativeActivationOf({ tools: registeredCatalog(), claude: registeredAiId("claude") });
+const tool = SYNTHETIC_TOOL;
+const { buildSyncReadingHost, manifestWithPlugin, nativeSource, ownedMachineCatalog } =
+  nativeActivationOf({ tools: syntheticNativeCatalog(tool), tool });
 
 describe("native activation: reclaim", () => {
   describe("reclaiming a dead registration asks and acts on the host's own name", () => {
@@ -34,7 +38,7 @@ describe("native activation: reclaim", () => {
       });
       const registry = new InMemoryMarketplaceRegistry();
       const fs = new InMemoryFileAdapter({
-        "/built/claude/.claude-plugin/marketplace.json": JSON.stringify({
+        [`/built/${tool}/.plugin/marketplace.json`]: JSON.stringify({
           name: CATALOG_NAME,
           version: "1.0.0",
           plugins: [],
@@ -42,30 +46,30 @@ describe("native activation: reclaim", () => {
       });
       const manifestRepo = manifestWithPlugin();
       const useCase = marketplaceSync({
-        tools: registeredCatalog(),
+        tools: syntheticNativeCatalog(tool),
         fs,
         manifestRepo,
         marketplaceRegistry: registry,
         logger: new CapturingLogger(),
-        activators: new Map([[claude, activator]]),
+        activators: new Map([[tool, activator]]),
         ensureBuilt: fakeEnsureBuiltMarketplace(),
         hostMarketplaceRegistries: new Map([
           [
-            claude,
+            tool,
             {
               read: async () => ({
-                location: "/home/.claude/plugins/known_marketplaces.json",
+                location: `/home/.${tool}/known_marketplaces.json`,
                 entries: new Map([
-                  [CATALOG_NAME, builtMarketplaceDir(PROJECT_ROOT, MARKETPLACE, "claude")],
+                  [CATALOG_NAME, builtMarketplaceDir(PROJECT_ROOT, MARKETPLACE, tool)],
                 ]),
               }),
             },
           ],
         ]),
-        hostPluginRegistries: new Map([[claude, { read: async () => hostReadingOf([]) }]]),
+        hostPluginRegistries: new Map([[tool, { read: async () => hostReadingOf([]) }]]),
         userManifestRepo: ownedMachineCatalog(
           CATALOG_NAME,
-          builtMarketplaceDir(PROJECT_ROOT, MARKETPLACE, "claude")
+          builtMarketplaceDir(PROJECT_ROOT, MARKETPLACE, tool)
         ),
         nativeSources: nativeSource(
           activator,
@@ -75,7 +79,7 @@ describe("native activation: reclaim", () => {
               CATALOG_NAME,
               {
                 kind: "registry",
-                source: builtMarketplaceDir(PROJECT_ROOT, MARKETPLACE, "claude"),
+                source: builtMarketplaceDir(PROJECT_ROOT, MARKETPLACE, tool),
               },
             ],
           ])
@@ -100,7 +104,7 @@ describe("native activation: reclaim", () => {
 
     function reclaimSync(
       activator: FakeHostActions,
-      hostSource = builtMarketplaceDir(PROJECT_ROOT, MARKETPLACE, "claude"),
+      hostSource = builtMarketplaceDir(PROJECT_ROOT, MARKETPLACE, tool),
       userRoot = ""
     ) {
       const registry = new InMemoryMarketplaceRegistry();
@@ -111,7 +115,7 @@ describe("native activation: reclaim", () => {
         }
       }
       const fs = new UserRootThatCannotResolve({
-        "/built/claude/.claude-plugin/marketplace.json": JSON.stringify({
+        [`/built/${tool}/.plugin/marketplace.json`]: JSON.stringify({
           name: CATALOG_NAME,
           version: "1.0.0",
           plugins: [],
@@ -120,30 +124,30 @@ describe("native activation: reclaim", () => {
       });
       const logger = new CapturingLogger();
       const useCase = marketplaceSync({
-        tools: registeredCatalog(),
+        tools: syntheticNativeCatalog(tool),
         fs,
         manifestRepo: manifestWithPlugin(),
         marketplaceRegistry: registry,
         logger,
-        activators: new Map([[claude, activator]]),
+        activators: new Map([[tool, activator]]),
         ensureBuilt: fakeEnsureBuiltMarketplace(),
         hostMarketplaceRegistries: new Map([
           [
-            claude,
+            tool,
             {
               read: async () => ({
-                location: "/home/.claude/plugins/known_marketplaces.json",
+                location: `/home/.${tool}/known_marketplaces.json`,
                 entries: new Map([[CATALOG_NAME, hostSource]]),
               }),
             },
           ],
         ]),
         userCacheRoot: () => userRoot,
-        hostPluginRegistries: new Map([[claude, { read: async () => hostReadingOf([]) }]]),
+        hostPluginRegistries: new Map([[tool, { read: async () => hostReadingOf([]) }]]),
         userManifestRepo: ownedMachineCatalog(
           CATALOG_NAME,
           hostSource === "/foreign/cache"
-            ? builtMarketplaceDir(PROJECT_ROOT, MARKETPLACE, "claude")
+            ? builtMarketplaceDir(PROJECT_ROOT, MARKETPLACE, tool)
             : hostSource
         ),
         nativeSources: nativeSource(
@@ -204,7 +208,7 @@ describe("native activation: reclaim", () => {
         userConfigDir: userRoot,
         cliVersion: "1.0.0",
         marketplaceName: MARKETPLACE,
-        target: "claude",
+        target: tool,
       });
       const { useCase, registry } = reclaimSync(activator, source, userRoot);
       await registry.save(PROJECT_ROOT, marketplace());
@@ -213,7 +217,7 @@ describe("native activation: reclaim", () => {
 
       expect(activator.removedMarketplaces).toEqual([CATALOG_NAME]);
       expect(activator.forcedRemovals).toEqual([true]);
-      expect(activator.addedMarketplaces).toEqual(["/built/claude"]);
+      expect(activator.addedMarketplaces).toEqual([`/built/${tool}`]);
     });
 
     it("names the vanished directory's own registration in the one warning it gives", async () => {
@@ -272,7 +276,7 @@ describe("native activation: reclaim", () => {
       expect(activator.addedMarketplaces).toEqual([]);
       expect(result.warnings.join("\n")).toContain(`foreign host ref '${REF}'`);
       expect(logger.warnMessages).toEqual(result.warnings);
-      const recorded = (await manifestRepo.load())?.getNativeRegistrations(claude);
+      const recorded = (await manifestRepo.load())?.getNativeRegistrations(tool);
       expect(recorded?.pluginRefs).toEqual([]);
     });
 
@@ -290,14 +294,14 @@ describe("native activation: reclaim", () => {
       await useCase.execute({ projectRoot: PROJECT_ROOT });
       await useCase.execute({ projectRoot: PROJECT_ROOT });
 
-      const recorded = (await manifestRepo.load())?.getNativeRegistrations(claude);
+      const recorded = (await manifestRepo.load())?.getNativeRegistrations(tool);
       expect(recorded?.pluginRefs).toEqual([REF]);
     });
 
     it.each([
       [
         "cannot be read",
-        { location: "/home/dev/.claude/plugins/installed_plugins.json", unreadable: "ENOENT" },
+        { location: "/home/dev/.host/plugins/installed_plugins.json", unreadable: "ENOENT" },
       ],
       ["lists it disabled", hostReadingOf([REF], false)],
     ])("refuses to claim a ref when the host registry %s", async (_case, reading) => {
@@ -318,7 +322,7 @@ describe("native activation: reclaim", () => {
           describeMessage(warning).includes("registration left untouched")
         )
       ).toBe(true);
-      const recorded = (await manifestRepo.load())?.getNativeRegistrations(claude);
+      const recorded = (await manifestRepo.load())?.getNativeRegistrations(tool);
       expect(recorded?.pluginRefs).toEqual([]);
     });
   });

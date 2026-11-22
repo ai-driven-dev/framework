@@ -145,7 +145,7 @@ export function makeSync(toolId: AiToolId, options: SyncOptions = {}) {
       knownSources(currentSource)
     );
   const useCase = marketplaceSync({
-    tools: syntheticNativeCatalog(toolId),
+    tools: syntheticNativeCatalog(toolId, "list-command"),
     fs,
     manifestRepo: projectRepo,
     marketplaceRegistry: registry,

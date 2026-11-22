@@ -3,12 +3,16 @@ import { registrationRecordRules } from "../../../src/composition/installation.j
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordMachineClaims } from "../../../src/contexts/machine-claims/application/record/record-machine-claims.use-case.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
-import { registeredCatalog } from "../../shared/testing/catalog-of.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SECOND_SYNTHETIC_TOOL,
+  SYNTHETIC_TOOL,
+  syntheticCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
-const { claude, codex } = TOOL;
+const claude = SYNTHETIC_TOOL;
+const codex = SECOND_SYNTHETIC_TOOL;
 
 const CLAIMED_REF = "aidd-telemetry@aidd-framework";
 const HELD_REF = "held@market";
@@ -34,7 +38,7 @@ describe("the machine record is saved once any tool of the run changed it", () =
       .withTool(codex, [], { version: "test" })
       .build();
     machine.setNativeRegistrations(codex, {
-      binary: "codex",
+      binary: codex,
       marketplaces: [],
       pluginRefs: [],
       pluginClaims: [{ ref: HELD_REF, dependents: [] }],
@@ -47,7 +51,7 @@ describe("the machine record is saved once any tool of the run changed it", () =
         emptyManifest: Manifest.create,
         mergeClaims: registrationRecordRules.mergeCatalogueClaims,
       },
-      registeredCatalog()
+      syntheticCatalog()
     );
 
     await record.execute({

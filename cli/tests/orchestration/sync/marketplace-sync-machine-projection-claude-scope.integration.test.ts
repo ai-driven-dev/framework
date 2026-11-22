@@ -2,13 +2,16 @@ import { describe, expect, it } from "vitest";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_TOOL,
+  syntheticNativeCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   builtPerMarketplace,
   catalogFile,
-  claudeHostCatalogs,
   freshNativeSources,
   fsWithProjects,
+  hostCatalogs,
   manifestWithTool,
   projectWithPlugin,
   readablePlugins,
@@ -16,7 +19,7 @@ import {
   wireSync,
 } from "../testing/machine-projection.builder.js";
 
-const { claude } = TOOL;
+const tool = SYNTHETIC_TOOL;
 
 type Mode = "fresh" | "existing project proof" | "existing machine proof";
 
@@ -27,23 +30,23 @@ const OTHER_REF = "owned-other@other-catalog";
 const OTHER_REGISTRATION = {
   alias: "other",
   hostName: "other-catalog",
-  provenance: { kind: "registry" as const, source: "/other/claude" },
+  provenance: { kind: "registry" as const, source: `/other/${tool}` },
 };
 const REGISTRATION = {
   alias: ALIAS,
   hostName: HOST_NAME,
-  provenance: { kind: "registry" as const, source: "/built/claude" },
+  provenance: { kind: "registry" as const, source: `/built/${tool}` },
 };
 
 function seedExistingProof(project: Manifest, machine: Manifest, mode: Mode) {
   const projectHolds = mode === "existing project proof";
-  project.setNativeRegistrations(claude, {
-    binary: "claude",
+  project.setNativeRegistrations(tool, {
+    binary: tool,
     marketplaces: projectHolds ? [OTHER_REGISTRATION, REGISTRATION] : [],
     pluginRefs: [REF],
   });
-  machine.setNativeRegistrations(claude, {
-    binary: "claude",
+  machine.setNativeRegistrations(tool, {
+    binary: tool,
     marketplaces: projectHolds ? [OTHER_REGISTRATION] : [OTHER_REGISTRATION, REGISTRATION],
     pluginRefs: [OTHER_REF],
     pluginClaims: [{ ref: OTHER_REF, dependents: ["/B"] }],
@@ -52,21 +55,20 @@ function seedExistingProof(project: Manifest, machine: Manifest, mode: Mode) {
 
 /** The host's own record, as it reads once a catalogue and plugins already exist there. */
 function existingHostRecord() {
-  const catalogs = claudeHostCatalogs(
-    claude,
+  const catalogs = hostCatalogs(
+    tool,
     new Map([
-      [HOST_NAME, "/built/claude"],
-      ["other-catalog", "/other/claude"],
+      [HOST_NAME, `/built/${tool}`],
+      ["other-catalog", `/other/${tool}`],
     ])
   );
   const plugins = readablePlugins(
-    claude,
+    tool,
     new Map([
       [REF, { enabled: true, scope: "project" }],
       [OTHER_REF, { enabled: true, scope: "user" }],
       ["test-plugin@external-catalog", { enabled: true, scope: "user" }],
-    ]),
-    ".claude"
+    ])
   );
   const known = new Map([
     [HOST_NAME, REGISTRATION.provenance],
@@ -77,29 +79,29 @@ function existingHostRecord() {
 
 async function catalogueScope(mode: Mode) {
   const fresh = mode === "fresh";
-  const project = projectWithPlugin(claude, ALIAS);
-  const machine = fresh ? Manifest.create() : manifestWithTool(claude);
+  const project = projectWithPlugin(tool, ALIAS);
+  const machine = fresh ? Manifest.create() : manifestWithTool(tool);
   if (!fresh) seedExistingProof(project, machine, mode);
   const projectRepo = new InMemoryManifestRepository(project);
   const machineRepo = new InMemoryManifestRepository(machine);
   const activator = new FakeHostActions({ available: true });
   const existing = existingHostRecord();
   const sync = wireSync({
-    tools: registeredTools(),
-    toolId: claude,
+    tools: syntheticNativeCatalog(tool),
+    toolId: tool,
     fs: fsWithProjects({
-      "/built/claude/.claude-plugin/marketplace.json": catalogFile(HOST_NAME, ["test-plugin"]),
+      [`/built/${tool}/.plugin/marketplace.json`]: catalogFile(HOST_NAME, ["test-plugin"]),
     }),
     projectRepo,
     machineRepo,
     registry: await registryOf("/project", { name: ALIAS, scope: "user" }),
     activator,
-    hostMarketplaceRegistries: fresh ? claudeHostCatalogs(claude) : existing.catalogs,
-    hostPluginRegistries: fresh ? readablePlugins(claude, new Map(), ".claude") : existing.plugins,
+    hostMarketplaceRegistries: fresh ? hostCatalogs(tool) : existing.catalogs,
+    hostPluginRegistries: fresh ? readablePlugins(tool) : existing.plugins,
     nativeSources: freshNativeSources(
-      claude,
+      tool,
       activator,
-      new Map([["/built/claude", HOST_NAME]]),
+      new Map([[`/built/${tool}`, HOST_NAME]]),
       fresh ? new Map() : existing.known
     ),
   });
@@ -111,12 +113,12 @@ type CatalogueScope = Awaited<ReturnType<typeof catalogueScope>>;
 function expectHostWrites({ activator }: CatalogueScope, fresh: boolean) {
   expect(activator.enabledPlugins).toEqual(fresh ? [REF] : []);
   expect(activator.enabledPluginScopes).toEqual(fresh ? ["project"] : []);
-  expect(activator.addedMarketplaces).toStrictEqual(fresh ? ["/built/claude"] : []);
+  expect(activator.addedMarketplaces).toStrictEqual(fresh ? [`/built/${tool}`] : []);
   expect(activator.removedMarketplaces).toStrictEqual([]);
 }
 
 function expectMachineRecord({ machineRepo }: CatalogueScope, fresh: boolean) {
-  const recorded = machineRepo.getCurrent()?.getNativeRegistrations(claude);
+  const recorded = machineRepo.getCurrent()?.getNativeRegistrations(tool);
   expect(recorded?.marketplaces).toEqual(
     fresh ? [REGISTRATION] : [OTHER_REGISTRATION, REGISTRATION]
   );
@@ -134,11 +136,11 @@ describe("native plugin ownership follows the host's Claude activation scope", (
 
       const result = await fixture.sync.execute({ projectRoot: "/project" });
 
-      expect(result.activated).toEqual(["claude"]);
+      expect(result.activated).toEqual([tool]);
       expect(result.errors).toStrictEqual([]);
       expect(result.warnings).toStrictEqual([]);
       expectHostWrites(fixture, mode === "fresh");
-      expect(fixture.projectRepo.getCurrent()?.getNativeRegistrations(claude)?.pluginRefs).toEqual([
+      expect(fixture.projectRepo.getCurrent()?.getNativeRegistrations(tool)?.pluginRefs).toEqual([
         REF,
       ]);
       expectMachineRecord(fixture, mode === "fresh");
@@ -147,27 +149,25 @@ describe("native plugin ownership follows the host's Claude activation scope", (
 
   it("claims a Claude plugin enabled at user scope without inventing a project dependent", async () => {
     const alias = "user-catalog";
-    const userRepo = new InMemoryManifestRepository(projectWithPlugin(claude, alias, "user"));
+    const userRepo = new InMemoryManifestRepository(projectWithPlugin(tool, alias, "user"));
     const projectRepo = new InMemoryManifestRepository(Manifest.create());
     const activator = new FakeHostActions({ available: true });
     const sync = wireSync({
-      tools: registeredTools(),
-      toolId: claude,
+      tools: syntheticNativeCatalog(tool),
+      toolId: tool,
       fs: fsWithProjects({
-        "/built/claude/.claude-plugin/marketplace.json": catalogFile("real-catalog", [
-          "test-plugin",
-        ]),
+        [`/built/${tool}/.plugin/marketplace.json`]: catalogFile("real-catalog", ["test-plugin"]),
       }),
       projectRepo,
       machineRepo: userRepo,
       registry: await registryOf("/project", { name: alias, scope: "user" }),
       activator,
-      hostMarketplaceRegistries: claudeHostCatalogs(claude),
-      hostPluginRegistries: readablePlugins(claude),
+      hostMarketplaceRegistries: hostCatalogs(tool),
+      hostPluginRegistries: readablePlugins(tool),
       nativeSources: freshNativeSources(
-        claude,
+        tool,
         activator,
-        new Map([["/built/claude", "real-catalog"]])
+        new Map([[`/built/${tool}`, "real-catalog"]])
       ),
     });
 
@@ -176,29 +176,29 @@ describe("native plugin ownership follows the host's Claude activation scope", (
     expect(result.errors).toEqual([]);
     expect(activator.enabledPlugins).toEqual(["test-plugin@real-catalog"]);
     expect(activator.enabledPluginScopes).toEqual(["user"]);
-    expect(userRepo.getCurrent()?.getNativeRegistrations(claude)?.marketplaces).toEqual([
+    expect(userRepo.getCurrent()?.getNativeRegistrations(tool)?.marketplaces).toEqual([
       {
         alias,
         hostName: "real-catalog",
-        provenance: { kind: "registry", source: "/built/claude" },
+        provenance: { kind: "registry", source: `/built/${tool}` },
       },
     ]);
-    expect(userRepo.getCurrent()?.getNativeRegistrations(claude)?.pluginClaims).toEqual([
+    expect(userRepo.getCurrent()?.getNativeRegistrations(tool)?.pluginClaims).toEqual([
       { ref: "test-plugin@real-catalog", dependents: [] },
     ]);
-    expect(projectRepo.getCurrent()?.getNativeRegistrations(claude)).toBeUndefined();
+    expect(projectRepo.getCurrent()?.getNativeRegistrations(tool)).toBeUndefined();
   });
 
   it("records only the user-scope marketplace in the machine manifest when a project syncs both scopes", async () => {
-    const projectRepo = new InMemoryManifestRepository(manifestWithTool(claude));
+    const projectRepo = new InMemoryManifestRepository(manifestWithTool(tool));
     const machineRepo = new InMemoryManifestRepository(Manifest.create());
     const activator = new FakeHostActions({ available: true });
     const sync = wireSync({
-      tools: registeredTools(),
-      toolId: claude,
+      tools: syntheticNativeCatalog(tool),
+      toolId: tool,
       fs: fsWithProjects({
-        "/built/user-alias/.claude-plugin/marketplace.json": catalogFile("real-user", []),
-        "/built/project-alias/.claude-plugin/marketplace.json": catalogFile("real-project", []),
+        "/built/user-alias/.plugin/marketplace.json": catalogFile("real-user", []),
+        "/built/project-alias/.plugin/marketplace.json": catalogFile("real-project", []),
       }),
       projectRepo,
       machineRepo,
@@ -209,10 +209,10 @@ describe("native plugin ownership follows the host's Claude activation scope", (
       ),
       activator,
       ensureBuilt: builtPerMarketplace,
-      hostMarketplaceRegistries: claudeHostCatalogs(claude),
-      hostPluginRegistries: readablePlugins(claude, new Map(), ".claude"),
+      hostMarketplaceRegistries: hostCatalogs(tool),
+      hostPluginRegistries: readablePlugins(tool),
       nativeSources: freshNativeSources(
-        claude,
+        tool,
         activator,
         new Map([
           ["/built/user-alias", "real-user"],
@@ -226,7 +226,7 @@ describe("native plugin ownership follows the host's Claude activation scope", (
     expect(result.errors).toEqual([]);
     const projectMarketplaces = projectRepo
       .getCurrent()
-      ?.getNativeRegistrations(claude)?.marketplaces;
+      ?.getNativeRegistrations(tool)?.marketplaces;
     expect(projectMarketplaces).toHaveLength(2);
     expect(projectMarketplaces).toEqual(
       expect.arrayContaining([
@@ -242,7 +242,7 @@ describe("native plugin ownership follows the host's Claude activation scope", (
         },
       ])
     );
-    expect(machineRepo.getCurrent()?.getNativeRegistrations(claude)?.marketplaces).toEqual([
+    expect(machineRepo.getCurrent()?.getNativeRegistrations(tool)?.marketplaces).toEqual([
       {
         alias: "user-alias",
         hostName: "real-user",

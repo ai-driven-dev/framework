@@ -18,16 +18,14 @@ import { ROOT } from "./recovery-contract.builder.js";
 
 export interface OwnedNativeSettingsOptions {
   tools: ToolCatalog;
-  copilot: AiToolId;
-  toolId?: AiToolId;
+  toolId: AiToolId;
+  withSettings?: boolean;
   names?: readonly string[];
   settings?: string;
   withPlugins?: boolean;
   cachedRoot?: string;
   cachedCatalogue?: string;
 }
-
-const SETTINGS_PATH = ".github/copilot/settings.json";
 
 function registrationsOf(
   toolId: AiToolId,
@@ -50,11 +48,11 @@ function registrationsOf(
   }));
 }
 
-function settingsFilesOf(toolId: AiToolId, copilot: AiToolId, settings: string) {
-  if (toolId !== copilot) return [];
+function settingsFilesOf(settingsPath: string, withSettings: boolean, settings: string) {
+  if (!withSettings) return [];
   return [
     new InstallationFile({
-      relativePath: SETTINGS_PATH,
+      relativePath: settingsPath,
       content: settings,
       hash: FileHash.of(settings),
     }),
@@ -72,13 +70,9 @@ function reviewPlugin(name: string, alias: string) {
   });
 }
 
-function catalogueDirOf(toolId: AiToolId, copilot: AiToolId) {
-  return toolId === copilot ? ".plugin" : ".agents/plugins";
-}
-
 export async function ownedNativeSettings(options: OwnedNativeSettingsOptions) {
-  const { copilot } = options;
-  const toolId = options.toolId ?? copilot;
+  const { toolId } = options;
+  const settingsPath = `.${toolId}/settings.json`;
   const names = options.names ?? ["first"];
   const settings = options.settings ?? JSON.stringify({ permissions: { allow: ["Read"] } });
   const registrations = registrationsOf(toolId, names, options);
@@ -87,7 +81,11 @@ export async function ownedNativeSettings(options: OwnedNativeSettingsOptions) {
       ? []
       : names.map((name, i) => `review-${name}@${registrations[i].hostName}`);
   const project = Manifest.create();
-  project.addTool(toolId, "1.0.0", settingsFilesOf(toolId, copilot, settings));
+  project.addTool(
+    toolId,
+    "1.0.0",
+    settingsFilesOf(settingsPath, options.withSettings !== false, settings)
+  );
   const machine = Manifest.create();
   machine.addTool(toolId, "1.0.0", []);
   project.setNativeRegistrations(toolId, {
@@ -104,7 +102,7 @@ export async function ownedNativeSettings(options: OwnedNativeSettingsOptions) {
   const projectRepo = new InMemoryManifestRepository(project, ROOT);
   const machineRepo = new InMemoryManifestRepository(machine);
   const registry = new InMemoryMarketplaceRegistry();
-  const fs = new InMemoryFileAdapter({ [resolve(ROOT, SETTINGS_PATH)]: settings });
+  const fs = new InMemoryFileAdapter({ [resolve(ROOT, settingsPath)]: settings });
   const identities = new Map<string, string>();
   const initial = new Map<string, NativeMarketplaceSource>();
   for (const [index, name] of names.entries()) {
@@ -113,7 +111,7 @@ export async function ownedNativeSettings(options: OwnedNativeSettingsOptions) {
     identities.set(builtDir, registration.hostName);
     initial.set(registration.hostName, registration.provenance);
     fs.setFile(
-      `${builtDir}/${catalogueDirOf(toolId, copilot)}/marketplace.json`,
+      `${builtDir}/.plugin/marketplace.json`,
       JSON.stringify({ name: registration.hostName, plugins: [{ name: `review-${name}` }] })
     );
     await registry.save(
@@ -175,7 +173,7 @@ export async function ownedNativeSettings(options: OwnedNativeSettingsOptions) {
     logger,
     projectRepo,
     machineRepo,
-    settingsPath: SETTINGS_PATH,
+    settingsPath,
     registrations,
     refs,
   };

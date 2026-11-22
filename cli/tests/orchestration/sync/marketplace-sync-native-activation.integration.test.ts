@@ -3,13 +3,16 @@ import { answeredRegistry } from "../../../src/contexts/host-registration/domain
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
-import { registeredAiId, registeredCatalog } from "../../shared/testing/catalog-of.builder.js";
 import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
+import {
+  SYNTHETIC_TOOL,
+  syntheticNativeCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   ActivatorThatWritesSettings,
   MARKETPLACE,
@@ -18,13 +21,16 @@ import {
   PLUGIN,
   PROJECT_ROOT,
   REF,
-  SETTINGS_PATH,
   seededBuiltCatalog,
   settingsPathIn,
+  settingsPathOf,
 } from "../testing/marketplace-sync-native-activation.builder.js";
 
-const { buildSync, claude, manifestWithPlugin, nativeSource, readableHostPlugins } =
-  nativeActivationOf({ tools: registeredCatalog(), claude: registeredAiId("claude") });
+const tool = SYNTHETIC_TOOL;
+const { buildSync, manifestWithPlugin, nativeSource, readableHostPlugins } = nativeActivationOf({
+  tools: syntheticNativeCatalog(tool),
+  tool,
+});
 
 describe("native activation", () => {
   describe("syncing settings registers the plugin with the host's own CLI", () => {
@@ -59,7 +65,7 @@ describe("native activation", () => {
       await useCase.execute({ projectRoot: PROJECT_ROOT });
 
       expect(activator.enabledPlugins).toEqual([]);
-      const answered = answeredRegistry(claude, { location: "/registry", refs: new Map() }, true);
+      const answered = answeredRegistry(tool, { location: "/registry", refs: new Map() }, true);
 
       expect("refs" in answered && answered.refs.has(`${PLUGIN}@a-marketplace-nobody-added`)).toBe(
         false
@@ -76,13 +82,13 @@ describe("native activation", () => {
       await useCase.execute({ projectRoot: PROJECT_ROOT });
 
       const reloaded = await manifestRepo.load();
-      expect(reloaded?.getNativeRegistrations(claude)).toEqual({
-        binary: "claude",
+      expect(reloaded?.getNativeRegistrations(tool)).toEqual({
+        binary: tool,
         marketplaces: [
           {
             alias: MARKETPLACE,
             hostName: MARKETPLACE,
-            provenance: { kind: "registry", source: "/built/claude" },
+            provenance: { kind: "registry", source: `/built/${tool}` },
           },
         ],
         pluginRefs: [REF],
@@ -97,20 +103,20 @@ describe("native activation", () => {
       await useCase.execute({ projectRoot: PROJECT_ROOT });
 
       const reloaded = await manifestRepo.load();
-      expect(reloaded?.getNativeRegistrations(claude)).toBeUndefined();
+      expect(reloaded?.getNativeRegistrations(tool)).toBeUndefined();
     });
 
     it("re-registers through the host CLI when the manifest's record has gone stale", async () => {
       const activator = new FakeHostActions({ available: true });
       const { useCase, registry, manifestRepo } = buildSync(activator);
       const staleManifest = await manifestRepo.load();
-      staleManifest?.setNativeRegistrations(claude, {
-        binary: "claude",
+      staleManifest?.setNativeRegistrations(tool, {
+        binary: tool,
         marketplaces: [
           {
             alias: MARKETPLACE,
             hostName: MARKETPLACE,
-            provenance: { kind: "registry", source: "/built/claude" },
+            provenance: { kind: "registry", source: `/built/${tool}` },
           },
         ],
         pluginRefs: [REF],
@@ -122,13 +128,13 @@ describe("native activation", () => {
 
       expect(activator.enabledPlugins).toContain(REF);
       const reloaded = await manifestRepo.load();
-      expect(reloaded?.getNativeRegistrations(claude)).toEqual({
-        binary: "claude",
+      expect(reloaded?.getNativeRegistrations(tool)).toEqual({
+        binary: tool,
         marketplaces: [
           {
             alias: MARKETPLACE,
             hostName: MARKETPLACE,
-            provenance: { kind: "registry", source: "/built/claude" },
+            provenance: { kind: "registry", source: `/built/${tool}` },
           },
         ],
         pluginRefs: [REF],
@@ -142,7 +148,7 @@ describe("native activation", () => {
       const activator = new FakeHostActions({ available: true });
       const registry = new InMemoryMarketplaceRegistry();
       const fs = new InMemoryFileAdapter({
-        "/built/claude/.claude-plugin/marketplace.json": JSON.stringify({
+        [`/built/${tool}/.plugin/marketplace.json`]: JSON.stringify({
           name: CATALOG_NAME,
           version: "1.0.0",
           plugins: [],
@@ -150,12 +156,12 @@ describe("native activation", () => {
       });
       const manifestRepo = manifestWithPlugin();
       const useCase = marketplaceSync({
-        tools: registeredCatalog(),
+        tools: syntheticNativeCatalog(tool),
         fs,
         manifestRepo,
         marketplaceRegistry: registry,
         logger: new CapturingLogger(),
-        activators: new Map([[claude, activator]]),
+        activators: new Map([[tool, activator]]),
         ensureBuilt: fakeEnsureBuiltMarketplace(),
         hostPluginRegistries: readableHostPlugins(),
         nativeSources: nativeSource(activator, CATALOG_NAME),
@@ -167,13 +173,13 @@ describe("native activation", () => {
       expect(activator.enabledPlugins).toEqual([`${PLUGIN}@${CATALOG_NAME}`]);
       expect(activator.enabledPlugins).not.toContain(REF);
       const reloaded = await manifestRepo.load();
-      expect(reloaded?.getNativeRegistrations(claude)).toEqual({
-        binary: "claude",
+      expect(reloaded?.getNativeRegistrations(tool)).toEqual({
+        binary: tool,
         marketplaces: [
           {
             alias: MARKETPLACE,
             hostName: CATALOG_NAME,
-            provenance: { kind: "registry", source: "/built/claude" },
+            provenance: { kind: "registry", source: `/built/${tool}` },
           },
         ],
         pluginRefs: [`${PLUGIN}@${CATALOG_NAME}`],
@@ -187,17 +193,17 @@ describe("native activation", () => {
     it("registers every known marketplace even when the manifest declares no plugin", async () => {
       const activator = new FakeHostActions({ available: true });
       const registry = new InMemoryMarketplaceRegistry();
-      const fs = seededBuiltCatalog();
+      const fs = seededBuiltCatalog(tool);
       const manifest = Manifest.create();
-      manifest.addTool(claude, "test", []);
+      manifest.addTool(tool, "test", []);
       const manifestRepo = new InMemoryManifestRepository(manifest);
       const useCase = marketplaceSync({
-        tools: registeredCatalog(),
+        tools: syntheticNativeCatalog(tool),
         fs,
         manifestRepo,
         marketplaceRegistry: registry,
         logger: new CapturingLogger(),
-        activators: new Map([[claude, activator]]),
+        activators: new Map([[tool, activator]]),
         ensureBuilt: fakeEnsureBuiltMarketplace(),
         hostPluginRegistries: readableHostPlugins(),
         nativeSources: nativeSource(activator),
@@ -215,17 +221,17 @@ describe("native activation", () => {
   describe("what native activation leaves behind is not reported as the user's drift", () => {
     it("tracks a hash that still matches the settings file after the host CLI has written to it", async () => {
       const registry = new InMemoryMarketplaceRegistry();
-      const fs = seededBuiltCatalog();
+      const fs = seededBuiltCatalog(tool);
       const manifestRepo = manifestWithPlugin();
-      const settingsAbsolutePath = settingsPathIn(PROJECT_ROOT);
+      const settingsAbsolutePath = settingsPathIn(PROJECT_ROOT, tool);
       const activator = new ActivatorThatWritesSettings(fs, settingsAbsolutePath);
       const useCase = marketplaceSync({
-        tools: registeredCatalog(),
+        tools: syntheticNativeCatalog(tool),
         fs,
         manifestRepo,
         marketplaceRegistry: registry,
         logger: new CapturingLogger(),
-        activators: new Map([[claude, activator]]),
+        activators: new Map([[tool, activator]]),
         ensureBuilt: fakeEnsureBuiltMarketplace(),
         hostPluginRegistries: readableHostPlugins(),
         nativeSources: nativeSource(activator),
@@ -239,8 +245,8 @@ describe("native activation", () => {
 
       const onDisk = await fs.readFile(settingsAbsolutePath);
       const manifest = await manifestRepo.load();
-      const tracked = manifest?.getToolFiles(claude) ?? [];
-      const entry = tracked.find((file) => file.relativePath === SETTINGS_PATH);
+      const tracked = manifest?.getToolFiles(tool) ?? [];
+      const entry = tracked.find((file) => file.relativePath === settingsPathOf(tool));
 
       expect(entry, "the settings file is tracked at all").toBeDefined();
       expect(entry?.hash).toEqual(FileHash.of(onDisk));
@@ -251,30 +257,30 @@ describe("native activation", () => {
       const registry = new InMemoryMarketplaceRegistry();
       const fs = new InMemoryFileAdapter();
       const manifestRepo = manifestWithPlugin();
-      const settingsAbsolutePath = settingsPathIn(PROJECT_ROOT);
+      const settingsAbsolutePath = settingsPathIn(PROJECT_ROOT, tool);
       const useCase = marketplaceSync({
-        tools: registeredCatalog(),
+        tools: syntheticNativeCatalog(tool),
         fs,
         manifestRepo,
         marketplaceRegistry: registry,
         logger: new CapturingLogger(),
         activators: // Not available: the binary is not on the PATH, so nothing of the host's is written.
-          new Map([[claude, new FakeHostActions({ available: false })]]),
+          new Map([[tool, new FakeHostActions({ available: false })]]),
         ensureBuilt: fakeEnsureBuiltMarketplace(),
       });
       await registry.save(PROJECT_ROOT, marketplace());
       await useCase.execute({ projectRoot: PROJECT_ROOT });
       const hashAfterSync = (await manifestRepo.load())
-        ?.getToolFiles(claude)
-        .find((file) => file.relativePath === SETTINGS_PATH)?.hash;
+        ?.getToolFiles(tool)
+        .find((file) => file.relativePath === settingsPathOf(tool))?.hash;
 
       const edited = `${await fs.readFile(settingsAbsolutePath)}\n`;
       await fs.writeFile(settingsAbsolutePath, edited);
       await useCase.execute({ projectRoot: PROJECT_ROOT });
 
       const tracked = (await manifestRepo.load())
-        ?.getToolFiles(claude)
-        .find((file) => file.relativePath === SETTINGS_PATH);
+        ?.getToolFiles(tool)
+        .find((file) => file.relativePath === settingsPathOf(tool));
       expect(hashAfterSync, "the settings file is tracked at all").toBeDefined();
       expect(tracked?.hash).toEqual(hashAfterSync);
       expect(tracked?.hash).not.toEqual(FileHash.of(edited));

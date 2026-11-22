@@ -21,23 +21,19 @@ import { FakeHostPluginRegistry } from "./fake-host-plugin-registry.fake.js";
 
 /** The projects these cases sync from exist on disk before anything is installed into them. */
 export const fsWithProjects = (seed: Record<string, string>) =>
-  new InMemoryFileAdapter(seed, ["/project", "/B", "/codex-project", "/resolved-codex-project"]);
+  new InMemoryFileAdapter(seed, ["/project", "/B", "/listed-project", "/resolved-listed-project"]);
 
 export const freshNativeSources = (
   toolId: AiToolId,
   activator: FakeHostActions,
   identities: ReadonlyMap<string, string>,
-  initial: ReadonlyMap<string, NativeMarketplaceSource> = new Map()
+  initial: ReadonlyMap<string, NativeMarketplaceSource> = new Map(),
+  kind: "registry" | "effective-list" = "registry"
 ) =>
   new Map([
     [
       toolId,
-      new FakeHostMarketplaceSources(
-        activator,
-        toolId === "claude" ? "registry" : "effective-list",
-        (path) => identities.get(path),
-        initial
-      ),
+      new FakeHostMarketplaceSources(activator, kind, (path) => identities.get(path), initial),
     ],
   ]);
 
@@ -56,16 +52,13 @@ export const readablePlugins = (
     ],
   ]);
 
-export const claudeHostCatalogs = (
-  claude: AiToolId,
-  entries: ReadonlyMap<string, string> = new Map()
-) =>
+export const hostCatalogs = (toolId: AiToolId, entries: ReadonlyMap<string, string> = new Map()) =>
   new Map<AiToolId, HostMarketplaceRegistry>([
     [
-      claude,
+      toolId,
       {
         read: async () => ({
-          location: "/home/.claude/plugins/known_marketplaces.json",
+          location: `/home/.${toolId}/known_marketplaces.json`,
           entries: new Map(entries),
         }),
       },
@@ -153,7 +146,7 @@ export interface SyncWiring {
   readonly registry: InMemoryMarketplaceRegistry;
   readonly activator: FakeHostActions;
   readonly hostPluginRegistries: ReturnType<typeof readablePlugins | typeof unreadableHostPlugins>;
-  readonly hostMarketplaceRegistries?: ReturnType<typeof claudeHostCatalogs>;
+  readonly hostMarketplaceRegistries?: ReturnType<typeof hostCatalogs>;
   readonly ensureBuilt?: BuiltMarketplaceEnsurer;
   readonly nativeSources?: ReturnType<typeof freshNativeSources>;
 }
@@ -174,33 +167,39 @@ export function wireSync(w: SyncWiring) {
   });
 }
 
-/** One project-scope codex catalogue, `local-catalog` locally and `real-catalog` on the host. */
-export async function singleCodexCatalog(o: {
+/** One project-scope catalogue on a list-command host, `local-catalog` locally and `real-catalog` on the host. */
+export async function singleListedCatalog(o: {
   readonly tools: ToolCatalog;
-  readonly codex: AiToolId;
+  readonly tool: AiToolId;
   readonly projectRoot: string;
   readonly machine: Manifest;
   readonly activator: FakeHostActions;
   /** When given, the host plugin registry is this one and no native source reader is wired. */
   readonly hostPluginRegistries?: SyncWiring["hostPluginRegistries"];
 }) {
-  const projectRepo = new InMemoryManifestRepository(projectWithPlugin(o.codex, "local-catalog"));
+  const projectRepo = new InMemoryManifestRepository(projectWithPlugin(o.tool, "local-catalog"));
   const machineRepo = new InMemoryManifestRepository(o.machine);
   const fs = fsWithProjects({
-    "/built/codex/.agents/plugins/marketplace.json": catalogFile("real-catalog", ["test-plugin"]),
+    [`/built/${o.tool}/.plugin/marketplace.json`]: catalogFile("real-catalog", ["test-plugin"]),
   });
   const sync = wireSync({
     tools: o.tools,
-    toolId: o.codex,
+    toolId: o.tool,
     fs,
     projectRepo,
     machineRepo,
     registry: await registryOf(o.projectRoot, { name: "local-catalog", scope: "project" }),
     activator: o.activator,
-    hostPluginRegistries: o.hostPluginRegistries ?? readablePlugins(o.codex),
+    hostPluginRegistries: o.hostPluginRegistries ?? readablePlugins(o.tool),
     nativeSources:
       o.hostPluginRegistries === undefined
-        ? freshNativeSources(o.codex, o.activator, new Map([["/built/codex", "real-catalog"]]))
+        ? freshNativeSources(
+            o.tool,
+            o.activator,
+            new Map([[`/built/${o.tool}`, "real-catalog"]]),
+            new Map(),
+            "effective-list"
+          )
         : undefined,
   });
   return { sync, fs, projectRepo, machineRepo };

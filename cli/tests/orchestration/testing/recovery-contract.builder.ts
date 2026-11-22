@@ -19,14 +19,15 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
+import { SYNTHETIC_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
 import { FakeHostMarketplaceSources } from "./fake-host-marketplace-sources.fake.js";
 
 export const ROOT = "/project";
 export const ALIAS = "team-tools";
 export const HOST = "team-catalog";
-export const BUILT = "/built/claude";
+export const BUILT = `/built/${SYNTHETIC_TOOL}`;
 export const REF = `review@${HOST}`;
-export const OLD = builtMarketplaceDir(ROOT, ALIAS, "claude");
+export const OLD = builtMarketplaceDir(ROOT, ALIAS, SYNTHETIC_TOOL);
 export const ADD_ERROR = "catalogue already exists";
 export const RECLAIM = `Marketplace '${HOST}' was registered to a directory that no longer exists; re-registering it for this project. Plugins installed from it are removed and the ones this CLI manages are put back.`;
 
@@ -58,7 +59,7 @@ export class RecoveringActivator extends FakeHostActions {
 
 export interface RecoveryOptions {
   tools: ToolCatalog;
-  claude: AiToolId;
+  toolId: AiToolId;
   source?: string;
   userRoot?: string;
   scope?: Scope;
@@ -90,15 +91,15 @@ function ownedProject(options: RecoveryOptions) {
   const source = options.source ?? OLD;
   const settings = options.settings ?? "{}";
   const manifest = Manifest.create();
-  manifest.addTool(options.claude, "1.0.0", [
+  manifest.addTool(options.toolId, "1.0.0", [
     new InstallationFile({
-      relativePath: ".claude/settings.json",
+      relativePath: `.${options.toolId}/settings.json`,
       content: settings,
       hash: FileHash.of(settings),
     }),
   ]);
   manifest.addPlugin(
-    options.claude,
+    options.toolId,
     RecordedPlugin.fromMetadata({
       name: "review",
       version: "1.0.0",
@@ -108,8 +109,8 @@ function ownedProject(options: RecoveryOptions) {
       marketplace: ALIAS,
     })
   );
-  manifest.setNativeRegistrations(options.claude, {
-    binary: "claude",
+  manifest.setNativeRegistrations(options.toolId, {
+    binary: options.toolId,
     marketplaces: [{ alias: ALIAS, hostName: HOST, provenance: { kind: "registry", source } }],
     pluginRefs: options.ownRefs ?? [],
   });
@@ -118,13 +119,13 @@ function ownedProject(options: RecoveryOptions) {
 
 function recoveryFiles(options: RecoveryOptions) {
   const catalogue = {
-    [`${BUILT}/.claude-plugin/marketplace.json`]: JSON.stringify({
+    [`${BUILT}/.plugin/marketplace.json`]: JSON.stringify({
       name: HOST,
       plugins: [{ name: "review" }],
     }),
   };
   if (options.settings === undefined) return catalogue;
-  return { ...catalogue, [resolve(ROOT, ".claude/settings.json")]: options.settings };
+  return { ...catalogue, [resolve(ROOT, `.${options.toolId}/settings.json`)]: options.settings };
 }
 
 function recoveryActivator(options: RecoveryOptions) {
@@ -211,19 +212,19 @@ export async function recovery(options: RecoveryOptions) {
     manifestRepo: repo,
     marketplaceRegistry: registry,
     logger,
-    activators: new Map([[options.claude, activator]]),
+    activators: new Map([[options.toolId, activator]]),
     ensureBuilt: fakeEnsureBuiltMarketplace(),
-    hostMarketplaceRegistries: new Map([[options.claude, hostCatalogues]]),
+    hostMarketplaceRegistries: new Map([[options.toolId, hostCatalogues]]),
     userCacheRoot: () => options.userRoot ?? "",
     hostPluginRegistries: new Map([
       [
-        options.claude,
+        options.toolId,
         pluginsReadInTurn(options.plugins ?? [{ location: "host plugins", refs: new Map() }]),
       ],
     ]),
     nativeSources: new Map([
       [
-        options.claude,
+        options.toolId,
         hostSourcesThroughRecovery(activator, delegate, options.sourceAfterCollision),
       ],
     ]),

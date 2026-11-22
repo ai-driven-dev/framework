@@ -16,7 +16,12 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_TOOL,
+  syntheticNativeCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
+
+const tool = SYNTHETIC_TOOL;
 
 const PROJECT_ROOT = "/test-project";
 
@@ -43,12 +48,12 @@ function ensureBuiltPerMarketplace(): BuiltMarketplaceEnsurer {
 
 function seededCatalogs(): InMemoryFileAdapter {
   return new InMemoryFileAdapter({
-    "/built/market-a/.claude-plugin/marketplace.json": JSON.stringify({
+    "/built/market-a/.plugin/marketplace.json": JSON.stringify({
       name: "market-a",
       version: "1.0.0",
       plugins: [{ name: "plugin-a" }],
     }),
-    "/built/market-b/.claude-plugin/marketplace.json": JSON.stringify({
+    "/built/market-b/.plugin/marketplace.json": JSON.stringify({
       name: "market-b",
       version: "1.0.0",
       plugins: [{ name: "plugin-b" }],
@@ -58,9 +63,9 @@ function seededCatalogs(): InMemoryFileAdapter {
 
 function manifestWithTwoPlugins(): Manifest {
   const manifest = aManifest()
-    .withTool(TOOL.claude, [], { version: "test" })
+    .withTool(tool, [], { version: "test" })
     .withPlugin(
-      TOOL.claude,
+      tool,
       RecordedPlugin.fromMetadata({
         name: "plugin-a",
         version: "1.0.0",
@@ -71,7 +76,7 @@ function manifestWithTwoPlugins(): Manifest {
       })
     )
     .withPlugin(
-      TOOL.claude,
+      tool,
       RecordedPlugin.fromMetadata({
         name: "plugin-b",
         version: "1.0.0",
@@ -96,16 +101,16 @@ function build(activator: FakeHostActions) {
     manifest,
     manifestRepo,
     useCase: marketplaceSync({
-      tools: registeredTools(),
+      tools: syntheticNativeCatalog(tool),
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
       logger: new CapturingLogger(),
-      activators: new Map([[TOOL.claude, activator]]),
+      activators: new Map([[tool, activator]]),
       ensureBuilt: ensureBuiltPerMarketplace(),
       hostPluginRegistries: new Map([
         [
-          TOOL.claude,
+          tool,
           new FakeHostPluginRegistry({
             location: "/host/installed_plugins.json",
             refs: new Map(),
@@ -114,7 +119,7 @@ function build(activator: FakeHostActions) {
       ]),
       nativeSources: new Map([
         [
-          TOOL.claude,
+          tool,
           new FakeHostMarketplaceSources(
             activator,
             "registry",
@@ -162,7 +167,7 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
     });
 
     const reloaded = await manifestRepo.load();
-    const registrations = reloaded?.getNativeRegistrations(TOOL.claude);
+    const registrations = reloaded?.getNativeRegistrations(tool);
     expect(registrations?.marketplaces).toEqual(
       expect.arrayContaining([
         {
@@ -178,8 +183,8 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
   it("drops a stale ref for the touched marketplace by its hostName suffix, keeping the untouched marketplace's own refs", async () => {
     const activator = new FakeHostActions({ available: true });
     const { useCase, registry, manifest, manifestRepo } = build(activator);
-    manifest.setNativeRegistrations(TOOL.claude, {
-      binary: "claude",
+    manifest.setNativeRegistrations(tool, {
+      binary: tool,
       marketplaces: [
         { alias: "market-a", hostName: "market-a" },
         { alias: "market-b", hostName: "market-b" },
@@ -196,7 +201,7 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
     });
 
     const reloaded = await manifestRepo.load();
-    const registrations = reloaded?.getNativeRegistrations(TOOL.claude);
+    const registrations = reloaded?.getNativeRegistrations(tool);
     expect(registrations?.pluginRefs).toContain("plugin-a@market-a");
     expect(registrations?.pluginRefs).toContain("plugin-b@market-b");
     expect(registrations?.pluginRefs).not.toContain("plugin-b-old@market-b");
@@ -247,8 +252,8 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
       marketplaceNames: ["market-b"],
     });
 
-    expect((await manifestRepo.load())?.getNativeRegistrations(TOOL.claude)).toStrictEqual({
-      binary: "claude",
+    expect((await manifestRepo.load())?.getNativeRegistrations(tool)).toStrictEqual({
+      binary: tool,
       marketplaces: [
         {
           alias: "market-b",
@@ -263,8 +268,8 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
   it("drops a stale ref of either touched marketplace when narrowed to both", async () => {
     const activator = new FakeHostActions({ available: true });
     const { useCase, registry, manifest, manifestRepo } = build(activator);
-    manifest.setNativeRegistrations(TOOL.claude, {
-      binary: "claude",
+    manifest.setNativeRegistrations(tool, {
+      binary: tool,
       marketplaces: [
         {
           alias: "market-a",
@@ -288,8 +293,8 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
       marketplaceNames: ["market-a", "market-b"],
     });
 
-    expect((await manifestRepo.load())?.getNativeRegistrations(TOOL.claude)).toStrictEqual({
-      binary: "claude",
+    expect((await manifestRepo.load())?.getNativeRegistrations(tool)).toStrictEqual({
+      binary: tool,
       marketplaces: [
         {
           alias: "market-a",
