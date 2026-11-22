@@ -202,15 +202,11 @@ describe("present(codex.buildContracts.flat)()", () => {
       agents: sourceOf(artifacts.agents),
       hooks: sourceOf(artifacts.hooks),
       mcp: artifacts.mcp,
-      rules: artifacts.rules,
-      commands: artifacts.commands,
     }).toStrictEqual({
       skills: { kind: "fullTree", srcDir: "skills" },
       agents: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
       hooks: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
       mcp: { supported: false },
-      rules: { supported: false },
-      commands: { supported: false },
     });
   });
 

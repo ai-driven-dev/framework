@@ -1,9 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { kilo } from "../../../../../../src/contexts/tools/domain/profiles/kilo/kilo.profile.js";
 import { FileHash } from "../../../../../../src/shared/domain/file-hash.js";
-import { flatHooksPathWithLoaderEntry } from "../../../../../../src/shared/domain/materialization/flat-paths.js";
 import type { FileReader } from "../../../../../../src/shared/ports/file-reader.js";
-import { flatOf } from "../../../testing/plugin-mode.builder.js";
 import { rulesRows, WRITES_NOTHING } from "../../../testing/profile-tables.builder.js";
 import { type InstallKind, installPathOf } from "../../../testing/profiles.builder.js";
 
@@ -32,11 +30,6 @@ describe("kilo", () => {
     ).toEqual({ description: "Review code", mode: "subagent" });
   });
 
-  it("preserves skill metadata", () => {
-    const metadata = { name: "plan", description: "Plan work", license: "MIT" };
-    expect(kilo.section("skills").convertFrontmatter(metadata)).toEqual(metadata);
-  });
-
   it("namespaces commands by phase and omits argument hints unsupported by Kilo", () => {
     expect(
       kilo
@@ -54,37 +47,17 @@ describe("kilo", () => {
 
   it.each<[InstallKind, string, string]>([
     ["agents", "reviewer.kilo.md", ".kilo/agents/reviewer.md"],
-    ["skills", "01-plan/SKILL.kilo.md", ".kilo/skills/01-plan/SKILL.md"],
     ["commands", "01-plan/greet.md", ".kilo/commands/aidd/01/greet.md"],
     ["rules", "standards.kilo.md", ".kilo/rules/standards.md"],
   ])("installs %s file %s at %s", (kind, built, path) => {
     expect(installPathOf(kilo, kind, built)).toBe(path);
   });
 
-  it("delivers hook scripts under .kilo/hooks and generates a bridge under .kilo/plugin", () => {
-    const plugins = flatOf(kilo.plugins());
-    expect([
-      plugins.kind,
-      plugins.hooksAcceptance().accepts,
-      plugins.flatLayout().hooksDir,
-    ]).toStrictEqual(["flat", true, ".kilo/hooks/"]);
-    expect(plugins.flatLayout().hooksBridge?.dir).toBe(".kilo/plugin/");
-    expect(
-      flatHooksPathWithLoaderEntry({
-        perPluginHooksDir: plugins.flatLayout().hooksDir ?? "",
-        loaderEntry: plugins.flatLayout().hooksLoaderEntry,
-        plugin: "aidd-context",
-        hooksRelativePath: "hooks/kilo-plugin.js",
-      })
-    ).toBe(".kilo/plugin/aidd-context.js");
-    expect(
-      flatHooksPathWithLoaderEntry({
-        perPluginHooksDir: plugins.flatLayout().hooksDir ?? "",
-        loaderEntry: plugins.flatLayout().hooksLoaderEntry,
-        plugin: "aidd-context",
-        hooksRelativePath: "hooks/capture.cjs",
-      })
-    ).toBe(".kilo/hooks/aidd-context/capture.cjs");
+  it("is a flat tool that accepts hooks", () => {
+    expect([kilo.plugins()?.kind, kilo.plugins()?.hooksAcceptance().accepts]).toStrictEqual([
+      "flat",
+      true,
+    ]);
   });
 });
 

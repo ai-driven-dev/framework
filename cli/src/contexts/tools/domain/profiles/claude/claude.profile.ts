@@ -146,10 +146,7 @@ export const claude = defineAiTool({
       format: "markdown",
       frontmatter: claudeAgentFrontmatter,
     }),
-    skills: bound.skills({
-      buildInstallPath: bound.installUnder("skills/"),
-      convertFrontmatter: (fm) => fm,
-    }),
+    skills: bound.skills({}),
     commands: bound.commands({
       buildInstallPath: (fileName) =>
         phasedCommandPath(fileName) ?? bound.installUnder("commands/")(fileName),

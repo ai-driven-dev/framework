@@ -31,8 +31,6 @@ function contractWith(artifacts: Partial<ToolBuildContract["artifacts"]> = {}): 
       agents: unsupported,
       mcp: unsupported,
       hooks: unsupported,
-      rules: unsupported,
-      commands: unsupported,
       ...artifacts,
     },
     buildMarketplaceCatalog: null,

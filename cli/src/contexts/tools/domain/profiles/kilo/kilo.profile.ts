@@ -15,7 +15,6 @@ import { McpConfigPart } from "../../sections/mcp-section.js";
 import { ModelsSection } from "../../sections/models-section.js";
 import { kiloAgentFrontmatter } from "./kilo-agent.model.js";
 import { buildKiloFlatContract, KILO_FLAT_LAYOUT } from "./kilo-build.model.js";
-import { generateKiloHooksBridge } from "./kilo-hooks-bridge.model.js";
 import { KILO_DIRECTORY, KILO_OUTPUT_PATH_CANDIDATES } from "./kilo-paths.model.js";
 
 const TOOL_SUFFIX = ".kilo.md";
@@ -25,7 +24,7 @@ const hooks = declareBridgeHooks(
   ["session.created", "tool.execute.after", "session.idle"],
   { loaderEntry: { dir: `${KILO_DIRECTORY}plugin/`, baseName: "kilo-plugin.js" } }
 );
-const hooksDelivery = flatHooksSupport(hooks, generateKiloHooksBridge);
+const hooksDelivery = flatHooksSupport(hooks);
 
 export const kilo = defineAiTool({
   toolId: "kilo",
@@ -45,10 +44,7 @@ export const kilo = defineAiTool({
       format: "markdown",
       frontmatter: kiloAgentFrontmatter,
     }),
-    skills: bound.skills({
-      buildInstallPath: bound.installUnder("skills/"),
-      convertFrontmatter: (fm) => fm,
-    }),
+    skills: bound.skills({}),
     commands: bound.commands({
       buildInstallPath: (fileName) => buildAiddCommandFilePath(KILO_DIRECTORY, fileName),
       convertFrontmatter: convertCommandFrontmatterNoHint,

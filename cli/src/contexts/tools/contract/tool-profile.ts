@@ -1,11 +1,8 @@
 import type { ConfigAsset } from "../../../shared/domain/config-asset.js";
 import type { InstallationFile } from "../../../shared/domain/installation-file.js";
-import type {
-  FlatArtifactLayout,
-  FlatHooksLoaderEntry,
-} from "../../../shared/domain/materialization/flat-paths.js";
+import type { FlatArtifactLayout } from "../../../shared/domain/materialization/flat-paths.js";
 import type { AiToolId, IdeToolId } from "../../../shared/domain/tool.js";
-import type { FlatHooksBridge, ToolBuildContract } from "./build-contract.js";
+import type { ToolBuildContract } from "./build-contract.js";
 import type { ConfigRef } from "./config-refs.js";
 import type { LinkSyntax } from "./link-syntax.js";
 import type {
@@ -70,9 +67,6 @@ export type FlatInstallSection = "commands" | "agents" | "rules" | "skills";
 export interface FlatLayout {
   skillLayout: FlatSkillLayout;
   namespacePrefix: string;
-  hooksDir: string | null;
-  hooksLoaderEntry: FlatHooksLoaderEntry | null;
-  hooksBridge: FlatHooksBridge | null;
 }
 
 /** A tool that installs a plugin through its own plugin CLI, as an outside caller asks it. */
@@ -95,8 +89,6 @@ export interface NativePluginAnswers extends PluginDelivery {
 export interface FlatPluginAnswers extends PluginDelivery {
   readonly kind: "flat";
   flatLayout(): FlatLayout;
-  /** Where a plugin's hook file lands, or null when the tool places no hooks of its own. */
-  hooksInstallPath(pluginName: string, hooksRelativePath: string): string | null;
   hookScript(pluginPath: string, content: string): string;
 }
 
@@ -112,12 +104,8 @@ export interface MarkdownSectionAnswers {
   /** Where a built file lands, or null when the tool takes none by that name. */
   buildInstallPath(fileName: string): string | null;
   convertFrontmatter(fm: Record<string, unknown>, fileName: string): Record<string, unknown>;
-  serialize(fm: Record<string, unknown>, body: string): string;
-}
-
-/** The skills section a tool declares. */
-export interface SkillsSectionAnswers extends Omit<MarkdownSectionAnswers, "convertFrontmatter"> {
-  convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown>;
+  /** The tool's own writer for a document, when it keeps its header in a form of its own. */
+  readonly serialize?: (fm: Record<string, unknown>, body: string) => string;
 }
 
 /** What merging a plugin's mcp servers into a tool's shared file produced. */
@@ -297,8 +285,8 @@ export interface AiToolProfile {
   supportsUserScopeActivation(): boolean;
   /** The commands, agents or rules section the tool declares, or null. */
   markdownSection(kind: "commands" | "agents" | "rules"): MarkdownSectionAnswers | null;
-  /** The skills section the tool declares, or null. */
-  skillsSection(): SkillsSectionAnswers | null;
+  /** Whether the tool declares a skills section. */
+  declaresSkills(): boolean;
   /** The tool's native plugin CLI declaration, or undefined when it has none. */
   nativeActivation(): NativeActivationAnswers | undefined;
   /** The providers its main session and agents can run on, or null when it runs none. */

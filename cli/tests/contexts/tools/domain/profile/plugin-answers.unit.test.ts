@@ -42,10 +42,6 @@ describe("what a flat tool answers", () => {
     ]);
   });
 
-  it("names no loader entry unless it declares one", () => {
-    expect(answers.flatLayout().hooksLoaderEntry).toBeNull();
-  });
-
   it("takes a fresh install at project scope, and copies the built tree", () => {
     expect([answers.requiresUserScope(), answers.materializesFromBuiltTree()]).toEqual([
       false,
@@ -54,19 +50,9 @@ describe("what a flat tool answers", () => {
   });
 
   it("delivers its hooks to the project when it merges them there", () => {
-    const merging = answersOf(
-      flatPlugins({ ...projectMerge, flat: { dir: ".x/hooks/" } }, "aidd-")
-    );
+    const merging = answersOf(flatPlugins({ ...projectMerge, flat: true }, "aidd-"));
 
     expect(merging.deliversHooksToProject()).toBe(true);
-  });
-});
-
-describe("where a flat tool puts the hooks of a plugin", () => {
-  it("names no path when it declares no hooks directory", () => {
-    const answers = flatOf(answersOf(flatPlugins("refuses")));
-
-    expect(answers.hooksInstallPath("p", "hooks/hooks.json")).toBeNull();
   });
 });
 
@@ -183,12 +169,12 @@ describe("which hooks deliveries a flat layout takes", () => {
     artifacts: flatArtifactLayout(".x/", { skills: "nested", agent: { ext: ".md" } }),
     namespacePrefix: "x-",
   });
-  const bridge = { kind: "bridge", flat: { dir: ".x/hooks/" } } as const;
+  const bridge = { kind: "bridge", flat: true } as const;
 
   it("takes a bridge, and a project merge that declares a flat part", () => {
     expect([
       deliverySuits(flat, bridge),
-      deliverySuits(flat, { ...projectMerge, flat: { dir: ".x/hooks/" } }),
+      deliverySuits(flat, { ...projectMerge, flat: true }),
     ]).toEqual([true, true]);
   });
 

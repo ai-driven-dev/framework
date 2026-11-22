@@ -52,8 +52,6 @@ function codexPluginArtifacts(
       placement: { kind: "file", at: ".mcp.json" },
     },
     hooks: pluginTreeHooksArtifact(hooks),
-    rules: { supported: false },
-    commands: { supported: false },
   };
 }
 
@@ -127,8 +125,6 @@ function codexFlatArtifacts(toml: TomlCodec, hooks: FlatHooks): ToolBuildContrac
     },
     mcp: { supported: false }, // handled by configArtifact (config.toml mcp_servers)
     hooks: flatHooksArtifact(hooks, { tool: "codex" }),
-    rules: { supported: false },
-    commands: { supported: false },
   };
 }
 

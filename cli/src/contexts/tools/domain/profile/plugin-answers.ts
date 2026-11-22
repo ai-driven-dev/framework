@@ -1,4 +1,3 @@
-import { flatHooksPathWithLoaderEntry } from "../../../../shared/domain/materialization/flat-paths.js";
 import type {
   FlatLayout,
   FlatPluginAnswers,
@@ -107,33 +106,19 @@ function nativeAnswers(
   };
 }
 
-function flatLayoutOf(layout: FlatPlacement, delivery: HooksDelivery): FlatLayout {
-  const flat =
-    delivery.kind === "bridge" || delivery.kind === "project-merge" ? delivery.flat : undefined;
+function flatLayoutOf(layout: FlatPlacement): FlatLayout {
   return {
     skillLayout: layout.artifacts.skills,
     namespacePrefix: layout.namespacePrefix,
-    hooksDir: flat?.dir ?? null,
-    hooksLoaderEntry: flat?.loaderEntry ?? null,
-    hooksBridge: flat?.bridge ?? null,
   };
 }
 
 function flatAnswers(layout: FlatPlacement, hooks: HooksSection): FlatPluginAnswers {
-  const flatLayout = flatLayoutOf(layout, hooks.delivery);
+  const flatLayout = flatLayoutOf(layout);
   return {
     ...deliveryOf(layout, hooks),
     kind: "flat",
     flatLayout: () => flatLayout,
-    hooksInstallPath: (pluginName, hooksRelativePath) =>
-      flatLayout.hooksDir === null
-        ? null
-        : flatHooksPathWithLoaderEntry({
-            perPluginHooksDir: flatLayout.hooksDir,
-            loaderEntry: flatLayout.hooksLoaderEntry,
-            plugin: pluginName,
-            hooksRelativePath,
-          }),
     hookScript: hookScriptOf(hooks.delivery),
   };
 }

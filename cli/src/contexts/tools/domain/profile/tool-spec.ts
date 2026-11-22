@@ -32,7 +32,7 @@ type AiToolFields = Omit<
   | "agentModels"
   | "hostRefInUse"
   | "markdownSection"
-  | "skillsSection"
+  | "declaresSkills"
   | "configFiles"
   | "runtimeFiles"
   | "configAsset"

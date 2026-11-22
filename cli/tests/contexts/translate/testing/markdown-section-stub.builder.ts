@@ -7,6 +7,5 @@ export function markdownSectionInstalling(
   return {
     buildInstallPath: installAt,
     convertFrontmatter: (frontmatter) => frontmatter,
-    serialize: (_frontmatter, body) => body,
   };
 }

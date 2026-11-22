@@ -11,7 +11,6 @@ import { type InstallKind, installPathOf } from "../../../testing/profiles.build
 
 describe("claude profile", () => {
   it.each<[InstallKind, string, string]>([
-    ["skills", "commit.claude.md", ".claude/skills/commit.md"],
     ["commands", "04_code/implement.md", ".claude/commands/aidd/04/implement.md"],
     [
       "commands",

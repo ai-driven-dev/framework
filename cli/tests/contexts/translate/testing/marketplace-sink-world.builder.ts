@@ -53,8 +53,6 @@ export function stubContract(over: Partial<ToolBuildContract> = {}): ToolBuildCo
       skills: supportedArtifact({ kind: "relative" }),
       hooks: supportedArtifact({ kind: "relative" }),
       mcp: supportedArtifact({ kind: "relative" }),
-      rules: { supported: false },
-      commands: { supported: false },
     },
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,

@@ -20,31 +20,16 @@ import { ModelsSection } from "../../sections/models-section.js";
 import { buildCodexContract, buildCodexFlatContract } from "./codex-build.model.js";
 import { mergeCodexConfigToml } from "./codex-config.model.js";
 import { codexGlobalFilePath } from "./codex-paths.model.js";
-import { stripCodexSkillFrontmatter } from "./codex-skill.model.js";
 
 const PLUGIN_MCP = acceptedPluginMcp();
 
 const DIRECTORY = ".codex/";
 const TOOL_SUFFIX = ".codex.md";
-const AGENTS_SKILLS_PREFIX = ".agents/skills/";
 
 const LINK_SYNTAX: LinkSyntax = [
   { from: /\.codex\/skills\//g, to: ".agents/skills/aidd-" },
   { from: /(@?)\.codex\/commands\/(\d+)[_-][^/]+\/([^\s]+)/g, to: "$1.codex/commands/aidd/$2/$3" },
 ];
-
-function skillNameFromPath(fileName: string): string {
-  const parts = fileName.split("/");
-  if (parts.length > 1) return parts[0];
-  const base = parts[0];
-  if (base.endsWith(TOOL_SUFFIX)) return base.slice(0, -TOOL_SUFFIX.length);
-  if (base.endsWith(".md")) return base.slice(0, -3);
-  return base;
-}
-
-function buildCodexSkillFilePath(fileName: string): string {
-  return `${AGENTS_SKILLS_PREFIX}aidd-${skillNameFromPath(fileName)}/SKILL.md`;
-}
 
 const hooks = declareHooks(
   { toolId: "codex", directory: DIRECTORY, adapter },
@@ -129,8 +114,6 @@ function codexCapabilities(toml: TomlCodec) {
     }),
     skills: bound.skills({
       agentsSkillsDirectory: true,
-      buildInstallPath: buildCodexSkillFilePath,
-      convertFrontmatter: stripCodexSkillFrontmatter,
     }),
     commands: bound.commands({
       buildInstallPath: (fileName) => buildAiddCommandFilePath(DIRECTORY, fileName),

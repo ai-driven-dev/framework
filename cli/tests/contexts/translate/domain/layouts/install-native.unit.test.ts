@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseFrontmatter } from "../../../../../src/shared/domain/markdown.js";
+import { anEmptyContract } from "../../../../shared/testing/empty-build-contract.builder.js";
 import { nativeOf } from "../../../../shared/testing/native-plugin-answers.builder.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { contractToolProfile } from "../../testing/contract-tool-profile.builder.js";
@@ -156,5 +157,24 @@ describe("a target that hosts no plugin", () => {
       plugins: unsupportedPluginsStub("Claude hosts no plugin here."),
     });
     expect(translator.translateWithComponentPaths(makeDist(), unsupported)).toEqual(emptyResult);
+  });
+});
+
+describe("a native skill's frontmatter", () => {
+  it("is shaped the way the tool's marketplace build shapes it", () => {
+    const base = anEmptyContract();
+    const marketplaceContract = anEmptyContract({
+      artifacts: {
+        ...base.artifacts,
+        skills: {
+          supported: true,
+          source: { kind: "filteredTree", srcDir: "skills", inputExt: ".md" },
+          placement: { kind: "relative" },
+          skillFrontmatter: (fm) => ({ ...fm, shaped: true }),
+        },
+      },
+    });
+    const tree = treeOf(contractToolProfile(claude, { marketplaceContract }), skillDist());
+    expect(tree[".claude/plugins/sample-plugin/skills/hello/SKILL.md"]).toContain("shaped: true");
   });
 });

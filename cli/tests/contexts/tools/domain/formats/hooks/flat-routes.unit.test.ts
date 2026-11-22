@@ -208,28 +208,9 @@ describe("where a plugin's bridge lands", () => {
 
 describe("a flat tool's plugins capability, as far as hooks go", () => {
   it("accepts hooks flat, into the route's scripts folder", () => {
-    expect(
-      flatHooksSupport(routed({ flat: { scriptsDir: ".tool/hooks/" } }), bridge)
-    ).toStrictEqual({
+    expect(flatHooksSupport(routed({ flat: { scriptsDir: ".tool/hooks/" } }))).toStrictEqual({
       kind: "bridge",
-      flat: { dir: ".tool/hooks/" },
     });
-  });
-
-  it("names the loader's module and the bridge generated for it", () => {
-    const support = flatHooksSupport(
-      routed({ flat: { scriptsDir: ".tool/hooks/", loaderEntry: LOADER } }),
-      bridge
-    );
-
-    expect(support.flat.loaderEntry).toStrictEqual(LOADER);
-    expect(support.flat.bridge?.generate("{}", "p")).toBe("p:{}");
-    expect(support.flat.bridge?.dir).toBe(".tool/plugin/");
-    expect(support.flat.bridge?.skipIfSourceHas).toBe("tool-plugin.js");
-    expect(
-      flatHooksSupport(routed({ flat: { scriptsDir: ".tool/hooks/", loaderEntry: LOADER } })).flat
-        .bridge
-    ).toBeUndefined();
   });
 
   it("merges a flat tool's installed hooks into its route's shared file", () => {
@@ -251,7 +232,7 @@ describe("a flat tool's plugins capability, as far as hooks go", () => {
     ).toStrictEqual({
       kind: "project-merge",
       project: { relativePath: ".tool/hooks.json", format },
-      flat: { dir: ".tool/hooks/" },
+      flat: true,
     });
   });
 });

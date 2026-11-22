@@ -27,8 +27,6 @@ export function aStubBuildContract(over: Partial<ToolBuildContract> = {}): ToolB
       skills: aSupportedArtifact(),
       hooks: aSupportedArtifact(),
       mcp: aSupportedArtifact(),
-      rules: { supported: false },
-      commands: { supported: false },
     },
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,

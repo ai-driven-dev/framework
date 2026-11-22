@@ -144,7 +144,7 @@ describe("buildAntigravityFlatContract", () => {
     ).toEqual(["antigravity: unmapped event 'Stop' skipped"]);
   });
 
-  it.each(["mcp", "rules", "commands"] as const)("declares %s unsupported", (kind) => {
+  it.each(["mcp"] as const)("declares %s unsupported", (kind) => {
     expect(present(antigravity.buildContracts.flat)().artifacts[kind].supported).toBe(false);
   });
 

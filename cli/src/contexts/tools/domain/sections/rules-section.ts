@@ -1,5 +1,3 @@
-import { serializeFrontmatter } from "../../../../shared/domain/markdown.js";
-
 type RulesSectionParams = {
   toolSuffix: string;
   inputSuffix?: string;
@@ -43,9 +41,5 @@ export class RulesSection {
 
   convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
     return this.#params.convertFrontmatter(fm);
-  }
-
-  serialize(frontmatter: Record<string, unknown>, body: string): string {
-    return serializeFrontmatter(frontmatter, body);
   }
 }

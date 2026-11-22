@@ -10,11 +10,6 @@ describe("opencode profile", () => {
   ])("installs %s file %s at %s", (kind, built, path) => {
     expect(installPathOf(opencode, kind, built)).toBe(path);
   });
-
-  it("preserves every frontmatter field of a skill", () => {
-    const fm = { name: "my-skill", description: "A skill" };
-    expect(opencode.section("skills").convertFrontmatter(fm)).toEqual(fm);
-  });
 });
 
 describe("opencode build and conversion tables", () => {

@@ -13,7 +13,7 @@ const SNAPSHOT_FILE = join(REPOSITORY_ROOT, "cli/tests/golden/snapshots/tool-sup
 const SURFACES = ["skills", "agents", "mcp", "hooks", "rules", "commands"] as const;
 type Surface = (typeof SURFACES)[number];
 
-/** `no` is a surface the build contract declares unsupported; `bridge` is a hooks surface a
+/** `no` is a surface the build contract declares unsupported or does not name; `bridge` is a hooks surface a
  * tool reaches through a generated event bridge instead of a hooks file of its own. */
 type Support = "yes" | "bridge" | "no";
 
@@ -28,8 +28,8 @@ interface ToolSupport {
   builds: Record<string, Record<Surface, Support>>;
 }
 
-function supportOf(surface: Surface, contract: ArtifactContract): Support {
-  if (!contract.supported) return "no";
+function supportOf(surface: Surface, contract: ArtifactContract | undefined): Support {
+  if (!contract?.supported) return "no";
   if (surface === "hooks" && contract.skipHooksJson === true && contract.hooksBridge) {
     return "bridge";
   }
@@ -46,8 +46,9 @@ function capture(): ToolSupport[] {
       for (const mode of ["marketplace", "flat"] as const) {
         const contract = tool.buildContract(mode);
         if (contract === null) continue;
+        const declared: Partial<Record<string, ArtifactContract>> = contract.artifacts;
         builds[mode] = Object.fromEntries(
-          SURFACES.map((surface) => [surface, supportOf(surface, contract.artifacts[surface])])
+          SURFACES.map((surface) => [surface, supportOf(surface, declared[surface])])
         ) as Record<Surface, Support>;
       }
       return {

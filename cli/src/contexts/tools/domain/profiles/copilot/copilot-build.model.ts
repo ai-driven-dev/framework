@@ -104,8 +104,6 @@ export function buildCopilotFlatContract(hooks: FlatHooks): ToolBuildContract {
         mcpServersKey: "servers",
       },
       hooks: flatHooksArtifact(hooks, { tool: "copilot" }),
-      rules: { supported: false },
-      commands: { supported: false },
     },
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,

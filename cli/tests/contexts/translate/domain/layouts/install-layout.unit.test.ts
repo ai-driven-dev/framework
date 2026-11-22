@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { anEmptyContract } from "../../../../shared/testing/empty-build-contract.builder.js";
 import { contractToolProfile } from "../../testing/contract-tool-profile.builder.js";
 import {
   CLAUDE_ROOT_TOKEN,
@@ -101,13 +102,21 @@ describe("a flat target whose loader is triggered by a generated bridge", () => 
     plugins: flatPluginsStub({
       namespacePrefix: "aidd-",
       hooks: { accepts: true },
-      layout: {
-        hooksDir: ".stub/hooks/",
-        hooksBridge: {
-          generate: (raw, plugin) =>
-            raw.includes("PreToolUse") ? `bridge(${plugin}):${raw}` : null,
-          dir: ".stub/plugin/",
-          skipIfSourceHas: "own-plugin.js",
+    }),
+    flatContract: anEmptyContract({
+      artifacts: {
+        ...anEmptyContract().artifacts,
+        hooks: {
+          supported: true,
+          source: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
+          placement: { kind: "hooks", scriptsDir: ".stub/hooks/" },
+          skipHooksJson: true,
+          hooksBridge: {
+            generate: (raw, plugin) =>
+              raw.includes("PreToolUse") ? `bridge(${plugin}):${raw}` : null,
+            dir: ".stub/plugin/",
+            skipIfSourceHas: "own-plugin.js",
+          },
         },
       },
     }),
