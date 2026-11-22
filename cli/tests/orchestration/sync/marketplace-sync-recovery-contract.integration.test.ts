@@ -7,7 +7,7 @@ import {
 } from "../../../src/shared/domain/layout/aidd-layout.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.fake.js";
 import { hostRecord } from "../../shared/testing/host-record-reading.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   ADD_ERROR,
   ALIAS,
@@ -25,11 +25,13 @@ import {
 const firstSourceOf = (record: Parameters<typeof hostRecord>[0]) =>
   hostRecord(record)?.marketplaces[0]?.provenance;
 
+const REAL = { tools: registeredTools(), claude: TOOL.claude };
+
 describe("marketplace sync recovery preserves public ownership and failure outcomes", () => {
   it.each(["project", "user"] as const)(
     "reclaims an owned dead catalogue at its marketplace's %s scope",
     async (scope) => {
-      const { activator, result, manifest, logger } = await recovery({ scope });
+      const { activator, result, manifest, logger } = await recovery({ ...REAL, scope });
       expect(activator).toBeInstanceOf(RecoveringActivator);
       if (!(activator instanceof RecoveringActivator))
         throw new Error("expected recovery activator");
@@ -58,7 +60,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
   );
 
   it("recognizes the original project path even when its directory and project root no longer resolve", async () => {
-    const { activator, result } = await recovery({ realpathFails: [OLD, ROOT] });
+    const { activator, result } = await recovery({ ...REAL, realpathFails: [OLD, ROOT] });
     expect(activator.removedMarketplaces).toEqual([HOST]);
     expect(activator.enabledPlugins).toEqual([REF]);
     expect(result.warnings).toEqual([RECLAIM]);
@@ -74,6 +76,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
       target: "claude",
     });
     const { activator, result } = await recovery({
+      ...REAL,
       source,
       userRoot,
       realpathFails: [source, userRoot],
@@ -87,7 +90,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
   it.each(["live", "unknown"] as const)(
     "reports the add refusal for a %s registration without force-removing it",
     async (state) => {
-      const { activator, result } = await recovery({ state });
+      const { activator, result } = await recovery({ ...REAL, state });
       expect(activator.forcedRemovals).toEqual([]);
       expect(activator.addedMarketplaces).toEqual([]);
       expect(result.warnings).toEqual([
@@ -110,7 +113,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
   ])(
     "refuses force removal for a source outside this catalogue's recognized cache: %s",
     async (source) => {
-      const { activator, result, manifest } = await recovery({ source });
+      const { activator, result, manifest } = await recovery({ ...REAL, source });
       expect(activator.removedMarketplaces).toEqual([]);
       expect(activator.enabledPlugins).toEqual([REF]);
       expect(result.warnings).toEqual([
@@ -124,7 +127,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
   );
 
   it("keeps a failed remove recoverable and records the still-owned original source", async () => {
-    const { activator, result, manifest, logger } = await recovery({ failure: "remove" });
+    const { activator, result, manifest, logger } = await recovery({ ...REAL, failure: "remove" });
     expect(activator.removedMarketplaces).toEqual([]);
     expect(activator.addedMarketplaces).toEqual([]);
     expect(result.warnings).toEqual([
@@ -140,7 +143,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
   });
 
   it("reports a failed retry separately from a successful forced remove", async () => {
-    const { activator, result, logger } = await recovery({ failure: "retry" });
+    const { activator, result, logger } = await recovery({ ...REAL, failure: "retry" });
     expect(activator.removedMarketplaces).toEqual([HOST]);
     expect(activator.addedMarketplaces).toEqual([]);
     expect(activator.enabledPlugins).toEqual([]);
@@ -153,7 +156,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
   });
 
   it("returns a retry crash as a hard tool error and preserves earlier manifest ownership", async () => {
-    const { activator, result, manifest } = await recovery({ failure: "crash" });
+    const { activator, result, manifest } = await recovery({ ...REAL, failure: "crash" });
     expect(activator.removedMarketplaces).toEqual([HOST]);
     expect(activator.enabledPlugins).toEqual([]);
     expect(result).toEqual({
@@ -172,7 +175,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
   it.each(["absent", "foreign"] as const)(
     "does not reclaim when the source becomes %s between the failed add and recovery",
     async (sourceAfterCollision) => {
-      const { activator, result, manifest } = await recovery({ sourceAfterCollision });
+      const { activator, result, manifest } = await recovery({ ...REAL, sourceAfterCollision });
       expect(activator.removedMarketplaces).toEqual([]);
       expect(activator.enabledPlugins).toEqual([]);
       expect(result.warnings).toEqual([
@@ -188,6 +191,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
   it("reports the foreign plugin that appeared after add failed and leaves the host untouched", async () => {
     const foreign = `other@${HOST}`;
     const { activator, result } = await recovery({
+      ...REAL,
       plugins: [
         { location: "host plugins", refs: new Map() },
         { location: "host plugins", refs: new Map([[foreign, { enabled: true }]]) },
@@ -204,6 +208,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
   it("refuses recovery when the host marketplace registry disappears after the failed add", async () => {
     const owned = { location: "host marketplaces", entries: new Map([[HOST, OLD]]) };
     const { activator, result } = await recovery({
+      ...REAL,
       host: new FakeHostMarketplaceRegistry(owned, owned, {
         location: "host marketplaces",
         absent: true,
@@ -218,6 +223,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
 
   it("preserves an enabled project-owned ref without a machine manifest or another install", async () => {
     const { activator, result, manifest } = await recovery({
+      ...REAL,
       ownRefs: [REF],
       plugins: [{ location: "host plugins", refs: new Map([[REF, { enabled: true }]]) }],
     });
@@ -229,6 +235,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
 
   it("does not resave the manifest after a repeated sync produces identical native ownership and settings", async () => {
     const { activator, result, useCase, repo, fs, manifest } = await recovery({
+      ...REAL,
       settings: JSON.stringify({
         enabledPlugins: { [`review@${ALIAS}`]: true },
         permissions: { allow: ["Read"] },
@@ -248,7 +255,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
   it.each(["null", "[]", "false", '"user value"'])(
     "rebuilds managed settings from a JSON root that is not a settings object: %s",
     async (settings) => {
-      const { fs, manifest, result, logger } = await recovery({ settings });
+      const { fs, manifest, result, logger } = await recovery({ ...REAL, settings });
       const content = await fs.readFile(resolve(ROOT, ".claude/settings.json"));
       expect(JSON.parse(content)).toEqual({ enabledPlugins: { [`review@${ALIAS}`]: true } });
       expect(manifest.getToolFiles(TOOL.claude)[0]?.hash.value).toBe(FileHash.of(content).value);
@@ -259,6 +266,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
 
   it("evicts only the obsolete marketplace key from otherwise empty managed settings", async () => {
     const { fs, manifest, result } = await recovery({
+      ...REAL,
       settings: JSON.stringify({
         extraKnownMarketplaces: {},
         permissions: { allow: ["Read"] },
