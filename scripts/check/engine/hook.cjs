@@ -3,7 +3,8 @@
 // scripts/check/engine/hook.cjs). `start` notes the session's start, `mark` notes the artifacts the model wrote,
 // `check` judges them at Stop by the contracts under ./lib/contracts and hands each finding back once.
 // It knows no kind: each contract names where its artifacts live in a user's project (`scope`). A contract that sets
-// `"shell": false` is not scanned after a shell turn: its files change by install or by a writer, never by a stray command. Node built-ins only.
+// `"shell": false` is scanned after a shell turn only for the files a command of the turn names: an install writes them too,
+// and names none. Node built-ins only.
 const crypto = require("node:crypto");
 const fs = require("node:fs");
 const os = require("node:os");
@@ -185,20 +186,27 @@ function expand(root, glob, globRegex) {
   return [...files, ...outer.flatMap(filesBelow)];
 }
 
-/** The files under the contracts' scope whose mtime is after `since`; each scope glob walked and each file read once. */
-function modifiedSince(cwd, entries, since) {
+/**
+ * The files under the contracts' scope whose mtime is after `since`; each scope glob walked and each file read once.
+ * A `"shell": false` contract keeps only the files whose project path one of `commands` names.
+ */
+function modifiedSince(cwd, entries, since, commands) {
+  const text = commands.join("\n").replaceAll("\\", "/");
   const globs = new Set();
   const seen = new Set();
   const found = [];
-  for (const entry of entries) {
-    if (entry.broken || entry.contract.shell === false) continue;
+  const named = (entry) => entry.contract.shell === false;
+  // the contracts every shell turn scans walk first: a file they share with a named-only one is never dropped
+  const usable = entries.filter((entry) => !entry.broken);
+  for (const entry of [...usable.filter((e) => !named(e)), ...usable.filter(named)]) {
+    if (named(entry) && text === "") continue;
     for (const glob of entry.scope) {
       if (globs.has(glob)) continue;
       globs.add(glob);
       for (const file of expand(cwd, glob, entry.engine.globRegex)) {
         if (seen.has(file)) continue;
         seen.add(file);
-        if (statOf(file)?.mtimeMs > since) found.push(file);
+        if (statOf(file)?.mtimeMs > since && (!named(entry) || text.includes(relative(cwd, file)))) found.push(file);
       }
     }
   }
@@ -217,7 +225,7 @@ function start(event) {
   if (stat === undefined || Date.now() - stat.mtimeMs > STATE_MAX_AGE_MS) writeAtomic(ref, String(Date.now()));
 }
 
-/** PostToolUse: notes the files the model wrote that some contract could claim, or that a shell ran, in a mark of its own: calls running in parallel never share a file. */
+/** PostToolUse: notes the files the model wrote that some contract could claim, or the shell command it ran, in a mark of its own: calls running in parallel never share a file. */
 function mark(event) {
   const id = sessionOf(event);
   if (!id) return;
@@ -232,12 +240,13 @@ function mark(event) {
   }
   if (files.length === 0 && !shell) return;
   const folder = stateFolder(true);
-  if (folder) writeAtomic(path.join(folder, `${id}.${process.pid}-${crypto.randomBytes(6).toString("hex")}${MARK_SUFFIX}`), JSON.stringify({ files, shell }));
+  const mark = shell ? { files, shell, command: event.command } : { files, shell };
+  if (folder) writeAtomic(path.join(folder, `${id}.${process.pid}-${crypto.randomBytes(6).toString("hex")}${MARK_SUFFIX}`), JSON.stringify(mark));
 }
 
 /** The session's marks, merged and removed: each one is read once and consumed. */
 function takeMarks(folder, id) {
-  const turn = { files: [], shell: false };
+  const turn = { files: [], shell: false, commands: [] };
   let found = false;
   for (const name of listOf(folder)) {
     if (!name.startsWith(`${id}.`) || !name.endsWith(MARK_SUFFIX)) continue;
@@ -248,6 +257,7 @@ function takeMarks(folder, id) {
     found = true;
     if (Array.isArray(mark.files)) turn.files.push(...mark.files.filter((f) => typeof f === "string"));
     if (mark.shell === true) turn.shell = true;
+    if (typeof mark.command === "string") turn.commands.push(mark.command);
   }
   return found ? turn : null;
 }
@@ -314,7 +324,7 @@ function atStop(event) {
     const written = new Set(turn.files.map((f) => path.resolve(f)));
     const since = Number(attempt(() => fs.readFileSync(refFile, "utf8"), Number.NaN));
     // a shell scan that fails must not lose the files the model's own writes marked
-    if (turn.shell && Number.isFinite(since)) for (const file of attempt(() => modifiedSince(event.cwd, entries, since), [])) written.add(file);
+    if (turn.shell && Number.isFinite(since)) for (const file of attempt(() => modifiedSince(event.cwd, entries, since, turn.commands), [])) written.add(file);
     return judge(event.cwd, entries, written);
   } finally {
     try {
