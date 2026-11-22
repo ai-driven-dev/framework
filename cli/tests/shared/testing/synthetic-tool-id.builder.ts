@@ -189,3 +189,35 @@ export const SYNTHETIC_PROVEN_CATALOGUE = PROVEN_CATALOGUE;
 export function syntheticSyncCatalog(): ToolCatalog {
   return new RegisteredToolCatalog([...NATIVE_CONFIGS, IDE_CONFIG]);
 }
+/** A catalog listing one synthetic AI tool under the given id, driven through its own host CLI
+ * the way a native tool is: for a test of the native activation flow that names no real tool. */
+export function syntheticNativeCatalog(id: string): ToolCatalog {
+  return new RegisteredToolCatalog([
+    defineAiTool({
+      toolId: id,
+      distributionProbes: {
+        manifest: [".plugin/plugin.json"],
+        marketplace: [".plugin/marketplace.json"],
+      },
+      directory: `.${id}/`,
+      toolSuffix: `.${id}.md`,
+      signalDir: null,
+      displayName: id,
+      buildContracts: { flat: () => anEmptyContract() },
+      capabilities: () => ({
+        layout: nativeLayout({
+          pluginsDir: `.${id}/plugins/`,
+          nativeActivation: {
+            binary: id,
+            upgradeVerb: "upgrade",
+            enableVerb: "add",
+            disableVerb: "remove",
+          },
+        }),
+        manifest: manifestSection({ manifestRelativePath: "plugin.json", pluginRootToken: "." }),
+        hooks: { delivery: { kind: "plugin-file" } },
+      }),
+      linkSyntax: [],
+    }),
+  ]);
+}
