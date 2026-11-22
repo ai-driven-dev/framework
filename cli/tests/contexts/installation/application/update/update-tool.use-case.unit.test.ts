@@ -9,8 +9,8 @@ import {
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
-import { InputRequiredError } from "../../../../../src/shared/domain/shared.error.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
+import { updateOf } from "../../../../shared/testing/installation-deps.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 const PROJECT = "/proj";
@@ -71,7 +71,7 @@ describe("UpdateTool", () => {
   it("installs an AI tool through the runtime installer, forced, at the command's version", async () => {
     const { tool, runtime, ide } = setup();
 
-    const result = await tool.execute(commandOf());
+    const result = await updateOf(tool, commandOf());
 
     expect(result).toStrictEqual({ kind: "updated", toolId: TOOL.claude, fileCount: 3 });
     expect(ide).not.toHaveBeenCalled();
@@ -88,7 +88,7 @@ describe("UpdateTool", () => {
   it("installs an IDE tool through the IDE installer", async () => {
     const { tool, runtime, ide } = setup();
 
-    await tool.execute(commandOf(undefined, TOOL.vscode));
+    await updateOf(tool, commandOf(undefined, TOOL.vscode));
 
     expect(runtime).not.toHaveBeenCalled();
     expect(ide).toHaveBeenCalledWith(expect.objectContaining({ toolId: TOOL.vscode }));
@@ -97,7 +97,7 @@ describe("UpdateTool", () => {
   it("installs over an empty manifest when none is saved", async () => {
     const { tool, runtime } = setup({ manifest: null });
 
-    await tool.execute(commandOf());
+    await updateOf(tool, commandOf());
 
     expect(runtime.mock.calls[0]?.[0]).toMatchObject({ manifest: expect.any(Manifest) });
   });
@@ -113,30 +113,20 @@ describe("UpdateTool", () => {
       }),
     });
 
-    expect(await tool.execute(commandOf())).toStrictEqual({ kind: "skipped" });
+    expect(await updateOf(tool, commandOf())).toStrictEqual({ kind: "skipped" });
   });
 
   it.each([
     ["an Error", new Error("disk full")],
     ["a plain string", "plain string"],
-  ])("answers failed with %s the installer rejected with", async (_n, rejection) => {
+  ])("lets %s the installer rejected with travel", async (_n, rejection) => {
     const { tool } = setup({
       runtime: async () => {
         throw rejection;
       },
     });
 
-    expect(await tool.execute(commandOf())).toStrictEqual({ kind: "failed", error: rejection });
-  });
-
-  it("lets an InputRequiredError stop the run", async () => {
-    const { tool } = setup({
-      runtime: async () => {
-        throw new InputRequiredError("use --force");
-      },
-    });
-
-    await expect(tool.execute(commandOf())).rejects.toThrow(InputRequiredError);
+    await expect(updateOf(tool, commandOf())).rejects.toBe(rejection);
   });
 
   describe("the guard it hands the installer", () => {
@@ -145,7 +135,7 @@ describe("UpdateTool", () => {
       overwriteModified: UpdateToolRequest["overwriteModified"]
     ) {
       const s = setup(setupOptions);
-      await s.tool.execute(commandOf(overwriteModified));
+      await updateOf(s.tool, commandOf(overwriteModified));
       const gate = s.runtime.mock.calls[0]?.[0].onBeforeWriteRegularFile;
       if (gate === undefined) throw new Error("the installer was handed no gate");
       return { ...s, gate };
