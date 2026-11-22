@@ -6,6 +6,7 @@ import {
   AddPlugin,
   type AddPluginManifests,
 } from "../../../../src/contexts/installation/application/plugin/add-plugin.use-case.js";
+import { AddPluginToProject } from "../../../../src/contexts/installation/application/plugin/add-plugin-to-project.use-case.js";
 import type { BuiltMarketplaceEnsurer } from "../../../../src/contexts/installation/contract/built-marketplace.js";
 import type { InstallationMarketplaceRegistry } from "../../../../src/contexts/installation/ports/marketplace-sources.js";
 import type { LoadDistribution } from "../../../../src/contexts/installation/ports/plugin/load-plugin-distribution.js";
@@ -48,14 +49,19 @@ export function buildAddPlugin(
   });
   return new AddPlugin(
     {
-      fs: host.fs,
       ownership: userScopeOwnership(host.fs),
       manifests,
-      source: new ResolveAddedPluginSource(
-        { loadDistribution: sources.loadDistribution, fs: host.fs, built },
+      addToProject: new AddPluginToProject(
+        {
+          fs: host.fs,
+          source: new ResolveAddedPluginSource(
+            { loadDistribution: sources.loadDistribution, fs: host.fs, built },
+            tools
+          ),
+          place: new PlacePlugin({ fs: host.fs, logger: host.logger, built, pluginRuntime }, tools),
+        },
         tools
       ),
-      place: new PlacePlugin({ fs: host.fs, logger: host.logger, built, pluginRuntime }, tools),
     },
     tools
   );

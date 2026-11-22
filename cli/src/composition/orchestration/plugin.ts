@@ -10,6 +10,7 @@ import { ReplacePluginFiles } from "../../contexts/installation/application/mate
 import { PlacePlugin } from "../../contexts/installation/application/plugin/add/place-plugin.use-case.js";
 import { ResolveAddedPluginSource } from "../../contexts/installation/application/plugin/add/resolve-added-plugin-source.use-case.js";
 import { AddPlugin } from "../../contexts/installation/application/plugin/add-plugin.use-case.js";
+import { AddPluginToProject } from "../../contexts/installation/application/plugin/add-plugin-to-project.use-case.js";
 import { PluginMaterializer } from "../../contexts/installation/application/plugin/files/plugin-materializer.js";
 import { PlanPluginInstall } from "../../contexts/installation/application/plugin/plan-plugin-install.use-case.js";
 import { UpdatePlugin } from "../../contexts/installation/application/plugin/update-plugin.use-case.js";
@@ -203,19 +204,25 @@ function pluginAddOf(base: Base, inst: Installation) {
   const { installRuntimeConfigUseCase, builtMaterializationDeps } = inst;
   return new AddPlugin(
     {
-      fs,
       ownership: userScopeOwnership(fs),
       manifests: { project: manifestRepo, user: userManifestRepo },
-      source: new ResolveAddedPluginSource(
+      addToProject: new AddPluginToProject(
         {
-          loadDistribution: base.loadDistribution,
           fs,
-          built: builtMaterializationDeps,
+          source: new ResolveAddedPluginSource(
+            { loadDistribution: base.loadDistribution, fs, built: builtMaterializationDeps },
+            tools
+          ),
+          place: new PlacePlugin(
+            {
+              fs,
+              logger,
+              built: builtMaterializationDeps,
+              pluginRuntime: installRuntimeConfigUseCase,
+            },
+            tools
+          ),
         },
-        tools
-      ),
-      place: new PlacePlugin(
-        { fs, logger, built: builtMaterializationDeps, pluginRuntime: installRuntimeConfigUseCase },
         tools
       ),
     },
