@@ -1,7 +1,7 @@
 import { Ajv } from "ajv";
 import { describe, expect, it } from "vitest";
 import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domain/profile.js";
-import { bundledSchemas } from "../../../shared/testing/bundled-schemas.builder.js";
+import type { SchemaName } from "../../../../src/shared/domain/config-asset.js";
 import {
   aiCheck,
   type ConformanceCheck,
@@ -10,6 +10,16 @@ import {
 } from "./profile-conformance.contract.js";
 import { referenceHooks, referencePlugin, reversed } from "./reference-plugin.builder.js";
 import { translatePlugin } from "./translate-plugin.builder.js";
+
+/** The schemas the produced JSON is held to, by name. */
+export interface SchemaSource {
+  loadSchema(name: SchemaName): object;
+}
+
+/** What a translation check is told: the schemas the produced JSON is held to come from the caller. */
+export interface TranslationSubject extends ConformanceSubject {
+  readonly schemas: SchemaSource;
+}
 
 const PERSON_KEY = "personal";
 const PERSON_SERVER = JSON.stringify({ mcpServers: { mine: { command: "node" } } });
@@ -39,7 +49,7 @@ const PRESENCE = {
   hasMcpJson: true,
 };
 
-export const PROFILE_TRANSLATION_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
+export const PROFILE_TRANSLATION_CHECKS: readonly ConformanceCheck<TranslationSubject>[] = [
   aiCheck("writes its files sorted by path, whatever order its files arrive in", (p, s) => {
     const given = filesOf(p, s, "alpha");
     const paths = given.map((file) => file.relativePath);
@@ -61,11 +71,11 @@ export const PROFILE_TRANSLATION_CHECKS: readonly ConformanceCheck<ConformanceSu
       });
     }
   }),
-  aiCheck("builds manifests that satisfy the schema it names", (p) => {
+  aiCheck("builds manifests that satisfy the schema it names", (p, { schemas }) => {
     for (const { synthesizeManifest, manifestSchemaName } of contractsOf(p)) {
       if (synthesizeManifest === null || manifestSchemaName === null) continue;
       const manifest = synthesizeManifest({ name: "alpha", version: "1.0.0" }, PRESENCE);
-      const validate = SCHEMA_VALIDATOR.compile(bundledSchemas.loadSchema(manifestSchemaName));
+      const validate = SCHEMA_VALIDATOR.compile(schemas.loadSchema(manifestSchemaName));
       expect(validate(manifest), JSON.stringify(validate.errors)).toBe(true);
     }
   }),
@@ -104,11 +114,12 @@ export const PROFILE_TRANSLATION_CHECKS: readonly ConformanceCheck<ConformanceSu
 
 export function describeProfileTranslationConformance(
   profile: AiTool | IdeToolConfig,
-  registration: readonly (AiTool | IdeToolConfig)[]
+  registration: readonly (AiTool | IdeToolConfig)[],
+  schemas: SchemaSource
 ): void {
   describe(`${profile.toolId} translation`, () => {
     for (const check of PROFILE_TRANSLATION_CHECKS) {
-      it(check.title, () => check.holds({ profile, registration }));
+      it(check.title, () => check.holds({ profile, registration, schemas }));
     }
   });
 }

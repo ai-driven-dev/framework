@@ -66,10 +66,10 @@ function supportedArtifacts(
   );
 }
 
-export function aiCheck(
+export function aiCheck<S extends ConformanceSubject = ConformanceSubject>(
   title: string,
-  holds: (profile: AiTool, subject: ConformanceSubject) => void | Promise<void>
-): ConformanceCheck<ConformanceSubject> {
+  holds: (profile: AiTool, subject: S) => void | Promise<void>
+): ConformanceCheck<S> {
   return {
     title,
     holds: (subject) =>
