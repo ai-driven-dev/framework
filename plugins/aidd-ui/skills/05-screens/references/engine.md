@@ -23,7 +23,7 @@ Try the plugin row first, then the flat row.
 | Step | Command |
 | --- | --- |
 | propose 5, write the showcase | `node <engine> showcase --lang <code>` |
-| choose 4, keep the chosen variant | `node <engine> keep <set> <variant>` |
+| choose 4, keep the chosen variant; the engine records the others in `choices.md` | `node <engine> keep <set> <variant>` |
 | conclude 1, record what this run created | `node <engine> bump --task <task folder> --created <id>…` |
 | conclude 1, raise a screen sent back | `node <engine> bump --task <task folder> --change "<one line>" <id>…` |
 | conclude 2 and 4, validate | `node <engine> validate` |

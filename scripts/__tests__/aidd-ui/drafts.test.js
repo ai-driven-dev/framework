@@ -8,6 +8,8 @@ const { UI, PATHS, LIB, makeTmp, removeTmp, filesUnder, engine, validate, writeP
 // writes its page, `keep` makes one of its variants the design system's own file.
 
 const DRAFTS = `${UI}/drafts`;
+const CHOICES = `${UI}/choices.md`;
+const CHOICES_HEADER = "# Choices\n\n| Set | Kept | Set aside | Intent |\n| --- | --- | --- | --- |\n";
 const HEADER = ["Variant", "Intent", "Tone", "Density"];
 const ROWS = [
   ["a", "Calm and plain for analysts", "calm", "roomy"],
@@ -153,6 +155,22 @@ describe("aidd-ui drafts", () => {
       assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
     });
 
+    it("records each variant it sets aside, with its intent, in choices.md, which is no record", () => {
+      writeSet("brand");
+      keep("brand", "b");
+      assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
+      assert.equal(read(CHOICES), `${CHOICES_HEADER}| brand | b | a | Calm and plain for analysts |\n| brand | b | c | Dense and quiet for experts |\n`);
+    });
+
+    it("adds a later choice under the earlier ones", () => {
+      writeSet("brand");
+      keep("brand", "b");
+      writeSet("button", { rows: ROWS.slice(0, 2), files: (name) => ({ "components/x.md": `md ${name}\n`, "preview.html": "<p>p</p>\n" }) });
+      keep("button", "a");
+      assert.equal(read(CHOICES).split("\n").at(-2), "| button | a | b | Bold and direct for newcomers |");
+      assert.equal(read(CHOICES).split("\n").filter((line) => line.startsWith("| brand ")).length, 2);
+    });
+
     it("keeps the version of the record it replaces, never the variant's", () => {
       writeSet("brand");
       fs.writeFileSync(path.join(tmp, PATHS.BRAND), read(PATHS.BRAND).replace("version: 1", "version: 3"));
@@ -173,6 +191,7 @@ describe("aidd-ui drafts", () => {
       assert.deepEqual([run.code, run.err], [0, ""]);
       assert.equal(read(PATHS.BRAND), brandOf("Tone of c"));
       assert.equal(exists(`${DRAFTS}/brand`), false);
+      assert.deepEqual(read(CHOICES).split("\n").filter((line) => line.startsWith("| brand ")).map((line) => line.split(" | ")[2]), ["a", "b"]);
     });
 
     it("lands each file where the variant's folder mirrors it", () => {

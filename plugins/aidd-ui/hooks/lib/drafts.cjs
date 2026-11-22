@@ -1,7 +1,7 @@
 // Sets of variants: a skill writes one under aidd_docs/ui/drafts/<set>/, `showcase` checks it, `keep` makes one variant the design system's own.
 const fs = require("node:fs");
 const path = require("node:path");
-const { Refusal, NO_UI_FOLDER, walk, clean, relative, UI_DIR, DRAFTS_DIR, ERROR } = require("./project.cjs");
+const { Refusal, NO_UI_FOLDER, walk, clean, relative, UI_DIR, DRAFTS_DIR, CHOICES_FILE, ERROR } = require("./project.cjs");
 const { table, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
 const { fingerprintOf } = require("./html.cjs");
 const { loadsStylesheet, STYLESHEET_HREF } = require("./renders.cjs");
@@ -10,6 +10,7 @@ const VARIANTS_FILE = "variants.md";
 const PREVIEW_FILE = "preview.html"; // a variant's own look, shown while choosing and never kept
 const IGNORE_FILE = ".gitignore";
 const IGNORE_ALL = "*\n";
+const CHOICES_HEADER = `# Choices${LINE_BREAK}${LINE_BREAK}| Set | Kept | Set aside | Intent |${LINE_BREAK}| --- | --- | --- | --- |${LINE_BREAK}`;
 const VARIANT_COLUMN = "Variant";
 const INTENT_COLUMN = "Intent";
 const ROUND_COLUMN = "Round"; // the round a variant belongs to, 1 when the column is absent
@@ -112,7 +113,15 @@ function withVersionOf(variantText, existingText) {
   return lines.join(LINE_BREAK);
 }
 
-/** Copies the variant's folder into the design system, `preview.html` aside, then deletes the set. A record replaced keeps its version. */
+/** Adds to choices.md a row for each variant of the set but `kept`, every round included: what was set aside, and what it aimed at.
+ * A cell read from variants.md holds no "|" nor line break, so it is written as read. */
+function recordChoice(root, { id, rows }, kept) {
+  const file = path.join(root, CHOICES_FILE);
+  const rowsOf = rows.filter((row) => row[VARIANT_COLUMN] !== kept).map((row) => `| ${id} | ${kept} | ${row[VARIANT_COLUMN]} | ${row[INTENT_COLUMN]} |${LINE_BREAK}`);
+  fs.appendFileSync(file, `${fs.existsSync(file) ? "" : CHOICES_HEADER}${rowsOf.join("")}`);
+}
+
+/** Copies the variant's folder into the design system, `preview.html` aside, records the variants set aside, then deletes the set. A record replaced keeps its version. */
 function keep(root, id, variant) {
   const set = setOf(root, id);
   const problems = check(set);
@@ -129,6 +138,7 @@ function keep(root, id, variant) {
       else fs.copyFileSync(path.join(from, file), target);
       return `${UI_DIR}/${file}`;
     });
+  recordChoice(root, set, variant);
   fs.rmSync(set.dir, { recursive: true });
   return { kept: variant, written };
 }

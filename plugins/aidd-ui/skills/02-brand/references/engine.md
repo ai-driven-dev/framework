@@ -23,7 +23,7 @@ Try the plugin row first, then the flat row.
 | Step | Command |
 | --- | --- |
 | propose 5, write the showcase | `node <engine> showcase --lang <code>` |
-| choose 4, keep the chosen variant | `node <engine> keep brand <variant>` |
+| choose 4, keep the chosen variant; the engine records the others in `choices.md` | `node <engine> keep brand <variant>` |
 | choose 4, raise the brand created | `node <engine> bump --task <task folder> --created brand` |
 | choose 4, raise the brand changed | `node <engine> bump --task <task folder> --change "<one line>" brand` |
 | conclude 1 and 3, validate | `node <engine> validate` |

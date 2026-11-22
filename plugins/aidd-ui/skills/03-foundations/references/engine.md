@@ -24,7 +24,7 @@ Try the plugin row first, then the flat row.
 | --- | --- |
 | prepare 6, what a change reaches | `node <engine> impact <token>…` |
 | write 2, write the showcase | `node <engine> showcase --lang <code>` |
-| write 2, keep the chosen variant | `node <engine> keep <set> <variant>` |
+| write 2, keep the chosen variant; the engine records the others in `choices.md` | `node <engine> keep <set> <variant>` |
 | write 4, extract the tokens of the code | `node <engine> extract` |
 | write 5, raise what a change reaches | `node <engine> bump --task <task folder> --change "<one line>" [--breaking] <agreed refs>` |
 | write 7, generate the stylesheet | `node <engine> tokens`, until it exits 0 |

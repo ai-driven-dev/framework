@@ -26,7 +26,7 @@ Try the plugin row first, then the flat row.
 | write 2, raise what a change reaches | `node <engine> bump --task <task folder> --change "<one line>" [--breaking] <agreed refs>` |
 | write 2, raise a removal | `node <engine> bump --task <task folder> --removed <ids>`, in place of `--change` |
 | write 3, write the showcase | `node <engine> showcase --lang <code>` |
-| write 3, keep the chosen variant | `node <engine> keep <set> <variant>` |
+| write 3, keep the chosen variant; the engine records the others in `choices.md` | `node <engine> keep <set> <variant>` |
 | write 5, generate the stylesheet | `node <engine> tokens`, until it exits 0 |
 | write 6, record what this run created | `node <engine> bump --task <task folder> --created <id>…` |
 | conclude 1 and 4, validate | `node <engine> validate` |

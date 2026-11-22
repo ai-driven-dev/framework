@@ -89,13 +89,13 @@ const OWNED = {
   "06-review": ["reviews/"],
 };
 // What the engine writes for each skill's step; a folder ends with `/`. The history is the engine's, and a model could write it by hand: the snapshot cannot tell the two apart.
-// Every step ends by writing the showcase. The review's publication rewrites the status of the records it publishes: the brand, the system, journeys, wireframes and elements. The brand step's first history row is the engine's too.
+// Every step ends by writing the showcase. The review's publication rewrites the status of the records it publishes: the brand, the system, journeys, wireframes and elements. The brand step's first history row is the engine's too, and keeping a variant records the others in choices.md.
 const ENGINE_FILES = {
   "01-journeys": ["history.md", "showcase/"],
-  "02-brand": ["history.md", "drafts/.gitignore", "showcase/"],
-  "03-foundations": ["history.md", "code-debt.json", "tokens.css", "tokens.resolver.json", "showcase/"],
-  "04-components": ["history.md", "tokens.css", "tokens.resolver.json", "showcase/"],
-  "05-screens": ["history.md", "drafts/.gitignore", "showcase/"],
+  "02-brand": ["history.md", "choices.md", "drafts/.gitignore", "showcase/"],
+  "03-foundations": ["history.md", "choices.md", "code-debt.json", "tokens.css", "tokens.resolver.json", "showcase/"],
+  "04-components": ["history.md", "choices.md", "tokens.css", "tokens.resolver.json", "showcase/"],
+  "05-screens": ["history.md", "choices.md", "drafts/.gitignore", "showcase/"],
   "06-review": ["history.md", "brand.md", "system.md", "journeys/", "components/", "screens/", "wireframes/", "assets/", "showcase/"],
 };
 

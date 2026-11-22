@@ -320,10 +320,10 @@ describe("aidd-ui pilot step files", () => {
   it("lets each skill's step drive only these engine files", () => {
     assert.deepEqual(ENGINE_FILES, {
       "01-journeys": ["history.md", "showcase/"],
-      "02-brand": ["history.md", "drafts/.gitignore", "showcase/"],
-      "03-foundations": ["history.md", "code-debt.json", "tokens.css", "tokens.resolver.json", "showcase/"],
-      "04-components": ["history.md", "tokens.css", "tokens.resolver.json", "showcase/"],
-      "05-screens": ["history.md", "drafts/.gitignore", "showcase/"],
+      "02-brand": ["history.md", "choices.md", "drafts/.gitignore", "showcase/"],
+      "03-foundations": ["history.md", "choices.md", "code-debt.json", "tokens.css", "tokens.resolver.json", "showcase/"],
+      "04-components": ["history.md", "choices.md", "tokens.css", "tokens.resolver.json", "showcase/"],
+      "05-screens": ["history.md", "choices.md", "drafts/.gitignore", "showcase/"],
       "06-review": ["history.md", "brand.md", "system.md", "journeys/", "components/", "screens/", "wireframes/", "assets/", "showcase/"],
     });
   });

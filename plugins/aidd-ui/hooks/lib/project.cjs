@@ -9,6 +9,7 @@ const TOKENS_FILE = "tokens.json";
 const RESOLVER_FILE = "tokens.resolver.json";
 const CSS_FILE = "tokens.css";
 const HISTORY_FILE = `${UI_DIR}/history.md`; // the engine's: one row per version of each record, no record itself
+const CHOICES_FILE = `${UI_DIR}/choices.md`; // the engine's: the variants each kept choice set aside, no record itself
 const CODE_DEBT_FILE = `${UI_DIR}/code-debt.json`; // the colour literals the code held when the system started, by file
 const SHOWCASE_DIR = "showcase";
 const DRAFTS_DIR = "drafts"; // the sets of variants being compared: not the design system yet
@@ -112,7 +113,7 @@ function load(root) {
   const project = { root, texts: new Map(), tokensFile: `${UI_DIR}/${TOKENS_FILE}` };
   const unlisted = (dir) => project.texts.set(relative(root, dir), null);
   const files = walk(uiDir, (dir) => skipped.includes(dir), unlisted).map((file) => relative(root, file));
-  project.records = files.filter((file) => file.endsWith(RECORD_EXTENSION) && file !== HISTORY_FILE).flatMap((file) => readRecord(project, file));
+  project.records = files.filter((file) => file.endsWith(RECORD_EXTENSION) && file !== HISTORY_FILE && file !== CHOICES_FILE).flatMap((file) => readRecord(project, file));
   project.history = files.includes(HISTORY_FILE) ? table({ lines: (text(project, HISTORY_FILE) ?? "").split(LINE_BREAK) }) : [];
   project.renders = files.filter((file) => file.endsWith(RENDER_EXTENSION));
   return project;
@@ -125,4 +126,4 @@ function required(root) {
   return project;
 }
 
-module.exports = { Refusal, NO_UI_FOLDER, load, required, walk, text, clean, unreadable, relative, isUnder, withoutTrailingSeparators, besideTokens, checkOf, UI_DIR, SYSTEM_FILE, TOKENS_FILE, RESOLVER_FILE, CSS_FILE, HISTORY_FILE, CODE_DEBT_FILE, RENDER_EXTENSION, SHOWCASE_DIR, DRAFTS_DIR, ERROR, WARNING, ENGINE_REF };
+module.exports = { Refusal, NO_UI_FOLDER, load, required, walk, text, clean, unreadable, relative, isUnder, withoutTrailingSeparators, besideTokens, checkOf, UI_DIR, SYSTEM_FILE, TOKENS_FILE, RESOLVER_FILE, CSS_FILE, HISTORY_FILE, CHOICES_FILE, CODE_DEBT_FILE, RENDER_EXTENSION, SHOWCASE_DIR, DRAFTS_DIR, ERROR, WARNING, ENGINE_REF };
