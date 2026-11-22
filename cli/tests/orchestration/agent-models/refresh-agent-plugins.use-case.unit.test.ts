@@ -3,7 +3,7 @@ import type { AgentPluginPlacement } from "../../../src/contexts/installation/ap
 import { RefreshAgentPlugins } from "../../../src/orchestration/agent-models/refresh-agent-plugins.use-case.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { SYNTHETIC_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
 
 const PROJECT = "/project";
 
@@ -47,7 +47,7 @@ function refreshOver(placed: Placed, activationErrors: string[] = []) {
     },
   });
   const run = (scope: Scope) =>
-    useCase.execute({ projectRoot: PROJECT, hosts: [TOOL.claude], scope });
+    useCase.execute({ projectRoot: PROJECT, hosts: [SYNTHETIC_TOOL], scope });
   return { run, calls, activations };
 }
 
@@ -74,7 +74,7 @@ describe("RefreshAgentPlugins", () => {
 
     await run("project");
 
-    expect(activations).toStrictEqual([{ toolIds: [TOOL.claude] }]);
+    expect(activations).toStrictEqual([{ toolIds: [SYNTHETIC_TOOL] }]);
   });
 
   it("activates the machine-scope hosts only when the scope is user", async () => {
@@ -84,7 +84,7 @@ describe("RefreshAgentPlugins", () => {
     expect(activations).toStrictEqual([]);
 
     await run("user");
-    expect(activations).toStrictEqual([{ toolIds: [TOOL.claude], scope: "user" }]);
+    expect(activations).toStrictEqual([{ toolIds: [SYNTHETIC_TOOL], scope: "user" }]);
   });
 
   it("activates nothing at user scope when no host is installed on the machine", async () => {

@@ -6,7 +6,7 @@ import { RunUserScopeDoctor } from "../../../src/orchestration/doctor/run-user-s
 import { UserScopeFilterUnsupportedError } from "../../../src/orchestration/orchestration.error.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
 import { manifestRepositoryLoading } from "../../shared/testing/partial-ports.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { SYNTHETIC_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
 
 const ISSUES: DoctorIssue[] = [];
 
@@ -30,7 +30,7 @@ function aRun(machine: Manifest | null) {
 
 describe("RunUserScopeDoctor", () => {
   it("refuses a plugin filter before reading the machine", async () => {
-    const run = aRun(aManifest().withTool(TOOL.claude, []).build());
+    const run = aRun(aManifest().withTool(SYNTHETIC_TOOL, []).build());
 
     await expect(
       run.useCase.execute({ projectRoot: "/p", plugin: "aidd-dev" }, run.report)
@@ -47,20 +47,20 @@ describe("RunUserScopeDoctor", () => {
   });
 
   it("reports the machine, then checks every registration", async () => {
-    const run = aRun(aManifest().withTool(TOOL.claude, []).build());
+    const run = aRun(aManifest().withTool(SYNTHETIC_TOOL, []).build());
 
     expect(await run.useCase.execute({ projectRoot: "/p" }, run.report)).toBe(ISSUES);
-    expect(run.seen).toEqual([[TOOL.claude]]);
+    expect(run.seen).toEqual([[SYNTHETIC_TOOL]]);
     expect(run.checked).toEqual([{ projectRoot: "/p", allowedIds: null, globalInstall: true }]);
   });
 
   it("limits the check to the tool asked for", async () => {
-    const run = aRun(aManifest().withTool(TOOL.claude, []).build());
+    const run = aRun(aManifest().withTool(SYNTHETIC_TOOL, []).build());
 
-    await run.useCase.execute({ projectRoot: "/p", tool: TOOL.claude }, run.report);
+    await run.useCase.execute({ projectRoot: "/p", tool: SYNTHETIC_TOOL }, run.report);
 
     expect(run.checked).toEqual([
-      { projectRoot: "/p", allowedIds: new Set([TOOL.claude]), globalInstall: true },
+      { projectRoot: "/p", allowedIds: new Set([SYNTHETIC_TOOL]), globalInstall: true },
     ]);
   });
 });

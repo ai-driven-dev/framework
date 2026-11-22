@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import type { PluginSource } from "../../../src/contexts/installation/contract/plugin-sources.js";
 import { CheckMarketplaceUpstream } from "../../../src/orchestration/marketplace/check-marketplace-upstream.use-case.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { SYNTHETIC_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
 
 const installed = (marketplace: string, plugin: string): PluginSource => ({
   marketplace,
   plugin,
-  toolId: TOOL.claude,
+  toolId: SYNTHETIC_TOOL,
 });
 
 function checkOf(

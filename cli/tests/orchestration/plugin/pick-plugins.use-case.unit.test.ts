@@ -10,7 +10,7 @@ import {
 import { PickPlugins } from "../../../src/orchestration/plugin/pick-plugins.use-case.js";
 import { InvalidPluginManifestError } from "../../../src/shared/domain/shared.error.js";
 import { CheckboxRecordingPrompter } from "../../shared/testing/checkbox-recording-prompter.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { SYNTHETIC_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
 
 const PROJECT = "/project";
 
@@ -90,7 +90,7 @@ function build(options: {
   return { useCase, added, prompter, resolveMarketplace };
 }
 
-const command = { toolIds: [TOOL.claude], projectRoot: PROJECT, interactive: true };
+const command = { toolIds: [SYNTHETIC_TOOL], projectRoot: PROJECT, interactive: true };
 
 describe("PickPlugins", () => {
   it("refuses a run that cannot ask", async () => {
@@ -122,7 +122,7 @@ describe("PickPlugins", () => {
     expect(added).toEqual([
       {
         source: { kind: "local", path: "/plugins/alpha" },
-        toolIds: [TOOL.claude],
+        toolIds: [SYNTHETIC_TOOL],
         projectRoot: PROJECT,
         interactive: true,
         marketplace: "one",
