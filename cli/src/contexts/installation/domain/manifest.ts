@@ -16,7 +16,6 @@ import {
   createToolEntry,
   removePluginFromEntry,
   type ToolEntry,
-  trackedPathsInDirectory,
   updatePluginInEntry,
 } from "./manifest/tool-entry.js";
 import { withUpdatedHash } from "./manifest/tracked-files.js";
@@ -69,10 +68,6 @@ export class Manifest {
   }
 
   /** Tracked files, merge files and plugin files alike, across every tool. */
-  getTrackedPathsInDirectory(dir: string): Set<string> {
-    return trackedPathsInDirectory(this._tools.values(), dir);
-  }
-
   recordFileHash(toolId: ToolId, relativePath: string, hash: FileHash): void {
     const entry = this._tools.get(toolId);
     if (!entry) return;

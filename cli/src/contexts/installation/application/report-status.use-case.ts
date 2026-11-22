@@ -121,7 +121,7 @@ export class ReportStatus implements StatusQuery {
       ...(await mergeFileDrift(fs, mergeFiles, projectRoot)),
       ...(await addedFileDrift(fs, {
         directory: tool.directory,
-        trackedSet: manifest.getTrackedPathsInDirectory(tool.directory),
+        isTracked: (relativePath) => manifest.isFileTracked(relativePath),
         projectRoot,
         machineLocal: tool.machineLocalFiles(),
       })),

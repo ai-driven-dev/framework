@@ -338,8 +338,8 @@ describe("Manifest", () => {
     });
   });
 
-  describe("getTrackedPathsInDirectory()", () => {
-    it("lists the tracked, merged and plugin files under the directory, across tools, and no other", () => {
+  describe("isFileTracked() across files, merge files and plugin files", () => {
+    it("holds for each tool, and not for a path no entry lists", () => {
       const manifest = Manifest.create();
       manifest.addTool(TOOL.claude, "3.0.0", [
         makeFile(".claude/rules/a.md", "aa"),
@@ -362,11 +362,19 @@ describe("Manifest", () => {
         })
       );
 
-      expect([...manifest.getTrackedPathsInDirectory(".claude/")]).toStrictEqual([
+      const tracked = [
         ".claude/rules/a.md",
         ".claude/settings.json",
         ".claude/skills/x.md",
+        ".cursor/rules/b.mdc",
+      ];
+      expect(tracked.map((path) => manifest.isFileTracked(path))).toStrictEqual([
+        true,
+        true,
+        true,
+        true,
       ]);
+      expect(manifest.isFileTracked(".claude/rules/user.md")).toBe(false);
     });
   });
 
