@@ -374,16 +374,18 @@ describe("aidd-ui code link", () => {
       assert.deepEqual(problems(), [`${CARD}: no record links it and no ignore covers it`]);
     });
 
-    const SKIPPED = [
-      ".md", ".mdx", ".txt", ".rst", ".adoc",
-      ".json", ".yaml", ".yml", ".csv", ".toml",
-      ".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif", ".ico", ".bmp", ".svg",
-      ".woff", ".woff2", ".ttf", ".otf", ".eot",
-    ];
-    it("reads no document, data, image or font file: neither covered nor scanned", () => {
-      for (const extension of SKIPPED) put(tmp, `src/ui/skipped${extension}`, '{"color": "#ff0000"}\n');
-      assert.deepEqual(problems(), []);
-    });
+    const SKIPPED = {
+      documents: [".md", ".mdx", ".txt", ".rst", ".adoc"],
+      data: [".json", ".yaml", ".yml", ".csv", ".toml"],
+      images: [".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif", ".ico", ".bmp", ".svg"],
+      fonts: [".woff", ".woff2", ".ttf", ".otf", ".eot"],
+    };
+    for (const [kind, extensions] of Object.entries(SKIPPED)) {
+      it(`reads no ${kind} file: neither covered nor scanned`, () => {
+        for (const extension of extensions) put(tmp, `src/ui/skipped${extension}`, '{"color": "#ff0000"}\n');
+        assert.deepEqual(problems(), []);
+      });
+    }
 
     it("opens no code file outside the files a caller narrows the check to", () => {
       put(tmp, "src/ui/Other.tsx", 'const style = "color: #ff0000";\n');
@@ -518,14 +520,13 @@ describe("aidd-ui code link", () => {
       assert.deepEqual(problems(), []);
     });
 
-    it("takes he, fa-AF, ur_PK and AR-eg as right to left", () => {
-      for (const locale of ["he", "fa-AF", "ur_PK", "AR-eg"]) {
+    for (const locale of ["he", "fa-AF", "ur_PK", "AR-eg"]) {
+      it(`takes ${locale} as right to left`, () => {
         edit(tmp, SYSTEM, "locales: [fr, ar]", `locales: [fr, ${locale}]`);
         linkedStylesheet(".SearchField { margin-left: 0; }\n");
-        assert.equal(problems().length, 1, locale);
-        edit(tmp, SYSTEM, `locales: [fr, ${locale}]`, "locales: [fr, ar]");
-      }
-    });
+        assert.equal(problems().length, 1);
+      });
+    }
   });
 
   describe("C8 code tokens", () => {

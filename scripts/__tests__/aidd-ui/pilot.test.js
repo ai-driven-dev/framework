@@ -176,6 +176,14 @@ describe("aidd-ui pilot step files", () => {
   const hashes = (files) => Object.fromEntries(files.map((file) => [file, file]));
   const after = (...written) => hashes(written.map(ui));
 
+  it("owns the files each skill's Write only line names", () => {
+    const SKILLS = path.resolve(__dirname, "../../../plugins/aidd-ui/skills");
+    for (const [skill, entries] of Object.entries(OWNED)) {
+      const line = fs.readFileSync(path.join(SKILLS, skill, "SKILL.md"), "utf8").split("\n").find((each) => each.startsWith("- Write only"));
+      for (const entry of entries) assert.ok(line.includes(entry), `${skill}: ${entry}`);
+    }
+  });
+
   it("names a step and the path it wrote outside its set", () => {
     assert.deepEqual(stepBreaks("02-brand", {}, after("brand.md", "system.md")), ["02-brand wrote aidd_docs/ui/system.md"]);
     assert.deepEqual(stepBreaks("02-brand", {}, { ...after("brand.md"), "src/app.js": "x" }), ["02-brand wrote src/app.js"]);
@@ -200,6 +208,13 @@ describe("aidd-ui pilot step files", () => {
 
   it("names a draft a step left behind", () => {
     assert.deepEqual(stepBreaks("02-brand", {}, after("brand.md", "drafts/.gitignore", "drafts/brand/calm/brand.md")), ["02-brand wrote aidd_docs/ui/drafts/brand/calm/brand.md"]);
+  });
+
+  it("has each Write only line name the drafts its skill may leave while it works", () => {
+    const SKILLS = path.resolve(__dirname, "../../../plugins/aidd-ui/skills");
+    const lineOf = (skill) => fs.readFileSync(path.join(SKILLS, skill, "SKILL.md"), "utf8").split("\n").find((each) => each.startsWith("- Write only"));
+    assert.ok(lineOf("02-brand").includes("aidd_docs/ui/drafts/brand/"));
+    for (const skill of ["03-foundations", "04-components"]) assert.ok(lineOf(skill).includes("`drafts/`"), skill);
   });
 
   it("names a step that wrote an engine file it does not drive", () => {
@@ -320,6 +335,17 @@ describe("aidd-ui pilot chain", () => {
   });
 });
 
+describe("aidd-ui pilot platforms", () => {
+  it("asks for three directions in the blank brand request", () => {
+    assert.ok(REQUESTS.blank.brand.includes("three"));
+  });
+
+  it("asks for web and mobile in the blank foundations request, not in the brand one", () => {
+    assert.equal(REQUESTS.blank.brand.includes("web and mobile"), false);
+    assert.ok(REQUESTS.blank.foundations.includes("web and mobile"));
+  });
+});
+
 describe("aidd-ui pilot chats", () => {
   it("finds the chat folders of one copy, no other", () => {
     const names = [
@@ -378,6 +404,14 @@ describe("aidd-ui pilot run", () => {
     }
     assert.equal(modelRuns, 0);
     assert.ok(logged.some((line) => String(line).includes("git archive failed in the source")), logged.join("|"));
+  });
+});
+
+describe("aidd-ui pilot request suffix", () => {
+  it("has the model state its choices in the final reply, and write no file the skill does not name", () => {
+    const request = requestOf("blank", "02-brand", "brand");
+    assert.ok(request.includes("state each choice in your final reply"));
+    assert.ok(request.includes("write no file the skill does not name"));
   });
 });
 
