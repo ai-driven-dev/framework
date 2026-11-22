@@ -4,11 +4,24 @@
  * project-or-user union written inline. Each takes the files as text and returns violations;
  * `kinds.rules.arch.test.ts` holds the tree to them, with no violation tolerated.
  *
- * Written limit: the union is read when its two members sit side by side.
+ * Written limits: the union is read when its two members sit side by side; a cache is seen when it
+ * is a module-level `let` or a module-level `Map`/`Set` a method call mutates, not an object literal
+ * assigned to.
  */
+import {
+  isCallExpression,
+  isIdentifier,
+  isNewExpression,
+  isPropertyAccessExpression,
+  isVariableStatement,
+  type Node,
+  NodeFlags,
+  type SourceFile,
+} from "typescript/unstable/ast";
 import { present } from "../shared/testing/present.builder.js";
 import { literalsOf, readEach, violation } from "./kind-rule-support.js";
-import type { Violation } from "./kinds.js";
+import { kindsOf, type Violation } from "./kinds.js";
+import { walk } from "./ts-project.js";
 
 // A test reaches the repository through the repository-root builder.
 
@@ -162,5 +175,127 @@ export function binaryViolations(
           "return the code and its facts, and word the command in src/presentation"
         )
       )
+  );
+}
+
+// The domain holds no clock, no logging and no memo.
+
+const DOMAIN_KINDS = ["model", "profile"];
+const CLOCK_CALLS: readonly string[] = [
+  "Date.now",
+  "performance.now",
+  "process.hrtime",
+  "process.hrtime.bigint",
+];
+const MEMO_CONTAINERS: readonly string[] = ["Map", "Set", "WeakMap", "WeakSet"];
+const MEMO_WRITES: readonly string[] = ["set", "add", "delete", "clear"];
+
+/** `a.b.c` as text when every link is a plain name, else nothing. */
+function dotted(node: Node): string | undefined {
+  if (isIdentifier(node)) return node.text;
+  if (!isPropertyAccessExpression(node)) return undefined;
+  const owner = dotted(node.expression);
+  return owner && `${owner}.${node.name.text}`;
+}
+
+/** The module-level bindings of a file, each with whether it is a `const` and what it is built by. */
+function moduleBindings(root: SourceFile) {
+  return root.statements.filter(isVariableStatement).flatMap((statement) =>
+    statement.declarationList.declarations.flatMap(({ name, initializer }) =>
+      isIdentifier(name)
+        ? [
+            {
+              name: name.text,
+              isConst: (statement.declarationList.flags & NodeFlags.Const) !== 0,
+              type:
+                initializer && isNewExpression(initializer)
+                  ? dotted(initializer.expression)
+                  : undefined,
+            },
+          ]
+        : []
+    )
+  );
+}
+
+/** The module-level `let`s of a file, and its `Map`s and `Set`s by name. */
+function moduleState(root: SourceFile): { lets: string[]; containers: Map<string, string> } {
+  const bindings = moduleBindings(root);
+  return {
+    lets: bindings.filter((b) => !b.isConst).map((b) => b.name),
+    containers: new Map(
+      bindings.flatMap((b) =>
+        b.isConst && b.type && MEMO_CONTAINERS.includes(b.type) ? [[b.name, b.type] as const] : []
+      )
+    ),
+  };
+}
+
+/** What a node reads from the clock or the console: `new Date()` with no argument, a clock call, a
+ * `console.` call. */
+function worldRead(node: Node): string | undefined {
+  if (isNewExpression(node)) {
+    return dotted(node.expression) === "Date" && !node.arguments?.length ? "new Date()" : undefined;
+  }
+  const callee = isCallExpression(node) ? dotted(node.expression) : undefined;
+  return callee && (CLOCK_CALLS.includes(callee) || callee.startsWith("console."))
+    ? `${callee}()`
+    : undefined;
+}
+
+/** The name a `name.set(...)`-like call writes to, if the node is one. */
+function writtenName(node: Node): string | undefined {
+  const callee = isCallExpression(node) ? dotted(node.expression) : undefined;
+  const [owner, method, ...rest] = callee?.split(".") ?? [];
+  return owner && method && rest.length === 0 && MEMO_WRITES.includes(method) ? owner : undefined;
+}
+
+/** The clock and `console.` calls of a file, and the module-level names a method call writes. */
+function calls(root: SourceFile): { impure: string[]; written: Set<string> } {
+  const impure: string[] = [];
+  const written = new Set<string>();
+  walk(root, (node) => {
+    const read = worldRead(node);
+    if (read) impure.push(read);
+    const name = writtenName(node);
+    if (name) written.add(name);
+  });
+  return { impure, written };
+}
+
+/** What a domain file reads from the world or keeps between calls: the clock, `console.`, a
+ * module-level `let` and a module-level `Map` or `Set` that a method call writes. A string that
+ * spells them (a script the domain generates) is text, never a call. */
+function impurities(root: SourceFile): string[] {
+  const { lets, containers } = moduleState(root);
+  const { impure, written } = calls(root);
+  return [
+    ...impure,
+    ...lets.map((name) => `module-level let ${name}`),
+    ...[...containers]
+      .filter(([name]) => written.has(name))
+      .map(([name, type]) => `module-level ${type} ${name} written`),
+  ];
+}
+
+/** A file of the domain kind that reads a clock, logs, or keeps a cache between calls. The domain
+ * stays a function of its arguments: time comes in through the clock port, a message goes out as a
+ * returned fact, and a memo lives in the layer that owns the lifetime. */
+export function purityViolations(files: Readonly<Record<string, string>>): Violation[] {
+  const domain = Object.fromEntries(
+    Object.entries(files).filter(([path]) =>
+      kindsOf(path).some((kind) => DOMAIN_KINDS.includes(kind))
+    )
+  );
+  return readEach(domain, (path, root) =>
+    impurities(root).map((what) =>
+      violation(
+        "purity",
+        `${path} :: ${what}`,
+        "is not pure",
+        "the domain holds no clock, no logging and no memo",
+        "take time from the clock port, return a fact instead of logging, and keep a cache in application or infrastructure"
+      )
+    )
   );
 }

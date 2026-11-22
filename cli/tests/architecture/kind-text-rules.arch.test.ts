@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import { entries, expectNone, src, textsOf } from "./kind-rule-fixtures.js";
 import {
   binaryViolations,
+  purityViolations,
   repositoryViolations,
   scopeViolations,
   sizeViolations,
@@ -146,5 +147,52 @@ describe("only presentation names the binary", () => {
 describe("the tree below presentation names no binary", () => {
   it("holds the tree", () => {
     expectNone(binaryViolations(src(), declaredCommands()));
+  });
+});
+
+describe("the domain holds no clock, no logging and no memo", () => {
+  const model = "src/contexts/a/domain/b.model.ts";
+  const found = (text: string, path = model) => entries(purityViolations({ [path]: text }));
+
+  it.each([
+    ["Date.now", "export const f = () => Date.now();", "Date.now()"],
+    ["a bare new Date", "export const f = () => new Date();", "new Date()"],
+    ["performance.now", "export const f = () => performance.now();", "performance.now()"],
+    ["process.hrtime", "export const f = () => process.hrtime();", "process.hrtime()"],
+    ["console", "export const f = () => console.warn('x');", "console.warn()"],
+    [
+      "a module-level let",
+      "let cache = 0;\nexport const f = () => cache;",
+      "module-level let cache",
+    ],
+    [
+      "a Map a function writes",
+      "const seen = new Map<string, number>();\nexport const f = (k: string) => seen.set(k, 1);",
+      "module-level Map seen written",
+    ],
+    [
+      "a Set a function writes",
+      "const seen = new Set<string>();\nexport const f = (k: string) => seen.add(k);",
+      "module-level Set seen written",
+    ],
+  ])("reports %s", (_name, text, what) => {
+    expect(found(text)).toEqual([`${model} :: ${what}`]);
+  });
+
+  it("clears a dated value, a read-only table, a generated script and a layer that may keep state", () => {
+    expect(found("export const f = (t: number) => new Date(t);")).toEqual([]);
+    expect(found("const T = new Set(['a']);\nexport const f = (k: string) => T.has(k);")).toEqual(
+      []
+    );
+    expect(found("export const s = `console.warn(Date.now())`;")).toEqual([]);
+    expect(found("// Date.now() console.log\nexport const a = 1;")).toEqual([]);
+    expect(
+      found("export const f = () => Date.now();", "src/contexts/a/infrastructure/b.adapter.ts")
+    ).toEqual([]);
+    expect(found("let n = 0;", "src/contexts/a/application/b.use-case.ts")).toEqual([]);
+  });
+
+  it("holds the domain of the tree", () => {
+    expectNone(purityViolations(src()));
   });
 });
