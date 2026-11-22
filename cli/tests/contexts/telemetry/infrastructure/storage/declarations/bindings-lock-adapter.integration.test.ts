@@ -5,9 +5,9 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SnapshotBindings } from "../../../../../../src/contexts/telemetry/application/snapshot-bindings.use-case.js";
 import { BindingsLockAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/declarations/bindings-lock-adapter.js";
 import { BindingSnapshotStoreAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/binding-snapshot-store-adapter.js";
-import { UsageLedgerAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 import { FakeBindings } from "../../../testing/fake-bindings.fake.js";
+import { ledgerOver } from "../../../testing/ledger-adapters.builder.js";
 import { NO_ALIASES } from "../../../testing/no-aliases.fake.js";
 
 let root: string;
@@ -22,7 +22,7 @@ afterEach(async () => {
 
 describe("the bindings lock", () => {
   it("is granted while another process holds the ledger lock", async () => {
-    const ledger = new UsageLedgerAdapter(join(root, "ledger"), storage);
+    const ledger = ledgerOver(join(root, "ledger"), storage);
     const bindings = new BindingsLockAdapter(join(root, "bindings"), storage, {
       waitMs: 200,
       pollMs: 10,

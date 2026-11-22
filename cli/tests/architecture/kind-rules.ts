@@ -337,25 +337,25 @@ export function contractReaderViolations(files: Readonly<Record<string, string>>
     );
 }
 
-const BUILT_IN_COMPOSITION =
-  /^src\/(?:orchestration\/|contexts\/[^/]+\/(?:application|infrastructure)\/|shared\/infrastructure\/)/;
+const COMPOSED_FILE =
+  /^src\/orchestration\/(?!domain\/|ports\/)(?:.*\/)?(?![^/]*\.error\.ts$)[^/]+$|^src\/contexts\/[^/]+\/application\/.*(?:\.use-case|-translator)\.ts$|[-.]adapter\.ts$/;
 const CLASS_DECLARATION = /^export (?:abstract )?class (\w+)/gm;
 
 /** A validating value object the setup command still builds: moving it would reorder the
  * validation errors against the banner. */
 const BUILT_IN_PRESENTATION: ReadonlySet<string> = new Set(["SetupFlow"]);
 
-/** A class of an orchestration, an application, an infrastructure or the shared infrastructure
- * that a presentation file or the binary entry builds with `new`. Presentation parses arguments
- * and displays results; `composition/` builds the command or the adapter and hands it in, so a
- * command never decides which adapter backs it. */
+/** A class of an orchestration file, a use case, a translator or an adapter that any file outside
+ * `composition/` builds with `new`. Presentation parses arguments and displays results, a use case
+ * runs one operation, an adapter talks to one system: `composition/` builds the command or the
+ * adapter and hands it in, so nothing decides which collaborator backs it. */
 export function constructionViolations(files: Readonly<Record<string, string>>): Violation[] {
   const composed = Object.entries(files)
-    .filter(([path]) => BUILT_IN_COMPOSITION.test(path))
+    .filter(([path]) => COMPOSED_FILE.test(path))
     .flatMap(([, text]) => [...text.matchAll(CLASS_DECLARATION)].map((match) => present(match[1])))
     .filter((name) => !BUILT_IN_PRESENTATION.has(name));
   return Object.entries(files)
-    .filter(([path]) => path.startsWith("src/presentation/") || path === "src/cli.ts")
+    .filter(([path]) => path.startsWith("src/") && !path.startsWith("src/composition/"))
     .flatMap(([path, text]) =>
       [...new Set(composed)]
         .filter((name) => new RegExp(`\\bnew ${name}\\(`).test(text))
@@ -365,7 +365,7 @@ export function constructionViolations(files: Readonly<Record<string, string>>):
             "composition",
             `${path} :: new ${name}`,
             `builds ${name}`,
-            "presentation and the binary entry build no command and no adapter",
+            "only composition builds a command, a use case or an adapter",
             "build it in composition/ and hand it in"
           )
         )

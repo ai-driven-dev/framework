@@ -4,8 +4,8 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { CloneIdentity } from "../../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import { resolutionKey } from "../../../../../../src/contexts/telemetry/domain/repository-resolution.js";
-import { ResolutionStoreAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/resolution-store-adapter.js";
 import { PrivateStorageAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
+import { resolutionStoreOver } from "../../../testing/ledger-adapters.builder.js";
 
 let root: string;
 beforeEach(async () => {
@@ -24,7 +24,7 @@ const CLONE: CloneIdentity = {
 
 describe("the remembered resolutions", () => {
   it("are kept in roots.json beside the ledger, and read back", async () => {
-    const store = new ResolutionStoreAdapter(join(root, "ledger"), new PrivateStorageAdapter());
+    const store = resolutionStoreOver(join(root, "ledger"), new PrivateStorageAdapter());
     const resolution = {
       dir: "/a",
       repository_id: "id",
@@ -41,7 +41,7 @@ describe("the remembered resolutions", () => {
   });
 
   it("start empty from a file of the format before clones had an identity", async () => {
-    const store = new ResolutionStoreAdapter(join(root, "ledger"), new PrivateStorageAdapter());
+    const store = resolutionStoreOver(join(root, "ledger"), new PrivateStorageAdapter());
     await store.save(new Map());
     await writeFile(
       join(root, "ledger", "roots.json"),

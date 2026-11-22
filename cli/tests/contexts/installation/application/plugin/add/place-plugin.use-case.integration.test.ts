@@ -12,6 +12,7 @@ import {
 } from "../../../../../shared/testing/installation-deps.builder.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../../shared/testing/seed-from-directory.builder.js";
+import { builtDepsOf } from "../../../testing/built-translators.builder.js";
 import { fakeBuildSources } from "../../../testing/fake-build-sources.fake.js";
 import { FakeMarketplaceRegistry } from "../../../testing/fake-marketplace-registry.fake.js";
 
@@ -39,12 +40,12 @@ async function placeForCursor(foundFile: string | undefined) {
     source: { kind: "github", repo: "ai-driven-dev/framework" },
     scope: "project",
   });
-  const built = {
+  const built = builtDepsOf(deps.fs, {
     ...fakeBuildSources(),
     marketplaceRegistry: registry,
     homedir,
     platform: process.platform,
-  };
+  });
   const added = await new ResolveAddedPluginSource(
     {
       distributionLoader: new PluginDistributionLoader(

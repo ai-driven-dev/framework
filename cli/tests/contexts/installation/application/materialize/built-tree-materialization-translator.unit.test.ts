@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { BuiltTreeMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/built-tree-materialization-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { builtTreeTranslator } from "../../testing/built-translators.builder.js";
 import { translateDistribution } from "../../testing/fake-build-sources.fake.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
 
@@ -35,7 +35,7 @@ describe("BuiltTreeMaterializationTranslator - cursor", () => {
   it("counts changed files and skips byte-identical files on repeated materialization", async () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(`${BUILT}/plugins/sample-plugin/skills/demo/SKILL.md`, "built skill");
-    const translator = new BuiltTreeMaterializationTranslator(fs, {
+    const translator = builtTreeTranslator(fs, {
       platform: process.platform,
       homedir: () => HOME,
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -73,7 +73,7 @@ describe("BuiltTreeMaterializationTranslator - cursor", () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(`${BUILT}/plugins/sample-plugin/skills/demo/SKILL.md`, "built skill");
     const execute = vi.fn(translateDistribution.execute.bind(translateDistribution));
-    const translator = new BuiltTreeMaterializationTranslator(fs, {
+    const translator = builtTreeTranslator(fs, {
       platform: process.platform,
       homedir: () => HOME,
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -107,7 +107,7 @@ describe("BuiltTreeMaterializationTranslator - cursor", () => {
 
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
-    const translator = new BuiltTreeMaterializationTranslator(fs, {
+    const translator = builtTreeTranslator(fs, {
       platform: process.platform,
       homedir: () => HOME,
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -141,7 +141,7 @@ describe("BuiltTreeMaterializationTranslator - cursor", () => {
     fs.setFile(occupied, "foreign bytes");
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
-    const translator = new BuiltTreeMaterializationTranslator(fs, {
+    const translator = builtTreeTranslator(fs, {
       platform: process.platform,
       homedir: () => HOME,
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -168,7 +168,7 @@ describe("BuiltTreeMaterializationTranslator - cursor", () => {
     const fs = new InMemoryFileAdapter();
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
-    const translator = new BuiltTreeMaterializationTranslator(fs, {
+    const translator = builtTreeTranslator(fs, {
       platform: process.platform,
       homedir: () => HOME,
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -211,7 +211,7 @@ describe("BuiltTreeMaterializationTranslator - when no built tree applies", () =
     fs.setFile(`${BUILT}/plugins/sample-plugin/skills/demo/SKILL.md`, "built skill");
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
-    const translator = new BuiltTreeMaterializationTranslator(fs, {
+    const translator = builtTreeTranslator(fs, {
       platform: process.platform,
       homedir: () => HOME,
       ensureBuilt: fakeEnsureBuiltMarketplace(),

@@ -17,6 +17,7 @@ import { registeredTools, TOOL } from "../../../../shared/testing/registered-too
 import { saying } from "../../../../shared/testing/saying.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
+import { builtDepsOf } from "../../testing/built-translators.builder.js";
 import {
   fakeBuildSources,
   fakeBuiltDeps,
@@ -286,13 +287,13 @@ describe("UpdatePlugin", () => {
       const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const { addUseCase, updateUseCase } = await setup(deps, {
-        builtDeps: {
+        builtDeps: builtDepsOf(deps.fs, {
           ensureBuilt: fakeEnsureBuiltMarketplace(),
           marketplaceRegistry: deps.marketplaceRegistry,
           platform: process.platform,
           homedir: () => "/home/u",
           translate: translateDistribution,
-        },
+        }),
       });
       await addLocal(addUseCase);
       await recordVersion(deps, "sample-plugin", "0.0.1");

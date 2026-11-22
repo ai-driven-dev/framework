@@ -11,6 +11,7 @@ import {
 } from "../../../../../shared/testing/installation-deps.builder.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../../shared/testing/seed-from-directory.builder.js";
+import { builtDepsOf } from "../../../testing/built-translators.builder.js";
 import { fakeBuildSources } from "../../../testing/fake-build-sources.fake.js";
 
 const PROJECT_ROOT = "/test-project";
@@ -31,7 +32,7 @@ async function placeForClaude() {
         deps.pluginDistributionReader
       ),
       fs: deps.fs,
-      built: { ...built, ...platform },
+      built: builtDepsOf(deps.fs, { ...built, ...platform }),
     },
     registeredTools()
   ).execute({
@@ -49,7 +50,7 @@ async function placeForClaude() {
     {
       fs: deps.fs,
       logger,
-      built: { ...built, ...platform },
+      built: builtDepsOf(deps.fs, { ...built, ...platform }),
       pluginRuntime: {
         ensurePluginRuntimeFiles: async (tool) => {
           refreshed.push(tool.toolId);

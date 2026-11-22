@@ -2,12 +2,12 @@
  * a built tree's plugin-scoped `hooks/hooks.json` lands in a directory Cursor never reads. */
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { BuiltTreeMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/built-tree-materialization-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { builtTreeTranslator } from "../../testing/built-translators.builder.js";
 import { translateDistribution } from "../../testing/fake-build-sources.fake.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
 
@@ -63,7 +63,7 @@ describe("BuiltTreeMaterializationTranslator - cursor marketplace hooks (Phase 7
     fs.setFile(`${BUILT}/plugins/${PLUGIN_NAME}/hooks/post.js`, "module.exports = () => {};");
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
-    const translator = new BuiltTreeMaterializationTranslator(fs, {
+    const translator = builtTreeTranslator(fs, {
       platform: process.platform,
       homedir: () => HOME,
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -93,7 +93,7 @@ describe("BuiltTreeMaterializationTranslator - cursor marketplace hooks (Phase 7
     fs.setFile(`${BUILT}/plugins/${PLUGIN_NAME}/hooks/post.js`, "module.exports = () => {};");
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
-    const translator = new BuiltTreeMaterializationTranslator(fs, {
+    const translator = builtTreeTranslator(fs, {
       platform: process.platform,
       homedir: () => HOME,
       ensureBuilt: fakeEnsureBuiltMarketplace(),

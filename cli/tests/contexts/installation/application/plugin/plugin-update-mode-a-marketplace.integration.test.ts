@@ -12,6 +12,7 @@ import {
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
+import { builtDepsOf } from "../../testing/built-translators.builder.js";
 import { fakeBuildSources, translateDistribution } from "../../testing/fake-build-sources.fake.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
 
@@ -53,13 +54,13 @@ function makeUpdateUseCase(deps: Deps, registry: FakeMarketplaceRegistry): Updat
       ),
       replacePluginFiles: new ReplacePluginFiles(
         deps.fs,
-        {
+        builtDepsOf(deps.fs, {
           ensureBuilt: fakeEnsureBuiltMarketplace(),
           marketplaceRegistry: registry,
           platform: process.platform,
           homedir: () => HOME,
           translate: translateDistribution,
-        },
+        }),
         registeredTools()
       ),
     },

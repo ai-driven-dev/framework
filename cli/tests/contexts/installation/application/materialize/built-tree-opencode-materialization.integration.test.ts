@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { BuiltTreeMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/built-tree-materialization-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
@@ -7,6 +6,7 @@ import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plug
 import { fakeEnsureBuiltMarketplace } from "../../../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { builtTreeTranslator } from "../../testing/built-translators.builder.js";
 import { translateDistribution } from "../../testing/fake-build-sources.fake.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
 
@@ -67,7 +67,7 @@ describe("BuiltTreeMaterializationTranslator - opencode (integration)", () => {
 
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
-    const translator = new BuiltTreeMaterializationTranslator(fs, {
+    const translator = builtTreeTranslator(fs, {
       platform: process.platform,
       homedir: () => "/home/u",
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -104,7 +104,7 @@ describe("BuiltTreeMaterializationTranslator - opencode (integration)", () => {
 
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
-    const translator = new BuiltTreeMaterializationTranslator(fs, {
+    const translator = builtTreeTranslator(fs, {
       platform: process.platform,
       homedir: () => "/home/u",
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -139,7 +139,7 @@ describe("BuiltTreeMaterializationTranslator - what the opencode flat tree never
   ): Promise<{ skipped: readonly unknown[] }> {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
-    const translator = new BuiltTreeMaterializationTranslator(fs, {
+    const translator = builtTreeTranslator(fs, {
       platform: process.platform,
       homedir: () => "/home/u",
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -211,7 +211,7 @@ describe("BuiltTreeMaterializationTranslator - kilo (integration)", () => {
         hash: FileHash.of(baseConfig),
       }),
     ]);
-    const translator = new BuiltTreeMaterializationTranslator(fs, {
+    const translator = builtTreeTranslator(fs, {
       platform: process.platform,
       homedir: () => "/home/u",
       ensureBuilt: fakeEnsureBuiltMarketplace(),

@@ -14,6 +14,7 @@ import type { ToolCatalog } from "../../../../src/contexts/tools/contract/tool-c
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
 import type { Logger } from "../../../../src/shared/ports/logger.js";
+import { builtDepsOf } from "./built-translators.builder.js";
 
 /** What an AddPlugin writes through and reports with. */
 interface AddPluginHost {
@@ -37,13 +38,13 @@ export function buildAddPlugin(
   tools: ToolCatalog,
   pluginRuntime?: Pick<InstallRuntimeConfig, "ensurePluginRuntimeFiles">
 ): AddPlugin {
-  const built = {
+  const built = builtDepsOf(host.fs, {
     homedir: nodeHomedir,
     ensureBuilt: sources.ensureBuilt,
     marketplaceRegistry: sources.marketplaceRegistry,
     translate: sources.translate,
     platform: nodePlatform(),
-  };
+  });
   return new AddPlugin(
     {
       fs: host.fs,

@@ -9,6 +9,7 @@ import {
   initAndInstall,
 } from "../../../../shared/testing/installation-deps.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { builtDepsOf } from "../../testing/built-translators.builder.js";
 import { translateDistribution } from "../../testing/fake-build-sources.fake.js";
 import {
   attachFutureSupportedNativeClaim,
@@ -165,13 +166,13 @@ describe("UpdatePlugin - built-tree materialization", () => {
       fs: deps.fs,
       loader: new PluginDistributionLoader(deps.pluginFetcher, deps.pluginDistributionReader),
       guard: userScopeFileGuard,
-      builtDeps: {
+      builtDeps: builtDepsOf(deps.fs, {
         ensureBuilt: fakeEnsureBuiltMarketplace(),
         marketplaceRegistry: registry,
         platform: process.platform,
         homedir: () => HOME,
         translate: translateDistribution,
-      },
+      }),
     });
     const plan = await updater.planUpdate({
       plugin: machine.getPlugins(cursor)[0],

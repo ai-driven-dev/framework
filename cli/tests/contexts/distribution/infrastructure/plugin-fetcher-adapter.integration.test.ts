@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
+import { GitCloner } from "../../../../src/contexts/distribution/infrastructure/git-cloner-adapter.js";
 import { PluginFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
 
@@ -49,7 +50,7 @@ async function setupBareRepoWithPlugin(repoPath: string, workPath: string): Prom
 }
 
 function makeAdapter(): PluginFetcherAdapter {
-  return new PluginFetcherAdapter(new FileAdapter());
+  return new PluginFetcherAdapter(new FileAdapter(), new GitCloner());
 }
 
 describe("PluginFetcherAdapter", () => {
