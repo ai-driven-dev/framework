@@ -66,10 +66,8 @@ export class ResolveAddedPluginSource {
       return { isGithubMarketplace: false, distribution: await this.read(source, projectRoot) };
     }
     const isFlat = (toolId: AiToolId): boolean =>
-      resolvePluginTranslator(this.tools.aiProfile(toolId), {
-        fs: this.deps.fs,
-        built: this.deps.built,
-      })?.mode === "flat";
+      resolvePluginTranslator(this.tools.aiProfile(toolId), this.deps.built.translators)?.mode ===
+      "flat";
     const flat = toolIds.filter(isFlat);
     const native = toolIds.filter((toolId) => !isFlat(toolId));
     // Without a catalog entry a github add is refused before it places anything.

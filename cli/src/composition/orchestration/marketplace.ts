@@ -18,6 +18,7 @@ import { UserScopePluginFiles } from "../../contexts/installation/application/re
 import { BuildMarketplaceForTool } from "../../contexts/installation/application/sync/build-marketplace-for-tool.use-case.js";
 import { LoadSyncContext } from "../../contexts/installation/application/sync/load-sync-context.use-case.js";
 import { RecordActivation } from "../../contexts/installation/application/sync/record-activation.use-case.js";
+import { RecordMachineClaims } from "../../contexts/installation/application/sync/record-machine-claims.use-case.js";
 import { SyncToolSettingsFiles } from "../../contexts/installation/application/sync/sync-tool-settings-files.use-case.js";
 import { PurgeDeclaredCache } from "../../contexts/machine-claims/application/purge-declared-cache.js";
 import { RecordSourceReference } from "../../contexts/machine-claims/application/record-source-reference.use-case.js";
@@ -182,7 +183,15 @@ function syncSettingsOf(base: Base, inst: Installation, sources: SyncSources): S
     ),
     activateNativeTools: nativeActivationOf(base, inst, buildMarketplaceForTool),
     recordActivation: new RecordActivation(
-      { fs, records: registrationRecordRules, userManifestRepo },
+      {
+        fs,
+        records: registrationRecordRules,
+        userManifestRepo,
+        machineClaims: new RecordMachineClaims(
+          { fs, records: registrationRecordRules, userManifestRepo },
+          tools
+        ),
+      },
       tools
     ),
     sharedSource: new SharedFrameworkSource({

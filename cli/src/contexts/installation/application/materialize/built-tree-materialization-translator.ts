@@ -15,11 +15,10 @@ import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.j
 import type { PluginTranslationResult } from "../../ports/plugin/plugin-translation.js";
 import { resolveScopeForInstall, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import { writeChangedPluginFiles } from "../plugin/write-changed-plugin-files.js";
-import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
+import type { BuiltBuildDeps } from "../shared/built-materialization-deps.js";
 import { materializeRequestedMcp } from "./flat-mcp-materializer.js";
-import { ModeBFlatMaterializationTranslator } from "./mode-b-flat-materialization-translator.js";
 import type { AddPluginRequest, AddPluginResult, PluginTranslator } from "./plugin-translator.js";
-import { ProjectHooksMaterializer } from "./project-hooks-materializer.use-case.js";
+import type { ProjectHooksMaterializer } from "./project-hooks-materializer.use-case.js";
 import {
   readBuiltFlatFiles,
   readBuiltUserPluginFiles,
@@ -27,21 +26,20 @@ import {
 } from "./read-built-plugin-files.js";
 export class BuiltTreeMaterializationTranslator implements PluginTranslator {
   readonly mode = "flat" as const;
-  private readonly projectHooks: ProjectHooksMaterializer;
 
   constructor(
     private readonly fs: FileWriter & FileReader,
-    private readonly built: BuiltMaterializationDeps
-  ) {
-    this.projectHooks = new ProjectHooksMaterializer(fs);
-  }
+    private readonly built: BuiltBuildDeps,
+    private readonly projectHooks: ProjectHooksMaterializer,
+    private readonly fallback: PluginTranslator
+  ) {}
 
   async addPlugin(request: AddPluginRequest): Promise<AddPluginResult> {
     const { dist, tool, source, projectRoot, manifest, marketplace } = request;
     const resolved =
       marketplace === undefined ? null : await this.findMarketplace(marketplace, projectRoot);
     if (marketplace === undefined || resolved === null) {
-      return this.fallback().addPlugin(request);
+      return this.fallback.addPlugin(request);
     }
     const mode = tool.frameworkBuildMode();
     const { files, hooks, mcp } = await this.readTranslated(request, resolved, mode);
@@ -146,13 +144,5 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
   private async findMarketplace(name: string, projectRoot: string) {
     const all = await this.built.marketplaceRegistry.list(projectRoot);
     return all.find((m) => m.name === name) ?? null;
-  }
-
-  private fallback(): ModeBFlatMaterializationTranslator {
-    return new ModeBFlatMaterializationTranslator(
-      this.fs,
-      this.built.homedir,
-      this.built.translate
-    );
   }
 }

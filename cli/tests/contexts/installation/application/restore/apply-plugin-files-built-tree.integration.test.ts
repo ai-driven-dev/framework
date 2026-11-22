@@ -1,6 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { builtMaterializationDepsOf } from "../../../../../src/composition/installation.js";
 import type { RestoreAllPlugins } from "../../../../../src/contexts/installation/application/restore/restore-all-plugins.use-case.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import {
@@ -44,13 +45,13 @@ function makeRestoreUseCase(deps: Deps, registry: FakeMarketplaceRegistry): Rest
   return restoreAllPluginsOf({
     ...deps,
     loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
-    builtDeps: {
+    builtDeps: builtMaterializationDepsOf(deps.fs, {
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       marketplaceRegistry: registry,
       homedir,
       platform: process.platform,
       translate: translateDistribution,
-    },
+    }),
   });
 }
 

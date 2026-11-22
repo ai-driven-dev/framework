@@ -51,6 +51,7 @@ import { BindingsLockAdapter } from "../contexts/telemetry/infrastructure/storag
 import { RepositoryDeclarationsAdapter } from "../contexts/telemetry/infrastructure/storage/declarations/repository-declarations-adapter.js";
 import { SessionBindingStoreAdapter } from "../contexts/telemetry/infrastructure/storage/declarations/session-binding-store-adapter.js";
 import { BindingSnapshotStoreAdapter } from "../contexts/telemetry/infrastructure/storage/ledger/binding-snapshot-store-adapter.js";
+import { LeftOutAdapter } from "../contexts/telemetry/infrastructure/storage/ledger/left-out-adapter.js";
 import { ResolutionStoreAdapter } from "../contexts/telemetry/infrastructure/storage/ledger/resolution-store-adapter.js";
 import { UsageLedgerAdapter } from "../contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { MeasurementErasureAdapter } from "../contexts/telemetry/infrastructure/storage/measurement-erasure-adapter.js";
@@ -110,8 +111,11 @@ function wireStores(root: string) {
   const aliases = new RepositoryAliasStoreAdapter(ledgerDir);
   return {
     root,
-    ledger: new UsageLedgerAdapter(ledgerDir, storage),
-    resolutionStore: new ResolutionStoreAdapter(ledgerDir, storage),
+    ledger: new UsageLedgerAdapter(ledgerDir, storage, {
+      leftOut: new LeftOutAdapter(ledgerDir, storage),
+      aliases,
+    }),
+    resolutionStore: new ResolutionStoreAdapter(ledgerDir, storage, aliases),
     consentHistory: new ConsentHistoryAdapter(ledgerDir, storage),
     snapshotStore: new BindingSnapshotStoreAdapter(bindingsDir, storage, aliases),
     bindingsLock: new BindingsLockAdapter(bindingsDir, storage),

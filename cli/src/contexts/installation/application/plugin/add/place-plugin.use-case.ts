@@ -99,7 +99,7 @@ export class PlacePlugin {
   private async placeForTool(placement: ToolPlacement): Promise<Placement> {
     const { command, tool, userScopeDirTaken } = placement;
     const { dist, source, projectRoot, manifest, marketplace } = command;
-    const adapter = resolvePluginTranslator(tool, { fs: this.deps.fs, built: this.deps.built });
+    const adapter = resolvePluginTranslator(tool, this.deps.built.translators);
     if (adapter?.mode === "flat") {
       const result = await adapter.addPlugin({
         dist,

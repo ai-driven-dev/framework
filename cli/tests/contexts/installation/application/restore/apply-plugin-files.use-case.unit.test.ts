@@ -43,7 +43,7 @@ async function installedSample() {
   const apply = new ApplyPluginFiles({
     fs: deps.fs,
     loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
-    builtDeps: fakeBuiltDeps(),
+    builtDeps: fakeBuiltDeps(deps.fs),
   });
   const command = {
     toolId: TOOL.claude,

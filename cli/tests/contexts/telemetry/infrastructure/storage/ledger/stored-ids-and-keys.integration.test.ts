@@ -5,10 +5,9 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { renderResolutions } from "../../../../../../src/contexts/telemetry/domain/repository-resolution.js";
 import { RepositoryAliasStoreAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/legacy/repository-alias-store-adapter.js";
 import { BindingSnapshotStoreAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/binding-snapshot-store-adapter.js";
-import { ResolutionStoreAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/resolution-store-adapter.js";
-import { UsageLedgerAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../../../src/shared/infrastructure/private-storage-adapter.js";
 import { cloneOf } from "../../../testing/clone.builder.js";
+import { ledgerOver, resolutionStoreOver } from "../../../testing/ledger-adapters.builder.js";
 
 let dir: string;
 let bindings: string;
@@ -67,7 +66,7 @@ describe("the ledger, read after the rules changed", () => {
     ];
     const text = `${[kept, ...copies].map((line) => JSON.stringify(line)).join("\n")}\n`;
     await writeFile(join(dir, "2026-10-08.jsonl"), text);
-    const ledger = new UsageLedgerAdapter(dir, storage);
+    const ledger = ledgerOver(dir, storage);
     const held = await ledger.load();
     expect(held.records).toEqual([{ ...kept, repository_id: NEW }]);
     expect(held.skippedLines).toBe(2);
@@ -86,7 +85,7 @@ describe("the ledger, read after the rules changed", () => {
     await writeAliases();
     const now = call({ repository_id: NEW });
     await writeFile(join(dir, "2026-10-07.jsonl"), `${JSON.stringify(now)}\n`);
-    const held = await new UsageLedgerAdapter(dir, storage).load();
+    const held = await ledgerOver(dir, storage).load();
     expect(held.records).toEqual([now]);
     expect(held.unsettled.size).toBe(0);
   });
@@ -102,7 +101,7 @@ describe("roots.json and branch snapshots, read after the rules changed", () => 
       join(dir, "roots.json"),
       renderResolutions(new Map([["k", { ...seen, repository_id: OLD }]]))
     );
-    const loaded = await new ResolutionStoreAdapter(dir, storage).load();
+    const loaded = await resolutionStoreOver(dir, storage).load();
     expect([...loaded.values()].map((r) => r.repository_id)).toEqual([NEW]);
   });
 

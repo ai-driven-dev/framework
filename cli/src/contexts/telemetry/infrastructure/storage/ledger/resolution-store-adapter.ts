@@ -6,21 +6,20 @@ import {
   renderResolutions,
 } from "../../../domain/repository-resolution.js";
 import type { ResolutionStore } from "../../../ports/resolution-store.js";
-import { RepositoryAliasStoreAdapter } from "../../legacy/repository-alias-store-adapter.js";
+import type { RepositoryAliasStoreAdapter } from "../../legacy/repository-alias-store-adapter.js";
 import { readTextIfPresent } from "../../reading/text-file.js";
 
 /** `roots.json`, beside the ledger. */
 export class ResolutionStoreAdapter implements ResolutionStore {
   private readonly path: string;
-  private readonly aliases: RepositoryAliasStoreAdapter;
 
+  /** `aliases` is this directory's table, read at every load. */
   constructor(
     private readonly ledgerDir: string,
-    private readonly storage: PrivateStorage
+    private readonly storage: PrivateStorage,
+    private readonly aliases: RepositoryAliasStoreAdapter
   ) {
     this.path = join(ledgerDir, "roots.json");
-    // Its own directory's table, read at every load: no wiring can leave it out.
-    this.aliases = new RepositoryAliasStoreAdapter(ledgerDir);
   }
 
   /** Each repository by its id of now (see `RepositoryAliasStore`). */

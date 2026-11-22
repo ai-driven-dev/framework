@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { builtMaterializationDepsOf } from "../../../../../src/composition/installation.js";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
 import type { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.use-case.js";
 import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.use-case.js";
@@ -67,7 +68,7 @@ async function setup(
       loadDistribution: loadDistributionOf(options.fetcher ?? deps.pluginFetcher, reader),
       replacePluginFiles: new ReplacePluginFiles(
         deps.fs,
-        options.builtDeps ?? fakeBuiltDeps(),
+        options.builtDeps ?? fakeBuiltDeps(deps.fs),
         registeredTools()
       ),
     },
@@ -282,13 +283,13 @@ describe("UpdatePlugin", () => {
       const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const { addUseCase, updateUseCase } = await setup(deps, {
-        builtDeps: {
+        builtDeps: builtMaterializationDepsOf(deps.fs, {
           ensureBuilt: fakeEnsureBuiltMarketplace(),
           marketplaceRegistry: deps.marketplaceRegistry,
           platform: process.platform,
           homedir: () => "/home/u",
           translate: translateDistribution,
-        },
+        }),
       });
       await addLocal(addUseCase);
       await recordVersion(deps, "sample-plugin", "0.0.1");

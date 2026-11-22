@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { builtMaterializationDepsOf } from "../../../../../../src/composition/installation.js";
 import { PlacePlugin } from "../../../../../../src/contexts/installation/application/plugin/add/place-plugin.use-case.js";
 import { ResolveAddedPluginSource } from "../../../../../../src/contexts/installation/application/plugin/add/resolve-added-plugin-source.use-case.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
@@ -28,7 +29,7 @@ async function placeForClaude() {
     {
       loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
       fs: deps.fs,
-      built: { ...built, ...platform },
+      built: builtMaterializationDepsOf(deps.fs, { ...built, ...platform }),
     },
     registeredTools()
   ).execute({
@@ -46,7 +47,7 @@ async function placeForClaude() {
     {
       fs: deps.fs,
       logger,
-      built: { ...built, ...platform },
+      built: builtMaterializationDepsOf(deps.fs, { ...built, ...platform }),
       pluginRuntime: {
         ensurePluginRuntimeFiles: async (tool) => {
           refreshed.push(tool.toolId);

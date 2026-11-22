@@ -6,12 +6,9 @@ import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-a
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
 
-function buildDeps(homedir = "/stub-home") {
+function buildDeps() {
   const fs = new InMemoryFileAdapter();
-  return {
-    fs,
-    built: { ...fakeBuiltDeps(), homedir: () => homedir },
-  };
+  return fakeBuiltDeps(fs).translators;
 }
 
 function requirePlugins<T>(plugins: T | null): T {

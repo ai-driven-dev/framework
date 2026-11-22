@@ -1,9 +1,9 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { UsageLedgerAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../src/shared/infrastructure/private-storage-adapter.js";
 import { InMemoryLedger } from "../testing/in-memory-ledger.fake.js";
+import { ledgerOver } from "../testing/ledger-adapters.builder.js";
 import {
   describeUsageLedgerContract,
   type LedgerSubject,
@@ -20,7 +20,7 @@ describeUsageLedgerContract(
 describeUsageLedgerContract("the ledger on a temp dir", async (): Promise<LedgerSubject> => {
   const root = await mkdtemp(join(tmpdir(), "aidd-ledger-contract-"));
   return {
-    ledger: new UsageLedgerAdapter(join(root, "ledger"), new PrivateStorageAdapter()),
+    ledger: ledgerOver(join(root, "ledger"), new PrivateStorageAdapter()),
     dispose: () => rm(root, { recursive: true, force: true }),
   };
 });

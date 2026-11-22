@@ -12,9 +12,9 @@ import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/c
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { RepositoryVisibility } from "../../../src/contexts/distribution/ports/repository-visibility.js";
 import { InstallTools } from "../../../src/contexts/installation/application/install/install-tools.use-case.js";
+import { SetupFlow } from "../../../src/orchestration/domain/setup-flow.model.js";
 import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.use-case.js";
 import type { PluginPick } from "../../../src/orchestration/plugin/pick-plugins.use-case.js";
-import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
 import { ChoosePlugins } from "../../../src/orchestration/setup/steps/choose-plugins.use-case.js";
 import type { SyncSettings } from "../../../src/orchestration/sync/sync-settings.use-case.js";
 import { CatalogFetchAuthError } from "../../../src/shared/domain/shared.error.js";

@@ -1,6 +1,5 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
 import { ProjectScopeUnsupportedError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
@@ -11,6 +10,7 @@ import {
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../../../shared/testing/saying.builder.js";
+import { modeBTranslator } from "../../testing/built-translators.builder.js";
 import { translateDistribution } from "../../testing/fake-build-sources.fake.js";
 
 const PROJECT_ROOT = "/test-project";
@@ -38,7 +38,7 @@ function buildDist(name = "test-plugin"): PluginDistribution {
 function buildAdapter(homedir = "/stub-home") {
   const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
   return {
-    adapter: new ModeBFlatMaterializationTranslator(fs, () => homedir, translateDistribution),
+    adapter: modeBTranslator(fs, () => homedir, translateDistribution),
     fs,
   };
 }
@@ -298,11 +298,7 @@ describe("ModeBFlatMaterializationTranslator", () => {
     it("propagates a failure to read the MCP config other than the file being absent", async () => {
       const fs = new FaultingFileAdapter();
       fs.failOn("readFile", join(PROJECT_ROOT, "opencode.json"), errnoError("EACCES"));
-      const adapter = new ModeBFlatMaterializationTranslator(
-        fs,
-        () => "/stub-home",
-        translateDistribution
-      );
+      const adapter = modeBTranslator(fs, () => "/stub-home", translateDistribution);
       const manifest = Manifest.create();
       manifest.addTool(TOOL.opencode, "test", []);
 

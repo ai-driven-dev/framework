@@ -66,9 +66,6 @@ export class ReplacePluginFiles {
   // marketplace tools (claude/codex/copilot) re-register without writing files, so an
   // update matches whatever install would have done for that tool.
   private resolveTranslator(tool: AiToolProfile): PluginTranslator | null {
-    return resolvePluginTranslator(tool, {
-      fs: this.fs,
-      built: this.builtDeps,
-    });
+    return resolvePluginTranslator(tool, this.builtDeps.translators);
   }
 }

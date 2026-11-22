@@ -24,7 +24,7 @@ function restoreFor(deps: Deps) {
     plugins: restoreAllPluginsOf({
       ...deps,
       loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
-      builtDeps: fakeBuiltDeps(),
+      builtDeps: fakeBuiltDeps(deps.fs),
     }),
   });
 }

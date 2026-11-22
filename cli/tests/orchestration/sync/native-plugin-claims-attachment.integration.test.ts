@@ -152,7 +152,7 @@ for (const [toolId, catalogPath] of [
                 new PluginDistributionReaderAdapter(updateFs, registeredManifestProbes())
               ),
               guard: userScopeFileGuard,
-              builtDeps: fakeBuiltDeps(),
+              builtDeps: fakeBuiltDeps(updateFs),
             }),
             logger: new CapturingLogger(),
             records: registrationRecordRules,
@@ -188,7 +188,7 @@ for (const [toolId, catalogPath] of [
                   new PluginDistributionReaderAdapter(updateFs, registeredManifestProbes())
                 ),
                 guard: userScopeFileGuard,
-                builtDeps: fakeBuiltDeps(),
+                builtDeps: fakeBuiltDeps(updateFs),
               }),
               logger: new CapturingLogger(),
               records: registrationRecordRules,

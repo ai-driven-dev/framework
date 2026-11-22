@@ -92,7 +92,7 @@ function fixture(
               : new PluginDistributionReaderAdapter(fs, registeredManifestProbes())
           ),
           guard: userScopeFileGuard,
-          builtDeps: fakeBuiltDeps(),
+          builtDeps: fakeBuiltDeps(fs),
         }),
         logger,
         records: registrationRecordRules,

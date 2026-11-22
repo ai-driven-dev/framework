@@ -61,7 +61,7 @@ describe("RestoreAllPlugins - native-activation tools", () => {
     const useCase = restoreAllPluginsOf({
       fs: noopFs,
       loadDistribution: loadEmptyDistribution,
-      builtDeps: fakeBuiltDeps(),
+      builtDeps: fakeBuiltDeps(noopFs),
     });
 
     const result = await useCase.execute({
@@ -85,7 +85,7 @@ describe("RestoreAllPlugins - native-activation tools", () => {
     const useCase = restoreAllPluginsOf({
       fs: noopFs,
       loadDistribution: loadEmptyDistribution,
-      builtDeps: fakeBuiltDeps(),
+      builtDeps: fakeBuiltDeps(noopFs),
     });
 
     const result = await useCase.execute({
@@ -103,7 +103,7 @@ describe("RestoreAllPlugins - native-activation tools", () => {
     const useCase = restoreAllPluginsOf({
       fs: noopFs,
       loadDistribution: loadEmptyDistribution,
-      builtDeps: fakeBuiltDeps(),
+      builtDeps: fakeBuiltDeps(noopFs),
     });
 
     const result = await useCase.execute({
@@ -141,7 +141,7 @@ describe("RestoreAllPlugins - restricting to one plugin", () => {
     return restoreAllPluginsOf({
       fs: noopFs,
       loadDistribution: loadEmptyDistribution,
-      builtDeps: fakeBuiltDeps(),
+      builtDeps: fakeBuiltDeps(noopFs),
     });
   }
 

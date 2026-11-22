@@ -6,8 +6,8 @@ import { remoteFrameworkSource } from "../../../src/contexts/distribution/contra
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { RepositoryVisibility } from "../../../src/contexts/distribution/ports/repository-visibility.js";
 import { InstallTools } from "../../../src/contexts/installation/application/install/install-tools.use-case.js";
+import { SetupFlow } from "../../../src/orchestration/domain/setup-flow.model.js";
 import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.use-case.js";
-import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
 import { ChoosePlugins } from "../../../src/orchestration/setup/steps/choose-plugins.use-case.js";
 import { render } from "../../../src/presentation/errors/error-translator.presenter.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";

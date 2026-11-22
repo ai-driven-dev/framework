@@ -1,4 +1,5 @@
 import { homedir as nodeHomedir, platform as nodePlatform } from "node:os";
+import { builtMaterializationDepsOf } from "../../../../src/composition/installation.js";
 import type { InstallRuntimeConfig } from "../../../../src/contexts/installation/application/install/config/install-runtime-config.use-case.js";
 import { PlacePlugin } from "../../../../src/contexts/installation/application/plugin/add/place-plugin.use-case.js";
 import { ResolveAddedPluginSource } from "../../../../src/contexts/installation/application/plugin/add/resolve-added-plugin-source.use-case.js";
@@ -37,13 +38,13 @@ export function buildAddPlugin(
   tools: ToolCatalog,
   pluginRuntime?: Pick<InstallRuntimeConfig, "ensurePluginRuntimeFiles">
 ): AddPlugin {
-  const built = {
+  const built = builtMaterializationDepsOf(host.fs, {
     homedir: nodeHomedir,
     ensureBuilt: sources.ensureBuilt,
     marketplaceRegistry: sources.marketplaceRegistry,
     translate: sources.translate,
     platform: nodePlatform(),
-  };
+  });
   return new AddPlugin(
     {
       fs: host.fs,

@@ -65,7 +65,7 @@ describe("RestoreAll - consent to overwrite", () => {
       plugins: restoreAllPluginsOf({
         ...deps,
         loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
-        builtDeps: fakeBuiltDeps(),
+        builtDeps: fakeBuiltDeps(deps.fs),
       }),
     });
     const seen = recordAsks(restoreUseCase);
@@ -111,7 +111,7 @@ describe("RestoreAll - native-only tools", () => {
       plugins: restoreAllPluginsOf({
         ...deps,
         loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
-        builtDeps: fakeBuiltDeps(),
+        builtDeps: fakeBuiltDeps(deps.fs),
       }),
     });
     restoreUseCase.execute = async () => ({
@@ -166,7 +166,7 @@ function restoreAllDelegatingTo(
     plugins: restoreAllPluginsOf({
       ...deps,
       loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
-      builtDeps: fakeBuiltDeps(),
+      builtDeps: fakeBuiltDeps(deps.fs),
     }),
   });
   restoreUseCase.execute = delegate;

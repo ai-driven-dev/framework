@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { builtMaterializationDepsOf } from "../../../../../src/composition/installation.js";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
 import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.use-case.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
@@ -50,13 +51,13 @@ function makeUpdateUseCase(deps: Deps, registry: FakeMarketplaceRegistry): Updat
       loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
       replacePluginFiles: new ReplacePluginFiles(
         deps.fs,
-        {
+        builtMaterializationDepsOf(deps.fs, {
           ensureBuilt: fakeEnsureBuiltMarketplace(),
           marketplaceRegistry: registry,
           platform: process.platform,
           homedir: () => HOME,
           translate: translateDistribution,
-        },
+        }),
         registeredTools()
       ),
     },

@@ -21,7 +21,7 @@ import { writeChangedPluginFiles } from "../plugin/write-changed-plugin-files.js
 import { hashOutputFiles } from "../shared/hash-output-files.js";
 import { materializeRequestedMcp } from "./flat-mcp-materializer.js";
 import type { AddPluginRequest, AddPluginResult, PluginTranslator } from "./plugin-translator.js";
-import { ProjectHooksMaterializer } from "./project-hooks-materializer.use-case.js";
+import type { ProjectHooksMaterializer } from "./project-hooks-materializer.use-case.js";
 
 interface PluginRegistration {
   dist: PluginDistribution;
@@ -44,15 +44,13 @@ interface PluginRegistration {
  */
 export class ModeBFlatMaterializationTranslator implements PluginTranslator {
   readonly mode = "flat" as const;
-  private readonly projectHooks: ProjectHooksMaterializer;
 
   constructor(
     private readonly fs: FileWriter & FileReader,
     private readonly homedir: () => string,
-    private readonly translate: PluginTranslation
-  ) {
-    this.projectHooks = new ProjectHooksMaterializer(fs);
-  }
+    private readonly translate: PluginTranslation,
+    private readonly projectHooks: ProjectHooksMaterializer
+  ) {}
 
   async addPlugin(request: AddPluginRequest): Promise<AddPluginResult> {
     const {

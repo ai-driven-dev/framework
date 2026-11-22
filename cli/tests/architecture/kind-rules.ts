@@ -25,6 +25,7 @@ import {
 } from "typescript/unstable/ast";
 import { present } from "../shared/testing/present.builder.js";
 import { literalsOf, nameText, readEach, violation } from "./kind-rule-support.js";
+import type { KindId } from "./kind-table.js";
 import { kindsOf, type Violation } from "./kinds.js";
 import { PROFILE_MODULE_FILE, profileReaders, wholeProfileFlows } from "./profile-flow.js";
 import { INTERNAL_IMPORT, resolveImportTarget, unresolvedCommandMentions } from "./source-graph.js";
@@ -337,25 +338,21 @@ export function contractReaderViolations(files: Readonly<Record<string, string>>
     );
 }
 
-const BUILT_IN_COMPOSITION =
-  /^src\/(?:orchestration\/|contexts\/[^/]+\/(?:application|infrastructure)\/|shared\/infrastructure\/)/;
 const CLASS_DECLARATION = /^export (?:abstract )?class (\w+)/gm;
+const BUILT_KINDS: readonly KindId[] = ["adapter", "use-case"];
 
-/** A validating value object the setup command still builds: moving it would reorder the
- * validation errors against the banner. */
-const BUILT_IN_PRESENTATION: ReadonlySet<string> = new Set(["SetupFlow"]);
-
-/** A class of an orchestration, an application, an infrastructure or the shared infrastructure
- * that a presentation file or the binary entry builds with `new`. Presentation parses arguments
- * and displays results; `composition/` builds the command or the adapter and hands it in, so a
- * command never decides which adapter backs it. */
+/** A class of an adapter, a use case or an orchestration file that any file outside
+ * `composition/` builds with `new`. Presentation parses arguments and displays results, a use case
+ * runs one operation, an adapter talks to one system: `composition/` builds the command or the
+ * adapter and hands it in, so nothing decides which collaborator backs it. The kind of a file
+ * decides, by suffix or by its folder, so a class named otherwise than `*.adapter.ts` is held too.
+ * A class declared in a file of another kind (error, model, controller) is not built by composition. */
 export function constructionViolations(files: Readonly<Record<string, string>>): Violation[] {
   const composed = Object.entries(files)
-    .filter(([path]) => BUILT_IN_COMPOSITION.test(path))
-    .flatMap(([, text]) => [...text.matchAll(CLASS_DECLARATION)].map((match) => present(match[1])))
-    .filter((name) => !BUILT_IN_PRESENTATION.has(name));
+    .filter(([path]) => kindsOf(path).some((kind) => BUILT_KINDS.includes(kind)))
+    .flatMap(([, text]) => [...text.matchAll(CLASS_DECLARATION)].map((match) => present(match[1])));
   return Object.entries(files)
-    .filter(([path]) => path.startsWith("src/presentation/") || path === "src/cli.ts")
+    .filter(([path]) => path.startsWith("src/") && !path.startsWith("src/composition/"))
     .flatMap(([path, text]) =>
       [...new Set(composed)]
         .filter((name) => new RegExp(`\\bnew ${name}\\(`).test(text))
@@ -365,7 +362,7 @@ export function constructionViolations(files: Readonly<Record<string, string>>):
             "composition",
             `${path} :: new ${name}`,
             `builds ${name}`,
-            "presentation and the binary entry build no command and no adapter",
+            "only composition builds a command, a use case or an adapter",
             "build it in composition/ and hand it in"
           )
         )

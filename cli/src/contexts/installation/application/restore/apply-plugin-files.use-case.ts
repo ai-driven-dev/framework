@@ -62,10 +62,7 @@ export class ApplyPluginFiles {
   // (claude/codex/copilot) must re-register without writing files: not the raw source
   // transform in either case.
   private resolveTranslator(tool: AiToolProfile): PluginTranslator | null {
-    return resolvePluginTranslator(tool, {
-      fs: this.deps.fs,
-      built: this.deps.builtDeps,
-    });
+    return resolvePluginTranslator(tool, this.deps.builtDeps.translators);
   }
 
   private async restoreViaTranslator(

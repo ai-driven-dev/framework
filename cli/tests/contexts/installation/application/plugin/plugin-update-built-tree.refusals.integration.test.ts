@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
+import { builtMaterializationDepsOf } from "../../../../../src/composition/installation.js";
 import { PluginMaterializer } from "../../../../../src/contexts/installation/application/plugin/plugin-materializer.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../shared/testing/fake-ensure-built-marketplace.fake.js";
@@ -165,13 +166,13 @@ describe("UpdatePlugin - built-tree materialization", () => {
       fs: deps.fs,
       loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
       guard: userScopeFileGuard,
-      builtDeps: {
+      builtDeps: builtMaterializationDepsOf(deps.fs, {
         ensureBuilt: fakeEnsureBuiltMarketplace(),
         marketplaceRegistry: registry,
         platform: process.platform,
         homedir: () => HOME,
         translate: translateDistribution,
-      },
+      }),
     });
     const plan = await updater.planUpdate({
       plugin: machine.getPlugins(cursor)[0],

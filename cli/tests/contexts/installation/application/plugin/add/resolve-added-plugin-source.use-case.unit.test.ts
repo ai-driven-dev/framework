@@ -28,7 +28,7 @@ async function resolver() {
     {
       loadDistribution: loadDistributionOf({ fetch }, reader),
       fs: deps.fs,
-      built: fakeBuiltDeps(),
+      built: fakeBuiltDeps(deps.fs),
     },
     registeredTools()
   );

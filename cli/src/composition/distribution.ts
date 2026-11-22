@@ -5,6 +5,7 @@ import { LoadPluginDistribution } from "../contexts/distribution/application/plu
 import { RefreshMarketplace } from "../contexts/distribution/application/refresh-marketplace.use-case.js";
 import { RegisterFrameworkMarketplace } from "../contexts/distribution/application/register-framework-marketplace.use-case.js";
 import { ResolveMarketplace } from "../contexts/distribution/application/resolve-marketplace.use-case.js";
+import { GitCloner } from "../contexts/distribution/infrastructure/git-cloner-adapter.js";
 import { MarketplaceCacheAdapter } from "../contexts/distribution/infrastructure/marketplace-cache-adapter.js";
 import { MarketplaceRegistryAdapter } from "../contexts/distribution/infrastructure/marketplace-registry-adapter.js";
 import { MarketplaceTrustStoreAdapter } from "../contexts/distribution/infrastructure/marketplace-trust-store-adapter.js";
@@ -108,7 +109,7 @@ export function wireDistribution(shared: DistributionWiringShared): Distribution
   const marketplaceCache = new MarketplaceCacheAdapter(shared.projectRoot);
   const marketplaceRegistry = new MarketplaceRegistryAdapter(userConfigDir, atomicWriteFile);
   const marketplaceTrustStore = new MarketplaceTrustStoreAdapter(new PrivateStorageAdapter());
-  const pluginFetcher = new PluginFetcherAdapter(shared.fs, shared.tokenProvider);
+  const pluginFetcher = new PluginFetcherAdapter(shared.fs, new GitCloner(), shared.tokenProvider);
   const loadPluginDistribution = new LoadPluginDistribution(
     pluginFetcher,
     new PluginDistributionReaderAdapter(shared.fs, shared.manifestProbes)

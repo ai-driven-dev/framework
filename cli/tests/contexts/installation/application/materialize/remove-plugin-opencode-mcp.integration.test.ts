@@ -1,12 +1,12 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createOutput } from "../../../../../src/composition/shared.js";
-import { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { modeBTranslator } from "../../testing/built-translators.builder.js";
 import { translateDistribution } from "../../testing/fake-build-sources.fake.js";
 import { pluginRemover } from "../../testing/plugin-remover.builder.js";
 
@@ -44,11 +44,7 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
   it("removes only plugin-contributed servers; preserves user-added servers", async () => {
     const existingJson = JSON.stringify({ mcp: { "user-server": USER_SERVER } }, null, 2);
     const fs = new InMemoryFileAdapter({ [OPENCODE_JSON]: existingJson });
-    const adapter = new ModeBFlatMaterializationTranslator(
-      fs,
-      () => STUB_HOME,
-      translateDistribution
-    );
+    const adapter = modeBTranslator(fs, () => STUB_HOME, translateDistribution);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
     const manifestRepo = new InMemoryManifestRepository(manifest);
@@ -80,11 +76,7 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
 
   it("removes the plugin from the manifest after unmerge", async () => {
     const fs = new InMemoryFileAdapter();
-    const adapter = new ModeBFlatMaterializationTranslator(
-      fs,
-      () => STUB_HOME,
-      translateDistribution
-    );
+    const adapter = modeBTranslator(fs, () => STUB_HOME, translateDistribution);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
     const manifestRepo = new InMemoryManifestRepository(manifest);
@@ -113,11 +105,7 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
 
   it("is safe to call when opencode.json does not exist (first install never completed)", async () => {
     const fs = new InMemoryFileAdapter();
-    const adapter = new ModeBFlatMaterializationTranslator(
-      fs,
-      () => STUB_HOME,
-      translateDistribution
-    );
+    const adapter = modeBTranslator(fs, () => STUB_HOME, translateDistribution);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
     const manifestRepo = new InMemoryManifestRepository(manifest);
@@ -145,11 +133,7 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
 
   it("refuses reinstall when a previously contributed MCP server was user-edited", async () => {
     const fs = new InMemoryFileAdapter();
-    const translator = new ModeBFlatMaterializationTranslator(
-      fs,
-      () => STUB_HOME,
-      translateDistribution
-    );
+    const translator = modeBTranslator(fs, () => STUB_HOME, translateDistribution);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
     await translator.addPlugin({

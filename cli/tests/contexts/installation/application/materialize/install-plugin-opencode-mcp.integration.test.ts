@@ -1,10 +1,11 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
+import type { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { modeBTranslator } from "../../testing/built-translators.builder.js";
 import { translateDistribution } from "../../testing/fake-build-sources.fake.js";
 
 const PROJECT_ROOT = "/test-project";
@@ -41,11 +42,7 @@ function buildAdapter(seed: Record<string, string> = {}): {
   fs: InMemoryFileAdapter;
 } {
   const fs = new InMemoryFileAdapter(seed);
-  const adapter = new ModeBFlatMaterializationTranslator(
-    fs,
-    () => STUB_HOME,
-    translateDistribution
-  );
+  const adapter = modeBTranslator(fs, () => STUB_HOME, translateDistribution);
   return { adapter, fs };
 }
 

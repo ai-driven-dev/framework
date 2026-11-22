@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { builtMaterializationDepsOf } from "../../../../src/composition/installation.js";
 import { RefreshHostPlugin } from "../../../../src/contexts/host-registration/application/refresh-host-plugin.use-case.js";
 import { PluginMaterializer } from "../../../../src/contexts/installation/application/plugin/plugin-materializer.js";
 import { UpdateUserPluginFiles } from "../../../../src/contexts/installation/application/plugin/update-user-plugin-files.use-case.js";
@@ -65,13 +66,13 @@ export function makeUpdateUseCase(
           fs: deps.fs,
           loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
           guard: userScopeFileGuard,
-          builtDeps: {
+          builtDeps: builtMaterializationDepsOf(deps.fs, {
             ensureBuilt,
             marketplaceRegistry: registry,
             platform: process.platform,
             homedir: () => HOME,
             translate: translateDistribution,
-          },
+          }),
         }),
         logger: deps.logger,
         records: deps.registrationRecordRules,

@@ -10,6 +10,7 @@ import {
   type LoadSyncContextDeps,
 } from "../../../src/contexts/installation/application/sync/load-sync-context.use-case.js";
 import { RecordActivation } from "../../../src/contexts/installation/application/sync/record-activation.use-case.js";
+import { RecordMachineClaims } from "../../../src/contexts/installation/application/sync/record-machine-claims.use-case.js";
 import { SyncToolSettingsFiles } from "../../../src/contexts/installation/application/sync/sync-tool-settings-files.use-case.js";
 import { PurgeDeclaredCache } from "../../../src/contexts/machine-claims/application/purge-declared-cache.js";
 import {
@@ -51,6 +52,11 @@ export interface MarketplaceSyncParts {
 
 export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
   const build = new BuildMarketplaceForTool(parts.ensureBuilt, parts.logger, registeredTools());
+  const claimsDeps = {
+    fs: parts.fs,
+    records: registrationRecordRules,
+    userManifestRepo: parts.userManifestRepo,
+  };
   return new SyncSettings({
     loadContext: new LoadSyncContext({
       manifestRepo: parts.manifestRepo,
@@ -91,7 +97,7 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
       records: registrationRecordRules,
     }),
     recordActivation: new RecordActivation(
-      { fs: parts.fs, records: registrationRecordRules, userManifestRepo: parts.userManifestRepo },
+      { ...claimsDeps, machineClaims: new RecordMachineClaims(claimsDeps, registeredTools()) },
       registeredTools()
     ),
     sharedSource: new SharedFrameworkSource({

@@ -16,11 +16,10 @@ import {
   type TranscriptPosition,
 } from "../../../domain/transcript-position.js";
 import type { LeftOutStore, LoadedLedger, UsageLedger } from "../../../ports/usage-ledger.js";
-import { RepositoryAliasStoreAdapter } from "../../legacy/repository-alias-store-adapter.js";
+import type { RepositoryAliasStoreAdapter } from "../../legacy/repository-alias-store-adapter.js";
 import { readTextIfPresent } from "../../reading/text-file.js";
 import { DirectoryLock } from "./directory-lock.js";
 import type { LockOptions } from "./ledger-lock.js";
-import { LeftOutAdapter } from "./left-out-adapter.js";
 
 const DAILY = /^\d{4}-\d{2}-\d{2}\.jsonl$/;
 const EXTENSION = ".jsonl";
@@ -58,14 +57,15 @@ export class UsageLedgerAdapter implements UsageLedger {
   readonly leftOut: LeftOutStore;
   private readonly aliases: RepositoryAliasStoreAdapter;
 
+  /** `parts` are this directory's left-out store and alias table, read at every load. */
   constructor(
     private readonly dir: string,
     private readonly storage: PrivateStorage,
+    parts: { readonly leftOut: LeftOutStore; readonly aliases: RepositoryAliasStoreAdapter },
     private readonly lockOptions: Partial<LockOptions> = {}
   ) {
-    this.leftOut = new LeftOutAdapter(join(dir, "left-out.txt"), dir, storage);
-    // Its own directory's table, read at every load: no wiring can leave it out.
-    this.aliases = new RepositoryAliasStoreAdapter(dir);
+    this.leftOut = parts.leftOut;
+    this.aliases = parts.aliases;
   }
 
   exclusively<T>(work: () => Promise<T>): Promise<T> {

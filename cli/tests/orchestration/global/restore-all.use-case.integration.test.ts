@@ -1,6 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { builtMaterializationDepsOf } from "../../../src/composition/installation.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-distribution-reader-adapter.js";
 import { ReportStatus } from "../../../src/contexts/installation/application/report-status.use-case.js";
 import { RestoreGlobal } from "../../../src/contexts/installation/application/restore/project/restore-global.use-case.js";
@@ -89,7 +90,7 @@ function makeRestoreAll(
     plugins: restoreAllPluginsOf({
       ...deps,
       loadDistribution: loadDistributionOf(deps.pluginFetcher, pluginReader),
-      builtDeps: builtDeps(deps),
+      builtDeps: builtMaterializationDepsOf(deps.fs, builtDeps(deps)),
     }),
   });
   return new RestoreAll(

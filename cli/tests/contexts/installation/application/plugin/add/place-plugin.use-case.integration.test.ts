@@ -1,6 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { builtMaterializationDepsOf } from "../../../../../../src/composition/installation.js";
 import { PlacePlugin } from "../../../../../../src/contexts/installation/application/plugin/add/place-plugin.use-case.js";
 import { ResolveAddedPluginSource } from "../../../../../../src/contexts/installation/application/plugin/add/resolve-added-plugin-source.use-case.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
@@ -39,12 +40,12 @@ async function placeForCursor(foundFile: string | undefined) {
     source: { kind: "github", repo: "ai-driven-dev/framework" },
     scope: "project",
   });
-  const built = {
+  const built = builtMaterializationDepsOf(deps.fs, {
     ...fakeBuildSources(),
     marketplaceRegistry: registry,
     homedir,
     platform: process.platform,
-  };
+  });
   const added = await new ResolveAddedPluginSource(
     {
       loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),

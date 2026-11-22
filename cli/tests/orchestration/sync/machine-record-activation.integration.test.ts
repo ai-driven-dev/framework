@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { registrationRecordRules } from "../../../src/composition/installation.js";
 import { RecordActivation } from "../../../src/contexts/installation/application/sync/record-activation.use-case.js";
+import { RecordMachineClaims } from "../../../src/contexts/installation/application/sync/record-machine-claims.use-case.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
 import { registeredCatalog } from "../../shared/testing/catalog-of.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
@@ -39,8 +40,13 @@ describe("the machine record is saved once any tool of the run changed it", () =
       pluginClaims: [{ ref: HELD_REF, dependents: [] }],
     });
     const repo = new InMemoryManifestRepository(machine);
+    const deps = {
+      fs: new InMemoryFileAdapter(),
+      records: registrationRecordRules,
+      userManifestRepo: repo,
+    };
     const record = new RecordActivation(
-      { fs: new InMemoryFileAdapter(), records: registrationRecordRules, userManifestRepo: repo },
+      { ...deps, machineClaims: new RecordMachineClaims(deps, registeredCatalog()) },
       registeredCatalog()
     );
 
