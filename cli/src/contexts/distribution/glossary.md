@@ -12,6 +12,7 @@ The language of the `distribution` context. A name in the code means what this p
 | Trust | The recorded consent to read a source, kept per project | `MarketplaceTrustStore` |
 | Catalog | The list of plugins a marketplace offers, in the shape its host writes | `PluginCatalog`, `parsePluginCatalog`, `catalog-parsers/` |
 | Cache | The local copy of a fetched marketplace, reused until it is stale | `MarketplaceCachePort`, `isMarketplaceStale` |
+| Distribution loading | Fetching a plugin source, then reading the distribution found there | `LoadPluginDistribution`, `PluginDistributionReader` |
 | Staleness | A marketplace fetched longer ago than the allowed days | `STALE_MAX_DAYS_DEFAULT` |
 | Resolution | Turning a marketplace into its local path and its catalog, fetching only when needed | `ResolveMarketplace` |
 | Refresh | Fetching every registered marketplace again and recording the version it now carries | `RefreshMarketplace` |

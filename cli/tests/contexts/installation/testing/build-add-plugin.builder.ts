@@ -6,9 +6,9 @@ import {
   AddPlugin,
   type AddPluginManifests,
 } from "../../../../src/contexts/installation/application/plugin/add-plugin.use-case.js";
-import type { PluginDistributionLoader } from "../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import type { BuiltMarketplaceEnsurer } from "../../../../src/contexts/installation/contract/built-marketplace.js";
 import type { InstallationMarketplaceRegistry } from "../../../../src/contexts/installation/ports/marketplace-sources.js";
+import type { LoadDistribution } from "../../../../src/contexts/installation/ports/plugin/load-plugin-distribution.js";
 import type { PluginTranslation } from "../../../../src/contexts/installation/ports/plugin/plugin-translation.js";
 import type { ToolCatalog } from "../../../../src/contexts/tools/contract/tool-catalog.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
@@ -23,7 +23,7 @@ interface AddPluginHost {
 
 /** Where a plugin's files come from. */
 export interface AddPluginSources {
-  distributionLoader: PluginDistributionLoader;
+  loadDistribution: LoadDistribution;
   marketplaceRegistry: InstallationMarketplaceRegistry;
   ensureBuilt: BuiltMarketplaceEnsurer;
   translate: PluginTranslation;
@@ -49,7 +49,7 @@ export function buildAddPlugin(
       fs: host.fs,
       manifests,
       source: new ResolveAddedPluginSource(
-        { distributionLoader: sources.distributionLoader, fs: host.fs, built },
+        { loadDistribution: sources.loadDistribution, fs: host.fs, built },
         tools
       ),
       place: new PlacePlugin({ fs: host.fs, logger: host.logger, built, pluginRuntime }, tools),

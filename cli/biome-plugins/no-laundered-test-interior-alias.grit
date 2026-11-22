@@ -1,0 +1,15 @@
+language js
+
+// The hand-back of no-laundered-test-interior through an alias: a type imported from a closed
+// folder or a context kit, then exported under that name or another, passes the import
+// restriction by a side door.
+`export type $alias = $target` as $statement where {
+  $statement <: within JsModule() as $module,
+  $module <: contains or {
+    `import type { $target } from $source`,
+    `import type { $_ as $target } from $source`
+  },
+  $source <: r".*/contexts/[^/]+/[^/]+/.*",
+  $source <: not r".*/contexts/[^/]+/(?:application|contract)/.*",
+  register_diagnostic(span=$statement, message="a helper aliases a type of a closed folder or a context kit: import it where it is used, from application/ or contract/ only", severity="error")
+}

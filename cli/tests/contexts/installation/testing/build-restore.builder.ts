@@ -7,9 +7,8 @@ import { RestoreToolFiles } from "../../../../src/contexts/installation/applicat
 import type { BuiltMaterializationDeps } from "../../../../src/contexts/installation/application/shared/built-materialization-deps.js";
 import type { FileMerger } from "../../../../src/contexts/installation/ports/file-merger.js";
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
-import type { PluginFetcher } from "../../../../src/contexts/installation/ports/marketplace-sources.js";
 import type { Platform } from "../../../../src/contexts/installation/ports/platform.js";
-import type { PluginDistributionReader } from "../../../../src/contexts/installation/ports/plugin/plugin-distribution-reader.js";
+import type { LoadDistribution } from "../../../../src/contexts/installation/ports/plugin/load-plugin-distribution.js";
 import type { Prompter } from "../../../../src/orchestration/ports/prompter.js";
 import type { AssetProvider } from "../../../../src/shared/ports/asset-provider.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
@@ -48,16 +47,19 @@ export function restoreToolFilesOf(parts: RestoreToolFilesParts): RestoreToolFil
 
 interface RestoreAllPluginsParts {
   fs: FileReader & FileWriter;
-  pluginFetcher: PluginFetcher;
-  pluginDistributionReader: PluginDistributionReader;
+  loadDistribution: LoadDistribution;
   builtDeps: BuiltMaterializationDeps;
 }
 
 /** A restore of every installed plugin, with the registered tools. */
 export function restoreAllPluginsOf(parts: RestoreAllPluginsParts): RestoreAllPlugins {
-  const { fs, pluginFetcher, pluginDistributionReader, builtDeps } = parts;
+  const { fs, loadDistribution, builtDeps } = parts;
   return new RestoreAllPlugins(
-    new ApplyPluginFiles({ fs, pluginFetcher, pluginDistributionReader, builtDeps }),
+    new ApplyPluginFiles({
+      fs,
+      loadDistribution,
+      builtDeps,
+    }),
     registeredTools()
   );
 }

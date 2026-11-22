@@ -1,8 +1,8 @@
 import { join } from "node:path";
-import { PluginDistributionLoader } from "../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import type { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import type { AiToolId } from "../../../../src/shared/domain/tool.js";
 import type { buildInstallationDeps } from "../../../shared/testing/installation-deps.builder.js";
+import { loadDistributionOf } from "../../../shared/testing/load-distribution.builder.js";
 import { registeredTools } from "../../../shared/testing/registered-tools.builder.js";
 import { OverwritePrompter } from "../../../shared/testing/scripted-prompter.fake.js";
 import { seedFromDirectory } from "../../../shared/testing/seed-from-directory.builder.js";
@@ -26,7 +26,7 @@ export async function installPlugin(
     { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
-      distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, pluginReader),
+      loadDistribution: loadDistributionOf(deps.pluginFetcher, pluginReader),
       marketplaceRegistry: deps.marketplaceRegistry,
       ...fakeBuildSources(),
     },
@@ -65,7 +65,11 @@ export function makeRestoreUseCase(
   return restoreOf({
     ...deps,
     prompter,
-    plugins: restoreAllPluginsOf({ ...deps, builtDeps: fakeBuiltDeps() }),
+    plugins: restoreAllPluginsOf({
+      ...deps,
+      loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
+      builtDeps: fakeBuiltDeps(),
+    }),
   });
 }
 

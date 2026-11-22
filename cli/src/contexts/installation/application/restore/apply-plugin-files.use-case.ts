@@ -7,8 +7,7 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
-import type { PluginFetcher } from "../../ports/marketplace-sources.js";
-import type { PluginDistributionReader } from "../../ports/plugin/plugin-distribution-reader.js";
+import type { LoadDistribution } from "../../ports/plugin/load-plugin-distribution.js";
 import { materializeViaTranslator } from "../materialize/materialize-via-translator.js";
 import type { PluginTranslator } from "../materialize/plugin-translator.js";
 import { resolvePluginTranslator } from "../materialize/resolve-plugin-translator.js";
@@ -37,8 +36,7 @@ function deliversHooksToProject(tool: AiToolProfile): boolean {
 /** What ApplyPluginFiles is built from. */
 export interface ApplyPluginFilesDeps {
   readonly fs: FileReader & FileWriter;
-  readonly pluginFetcher: PluginFetcher;
-  readonly pluginDistributionReader: PluginDistributionReader;
+  readonly loadDistribution: LoadDistribution;
   readonly builtDeps: BuiltMaterializationDeps;
 }
 
@@ -47,8 +45,7 @@ export class ApplyPluginFiles {
 
   async execute(options: ApplyPluginFilesRequest): Promise<number> {
     if (options.plugin.scope === "user") return 0;
-    const localPath = await this.deps.pluginFetcher.fetch(options.plugin.source, options.cacheDir);
-    const dist = await this.deps.pluginDistributionReader.read(localPath);
+    const dist = await this.deps.loadDistribution(options.plugin.source, options.cacheDir);
     const translator = this.resolveTranslator(options.tool);
     if (
       translator !== null &&

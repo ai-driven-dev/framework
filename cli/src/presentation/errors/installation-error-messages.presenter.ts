@@ -24,13 +24,9 @@ export const INSTALLATION: MessagesOf<InstallationOwners> = {
   "invalid-manifest-data": (error) =>
     error.detail ? `Invalid manifest data: ${error.detail}` : "Invalid manifest data.",
   "invalid-manifest-tool-id": (error) => `Invalid tool id in manifest: '${error.key}'.`,
-  "invalid-plugin-name": (error) =>
-    `Invalid plugin name: "${error.pluginName}". Use lowercase alphanumeric characters and hyphens only.`,
   "invalid-plugin-scope": (error) =>
     `Tool '${error.toolId}' does not support scope '${error.requested}'. Supported scope: '${error.supported}'. ` +
     `Re-run with --scope ${error.supported} or omit the flag.`,
-  "invalid-plugin-version": (error) =>
-    `Invalid plugin version: "${error.version}". Expected semver format (e.g. 1.0.0).`,
   "malformed-plugin-scope": (error) =>
     `Plugin "${error.pluginName}" carries an invalid scope: ${JSON.stringify(error.scope)}. Expected "project" or "user".`,
   "manifest-missing": () => "No AIDD manifest found. Run `aidd setup` to initialize your project.",

@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import { registrationRecordRules } from "../../../src/composition/installation.js";
 import { createOutput } from "../../../src/composition/shared.js";
 import { wireTools } from "../../../src/composition/tools.js";
+import { PluginDistributionReaderAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-distribution-reader-adapter.js";
 import { InitProject } from "../../../src/contexts/installation/application/init-project.use-case.js";
 import { InstallIdeConfig } from "../../../src/contexts/installation/application/install/config/install-ide-config.use-case.js";
 import { InstallRuntimeConfig } from "../../../src/contexts/installation/application/install/config/install-runtime-config.use-case.js";
@@ -11,7 +12,6 @@ import { ResolveSyncConflict } from "../../../src/contexts/installation/applicat
 import { UpdateTool } from "../../../src/contexts/installation/application/update/update-tool.use-case.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import type { AiToolId, IdeToolId } from "../../../src/shared/domain/tool.js";
 import { BundledAssetProviderAdapter } from "../../../src/shared/infrastructure/asset-loader.js";
 import { FakeHostActions } from "./fake-host-actions.fake.js";

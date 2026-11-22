@@ -5,19 +5,22 @@ import {
   PluginDistribution,
   type PluginManifestFields,
 } from "../../../shared/domain/plugin/plugin-distribution.js";
+import { PLUGIN_NAME_REGEX } from "../../../shared/domain/plugin/plugin-name.js";
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import { isSemver } from "../../../shared/domain/semver.js";
-import { InvalidPluginManifestError } from "../../../shared/domain/shared.error.js";
+import {
+  InvalidPluginManifestError,
+  InvalidPluginNameError,
+  InvalidPluginVersionError,
+} from "../../../shared/domain/shared.error.js";
 import type { AiToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
-import { InvalidPluginNameError, InvalidPluginVersionError } from "../domain/installation.error.js";
-import { PLUGIN_NAME_REGEX } from "../domain/plugins/plugin-entry.js";
-import type { PluginDistributionReader } from "../ports/plugin/plugin-distribution-reader.js";
+import type { PluginDistributionReader } from "../ports/plugin-distribution-reader.js";
 
 const README_FILENAME = "README.md";
 
 /** Where a plugin manifest can sit, and the tool whose layout that is. */
-interface ManifestProbe {
+export interface ManifestProbe {
   readonly format: AiToolId;
   readonly relativePath: string;
 }

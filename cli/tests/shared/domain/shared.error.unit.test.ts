@@ -13,7 +13,9 @@ import {
   InvalidInstallScopeError,
   InvalidMarketplaceNameError,
   InvalidPluginManifestError,
+  InvalidPluginNameError,
   InvalidPluginSourceError,
+  InvalidPluginVersionError,
   InvalidSourceMarketplaceError,
   JsonParseError,
   ManifestValidationError,
@@ -81,6 +83,8 @@ describe("a shared error carries its data and says nothing itself", () => {
       "invalid-plugin-manifest",
     ],
     [new InvalidPluginManifestError(), { detail: undefined }, "invalid-plugin-manifest"],
+    [new InvalidPluginNameError("My Plugin"), { pluginName: "My Plugin" }, "invalid-plugin-name"],
+    [new InvalidPluginVersionError("latest"), { version: "latest" }, "invalid-plugin-version"],
     [new InvalidPluginSourceError("no kind"), { detail: "no kind" }, "invalid-plugin-source"],
     [new InvalidPluginSourceError(), { detail: undefined }, "invalid-plugin-source"],
     [

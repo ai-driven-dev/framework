@@ -110,8 +110,7 @@ function wireRestore(base: Base, installation: Installation, statusUseCase: Repo
   const restoreAllPlugins = new RestoreAllPlugins(
     new ApplyPluginFiles({
       fs,
-      pluginFetcher: base.pluginFetcher,
-      pluginDistributionReader: base.pluginDistributionReader,
+      loadDistribution: base.loadDistribution,
       builtDeps: installation.builtMaterializationDeps,
     }),
     tools

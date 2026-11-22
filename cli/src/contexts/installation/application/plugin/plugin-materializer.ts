@@ -7,6 +7,7 @@ import type { Logger } from "../../../../shared/ports/logger.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../domain/project-layout.js";
+import type { LoadDistribution } from "../../ports/plugin/load-plugin-distribution.js";
 import type {
   PlannedUserPluginFileUpdate,
   UserPluginMaterialization,
@@ -16,7 +17,6 @@ import type {
 import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
 import { assertUserPluginWritable } from "./assert-user-plugin-writable.js";
 import { deleteOldFiles } from "./delete-plugin-files.js";
-import type { PluginDistributionLoader } from "./plugin-distribution-loader.js";
 import { scopeBaseOf } from "./plugin-target-resolution.js";
 import { rebuildUserPluginFiles } from "./rebuild-user-plugin-files.js";
 import { writePluginFiles } from "./write-plugin-files.js";
@@ -24,7 +24,7 @@ import { writePluginFiles } from "./write-plugin-files.js";
 /** What PluginMaterializer is built from. */
 export interface PluginMaterializerDeps {
   readonly fs: FileReader & FileWriter;
-  readonly loader: PluginDistributionLoader;
+  readonly loadDistribution: LoadDistribution;
   readonly guard: UserScopeFileGuard;
   readonly builtDeps: BuiltMaterializationDeps;
   /** A global install's fetches: it writes nothing in the project. */
@@ -48,7 +48,7 @@ export class PluginMaterializer implements UserPluginMaterialization {
   ): Promise<PlannedUserPluginFileUpdate | null> {
     const { plugin, tool, projectRoot, logger, rebuild, isWithinUserScope } = request;
     const cacheDir = this.deps.globalCacheDir?.() ?? join(projectRoot, PLUGIN_CACHE_SUBDIR);
-    const dist = await this.deps.loader.load(plugin.source, cacheDir, { forceRefresh: true });
+    const dist = await this.deps.loadDistribution(plugin.source, cacheDir, { forceRefresh: true });
     if (!rebuild && compareSemver(dist.manifest.version, plugin.version) <= 0) return null;
     const { files, componentPaths } = await rebuildUserPluginFiles(this.deps, {
       dist,

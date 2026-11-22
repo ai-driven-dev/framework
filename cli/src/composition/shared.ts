@@ -2,7 +2,6 @@ import { WithdrawFromHost } from "../contexts/host-registration/application/with
 import { JsonFileMergerAdapter } from "../contexts/installation/infrastructure/json-file-merger-adapter.js";
 import { ManifestRepositoryAdapter } from "../contexts/installation/infrastructure/manifest-repository-adapter.js";
 import { PlatformAdapter } from "../contexts/installation/infrastructure/platform-adapter.js";
-import { PluginDistributionReaderAdapter } from "../contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { UserManifestRepositoryAdapter } from "../contexts/installation/infrastructure/user-manifest-repository-adapter.js";
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import { pluginManifestProbes } from "../contexts/translate/domain/plugin-format.js";
@@ -84,10 +83,6 @@ type Logging = ReturnType<typeof createOutput>;
 /** The file system and the manifests kept on it. */
 function wireStorage({ projectRoot, tools }: BaseOptions, logger: Logging) {
   const fs = new JsonFileMergerAdapter(new FileAdapter(logger));
-  const pluginDistributionReader = new PluginDistributionReaderAdapter(
-    fs,
-    pluginManifestProbes(tools)
-  );
   const resolveToolId = (raw: string) => tools.toolId(raw);
   const manifestRepo = new ManifestRepositoryAdapter(projectRoot, resolveToolId);
   const userManifestRepo = new UserManifestRepositoryAdapter(
@@ -95,12 +90,12 @@ function wireStorage({ projectRoot, tools }: BaseOptions, logger: Logging) {
     atomicWriteFile,
     resolveToolId
   );
-  return { fs, pluginDistributionReader, manifestRepo, userManifestRepo };
+  return { fs, manifestRepo, userManifestRepo };
 }
 
 /** What reaches beyond the machine: the network, the token and the marketplaces. */
 function wireRemote(
-  { projectRoot, token }: BaseOptions,
+  { projectRoot, token, tools }: BaseOptions,
   { logger, fs }: { logger: Logging; fs: MergingFileSystem }
 ) {
   const http = new HttpClient();
@@ -112,6 +107,7 @@ function wireRemote(
     tokenProvider: auth.tokenProvider,
     logger,
     projectRoot,
+    manifestProbes: pluginManifestProbes(tools),
   });
   return { http, environment, ...auth, ...distribution };
 }

@@ -33,4 +33,23 @@ export const PLUGIN_PLANTS: readonly Plant[] = [
     0,
   ],
   ["src/presentation/errors/says.ts", 'export const h = "Set AIDD_TOKEN, run it";\n', "plugin", 0],
+  // A type alias of a closed-folder type, imported into the shared test kit, is the same hand-back.
+  [
+    "tests/shared/testing/aliases.ts",
+    'import type { R as Reader } from "../../../src/contexts/b/ports/r.js";\nexport type R = Reader;',
+    "plugin",
+    1,
+  ],
+  [
+    "tests/shared/testing/aliases-contract.ts",
+    'import type { R as Reader } from "../../../src/contexts/b/contract/r.js";\nexport type R = Reader;',
+    "plugin",
+    0,
+  ],
+  [
+    "tests/shared/testing/aliases-local.ts",
+    'import type { R } from "../../../src/contexts/b/ports/r.js";\nexport type Own = Array<R>;',
+    "plugin",
+    0,
+  ],
 ];

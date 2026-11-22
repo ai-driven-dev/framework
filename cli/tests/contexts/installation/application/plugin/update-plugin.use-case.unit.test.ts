@@ -1,7 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
-import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import {
   UpdatePlugin,
   type UpdatePluginDeps,
@@ -11,6 +10,7 @@ import {
   buildInstallationDeps,
   initAndInstall,
 } from "../../../../shared/testing/installation-deps.builder.js";
+import { loadDistributionOf } from "../../../../shared/testing/load-distribution.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
@@ -24,12 +24,12 @@ async function installedSample(pluginRuntime?: UpdatePluginRuntime) {
   const deps = await buildInstallationDeps();
   await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
-  const loader = new PluginDistributionLoader(deps.pluginFetcher, deps.pluginDistributionReader);
+  const loader = loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader);
   await buildAddPlugin(
     { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
-      distributionLoader: loader,
+      loadDistribution: loader,
       marketplaceRegistry: deps.marketplaceRegistry,
       ...fakeBuildSources(),
     },
@@ -44,7 +44,7 @@ async function installedSample(pluginRuntime?: UpdatePluginRuntime) {
   const update = new UpdatePlugin(
     {
       manifestRepo: deps.manifestRepo,
-      distributionLoader: loader,
+      loadDistribution: loader,
       replacePluginFiles: new ReplacePluginFiles(deps.fs, fakeBuiltDeps(), registeredTools()),
       pluginRuntime,
     },

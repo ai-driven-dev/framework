@@ -10,7 +10,7 @@ paths:
 
 ## Reason to change
 
-- Where a plugin's content comes from: which marketplaces are registered, trusted and cached, and how a catalog or a release is fetched.
+- Where a plugin's content comes from: which marketplaces are registered, trusted and cached, how a catalog or a release is fetched, and how a fetched plugin distribution is read.
 - Its language is `src/contexts/distribution/glossary.md`, its shape `reference-context.md`.
 
 ## Ports
@@ -18,7 +18,7 @@ paths:
 - `MarketplaceRegistry`, `MarketplaceTrustStore`, `MarketplaceCachePort`: each contract kit in `tests/contexts/distribution/testing/` runs on the fake and on the real adapter.
 - `updateVersion` has a caller, `RefreshMarketplace`, and no contract case: no test reaches the adapter's own lines.
 - The registry case "keeps one user entry for every project" has no one-line break to plant in the adapter arm: `userPath()` takes no project argument.
-- `MarketplaceRemover`, `RepositoryVisibility`, `PluginFetcher`, `PluginCatalogRepository`, `RawCatalogFetcher`: no contract kit yet.
+- `MarketplaceRemover`, `RepositoryVisibility`, `PluginFetcher`, `PluginDistributionReader`, `PluginCatalogRepository`, `RawCatalogFetcher`: no contract kit yet.
 - `MarketplaceRemover` is answered by `src/composition/orchestration/marketplace.ts`, which hands it to the add command.
 - Outside importers reach only the `contract/` of distribution: the `imports` rule of `kinds.arch.test.ts`.
 

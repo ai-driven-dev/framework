@@ -3,13 +3,13 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PlacePlugin } from "../../../../../../src/contexts/installation/application/plugin/add/place-plugin.use-case.js";
 import { ResolveAddedPluginSource } from "../../../../../../src/contexts/installation/application/plugin/add/resolve-added-plugin-source.use-case.js";
-import { PluginDistributionLoader } from "../../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { CapturingLogger } from "../../../../../shared/testing/capturing-logger.fake.js";
 import {
   buildInstallationDeps,
   initAndInstall,
 } from "../../../../../shared/testing/installation-deps.builder.js";
+import { loadDistributionOf } from "../../../../../shared/testing/load-distribution.builder.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../../shared/testing/seed-from-directory.builder.js";
 import { fakeBuildSources } from "../../../testing/fake-build-sources.fake.js";
@@ -47,10 +47,7 @@ async function placeForCursor(foundFile: string | undefined) {
   };
   const added = await new ResolveAddedPluginSource(
     {
-      distributionLoader: new PluginDistributionLoader(
-        deps.pluginFetcher,
-        deps.pluginDistributionReader
-      ),
+      loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
       fs: deps.fs,
       built,
     },
