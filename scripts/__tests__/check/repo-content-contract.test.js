@@ -7,7 +7,6 @@ const { describe, it, beforeEach, afterEach } = require("node:test");
 const engine = require("../../check/engine/engine.cjs");
 
 const CONTRACT = path.resolve(__dirname, "../../check/contracts/repo.json");
-const HOST = "module.exports = { host: true };\n";
 const LIBRARY = "module.exports = { rules: true };\n";
 
 /** The contract with only the content rules: the others read anchor files a scratch repository does not hold. */
@@ -28,9 +27,7 @@ const CLEAN = {
   ".claude-plugin/marketplace.json": marketplace(PLUGIN),
   "notes.md": "Nothing from a machine here.\n",
   "data.json": '{"a":1}\n',
-  "cli/assets/hooks-runtime/host-claude.cjs": HOST,
-  "plugins/a/hooks/h.cjs": 'require("./lib/host.cjs");\nrequire("./lib/common-rules.cjs");\n',
-  "plugins/a/hooks/lib/host.cjs": HOST,
+  "plugins/a/hooks/h.cjs": 'require("./lib/common-rules.cjs");\n',
   "plugins/a/hooks/lib/common-rules.cjs": LIBRARY,
 };
 
@@ -106,13 +103,7 @@ describe("repo content rules", () => {
     assert.deepEqual(ids({ "plugins/a/agents/x.md": "---\nname: x\nmodel:\n---\n" }), ["REPO-08"]);
   });
 
-  it("REPO-06 flags a host adapter that differs from the CLI's asset", () => {
-    assert.deepEqual(ids({ "plugins/a/hooks/lib/host.cjs": "module.exports = {};\n" }), ["REPO-06"]);
-  });
-
-  it("REPO-06 flags a host adapter no hook requires, and one a hook requires but is missing", () => {
-    assert.deepEqual(ids({ "plugins/a/hooks/h.cjs": 'require("./lib/common-rules.cjs");\n' }), ["REPO-06"]);
-    fs.rmSync(path.join(dir, "plugins/a/hooks/lib/host.cjs"));
-    assert.deepEqual(ids({ "plugins/a/hooks/h.cjs": 'require("./lib/host.cjs");\nrequire("./lib/common-rules.cjs");\n' }), ["REPO-06"]);
+  it("REPO-06 flags a library copy no hook requires", () => {
+    assert.deepEqual(ids({ "plugins/a/hooks/h.cjs": "module.exports = {};\n" }), ["REPO-06"]);
   });
 });

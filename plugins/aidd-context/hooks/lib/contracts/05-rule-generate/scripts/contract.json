@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "kind": "rule",
+  "unit": "file",
+  "scope": ["aidd_docs/rules/*/*.md"],
+  "rules": {
+    "RULE-01": {
+      "op": "template",
+      "in": "*.md",
+      "template": "../assets/rule-template.md",
+      "optional": ["paths", "{{group}}"],
+      "why": "every host copy is rendered from the source, so its shape must hold",
+      "fix": "follow rule-template.md"
+    }
+  }
+}

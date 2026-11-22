@@ -2,6 +2,7 @@
   "version": 1,
   "kind": "implement",
   "unit": "folder",
+  "scope": ["aidd_docs/**"],
   "marker": "plan.md",
   "rules": {
     "IMPLEMENT-01": {

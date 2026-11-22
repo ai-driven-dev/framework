@@ -10,7 +10,9 @@ const ONBOARD = "plugins/aidd-context/skills/00-onboard";
 module.exports = (ctx) => {
   const skills = path.dirname(ctx.root);
   if (path.basename(skills) !== "skills") return [];
-  const plugin = path.basename(path.dirname(skills));
+  const pluginDir = path.dirname(skills);
+  if (path.basename(path.dirname(pluginDir)) !== "plugins") return [];
+  const plugin = path.basename(pluginDir);
   if (plugin === ORCHESTRATOR || `plugins/${plugin}/skills/${path.basename(ctx.root)}` === ONBOARD) return [];
   const found = [];
   ctx.lines.forEach((line, index) => {

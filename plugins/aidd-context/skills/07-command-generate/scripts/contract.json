@@ -2,6 +2,13 @@
   "version": 1,
   "kind": "command",
   "unit": "file",
+  "scope": [
+    ".claude/commands/*.md",
+    ".github/prompts/*.prompt.md",
+    ".opencode/commands/*.md",
+    ".kilo/commands/*.md"
+  ],
+  "shell": false,
   "rules": {
     "COMMAND-01": {
       "op": "template",

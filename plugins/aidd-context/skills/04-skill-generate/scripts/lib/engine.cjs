@@ -7,7 +7,7 @@ const { readText, frontmatter, proseLines } = require("./markdown.cjs");
 const { ops, OPTIONS, readSchema } = require("./ops.cjs");
 
 const EXIT = { OK: 0, FINDINGS: 1, USAGE: 2 };
-const TOP_KEYS = ["version", "kind", "unit", "targets", "marker", "watch", "rules"];
+const TOP_KEYS = ["version", "kind", "unit", "targets", "scope", "shell", "marker", "watch", "rules"];
 const RULE_KEYS = ["op", "in", "notIn", "why", "fix"];
 const EXCERPT_LIMIT = 40;
 
@@ -50,6 +50,8 @@ function loadContract(file) {
   for (const key of Object.keys(contract)) if (!TOP_KEYS.includes(key)) fail(`unknown key ${key}`);
   if (contract.targets !== undefined && typeof contract.targets !== "string") fail("targets must be a glob string");
   if (contract.watch !== undefined && !(Array.isArray(contract.watch) && contract.watch.every((g) => typeof g === "string"))) fail("watch must be an array of glob strings");
+  if (contract.scope !== undefined && !(Array.isArray(contract.scope) && contract.scope.every((g) => typeof g === "string" && g !== "" && !g.startsWith("/") && !/^[A-Za-z]:/u.test(g) && !g.includes("\\") && !g.split("/").includes("..")))) fail("scope must be an array of relative slash globs without ..");
+  if (contract.shell !== undefined && typeof contract.shell !== "boolean") fail("shell must be true or false");
   if (contract.version !== 1) fail("version must be 1");
   if (typeof contract.kind !== "string") fail("kind is required");
   if (!["folder", "file"].includes(contract.unit)) fail("unit must be folder or file");
@@ -147,4 +149,4 @@ function run(contractFile, targets) {
   }
 }
 
-module.exports = { run, check, loadContract, format, ContractError, isUsage, globRegex };
+module.exports = { run, check, loadContract, format, globRegex, ContractError, isUsage };

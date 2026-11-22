@@ -33,7 +33,7 @@
       "op": "custom",
       "in": "marketplace.json",
       "check": "hook-rule-copies",
-      "why": "each plugin ships its own copy of the hook library and the host adapter, and a copy that drifts runs different rules"
+      "why": "each plugin ships its own copy of the hook library, and a copy that drifts runs different rules"
     },
     "REPO-07": {
       "op": "custom",

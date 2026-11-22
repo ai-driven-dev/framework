@@ -112,6 +112,21 @@ describe("ops", () => {
     assert.match(findings({ op: "template", template: "t.md" }, '---\ntitle: "demo"\n---\n\n# T\n')[0].message, /key "note" missing/u);
   });
 
+  it("template reads a front matter value the same bare, single- or double-quoted", () => {
+    fs.writeFileSync(path.join(dir, "t.md"), "---\ntype: story\nstatus: proposed\n---\n\n# T\n");
+    const rule = { op: "template", template: "t.md", values: { status: ["proposed", "done"] } };
+    for (const quote of ["", "'", '"']) assert.deepEqual(findings(rule, `---\ntype: ${quote}story${quote}\nstatus: ${quote}done${quote}\n---\n\n# T\n`), []);
+  });
+
+  it("template names the value a missing front matter key takes", () => {
+    fs.writeFileSync(path.join(dir, "t.md"), '---\ntype: story\nstatus: proposed\ntitle: "{{x}}"\n---\n\n# T\n');
+    const rule = { op: "template", template: "t.md", values: { status: ["proposed", "done"] } };
+    const messages = findings(rule, "---\n---\n\n# T\n").map((f) => f.message);
+    assert.ok(messages.some((m) => /key "type" missing, set it to "story"/u.test(m)));
+    assert.ok(messages.some((m) => /key "status" missing, one of proposed, done/u.test(m)));
+    assert.ok(messages.some((m) => /key "title" missing, fill it/u.test(m)));
+  });
+
   it("template accepts any value for a front matter key the template leaves bare", () => {
     fs.writeFileSync(path.join(dir, "t.md"), "---\nmodel:\n---\n\n# T\n");
     const rule = { op: "template", template: "t.md" };

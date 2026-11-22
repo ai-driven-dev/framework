@@ -2,6 +2,7 @@
   "version": 1,
   "kind": "plan",
   "unit": "folder",
+  "scope": ["aidd_docs/**"],
   "marker": "plan.md",
   "rules": {
     "PLAN-01": {
