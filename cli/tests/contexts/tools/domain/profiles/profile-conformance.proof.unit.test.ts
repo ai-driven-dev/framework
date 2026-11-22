@@ -4,6 +4,7 @@ import type {
   ArtifactContract,
   ToolBuildContract,
 } from "../../../../../src/contexts/tools/contract/build-contract.js";
+import { MCP_CONFIG_REF } from "../../../../../src/contexts/tools/contract/config-refs.js";
 import type {
   FlatPluginAnswers,
   McpConfigAnswers,
@@ -267,6 +268,23 @@ const BROKEN: Readonly<Record<string, () => FileConformanceSubject>> = {
     subjectOf(
       withSections(NATIVE, {
         mcp: { config: new McpConfigPart({ format: "json", outputPath: ".mcp.json" }) },
+      })
+    ),
+  "settles several candidate config files as its mcp config declares": () =>
+    subjectOf(
+      withSections(NATIVE, {
+        mcp: {
+          config: new McpConfigPart({
+            format: "json",
+            outputPath: "a.json",
+            consumes: [MCP_CONFIG_REF],
+            outputPathCandidates: {
+              tiers: [["a.json", "a.jsonc"]],
+              fallback: "a.json",
+              onMultipleCandidates: { error: { toolId: "another", detail: "both exist" } },
+            },
+          }),
+        },
       })
     ),
   "asks, in each settings file, for a registered tool": () =>

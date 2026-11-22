@@ -9,16 +9,36 @@ import {
   mergeTypedMcp,
   unmergeTypedMcp,
 } from "../formats/typed-mcp-merge.js";
+import { DualConfigError } from "../tools.error.js";
 import { transformMcpForWin32 } from "./mcp-win32-launch.js";
 
 /** The config files a tool's MCP output may already live in. Tiers are tried in order; within the
- * first tier that has any file present, two present files make `conflict` throw, one is the answer.
- * `fallback` answers when no tier has a file. */
+ * first tier that has any file present, one present file is the answer and several are refused
+ * with a dual-config error naming `toolId` and `detail`. `fallback` answers when no tier has a
+ * file. Refusing is the one policy a tool has declared; taking the first of several is left
+ * unwritten until a tool needs it. */
 export type McpOutputPathCandidates = {
   readonly tiers: readonly (readonly string[])[];
   readonly fallback: string;
-  readonly conflict: () => never;
+  readonly onMultipleCandidates: {
+    readonly error: { readonly toolId: string; readonly detail: string };
+  };
 };
+
+/** The file an MCP config goes in: the only present file of the first tier that has any, the
+ * fallback when none does. Several in that tier raise the declared dual-config error. */
+export function chooseOutputPath(
+  candidates: McpOutputPathCandidates,
+  exists: (relativePath: string) => boolean
+): string {
+  for (const tier of candidates.tiers) {
+    const present = tier.filter(exists);
+    const { toolId, detail } = candidates.onMultipleCandidates.error;
+    if (present.length > 1) throw new DualConfigError(toolId, detail);
+    if (present[0] !== undefined) return present[0];
+  }
+  return candidates.fallback;
+}
 
 /** A TOML file is written through the codec the profile was given. */
 export type McpConfigParams = ({ format: "json" } | { format: "toml"; toml: TomlCodec }) & {
@@ -29,15 +49,6 @@ export type McpConfigParams = ({ format: "json" } | { format: "toml"; toml: Toml
   outputPathCandidates?: McpOutputPathCandidates;
   consumes?: readonly ConfigRef[];
 };
-
-async function presentIn(
-  tier: readonly string[],
-  exists: (relativePath: string) => Promise<boolean>
-): Promise<string[]> {
-  const present: string[] = [];
-  for (const candidate of tier) if (await exists(candidate)) present.push(candidate);
-  return present;
-}
 
 /** The file a tool's own MCP servers are written to, and how it is merged and converted. */
 export class McpConfigPart {
@@ -98,18 +109,25 @@ export class McpConfigPart {
     return platform === "win32" ? transformMcpForWin32 : undefined;
   }
 
-  /** The project-relative file this tool's MCP config goes in: the first tier of candidates for
-   * which `exists` answers true (reusing user-owned configuration), the fallback when none does.
-   * Two files in the answering tier raise the declared conflict. */
-  async resolveOutputPath(exists: (relativePath: string) => Promise<boolean>): Promise<string> {
+  /** The files a project may already keep this tool's MCP config in, best first, one tier each. */
+  candidateTiers(): readonly (readonly string[])[] {
+    return (this.#params.outputPathCandidates?.tiers ?? []).map((tier) => [...tier]);
+  }
+
+  /** The project-relative file this tool's MCP config goes in, `exists` asking the project. */
+  chooseOutputPath(exists: (relativePath: string) => boolean): string {
     const candidates = this.#params.outputPathCandidates;
-    if (candidates === undefined) return this.#params.outputPath;
-    for (const tier of candidates.tiers) {
-      const present = await presentIn(tier, exists);
-      if (present.length > 1) candidates.conflict();
-      if (present.length === 1) return present[0] as string;
-    }
-    return candidates.fallback;
+    return candidates === undefined
+      ? this.#params.outputPath
+      : chooseOutputPath(candidates, exists);
+  }
+
+  /** The project-relative file this tool's MCP config goes in: the candidate a project already
+   * keeps (reusing user-owned configuration), the fallback when none does. */
+  async resolveOutputPath(exists: (relativePath: string) => Promise<boolean>): Promise<string> {
+    const present = new Set<string>();
+    for (const path of this.candidateTiers().flat()) if (await exists(path)) present.add(path);
+    return this.chooseOutputPath((path) => present.has(path));
   }
 
   /** Adds the plugin's transformed servers to the existing file: what the plugin contributed

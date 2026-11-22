@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  chooseKiloConfigPath,
-  KILO_OUTPUT_PATH_CANDIDATES,
-} from "../../../../../../src/contexts/tools/domain/profiles/kilo/kilo-paths.model.js";
+import { KILO_OUTPUT_PATH_CANDIDATES } from "../../../../../../src/contexts/tools/domain/profiles/kilo/kilo-paths.model.js";
+import { chooseOutputPath } from "../../../../../../src/contexts/tools/domain/sections/mcp-section.js";
 import { DualConfigError } from "../../../../../../src/contexts/tools/domain/tools.error.js";
 
 const existing =
@@ -10,7 +8,7 @@ const existing =
   (path: string): boolean =>
     paths.includes(path);
 
-describe("chooseKiloConfigPath", () => {
+describe("the kilo config path chosen", () => {
   it.each([
     [[], ".kilo/kilo.jsonc"],
     [["kilo.json"], "kilo.json"],
@@ -19,13 +17,15 @@ describe("chooseKiloConfigPath", () => {
     [[".kilo/kilo.jsonc"], ".kilo/kilo.jsonc"],
     [["kilo.json", ".kilo/kilo.jsonc"], ".kilo/kilo.jsonc"],
   ])("with %j on disk, writes %s", (found, chosen) => {
-    expect(chooseKiloConfigPath(existing(...found))).toBe(chosen);
+    expect(chooseOutputPath(KILO_OUTPUT_PATH_CANDIDATES, existing(...found))).toBe(chosen);
   });
 
   it.each([[[".kilo/kilo.json", ".kilo/kilo.jsonc"]], [["kilo.json", "kilo.jsonc"]]])(
     "refuses %j, two variants of one tier",
     (found) => {
-      expect(() => chooseKiloConfigPath(existing(...found))).toThrow(DualConfigError);
+      expect(() => chooseOutputPath(KILO_OUTPUT_PATH_CANDIDATES, existing(...found))).toThrow(
+        DualConfigError
+      );
     }
   );
 });
@@ -39,7 +39,7 @@ describe("KILO_OUTPUT_PATH_CANDIDATES", () => {
     expect(KILO_OUTPUT_PATH_CANDIDATES.fallback).toBe(".kilo/kilo.jsonc");
   });
 
-  it("raises the dual-config error on a conflict", () => {
-    expect(() => KILO_OUTPUT_PATH_CANDIDATES.conflict()).toThrow(DualConfigError);
+  it("refuses several files of one tier, naming kilo", () => {
+    expect(KILO_OUTPUT_PATH_CANDIDATES.onMultipleCandidates.error.toolId).toBe("kilo");
   });
 });

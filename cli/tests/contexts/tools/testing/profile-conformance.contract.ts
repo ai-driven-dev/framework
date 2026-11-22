@@ -195,6 +195,23 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
     if (config === undefined) return;
     expect(config.consumes(CONFIG_MCP)).toBe(true);
   }),
+  aiCheck("settles several candidate config files as its mcp config declares", (profile) => {
+    const config = profile.section("mcp")?.config;
+    if (config === undefined) return;
+    const present =
+      (...planted: string[]) =>
+      (path: string) =>
+        planted.includes(path);
+    for (const tier of config.candidateTiers()) {
+      const [first = ""] = tier;
+      expect(config.chooseOutputPath(present(first)), first).toBe(first);
+      expect(() => config.chooseOutputPath(present(...tier)), tier.join()).toThrow(
+        expect.objectContaining({ code: "dual-config", toolId: profile.toolId })
+      );
+    }
+    const tiers = config.candidateTiers();
+    if (tiers.length > 0) expect(tiers.flat()).toContain(config.chooseOutputPath(() => false));
+  }),
   aiCheck("asks, in each settings file, for a registered tool", (profile, { registration }) => {
     const registered = registration.map((other) => other.toolId);
     for (const file of profile.settingsFiles()) {

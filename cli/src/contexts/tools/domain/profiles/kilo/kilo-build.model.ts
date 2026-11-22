@@ -18,12 +18,13 @@ import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descripto
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
 import { buildTypedMcpFlatConfig } from "../../formats/typed-mcp-merge.js";
 import { collectTypedMcp } from "../../formats/typed-mcp-section.js";
+import { chooseOutputPath } from "../../sections/mcp-section.js";
 import { kiloAgentFrontmatter } from "./kilo-agent.model.js";
 import { generateKiloHooksBridge } from "./kilo-hooks-bridge.model.js";
 import {
-  chooseKiloConfigPath,
   KILO_CONFIG_CANDIDATES,
   KILO_DIRECTORY,
+  KILO_OUTPUT_PATH_CANDIDATES,
 } from "./kilo-paths.model.js";
 
 /** Kilo's hooks as the profile declares them: a loader with no hooks file. */
@@ -48,7 +49,9 @@ function emitKiloConfig({
   existing,
   assets,
 }: ConfigArtifactInput): readonly ConfigArtifactFile[] {
-  const configPath = chooseKiloConfigPath((relPath) => existing.has(relPath));
+  const configPath = chooseOutputPath(KILO_OUTPUT_PATH_CANDIDATES, (relPath) =>
+    existing.has(relPath)
+  );
   const incoming = collectTypedMcp(builtPlugins, pluginMcp);
   const asset = assets.get("kilo.json");
   const base = typeof asset === "string" ? asset : JSON.stringify(asset);
