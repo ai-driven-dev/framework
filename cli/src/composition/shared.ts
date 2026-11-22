@@ -21,7 +21,7 @@ import { HttpClient } from "../shared/infrastructure/http-client.js";
 import { wireAuth } from "./auth.js";
 import { wireDistribution } from "./distribution.js";
 import { wireHostRegistration } from "./host-registration.js";
-import { registrationRecordStore, wireMachineClaims } from "./machine-claims.js";
+import { heldByMachineLock, registrationRecordStore, wireMachineClaims } from "./machine-claims.js";
 import { userConfigDir } from "./user-config-dir.js";
 
 const plainText = (message: string | HintedMessage): string =>
@@ -86,10 +86,12 @@ function wireStorage({ projectRoot, tools }: BaseOptions, logger: Logging) {
     ...files,
     records: registrationRecordStore(() => join(projectRoot, AIDD_DIR), files),
   });
-  const userManifestRepo = new UserManifestRepositoryAdapter(userConfigDir, {
-    ...files,
-    records: registrationRecordStore(userConfigDir, files),
-  });
+  const userManifestRepo = heldByMachineLock(
+    new UserManifestRepositoryAdapter(userConfigDir, {
+      ...files,
+      records: registrationRecordStore(userConfigDir, files),
+    })
+  );
   return { fs, manifestRepo, userManifestRepo };
 }
 

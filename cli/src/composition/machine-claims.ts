@@ -4,6 +4,7 @@ import {
   joinPluginClaims,
   splitPluginClaims,
 } from "../contexts/machine-claims/domain/record-claims.js";
+import { UserScopeLockAdapter } from "../contexts/machine-claims/infrastructure/lock.js";
 import { UserSourceReferencesAdapter } from "../contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import type { PluginClaimsRepository } from "../contexts/machine-claims/ports/plugin-claims-repository.js";
 import type { UserSourceReferences } from "../contexts/machine-claims/ports/user-source-references.js";
@@ -13,6 +14,7 @@ import {
 } from "../shared/infrastructure/tool-keyed-json-file.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
 import type { FileWriter } from "../shared/ports/file-writer.js";
+import type { Lock } from "../shared/ports/lock.js";
 import { registrationRecordFile } from "./host-registration.js";
 import { userConfigDir } from "./user-config-dir.js";
 
@@ -23,6 +25,15 @@ export interface MachineClaimsDeps {
 /** Wires the machine-wide claims over the file system and the user directory. */
 export function wireMachineClaims(fs: FileReader & FileWriter): MachineClaimsDeps {
   return { userSourceReferences: new UserSourceReferencesAdapter(fs, userConfigDir) };
+}
+
+/** The user scope's repository, its mutations held one at a time across the machine by the lock
+ * beside its file. */
+export function heldByMachineLock<R extends { readonly path: string }>(repository: R): R & Lock {
+  const lock = new UserScopeLockAdapter(() => `${repository.path}.lock`);
+  return Object.assign(repository, {
+    withExclusiveAccess: <T>(action: () => Promise<T>) => lock.withExclusiveAccess(action),
+  });
 }
 
 /** One scope's records, kept in `dir` as two files: the host data host registration reads, and
