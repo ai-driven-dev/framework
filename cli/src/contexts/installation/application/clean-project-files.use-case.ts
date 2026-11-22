@@ -6,7 +6,7 @@ import type { ProjectPluginIntegration } from "../ports/tool-sections.js";
 import type { ProjectCleanPlan, ProjectCleanRecords } from "./clean/project-clean-plan.js";
 import type { PlanProjectClean } from "./plan-project-clean.use-case.js";
 import type { RemoveProjectFiles } from "./removal/remove-project-files.js";
-import { assertProjectHooksRemovable } from "./shared/remove-project-hooks.js";
+import { assertProjectHooksRemovable } from "./shared/remove-project-hooks.use-case.js";
 
 /** What a project clean asks of the machine, answered where each one lives. */
 export interface ProjectCleanAsks {

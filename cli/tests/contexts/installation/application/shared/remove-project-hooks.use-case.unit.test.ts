@@ -4,7 +4,7 @@ import { assertProjectHooksUnchanged } from "../../../../../src/contexts/install
 import {
   assertProjectHooksRemovable,
   removeProjectHooks,
-} from "../../../../../src/contexts/installation/application/shared/remove-project-hooks.js";
+} from "../../../../../src/contexts/installation/application/shared/remove-project-hooks.use-case.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import {

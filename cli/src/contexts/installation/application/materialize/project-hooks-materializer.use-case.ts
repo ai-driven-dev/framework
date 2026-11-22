@@ -17,7 +17,7 @@ import {
 import {
   recordedProjectHookEntries,
   removeRecordedProjectHooks,
-} from "../shared/remove-project-hooks.js";
+} from "../shared/remove-project-hooks.use-case.js";
 
 import {
   assertScriptsNotUserOwned,

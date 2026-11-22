@@ -10,7 +10,10 @@ import type { ProjectIntegrationCleanup } from "../../ports/project-integration-
 import type { FlatMcpSection, ProjectPluginIntegration } from "../../ports/tool-sections.js";
 import { assertProjectPathWithinRoot } from "../ownership/project-path-boundary.js";
 import { deletePluginFilesForTool } from "../plugin/delete-plugin-files.js";
-import { assertProjectHooksRemovable, removeProjectHooks } from "../shared/remove-project-hooks.js";
+import {
+  assertProjectHooksRemovable,
+  removeProjectHooks,
+} from "../shared/remove-project-hooks.use-case.js";
 
 /** Read-only OpenCode MCP proof, shared by Clean and local plugin removals before any detach. */
 export async function assertProjectMcpEntriesRemovable(
