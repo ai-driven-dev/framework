@@ -126,13 +126,11 @@ async function buildSetupUseCase(tokenProvider: TokenProvider, isRepoPublic = fa
     tools: syntheticMixedCatalog(),
     fs: deps.fs,
     manifestRepo: deps.manifestRepo,
-    steps: {
-      ...setupMarketplaceRegistration,
-      installTools: setupToolsUseCase,
-      syncSettings: (options) => makeNoOpSyncSettings().execute(options),
-      version: CURRENT_VERSION,
-    },
-    questions: { plugins: (options) => choosePlugins.execute(options) },
+    ...setupMarketplaceRegistration,
+    installTools: setupToolsUseCase,
+    syncSettings: makeNoOpSyncSettings(),
+    version: CURRENT_VERSION,
+    choosePlugins,
   });
 }
 

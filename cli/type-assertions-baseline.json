@@ -31,7 +31,7 @@
   "tests/architecture/automation-calls-real-scripts.arch.test.ts": 2,
   "tests/architecture/mutation-covers-source.arch.test.ts": 3,
   "tests/architecture/repository-hygiene.arch.test.ts": 1,
-  "tests/composition/runtime-wiring.integration.test.ts": 10,
+  "tests/composition/runtime-wiring.integration.test.ts": 4,
   "tests/contexts/host-registration/domain/record/registration-projection.unit.test.ts": 1,
   "tests/contexts/host-registration/domain/record/registration-record.unit.test.ts": 1,
   "tests/contexts/host-registration/infrastructure/host-cli-adapter.claude.integration.test.ts": 2,

@@ -23,7 +23,6 @@ import {
   userScopeFileGuard,
   withinUserScope,
 } from "../../src/composition/orchestration/plugin.js";
-import { setupQuestionsOf, setupStepsOf } from "../../src/composition/orchestration/setup.js";
 import { wireBase } from "../../src/composition/shared.js";
 import { wireTools } from "../../src/composition/tools.js";
 import { Marketplace } from "../../src/contexts/distribution/domain/marketplace.js";
@@ -246,10 +245,6 @@ describe("cacheBuildFor", () => {
   });
 });
 
-type Guards = Parameters<typeof setupStepsOf>[2];
-type Base = Parameters<typeof setupStepsOf>[0];
-type Questions = ReturnType<typeof setupQuestionsOf>;
-
 describe("debugOnly", () => {
   it("lands every level at debug", () => {
     const debug = vi.fn();
@@ -321,78 +316,5 @@ describe("askedFrom", () => {
 
     expect(await askedFrom({ execute })(options)).toBe("answer");
     expect(execute).toHaveBeenCalledWith(options);
-  });
-});
-
-describe("setupStepsOf", () => {
-  const resolveSource = { execute: vi.fn() };
-  const register = vi.fn();
-  const installTools = {} as Guards["setupToolsUseCase"];
-  const detectContext = {} as Guards["projectContextDetector"];
-  const machineScope = {} as Guards["setupMachineScope"];
-  const version = {} as Base["currentVersion"];
-
-  it("names each stage after what runs it", () => {
-    const steps = setupStepsOf(
-      { currentVersion: version },
-      {
-        resolveSetupSource: resolveSource,
-        registerSetupSource: register,
-        syncSettingsUseCase: { execute: vi.fn() },
-      },
-      {
-        setupToolsUseCase: installTools,
-        projectContextDetector: detectContext,
-        setupMachineScope: machineScope,
-      }
-    );
-
-    expect(steps).toMatchObject({
-      resolveSource,
-      register,
-      installTools,
-      version,
-      detectContext,
-      machineScope,
-    });
-  });
-
-  it("syncs settings through the marketplace's sync", async () => {
-    const execute = vi.fn().mockResolvedValue({ binaryMissing: [], errors: [] });
-    const steps = setupStepsOf(
-      { currentVersion: version },
-      {
-        resolveSetupSource: resolveSource,
-        registerSetupSource: register,
-        syncSettingsUseCase: { execute },
-      },
-      {
-        setupToolsUseCase: installTools,
-        projectContextDetector: detectContext,
-        setupMachineScope: machineScope,
-      }
-    );
-    const options = { projectRoot: "/project", tools: catalogOf() };
-
-    await steps.syncSettings(options);
-
-    expect(execute).toHaveBeenCalledWith(options);
-  });
-});
-
-describe("setupQuestionsOf", () => {
-  it("asks the plugin and tool questions through the prompts that own them", async () => {
-    const plugins = vi.fn().mockResolvedValue("p");
-    const tools = vi.fn().mockResolvedValue("t");
-    const questions = setupQuestionsOf({ execute: plugins }, { execute: tools });
-    const pluginOptions = { projectRoot: "/project" } as Parameters<Questions["plugins"]>[0];
-    const toolOptions = { interactive: false } as NonNullable<
-      Parameters<NonNullable<Questions["tools"]>>[0]
-    >;
-
-    expect(await questions.plugins(pluginOptions)).toBe("p");
-    expect(await questions.tools?.(toolOptions)).toBe("t");
-    expect(plugins).toHaveBeenCalledWith(pluginOptions);
-    expect(tools).toHaveBeenCalledWith(toolOptions);
   });
 });

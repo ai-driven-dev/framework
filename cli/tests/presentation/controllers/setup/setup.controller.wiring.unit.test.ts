@@ -9,6 +9,8 @@ import { InitProject } from "../../../../src/contexts/installation/application/i
 import { UpdateGitignore } from "../../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import type { SetupFlow } from "../../../../src/orchestration/domain/setup-flow.model.js";
 import { RunSetup } from "../../../../src/orchestration/setup/run-setup.use-case.js";
+import { InstallSetupTools } from "../../../../src/orchestration/setup/steps/install-setup-tools.use-case.js";
+import { PrepareSetupProject } from "../../../../src/orchestration/setup/steps/prepare-setup-project.use-case.js";
 import { bindOutput } from "../../../../src/presentation/controllers/menu/global-options.controller.js";
 import { ExitRequested } from "../../../shared/testing/capturing-output.fake.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
@@ -43,24 +45,23 @@ const createDeps = vi.fn(async () => {
   const fs = new InMemoryFileAdapter();
   return {
     runSetup: new RunSetup(
-      {
-        resolveSource: { execute: resolveSourceIfNeeded },
-        register: registerIfPresent,
-        installTools: { execute: setupTools },
-        syncSettings: activation,
-        version: "5.2.2",
-        detectContext: { execute: detectContext },
-        machineScope: { execute: setupMachineScope },
-      },
-      { plugins: setupPluginsPrompt, tools: setupToolsPrompt },
-      new InitProject(
-        {
-          fs,
-          manifestRepo: manifestRepositoryLoading(loadManifest),
-          updateGitignore: new UpdateGitignore(fs),
-        },
-        CATALOG
-      )
+      new PrepareSetupProject(
+        { execute: detectContext },
+        { execute: resolveSourceIfNeeded },
+        new InitProject(
+          {
+            fs,
+            manifestRepo: manifestRepositoryLoading(loadManifest),
+            updateGitignore: new UpdateGitignore(fs),
+          },
+          CATALOG
+        ),
+        registerIfPresent
+      ),
+      new InstallSetupTools({ execute: setupTools }, { execute: setupToolsPrompt }, "5.2.2"),
+      { execute: setupPluginsPrompt },
+      { execute: activation },
+      { execute: setupMachineScope }
     ),
     setAgentModels: { execute: setAgentModel, reset: vi.fn() },
   };
