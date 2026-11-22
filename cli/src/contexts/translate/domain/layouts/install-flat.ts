@@ -45,7 +45,7 @@ export function flatInstallPlan(
     place: (relativePath) =>
       hooksArtifact === null ? null : artifactPath(hooksArtifact, pluginName, relativePath),
     script: (relativePath, content) => plugins.hookScript(relativePath, content),
-    bridge: hooksArtifact?.skipHooksJson ? (hooksArtifact.hooksBridge ?? null) : null,
+    bridge: hooksArtifact?.hooksBridge ?? null,
     bridgeFirst: false,
     needsManifest: false,
   });

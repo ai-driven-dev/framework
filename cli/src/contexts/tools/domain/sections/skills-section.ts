@@ -2,7 +2,6 @@ import { CapabilityConfigError } from "../tools.error.js";
 
 type SkillsSectionParams = {
   directory?: string;
-  toolSuffix?: string;
   agentsSkillsDirectory?: boolean;
 };
 

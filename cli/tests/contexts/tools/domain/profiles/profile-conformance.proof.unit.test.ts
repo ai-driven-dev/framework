@@ -6,7 +6,6 @@ import type {
 } from "../../../../../src/contexts/tools/contract/build-contract.js";
 import { MCP_CONFIG_REF } from "../../../../../src/contexts/tools/contract/config-refs.js";
 import type {
-  FlatPluginAnswers,
   McpConfigAnswers,
   NativePluginAnswers,
   SettingsFileAnswers,
@@ -78,12 +77,6 @@ function subjectOf(
 function native(profile: AiTool): NativePluginAnswers {
   const plugins = profile.plugins();
   if (plugins?.kind !== "native") throw new Error(`${profile.toolId} is not native`);
-  return plugins;
-}
-
-function _flat(profile: AiTool): FlatPluginAnswers {
-  const plugins = profile.plugins();
-  if (plugins?.kind !== "flat") throw new Error(`${profile.toolId} is not flat`);
   return plugins;
 }
 

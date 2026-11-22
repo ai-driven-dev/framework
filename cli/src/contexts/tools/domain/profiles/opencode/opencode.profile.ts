@@ -18,7 +18,6 @@ import { McpConfigPart } from "../../sections/mcp-section.js";
 import { ModelsSection } from "../../sections/models-section.js";
 import { opencodeAgentFrontmatter } from "./opencode-agent.model.js";
 import { buildOpencodeFlatContract, OPENCODE_FLAT_LAYOUT } from "./opencode-build.model.js";
-import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.model.js";
 
 const DIRECTORY = ".opencode/";
 const TOOL_SUFFIX = ".opencode.md";
@@ -67,7 +66,7 @@ const hooks = declareBridgeHooks(
   }
 );
 
-const hooksDelivery = flatHooksSupport(hooks, generateOpencodeHooksBridge);
+const hooksDelivery = flatHooksSupport(hooks);
 
 export const opencode = defineAiTool({
   toolId: "opencode",

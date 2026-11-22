@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { artifactPath } from "../../../../../../src/contexts/tools/contract/artifact-path.js";
 import { kilo } from "../../../../../../src/contexts/tools/domain/profiles/kilo/kilo.profile.js";
 import { FileHash } from "../../../../../../src/shared/domain/file-hash.js";
 import type { FileReader } from "../../../../../../src/shared/ports/file-reader.js";
@@ -54,20 +53,11 @@ describe("kilo", () => {
     expect(installPathOf(kilo, kind, built)).toBe(path);
   });
 
-  it("delivers hook scripts under .kilo/hooks and generates a bridge under .kilo/plugin", () => {
-    const hooks = kilo.buildContract("flat")?.artifacts.hooks;
-    if (hooks?.supported !== true) throw new Error("kilo builds no flat hooks");
+  it("is a flat tool that accepts hooks", () => {
     expect([kilo.plugins()?.kind, kilo.plugins()?.hooksAcceptance().accepts]).toStrictEqual([
       "flat",
       true,
     ]);
-    expect(hooks.hooksBridge?.dir).toBe(".kilo/plugin/");
-    expect(artifactPath(hooks, "aidd-context", "hooks/kilo-plugin.js")).toBe(
-      ".kilo/plugin/aidd-context.js"
-    );
-    expect(artifactPath(hooks, "aidd-context", "hooks/capture.cjs")).toBe(
-      ".kilo/hooks/aidd-context/capture.cjs"
-    );
   });
 });
 

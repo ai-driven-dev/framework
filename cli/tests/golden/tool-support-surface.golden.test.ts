@@ -13,7 +13,7 @@ const SNAPSHOT_FILE = join(REPOSITORY_ROOT, "cli/tests/golden/snapshots/tool-sup
 const SURFACES = ["skills", "agents", "mcp", "hooks", "rules", "commands"] as const;
 type Surface = (typeof SURFACES)[number];
 
-/** `no` is a surface the build contract declares unsupported; `bridge` is a hooks surface a
+/** `no` is a surface the build contract declares unsupported or does not name; `bridge` is a hooks surface a
  * tool reaches through a generated event bridge instead of a hooks file of its own. */
 type Support = "yes" | "bridge" | "no";
 

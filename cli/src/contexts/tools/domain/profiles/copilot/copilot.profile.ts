@@ -199,7 +199,6 @@ export const copilot = defineAiTool({
     }),
     skills: new SkillsSection({
       directory: DIRECTORY,
-      toolSuffix: TOOL_SUFFIX,
     }),
     commands: new CommandsSection({
       toolSuffix: EXT_PROMPT,
