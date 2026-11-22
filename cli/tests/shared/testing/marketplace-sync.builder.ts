@@ -15,8 +15,8 @@ import {
 import { RecordActivation } from "../../../src/contexts/installation/application/sync/record-activation.use-case.js";
 import { trackedSharedSettings } from "../../../src/contexts/installation/application/sync/tracked-shared-settings.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { PurgeDeclaredCache } from "../../../src/contexts/machine-claims/application/purge-declared-cache.js";
 import { RecordMachineClaims } from "../../../src/contexts/machine-claims/application/record/record-machine-claims.use-case.js";
+import { ResolvePurgeCandidate } from "../../../src/contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
 import {
   RecordSourceReference,
   type RecordSourceReferenceDeps,
@@ -117,7 +117,7 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
           frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
           userSourceReferences: parts.userSourceReferences,
         }),
-        purgeCache: new PurgeDeclaredCache(parts.fs, parts.logger),
+        purgeCache: new ResolvePurgeCandidate(parts.fs, parts.logger),
         frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
       }),
       records: registrationRecordRules,

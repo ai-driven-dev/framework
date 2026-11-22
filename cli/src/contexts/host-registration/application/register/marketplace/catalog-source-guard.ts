@@ -7,7 +7,7 @@ import {
   pluginSetDifference,
 } from "../../../domain/source/marketplace-source-conflict.js";
 import { isDriftFound, judgeDrift } from "../../../domain/source/marketplace-source-drift.js";
-import { hostMarketplaceSourceConflict } from "../../check-marketplace-source.use-case.js";
+import { hostMarketplaceSourceConflict } from "../../check-marketplace-source.js";
 import {
   marketplaceRegistryOf,
   type RegistrationRun,

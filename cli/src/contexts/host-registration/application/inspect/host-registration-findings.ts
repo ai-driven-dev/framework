@@ -1,6 +1,10 @@
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { HostRegistrationFinding } from "../../contract/inspect-host-registration-result.js";
 import {
+  type RegistryAnswer,
+  registrationAnswer,
+} from "../../domain/reading/host-registration-answers.js";
+import {
   describePluginDiff,
   pluginSetDifference,
 } from "../../domain/source/marketplace-source-conflict.js";
@@ -13,18 +17,19 @@ import {
 export function pluginFinding(
   tool: AiToolId,
   item: { readonly plugin: string; readonly ref?: string },
-  answered: {
-    readonly refs: ReadonlyMap<string, { readonly enabled: boolean }>;
-    readonly location: string;
-  }
+  answered: Extract<RegistryAnswer, { readonly location: string }>
 ): HostRegistrationFinding[] {
   if (item.ref === undefined) return [{ kind: "plugin-unrecorded", tool, plugin: item.plugin }];
-  const entry = answered.refs.get(item.ref);
-  if (entry === undefined)
-    return [{ kind: "plugin-missing", tool, ref: item.ref, location: answered.location }];
-  return entry.enabled
-    ? []
-    : [{ kind: "plugin-disabled", tool, ref: item.ref, location: answered.location }];
+  const { ref } = item;
+  const { location } = answered;
+  switch (registrationAnswer(answered, ref)) {
+    case "not-registered":
+      return [{ kind: "plugin-missing", tool, ref, location }];
+    case "registered-disabled":
+      return [{ kind: "plugin-disabled", tool, ref, location }];
+    default:
+      return [];
+  }
 }
 
 export function sourceFinding(

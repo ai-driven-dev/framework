@@ -1,6 +1,6 @@
-import type { PurgeDeclaredCache } from "../../contexts/machine-claims/application/purge-declared-cache.js";
 import type { detachProjectClaims } from "../../contexts/machine-claims/application/removal/detach-project-claims.js";
 import type { readMachineClaims } from "../../contexts/machine-claims/application/removal/read-machine-claims.js";
+import type { ResolvePurgeCandidate } from "../../contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
 import type { dropSourceClaim } from "../../contexts/machine-claims/application/shared-source/drop-source-claim.js";
 import type { readSharedSourceClaim } from "../../contexts/machine-claims/application/shared-source/read-shared-source-claim.js";
 import type { Lock } from "../../shared/ports/lock.js";
@@ -18,6 +18,6 @@ export interface CleanClaims {
   readonly detach: ReturnType<typeof detachProjectClaims>;
   readonly machineClaims: ReturnType<typeof readMachineClaims>;
   readonly exclusive: Lock;
-  readonly purgeCache: Pick<PurgeDeclaredCache, "resolveCandidate">;
+  readonly purgeCache: Pick<ResolvePurgeCandidate, "execute">;
   readonly frameworkMarketplaceName: string;
 }

@@ -5,7 +5,7 @@ import {
   type MachineStateGuards,
   PurgeMachineState,
 } from "../../../../../src/contexts/installation/application/removal/purge-machine-state.js";
-import { PurgeDeclaredCache } from "../../../../../src/contexts/machine-claims/application/purge-declared-cache.js";
+import { ResolvePurgeCandidate } from "../../../../../src/contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 
@@ -13,11 +13,11 @@ const CONFIG = "/fake-home/.config/aidd";
 
 function machineOver(fs: InMemoryFileAdapter) {
   const logger = new CapturingLogger();
-  const cache = new PurgeDeclaredCache(fs, logger);
+  const cache = new ResolvePurgeCandidate(fs, logger);
   const guards: MachineStateGuards = {
     userConfigDir: () => CONFIG,
     resolveCacheCandidate: (cacheRoot, segments, label) =>
-      cache.resolveCandidate(cacheRoot, segments, label),
+      cache.execute(cacheRoot, segments, label),
     frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
   };
   return new PurgeMachineState({ fs, logger, guards });

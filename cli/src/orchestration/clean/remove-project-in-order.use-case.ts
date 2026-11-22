@@ -79,7 +79,7 @@ export class RemoveProjectInOrder {
       machine: this.deps.claims.machineClaims,
       exclusive: (action) => this.deps.claims.exclusive.withExclusiveAccess(action),
       resolveCacheCandidate: (cacheRoot, segments, label) =>
-        this.deps.claims.purgeCache.resolveCandidate(cacheRoot, segments, label),
+        this.deps.claims.purgeCache.execute(cacheRoot, segments, label),
     };
   }
 }

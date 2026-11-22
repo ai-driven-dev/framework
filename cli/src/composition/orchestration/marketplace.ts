@@ -21,9 +21,9 @@ import { RecordActivation } from "../../contexts/installation/application/sync/r
 import { trackedSharedSettings } from "../../contexts/installation/application/sync/tracked-shared-settings.js";
 import { Manifest } from "../../contexts/installation/domain/manifest.js";
 import { userScopeFilesSafeToDelete } from "../../contexts/machine-claims/application/ownership/user-scope-plugin-files.js";
-import { PurgeDeclaredCache } from "../../contexts/machine-claims/application/purge-declared-cache.js";
 import { RecordMachineClaims } from "../../contexts/machine-claims/application/record/record-machine-claims.use-case.js";
 import { removalClaims } from "../../contexts/machine-claims/application/removal/removal-claims.js";
+import { ResolvePurgeCandidate } from "../../contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
 import { RecordSourceReference } from "../../contexts/machine-claims/application/shared-source/record-source-reference.use-case.js";
 import { SharedFrameworkSource } from "../../contexts/machine-claims/application/shared-source/shared-framework-source.use-case.js";
 import { AddMarketplace } from "../../orchestration/marketplace/add-marketplace.use-case.js";
@@ -212,7 +212,7 @@ function syncSettingsOf(base: Base, inst: Installation, sources: SyncSources): S
         fs,
         logger,
         recordReference: recordSourceReference,
-        purgeCache: new PurgeDeclaredCache(fs, logger),
+        purgeCache: new ResolvePurgeCandidate(fs, logger),
         frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
       }),
       records: registrationRecordRules,

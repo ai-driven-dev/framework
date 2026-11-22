@@ -20,7 +20,7 @@ import {
 import { UserScopePluginFiles } from "../../../src/contexts/installation/application/removal/user-scope-plugin-files.js";
 import type { RecordsBesideManifest } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { userScopeFilesSafeToDelete } from "../../../src/contexts/machine-claims/application/ownership/user-scope-plugin-files.js";
-import { PurgeDeclaredCache } from "../../../src/contexts/machine-claims/application/purge-declared-cache.js";
+import { ResolvePurgeCandidate } from "../../../src/contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import {
@@ -60,11 +60,11 @@ export function userScopeCleanerDeps(parts: UserScopeCleanerParts): CleanUserSco
   const fs = parts.fs ?? new InMemoryFileAdapter();
   const logger = parts.logger ?? new CapturingLogger();
   const homeDir = parts.homeDir ?? (() => "/fake-home");
-  const purgeCache = new PurgeDeclaredCache(fs, logger);
+  const purgeCache = new ResolvePurgeCandidate(fs, logger);
   const guards: MachineStateGuards = {
     userConfigDir: parts.userConfigDir ?? (() => "/fake-home/.config/aidd"),
     resolveCacheCandidate: (cacheRoot, segments, label) =>
-      purgeCache.resolveCandidate(cacheRoot, segments, label),
+      purgeCache.execute(cacheRoot, segments, label),
     frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
   };
   const userScopeParts = {

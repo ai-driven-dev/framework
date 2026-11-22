@@ -4,9 +4,10 @@ import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { BuiltCatalogs } from "../../contract/built-catalogs.js";
 import type { ClaimsView } from "../../contract/claims-view.js";
+import { skippedWarning } from "../../domain/confirmation.js";
 import { judgeRegistration } from "../../domain/policy/registration-policy.js";
 import type { CatalogIdentityReader } from "../../ports/catalog-identity-reader.js";
-import { bestEffortNativeCall, skippedWarning } from "../confirm-native-call.use-case.js";
+import { bestEffortNativeCall } from "../confirm-native-call.js";
 import { enableRefs } from "./enable-refs.js";
 import { nativeCatalogProof } from "./native-catalog-proof.js";
 import type {

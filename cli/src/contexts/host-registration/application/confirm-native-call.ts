@@ -1,9 +1,5 @@
+import type { Confirmation } from "../domain/confirmation.js";
 import type { HostRefusal } from "../ports/host-actions.js";
-
-/** Whether a host's own CLI confirmed a call, and when it did not, the warning that says why. */
-export type Confirmation =
-  | { readonly confirmed: true }
-  | { readonly confirmed: false; readonly warning: string };
 
 /**
  * Confirms whether `action`, a call into a tool's own native plugin CLI, ran to completion rather
@@ -22,7 +18,3 @@ export function bestEffortNativeCall(
   warn(refused.warning);
   return refused;
 }
-
-/** The warning a skipped native step carries: which step, and the host's reason. */
-export const skippedWarning = (label: string) => (reason: string) =>
-  `Native plugin activation \u2014 ${label} skipped: ${reason}`;

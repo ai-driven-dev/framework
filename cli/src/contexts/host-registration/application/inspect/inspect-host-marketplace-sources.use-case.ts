@@ -11,7 +11,7 @@ import type { HostMarketplaceSourceCheck } from "../../domain/source/marketplace
 import type { CatalogIdentityReader } from "../../ports/catalog-identity-reader.js";
 import type { HostMarketplaceRegistry } from "../../ports/host-marketplace-registry.js";
 import type { CatalogProbeTool } from "../../ports/host-tool.js";
-import { hostMarketplaceSourceConflict } from "../check-marketplace-source.use-case.js";
+import { hostMarketplaceSourceConflict } from "../check-marketplace-source.js";
 import { sourceFinding } from "./host-registration-findings.js";
 
 /**

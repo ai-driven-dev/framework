@@ -33,8 +33,8 @@ import {
   userScopeFilesSafeToDelete,
   withoutMissingFiles,
 } from "../../contexts/machine-claims/application/ownership/user-scope-plugin-files.js";
-import { PurgeDeclaredCache } from "../../contexts/machine-claims/application/purge-declared-cache.js";
 import { pluginRemovalClaims } from "../../contexts/machine-claims/application/removal/plugin-removal-claims.js";
+import { ResolvePurgeCandidate } from "../../contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
 import { isStrictlyWithinUserScope } from "../../contexts/machine-claims/domain/user-scope-containment.js";
 import { ConfirmPluginSourceTrust } from "../../orchestration/plugin/confirm-plugin-source-trust.use-case.js";
 import { InstallFromMarketplace } from "../../orchestration/plugin/install-from-marketplace.use-case.js";
@@ -70,9 +70,8 @@ export function withinUserScope(
 }
 
 /** Resolves a cache path a removal may delete, through the purge that owns the rule. */
-export function purgeCandidateResolverOf(purge: Pick<PurgeDeclaredCache, "resolveCandidate">) {
-  return (...args: Parameters<PurgeDeclaredCache["resolveCandidate"]>) =>
-    purge.resolveCandidate(...args);
+export function purgeCandidateResolverOf(purge: Pick<ResolvePurgeCandidate, "execute">) {
+  return (...args: Parameters<ResolvePurgeCandidate["execute"]>) => purge.execute(...args);
 }
 
 // One writer for a machine-scope plugin's files, whether setup installs it or update rebuilds it.
@@ -130,7 +129,7 @@ function wirePluginRemoval(base: Base, inst: Installation) {
     frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
     userSourceReferences: base.userSourceReferences,
     marketplaceRegistry: base.marketplaceRegistry,
-    resolveCacheCandidate: purgeCandidateResolverOf(new PurgeDeclaredCache(fs, logger)),
+    resolveCacheCandidate: purgeCandidateResolverOf(new ResolvePurgeCandidate(fs, logger)),
   });
   const pluginRemoveUseCase = new RemovePlugin({
     remove: new RemoveProjectPluginFiles(
