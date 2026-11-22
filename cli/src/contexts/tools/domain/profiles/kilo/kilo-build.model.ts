@@ -15,8 +15,8 @@ import type {
 } from "../../../contract/build-contract.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
-import { buildTypedMcpFlatConfig } from "../../formats/typed-mcp-merge.js";
-import { collectTypedMcp } from "../../formats/typed-mcp-section.js";
+import { buildTypedMcpFlatConfig } from "../../formats/mcp/typed-mcp-merge.js";
+import { collectTypedMcp } from "../../formats/mcp/typed-mcp-section.js";
 import { chooseOutputPath } from "../../sections/mcp-section.js";
 import { kiloAgentFrontmatter } from "./kilo-agent.model.js";
 import { generateKiloHooksBridge } from "./kilo-hooks-bridge.model.js";

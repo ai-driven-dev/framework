@@ -1,5 +1,5 @@
-import { McpConfigError } from "../../../../shared/domain/shared.error.js";
-import { InvalidMcpServerConfigError } from "../tools.error.js";
+import { McpConfigError } from "../../../../../shared/domain/shared.error.js";
+import { InvalidMcpServerConfigError } from "../../tools.error.js";
 
 type RawServer =
   | { command: string; args?: string[]; env?: Record<string, string>; disabled?: boolean }

@@ -1,5 +1,5 @@
 import { serializeFrontmatter } from "../../../../shared/domain/markdown.js";
-import type { AgentFrontmatter } from "../formats/agent-format.js";
+import type { AgentFrontmatter } from "../formats/agents/agent-format.js";
 import { ToolSuffix } from "../profile/tool-suffix.js";
 
 function agentNameFromFrontmatter(

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { modelWithEffort } from "../../../../../src/contexts/tools/domain/formats/agent-format.js";
+import { modelWithEffort } from "../../../../../../src/contexts/tools/domain/formats/agents/agent-format.js";
 
 describe("modelWithEffort()", () => {
   it("joins the model and the effort between the given delimiters", () => {

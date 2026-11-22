@@ -6,8 +6,8 @@ import {
 } from "../../../../../shared/domain/materialization/flat-paths.js";
 import { agentsIn, skillsIn } from "../../../contract/artifact-path.js";
 import type { AgentMarkdown, ToolBuildContract } from "../../../contract/build-contract.js";
+import { portableAgentFrontmatter } from "../../formats/agents/portable-agent.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
-import { portableAgentFrontmatter } from "../../formats/portable-agent.js";
 import { type AntigravityHooks, mergeAntigravityHooks } from "./antigravity-hooks.model.js";
 
 /** Where a flat build, and a flat install, put antigravity's skills and agents. */

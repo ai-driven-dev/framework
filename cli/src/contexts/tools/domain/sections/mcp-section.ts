@@ -2,14 +2,17 @@ import { FileHash } from "../../../../shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { ConfigRef } from "../../contract/config-refs.js";
 import type { ConfigFilePlace } from "../../contract/tool-profile.js";
-import { mcpJsonToToml, mergeJsonUserPrime, transformMcpForWin32 } from "../formats/mcp-format.js";
-
-import type { TomlCodec } from "../formats/toml.js";
+import {
+  mcpJsonToToml,
+  mergeJsonUserPrime,
+  transformMcpForWin32,
+} from "../formats/mcp/mcp-format.js";
 import {
   buildTypedMcpFlatConfig,
   mergeTypedMcp,
   unmergeTypedMcp,
-} from "../formats/typed-mcp-merge.js";
+} from "../formats/mcp/typed-mcp-merge.js";
+import type { TomlCodec } from "../formats/toml.js";
 import { DualConfigError } from "../tools.error.js";
 
 /** The config files a tool's MCP output may already live in. Tiers are tried in order; within the
@@ -110,9 +113,7 @@ export class McpConfigPart {
     const afterTransform = this.#params.transformContent
       ? this.#params.transformContent(mcpJson)
       : mcpJson;
-    if (this.#params.format === "toml") {
-      return mcpJsonToToml(this.#params.toml, afterTransform);
-    }
+    if (this.#params.format === "toml") return mcpJsonToToml(this.#params.toml, afterTransform);
     return afterTransform;
   }
 

@@ -1,6 +1,6 @@
-import { parseFrontmatter } from "../../../../shared/domain/markdown.js";
+import { parseFrontmatter } from "../../../../../shared/domain/markdown.js";
+import type { TomlCodec } from "../toml.js";
 import { type AgentFrontmatter, pickFrontmatterKeys } from "./agent-format.js";
-import type { TomlCodec } from "./toml.js";
 
 /** Codex requires `name` and `description`, and reads the effort as `model_reasoning_effort`. */
 export const tomlAgentFrontmatter: AgentFrontmatter = (fm) => ({

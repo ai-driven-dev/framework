@@ -1,4 +1,4 @@
-import { type AgentFrontmatter, pickFrontmatterKeys } from "../../formats/agent-format.js";
+import { type AgentFrontmatter, pickFrontmatterKeys } from "../../formats/agents/agent-format.js";
 
 /** Copilot reads `effort` as `reasoningEffort`, and gives a subagent the repository
  * instructions only when `include-custom-instructions` is set; it defaults to false. */

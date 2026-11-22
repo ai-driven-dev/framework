@@ -5,7 +5,7 @@ import { MCP_CONFIG_REF } from "../../../src/contexts/tools/contract/config-refs
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { declareHooks } from "../../../src/contexts/tools/domain/formats/hooks/declaration.js";
 import { projectHooksSupport } from "../../../src/contexts/tools/domain/formats/hooks/routes.js";
-import { toTypedMcpSection } from "../../../src/contexts/tools/domain/formats/typed-mcp-section.js";
+import { toTypedMcpSection } from "../../../src/contexts/tools/domain/formats/mcp/typed-mcp-section.js";
 import { defineAiTool } from "../../../src/contexts/tools/domain/profile/define-tool.js";
 import {
   flatGlobalFilePath,

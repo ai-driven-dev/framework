@@ -9,11 +9,11 @@ import {
 } from "../../../../../shared/domain/materialization/flat-paths.js";
 import { agentsIn, skillsIn } from "../../../contract/artifact-path.js";
 import type { ToolBuildContract } from "../../../contract/build-contract.js";
+import { tomlAgentMarkdownToToml } from "../../formats/agents/toml-agent.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
 import { pluginTreeHooksArtifact } from "../../formats/hooks/routes.js";
 import type { TomlCodec } from "../../formats/toml.js";
-import { tomlAgentMarkdownToToml } from "../../formats/toml-agent.js";
 import { mergeCodexConfigToml } from "./codex-config.model.js";
 import {
   buildCodexManifest,

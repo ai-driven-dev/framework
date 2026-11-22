@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   collectTypedMcp,
   toTypedMcpSection,
-} from "../../../../../src/contexts/tools/domain/formats/typed-mcp-section.js";
-import { saying } from "../../../../shared/testing/saying.builder.js";
+} from "../../../../../../src/contexts/tools/domain/formats/mcp/typed-mcp-section.js";
+import { saying } from "../../../../../shared/testing/saying.builder.js";
 
 describe("toTypedMcpSection()", () => {
   it("turns a command server into a local one, its arguments folded into the command line", () => {

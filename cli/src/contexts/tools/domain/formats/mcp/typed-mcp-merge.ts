@@ -1,5 +1,5 @@
-import { FileHash } from "../../../../shared/domain/file-hash.js";
-import { stripJsonComments } from "../../../../shared/domain/reading/jsonc.js";
+import { FileHash } from "../../../../../shared/domain/file-hash.js";
+import { stripJsonComments } from "../../../../../shared/domain/reading/jsonc.js";
 
 interface TypedMcpFile {
   mcp?: Record<string, unknown>;

@@ -20,8 +20,8 @@ import type {
   HooksRouting,
 } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact, hooksBridgePath } from "../../formats/hooks/flat-routes.js";
-import { buildTypedMcpFlatConfig } from "../../formats/typed-mcp-merge.js";
-import { collectTypedMcp } from "../../formats/typed-mcp-section.js";
+import { buildTypedMcpFlatConfig } from "../../formats/mcp/typed-mcp-merge.js";
+import { collectTypedMcp } from "../../formats/mcp/typed-mcp-section.js";
 import { opencodeAgentFrontmatter } from "./opencode-agent.model.js";
 import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.model.js";
 

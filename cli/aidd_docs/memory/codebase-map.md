@@ -116,7 +116,9 @@ src/
 │   │   ├── domain/
 │   │   │   ├── bridges/
 │   │   │   ├── formats/
-│   │   │   │   └── hooks/
+│   │   │   │   ├── agents/
+│   │   │   │   ├── hooks/
+│   │   │   │   └── mcp/
 │   │   │   ├── hooks/
 │   │   │   ├── models/
 │   │   │   ├── native-registration/

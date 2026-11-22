@@ -7,8 +7,8 @@ import {
   convertCommandFrontmatterNoHint,
 } from "../../formats/command.js";
 import { flatHooksSupport } from "../../formats/hooks/flat-routes.js";
+import { toTypedMcpSection } from "../../formats/mcp/typed-mcp-section.js";
 import { descriptionOnlyRule } from "../../formats/rule-frontmatter.js";
-import { toTypedMcpSection } from "../../formats/typed-mcp-section.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { flatGlobalFilePath, flatPlacement } from "../../sections/layout-section.js";
 import { McpConfigPart } from "../../sections/mcp-section.js";

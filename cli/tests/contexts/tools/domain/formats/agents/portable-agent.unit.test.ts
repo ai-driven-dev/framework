@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { portableAgentFrontmatter } from "../../../../../src/contexts/tools/domain/formats/portable-agent.js";
-import { InvalidAgentFrontmatterError } from "../../../../../src/contexts/tools/domain/tools.error.js";
+import { portableAgentFrontmatter } from "../../../../../../src/contexts/tools/domain/formats/agents/portable-agent.js";
+import { InvalidAgentFrontmatterError } from "../../../../../../src/contexts/tools/domain/tools.error.js";
 import {
   parseFrontmatter,
   serializeFrontmatter,
-} from "../../../../../src/shared/domain/markdown.js";
+} from "../../../../../../src/shared/domain/markdown.js";
 
 describe("portableAgentFrontmatter", () => {
   it("names the agent, keeps its description and inherits the session model", () => {

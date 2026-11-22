@@ -1,4 +1,4 @@
-import type { TomlCodec } from "./toml.js";
+import type { TomlCodec } from "../toml.js";
 
 interface StdioServer {
   command: string;
