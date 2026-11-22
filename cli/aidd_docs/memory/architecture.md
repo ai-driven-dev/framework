@@ -33,7 +33,7 @@ flowchart LR
 | Record placement: the host record's shape lives in `host-registration/domain/`, the manifest stores it opaque | only host registration knows what it means; the manifest keeps its own claims on refs |
 | Claude registers at `--scope local` | the hashed settings file keeps one writer (`profiles/claude/profile.ts`) |
 | Files this CLI owns are regenerated, co-owned files are merged | `MergeStrategy` in `shared/domain/merge.ts` |
-| The manifest reads one version and refuses the rest | the refusal names the fix; no migration chain |
+| The manifest reads v9, and a v8 document only to split it once | any other version is refused with the fix named; one step, no migration chain. See `internal/decisions/manifest-reads-v9-and-splits-v8.md` |
 | One hooks descriptor per tool, one merge engine, one host adapter per tool in `assets/hooks-runtime/` | adding a tool is a descriptor and a payload fixture |
 
 Decision records: `internal/decisions/`.
