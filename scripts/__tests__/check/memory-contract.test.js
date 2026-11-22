@@ -44,11 +44,11 @@ describe("memory contract", () => {
     assert.deepEqual(ids(), ["MEMORY-03"]);
   });
 
-  it("MEMORY-04 flags a memory template with an error besides its questions, and one with no question", () => {
+  it("MEMORY-03 flags a memory template with an error besides its questions, and one with no question", () => {
     edit("assets/templates/memory/api.md", (text) => `${text}\n- See \`aidd_docs/nothing-here.md\`.\n`);
-    assert.deepEqual(ids(), ["MEMORY-04"]);
+    assert.deepEqual(ids(), ["MEMORY-03"]);
     fs.writeFileSync(path.join(dir, "assets/templates/memory/api.md"), "# API\n\n## Surface\n\n- Plain.\n");
-    assert.deepEqual(ids(), ["MEMORY-04"]);
+    assert.deepEqual(ids(), ["MEMORY-03"]);
   });
 
   it("MEMORY-05 flags a guidance comment and a TODO left in a template", () => {
