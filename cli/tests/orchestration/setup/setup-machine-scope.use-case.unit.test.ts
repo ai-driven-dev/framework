@@ -7,12 +7,15 @@ import type {
 import type { NativeActivationReport } from "../../../src/contexts/installation/application/install/install-ai-tool.use-case.js";
 import { SetupFlow } from "../../../src/orchestration/domain/setup-flow.model.js";
 import { SetupMachineScope } from "../../../src/orchestration/setup/setup-machine-scope.use-case.js";
-import { flowTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_TOOL,
+  syntheticFlowTools,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
 const PROJECT = "/project";
 const SOURCE = remoteFrameworkSource();
 const ACTIVATION: NativeActivationReport = {
-  activated: [TOOL.claude],
+  activated: [SYNTHETIC_TOOL],
   binaryMissing: [],
   warnings: [],
   failed: false,
@@ -21,11 +24,11 @@ const ACTIVATION: NativeActivationReport = {
 
 function flow(pluginNames: string[] = ["alpha"]): SetupFlow {
   return new SetupFlow({
-    ...flowTools(),
+    ...syntheticFlowTools(),
     supportsUserScopeActivation: () => true,
     projectRoot: PROJECT,
     source: SOURCE,
-    aiTools: [TOOL.claude],
+    aiTools: [SYNTHETIC_TOOL],
     pluginMode: "named",
     pluginNames,
     scope: "user",
@@ -85,16 +88,16 @@ describe("SetupMachineScope", () => {
     const result = await useCase.execute(f);
 
     expect(register).toHaveBeenCalledWith(f, SOURCE);
-    expect(configuredTools).toEqual([TOOL.claude]);
+    expect(configuredTools).toEqual([SYNTHETIC_TOOL]);
     expect(installPlugins.execute).toHaveBeenCalledWith({
       projectRoot: PROJECT,
-      toolIds: [TOOL.claude],
+      toolIds: [SYNTHETIC_TOOL],
       mode: "named",
       pluginNames: ["alpha"],
     });
     expect(sync).toHaveBeenCalledWith({
       projectRoot: PROJECT,
-      toolIds: [TOOL.claude],
+      toolIds: [SYNTHETIC_TOOL],
       enablePlugins: ["alpha"],
     });
     expect(result).toEqual({

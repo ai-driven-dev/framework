@@ -6,11 +6,15 @@ import { builtMarketplaceDir } from "../../../src/shared/domain/layout/aidd-layo
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
 import type { VersionReader } from "../../../src/shared/ports/version-reader.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.fake.js";
-import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 import { hostInspector } from "../../shared/testing/host-inspector.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_NATIVE_MARKETPLACE_REGISTRY,
+  SYNTHETIC_NATIVE_TOOL,
+  SYNTHETIC_UPDATING_NATIVE_TOOL,
+  syntheticNativeCatalog,
+} from "../../shared/testing/synthetic-native-tool.builder.js";
 import { buildCheckRegistration } from "../testing/build-check-registration.builder.js";
 
 function fakeVersion(value: string): VersionReader {
@@ -22,12 +26,12 @@ function fakeVersion(value: string): VersionReader {
 const PROJECT_ROOT = resolve("/project");
 const NAME = "probe-mkt";
 const CATALOG_RELATIVE = ".claude-plugin/marketplace.json";
-const REGISTRY_LOCATION = "/home/.claude/plugins/known_marketplaces.json";
+const REGISTRY_LOCATION = SYNTHETIC_NATIVE_MARKETPLACE_REGISTRY("/home");
 
 /** The exact path `SyncSettings`'s own guard would compare against -
  * recomputed the same way `checkMarketplaceSources` does, never a value invented here. */
 function expectedBuiltDir(): string {
-  return resolve(builtMarketplaceDir(PROJECT_ROOT, NAME, "claude"));
+  return resolve(builtMarketplaceDir(PROJECT_ROOT, NAME, SYNTHETIC_NATIVE_TOOL));
 }
 
 /** A `FileReader` whose `realpath` always throws, standing in for a built tree that was
@@ -113,19 +117,19 @@ async function issuesFor(
     })
   );
   const manifest = Manifest.create();
-  manifest.addTool(TOOL.claude, "test", []);
+  manifest.addTool(SYNTHETIC_NATIVE_TOOL, "test", []);
   const useCase = buildCheckRegistration(
     fs,
     registry,
     () => false,
-    hostInspector(registeredTools(), {
+    hostInspector(syntheticNativeCatalog(), {
       fs: fs,
       pluginRegistries: new Map(),
-      marketplaceRegistries: new Map([[TOOL.claude, hostReader]]),
+      marketplaceRegistries: new Map([[SYNTHETIC_NATIVE_TOOL, hostReader]]),
     }),
     () => "/user-cache",
     fakeVersion("1.0.0"),
-    catalogOf()
+    syntheticNativeCatalog()
   );
   const issues = await useCase.execute({
     manifest,
@@ -202,13 +206,13 @@ describe("CheckRegistration - marketplace source conflicts", () => {
   it("reports nothing when the same catalog is registered from a different, resolved path - two projects sharing one build", async () => {
     const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
-      entries: new Map([[NAME, "/other-project/built/claude"]]),
+      entries: new Map([[NAME, `/other-project/built/${SYNTHETIC_NATIVE_TOOL}`]]),
     });
 
     const issues = await issuesFor(hostReader, {
       requested: { path: expectedBuiltDir(), version: "1.0.0", pluginNames: ["sample-plugin"] },
       registered: {
-        path: "/other-project/built/claude",
+        path: `/other-project/built/${SYNTHETIC_NATIVE_TOOL}`,
         version: "1.0.0",
         pluginNames: ["sample-plugin"],
       },
@@ -289,19 +293,19 @@ describe("CheckRegistration - marketplace source conflicts", () => {
       })
     );
     const manifest = Manifest.create();
-    manifest.addTool(TOOL.claude, "test", []);
+    manifest.addTool(SYNTHETIC_NATIVE_TOOL, "test", []);
     const useCase = buildCheckRegistration(
       fs,
       registry,
       () => false,
-      hostInspector(registeredTools(), {
+      hostInspector(syntheticNativeCatalog(), {
         fs: fs,
         pluginRegistries: new Map(),
         marketplaceRegistries: new Map(),
       }),
       () => "/user-cache",
       fakeVersion("1.0.0"),
-      catalogOf()
+      syntheticNativeCatalog()
     );
 
     await expect(
@@ -316,7 +320,7 @@ describe("CheckRegistration - marketplace source conflicts", () => {
   it("reports nothing for a tool whose profile declares no marketplace registry, whatever a reader would answer", async () => {
     const codexCatalog = ".agents/plugins/marketplace.json";
     const fs = new InMemoryFileAdapter({
-      [`${resolve(builtMarketplaceDir(PROJECT_ROOT, NAME, "codex"))}/${codexCatalog}`]:
+      [`${resolve(builtMarketplaceDir(PROJECT_ROOT, NAME, SYNTHETIC_UPDATING_NATIVE_TOOL))}/${codexCatalog}`]:
         JSON.stringify({ name: NAME, plugins: [{ name: "sample-plugin" }] }),
       [`/other/src/${codexCatalog}`]: JSON.stringify({
         name: NAME,
@@ -334,7 +338,7 @@ describe("CheckRegistration - marketplace source conflicts", () => {
       })
     );
     const manifest = Manifest.create();
-    manifest.addTool(TOOL.codex, "test", []);
+    manifest.addTool(SYNTHETIC_UPDATING_NATIVE_TOOL, "test", []);
     const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map([[NAME, "/other/src"]]),
@@ -343,14 +347,14 @@ describe("CheckRegistration - marketplace source conflicts", () => {
       fs,
       registry,
       () => false,
-      hostInspector(registeredTools(), {
+      hostInspector(syntheticNativeCatalog(), {
         fs: fs,
         pluginRegistries: new Map(),
-        marketplaceRegistries: new Map([[TOOL.codex, hostReader]]),
+        marketplaceRegistries: new Map([[SYNTHETIC_UPDATING_NATIVE_TOOL, hostReader]]),
       }),
       () => "/user-cache",
       fakeVersion("1.0.0"),
-      catalogOf()
+      syntheticNativeCatalog()
     );
 
     const issues = await useCase.execute({
@@ -373,7 +377,7 @@ describe("CheckRegistration - marketplace source conflicts", () => {
         name: NAME,
         plugins: [],
       }),
-      [`${resolve(builtMarketplaceDir(PROJECT_ROOT, SECOND_NAME, "claude"))}/${CATALOG_RELATIVE}`]:
+      [`${resolve(builtMarketplaceDir(PROJECT_ROOT, SECOND_NAME, SYNTHETIC_NATIVE_TOOL))}/${CATALOG_RELATIVE}`]:
         JSON.stringify({ name: SECOND_NAME, plugins: [] }),
     });
     const registry = new InMemoryMarketplaceRegistry();
@@ -396,19 +400,19 @@ describe("CheckRegistration - marketplace source conflicts", () => {
       })
     );
     const manifest = Manifest.create();
-    manifest.addTool(TOOL.claude, "test", []);
+    manifest.addTool(SYNTHETIC_NATIVE_TOOL, "test", []);
     const useCase = buildCheckRegistration(
       fs,
       registry,
       () => false,
-      hostInspector(registeredTools(), {
+      hostInspector(syntheticNativeCatalog(), {
         fs: fs,
         pluginRegistries: new Map(),
-        marketplaceRegistries: new Map([[TOOL.claude, hostReader]]),
+        marketplaceRegistries: new Map([[SYNTHETIC_NATIVE_TOOL, hostReader]]),
       }),
       () => "/user-cache",
       fakeVersion("1.0.0"),
-      catalogOf()
+      syntheticNativeCatalog()
     );
 
     await useCase.execute({

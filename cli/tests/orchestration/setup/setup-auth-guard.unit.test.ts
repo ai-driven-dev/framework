@@ -23,8 +23,11 @@ import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.fa
 import { InMemoryEnvironment } from "../../shared/testing/in-memory-environment.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { buildInstallationDeps } from "../../shared/testing/installation-deps.builder.js";
-import { flowTools, registeredTools } from "../../shared/testing/registered-tools.builder.js";
 import { OverwritePrompter } from "../../shared/testing/scripted-prompter.fake.js";
+import {
+  syntheticFlowTools,
+  syntheticMixedCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import { askMarketplaceSource } from "../testing/ask-marketplace-source.builder.js";
 import { runSetupOf } from "../testing/run-setup-of.builder.js";
 import { setupMarketplaceRegistrar } from "../testing/setup-marketplace-registrar.builder.js";
@@ -95,7 +98,7 @@ function makeTokenProvider(token: string | null): TokenProvider {
 const PROJECT_ROOT = "/test-project";
 
 async function buildSetupUseCase(tokenProvider: TokenProvider, isRepoPublic = false) {
-  const deps = await buildInstallationDeps({ tools: registeredTools() });
+  const deps = await buildInstallationDeps({ tools: syntheticMixedCatalog() });
   const prompter = new OverwritePrompter();
   const askSource = askMarketplaceSource(prompter, makeReleaseResolver(true));
   const setupToolsUseCase = new InstallTools(
@@ -121,7 +124,7 @@ async function buildSetupUseCase(tokenProvider: TokenProvider, isRepoPublic = fa
     makeReleaseResolver(isRepoPublic)
   );
   return runSetupOf({
-    tools: registeredTools(),
+    tools: syntheticMixedCatalog(),
     fs: deps.fs,
     manifestRepo: deps.manifestRepo,
     steps: {
@@ -139,7 +142,7 @@ describe("RunSetup - auth guard for remote source", () => {
     const useCase = await buildSetupUseCase(makeTokenProvider(null), false);
 
     const flow = new SetupFlow({
-      ...flowTools(),
+      ...syntheticFlowTools(),
       supportsUserScopeActivation: () => true,
       projectRoot: PROJECT_ROOT,
       source: remoteFrameworkSource(),
@@ -153,7 +156,7 @@ describe("RunSetup - auth guard for remote source", () => {
     const useCase = await buildSetupUseCase(makeTokenProvider(null), true);
 
     const flow = new SetupFlow({
-      ...flowTools(),
+      ...syntheticFlowTools(),
       supportsUserScopeActivation: () => true,
       projectRoot: PROJECT_ROOT,
       source: remoteFrameworkSource(),
@@ -167,7 +170,7 @@ describe("RunSetup - auth guard for remote source", () => {
     const useCase = await buildSetupUseCase(makeTokenProvider("ghp_valid-token"));
 
     const flow = new SetupFlow({
-      ...flowTools(),
+      ...syntheticFlowTools(),
       supportsUserScopeActivation: () => true,
       projectRoot: PROJECT_ROOT,
       source: remoteFrameworkSource(),
@@ -181,7 +184,7 @@ describe("RunSetup - auth guard for remote source", () => {
     const useCase = await buildSetupUseCase(makeTokenProvider(null));
 
     const flow = new SetupFlow({
-      ...flowTools(),
+      ...syntheticFlowTools(),
       supportsUserScopeActivation: () => true,
       projectRoot: PROJECT_ROOT,
       source: localFrameworkSource("/some/path"),

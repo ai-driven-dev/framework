@@ -41,14 +41,29 @@ export const SYNTHETIC_IDE_TOOL = IDE_CONFIG.toolId;
 /** The synthetic IDE tool and both AI tools, the first running the agents on anthropic and the
  * second on openai: for a test that reads both categories or the providers the tools run. */
 export function syntheticMixedCatalog(): ToolCatalog {
-  return new RegisteredToolCatalog([
+  return new RegisteredToolCatalog(syntheticMixedConfigs());
+}
+
+/** The profiles of the mixed catalog, for a catalog that lists more tools beside them. */
+export function syntheticMixedConfigs() {
+  return [
     syntheticConfig(SYNTHETIC_TOOL, ["anthropic"]),
     syntheticConfig(SECOND_SYNTHETIC_TOOL, ["openai"]),
     IDE_CONFIG,
-  ]);
+  ];
 }
 
 /** A catalog listing only the synthetic tools: what a generic test hands code that asks its tools. */
 export function syntheticCatalog(): ToolCatalog {
   return new RegisteredToolCatalog(CONFIGS);
+}
+
+/** The tool ids a setup flow is built over, read from the given synthetic catalog, the mixed one by
+ * default: a flow test names no registered tool. */
+export function syntheticFlowTools(tools: ToolCatalog = syntheticMixedCatalog()) {
+  return {
+    registeredToolIds: tools.idsInCanonicalOrder(),
+    aiToolIds: tools.idsInCanonicalOrder("ai"),
+    ideToolIds: tools.idsInCanonicalOrder("ide"),
+  };
 }

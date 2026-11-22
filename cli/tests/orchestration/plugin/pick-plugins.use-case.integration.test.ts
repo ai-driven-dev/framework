@@ -15,7 +15,6 @@ import type { Prompter } from "../../../src/orchestration/ports/prompter.js";
 import { InvalidPluginManifestError } from "../../../src/shared/domain/shared.error.js";
 import { buildAddPlugin } from "../../contexts/installation/testing/build-add-plugin.builder.js";
 import { fakeBuildSources } from "../../contexts/installation/testing/fake-build-sources.fake.js";
-import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 import type { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import {
@@ -25,9 +24,12 @@ import {
 import { loadDistributionOf } from "../../shared/testing/load-distribution.builder.js";
 import { manifestProbesOf } from "../../shared/testing/manifest-probes-of.builder.js";
 import { unusedRawCatalog } from "../../shared/testing/raw-catalog.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
 import { seedFromDirectory } from "../../shared/testing/seed-from-directory.builder.js";
+import {
+  SYNTHETIC_NATIVE_TOOL,
+  syntheticNativeCatalog,
+} from "../../shared/testing/synthetic-native-tool.builder.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";
@@ -59,8 +61,8 @@ function registerMarketplace(
 }
 
 async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
-  const deps = await buildInstallationDeps({ tools: registeredTools() });
-  await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+  const deps = await buildInstallationDeps({ tools: syntheticNativeCatalog() });
+  await initAndInstall(deps, PROJECT_ROOT, SYNTHETIC_NATIVE_TOOL);
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const registry = new InMemoryMarketplaceRegistry();
   const pluginAdd = buildAddPlugin(
@@ -69,12 +71,12 @@ async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
     {
       loadDistribution: loadDistributionOf(
         deps.pluginFetcher,
-        new PluginDistributionReaderAdapter(deps.fs, manifestProbesOf(registeredTools()))
+        new PluginDistributionReaderAdapter(deps.fs, manifestProbesOf(syntheticNativeCatalog()))
       ),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
     },
-    catalogOf()
+    syntheticNativeCatalog()
   );
   const fetchMarketplaceSource = new FetchMarketplaceSource({
     pluginFetcher: deps.pluginFetcher,
@@ -97,7 +99,7 @@ describe("PickPlugins", () => {
   it("refuses a non-interactive run with InteractiveOnlyError, naming the command to rerun", async () => {
     const { useCase } = await buildUseCase();
     const run = useCase.execute({
-      toolIds: [TOOL.claude],
+      toolIds: [SYNTHETIC_NATIVE_TOOL],
       projectRoot: PROJECT_ROOT,
       interactive: false,
     });
@@ -109,7 +111,7 @@ describe("PickPlugins", () => {
     const { useCase } = await buildUseCase();
     await expect(
       useCase.execute({
-        toolIds: [TOOL.claude],
+        toolIds: [SYNTHETIC_NATIVE_TOOL],
         projectRoot: PROJECT_ROOT,
         interactive: true,
       })
@@ -137,7 +139,7 @@ describe("PickPlugins", () => {
     );
 
     const result = await useCase.execute({
-      toolIds: [TOOL.claude],
+      toolIds: [SYNTHETIC_NATIVE_TOOL],
       projectRoot: PROJECT_ROOT,
       interactive: true,
     });
@@ -145,7 +147,7 @@ describe("PickPlugins", () => {
     expect(result.marketplace.name).toBe("local");
     expect(result.installed).toEqual(["sample-plugin"]);
     const manifest = await deps.manifestRepo.load();
-    const plugins = manifest?.getRecordedPlugins(TOOL.claude) ?? [];
+    const plugins = manifest?.getRecordedPlugins(SYNTHETIC_NATIVE_TOOL) ?? [];
     const installed = plugins.find((p) => p.plugin.name === "sample-plugin");
     expect(installed?.marketplace).toBe("local");
   });
@@ -158,7 +160,7 @@ describe("PickPlugins", () => {
     await registerMarketplace(registry, "second", MKT_DIR_2);
 
     const result = await useCase.execute({
-      toolIds: [TOOL.claude],
+      toolIds: [SYNTHETIC_NATIVE_TOOL],
       projectRoot: PROJECT_ROOT,
       interactive: true,
     });
@@ -173,7 +175,7 @@ describe("PickPlugins", () => {
 
     await expect(
       useCase.execute({
-        toolIds: [TOOL.claude],
+        toolIds: [SYNTHETIC_NATIVE_TOOL],
         projectRoot: PROJECT_ROOT,
         interactive: true,
       })
@@ -195,7 +197,7 @@ describe("PickPlugins", () => {
     await registerMarketplace(registry, "local", MKT_DIR);
 
     const result = await useCase.execute({
-      toolIds: [TOOL.claude],
+      toolIds: [SYNTHETIC_NATIVE_TOOL],
       projectRoot: PROJECT_ROOT,
       interactive: true,
     });
@@ -213,7 +215,7 @@ describe("PickPlugins - what it asks, and when it asks nothing", () => {
     await registerMarketplace(registry, "local", MKT_DIR);
 
     await useCase.execute({
-      toolIds: [TOOL.claude],
+      toolIds: [SYNTHETIC_NATIVE_TOOL],
       projectRoot: PROJECT_ROOT,
       interactive: true,
     });
@@ -229,7 +231,7 @@ describe("PickPlugins - what it asks, and when it asks nothing", () => {
     await registerMarketplace(registry, "local", MKT_DIR);
 
     const result = await useCase.execute({
-      toolIds: [TOOL.claude],
+      toolIds: [SYNTHETIC_NATIVE_TOOL],
       projectRoot: PROJECT_ROOT,
       interactive: true,
     });
@@ -256,14 +258,14 @@ describe("PickPlugins - what it hands the installer", () => {
     await registerMarketplace(registry, "local", MKT_DIR);
 
     await useCase.execute({
-      toolIds: [TOOL.claude],
+      toolIds: [SYNTHETIC_NATIVE_TOOL],
       projectRoot: PROJECT_ROOT,
       interactive: true,
     });
 
     expect(add).toHaveBeenCalledWith({
       source: { kind: "local", path: PLUGIN_FIXTURE },
-      toolIds: ["claude"],
+      toolIds: [SYNTHETIC_NATIVE_TOOL],
       projectRoot: PROJECT_ROOT,
       interactive: true,
       marketplace: "local",
@@ -290,7 +292,7 @@ describe("PickPlugins - what it hands the installer", () => {
     await registerMarketplace(registry, "local", MKT_DIR);
 
     await useCase.execute({
-      toolIds: [TOOL.claude],
+      toolIds: [SYNTHETIC_NATIVE_TOOL],
       projectRoot: PROJECT_ROOT,
       interactive: true,
     });

@@ -6,10 +6,9 @@ import { hostRecord } from "../../shared/testing/host-record-reading.builder.js"
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import {
-  registeredTools,
-  resolveRegisteredToolId,
-  TOOL,
-} from "../../shared/testing/registered-tools.builder.js";
+  SYNTHETIC_NATIVE_TOOL,
+  syntheticNativeCatalog,
+} from "../../shared/testing/synthetic-native-tool.builder.js";
 import {
   ALIAS,
   HOST,
@@ -21,12 +20,12 @@ import {
 } from "../testing/user-marketplace-removal.builder.js";
 import { userMarketplaceRemover } from "../testing/user-marketplace-remover.builder.js";
 
-for (const toolId of [TOOL.codex]) {
+for (const toolId of [SYNTHETIC_NATIVE_TOOL]) {
   describe(`${toolId} targeted user marketplace removal: host refusals and retries`, () => {
     const fixture = (
       refs: Parameters<typeof nativeFixture>[1],
       opts: Omit<NativeFixtureOptions, "tools"> = {}
-    ) => nativeFixture(toolId, refs, { ...opts, tools: registeredTools() });
+    ) => nativeFixture(toolId, refs, { ...opts, tools: syntheticNativeCatalog() });
 
     const enabled = () => new Map([[REF, { enabled: true, scope: "user" as const }]]);
 
@@ -34,7 +33,7 @@ for (const toolId of [TOOL.codex]) {
       const f = await fixture(enabled());
       const absent = new InMemoryManifestRepository();
       const useCase = userMarketplaceRemover(
-        registeredTools(),
+        syntheticNativeCatalog(),
         new InMemoryFileAdapter(),
         absent,
         f.registry,
@@ -73,7 +72,7 @@ for (const toolId of [TOOL.codex]) {
         new Map([[toolId, sourceReader()]])
       );
       const useCase = userMarketplaceRemover(
-        registeredTools(),
+        syntheticNativeCatalog(),
         new InMemoryFileAdapter(),
         f.repo,
         f.registry,
@@ -147,7 +146,7 @@ for (const toolId of [TOOL.codex]) {
         updateVersion: (root, key, version) => f.registry.updateVersion(root, key, version),
       };
       const useCase = userMarketplaceRemover(
-        registeredTools(),
+        syntheticNativeCatalog(),
         new InMemoryFileAdapter(),
         {
           path: f.repo.path,
@@ -155,7 +154,7 @@ for (const toolId of [TOOL.codex]) {
             const current = await f.repo.load();
             return current === null
               ? null
-              : Manifest.fromJSON(current.toJSON(), resolveRegisteredToolId);
+              : Manifest.fromJSON(current.toJSON(), (raw) => syntheticNativeCatalog().toolId(raw));
           },
           loadIfReadable: async () => null,
           save: (manifest) => f.repo.save(manifest),

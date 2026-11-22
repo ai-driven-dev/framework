@@ -8,7 +8,10 @@ import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { ChoosingPrompter } from "../../shared/testing/choosing-prompter.fake.js";
 import { loadDistributionOf } from "../../shared/testing/load-distribution.builder.js";
 import { manifestProbesOf } from "../../shared/testing/manifest-probes-of.builder.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_NATIVE_TOOL,
+  syntheticNativeCatalog,
+} from "../../shared/testing/synthetic-native-tool.builder.js";
 import {
   type AddPluginFor,
   buildUseCase as buildUseCaseWith,
@@ -29,17 +32,22 @@ const addPluginOver: AddPluginFor = (deps, registry) =>
     {
       loadDistribution: loadDistributionOf(
         deps.pluginFetcher,
-        new PluginDistributionReaderAdapter(deps.fs, manifestProbesOf(registeredTools()))
+        new PluginDistributionReaderAdapter(deps.fs, manifestProbesOf(syntheticNativeCatalog()))
       ),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
     },
-    registeredTools()
+    syntheticNativeCatalog()
   );
 
 const buildUseCase = (
   options: Omit<Parameters<typeof buildUseCaseWith>[1], "tools" | "claude"> = {}
-) => buildUseCaseWith(addPluginOver, { tools: registeredTools(), claude: TOOL.claude, ...options });
+) =>
+  buildUseCaseWith(addPluginOver, {
+    tools: syntheticNativeCatalog(),
+    claude: SYNTHETIC_NATIVE_TOOL,
+    ...options,
+  });
 
 describe("InstallFromMarketplace: matches and versions", () => {
   describe("choosing among several matches", () => {
@@ -59,7 +67,7 @@ describe("InstallFromMarketplace: matches and versions", () => {
 
       const result = await useCase.execute({
         pluginName: "sample-plugin",
-        toolIds: [TOOL.claude],
+        toolIds: [SYNTHETIC_NATIVE_TOOL],
         projectRoot: PROJECT_ROOT,
         interactive: true,
       });
@@ -83,7 +91,7 @@ describe("InstallFromMarketplace: matches and versions", () => {
       await expect(
         useCase.execute({
           pluginName: "sample-plugin",
-          toolIds: [TOOL.claude],
+          toolIds: [SYNTHETIC_NATIVE_TOOL],
           projectRoot: PROJECT_ROOT,
           interactive: false,
         })
@@ -102,7 +110,7 @@ describe("InstallFromMarketplace: matches and versions", () => {
 
       const result = await useCase.execute({
         pluginName: "sample-plugin",
-        toolIds: [TOOL.claude],
+        toolIds: [SYNTHETIC_NATIVE_TOOL],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       });
@@ -118,7 +126,7 @@ describe("InstallFromMarketplace: matches and versions", () => {
 
       const result = await useCase.execute({
         pluginName: "sample-plugin",
-        toolIds: [TOOL.claude],
+        toolIds: [SYNTHETIC_NATIVE_TOOL],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       });
@@ -151,7 +159,7 @@ describe("InstallFromMarketplace: matches and versions", () => {
         useCase.execute({
           pluginName: "sample-plugin",
           version: "1.0.0",
-          toolIds: [TOOL.claude],
+          toolIds: [SYNTHETIC_NATIVE_TOOL],
           projectRoot: PROJECT_ROOT,
           interactive: false,
         })
@@ -183,7 +191,7 @@ describe("InstallFromMarketplace: matches and versions", () => {
           pluginName: "sample-plugin",
           version: "1.0.0",
           requestedVersionPolicy: "prefer-catalog",
-          toolIds: [TOOL.claude],
+          toolIds: [SYNTHETIC_NATIVE_TOOL],
           projectRoot: PROJECT_ROOT,
           interactive: false,
         })
@@ -216,7 +224,7 @@ describe("InstallFromMarketplace: matches and versions", () => {
         pluginName: "sample-plugin",
         version: "1.0.0",
         requestedVersionPolicy: "prefer-catalog",
-        toolIds: [TOOL.claude],
+        toolIds: [SYNTHETIC_NATIVE_TOOL],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       });
@@ -243,12 +251,12 @@ describe("InstallFromMarketplace: matches and versions", () => {
       await useCase.execute({
         pluginName: "sample-plugin",
         version: "1.0.0",
-        toolIds: [TOOL.claude],
+        toolIds: [SYNTHETIC_NATIVE_TOOL],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       });
 
-      expect(installedSamplePlugin(deps, TOOL.claude)?.plugin.version).toBe("1.0.0");
+      expect(installedSamplePlugin(deps, SYNTHETIC_NATIVE_TOOL)?.plugin.version).toBe("1.0.0");
     });
 
     it("logs nothing under prefer-catalog when no version was requested", async () => {
@@ -266,7 +274,7 @@ describe("InstallFromMarketplace: matches and versions", () => {
       await useCase.execute({
         pluginName: "sample-plugin",
         requestedVersionPolicy: "prefer-catalog",
-        toolIds: [TOOL.claude],
+        toolIds: [SYNTHETIC_NATIVE_TOOL],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       });
@@ -289,12 +297,12 @@ describe("InstallFromMarketplace: matches and versions", () => {
         pluginName: "sample-plugin",
         version: "1.0.0",
         requestedVersionPolicy: "prefer-catalog",
-        toolIds: [TOOL.claude],
+        toolIds: [SYNTHETIC_NATIVE_TOOL],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       });
 
-      expect(installedSamplePlugin(deps, TOOL.claude)?.marketplace).toBe("mkt1");
+      expect(installedSamplePlugin(deps, SYNTHETIC_NATIVE_TOOL)?.marketplace).toBe("mkt1");
     });
   });
 });

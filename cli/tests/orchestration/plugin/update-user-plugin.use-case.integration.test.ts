@@ -22,10 +22,16 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { loadDistributionOf } from "../../shared/testing/load-distribution.builder.js";
 import { manifestProbesOf } from "../../shared/testing/manifest-probes-of.builder.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
+import {
+  SYNTHETIC_NATIVE_TOOL,
+  SYNTHETIC_UPDATING_NATIVE_TOOL,
+  SYNTHETIC_USER_TOOL,
+  syntheticNativeCatalog,
+} from "../../shared/testing/synthetic-native-tool.builder.js";
 
-const { copilot, cursor } = TOOL;
+const copilot = SYNTHETIC_UPDATING_NATIVE_TOOL;
+const cursor = SYNTHETIC_USER_TOOL;
 
 const REF = "test-plugin@real-catalog";
 const OTHER = "test-plugin@other-catalog";
@@ -89,14 +95,14 @@ function fixture(
             new FixturePluginFetcher(),
             distribution
               ? { read: async () => distribution }
-              : new PluginDistributionReaderAdapter(fs, manifestProbesOf(registeredTools()))
+              : new PluginDistributionReaderAdapter(fs, manifestProbesOf(syntheticNativeCatalog()))
           ),
           guard: userScopeFileGuard,
           builtDeps: fakeBuiltDeps(fs),
         }),
         logger,
       },
-      registeredTools()
+      syntheticNativeCatalog()
     ),
     new RefreshHostPlugin(
       new Map([[toolId, activator]]),
@@ -127,14 +133,14 @@ function currentDistribution(version: string) {
   const skill = { relativePath: "skills/demo/SKILL.md", content: "# Skill" };
   return new PluginDistribution({
     manifest: { name: "sample-plugin", version },
-    format: TOOL.claude,
+    format: SYNTHETIC_NATIVE_TOOL,
     files: [skill],
     components: { commands: [], agents: [], rules: [], skills: [skill], hooks: [], mcp: [] },
   });
 }
 
 describe("targeted machine native plugin update", () => {
-  it("Copilot retains exact AIDD claims when its installed binary cannot prove the source", async () => {
+  it("an updating tool retains exact AIDD claims when its installed binary cannot prove the source", async () => {
     const f = fixture(copilot, { refs: [REF, OTHER], dependents: ["/A", "/B"] });
     await expect(f.execute(REF)).rejects.toThrow(/host source reader unavailable/);
     expect(f.activator.updatedPlugins).toEqual([]);
@@ -197,8 +203,8 @@ describe("targeted machine native plugin update", () => {
   });
 
   it.each([
-    ["Codex, whose verified binary has no update verb", TOOL.codex],
-    ["Cursor, which has no native activation at all", cursor],
+    ["a native tool whose binary has no update verb", SYNTHETIC_NATIVE_TOOL],
+    ["a tool with no native activation at all", cursor],
   ])("refuses targeted update for %s", async (_why, toolId) => {
     const f = fixture(toolId);
     await expect(f.execute(REF)).rejects.toThrow(/does not support targeted native plugin update/);
@@ -208,7 +214,7 @@ describe("targeted machine native plugin update", () => {
     ]);
   });
 
-  it("does not touch a project-scope record when selected Copilot source is unproved", async () => {
+  it("does not touch a project-scope record when selected updating-tool source is unproved", async () => {
     const f = fixture(copilot, { refs: [REF, OTHER] });
     const machine = f.repo.getCurrent();
     if (machine === null) throw new Error("fixture missing machine manifest");
@@ -227,7 +233,7 @@ describe("targeted machine native plugin update", () => {
     expect(machine.getPlugins(copilot).map((plugin) => plugin.name)).toEqual(["project-plugin"]);
   });
 
-  it("refuses two selected Copilot refs before updating either without current source proof", async () => {
+  it("refuses two selected updating-tool refs before updating either without current source proof", async () => {
     const f = fixture(copilot, { refs: [REF, OTHER] });
     await expect(f.execute([REF, OTHER])).rejects.toThrow(/host source reader unavailable/);
     expect(f.activator.updatedPlugins).toEqual([]);
@@ -247,7 +253,7 @@ describe("targeted machine native plugin update", () => {
     expect(f.repo.saveCount).toBe(0);
   });
 
-  it("all-target Copilot update refuses an unproved catalogue and preserves project records", async () => {
+  it("all-target update refuses an unproved catalogue and preserves project records", async () => {
     const f = fixture(copilot);
     const machine = f.repo.getCurrent();
     if (machine === null) throw new Error("fixture missing machine manifest");
@@ -266,7 +272,7 @@ describe("targeted machine native plugin update", () => {
     expect(machine.getPlugins(copilot).map((plugin) => plugin.name)).toEqual(["project-plugin"]);
   });
 
-  it("does not reach Copilot's update verb when its current source cannot be proven", async () => {
+  it("does not reach the tool's update verb when its current source cannot be proven", async () => {
     const f = fixture(copilot, { failOnUpdate: true });
     await expect(f.execute(REF)).rejects.toThrow(/host source reader unavailable/);
     expect(f.activator.updatedPlugins).toEqual([]);

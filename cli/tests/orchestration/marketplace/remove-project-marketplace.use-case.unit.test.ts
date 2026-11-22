@@ -9,9 +9,12 @@ import { Marketplace } from "../../../src/contexts/distribution/domain/marketpla
 import { RemoveProjectPlugin } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
+import {
+  SYNTHETIC_USER_TOOL,
+  syntheticNativeCatalog,
+} from "../../shared/testing/synthetic-native-tool.builder.js";
 import {
   SYNTHETIC_TOOL,
   syntheticCatalog,
@@ -75,14 +78,14 @@ describe("RemoveProjectMarketplace", () => {
       source: { kind: "github", repo: "owner/sample" },
       version: "1.0.0",
       strict: false,
-      files: { ".claude/plugins/sample/CLAUDE.md": "0123456789abcdef0123456789abcdef" },
+      files: { ".synthetic/plugins/sample/note.md": "0123456789abcdef0123456789abcdef" },
       scope: "project",
       marketplace: "awesome",
     });
     manifest.addPlugin(SYNTHETIC_TOOL, plugin);
     await manifestRepo.save(manifest);
 
-    const filePath = join(PROJECT_ROOT, ".claude/plugins/sample/CLAUDE.md");
+    const filePath = join(PROJECT_ROOT, ".synthetic/plugins/sample/note.md");
     await fs.writeFile(filePath, "content");
 
     await registry.save(
@@ -107,20 +110,20 @@ describe("RemoveProjectMarketplace", () => {
     expect(reloaded?.getPlugins(SYNTHETIC_TOOL)).toHaveLength(0);
   });
 
-  it("removes a project marketplace's orphan projection without deleting shared Cursor files", async () => {
-    const { registry, manifestRepo, fs } = buildUseCase(registeredTools());
+  it("removes a project marketplace's orphan projection without deleting shared user-scope files", async () => {
+    const { registry, manifestRepo, fs } = buildUseCase(syntheticNativeCatalog());
     const useCase = projectMarketplaceRemover(
-      registeredTools(),
+      syntheticNativeCatalog(),
       new RemoveProjectPlugin(fs, () => "/home/dev"),
       manifestRepo,
       registry,
       new KeepPrompter()
     );
     const manifest = Manifest.create();
-    manifest.addTool(TOOL.cursor, "1.0.0", []);
+    manifest.addTool(SYNTHETIC_USER_TOOL, "1.0.0", []);
     const pluginKey = "aidd-context/commands/hello.md";
     manifest.addPlugin(
-      TOOL.cursor,
+      SYNTHETIC_USER_TOOL,
       RecordedPlugin.fromJSON({
         name: "aidd-context",
         source: { kind: "github", repo: "owner/aidd-context" },
@@ -151,32 +154,34 @@ describe("RemoveProjectMarketplace", () => {
 
     expect(result.removedPluginCount).toBe(1);
     expect(
-      fs.deletedPaths.some((p) => p.endsWith(join(".cursor", "plugins", "local", pluginKey)))
+      fs.deletedPaths.some((p) =>
+        p.endsWith(join(`.${SYNTHETIC_USER_TOOL}`, "plugins", "local", pluginKey))
+      )
     ).toBe(false);
     expect(fs.deletedPaths).not.toContain(join(PROJECT_ROOT, pluginKey));
   });
 
-  it("removes a cursor orphan's file under projectRoot, not ~/.cursor/plugins/local, when the manifest says scope: project", async () => {
-    const { registry, manifestRepo, fs } = buildUseCase(registeredTools());
+  it("removes a user-scope tool orphan's file under projectRoot, not the home plugins directory, when the manifest says scope: project", async () => {
+    const { registry, manifestRepo, fs } = buildUseCase(syntheticNativeCatalog());
     const useCase = projectMarketplaceRemover(
-      registeredTools(),
+      syntheticNativeCatalog(),
       new RemoveProjectPlugin(fs, () => "/home/dev"),
       manifestRepo,
       registry,
       new KeepPrompter()
     );
     const manifest = Manifest.create();
-    manifest.addTool(TOOL.cursor, "1.0.0", []);
+    manifest.addTool(SYNTHETIC_USER_TOOL, "1.0.0", []);
     const pluginKey = "aidd-context/commands/hello.md";
     manifest.addPlugin(
-      TOOL.cursor,
+      SYNTHETIC_USER_TOOL,
       RecordedPlugin.fromJSON({
         name: "aidd-context",
         source: { kind: "github", repo: "owner/aidd-context" },
         version: "1.0.0",
         strict: false,
         files: { [pluginKey]: "0123456789abcdef0123456789abcdef" },
-        // Disagrees with cursor's own profile, which declares installScope "user".
+        // Disagrees with the tool's own profile, which declares installScope "user".
         scope: "project",
         marketplace: "awesome",
       })
@@ -201,9 +206,9 @@ describe("RemoveProjectMarketplace", () => {
 
     expect(result.removedPluginCount).toBe(1);
     expect(fs.deletedPaths).toContain(join(PROJECT_ROOT, pluginKey));
-    expect(fs.deletedPaths.some((p) => p.includes(join(".cursor", "plugins", "local")))).toBe(
-      false
-    );
+    expect(
+      fs.deletedPaths.some((p) => p.includes(join(`.${SYNTHETIC_USER_TOOL}`, "plugins", "local")))
+    ).toBe(false);
   });
 
   // `aidd-framework` is machine-scope: removing it from one project would orphan the host's

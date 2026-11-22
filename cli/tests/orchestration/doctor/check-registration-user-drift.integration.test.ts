@@ -8,11 +8,14 @@ import {
 } from "../../../src/shared/domain/layout/aidd-layout.js";
 import type { VersionReader } from "../../../src/shared/ports/version-reader.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.fake.js";
-import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 import { hostInspector } from "../../shared/testing/host-inspector.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_NATIVE_MARKETPLACE_REGISTRY,
+  SYNTHETIC_NATIVE_TOOL,
+  syntheticNativeCatalog,
+} from "../../shared/testing/synthetic-native-tool.builder.js";
 import { buildCheckRegistration } from "../testing/build-check-registration.builder.js";
 
 function fakeVersion(value: string): VersionReader {
@@ -24,7 +27,7 @@ function fakeVersion(value: string): VersionReader {
 const PROJECT_ROOT = resolve("/project");
 const NAME = "probe-mkt";
 const CATALOG_RELATIVE = ".claude-plugin/marketplace.json";
-const REGISTRY_LOCATION = "/home/.claude/plugins/known_marketplaces.json";
+const REGISTRY_LOCATION = SYNTHETIC_NATIVE_MARKETPLACE_REGISTRY("/home");
 
 describe("CheckRegistration - user-scope marketplace source drift", () => {
   // resolve(): compared against an already-resolved requested/registered source, so a
@@ -38,7 +41,7 @@ describe("CheckRegistration - user-scope marketplace source drift", () => {
         userConfigDir: USER_CACHE_ROOT,
         cliVersion: version,
         marketplaceName: NAME,
-        target: "claude",
+        target: SYNTHETIC_NATIVE_TOOL,
       })
     );
   }
@@ -61,19 +64,19 @@ describe("CheckRegistration - user-scope marketplace source drift", () => {
       })
     );
     const manifest = Manifest.create();
-    manifest.addTool(TOOL.claude, "test", []);
+    manifest.addTool(SYNTHETIC_NATIVE_TOOL, "test", []);
     const useCase = buildCheckRegistration(
       fs,
       registry,
       () => false,
-      hostInspector(registeredTools(), {
+      hostInspector(syntheticNativeCatalog(), {
         fs: fs,
         pluginRegistries: new Map(),
-        marketplaceRegistries: new Map([[TOOL.claude, hostReader]]),
+        marketplaceRegistries: new Map([[SYNTHETIC_NATIVE_TOOL, hostReader]]),
       }),
       () => USER_CACHE_ROOT,
       fakeVersion(CURRENT_VERSION),
-      catalogOf()
+      syntheticNativeCatalog()
     );
     return useCase.execute({
       manifest,
@@ -98,7 +101,7 @@ describe("CheckRegistration - user-scope marketplace source drift", () => {
   });
 
   it("warns naming `aidd sync` when the host still points at this project's own pre-migration cache", async () => {
-    const projectCache = resolve(builtMarketplaceDir(PROJECT_ROOT, NAME, "claude"));
+    const projectCache = resolve(builtMarketplaceDir(PROJECT_ROOT, NAME, SYNTHETIC_NATIVE_TOOL));
     const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map([[NAME, projectCache]]),
@@ -109,14 +112,16 @@ describe("CheckRegistration - user-scope marketplace source drift", () => {
     expect(issues).toStrictEqual([
       {
         severity: "warning",
-        message: `claude's marketplace registry (${REGISTRY_LOCATION}) still carries '${NAME}' from this project's own pre-migration cache (${projectCache})`,
+        message: `${SYNTHETIC_NATIVE_TOOL}'s marketplace registry (${REGISTRY_LOCATION}) still carries '${NAME}' from this project's own pre-migration cache (${projectCache})`,
         fix: { code: "sync-migrate-source" },
       },
     ]);
   });
 
   it("warns naming `aidd sync` when the host still points at another project's pre-migration cache", async () => {
-    const foreignProjectCache = resolve(builtMarketplaceDir("/other-project", NAME, "claude"));
+    const foreignProjectCache = resolve(
+      builtMarketplaceDir("/other-project", NAME, SYNTHETIC_NATIVE_TOOL)
+    );
     const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map([[NAME, foreignProjectCache]]),

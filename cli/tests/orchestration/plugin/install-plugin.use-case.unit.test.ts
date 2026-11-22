@@ -6,7 +6,11 @@ import {
   TrustDeniedError,
 } from "../../../src/orchestration/orchestration.error.js";
 import type { Prompter } from "../../../src/orchestration/ports/prompter.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_NATIVE_TOOL,
+  SYNTHETIC_USER_TOOL,
+  syntheticNativeCatalog,
+} from "../../shared/testing/synthetic-native-tool.builder.js";
 import {
   makeUseCase,
   manifestWith,
@@ -21,7 +25,7 @@ describe("InstallPlugin", () => {
         .fn()
         .mockResolvedValue({ marketplace: { name: "m" }, installed: ["p1"] });
 
-      const result = await makeUseCase({ tools: registeredTools(), pickExecute }).execute({
+      const result = await makeUseCase({ tools: syntheticNativeCatalog(), pickExecute }).execute({
         pluginArg: undefined,
         toolIds: "all",
         projectRoot: PROJECT_ROOT,
@@ -35,7 +39,7 @@ describe("InstallPlugin", () => {
 
     it("throws InteractiveOnlyError when no arg and non-interactive", async () => {
       await expect(
-        makeUseCase({ tools: registeredTools() }).execute({
+        makeUseCase({ tools: syntheticNativeCatalog() }).execute({
           pluginArg: undefined,
           toolIds: "all",
           projectRoot: PROJECT_ROOT,
@@ -46,11 +50,11 @@ describe("InstallPlugin", () => {
   });
 
   describe("scope validation", () => {
-    it("rejects --scope user for a project-scope tool (claude)", async () => {
+    it("rejects --scope user for a project-scope tool", async () => {
       await expect(
-        makeUseCase({ tools: registeredTools() }).execute({
+        makeUseCase({ tools: syntheticNativeCatalog() }).execute({
           pluginArg: "my-plugin",
-          toolIds: [TOOL.claude],
+          toolIds: [SYNTHETIC_NATIVE_TOOL],
           projectRoot: PROJECT_ROOT,
           interactive: false,
           scope: "user",
@@ -58,11 +62,11 @@ describe("InstallPlugin", () => {
       ).rejects.toBeInstanceOf(InvalidPluginScopeError);
     });
 
-    it("rejects --scope project for a user-scope tool (cursor)", async () => {
+    it("rejects --scope project for a user-scope tool", async () => {
       await expect(
-        makeUseCase({ tools: registeredTools() }).execute({
+        makeUseCase({ tools: syntheticNativeCatalog() }).execute({
           pluginArg: "my-plugin",
-          toolIds: [TOOL.cursor],
+          toolIds: [SYNTHETIC_USER_TOOL],
           projectRoot: PROJECT_ROOT,
           interactive: false,
           scope: "project",
@@ -70,11 +74,14 @@ describe("InstallPlugin", () => {
       ).rejects.toBeInstanceOf(InvalidPluginScopeError);
     });
 
-    it("accepts --scope user for cursor (matches tool's supported scope)", async () => {
+    it("accepts --scope user for a user-scope tool (matches tool's supported scope)", async () => {
       const marketplaceExecute = vi.fn().mockResolvedValue({ entry: { name: "my-plugin" } });
-      const result = await makeUseCase({ tools: registeredTools(), marketplaceExecute }).execute({
+      const result = await makeUseCase({
+        tools: syntheticNativeCatalog(),
+        marketplaceExecute,
+      }).execute({
         pluginArg: "my-plugin",
-        toolIds: [TOOL.cursor],
+        toolIds: [SYNTHETIC_USER_TOOL],
         projectRoot: PROJECT_ROOT,
         interactive: false,
         scope: "user",
@@ -82,11 +89,14 @@ describe("InstallPlugin", () => {
       expect(result.kind).toBe("marketplace");
     });
 
-    it("accepts --scope project for claude (matches default supported scope)", async () => {
+    it("accepts --scope project for a project-scope tool (matches default supported scope)", async () => {
       const marketplaceExecute = vi.fn().mockResolvedValue({ entry: { name: "my-plugin" } });
-      const result = await makeUseCase({ tools: registeredTools(), marketplaceExecute }).execute({
+      const result = await makeUseCase({
+        tools: syntheticNativeCatalog(),
+        marketplaceExecute,
+      }).execute({
         pluginArg: "my-plugin",
-        toolIds: [TOOL.claude],
+        toolIds: [SYNTHETIC_NATIVE_TOOL],
         projectRoot: PROJECT_ROOT,
         interactive: false,
         scope: "project",
@@ -99,7 +109,7 @@ describe("InstallPlugin", () => {
     it("delegates to AddPlugin when arg is an absolute local path", async () => {
       const addExecute = vi.fn().mockResolvedValue(undefined);
 
-      const result = await makeUseCase({ tools: registeredTools(), addExecute }).execute({
+      const result = await makeUseCase({ tools: syntheticNativeCatalog(), addExecute }).execute({
         pluginArg: PLUGIN_FIXTURE,
         toolIds: "all",
         projectRoot: PROJECT_ROOT,
@@ -113,7 +123,10 @@ describe("InstallPlugin", () => {
     it("delegates to PluginInstallFromMarketplace when arg is a plugin name", async () => {
       const marketplaceExecute = vi.fn().mockResolvedValue({ entry: { name: "my-plugin" } });
 
-      const result = await makeUseCase({ tools: registeredTools(), marketplaceExecute }).execute({
+      const result = await makeUseCase({
+        tools: syntheticNativeCatalog(),
+        marketplaceExecute,
+      }).execute({
         pluginArg: "my-plugin",
         toolIds: "all",
         projectRoot: PROJECT_ROOT,
@@ -144,7 +157,7 @@ describe("InstallPlugin", () => {
 
       await expect(
         makeUseCase({
-          tools: registeredTools(),
+          tools: syntheticNativeCatalog(),
           addExecute,
           trustStore: denyingTrustStore,
           prompter: denyingPrompter,
@@ -175,7 +188,7 @@ describe("InstallPlugin", () => {
       };
 
       const result = await makeUseCase({
-        tools: registeredTools(),
+        tools: syntheticNativeCatalog(),
         addExecute,
         trustStore: grantingTrustStore,
         prompter: grantingPrompter,
@@ -197,7 +210,11 @@ describe("InstallPlugin", () => {
         trust: vi.fn().mockResolvedValue(undefined),
       };
 
-      await makeUseCase({ tools: registeredTools(), marketplaceExecute, trustStore }).execute({
+      await makeUseCase({
+        tools: syntheticNativeCatalog(),
+        marketplaceExecute,
+        trustStore,
+      }).execute({
         pluginArg: "my-plugin",
         toolIds: "all",
         projectRoot: PROJECT_ROOT,
@@ -213,23 +230,24 @@ describe("InstallPlugin", () => {
 
     it("checks every AI tool when no manifest exists", async () => {
       await expect(
-        makeUseCase({ tools: registeredTools(), marketplaceExecute: marketplaceExecute() }).execute(
-          {
-            pluginArg: "my-plugin",
-            toolIds: "all",
-            projectRoot: PROJECT_ROOT,
-            interactive: false,
-            scope: "project",
-          }
-        )
+        makeUseCase({
+          tools: syntheticNativeCatalog(),
+          marketplaceExecute: marketplaceExecute(),
+        }).execute({
+          pluginArg: "my-plugin",
+          toolIds: "all",
+          projectRoot: PROJECT_ROOT,
+          interactive: false,
+          scope: "project",
+        })
       ).rejects.toBeInstanceOf(InvalidPluginScopeError);
     });
 
     it("checks only the installed tools when a manifest exists", async () => {
       const result = await makeUseCase({
-        tools: registeredTools(),
+        tools: syntheticNativeCatalog(),
         marketplaceExecute: marketplaceExecute(),
-        manifestRepo: manifestWith(TOOL.claude),
+        manifestRepo: manifestWith(SYNTHETIC_NATIVE_TOOL),
       }).execute({
         pluginArg: "my-plugin",
         toolIds: "all",
@@ -244,9 +262,9 @@ describe("InstallPlugin", () => {
     it("rejects a scope an installed tool refuses", async () => {
       await expect(
         makeUseCase({
-          tools: registeredTools(),
+          tools: syntheticNativeCatalog(),
           marketplaceExecute: marketplaceExecute(),
-          manifestRepo: manifestWith(TOOL.claude),
+          manifestRepo: manifestWith(SYNTHETIC_NATIVE_TOOL),
         }).execute({
           pluginArg: "my-plugin",
           toolIds: "all",
@@ -262,7 +280,7 @@ describe("InstallPlugin", () => {
     it("routes a URL argument to the local-source add", async () => {
       const addExecute = vi.fn().mockResolvedValue(undefined);
 
-      const result = await makeUseCase({ tools: registeredTools(), addExecute }).execute({
+      const result = await makeUseCase({ tools: syntheticNativeCatalog(), addExecute }).execute({
         pluginArg: "https://github.com/x/y.git",
         toolIds: "all",
         projectRoot: PROJECT_ROOT,
@@ -275,7 +293,7 @@ describe("InstallPlugin", () => {
     it("routes a relative ./ path to the local-source add", async () => {
       const addExecute = vi.fn().mockResolvedValue(undefined);
 
-      const result = await makeUseCase({ tools: registeredTools(), addExecute }).execute({
+      const result = await makeUseCase({ tools: syntheticNativeCatalog(), addExecute }).execute({
         pluginArg: "./plugins/mine",
         toolIds: "all",
         projectRoot: PROJECT_ROOT,

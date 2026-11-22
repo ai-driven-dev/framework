@@ -7,8 +7,13 @@ import { SetupFlow } from "../../../src/orchestration/domain/setup-flow.model.js
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { initAndInstall, initProject } from "../../shared/testing/installation-deps.builder.js";
-import { flowTools, registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
+import {
+  SECOND_SYNTHETIC_TOOL,
+  SYNTHETIC_TOOL,
+  syntheticFlowTools,
+  syntheticMixedCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   CURRENT_VERSION,
   makeRecordingUserSourceReferences,
@@ -16,13 +21,13 @@ import {
   runSetupScenarioOf,
 } from "../testing/run-setup-scenario.builder.js";
 
-const { buildUseCase, remoteFlow } = runSetupScenarioOf(registeredTools());
+const { buildUseCase, remoteFlow } = runSetupScenarioOf(syntheticMixedCatalog());
 
 describe("setup validates before any side effect", () => {
   it("non-interactive with no --source rejects without writing a manifest or .gitignore", async () => {
     const { useCase, deps } = await buildUseCase();
     const flow = new SetupFlow({
-      ...flowTools(),
+      ...syntheticFlowTools(),
       supportsUserScopeActivation: () => true,
       projectRoot: PROJECT_ROOT,
       aiTools: [],
@@ -43,8 +48,8 @@ describe("setup without TTY", () => {
     const { useCase } = await buildUseCase();
     const result = await useCase.execute(
       remoteFlow({
-        aiTools: [...registeredTools().idsInCanonicalOrder("ai")],
-        ideTools: [...registeredTools().idsInCanonicalOrder("ide")],
+        aiTools: [...syntheticMixedCatalog().idsInCanonicalOrder("ai")],
+        ideTools: [...syntheticMixedCatalog().idsInCanonicalOrder("ide")],
       })
     );
 
@@ -70,8 +75,8 @@ describe("setup without TTY", () => {
 
     const result = await useCase.execute(
       remoteFlow({
-        aiTools: [...registeredTools().idsInCanonicalOrder("ai")],
-        ideTools: [...registeredTools().idsInCanonicalOrder("ide")],
+        aiTools: [...syntheticMixedCatalog().idsInCanonicalOrder("ai")],
+        ideTools: [...syntheticMixedCatalog().idsInCanonicalOrder("ide")],
       })
     );
 
@@ -87,8 +92,8 @@ describe("setup without TTY", () => {
 
     const result = await useCase.execute(
       remoteFlow({
-        aiTools: [...registeredTools().idsInCanonicalOrder("ai")],
-        ideTools: [...registeredTools().idsInCanonicalOrder("ide")],
+        aiTools: [...syntheticMixedCatalog().idsInCanonicalOrder("ai")],
+        ideTools: [...syntheticMixedCatalog().idsInCanonicalOrder("ide")],
       })
     );
 
@@ -112,7 +117,7 @@ describe("setup without TTY", () => {
 
   it("project already up to date - exits without error", async () => {
     const { useCase, deps } = await buildUseCase();
-    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+    await initAndInstall(deps, PROJECT_ROOT, SYNTHETIC_TOOL);
 
     const result = await useCase.execute(remoteFlow());
 
@@ -135,11 +140,11 @@ describe("setup without TTY", () => {
   describe("plugins named on the command line", () => {
     function namedFlow(registerDefaultMarketplace: boolean): SetupFlow {
       return new SetupFlow({
-        ...flowTools(),
+        ...syntheticFlowTools(),
         supportsUserScopeActivation: () => true,
         projectRoot: PROJECT_ROOT,
         source: remoteFrameworkSource(),
-        aiTools: [TOOL.claude],
+        aiTools: [SYNTHETIC_TOOL],
         ideTools: [],
         pluginMode: "named",
         pluginNames: ["aidd-context"],
@@ -176,7 +181,7 @@ describe("setup without TTY", () => {
   describe("default marketplace opt-out (#197)", () => {
     it("registers framework marketplace by default", async () => {
       const { useCase, marketplaceRegisterFramework, marketplaceRefresh } = await buildUseCase();
-      await useCase.execute(remoteFlow({ aiTools: [TOOL.claude] }));
+      await useCase.execute(remoteFlow({ aiTools: [SYNTHETIC_TOOL] }));
       expect(marketplaceRegisterFramework.execute).toHaveBeenCalledOnce();
       expect(marketplaceRefresh.execute).toHaveBeenCalledOnce();
     });
@@ -185,11 +190,11 @@ describe("setup without TTY", () => {
       const { useCase, marketplaceRegisterFramework, marketplaceRefresh } = await buildUseCase();
       await useCase.execute(
         new SetupFlow({
-          ...flowTools(),
+          ...syntheticFlowTools(),
           supportsUserScopeActivation: () => true,
           projectRoot: PROJECT_ROOT,
           source: remoteFrameworkSource(),
-          aiTools: [TOOL.claude],
+          aiTools: [SYNTHETIC_TOOL],
           ideTools: [],
           pluginMode: "none",
           interactive: false,
@@ -204,11 +209,11 @@ describe("setup without TTY", () => {
       const { useCase } = await buildUseCase();
       const result = await useCase.execute(
         new SetupFlow({
-          ...flowTools(),
+          ...syntheticFlowTools(),
           supportsUserScopeActivation: () => true,
           projectRoot: PROJECT_ROOT,
           source: remoteFrameworkSource(),
-          aiTools: [TOOL.claude],
+          aiTools: [SYNTHETIC_TOOL],
           ideTools: [],
           pluginMode: "none",
           interactive: false,
@@ -217,7 +222,7 @@ describe("setup without TTY", () => {
       );
       expect(result.kind).toBe("initialized");
       if (result.kind === "initialized") {
-        const claudeResult = result.install.results.find((r) => r.toolId === "claude");
+        const claudeResult = result.install.results.find((r) => r.toolId === SYNTHETIC_TOOL);
         expect(claudeResult).toBeDefined();
       }
     });
@@ -228,7 +233,7 @@ describe("setup without TTY", () => {
       const userSourceReferences = makeRecordingUserSourceReferences();
       const { useCase } = await buildUseCase(undefined, userSourceReferences);
 
-      await useCase.execute(remoteFlow({ aiTools: [TOOL.claude] }));
+      await useCase.execute(remoteFlow({ aiTools: [SYNTHETIC_TOOL] }));
 
       expect(userSourceReferences.added).toEqual([
         { version: CURRENT_VERSION.get(), projectRoot: PROJECT_ROOT },
@@ -241,11 +246,11 @@ describe("setup without TTY", () => {
 
       await useCase.execute(
         new SetupFlow({
-          ...flowTools(),
+          ...syntheticFlowTools(),
           supportsUserScopeActivation: () => true,
           projectRoot: PROJECT_ROOT,
           source: remoteFrameworkSource(),
-          aiTools: [TOOL.claude],
+          aiTools: [SYNTHETIC_TOOL],
           ideTools: [],
           pluginMode: "none",
           interactive: false,
@@ -268,7 +273,7 @@ describe("setup without TTY", () => {
       );
       const { useCase } = await buildUseCase(undefined, userSourceReferences, logger);
 
-      const result = await useCase.execute(remoteFlow({ aiTools: [TOOL.claude] }));
+      const result = await useCase.execute(remoteFlow({ aiTools: [SYNTHETIC_TOOL] }));
 
       expect(result.kind).toBe("initialized");
       expect(logger.warnMessages.some((m) => m.includes("references.json"))).toBe(true);
@@ -281,7 +286,7 @@ describe("setup without TTY", () => {
       deps.fs.writeFile(join(PROJECT_ROOT, "aidd_docs/.keep"), "");
       deps.fs.writeFile(join(PROJECT_ROOT, ".aidd/.keep"), "");
 
-      const result = await useCase.execute(remoteFlow({ aiTools: [TOOL.claude] }));
+      const result = await useCase.execute(remoteFlow({ aiTools: [SYNTHETIC_TOOL] }));
 
       expect(result.kind).toBe("initialized");
     });
@@ -291,11 +296,11 @@ describe("setup without TTY", () => {
       deps.fs.writeFile(join(PROJECT_ROOT, "aidd_docs/.keep"), "");
       deps.fs.writeFile(join(PROJECT_ROOT, ".aidd/.keep"), "");
 
-      const result = await useCase.execute(remoteFlow({ aiTools: [TOOL.opencode] }));
+      const result = await useCase.execute(remoteFlow({ aiTools: [SECOND_SYNTHETIC_TOOL] }));
 
       expect(result.kind).toBe("initialized");
       if (result.kind === "initialized") {
-        const opencodeTool = result.install.results.find((r) => r.toolId === "opencode");
+        const opencodeTool = result.install.results.find((r) => r.toolId === SECOND_SYNTHETIC_TOOL);
         expect(opencodeTool).toBeDefined();
         expect(opencodeTool?.skipped).toBe(false);
       }
@@ -317,7 +322,7 @@ describe("setup without TTY", () => {
       deps.fs.writeFile(join(PROJECT_ROOT, ".aidd/.keep"), "");
       deps.fs.writeFile(join(PROJECT_ROOT, "aidd_docs/README.md"), "my custom readme");
 
-      await useCase.execute(remoteFlow({ aiTools: [TOOL.claude] }));
+      await useCase.execute(remoteFlow({ aiTools: [SYNTHETIC_TOOL] }));
 
       const content = deps.fs.getFile(join(PROJECT_ROOT, "aidd_docs/README.md")) ?? "";
       expect(content).toBe("my custom readme");
