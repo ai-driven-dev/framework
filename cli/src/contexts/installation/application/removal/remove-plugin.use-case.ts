@@ -8,7 +8,10 @@ import type { Manifest } from "../../domain/manifest.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import { resolvePluginToolIds, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
-import { assertProjectHooksRemovable, removeProjectHooks } from "../shared/remove-project-hooks.js";
+import {
+  assertProjectHooksRemovable,
+  removeProjectHooks,
+} from "../shared/remove-project-hooks.use-case.js";
 import { requireManifest } from "../shared/require-manifest.js";
 import type { ProjectPluginWithdrawalSteps } from "./project-plugin-withdrawal.js";
 import { removeFlatMcpEntries } from "./remove-flat-mcp-entries.js";

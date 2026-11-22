@@ -1,7 +1,6 @@
-import type { Scope } from "../../../../shared/domain/scope.js";
+import { getToolSupportedScope, type Scope } from "../../../../shared/domain/scope.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import { getToolSupportedScope } from "../../domain/install-scope.js";
 import { resolveScopeBase } from "../../domain/manifest/scope-base.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { PluginPlacement } from "../../ports/tool-sections.js";

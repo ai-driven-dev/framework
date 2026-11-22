@@ -10,7 +10,7 @@ import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { ProjectPluginIntegration } from "../../ports/tool-sections.js";
 import { deletePluginFilesForTool } from "../plugin/delete-plugin-files.js";
 import type { ProjectHooksGuard } from "../shared/assert-project-hooks-unchanged.js";
-import { removeProjectHooks } from "../shared/remove-project-hooks.js";
+import { removeProjectHooks } from "../shared/remove-project-hooks.use-case.js";
 import type { UpdateGitignore } from "../update-gitignore.use-case.js";
 import { cleanMergeFileKeys } from "./clean-merge-file-keys.js";
 import { removeAiddState } from "./remove-aidd-state.js";
