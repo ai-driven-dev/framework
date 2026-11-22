@@ -1,9 +1,7 @@
 import { personIdOf } from "../../domain/identity/person-identity.js";
-import type { ConsentSource } from "../../ports/consent-source.js";
 import type { PersonIdentityStore } from "../../ports/identity/person-identity-store.js";
-import type { RepositoryLocator } from "../../ports/repository-locator.js";
-import { readCloneConsent } from "./clone-consent.js";
 import type { GrantConsent } from "./grant-consent.use-case.js";
+import type { ReadCloneConsent } from "./read-clone-consent.use-case.js";
 import type { RememberOwnRoot } from "./remember-own-root.use-case.js";
 
 /** Who the clone is measured as: the identity already set, none, or the one the person chose. */
@@ -44,8 +42,7 @@ export type EnableTelemetryResult =
     };
 
 interface EnableTelemetryDeps {
-  readonly locator: RepositoryLocator;
-  readonly consents: ConsentSource;
+  readonly cloneConsent: ReadCloneConsent;
   readonly grant: GrantConsent;
   readonly roots: RememberOwnRoot;
   readonly identities: PersonIdentityStore;
@@ -60,7 +57,7 @@ export class EnableTelemetry {
     const previous = await this.deps.identities.read();
     const named = chosenIdentity(choice, previous);
     if ("status" in named) return named;
-    const clone = await readCloneConsent(this.deps.locator, this.deps.consents, cwd);
+    const clone = await this.deps.cloneConsent.execute(cwd);
     if (clone.status === "refused") return clone;
     const { located } = clone;
     if (located.clone === null) return refusal("unidentified-clone");

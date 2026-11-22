@@ -1,6 +1,6 @@
-import type { Period } from "../../contract/period.js";
-import type { ReportFilters } from "../../contract/report-filter.js";
-import type { NotStoredReason } from "../../contract/repository-resolution.js";
+import type { Period } from "./period.js";
+import { filtersOf, type ReportFilters } from "./report-filter.js";
+import type { LeftOutReason, NotStoredReason } from "./repository-resolution.js";
 import {
   byCounter,
   type CounterSum,
@@ -8,10 +8,8 @@ import {
   type ReportRow,
   type Tally,
   type UnattributedReason,
-} from "../../contract/usage-report.js";
-import { filtersOf } from "../../domain/report/report-filter.js";
-import type { LeftOutReason } from "../../ports/usage-ledger.js";
-import type { ReportUsageResult } from "./report-usage.use-case.js";
+  type UsageReport,
+} from "./usage-report.js";
 
 /** A counter: the sum of the calls that reported it, and how many calls did not. A call that
  * did not report a counter is left out of the sum, never counted as zero. */
@@ -87,9 +85,26 @@ function rowOf(row: ReportRow): EnvelopeRow {
   };
 }
 
-export function reportEnvelopeOf(
-  result: Extract<ReportUsageResult, { status: "reported" }>
-): ReportEnvelope {
+/** A report that was made: the figures, and what the read that made it found. */
+export interface ReportedFigures {
+  readonly period: Period;
+  readonly filters: ReportFilters;
+  readonly report: UsageReport;
+  readonly coverage: {
+    readonly records: number;
+    readonly leftOut: Readonly<Record<LeftOutReason, number>>;
+  };
+  readonly run: {
+    readonly filesRead: number;
+    readonly unrecognised: number;
+    readonly notStored: Readonly<Record<NotStoredReason, number>>;
+    readonly consentLogDamaged: boolean;
+    readonly oldestTranscriptAt: string | null;
+    readonly skippedLedgerLines: number;
+  };
+}
+
+export function reportEnvelopeOf(result: ReportedFigures): ReportEnvelope {
   const { period, filters, report, coverage, run } = result;
   return {
     version: 2,

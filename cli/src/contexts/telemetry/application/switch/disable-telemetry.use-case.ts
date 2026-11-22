@@ -1,7 +1,5 @@
 import { tokenOfKey } from "../../domain/telemetry-consent.js";
-import type { ConsentSource } from "../../ports/consent-source.js";
-import type { RepositoryLocator } from "../../ports/repository-locator.js";
-import { readCloneConsent } from "./clone-consent.js";
+import type { ReadCloneConsent } from "./read-clone-consent.use-case.js";
 import type { WithdrawConsent } from "./withdraw-consent.use-case.js";
 
 export interface DisableTelemetryRequest {
@@ -19,13 +17,12 @@ export type DisableTelemetryResult =
  * stored, whenever the next ingest runs. What was already measured stays until `forget`. */
 export class DisableTelemetry {
   constructor(
-    private readonly locator: RepositoryLocator,
-    private readonly consents: ConsentSource,
+    private readonly cloneConsent: ReadCloneConsent,
     private readonly withdraw: WithdrawConsent
   ) {}
 
   async execute({ cwd }: DisableTelemetryRequest): Promise<DisableTelemetryResult> {
-    const clone = await readCloneConsent(this.locator, this.consents, cwd);
+    const clone = await this.cloneConsent.execute(cwd);
     if (clone.status === "refused") return clone;
     const withdrawn = await this.withdraw.execute({
       located: clone.located,

@@ -1,7 +1,7 @@
 import type { ReportFilters } from "../../contract/report-filter.js";
+import { filtersOf } from "../../contract/report-filter.js";
 import type { ReportAxis } from "../../contract/usage-report.js";
 import { periodOf } from "../../domain/report/period.js";
-import { filtersOf } from "../../domain/report/report-filter.js";
 import { InvalidReportPeriodError } from "../../domain/telemetry.error.js";
 import type { ReportUsageRequest } from "./report-usage.use-case.js";
 

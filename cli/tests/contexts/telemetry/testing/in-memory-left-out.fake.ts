@@ -1,6 +1,6 @@
+import type { LeftOutReason } from "../../../../src/contexts/telemetry/contract/repository-resolution.js";
 import type {
   LeftOutEntry,
-  LeftOutReason,
   LeftOutStore,
 } from "../../../../src/contexts/telemetry/ports/usage-ledger.js";
 

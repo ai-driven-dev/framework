@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Located } from "../../../../../src/contexts/telemetry/application/switch/clone-consent.js";
+import type { Located } from "../../../../../src/contexts/telemetry/application/switch/read-clone-consent.use-case.js";
 import { RememberOwnRoot } from "../../../../../src/contexts/telemetry/application/switch/remember-own-root.use-case.js";
 import { resolutionKey } from "../../../../../src/contexts/telemetry/domain/repository-resolution.js";
 import { cloneOf } from "../../testing/clone.builder.js";

@@ -4,7 +4,7 @@ import type {
   ReportUsageResult,
 } from "../../../../../src/contexts/telemetry/application/report/report-usage.use-case.js";
 import { RequestReport } from "../../../../../src/contexts/telemetry/application/report/request-report.use-case.js";
-import { filtersOf } from "../../../../../src/contexts/telemetry/domain/report/report-filter.js";
+import { filtersOf } from "../../../../../src/contexts/telemetry/contract/report-filter.js";
 import { buildReport } from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
 import { NOT_STORED } from "../../testing/ingest-usage-setup.builder.js";
 

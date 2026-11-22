@@ -6,6 +6,7 @@ import {
   NO_FILTERS,
   type ReportFilters,
 } from "../../contract/report-filter.js";
+import type { LeftOutReason } from "../../contract/repository-resolution.js";
 import type { ReportAxis, UsageReport } from "../../contract/usage-report.js";
 import { attribute } from "../../domain/report/attribution.js";
 import { inPeriod, windowOf } from "../../domain/report/period.js";
@@ -14,7 +15,7 @@ import { buildReport } from "../../domain/report/usage-report.js";
 import { repositoryIdOf } from "../../domain/repository-identity.js";
 import { MEASUREMENT_SWITCH, measurementRefused } from "../../domain/telemetry-consent.js";
 import type { RepositoryLocator } from "../../ports/repository-locator.js";
-import type { LeftOutReason, UsageLedger } from "../../ports/usage-ledger.js";
+import type { UsageLedger } from "../../ports/usage-ledger.js";
 import type { IngestUsage, IngestUsageResult } from "../ingest-usage.use-case.js";
 import { settleLedger } from "../ledger-upkeep.js";
 import type { DeclaredBindings } from "./declared-bindings.js";

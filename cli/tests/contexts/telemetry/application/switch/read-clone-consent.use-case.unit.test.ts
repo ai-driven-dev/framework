@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readCloneConsent } from "../../../../../src/contexts/telemetry/application/switch/clone-consent.js";
+import { ReadCloneConsent } from "../../../../../src/contexts/telemetry/application/switch/read-clone-consent.use-case.js";
 import { FakeConsents } from "../../testing/fake-consents.fake.js";
 import { FakeLocator } from "../../testing/fake-locator.fake.js";
 import { repository } from "../../testing/telemetry-switch.builder.js";
@@ -8,7 +8,11 @@ function setup() {
   const locator = new FakeLocator();
   const consents = new FakeConsents();
   locator.directories.set("/w/repo", repository("/w/repo"));
-  return { locator, consents, read: (cwd: string) => readCloneConsent(locator, consents, cwd) };
+  return {
+    locator,
+    consents,
+    read: (cwd: string) => new ReadCloneConsent(locator, consents).execute(cwd),
+  };
 }
 
 describe("reading a clone's consent", () => {
