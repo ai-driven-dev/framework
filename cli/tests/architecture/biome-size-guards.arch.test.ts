@@ -1,6 +1,7 @@
 /**
  * The size guards Biome carries, per kind of file: each guard's rule, scope and cap in
  * `biome.json`, and a planted violator that makes each guard bite, one step past its cap.
+ * What a rule spares, rather than caps, is guarded by `biome-exemptions.arch.test.ts`.
  */
 import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";

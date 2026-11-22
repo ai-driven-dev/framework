@@ -1,5 +1,7 @@
 /**
  * What `biome.json` spares from a rule: each exemption is held to the one carrier that writes it.
+ * The split with `biome-size-guards.arch.test.ts` is intended: this file guards what is spared,
+ * that one guards the caps that bite.
  */
 import { describe, expect, it } from "vitest";
 import { biomeConfig, type Override } from "./biome-config.js";

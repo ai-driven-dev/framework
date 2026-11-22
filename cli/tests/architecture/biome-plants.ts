@@ -7,6 +7,7 @@ import { PLUGIN_PLANTS } from "./plugin-plants.js";
 const IMPORT = "lint/style/noRestrictedImports";
 const GLOBAL = "lint/style/noRestrictedGlobals";
 const FILE_NAME = "lint/style/useFilenamingConvention";
+const IMPORT_TYPE = "lint/style/useImportType";
 const FLOATING = "lint/nursery/noFloatingPromises";
 const PROFILE_MODULE = "../../../tools/contract/tool-profile.js";
 const OF_INSTALLATION = "tests/contexts/installation/application";
@@ -145,6 +146,12 @@ export const PLANTS: readonly Plant[] = [
   ["src/shared/domain/BadName.ts", "export const one = 1;\n", FILE_NAME, 1],
   ["src/shared/domain/bad_name.ts", "export const one = 1;\n", FILE_NAME, 1],
   ["tests/shared/domain/good-name.unit.test.ts", "export const one = 1;\n", FILE_NAME, 0],
+  [
+    "src/shared/domain/value-as-type.ts",
+    'import { Thing } from "./thing.js";\nexport const take = (x: Thing): Thing => x;\n',
+    IMPORT_TYPE,
+    1,
+  ],
   // The process global, in the layers that hold no I/O.
   ["src/contexts/installation/domain/env.ts", readsEnv, GLOBAL, 1],
   ["src/contexts/installation/application/env.ts", readsEnv, GLOBAL, 1],
