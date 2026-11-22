@@ -11,7 +11,6 @@ import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js"
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   atProject,
   BINARY,
@@ -21,9 +20,10 @@ import {
   seedManifestWithNativeRegistrations,
   seedMarketplaceRegistry,
 } from "../testing/clean-project.builder.js";
+import { HOST, hostCacheRoot, hostCatalog } from "../testing/synthetic-hosts.builder.js";
 
-const AT_PROJECT = atProject(registeredTools());
-const CleanWithKnownHostSource = knownHostSourceCleaner(registeredTools(), TOOL);
+const AT_PROJECT = atProject(hostCatalog());
+const CleanWithKnownHostSource = knownHostSourceCleaner(hostCatalog(), HOST);
 
 describe("clean: native registration host names", () => {
   describe("undoing a host's own native registration", () => {
@@ -31,8 +31,8 @@ describe("clean: native registration host names", () => {
       const ALIAS = "userscoped";
       const HOST_NAME = "user-mkt";
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.codex, "1.0.0", []);
-      manifest.setNativeRegistrations(TOOL.codex, {
+      manifest.addTool(HOST.codex, "1.0.0", []);
+      manifest.setNativeRegistrations(HOST.codex, {
         binary: BINARY,
         marketplaces: [
           {
@@ -90,10 +90,10 @@ describe("clean: native registration host names", () => {
         plugins: ReadonlyArray<{ name: string; scope: Scope; marketplace: string }>
       ): Manifest {
         const manifest = Manifest.create();
-        manifest.addTool(TOOL.claude, "1.0.0", []);
+        manifest.addTool(HOST.claude, "1.0.0", []);
         for (const plugin of plugins) {
           manifest.addPlugin(
-            TOOL.claude,
+            HOST.claude,
             RecordedPlugin.fromMetadata({
               name: plugin.name,
               version: "1.0.0",
@@ -104,8 +104,8 @@ describe("clean: native registration host names", () => {
             })
           );
         }
-        manifest.setNativeRegistrations(TOOL.claude, {
-          binary: "claude",
+        manifest.setNativeRegistrations(HOST.claude, {
+          binary: HOST.claude,
           marketplaces: marketplaces.map(({ alias, hostName }) => ({
             alias,
             hostName,
@@ -127,7 +127,7 @@ describe("clean: native registration host names", () => {
           new InMemoryManifestRepository(manifest, PROJECT_ROOT),
           new CapturingLogger(),
           new UpdateGitignore(fs),
-          new Map([[TOOL.claude, activator]]),
+          new Map([[HOST.claude, activator]]),
           seedMarketplaceRegistry()
         );
         await useCase.execute({ ...AT_PROJECT, force: true });
@@ -175,7 +175,7 @@ describe("clean: native registration host names", () => {
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const useCase = new CleanWithKnownHostSource(
         fs,
-        new InMemoryManifestRepository(seedManifestWithNativeRegistrations(TOOL), PROJECT_ROOT),
+        new InMemoryManifestRepository(seedManifestWithNativeRegistrations(HOST), PROJECT_ROOT),
         new CapturingLogger(),
         new UpdateGitignore(fs),
         new Map(),
@@ -192,15 +192,15 @@ describe("clean: native registration host names", () => {
         dryRun: true,
         manifestFound: true,
         preview: {
-          tools: [{ toolId: TOOL.codex, fileCount: 0 }],
+          tools: [{ toolId: HOST.codex, fileCount: 0 }],
           totalFileCount: 0,
           nativeRegistrations: [
             {
-              toolId: TOOL.codex,
+              toolId: HOST.codex,
               binary: BINARY,
               marketplaceCount: 1,
               pluginRefCount: 1,
-              cachePaths: [join("/fake-home", ".codex", "plugins", "cache", MARKETPLACE)],
+              cachePaths: [join(hostCacheRoot("codex", "/fake-home"), MARKETPLACE)],
             },
           ],
           sharedSourceOtherProjects: undefined,

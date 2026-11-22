@@ -18,14 +18,20 @@ import type { Scope } from "../../../src/shared/domain/scope.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  HOST,
+  HOST_CONFIG_DIR_ENV,
+  HOST_MCP_SCHEMA,
+  hostCatalog,
+  hostMcpGlobalDir,
+} from "../testing/synthetic-hosts.builder.js";
 
 const PROJECT = "/p";
 const HOME = "/home/me";
 const CONFIG = "/home/me/.config/aidd";
-const CLAUDE_SETTINGS = join(HOME, ".claude", "settings.json");
-const OPENCODE_SETTINGS = join(HOME, ".config", "opencode", "opencode.jsonc");
-const OPENCODE_SCHEMA = '"$schema": "https://opencode.ai/config.json"';
+const CLAUDE_SETTINGS = join(HOME, ".hostclaude", "settings.json");
+const OPENCODE_SETTINGS = join(hostMcpGlobalDir(HOME), "hostmcp.jsonc");
+const OPENCODE_SCHEMA = `"$schema": "${HOST_MCP_SCHEMA}"`;
 
 function plugin(scope: Scope): RecordedPlugin {
   return RecordedPlugin.fromJSON({
@@ -76,7 +82,7 @@ function setup(
       },
     },
   });
-  const tools = registeredTools();
+  const tools = hostCatalog();
   const mainSessions = new MainSessionModels({
     fs,
     store,
@@ -99,20 +105,20 @@ function setup(
 describe("SetAgentModels", () => {
   it("records the provider machine-wide, re-installs this project's plugins, then sets the main session", async () => {
     const { fs, useCase, updates, activations } = setup((manifest) => {
-      manifest.addTool(TOOL.opencode, "1.0.0", []);
-      manifest.addPlugin(TOOL.opencode, plugin("project"));
+      manifest.addTool(HOST.mcp, "1.0.0", []);
+      manifest.addPlugin(HOST.mcp, plugin("project"));
     });
 
     const result = await useCase.execute({
       projectRoot: PROJECT,
-      hosts: [TOOL.opencode],
+      hosts: [HOST.mcp],
       provider: "mistral",
       scope: "project",
     });
 
-    expect(fs.getFile(`${CONFIG}/agent-models.json`)).toBe('{\n  "opencode": "mistral"\n}\n');
-    expect(updates).toStrictEqual([{ toolIds: ["opencode"], projectRoot: PROJECT, rebuild: true }]);
-    expect(activations).toStrictEqual([{ projectRoot: PROJECT, toolIds: ["opencode"] }]);
+    expect(fs.getFile(`${CONFIG}/agent-models.json`)).toBe(`{\n  "${HOST.mcp}": "mistral"\n}\n`);
+    expect(updates).toStrictEqual([{ toolIds: [HOST.mcp], projectRoot: PROJECT, rebuild: true }]);
+    expect(activations).toStrictEqual([{ projectRoot: PROJECT, toolIds: [HOST.mcp] }]);
     expect(result.reinstalled).toStrictEqual(["aidd-orchestrator"]);
   });
 
@@ -123,12 +129,12 @@ describe("SetAgentModels", () => {
     const set = await useCase.execute({
       projectRoot: PROJECT,
       scope: "project",
-      hosts: [TOOL.claude],
+      hosts: [HOST.claude],
       provider: "anthropic",
     });
     expect(set).toStrictEqual({
       reinstalled: [],
-      changed: [{ host: "claude", path: CLAUDE_SETTINGS }],
+      changed: [{ host: HOST.claude, path: CLAUDE_SETTINGS }],
       skipped: [],
     });
     expect(fs.getFile(CLAUDE_SETTINGS)).toBe(
@@ -138,9 +144,9 @@ describe("SetAgentModels", () => {
     const unset = await useCase.execute({
       projectRoot: PROJECT,
       scope: "project",
-      hosts: [TOOL.claude],
+      hosts: [HOST.claude],
     });
-    expect(unset.changed).toStrictEqual([{ host: "claude", path: CLAUDE_SETTINGS }]);
+    expect(unset.changed).toStrictEqual([{ host: HOST.claude, path: CLAUDE_SETTINGS }]);
     expect(fs.getFile(CLAUDE_SETTINGS)).toBe('{\n  "model": "mine"\n}\n');
     expect(fs.has(`${CONFIG}/main-model.json`)).toBe(false);
   });
@@ -151,7 +157,7 @@ describe("SetAgentModels", () => {
     const result = await useCase.execute({
       projectRoot: PROJECT,
       scope: "project",
-      hosts: [TOOL.claude, TOOL.opencode, TOOL.cursor],
+      hosts: [HOST.claude, HOST.mcp, HOST.cursor],
       provider: "anthropic",
     });
 
@@ -159,8 +165,8 @@ describe("SetAgentModels", () => {
       `{\n  ${OPENCODE_SCHEMA},\n  "model": "anthropic/claude-sonnet-5-5"\n}\n`
     );
     expect(result.changed).toStrictEqual([
-      { host: "claude", path: CLAUDE_SETTINGS },
-      { host: "opencode", path: OPENCODE_SETTINGS },
+      { host: HOST.claude, path: CLAUDE_SETTINGS },
+      { host: HOST.mcp, path: OPENCODE_SETTINGS },
     ]);
     expect(fs.listAll().filter((path) => path.startsWith(`${PROJECT}/`))).toStrictEqual([]);
   });
@@ -168,13 +174,13 @@ describe("SetAgentModels", () => {
   it("follows CLAUDE_CONFIG_DIR to the settings file Claude Code reads", async () => {
     const custom = join(HOME, "claude-config");
     const { fs, useCase } = setup(undefined, null, undefined, (name) =>
-      name === "CLAUDE_CONFIG_DIR" ? custom : undefined
+      name === HOST_CONFIG_DIR_ENV ? custom : undefined
     );
 
     await useCase.execute({
       projectRoot: PROJECT,
       scope: "project",
-      hosts: [TOOL.claude],
+      hosts: [HOST.claude],
       provider: "anthropic",
     });
 
@@ -184,42 +190,44 @@ describe("SetAgentModels", () => {
 
   it("refreshes this project globally too, and adds the machine-scope registrations", async () => {
     const userManifest = Manifest.create();
-    userManifest.addTool(TOOL.claude, "1.0.0", []);
+    userManifest.addTool(HOST.claude, "1.0.0", []);
     const { useCase, updates, activations } = setup((manifest) => {
-      manifest.addTool(TOOL.claude, "1.0.0", []);
-      manifest.addPlugin(TOOL.claude, plugin("project"));
+      manifest.addTool(HOST.claude, "1.0.0", []);
+      manifest.addPlugin(HOST.claude, plugin("project"));
     }, userManifest);
 
     await useCase.execute({
       projectRoot: PROJECT,
-      hosts: [TOOL.claude],
+      hosts: [HOST.claude],
       provider: "anthropic",
       scope: "user",
     });
 
-    expect(updates).toStrictEqual([{ toolIds: ["claude"], projectRoot: PROJECT, rebuild: true }]);
+    expect(updates).toStrictEqual([
+      { toolIds: [HOST.claude], projectRoot: PROJECT, rebuild: true },
+    ]);
     expect(activations.map(({ toolIds, scope }) => ({ toolIds, scope }))).toStrictEqual([
-      { toolIds: ["claude"], scope: undefined },
-      { toolIds: ["claude"], scope: "user" },
+      { toolIds: [HOST.claude], scope: undefined },
+      { toolIds: [HOST.claude], scope: "user" },
     ]);
   });
 
   it("rewrites a plugin installed in the user's home whatever the scope", async () => {
     const userManifest = aManifest()
-      .withTool(TOOL.cursor, [])
-      .withPlugin(TOOL.cursor, plugin("user"))
+      .withTool(HOST.cursor, [])
+      .withPlugin(HOST.cursor, plugin("user"))
       .build();
     const { useCase, userUpdates } = setup(undefined, userManifest);
 
     await useCase.execute({
       projectRoot: PROJECT,
-      hosts: [TOOL.cursor],
+      hosts: [HOST.cursor],
       provider: "anthropic",
       scope: "project",
     });
 
     expect(userUpdates).toStrictEqual([
-      { toolIds: ["cursor"], projectRoot: PROJECT, scope: "user", rebuild: true },
+      { toolIds: [HOST.cursor], projectRoot: PROJECT, scope: "user", rebuild: true },
     ]);
   });
 
@@ -227,11 +235,11 @@ describe("SetAgentModels", () => {
     const { fs, useCase } = setup();
     fs.setFile(CLAUDE_SETTINGS, '{\n  "model": "opus"\n}\n');
     const base = { projectRoot: PROJECT, scope: "project" as const };
-    await useCase.execute({ ...base, hosts: [TOOL.claude, TOOL.opencode], provider: "anthropic" });
+    await useCase.execute({ ...base, hosts: [HOST.claude, HOST.mcp], provider: "anthropic" });
 
     const preview = await useCase.reset({ dryRun: true });
-    expect(preview.providers).toStrictEqual(["claude", "opencode"]);
-    expect(preview.changed.map(({ host }) => host)).toStrictEqual(["claude", "opencode"]);
+    expect(preview.providers).toStrictEqual([HOST.claude, HOST.mcp]);
+    expect(preview.changed.map(({ host }) => host)).toStrictEqual([HOST.claude, HOST.mcp]);
     expect(fs.getFile(CLAUDE_SETTINGS)).toContain("claude-sonnet-5-5");
 
     await useCase.reset({ dryRun: false });
@@ -243,15 +251,15 @@ describe("SetAgentModels", () => {
 
   it("puts the previous provider back when rebuilding this project's agents fails", async () => {
     const { fs, useCase } = setup((manifest) => {
-      manifest.addTool(TOOL.opencode, "1.0.0", []);
-      manifest.addPlugin(TOOL.opencode, plugin("project"));
+      manifest.addTool(HOST.mcp, "1.0.0", []);
+      manifest.addPlugin(HOST.mcp, plugin("project"));
     });
-    const base = { projectRoot: PROJECT, scope: "project" as const, hosts: [TOOL.opencode] };
+    const base = { projectRoot: PROJECT, scope: "project" as const, hosts: [HOST.mcp] };
     await useCase.execute({ ...base, provider: "mistral" });
     const failing = setup(
       (manifest) => {
-        manifest.addTool(TOOL.opencode, "1.0.0", []);
-        manifest.addPlugin(TOOL.opencode, plugin("project"));
+        manifest.addTool(HOST.mcp, "1.0.0", []);
+        manifest.addPlugin(HOST.mcp, plugin("project"));
       },
       null,
       fs,
@@ -263,7 +271,7 @@ describe("SetAgentModels", () => {
       "build failed"
     );
 
-    expect(fs.getFile(`${CONFIG}/agent-models.json`)).toBe('{\n  "opencode": "mistral"\n}\n');
+    expect(fs.getFile(`${CONFIG}/agent-models.json`)).toBe(`{\n  "${HOST.mcp}": "mistral"\n}\n`);
     expect(fs.getFile(OPENCODE_SETTINGS)).toContain("mistral/mistral-large-4");
   });
 
@@ -272,14 +280,14 @@ describe("SetAgentModels", () => {
     await useCase.execute({
       projectRoot: PROJECT,
       scope: "project",
-      hosts: [TOOL.claude],
+      hosts: [HOST.claude],
       provider: "anthropic",
     });
     fs.setFile(CLAUDE_SETTINGS, "{ broken");
 
     const reset = await useCase.reset({ dryRun: false });
 
-    expect(reset.skipped.map(({ host }) => host)).toStrictEqual(["claude"]);
+    expect(reset.skipped.map(({ host }) => host)).toStrictEqual([HOST.claude]);
     expect(fs.has(`${CONFIG}/agent-models.json`)).toBe(false);
   });
 
@@ -289,11 +297,11 @@ describe("SetAgentModels", () => {
     await expect(
       useCase.execute({
         projectRoot: PROJECT,
-        hosts: [TOOL.opencode, TOOL.claude],
+        hosts: [HOST.mcp, HOST.claude],
         provider: "mistral",
         scope: "project",
       })
-    ).rejects.toThrow('Provider "mistral" is not supported for "claude". Use: anthropic.');
+    ).rejects.toThrow(`Provider "mistral" is not supported for "${HOST.claude}". Use: anthropic.`);
     expect(fs.listAll()).toStrictEqual([]);
   });
 
@@ -303,11 +311,11 @@ describe("SetAgentModels", () => {
     await expect(
       useCase.execute({
         projectRoot: PROJECT,
-        hosts: [TOOL.antigravity],
+        hosts: [HOST.copilot],
         provider: "anthropic",
         scope: "project",
       })
-    ).rejects.toThrow('No agent provider is supported for "antigravity".');
+    ).rejects.toThrow(`No agent provider is supported for "${HOST.copilot}".`);
     expect(fs.listAll()).toStrictEqual([]);
   });
 });

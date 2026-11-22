@@ -11,7 +11,6 @@ import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js"
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   atProject,
   BINARY,
@@ -22,16 +21,17 @@ import {
   seedManifestWithNativeRegistrations,
   seedMarketplaceRegistry,
 } from "../testing/clean-project.builder.js";
+import { HOST, hostCacheRoot, hostCatalog } from "../testing/synthetic-hosts.builder.js";
 
-const AT_PROJECT = atProject(registeredTools());
-const CleanWithKnownHostSource = knownHostSourceCleaner(registeredTools(), TOOL);
+const AT_PROJECT = atProject(hostCatalog());
+const CleanWithKnownHostSource = knownHostSourceCleaner(hostCatalog(), HOST);
 
 describe("clean: native registration refusals", () => {
   describe("undoing a host's own native registration", () => {
     it("refuses a repointed native catalogue before shared reference or local deletion", async () => {
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.codex, "1.0.0", []);
-      manifest.setNativeRegistrations(TOOL.codex, {
+      manifest.addTool(HOST.codex, "1.0.0", []);
+      manifest.setNativeRegistrations(HOST.codex, {
         binary: BINARY,
         marketplaces: [
           {
@@ -83,7 +83,7 @@ describe("clean: native registration refusals", () => {
         references,
         new Map(),
         undefined,
-        new Map([[TOOL.codex, sourceReader]])
+        new Map([[HOST.codex, sourceReader]])
       );
 
       await expect(useCase.execute({ ...AT_PROJECT, force: true })).rejects.toThrow("differs");
@@ -97,8 +97,8 @@ describe("clean: native registration refusals", () => {
 
     it("refuses a foreign enabled ref inside an otherwise AIDD-owned catalogue", async () => {
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.codex, "1.0.0", []);
-      manifest.setNativeRegistrations(TOOL.codex, {
+      manifest.addTool(HOST.codex, "1.0.0", []);
+      manifest.setNativeRegistrations(HOST.codex, {
         binary: BINARY,
         marketplaces: [
           {
@@ -139,7 +139,7 @@ describe("clean: native registration refusals", () => {
         new Map(),
         () => "/fake-home",
         references,
-        new Map([[TOOL.codex, hostRefs]])
+        new Map([[HOST.codex, hostRefs]])
       );
 
       await expect(useCase.execute({ ...AT_PROJECT, force: true })).rejects.toThrow("foreign");
@@ -152,7 +152,7 @@ describe("clean: native registration refusals", () => {
     });
 
     it("leaves an unclaimed machine-global ref enabled while removing its empty project catalogue", async () => {
-      const manifest = seedManifestWithNativeRegistrations(TOOL);
+      const manifest = seedManifestWithNativeRegistrations(HOST);
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
       const activator = new FakeHostActions({ available: true });
@@ -173,7 +173,7 @@ describe("clean: native registration refusals", () => {
     });
 
     it("leaves both an unclaimed machine-global ref and its shared catalogue registered", async () => {
-      const manifest = seedManifestWithNativeRegistrations(TOOL);
+      const manifest = seedManifestWithNativeRegistrations(HOST);
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
       const activator = new FakeHostActions({ available: true });
@@ -213,7 +213,7 @@ describe("clean: native registration refusals", () => {
       );
       expect(message).toBeDefined();
       expect(message).toContain("userConfigDir()/marketplaces.json");
-      expect(message).toContain(join(HOME, ".codex", "plugins", "cache", MARKETPLACE));
+      expect(message).toContain(join(hostCacheRoot("codex", HOME), MARKETPLACE));
     });
   });
 });

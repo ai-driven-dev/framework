@@ -15,6 +15,7 @@ import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-mark
 import type { NamedTools } from "../../shared/testing/named-tools.builder.js";
 import { FakeHostPluginRegistry } from "./fake-host-plugin-registry.fake.js";
 import { type ProjectCleanerParts, projectCleanerDeps } from "./project-cleaner.builder.js";
+import { HOST } from "./synthetic-hosts.builder.js";
 
 export const PROJECT_ROOT = "/test-project";
 export function atProject(tools: ToolCatalog) {
@@ -134,7 +135,7 @@ export class RecordingFileAdapter extends InMemoryFileAdapter {
 // Cursor Mode B: the file key is base-relative, resolved against the user plugins dir.
 export const PLUGIN_KEY = "aidd-context/commands/hello.md";
 
-export const BINARY = "codex";
+export const BINARY = HOST.codex;
 export const MARKETPLACE = "aidd-framework";
 export const REF = "aidd-context@aidd-framework";
 
@@ -164,7 +165,7 @@ export function seedClaudeNativeRegistrations(ids: NamedTools<"claude">): Manife
   const manifest = Manifest.create();
   manifest.addTool(ids.claude, "1.0.0", []);
   manifest.setNativeRegistrations(ids.claude, {
-    binary: "claude",
+    binary: HOST.claude,
     marketplaces: [
       {
         alias: MARKETPLACE,

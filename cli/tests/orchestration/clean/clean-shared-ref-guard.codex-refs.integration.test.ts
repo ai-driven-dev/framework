@@ -6,7 +6,6 @@ import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claim
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   buildUseCase,
   OTHER_PROJECT,
@@ -18,6 +17,7 @@ import {
   seedSharedMarketplaceRegistry,
   USER_CONFIG_DIR,
 } from "../testing/clean-shared-ref-guard.builder.js";
+import { HOST, hostCatalog } from "../testing/synthetic-hosts.builder.js";
 
 describe("clean guards a ref another project on this machine still needs", () => {
   it("keeps codex's ref enabled and names the other project still referencing the shared source", async () => {
@@ -27,15 +27,15 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const logger = new CapturingLogger();
 
     const useCase = buildUseCase({
-      tools: registeredTools(),
+      tools: hostCatalog(),
       fs,
       manifest: seedManifest(
-        TOOL.codex,
-        [provenRegistration(TOOL.codex, "aidd-framework", "aidd-framework")],
+        HOST.codex,
+        [provenRegistration(HOST.codex, "aidd-framework", "aidd-framework")],
         ["aidd-vcs@aidd-framework"]
       ),
       activator,
-      binary: TOOL.codex,
+      binary: HOST.codex,
       logger,
       aiddMarketplaceRegistry: seedSharedMarketplaceRegistry(),
     });
@@ -59,15 +59,15 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const activator = new FakeHostActions({ available: true });
 
     const useCase = buildUseCase({
-      tools: registeredTools(),
+      tools: hostCatalog(),
       fs,
       manifest: seedManifest(
-        TOOL.codex,
-        [provenRegistration(TOOL.codex, "aidd-framework", "aidd-framework")],
+        HOST.codex,
+        [provenRegistration(HOST.codex, "aidd-framework", "aidd-framework")],
         ["aidd-vcs@aidd-framework"]
       ),
       activator,
-      binary: TOOL.codex,
+      binary: HOST.codex,
       logger: new CapturingLogger(),
       aiddMarketplaceRegistry: seedSharedMarketplaceRegistry(),
     });
@@ -90,15 +90,15 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const activator = new FakeHostActions({ available: true });
 
     const useCase = buildUseCase({
-      tools: registeredTools(),
+      tools: hostCatalog(),
       fs,
       manifest: seedManifest(
-        TOOL.claude,
-        [provenRegistration(TOOL.claude, "aidd-framework", "aidd-framework")],
+        HOST.claude,
+        [provenRegistration(HOST.claude, "aidd-framework", "aidd-framework")],
         ["aidd-vcs@aidd-framework"]
       ),
       activator,
-      binary: TOOL.claude,
+      binary: HOST.claude,
       logger: new CapturingLogger(),
       aiddMarketplaceRegistry: seedSharedMarketplaceRegistry(),
     });
@@ -119,18 +119,18 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const logger = new CapturingLogger();
 
     const useCase = buildUseCase({
-      tools: registeredTools(),
+      tools: hostCatalog(),
       fs,
       manifest: seedManifest(
-        TOOL.codex,
+        HOST.codex,
         [
-          provenRegistration(TOOL.codex, "aidd-framework", "aidd-framework"),
-          provenRegistration(TOOL.codex, "other-mkt", "other-mkt"),
+          provenRegistration(HOST.codex, "aidd-framework", "aidd-framework"),
+          provenRegistration(HOST.codex, "other-mkt", "other-mkt"),
         ],
         ["aidd-vcs@aidd-framework", "plugin-b@other-mkt"]
       ),
       activator,
-      binary: TOOL.codex,
+      binary: HOST.codex,
       logger,
       aiddMarketplaceRegistry: seedSharedMarketplaceRegistry(true),
     });
@@ -155,18 +155,18 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const activator = new FakeHostActions({ available: true });
 
     const useCase = buildUseCase({
-      tools: registeredTools(),
+      tools: hostCatalog(),
       fs,
       manifest: seedManifest(
-        TOOL.codex,
+        HOST.codex,
         [
-          provenRegistration(TOOL.codex, "other-mkt", "other-mkt"),
-          provenRegistration(TOOL.codex, "aidd-framework", "aidd-framework"),
+          provenRegistration(HOST.codex, "other-mkt", "other-mkt"),
+          provenRegistration(HOST.codex, "aidd-framework", "aidd-framework"),
         ],
         ["plugin-b@other-mkt", "aidd-vcs@aidd-framework"]
       ),
       activator,
-      binary: TOOL.codex,
+      binary: HOST.codex,
       logger: new CapturingLogger(),
       aiddMarketplaceRegistry: seedSharedMarketplaceRegistry(true),
     });
@@ -189,15 +189,15 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const activator = new FakeHostActions({ available: true });
 
     const useCase = buildUseCase({
-      tools: registeredTools(),
+      tools: hostCatalog(),
       fs,
       manifest: seedManifest(
-        TOOL.codex,
-        [provenRegistration(TOOL.codex, "aidd-framework", "aidd-framework")],
+        HOST.codex,
+        [provenRegistration(HOST.codex, "aidd-framework", "aidd-framework")],
         ["aidd-vcs@aidd-framework"]
       ),
       activator,
-      binary: TOOL.codex,
+      binary: HOST.codex,
       logger: new CapturingLogger(),
       aiddMarketplaceRegistry: seedSharedMarketplaceRegistry(),
     });
@@ -221,15 +221,15 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const logger = new CapturingLogger();
 
     const useCase = buildUseCase({
-      tools: registeredTools(),
+      tools: hostCatalog(),
       fs,
       manifest: seedManifest(
-        TOOL.codex,
-        [provenRegistration(TOOL.codex, "aidd-framework", "aidd-framework")],
+        HOST.codex,
+        [provenRegistration(HOST.codex, "aidd-framework", "aidd-framework")],
         ["aidd-vcs@aidd-framework"]
       ),
       activator,
-      binary: TOOL.codex,
+      binary: HOST.codex,
       logger,
       aiddMarketplaceRegistry: seedSharedMarketplaceRegistry(),
     });

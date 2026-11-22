@@ -7,7 +7,6 @@ import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { RecordingPrompter } from "../../shared/testing/recording-prompter.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   atProject,
   fileEntry,
@@ -19,9 +18,10 @@ import {
   RecordingFileAdapter,
   seedTrackedFiles,
 } from "../testing/clean-project.builder.js";
+import { HOST, hostCatalog, hostUserPluginsDir } from "../testing/synthetic-hosts.builder.js";
 
-const AT_PROJECT = atProject(registeredTools());
-const CleanWithKnownHostSource = knownHostSourceCleaner(registeredTools(), TOOL);
+const AT_PROJECT = atProject(hostCatalog());
+const CleanWithKnownHostSource = knownHostSourceCleaner(hostCatalog(), HOST);
 
 const homedir = (): string => "/home/dev";
 
@@ -29,9 +29,9 @@ describe("clean: confirmation and preview", () => {
   describe("user-scope files belong to machine cleanup", () => {
     it("leaves both legitimate and escaping user paths untouched", async () => {
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.cursor, "1.0.0", []);
+      manifest.addTool(HOST.cursor, "1.0.0", []);
       manifest.addPlugin(
-        TOOL.cursor,
+        HOST.cursor,
         RecordedPlugin.fromJSON({
           name: "aidd-context",
           source: { kind: "local", path: "/some/path" },
@@ -57,7 +57,7 @@ describe("clean: confirmation and preview", () => {
       await useCase.execute({ ...AT_PROJECT, force: true });
 
       expect(
-        fs.deletedPaths.some((p) => p.endsWith(join(".cursor", "plugins", "local", PLUGIN_KEY)))
+        fs.deletedPaths.some((p) => p.endsWith(join(hostUserPluginsDir(""), PLUGIN_KEY)))
       ).toBe(false);
       expect(fs.deletedPaths.some((p) => p.includes(join(".ssh", "id_rsa")))).toBe(false);
       expect(logger.warnMessages.some((m) => m.includes("id_rsa"))).toBe(false);
@@ -65,9 +65,9 @@ describe("clean: confirmation and preview", () => {
 
     it("refuses to delete a plugin whose own directory is a symlink resolving outside the user-scope directory", async () => {
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.cursor, "1.0.0", []);
+      manifest.addTool(HOST.cursor, "1.0.0", []);
       manifest.addPlugin(
-        TOOL.cursor,
+        HOST.cursor,
         RecordedPlugin.fromJSON({
           name: "aidd-context",
           source: { kind: "local", path: "/some/path" },
@@ -78,7 +78,7 @@ describe("clean: confirmation and preview", () => {
         })
       );
       const fs = new RecordingFileAdapter({}, [PROJECT_ROOT]);
-      const boundary = join(homedir(), ".cursor", "plugins", "local");
+      const boundary = hostUserPluginsDir(homedir());
       fs.setSymlink(join(boundary, "aidd-context"), "/tmp/evil-aidd-context");
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
       const logger = new CapturingLogger();
@@ -93,7 +93,7 @@ describe("clean: confirmation and preview", () => {
 
       expect(fs.deletedPaths.some((p) => p.includes("evil"))).toBe(false);
       expect(
-        fs.deletedPaths.some((p) => p.endsWith(join(".cursor", "plugins", "local", PLUGIN_KEY)))
+        fs.deletedPaths.some((p) => p.endsWith(join(hostUserPluginsDir(""), PLUGIN_KEY)))
       ).toBe(false);
       expect(logger.warnMessages.some((m) => m.includes(PLUGIN_KEY))).toBe(false);
     });
@@ -127,7 +127,7 @@ describe("clean: confirmation and preview", () => {
     ) {
       return new CleanWithKnownHostSource(
         fs,
-        new InMemoryManifestRepository(seedTrackedFiles(TOOL, fs, ["a.md"]), PROJECT_ROOT),
+        new InMemoryManifestRepository(seedTrackedFiles(HOST, fs, ["a.md"]), PROJECT_ROOT),
         new CapturingLogger(),
         new UpdateGitignore(fs),
         new Map(),
@@ -147,7 +147,7 @@ describe("clean: confirmation and preview", () => {
       expect(result).toStrictEqual({
         dryRun: false,
         manifestFound: true,
-        preview: previewOf([[TOOL.claude, 1]]),
+        preview: previewOf([[HOST.claude, 1]]),
         fileCount: 1,
       });
       expect(fs.has(join(PROJECT_ROOT, "a.md"))).toBe(false);
@@ -162,7 +162,7 @@ describe("clean: confirmation and preview", () => {
       expect(result).toStrictEqual({
         dryRun: true,
         manifestFound: true,
-        preview: previewOf([[TOOL.claude, 1]]),
+        preview: previewOf([[HOST.claude, 1]]),
         fileCount: 0,
       });
       expect(fs.has(join(PROJECT_ROOT, "a.md"))).toBe(true);
@@ -179,7 +179,7 @@ describe("clean: confirmation and preview", () => {
       expect(result).toStrictEqual({
         dryRun: true,
         manifestFound: true,
-        preview: previewOf([[TOOL.claude, 1]]),
+        preview: previewOf([[HOST.claude, 1]]),
         fileCount: 0,
       });
     });
@@ -198,12 +198,12 @@ describe("clean: confirmation and preview", () => {
   describe("what a dry-run previews", () => {
     it("counts each tool's tracked and merged files, and totals them", async () => {
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-      const manifest = seedTrackedFiles(TOOL, fs, ["a.md", "b.md"]);
-      manifest.addTool(TOOL.claude, "1.0.0", [fileEntry("a.md"), fileEntry("b.md")]);
-      manifest.updateToolMergeFiles(TOOL.claude, [
+      const manifest = seedTrackedFiles(HOST, fs, ["a.md", "b.md"]);
+      manifest.addTool(HOST.claude, "1.0.0", [fileEntry("a.md"), fileEntry("b.md")]);
+      manifest.updateToolMergeFiles(HOST.claude, [
         { relativePath: ".claude/settings.json", sectionKey: null, entries: { owned: hash() } },
       ]);
-      manifest.addTool(TOOL.codex, "1.0.0", [fileEntry("c.md")]);
+      manifest.addTool(HOST.codex, "1.0.0", [fileEntry("c.md")]);
       const useCase = new CleanWithKnownHostSource(
         fs,
         new InMemoryManifestRepository(manifest, PROJECT_ROOT),
@@ -217,8 +217,8 @@ describe("clean: confirmation and preview", () => {
         dryRun: true,
         manifestFound: true,
         preview: previewOf([
-          [TOOL.claude, 3],
-          [TOOL.codex, 1],
+          [HOST.claude, 3],
+          [HOST.codex, 1],
         ]),
         fileCount: 0,
       });
@@ -226,9 +226,9 @@ describe("clean: confirmation and preview", () => {
 
     it("announces no cache path for a host whose profile declares no cache directory (copilot)", async () => {
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.copilot, "1.0.0", []);
-      manifest.setNativeRegistrations(TOOL.copilot, {
-        binary: "copilot",
+      manifest.addTool(HOST.copilot, "1.0.0", []);
+      manifest.setNativeRegistrations(HOST.copilot, {
+        binary: HOST.copilot,
         marketplaces: [{ alias: "aidd-framework", hostName: "aidd-framework" }],
         pluginRefs: ["aidd-context@aidd-framework"],
       });
@@ -244,8 +244,8 @@ describe("clean: confirmation and preview", () => {
 
       expect(result.preview.nativeRegistrations).toStrictEqual([
         {
-          toolId: TOOL.copilot,
-          binary: "copilot",
+          toolId: HOST.copilot,
+          binary: HOST.copilot,
           marketplaceCount: 1,
           pluginRefCount: 1,
           cachePaths: [],
@@ -255,9 +255,9 @@ describe("clean: confirmation and preview", () => {
 
     it("announces no cache path for a tool that drives no native CLI (cursor)", async () => {
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.cursor, "1.0.0", []);
-      manifest.setNativeRegistrations(TOOL.cursor, {
-        binary: "cursor",
+      manifest.addTool(HOST.cursor, "1.0.0", []);
+      manifest.setNativeRegistrations(HOST.cursor, {
+        binary: HOST.cursor,
         marketplaces: [{ alias: "aidd-framework", hostName: "aidd-framework" }],
         pluginRefs: [],
       });
@@ -273,8 +273,8 @@ describe("clean: confirmation and preview", () => {
 
       expect(result.preview.nativeRegistrations).toStrictEqual([
         {
-          toolId: TOOL.cursor,
-          binary: "cursor",
+          toolId: HOST.cursor,
+          binary: HOST.cursor,
           marketplaceCount: 1,
           pluginRefCount: 0,
           cachePaths: [],

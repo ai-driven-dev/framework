@@ -1,5 +1,4 @@
 import { homedir } from "node:os";
-import { join } from "node:path";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { HostMarketplaceRegistryReading } from "../../../src/contexts/host-registration/domain/reading/marketplace-registry-reading.js";
 import { HostRegistryMarketplaceSourceReaderAdapter } from "../../../src/contexts/host-registration/infrastructure/host-registry-marketplace-source-reader-adapter.js";
@@ -18,13 +17,14 @@ import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manif
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { FakeHostPluginRegistry } from "./fake-host-plugin-registry.fake.js";
 import { projectCleaner } from "./project-cleaner.builder.js";
+import { HOST, hostCacheRoot } from "./synthetic-hosts.builder.js";
 
 export const PROJECT_ROOT = "/test-project";
 // Resolve once for this in-memory fixture, then inject it into CleanProject: Stryker reuses
 // runners while globalSetup changes HOME, so load-time cache paths and runtime paths must agree.
 export const HOME = homedir();
-export const CLAUDE_CACHE_ROOT = join(HOME, ".claude", "plugins", "cache");
-export const CODEX_CACHE_ROOT = join(HOME, ".codex", "plugins", "cache");
+export const CLAUDE_CACHE_ROOT = hostCacheRoot("claude", HOME);
+export const CODEX_CACHE_ROOT = hostCacheRoot("codex", HOME);
 export const EXISTING_DIRECTORIES = [
   PROJECT_ROOT,
   CLAUDE_CACHE_ROOT,
@@ -143,7 +143,7 @@ export function seedManifest(toolId: AiToolId, hostName: string, alias: string):
         alias,
         hostName,
         provenance:
-          toolId === "claude"
+          toolId === HOST.claude
             ? { kind: "registry", source: "/resolved/source" }
             : {
                 kind: "effective-list",
@@ -187,9 +187,9 @@ export function buildUseCase(deps: {
   const manifestRepo = new InMemoryManifestRepository(deps.manifest, PROJECT_ROOT);
   const claudeHostRegistry = deps.hostMarketplaceRegistries?.get(deps.binary);
   const nativeReader: HostMarketplaceSources | undefined =
-    deps.binary === "codex"
+    deps.binary === HOST.codex
       ? codexHostSource()
-      : deps.binary === "claude" && claudeHostRegistry !== undefined
+      : deps.binary === HOST.claude && claudeHostRegistry !== undefined
         ? new HostRegistryMarketplaceSourceReaderAdapter(claudeHostRegistry)
         : undefined;
   return projectCleaner({

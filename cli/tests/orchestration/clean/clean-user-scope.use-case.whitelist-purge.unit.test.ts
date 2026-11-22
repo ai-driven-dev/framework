@@ -9,13 +9,13 @@ import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
 import {
   HOME,
   RecordingFileAdapter,
   USER_CONFIG_DIR,
 } from "../testing/clean-user-scope.builder.js";
+import { HOST, hostCatalog, hostUserPluginsDir } from "../testing/synthetic-hosts.builder.js";
 import { userScopeCleaner } from "../testing/user-scope-cleaner.builder.js";
 
 describe("clean --scope user: whitelist purge", () => {
@@ -39,7 +39,7 @@ describe("clean --scope user: whitelist purge", () => {
         })
       );
       const useCase = userScopeCleaner({
-        tools: registeredTools(),
+        tools: hostCatalog(),
         fs,
         repo: new InMemoryManifestRepository(Manifest.create()),
         marketplaceRegistry: registry,
@@ -66,7 +66,7 @@ describe("clean --scope user: whitelist purge", () => {
       );
       fs.setFile(join(USER_CONFIG_DIR, "cache", "plugin-cache", "source"), "plugin clone");
       const useCase = userScopeCleaner({
-        tools: registeredTools(),
+        tools: hostCatalog(),
         fs,
         repo: new InMemoryManifestRepository(Manifest.create()),
       });
@@ -93,7 +93,7 @@ describe("clean --scope user: whitelist purge", () => {
         fs.setSymlink(cache, "/elsewhere/clone");
         const logger = new CapturingLogger();
         const useCase = userScopeCleaner({
-          tools: registeredTools(),
+          tools: hostCatalog(),
           fs,
           repo: new InMemoryManifestRepository(Manifest.create()),
           logger,
@@ -142,7 +142,7 @@ describe("clean --scope user: whitelist purge", () => {
       await userSourceReferences.addReference("1.0.0", "/project-a");
       await userSourceReferences.removeReference("/project-a");
       const useCase = userScopeCleaner({
-        tools: registeredTools(),
+        tools: hostCatalog(),
         fs,
         repo: manifestRepo,
         marketplaceRegistry: registry,
@@ -174,7 +174,7 @@ describe("clean --scope user: whitelist purge", () => {
       // And where an older CLI wrote the same cache, before it moved under `cache/`.
       fs.setFile(join(USER_CONFIG_DIR, "update-check.json"), '{"latest":"8.0.0"}');
       const useCase = userScopeCleaner({
-        tools: registeredTools(),
+        tools: hostCatalog(),
         fs,
         repo: new InMemoryManifestRepository(Manifest.create()),
       });
@@ -201,7 +201,7 @@ describe("clean --scope user: whitelist purge", () => {
       fs.setSymlink(join(USER_CONFIG_DIR, "references.json"), USER_CONFIG_DIR);
       const logger = new CapturingLogger();
       const useCase = userScopeCleaner({
-        tools: registeredTools(),
+        tools: hostCatalog(),
         fs,
         repo: new InMemoryManifestRepository(Manifest.create()),
         logger,
@@ -223,8 +223,8 @@ describe("clean --scope user: whitelist purge", () => {
     });
 
     it("leaves a cursor plugin file in place when it resolves outside the user plugins boundary through a symlink", async () => {
-      const fs = new RecordingFileAdapter([], [join(HOME, ".cursor", "plugins", "local")]);
-      const boundary = join(HOME, ".cursor", "plugins", "local");
+      const fs = new RecordingFileAdapter([], [hostUserPluginsDir(HOME)]);
+      const boundary = hostUserPluginsDir(HOME);
       // A sibling sharing `boundary`'s name as a string prefix, not a path under it: a raw
       // `startsWith` would call it contained, where `relative()` sees the leading `..`.
       const escapeTarget = `${boundary}-evil`;
@@ -233,9 +233,9 @@ describe("clean --scope user: whitelist purge", () => {
       // symlink escaping the declared user-scope boundary.
       fs.setSymlink(join(boundary, "rogue-plugin"), escapeTarget);
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.cursor, "1.0.0", []);
+      manifest.addTool(HOST.cursor, "1.0.0", []);
       manifest.addPlugin(
-        TOOL.cursor,
+        HOST.cursor,
         RecordedPlugin.fromMetadata({
           name: "rogue-plugin",
           version: "1.0.0",
@@ -246,7 +246,7 @@ describe("clean --scope user: whitelist purge", () => {
       );
       const logger = new CapturingLogger();
       const useCase = userScopeCleaner({
-        tools: registeredTools(),
+        tools: hostCatalog(),
         fs,
         repo: new InMemoryManifestRepository(manifest),
         logger,
@@ -272,7 +272,7 @@ describe("clean --scope user: whitelist purge", () => {
       const userSourceReferences = new UserSourceReferencesAdapter(fs, () => USER_CONFIG_DIR);
       await userSourceReferences.addReference("1.2.3", "/project-a");
       const useCase = userScopeCleaner({
-        tools: registeredTools(),
+        tools: hostCatalog(),
         fs,
         repo: new InMemoryManifestRepository(Manifest.create()),
         userSourceReferences,
@@ -293,7 +293,7 @@ describe("clean --scope user: whitelist purge", () => {
       const userSourceReferences = new UserSourceReferencesAdapter(fs, () => USER_CONFIG_DIR);
       await userSourceReferences.addReference("1.0.0", "/gone");
       const useCase = userScopeCleaner({
-        tools: registeredTools(),
+        tools: hostCatalog(),
         fs,
         repo: new InMemoryManifestRepository(Manifest.create()),
         userSourceReferences,
@@ -314,7 +314,7 @@ describe("clean --scope user: whitelist purge", () => {
       await userSourceReferences.addReference("1.0.0", "/project-a");
       const manifestRepo = new InMemoryManifestRepository(Manifest.create());
       const useCase = userScopeCleaner({
-        tools: registeredTools(),
+        tools: hostCatalog(),
         fs,
         repo: manifestRepo,
         userSourceReferences,

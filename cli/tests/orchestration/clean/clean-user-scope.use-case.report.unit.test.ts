@@ -11,7 +11,6 @@ import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
 import {
   manifestWithClaude,
@@ -23,6 +22,7 @@ import {
   seedClaudeCache,
   USER_CONFIG_DIR,
 } from "../testing/clean-user-scope.builder.js";
+import { HOST, hostCatalog } from "../testing/synthetic-hosts.builder.js";
 import { userScopeCleaner } from "../testing/user-scope-cleaner.builder.js";
 
 describe("clean --scope user: report", () => {
@@ -50,12 +50,12 @@ describe("clean --scope user: report", () => {
       const activator = new RecordingActivator(order);
       const logger = new CapturingLogger();
       const useCase = userScopeCleaner({
-        tools: registeredTools(),
+        tools: hostCatalog(),
         fs,
         repo: new InMemoryManifestRepository(null),
         logger,
         marketplaceRegistry: registry,
-        activators: new Map([[TOOL.claude, activator]]),
+        activators: new Map([[HOST.claude, activator]]),
         userSourceReferences,
       });
 
@@ -86,23 +86,23 @@ describe("clean --scope user: report", () => {
       const fs = new RecordingFileAdapter(order);
       seedClaudeCache(fs);
       const activator = new RecordingActivator(order);
-      const manifestRepo = new InMemoryManifestRepository(manifestWithClaude(TOOL));
+      const manifestRepo = new InMemoryManifestRepository(manifestWithClaude(HOST));
       const useCase = userScopeCleaner({
-        tools: registeredTools(),
+        tools: hostCatalog(),
         fs,
         repo: manifestRepo,
-        activators: new Map([[TOOL.claude, activator]]),
+        activators: new Map([[HOST.claude, activator]]),
         marketplaceRegistries: new Map([
           [
-            TOOL.claude,
+            HOST.claude,
             new FakeHostMarketplaceRegistry({
               location: "known_marketplaces.json",
               entries: new Map(),
             }),
           ],
         ]),
-        sources: provenClaudeSources(TOOL),
-        pluginRegistries: provenHostPlugins(TOOL, manifestWithClaude(TOOL)),
+        sources: provenClaudeSources(HOST),
+        pluginRegistries: provenHostPlugins(HOST, manifestWithClaude(HOST)),
       });
 
       await useCase.execute({
@@ -121,7 +121,7 @@ describe("clean --scope user: report", () => {
   describe("the versions built on this machine", () => {
     function buildPreviewUseCase(fs: InMemoryFileAdapter) {
       return userScopeCleaner({
-        tools: registeredTools(),
+        tools: hostCatalog(),
         fs,
         repo: new InMemoryManifestRepository(Manifest.create()),
       });
@@ -183,7 +183,7 @@ describe("clean --scope user: report", () => {
     async function errorsFor(manifest: Manifest): Promise<readonly string[]> {
       const logger = new CapturingLogger();
       const useCase = userScopeCleaner({
-        tools: registeredTools(),
+        tools: hostCatalog(),
         repo: new InMemoryManifestRepository(manifest),
         logger,
       });
@@ -201,38 +201,38 @@ describe("clean --scope user: report", () => {
     it("names no cache for a host whose profile declares no cache directory (copilot)", async () => {
       const warnings = await errorsFor(
         seedRegistrations(
-          TOOL.copilot,
+          HOST.copilot,
           [{ alias: "aidd-framework", hostName: "aidd-framework" }],
           ["aidd-context@aidd-framework"]
         )
       );
 
       expect(warnings).toStrictEqual([
-        "copilot: registration left in place, the copilot CLI is not on the PATH. It would have unregistered 1 marketplace(s) and 1 plugin ref(s). User clean refused; canonical claims retained.",
+        `${HOST.copilot}: registration left in place, the ${HOST.copilot} CLI is not on the PATH. It would have unregistered 1 marketplace(s) and 1 plugin ref(s). User clean refused; canonical claims retained.`,
       ]);
     });
 
     it("names no cache for a tool that drives no native CLI (cursor)", async () => {
       const warnings = await errorsFor(
         seedRegistrations(
-          TOOL.cursor,
+          HOST.cursor,
           [{ alias: "aidd-framework", hostName: "aidd-framework" }],
           []
         )
       );
 
       expect(warnings).toStrictEqual([
-        "cursor: registration left in place, the cursor CLI is not on the PATH. It would have unregistered 1 marketplace(s) and 0 plugin ref(s). User clean refused; canonical claims retained.",
+        `${HOST.cursor}: registration left in place, the ${HOST.cursor} CLI is not on the PATH. It would have unregistered 1 marketplace(s) and 0 plugin ref(s). User clean refused; canonical claims retained.`,
       ]);
     });
 
     it("names no cache when the binary registered no marketplace", async () => {
       const warnings = await errorsFor(
-        seedRegistrations(TOOL.codex, [], ["aidd-context@aidd-framework"])
+        seedRegistrations(HOST.codex, [], ["aidd-context@aidd-framework"])
       );
 
       expect(warnings).toStrictEqual([
-        "codex: registration left in place, the codex CLI is not on the PATH. It would have unregistered 0 marketplace(s) and 1 plugin ref(s). User clean refused; canonical claims retained.",
+        `${HOST.codex}: registration left in place, the ${HOST.codex} CLI is not on the PATH. It would have unregistered 0 marketplace(s) and 1 plugin ref(s). User clean refused; canonical claims retained.`,
       ]);
     });
   });
@@ -243,9 +243,9 @@ describe("clean --scope user: report", () => {
       const projectFile = join("/wherever", "skills", "x.md");
       fs.setFile(projectFile, "x");
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.cursor, "1.0.0", []);
+      manifest.addTool(HOST.cursor, "1.0.0", []);
       manifest.addPlugin(
-        TOOL.cursor,
+        HOST.cursor,
         RecordedPlugin.fromMetadata({
           name: "aidd-context",
           version: "1.0.0",
@@ -255,7 +255,7 @@ describe("clean --scope user: report", () => {
         }).withFiles(new Map([["skills/x.md", "hash"]]))
       );
       const useCase = userScopeCleaner({
-        tools: registeredTools(),
+        tools: hostCatalog(),
         fs,
         repo: new InMemoryManifestRepository(manifest),
       });

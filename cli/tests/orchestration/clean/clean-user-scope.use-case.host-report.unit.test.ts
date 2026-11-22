@@ -7,7 +7,6 @@ import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
 import {
   CLAUDE_CACHE,
@@ -19,28 +18,29 @@ import {
   USER_CONFIG_DIR,
   WHITELIST_PURGE_MESSAGES,
 } from "../testing/clean-user-scope.builder.js";
+import { HOST, hostCatalog } from "../testing/synthetic-hosts.builder.js";
 import { userScopeCleaner } from "../testing/user-scope-cleaner.builder.js";
 
 describe("clean --scope user: host report", () => {
   describe("what the run reports", () => {
     function buildClaudeUseCase(fs: InMemoryFileAdapter, logger: CapturingLogger) {
       return userScopeCleaner({
-        tools: registeredTools(),
+        tools: hostCatalog(),
         fs,
-        repo: new InMemoryManifestRepository(manifestWithClaude(TOOL)),
+        repo: new InMemoryManifestRepository(manifestWithClaude(HOST)),
         logger,
-        activators: new Map([[TOOL.claude, new FakeHostActions({ available: true })]]),
+        activators: new Map([[HOST.claude, new FakeHostActions({ available: true })]]),
         marketplaceRegistries: new Map([
           [
-            TOOL.claude,
+            HOST.claude,
             new FakeHostMarketplaceRegistry({
               location: "known_marketplaces.json",
               entries: new Map(),
             }),
           ],
         ]),
-        sources: provenClaudeSources(TOOL),
-        pluginRegistries: provenHostPlugins(TOOL, manifestWithClaude(TOOL)),
+        sources: provenClaudeSources(HOST),
+        pluginRegistries: provenHostPlugins(HOST, manifestWithClaude(HOST)),
       });
     }
 
@@ -58,7 +58,7 @@ describe("clean --scope user: host report", () => {
         dryRun: false,
         manifestFound: true,
         preview: {
-          toolIds: ["claude"],
+          toolIds: [HOST.claude],
           activePluginDependents: [],
           builtVersions: [],
           referencingProjects: [],
@@ -80,7 +80,7 @@ describe("clean --scope user: host report", () => {
       });
 
       expect(logger.infoMessages).toStrictEqual([
-        `claude: cache for 'aidd-framework' purged: ${join(CLAUDE_CACHE, "aidd-framework")}`,
+        `${HOST.claude}: cache for 'aidd-framework' purged: ${join(CLAUDE_CACHE, "aidd-framework")}`,
         ...WHITELIST_PURGE_MESSAGES,
       ]);
     });
@@ -90,7 +90,7 @@ describe("clean --scope user: host report", () => {
       await seedWhitelist(fs);
       const logger = new CapturingLogger();
       const useCase = userScopeCleaner({
-        tools: registeredTools(),
+        tools: hostCatalog(),
         fs,
         repo: new InMemoryManifestRepository(null),
         logger,
@@ -126,7 +126,7 @@ describe("clean --scope user: host report", () => {
       await userSourceReferences.addReference("1.0.0", "/project-b");
       const logger = new CapturingLogger();
       const useCase = userScopeCleaner({
-        tools: registeredTools(),
+        tools: hostCatalog(),
         fs,
         repo: new InMemoryManifestRepository(null),
         logger,
@@ -150,7 +150,7 @@ describe("clean --scope user: host report", () => {
       fs.setFile(join(USER_CONFIG_DIR, "references.json"), "not json");
       const logger = new CapturingLogger();
       const useCase = userScopeCleaner({
-        tools: registeredTools(),
+        tools: hostCatalog(),
         fs,
         repo: new InMemoryManifestRepository(Manifest.create()),
         logger,
