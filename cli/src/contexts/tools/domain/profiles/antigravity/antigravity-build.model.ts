@@ -39,7 +39,7 @@ export function buildAntigravityFlatContract(hooks: AntigravityHooks): ToolBuild
         placement: agentsIn(ANTIGRAVITY_FLAT_LAYOUT),
         agentMarkdown: antigravityAgentMarkdown,
       },
-      mcp: { supported: false },
+      mcp: { supported: false, reason: "the flat build ships no MCP file" },
       hooks: flatHooksArtifact(hooks, { tool: "antigravity" }, (existing, shipped) =>
         mergeAntigravityHooks(hooks, existing, shipped)
       ),

@@ -115,7 +115,10 @@ function withSections(profile: AiTool, replaced: ProfileSections): AiTool {
   return { ...profile, section };
 }
 
-const UNSUPPORTED: ArtifactContract = { supported: false };
+const UNSUPPORTED: ArtifactContract = {
+  supported: false,
+  reason: "not shipped by this proof subject",
+};
 
 function supported(at: string): ArtifactContract {
   return {
@@ -238,6 +241,15 @@ const BROKEN: Readonly<Record<string, () => FileConformanceSubject>> = {
     subjectOf(
       withMarketplace(NATIVE, {
         artifacts: { ...marketplaceOf(NATIVE).artifacts, skills: supported("") },
+      })
+    ),
+  "says why each artifact it does not ship is not shipped": () =>
+    subjectOf(
+      withFlatBuild(FLAT, {
+        artifacts: {
+          ...flatBuildOf(FLAT).artifacts,
+          mcp: { supported: false, reason: "" },
+        },
       })
     ),
   "is reachable by at least one build": () => subjectOf({ ...NATIVE, buildContracts: {} }),

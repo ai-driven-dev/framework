@@ -71,7 +71,11 @@ export type ArtifactPlacement =
     };
 
 export type ArtifactContract =
-  | { readonly supported: false }
+  | {
+      readonly supported: false;
+      /** Why the tool ships none: what a reader of the profile needs to know. */
+      readonly reason: string;
+    }
   | {
       readonly supported: true;
       readonly source: ArtifactSource;

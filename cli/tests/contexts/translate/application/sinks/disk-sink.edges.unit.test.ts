@@ -38,7 +38,7 @@ const ASSETS: AssetProvider = {
 };
 
 const COPY_DIR = ".out/";
-const NONE: ArtifactContract = { supported: false };
+const NONE: ArtifactContract = { supported: false, reason: "off in this test" };
 const COPY: ArtifactContract = {
   supported: true,
   source: { kind: "fullTree", srcDir: "" },

@@ -154,6 +154,13 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
       }
     }
   }),
+  aiCheck("says why each artifact it does not ship is not shipped", (profile) => {
+    for (const contract of contractsOf(profile)) {
+      for (const [name, artifact] of Object.entries(contract.artifacts)) {
+        if (!artifact.supported) expect(artifact.reason, name).not.toBe("");
+      }
+    }
+  }),
   aiCheck("is reachable by at least one build", (profile) => {
     if (profile.plugins() === null) return;
     expect(Object.keys(profile.buildContracts ?? {}).length).toBeGreaterThan(0);

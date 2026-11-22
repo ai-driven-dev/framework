@@ -146,7 +146,10 @@ describe("FlatOutputStrategy integration", () => {
         makeValidator(),
         makeAssetProvider(),
         captLogger,
-        { ...base, artifacts: { ...base.artifacts, hooks: { supported: false } } },
+        {
+          ...base,
+          artifacts: { ...base.artifacts, hooks: { supported: false, reason: "off in this test" } },
+        },
         "flat"
       );
       memFs.setFile(`${FIXTURE_DIR}/plugins/${PLUGIN}/hooks/hooks.json`, '{"hooks":{}}');

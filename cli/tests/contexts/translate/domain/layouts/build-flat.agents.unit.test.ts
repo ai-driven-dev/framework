@@ -30,8 +30,8 @@ function flatAgents(
             flatArtifactLayout("flat/", { skills: "nested", agent: { ext: ".md" } })
           ),
         }),
-        hooks: { supported: false },
-        mcp: { supported: false },
+        hooks: { supported: false, reason: "off in this test" },
+        mcp: { supported: false, reason: "off in this test" },
       },
     },
     "flat"

@@ -156,7 +156,10 @@ describe("the hooks a flat layout writes", () => {
     const memFs = hooksFs();
     const logger = new CapturingLogger();
     const contract = stubContract({
-      artifacts: { ...stubContract().artifacts, hooks: { supported: false } },
+      artifacts: {
+        ...stubContract().artifacts,
+        hooks: { supported: false, reason: "off in this test" },
+      },
     });
     expect(await stubWrite(memFs, contract, logger)).toBe(0);
     expect(logger.warnMessages).toEqual([

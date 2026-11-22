@@ -67,7 +67,13 @@ describe("one plugin's hooks and MCP servers", () => {
     const { deps, hooks } = depsOver();
     const contract = aStubBuildContract();
     const target = aDiskTarget(
-      { ...contract, artifacts: { ...contract.artifacts, hooks: { supported: false } } },
+      {
+        ...contract,
+        artifacts: {
+          ...contract.artifacts,
+          hooks: { supported: false, reason: "off in this test" },
+        },
+      },
       { mode: "flat" }
     );
 

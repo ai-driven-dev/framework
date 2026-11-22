@@ -104,7 +104,7 @@ describe("where a flat layout points a plugin-root reference", () => {
   });
 
   it("leaves a reference under a folder the layout does not host where the plugin had it", async () => {
-    const off = { supported: false } as const;
+    const off = { supported: false, reason: "off in this test" } as const;
     const contract = stubContract({
       artifacts: { ...stubContract().artifacts, mcp: mcp(), agents: off, skills: off, hooks: off },
     });
@@ -124,7 +124,7 @@ describe("where a flat layout points a plugin-root reference", () => {
   });
 
   it("links an agent to itself where the layout writes it, and to an unhosted skill as the plugin had it", async () => {
-    const off = { supported: false } as const;
+    const off = { supported: false, reason: "off in this test" } as const;
     const memFs = new InMemoryFileAdapter({
       [`${STUB_PLUGIN_SRC}/agents/rev.md`]: `---\nname: rev\n---\n\n${refs}\n`,
     });
@@ -138,7 +138,7 @@ describe("where a flat layout points a plugin-root reference", () => {
   });
 
   it("links a skill to an unhosted agent as the plugin had it", async () => {
-    const off = { supported: false } as const;
+    const off = { supported: false, reason: "off in this test" } as const;
     const memFs = new InMemoryFileAdapter({
       [`${STUB_PLUGIN_SRC}/skills/hello/SKILL.md`]: `---\nname: hello\n---\n\n${refs}\n`,
     });

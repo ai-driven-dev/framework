@@ -28,9 +28,9 @@ function flatHooks(
           placement: { kind: "hooks", scriptsDir: "flat/hooks/" },
           ...over,
         }),
-        agents: { supported: false },
-        skills: { supported: false },
-        mcp: { supported: false },
+        agents: { supported: false, reason: "off in this test" },
+        skills: { supported: false, reason: "off in this test" },
+        mcp: { supported: false, reason: "off in this test" },
       },
     },
     "flat"

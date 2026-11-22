@@ -80,7 +80,7 @@ export function buildKiloFlatContract(hooks: KiloHooks): ToolBuildContract {
         placement: agentsIn(KILO_FLAT_LAYOUT),
         agentMarkdown: kiloAgentMarkdown,
       },
-      mcp: { supported: false },
+      mcp: { supported: false, reason: "carried by the config artifact, not a file of its own" },
       hooks: flatHooksArtifact(hooks, { bridge: generateKiloHooksBridge }),
     },
     buildMarketplaceCatalog: null,

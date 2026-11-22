@@ -24,9 +24,9 @@ function mcpBuilt(
       artifacts: {
         ...contract.artifacts,
         mcp,
-        agents: { supported: false },
-        skills: { supported: false },
-        hooks: { supported: false },
+        agents: { supported: false, reason: "off in this test" },
+        skills: { supported: false, reason: "off in this test" },
+        hooks: { supported: false, reason: "off in this test" },
       },
     },
     "marketplace"
@@ -62,6 +62,8 @@ describe("the marketplace layout of a plugin's mcp servers", () => {
   });
 
   it("builds no declaration for a tool that has none", () => {
-    expect(mcpBuilt({ ".mcp.json": "{}" }, { supported: false })).toEqual({});
+    expect(
+      mcpBuilt({ ".mcp.json": "{}" }, { supported: false, reason: "off in this test" })
+    ).toEqual({});
   });
 });
