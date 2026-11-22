@@ -1,9 +1,9 @@
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import type { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { FakeHostMarketplaceSources } from "./fake-host-marketplace-sources.fake.js";
 import { FakeHostPluginRegistry } from "./fake-host-plugin-registry.fake.js";
 
@@ -19,9 +19,9 @@ export function marketplace(): Marketplace {
   });
 }
 
-export function manifestWithTool(): InMemoryManifestRepository {
+export function manifestWithTool(claude: AiToolId): InMemoryManifestRepository {
   const manifest = Manifest.create();
-  manifest.addTool(TOOL.claude, "test", []);
+  manifest.addTool(claude, "test", []);
   return new InMemoryManifestRepository(manifest);
 }
 
@@ -38,11 +38,11 @@ export function seededBuiltCatalog(): InMemoryFileAdapter {
   );
 }
 
-export function freshHostProof(activator: FakeHostActions) {
+export function freshHostProof(claude: AiToolId, activator: FakeHostActions) {
   return {
     plugins: new Map([
       [
-        TOOL.claude,
+        claude,
         new FakeHostPluginRegistry({
           location: "/host/installed_plugins.json",
           refs: new Map(),
@@ -51,7 +51,7 @@ export function freshHostProof(activator: FakeHostActions) {
     ]),
     sources: new Map([
       [
-        TOOL.claude,
+        claude,
         new FakeHostMarketplaceSources(
           activator,
           "registry",

@@ -116,7 +116,7 @@ describe("SyncSettings - when the stale cache is purged and what it says", () =>
     const useCase = marketplaceSync({
       tools: registeredTools(),
       fs: fsAt(PROJECT_ROOT, { [OLD_CACHE_FILE]: "stale content" }),
-      manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
+      manifestRepo: new InMemoryManifestRepository(manifestWithClaude(TOOL.claude)),
       marketplaceRegistry: registry,
       logger,
       activators: new Map([[TOOL.claude, new FakeHostActions({ available: false })]]),
@@ -141,7 +141,7 @@ describe("SyncSettings - when the stale cache is purged and what it says", () =>
     const useCase = marketplaceSync({
       tools: registeredTools(),
       fs: fsAt(PROJECT_ROOT, { [OLD_CACHE_FILE]: "stale content" }),
-      manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
+      manifestRepo: new InMemoryManifestRepository(manifestWithClaude(TOOL.claude)),
       marketplaceRegistry: registry,
       logger,
       activators: new Map([[TOOL.claude, new FakeHostActions({ available: true })]]),
@@ -167,7 +167,7 @@ describe("SyncSettings - when the stale cache is purged and what it says", () =>
 
   it("keeps the stale built tree when one of two requested tools' builds failed", async () => {
     const registry = projectWithMigratableEntry();
-    const manifest = manifestWithClaude();
+    const manifest = manifestWithClaude(TOOL.claude);
     manifest.addTool(TOOL.codex, "test", []);
     const fs = staleCacheAndCatalog();
     const activator = new FakeHostActions({ available: true });
@@ -212,14 +212,14 @@ describe("SyncSettings - when the stale cache is purged and what it says", () =>
     const useCase = marketplaceSync({
       tools: registeredTools(),
       fs,
-      manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
+      manifestRepo: new InMemoryManifestRepository(manifestWithClaude(TOOL.claude)),
       marketplaceRegistry: registry,
       logger,
       activators: new Map([[TOOL.claude, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
       marketplaceRegisterFrameworkUseCase: new RegisterFrameworkMarketplace(registry),
       hostPluginRegistries: readableHostPlugins(TOOL.claude),
-      nativeSources: freshClaudeSource(activator, CLAUDE_BUILT_DIR),
+      nativeSources: freshClaudeSource(TOOL.claude, activator, CLAUDE_BUILT_DIR),
     });
 
     await useCase.execute({
@@ -238,7 +238,7 @@ describe("SyncSettings - when the stale cache is purged and what it says", () =>
     const useCase = marketplaceSync({
       tools: registeredTools(),
       fs: staleCacheAndCatalog(),
-      manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
+      manifestRepo: new InMemoryManifestRepository(manifestWithClaude(TOOL.claude)),
       marketplaceRegistry: registry,
       logger,
       activators: new Map([[TOOL.claude, new FakeHostActions({ available: true })]]),

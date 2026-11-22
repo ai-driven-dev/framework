@@ -27,11 +27,11 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
     const activator = new FakeHostActions({ available: true });
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
-    const proof = freshHostProof(activator);
+    const proof = freshHostProof(TOOL.claude, activator);
     const useCase = marketplaceSync({
       tools: registeredTools(),
       fs: seededBuiltCatalog(),
-      manifestRepo: manifestWithTool(),
+      manifestRepo: manifestWithTool(TOOL.claude),
       marketplaceRegistry: registry,
       logger: new CapturingLogger(),
       activators: new Map([[TOOL.claude, activator]]),
@@ -77,7 +77,7 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
       },
       [PROJECT_ROOT]
     );
-    const proof = freshHostProof(activator);
+    const proof = freshHostProof(TOOL.claude, activator);
     const useCase = marketplaceSync({
       tools: registeredTools(),
       fs: catalog,
@@ -238,8 +238,8 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
     const activator = new FakeHostActions({ available: true });
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
-    const constructedRepo = manifestWithTool();
-    const machineRepo = manifestWithTool();
+    const constructedRepo = manifestWithTool(TOOL.claude);
+    const machineRepo = manifestWithTool(TOOL.claude);
     const useCase = marketplaceSync({
       tools: registeredTools(),
       fs: seededBuiltCatalog(),
@@ -276,7 +276,7 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
     const useCase = marketplaceSync({
       tools: registeredTools(),
       fs: seededBuiltCatalog(),
-      manifestRepo: manifestWithTool(),
+      manifestRepo: manifestWithTool(TOOL.claude),
       marketplaceRegistry: registry,
       logger: new CapturingLogger(),
       activators: new Map([[TOOL.claude, activator]]),
@@ -295,7 +295,7 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
 
   it("still records a shared-source reference at project scope, unaffected", async () => {
     const activator = new FakeHostActions({ available: true });
-    const proof = freshHostProof(activator);
+    const proof = freshHostProof(TOOL.claude, activator);
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
     const added: Array<{ version: string; projectRoot: string }> = [];
@@ -309,7 +309,7 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
     const useCase = marketplaceSync({
       tools: registeredTools(),
       fs: seededBuiltCatalog(),
-      manifestRepo: manifestWithTool(),
+      manifestRepo: manifestWithTool(TOOL.claude),
       marketplaceRegistry: registry,
       logger: new CapturingLogger(),
       activators: new Map([[TOOL.claude, activator]]),

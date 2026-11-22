@@ -324,7 +324,7 @@ describe("settings migration", () => {
             }),
           ],
         ]),
-        nativeSources: freshClaudeSource(activator, CLAUDE_BUILT_DIR),
+        nativeSources: freshClaudeSource(TOOL.claude, activator, CLAUDE_BUILT_DIR),
       });
 
       return {

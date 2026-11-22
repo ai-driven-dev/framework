@@ -2,12 +2,15 @@ import { describe, expect, it } from "vitest";
 import type { RegisterFrameworkMarketplaceRequest } from "../../../src/contexts/distribution/application/register-framework-marketplace.use-case.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
-import { registeredCatalog } from "../../shared/testing/catalog-of.builder.js";
 import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { fsAt } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
+import {
+  SYNTHETIC_TOOL,
+  syntheticCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   CLAUDE_BUILT_DIR,
   catalogFixture,
@@ -26,9 +29,9 @@ describe("SyncSettings - when the stale cache is left alone", () => {
   it("leaves the stale built tree alone at user scope, where no project file is this run's to touch", async () => {
     const fs = staleCacheAndCatalog();
     const useCase = marketplaceSync({
-      tools: registeredCatalog(),
+      tools: syntheticCatalog(),
       fs,
-      manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
+      manifestRepo: new InMemoryManifestRepository(manifestWithClaude(SYNTHETIC_TOOL)),
       marketplaceRegistry: registryWithSharedFramework(),
       logger: new CapturingLogger(),
       ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
@@ -47,9 +50,9 @@ describe("SyncSettings - when the stale cache is left alone", () => {
   it("leaves the stale built tree alone unless the caller asked to recreate the framework entry", async () => {
     const fs = staleCacheAndCatalog();
     const useCase = marketplaceSync({
-      tools: registeredCatalog(),
+      tools: syntheticCatalog(),
       fs,
-      manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
+      manifestRepo: new InMemoryManifestRepository(manifestWithClaude(SYNTHETIC_TOOL)),
       marketplaceRegistry: registryWithSharedFramework(),
       logger: new CapturingLogger(),
       ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
@@ -66,9 +69,9 @@ describe("SyncSettings - when the stale cache is left alone", () => {
   it("leaves the stale built tree alone while the framework entry is still at project scope", async () => {
     const fs = staleCacheAndCatalog();
     const useCase = marketplaceSync({
-      tools: registeredCatalog(),
+      tools: syntheticCatalog(),
       fs,
-      manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
+      manifestRepo: new InMemoryManifestRepository(manifestWithClaude(SYNTHETIC_TOOL)),
       marketplaceRegistry: projectWithMigratableEntry(),
       logger: new CapturingLogger(),
       ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
@@ -96,9 +99,9 @@ describe("SyncSettings - when the stale cache is left alone", () => {
     );
     const calls: RegisterFrameworkMarketplaceRequest[] = [];
     const useCase = marketplaceSync({
-      tools: registeredCatalog(),
+      tools: syntheticCatalog(),
       fs: fsAt(PROJECT_ROOT, catalogFixture(CLAUDE_BUILT_DIR)),
-      manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
+      manifestRepo: new InMemoryManifestRepository(manifestWithClaude(SYNTHETIC_TOOL)),
       marketplaceRegistry: registry,
       logger: new CapturingLogger(),
       ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
@@ -126,9 +129,9 @@ describe("SyncSettings - when the stale cache is left alone", () => {
     );
     const calls: RegisterFrameworkMarketplaceRequest[] = [];
     const useCase = marketplaceSync({
-      tools: registeredCatalog(),
+      tools: syntheticCatalog(),
       fs: fsAt(PROJECT_ROOT, catalogFixture(CLAUDE_BUILT_DIR)),
-      manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
+      manifestRepo: new InMemoryManifestRepository(manifestWithClaude(SYNTHETIC_TOOL)),
       marketplaceRegistry: registry,
       logger: new CapturingLogger(),
       ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
