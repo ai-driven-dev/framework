@@ -4,10 +4,10 @@ import type { CheckPluginDrift } from "../../contexts/installation/application/d
 import type { CheckProjectLayout } from "../../contexts/installation/application/doctor/check-project-layout.use-case.js";
 import type { CheckTrackedFiles } from "../../contexts/installation/application/doctor/check-tracked-files.use-case.js";
 import type { LoadManifestForDoctor } from "../../contexts/installation/application/doctor/load-manifest-for-doctor.use-case.js";
-import type { DoctorReport } from "../../contexts/installation/contract/doctor-issue.js";
 import type { InstalledToolsView } from "../../contexts/installation/contract/installed-tools-view.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { ToolCategory } from "../../shared/domain/tool.js";
+import type { DoctorReport } from "../domain/doctor-report.model.js";
 import type { CheckAuthentication } from "./check-authentication.use-case.js";
 import type { CheckRegistration } from "./check-registration.use-case.js";
 

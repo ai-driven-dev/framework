@@ -12,7 +12,7 @@ import {
 } from "../menu/global-options.controller.js";
 
 /** What this command reads of the graph. */
-type CleanKeys = "cleanUseCase" | "cleanUserScopeUseCase" | "setAgentModels";
+type CleanKeys = "cleanUseCase" | "cleanUserScopeUseCase" | "resetAgentModels";
 
 interface CleanCmdOptions {
   force: boolean;
@@ -60,7 +60,7 @@ async function runUserScopeClean({
 
   // The agents' provider and the main sessions' models are machine-wide choices too, undone
   // exactly when the clean itself ran: --force, or a confirmed prompt.
-  const models = await deps.setAgentModels.reset({ dryRun: result.dryRun });
+  const models = await deps.resetAgentModels.execute({ dryRun: result.dryRun });
   const verb = result.dryRun ? "would be restored" : "restored";
   for (const { host, path } of models.changed)
     output.info(`${host} main session: ${verb} in ${path}`);

@@ -1,106 +1,18 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { AgentPluginHosts } from "../../../src/contexts/installation/application/agents/agent-plugin-hosts.js";
-import { MainSessionLocator } from "../../../src/contexts/installation/application/agents/main-session-locator.js";
-import { MainSessionModels } from "../../../src/contexts/installation/application/agents/main-session-models.use-case.js";
-import { RecordAgentProviders } from "../../../src/contexts/installation/application/agents/record-agent-providers.use-case.js";
-import { RestoreAgentProviders } from "../../../src/contexts/installation/application/agents/restore-agent-providers.use-case.js";
-import { RestoreMainSessionModels } from "../../../src/contexts/installation/application/agents/restore-main-session-models.use-case.js";
-import type { UpdatePluginRequest } from "../../../src/contexts/installation/application/plugin/update-plugin.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import { AgentModelStoreAdapter } from "../../../src/contexts/installation/infrastructure/agent-model-store-adapter.js";
-import { jsoncMainSessionSettings } from "../../../src/contexts/installation/infrastructure/jsonc-main-session-settings.js";
-import { RefreshAgentPlugins } from "../../../src/orchestration/agent-models/refresh-agent-plugins.use-case.js";
-import { SetAgentModels } from "../../../src/orchestration/agent-models/set-agent-models.use-case.js";
-import type { SyncSettingsRequest } from "../../../src/orchestration/domain/sync-settings.model.js";
-import type { Scope } from "../../../src/shared/domain/scope.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
-import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
-import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import {
-  HOST,
-  HOST_CONFIG_DIR_ENV,
-  HOST_MCP_SCHEMA,
-  hostCatalog,
-  hostMcpGlobalDir,
-} from "../testing/synthetic-hosts.builder.js";
-
-const PROJECT = "/p";
-const HOME = "/home/me";
-const CONFIG = "/home/me/.config/aidd";
-const CLAUDE_SETTINGS = join(HOME, ".hostclaude", "settings.json");
-const OPENCODE_SETTINGS = join(hostMcpGlobalDir(HOME), "hostmcp.jsonc");
-const OPENCODE_SCHEMA = `"$schema": "${HOST_MCP_SCHEMA}"`;
-
-function plugin(scope: Scope): RecordedPlugin {
-  return RecordedPlugin.fromJSON({
-    name: "aidd-orchestrator",
-    source: { kind: "local", path: "./orchestrator" },
-    version: "1.0.0",
-    strict: false,
-    files: {},
-    scope,
-  });
-}
-
-function setup(
-  seed?: (manifest: Manifest) => void,
-  userManifest: Manifest | null = null,
-  fs: InMemoryFileAdapter = new InMemoryFileAdapter(),
-  env: (name: string) => string | undefined = () => undefined,
-  updateFails = false
-) {
-  const manifest = Manifest.create();
-  seed?.(manifest);
-  const updates: UpdatePluginRequest[] = [];
-  const userUpdates: UpdatePluginRequest[] = [];
-  const activations: SyncSettingsRequest[] = [];
-  const store = new AgentModelStoreAdapter(fs, () => CONFIG);
-  const refresh = new RefreshAgentPlugins({
-    pluginHosts: new AgentPluginHosts(
-      new InMemoryManifestRepository(manifest, PROJECT),
-      new InMemoryManifestRepository(userManifest, CONFIG)
-    ),
-    updatePlugin: {
-      execute: async (options) => {
-        if (updateFails) throw new Error("build failed");
-        updates.push(options);
-        return ["aidd-orchestrator"];
-      },
-    },
-    updateUserPlugin: {
-      execute: async (options) => {
-        userUpdates.push(options);
-        return [];
-      },
-    },
-    syncSettings: {
-      execute: async (options) => {
-        activations.push(options);
-        return { activated: [], binaryMissing: [], warnings: [], errors: [], failed: false };
-      },
-    },
-  });
-  const tools = hostCatalog();
-  const mainSessions = new MainSessionModels({
-    fs,
-    store,
-    settings: jsoncMainSessionSettings,
-    mainSessionLocator: new MainSessionLocator(
-      { fs, homedir: () => HOME, environment: { get: env } },
-      tools
-    ),
-  });
-  const useCase = new SetAgentModels({
-    recordProviders: new RecordAgentProviders(store, tools),
-    restoreProviders: new RestoreAgentProviders(store),
-    mainSessions,
-    restoreMainSessions: new RestoreMainSessionModels(store, mainSessions),
-    refresh,
-  });
-  return { fs, useCase, updates, userUpdates, activations };
-}
+  CLAUDE_SETTINGS,
+  CONFIG,
+  HOME,
+  OPENCODE_SCHEMA,
+  OPENCODE_SETTINGS,
+  PROJECT,
+  plugin,
+  setup,
+} from "../testing/agent-models.builder.js";
+import { HOST, HOST_CONFIG_DIR_ENV } from "../testing/synthetic-hosts.builder.js";
 
 describe("setting agent models", () => {
   it("records the provider machine-wide, re-installs this project's plugins, then sets the main session", async () => {
@@ -231,24 +143,6 @@ describe("setting agent models", () => {
     ]);
   });
 
-  it("resets the machine: restores every main session it changed and forgets the providers", async () => {
-    const { fs, useCase } = setup();
-    fs.setFile(CLAUDE_SETTINGS, '{\n  "model": "opus"\n}\n');
-    const base = { projectRoot: PROJECT, scope: "project" as const };
-    await useCase.execute({ ...base, hosts: [HOST.claude, HOST.mcp], provider: "anthropic" });
-
-    const preview = await useCase.reset({ dryRun: true });
-    expect(preview.providers).toStrictEqual([HOST.claude, HOST.mcp]);
-    expect(preview.changed.map(({ host }) => host)).toStrictEqual([HOST.claude, HOST.mcp]);
-    expect(fs.getFile(CLAUDE_SETTINGS)).toContain("claude-sonnet-5-5");
-
-    await useCase.reset({ dryRun: false });
-    expect(fs.getFile(CLAUDE_SETTINGS)).toBe('{\n  "model": "opus"\n}\n');
-    expect(fs.has(OPENCODE_SETTINGS)).toBe(false);
-    expect(fs.has(`${CONFIG}/agent-models.json`)).toBe(false);
-    expect(fs.has(`${CONFIG}/main-model.json`)).toBe(false);
-  });
-
   it("puts the previous provider back when rebuilding this project's agents fails", async () => {
     const { fs, useCase } = setup((manifest) => {
       manifest.addTool(HOST.mcp, "1.0.0", []);
@@ -273,22 +167,6 @@ describe("setting agent models", () => {
 
     expect(fs.getFile(`${CONFIG}/agent-models.json`)).toBe(`{\n  "${HOST.mcp}": "mistral"\n}\n`);
     expect(fs.getFile(OPENCODE_SETTINGS)).toContain("mistral/mistral-large-4");
-  });
-
-  it("forgets the provider on reset even when a settings file cannot be restored", async () => {
-    const { fs, useCase } = setup();
-    await useCase.execute({
-      projectRoot: PROJECT,
-      scope: "project",
-      hosts: [HOST.claude],
-      provider: "anthropic",
-    });
-    fs.setFile(CLAUDE_SETTINGS, "{ broken");
-
-    const reset = await useCase.reset({ dryRun: false });
-
-    expect(reset.skipped.map(({ host }) => host)).toStrictEqual([HOST.claude]);
-    expect(fs.has(`${CONFIG}/agent-models.json`)).toBe(false);
   });
 
   it("refuses a provider one host cannot run before writing anything", async () => {

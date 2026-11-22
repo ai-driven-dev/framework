@@ -26,7 +26,7 @@ describe("building a marketplace for a tool", () => {
   it("builds nothing for a tool that is not an AI tool", async () => {
     const { command, execute } = setup();
 
-    await expect(command.forTool(SYNTHETIC_IDE_TOOL, MARKETPLACE, ROOT)).resolves.toBeNull();
+    await expect(command.execute(SYNTHETIC_IDE_TOOL, MARKETPLACE, ROOT)).resolves.toBeNull();
 
     expect(execute).not.toHaveBeenCalled();
   });
