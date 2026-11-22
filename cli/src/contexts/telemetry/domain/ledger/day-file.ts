@@ -1,6 +1,6 @@
-import { parseStoredUsage, type StoredUsage, usageId } from "./stored-usage.js";
-import { compareText } from "./text-order.js";
-import { foldUsage } from "./usage-fold.js";
+import { parseStoredUsage, type StoredUsage, usageId } from "../stored-usage.js";
+import { compareText } from "../text-order.js";
+import { foldUsage } from "../usage-fold.js";
 
 /** What one day's file holds. */
 export interface DayRead {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { BranchSnapshot } from "../../../../src/contexts/telemetry/domain/branch-binding.js";
-import { parseBranchSnapshot } from "../../../../src/contexts/telemetry/domain/branch-snapshot-line.js";
+import type { BranchSnapshot } from "../../../../../src/contexts/telemetry/domain/branch-binding.js";
+import { parseBranchSnapshot } from "../../../../../src/contexts/telemetry/domain/declaration/branch-snapshot-line.js";
 
 describe("a snapshot line is read back or refused", () => {
   const snapshot: BranchSnapshot = {

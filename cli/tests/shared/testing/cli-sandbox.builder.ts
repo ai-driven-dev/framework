@@ -13,7 +13,7 @@ import { homedir, tmpdir } from "node:os";
 import { delimiter, dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { afterAll, inject } from "vitest";
-import { environmentWithoutGitVariables as withoutGitEnv } from "../../../src/contexts/telemetry/domain/git-environment.js";
+import { environmentWithoutGitVariables as withoutGitEnv } from "../../../src/contexts/telemetry/domain/resolution/git-environment.js";
 
 export const execFileAsync = promisify(execFile);
 

@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import type { PrivateStorage } from "../../../../../shared/ports/private-storage.js";
 import { type BranchSnapshot, snapshotKey } from "../../../domain/branch-binding.js";
-import { parseBranchSnapshot } from "../../../domain/branch-snapshot-line.js";
+import { parseBranchSnapshot } from "../../../domain/declaration/branch-snapshot-line.js";
 import type { BindingSnapshotStore } from "../../../ports/bindings/binding-snapshot-store.js";
 import type { RepositoryAliasStore } from "../../../ports/repository-alias-store.js";
 import { readTextIfPresent } from "../../reading/text-file.js";

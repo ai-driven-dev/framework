@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { branchCreatedAt } from "../../../../src/contexts/telemetry/domain/branch-creation.js";
+import { branchCreatedAt } from "../../../../../src/contexts/telemetry/domain/declaration/branch-creation.js";
 
 describe("the reflog says when the branch took its name", () => {
   it("takes the last line, which git lists newest first, as UTC", () => {

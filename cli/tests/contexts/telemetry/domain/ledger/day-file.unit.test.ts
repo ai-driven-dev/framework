@@ -4,9 +4,9 @@ import {
   keptLines,
   mergeDays,
   readDay,
-} from "../../../../src/contexts/telemetry/domain/day-file.js";
-import type { StoredUsage } from "../../../../src/contexts/telemetry/domain/stored-usage.js";
-import { aUsageRecord } from "../testing/usage-record.builder.js";
+} from "../../../../../src/contexts/telemetry/domain/ledger/day-file.js";
+import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/stored-usage.js";
+import { aUsageRecord } from "../../testing/usage-record.builder.js";
 
 const stored = (overrides: Partial<StoredUsage> = {}): StoredUsage =>
   aUsageRecord().with(overrides).build();

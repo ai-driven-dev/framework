@@ -1,5 +1,5 @@
 import { type BranchConfigBinding, parseBranchConfig } from "../../domain/branch-binding.js";
-import { branchCreatedAt } from "../../domain/branch-creation.js";
+import { branchCreatedAt } from "../../domain/declaration/branch-creation.js";
 import type { BranchBindingSource } from "../../ports/branch-binding-source.js";
 import { runGit } from "./run-git.js";
 

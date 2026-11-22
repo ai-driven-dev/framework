@@ -31,8 +31,8 @@ import { ReadCloneConsent } from "../contexts/telemetry/application/switch/read-
 import { ReadTranscriptRetention } from "../contexts/telemetry/application/switch/read-transcript-retention.use-case.js";
 import { RememberOwnRoot } from "../contexts/telemetry/application/switch/remember-own-root.use-case.js";
 import { WithdrawConsent } from "../contexts/telemetry/application/switch/withdraw-consent.use-case.js";
-import { environmentWithoutGitVariables } from "../contexts/telemetry/domain/git-environment.js";
 import { legacyLocations } from "../contexts/telemetry/domain/legacy/legacy-locations.js";
+import { environmentWithoutGitVariables } from "../contexts/telemetry/domain/resolution/git-environment.js";
 import { GitBranchBindingSourceAdapter } from "../contexts/telemetry/infrastructure/git/git-branch-binding-source-adapter.js";
 import { GitBranchBindingStoreAdapter } from "../contexts/telemetry/infrastructure/git/git-branch-binding-store-adapter.js";
 import { GitConsentAdapter } from "../contexts/telemetry/infrastructure/git/git-consent-adapter.js";

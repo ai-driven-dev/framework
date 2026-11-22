@@ -8,7 +8,7 @@ import {
   keptLines,
   mergeDays,
   readDay,
-} from "../../../domain/day-file.js";
+} from "../../../domain/ledger/day-file.js";
 import { partitionByDay, type StoredUsage } from "../../../domain/stored-usage.js";
 import {
   parsePositions,

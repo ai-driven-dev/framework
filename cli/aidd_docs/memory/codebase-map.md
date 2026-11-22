@@ -89,6 +89,7 @@ src/
 │   │   │   ├── consent/
 │   │   │   ├── declaration/
 │   │   │   ├── identity/
+│   │   │   ├── ledger/
 │   │   │   ├── legacy/
 │   │   │   ├── report/
 │   │   │   ├── resolution/

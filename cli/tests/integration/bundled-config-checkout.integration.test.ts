@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { environmentWithoutGitVariables } from "../../src/contexts/telemetry/domain/git-environment.js";
+import { environmentWithoutGitVariables } from "../../src/contexts/telemetry/domain/resolution/git-environment.js";
 
 const CLI_ROOT = resolve(import.meta.dirname, "..", "..");
 const read = (path: string): string => readFileSync(join(CLI_ROOT, path), "utf8");

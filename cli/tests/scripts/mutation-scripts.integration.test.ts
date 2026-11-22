@@ -203,17 +203,17 @@ describe("the mutation scripts", () => {
   it("runs a scope that names a single file when that file changed", () => {
     const single = {
       adapter: {
-        mutate: ["src/contexts/telemetry/domain/git-environment.ts"],
+        mutate: ["src/contexts/telemetry/domain/resolution/git-environment.ts"],
         break: 1,
       },
       tools: { mutate: "src/contexts/tools/**/*.ts", break: 1 },
     };
-    expect(scopesToRun(["cli/src/contexts/telemetry/domain/git-environment.ts"], single)).toEqual([
-      "adapter",
-    ]);
-    expect(scopesToRun(["cli/src/contexts/telemetry/domain/git-environment.tsx"], single)).toEqual(
-      []
-    );
+    expect(
+      scopesToRun(["cli/src/contexts/telemetry/domain/resolution/git-environment.ts"], single)
+    ).toEqual(["adapter"]);
+    expect(
+      scopesToRun(["cli/src/contexts/telemetry/domain/resolution/git-environment.tsx"], single)
+    ).toEqual([]);
   });
 
   it("names every harness file the tree holds, so a renamed one cannot silently stop counting", () => {
