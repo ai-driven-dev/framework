@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
+import { join } from "node:path";
+import type { PrivateStorage } from "../../../../../shared/ports/private-storage.js";
 import { compareText } from "../../../domain/text-order.js";
-import type { PrivateStorage } from "../../../ports/private-storage.js";
 import type { LeftOutEntry, LeftOutReason, LeftOutStore } from "../../../ports/usage-ledger.js";
 import { readTextIfPresent } from "../../reading/text-file.js";
 
@@ -8,11 +9,14 @@ import { readTextIfPresent } from "../../reading/text-file.js";
  * per line, the hash of the reason and of what the thing is, in text order, each once. A line
  * this version does not know is kept and not counted. Written under the ledger's lock. */
 export class LeftOutAdapter implements LeftOutStore {
+  private readonly path: string;
+
   constructor(
-    private readonly path: string,
     private readonly dir: string,
     private readonly storage: PrivateStorage
-  ) {}
+  ) {
+    this.path = join(dir, "left-out.txt");
+  }
 
   async add(entries: readonly LeftOutEntry[]): Promise<void> {
     const held = (await readTextIfPresent(this.path)) ?? "";

@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
+import { skillsIn } from "../../../../../src/contexts/tools/contract/artifact-path.js";
 import type {
   ArtifactContract,
   ToolBuildContract,
@@ -10,6 +11,7 @@ import {
 } from "../../../../../src/contexts/translate/domain/translate.error.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
 import type { DiskTarget } from "../../../../../src/contexts/translate/ports/plugin-tree-sink.js";
+import { flatArtifactLayout } from "../../../../../src/shared/domain/materialization/flat-paths.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
@@ -35,11 +37,20 @@ const ASSETS: AssetProvider = {
   },
 };
 
+const COPY_DIR = ".out/";
 const NONE: ArtifactContract = { supported: false };
 const COPY: ArtifactContract = {
   supported: true,
   source: { kind: "fullTree", srcDir: "" },
-  path: (plugin, rel) => `.out/${plugin}/${rel}`,
+  placement: { kind: "relative" },
+};
+const COPY_HOOKS: ArtifactContract = {
+  ...COPY,
+  placement: { kind: "hooks", scriptsDir: `${COPY_DIR}hooks/` },
+};
+const COPY_SKILLS: ArtifactContract = {
+  ...COPY,
+  placement: skillsIn(flatArtifactLayout(COPY_DIR, { skills: "nested", agent: { ext: ".md" } })),
 };
 
 function contractOf(
@@ -199,14 +210,11 @@ describe("a flat MCP artifact", () => {
       }),
     });
     const contract = contractOf({
-      hooks: COPY,
+      hooks: COPY_HOOKS,
       mcp: {
         ...COPY,
-        merge: (_existing, incoming) => ({
-          mergedContent: JSON.stringify(incoming),
-          collisions: [],
-        }),
-        mergeDest: (outDir) => `${outDir}/mcp.json`,
+        placement: { kind: "file", at: "mcp.json" },
+        mcpServersKey: "mcpServers",
       },
     });
     const outDir = `${OUT}\\nested`;
@@ -214,7 +222,9 @@ describe("a flat MCP artifact", () => {
     await write(fs, targetOf(contract, "flat", outDir));
 
     const written = fs.getFile(`${outDir}/mcp.json`) ?? "";
-    expect(written).toContain(`${OUT.replace(/\\/g, "/")}/nested/.out/${PLUGIN}/hooks/server.js`);
+    expect(written).toContain(
+      `${OUT.replace(/\\/g, "/")}/nested/${COPY_DIR}hooks/${PLUGIN}/server.js`
+    );
   });
 });
 
@@ -259,23 +269,20 @@ describe("a source path a Windows host reports with backslashes", () => {
       [`${PLUGIN_SRC}/hooks/sub/run.js`]: "run",
     });
     const script = vi.fn((_pluginPath: string, content: string) => content);
-    const contract = contractOf({ hooks: { ...COPY, skipHooksJson: true, script } });
+    const contract = contractOf({ hooks: { ...COPY_HOOKS, skipHooksJson: true, script } });
 
     await write(fs, targetOf(contract, "flat"));
 
-    expect(writtenPaths(fs)).toEqual([`.out/${PLUGIN}/hooks/sub/run.js`]);
+    expect(writtenPaths(fs)).toEqual([`${COPY_DIR}hooks/${PLUGIN}/sub/run.js`]);
     expect(script).toHaveBeenCalledWith("hooks/sub/run.js", "run");
   });
 
   it("lands a flat skill file under its folder", async () => {
     const fs = windowsSeeded({ [`${PLUGIN_SRC}/skills/plan/SKILL.md`]: "Plan." });
 
-    const path = vi.fn(COPY.path);
+    await write(fs, targetOf(contractOf({ skills: COPY_SKILLS }), "flat"));
 
-    await write(fs, targetOf(contractOf({ skills: { ...COPY, path } }), "flat"));
-
-    expect(writtenPaths(fs)).toEqual([`.out/${PLUGIN}/skills/plan/SKILL.md`]);
-    expect(path).toHaveBeenCalledWith(PLUGIN, "skills/plan/SKILL.md");
+    expect(writtenPaths(fs)).toEqual([`${COPY_DIR}skills/${PLUGIN}/plan/SKILL.md`]);
   });
 
   it("names a flat agent with the placeholder by its forward-slash path", async () => {
@@ -294,10 +301,9 @@ describe("a source path a Windows host reports with backslashes", () => {
     fs.setFile(`${OUT}/cfg\\hooks.json`, "not json");
     const contract = contractOf({
       hooks: {
-        ...COPY,
+        ...COPY_HOOKS,
         hooksFile: {
-          path: () => "cfg\\hooks.json",
-          shared: true,
+          at: { shared: "cfg\\hooks.json" },
           merge: () => ({ content: "{}", warnings: [] }),
         },
       },
@@ -331,10 +337,9 @@ describe("a flat hooks file that names a script the plugin ships", () => {
     const fs = seeded({ [`${PLUGIN_SRC}/hooks/hooks.json`]: "{}" });
     const contract = contractOf({
       hooks: {
-        ...COPY,
+        ...COPY_HOOKS,
         hooksFile: {
-          path: () => "hooks-out.json",
-          shared: false,
+          at: { shared: "hooks-out.json" },
           merge: (_existing, { locate }) => ({
             content: locate?.("hooks/run.js") ?? "",
             warnings: [],
@@ -345,7 +350,7 @@ describe("a flat hooks file that names a script the plugin ships", () => {
 
     await write(fs, targetOf(contract, "flat"));
 
-    expect(fs.getFile(`${OUT}/hooks-out.json`)).toBe(`./.out/${PLUGIN}/hooks/run.js`);
+    expect(fs.getFile(`${OUT}/hooks-out.json`)).toBe(`./${COPY_DIR}hooks/${PLUGIN}/run.js`);
   });
 });
 

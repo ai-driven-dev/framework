@@ -29,12 +29,13 @@ vi.mock("node:child_process", () => ({
   },
 }));
 
+import { GitCloner } from "../../../../src/contexts/distribution/infrastructure/git-cloner-adapter.js";
 import { PluginFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 
 function makeAdapter(): PluginFetcherAdapter {
   const fs = new InMemoryFileAdapter({});
-  return new PluginFetcherAdapter(fs);
+  return new PluginFetcherAdapter(fs, new GitCloner());
 }
 
 describe("PluginFetcherAdapter - fail-fast git clone", () => {

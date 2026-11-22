@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
+import { registerMarketplacePlugin } from "../../../../../src/contexts/installation/application/materialize/register-marketplace-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
@@ -56,7 +56,7 @@ async function seedCopilotPlugin(
 ): Promise<void> {
   const manifest = Manifest.create();
   manifest.addTool(TOOL.copilot, "test", []);
-  await new ModeAMarketplaceTranslator().addPlugin({
+  await registerMarketplacePlugin({
     dist: buildDist(),
     tool: registeredTools().aiProfile(TOOL.copilot),
     source: { kind: "github", repo: "ai-driven-dev/framework" },

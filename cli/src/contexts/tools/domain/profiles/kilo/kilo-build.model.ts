@@ -4,10 +4,9 @@
 import type { FlatHooksLoaderEntry } from "../../../../../shared/domain/materialization/flat-paths.js";
 import {
   type FlatArtifactLayout,
-  flatAgentFilePath,
   flatArtifactLayout,
-  flatSkillPath,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
+import { agentsIn, skillsIn } from "../../../contract/artifact-path.js";
 import type {
   AgentMarkdown,
   ConfigArtifactFile,
@@ -17,13 +16,14 @@ import type {
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
 import { buildTypedMcpFlatConfig } from "../../formats/typed-mcp-merge.js";
-import { toTypedMcpSection } from "../../formats/typed-mcp-section.js";
+import { collectTypedMcp } from "../../formats/typed-mcp-section.js";
+import { chooseOutputPath } from "../../sections/mcp-section.js";
 import { kiloAgentFrontmatter } from "./kilo-agent.model.js";
 import { generateKiloHooksBridge } from "./kilo-hooks-bridge.model.js";
 import {
-  chooseKiloConfigPath,
   KILO_CONFIG_CANDIDATES,
   KILO_DIRECTORY,
+  KILO_OUTPUT_PATH_CANDIDATES,
 } from "./kilo-paths.model.js";
 
 /** Kilo's hooks as the profile declares them: a loader with no hooks file. */
@@ -42,32 +42,16 @@ const kiloAgentMarkdown: AgentMarkdown = {
   frontmatter: (frontmatter) => kiloAgentFrontmatter(frontmatter),
 };
 
-function collectKiloMcp(
-  builtPlugins: readonly string[],
-  pluginMcp: ReadonlyMap<string, string>
-): Record<string, unknown> {
-  const incoming: Record<string, unknown> = {};
-  for (const plugin of builtPlugins) {
-    const raw = pluginMcp.get(plugin);
-    if (raw === undefined) continue;
-    const transformed = JSON.parse(toTypedMcpSection(raw)) as {
-      mcp?: Record<string, unknown>;
-    };
-    for (const [key, value] of Object.entries(transformed.mcp ?? {})) {
-      incoming[key] = value;
-    }
-  }
-  return incoming;
-}
-
 function emitKiloConfig({
   builtPlugins,
   pluginMcp,
   existing,
   assets,
 }: ConfigArtifactInput): readonly ConfigArtifactFile[] {
-  const configPath = chooseKiloConfigPath((relPath) => existing.has(relPath));
-  const incoming = collectKiloMcp(builtPlugins, pluginMcp);
+  const configPath = chooseOutputPath(KILO_OUTPUT_PATH_CANDIDATES, (relPath) =>
+    existing.has(relPath)
+  );
+  const incoming = collectTypedMcp(builtPlugins, pluginMcp);
   const asset = assets.get("kilo.json");
   const base = typeof asset === "string" ? asset : JSON.stringify(asset);
   const config = buildTypedMcpFlatConfig({
@@ -87,13 +71,13 @@ export function buildKiloFlatContract(hooks: KiloHooks): ToolBuildContract {
       skills: {
         supported: true,
         source: { kind: "fullTree", srcDir: "skills" },
-        path: (plugin, rel) => flatSkillPath(KILO_FLAT_LAYOUT, plugin, rel),
+        placement: skillsIn(KILO_FLAT_LAYOUT),
         rewriteSkillName: true,
       },
       agents: {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        path: (plugin, rel) => flatAgentFilePath(KILO_FLAT_LAYOUT, plugin, rel),
+        placement: agentsIn(KILO_FLAT_LAYOUT),
         agentMarkdown: kiloAgentMarkdown,
       },
       mcp: { supported: false },

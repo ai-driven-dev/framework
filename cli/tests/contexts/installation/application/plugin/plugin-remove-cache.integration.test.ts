@@ -5,7 +5,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
+import { registerMarketplacePlugin } from "../../../../../src/contexts/installation/application/materialize/register-marketplace-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
@@ -44,7 +44,7 @@ function buildDist(): PluginDistribution {
 async function seedManifest(): Promise<Manifest> {
   const manifest = Manifest.create();
   manifest.addTool(TOOL.claude, "test", []);
-  await new ModeAMarketplaceTranslator().addPlugin({
+  await registerMarketplacePlugin({
     dist: buildDist(),
     tool: registeredTools().aiProfile(TOOL.claude),
     source: { kind: "local", path: "/plugin-source" },
@@ -184,7 +184,7 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
     await fs.writeFile(witness, "still here");
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "test", []);
-    await new ModeAMarketplaceTranslator().addPlugin({
+    await registerMarketplacePlugin({
       dist: buildDist(),
       tool: registeredTools().aiProfile(TOOL.claude),
       source: { kind: "local", path: "/plugin-source" },
@@ -266,7 +266,7 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
     const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     const manifest = Manifest.create();
     manifest.addTool(TOOL.copilot, "test", []);
-    await new ModeAMarketplaceTranslator().addPlugin({
+    await registerMarketplacePlugin({
       dist: buildDist(),
       tool: registeredTools().aiProfile(TOOL.copilot),
       source: { kind: "local", path: "/plugin-source" },

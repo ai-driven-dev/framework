@@ -1,5 +1,9 @@
 import { isAbsolute } from "node:path";
 import { describe, expect, it } from "vitest";
+import {
+  artifactPath,
+  hooksFilePath,
+} from "../../../../src/contexts/tools/contract/artifact-path.js";
 import type {
   ArtifactContract,
   ToolBuildContract,
@@ -24,7 +28,7 @@ export interface ConformanceSubject {
 /** A check is a pure assertion, so a proof can run it against a subject built to break it. */
 export interface ConformanceCheck<S> {
   readonly title: string;
-  readonly holds: (subject: S) => void;
+  readonly holds: (subject: S) => void | Promise<void>;
 }
 
 /** The only place a capability is read from a profile whose capabilities are `unknown`. */
@@ -64,13 +68,12 @@ function supportedArtifacts(
 
 export function aiCheck(
   title: string,
-  holds: (profile: AiTool, subject: ConformanceSubject) => void
+  holds: (profile: AiTool, subject: ConformanceSubject) => void | Promise<void>
 ): ConformanceCheck<ConformanceSubject> {
   return {
     title,
-    holds: (subject) => {
-      if (subject.profile.kind === "ai") holds(subject.profile, subject);
-    },
+    holds: (subject) =>
+      subject.profile.kind === "ai" ? holds(subject.profile, subject) : undefined,
   };
 }
 
@@ -89,9 +92,9 @@ function installedPaths(profile: AiTool): string[] {
 function flatPathsUnderDirectory(contract: ToolBuildContract): string[] {
   const { agents, hooks } = contract.artifacts;
   return [
-    agents.supported ? agents.path("plug", SAMPLE_PATHS.agents) : "",
-    hooks.supported ? hooks.path("plug", SAMPLE_PATHS.hooks) : "",
-    hooks.supported && hooks.hooksFile !== undefined ? hooks.hooksFile.path("plug") : "",
+    agents.supported ? artifactPath(agents, "plug", SAMPLE_PATHS.agents) : "",
+    hooks.supported ? artifactPath(hooks, "plug", SAMPLE_PATHS.hooks) : "",
+    hooks.supported && hooks.hooksFile !== undefined ? hooksFilePath(hooks.hooksFile, "plug") : "",
   ].filter((path) => path !== "");
 }
 
@@ -133,7 +136,7 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
       }
       for (const contract of contractsOf(profile)) {
         for (const [name, artifact] of supportedArtifacts(contract)) {
-          expectRelative(artifact.path("plug", SAMPLE_PATHS[name] ?? "x"), `${name} path`);
+          expectRelative(artifactPath(artifact, "plug", SAMPLE_PATHS[name] ?? "x"), `${name} path`);
         }
       }
       const flat = profile.buildContracts?.flat?.();
@@ -153,7 +156,7 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
   aiCheck("gives every supported artifact a non-empty path", (profile) => {
     for (const contract of contractsOf(profile)) {
       for (const [name, artifact] of supportedArtifacts(contract)) {
-        expect(artifact.path("plug", SAMPLE_PATHS[name] ?? "x"), name).not.toBe("");
+        expect(artifactPath(artifact, "plug", SAMPLE_PATHS[name] ?? "x"), name).not.toBe("");
       }
     }
   }),
@@ -194,6 +197,31 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
     const config = profile.section("mcp")?.config;
     if (config === undefined) return;
     expect(config.consumes(CONFIG_MCP)).toBe(true);
+  }),
+  aiCheck("settles several candidate config files as its mcp config declares", async (profile) => {
+    const config = profile.section("mcp")?.config;
+    if (config === undefined) return;
+    const candidates: string[] = [];
+    const fallback = await config.resolveOutputPath(async (path) => {
+      candidates.push(path);
+      return false;
+    });
+    const only =
+      (...planted: string[]) =>
+      async (path: string) =>
+        planted.includes(path);
+    for (const path of candidates) {
+      expect(await config.resolveOutputPath(only(path)), path).toBe(path);
+    }
+    if (candidates.length === 0) return;
+    expect(candidates).toContain(fallback);
+    const [first] = candidates;
+    const all = await config
+      .resolveOutputPath(only(...candidates))
+      .catch((error: unknown) => error);
+    if (all !== first) {
+      expect(all).toMatchObject({ code: "dual-config", toolId: profile.toolId });
+    }
   }),
   aiCheck("asks, in each settings file, for a registered tool", (profile, { registration }) => {
     const registered = registration.map((other) => other.toolId);

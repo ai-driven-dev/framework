@@ -2,7 +2,10 @@ import { join, resolve } from "node:path";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../shared/ports/logger.js";
 import type { PluginCatalog } from "../contract/catalog.js";
-import { hasRelativePluginSources, parsePluginCatalog } from "../domain/catalog.js";
+import {
+  hasRelativePluginSources,
+  parsePluginCatalog,
+} from "../domain/catalog-parsers/claude-marketplace-catalog.js";
 import type { Marketplace } from "../domain/marketplace.js";
 import { MARKETPLACE_CATALOG_RELATIVE } from "../domain/marketplace-cache-layout.js";
 import type { MarketplaceCachePort } from "../ports/marketplace-cache.js";

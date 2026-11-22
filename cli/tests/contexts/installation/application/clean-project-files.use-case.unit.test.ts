@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { CleanProjectFiles } from "../../../../src/contexts/installation/application/clean-project-files.use-case.js";
+import { PlanProjectClean } from "../../../../src/contexts/installation/application/plan-project-clean.use-case.js";
 import { RemoveProjectFiles } from "../../../../src/contexts/installation/application/removal/remove-project-files.js";
 import { UpdateGitignore } from "../../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
@@ -19,14 +20,16 @@ const ROOT = "/test-project";
 
 function cleanOver(manifest: Manifest | null, fs: InMemoryFileAdapter): CleanProjectFiles {
   const repo = new InMemoryManifestRepository(manifest, ROOT);
+  const asks = {
+    homeDir: () => "/home",
+    assertMcpRemovable: async () => undefined,
+  };
   return new CleanProjectFiles(
     {
       fs,
       manifestRepo: repo,
-      asks: {
-        homeDir: () => "/home",
-        assertMcpRemovable: async () => undefined,
-      },
+      asks,
+      planProjectClean: new PlanProjectClean({ manifestRepo: repo, asks }, registeredTools()),
       removeProjectFiles: new RemoveProjectFiles(
         {
           fs,

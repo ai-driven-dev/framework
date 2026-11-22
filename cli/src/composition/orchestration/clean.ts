@@ -2,7 +2,11 @@ import { homedir } from "node:os";
 import { ListMarketplaces } from "../../contexts/distribution/application/list-marketplaces.use-case.js";
 import { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.use-case.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
-import { CleanProjectFiles } from "../../contexts/installation/application/clean-project-files.use-case.js";
+import {
+  CleanProjectFiles,
+  type ProjectCleanAsks,
+} from "../../contexts/installation/application/clean-project-files.use-case.js";
+import { PlanProjectClean } from "../../contexts/installation/application/plan-project-clean.use-case.js";
 import { PurgeUserScopeFiles } from "../../contexts/installation/application/purge-user-scope-files.js";
 import type { MachineStateGuards } from "../../contexts/installation/application/removal/purge-machine-state.js";
 import { PurgeMachineState } from "../../contexts/installation/application/removal/purge-machine-state.js";
@@ -94,15 +98,17 @@ function wireCleanUserScope(base: Base, purgeCache: PurgeDeclaredCache, claims: 
 function wireCleanProjectFiles(base: Base, inst: Installation) {
   const { fs, logger, manifestRepo, tools } = base;
   const { updateGitignore } = inst;
+  const asks: ProjectCleanAsks = {
+    homeDir: resolveHomeDir,
+    assertMcpRemovable: (plugin, tool, projectRoot) =>
+      assertProjectMcpEntriesRemovable(fs, { plugin, tool, projectRoot }),
+  };
   return new CleanProjectFiles(
     {
       fs,
       manifestRepo,
-      asks: {
-        homeDir: resolveHomeDir,
-        assertMcpRemovable: (plugin, tool, projectRoot) =>
-          assertProjectMcpEntriesRemovable(fs, { plugin, tool, projectRoot }),
-      },
+      asks,
+      planProjectClean: new PlanProjectClean({ manifestRepo, asks }, tools),
       removeProjectFiles: new RemoveProjectFiles(
         { fs, manifestRepo, logger, updateGitignore, homedir },
         tools

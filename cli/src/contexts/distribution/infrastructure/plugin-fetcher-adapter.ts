@@ -13,16 +13,15 @@ import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { TokenProvider } from "../../auth/contract/token-provider.js";
 import { PluginFetchError } from "../domain/distribution.error.js";
 import type { PluginFetcher, PluginFetchOptions } from "../ports/plugin-fetcher.js";
-import { GitCloner } from "./git-cloner-adapter.js";
+import type { GitCloner } from "./git-cloner-adapter.js";
 import { injectTokenIntoUrl, withoutCredentials } from "./inject-token.js";
 
 const execFile = promisify(execFileCb);
 
 export class PluginFetcherAdapter implements PluginFetcher {
-  private readonly git = new GitCloner();
-
   constructor(
     private readonly fs: FileReader & FileWriter,
+    private readonly git: GitCloner,
     private readonly tokenProvider?: TokenProvider
   ) {}
 

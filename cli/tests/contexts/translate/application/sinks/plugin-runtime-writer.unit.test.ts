@@ -14,10 +14,7 @@ import {
   aSupportedArtifact,
 } from "../../testing/stub-build-contract.builder.js";
 
-const MERGES = {
-  merge: () => ({ mergedContent: "", collisions: [] }),
-  mergeDest: (outDir: string) => `${outDir}/mcp.json`,
-};
+const MERGES = { mcpServersKey: "mcpServers" };
 
 function depsOver(logger = new CapturingLogger()) {
   const hooks: FlatHooksStep[] = [];

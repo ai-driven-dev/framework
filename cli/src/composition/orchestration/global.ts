@@ -17,7 +17,7 @@ import { Restore } from "../../contexts/installation/application/restore/restore
 import { RestoreAllPlugins } from "../../contexts/installation/application/restore/restore-all-plugins.use-case.js";
 import { RestoreToolFiles } from "../../contexts/installation/application/restore/restore-tool-files.use-case.js";
 import { UpdateTool } from "../../contexts/installation/application/update/update-tool.use-case.js";
-import { ReportAllStatus } from "../../orchestration/global/report-all-status.use-case.js";
+import { reportAllStatus } from "../../orchestration/global/report-all-status.js";
 import { ResolveUpdateDecision } from "../../orchestration/global/resolve-update-decision.use-case.js";
 import { RestoreAll } from "../../orchestration/global/restore-all.use-case.js";
 import { UpdateTools } from "../../orchestration/global/update-tools.use-case.js";
@@ -110,8 +110,7 @@ function wireRestore(base: Base, installation: Installation, statusUseCase: Repo
   const restoreAllPlugins = new RestoreAllPlugins(
     new ApplyPluginFiles({
       fs,
-      pluginFetcher: base.pluginFetcher,
-      pluginDistributionReader: base.pluginDistributionReader,
+      loadDistribution: base.loadDistribution,
       builtDeps: installation.builtMaterializationDeps,
     }),
     tools
@@ -177,7 +176,9 @@ export function wireGlobal(parts: GlobalParts) {
     projectContextDetector: new DetectProjectContext(fs),
     setupMachineScope: wireMachineScope(parts),
     statusUseCase,
-    statusAllUseCase: new ReportAllStatus(statusUseCase),
+    statusAllUseCase: {
+      execute: (projectRoot: string) => reportAllStatus(statusUseCase, projectRoot),
+    },
   };
 }
 

@@ -6,7 +6,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createOutput } from "../../../../../src/composition/shared.js";
-import { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
+import { placeFlatPlugin } from "../../../../../src/contexts/installation/application/materialize/place-flat-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { ProjectHooksProvenance } from "../../../../../src/contexts/installation/domain/plugins/plugin-entry.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
@@ -14,7 +14,7 @@ import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-a
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../../../shared/testing/saying.builder.js";
-import { translateDistribution } from "../../testing/fake-build-sources.fake.js";
+import { fakeFlatDeps } from "../../testing/fake-build-sources.fake.js";
 import { pluginRemover } from "../../testing/plugin-remover.builder.js";
 
 const STUB_HOME = "/tmp/test-home";
@@ -90,22 +90,21 @@ async function installPlugin(
   name: string,
   previous?: ProjectHooksProvenance
 ) {
-  const adapter = new ModeBFlatMaterializationTranslator(
-    fs,
-    () => STUB_HOME,
-    translateDistribution
+  const adapter = fakeFlatDeps(fs, () => STUB_HOME);
+  await placeFlatPlugin(
+    {
+      dist: buildDist(name),
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      source: { kind: "local", path: "/plugin-source" },
+      projectRoot: PROJECT_ROOT,
+      manifest,
+      marketplace: undefined,
+      previousMcpEntries: new Map(),
+      userScopeDirTaken: false,
+      previousProjectHooks: previous,
+    },
+    adapter
   );
-  await adapter.addPlugin({
-    dist: buildDist(name),
-    tool: registeredTools().aiProfile(TOOL.cursor),
-    source: { kind: "local", path: "/plugin-source" },
-    projectRoot: PROJECT_ROOT,
-    manifest,
-    marketplace: undefined,
-    previousMcpEntries: new Map(),
-    userScopeDirTaken: false,
-    previousProjectHooks: previous,
-  });
 }
 
 describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => {
@@ -175,22 +174,21 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     await installPlugin(fs, manifest, PLUGIN_NAME);
     const previous = manifest.getRecordedPlugins(TOOL.cursor)[0].provenance.projectHooks;
     manifest.removePlugin(TOOL.cursor, PLUGIN_NAME);
-    const translator = new ModeBFlatMaterializationTranslator(
-      fs,
-      () => STUB_HOME,
-      translateDistribution
+    const translator = fakeFlatDeps(fs, () => STUB_HOME);
+    await placeFlatPlugin(
+      {
+        dist: buildWithoutHooks(PLUGIN_NAME),
+        tool: registeredTools().aiProfile(TOOL.cursor),
+        source: { kind: "local", path: "/plugin-source" },
+        projectRoot: PROJECT_ROOT,
+        manifest,
+        marketplace: undefined,
+        previousMcpEntries: new Map(),
+        userScopeDirTaken: false,
+        previousProjectHooks: previous,
+      },
+      translator
     );
-    await translator.addPlugin({
-      dist: buildWithoutHooks(PLUGIN_NAME),
-      tool: registeredTools().aiProfile(TOOL.cursor),
-      source: { kind: "local", path: "/plugin-source" },
-      projectRoot: PROJECT_ROOT,
-      manifest,
-      marketplace: undefined,
-      previousMcpEntries: new Map(),
-      userScopeDirTaken: false,
-      previousProjectHooks: previous,
-    });
     expect(fs.has(HOOKS_PATH)).toBe(false);
     expect(fs.has(SCRIPT_PATH)).toBe(false);
     expect(manifest.getRecordedPlugins(TOOL.cursor)[0].provenance.projectHooks).toBeUndefined();

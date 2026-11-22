@@ -45,7 +45,7 @@ import type { RunDoctor } from "./doctor/run-doctor.use-case.js";
 import type { RunUserScopeDoctor } from "./doctor/run-user-scope-doctor.use-case.js";
 import type { Output } from "./domain/output.js";
 import type { DoctorAll } from "./global/doctor-all.js";
-import type { ReportAllStatus } from "./global/report-all-status.use-case.js";
+import type { ReportAllStatus } from "./global/report-all-status.js";
 import type { UpdateTools } from "./global/update-tools.use-case.js";
 import type { AddMarketplace } from "./marketplace/add-marketplace.use-case.js";
 import type { CheckMarketplaceUpstream } from "./marketplace/check-marketplace-upstream.use-case.js";
@@ -133,7 +133,7 @@ export interface Deps {
   setAgentModels: Pick<SetAgentModels, "execute" | "reset">;
   selfUpdate: Pick<SelfUpdate, "execute">;
   statusUseCase: Pick<ReportStatus, "execute">;
-  statusAllUseCase: Pick<ReportAllStatus, "execute">;
+  statusAllUseCase: { execute: ReportAllStatus };
   runSync: Pick<RunSync, "execute">;
   runUserScopeSync: Pick<RunUserScopeSync, "execute">;
   updateToolsUseCase: Pick<UpdateTools, "execute">;

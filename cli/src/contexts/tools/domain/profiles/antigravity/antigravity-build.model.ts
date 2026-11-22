@@ -2,10 +2,9 @@
 
 import {
   type FlatArtifactLayout,
-  flatAgentFilePath,
   flatArtifactLayout,
-  flatSkillPath,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
+import { agentsIn, skillsIn } from "../../../contract/artifact-path.js";
 import type { AgentMarkdown, ToolBuildContract } from "../../../contract/build-contract.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
 import { portableAgentFrontmatter } from "../../formats/portable-agent.js";
@@ -31,13 +30,13 @@ export function buildAntigravityFlatContract(hooks: AntigravityHooks): ToolBuild
       skills: {
         supported: true,
         source: { kind: "fullTree", srcDir: "skills" },
-        path: (plugin, rel) => flatSkillPath(ANTIGRAVITY_FLAT_LAYOUT, plugin, rel),
+        placement: skillsIn(ANTIGRAVITY_FLAT_LAYOUT),
         rewriteSkillName: true,
       },
       agents: {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        path: (plugin, rel) => flatAgentFilePath(ANTIGRAVITY_FLAT_LAYOUT, plugin, rel),
+        placement: agentsIn(ANTIGRAVITY_FLAT_LAYOUT),
         agentMarkdown: antigravityAgentMarkdown,
       },
       mcp: { supported: false },

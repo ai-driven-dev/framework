@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { toTypedMcpSection } from "../../../../../src/contexts/tools/domain/formats/typed-mcp-section.js";
+import {
+  collectTypedMcp,
+  toTypedMcpSection,
+} from "../../../../../src/contexts/tools/domain/formats/typed-mcp-section.js";
 import { saying } from "../../../../shared/testing/saying.builder.js";
 
 describe("toTypedMcpSection()", () => {
@@ -46,5 +49,21 @@ describe("toTypedMcpSection()", () => {
   it("refuses a config that is null or a bare value", () => {
     expect(() => toTypedMcpSection("null")).toThrow(saying("MCP config must be a JSON object"));
     expect(() => toTypedMcpSection("42")).toThrow(saying("MCP config must be a JSON object"));
+  });
+});
+
+describe("collectTypedMcp()", () => {
+  it("gathers the typed servers of the built plugins that ship an mcp file, later plugins winning", () => {
+    const raw = (command: string) => JSON.stringify({ mcpServers: { shared: { command } } });
+    const mcp = new Map([
+      ["alpha", raw("first")],
+      ["gamma", raw("last")],
+    ]);
+
+    const collected = collectTypedMcp(["alpha", "beta", "gamma"], mcp);
+
+    expect(collected).toStrictEqual({
+      shared: { type: "local", command: ["last"], enabled: true },
+    });
   });
 });

@@ -30,23 +30,13 @@ describe("what a project check asks a tool profile", () => {
   });
 
   describe("how a tool registers marketplaces in its shared settings file", () => {
-    it("answers a copy of a parsed shared file with the plugins enabled", () => {
+    it("answers the keys under which the declarations and the enabled plugins sit", () => {
       const registration = registeredAiProfile(TOOL.claude).marketplaceRegistration();
-      const shared: Record<string, unknown> = {};
 
-      expect(registration?.withEnabledPlugins(shared, ["p@m"])).toStrictEqual({
-        enabledPlugins: { "p@m": true },
-      });
-      expect(shared).toStrictEqual({});
-    });
-
-    it("answers a copy without the marketplaces declaration, or null when there was none", () => {
-      const registration = registeredAiProfile(TOOL.claude).marketplaceRegistration();
-      const shared: Record<string, unknown> = { extraKnownMarketplaces: {}, keep: 1 };
-
-      expect(registration?.withoutMarketplaces(shared)).toStrictEqual({ keep: 1 });
-      expect(shared).toStrictEqual({ extraKnownMarketplaces: {}, keep: 1 });
-      expect(registration?.withoutMarketplaces({ keep: 1 })).toBeNull();
+      expect([registration?.marketplacesKey(), registration?.enabledPluginsKey()]).toStrictEqual([
+        "extraKnownMarketplaces",
+        "enabledPlugins",
+      ]);
     });
   });
 });

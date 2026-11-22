@@ -1,8 +1,10 @@
-import { basename } from "node:path";
 import { describe, expect, it } from "vitest";
+import { agentsIn, skillsIn } from "../../../../../src/contexts/tools/contract/artifact-path.js";
 import { FrameworkPlaceholderInPluginError } from "../../../../../src/contexts/translate/domain/translate.error.js";
+import { flatArtifactLayout } from "../../../../../src/shared/domain/materialization/flat-paths.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import {
+  STUB_LAYOUT,
   STUB_OUT,
   STUB_PLUGIN_SRC,
   stubContract,
@@ -10,6 +12,11 @@ import {
   supportedArtifact,
   writtenUnder,
 } from "../../testing/flat-writer-world.builder.js";
+
+const SINGLE_LEVEL = flatArtifactLayout(".stub/", {
+  skills: "single-level",
+  agent: { ext: ".md" },
+});
 
 describe("the agents a flat layout writes", () => {
   const reviewer = "---\nname: reviewer\n---\n\nReview the diff.\n";
@@ -32,7 +39,7 @@ describe("the agents a flat layout writes", () => {
     const contract = stubContract({
       artifacts: {
         ...stubContract().artifacts,
-        agents: supportedArtifact((plugin, rel) => `.stub/agents/${plugin}-${rel.slice(7)}`, {
+        agents: supportedArtifact(agentsIn(STUB_LAYOUT), {
           transform: (content, plugin, base) => `${plugin}:${base}\n${content}`,
         }),
       },
@@ -102,7 +109,7 @@ describe("the skills a flat layout writes", () => {
     const contract = stubContract({
       artifacts: {
         ...stubContract().artifacts,
-        skills: supportedArtifact((plugin, rel) => `.stub/skills/${plugin}-${rel.slice(7)}`, {
+        skills: supportedArtifact(skillsIn(SINGLE_LEVEL), {
           rewriteSkillName: true,
         }),
       },
@@ -114,11 +121,13 @@ describe("the skills a flat layout writes", () => {
   });
 
   it("leaves the entry file alone when its flat destination has no folder to name it after", async () => {
-    const memFs = skillFs();
+    const memFs = new InMemoryFileAdapter({
+      [`${STUB_PLUGIN_SRC}/skills/hello/SKILL.md`]: entry,
+    });
     const contract = stubContract({
       artifacts: {
         ...stubContract().artifacts,
-        skills: supportedArtifact((_plugin, rel) => basename(rel), { rewriteSkillName: true }),
+        skills: supportedArtifact({ kind: "file", at: "SKILL.md" }, { rewriteSkillName: true }),
       },
     });
     await stubWrite(memFs, contract);

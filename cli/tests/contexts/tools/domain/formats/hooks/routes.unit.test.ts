@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { artifactPath } from "../../../../../../src/contexts/tools/contract/artifact-path.js";
 import type { ArtifactContract } from "../../../../../../src/contexts/tools/contract/build-contract.js";
 import {
   flatHooksArtifact,
@@ -31,7 +32,7 @@ describe("a plugin tree's hooks artifact", () => {
     const artifact = supported(pluginTreeHooksArtifact(routed({})));
 
     expect(artifact.source).toStrictEqual(SOURCE);
-    expect(artifact.path("aidd-dev", "hooks/journal.cjs")).toBe("hooks/journal.cjs");
+    expect(artifactPath(artifact, "aidd-dev", "hooks/journal.cjs")).toBe("hooks/journal.cjs");
   });
 });
 

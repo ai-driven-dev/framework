@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
-import {
-  InvalidPluginNameError,
-  InvalidPluginVersionError,
-  MalformedPluginScopeError,
-} from "../../../../../src/contexts/installation/domain/installation.error.js";
+import { MalformedPluginScopeError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import type { PluginEntryData } from "../../../../../src/contexts/installation/domain/plugins/plugin-entry.js";
 import {
   entryFromRecordedPlugin,
   recordedPluginFromEntry,
 } from "../../../../../src/contexts/installation/domain/plugins/plugin-entry-codec.js";
+import {
+  InvalidPluginNameError,
+  InvalidPluginVersionError,
+} from "../../../../../src/shared/domain/shared.error.js";
 
 const entry = (overrides: Partial<PluginEntryData> = {}): PluginEntryData => ({
   name: "my-plugin",

@@ -3,7 +3,9 @@ import { wireCleanClaims } from "../../../src/composition/orchestration/clean.js
 import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.use-case.js";
 import { WithdrawFromHost } from "../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import type { HostPorts } from "../../../src/contexts/host-registration/ports/host-ports.js";
+import type { ProjectCleanAsks } from "../../../src/contexts/installation/application/clean-project-files.use-case.js";
 import { CleanProjectFiles } from "../../../src/contexts/installation/application/clean-project-files.use-case.js";
+import { PlanProjectClean } from "../../../src/contexts/installation/application/plan-project-clean.use-case.js";
 import {
   RemoveProjectFiles,
   type RemoveProjectFilesDeps,
@@ -38,16 +40,21 @@ export interface ProjectCleanerParts extends Partial<HostPorts> {
 
 export function projectCleanerDeps(parts: ProjectCleanerParts): CleanProjectDeps {
   const purgeCache = new PurgeDeclaredCache(parts.fs, parts.logger);
+  const asks: ProjectCleanAsks = {
+    homeDir: parts.homeDir ?? homedir,
+    assertMcpRemovable: (plugin, tool, projectRoot) =>
+      assertProjectMcpEntriesRemovable(parts.fs, { plugin, tool, projectRoot }),
+  };
   return {
     cleanProject: new CleanProjectFiles(
       {
         fs: parts.fs,
         manifestRepo: parts.manifestRepo,
-        asks: {
-          homeDir: parts.homeDir ?? homedir,
-          assertMcpRemovable: (plugin, tool, projectRoot) =>
-            assertProjectMcpEntriesRemovable(parts.fs, { plugin, tool, projectRoot }),
-        },
+        asks,
+        planProjectClean: new PlanProjectClean(
+          { manifestRepo: parts.manifestRepo, asks },
+          registeredTools()
+        ),
         removeProjectFiles: new RemoveProjectFiles(
           {
             fs: parts.fs,

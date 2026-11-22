@@ -1,19 +1,19 @@
+import { PLUGIN_NAME_REGEX } from "../../../../shared/domain/plugin/plugin-name.js";
 import { isScope } from "../../../../shared/domain/scope.js";
 import { isSemver } from "../../../../shared/domain/semver.js";
-import { serializePluginSource } from "../../../../shared/domain/source.js";
-import { parsePluginSource } from "../../../../shared/domain/source-parsing.js";
 import {
   InvalidPluginNameError,
   InvalidPluginVersionError,
-  MalformedPluginScopeError,
-} from "../installation.error.js";
+} from "../../../../shared/domain/shared.error.js";
+import { serializePluginSource } from "../../../../shared/domain/source.js";
+import { parsePluginSource } from "../../../../shared/domain/source-parsing.js";
+import { MalformedPluginScopeError } from "../installation.error.js";
 import type { FileProvenance } from "./file-provenance.js";
 import { InstalledPlugin } from "./installed-plugin.js";
 import {
   asComponentPathMap,
   asMcpDigestMap,
   asPathHashMap,
-  PLUGIN_NAME_REGEX,
   type PluginEntryData,
 } from "./plugin-entry.js";
 import type { RecordedPluginParts } from "./recorded-plugin.js";

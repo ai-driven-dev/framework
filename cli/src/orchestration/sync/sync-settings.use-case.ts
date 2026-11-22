@@ -1,13 +1,13 @@
 import type { RegistrationRecordRules } from "../../contexts/host-registration/contract/registration-record-rules.js";
 import type { LoadSyncContext } from "../../contexts/installation/application/sync/load-sync-context.use-case.js";
 import type { RecordActivation } from "../../contexts/installation/application/sync/record-activation.use-case.js";
-import type { SyncToolSettingsFiles } from "../../contexts/installation/application/sync/sync-tool-settings-files.use-case.js";
 import type { RecordMachineClaims } from "../../contexts/machine-claims/application/record/record-machine-claims.use-case.js";
 import type { SharedFrameworkSource } from "../../contexts/machine-claims/application/shared-source/shared-framework-source.use-case.js";
 import type { Scope } from "../../shared/domain/scope.js";
 import type { SyncSettingsRequest, SyncSettingsResult } from "../domain/sync-settings.model.js";
 import type { ActivateNativeTools } from "./activate-native-tools.use-case.js";
 import { claimsViewOf } from "./claims-view-of.js";
+import type { SyncToolSettingsFiles } from "./sync-tool-settings-files.use-case.js";
 
 const EMPTY_RESULT: SyncSettingsResult = {
   activated: [],

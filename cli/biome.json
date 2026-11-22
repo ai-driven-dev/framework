@@ -6049,7 +6049,10 @@
     },
     {
       "includes": ["tests/helpers/**", "tests/shared/**"],
-      "plugins": ["./biome-plugins/no-laundered-test-interior.grit"]
+      "plugins": [
+        "./biome-plugins/no-laundered-test-interior.grit",
+        "./biome-plugins/no-laundered-test-interior-alias.grit"
+      ]
     },
     {
       "includes": ["src/**"],

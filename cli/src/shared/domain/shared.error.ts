@@ -98,9 +98,23 @@ export class InvalidPluginManifestError extends AiddError {
   }
 }
 
+export class InvalidPluginNameError extends AiddError {
+  readonly code = "invalid-plugin-name";
+  constructor(readonly pluginName: string) {
+    super();
+  }
+}
+
 export class InvalidPluginSourceError extends AiddError {
   readonly code = "invalid-plugin-source";
   constructor(readonly detail?: string) {
+    super();
+  }
+}
+
+export class InvalidPluginVersionError extends AiddError {
+  readonly code = "invalid-plugin-version";
+  constructor(readonly version: string) {
     super();
   }
 }

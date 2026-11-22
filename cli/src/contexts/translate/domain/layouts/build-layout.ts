@@ -1,5 +1,6 @@
 import { reshapeFrontmatter } from "../../../../shared/domain/markdown.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
+import { artifactPath } from "../../../tools/contract/artifact-path.js";
 import type {
   SupportedArtifact,
   ToolBuildContract,
@@ -43,7 +44,7 @@ function marketplaceAgents(
     const place = { plugin, outName: base, from: `agents/${base}`, unshaped: "carry" } as const;
     return {
       source: relativePath,
-      path: `plugins/${plugin}/${artifact.path(plugin, `agents/${base}`)}`,
+      path: `plugins/${plugin}/${artifactPath(artifact, plugin, `agents/${base}`)}`,
       content,
       guard: { plugin, name: relativePath.slice("agents/".length) },
       links: agentLinks(artifact, place),

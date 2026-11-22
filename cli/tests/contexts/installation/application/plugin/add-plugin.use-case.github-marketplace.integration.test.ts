@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from "vitest";
-import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import {
   DuplicatePluginError,
   MissingPluginMetadataError,
@@ -8,6 +7,7 @@ import {
   buildInstallationDeps,
   initAndInstall,
 } from "../../../../shared/testing/installation-deps.builder.js";
+import { loadDistributionOf } from "../../../../shared/testing/load-distribution.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import {
@@ -70,10 +70,7 @@ describe("AddPlugin", () => {
         { fs: deps.fs, logger: deps.logger },
         { project: deps.manifestRepo, user: deps.userManifestRepo },
         {
-          distributionLoader: new PluginDistributionLoader(
-            deps.pluginFetcher,
-            deps.pluginDistributionReader
-          ),
+          loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
           marketplaceRegistry: registry,
           ...fakeBuildSources(),
         },
@@ -110,10 +107,7 @@ describe("AddPlugin", () => {
         { fs: deps.fs, logger: deps.logger },
         { project: deps.manifestRepo, user: deps.userManifestRepo },
         {
-          distributionLoader: new PluginDistributionLoader(
-            deps.pluginFetcher,
-            deps.pluginDistributionReader
-          ),
+          loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
           marketplaceRegistry: registry,
           ...fakeBuildSources(),
         },

@@ -1,6 +1,6 @@
+import type { PrivateStorage } from "../../../../../shared/ports/private-storage.js";
 import type { LockWait } from "../../../domain/declaration/task-declaration.js";
 import type { BindingsLock } from "../../../ports/bindings/bindings-lock.js";
-import type { PrivateStorage } from "../../../ports/private-storage.js";
 import { DirectoryLock } from "../ledger/directory-lock.js";
 import type { LockOptions } from "../ledger/ledger-lock.js";
 

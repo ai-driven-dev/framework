@@ -106,7 +106,7 @@ describe("a flat target whose loader is triggered by a generated bridge", () => 
         hooksBridge: {
           generate: (raw, plugin) =>
             raw.includes("PreToolUse") ? `bridge(${plugin}):${raw}` : null,
-          path: (plugin) => `.stub/plugin/${plugin}.js`,
+          dir: ".stub/plugin/",
           skipIfSourceHas: "own-plugin.js",
         },
       },
@@ -116,7 +116,7 @@ describe("a flat target whose loader is triggered by a generated bridge", () => 
   it("generates the bridge from the plugin's own hooks manifest", () => {
     expect(treeOf(bridged, hooksDist())).toEqual({
       ".stub/hooks/sample-plugin/lib/check.sh": hookScriptContent,
-      ".stub/plugin/sample-plugin.js": `bridge(sample-plugin):${hooksManifestFor(CLAUDE_ROOT_TOKEN)}`,
+      ".stub/plugin/sample-plugin-hooks.js": `bridge(sample-plugin):${hooksManifestFor(CLAUDE_ROOT_TOKEN)}`,
     });
   });
 
@@ -133,7 +133,7 @@ describe("a flat target whose loader is triggered by a generated bridge", () => 
   it("names the hook paths it writes, the generated bridge among them", () => {
     expect([...translator.flatHookPaths(hooksDist(), bridged)].sort()).toEqual([
       ".stub/hooks/sample-plugin/lib/check.sh",
-      ".stub/plugin/sample-plugin.js",
+      ".stub/plugin/sample-plugin-hooks.js",
     ]);
   });
 

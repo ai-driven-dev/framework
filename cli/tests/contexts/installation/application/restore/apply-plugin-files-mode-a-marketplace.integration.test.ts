@@ -1,17 +1,16 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import type { RestoreAllPlugins } from "../../../../../src/contexts/installation/application/restore/restore-all-plugins.use-case.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import {
   buildInstallationDeps,
   initAndInstall,
 } from "../../../../shared/testing/installation-deps.builder.js";
+import { loadDistributionOf } from "../../../../shared/testing/load-distribution.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
 import { restoreAllPluginsOf } from "../../testing/build-restore.builder.js";
-import { fakeBuildSources, translateDistribution } from "../../testing/fake-build-sources.fake.js";
+import { fakeBuildSources, fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
@@ -43,13 +42,8 @@ async function makeGithubRegistry(): Promise<FakeMarketplaceRegistry> {
 function makeRestoreUseCase(deps: Deps, registry: FakeMarketplaceRegistry): RestoreAllPlugins {
   return restoreAllPluginsOf({
     ...deps,
-    builtDeps: {
-      ensureBuilt: fakeEnsureBuiltMarketplace(),
-      marketplaceRegistry: registry,
-      platform: process.platform,
-      homedir: () => HOME,
-      translate: translateDistribution,
-    },
+    loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
+    builtDeps: fakeBuiltDeps(deps.fs, { marketplaceRegistry: registry, homedir: () => HOME }),
   });
 }
 
@@ -63,10 +57,7 @@ async function installGithubPlugin(deps: Deps, registry: FakeMarketplaceRegistry
     { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
-      distributionLoader: new PluginDistributionLoader(
-        deps.pluginFetcher,
-        deps.pluginDistributionReader
-      ),
+      loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
     },

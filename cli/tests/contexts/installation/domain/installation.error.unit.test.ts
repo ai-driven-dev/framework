@@ -6,9 +6,7 @@ import {
   DuplicatePluginError,
   InvalidManifestDataError,
   InvalidManifestToolIdError,
-  InvalidPluginNameError,
   InvalidPluginScopeError,
-  InvalidPluginVersionError,
   MalformedPluginScopeError,
   ManifestUnavailableError,
   MissingPluginMetadataError,
@@ -34,13 +32,11 @@ describe("an installation error carries its data and says nothing itself", () =>
     [new DuplicatePluginError("aidd-dev"), { pluginName: "aidd-dev" }, "duplicate-plugin"],
     [new InvalidManifestDataError("bad"), { detail: "bad" }, "invalid-manifest-data"],
     [new InvalidManifestToolIdError("zed"), { key: "zed" }, "invalid-manifest-tool-id"],
-    [new InvalidPluginNameError("My Plugin"), { pluginName: "My Plugin" }, "invalid-plugin-name"],
     [
       new InvalidPluginScopeError("cursor", "project", "user"),
       { toolId: "cursor", requested: "project", supported: "user" },
       "invalid-plugin-scope",
     ],
-    [new InvalidPluginVersionError("latest"), { version: "latest" }, "invalid-plugin-version"],
     [
       new MalformedPluginScopeError("aidd-dev", "global"),
       { pluginName: "aidd-dev", scope: "global" },

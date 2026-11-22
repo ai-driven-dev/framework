@@ -1,9 +1,10 @@
 import type { ConfigureMachineScope } from "../../contexts/installation/application/install/configure-machine-scope.use-case.js";
 import type { NativeActivationReport } from "../../contexts/installation/application/install/install-ai-tool.use-case.js";
 import type { InstallToolsResult } from "../../contexts/installation/application/install/install-tools.use-case.js";
+import type { SetupFlow } from "../domain/setup-flow.model.js";
 import type { InstallGlobalPlugins } from "./install-global-plugins.use-case.js";
 import type { ResolveSetupSource } from "./resolve-setup-source.use-case.js";
-import type { RegisterFrameworkSource, SetupFlow, SetupResult } from "./setup-flow.js";
+import type { RegisterFrameworkSource, SetupResult } from "./setup-flow.js";
 
 /** Drives native activation machine-wide, enabling the plugins a machine-scope setup installed.
  * Which manifest it works on is not this scenario's: composition binds it. */

@@ -42,6 +42,7 @@ vi.mock("node:child_process", () => ({
 
 import type { TokenProvider } from "../../../../src/contexts/auth/contract/token-provider.js";
 import { PluginFetchError } from "../../../../src/contexts/distribution/domain/distribution.error.js";
+import { GitCloner } from "../../../../src/contexts/distribution/infrastructure/git-cloner-adapter.js";
 import { PluginFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
 import type { PluginSource } from "../../../../src/shared/domain/source.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
@@ -63,7 +64,7 @@ function adapter(token?: string, files: Record<string, string> = {}): PluginFetc
   lastFs = new InMemoryFileAdapter(files);
   const provider: TokenProvider | undefined =
     token === undefined ? undefined : { resolve: async () => token };
-  return new PluginFetcherAdapter(lastFs, provider);
+  return new PluginFetcherAdapter(lastFs, new GitCloner(), provider);
 }
 
 function clonedInto(): string {

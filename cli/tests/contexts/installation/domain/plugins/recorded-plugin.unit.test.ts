@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  InvalidPluginNameError,
-  InvalidPluginVersionError,
-  MalformedPluginScopeError,
-} from "../../../../../src/contexts/installation/domain/installation.error.js";
+import { MalformedPluginScopeError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import type {
   ComponentPathMap,
   McpDigestMap,
@@ -11,6 +7,10 @@ import type {
 } from "../../../../../src/contexts/installation/domain/plugins/plugin-entry.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import {
+  InvalidPluginNameError,
+  InvalidPluginVersionError,
+} from "../../../../../src/shared/domain/shared.error.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../../../shared/testing/saying.builder.js";
 

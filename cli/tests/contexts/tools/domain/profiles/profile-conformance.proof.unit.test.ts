@@ -4,6 +4,7 @@ import type {
   ArtifactContract,
   ToolBuildContract,
 } from "../../../../../src/contexts/tools/contract/build-contract.js";
+import { MCP_CONFIG_REF } from "../../../../../src/contexts/tools/contract/config-refs.js";
 import type {
   FlatPluginAnswers,
   McpConfigAnswers,
@@ -123,8 +124,12 @@ function withSections(profile: AiTool, replaced: ProfileSections): AiTool {
 
 const UNSUPPORTED: ArtifactContract = { supported: false };
 
-function supported(path: () => string): ArtifactContract {
-  return { supported: true, source: { kind: "configFile", srcPath: "x" }, path };
+function supported(at: string): ArtifactContract {
+  return {
+    supported: true,
+    source: { kind: "configFile", srcPath: "x" },
+    placement: { kind: "file", at },
+  };
 }
 
 function convertedLike(profile: AiTool): CommandsSection["convertFrontmatter"] {
@@ -234,13 +239,13 @@ const BROKEN: Readonly<Record<string, () => FileConformanceSubject>> = {
   "builds neither rules nor commands from the plugin tree": () =>
     subjectOf(
       withMarketplace(NATIVE, {
-        artifacts: { ...marketplaceOf(NATIVE).artifacts, rules: supported(() => "x.md") },
+        artifacts: { ...marketplaceOf(NATIVE).artifacts, rules: supported("x.md") },
       })
     ),
   "gives every supported artifact a non-empty path": () =>
     subjectOf(
       withMarketplace(NATIVE, {
-        artifacts: { ...marketplaceOf(NATIVE).artifacts, skills: supported(() => "") },
+        artifacts: { ...marketplaceOf(NATIVE).artifacts, skills: supported("") },
       })
     ),
   "is reachable by at least one build": () => subjectOf({ ...NATIVE, buildContracts: {} }),
@@ -267,6 +272,23 @@ const BROKEN: Readonly<Record<string, () => FileConformanceSubject>> = {
     subjectOf(
       withSections(NATIVE, {
         mcp: { config: new McpConfigPart({ format: "json", outputPath: ".mcp.json" }) },
+      })
+    ),
+  "settles several candidate config files as its mcp config declares": () =>
+    subjectOf(
+      withSections(NATIVE, {
+        mcp: {
+          config: new McpConfigPart({
+            format: "json",
+            outputPath: "a.json",
+            consumes: [MCP_CONFIG_REF],
+            outputPathCandidates: {
+              tiers: [["a.json", "a.jsonc"]],
+              fallback: "a.json",
+              onMultipleCandidates: { error: { toolId: "another", detail: "both exist" } },
+            },
+          }),
+        },
       })
     ),
   "asks, in each settings file, for a registered tool": () =>
@@ -305,21 +327,22 @@ const BROKEN: Readonly<Record<string, () => FileConformanceSubject>> = {
     subjectOf(withHooksMergeForgetting(HOOKED)),
 };
 
-function failuresOf(subject: FileConformanceSubject): string[] {
-  return ALL_CHECKS.filter((check) => {
+async function failuresOf(subject: FileConformanceSubject): Promise<string[]> {
+  const failed: string[] = [];
+  for (const check of ALL_CHECKS) {
     try {
-      check.holds(subject);
-      return false;
+      await check.holds(subject);
     } catch {
-      return true;
+      failed.push(check.title);
     }
-  }).map((check) => check.title);
+  }
+  return failed;
 }
 
 describe("the profile conformance checks, each against a subject broken for it alone", () => {
-  it("passes every check on the subjects it is broken from", () => {
+  it("passes every check on the subjects it is broken from", async () => {
     for (const profile of [NATIVE, FLAT, HOOKED, SCHEMED]) {
-      expect(failuresOf(subjectOf(profile))).toEqual([]);
+      expect(await failuresOf(subjectOf(profile))).toEqual([]);
     }
   });
 
@@ -328,7 +351,7 @@ describe("the profile conformance checks, each against a subject broken for it a
     expect(new Set(ALL_CHECKS.map((check) => check.title)).size).toBe(ALL_CHECKS.length);
   });
 
-  it.each(ALL_CHECKS.map((check) => check.title))("%s", (title) => {
-    expect(failuresOf(BROKEN[title]?.() ?? subjectOf(NATIVE))).toEqual([title]);
+  it.each(ALL_CHECKS.map((check) => check.title))("%s", async (title) => {
+    expect(await failuresOf(BROKEN[title]?.() ?? subjectOf(NATIVE))).toEqual([title]);
   });
 });

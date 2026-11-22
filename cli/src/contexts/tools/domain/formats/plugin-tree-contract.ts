@@ -21,18 +21,18 @@ function pluginTreeArtifacts(
     skills: {
       supported: true,
       source: { kind: "fullTree", srcDir: "skills" },
-      path: (_p, rel) => rel,
+      placement: { kind: "relative" },
     },
     agents: {
       supported: true,
       source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-      path: (_p, rel) => rel,
+      placement: { kind: "relative" },
       agentMarkdown,
     },
     mcp: {
       supported: true,
       source: { kind: "configFile", srcPath: ".mcp.json" },
-      path: () => ".mcp.json",
+      placement: { kind: "file", at: ".mcp.json" },
     },
     hooks: pluginTreeHooksArtifact(hooks),
     rules: { supported: false },

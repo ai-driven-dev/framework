@@ -1,13 +1,19 @@
 import type { TokenProvider } from "../contexts/auth/contract/token-provider.js";
 import { FetchMarketplaceSource } from "../contexts/distribution/application/fetch-marketplace-source.use-case.js";
 import { ListMarketplaces } from "../contexts/distribution/application/list-marketplaces.use-case.js";
+import { LoadPluginDistribution } from "../contexts/distribution/application/plugin-source/load-plugin-distribution.use-case.js";
 import { RefreshMarketplace } from "../contexts/distribution/application/refresh-marketplace.use-case.js";
 import { RegisterFrameworkMarketplace } from "../contexts/distribution/application/register-framework-marketplace.use-case.js";
 import { ResolveMarketplace } from "../contexts/distribution/application/resolve-marketplace.use-case.js";
+import { GitCloner } from "../contexts/distribution/infrastructure/git-cloner-adapter.js";
 import { MarketplaceCacheAdapter } from "../contexts/distribution/infrastructure/marketplace-cache-adapter.js";
 import { MarketplaceRegistryAdapter } from "../contexts/distribution/infrastructure/marketplace-registry-adapter.js";
 import { MarketplaceTrustStoreAdapter } from "../contexts/distribution/infrastructure/marketplace-trust-store-adapter.js";
 import { PluginCatalogRepositoryAdapter } from "../contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
+import {
+  type ManifestProbe,
+  PluginDistributionReaderAdapter,
+} from "../contexts/distribution/infrastructure/plugin-distribution-reader-adapter.js";
 import { PluginFetcherAdapter } from "../contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
 import type { MarketplaceCachePort } from "../contexts/distribution/ports/marketplace-cache.js";
 import type { MarketplaceRegistry } from "../contexts/distribution/ports/marketplace-registry.js";
@@ -16,9 +22,11 @@ import type { PluginCatalogRepository } from "../contexts/distribution/ports/plu
 import type { PluginFetcher } from "../contexts/distribution/ports/plugin-fetcher.js";
 import type { RawCatalogFetcher } from "../contexts/distribution/ports/raw-catalog-fetcher.js";
 import type { RepositoryVisibility } from "../contexts/distribution/ports/repository-visibility.js";
+import type { LoadDistribution } from "../contexts/installation/ports/plugin/load-plugin-distribution.js";
 import { atomicWriteFile } from "../shared/infrastructure/atomic-write.js";
 import { GitHubAdapter } from "../shared/infrastructure/github-adapter.js";
 import type { HttpClient } from "../shared/infrastructure/http-client.js";
+import { PrivateStorageAdapter } from "../shared/infrastructure/private-storage-adapter.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
 import type { FileWriter } from "../shared/ports/file-writer.js";
 import type { Logger } from "../shared/ports/logger.js";
@@ -31,11 +39,12 @@ export interface DistributionWiringShared {
   tokenProvider: TokenProvider;
   logger: Logger;
   projectRoot: string;
+  manifestProbes: readonly ManifestProbe[];
 }
 
 export interface DistributionDeps {
   pluginCatalogRepository: PluginCatalogRepository;
-  pluginFetcher: PluginFetcher;
+  loadDistribution: LoadDistribution;
   marketplaceRegistry: MarketplaceRegistry;
   marketplaceTrustStore: MarketplaceTrustStore;
   releaseResolver: ReleaseLister & RepositoryVisibility;
@@ -99,8 +108,12 @@ export function wireDistribution(shared: DistributionWiringShared): Distribution
   const pluginCatalogRepository = new PluginCatalogRepositoryAdapter(shared.fs);
   const marketplaceCache = new MarketplaceCacheAdapter(shared.projectRoot);
   const marketplaceRegistry = new MarketplaceRegistryAdapter(userConfigDir, atomicWriteFile);
-  const marketplaceTrustStore = new MarketplaceTrustStoreAdapter();
-  const pluginFetcher = new PluginFetcherAdapter(shared.fs, shared.tokenProvider);
+  const marketplaceTrustStore = new MarketplaceTrustStoreAdapter(new PrivateStorageAdapter());
+  const pluginFetcher = new PluginFetcherAdapter(shared.fs, new GitCloner(), shared.tokenProvider);
+  const loadPluginDistribution = new LoadPluginDistribution(
+    pluginFetcher,
+    new PluginDistributionReaderAdapter(shared.fs, shared.manifestProbes)
+  );
   const github = new GitHubAdapter(shared.http, { tokenProvider: shared.tokenProvider });
   const releaseResolver = github;
   const rawCatalogFetcher = github;
@@ -114,7 +127,8 @@ export function wireDistribution(shared: DistributionWiringShared): Distribution
   });
   return {
     pluginCatalogRepository,
-    pluginFetcher,
+    loadDistribution: (source, cacheDir, options) =>
+      loadPluginDistribution.execute({ source, cacheDir, ...options }),
     marketplaceRegistry,
     marketplaceTrustStore,
     releaseResolver,

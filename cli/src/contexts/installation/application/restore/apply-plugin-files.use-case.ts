@@ -5,13 +5,12 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 // biome-ignore lint/plugin: hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
+import type { PluginTranslationMode } from "../../../tools/contract/tool-vocabulary.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
-import type { PluginFetcher } from "../../ports/marketplace-sources.js";
-import type { PluginDistributionReader } from "../../ports/plugin/plugin-distribution-reader.js";
-import { materializeViaTranslator } from "../materialize/materialize-via-translator.js";
-import type { PluginTranslator } from "../materialize/plugin-translator.js";
-import { resolvePluginTranslator } from "../materialize/resolve-plugin-translator.js";
+import type { LoadDistribution } from "../../ports/plugin/load-plugin-distribution.js";
+import { placementModeOf } from "../materialize/plugin-placement.js";
+import { rematerializePlugin } from "../materialize/rematerialize-plugin.js";
 import { isPluginFileAtDesiredState } from "../plugin/check-plugin-file-state.js";
 import { deleteOldFiles } from "../plugin/delete-plugin-files.js";
 import { scopeBaseOf } from "../plugin/plugin-target-resolution.js";
@@ -37,8 +36,7 @@ function deliversHooksToProject(tool: AiToolProfile): boolean {
 /** What ApplyPluginFiles is built from. */
 export interface ApplyPluginFilesDeps {
   readonly fs: FileReader & FileWriter;
-  readonly pluginFetcher: PluginFetcher;
-  readonly pluginDistributionReader: PluginDistributionReader;
+  readonly loadDistribution: LoadDistribution;
   readonly builtDeps: BuiltMaterializationDeps;
 }
 
@@ -47,18 +45,14 @@ export class ApplyPluginFiles {
 
   async execute(options: ApplyPluginFilesRequest): Promise<number> {
     if (options.plugin.plugin.scope === "user") return 0;
-    const localPath = await this.deps.pluginFetcher.fetch(
-      options.plugin.plugin.source,
-      options.cacheDir
-    );
-    const dist = await this.deps.pluginDistributionReader.read(localPath);
-    const translator = this.resolveTranslator(options.tool);
+    const dist = await this.deps.loadDistribution(options.plugin.plugin.source, options.cacheDir);
+    const mode = placementModeOf(options.tool);
     if (
-      translator !== null &&
+      mode !== null &&
       (options.plugin.marketplace !== undefined ||
         (!options.fileFilter && deliversHooksToProject(options.tool)))
     ) {
-      return this.restoreViaTranslator(translator, dist, options);
+      return this.restoreViaPlacement(mode, dist, options);
     }
     return this.restoreViaTranslate(dist, options);
   }
@@ -67,15 +61,8 @@ export class ApplyPluginFiles {
   // restored content + hashes match what install wrote, and Mode A marketplace tools
   // (claude/codex/copilot) must re-register without writing files: not the raw source
   // transform in either case.
-  private resolveTranslator(tool: AiToolProfile): PluginTranslator | null {
-    return resolvePluginTranslator(tool, {
-      fs: this.deps.fs,
-      built: this.deps.builtDeps,
-    });
-  }
-
-  private async restoreViaTranslator(
-    translator: PluginTranslator,
+  private async restoreViaPlacement(
+    mode: PluginTranslationMode,
     dist: PluginDistribution,
     options: ApplyPluginFilesRequest
   ): Promise<number> {
@@ -83,7 +70,7 @@ export class ApplyPluginFiles {
     // Mode A never materializes files, so any manifest-tracked path here is a leftover from a run
     // before that was true. Scoped to the manifest's own keys under the plugin's base dir: never a
     // directory scan: so it cannot touch files the plugin never wrote.
-    if (translator.mode === "marketplace") {
+    if (mode === "marketplace") {
       const baseDir = scopeBaseOf(tool, {
         scope: plugin.plugin.scope,
         projectRoot: projectRoot,
@@ -91,14 +78,10 @@ export class ApplyPluginFiles {
       });
       await deleteOldFiles(plugin.plugin.files, baseDir, this.deps.fs);
     }
-    return materializeViaTranslator(translator, {
-      dist,
-      tool,
-      plugin,
-      projectRoot,
-      manifest,
-      hooksGuard: { overwriteEdited: force },
-    });
+    return rematerializePlugin(
+      { dist, tool, mode, plugin, projectRoot, manifest, hooksGuard: { overwriteEdited: force } },
+      { fs: this.deps.fs, built: this.deps.builtDeps }
+    );
   }
 
   private async restoreViaTranslate(

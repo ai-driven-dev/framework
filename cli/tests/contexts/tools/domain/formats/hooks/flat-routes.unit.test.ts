@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { artifactPath } from "../../../../../../src/contexts/tools/contract/artifact-path.js";
 import type {
   ArtifactContract,
   ShippedHooks,
@@ -40,13 +41,13 @@ describe("a flat build's hooks artifact", () => {
     );
 
     expect(artifact.source).toStrictEqual(SOURCE);
-    expect(artifact.path("aidd-dev", "hooks/lib/journal.cjs")).toBe(
+    expect(artifactPath(artifact, "aidd-dev", "hooks/lib/journal.cjs")).toBe(
       ".tool/hooks/aidd-dev/lib/journal.cjs"
     );
-    expect(artifact.path("aidd-dev", "hooks/lib/hooks/a.cjs")).toBe(
+    expect(artifactPath(artifact, "aidd-dev", "hooks/lib/hooks/a.cjs")).toBe(
       ".tool/hooks/aidd-dev/lib/hooks/a.cjs"
     );
-    expect(artifact.path("aidd-dev", "hooks/aidd-dev.hooks.json")).toBe(
+    expect(artifactPath(artifact, "aidd-dev", "hooks/aidd-dev.hooks.json")).toBe(
       ".tool/hooks/aidd-dev.hooks.json"
     );
   });
@@ -64,10 +65,7 @@ describe("a flat build's hooks artifact", () => {
       )
     );
 
-    expect([artifact.hooksFile?.path("aidd-dev"), artifact.hooksFile?.shared]).toStrictEqual([
-      ".tool/hooks.json",
-      true,
-    ]);
+    expect(artifact.hooksFile?.at).toStrictEqual({ shared: ".tool/hooks.json" });
     expect(
       JSON.parse(
         artifact.hooksFile?.merge(null, { json: SHIPPED, plugin: "p", locate }).content ?? ""
@@ -108,10 +106,7 @@ describe("a flat build's hooks artifact", () => {
       })
     );
 
-    expect([artifact.hooksFile?.path("aidd-dev"), artifact.hooksFile?.shared]).toStrictEqual([
-      ".tool/hooks/aidd-dev.hooks.json",
-      false,
-    ]);
+    expect(artifact.hooksFile?.at).toStrictEqual({ own: ".tool/hooks/" });
     expect(
       JSON.parse(
         artifact.hooksFile?.merge(null, { json: SHIPPED, plugin: "p", locate }).content ?? ""
@@ -135,10 +130,7 @@ describe("a flat build's hooks artifact", () => {
       )
     );
 
-    expect([artifact.hooksFile?.path("p"), artifact.hooksFile?.shared]).toStrictEqual([
-      ".tool/hooks.json",
-      true,
-    ]);
+    expect(artifact.hooksFile?.at).toStrictEqual({ shared: ".tool/hooks.json" });
     expect(artifact.hooksFile?.merge(null, { json: "h", plugin: "p", locate }).content).toBe(
       "+h@p"
     );
@@ -169,8 +161,12 @@ describe("a flat build's hooks artifact", () => {
       })
     );
 
-    expect(artifact.path("aidd-dev", "hooks/tool-plugin.js")).toBe(".tool/plugin/aidd-dev.js");
-    expect(artifact.path("aidd-dev", "hooks/journal.cjs")).toBe(".tool/hooks/aidd-dev/journal.cjs");
+    expect(artifactPath(artifact, "aidd-dev", "hooks/tool-plugin.js")).toBe(
+      ".tool/plugin/aidd-dev.js"
+    );
+    expect(artifactPath(artifact, "aidd-dev", "hooks/journal.cjs")).toBe(
+      ".tool/hooks/aidd-dev/journal.cjs"
+    );
   });
 
   it("replaces the hooks file with a generated bridge for a loader", () => {
@@ -182,7 +178,7 @@ describe("a flat build's hooks artifact", () => {
 
     expect(artifact.skipHooksJson).toBe(true);
     expect(artifact.hooksBridge?.generate("{}", "aidd-dev")).toBe("aidd-dev:{}");
-    expect(artifact.hooksBridge?.path("aidd-dev")).toBe(".tool/plugin/aidd-dev-hooks.js");
+    expect(artifact.hooksBridge?.dir).toBe(".tool/plugin/");
     expect(artifact.hooksBridge?.skipIfSourceHas).toBe("tool-plugin.js");
   });
 
@@ -228,7 +224,7 @@ describe("a flat tool's plugins capability, as far as hooks go", () => {
 
     expect(support.flat.loaderEntry).toStrictEqual(LOADER);
     expect(support.flat.bridge?.generate("{}", "p")).toBe("p:{}");
-    expect(support.flat.bridge?.path("p")).toBe(".tool/plugin/p-hooks.js");
+    expect(support.flat.bridge?.dir).toBe(".tool/plugin/");
     expect(support.flat.bridge?.skipIfSourceHas).toBe("tool-plugin.js");
     expect(
       flatHooksSupport(routed({ flat: { scriptsDir: ".tool/hooks/", loaderEntry: LOADER } })).flat

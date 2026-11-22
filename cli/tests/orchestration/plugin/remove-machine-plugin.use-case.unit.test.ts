@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { RemoveUserPluginRequest } from "../../../src/contexts/installation/application/removal/remove-user-plugin.use-case.js";
 import { RemoveMachinePlugin } from "../../../src/orchestration/plugin/remove-machine-plugin.use-case.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { SYNTHETIC_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
 
 describe("RemoveMachinePlugin", () => {
   it("hands the command and the host registration's claimed ref rules to the user-scope removal", async () => {
@@ -19,7 +19,7 @@ describe("RemoveMachinePlugin", () => {
       },
       records
     );
-    const command = { pluginName: "p", toolIds: [TOOL.claude], projectRoot: "/A", home: "/H" };
+    const command = { pluginName: "p", toolIds: [SYNTHETIC_TOOL], projectRoot: "/A", home: "/H" };
 
     await remove.execute(command);
 

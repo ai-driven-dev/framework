@@ -135,7 +135,7 @@ describe("the agents a marketplace layout writes", () => {
     const contract = stubContract({
       artifacts: {
         ...stubContract().artifacts,
-        agents: supportedArtifact((plugin, rel) => `${plugin}/${rel}`),
+        agents: supportedArtifact({ kind: "agentFiles", dir: `${PLUGIN}/agents`, ext: ".md" }),
       },
     });
     expect(await sinkFor(fs, contract).write()).toBe(1);
@@ -149,9 +149,12 @@ describe("the agents a marketplace layout writes", () => {
     const contract = stubContract({
       artifacts: {
         ...stubContract().artifacts,
-        agents: supportedArtifact((_plugin, rel) => rel.replace(/\.md$/, ".toml"), {
-          transform: (content, plugin, base) => `${plugin}:${base}\n${content}`,
-        }),
+        agents: supportedArtifact(
+          { kind: "agentFiles", dir: "agents", ext: ".toml" },
+          {
+            transform: (content, plugin, base) => `${plugin}:${base}\n${content}`,
+          }
+        ),
       },
     });
     await sinkFor(fs, contract).write();
@@ -225,9 +228,12 @@ describe("the hooks a marketplace layout writes", () => {
     const contract = stubContract({
       artifacts: {
         ...stubContract().artifacts,
-        hooks: supportedArtifact((_plugin, rel) => rel, {
-          transform: (content, plugin, base) => `${plugin}:${base}\n${content}`,
-        }),
+        hooks: supportedArtifact(
+          { kind: "relative" },
+          {
+            transform: (content, plugin, base) => `${plugin}:${base}\n${content}`,
+          }
+        ),
       },
     });
     await sinkFor(fs, contract).write();
@@ -261,9 +267,12 @@ describe("the mcp declaration a marketplace layout writes", () => {
     const contract = stubContract({
       artifacts: {
         ...stubContract().artifacts,
-        mcp: supportedArtifact((_plugin, rel) => rel, {
-          transform: (content, plugin, base) => `${plugin}:${base}\n${content}`,
-        }),
+        mcp: supportedArtifact(
+          { kind: "relative" },
+          {
+            transform: (content, plugin, base) => `${plugin}:${base}\n${content}`,
+          }
+        ),
       },
     });
     await sinkFor(fs, contract).write();

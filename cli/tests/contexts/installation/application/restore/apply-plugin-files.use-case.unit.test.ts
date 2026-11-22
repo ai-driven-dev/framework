@@ -1,12 +1,12 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { ApplyPluginFiles } from "../../../../../src/contexts/installation/application/restore/apply-plugin-files.use-case.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import {
   buildInstallationDeps,
   initAndInstall,
 } from "../../../../shared/testing/installation-deps.builder.js";
+import { loadDistributionOf } from "../../../../shared/testing/load-distribution.builder.js";
 import { present } from "../../../../shared/testing/present.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
@@ -25,10 +25,7 @@ async function installedSample() {
     { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
-      distributionLoader: new PluginDistributionLoader(
-        deps.pluginFetcher,
-        deps.pluginDistributionReader
-      ),
+      loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
       marketplaceRegistry: deps.marketplaceRegistry,
       ...fakeBuildSources(),
     },
@@ -45,9 +42,8 @@ async function installedSample() {
   const plugin = present(manifest.getRecordedPlugins(TOOL.claude)[0]);
   const apply = new ApplyPluginFiles({
     fs: deps.fs,
-    pluginFetcher: deps.pluginFetcher,
-    pluginDistributionReader: deps.pluginDistributionReader,
-    builtDeps: fakeBuiltDeps(),
+    loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
+    builtDeps: fakeBuiltDeps(deps.fs),
   });
   const command = {
     toolId: TOOL.claude,

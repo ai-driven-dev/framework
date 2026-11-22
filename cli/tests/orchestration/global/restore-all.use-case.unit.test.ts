@@ -7,7 +7,7 @@ import type {
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RestoreAll } from "../../../src/orchestration/global/restore-all.use-case.js";
 import { CheckboxRecordingPrompter } from "../../shared/testing/checkbox-recording-prompter.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { SYNTHETIC_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
 
 const PROJECT = "/project";
 
@@ -16,14 +16,14 @@ const restored: RestoreGlobalResult = {
   totalKept: 1,
   restoredPluginNames: ["alpha"],
   unrestorable: ["gone.md"],
-  nativeOnlyToolIds: [TOOL.claude],
+  nativeOnlyToolIds: [SYNTHETIC_TOOL],
 };
 
 function drift(...entries: Array<[string, "modified" | "deleted" | "added"]>): ReportStatusResult {
   return {
     tools: [
       {
-        toolId: TOOL.claude,
+        toolId: SYNTHETIC_TOOL,
         version: "1",
         drifted: entries.map(([relativePath, status]) => ({ relativePath, status })),
       },
@@ -60,7 +60,7 @@ describe("RestoreAll", () => {
       errors: [],
       failed: false,
       unrestorable: ["gone.md"],
-      nativeOnlyToolIds: [TOOL.claude],
+      nativeOnlyToolIds: [SYNTHETIC_TOOL],
     });
     expect(execute).toHaveBeenCalledWith({
       projectRoot: PROJECT,

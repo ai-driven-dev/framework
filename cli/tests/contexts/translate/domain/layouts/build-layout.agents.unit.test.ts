@@ -31,7 +31,9 @@ describe("the marketplace layout of a plugin's agents", () => {
   });
 
   it("lands a nested agent by its file name alone, where the tool's path puts it", () => {
-    const agents = aSupportedArtifact({ path: (_plugin, rel) => `built/${rel}` });
+    const agents = aSupportedArtifact({
+      placement: { kind: "agentFiles", dir: "built/agents", ext: ".md" },
+    });
     expect(agentsBuilt({ "agents/sub/deep.md": "# deep\n" }, agents)).toEqual({
       "plugins/plug/built/agents/deep.md": "# deep\n",
     });

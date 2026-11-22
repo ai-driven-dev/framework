@@ -4,7 +4,7 @@ import {
   InstallGlobalPlugins,
   type InstallGlobalPluginsRequest,
 } from "../../../src/orchestration/setup/install-global-plugins.use-case.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { SYNTHETIC_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
 
 function match(name: string, recommended: boolean): PluginSourceMatch {
   return {
@@ -40,7 +40,7 @@ function run(
 ) {
   return useCase.execute({
     projectRoot: "/project",
-    toolIds: [TOOL.opencode],
+    toolIds: [SYNTHETIC_TOOL],
     mode,
     pluginNames,
   });
@@ -57,7 +57,7 @@ describe("InstallGlobalPlugins", () => {
       expect.objectContaining({
         plugins: [DEV, PM],
         projectRoot: "/project",
-        toolIds: [TOOL.opencode],
+        toolIds: [SYNTHETIC_TOOL],
       })
     );
   });

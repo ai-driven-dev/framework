@@ -55,11 +55,15 @@ describe("listing Codex session files", () => {
       "old-rollout-c.jsonl",
       "rollout-d.jsonl.bak",
       "rollout-e.json",
+      "rollout-f-jsonl",
+      "rollout-g.jsonlxzst",
+      "rollout-.jsonl",
     ];
     for (const name of names) await writeFile(join(day, name), "");
     await writeFile(join(archived, "rollout-f.jsonl.zst"), "");
     expect(await source().list()).toEqual(
       [
+        join(day, "rollout-.jsonl"),
         join(day, "rollout-2026-10-07T10-00-00-aaaa.jsonl"),
         join(day, "rollout-2026-10-07T11-00-00-bbbb.jsonl.zst"),
         join(archived, "rollout-f.jsonl.zst"),
@@ -273,6 +277,47 @@ describe.skipIf(NO_ZSTD)("reading a compressed Codex session file", () => {
     };
     expect(first.read).toEqual(expected);
     expect((await readLines(adapter, path, first.read.position)).read).toEqual(expected);
+  });
+});
+
+describe("a compressed stream that fails for another reason than its content", () => {
+  it.each(["EZ_STREAM", "ZERO"])(
+    "fails the read on the code %s: it is no zlib code",
+    async (code) => {
+      const path = join(archived, "rollout-a.jsonl.zst");
+      await writeFile(path, "a\n");
+      const failsWith = () =>
+        new Transform({
+          transform(_chunk, _encoding, done) {
+            done(Object.assign(new Error("broken"), { code }));
+          },
+        });
+      const adapter = new CodexTranscriptSourceAdapter({
+        roots: [sessions, archived],
+        decompress: failsWith,
+      });
+      await expect(readLines(adapter, path, null)).rejects.toMatchObject({ code });
+    }
+  );
+});
+
+describe("decoding a Codex call line", () => {
+  it("carries the codex tool id on its record", () => {
+    const line = JSON.stringify({
+      timestamp: "2026-10-07T10:00:01.000Z",
+      type: "token_usage_record",
+      payload: {
+        thread_id: "t",
+        session_id: "t",
+        response_id: "r",
+        usage: { input_tokens: 1, output_tokens: 1 },
+      },
+    });
+    expect(
+      source()
+        .decode(line)
+        .records.map((record) => record.tool)
+    ).toEqual(["codex"]);
   });
 });
 

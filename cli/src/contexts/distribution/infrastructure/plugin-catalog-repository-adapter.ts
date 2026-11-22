@@ -4,7 +4,7 @@ import { InvalidPluginManifestError } from "../../../shared/domain/shared.error.
 import type { PluginSource } from "../../../shared/domain/source.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { PluginCatalog } from "../contract/catalog.js";
-import { parsePluginCatalog } from "../domain/catalog.js";
+import { parsePluginCatalog } from "../domain/catalog-parsers/claude-marketplace-catalog.js";
 import { parseCopilotMarketplaceCatalog } from "../domain/catalog-parsers/copilot-marketplace-catalog.js";
 import { MalformedMarketplaceCatalogError } from "../domain/distribution.error.js";
 import {

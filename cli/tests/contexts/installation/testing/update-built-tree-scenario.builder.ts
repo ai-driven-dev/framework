@@ -1,6 +1,5 @@
 import { join } from "node:path";
 import { RefreshHostPlugin } from "../../../../src/contexts/host-registration/application/refresh-host-plugin.use-case.js";
-import { PluginDistributionLoader } from "../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { PluginMaterializer } from "../../../../src/contexts/installation/application/plugin/plugin-materializer.js";
 import { UpdateUserPluginFiles } from "../../../../src/contexts/installation/application/plugin/update-user-plugin-files.use-case.js";
 import type { BuiltMarketplaceEnsurer } from "../../../../src/contexts/installation/contract/built-marketplace.js";
@@ -9,10 +8,11 @@ import { UpdateUserPlugin } from "../../../../src/orchestration/plugin/update-us
 import { fakeEnsureBuiltMarketplace } from "../../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { FakeHostActions } from "../../../shared/testing/fake-host-actions.fake.js";
 import type { buildInstallationDeps } from "../../../shared/testing/installation-deps.builder.js";
+import { loadDistributionOf } from "../../../shared/testing/load-distribution.builder.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "./build-add-plugin.builder.js";
-import { fakeBuildSources, translateDistribution } from "./fake-build-sources.fake.js";
+import { fakeBuildSources, fakeBuiltDeps } from "./fake-build-sources.fake.js";
 import { FakeMarketplaceRegistry } from "./fake-marketplace-registry.fake.js";
 import { userScopeFileGuard } from "./user-scope-file-guard.fake.js";
 
@@ -63,15 +63,13 @@ export function makeUpdateUseCase(
         repo: deps.userManifestRepo,
         materializer: new PluginMaterializer({
           fs: deps.fs,
-          loader: new PluginDistributionLoader(deps.pluginFetcher, deps.pluginDistributionReader),
+          loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
           guard: userScopeFileGuard,
-          builtDeps: {
+          builtDeps: fakeBuiltDeps(deps.fs, {
             ensureBuilt,
             marketplaceRegistry: registry,
-            platform: process.platform,
             homedir: () => HOME,
-            translate: translateDistribution,
-          },
+          }),
         }),
         logger: deps.logger,
       },
@@ -95,10 +93,7 @@ export async function installStalePlugin(
     { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
-      distributionLoader: new PluginDistributionLoader(
-        deps.pluginFetcher,
-        deps.pluginDistributionReader
-      ),
+      loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
     },

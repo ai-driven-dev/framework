@@ -18,7 +18,7 @@ import { UserScopePluginFiles } from "../../contexts/installation/application/re
 import { BuildMarketplaceForTool } from "../../contexts/installation/application/sync/build-marketplace-for-tool.use-case.js";
 import { LoadSyncContext } from "../../contexts/installation/application/sync/load-sync-context.use-case.js";
 import { RecordActivation } from "../../contexts/installation/application/sync/record-activation.use-case.js";
-import { SyncToolSettingsFiles } from "../../contexts/installation/application/sync/sync-tool-settings-files.use-case.js";
+import { trackedSharedSettings } from "../../contexts/installation/application/sync/tracked-shared-settings.js";
 import { Manifest } from "../../contexts/installation/domain/manifest.js";
 import { PurgeDeclaredCache } from "../../contexts/machine-claims/application/purge-declared-cache.js";
 import { RecordMachineClaims } from "../../contexts/machine-claims/application/record/record-machine-claims.use-case.js";
@@ -38,7 +38,9 @@ import type { RegisterFrameworkSource } from "../../orchestration/setup/setup-fl
 import { ActivateNativeTools } from "../../orchestration/sync/activate-native-tools.use-case.js";
 import { SyncNativeActivation } from "../../orchestration/sync/sync-native-activation.use-case.js";
 import { SyncSettings } from "../../orchestration/sync/sync-settings.use-case.js";
+import { SyncToolSettingsFiles } from "../../orchestration/sync/sync-tool-settings-files.use-case.js";
 import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
+import { settingsDeclaration } from "../host-registration.js";
 import type { Installation } from "../installation.js";
 import type { Base } from "../shared.js";
 import { userConfigDir } from "../user-config-dir.js";
@@ -162,6 +164,20 @@ interface SyncSources {
   recordSourceReference: RecordSourceReference;
 }
 
+/** The shared settings files of every tool, synced against the project's marketplaces. */
+function settingsFilesOf(
+  base: Base,
+  inst: Installation,
+  buildMarketplace: BuildMarketplaceForTool
+): SyncToolSettingsFiles {
+  const tracked = trackedSharedSettings({ fs: base.fs, logger: base.logger });
+  const refs = inst.registrationRecordRules;
+  return new SyncToolSettingsFiles(
+    { tracked, buildMarketplace, declaration: settingsDeclaration, refs },
+    base.tools
+  );
+}
+
 /** The settings sync of a project: its context, its files, its native activation and its claims. */
 function syncSettingsOf(base: Base, inst: Installation, sources: SyncSources): SyncSettings {
   const { tools, fs, logger, manifestRepo, userManifestRepo } = base;
@@ -176,10 +192,7 @@ function syncSettingsOf(base: Base, inst: Installation, sources: SyncSources): S
       marketplaceRegisterFrameworkUseCase: registerFrameworkMarketplace,
       userManifestRepo,
     }),
-    settingsFiles: new SyncToolSettingsFiles(
-      { fs, logger, buildMarketplace: buildMarketplaceForTool, records: registrationRecordRules },
-      tools
-    ),
+    settingsFiles: settingsFilesOf(base, inst, buildMarketplaceForTool),
     activateNativeTools: nativeActivationOf(base, inst, buildMarketplaceForTool),
     recordActivation: new RecordActivation({ fs }, tools),
     machineClaims: new RecordMachineClaims(

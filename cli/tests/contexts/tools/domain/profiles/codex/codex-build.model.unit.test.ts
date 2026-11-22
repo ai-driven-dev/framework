@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { artifactPath } from "../../../../../../src/contexts/tools/contract/artifact-path.js";
 import type { ConfigArtifact } from "../../../../../../src/contexts/tools/contract/build-contract.js";
 import { codexProfile } from "../../../../../../src/contexts/tools/domain/profiles/codex/codex.profile.js";
 import { SmolTomlCodec } from "../../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
@@ -114,10 +115,10 @@ describe("present(codex.buildContracts.marketplace)()", () => {
     const { artifacts } = present(codex.buildContracts.marketplace)();
 
     expect({
-      skill: supported(artifacts.skills).path("aidd-dev", "skills/01-plan/SKILL.md"),
-      agent: supported(artifacts.agents).path("aidd-dev", "agents/planner.md"),
-      mcp: supported(artifacts.mcp).path("aidd-dev", ".mcp.json"),
-      hook: supported(artifacts.hooks).path("aidd-dev", "hooks/journal.cjs"),
+      skill: artifactPath(supported(artifacts.skills), "aidd-dev", "skills/01-plan/SKILL.md"),
+      agent: artifactPath(supported(artifacts.agents), "aidd-dev", "agents/planner.md"),
+      mcp: artifactPath(supported(artifacts.mcp), "aidd-dev", ".mcp.json"),
+      hook: artifactPath(supported(artifacts.hooks), "aidd-dev", "hooks/journal.cjs"),
     }).toStrictEqual({
       skill: "skills/01-plan/SKILL.md",
       agent: "codex-agents/planner.toml",
@@ -217,8 +218,8 @@ describe("present(codex.buildContracts.flat)()", () => {
     const hooks = supported(present(codex.buildContracts.flat)().artifacts.hooks);
 
     expect({
-      script: hooks.path("aidd-dev", "hooks/journal.cjs"),
-      file: [hooks.hooksFile?.path("aidd-dev"), hooks.hooksFile?.shared],
+      script: artifactPath(hooks, "aidd-dev", "hooks/journal.cjs"),
+      file: hooks.hooksFile?.at,
       merged: hooks.hooksFile?.merge(null, {
         json: HOOKS_JSON,
         plugin: "aidd-dev",
@@ -226,7 +227,7 @@ describe("present(codex.buildContracts.flat)()", () => {
       }),
     }).toStrictEqual({
       script: ".codex/hooks/aidd-dev/journal.cjs",
-      file: [".codex/hooks.json", true],
+      file: { shared: ".codex/hooks.json" },
       merged: {
         content: `${JSON.stringify(
           {

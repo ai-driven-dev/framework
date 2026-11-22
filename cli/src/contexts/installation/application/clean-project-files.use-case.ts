@@ -3,10 +3,10 @@ import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { RecordedPlugin } from "../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
 import type { ProjectPluginIntegration } from "../ports/tool-sections.js";
-import {
+import type {
   PlanProjectClean,
-  type ProjectCleanPlan,
-  type ProjectCleanRecords,
+  ProjectCleanPlan,
+  ProjectCleanRecords,
 } from "./plan-project-clean.use-case.js";
 import type { RemoveProjectFiles } from "./removal/remove-project-files.js";
 import { assertProjectHooksRemovable } from "./shared/remove-project-hooks.js";
@@ -52,6 +52,7 @@ export interface CleanProjectFilesDeps {
   readonly manifestRepo: ManifestRepository;
   readonly asks: ProjectCleanAsks;
   readonly removeProjectFiles: RemoveProjectFiles;
+  readonly planProjectClean: PlanProjectClean;
 }
 
 /**
@@ -60,14 +61,10 @@ export interface CleanProjectFilesDeps {
  * registration and releasing the machine claims sit around those and are the caller's.
  */
 export class CleanProjectFiles {
-  private readonly planProjectClean: PlanProjectClean;
-
   constructor(
     private readonly deps: CleanProjectFilesDeps,
     private readonly tools: ToolCatalog
-  ) {
-    this.planProjectClean = new PlanProjectClean(deps, tools);
-  }
+  ) {}
 
   /** `plan` answers `null` when this project installed nothing. `assert-removable` refuses while a
    * hook or an MCP entry of a tracked plugin could not be removed cleanly. `remove` answers how
@@ -78,7 +75,7 @@ export class CleanProjectFiles {
   async execute(command: AnyCleanProjectFilesRequest): Promise<unknown> {
     switch (command.kind) {
       case "plan":
-        return this.planProjectClean.execute(command.records);
+        return this.deps.planProjectClean.execute(command.records);
       case "assert-removable":
         return this.assertRemovable(command.projectRoot, command.force);
       case "remove":

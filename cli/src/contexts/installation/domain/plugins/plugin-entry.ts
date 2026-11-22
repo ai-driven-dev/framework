@@ -1,7 +1,5 @@
 import type { Scope } from "../../../../shared/domain/scope.js";
 
-export const PLUGIN_NAME_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*$/;
-
 // Branding closes a hole the compiler could not see: three `ReadonlyMap<string, string>` fields
 // told apart only by name meant a value meant for one could be assigned to another. The brand is a
 // phantom property, so a plain map built anywhere else is still accepted at the factories below.

@@ -6,14 +6,15 @@ import {
   AddPlugin,
   type AddPluginManifests,
 } from "../../../../src/contexts/installation/application/plugin/add-plugin.use-case.js";
-import type { PluginDistributionLoader } from "../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import type { BuiltMarketplaceEnsurer } from "../../../../src/contexts/installation/contract/built-marketplace.js";
 import type { InstallationMarketplaceRegistry } from "../../../../src/contexts/installation/ports/marketplace-sources.js";
+import type { LoadDistribution } from "../../../../src/contexts/installation/ports/plugin/load-plugin-distribution.js";
 import type { PluginTranslation } from "../../../../src/contexts/installation/ports/plugin/plugin-translation.js";
 import type { ToolCatalog } from "../../../../src/contexts/tools/contract/tool-catalog.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
 import type { Logger } from "../../../../src/shared/ports/logger.js";
+import { fakeBuiltDeps } from "./fake-build-sources.fake.js";
 
 /** What an AddPlugin writes through and reports with. */
 interface AddPluginHost {
@@ -23,7 +24,7 @@ interface AddPluginHost {
 
 /** Where a plugin's files come from. */
 export interface AddPluginSources {
-  distributionLoader: PluginDistributionLoader;
+  loadDistribution: LoadDistribution;
   marketplaceRegistry: InstallationMarketplaceRegistry;
   ensureBuilt: BuiltMarketplaceEnsurer;
   translate: PluginTranslation;
@@ -37,19 +38,19 @@ export function buildAddPlugin(
   tools: ToolCatalog,
   pluginRuntime?: Pick<InstallRuntimeConfig, "ensurePluginRuntimeFiles">
 ): AddPlugin {
-  const built = {
+  const built = fakeBuiltDeps(host.fs, {
     homedir: nodeHomedir,
     ensureBuilt: sources.ensureBuilt,
     marketplaceRegistry: sources.marketplaceRegistry,
     translate: sources.translate,
     platform: nodePlatform(),
-  };
+  });
   return new AddPlugin(
     {
       fs: host.fs,
       manifests,
       source: new ResolveAddedPluginSource(
-        { distributionLoader: sources.distributionLoader, fs: host.fs, built },
+        { loadDistribution: sources.loadDistribution, fs: host.fs, built },
         tools
       ),
       place: new PlacePlugin({ fs: host.fs, logger: host.logger, built, pluginRuntime }, tools),

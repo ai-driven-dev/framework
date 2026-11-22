@@ -123,8 +123,10 @@ describe("the ledger lock", () => {
   it("waits while Windows refuses a lock file another process is still removing", async () => {
     const pending = Object.assign(new Error("EPERM: operation not permitted"), { code: "EPERM" });
     vi.mocked(writeFile).mockRejectedValueOnce(pending);
-    const release = await new LedgerLock(path, quick).acquire();
+    const time = fakeTime();
+    const release = await new LedgerLock(path, { ...quick, ...time.options }).acquire();
     expect((await holder()).pid).toBe(process.pid);
+    expect(time.sleeps).toEqual([10]);
     await release();
   });
 

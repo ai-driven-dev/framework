@@ -50,7 +50,7 @@ async function replaceOnClaude(marketplace: string | undefined) {
     marketplace,
   }).withFiles(new Map([[STALE_FILE, "old-hash"]]));
   manifest.addPlugin(TOOL.claude, installed);
-  await new ReplacePluginFiles(deps.fs, fakeBuiltDeps(), registeredTools()).execute({
+  await new ReplacePluginFiles(deps.fs, fakeBuiltDeps(deps.fs), registeredTools()).execute({
     plugin: installed,
     dist: greetDistribution(),
     toolId: TOOL.claude,

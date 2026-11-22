@@ -34,7 +34,7 @@ function convertRawServer(name: string, server: RawServer): TypedServer {
   throw new InvalidMcpServerConfigError(name);
 }
 
-export function toTypedMcpSection(content: string): string {
+function typedServers(content: string): Record<string, TypedServer> {
   let parsed: { mcpServers?: Record<string, RawServer> };
   try {
     parsed = JSON.parse(content);
@@ -50,5 +50,24 @@ export function toTypedMcpSection(content: string): string {
   for (const [name, server] of Object.entries(parsed.mcpServers ?? {})) {
     mcp[name] = convertRawServer(name, server);
   }
-  return JSON.stringify({ mcp }, null, 2);
+  return mcp;
+}
+
+export function toTypedMcpSection(content: string): string {
+  return JSON.stringify({ mcp: typedServers(content) }, null, 2);
+}
+
+/** The typed servers of every built plugin that ships an mcp file, a later plugin overriding an
+ * earlier one of the same name. */
+export function collectTypedMcp(
+  builtPlugins: readonly string[],
+  pluginMcp: ReadonlyMap<string, string>
+): Record<string, unknown> {
+  const incoming: Record<string, unknown> = {};
+  for (const plugin of builtPlugins) {
+    const raw = pluginMcp.get(plugin);
+    if (raw === undefined) continue;
+    Object.assign(incoming, typedServers(raw));
+  }
+  return incoming;
 }

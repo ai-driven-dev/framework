@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
+import { registerMarketplacePlugin } from "../../../../../src/contexts/installation/application/materialize/register-marketplace-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
@@ -26,7 +26,7 @@ describe("RemovePlugin proves the native source before undoing activation", () =
     const fs = new InMemoryFileAdapter();
     const manifest = Manifest.create();
     manifest.addTool(claude, "test", []);
-    await new ModeAMarketplaceTranslator().addPlugin({
+    await registerMarketplacePlugin({
       dist: buildDist(),
       tool: registeredTools().aiProfile(claude),
       source: { kind: "local", path: "/plugin-source" },
@@ -138,7 +138,7 @@ describe("RemovePlugin proves the native source before undoing activation", () =
     const { removeUseCase, manifestRepo } = buildRemoveUseCase(activator, logger);
     const manifest = Manifest.create();
     manifest.addTool(claude, "test", []);
-    await new ModeAMarketplaceTranslator().addPlugin({
+    await registerMarketplacePlugin({
       dist: buildDist(),
       tool: registeredTools().aiProfile(claude),
       source: { kind: "local", path: "/plugin-source" },

@@ -3,8 +3,6 @@ import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-// biome-ignore lint/plugin: hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input
-import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import { deleteOldFiles } from "../plugin/delete-plugin-files.js";
@@ -12,9 +10,8 @@ import { scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import { writePluginFiles } from "../plugin/write-plugin-files.js";
 import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
 import { hashOutputFiles } from "../shared/hash-output-files.js";
-import { materializeViaTranslator } from "./materialize-via-translator.js";
-import type { PluginTranslator } from "./plugin-translator.js";
-import { resolvePluginTranslator } from "./resolve-plugin-translator.js";
+import { placementModeOf } from "./plugin-placement.js";
+import { rematerializePlugin } from "./rematerialize-plugin.js";
 
 export interface ReplacePluginFilesRequest {
   readonly plugin: RecordedPlugin;
@@ -43,15 +40,12 @@ export class ReplacePluginFiles {
       homedir: this.builtDeps.homedir,
     });
     await deleteOldFiles(plugin.files, baseDir, this.fs);
-    const translator = this.resolveTranslator(tool);
-    if (translator !== null && command.plugin.marketplace !== undefined) {
-      await materializeViaTranslator(translator, {
-        dist,
-        tool,
-        plugin: command.plugin,
-        projectRoot,
-        manifest,
-      });
+    const mode = placementModeOf(tool);
+    if (mode !== null && command.plugin.marketplace !== undefined) {
+      await rematerializePlugin(
+        { dist, tool, mode, plugin: command.plugin, projectRoot, manifest },
+        { fs: this.fs, built: this.builtDeps }
+      );
       return;
     }
     const translated = this.builtDeps.translate.execute({ distribution: dist, tool });
@@ -67,15 +61,5 @@ export class ReplacePluginFiles {
         componentPaths: translated.componentPaths,
       })
     );
-  }
-
-  // Materializing tools (cursor/opencode) re-materialize from the BUILT tree, and Mode A
-  // marketplace tools (claude/codex/copilot) re-register without writing files, so an
-  // update matches whatever install would have done for that tool.
-  private resolveTranslator(tool: AiToolProfile): PluginTranslator | null {
-    return resolvePluginTranslator(tool, {
-      fs: this.fs,
-      built: this.builtDeps,
-    });
   }
 }

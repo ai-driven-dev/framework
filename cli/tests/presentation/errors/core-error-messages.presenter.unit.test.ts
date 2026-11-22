@@ -28,7 +28,9 @@ import {
   InvalidInstallScopeError,
   InvalidMarketplaceNameError,
   InvalidPluginManifestError,
+  InvalidPluginNameError,
   InvalidPluginSourceError,
+  InvalidPluginVersionError,
   InvalidSourceMarketplaceError,
   JsonParseError,
   ManifestValidationError,
@@ -78,8 +80,16 @@ const cases: [() => Error, string][] = [
   ],
   [() => new InvalidPluginManifestError(), "Invalid plugin manifest."],
   [() => new InvalidPluginManifestError("bad field"), "Invalid plugin manifest: bad field"],
+  [
+    () => new InvalidPluginNameError("N"),
+    'Invalid plugin name: "N". Use lowercase alphanumeric characters and hyphens only.',
+  ],
   [() => new InvalidPluginSourceError(), "Invalid plugin source."],
   [() => new InvalidPluginSourceError("bad url"), "Invalid plugin source: bad url"],
+  [
+    () => new InvalidPluginVersionError("x"),
+    'Invalid plugin version: "x". Expected semver format (e.g. 1.0.0).',
+  ],
   [() => new InvalidSourceMarketplaceError("no name"), "Invalid source marketplace: no name."],
   [
     () => new JsonParseError("a.json", "Unexpected token"),

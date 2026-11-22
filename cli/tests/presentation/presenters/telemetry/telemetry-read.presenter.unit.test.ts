@@ -130,4 +130,11 @@ describe("printIngestResult", () => {
     ]);
     expect(lines.join("\n")).not.toContain("config.json");
   });
+
+  it("warns, not informs, of a damaged consent log and of ledger lines kept", () => {
+    const output = new CapturingOutput(false);
+    printIngestResult(output, { ...INGESTED, consentLogDamaged: true, skippedLedgerLines: 1 });
+    expect(output.at("warn")).toHaveLength(2);
+    expect(output.at("info")).toEqual([]);
+  });
 });

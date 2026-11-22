@@ -3,6 +3,7 @@ import { describeError } from "../../../../shared/domain/describe-error.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
+import { hooksFilePath } from "../../../tools/contract/artifact-path.js";
 import { mergeFlatHooks } from "../../domain/flat-layout.js";
 import { FlatMergeTargetNotJsonError } from "../../domain/translate.error.js";
 import type { FlatHooksStep } from "../../ports/flat-plugin-writer.js";
@@ -18,8 +19,8 @@ export async function writeFlatHooks(
   { target, artifact, pluginName, hooksJson }: FlatHooksStep
 ): Promise<number> {
   const file = artifact.skipHooksJson ? undefined : artifact.hooksFile;
-  if (file === undefined || !file.shared) return 0;
-  const destPath = join(target.outDir, file.path(pluginName));
+  if (file === undefined || !("shared" in file.at)) return 0;
+  const destPath = join(target.outDir, hooksFilePath(file, pluginName));
   const existing = await readSharedHooksTarget(fs, target.outDir, destPath);
   const { content, warnings } = mergeFlatHooks({ file, contract: target.contract }, existing, {
     json: hooksJson,
