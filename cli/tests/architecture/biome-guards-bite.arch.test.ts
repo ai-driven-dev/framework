@@ -22,6 +22,11 @@ const PURE_FOLDERS = [
   "src/contexts/auth/contract/**/*.ts",
   "src/contexts/recipes/domain/**/*.ts",
   "src/contexts/recipes/ports/**/*.ts",
+  "src/contexts/distribution/domain/**/*.ts",
+  "src/contexts/installation/domain/**/*.ts",
+  "src/contexts/machine-claims/domain/**/*.ts",
+  "src/contexts/telemetry/domain/**/*.ts",
+  "src/contexts/translate/domain/**/*.ts",
   "src/shared/domain/**/*.ts",
   "src/shared/ports/**/*.ts",
 ] as const;
