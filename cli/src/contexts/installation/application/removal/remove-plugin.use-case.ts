@@ -12,11 +12,10 @@ import type {
   RegistrationRecords,
 } from "../../ports/record/registration-records.js";
 import { resolvePluginToolIds, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
-import { assertProjectHooksRemovable, removeProjectHooks } from "../shared/remove-project-hooks.js";
 import { requireManifest } from "../shared/require-manifest.js";
+import type { AssertProjectIntegrationRemovable } from "./assert-project-integration-removable.use-case.js";
 import type { ProjectPluginWithdrawalSteps } from "./project-plugin-withdrawal.js";
-import { removeFlatMcpEntries } from "./remove-flat-mcp-entries.js";
-import { assertProjectMcpEntriesRemovable } from "./remove-project-plugin.js";
+import type { RemoveProjectIntegration } from "./remove-project-integration.use-case.js";
 
 export interface RemovePluginRequest {
   pluginName: string;
@@ -30,6 +29,10 @@ export interface RemovePluginDeps {
   readonly fs: FileWriter & FileReader;
   readonly projectRepo: ManifestRepository & RecordsBesideManifest;
   readonly homedir: () => string;
+  readonly integration: {
+    readonly assert: Pick<AssertProjectIntegrationRemovable, "execute">;
+    readonly remove: Pick<RemoveProjectIntegration, "execute">;
+  };
 }
 
 export class RemovePlugin {
@@ -81,8 +84,7 @@ export class RemovePlugin {
   ): Promise<void> {
     for (const { toolId, plugin } of named) {
       const tool = this.tools.aiProfile(toolId);
-      await assertProjectMcpEntriesRemovable(this.deps.fs, { plugin, tool, projectRoot });
-      await assertProjectHooksRemovable({ fs: this.deps.fs, plugin, tool, projectRoot });
+      await this.deps.integration.assert.execute({ plugin, tool, projectRoot });
       await withdrawal.assertSource({
         toolId,
         tool,
@@ -117,8 +119,7 @@ export class RemovePlugin {
         registrations,
       });
       if (plugin.scope !== "user") await this.deletePluginFiles(plugin.files, baseDir);
-      await removeFlatMcpEntries(this.deps.fs, { plugin: entry, tool, projectRoot });
-      await removeProjectHooks({ fs: this.deps.fs, plugin: entry, tool, projectRoot });
+      await this.deps.integration.remove.execute({ plugin: entry, tool, projectRoot });
       const ref = withdrawal.recordedRef(registrations, entry);
       if (
         ref !== undefined &&

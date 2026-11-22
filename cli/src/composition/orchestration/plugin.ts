@@ -138,6 +138,10 @@ function wirePluginRemoval(base: Base, inst: Installation) {
         fs,
         projectRepo: manifestRepo,
         homedir: inst.builtMaterializationDeps.homedir,
+        integration: {
+          assert: inst.projectIntegration.assertIntegration,
+          remove: inst.projectIntegration.removeIntegration,
+        },
       },
       tools
     ),
@@ -208,7 +212,7 @@ function pluginAddOf(base: Base, inst: Installation) {
       manifests: { project: manifestRepo, user: userManifestRepo },
       addToProject: new AddPluginToProject(
         {
-          fs,
+          assertIntegration: inst.projectIntegration.assertIntegration,
           source: new ResolveAddedPluginSource(
             { loadDistribution: base.loadDistribution, fs, built: builtMaterializationDeps },
             tools

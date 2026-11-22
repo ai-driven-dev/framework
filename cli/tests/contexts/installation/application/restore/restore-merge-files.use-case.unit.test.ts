@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { restoreMergeFiles } from "../../../../../src/contexts/installation/application/restore/restore-merge-files.js";
+import { RestoreDriftEntries } from "../../../../../src/contexts/installation/application/restore/restore-drift-entries.use-case.js";
+import { RestoreMergeFiles } from "../../../../../src/contexts/installation/application/restore/restore-merge-files.use-case.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
 import type { MergeFileEntry } from "../../../../../src/shared/domain/merge.js";
@@ -26,7 +27,7 @@ describe("restoring the merge files", () => {
     await deps.fs.writeFile(settingsPath, JSON.stringify({ a: "1" }));
     const prompter = new OverwritePrompter();
 
-    const result = await restoreMergeFiles(deps.fs, prompter, {
+    const result = await new RestoreMergeFiles(deps.fs, new RestoreDriftEntries(prompter)).execute({
       mergeFiles: [
         {
           relativePath: "settings.json",
@@ -59,7 +60,7 @@ describe("restoring the merge files", () => {
     const prompter = new OverwritePrompter();
     const distContent = JSON.stringify({ a: "framework-a" });
 
-    const result = await restoreMergeFiles(deps.fs, prompter, {
+    const result = await new RestoreMergeFiles(deps.fs, new RestoreDriftEntries(prompter)).execute({
       mergeFiles: [
         {
           relativePath: "settings.json",
@@ -98,7 +99,7 @@ describe("restoring the merge files", () => {
     const distContent = JSON.stringify({ a: "framework-a" });
 
     await expect(
-      restoreMergeFiles(deps.fs, prompter, {
+      new RestoreMergeFiles(deps.fs, new RestoreDriftEntries(prompter)).execute({
         mergeFiles: [
           {
             relativePath: "settings.json",
@@ -134,7 +135,7 @@ describe("restoring the merge files", () => {
     const prompter = new KeepPrompter();
     const distContent = JSON.stringify({ a: "framework-a" });
 
-    const result = await restoreMergeFiles(deps.fs, prompter, {
+    const result = await new RestoreMergeFiles(deps.fs, new RestoreDriftEntries(prompter)).execute({
       mergeFiles: [
         {
           relativePath: "settings.json",
@@ -175,7 +176,7 @@ describe("restoring the merge files", () => {
       { relativePath: "b.json", sectionKey: null, entries: { x: FileHash.of('"orig"') } },
     ];
 
-    const result = await restoreMergeFiles(deps.fs, prompter, {
+    const result = await new RestoreMergeFiles(deps.fs, new RestoreDriftEntries(prompter)).execute({
       mergeFiles,
       distMap: new Map([
         [
@@ -212,7 +213,7 @@ describe("restoring the merge files", () => {
     await deps.fs.writeFile(join(PROJECT_ROOT, "a.json"), JSON.stringify({ x: "disk" }));
     const prompter = new OverwritePrompter();
 
-    const result = await restoreMergeFiles(deps.fs, prompter, {
+    const result = await new RestoreMergeFiles(deps.fs, new RestoreDriftEntries(prompter)).execute({
       mergeFiles: [
         { relativePath: "a.json", sectionKey: null, entries: { x: FileHash.of('"orig"') } },
       ],
@@ -245,7 +246,7 @@ describe("restoring the merge files", () => {
     await deps.fs.writeFile(join(PROJECT_ROOT, "a.json"), distContent);
     const prompter = new OverwritePrompter();
 
-    const result = await restoreMergeFiles(deps.fs, prompter, {
+    const result = await new RestoreMergeFiles(deps.fs, new RestoreDriftEntries(prompter)).execute({
       mergeFiles: [
         {
           relativePath: "a.json",
@@ -285,7 +286,7 @@ describe("restoring the merge files", () => {
     const distContentA = JSON.stringify({ x: "framework-a" });
     const distContentB = JSON.stringify({ x: "framework-b" });
 
-    const result = await restoreMergeFiles(deps.fs, prompter, {
+    const result = await new RestoreMergeFiles(deps.fs, new RestoreDriftEntries(prompter)).execute({
       mergeFiles: [
         { relativePath: "a.json", sectionKey: null, entries: { x: FileHash.of('"orig-a"') } },
         { relativePath: "b.json", sectionKey: null, entries: { x: FileHash.of('"orig-b"') } },
@@ -335,7 +336,7 @@ describe("restoring the merge files", () => {
     // never appears in it, proving a merge restore cannot behave as a whole-file replace.
     const distContent = JSON.stringify({ toolPath: "/usr/local/new-tool", timeout: 30 });
 
-    const result = await restoreMergeFiles(deps.fs, prompter, {
+    const result = await new RestoreMergeFiles(deps.fs, new RestoreDriftEntries(prompter)).execute({
       mergeFiles: [
         {
           relativePath: "config.json",
@@ -370,73 +371,5 @@ describe("restoring the merge files", () => {
       timeout: 30,
       sideNote: "keep-me",
     });
-  });
-});
-
-describe("restoreMergeFiles - the entries it hands back", () => {
-  const distContent = JSON.stringify({ a: "framework-a" });
-
-  function distMapFor() {
-    return new Map([
-      [
-        "settings.json",
-        new InstallationFile({
-          relativePath: "settings.json",
-          content: distContent,
-          hash: FileHash.of(distContent),
-          mergeStrategy: "framework-prime",
-        }),
-      ],
-    ]);
-  }
-
-  it("re-reads the entries of a restored merge file from what landed on disk", async () => {
-    const deps = await buildDeps();
-    const prompter = new OverwritePrompter();
-
-    const result = await restoreMergeFiles(deps.fs, prompter, {
-      mergeFiles: [
-        {
-          relativePath: "settings.json",
-          sectionKey: null,
-          entries: { a: FileHash.of(JSON.stringify("original-a")) },
-        },
-      ],
-      distMap: distMapFor(),
-      projectRoot: PROJECT_ROOT,
-      force: true,
-      interactive: false,
-      fileFilter: null,
-    });
-
-    expect(result?.updatedMergeFiles).toStrictEqual([
-      {
-        relativePath: "settings.json",
-        sectionKey: null,
-        entries: { a: FileHash.of(JSON.stringify("framework-a")) },
-      },
-    ]);
-  });
-
-  it("hands back a kept merge file's entries exactly as they were tracked", async () => {
-    const deps = await buildDeps();
-    await deps.fs.writeFile(join(PROJECT_ROOT, "settings.json"), JSON.stringify({ a: "disk" }));
-    const tracked: MergeFileEntry = {
-      relativePath: "settings.json",
-      sectionKey: null,
-      entries: { a: FileHash.of(JSON.stringify("original-a")) },
-    };
-    const prompter = new KeepPrompter();
-
-    const result = await restoreMergeFiles(deps.fs, prompter, {
-      mergeFiles: [tracked],
-      distMap: distMapFor(),
-      projectRoot: PROJECT_ROOT,
-      force: false,
-      interactive: true,
-      fileFilter: null,
-    });
-
-    expect(result?.updatedMergeFiles).toStrictEqual([tracked]);
   });
 });

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { projectIntegrationOf } from "../../../../../src/composition/installation.js";
 import { AssertProjectRemovable } from "../../../../../src/contexts/installation/application/clean/assert-project-removable.use-case.js";
 import { CleanProjectFiles } from "../../../../../src/contexts/installation/application/clean/clean-project-files.use-case.js";
 import { PlanProjectClean } from "../../../../../src/contexts/installation/application/clean/plan-project-clean.use-case.js";
@@ -17,7 +18,11 @@ function cleanOverEmptyProject(): CleanProjectFiles {
   const asks = { homeDir: () => "/home", assertMcpRemovable: async () => undefined };
   return new CleanProjectFiles({
     assertProjectRemovable: new AssertProjectRemovable(
-      { fs, manifestRepo, assertMcpRemovable: asks.assertMcpRemovable },
+      {
+        assertHooksRemovable: projectIntegrationOf(fs).assertHooksRemovable,
+        manifestRepo,
+        assertMcpRemovable: asks.assertMcpRemovable,
+      },
       registeredTools()
     ),
     planProjectClean: new PlanProjectClean({ manifestRepo, asks }, registeredTools()),

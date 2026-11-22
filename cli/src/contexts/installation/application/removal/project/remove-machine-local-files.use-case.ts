@@ -4,8 +4,8 @@ import type { FileReader } from "../../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../../shared/ports/file-writer.js";
 import type { ToolCatalog } from "../../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../../domain/manifest.js";
-import type { ProjectHooksGuard } from "../../shared/assert-project-hooks-unchanged.js";
-import { removeProjectHooks } from "../../shared/remove-project-hooks.js";
+import type { ProjectHooksGuard } from "../../shared/assert-project-hooks-unchanged.use-case.js";
+import type { RemoveProjectHooks } from "../remove-project-hooks.use-case.js";
 
 /** The files a tool writes that `plugins[].files` never tracks: a machine-local settings file
  * (`.claude/settings.local.json`) and, for a tool merging a plugin's hooks into its own project
@@ -13,7 +13,8 @@ import { removeProjectHooks } from "../../shared/remove-project-hooks.js";
 export class RemoveMachineLocalFiles {
   constructor(
     private readonly fs: FileReader & FileWriter,
-    private readonly tools: ToolCatalog
+    private readonly tools: ToolCatalog,
+    private readonly removeHooks: Pick<RemoveProjectHooks, "execute">
   ) {}
 
   private pathsOf(toolId: ToolId): readonly string[] {
@@ -59,8 +60,7 @@ export class RemoveMachineLocalFiles {
     let count = 0;
     for (const plugin of manifest.getRecordedPlugins(toolId)) {
       if (
-        await removeProjectHooks({
-          fs: this.fs,
+        await this.removeHooks.execute({
           plugin,
           tool: this.tools.aiProfile(toolId),
           projectRoot,

@@ -3,15 +3,13 @@ import { errorMessage } from "../../../../shared/domain/describe-error.js";
 import { FileHash } from "../../../../shared/domain/file-hash.js";
 import { tryParseJson, whenAbsent } from "../../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type {
-  ProjectHookEntry,
-  ProjectHooksFormat,
-} from "../../../tools/contract/tool-vocabulary.js";
+import type { ProjectHooksFormat } from "../../../tools/contract/tool-vocabulary.js";
 import { ProjectHooksEditedError } from "../../domain/installation.error.js";
 import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.js";
+import { digestEntry } from "../../domain/project-hooks.model.js";
 import type { ProjectHooksSection } from "../../ports/tool-sections.js";
+import type { AssertProjectPathWithinRoot } from "../ownership/assert-project-path-within-root.use-case.js";
 import { assertScriptPath } from "../ownership/assert-script-path.js";
-import { assertProjectPathWithinRoot } from "../ownership/project-path-boundary.js";
 
 /** `overwriteEdited` lifts only the "edited after install" refusals, never an ownership proof. */
 export interface ProjectHooksGuard {
@@ -27,31 +25,56 @@ export interface RecordedProjectHooks {
 }
 
 /** Preflight the exact project hook entries and scripts installed by AIDD. Does not mutate. */
-export async function assertProjectHooksUnchanged(
-  request: RecordedProjectHooks & { readonly fs: FileReader }
-): Promise<{ existing: string | null }> {
-  const { fs, pluginName, provenance, tool, projectRoot, guard } = request;
-  const delivery = tool.projectHooksDelivery();
-  if (delivery === null) return { existing: null };
-  const { format, toolName } = delivery;
-  const hooksPath = join(projectRoot, delivery.relativePath);
-  await assertProjectPathWithinRoot(fs, projectRoot, hooksPath);
-  const existing = await readExistingJson(fs, hooksPath);
-  if (existing !== null) assertParsableJson(existing, delivery.relativePath);
-  const scriptDir = join(projectRoot, format.scriptDir(pluginName));
-  await assertProjectPathWithinRoot(fs, projectRoot, scriptDir);
-  const currentEntries = existing === null ? [] : format.contributedEntries(existing, pluginName);
-  if (provenance === undefined) {
-    const scriptsPresent = (await fs.fileExists(scriptDir))
-      ? await fs.listDirectory(scriptDir)
-      : [];
-    assertNothingContributed(currentEntries.length + scriptsPresent.length, toolName, pluginName);
+export class AssertProjectHooksUnchanged {
+  constructor(
+    private readonly fs: FileReader,
+    private readonly withinRoot: Pick<AssertProjectPathWithinRoot, "execute">
+  ) {}
+
+  async execute(request: RecordedProjectHooks): Promise<{ existing: string | null }> {
+    const { pluginName, provenance, tool, projectRoot, guard } = request;
+    const delivery = tool.projectHooksDelivery();
+    if (delivery === null) return { existing: null };
+    const { format, toolName } = delivery;
+    const hooksPath = join(projectRoot, delivery.relativePath);
+    await this.withinRoot.execute(projectRoot, hooksPath);
+    const existing = await readExistingJson(this.fs, hooksPath);
+    if (existing !== null) assertParsableJson(existing, delivery.relativePath);
+    const scriptDir = join(projectRoot, format.scriptDir(pluginName));
+    await this.withinRoot.execute(projectRoot, scriptDir);
+    const currentEntries = existing === null ? [] : format.contributedEntries(existing, pluginName);
+    if (provenance === undefined) {
+      const scriptsPresent = (await this.fs.fileExists(scriptDir))
+        ? await this.fs.listDirectory(scriptDir)
+        : [];
+      assertNothingContributed(currentEntries.length + scriptsPresent.length, toolName, pluginName);
+      return { existing };
+    }
+    const overwriteEdited = guard?.overwriteEdited ?? false;
+    assertEntriesUnchanged({ provenance, currentEntries, toolName, pluginName, overwriteEdited });
+    await this.assertScriptsUnchanged(request, { format, toolName }, overwriteEdited);
     return { existing };
   }
-  const overwriteEdited = guard?.overwriteEdited ?? false;
-  assertEntriesUnchanged({ provenance, currentEntries, toolName, pluginName, overwriteEdited });
-  await assertScriptsUnchanged(request, { format, toolName }, overwriteEdited);
-  return { existing };
+
+  private async assertScriptsUnchanged(
+    request: RecordedProjectHooks,
+    delivery: { format: ProjectHooksFormat; toolName: string },
+    overwriteEdited: boolean
+  ): Promise<void> {
+    const { pluginName, provenance, projectRoot } = request;
+    const { format, toolName } = delivery;
+    for (const [relativePath, digest] of provenance?.scripts ?? []) {
+      assertScriptPath({ format, toolName, pluginName, relativePath });
+      const path = join(projectRoot, relativePath);
+      await this.withinRoot.execute(projectRoot, path);
+      if (!(await this.fs.fileExists(path))) continue;
+      await assertScriptDigest(
+        { fs: this.fs, path, relativePath, toolName: delivery.toolName },
+        digest,
+        overwriteEdited
+      );
+    }
+  }
 }
 
 function assertNothingContributed(count: number, toolName: string, pluginName: string): void {
@@ -87,26 +110,6 @@ function assertEntriesUnchanged(check: {
   }
 }
 
-async function assertScriptsUnchanged(
-  request: RecordedProjectHooks & { readonly fs: FileReader },
-  delivery: { format: ProjectHooksFormat; toolName: string },
-  overwriteEdited: boolean
-): Promise<void> {
-  const { fs, pluginName, provenance, projectRoot } = request;
-  const { format, toolName } = delivery;
-  for (const [relativePath, digest] of provenance?.scripts ?? []) {
-    assertScriptPath({ format, toolName, pluginName, relativePath });
-    const path = join(projectRoot, relativePath);
-    await assertProjectPathWithinRoot(fs, projectRoot, path);
-    if (!(await fs.fileExists(path))) continue;
-    await assertScriptDigest(
-      { fs, path, relativePath, toolName: delivery.toolName },
-      digest,
-      overwriteEdited
-    );
-  }
-}
-
 async function assertScriptDigest(
   script: { fs: FileReader; path: string; relativePath: string; toolName: string },
   digest: string,
@@ -123,11 +126,6 @@ async function assertScriptDigest(
       `${toolName} hook script '${relativePath}' was edited after install; detach refused.`
     );
   }
-}
-
-/** Hash of one merged hook entry, independent of other plugins' entries. */
-export function digestEntry(entry: ProjectHookEntry): string {
-  return FileHash.of(JSON.stringify(entry)).value;
 }
 
 /** Merging into a file AIDD cannot parse would mean guessing what it holds. */

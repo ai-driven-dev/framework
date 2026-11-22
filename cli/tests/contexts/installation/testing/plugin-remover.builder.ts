@@ -28,6 +28,7 @@ import type { Logger } from "../../../../src/shared/ports/logger.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools } from "../../../shared/testing/registered-tools.builder.js";
+import { pickIntegration } from "../../../shared/testing/remove-project-plugin.builder.js";
 
 type RecordRules = typeof registrationRecordRules;
 
@@ -78,6 +79,7 @@ export function pluginRemover(parts: PluginRemoverParts) {
         fs,
         projectRepo: parts.manifestRepo,
         homedir: () => "/home/dev",
+        integration: pickIntegration(fs),
       },
       parts.tools ?? registeredTools()
     ),

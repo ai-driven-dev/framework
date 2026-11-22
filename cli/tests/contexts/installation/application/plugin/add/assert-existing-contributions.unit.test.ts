@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { projectIntegrationOf } from "../../../../../../src/composition/installation.js";
 import { assertExistingContributionsUnchanged } from "../../../../../../src/contexts/installation/application/plugin/add/assert-existing-contributions.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
@@ -26,7 +27,7 @@ describe("when a plugin is added over an earlier install", () => {
 
     await expect(
       assertExistingContributionsUnchanged(
-        new InMemoryFileAdapter({}, ["/test-project"]),
+        projectIntegrationOf(new InMemoryFileAdapter({}, ["/test-project"])).assertIntegration,
         registeredTools(),
         {
           pluginName: "sample",
@@ -43,7 +44,7 @@ describe("when a plugin is added over an earlier install", () => {
 
     await expect(
       assertExistingContributionsUnchanged(
-        new InMemoryFileAdapter({}, ["/test-project"]),
+        projectIntegrationOf(new InMemoryFileAdapter({}, ["/test-project"])).assertIntegration,
         registeredTools(),
         {
           pluginName: "absent",
@@ -68,12 +69,16 @@ describe("when a plugin is added over an earlier install", () => {
     });
 
     await expect(
-      assertExistingContributionsUnchanged(fs, registeredTools(), {
-        pluginName: "sample",
-        toolIds: [TOOL.cursor],
-        manifest: manifestWith(plugin),
-        projectRoot: "/test-project",
-      })
+      assertExistingContributionsUnchanged(
+        projectIntegrationOf(fs).assertIntegration,
+        registeredTools(),
+        {
+          pluginName: "sample",
+          toolIds: [TOOL.cursor],
+          manifest: manifestWith(plugin),
+          projectRoot: "/test-project",
+        }
+      )
     ).rejects.toThrow(/unproven install digest/);
   });
 });

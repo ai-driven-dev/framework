@@ -3,25 +3,25 @@ import { whenAbsent } from "../../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 
 /** Resolve an existing file or its nearest existing parent before mutating project-local content. */
-export async function assertProjectPathWithinRoot(
-  fs: FileReader,
-  projectRoot: string,
-  path: string
-): Promise<void> {
-  const lexicalRoot = resolve(projectRoot);
-  const lexicalPath = resolve(path);
-  if (!strictlyWithin(lexicalRoot, lexicalPath)) {
-    throw new Error(`'${path}' escapes project root '${projectRoot}'; local mutation refused.`);
-  }
-  const canonicalRoot = await fs.realpath(lexicalRoot);
-  const canonical = await realpathOfNearest(fs, lexicalPath, lexicalRoot);
-  if (canonical === null) {
-    throw new Error(`Project root '${projectRoot}' disappeared; local mutation refused.`);
-  }
-  if (!within(canonicalRoot, canonical)) {
-    throw new Error(
-      `'${path}' resolves outside project root '${projectRoot}'; local mutation refused.`
-    );
+export class AssertProjectPathWithinRoot {
+  constructor(private readonly fs: FileReader) {}
+
+  async execute(projectRoot: string, path: string): Promise<void> {
+    const lexicalRoot = resolve(projectRoot);
+    const lexicalPath = resolve(path);
+    if (!strictlyWithin(lexicalRoot, lexicalPath)) {
+      throw new Error(`'${path}' escapes project root '${projectRoot}'; local mutation refused.`);
+    }
+    const canonicalRoot = await this.fs.realpath(lexicalRoot);
+    const canonical = await realpathOfNearest(this.fs, lexicalPath, lexicalRoot);
+    if (canonical === null) {
+      throw new Error(`Project root '${projectRoot}' disappeared; local mutation refused.`);
+    }
+    if (!within(canonicalRoot, canonical)) {
+      throw new Error(
+        `'${path}' resolves outside project root '${projectRoot}'; local mutation refused.`
+      );
+    }
   }
 }
 

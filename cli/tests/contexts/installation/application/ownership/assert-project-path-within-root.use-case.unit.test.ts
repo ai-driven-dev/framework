@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { assertProjectPathWithinRoot } from "../../../../../src/contexts/installation/application/ownership/project-path-boundary.js";
+import { AssertProjectPathWithinRoot } from "../../../../../src/contexts/installation/application/ownership/assert-project-path-within-root.use-case.js";
 import {
   errnoError,
   FaultingFileAdapter,
@@ -14,7 +14,7 @@ describe("project-local mutation boundary", () => {
     "refuses a path outside the strict project subtree: %s",
     async (path) => {
       await expect(
-        assertProjectPathWithinRoot(new FaultingFileAdapter({}, [ROOT]), ROOT, path)
+        new AssertProjectPathWithinRoot(new FaultingFileAdapter({}, [ROOT])).execute(ROOT, path)
       ).rejects.toThrow(/escapes project root/);
     }
   );
@@ -26,7 +26,7 @@ describe("project-local mutation boundary", () => {
     fs.setFile("/project/marker", "project bytes");
 
     await expect(
-      assertProjectPathWithinRoot(fs, ROOT, "/project/new/deep/file")
+      new AssertProjectPathWithinRoot(fs).execute(ROOT, "/project/new/deep/file")
     ).resolves.toBeUndefined();
     expect(fs.getFile("/project/marker")).toBe("project bytes");
   });
@@ -37,9 +37,9 @@ describe("project-local mutation boundary", () => {
     fs.setFile("/foreign/new/marker", "foreign bytes");
     fs.failOn("realpath", "/project/link/new/file", errnoError("ENOENT"));
 
-    await expect(assertProjectPathWithinRoot(fs, ROOT, "/project/link/new/file")).rejects.toThrow(
-      /resolves outside project root/
-    );
+    await expect(
+      new AssertProjectPathWithinRoot(fs).execute(ROOT, "/project/link/new/file")
+    ).rejects.toThrow(/resolves outside project root/);
     expect(fs.getFile("/foreign/new/marker")).toBe("foreign bytes");
   });
 
@@ -48,9 +48,9 @@ describe("project-local mutation boundary", () => {
     const error = errnoError("EACCES");
     fs.failOn("realpath", "/project/private/file", error);
 
-    await expect(assertProjectPathWithinRoot(fs, ROOT, "/project/private/file")).rejects.toBe(
-      error
-    );
+    await expect(
+      new AssertProjectPathWithinRoot(fs).execute(ROOT, "/project/private/file")
+    ).rejects.toBe(error);
   });
 
   it("refuses a project root that disappears while a missing child is being resolved", async () => {
@@ -64,9 +64,9 @@ describe("project-local mutation boundary", () => {
       throw errnoError("ENOENT");
     });
 
-    await expect(assertProjectPathWithinRoot(fs, ROOT, "/project/new/file")).rejects.toThrow(
-      /Project root.*disappeared/
-    );
+    await expect(
+      new AssertProjectPathWithinRoot(fs).execute(ROOT, "/project/new/file")
+    ).rejects.toThrow(/Project root.*disappeared/);
   });
 
   it("allows a child of a project whose own root is a symlink", async () => {
@@ -74,7 +74,9 @@ describe("project-local mutation boundary", () => {
     fs.setSymlink(ROOT, "/canonical-project");
     fs.setFile("/canonical-project/file", "project bytes");
 
-    await expect(assertProjectPathWithinRoot(fs, ROOT, "/project/file")).resolves.toBeUndefined();
+    await expect(
+      new AssertProjectPathWithinRoot(fs).execute(ROOT, "/project/file")
+    ).resolves.toBeUndefined();
   });
 });
 
@@ -85,7 +87,7 @@ describe("project-local mutation boundary on a filesystem that rejects a missing
     });
 
     await expect(
-      assertProjectPathWithinRoot(fs, ROOT, "/project/new/deep/file")
+      new AssertProjectPathWithinRoot(fs).execute(ROOT, "/project/new/deep/file")
     ).resolves.toBeUndefined();
   });
 
@@ -96,15 +98,17 @@ describe("project-local mutation boundary on a filesystem that rejects a missing
     });
     fs.setSymlink("/project/link", "/foreign");
 
-    await expect(assertProjectPathWithinRoot(fs, ROOT, "/project/link/new/file")).rejects.toThrow(
-      /resolves outside project root/
-    );
+    await expect(
+      new AssertProjectPathWithinRoot(fs).execute(ROOT, "/project/link/new/file")
+    ).rejects.toThrow(/resolves outside project root/);
   });
 
   it("propagates ENOENT of a project root that does not exist, refusing the mutation", async () => {
     const fs = new InMemoryFileAdapter();
 
-    await expect(assertProjectPathWithinRoot(fs, ROOT, "/project/new/file")).rejects.toMatchObject({
+    await expect(
+      new AssertProjectPathWithinRoot(fs).execute(ROOT, "/project/new/file")
+    ).rejects.toMatchObject({
       code: "ENOENT",
     });
   });

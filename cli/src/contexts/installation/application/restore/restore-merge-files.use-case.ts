@@ -9,9 +9,11 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import { type DriftVerdict, driftOfKeys } from "../../domain/manifest/drift.js";
 import { planRestore, type RecordedVerdict } from "../../domain/manifest/restore-plan.js";
 import type { FileMerger } from "../../ports/file-merger.js";
-import type { ConflictResolver } from "./resolve-restore-decision.js";
-import type { DriftCollection, DriftDescriptor } from "./restore-drift-entries.js";
-import { restoreDriftEntries } from "./restore-drift-entries.js";
+import type {
+  DriftCollection,
+  DriftDescriptor,
+  RestoreDriftEntries,
+} from "./restore-drift-entries.use-case.js";
 
 interface MergeDriftEntry {
   relativePath: string;
@@ -21,7 +23,7 @@ interface MergeDriftEntry {
   sectionKey: string | null;
 }
 
-interface RestoreMergeFilesCommand {
+export interface RestoreMergeFilesCommand {
   mergeFiles: readonly MergeFileEntry[];
   distMap: Map<string, InstallationFile>;
   projectRoot: string;
@@ -37,28 +39,31 @@ export interface RestoreMergeFilesResult {
   updatedMergeFiles: MergeFileEntry[];
 }
 
-export async function restoreMergeFiles(
-  fs: FileReader & FileMerger,
-  conflicts: ConflictResolver,
-  options: RestoreMergeFilesCommand
-): Promise<RestoreMergeFilesResult | null> {
-  const mergeMap = new Map(options.mergeFiles.map((m) => [m.relativePath, m]));
+export class RestoreMergeFiles {
+  constructor(
+    private readonly fs: FileReader & FileMerger,
+    private readonly drift: Pick<RestoreDriftEntries, "execute">
+  ) {}
 
-  return restoreDriftEntries(
-    conflicts,
-    {
-      collectDrift: () => collectMergeDrift(fs, options),
-      restore: (entry) =>
-        applyOneMergeRestore(fs, entry, { projectRoot: options.projectRoot, mergeMap }),
-      buildResult: (restored, kept, unrestorable) => ({
-        restored,
-        kept,
-        unrestorable,
-        updatedMergeFiles: [...mergeMap.values()],
-      }),
-    },
-    options
-  );
+  async execute(options: RestoreMergeFilesCommand): Promise<RestoreMergeFilesResult | null> {
+    const { fs } = this;
+    const mergeMap = new Map(options.mergeFiles.map((m) => [m.relativePath, m]));
+
+    return this.drift.execute(
+      {
+        collectDrift: () => collectMergeDrift(fs, options),
+        restore: (entry) =>
+          applyOneMergeRestore(fs, entry, { projectRoot: options.projectRoot, mergeMap }),
+        buildResult: (restored, kept, unrestorable) => ({
+          restored,
+          kept,
+          unrestorable,
+          updatedMergeFiles: [...mergeMap.values()],
+        }),
+      },
+      options
+    );
+  }
 }
 
 async function collectMergeDrift(

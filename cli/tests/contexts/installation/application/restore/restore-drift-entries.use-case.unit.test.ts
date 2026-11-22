@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   type DriftDescriptor,
+  RestoreDriftEntries,
   type RestoreDriftLeaf,
-  restoreDriftEntries,
-} from "../../../../../src/contexts/installation/application/restore/restore-drift-entries.js";
+} from "../../../../../src/contexts/installation/application/restore/restore-drift-entries.use-case.js";
+import { InputRequiredError } from "../../../../../src/shared/domain/shared.error.js";
 import { ScriptedPrompter } from "../../../../shared/testing/scripted-prompter.fake.js";
 
 interface Summary {
@@ -34,7 +35,7 @@ describe("restoring the drifted entries", () => {
   it("answers nothing when nothing drifted", async () => {
     const leaf = leafOver([]);
 
-    const result = await restoreDriftEntries(new ScriptedPrompter([]), leaf, {
+    const result = await new RestoreDriftEntries(new ScriptedPrompter([])).execute(leaf, {
       force: false,
       interactive: false,
     });
@@ -45,7 +46,7 @@ describe("restoring the drifted entries", () => {
   it("restores a deleted file without asking", async () => {
     const leaf = leafOver([deleted]);
 
-    const result = await restoreDriftEntries(new ScriptedPrompter([]), leaf, {
+    const result = await new RestoreDriftEntries(new ScriptedPrompter([])).execute(leaf, {
       force: false,
       interactive: false,
     });
@@ -57,7 +58,7 @@ describe("restoring the drifted entries", () => {
   it("overwrites a modified file when forced", async () => {
     const leaf = leafOver([modified]);
 
-    const result = await restoreDriftEntries(new ScriptedPrompter([]), leaf, {
+    const result = await new RestoreDriftEntries(new ScriptedPrompter([])).execute(leaf, {
       force: true,
       interactive: false,
     });
@@ -69,7 +70,10 @@ describe("restoring the drifted entries", () => {
     const leaf = leafOver([modified]);
     const prompter = new ScriptedPrompter([ScriptedPrompter.answer.conflict("keep")]);
 
-    const result = await restoreDriftEntries(prompter, leaf, { force: false, interactive: true });
+    const result = await new RestoreDriftEntries(prompter).execute(leaf, {
+      force: false,
+      interactive: true,
+    });
 
     expect(result).toStrictEqual({ restored: [], kept: ["edited.md"], unrestorable: [] });
     expect(leaf.written).toStrictEqual([]);
@@ -78,11 +82,36 @@ describe("restoring the drifted entries", () => {
   it("reports entries the distribution cannot restore even when no other file drifted", async () => {
     const leaf = leafOver([], [modified]);
 
-    const result = await restoreDriftEntries(new ScriptedPrompter([]), leaf, {
+    const result = await new RestoreDriftEntries(new ScriptedPrompter([])).execute(leaf, {
       force: false,
       interactive: false,
     });
 
     expect(result).toStrictEqual({ restored: [], kept: [], unrestorable: ["edited.md"] });
+  });
+
+  it("refuses a modified file when it can neither force nor ask", async () => {
+    const leaf = leafOver([modified]);
+
+    await expect(
+      new RestoreDriftEntries(new ScriptedPrompter([])).execute(leaf, {
+        force: false,
+        interactive: false,
+      })
+    ).rejects.toThrow(
+      new InputRequiredError("Use --force to overwrite modified files in non-interactive mode.")
+    );
+    expect(leaf.written).toStrictEqual([]);
+  });
+
+  it("overwrites a modified file without asking when forced, even where it could ask", async () => {
+    const leaf = leafOver([modified]);
+
+    const result = await new RestoreDriftEntries(new ScriptedPrompter([])).execute(leaf, {
+      force: true,
+      interactive: true,
+    });
+
+    expect(result?.restored).toStrictEqual(["edited.md"]);
   });
 });

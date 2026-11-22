@@ -117,11 +117,13 @@ function wireUserMarketplaceRemoval(base: Base, inst: Installation) {
 function wireMarketplaceRemoval(base: Base, inst: Installation) {
   const { tools, fs, prompter, manifestRepo, userManifestRepo, marketplaceRegistry } = base;
   const { registrationRecordRules } = inst;
-  const projectCleanup = new RemoveProjectPlugin(
+  const projectCleanup = new RemoveProjectPlugin({
     fs,
-    inst.builtMaterializationDeps.homedir,
-    removalClaims(userManifestRepo, fs)
-  );
+    homedir: inst.builtMaterializationDeps.homedir,
+    assertIntegration: inst.projectIntegration.assertIntegration,
+    removeIntegration: inst.projectIntegration.removeIntegration,
+    claims: removalClaims(userManifestRepo, fs),
+  });
   const marketplaceRemoveUseCase = new RemoveProjectMarketplace({
     find: new FindMarketplaceToRemove(marketplaceRegistry),
     removePlugins: new RemoveMarketplacePlugins(

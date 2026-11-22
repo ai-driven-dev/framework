@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
-import { RemoveProjectPlugin } from "../../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { aManifest } from "../../../contexts/installation/testing/manifest.builder.js";
 import {
@@ -10,6 +9,7 @@ import {
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../../shared/testing/in-memory-marketplace-registry.fake.js";
+import { removeProjectPluginOf } from "../../../shared/testing/remove-project-plugin.builder.js";
 import { KeepPrompter } from "../../../shared/testing/scripted-prompter.fake.js";
 import {
   SYNTHETIC_TOOL,
@@ -28,7 +28,7 @@ describe("the record a project marketplace removal writes", () => {
     const registry = new InMemoryMarketplaceRegistry();
     const useCase = projectMarketplaceRemover(
       syntheticCatalog(),
-      new RemoveProjectPlugin(fs, () => "/home/dev"),
+      removeProjectPluginOf(fs),
       manifestRepo,
       registry,
       new KeepPrompter(),

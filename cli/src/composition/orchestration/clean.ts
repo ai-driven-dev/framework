@@ -19,7 +19,6 @@ import { RemoveProjectFiles } from "../../contexts/installation/application/remo
 import { RemoveToolFiles } from "../../contexts/installation/application/removal/project/remove-tool-files.use-case.js";
 import type { MachineStateGuards } from "../../contexts/installation/application/removal/purge-machine-state.js";
 import { PurgeMachineState } from "../../contexts/installation/application/removal/purge-machine-state.js";
-import { assertProjectMcpEntriesRemovable } from "../../contexts/installation/application/removal/remove-project-plugin.js";
 import { UserScopePluginFiles } from "../../contexts/installation/application/removal/user-scope-plugin-files.js";
 import { UninstallTools } from "../../contexts/installation/application/uninstall-tools.use-case.js";
 import { userScopeFilesSafeToDelete } from "../../contexts/machine-claims/application/ownership/user-scope-plugin-files.js";
@@ -86,22 +85,26 @@ function wireCleanUserScope(
 /** What a project clean removes: its files, with the records the registrations left. */
 function wireCleanProjectFiles(base: Base, inst: Installation) {
   const { fs, logger, manifestRepo, tools } = base;
-  const { updateGitignore } = inst;
+  const { updateGitignore, projectIntegration } = inst;
   const asks: ProjectCleanAsks = {
     homeDir: resolveHomeDir,
     assertMcpRemovable: (plugin, tool, projectRoot) =>
-      assertProjectMcpEntriesRemovable(fs, { plugin, tool, projectRoot }),
+      projectIntegration.assertMcpRemovable.execute({ plugin, tool, projectRoot }),
   };
   return new CleanProjectFiles({
     assertProjectRemovable: new AssertProjectRemovable(
-      { fs, manifestRepo, assertMcpRemovable: asks.assertMcpRemovable },
+      {
+        assertHooksRemovable: projectIntegration.assertHooksRemovable,
+        manifestRepo,
+        assertMcpRemovable: asks.assertMcpRemovable,
+      },
       tools
     ),
     planProjectClean: new PlanProjectClean({ manifestRepo, asks }, tools),
     removeProjectFiles: new RemoveProjectFiles({
       manifestRepo,
       trackedFiles: new DeleteTrackedProjectFiles({ fs, logger, homedir }, tools),
-      machineLocalFiles: new RemoveMachineLocalFiles(fs, tools),
+      machineLocalFiles: new RemoveMachineLocalFiles(fs, tools, projectIntegration.removeHooks),
       aiddTraces: new RemoveAiddTraces({ fs, manifestRepo, logger, updateGitignore }, tools),
     }),
   });

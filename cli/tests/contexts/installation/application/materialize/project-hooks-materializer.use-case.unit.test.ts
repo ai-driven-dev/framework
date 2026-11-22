@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { ProjectHooksMaterializer } from "../../../../../src/contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
-import { removeRecordedProjectHooks } from "../../../../../src/contexts/installation/application/shared/remove-project-hooks.js";
+import { projectIntegrationOf } from "../../../../../src/composition/installation.js";
+import type { RemoveRecordedProjectHooks } from "../../../../../src/contexts/installation/application/shared/remove-recorded-project-hooks.use-case.js";
 import {
   type PluginComponentFile,
   PluginDistribution,
@@ -58,7 +58,7 @@ describe("materializing a project's hooks", () => {
   it("refuses a preexisting user-owned script without changing the project's hooks", async () => {
     const scriptPath = join(PROJECT_ROOT, ".cursor/hooks", PLUGIN_NAME, "extra.js");
     const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-    const materializer = new ProjectHooksMaterializer(fs);
+    const materializer = projectIntegrationOf(fs).materializer;
     const first = await deliverProjectHooks(materializer, {
       dist: distWithHooks([hooksManifest("PreToolUse"), SCRIPT]),
       ...CURSOR,
@@ -90,7 +90,7 @@ describe("materializing a project's hooks", () => {
     "reinstall removes only the obsolete owned script when it is %s",
     async (state) => {
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-      const materializer = new ProjectHooksMaterializer(fs);
+      const materializer = projectIntegrationOf(fs).materializer;
       const oldPath = join(PROJECT_ROOT, ".cursor/hooks", PLUGIN_NAME, "old.js");
       const scriptPath = join(PROJECT_ROOT, ".cursor/hooks", PLUGIN_NAME, "pre.js");
       const userPath = join(PROJECT_ROOT, ".cursor/hooks", PLUGIN_NAME, "notes.txt");
@@ -135,7 +135,7 @@ describe("materializing a project's hooks", () => {
 
   it("preserves an obsolete script edited after preflight instead of deleting it during reinstall", async () => {
     const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-    const materializer = new ProjectHooksMaterializer(fs);
+    const materializer = projectIntegrationOf(fs).materializer;
     const oldPath = join(PROJECT_ROOT, ".cursor/hooks", PLUGIN_NAME, "old.js");
     const scriptPath = join(PROJECT_ROOT, ".cursor/hooks", PLUGIN_NAME, "pre.js");
     const first = await deliverProjectHooks(materializer, {
@@ -172,7 +172,7 @@ describe("materializing a project's hooks", () => {
 
   it("removes an edited obsolete script when told to overwrite edits", async () => {
     const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-    const materializer = new ProjectHooksMaterializer(fs);
+    const materializer = projectIntegrationOf(fs).materializer;
     const oldPath = join(PROJECT_ROOT, ".cursor/hooks", PLUGIN_NAME, "old.js");
     const first = await deliverProjectHooks(materializer, {
       dist: distWithHooks([
@@ -201,7 +201,7 @@ describe("materializing a project's hooks", () => {
 
   it("rewrites an edited script and entry when told to overwrite edits, and names --force otherwise", async () => {
     const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-    const materializer = new ProjectHooksMaterializer(fs);
+    const materializer = projectIntegrationOf(fs).materializer;
     const dist = distWithHooks([hooksManifest("PreToolUse"), SCRIPT]);
     const scriptPath = join(PROJECT_ROOT, ".cursor/hooks", PLUGIN_NAME, "pre.js");
     const first = await deliverProjectHooks(materializer, {
@@ -238,7 +238,7 @@ describe("materializing a project's hooks", () => {
   it("merges the plugin's hooks manifest whichever position it holds among the hook files", async () => {
     const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
 
-    const { skipped } = await deliverProjectHooks(new ProjectHooksMaterializer(fs), {
+    const { skipped } = await deliverProjectHooks(projectIntegrationOf(fs).materializer, {
       dist: distWithHooks([SCRIPT, hooksManifest("PreToolUse")]),
       ...CURSOR,
       projectRoot: PROJECT_ROOT,
@@ -257,7 +257,7 @@ describe("materializing a project's hooks", () => {
     const fs = new InMemoryFileAdapter({
       [HOOKS_PATH]: JSON.stringify({ version: 1, hooks: { postToolUse: [foreign] } }),
     });
-    const materializer = new ProjectHooksMaterializer(fs);
+    const materializer = projectIntegrationOf(fs).materializer;
     const first = await deliverProjectHooks(materializer, {
       dist: distWithHooks([SCRIPT, hooksManifest("PostToolUse")]),
       ...CURSOR,
@@ -297,7 +297,7 @@ describe("materializing a project's hooks", () => {
   it("reports an event the tool cannot map as a hooks skip for this plugin", async () => {
     const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
 
-    const { skipped } = await deliverProjectHooks(new ProjectHooksMaterializer(fs), {
+    const { skipped } = await deliverProjectHooks(projectIntegrationOf(fs).materializer, {
       dist: distWithHooks([hooksManifest("Notification"), SCRIPT]),
       ...CURSOR,
       projectRoot: PROJECT_ROOT,
@@ -316,7 +316,7 @@ describe("materializing a project's hooks", () => {
   it("copies every hook script beside the project's hooks file, never the manifest itself", async () => {
     const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
 
-    await deliverProjectHooks(new ProjectHooksMaterializer(fs), {
+    await deliverProjectHooks(projectIntegrationOf(fs).materializer, {
       dist: distWithHooks([hooksManifest("PreToolUse"), SCRIPT]),
       ...CURSOR,
       projectRoot: PROJECT_ROOT,
@@ -332,7 +332,7 @@ describe("materializing a project's hooks", () => {
     fs.failOn("readFile", HOOKS_PATH, errnoError("EACCES"));
 
     await expect(
-      deliverProjectHooks(new ProjectHooksMaterializer(fs), {
+      deliverProjectHooks(projectIntegrationOf(fs).materializer, {
         dist: distWithHooks([hooksManifest("PreToolUse"), SCRIPT]),
         ...CURSOR,
         projectRoot: PROJECT_ROOT,
@@ -348,7 +348,7 @@ describe("ProjectHooksMaterializer for a flat tool merging into .agents/hooks.js
   it("adds the plugin's key beside the user's, rewrites nothing on a second run, and removes only its own on clean", async () => {
     const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     fs.setFile(AGENTS_HOOKS, USER_HOOKS);
-    const materializer = new ProjectHooksMaterializer(fs);
+    const materializer = projectIntegrationOf(fs).materializer;
     const dist = distWithHooks([hooksManifest("SessionStart"), SCRIPT]);
 
     const first = await deliverProjectHooks(materializer, {
@@ -384,8 +384,7 @@ describe("ProjectHooksMaterializer for a flat tool merging into .agents/hooks.js
     );
     expect(fs.getFile(AGENTS_HOOKS)).toBe(afterFirst);
 
-    await removeRecordedProjectHooks({
-      fs,
+    await removeRecordedHooksOver(fs).execute({
       pluginName: PLUGIN_NAME,
       provenance: second.projectHooks,
       tool: registeredTools().aiProfile(TOOL.antigravity),
@@ -398,7 +397,7 @@ describe("ProjectHooksMaterializer for a flat tool merging into .agents/hooks.js
 
   it("deletes the hooks file on clean when nothing but the plugin's key was in it", async () => {
     const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-    const materializer = new ProjectHooksMaterializer(fs);
+    const materializer = projectIntegrationOf(fs).materializer;
     const { projectHooks } = await deliverProjectHooks(materializer, {
       dist: distWithHooks([hooksManifest("SessionStart"), SCRIPT]),
       tools: registeredTools(),
@@ -406,8 +405,7 @@ describe("ProjectHooksMaterializer for a flat tool merging into .agents/hooks.js
       projectRoot: PROJECT_ROOT,
     });
 
-    await removeRecordedProjectHooks({
-      fs,
+    await removeRecordedHooksOver(fs).execute({
       pluginName: PLUGIN_NAME,
       provenance: projectHooks,
       tool: registeredTools().aiProfile(TOOL.antigravity),
@@ -422,7 +420,7 @@ describe("ProjectHooksMaterializer for a flat tool merging into .agents/hooks.js
     fs.setFile(AGENTS_HOOKS, "{ not json");
 
     await expect(
-      deliverProjectHooks(new ProjectHooksMaterializer(fs), {
+      deliverProjectHooks(projectIntegrationOf(fs).materializer, {
         dist: distWithHooks([hooksManifest("SessionStart"), SCRIPT]),
         tools: registeredTools(),
         tool: registeredTools().aiProfile(TOOL.antigravity),
@@ -432,3 +430,8 @@ describe("ProjectHooksMaterializer for a flat tool merging into .agents/hooks.js
     expect(fs.getFile(AGENTS_HOOKS)).toBe("{ not json");
   });
 });
+
+function removeRecordedHooksOver(fs: InMemoryFileAdapter): RemoveRecordedProjectHooks {
+  const { removeRecorded } = projectIntegrationOf(fs);
+  return removeRecorded;
+}

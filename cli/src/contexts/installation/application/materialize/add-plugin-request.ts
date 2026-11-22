@@ -7,7 +7,7 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.js";
-import type { ProjectHooksGuard } from "../shared/assert-project-hooks-unchanged.js";
+import type { ProjectHooksGuard } from "../shared/assert-project-hooks-unchanged.use-case.js";
 import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
 
 /** Everything needed to place one plugin. The optional fields default per placement mode. */

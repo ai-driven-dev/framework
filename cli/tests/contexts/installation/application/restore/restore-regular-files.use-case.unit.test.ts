@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { restoreRegularFiles } from "../../../../../src/contexts/installation/application/restore/restore-regular-files.js";
+import { RestoreDriftEntries } from "../../../../../src/contexts/installation/application/restore/restore-drift-entries.use-case.js";
+import { RestoreRegularFiles } from "../../../../../src/contexts/installation/application/restore/restore-regular-files.use-case.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
 import { InputRequiredError } from "../../../../../src/shared/domain/shared.error.js";
@@ -24,7 +25,10 @@ describe("restoring the regular files", () => {
     await deps.fs.writeFile(join(PROJECT_ROOT, "a.md"), "current content");
     const prompter = new OverwritePrompter();
 
-    const result = await restoreRegularFiles(deps.fs, prompter, {
+    const result = await new RestoreRegularFiles(
+      deps.fs,
+      new RestoreDriftEntries(prompter)
+    ).execute({
       manifestFiles: [{ relativePath: "a.md", hash: FileHash.of("current content") }],
       distMap: new Map(),
       projectRoot: PROJECT_ROOT,
@@ -50,7 +54,10 @@ describe("restoring the regular files", () => {
       ],
     ]);
 
-    const result = await restoreRegularFiles(deps.fs, prompter, {
+    const result = await new RestoreRegularFiles(
+      deps.fs,
+      new RestoreDriftEntries(prompter)
+    ).execute({
       manifestFiles: [{ relativePath: "a.md", hash: FileHash.of("original content") }],
       distMap,
       projectRoot: PROJECT_ROOT,
@@ -83,7 +90,7 @@ describe("restoring the regular files", () => {
     ]);
 
     await expect(
-      restoreRegularFiles(deps.fs, prompter, {
+      new RestoreRegularFiles(deps.fs, new RestoreDriftEntries(prompter)).execute({
         manifestFiles: [{ relativePath: "a.md", hash: FileHash.of("original content") }],
         distMap,
         projectRoot: PROJECT_ROOT,
@@ -111,7 +118,10 @@ describe("restoring the regular files", () => {
       ],
     ]);
 
-    const result = await restoreRegularFiles(deps.fs, prompter, {
+    const result = await new RestoreRegularFiles(
+      deps.fs,
+      new RestoreDriftEntries(prompter)
+    ).execute({
       manifestFiles: [{ relativePath: "a.md", hash: FileHash.of("original content") }],
       distMap,
       projectRoot: PROJECT_ROOT,
@@ -140,7 +150,10 @@ describe("restoring the regular files", () => {
       ],
     ]);
 
-    const result = await restoreRegularFiles(deps.fs, prompter, {
+    const result = await new RestoreRegularFiles(
+      deps.fs,
+      new RestoreDriftEntries(prompter)
+    ).execute({
       manifestFiles: [{ relativePath: "a.md", hash: originalHash }],
       distMap,
       projectRoot: PROJECT_ROOT,
@@ -171,7 +184,10 @@ describe("restoring the regular files", () => {
       ],
     ]);
 
-    const result = await restoreRegularFiles(deps.fs, prompter, {
+    const result = await new RestoreRegularFiles(
+      deps.fs,
+      new RestoreDriftEntries(prompter)
+    ).execute({
       manifestFiles: [{ relativePath: "a.md", hash: FileHash.of("original content") }],
       distMap,
       projectRoot: PROJECT_ROOT,
@@ -207,7 +223,10 @@ describe("restoring the regular files", () => {
       ],
     ]);
 
-    const result = await restoreRegularFiles(deps.fs, prompter, {
+    const result = await new RestoreRegularFiles(
+      deps.fs,
+      new RestoreDriftEntries(prompter)
+    ).execute({
       manifestFiles: [
         { relativePath: "a.md", hash: FileHash.of("original a") },
         { relativePath: "b.md", hash: FileHash.of("original b") },
@@ -252,7 +271,10 @@ describe("restoring the regular files", () => {
       ],
     ]);
 
-    const result = await restoreRegularFiles(deps.fs, prompter, {
+    const result = await new RestoreRegularFiles(
+      deps.fs,
+      new RestoreDriftEntries(prompter)
+    ).execute({
       manifestFiles: [
         { relativePath: "a.md", hash: FileHash.of("original a") },
         { relativePath: "b.md", hash: FileHash.of("original b") },
@@ -274,7 +296,10 @@ describe("restoring the regular files", () => {
     const deps = await buildDeps();
     const prompter = new OverwritePrompter();
 
-    const result = await restoreRegularFiles(deps.fs, prompter, {
+    const result = await new RestoreRegularFiles(
+      deps.fs,
+      new RestoreDriftEntries(prompter)
+    ).execute({
       manifestFiles: [{ relativePath: "a.md", hash: FileHash.of("original content") }],
       distMap: new Map(),
       projectRoot: PROJECT_ROOT,
@@ -294,7 +319,10 @@ describe("restoring the regular files", () => {
     await deps.fs.writeFile(join(PROJECT_ROOT, "a.md"), "disk modified content");
     const prompter = new OverwritePrompter();
 
-    const result = await restoreRegularFiles(deps.fs, prompter, {
+    const result = await new RestoreRegularFiles(
+      deps.fs,
+      new RestoreDriftEntries(prompter)
+    ).execute({
       manifestFiles: [{ relativePath: "a.md", hash: FileHash.of("original content") }],
       distMap: new Map(),
       projectRoot: PROJECT_ROOT,
@@ -325,7 +353,10 @@ describe("restoreRegularFiles - the files it hands back", () => {
       ],
     ]);
 
-    const result = await restoreRegularFiles(deps.fs, prompter, {
+    const result = await new RestoreRegularFiles(
+      deps.fs,
+      new RestoreDriftEntries(prompter)
+    ).execute({
       manifestFiles: [{ relativePath: "a.md", hash: FileHash.of("original content") }],
       distMap,
       projectRoot: PROJECT_ROOT,

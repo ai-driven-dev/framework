@@ -1,4 +1,7 @@
-import { registrationRecordRules } from "../../../src/composition/installation.js";
+import {
+  projectIntegrationOf,
+  registrationRecordRules,
+} from "../../../src/composition/installation.js";
 import { wireCleanClaims } from "../../../src/composition/orchestration/clean-claims.js";
 import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.use-case.js";
 import { WithdrawFromHost } from "../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
@@ -14,7 +17,6 @@ import {
 } from "../../../src/contexts/installation/application/removal/project/remove-aidd-traces.use-case.js";
 import { RemoveMachineLocalFiles } from "../../../src/contexts/installation/application/removal/project/remove-machine-local-files.use-case.js";
 import { RemoveProjectFiles } from "../../../src/contexts/installation/application/removal/project/remove-project-files.use-case.js";
-import { assertProjectMcpEntriesRemovable } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import type { RecordsBesideManifest } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { PurgeDeclaredCache } from "../../../src/contexts/machine-claims/application/purge-declared-cache.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
@@ -49,15 +51,16 @@ export interface ProjectCleanerParts extends Partial<HostPorts> {
 
 export function projectCleanerDeps(parts: ProjectCleanerParts): CleanProjectDeps {
   const purgeCache = new PurgeDeclaredCache(parts.fs, parts.logger);
+  const integration = projectIntegrationOf(parts.fs);
   const asks: ProjectCleanAsks = {
     homeDir: parts.homeDir ?? homedir,
     assertMcpRemovable: (plugin, tool, projectRoot) =>
-      assertProjectMcpEntriesRemovable(parts.fs, { plugin, tool, projectRoot }),
+      integration.assertMcpRemovable.execute({ plugin, tool, projectRoot }),
   };
   const cleanProject = new CleanProjectFiles({
     assertProjectRemovable: new AssertProjectRemovable(
       {
-        fs: parts.fs,
+        assertHooksRemovable: integration.assertHooksRemovable,
         manifestRepo: parts.manifestRepo,
         assertMcpRemovable: asks.assertMcpRemovable,
       },
@@ -70,7 +73,11 @@ export function projectCleanerDeps(parts: ProjectCleanerParts): CleanProjectDeps
         { fs: parts.fs, logger: parts.logger, homedir },
         parts.tools
       ),
-      machineLocalFiles: new RemoveMachineLocalFiles(parts.fs, parts.tools),
+      machineLocalFiles: new RemoveMachineLocalFiles(
+        parts.fs,
+        parts.tools,
+        integration.removeHooks
+      ),
       aiddTraces: new RemoveAiddTraces(
         {
           fs: parts.fs,

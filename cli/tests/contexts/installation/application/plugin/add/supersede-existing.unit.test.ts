@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { projectIntegrationOf } from "../../../../../../src/composition/installation.js";
 import { supersedeExisting } from "../../../../../../src/contexts/installation/application/plugin/add/supersede-existing.js";
 import { DuplicatePluginError } from "../../../../../../src/contexts/installation/domain/installation.error.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
@@ -28,11 +29,15 @@ describe("when a plugin is already installed", () => {
   it("drops the earlier install on replace and returns what it left behind", async () => {
     const manifest = installedManifest();
 
-    const previous = await supersedeExisting(new InMemoryFileAdapter(), registeredTools(), {
-      ...REQUEST,
-      manifest,
-      replace: true,
-    });
+    const previous = await supersedeExisting(
+      projectIntegrationOf(new InMemoryFileAdapter()).assertIntegration,
+      registeredTools(),
+      {
+        ...REQUEST,
+        manifest,
+        replace: true,
+      }
+    );
 
     expect(manifest.getPlugins(TOOL.claude)).toStrictEqual([]);
     expect(previous.mcpEntries.get(TOOL.claude)?.get("server")).toBe("digest");
@@ -42,7 +47,11 @@ describe("when a plugin is already installed", () => {
     const manifest = installedManifest();
 
     await expect(
-      supersedeExisting(new InMemoryFileAdapter(), registeredTools(), { ...REQUEST, manifest })
+      supersedeExisting(
+        projectIntegrationOf(new InMemoryFileAdapter()).assertIntegration,
+        registeredTools(),
+        { ...REQUEST, manifest }
+      )
     ).rejects.toThrow(DuplicatePluginError);
     expect(manifest.getPlugins(TOOL.claude)).toHaveLength(1);
   });

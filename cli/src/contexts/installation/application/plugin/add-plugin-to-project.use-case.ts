@@ -1,10 +1,9 @@
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
-import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { MissingPluginMetadataError } from "../../domain/installation.error.js";
 import type { Manifest } from "../../domain/manifest.js";
+import type { AssertProjectIntegrationRemovable } from "../removal/assert-project-integration-removable.use-case.js";
 import { assertRequestedVersion } from "./add/existing-plugin.js";
 import type { PlacePlugin } from "./add/place-plugin.use-case.js";
 import type { AddPluginRequest } from "./add/plugin-add.js";
@@ -24,7 +23,7 @@ export interface AddTargets {
 
 /** What placing an added plugin collaborates with. The tool catalog is the constructor's second argument. */
 export interface AddPluginToProjectDeps {
-  readonly fs: FileWriter & FileReader;
+  readonly assertIntegration: Pick<AssertProjectIntegrationRemovable, "execute">;
   readonly source: Pick<ResolveAddedPluginSource, "execute">;
   readonly place: Pick<PlacePlugin, "execute">;
 }
@@ -63,7 +62,7 @@ export class AddPluginToProject {
     const { pluginMetadata, projectRoot, replace } = options;
     if (pluginMetadata === undefined) throw new MissingPluginMetadataError();
     const existing = { pluginName: pluginMetadata.name, toolIds, manifest, projectRoot, replace };
-    await supersedeExisting(this.deps.fs, this.tools, existing);
+    await supersedeExisting(this.deps.assertIntegration, this.tools, existing);
   }
 
   private async addGithubMarketplacePlugin(
@@ -88,7 +87,7 @@ export class AddPluginToProject {
     const pluginName = dist.manifest.name;
     assertRequestedVersion(dist, requiredVersion);
     const existing = { pluginName, toolIds, manifest, projectRoot, replace };
-    const previous = await supersedeExisting(this.deps.fs, this.tools, existing);
+    const previous = await supersedeExisting(this.deps.assertIntegration, this.tools, existing);
     await this.deps.place.execute({
       dist,
       toolIds,
