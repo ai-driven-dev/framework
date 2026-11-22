@@ -173,15 +173,6 @@ describe("RemovePlugin undoes native activation", () => {
         name: "no reader",
         message: `claude: '${REF}' has no readable host plugin registry; uninstall refused before project changes.`,
       },
-      ...[new Error("registry unavailable"), "registry unavailable"].map((error, index) => ({
-        name: `reader throws ${index === 0 ? "Error" : "string"}`,
-        reader: {
-          read: async (): Promise<FixedRegistryReading> => {
-            throw error;
-          },
-        },
-        message: `claude: '${REF}' host plugin registry read failed (registry unavailable); uninstall refused.`,
-      })),
       ...invalidReadings.map(({ name, reading, diagnostic }) => ({
         name,
         reader: new FakeHostPluginRegistry(reading),

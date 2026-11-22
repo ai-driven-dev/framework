@@ -2,7 +2,7 @@ import { isRefOnHost } from "../../domain/record/host-ref.js";
 import type { RegistrationRecord } from "../../domain/record/registration-record.js";
 import type { HostActions } from "../../ports/host-actions.js";
 import { inspectHostSource, judgeCatalogueWithdrawal } from "../native-marketplace-source-proof.js";
-import { assertNoForeignRefs, stillNeededBy, uninstallAtFirstAcceptedScope } from "./host-call.js";
+import { inspectForeignRefs, stillNeededBy, uninstallAtFirstAcceptedScope } from "./host-call.js";
 import { resolveUninstallScopeOrder } from "./uninstall-scope-order.js";
 import type {
   ProjectCleanFacts,
@@ -33,10 +33,9 @@ export async function uninstallProjectRef(run: ProjectToolRun, ref: string): Pro
   const sourceRegistration = await provenCatalogue(run, ref);
   if (sourceRegistration === undefined) return;
   const reader = deps.ports.pluginRegistries.get(withdrawal.tool.toolId);
-  try {
-    await assertNoForeignRefs(deps, run, sourceRegistration.hostName);
-  } catch (error) {
-    deps.logger.warn(`${registrations.binary}: '${ref}' left enabled; ${String(error)}`);
+  const held = await inspectForeignRefs(deps, run, sourceRegistration.hostName);
+  if ("refusal" in held) {
+    deps.logger.warn(`${registrations.binary}: '${ref}' left enabled; ${String(held.refusal)}`);
     return;
   }
   const order = await resolveUninstallScopeOrder({

@@ -7,7 +7,7 @@ import { NativePluginCliError } from "../../domain/host-registration.error.js";
 import type { RegistrationRecord } from "../../domain/record/registration-record.js";
 import type { HostActions } from "../../ports/host-actions.js";
 import { bestEffortNativeCall } from "../confirmation.js";
-import { assertNoForeignNativeRefs } from "../native-marketplace-source-proof.js";
+import { type HostRefsVerdict, inspectNativeRefs } from "../native-marketplace-source-proof.js";
 import type {
   ProjectCleanFacts,
   ProjectRegistrationWithdrawal,
@@ -94,8 +94,9 @@ export function hostNameFor(
   return registrations?.marketplaces.find((m) => m.alias === alias)?.hostName;
 }
 
-/** Refuses `hostName` when the host carries a ref neither this project nor a machine claim owns. */
-export async function assertNoForeignRefs(
+/** What the host carries of `hostName`: its refs, or the refusal when a ref neither this project nor
+ * a machine claim owns is there. */
+export async function inspectForeignRefs(
   deps: WithdrawalDeps,
   held: {
     readonly withdrawal: ProjectRegistrationWithdrawal;
@@ -103,11 +104,11 @@ export async function assertNoForeignRefs(
     readonly facts: ProjectCleanFacts;
   },
   hostName: string
-): Promise<void> {
+): Promise<HostRefsVerdict> {
   const { withdrawal, registrations, facts } = held;
   const { tool } = withdrawal;
   const claimed = (await facts.machine.claimedRefs(tool.toolId)) ?? [];
-  await assertNoForeignNativeRefs(
+  return inspectNativeRefs(
     { reader: deps.ports.pluginRegistries.get(tool.toolId), tool },
     {
       hostName,
@@ -115,4 +116,14 @@ export async function assertNoForeignRefs(
       projectRoot: facts.projectRoot,
     }
   );
+}
+
+/** `inspectForeignRefs`, its refusal thrown. */
+export async function assertNoForeignRefs(
+  deps: WithdrawalDeps,
+  held: Parameters<typeof inspectForeignRefs>[1],
+  hostName: string
+): Promise<void> {
+  const verdict = await inspectForeignRefs(deps, held, hostName);
+  if ("refusal" in verdict) throw verdict.refusal;
 }

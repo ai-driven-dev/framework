@@ -4,11 +4,8 @@
     "closesWhen": "a scenario collects the partial failure and the use case lets its typed error travel",
     "entries": {
       "src/contexts/host-registration/application/confirmation.ts": 1,
-      "src/contexts/host-registration/application/native-marketplace-source-proof.ts": 2,
       "src/contexts/host-registration/application/register/register-marketplace.ts": 1,
-      "src/contexts/host-registration/application/withdraw/assert-project-source.ts": 1,
       "src/contexts/host-registration/application/withdraw/host-call.ts": 1,
-      "src/contexts/host-registration/application/withdraw/uninstall-project-ref.ts": 1,
       "src/contexts/installation/application/agents/main-session-models.use-case.ts": 2,
       "src/contexts/installation/application/doctor/load-manifest.use-case.ts": 1,
       "src/contexts/installation/application/plugin/update-user-plugin-files.use-case.ts": 1,

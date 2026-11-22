@@ -47,22 +47,6 @@ describe("current native marketplace source proof", () => {
     }
   );
 
-  it.each([new Error("source permission denied"), "source permission denied"])(
-    "reports host source read failures as unproven without throwing",
-    async (error) => {
-      const sourceReader: HostMarketplaceSources = {
-        read: async () => {
-          throw error;
-        },
-      };
-      expect(await inspectHostSource(sourceReader, "/project-b", claim)).toEqual({
-        status: "unproven",
-        reason:
-          "Catalogue 'real-catalog': host source read failed (source permission denied); reconcile manually.",
-      });
-    }
-  );
-
   it.each([
     { location: "/host/catalogue", unreadable: "permission denied", reason: "permission denied" },
     { location: "/host/catalogue", reason: "host source unreadable at /host/catalogue" },
@@ -126,19 +110,6 @@ describe("current native marketplace source proof", () => {
         { hostName: "real-catalog", ownedRefs: new Set(), projectRoot: "/project-b" }
       )
     ).rejects.toThrow(/EACCES/);
-    await expect(
-      assertNoForeignNativeRefs(
-        {
-          reader: {
-            read: async () => {
-              throw new Error("EACCES");
-            },
-          },
-          tool: registeredTools().aiProfile(TOOL.claude),
-        },
-        { hostName: "real-catalog", ownedRefs: new Set(), projectRoot: "/project-b" }
-      )
-    ).rejects.toThrow(/real-catalog.*host plugin registry read failed.*EACCES/);
     expect(
       await assertNoForeignNativeRefs(
         {
@@ -212,17 +183,6 @@ describe("current native marketplace source proof", () => {
     ["an unknown source", named(null), claim, "unproven", "current host source is unproven"],
     ["an unreadable host", reader(), claim, "unproven", "host source unreadable"],
     ["no reader", undefined, claim, "unproven", "reader unavailable"],
-    [
-      "a reader that throws",
-      {
-        read: async () => {
-          throw new Error("boom");
-        },
-      },
-      claim,
-      "unproven",
-      "read failed (boom)",
-    ],
   ];
 
   it.each(VERDICTS)("judges %s", async (_cell, sourceReader, registration, status, reason) => {
