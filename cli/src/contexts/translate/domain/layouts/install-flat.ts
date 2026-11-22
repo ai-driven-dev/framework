@@ -7,15 +7,13 @@ import type {
   PluginTranslationSkip,
   ReadonlySkipList,
 } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
-import { artifactPath } from "../../../tools/contract/artifact-path.js";
 import type { FlatPluginAnswers } from "../../../tools/contract/tool-profile.js";
-import { flatLinkTarget } from "../flat-layout.js";
 import { basename, isProse } from "../plugin-paths.js";
-import { agentLinks } from "../rules/agent-markdown.js";
-import { agentShape, type ComponentPlan } from "../rules/component-pipeline.js";
+import type { ComponentPlan } from "../rules/component-pipeline.js";
 import { flatHookPlans } from "../rules/hook-plans.js";
 import { chainLinks, toolLinks } from "../rules/links.js";
 import type { TranslatedAiTool } from "../translate-profile.js";
+import { flatAgentPlan } from "./build-flat.js";
 
 type FlatSection = "agents" | "rules" | "skills";
 
@@ -95,25 +93,10 @@ function sectionPlan(
 
 /** An agent a target carries as a build artifact, null when it declares none. */
 function agentPlan(file: PluginComponentFile, at: FlatAt): ComponentPlan | null {
-  const { tool, pluginName } = at;
-  const contract = tool.buildContract("flat");
+  const contract = at.tool.buildContract("flat");
   const artifact = contract?.artifacts.agents;
   if (contract === null || !artifact?.supported) return null;
-  const path = artifactPath(artifact, pluginName, file.relativePath);
-  const place = {
-    plugin: pluginName,
-    outName: file.relativePath.slice("agents/".length),
-    from: path,
-    resolveTarget: (rel: string) => flatLinkTarget(contract, pluginName, rel),
-    unshaped: "carry" as const,
-  };
-  return {
-    source: file.relativePath,
-    path,
-    content: file.content,
-    links: agentLinks(artifact, place),
-    shape: agentShape(artifact, place),
-  };
+  return flatAgentPlan(file, { plugin: at.pluginName, contract, artifact, unshaped: "carry" });
 }
 
 function prefixCommandName(
