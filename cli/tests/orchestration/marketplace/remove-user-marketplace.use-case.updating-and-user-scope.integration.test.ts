@@ -2,11 +2,11 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import { NativeHostRegistrationGate } from "../../../src/contexts/host-registration/application/native-host-registration-gate.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
+import { hostWithdrawal } from "../../shared/testing/host-withdrawal.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
@@ -48,7 +48,7 @@ describe("updating native tool targeted user marketplace removal", () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile("/A/user-note.md", "user bytes");
     const activator = new FakeHostActions({ available: true });
-    const gate = new NativeHostRegistrationGate(
+    const gate = hostWithdrawal(
       new Map([[SYNTHETIC_UPDATING_NATIVE_TOOL, activator]]),
       new Map([
         [
@@ -135,7 +135,7 @@ describe("user-scope tool targeted user marketplace removal", () => {
       fs,
       repo,
       registry,
-      new NativeHostRegistrationGate(new Map(), new Map())
+      hostWithdrawal(new Map(), new Map())
     );
     return { repo, registry, fs, useCase, path, pluginDir, foreign };
   }

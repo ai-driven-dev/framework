@@ -2,7 +2,6 @@
 
 import type { registrationRecordRules } from "../../../src/composition/installation.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import { NativeHostRegistrationGate } from "../../../src/contexts/host-registration/application/native-host-registration-gate.js";
 import type { NativeMarketplaceSource } from "../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
@@ -11,6 +10,7 @@ import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-cata
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
+import { hostWithdrawal } from "../../shared/testing/host-withdrawal.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
@@ -94,7 +94,7 @@ export async function nativeFixture(
     new InMemoryFileAdapter(),
     repo,
     registry,
-    new NativeHostRegistrationGate(
+    hostWithdrawal(
       new Map([[toolId, activator]]),
       new Map([[toolId, reader]]),
       new Map([[toolId, sourceReader()]])

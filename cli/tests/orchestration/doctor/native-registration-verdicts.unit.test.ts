@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { NativeHostRegistrationGate } from "../../../src/contexts/host-registration/application/native-host-registration-gate.js";
 import { RefreshHostPlugin } from "../../../src/contexts/host-registration/application/refresh-host-plugin.use-case.js";
 import type { HostPluginRegistryReading } from "../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { RegistrationRecord } from "../../../src/contexts/host-registration/domain/record/registration-record.js";
@@ -9,6 +8,10 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { hostInspector } from "../../shared/testing/host-inspector.builder.js";
+import {
+  hostWithdrawal,
+  proveMarketplaceRemoval,
+} from "../../shared/testing/host-withdrawal.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import {
@@ -155,10 +158,9 @@ describe("registration verdicts across intents", () => {
     });
 
     it("catalogue removal", async () => {
-      const gate = new NativeHostRegistrationGate(
-        ...hostOver(row.registry, ownedSource(provenance))
-      );
-      const attempt = gate.planMarketplaceRemoval(
+      const gate = hostWithdrawal(...hostOver(row.registry, ownedSource(provenance)));
+      const attempt = proveMarketplaceRemoval(
+        gate,
         syntheticNativeFamilyCatalog().aiProfile(tool),
         registrations,
         {
@@ -190,9 +192,8 @@ describe("registration verdicts across intents", () => {
       const attempt =
         intent === "targeted update"
           ? refreshOf(registry, ownedSource(entry))
-          : new NativeHostRegistrationGate(
-              ...hostOver(registry, ownedSource(entry))
-            ).planMarketplaceRemoval(
+          : proveMarketplaceRemoval(
+              hostWithdrawal(...hostOver(registry, ownedSource(entry))),
               syntheticNativeFamilyCatalog().aiProfile(tool),
               registrations,
               {

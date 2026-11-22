@@ -1,8 +1,11 @@
 import type { FindUserMarketplace } from "../../contexts/distribution/application/remove/find-user-marketplace.use-case.js";
 import type { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.use-case.js";
 import type { MarketplaceRemovalResult } from "../../contexts/distribution/contract/marketplace-removal.js";
-import type { NativeHostRegistrationGate } from "../../contexts/host-registration/application/native-host-registration-gate.js";
-import { throwRefusal } from "../../contexts/host-registration/application/throw-refusal.js";
+import type {
+  ProveMarketplaceRemovalRequest,
+  ProvenMarketplaceRemoval,
+  WithdrawalRequest,
+} from "../../contexts/host-registration/application/withdraw/withdrawal.js";
 import type { RegistrationRecordRules } from "../../contexts/host-registration/contract/registration-record-rules.js";
 import type {
   MarketplaceRecords,
@@ -18,26 +21,25 @@ export interface RemoveUserMarketplaceRequest {
   scope?: Scope;
 }
 
+/** The two steps of a catalogue removal on a host: prove it, then act on the proof. */
+export interface MarketplaceRemovalHost {
+  execute(command: ProveMarketplaceRemovalRequest): Promise<ProvenMarketplaceRemoval>;
+  execute(
+    command: Extract<WithdrawalRequest, { kind: "withdraw-proven-marketplace" }>
+  ): Promise<void>;
+}
+
 export interface RemoveUserMarketplaceDeps {
   readonly find: Pick<FindUserMarketplace, "execute">;
   readonly purge: Pick<PurgeMarketplacePlugins, "execute">;
   readonly remove: Pick<RemoveMarketplace, "execute">;
-  readonly hostGate: Pick<NativeHostRegistrationGate, "planMarketplaceRemoval">;
+  readonly host: MarketplaceRemovalHost;
   readonly home: string;
   readonly records: Pick<RegistrationRecordRules, "marketplaceOf"> &
     Pick<
       RecordClaimRules,
       "claimsOnMarketplace" | "withoutMarketplace" | "claimedRefs" | "holdersOf"
     >;
-}
-
-type HostRemovalPlan = Awaited<ReturnType<NativeHostRegistrationGate["planMarketplaceRemoval"]>>;
-
-/** Uninstalls each plugin ref the plan kept at the scope the host holds it, the user scope when
- * the host names none, then the catalogue itself at the user scope. */
-function withdrawFromHost(hostName: string, { activator, refs, scopes }: HostRemovalPlan): void {
-  for (const ref of refs) throwRefusal(activator.uninstallPlugin(ref, scopes.get(ref) ?? "user"));
-  throwRefusal(activator.removeMarketplace(hostName, "user"));
 }
 
 /** A catalogue's place in a tool's record, as the host registration reads and drops it. */
@@ -71,15 +73,16 @@ export class RemoveUserMarketplace {
       },
       forget: () => this.deps.remove.execute({ projectRoot, marketplace }),
       hostRemoval: {
-        plan: async ({ tool, registrations, registration }) => ({
-          hostName: registration.hostName,
-          plan: await this.deps.hostGate.planMarketplaceRemoval(tool, registrations, {
+        plan: ({ tool, registrations, registration }) =>
+          this.deps.host.execute({
+            kind: "prove-marketplace-removal",
+            tool,
+            registrations,
             registration,
             projectRoot,
             claimedRefs: this.deps.records.claimedRefs(registrations),
           }),
-        }),
-        apply: ({ hostName, plan }) => withdrawFromHost(hostName, plan),
+        apply: (proven) => this.deps.host.execute({ kind: "withdraw-proven-marketplace", proven }),
       },
       records: marketplaceRecordsOf(this.deps.records),
     });

@@ -1,12 +1,19 @@
 import { describe, expect, it, vi } from "vitest";
-import type { NativeHostRegistrationGate } from "../../../src/contexts/host-registration/application/native-host-registration-gate.js";
+import type { WithdrawFromHost } from "../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
+import type {
+  ProveMarketplaceRemovalRequest,
+  ProvenMarketplaceRemoval,
+  WithdrawalRequest,
+} from "../../../src/contexts/host-registration/application/withdraw/withdrawal.js";
 import type { PurgeMarketplacePlugins } from "../../../src/contexts/installation/application/marketplace/purge-marketplace-plugins.use-case.js";
 import {
+  type MarketplaceRemovalHost,
   RemoveUserMarketplace,
   type RemoveUserMarketplaceDeps,
 } from "../../../src/orchestration/marketplace/remove-user-marketplace.use-case.js";
 import { syntheticToolProfile } from "../../contexts/translate/testing/synthetic-tool-profile.builder.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
+import { hostWithdrawal } from "../../shared/testing/host-withdrawal.builder.js";
 
 type PurgeCommand = Parameters<PurgeMarketplacePlugins["execute"]>[0];
 
@@ -24,6 +31,30 @@ const TARGET: Parameters<PurgeCommand["hostRemoval"]["plan"]>[0] = {
   registration: REGISTRATION,
 };
 
+/** Proves every catalogue removable with the claimed refs, and withdraws through a real host. */
+class ProvingHost implements MarketplaceRemovalHost {
+  readonly requests: WithdrawalRequest[] = [];
+  private readonly real: WithdrawFromHost;
+  constructor(private readonly activator: FakeHostActions) {
+    this.real = hostWithdrawal(new Map());
+  }
+  execute(command: ProveMarketplaceRemovalRequest): Promise<ProvenMarketplaceRemoval>;
+  execute(
+    command: Extract<WithdrawalRequest, { kind: "withdraw-proven-marketplace" }>
+  ): Promise<void>;
+  async execute(command: WithdrawalRequest): Promise<unknown> {
+    this.requests.push(command);
+    if (command.kind === "withdraw-proven-marketplace") return this.real.execute(command);
+    if (command.kind !== "prove-marketplace-removal") return undefined;
+    return {
+      hostName: command.registration.hostName,
+      activator: this.activator,
+      refs: command.claimedRefs,
+      scopes: new Map([["scoped@aidd-market", "project"]]),
+    };
+  }
+}
+
 function removerWith(purge: (command: PurgeCommand) => Promise<number>) {
   const records: RemoveUserMarketplaceDeps["records"] = {
     marketplaceOf: vi.fn(() => REGISTRATION),
@@ -35,23 +66,16 @@ function removerWith(purge: (command: PurgeCommand) => Promise<number>) {
   const find = { execute: vi.fn().mockResolvedValue(FOUND) };
   const remove = { execute: vi.fn().mockResolvedValue(undefined) };
   const activator = new FakeHostActions();
-  const hostGate: Pick<NativeHostRegistrationGate, "planMarketplaceRemoval"> = {
-    planMarketplaceRemoval: async (_tool, _registrations, { claimedRefs }) => ({
-      activator,
-      refs: claimedRefs,
-      scopes: new Map([["scoped@aidd-market", "project"]]),
-    }),
-  };
-  const plan = vi.spyOn(hostGate, "planMarketplaceRemoval");
+  const host = new ProvingHost(activator);
   const useCase = new RemoveUserMarketplace({
     find,
     purge: { execute: purge },
     remove,
-    hostGate,
+    host,
     home: "/home",
     records,
   });
-  return { useCase, find, remove, plan, activator, records };
+  return { useCase, find, remove, host, activator, records };
 }
 
 describe("RemoveUserMarketplace", () => {
@@ -105,11 +129,14 @@ describe("RemoveUserMarketplace", () => {
       await command.hostRemoval.plan(TARGET);
       return 0;
     });
-    const { useCase, plan, activator } = removerWith(purge);
+    const { useCase, host, activator } = removerWith(purge);
 
     await useCase.execute({ name: "market", projectRoot: "/project", autoConfirm: true });
 
-    expect(plan).toHaveBeenCalledWith(TARGET.tool, TARGET.registrations, {
+    expect(host.requests[0]).toEqual({
+      kind: "prove-marketplace-removal",
+      tool: TARGET.tool,
+      registrations: TARGET.registrations,
       registration: REGISTRATION,
       projectRoot: "/project",
       claimedRefs: ["scoped@aidd-market", "unscoped@aidd-market"],

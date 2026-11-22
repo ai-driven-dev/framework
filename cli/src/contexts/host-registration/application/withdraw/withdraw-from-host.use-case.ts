@@ -3,6 +3,7 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import { recordedRegistrations } from "../../domain/record/registration-record.js";
 import type { HostPorts } from "../../ports/host-ports.js";
+import { proveMarketplaceRemoval } from "../prove-marketplace-removal.js";
 import { throwRefusal } from "../throw-refusal.js";
 import { assertProjectRegistrationsOwned } from "./assert-project-registrations-owned.js";
 import { assertProjectSource } from "./assert-project-source.js";
@@ -17,7 +18,9 @@ import {
 } from "./withdraw-user-registrations.js";
 import type {
   ProveClaimedRefRequest,
+  ProveMarketplaceRemovalRequest,
   ProvenHostRef,
+  ProvenMarketplaceRemoval,
   WithdrawalDeps,
   WithdrawalRequest,
   WithdrawalStepRequest,
@@ -43,6 +46,7 @@ export class WithdrawFromHost {
    * acts, and returns nothing. */
   async execute(command: WithdrawPluginRequest): Promise<boolean | undefined>;
   async execute(command: ProveClaimedRefRequest): Promise<ProvenHostRef>;
+  async execute(command: ProveMarketplaceRemovalRequest): Promise<ProvenMarketplaceRemoval>;
   async execute(command: WithdrawalStepRequest): Promise<void>;
   async execute(command: WithdrawalRequest): Promise<unknown> {
     switch (command.kind) {
@@ -52,6 +56,10 @@ export class WithdrawFromHost {
         return assertProjectSource(this.deps, command);
       case "prove-claimed-ref":
         return proveClaimedRef(this.deps, command);
+      case "prove-marketplace-removal":
+        return proveMarketplaceRemoval(this.deps.ports, command);
+      case "withdraw-proven-marketplace":
+        return this.withdrawMarketplace(command.proven);
       case "withdraw-proven-ref":
         throwRefusal(
           command.proven.activator.uninstallPlugin(command.proven.ref, command.proven.scope)
@@ -102,6 +110,18 @@ export class WithdrawFromHost {
   ): Promise<void> {
     const removed = await withdrawUserRegistrations(this.deps, command.withdrawals);
     return purgeMarketplaceCaches(this.deps, removed, command.resolveCacheCandidate);
+  }
+
+  /** Uninstalls each proven ref at the scope the host holds it, the user scope when the host
+   * names none, then the catalogue itself at the user scope. */
+  private withdrawMarketplace({
+    activator,
+    hostName,
+    refs,
+    scopes,
+  }: ProvenMarketplaceRemoval): void {
+    for (const ref of refs) throwRefusal(activator.uninstallPlugin(ref, scopes.get(ref) ?? "user"));
+    throwRefusal(activator.removeMarketplace(hostName, "user"));
   }
 
   private async withdrawPlugin(command: WithdrawPluginRequest): Promise<boolean | undefined> {
