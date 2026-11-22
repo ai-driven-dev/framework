@@ -59,7 +59,7 @@ const claimOf = (version: string | undefined) => ({
   scope: "user" as const,
 });
 
-describe("RecordMachineClaims", () => {
+describe("recording a project's machine claims", () => {
   it("changes nothing without a machine manifest to write to", async () => {
     const record = new RecordMachineClaims(
       {

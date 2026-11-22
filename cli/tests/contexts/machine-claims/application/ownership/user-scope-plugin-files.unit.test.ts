@@ -26,7 +26,7 @@ function plugin(files: Record<string, string>): MachinePlugin {
   return new MachinePlugin({ name: "aidd-test", files });
 }
 
-describe("userScopeFilesSafeToDelete", () => {
+describe("choosing the user-scope files safe to delete", () => {
   it("answers nothing for a tool without a user-scope plugin directory", async () => {
     const logger = new CapturingLogger();
 
@@ -136,7 +136,7 @@ describe("userScopeFilesSafeToDelete", () => {
   });
 });
 
-describe("withoutMissingFiles", () => {
+describe("leaving out the files already gone", () => {
   it("hands back the same plugin when the tool has no user-scope plugin directory", async () => {
     const recorded = plugin({ "aidd-test/a.md": HASH });
 
@@ -167,7 +167,7 @@ describe("a recorded install digest", () => {
   });
 });
 
-describe("assertUserScopeWriteBoundary", () => {
+describe("before writing inside a user-scope directory", () => {
   const file = (relativePath: string) =>
     new InstallationFile({
       relativePath,

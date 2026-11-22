@@ -3,7 +3,7 @@ import { isStrictlyWithinUserScope } from "../../../../src/contexts/machine-clai
 
 const BOUNDARY = "/home/dev/.cursor/plugins/local";
 
-describe("isStrictlyWithinUserScope", () => {
+describe("checking a path stays inside the user scope", () => {
   it("accepts a plugin's own subdirectory inside the boundary", () => {
     expect(isStrictlyWithinUserScope(`${BOUNDARY}/aidd-context/skills/hello.md`, BOUNDARY)).toBe(
       true

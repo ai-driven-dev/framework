@@ -12,7 +12,7 @@ const CACHE_ROOT = "/cache";
 const CANDIDATE = join(CACHE_ROOT, "mkt");
 const LABEL = "codex: cache for 'mkt'";
 
-describe("PurgeDeclaredCache.resolveCandidate", () => {
+describe("resolving a cache directory to purge", () => {
   it("answers nothing, silently, when the cache root does not exist", async () => {
     const fs = new FaultingFileAdapter();
     fs.failOn("realpath", CACHE_ROOT, errnoError("ENOENT"));

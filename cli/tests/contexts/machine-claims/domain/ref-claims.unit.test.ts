@@ -5,7 +5,7 @@ import {
   readHeldClaims,
 } from "../../../../src/contexts/machine-claims/domain/ref-claims.js";
 
-describe("mergeRefClaims", () => {
+describe("merging a dependent into the ref claims", () => {
   const claimsOf = (
     claims: { ref: string; dependents: string[] }[],
     refs: string[],
@@ -64,7 +64,7 @@ describe("mergeRefClaims", () => {
   });
 });
 
-describe("claimsKeeping", () => {
+describe("keeping the claims whose ref passes", () => {
   it("keeps the claims whose ref passes", () => {
     const kept = { ref: "a@catalog", dependents: [] };
     const dropped = { ref: "b@other", dependents: [] };
@@ -72,7 +72,7 @@ describe("claimsKeeping", () => {
   });
 });
 
-describe("readHeldClaims", () => {
+describe("reading the claims a record holds", () => {
   it("reads none when the record keeps none", () => {
     expect(readHeldClaims(undefined)).toEqual([]);
   });

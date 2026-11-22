@@ -16,7 +16,7 @@ const recordWith = () => ({
 });
 
 describe("record claim rules, following the host data", () => {
-  describe("mergeCatalogueClaims", () => {
+  describe("merging catalogue claims into a record", () => {
     it("writes the claims list after the host data, even when there were none", () => {
       const merged = rules.mergeCatalogueClaims(
         { binary: "claude", marketplaces: [], pluginRefs: ["a@catalog"] },
@@ -56,7 +56,7 @@ describe("record claim rules, following the host data", () => {
     });
   });
 
-  describe("withoutClaimedRef", () => {
+  describe("dropping a claimed ref from a record", () => {
     it("drops the ref and its claim, keeping the other claims", () => {
       const record = recordWith();
       const next = rules.withoutClaimedRef(record, "a@catalog");
@@ -73,7 +73,7 @@ describe("record claim rules, following the host data", () => {
     });
   });
 
-  describe("withoutMarketplace", () => {
+  describe("dropping a marketplace from a record", () => {
     it("drops the alias, and the refs and claims on its host name", () => {
       const record = recordWith();
       const next = rules.withoutMarketplace(record, "local");
@@ -104,7 +104,7 @@ describe("record claim rules, following the host data", () => {
     });
   });
 
-  describe("claimsOnMarketplace", () => {
+  describe("keeping the claims on a marketplace", () => {
     it("keeps the claims on the host name of the alias", () => {
       const record = recordWith();
       const claims = rules.claimsOnMarketplace(record, "other");

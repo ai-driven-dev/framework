@@ -17,7 +17,7 @@ const BASE = {
   otherProjects: ["/other-project"],
 } as const;
 
-describe("refAnotherProjectStillNeeds", () => {
+describe("when a ref may be needed by another project", () => {
   it("is true when the ref came from the shared source, enablement is machine-global, and another project still references it", () => {
     expect(refAnotherProjectStillNeeds(BASE)).toBe(true);
   });
@@ -31,7 +31,7 @@ describe("refAnotherProjectStillNeeds", () => {
   });
 });
 
-describe("frameworkSourceIsShared", () => {
+describe("when the framework source is shared", () => {
   it("is false for the framework marketplace at project scope", () => {
     expect(frameworkSourceIsShared("aidd-framework", "project", "aidd-framework")).toBe(false);
   });
@@ -41,7 +41,7 @@ describe("frameworkSourceIsShared", () => {
   });
 });
 
-describe("resolveReferenceRoot", () => {
+describe("resolving the root of a reference", () => {
   it("propagates a resolution failure other than the project being absent", async () => {
     const fs = new FaultingFileAdapter();
     fs.failOn("realpath", "/project", errnoError("EACCES"));
@@ -52,7 +52,7 @@ describe("resolveReferenceRoot", () => {
   });
 });
 
-describe("toleratingUnreadableRefs", () => {
+describe("when the refs cannot be read", () => {
   it("propagates any failure that is not an unreadable registry", async () => {
     await expect(
       toleratingUnreadableRefs(new CapturingLogger(), "fallback", async () => {
@@ -64,7 +64,7 @@ describe("toleratingUnreadableRefs", () => {
 
 // Nothing else in the suite pins this sentence's grammar, so a swapped singular/plural branch
 // ("references"/"reference", "project"/"projects") would pass every other test.
-describe("describeGuardedPluginRefMessage", () => {
+describe("wording the guarded plugin ref message", () => {
   it("uses singular wording for exactly one other project", () => {
     const message = describeGuardedPluginRefMessage({
       binary: "codex",

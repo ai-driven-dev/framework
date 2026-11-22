@@ -158,7 +158,7 @@ describe("the shared source's own project references", () => {
     expect(written).toEqual({ "2.0.0": ["/project-a"] });
   });
 
-  describe("removeReference", () => {
+  describe("removing a project's reference", () => {
     it("drops this project's own claim, wherever it is recorded, leaving every other one", async () => {
       const fs = new InMemoryFileAdapter();
       markExisting(fs, "/project-a");
@@ -273,7 +273,7 @@ describe("the shared source's own project references", () => {
     });
   });
 
-  describe("listAllReferencingProjects", () => {
+  describe("listing every referencing project", () => {
     it("lists existing projects across every version key, deduplicated", async () => {
       const fs = new InMemoryFileAdapter();
       markExisting(fs, "/project-a");
