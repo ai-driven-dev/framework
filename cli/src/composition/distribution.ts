@@ -7,9 +7,11 @@ import { RefreshMarketplace } from "../contexts/distribution/application/refresh
 import { RegisterFrameworkMarketplace } from "../contexts/distribution/application/register-framework-marketplace.use-case.js";
 import { ResolveMarketplace } from "../contexts/distribution/application/resolve-marketplace.use-case.js";
 import { GitCloner } from "../contexts/distribution/infrastructure/git-cloner-adapter.js";
+import { GitSourceFetcher } from "../contexts/distribution/infrastructure/git-source-fetcher.js";
 import { MarketplaceCacheAdapter } from "../contexts/distribution/infrastructure/marketplace-cache-adapter.js";
 import { MarketplaceRegistryAdapter } from "../contexts/distribution/infrastructure/marketplace-registry-adapter.js";
 import { MarketplaceTrustStoreAdapter } from "../contexts/distribution/infrastructure/marketplace-trust-store-adapter.js";
+import { NpmSourceFetcher } from "../contexts/distribution/infrastructure/npm-source-fetcher.js";
 import { PluginCatalogRepositoryAdapter } from "../contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import {
   type ManifestProbe,
@@ -110,8 +112,11 @@ function marketplaceUseCasesOf(inputs: MarketplaceUseCaseInputs): MarketplaceUse
 }
 
 function pluginFetcherOf(shared: DistributionWiringShared): PluginFetcher {
-  const npm = new PnpmInstallerAdapter();
-  return new PluginFetcherAdapter(shared.fs, new GitCloner(), npm, shared.tokenProvider);
+  return new PluginFetcherAdapter(
+    shared.fs,
+    new GitSourceFetcher(shared.fs, new GitCloner(), shared.tokenProvider),
+    new NpmSourceFetcher(shared.fs, new PnpmInstallerAdapter())
+  );
 }
 
 export function wireDistribution(shared: DistributionWiringShared): DistributionDeps {
