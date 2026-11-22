@@ -3,7 +3,7 @@ import { answeredRegistry } from "../../../src/contexts/host-registration/domain
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
-import { registeredCatalog } from "../../shared/testing/catalog-of.builder.js";
+import { registeredAiId, registeredCatalog } from "../../shared/testing/catalog-of.builder.js";
 import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
@@ -12,20 +12,19 @@ import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-mark
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
 import {
   ActivatorThatWritesSettings,
-  buildSync,
-  claude,
   MARKETPLACE,
-  manifestWithPlugin,
   marketplace,
-  nativeSource,
+  nativeActivationOf,
   PLUGIN,
   PROJECT_ROOT,
   REF,
-  readableHostPlugins,
   SETTINGS_PATH,
   seededBuiltCatalog,
   settingsPathIn,
 } from "../testing/marketplace-sync-native-activation.builder.js";
+
+const { buildSync, claude, manifestWithPlugin, nativeSource, readableHostPlugins } =
+  nativeActivationOf({ tools: registeredCatalog(), claude: registeredAiId("claude") });
 
 describe("native activation", () => {
   describe("syncing settings registers the plugin with the host's own CLI", () => {

@@ -14,16 +14,18 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { registeredTools } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { buildCheckRegistration } from "../testing/build-check-registration.builder.js";
 import {
-  buildSync,
-  claude,
   marketplace,
-  nativeSource,
+  nativeActivationOf,
   PROJECT_ROOT,
-  readableHostPlugins,
 } from "../testing/marketplace-sync-native-activation.builder.js";
+
+const { buildSync, claude, nativeSource, readableHostPlugins } = nativeActivationOf({
+  tools: registeredTools(),
+  claude: TOOL.claude,
+});
 
 describe("native activation: recorded refs", () => {
   describe("what doctor tells a person to run becomes true once sync has run", () => {
