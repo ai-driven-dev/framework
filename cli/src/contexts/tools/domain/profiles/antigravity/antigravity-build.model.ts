@@ -43,8 +43,6 @@ export function buildAntigravityFlatContract(hooks: AntigravityHooks): ToolBuild
       hooks: flatHooksArtifact(hooks, { tool: "antigravity" }, (existing, shipped) =>
         mergeAntigravityHooks(hooks, existing, shipped)
       ),
-      rules: { supported: false },
-      commands: { supported: false },
     },
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,

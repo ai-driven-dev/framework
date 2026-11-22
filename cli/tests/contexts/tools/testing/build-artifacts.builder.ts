@@ -24,8 +24,6 @@ export const PLUGIN_TREE_SOURCES = {
   agents: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
   mcp: { kind: "configFile", srcPath: ".mcp.json" },
   hooks: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
-  rules: { supported: false },
-  commands: { supported: false },
 };
 
 export function pluginTreeSourcesOf(artifacts: Artifacts) {
@@ -34,8 +32,6 @@ export function pluginTreeSourcesOf(artifacts: Artifacts) {
     agents: sourceOf(artifacts.agents),
     mcp: sourceOf(artifacts.mcp),
     hooks: sourceOf(artifacts.hooks),
-    rules: artifacts.rules,
-    commands: artifacts.commands,
   };
 }
 

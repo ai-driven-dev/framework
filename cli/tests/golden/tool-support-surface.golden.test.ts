@@ -28,8 +28,8 @@ interface ToolSupport {
   builds: Record<string, Record<Surface, Support>>;
 }
 
-function supportOf(surface: Surface, contract: ArtifactContract): Support {
-  if (!contract.supported) return "no";
+function supportOf(surface: Surface, contract: ArtifactContract | undefined): Support {
+  if (!contract?.supported) return "no";
   if (surface === "hooks" && contract.skipHooksJson === true && contract.hooksBridge) {
     return "bridge";
   }
@@ -46,8 +46,9 @@ function capture(): ToolSupport[] {
       for (const mode of ["marketplace", "flat"] as const) {
         const contract = tool.buildContract(mode);
         if (contract === null) continue;
+        const declared: Partial<Record<string, ArtifactContract>> = contract.artifacts;
         builds[mode] = Object.fromEntries(
-          SURFACES.map((surface) => [surface, supportOf(surface, contract.artifacts[surface])])
+          SURFACES.map((surface) => [surface, supportOf(surface, declared[surface])])
         ) as Record<Surface, Support>;
       }
       return {

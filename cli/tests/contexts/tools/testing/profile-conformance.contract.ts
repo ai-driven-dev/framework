@@ -147,12 +147,6 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
       }
     }
   ),
-  aiCheck("builds neither rules nor commands from the plugin tree", (profile) => {
-    for (const { artifacts } of contractsOf(profile)) {
-      expect(artifacts.rules.supported).toBe(false);
-      expect(artifacts.commands.supported).toBe(false);
-    }
-  }),
   aiCheck("gives every supported artifact a non-empty path", (profile) => {
     for (const contract of contractsOf(profile)) {
       for (const [name, artifact] of supportedArtifacts(contract)) {

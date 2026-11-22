@@ -70,8 +70,6 @@ export function buildClaudeFlatContract(hooks: FlatHooks): ToolBuildContract {
         mcpServersKey: "mcpServers",
       },
       hooks: flatHooksArtifact(hooks, { tool: "claude" }),
-      rules: { supported: false },
-      commands: { supported: false },
     },
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,

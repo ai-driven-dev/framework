@@ -98,8 +98,6 @@ export function buildOpencodeFlatContract(hooks: OpencodeHooks): ToolBuildContra
       },
       mcp: { supported: false }, // handled by configArtifact (opencode.json mcp)
       hooks: flatHooksArtifact(hooks, { bridge: generateOpencodeHooksBridge }),
-      rules: { supported: false },
-      commands: { supported: false },
     },
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,

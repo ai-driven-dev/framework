@@ -236,12 +236,6 @@ const BROKEN: Readonly<Record<string, () => FileConformanceSubject>> = {
           commands: commandsWith(NATIVE, { buildInstallPath: () => "/x.md" }),
         })
       ),
-  "builds neither rules nor commands from the plugin tree": () =>
-    subjectOf(
-      withMarketplace(NATIVE, {
-        artifacts: { ...marketplaceOf(NATIVE).artifacts, rules: supported("x.md") },
-      })
-    ),
   "gives every supported artifact a non-empty path": () =>
     subjectOf(
       withMarketplace(NATIVE, {
