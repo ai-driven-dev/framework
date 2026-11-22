@@ -47,14 +47,14 @@ function keyRefusal(reading: ConsentReading): RefusalReason | null {
 /** The repository a directory is in, when its clone is measured: its key names an interval
  * that is open for it, the same test the hooks make. A declaration is stored only for a clone
  * that asked to be measured, never for one whose key was set by hand or came with a copy. */
-export class ConsentedRepositories {
+export class FindConsentedRepository {
   constructor(
     private readonly locator: RepositoryLocator,
     private readonly consents: ConsentSource,
     private readonly history: ConsentHistory
   ) {}
 
-  async open(cwd: string): Promise<ConsentedRepository> {
+  async execute(cwd: string): Promise<ConsentedRepository> {
     const located = await this.locator.locate(cwd);
     if (located.status !== "repository") return refused(outsideReason(located));
     const repositoryId = repositoryIdOf(located);

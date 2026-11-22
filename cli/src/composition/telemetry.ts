@@ -1,14 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { ConsentedRepositories } from "../contexts/telemetry/application/consented-repositories.js";
 import { DeclareOnBranch } from "../contexts/telemetry/application/declaration/declare-on-branch.use-case.js";
 import { DeclareTask } from "../contexts/telemetry/application/declaration/declare-task.use-case.js";
 import { ParseTaskFlags } from "../contexts/telemetry/application/declaration/parse-task-flags.use-case.js";
 import { ReadCurrentBranch } from "../contexts/telemetry/application/declaration/read-current-branch.use-case.js";
 import { DirectoryResolver } from "../contexts/telemetry/application/directory-resolver.use-case.js";
+import { FindConsentedRepository } from "../contexts/telemetry/application/find-consented-repository.use-case.js";
 import { ForgetTelemetry } from "../contexts/telemetry/application/forget/forget-telemetry.use-case.js";
-import { RememberedClones } from "../contexts/telemetry/application/forget/remembered-clones.js";
+import { ReadRememberedClones } from "../contexts/telemetry/application/forget/read-remembered-clones.use-case.js";
 import { CheckIdentity } from "../contexts/telemetry/application/identity/check-identity.use-case.js";
 import { DecideIdentity } from "../contexts/telemetry/application/identity/decide-identity.use-case.js";
 import { ManageIdentity } from "../contexts/telemetry/application/identity/manage-identity.use-case.js";
@@ -18,8 +18,8 @@ import { IngestUsage } from "../contexts/telemetry/application/ingest-usage.use-
 import { ReadTelemetryStatus } from "../contexts/telemetry/application/read-telemetry-status.use-case.js";
 import { ReadUsage } from "../contexts/telemetry/application/read-usage.use-case.js";
 import { CheckFilterValue } from "../contexts/telemetry/application/report/check-filter-value.use-case.js";
-import { DeclaredBindings } from "../contexts/telemetry/application/report/declared-bindings.js";
 import { ParseReportFlags } from "../contexts/telemetry/application/report/parse-report-flags.use-case.js";
+import { ReadDeclaredBindings } from "../contexts/telemetry/application/report/read-declared-bindings.use-case.js";
 import { ReportUsage } from "../contexts/telemetry/application/report/report-usage.use-case.js";
 import { RequestReport } from "../contexts/telemetry/application/report/request-report.use-case.js";
 import { SnapshotBindings } from "../contexts/telemetry/application/snapshot-bindings.use-case.js";
@@ -156,7 +156,7 @@ function wireGit(stores: Stores) {
     consents,
     branchSource,
     branchStore: new GitBranchBindingStoreAdapter(gitEnv),
-    repositories: new ConsentedRepositories(locator, consents, stores.consentHistory),
+    repositories: new FindConsentedRepository(locator, consents, stores.consentHistory),
     snapshotBindings: new SnapshotBindings({
       source: branchSource,
       store: stores.snapshotStore,
@@ -228,7 +228,7 @@ function wireMeasurement(stores: Stores, git: Git, homedir: () => string) {
     new ReportUsage({
       ingest: ingestUsage,
       ledger: stores.ledger,
-      declared: new DeclaredBindings(stores.sessions, stores.snapshotStore, stores.identity),
+      declared: new ReadDeclaredBindings(stores.sessions, stores.snapshotStore, stores.identity),
       locator: git.locator,
       environment: processEnvironment,
     })
@@ -268,7 +268,7 @@ function forgetTelemetryOf(stores: Stores, git: Git, homedir: () => string) {
       })
     ),
     declarations: new RepositoryDeclarationsAdapter(git.gitEnv),
-    remembered: new RememberedClones(resolutionStore, consentHistory, stores.snapshotStore),
+    remembered: new ReadRememberedClones(resolutionStore, consentHistory, stores.snapshotStore),
     ledger,
   });
 }

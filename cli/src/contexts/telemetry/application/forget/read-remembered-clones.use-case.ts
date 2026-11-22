@@ -15,14 +15,14 @@ export interface Remembered {
  * consent it found there (a clone that ran `off` still holds its key), and every one that
  * consented, whether or not any session ever ran there. A snapshot carries no path of its
  * own. */
-export class RememberedClones {
+export class ReadRememberedClones {
   constructor(
     private readonly resolutions: ResolutionStore,
     private readonly history: ConsentHistory,
     private readonly snapshots: BindingSnapshotStore
   ) {}
 
-  async read(): Promise<Remembered> {
+  async execute(): Promise<Remembered> {
     const remembered = [...(await this.resolutions.load()).values()];
     const consenting = new Set(
       (await this.history.read()).events.flatMap((event) =>

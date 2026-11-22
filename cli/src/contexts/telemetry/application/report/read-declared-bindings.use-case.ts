@@ -6,14 +6,14 @@ import type { PersonIdentityStore } from "../../ports/identity/person-identity-s
 /** Everything people declared about what their work belongs to, wherever each kind is kept:
  * session declarations, the carries across a `/clear`, the snapshots of branch declarations, and
  * who the person chose to be measured as. Read whole, never narrowed to a period. */
-export class DeclaredBindings {
+export class ReadDeclaredBindings {
   constructor(
     private readonly sessions: SessionBindingStore,
     private readonly snapshots: BindingSnapshotStore,
     private readonly identity: PersonIdentityStore
   ) {}
 
-  async read(): Promise<{ readonly facts: AttributionFacts; readonly person: string | null }> {
+  async execute(): Promise<{ readonly facts: AttributionFacts; readonly person: string | null }> {
     const facts = {
       declarations: await this.sessions.declarations(),
       carries: await this.sessions.carries(),

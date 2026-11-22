@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ForgetTelemetry } from "../../../../../src/contexts/telemetry/application/forget/forget-telemetry.use-case.js";
-import { RememberedClones } from "../../../../../src/contexts/telemetry/application/forget/remembered-clones.js";
+import { ReadRememberedClones } from "../../../../../src/contexts/telemetry/application/forget/read-remembered-clones.use-case.js";
 import type { BranchSnapshot } from "../../../../../src/contexts/telemetry/domain/branch-binding.js";
 import { repositoryIdOf } from "../../../../../src/contexts/telemetry/domain/repository-identity.js";
 import { resolutionKey } from "../../../../../src/contexts/telemetry/domain/repository-resolution.js";
@@ -68,7 +68,7 @@ function setup(entries: ErasureEntry[] = [ENTRY]) {
         return { taskKeys: keys.get(clone) ?? 0, consent: consented.has(clone) };
       },
     },
-    remembered: new RememberedClones(resolutions, history, snapshots),
+    remembered: new ReadRememberedClones(resolutions, history, snapshots),
     ledger,
   });
   return { use, events, history, snapshots, resolutions, ledger, cleared, keys, consented };

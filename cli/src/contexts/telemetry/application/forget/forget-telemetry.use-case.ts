@@ -4,7 +4,7 @@ import type {
   RepositoryKeys,
 } from "../../ports/forget/repository-declarations.js";
 import type { UsageLedger } from "../../ports/usage-ledger.js";
-import type { RememberedClones } from "./remembered-clones.js";
+import type { ReadRememberedClones } from "./read-remembered-clones.use-case.js";
 
 export interface ForgetPlan {
   readonly entries: readonly ErasureEntry[];
@@ -35,7 +35,7 @@ function nothingToForget(plan: ForgetPlan): boolean {
 interface ForgetTelemetryDeps {
   readonly erasure: MeasurementErasure;
   readonly declarations: RepositoryDeclarations;
-  readonly remembered: RememberedClones;
+  readonly remembered: ReadRememberedClones;
   readonly ledger: UsageLedger;
 }
 
@@ -62,7 +62,7 @@ export class ForgetTelemetry {
 
   private async plan(): Promise<ForgetPlan> {
     const entries = await this.deps.erasure.inventory();
-    const found = await this.deps.remembered.read();
+    const found = await this.deps.remembered.execute();
     const repositories: ({ clone: string } & RepositoryKeys)[] = [];
     const missing: string[] = [];
     for (const clone of found.clones) {

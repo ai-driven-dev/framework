@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ConsentedRepositories } from "../../../../src/contexts/telemetry/application/consented-repositories.js";
+import { FindConsentedRepository } from "../../../../src/contexts/telemetry/application/find-consented-repository.use-case.js";
 import { repositoryIdOf } from "../../../../src/contexts/telemetry/domain/repository-identity.js";
 import type { LocatedDirectory } from "../../../../src/contexts/telemetry/domain/resolution/located-directory.js";
 import {
@@ -20,7 +20,7 @@ function setup(located: LocatedDirectory = repository(ROOT)) {
   locator.directories.set(ROOT, located);
   const consents = new FakeConsents();
   const history = new InMemoryConsentHistory();
-  const open = () => new ConsentedRepositories(locator, consents, history).open(ROOT);
+  const open = () => new FindConsentedRepository(locator, consents, history).execute(ROOT);
   return { consents, history, open, located };
 }
 

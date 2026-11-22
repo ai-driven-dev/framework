@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { RememberedClones } from "../../../../../src/contexts/telemetry/application/forget/remembered-clones.js";
+import { ReadRememberedClones } from "../../../../../src/contexts/telemetry/application/forget/read-remembered-clones.use-case.js";
 import type { BranchSnapshot } from "../../../../../src/contexts/telemetry/domain/branch-binding.js";
 import { cloneOf } from "../../testing/clone.builder.js";
 import { InMemoryConsentHistory } from "../../testing/in-memory-consent-history.fake.js";
@@ -26,7 +26,7 @@ function setup() {
     resolutions,
     history,
     snapshots,
-    read: () => new RememberedClones(resolutions, history, snapshots).read(),
+    read: () => new ReadRememberedClones(resolutions, history, snapshots).execute(),
   };
 }
 

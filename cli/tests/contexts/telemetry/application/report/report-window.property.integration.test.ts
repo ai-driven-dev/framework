@@ -9,7 +9,7 @@ import {
   type IngestUsageResult,
 } from "../../../../../src/contexts/telemetry/application/ingest-usage.use-case.js";
 import { storeCalls } from "../../../../../src/contexts/telemetry/application/ledger-upkeep.js";
-import { DeclaredBindings } from "../../../../../src/contexts/telemetry/application/report/declared-bindings.js";
+import { ReadDeclaredBindings } from "../../../../../src/contexts/telemetry/application/report/read-declared-bindings.use-case.js";
 import { ReportUsage } from "../../../../../src/contexts/telemetry/application/report/report-usage.use-case.js";
 import { SnapshotBindings } from "../../../../../src/contexts/telemetry/application/snapshot-bindings.use-case.js";
 import type { Period } from "../../../../../src/contexts/telemetry/contract/period.js";
@@ -255,13 +255,13 @@ async function referenceOf(input: {
   full: Awaited<ReturnType<UsageLedgerAdapter["load"]>>;
   kept: readonly StoredUsage[];
   fullLedger: UsageLedgerAdapter;
-  declared: DeclaredBindings;
+  declared: ReadDeclaredBindings;
   resolved: Typed;
   period: Period;
   axis: (typeof REPORT_AXES)[number];
 }) {
   const { full, kept, fullLedger, declared, resolved, period, axis } = input;
-  const { facts, person } = await declared.read();
+  const { facts, person } = await declared.execute();
   const selected = kept.filter((record) =>
     matchesFilter({ filters: resolved, record, attribution: attribute(record, facts), person })
   );
@@ -298,7 +298,7 @@ describe("a report on a bounded period", () => {
         const files = filesOf(calls);
         const identity = new InMemoryIdentity();
         identity.personId = "person-a";
-        const declared = new DeclaredBindings(
+        const declared = new ReadDeclaredBindings(
           new InMemorySessions(),
           new InMemorySnapshots(),
           identity

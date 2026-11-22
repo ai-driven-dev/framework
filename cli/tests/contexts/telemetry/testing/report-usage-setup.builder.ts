@@ -1,7 +1,7 @@
 import { DirectoryResolver } from "../../../../src/contexts/telemetry/application/directory-resolver.use-case.js";
 import { IngestUsage } from "../../../../src/contexts/telemetry/application/ingest-usage.use-case.js";
 import { ReadUsage } from "../../../../src/contexts/telemetry/application/read-usage.use-case.js";
-import { DeclaredBindings } from "../../../../src/contexts/telemetry/application/report/declared-bindings.js";
+import { ReadDeclaredBindings } from "../../../../src/contexts/telemetry/application/report/read-declared-bindings.use-case.js";
 import { ReportUsage } from "../../../../src/contexts/telemetry/application/report/report-usage.use-case.js";
 import { SnapshotBindings } from "../../../../src/contexts/telemetry/application/snapshot-bindings.use-case.js";
 import type { Period } from "../../../../src/contexts/telemetry/contract/period.js";
@@ -94,7 +94,7 @@ export function setup(options: { refused?: boolean } = {}) {
   const report = new ReportUsage({
     ingest,
     ledger,
-    declared: new DeclaredBindings(sessions, snapshotStore, identity),
+    declared: new ReadDeclaredBindings(sessions, snapshotStore, identity),
     locator,
     environment: {
       get: (name) => (name === "AIDD_TELEMETRY" && options.refused ? "0" : undefined),

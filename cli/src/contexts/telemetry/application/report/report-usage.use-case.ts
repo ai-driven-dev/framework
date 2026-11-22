@@ -18,7 +18,7 @@ import type { RepositoryLocator } from "../../ports/repository-locator.js";
 import type { UsageLedger } from "../../ports/usage-ledger.js";
 import type { IngestUsage, IngestUsageResult } from "../ingest-usage.use-case.js";
 import { settleLedger } from "../ledger-upkeep.js";
-import type { DeclaredBindings } from "./declared-bindings.js";
+import type { ReadDeclaredBindings } from "./read-declared-bindings.use-case.js";
 import { type AmbiguousStart, resolvedFilters } from "./resolved-filters.js";
 
 /** The filters as typed: a session or repository may be the start of an id. A repository is
@@ -83,7 +83,7 @@ interface ReportUsageDeps {
   /** Only its run is used: whatever it found is the report's `run`, never a figure. */
   readonly ingest: Pick<IngestUsage, "execute">;
   readonly ledger: UsageLedger;
-  readonly declared: DeclaredBindings;
+  readonly declared: ReadDeclaredBindings;
   readonly locator: RepositoryLocator;
   readonly environment: Environment;
 }
@@ -119,7 +119,7 @@ export class ReportUsage {
     const records = held.records.filter((record) => inPeriod(record.at, request.period));
     const filters = resolvedFilters(records, asked, located);
     if ("status" in filters) return filters;
-    const { facts, person } = await this.deps.declared.read();
+    const { facts, person } = await this.deps.declared.execute();
     const selected = records.filter((record) =>
       matchesFilter({ filters, record, attribution: attribute(record, facts), person })
     );
