@@ -23,7 +23,7 @@ export type Rule =
   | "sections"
   | "answers"
   | "repository"
-  | "translate"
+  | "manifestSpelling"
   | "scope"
   | "binary"
   | "profile"

@@ -1,8 +1,9 @@
 import { join } from "node:path";
 import { AIDD_DIR } from "../../../shared/domain/layout/aidd-layout.js";
+import { SOURCE_MARKETPLACE_RELATIVE } from "../../../shared/domain/plugin/canon-paths.js";
 
 /** Where the catalog sits inside a fetched marketplace. */
-export const MARKETPLACE_CATALOG_RELATIVE = ".claude-plugin/marketplace.json";
+export const MARKETPLACE_CATALOG_RELATIVE = SOURCE_MARKETPLACE_RELATIVE;
 
 export const MARKETPLACE_CACHE_SUBDIR = join(AIDD_DIR, "cache", "marketplaces");
 

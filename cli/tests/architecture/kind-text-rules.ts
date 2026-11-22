@@ -49,31 +49,35 @@ export function repositoryViolations(files: Readonly<Record<string, string>>): V
   return out;
 }
 
-// translate asks the tool catalog where a host keeps its manifest.
+// A host's plugin manifest path has one spelling outside the host's own profile: the canon's.
 
-const SOURCE_SPELLING = "src/contexts/translate/domain/canon-format.ts";
+const SOURCE_SPELLING = "src/shared/domain/plugin/canon-paths.ts";
+const HOST_PROFILES = "src/contexts/tools/domain/profiles/";
+const HOST_PLUGIN_DIR = /\.(claude|cursor|codex)-plugin\b/;
+const MANIFEST_PATH = /^\S*plugin\.json$/;
 
-/** A string spelling a plugin manifest path in translate, other than the canonical source's: a
- * second spelling of another host's path is a list that drifts from the profiles. */
-export function translateViolations(files: Readonly<Record<string, string>>): Violation[] {
-  const inTranslate = Object.fromEntries(
+/** A string spelling a host's plugin directory or manifest path, outside the canonical source and
+ * the profiles that own a host's spelling: a second one is a copy that drifts from the profiles. */
+export function manifestSpellingViolations(files: Readonly<Record<string, string>>): Violation[] {
+  const outsideTheOwners = Object.fromEntries(
     Object.entries(files).filter(
       ([path, text]) =>
-        path.startsWith("src/contexts/translate/") &&
+        path.startsWith("src/") &&
         path !== SOURCE_SPELLING &&
-        text.includes("plugin.json")
+        !path.startsWith(HOST_PROFILES) &&
+        (text.includes("plugin.json") || HOST_PLUGIN_DIR.test(text))
     )
   );
-  return readEach(inTranslate, (path, root) =>
+  return readEach(outsideTheOwners, (path, root) =>
     literalsOf(root)
-      .filter((text) => text.endsWith("plugin.json"))
+      .filter((text) => MANIFEST_PATH.test(text) || HOST_PLUGIN_DIR.test(text))
       .map((text) =>
         violation(
-          "translate",
+          "manifestSpelling",
           `${path} :: "${text}"`,
           "spells a host's plugin manifest path",
-          "translate learns a manifest path from the tool catalog, never from a list of its own",
-          "ask pluginManifestProbes"
+          "a manifest path comes from the canon's constants or from the tool catalog, never from a literal of its own",
+          "import it from shared/domain/plugin/canon-paths.ts or ask pluginManifestProbes"
         )
       )
   );

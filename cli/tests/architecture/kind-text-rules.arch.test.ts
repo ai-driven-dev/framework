@@ -1,5 +1,5 @@
 /**
- * The text rules of the kind gate (`kind-text-rules.ts`): what translate, a test, a repository
+ * The text rules of the kind gate (`kind-text-rules.ts`): what a manifest path, a test, a repository
  * reach and a scope spelling may say. Each is held to the case it names and then to the real
  * tree, with no violation tolerated.
  */
@@ -7,15 +7,16 @@ import { describe, expect, it } from "vitest";
 import { entries, expectNone, src, textsOf } from "./kind-rule-fixtures.js";
 import {
   binaryViolations,
+  manifestSpellingViolations,
   repositoryViolations,
   scopeViolations,
   sizeViolations,
-  translateViolations,
 } from "./kind-text-rules.js";
 import { declaredCommands, tsFilesUnder } from "./source-graph.js";
 
-describe("translate holds no list of the other hosts' manifest paths", () => {
-  const found = (path: string, text: string) => entries(translateViolations({ [path]: text }));
+describe("a host's plugin manifest path is spelled once, by the canon or by its profile", () => {
+  const found = (path: string, text: string) =>
+    entries(manifestSpellingViolations({ [path]: text }));
 
   it("sees a host manifest path written into a translate file", () => {
     expect(
@@ -23,17 +24,24 @@ describe("translate holds no list of the other hosts' manifest paths", () => {
     ).toEqual(['src/contexts/translate/x.ts :: ".cursor-plugin/plugin.json"']);
   });
 
-  it("leaves the canonical spelling, a comment and another context alone", () => {
+  it("sees a host plugin directory written into a file of another context", () => {
+    expect(
+      found("src/contexts/distribution/x.ts", 'const C = ".claude-plugin/marketplace.json";')
+    ).toEqual(['src/contexts/distribution/x.ts :: ".claude-plugin/marketplace.json"']);
+  });
+
+  it("leaves the canonical spelling, a profile, a comment and a test alone", () => {
     const text = 'const P = ".claude-plugin/plugin.json";';
-    expect(found("src/contexts/translate/domain/canon-format.ts", text)).toEqual([]);
+    expect(found("src/shared/domain/plugin/canon-paths.ts", text)).toEqual([]);
+    expect(found("src/contexts/tools/domain/profiles/claude/claude.profile.ts", text)).toEqual([]);
     expect(
       found("src/contexts/translate/x.ts", "// the plugin.json of a host\nconst a = 1;")
     ).toEqual([]);
-    expect(found("src/contexts/tools/x.ts", text)).toEqual([]);
+    expect(found("tests/contexts/translate/x.unit.test.ts", text)).toEqual([]);
   });
 
-  it("holds the translate context of the tree", () => {
-    expectNone(translateViolations(src()));
+  it("holds the sources of the tree", () => {
+    expectNone(manifestSpellingViolations(src()));
   });
 });
 
