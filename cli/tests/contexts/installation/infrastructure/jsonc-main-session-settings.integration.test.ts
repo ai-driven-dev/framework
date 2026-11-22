@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  jsoncMainSessionSettings,
   planMainModelInstall,
   planMainModelRemoval,
 } from "../../../../src/contexts/installation/infrastructure/jsonc-main-session-settings.js";
@@ -28,17 +29,13 @@ describe("main model settings", () => {
   });
 
   it("refuses a file holding no object, or a value that is not a string", () => {
-    expect(() =>
-      planMainModelInstall({ path: P, content: "[]", values: { model: "x" }, record: undefined })
-    ).toThrow("no JSON object");
-    expect(() =>
-      planMainModelInstall({
-        path: P,
-        content: '{ "model": 1 }',
-        values: { model: "x" },
-        record: undefined,
-      })
-    ).toThrow('"model" is not a string');
+    const { planInstall } = jsoncMainSessionSettings;
+    expect(
+      planInstall({ path: P, content: "[]", values: { model: "x" }, record: undefined })
+    ).toStrictEqual({ refused: "it holds no JSON object" });
+    expect(
+      planInstall({ path: P, content: '{ "model": 1 }', values: { model: "x" }, record: undefined })
+    ).toStrictEqual({ refused: '"model" is not a string' });
   });
 
   it("keeps comments and trailing commas, on install and on removal", () => {
@@ -156,6 +153,8 @@ describe("main model settings", () => {
     const record = { path: P, written: { model: "x" }, previous: { model: null }, created: false };
     expect(planMainModelRemoval(null, record)).toBeNull();
     expect(planMainModelRemoval('{"model":"mine"}', record)).toBe('{"model":"mine"}');
-    expect(() => planMainModelRemoval("// broken", record)).toThrow("no JSON object");
+    expect(jsoncMainSessionSettings.planRemoval("// broken", record)).toStrictEqual({
+      refused: "it holds no JSON object",
+    });
   });
 });
