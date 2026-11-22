@@ -1,9 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { userScopeOwnership } from "../../../../../src/contexts/machine-claims/application/ownership/user-scope-ownership.js";
-import type {
-  OwnershipMachineManifest,
-  OwnershipProjectManifest,
-} from "../../../../../src/contexts/machine-claims/ports/machine-manifest.js";
+import type { OwnershipMachineManifest } from "../../../../../src/contexts/machine-claims/ports/machine-manifest.js";
+import { ToolNotInManifestError } from "../../../../../src/shared/domain/shared.error.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
@@ -11,42 +9,19 @@ import { InMemoryMachineManifest } from "../../testing/in-memory-machine-manifes
 import { MachinePlugin } from "../../testing/machine-plugin.fake.js";
 
 const ROOT = "/test-project";
-const FILES = { "a.md": "abc" };
 const tool = TOOL.claude;
 
-class Project implements OwnershipProjectManifest {
-  private held: MachinePlugin[];
-
-  constructor(plugin: MachinePlugin) {
-    this.held = [plugin];
-  }
-
-  getPlugins() {
-    return this.held.map((held) => held.plugin);
-  }
-
-  getRecordedPlugins(): readonly MachinePlugin[] {
-    return this.held;
-  }
-
-  updatePlugin(_toolId: AiToolId, plugin: MachinePlugin): void {
-    this.held = this.held.map((held) => (held.name === plugin.name ? plugin : held));
-  }
-
-  getToolVersion(): string {
-    return "1.0.0";
-  }
-}
-
 class Machine extends InMemoryMachineManifest implements OwnershipMachineManifest {
+  readonly added: string[] = [];
   private tools = new Set<string>();
 
   hasTool(toolId: string): boolean {
     return this.tools.has(toolId);
   }
 
-  addTool(toolId: AiToolId): void {
+  addTool(toolId: AiToolId, version: string): void {
     this.tools.add(toolId);
+    this.added.push(`${toolId}@${version}`);
   }
 
   withPlugin(toolId: AiToolId, plugin: MachinePlugin): void {
@@ -58,53 +33,46 @@ class Machine extends InMemoryMachineManifest implements OwnershipMachineManifes
   }
 }
 
-const userPlugin = (files: Record<string, string>) => new MachinePlugin({ name: "sample", files });
+const userPlugin = () => new MachinePlugin({ name: "sample", files: { "a.md": "abc" } });
 const ownership = userScopeOwnership(new InMemoryFileAdapter({}, [ROOT]));
 
-function claim(project: Project, machine: Machine, installedBefore: ReadonlySet<string>) {
+function claim(machine: Machine, toolVersion: string | undefined) {
   return ownership.record({
-    project,
     machine,
-    toolIds: [tool],
+    toolId: tool,
+    plugin: userPlugin(),
+    toolVersion,
     projectRoot: ROOT,
-    installedBefore,
   });
 }
 
-describe("installedBefore", () => {
-  it("keys every plugin the manifest holds for the targeted tools", () => {
-    const keys = ownership.installedBefore(new Project(userPlugin(FILES)), [tool]);
-
-    expect([...keys]).toStrictEqual([`${tool}/sample`]);
-  });
-});
-
-describe("record", () => {
-  it("moves a newly added user-scope plugin and its files to the machine manifest", async () => {
-    const project = new Project(userPlugin(FILES));
+describe("recording a project's claim on a user-scope plugin", () => {
+  it("records the plugin on the machine with the project as its holder", async () => {
     const machine = new Machine(tool);
 
-    expect(await claim(project, machine, new Set())).toBe(true);
+    await claim(machine, "1.0.0");
 
-    const [owned] = machine.getRecordedPlugins(tool);
-    expect(owned?.machineClaim).toStrictEqual([ROOT]);
-    expect(project.getRecordedPlugins()[0]?.plugin.files.size).toBe(0);
+    expect(machine.getRecordedPlugins(tool)[0]?.machineClaim).toStrictEqual([ROOT]);
   });
 
-  it("leaves a plugin installed before this add, or one with no files, with the project", async () => {
-    const before = new Project(userPlugin(FILES));
-    const empty = new Project(userPlugin({}));
-
-    expect(await claim(before, new Machine(tool), new Set([`${tool}/sample`]))).toBe(false);
-    expect(await claim(empty, new Machine(tool), new Set())).toBe(false);
-  });
-
-  it("adds the project as a dependent of a plugin the machine already owns", async () => {
+  it("adds the project as a holder of a plugin the machine already owns", async () => {
     const machine = new Machine(tool);
-    machine.addPlugin(tool, userPlugin(FILES).withMachineClaim(["/other"]));
+    machine.addPlugin(tool, userPlugin().withMachineClaim(["/other"]));
 
-    await claim(new Project(userPlugin(FILES)), machine, new Set([`${tool}/sample`]));
+    await claim(machine, "1.0.0");
 
     expect(machine.getRecordedPlugins(tool)[0]?.machineClaim).toStrictEqual(["/other", ROOT]);
+  });
+
+  it("tracks the tool at the project's version when the machine did not", async () => {
+    const machine = new Machine(tool);
+
+    await claim(machine, "2.3.4");
+
+    expect(machine.added).toStrictEqual([`${tool}@2.3.4`]);
+  });
+
+  it("refuses a tool the project record does not track either", async () => {
+    await expect(claim(new Machine(tool), undefined)).rejects.toThrow(ToolNotInManifestError);
   });
 });
