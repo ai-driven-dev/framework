@@ -17,7 +17,7 @@ import {
   UserScopeUnsupportedAiToolsError,
 } from "../../src/orchestration/orchestration.error.js";
 
-describe("AmbiguousPluginMatchError", () => {
+describe("when several marketplaces match a plugin", () => {
   it("carries its data and says nothing itself", () => {
     const error = new AmbiguousPluginMatchError("aidd-dev", ["a", "b"]);
     expect({
@@ -40,7 +40,7 @@ describe("AmbiguousPluginMatchError", () => {
   });
 });
 
-describe("CategoryMismatchError", () => {
+describe("when a plugin's category does not match", () => {
   it("carries its data and says nothing itself", () => {
     const error = new CategoryMismatchError(["vscode"], "ai", ["claude", "cursor"]);
     expect({
@@ -82,7 +82,7 @@ describe("CategoryMismatchError", () => {
   });
 });
 
-describe("InteractiveOnlyError", () => {
+describe("when a command needs a terminal", () => {
   it("carries its data and says nothing itself", () => {
     const error = new InteractiveOnlyError("aidd setup");
     expect({ name: error.name, action: error.action, message: error.message }).toStrictEqual({
@@ -97,7 +97,7 @@ describe("InteractiveOnlyError", () => {
   });
 });
 
-describe("InvalidPluginModeConfigError", () => {
+describe("when the plugin mode config is invalid", () => {
   it("carries its data and says nothing itself", () => {
     const error = new InvalidPluginModeConfigError("bad mode");
     expect({ name: error.name, detail: error.detail, message: error.message }).toStrictEqual({
@@ -112,7 +112,7 @@ describe("InvalidPluginModeConfigError", () => {
   });
 });
 
-describe("InvalidSetupToolIdError", () => {
+describe("when a setup tool id is invalid", () => {
   it("carries its data and says nothing itself", () => {
     const error = new InvalidSetupToolIdError("zed", ["claude", "cursor"]);
     expect({
@@ -135,7 +135,7 @@ describe("InvalidSetupToolIdError", () => {
   });
 });
 
-describe("NoMarketplacesRegisteredError", () => {
+describe("when no marketplace is registered", () => {
   it("says nothing itself", () => {
     const error = new NoMarketplacesRegisteredError();
     expect({ name: error.name, message: error.message }).toStrictEqual({
@@ -149,7 +149,7 @@ describe("NoMarketplacesRegisteredError", () => {
   });
 });
 
-describe("TrustDeniedError", () => {
+describe("when trust is denied", () => {
   it("carries its data and says nothing itself", () => {
     const error = new TrustDeniedError("aidd");
     expect({
@@ -168,7 +168,7 @@ describe("TrustDeniedError", () => {
   });
 });
 
-describe("UserScopeIdeToolsError", () => {
+describe("when an IDE tool is asked at user scope", () => {
   it("carries its data and says nothing itself", () => {
     const error = new UserScopeIdeToolsError(["vscode", "zed"]);
     expect({ name: error.name, ideTools: error.ideTools, message: error.message }).toStrictEqual({
@@ -183,7 +183,7 @@ describe("UserScopeIdeToolsError", () => {
   });
 });
 
-describe("UserScopeNoToolsError", () => {
+describe("when a user-scope run names no tool", () => {
   it("says nothing itself", () => {
     const error = new UserScopeNoToolsError();
     expect({ name: error.name, message: error.message }).toStrictEqual({
@@ -197,7 +197,7 @@ describe("UserScopeNoToolsError", () => {
   });
 });
 
-describe("UserScopePluginModeError", () => {
+describe("when a user-scope run has a bad plugin mode", () => {
   it("says nothing itself", () => {
     const error = new UserScopePluginModeError();
     expect({ name: error.name, message: error.message }).toStrictEqual({
@@ -211,7 +211,7 @@ describe("UserScopePluginModeError", () => {
   });
 });
 
-describe("UserScopeUnavailableError", () => {
+describe("when user scope is unavailable", () => {
   it("says nothing itself", () => {
     const error = new UserScopeUnavailableError();
     expect({ name: error.name, message: error.message }).toStrictEqual({
@@ -225,7 +225,7 @@ describe("UserScopeUnavailableError", () => {
   });
 });
 
-describe("UserScopeUnsupportedAiToolsError", () => {
+describe("when an AI tool has no user scope", () => {
   it("carries its data and says nothing itself", () => {
     const error = new UserScopeUnsupportedAiToolsError(["cursor", "opencode"]);
     expect({ name: error.name, aiTools: error.aiTools, message: error.message }).toStrictEqual({
@@ -242,7 +242,7 @@ describe("UserScopeUnsupportedAiToolsError", () => {
   });
 });
 
-describe("SyncFailedError", () => {
+describe("when a sync fails", () => {
   it("carries its data and says nothing itself", () => {
     const error = new SyncFailedError([
       { scope: "claude", error: "x" },
@@ -268,7 +268,7 @@ describe("SyncFailedError", () => {
   });
 });
 
-describe("UnknownAiToolIdError", () => {
+describe("when an AI tool id is unknown", () => {
   it("carries its data and says nothing itself", () => {
     const error = new UnknownAiToolIdError("zed", ["claude", "cursor"]);
     expect({
@@ -289,7 +289,7 @@ describe("UnknownAiToolIdError", () => {
   });
 });
 
-describe("UserScopeFilterUnsupportedError", () => {
+describe("when a user-scope run is given a filter", () => {
   it("carries its data and says nothing itself", () => {
     const error = new UserScopeFilterUnsupportedError("--plugin", "sync");
     expect({

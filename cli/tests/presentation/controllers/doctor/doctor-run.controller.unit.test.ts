@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { concludeDoctor } from "../../../../src/presentation/controllers/doctor/doctor-run.controller.js";
 import { CapturingOutput, ExitRequested } from "../../../shared/testing/capturing-output.fake.js";
 
-describe("concludeDoctor", () => {
+describe("concluding a doctor run", () => {
   it("says the message when the run is healthy and leaves the process alone", () => {
     const output = new CapturingOutput();
 

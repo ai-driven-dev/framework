@@ -12,7 +12,7 @@ import {
   syntheticMixedCatalog,
 } from "../../shared/testing/synthetic-tool-id.builder.js";
 
-describe("agentModelsRequest", () => {
+describe("reading the agent models request", () => {
   it("names the tool that does not run the provider asked for", () => {
     expect(() =>
       agentModelsRequest("openai", [SYNTHETIC_TOOL, SECOND_SYNTHETIC_TOOL], syntheticMixedCatalog())
@@ -33,7 +33,7 @@ describe("agentModelsRequest", () => {
   });
 });
 
-describe("selectTools", () => {
+describe("selecting tools", () => {
   it("files every id under the list its category decides, --ai ones first", () => {
     expect(
       selectTools(
@@ -63,7 +63,7 @@ describe("selectTools refusal", () => {
   });
 });
 
-describe("isInteractiveRun", () => {
+describe("telling an interactive run", () => {
   it("asks on a terminal when no scripting flag was given", () => {
     expect(isInteractiveRun(true, [undefined, "", false])).toBe(true);
   });

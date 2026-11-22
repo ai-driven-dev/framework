@@ -6,7 +6,7 @@ import {
   SYNTHETIC_TOOL,
 } from "../../../shared/testing/synthetic-tool-id.builder.js";
 
-describe("printNativeActivation", () => {
+describe("printing a native activation", () => {
   it("prints nothing when every tool's CLI ran", () => {
     const output = new CapturingOutput(false);
 

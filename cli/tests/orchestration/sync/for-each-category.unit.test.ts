@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { forEachCategory } from "../../../src/orchestration/sync/for-each-category.js";
 
-describe("forEachCategory", () => {
+describe("running a step per category", () => {
   it("runs ai then ide, one after the other, and returns each result", async () => {
     const order: string[] = [];
 

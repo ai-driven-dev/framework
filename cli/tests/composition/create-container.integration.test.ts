@@ -14,7 +14,7 @@ vi.mock("../../src/composition/installation.js", async (importOriginal) => {
   return { ...actual, wireInstallation: vi.fn(actual.wireInstallation) };
 });
 
-describe("createContainer", () => {
+describe("creating a container", () => {
   const tools = catalogOf();
   let root: string;
 

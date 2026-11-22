@@ -22,7 +22,7 @@ function setup(ensureBuilt = fakeEnsureBuiltMarketplace()) {
   return { command, execute, logger };
 }
 
-describe("BuildMarketplaceForTool.forTool", () => {
+describe("building a marketplace for a tool", () => {
   it("builds nothing for a tool that is not an AI tool", async () => {
     const { command, execute } = setup();
 

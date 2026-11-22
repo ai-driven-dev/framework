@@ -9,7 +9,7 @@ const LABEL = "claude: cache for 'aidd'";
 const CANDIDATE = "/cache/aidd";
 const LOCATION = "/host/known_marketplaces.json";
 
-describe("judgeConfirmation", () => {
+describe("judging a removal's confirmation", () => {
   it("purges what a confirmed removal left behind", () => {
     expect(judgeConfirmation(LABEL, CANDIDATE, true)).toEqual({ purge: true });
   });
@@ -22,7 +22,7 @@ describe("judgeConfirmation", () => {
   });
 });
 
-describe("judgeEmptiness", () => {
+describe("judging whether a directory is empty", () => {
   it("purges a directory that holds nothing", () => {
     expect(judgeEmptiness(LABEL, CANDIDATE, 0)).toEqual({ purge: true });
   });
@@ -35,7 +35,7 @@ describe("judgeEmptiness", () => {
   });
 });
 
-describe("judgeRegistryClearance", () => {
+describe("judging the registry's clearance", () => {
   const judge = (reading: Parameters<typeof judgeRegistryClearance>[1]) =>
     judgeRegistryClearance({ binary: "claude", hostName: "aidd", candidate: CANDIDATE }, reading);
 

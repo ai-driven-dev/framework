@@ -82,7 +82,7 @@ describe("RefreshMarketplace: force", () => {
   });
 });
 
-describe("RefreshMarketplace", () => {
+describe("refreshing marketplaces end to end", () => {
   it("refreshes a registered marketplace and updates lastFetched", async () => {
     const { useCase, registry } = await buildUseCase();
     await registry.save(

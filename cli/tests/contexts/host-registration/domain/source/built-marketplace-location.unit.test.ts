@@ -7,7 +7,7 @@ import {
 } from "../../../../../src/contexts/host-registration/domain/source/built-marketplace-location.js";
 import { userBuiltMarketplaceDir } from "../../../../../src/shared/domain/layout/aidd-layout.js";
 
-describe("parseUserBuiltMarketplaceDir()", () => {
+describe("parsing a user-scope built marketplace dir", () => {
   it("tolerates a trailing separator on the path", () => {
     expect(
       parseUserBuiltMarketplaceDir("/cfg", "/cfg/cache/built/1.0.0/mkt/claude/", "linux")
@@ -99,7 +99,7 @@ describe("parseUserBuiltMarketplaceDir()", () => {
   });
 });
 
-describe("parseBuiltMarketplaceDir()", () => {
+describe("parsing a project-scope built marketplace dir", () => {
   it("is undefined for a path carrying one segment too many", () => {
     expect(parseBuiltMarketplaceDir("/p", "/p/.aidd/cache/built/mkt/claude/extra", "linux")).toBe(
       undefined
@@ -130,7 +130,7 @@ describe("parseBuiltMarketplaceDir()", () => {
   });
 });
 
-describe("parseBuiltMarketplaceDirAtAnyRoot()", () => {
+describe("parsing a built marketplace dir at any root", () => {
   it("reads back a relative project root of a single segment", () => {
     expect(
       parseBuiltMarketplaceDirAtAnyRoot("p/.aidd/cache/built/mkt/claude", "linux")

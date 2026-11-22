@@ -81,7 +81,7 @@ describe("clean --scope user: report", () => {
     });
   });
 
-  describe("order", () => {
+  describe("ordering the clean steps", () => {
     it("unregisters the marketplace through the host CLI before purging its cache", async () => {
       const order: string[] = [];
       const fs = new RecordingFileAdapter(order);

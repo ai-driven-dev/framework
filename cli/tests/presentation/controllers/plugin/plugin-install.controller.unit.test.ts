@@ -18,7 +18,7 @@ function installation() {
   return { install, activation, createDeps, output, program };
 }
 
-describe("installPluginFrom", () => {
+describe("installing a plugin from the command line", () => {
   it("installs what it was given, activates every marketplace, and names what landed", async () => {
     const { install, activation, createDeps, output, program } = installation();
 

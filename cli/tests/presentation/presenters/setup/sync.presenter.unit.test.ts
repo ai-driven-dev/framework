@@ -12,7 +12,7 @@ import {
   SYNTHETIC_TOOL,
 } from "../../../shared/testing/synthetic-tool-id.builder.js";
 
-describe("printRestoreOutcome", () => {
+describe("printing a restore outcome", () => {
   it("says nothing was modified when nothing errored, restored or resisted restoration", () => {
     const output = new CapturingOutput(false);
 
@@ -87,7 +87,7 @@ describe("printRestoreOutcome", () => {
   });
 });
 
-describe("printToolRestoreOutcome", () => {
+describe("printing a per-tool restore outcome", () => {
   it("says nothing was modified when every tool had nothing to restore", () => {
     const output = new CapturingOutput(false);
 
@@ -144,7 +144,7 @@ describe("printToolRestoreOutcome", () => {
   });
 });
 
-describe("printActivationOutcome", () => {
+describe("printing an activation outcome", () => {
   it("prints nothing when every binary was there and nothing errored", () => {
     const output = new CapturingOutput(false);
 
@@ -168,7 +168,7 @@ describe("printActivationOutcome", () => {
   });
 });
 
-describe("printUserScopeSyncOutcome", () => {
+describe("printing a user-scope sync outcome", () => {
   it("names the plugins whose global files were rebuilt, and nothing else when no host was driven", () => {
     const output = new CapturingOutput(false);
 
@@ -209,7 +209,7 @@ describe("printUserScopeSyncOutcome", () => {
   });
 });
 
-describe("printScopedFailures", () => {
+describe("printing scoped failures", () => {
   it("prints nothing when nothing failed", () => {
     const output = new CapturingOutput(false);
 

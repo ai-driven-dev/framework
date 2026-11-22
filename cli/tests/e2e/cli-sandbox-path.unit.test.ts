@@ -100,7 +100,7 @@ describe("the PATH a sandboxed run is given, on the platform nobody here can run
   });
 });
 
-describe("failedRunOf", () => {
+describe("reading a failed child run", () => {
   it("reads the output and the exit code a failed child process carries", () => {
     expect(
       failedRunOf(Object.assign(new Error("exit"), { stdout: "o", stderr: "e", code: 3 }))

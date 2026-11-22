@@ -44,7 +44,7 @@ function checkOf(
   return { useCase, marketplaces, resolve, sourcesOf };
 }
 
-describe("CheckMarketplaceUpstream", () => {
+describe("checking a marketplace upstream", () => {
   it("names an installed plugin its marketplace's catalog no longer lists", async () => {
     const { useCase } = checkOf(
       [{ marketplace: "market", plugins: new Set(["kept"]) }],

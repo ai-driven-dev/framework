@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { describeMessage } from "../../../src/presentation/errors/describe-message.presenter.js";
 import type { MessageHint } from "../../../src/shared/domain/describe-error.js";
 
-describe("describeMessage", () => {
+describe("describing an error message", () => {
   it("leaves a plain message as it is", () => {
     expect(describeMessage("done")).toBe("done");
   });

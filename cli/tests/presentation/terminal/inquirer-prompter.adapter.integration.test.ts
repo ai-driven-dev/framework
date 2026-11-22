@@ -13,8 +13,8 @@ function makeAdapter() {
   return { adapter, inputStream };
 }
 
-describe("InquirerPrompterAdapter", () => {
-  describe("confirm()", () => {
+describe("prompting through the terminal", () => {
+  describe("when asked to confirm", () => {
     it("returns true when user types y", async () => {
       const { adapter, inputStream } = makeAdapter();
       const result = adapter.confirm("Continue?");
@@ -37,7 +37,7 @@ describe("InquirerPrompterAdapter", () => {
     });
   });
 
-  describe("input()", () => {
+  describe("when asked for text", () => {
     it("returns typed text", async () => {
       const { adapter, inputStream } = makeAdapter();
       const result = adapter.input("Enter name:");
@@ -60,7 +60,7 @@ describe("InquirerPrompterAdapter", () => {
     });
   });
 
-  describe("select()", () => {
+  describe("when asked to select", () => {
     it("returns the first choice when user presses Enter", async () => {
       const { adapter, inputStream } = makeAdapter();
       const result = adapter.select("Pick:", [
@@ -82,7 +82,7 @@ describe("InquirerPrompterAdapter", () => {
     });
   });
 
-  describe("checkbox()", () => {
+  describe("when asked to check items", () => {
     it("returns pre-checked items when user presses Enter immediately", async () => {
       const { adapter, inputStream } = makeAdapter();
       const result = adapter.checkbox("Pick:", [
@@ -114,7 +114,7 @@ describe("InquirerPrompterAdapter", () => {
     });
   });
 
-  describe("resolveConflict()", () => {
+  describe("when asked to resolve a conflict", () => {
     it("returns overwrite when user presses Enter (first choice)", async () => {
       const { adapter, inputStream } = makeAdapter();
       const result = adapter.resolveConflict("src/foo.ts", "modified");

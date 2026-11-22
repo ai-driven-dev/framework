@@ -35,7 +35,7 @@ function question(overrides: Partial<WhichMatchQuestion>): WhichMatchQuestion {
   };
 }
 
-describe("askWhichMatch", () => {
+describe("asking which marketplace matches", () => {
   it("takes the only match without asking", async () => {
     const prompter = new ScriptedPrompter([]);
 

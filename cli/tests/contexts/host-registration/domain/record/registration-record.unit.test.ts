@@ -48,7 +48,7 @@ describe("registration record: what a tool's own CLI was asked to register", () 
     );
   });
 
-  describe("serialized", () => {
+  describe("serializing a registration", () => {
     it("carries the binary, every marketplace pair and every plugin ref", () => {
       expect(registrationRecordData(registrations)).toStrictEqual({
         binary: "claude",
@@ -58,7 +58,7 @@ describe("registration record: what a tool's own CLI was asked to register", () 
     });
   });
 
-  describe("read", () => {
+  describe("reading a registration", () => {
     it("keeps an absent registration absent", () => {
       expect(readRegistrationRecord(undefined)).toBeUndefined();
     });
@@ -169,7 +169,7 @@ describe("registration record queries and removals", () => {
     expect(refOf(recordWith(), "p", undefined)).toBeUndefined();
   });
 
-  describe("withoutRef", () => {
+  describe("dropping a ref", () => {
     it("drops only that ref and keeps every other field untouched", () => {
       const record = recordWith();
       const next = withoutRef(record, "b@second");
@@ -189,7 +189,7 @@ describe("registration record queries and removals", () => {
     });
   });
 
-  describe("withoutMarketplace", () => {
+  describe("dropping a marketplace", () => {
     it("drops the alias, and the refs on its host name, leaving the claims as they were", () => {
       const record = recordWith();
       const next = withoutMarketplace(record, "local");
@@ -214,7 +214,7 @@ describe("registration record queries and removals", () => {
     });
   });
 
-  describe("registrationPreview", () => {
+  describe("previewing a registration", () => {
     it("counts the registrations and joins each host name under the cache root", () => {
       expect(registrationPreview(recordWith(), "/cache")).toEqual({
         binary: "claude",
@@ -229,7 +229,7 @@ describe("registration record queries and removals", () => {
     });
   });
 
-  describe("refsOnHosts", () => {
+  describe("keeping refs on proven hosts", () => {
     const claimed = ["a@catalog", "b@second"];
 
     it("keeps the refs and claimed refs on a proven host, refs first", () => {
@@ -250,7 +250,7 @@ describe("registration record queries and removals", () => {
     });
   });
 
-  describe("marketplaceOf", () => {
+  describe("finding a marketplace's registration", () => {
     it("finds the registration of an alias", () => {
       const record = recordWith();
       expect(marketplaceOf(record, "other")).toEqual(record.marketplaces[1]);

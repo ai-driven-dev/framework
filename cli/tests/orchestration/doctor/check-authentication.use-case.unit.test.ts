@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CheckAuthentication } from "../../../src/orchestration/doctor/check-authentication.use-case.js";
 
-describe("CheckAuthentication", () => {
+describe("checking authentication", () => {
   it("reports an info line when no token resolves", async () => {
     const issues = await new CheckAuthentication({ resolve: async () => null }).execute();
 

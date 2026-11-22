@@ -17,7 +17,7 @@ import {
   SYNTHETIC_TOOL,
 } from "../../shared/testing/synthetic-tool-id.builder.js";
 
-describe("printPluginIssues", () => {
+describe("printing plugin issues", () => {
   it("prints nothing when there are no issues", () => {
     const output = new CapturingOutput(false);
 
@@ -63,7 +63,7 @@ describe("printPluginIssues", () => {
   });
 });
 
-describe("printScopeIssues", () => {
+describe("printing a scope's issues", () => {
   it("prints nothing when the scope was never reported on", () => {
     const output = new CapturingOutput(false);
 
@@ -138,7 +138,7 @@ describe("printScopeIssues", () => {
   });
 });
 
-describe("printInventory", () => {
+describe("printing the inventory of a category", () => {
   it("prints nothing when the category holds no tool", () => {
     const output = new CapturingOutput(false);
 
@@ -195,7 +195,7 @@ describe("printInventory", () => {
   });
 });
 
-describe("printReportErrors", () => {
+describe("printing the errors of a run", () => {
   it("prints nothing when the run reported no error", () => {
     const output = new CapturingOutput(false);
 
@@ -213,7 +213,7 @@ describe("printReportErrors", () => {
   });
 });
 
-describe("printAllToolsDrift", () => {
+describe("printing drift for every tool", () => {
   it("heads drift, then reports AI tools, IDE tools and plugins in that order", () => {
     const output = new CapturingOutput(false);
 
@@ -235,7 +235,7 @@ describe("printAllToolsDrift", () => {
   });
 });
 
-describe("printToolDrift", () => {
+describe("printing drift for one tool", () => {
   it("heads drift, then reports the one tool and its plugins, naming no category", () => {
     const output = new CapturingOutput(false);
 
@@ -253,7 +253,7 @@ describe("printToolDrift", () => {
   });
 });
 
-describe("printUserScopeTools", () => {
+describe("printing the machine-wide tools", () => {
   it("heads the machine-wide tools even when none is registered", () => {
     const output = new CapturingOutput(false);
 

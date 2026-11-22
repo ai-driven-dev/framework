@@ -4,7 +4,7 @@ import { MarketplaceSourceConflictError } from "../../../../../../src/contexts/h
 import { userBuiltMarketplaceDir } from "../../../../../../src/shared/domain/layout/aidd-layout.js";
 import { catalogAt, DIR, setup } from "../../../testing/registration-run.builder.js";
 
-describe("guardAgainstConflict", () => {
+describe("guarding a catalog against a name conflict", () => {
   const requested = { name: "aidd", pluginNames: ["a"] };
   const subject = { name: "aidd", scope: "project" as const };
 

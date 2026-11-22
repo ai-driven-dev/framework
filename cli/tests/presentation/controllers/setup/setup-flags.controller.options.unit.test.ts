@@ -15,7 +15,7 @@ import {
   syntheticMixedCatalog,
 } from "../../../shared/testing/synthetic-tool-id.builder.js";
 
-describe("parseSourceFlag", () => {
+describe("reading the --source flag", () => {
   it("chooses no source at all when --source was not given", () => {
     const output = new CapturingOutput(false);
 
@@ -47,7 +47,7 @@ describe("parseSourceFlag", () => {
   });
 });
 
-describe("parseToolIds", () => {
+describe("reading the tool id flags", () => {
   it("selects no tool at all when neither category was given", () => {
     expect(parseToolIds({}, syntheticMixedCatalog())).toEqual({
       aiTools: [],
@@ -72,7 +72,7 @@ describe("parseToolIds", () => {
   });
 });
 
-describe("expandAllKeyword", () => {
+describe("expanding the all keyword", () => {
   it("selects nothing when the flag was not given", () => {
     expect(expandAllKeyword(undefined, syntheticMixedCatalog().idsInCanonicalOrder("ai"))).toEqual(
       []
@@ -98,7 +98,7 @@ describe("expandAllKeyword", () => {
   });
 });
 
-describe("parsePluginsFlag", () => {
+describe("reading the --plugins flag", () => {
   it("asks on a terminal when --plugins was not given", () => {
     expect(parsePluginsFlag(undefined, true)).toEqual({ mode: "interactive", names: [] });
   });
@@ -121,7 +121,7 @@ describe("parsePluginsFlag", () => {
   });
 });
 
-describe("requireAgentHosts", () => {
+describe("requiring a host that runs the agents", () => {
   it("asks for an --ide tool that runs the agents when none was given", () => {
     expect(() => requireAgentHosts("openai", { hosts: [], runnable: ["claude", "codex"] })).toThrow(
       "--provider needs --ide with a tool that runs the framework's agents: claude, codex."

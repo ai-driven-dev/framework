@@ -2,7 +2,7 @@ import { PassThrough } from "node:stream";
 import { describe, expect, it } from "vitest";
 import { waitForEnter } from "../../../src/presentation/terminal/wait-for-enter.js";
 
-describe("waitForEnter", () => {
+describe("waiting for ENTER", () => {
   it("shows the prompt and stays pending until ENTER is pressed", async () => {
     const input = new PassThrough();
     const output = new PassThrough();

@@ -6,7 +6,7 @@ import {
 
 const refused = () => ({ detail: "exit 1" });
 
-describe("bestEffortNativeCall", () => {
+describe("confirming a native host call", () => {
   it("confirms a call that ran to completion, with no warning", () => {
     const warnings: string[] = [];
 
@@ -46,7 +46,7 @@ describe("bestEffortNativeCall", () => {
   });
 });
 
-describe("skippedWarning", () => {
+describe("wording a skipped native step", () => {
   it("words a refused native step with its label and the host's reason", () => {
     expect(skippedWarning("register marketplace 'aidd'")("exit 1")).toBe(
       "Native plugin activation — register marketplace 'aidd' skipped: exit 1"

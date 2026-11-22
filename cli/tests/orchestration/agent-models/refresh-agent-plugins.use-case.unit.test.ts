@@ -51,7 +51,7 @@ function refreshOver(placed: Placed, activationErrors: string[] = []) {
   return { run, calls, activations };
 }
 
-describe("RefreshAgentPlugins", () => {
+describe("refreshing agent plugins", () => {
   it("does nothing when no host has a plugin placed", async () => {
     const { run, calls, activations } = refreshOver({});
 

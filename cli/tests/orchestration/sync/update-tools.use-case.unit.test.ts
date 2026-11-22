@@ -56,7 +56,7 @@ async function installed(...toolIds: Parameters<typeof installTool>[2][]): Promi
   return deps;
 }
 
-describe("UpdateTools", () => {
+describe("updating tools", () => {
   it("returns an empty result when nothing is installed", async () => {
     const { useCase } = build(await buildInstallationDeps({ tools: syntheticMixedCatalog() }));
 

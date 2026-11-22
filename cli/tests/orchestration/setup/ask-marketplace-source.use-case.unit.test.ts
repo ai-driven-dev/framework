@@ -21,7 +21,7 @@ function makeResolver(rootReleases: string[]): ReleaseLister & RepositoryVisibil
 
 const PROJECT_ROOT = "/test-project";
 
-describe("AskMarketplaceSource", () => {
+describe("asking for a marketplace source", () => {
   describe("non-interactive auto-resolve path", () => {
     it("pins the newest root release when no ref given", async () => {
       const resolver = makeResolver(["v2.3.4", "v2.3.3"]);

@@ -19,7 +19,7 @@ const CLAUDE_INSTALLED = {
   warnings: [],
 };
 
-describe("printWelcomeBanner", () => {
+describe("printing the welcome banner", () => {
   it("frames the run between two blank lines and names what it is about to wire", () => {
     const output = new CapturingOutput(false);
 
@@ -35,7 +35,7 @@ describe("printWelcomeBanner", () => {
   });
 });
 
-describe("printNextSteps", () => {
+describe("printing the next steps", () => {
   it("offers doctor first when something was installed", () => {
     const output = new CapturingOutput(false);
 
@@ -66,7 +66,7 @@ describe("printNextSteps", () => {
   });
 });
 
-describe("printDetectedContext", () => {
+describe("printing the detected context", () => {
   it("names what the project was detected as, ended by a full stop", () => {
     const output = new CapturingOutput(false);
 
@@ -76,7 +76,7 @@ describe("printDetectedContext", () => {
   });
 });
 
-describe("printSetupOutcome", () => {
+describe("printing a setup outcome", () => {
   it("announces a first install as initialized", () => {
     const output = new CapturingOutput(false);
 

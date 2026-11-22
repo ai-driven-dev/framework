@@ -18,7 +18,7 @@ const flow = new SetupFlow({
   interactive: false,
 });
 
-describe("InstallSetupTools", () => {
+describe("installing the setup tools", () => {
   describe("when nothing asks the person", () => {
     it("installs the tools the flow names, forced and at the current version", async () => {
       const execute = vi.fn().mockResolvedValue("installed");

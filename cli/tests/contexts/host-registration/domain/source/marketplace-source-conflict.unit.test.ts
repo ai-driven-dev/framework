@@ -12,7 +12,7 @@ const IDENTITY_A = { name: "probe-mkt", pluginNames: ["sample-plugin"] };
 const IDENTITY_A_SAME = { name: "probe-mkt", pluginNames: ["sample-plugin"] };
 const IDENTITY_B = { name: "probe-mkt", pluginNames: ["other-plugin"] };
 
-describe("marketplaceSourceConflict", () => {
+describe("detecting a marketplace source conflict", () => {
   it("is not a conflict when the registry could not be read", () => {
     const reading = { location: LOCATION, unreadable: "ENOENT" };
 
@@ -210,7 +210,7 @@ describe("describePluginDiff, with several names on each side", () => {
   });
 });
 
-describe("judgeConflict", () => {
+describe("judging a source conflict", () => {
   it("proceeds when no different catalog holds the name", () => {
     expect(judgeConflict(undefined)).toStrictEqual({ outcome: "proceed" });
   });

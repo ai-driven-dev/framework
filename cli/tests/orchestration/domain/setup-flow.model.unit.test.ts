@@ -35,7 +35,7 @@ function makeFlow(overrides: Partial<ConstructorParameters<typeof SetupFlow>[0]>
   });
 }
 
-describe("SetupFlow", () => {
+describe("building a setup flow", () => {
   describe("constructor validation", () => {
     it("throws InvalidSetupToolIdError for unknown AI tool IDs, naming every valid one", () => {
       expect(() => makeFlow({ aiTools: ["unknown-tool"] })).toThrow(InvalidSetupToolIdError);
@@ -123,7 +123,7 @@ describe("SetupFlow", () => {
     });
   });
 
-  describe("scope", () => {
+  describe("choosing the setup scope", () => {
     it("defaults to project", () => {
       expect(makeFlow().scope).toBe("project");
     });

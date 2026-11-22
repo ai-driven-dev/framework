@@ -11,7 +11,7 @@ import {
 
 const NO_PREVIEW = { tools: [], nativeRegistrations: [], totalFileCount: 0 };
 
-describe("printProjectCleanOutcome", () => {
+describe("printing a project clean outcome", () => {
   it("says nothing is there to clean when no manifest was found", () => {
     const output = new CapturingOutput(false);
 
@@ -167,7 +167,7 @@ describe("printProjectCleanOutcome", () => {
   });
 });
 
-describe("printUserScopeCleanOutcome", () => {
+describe("printing a user-scope clean outcome", () => {
   it("names each tool, the built versions and the referencing projects before removing anything", () => {
     const output = new CapturingOutput(false);
 

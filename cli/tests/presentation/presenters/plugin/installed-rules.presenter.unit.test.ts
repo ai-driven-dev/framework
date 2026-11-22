@@ -9,7 +9,7 @@ import {
   SYNTHETIC_TOOL,
 } from "../../../shared/testing/synthetic-tool-id.builder.js";
 
-describe("printInstalledRulesJson", () => {
+describe("printing installed rules as JSON", () => {
   it("prints an empty inventory as an empty array, not as nothing", () => {
     const output = new CapturingOutput(false);
 
@@ -37,7 +37,7 @@ describe("printInstalledRulesJson", () => {
   });
 });
 
-describe("printInstalledRules", () => {
+describe("printing installed rules as text", () => {
   it("says no rule is installed rather than printing nothing", () => {
     const output = new CapturingOutput(false);
 

@@ -9,7 +9,7 @@ const OUTCOME = {
   failed: true,
 };
 
-describe("SyncNativeActivation", () => {
+describe("syncing native activation", () => {
   it("re-drives every registered marketplace when none is named, and hands back what the sync reported", async () => {
     const syncSettings = { execute: vi.fn().mockResolvedValue(OUTCOME) };
 

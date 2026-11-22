@@ -84,7 +84,7 @@ async function register(
   return refresh;
 }
 
-describe("RegisterMarketplace", () => {
+describe("registering a marketplace", () => {
   describe("catalog refresh", () => {
     it("refreshes the catalog when the environment carries no skip switch", async () => {
       const refresh = await register(new InMemoryEnvironment());

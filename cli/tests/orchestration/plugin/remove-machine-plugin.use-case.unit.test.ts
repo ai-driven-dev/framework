@@ -3,7 +3,7 @@ import type { RemoveUserPluginRequest } from "../../../src/contexts/installation
 import { RemoveMachinePlugin } from "../../../src/orchestration/plugin/remove-machine-plugin.use-case.js";
 import { SYNTHETIC_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
 
-describe("RemoveMachinePlugin", () => {
+describe("removing a machine plugin", () => {
   it("hands the command and the host registration's claimed ref rules to the user-scope removal", async () => {
     const records = {
       isQualifiedRef: () => false,

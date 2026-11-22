@@ -159,7 +159,7 @@ describe("marketplaceSourceDrift - a pre-migration cache of another catalog is n
   });
 });
 
-describe("judgeDrift", () => {
+describe("judging source drift", () => {
   it("skips a host already following a newer build, carrying both versions", () => {
     expect(
       judgeDrift({
@@ -181,7 +181,7 @@ describe("judgeDrift", () => {
   });
 });
 
-describe("isDriftFound", () => {
+describe("telling whether a drift was found", () => {
   const source = { name: "aidd-framework", registeredSource: "/a", requestedSource: "/b" };
 
   it("is false for no check at all", () => {

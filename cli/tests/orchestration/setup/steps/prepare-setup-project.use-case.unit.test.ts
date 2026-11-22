@@ -42,7 +42,7 @@ function prepareOver(parts: { initialized?: boolean; withDetector?: boolean } = 
   return { prepare, calls, context, resolveSource, register, initializeIfAbsent };
 }
 
-describe("PrepareSetupProject", () => {
+describe("preparing a setup project", () => {
   describe("when a project is set up", () => {
     it("detects, resolves the source, initializes, then registers, in that order", async () => {
       const { prepare, calls } = prepareOver();

@@ -16,7 +16,7 @@ function flowOf(params: Partial<ConstructorParameters<typeof SetupFlow>[0]> = {}
   });
 }
 
-describe("ResolveSetupSource", () => {
+describe("resolving the setup source", () => {
   it("asks for no source when the flow opts out of the default marketplace", async () => {
     const resolve = vi.fn();
 

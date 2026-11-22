@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { assertActivated } from "../../../src/orchestration/domain/activation-outcome.model.js";
 import { SyncFailedError } from "../../../src/orchestration/orchestration.error.js";
 
-describe("assertActivated", () => {
+describe("asserting an activation succeeded", () => {
   it("lets an activation that did not fail through, warnings or not", () => {
     expect(() =>
       assertActivated({ errors: [{ scope: "claude", error: "x" }], failed: false })

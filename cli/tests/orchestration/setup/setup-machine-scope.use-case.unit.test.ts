@@ -72,7 +72,7 @@ function build(initialized: boolean) {
   return { useCase, calls, register, sync, installPlugins, configuredTools };
 }
 
-describe("SetupMachineScope", () => {
+describe("setting up the machine scope", () => {
   it("resolves the source first, then works inside the machine configuration in order", async () => {
     const { useCase, calls } = build(true);
 

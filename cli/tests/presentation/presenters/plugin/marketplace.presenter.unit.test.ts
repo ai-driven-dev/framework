@@ -26,7 +26,7 @@ function catalog(entries: PluginCatalog["plugins"]): PluginCatalog {
   return { plugins: entries };
 }
 
-describe("printCatalogEntries", () => {
+describe("printing a catalog's entries", () => {
   it("warns instead of listing when the catalog could not be fetched", () => {
     const output = new CapturingOutput(false);
 
@@ -80,7 +80,7 @@ describe("printCatalogEntries", () => {
   });
 });
 
-describe("printRegisteredMarketplaces", () => {
+describe("printing registered marketplaces", () => {
   it("says none is registered rather than printing nothing", () => {
     const output = new CapturingOutput(false);
 
@@ -115,7 +115,7 @@ describe("printRegisteredMarketplaces", () => {
   });
 });
 
-describe("printMarketplaceRegistered", () => {
+describe("printing a registered marketplace", () => {
   it("names the marketplace that was registered", () => {
     const output = new CapturingOutput(false);
 
@@ -125,7 +125,7 @@ describe("printMarketplaceRegistered", () => {
   });
 });
 
-describe("printMarketplaceRemoved", () => {
+describe("printing a removed marketplace", () => {
   it("names the marketplace and how many plugins went with it", () => {
     const output = new CapturingOutput(false);
 
@@ -135,7 +135,7 @@ describe("printMarketplaceRemoved", () => {
   });
 });
 
-describe("printRefreshResults", () => {
+describe("printing refresh results", () => {
   it("prints a status per marketplace, appending an error only where there is one", () => {
     const output = new CapturingOutput(false);
 
@@ -148,7 +148,7 @@ describe("printRefreshResults", () => {
   });
 });
 
-describe("printMarketplaceCheck", () => {
+describe("printing an upstream check", () => {
   it("reports everything fresh when nothing is stale, removed or skipped", () => {
     const output = new CapturingOutput(false);
 

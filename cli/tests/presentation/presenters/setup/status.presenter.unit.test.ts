@@ -10,7 +10,7 @@ import {
   SYNTHETIC_TOOL,
 } from "../../../shared/testing/synthetic-tool-id.builder.js";
 
-describe("printScopeReport", () => {
+describe("printing a scope report", () => {
   it("says nothing is installed when the scope carries no tool", () => {
     const output = new CapturingOutput(false);
 
@@ -76,7 +76,7 @@ describe("printScopeReport", () => {
   });
 });
 
-describe("printDriftStats", () => {
+describe("printing drift counts", () => {
   it("counts each drift kind on one line", () => {
     const output = new CapturingOutput(false);
 
@@ -93,7 +93,7 @@ describe("printDriftStats", () => {
   });
 });
 
-describe("printPluginDrift", () => {
+describe("printing plugin drift", () => {
   it("prints '(all in sync)' only when nothing was skipped and nothing drifted", () => {
     const output = new CapturingOutput(false);
 

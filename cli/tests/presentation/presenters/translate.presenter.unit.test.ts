@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { printTranslateResult } from "../../../src/presentation/presenters/translate.presenter.js";
 import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
 
-describe("printTranslateResult", () => {
+describe("printing a translate result", () => {
   it("says what was built and where, for a marketplace layout", () => {
     const output = new CapturingOutput(false);
 

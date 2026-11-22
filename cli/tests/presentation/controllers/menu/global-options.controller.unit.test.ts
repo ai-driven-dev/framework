@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { parseScopeFlag } from "../../../../src/presentation/controllers/menu/global-options.controller.js";
 import { CapturingOutput, ExitRequested } from "../../../shared/testing/capturing-output.fake.js";
 
-describe("parseScopeFlag()", () => {
+describe("reading the scope flag", () => {
   it("returns undefined when no flag was given", () => {
     expect(parseScopeFlag(undefined, new CapturingOutput())).toBeUndefined();
   });

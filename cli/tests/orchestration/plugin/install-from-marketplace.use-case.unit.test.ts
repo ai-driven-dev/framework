@@ -49,7 +49,7 @@ function build(matches: PluginSourceMatch[], chosenName = "") {
   return { useCase, added, logger, resolve };
 }
 
-describe("InstallFromMarketplace", () => {
+describe("installing a plugin from a marketplace", () => {
   it("adds the plugin from the one marketplace that lists it, with its catalog metadata", async () => {
     const { useCase, added, resolve } = build([match("one", "1.0.0", true)]);
 

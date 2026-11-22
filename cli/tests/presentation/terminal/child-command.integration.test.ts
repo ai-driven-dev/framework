@@ -21,7 +21,7 @@ async function entryExitingWithFirstArgument(): Promise<string> {
   return entry;
 }
 
-describe("spawnCliCommand", () => {
+describe("spawning a command of the CLI", () => {
   it("runs the entry with the command as its arguments and answers the exit code", async () => {
     const entry = await entryExitingWithFirstArgument();
 

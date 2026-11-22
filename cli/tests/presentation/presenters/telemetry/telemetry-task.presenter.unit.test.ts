@@ -7,7 +7,7 @@ import {
 } from "../../../../src/presentation/presenters/telemetry/telemetry-task.presenter.js";
 import { linesOf } from "../../../shared/testing/printed-lines.builder.js";
 
-describe("printDeclareResult", () => {
+describe("printing a declared task", () => {
   const declaration = {
     task: "checkout",
     ticket: "P-1",
@@ -76,7 +76,7 @@ describe("printDeclareResult", () => {
   });
 });
 
-describe("printTelemetryStatus", () => {
+describe("printing the telemetry status", () => {
   const shown = (
     over: Partial<Extract<ReadTelemetryStatusResult, { status: "shown" }>>
   ): ReadTelemetryStatusResult => ({

@@ -40,7 +40,7 @@ function listOf(
   return { useCase, resolve, logger };
 }
 
-describe("ListMarketplaceCatalogs", () => {
+describe("listing marketplace catalogs", () => {
   it("keys each catalog by its marketplace and re-fetches it", async () => {
     const catalog = catalogOf("p");
     const { useCase, resolve } = listOf([view("a")], { a: catalog });

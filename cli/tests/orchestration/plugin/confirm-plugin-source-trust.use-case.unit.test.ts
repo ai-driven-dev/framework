@@ -27,7 +27,7 @@ function build(answer: boolean) {
   return { store, prompter, confirm };
 }
 
-describe("ConfirmPluginSourceTrust", () => {
+describe("confirming a plugin source's trust", () => {
   it("asks about an unknown source and trusts it once confirmed", async () => {
     const { store, prompter, confirm } = build(true);
 

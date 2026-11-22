@@ -73,7 +73,7 @@ function ensurerOf(journal: string[] = []) {
   };
 }
 
-describe("EnsureBuiltMarketplace", () => {
+describe("ensuring a built marketplace", () => {
   it.each([{ forceRefresh: true }, { forceRefresh: false }, { forceRefresh: undefined }])(
     "asks the resolver for exactly the marketplace, project and refresh flag ($forceRefresh)",
     async ({ forceRefresh }) => {

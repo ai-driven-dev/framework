@@ -108,7 +108,7 @@ const cursor = activatingTool("machine-wide", false);
 const CLAUDE = claude.toolId;
 const CURSOR = cursor.toolId;
 
-describe("RemovePlugin", () => {
+describe("removing a plugin", () => {
   it("asks nothing of the host about a plugin that carries no marketplace", async () => {
     const { steps, host } = await stepsOf();
     const reach = { tool: claude, plugin: plugin(undefined), projectRoot: ROOT, registrations: {} };

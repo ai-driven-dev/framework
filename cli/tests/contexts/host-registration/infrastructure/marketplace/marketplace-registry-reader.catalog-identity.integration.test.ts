@@ -15,7 +15,7 @@ function fsWithCatalog(catalog: unknown): InMemoryFileAdapter {
   return new InMemoryFileAdapter({ [CATALOG_PATH]: JSON.stringify(catalog) });
 }
 
-describe("catalogIdentityReader", () => {
+describe("reading a declared catalog's identity", () => {
   it("answers no identity when the declared catalog does not exist", async () => {
     expect(
       await catalogIdentityReader(new InMemoryFileAdapter()).read(

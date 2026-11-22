@@ -22,7 +22,7 @@ const plugin = RecordedPlugin.fromJSON({
   marketplace: "framework",
 });
 
-describe("pluginRefRecords", () => {
+describe("keeping plugin refs in the record", () => {
   it("reads the plugin's ref from the record under the marketplace it came from", () => {
     const { rules, records } = recordsOf();
     const recorded = { pluginRefs: ["aidd-dev@framework"] };

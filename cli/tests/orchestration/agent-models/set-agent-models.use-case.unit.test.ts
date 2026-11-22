@@ -102,7 +102,7 @@ function setup(
   return { fs, useCase, updates, userUpdates, activations };
 }
 
-describe("SetAgentModels", () => {
+describe("setting agent models", () => {
   it("records the provider machine-wide, re-installs this project's plugins, then sets the main session", async () => {
     const { fs, useCase, updates, activations } = setup((manifest) => {
       manifest.addTool(HOST.mcp, "1.0.0", []);
