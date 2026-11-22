@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   PrivateStorageAdapter,
   type PrivateStorageHost,
-} from "../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
+} from "../../../src/shared/infrastructure/private-storage-adapter.js";
 
 const posix = process.platform === "win32" ? it.skip : it;
 let dir: string;
@@ -140,7 +140,7 @@ describe("a private directory on the machine itself, as Windows", () => {
     vi.stubEnv("USERNAME", "someone");
     Object.defineProperty(process, "platform", { value: "win32" });
     const { PrivateStorageAdapter: Fresh } = await import(
-      "../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js"
+      "../../../src/shared/infrastructure/private-storage-adapter.js"
     );
 
     await new Fresh().ensureDirectory(join(dir, "ledger"));
@@ -178,6 +178,18 @@ describe("replacing a file", () => {
     const path = join(dir, "missing", "f.json");
 
     await expect(storage.replace(path, "x")).rejects.toMatchObject({ syscall: "open" });
+  });
+});
+
+describe("reading a file", () => {
+  it("returns what it holds", async () => {
+    const path = join(dir, "f.json");
+    await writeFile(path, "nouvelle étape");
+    expect(await storage.read(path)).toBe("nouvelle étape");
+  });
+
+  it("returns nothing for a file that is not there", async () => {
+    expect(await storage.read(join(dir, "missing.json"))).toBeUndefined();
   });
 });
 

@@ -2,7 +2,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { BindingsLockAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/declarations/bindings-lock-adapter.js";
-import { PrivateStorageAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
+import { PrivateStorageAdapter } from "../../../../src/shared/infrastructure/private-storage-adapter.js";
 import {
   type BindingsLockSubject,
   describeBindingsLockContract,

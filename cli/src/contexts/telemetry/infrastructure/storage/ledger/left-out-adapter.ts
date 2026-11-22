@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
+import type { PrivateStorage } from "../../../../../shared/ports/private-storage.js";
 import { compareText } from "../../../domain/text-order.js";
-import type { PrivateStorage } from "../../../ports/private-storage.js";
 import type { LeftOutEntry, LeftOutReason, LeftOutStore } from "../../../ports/usage-ledger.js";
 import { readTextIfPresent } from "../../reading/text-file.js";
 

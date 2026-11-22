@@ -6,7 +6,7 @@ import { SnapshotBindings } from "../../../../../../src/contexts/telemetry/appli
 import { BindingsLockAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/declarations/bindings-lock-adapter.js";
 import { BindingSnapshotStoreAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/binding-snapshot-store-adapter.js";
 import { UsageLedgerAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
-import { PrivateStorageAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
+import { PrivateStorageAdapter } from "../../../../../../src/shared/infrastructure/private-storage-adapter.js";
 import { FakeBindings } from "../../../testing/fake-bindings.fake.js";
 import { NO_ALIASES } from "../../../testing/no-aliases.fake.js";
 

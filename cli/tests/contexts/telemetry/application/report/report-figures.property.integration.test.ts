@@ -26,7 +26,7 @@ import { declarationOf } from "../../../../../src/contexts/telemetry/domain/decl
 import { conflictsOf } from "../../../../../src/contexts/telemetry/domain/report/report-filter.js";
 import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/stored-usage.js";
 import { UsageLedgerAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
-import { PrivateStorageAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
+import { PrivateStorageAdapter } from "../../../../../src/shared/infrastructure/private-storage-adapter.js";
 import { FakeLocator } from "../../testing/fake-locator.fake.js";
 import { InMemoryIdentity } from "../../testing/in-memory-identity.fake.js";
 import { InMemorySessions } from "../../testing/in-memory-sessions.fake.js";

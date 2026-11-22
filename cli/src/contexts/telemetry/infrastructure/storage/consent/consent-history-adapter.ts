@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import type { PrivateStorage } from "../../../../../shared/ports/private-storage.js";
 import {
   type ConsentEvent,
   type ConsentRecords,
@@ -6,7 +7,6 @@ import {
   renderConsentEvent,
 } from "../../../domain/consent/consent-history.js";
 import type { ConsentHistory } from "../../../ports/consent-history.js";
-import type { PrivateStorage } from "../../../ports/private-storage.js";
 import { readTextIfPresent } from "../../reading/text-file.js";
 
 /** `consents.jsonl`, in the ledger directory: append-only, one event a line, written by the CLI
