@@ -58,13 +58,9 @@ export class UpdateTool {
     const hashes = new Map<string, FileHash>();
     for (const f of manifest.getToolFiles(command.toolId)) hashes.set(f.relativePath, f.hash);
     return async (relativePath: string) => {
-      const diskPath = join(command.projectRoot, relativePath);
-      const manifestHash = hashes.get(relativePath);
       const isModified = await this.deps.resolveSyncConflict.execute({
-        diskTargetPath: diskPath,
-        targetRelativePath: relativePath,
-        targetManifestMap:
-          manifestHash !== undefined ? new Map([[relativePath, manifestHash]]) : new Map(),
+        diskPath: join(command.projectRoot, relativePath),
+        recorded: hashes.get(relativePath),
       });
       if (!isModified) return "write";
       return (await command.overwriteModified(relativePath)) ? "write" : "skip";

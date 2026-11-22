@@ -4,34 +4,23 @@ import { FileHash } from "../../../../src/shared/domain/file-hash.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 
 const DISK_PATH = "/project/target.md";
-const RELATIVE_PATH = "target.md";
 
-async function conflictOver(disk: string | null, recorded: string | null): Promise<boolean> {
-  const fs = new InMemoryFileAdapter({});
-  if (disk !== null) await fs.writeFile(DISK_PATH, disk);
-  return new ResolveSyncConflict(fs).execute({
-    diskTargetPath: DISK_PATH,
-    targetRelativePath: RELATIVE_PATH,
-    targetManifestMap: new Map(
-      recorded === null ? [] : [[RELATIVE_PATH, { value: FileHash.of(recorded).value }]]
-    ),
-  });
-}
-
+// The comparison itself is the sync-conflict model's (sync-conflict.model.unit.test.ts); these
+// cases prove the file is read from disk, and that a missing one is answered without a read.
 describe("looking for a sync conflict", () => {
-  it("finds a conflict when the file on disk changed since the manifest recorded it", async () => {
-    expect(await conflictOver("edited", "installed")).toBe(true);
+  it("reads the file on disk to find it changed since the manifest recorded it", async () => {
+    const fs = new InMemoryFileAdapter({});
+    await fs.writeFile(DISK_PATH, "edited");
+    const conflict = new ResolveSyncConflict(fs);
+    expect(
+      await conflict.execute({ diskPath: DISK_PATH, recorded: FileHash.of("installed") })
+    ).toBe(true);
   });
 
-  it("finds no conflict when the file still matches what the manifest recorded", async () => {
-    expect(await conflictOver("installed", "installed")).toBe(false);
-  });
-
-  it("finds no conflict for a missing file", async () => {
-    expect(await conflictOver(null, "installed")).toBe(false);
-  });
-
-  it("finds no conflict for a file the manifest never recorded", async () => {
-    expect(await conflictOver("anything", null)).toBe(false);
+  it("finds no conflict for a file no longer on disk", async () => {
+    const conflict = new ResolveSyncConflict(new InMemoryFileAdapter({}));
+    expect(
+      await conflict.execute({ diskPath: DISK_PATH, recorded: FileHash.of("installed") })
+    ).toBe(false);
   });
 });
