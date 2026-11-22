@@ -82,6 +82,7 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 826 KB: 825.9 KB, the kind rollout giving installation and the controllers one request object, one execute and their checks inside use cases, and the config parts answering the file they write; 0.01% measured headroom.
 // 825 KB: 824.5 KB, the kind rollout reading foreign suffixes and the tool list from the registered catalog, and one dual-config error; 0.1% measured headroom.
 // 830 KB: 828.7 KB, manifest v9 moving the host registrations and the plugin claims into their own files, with the atomic v8 split at load; 0.2% measured headroom.
+// 834 KB: 832.8 KB, the kind rollout splitting every use case over five dependencies by question, and the folders over ten files by responsibility; 0.1% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 
