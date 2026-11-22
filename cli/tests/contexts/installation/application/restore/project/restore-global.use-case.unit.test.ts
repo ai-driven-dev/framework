@@ -40,13 +40,16 @@ describe("restoring a whole project", () => {
     const { restore } = recordingRestore();
     const restoreGlobal = new RestoreGlobal(new InMemoryManifestRepository(), restore);
 
-    await expect(restoreGlobal.open()).rejects.toBeInstanceOf(ManifestUnavailableError);
+    await expect(restoreGlobal.execute()).rejects.toBeInstanceOf(ManifestUnavailableError);
   });
 
   it("restores from the record it opened, at the version the record holds", async () => {
     const { restore, received } = recordingRestore();
     const manifest = recordWith("1.4.0");
-    const open = await new RestoreGlobal(new InMemoryManifestRepository(manifest), restore).open();
+    const open = await new RestoreGlobal(
+      new InMemoryManifestRepository(manifest),
+      restore
+    ).execute();
 
     const result = await open.execute({ ...run, files: ["a.md"] });
 
@@ -65,7 +68,7 @@ describe("restoring a whole project", () => {
     const open = await new RestoreGlobal(
       new InMemoryManifestRepository(Manifest.create()),
       restore
-    ).open();
+    ).execute();
 
     await open.execute(run);
 
@@ -77,7 +80,7 @@ describe("restoring a whole project", () => {
     const open = await new RestoreGlobal(
       new InMemoryManifestRepository(recordWith("1.0.0")),
       restore
-    ).open();
+    ).execute();
 
     await open.execute({ ...run, interactive: true });
     await open.execute({ ...run, force: true });

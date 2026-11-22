@@ -1,9 +1,9 @@
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import { RemoveProjectPlugin } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
+import { removeProjectPluginOf } from "../../shared/testing/remove-project-plugin.builder.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
 import { projectMarketplaceRemover } from "./project-marketplace-remover.builder.js";
 
@@ -35,7 +35,7 @@ export function buildUseCase(tools: ToolCatalog) {
   const registry = new InMemoryMarketplaceRegistry();
   const useCase = projectMarketplaceRemover(
     tools,
-    new RemoveProjectPlugin(fs, () => "/home/dev"),
+    removeProjectPluginOf(fs),
     manifestRepo,
     registry,
     new KeepPrompter()

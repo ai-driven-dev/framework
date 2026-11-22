@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { projectIntegrationOf } from "../../../../../src/composition/installation.js";
 import type { PlacePluginRequest } from "../../../../../src/contexts/installation/application/plugin/add/place-plugin.use-case.js";
 import type { AddPluginRequest } from "../../../../../src/contexts/installation/application/plugin/add/plugin-add.js";
 import { AddPluginToProject } from "../../../../../src/contexts/installation/application/plugin/add-plugin-to-project.use-case.js";
@@ -33,7 +34,7 @@ function addToProject() {
   const placed: PlacePluginRequest[] = [];
   const addition = new AddPluginToProject(
     {
-      fs: new InMemoryFileAdapter(),
+      assertIntegration: projectIntegrationOf(new InMemoryFileAdapter()).assertIntegration,
       source: {
         execute: async () => ({ isGithubMarketplace: false, distribution: DISTRIBUTION }),
       },

@@ -17,6 +17,7 @@ import {
   withoutMarketplace,
   withoutRef,
 } from "../contexts/host-registration/domain/record/registration-record.js";
+import { AssertProjectMcpEntriesRemovable } from "../contexts/installation/application/assert-project-mcp-entries-removable.use-case.js";
 import { ReadMachineInstallation } from "../contexts/installation/application/doctor/read-machine-installation.use-case.js";
 import { InstallIdeConfig } from "../contexts/installation/application/install/config/install-ide-config.use-case.js";
 import { InstallRuntimeConfig } from "../contexts/installation/application/install/config/install-runtime-config.use-case.js";
@@ -29,9 +30,17 @@ import {
   type FrameworkBuilds,
 } from "../contexts/installation/application/marketplace/cache-built-marketplace.use-case.js";
 import { ProjectHooksMaterializer } from "../contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
+import { AssertProjectPathWithinRoot } from "../contexts/installation/application/ownership/assert-project-path-within-root.use-case.js";
 import { ListPlugins } from "../contexts/installation/application/plugin/list-plugins.use-case.js";
+import { AssertProjectIntegrationRemovable } from "../contexts/installation/application/removal/assert-project-integration-removable.use-case.js";
+import { PlanProjectMcpRemoval } from "../contexts/installation/application/removal/plan-project-mcp-removal.use-case.js";
+import { RemoveProjectHooks } from "../contexts/installation/application/removal/remove-project-hooks.use-case.js";
+import { RemoveProjectIntegration } from "../contexts/installation/application/removal/remove-project-integration.use-case.js";
+import { AssertProjectHooksRemovable } from "../contexts/installation/application/shared/assert-project-hooks-removable.use-case.js";
+import { AssertProjectHooksUnchanged } from "../contexts/installation/application/shared/assert-project-hooks-unchanged.use-case.js";
 import type { BuiltMaterializationDeps } from "../contexts/installation/application/shared/built-materialization-deps.js";
 import { DetectPluginDrift } from "../contexts/installation/application/shared/detect-plugin-drift.use-case.js";
+import { RemoveRecordedProjectHooks } from "../contexts/installation/application/shared/remove-recorded-project-hooks.use-case.js";
 import { UpdateGitignore } from "../contexts/installation/application/update-gitignore.use-case.js";
 import type { ProjectSetupState } from "../contexts/installation/contract/project-setup-state.js";
 import { AgentModelStoreAdapter } from "../contexts/installation/infrastructure/agent-model-store-adapter.js";
@@ -126,7 +135,31 @@ export function builtMaterializationDepsOf(
   fs: FileReader & FileWriter,
   build: Omit<BuiltMaterializationDeps, "projectHooks">
 ): BuiltMaterializationDeps {
-  return { ...build, projectHooks: new ProjectHooksMaterializer(fs) };
+  return { ...build, projectHooks: projectIntegrationOf(fs).materializer };
+}
+
+/** The project hooks and MCP use cases, built once over one file system. */
+export function projectIntegrationOf(fs: FileReader & FileWriter) {
+  const withinRoot = new AssertProjectPathWithinRoot(fs);
+  const unchanged = new AssertProjectHooksUnchanged(fs, withinRoot);
+  const removeRecorded = new RemoveRecordedProjectHooks({ fs, unchanged, withinRoot });
+  const removeHooks = new RemoveProjectHooks(removeRecorded);
+  const assertHooksRemovable = new AssertProjectHooksRemovable(unchanged);
+  const plan = new PlanProjectMcpRemoval(fs, withinRoot);
+  const assertMcpRemovable = new AssertProjectMcpEntriesRemovable(plan);
+  return {
+    materializer: new ProjectHooksMaterializer(fs, unchanged, removeRecorded),
+    unchanged,
+    removeRecorded,
+    removeHooks,
+    assertHooksRemovable,
+    assertMcpRemovable,
+    assertIntegration: new AssertProjectIntegrationRemovable(
+      assertMcpRemovable,
+      assertHooksRemovable
+    ),
+    removeIntegration: new RemoveProjectIntegration({ fs, plan, hooks: removeHooks, withinRoot }),
+  };
 }
 
 /** What installing a tool's configuration writes, and the steps that follow each install. */
@@ -209,6 +242,7 @@ export function wireInstallation(base: Base) {
     readMachineInstallation: new ReadMachineInstallation(userManifestRepo),
     pluginListUseCase: new ListPlugins(manifestRepo, tools),
     builtMaterializationDeps,
+    projectIntegration: projectIntegrationOf(fs),
     detectPluginDriftUseCase: new DetectPluginDrift(fs, tools, base.homedir),
     registrationRecordRules,
   };

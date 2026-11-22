@@ -6,9 +6,9 @@ import {
   SharedMarketplaceRemovalError,
 } from "../../../../src/contexts/distribution/domain/distribution.error.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
-import { RemoveProjectPlugin } from "../../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import { removeProjectPluginOf } from "../../../shared/testing/remove-project-plugin.builder.js";
 import { saying } from "../../../shared/testing/saying.builder.js";
 import { KeepPrompter } from "../../../shared/testing/scripted-prompter.fake.js";
 import {
@@ -114,7 +114,7 @@ describe("removing a project marketplace", () => {
     const { registry, manifestRepo, fs } = buildUseCase(syntheticNativeFamilyCatalog());
     const useCase = projectMarketplaceRemover(
       syntheticNativeFamilyCatalog(),
-      new RemoveProjectPlugin(fs, () => "/home/dev"),
+      removeProjectPluginOf(fs),
       manifestRepo,
       registry,
       new KeepPrompter()
@@ -165,7 +165,7 @@ describe("removing a project marketplace", () => {
     const { registry, manifestRepo, fs } = buildUseCase(syntheticNativeFamilyCatalog());
     const useCase = projectMarketplaceRemover(
       syntheticNativeFamilyCatalog(),
-      new RemoveProjectPlugin(fs, () => "/home/dev"),
+      removeProjectPluginOf(fs),
       manifestRepo,
       registry,
       new KeepPrompter()

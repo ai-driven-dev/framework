@@ -8,6 +8,7 @@ import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { pickIntegration } from "../../../../shared/testing/remove-project-plugin.builder.js";
 import { FakePluginRemovalSteps } from "../../testing/fake-plugin-removal-steps.fake.js";
 import { aManifest } from "../../testing/manifest.builder.js";
 
@@ -62,6 +63,7 @@ function fixture(
       fs,
       projectRepo: repo,
       homedir: () => "/home/dev",
+      integration: pickIntegration(fs),
     },
     registeredTools()
   );

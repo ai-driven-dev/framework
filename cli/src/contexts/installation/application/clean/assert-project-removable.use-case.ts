@@ -1,12 +1,11 @@
-import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import { assertProjectHooksRemovable } from "../shared/remove-project-hooks.use-case.js";
+import type { AssertProjectHooksRemovable } from "../shared/assert-project-hooks-removable.use-case.js";
 import type { ProjectCleanAsks } from "./clean-project-files.use-case.js";
 
 /** What AssertProjectRemovable is built from. */
 export interface AssertProjectRemovableDeps {
-  readonly fs: FileReader;
+  readonly assertHooksRemovable: Pick<AssertProjectHooksRemovable, "execute">;
   readonly manifestRepo: ManifestRepository;
   readonly assertMcpRemovable: ProjectCleanAsks["assertMcpRemovable"];
 }
@@ -25,8 +24,7 @@ export class AssertProjectRemovable {
       if (!this.tools.isAiTool(toolId)) continue;
       for (const plugin of manifest.getRecordedPlugins(toolId)) {
         const tool = this.tools.aiProfile(toolId);
-        await assertProjectHooksRemovable({
-          fs: this.deps.fs,
+        await this.deps.assertHooksRemovable.execute({
           plugin,
           tool,
           projectRoot: command.projectRoot,
