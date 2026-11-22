@@ -12,6 +12,9 @@
         "Rules",
         "Decisions"
       ],
+      "values": {
+        "status": ["pending", "in-progress", "implemented", "blocked"]
+      },
       "why": "the implementer reads every plan the same way",
       "fix": "follow plan-template.md"
     },
@@ -22,6 +25,9 @@
       "optional": [
         "Wireframe"
       ],
+      "values": {
+        "status": ["pending", "in-progress", "done"]
+      },
       "why": "the implementer reads every phase the same way",
       "fix": "follow phase-template.md"
     },
