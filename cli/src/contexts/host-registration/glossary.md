@@ -12,3 +12,16 @@ The language of the `host-registration` context. A name in the code means what t
 | Catalog identity | A marketplace's declared name plus its plugin set, never a path or a version | `MarketplaceCatalogIdentity` |
 | Source conflict | A registered name pointing at a different catalog than the one about to be registered | `MarketplaceSourceConflict` |
 | Host actions | Registering, enabling, updating and removing through the host's own CLI | `HostActions`, `HostCliAdapter` |
+| Alias | The local name a project gives a marketplace, the key of its marketplace registry | `NativeMarketplaceRegistration.alias` |
+| Host name | The name the host registered the catalog under, the one the catalog declares. Every host call uses it, never the alias | `NativeMarketplaceRegistration.hostName` |
+| Ref | `<plugin>@<hostName>`, the key every host's plugin registry shares | `refOnHostName`, `isRefOnHost` |
+| Registration record | What aidd asked a host's own CLI to register: binary, marketplaces and plugin refs. The manifest stores it opaque | `RegistrationRecord` |
+| Provenance | The source the host had when aidd registered: `registry` or `effective-list`. Absent on a legacy record, so ownership is never inferred from the name | `NativeMarketplaceRegistration.provenance` |
+| Source proof | What a host's source reading proves about one catalog: `absent`, `owned` or `unproven` with the reason | `NativeMarketplaceSourceInspection` |
+| Claim | A ref some project needs enabled. Owned by `machine-claims`: this context reads a view, never the store | `ClaimsView`, `WithdrawalClaimsView` |
+| Foreign ref | A ref on the host under our host name that none of our claims names | `assertNoForeignNativeRefs` |
+| Activation | Enabling a plugin through the host's own CLI, at the same scope it is later removed at | `HostActions.enablePlugin` |
+| Source drift | The host follows a newer build (`version-behind`) or a pre-migration project cache (`unmigrated-project-source`, `unmigrated-foreign-project-source`). Never a different catalog | `MarketplaceSourceDrift` |
+| Dead, live | Whether the source a registration points at still exists. `unknown` means leave it alone | `HostActions.registrationState` |
+| Unanswerable | A registry that gave no reading: none to read, none established, or unreadable. Never read as empty | `answeredRegistry` |
+| Strict, best-effort | Strict: a host refusal throws before the work goes on. Best-effort: a refused step becomes a warning and a `Confirmation`, and the rest runs | `throwRefusal`, `bestEffortNativeCall` |
