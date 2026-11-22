@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.use-case.js";
-import type { RefreshMarketplace } from "../../../src/contexts/distribution/application/refresh-marketplace.use-case.js";
 import type { RegisterFrameworkMarketplace } from "../../../src/contexts/distribution/application/register-framework-marketplace.use-case.js";
 import { remoteFrameworkSource } from "../../../src/contexts/distribution/contract/framework-source.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { RepositoryVisibility } from "../../../src/contexts/distribution/ports/repository-visibility.js";
 import { InstallTools } from "../../../src/contexts/installation/application/install/install-tools.use-case.js";
 import { SetupFlow } from "../../../src/orchestration/domain/setup-flow.model.js";
+import type { RefreshMarketplaces } from "../../../src/orchestration/marketplace/refresh-marketplaces.use-case.js";
 import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.use-case.js";
 import { ChoosePlugins } from "../../../src/orchestration/setup/steps/choose-plugins.use-case.js";
 import { render } from "../../../src/presentation/errors/error-translator.presenter.js";
@@ -43,7 +43,7 @@ function makeNoOpMarketplaceRegisterFramework(): Pick<RegisterFrameworkMarketpla
   return { execute: vi.fn().mockResolvedValue({ registered: false, scope: "user" }) };
 }
 
-function makeNoOpMarketplaceRefresh(): Pick<RefreshMarketplace, "execute"> {
+function makeNoOpMarketplaceRefresh(): Pick<RefreshMarketplaces, "execute"> {
   return { execute: vi.fn().mockResolvedValue({ results: [], failedCount: 0 }) };
 }
 

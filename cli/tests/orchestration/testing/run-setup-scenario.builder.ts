@@ -2,7 +2,6 @@
 
 import { vi } from "vitest";
 import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.use-case.js";
-import type { RefreshMarketplace } from "../../../src/contexts/distribution/application/refresh-marketplace.use-case.js";
 import type { RegisterFrameworkMarketplace } from "../../../src/contexts/distribution/application/register-framework-marketplace.use-case.js";
 import type { ResolveMarketplace } from "../../../src/contexts/distribution/application/resolve-marketplace.use-case.js";
 import type { PluginCatalogEntry } from "../../../src/contexts/distribution/contract/catalog.js";
@@ -17,6 +16,7 @@ import type { ManifestRepository } from "../../../src/contexts/installation/port
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { SetupFlow } from "../../../src/orchestration/domain/setup-flow.model.js";
+import type { RefreshMarketplaces } from "../../../src/orchestration/marketplace/refresh-marketplaces.use-case.js";
 import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.use-case.js";
 import type { PluginPick } from "../../../src/orchestration/plugin/pick-plugins.use-case.js";
 import type { InstallGlobalPlugins } from "../../../src/orchestration/setup/install-global-plugins.use-case.js";
@@ -51,7 +51,7 @@ function makeNoOpLatestResolver(): ReleaseLister & RepositoryVisibility {
 type RegisterFrameworkMock = Pick<RegisterFrameworkMarketplace, "execute"> & {
   execute: ReturnType<typeof vi.fn>;
 };
-type RefreshMock = Pick<RefreshMarketplace, "execute"> & { execute: ReturnType<typeof vi.fn> };
+type RefreshMock = Pick<RefreshMarketplaces, "execute"> & { execute: ReturnType<typeof vi.fn> };
 
 function makeNoOpMarketplaceRegisterFramework(): RegisterFrameworkMock {
   const execute = vi.fn().mockResolvedValue({ registered: false, scope: "user" });

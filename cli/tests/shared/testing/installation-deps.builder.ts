@@ -125,6 +125,14 @@ export async function initAndInstall(
   return installTool(deps, projectRoot, toolId);
 }
 
+/** One tool's update, prepared then run, as the scenario that owns the failure policy does. */
+export async function updateOf(
+  tool: UpdateTool,
+  command: Parameters<UpdateTool["prepare"]>[0]
+): Promise<Awaited<ReturnType<UpdateTool["execute"]>>> {
+  return tool.execute(await tool.prepare(command));
+}
+
 export function buildUpdateTool(deps: InstallationDeps): UpdateTool {
   return new UpdateTool(
     {

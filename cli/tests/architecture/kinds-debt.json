@@ -4,7 +4,7 @@
     "closesWhen": "a scenario collects the partial failure and the use case lets its typed error travel",
     "entries": {
       "src/contexts/distribution/application/fetch-marketplace-source.use-case.ts": 2,
-      "src/contexts/distribution/application/refresh-marketplace.use-case.ts": 2,
+      "src/contexts/distribution/application/refresh-marketplace.use-case.ts": 1,
       "src/contexts/host-registration/application/confirmation.ts": 1,
       "src/contexts/host-registration/application/native-marketplace-source-proof.ts": 2,
       "src/contexts/host-registration/application/register/register-marketplace.ts": 1,
@@ -13,11 +13,7 @@
       "src/contexts/host-registration/application/withdraw/uninstall-project-ref.ts": 1,
       "src/contexts/installation/application/agents/main-session-models.use-case.ts": 2,
       "src/contexts/installation/application/doctor/load-manifest.use-case.ts": 1,
-      "src/contexts/installation/application/install/install-ai-tool.use-case.ts": 1,
       "src/contexts/installation/application/plugin/update-user-plugin-files.use-case.ts": 1,
-      "src/contexts/installation/application/sync/build-marketplace-for-tool.use-case.ts": 1,
-      "src/contexts/installation/application/sync/load-sync-context.use-case.ts": 1,
-      "src/contexts/installation/application/update/update-tool.use-case.ts": 1,
       "src/contexts/machine-claims/application/purge-declared-cache.ts": 1,
       "src/contexts/machine-claims/application/shared-source-reference-support.ts": 1
     }

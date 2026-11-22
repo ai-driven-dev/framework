@@ -15,6 +15,10 @@ export class InMemoryManifestRepository
     this.path = `${projectRoot}/.aidd/manifest.json`;
   }
 
+  async loadIfReadable(): Promise<Manifest | null> {
+    return this.load().catch(() => null);
+  }
+
   async delete(): Promise<void> {
     this.record = null;
   }

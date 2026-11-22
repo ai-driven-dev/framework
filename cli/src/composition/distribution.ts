@@ -50,7 +50,7 @@ export interface DistributionDeps {
   releaseResolver: ReleaseLister & RepositoryVisibility;
   resolveMarketplaceUseCase: ResolveMarketplace;
   listMarketplaces: ListMarketplaces;
-  refreshMarketplace: RefreshMarketplace;
+  refreshMarketplaceUseCase: RefreshMarketplace;
   registerFrameworkMarketplace: RegisterFrameworkMarketplace;
 }
 
@@ -67,7 +67,7 @@ type MarketplaceUseCases = Pick<
   DistributionDeps,
   | "resolveMarketplaceUseCase"
   | "listMarketplaces"
-  | "refreshMarketplace"
+  | "refreshMarketplaceUseCase"
   | "registerFrameworkMarketplace"
 >;
 
@@ -84,7 +84,7 @@ function marketplaceUseCasesOf(inputs: MarketplaceUseCaseInputs): MarketplaceUse
     userConfigDir
   );
   const listMarketplaces = new ListMarketplaces(marketplaceRegistry);
-  const refreshMarketplace = new RefreshMarketplace({
+  const refreshMarketplaceUseCase = new RefreshMarketplace({
     registry: marketplaceRegistry,
     resolveMarketplace: resolveMarketplaceUseCase,
     cache: inputs.marketplaceCache,
@@ -95,7 +95,7 @@ function marketplaceUseCasesOf(inputs: MarketplaceUseCaseInputs): MarketplaceUse
   return {
     resolveMarketplaceUseCase,
     listMarketplaces,
-    refreshMarketplace,
+    refreshMarketplaceUseCase,
     registerFrameworkMarketplace,
   };
 }

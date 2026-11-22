@@ -49,6 +49,21 @@ describe("ManifestRepositoryAdapter", () => {
     });
   });
 
+  describe("loadIfReadable()", () => {
+    it("answers none, rather than rejecting, when manifest.json is truncated", async () => {
+      await mkdir(join(tempDir, ".aidd"), { recursive: true });
+      await writeFile(join(tempDir, ".aidd", "manifest.json"), '{"version": 6, "tools": {');
+
+      expect(await adapter.loadIfReadable()).toBeNull();
+    });
+
+    it("answers the manifest when it is readable", async () => {
+      await adapter.save(Manifest.create());
+
+      expect(await adapter.loadIfReadable()).not.toBeNull();
+    });
+  });
+
   describe("delete()", () => {
     it("prunes empty .aidd/ directory after manifest deletion", async () => {
       const manifest = Manifest.create();

@@ -15,7 +15,6 @@ import { PurgeMarketplacePlugins } from "../../contexts/installation/application
 import { RemovePluginsFromMarketplace } from "../../contexts/installation/application/marketplace/remove-plugins-from-marketplace.use-case.js";
 import { RemoveProjectPlugin } from "../../contexts/installation/application/removal/remove-project-plugin.js";
 import { UserScopePluginFiles } from "../../contexts/installation/application/removal/user-scope-plugin-files.js";
-import { BuildMarketplaceForTool } from "../../contexts/installation/application/sync/build-marketplace-for-tool.use-case.js";
 import { LoadSyncContext } from "../../contexts/installation/application/sync/load-sync-context.use-case.js";
 import { RecordActivation } from "../../contexts/installation/application/sync/record-activation.use-case.js";
 import { trackedSharedSettings } from "../../contexts/installation/application/sync/tracked-shared-settings.js";
@@ -29,6 +28,7 @@ import { userScopeFilesSafeToDelete } from "../../contexts/machine-claims/applic
 import { AddMarketplace } from "../../orchestration/marketplace/add-marketplace.use-case.js";
 import { CheckMarketplaceUpstream } from "../../orchestration/marketplace/check-marketplace-upstream.use-case.js";
 import { ListMarketplaceCatalogs } from "../../orchestration/marketplace/list-marketplace-catalogs.use-case.js";
+import { RefreshMarketplaces } from "../../orchestration/marketplace/refresh-marketplaces.use-case.js";
 import { RegisterMarketplace } from "../../orchestration/marketplace/register-marketplace.use-case.js";
 import { RemoveProjectMarketplace } from "../../orchestration/marketplace/remove-project-marketplace.use-case.js";
 import { RemoveRegisteredMarketplace } from "../../orchestration/marketplace/remove-registered-marketplace.use-case.js";
@@ -37,6 +37,7 @@ import { AskMarketplaceSource } from "../../orchestration/setup/ask-marketplace-
 import { ResolveSetupSource } from "../../orchestration/setup/resolve-setup-source.use-case.js";
 import type { RegisterFrameworkSource } from "../../orchestration/setup/setup-flow.js";
 import { ActivateNativeTools } from "../../orchestration/sync/activate-native-tools.use-case.js";
+import { BuildMarketplaceForTool } from "../../orchestration/sync/build-marketplace-for-tool.use-case.js";
 import { SyncNativeActivation } from "../../orchestration/sync/sync-native-activation.use-case.js";
 import { SyncSettings } from "../../orchestration/sync/sync-settings.use-case.js";
 import { SyncToolSettingsFiles } from "../../orchestration/sync/sync-tool-settings-files.use-case.js";
@@ -259,7 +260,7 @@ function wireSetupSource(base: Base, recordSourceReference: RecordSourceReferenc
       releaseResolver
     ),
     recordReference: recordSourceReference,
-    refresh: base.refreshMarketplace,
+    refresh: new RefreshMarketplaces(base.refreshMarketplaceUseCase),
     environment,
   });
   return {
@@ -283,7 +284,8 @@ function wireMarketplaceReads(base: Base) {
     resolveMarketplaceUseCase,
     base.logger
   );
-  return { marketplaceCheckUseCase, listMarketplaceCatalogs };
+  const refreshMarketplace = new RefreshMarketplaces(base.refreshMarketplaceUseCase);
+  return { marketplaceCheckUseCase, listMarketplaceCatalogs, refreshMarketplace };
 }
 
 /** Marketplace removal, check and sync, and the setup steps that register a marketplace. */

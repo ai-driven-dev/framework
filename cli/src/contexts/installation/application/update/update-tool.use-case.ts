@@ -1,6 +1,5 @@
 import { join } from "node:path";
 import type { FileHash } from "../../../../shared/domain/file-hash.js";
-import { InputRequiredError } from "../../../../shared/domain/shared.error.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { Manifest } from "../../domain/manifest.js";
@@ -20,8 +19,15 @@ export interface UpdateToolRequest {
 
 export type UpdateToolResult =
   | { kind: "updated"; toolId: ToolId; fileCount: number }
-  | { kind: "skipped" }
-  | { kind: "failed"; error: unknown };
+  | { kind: "skipped" };
+
+/** What one tool's update runs against: the request, the manifest it reads and the guard that
+ * asks before a file the user changed is overwritten. */
+export interface PreparedUpdate {
+  readonly command: UpdateToolRequest;
+  readonly manifest: Manifest;
+  readonly guard: BeforeWriteGate;
+}
 
 /** What UpdateTool is built from. */
 export interface UpdateToolDeps {
@@ -37,19 +43,15 @@ export class UpdateTool {
     private readonly tools: ToolCatalog
   ) {}
 
-  async execute(command: UpdateToolRequest): Promise<UpdateToolResult> {
+  /** Reads what the update runs against. A fault here belongs to no tool: it is the caller's to
+   * stop on, not to report beside the tools that did update. */
+  async prepare(command: UpdateToolRequest): Promise<PreparedUpdate> {
     const manifest = (await this.deps.manifestRepo.load()) ?? Manifest.create();
-    const guard = this.buildFileGuard(manifest, command);
-    // @policy report-and-continue: one tool failing must not abort a batch update.
-    // Failures come back as a `failed` result, which every caller prints.
-    // InputRequiredError is the exception: it means a prompt is needed and the run
-    // cannot proceed unattended, so it propagates and stops the batch.
-    try {
-      return await this.runInstall(command, manifest, guard);
-    } catch (err) {
-      if (err instanceof InputRequiredError) throw err;
-      return { kind: "failed", error: err };
-    }
+    return { command, manifest, guard: this.buildFileGuard(manifest, command) };
+  }
+
+  async execute({ command, manifest, guard }: PreparedUpdate): Promise<UpdateToolResult> {
+    return this.runInstall(command, manifest, guard);
   }
 
   private buildFileGuard(manifest: Manifest, command: UpdateToolRequest): BeforeWriteGate {

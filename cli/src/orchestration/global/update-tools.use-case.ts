@@ -1,5 +1,10 @@
 import type { ListInstalledTools } from "../../contexts/installation/application/list-installed-tools.use-case.js";
-import type { UpdateTool } from "../../contexts/installation/application/update/update-tool.use-case.js";
+import type {
+  PreparedUpdate,
+  UpdateTool,
+  UpdateToolResult,
+} from "../../contexts/installation/application/update/update-tool.use-case.js";
+import { InputRequiredError } from "../../shared/domain/shared.error.js";
 import type { ToolCategory, ToolId } from "../../shared/domain/tool.js";
 import type { VersionReader } from "../../shared/ports/version-reader.js";
 import { BulkConflictState } from "../domain/bulk-conflict-state.js";
@@ -60,7 +65,7 @@ export class UpdateTools {
     const updatedTools: UpdateToolsResult["updatedTools"] = [];
     const errors: GlobalExecutionError[] = [];
     for (const toolId of targetIds) {
-      const result = await this.deps.updateTool.execute({
+      const prepared = await this.deps.updateTool.prepare({
         toolId,
         projectRoot,
         version,
@@ -72,6 +77,7 @@ export class UpdateTools {
             bulkState,
           }),
       });
+      const result = await this.updateOne(prepared);
       if (result.kind === "updated") {
         updatedTools.push({ toolId: result.toolId, fileCount: result.fileCount });
       } else if (result.kind === "failed") {
@@ -79,5 +85,19 @@ export class UpdateTools {
       }
     }
     return { updatedTools, errors };
+  }
+
+  // @policy report-and-continue: one tool failing must not abort a batch update.
+  // InputRequiredError is the exception: it means a prompt is needed and the run
+  // cannot proceed unattended, so it propagates and stops the batch.
+  private async updateOne(
+    prepared: PreparedUpdate
+  ): Promise<UpdateToolResult | { kind: "failed"; error: unknown }> {
+    try {
+      return await this.deps.updateTool.execute(prepared);
+    } catch (error) {
+      if (error instanceof InputRequiredError) throw error;
+      return { kind: "failed", error };
+    }
   }
 }

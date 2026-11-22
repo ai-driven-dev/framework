@@ -3,6 +3,7 @@ import { ListInstalledTools } from "../../../src/contexts/installation/applicati
 import { ResolveUpdateDecision } from "../../../src/orchestration/global/resolve-update-decision.use-case.js";
 import { UpdateTools } from "../../../src/orchestration/global/update-tools.use-case.js";
 import type { Prompter } from "../../../src/orchestration/ports/prompter.js";
+import { InputRequiredError } from "../../../src/shared/domain/shared.error.js";
 import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.fake.js";
 import {
   buildInstallationDeps,
@@ -93,11 +94,10 @@ describe("UpdateTools", () => {
   it("reports the tool that failed under its own scope and updates the others", async () => {
     const deps = await installed(TOOL.claude, TOOL.cursor);
     const { useCase, updateTool } = build(deps);
-    vi.spyOn(updateTool, "execute").mockImplementation(async ({ toolId }) =>
-      toolId === "cursor"
-        ? { kind: "failed", error: new Error("cursor update failed") }
-        : { kind: "updated", toolId, fileCount: 3 }
-    );
+    vi.spyOn(updateTool, "execute").mockImplementation(async ({ command: { toolId } }) => {
+      if (toolId === "cursor") throw new Error("cursor update failed");
+      return { kind: "updated", toolId, fileCount: 3 };
+    });
 
     const result = await useCase.execute({
       projectRoot: PROJECT_ROOT,
@@ -108,6 +108,37 @@ describe("UpdateTools", () => {
     expect(result.errors).toStrictEqual([
       { scope: "cursor", error: new Error("cursor update failed") },
     ]);
+  });
+
+  it("reports a rejection that is no Error as it came", async () => {
+    const { useCase, updateTool } = build(await installed(TOOL.claude));
+    vi.spyOn(updateTool, "execute").mockRejectedValue("plain string");
+
+    const result = await useCase.execute({ projectRoot: PROJECT_ROOT, ...NO_FORCE_NO_TTY });
+
+    expect(result.errors).toStrictEqual([{ scope: "claude", error: "plain string" }]);
+  });
+
+  it("stops the whole batch when a tool needs a question nobody can answer", async () => {
+    const { useCase, updateTool } = build(await installed(TOOL.claude, TOOL.cursor));
+    const update = vi
+      .spyOn(updateTool, "execute")
+      .mockRejectedValue(new InputRequiredError("use --force"));
+
+    await expect(
+      useCase.execute({ projectRoot: PROJECT_ROOT, ...NO_FORCE_NO_TTY })
+    ).rejects.toThrow(InputRequiredError);
+    expect(update).toHaveBeenCalledTimes(1);
+  });
+
+  it("stops the batch, reporting no tool, when the manifest it updates against cannot be read", async () => {
+    const deps = await installed(TOOL.claude);
+    const { useCase } = build(deps);
+    vi.spyOn(deps.manifestRepo, "load").mockRejectedValue(new Error("manifest corrupted"));
+
+    await expect(
+      useCase.execute({ toolArg: TOOL.claude, projectRoot: PROJECT_ROOT, ...NO_FORCE_NO_TTY })
+    ).rejects.toThrow("manifest corrupted");
   });
 
   it("reports neither an update nor an error for a tool the update skipped", async () => {

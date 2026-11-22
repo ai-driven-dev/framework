@@ -17,6 +17,7 @@ import { Restore } from "../../contexts/installation/application/restore/restore
 import { RestoreAllPlugins } from "../../contexts/installation/application/restore/restore-all-plugins.use-case.js";
 import { RestoreToolFiles } from "../../contexts/installation/application/restore/restore-tool-files.use-case.js";
 import { UpdateTool } from "../../contexts/installation/application/update/update-tool.use-case.js";
+import { InstallAiToolWithPlugins } from "../../orchestration/global/install-ai-tool-with-plugins.use-case.js";
 import { reportAllStatus } from "../../orchestration/global/report-all-status.js";
 import { ResolveUpdateDecision } from "../../orchestration/global/resolve-update-decision.use-case.js";
 import { RestoreAll } from "../../orchestration/global/restore-all.use-case.js";
@@ -75,9 +76,11 @@ function wireToolLifecycle({ base, installation, marketplace, plugin }: GlobalPa
     installIdeConfig,
     propagateAiSettingsToIde
   );
-  const installAiToolUseCase = new InstallAiTool({
-    installRuntimeConfig: installRuntimeConfigUseCase,
-    manifestRepo,
+  const installAiToolUseCase = new InstallAiToolWithPlugins({
+    installAiTool: new InstallAiTool({
+      installRuntimeConfig: installRuntimeConfigUseCase,
+      manifestRepo,
+    }),
     pluginInstallFromMarketplace: plugin.pluginInstallFromMarketplaceUseCase,
     activatePropagated: marketplace.syncSettingsUseCase,
     logger,

@@ -5,6 +5,9 @@ export interface ManifestRepository {
    * report a failure a person cannot locate. */
   readonly path: string;
   load(): Promise<Manifest | null>;
+  /** `load`, with any failure to read or parse answered as none, for a best-effort caller that
+   * treats an unreadable manifest as absent. */
+  loadIfReadable(): Promise<Manifest | null>;
   save(manifest: Manifest): Promise<void>;
   delete(): Promise<void>;
 }
