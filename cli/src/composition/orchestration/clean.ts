@@ -21,6 +21,11 @@ import { detachProjectClaims } from "../../contexts/machine-claims/application/r
 import type { CleanClaims } from "../../orchestration/clean/clean-claims.js";
 import { CleanProject } from "../../orchestration/clean/clean-project.use-case.js";
 import { CleanUserScope } from "../../orchestration/clean/clean-user-scope.use-case.js";
+import { ConfirmRemoval } from "../../orchestration/clean/confirm-removal.use-case.js";
+import { InspectUserScope } from "../../orchestration/clean/inspect-user-scope.use-case.js";
+import { PreviewProjectClean } from "../../orchestration/clean/preview-project-clean.use-case.js";
+import { RemoveProjectInOrder } from "../../orchestration/clean/remove-project-in-order.use-case.js";
+import { RemoveUserScope } from "../../orchestration/clean/remove-user-scope.use-case.js";
 import { UninstallProjectTools } from "../../orchestration/clean/uninstall-project-tools.use-case.js";
 import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
 import type { Installation } from "../installation.js";
@@ -57,11 +62,14 @@ function wireCleanUserScope(
   );
   return new CleanUserScope({
     purgeFiles: purgeUserScopeFiles,
-    withdrawFromHost,
-    removeMarketplace: new RemoveMarketplace(marketplaceRegistry),
-    claims,
-    logger,
-    prompter,
+    inspect: new InspectUserScope({ purgeFiles: purgeUserScopeFiles, claims, logger }),
+    confirm: new ConfirmRemoval(prompter),
+    remove: new RemoveUserScope({
+      purgeFiles: purgeUserScopeFiles,
+      withdrawFromHost,
+      removeMarketplace: new RemoveMarketplace(marketplaceRegistry),
+      claims,
+    }),
   });
 }
 
@@ -89,9 +97,30 @@ function wireCleanProjectFiles(base: Base, inst: Installation) {
   );
 }
 
+/** The project clean: what it would remove, the confirmation, and the ordered removal. */
+function wireCleanProject(base: Base, inst: Installation, claims: CleanClaims) {
+  const cleanProject = wireCleanProjectFiles(base, inst);
+  const marketplaces = new ListMarketplaces(base.marketplaceRegistry);
+  return new CleanProject({
+    preview: new PreviewProjectClean({
+      cleanProject,
+      claims,
+      marketplaces,
+      records: inst.registrationRecordRules,
+    }),
+    confirm: new ConfirmRemoval(base.prompter),
+    remove: new RemoveProjectInOrder({
+      cleanProject,
+      withdrawFromHost: base.withdrawFromHost,
+      claims,
+      marketplaces,
+    }),
+  });
+}
+
 /** Clean and uninstall. */
 export function wireClean(base: Base, inst: Installation) {
-  const { fs, logger, prompter, manifestRepo, userManifestRepo, marketplaceRegistry, tools } = base;
+  const { fs, logger, manifestRepo, userManifestRepo, tools } = base;
   const uninstallTools = new UninstallProjectTools(
     new UninstallTools(
       {
@@ -111,14 +140,7 @@ export function wireClean(base: Base, inst: Installation) {
     userSourceReferences: base.userSourceReferences,
     purgeCache,
   });
-  const cleanUseCase = new CleanProject({
-    cleanProject: wireCleanProjectFiles(base, inst),
-    withdrawFromHost: base.withdrawFromHost,
-    claims,
-    marketplaces: new ListMarketplaces(marketplaceRegistry),
-    prompter,
-    records: inst.registrationRecordRules,
-  });
+  const cleanUseCase = wireCleanProject(base, inst, claims);
   const cleanUserScopeUseCase = wireCleanUserScope(base, inst, { purgeCache, claims });
   return { uninstallTools, cleanUseCase, cleanUserScopeUseCase };
 }

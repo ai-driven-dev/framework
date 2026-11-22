@@ -160,14 +160,15 @@ src/
 │   ├── clean/
 │   ├── doctor/
 │   ├── domain/
-│   ├── global/
 │   ├── marketplace/
+│   │   └── remove/
 │   ├── menu/
 │   ├── plugin/
 │   ├── ports/    # the Prompter port, implemented by presentation
 │   ├── setup/
 │   │   └── steps/
 │   ├── sync/
+│   │   └── settings/
 │   └── telemetry/
 ├── presentation/    # everything that talks to a human
 │   ├── controllers/

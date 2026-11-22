@@ -18,6 +18,9 @@ import {
   CleanProject,
   type CleanProjectDeps,
 } from "../../../src/orchestration/clean/clean-project.use-case.js";
+import { ConfirmRemoval } from "../../../src/orchestration/clean/confirm-removal.use-case.js";
+import { PreviewProjectClean } from "../../../src/orchestration/clean/preview-project-clean.use-case.js";
+import { RemoveProjectInOrder } from "../../../src/orchestration/clean/remove-project-in-order.use-case.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 
@@ -33,7 +36,7 @@ export interface ProjectCleanerParts extends Partial<HostPorts> {
   logger: Files["logger"];
   gitignore: Files["updateGitignore"];
   marketplaceRegistry?: ConstructorParameters<typeof ListMarketplaces>[0];
-  prompter?: CleanProjectDeps["prompter"];
+  prompter?: ConstructorParameters<typeof ConfirmRemoval>[0];
   homeDir?: () => string;
   userSourceReferences?: UserSourceReferences;
   userManifestRepo?: Parameters<typeof wireCleanClaims>[0]["userManifestRepo"];
@@ -46,47 +49,57 @@ export function projectCleanerDeps(parts: ProjectCleanerParts): CleanProjectDeps
     assertMcpRemovable: (plugin, tool, projectRoot) =>
       assertProjectMcpEntriesRemovable(parts.fs, { plugin, tool, projectRoot }),
   };
-  return {
-    cleanProject: new CleanProjectFiles(
-      {
-        fs: parts.fs,
-        manifestRepo: parts.manifestRepo,
-        asks,
-        planProjectClean: new PlanProjectClean(
-          { manifestRepo: parts.manifestRepo, asks },
-          parts.tools
-        ),
-        removeProjectFiles: new RemoveProjectFiles(
-          {
-            fs: parts.fs,
-            manifestRepo: parts.manifestRepo,
-            logger: parts.logger,
-            updateGitignore: parts.gitignore,
-            homedir,
-          },
-          parts.tools
-        ),
-      },
-      parts.tools
-    ),
-    withdrawFromHost: new WithdrawFromHost(parts.fs, parts.logger, {
-      activators: parts.activators ?? new Map(),
-      pluginRegistries: parts.pluginRegistries ?? new Map(),
-      marketplaceRegistries: parts.marketplaceRegistries ?? new Map(),
-      sources: parts.sources ?? new Map(),
-    }),
-    claims: wireCleanClaims({
+  const cleanProject = new CleanProjectFiles(
+    {
       fs: parts.fs,
-      logger: parts.logger,
-      userManifestRepo: parts.userManifestRepo ?? new InMemoryManifestRepository(),
-      userSourceReferences: parts.userSourceReferences,
-      purgeCache,
+      manifestRepo: parts.manifestRepo,
+      asks,
+      planProjectClean: new PlanProjectClean(
+        { manifestRepo: parts.manifestRepo, asks },
+        parts.tools
+      ),
+      removeProjectFiles: new RemoveProjectFiles(
+        {
+          fs: parts.fs,
+          manifestRepo: parts.manifestRepo,
+          logger: parts.logger,
+          updateGitignore: parts.gitignore,
+          homedir,
+        },
+        parts.tools
+      ),
+    },
+    parts.tools
+  );
+  const claims = wireCleanClaims({
+    fs: parts.fs,
+    logger: parts.logger,
+    userManifestRepo: parts.userManifestRepo ?? new InMemoryManifestRepository(),
+    userSourceReferences: parts.userSourceReferences,
+    purgeCache,
+  });
+  const marketplaces = new ListMarketplaces(
+    parts.marketplaceRegistry ?? new InMemoryMarketplaceRegistry()
+  );
+  return {
+    preview: new PreviewProjectClean({
+      cleanProject,
+      claims,
+      marketplaces,
+      records: registrationRecordRules,
     }),
-    marketplaces: new ListMarketplaces(
-      parts.marketplaceRegistry ?? new InMemoryMarketplaceRegistry()
-    ),
-    prompter: parts.prompter,
-    records: registrationRecordRules,
+    confirm: new ConfirmRemoval(parts.prompter),
+    remove: new RemoveProjectInOrder({
+      cleanProject,
+      withdrawFromHost: new WithdrawFromHost(parts.fs, parts.logger, {
+        activators: parts.activators ?? new Map(),
+        pluginRegistries: parts.pluginRegistries ?? new Map(),
+        marketplaceRegistries: parts.marketplaceRegistries ?? new Map(),
+        sources: parts.sources ?? new Map(),
+      }),
+      claims,
+      marketplaces,
+    }),
   };
 }
 

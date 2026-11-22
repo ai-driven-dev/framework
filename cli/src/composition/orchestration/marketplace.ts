@@ -31,17 +31,20 @@ import { CheckMarketplaceUpstream } from "../../orchestration/marketplace/check-
 import { ListMarketplaceCatalogs } from "../../orchestration/marketplace/list-marketplace-catalogs.use-case.js";
 import { RefreshMarketplaces } from "../../orchestration/marketplace/refresh-marketplaces.use-case.js";
 import { RegisterMarketplace } from "../../orchestration/marketplace/register-marketplace.use-case.js";
-import { RemoveProjectMarketplace } from "../../orchestration/marketplace/remove-project-marketplace.use-case.js";
-import { RemoveRegisteredMarketplace } from "../../orchestration/marketplace/remove-registered-marketplace.use-case.js";
-import { RemoveUserMarketplace } from "../../orchestration/marketplace/remove-user-marketplace.use-case.js";
+import { PurgeUserMarketplace } from "../../orchestration/marketplace/remove/purge-user-marketplace.use-case.js";
+import { RemoveMarketplacePlugins } from "../../orchestration/marketplace/remove/remove-marketplace-plugins.use-case.js";
+import { RemoveProjectMarketplace } from "../../orchestration/marketplace/remove/remove-project-marketplace.use-case.js";
+import { RemoveRegisteredMarketplace } from "../../orchestration/marketplace/remove/remove-registered-marketplace.use-case.js";
+import { RemoveUserMarketplace } from "../../orchestration/marketplace/remove/remove-user-marketplace.use-case.js";
 import { AskMarketplaceSource } from "../../orchestration/setup/ask-marketplace-source.use-case.js";
 import { ResolveSetupSource } from "../../orchestration/setup/resolve-setup-source.use-case.js";
 import type { RegisterFrameworkSource } from "../../orchestration/setup/setup-flow.js";
-import { ActivateNativeTools } from "../../orchestration/sync/activate-native-tools.use-case.js";
-import { BuildMarketplaceForTool } from "../../orchestration/sync/build-marketplace-for-tool.use-case.js";
-import { SyncNativeActivation } from "../../orchestration/sync/sync-native-activation.use-case.js";
-import { SyncSettings } from "../../orchestration/sync/sync-settings.use-case.js";
-import { SyncToolSettingsFiles } from "../../orchestration/sync/sync-tool-settings-files.use-case.js";
+import { ActivateNativeTools } from "../../orchestration/sync/settings/activate-native-tools.use-case.js";
+import { BuildMarketplaceForTool } from "../../orchestration/sync/settings/build-marketplace-for-tool.use-case.js";
+import { RecordSyncActivation } from "../../orchestration/sync/settings/record-sync-activation.use-case.js";
+import { SyncNativeActivation } from "../../orchestration/sync/settings/sync-native-activation.use-case.js";
+import { SyncSettings } from "../../orchestration/sync/settings/sync-settings.use-case.js";
+import { SyncToolSettingsFiles } from "../../orchestration/sync/settings/sync-tool-settings-files.use-case.js";
 import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
 import { settingsDeclaration } from "../host-registration.js";
 import type { Installation } from "../installation.js";
@@ -94,17 +97,19 @@ function wireUserMarketplaceRemoval(base: Base, inst: Installation) {
   const { tools, fs, userManifestRepo, marketplaceRegistry } = base;
   return new RemoveUserMarketplace({
     find: new FindUserMarketplace(marketplaceRegistry),
-    purge: new PurgeMarketplacePlugins(
-      {
-        repo: userManifestRepo,
-        userScopePluginFiles: new UserScopePluginFiles(fs, quietUserScopeFilesSafeToDelete(fs)),
-      },
-      tools
-    ),
+    purge: new PurgeUserMarketplace({
+      purge: new PurgeMarketplacePlugins(
+        {
+          repo: userManifestRepo,
+          userScopePluginFiles: new UserScopePluginFiles(fs, quietUserScopeFilesSafeToDelete(fs)),
+        },
+        tools
+      ),
+      host: base.withdrawFromHost,
+      home: resolveHomeDir(),
+      records: inst.registrationRecordRules,
+    }),
     remove: new RemoveMarketplace(marketplaceRegistry),
-    host: base.withdrawFromHost,
-    home: resolveHomeDir(),
-    records: inst.registrationRecordRules,
   });
 }
 
@@ -119,11 +124,13 @@ function wireMarketplaceRemoval(base: Base, inst: Installation) {
   );
   const marketplaceRemoveUseCase = new RemoveProjectMarketplace({
     find: new FindMarketplaceToRemove(marketplaceRegistry),
-    plugins: new RemovePluginsFromMarketplace({ manifestRepo, cleanup: projectCleanup }, tools),
+    removePlugins: new RemoveMarketplacePlugins(
+      new RemovePluginsFromMarketplace({ manifestRepo, cleanup: projectCleanup }, tools),
+      prompter,
+      registrationRecordRules
+    ),
     remove: new RemoveMarketplace(marketplaceRegistry),
     detachClaims: detachClaimsOf(projectCleanup),
-    prompter,
-    records: registrationRecordRules,
   });
   const userMarketplaceRemoveUseCase = wireUserMarketplaceRemoval(base, inst);
   return { marketplaceRemoveUseCase, userMarketplaceRemoveUseCase };
@@ -190,22 +197,25 @@ function syncSettingsOf(base: Base, inst: Installation, sources: SyncSources): S
     }),
     settingsFiles: settingsFilesOf(base, inst, buildMarketplaceForTool),
     activateNativeTools: nativeActivationOf(base, inst, buildMarketplaceForTool),
-    recordActivation: new RecordActivation({ fs }, tools),
-    machineClaims: new RecordMachineClaims(
-      {
+    recordActivation: new RecordSyncActivation({
+      recordActivation: new RecordActivation({ fs }, tools),
+      machineClaims: new RecordMachineClaims(
+        {
+          fs,
+          userManifestRepo,
+          emptyManifest: Manifest.create,
+          mergeClaims: registrationRecordRules.mergeCatalogueClaims,
+        },
+        tools
+      ),
+      sharedSource: new SharedFrameworkSource({
         fs,
-        userManifestRepo,
-        emptyManifest: Manifest.create,
-        mergeClaims: registrationRecordRules.mergeCatalogueClaims,
-      },
-      tools
-    ),
-    sharedSource: new SharedFrameworkSource({
-      fs,
-      logger,
-      recordReference: recordSourceReference,
-      purgeCache: new PurgeDeclaredCache(fs, logger),
-      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+        logger,
+        recordReference: recordSourceReference,
+        purgeCache: new PurgeDeclaredCache(fs, logger),
+        frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+      }),
+      records: registrationRecordRules,
     }),
     records: registrationRecordRules,
   });

@@ -24,7 +24,7 @@ import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import type { NativeActivation } from "../contexts/tools/domain/native-registration/native-activation.js";
 import type { BuiltToolConfig } from "../contexts/tools/domain/profile/define-tool.js";
 import { DuplicateToolIdError } from "../contexts/tools/domain/tools.error.js";
-import type { SettingsDeclarationRules } from "../orchestration/sync/sync-tool-settings-files.use-case.js";
+import type { SettingsDeclarationRules } from "../orchestration/sync/settings/sync-tool-settings-files.use-case.js";
 import { asPlainObject } from "../shared/domain/reading/plain-object.js";
 import { UnregisteredToolError } from "../shared/domain/shared.error.js";
 import type { AiToolId, ToolId } from "../shared/domain/tool.js";

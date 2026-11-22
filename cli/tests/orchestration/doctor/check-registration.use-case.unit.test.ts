@@ -1,11 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { registrationRecordRules } from "../../../src/composition/installation.js";
-import type { ResolveBuiltMarketplaces } from "../../../src/contexts/distribution/application/resolve-built-marketplaces.use-case.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { InspectDeclaredMarketplaces } from "../../../src/contexts/host-registration/application/inspect/inspect-declared-marketplaces.use-case.js";
 import type { HostPluginRegistryReading } from "../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
-import { ListRegisteredPlugins } from "../../../src/contexts/installation/application/doctor/list-registered-plugins.use-case.js";
 import { LoadManifest } from "../../../src/contexts/installation/application/doctor/load-manifest.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
@@ -30,6 +27,7 @@ import { SYNTHETIC_IDE_TOOL } from "../../shared/testing/synthetic-tool-id.build
 import {
   buildCheckRegistration,
   checkRegistrationOver,
+  resolveRegisteredBuildsOver,
 } from "../testing/build-check-registration.builder.js";
 
 const PROJECT_ROOT = "/project";
@@ -368,46 +366,6 @@ describe("CheckRegistration - order", () => {
   });
 });
 
-describe("the tools whose built marketplaces are resolved", () => {
-  it("are the AI tools the manifest holds, and no IDE tool", async () => {
-    const manifest = aManifest()
-      .withTool(SYNTHETIC_NATIVE_TOOL, [], { version: "test" })
-      .withTool(SYNTHETIC_IDE_TOOL, [], { version: "test" })
-      .build();
-    const resolved: (readonly string[])[] = [];
-    const builds: Pick<ResolveBuiltMarketplaces, "execute"> = {
-      execute: async ({ toolIds }) => {
-        resolved.push(toolIds);
-        return { registeredNames: [], userCacheRoot: "/user-cache", built: new Map() };
-      },
-    };
-    const check = new CheckRegistration(
-      {
-        listPlugins: new ListRegisteredPlugins(
-          new LoadManifest(new InMemoryManifestRepository(manifest))
-        ),
-        records: registrationRecordRules,
-        builds,
-        declared: new InspectDeclaredMarketplaces(
-          new InMemoryFileAdapter(),
-          () => false,
-          syntheticNativeFamilyCatalog()
-        ),
-        inspectHost: { execute: async () => ({ findings: [] }) },
-      },
-      syntheticNativeFamilyCatalog()
-    );
-
-    await check.execute({
-      projectRoot: PROJECT_ROOT,
-      allowedIds: null,
-      globalInstall: true,
-    });
-
-    expect(resolved).toStrictEqual([[SYNTHETIC_NATIVE_TOOL]]);
-  });
-});
-
 describe("the hosts handed to the registry inspection", () => {
   it("carry no marketplaces for a tool with no built marketplace", async () => {
     const manifest = Manifest.create();
@@ -415,17 +373,17 @@ describe("the hosts handed to the registry inspection", () => {
     const inspected: unknown[] = [];
     const check = new CheckRegistration(
       {
-        listPlugins: new ListRegisteredPlugins(
-          new LoadManifest(new InMemoryManifestRepository(manifest))
+        resolve: resolveRegisteredBuildsOver(
+          new LoadManifest(new InMemoryManifestRepository(manifest)),
+          {
+            execute: async () => ({
+              registeredNames: [],
+              userCacheRoot: "/user-cache",
+              built: new Map(),
+            }),
+          },
+          syntheticNativeFamilyCatalog()
         ),
-        records: registrationRecordRules,
-        builds: {
-          execute: async () => ({
-            registeredNames: [],
-            userCacheRoot: "/user-cache",
-            built: new Map(),
-          }),
-        },
         declared: new InspectDeclaredMarketplaces(
           new InMemoryFileAdapter(),
           () => false,

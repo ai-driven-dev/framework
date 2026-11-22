@@ -29,10 +29,11 @@ import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-cata
 import {
   ActivateNativeTools,
   type ActivationMarketplace,
-} from "../../../src/orchestration/sync/activate-native-tools.use-case.js";
-import { BuildMarketplaceForTool } from "../../../src/orchestration/sync/build-marketplace-for-tool.use-case.js";
-import { SyncSettings } from "../../../src/orchestration/sync/sync-settings.use-case.js";
-import { SyncToolSettingsFiles } from "../../../src/orchestration/sync/sync-tool-settings-files.use-case.js";
+} from "../../../src/orchestration/sync/settings/activate-native-tools.use-case.js";
+import { BuildMarketplaceForTool } from "../../../src/orchestration/sync/settings/build-marketplace-for-tool.use-case.js";
+import { RecordSyncActivation } from "../../../src/orchestration/sync/settings/record-sync-activation.use-case.js";
+import { SyncSettings } from "../../../src/orchestration/sync/settings/sync-settings.use-case.js";
+import { SyncToolSettingsFiles } from "../../../src/orchestration/sync/settings/sync-tool-settings-files.use-case.js";
 
 type Deps = RegisterPluginWithHostDeps;
 type Loader = LoadSyncContextDeps;
@@ -95,28 +96,31 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
       },
       records: registrationRecordRules,
     }),
-    recordActivation: new RecordActivation({ fs: parts.fs }, parts.tools),
-    machineClaims: new RecordMachineClaims(
-      {
+    recordActivation: new RecordSyncActivation({
+      recordActivation: new RecordActivation({ fs: parts.fs }, parts.tools),
+      machineClaims: new RecordMachineClaims(
+        {
+          fs: parts.fs,
+          userManifestRepo: parts.userManifestRepo,
+          emptyManifest: Manifest.create,
+          mergeClaims: registrationRecordRules.mergeCatalogueClaims,
+        },
+        parts.tools
+      ),
+      sharedSource: new SharedFrameworkSource({
         fs: parts.fs,
-        userManifestRepo: parts.userManifestRepo,
-        emptyManifest: Manifest.create,
-        mergeClaims: registrationRecordRules.mergeCatalogueClaims,
-      },
-      parts.tools
-    ),
-    sharedSource: new SharedFrameworkSource({
-      fs: parts.fs,
-      logger: parts.logger,
-      recordReference: new RecordSourceReference({
-        fs: parts.fs,
-        currentVersion: parts.currentVersion ?? "0.0.0-test",
         logger: parts.logger,
+        recordReference: new RecordSourceReference({
+          fs: parts.fs,
+          currentVersion: parts.currentVersion ?? "0.0.0-test",
+          logger: parts.logger,
+          frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+          userSourceReferences: parts.userSourceReferences,
+        }),
+        purgeCache: new PurgeDeclaredCache(parts.fs, parts.logger),
         frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-        userSourceReferences: parts.userSourceReferences,
       }),
-      purgeCache: new PurgeDeclaredCache(parts.fs, parts.logger),
-      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+      records: registrationRecordRules,
     }),
     records: registrationRecordRules,
   });

@@ -3,7 +3,7 @@ import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js"
 import type { SyncSettingsResult } from "../domain/sync-settings.model.js";
 import { SyncFailedError, UserScopeFilterUnsupportedError } from "../orchestration.error.js";
 import type { UpdateUserPlugin } from "../plugin/update-user-plugin.use-case.js";
-import type { SyncSettings } from "./sync-settings.use-case.js";
+import type { SyncSettings } from "./settings/sync-settings.use-case.js";
 
 export interface RunUserScopeSyncRequest {
   projectRoot: string;

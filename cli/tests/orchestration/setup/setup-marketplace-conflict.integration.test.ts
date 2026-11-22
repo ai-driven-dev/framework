@@ -123,13 +123,11 @@ async function buildUseCaseWithConflict() {
     tools: syntheticNativeFamilyCatalog(),
     fs: deps.fs,
     manifestRepo: deps.manifestRepo,
-    steps: {
-      ...setupMarketplaceRegistration,
-      installTools: setupToolsUseCase,
-      syncSettings: (options) => syncSettingsUseCase.execute(options),
-      version: CURRENT_VERSION,
-    },
-    questions: { plugins: (options) => choosePlugins.execute(options) },
+    ...setupMarketplaceRegistration,
+    installTools: setupToolsUseCase,
+    syncSettings: syncSettingsUseCase,
+    version: CURRENT_VERSION,
+    choosePlugins,
   });
   return { useCase, activator };
 }
