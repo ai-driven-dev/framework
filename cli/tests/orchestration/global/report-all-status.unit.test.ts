@@ -4,7 +4,7 @@ import type {
   ReportStatusResult,
   StatusQuery,
 } from "../../../src/contexts/installation/application/report-status.use-case.js";
-import { ReportAllStatus } from "../../../src/orchestration/global/report-all-status.use-case.js";
+import { reportAllStatus } from "../../../src/orchestration/global/report-all-status.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const PROJECT_ROOT = "/test-project";
@@ -35,11 +35,11 @@ function fakeStatus(byCategory: (o: Options) => Report) {
   return { useCase, calls };
 }
 
-describe("ReportAllStatus", () => {
+describe("reportAllStatus", () => {
   it("queries each category exactly once and never runs an unscoped pass", async () => {
     const { useCase, calls } = fakeStatus(() => report());
 
-    await new ReportAllStatus(useCase).execute(PROJECT_ROOT);
+    await reportAllStatus(useCase, PROJECT_ROOT);
 
     expect(calls).toHaveLength(2);
     expect(calls.map((c) => c.category)).toEqual(["ai", "ide"]);
@@ -51,7 +51,7 @@ describe("ReportAllStatus", () => {
       o.category === "ai" ? report({ pluginDrift: DRIFT, inSync: false }) : report()
     );
 
-    const result = await new ReportAllStatus(useCase).execute(PROJECT_ROOT);
+    const result = await reportAllStatus(useCase, PROJECT_ROOT);
 
     expect(result.pluginDrift).toEqual(DRIFT);
   });
@@ -62,7 +62,7 @@ describe("ReportAllStatus", () => {
       return report();
     });
 
-    const result = await new ReportAllStatus(useCase).execute(PROJECT_ROOT);
+    const result = await reportAllStatus(useCase, PROJECT_ROOT);
 
     expect(result).toStrictEqual({
       aiTools: { tools: [], pluginDrift: [], inSync: true },
@@ -77,7 +77,7 @@ describe("ReportAllStatus", () => {
     const ideReport = report({ tools: [{ toolId: TOOL.vscode, version: "1", drifted: [] }] });
     const { useCase } = fakeStatus((o) => (o.category === "ai" ? aiReport : ideReport));
 
-    const result = await new ReportAllStatus(useCase).execute(PROJECT_ROOT);
+    const result = await reportAllStatus(useCase, PROJECT_ROOT);
 
     expect(result).toStrictEqual({
       aiTools: aiReport,
@@ -93,7 +93,7 @@ describe("ReportAllStatus", () => {
       return report();
     });
 
-    const result = await new ReportAllStatus(useCase).execute(PROJECT_ROOT);
+    const result = await reportAllStatus(useCase, PROJECT_ROOT);
 
     expect(result).toStrictEqual({
       aiTools: report(),

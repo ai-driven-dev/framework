@@ -170,4 +170,24 @@ describe("doctorAll", () => {
       false,
     ]);
   });
+
+  it("judges health on plugin issues alone when a plugin is named", async () => {
+    const { deps, manifest } = await depsWithBothCategories();
+    await deleteOneTrackedFile(deps, manifest, TOOL.claude);
+    const useCase = doctorAllOver(deps);
+
+    const result = await useCase.execute(PROJECT_ROOT, "sample");
+
+    expect([result.ai?.healthy, result.healthy]).toStrictEqual([false, true]);
+  });
+
+  it("calls a named plugin healthy when its scope could not be checked, as the gate always did", async () => {
+    const doctor = {
+      execute: () => Promise.reject(new Error("could not be checked")),
+    };
+
+    const result = await doctorAll(doctor, PROJECT_ROOT, "sample");
+
+    expect([result.healthy, result.errors.length]).toStrictEqual([true, 2]);
+  });
 });

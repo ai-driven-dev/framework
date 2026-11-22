@@ -102,7 +102,7 @@
   "tests/mutation/unloadable-file-as-failed-test.ts": 1,
   "tests/orchestration/doctor/check-registration-sources.integration.test.ts": 1,
   "tests/orchestration/doctor/run-doctor.use-case.installation-health.unit.test.ts": 1,
-  "tests/orchestration/global/report-all-status.use-case.unit.test.ts": 1,
+  "tests/orchestration/global/report-all-status.unit.test.ts": 1,
   "tests/presentation/controllers/antigravity-hooks.integration.test.ts": 2,
   "tests/presentation/controllers/clean.controller.integration.test.ts": 1,
   "tests/presentation/controllers/setup-scope-user.integration.test.ts": 3,

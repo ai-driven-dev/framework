@@ -99,7 +99,7 @@ describe("aidd doctor - every tool at once", () => {
     expect(exit).toHaveBeenCalledWith(1);
   });
 
-  it("narrows the health gate to the named plugin, and holds its scope issues back", async () => {
+  it("holds scope issues back for a named plugin and ends on the scenario's verdict", async () => {
     doctorAll.mockResolvedValue({
       errors: [],
       ai: {
@@ -114,7 +114,7 @@ describe("aidd doctor - every tool at once", () => {
       },
       ide: HEALTHY_SCOPE,
       pluginIssues: [],
-      healthy: false,
+      healthy: true,
     });
 
     const lines = await run("--plugin", "aidd-dev");
@@ -137,7 +137,7 @@ describe("aidd doctor - every tool at once", () => {
           filePath: ".claude/a.md",
         },
       ],
-      healthy: true,
+      healthy: false,
     });
     const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
       throw new ExitRequested(Number(code ?? 0));
