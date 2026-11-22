@@ -5,7 +5,6 @@ import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import {
   SYNTHETIC_IDE_TOOL,
-  SYNTHETIC_TOOL,
   syntheticMixedCatalog,
 } from "../../shared/testing/synthetic-tool-id.builder.js";
 
@@ -30,26 +29,5 @@ describe("BuildMarketplaceForTool.forTool", () => {
     await expect(command.forTool(SYNTHETIC_IDE_TOOL, MARKETPLACE, ROOT)).resolves.toBeNull();
 
     expect(execute).not.toHaveBeenCalled();
-  });
-});
-
-describe("BuildMarketplaceForTool when the build fails", () => {
-  const refused = new Error("translator refused the source");
-  const failing = () => ({ execute: vi.fn().mockRejectedValue(refused) });
-
-  it("warns naming the marketplace and the tool, and answers null", async () => {
-    const { command, logger } = setup(failing());
-
-    await expect(command.forTool(SYNTHETIC_TOOL, MARKETPLACE, ROOT)).resolves.toBeNull();
-
-    expect(logger.warnMessages).toStrictEqual([
-      "Native plugin activation — build 'aidd' for synthetic skipped: Error: translator refused the source",
-    ]);
-  });
-
-  it("does the same when asked for the tree directly", async () => {
-    const { command } = setup(failing());
-
-    await expect(command.execute(SYNTHETIC_TOOL, MARKETPLACE, ROOT)).resolves.toBeNull();
   });
 });

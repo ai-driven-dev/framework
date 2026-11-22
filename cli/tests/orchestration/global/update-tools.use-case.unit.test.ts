@@ -132,8 +132,9 @@ describe("UpdateTools", () => {
   });
 
   it("stops the batch, reporting no tool, when the manifest it updates against cannot be read", async () => {
-    const { useCase, updateTool } = build(await installed(TOOL.claude));
-    vi.spyOn(updateTool, "prepare").mockRejectedValue(new Error("manifest corrupted"));
+    const deps = await installed(TOOL.claude);
+    const { useCase } = build(deps);
+    vi.spyOn(deps.manifestRepo, "load").mockRejectedValue(new Error("manifest corrupted"));
 
     await expect(
       useCase.execute({ toolArg: TOOL.claude, projectRoot: PROJECT_ROOT, ...NO_FORCE_NO_TTY })
