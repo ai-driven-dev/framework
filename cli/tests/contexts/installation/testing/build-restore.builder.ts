@@ -8,16 +8,12 @@ import type { BuiltMaterializationDeps } from "../../../../src/contexts/installa
 import type { FileMerger } from "../../../../src/contexts/installation/ports/file-merger.js";
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
 import type { Platform } from "../../../../src/contexts/installation/ports/platform.js";
+import type { LoadDistribution } from "../../../../src/contexts/installation/ports/plugin/load-plugin-distribution.js";
 import type { Prompter } from "../../../../src/orchestration/ports/prompter.js";
 import type { AssetProvider } from "../../../../src/shared/ports/asset-provider.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
 import type { Logger } from "../../../../src/shared/ports/logger.js";
-import {
-  loadDistributionOf,
-  type PluginDistributionReader,
-  type PluginFetcher,
-} from "../../../shared/testing/load-distribution.builder.js";
 import { registeredTools } from "../../../shared/testing/registered-tools.builder.js";
 import { FakePlatform } from "./fake-platform.fake.js";
 
@@ -51,18 +47,17 @@ export function restoreToolFilesOf(parts: RestoreToolFilesParts): RestoreToolFil
 
 interface RestoreAllPluginsParts {
   fs: FileReader & FileWriter;
-  pluginFetcher: PluginFetcher;
-  pluginDistributionReader: PluginDistributionReader;
+  loadDistribution: LoadDistribution;
   builtDeps: BuiltMaterializationDeps;
 }
 
 /** A restore of every installed plugin, with the registered tools. */
 export function restoreAllPluginsOf(parts: RestoreAllPluginsParts): RestoreAllPlugins {
-  const { fs, pluginFetcher, pluginDistributionReader, builtDeps } = parts;
+  const { fs, loadDistribution, builtDeps } = parts;
   return new RestoreAllPlugins(
     new ApplyPluginFiles({
       fs,
-      loadDistribution: loadDistributionOf(pluginFetcher, pluginDistributionReader),
+      loadDistribution,
       builtDeps,
     }),
     registeredTools()

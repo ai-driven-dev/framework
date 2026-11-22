@@ -7,7 +7,7 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
-import type { LoadPluginDistribution } from "../../ports/plugin/load-plugin-distribution.js";
+import type { LoadDistribution } from "../../ports/plugin/load-plugin-distribution.js";
 import { materializeViaTranslator } from "../materialize/materialize-via-translator.js";
 import type { PluginTranslator } from "../materialize/plugin-translator.js";
 import { resolvePluginTranslator } from "../materialize/resolve-plugin-translator.js";
@@ -36,7 +36,7 @@ function deliversHooksToProject(tool: AiToolProfile): boolean {
 /** What ApplyPluginFiles is built from. */
 export interface ApplyPluginFilesDeps {
   readonly fs: FileReader & FileWriter;
-  readonly loadDistribution: LoadPluginDistribution;
+  readonly loadDistribution: LoadDistribution;
   readonly builtDeps: BuiltMaterializationDeps;
 }
 

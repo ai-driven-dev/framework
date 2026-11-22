@@ -88,7 +88,7 @@ function makeRestoreAll(
     prompter,
     plugins: restoreAllPluginsOf({
       ...deps,
-      pluginDistributionReader: pluginReader,
+      loadDistribution: loadDistributionOf(deps.pluginFetcher, pluginReader),
       builtDeps: builtDeps(deps),
     }),
   });

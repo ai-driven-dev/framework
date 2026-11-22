@@ -8,7 +8,7 @@ import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../domain/project-layout.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { LoadPluginDistribution } from "../../ports/plugin/load-plugin-distribution.js";
+import type { LoadDistribution } from "../../ports/plugin/load-plugin-distribution.js";
 import type { RuntimeConfigSection } from "../../ports/tool-sections.js";
 import type { InstallRuntimeConfig } from "../install/config/install-runtime-config.use-case.js";
 import type { ReplacePluginFiles } from "../materialize/replace-plugin-files.use-case.js";
@@ -35,7 +35,7 @@ interface ProjectUpdateScope {
 /** What UpdatePlugin is built from. */
 export interface UpdatePluginDeps {
   readonly manifestRepo: ManifestRepository;
-  readonly loadDistribution: LoadPluginDistribution;
+  readonly loadDistribution: LoadDistribution;
   readonly replacePluginFiles: ReplacePluginFiles;
   readonly pluginRuntime?: Pick<InstallRuntimeConfig, "ensurePluginRuntimeFiles">;
 }

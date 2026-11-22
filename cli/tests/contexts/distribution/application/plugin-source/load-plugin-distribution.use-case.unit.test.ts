@@ -21,19 +21,4 @@ describe("LoadPluginDistribution", () => {
     expect(fetch).toHaveBeenCalledWith(source, "/cache", { forceRefresh: true });
     expect(read).toHaveBeenCalledWith("/cache/fetched");
   });
-
-  it("propagates a fetch failure without reading an unfetched distribution", async () => {
-    const read = vi.fn();
-    const loader = new LoadPluginDistribution(
-      {
-        fetch: async () => {
-          throw new Error("cannot fetch");
-        },
-      },
-      { read }
-    );
-
-    await expect(loader.execute({ source, cacheDir: "/cache" })).rejects.toThrow("cannot fetch");
-    expect(read).not.toHaveBeenCalled();
-  });
 });

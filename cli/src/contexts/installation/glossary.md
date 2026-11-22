@@ -18,4 +18,4 @@ The language of the `installation` context. A name in the code means what this p
 | Materialization | Turning a plugin's canonical content into the files of a tool, in marketplace or flat mode | `PluginTranslator`, `resolvePluginTranslator` |
 | Plugin update | Replacing an installed plugin's files with a newer version of its source | `UpdatePlugin`, `ApplyPluginFiles` |
 | Status | What the manifest and the files on disk say about a project, side by side | `ReportStatus` |
-| Distribution loading | The function that brings a plugin source to its distribution, wired from distribution | `LoadPluginDistribution` |
+| Distribution loading | The function that brings a plugin source to its distribution, wired from distribution | `LoadDistribution` |

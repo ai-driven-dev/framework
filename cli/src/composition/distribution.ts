@@ -21,7 +21,7 @@ import type { PluginCatalogRepository } from "../contexts/distribution/ports/plu
 import type { PluginFetcher } from "../contexts/distribution/ports/plugin-fetcher.js";
 import type { RawCatalogFetcher } from "../contexts/distribution/ports/raw-catalog-fetcher.js";
 import type { RepositoryVisibility } from "../contexts/distribution/ports/repository-visibility.js";
-import type { LoadPluginDistribution as LoadDistributionFn } from "../contexts/installation/ports/plugin/load-plugin-distribution.js";
+import type { LoadDistribution } from "../contexts/installation/ports/plugin/load-plugin-distribution.js";
 import { atomicWriteFile } from "../shared/infrastructure/atomic-write.js";
 import { GitHubAdapter } from "../shared/infrastructure/github-adapter.js";
 import type { HttpClient } from "../shared/infrastructure/http-client.js";
@@ -42,8 +42,7 @@ export interface DistributionWiringShared {
 
 export interface DistributionDeps {
   pluginCatalogRepository: PluginCatalogRepository;
-  pluginFetcher: PluginFetcher;
-  loadDistribution: LoadDistributionFn;
+  loadDistribution: LoadDistribution;
   marketplaceRegistry: MarketplaceRegistry;
   marketplaceTrustStore: MarketplaceTrustStore;
   releaseResolver: ReleaseLister & RepositoryVisibility;
@@ -126,7 +125,6 @@ export function wireDistribution(shared: DistributionWiringShared): Distribution
   });
   return {
     pluginCatalogRepository,
-    pluginFetcher,
     loadDistribution: (source, cacheDir, options) =>
       loadPluginDistribution.execute({ source, cacheDir, ...options }),
     marketplaceRegistry,

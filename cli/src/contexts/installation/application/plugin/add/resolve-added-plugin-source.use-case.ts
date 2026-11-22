@@ -6,7 +6,7 @@ import type { FileReader } from "../../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../../shared/ports/file-writer.js";
 import type { ToolCatalog } from "../../../../tools/contract/tool-catalog.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../../domain/project-layout.js";
-import type { LoadPluginDistribution } from "../../../ports/plugin/load-plugin-distribution.js";
+import type { LoadDistribution } from "../../../ports/plugin/load-plugin-distribution.js";
 import { resolvePluginTranslator } from "../../materialize/resolve-plugin-translator.js";
 import type { BuiltMaterializationDeps } from "../../shared/built-materialization-deps.js";
 
@@ -47,7 +47,7 @@ export type ResolveAddedPluginSourceResult = LocalAddedPluginSource | GithubAdde
 
 /** What ResolveAddedPluginSource is built from. */
 export interface ResolveAddedPluginSourceDeps {
-  readonly loadDistribution: LoadPluginDistribution;
+  readonly loadDistribution: LoadDistribution;
   readonly fs: FileWriter & FileReader;
   readonly built: BuiltMaterializationDeps;
 }

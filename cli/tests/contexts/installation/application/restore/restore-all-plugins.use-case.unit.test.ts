@@ -2,15 +2,12 @@ import { describe, expect, it } from "vitest";
 import type { RestoreAllPlugins } from "../../../../../src/contexts/installation/application/restore/restore-all-plugins.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import type { LoadDistribution } from "../../../../../src/contexts/installation/ports/plugin/load-plugin-distribution.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import type { FileReader } from "../../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../../src/shared/ports/file-writer.js";
-import type {
-  PluginDistributionReader,
-  PluginFetcher,
-} from "../../../../shared/testing/load-distribution.builder.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { restoreAllPluginsOf } from "../../testing/build-restore.builder.js";
 import { fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
@@ -32,19 +29,14 @@ const noopFs: FileReader & FileWriter = {
   deleteDirectory: async () => {},
 };
 
-const stubFetcher: PluginFetcher = {
-  fetch: async () => "/cache/local",
-};
+const emptyDistribution = new PluginDistribution({
+  manifest: { name: "aidd-test", version: "1.0.0" },
+  format: TOOL.claude,
+  files: [],
+  components: { skills: [], commands: [], agents: [], rules: [], hooks: [], mcp: [] },
+});
 
-const emptyDistributionReader: PluginDistributionReader = {
-  read: async () =>
-    new PluginDistribution({
-      manifest: { name: "aidd-test", version: "1.0.0" },
-      format: TOOL.claude,
-      files: [],
-      components: { skills: [], commands: [], agents: [], rules: [], hooks: [], mcp: [] },
-    }),
-};
+const loadEmptyDistribution: LoadDistribution = async () => emptyDistribution;
 
 function nativePlugin(
   files: Record<string, string> = {},
@@ -68,8 +60,7 @@ describe("RestoreAllPlugins - native-activation tools", () => {
       .build();
     const useCase = restoreAllPluginsOf({
       fs: noopFs,
-      pluginFetcher: stubFetcher,
-      pluginDistributionReader: emptyDistributionReader,
+      loadDistribution: loadEmptyDistribution,
       builtDeps: fakeBuiltDeps(),
     });
 
@@ -93,8 +84,7 @@ describe("RestoreAllPlugins - native-activation tools", () => {
       .build();
     const useCase = restoreAllPluginsOf({
       fs: noopFs,
-      pluginFetcher: stubFetcher,
-      pluginDistributionReader: emptyDistributionReader,
+      loadDistribution: loadEmptyDistribution,
       builtDeps: fakeBuiltDeps(),
     });
 
@@ -112,8 +102,7 @@ describe("RestoreAllPlugins - native-activation tools", () => {
     manifest.addTool(TOOL.claude, "1.0.0", []);
     const useCase = restoreAllPluginsOf({
       fs: noopFs,
-      pluginFetcher: stubFetcher,
-      pluginDistributionReader: emptyDistributionReader,
+      loadDistribution: loadEmptyDistribution,
       builtDeps: fakeBuiltDeps(),
     });
 
@@ -151,8 +140,7 @@ describe("RestoreAllPlugins - restricting to one plugin", () => {
   function useCase(): RestoreAllPlugins {
     return restoreAllPluginsOf({
       fs: noopFs,
-      pluginFetcher: stubFetcher,
-      pluginDistributionReader: emptyDistributionReader,
+      loadDistribution: loadEmptyDistribution,
       builtDeps: fakeBuiltDeps(),
     });
   }

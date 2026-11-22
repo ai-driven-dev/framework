@@ -1,16 +1,14 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { DuplicatePluginError } from "../../../../../src/contexts/installation/domain/installation.error.js";
+import type { LoadDistribution } from "../../../../../src/contexts/installation/ports/plugin/load-plugin-distribution.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import {
   buildInstallationDeps,
   initAndInstall,
 } from "../../../../shared/testing/installation-deps.builder.js";
-import {
-  loadDistributionOf,
-  type PluginDistributionReader,
-} from "../../../../shared/testing/load-distribution.builder.js";
+import { loadDistributionOf } from "../../../../shared/testing/load-distribution.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import {
@@ -111,15 +109,13 @@ describe("AddPlugin", () => {
       // native tool, and a plugin with zero files is never added to the manifest.
       const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
-      const zeroFilesReader: PluginDistributionReader = {
-        read: async () =>
-          new PluginDistribution({
-            manifest: { name: "zero-plugin", version: "1.0.0" },
-            format: TOOL.claude,
-            files: [],
-            components: { commands: [], agents: [], rules: [], skills: [], hooks: [], mcp: [] },
-          }),
-      };
+      const loadZeroFiles: LoadDistribution = async () =>
+        new PluginDistribution({
+          manifest: { name: "zero-plugin", version: "1.0.0" },
+          format: TOOL.claude,
+          files: [],
+          components: { commands: [], agents: [], rules: [], skills: [], hooks: [], mcp: [] },
+        });
       const registry = new FakeMarketplaceRegistry();
       registry.seed(PROJECT_ROOT, {
         name: "local-mkt",
@@ -130,7 +126,7 @@ describe("AddPlugin", () => {
         { fs: deps.fs, logger: deps.logger },
         { project: deps.manifestRepo, user: deps.userManifestRepo },
         {
-          loadDistribution: loadDistributionOf(deps.pluginFetcher, zeroFilesReader),
+          loadDistribution: loadZeroFiles,
           marketplaceRegistry: registry,
           ...fakeBuildSources(),
         },

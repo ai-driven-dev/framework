@@ -43,6 +43,7 @@ async function makeGithubRegistry(): Promise<FakeMarketplaceRegistry> {
 function makeRestoreUseCase(deps: Deps, registry: FakeMarketplaceRegistry): RestoreAllPlugins {
   return restoreAllPluginsOf({
     ...deps,
+    loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
     builtDeps: {
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       marketplaceRegistry: registry,

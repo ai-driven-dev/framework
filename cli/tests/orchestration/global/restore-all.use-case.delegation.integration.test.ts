@@ -18,6 +18,7 @@ import {
   initAndInstall,
   initProject,
 } from "../../shared/testing/installation-deps.builder.js";
+import { loadDistributionOf } from "../../shared/testing/load-distribution.builder.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { OverwritePrompter } from "../../shared/testing/scripted-prompter.fake.js";
 
@@ -61,7 +62,11 @@ describe("RestoreAll - consent to overwrite", () => {
     const restoreUseCase = restoreOf({
       ...deps,
       prompter,
-      plugins: restoreAllPluginsOf({ ...deps, builtDeps: fakeBuiltDeps() }),
+      plugins: restoreAllPluginsOf({
+        ...deps,
+        loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
+        builtDeps: fakeBuiltDeps(),
+      }),
     });
     const seen = recordAsks(restoreUseCase);
     await new RestoreAll(
@@ -103,7 +108,11 @@ describe("RestoreAll - native-only tools", () => {
     const restoreUseCase = restoreOf({
       ...deps,
       prompter,
-      plugins: restoreAllPluginsOf({ ...deps, builtDeps: fakeBuiltDeps() }),
+      plugins: restoreAllPluginsOf({
+        ...deps,
+        loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
+        builtDeps: fakeBuiltDeps(),
+      }),
     });
     restoreUseCase.execute = async () => ({
       tools: [],
@@ -154,7 +163,11 @@ function restoreAllDelegatingTo(
   const restoreUseCase = restoreOf({
     ...deps,
     prompter,
-    plugins: restoreAllPluginsOf({ ...deps, builtDeps: fakeBuiltDeps() }),
+    plugins: restoreAllPluginsOf({
+      ...deps,
+      loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
+      builtDeps: fakeBuiltDeps(),
+    }),
   });
   restoreUseCase.execute = delegate;
   return new RestoreAll(

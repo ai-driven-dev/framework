@@ -7,7 +7,7 @@ import type { Logger } from "../../../../shared/ports/logger.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../domain/project-layout.js";
-import type { LoadPluginDistribution } from "../../ports/plugin/load-plugin-distribution.js";
+import type { LoadDistribution } from "../../ports/plugin/load-plugin-distribution.js";
 import type {
   PlannedUserPluginFileUpdate,
   UserPluginMaterialization,
@@ -24,7 +24,7 @@ import { writePluginFiles } from "./write-plugin-files.js";
 /** What PluginMaterializer is built from. */
 export interface PluginMaterializerDeps {
   readonly fs: FileReader & FileWriter;
-  readonly loadDistribution: LoadPluginDistribution;
+  readonly loadDistribution: LoadDistribution;
   readonly guard: UserScopeFileGuard;
   readonly builtDeps: BuiltMaterializationDeps;
   /** A global install's fetches: it writes nothing in the project. */

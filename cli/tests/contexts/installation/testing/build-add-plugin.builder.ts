@@ -8,7 +8,7 @@ import {
 } from "../../../../src/contexts/installation/application/plugin/add-plugin.use-case.js";
 import type { BuiltMarketplaceEnsurer } from "../../../../src/contexts/installation/contract/built-marketplace.js";
 import type { InstallationMarketplaceRegistry } from "../../../../src/contexts/installation/ports/marketplace-sources.js";
-import type { LoadPluginDistribution } from "../../../../src/contexts/installation/ports/plugin/load-plugin-distribution.js";
+import type { LoadDistribution } from "../../../../src/contexts/installation/ports/plugin/load-plugin-distribution.js";
 import type { PluginTranslation } from "../../../../src/contexts/installation/ports/plugin/plugin-translation.js";
 import type { ToolCatalog } from "../../../../src/contexts/tools/contract/tool-catalog.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
@@ -23,7 +23,7 @@ interface AddPluginHost {
 
 /** Where a plugin's files come from. */
 export interface AddPluginSources {
-  loadDistribution: LoadPluginDistribution;
+  loadDistribution: LoadDistribution;
   marketplaceRegistry: InstallationMarketplaceRegistry;
   ensureBuilt: BuiltMarketplaceEnsurer;
   translate: PluginTranslation;

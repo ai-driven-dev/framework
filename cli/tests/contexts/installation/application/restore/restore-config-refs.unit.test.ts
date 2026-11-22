@@ -6,6 +6,7 @@ import {
   FIXTURE_DIR,
   initAndInstall,
 } from "../../../../shared/testing/installation-deps.builder.js";
+import { loadDistributionOf } from "../../../../shared/testing/load-distribution.builder.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { OverwritePrompter } from "../../../../shared/testing/scripted-prompter.fake.js";
 import { restoreAllPluginsOf, restoreOf } from "../../testing/build-restore.builder.js";
@@ -45,7 +46,11 @@ async function restore(deps: Awaited<ReturnType<typeof buildInstallationDeps>>, 
   await restoreOf({
     ...deps,
     prompter: new OverwritePrompter(),
-    plugins: restoreAllPluginsOf({ ...deps, builtDeps: fakeBuiltDeps() }),
+    plugins: restoreAllPluginsOf({
+      ...deps,
+      loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
+      builtDeps: fakeBuiltDeps(),
+    }),
   }).execute({
     frameworkPath: FIXTURE_DIR,
     version: "test",

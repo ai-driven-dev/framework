@@ -18,11 +18,7 @@ export class LoadPluginDistribution {
 
   async execute(request: LoadPluginDistributionRequest): Promise<PluginDistribution> {
     const { source, cacheDir, forceRefresh } = request;
-    const localPath = await this.fetcher.fetch(
-      source,
-      cacheDir,
-      forceRefresh === undefined ? undefined : { forceRefresh }
-    );
+    const localPath = await this.fetcher.fetch(source, cacheDir, { forceRefresh });
     return this.reader.read(localPath);
   }
 }
