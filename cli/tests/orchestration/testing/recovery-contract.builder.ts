@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import { NativePluginCliError } from "../../../src/contexts/host-registration/domain/host-registration.error.js";
 import type { HostPluginRegistryReading } from "../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
+import type { HostRefusal } from "../../../src/contexts/host-registration/ports/host-actions.js";
 import type { HostMarketplaceRegistry } from "../../../src/contexts/host-registration/ports/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
@@ -41,18 +41,22 @@ export class RecoveringActivator extends FakeHostActions {
     super({ available: true, registrationState: "dead" });
   }
 
-  override addMarketplace(source: string, scope?: Scope): void {
+  override addMarketplace(source: string, scope?: Scope): HostRefusal {
     this.adds.push({ source, scope });
-    if (this.adds.length === 1) throw new NativePluginCliError(ADD_ERROR);
-    if (this.failure === "retry") throw new NativePluginCliError("retry denied");
+    if (this.adds.length === 1) return { detail: ADD_ERROR };
+    if (this.failure === "retry") return { detail: "retry denied" };
     if (this.failure === "crash") throw new Error("retry crashed");
-    super.addMarketplace(source, scope);
+    return super.addMarketplace(source, scope);
   }
 
-  override removeMarketplace(name: string, scope?: Scope, options?: { force?: boolean }): void {
+  override removeMarketplace(
+    name: string,
+    scope?: Scope,
+    options?: { force?: boolean }
+  ): HostRefusal {
     this.removals.push({ name, scope, force: options?.force === true });
-    if (this.failure === "remove") throw new NativePluginCliError("remove denied");
-    super.removeMarketplace(name, scope, options);
+    if (this.failure === "remove") return { detail: "remove denied" };
+    return super.removeMarketplace(name, scope, options);
   }
 }
 

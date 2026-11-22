@@ -3,6 +3,7 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import { recordedRegistrations } from "../../domain/record/registration-record.js";
 import type { HostPorts } from "../../ports/host-ports.js";
+import { throwRefusal } from "../throw-refusal.js";
 import { assertProjectRegistrationsOwned } from "./assert-project-registrations-owned.js";
 import { assertProjectSource } from "./assert-project-source.js";
 import { proveClaimedRef } from "./prove-claimed-ref.js";
@@ -52,7 +53,9 @@ export class WithdrawFromHost {
       case "prove-claimed-ref":
         return proveClaimedRef(this.deps, command);
       case "withdraw-proven-ref":
-        command.proven.activator.uninstallPlugin(command.proven.ref, command.proven.scope);
+        throwRefusal(
+          command.proven.activator.uninstallPlugin(command.proven.ref, command.proven.scope)
+        );
         return undefined;
       case "prove-project-registrations":
         return assertProjectRegistrationsOwned(this.deps, command.withdrawals, command.facts);

@@ -71,7 +71,7 @@ export class RegisterPluginWithHost {
 
   /** Registers every marketplace with the tool's own CLI and enables the refs this run asks
    * for. Each step is independently best-effort: one failing plugin or marketplace warns and
-   * lets the others through. Anything but a recoverable `NativePluginCliError` propagates. */
+   * lets the others through. A host refusal is reported; anything else propagates. */
   async execute<M extends RegistrationSubject>(
     command: RegisterPluginWithHostRequest<M>
   ): Promise<RegisterPluginWithHostResult> {

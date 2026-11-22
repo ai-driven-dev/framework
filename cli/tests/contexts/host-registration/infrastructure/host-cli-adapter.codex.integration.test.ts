@@ -3,7 +3,6 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { NativePluginCliError } from "../../../../src/contexts/host-registration/domain/host-registration.error.js";
 import { HostCliAdapter } from "../../../../src/contexts/host-registration/infrastructure/host-cli-adapter.js";
 
 function pathWithExecutable(name: string): { dir: string; restore: () => void } {
@@ -128,23 +127,23 @@ describe("HostCliAdapter (codex)", () => {
     );
   });
 
-  it("throws NativePluginCliError with stderr detail on non-zero exit", () => {
+  it("refuses with stderr detail on non-zero exit", () => {
     mockSpawnSync.mockReturnValue(
       makeResult({ status: 1, stderr: "plugin `ghost` was not found in marketplace `m1`" })
     );
 
-    expect(() =>
+    expect(
       new HostCliAdapter("codex", {
         upgradeVerb: "upgrade",
         enableVerb: "add",
       }).enablePlugin("ghost@m1")
-    ).toThrow(NativePluginCliError);
-    expect(() =>
+    ).toMatchObject({ detail: expect.any(String) });
+    expect(
       new HostCliAdapter("codex", {
         upgradeVerb: "upgrade",
         enableVerb: "add",
       }).enablePlugin("ghost@m1")
-    ).toThrow(
+    ).toEqual(
       expect.objectContaining({ detail: expect.stringContaining("plugin `ghost` was not found") })
     );
   });
@@ -163,22 +162,22 @@ describe("HostCliAdapter (codex)", () => {
     );
   });
 
-  it("throws NativePluginCliError when uninstalling an already-absent plugin", () => {
+  it("refuses when uninstalling an already-absent plugin", () => {
     mockSpawnSync.mockReturnValue(makeResult({ status: 1, stderr: "plugin `ghost` not found" }));
 
-    expect(() =>
+    expect(
       new HostCliAdapter("codex", { disableVerb: "remove" }).uninstallPlugin("ghost@m1")
-    ).toThrow(NativePluginCliError);
+    ).toMatchObject({ detail: expect.any(String) });
   });
 
-  it("throws NativePluginCliError when the process fails to spawn", () => {
+  it("refuses when the process fails to spawn", () => {
     mockSpawnSync.mockReturnValue(makeResult({ error: new Error("spawn EACCES"), status: null }));
 
-    expect(() =>
+    expect(
       new HostCliAdapter("codex", {
         upgradeVerb: "upgrade",
         enableVerb: "add",
       }).addMarketplace("/abs/mkt", "project")
-    ).toThrow(NativePluginCliError);
+    ).toMatchObject({ detail: expect.any(String) });
   });
 });

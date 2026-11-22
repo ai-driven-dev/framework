@@ -1,6 +1,9 @@
 import { join } from "node:path";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
-import type { HostActions } from "../../../src/contexts/host-registration/ports/host-actions.js";
+import type {
+  HostActions,
+  HostRefusal,
+} from "../../../src/contexts/host-registration/ports/host-actions.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
@@ -76,22 +79,32 @@ export class RecordingActivator implements HostActions {
   isAvailable(): boolean {
     return true;
   }
-  addMarketplace(): void {}
-  removeMarketplace(name: string, scope: Scope): void {
+  addMarketplace(): HostRefusal {
+    return undefined;
+  }
+  removeMarketplace(name: string, scope: Scope): HostRefusal {
     this.order.push(`removeMarketplace:${name}`);
     this.removedMarketplaces.push(name);
     this.removedMarketplaceScopes.push(scope);
+    return undefined;
   }
   registrationState(): "live" | "dead" | "unknown" {
     return "unknown";
   }
-  upgradeMarketplaces(): void {}
-  enablePlugin(): void {}
-  updatePlugin(): void {}
-  uninstallPlugin(pluginRef: string, scope: Scope = "project"): void {
+  upgradeMarketplaces(): HostRefusal {
+    return undefined;
+  }
+  enablePlugin(): HostRefusal {
+    return undefined;
+  }
+  updatePlugin(): HostRefusal {
+    return undefined;
+  }
+  uninstallPlugin(pluginRef: string, scope: Scope = "project"): HostRefusal {
     this.order.push(`uninstallPlugin:${pluginRef}`);
     this.uninstalledPlugins.push(pluginRef);
     this.uninstalledPluginScopes.push(scope);
+    return undefined;
   }
 }
 

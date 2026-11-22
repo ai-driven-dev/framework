@@ -3,9 +3,8 @@
 import { join } from "node:path";
 import type { HintedMessage } from "../../../../shared/domain/describe-error.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
-import { NativePluginCliError } from "../../domain/host-registration.error.js";
 import type { RegistrationRecord } from "../../domain/record/registration-record.js";
-import type { HostActions } from "../../ports/host-actions.js";
+import type { HostActions, HostRefusal } from "../../ports/host-actions.js";
 import { bestEffortNativeCall } from "../confirmation.js";
 import { type HostRefsVerdict, inspectNativeRefs } from "../native-marketplace-source-proof.js";
 import type {
@@ -15,7 +14,7 @@ import type {
 } from "./withdrawal.js";
 
 /** Runs `action` against the host, naming a failure in a warning instead of throwing it. */
-export function callHost(deps: WithdrawalDeps, action: () => void, label: string): boolean {
+export function callHost(deps: WithdrawalDeps, action: () => HostRefusal, label: string): boolean {
   return bestEffortNativeCall(
     action,
     (reason) => `${label} failed: ${reason}`,
@@ -36,13 +35,9 @@ export function uninstallAtFirstAcceptedScope(
 ): string | undefined {
   let lastMessage = "";
   for (const scope of order) {
-    try {
-      activator.uninstallPlugin(ref, scope);
-      return undefined;
-    } catch (error) {
-      if (!(error instanceof NativePluginCliError)) throw error;
-      lastMessage = error.detail;
-    }
+    const refusal = activator.uninstallPlugin(ref, scope);
+    if (refusal === undefined) return undefined;
+    lastMessage = refusal.detail;
   }
   return lastMessage;
 }

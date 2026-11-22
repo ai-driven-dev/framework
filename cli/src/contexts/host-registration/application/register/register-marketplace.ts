@@ -1,7 +1,4 @@
-import {
-  NativePluginCliError,
-  UnreadableBuiltCatalogError,
-} from "../../domain/host-registration.error.js";
+import { UnreadableBuiltCatalogError } from "../../domain/host-registration.error.js";
 import type {
   NativeMarketplaceRegistration,
   NativeMarketplaceSource,
@@ -84,13 +81,9 @@ async function addedOrReclaimed(
   hostName: string
 ): Promise<boolean> {
   const { builtDir, marketplace } = request;
-  try {
-    run.activator.addMarketplace(builtDir, marketplace.scope);
-    return true;
-  } catch (error) {
-    if (!(error instanceof NativePluginCliError)) throw error;
-    return reclaimOrReport(run, { marketplace, hostName, builtDir }, error);
-  }
+  const refusal = run.activator.addMarketplace(builtDir, marketplace.scope);
+  if (refusal === undefined) return true;
+  return reclaimOrReport(run, { marketplace, hostName, builtDir }, refusal);
 }
 
 async function builtIdentityOf(

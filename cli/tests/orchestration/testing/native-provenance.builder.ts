@@ -1,4 +1,5 @@
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import type { HostRefusal } from "../../../src/contexts/host-registration/ports/host-actions.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
@@ -26,9 +27,10 @@ export const FOREIGN_CATALOG_BYTES = '{"name":"aidd-framework","source":"foreign
 export class NamedActivator extends FakeHostActions {
   readonly refreshedCatalogs: string[] = [];
 
-  override upgradeMarketplaces(name?: string): void {
+  override upgradeMarketplaces(name?: string): HostRefusal {
     this.refreshedCatalogs.push(name ?? "<all>");
     super.upgradeMarketplaces();
+    return undefined;
   }
 }
 

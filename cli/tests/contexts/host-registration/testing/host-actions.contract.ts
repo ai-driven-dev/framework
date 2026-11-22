@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { NativePluginCliError } from "../../../../src/contexts/host-registration/domain/host-registration.error.js";
 import type { HostActions } from "../../../../src/contexts/host-registration/ports/host-actions.js";
 
 /** How the host's CLI behaves: not installed, installed and accepting, installed and refusing. */
@@ -12,7 +11,7 @@ export interface HostActionsSubject {
 
 /**
  * What driving a host's own CLI promises: availability never throws, an accepting host takes
- * every call, and a refusing one fails with the typed error rather than returning quietly.
+ * every call, and a refusing one returns the typed refusal rather than answering quietly.
  */
 export function describeHostActionsContract(
   subjectName: string,
@@ -42,13 +41,13 @@ export function describeHostActionsContract(
     it("takes every call an accepting host is given", async () => {
       const actions = await given("accepting");
 
-      expect(() => {
-        actions.addMarketplace("/srv/aidd/market", "project");
-        actions.enablePlugin("p@m", "project");
-        actions.uninstallPlugin("p@m", "project");
-        actions.upgradeMarketplaces("m");
-        actions.removeMarketplace("m", "project");
-      }).not.toThrow();
+      expect([
+        actions.addMarketplace("/srv/aidd/market", "project"),
+        actions.enablePlugin("p@m", "project"),
+        actions.uninstallPlugin("p@m", "project"),
+        actions.upgradeMarketplaces("m"),
+        actions.removeMarketplace("m", "project"),
+      ]).toEqual([undefined, undefined, undefined, undefined, undefined]);
     });
 
     it.each([
@@ -56,10 +55,10 @@ export function describeHostActionsContract(
       ["removing a marketplace", (a: HostActions) => a.removeMarketplace("m", "project")],
       ["enabling a plugin", (a: HostActions) => a.enablePlugin("p@m", "project")],
       ["uninstalling a plugin", (a: HostActions) => a.uninstallPlugin("p@m", "project")],
-    ])("fails with the typed error when a refusing host is asked for %s", async (_label, call) => {
+    ])("returns the typed refusal when a refusing host is asked for %s", async (_label, call) => {
       const actions = await given("refusing");
 
-      expect(() => call(actions)).toThrow(NativePluginCliError);
+      expect(call(actions)).toMatchObject({ detail: expect.any(String) });
     });
   });
 }

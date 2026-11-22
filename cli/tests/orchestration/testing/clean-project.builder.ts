@@ -1,6 +1,9 @@
 import { join } from "node:path";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import type { HostActions } from "../../../src/contexts/host-registration/ports/host-actions.js";
+import type {
+  HostActions,
+  HostRefusal,
+} from "../../../src/contexts/host-registration/ports/host-actions.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
@@ -241,15 +244,25 @@ export class CrashingUninstallActivator implements HostActions {
   isAvailable(): boolean {
     return true;
   }
-  addMarketplace(): void {}
-  removeMarketplace(): void {}
+  addMarketplace(): HostRefusal {
+    return undefined;
+  }
+  removeMarketplace(): HostRefusal {
+    return undefined;
+  }
   registrationState(): "live" | "dead" | "unknown" {
     return "live";
   }
-  upgradeMarketplaces(): void {}
-  enablePlugin(): void {}
-  updatePlugin(): void {}
-  uninstallPlugin(): void {
+  upgradeMarketplaces(): HostRefusal {
+    return undefined;
+  }
+  enablePlugin(): HostRefusal {
+    return undefined;
+  }
+  updatePlugin(): HostRefusal {
+    return undefined;
+  }
+  uninstallPlugin(): HostRefusal {
     throw new Error("activator crashed uninstalling a plugin");
   }
 }
@@ -260,18 +273,28 @@ export class OrderRecordingActivator implements HostActions {
   isAvailable(): boolean {
     return true;
   }
-  addMarketplace(): void {}
-  removeMarketplace(name: string): void {
+  addMarketplace(): HostRefusal {
+    return undefined;
+  }
+  removeMarketplace(name: string): HostRefusal {
     this.calls.push(`removeMarketplace:${name}`);
+    return undefined;
   }
   registrationState(): "live" | "dead" | "unknown" {
     return "live";
   }
-  upgradeMarketplaces(): void {}
-  enablePlugin(): void {}
-  updatePlugin(): void {}
-  uninstallPlugin(pluginRef: string): void {
+  upgradeMarketplaces(): HostRefusal {
+    return undefined;
+  }
+  enablePlugin(): HostRefusal {
+    return undefined;
+  }
+  updatePlugin(): HostRefusal {
+    return undefined;
+  }
+  uninstallPlugin(pluginRef: string): HostRefusal {
     this.calls.push(`uninstall:${pluginRef}`);
+    return undefined;
   }
 }
 
@@ -282,15 +305,26 @@ export class AssertingActivator implements HostActions {
   isAvailable(): boolean {
     return true;
   }
-  addMarketplace(): void {}
-  removeMarketplace(): void {
+  addMarketplace(): HostRefusal {
+    return undefined;
+  }
+  removeMarketplace(): HostRefusal {
     void this.onRemoveMarketplace();
+    return undefined;
   }
   registrationState(): "live" | "dead" | "unknown" {
     return "live";
   }
-  upgradeMarketplaces(): void {}
-  enablePlugin(): void {}
-  updatePlugin(): void {}
-  uninstallPlugin(): void {}
+  upgradeMarketplaces(): HostRefusal {
+    return undefined;
+  }
+  enablePlugin(): HostRefusal {
+    return undefined;
+  }
+  updatePlugin(): HostRefusal {
+    return undefined;
+  }
+  uninstallPlugin(): HostRefusal {
+    return undefined;
+  }
 }

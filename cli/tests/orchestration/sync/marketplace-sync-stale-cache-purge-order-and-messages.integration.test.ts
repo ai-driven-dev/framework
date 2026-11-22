@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { RegisterFrameworkMarketplace } from "../../../src/contexts/distribution/application/register-framework-marketplace.use-case.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
-import type { HostActions } from "../../../src/contexts/host-registration/ports/host-actions.js";
+import type {
+  HostActions,
+  HostRefusal,
+} from "../../../src/contexts/host-registration/ports/host-actions.js";
 import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/contract/built-marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
@@ -43,18 +46,29 @@ describe("SyncSettings - when the stale cache is purged and what it says", () =>
       isAvailable(): boolean {
         return true;
       }
-      addMarketplace(source: string): void {
+      addMarketplace(source: string): HostRefusal {
         this.addedSource = source;
         this.cacheStillPresentAtAdd.push(this.fs.has(this.probe));
+        return undefined;
       }
-      removeMarketplace(): void {}
+      removeMarketplace(): HostRefusal {
+        return undefined;
+      }
       registrationState(): "live" | "dead" | "unknown" {
         return "unknown";
       }
-      upgradeMarketplaces(): void {}
-      enablePlugin(): void {}
-      updatePlugin(): void {}
-      uninstallPlugin(): void {}
+      upgradeMarketplaces(): HostRefusal {
+        return undefined;
+      }
+      enablePlugin(): HostRefusal {
+        return undefined;
+      }
+      updatePlugin(): HostRefusal {
+        return undefined;
+      }
+      uninstallPlugin(): HostRefusal {
+        return undefined;
+      }
     }
 
     const registry = projectWithMigratableEntry();

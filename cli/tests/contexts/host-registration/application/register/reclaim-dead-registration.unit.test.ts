@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { reclaimOrReport } from "../../../../../src/contexts/host-registration/application/register/reclaim-dead-registration.js";
 import type { RegistrationRun } from "../../../../../src/contexts/host-registration/application/register/registration-run.js";
 import type { ClaimsView } from "../../../../../src/contexts/host-registration/contract/claims-view.js";
-import { NativePluginCliError } from "../../../../../src/contexts/host-registration/domain/host-registration.error.js";
 import type { HostPluginRegistryReading } from "../../../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
 import {
@@ -21,7 +20,7 @@ const DIR = "/built/aidd";
 const OWN: NativeMarketplaceSource = { kind: "registry", source: DIR };
 const PROJECT_BUILT = builtMarketplaceDir("/p", "aidd", "claude");
 const USER_ROOT = "/home/.config/aidd";
-const ADD_ERROR = new NativePluginCliError("already added");
+const ADD_ERROR = { detail: "already added" };
 const SUBJECT = { name: "aidd", scope: "project" as const };
 const KNOWN: Partial<ClaimsView> = {
   machine: async () => ({
