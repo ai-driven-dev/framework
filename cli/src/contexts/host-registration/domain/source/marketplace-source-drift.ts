@@ -1,11 +1,15 @@
 import { samePathSegment } from "../../../../shared/domain/paths.js";
 import { compareSemver, isSemver } from "../../../../shared/domain/semver.js";
-import type { MarketplaceSourceDrift } from "../../contract/marketplace-source-drift.js";
+import type {
+  MarketplaceSourceDrift,
+  MarketplaceSourceDriftFound,
+} from "../../contract/marketplace-source-drift.js";
 import {
   parseBuiltMarketplaceDir,
   parseBuiltMarketplaceDirAtAnyRoot,
   parseUserBuiltMarketplaceDir,
 } from "./built-marketplace-location.js";
+import type { MarketplaceSourceConflict } from "./marketplace-source-conflict.js";
 
 /** Every path a caller hands `marketplaceSourceDrift`: `userCacheRoot`, `projectRoot` and the two
  * sources compared against them: is expected already `realpath`'d: this decides a migration story
@@ -97,4 +101,19 @@ export function judgeDrift(drift: MarketplaceSourceDrift): DriftVerdict {
   if (drift.kind !== "version-behind") return { outcome: "proceed", evidence: drift };
   const { registeredVersion, requestedVersion } = drift;
   return { outcome: "skip", reason: { registeredVersion, requestedVersion } };
+}
+
+/** What a host's marketplace registry says about a source about to be registered: a different
+ * catalog under the name, a version or migration drift, or nothing. */
+export type HostMarketplaceSourceCheck =
+  | MarketplaceSourceConflict
+  | MarketplaceSourceDriftFound
+  | undefined;
+
+/** `drift` is the one field `MarketplaceSourceConflict` does not have, so its presence alone
+ * discriminates. */
+export function isDriftFound(
+  check: HostMarketplaceSourceCheck
+): check is MarketplaceSourceDriftFound {
+  return check !== undefined && "drift" in check;
 }

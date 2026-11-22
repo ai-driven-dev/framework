@@ -5,6 +5,7 @@ import {
   RegisterPluginWithHost,
   type RegisterPluginWithHostDeps,
 } from "../../../src/contexts/host-registration/application/register/register-plugin-with-host.use-case.js";
+import { catalogIdentityReader } from "../../../src/contexts/host-registration/infrastructure/marketplace-registry-reader.js";
 import {
   LoadSyncContext,
   type LoadSyncContextDeps,
@@ -76,6 +77,7 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
       registerPluginWithHost: new RegisterPluginWithHost(
         {
           fs: parts.fs,
+          identities: catalogIdentityReader(parts.fs),
           activators: parts.activators ?? new Map(),
           hosts: {
             marketplaceRegistries: parts.hostMarketplaceRegistries ?? new Map(),

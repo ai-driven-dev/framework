@@ -1,6 +1,6 @@
 import type { Scope } from "../../../../shared/domain/scope.js";
 import { pluginRefsOf } from "../../domain/record/registration-record.js";
-import { bestEffortNativeCall, skippedWarning } from "../confirmation.js";
+import { bestEffortNativeCall, skippedWarning } from "../confirm-native-call.use-case.js";
 import type { RegisteredMarketplace } from "./registration-outcome.js";
 import { type RegistrationRun, warnRegistration } from "./registration-run.js";
 

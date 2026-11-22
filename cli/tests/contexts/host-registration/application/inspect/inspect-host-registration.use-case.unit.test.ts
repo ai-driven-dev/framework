@@ -5,6 +5,7 @@ import {
   type InspectHostRegistrationDeps,
 } from "../../../../../src/contexts/host-registration/application/inspect/inspect-host-registration.use-case.js";
 import type { HostPluginRegistryReading } from "../../../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
+import { catalogIdentityReader } from "../../../../../src/contexts/host-registration/infrastructure/marketplace-registry-reader.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
@@ -28,9 +29,11 @@ function inspector(
     marketplaceRegistries?: InspectHostRegistrationDeps["marketplaceRegistries"];
   } = {}
 ) {
+  const fs = parts.fs ?? new InMemoryFileAdapter();
   return new InspectHostRegistration(
     {
-      fs: parts.fs ?? new InMemoryFileAdapter(),
+      fs,
+      identities: catalogIdentityReader(fs),
       pluginRegistries: parts.pluginRegistries ?? new Map(),
       marketplaceRegistries: parts.marketplaceRegistries ?? new Map(),
       platform: "linux",

@@ -10,6 +10,7 @@ import { RemoveMarketplace } from "../../contexts/distribution/application/remov
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
 import { NativeHostRegistrationGate } from "../../contexts/host-registration/application/native-host-registration-gate.js";
 import { RegisterPluginWithHost } from "../../contexts/host-registration/application/register/register-plugin-with-host.use-case.js";
+import { catalogIdentityReader } from "../../contexts/host-registration/infrastructure/marketplace-registry-reader.js";
 import { ListPluginSources } from "../../contexts/installation/application/marketplace/list-plugin-sources.use-case.js";
 import { PurgeMarketplacePlugins } from "../../contexts/installation/application/marketplace/purge-marketplace-plugins.use-case.js";
 import { RemovePluginsFromMarketplace } from "../../contexts/installation/application/marketplace/remove-plugins-from-marketplace.use-case.js";
@@ -144,6 +145,7 @@ function nativeActivationOf(
     registerPluginWithHost: new RegisterPluginWithHost(
       {
         fs,
+        identities: catalogIdentityReader(fs),
         activators: base.nativePluginActivators,
         hosts: {
           marketplaceRegistries: base.hostMarketplaceRegistries,

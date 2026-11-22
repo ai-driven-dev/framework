@@ -4,6 +4,7 @@ import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ClaimsView } from "../../contract/claims-view.js";
+import type { CatalogIdentityReader } from "../../ports/catalog-identity-reader.js";
 import type { HostActions } from "../../ports/host-actions.js";
 import type { HostMarketplaceRegistry } from "../../ports/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../../ports/host-marketplace-sources.js";
@@ -23,6 +24,7 @@ export interface RegistrationRun {
   readonly profile: NativeHostTool & CatalogProbeTool;
   readonly activator: HostActions;
   readonly fs: FileReader;
+  readonly identities: CatalogIdentityReader;
   readonly hosts: HostRegistries;
   readonly projectRoot: string;
   readonly claims: ClaimsView;

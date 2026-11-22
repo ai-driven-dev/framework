@@ -5,6 +5,7 @@ import type { ClaimsView } from "../../../../../src/contexts/host-registration/c
 import type { HostMarketplaceRegistryReading } from "../../../../../src/contexts/host-registration/domain/reading/marketplace-registry-reading.js";
 import type { HostPluginRegistryReading } from "../../../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
+import { catalogIdentityReader } from "../../../../../src/contexts/host-registration/infrastructure/marketplace-registry-reader.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
@@ -39,9 +40,11 @@ function setup(
   const activator = options.activator ?? new FakeHostActions({ available: true });
   const logger = new CapturingLogger();
   const warnings: string[] = [];
+  const fs = new InMemoryFileAdapter({ [CATALOG]: JSON.stringify({ name: "aidd", plugins: [] }) });
   const command = new RegisterPluginWithHost(
     {
-      fs: new InMemoryFileAdapter({ [CATALOG]: JSON.stringify({ name: "aidd", plugins: [] }) }),
+      fs,
+      identities: catalogIdentityReader(fs),
       activators: new Map([["claude", activator]]),
       hosts: {
         marketplaceRegistries: new Map([
@@ -110,9 +113,11 @@ describe("register plugin with host", () => {
   );
 
   it("is unconfigured when no activator serves the binary", async () => {
+    const fs = new InMemoryFileAdapter();
     const command = new RegisterPluginWithHost(
       {
-        fs: new InMemoryFileAdapter(),
+        fs,
+        identities: catalogIdentityReader(fs),
         activators: new Map(),
         hosts: {
           marketplaceRegistries: new Map(),
