@@ -28,7 +28,8 @@ export type Rule =
   | "binary"
   | "profile"
   | "controllerBuildsError"
-  | "size";
+  | "size"
+  | "purity";
 
 export interface Violation {
   readonly rule: Rule;
