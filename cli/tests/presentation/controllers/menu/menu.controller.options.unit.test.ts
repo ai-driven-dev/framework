@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { isUserAbort } from "../../../../src/presentation/controllers/menu/menu.controller.js";
 
-describe("isUserAbort", () => {
+describe("recognising a prompt the user aborted", () => {
   it("recognises the error inquirer throws on Ctrl-C", () => {
     expect(isUserAbort(Object.assign(new Error("aborted"), { name: "ExitPromptError" }))).toBe(
       true

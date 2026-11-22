@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { printBanner } from "../../../src/presentation/presenters/menu.presenter.js";
 import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
 
-describe("printBanner", () => {
+describe("printing the banner", () => {
   it("prints the ASCII wordmark under a blank line, ending on the product name", () => {
     const output = new CapturingOutput(false);
 

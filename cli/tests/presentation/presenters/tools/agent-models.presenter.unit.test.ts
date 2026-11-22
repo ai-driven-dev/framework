@@ -23,7 +23,7 @@ function reported(report: Pick<AgentModelsReport, "provider" | "hosts" | "main">
   return output;
 }
 
-describe("reportAgentModels", () => {
+describe("reporting agent models", () => {
   it("says, per host, what the main session and each agent now run on, and what it updated", () => {
     const output = reported({
       provider: "openai",

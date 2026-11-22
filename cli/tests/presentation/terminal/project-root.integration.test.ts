@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { resolveProjectRoot } from "../../../src/presentation/terminal/project-root.js";
 
-describe("resolveProjectRoot", () => {
+describe("resolving the project root", () => {
   const savedPwd = process.env.PWD;
   let elsewhere: string;
 

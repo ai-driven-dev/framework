@@ -28,7 +28,7 @@ function change() {
   return { remove, userRemove, update, userUpdate, activation, output, environment };
 }
 
-describe("removePluginFrom", () => {
+describe("removing a plugin from the command line", () => {
   it("removes at project scope by default, then re-drives activation", async () => {
     const { remove, userRemove, activation, output, environment } = change();
 
@@ -51,7 +51,7 @@ describe("removePluginFrom", () => {
   });
 });
 
-describe("updatePluginsFrom", () => {
+describe("updating plugins from the command line", () => {
   it("updates every plugin at project scope when none is named", async () => {
     const { update, userUpdate, activation, environment } = change();
 

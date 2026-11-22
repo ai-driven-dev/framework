@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { parseRegistrationScope } from "../../../../src/presentation/controllers/plugin/marketplace-add.controller.js";
 import { CapturingOutput, ExitRequested } from "../../../shared/testing/capturing-output.fake.js";
 
-describe("parseRegistrationScope", () => {
+describe("reading the registration scope", () => {
   it.each([
     [undefined, "project"],
     ["project", "project"],

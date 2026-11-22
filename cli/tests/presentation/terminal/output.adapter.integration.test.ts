@@ -8,8 +8,8 @@ const ended = (code: number): never => {
   throw new Error(`ended ${String(code)}`);
 };
 
-describe("OutputAdapter", () => {
-  describe("debug()", () => {
+describe("writing output", () => {
+  describe("when debugging", () => {
     it("writes to stderr with [verbose] prefix when verbose is true", () => {
       const written: string[] = [];
       const original = process.stderr.write.bind(process.stderr);
@@ -84,7 +84,7 @@ describe("OutputAdapter", () => {
     });
   });
 
-  describe("info()", () => {
+  describe("when informing", () => {
     it("always writes to stdout regardless of verbose", () => {
       const written: string[] = [];
       const original = process.stdout.write.bind(process.stdout);
@@ -103,7 +103,7 @@ describe("OutputAdapter", () => {
     });
   });
 
-  describe("warn()", () => {
+  describe("when warning", () => {
     it("always writes to stderr with Warning: prefix", () => {
       const written: string[] = [];
       const original = process.stderr.write.bind(process.stderr);
@@ -145,7 +145,7 @@ describe("OutputAdapter", () => {
     });
   });
 
-  describe("error()", () => {
+  describe("when reporting an error", () => {
     it("always writes to stderr with Error: prefix", () => {
       const written: string[] = [];
       const original = process.stderr.write.bind(process.stderr);
@@ -187,7 +187,7 @@ describe("OutputAdapter", () => {
     });
   });
 
-  describe("exit()", () => {
+  describe("when exiting", () => {
     it("hands the code to the process end it was given, and does not return", () => {
       const codes: number[] = [];
       const output = new OutputAdapter(

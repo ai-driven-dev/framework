@@ -18,7 +18,7 @@ function marketplace(name: string): Marketplace {
   });
 }
 
-describe("printInstalledPlugins", () => {
+describe("printing installed plugins", () => {
   it("says none is installed when no tool holds one", () => {
     const output = new CapturingOutput(false);
 
@@ -64,7 +64,7 @@ describe("printInstalledPlugins", () => {
   });
 });
 
-describe("printPluginInstallOutcome", () => {
+describe("printing an install outcome", () => {
   it("says nothing was selected when the interactive pick installed none", () => {
     const output = new CapturingOutput(false);
 
@@ -98,7 +98,7 @@ describe("printPluginInstallOutcome", () => {
   });
 });
 
-describe("printSearchHits", () => {
+describe("printing search hits", () => {
   it("says there is no match rather than printing nothing", () => {
     const output = new CapturingOutput(false);
 
@@ -150,7 +150,7 @@ describe("printSearchHits", () => {
   });
 });
 
-describe("printPluginsUpdated", () => {
+describe("printing updated plugins", () => {
   it("reports everything current when nothing moved", () => {
     const output = new CapturingOutput(false);
 
@@ -168,7 +168,7 @@ describe("printPluginsUpdated", () => {
   });
 });
 
-describe("printPluginRemoved", () => {
+describe("printing a removed plugin", () => {
   it("quotes the plugin that was removed", () => {
     const output = new CapturingOutput(false);
 

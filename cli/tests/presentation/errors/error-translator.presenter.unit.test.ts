@@ -6,7 +6,7 @@ import {
 } from "../../../src/shared/domain/shared.error.js";
 import { CapturingOutput, ExitRequested } from "../../shared/testing/capturing-output.fake.js";
 
-describe("failCommand", () => {
+describe("failing a command on an error", () => {
   let output: CapturingOutput;
 
   /** Asserts the failure ran to the exit it promises, and hands the test the rest. */

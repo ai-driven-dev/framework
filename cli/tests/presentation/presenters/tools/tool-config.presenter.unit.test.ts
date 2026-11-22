@@ -11,7 +11,7 @@ import {
   SYNTHETIC_TOOL,
 } from "../../../shared/testing/synthetic-tool-id.builder.js";
 
-describe("printToolAlreadyInstalled", () => {
+describe("printing a tool already installed", () => {
   it("warns that the tool is there and names the flag that reinstalls it", () => {
     const output = new CapturingOutput(false);
 
@@ -23,7 +23,7 @@ describe("printToolAlreadyInstalled", () => {
   });
 });
 
-describe("printToolInstalled", () => {
+describe("printing an installed tool", () => {
   it("announces the tool and its file count when nothing warned", () => {
     const output = new CapturingOutput(false);
 
@@ -49,7 +49,7 @@ describe("printToolInstalled", () => {
   });
 });
 
-describe("printToolRemoved", () => {
+describe("printing a removed tool", () => {
   it("announces the tool and how many files went with it", () => {
     const output = new CapturingOutput(false);
 
@@ -59,7 +59,7 @@ describe("printToolRemoved", () => {
   });
 });
 
-describe("printUpdateResult", () => {
+describe("printing an update result", () => {
   it("says no tool is installed when there is neither an update nor an error", () => {
     const output = new CapturingOutput(false);
 

@@ -12,7 +12,7 @@ function surfaceOf() {
   return { program, createDeps };
 }
 
-describe("commandOf", () => {
+describe("running a telemetry command", () => {
   it("wires the dependencies only when the work runs", async () => {
     const { program, createDeps } = surfaceOf();
     const { run } = commandOf(program, createDeps);

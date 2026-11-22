@@ -8,7 +8,7 @@ function shown(result: Parameters<typeof printIdentityResult>[1]): CapturingOutp
   return output;
 }
 
-describe("printIdentityResult", () => {
+describe("printing an identity result", () => {
   it("says who the measurement names, and how to stop", () => {
     const output = shown({ status: "set", personId: "person-a" });
     expect(output.at("success")[0]).toContain('"person-a"');

@@ -6,7 +6,7 @@ import {
 } from "../../../src/presentation/presenters/auth.presenter.js";
 import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
 
-describe("printAuthenticated", () => {
+describe("printing a fresh login", () => {
   it("names the login and the level it was stored at", () => {
     const output = new CapturingOutput(false);
 
@@ -16,7 +16,7 @@ describe("printAuthenticated", () => {
   });
 });
 
-describe("printAuthStatus", () => {
+describe("printing the authentication status", () => {
   it("says not authenticated when no credential resolved", () => {
     const output = new CapturingOutput(false);
 
@@ -36,7 +36,7 @@ describe("printAuthStatus", () => {
   });
 });
 
-describe("printLogoutResult", () => {
+describe("printing a logout", () => {
   it("says not authenticated when there was nothing to remove", () => {
     const output = new CapturingOutput(false);
 

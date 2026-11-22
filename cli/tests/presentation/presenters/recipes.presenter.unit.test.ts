@@ -3,7 +3,7 @@ import { renderRecipeValidation } from "../../../src/presentation/presenters/rec
 
 const root = "/project";
 
-describe("renderRecipeValidation", () => {
+describe("rendering a recipe validation", () => {
   it("states a pass with the recipe count when nothing was found", () => {
     expect(renderRecipeValidation({ findings: [], fileCount: 3 }, root)).toBe(
       "PASS: 3 recipe(s) validated."

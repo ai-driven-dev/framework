@@ -24,7 +24,7 @@ function on(
   return output;
 }
 
-describe("printOnResult", () => {
+describe("printing the result of turning measurement on", () => {
   it("says measurement is on for this clone, that it is never committed, and the next step", () => {
     const output = on({});
     expect(output.at("success")).toEqual([
@@ -111,7 +111,7 @@ describe("printOnResult", () => {
   });
 });
 
-describe("printOffResult", () => {
+describe("printing the result of turning measurement off", () => {
   it("says what stays", () => {
     const output = new CapturingOutput(false);
     printOffResult(output, { status: "off", changed: true });
@@ -150,7 +150,7 @@ function forgotten(result: ForgetTelemetryResult): CapturingOutput {
   return output;
 }
 
-describe("printForgetResult", () => {
+describe("printing the result of forgetting measured data", () => {
   it("lists everything that would go, and says nothing was removed", () => {
     const output = forgotten({ status: "preview", plan: PLAN });
     expect(output.lines).toContain("  - the ledger of billed calls: /t/ledger (3 files)");

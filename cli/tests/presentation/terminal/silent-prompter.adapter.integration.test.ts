@@ -2,16 +2,16 @@ import { describe, expect, it } from "vitest";
 import { SilentPrompterAdapter } from "../../../src/presentation/terminal/silent-prompter.adapter.js";
 import { saying } from "../../shared/testing/saying.builder.js";
 
-describe("SilentPrompterAdapter", () => {
+describe("answering prompts silently", () => {
   const adapter = new SilentPrompterAdapter();
 
-  describe("confirm()", () => {
+  describe("when asked to confirm", () => {
     it("always returns true", async () => {
       expect(await adapter.confirm("Are you sure?")).toBe(true);
     });
   });
 
-  describe("input()", () => {
+  describe("when asked for text", () => {
     it("returns empty string when no default provided", async () => {
       expect(await adapter.input("Enter value:")).toBe("");
     });
@@ -21,7 +21,7 @@ describe("SilentPrompterAdapter", () => {
     });
   });
 
-  describe("select()", () => {
+  describe("when asked to select", () => {
     it("returns the first non-disabled choice value", async () => {
       const result = await adapter.select("Pick one:", [
         { name: "A", value: "a" },
@@ -46,7 +46,7 @@ describe("SilentPrompterAdapter", () => {
     });
   });
 
-  describe("checkbox()", () => {
+  describe("when asked to check items", () => {
     it("returns checked and non-disabled choices", async () => {
       const result = await adapter.checkbox("Pick:", [
         { name: "A", value: "a", checked: true },

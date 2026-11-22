@@ -25,7 +25,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("offerGroupMenu", () => {
+describe("offering a group's subcommands", () => {
   it("asks which subcommand to run on a terminal, then re-runs the program with the pick", async () => {
     pretendTerminal(true);
     const { group, select, runCommand } = groupWith("add");

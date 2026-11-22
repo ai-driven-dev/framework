@@ -12,7 +12,7 @@ function exitCodeOf(route: () => never): number {
   throw new Error("the route returned instead of exiting");
 }
 
-describe("routeMenuError", () => {
+describe("routing an error out of the menu", () => {
   it("exits 0 without reporting when the user aborts a prompt (Ctrl-C)", () => {
     const output = new CapturingOutput(false);
     const abort = Object.assign(new Error("prompt aborted"), { name: "ExitPromptError" });

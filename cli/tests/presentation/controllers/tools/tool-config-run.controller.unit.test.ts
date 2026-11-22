@@ -7,7 +7,7 @@ import {
   syntheticMixedCatalog,
 } from "../../../shared/testing/synthetic-tool-id.builder.js";
 
-describe("assertKnownToolId", () => {
+describe("checking a tool id", () => {
   it("accepts an AI tool id", () => {
     expect(() => assertKnownToolId(SYNTHETIC_TOOL, syntheticMixedCatalog())).not.toThrow();
   });

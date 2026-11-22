@@ -28,7 +28,7 @@ const INGESTED: IngestUsageResult = {
   consentLogDamaged: false,
   oldestTranscriptAt: null,
 };
-describe("printIngestResult", () => {
+describe("printing an ingest result", () => {
   it("says what was read, in the singular and the plural", () => {
     expect(linesOf((o) => printIngestResult(o, INGESTED))).toEqual([
       "Read 1 transcript: 1 call added, 0 updated.",
