@@ -1,9 +1,9 @@
 import { join } from "node:path";
 import type { AddPlugin } from "../../../../src/contexts/installation/application/plugin/add-plugin.use-case.js";
-import { PluginDistributionLoader } from "../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import type { AiToolId } from "../../../../src/shared/domain/tool.js";
 import type { Logger } from "../../../../src/shared/ports/logger.js";
 import type { buildInstallationDeps } from "../../../shared/testing/installation-deps.builder.js";
+import { loadDistributionOf } from "../../../shared/testing/load-distribution.builder.js";
 import { registeredTools } from "../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "./build-add-plugin.builder.js";
@@ -43,10 +43,7 @@ export function buildAddUseCase(
     { fs: deps.fs, logger: logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
-      distributionLoader: new PluginDistributionLoader(
-        deps.pluginFetcher,
-        deps.pluginDistributionReader
-      ),
+      loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
     },

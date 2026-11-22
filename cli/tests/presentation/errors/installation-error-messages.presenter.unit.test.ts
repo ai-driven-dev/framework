@@ -11,9 +11,7 @@ import {
   DuplicatePluginError,
   InvalidManifestDataError,
   InvalidManifestToolIdError,
-  InvalidPluginNameError,
   InvalidPluginScopeError,
-  InvalidPluginVersionError,
   MalformedPluginScopeError,
   ManifestUnavailableError,
   MissingPluginMetadataError,
@@ -109,16 +107,8 @@ const cases: [() => Error, string][] = [
   [() => new InvalidManifestDataError("detail"), "Invalid manifest data: detail"],
   [() => new InvalidManifestToolIdError("k"), "Invalid tool id in manifest: 'k'."],
   [
-    () => new InvalidPluginNameError("N"),
-    'Invalid plugin name: "N". Use lowercase alphanumeric characters and hyphens only.',
-  ],
-  [
     () => new InvalidPluginScopeError("cursor", "project", "user"),
     "Tool 'cursor' does not support scope 'project'. Supported scope: 'user'. Re-run with --scope user or omit the flag.",
-  ],
-  [
-    () => new InvalidPluginVersionError("x"),
-    'Invalid plugin version: "x". Expected semver format (e.g. 1.0.0).',
   ],
   [
     () => new MalformedPluginScopeError("p", "team"),

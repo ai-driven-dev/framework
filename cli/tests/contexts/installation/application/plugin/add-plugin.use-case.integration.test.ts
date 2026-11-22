@@ -1,14 +1,16 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { DuplicatePluginError } from "../../../../../src/contexts/installation/domain/installation.error.js";
-import type { PluginDistributionReader } from "../../../../../src/contexts/installation/ports/plugin/plugin-distribution-reader.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import {
   buildInstallationDeps,
   initAndInstall,
 } from "../../../../shared/testing/installation-deps.builder.js";
+import {
+  loadDistributionOf,
+  type PluginDistributionReader,
+} from "../../../../shared/testing/load-distribution.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import {
@@ -79,10 +81,7 @@ describe("AddPlugin", () => {
           { fs: deps.fs, logger: deps.logger },
           { project: deps.manifestRepo, user: deps.userManifestRepo },
           {
-            distributionLoader: new PluginDistributionLoader(
-              deps.pluginFetcher,
-              deps.pluginDistributionReader
-            ),
+            loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
           },
@@ -131,7 +130,7 @@ describe("AddPlugin", () => {
         { fs: deps.fs, logger: deps.logger },
         { project: deps.manifestRepo, user: deps.userManifestRepo },
         {
-          distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, zeroFilesReader),
+          loadDistribution: loadDistributionOf(deps.pluginFetcher, zeroFilesReader),
           marketplaceRegistry: registry,
           ...fakeBuildSources(),
         },

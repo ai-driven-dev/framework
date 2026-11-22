@@ -1,4 +1,4 @@
-import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
+import { loadDistributionOf } from "../../../../shared/testing/load-distribution.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 /** Installing a plugin carrying hooks/ against OpenCode delivers the script, namespaced under
  * .opencode/hooks/<plugin>/ like .claude/ and .cursor/ already are. Never .opencode/plugin/,
@@ -29,10 +29,7 @@ async function installSamplePlugin() {
     { fs: deps.fs, logger: capturingLogger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
-      distributionLoader: new PluginDistributionLoader(
-        deps.pluginFetcher,
-        deps.pluginDistributionReader
-      ),
+      loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
     },

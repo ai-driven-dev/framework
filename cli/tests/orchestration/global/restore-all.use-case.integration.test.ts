@@ -1,11 +1,10 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { PluginDistributionLoader } from "../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
+import { PluginDistributionReaderAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-distribution-reader-adapter.js";
 import { ReportStatus } from "../../../src/contexts/installation/application/report-status.use-case.js";
 import { RestoreGlobal } from "../../../src/contexts/installation/application/restore/project/restore-global.use-case.js";
 import { DetectPluginDrift } from "../../../src/contexts/installation/application/shared/detect-plugin-drift.use-case.js";
-import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { RestoreAll } from "../../../src/orchestration/global/restore-all.use-case.js";
 import { render } from "../../../src/presentation/errors/error-translator.presenter.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
@@ -24,6 +23,7 @@ import {
   initAndInstall,
   installTool,
 } from "../../shared/testing/installation-deps.builder.js";
+import { loadDistributionOf } from "../../shared/testing/load-distribution.builder.js";
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.builder.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
@@ -56,7 +56,7 @@ async function installPlugin(
     { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
-      distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, pluginReader),
+      loadDistribution: loadDistributionOf(deps.pluginFetcher, pluginReader),
       marketplaceRegistry: deps.marketplaceRegistry,
       ...fakeBuildSources(),
     },
@@ -322,7 +322,7 @@ describe("RestoreAll - plugin materialization", () => {
       { fs: deps.fs, logger: deps.logger },
       { project: deps.manifestRepo, user: deps.userManifestRepo },
       {
-        distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, reader),
+        loadDistribution: loadDistributionOf(deps.pluginFetcher, reader),
         marketplaceRegistry: deps.marketplaceRegistry,
         ...fakeBuildSources(),
       },

@@ -2,13 +2,15 @@ import { describe, expect, it } from "vitest";
 import type { RestoreAllPlugins } from "../../../../../src/contexts/installation/application/restore/restore-all-plugins.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import type { PluginFetcher } from "../../../../../src/contexts/installation/ports/marketplace-sources.js";
-import type { PluginDistributionReader } from "../../../../../src/contexts/installation/ports/plugin/plugin-distribution-reader.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import type { FileReader } from "../../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../../src/shared/ports/file-writer.js";
+import type {
+  PluginDistributionReader,
+  PluginFetcher,
+} from "../../../../shared/testing/load-distribution.builder.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { restoreAllPluginsOf } from "../../testing/build-restore.builder.js";
 import { fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";

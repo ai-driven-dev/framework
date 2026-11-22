@@ -7,14 +7,17 @@ import { RestoreToolFiles } from "../../../../src/contexts/installation/applicat
 import type { BuiltMaterializationDeps } from "../../../../src/contexts/installation/application/shared/built-materialization-deps.js";
 import type { FileMerger } from "../../../../src/contexts/installation/ports/file-merger.js";
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
-import type { PluginFetcher } from "../../../../src/contexts/installation/ports/marketplace-sources.js";
 import type { Platform } from "../../../../src/contexts/installation/ports/platform.js";
-import type { PluginDistributionReader } from "../../../../src/contexts/installation/ports/plugin/plugin-distribution-reader.js";
 import type { Prompter } from "../../../../src/orchestration/ports/prompter.js";
 import type { AssetProvider } from "../../../../src/shared/ports/asset-provider.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
 import type { Logger } from "../../../../src/shared/ports/logger.js";
+import {
+  loadDistributionOf,
+  type PluginDistributionReader,
+  type PluginFetcher,
+} from "../../../shared/testing/load-distribution.builder.js";
 import { registeredTools } from "../../../shared/testing/registered-tools.builder.js";
 import { FakePlatform } from "./fake-platform.fake.js";
 
@@ -57,7 +60,11 @@ interface RestoreAllPluginsParts {
 export function restoreAllPluginsOf(parts: RestoreAllPluginsParts): RestoreAllPlugins {
   const { fs, pluginFetcher, pluginDistributionReader, builtDeps } = parts;
   return new RestoreAllPlugins(
-    new ApplyPluginFiles({ fs, pluginFetcher, pluginDistributionReader, builtDeps }),
+    new ApplyPluginFiles({
+      fs,
+      loadDistribution: loadDistributionOf(pluginFetcher, pluginDistributionReader),
+      builtDeps,
+    }),
     registeredTools()
   );
 }

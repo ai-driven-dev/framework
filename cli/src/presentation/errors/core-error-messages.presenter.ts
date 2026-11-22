@@ -21,8 +21,12 @@ export const CORE: MessagesOf<SharedOwners> = {
     `Invalid marketplace name: "${error.detail}". Use lowercase alphanumeric characters and hyphens only.`,
   "invalid-plugin-manifest": (error) =>
     error.detail ? `Invalid plugin manifest: ${error.detail}` : "Invalid plugin manifest.",
+  "invalid-plugin-name": (error) =>
+    `Invalid plugin name: "${error.pluginName}". Use lowercase alphanumeric characters and hyphens only.`,
   "invalid-plugin-source": (error) =>
     error.detail ? `Invalid plugin source: ${error.detail}` : "Invalid plugin source.",
+  "invalid-plugin-version": (error) =>
+    `Invalid plugin version: "${error.version}". Expected semver format (e.g. 1.0.0).`,
   "invalid-source-marketplace": (error) => `Invalid source marketplace: ${error.detail}.`,
   "json-parse": (error) => `Cannot parse existing JSON at ${error.path}: ${error.reason}`,
   "manifest-validation": (error) => error.detail,

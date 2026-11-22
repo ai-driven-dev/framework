@@ -28,16 +28,6 @@ export interface InstallationMarketplaceRegistry {
   delete(projectRoot: string, name: string, scope: Scope): Promise<void>;
 }
 
-export interface PluginFetchOptions {
-  forceRefresh?: boolean;
-}
-
-/** Brings a plugin's source to a local directory. The distribution owns the fetching and hands
- * over the real one, which satisfies this shape. */
-export interface PluginFetcher {
-  fetch(source: PluginSource, cacheDir: string, options?: PluginFetchOptions): Promise<string>;
-}
-
 /** Registers the machine-scope framework source again, from the source a caller carries. */
 export interface FrameworkMarketplaceRegistrar {
   execute(options: { projectRoot: string; pluginSource?: PluginSource }): Promise<unknown>;

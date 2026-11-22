@@ -13,7 +13,7 @@ paths:
 
 ## Ports
 
-- `ManifestRepository`, `FileMerger`, `Platform`, `PluginDistributionReader`: held here, implemented by its adapters, no contract kit yet.
+- `ManifestRepository`, `FileMerger`, `Platform`: held here, implemented by its adapters, no contract kit yet.
 
 ## Suppliers
 
