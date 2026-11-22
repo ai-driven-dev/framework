@@ -2,9 +2,12 @@ import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { InstalledPlugin } from "../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
-import type { RegistrationRecordRules } from "../ports/native-host.js";
 import type { ProjectPluginIntegration } from "../ports/tool-sections.js";
-import { PlanProjectClean, type ProjectCleanPlan } from "./plan-project-clean.use-case.js";
+import {
+  PlanProjectClean,
+  type ProjectCleanPlan,
+  type ProjectCleanRecords,
+} from "./plan-project-clean.use-case.js";
 import type { RemoveProjectFiles } from "./removal/remove-project-files.js";
 import { assertProjectHooksRemovable } from "./shared/remove-project-hooks.js";
 
@@ -18,12 +21,12 @@ export interface ProjectCleanAsks {
     tool: ProjectPluginIntegration,
     projectRoot: string
   ) => Promise<void>;
-  /** What the host registration says of the registrations this project recorded. */
-  readonly records: RegistrationRecordRules;
 }
 
 export interface CleanProjectFilesRequest {
   kind: "plan";
+  /** What the host registration says of the registrations this project recorded. */
+  records: ProjectCleanRecords;
 }
 
 export interface AssertProjectRemovableRequest {
@@ -75,7 +78,7 @@ export class CleanProjectFiles {
   async execute(command: AnyCleanProjectFilesRequest): Promise<unknown> {
     switch (command.kind) {
       case "plan":
-        return this.planProjectClean.execute();
+        return this.planProjectClean.execute(command.records);
       case "assert-removable":
         return this.assertRemovable(command.projectRoot, command.force);
       case "remove":

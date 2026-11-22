@@ -12,7 +12,7 @@ function planOver(manifest: Manifest | null): PlanProjectClean {
   return new PlanProjectClean(
     {
       manifestRepo: new InMemoryManifestRepository(manifest, "/test-project"),
-      asks: { homeDir: () => "/home", records: registrationRecordRules },
+      asks: { homeDir: () => "/home" },
     },
     registeredTools()
   );
@@ -30,7 +30,7 @@ function localPlugin(name: string, scope: Scope = "project"): InstalledPlugin {
 
 describe("PlanProjectClean", () => {
   it("answers null when the project installed nothing", async () => {
-    await expect(planOver(null).execute()).resolves.toBeNull();
+    await expect(planOver(null).execute(registrationRecordRules)).resolves.toBeNull();
   });
 
   it("leaves a tool that is not an AI tool out of the user plugins it lists", async () => {
@@ -39,7 +39,7 @@ describe("PlanProjectClean", () => {
       .withPlugin(TOOL.vscode, localPlugin("ide-plugin", "user"))
       .build();
 
-    const plan = await planOver(manifest).execute();
+    const plan = await planOver(manifest).execute(registrationRecordRules);
 
     expect(plan?.userPlugins).toEqual([]);
   });
@@ -55,7 +55,7 @@ describe("PlanProjectClean", () => {
       pluginRefs: [],
     });
 
-    const plan = await planOver(manifest).execute();
+    const plan = await planOver(manifest).execute(registrationRecordRules);
 
     expect(plan?.withdrawals.map((w) => w.refScopes.size)).toEqual([0]);
   });

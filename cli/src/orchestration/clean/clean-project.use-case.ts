@@ -1,6 +1,7 @@
 import type { ListMarketplaces } from "../../contexts/distribution/application/list-marketplaces.use-case.js";
 import type { WithdrawFromHost } from "../../contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import type { ProjectCleanFacts } from "../../contexts/host-registration/application/withdraw/withdrawal.js";
+import type { RegistrationRecordRules } from "../../contexts/host-registration/contract/registration-record-rules.js";
 import type { CleanProjectFiles } from "../../contexts/installation/application/clean-project-files.use-case.js";
 import type {
   CleanNativeRegistrationPreview,
@@ -39,6 +40,7 @@ export interface CleanProjectDeps {
   readonly claims: CleanClaims;
   readonly marketplaces: ListMarketplaces;
   readonly prompter?: Prompter;
+  readonly records: Pick<RegistrationRecordRules, "pluginRefsOf" | "refOf" | "registrationPreview">;
 }
 
 /**
@@ -52,7 +54,10 @@ export class CleanProject {
 
   async execute(options: CleanProjectRequest): Promise<CleanProjectResult> {
     const { projectRoot } = options;
-    const plan = await this.deps.cleanProject.execute({ kind: "plan" });
+    const plan = await this.deps.cleanProject.execute({
+      kind: "plan",
+      records: this.deps.records,
+    });
     if (plan === null) {
       const emptyPreview: CleanPreview = { tools: [], totalFileCount: 0, nativeRegistrations: [] };
       return { dryRun: false, manifestFound: false, preview: emptyPreview, fileCount: 0 };

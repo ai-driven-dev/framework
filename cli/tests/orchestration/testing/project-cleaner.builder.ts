@@ -47,7 +47,6 @@ export function projectCleanerDeps(parts: ProjectCleanerParts): CleanProjectDeps
           homeDir: parts.homeDir ?? homedir,
           assertMcpRemovable: (plugin, tool, projectRoot) =>
             assertProjectMcpEntriesRemovable(parts.fs, { plugin, tool, projectRoot }),
-          records: registrationRecordRules,
         },
         removeProjectFiles: new RemoveProjectFiles(
           {
@@ -79,6 +78,7 @@ export function projectCleanerDeps(parts: ProjectCleanerParts): CleanProjectDeps
       parts.marketplaceRegistry ?? new InMemoryMarketplaceRegistry()
     ),
     prompter: parts.prompter,
+    records: registrationRecordRules,
   };
 }
 

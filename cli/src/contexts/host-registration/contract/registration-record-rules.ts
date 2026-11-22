@@ -30,9 +30,24 @@ export interface CatalogueClaimsView {
   readonly dependent: string | undefined;
 }
 
+/** What a clean announces of one tool's recorded registration. */
+export interface RegistrationPreviewView {
+  readonly binary: string;
+  readonly marketplaceCount: number;
+  readonly pluginRefCount: number;
+  readonly cachePaths: readonly string[];
+}
+
 /** What the host registration answers over a record another context keeps for it, without that
  * context reading the record's shape. */
 export interface RegistrationRecordRules {
+  /** The refs recorded on the host, none when nothing was recorded. */
+  readonly pluginRefsOf: (record: RegistrationRecordView | undefined) => readonly string[];
+  /** What a clean announces of the record, with the cache paths it would purge under the root. */
+  readonly registrationPreview: (
+    record: RegistrationRecordView,
+    cacheRoot: string | undefined
+  ) => RegistrationPreviewView;
   /** The ref a plugin has on the host, `undefined` when nothing was recorded for the alias. */
   readonly refOf: (
     record: RegistrationRecordView | undefined,

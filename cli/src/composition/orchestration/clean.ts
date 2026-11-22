@@ -92,7 +92,7 @@ function wireCleanUserScope(base: Base, purgeCache: PurgeDeclaredCache, claims: 
 /** What a project clean removes: its files, with the records the registrations left. */
 function wireCleanProjectFiles(base: Base, inst: Installation) {
   const { fs, logger, manifestRepo, tools } = base;
-  const { updateGitignore, registrationRecordRules } = inst;
+  const { updateGitignore } = inst;
   return new CleanProjectFiles(
     {
       fs,
@@ -101,7 +101,6 @@ function wireCleanProjectFiles(base: Base, inst: Installation) {
         homeDir: resolveHomeDir,
         assertMcpRemovable: (plugin, tool, projectRoot) =>
           assertProjectMcpEntriesRemovable(fs, { plugin, tool, projectRoot }),
-        records: registrationRecordRules,
       },
       removeProjectFiles: new RemoveProjectFiles(
         { fs, manifestRepo, logger, updateGitignore, homedir },
@@ -138,6 +137,7 @@ export function wireClean(base: Base, inst: Installation) {
     claims,
     marketplaces: new ListMarketplaces(marketplaceRegistry),
     prompter,
+    records: inst.registrationRecordRules,
   });
   const cleanUserScopeUseCase = wireCleanUserScope(base, purgeCache, claims);
   return { uninstallTools, cleanUseCase, cleanUserScopeUseCase };

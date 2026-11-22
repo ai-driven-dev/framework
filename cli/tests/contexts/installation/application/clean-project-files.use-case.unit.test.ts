@@ -1,6 +1,5 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { registrationRecordRules } from "../../../../src/composition/installation.js";
 import { CleanProjectFiles } from "../../../../src/contexts/installation/application/clean-project-files.use-case.js";
 import { RemoveProjectFiles } from "../../../../src/contexts/installation/application/removal/remove-project-files.js";
 import { UpdateGitignore } from "../../../../src/contexts/installation/application/update-gitignore.use-case.js";
@@ -27,7 +26,6 @@ function cleanOver(manifest: Manifest | null, fs: InMemoryFileAdapter): CleanPro
       asks: {
         homeDir: () => "/home",
         assertMcpRemovable: async () => undefined,
-        records: registrationRecordRules,
       },
       removeProjectFiles: new RemoveProjectFiles(
         {
