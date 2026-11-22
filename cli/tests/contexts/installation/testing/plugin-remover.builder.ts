@@ -3,6 +3,7 @@ import {
   claimedRefWithdrawal,
   underMachineHome,
 } from "../../../../src/composition/orchestration/plugin.js";
+import { homeDirResolver } from "../../../../src/composition/user-config-dir.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../src/contexts/distribution/contract/marketplace.js";
 import { WithdrawFromHost } from "../../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import { RemovePlugin as RemoveProjectPluginFiles } from "../../../../src/contexts/installation/application/removal/remove-plugin.use-case.js";
@@ -19,7 +20,6 @@ import {
 import type { ToolCatalog } from "../../../../src/contexts/tools/contract/tool-catalog.js";
 import { RemoveMachinePlugin } from "../../../../src/orchestration/plugin/remove-machine-plugin.use-case.js";
 import { RemovePlugin } from "../../../../src/orchestration/plugin/remove-plugin.use-case.js";
-import { resolveHomeDir } from "../../../../src/shared/infrastructure/home-dir.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
 import type { Lock } from "../../../../src/shared/ports/lock.js";
@@ -63,7 +63,7 @@ export function pluginRemover(parts: PluginRemoverParts) {
     repo: parts.userManifestRepo,
     fs,
     logger,
-    home: resolveHomeDir(),
+    home: homeDirResolver()(),
     platform: process.platform,
     frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
     userSourceReferences: parts.userSourceReferences,
@@ -103,6 +103,7 @@ export function userPluginRemover(
     registeredTools()
   );
   return underMachineHome(
-    new RemoveMachinePlugin(removal, parts.records ?? registrationRecordRules)
+    new RemoveMachinePlugin(removal, parts.records ?? registrationRecordRules),
+    homeDirResolver()()
   );
 }

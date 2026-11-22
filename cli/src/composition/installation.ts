@@ -1,4 +1,4 @@
-import { homedir, tmpdir } from "node:os";
+import { tmpdir } from "node:os";
 import type { RegistrationRecordRules } from "../contexts/host-registration/contract/registration-record-rules.js";
 import { mergeCatalogueMarketplaces } from "../contexts/host-registration/domain/record/catalogue-marketplaces.js";
 import {
@@ -196,7 +196,7 @@ export function wireInstallation(base: Base) {
   const builtMaterializationDeps = builtMaterializationDepsOf(fs, {
     ensureBuilt: ensureBuiltMarketplaceUseCase,
     marketplaceRegistry,
-    homedir,
+    homedir: base.homedir,
     translate: createPluginTranslation(tools),
     platform: process.platform,
   });
@@ -209,7 +209,7 @@ export function wireInstallation(base: Base) {
     readMachineInstallation: new ReadMachineInstallation(userManifestRepo),
     pluginListUseCase: new ListPlugins(manifestRepo, tools),
     builtMaterializationDeps,
-    detectPluginDriftUseCase: new DetectPluginDrift(fs, tools, homedir),
+    detectPluginDriftUseCase: new DetectPluginDrift(fs, tools, base.homedir),
     registrationRecordRules,
   };
 }

@@ -8,7 +8,7 @@ export type DoctorKeys =
   | "doctorUseCase"
   | "statusUseCase"
   | "runUserScopeDoctor"
-  | "homedir"
+  | "userSettingsFileOf"
   | "environment";
 
 /** What every doctor run is given: the graph it reads, where it writes, and the project it checks. */

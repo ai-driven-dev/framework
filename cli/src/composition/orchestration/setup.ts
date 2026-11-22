@@ -1,4 +1,3 @@
-import { homedir } from "node:os";
 import { AgentPluginHosts } from "../../contexts/installation/application/agents/agent-plugin-hosts.js";
 import { MainSessionLocator } from "../../contexts/installation/application/agents/main-session-locator.js";
 import { MainSessionModels } from "../../contexts/installation/application/agents/main-session-models.use-case.js";
@@ -39,7 +38,10 @@ export function wireAgentModels({
     fs,
     store: agentModelStore,
     settings: jsoncMainSessionSettings,
-    mainSessionLocator: new MainSessionLocator({ fs, homedir, environment }, base.tools),
+    mainSessionLocator: new MainSessionLocator(
+      { fs, homedir: base.homedir, environment },
+      base.tools
+    ),
   });
   const refresh = new RefreshAgentPlugins({
     pluginHosts: new AgentPluginHosts(manifestRepo, userManifestRepo),

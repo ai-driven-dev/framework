@@ -45,7 +45,6 @@ import { RecordSyncActivation } from "../../orchestration/sync/settings/record-s
 import { SyncNativeActivation } from "../../orchestration/sync/settings/sync-native-activation.use-case.js";
 import { SyncSettings } from "../../orchestration/sync/settings/sync-settings.use-case.js";
 import { SyncToolSettingsFiles } from "../../orchestration/sync/settings/sync-tool-settings-files.use-case.js";
-import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
 import { settingsDeclaration } from "../host-registration.js";
 import type { Installation } from "../installation.js";
 import type { Base } from "../shared.js";
@@ -106,7 +105,7 @@ function wireUserMarketplaceRemoval(base: Base, inst: Installation) {
         tools
       ),
       host: base.withdrawFromHost,
-      home: resolveHomeDir(),
+      home: base.homedir(),
       records: inst.registrationRecordRules,
     }),
     remove: new RemoveMarketplace(marketplaceRegistry),

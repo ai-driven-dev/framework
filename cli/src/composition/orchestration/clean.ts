@@ -1,4 +1,3 @@
-import { homedir } from "node:os";
 import { ListMarketplaces } from "../../contexts/distribution/application/list-marketplaces.use-case.js";
 import { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.use-case.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
@@ -34,7 +33,6 @@ import { PreviewProjectClean } from "../../orchestration/clean/preview-project-c
 import { RemoveProjectInOrder } from "../../orchestration/clean/remove-project-in-order.use-case.js";
 import { RemoveUserScope } from "../../orchestration/clean/remove-user-scope.use-case.js";
 import { UninstallProjectTools } from "../../orchestration/clean/uninstall-project-tools.use-case.js";
-import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
 import type { Installation } from "../installation.js";
 import type { Base } from "../shared.js";
 import { userConfigDir } from "../user-config-dir.js";
@@ -59,7 +57,7 @@ function wireCleanUserScope(
     userManifestRepo,
     claims: inst.registrationRecordRules,
     purgeMachineState: new PurgeMachineState({ fs, logger, guards }),
-    homeDir: homedir,
+    homeDir: base.homedir,
     userScopePluginFiles: new UserScopePluginFiles(fs, (plugin, tool, home) =>
       userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
     ),
@@ -88,7 +86,7 @@ function wireCleanProjectFiles(base: Base, inst: Installation) {
   const { fs, logger, manifestRepo, tools } = base;
   const { updateGitignore } = inst;
   const asks: ProjectCleanAsks = {
-    homeDir: resolveHomeDir,
+    homeDir: base.homedir,
     assertMcpRemovable: (plugin, tool, projectRoot) =>
       assertProjectMcpEntriesRemovable(fs, { plugin, tool, projectRoot }),
   };
@@ -100,7 +98,7 @@ function wireCleanProjectFiles(base: Base, inst: Installation) {
     planProjectClean: new PlanProjectClean({ manifestRepo, asks }, tools),
     removeProjectFiles: new RemoveProjectFiles({
       manifestRepo,
-      trackedFiles: new DeleteTrackedProjectFiles({ fs, logger, homedir }, tools),
+      trackedFiles: new DeleteTrackedProjectFiles({ fs, logger, homedir: base.homedir }, tools),
       machineLocalFiles: new RemoveMachineLocalFiles(fs, tools),
       aiddTraces: new RemoveAiddTraces({ fs, manifestRepo, logger, updateGitignore }, tools),
     }),
@@ -136,7 +134,7 @@ export function wireClean(base: Base, inst: Installation) {
       {
         manifestRepo,
         detachClaims: detachProjectClaims(userManifestRepo, fs),
-        removeToolFiles: new RemoveToolFiles(fs, logger, tools, homedir),
+        removeToolFiles: new RemoveToolFiles(fs, logger, tools, base.homedir),
       },
       tools
     ),

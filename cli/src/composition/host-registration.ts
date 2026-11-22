@@ -28,7 +28,6 @@ import type { SettingsDeclarationRules } from "../orchestration/sync/settings/sy
 import { asPlainObject } from "../shared/domain/reading/plain-object.js";
 import { UnregisteredToolError } from "../shared/domain/shared.error.js";
 import type { AiToolId, ToolId } from "../shared/domain/tool.js";
-import { resolveHomeDir } from "../shared/infrastructure/home-dir.js";
 import {
   ToolKeyedJsonFile,
   type ToolKeyedJsonFileDeps,
@@ -87,7 +86,7 @@ export interface HostRegistrationDeps {
  * a new tool costs its profile and no edit here, a new layout one reader and one table line. */
 export function wireHostRegistration(
   tools: ToolCatalog,
-  home: string = resolveHomeDir(),
+  home: string,
   registrations: ReadonlyMap<ToolId, NativeActivation> = nativeRegistrationsOf(REGISTERED_PROFILES)
 ): HostRegistrationDeps {
   const wiring: MutableWiring = {

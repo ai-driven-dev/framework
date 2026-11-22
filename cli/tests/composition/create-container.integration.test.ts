@@ -110,7 +110,7 @@ describe("creating a container", () => {
       slice.telemetry.declareTask,
     ])
       expect(member.execute).toBeTypeOf("function");
-    expect(slice.homedir()).toEqual(expect.any(String));
+    expect(slice.userSettingsFileOf).toBeTypeOf("function");
   });
 
   it("wires telemetry and recipes without wiring installation", async () => {
