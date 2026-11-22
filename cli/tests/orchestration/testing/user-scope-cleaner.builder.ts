@@ -5,7 +5,7 @@ import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/c
 import type { MarketplaceRegistry } from "../../../src/contexts/distribution/ports/marketplace-registry.js";
 import { WithdrawFromHost } from "../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import type { HostPorts } from "../../../src/contexts/host-registration/ports/host-ports.js";
-import { InspectUserScope } from "../../../src/contexts/installation/application/clean/inspect-user-scope.use-case.js";
+import { InspectUserScopeFiles } from "../../../src/contexts/installation/application/clean/inspect-user-scope-files.use-case.js";
 import { ProveUserScopeWithdrawals } from "../../../src/contexts/installation/application/clean/prove-user-scope-withdrawals.js";
 import {
   PurgeUserScopeFiles,
@@ -18,14 +18,17 @@ import {
   type PurgeMachineStateDeps,
 } from "../../../src/contexts/installation/application/removal/purge-machine-state.js";
 import { UserScopePluginFiles } from "../../../src/contexts/installation/application/removal/user-scope-plugin-files.js";
+import { userScopeFilesSafeToDelete } from "../../../src/contexts/machine-claims/application/ownership/user-scope-plugin-files.js";
 import { PurgeDeclaredCache } from "../../../src/contexts/machine-claims/application/purge-declared-cache.js";
-import { userScopeFilesSafeToDelete } from "../../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import {
   CleanUserScope,
   type CleanUserScopeDeps,
 } from "../../../src/orchestration/clean/clean-user-scope.use-case.js";
+import { ConfirmRemoval } from "../../../src/orchestration/clean/confirm-removal.use-case.js";
+import { InspectUserScope } from "../../../src/orchestration/clean/inspect-user-scope.use-case.js";
+import { RemoveUserScope } from "../../../src/orchestration/clean/remove-user-scope.use-case.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
@@ -40,7 +43,7 @@ export interface UserScopeCleanerParts extends Partial<HostPorts> {
   userConfigDir?: () => string;
   homeDir?: () => string;
   userSourceReferences?: UserSourceReferences;
-  prompter?: CleanUserScopeDeps["prompter"];
+  prompter?: ConstructorParameters<typeof ConfirmRemoval>[0];
 }
 
 function hostPortsOf(parts: Partial<HostPorts>): HostPorts {
@@ -52,7 +55,7 @@ function hostPortsOf(parts: Partial<HostPorts>): HostPorts {
   };
 }
 
-export function userScopeCleaner(parts: UserScopeCleanerParts): CleanUserScope {
+export function userScopeCleanerDeps(parts: UserScopeCleanerParts): CleanUserScopeDeps {
   const fs = parts.fs ?? new InMemoryFileAdapter();
   const logger = parts.logger ?? new CapturingLogger();
   const homeDir = parts.homeDir ?? (() => "/fake-home");
@@ -72,25 +75,34 @@ export function userScopeCleaner(parts: UserScopeCleanerParts): CleanUserScope {
       userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
     ),
   };
-  return new CleanUserScope({
-    purgeFiles: new PurgeUserScopeFiles({
-      userManifestRepo: parts.repo,
-      inspection: new InspectUserScope(userScopeParts, parts.tools),
-      withdrawals: new ProveUserScopeWithdrawals(userScopeParts, parts.tools),
-      machinePurge: new PurgeUserScopeMachine(userScopeParts, parts.tools),
-    }),
-    withdrawFromHost: new WithdrawFromHost(fs, logger, hostPortsOf(parts)),
-    removeMarketplace: new RemoveMarketplace(
-      parts.marketplaceRegistry ?? new InMemoryMarketplaceRegistry()
-    ),
-    claims: wireCleanClaims({
-      fs,
-      logger,
-      userManifestRepo: parts.repo,
-      userSourceReferences: parts.userSourceReferences,
-      purgeCache,
-    }),
-    logger,
-    prompter: parts.prompter,
+  const purgeFiles = new PurgeUserScopeFiles({
+    userManifestRepo: parts.repo,
+    inspection: new InspectUserScopeFiles(userScopeParts, parts.tools),
+    withdrawals: new ProveUserScopeWithdrawals(userScopeParts, parts.tools),
+    machinePurge: new PurgeUserScopeMachine(userScopeParts, parts.tools),
   });
+  const claims = wireCleanClaims({
+    fs,
+    logger,
+    userManifestRepo: parts.repo,
+    userSourceReferences: parts.userSourceReferences,
+    purgeCache,
+  });
+  return {
+    purgeFiles,
+    inspect: new InspectUserScope({ purgeFiles, claims, logger }),
+    confirm: new ConfirmRemoval(parts.prompter),
+    remove: new RemoveUserScope({
+      purgeFiles,
+      withdrawFromHost: new WithdrawFromHost(fs, logger, hostPortsOf(parts)),
+      removeMarketplace: new RemoveMarketplace(
+        parts.marketplaceRegistry ?? new InMemoryMarketplaceRegistry()
+      ),
+      claims,
+    }),
+  };
+}
+
+export function userScopeCleaner(parts: UserScopeCleanerParts): CleanUserScope {
+  return new CleanUserScope(userScopeCleanerDeps(parts));
 }

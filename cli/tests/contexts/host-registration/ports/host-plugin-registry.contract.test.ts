@@ -1,8 +1,8 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { EnabledPluginsMapReader } from "../../../../src/contexts/host-registration/infrastructure/enabled-plugins-map-reader.js";
-import { PluginEntriesByScopeReader } from "../../../../src/contexts/host-registration/infrastructure/plugin-entries-by-scope-reader.js";
-import { TomlPluginTablesReader } from "../../../../src/contexts/host-registration/infrastructure/toml-plugin-tables-reader.js";
+import { EnabledPluginsMapReader } from "../../../../src/contexts/host-registration/infrastructure/plugin-registry/enabled-plugins-map-reader.js";
+import { PluginEntriesByScopeReader } from "../../../../src/contexts/host-registration/infrastructure/plugin-registry/plugin-entries-by-scope-reader.js";
+import { TomlPluginTablesReader } from "../../../../src/contexts/host-registration/infrastructure/plugin-registry/toml-plugin-tables-reader.js";
 import { FakeHostPluginRegistry } from "../testing/fake-host-plugin-registry.fake.js";
 import {
   describeHostPluginRegistryContract,

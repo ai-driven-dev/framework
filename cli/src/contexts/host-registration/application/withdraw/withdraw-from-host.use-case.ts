@@ -5,10 +5,10 @@ import { recordedRegistrations } from "../../domain/record/registration-record.j
 import type { HostPorts } from "../../ports/host-ports.js";
 import { proveMarketplaceRemoval } from "../prove-marketplace-removal.js";
 import { throwRefusal } from "../throw-refusal.js";
-import { assertProjectRegistrationsOwned } from "./assert-project-registrations-owned.js";
-import { assertProjectSource } from "./assert-project-source.js";
-import { proveClaimedRef } from "./prove-claimed-ref.js";
-import { proveUserRegistrations } from "./prove-user-registrations.js";
+import { assertProjectRegistrationsOwned } from "./prove/assert-project-registrations-owned.js";
+import { assertProjectSource } from "./prove/assert-project-source.js";
+import { proveClaimedRef } from "./prove/prove-claimed-ref.js";
+import { proveUserRegistrations } from "./prove/prove-user-registrations.js";
 import { purgeCachedPlugin, purgeMarketplaceCaches } from "./purge-host-cache.js";
 import { uninstallPlugin } from "./uninstall-plugin.js";
 import { withdrawProjectRegistrations } from "./withdraw-project-registrations.js";

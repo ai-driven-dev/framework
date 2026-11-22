@@ -6,7 +6,7 @@ import type {
 import type { RecordMarketplace } from "../../contexts/distribution/application/add/record-marketplace.use-case.js";
 import { TrustDeniedError } from "../orchestration.error.js";
 import type { Prompter } from "../ports/prompter.js";
-import type { RemoveRegisteredMarketplace } from "./remove-registered-marketplace.use-case.js";
+import type { RemoveRegisteredMarketplace } from "./remove/remove-registered-marketplace.use-case.js";
 
 export interface AddMarketplaceRequest extends Omit<PrepareMarketplaceRequest, "replace"> {
   /** Trusts the source without asking. */

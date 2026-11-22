@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { InstallLocationsByNameReader } from "../../../../src/contexts/host-registration/infrastructure/marketplace-registry-reader.js";
+import { InstallLocationsByNameReader } from "../../../../src/contexts/host-registration/infrastructure/marketplace/marketplace-registry-reader.js";
 import { FakeHostMarketplaceRegistry } from "../testing/fake-host-marketplace-registry.fake.js";
 import {
   describeHostMarketplaceRegistryContract,

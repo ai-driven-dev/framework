@@ -23,7 +23,7 @@ import type { InstallGlobalPlugins } from "../../../src/orchestration/setup/inst
 import { SetupMachineScope } from "../../../src/orchestration/setup/setup-machine-scope.use-case.js";
 import { ChoosePlugins } from "../../../src/orchestration/setup/steps/choose-plugins.use-case.js";
 import type { ChooseTools } from "../../../src/orchestration/setup/steps/choose-tools.use-case.js";
-import type { SyncSettings } from "../../../src/orchestration/sync/sync-settings.use-case.js";
+import type { SyncSettings } from "../../../src/orchestration/sync/settings/sync-settings.use-case.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 import type { Lock } from "../../../src/shared/ports/lock.js";
@@ -187,22 +187,14 @@ async function buildUseCaseOver(tools: ToolCatalog, args: UseCaseArgs) {
     tools,
     fs: deps.fs,
     manifestRepo: deps.manifestRepo,
-    steps: {
-      ...setupMarketplaceRegistration,
-      installTools: setupToolsUseCase,
-      syncSettings: (syncOptions) => syncSettingsUseCase.execute(syncOptions),
-      version: CURRENT_VERSION,
-      detectContext:
-        options?.detectContext === true ? new DetectProjectContext(deps.fs) : undefined,
-      machineScope,
-    },
-    questions: {
-      plugins: (promptOptions) => choosePlugins.execute(promptOptions),
-      tools:
-        chooseTools === undefined
-          ? undefined
-          : (promptOptions) => chooseTools.execute(promptOptions),
-    },
+    ...setupMarketplaceRegistration,
+    installTools: setupToolsUseCase,
+    syncSettings: syncSettingsUseCase,
+    version: CURRENT_VERSION,
+    detectContext: options?.detectContext === true ? new DetectProjectContext(deps.fs) : undefined,
+    machineScope,
+    choosePlugins,
+    chooseTools,
   });
   return {
     useCase,

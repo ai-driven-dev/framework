@@ -9,50 +9,16 @@ import { InitProject } from "../../contexts/installation/application/init-projec
 import { jsoncMainSessionSettings } from "../../contexts/installation/infrastructure/jsonc-main-session-settings.js";
 import { RefreshAgentPlugins } from "../../orchestration/agent-models/refresh-agent-plugins.use-case.js";
 import { SetAgentModels } from "../../orchestration/agent-models/set-agent-models.use-case.js";
-import {
-  RunSetup,
-  type SetupQuestions,
-  type SetupSteps,
-} from "../../orchestration/setup/run-setup.use-case.js";
+import { RunSetup } from "../../orchestration/setup/run-setup.use-case.js";
 import { ChoosePlugins } from "../../orchestration/setup/steps/choose-plugins.use-case.js";
 import { ChooseTools } from "../../orchestration/setup/steps/choose-tools.use-case.js";
+import { InstallSetupTools } from "../../orchestration/setup/steps/install-setup-tools.use-case.js";
+import { PrepareSetupProject } from "../../orchestration/setup/steps/prepare-setup-project.use-case.js";
 import type { Installation } from "../installation.js";
 import type { Base } from "../shared.js";
 import type { Global } from "./global.js";
 import type { Marketplace } from "./marketplace.js";
 import type { Plugin } from "./plugin.js";
-
-/** What a project-scope setup does at each stage. */
-export function setupStepsOf(
-  base: Pick<Base, "currentVersion">,
-  m: {
-    readonly resolveSetupSource: SetupSteps["resolveSource"];
-    readonly registerSetupSource: SetupSteps["register"];
-    readonly syncSettingsUseCase: Pick<Marketplace["syncSettingsUseCase"], "execute">;
-  },
-  g: Pick<Global, "setupToolsUseCase" | "projectContextDetector" | "setupMachineScope">
-): SetupSteps {
-  return {
-    resolveSource: m.resolveSetupSource,
-    register: m.registerSetupSource,
-    installTools: g.setupToolsUseCase,
-    syncSettings: (options) => m.syncSettingsUseCase.execute(options),
-    version: base.currentVersion,
-    detectContext: g.projectContextDetector,
-    machineScope: g.setupMachineScope,
-  };
-}
-
-/** What a setup asks a person, answered by the prompts that own the questions. */
-export function setupQuestionsOf(
-  plugins: Pick<ChoosePlugins, "execute">,
-  tools: Pick<ChooseTools, "execute">
-): SetupQuestions {
-  return {
-    plugins: (options) => plugins.execute(options),
-    tools: (options) => tools.execute(options),
-  };
-}
 
 /** The agents' provider and the main session's model, which `setup --provider` sets and
  * `clean --global` forgets. */
@@ -115,9 +81,16 @@ export function wireSetup({
   });
   const chooseTools = new ChooseTools(prompter, base.tools);
   const runSetup = new RunSetup(
-    setupStepsOf(base, m, g),
-    setupQuestionsOf(choosePlugins, chooseTools),
-    new InitProject({ fs, manifestRepo, updateGitignore: inst.updateGitignore }, base.tools)
+    new PrepareSetupProject(
+      g.projectContextDetector,
+      m.resolveSetupSource,
+      new InitProject({ fs, manifestRepo, updateGitignore: inst.updateGitignore }, base.tools),
+      m.registerSetupSource
+    ),
+    new InstallSetupTools(g.setupToolsUseCase, chooseTools, base.currentVersion),
+    choosePlugins,
+    m.syncSettingsUseCase,
+    g.setupMachineScope
   );
   return { choosePlugins, chooseTools, runSetup };
 }

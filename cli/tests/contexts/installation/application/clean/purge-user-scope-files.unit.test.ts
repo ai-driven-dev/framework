@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { InspectUserScope } from "../../../../../src/contexts/installation/application/clean/inspect-user-scope.use-case.js";
+import { InspectUserScopeFiles } from "../../../../../src/contexts/installation/application/clean/inspect-user-scope-files.use-case.js";
 import { ProveUserScopeWithdrawals } from "../../../../../src/contexts/installation/application/clean/prove-user-scope-withdrawals.js";
 import { PurgeUserScopeFiles } from "../../../../../src/contexts/installation/application/clean/purge-user-scope-files.js";
 import { PurgeUserScopeMachine } from "../../../../../src/contexts/installation/application/clean/purge-user-scope-machine.js";
@@ -12,7 +12,7 @@ function fixture() {
   const { userManifestRepo, claims, purgeMachineState, homeDir, userScopePluginFiles } = deps;
   const purge = new PurgeUserScopeFiles({
     userManifestRepo,
-    inspection: new InspectUserScope({ userManifestRepo, claims, purgeMachineState }, tools),
+    inspection: new InspectUserScopeFiles({ userManifestRepo, claims, purgeMachineState }, tools),
     withdrawals: new ProveUserScopeWithdrawals(
       { userManifestRepo, claims, homeDir, userScopePluginFiles },
       tools

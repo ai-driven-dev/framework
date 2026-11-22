@@ -5,7 +5,9 @@ import {
   RegisterPluginWithHost,
   type RegisterPluginWithHostDeps,
 } from "../../../src/contexts/host-registration/application/register/register-plugin-with-host.use-case.js";
-import { catalogIdentityReader } from "../../../src/contexts/host-registration/infrastructure/marketplace-registry-reader.js";
+import { ResolveNativeHost } from "../../../src/contexts/host-registration/application/register/resolve-native-host.use-case.js";
+import { catalogIdentityReader } from "../../../src/contexts/host-registration/infrastructure/marketplace/marketplace-registry-reader.js";
+import type { HostActions } from "../../../src/contexts/host-registration/ports/host-actions.js";
 import {
   LoadSyncContext,
   type LoadSyncContextDeps,
@@ -18,7 +20,7 @@ import { RecordMachineClaims } from "../../../src/contexts/machine-claims/applic
 import {
   RecordSourceReference,
   type RecordSourceReferenceDeps,
-} from "../../../src/contexts/machine-claims/application/record-source-reference.use-case.js";
+} from "../../../src/contexts/machine-claims/application/shared-source/record-source-reference.use-case.js";
 import {
   SharedFrameworkSource,
   type SharedFrameworkSourceDeps,
@@ -27,10 +29,11 @@ import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-cata
 import {
   ActivateNativeTools,
   type ActivationMarketplace,
-} from "../../../src/orchestration/sync/activate-native-tools.use-case.js";
-import { BuildMarketplaceForTool } from "../../../src/orchestration/sync/build-marketplace-for-tool.use-case.js";
-import { SyncSettings } from "../../../src/orchestration/sync/sync-settings.use-case.js";
-import { SyncToolSettingsFiles } from "../../../src/orchestration/sync/sync-tool-settings-files.use-case.js";
+} from "../../../src/orchestration/sync/settings/activate-native-tools.use-case.js";
+import { BuildMarketplaceForTool } from "../../../src/orchestration/sync/settings/build-marketplace-for-tool.use-case.js";
+import { RecordSyncActivation } from "../../../src/orchestration/sync/settings/record-sync-activation.use-case.js";
+import { SyncSettings } from "../../../src/orchestration/sync/settings/sync-settings.use-case.js";
+import { SyncToolSettingsFiles } from "../../../src/orchestration/sync/settings/sync-tool-settings-files.use-case.js";
 
 type Deps = RegisterPluginWithHostDeps;
 type Loader = LoadSyncContextDeps;
@@ -48,7 +51,7 @@ export interface MarketplaceSyncParts {
   userSourceReferences?: RecordSourceReferenceDeps["userSourceReferences"];
   currentVersion?: RecordSourceReferenceDeps["currentVersion"];
   userManifestRepo?: Loader["userManifestRepo"];
-  activators?: Deps["activators"];
+  activators?: ReadonlyMap<string, HostActions>;
   hostMarketplaceRegistries?: Deps["hosts"]["marketplaceRegistries"];
   hostPluginRegistries?: Deps["hosts"]["pluginRegistries"];
   nativeSources?: Deps["hosts"]["sources"];
@@ -74,20 +77,17 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
       parts.tools
     ),
     activateNativeTools: new ActivateNativeTools({
-      registerPluginWithHost: new RegisterPluginWithHost(
-        {
-          fs: parts.fs,
-          identities: catalogIdentityReader(parts.fs),
-          activators: parts.activators ?? new Map(),
-          hosts: {
-            marketplaceRegistries: parts.hostMarketplaceRegistries ?? new Map(),
-            pluginRegistries: parts.hostPluginRegistries ?? new Map(),
-            sources: parts.nativeSources ?? new Map(),
-          },
-          platform: process.platform,
+      registerPluginWithHost: new RegisterPluginWithHost({
+        fs: parts.fs,
+        identities: catalogIdentityReader(parts.fs),
+        nativeHosts: new ResolveNativeHost(parts.activators ?? new Map(), parts.tools),
+        hosts: {
+          marketplaceRegistries: parts.hostMarketplaceRegistries ?? new Map(),
+          pluginRegistries: parts.hostPluginRegistries ?? new Map(),
+          sources: parts.nativeSources ?? new Map(),
         },
-        parts.tools
-      ),
+        platform: process.platform,
+      }),
       buildMarketplace: build,
       logger: parts.logger,
       marketplace: {
@@ -96,28 +96,31 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
       },
       records: registrationRecordRules,
     }),
-    recordActivation: new RecordActivation({ fs: parts.fs }, parts.tools),
-    machineClaims: new RecordMachineClaims(
-      {
+    recordActivation: new RecordSyncActivation({
+      recordActivation: new RecordActivation({ fs: parts.fs }, parts.tools),
+      machineClaims: new RecordMachineClaims(
+        {
+          fs: parts.fs,
+          userManifestRepo: parts.userManifestRepo,
+          emptyManifest: Manifest.create,
+          mergeClaims: registrationRecordRules.mergeCatalogueClaims,
+        },
+        parts.tools
+      ),
+      sharedSource: new SharedFrameworkSource({
         fs: parts.fs,
-        userManifestRepo: parts.userManifestRepo,
-        emptyManifest: Manifest.create,
-        mergeClaims: registrationRecordRules.mergeCatalogueClaims,
-      },
-      parts.tools
-    ),
-    sharedSource: new SharedFrameworkSource({
-      fs: parts.fs,
-      logger: parts.logger,
-      recordReference: new RecordSourceReference({
-        fs: parts.fs,
-        currentVersion: parts.currentVersion ?? "0.0.0-test",
         logger: parts.logger,
+        recordReference: new RecordSourceReference({
+          fs: parts.fs,
+          currentVersion: parts.currentVersion ?? "0.0.0-test",
+          logger: parts.logger,
+          frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+          userSourceReferences: parts.userSourceReferences,
+        }),
+        purgeCache: new PurgeDeclaredCache(parts.fs, parts.logger),
         frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-        userSourceReferences: parts.userSourceReferences,
       }),
-      purgeCache: new PurgeDeclaredCache(parts.fs, parts.logger),
-      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+      records: registrationRecordRules,
     }),
     records: registrationRecordRules,
   });

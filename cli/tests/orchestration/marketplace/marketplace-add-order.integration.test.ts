@@ -10,9 +10,9 @@ import { Marketplace } from "../../../src/contexts/distribution/domain/marketpla
 import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { RemoveProjectPlugin } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { removalClaims } from "../../../src/contexts/machine-claims/application/removal-claims.js";
+import { removalClaims } from "../../../src/contexts/machine-claims/application/removal/removal-claims.js";
 import { AddMarketplace } from "../../../src/orchestration/marketplace/add-marketplace.use-case.js";
-import { RemoveRegisteredMarketplace } from "../../../src/orchestration/marketplace/remove-registered-marketplace.use-case.js";
+import { RemoveRegisteredMarketplace } from "../../../src/orchestration/marketplace/remove/remove-registered-marketplace.use-case.js";
 import { TrustDeniedError } from "../../../src/orchestration/orchestration.error.js";
 import type { Prompter } from "../../../src/orchestration/ports/prompter.js";
 import { SilentPrompterAdapter } from "../../../src/presentation/terminal/silent-prompter.adapter.js";

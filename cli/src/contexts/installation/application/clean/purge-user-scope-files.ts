@@ -6,14 +6,14 @@ import type {
   UserScopePurge,
 } from "../../ports/user-scope/user-scope-purge.js";
 import { assertNothingDepends } from "./assert-nothing-depends.js";
-import type { InspectUserScope } from "./inspect-user-scope.use-case.js";
+import type { InspectUserScopeFiles } from "./inspect-user-scope-files.use-case.js";
 import type { ProveUserScopeWithdrawals } from "./prove-user-scope-withdrawals.js";
 import type { PurgeUserScopeMachine } from "./purge-user-scope-machine.js";
 
 /** What PurgeUserScopeFiles is built from. */
 export interface PurgeUserScopeFilesDeps {
   readonly userManifestRepo: ManifestRepository & Lock;
-  readonly inspection: InspectUserScope;
+  readonly inspection: InspectUserScopeFiles;
   readonly withdrawals: ProveUserScopeWithdrawals;
   readonly machinePurge: PurgeUserScopeMachine;
 }

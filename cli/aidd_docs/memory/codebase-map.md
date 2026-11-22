@@ -27,7 +27,9 @@ src/
 │   │   ├── application/
 │   │   │   ├── inspect/
 │   │   │   ├── register/
+│   │   │   │   └── marketplace/
 │   │   │   └── withdraw/
+│   │   │       └── prove/
 │   │   ├── contract/
 │   │   ├── domain/
 │   │   │   ├── policy/
@@ -35,6 +37,8 @@ src/
 │   │   │   ├── record/
 │   │   │   └── source/
 │   │   ├── infrastructure/
+│   │   │   ├── marketplace/
+│   │   │   └── plugin-registry/
 │   │   └── ports/
 │   ├── installation/    # the installation record and what installs, restores and materializes it
 │   │   ├── application/
@@ -72,6 +76,7 @@ src/
 │   │   ├── application/
 │   │   │   ├── ownership/
 │   │   │   ├── record/
+│   │   │   ├── removal/
 │   │   │   └── shared-source/
 │   │   ├── contract/
 │   │   ├── domain/
@@ -159,14 +164,15 @@ src/
 │   ├── clean/
 │   ├── doctor/
 │   ├── domain/
-│   ├── global/
 │   ├── marketplace/
+│   │   └── remove/
 │   ├── menu/
 │   ├── plugin/
 │   ├── ports/    # the Prompter port, implemented by presentation
 │   ├── setup/
 │   │   └── steps/
 │   ├── sync/
+│   │   └── settings/
 │   └── telemetry/
 ├── presentation/    # everything that talks to a human
 │   ├── controllers/

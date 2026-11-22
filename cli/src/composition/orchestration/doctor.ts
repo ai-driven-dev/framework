@@ -1,7 +1,9 @@
 import { ResolveBuiltMarketplaces } from "../../contexts/distribution/application/resolve-built-marketplaces.use-case.js";
 import { InspectDeclaredMarketplaces } from "../../contexts/host-registration/application/inspect/inspect-declared-marketplaces.use-case.js";
+import { InspectHostMarketplaceSources } from "../../contexts/host-registration/application/inspect/inspect-host-marketplace-sources.use-case.js";
+import { InspectHostPlugins } from "../../contexts/host-registration/application/inspect/inspect-host-plugins.use-case.js";
 import { InspectHostRegistration } from "../../contexts/host-registration/application/inspect/inspect-host-registration.use-case.js";
-import { catalogIdentityReader } from "../../contexts/host-registration/infrastructure/marketplace-registry-reader.js";
+import { catalogIdentityReader } from "../../contexts/host-registration/infrastructure/marketplace/marketplace-registry-reader.js";
 import { CheckFileReferences } from "../../contexts/installation/application/doctor/check-file-references.use-case.js";
 import { CheckMergeFiles } from "../../contexts/installation/application/doctor/check-merge-files.use-case.js";
 import { CheckPluginDrift } from "../../contexts/installation/application/doctor/check-plugin-drift.use-case.js";
@@ -12,9 +14,10 @@ import { LoadManifest } from "../../contexts/installation/application/doctor/loa
 import { LoadManifestForDoctor } from "../../contexts/installation/application/doctor/load-manifest-for-doctor.use-case.js";
 import { CheckAuthentication } from "../../orchestration/doctor/check-authentication.use-case.js";
 import { CheckRegistration } from "../../orchestration/doctor/check-registration.use-case.js";
+import { doctorAll } from "../../orchestration/doctor/doctor-all.js";
+import { ResolveRegisteredBuilds } from "../../orchestration/doctor/resolve-registered-builds.use-case.js";
 import { RunDoctor } from "../../orchestration/doctor/run-doctor.use-case.js";
 import { RunUserScopeDoctor } from "../../orchestration/doctor/run-user-scope-doctor.use-case.js";
-import { doctorAll } from "../../orchestration/global/doctor-all.js";
 import type { Installation } from "../installation.js";
 import type { Base } from "../shared.js";
 import { userConfigDir } from "../user-config-dir.js";
@@ -32,28 +35,31 @@ function registrationCheckOver(base: Base, inst: Installation, manifests: LoadMa
   const { fs, tools } = base;
   return new CheckRegistration(
     {
-      listPlugins: new ListRegisteredPlugins(manifests),
-      records: inst.registrationRecordRules,
-      builds: new ResolveBuiltMarketplaces({
-        fs,
-        registry: base.marketplaceRegistry,
-        userCacheRoot: userConfigDir,
-        currentVersion: base.currentVersion,
-      }),
+      resolve: new ResolveRegisteredBuilds(
+        new ListRegisteredPlugins(manifests),
+        inst.registrationRecordRules,
+        new ResolveBuiltMarketplaces({
+          fs,
+          registry: base.marketplaceRegistry,
+          userCacheRoot: userConfigDir,
+          currentVersion: base.currentVersion,
+        }),
+        tools
+      ),
       declared: new InspectDeclaredMarketplaces(
         fs,
         hostBinaryAvailableIn(base.nativePluginActivators),
         tools
       ),
       inspectHost: new InspectHostRegistration(
-        {
+        new InspectHostPlugins(base.hostPluginRegistries, tools),
+        new InspectHostMarketplaceSources(
           fs,
-          identities: catalogIdentityReader(fs),
-          pluginRegistries: base.hostPluginRegistries,
-          marketplaceRegistries: base.hostMarketplaceRegistries,
-          platform: process.platform,
-        },
-        tools
+          catalogIdentityReader(fs),
+          base.hostMarketplaceRegistries,
+          process.platform,
+          tools
+        )
       ),
     },
     tools

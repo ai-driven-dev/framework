@@ -9,8 +9,23 @@ import type { Manifest } from "../../../src/contexts/installation/domain/manifes
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import type { CheckRegistrationRequest } from "../../../src/orchestration/doctor/check-registration.use-case.js";
 import { CheckRegistration } from "../../../src/orchestration/doctor/check-registration.use-case.js";
+import { ResolveRegisteredBuilds } from "../../../src/orchestration/doctor/resolve-registered-builds.use-case.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
+
+/** The registered tools and their built marketplaces, over the manifest and builds given. */
+export function resolveRegisteredBuildsOver(
+  loadManifest: LoadManifest,
+  builds: Pick<ResolveBuiltMarketplaces, "execute">,
+  tools: ToolCatalog
+): ResolveRegisteredBuilds {
+  return new ResolveRegisteredBuilds(
+    new ListRegisteredPlugins(loadManifest),
+    registrationRecordRules,
+    builds,
+    tools
+  );
+}
 
 /** The registration check wired as the composition root wires it. */
 export function checkRegistrationOver(
@@ -25,9 +40,11 @@ export function checkRegistrationOver(
 ): CheckRegistration {
   return new CheckRegistration(
     {
-      listPlugins: new ListRegisteredPlugins(loadManifest),
-      records: registrationRecordRules,
-      builds: new ResolveBuiltMarketplaces({ fs, registry, userCacheRoot, currentVersion }),
+      resolve: resolveRegisteredBuildsOver(
+        loadManifest,
+        new ResolveBuiltMarketplaces({ fs, registry, userCacheRoot, currentVersion }),
+        tools
+      ),
       declared: new InspectDeclaredMarketplaces(fs, hostAvailable, tools),
       inspectHost,
     },

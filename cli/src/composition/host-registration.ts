@@ -3,14 +3,14 @@ import {
   withEnabledPlugins,
   withoutMarketplaces,
 } from "../contexts/host-registration/domain/settings-declaration.js";
-import { EnabledPluginsMapReader } from "../contexts/host-registration/infrastructure/enabled-plugins-map-reader.js";
 import { HostCliAdapter } from "../contexts/host-registration/infrastructure/host-cli-adapter.js";
-import { HostRegistryMarketplaceSourceReaderAdapter } from "../contexts/host-registration/infrastructure/host-registry-marketplace-source-reader-adapter.js";
-import { marketplaceListContract } from "../contexts/host-registration/infrastructure/marketplace-list-parsers.js";
-import { InstallLocationsByNameReader } from "../contexts/host-registration/infrastructure/marketplace-registry-reader.js";
-import { NativeMarketplaceSourceReaderAdapter } from "../contexts/host-registration/infrastructure/native-marketplace-source-reader-adapter.js";
-import { PluginEntriesByScopeReader } from "../contexts/host-registration/infrastructure/plugin-entries-by-scope-reader.js";
-import { TomlPluginTablesReader } from "../contexts/host-registration/infrastructure/toml-plugin-tables-reader.js";
+import { HostRegistryMarketplaceSourceReaderAdapter } from "../contexts/host-registration/infrastructure/marketplace/host-registry-marketplace-source-reader-adapter.js";
+import { marketplaceListContract } from "../contexts/host-registration/infrastructure/marketplace/marketplace-list-parsers.js";
+import { InstallLocationsByNameReader } from "../contexts/host-registration/infrastructure/marketplace/marketplace-registry-reader.js";
+import { NativeMarketplaceSourceReaderAdapter } from "../contexts/host-registration/infrastructure/marketplace/native-marketplace-source-reader-adapter.js";
+import { EnabledPluginsMapReader } from "../contexts/host-registration/infrastructure/plugin-registry/enabled-plugins-map-reader.js";
+import { PluginEntriesByScopeReader } from "../contexts/host-registration/infrastructure/plugin-registry/plugin-entries-by-scope-reader.js";
+import { TomlPluginTablesReader } from "../contexts/host-registration/infrastructure/plugin-registry/toml-plugin-tables-reader.js";
 import type { HostActions } from "../contexts/host-registration/ports/host-actions.js";
 import type { HostMarketplaceRegistry } from "../contexts/host-registration/ports/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../contexts/host-registration/ports/host-marketplace-sources.js";
@@ -24,7 +24,7 @@ import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import type { NativeActivation } from "../contexts/tools/domain/native-registration/native-activation.js";
 import type { BuiltToolConfig } from "../contexts/tools/domain/profile/define-tool.js";
 import { DuplicateToolIdError } from "../contexts/tools/domain/tools.error.js";
-import type { SettingsDeclarationRules } from "../orchestration/sync/sync-tool-settings-files.use-case.js";
+import type { SettingsDeclarationRules } from "../orchestration/sync/settings/sync-tool-settings-files.use-case.js";
 import { asPlainObject } from "../shared/domain/reading/plain-object.js";
 import { UnregisteredToolError } from "../shared/domain/shared.error.js";
 import type { AiToolId, ToolId } from "../shared/domain/tool.js";
