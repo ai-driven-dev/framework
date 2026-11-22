@@ -15,7 +15,6 @@ This page holds only what differs here.
 - `release-please-config.json` declares `cli` as its own package: `@ai-driven-dev/cli`, tagged `cli-v<semver>`.
 - The root package `.` is not the CLI: it bumps the `version` of `.claude-plugin/marketplace.json`.
 - The header limit is 100, from the root config that `lefthook.yml` and `ci.yml` read.
-- `cli/commitlint.config.cjs` sets 120 and neither reads it.
 
 ## Agent may
 
