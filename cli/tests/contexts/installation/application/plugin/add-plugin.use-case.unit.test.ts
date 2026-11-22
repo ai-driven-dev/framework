@@ -137,7 +137,7 @@ describe("AddPlugin", () => {
     await expect(add.execute(ADD)).rejects.toThrow("disk full");
 
     const claimed = user.getCurrent()?.getRecordedPlugins(TOOL.claude);
-    expect([user.saveCount, claimed?.map((p) => [p.plugin.name, p.dependents])]).toStrictEqual([
+    expect([user.saveCount, claimed?.map((p) => [p.plugin.name, p.machineClaim])]).toStrictEqual([
       1,
       [["sample-plugin", [PROJECT_ROOT]]],
     ]);

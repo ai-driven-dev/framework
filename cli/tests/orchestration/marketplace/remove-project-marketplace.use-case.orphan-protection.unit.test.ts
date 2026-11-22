@@ -52,7 +52,7 @@ describe("which plugins a removal orphans: what it protects", () => {
     const projectRepo = new InMemoryManifestRepository(project);
     const machine = aManifest()
       .withTool(TOOL.cursor, [])
-      .withPlugin(TOOL.cursor, plugin.withDependents([PROJECT_ROOT, "/B"]))
+      .withPlugin(TOOL.cursor, plugin.withMachineClaim([PROJECT_ROOT, "/B"]))
       .build();
     const machineRepo = new InMemoryManifestRepository(machine);
     const registry = new InMemoryMarketplaceRegistry();
@@ -73,7 +73,7 @@ describe("which plugins a removal orphans: what it protects", () => {
     ).rejects.toThrow(/outside.*project/);
 
     expect(projectRepo.getCurrent()?.getRecordedPlugins(TOOL.cursor)).toHaveLength(1);
-    expect(machineRepo.getCurrent()?.getRecordedPlugins(TOOL.cursor)[0]?.dependents).toEqual([
+    expect(machineRepo.getCurrent()?.getRecordedPlugins(TOOL.cursor)[0]?.machineClaim).toEqual([
       PROJECT_ROOT,
       "/B",
     ]);

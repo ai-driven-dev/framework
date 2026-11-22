@@ -87,7 +87,7 @@ describe("record", () => {
     expect(await claim(project, machine, new Set())).toBe(true);
 
     const [owned] = machine.getRecordedPlugins(tool);
-    expect(owned?.dependents).toStrictEqual([ROOT]);
+    expect(owned?.machineClaim).toStrictEqual([ROOT]);
     expect(project.getRecordedPlugins()[0]?.plugin.files.size).toBe(0);
   });
 
@@ -101,10 +101,10 @@ describe("record", () => {
 
   it("adds the project as a dependent of a plugin the machine already owns", async () => {
     const machine = new Machine(tool);
-    machine.addPlugin(tool, userPlugin(FILES).withDependents(["/other"]));
+    machine.addPlugin(tool, userPlugin(FILES).withMachineClaim(["/other"]));
 
     await claim(new Project(userPlugin(FILES)), machine, new Set([`${tool}/sample`]));
 
-    expect(machine.getRecordedPlugins(tool)[0]?.dependents).toStrictEqual(["/other", ROOT]);
+    expect(machine.getRecordedPlugins(tool)[0]?.machineClaim).toStrictEqual(["/other", ROOT]);
   });
 });

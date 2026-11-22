@@ -7,8 +7,9 @@ export type MachineNativeRegistrations = Readonly<Record<string, unknown>>;
 /** A user-scope plugin the machine-wide record holds, as far as a claim over it needs to know. */
 export interface MachineUserPlugin {
   readonly plugin: { readonly name: string; readonly scope: string };
-  readonly dependents: readonly string[];
-  withDependents(dependents: readonly string[]): MachineUserPlugin;
+  /** The claim on its files, as the record keeps it: only machine claims read it. */
+  readonly machineClaim?: unknown;
+  withMachineClaim(machineClaim: unknown): MachineUserPlugin;
 }
 
 /** The machine-wide record, narrowed to what the claims read and rewrite. The installation owns

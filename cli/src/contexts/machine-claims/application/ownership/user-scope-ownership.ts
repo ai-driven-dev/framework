@@ -1,6 +1,7 @@
 import { ToolNotInManifestError } from "../../../../shared/domain/shared.error.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import { dependentsClaim, readDependents } from "../../domain/plugin-dependents.js";
 import type {
   MachineUserPlugin,
   OwnershipMachineManifest,
@@ -76,10 +77,9 @@ function claimUserPlugin(claim: PluginClaim): boolean {
     if (version === undefined) throw new ToolNotInManifestError(toolId);
     machine.addTool(toolId, version, []);
   }
-  const canonical = (owned ?? recorded.withMcpEntries(new Map())).withDependents([
-    ...(owned?.dependents ?? []),
-    root,
-  ]);
+  const canonical = (owned ?? recorded.withMcpEntries(new Map())).withMachineClaim(
+    dependentsClaim([...readDependents(owned?.machineClaim), root])
+  );
   machine.withPlugin(toolId, canonical);
   project.updatePlugin(toolId, recorded.withFiles(new Map()));
   return true;

@@ -97,6 +97,6 @@ export class InstallUserPlugins {
     });
     return owned === undefined
       ? resolved
-      : resolved.withFiles(owned.plugin.files).withDependents(owned.dependents);
+      : resolved.withFiles(owned.plugin.files).withMachineClaim(owned.machineClaim);
   }
 }

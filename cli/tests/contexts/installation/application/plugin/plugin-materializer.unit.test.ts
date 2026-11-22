@@ -51,7 +51,7 @@ function fixture(installedVersion = "0.0.1", options: { globalCacheDir?: () => s
     source: { kind: "local", path: "/source" },
     strict: false,
     scope: "user",
-  }).withDependents(["/A", "/B"]);
+  }).withMachineClaim(["/A", "/B"]);
   const base = join(homedir(), ".cursor/plugins/local");
   return { fs, logger, updater, plugin, base, content, fetcher };
 }
@@ -72,7 +72,7 @@ describe("PluginMaterializer public update contract", () => {
       ).toBeNull();
       expect(await f.fs.fileExists(join(f.base, "sample-plugin/skills/demo/SKILL.md"))).toBe(false);
       expect(f.plugin.plugin.version).toBe(version);
-      expect(f.plugin.dependents).toEqual(["/A", "/B"]);
+      expect(f.plugin.machineClaim).toEqual(["/A", "/B"]);
     }
   );
 
@@ -87,7 +87,7 @@ describe("PluginMaterializer public update contract", () => {
     });
     expect(result?.plugin.version).toBe("1.0.0");
     expect(result?.plugin.scope).toBe("user");
-    expect(result?.dependents).toEqual(["/A", "/B"]);
+    expect(result?.machineClaim).toEqual(["/A", "/B"]);
     expect(await f.fs.readFile(join(f.base, "sample-plugin/skills/demo/SKILL.md"))).toBe(f.content);
     expect(result?.plugin.files.get("sample-plugin/skills/demo/SKILL.md")).toBe(
       FileHash.of(f.content).value

@@ -41,6 +41,7 @@ export interface MarketplaceRecords {
     registrations: NativeRegistrations,
     alias: string
   ): RegisteredMarketplace | undefined;
+  dependentsOf(plugin: { readonly machineClaim?: unknown }): readonly string[];
   /** The claims on the refs sitting on the host name the alias was registered under. */
   claimsOn(registrations: NativeRegistrations, alias: string): readonly NativeRefClaim[];
   /** The record without the marketplace, nor any ref or claim on its host name. */
@@ -66,16 +67,8 @@ export interface PurgeMarketplacePluginsDeps {
 }
 
 /** Who still depends on the plugins or the native references about to be removed, once each. */
-function dependentsOf(
-  plugins: readonly { dependents: readonly string[] }[],
-  refs: readonly { dependents: readonly string[] }[]
-): string[] {
-  return [
-    ...new Set([
-      ...plugins.flatMap((claim) => claim.dependents),
-      ...refs.flatMap((claim) => claim.dependents),
-    ]),
-  ];
+function dependentsOf(...claims: readonly { dependents: readonly string[] }[][]): string[] {
+  return [...new Set(claims.flat().flatMap((claim) => claim.dependents))];
 }
 
 /** Removes everything the machine holds on behalf of one user-scope marketplace: the plugins
@@ -138,7 +131,11 @@ export class PurgeMarketplacePlugins {
       manifest
         .getRecordedPlugins(toolId)
         .filter((p) => p.plugin.scope === "user" && p.marketplace === marketplace)
-        .map(({ plugin, dependents }) => ({ toolId, plugin, dependents }))
+        .map((recorded) => ({
+          toolId,
+          plugin: recorded.plugin,
+          dependents: records.dependentsOf(recorded),
+        }))
     );
     const native = this.tools.idsInCanonicalOrder("ai").flatMap((toolId) => {
       const registrations = manifest.getNativeRegistrations(toolId);

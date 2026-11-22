@@ -25,6 +25,9 @@ export interface RecordClaimRules {
   readonly claimsOf: (
     record: Readonly<Record<string, unknown>> | undefined
   ) => readonly DependentClaimView[];
+  /** The project roots a machine plugin's claim lists, none when it keeps none. Refuses a claim
+   * it did not write. */
+  readonly dependentsOf: (plugin: { readonly machineClaim?: unknown }) => readonly string[];
   /** The claims on the refs sitting on the host name the alias was registered under. */
   readonly claimsOnMarketplace: <Claim extends { readonly ref: string }>(
     record: ClaimedRecordView<Claim>,

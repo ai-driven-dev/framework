@@ -16,6 +16,7 @@ import { render } from "../../../src/presentation/errors/error-translator.presen
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 import { pathWithoutAidd } from "../../shared/testing/cli-sandbox.builder.js";
+import { dependentsRecorded } from "../../shared/testing/host-record-reading.builder.js";
 import {
   type PluginMarketplaceSource,
   pluginMarketplaceSource,
@@ -311,7 +312,7 @@ function recordedPluginLines(
     .filter((f) => /hook/i.test(f) && !f.includes("/skills/"))
     .sort();
   const projectHooks = JSON.stringify(recorded.provenance.projectHooks ?? null, null, 2);
-  const dependents = recorded.dependents.map(
+  const dependents = dependentsRecorded(recorded).map(
     (dependent) => `<root>/${relative(ws.root, dependent).split(sep).join("/")}`
   );
   return [

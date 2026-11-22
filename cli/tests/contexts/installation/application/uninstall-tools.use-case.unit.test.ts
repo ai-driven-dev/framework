@@ -251,7 +251,7 @@ async function seedSharedClaims(deps: Awaited<ReturnType<typeof buildInstallatio
   const machine = Manifest.create();
   machine.addTool(TOOL.cursor, "1.0.0", []);
   for (const name of ["shared", "local-only"])
-    machine.addPlugin(TOOL.cursor, record(name, "user").withDependents([PROJECT_ROOT, "/B"]));
+    machine.addPlugin(TOOL.cursor, record(name, "user").withMachineClaim([PROJECT_ROOT, "/B"]));
   machine.addTool(TOOL.codex, "1.0.0", []);
   machine.setNativeRegistrations(TOOL.codex, {
     ...registration,
@@ -262,7 +262,7 @@ async function seedSharedClaims(deps: Awaited<ReturnType<typeof buildInstallatio
 
 function userPluginDependents(deps: Awaited<ReturnType<typeof buildInstallationDeps>>) {
   const plugins = deps.userManifestRepo.getCurrent()?.getRecordedPlugins(TOOL.cursor) ?? [];
-  return plugins.map((plugin) => ({ name: plugin.plugin.name, dependents: plugin.dependents }));
+  return plugins.map((plugin) => ({ name: plugin.plugin.name, dependents: plugin.machineClaim }));
 }
 
 function codexClaims(deps: Awaited<ReturnType<typeof buildInstallationDeps>>) {

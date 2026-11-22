@@ -132,8 +132,8 @@ describe("a tool's manifest entry", () => {
       expect(rewritten(full)).toBe(JSON.stringify([full]));
     });
 
-    it("leaves out an empty component map, server map and dependent list", () => {
-      const empty = storedPlugin({ componentPaths: {}, mcpEntries: {}, dependents: [] });
+    it("leaves out an empty component map and server map", () => {
+      const empty = storedPlugin({ componentPaths: {}, mcpEntries: {} });
 
       expect(rewritten(empty)).toBe(JSON.stringify([storedPlugin({})]));
     });

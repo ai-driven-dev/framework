@@ -9,6 +9,7 @@ describe("UpdateUserPlugin", () => {
       isQualifiedRef: () => false,
       refSelectedBy: () => true,
       claimsOf: () => [],
+      dependentsOf: () => [],
     };
     let seen: unknown;
     const update = new UpdateUserPlugin(
@@ -51,7 +52,12 @@ describe("UpdateUserPlugin", () => {
         },
       },
       contained,
-      { isQualifiedRef: () => false, refSelectedBy: () => false, claimsOf: () => [] }
+      {
+        isQualifiedRef: () => false,
+        refSelectedBy: () => false,
+        claimsOf: () => [],
+        dependentsOf: () => [],
+      }
     );
 
     await update.execute({ toolIds: [], projectRoot: "/A", scope: "user" });

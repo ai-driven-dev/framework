@@ -91,7 +91,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
       const native = machine.getNativeRegistrations(copilot);
       if (owned === undefined || native === undefined)
         throw new Error("fixture missing selected claims");
-      machine.updatePlugin(cursor, owned.withDependents(dependents));
+      machine.updatePlugin(cursor, owned.withMachineClaim(dependents));
       machine.setNativeRegistrations(copilot, {
         ...native,
         pluginClaims: [{ ref: "native-plugin@aidd-catalog", dependents }],
@@ -123,7 +123,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
       expect(after?.getNativeRegistrations(copilot)?.pluginClaims).toStrictEqual([
         { ref: "native-plugin@aidd-catalog", dependents },
       ]);
-      expect(recordedNamed(after, "sample-plugin")?.dependents).toStrictEqual(dependents);
+      expect(recordedNamed(after, "sample-plugin")?.machineClaim).toStrictEqual(dependents);
       expect(
         after?.getPlugins(cursor).find((plugin) => plugin.name === "sample-plugin")?.version
       ).toBe("1.0.0");
@@ -149,7 +149,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
       source: { kind: "local", path: "/unselected/source" },
       strict: false,
       scope: "user",
-    }).withDependents([PROJECT_ROOT, "/B"]);
+    }).withMachineClaim([PROJECT_ROOT, "/B"]);
     const projectOnly = RecordedPlugin.fromMetadata({
       name: "project-only",
       version: "0.0.1",
@@ -161,7 +161,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
     machine.addPlugin(cursor, projectOnly);
     const owned = recordedNamed(machine, "sample-plugin");
     if (owned === undefined) throw new Error("fixture missing user plugin");
-    machine.updatePlugin(cursor, owned.withDependents([PROJECT_ROOT, "/B"]));
+    machine.updatePlugin(cursor, owned.withMachineClaim([PROJECT_ROOT, "/B"]));
     const claimsBefore = machine.getNativeRegistrations(copilot)?.pluginClaims;
     deps.fs.setFile(BUILT_SKILL, "# Selected update");
     const otherPath = join(USER_PLUGINS_DIR, "unselected-plugin/skills/demo/SKILL.md");
@@ -181,7 +181,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
     expect(after?.getNativeRegistrations(copilot)?.pluginClaims).toEqual(claimsBefore);
     expect(recordedNamed(after, "unselected-plugin")).toEqual(unselected);
     expect(recordedNamed(after, "project-only")).toEqual(projectOnly);
-    expect(recordedNamed(after, "sample-plugin")?.dependents).toEqual([PROJECT_ROOT, "/B"]);
+    expect(recordedNamed(after, "sample-plugin")?.machineClaim).toEqual([PROJECT_ROOT, "/B"]);
     expect(deps.fs.getFile(join(USER_PLUGINS_DIR, "sample-plugin/skills/demo/SKILL.md"))).toBe(
       "# Selected update"
     );
@@ -394,7 +394,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
         source: { kind: "local", path: PLUGIN_FIXTURE },
         strict: false,
         scope: "user",
-      }).withDependents([PROJECT_ROOT])
+      }).withMachineClaim([PROJECT_ROOT])
     );
     await deps.userManifestRepo.save(machine);
     expect(
@@ -406,7 +406,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
     ).toEqual(["sample-plugin"]);
     const owned = deps.userManifestRepo.getCurrent()?.getRecordedPlugins(cursor)[0];
     expect(owned?.plugin.version).toBe("1.0.0");
-    expect(owned?.dependents).toEqual([PROJECT_ROOT]);
+    expect(owned?.machineClaim).toEqual([PROJECT_ROOT]);
     expect(owned?.plugin.files.size).toBeGreaterThan(0);
     expect(
       [...(owned?.plugin.files.keys() ?? [])].some((path) => path.includes("skills/hello"))

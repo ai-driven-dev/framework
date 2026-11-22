@@ -24,7 +24,7 @@ export interface RemoveUserMarketplaceDeps {
   readonly hostGate: Pick<NativeHostRegistrationGate, "planMarketplaceRemoval">;
   readonly home: string;
   readonly records: Pick<RegistrationRecordRules, "marketplaceOf"> &
-    Pick<RecordClaimRules, "claimsOnMarketplace" | "withoutMarketplace">;
+    Pick<RecordClaimRules, "claimsOnMarketplace" | "withoutMarketplace" | "dependentsOf">;
 }
 
 type HostRemovalPlan = Awaited<ReturnType<NativeHostRegistrationGate["planMarketplaceRemoval"]>>;
@@ -40,6 +40,7 @@ function withdrawFromHost(hostName: string, { activator, refs, scopes }: HostRem
 function marketplaceRecordsOf(records: RemoveUserMarketplaceDeps["records"]): MarketplaceRecords {
   return {
     registrationOf: (registrations, alias) => records.marketplaceOf(registrations, alias),
+    dependentsOf: (plugin) => records.dependentsOf(plugin),
     claimsOn: (registrations, alias) => records.claimsOnMarketplace(registrations, alias),
     withoutMarketplace: (registrations, alias) => records.withoutMarketplace(registrations, alias),
   };

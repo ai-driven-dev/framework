@@ -251,7 +251,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
         .withFiles(
           new Map([...stale.plugin.files, [oldPath, FileHash.of("old owned bytes").value]])
         )
-        .withDependents([PROJECT_ROOT, "/B"])
+        .withMachineClaim([PROJECT_ROOT, "/B"])
     );
     expect(
       await makeUpdateUseCase(deps, registry).execute({
@@ -262,7 +262,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
     ).toEqual(["sample-plugin"]);
     expect(deps.fs.getFile(oldAbsolute)).toBeUndefined();
     const owned = deps.userManifestRepo.getCurrent()?.getRecordedPlugins(cursor)[0];
-    expect(owned?.dependents).toEqual([PROJECT_ROOT, "/B"]);
+    expect(owned?.machineClaim).toEqual([PROJECT_ROOT, "/B"]);
     expect(owned?.plugin.files.has(oldPath)).toBe(false);
   });
 });

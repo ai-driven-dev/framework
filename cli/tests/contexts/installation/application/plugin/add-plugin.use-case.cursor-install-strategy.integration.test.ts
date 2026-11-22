@@ -71,7 +71,7 @@ describe("AddPlugin", () => {
           ?.getRecordedPlugins(cursor)
           .find((p) => p.plugin.name === "sample-plugin");
         expect(machine?.plugin.files.size).toBeGreaterThan(0);
-        expect(machine?.dependents).toEqual([PROJECT_ROOT]);
+        expect(machine?.machineClaim).toEqual([PROJECT_ROOT]);
       });
 
       const CURSOR_SKILL = "sample-plugin/skills/demo/SKILL.md";
@@ -171,7 +171,7 @@ describe("AddPlugin", () => {
         expect(deps.userManifestRepo.saveCount).toBe(machineSavesBefore);
         expect(pluginNames(deps, cursor)).toEqual(["sample-plugin"]);
         expect(
-          deps.userManifestRepo.getCurrent()?.getRecordedPlugins(cursor)[0]?.dependents
+          deps.userManifestRepo.getCurrent()?.getRecordedPlugins(cursor)[0]?.machineClaim
         ).toEqual([PROJECT_ROOT]);
       });
 
@@ -207,7 +207,7 @@ describe("AddPlugin", () => {
         expect(deps.fs.getFile(ownedPath)).toBe("A's own bytes");
         expect(projectBRepo.getCurrent()?.getRecordedPlugins(cursor)[0]?.plugin.files.size).toBe(0);
         expect(
-          deps.userManifestRepo.getCurrent()?.getRecordedPlugins(cursor)[0]?.dependents
+          deps.userManifestRepo.getCurrent()?.getRecordedPlugins(cursor)[0]?.machineClaim
         ).toEqual([PROJECT_ROOT, "/B"]);
         expect(logger.warnMessages.slice(warningsBeforeB).join("\n")).not.toContain(
           "was already there and this project did not install it"

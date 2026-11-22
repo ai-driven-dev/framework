@@ -55,12 +55,12 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
       SELECTED_PLUGIN,
     ]);
     expect(
-      machine.getRecordedPlugins(cursor).map((entry) => [entry.plugin.name, entry.dependents])
+      machine.getRecordedPlugins(cursor).map((entry) => [entry.plugin.name, entry.machineClaim])
     ).toEqual([
       ["other-plugin", [SELECTION_ROOT, SELECTION_OTHER_ROOT]],
       [SELECTED_PLUGIN, [SELECTION_OTHER_ROOT]],
     ]);
-    expect(machine.getRecordedPlugins(claude).map((entry) => entry.dependents)).toEqual([
+    expect(machine.getRecordedPlugins(claude).map((entry) => entry.machineClaim)).toEqual([
       [SELECTION_ROOT, SELECTION_OTHER_ROOT],
       [SELECTION_ROOT, SELECTION_OTHER_ROOT],
     ]);

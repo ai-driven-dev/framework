@@ -85,7 +85,7 @@ export class RemoveUserPlugin<Proof> {
         .find((p) => p.plugin.name === options.pluginName && p.plugin.scope === "user");
       return recorded === undefined
         ? []
-        : [{ toolId, plugin: recorded.plugin, dependents: recorded.dependents }];
+        : [{ toolId, plugin: recorded.plugin, dependents: options.records.dependentsOf(recorded) }];
     });
   }
 

@@ -3,7 +3,7 @@ import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { PluginNotFoundError } from "../../domain/installation.error.js";
 import type {
-  NativeRefClaims,
+  MachineClaimsReading,
   NativeRegistrations,
 } from "../../domain/manifest/native-registrations.js";
 import type { Manifest } from "../../domain/manifest.js";
@@ -12,7 +12,7 @@ import type { UpdatePluginRequest } from "./update-plugin.use-case.js";
 
 /** How a plugin selection reads a native ref: the host registration's to answer, and the claims
  * on it the machine claims'. */
-export interface RefSelection extends NativeRefClaims {
+export interface RefSelection extends MachineClaimsReading {
   /** Whether a plugin selector names its catalogue, so it can only mean one exact ref. */
   isQualifiedRef(selector: string): boolean;
   /** A qualified selector is one exact ref; a bare plugin name selects it in every catalogue. */

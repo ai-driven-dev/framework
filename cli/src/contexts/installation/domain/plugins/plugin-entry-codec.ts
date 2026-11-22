@@ -35,12 +35,12 @@ export function recordedPluginFromEntry(data: PluginEntryData): RecordedPluginPa
     plugin,
     provenance: provenanceFromEntry(data),
     marketplace: data.marketplace,
-    dependents: data.dependents ?? [],
+    machineClaim: data.dependents,
   };
 }
 
 /** Writes a recorded plugin back as one stored entry, in the stored key order, leaving out what
- * is empty: the installed plugin first, then its provenance, its marketplace, its dependents. */
+ * is empty: the installed plugin first, then its provenance, its marketplace, its machine claim. */
 export function entryFromRecordedPlugin(recorded: RecordedPluginParts): PluginEntryData {
   const { plugin } = recorded;
   const data: PluginEntryData = {
@@ -53,7 +53,7 @@ export function entryFromRecordedPlugin(recorded: RecordedPluginParts): PluginEn
   };
   writeProvenance(data, recorded.provenance);
   if (recorded.marketplace !== undefined) data.marketplace = recorded.marketplace;
-  if (recorded.dependents.length > 0) data.dependents = [...recorded.dependents];
+  if (recorded.machineClaim !== undefined) data.dependents = recorded.machineClaim;
   return data;
 }
 
