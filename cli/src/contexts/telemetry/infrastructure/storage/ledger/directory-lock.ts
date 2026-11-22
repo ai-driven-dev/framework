@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import type { PrivateStorage } from "../../../ports/private-storage.js";
+import type { PrivateStorage } from "../../../../../shared/ports/private-storage.js";
 import { LedgerLock, type LockOptions } from "./ledger-lock.js";
 
 interface DirectoryLockDeps {

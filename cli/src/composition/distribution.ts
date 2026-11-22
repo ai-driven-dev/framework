@@ -19,6 +19,7 @@ import type { RepositoryVisibility } from "../contexts/distribution/ports/reposi
 import { atomicWriteFile } from "../shared/infrastructure/atomic-write.js";
 import { GitHubAdapter } from "../shared/infrastructure/github-adapter.js";
 import type { HttpClient } from "../shared/infrastructure/http-client.js";
+import { PrivateStorageAdapter } from "../shared/infrastructure/private-storage-adapter.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
 import type { FileWriter } from "../shared/ports/file-writer.js";
 import type { Logger } from "../shared/ports/logger.js";
@@ -99,7 +100,7 @@ export function wireDistribution(shared: DistributionWiringShared): Distribution
   const pluginCatalogRepository = new PluginCatalogRepositoryAdapter(shared.fs);
   const marketplaceCache = new MarketplaceCacheAdapter(shared.projectRoot);
   const marketplaceRegistry = new MarketplaceRegistryAdapter(userConfigDir, atomicWriteFile);
-  const marketplaceTrustStore = new MarketplaceTrustStoreAdapter();
+  const marketplaceTrustStore = new MarketplaceTrustStoreAdapter(new PrivateStorageAdapter());
   const pluginFetcher = new PluginFetcherAdapter(shared.fs, shared.tokenProvider);
   const github = new GitHubAdapter(shared.http, { tokenProvider: shared.tokenProvider });
   const releaseResolver = github;

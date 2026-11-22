@@ -14,7 +14,7 @@ import { SnapshotBindings } from "../../../../src/contexts/telemetry/application
 import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
 import { CodexTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.js";
 import { UsageLedgerAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
-import { PrivateStorageAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
+import { PrivateStorageAdapter } from "../../../../src/shared/infrastructure/private-storage-adapter.js";
 import { cloneOf, grantedBy } from "../testing/clone.builder.js";
 import { FakeBindings } from "../testing/fake-bindings.fake.js";
 import { FakeConsents } from "../testing/fake-consents.fake.js";

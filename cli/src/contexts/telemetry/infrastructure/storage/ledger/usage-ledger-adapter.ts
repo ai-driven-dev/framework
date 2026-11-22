@@ -1,6 +1,7 @@
 import { readdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { isErrnoException } from "../../../../../shared/domain/reading/json-file.js";
+import type { PrivateStorage } from "../../../../../shared/ports/private-storage.js";
 import {
   type DayPart,
   dayContent,
@@ -14,7 +15,6 @@ import {
   renderPositions,
   type TranscriptPosition,
 } from "../../../domain/transcript-position.js";
-import type { PrivateStorage } from "../../../ports/private-storage.js";
 import type { LeftOutStore, LoadedLedger, UsageLedger } from "../../../ports/usage-ledger.js";
 import { RepositoryAliasStoreAdapter } from "../../legacy/repository-alias-store-adapter.js";
 import { readTextIfPresent } from "../../reading/text-file.js";

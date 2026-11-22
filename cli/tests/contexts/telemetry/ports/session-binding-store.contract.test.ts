@@ -2,7 +2,7 @@ import { appendFile, mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { SessionBindingStoreAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/declarations/session-binding-store-adapter.js";
-import { PrivateStorageAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
+import { PrivateStorageAdapter } from "../../../../src/shared/infrastructure/private-storage-adapter.js";
 import { InMemorySessions } from "../testing/in-memory-sessions.fake.js";
 import {
   describeSessionBindingStoreContract,

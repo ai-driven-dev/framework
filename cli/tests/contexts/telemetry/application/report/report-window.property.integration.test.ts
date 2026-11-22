@@ -30,8 +30,8 @@ import {
 import { buildReport } from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
 import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/stored-usage.js";
 import { UsageLedgerAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
-import { PrivateStorageAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 import type { UsageLedger } from "../../../../../src/contexts/telemetry/ports/usage-ledger.js";
+import { PrivateStorageAdapter } from "../../../../../src/shared/infrastructure/private-storage-adapter.js";
 import { FakeBindings } from "../../testing/fake-bindings.fake.js";
 import { FakeConsents } from "../../testing/fake-consents.fake.js";
 import { FakeLocator } from "../../testing/fake-locator.fake.js";

@@ -55,12 +55,12 @@ import { ResolutionStoreAdapter } from "../contexts/telemetry/infrastructure/sto
 import { UsageLedgerAdapter } from "../contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { MeasurementErasureAdapter } from "../contexts/telemetry/infrastructure/storage/measurement-erasure-adapter.js";
 import { PersonIdentityAdapter } from "../contexts/telemetry/infrastructure/storage/person-identity-adapter.js";
-import { PrivateStorageAdapter } from "../contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 import type { UsageSource } from "../contexts/telemetry/ports/usage-source.js";
 import type { TelemetryDeps, TelemetryRequests } from "../orchestration/deps.js";
 import type { Prompter } from "../orchestration/ports/prompter.js";
 import { ChooseIdentity } from "../orchestration/telemetry/choose-identity.use-case.js";
 import { EnvironmentAdapter } from "../shared/infrastructure/environment-adapter.js";
+import { PrivateStorageAdapter } from "../shared/infrastructure/private-storage-adapter.js";
 import { userConfigDirOf } from "./user-config-dir.js";
 
 /** The requests a command checks before anything is wired: no file, no process, only the clock. */

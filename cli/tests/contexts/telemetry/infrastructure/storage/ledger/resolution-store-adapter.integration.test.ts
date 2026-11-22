@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { CloneIdentity } from "../../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import { resolutionKey } from "../../../../../../src/contexts/telemetry/domain/repository-resolution.js";
 import { ResolutionStoreAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/resolution-store-adapter.js";
-import { PrivateStorageAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
+import { PrivateStorageAdapter } from "../../../../../../src/shared/infrastructure/private-storage-adapter.js";
 
 let root: string;
 beforeEach(async () => {

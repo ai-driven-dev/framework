@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { LeftOutAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/left-out-adapter.js";
-import { PrivateStorageAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
+import { PrivateStorageAdapter } from "../../../../../../src/shared/infrastructure/private-storage-adapter.js";
 
 let dir: string;
 beforeEach(async () => {

@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { chmod, mkdir, open, rename, rm, writeFile } from "node:fs/promises";
-import type { PrivateStorage } from "../../ports/private-storage.js";
+import { chmod, mkdir, open, readFile, rename, rm, writeFile } from "node:fs/promises";
+import type { PrivateStorage } from "../ports/private-storage.js";
 
 const NEWLINE = 0x0a;
 
@@ -70,6 +70,14 @@ export class PrivateStorageAdapter implements PrivateStorage {
     } catch (error) {
       await rm(temporary, { force: true });
       throw error;
+    }
+  }
+
+  async read(path: string): Promise<string | undefined> {
+    try {
+      return await readFile(path, "utf-8");
+    } catch {
+      return undefined;
     }
   }
 
