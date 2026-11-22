@@ -80,6 +80,8 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |-------|------|---|
 | `actions` | [01-assert.md](skills/03-assert/actions/01-assert.md) | - |
 | `assets` | [assert-template.md](skills/03-assert/assets/assert-template.md) | - |
+| `scripts` | [contract.json](skills/03-assert/scripts/contract.json) | - |
+| `scripts` | [validate-assert.cjs](skills/03-assert/scripts/validate-assert.cjs) | - |
 | `-` | [SKILL.md](skills/03-assert/SKILL.md) | `Assert the work against the project's coding assertions into a pass or fail report. Use to verify an implementation. Not for fixing code, reviewing a diff, or writing tests.` |
 
 #### `skills/04-audit`
@@ -93,7 +95,9 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [05-performance.md](skills/04-audit/actions/05-performance.md) | - |
 | `actions` | [06-tests.md](skills/04-audit/actions/06-tests.md) | - |
 | `actions` | [07-ui.md](skills/04-audit/actions/07-ui.md) | - |
-| `assets` | [audit-template.md](skills/04-audit/assets/audit-template.md) | `Codebase audit report template` |
+| `assets` | [audit-template.md](skills/04-audit/assets/audit-template.md) | - |
+| `scripts` | [contract.json](skills/04-audit/scripts/contract.json) | - |
+| `scripts` | [validate-audit.cjs](skills/04-audit/scripts/validate-audit.cjs) | - |
 | `-` | [SKILL.md](skills/04-audit/SKILL.md) | `Audit a codebase read-only across seven quality pillars into one ranked report. Use when the user wants to assess, health-check, or audit a codebase or one pillar. Not for fixing findings, reviewing a change, or checking a feature works.` |
 
 #### `skills/05-review`
@@ -108,6 +112,8 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [axis-functional.md](skills/05-review/references/axis-functional.md) | - |
 | `references` | [axis-relevancy.md](skills/05-review/references/axis-relevancy.md) | - |
 | `references` | [rubric.md](skills/05-review/references/rubric.md) | - |
+| `scripts` | [contract.json](skills/05-review/scripts/contract.json) | - |
+| `scripts` | [validate-review.cjs](skills/05-review/scripts/validate-review.cjs) | - |
 | `-` | [SKILL.md](skills/05-review/SKILL.md) | `Reviews work and says whether it is ready, naming each defect with its fix, when the user wants a change or diff reviewed.` |
 
 #### `skills/06-test`

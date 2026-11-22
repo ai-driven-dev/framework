@@ -360,7 +360,8 @@ test("a shell turn reads each in-scope file once, however deep, though two contr
     });
   }
   assert.ok(stats >= files, `the scan ran: ${stats} stats`);
-  assert.ok(stats < files + 50, `${stats} stats for ${files} files`);
+  // each scope glob checks the 14 folders of the tree once more, so the slack grows with the globs, never with the files
+  assert.ok(stats < files + 120, `${stats} stats for ${files} files`);
 });
 
 test("a shell turn with no session start has no reference: silent, nothing walked", () => {
