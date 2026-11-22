@@ -1,20 +1,22 @@
 import { describe, expect, it } from "vitest";
 import { aiToolSelectionOf } from "../../../src/orchestration/domain/ai-tool-selection.model.js";
 import { UnknownAiToolIdError } from "../../../src/orchestration/orchestration.error.js";
-import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_TOOL,
+  syntheticCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
 describe("aiToolSelectionOf", () => {
   it.each([undefined, "all"])("selects every AI tool for %s", (tool) => {
-    expect(aiToolSelectionOf(tool, catalogOf())).toBe("all");
+    expect(aiToolSelectionOf(tool, syntheticCatalog())).toBe("all");
   });
 
   it("selects the one AI tool named", () => {
-    expect(aiToolSelectionOf("claude", catalogOf())).toEqual([TOOL.claude]);
+    expect(aiToolSelectionOf(SYNTHETIC_TOOL, syntheticCatalog())).toEqual([SYNTHETIC_TOOL]);
   });
 
   it("refuses a name no AI tool answers to, listing the valid ones", () => {
-    const catalog = catalogOf();
+    const catalog = syntheticCatalog();
 
     expect(() => aiToolSelectionOf("emacs", catalog)).toThrow(
       new UnknownAiToolIdError("emacs", catalog.idsInCanonicalOrder("ai"))
