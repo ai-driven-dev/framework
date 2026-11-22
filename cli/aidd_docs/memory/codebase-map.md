@@ -17,6 +17,7 @@ src/
 │   │   ├── application/
 │   │   │   ├── add/
 │   │   │   ├── plugin-source/
+│   │   │   ├── refresh/
 │   │   │   └── remove/
 │   │   ├── contract/
 │   │   ├── domain/

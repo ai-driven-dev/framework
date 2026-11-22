@@ -2,7 +2,8 @@ import type { TokenProvider } from "../contexts/auth/contract/token-provider.js"
 import { FetchMarketplaceSource } from "../contexts/distribution/application/fetch-marketplace-source.use-case.js";
 import { ListMarketplaces } from "../contexts/distribution/application/list-marketplaces.use-case.js";
 import { LoadPluginDistribution } from "../contexts/distribution/application/plugin-source/load-plugin-distribution.use-case.js";
-import { RefreshMarketplace } from "../contexts/distribution/application/refresh-marketplace.use-case.js";
+import { ListMarketplacesToRefresh } from "../contexts/distribution/application/refresh/list-marketplaces-to-refresh.use-case.js";
+import { RefreshMarketplace } from "../contexts/distribution/application/refresh/refresh-marketplace.use-case.js";
 import { RegisterFrameworkMarketplace } from "../contexts/distribution/application/register-framework-marketplace.use-case.js";
 import { ResolveMarketplace } from "../contexts/distribution/application/resolve-marketplace.use-case.js";
 import { GitCloner } from "../contexts/distribution/infrastructure/git-cloner-adapter.js";
@@ -51,6 +52,7 @@ export interface DistributionDeps {
   releaseResolver: ReleaseLister & RepositoryVisibility;
   resolveMarketplaceUseCase: ResolveMarketplace;
   listMarketplaces: ListMarketplaces;
+  marketplacesToRefresh: ListMarketplacesToRefresh;
   refreshMarketplaceUseCase: RefreshMarketplace;
   registerFrameworkMarketplace: RegisterFrameworkMarketplace;
 }
@@ -68,6 +70,7 @@ type MarketplaceUseCases = Pick<
   DistributionDeps,
   | "resolveMarketplaceUseCase"
   | "listMarketplaces"
+  | "marketplacesToRefresh"
   | "refreshMarketplaceUseCase"
   | "registerFrameworkMarketplace"
 >;
@@ -88,14 +91,19 @@ function marketplaceUseCasesOf(inputs: MarketplaceUseCaseInputs): MarketplaceUse
   const refreshMarketplaceUseCase = new RefreshMarketplace({
     registry: marketplaceRegistry,
     resolveMarketplace: resolveMarketplaceUseCase,
-    cache: inputs.marketplaceCache,
+    userConfigDir,
     logger: shared.logger,
     fs: shared.fs,
   });
+  const marketplacesToRefresh = new ListMarketplacesToRefresh(
+    marketplaceRegistry,
+    inputs.marketplaceCache
+  );
   const registerFrameworkMarketplace = new RegisterFrameworkMarketplace(marketplaceRegistry);
   return {
     resolveMarketplaceUseCase,
     listMarketplaces,
+    marketplacesToRefresh,
     refreshMarketplaceUseCase,
     registerFrameworkMarketplace,
   };

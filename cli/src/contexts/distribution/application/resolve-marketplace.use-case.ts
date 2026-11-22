@@ -38,7 +38,7 @@ export class ResolveMarketplace {
     return { marketplace: options.marketplace, localPath, catalog };
   }
 
-  cacheDirOf(marketplace: ResolvableMarketplace, projectRoot: string): string {
+  private cacheDirOf(marketplace: ResolvableMarketplace, projectRoot: string): string {
     return fetchedMarketplaceDir(marketplace, projectRoot, this.userConfigDir?.());
   }
 }

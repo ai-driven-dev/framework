@@ -1,7 +1,8 @@
+import type { ListMarketplacesToRefresh } from "../../contexts/distribution/application/refresh/list-marketplaces-to-refresh.use-case.js";
 import type {
   RefreshMarketplace,
   RefreshMarketplaceRequest,
-} from "../../contexts/distribution/application/refresh-marketplace.use-case.js";
+} from "../../contexts/distribution/application/refresh/refresh-marketplace.use-case.js";
 
 export interface RefreshEntryResult {
   name: string;
@@ -16,11 +17,14 @@ export interface RefreshMarketplacesResult {
 
 /** Refreshing every registered marketplace, or the one named. */
 export class RefreshMarketplaces {
-  constructor(private readonly refresh: Pick<RefreshMarketplace, "targets" | "execute">) {}
+  constructor(
+    private readonly marketplaces: Pick<ListMarketplacesToRefresh, "execute">,
+    private readonly refresh: Pick<RefreshMarketplace, "execute">
+  ) {}
 
   async execute(options: RefreshMarketplaceRequest): Promise<RefreshMarketplacesResult> {
     const results: RefreshEntryResult[] = [];
-    for (const m of await this.refresh.targets(options)) {
+    for (const m of await this.marketplaces.execute(options)) {
       results.push(await this.refreshOne(options.projectRoot, m));
     }
     const failedCount = results.filter((r) => r.status === "failed").length;

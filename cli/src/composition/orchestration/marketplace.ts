@@ -264,7 +264,7 @@ function wireSetupSource(base: Base, recordSourceReference: RecordSourceReferenc
       releaseResolver
     ),
     recordReference: recordSourceReference,
-    refresh: new RefreshMarketplaces(base.refreshMarketplaceUseCase),
+    refresh: new RefreshMarketplaces(base.marketplacesToRefresh, base.refreshMarketplaceUseCase),
     environment,
   });
   return {
@@ -288,7 +288,10 @@ function wireMarketplaceReads(base: Base) {
     resolveMarketplaceUseCase,
     base.logger
   );
-  const refreshMarketplace = new RefreshMarketplaces(base.refreshMarketplaceUseCase);
+  const refreshMarketplace = new RefreshMarketplaces(
+    base.marketplacesToRefresh,
+    base.refreshMarketplaceUseCase
+  );
   return { marketplaceCheckUseCase, listMarketplaceCatalogs, refreshMarketplace };
 }
 
