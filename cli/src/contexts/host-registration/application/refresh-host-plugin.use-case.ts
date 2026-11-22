@@ -6,14 +6,12 @@ import {
   type RegistrationRecordData,
   readRegistrationRecord,
 } from "../domain/record/registration-record.js";
+import type { NativeMarketplaceSourceInspection } from "../domain/source-proof.js";
 import type { HostActions } from "../ports/host-actions.js";
 import type { HostMarketplaceSources } from "../ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../ports/host-plugin-registry.js";
 import type { ActivatedTool } from "../ports/host-tool.js";
-import {
-  inspectHostSource,
-  type NativeMarketplaceSourceInspection,
-} from "./native-marketplace-source-proof.js";
+import { inspectHostSource } from "./native-marketplace-source-proof.js";
 import { reachableActivator } from "./reachable-activator.js";
 import { throwRefusal } from "./throw-refusal.js";
 
