@@ -47,7 +47,7 @@ async function installedSample() {
     fs: deps.fs,
     pluginFetcher: deps.pluginFetcher,
     pluginDistributionReader: deps.pluginDistributionReader,
-    builtDeps: fakeBuiltDeps(),
+    builtDeps: fakeBuiltDeps(deps.fs),
   });
   const command = {
     toolId: TOOL.claude,

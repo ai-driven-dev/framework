@@ -4,6 +4,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { entries, expectNone, src, textsOf } from "./kind-rule-fixtures.js";
+import { debtEntries } from "./kind-rule-support.js";
 import {
   compositionViolations,
   constructionViolations,
@@ -285,8 +286,11 @@ describe("a contract file is read from outside its context", () => {
 
 describe("only composition builds a command, a use case or an adapter", () => {
   const files = (presentation: string) => ({
-    "src/orchestration/menu.ts": "export class MenuLoop {}\nexport class SetupFlow {}",
+    "src/orchestration/menu.ts": "export class MenuLoop {}",
+    "src/orchestration/domain/flow.model.ts": "export class Flow {}",
+    "src/orchestration/orchestration.error.ts": "export class MenuError extends Error {}",
     "src/contexts/a/infrastructure/b.adapter.ts": "export abstract class Gateway {}",
+    "src/contexts/a/infrastructure/lock.ts": "export class Lock {}",
     "src/presentation/x.controller.ts": presentation,
   });
   const found = (presentation: string) => entries(constructionViolations(files(presentation)));
@@ -298,8 +302,14 @@ describe("only composition builds a command, a use case or an adapter", () => {
     ]);
   });
 
-  it("clears the value object presentation builds, and a class composition built", () => {
-    expect(found("const s = new SetupFlow(a);\nconst e = new Error();")).toEqual([]);
+  it("reports an infrastructure class whose file is not named as an adapter", () => {
+    expect(found("const l = new Lock();")).toEqual([
+      "src/presentation/x.controller.ts :: new Lock",
+    ]);
+  });
+
+  it("clears a model, an error and a class no file declares", () => {
+    expect(found("new Flow(a);\nnew MenuError();\nnew Error();")).toEqual([]);
   });
 
   it("reports a use case and an adapter that build another one", () => {
@@ -324,18 +334,6 @@ describe("only composition builds a command, a use case or an adapter", () => {
     ]);
   });
 
-  it("clears a plain class an infrastructure file builds for itself", () => {
-    expect(
-      entries(
-        constructionViolations({
-          ...files(""),
-          "src/contexts/a/infrastructure/lock.ts": "export class Lock {}",
-          "src/contexts/a/infrastructure/d.adapter.ts": "new Lock();",
-        })
-      )
-    ).toEqual([]);
-  });
-
   it("reports the binary entry too, and not composition", () => {
     expect(
       entries(
@@ -351,7 +349,9 @@ describe("only composition builds a command, a use case or an adapter", () => {
   it("holds the tree", () => {
     const tree = src();
     expect(Object.keys(tree).some((path) => path.startsWith("src/presentation/"))).toBe(true);
-    expectNone(constructionViolations(tree));
+    expect(entries(constructionViolations(tree)).sort()).toEqual(
+      Object.keys(debtEntries("construction")).sort()
+    );
   });
 });
 

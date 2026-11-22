@@ -13,7 +13,7 @@ afterEach(async () => {
   await rm(dir, { recursive: true, force: true });
 });
 
-const adapter = () => new LeftOutAdapter(join(dir, "left-out"), dir, new PrivateStorageAdapter());
+const adapter = () => new LeftOutAdapter(dir, new PrivateStorageAdapter());
 
 describe("what was left out", () => {
   it("counts nothing before anything is added, and creates no file", async () => {
@@ -22,7 +22,7 @@ describe("what was left out", () => {
       unrecognised: 0,
       requestless: 0,
     });
-    await expect(readFile(join(dir, "left-out"), "utf8")).rejects.toThrow();
+    await expect(readFile(join(dir, "left-out.txt"), "utf8")).rejects.toThrow();
   });
 
   it("counts each thing once per reason, however often it is added", async () => {
@@ -44,16 +44,16 @@ describe("what was left out", () => {
       { reason: "unrecognised", of: "secret-name" },
       { reason: "undated", of: "secret-name" },
     ]);
-    const lines = (await readFile(join(dir, "left-out"), "utf8")).split("\n").filter(Boolean);
+    const lines = (await readFile(join(dir, "left-out.txt"), "utf8")).split("\n").filter(Boolean);
     expect(lines.map((line) => line.split(" ")[0])).toStrictEqual(["undated", "unrecognised"]);
     expect(lines.join("")).not.toContain("secret-name");
   });
 
   it("keeps a line this version does not know and does not count it", async () => {
     const { writeFile } = await import("node:fs/promises");
-    await writeFile(join(dir, "left-out"), "future abc\n");
+    await writeFile(join(dir, "left-out.txt"), "future abc\n");
     await adapter().add([{ reason: "undated", of: "a" }]);
-    expect(await readFile(join(dir, "left-out"), "utf8")).toContain("future abc\n");
+    expect(await readFile(join(dir, "left-out.txt"), "utf8")).toContain("future abc\n");
     expect(await adapter().counts()).toStrictEqual({
       undated: 1,
       unrecognised: 0,

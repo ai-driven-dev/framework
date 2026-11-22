@@ -52,7 +52,11 @@ async function legacyProject() {
         deps.pluginFetcher,
         deps.pluginDistributionReader
       ),
-      replacePluginFiles: new ReplacePluginFiles(deps.fs, fakeBuiltDeps(), registeredTools()),
+      replacePluginFiles: new ReplacePluginFiles(
+        deps.fs,
+        fakeBuiltDeps(deps.fs),
+        registeredTools()
+      ),
       pluginRuntime: deps.installRuntimeConfigUseCase,
     },
     registeredTools()

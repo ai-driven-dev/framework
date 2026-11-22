@@ -34,15 +34,17 @@ import { ModeAMarketplaceTranslator } from "../contexts/installation/application
 import { ModeBFlatMaterializationTranslator } from "../contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
 import { ProjectHooksMaterializer } from "../contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 import { ListPlugins } from "../contexts/installation/application/plugin/list-plugins.use-case.js";
+import type {
+  BuiltBuildDeps,
+  BuiltMaterializationDeps,
+} from "../contexts/installation/application/shared/built-materialization-deps.js";
 import { DetectPluginDrift } from "../contexts/installation/application/shared/detect-plugin-drift.use-case.js";
 import { UpdateGitignore } from "../contexts/installation/application/update-gitignore.use-case.js";
-import type { BuiltMarketplaceEnsurer } from "../contexts/installation/contract/built-marketplace.js";
 import type { ProjectSetupState } from "../contexts/installation/contract/project-setup-state.js";
 import { AgentModelStoreAdapter } from "../contexts/installation/infrastructure/agent-model-store-adapter.js";
 import type { AgentModelStore } from "../contexts/installation/ports/agent-model-store.js";
 import type { ManifestRepository } from "../contexts/installation/ports/manifest-repository.js";
 import type { RegistrationRecordRules } from "../contexts/installation/ports/native-host.js";
-import type { PluginTranslation } from "../contexts/installation/ports/plugin/plugin-translation.js";
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import { EnsureBuiltMarketplace } from "../orchestration/marketplace/ensure-built-marketplace.use-case.js";
 import { BundledAssetProviderAdapter } from "../shared/infrastructure/asset-loader.js";
@@ -122,26 +124,18 @@ export function debugOnly(logger: Logger): Logger {
   };
 }
 
-interface BuiltSources {
-  readonly ensureBuilt: BuiltMarketplaceEnsurer;
-  readonly marketplaceRegistry: Base["marketplaceRegistry"];
-  readonly translate: PluginTranslation;
-}
-
 /** What a restore needs to rebuild through the build pipeline. */
 export function builtMaterializationDepsOf(
-  { ensureBuilt, marketplaceRegistry, translate }: BuiltSources,
-  fs: FileReader & FileWriter
-) {
-  const build = {
-    ensureBuilt,
-    marketplaceRegistry,
-    homedir,
-    translate,
-    platform: process.platform,
-  };
+  fs: FileReader & FileWriter,
+  build: BuiltBuildDeps
+): BuiltMaterializationDeps {
   const projectHooks = new ProjectHooksMaterializer(fs);
-  const flat = new ModeBFlatMaterializationTranslator(fs, homedir, translate, projectHooks);
+  const flat = new ModeBFlatMaterializationTranslator(
+    fs,
+    build.homedir,
+    build.translate,
+    projectHooks
+  );
   return {
     ...build,
     translators: {
@@ -215,14 +209,13 @@ export function wireInstallation(base: Base) {
   );
   // Restore re-materializes through the build pipeline, matching what install wrote:
   // rewriting raw content instead would itself be drift.
-  const builtMaterializationDeps = builtMaterializationDepsOf(
-    {
-      ensureBuilt: ensureBuiltMarketplaceUseCase,
-      marketplaceRegistry,
-      translate: createPluginTranslation(tools),
-    },
-    fs
-  );
+  const builtMaterializationDeps = builtMaterializationDepsOf(fs, {
+    ensureBuilt: ensureBuiltMarketplaceUseCase,
+    marketplaceRegistry,
+    homedir,
+    translate: createPluginTranslation(tools),
+    platform: process.platform,
+  });
   return {
     assetProvider,
     agentModelStore,

@@ -5,7 +5,7 @@ import type {
   ConfigureMachineScopeRequest,
 } from "../../../src/contexts/installation/application/install/configure-machine-scope.use-case.js";
 import type { NativeActivationReport } from "../../../src/contexts/installation/application/install/install-ai-tool.use-case.js";
-import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
+import { SetupFlow } from "../../../src/orchestration/domain/setup-flow.model.js";
 import { SetupMachineScope } from "../../../src/orchestration/setup/setup-machine-scope.use-case.js";
 import { flowTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 

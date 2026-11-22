@@ -25,6 +25,7 @@ import {
 } from "typescript/unstable/ast";
 import { present } from "../shared/testing/present.builder.js";
 import { literalsOf, nameText, readEach, violation } from "./kind-rule-support.js";
+import type { KindId } from "./kind-table.js";
 import { kindsOf, type Violation } from "./kinds.js";
 import { PROFILE_MODULE_FILE, profileReaders, wholeProfileFlows } from "./profile-flow.js";
 import { INTERNAL_IMPORT, resolveImportTarget, unresolvedCommandMentions } from "./source-graph.js";
@@ -337,23 +338,19 @@ export function contractReaderViolations(files: Readonly<Record<string, string>>
     );
 }
 
-const COMPOSED_FILE =
-  /^src\/orchestration\/(?!domain\/|ports\/)(?:.*\/)?(?![^/]*\.error\.ts$)[^/]+$|^src\/contexts\/[^/]+\/application\/.*(?:\.use-case|-translator)\.ts$|[-.]adapter\.ts$/;
 const CLASS_DECLARATION = /^export (?:abstract )?class (\w+)/gm;
+const BUILT_KINDS: readonly KindId[] = ["adapter", "use-case"];
 
-/** A validating value object the setup command still builds: moving it would reorder the
- * validation errors against the banner. */
-const BUILT_IN_PRESENTATION: ReadonlySet<string> = new Set(["SetupFlow"]);
-
-/** A class of an orchestration file, a use case, a translator or an adapter that any file outside
+/** A class of an adapter, a use case or an orchestration file that any file outside
  * `composition/` builds with `new`. Presentation parses arguments and displays results, a use case
  * runs one operation, an adapter talks to one system: `composition/` builds the command or the
- * adapter and hands it in, so nothing decides which collaborator backs it. */
+ * adapter and hands it in, so nothing decides which collaborator backs it. The kind of a file
+ * decides, by suffix or by its folder, so a class named otherwise than `*.adapter.ts` is held too.
+ * A class declared in a file of another kind (error, model, controller) is not built by composition. */
 export function constructionViolations(files: Readonly<Record<string, string>>): Violation[] {
   const composed = Object.entries(files)
-    .filter(([path]) => COMPOSED_FILE.test(path))
-    .flatMap(([, text]) => [...text.matchAll(CLASS_DECLARATION)].map((match) => present(match[1])))
-    .filter((name) => !BUILT_IN_PRESENTATION.has(name));
+    .filter(([path]) => kindsOf(path).some((kind) => BUILT_KINDS.includes(kind)))
+    .flatMap(([, text]) => [...text.matchAll(CLASS_DECLARATION)].map((match) => present(match[1])));
   return Object.entries(files)
     .filter(([path]) => path.startsWith("src/") && !path.startsWith("src/composition/"))
     .flatMap(([path, text]) =>

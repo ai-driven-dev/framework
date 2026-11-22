@@ -65,7 +65,7 @@ export function makeRestoreUseCase(
   return restoreOf({
     ...deps,
     prompter,
-    plugins: restoreAllPluginsOf({ ...deps, builtDeps: fakeBuiltDeps() }),
+    plugins: restoreAllPluginsOf({ ...deps, builtDeps: fakeBuiltDeps(deps.fs) }),
   });
 }
 

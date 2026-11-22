@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { builtMaterializationDepsOf } from "../../../../../src/composition/installation.js";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
 import type { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.use-case.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
@@ -17,7 +18,6 @@ import { registeredTools, TOOL } from "../../../../shared/testing/registered-too
 import { saying } from "../../../../shared/testing/saying.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
-import { builtDepsOf } from "../../testing/built-translators.builder.js";
 import {
   fakeBuildSources,
   fakeBuiltDeps,
@@ -72,7 +72,7 @@ async function setup(
       ),
       replacePluginFiles: new ReplacePluginFiles(
         deps.fs,
-        options.builtDeps ?? fakeBuiltDeps(),
+        options.builtDeps ?? fakeBuiltDeps(deps.fs),
         registeredTools()
       ),
     },
@@ -287,7 +287,7 @@ describe("UpdatePlugin", () => {
       const deps = await buildInstallationDeps();
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const { addUseCase, updateUseCase } = await setup(deps, {
-        builtDeps: builtDepsOf(deps.fs, {
+        builtDeps: builtMaterializationDepsOf(deps.fs, {
           ensureBuilt: fakeEnsureBuiltMarketplace(),
           marketplaceRegistry: deps.marketplaceRegistry,
           platform: process.platform,

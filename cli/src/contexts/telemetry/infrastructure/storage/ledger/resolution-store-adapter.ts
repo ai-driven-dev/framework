@@ -13,7 +13,7 @@ import { readTextIfPresent } from "../../reading/text-file.js";
 export class ResolutionStoreAdapter implements ResolutionStore {
   private readonly path: string;
 
-  /** `aliases` is this directory's own table, read at every load: no wiring can leave it out. */
+  /** `aliases` is this directory's table, read at every load. */
   constructor(
     private readonly ledgerDir: string,
     private readonly storage: PrivateStorage,

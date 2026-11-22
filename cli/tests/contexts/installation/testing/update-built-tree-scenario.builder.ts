@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { builtMaterializationDepsOf } from "../../../../src/composition/installation.js";
 import { RefreshHostPlugin } from "../../../../src/contexts/host-registration/application/refresh-host-plugin.use-case.js";
 import { PluginDistributionLoader } from "../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { PluginMaterializer } from "../../../../src/contexts/installation/application/plugin/plugin-materializer.js";
@@ -12,7 +13,6 @@ import type { buildInstallationDeps } from "../../../shared/testing/installation
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "./build-add-plugin.builder.js";
-import { builtDepsOf } from "./built-translators.builder.js";
 import { fakeBuildSources, translateDistribution } from "./fake-build-sources.fake.js";
 import { FakeMarketplaceRegistry } from "./fake-marketplace-registry.fake.js";
 import { userScopeFileGuard } from "./user-scope-file-guard.fake.js";
@@ -66,7 +66,7 @@ export function makeUpdateUseCase(
           fs: deps.fs,
           loader: new PluginDistributionLoader(deps.pluginFetcher, deps.pluginDistributionReader),
           guard: userScopeFileGuard,
-          builtDeps: builtDepsOf(deps.fs, {
+          builtDeps: builtMaterializationDepsOf(deps.fs, {
             ensureBuilt,
             marketplaceRegistry: registry,
             platform: process.platform,

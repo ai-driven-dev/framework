@@ -1,6 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { builtMaterializationDepsOf } from "../../../../../../src/composition/installation.js";
 import { PlacePlugin } from "../../../../../../src/contexts/installation/application/plugin/add/place-plugin.use-case.js";
 import { ResolveAddedPluginSource } from "../../../../../../src/contexts/installation/application/plugin/add/resolve-added-plugin-source.use-case.js";
 import { PluginDistributionLoader } from "../../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
@@ -12,7 +13,6 @@ import {
 } from "../../../../../shared/testing/installation-deps.builder.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../../shared/testing/seed-from-directory.builder.js";
-import { builtDepsOf } from "../../../testing/built-translators.builder.js";
 import { fakeBuildSources } from "../../../testing/fake-build-sources.fake.js";
 import { FakeMarketplaceRegistry } from "../../../testing/fake-marketplace-registry.fake.js";
 
@@ -40,7 +40,7 @@ async function placeForCursor(foundFile: string | undefined) {
     source: { kind: "github", repo: "ai-driven-dev/framework" },
     scope: "project",
   });
-  const built = builtDepsOf(deps.fs, {
+  const built = builtMaterializationDepsOf(deps.fs, {
     ...fakeBuildSources(),
     marketplaceRegistry: registry,
     homedir,

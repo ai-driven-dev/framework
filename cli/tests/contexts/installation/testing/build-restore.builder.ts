@@ -1,3 +1,4 @@
+import { builtMaterializationDepsOf } from "../../../../src/composition/installation.js";
 import { InstallConfig } from "../../../../src/contexts/installation/application/install/install-config.use-case.js";
 import { ApplyPluginFiles } from "../../../../src/contexts/installation/application/restore/apply-plugin-files.use-case.js";
 import { GenerateToolDistribution } from "../../../../src/contexts/installation/application/restore/generate-tool-distribution.use-case.js";
@@ -16,7 +17,6 @@ import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
 import type { Logger } from "../../../../src/shared/ports/logger.js";
 import { registeredTools } from "../../../shared/testing/registered-tools.builder.js";
-import { builtDepsOf } from "./built-translators.builder.js";
 import { FakePlatform } from "./fake-platform.fake.js";
 
 type Files = FileReader & FileWriter & FileMerger;
@@ -62,7 +62,7 @@ export function restoreAllPluginsOf(parts: RestoreAllPluginsParts): RestoreAllPl
       fs,
       pluginFetcher,
       pluginDistributionReader,
-      builtDeps: builtDepsOf(fs, builtDeps),
+      builtDeps: builtMaterializationDepsOf(fs, builtDeps),
     }),
     registeredTools()
   );

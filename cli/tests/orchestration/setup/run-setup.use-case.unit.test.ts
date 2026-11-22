@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { remoteFrameworkSource } from "../../../src/contexts/distribution/contract/framework-source.js";
 import { ProjectContext } from "../../../src/contexts/installation/contract/project-context.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
-import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
+import { SetupFlow } from "../../../src/orchestration/domain/setup-flow.model.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { initAndInstall, initProject } from "../../shared/testing/installation-deps.builder.js";

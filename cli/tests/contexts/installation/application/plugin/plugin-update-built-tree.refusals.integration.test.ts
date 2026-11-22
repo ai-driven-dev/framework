@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
+import { builtMaterializationDepsOf } from "../../../../../src/composition/installation.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { PluginMaterializer } from "../../../../../src/contexts/installation/application/plugin/plugin-materializer.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
@@ -9,7 +10,6 @@ import {
   initAndInstall,
 } from "../../../../shared/testing/installation-deps.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { builtDepsOf } from "../../testing/built-translators.builder.js";
 import { translateDistribution } from "../../testing/fake-build-sources.fake.js";
 import {
   attachFutureSupportedNativeClaim,
@@ -166,7 +166,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
       fs: deps.fs,
       loader: new PluginDistributionLoader(deps.pluginFetcher, deps.pluginDistributionReader),
       guard: userScopeFileGuard,
-      builtDeps: builtDepsOf(deps.fs, {
+      builtDeps: builtMaterializationDepsOf(deps.fs, {
         ensureBuilt: fakeEnsureBuiltMarketplace(),
         marketplaceRegistry: registry,
         platform: process.platform,

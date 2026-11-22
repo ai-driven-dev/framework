@@ -57,8 +57,7 @@ export class UsageLedgerAdapter implements UsageLedger {
   readonly leftOut: LeftOutStore;
   private readonly aliases: RepositoryAliasStoreAdapter;
 
-  /** `parts` are this directory's own left-out store and alias table, read at every load: no
-   * wiring can leave the table out. */
+  /** `parts` are this directory's left-out store and alias table, read at every load. */
   constructor(
     private readonly dir: string,
     private readonly storage: PrivateStorage,

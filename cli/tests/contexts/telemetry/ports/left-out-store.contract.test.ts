@@ -20,7 +20,7 @@ describeLeftOutStoreContract(
 describeLeftOutStoreContract("on a temp dir", async (): Promise<LeftOutStoreSubject> => {
   const dir = await mkdtemp(join(tmpdir(), "aidd-left-out-contract-"));
   return {
-    store: new LeftOutAdapter(join(dir, "left-out"), dir, new PrivateStorageAdapter()),
+    store: new LeftOutAdapter(dir, new PrivateStorageAdapter()),
     dispose: () => rm(dir, { recursive: true, force: true }),
   };
 });

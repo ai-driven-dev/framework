@@ -20,7 +20,7 @@ function restoreFor(deps: Deps) {
   return restoreOf({
     ...deps,
     prompter: new OverwritePrompter(),
-    plugins: restoreAllPluginsOf({ ...deps, builtDeps: fakeBuiltDeps() }),
+    plugins: restoreAllPluginsOf({ ...deps, builtDeps: fakeBuiltDeps(deps.fs) }),
   });
 }
 

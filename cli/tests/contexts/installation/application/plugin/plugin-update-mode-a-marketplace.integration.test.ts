@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { builtMaterializationDepsOf } from "../../../../../src/composition/installation.js";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.use-case.js";
@@ -12,7 +13,6 @@ import {
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
-import { builtDepsOf } from "../../testing/built-translators.builder.js";
 import { fakeBuildSources, translateDistribution } from "../../testing/fake-build-sources.fake.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
 
@@ -54,7 +54,7 @@ function makeUpdateUseCase(deps: Deps, registry: FakeMarketplaceRegistry): Updat
       ),
       replacePluginFiles: new ReplacePluginFiles(
         deps.fs,
-        builtDepsOf(deps.fs, {
+        builtMaterializationDepsOf(deps.fs, {
           ensureBuilt: fakeEnsureBuiltMarketplace(),
           marketplaceRegistry: registry,
           platform: process.platform,

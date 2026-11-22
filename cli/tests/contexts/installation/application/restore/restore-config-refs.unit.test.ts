@@ -45,7 +45,7 @@ async function restore(deps: Awaited<ReturnType<typeof buildInstallationDeps>>, 
   await restoreOf({
     ...deps,
     prompter: new OverwritePrompter(),
-    plugins: restoreAllPluginsOf({ ...deps, builtDeps: fakeBuiltDeps() }),
+    plugins: restoreAllPluginsOf({ ...deps, builtDeps: fakeBuiltDeps(deps.fs) }),
   }).execute({
     frameworkPath: FIXTURE_DIR,
     version: "test",

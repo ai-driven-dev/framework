@@ -61,7 +61,7 @@ describe("RestoreAll - consent to overwrite", () => {
     const restoreUseCase = restoreOf({
       ...deps,
       prompter,
-      plugins: restoreAllPluginsOf({ ...deps, builtDeps: fakeBuiltDeps() }),
+      plugins: restoreAllPluginsOf({ ...deps, builtDeps: fakeBuiltDeps(deps.fs) }),
     });
     const seen = recordAsks(restoreUseCase);
     await new RestoreAll(
@@ -103,7 +103,7 @@ describe("RestoreAll - native-only tools", () => {
     const restoreUseCase = restoreOf({
       ...deps,
       prompter,
-      plugins: restoreAllPluginsOf({ ...deps, builtDeps: fakeBuiltDeps() }),
+      plugins: restoreAllPluginsOf({ ...deps, builtDeps: fakeBuiltDeps(deps.fs) }),
     });
     restoreUseCase.execute = async () => ({
       tools: [],
@@ -154,7 +154,7 @@ function restoreAllDelegatingTo(
   const restoreUseCase = restoreOf({
     ...deps,
     prompter,
-    plugins: restoreAllPluginsOf({ ...deps, builtDeps: fakeBuiltDeps() }),
+    plugins: restoreAllPluginsOf({ ...deps, builtDeps: fakeBuiltDeps(deps.fs) }),
   });
   restoreUseCase.execute = delegate;
   return new RestoreAll(

@@ -28,7 +28,7 @@ async function resolver() {
     {
       distributionLoader: new PluginDistributionLoader({ fetch }, reader),
       fs: deps.fs,
-      built: fakeBuiltDeps(),
+      built: fakeBuiltDeps(deps.fs),
     },
     registeredTools()
   );

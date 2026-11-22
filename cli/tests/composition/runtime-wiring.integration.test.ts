@@ -262,24 +262,19 @@ describe("debugOnly", () => {
 });
 
 describe("builtMaterializationDepsOf", () => {
-  it("hands a restore the build, the registry, the home directory resolver, the translation, the platform and the translators", () => {
-    type Sources = Parameters<typeof builtMaterializationDepsOf>[0];
-    const ensureBuilt = {} as Sources["ensureBuilt"];
-    const marketplaceRegistry = {} as Sources["marketplaceRegistry"];
-    const translate = {} as Sources["translate"];
-
-    const deps = builtMaterializationDepsOf(
-      { ensureBuilt, marketplaceRegistry, translate },
-      new InMemoryFileAdapter()
-    );
-
-    expect(deps).toMatchObject({
-      ensureBuilt,
-      marketplaceRegistry,
+  it("hands a restore the build it was given and the translators built over it", () => {
+    type Build = Parameters<typeof builtMaterializationDepsOf>[1];
+    const build: Build = {
+      ensureBuilt: {} as Build["ensureBuilt"],
+      marketplaceRegistry: {} as Build["marketplaceRegistry"],
       homedir,
-      translate,
+      translate: {} as Build["translate"],
       platform: process.platform,
-    });
+    };
+
+    const deps = builtMaterializationDepsOf(new InMemoryFileAdapter(), build);
+
+    expect(deps).toMatchObject(build);
     expect(Object.keys(deps.translators)).toStrictEqual(["builtTree", "marketplace"]);
   });
 });

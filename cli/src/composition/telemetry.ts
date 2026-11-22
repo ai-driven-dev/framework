@@ -112,7 +112,7 @@ function wireStores(root: string) {
   return {
     root,
     ledger: new UsageLedgerAdapter(ledgerDir, storage, {
-      leftOut: new LeftOutAdapter(join(ledgerDir, "left-out.txt"), ledgerDir, storage),
+      leftOut: new LeftOutAdapter(ledgerDir, storage),
       aliases,
     }),
     resolutionStore: new ResolutionStoreAdapter(ledgerDir, storage, aliases),
