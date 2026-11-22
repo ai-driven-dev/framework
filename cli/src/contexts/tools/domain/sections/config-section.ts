@@ -1,7 +1,7 @@
-import type { ConfigAsset } from "../../../../shared/domain/config-asset.js";
 import { FileHash } from "../../../../shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { MergeStrategy } from "../../../../shared/domain/merge.js";
+import type { ConfigAsset } from "../../../../shared/domain/reading/config-asset.js";
 import type { ConfigRef } from "../../contract/config-refs.js";
 import type { ConfigFilePlace } from "../../contract/tool-profile.js";
 import { CapabilityConfigError } from "../tools.error.js";

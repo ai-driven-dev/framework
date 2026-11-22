@@ -1,5 +1,5 @@
 import type { SchemaProvider } from "../../../../src/contexts/translate/ports/schema-provider.js";
-import type { SchemaName } from "../../../../src/shared/domain/config-asset.js";
+import type { SchemaName } from "../../../../src/shared/domain/reading/config-asset.js";
 
 /** Schemas that accept anything: the validator under test is a stub that never reads one. */
 export const openSchemas: SchemaProvider = { loadSchema: () => ({}) };

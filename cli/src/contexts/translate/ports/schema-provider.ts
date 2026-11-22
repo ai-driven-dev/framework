@@ -1,4 +1,4 @@
-import type { SchemaName } from "../../../shared/domain/config-asset.js";
+import type { SchemaName } from "../../../shared/domain/reading/config-asset.js";
 
 /** The JSON schemas a build validates its manifests and catalogs against. */
 export interface SchemaProvider {

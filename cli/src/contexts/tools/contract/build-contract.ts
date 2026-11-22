@@ -1,4 +1,3 @@
-import type { ConfigAsset, SchemaName } from "../../../shared/domain/config-asset.js";
 import type {
   FlatArtifactLayout,
   FlatHooksLoaderEntry,
@@ -7,6 +6,7 @@ import type {
   SourceMarketplaceRef,
   SourcePluginEntryRef,
 } from "../../../shared/domain/plugin/source-refs.js";
+import type { ConfigAsset, SchemaName } from "../../../shared/domain/reading/config-asset.js";
 
 /** All a marketplace builder reads of the output tree. */
 export interface BuildFileReader {

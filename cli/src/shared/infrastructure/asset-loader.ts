@@ -1,4 +1,4 @@
-import type { ConfigAsset } from "../domain/config-asset.js";
+import type { ConfigAsset } from "../domain/reading/config-asset.js";
 import { AssetNotFoundError } from "../domain/shared.error.js";
 import type { AssetProvider } from "../ports/asset-provider.js";
 

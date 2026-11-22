@@ -13,7 +13,7 @@ import codexPluginManifest from "../../../../assets/schemas/codex-plugin-manifes
 import marketplace from "../../../../assets/schemas/copilot-plugin-marketplace.json" with {
   type: "json",
 };
-import type { SchemaName } from "../../../../src/shared/domain/config-asset.js";
+import type { SchemaName } from "../../../../src/shared/domain/reading/config-asset.js";
 import type { SchemaSource } from "./profile-translation-conformance.contract.js";
 
 const VENDORED: Record<SchemaName, object> = {

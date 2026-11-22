@@ -6,8 +6,8 @@ import type {
 } from "../../../../../src/contexts/tools/contract/build-contract.js";
 import { JsonSchemaValidationError } from "../../../../../src/contexts/translate/domain/translate.error.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
-import type { SchemaName } from "../../../../../src/shared/domain/config-asset.js";
 import type { SourcePluginEntryRef } from "../../../../../src/shared/domain/plugin/source-refs.js";
+import type { SchemaName } from "../../../../../src/shared/domain/reading/config-asset.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import {
   OUT_DIR,

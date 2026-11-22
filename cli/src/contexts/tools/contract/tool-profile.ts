@@ -1,6 +1,6 @@
-import type { ConfigAsset } from "../../../shared/domain/config-asset.js";
 import type { InstallationFile } from "../../../shared/domain/installation-file.js";
 import type { FlatArtifactLayout } from "../../../shared/domain/materialization/flat-paths.js";
+import type { ConfigAsset } from "../../../shared/domain/reading/config-asset.js";
 import type { AiToolId, IdeToolId } from "../../../shared/domain/tool.js";
 import type { ToolBuildContract } from "./build-contract.js";
 import type { ConfigRef } from "./config-refs.js";

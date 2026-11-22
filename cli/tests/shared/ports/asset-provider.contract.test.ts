@@ -1,4 +1,4 @@
-import type { ConfigAsset } from "../../../src/shared/domain/config-asset.js";
+import type { ConfigAsset } from "../../../src/shared/domain/reading/config-asset.js";
 import { BundledAssetProviderAdapter } from "../../../src/shared/infrastructure/asset-loader.js";
 import { describeAssetProviderContract } from "../testing/run-asset-provider.contract.js";
 import { StubAssetProvider } from "../testing/stub-asset-provider.fake.js";

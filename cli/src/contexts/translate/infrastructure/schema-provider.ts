@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import type { SchemaName } from "../../../shared/domain/config-asset.js";
+import type { SchemaName } from "../../../shared/domain/reading/config-asset.js";
 import { AssetNotFoundError } from "../../../shared/domain/shared.error.js";
 import type { SchemaProvider } from "../ports/schema-provider.js";
 

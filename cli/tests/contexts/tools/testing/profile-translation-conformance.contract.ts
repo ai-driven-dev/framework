@@ -1,7 +1,7 @@
 import { Ajv } from "ajv";
 import { describe, expect, it } from "vitest";
 import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domain/profile.js";
-import type { SchemaName } from "../../../../src/shared/domain/config-asset.js";
+import type { SchemaName } from "../../../../src/shared/domain/reading/config-asset.js";
 import {
   aiCheck,
   type ConformanceCheck,
