@@ -15,5 +15,5 @@ test("a change to the shared test kit alone selects no mutation scope", async ()
   const { scopes } = JSON.parse(fs.readFileSync(path.join(cli, "mutation-scopes.json"), "utf8"));
 
   assert.deepEqual(scopesToRun(["cli/tests/shared/testing/capturing-logger.fake.ts"], scopes), []);
-  assert.deepEqual(scopesToRun(["cli/src/shared/domain/paths.ts"], scopes), ["shared"]);
+  assert.deepEqual(scopesToRun(["cli/src/shared/domain/paths.model.ts"], scopes), ["shared"]);
 });

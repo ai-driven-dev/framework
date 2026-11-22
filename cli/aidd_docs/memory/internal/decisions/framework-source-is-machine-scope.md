@@ -11,7 +11,7 @@ One registration of `aidd-framework` per machine, shared by every project. Read 
 ## Where
 
 - Registration: `userConfigDir()/marketplaces.json`, `scope: "user"`.
-- Build: `userConfigDir()/cache/built/<version>/aidd-framework/<tool>` (`shared/domain/paths.ts`, `userBuiltMarketplaceDir`).
+- Build: `userConfigDir()/cache/built/<version>/aidd-framework/<tool>` (`shared/domain/layout/aidd-layout.ts`, `userBuiltMarketplaceDir`).
 - Built once per CLI version.
 
 ## Migration

@@ -1,10 +1,10 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { homeDirResolver } from "../../../../../src/composition/user-config-dir.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { userScopeFilesSafeToDelete } from "../../../../../src/contexts/machine-claims/application/ownership/user-scope-plugin-files.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
-import { resolveHomeDir } from "../../../../../src/shared/infrastructure/home-dir.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
@@ -89,7 +89,7 @@ describe("Cursor user plugin boundary", () => {
     expect(
       (
         await userScopeFilesSafeToDelete(
-          { fs, logger: new CapturingLogger(), home: resolveHomeDir() },
+          { fs, logger: new CapturingLogger(), home: homeDirResolver()() },
           owned,
           registeredTools().aiProfile(TOOL.cursor)
         )

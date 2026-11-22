@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   fetchedMarketplaceDir,
   marketplaceCacheDir,
-} from "../../../../src/contexts/distribution/domain/marketplace-cache-layout.js";
+} from "../../../../src/contexts/distribution/domain/marketplace-cache-paths.model.js";
 
 describe("locating a marketplace's cache directory", () => {
   it("nests the marketplace under the project's cache", () => {

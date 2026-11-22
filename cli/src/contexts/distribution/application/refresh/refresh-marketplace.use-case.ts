@@ -1,16 +1,18 @@
 import { join, resolve } from "node:path";
-import type { FileReader } from "../../../shared/ports/file-reader.js";
-import type { Logger } from "../../../shared/ports/logger.js";
-import type { PluginCatalog } from "../contract/catalog.js";
-import type { MarketplaceView } from "../contract/marketplace-view.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { Logger } from "../../../../shared/ports/logger.js";
+import type { PluginCatalog } from "../../contract/catalog.js";
+import type { MarketplaceView } from "../../contract/marketplace-view.js";
 import {
   hasRelativePluginSources,
   tryParsePluginCatalog,
-} from "../domain/catalog-parsers/claude-marketplace-catalog.js";
-import { MARKETPLACE_CATALOG_RELATIVE } from "../domain/marketplace-cache-layout.js";
-import type { MarketplaceCachePort } from "../ports/marketplace-cache.js";
-import type { MarketplaceRegistry } from "../ports/marketplace-registry.js";
-import type { ResolveMarketplace } from "./resolve-marketplace.use-case.js";
+} from "../../domain/catalog-parsers/claude-marketplace-catalog.js";
+import {
+  fetchedMarketplaceDir,
+  MARKETPLACE_CATALOG_RELATIVE,
+} from "../../domain/marketplace-cache-paths.model.js";
+import type { MarketplaceRegistry } from "../../ports/marketplace-registry.js";
+import type { ResolveMarketplace } from "../resolve-marketplace.use-case.js";
 
 export interface RefreshMarketplaceRequest {
   projectRoot: string;
@@ -21,7 +23,7 @@ export interface RefreshMarketplaceRequest {
 export interface RefreshMarketplaceDeps {
   readonly registry: MarketplaceRegistry;
   readonly resolveMarketplace: ResolveMarketplace;
-  readonly cache: MarketplaceCachePort;
+  readonly userConfigDir?: () => string;
   readonly logger?: Logger;
   readonly fs?: FileReader;
 }
@@ -30,28 +32,21 @@ export interface RefreshMarketplaceDeps {
 export class RefreshMarketplace {
   private readonly registry: MarketplaceRegistry;
   private readonly resolveMarketplace: ResolveMarketplace;
-  private readonly cache: MarketplaceCachePort;
+  private readonly userConfigDir: (() => string) | undefined;
   private readonly logger: Logger | undefined;
   private readonly fs: FileReader | undefined;
 
   constructor(deps: RefreshMarketplaceDeps) {
     this.registry = deps.registry;
     this.resolveMarketplace = deps.resolveMarketplace;
-    this.cache = deps.cache;
+    this.userConfigDir = deps.userConfigDir;
     this.logger = deps.logger;
     this.fs = deps.fs;
   }
 
-  /** The marketplaces a refresh covers, their cache cleared first when forced. */
-  async targets(options: RefreshMarketplaceRequest): Promise<readonly MarketplaceView[]> {
-    if (options.force) await this.cache.clear(options.name);
-    const all = await this.registry.list(options.projectRoot);
-    return options.name ? all.filter((m) => m.name === options.name) : all;
-  }
-
   /** Fetches one marketplace again and stamps what it now carries. A failure travels. */
   async execute(projectRoot: string, m: MarketplaceView): Promise<void> {
-    const cacheDir = this.resolveMarketplace.cacheDirOf(m, projectRoot);
+    const cacheDir = fetchedMarketplaceDir(m, projectRoot, this.userConfigDir?.());
     await this.warnIfStale(m.name, cacheDir);
     this.logger?.info(`Fetching marketplace '${m.name}'...`);
     const { catalog } = await this.resolveMarketplace.execute({

@@ -44,7 +44,6 @@ import { RecordSyncActivation } from "../../orchestration/sync/settings/record-s
 import { SyncNativeActivation } from "../../orchestration/sync/settings/sync-native-activation.use-case.js";
 import { SyncSettings } from "../../orchestration/sync/settings/sync-settings.use-case.js";
 import { SyncToolSettingsFiles } from "../../orchestration/sync/settings/sync-tool-settings-files.use-case.js";
-import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
 import { catalogReaders, settingsDeclaration } from "../host-registration.js";
 import type { Installation } from "../installation.js";
 import type { Base } from "../shared.js";
@@ -105,7 +104,7 @@ function wireUserMarketplaceRemoval(base: Base, inst: Installation) {
         tools
       ),
       host: base.withdrawFromHost,
-      home: resolveHomeDir(),
+      home: base.homedir(),
       records: inst.registrationRecordRules,
     }),
     remove: new RemoveMarketplace(marketplaceRegistry),
@@ -263,7 +262,7 @@ function wireSetupSource(base: Base, recordSourceReference: RecordSourceReferenc
       releaseResolver
     ),
     recordReference: recordSourceReference,
-    refresh: new RefreshMarketplaces(base.refreshMarketplaceUseCase),
+    refresh: new RefreshMarketplaces(base.marketplacesToRefresh, base.refreshMarketplaceUseCase),
     environment,
   });
   return {
@@ -287,7 +286,10 @@ function wireMarketplaceReads(base: Base) {
     resolveMarketplaceUseCase,
     base.logger
   );
-  const refreshMarketplace = new RefreshMarketplaces(base.refreshMarketplaceUseCase);
+  const refreshMarketplace = new RefreshMarketplaces(
+    base.marketplacesToRefresh,
+    base.refreshMarketplaceUseCase
+  );
   return { marketplaceCheckUseCase, listMarketplaceCatalogs, refreshMarketplace };
 }
 

@@ -2,7 +2,7 @@ import { constants } from "node:fs";
 import { access, mkdir, readdir, readFile, realpath, rm, rmdir, stat } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { FileHash } from "../domain/file-hash.js";
-import { posixRelative } from "../domain/paths.js";
+import { posixRelative } from "../domain/paths.model.js";
 import type { FileReader } from "../ports/file-reader.js";
 import type { FileWriter } from "../ports/file-writer.js";
 import type { Logger } from "../ports/logger.js";

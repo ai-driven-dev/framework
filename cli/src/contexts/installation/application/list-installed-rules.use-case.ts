@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { posixRelative } from "../../../shared/domain/paths.js";
+import { posixRelative } from "../../../shared/domain/paths.model.js";
 import type { AiToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";

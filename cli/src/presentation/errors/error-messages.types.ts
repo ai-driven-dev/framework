@@ -9,6 +9,7 @@ import type * as update from "../../contexts/update/domain/update.error.js";
 import type * as orchestration from "../../orchestration/orchestration.error.js";
 import type * as shared from "../../shared/domain/shared.error.js";
 import type { AiddError } from "../../shared/domain/shared.error.js";
+import type * as presentation from "../presentation.error.js";
 
 /** The words of a nested cause, so a message can name what failed beneath it. */
 export type CauseWords = (cause: unknown) => string;
@@ -40,3 +41,5 @@ export type CatalogOwners =
   | InstanceType<Classes<typeof distribution>>
   | InstanceType<Classes<typeof translate>>
   | InstanceType<Classes<typeof tools>>;
+
+export type PresentationOwners = InstanceType<Classes<typeof presentation>>;

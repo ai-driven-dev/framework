@@ -115,14 +115,16 @@ describe("the mutation scripts", () => {
       },
       tools: { mutate: "src/contexts/tools/**/*.ts", tests: ["tests/contexts/tools/**"] },
     };
-    expect(scopesToRun(["cli/src/shared/domain/paths.ts"], mixed)).toEqual(["shared"]);
+    expect(scopesToRun(["cli/src/shared/domain/paths.model.ts"], mixed)).toEqual(["shared"]);
     expect(scopesToRun(["cli/src/contexts/tools/domain/marketplace-entry.ts"], mixed)).toEqual([]);
     expect(
       scopesToRun(["cli/tests/contexts/tools/domain/catalog-registered.unit.test.ts"], mixed)
     ).toEqual([]);
     expect(scopesToRun(["README.md"], mixed)).toEqual([]);
     expect(scopesToRun(["cli/tests/golden/testing/expect-golden.builder.ts"], mixed)).toEqual([]);
-    expect(scopesToRun(["cli/tests/shared/domain/paths.unit.test.ts"], mixed)).toEqual(["shared"]);
+    expect(scopesToRun(["cli/tests/shared/domain/paths.model.unit.test.ts"], mixed)).toEqual([
+      "shared",
+    ]);
     expect(
       scopesToRun(["cli/tests/shared/infrastructure/asset-loader.integration.test.ts"], mixed)
     ).toEqual([]);
@@ -164,7 +166,7 @@ describe("the mutation scripts", () => {
     };
     expect(scopesToRun(["cli/pnpm-lock.yaml"], withCanary)).toEqual(["canary"]);
     expect(
-      scopesToRun(["cli/pnpm-lock.yaml", "cli/src/shared/domain/paths.ts"], withCanary)
+      scopesToRun(["cli/pnpm-lock.yaml", "cli/src/shared/domain/paths.model.ts"], withCanary)
     ).toEqual(["shared", "canary"]);
   });
 

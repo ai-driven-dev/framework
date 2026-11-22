@@ -1,4 +1,3 @@
-import { homedir } from "node:os";
 import { BuildMenu } from "../orchestration/menu/build-menu.use-case.js";
 import { MenuLoop } from "../orchestration/menu/menu-loop.use-case.js";
 import type { CommandRunner, Pause } from "../orchestration/menu/menu-ports.js";
@@ -73,7 +72,7 @@ function scenariosOf({ shared, installation, marketplace, plugin }: Foundation) 
   const doctor = memoized(() => wireDoctor(shared(), installation()));
   const clean = memoized(() => wireClean(shared(), installation()));
   const recipes = memoized(() => wireRecipes());
-  const telemetry = memoized(() => wireTelemetry(homedir, shared().prompter));
+  const telemetry = memoized(() => wireTelemetry(shared().homedir, shared().prompter));
   return { global, setup, agentModels, doctor, clean, recipes, telemetry };
 }
 

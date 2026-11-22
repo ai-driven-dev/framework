@@ -26,10 +26,9 @@ vi.mock("simple-git", () => ({
 import type { TokenProvider } from "../../../../src/contexts/auth/contract/token-provider.js";
 import { PluginFetchError } from "../../../../src/contexts/distribution/domain/distribution.error.js";
 import { GitCloner } from "../../../../src/contexts/distribution/infrastructure/git-cloner-adapter.js";
-import { PluginFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
+import { GitSourceFetcher } from "../../../../src/contexts/distribution/infrastructure/git-source-fetcher.js";
 import type { PluginSource } from "../../../../src/shared/domain/plugin/source.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
-import { FakeNpmInstaller } from "../testing/npm-installer.fake.js";
 
 const CACHE = "/tmp/cache";
 
@@ -41,15 +40,13 @@ function reset(): void {
 }
 
 let lastFs: InMemoryFileAdapter;
-let lastNpm: FakeNpmInstaller;
 
-function adapter(token?: string, files: Record<string, string> = {}): PluginFetcherAdapter {
+function adapter(token?: string, files: Record<string, string> = {}): GitSourceFetcher {
   reset();
   lastFs = new InMemoryFileAdapter(files);
   const provider: TokenProvider | undefined =
     token === undefined ? undefined : { resolve: async () => token };
-  lastNpm = new FakeNpmInstaller(lastFs, ["@acme/plugin"]);
-  return new PluginFetcherAdapter(lastFs, new GitCloner(), lastNpm, provider);
+  return new GitSourceFetcher(lastFs, new GitCloner(), provider);
 }
 
 function clonedInto(): string {
@@ -224,30 +221,6 @@ describe("how each kind of clone is asked for", () => {
   });
 });
 
-describe("an npm package as a source", () => {
-  it("asks for the pinned version", async () => {
-    await adapter().fetch({ kind: "npm", package: "@acme/plugin", version: "1.2.3" }, CACHE);
-
-    expect(lastNpm.installs).toEqual([{ spec: "@acme/plugin@1.2.3", prefix: CACHE }]);
-  });
-
-  it("falls back to latest when no version is pinned", async () => {
-    await adapter().fetch({ kind: "npm", package: "@acme/plugin" }, CACHE);
-
-    expect(lastNpm.installs.map((i) => i.spec)).toEqual(["@acme/plugin@latest"]);
-  });
-
-  it("names the spec it could not install", async () => {
-    const fetcher = adapter();
-
-    await expect(
-      fetcher.fetch({ kind: "npm", package: "@absent/plugin", version: "9.9.9" }, CACHE)
-    ).rejects.toThrow(
-      expect.objectContaining({ detail: expect.stringMatching(/@absent\/plugin@9\.9\.9/) })
-    );
-  });
-});
-
 describe("what the user is told when a clone fails", () => {
   const url = "https://user:ghp_SECRET@example.com/private.git";
 
@@ -356,46 +329,5 @@ describe("a tree already in the cache", () => {
     await fetcher.fetch(source, CACHE, { forceRefresh: true });
 
     expect(mockCloneFn).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe("an npm package already installed in the cache", () => {
-  const source: PluginSource = { kind: "npm", package: "@acme/plugin" };
-  const installed = { [`${CACHE}/node_modules/@acme/plugin/package.json`]: "{}" };
-  const stale = `${CACHE}/node_modules/@acme/plugin/removed-upstream.js`;
-
-  it("is reinstalled from scratch when the caller forces a refresh", async () => {
-    const fetcher = adapter(undefined, { ...installed, [stale]: "" });
-
-    const result = await fetcher.fetch(source, CACHE, { forceRefresh: true });
-
-    expect(await lastFs.fileExists(stale), "the stale install is wiped, not installed over").toBe(
-      false
-    );
-    expect(lastNpm.installs, "the reinstall still happens after the wipe").toHaveLength(1);
-    expect(result).toBe(join(CACHE, "node_modules", "@acme", "plugin"));
-  });
-
-  it("is left in place when no refresh is asked for", async () => {
-    const fetcher = adapter(undefined, installed);
-
-    await fetcher.fetch(source, CACHE);
-
-    expect(await lastFs.fileExists(`${CACHE}/node_modules/@acme/plugin/package.json`)).toBe(true);
-  });
-});
-
-describe("a local path as a source", () => {
-  it("names the path it resolved, not the one that was typed", async () => {
-    const fetcher = adapter();
-
-    await expect(fetcher.fetch({ kind: "local", path: "./missing" }, CACHE)).rejects.toThrow(
-      PluginFetchError
-    );
-    await expect(fetcher.fetch({ kind: "local", path: "./missing" }, CACHE)).rejects.toThrow(
-      expect.objectContaining({
-        detail: expect.stringContaining(process.cwd()),
-      })
-    );
   });
 });

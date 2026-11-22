@@ -1,6 +1,6 @@
 import { join, resolve } from "node:path";
 import { describeError } from "../../../shared/domain/describe-error.js";
-import { pathsOverlap } from "../../../shared/domain/paths.js";
+import { pathsOverlap } from "../../../shared/domain/paths.model.js";
 import { SOURCE_MARKETPLACE_RELATIVE } from "../../../shared/domain/plugin/canon-paths.js";
 import type {
   SourceMarketplaceRef,

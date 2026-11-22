@@ -15,8 +15,8 @@
 # first `aidd` call — per-phase relocation is how a phase added later reaches the real
 # profile instead. The `clean --scope user` whitelist deletes `cache/built/`, the self-update
 # cache and `references.json` outright, none of which may point at a real profile. The
-# variable does not move `identity.json`: `resolveAiddConfigDir()`
-# (`shared/infrastructure/home-dir.ts`) refuses it on purpose, so identity is read from the real one.
+# variable does not move `identity.json`: `userConfigDir()`
+# (`composition/user-config-dir.ts`) refuses it on purpose, so identity is read from the real one.
 #
 # Every `--scope user` call passes `--no-default-marketplace`; without it `setup --scope user`
 # registers the reserved name machine-wide at every host.
