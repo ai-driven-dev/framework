@@ -10,7 +10,7 @@ const marketplace = (alias: string, hostName: string, provenance?: NativeMarketp
   ...(provenance === undefined ? {} : { provenance }),
 });
 
-describe("mergeCatalogueMarketplaces", () => {
+describe("merging the marketplaces of a catalogue", () => {
   describe("the host data it answers", () => {
     it("starts from the fallback binary and empty lists when nothing was recorded", () => {
       expect(mergeCatalogueMarketplaces(undefined, [], "fallback")).toEqual({
@@ -39,7 +39,7 @@ describe("mergeCatalogueMarketplaces", () => {
     });
   });
 
-  describe("marketplaces", () => {
+  describe("adding marketplaces to a record", () => {
     const existing = {
       binary: "claude",
       marketplaces: [marketplace("local", "catalog", registry("/built"))],

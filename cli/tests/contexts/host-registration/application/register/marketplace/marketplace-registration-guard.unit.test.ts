@@ -60,7 +60,7 @@ const request = {
 const EMPTY = { location: "r", entries: new Map<string, string>() };
 const HELD = { location: "r", entries: new Map([["aidd", DIR]]) };
 
-describe("untouchedReason", () => {
+describe("deciding whether a registration is left untouched", () => {
   it("lets the registration go on when the proof is clean and the host reads fine", async () => {
     expect(await untouchedReason(runWith(EMPTY), request, CLEAN)).toBeUndefined();
   });
@@ -125,7 +125,7 @@ describe("untouchedReason", () => {
   });
 });
 
-describe("followsRequestedSource", () => {
+describe("checking the host follows the requested source", () => {
   it("follows a registry entry at the requested path", () => {
     expect(followsRequestedSource(CLEAN, DIR, "linux")).toBe(true);
   });

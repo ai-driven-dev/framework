@@ -97,7 +97,7 @@ function setup(
 const reclaim = (parts: ReturnType<typeof setup>) =>
   reclaimOrReport(parts.run, { marketplace: SUBJECT, hostName: "aidd", builtDir: DIR }, ADD_ERROR);
 
-describe("reclaimOrReport", () => {
+describe("reclaiming or reporting a dead registration", () => {
   it("leaves the host alone, naming the foreign ref, when ownership is unproven", async () => {
     const parts = setup({
       claims: KNOWN,

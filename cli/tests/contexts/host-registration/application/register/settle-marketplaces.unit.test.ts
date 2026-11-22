@@ -4,7 +4,7 @@ import { catalogAt, DIR, NONE, OWN, setup } from "../../testing/registration-run
 
 const marketplace = { name: "aidd", scope: "project" as const };
 
-describe("settleMarketplaces", () => {
+describe("settling registered marketplaces", () => {
   it("settles a registered marketplace as added this run", async () => {
     const { run } = setup({ files: catalogAt(DIR, []) });
     const settled = await settleMarketplaces(run, {

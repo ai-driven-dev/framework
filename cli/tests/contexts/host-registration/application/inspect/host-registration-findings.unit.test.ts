@@ -13,7 +13,7 @@ const answered = {
   ]),
 };
 
-describe("pluginFinding", () => {
+describe("finding a plugin's problem on the host", () => {
   it("says nothing about a plugin that is there and enabled", () => {
     expect(pluginFinding(TOOL.claude, { plugin: "on", ref: "on@aidd" }, answered)).toEqual([]);
   });
@@ -37,7 +37,7 @@ describe("pluginFinding", () => {
   });
 });
 
-describe("sourceFinding", () => {
+describe("finding a marketplace source's problem", () => {
   it("describes a different catalog under the same name by its plugin difference", () => {
     const finding = sourceFinding(TOOL.claude, {
       name: "aidd",

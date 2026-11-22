@@ -22,7 +22,7 @@ const outcome = (
   pluginRefs: parts.pluginRefs ?? [],
 });
 
-describe("afterActivation", () => {
+describe("projecting a record after activation", () => {
   const recorded = {
     binary: "claude",
     marketplaces: [marketplace("local", "catalog", registry("/built"))],

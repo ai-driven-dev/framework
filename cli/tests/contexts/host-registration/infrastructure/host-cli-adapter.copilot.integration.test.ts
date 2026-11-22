@@ -24,7 +24,7 @@ function makeResult(overrides: Partial<ReturnType<typeof spawnSync>>) {
   } as ReturnType<typeof spawnSync>;
 }
 
-describe("CopilotCliAdapter", () => {
+describe("driving the Copilot CLI", () => {
   let restorePath: (() => void) | undefined;
   afterEach(() => {
     restorePath?.();

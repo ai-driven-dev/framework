@@ -5,7 +5,7 @@ import {
   UnreadableBuiltCatalogError,
 } from "../../../../src/contexts/host-registration/domain/host-registration.error.js";
 
-describe("MarketplaceSourceConflictError", () => {
+describe("when a marketplace source conflicts", () => {
   it("carries its data and says nothing itself", () => {
     const error = new MarketplaceSourceConflictError("name taken");
     expect({ name: error.name, detail: error.detail, message: error.message }).toStrictEqual({
@@ -22,7 +22,7 @@ describe("MarketplaceSourceConflictError", () => {
   });
 });
 
-describe("NativePluginCliError", () => {
+describe("when a native plugin CLI call fails", () => {
   it("carries its data and says nothing itself", () => {
     const error = new NativePluginCliError("claude exited 2");
     expect({ name: error.name, detail: error.detail, message: error.message }).toStrictEqual({
@@ -37,7 +37,7 @@ describe("NativePluginCliError", () => {
   });
 });
 
-describe("UnreadableBuiltCatalogError", () => {
+describe("when a built catalog cannot be read", () => {
   it("carries its data and says nothing itself", () => {
     const error = new UnreadableBuiltCatalogError("/built/c.json");
     expect({ name: error.name, path: error.path, message: error.message }).toStrictEqual({

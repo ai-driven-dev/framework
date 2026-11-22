@@ -12,7 +12,7 @@ const target = {
   catalogClaims: [],
 };
 
-describe("registerMarketplace", () => {
+describe("registering a marketplace on a host", () => {
   it("adds the catalogue and claims it under the host's own name once the host follows it", async () => {
     const { run, activator } = setup({ files: catalogAt(DIR, []) });
     expect(await registerMarketplace(run, target)).toEqual({
@@ -29,7 +29,7 @@ describe("registerMarketplace", () => {
   });
 });
 
-describe("registrationOf", () => {
+describe("recording a registration", () => {
   it("carries the provenance only when there is one", () => {
     expect(registrationOf("a", { hostName: "h", provenance: undefined })).toEqual({
       alias: "a",

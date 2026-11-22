@@ -5,7 +5,7 @@ import {
 } from "../../../../../src/contexts/host-registration/application/register/native-catalog-proof.js";
 import { DIR, enabled, OWN, setup } from "../../testing/registration-run.builder.js";
 
-describe("nativeCatalogProof", () => {
+describe("proving a native catalog", () => {
   it("is canonical and owned for a registration made this run, with no foreign ref", async () => {
     const { run } = setup({ sources: new Map([["aidd", OWN]]) });
     expect(
@@ -68,7 +68,7 @@ describe("nativeCatalogProof", () => {
   });
 });
 
-describe("proveAddedSource", () => {
+describe("proving the source the host added", () => {
   it("returns the source the host now follows when it is the built directory", async () => {
     const { run, warnings } = setup({ sources: new Map([["aidd", OWN]]) });
     expect(await proveAddedSource(run, "aidd", DIR)).toEqual(OWN);

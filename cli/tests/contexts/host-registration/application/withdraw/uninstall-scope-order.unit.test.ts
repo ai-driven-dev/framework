@@ -13,7 +13,7 @@ function readerAnswering(
   return { read: async () => ({ location: "/registry", refs: entries }) };
 }
 
-describe("resolveUninstallScopeOrder", () => {
+describe("ordering the scopes to uninstall from", () => {
   it("trusts the host's own registry when it answers for this ref", async () => {
     const reader = readerAnswering(new Map([[REF, { enabled: true, scope: "user" }]]));
 

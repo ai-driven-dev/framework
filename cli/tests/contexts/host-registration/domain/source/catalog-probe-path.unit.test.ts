@@ -5,7 +5,7 @@ import { registeredTools, TOOL } from "../../../../shared/testing/registered-too
 
 const DIR = "/marketplace";
 
-describe("marketplaceCatalogProbePath", () => {
+describe("naming the catalog probe path", () => {
   it("names the catalog file the tool's own profile declares", () => {
     expect(marketplaceCatalogProbePath(registeredTools().profile(TOOL.opencode), DIR)).toBe(
       join(DIR, "opencode.json")

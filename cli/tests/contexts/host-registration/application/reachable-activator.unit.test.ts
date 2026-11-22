@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { reachableActivator } from "../../../../src/contexts/host-registration/application/reachable-activator.js";
 import { FakeHostActions } from "../../../shared/testing/fake-host-actions.fake.js";
 
-describe("reachableActivator", () => {
+describe("finding an activator on the PATH", () => {
   it("answers the activator of a binary on the PATH", () => {
     const activator = new FakeHostActions({ available: true });
 
