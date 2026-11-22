@@ -7,8 +7,19 @@ import {
 import type { PluginSourceGitHub } from "../../../../src/shared/domain/source.js";
 
 export const CATALOG_PATH = ".claude-plugin/marketplace.json";
-export const HEAD_CATALOG = '{"plugins":["head"]}';
-export const STABLE_CATALOG = '{"plugins":["stable"]}';
+
+/** A catalog as the forge holds it, in the format the published schema describes. */
+function catalogNamed(name: string): string {
+  return JSON.stringify({
+    name,
+    plugins: [
+      { name: `${name}-plugin`, source: `./plugins/${name}`, description: name, version: "1.0.0" },
+    ],
+  });
+}
+
+export const HEAD_CATALOG = catalogNamed("head");
+export const STABLE_CATALOG = catalogNamed("stable");
 
 /** The world every subject serves: a public repository with a `stable` ref, a private one. */
 export const PUBLIC_REPO = "owner/public";
