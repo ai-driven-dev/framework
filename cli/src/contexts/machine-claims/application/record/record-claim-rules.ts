@@ -1,4 +1,9 @@
-import type { CatalogueClaimsView, RecordClaimRules } from "../../contract/record-claim-rules.js";
+import type {
+  CatalogueClaimsView,
+  ClaimedRecordView,
+  MergedCatalogueClaimsView,
+  RecordClaimRules,
+} from "../../contract/record-claim-rules.js";
 import { holdersOf } from "../../domain/plugin-dependents.js";
 import { claimsKeeping, mergeRefClaims, readHeldClaims } from "../../domain/ref-claims.js";
 import type { HostRecordRules } from "../../ports/host-record.js";
@@ -18,11 +23,11 @@ function offMarketplace(
 function mergeCatalogue(
   host: HostRecordRules,
   run: {
-    existing: Parameters<RecordClaimRules["mergeCatalogueClaims"]>[0];
+    existing: ClaimedRecordView | undefined;
     claimed: CatalogueClaimsView;
     fallbackBinary: string;
   }
-): ReturnType<RecordClaimRules["mergeCatalogueClaims"]> {
+): MergedCatalogueClaimsView {
   const { existing, claimed, fallbackBinary } = run;
   const merged = host.mergeCatalogueMarketplaces(existing, claimed.marketplaces, fallbackBinary);
   const claims = mergeRefClaims(

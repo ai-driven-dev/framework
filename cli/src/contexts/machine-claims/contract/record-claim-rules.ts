@@ -1,5 +1,5 @@
 /** A record with the claims kept on its refs. */
-type ClaimedRecordView<Claim extends { readonly ref: string } = { readonly ref: string }> =
+export type ClaimedRecordView<Claim extends { readonly ref: string } = { readonly ref: string }> =
   Readonly<Record<string, unknown>> & { readonly pluginClaims?: readonly Claim[] };
 
 /** A claim on a ref, with the projects holding it. */
@@ -16,6 +16,14 @@ export interface CatalogueClaimsView {
   })[];
   readonly refs: readonly string[];
   readonly dependent: string | undefined;
+}
+
+/** A machine's record with the claims of one run merged in, and whether that changed it. */
+export interface MergedCatalogueClaimsView {
+  readonly record: ClaimedRecordView<DependentClaimView> & {
+    readonly pluginClaims: readonly DependentClaimView[];
+  };
+  readonly changed: boolean;
 }
 
 /** What the machine claims answer over the claims a record keeps beside the host data. */
@@ -52,12 +60,7 @@ export interface RecordClaimRules {
     existing: ClaimedRecordView | undefined,
     claimed: CatalogueClaimsView,
     fallbackBinary: string
-  ) => {
-    readonly record: ClaimedRecordView<DependentClaimView> & {
-      readonly pluginClaims: readonly DependentClaimView[];
-    };
-    readonly changed: boolean;
-  };
+  ) => MergedCatalogueClaimsView;
   /** The record without a ref and the claim kept on it, claims list always written. */
   readonly withoutClaimedRef: <R extends ClaimedRecordView>(
     record: R,
