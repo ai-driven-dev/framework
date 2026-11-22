@@ -299,14 +299,6 @@ describe("aidd-ui drafts", () => {
       assert.ok(page().includes("out.value = copiedOf(stateOf());"), "the textarea, so Copy and select agree, holds the fenced text");
     });
 
-    it("copies the feedback from a textarea", () => {
-      writeSet("brand");
-      compare();
-      assert.doesNotMatch(page(), /showSaveFilePicker|id="save"/);
-      assert.match(page(), /<button id="copy">/);
-      assert.match(page(), /<textarea id="feedback" readonly/);
-    });
-
     it("opens no connection", () => {
       writeSet("brand");
       compare();

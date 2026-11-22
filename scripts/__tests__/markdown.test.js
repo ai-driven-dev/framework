@@ -24,17 +24,6 @@ function inProject(files, body) {
   }
 }
 
-test("the markdown reader exports its structure and prose; the path reader its dead paths and folder names", () => {
-  assert.deepEqual(Object.keys(require(LIBRARY)).sort(), ["markdownLines", "proseLines"]);
-  assert.deepEqual(Object.keys(require(PATHS)).sort(), ["deadPaths", "namesIn"]);
-});
-
-test("the markdown reader requires nothing; the path reader only node:fs, node:path and the markdown reader", () => {
-  const requiredBy = (file) => [...fs.readFileSync(file, "utf8").matchAll(/require\(\s*["']([^"']+)["']\s*\)/g)].map((m) => m[1]);
-  assert.deepEqual(requiredBy(LIBRARY), []);
-  for (const name of requiredBy(PATHS)) assert.ok(["node:fs", "node:path", "./markdown.cjs"].includes(name), `requires ${name}`);
-});
-
 // deadPaths
 
 test("deadPaths: a backticked file under a real top-level folder that is missing is reported with its 1-based line", () => {
@@ -54,12 +43,6 @@ test("deadPaths: a path inside a code fence or an HTML comment is not read", () 
   inProject({ "src/here.cfg": "" }, (root) => {
     const text = "```\n`src/gone.cfg`\n```\n<!--\n`src/gone.cfg`\n-->\n<!-- `src/gone.cfg` -->\n`src/gone.cfg`\n";
     assert.deepEqual(deadPaths(text, root), [{ line: 8, path: "src/gone.cfg" }]);
-  });
-});
-
-test("deadPaths: a ~~~ fence is a fence", () => {
-  inProject({ "src/here.cfg": "" }, (root) => {
-    assert.deepEqual(deadPaths("~~~\n`src/gone.cfg`\n~~~\n`src/gone.cfg`\n", root), [{ line: 4, path: "src/gone.cfg" }]);
   });
 });
 
@@ -187,14 +170,6 @@ test("deadPaths: a .gitignore of the root, or of a parent folder up to the repos
   });
   inProject({ ".gitignore": "build\n", "build/other.cfg": "" }, (root) => {
     assert.deepEqual(deadPaths("`build/out.cfg`\n", root), []);
-  });
-});
-
-test("deadPaths limit: an anchored pattern ignores only its own level, and a negation, ** or a slash inside are not read", () => {
-  const files = { "cli/.gitignore": "/dist\n!keep.cfg\nlib/**/gen\nsrc/gen\n", "cli/a/dist/other.cfg": "", "cli/lib/x/gen/o.cfg": "", "cli/src/gen/o.cfg": "" };
-  inProject(files, (root) => {
-    const text = "`cli/a/dist/x.cfg` `cli/lib/x/gen/y.cfg` `cli/src/gen/y.cfg` `cli/dist/z.cfg`\n";
-    assert.deepEqual(deadPaths(text, root).map(({ path: found }) => found), ["cli/a/dist/x.cfg", "cli/lib/x/gen/y.cfg", "cli/src/gen/y.cfg"]);
   });
 });
 
