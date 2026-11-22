@@ -43,9 +43,9 @@ import {
   claudeProjectsRoot,
 } from "../contexts/telemetry/infrastructure/sources/claude/claude-config-dir.js";
 import { ClaudeSettingsAdapter } from "../contexts/telemetry/infrastructure/sources/claude/claude-settings-adapter.js";
-import { ClaudeTranscriptSourceAdapter } from "../contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
+import { ClaudeUsageSourceAdapter } from "../contexts/telemetry/infrastructure/sources/claude/claude-usage-source-adapter.js";
 import { codexSessionRoots } from "../contexts/telemetry/infrastructure/sources/codex/codex-session-roots.js";
-import { CodexTranscriptSourceAdapter } from "../contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.js";
+import { CodexUsageSourceAdapter } from "../contexts/telemetry/infrastructure/sources/codex/codex-usage-source-adapter.js";
 import { ConsentHistoryAdapter } from "../contexts/telemetry/infrastructure/storage/consent/consent-history-adapter.js";
 import {
   BINDINGS_LOCK_NAME,
@@ -206,8 +206,8 @@ function wireDeclaration(stores: Stores, git: Git) {
 function wireMeasurement(stores: Stores, git: Git, homedir: () => string) {
   // The measured tools, registered once: a tool is one source here and nowhere else.
   const usageSources: readonly UsageSource[] = [
-    new ClaudeTranscriptSourceAdapter(claudeProjectsRoot(process.env.CLAUDE_CONFIG_DIR, homedir())),
-    new CodexTranscriptSourceAdapter({
+    new ClaudeUsageSourceAdapter(claudeProjectsRoot(process.env.CLAUDE_CONFIG_DIR, homedir())),
+    new CodexUsageSourceAdapter({
       roots: codexSessionRoots(process.env.CODEX_HOME, homedir()),
     }),
   ];

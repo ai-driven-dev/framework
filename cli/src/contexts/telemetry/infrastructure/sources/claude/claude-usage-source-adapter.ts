@@ -18,7 +18,7 @@ const TRANSCRIPT_NAME = /\.jsonl(\.superseded-.+)?$/;
 
 /** Reads the transcripts Claude Code keeps under `<config dir>/projects`, each from where the
  * last read stopped: every Claude Code line carries its own directory. */
-export class ClaudeTranscriptSourceAdapter implements UsageSource {
+export class ClaudeUsageSourceAdapter implements UsageSource {
   constructor(
     private readonly projectsRoot: string,
     /** How much of a transcript is read at once. */

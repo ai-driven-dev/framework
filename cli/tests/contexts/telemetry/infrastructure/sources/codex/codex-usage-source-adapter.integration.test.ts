@@ -5,7 +5,7 @@ import { PassThrough, Transform } from "node:stream";
 import * as zlib from "node:zlib";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { TranscriptPosition } from "../../../../../../src/contexts/telemetry/domain/transcript-position.js";
-import { CodexTranscriptSourceAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.js";
+import { CodexUsageSourceAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/sources/codex/codex-usage-source-adapter.js";
 
 const EVERYTHING = Number.NEGATIVE_INFINITY;
 
@@ -26,14 +26,14 @@ afterEach(async () => {
 });
 
 function source(blockBytes?: number) {
-  return new CodexTranscriptSourceAdapter({
+  return new CodexUsageSourceAdapter({
     roots: [sessions, archived],
     blockBytes: blockBytes,
   });
 }
 
 async function readLines(
-  adapter: CodexTranscriptSourceAdapter,
+  adapter: CodexUsageSourceAdapter,
   path: string,
   since: TranscriptPosition | null,
   writtenFrom = EVERYTHING
@@ -217,7 +217,7 @@ describe.skipIf(NO_ZSTD)("reading a compressed Codex session file", () => {
     await writeFile(path, "a\nb\n");
     const passesThrough = () => new PassThrough();
     const { lines, read } = await readLines(
-      new CodexTranscriptSourceAdapter({
+      new CodexUsageSourceAdapter({
         roots: [sessions, archived],
         decompress: passesThrough,
       }),
@@ -248,7 +248,7 @@ describe.skipIf(NO_ZSTD)("reading a compressed Codex session file", () => {
       });
     };
     const { read } = await readLines(
-      new CodexTranscriptSourceAdapter({
+      new CodexUsageSourceAdapter({
         roots: [sessions, archived],
         decompress: dropsLastByte,
       }),
@@ -292,7 +292,7 @@ describe("a compressed stream that fails for another reason than its content", (
             done(Object.assign(new Error("broken"), { code }));
           },
         });
-      const adapter = new CodexTranscriptSourceAdapter({
+      const adapter = new CodexUsageSourceAdapter({
         roots: [sessions, archived],
         decompress: failsWith,
       });
@@ -337,7 +337,7 @@ describe("a Node with no zstd", () => {
   it("is one unrecognised shape, naming why, where Node has no zstd, and stays unread", async () => {
     const path = join(archived, "rollout-a.jsonl.zst");
     await writeFile(path, "not read");
-    const adapter = new CodexTranscriptSourceAdapter({
+    const adapter = new CodexUsageSourceAdapter({
       roots: [sessions, archived],
       decompress: null,
     });

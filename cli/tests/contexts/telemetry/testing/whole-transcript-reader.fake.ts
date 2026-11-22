@@ -2,7 +2,7 @@ import { constants, type Stats } from "node:fs";
 import { open } from "node:fs/promises";
 import type { EachTranscriptLine } from "../../../../src/contexts/telemetry/domain/transcript/line-splitter.js";
 import { resumeOffset } from "../../../../src/contexts/telemetry/domain/transcript-position.js";
-import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
+import { ClaudeUsageSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-usage-source-adapter.js";
 import type {
   TranscriptRead,
   TranscriptRequest,
@@ -12,7 +12,7 @@ import type {
  * whole tail in one buffer and one string. Copied from before the stream; only the lines
  * are handed one at a time at the end, to fit the port. Listing, and a file not read because it
  * is old, are the adapter's own. */
-export class WholeTranscriptReader extends ClaudeTranscriptSourceAdapter {
+export class WholeTranscriptReader extends ClaudeUsageSourceAdapter {
   override async read(
     request: TranscriptRequest,
     each: EachTranscriptLine

@@ -8,7 +8,7 @@ import { IngestUsage } from "../../../../src/contexts/telemetry/application/inge
 import { ReadUsage } from "../../../../src/contexts/telemetry/application/read-usage.use-case.js";
 import { SnapshotBindings } from "../../../../src/contexts/telemetry/application/snapshot-bindings.use-case.js";
 import { cloneKey } from "../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
-import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
+import { ClaudeUsageSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-usage-source-adapter.js";
 import type { UsageSource } from "../../../../src/contexts/telemetry/ports/usage-source.js";
 import { PrivateStorageAdapter } from "../../../../src/shared/infrastructure/private-storage-adapter.js";
 import { cloneOf, grantedBy } from "../testing/clone.builder.js";
@@ -198,7 +198,7 @@ describe("ingesting transcripts read as a stream", () => {
         async (files, block) => {
           const projects = join(root, `projects-${runs}`, "p");
           await mkdir(projects, { recursive: true });
-          const streamed = machine(new ClaudeTranscriptSourceAdapter(projects, block));
+          const streamed = machine(new ClaudeUsageSourceAdapter(projects, block));
           const whole = machine(new WholeTranscriptReader(projects));
           const steps = Math.max(...files.map((file) => file.cuts.length)) + 1;
           for (let step = 0; step < steps; step += 1) {
