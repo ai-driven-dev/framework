@@ -6,7 +6,7 @@ import { join } from "node:path";
  * names no file selects nothing and the guard would pass over zero tests. */
 export const TELEMETRY_TESTS = [
   "tests/contexts/telemetry/",
-  "tests/presentation/controllers/telemetry",
+  "tests/presentation/controllers/telemetry/",
   "tests/presentation/presenters/telemetry/",
   "tests/e2e/telemetry",
 ];

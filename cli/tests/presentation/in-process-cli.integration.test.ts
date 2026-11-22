@@ -27,7 +27,7 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
-  vi.doUnmock("../../src/presentation/controllers/clean.controller.js");
+  vi.doUnmock("../../src/presentation/controllers/setup/clean.controller.js");
   await rm(root, { recursive: true, force: true });
 });
 
@@ -83,7 +83,7 @@ describe("running a command in process", () => {
 
   it("finds no host binary on PATH from inside a command", async () => {
     let found: Array<string | undefined> = [];
-    vi.doMock("../../src/presentation/controllers/clean.controller.js", () => ({
+    vi.doMock("../../src/presentation/controllers/setup/clean.controller.js", () => ({
       registerCleanCommand: (program: import("commander").Command) => {
         program.command("clean").action(() => {
           found = HOST_BINARIES.map((binary) =>
@@ -101,7 +101,7 @@ describe("running a command in process", () => {
 
   it("shows the command the given cwd and home, and nothing of the runner's", async () => {
     let seen: { cwd: string; home: string | undefined; pwd: string | undefined } | undefined;
-    vi.doMock("../../src/presentation/controllers/clean.controller.js", () => ({
+    vi.doMock("../../src/presentation/controllers/setup/clean.controller.js", () => ({
       registerCleanCommand: (program: import("commander").Command) => {
         program.command("clean").action(() => {
           seen = { cwd: process.cwd(), home: process.env.HOME, pwd: process.env.PWD };
@@ -115,7 +115,7 @@ describe("running a command in process", () => {
   });
 
   it("restores the working directory, the environment and the exit code when the run throws", async () => {
-    vi.doMock("../../src/presentation/controllers/clean.controller.js", () => ({
+    vi.doMock("../../src/presentation/controllers/setup/clean.controller.js", () => ({
       registerCleanCommand: () => {
         throw new Error("registration failed");
       },
@@ -152,7 +152,7 @@ describe("running a command in process", () => {
 
   it("builds new dependencies on every call, as a new process would", async () => {
     const built: unknown[] = [];
-    vi.doMock("../../src/presentation/controllers/clean.controller.js", () => ({
+    vi.doMock("../../src/presentation/controllers/setup/clean.controller.js", () => ({
       registerCleanCommand: (program: import("commander").Command) => {
         program.command("clean").action(async () => {
           const { bindContainer } = await import(
@@ -181,7 +181,7 @@ describe("running a command in process", () => {
   });
 
   it("reports the exit code a command sets and leaves the runner's own untouched", async () => {
-    vi.doMock("../../src/presentation/controllers/clean.controller.js", () => ({
+    vi.doMock("../../src/presentation/controllers/setup/clean.controller.js", () => ({
       registerCleanCommand: (program: import("commander").Command) => {
         program.command("clean").action(() => {
           process.exitCode = 3;

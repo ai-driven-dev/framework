@@ -1,7 +1,7 @@
 import type { Command } from "commander";
 import type { DepsSliceFactory } from "../../orchestration/deps.js";
 import { printSelfUpdateResult } from "../presenters/update.presenter.js";
-import { parseGlobalOptions } from "./global-options.controller.js";
+import { parseGlobalOptions } from "./menu/global-options.controller.js";
 
 /** What this command reads of the graph. */
 type UpdateKeys = "selfUpdate";

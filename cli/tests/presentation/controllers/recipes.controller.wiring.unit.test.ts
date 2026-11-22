@@ -1,7 +1,7 @@
 import { join, resolve } from "node:path";
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { bindOutput } from "../../../src/presentation/controllers/global-options.controller.js";
+import { bindOutput } from "../../../src/presentation/controllers/menu/global-options.controller.js";
 import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
 import { parseToExit } from "../../shared/testing/parse-to-exit.builder.js";
 

@@ -8,7 +8,7 @@ import {
   printAuthStatus,
   printLogoutResult,
 } from "../presenters/auth.presenter.js";
-import { parseGlobalOptions } from "./global-options.controller.js";
+import { parseGlobalOptions } from "./menu/global-options.controller.js";
 
 /** What this command reads of the graph. */
 type Prompting = Deps["prompter"];

@@ -1,8 +1,8 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, type Mock, vi } from "vitest";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
-import { bindOutput } from "../../../src/presentation/controllers/global-options.controller.js";
-import { registerToolConfigCommand } from "../../../src/presentation/controllers/tool-config.controller.js";
+import { bindOutput } from "../../../src/presentation/controllers/menu/global-options.controller.js";
+import { registerToolConfigCommand } from "../../../src/presentation/controllers/tools/tool-config.controller.js";
 import type { AiToolId, IdeToolId } from "../../../src/shared/domain/tool.js";
 import { processOutputFactory } from "./output-factory.builder.js";
 import { parseToExit } from "./parse-to-exit.builder.js";

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
 import { supportedBuildTargets } from "../../../src/contexts/translate/contract/build-targets.js";
 import type { DepsFactory } from "../../../src/orchestration/deps.js";
-import { bindOutput } from "../../../src/presentation/controllers/global-options.controller.js";
+import { bindOutput } from "../../../src/presentation/controllers/menu/global-options.controller.js";
 import { registerTranslateCommand } from "../../../src/presentation/controllers/translate.controller.js";
 import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
 

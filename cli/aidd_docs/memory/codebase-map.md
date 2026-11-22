@@ -165,6 +165,12 @@ src/
 │   └── telemetry/
 ├── presentation/    # everything that talks to a human
 │   ├── controllers/
+│   │   ├── doctor/
+│   │   ├── menu/
+│   │   ├── plugin/
+│   │   ├── setup/
+│   │   ├── telemetry/
+│   │   └── tools/
 │   ├── errors/
 │   ├── hooks/
 │   ├── presenters/

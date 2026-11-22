@@ -186,7 +186,7 @@ describe("the guard itself", () => {
         earned,
         new Set([
           "src/contexts/framework/application/doctor/a.ts",
-          "src/presentation/controllers/doctor.controller.ts",
+          "src/presentation/controllers/doctor/doctor.controller.ts",
         ]),
       ],
     ]);
@@ -217,7 +217,7 @@ describe("the guard itself", () => {
     const importers = new Map([
       [
         "src/shared/domain/lonely.ts",
-        new Set([A, "src/presentation/controllers/doctor.controller.ts"]),
+        new Set([A, "src/presentation/controllers/doctor/doctor.controller.ts"]),
       ],
       ["src/shared/domain/earned.ts", new Set([A, B])],
       [port, new Set([A, B])],
@@ -270,7 +270,7 @@ describe("the guard itself", () => {
     expect(areaOf("src/contexts/tools/domain/registry.ts")).toBe("domain:tools");
     expect(areaOf("src/contexts/tools/infrastructure/a.ts")).toBe("infrastructure:tools");
     expect(areaOf("src/orchestration/setup/a.ts"), "one area per scenario").toBe("scenario:setup");
-    expect(areaOf("src/presentation/controllers/doctor.controller.ts")).toBe("controllers");
+    expect(areaOf("src/presentation/controllers/doctor/doctor.controller.ts")).toBe("controllers");
     expect(areaOf("src/presentation/presenters/a.presenter.ts")).toBe("presentation");
     expect(areaOf("src/shared/domain/tool.ts")).toBe("shared");
     expect(areaOf("src/composition/auth.ts"), "the composition of a migrated context").toBe(

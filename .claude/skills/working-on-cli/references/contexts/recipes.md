@@ -15,4 +15,4 @@ What makes a recipe sheet valid: its structure, examples and local links. Langua
 
 - Read the disk in `application/` or `domain/`: files arrive through `RecipeFiles`.
 - Import another context.
-- Change a finding's `fix` text or the report layout: the domain tests, `validate-recipes.use-case.unit.test.ts`, `tests/presentation/controllers/tool-config-validate-recipes.integration.test.ts` and `tool-config.presenter.recipes.unit.test.ts` freeze them.
+- Change a finding's `fix` text or the report layout: the domain tests, `validate-recipes.use-case.unit.test.ts`, `tests/presentation/controllers/tools/tool-config-validate-recipes.integration.test.ts` and `tool-config.presenter.recipes.unit.test.ts` freeze them.

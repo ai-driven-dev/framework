@@ -9,7 +9,7 @@ import {
 import type { DepsSliceFactory } from "../../orchestration/deps.js";
 import type { Output } from "../../orchestration/domain/output.js";
 import { printTranslateResult } from "../presenters/translate.presenter.js";
-import { parseGlobalOptions } from "./global-options.controller.js";
+import { parseGlobalOptions } from "./menu/global-options.controller.js";
 
 /** What this command reads of the graph. */
 type TranslateKeys = "frameworkBuild";

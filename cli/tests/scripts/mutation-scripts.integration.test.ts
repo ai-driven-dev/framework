@@ -188,7 +188,7 @@ describe("the mutation scripts", () => {
     );
     const excluded = typeof unit === "object" && "test" in unit ? unit.test?.exclude : undefined;
     expect(excluded).toContain(
-      "tests/presentation/controllers/unknown-commands.integration.test.ts"
+      "tests/presentation/controllers/menu/unknown-commands.integration.test.ts"
     );
   });
 

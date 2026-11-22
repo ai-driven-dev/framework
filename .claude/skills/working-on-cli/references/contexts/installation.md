@@ -26,7 +26,7 @@ What the project records as installed, and how a tool's files are written, resto
 
 ## Exceptions
 
-- The plugin translation pipeline in `application/` and `presentation/controllers/setup.controller.ts` take the whole profile, each under a `biome-ignore lint/plugin` above its import; closes when each declares its own profile input, as `translate` does in `src/contexts/translate/domain/translate-profile.ts`.
+- The plugin translation pipeline in `application/` and `presentation/controllers/setup/setup.controller.ts` take the whole profile, each under a `biome-ignore lint/plugin` above its import; closes when each declares its own profile input, as `translate` does in `src/contexts/translate/domain/translate-profile.ts`.
 - Restore asks through an injected `ConflictResolver` on the single-tool interactive restore (`run-sync`); closes when sync lists drift through `status` and hands restore a keep list, which changes log order.
 - `application/removal/project-plugin-withdrawal.ts` types the `ClaimedRefWithdrawal` that `remove-user-plugin` and `purge-marketplace-plugins` drive: host seams until orchestration calls the `host-registration` and `machine-claims` contracts.
 - `AddPlugin` saves the machine manifest before the project one, so a failed project save leaves the machine claim behind (pinned by a unit test); changing it is a behaviour change.

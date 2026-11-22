@@ -20,7 +20,6 @@ const OVER_THE_CAP: Readonly<Record<string, number>> = {
   "contexts/installation/application/removal": 11,
   "contexts/installation/ports": 11,
   "contexts/machine-claims/application": 12,
-  "presentation/controllers": 30,
   "shared/domain": 13,
 };
 

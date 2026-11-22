@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
-import { bindOutput } from "../../../src/presentation/controllers/global-options.controller.js";
+import { bindOutput } from "../../../src/presentation/controllers/menu/global-options.controller.js";
 import { AIDD_DIR } from "../../../src/shared/domain/layout/aidd-layout.js";
 import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";
 import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";

@@ -5,8 +5,8 @@ import { CheckIdentity } from "../../../src/contexts/telemetry/application/ident
 import { DecideIdentity } from "../../../src/contexts/telemetry/application/identity/decide-identity.use-case.js";
 import { RequestReport } from "../../../src/contexts/telemetry/application/report/request-report.use-case.js";
 import { ChooseIdentity } from "../../../src/orchestration/telemetry/choose-identity.use-case.js";
-import { bindOutput } from "../../../src/presentation/controllers/global-options.controller.js";
-import { registerTelemetryCommand } from "../../../src/presentation/controllers/telemetry.controller.js";
+import { bindOutput } from "../../../src/presentation/controllers/menu/global-options.controller.js";
+import { registerTelemetryCommand } from "../../../src/presentation/controllers/telemetry/telemetry.controller.js";
 import { processOutputFactory } from "./output-factory.builder.js";
 import { parseToExit } from "./parse-to-exit.builder.js";
 import { prompterAnswering } from "./partial-ports.builder.js";
