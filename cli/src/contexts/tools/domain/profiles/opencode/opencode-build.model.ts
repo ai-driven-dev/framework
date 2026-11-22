@@ -22,7 +22,7 @@ import type {
 } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact, hooksBridgePath } from "../../formats/hooks/flat-routes.js";
 import { buildTypedMcpFlatConfig } from "../../formats/typed-mcp-merge.js";
-import { toTypedMcpSection } from "../../formats/typed-mcp-section.js";
+import { collectTypedMcp } from "../../formats/typed-mcp-section.js";
 import { opencodeAgentFrontmatter } from "./opencode-agent.model.js";
 import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.model.js";
 
@@ -47,24 +47,6 @@ const opencodeAgentMarkdown: AgentMarkdown = {
 const OPENCODE_JSONC = "opencode.jsonc";
 const OPENCODE_JSON = "opencode.json";
 
-function collectOpencodeMcp(
-  builtPlugins: readonly string[],
-  pluginMcp: ReadonlyMap<string, string>
-): Record<string, unknown> {
-  const incoming: Record<string, unknown> = {};
-  for (const plugin of builtPlugins) {
-    const raw = pluginMcp.get(plugin);
-    if (raw === undefined) continue;
-    const transformed = JSON.parse(toTypedMcpSection(raw)) as {
-      mcp?: Record<string, unknown>;
-    };
-    for (const [k, v] of Object.entries(transformed.mcp ?? {})) {
-      incoming[k] = v;
-    }
-  }
-  return incoming;
-}
-
 /** A built plugin's own loader or its generated bridge: either means OpenCode will run hooks. */
 function pluginLoaders(hooks: OpencodeHooks, plugin: string): readonly string[] {
   const { loaderEntry } = hooks.flat;
@@ -76,7 +58,7 @@ function emitOpencodeConfig(
   { builtPlugins, pluginMcp, existing, present, assets }: ConfigArtifactInput
 ): readonly ConfigArtifactFile[] {
   const configPath = existing.has(OPENCODE_JSONC) ? OPENCODE_JSONC : OPENCODE_JSON;
-  const incoming = collectOpencodeMcp(builtPlugins, pluginMcp);
+  const incoming = collectTypedMcp(builtPlugins, pluginMcp);
   const baseAsset = assets.get(OPENCODE_JSON);
   const base = typeof baseAsset === "string" ? baseAsset : JSON.stringify(baseAsset);
   const config = {

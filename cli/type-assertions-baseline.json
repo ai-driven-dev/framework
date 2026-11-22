@@ -27,8 +27,6 @@
   "src/contexts/tools/domain/profiles/codex/codex-build.model.ts": 3,
   "src/contexts/tools/domain/profiles/codex/codex-config.model.ts": 3,
   "src/contexts/tools/domain/profiles/copilot/copilot.profile.ts": 2,
-  "src/contexts/tools/domain/profiles/kilo/kilo-build.model.ts": 1,
-  "src/contexts/tools/domain/profiles/opencode/opencode-build.model.ts": 1,
   "src/contexts/tools/domain/sections/mcp-section.ts": 1,
   "src/contexts/tools/domain/sections/models-section.ts": 1,
   "src/contexts/translate/application/build-native-tree.use-case.ts": 2,
