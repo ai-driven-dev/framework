@@ -11,6 +11,7 @@ import { DetectPluginDrift } from "../../../src/contexts/installation/applicatio
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
+import type { RecordsBesideManifest } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { RunDoctor } from "../../../src/orchestration/doctor/run-doctor.use-case.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
@@ -64,7 +65,7 @@ function makeFs(fileExists: boolean, diskHash: string): FileReader {
   };
 }
 
-function makeManifestRepo(manifest: Manifest): ManifestRepository {
+function makeManifestRepo(manifest: Manifest): ManifestRepository & RecordsBesideManifest {
   return {
     path: "/proj/.aidd/manifest.json",
     load: async () => manifest,

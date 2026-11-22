@@ -5,6 +5,7 @@ import type { Manifest } from "../../domain/manifest.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type {
+  RecordsBesideManifest,
   RegistrationRecordData,
   RegistrationRecords,
 } from "../../ports/record/registration-records.js";
@@ -17,7 +18,7 @@ import type {
 
 /** What PlanProjectClean is built from. */
 export interface PlanProjectCleanDeps {
-  readonly manifestRepo: ManifestRepository;
+  readonly manifestRepo: ManifestRepository & RecordsBesideManifest;
   readonly asks: { readonly homeDir: () => string };
 }
 

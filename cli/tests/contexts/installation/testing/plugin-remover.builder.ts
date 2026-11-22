@@ -10,6 +10,7 @@ import { RemoveUserPlugin } from "../../../../src/contexts/installation/applicat
 import { UserScopePluginFiles } from "../../../../src/contexts/installation/application/removal/user-scope-plugin-files.js";
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
 import type { InstallationMarketplaceRegistry } from "../../../../src/contexts/installation/ports/marketplace-sources.js";
+import type { RecordsBesideManifest } from "../../../../src/contexts/installation/ports/record/registration-records.js";
 import { userScopeFilesSafeToDelete } from "../../../../src/contexts/machine-claims/application/ownership/user-scope-plugin-files.js";
 import { PurgeDeclaredCache } from "../../../../src/contexts/machine-claims/application/purge-declared-cache.js";
 import {
@@ -34,14 +35,14 @@ type Withdrawing = ConstructorParameters<typeof WithdrawFromHost>;
 
 /** What a test names; everything else is the empty or in-memory default. */
 export interface PluginRemoverParts {
-  manifestRepo: ManifestRepository;
+  manifestRepo: ManifestRepository & RecordsBesideManifest;
   fs?: FileReader & FileWriter;
   logger?: Logger;
   activators?: Withdrawing[2]["activators"];
   hostPluginRegistries?: Withdrawing[2]["pluginRegistries"];
   userSourceReferences?: PluginRemovalClaimsDeps["userSourceReferences"];
   marketplaceRegistry?: InstallationMarketplaceRegistry;
-  userManifestRepo?: ManifestRepository & Lock;
+  userManifestRepo?: ManifestRepository & RecordsBesideManifest & Lock;
   nativeMarketplaceSources?: Withdrawing[2]["sources"];
   records?: RecordRules;
   tools?: ToolCatalog;
@@ -88,7 +89,9 @@ export function pluginRemover(parts: PluginRemoverParts) {
 
 /** The user-scope removal, under the machine home exactly as the composition binds it. */
 export function userPluginRemover(
-  parts: Omit<PluginRemoverParts, "manifestRepo"> & { userManifestRepo: Lock & ManifestRepository }
+  parts: Omit<PluginRemoverParts, "manifestRepo"> & {
+    userManifestRepo: Lock & ManifestRepository & RecordsBesideManifest;
+  }
 ) {
   const fs = parts.fs ?? new InMemoryFileAdapter();
   const logger = parts.logger ?? new CapturingLogger();

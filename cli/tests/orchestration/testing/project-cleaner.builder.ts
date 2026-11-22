@@ -15,6 +15,7 @@ import {
 import { RemoveMachineLocalFiles } from "../../../src/contexts/installation/application/removal/project/remove-machine-local-files.js";
 import { RemoveProjectFiles } from "../../../src/contexts/installation/application/removal/project/remove-project-files.js";
 import { assertProjectMcpEntriesRemovable } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
+import type { RecordsBesideManifest } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { PurgeDeclaredCache } from "../../../src/contexts/machine-claims/application/purge-declared-cache.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
@@ -36,7 +37,7 @@ type Files = AiddTracesDeps;
 export interface ProjectCleanerParts extends Partial<HostPorts> {
   tools: ToolCatalog;
   fs: Files["fs"];
-  manifestRepo: Files["manifestRepo"];
+  manifestRepo: Files["manifestRepo"] & RecordsBesideManifest;
   logger: Files["logger"];
   gitignore: Files["updateGitignore"];
   marketplaceRegistry?: ConstructorParameters<typeof ListMarketplaces>[0];

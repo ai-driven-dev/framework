@@ -1,5 +1,10 @@
 import { join } from "node:path";
-import type { RegistrationRecordStore } from "../contexts/installation/ports/record/registration-records.js";
+import type { ManifestRepository } from "../contexts/installation/ports/manifest-repository.js";
+import type {
+  RecordsBesideManifest,
+  RegistrationRecordStore,
+  RegistrationRecords,
+} from "../contexts/installation/ports/record/registration-records.js";
 import {
   joinPluginClaims,
   splitPluginClaims,
@@ -33,6 +38,25 @@ export function heldByMachineLock<R extends { readonly path: string }>(repositor
   const lock = new UserScopeLockAdapter(() => `${repository.path}.lock`);
   return Object.assign(repository, {
     withExclusiveAccess: <T>(action: () => Promise<T>) => lock.withExclusiveAccess(action),
+  });
+}
+
+/** A scope's repository with its records beside it. Each read or write of the records first
+ * reads the manifest, which splits a v8 document, so neither reads nor writes over its records.
+ * Takes no lock: a caller holding the machine lock reads them, and the lock is not re-entrant. */
+export function withRecordsBeside<R extends ManifestRepository>(
+  repository: R,
+  records: RegistrationRecordStore
+): R & RecordsBesideManifest {
+  return Object.assign(repository, {
+    loadRecords: async () => {
+      await repository.loadIfReadable();
+      return records.load();
+    },
+    saveRecords: async (saved: RegistrationRecords) => {
+      await repository.loadIfReadable();
+      await records.save(saved);
+    },
   });
 }
 

@@ -10,6 +10,7 @@ import type {
   PlannedUserPluginFileUpdate,
   UserPluginMaterialization,
 } from "../../ports/plugin/user-plugin-materialization.js";
+import type { RecordsBesideManifest } from "../../ports/record/registration-records.js";
 import { resolvePluginToolIds } from "./plugin-target-resolution.js";
 import {
   assertSelectionResolves,
@@ -29,7 +30,7 @@ export interface UpdateUserPluginFilesRequest extends UpdatePluginRequest {
 
 /** What UpdateUserPluginFiles is built from. */
 export interface UpdateUserPluginFilesDeps {
-  readonly repo: ManifestRepository & Lock;
+  readonly repo: ManifestRepository & RecordsBesideManifest & Lock;
   readonly materializer: UserPluginMaterialization;
   readonly logger: Logger;
 }

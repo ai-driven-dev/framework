@@ -18,12 +18,14 @@ import type {
 export interface ManifestFileDeps {
   readonly atomicWriter: AtomicWrite;
   readonly resolveToolId: ToolIdResolver;
-  readonly records: RegistrationRecordStore;
+  /** Where a v8 document's records go when it is split, and what `delete` clears. */
+  readonly records: Pick<RegistrationRecordStore, "save">;
 }
 
 /**
- * The one place a manifest file's bytes are read, parsed and written, with the records kept beside
- * it. The project and user-scope adapters differ only in which path they read and what a
+ * The one place a manifest file's bytes are read, parsed and written. The records beside it are
+ * written here only by a v8 split and cleared only by `delete`; composition reads and writes them.
+ * The project and user-scope adapters differ only in which path they read and what a
  * version-refusal message should name to fix it (`ManifestFileContext`).
  *
  * A v8 document is split on its first read, whichever operation reads it first: the whole document
@@ -77,17 +79,7 @@ export abstract class ManifestFile {
     await this.write(manifest);
   }
 
-  async loadRecords(): Promise<RegistrationRecords> {
-    await this.splitIfV8();
-    return this.deps.records.load();
-  }
-
-  async saveRecords(records: RegistrationRecords): Promise<void> {
-    await this.splitIfV8();
-    await this.deps.records.save(records);
-  }
-
-  /** Splits a v8 document before the records or the manifest are touched without it. */
+  /** Splits a v8 document before the manifest is written over it. */
   private async splitIfV8(): Promise<void> {
     await this.loadIfReadable();
   }

@@ -4,7 +4,10 @@ import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import { ToolNotInstalledError } from "../domain/installation.error.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
-import type { RegistrationRecordData } from "../ports/record/registration-records.js";
+import type {
+  RecordsBesideManifest,
+  RegistrationRecordData,
+} from "../ports/record/registration-records.js";
 import type { RemoveToolFiles, ToolRemoval } from "./removal/project/remove-tool-files.js";
 import { requireManifest } from "./shared/require-manifest.js";
 
@@ -40,7 +43,7 @@ export type DetachProjectClaims = (
 
 /** What UninstallTools is built from. */
 export interface UninstallToolsDeps {
-  readonly manifestRepo: ManifestRepository;
+  readonly manifestRepo: ManifestRepository & RecordsBesideManifest;
   readonly detachClaims: DetachProjectClaims;
   readonly removeToolFiles: RemoveToolFiles;
 }

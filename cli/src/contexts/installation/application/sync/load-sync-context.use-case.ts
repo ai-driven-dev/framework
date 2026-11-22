@@ -8,7 +8,10 @@ import type {
   FrameworkMarketplaceRegistrar,
   InstallationMarketplaceRegistry,
 } from "../../ports/marketplace-sources.js";
-import type { RegistrationRecords } from "../../ports/record/registration-records.js";
+import type {
+  RecordsBesideManifest,
+  RegistrationRecords,
+} from "../../ports/record/registration-records.js";
 
 export interface LoadSyncContextRequest {
   projectRoot: string;
@@ -38,14 +41,14 @@ export interface SyncContext {
 
 /** What LoadSyncContext is built from. */
 export interface LoadSyncContextDeps {
-  readonly manifestRepo: ManifestRepository;
+  readonly manifestRepo: ManifestRepository & RecordsBesideManifest;
   readonly marketplaceRegistry: InstallationMarketplaceRegistry;
   /** The name the framework marketplace is registered under. */
   readonly frameworkMarketplaceName: string;
   /** Re-registers the shared machine-scope source when this run finds no marketplace at all.
    * Absent keeps the silent no-op instead of guessing what to register. */
   readonly marketplaceRegisterFrameworkUseCase?: FrameworkMarketplaceRegistrar;
-  readonly userManifestRepo?: ManifestRepository & Lock;
+  readonly userManifestRepo?: ManifestRepository & RecordsBesideManifest & Lock;
 }
 
 export class LoadSyncContext {
@@ -59,7 +62,7 @@ export class LoadSyncContext {
     return work();
   }
 
-  private repositoryOf(scope: Scope): ManifestRepository {
+  private repositoryOf(scope: Scope): ManifestRepository & RecordsBesideManifest {
     return scope === "user"
       ? (this.deps.userManifestRepo ?? this.deps.manifestRepo)
       : this.deps.manifestRepo;

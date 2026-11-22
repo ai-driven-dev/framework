@@ -1,11 +1,14 @@
 import type { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
-import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
+import type {
+  RecordsBesideManifest,
+  RegistrationRecords,
+} from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { InMemoryRepository } from "./in-memory-repository.fake.js";
 
 export class InMemoryManifestRepository
   extends InMemoryRepository<Manifest>
-  implements ManifestRepository
+  implements ManifestRepository, RecordsBesideManifest
 {
   /** Derived from the root the test drives the use case with, never a fixed literal: a
    * double naming a fictional file lets a diagnostic go wrong with every test still green. */

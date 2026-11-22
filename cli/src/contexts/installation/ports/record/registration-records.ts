@@ -23,6 +23,13 @@ export interface RegistrationRecordStore {
   save(records: ReadonlyMap<ToolId, RegistrationRecordData>): Promise<void>;
 }
 
+/** The records beside a scope's manifest, read and written through its repository. A v8 manifest
+ * is split before either touches them, so its records are never read or written over. */
+export interface RecordsBesideManifest {
+  loadRecords(): Promise<RegistrationRecords>;
+  saveRecords(records: RegistrationRecords): Promise<void>;
+}
+
 /** A claim on a native ref, with the project roots still holding it. */
 export interface NativeRefClaim {
   readonly ref: string;

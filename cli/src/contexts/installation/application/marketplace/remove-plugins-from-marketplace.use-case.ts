@@ -6,7 +6,10 @@ import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { ProjectIntegrationCleanup } from "../../ports/project-integration-cleanup.js";
-import type { RegistrationRecords } from "../../ports/record/registration-records.js";
+import type {
+  RecordsBesideManifest,
+  RegistrationRecords,
+} from "../../ports/record/registration-records.js";
 import type { RecordedPluginRef } from "../removal/project-plugin-withdrawal.js";
 
 export interface RemovePluginsFromMarketplaceRequest {
@@ -32,7 +35,7 @@ interface OrphanRef {
 
 /** What RemovePluginsFromMarketplace is built from. */
 export interface RemovePluginsFromMarketplaceDeps {
-  readonly manifestRepo: ManifestRepository;
+  readonly manifestRepo: ManifestRepository & RecordsBesideManifest;
   readonly cleanup: ProjectIntegrationCleanup;
 }
 

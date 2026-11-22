@@ -21,7 +21,12 @@ import { HttpClient } from "../shared/infrastructure/http-client.js";
 import { wireAuth } from "./auth.js";
 import { wireDistribution } from "./distribution.js";
 import { wireHostRegistration } from "./host-registration.js";
-import { heldByMachineLock, registrationRecordStore, wireMachineClaims } from "./machine-claims.js";
+import {
+  heldByMachineLock,
+  registrationRecordStore,
+  wireMachineClaims,
+  withRecordsBeside,
+} from "./machine-claims.js";
 import { userConfigDir } from "./user-config-dir.js";
 
 const plainText = (message: string | HintedMessage): string =>
@@ -82,15 +87,17 @@ function wireStorage({ projectRoot, tools }: BaseOptions, logger: Logging) {
   const fs = new JsonFileMergerAdapter(new FileAdapter(logger));
   const resolveToolId = (raw: string) => tools.toolId(raw);
   const files = { atomicWriter: atomicWriteFile, resolveToolId };
-  const manifestRepo = new ManifestRepositoryAdapter(projectRoot, {
-    ...files,
-    records: registrationRecordStore(() => join(projectRoot, AIDD_DIR), files),
-  });
+  const projectRecords = registrationRecordStore(() => join(projectRoot, AIDD_DIR), files);
+  const manifestRepo = withRecordsBeside(
+    new ManifestRepositoryAdapter(projectRoot, { ...files, records: projectRecords }),
+    projectRecords
+  );
+  const userRecords = registrationRecordStore(userConfigDir, files);
   const userManifestRepo = heldByMachineLock(
-    new UserManifestRepositoryAdapter(userConfigDir, {
-      ...files,
-      records: registrationRecordStore(userConfigDir, files),
-    })
+    withRecordsBeside(
+      new UserManifestRepositoryAdapter(userConfigDir, { ...files, records: userRecords }),
+      userRecords
+    )
   );
   return { fs, manifestRepo, userManifestRepo };
 }

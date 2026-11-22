@@ -7,7 +7,10 @@ import { PluginNotFoundError } from "../../domain/installation.error.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { RegistrationRecords } from "../../ports/record/registration-records.js";
+import type {
+  RecordsBesideManifest,
+  RegistrationRecords,
+} from "../../ports/record/registration-records.js";
 import { resolvePluginToolIds, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import {
   assertProjectHooksRemovable,
@@ -28,7 +31,7 @@ export interface RemovePluginRequest {
 /** What RemovePlugin is built from. */
 export interface RemovePluginDeps {
   readonly fs: FileWriter & FileReader;
-  readonly projectRepo: ManifestRepository;
+  readonly projectRepo: ManifestRepository & RecordsBesideManifest;
   readonly homedir: () => string;
 }
 
