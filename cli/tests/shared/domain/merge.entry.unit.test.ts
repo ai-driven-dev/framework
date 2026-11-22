@@ -6,7 +6,7 @@ import {
   removeEntriesFromJson,
 } from "../../../src/shared/domain/merge.js";
 
-describe("extractMergeEntries", () => {
+describe("extracting the entries of a merge file", () => {
   describe("with section key", () => {
     it("extracts per-entry hashes from a nested section", () => {
       const json = JSON.stringify({
@@ -103,7 +103,7 @@ describe("extractMergeEntries", () => {
   });
 });
 
-describe("removeEntriesFromJson", () => {
+describe("removing entries from a JSON file", () => {
   it("removes keys from a nested section", () => {
     const json = JSON.stringify({
       mcpServers: { playwright: { cmd: "npx" }, github: { cmd: "gh" } },
@@ -149,7 +149,7 @@ describe("removeEntriesFromJson", () => {
   });
 });
 
-describe("hashJsonEntries", () => {
+describe("hashing the entries of a JSON file", () => {
   it("hashes each top-level value, one entry per key", () => {
     const entries = hashJsonEntries({ a: 1, b: "two" });
     expect(entries.a.value).toBe(FileHash.of(JSON.stringify(1)).value);

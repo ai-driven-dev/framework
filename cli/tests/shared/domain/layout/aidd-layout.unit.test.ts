@@ -8,7 +8,7 @@ import { pathContainsOrEquals } from "../../../../src/shared/domain/paths.js";
 
 // The shared source is one per CLI version, so a purge of one version is a single `rm -rf`:
 // two versions resolving to the same directory would take the other's registrations too.
-describe("userBuiltMarketplaceDir()", () => {
+describe("locating a built marketplace directory", () => {
   it("places the version segment before the marketplace name", () => {
     expect(
       userBuiltMarketplaceDir({
@@ -40,7 +40,7 @@ describe("userBuiltMarketplaceDir()", () => {
   });
 });
 
-describe("userBuiltCacheRoot()", () => {
+describe("locating the built cache root", () => {
   it("is the parent every version directory sits under, one join above the version", () => {
     const root = userBuiltCacheRoot("/user-cache");
     const versioned = userBuiltMarketplaceDir({

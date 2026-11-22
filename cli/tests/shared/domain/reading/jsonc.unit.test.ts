@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { stripJsonComments } from "../../../../src/shared/domain/reading/jsonc.js";
 
-describe("stripJsonComments", () => {
+describe("stripping comments from JSONC", () => {
   describe("a line comment", () => {
     it("is dropped up to the end of its line, the line ending kept", () => {
       expect(stripJsonComments("a //c\nb")).toBe("a \nb");

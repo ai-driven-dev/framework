@@ -8,13 +8,13 @@ import {
   samePathSegment,
 } from "../../../src/shared/domain/paths.js";
 
-describe("samePathSegment()", () => {
+describe("comparing two path segments across platforms", () => {
   it("tells two different names apart on win32 too", () => {
     expect(samePathSegment("alpha", "beta", "win32")).toBe(false);
   });
 });
 
-describe("samePath()", () => {
+describe("comparing two paths", () => {
   it("calls a realpath answer and a stored path the same directory when only separators differ", () => {
     expect(samePath("/user-cache/built/1.0.0", "\\user-cache\\built\\1.0.0", "win32")).toBe(true);
   });
@@ -35,7 +35,7 @@ describe("samePath()", () => {
 
 // Asked with backslash-spelled paths, which is what a Windows run passes and what a
 // hardcoded "/" comparison never recognises.
-describe("pathContainsOrEquals()", () => {
+describe("asking whether a path contains another", () => {
   it("sees the same directory spelled either way", () => {
     expect(pathContainsOrEquals("/a/b", "/a/b")).toBe(true);
     expect(pathContainsOrEquals("C:\\a\\b", "C:\\a\\b")).toBe(true);
@@ -62,7 +62,7 @@ describe("pathContainsOrEquals()", () => {
   });
 });
 
-describe("pathsOverlap()", () => {
+describe("asking whether two paths overlap", () => {
   it("answers in both directions, with either separator", () => {
     expect(pathsOverlap("/a", "/a/b")).toBe(true);
     expect(pathsOverlap("/a/b", "/a")).toBe(true);
@@ -76,7 +76,7 @@ describe("pathsOverlap()", () => {
   });
 });
 
-describe("samePathSegment()", () => {
+describe("comparing path segments by platform case rules", () => {
   it("compares case-sensitively on a case-sensitive platform", () => {
     expect(samePathSegment("aidd-framework", "AIDD-FRAMEWORK", "linux")).toBe(false);
   });
@@ -86,7 +86,7 @@ describe("samePathSegment()", () => {
   });
 });
 
-describe("dedupePathSegments()", () => {
+describe("removing repeated path segments", () => {
   it("collapses a win32 case-only spelling difference, keeping the first spelling", () => {
     expect(dedupePathSegments(["/A/proj", "/a/proj"], "win32")).toEqual(["/A/proj"]);
   });
@@ -96,7 +96,7 @@ describe("dedupePathSegments()", () => {
   });
 });
 
-describe("posixRelative()", () => {
+describe("spelling a relative path with forward slashes", () => {
   it("spells a Windows-joined path with forward slashes, the form a manifest records", () => {
     expect(posixRelative("C:\\proj\\plugin", "C:\\proj\\plugin\\hooks\\check.sh", "win32")).toBe(
       "hooks/check.sh"

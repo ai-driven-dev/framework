@@ -5,7 +5,7 @@ import {
   whenAbsent,
 } from "../../../../src/shared/domain/reading/json-file.js";
 
-describe("isErrnoException", () => {
+describe("recognising a filesystem failure", () => {
   it("recognises an Error carrying a code", () => {
     expect(isErrnoException(Object.assign(new Error("gone"), { code: "ENOENT" }))).toBe(true);
   });
@@ -19,7 +19,7 @@ describe("isErrnoException", () => {
   });
 });
 
-describe("tryParseJson", () => {
+describe("parsing JSON text", () => {
   it("returns the parsed value", () => {
     expect(tryParseJson('{"a":1}')).toEqual({ ok: true, value: { a: 1 } });
   });
@@ -34,7 +34,7 @@ describe("tryParseJson", () => {
   });
 });
 
-describe("whenAbsent", () => {
+describe("falling back when a read finds nothing", () => {
   const failing = (code: string) => () => Promise.reject(Object.assign(new Error("x"), { code }));
 
   it("returns what the read returns", async () => {

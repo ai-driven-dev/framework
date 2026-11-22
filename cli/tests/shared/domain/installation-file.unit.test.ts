@@ -8,7 +8,7 @@ function file(relativePath: string): InstallationFile {
   return new InstallationFile({ relativePath, content: "", hash: HASH });
 }
 
-describe("InstallationFile", () => {
+describe("building an installation file", () => {
   it("defaults to no merge strategy", () => {
     expect(file("a.md").mergeStrategy).toBe("none");
   });

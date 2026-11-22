@@ -76,7 +76,7 @@ describe("a flat artifact layout", () => {
   });
 });
 
-describe("genericFlatHooksFile", () => {
+describe("locating a plugin's flat hooks file", () => {
   it("returns per-plugin hooks file path", () => {
     expect(genericFlatHooksFile(".github/hooks/", "aidd-dev")).toBe(
       ".github/hooks/aidd-dev.hooks.json"
@@ -96,7 +96,7 @@ describe("genericFlatHooksFile", () => {
   });
 });
 
-describe("genericFlatHooksScriptPath", () => {
+describe("locating a plugin's flat hook script", () => {
   it("returns per-plugin script path under hooks/plugin/", () => {
     expect(genericFlatHooksScriptPath(".github/hooks/", "aidd-dev", "check.sh")).toBe(
       ".github/hooks/aidd-dev/check.sh"
@@ -110,7 +110,7 @@ describe("genericFlatHooksScriptPath", () => {
   });
 });
 
-describe("flatHooksPathWithLoaderEntry", () => {
+describe("placing a hook script beside a loader entry", () => {
   it("namespaces a plain hook script under <perPluginHooksDir>/<plugin>/", () => {
     expect(
       flatHooksPathWithLoaderEntry({
@@ -187,7 +187,7 @@ describe("flatHooksPathWithLoaderEntry", () => {
   });
 });
 
-describe("flatMcpKeyPrefix", () => {
+describe("prefixing a plugin's MCP keys", () => {
   it("returns plugin name with trailing dash", () => {
     expect(flatMcpKeyPrefix("aidd-dev")).toBe("aidd-dev-");
   });

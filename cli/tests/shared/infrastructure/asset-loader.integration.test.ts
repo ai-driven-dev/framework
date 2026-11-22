@@ -5,7 +5,7 @@ import { SYNTHETIC_TOOL, syntheticCatalog } from "../testing/synthetic-tool-id.b
 
 const provider = new BundledAssetProviderAdapter(syntheticCatalog());
 
-describe("BundledAssetProviderAdapter.loadConfigAsset", () => {
+describe("loading a bundled config asset", () => {
   it("throws for an unknown file name", () => {
     expect(() => provider.loadConfigAsset(SYNTHETIC_TOOL, "missing.json")).toThrow(
       saying(`Bundled asset not found: '${SYNTHETIC_TOOL}/missing.json'`)

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { ManifestValidationError } from "../../../src/shared/domain/shared.error.js";
 
-describe("FileHash", () => {
+describe("building a file hash", () => {
   const validHash = "d41d8cd98f00b204e9800998ecf8427e";
 
   it("names the value it refused and the shape it wanted", () => {

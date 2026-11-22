@@ -12,7 +12,7 @@ import { SYNTHETIC_TOOL } from "../testing/synthetic-tool-id.builder.js";
 const resolveToolId: ToolIdResolver = (raw) => (raw === SYNTHETIC_TOOL ? SYNTHETIC_TOOL : null);
 const readNumber = (value: unknown) => (typeof value === "number" ? value : null);
 
-describe("ToolKeyedJsonFile", () => {
+describe("keeping per-tool values in a JSON file", () => {
   let dir: string;
   let path: string;
 

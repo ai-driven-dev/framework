@@ -13,7 +13,7 @@ import { CapturingLogger } from "../testing/capturing-logger.fake.js";
 
 // What the file port contract cannot observe stays here: the rename step, the stop at a
 // directory the filesystem refuses to remove, and what the adapter tells its logger.
-describe("FileAdapter", () => {
+describe("working with files on disk", () => {
   let tempDir: string;
   let fs: FileAdapter;
 
@@ -26,7 +26,7 @@ describe("FileAdapter", () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  describe("writeFile()", () => {
+  describe("writing a file", () => {
     // A crash mid-write must never leave a truncated file at `path`, and two concurrent `aidd
     // setup` runs both write `references.json`: `rename` is the one POSIX-atomic step.
     it("writes through a temporary file and renames it into place", async () => {
@@ -60,7 +60,7 @@ describe("FileAdapter, at the edges", () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  describe("listFilesRecursive()", () => {
+  describe("listing files under a directory", () => {
     it("skips a symlink and says which one", async () => {
       await writeFile(join(tempDir, "real.txt"), "");
       await symlink(join(tempDir, "real.txt"), join(tempDir, "link.txt"));
@@ -81,7 +81,7 @@ describe("FileAdapter, at the edges", () => {
     });
   });
 
-  describe("listDirectory()", () => {
+  describe("listing a directory", () => {
     it("says which symlink it skipped", async () => {
       await writeFile(join(tempDir, "real.txt"), "");
       await symlink(join(tempDir, "real.txt"), join(tempDir, "link.txt"));
@@ -92,7 +92,7 @@ describe("FileAdapter, at the edges", () => {
     });
   });
 
-  describe("deleteEmptyDirectories()", () => {
+  describe("deleting empty directories", () => {
     // A read-only directory blocks removal on POSIX alone, and never for root.
     it.skipIf(process.platform === "win32" || process.getuid?.() === 0)(
       "stops at a directory it cannot remove",
@@ -111,7 +111,7 @@ describe("FileAdapter, at the edges", () => {
     );
   });
 
-  describe("isExecutable()", () => {
+  describe("checking whether a file is executable", () => {
     it.skipIf(process.platform === "win32")(
       "tells a file its owner may run from one it may not, and from one that is absent",
       async () => {

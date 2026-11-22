@@ -3,7 +3,7 @@ import { reshapeFrontmatter } from "../../../src/shared/domain/markdown.js";
 
 const DOC = "---\nname: old\nkind: a\n---\nBody\n";
 
-describe("reshapeFrontmatter", () => {
+describe("reshaping a document's frontmatter", () => {
   it("rewrites the frontmatter and keeps the body", () => {
     expect(reshapeFrontmatter(DOC, { frontmatter: (fm) => ({ ...fm, name: "new" }) })).toBe(
       "---\nname: 'new'\nkind: 'a'\n---\nBody\n"

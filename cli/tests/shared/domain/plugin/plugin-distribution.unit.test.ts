@@ -11,7 +11,7 @@ const distribution = new PluginDistribution({
   components: { ...none, skills: files },
 });
 
-describe("PluginDistribution.withStrict", () => {
+describe("copying a distribution with the strict flag", () => {
   it("returns a copy whose manifest carries the strict flag", () => {
     expect(distribution.withStrict(true).manifest).toEqual({
       name: "p",

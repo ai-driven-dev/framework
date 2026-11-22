@@ -3,7 +3,7 @@ import { getToolSupportedScope, isScope, parseScope } from "../../../src/shared/
 import { saying } from "../testing/saying.builder.js";
 
 describe("scope value object", () => {
-  describe("isScope", () => {
+  describe("telling whether a string is a scope", () => {
     it("returns true for project and user", () => {
       expect(isScope("project")).toBe(true);
       expect(isScope("user")).toBe(true);
@@ -16,7 +16,7 @@ describe("scope value object", () => {
     });
   });
 
-  describe("parseScope", () => {
+  describe("reading a scope", () => {
     it("returns undefined for undefined input", () => {
       expect(parseScope(undefined)).toBeUndefined();
     });
@@ -31,7 +31,7 @@ describe("scope value object", () => {
     });
   });
 
-  describe("getToolSupportedScope", () => {
+  describe("choosing the scope a tool supports", () => {
     it("answers user for a tool that requires the user scope", () => {
       expect(getToolSupportedScope(true)).toBe("user");
     });

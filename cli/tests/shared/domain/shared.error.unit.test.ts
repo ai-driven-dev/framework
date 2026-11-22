@@ -26,7 +26,7 @@ import {
   VersionMismatchError,
 } from "../../../src/shared/domain/shared.error.js";
 
-describe("AiddError", () => {
+describe("raising an AIDD error", () => {
   class ProbeError extends AiddError {
     readonly code = "probe";
   }

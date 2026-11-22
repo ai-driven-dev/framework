@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { asPlainObject } from "../../../../src/shared/domain/reading/plain-object.js";
 
-describe("asPlainObject", () => {
+describe("narrowing a value to a plain object", () => {
   it("passes a plain object through unchanged", () => {
     const value = { a: 1 };
     expect(asPlainObject(value)).toBe(value);

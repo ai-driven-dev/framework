@@ -17,8 +17,8 @@ function makeHttp(override: Partial<{ get: Mock }> = {}) {
   };
 }
 
-describe("GitHubAdapter", () => {
-  describe("fetchCatalog", () => {
+describe("reading a catalog from GitHub", () => {
+  describe("fetching a catalog", () => {
     it("calls GitHub Contents API with correct URL and auth header", async () => {
       const http = makeHttp();
       const tokenProvider = { resolve: async (): Promise<string | null> => "my-token" };

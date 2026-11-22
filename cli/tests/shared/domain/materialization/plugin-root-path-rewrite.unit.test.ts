@@ -8,7 +8,7 @@ const BIN_PATH = `${CLAUDE_ROOT}/bin/server.js`;
 const RELATIVE_SCRIPTS = "./scripts/check.sh";
 const RELATIVE_BIN = "./bin/server.js";
 
-describe("rewritePluginRootInJson", () => {
+describe("rewriting the plugin root in JSON", () => {
   describe("string leaf rewrite", () => {
     it("rewrites CLAUDE_PLUGIN_ROOT prefix in a plain string", () => {
       expect(rewritePluginRootInJson(SCRIPTS_PATH)).toBe(RELATIVE_SCRIPTS);

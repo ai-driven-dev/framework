@@ -6,14 +6,14 @@ import { saying } from "../testing/saying.builder.js";
 
 const root = join("/", "merge");
 
-describe("mergeIntoJsonFile", () => {
+describe("merging into a JSON file", () => {
   let files: InMemoryFileAdapter;
 
   beforeEach(() => {
     files = new InMemoryFileAdapter();
   });
 
-  describe("mergeJsonFile()", () => {
+  describe("merging by prime strategy", () => {
     it("creates file if it does not exist", async () => {
       const path = join(root, "new.json");
       await files.mergeJsonFile(path, JSON.stringify({ key: "value" }), "framework-prime");
@@ -178,7 +178,7 @@ describe("mergeIntoJsonFile, at the edges", () => {
     files = new InMemoryFileAdapter();
   });
 
-  describe("mergeJsonFile()", () => {
+  describe("merging values of different shapes", () => {
     it("refuses to merge into a file it cannot parse, naming the file", async () => {
       const path = join(root, "settings.json");
       files.setFile(path, "{ not json");

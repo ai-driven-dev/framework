@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parseFrontmatter, serializeFrontmatter } from "../../../src/shared/domain/markdown.js";
 
-describe("parseFrontmatter()", () => {
+describe("reading a file's frontmatter", () => {
   it("parses frontmatter and body from a well-formed file", () => {
     const content = "---\nname: my-agent\ndescription: A test agent\n---\nBody text here.";
     const { frontmatter, body } = parseFrontmatter(content);
@@ -43,7 +43,7 @@ describe("parseFrontmatter()", () => {
   });
 });
 
-describe("serializeFrontmatter()", () => {
+describe("writing a file's frontmatter", () => {
   it("serializes frontmatter and body into delimited format", () => {
     const result = serializeFrontmatter({ name: "my-agent", description: "A test" }, "Body text.");
     expect(result).toContain("---");

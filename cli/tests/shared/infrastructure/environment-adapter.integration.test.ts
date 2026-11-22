@@ -3,7 +3,7 @@ import { EnvironmentAdapter } from "../../../src/shared/infrastructure/environme
 
 const VARIABLE = "AIDD_ENVIRONMENT_ADAPTER_PROBE";
 
-describe("EnvironmentAdapter", () => {
+describe("reading the process environment", () => {
   afterEach(() => {
     delete process.env[VARIABLE];
   });

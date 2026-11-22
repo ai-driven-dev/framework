@@ -13,7 +13,7 @@ function pathsOf(files: readonly InstallationFile[]): string[] {
   return files.map((f) => f.relativePath);
 }
 
-describe("removeRedundantGitkeeps", () => {
+describe("removing the gitkeeps a directory no longer needs", () => {
   it("drops a .gitkeep from a directory that holds another file", () => {
     const kept = removeRedundantGitkeeps([file("dir/.gitkeep"), file("dir/a.md")]);
     expect(pathsOf(kept)).toStrictEqual(["dir/a.md"]);

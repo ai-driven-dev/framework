@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { describeError, errorMessage } from "../../../src/shared/domain/describe-error.js";
 
-describe("describeError", () => {
+describe("describing a failure", () => {
   it("answers the code of a filesystem failure", () => {
     expect(describeError(Object.assign(new Error("open failed"), { code: "ENOENT" }))).toBe(
       "ENOENT"
@@ -21,7 +21,7 @@ describe("describeError", () => {
   });
 });
 
-describe("errorMessage", () => {
+describe("reading the message of a failure", () => {
   it("answers the message of an Error, whatever code it carries", () => {
     expect(errorMessage(Object.assign(new Error("open failed"), { code: "ENOENT" }))).toBe(
       "open failed"

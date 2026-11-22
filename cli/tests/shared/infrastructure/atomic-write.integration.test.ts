@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { PlatformAdapter } from "../../../src/contexts/installation/infrastructure/platform-adapter.js";
 import { atomicWriteFile } from "../../../src/shared/infrastructure/atomic-write.js";
 
-describe("atomicWriteFile", () => {
+describe("writing a file atomically", () => {
   let tempDir: string;
 
   beforeEach(async () => {
@@ -26,7 +26,7 @@ describe("atomicWriteFile", () => {
   });
 });
 
-describe("PlatformAdapter", () => {
+describe("asking for the running platform", () => {
   it("answers the platform this process runs on", () => {
     expect(new PlatformAdapter().current()).toBe(process.platform);
   });

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ScriptedPrompter } from "./scripted-prompter.fake.js";
 
-describe("ScriptedPrompter", () => {
+describe("answering prompts from a script", () => {
   it("refuses a queued answer of another kind than the prompt asked", async () => {
     const prompter = new ScriptedPrompter([ScriptedPrompter.answer.conflict("keep")]);
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { isMergeContentEmpty } from "../../../src/shared/domain/merge.js";
 
-describe("isMergeContentEmpty", () => {
+describe("telling whether merged content is empty", () => {
   describe("at the top level", () => {
     it("is empty for an object with no keys", () => {
       expect(isMergeContentEmpty("{}", null)).toBe(true);

@@ -17,7 +17,7 @@ function http(
   };
 }
 
-describe("GitHubAdapter", () => {
+describe("asking GitHub who a token belongs to", () => {
   it("asks GitHub who the token belongs to, with the token", async () => {
     const client = http({ login: "octocat" });
 

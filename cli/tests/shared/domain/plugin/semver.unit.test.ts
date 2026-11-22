@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { compareSemver, isSemver } from "../../../../src/shared/domain/plugin/semver.js";
 
-describe("isSemver()", () => {
+describe("telling whether a string is a version", () => {
   it("accepts a plain release version", () => {
     expect(isSemver("5.3.0")).toBe(true);
     expect(isSemver("v5.3.0")).toBe(true);
@@ -29,7 +29,7 @@ describe("isSemver()", () => {
   });
 });
 
-describe("compareSemver()", () => {
+describe("comparing two versions", () => {
   it("compares numerically, not lexically", () => {
     expect(compareSemver("5.10.0", "5.9.0")).toBe(1);
     expect(compareSemver("5.9.0", "5.10.0")).toBe(-1);

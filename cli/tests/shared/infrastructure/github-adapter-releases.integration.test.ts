@@ -30,7 +30,7 @@ function makeHttpThrowing(err: Error) {
   return { get } satisfies HttpGet;
 }
 
-describe("GitHubAdapter", () => {
+describe("reading releases from GitHub", () => {
   describe("a repository that needs credentials", () => {
     it("lists and reads releases with the token the provider resolves", async () => {
       const { apiBase, close } = await startLocalReleases();
@@ -73,7 +73,7 @@ describe("GitHubAdapter", () => {
     });
   });
 
-  describe("isRepoPublic", () => {
+  describe("asking whether a repository is public", () => {
     it("returns true when the unauthenticated repo request succeeds (public)", async () => {
       const http = makeHttp({ full_name: REPO, private: false });
       const adapter = new GitHubAdapter(http);

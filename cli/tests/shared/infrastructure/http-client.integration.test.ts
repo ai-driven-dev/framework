@@ -36,7 +36,7 @@ async function against<T>(
   }
 }
 
-describe("HttpClient", () => {
+describe("sending HTTP requests", () => {
   it("sends GET, the path with its query, and the GitHub headers by default", async () => {
     let seen: Record<string, string | undefined> = {};
     await against(

@@ -8,7 +8,7 @@ import { saying } from "../../testing/saying.builder.js";
 const npmNameDetail = (got: string): string =>
   `"package" must be a valid npm package name (e.g. my-plugin or @scope/my-plugin). Got: "${got}"`;
 
-describe("parsePluginSource", () => {
+describe("reading a plugin source", () => {
   describe("github kind", () => {
     it("round-trips a minimal github source", () => {
       const raw = { kind: "github", repo: "owner/repo" };

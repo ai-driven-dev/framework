@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { resolveHomeDir } from "../../../src/shared/infrastructure/home-dir.js";
 
-describe("resolveHomeDir", () => {
+describe("resolving the home directory", () => {
   // `os.homedir()` reads `USERPROFILE` on Windows, never `HOME`, so a bare `homedir()` drops
   // a sandboxed `HOME`. No platform branch here, so a regression fails on every platform.
   it("prefers HOME over the OS-reported home directory", () => {
