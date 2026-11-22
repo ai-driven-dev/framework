@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   claimsKeeping,
   mergeRefClaims,
+  readHeldClaims,
 } from "../../../../src/contexts/machine-claims/domain/ref-claims.js";
 
 describe("mergeRefClaims", () => {
@@ -74,5 +75,29 @@ describe("claimsKeeping", () => {
 
   it("keeps none when there were none", () => {
     expect(claimsKeeping(undefined, () => true)).toEqual([]);
+  });
+});
+
+describe("readHeldClaims", () => {
+  it("reads none when the record keeps none", () => {
+    expect(readHeldClaims(undefined)).toEqual([]);
+  });
+
+  it("copies each claim so the record stays as it was", () => {
+    const dependents = ["/project-a"];
+    const record = [{ ref: "plugin@declared", dependents }];
+
+    const read = readHeldClaims(record);
+    dependents.push("/project-b");
+
+    expect(read).toStrictEqual([{ ref: "plugin@declared", dependents: ["/project-a"] }]);
+  });
+
+  it.each([
+    ["claims that are not a list", "plugin@declared"],
+    ["a claim without a ref", [{ dependents: [] }]],
+    ["a claim whose dependents are not paths", [{ ref: "a@b", dependents: [1] }]],
+  ])("refuses %s", (_name, value) => {
+    expect(() => readHeldClaims(value)).toThrow("nativeRegistrations.pluginClaims");
   });
 });

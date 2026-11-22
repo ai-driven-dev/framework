@@ -7,7 +7,7 @@ import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
-import { hostRecord } from "../../shared/testing/host-record-reading.builder.js";
+import { claimsRecorded, hostRecord } from "../../shared/testing/host-record-reading.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
@@ -34,7 +34,7 @@ function applyHostFault(manifest: Manifest, fault: HostFault): void {
     manifest.setNativeRegistrations(TOOL.claude, {
       ...registration,
       pluginClaims: [
-        ...(registration.pluginClaims ?? []),
+        ...claimsRecorded(registration),
         { ref: "aidd-context@aidd-framework", dependents: [] },
       ],
     });

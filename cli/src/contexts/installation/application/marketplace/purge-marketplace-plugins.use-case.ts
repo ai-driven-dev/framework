@@ -3,7 +3,7 @@ import type { Lock } from "../../../../shared/ports/lock.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { ActiveMachineDependentsError } from "../../domain/installation.error.js";
 import type {
-  NativePluginClaim,
+  NativeRefClaim,
   NativeRegistrations,
 } from "../../domain/manifest/native-registrations.js";
 import type { Manifest } from "../../domain/manifest.js";
@@ -42,7 +42,7 @@ export interface MarketplaceRecords {
     alias: string
   ): RegisteredMarketplace | undefined;
   /** The claims on the refs sitting on the host name the alias was registered under. */
-  claimsOn(registrations: NativeRegistrations, alias: string): readonly NativePluginClaim[];
+  claimsOn(registrations: NativeRegistrations, alias: string): readonly NativeRefClaim[];
   /** The record without the marketplace, nor any ref or claim on its host name. */
   withoutMarketplace(registrations: NativeRegistrations, alias: string): NativeRegistrations;
 }

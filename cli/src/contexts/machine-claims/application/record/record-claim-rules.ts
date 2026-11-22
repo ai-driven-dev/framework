@@ -1,5 +1,5 @@
 import type { RecordClaimRules } from "../../contract/record-claim-rules.js";
-import { claimsKeeping, mergeRefClaims } from "../../domain/ref-claims.js";
+import { claimsKeeping, mergeRefClaims, readHeldClaims } from "../../domain/ref-claims.js";
 import type { HostRecordRules } from "../../ports/host-record.js";
 
 /** Whether a ref stays once the alias's marketplace goes: every ref stays for an alias that was
@@ -17,6 +17,7 @@ function offMarketplace(
  * claims list always goes last, after the host data. */
 export function recordClaimRules(host: HostRecordRules): RecordClaimRules {
   return {
+    claimsOf: (record) => readHeldClaims(record?.pluginClaims),
     claimsOnMarketplace: (record, alias) => {
       const off = offMarketplace(host, record, alias);
       return claimsKeeping(record.pluginClaims, (ref) => !off(ref));

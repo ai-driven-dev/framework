@@ -2,6 +2,7 @@ import type { AiToolId } from "../../../shared/domain/tool.js";
 import type { Lock } from "../../../shared/ports/lock.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import { ActiveMachineDependentsError } from "../domain/installation.error.js";
+import type { NativeRefClaims } from "../domain/manifest/native-registrations.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { InstalledPlugin } from "../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
@@ -16,6 +17,7 @@ import type {
 /** What PurgeUserScopeFiles is built from. */
 export interface PurgeUserScopeFilesDeps {
   readonly userManifestRepo: ManifestRepository & Lock;
+  readonly claims: NativeRefClaims;
   readonly purgeMachineState: MachineStatePurge;
   /** The one resolver for the OS home directory a user-scope plugin's files sit under. */
   readonly homeDir: () => string;
@@ -99,9 +101,9 @@ export class PurgeUserScopeFiles implements UserScopePurge {
                   .getRecordedPlugins(toolId)
                   .filter(({ plugin }) => plugin.scope === "user")
                   .flatMap(({ dependents }) => dependents),
-                ...(manifest.getNativeRegistrations(toolId)?.pluginClaims ?? []).flatMap(
-                  (claim) => claim.dependents
-                ),
+                ...this.deps.claims
+                  .claimsOf(manifest.getNativeRegistrations(toolId))
+                  .flatMap((claim) => claim.dependents),
               ]
             : []
         ) ?? []
@@ -154,7 +156,7 @@ export class PurgeUserScopeFiles implements UserScopePurge {
         {
           tool,
           registrations,
-          claimedRefs: (registrations.pluginClaims ?? []).map((claim) => claim.ref),
+          claimedRefs: this.deps.claims.claimsOf(registrations).map((claim) => claim.ref),
           cacheRoot: tool.nativeActivation()?.pluginCacheRoot(home),
         },
       ];

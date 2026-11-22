@@ -5,7 +5,11 @@ import { registeredTools, TOOL } from "../../shared/testing/registered-tools.bui
 
 describe("UpdateUserPlugin", () => {
   it("hands the host registration's ref selection to the file update", async () => {
-    const selection = { isQualifiedRef: () => false, refSelectedBy: () => true };
+    const selection = {
+      isQualifiedRef: () => false,
+      refSelectedBy: () => true,
+      claimsOf: () => [],
+    };
     let seen: unknown;
     const update = new UpdateUserPlugin(
       {
@@ -47,7 +51,7 @@ describe("UpdateUserPlugin", () => {
         },
       },
       contained,
-      { isQualifiedRef: () => false, refSelectedBy: () => false }
+      { isQualifiedRef: () => false, refSelectedBy: () => false, claimsOf: () => [] }
     );
 
     await update.execute({ toolIds: [], projectRoot: "/A", scope: "user" });

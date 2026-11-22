@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { BuiltMarketplaceEnsurer } from "../../../../../src/contexts/installation/contract/built-marketplace.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import { claimsRecorded } from "../../../../shared/testing/host-record-reading.builder.js";
 import {
   buildInstallationDeps,
   initAndInstall,
@@ -140,7 +141,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
     const otherRef = "native-plugin@other-catalog";
     machine.setNativeRegistrations(copilot, {
       ...native,
-      pluginClaims: [...(native.pluginClaims ?? []), { ref: otherRef, dependents: ["/B"] }],
+      pluginClaims: [...claimsRecorded(native), { ref: otherRef, dependents: ["/B"] }],
     });
     const unselected = RecordedPlugin.fromMetadata({
       name: "unselected-plugin",
@@ -198,7 +199,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
     machine.setNativeRegistrations(copilot, {
       ...native,
       pluginClaims: [
-        ...(native.pluginClaims ?? []),
+        ...claimsRecorded(native),
         {
           ref: "native-plugin@other-catalog",
           dependents: ["/B"],

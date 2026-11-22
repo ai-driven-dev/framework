@@ -97,7 +97,8 @@ export class RemoveUserPlugin<Proof> {
     return toolIds.flatMap((toolId) => {
       const registrations = manifest.getNativeRegistrations(toolId);
       if (registrations === undefined) return [];
-      return (registrations.pluginClaims ?? [])
+      return options.records
+        .claimsOf(registrations)
         .filter((claim) => options.records.refSelectedBy(claim.ref, options.pluginName))
         .map((claim) => ({ toolId, registrations, claim }));
     });

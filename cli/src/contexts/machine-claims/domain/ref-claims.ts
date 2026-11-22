@@ -1,7 +1,30 @@
+import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
+
 /** A claim kept on a host ref: the ref, and the project roots holding it. */
 export interface HeldRefClaim {
   readonly ref: string;
   readonly dependents: readonly string[];
+}
+
+/** The claims a record keeps on its refs, each copied; none when it keeps none. Refuses a list,
+ * or a claim, that is not a ref with the paths of the projects holding it. */
+export function readHeldClaims(value: unknown): HeldRefClaim[] {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) {
+    throw new Error("nativeRegistrations.pluginClaims: expected an array.");
+  }
+  return value.map((item) => {
+    const claim = asPlainObject(item);
+    if (
+      claim === null ||
+      typeof claim.ref !== "string" ||
+      !Array.isArray(claim.dependents) ||
+      !claim.dependents.every((dependent) => typeof dependent === "string")
+    ) {
+      throw new Error("nativeRegistrations.pluginClaims: expected a ref and its dependents.");
+    }
+    return { ref: claim.ref, dependents: [...claim.dependents] };
+  });
 }
 
 interface OpenClaim {

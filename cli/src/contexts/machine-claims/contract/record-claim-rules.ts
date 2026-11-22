@@ -20,6 +20,11 @@ export interface CatalogueClaimsView {
 
 /** What the machine claims answer over the claims a record keeps beside the host data. */
 export interface RecordClaimRules {
+  /** The claims a record keeps on its refs with the projects holding each, none for a record
+   * that is absent or keeps none. Refuses a claims block it did not write. */
+  readonly claimsOf: (
+    record: Readonly<Record<string, unknown>> | undefined
+  ) => readonly DependentClaimView[];
   /** The claims on the refs sitting on the host name the alias was registered under. */
   readonly claimsOnMarketplace: <Claim extends { readonly ref: string }>(
     record: ClaimedRecordView<Claim>,
