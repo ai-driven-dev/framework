@@ -1,7 +1,7 @@
 import { join, resolve } from "node:path";
 import type { Command } from "commander";
 import type { DepsSliceFactory } from "../../orchestration/deps.js";
-import { renderRecipeValidation } from "../presenters/tool-config.presenter.js";
+import { renderRecipeValidation } from "../presenters/recipes.presenter.js";
 import { parseGlobalOptions } from "./global-options.controller.js";
 
 /** What this command reads of the graph. */

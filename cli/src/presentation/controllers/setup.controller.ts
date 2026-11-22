@@ -5,14 +5,14 @@ import type { DepsSliceFactory } from "../../orchestration/deps.js";
 import type { Output } from "../../orchestration/domain/output.js";
 import { type PluginInstallMode, SetupFlow } from "../../orchestration/domain/setup-flow.model.js";
 import { agentModelsRequest, isInteractiveRun } from "../../orchestration/setup/setup-request.js";
-import { reportAgentModels } from "../presenters/agent-models.presenter.js";
 import {
   printDetectedContext,
   printNextSteps,
   printSetupOutcome,
   printWelcomeBanner,
-} from "../presenters/setup.presenter.js";
-import { reportNativeActivation } from "../presenters/sync.presenter.js";
+} from "../presenters/setup/setup.presenter.js";
+import { reportNativeActivation } from "../presenters/setup/sync.presenter.js";
+import { reportAgentModels } from "../presenters/tools/agent-models.presenter.js";
 import { parseGlobalOptions, parseScopeFlag } from "./global-options.controller.js";
 import {
   activatesAtUserScope,

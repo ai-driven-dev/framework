@@ -3,8 +3,8 @@ import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js"
 import type { DepsSliceFactory } from "../../orchestration/deps.js";
 import { aiToolSelectionOf } from "../../orchestration/domain/ai-tool-selection.model.js";
 import { parseScope } from "../../shared/domain/scope.js";
-import { printPluginRemoved, printPluginsUpdated } from "../presenters/plugin.presenter.js";
-import { reportNativeActivation } from "../presenters/sync.presenter.js";
+import { printPluginRemoved, printPluginsUpdated } from "../presenters/plugin/plugin.presenter.js";
+import { reportNativeActivation } from "../presenters/setup/sync.presenter.js";
 import { parseGlobalOptions } from "./global-options.controller.js";
 
 /** What removing or updating a plugin reads of the graph. */

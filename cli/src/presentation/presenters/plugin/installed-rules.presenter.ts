@@ -1,5 +1,5 @@
-import type { InstalledRule } from "../../contexts/installation/contract/installed-rule.js";
-import type { Output } from "../../orchestration/domain/output.js";
+import type { InstalledRule } from "../../../contexts/installation/contract/installed-rule.js";
+import type { Output } from "../../../orchestration/domain/output.js";
 
 /** The contract the explore skill reads, field for field; the two-space indent and the
  * trailing newline are part of it. */

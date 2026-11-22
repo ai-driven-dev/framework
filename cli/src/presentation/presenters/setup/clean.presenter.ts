@@ -1,5 +1,5 @@
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
-import type { Output } from "../../orchestration/domain/output.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../../contexts/distribution/contract/marketplace.js";
+import type { Output } from "../../../orchestration/domain/output.js";
 
 interface ProjectCleanResult {
   readonly manifestFound: boolean;

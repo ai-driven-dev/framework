@@ -4,7 +4,7 @@ import type { DepsSliceFactory } from "../../orchestration/deps.js";
 import {
   printInstalledRules,
   printInstalledRulesJson,
-} from "../presenters/installed-rules.presenter.js";
+} from "../presenters/plugin/installed-rules.presenter.js";
 import { parseGlobalOptions } from "./global-options.controller.js";
 import { type RecipesKeys, registerRecipesCommand } from "./recipes.controller.js";
 import type { ToolConfigKeys } from "./tool-config-run.controller.js";

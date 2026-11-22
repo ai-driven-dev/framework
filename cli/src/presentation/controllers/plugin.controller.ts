@@ -2,7 +2,7 @@ import type { Command } from "commander";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { CommandRunner, DepsSliceFactory } from "../../orchestration/deps.js";
 import { aiToolSelectionOf } from "../../orchestration/domain/ai-tool-selection.model.js";
-import { printInstalledPlugins, printSearchHits } from "../presenters/plugin.presenter.js";
+import { printInstalledPlugins, printSearchHits } from "../presenters/plugin/plugin.presenter.js";
 import { parseGlobalOptions, TOKEN_FLAG_HELP } from "./global-options.controller.js";
 import { type MenuChoice, offerGroupMenu } from "./group-menu.controller.js";
 import {

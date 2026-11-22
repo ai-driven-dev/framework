@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { PluginCatalog } from "../../../src/contexts/distribution/contract/catalog.js";
-import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import type { PluginCatalog } from "../../../../src/contexts/distribution/contract/catalog.js";
+import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import {
   printCatalogEntries,
   printMarketplaceCheck,
@@ -8,9 +8,9 @@ import {
   printMarketplaceRemoved,
   printRefreshResults,
   printRegisteredMarketplaces,
-} from "../../../src/presentation/presenters/marketplace.presenter.js";
-import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
-import { SYNTHETIC_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
+} from "../../../../src/presentation/presenters/plugin/marketplace.presenter.js";
+import { CapturingOutput } from "../../../shared/testing/capturing-output.fake.js";
+import { SYNTHETIC_TOOL } from "../../../shared/testing/synthetic-tool-id.builder.js";
 
 function marketplace(name: string, version?: string): Marketplace {
   return Marketplace.fromJSON({

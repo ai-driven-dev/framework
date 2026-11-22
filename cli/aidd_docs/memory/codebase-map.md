@@ -165,7 +165,10 @@ src/
 │   ├── errors/
 │   ├── hooks/
 │   ├── presenters/
-│   │   └── telemetry/
+│   │   ├── plugin/
+│   │   ├── setup/
+│   │   ├── telemetry/
+│   │   └── tools/
 │   └── terminal/
 └── shared/    # what two or more contexts need
     ├── domain/    # the vocabulary

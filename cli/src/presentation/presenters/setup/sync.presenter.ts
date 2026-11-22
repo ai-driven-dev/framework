@@ -1,7 +1,7 @@
-import { assertActivated } from "../../orchestration/domain/activation-outcome.model.js";
-import type { Output } from "../../orchestration/domain/output.js";
-import type { ToolId } from "../../shared/domain/tool.js";
-import { render } from "../errors/error-translator.presenter.js";
+import { assertActivated } from "../../../orchestration/domain/activation-outcome.model.js";
+import type { Output } from "../../../orchestration/domain/output.js";
+import type { ToolId } from "../../../shared/domain/tool.js";
+import { render } from "../../errors/error-translator.presenter.js";
 import { printNativeActivation, printUnrestorable } from "./restore.presenter.js";
 
 interface ScopedError {

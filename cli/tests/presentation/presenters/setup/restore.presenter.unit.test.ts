@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { printNativeActivation } from "../../../src/presentation/presenters/restore.presenter.js";
-import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
+import { printNativeActivation } from "../../../../src/presentation/presenters/setup/restore.presenter.js";
+import { CapturingOutput } from "../../../shared/testing/capturing-output.fake.js";
 import {
   SECOND_SYNTHETIC_TOOL,
   SYNTHETIC_TOOL,
-} from "../../shared/testing/synthetic-tool-id.builder.js";
+} from "../../../shared/testing/synthetic-tool-id.builder.js";
 
 describe("printNativeActivation", () => {
   it("prints nothing when every tool's CLI ran", () => {

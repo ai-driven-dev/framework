@@ -1,11 +1,11 @@
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { AiToolId, IdeToolId } from "../../shared/domain/tool.js";
 import { render } from "../errors/error-translator.presenter.js";
-import { reportNativeActivation } from "../presenters/sync.presenter.js";
+import { reportNativeActivation } from "../presenters/setup/sync.presenter.js";
 import {
   printToolAlreadyInstalled,
   printToolInstalled,
-} from "../presenters/tool-config.presenter.js";
+} from "../presenters/tools/tool-config.presenter.js";
 import { assertKnownToolId, type ToolRun } from "./tool-config-run.controller.js";
 
 export async function installTool({

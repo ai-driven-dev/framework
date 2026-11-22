@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   printProjectCleanOutcome,
   printUserScopeCleanOutcome,
-} from "../../../src/presentation/presenters/clean.presenter.js";
-import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
+} from "../../../../src/presentation/presenters/setup/clean.presenter.js";
+import { CapturingOutput } from "../../../shared/testing/capturing-output.fake.js";
 import {
   SECOND_SYNTHETIC_TOOL,
   SYNTHETIC_TOOL,
-} from "../../shared/testing/synthetic-tool-id.builder.js";
+} from "../../../shared/testing/synthetic-tool-id.builder.js";
 
 const NO_PREVIEW = { tools: [], nativeRegistrations: [], totalFileCount: 0 };
 

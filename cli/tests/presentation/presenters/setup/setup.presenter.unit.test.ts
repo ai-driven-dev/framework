@@ -4,12 +4,12 @@ import {
   printNextSteps,
   printSetupOutcome,
   printWelcomeBanner,
-} from "../../../src/presentation/presenters/setup.presenter.js";
-import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
+} from "../../../../src/presentation/presenters/setup/setup.presenter.js";
+import { CapturingOutput } from "../../../shared/testing/capturing-output.fake.js";
 import {
   SECOND_SYNTHETIC_TOOL,
   SYNTHETIC_TOOL,
-} from "../../shared/testing/synthetic-tool-id.builder.js";
+} from "../../../shared/testing/synthetic-tool-id.builder.js";
 
 const CLAUDE_INSTALLED = {
   toolId: SYNTHETIC_TOOL,

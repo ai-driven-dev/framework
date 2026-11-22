@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import {
   printInstalledPlugins,
   printPluginInstallOutcome,
   printPluginRemoved,
   printPluginsUpdated,
   printSearchHits,
-} from "../../../src/presentation/presenters/plugin.presenter.js";
-import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
+} from "../../../../src/presentation/presenters/plugin/plugin.presenter.js";
+import { CapturingOutput } from "../../../shared/testing/capturing-output.fake.js";
 
 function marketplace(name: string): Marketplace {
   return Marketplace.create({

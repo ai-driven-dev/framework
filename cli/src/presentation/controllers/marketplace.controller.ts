@@ -6,8 +6,8 @@ import {
   printMarketplaceRemoved,
   printRefreshResults,
   printRegisteredMarketplaces,
-} from "../presenters/marketplace.presenter.js";
-import { reportNativeActivation } from "../presenters/sync.presenter.js";
+} from "../presenters/plugin/marketplace.presenter.js";
+import { reportNativeActivation } from "../presenters/setup/sync.presenter.js";
 import { parseGlobalOptions, TOKEN_FLAG_HELP } from "./global-options.controller.js";
 import { type MenuChoice, offerGroupMenu } from "./group-menu.controller.js";
 import {

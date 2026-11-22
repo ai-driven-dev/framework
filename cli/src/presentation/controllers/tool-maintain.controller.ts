@@ -1,5 +1,5 @@
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import { printToolRemoved, printUpdateResult } from "../presenters/tool-config.presenter.js";
+import { printToolRemoved, printUpdateResult } from "../presenters/tools/tool-config.presenter.js";
 import { assertKnownToolId, type ToolRun } from "./tool-config-run.controller.js";
 
 export async function removeTool({

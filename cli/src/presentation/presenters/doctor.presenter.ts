@@ -1,7 +1,7 @@
 import type { DoctorFix } from "../../contexts/installation/contract/doctor-issue.js";
 import type { Output } from "../../orchestration/domain/output.js";
 import { render } from "../errors/error-translator.presenter.js";
-import { printPluginDrift, printScopeReport } from "./status.presenter.js";
+import { printPluginDrift, printScopeReport } from "./setup/status.presenter.js";
 
 type PluginIssue = { pluginName: string; toolId: string; issue: string; filePath?: string };
 

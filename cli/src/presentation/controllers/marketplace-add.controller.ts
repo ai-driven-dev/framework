@@ -3,8 +3,8 @@ import type { DepsSliceFactory } from "../../orchestration/deps.js";
 import type { Output } from "../../orchestration/domain/output.js";
 import { parsePluginSourceShorthand } from "../../orchestration/domain/source-shorthand.model.js";
 import type { Scope } from "../../shared/domain/scope.js";
-import { printMarketplaceRegistered } from "../presenters/marketplace.presenter.js";
-import { reportNativeActivation } from "../presenters/sync.presenter.js";
+import { printMarketplaceRegistered } from "../presenters/plugin/marketplace.presenter.js";
+import { reportNativeActivation } from "../presenters/setup/sync.presenter.js";
 import { parseGlobalOptions } from "./global-options.controller.js";
 
 /** What this command reads of the graph. */

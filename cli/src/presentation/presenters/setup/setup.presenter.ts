@@ -1,4 +1,4 @@
-import type { Output } from "../../orchestration/domain/output.js";
+import type { Output } from "../../../orchestration/domain/output.js";
 
 interface ToolInstallOutcome {
   readonly toolId: string;

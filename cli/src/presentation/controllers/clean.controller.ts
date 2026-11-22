@@ -4,7 +4,7 @@ import type { Output } from "../../orchestration/domain/output.js";
 import {
   printProjectCleanOutcome,
   printUserScopeCleanOutcome,
-} from "../presenters/clean.presenter.js";
+} from "../presenters/setup/clean.presenter.js";
 import {
   GLOBAL_FLAG_HELP,
   parseGlobalOptions,

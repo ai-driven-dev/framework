@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 import {
   type AgentModelsReport,
   reportAgentModels,
-} from "../../../src/presentation/presenters/agent-models.presenter.js";
-import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
+} from "../../../../src/presentation/presenters/tools/agent-models.presenter.js";
+import { CapturingOutput } from "../../../shared/testing/capturing-output.fake.js";
 import {
   SECOND_SYNTHETIC_TOOL,
   SYNTHETIC_TOOL,
   syntheticConfig,
   syntheticMixedCatalog,
-} from "../../shared/testing/synthetic-tool-id.builder.js";
+} from "../../../shared/testing/synthetic-tool-id.builder.js";
 
 const OPENAI_CONFIG = syntheticConfig("syntheticopenai", ["openai"]);
 const OPENAI_TOOL = OPENAI_CONFIG.toolId;

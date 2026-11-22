@@ -5,7 +5,7 @@ import {
   printRestoreOutcome,
   printToolRestoreOutcome,
   printUserScopeSyncOutcome,
-} from "../presenters/sync.presenter.js";
+} from "../presenters/setup/sync.presenter.js";
 import {
   GLOBAL_FLAG_HELP,
   parseGlobalOptions,

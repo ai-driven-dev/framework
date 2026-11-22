@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   printInstalledRules,
   printInstalledRulesJson,
-} from "../../../src/presentation/presenters/installed-rules.presenter.js";
-import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
+} from "../../../../src/presentation/presenters/plugin/installed-rules.presenter.js";
+import { CapturingOutput } from "../../../shared/testing/capturing-output.fake.js";
 import {
   SECOND_SYNTHETIC_TOOL,
   SYNTHETIC_TOOL,
-} from "../../shared/testing/synthetic-tool-id.builder.js";
+} from "../../../shared/testing/synthetic-tool-id.builder.js";
 
 describe("printInstalledRulesJson", () => {
   it("prints an empty inventory as an empty array, not as nothing", () => {

@@ -4,12 +4,12 @@ import {
   printToolInstalled,
   printToolRemoved,
   printUpdateResult,
-} from "../../../src/presentation/presenters/tool-config.presenter.js";
-import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
+} from "../../../../src/presentation/presenters/tools/tool-config.presenter.js";
+import { CapturingOutput } from "../../../shared/testing/capturing-output.fake.js";
 import {
   SECOND_SYNTHETIC_TOOL,
   SYNTHETIC_TOOL,
-} from "../../shared/testing/synthetic-tool-id.builder.js";
+} from "../../../shared/testing/synthetic-tool-id.builder.js";
 
 describe("printToolAlreadyInstalled", () => {
   it("warns that the tool is there and names the flag that reinstalls it", () => {
