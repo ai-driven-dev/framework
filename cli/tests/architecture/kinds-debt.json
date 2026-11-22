@@ -117,14 +117,5 @@
       "tests/shared/infrastructure/asset-loader.integration.test.ts": 1,
       "tests/shared/ports/asset-provider.contract.test.ts": 1
     }
-  },
-  {
-    "rule": "real-tool-list:catalog-of",
-    "closesWhen": "the test is converted to SYNTHETIC_TOOL once catalog-of.builder takes an injected registry",
-    "entries": {
-      "tests/orchestration/doctor/run-doctor.use-case.unit.test.ts": 1,
-      "tests/orchestration/testing/native-provenance.builder.ts": 1,
-      "tests/shared/testing/list-command-contract.builder.ts": 1
-    }
   }
 ]
