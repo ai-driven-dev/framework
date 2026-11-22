@@ -14,7 +14,7 @@ function plugin(name: string): RecordedPlugin {
   });
 }
 
-describe("pluginsOnOtherTools", () => {
+describe("listing the plugins other tools carry", () => {
   it("lists a plugin once when several other tools carry it and skips the named tool's own", () => {
     const manifest = aManifest()
       .withTool(TOOL.claude, [])

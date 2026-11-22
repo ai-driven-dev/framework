@@ -17,7 +17,7 @@ function fixture(options: Parameters<typeof userScopeParts>[0] = {}) {
   };
 }
 
-describe("ProveUserScopeWithdrawals.prove", () => {
+describe("proving a user-scope withdrawal is safe", () => {
   it("answers none when the machine has no manifest", async () => {
     await expect(fixture({ manifest: null }).prove.prove()).resolves.toEqual([]);
   });

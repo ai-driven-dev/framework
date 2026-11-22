@@ -33,7 +33,7 @@ function makeManifestRepository(manifest: Manifest): ManifestRepository {
   };
 }
 
-describe("ListPlugins", () => {
+describe("listing the installed plugins", () => {
   describe("list plugins for installed tool", () => {
     it("returns map with installed plugins for requested tool", async () => {
       const manifest = makeManifestWithPlugin();

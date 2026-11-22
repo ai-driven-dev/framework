@@ -14,7 +14,7 @@ function removal(seed: Record<string, string>) {
   return { fs, logger, manifestRepo, deps: { fs, logger, manifestRepo } };
 }
 
-describe("removeAiddState", () => {
+describe("removing AIDD's own state from a project", () => {
   it("deletes the manifest and the marketplace registry it wrote", async () => {
     const { deps, manifestRepo, fs } = removal({ "/project/.aidd/marketplaces.json": "{}" });
 

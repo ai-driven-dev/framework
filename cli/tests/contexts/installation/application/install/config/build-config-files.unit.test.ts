@@ -26,7 +26,7 @@ async function setup(assetContent: string) {
   };
 }
 
-describe("buildConfigFiles", () => {
+describe("building a tool's config files", () => {
   it("returns the tool's config asset at its output path with its content hashed", async () => {
     const content = '{ "custom": true }\n';
     const { manifest, configDeps } = await setup(content);

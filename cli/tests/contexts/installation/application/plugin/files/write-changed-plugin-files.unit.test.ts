@@ -6,7 +6,7 @@ import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-fil
 
 const BASE = "/base";
 
-describe("writeChangedPluginFiles", () => {
+describe("writing the plugin files that changed", () => {
   const file = (relativePath: string, content: string) =>
     new InstallationFile({ relativePath, content, hash: FileHash.of(content) });
 

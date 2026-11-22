@@ -133,7 +133,7 @@ function harness(given: Case = {}) {
   };
 }
 
-describe("MainSessionModels", () => {
+describe("setting the main session models of the hosts", () => {
   describe("setting a main session", () => {
     it("plans the install from the file the host reads, the provider's values and the schema, then writes and records it", async () => {
       const h = harness({ files: { [A]: "current" } });

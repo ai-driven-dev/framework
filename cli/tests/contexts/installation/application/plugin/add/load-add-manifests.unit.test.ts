@@ -11,7 +11,7 @@ function manifestWithClaude(): Manifest {
   return manifest;
 }
 
-describe("loadAddManifests", () => {
+describe("loading the manifests an add needs", () => {
   it("returns the project manifest and an empty machine manifest when none is claimed yet", async () => {
     const project = new InMemoryManifestRepository(manifestWithClaude());
     const user = new InMemoryManifestRepository();

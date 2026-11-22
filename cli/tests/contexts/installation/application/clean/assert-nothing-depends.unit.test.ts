@@ -3,7 +3,7 @@ import { assertNothingDepends } from "../../../../../src/contexts/installation/a
 import { ActiveMachineDependentsError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import type { UserScopeInspection } from "../../../../../src/contexts/installation/ports/user-scope/user-scope-purge.js";
 
-describe("assertNothingDepends", () => {
+describe("before a purge removes what others may depend on", () => {
   const inspection: UserScopeInspection = {
     manifestFound: true,
     toolIds: [],

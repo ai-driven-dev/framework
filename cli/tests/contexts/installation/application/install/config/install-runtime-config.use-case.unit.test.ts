@@ -31,7 +31,7 @@ function buildUseCase(
   );
 }
 
-describe("InstallRuntimeConfig", () => {
+describe("installing a tool's runtime config", () => {
   it("writes a text config asset verbatim and records its content hash without warnings", async () => {
     const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);

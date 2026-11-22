@@ -31,7 +31,7 @@ describe("tracked files - one tool's paths and hashes", () => {
     });
   });
 
-  describe("serialized", () => {
+  describe("when tracked files are serialized", () => {
     it("writes the origin beside the hash for a framework-owned file", () => {
       const file: TrackedFile = {
         relativePath: ".claude/rules/a.md",
@@ -51,7 +51,7 @@ describe("tracked files - one tool's paths and hashes", () => {
     });
   });
 
-  describe("parsed", () => {
+  describe("when tracked files are parsed", () => {
     it("reads the origin back for a framework-owned file", () => {
       expect(
         parseTrackedFiles([

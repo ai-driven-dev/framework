@@ -13,7 +13,7 @@ function check(relativePath: string): void {
   });
 }
 
-describe("assertScriptPath", () => {
+describe("checking a script path", () => {
   it("accepts a path inside the plugin script directory", () => {
     expect(() => check(".cursor/hooks/aidd-context/pre.js")).not.toThrow();
   });

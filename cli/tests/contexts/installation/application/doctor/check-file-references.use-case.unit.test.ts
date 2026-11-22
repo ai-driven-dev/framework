@@ -70,7 +70,7 @@ async function issuesFor(
 
 const TRACKED_DOC = [{ relativePath: DOC, toolId: TOOL.claude }];
 
-describe("CheckFileReferences", () => {
+describe("checking the references of tracked files", () => {
   describe("references in a tracked markdown file", () => {
     it("reports a warning for an @ reference to a file that is not on disk", async () => {
       const issues = await issuesFor(

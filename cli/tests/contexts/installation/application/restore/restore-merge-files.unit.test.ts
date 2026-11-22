@@ -19,7 +19,7 @@ async function buildDeps() {
   return buildInstallationDeps({ tools: registeredTools() });
 }
 
-describe("restoreMergeFiles", () => {
+describe("restoring the merge files", () => {
   it("returns null when no merge file has drifted", async () => {
     const deps = await buildDeps();
     const settingsPath = join(PROJECT_ROOT, "settings.json");

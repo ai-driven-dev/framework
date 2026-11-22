@@ -34,7 +34,7 @@ async function resolver() {
   );
 }
 
-describe("ResolveAddedPluginSource", () => {
+describe("resolving the source of an added plugin", () => {
   it("reads the distribution of a plugin that is not from a github marketplace", async () => {
     const added = await (await resolver()).execute({ ...INPUT, githubMarketplace: false });
 

@@ -21,8 +21,8 @@ const claudeFiles = [
   makeFile(".claude/rules/naming.md", "ddeeff"),
 ];
 
-describe("Manifest", () => {
-  describe("addTool()", () => {
+describe("holding the tools an install recorded", () => {
+  describe("adding a tool", () => {
     it("adds a new tool entry", () => {
       const manifest = Manifest.create();
       manifest.addTool(TOOL.claude, "3.0.0", claudeFiles);
@@ -30,7 +30,7 @@ describe("Manifest", () => {
     });
   });
 
-  describe("removeTool()", () => {
+  describe("removing a tool", () => {
     it("removes only the specified tool", () => {
       const manifest = Manifest.create();
       manifest.addTool(TOOL.claude, "3.0.0", claudeFiles);
@@ -46,7 +46,7 @@ describe("Manifest", () => {
     });
   });
 
-  describe("hasTool()", () => {
+  describe("asking whether a tool is installed", () => {
     it("returns true when tool is installed", () => {
       const manifest = Manifest.create();
       manifest.addTool(TOOL.claude, "3.0.0", claudeFiles);
@@ -59,7 +59,7 @@ describe("Manifest", () => {
     });
   });
 
-  describe("getToolVersion()", () => {
+  describe("reading a tool's version", () => {
     it("returns version for installed tool", () => {
       const manifest = Manifest.create();
       manifest.addTool(TOOL.claude, "3.0.0", claudeFiles);
@@ -72,7 +72,7 @@ describe("Manifest", () => {
     });
   });
 
-  describe("isFileTracked()", () => {
+  describe("asking whether a file is tracked", () => {
     it("returns true for a file tracked by a tool", () => {
       const manifest = Manifest.create();
       manifest.addTool(TOOL.claude, "3.0.0", claudeFiles);
@@ -86,7 +86,7 @@ describe("Manifest", () => {
     });
   });
 
-  describe("ownerOf()", () => {
+  describe("finding the tool that owns a file", () => {
     const mergeFiles: MergeFileEntry[] = [
       {
         relativePath: ".mcp.json",
@@ -107,7 +107,7 @@ describe("Manifest", () => {
     });
   });
 
-  describe("mergeFiles", () => {
+  describe("with merge files recorded", () => {
     const mergeFiles: MergeFileEntry[] = [
       {
         relativePath: ".mcp.json",
@@ -165,7 +165,7 @@ describe("Manifest", () => {
     });
   });
 
-  describe("updateToolMergeFiles()", () => {
+  describe("replacing a tool's merge files", () => {
     it("updateToolMergeFiles replaces merge files without touching regular files", () => {
       const mergeEntry: MergeFileEntry = {
         relativePath: ".mcp.json",
@@ -191,7 +191,7 @@ describe("Manifest", () => {
     });
   });
 
-  describe("recordFileHash()", () => {
+  describe("recording a file's hash", () => {
     it("updates the hash when the file is already tracked", () => {
       const manifest = Manifest.create();
       manifest.addTool(TOOL.claude, "3.0.0", claudeFiles);
@@ -258,7 +258,7 @@ describe("Manifest", () => {
     });
   });
 
-  describe("getInstalledDirectories()", () => {
+  describe("listing the directories a tool installed into", () => {
     it("names each top-level directory a tracked file sits under, with its trailing slash", () => {
       const manifest = Manifest.create();
       manifest.addTool(TOOL.claude, "3.0.0", claudeFiles);

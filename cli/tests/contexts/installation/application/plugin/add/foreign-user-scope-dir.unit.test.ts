@@ -41,7 +41,7 @@ const userScoped = Object.values(aiTools)
   .map((id) => tools.aiProfile(id))
   .find((profile) => resolveScopeForInstall(profile) === "user");
 
-describe("foreignUserScopeDir", () => {
+describe("looking for a user-scope directory someone else owns", () => {
   it("has nothing to report for a tool that installs at project scope", async () => {
     const tool = tools.aiProfile(TOOL.claude);
 

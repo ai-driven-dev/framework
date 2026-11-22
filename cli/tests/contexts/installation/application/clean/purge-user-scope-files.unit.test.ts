@@ -25,7 +25,7 @@ function fixture() {
   return { ...doubles, purge };
 }
 
-describe("PurgeUserScopeFiles", () => {
+describe("purging the user-scope files", () => {
   it("purges the proven plugin files and the machine state, keeping the manifest", async () => {
     const { repo, files, machine, purge } = fixture();
 

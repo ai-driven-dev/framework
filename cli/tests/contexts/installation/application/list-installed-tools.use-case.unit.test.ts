@@ -4,7 +4,7 @@ import { InMemoryManifestRepository } from "../../../shared/testing/in-memory-ma
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { aManifest } from "../testing/manifest.builder.js";
 
-describe("ListInstalledTools", () => {
+describe("listing the installed tools", () => {
   it("answers nothing when the project has no manifest", async () => {
     const useCase = new ListInstalledTools(new InMemoryManifestRepository(), registeredTools());
 

@@ -50,7 +50,7 @@ async function issuesFor(
   });
 }
 
-describe("CheckTrackedFiles", () => {
+describe("checking the tracked files", () => {
   describe("a tracked file", () => {
     it("reports nothing when the disk matches the manifest", async () => {
       expect(await issuesFor(CONTENT)).toStrictEqual([]);
@@ -83,7 +83,7 @@ describe("CheckTrackedFiles", () => {
     });
   });
 
-  describe("collectTrackedFiles", () => {
+  describe("collecting the tracked files of every tool", () => {
     it("pairs every tracked file with the tool that owns it", () => {
       const collected = collectTrackedFiles(manifestTracking(TOOL.claude), null);
 

@@ -71,7 +71,7 @@ async function placeForCursor(foundFile: string | undefined) {
   return { deps, logger, manifest };
 }
 
-describe("PlacePlugin", () => {
+describe("placing a plugin on disk", () => {
   it("leaves a user-scope plugin dir it finds already there as it was, warns of it and tracks none of it", async () => {
     const { deps, logger, manifest } = await placeForCursor("# Their own skill");
 

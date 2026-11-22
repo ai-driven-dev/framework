@@ -11,7 +11,7 @@ function entry(keys: readonly string[]) {
   return { relativePath: ".tool/mcp.json", sectionKey: "servers", entries };
 }
 
-describe("cleanMergeFileKeys", () => {
+describe("cleaning the keys an install merged into a file", () => {
   it("keeps the keys the install did not merge and counts the file", async () => {
     const content = JSON.stringify({ servers: { mine: 1, theirs: 2 } });
     const fs = new InMemoryFileAdapter({ [FILE]: content }, [ROOT]);

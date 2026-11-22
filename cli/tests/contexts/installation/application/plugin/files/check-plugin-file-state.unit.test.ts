@@ -3,7 +3,7 @@ import { isPluginFileAtDesiredState } from "../../../../../../src/contexts/insta
 import { FileHash } from "../../../../../../src/shared/domain/file-hash.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
 
-describe("isPluginFileAtDesiredState()", () => {
+describe("comparing a plugin file with its expected hash", () => {
   const path = "/p/a.md";
   const expected = FileHash.of("wanted").value;
 

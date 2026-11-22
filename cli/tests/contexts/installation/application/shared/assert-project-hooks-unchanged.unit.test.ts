@@ -18,7 +18,7 @@ function hooksFile(...plugins: string[]): string {
   });
 }
 
-describe("assertProjectHooksUnchanged", () => {
+describe("before changing a project's hooks", () => {
   it("allows a legacy install with no project contribution and returns the existing hooks during preflight", async () => {
     const content = hooksFile(OTHER);
     const fs = new InMemoryFileAdapter({ [HOOKS_PATH]: content });

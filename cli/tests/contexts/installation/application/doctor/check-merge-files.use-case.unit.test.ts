@@ -52,7 +52,7 @@ async function issuesFor(
   });
 }
 
-describe("CheckMergeFiles", () => {
+describe("checking the merge files", () => {
   describe("a merge file", () => {
     it("reports nothing when every managed key holds its recorded value", async () => {
       expect(await issuesFor(`{ "${KEY}": true }`)).toStrictEqual([]);

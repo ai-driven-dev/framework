@@ -30,7 +30,7 @@ function leafOver(
 const deleted: DriftDescriptor = { relativePath: "gone.md", reason: "deleted" };
 const modified: DriftDescriptor = { relativePath: "edited.md", reason: "modified" };
 
-describe("restoreDriftEntries", () => {
+describe("restoring the drifted entries", () => {
   it("answers nothing when nothing drifted", async () => {
     const leaf = leafOver([]);
 

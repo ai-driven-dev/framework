@@ -33,7 +33,7 @@ function options(aiTools: AiToolId[], ideTools: IdeToolId[]) {
   };
 }
 
-describe("InstallTools", () => {
+describe("installing the tools asked for", () => {
   it("installs nothing when no tool was asked for", async () => {
     const { useCase } = await build();
 

@@ -5,7 +5,7 @@ import { registeredTools, TOOL } from "../../../../shared/testing/registered-too
 import { aManifest } from "../../testing/manifest.builder.js";
 import { aUserPlugin, USER_PLUGIN_NAME } from "../../testing/user-scope-purge.builder.js";
 
-describe("userPluginsOf", () => {
+describe("listing the user-scope plugins of a manifest", () => {
   it("keeps the user-scope plugins with the AI tool each was installed for", () => {
     const projectPlugin = RecordedPlugin.fromJSON({
       name: "kept",

@@ -119,7 +119,7 @@ function removeUseCaseOver(
   return pluginRemover({ fs, manifestRepo });
 }
 
-describe("RemovePlugin", () => {
+describe("removing a plugin from a project on disk", () => {
   describe("remove installed plugin", () => {
     it("deletes plugin files and updates manifest", async () => {
       const deps = await buildInstallationDeps(withCodexActivator());

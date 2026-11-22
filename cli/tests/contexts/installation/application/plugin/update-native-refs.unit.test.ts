@@ -27,7 +27,7 @@ function recordsWithRefs(...refs: string[]): RegistrationRecords {
 const toolIds = [TOOL.codex];
 const command = { projectRoot: "/A", toolIds };
 
-describe("nativeTargets", () => {
+describe("choosing the native refs to update", () => {
   it("lists every native ref of the selected tools when no plugin is named", () => {
     const records = recordsWithRefs("aidd-dev@aidd", "other@aidd");
 
@@ -56,7 +56,7 @@ describe("nativeTargets", () => {
   });
 });
 
-describe("assertSelectionResolves", () => {
+describe("checking that a selection matches something", () => {
   it("refuses a named plugin that matches no file and no native ref", () => {
     expect(() =>
       assertSelectionResolves(
@@ -84,7 +84,7 @@ describe("assertSelectionResolves", () => {
   });
 });
 
-describe("refreshNativeRefs", () => {
+describe("refreshing the native refs", () => {
   it("warns about dependents, applies each refresh and returns the refs", async () => {
     const records = recordsWithRefs("aidd-dev@aidd");
     const targets = nativeTargets(registrationRecordRules, records, { toolIds, options: command });

@@ -50,7 +50,7 @@ function removal(
   });
 }
 
-describe("RemoveToolFiles.remove", () => {
+describe("removing a tool's files", () => {
   it("announces the tool it removes", async () => {
     const target = projectWith({});
     target.manifest.addTool(TOOL.claude, "test", []);

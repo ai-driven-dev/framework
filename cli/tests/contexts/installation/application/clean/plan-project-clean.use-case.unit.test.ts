@@ -32,7 +32,7 @@ function localPlugin(name: string, scope: Scope = "project"): RecordedPlugin {
   });
 }
 
-describe("PlanProjectClean", () => {
+describe("planning the clean of a project", () => {
   it("answers null when the project installed nothing", async () => {
     await expect(planOver(null).execute(registrationRecordRules)).resolves.toBeNull();
   });

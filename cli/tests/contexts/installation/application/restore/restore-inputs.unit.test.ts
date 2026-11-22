@@ -5,7 +5,7 @@ import {
 } from "../../../../../src/contexts/installation/application/restore/restore-inputs.js";
 import { registeredTools } from "../../../../shared/testing/registered-tools.builder.js";
 
-describe("buildFileFilter", () => {
+describe("filtering the files of a restore", () => {
   it("lets every path through when no file was named", () => {
     expect(buildFileFilter(undefined)).toBeNull();
     expect(buildFileFilter([])).toBeNull();
@@ -26,7 +26,7 @@ describe("buildFileFilter", () => {
   });
 });
 
-describe("configRefsOf", () => {
+describe("listing the config artifacts of a restore", () => {
   it("names each config artifact once, hooks left out", () => {
     const names = configRefsOf(registeredTools()).map((ref) => ref.name);
     expect(names.length).toBeGreaterThan(0);

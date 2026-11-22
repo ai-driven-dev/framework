@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { RestoreAgentProviders } from "../../../../../src/contexts/installation/application/agents/restore-agent-providers.use-case.js";
 import { InMemoryAgentModelStore } from "../../testing/in-memory-agent-model-store.fake.js";
 
-describe("RestoreAgentProviders", () => {
+describe("restoring the recorded agent providers", () => {
   it("puts the recorded providers back and names the hosts that lose theirs", async () => {
     const store = new InMemoryAgentModelStore({ a: "x", b: "y" });
     const restore = new RestoreAgentProviders(store);

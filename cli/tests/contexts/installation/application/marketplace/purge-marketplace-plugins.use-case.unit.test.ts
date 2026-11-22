@@ -137,7 +137,7 @@ function setup(seed: Seed = {}) {
   };
 }
 
-describe("PurgeMarketplacePlugins", () => {
+describe("purging a marketplace's plugins from the machine", () => {
   it("refuses a machine with no manifest", async () => {
     const s = setup();
     await s.repo.delete();

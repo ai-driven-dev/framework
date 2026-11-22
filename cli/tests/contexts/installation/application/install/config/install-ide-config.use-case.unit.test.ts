@@ -28,7 +28,7 @@ function buildUseCase(
   );
 }
 
-describe("InstallIdeConfig", () => {
+describe("installing an IDE's config", () => {
   it("writes settings files on fresh install", async () => {
     const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);

@@ -39,7 +39,7 @@ const declared = (mcp: readonly string[]) =>
 const SERVER = JSON.stringify({ mcpServers: { local: { command: "node", args: ["s.js"] } } });
 const opencode = () => registeredTools().aiProfile(TOOL.opencode);
 
-describe("materializeFlatMcp", () => {
+describe("materializing a plugin's MCP servers into a flat config", () => {
   it("answers nothing and writes nothing for a plugin without MCP servers", async () => {
     const fs = new InMemoryFileAdapter();
     const result = await materializeFlatMcp({
@@ -113,7 +113,7 @@ describe("materializeFlatMcp", () => {
   });
 });
 
-describe("refreshTrackedMcpConfigHash", () => {
+describe("after the install rewrote a tracked MCP config", () => {
   const STALE = FileHash.of("before the install");
 
   function manifestTracking(): Manifest {

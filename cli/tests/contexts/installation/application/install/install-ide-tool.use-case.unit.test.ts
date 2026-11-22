@@ -34,7 +34,7 @@ async function installVscode(deps: Deps, propagate: PropagateAiSettingsToIde) {
   });
 }
 
-describe("InstallIdeTool", () => {
+describe("installing an IDE tool", () => {
   it("propagates the AI tools' settings once the IDE config is installed", async () => {
     const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);

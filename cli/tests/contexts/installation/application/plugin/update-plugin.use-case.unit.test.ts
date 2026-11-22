@@ -59,7 +59,7 @@ async function installedSample(pluginRuntime?: UpdatePluginRuntime) {
 
 type UpdatePluginRuntime = UpdatePluginDeps["pluginRuntime"];
 
-describe("UpdatePlugin", () => {
+describe("updating a plugin in a project", () => {
   it("leaves user scope to UpdateUserPluginFiles", async () => {
     const { update } = await installedSample();
 

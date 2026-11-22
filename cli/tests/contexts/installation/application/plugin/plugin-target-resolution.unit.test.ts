@@ -13,7 +13,7 @@ import { aManifest } from "../../testing/manifest.builder.js";
 
 const { cursor } = TOOL;
 
-describe("resolvePluginToolIds()", () => {
+describe("resolving the tools a plugin command targets", () => {
   it("resolves 'all' to the AI tools the manifest holds, in registry order", () => {
     const manifest = aManifest().withTool(cursor, []).withTool(TOOL.claude, []).build();
 
@@ -24,7 +24,7 @@ describe("resolvePluginToolIds()", () => {
   });
 });
 
-describe("resolveScopeForInstall()", () => {
+describe("resolving the scope of a fresh install", () => {
   it("reads the scope a fresh install writes from the tool's own profile", () => {
     expect(resolveScopeForInstall(registeredTools().aiProfile(cursor))).toBe("user");
     expect(resolveScopeForInstall(registeredTools().aiProfile(TOOL.claude))).toBe("project");
@@ -47,7 +47,7 @@ describe("resolvePluginToolIds() order", () => {
   });
 });
 
-describe("scopeBaseOf()", () => {
+describe("resolving the base directory of a recorded scope", () => {
   const home = "/home/u";
   const query = (scope: Scope) => ({
     scope,

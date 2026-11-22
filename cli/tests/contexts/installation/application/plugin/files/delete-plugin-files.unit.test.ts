@@ -6,7 +6,7 @@ import { registeredTools, TOOL } from "../../../../../shared/testing/registered-
 
 const PROJECT_ROOT = "/test-project";
 
-describe("deletePluginFilesForTool()", () => {
+describe("deleting a tool's plugin files", () => {
   it("returns exactly the tracked paths it deleted, in manifest order", async () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(join(PROJECT_ROOT, "a/first.md"), "1");

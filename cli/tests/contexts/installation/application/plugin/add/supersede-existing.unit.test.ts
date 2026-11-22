@@ -24,7 +24,7 @@ function installedManifest(): Manifest {
 
 const REQUEST = { pluginName: "sample", toolIds: [TOOL.claude], projectRoot: "/test-project" };
 
-describe("supersedeExisting", () => {
+describe("when a plugin is already installed", () => {
   it("drops the earlier install on replace and returns what it left behind", async () => {
     const manifest = installedManifest();
 

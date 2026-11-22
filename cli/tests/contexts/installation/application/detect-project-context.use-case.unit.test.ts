@@ -5,7 +5,7 @@ import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adap
 
 const PROJECT_ROOT = "/proj";
 
-describe("DetectProjectContext", () => {
+describe("detecting a project's stack from its files", () => {
   it("detects typescript via tsconfig.json", async () => {
     const fs = new InMemoryFileAdapter({});
     await fs.writeFile(join(PROJECT_ROOT, "tsconfig.json"), "{}");

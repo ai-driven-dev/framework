@@ -58,7 +58,7 @@ function inSyncTool(toolId: ToolId) {
   return { toolId, version: "test", drifted: [] };
 }
 
-describe("ReportStatus", () => {
+describe("reporting a project's status", () => {
   describe("which tools are reported", () => {
     it("fails when no manifest exists", async () => {
       const failure = await statusOver({}, null)
@@ -288,7 +288,7 @@ describe("ReportStatus", () => {
   });
 });
 
-describe("status", () => {
+describe("reporting the drift of installed tools", () => {
   it("reports no drift when no tools are installed", async () => {
     const deps = await buildInstallationDeps({ tools: registeredTools() });
     await new InitProject(
@@ -356,7 +356,7 @@ describe("status", () => {
     expect(report.inSync).toBe(true);
   });
 
-  describe("compareSemver()", () => {
+  describe("comparing two versions", () => {
     it("orders lower major version as smaller", () => {
       expect(compareSemver("1.0.0", "2.0.0")).toBe(-1);
     });

@@ -29,9 +29,9 @@ import { fakeBuildSources } from "../../testing/fake-build-sources.fake.js";
 
 const { cursor } = TOOL;
 
-describe("AddPlugin", () => {
+describe("adding a plugin for Cursor", () => {
   describe("per-tool install strategy (github marketplace)", () => {
-    describe("cursor", () => {
+    describe("with the Cursor tool", () => {
       it("fetches and materializes files in Mode B user-scope", async () => {
         const deps = await buildInstallationDeps({ tools: registeredTools() });
         await initAndInstall(deps, PROJECT_ROOT, cursor);

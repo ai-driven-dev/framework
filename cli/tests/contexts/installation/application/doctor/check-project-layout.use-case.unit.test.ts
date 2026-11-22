@@ -37,7 +37,7 @@ async function issuesFor(onDisk: Record<string, string>) {
   });
 }
 
-describe("CheckProjectLayout", () => {
+describe("checking the project layout", () => {
   describe("orphaned tool directories", () => {
     it("warns about a tool directory holding aidd files the manifest does not track", async () => {
       const issues = await issuesFor({

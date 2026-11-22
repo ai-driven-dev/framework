@@ -31,7 +31,7 @@ function manifestWith(...plugins: RecordedPlugin[]): Manifest {
   return manifest;
 }
 
-describe("previousInstall", () => {
+describe("reading what an earlier install of a plugin left", () => {
   it("collects the recorded MCP entries and project hooks of the named plugin only", () => {
     const withMcp = plugin("sample").withMcpEntries(new Map([["server", "digest"]]));
     const manifest = manifestWith(withMcp, plugin("other"));
@@ -49,7 +49,7 @@ describe("previousInstall", () => {
   });
 });
 
-describe("assertNoDuplicates", () => {
+describe("when a plugin is already installed", () => {
   it("refuses a plugin already installed for a target tool", () => {
     expect(() =>
       assertNoDuplicates("sample", [TOOL.claude], manifestWith(plugin("sample")))
@@ -61,7 +61,7 @@ describe("assertNoDuplicates", () => {
   });
 });
 
-describe("dropExistingPlugin", () => {
+describe("when an existing plugin is dropped", () => {
   it("removes the plugin from every target tool and keeps the others", () => {
     const manifest = manifestWith(plugin("sample"), plugin("other"));
 
@@ -71,7 +71,7 @@ describe("dropExistingPlugin", () => {
   });
 });
 
-describe("assertRequestedVersion", () => {
+describe("when a version is pinned", () => {
   const dist = new PluginDistribution({
     manifest: { name: "sample", version: "1.0.0" },
     format: TOOL.claude,

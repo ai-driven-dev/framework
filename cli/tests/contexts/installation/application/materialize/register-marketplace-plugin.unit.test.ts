@@ -15,7 +15,7 @@ function buildDist(name = "test-plugin"): PluginDistribution {
   });
 }
 
-describe("registerMarketplacePlugin", () => {
+describe("registering a marketplace plugin", () => {
   describe("when adding a plugin for a native tool with marketplace", () => {
     it("registers plugin in manifest with empty files (no materialization)", async () => {
       const manifest = Manifest.create();

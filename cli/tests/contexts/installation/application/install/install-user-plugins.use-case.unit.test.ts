@@ -75,7 +75,7 @@ function run(
   return useCase.execute({ projectRoot: "/project", toolIds, plugins });
 }
 
-describe("InstallUserPlugins", () => {
+describe("installing plugins at user scope", () => {
   it("records each plugin's global files for a tool that copies them, under its marketplace", async () => {
     const { repo, useCase, planUpdate } = setup();
 

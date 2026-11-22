@@ -88,7 +88,7 @@ function fixture(
   return { repo, materializer, logger, refreshed, applied, run };
 }
 
-describe("UpdateUserPluginFiles", () => {
+describe("updating the user-scope plugins", () => {
   it("refuses without a machine manifest", async () => {
     await expect(fixture({ manifest: null }).run()).rejects.toThrow("No machine manifest");
   });

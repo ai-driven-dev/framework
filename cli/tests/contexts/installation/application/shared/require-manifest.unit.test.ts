@@ -4,7 +4,7 @@ import { ManifestUnavailableError } from "../../../../../src/contexts/installati
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 
-describe("requireManifest()", () => {
+describe("requiring a project's manifest", () => {
   it("answers the manifest a project holds", async () => {
     const manifest = Manifest.create();
 

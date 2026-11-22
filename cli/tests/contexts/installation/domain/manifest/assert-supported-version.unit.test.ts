@@ -19,7 +19,7 @@ function refusal(
   throw new Error("expected a refusal");
 }
 
-describe("assertSupportedManifestVersion", () => {
+describe("reading a manifest of some version", () => {
   it("accepts the version this CLI reads", () => {
     expect(() =>
       assertSupportedManifestVersion({ version: MANIFEST_VERSION }, DEFAULT_MANIFEST_CONTEXT)

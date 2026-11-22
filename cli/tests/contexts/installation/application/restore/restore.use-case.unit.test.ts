@@ -29,7 +29,7 @@ function restoreFor(deps: Deps) {
   });
 }
 
-describe("Restore", () => {
+describe("restoring a project", () => {
   it("restores the tools the manifest records when none is named", async () => {
     const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);

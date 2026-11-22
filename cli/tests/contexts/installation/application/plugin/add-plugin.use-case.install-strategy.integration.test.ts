@@ -18,7 +18,7 @@ import { fakeBuildSources } from "../../testing/fake-build-sources.fake.js";
 
 const { copilot, opencode, codex } = TOOL;
 
-describe("AddPlugin", () => {
+describe("adding a plugin per tool install strategy", () => {
   describe("per-tool install strategy (github marketplace)", () => {
     describe("the catalog's strict", () => {
       it("lands on every installed entry, whatever the plugin's own manifest says", async () => {
@@ -55,7 +55,7 @@ describe("AddPlugin", () => {
       });
     });
 
-    describe("opencode", () => {
+    describe("with opencode", () => {
       it("fetches and materializes flat files", async () => {
         const deps = await buildInstallationDeps({ tools: registeredTools() });
         await initAndInstall(deps, PROJECT_ROOT, opencode);
@@ -97,7 +97,7 @@ describe("AddPlugin", () => {
       });
     });
 
-    describe("codex", () => {
+    describe("with codex", () => {
       it("reads version from plugin.json when catalog omits it", async () => {
         const deps = await buildInstallationDeps({ tools: registeredTools() });
         await initAndInstall(deps, PROJECT_ROOT, codex);
@@ -164,7 +164,7 @@ describe("AddPlugin", () => {
       });
     });
 
-    describe("claude", () => {
+    describe("with claude", () => {
       it("reads version from plugin.json when catalog omits it", async () => {
         const deps = await buildInstallationDeps({ tools: registeredTools() });
         await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
@@ -229,7 +229,7 @@ describe("AddPlugin", () => {
       });
     });
 
-    describe("copilot", () => {
+    describe("with copilot", () => {
       it("reads version from plugin.json when catalog omits it", async () => {
         const deps = await buildInstallationDeps({ tools: registeredTools() });
         await initAndInstall(deps, PROJECT_ROOT, copilot);

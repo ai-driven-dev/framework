@@ -11,7 +11,7 @@ function setup(seed: Manifest | null = null) {
 
 const held = async (created: boolean) => created;
 
-describe("ConfigureMachineScope", () => {
+describe("configuring the machine scope", () => {
   describe("given no machine manifest", () => {
     it("creates it and tells the body it did", async () => {
       const { repo, useCase } = setup();

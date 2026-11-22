@@ -17,7 +17,7 @@ const plugin = RecordedPlugin.fromMetadata({
   scope: "user",
 }).plugin;
 
-describe("UserScopePluginFiles.proven", () => {
+describe("proving a user-scope plugin's files", () => {
   it("answers what the proof answers for this plugin, tool and home", async () => {
     const proof = new Map([["skills/x.md", "digest"]]);
     const seen: unknown[] = [];
@@ -31,7 +31,7 @@ describe("UserScopePluginFiles.proven", () => {
   });
 });
 
-describe("UserScopePluginFiles.remove", () => {
+describe("deleting a user-scope plugin's files", () => {
   it("deletes the given files from the user plugins directory of the tool", async () => {
     const fs = new InMemoryFileAdapter();
     const target = join(tool.plugins()?.userPluginsBaseDir(homedir()) ?? "", "skills", "x.md");

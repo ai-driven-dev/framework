@@ -35,7 +35,7 @@ function localPlugin(name: string, scope: Scope = "project"): RecordedPlugin {
   });
 }
 
-describe("AssertProjectRemovable", () => {
+describe("before removing a project's install", () => {
   it("refuses a hook script edited after install unless forced", async () => {
     const script = `${cursorHookScriptDir("aidd-context")}run.js`;
     const installed = FileHash.of("// installed").value;

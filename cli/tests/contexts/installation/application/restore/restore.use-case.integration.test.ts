@@ -18,7 +18,7 @@ import {
   RecordingPrompter,
 } from "../../testing/restore-scenario.builder.js";
 
-describe("restore", () => {
+describe("restoring a project on disk", () => {
   it("aborts if project is not initialized", async () => {
     const deps = await buildInstallationDeps({ tools: registeredTools() });
     const useCase = makeRestoreUseCase(deps);

@@ -47,7 +47,7 @@ async function setup(propagatePlugins = true, own = false) {
   return { deps, run };
 }
 
-describe("InstallAiTool", () => {
+describe("installing an AI tool", () => {
   it("hands back the plugins of the other tools, one named and one with no marketplace", async () => {
     const { run } = await setup();
 

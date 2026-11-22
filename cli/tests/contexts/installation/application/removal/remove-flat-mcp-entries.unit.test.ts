@@ -31,7 +31,7 @@ function contributed() {
   return { content: merged.mergedContent, entries: merged.contributedEntries };
 }
 
-describe("removeFlatMcpEntries", () => {
+describe("removing a plugin's MCP servers from a flat config", () => {
   it("writes the config back without the servers the plugin contributed", async () => {
     const { content, entries } = contributed();
     const fs = new InMemoryFileAdapter({ [MCP_FILE]: content }, [ROOT]);

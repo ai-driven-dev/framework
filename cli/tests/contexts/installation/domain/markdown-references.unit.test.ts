@@ -5,7 +5,7 @@ import {
   isFileReference,
 } from "../../../../src/contexts/installation/domain/markdown-references.js";
 
-describe("isFileReference", () => {
+describe("telling a file reference from a directory", () => {
   it("returns true for a path with a file extension", () => {
     expect(isFileReference("src/utils/helper.ts")).toBe(true);
     expect(isFileReference("README.md")).toBe(true);
@@ -27,7 +27,7 @@ describe("isFileReference", () => {
   });
 });
 
-describe("extractAtReferences", () => {
+describe("extracting @ references", () => {
   it("returns empty array when no @-references are present", () => {
     expect(extractAtReferences("# Heading\nSome content without references.")).toEqual([]);
   });
@@ -53,7 +53,7 @@ describe("extractAtReferences", () => {
   });
 });
 
-describe("extractMarkdownLinkTargets", () => {
+describe("extracting markdown link targets", () => {
   it("returns empty array when no links are present", () => {
     expect(extractMarkdownLinkTargets("Plain text content.")).toEqual([]);
   });

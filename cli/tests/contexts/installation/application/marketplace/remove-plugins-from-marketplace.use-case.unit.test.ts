@@ -82,7 +82,7 @@ const command = (
   confirm: RemovePluginsFromMarketplaceRequest["confirm"] = async () => true
 ): Command => ({ marketplace: MARKET, projectRoot: PROJECT, confirm });
 
-describe("RemovePluginsFromMarketplace", () => {
+describe("removing a marketplace's plugins from a project", () => {
   it("answers nothing to remove when no manifest is saved, without asking", async () => {
     const confirm = vi.fn(async () => true);
     const { useCase } = setup({ manifest: null });

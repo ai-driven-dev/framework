@@ -9,7 +9,7 @@ import { UserManifestRepositoryAdapter } from "../../../../src/contexts/installa
 import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { manifestFileDeps } from "../testing/manifest-file-deps.builder.js";
 
-describe("UserManifestRepositoryAdapter", () => {
+describe("storing the user manifest on disk", () => {
   let userConfigDir: string;
   let adapter: UserManifestRepositoryAdapter;
 
@@ -25,7 +25,7 @@ describe("UserManifestRepositoryAdapter", () => {
     await rm(userConfigDir, { recursive: true, force: true });
   });
 
-  describe("loadIfReadable()", () => {
+  describe("loading a manifest that may be unreadable", () => {
     it("answers the manifest when it is readable", async () => {
       await adapter.save(Manifest.create());
 
@@ -110,7 +110,7 @@ describe("UserManifestRepositoryAdapter", () => {
     });
   });
 
-  describe("delete()", () => {
+  describe("deleting the user manifest", () => {
     it("deletes manifest.json from disk", async () => {
       const manifest = Manifest.create();
       await adapter.save(manifest);

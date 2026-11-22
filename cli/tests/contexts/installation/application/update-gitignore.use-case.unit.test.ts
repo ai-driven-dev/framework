@@ -10,8 +10,8 @@ function build(existing?: string) {
   return { fs, useCase: new UpdateGitignore(fs) };
 }
 
-describe("UpdateGitignore", () => {
-  describe("execute", () => {
+describe("updating a project's gitignore", () => {
+  describe("adding entries to the gitignore", () => {
     it("creates the file from the entries, one per line, ending with a newline", async () => {
       const { fs, useCase } = build();
 
@@ -61,7 +61,7 @@ describe("UpdateGitignore", () => {
     });
   });
 
-  describe("remove", () => {
+  describe("removing an entry from the gitignore", () => {
     it("does nothing when there is no file", async () => {
       const { fs, useCase } = build();
 

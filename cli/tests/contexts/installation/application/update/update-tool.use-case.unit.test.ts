@@ -67,7 +67,7 @@ function commandOf(
   return { toolId, projectRoot: PROJECT, version: "9.9.9", overwriteModified };
 }
 
-describe("UpdateTool", () => {
+describe("updating an installed tool", () => {
   it("installs an AI tool through the runtime installer, forced, at the command's version", async () => {
     const { tool, runtime, ide } = setup();
 

@@ -9,7 +9,7 @@ import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-a
 
 const ROOT = "/project";
 
-describe("trackedFileDrift", () => {
+describe("comparing a tracked file with the disk", () => {
   const files = [{ relativePath: ".tool/a.md", hash: FileHash.of("a") }];
 
   it("reports nothing for a file as installed", async () => {
@@ -35,7 +35,7 @@ describe("trackedFileDrift", () => {
   });
 });
 
-describe("mergeFileDrift", () => {
+describe("comparing a merge file with the disk", () => {
   const mergeFile = {
     relativePath: ".tool/mcp.json",
     sectionKey: "servers",
@@ -62,7 +62,7 @@ describe("mergeFileDrift", () => {
   });
 });
 
-describe("addedFileDrift", () => {
+describe("looking for files the install did not write", () => {
   const scan = {
     directory: ".tool/",
     isTracked: (path: string) => path === ".tool/kept.md",

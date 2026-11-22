@@ -7,7 +7,7 @@ import { aManifest } from "../../testing/manifest.builder.js";
 
 const source = { kind: "local", path: "/p" } as const;
 
-describe("ListPluginSources", () => {
+describe("listing the plugin sources of a project", () => {
   it("answers nothing when the project has no manifest", async () => {
     const useCase = new ListPluginSources(new InMemoryManifestRepository(), registeredTools());
 

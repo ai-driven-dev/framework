@@ -3,7 +3,7 @@ import { Manifest } from "../../../../src/contexts/installation/domain/manifest.
 import { aiddGitignoreEntries } from "../../../../src/contexts/installation/domain/manifest-gitignore-entries.js";
 import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
-describe("aiddGitignoreEntries", () => {
+describe("listing the gitignore entries of a manifest", () => {
   it("lists the plugin cache when no tool is installed", () => {
     expect(aiddGitignoreEntries(Manifest.create(), () => [])).toEqual([".aidd/cache/"]);
   });

@@ -8,7 +8,7 @@ function recorder(providers: Record<string, string> = {}) {
   return { store, record: new RecordAgentProviders(store, registeredTools()) };
 }
 
-describe("RecordAgentProviders", () => {
+describe("recording the agent provider of each host", () => {
   it("records the provider of each host and hands back what was recorded before", async () => {
     const { store, record } = recorder({ opencode: "openai", cursor: "anthropic" });
 

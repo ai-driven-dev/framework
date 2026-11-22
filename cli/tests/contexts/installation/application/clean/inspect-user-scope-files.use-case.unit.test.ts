@@ -12,7 +12,7 @@ function fixture(options: Parameters<typeof userScopeParts>[0] = {}) {
   };
 }
 
-describe("InspectUserScopeFiles", () => {
+describe("inspecting the machine's user-scope files", () => {
   it("reports the manifest's tools, the user plugin dependents, the built versions and the referencing projects", async () => {
     const manifest = aManifest()
       .withTool(TOOL.claude, [])

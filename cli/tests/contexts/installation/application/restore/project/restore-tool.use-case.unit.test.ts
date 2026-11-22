@@ -27,7 +27,7 @@ function setup(manifest: Manifest | null) {
 
 const command = { projectRoot: "/p", force: false, interactive: false };
 
-describe("RestoreTool", () => {
+describe("restoring one tool of a project", () => {
   it("restores the tool at the version the manifest recorded, handing over the manifest it read", async () => {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "5.1.0", []);

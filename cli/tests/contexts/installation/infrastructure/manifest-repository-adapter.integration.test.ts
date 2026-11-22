@@ -6,7 +6,7 @@ import { Manifest } from "../../../../src/contexts/installation/domain/manifest.
 import { ManifestRepositoryAdapter } from "../../../../src/contexts/installation/infrastructure/manifest-repository-adapter.js";
 import { manifestFileDeps } from "../testing/manifest-file-deps.builder.js";
 
-describe("ManifestRepositoryAdapter", () => {
+describe("storing a project manifest on disk", () => {
   let tempDir: string;
   let adapter: ManifestRepositoryAdapter;
 
@@ -22,7 +22,7 @@ describe("ManifestRepositoryAdapter", () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  describe("loadIfReadable()", () => {
+  describe("loading a manifest that may be unreadable", () => {
     it("answers the manifest when it is readable", async () => {
       await adapter.save(Manifest.create());
 
@@ -30,7 +30,7 @@ describe("ManifestRepositoryAdapter", () => {
     });
   });
 
-  describe("delete()", () => {
+  describe("deleting a manifest", () => {
     it("prunes empty .aidd/ directory after manifest deletion", async () => {
       const manifest = Manifest.create();
       await adapter.save(manifest);

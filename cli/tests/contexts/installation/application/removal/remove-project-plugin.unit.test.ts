@@ -65,7 +65,7 @@ class RecordingClaims implements RemovalClaims {
   }
 }
 
-describe("RemoveProjectPlugin.removeLocalIntegration", () => {
+describe("removing a plugin's local integration", () => {
   it("removes the servers the plugin contributed and keeps the ones a person added", async () => {
     const { content, entries } = contributedConfig();
     const fs = new InMemoryFileAdapter();
@@ -125,7 +125,7 @@ describe("RemoveProjectPlugin.removeLocalIntegration hooks", () => {
   });
 });
 
-describe("RemoveProjectPlugin.assertLocalIntegrationRemovable", () => {
+describe("before removing a plugin's local integration", () => {
   it("refuses a hook script edited since install", async () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(join(ROOT, HOOK_SCRIPT), "// edited");
@@ -171,7 +171,7 @@ describe("RemoveProjectPlugin.assertLocalIntegrationRemovable", () => {
   });
 });
 
-describe("RemoveProjectPlugin.deleteLocalFiles", () => {
+describe("deleting a plugin's local files", () => {
   it("deletes exactly the files the plugin tracked", async () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(join(ROOT, "skills/a.md"), "a");
@@ -190,7 +190,7 @@ describe("RemoveProjectPlugin.deleteLocalFiles", () => {
   });
 });
 
-describe("RemoveProjectPlugin.detachClaims", () => {
+describe("detaching a plugin's claims", () => {
   const refs = new Map<ToolId, readonly string[]>([[TOOL.codex, ["p@c"]]]);
 
   it("lets go of the native refs and of each removed user-scope plugin only", async () => {

@@ -64,7 +64,7 @@ const ADD: AddPluginRequest = {
   githubMarketplace: false,
 };
 
-describe("AddPlugin", () => {
+describe("adding a plugin to a project", () => {
   it("adds the plugin for the named tools, then saves the project manifest", async () => {
     const { add, project, placed } = addTo(manifestWithClaude());
 

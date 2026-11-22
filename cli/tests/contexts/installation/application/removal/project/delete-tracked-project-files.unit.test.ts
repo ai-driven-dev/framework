@@ -27,7 +27,7 @@ function localPlugin(name: string): RecordedPlugin {
   });
 }
 
-describe("DeleteTrackedProjectFiles", () => {
+describe("deleting the tracked files of a project", () => {
   it("deletes a project-scope plugin's files from the project and counts them", async () => {
     const manifest = aManifest()
       .withTool(TOOL.claude, [])

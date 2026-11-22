@@ -35,7 +35,7 @@ function recordWith(version: string): Manifest {
 
 const run = { projectRoot: "/test-project", force: false, interactive: false };
 
-describe("RestoreGlobal", () => {
+describe("restoring a whole project", () => {
   it("refuses a project that has no record", async () => {
     const { restore } = recordingRestore();
     const restoreGlobal = new RestoreGlobal(new InMemoryManifestRepository(), restore);

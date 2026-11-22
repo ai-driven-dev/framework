@@ -33,7 +33,7 @@ const makePlugin = (name = "my-plugin", version = "1.0.0") =>
     scope: "project",
   });
 
-describe("addPlugin()", () => {
+describe("adding a plugin to a tool", () => {
   it("adds a plugin to the specified tool", () => {
     const manifest = makeManifest();
     manifest.addPlugin(CLAUDE, makePlugin());
@@ -53,7 +53,7 @@ describe("addPlugin()", () => {
   });
 });
 
-describe("removePlugin()", () => {
+describe("removing a plugin from a tool", () => {
   it("removes a plugin by name", () => {
     const manifest = makeManifest();
     manifest.addPlugin(CLAUDE, makePlugin("to-remove"));
@@ -86,7 +86,7 @@ describe("isFileTracked() with plugins", () => {
   });
 });
 
-describe("updatePlugin()", () => {
+describe("updating a recorded plugin", () => {
   it("replaces only the plugin of that name", () => {
     const manifest = makeManifest();
     manifest.addPlugin(CLAUDE, makePlugin("other"));
@@ -106,7 +106,7 @@ describe("updatePlugin()", () => {
   });
 });
 
-describe("withPlugin()", () => {
+describe("recording a plugin on a copy of the manifest", () => {
   it("adds the plugin when its name is not recorded", () => {
     const manifest = makeManifest();
     manifest.withPlugin(CLAUDE, makePlugin("fresh"));
@@ -135,7 +135,7 @@ describe("withPlugin()", () => {
   });
 });
 
-describe("withoutPlugin()", () => {
+describe("dropping a plugin from a copy of the manifest", () => {
   it("drops the plugin of that name and keeps the others", () => {
     const manifest = makeManifest();
     manifest.addPlugin(CLAUDE, makePlugin("keep"));

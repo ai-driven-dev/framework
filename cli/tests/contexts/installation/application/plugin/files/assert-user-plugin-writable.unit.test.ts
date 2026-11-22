@@ -33,7 +33,7 @@ function write(owned: InstalledPlugin) {
   };
 }
 
-describe("assertUserPluginWritable", () => {
+describe("before writing a user plugin's files", () => {
   it("creates the plugin directory and accepts a first install", async () => {
     const fs = new InMemoryFileAdapter();
 

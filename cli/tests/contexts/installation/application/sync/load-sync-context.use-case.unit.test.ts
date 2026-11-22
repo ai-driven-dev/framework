@@ -78,7 +78,7 @@ const request = (overrides: Partial<LoadSyncContextRequest> = {}): LoadSyncConte
   ...overrides,
 });
 
-describe("LoadSyncContext.execute", () => {
+describe("loading the context of a sync", () => {
   it("answers null when no manifest is saved", async () => {
     expect(await setup({ project: null }).load.execute(request())).toBeNull();
   });
@@ -221,7 +221,7 @@ describe("LoadSyncContext.execute", () => {
   });
 });
 
-describe("LoadSyncContext.runLocked", () => {
+describe("running a sync under the manifest lock", () => {
   it("holds the machine manifest's lock for a project-scope run", async () => {
     const { load, user } = setup({ user: manifestWith() });
 

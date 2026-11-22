@@ -79,7 +79,7 @@ function buildEnsurer(
   return { execute: (command) => cache.execute(command, resolved) };
 }
 
-describe("CacheBuiltMarketplace", () => {
+describe("caching a built marketplace", () => {
   let fs: InMemoryFileAdapter;
   let builds: number;
   let buildFor: BuildFor;

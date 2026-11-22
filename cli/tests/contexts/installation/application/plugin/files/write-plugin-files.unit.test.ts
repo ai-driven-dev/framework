@@ -4,7 +4,7 @@ import { writePluginFiles } from "../../../../../../src/contexts/installation/ap
 import { InstallationFile } from "../../../../../../src/shared/domain/installation-file.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
 
-describe("writePluginFiles()", () => {
+describe("writing plugin files under a base directory", () => {
   it("writes every file under the base directory", async () => {
     const fs = new InMemoryFileAdapter();
 

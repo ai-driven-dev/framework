@@ -70,7 +70,7 @@ async function rematerializeOnCursor(): Promise<number> {
   );
 }
 
-describe("rematerializePlugin()", () => {
+describe("rematerializing an installed plugin", () => {
   it("replaces the recorded entry with the one a fresh install would record", async () => {
     const { count, manifest } = rematerialize();
 

@@ -23,7 +23,7 @@ function machineOver(fs: InMemoryFileAdapter) {
   return new PurgeMachineState({ fs, logger, guards });
 }
 
-describe("PurgeMachineState.builtVersions", () => {
+describe("listing the built versions on the machine", () => {
   it("names each built version once, sorted", async () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(join(CONFIG, "cache", "built", "2.0.0", "a", "x"), "1");
@@ -38,7 +38,7 @@ describe("PurgeMachineState.builtVersions", () => {
   });
 });
 
-describe("PurgeMachineState.purge", () => {
+describe("purging the machine state", () => {
   it("removes the built cache and the self-update check, then the cache shell they emptied", async () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(join(CONFIG, "cache", "built", "1.0.0", "x"), "1");

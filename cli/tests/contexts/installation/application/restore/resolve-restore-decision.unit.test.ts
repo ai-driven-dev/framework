@@ -9,7 +9,7 @@ function neverAsked(): ScriptedPrompter {
   return new ScriptedPrompter([]);
 }
 
-describe("resolveRestoreDecision", () => {
+describe("deciding what to do with a drifted file", () => {
   it("restores a deleted file without asking, whatever the mode", async () => {
     const prompter = neverAsked();
 

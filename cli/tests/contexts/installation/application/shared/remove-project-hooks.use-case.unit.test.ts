@@ -28,7 +28,7 @@ import {
 
 const { cursor } = TOOL;
 
-describe("removeProjectHooks", () => {
+describe("removing a project's hooks", () => {
   it("removes an edited entry and an edited script when told to overwrite edits", async () => {
     const edited = JSON.stringify({
       version: 1,

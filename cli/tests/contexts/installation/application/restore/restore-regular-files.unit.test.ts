@@ -18,7 +18,7 @@ async function buildDeps() {
   return buildInstallationDeps({ tools: registeredTools() });
 }
 
-describe("restoreRegularFiles", () => {
+describe("restoring the regular files", () => {
   it("returns null when no manifest file has drifted", async () => {
     const deps = await buildDeps();
     await deps.fs.writeFile(join(PROJECT_ROOT, "a.md"), "current content");

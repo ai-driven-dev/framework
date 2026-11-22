@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { placementModeOf } from "../../../../../src/contexts/installation/application/materialize/plugin-placement.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
-describe("placementModeOf", () => {
+describe("choosing how a tool places a plugin", () => {
   it("answers nothing for a tool that is not an AI tool", () => {
     expect(placementModeOf(registeredTools().profile(TOOL.vscode))).toBeNull();
   });

@@ -19,7 +19,7 @@ function fixture(options: Parameters<typeof userScopeParts>[0] = {}) {
   };
 }
 
-describe("PurgeUserScopeMachine.purge", () => {
+describe("purging the user-scope machine state", () => {
   it("removes the proven plugin files and purges the machine state, keeping the manifest", async () => {
     const { repo, files, machine, purger: purge } = fixture();
 

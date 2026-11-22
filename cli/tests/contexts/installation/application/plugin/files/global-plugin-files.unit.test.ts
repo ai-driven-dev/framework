@@ -37,7 +37,7 @@ const tree = new InMemoryFileAdapter({
   [`${BUILT}/.opencode/commands/aidd-dev-plan.md`]: "command",
 });
 
-describe("readGlobalPluginFiles", () => {
+describe("reading a plugin's global files", () => {
   it("reads the plugin's skills and the agents its source ships, keyed under the user directory", async () => {
     const files = await readGlobalPluginFiles(tree, {
       builtDir: BUILT,
@@ -90,7 +90,7 @@ describe("readGlobalPluginFiles", () => {
   });
 });
 
-describe("assertGlobalFilesWritable", () => {
+describe("before writing global files", () => {
   const HOME = "/home/me";
   const DIR = join(HOME, ".config", "opencode");
   const under = (...parts: string[]) => join(DIR, ...parts);

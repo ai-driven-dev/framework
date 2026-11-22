@@ -15,8 +15,8 @@ const makePluginData = (overrides: Partial<PluginEntryData> = {}): PluginEntryDa
 
 const installed = () => RecordedPlugin.fromJSON(makePluginData()).plugin;
 
-describe("InstalledPlugin", () => {
-  describe("isFileTracked()", () => {
+describe("an installed plugin", () => {
+  describe("asking whether a file is tracked", () => {
     it("returns true for a tracked file path", () => {
       const plugin = installed();
       expect(plugin.isFileTracked(".claude/plugins/my-plugin/CLAUDE.md")).toBe(true);
@@ -28,7 +28,7 @@ describe("InstalledPlugin", () => {
     });
   });
 
-  describe("withVersion()", () => {
+  describe("changing the version", () => {
     it("returns a new plugin with the updated version", () => {
       const plugin = installed();
       const updated = plugin.withVersion("2.0.0");
@@ -46,7 +46,7 @@ describe("InstalledPlugin", () => {
     });
   });
 
-  describe("withFiles()", () => {
+  describe("changing the files", () => {
     it("returns a new plugin with updated files", () => {
       const plugin = installed();
       const newFiles = new Map([["new/path.md", "hash-value"]]);

@@ -43,7 +43,7 @@ function buildAdapter(homedir = "/stub-home") {
   };
 }
 
-describe("placeFlatPlugin", () => {
+describe("placing a plugin in flat mode", () => {
   describe("when tool is flat mode", () => {
     it("materializes plugin files in the correct output directory", async () => {
       const { adapter, fs } = buildAdapter();

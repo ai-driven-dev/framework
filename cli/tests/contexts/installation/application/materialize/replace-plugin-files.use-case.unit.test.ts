@@ -63,7 +63,7 @@ async function replaceOnClaude(marketplace: string | undefined) {
   };
 }
 
-describe("ReplacePluginFiles", () => {
+describe("replacing a plugin's files", () => {
   it("swaps the old files for the new ones for a plugin that came from a local path", async () => {
     const { fs, entry } = await replaceOnClaude(undefined);
 

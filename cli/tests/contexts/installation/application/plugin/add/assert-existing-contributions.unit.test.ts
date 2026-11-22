@@ -20,7 +20,7 @@ const BASE = {
   scope: "project" as const,
 };
 
-describe("assertExistingContributionsUnchanged", () => {
+describe("when a plugin is added over an earlier install", () => {
   it("accepts a plugin that contributed nothing to the project", async () => {
     const manifest = manifestWith(RecordedPlugin.fromMetadata(BASE));
 

@@ -15,7 +15,7 @@ function locator(fs = new InMemoryFileAdapter()) {
   );
 }
 
-describe("MainSessionLocator", () => {
+describe("locating a host's main session settings", () => {
   it("reads the JSONC config when the JSON twin is there too", async () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(JSONC, "{}");

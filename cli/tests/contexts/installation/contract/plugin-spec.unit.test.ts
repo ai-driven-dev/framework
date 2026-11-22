@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parsePluginSpec } from "../../../../src/contexts/installation/contract/plugin-spec.js";
 
-describe("parsePluginSpec", () => {
+describe("reading a plugin spec", () => {
   it("answers a bare name with no version", () => {
     expect(parsePluginSpec("aidd-dev")).toEqual({ name: "aidd-dev" });
   });

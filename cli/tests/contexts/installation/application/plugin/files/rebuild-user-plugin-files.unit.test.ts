@@ -24,7 +24,7 @@ const plugin = RecordedPlugin.fromMetadata({
 const fs = new InMemoryFileAdapter();
 const deps = { fs, builtDeps: fakeBuiltDeps(fs) };
 
-describe("rebuildUserPluginFiles", () => {
+describe("rebuilding a user plugin's files", () => {
   it("translates the distribution when the plugin has no registered marketplace", async () => {
     const { files } = await rebuildUserPluginFiles(deps, {
       dist,

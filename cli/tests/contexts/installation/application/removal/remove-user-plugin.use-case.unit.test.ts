@@ -68,7 +68,7 @@ function fixture(
   return { repo, files, host, run };
 }
 
-describe("RemoveUserPlugin", () => {
+describe("removing a user-scope plugin", () => {
   it("deletes the proven files and drops the plugin from the machine manifest", async () => {
     const { repo, files, run } = fixture();
 

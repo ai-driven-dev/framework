@@ -24,7 +24,7 @@ function restorer(dryRun: boolean) {
   return { requests, outcome, result: restore.execute({ dryRun }) };
 }
 
-describe("RestoreMainSessionModels", () => {
+describe("restoring the recorded main session models", () => {
   it("sets every recorded host back with no provider chosen", async () => {
     const { requests, outcome, result } = restorer(false);
 

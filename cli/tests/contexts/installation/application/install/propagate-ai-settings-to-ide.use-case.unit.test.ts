@@ -50,7 +50,7 @@ function parsed(deps: Deps, relativePath: string) {
   return JSON.parse(deps.fs.getFile(join(PROJECT_ROOT, relativePath)) ?? "");
 }
 
-describe("PropagateAiSettingsToIde", () => {
+describe("propagating AI tool settings to an IDE", () => {
   it("merges under the strategy the capability declares", async () => {
     const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.copilot);

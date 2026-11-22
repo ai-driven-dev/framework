@@ -21,7 +21,7 @@ function localPlugin(name: string): RecordedPlugin {
   });
 }
 
-describe("RemoveMachineLocalFiles", () => {
+describe("removing the machine-local files of a project", () => {
   it("deletes the machine-local settings file a tool writes and counts it", async () => {
     const tools = registeredTools();
     const [settings] = tools.profile(TOOL.claude).machineLocalFiles();

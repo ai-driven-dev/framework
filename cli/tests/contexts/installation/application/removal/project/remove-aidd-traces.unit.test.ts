@@ -21,7 +21,7 @@ function tracesOver(
   );
 }
 
-describe("RemoveAiddTraces", () => {
+describe("removing AIDD's traces from a project", () => {
   it("takes back every machine-local gitignore line the install added", async () => {
     const [machineLocal] = registeredTools().profile(TOOL.claude).machineLocalFiles();
     const manifest = Manifest.create();

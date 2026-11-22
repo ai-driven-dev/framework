@@ -54,7 +54,7 @@ function distWithHooks(hooks: readonly PluginComponentFile[]): PluginDistributio
   });
 }
 
-describe("ProjectHooksMaterializer", () => {
+describe("materializing a project's hooks", () => {
   it("refuses a preexisting user-owned script without changing the project's hooks", async () => {
     const scriptPath = join(PROJECT_ROOT, ".cursor/hooks", PLUGIN_NAME, "extra.js");
     const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);

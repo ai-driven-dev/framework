@@ -18,7 +18,7 @@ async function conflictOver(disk: string | null, recorded: string | null): Promi
   });
 }
 
-describe("ResolveSyncConflict", () => {
+describe("looking for a sync conflict", () => {
   it("finds a conflict when the file on disk changed since the manifest recorded it", async () => {
     expect(await conflictOver("edited", "installed")).toBe(true);
   });

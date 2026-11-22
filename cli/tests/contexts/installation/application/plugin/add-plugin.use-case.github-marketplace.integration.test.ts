@@ -25,7 +25,7 @@ import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry
 
 const { opencode, codex } = TOOL;
 
-describe("AddPlugin", () => {
+describe("adding a plugin from a GitHub marketplace", () => {
   describe("github marketplace plugin", () => {
     it("registers a plugin reference without materializing files", async () => {
       const deps = await buildInstallationDeps({ tools: registeredTools() });

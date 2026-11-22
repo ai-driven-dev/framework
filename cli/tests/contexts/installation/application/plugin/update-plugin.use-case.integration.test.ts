@@ -97,7 +97,7 @@ function installed(deps: Deps, name: string) {
     .find((p) => p.name === name);
 }
 
-describe("UpdatePlugin", () => {
+describe("updating a plugin on disk", () => {
   it("skips machine-owned Cursor plugins in an unnamed project sweep", async () => {
     const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.cursor);

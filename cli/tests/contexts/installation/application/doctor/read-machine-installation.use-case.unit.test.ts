@@ -27,7 +27,7 @@ function machineWith(plugin?: RecordedPlugin): Manifest {
 const readOf = (manifest: Manifest | null) =>
   new ReadMachineInstallation(manifestRepositoryLoading(async () => manifest)).execute();
 
-describe("ReadMachineInstallation", () => {
+describe("reading the machine's installation", () => {
   it("answers null when nothing is registered at user scope", async () => {
     expect(await readOf(null)).toBeNull();
   });

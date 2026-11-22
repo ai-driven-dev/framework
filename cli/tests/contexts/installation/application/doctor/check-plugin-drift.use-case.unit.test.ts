@@ -49,7 +49,7 @@ function checkerOver(disk: Record<string, string>) {
   );
 }
 
-describe("CheckPluginDrift", () => {
+describe("checking plugin files for drift", () => {
   it("answers no issue when every tracked file matches", async () => {
     const issues = await checkerOver({ "one.md": TRACKED }).execute({
       projectRoot: "/proj",

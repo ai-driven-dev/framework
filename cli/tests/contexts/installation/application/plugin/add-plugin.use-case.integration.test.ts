@@ -30,7 +30,7 @@ import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry
 
 const { opencode } = TOOL;
 
-describe("AddPlugin", () => {
+describe("adding a plugin to a project on disk", () => {
   describe("add local plugin for claude", () => {
     it("writes plugin files and updates manifest", async () => {
       const deps = await buildInstallationDeps({ tools: registeredTools() });
@@ -57,7 +57,7 @@ describe("AddPlugin", () => {
   });
 
   describe("per-tool install strategy (local marketplace)", () => {
-    describe("opencode", () => {
+    describe("with opencode", () => {
       it("materializes flat files even when source is local marketplace", async () => {
         const deps = await buildInstallationDeps({ tools: registeredTools() });
         await initAndInstall(deps, PROJECT_ROOT, opencode);

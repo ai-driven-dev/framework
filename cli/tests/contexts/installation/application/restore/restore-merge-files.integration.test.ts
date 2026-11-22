@@ -12,7 +12,7 @@ import { KeepPrompter } from "../../../../shared/testing/scripted-prompter.fake.
 
 import { makeRestoreUseCase, PROJECT_ROOT } from "../../testing/restore-scenario.builder.js";
 
-describe("restore", () => {
+describe("restoring merge files on disk", () => {
   describe("merge file restore", () => {
     it("reports nothing to restore when merge file keys are unmodified", async () => {
       const deps = await buildInstallationDeps({ tools: registeredTools() });

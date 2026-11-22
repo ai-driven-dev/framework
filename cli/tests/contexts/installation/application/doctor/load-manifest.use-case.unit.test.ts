@@ -13,7 +13,7 @@ function failingWith(error: Error): ManifestRepository {
   })();
 }
 
-describe("LoadManifest", () => {
+describe("loading a project's manifest", () => {
   it("answers the manifest a project holds", async () => {
     const manifest = Manifest.create();
 

@@ -52,8 +52,8 @@ const makePluginData = (overrides: Partial<PluginEntryData> = {}): PluginEntryDa
   ...overrides,
 });
 
-describe("RecordedPlugin", () => {
-  describe("fromJSON()", () => {
+describe("a recorded plugin", () => {
+  describe("reading a plugin from JSON", () => {
     it("creates a plugin from valid data", () => {
       const plugin = RecordedPlugin.fromJSON(makePluginData());
       expect(plugin.plugin.name).toBe("my-plugin");
@@ -122,7 +122,7 @@ describe("RecordedPlugin", () => {
     });
   });
 
-  describe("toJSON()", () => {
+  describe("writing a plugin to JSON", () => {
     it("round-trips via fromJSON/toJSON", () => {
       const data = makePluginData();
       const plugin = RecordedPlugin.fromJSON(data);
@@ -155,7 +155,7 @@ describe("RecordedPlugin", () => {
     });
   });
 
-  describe("fromDistribution()", () => {
+  describe("building a plugin from a distribution", () => {
     const source = { kind: "github", repo: "owner/my-plugin" } as const;
 
     it("is strict only where the distribution's manifest says so", () => {

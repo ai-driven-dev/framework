@@ -20,7 +20,7 @@ const entry = (overrides: Partial<PluginEntryData> = {}): PluginEntryData => ({
   ...overrides,
 });
 
-describe("recordedPluginFromEntry", () => {
+describe("reading a recorded plugin from an entry", () => {
   it("reads maps and defaults the optional fields", () => {
     const fields = recordedPluginFromEntry(entry());
     expect(fields.plugin.files.get("a.md")).toBe("h1");
@@ -42,7 +42,7 @@ describe("recordedPluginFromEntry", () => {
   });
 });
 
-describe("entryFromRecordedPlugin", () => {
+describe("writing an entry from a recorded plugin", () => {
   it("leaves out what is empty", () => {
     const data = entryFromRecordedPlugin(recordedPluginFromEntry(entry()));
     expect(Object.keys(data).sort()).toEqual(

@@ -28,7 +28,7 @@ function countingLoads(repo: { load: () => Promise<unknown> }): () => number {
   return () => reads;
 }
 
-describe("init", () => {
+describe("initializing a project", () => {
   it("reads the manifest once, whether it initializes or refuses", async () => {
     const deps = await buildInstallationDeps({ tools: registeredTools() });
     const reads = countingLoads(deps.manifestRepo);
@@ -91,7 +91,7 @@ describe("init", () => {
     expect(deps.fs.getFile(docFile)).toBe("custom content");
   });
 
-  describe("initializeIfAbsent", () => {
+  describe("initializing only when the manifest is absent", () => {
     it("creates the manifest and answers true when none exists", async () => {
       const deps = await buildInstallationDeps({ tools: registeredTools() });
 
@@ -201,7 +201,7 @@ describe("init", () => {
     });
   });
 
-  describe("--force", () => {
+  describe("when a forced init finds a manifest", () => {
     it("does not create or alter gitignore while reusing an existing manifest", async () => {
       const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initProject(deps, PROJECT_ROOT);

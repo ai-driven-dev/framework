@@ -32,7 +32,7 @@ function manifest(): Manifest {
   return created;
 }
 
-describe("registerNativeGithubPlugins", () => {
+describe("registering a GitHub plugin with native tools", () => {
   it("records the plugin for each natively installed tool at the catalog version", () => {
     const target = manifest();
 

@@ -36,7 +36,7 @@ function delivery(options: {
   };
 }
 
-describe("assertScriptsNotUserOwned", () => {
+describe("when a hook script is already on disk", () => {
   it("refuses a script already on disk that no earlier install recorded", async () => {
     const fs = new InMemoryFileAdapter({ [SCRIPT_PATH]: "user" });
 
@@ -55,7 +55,7 @@ describe("assertScriptsNotUserOwned", () => {
   });
 });
 
-describe("writeProjectHookScripts", () => {
+describe("writing the project's hook scripts", () => {
   it("writes each script beside the hooks file and returns its digest", async () => {
     const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
 
@@ -66,7 +66,7 @@ describe("writeProjectHookScripts", () => {
   });
 });
 
-describe("removeObsoleteScripts", () => {
+describe("removing the scripts an install no longer ships", () => {
   const previous = new Map([[SCRIPT_RELATIVE, FileHash.of("ours").value]]);
 
   it("deletes a recorded script the new install no longer ships", async () => {

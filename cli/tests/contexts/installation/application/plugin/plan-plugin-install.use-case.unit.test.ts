@@ -17,7 +17,7 @@ function planner(installed: Manifest | null = null): PlanPluginInstall {
   return new PlanPluginInstall(new InMemoryManifestRepository(installed), tools);
 }
 
-describe("PlanPluginInstall", () => {
+describe("planning a plugin install", () => {
   it("accepts the scope each named tool supports", async () => {
     await expect(
       planner().execute({ toolIds: [projectOnly], scope: "project" })

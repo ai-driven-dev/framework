@@ -11,7 +11,7 @@ import { registeredTools, TOOL } from "../../../../../shared/testing/registered-
 
 const BUILT = "/built";
 
-describe("readBuiltUserPluginFiles", () => {
+describe("reading a built user plugin's files", () => {
   it("reads the plugin subtree with every path prefixed by the plugin name", async () => {
     const fs = new InMemoryFileAdapter(
       { "/built/plugins/aidd-dev/skills/a.md": "a", "/built/plugins/other/x.md": "x" },
@@ -29,7 +29,7 @@ describe("readBuiltUserPluginFiles", () => {
   });
 });
 
-describe("withoutDroppedFiles", () => {
+describe("leaving out the files an install drops", () => {
   it("drops the files the engine says an install leaves out, below the plugin's own directory", () => {
     const file = (relativePath: string) =>
       new InstallationFile({ relativePath, content: "", hash: FileHash.of("") });
@@ -44,7 +44,7 @@ describe("withoutDroppedFiles", () => {
   });
 });
 
-describe("readBuiltFlatFiles", () => {
+describe("reading a built flat plugin's files", () => {
   const tool = registeredTools().aiProfile(TOOL.cursor);
 
   it("keeps what the tool says the plugin owns plus the extra paths, and nothing else", async () => {

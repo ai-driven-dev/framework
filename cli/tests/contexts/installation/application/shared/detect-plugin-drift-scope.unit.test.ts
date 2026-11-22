@@ -33,7 +33,7 @@ function manifestWith(plugins: Record<string, Record<string, string>>): Manifest
   return manifest;
 }
 
-describe("DetectPluginDrift", () => {
+describe("detecting plugin drift", () => {
   it("narrows the report to the plugin it was asked about", async () => {
     const manifest = manifestWith({
       "aidd-one": { "aidd-one/a.md": HASH_OF_ONE },

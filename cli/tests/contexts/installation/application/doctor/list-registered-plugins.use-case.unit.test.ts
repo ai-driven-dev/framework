@@ -26,7 +26,7 @@ function listerOver(
   };
 }
 
-describe("ListRegisteredPlugins", () => {
+describe("listing the plugins registered with the hosts", () => {
   it("expects the refs a tool's host registration recorded", async () => {
     const manifest = aManifest().withTool(TOOL.claude, []).build();
     const records: RegistrationRecords = new Map([

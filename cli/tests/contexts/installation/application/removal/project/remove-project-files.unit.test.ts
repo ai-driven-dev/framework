@@ -32,7 +32,7 @@ function removalOver(
   });
 }
 
-describe("RemoveProjectFiles.remove", () => {
+describe("removing a project's files", () => {
   it("removes nothing from a project that installed nothing", async () => {
     await expect(removalOver(null, new InMemoryFileAdapter()).remove(ROOT, true)).resolves.toBe(0);
   });

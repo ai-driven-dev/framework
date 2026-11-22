@@ -78,7 +78,7 @@ describe("a tool's manifest entry", () => {
     });
   });
 
-  describe("serialized", () => {
+  describe("when a tool entry is serialized", () => {
     const storedPlugin = (extra: Record<string, unknown>): PluginEntryData => ({
       name: "aidd-dev",
       source: { kind: "github", repo: "owner/aidd-dev" },

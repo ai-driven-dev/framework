@@ -11,7 +11,7 @@ const exists = (path: string) =>
     () => false
   );
 
-describe("AgentModelStoreAdapter", () => {
+describe("storing the agent models on disk", () => {
   let dir: string;
   let store: AgentModelStoreAdapter;
 

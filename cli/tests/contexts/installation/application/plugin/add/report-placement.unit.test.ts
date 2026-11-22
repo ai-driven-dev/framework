@@ -6,7 +6,7 @@ import {
 import { CapturingLogger } from "../../../../../shared/testing/capturing-logger.fake.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 
-describe("reportSkipWarnings", () => {
+describe("reporting the components a placement skipped", () => {
   it("warns once per skipped component, naming plugin, component, tool and reason", () => {
     const logger = new CapturingLogger();
 
@@ -28,7 +28,7 @@ describe("reportSkipWarnings", () => {
   });
 });
 
-describe("reportInstallNotices", () => {
+describe("reporting the notices of an install", () => {
   it("informs once per notice", () => {
     const logger = new CapturingLogger();
 

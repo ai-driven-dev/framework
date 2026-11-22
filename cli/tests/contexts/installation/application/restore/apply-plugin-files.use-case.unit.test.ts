@@ -56,7 +56,7 @@ async function installedSample() {
   return { deps, apply, command };
 }
 
-describe("ApplyPluginFiles", () => {
+describe("applying a plugin's files", () => {
   it("rewrites a file that is missing and counts it", async () => {
     const { deps, apply, command } = await installedSample();
     await deps.fs.deleteFile(GREET_PATH);

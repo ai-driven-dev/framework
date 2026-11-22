@@ -70,7 +70,7 @@ async function placeForClaude() {
   return { deps, manifest, refreshed };
 }
 
-describe("PlacePlugin", () => {
+describe("placing a plugin in a project", () => {
   it("writes the plugin's files and records the plugin in the project manifest", async () => {
     const { deps, manifest } = await placeForClaude();
 

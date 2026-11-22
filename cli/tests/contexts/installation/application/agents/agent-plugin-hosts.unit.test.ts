@@ -11,7 +11,7 @@ const plugin = (scope: Scope) =>
   RecordedPlugin.fromMetadata({ name: "a", version: "1.0.0", source, strict: false, scope });
 const HOSTS = [TOOL.claude, TOOL.cursor, TOOL.codex];
 
-describe("AgentPluginHosts", () => {
+describe("locating the hosts that hold agent plugins", () => {
   it("places nothing when neither manifest exists", async () => {
     const hosts = new AgentPluginHosts(
       new InMemoryManifestRepository(),

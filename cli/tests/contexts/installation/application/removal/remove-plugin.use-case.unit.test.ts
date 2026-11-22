@@ -70,7 +70,7 @@ function fixture(
   return { repo, fs, withdrawal, run };
 }
 
-describe("RemovePlugin", () => {
+describe("removing a plugin from a project", () => {
   it("deletes the tracked files, drops the plugin from the manifest and saves it", async () => {
     const { repo, fs, run } = fixture();
 

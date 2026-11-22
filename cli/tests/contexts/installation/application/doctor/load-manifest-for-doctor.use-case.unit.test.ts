@@ -17,7 +17,7 @@ function doctorOver(repo: InMemoryManifestRepository) {
   return new LoadManifestForDoctor(new LoadManifest(repo));
 }
 
-describe("LoadManifestForDoctor", () => {
+describe("loading the manifest for the doctor", () => {
   const manifest = () =>
     aManifest().withTool(TOOL.claude, [file]).withTool(TOOL.cursor, []).build();
 

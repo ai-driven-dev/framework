@@ -47,7 +47,7 @@ async function readBuilt(
   );
 }
 
-describe("readTranslatedBuiltTree", () => {
+describe("reading a translated built tree", () => {
   it("reads the built plugin tree and reports no mcp entry for a plugin declaring none", async () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile("/built/cursor/plugins/sample-plugin/skills/demo/SKILL.md", "built skill");
