@@ -6,7 +6,7 @@ import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   buildUseCase,
   CODEX_CACHE_ROOT,
@@ -48,6 +48,7 @@ describe("clean purges a host's own plugin cache: claims", () => {
     const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
     const useCase = buildUseCase({
+      tools: registeredTools(),
       fs,
       manifest: seedManifest(TOOL.codex, MARKETPLACE, MARKETPLACE),
       activator,
@@ -92,6 +93,7 @@ describe("clean purges a host's own plugin cache: claims", () => {
     const userRepo = new InMemoryManifestRepository(machine);
     const activator = new FakeHostActions({ available: true });
     const useCase = buildUseCase({
+      tools: registeredTools(),
       fs: new RecordingFileAdapter({}, EXISTING_DIRECTORIES),
       manifest: seedManifest(TOOL.codex, MARKETPLACE, MARKETPLACE),
       activator,
@@ -134,6 +136,7 @@ describe("clean purges a host's own plugin cache: claims", () => {
     const userRepo = new LockTrackingManifestRepository(machine);
     const activator = new LockAwareActivator(userRepo);
     const useCase = buildUseCase({
+      tools: registeredTools(),
       fs: new RecordingFileAdapter({}, EXISTING_DIRECTORIES),
       manifest: project,
       activator,
@@ -168,6 +171,7 @@ describe("clean purges a host's own plugin cache: claims", () => {
     const emptyCache = join(CODEX_CACHE_ROOT, MARKETPLACE);
     const fs = new RecordingFileAdapter({}, [...EXISTING_DIRECTORIES, emptyCache]);
     const useCase = buildUseCase({
+      tools: registeredTools(),
       fs,
       manifest: seedManifest(TOOL.codex, MARKETPLACE, MARKETPLACE),
       activator,
@@ -191,6 +195,7 @@ describe("clean purges a host's own plugin cache: claims", () => {
     const noRepoLogger = new CapturingLogger();
     const noRepoFs = new RecordingFileAdapter({}, [...EXISTING_DIRECTORIES, emptyCache]);
     const noRepoUseCase = buildUseCase({
+      tools: registeredTools(),
       fs: noRepoFs,
       manifest: seedManifest(TOOL.codex, MARKETPLACE, MARKETPLACE),
       activator: noRepoActivator,
@@ -226,6 +231,7 @@ describe("clean purges a host's own plugin cache: claims", () => {
     const userRepo = new InMemoryManifestRepository(machine);
     const activator = new FakeHostActions({ available: true });
     const useCase = buildUseCase({
+      tools: registeredTools(),
       fs: new RecordingFileAdapter({}, EXISTING_DIRECTORIES),
       manifest: project,
       activator,
@@ -271,6 +277,7 @@ describe("clean purges a host's own plugin cache: claims", () => {
     const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
     const useCase = buildUseCase({
+      tools: registeredTools(),
       fs,
       manifest: seedManifest(TOOL.codex, MARKETPLACE, MARKETPLACE),
       activator,
@@ -305,6 +312,7 @@ describe("clean purges a host's own plugin cache: claims", () => {
     const userRepo = new InMemoryManifestRepository(machine);
     const activator = new FakeHostActions({ available: true });
     const useCase = buildUseCase({
+      tools: registeredTools(),
       fs,
       manifest: seedManifest(TOOL.codex, MARKETPLACE, MARKETPLACE),
       activator,

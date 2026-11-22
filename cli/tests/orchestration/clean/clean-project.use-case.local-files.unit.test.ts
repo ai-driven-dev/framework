@@ -21,11 +21,14 @@ import { RecordingPrompter } from "../../shared/testing/recording-prompter.fake.
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
 import {
-  AT_PROJECT,
-  CleanWithKnownHostSource,
+  atProject,
+  knownHostSourceCleaner,
   md5,
   PROJECT_ROOT,
 } from "../testing/clean-project.builder.js";
+
+const AT_PROJECT = atProject(registeredTools());
+const CleanWithKnownHostSource = knownHostSourceCleaner(registeredTools(), TOOL);
 
 describe("clean: local files", () => {
   describe("machine-local files a tool's own materialization writes outside the manifest", () => {

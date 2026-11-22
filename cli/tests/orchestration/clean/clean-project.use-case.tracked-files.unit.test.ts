@@ -11,12 +11,15 @@ import {
 } from "../../shared/testing/installation-deps.builder.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
-  AT_PROJECT,
-  CleanWithKnownHostSource,
+  atProject,
+  knownHostSourceCleaner,
   PLUGIN_KEY,
   PROJECT_ROOT,
   RecordingFileAdapter,
 } from "../testing/clean-project.builder.js";
+
+const AT_PROJECT = atProject(registeredTools());
+const CleanWithKnownHostSource = knownHostSourceCleaner(registeredTools(), TOOL);
 
 describe("clean: tracked project files", () => {
   it("with force removes .aidd/cache/ entry from .gitignore", async () => {

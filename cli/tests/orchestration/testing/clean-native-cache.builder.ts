@@ -7,6 +7,7 @@ import type { HostMarketplaceRegistry } from "../../../src/contexts/host-registr
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import type { CleanProject } from "../../../src/orchestration/clean/clean-project.use-case.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
@@ -15,7 +16,6 @@ import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js"
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { FakeHostPluginRegistry } from "./fake-host-plugin-registry.fake.js";
 import { projectCleaner } from "./project-cleaner.builder.js";
 
@@ -173,6 +173,7 @@ export function seedAiddMarketplaceRegistry(alias: string, scope: Scope = "proje
 }
 
 export function buildUseCase(deps: {
+  tools: ToolCatalog;
   fs: InMemoryFileAdapter;
   manifest: Manifest;
   activator: FakeHostActions;
@@ -184,7 +185,7 @@ export function buildUseCase(deps: {
   userManifestRepo?: InMemoryManifestRepository;
 }): CleanProject {
   const manifestRepo = new InMemoryManifestRepository(deps.manifest, PROJECT_ROOT);
-  const claudeHostRegistry = deps.hostMarketplaceRegistries?.get(TOOL.claude);
+  const claudeHostRegistry = deps.hostMarketplaceRegistries?.get(deps.binary);
   const nativeReader: HostMarketplaceSources | undefined =
     deps.binary === "codex"
       ? codexHostSource()
@@ -192,6 +193,7 @@ export function buildUseCase(deps: {
         ? new HostRegistryMarketplaceSourceReaderAdapter(claudeHostRegistry)
         : undefined;
   return projectCleaner({
+    tools: deps.tools,
     fs: deps.fs,
     manifestRepo,
     logger: deps.logger,

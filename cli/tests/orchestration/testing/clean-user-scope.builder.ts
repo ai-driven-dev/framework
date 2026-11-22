@@ -7,7 +7,7 @@ import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { claimsRecorded } from "../../shared/testing/host-record-reading.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import type { NamedTools } from "../../shared/testing/named-tools.builder.js";
 import { FakeHostPluginRegistry } from "./fake-host-plugin-registry.fake.js";
 
 export const USER_CONFIG_DIR = "/fake-home/.config/aidd";
@@ -111,10 +111,10 @@ export class StrictListingFileAdapter extends InMemoryFileAdapter {
   }
 }
 
-export function manifestWithClaude(): Manifest {
+export function manifestWithClaude(ids: NamedTools<"claude">): Manifest {
   const manifest = Manifest.create();
-  manifest.addTool(TOOL.claude, "1.0.0", []);
-  manifest.setNativeRegistrations(TOOL.claude, {
+  manifest.addTool(ids.claude, "1.0.0", []);
+  manifest.setNativeRegistrations(ids.claude, {
     binary: "claude",
     marketplaces: [
       {
@@ -130,11 +130,12 @@ export function manifestWithClaude(): Manifest {
 }
 
 export function provenClaudeSources(
+  ids: NamedTools<"claude">,
   source = "/built/claude"
 ): ReadonlyMap<AiToolId, HostMarketplaceSources> {
   return new Map([
     [
-      TOOL.claude,
+      ids.claude,
       {
         read: async () => ({
           location: "known_marketplaces.json",
@@ -146,10 +147,11 @@ export function provenClaudeSources(
 }
 
 export function provenHostPlugins(
+  ids: NamedTools<"claude" | "codex">,
   manifest: Manifest
 ): ReadonlyMap<AiToolId, FakeHostPluginRegistry> {
   const readers = new Map<AiToolId, FakeHostPluginRegistry>();
-  for (const toolId of [TOOL.claude, TOOL.codex]) {
+  for (const toolId of [ids.claude, ids.codex]) {
     const registrations = manifest.getNativeRegistrations(toolId);
     if (registrations === undefined) continue;
     readers.set(

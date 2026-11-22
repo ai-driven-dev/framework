@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import type { MarketplaceTrustStore } from "../../../src/contexts/distribution/ports/marketplace-trust-store.js";
-import { SYNTHETIC_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
+import {
+  SYNTHETIC_TOOL,
+  syntheticCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   makeAlwaysTrustStore,
   makeSilentPrompter,
@@ -13,7 +16,7 @@ describe("InstallPlugin: what it delegates", () => {
   describe("what each delegate receives", () => {
     it("names the action when refusing a non-interactive pick", async () => {
       await expect(
-        makeUseCase().execute({
+        makeUseCase({ tools: syntheticCatalog() }).execute({
           pluginArg: undefined,
           toolIds: "all",
           projectRoot: PROJECT_ROOT,
@@ -25,7 +28,7 @@ describe("InstallPlugin: what it delegates", () => {
     it("hands the pick its tools, project and an interactive flag", async () => {
       const pickExecute = vi.fn().mockResolvedValue({ installed: [] });
 
-      await makeUseCase({ pickExecute }).execute({
+      await makeUseCase({ tools: syntheticCatalog(), pickExecute }).execute({
         pluginArg: undefined,
         toolIds: [SYNTHETIC_TOOL],
         projectRoot: PROJECT_ROOT,
@@ -42,7 +45,7 @@ describe("InstallPlugin: what it delegates", () => {
     it("hands the add the parsed source and the caller's options", async () => {
       const addExecute = vi.fn().mockResolvedValue(undefined);
 
-      const result = await makeUseCase({ addExecute }).execute({
+      const result = await makeUseCase({ tools: syntheticCatalog(), addExecute }).execute({
         pluginArg: PLUGIN_FIXTURE,
         toolIds: [SYNTHETIC_TOOL],
         projectRoot: PROJECT_ROOT,
@@ -62,7 +65,7 @@ describe("InstallPlugin: what it delegates", () => {
     it("hands the marketplace install the parsed name, version and options", async () => {
       const marketplaceExecute = vi.fn().mockResolvedValue({ entry: { name: "my-plugin" } });
 
-      await makeUseCase({ marketplaceExecute }).execute({
+      await makeUseCase({ tools: syntheticCatalog(), marketplaceExecute }).execute({
         pluginArg: "my-plugin@1.2.3",
         toolIds: [SYNTHETIC_TOOL],
         projectRoot: PROJECT_ROOT,
@@ -85,7 +88,7 @@ describe("InstallPlugin: what it delegates", () => {
     it("defaults autoSelect to false when --yes is absent", async () => {
       const marketplaceExecute = vi.fn().mockResolvedValue({ entry: { name: "my-plugin" } });
 
-      await makeUseCase({ marketplaceExecute }).execute({
+      await makeUseCase({ tools: syntheticCatalog(), marketplaceExecute }).execute({
         pluginArg: "my-plugin",
         toolIds: [SYNTHETIC_TOOL],
         projectRoot: PROJECT_ROOT,
@@ -116,7 +119,12 @@ describe("InstallPlugin: what it delegates", () => {
       const trustStore = makeAlwaysTrustStore();
       const prompter = makeSilentPrompter();
 
-      await makeUseCase({ addExecute: vi.fn(), trustStore, prompter }).execute({
+      await makeUseCase({
+        tools: syntheticCatalog(),
+        addExecute: vi.fn(),
+        trustStore,
+        prompter,
+      }).execute({
         pluginArg: PLUGIN_FIXTURE,
         toolIds: "all",
         projectRoot: PROJECT_ROOT,
@@ -131,7 +139,12 @@ describe("InstallPlugin: what it delegates", () => {
       const trustStore = untrustedStore();
       const prompter = makeSilentPrompter();
 
-      await makeUseCase({ addExecute: vi.fn(), trustStore, prompter }).execute({
+      await makeUseCase({
+        tools: syntheticCatalog(),
+        addExecute: vi.fn(),
+        trustStore,
+        prompter,
+      }).execute({
         pluginArg: PLUGIN_FIXTURE,
         toolIds: "all",
         projectRoot: PROJECT_ROOT,
@@ -149,7 +162,12 @@ describe("InstallPlugin: what it delegates", () => {
     it("asks to trust the source by its description", async () => {
       const prompter = makeSilentPrompter();
 
-      await makeUseCase({ addExecute: vi.fn(), trustStore: untrustedStore(), prompter }).execute({
+      await makeUseCase({
+        tools: syntheticCatalog(),
+        addExecute: vi.fn(),
+        trustStore: untrustedStore(),
+        prompter,
+      }).execute({
         pluginArg: PLUGIN_FIXTURE,
         toolIds: "all",
         projectRoot: PROJECT_ROOT,

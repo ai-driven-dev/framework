@@ -7,6 +7,7 @@ import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { RecordingPrompter } from "../../shared/testing/recording-prompter.fake.js";
+import { syntheticCatalog } from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   RecordingFileAdapter,
   StrictListingFileAdapter,
@@ -22,7 +23,12 @@ describe("clean --scope user: whitelist prompt and cache shell", () => {
       const fs = new RecordingFileAdapter();
       const manifestRepo = new InMemoryManifestRepository(Manifest.create());
       const prompter = new RecordingPrompter(true);
-      const useCase = userScopeCleaner({ fs, repo: manifestRepo, prompter });
+      const useCase = userScopeCleaner({
+        tools: syntheticCatalog(),
+        fs,
+        repo: manifestRepo,
+        prompter,
+      });
 
       const result = await useCase.execute({
         projectRoot: "/wherever",
@@ -42,7 +48,12 @@ describe("clean --scope user: whitelist prompt and cache shell", () => {
       const fs = new RecordingFileAdapter();
       const manifestRepo = new InMemoryManifestRepository(Manifest.create());
       const prompter = new RecordingPrompter(false);
-      const useCase = userScopeCleaner({ fs, repo: manifestRepo, prompter });
+      const useCase = userScopeCleaner({
+        tools: syntheticCatalog(),
+        fs,
+        repo: manifestRepo,
+        prompter,
+      });
 
       const result = await useCase.execute({
         projectRoot: "/wherever",
@@ -59,6 +70,7 @@ describe("clean --scope user: whitelist prompt and cache shell", () => {
       const fs = new RecordingFileAdapter();
       const prompter = new RecordingPrompter(true);
       const useCase = userScopeCleaner({
+        tools: syntheticCatalog(),
         fs,
         repo: new InMemoryManifestRepository(Manifest.create()),
         prompter,
@@ -85,6 +97,7 @@ describe("clean --scope user: whitelist prompt and cache shell", () => {
       await userSourceReferences.addReference("2.0.0", "/project-b");
       const prompter = new RecordingPrompter(false);
       const useCase = userScopeCleaner({
+        tools: syntheticCatalog(),
         fs,
         repo: new InMemoryManifestRepository(Manifest.create()),
         userSourceReferences,
@@ -111,7 +124,7 @@ describe("clean --scope user: whitelist prompt and cache shell", () => {
       fs.setFile(marker, "legacy cache");
       const logger = new CapturingLogger();
       const repo = new InMemoryManifestRepository(Manifest.create());
-      const useCase = userScopeCleaner({ fs, repo, logger });
+      const useCase = userScopeCleaner({ tools: syntheticCatalog(), fs, repo, logger });
 
       const result = await useCase.execute({
         projectRoot: "/wherever",
@@ -134,7 +147,7 @@ describe("clean --scope user: whitelist prompt and cache shell", () => {
       fs.setFile(legacy, "legacy cache");
       const machine = Manifest.create();
       const repo = new InMemoryManifestRepository(machine);
-      const useCase = userScopeCleaner({ fs, repo });
+      const useCase = userScopeCleaner({ tools: syntheticCatalog(), fs, repo });
 
       await expect(useCase.execute({ projectRoot: "/wherever", force: true })).rejects.toThrow(
         "permission denied"
@@ -152,6 +165,7 @@ describe("clean --scope user: whitelist prompt and cache shell", () => {
       fs.setSymlink(cacheDir, "/elsewhere/cache");
       const logger = new CapturingLogger();
       const useCase = userScopeCleaner({
+        tools: syntheticCatalog(),
         fs,
         repo: new InMemoryManifestRepository(Manifest.create()),
         logger,
@@ -180,6 +194,7 @@ describe("clean --scope user: whitelist prompt and cache shell", () => {
       await seedWhitelist(fs);
       const logger = new CapturingLogger();
       const useCase = userScopeCleaner({
+        tools: syntheticCatalog(),
         fs,
         repo: new InMemoryManifestRepository(Manifest.create()),
         logger,

@@ -9,7 +9,7 @@ import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
 import {
   manifestWithClaude,
@@ -26,7 +26,7 @@ const homedir = (): string => "/home/dev";
 
 describe("clean --scope user: native preflight", () => {
   it("preflights every native source before uninstalling any other catalogue", async () => {
-    const machine = manifestWithClaude();
+    const machine = manifestWithClaude(TOOL);
     machine.addTool(TOOL.codex, "1.0.0", []);
     machine.setNativeRegistrations(TOOL.codex, {
       binary: "codex",
@@ -44,7 +44,7 @@ describe("clean --scope user: native preflight", () => {
     const codex = new RecordingActivator([]);
     const repo = new InMemoryManifestRepository(machine);
     const fs = new RecordingFileAdapter();
-    const claudeSource = provenClaudeSources().get(TOOL.claude);
+    const claudeSource = provenClaudeSources(TOOL).get(TOOL.claude);
     if (claudeSource === undefined) throw new Error("fixture missing Claude source reader");
     const sources = new Map<AiToolId, HostMarketplaceSources>([
       [TOOL.claude, claudeSource],
@@ -69,6 +69,7 @@ describe("clean --scope user: native preflight", () => {
       ],
     ]);
     const useCase = userScopeCleaner({
+      tools: registeredTools(),
       fs,
       repo,
       activators: new Map([
@@ -76,7 +77,7 @@ describe("clean --scope user: native preflight", () => {
         [TOOL.codex, codex],
       ]),
       sources,
-      pluginRegistries: provenHostPlugins(machine),
+      pluginRegistries: provenHostPlugins(TOOL, machine),
     });
     await expect(useCase.execute({ projectRoot: "/A", force: true })).rejects.toThrow(
       /current host source differs.*reconcile manually/
@@ -117,6 +118,7 @@ describe("clean --scope user: native preflight", () => {
       }),
     };
     const useCase = userScopeCleaner({
+      tools: registeredTools(),
       fs,
       repo,
       activators: new Map([[TOOL.codex, activator]]),
@@ -130,7 +132,7 @@ describe("clean --scope user: native preflight", () => {
     expect(repo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.marketplaces).toHaveLength(1);
   });
   it("refuses an active B native ref even with force, then succeeds only after B detaches", async () => {
-    const machine = manifestWithClaude();
+    const machine = manifestWithClaude(TOOL);
     const registrations = machine.getNativeRegistrations(TOOL.claude);
     if (registrations === undefined) throw new Error("fixture missing native registration");
     machine.setNativeRegistrations(TOOL.claude, {
@@ -141,6 +143,7 @@ describe("clean --scope user: native preflight", () => {
     const fs = new RecordingFileAdapter();
     const activator = new RecordingActivator([]);
     const useCase = userScopeCleaner({
+      tools: registeredTools(),
       fs,
       repo,
       activators: new Map([[TOOL.claude, activator]]),
@@ -153,8 +156,8 @@ describe("clean --scope user: native preflight", () => {
           }),
         ],
       ]),
-      sources: provenClaudeSources(),
-      pluginRegistries: provenHostPlugins(machine),
+      sources: provenClaudeSources(TOOL),
+      pluginRegistries: provenHostPlugins(TOOL, machine),
     });
     await expect(useCase.execute({ projectRoot: "/A", force: true })).rejects.toThrow(
       saying(/active projects.*\/B/)
@@ -205,7 +208,7 @@ describe("clean --scope user: native preflight", () => {
         .withMachineClaim(["/project-foreign"])
     );
     const repo = new InMemoryManifestRepository(machine);
-    const useCase = userScopeCleaner({ fs, repo, homeDir: homedir });
+    const useCase = userScopeCleaner({ tools: registeredTools(), fs, repo, homeDir: homedir });
 
     expect(
       (await useCase.execute({ projectRoot: "/A", force: false })).preview.activePluginDependents
@@ -247,6 +250,7 @@ describe("clean --scope user: native preflight", () => {
     const fs = new RecordingFileAdapter(order);
     await seedWhitelist(fs);
     const useCase = userScopeCleaner({
+      tools: registeredTools(),
       fs,
       repo: new RecordingRepository(Manifest.create()),
       marketplaceRegistry: new RecordingRegistry(),
@@ -269,6 +273,7 @@ describe("clean --scope user: native preflight", () => {
     }
     const repo = new InMemoryManifestRepository(Manifest.create());
     const useCase = userScopeCleaner({
+      tools: registeredTools(),
       fs: new RecordingFileAdapter(),
       repo,
       marketplaceRegistry: new RefusingRegistry(),

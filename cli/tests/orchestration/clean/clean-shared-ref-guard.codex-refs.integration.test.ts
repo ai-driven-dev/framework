@@ -6,7 +6,7 @@ import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claim
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   buildUseCase,
   OTHER_PROJECT,
@@ -27,6 +27,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const logger = new CapturingLogger();
 
     const useCase = buildUseCase({
+      tools: registeredTools(),
       fs,
       manifest: seedManifest(
         TOOL.codex,
@@ -58,6 +59,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const activator = new FakeHostActions({ available: true });
 
     const useCase = buildUseCase({
+      tools: registeredTools(),
       fs,
       manifest: seedManifest(
         TOOL.codex,
@@ -88,6 +90,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const activator = new FakeHostActions({ available: true });
 
     const useCase = buildUseCase({
+      tools: registeredTools(),
       fs,
       manifest: seedManifest(
         TOOL.claude,
@@ -116,6 +119,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const logger = new CapturingLogger();
 
     const useCase = buildUseCase({
+      tools: registeredTools(),
       fs,
       manifest: seedManifest(
         TOOL.codex,
@@ -151,6 +155,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const activator = new FakeHostActions({ available: true });
 
     const useCase = buildUseCase({
+      tools: registeredTools(),
       fs,
       manifest: seedManifest(
         TOOL.codex,
@@ -184,6 +189,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const activator = new FakeHostActions({ available: true });
 
     const useCase = buildUseCase({
+      tools: registeredTools(),
       fs,
       manifest: seedManifest(
         TOOL.codex,
@@ -215,6 +221,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const logger = new CapturingLogger();
 
     const useCase = buildUseCase({
+      tools: registeredTools(),
       fs,
       manifest: seedManifest(
         TOOL.codex,

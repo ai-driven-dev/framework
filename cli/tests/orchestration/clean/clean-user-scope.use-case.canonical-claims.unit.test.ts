@@ -5,7 +5,7 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
 import {
   CLAUDE_CACHE,
@@ -44,6 +44,7 @@ describe("clean --scope user: canonical claims", () => {
       ]);
       const activator = new FakeHostActions({ available: true });
       const clean = userScopeCleaner({
+        tools: registeredTools(),
         repo,
         activators: new Map([[TOOL.copilot, activator]]),
         sources: new Map([
@@ -82,7 +83,7 @@ describe("clean --scope user: canonical claims", () => {
   );
 
   it("reads canonical dependents after acquiring the machine lock", async () => {
-    const machine = manifestWithClaude();
+    const machine = manifestWithClaude(TOOL);
     class LockedRepository extends InMemoryManifestRepository {
       async withExclusiveAccess<T>(action: () => Promise<T>): Promise<T> {
         // A concurrent install completed while clean was waiting for the lock.
@@ -112,11 +113,12 @@ describe("clean --scope user: canonical claims", () => {
     fs.setFile(plugins, "plugin clone");
     const activator = new FakeHostActions({ available: true });
     const useCase = userScopeCleaner({
+      tools: registeredTools(),
       fs,
       repo,
       activators: new Map([[TOOL.claude, activator]]),
-      sources: provenClaudeSources(),
-      pluginRegistries: provenHostPlugins(machine),
+      sources: provenClaudeSources(TOOL),
+      pluginRegistries: provenHostPlugins(TOOL, machine),
     });
 
     await expect(useCase.execute({ projectRoot: "/wherever", force: true })).rejects.toThrow(
@@ -135,7 +137,7 @@ describe("clean --scope user: canonical claims", () => {
   });
 
   it("refuses an owned catalogue with a foreign enabled plugin ref before any global clean effect", async () => {
-    const machine = manifestWithClaude();
+    const machine = manifestWithClaude(TOOL);
     const repo = new InMemoryManifestRepository(machine);
     const fs = new RecordingFileAdapter();
     const foreignCache = join(CLAUDE_CACHE, "aidd-framework", "foreign-payload", "bytes");
@@ -149,10 +151,11 @@ describe("clean --scope user: canonical claims", () => {
       ]),
     });
     const useCase = userScopeCleaner({
+      tools: registeredTools(),
       fs,
       repo,
       activators: new Map([[TOOL.claude, activator]]),
-      sources: provenClaudeSources(),
+      sources: provenClaudeSources(TOOL),
       pluginRegistries: new Map([[TOOL.claude, hostPlugins]]),
     });
     await expect(useCase.execute({ projectRoot: "/A", force: true })).rejects.toThrow(

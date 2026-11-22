@@ -7,7 +7,7 @@ import { claimsRecorded } from "../../shared/testing/host-record-reading.builder
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
 import { effectiveListSources } from "../testing/effective-list-sources.builder.js";
 import { userScopeCleaner } from "../testing/user-scope-cleaner.builder.js";
@@ -63,6 +63,7 @@ for (const [toolId, catalogPath] of [
         ],
       ]);
       const clean = userScopeCleaner({
+        tools: registeredTools(),
         fs,
         repo,
         marketplaceRegistry: registry,
@@ -94,6 +95,7 @@ for (const [toolId, catalogPath] of [
       ]);
       const working = new FakeHostActions({ available: true });
       const finish = userScopeCleaner({
+        tools: registeredTools(),
         fs,
         repo,
         marketplaceRegistry: registry,

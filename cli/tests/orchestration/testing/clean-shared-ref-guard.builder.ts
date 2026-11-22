@@ -5,6 +5,7 @@ import type { HostMarketplaceSources } from "../../../src/contexts/host-registra
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
+import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import type { CleanProject } from "../../../src/orchestration/clean/clean-project.use-case.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import type { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
@@ -121,6 +122,7 @@ export function seedReferences(fs: InMemoryFileAdapter, roots: readonly string[]
 }
 
 export function buildUseCase(deps: {
+  tools: ToolCatalog;
   fs: InMemoryFileAdapter;
   manifest: Manifest;
   activator: FakeHostActions;
@@ -133,6 +135,7 @@ export function buildUseCase(deps: {
   const manifestRepo = new InMemoryManifestRepository(deps.manifest, PROJECT_ROOT);
   const userSourceReferences = new UserSourceReferencesAdapter(deps.fs, () => USER_CONFIG_DIR);
   return projectCleaner({
+    tools: deps.tools,
     fs: deps.fs,
     manifestRepo,
     logger: deps.logger,

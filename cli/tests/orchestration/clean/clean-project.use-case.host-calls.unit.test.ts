@@ -13,13 +13,13 @@ import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js"
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
-  AT_PROJECT,
+  atProject,
   BINARY,
-  CleanWithKnownHostSource,
   CrashingUninstallActivator,
   claudeRefOnHost,
+  knownHostSourceCleaner,
   MARKETPLACE,
   PROJECT_ROOT,
   REF,
@@ -27,6 +27,9 @@ import {
   seedManifestWithNativeRegistrations,
   seedMarketplaceRegistry,
 } from "../testing/clean-project.builder.js";
+
+const AT_PROJECT = atProject(registeredTools());
+const CleanWithKnownHostSource = knownHostSourceCleaner(registeredTools(), TOOL);
 
 describe("clean: host calls", () => {
   describe("undoing a host's own native registration", () => {
@@ -41,7 +44,7 @@ describe("clean: host calls", () => {
         activators: ReadonlyMap<string, HostActions>;
         registry: InMemoryMarketplaceRegistry | undefined;
         hostPluginRegistries?: ReadonlyMap<AiToolId, HostPluginRegistry>;
-      }): CleanWithKnownHostSource {
+      }): InstanceType<typeof CleanWithKnownHostSource> {
         return new CleanWithKnownHostSource(
           deps.fs,
           new InMemoryManifestRepository(deps.manifest, PROJECT_ROOT),
@@ -73,7 +76,7 @@ describe("clean: host calls", () => {
           })
         );
         const useCase = buildUseCase({
-          manifest: seedManifestWithNativeRegistrations(),
+          manifest: seedManifestWithNativeRegistrations(TOOL),
           fs,
           logger,
           activators: new Map([[BINARY, activator]]),
@@ -96,7 +99,7 @@ describe("clean: host calls", () => {
         const logger = new CapturingLogger();
         const activator = new FakeHostActions({ available: true });
         const useCase = buildUseCase({
-          manifest: seedManifestWithNativeRegistrations(),
+          manifest: seedManifestWithNativeRegistrations(TOOL),
           fs,
           logger,
           activators: new Map([[BINARY, activator]]),
@@ -122,12 +125,12 @@ describe("clean: host calls", () => {
           failOnUninstall: [REF],
         });
         const useCase = buildUseCase({
-          manifest: seedClaudeNativeRegistrations(),
+          manifest: seedClaudeNativeRegistrations(TOOL),
           fs,
           logger,
           activators: new Map([[TOOL.claude, activator]]),
           registry: seedMarketplaceRegistry(),
-          hostPluginRegistries: claudeRefOnHost(),
+          hostPluginRegistries: claudeRefOnHost(TOOL),
         });
 
         await useCase.execute({ ...AT_PROJECT, force: true });
@@ -141,12 +144,12 @@ describe("clean: host calls", () => {
       it("propagates an activator failure that is not the host refusing", async () => {
         const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const useCase = buildUseCase({
-          manifest: seedClaudeNativeRegistrations(),
+          manifest: seedClaudeNativeRegistrations(TOOL),
           fs,
           logger: new CapturingLogger(),
           activators: new Map([[TOOL.claude, new CrashingUninstallActivator()]]),
           registry: seedMarketplaceRegistry(),
-          hostPluginRegistries: claudeRefOnHost("project"),
+          hostPluginRegistries: claudeRefOnHost(TOOL, "project"),
         });
 
         await expect(useCase.execute({ ...AT_PROJECT, force: true })).rejects.toThrow(

@@ -6,6 +6,7 @@ import type { MarketplaceTrustStore } from "../../../src/contexts/distribution/p
 import type { PluginAdd } from "../../../src/contexts/installation/application/plugin/add/plugin-add.js";
 import { PlanPluginInstall } from "../../../src/contexts/installation/application/plugin/plan-plugin-install.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { ConfirmPluginSourceTrust } from "../../../src/orchestration/plugin/confirm-plugin-source-trust.use-case.js";
 import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.use-case.js";
 import { InstallPlugin } from "../../../src/orchestration/plugin/install-plugin.use-case.js";
@@ -13,7 +14,6 @@ import type { PluginPick } from "../../../src/orchestration/plugin/pick-plugins.
 import type { Prompter } from "../../../src/orchestration/ports/prompter.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
-import { registeredTools } from "../../shared/testing/registered-tools.builder.js";
 
 export const PLUGIN_FIXTURE = join(
   process.cwd(),
@@ -77,7 +77,9 @@ export function makeUseCases(overrides?: {
   };
 }
 
-export function makeUseCase(overrides?: Parameters<typeof makeUseCases>[0]): InstallPlugin {
+export function makeUseCase(
+  overrides: NonNullable<Parameters<typeof makeUseCases>[0]> & { readonly tools: ToolCatalog }
+): InstallPlugin {
   const {
     pickPlugins,
     pluginAddUseCase,
@@ -87,7 +89,7 @@ export function makeUseCase(overrides?: Parameters<typeof makeUseCases>[0]): Ins
     prompter,
   } = makeUseCases(overrides);
   return new InstallPlugin({
-    planPluginInstall: new PlanPluginInstall(manifestRepo, registeredTools()),
+    planPluginInstall: new PlanPluginInstall(manifestRepo, overrides.tools),
     pickPlugin: pickPlugins,
     addPlugin: pluginAddUseCase,
     installFromMarketplace: pluginInstallFromMarketplaceUseCase,

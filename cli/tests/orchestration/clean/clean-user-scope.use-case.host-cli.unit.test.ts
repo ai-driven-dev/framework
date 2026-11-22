@@ -10,7 +10,7 @@ import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js"
 import { claimsRecorded, hostRecord } from "../../shared/testing/host-record-reading.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   CODEX_CACHE,
   manifestWithClaude,
@@ -64,13 +64,15 @@ describe("clean --scope user: host cli", () => {
       activator: HostActions;
     }) {
       return userScopeCleaner({
+        tools: registeredTools(),
         fs: deps.fs,
-        repo: deps.repo ?? new InMemoryManifestRepository(deps.manifest ?? manifestWithClaude()),
+        repo:
+          deps.repo ?? new InMemoryManifestRepository(deps.manifest ?? manifestWithClaude(TOOL)),
         logger: deps.logger,
         activators: new Map([[deps.binary ?? TOOL.claude, deps.activator]]),
-        sources: deps.nativeSources ?? provenClaudeSources(),
+        sources: deps.nativeSources ?? provenClaudeSources(TOOL),
         pluginRegistries:
-          deps.hostPlugins ?? provenHostPlugins(deps.manifest ?? manifestWithClaude()),
+          deps.hostPlugins ?? provenHostPlugins(TOOL, deps.manifest ?? manifestWithClaude(TOOL)),
       });
     }
 
@@ -115,7 +117,7 @@ describe("clean --scope user: host cli", () => {
     });
 
     it("retains canonical state when the recorded host catalogue is absent", async () => {
-      const manifest = manifestWithClaude();
+      const manifest = manifestWithClaude(TOOL);
       const repo = new InMemoryManifestRepository(manifest);
       const fs = new RecordingFileAdapter();
       const marker = join(seedClaudeCache(fs), "marker.json");
@@ -145,7 +147,7 @@ describe("clean --scope user: host cli", () => {
     it.each<HostFault>(["missing catalogue", "duplicate claim", "disabled ref", "missing ref"])(
       "refuses %s before native or cache cleanup and retains the canonical manifest",
       async (fault) => {
-        const manifest = manifestWithClaude();
+        const manifest = manifestWithClaude(TOOL);
         applyHostFault(manifest, fault);
         const before = manifest.toJSON();
         const repo = new InMemoryManifestRepository(manifest);
@@ -175,7 +177,7 @@ describe("clean --scope user: host cli", () => {
     );
 
     it("refuses a second missing native binary before uninstalling the first tool", async () => {
-      const manifest = manifestWithClaude();
+      const manifest = manifestWithClaude(TOOL);
       manifest.addTool(TOOL.copilot, "1.0.0", []);
       manifest.setNativeRegistrations(TOOL.copilot, {
         binary: "copilot",
@@ -220,7 +222,7 @@ describe("clean --scope user: host cli", () => {
     it.each(["claim", "projection"] as const)(
       "refuses an orphan machine %s before uninstalling a proven catalogue's own ref",
       async (placement) => {
-        const manifest = manifestWithClaude();
+        const manifest = manifestWithClaude(TOOL);
         const registrations = hostRecord(manifest.getNativeRegistrations(TOOL.claude));
         if (registrations === undefined) throw new Error("fixture missing native registration");
         manifest.setNativeRegistrations(TOOL.claude, {
@@ -260,7 +262,7 @@ describe("clean --scope user: host cli", () => {
     );
 
     it("refuses duplicate host catalogue registrations before uninstall or cache purge", async () => {
-      const manifest = manifestWithClaude();
+      const manifest = manifestWithClaude(TOOL);
       const registrations = hostRecord(manifest.getNativeRegistrations(TOOL.claude));
       manifest.setNativeRegistrations(TOOL.claude, {
         ...registrations,

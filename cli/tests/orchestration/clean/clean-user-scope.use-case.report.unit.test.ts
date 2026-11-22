@@ -11,7 +11,7 @@ import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
 import {
   manifestWithClaude,
@@ -50,6 +50,7 @@ describe("clean --scope user: report", () => {
       const activator = new RecordingActivator(order);
       const logger = new CapturingLogger();
       const useCase = userScopeCleaner({
+        tools: registeredTools(),
         fs,
         repo: new InMemoryManifestRepository(null),
         logger,
@@ -85,8 +86,9 @@ describe("clean --scope user: report", () => {
       const fs = new RecordingFileAdapter(order);
       seedClaudeCache(fs);
       const activator = new RecordingActivator(order);
-      const manifestRepo = new InMemoryManifestRepository(manifestWithClaude());
+      const manifestRepo = new InMemoryManifestRepository(manifestWithClaude(TOOL));
       const useCase = userScopeCleaner({
+        tools: registeredTools(),
         fs,
         repo: manifestRepo,
         activators: new Map([[TOOL.claude, activator]]),
@@ -99,8 +101,8 @@ describe("clean --scope user: report", () => {
             }),
           ],
         ]),
-        sources: provenClaudeSources(),
-        pluginRegistries: provenHostPlugins(manifestWithClaude()),
+        sources: provenClaudeSources(TOOL),
+        pluginRegistries: provenHostPlugins(TOOL, manifestWithClaude(TOOL)),
       });
 
       await useCase.execute({
@@ -118,7 +120,11 @@ describe("clean --scope user: report", () => {
 
   describe("the versions built on this machine", () => {
     function buildPreviewUseCase(fs: InMemoryFileAdapter) {
-      return userScopeCleaner({ fs, repo: new InMemoryManifestRepository(Manifest.create()) });
+      return userScopeCleaner({
+        tools: registeredTools(),
+        fs,
+        repo: new InMemoryManifestRepository(Manifest.create()),
+      });
     }
 
     it("lists them sorted, whatever order the cache holds them in", async () => {
@@ -176,7 +182,11 @@ describe("clean --scope user: report", () => {
 
     async function errorsFor(manifest: Manifest): Promise<readonly string[]> {
       const logger = new CapturingLogger();
-      const useCase = userScopeCleaner({ repo: new InMemoryManifestRepository(manifest), logger });
+      const useCase = userScopeCleaner({
+        tools: registeredTools(),
+        repo: new InMemoryManifestRepository(manifest),
+        logger,
+      });
       try {
         await useCase.execute({
           projectRoot: "/wherever",
@@ -244,7 +254,11 @@ describe("clean --scope user: report", () => {
           scope: "project",
         }).withFiles(new Map([["skills/x.md", "hash"]]))
       );
-      const useCase = userScopeCleaner({ fs, repo: new InMemoryManifestRepository(manifest) });
+      const useCase = userScopeCleaner({
+        tools: registeredTools(),
+        fs,
+        repo: new InMemoryManifestRepository(manifest),
+      });
 
       await useCase.execute({
         projectRoot: "/wherever",
