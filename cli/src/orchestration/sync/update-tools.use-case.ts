@@ -1,4 +1,5 @@
 import type { ListInstalledTools } from "../../contexts/installation/application/list-installed-tools.use-case.js";
+import type { PrepareToolUpdate } from "../../contexts/installation/application/update/prepare-tool-update.use-case.js";
 import type {
   PreparedUpdate,
   UpdateTool,
@@ -25,7 +26,8 @@ export interface UpdateToolsResult {
 
 export interface UpdateToolsDeps {
   readonly listInstalledTools: ListInstalledTools;
-  readonly updateTool: UpdateTool;
+  readonly prepareToolUpdate: Pick<PrepareToolUpdate, "execute">;
+  readonly updateTool: Pick<UpdateTool, "execute">;
   readonly resolveUpdateDecision: ResolveUpdateDecision;
   readonly version: string;
 }
@@ -61,7 +63,7 @@ export class UpdateTools {
     const updatedTools: UpdateToolsResult["updatedTools"] = [];
     const errors: GlobalExecutionError[] = [];
     for (const toolId of targetIds) {
-      const prepared = await this.deps.updateTool.prepare({
+      const prepared = await this.deps.prepareToolUpdate.execute({
         toolId,
         projectRoot,
         version,

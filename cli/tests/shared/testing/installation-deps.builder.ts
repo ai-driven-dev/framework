@@ -8,7 +8,12 @@ import { InstallRuntimeConfig } from "../../../src/contexts/installation/applica
 import { TrackedConfigFiles } from "../../../src/contexts/installation/application/install/config/tracked-config-files.use-case.js";
 import { RunPostInstallPipeline } from "../../../src/contexts/installation/application/install/run-post-install-pipeline.use-case.js";
 import { ResolveSyncConflict } from "../../../src/contexts/installation/application/resolve-sync-conflict.use-case.js";
-import { UpdateTool } from "../../../src/contexts/installation/application/update/update-tool.use-case.js";
+import { PrepareToolUpdate } from "../../../src/contexts/installation/application/update/prepare-tool-update.use-case.js";
+import {
+  UpdateTool,
+  type UpdateToolRequest,
+  type UpdateToolResult,
+} from "../../../src/contexts/installation/application/update/update-tool.use-case.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
@@ -125,24 +130,37 @@ export async function initAndInstall(
   return installTool(deps, projectRoot, toolId);
 }
 
-/** One tool's update, prepared then run, as the scenario that owns the failure policy does. */
-export async function updateOf(
-  tool: UpdateTool,
-  command: Parameters<UpdateTool["prepare"]>[0]
-): Promise<Awaited<ReturnType<UpdateTool["execute"]>>> {
-  return tool.execute(await tool.prepare(command));
+/** One tool's update: what reads what it runs against, and what runs it. */
+export interface ToolUpdate {
+  readonly prepare: Pick<PrepareToolUpdate, "execute">;
+  readonly update: Pick<UpdateTool, "execute">;
 }
 
-export function buildUpdateTool(deps: InstallationDeps): UpdateTool {
-  return new UpdateTool(
-    {
-      installRuntimeConfig: deps.installRuntimeConfigUseCase,
-      installIdeConfig: deps.installIdeConfig,
+/** One tool's update, prepared then run, as the scenario that owns the failure policy does. */
+export async function updateOf(
+  { prepare, update }: ToolUpdate,
+  command: UpdateToolRequest
+): Promise<UpdateToolResult> {
+  return update.execute(await prepare.execute(command));
+}
+
+export function buildToolUpdate(deps: InstallationDeps): {
+  prepare: PrepareToolUpdate;
+  update: UpdateTool;
+} {
+  return {
+    prepare: new PrepareToolUpdate({
       resolveSyncConflict: deps.resolveSyncConflict,
       manifestRepo: deps.manifestRepo,
-    },
-    deps.tools
-  );
+    }),
+    update: new UpdateTool(
+      {
+        installRuntimeConfig: deps.installRuntimeConfigUseCase,
+        installIdeConfig: deps.installIdeConfig,
+      },
+      deps.tools
+    ),
+  };
 }
 
 export { FIXTURE_DIR };
