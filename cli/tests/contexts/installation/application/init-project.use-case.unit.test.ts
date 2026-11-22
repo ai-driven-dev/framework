@@ -46,9 +46,7 @@ describe("initializing a project", () => {
     const deps = await buildInstallationDeps({ tools: registeredTools() });
     const reads = countingLoads(deps.manifestRepo);
 
-    await initOf(deps).initializeIfAbsent({
-      projectRoot: PROJECT_ROOT,
-    });
+    await initOf(deps).execute({ projectRoot: PROJECT_ROOT, ifAbsent: true });
 
     expect(reads()).toBe(1);
   });
@@ -95,9 +93,7 @@ describe("initializing a project", () => {
     it("creates the manifest and answers true when none exists", async () => {
       const deps = await buildInstallationDeps({ tools: registeredTools() });
 
-      const created = await initOf(deps).initializeIfAbsent({
-        projectRoot: PROJECT_ROOT,
-      });
+      const { created } = await initOf(deps).execute({ projectRoot: PROJECT_ROOT, ifAbsent: true });
 
       expect(created).toBe(true);
       expect(await deps.manifestRepo.load()).not.toBeNull();
@@ -108,12 +104,18 @@ describe("initializing a project", () => {
       await initProject(deps, PROJECT_ROOT);
       const before = deps.manifestRepo.saveCount;
 
-      const created = await initOf(deps).initializeIfAbsent({
-        projectRoot: PROJECT_ROOT,
-      });
+      const { created } = await initOf(deps).execute({ projectRoot: PROJECT_ROOT, ifAbsent: true });
 
       expect(created).toBe(false);
       expect(deps.manifestRepo.saveCount).toBe(before);
+    });
+    it("answers false when force reuses the existing manifest", async () => {
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
+      await initProject(deps, PROJECT_ROOT);
+
+      const { created } = await initOf(deps).execute({ projectRoot: PROJECT_ROOT, force: true });
+
+      expect(created).toBe(false);
     });
   });
 

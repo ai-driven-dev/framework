@@ -4,6 +4,7 @@ import {
   localFrameworkSource,
 } from "../../../../src/contexts/distribution/contract/framework-source.js";
 import { ProjectContext } from "../../../../src/contexts/installation/contract/project-context.js";
+import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { SetupFlow } from "../../../../src/orchestration/domain/setup-flow.model.js";
 import { PrepareSetupProject } from "../../../../src/orchestration/setup/steps/prepare-setup-project.use-case.js";
 import { syntheticFlowTools } from "../../../shared/testing/synthetic-tool-id.builder.js";
@@ -26,9 +27,10 @@ function prepareOver(parts: { initialized?: boolean; withDetector?: boolean } = 
     calls.push("resolve");
     return null;
   });
-  const initializeIfAbsent = vi.fn(async () => {
-    calls.push("init");
-    return parts.initialized ?? true;
+  // Recorded as "init" only when asked to leave an existing manifest alone.
+  const initialize = vi.fn(async (request: { readonly ifAbsent?: boolean }) => {
+    calls.push(request.ifAbsent === true ? "init" : "init-or-refuse");
+    return { manifest: Manifest.create(), created: parts.initialized ?? true };
   });
   const register = vi.fn(async () => {
     calls.push("register");
@@ -36,10 +38,10 @@ function prepareOver(parts: { initialized?: boolean; withDetector?: boolean } = 
   const prepare = new PrepareSetupProject(
     parts.withDetector === false ? undefined : { execute: detect },
     { execute: resolveSource },
-    { initializeIfAbsent },
+    { execute: initialize },
     register
   );
-  return { prepare, calls, context, resolveSource, register, initializeIfAbsent };
+  return { prepare, calls, context, resolveSource, register, initialize };
 }
 
 describe("preparing a setup project", () => {

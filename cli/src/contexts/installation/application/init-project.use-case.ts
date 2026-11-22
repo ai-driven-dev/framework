@@ -35,11 +35,17 @@ export async function detectToolSignals(
 
 interface InitProjectRequest {
   projectRoot: string;
+  /** Reuses the existing manifest instead of refusing it. */
   force?: boolean;
+  /** Leaves a project that already has a manifest as it is, instead of refusing it. */
+  ifAbsent?: boolean;
 }
 
 interface InitProjectResult {
   manifest: Manifest;
+  /** Whether this call created the manifest, which a caller reports as a fresh start or an
+   * already-set-up project. */
+  created: boolean;
 }
 
 /** What InitProject is built from. */
@@ -87,15 +93,11 @@ export class InitProject {
   }
 
   async execute(options: InitProjectRequest): Promise<InitProjectResult> {
-    return this.initialize(await this.deps.manifestRepo.load(), options);
-  }
-
-  /** Initializes a project that has no manifest yet and leaves one that has. Answers whether
-   * this call created it, which a caller reports as a fresh start or an already-set-up project. */
-  async initializeIfAbsent(options: Omit<InitProjectRequest, "force">): Promise<boolean> {
-    if ((await this.deps.manifestRepo.load()) !== null) return false;
-    await this.initialize(null, { ...options, force: false });
-    return true;
+    const existing = await this.deps.manifestRepo.load();
+    if (options.ifAbsent === true && existing !== null) {
+      return { manifest: existing, created: false };
+    }
+    return this.initialize(existing, options);
   }
 
   private async initialize(
@@ -108,7 +110,7 @@ export class InitProject {
     // The refusal above leaves a record exactly when `force` asked to reuse it.
     const manifest = existing ?? Manifest.create();
     await this.persistInit(manifest, projectRoot, force);
-    return { manifest };
+    return { manifest, created: existing === null };
   }
 
   private async persistInit(

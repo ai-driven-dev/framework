@@ -16,7 +16,7 @@ export class PrepareSetupProject {
   constructor(
     private readonly detectContext: Pick<DetectProjectContext, "execute"> | undefined,
     private readonly resolveSource: Pick<ResolveSetupSource, "execute">,
-    private readonly initProject: Pick<InitProject, "initializeIfAbsent">,
+    private readonly initProject: Pick<InitProject, "execute">,
     private readonly register: RegisterFrameworkSource
   ) {}
 
@@ -28,7 +28,10 @@ export class PrepareSetupProject {
     // Resolved before the manifest is initialized: a non-interactive run with no --source must
     // reject before it ever writes .aidd/manifest.json or touches .gitignore, not after.
     const source = await this.resolveSource.execute(flow);
-    const isNew = await this.initProject.initializeIfAbsent({ projectRoot: flow.projectRoot });
+    const { created: isNew } = await this.initProject.execute({
+      projectRoot: flow.projectRoot,
+      ifAbsent: true,
+    });
     await this.register(flow, source);
     return { context, isNew };
   }
