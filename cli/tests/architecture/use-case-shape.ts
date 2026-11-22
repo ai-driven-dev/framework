@@ -10,10 +10,13 @@ import {
   type ClassDeclaration,
   isClassDeclaration,
   isConstructorDeclaration,
+  isInterfaceDeclaration,
   isMethodDeclaration,
   isObjectBindingPattern,
   isPropertyDeclaration,
   isPropertySignatureDeclaration,
+  isTypeAliasDeclaration,
+  isTypeLiteralNode,
   isTypeReferenceNode,
   type Node,
   type ParameterDeclaration,
@@ -54,12 +57,32 @@ const hasModifier = (node: Node, kind: SyntaxKind): boolean => {
 const isHidden = (node: Node): boolean =>
   hasModifier(node, SyntaxKind.PrivateKeyword) || hasModifier(node, SyntaxKind.ProtectedKeyword);
 
-/** One dependency per parameter, one per name a destructured parameter binds. */
-function dependencies(parameters: readonly ParameterDeclaration[]): number {
-  return parameters.reduce(
-    (total, { name }) => total + (isObjectBindingPattern(name) ? name.elements.length : 1),
-    0
-  );
+/** The fields of the interface or object type `name`, when the file declares it. */
+function fieldsOf(root: SourceFile, name: string): number | undefined {
+  for (const statement of root.statements) {
+    if (isInterfaceDeclaration(statement) && nameOf(statement) === name)
+      return statement.members.length;
+    if (
+      isTypeAliasDeclaration(statement) &&
+      nameOf(statement) === name &&
+      isTypeLiteralNode(statement.type)
+    )
+      return statement.type.members.length;
+  }
+  return undefined;
+}
+
+/** One dependency per parameter, one per name a destructured parameter binds, one per field of a
+ * bag the file declares. */
+function dependencies(root: SourceFile, parameters: readonly ParameterDeclaration[]): number {
+  return parameters.reduce((total, { name, type }) => {
+    if (isObjectBindingPattern(name)) return total + name.elements.length;
+    const bag =
+      type !== undefined && isTypeReferenceNode(type)
+        ? fieldsOf(root, type.typeName.getText())
+        : undefined;
+    return total + (bag ?? 1);
+  }, 0);
 }
 
 const NAMED_IMPORT = /import\s+(?:type\s+)?\{([^}]*)\}\s+from\s+["']([^"']+)["']/g;
@@ -121,10 +144,10 @@ function methodBreaks(
     : [];
 }
 
-function constructorBreaks(classes: readonly ClassDeclaration[]): string[] {
+function constructorBreaks(root: SourceFile, classes: readonly ClassDeclaration[]): string[] {
   return classes.flatMap((declaration) => {
     const constructors = declaration.members.filter(isConstructorDeclaration);
-    const widest = Math.max(0, ...constructors.map((c) => dependencies(c.parameters)));
+    const widest = Math.max(0, ...constructors.map((c) => dependencies(root, c.parameters)));
     return widest > MAX_CONSTRUCTOR_DEPENDENCIES
       ? [`${widest} constructor dependencies, at most ${MAX_CONSTRUCTOR_DEPENDENCIES}`]
       : [];
@@ -160,7 +183,7 @@ function breaksOf(file: string, source: string, root: SourceFile): string[] {
   const classes = root.statements.filter(isClassDeclaration);
   const inClasses =
     classes.length > 0
-      ? [...methodBreaks(file, source, classes), ...constructorBreaks(classes)]
+      ? [...methodBreaks(file, source, classes), ...constructorBreaks(root, classes)]
       : [];
   return [...inClasses, ...catalogBreaks(root)];
 }

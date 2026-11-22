@@ -316,6 +316,22 @@ describe("a use case holds one shape", () => {
     ).toEqual(["6 constructor dependencies, at most 5"]);
   });
 
+  it("counts each field of a dependencies bag declared in the file", () => {
+    const bag = (n: number, form: "interface" | "type") => {
+      const fields = Array.from({ length: n }, (_, i) => `readonly p${i}: P;`).join(" ");
+      const declared =
+        form === "interface" ? `interface D { ${fields} }` : `type D = { ${fields} };`;
+      return `${declared}\nexport class X { constructor(private readonly deps: D) {} execute() {} }`;
+    };
+    expect(breaksOf(`${home}x.ts`, bag(5, "interface"))).toEqual([]);
+    expect(breaksOf(`${home}x.ts`, bag(6, "interface"))).toEqual([
+      "6 constructor dependencies, at most 5",
+    ]);
+    expect(breaksOf(`${home}x.ts`, bag(6, "type"))).toEqual([
+      "6 constructor dependencies, at most 5",
+    ]);
+  });
+
   it("flags the tool catalog taken by a method or an options type, and passes the constructor and a free function", () => {
     expect(breaksOf(`${home}x.ts`, "export class X { execute(t: ToolCatalog) {} }")).toEqual([
       "takes the tool catalog as a method parameter",
