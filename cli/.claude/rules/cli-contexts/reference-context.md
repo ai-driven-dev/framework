@@ -98,7 +98,7 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 | `no-swallowed-catch.grit` does not see the empty catches written inside the template text of `opencode-hooks-bridge.ts`, nor a dynamic `import()` of `seed-from-directory` or a `vi.importActual` of a closed folder | those catches are text, not syntax; no unit test imports the helper dynamically | none, a written limit |
 | `token-owner.grit` does not see an aliased import of `TOKEN_VARIABLE`, a re-export of it, the name inside a template literal, or a destructured `process.env` | no `src` file outside `auth` writes one | none, a written limit |
 | Biome's filename convention does not check `.md` files (the `glossary.md` of each context) | Biome lints source files only | none, a written limit |
-| A `pluginClaims` entry is checked at load as a string `ref` with string `dependents`, never as a well-formed `<plugin>@<marketplace>` | a hand-edited ref that matches no plugin is inert: nothing selects it and a clean drops it with its tool | none, a written limit |
+| A `pluginClaims` entry is checked as a string `ref` with string `dependents` when machine claims read it, not when the manifest loads, and never as a well-formed `<plugin>@<marketplace>` | a hand-edited ref that matches no plugin is inert: nothing selects it and a clean drops it with its tool | none, a written limit |
 | `Prompter` has no contract suite | it answers a person at a terminal, and a prompt has nothing to read back: the doubles script answers, and the real adapter is checked by the e2e journeys that drive it | none, accepted: an interactive port is not a store |
 
 ### Migration state
