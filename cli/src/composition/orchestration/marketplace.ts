@@ -26,11 +26,11 @@ import { SharedFrameworkSource } from "../../contexts/machine-claims/application
 import { userScopeFilesSafeToDelete } from "../../contexts/machine-claims/application/user-scope-plugin-files.js";
 import { AddMarketplace } from "../../orchestration/marketplace/add-marketplace.use-case.js";
 import { CheckMarketplaceUpstream } from "../../orchestration/marketplace/check-marketplace-upstream.use-case.js";
+import { RegisterMarketplace } from "../../orchestration/marketplace/register-marketplace.use-case.js";
 import { RemoveProjectMarketplace } from "../../orchestration/marketplace/remove-project-marketplace.use-case.js";
 import { RemoveRegisteredMarketplace } from "../../orchestration/marketplace/remove-registered-marketplace.use-case.js";
 import { RemoveUserMarketplace } from "../../orchestration/marketplace/remove-user-marketplace.use-case.js";
 import { AskMarketplaceSource } from "../../orchestration/setup/ask-marketplace-source.use-case.js";
-import { RegisterMarketplace } from "../../orchestration/setup/register-marketplace.use-case.js";
 import { ResolveSetupSource } from "../../orchestration/setup/resolve-setup-source.use-case.js";
 import type { RegisterFrameworkSource } from "../../orchestration/setup/setup-flow.js";
 import { ActivateNativeTools } from "../../orchestration/sync/activate-native-tools.use-case.js";
