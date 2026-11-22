@@ -150,6 +150,16 @@ describe("ops", () => {
       assert.match(hit[0].message, /"C" is not in the template/u);
     });
 
+    it("says what an unknown heading's level holds", () => {
+      const hit = findings(rule, `# T demo\n\n${round(ok + "\n### C\n")}`);
+      assert.match(hit[0].message, /: rename it to, or move its text under, one of "### A", "### B"$/u);
+    });
+
+    it("says where a misplaced heading belongs", () => {
+      const hit = findings(rule, `# T demo\n\n${round(ok)}\n## B\n`);
+      assert.match(hit[0].message, /section "B" is not in the template: write it as "### B" under "## Round <n>"$/u);
+    });
+
     it("names a child out of order", () => {
       const hit = findings(rule, "# T demo\n\n## Round 1\n\n### B\n\n| h1 | h2 |\n| -- | -- |\n\n### A\n");
       assert.equal(hit.length, 1);

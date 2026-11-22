@@ -4,6 +4,7 @@
   "unit": "folder",
   "targets": "plugins/*/skills/*",
   "scope": [".claude/skills/*", ".cursor/skills/*", ".opencode/skills/*", ".kilo/skills/*", ".github/skills/*", ".agents/skills/*"],
+  "shell": false,
   "marker": "SKILL.md",
   "rules": {
     "SKILL-01": { "op": "max", "measure": "chars", "in": "SKILL.md", "field": "description", "max": 150,

@@ -4,6 +4,7 @@
   "unit": "file",
   "targets": "plugins/*/agents/*.md",
   "scope": [".claude/agents/*.md"],
+  "shell": false,
   "rules": {
     "AGENT-02": {
       "op": "equals",
