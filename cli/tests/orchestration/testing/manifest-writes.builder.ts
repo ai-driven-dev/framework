@@ -5,17 +5,17 @@ import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation
 import type { NativeRegistrations } from "../../../src/contexts/installation/domain/manifest/native-registrations.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../src/shared/domain/installation-file.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
-import type { ToolId } from "../../../src/shared/domain/tool.js";
+import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { FakeHostMarketplaceSources } from "./fake-host-marketplace-sources.fake.js";
 import { FakeHostPluginRegistry } from "./fake-host-plugin-registry.fake.js";
 
@@ -35,6 +35,8 @@ export class SaveCountingManifestRepository extends InMemoryManifestRepository {
 }
 
 export interface Setup {
+  readonly tools: ToolCatalog;
+  readonly claude: AiToolId;
   readonly toolIds?: readonly ToolId[];
   readonly marketplaceNames?: readonly string[];
   readonly marketplaceScope?: Scope;
@@ -110,13 +112,13 @@ function installedPlugin(): RecordedPlugin {
 }
 
 function projectManifestOf(setup: Setup, toolIds: readonly ToolId[]): Manifest {
+  const { claude } = setup;
   const manifest = Manifest.create();
   const tracked = trackedFilesOf(setup);
-  for (const toolId of toolIds)
-    manifest.addTool(toolId, "test", toolId === "claude" ? tracked : []);
-  if (setup.withPlugin === true) manifest.addPlugin(TOOL.claude, installedPlugin());
+  for (const toolId of toolIds) manifest.addTool(toolId, "test", toolId === claude ? tracked : []);
+  if (setup.withPlugin === true) manifest.addPlugin(claude, installedPlugin());
   if (setup.existingRegistrations !== undefined) {
-    manifest.setNativeRegistrations(TOOL.claude, setup.existingRegistrations);
+    manifest.setNativeRegistrations(claude, setup.existingRegistrations);
   }
   return manifest;
 }
@@ -141,20 +143,21 @@ async function registeredMarketplaces(
 }
 
 function machineRepoOf(
+  claude: AiToolId,
   registrations: NativeRegistrations | undefined
 ): SaveCountingManifestRepository | undefined {
   if (registrations === undefined) return undefined;
   const machine = Manifest.create();
-  machine.addTool(TOOL.claude, "test", []);
-  machine.setNativeRegistrations(TOOL.claude, registrations);
+  machine.addTool(claude, "test", []);
+  machine.setNativeRegistrations(claude, registrations);
   return new SaveCountingManifestRepository(machine);
 }
 
-function hostMarketplaceRegistriesOf(source: string | undefined) {
+function hostMarketplaceRegistriesOf(claude: AiToolId, source: string | undefined) {
   if (source === undefined) return new Map();
   return new Map([
     [
-      TOOL.claude,
+      claude,
       {
         read: async () => ({
           location: "/home/.claude/plugins/known_marketplaces.json",
@@ -166,6 +169,7 @@ function hostMarketplaceRegistriesOf(source: string | undefined) {
 }
 
 function nativeSourcesOf(
+  claude: AiToolId,
   activator: FakeHostActions,
   names: readonly string[],
   hostRegisteredSource: string | undefined
@@ -176,7 +180,7 @@ function nativeSourcesOf(
       : new Map([[MARKETPLACE, { kind: "registry" as const, source: hostRegisteredSource }]]);
   return new Map([
     [
-      TOOL.claude,
+      claude,
       new FakeHostMarketplaceSources(
         activator,
         "registry",
@@ -187,28 +191,29 @@ function nativeSourcesOf(
   ]);
 }
 
-export async function build(setup: Setup = {}) {
+async function buildWith(setup: Setup) {
+  const { claude } = setup;
   const names = setup.marketplaceNames ?? [MARKETPLACE];
-  const toolIds = setup.toolIds ?? [TOOL.claude];
+  const toolIds = setup.toolIds ?? [claude];
   const fs = builtCatalogs(names, toolIds);
   if (setup.settingsOnDisk !== undefined) fs.setFile(SETTINGS_ABSOLUTE, setup.settingsOnDisk);
   const manifest = projectManifestOf(setup, toolIds);
   const manifestRepo = new SaveCountingManifestRepository(manifest);
   const registry = await registeredMarketplaces(names, setup.marketplaceScope ?? "project");
   const activator = setup.activator ?? new FakeHostActions({ available: true });
-  const machineRepo = machineRepoOf(setup.existingMachineRegistrations);
+  const machineRepo = machineRepoOf(claude, setup.existingMachineRegistrations);
   const useCase = marketplaceSync({
-    tools: registeredTools(),
+    tools: setup.tools,
     fs,
     manifestRepo,
     marketplaceRegistry: registry,
     logger: new CapturingLogger(),
     activators: new Map(toolIds.map((toolId) => [toolId, activator])),
     ensureBuilt: buildPerMarketplace(setup.failingBuilds ?? []),
-    hostMarketplaceRegistries: hostMarketplaceRegistriesOf(setup.hostRegisteredSource),
+    hostMarketplaceRegistries: hostMarketplaceRegistriesOf(claude, setup.hostRegisteredSource),
     hostPluginRegistries: new Map([
       [
-        TOOL.claude,
+        claude,
         new FakeHostPluginRegistry({
           location: "/home/.claude/plugins/installed_plugins.json",
           refs: new Map(),
@@ -216,18 +221,20 @@ export async function build(setup: Setup = {}) {
       ],
     ]),
     userManifestRepo: machineRepo,
-    nativeSources: nativeSourcesOf(activator, names, setup.hostRegisteredSource),
+    nativeSources: nativeSourcesOf(claude, activator, names, setup.hostRegisteredSource),
   });
   return { useCase, manifestRepo, manifest, fs, activator, machineRepo };
 }
 
-export function recorded(manifest: Manifest | null | undefined): NativeRegistrations | undefined {
-  return manifest?.getNativeRegistrations(TOOL.claude);
-}
-
-export function trackedSettingsHash(manifest: Manifest): string | undefined {
-  return manifest.getToolFiles(TOOL.claude).find((file) => file.relativePath === SETTINGS_PATH)
-    ?.hash.value;
+/** The scenario's three readers of one sync: build it, read the recorded registrations, read the tracked settings hash. */
+export function manifestWrites(tools: ToolCatalog, claude: AiToolId) {
+  return {
+    build: (setup: Omit<Setup, "tools" | "claude"> = {}) => buildWith({ ...setup, tools, claude }),
+    recorded: (manifest: Manifest | null | undefined): NativeRegistrations | undefined =>
+      manifest?.getNativeRegistrations(claude),
+    trackedSettingsHash: (manifest: Manifest): string | undefined =>
+      manifest.getToolFiles(claude).find((file) => file.relativePath === SETTINGS_PATH)?.hash.value,
+  };
 }
 
 export const FRAMEWORK_ONLY: RegistrationRecord = {

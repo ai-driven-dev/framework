@@ -2,17 +2,17 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
-  build,
   FRAMEWORK_ONLY,
   MARKETPLACE,
+  manifestWrites,
   PLUGIN,
   PROJECT_ROOT,
-  recorded,
   SETTINGS_ABSOLUTE,
-  trackedSettingsHash,
 } from "../testing/manifest-writes.builder.js";
+
+const { build, recorded, trackedSettingsHash } = manifestWrites(registeredTools(), TOOL.claude);
 
 describe("how many times the manifest is written back", () => {
   it("zero times when a run changed nothing, writing no project file either", async () => {

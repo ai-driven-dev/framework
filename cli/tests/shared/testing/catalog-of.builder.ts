@@ -44,3 +44,10 @@ export function registeredAiConfig(id: AiToolId): AiTool {
   if (config.kind !== "ai") throw new UnregisteredToolError(id);
   return config;
 }
+
+/** The registered AI id a name answers to, for a generic test that needs a real host profile's id. */
+export function registeredAiId(name: string): AiToolId {
+  const id = catalogOf().aiToolId(name);
+  if (id === null) throw new UnregisteredToolError(name);
+  return id;
+}
