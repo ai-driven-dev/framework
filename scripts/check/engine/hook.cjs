@@ -299,7 +299,7 @@ function judge(cwd, entries, written) {
 
 /**
  * Stop: the findings on the files the turn wrote, "" when there are none. Consumes the mark, never creates
- * state, and renews the reference time. Silent on a turn that already continued.
+ * state, and renews the reference time. A turn that already continued is silenced by host.continueTurn.
  */
 function atStop(event) {
   const id = sessionOf(event);
@@ -309,7 +309,7 @@ function atStop(event) {
   try {
     sweepState(folder);
     const turn = takeMarks(folder, id);
-    if (turn === null || event.stopActive === true) return "";
+    if (turn === null) return "";
     const entries = contracts();
     const written = new Set(turn.files.map((f) => path.resolve(f)));
     const since = Number(attempt(() => fs.readFileSync(refFile, "utf8"), Number.NaN));
