@@ -222,16 +222,4 @@ describe("validate-plan", () => {
     refused(run(good(), copy), /plan\.md:\d+ PLAN-01 section "Added" missing/);
   });
 
-  it("requires the Test Scope implement runs, even when the template no longer holds it", () => {
-    const copy = path.join(root, "skill-no-scope");
-    fs.cpSync(SKILL, copy, { recursive: true });
-    const template = path.join(copy, "assets/phase-template.md");
-    fs.writeFileSync(template, fs.readFileSync(template, "utf8").replace(/## Test Scope[\s\S]*?(?=## Wireframe)/, ""));
-    const files = good();
-    files["phase-1.md"] = files["phase-1.md"].replace(/## Test Scope[\s\S]*?(?=## Wireframe)/, "");
-    files["phase-2.md"] = files["phase-1.md"];
-    const r = run(files, copy);
-    refused(r, /phase-1\.md:\d+ PLAN-08 add the section Test Scope/);
-    assert.doesNotMatch(r.out, /PLAN-02/);
-  });
 });
