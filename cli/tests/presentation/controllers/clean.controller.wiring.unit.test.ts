@@ -4,7 +4,7 @@ import { bindOutput } from "../../../src/presentation/controllers/global-options
 import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";
 import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
 import { parseToExit } from "../../shared/testing/parse-to-exit.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { SYNTHETIC_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
 
 const cleanProject = vi.fn();
 const cleanUserScope = vi.fn();
@@ -23,7 +23,7 @@ const { registerCleanCommand } = await import(
 const PROJECT_ROOT = process.cwd();
 
 const EMPTY_PREVIEW = {
-  tools: [{ toolId: TOOL.claude, fileCount: 3 }],
+  tools: [{ toolId: SYNTHETIC_TOOL, fileCount: 3 }],
   nativeRegistrations: [],
   totalFileCount: 3,
 };
@@ -81,7 +81,7 @@ describe("aidd clean - the project this command was run in", () => {
   it("previews rather than removes when nothing confirmed it", async () => {
     expect(await run("clean")).toEqual([
       "The following will be removed:",
-      "  claude: 3 files",
+      `  ${SYNTHETIC_TOOL}: 3 files`,
       "  manifest: .aidd/ (config.json, if present, is kept)",
       "Would remove 3 files across 1 tool. Use --force to confirm.",
     ]);

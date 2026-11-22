@@ -14,8 +14,11 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { unusedRawCatalog } from "../../shared/testing/raw-catalog.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../shared/testing/seed-from-directory.builder.js";
+import {
+  SYNTHETIC_TOOL,
+  syntheticCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
 const VALID_FIXTURE = join(process.cwd(), "tests/fixtures/framework/marketplace-sample");
 const PROJECT_ROOT = "/test-project";
@@ -35,7 +38,7 @@ async function buildUseCase() {
   );
   const useCase = new CheckMarketplaceUpstream(
     new CheckMarketplaces(registry, resolveMarketplace),
-    new ListPluginSources(manifestRepo, registeredTools())
+    new ListPluginSources(manifestRepo, syntheticCatalog())
   );
   return { useCase, registry, manifestRepo };
 }
@@ -66,8 +69,8 @@ async function manifestWith(
   ...plugins: readonly RecordedPlugin[]
 ): Promise<void> {
   const manifest = Manifest.create();
-  manifest.addTool(TOOL.claude, "1.0.0", []);
-  for (const plugin of plugins) manifest.addPlugin(TOOL.claude, plugin);
+  manifest.addTool(SYNTHETIC_TOOL, "1.0.0", []);
+  for (const plugin of plugins) manifest.addPlugin(SYNTHETIC_TOOL, plugin);
   await manifestRepo.save(manifest);
 }
 
@@ -153,7 +156,7 @@ describe("what counts as removed upstream", () => {
     const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(result.upstreamRemoved).toStrictEqual([
-      { marketplace: "awesome", plugin: "ghost", toolId: TOOL.claude },
+      { marketplace: "awesome", plugin: "ghost", toolId: SYNTHETIC_TOOL },
     ]);
   });
 

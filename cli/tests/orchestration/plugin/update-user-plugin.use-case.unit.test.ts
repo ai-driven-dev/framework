@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { IsWithinUserScope } from "../../../src/contexts/machine-claims/contract/user-scope-containment.js";
 import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.use-case.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_TOOL,
+  syntheticCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
 describe("UpdateUserPlugin", () => {
   it("hands the host registration's ref selection to the file update", async () => {
@@ -37,7 +40,7 @@ describe("UpdateUserPlugin", () => {
         execute: async (options) => {
           seen.within = options.isWithinUserScope;
           await options.refreshNative({
-            tool: registeredTools().aiProfile(TOOL.cursor),
+            tool: syntheticCatalog().aiProfile(SYNTHETIC_TOOL),
             ref: "a@b",
             projectRoot: "/A",
             registrations: undefined,
