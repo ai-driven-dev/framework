@@ -152,7 +152,7 @@ describe("ops", () => {
 
     it("says what an unknown heading's level holds", () => {
       const hit = findings(rule, `# T demo\n\n${round(ok + "\n### C\n")}`);
-      assert.match(hit[0].message, /; here the template has "### A", "### B"$/u);
+      assert.match(hit[0].message, /: rename it to, or move its text under, one of "### A", "### B"$/u);
     });
 
     it("says where a misplaced heading belongs", () => {
