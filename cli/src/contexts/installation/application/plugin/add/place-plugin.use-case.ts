@@ -10,12 +10,13 @@ import type { ReadonlyNoticeList } from "../../../../tools/contract/plugin-insta
 import type { ToolCatalog } from "../../../../tools/contract/tool-catalog.js";
 // biome-ignore lint/plugin: hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input
 import type { AiToolProfile } from "../../../../tools/contract/tool-profile.js";
+import type { PluginTranslationMode } from "../../../../tools/contract/tool-vocabulary.js";
 import type { Manifest } from "../../../domain/manifest.js";
 import { InstalledPlugin } from "../../../domain/plugins/installed-plugin.js";
 import type { ProjectHooksProvenance } from "../../../domain/plugins/plugin-entry.js";
 import type { InstallRuntimeConfig } from "../../install/config/install-runtime-config.use-case.js";
-import type { PluginTranslator } from "../../materialize/plugin-translator.js";
-import { resolvePluginTranslator } from "../../materialize/resolve-plugin-translator.js";
+import { placementModeOf, placePlugin } from "../../materialize/plugin-placement.js";
+import { registerMarketplacePlugin } from "../../materialize/register-marketplace-plugin.js";
 import type { BuiltMaterializationDeps } from "../../shared/built-materialization-deps.js";
 import { hashOutputFiles } from "../../shared/hash-output-files.js";
 import { resolveScopeForInstall } from "../plugin-target-resolution.js";
@@ -99,34 +100,37 @@ export class PlacePlugin {
   private async placeForTool(placement: ToolPlacement): Promise<Placement> {
     const { command, tool, userScopeDirTaken } = placement;
     const { dist, source, projectRoot, manifest, marketplace } = command;
-    const adapter = resolvePluginTranslator(tool, { fs: this.deps.fs, built: this.deps.built });
-    if (adapter?.mode === "flat") {
-      const result = await adapter.addPlugin({
-        dist,
-        tool,
-        source,
-        projectRoot,
-        manifest,
-        marketplace,
-        previousMcpEntries: command.previousMcpEntries.get(tool.toolId) ?? new Map(),
-        userScopeDirTaken,
-        previousProjectHooks: command.previousProjectHooks.get(tool.toolId),
-      });
+    const mode = placementModeOf(tool);
+    if (mode === "flat") {
+      const result = await placePlugin(
+        {
+          dist,
+          tool,
+          source,
+          projectRoot,
+          manifest,
+          marketplace,
+          previousMcpEntries: command.previousMcpEntries.get(tool.toolId) ?? new Map(),
+          userScopeDirTaken,
+          previousProjectHooks: command.previousProjectHooks.get(tool.toolId),
+        },
+        { fs: this.deps.fs, built: this.deps.built }
+      );
       return { ...result, notices: [] };
     }
     const output = this.deps.built.translate.execute({ distribution: dist, tool });
-    return this.materializeNativePlugin(placement, adapter, {
+    return this.materializeNativePlugin(placement, mode, {
       ...output,
       files: hashOutputFiles(output.files),
     });
   }
 
   // `notices` survives every branch below, including the marketplace one that discards its
-  // own `translated.skipped` in favor of the adapter's: a delivered hook's trust notice is
+  // own `translated.skipped` in favor of the registration's: a delivered hook's trust notice is
   // a fact about the tool, not about which materialization route happened to run.
   private async materializeNativePlugin(
     placement: ToolPlacement,
-    adapter: PluginTranslator | null,
+    mode: PluginTranslationMode | null,
     translated: {
       files: InstallationFile[];
       componentPaths: ReadonlyMap<string, string>;
@@ -138,16 +142,9 @@ export class PlacePlugin {
     const { dist, source, projectRoot, manifest, marketplace } = command;
     const { files, componentPaths, skipped, notices } = translated;
     if (files.length === 0) return { skipped, notices };
-    if (adapter?.mode === "marketplace" && source.kind === "local" && marketplace !== undefined) {
-      const result = await adapter.addPlugin({
-        dist,
-        tool,
-        source,
-        projectRoot,
-        manifest,
-        marketplace,
-      });
-      return { ...result, notices };
+    if (mode === "marketplace" && source.kind === "local" && marketplace !== undefined) {
+      const request = { dist, tool, source, projectRoot, manifest, marketplace };
+      return { ...registerMarketplacePlugin(request), notices };
     }
     await writePluginFiles(files, projectRoot, this.deps.fs);
     manifest.addPlugin(

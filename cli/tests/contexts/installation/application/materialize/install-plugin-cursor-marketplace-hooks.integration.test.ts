@@ -2,7 +2,7 @@
  * a built tree's plugin-scoped `hooks/hooks.json` lands in a directory Cursor never reads. */
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { BuiltTreeMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/built-tree-materialization-translator.js";
+import { placeBuiltTreePlugin } from "../../../../../src/contexts/installation/application/materialize/place-built-tree-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../shared/testing/fake-ensure-built-marketplace.fake.js";
@@ -56,29 +56,35 @@ async function makeRegistry(): Promise<FakeMarketplaceRegistry> {
   return registry;
 }
 
-describe("BuiltTreeMaterializationTranslator - cursor marketplace hooks (Phase 7)", () => {
+describe("placeBuiltTreePlugin - cursor marketplace hooks (Phase 7)", () => {
   it("merges hooks into the project's .cursor/hooks.json, not the plugin-scoped built tree", async () => {
     const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
     fs.setFile(`${BUILT}/plugins/${PLUGIN_NAME}/hooks/hooks.json`, HOOKS_CONTENT);
     fs.setFile(`${BUILT}/plugins/${PLUGIN_NAME}/hooks/post.js`, "module.exports = () => {};");
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
-    const translator = new BuiltTreeMaterializationTranslator(fs, {
-      platform: process.platform,
-      homedir: () => HOME,
-      ensureBuilt: fakeEnsureBuiltMarketplace(),
-      marketplaceRegistry: await makeRegistry(),
-      translate: translateDistribution,
-    });
+    const translator = {
+      fs: fs,
+      built: {
+        platform: process.platform,
+        homedir: () => HOME,
+        ensureBuilt: fakeEnsureBuiltMarketplace(),
+        marketplaceRegistry: await makeRegistry(),
+        translate: translateDistribution,
+      },
+    };
 
-    const { skipped } = await translator.addPlugin({
-      dist: dist(),
-      tool: registeredTools().aiProfile(TOOL.cursor),
-      source: { kind: "local", path: "/plugin-source" },
-      projectRoot: PROJECT_ROOT,
-      manifest,
-      marketplace: "aidd-framework",
-    });
+    const { skipped } = await placeBuiltTreePlugin(
+      {
+        dist: dist(),
+        tool: registeredTools().aiProfile(TOOL.cursor),
+        source: { kind: "local", path: "/plugin-source" },
+        projectRoot: PROJECT_ROOT,
+        manifest,
+        marketplace: "aidd-framework",
+      },
+      translator
+    );
 
     const hooksPath = join(PROJECT_ROOT, ".cursor", "hooks.json");
     expect(fs.has(hooksPath)).toBe(true);
@@ -93,22 +99,28 @@ describe("BuiltTreeMaterializationTranslator - cursor marketplace hooks (Phase 7
     fs.setFile(`${BUILT}/plugins/${PLUGIN_NAME}/hooks/post.js`, "module.exports = () => {};");
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
-    const translator = new BuiltTreeMaterializationTranslator(fs, {
-      platform: process.platform,
-      homedir: () => HOME,
-      ensureBuilt: fakeEnsureBuiltMarketplace(),
-      marketplaceRegistry: await makeRegistry(),
-      translate: translateDistribution,
-    });
+    const translator = {
+      fs: fs,
+      built: {
+        platform: process.platform,
+        homedir: () => HOME,
+        ensureBuilt: fakeEnsureBuiltMarketplace(),
+        marketplaceRegistry: await makeRegistry(),
+        translate: translateDistribution,
+      },
+    };
 
-    await translator.addPlugin({
-      dist: dist(),
-      tool: registeredTools().aiProfile(TOOL.cursor),
-      source: { kind: "local", path: "/plugin-source" },
-      projectRoot: PROJECT_ROOT,
-      manifest,
-      marketplace: "aidd-framework",
-    });
+    await placeBuiltTreePlugin(
+      {
+        dist: dist(),
+        tool: registeredTools().aiProfile(TOOL.cursor),
+        source: { kind: "local", path: "/plugin-source" },
+        projectRoot: PROJECT_ROOT,
+        manifest,
+        marketplace: "aidd-framework",
+      },
+      translator
+    );
 
     const base = `${HOME}/.cursor/plugins/local/${PLUGIN_NAME}`;
     const written = fs.listUnder(base);

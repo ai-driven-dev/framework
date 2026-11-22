@@ -9,7 +9,7 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { FlatMcpSection } from "../../ports/tool-sections.js";
-import type { AddPluginRequest } from "./plugin-translator.js";
+import type { AddPluginRequest } from "./add-plugin-request.js";
 
 export async function refreshTrackedMcpConfigHash(refresh: {
   fs: FileReader;

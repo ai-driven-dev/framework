@@ -1,7 +1,7 @@
 // Idempotency and the empty-marketplace-list case live on SyncSettings; this
-// translator only registers the plugin reference in the manifest, with empty files.
+// registration only adds the plugin reference in the manifest, with empty files.
 import { describe, expect, it } from "vitest";
-import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
+import { registerMarketplacePlugin } from "../../../../../src/contexts/installation/application/materialize/register-marketplace-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
@@ -15,25 +15,13 @@ function buildDist(name = "test-plugin"): PluginDistribution {
   });
 }
 
-function buildAdapter() {
-  return { adapter: new ModeAMarketplaceTranslator() };
-}
-
-describe("ModeAMarketplaceTranslator", () => {
-  describe("mode discriminant", () => {
-    it("exposes mode as marketplace", () => {
-      const { adapter } = buildAdapter();
-      expect(adapter.mode).toBe("marketplace");
-    });
-  });
-
+describe("registerMarketplacePlugin", () => {
   describe("when adding a plugin for a native tool with marketplace", () => {
     it("registers plugin in manifest with empty files (no materialization)", async () => {
-      const { adapter } = buildAdapter();
       const manifest = Manifest.create();
       manifest.addTool(TOOL.claude, "test", []);
       const dist = buildDist("aidd-context");
-      await adapter.addPlugin({
+      await registerMarketplacePlugin({
         dist,
         tool: registeredTools().aiProfile(TOOL.claude),
         source: { kind: "local", path: "/plugin-source" },
@@ -49,11 +37,10 @@ describe("ModeAMarketplaceTranslator", () => {
     });
 
     it("reports nothing skipped, since nothing was translated", async () => {
-      const { adapter } = buildAdapter();
       const manifest = Manifest.create();
       manifest.addTool(TOOL.claude, "test", []);
 
-      const result = await adapter.addPlugin({
+      const result = await registerMarketplacePlugin({
         dist: buildDist("aidd-context"),
         tool: registeredTools().aiProfile(TOOL.claude),
         source: { kind: "local", path: "/plugin-source" },
@@ -68,11 +55,10 @@ describe("ModeAMarketplaceTranslator", () => {
 
   describe("when adding a plugin without marketplace", () => {
     it("registers plugin in manifest with undefined marketplace", async () => {
-      const { adapter } = buildAdapter();
       const manifest = Manifest.create();
       manifest.addTool(TOOL.claude, "test", []);
       const dist = buildDist("test-plugin");
-      await adapter.addPlugin({
+      await registerMarketplacePlugin({
         dist,
         tool: registeredTools().aiProfile(TOOL.claude),
         source: { kind: "local", path: "/plugin-source" },
