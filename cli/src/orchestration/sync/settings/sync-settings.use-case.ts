@@ -1,104 +1,21 @@
-import type { LoadSyncContext } from "../../../contexts/installation/application/sync/load-sync-context.use-case.js";
-import type { RecordClaimRules } from "../../../contexts/machine-claims/contract/record-claim-rules.js";
-import type { Scope } from "../../../shared/domain/scope.js";
+import type { Lock } from "../../../shared/ports/lock.js";
 import type { SyncSettingsRequest, SyncSettingsResult } from "../../domain/sync-settings.model.js";
-import type { ActivateNativeTools } from "./activate-native-tools.use-case.js";
-import { claimsViewOf } from "./claims-view-of.js";
-import type {
-  LoadedSyncContext,
-  RecordSyncActivation,
-  RecordSyncActivationRequest,
-} from "./record-sync-activation.use-case.js";
-import type { SyncToolSettingsFiles } from "./sync-tool-settings-files.use-case.js";
+import type { RunSettingsSync } from "./run-settings-sync.use-case.js";
 
-const EMPTY_RESULT: SyncSettingsResult = {
-  activated: [],
-  binaryMissing: [],
-  warnings: [],
-  errors: [],
-  failed: false,
-};
-
-export interface SyncSettingsDeps {
-  readonly loadContext: LoadSyncContext;
-  readonly settingsFiles: SyncToolSettingsFiles;
-  readonly activateNativeTools: ActivateNativeTools;
-  readonly recordActivation: RecordSyncActivation;
-  readonly records: Pick<RecordClaimRules, "claimedRefs">;
-}
-
-function resultOf(activation: RecordSyncActivationRequest["activation"]): SyncSettingsResult {
-  return {
-    activated: [...activation.outcomes.keys()],
-    binaryMissing: activation.binaryMissing,
-    warnings: activation.warnings,
-    errors: activation.errors,
-    failed: activation.errors.length > 0,
-  };
-}
-
-/** Brings a project's (or the machine's) tool settings and native registrations in line with its manifest. */
+/** Brings a project's (or the machine's) tool settings and native registrations in line with its
+ * manifest. A project-scope run holds the machine manifest's lock; a user-scope one already works
+ * on that manifest, and no lock is held when no machine manifest is kept. */
 export class SyncSettings {
-  constructor(private readonly deps: SyncSettingsDeps) {}
+  constructor(
+    private readonly run: Pick<RunSettingsSync, "execute">,
+    private readonly machineManifest: Lock | undefined
+  ) {}
 
   execute(options: SyncSettingsRequest): Promise<SyncSettingsResult> {
-    return this.deps.loadContext.runLocked(options.scope ?? "project", () =>
-      this.executeLocked(options)
-    );
-  }
-
-  private async executeLocked(options: SyncSettingsRequest): Promise<SyncSettingsResult> {
-    const { projectRoot } = options;
-    const scope = options.scope ?? "project";
-    const context = await this.deps.loadContext.execute({
-      projectRoot,
-      toolIds: options.toolIds,
-      recreateFrameworkIfMissing: options.recreateFrameworkIfMissing,
-      scope,
-      marketplaceNames: options.marketplaceNames,
-    });
-    if (context === null) return EMPTY_RESULT;
-    const { manifest, marketplaces } = context;
-    // A user-scope run lands nothing under `projectRoot`, so no project settings file mirrors it.
-    await this.saveWhenProjectMirrored(scope, context, () =>
-      this.deps.settingsFiles.execute({
-        kind: "project-tools",
-        projectRoot,
-        manifest,
-        marketplaces,
-        toolIds: context.toolIds,
-      })
-    );
-    const activation = await this.activate({ options, scope, context });
-    await this.saveWhenProjectMirrored(scope, context, () =>
-      this.deps.settingsFiles.execute({
-        kind: "proven-plugins",
-        projectRoot,
-        manifest,
-        marketplaces,
-        outcomes: activation.outcomes,
-      })
-    );
-    await this.deps.recordActivation.execute({ options, scope, context, activation });
-    return resultOf(activation);
-  }
-
-  private activate(run: Omit<RecordSyncActivationRequest, "activation">) {
-    const { options, scope, context } = run;
-    return this.deps.activateNativeTools.execute({
-      projectRoot: options.projectRoot,
-      context,
-      claims: (toolId) => claimsViewOf(context, toolId, this.deps.records),
-      scope,
-      enablePlugins: options.enablePlugins ?? [],
-    });
-  }
-
-  private async saveWhenProjectMirrored(
-    scope: Scope,
-    context: LoadedSyncContext,
-    mirror: () => Promise<boolean>
-  ): Promise<void> {
-    if (scope === "project" && (await mirror())) await context.save();
+    const work = () => this.run.execute(options);
+    if ((options.scope ?? "project") === "project" && this.machineManifest !== undefined) {
+      return this.machineManifest.withExclusiveAccess(work);
+    }
+    return work();
   }
 }

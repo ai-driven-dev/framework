@@ -31,6 +31,7 @@ import {
 } from "../../../src/orchestration/sync/settings/activate-native-tools.use-case.js";
 import { BuildMarketplaceForTool } from "../../../src/orchestration/sync/settings/build-marketplace-for-tool.use-case.js";
 import { RecordSyncActivation } from "../../../src/orchestration/sync/settings/record-sync-activation.use-case.js";
+import { RunSettingsSync } from "../../../src/orchestration/sync/settings/run-settings-sync.use-case.js";
 import { SyncSettings } from "../../../src/orchestration/sync/settings/sync-settings.use-case.js";
 import { SyncToolSettingsFiles } from "../../../src/orchestration/sync/settings/sync-tool-settings-files.use-case.js";
 import { catalogReadersOver } from "./catalog-readers.builder.js";
@@ -59,69 +60,72 @@ export interface MarketplaceSyncParts {
 
 export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
   const build = new BuildMarketplaceForTool(parts.ensureBuilt, parts.logger, parts.tools);
-  return new SyncSettings({
-    loadContext: new LoadSyncContext({
-      manifestRepo: parts.manifestRepo,
-      marketplaceRegistry: parts.marketplaceRegistry,
-      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-      marketplaceRegisterFrameworkUseCase: parts.marketplaceRegisterFrameworkUseCase,
-      userManifestRepo: parts.userManifestRepo,
-    }),
-    settingsFiles: new SyncToolSettingsFiles(
-      {
-        tracked: trackedSharedSettings({ fs: parts.fs, logger: parts.logger }),
-        buildMarketplace: build,
-        declaration: settingsDeclaration,
-        refs: registrationRecordRules,
-      },
-      parts.tools
-    ),
-    activateNativeTools: new ActivateNativeTools({
-      registerPluginWithHost: new RegisterPluginWithHost({
-        fs: parts.fs,
-        catalogs: catalogReadersOver(parts.fs),
-        nativeHosts: new ResolveNativeHost(parts.activators ?? new Map(), parts.tools),
-        hosts: {
-          marketplaceRegistries: parts.hostMarketplaceRegistries ?? new Map(),
-          pluginRegistries: parts.hostPluginRegistries ?? new Map(),
-          sources: parts.nativeSources ?? new Map(),
-        },
-        platform: process.platform,
+  return new SyncSettings(
+    new RunSettingsSync({
+      loadContext: new LoadSyncContext({
+        manifestRepo: parts.manifestRepo,
+        marketplaceRegistry: parts.marketplaceRegistry,
+        frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+        marketplaceRegisterFrameworkUseCase: parts.marketplaceRegisterFrameworkUseCase,
+        userManifestRepo: parts.userManifestRepo,
       }),
-      buildMarketplace: build,
-      logger: parts.logger,
-      marketplace: {
-        name: FRAMEWORK_MARKETPLACE_NAME,
-        userCacheRoot: parts.userCacheRoot ?? (() => ""),
-      },
-      records: registrationRecordRules,
-    }),
-    recordActivation: new RecordSyncActivation({
-      recordActivation: new RecordActivation({ fs: parts.fs }, parts.tools),
-      machineClaims: new RecordMachineClaims(
+      settingsFiles: new SyncToolSettingsFiles(
         {
-          fs: parts.fs,
-          userManifestRepo: parts.userManifestRepo,
-          emptyManifest: Manifest.create,
-          mergeClaims: registrationRecordRules.mergeCatalogueClaims,
+          tracked: trackedSharedSettings({ fs: parts.fs, logger: parts.logger }),
+          buildMarketplace: build,
+          declaration: settingsDeclaration,
+          refs: registrationRecordRules,
         },
         parts.tools
       ),
-      sharedSource: new SharedFrameworkSource({
-        fs: parts.fs,
-        logger: parts.logger,
-        recordReference: new RecordSourceReference({
+      activateNativeTools: new ActivateNativeTools({
+        registerPluginWithHost: new RegisterPluginWithHost({
           fs: parts.fs,
-          currentVersion: parts.currentVersion ?? "0.0.0-test",
-          logger: parts.logger,
-          frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-          userSourceReferences: parts.userSourceReferences,
+          catalogs: catalogReadersOver(parts.fs),
+          nativeHosts: new ResolveNativeHost(parts.activators ?? new Map(), parts.tools),
+          hosts: {
+            marketplaceRegistries: parts.hostMarketplaceRegistries ?? new Map(),
+            pluginRegistries: parts.hostPluginRegistries ?? new Map(),
+            sources: parts.nativeSources ?? new Map(),
+          },
+          platform: process.platform,
         }),
-        purgeCache: new ResolvePurgeCandidate(parts.fs, parts.logger),
-        frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+        buildMarketplace: build,
+        logger: parts.logger,
+        marketplace: {
+          name: FRAMEWORK_MARKETPLACE_NAME,
+          userCacheRoot: parts.userCacheRoot ?? (() => ""),
+        },
+        records: registrationRecordRules,
+      }),
+      recordActivation: new RecordSyncActivation({
+        recordActivation: new RecordActivation({ fs: parts.fs }, parts.tools),
+        machineClaims: new RecordMachineClaims(
+          {
+            fs: parts.fs,
+            userManifestRepo: parts.userManifestRepo,
+            emptyManifest: Manifest.create,
+            mergeClaims: registrationRecordRules.mergeCatalogueClaims,
+          },
+          parts.tools
+        ),
+        sharedSource: new SharedFrameworkSource({
+          fs: parts.fs,
+          logger: parts.logger,
+          recordReference: new RecordSourceReference({
+            fs: parts.fs,
+            currentVersion: parts.currentVersion ?? "0.0.0-test",
+            logger: parts.logger,
+            frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+            userSourceReferences: parts.userSourceReferences,
+          }),
+          purgeCache: new ResolvePurgeCandidate(parts.fs, parts.logger),
+          frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+        }),
+        records: registrationRecordRules,
       }),
       records: registrationRecordRules,
     }),
-    records: registrationRecordRules,
-  });
+    parts.userManifestRepo
+  );
 }

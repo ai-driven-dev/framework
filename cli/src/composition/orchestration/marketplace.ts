@@ -41,6 +41,7 @@ import type { RegisterFrameworkSource } from "../../orchestration/setup/setup-fl
 import { ActivateNativeTools } from "../../orchestration/sync/settings/activate-native-tools.use-case.js";
 import { BuildMarketplaceForTool } from "../../orchestration/sync/settings/build-marketplace-for-tool.use-case.js";
 import { RecordSyncActivation } from "../../orchestration/sync/settings/record-sync-activation.use-case.js";
+import { RunSettingsSync } from "../../orchestration/sync/settings/run-settings-sync.use-case.js";
 import { SyncNativeActivation } from "../../orchestration/sync/settings/sync-native-activation.use-case.js";
 import { SyncSettings } from "../../orchestration/sync/settings/sync-settings.use-case.js";
 import { SyncToolSettingsFiles } from "../../orchestration/sync/settings/sync-tool-settings-files.use-case.js";
@@ -180,13 +181,18 @@ function settingsFilesOf(
   );
 }
 
-/** The settings sync of a project: its context, its files, its native activation and its claims. */
+/** The settings sync of a project, held under the machine manifest's lock. */
 function syncSettingsOf(base: Base, inst: Installation, sources: SyncSources): SyncSettings {
+  return new SyncSettings(runSettingsSyncOf(base, inst, sources), base.userManifestRepo);
+}
+
+/** One settings sync: its context, its files, its native activation and its claims. */
+function runSettingsSyncOf(base: Base, inst: Installation, sources: SyncSources): RunSettingsSync {
   const { tools, fs, logger, manifestRepo, userManifestRepo } = base;
   const { buildMarketplaceForTool, recordSourceReference } = sources;
   const { marketplaceRegistry, registerFrameworkMarketplace } = base;
   const { registrationRecordRules } = inst;
-  return new SyncSettings({
+  return new RunSettingsSync({
     loadContext: new LoadSyncContext({
       manifestRepo,
       marketplaceRegistry,

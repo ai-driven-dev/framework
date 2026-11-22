@@ -54,14 +54,6 @@ export interface LoadSyncContextDeps {
 export class LoadSyncContext {
   constructor(private readonly deps: LoadSyncContextDeps) {}
 
-  /** A project-scope run holds the machine manifest's lock; a user-scope one already works on it. */
-  runLocked<T>(scope: Scope, work: () => Promise<T>): Promise<T> {
-    if (scope === "project" && this.deps.userManifestRepo !== undefined) {
-      return this.deps.userManifestRepo.withExclusiveAccess(work);
-    }
-    return work();
-  }
-
   private repositoryOf(scope: Scope): ManifestRepository & RecordsBesideManifest {
     return scope === "user"
       ? (this.deps.userManifestRepo ?? this.deps.manifestRepo)
