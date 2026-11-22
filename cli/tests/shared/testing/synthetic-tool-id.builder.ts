@@ -57,9 +57,17 @@ export function syntheticCatalog(): ToolCatalog {
   return new RegisteredToolCatalog(CONFIGS);
 }
 
+/** How the synthetic host answers which marketplaces it knows: from a registry file it keeps
+ * and a settings file the project carries, or from a list its own command prints. */
+export type SyntheticNativeSources = "registry" | "list-command";
+
 /** A catalog listing one synthetic AI tool under the given id, driven through its own host CLI
  * the way a native tool is: for a test of the native activation flow that names no real tool. */
-export function syntheticNativeCatalog(id: string): ToolCatalog {
+export function syntheticNativeCatalog(
+  id: string,
+  sources: SyntheticNativeSources = "registry"
+): ToolCatalog {
+  const registry = sources === "registry";
   return new RegisteredToolCatalog([
     defineAiTool({
       toolId: id,
@@ -80,19 +88,38 @@ export function syntheticNativeCatalog(id: string): ToolCatalog {
             upgradeVerb: "upgrade",
             enableVerb: "add",
             disableVerb: "remove",
-            marketplaceRegistry: {
-              location: (home) => join(home, `.${id}`, "known_marketplaces.json"),
-              layout: "install-locations-by-name",
-            },
-            marketplaceSources: { from: "marketplace-registry" },
+            ...(registry
+              ? {
+                  scopeArgs: { project: ["--project"], user: ["--user"] },
+                  userRemoveArgs: [],
+                  marketplaceRegistry: {
+                    location: (home: string) => join(home, `.${id}`, "known_marketplaces.json"),
+                    layout: "install-locations-by-name" as const,
+                  },
+                  marketplaceSources: { from: "marketplace-registry" as const },
+                }
+              : {
+                  marketplaceSources: {
+                    from: "list-command" as const,
+                    args: ["plugin", "marketplace", "list", "--json"],
+                    layout: "marketplaces-with-source" as const,
+                    hostLabel: id,
+                    unavailableMessage: `${id} marketplace list unavailable; inspect the host CLI and retry`,
+                    unverifiedMessage: `${id} marketplace list output shape is not verified`,
+                  },
+                }),
           },
-          marketplaceSettings: {
-            settingsPath: `.${id}/settings.json`,
-            settingsKey: "extraKnownMarketplaces",
-            marketplacesSettingsPath: `.${id}/settings.local.json`,
-            enabledPluginsKey: "enabledPlugins",
-            toEntryKey: sharedMarketplaceKey,
-          },
+          ...(registry
+            ? {
+                marketplaceSettings: {
+                  settingsPath: `.${id}/settings.json`,
+                  settingsKey: "extraKnownMarketplaces",
+                  marketplacesSettingsPath: `.${id}/settings.local.json`,
+                  enabledPluginsKey: "enabledPlugins",
+                  toEntryKey: sharedMarketplaceKey,
+                },
+              }
+            : {}),
         }),
         manifest: manifestSection({ manifestRelativePath: "plugin.json", pluginRootToken: "." }),
         hooks: { delivery: { kind: "plugin-file" } },

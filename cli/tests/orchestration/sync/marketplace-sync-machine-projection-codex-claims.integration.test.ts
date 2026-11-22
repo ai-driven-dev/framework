@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_TOOL,
+  syntheticNativeCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   builtPerMarketplace,
   catalogFile,
@@ -12,15 +15,15 @@ import {
   pluginIn,
   readablePlugins,
   registryOf,
-  singleCodexCatalog,
+  singleListedCatalog,
   wireSync,
 } from "../testing/machine-projection.builder.js";
 
-const { codex } = TOOL;
+const tool = SYNTHETIC_TOOL;
 
 describe("native plugin claims recorded on the machine for Codex", () => {
   it("records a Codex plugin as machine-owned even when its marketplace source is project-local", async () => {
-    const projectRoot = "/codex-project";
+    const projectRoot = "/listed-project";
     const ref = "test-plugin@real-catalog";
     const otherRef = "unrelated-plugin@older-catalog";
     const older = {
@@ -33,9 +36,9 @@ describe("native plugin claims recorded on the machine for Codex", () => {
         source: "/older",
       },
     };
-    const machine = manifestWithTool(codex);
-    machine.setNativeRegistrations(codex, {
-      binary: "codex",
+    const machine = manifestWithTool(tool);
+    machine.setNativeRegistrations(tool, {
+      binary: tool,
       marketplaces: [older],
       pluginRefs: [otherRef],
       pluginClaims: [
@@ -44,52 +47,52 @@ describe("native plugin claims recorded on the machine for Codex", () => {
       ],
     });
     const activator = new FakeHostActions({ available: true });
-    const { sync, fs, projectRepo, machineRepo } = await singleCodexCatalog({
-      tools: registeredTools(),
-      codex: TOOL.codex,
+    const { sync, fs, projectRepo, machineRepo } = await singleListedCatalog({
+      tools: syntheticNativeCatalog(tool, "list-command"),
+      tool,
       projectRoot,
       machine,
       activator,
     });
-    fs.setSymlink(projectRoot, "/resolved-codex-project");
+    fs.setSymlink(projectRoot, "/resolved-listed-project");
 
     const result = await sync.execute({ projectRoot });
 
-    expect(result.activated).toEqual(["codex"]);
+    expect(result.activated).toEqual([tool]);
     expect(activator.enabledPlugins).toEqual([ref]);
-    expect(projectRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginRefs).toEqual([ref]);
-    expect(machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
+    expect(projectRepo.getCurrent()?.getNativeRegistrations(tool)?.pluginRefs).toEqual([ref]);
+    expect(machineRepo.getCurrent()?.getNativeRegistrations(tool)?.pluginClaims).toEqual([
       { ref: otherRef, dependents: ["/B"] },
-      { ref, dependents: ["/B", "/resolved-codex-project"] },
+      { ref, dependents: ["/B", "/resolved-listed-project"] },
     ]);
-    expect(machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginRefs).toEqual([otherRef]);
-    expect(machineRepo.getCurrent()?.getNativeRegistrations(codex)?.marketplaces).toEqual([
+    expect(machineRepo.getCurrent()?.getNativeRegistrations(tool)?.pluginRefs).toEqual([otherRef]);
+    expect(machineRepo.getCurrent()?.getNativeRegistrations(tool)?.marketplaces).toEqual([
       older,
       {
         alias: "local-catalog",
         hostName: "real-catalog",
         provenance: {
           kind: "effective-list",
-          root: "/built/codex",
+          root: `/built/${tool}`,
           sourceType: "local",
-          source: "/built/codex",
+          source: `/built/${tool}`,
         },
       },
     ]);
 
     await sync.execute({ projectRoot });
-    expect(machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
+    expect(machineRepo.getCurrent()?.getNativeRegistrations(tool)?.pluginClaims).toEqual([
       { ref: otherRef, dependents: ["/B"] },
-      { ref, dependents: ["/B", "/resolved-codex-project"] },
+      { ref, dependents: ["/B", "/resolved-listed-project"] },
     ]);
   });
 
   it("preserves another machine-owned marketplace claim during a narrowed sync", async () => {
-    const projectRoot = "/codex-project";
-    const project = manifestWithTool(codex);
+    const projectRoot = "/listed-project";
+    const project = manifestWithTool(tool);
     for (const alias of ["market-a", "market-b"]) {
       project.addPlugin(
-        codex,
+        tool,
         pluginIn(alias, "project", `plugin-${alias.at(-1)}`, `/source/${alias}`)
       );
     }
@@ -97,11 +100,11 @@ describe("native plugin claims recorded on the machine for Codex", () => {
     const machineRepo = new InMemoryManifestRepository(Manifest.create());
     const activator = new FakeHostActions({ available: true });
     const sync = wireSync({
-      tools: registeredTools(),
-      toolId: codex,
+      tools: syntheticNativeCatalog(tool, "list-command"),
+      toolId: tool,
       fs: fsWithProjects({
-        "/built/market-a/.agents/plugins/marketplace.json": catalogFile("real-a", ["plugin-a"]),
-        "/built/market-b/.agents/plugins/marketplace.json": catalogFile("real-b", ["plugin-b"]),
+        "/built/market-a/.plugin/marketplace.json": catalogFile("real-a", ["plugin-a"]),
+        "/built/market-b/.plugin/marketplace.json": catalogFile("real-b", ["plugin-b"]),
       }),
       projectRepo,
       machineRepo,
@@ -112,14 +115,16 @@ describe("native plugin claims recorded on the machine for Codex", () => {
       ),
       activator,
       ensureBuilt: builtPerMarketplace,
-      hostPluginRegistries: readablePlugins(codex),
+      hostPluginRegistries: readablePlugins(tool),
       nativeSources: freshNativeSources(
-        codex,
+        tool,
         activator,
         new Map([
           ["/built/market-a", "real-a"],
           ["/built/market-b", "real-b"],
-        ])
+        ]),
+        new Map(),
+        "effective-list"
       ),
     });
 
@@ -127,11 +132,11 @@ describe("native plugin claims recorded on the machine for Codex", () => {
     await sync.execute({ projectRoot, marketplaceNames: ["market-a"] });
 
     expect(activator.enabledPlugins).toEqual(["plugin-b@real-b", "plugin-a@real-a"]);
-    expect(projectRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginRefs).toEqual([
+    expect(projectRepo.getCurrent()?.getNativeRegistrations(tool)?.pluginRefs).toEqual([
       "plugin-b@real-b",
       "plugin-a@real-a",
     ]);
-    expect(machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
+    expect(machineRepo.getCurrent()?.getNativeRegistrations(tool)?.pluginClaims).toEqual([
       { ref: "plugin-b@real-b", dependents: [projectRoot] },
       { ref: "plugin-a@real-a", dependents: [projectRoot] },
     ]);
