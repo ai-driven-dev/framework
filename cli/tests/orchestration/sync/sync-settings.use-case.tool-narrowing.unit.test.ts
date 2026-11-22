@@ -30,7 +30,7 @@ describe("toolIds narrows which tool's CLI is driven", () => {
       .withTool(TOOL.codex, [], { version: "test" })
       .build();
     await registerMarketplacePlugin({
-      dist: distribution("aidd-context"),
+      dist: distribution(TOOL.claude, "aidd-context"),
       tool: registeredAiProfile(TOOL.claude),
       source: { kind: "local", path: "/plugin-source" },
       projectRoot: PROJECT_ROOT,
@@ -60,8 +60,8 @@ describe("toolIds narrows which tool's CLI is driven", () => {
         [TOOL.codex, codexActivator],
       ]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
-      hostPluginRegistries: readableClaudePluginRegistry(),
-      nativeSources: freshClaudeSource(claudeActivator),
+      hostPluginRegistries: readableClaudePluginRegistry(TOOL.claude),
+      nativeSources: freshClaudeSource(TOOL.claude, claudeActivator),
     });
 
     const result = await useCase.execute({
@@ -108,8 +108,8 @@ describe("toolIds narrows which tool's CLI is driven", () => {
         [TOOL.codex, codexActivator],
       ]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
-      hostPluginRegistries: readableClaudePluginRegistry(),
-      nativeSources: freshClaudeSource(claudeActivator),
+      hostPluginRegistries: readableClaudePluginRegistry(TOOL.claude),
+      nativeSources: freshClaudeSource(TOOL.claude, claudeActivator),
     });
 
     const result = await useCase.execute({
@@ -155,8 +155,8 @@ describe("a project whose manifest also lists a tool with no plugin system", () 
       logger: new CapturingLogger(),
       activators: new Map([[TOOL.claude, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
-      hostPluginRegistries: readableClaudePluginRegistry(),
-      nativeSources: freshClaudeSource(activator),
+      hostPluginRegistries: readableClaudePluginRegistry(TOOL.claude),
+      nativeSources: freshClaudeSource(TOOL.claude, activator),
     });
 
     const result = await useCase.execute({

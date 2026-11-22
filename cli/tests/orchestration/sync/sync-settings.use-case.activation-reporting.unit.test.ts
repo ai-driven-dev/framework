@@ -2,11 +2,13 @@ import { describe, expect, it } from "vitest";
 import { NativePluginCliError } from "../../../src/contexts/host-registration/domain/host-registration.error.js";
 import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/contract/built-marketplace.js";
 import { describeMessage } from "../../../src/presentation/errors/describe-message.presenter.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
-import { ActivatorFailingAtUpgrade, sync } from "../testing/sync-settings.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { ActivatorFailingAtUpgrade, syncOf } from "../testing/sync-settings.builder.js";
 
 /** The build runs for every tool, before the branch that decides who writes the registration
  * down, so a build that fails is on the path of every sync. */
+const sync = syncOf(registeredTools(), TOOL.claude);
+
 describe("a marketplace that will not build", () => {
   const failingBuild = (failFor: string): BuiltMarketplaceEnsurer => ({
     execute: async (options) => {
