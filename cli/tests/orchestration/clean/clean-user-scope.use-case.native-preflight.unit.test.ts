@@ -17,6 +17,8 @@ import {
   provenHostPlugins,
   RecordingActivator,
   RecordingFileAdapter,
+  seedWhitelist,
+  USER_CONFIG_DIR,
 } from "../testing/clean-user-scope.builder.js";
 import { userScopeCleaner } from "../testing/user-scope-cleaner.builder.js";
 
@@ -226,6 +228,37 @@ describe("clean --scope user: native preflight", () => {
     expect(fs.has(userFile)).toBe(false);
     expect(fs.order).toContain(`deleteFile:${userFile}`);
     expect(fs.has(projectFile)).toBe(true);
+  });
+
+  it("unregisters the framework marketplace after the last whitelisted file, before the manifest", async () => {
+    const order: string[] = [];
+    class RecordingRegistry extends InMemoryMarketplaceRegistry {
+      override async delete(root: string, name: string, scope: Scope): Promise<void> {
+        order.push(`unregister:${name}:${scope}`);
+        return super.delete(root, name, scope);
+      }
+    }
+    class RecordingRepository extends InMemoryManifestRepository {
+      override async delete(): Promise<void> {
+        order.push("deleteManifest");
+        return super.delete();
+      }
+    }
+    const fs = new RecordingFileAdapter(order);
+    await seedWhitelist(fs);
+    const useCase = userScopeCleaner({
+      fs,
+      repo: new RecordingRepository(Manifest.create()),
+      marketplaceRegistry: new RecordingRegistry(),
+    });
+
+    await useCase.execute({ projectRoot: "/A", force: true });
+
+    expect(order.slice(-3)).toEqual([
+      `deleteFile:${join(USER_CONFIG_DIR, "references.json")}`,
+      "unregister:aidd-framework:user",
+      "deleteManifest",
+    ]);
   });
 
   it("retains canonical claims if the user catalogue registry refuses the final delete", async () => {

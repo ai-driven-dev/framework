@@ -8,12 +8,10 @@ import {
 import { PurgeDeclaredCache } from "../../../../../src/contexts/machine-claims/application/purge-declared-cache.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
-import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
 
 const CONFIG = "/fake-home/.config/aidd";
-const ROOT = "/project";
 
-function machineOver(fs: InMemoryFileAdapter, registry = new FakeMarketplaceRegistry()) {
+function machineOver(fs: InMemoryFileAdapter) {
   const logger = new CapturingLogger();
   const cache = new PurgeDeclaredCache(fs, logger);
   const guards: MachineStateGuards = {
@@ -22,7 +20,7 @@ function machineOver(fs: InMemoryFileAdapter, registry = new FakeMarketplaceRegi
       cache.resolveCandidate(cacheRoot, segments, label),
     frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
   };
-  return new PurgeMachineState({ fs, logger, marketplaceRegistry: registry, guards });
+  return new PurgeMachineState({ fs, logger, guards });
 }
 
 describe("PurgeMachineState.builtVersions", () => {
@@ -46,7 +44,7 @@ describe("PurgeMachineState.purge", () => {
     fs.setFile(join(CONFIG, "cache", "built", "1.0.0", "x"), "1");
     fs.setFile(join(CONFIG, "cache", "update-check.json"), "{}");
 
-    await machineOver(fs).purge(ROOT);
+    await machineOver(fs).purge();
 
     expect(await fs.isDirectory(join(CONFIG, "cache"))).toBe(false);
   });
@@ -56,22 +54,9 @@ describe("PurgeMachineState.purge", () => {
     fs.setFile(join(CONFIG, "cache", "built", "1.0.0", "x"), "1");
     fs.setFile(join(CONFIG, "cache", "other-tool", "keep"), "1");
 
-    await machineOver(fs).purge(ROOT);
+    await machineOver(fs).purge();
 
     expect(fs.has(join(CONFIG, "cache", "other-tool", "keep"))).toBe(true);
     expect(await fs.isDirectory(join(CONFIG, "cache", "built"))).toBe(false);
-  });
-
-  it("withdraws the framework marketplace's user registration", async () => {
-    const registry = new FakeMarketplaceRegistry();
-    registry.seed(ROOT, {
-      name: FRAMEWORK_MARKETPLACE_NAME,
-      source: { kind: "local", path: "/m" },
-      scope: "user",
-    });
-
-    await machineOver(new InMemoryFileAdapter(), registry).purge(ROOT);
-
-    expect(await registry.list(ROOT)).toEqual([]);
   });
 });

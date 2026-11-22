@@ -4,11 +4,14 @@ import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import { ActiveMachineDependentsError } from "../domain/installation.error.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { InstalledPlugin } from "../domain/plugins/installed-plugin.js";
-import type { MachineStatePurge } from "../ports/machine-state-purge.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
 import type { UserRegistrationWithdrawal } from "../ports/native-host.js";
 import type { UserScopePluginFileRemoval } from "../ports/user-scope-plugin-files.js";
-import type { UserScopeInspection, UserScopePurge } from "../ports/user-scope-purge.js";
+import type {
+  MachineStatePurge,
+  UserScopeInspection,
+  UserScopePurge,
+} from "../ports/user-scope-purge.js";
 
 /** What PurgeUserScopeFiles is built from. */
 export interface PurgeUserScopeFilesDeps {
@@ -22,7 +25,8 @@ export interface PurgeUserScopeFilesDeps {
 /**
  * The machine-scope half of `aidd clean --scope user`: reads what is registered, proves each
  * tracked user-scope file safe to delete, then purges the user plugin files and the whitelisted
- * machine state. Undoing the host's own registration sits between those and is the caller's.
+ * machine state, then deletes the manifest. Undoing the host's own registration comes before the
+ * purge and unregistering the framework marketplace before the manifest delete, both the caller's.
  */
 export class PurgeUserScopeFiles implements UserScopePurge {
   constructor(
@@ -60,7 +64,10 @@ export class PurgeUserScopeFiles implements UserScopePurge {
   async purge(projectRoot: string): Promise<void> {
     const manifest = await this.deps.userManifestRepo.load();
     if (manifest !== null) await this.purgeUserPluginFiles(manifest, projectRoot);
-    await this.deps.purgeMachineState.purge(projectRoot);
+    await this.deps.purgeMachineState.purge();
+  }
+
+  async deleteManifest(): Promise<void> {
     // The manifest's own repository is the single writer of `manifest.json`; deleting through
     // it, never a second path to the same file, is what keeps that true.
     await this.deps.userManifestRepo.delete();

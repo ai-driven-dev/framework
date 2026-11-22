@@ -1,5 +1,6 @@
 import { homedir } from "node:os";
 import { ListMarketplaces } from "../../contexts/distribution/application/list-marketplaces.use-case.js";
+import { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.use-case.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
 import { CleanProjectFiles } from "../../contexts/installation/application/clean-project-files.use-case.js";
 import { PurgeUserScopeFiles } from "../../contexts/installation/application/purge-user-scope-files.js";
@@ -70,7 +71,7 @@ function wireCleanUserScope(base: Base, purgeCache: PurgeDeclaredCache, claims: 
   const purgeUserScopeFiles = new PurgeUserScopeFiles(
     {
       userManifestRepo,
-      purgeMachineState: new PurgeMachineState({ fs, logger, marketplaceRegistry, guards }),
+      purgeMachineState: new PurgeMachineState({ fs, logger, guards }),
       homeDir: homedir,
       userScopePluginFiles: new UserScopePluginFiles(fs, (plugin, tool, home) =>
         userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
@@ -81,6 +82,7 @@ function wireCleanUserScope(base: Base, purgeCache: PurgeDeclaredCache, claims: 
   return new CleanUserScope({
     purgeFiles: purgeUserScopeFiles,
     withdrawFromHost,
+    removeMarketplace: new RemoveMarketplace(marketplaceRegistry),
     claims,
     logger,
     prompter,

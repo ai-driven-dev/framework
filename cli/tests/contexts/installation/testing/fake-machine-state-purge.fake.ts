@@ -1,8 +1,8 @@
-import type { MachineStatePurge } from "../../../../src/contexts/installation/ports/machine-state-purge.js";
+import type { MachineStatePurge } from "../../../../src/contexts/installation/ports/user-scope-purge.js";
 
-/** Machine state told as built versions, recording each purge and the root it was asked with. */
+/** Machine state told as built versions, counting each purge. */
 export class FakeMachineStatePurge implements MachineStatePurge {
-  readonly purgedRoots: string[] = [];
+  purgeCount = 0;
 
   constructor(private readonly versions: readonly string[] = []) {}
 
@@ -10,7 +10,7 @@ export class FakeMachineStatePurge implements MachineStatePurge {
     return this.versions;
   }
 
-  async purge(projectRoot: string): Promise<void> {
-    this.purgedRoots.push(projectRoot);
+  async purge(): Promise<void> {
+    this.purgeCount += 1;
   }
 }

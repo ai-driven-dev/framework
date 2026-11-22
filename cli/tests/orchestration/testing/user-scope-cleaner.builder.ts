@@ -1,5 +1,7 @@
 import { wireCleanClaims } from "../../../src/composition/orchestration/clean.js";
+import { RemoveMarketplace } from "../../../src/contexts/distribution/application/remove/remove-marketplace.use-case.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
+import type { MarketplaceRegistry } from "../../../src/contexts/distribution/ports/marketplace-registry.js";
 import { WithdrawFromHost } from "../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import type { HostPorts } from "../../../src/contexts/host-registration/ports/host-ports.js";
 import {
@@ -29,7 +31,7 @@ export interface UserScopeCleanerParts extends Partial<HostPorts> {
   repo: PurgeUserScopeFilesDeps["userManifestRepo"];
   fs?: PurgeMachineStateDeps["fs"];
   logger?: PurgeMachineStateDeps["logger"];
-  marketplaceRegistry?: PurgeMachineStateDeps["marketplaceRegistry"];
+  marketplaceRegistry?: MarketplaceRegistry;
   userConfigDir?: () => string;
   homeDir?: () => string;
   userSourceReferences?: UserSourceReferences;
@@ -60,12 +62,7 @@ export function userScopeCleaner(parts: UserScopeCleanerParts): CleanUserScope {
     purgeFiles: new PurgeUserScopeFiles(
       {
         userManifestRepo: parts.repo,
-        purgeMachineState: new PurgeMachineState({
-          fs,
-          logger,
-          marketplaceRegistry: parts.marketplaceRegistry ?? new InMemoryMarketplaceRegistry(),
-          guards,
-        }),
+        purgeMachineState: new PurgeMachineState({ fs, logger, guards }),
         homeDir,
         userScopePluginFiles: new UserScopePluginFiles(fs, (plugin, tool, home) =>
           userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
@@ -74,6 +71,9 @@ export function userScopeCleaner(parts: UserScopeCleanerParts): CleanUserScope {
       registeredTools()
     ),
     withdrawFromHost: new WithdrawFromHost(fs, logger, hostPortsOf(parts)),
+    removeMarketplace: new RemoveMarketplace(
+      parts.marketplaceRegistry ?? new InMemoryMarketplaceRegistry()
+    ),
     claims: wireCleanClaims({
       fs,
       logger,

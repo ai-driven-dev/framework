@@ -12,6 +12,15 @@ export interface UserScopeInspection {
   referencingProjects: readonly string[];
 }
 
+/** What a machine-scope purge reads and removes on the machine itself. */
+export interface MachineStatePurge {
+  /** Every version directory found under the user config directory's built cache, read
+   * structurally and never trusted from any one tool's own manifest entry. */
+  builtVersions(): Promise<readonly string[]>;
+  /** Removes the whitelisted machine state. */
+  purge(): Promise<void>;
+}
+
 /** The machine-scope half of a user clean: inspect, prove, then purge, under the manifest's lock. */
 export interface UserScopePurge {
   /** Runs `action` holding the user manifest's lock. */
@@ -21,6 +30,7 @@ export interface UserScopePurge {
    * this machine recorded. */
   proveWithdrawals(): Promise<UserRegistrationWithdrawal[]>;
   purge(projectRoot: string): Promise<void>;
+  deleteManifest(): Promise<void>;
   /** Refuses when anything still depends on what a purge would remove. */
   assertNothingDepends(inspection: UserScopeInspection): void;
 }

@@ -123,14 +123,14 @@ describe("PurgeUserScopeFiles.proveWithdrawals", () => {
 });
 
 describe("PurgeUserScopeFiles.purge", () => {
-  it("removes the proven plugin files, purges the machine state, then deletes the manifest", async () => {
+  it("removes the proven plugin files and purges the machine state, keeping the manifest", async () => {
     const { repo, files, machine, purge } = fixture();
 
     await purge.purge(ROOT);
 
     expect(files.removed.map((removed) => [...removed.keys()])).toEqual([["a.md", "b.md"]]);
-    expect(machine.purgedRoots).toEqual([ROOT]);
-    expect(repo.getCurrent()).toBeNull();
+    expect(machine.purgeCount).toBe(1);
+    expect(repo.getCurrent()).not.toBeNull();
   });
 
   it("leaves a project-scope plugin's files alone", async () => {
@@ -160,7 +160,17 @@ describe("PurgeUserScopeFiles.purge", () => {
     await purge.purge(ROOT);
 
     expect(files.removed).toEqual([]);
-    expect(machine.purgedRoots).toEqual([ROOT]);
+    expect(machine.purgeCount).toBe(1);
+  });
+});
+
+describe("PurgeUserScopeFiles.deleteManifest", () => {
+  it("deletes the user manifest", async () => {
+    const { repo, purge } = fixture();
+
+    await purge.deleteManifest();
+
+    expect(repo.getCurrent()).toBeNull();
   });
 });
 
