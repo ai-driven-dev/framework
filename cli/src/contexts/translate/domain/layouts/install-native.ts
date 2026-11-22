@@ -1,4 +1,4 @@
-import { reshapeFrontmatter } from "../../../../shared/domain/markdown.js";
+import { reshapeFrontmatter, serializeFrontmatter } from "../../../../shared/domain/markdown.js";
 import type {
   PluginComponentFile,
   PluginDistribution,
@@ -92,7 +92,8 @@ function markdownPlan(
     shape: (text) =>
       reshapeFrontmatter(text, {
         frontmatter: (fm) => section.convertFrontmatter(fm, fileName),
-        serialize: (fm, body) => section.serialize(fm, body),
+        serialize: (fm, body) =>
+          section.serialize ? section.serialize(fm, body) : serializeFrontmatter(fm, body),
       }),
     rootToken: plugins.rootToken(),
   };

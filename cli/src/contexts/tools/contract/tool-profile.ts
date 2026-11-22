@@ -112,7 +112,8 @@ export interface MarkdownSectionAnswers {
   /** Where a built file lands, or null when the tool takes none by that name. */
   buildInstallPath(fileName: string): string | null;
   convertFrontmatter(fm: Record<string, unknown>, fileName: string): Record<string, unknown>;
-  serialize(fm: Record<string, unknown>, body: string): string;
+  /** The tool's own writer for a document, when it keeps its header in a form of its own. */
+  readonly serialize?: (fm: Record<string, unknown>, body: string) => string;
 }
 
 /** What merging a plugin's mcp servers into a tool's shared file produced. */
