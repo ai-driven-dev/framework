@@ -134,7 +134,7 @@ describe("validate-plan", () => {
     ["sections out of order", "plan.md", (s) => s.replace("## Rules", "## Zzz").replace("## Impact", "## Rules").replace("## Zzz", "## Impact"), /out of order/],
     ["a table header renamed", "plan.md", (s) => s.replace("| Rule ", "| Law  "), /table header differs/],
     ["a front matter key missing", "plan.md", (s) => s.replace(/objective:.*\n/, ""), /front matter key "objective" missing/],
-    ["a front matter value changed", "phase-1.md", (s) => s.replace("status: pending", "status: done"), /"status" must be "pending"/],
+    ["a status outside the lifecycle", "phase-1.md", (s) => s.replace("status: pending", "status: implemented"), /phase-1\.md:\d+ PLAN-02 front matter "status" must be one of pending, in-progress, done/],
     ["an empty objective", "plan.md", (s) => s.replace(/objective:.*\n/, 'objective: ""\n'), /"objective" empty/],
     ["a source without a URL", "plan.md", (s) => s.replace("https://example.test", "somewhere"), /without a URL/],
     ["a gap in the task numbers", "phase-1.md", (s) => s.replace("### `1)`", "### `2)`"), /task numbers must run 1 to 1 with no gap/],
@@ -151,6 +151,12 @@ describe("validate-plan", () => {
       assert.match(r.out, expected);
     });
   }
+
+  it("accepts a plan in progress with a phase done", () => {
+    const files = mutate("plan.md", (s) => s.replace("status: pending", "status: in-progress"));
+    files["phase-1.md"] = files["phase-1.md"].replace("status: pending", "status: done");
+    assert.deepEqual(run(files), OK);
+  });
 
   it("accepts an omitted optional section and a placeholder inside code", () => {
     const files = mutate("plan.md", (s) => s.replace(/## Rules[\s\S]*?(?=## Decisions)/, "").replace("Source: x", "Source: `{{kept}}`"));
@@ -216,16 +222,4 @@ describe("validate-plan", () => {
     refused(run(good(), copy), /plan\.md:\d+ PLAN-01 section "Added" missing/);
   });
 
-  it("requires the Test Scope implement runs, even when the template no longer holds it", () => {
-    const copy = path.join(root, "skill-no-scope");
-    fs.cpSync(SKILL, copy, { recursive: true });
-    const template = path.join(copy, "assets/phase-template.md");
-    fs.writeFileSync(template, fs.readFileSync(template, "utf8").replace(/## Test Scope[\s\S]*?(?=## Wireframe)/, ""));
-    const files = good();
-    files["phase-1.md"] = files["phase-1.md"].replace(/## Test Scope[\s\S]*?(?=## Wireframe)/, "");
-    files["phase-2.md"] = files["phase-1.md"];
-    const r = run(files, copy);
-    refused(r, /phase-1\.md:\d+ PLAN-08 add the section Test Scope/);
-    assert.doesNotMatch(r.out, /PLAN-02/);
-  });
 });

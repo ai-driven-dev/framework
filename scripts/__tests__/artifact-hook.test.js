@@ -475,7 +475,7 @@ function runAsync(plugin, goal, payload, tmp) {
 }
 
 test("marks written by parallel tool calls are all judged", async () => {
-  const names = Array.from({ length: 24 }, (_, i) => `aidd_docs/backlog/stories/p${i}.md`);
+  const names = Array.from({ length: 4 }, (_, i) => `aidd_docs/backlog/stories/p${i}.md`);
   const s = session("aidd-pm", "claude", Object.fromEntries(names.map((rel) => [rel, BROKEN_STORY])));
   s.start();
   await Promise.all(names.map((rel) => runAsync("aidd-pm", "mark", writePayload("claude", s.root, rel), s.tmp)));
@@ -557,6 +557,44 @@ test("aidd-context: the shell turn answers the rule modified after the reference
   const found = lines(s.stop());
   assert.ok(found.length > 0);
   assert.ok(found.every((line) => line.startsWith("aidd_docs/rules/x/r.md:")));
+});
+
+test("aidd-context: a shell turn never scans skills, agents or commands, which an install writes", () => {
+  const files = { ".claude/skills/s/SKILL.md": "# nope\n", ".claude/agents/a.md": "# nope\n", ".claude/commands/c.md": "# nope\n" };
+  const s = session("aidd-context", "claude", contextFiles(files));
+  s.start();
+  for (const rel of Object.keys(files)) past(path.join(s.root, rel), -60);
+  s.shell();
+  assert.equal(s.stop(), "");
+});
+
+test("aidd-context: a skill the model wrote is still answered after a shell turn", () => {
+  const s = session("aidd-context", "claude", contextFiles({ ".claude/skills/s/SKILL.md": "# nope\n" }));
+  s.start();
+  s.wrote(".claude/skills/s/SKILL.md");
+  s.shell();
+  assert.ok(lines(s.stop()).some((line) => line.startsWith(".claude/skills/s/SKILL.md:")));
+});
+
+test("a Stop answer holds at most 20 finding lines, then one line counting the rest", () => {
+  const rels = Array.from({ length: 30 }, (_, i) => `aidd_docs/backlog/stories/s${i}.md`);
+  const s = session("aidd-pm", "claude", Object.fromEntries(rels.map((rel) => [rel, BROKEN_STORY])));
+  s.start();
+  for (const rel of rels) s.wrote(rel);
+  const found = lines(s.stop());
+  assert.equal(found.length, 21);
+  assert.match(found[20], /^\+\d+ more: run the skill's validate script$/u);
+  assert.ok(found.slice(0, 20).every((line) => /^aidd_docs\/backlog\/stories\/s\d+\.md:/u.test(line)));
+});
+
+test("a Stop answer of 20 finding lines or fewer is never cut", () => {
+  const rels = Array.from({ length: 2 }, (_, i) => `aidd_docs/backlog/stories/s${i}.md`);
+  const s = session("aidd-pm", "claude", Object.fromEntries(rels.map((rel) => [rel, BROKEN_STORY])));
+  s.start();
+  for (const rel of rels) s.wrote(rel);
+  const found = lines(s.stop());
+  assert.ok(found.length > 0 && found.length <= 20);
+  assert.ok(found.every((line) => !line.startsWith("+")));
 });
 
 test("aidd-context: one answer holds the artifact findings and memory's own text, never two", () => {
