@@ -8,7 +8,7 @@ import { fsAt } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { SYNTHETIC_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   CLAUDE_BUILT_DIR,
   catalogFixture,
@@ -32,7 +32,7 @@ describe("SyncSettings - when the stale cache is left alone", () => {
       manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
       marketplaceRegistry: registryWithSharedFramework(),
       logger: new CapturingLogger(),
-      activators: new Map([[TOOL.claude, new FakeHostActions({ available: true })]]),
+      activators: new Map([[SYNTHETIC_TOOL, new FakeHostActions({ available: true })]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
     });
 
@@ -53,7 +53,7 @@ describe("SyncSettings - when the stale cache is left alone", () => {
       manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
       marketplaceRegistry: registryWithSharedFramework(),
       logger: new CapturingLogger(),
-      activators: new Map([[TOOL.claude, new FakeHostActions({ available: true })]]),
+      activators: new Map([[SYNTHETIC_TOOL, new FakeHostActions({ available: true })]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
     });
 
@@ -72,7 +72,7 @@ describe("SyncSettings - when the stale cache is left alone", () => {
       manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
       marketplaceRegistry: projectWithMigratableEntry(),
       logger: new CapturingLogger(),
-      activators: new Map([[TOOL.claude, new FakeHostActions({ available: true })]]),
+      activators: new Map([[SYNTHETIC_TOOL, new FakeHostActions({ available: true })]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
     });
 

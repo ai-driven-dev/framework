@@ -12,7 +12,7 @@ import type {
   ResolvedMarketplace,
 } from "../../../src/contexts/installation/contract/built-marketplace.js";
 import { EnsureBuiltMarketplace } from "../../../src/orchestration/marketplace/ensure-built-marketplace.use-case.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { SYNTHETIC_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
 
 type RegisteredCommand = Parameters<EnsureBuiltMarketplace["execute"]>[0];
 
@@ -36,7 +36,7 @@ function commandOf(forceRefresh?: boolean): RegisteredCommand {
   return {
     projectRoot: PROJECT_ROOT,
     marketplace,
-    target: TOOL.codex,
+    target: SYNTHETIC_TOOL,
     mode: "marketplace",
     ...(forceRefresh === undefined ? {} : { forceRefresh }),
   };

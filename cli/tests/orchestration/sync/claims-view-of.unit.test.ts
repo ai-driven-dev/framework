@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { claimsViewOf } from "../../../src/orchestration/sync/claims-view-of.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SECOND_SYNTHETIC_TOOL,
+  SYNTHETIC_TOOL,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
-const tool = TOOL.copilot;
-const other = TOOL.codex;
+const tool = SYNTHETIC_TOOL;
+const other = SECOND_SYNTHETIC_TOOL;
 
 function manifestWith(pluginRefs: readonly string[]): Manifest {
   const manifest = Manifest.create();

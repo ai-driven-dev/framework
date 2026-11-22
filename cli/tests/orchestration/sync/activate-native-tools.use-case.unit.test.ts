@@ -8,7 +8,10 @@ import { ActivateNativeTools } from "../../../src/orchestration/sync/activate-na
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SECOND_SYNTHETIC_TOOL,
+  SYNTHETIC_TOOL,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
 type Register = Pick<RegisterPluginWithHost, "execute">;
 
@@ -47,7 +50,7 @@ function plugin(name: string, marketplace: string): RecordedPlugin {
 
 function contextOf(
   manifest: SyncContext["manifest"],
-  toolIds: SyncContext["toolIds"] = [TOOL.claude]
+  toolIds: SyncContext["toolIds"] = [SYNTHETIC_TOOL]
 ): SyncContext {
   return {
     manifest,
@@ -84,7 +87,7 @@ const request = (context: SyncContext, scope: Scope = "project", enablePlugins: 
   enablePlugins,
 });
 
-const emptyManifest = () => aManifest().withTool(TOOL.claude, []).build();
+const emptyManifest = () => aManifest().withTool(SYNTHETIC_TOOL, []).build();
 
 describe("ActivateNativeTools", () => {
   it("reports each tool the host activated, with what the host registered", async () => {
@@ -92,7 +95,7 @@ describe("ActivateNativeTools", () => {
 
     const run = await useCase.execute(request(contextOf(emptyManifest())));
 
-    expect(run.outcomes).toEqual(new Map([[TOOL.claude, OUTCOME]]));
+    expect(run.outcomes).toEqual(new Map([[SYNTHETIC_TOOL, OUTCOME]]));
     expect(run).toMatchObject({ binaryMissing: [], warnings: [], errors: [] });
   });
 
@@ -107,7 +110,7 @@ describe("ActivateNativeTools", () => {
       request(contextOf(emptyManifest()), "user", ["framework-plugin"])
     );
 
-    expect(plain.binaryMissing).toEqual([{ toolId: TOOL.claude, binary: "claude" }]);
+    expect(plain.binaryMissing).toEqual([{ toolId: SYNTHETIC_TOOL, binary: "claude" }]);
     expect(plain.outcomes.size).toBe(0);
     expect(logger.warnMessages).toEqual([
       "claude CLI not found on PATH — skipping native plugin activation.",
@@ -127,16 +130,16 @@ describe("ActivateNativeTools", () => {
 
   it("returns a tool's failure as an error and goes on to the next tool", async () => {
     const { useCase } = activatorOf(async (command) => {
-      if (command.toolId === TOOL.claude) throw new Error("activator crashed");
+      if (command.toolId === SYNTHETIC_TOOL) throw new Error("activator crashed");
       return { status: "activated", outcome: OUTCOME };
     });
 
     const run = await useCase.execute(
-      request(contextOf(emptyManifest(), [TOOL.claude, TOOL.codex]))
+      request(contextOf(emptyManifest(), [SYNTHETIC_TOOL, SECOND_SYNTHETIC_TOOL]))
     );
 
-    expect(run.errors).toEqual([{ scope: TOOL.claude, error: new Error("activator crashed") }]);
-    expect([...run.outcomes.keys()]).toEqual([TOOL.codex]);
+    expect(run.errors).toEqual([{ scope: SYNTHETIC_TOOL, error: new Error("activator crashed") }]);
+    expect([...run.outcomes.keys()]).toEqual([SECOND_SYNTHETIC_TOOL]);
   });
 
   describe("the refs it asks the host to enable", () => {
@@ -161,9 +164,9 @@ describe("ActivateNativeTools", () => {
 
     it("is each manifest plugin under the name its marketplace answers to at the host", async () => {
       const manifest = aManifest()
-        .withTool(TOOL.claude, [])
-        .withPlugin(TOOL.claude, plugin("kept", "market"))
-        .withPlugin(TOOL.claude, plugin("orphan", "unregistered"))
+        .withTool(SYNTHETIC_TOOL, [])
+        .withPlugin(SYNTHETIC_TOOL, plugin("kept", "market"))
+        .withPlugin(SYNTHETIC_TOOL, plugin("orphan", "unregistered"))
         .build();
 
       const { asked } = await refsAsked(manifest, "project", []);
@@ -173,8 +176,8 @@ describe("ActivateNativeTools", () => {
 
     it("adds the framework plugins a caller asked for, once", async () => {
       const manifest = aManifest()
-        .withTool(TOOL.claude, [])
-        .withPlugin(TOOL.claude, plugin("kept", "market"))
+        .withTool(SYNTHETIC_TOOL, [])
+        .withPlugin(SYNTHETIC_TOOL, plugin("kept", "market"))
         .build();
 
       const { asked } = await refsAsked(manifest, "project", ["extra", "extra"]);
@@ -184,7 +187,7 @@ describe("ActivateNativeTools", () => {
 
     it("recovers the refs a machine-scope record holds, at user scope only", async () => {
       const manifest = emptyManifest();
-      manifest.setNativeRegistrations(TOOL.claude, {
+      manifest.setNativeRegistrations(SYNTHETIC_TOOL, {
         binary: "claude",
         marketplaces: [],
         pluginRefs: ["recorded@host-market"],
