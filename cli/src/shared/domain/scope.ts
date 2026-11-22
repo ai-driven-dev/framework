@@ -18,3 +18,8 @@ export function parseScope(value: string | undefined): Scope | undefined {
   }
   return value;
 }
+
+/** The one scope a tool's plugins install under: the user's when its profile requires it. */
+export function getToolSupportedScope(requiresUserScope: boolean): Scope {
+  return requiresUserScope ? "user" : "project";
+}

@@ -1,7 +1,7 @@
-import type { Scope } from "../../../../shared/domain/scope.js";
+import { getToolSupportedScope, type Scope } from "../../../../shared/domain/scope.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import { assertToolSupportsScope, getToolSupportedScope } from "../../domain/install-scope.js";
+import { InvalidPluginScopeError } from "../../domain/installation.error.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 
 export interface PlanPluginInstallRequest {
@@ -21,7 +21,8 @@ export class PlanPluginInstall {
     for (const toolId of await this.targets(command.toolIds)) {
       const requiresUserScope =
         this.tools.aiProfile(toolId).plugins()?.requiresUserScope() === true;
-      assertToolSupportsScope(toolId, scope, getToolSupportedScope(requiresUserScope));
+      const supported = getToolSupportedScope(requiresUserScope);
+      if (supported !== scope) throw new InvalidPluginScopeError(toolId, scope, supported);
     }
   }
 

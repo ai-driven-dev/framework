@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isScope, parseScope } from "../../../src/shared/domain/scope.js";
+import { getToolSupportedScope, isScope, parseScope } from "../../../src/shared/domain/scope.js";
 import { saying } from "../testing/saying.builder.js";
 
 describe("scope value object", () => {
@@ -28,6 +28,16 @@ describe("scope value object", () => {
 
     it("throws on invalid value", () => {
       expect(() => parseScope("global")).toThrow(saying(/Invalid scope/));
+    });
+  });
+
+  describe("getToolSupportedScope", () => {
+    it("answers user for a tool that requires the user scope", () => {
+      expect(getToolSupportedScope(true)).toBe("user");
+    });
+
+    it("answers project for a tool that does not", () => {
+      expect(getToolSupportedScope(false)).toBe("project");
     });
   });
 });
