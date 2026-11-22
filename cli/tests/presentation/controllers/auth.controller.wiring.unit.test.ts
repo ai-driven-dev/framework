@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } fr
 import { bindOutput } from "../../../src/presentation/controllers/global-options.controller.js";
 import { AIDD_DIR } from "../../../src/shared/domain/layout/aidd-layout.js";
 import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";
-import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
 import { parseToExit } from "../../shared/testing/parse-to-exit.builder.js";
 import { prompterAnswering } from "../../shared/testing/partial-ports.builder.js";
@@ -30,7 +29,6 @@ const { registerAuthCommand } = await import(
 );
 
 const PROJECT_ROOT = process.cwd();
-const _CATALOG = catalogOf();
 
 let written: string[] = [];
 let errors: string[] = [];

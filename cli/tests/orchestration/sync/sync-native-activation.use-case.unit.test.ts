@@ -1,8 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { SyncNativeActivation } from "../../../src/orchestration/sync/sync-native-activation.use-case.js";
-import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 
-const _CATALOG = catalogOf();
 const OUTCOME = {
   activated: [],
   binaryMissing: [],

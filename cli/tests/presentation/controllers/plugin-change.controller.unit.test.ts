@@ -6,7 +6,7 @@ import {
   updatePluginsFrom,
 } from "../../../src/presentation/controllers/plugin-change.controller.js";
 import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
-import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
+import { syntheticCatalog } from "../../shared/testing/synthetic-tool-id.builder.js";
 
 function change() {
   const remove = vi.fn(async () => undefined);
@@ -24,7 +24,7 @@ function change() {
   const output = new CapturingOutput();
   const program = new Command();
   bindOutput(program, () => output);
-  const environment = { program, catalog: catalogOf(), createDeps };
+  const environment = { program, catalog: syntheticCatalog(), createDeps };
   return { remove, userRemove, update, userUpdate, activation, output, environment };
 }
 

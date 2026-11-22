@@ -3,7 +3,7 @@ import { describe, expect, it, type Mock, vi } from "vitest";
 import { bindOutput } from "../../../src/presentation/controllers/global-options.controller.js";
 import { installPluginFrom } from "../../../src/presentation/controllers/plugin-install.controller.js";
 import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
-import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
+import { syntheticCatalog } from "../../shared/testing/synthetic-tool-id.builder.js";
 
 function installation() {
   const install = vi.fn(async () => ({ kind: "marketplace", installed: ["aidd-dev"] }));
@@ -22,7 +22,7 @@ describe("installPluginFrom", () => {
   it("installs what it was given, activates every marketplace, and names what landed", async () => {
     const { install, activation, createDeps, output, program } = installation();
 
-    await installPluginFrom({ program, catalog: catalogOf(), createDeps }, "aidd-dev", {});
+    await installPluginFrom({ program, catalog: syntheticCatalog(), createDeps }, "aidd-dev", {});
 
     expect(install).toHaveBeenCalledWith(
       expect.objectContaining({ pluginArg: "aidd-dev", toolIds: "all", scope: undefined })
@@ -37,7 +37,7 @@ describe("installPluginFrom", () => {
   it("narrows activation to the marketplace it was told to install from", async () => {
     const { activation, createDeps, program } = installation();
 
-    await installPluginFrom({ program, catalog: catalogOf(), createDeps }, "aidd-dev", {
+    await installPluginFrom({ program, catalog: syntheticCatalog(), createDeps }, "aidd-dev", {
       from: "market-b",
     });
 
