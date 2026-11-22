@@ -5,7 +5,6 @@ import {
   RegisterPluginWithHost,
   type RegisterPluginWithHostDeps,
 } from "../../../src/contexts/host-registration/application/register/register-plugin-with-host.use-case.js";
-import { BuildMarketplaceForTool } from "../../../src/contexts/installation/application/sync/build-marketplace-for-tool.use-case.js";
 import {
   LoadSyncContext,
   type LoadSyncContextDeps,
@@ -28,6 +27,7 @@ import {
   ActivateNativeTools,
   type ActivationMarketplace,
 } from "../../../src/orchestration/sync/activate-native-tools.use-case.js";
+import { BuildMarketplaceForTool } from "../../../src/orchestration/sync/build-marketplace-for-tool.use-case.js";
 import { SyncSettings } from "../../../src/orchestration/sync/sync-settings.use-case.js";
 import { SyncToolSettingsFiles } from "../../../src/orchestration/sync/sync-tool-settings-files.use-case.js";
 import { FakeCurrentVersion } from "./fake-current-version.fake.js";

@@ -15,7 +15,6 @@
       "src/contexts/installation/application/doctor/load-manifest.use-case.ts": 1,
       "src/contexts/installation/application/install/install-ai-tool.use-case.ts": 1,
       "src/contexts/installation/application/plugin/update-user-plugin-files.use-case.ts": 1,
-      "src/contexts/installation/application/sync/build-marketplace-for-tool.use-case.ts": 1,
       "src/contexts/installation/application/sync/load-sync-context.use-case.ts": 1,
       "src/contexts/installation/application/update/update-tool.use-case.ts": 1,
       "src/contexts/machine-claims/application/purge-declared-cache.ts": 1,

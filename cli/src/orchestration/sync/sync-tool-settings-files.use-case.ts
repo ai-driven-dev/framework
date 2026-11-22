@@ -1,9 +1,9 @@
 import type { HostRegistrationOutcome } from "../../contexts/host-registration/application/register/registration-outcome.js";
-import type { BuildMarketplaceForTool } from "../../contexts/installation/application/sync/build-marketplace-for-tool.use-case.js";
 import type { TrackedSharedSettings } from "../../contexts/installation/application/sync/tracked-shared-settings.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { MarketplaceRegistrationAnswers } from "../../contexts/tools/contract/tool-profile.js";
 import type { AiToolId, ToolId } from "../../shared/domain/tool.js";
+import type { BuildMarketplaceForTool } from "./build-marketplace-for-tool.use-case.js";
 import type { RefRules, SyncedManifest, SyncedMarketplaces } from "./plugin-refs-run.js";
 
 interface SyncRun {

@@ -5,12 +5,12 @@ import type {
 import type { HostRegistrationOutcome } from "../../contexts/host-registration/application/register/registration-outcome.js";
 import type { BuiltCatalogs } from "../../contexts/host-registration/contract/built-catalogs.js";
 import type { ClaimsView } from "../../contexts/host-registration/contract/claims-view.js";
-import type { BuildMarketplaceForTool } from "../../contexts/installation/application/sync/build-marketplace-for-tool.use-case.js";
 import type { SyncContext } from "../../contexts/installation/application/sync/load-sync-context.use-case.js";
 import type { HintedMessage } from "../../shared/domain/describe-error.js";
 import type { Scope } from "../../shared/domain/scope.js";
 import type { ToolId } from "../../shared/domain/tool.js";
 import type { Logger } from "../../shared/ports/logger.js";
+import type { BuildMarketplaceForTool } from "./build-marketplace-for-tool.use-case.js";
 import type { PluginRefsRun, RefRules, SyncedMarketplaces } from "./plugin-refs-run.js";
 
 export interface ActivationRun {
