@@ -175,13 +175,14 @@ function checkChildren(expectedList, actualList, parent, optional, say, root = e
   const hint = (name) => {
     const place = placeOf(name);
     if (place) return `: write it as ${written(place.node)}${place.above ? ` under ${written(place.above)}` : ""}`;
-    return expectedList.length ? `; here the template has ${expectedList.map(written).join(", ")}` : "; remove it or move its text into the parent";
+    return expectedList.length ? `: rename it to, or move its text under, one of ${expectedList.map(written).join(", ")}` : ": remove it and move its text into the parent";
   };
   let last = -1;
   for (const actual of actualList) {
     const rank = rankOf(actual.name);
     const shown = `${"#".repeat(actual.level)} ${actual.name}`;
-    if (rank < 0) say(actual.line, shown, `${kind(actual)} "${actual.name}" is not in the template${parent ? ` under "${parent.name}"` : ""}${hint(actual.name)}`);
+    // The message quotes the heading, so no excerpt: one appended after the fix reads as part of it.
+    if (rank < 0) say(actual.line, undefined, `${kind(actual)} "${actual.name}" is not in the template${parent ? ` under "${parent.name}"` : ""}${hint(actual.name)}`);
     else if (rank < last && !expectedList[rank].repeat) say(actual.line, shown, `${kind(actual)} "${actual.name}" is out of order`);
     else last = rank;
   }
