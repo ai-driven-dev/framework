@@ -1,96 +1,20 @@
-import type {
-  NativePluginClaim,
-  NativeRegistrations,
-} from "../domain/manifest/native-registrations.js";
+import type { NativeRegistrations } from "../domain/manifest/native-registrations.js";
 
 /** A claim the manifest keeps on a ref: only the ref is the host's business. */
 interface RecordedClaim {
   readonly ref: string;
 }
 
-type ClaimedRecord<Claim extends RecordedClaim = RecordedClaim> = Omit<
-  NativeRegistrations,
-  "pluginClaims"
-> & {
-  readonly pluginClaims?: readonly Claim[];
+type ClaimedRecord = Omit<NativeRegistrations, "pluginClaims"> & {
+  readonly pluginClaims?: readonly RecordedClaim[];
 };
 
-/** What a run claims on a machine's record, and for which project. */
-interface CatalogueClaims {
-  readonly marketplaces: readonly RegisteredMarketplace[];
-  readonly refs: readonly string[];
-  /** The project root holding the claims, none when the project is unknown. */
-  readonly dependent: string | undefined;
-}
-
-/** The machine record once the claims are merged, and whether the merge changed anything. */
-interface MergedClaims {
-  readonly record: ClaimedRecord<NativePluginClaim> & {
-    readonly pluginClaims: readonly NativePluginClaim[];
-  };
-  readonly changed: boolean;
-}
-
-/** The record with its claims list always written, as the manifest rewrites it. */
-type WithClaims<R> = R & { readonly pluginClaims: readonly RecordedClaim[] };
-
-/** What installation asks of the host registration to read or rewrite a record it keeps. */
+/** What the settings sync asks of the host registration to read a record it keeps. */
 export interface RegistrationRecordRules {
-  /** The refs recorded on the host, none when nothing was recorded. */
-  readonly pluginRefsOf: (record: NativeRegistrations | undefined) => readonly string[];
-  /** The registration an alias stands for, `undefined` when it was never registered. */
-  readonly marketplaceOf: (
-    record: NativeRegistrations,
-    alias: string | undefined
-  ) => RegisteredMarketplace | undefined;
-  /** The claims on the refs sitting on the host name the alias was registered under. */
-  readonly claimsOnMarketplace: <Claim extends RecordedClaim>(
-    record: ClaimedRecord<Claim>,
-    alias: string
-  ) => readonly Claim[];
-  /** Whether a ref sits on one of the host names. */
-  readonly refOnAnyHost: (ref: string, hostNames: Iterable<string>) => boolean;
-  /** Whether a plugin selector names its catalogue, so it can only mean one exact ref. */
-  readonly isQualifiedRef: (selector: string) => boolean;
-  /** A qualified selector is one exact ref; a bare plugin name selects it in every catalogue. */
-  readonly refSelectedBy: (ref: string, selector: string) => boolean;
   /** The ref a plugin has on a host catalogue, which the host knows by its own name. */
   readonly refOnHostName: (plugin: string, hostName: string) => string;
-  /** The ref a plugin has on the host, `undefined` when nothing was recorded for the alias. */
-  readonly refOf: (
-    record: NativeRegistrations | undefined,
-    plugin: string,
-    alias: string | undefined
-  ) => string | undefined;
   /** The refs, then the claimed refs, that sit on one of the host names. */
   readonly refsOnHosts: (record: ClaimedRecord, hostNames: Iterable<string>) => string[];
-  readonly registrationPreview: (
-    record: NativeRegistrations,
-    cacheRoot: string | undefined
-  ) => {
-    readonly binary: string;
-    readonly marketplaceCount: number;
-    readonly pluginRefCount: number;
-    readonly cachePaths: readonly string[];
-  };
-  /** The record without one ref, every other entry untouched. */
-  readonly withoutRef: <R extends NativeRegistrations>(record: R, ref: string) => R;
-  /** The record without a ref and the claim the manifest keeps on it, claims list always written. */
-  readonly withoutClaimedRef: <R extends ClaimedRecord>(record: R, ref: string) => WithClaims<R>;
-  /** The record without a marketplace, nor any ref or claim on the host name it was registered under. */
-  readonly withoutMarketplace: <R extends ClaimedRecord>(record: R, alias: string) => WithClaims<R>;
-  /** The record a tool's activation leaves, `undefined` when it equals the one recorded. */
-  readonly afterActivation: <Claim extends RecordedClaim>(
-    existing: ClaimedRecord<Claim> | undefined,
-    outcome: Pick<HostRegistrationOutcome, "marketplaces" | "preservedMarketplaces" | "pluginRefs">,
-    run: { readonly binary: string; readonly narrowed: boolean }
-  ) => ClaimedRecord<Claim> | undefined;
-  /** A machine's record with the claims of one run merged in. */
-  readonly mergeCatalogueClaims: (
-    existing: ClaimedRecord<NativePluginClaim> | undefined,
-    claimed: CatalogueClaims,
-    fallbackBinary: string
-  ) => MergedClaims;
 }
 
 /** A marketplace the host registered: the manifest reads the two names and keeps the rest. */

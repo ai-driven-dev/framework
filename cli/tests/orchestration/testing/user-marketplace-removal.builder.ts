@@ -1,12 +1,12 @@
 /** Seeds a user-scope marketplace removal over a native host, so each removal case states only what it varies. */
 
+import type { registrationRecordRules } from "../../../src/composition/installation.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { NativeHostRegistrationGate } from "../../../src/contexts/host-registration/application/native-host-registration-gate.js";
 import type { NativeMarketplaceSource } from "../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import type { RegistrationRecordRules } from "../../../src/contexts/installation/ports/native-host.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
@@ -14,6 +14,8 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { userMarketplaceRemover } from "./user-marketplace-remover.builder.js";
+
+type RecordRules = typeof registrationRecordRules;
 
 export const ALIAS = "project-alias";
 export const HOST = "real-catalog";
@@ -53,7 +55,7 @@ export async function nativeFixture(
     available?: boolean;
     failOnUninstall?: boolean;
     throwOnRemove?: boolean;
-    records?: RegistrationRecordRules;
+    records?: RecordRules;
   } = {}
 ) {
   const machine = Manifest.create();

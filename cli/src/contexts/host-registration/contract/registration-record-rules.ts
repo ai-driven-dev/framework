@@ -87,6 +87,8 @@ export interface RegistrationRecordRules {
     };
     readonly changed: boolean;
   };
+  /** The refs, then the claimed refs, that sit on one of the host names. */
+  readonly refsOnHosts: (record: ClaimedRecordView, hostNames: Iterable<string>) => string[];
   /** The ref a plugin has on the host under a catalogue's host name. */
   readonly refOnHostName: (plugin: string, hostName: string) => string;
   /** Whether a plugin selector names its catalogue, so it can only mean one exact ref. */

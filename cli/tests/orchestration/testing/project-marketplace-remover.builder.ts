@@ -5,10 +5,11 @@ import type { MarketplaceRegistry } from "../../../src/contexts/distribution/por
 import { RemovePluginsFromMarketplace } from "../../../src/contexts/installation/application/marketplace/remove-plugins-from-marketplace.use-case.js";
 import type { RemoveProjectPlugin } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
-import type { RegistrationRecordRules } from "../../../src/contexts/installation/ports/native-host.js";
 import { RemoveProjectMarketplace } from "../../../src/orchestration/marketplace/remove-project-marketplace.use-case.js";
 import type { Prompter } from "../../../src/orchestration/ports/prompter.js";
 import { registeredTools } from "../../shared/testing/registered-tools.builder.js";
+
+type RecordRules = typeof registrationRecordRules;
 
 /** The project marketplace removal as composition wires it, over a given cleanup. */
 export function projectMarketplaceRemover(
@@ -16,7 +17,7 @@ export function projectMarketplaceRemover(
   manifestRepo: ManifestRepository,
   registry: MarketplaceRegistry,
   prompter: Prompter,
-  records: RegistrationRecordRules = registrationRecordRules
+  records: RecordRules = registrationRecordRules
 ): RemoveProjectMarketplace {
   return new RemoveProjectMarketplace({
     find: new FindMarketplaceToRemove(registry),

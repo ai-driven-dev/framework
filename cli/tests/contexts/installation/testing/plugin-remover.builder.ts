@@ -10,7 +10,6 @@ import { RemoveUserPlugin } from "../../../../src/contexts/installation/applicat
 import { UserScopePluginFiles } from "../../../../src/contexts/installation/application/removal/user-scope-plugin-files.js";
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
 import type { InstallationMarketplaceRegistry } from "../../../../src/contexts/installation/ports/marketplace-sources.js";
-import type { RegistrationRecordRules } from "../../../../src/contexts/installation/ports/native-host.js";
 import {
   type PluginRemovalClaimsDeps,
   pluginRemovalClaims,
@@ -28,6 +27,8 @@ import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.j
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools } from "../../../shared/testing/registered-tools.builder.js";
 
+type RecordRules = typeof registrationRecordRules;
+
 type Withdrawing = ConstructorParameters<typeof WithdrawFromHost>;
 
 /** What a test names; everything else is the empty or in-memory default. */
@@ -41,7 +42,7 @@ export interface PluginRemoverParts {
   marketplaceRegistry?: InstallationMarketplaceRegistry;
   userManifestRepo?: ManifestRepository & Lock;
   nativeMarketplaceSources?: Withdrawing[2]["sources"];
-  records?: RegistrationRecordRules;
+  records?: RecordRules;
 }
 
 function withdrawing(parts: Omit<PluginRemoverParts, "manifestRepo">, fs: FileReader & FileWriter) {
