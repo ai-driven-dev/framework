@@ -5,7 +5,10 @@ import type {
   StatusQuery,
 } from "../../../src/contexts/installation/application/report-status.use-case.js";
 import { reportAllStatus } from "../../../src/orchestration/global/report-all-status.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_IDE_TOOL,
+  SYNTHETIC_TOOL,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -14,7 +17,7 @@ type Options = ReportStatusRequest;
 
 const DRIFT = [
   {
-    toolId: TOOL.claude,
+    toolId: SYNTHETIC_TOOL,
     pluginName: "sample",
     driftedFiles: ["a.md"],
     notInstalledOnMachine: false,
@@ -73,8 +76,10 @@ describe("reportAllStatus", () => {
   });
 
   it("returns each scope's own report", async () => {
-    const aiReport = report({ tools: [{ toolId: TOOL.claude, version: "1", drifted: [] }] });
-    const ideReport = report({ tools: [{ toolId: TOOL.vscode, version: "1", drifted: [] }] });
+    const aiReport = report({ tools: [{ toolId: SYNTHETIC_TOOL, version: "1", drifted: [] }] });
+    const ideReport = report({
+      tools: [{ toolId: SYNTHETIC_IDE_TOOL, version: "1", drifted: [] }],
+    });
     const { useCase } = fakeStatus((o) => (o.category === "ai" ? aiReport : ideReport));
 
     const result = await reportAllStatus(useCase, PROJECT_ROOT);

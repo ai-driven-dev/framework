@@ -1,26 +1,33 @@
 import { describe, expect, it, vi } from "vitest";
 import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SECOND_SYNTHETIC_TOOL,
+  SYNTHETIC_IDE_TOOL,
+  SYNTHETIC_TOOL,
+  syntheticMixedCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import { toolConfigHarness } from "../../shared/testing/tool-config-command.builder.js";
 
 const PROJECT_ROOT = process.cwd();
-const CATALOG = registeredTools();
+const CATALOG = syntheticMixedCatalog();
 const { uninstallTools, updateTools, errors, pretendTerminal, run } = toolConfigHarness({
   tools: CATALOG,
-  ideTool: TOOL.vscode,
-  aiTool: TOOL.claude,
+  ideTool: SYNTHETIC_IDE_TOOL,
+  aiTool: SYNTHETIC_TOOL,
 });
 
 describe("aidd framework remove", () => {
   it("removes one AI tool, and counts every file that went", async () => {
     uninstallTools.mockResolvedValue([
-      { toolId: TOOL.claude, fileCount: 4 },
-      { toolId: TOOL.claude, fileCount: 3 },
+      { toolId: SYNTHETIC_TOOL, fileCount: 4 },
+      { toolId: SYNTHETIC_TOOL, fileCount: 3 },
     ]);
 
-    expect(await run("remove", "--tool", "claude")).toEqual(["Removed claude (7 files removed)"]);
+    expect(await run("remove", "--tool", SYNTHETIC_TOOL)).toEqual([
+      `Removed ${SYNTHETIC_TOOL} (7 files removed)`,
+    ]);
     expect(uninstallTools).toHaveBeenCalledWith({
-      toolIds: ["claude"],
+      toolIds: [SYNTHETIC_TOOL],
       projectRoot: PROJECT_ROOT,
     });
   });
@@ -31,18 +38,20 @@ describe("aidd framework remove", () => {
       throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("remove", "--tool", "claude")).rejects.toThrow(ExitRequested);
+    await expect(run("remove", "--tool", SYNTHETIC_TOOL)).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe("Error: manifest is locked\n");
     expect(exit).toHaveBeenCalledWith(1);
   });
 
   it("removes an IDE tool through the same command", async () => {
-    uninstallTools.mockResolvedValue([{ toolId: TOOL.vscode, fileCount: 1 }]);
+    uninstallTools.mockResolvedValue([{ toolId: SYNTHETIC_IDE_TOOL, fileCount: 1 }]);
 
-    expect(await run("remove", "--tool", "vscode")).toEqual(["Removed vscode (1 files removed)"]);
+    expect(await run("remove", "--tool", SYNTHETIC_IDE_TOOL)).toEqual([
+      `Removed ${SYNTHETIC_IDE_TOOL} (1 files removed)`,
+    ]);
     expect(uninstallTools).toHaveBeenCalledWith({
-      toolIds: ["vscode"],
+      toolIds: [SYNTHETIC_IDE_TOOL],
       projectRoot: PROJECT_ROOT,
     });
   });
@@ -52,19 +61,22 @@ describe("aidd framework update", () => {
   it("prints what the update moved and warns about what it could not", async () => {
     updateTools.mockResolvedValue({
       updatedTools: [
-        { toolId: TOOL.claude, fileCount: 5 },
-        { toolId: TOOL.vscode, fileCount: 2 },
+        { toolId: SYNTHETIC_TOOL, fileCount: 5 },
+        { toolId: SYNTHETIC_IDE_TOOL, fileCount: 2 },
       ],
-      errors: [{ scope: "vscode", error: "one file was kept" }],
+      errors: [{ scope: SYNTHETIC_IDE_TOOL, error: "one file was kept" }],
     });
 
-    expect(await run("update")).toEqual(["Updated claude (5 files)", "Updated vscode (2 files)"]);
+    expect(await run("update")).toEqual([
+      `Updated ${SYNTHETIC_TOOL} (5 files)`,
+      `Updated ${SYNTHETIC_IDE_TOOL} (2 files)`,
+    ]);
     expect(updateTools).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
       userForce: false,
       interactive: false,
     });
-    expect(errors.join("")).toBe("Warning: [vscode] one file was kept\n");
+    expect(errors.join("")).toBe(`Warning: [${SYNTHETIC_IDE_TOOL}] one file was kept\n`);
   });
 
   it("says nothing is installed when nothing moved and nothing failed", async () => {
@@ -72,10 +84,10 @@ describe("aidd framework update", () => {
   });
 
   it("narrows the update to the tool named", async () => {
-    await run("update", "--tool", "claude", "--force");
+    await run("update", "--tool", SYNTHETIC_TOOL, "--force");
 
     expect(updateTools).toHaveBeenCalledWith({
-      toolArg: "claude",
+      toolArg: SYNTHETIC_TOOL,
       projectRoot: PROJECT_ROOT,
       userForce: true,
       interactive: false,
@@ -118,7 +130,7 @@ describe("aidd framework update", () => {
     await expect(run("update", "--tool", "nope")).rejects.toThrow(ExitRequested);
 
     expect(errors[0]).toBe(
-      "Error: Unknown tool: nope. Valid tools: claude, cursor, copilot, opencode, kilo, codex, antigravity, vscode\n"
+      `Error: Unknown tool: nope. Valid tools: ${SYNTHETIC_TOOL}, ${SECOND_SYNTHETIC_TOOL}, ${SYNTHETIC_IDE_TOOL}\n`
     );
     expect(updateTools).not.toHaveBeenCalled();
     expect(exit).toHaveBeenCalledWith(1);
