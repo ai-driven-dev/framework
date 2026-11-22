@@ -1,7 +1,5 @@
-import type {
-  SourceMarketplaceRef,
-  ToolBuildContract,
-} from "../../tools/contract/build-contract.js";
+import type { SourceMarketplaceRef } from "../../../shared/domain/plugin/source-refs.js";
+import type { ToolBuildContract } from "../../tools/contract/build-contract.js";
 import type { FrameworkBuildMode } from "../../tools/contract/tool-profile.js";
 
 /** What a build writes and how: the tool's contract, the layout, and whether it may overwrite. */

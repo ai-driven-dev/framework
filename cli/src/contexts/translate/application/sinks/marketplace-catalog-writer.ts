@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import type { SourceMarketplaceRef } from "../../../tools/contract/build-contract.js";
+import type { SourceMarketplaceRef } from "../../../../shared/domain/plugin/source-refs.js";
 import type { DiskSinkDeps } from "../../ports/disk-sink-deps.js";
 import type { DiskTarget } from "../../ports/plugin-tree-sink.js";
 

@@ -3,6 +3,10 @@ import type {
   FlatArtifactLayout,
   FlatHooksLoaderEntry,
 } from "../../../shared/domain/materialization/flat-paths.js";
+import type {
+  SourceMarketplaceRef,
+  SourcePluginEntryRef,
+} from "../../../shared/domain/plugin/source-refs.js";
 
 /** All a marketplace builder reads of the output tree. */
 export interface BuildFileReader {
@@ -207,26 +211,6 @@ export interface ConfigArtifactFile {
   /** Relative to the output root. */
   readonly path: string;
   readonly content: string;
-}
-
-/** Minimal reference to the source marketplace catalog, so `domain/` need not import the
- * application layer. */
-export interface SourceMarketplaceRef {
-  readonly name: string;
-  readonly version?: string;
-  readonly description?: string;
-  readonly owner?: unknown;
-  readonly plugins: readonly SourcePluginEntryRef[];
-  readonly [key: string]: unknown;
-}
-
-export interface SourcePluginEntryRef {
-  readonly name: string;
-  readonly version?: string;
-  readonly description?: string;
-  readonly strict?: boolean;
-  readonly metadata?: { readonly recommended?: boolean };
-  readonly [key: string]: unknown;
 }
 
 export interface PluginPresence {
