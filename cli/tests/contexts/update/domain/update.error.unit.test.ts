@@ -6,7 +6,7 @@ import {
   UpdateError,
 } from "../../../../src/contexts/update/domain/update.error.js";
 
-describe("ElevatedPermissionUpdateError", () => {
+describe("when ElevatedPermissionUpdateError is raised", () => {
   it("carries the command that updates directly and says nothing itself", () => {
     const error = new ElevatedPermissionUpdateError("npm install -g x@latest");
     expect({
@@ -27,7 +27,7 @@ describe("ElevatedPermissionUpdateError", () => {
   });
 });
 
-describe("FrameworkResolutionError", () => {
+describe("when FrameworkResolutionError is raised", () => {
   it("carries its detail and says nothing itself", () => {
     const error = new FrameworkResolutionError("no framework");
     expect({ name: error.name, detail: error.detail, message: error.message }).toStrictEqual({
@@ -42,7 +42,7 @@ describe("FrameworkResolutionError", () => {
   });
 });
 
-describe("PackageManagerDetectionError", () => {
+describe("when PackageManagerDetectionError is raised", () => {
   it("carries the commands to run by hand and says nothing itself", () => {
     const error = new PackageManagerDetectionError(["npm i -g x", "pnpm add -g x"]);
     expect({ name: error.name, commands: error.commands, message: error.message }).toStrictEqual({
@@ -59,7 +59,7 @@ describe("PackageManagerDetectionError", () => {
   });
 });
 
-describe("UpdateError", () => {
+describe("when UpdateError is raised", () => {
   it("says nothing itself", () => {
     const error = new UpdateError();
     expect({ name: error.name, message: error.message }).toStrictEqual({

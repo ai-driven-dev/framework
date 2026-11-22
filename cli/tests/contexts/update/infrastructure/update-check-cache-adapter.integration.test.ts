@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { UpdateCheckCacheAdapter } from "../../../../src/contexts/update/infrastructure/update-check-cache-adapter.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 
-describe("UpdateCheckCacheAdapter", () => {
+describe("caching the update check", () => {
   it("writes the entry as JSON under cache/ in the config directory, creating it", async () => {
     const created: string[] = [];
     const fs = new InMemoryFileAdapter();

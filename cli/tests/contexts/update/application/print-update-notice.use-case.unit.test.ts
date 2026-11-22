@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { InMemoryUpdateCheckCache } from "../testing/in-memory-update-check-cache.fake.js";
 import { aPrintUpdateNotice } from "../testing/update.builder.js";
 
-describe("PrintUpdateNotice", () => {
+describe("printing the update notice", () => {
   it("warns of a newer release the last check kept, however old the check", async () => {
     const useCase = aPrintUpdateNotice()
       .withCache(new InMemoryUpdateCheckCache({ checkedAt: 0, latest: "2.0.0" }))

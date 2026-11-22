@@ -16,7 +16,7 @@ function over(installed: string, installer = new FakeCliInstaller()) {
   return { useCase, installer };
 }
 
-describe("SelfUpdate", () => {
+describe("updating the binary", () => {
   it("says what is waiting when asked only to check", async () => {
     const { useCase, installer } = over("2.5.0");
 
