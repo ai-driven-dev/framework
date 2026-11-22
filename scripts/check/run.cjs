@@ -9,7 +9,7 @@
 // --update-baseline records the baseline when scripts/check/baseline.json is missing; otherwise it only lowers counts and drops entries, never adds a finding. Exit 2 is a usage or contract error.
 const fs = require("node:fs");
 const path = require("node:path");
-const { check, loadContract, format, ContractError, isUsage } = require("./engine/engine.cjs");
+const { check, loadContract, format, ContractError, isUsage, globRegex } = require("./engine/engine.cjs");
 const { sync, syncHooks, describeHook } = require("./engine/sync.cjs");
 
 const BASELINE = "scripts/check/baseline.json";
@@ -29,12 +29,7 @@ function expand(root, pattern) {
   return found;
 }
 
-/** Whether a slash glob matches a path: `*` stays inside a segment, `**` crosses them. */
-function globMatch(glob, file) {
-  const source = glob.replace(/[.+?^${}()|[\]\\]/gu, "\\$&").replace(/\*\*\//gu, "\0").replace(/\*\*/gu, "\u0001").replace(/\*/gu, "[^/]*").replace(/\0/gu, "(?:.*/)?").replace(/\u0001/gu, ".*");
-  return new RegExp(`^${source}$`, "u").test(file);
-}
-const watches = (globs, given) => given.some((g) => (globs ?? []).some((glob) => globMatch(glob, g)));
+const watches = (globs, given) => given.some((g) => (globs ?? []).some((glob) => globRegex(glob).test(g)));
 
 const USAGE = "usage: run.cjs [--fix] [--update-baseline] [--root <dir>] [<file>...]";
 const ENGINE_PATH = /^(scripts\/check\/engine\/|plugins\/[^/]+\/skills\/[^/]+\/(?:scripts|assets)\/|plugins\/[^/]+\/hooks\/(?:artifacts\.cjs|hooks\.json|lib\/contracts\/))/u;

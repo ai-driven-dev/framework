@@ -23,6 +23,12 @@ const validate = (...targets) => lint(path.join(dir, "contract.json"), ...target
 const snapshot = () => fs.readdirSync(dir, { recursive: true }).sort().map((f) => `${f}:${fs.statSync(path.join(dir, f)).isFile() ? fs.readFileSync(path.join(dir, f), "utf8") : ""}`);
 
 describe("engine", () => {
+  it("passes a contract that has no rules", () => {
+    write("contract.json", JSON.stringify({ version: 1, kind: "demo", unit: "file" }));
+    write("a.md", "# Title\n");
+    assert.deepEqual(validate("a.md"), { status: 0, out: "", err: "" });
+  });
+
   it("exits 0 with no output on a valid artifact", () => {
     contract({ "DEMO-01": { op: "pattern", in: "*.md", line: 1, regex: "^# ", why: "w", fix: "start with a title" } });
     write("a.md", "# Title\n");

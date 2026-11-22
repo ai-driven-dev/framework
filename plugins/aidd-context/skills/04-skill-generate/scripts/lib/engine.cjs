@@ -116,7 +116,7 @@ function check(contract, target) {
     return views.get(file);
   };
   for (const file of files) {
-    for (const [id, rule] of Object.entries(contract.rules)) {
+    for (const [id, rule] of Object.entries(contract.rules ?? {})) {
       if (!rule.match.some((r) => r.test(file)) || rule.skip.some((r) => r.test(file))) continue;
       for (const hit of ops[rule.op](view(file), rule)) {
         const fix = hit.fix ?? rule.fix;
