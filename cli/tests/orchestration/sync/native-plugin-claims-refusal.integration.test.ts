@@ -7,14 +7,20 @@ import { claimsRecorded } from "../../shared/testing/host-record-reading.builder
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
+import {
+  SYNTHETIC_LISTED_CATALOGUE,
+  SYNTHETIC_LISTED_TOOL,
+  SYNTHETIC_PROVEN_CATALOGUE,
+  SYNTHETIC_PROVEN_TOOL,
+  syntheticSyncCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import { effectiveListSources } from "../testing/effective-list-sources.builder.js";
 import { userScopeCleaner } from "../testing/user-scope-cleaner.builder.js";
 
 for (const [toolId, catalogPath] of [
-  [TOOL.codex, ".agents/plugins/marketplace.json"],
-  [TOOL.copilot, ".plugin/marketplace.json"],
+  [SYNTHETIC_LISTED_TOOL, SYNTHETIC_LISTED_CATALOGUE],
+  [SYNTHETIC_PROVEN_TOOL, SYNTHETIC_PROVEN_CATALOGUE],
 ] as const) {
   describe(`${toolId} machine plugin claims`, () => {
     it("global clean refuses live plugin dependents and preserves claims if host unregister fails", async () => {
@@ -63,7 +69,7 @@ for (const [toolId, catalogPath] of [
         ],
       ]);
       const clean = userScopeCleaner({
-        tools: registeredTools(),
+        tools: syntheticSyncCatalog(),
         fs,
         repo,
         marketplaceRegistry: registry,
@@ -95,7 +101,7 @@ for (const [toolId, catalogPath] of [
       ]);
       const working = new FakeHostActions({ available: true });
       const finish = userScopeCleaner({
-        tools: registeredTools(),
+        tools: syntheticSyncCatalog(),
         fs,
         repo,
         marketplaceRegistry: registry,

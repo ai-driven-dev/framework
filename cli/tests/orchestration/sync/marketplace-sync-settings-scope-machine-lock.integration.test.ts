@@ -4,7 +4,11 @@ import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-bui
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_NATIVE_SETTINGS,
+  SYNTHETIC_NATIVE_TOOL,
+  syntheticSyncCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   freshHostProof,
   manifestWithTool,
@@ -15,13 +19,13 @@ import {
 
 describe("settings synchronization under the machine ownership lock", () => {
   async function fixture() {
-    const projectRepo = manifestWithTool(TOOL.claude);
-    const machineRepo = manifestWithTool(TOOL.claude);
+    const projectRepo = manifestWithTool(SYNTHETIC_NATIVE_TOOL);
+    const machineRepo = manifestWithTool(SYNTHETIC_NATIVE_TOOL);
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
-    const fs = seededBuiltCatalog();
+    const fs = seededBuiltCatalog(SYNTHETIC_NATIVE_TOOL);
     const activator = new FakeHostActions({ available: true });
-    const proof = freshHostProof(TOOL.claude, activator);
+    const proof = freshHostProof(SYNTHETIC_NATIVE_TOOL, activator);
     let locked = false;
     const accesses: boolean[] = [];
     const originalLoad = projectRepo.load.bind(projectRepo);
@@ -41,12 +45,12 @@ describe("settings synchronization under the machine ownership lock", () => {
       }
     };
     const sync = marketplaceSync({
-      tools: registeredTools(),
+      tools: syntheticSyncCatalog(),
       fs,
       manifestRepo: projectRepo,
       marketplaceRegistry: registry,
       logger: new CapturingLogger(),
-      activators: new Map([[TOOL.claude, activator]]),
+      activators: new Map([[SYNTHETIC_NATIVE_TOOL, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       hostPluginRegistries: proof.plugins,
       userManifestRepo: {
@@ -74,7 +78,7 @@ describe("settings synchronization under the machine ownership lock", () => {
       expect(f.acquireLock).toHaveBeenCalledTimes(1);
       expect(f.accesses.length).toBeGreaterThan(0);
       expect(f.accesses.every(Boolean)).toBe(true);
-      expect(f.activator.addedMarketplaces).toEqual(["/built/claude"]);
+      expect(f.activator.addedMarketplaces).toEqual([`/built/${SYNTHETIC_NATIVE_TOOL}`]);
       expect(f.machineRepo.saveCount).toBe(1);
     }
   );
@@ -87,7 +91,7 @@ describe("settings synchronization under the machine ownership lock", () => {
     });
     expect(result.errors).toEqual([]);
     expect(f.acquireLock).not.toHaveBeenCalled();
-    expect(f.activator.addedMarketplaces).toEqual(["/built/claude"]);
+    expect(f.activator.addedMarketplaces).toEqual([`/built/${SYNTHETIC_NATIVE_TOOL}`]);
     expect(f.machineRepo.saveCount).toBe(1);
   });
 
@@ -104,6 +108,6 @@ describe("settings synchronization under the machine ownership lock", () => {
     expect(f.activator.addedMarketplaces).toEqual([]);
     expect(f.activator.removedMarketplaces).toEqual([]);
     expect(f.activator.enabledPlugins).toEqual([]);
-    expect(f.fs.getFile(`${PROJECT_ROOT}/.claude/settings.json`)).toBeUndefined();
+    expect(f.fs.getFile(`${PROJECT_ROOT}/${SYNTHETIC_NATIVE_SETTINGS}`)).toBeUndefined();
   });
 });

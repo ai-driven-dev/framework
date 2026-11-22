@@ -16,6 +16,7 @@ import {
 } from "../../../../src/contexts/machine-claims/application/plugin-removal-claims.js";
 import { PurgeDeclaredCache } from "../../../../src/contexts/machine-claims/application/purge-declared-cache.js";
 import { userScopeFilesSafeToDelete } from "../../../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
+import type { ToolCatalog } from "../../../../src/contexts/tools/contract/tool-catalog.js";
 import { RemoveMachinePlugin } from "../../../../src/orchestration/plugin/remove-machine-plugin.use-case.js";
 import { RemovePlugin } from "../../../../src/orchestration/plugin/remove-plugin.use-case.js";
 import { resolveHomeDir } from "../../../../src/shared/infrastructure/home-dir.js";
@@ -43,6 +44,7 @@ export interface PluginRemoverParts {
   userManifestRepo?: ManifestRepository & Lock;
   nativeMarketplaceSources?: Withdrawing[2]["sources"];
   records?: RecordRules;
+  tools?: ToolCatalog;
 }
 
 function withdrawing(parts: Omit<PluginRemoverParts, "manifestRepo">, fs: FileReader & FileWriter) {
@@ -76,7 +78,7 @@ export function pluginRemover(parts: PluginRemoverParts) {
         projectRepo: parts.manifestRepo,
         homedir: () => "/home/dev",
       },
-      registeredTools()
+      parts.tools ?? registeredTools()
     ),
     withdrawFromHost: withdrawing({ ...parts, logger }, fs),
     claims: removalClaims,

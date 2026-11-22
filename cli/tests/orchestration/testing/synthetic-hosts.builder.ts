@@ -17,14 +17,12 @@ import { McpConfigPart } from "../../../src/contexts/tools/domain/sections/mcp-s
 import { ModelsSection } from "../../../src/contexts/tools/domain/sections/models-section.js";
 import { flatArtifactLayout } from "../../../src/shared/domain/materialization/flat-paths.js";
 import { anEmptyContract } from "../../shared/testing/empty-build-contract.builder.js";
-import { syntheticNativeTool } from "../../shared/testing/synthetic-tool-id.builder.js";
+import {
+  homeDir,
+  registryHost,
+  syntheticNativeTool,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import type { HostIds } from "./clean-project.builder.js";
-
-/** What a host keeps in its home directory: the root every host path below is derived from. */
-const homeDir =
-  (id: string, ...parts: string[]) =>
-  (home: string) =>
-    join(home, `.${id}`, ...parts);
 
 /** The environment variable that moves the claude host's user settings directory. */
 export const HOST_CONFIG_DIR_ENV = "HOSTCLAUDE_CONFIG_DIR";
@@ -35,37 +33,27 @@ export const HOST_LOCAL_SETTINGS = ".hostclaude/settings.local.json";
 const claude = syntheticNativeTool(
   "hostclaude",
   {
-    scopeArgs: { project: ["--scope", "local"], user: ["--scope", "user"] },
+    ...registryHost("hostclaude"),
     userRemoveArgs: [],
-    enableVerb: "install",
-    disableVerb: "uninstall",
-    upgradeVerb: "update",
     pluginArgs: ["--yes"],
-    marketplaceRegistry: {
-      location: homeDir("hostclaude", "plugins", "known_marketplaces.json"),
-      layout: "install-locations-by-name",
-    },
-    marketplaceSources: { from: "marketplace-registry" },
-    pluginRegistry: {
-      location: homeDir("hostclaude", "plugins", "installed_plugins.json"),
-      layout: "plugin-entries-by-scope",
-    },
     userSettingsPath: (home, env) =>
       join(env(HOST_CONFIG_DIR_ENV) || join(home, ".hostclaude"), "settings.json"),
   },
   {
-    marketplaceSettings: {
-      settingsPath: ".hostclaude/settings.json",
-      settingsKey: "extraKnownMarketplaces",
-      marketplacesSettingsPath: HOST_LOCAL_SETTINGS,
-      enabledPluginsKey: "enabledPlugins",
-      toEntryKey: ({ name }) => name,
+    layout: {
+      marketplaceSettings: {
+        settingsPath: ".hostclaude/settings.json",
+        settingsKey: "extraKnownMarketplaces",
+        marketplacesSettingsPath: HOST_LOCAL_SETTINGS,
+        enabledPluginsKey: "enabledPlugins",
+        toEntryKey: ({ name }) => name,
+      },
     },
-  },
-  new ModelsSection({
-    providers: ["anthropic"],
-    main: { settingsFile: "settings.json", effortKey: "effortLevel" },
-  })
+    models: new ModelsSection({
+      providers: ["anthropic"],
+      main: { settingsFile: "settings.json", effortKey: "effortLevel" },
+    }),
+  }
 );
 const codex = syntheticNativeTool("hostcodex", {
   pluginRegistry: { location: homeDir("hostcodex", "config.toml"), layout: "toml-plugin-tables" },

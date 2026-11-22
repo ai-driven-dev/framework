@@ -10,13 +10,15 @@ import { fsAt } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_NATIVE_TOOL,
+  syntheticSyncCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   CATALOG_RELATIVE,
   CLAUDE_BUILT_DIR,
   PROJECT_ROOT,
 } from "../testing/marketplace-sync-settings-migration.builder.js";
-
 import {
   OLD_CACHE_DIR,
   OLD_CACHE_FILE,
@@ -36,7 +38,7 @@ describe("SyncSettings - purging this project's own pre-migration cache", () => 
       })
     );
     const manifest = Manifest.create();
-    manifest.addTool(TOOL.claude, "test", []);
+    manifest.addTool(SYNTHETIC_NATIVE_TOOL, "test", []);
     const activator = new FakeHostActions({ available: true });
     const fs = fsAt(PROJECT_ROOT, {
       [OLD_CACHE_FILE]: "stale content",
@@ -47,12 +49,12 @@ describe("SyncSettings - purging this project's own pre-migration cache", () => 
       }),
     });
     const useCase = marketplaceSync({
-      tools: registeredTools(),
+      tools: syntheticSyncCatalog(),
       fs,
       manifestRepo: new InMemoryManifestRepository(manifest),
       marketplaceRegistry: registry,
       logger: new CapturingLogger(),
-      activators: new Map([[TOOL.claude, activator]]),
+      activators: new Map([[SYNTHETIC_NATIVE_TOOL, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
       marketplaceRegisterFrameworkUseCase: new RegisterFrameworkMarketplace(registry),
     });
@@ -79,17 +81,17 @@ describe("SyncSettings - purging this project's own pre-migration cache", () => 
       })
     );
     const manifest = Manifest.create();
-    manifest.addTool(TOOL.claude, "test", []);
+    manifest.addTool(SYNTHETIC_NATIVE_TOOL, "test", []);
     const activator = new FakeHostActions({ available: false });
     const fs = fsAt(PROJECT_ROOT, { [OLD_CACHE_FILE]: "stale content" });
     const logger = new CapturingLogger();
     const useCase = marketplaceSync({
-      tools: registeredTools(),
+      tools: syntheticSyncCatalog(),
       fs,
       manifestRepo: new InMemoryManifestRepository(manifest),
       marketplaceRegistry: registry,
       logger,
-      activators: new Map([[TOOL.claude, activator]]),
+      activators: new Map([[SYNTHETIC_NATIVE_TOOL, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
       marketplaceRegisterFrameworkUseCase: new RegisterFrameworkMarketplace(registry),
     });
@@ -100,7 +102,9 @@ describe("SyncSettings - purging this project's own pre-migration cache", () => 
     });
 
     expect(result.errors).toEqual([]);
-    expect(result.binaryMissing).toEqual([{ toolId: TOOL.claude, binary: "claude" }]);
+    expect(result.binaryMissing).toEqual([
+      { toolId: SYNTHETIC_NATIVE_TOOL, binary: SYNTHETIC_NATIVE_TOOL },
+    ]);
     expect(fs.has(OLD_CACHE_FILE)).toBe(true);
     expect(logger.warnMessages.some((w) => w.includes("pre-migration framework cache kept"))).toBe(
       true
@@ -121,7 +125,7 @@ describe("SyncSettings - purging this project's own pre-migration cache", () => 
       })
     );
     const manifest = Manifest.create();
-    manifest.addTool(TOOL.claude, "test", []);
+    manifest.addTool(SYNTHETIC_NATIVE_TOOL, "test", []);
     const activator = new FakeHostActions({ available: true });
     const fs = fsAt(PROJECT_ROOT, { [OLD_CACHE_FILE]: "stale content" });
     const logger = new CapturingLogger();
@@ -131,12 +135,12 @@ describe("SyncSettings - purging this project's own pre-migration cache", () => 
       },
     };
     const useCase = marketplaceSync({
-      tools: registeredTools(),
+      tools: syntheticSyncCatalog(),
       fs,
       manifestRepo: new InMemoryManifestRepository(manifest),
       marketplaceRegistry: registry,
       logger,
-      activators: new Map([[TOOL.claude, activator]]),
+      activators: new Map([[SYNTHETIC_NATIVE_TOOL, activator]]),
       ensureBuilt: failingBuild,
       marketplaceRegisterFrameworkUseCase: new RegisterFrameworkMarketplace(registry),
     });
@@ -157,7 +161,7 @@ describe("SyncSettings - purging this project's own pre-migration cache", () => 
   it("leaves the stale built tree in place when this run reports an error", async () => {
     const registry = projectWithMigratableEntry();
     const manifest = Manifest.create();
-    manifest.addTool(TOOL.claude, "test", []);
+    manifest.addTool(SYNTHETIC_NATIVE_TOOL, "test", []);
     const activator = new FakeHostActions({
       available: true,
       crashOnAddMarketplace: false,
@@ -166,12 +170,12 @@ describe("SyncSettings - purging this project's own pre-migration cache", () => 
     // `UnreadableBuiltCatalogError`, which `activateNativeTools` collects as a genuine error.
     const fs = fsAt(PROJECT_ROOT, { [OLD_CACHE_FILE]: "stale content" });
     const useCase = marketplaceSync({
-      tools: registeredTools(),
+      tools: syntheticSyncCatalog(),
       fs,
       manifestRepo: new InMemoryManifestRepository(manifest),
       marketplaceRegistry: registry,
       logger: new CapturingLogger(),
-      activators: new Map([[TOOL.claude, activator]]),
+      activators: new Map([[SYNTHETIC_NATIVE_TOOL, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
       marketplaceRegisterFrameworkUseCase: new RegisterFrameworkMarketplace(registry),
     });
@@ -188,7 +192,7 @@ describe("SyncSettings - purging this project's own pre-migration cache", () => 
   it("never deletes a candidate a symlink resolves outside the project root", async () => {
     const registry = projectWithMigratableEntry();
     const manifest = Manifest.create();
-    manifest.addTool(TOOL.claude, "test", []);
+    manifest.addTool(SYNTHETIC_NATIVE_TOOL, "test", []);
     const activator = new FakeHostActions({ available: true });
     const escapedFile = "/etc/evil/still-here.txt";
     const fs = fsAt(PROJECT_ROOT, {
@@ -201,12 +205,12 @@ describe("SyncSettings - purging this project's own pre-migration cache", () => 
     });
     fs.setSymlink(OLD_CACHE_DIR, "/etc/evil");
     const useCase = marketplaceSync({
-      tools: registeredTools(),
+      tools: syntheticSyncCatalog(),
       fs,
       manifestRepo: new InMemoryManifestRepository(manifest),
       marketplaceRegistry: registry,
       logger: new CapturingLogger(),
-      activators: new Map([[TOOL.claude, activator]]),
+      activators: new Map([[SYNTHETIC_NATIVE_TOOL, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
       marketplaceRegisterFrameworkUseCase: new RegisterFrameworkMarketplace(registry),
     });

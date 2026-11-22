@@ -30,14 +30,20 @@ import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-mark
 import { loadDistributionOf } from "../../shared/testing/load-distribution.builder.js";
 import { manifestProbesOf } from "../../shared/testing/manifest-probes-of.builder.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
+import {
+  SYNTHETIC_LISTED_CATALOGUE,
+  SYNTHETIC_LISTED_TOOL,
+  SYNTHETIC_PROVEN_CATALOGUE,
+  SYNTHETIC_PROVEN_TOOL,
+  syntheticSyncCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import { effectiveListSources } from "../testing/effective-list-sources.builder.js";
 import { userMarketplaceRemover } from "../testing/user-marketplace-remover.builder.js";
 
 for (const [toolId, catalogPath] of [
-  [TOOL.codex, ".agents/plugins/marketplace.json"],
-  [TOOL.copilot, ".plugin/marketplace.json"],
+  [SYNTHETIC_LISTED_TOOL, SYNTHETIC_LISTED_CATALOGUE],
+  [SYNTHETIC_PROVEN_TOOL, SYNTHETIC_PROVEN_CATALOGUE],
 ] as const) {
   describe(`${toolId} machine plugin claims`, () => {
     it("attaches B to AIDD's exact host ref without re-enabling it, but never claims a foreign ref", async () => {
@@ -106,7 +112,7 @@ for (const [toolId, catalogPath] of [
       };
       const syncOf = (manifestRepo: InMemoryManifestRepository) =>
         marketplaceSync({
-          tools: registeredTools(),
+          tools: syntheticSyncCatalog(),
           fs: new InMemoryFileAdapter(
             {
               [`${builtDir}/${catalogPath}`]: JSON.stringify({
@@ -150,14 +156,17 @@ for (const [toolId, catalogPath] of [
               fs: updateFs,
               loadDistribution: loadDistributionOf(
                 new FixturePluginFetcher(),
-                new PluginDistributionReaderAdapter(updateFs, manifestProbesOf(registeredTools()))
+                new PluginDistributionReaderAdapter(
+                  updateFs,
+                  manifestProbesOf(syntheticSyncCatalog())
+                )
               ),
               guard: userScopeFileGuard,
               builtDeps: fakeBuiltDeps(updateFs),
             }),
             logger: new CapturingLogger(),
           },
-          registeredTools()
+          syntheticSyncCatalog()
         ),
         new RefreshHostPlugin(
           new Map([[toolId, activator]]),
@@ -167,7 +176,7 @@ for (const [toolId, catalogPath] of [
         isStrictlyWithinUserScope,
         registrationRecordRules
       );
-      if (toolId === "copilot") {
+      if (toolId === SYNTHETIC_PROVEN_TOOL) {
         expect(
           await update.execute({
             pluginNames: ["test-plugin"],
@@ -186,14 +195,17 @@ for (const [toolId, catalogPath] of [
                 fs: updateFs,
                 loadDistribution: loadDistributionOf(
                   new FixturePluginFetcher(),
-                  new PluginDistributionReaderAdapter(updateFs, manifestProbesOf(registeredTools()))
+                  new PluginDistributionReaderAdapter(
+                    updateFs,
+                    manifestProbesOf(syntheticSyncCatalog())
+                  )
                 ),
                 guard: userScopeFileGuard,
                 builtDeps: fakeBuiltDeps(updateFs),
               }),
               logger: new CapturingLogger(),
             },
-            registeredTools()
+            syntheticSyncCatalog()
           ),
           new RefreshHostPlugin(
             new Map([[toolId, failed]]),
@@ -228,7 +240,7 @@ for (const [toolId, catalogPath] of [
         expect(activator.updatedPlugins).toEqual([]);
       }
       const removeMarketplace = userMarketplaceRemover(
-        registeredTools(),
+        syntheticSyncCatalog(),
         new InMemoryFileAdapter({}, ["/A", "/B"]),
         user,
         registry,
@@ -249,7 +261,7 @@ for (const [toolId, catalogPath] of [
 
       const foreignUser = new InMemoryManifestRepository(Manifest.create());
       const foreignUseCase = marketplaceSync({
-        tools: registeredTools(),
+        tools: syntheticSyncCatalog(),
         fs: new InMemoryFileAdapter(
           {
             [`${builtDir}/${catalogPath}`]: JSON.stringify({
@@ -279,7 +291,7 @@ for (const [toolId, catalogPath] of [
         []
       );
       const removeFs = new InMemoryFileAdapter({}, ["/A", "/B"]);
-      const cacheRoot = registeredTools()
+      const cacheRoot = syntheticSyncCatalog()
         .aiProfile(toolId)
         .nativeActivation()
         ?.pluginCacheRoot(resolveHomeDir());
@@ -295,6 +307,7 @@ for (const [toolId, catalogPath] of [
         marketplaceRegistry: registry,
         userManifestRepo: user,
         nativeMarketplaceSources: sources,
+        tools: syntheticSyncCatalog(),
       });
       const remove = (repo: InMemoryManifestRepository) => pluginRemover(removing(repo));
       await remove(a).execute({

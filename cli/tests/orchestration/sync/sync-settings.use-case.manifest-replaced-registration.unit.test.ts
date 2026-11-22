@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { registeredAiId, registeredCatalog } from "../../shared/testing/catalog-of.builder.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { hostRecord } from "../../shared/testing/host-record-reading.builder.js";
+import {
+  SYNTHETIC_NATIVE_TOOL,
+  syntheticSyncCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   FRAMEWORK_ONLY,
   MARKETPLACE,
@@ -11,13 +14,13 @@ import {
   PROJECT_ROOT,
 } from "../testing/manifest-writes.builder.js";
 
-const { build, recorded } = manifestWrites(registeredCatalog(), registeredAiId("claude"));
+const { build, recorded } = manifestWrites(syntheticSyncCatalog(), SYNTHETIC_NATIVE_TOOL);
 
 describe("when a recorded registration is replaced", () => {
   it("once its marketplaces differ, same binary and same refs", async () => {
     const { useCase, manifest } = await build({
       existingRegistrations: {
-        binary: "claude",
+        binary: SYNTHETIC_NATIVE_TOOL,
         marketplaces: [{ alias: "stale", hostName: "stale" }],
         pluginRefs: [],
       },
@@ -31,7 +34,7 @@ describe("when a recorded registration is replaced", () => {
   it("once a marketplace's hostName alone moved", async () => {
     const { useCase, manifest } = await build({
       existingRegistrations: {
-        binary: "claude",
+        binary: SYNTHETIC_NATIVE_TOOL,
         marketplaces: [{ alias: MARKETPLACE, hostName: "old-host" }],
         pluginRefs: [],
       },
@@ -62,7 +65,7 @@ describe("when a recorded registration is replaced", () => {
     const { useCase, manifest } = await build({
       marketplaceNames: ["market-a", "market-b"],
       existingRegistrations: {
-        binary: "claude",
+        binary: SYNTHETIC_NATIVE_TOOL,
         marketplaces: [
           { alias: "market-a", hostName: "market-a" },
           { alias: "stale", hostName: "stale" },
@@ -74,17 +77,17 @@ describe("when a recorded registration is replaced", () => {
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(recorded(manifest)).toStrictEqual({
-      binary: "claude",
+      binary: SYNTHETIC_NATIVE_TOOL,
       marketplaces: [
         {
           alias: "market-a",
           hostName: "market-a",
-          provenance: { kind: "registry", source: "/built/market-a/claude" },
+          provenance: { kind: "registry", source: `/built/market-a/${SYNTHETIC_NATIVE_TOOL}` },
         },
         {
           alias: "market-b",
           hostName: "market-b",
-          provenance: { kind: "registry", source: "/built/market-b/claude" },
+          provenance: { kind: "registry", source: `/built/market-b/${SYNTHETIC_NATIVE_TOOL}` },
         },
       ],
       pluginRefs: [],
@@ -96,7 +99,7 @@ describe("when a recorded registration is replaced", () => {
       marketplaceNames: [MARKETPLACE, "broken"],
       failingBuilds: ["broken"],
       existingRegistrations: {
-        binary: "claude",
+        binary: SYNTHETIC_NATIVE_TOOL,
         marketplaces: [{ alias: "retired", hostName: "retired-catalog" }],
         pluginRefs: [],
       },
@@ -113,7 +116,7 @@ describe("when a recorded registration is replaced", () => {
       failingBuilds: ["broken"],
       existingMachineRegistrations: ownedMachineEntry("broken", "broken-catalog"),
       existingRegistrations: {
-        binary: "claude",
+        binary: SYNTHETIC_NATIVE_TOOL,
         marketplaces: [{ alias: "broken", hostName: "broken-catalog" }],
         pluginRefs: [],
       },

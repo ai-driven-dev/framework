@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { RegisteredToolCatalog } from "../../../src/contexts/tools/application/registered-tool-catalog.js";
 import type { NativeActivationSpec } from "../../../src/contexts/tools/contract/native-registration-spec.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
+import { sharedMarketplaceKey } from "../../../src/contexts/tools/domain/marketplace-entry.js";
 import {
   defineAiTool,
   defineIdeTool,
@@ -103,18 +104,70 @@ export function syntheticCatalog(): ToolCatalog {
   return new RegisteredToolCatalog(CONFIGS);
 }
 
+/** What a host keeps under its own home directory, the root every host path derives from. */
+export const homeDir =
+  (id: string, ...parts: string[]) =>
+  (home: string) =>
+    join(home, `.${id}`, ...parts);
+
+/** A host whose plugins carry the install verbs and a registry file of their own. */
+function installingHost(id: string): Partial<NativeActivationSpec> {
+  return {
+    enableVerb: "install",
+    disableVerb: "uninstall",
+    upgradeVerb: "update",
+    pluginRegistry: {
+      location: homeDir(id, "plugins", "installed_plugins.json"),
+      layout: "plugin-entries-by-scope",
+    },
+  };
+}
+
+/** A host that lists its catalogue sources by command: the one shape every listing host shares. */
+function listedHost(id: string): Partial<NativeActivationSpec> {
+  return {
+    marketplaceSources: {
+      from: "list-command",
+      args: ["marketplace", "list"],
+      layout: "marketplaces-with-source",
+      hostLabel: id,
+      unavailableMessage: `${id} marketplace list unavailable`,
+      unverifiedMessage: `${id} marketplace list output shape is not verified`,
+    },
+  };
+}
+
+/** A host that keeps its catalogue sources in a registry file: the one shape every registry host shares. */
+export function registryHost(id: string): Partial<NativeActivationSpec> {
+  return {
+    ...installingHost(id),
+    scopeArgs: { project: ["--scope", "local"], user: ["--scope", "user"] },
+    marketplaceSources: { from: "marketplace-registry" },
+    marketplaceRegistry: {
+      location: homeDir(id, "plugins", "known_marketplaces.json"),
+      layout: "install-locations-by-name",
+    },
+  };
+}
+
+/** What a synthetic native tool takes beyond its host verbs: layout fields, models and its catalogue file. */
+interface NativeToolParts {
+  readonly layout?: Partial<NativeLayoutParams>;
+  readonly models?: ModelsSection;
+  readonly catalogue?: string;
+}
+
 /** One synthetic AI tool driven through its own host CLI the way a native tool is. */
 export function syntheticNativeTool(
   id: string,
   native: Partial<NativeActivationSpec> = {},
-  layout: Partial<NativeLayoutParams> = {},
-  models?: ModelsSection
+  parts: NativeToolParts = {}
 ) {
   return defineAiTool({
     toolId: id,
     distributionProbes: {
       manifest: [".plugin/plugin.json"],
-      marketplace: [".plugin/marketplace.json"],
+      marketplace: [parts.catalogue ?? ".plugin/marketplace.json"],
     },
     directory: `.${id}/`,
     toolSuffix: `.${id}.md`,
@@ -129,14 +182,14 @@ export function syntheticNativeTool(
           upgradeVerb: "upgrade",
           enableVerb: "add",
           disableVerb: "remove",
-          pluginCacheDir: (home) => join(home, `.${id}`, "plugins", "cache"),
+          pluginCacheDir: homeDir(id, "plugins", "cache"),
           ...native,
         },
-        ...layout,
+        ...parts.layout,
       }),
       manifest: manifestSection({ manifestRelativePath: "plugin.json", pluginRootToken: "." }),
       hooks: { delivery: { kind: "plugin-file" } },
-      ...(models === undefined ? {} : { models }),
+      ...(parts.models === undefined ? {} : { models: parts.models }),
     }),
     linkSyntax: [],
   });
@@ -146,4 +199,91 @@ export function syntheticNativeTool(
  * the way a native tool is: for a test of the native activation flow that names no real tool. */
 export function syntheticNativeCatalog(id: string): ToolCatalog {
   return new RegisteredToolCatalog([syntheticNativeTool(id)]);
+}
+
+/** How a synthetic sync tool's host answers. */
+interface NativeHost {
+  /** Where its build leaves the catalogue, under the built tree. */
+  readonly catalogue: string;
+  /** Whether the host keeps catalogue sources in a registry file or lists them by command. */
+  readonly sources: "registry" | "list";
+  /** The shared settings file declaring its catalogues, when it keeps one. */
+  readonly settings?: { readonly requiresNativeProof: boolean };
+  /** Whether its binary has a `plugin update` verb of its own. */
+  readonly updating?: boolean;
+}
+
+function settingsFile(name: string): string {
+  return `.${name}/settings.json`;
+}
+
+function syncActivation(name: string, host: NativeHost): Partial<NativeActivationSpec> {
+  const sources = host.sources === "registry" ? registryHost(name) : listedHost(name);
+  return {
+    ...(host.updating ? { updateVerb: "update", sourceCheckVerb: "update" } : {}),
+    ...installingHost(name),
+    ...sources,
+  };
+}
+
+function settingsOf(name: string, host: NativeHost): Partial<NativeLayoutParams> {
+  if (host.settings === undefined) return {};
+  return {
+    marketplaceSettings: {
+      settingsPath: settingsFile(name),
+      settingsKey: "extraKnownMarketplaces",
+      marketplacesSettingsPath: host.sources === "list" ? null : `.${name}/settings.local.json`,
+      enabledPluginsKey: "enabledPlugins",
+      declarativePluginActivationRequiresNativeProof: host.settings.requiresNativeProof,
+      toEntryKey: sharedMarketplaceKey,
+    },
+  };
+}
+
+function syntheticSyncTool(name: string, host: NativeHost) {
+  return syntheticNativeTool(name, syncActivation(name, host), {
+    layout: settingsOf(name, host),
+    catalogue: host.catalogue,
+  });
+}
+
+const NATIVE_CATALOGUE = ".claude-plugin/marketplace.json";
+const LISTED_CATALOGUE = ".agents/plugins/marketplace.json";
+const PROVEN_CATALOGUE = ".plugin/marketplace.json";
+
+const NATIVE_CONFIGS = [
+  syntheticSyncTool("syntheticnative", {
+    catalogue: NATIVE_CATALOGUE,
+    sources: "registry",
+    settings: { requiresNativeProof: false },
+  }),
+  syntheticSyncTool("syntheticlisted", { catalogue: LISTED_CATALOGUE, sources: "list" }),
+  syntheticSyncTool("syntheticproven", {
+    catalogue: PROVEN_CATALOGUE,
+    sources: "list",
+    settings: { requiresNativeProof: true },
+    updating: true,
+  }),
+] as const;
+
+/** A native tool no registry lists: its host keeps catalogue sources in a registry file and its
+ * settings file takes the plugins it enables without proof. */
+export const SYNTHETIC_NATIVE_TOOL = NATIVE_CONFIGS[0].toolId;
+/** A native tool whose host lists catalogue sources by command and keeps no shared settings file. */
+export const SYNTHETIC_LISTED_TOOL = NATIVE_CONFIGS[1].toolId;
+/** A native tool whose host lists catalogue sources by command, updates a plugin itself, and whose
+ * settings file takes a plugin only once the host proved it. */
+export const SYNTHETIC_PROVEN_TOOL = NATIVE_CONFIGS[2].toolId;
+/** The shared settings file the first synthetic native tool declares its catalogues in. */
+export const SYNTHETIC_NATIVE_SETTINGS = settingsFile(SYNTHETIC_NATIVE_TOOL);
+/** The shared settings file the proof-requiring synthetic tool declares its catalogues in. */
+export const SYNTHETIC_PROVEN_SETTINGS = settingsFile(SYNTHETIC_PROVEN_TOOL);
+/** Where each synthetic native tool's build leaves its catalogue, under the built tree. */
+export const SYNTHETIC_NATIVE_CATALOGUE = NATIVE_CATALOGUE;
+export const SYNTHETIC_LISTED_CATALOGUE = LISTED_CATALOGUE;
+export const SYNTHETIC_PROVEN_CATALOGUE = PROVEN_CATALOGUE;
+
+/** The synthetic native tools and the synthetic IDE tool: what a generic sync test hands code that drives hosts. */
+export function syntheticSyncCatalog(): ToolCatalog {
+  return new RegisteredToolCatalog([...NATIVE_CONFIGS, IDE_CONFIG]);
 }

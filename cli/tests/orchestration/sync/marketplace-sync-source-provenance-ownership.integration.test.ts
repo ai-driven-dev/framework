@@ -1,17 +1,25 @@
 import { describe, expect, it } from "vitest";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_LISTED_TOOL,
+  SYNTHETIC_NATIVE_TOOL,
+  syntheticSyncCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   hostPluginProofFixture,
   ownedAndOtherCatalogues,
 } from "../testing/source-provenance.builder.js";
 
-const { claude, codex } = TOOL;
+const claude = SYNTHETIC_NATIVE_TOOL;
+const codex = SYNTHETIC_LISTED_TOOL;
 
 function expectedMachineMarketplaces<T>(machineCatalogue: boolean, other: T, target: T) {
   return machineCatalogue ? [other, target] : [other];
 }
 
-const REAL = { tools: registeredTools(), ids: TOOL };
+const REAL = {
+  tools: syntheticSyncCatalog(),
+  ids: { claude: SYNTHETIC_NATIVE_TOOL, codex: SYNTHETIC_LISTED_TOOL },
+};
 
 describe("native catalogue ownership recorded from source provenance", () => {
   it.each([
@@ -60,7 +68,11 @@ describe("native catalogue ownership recorded from source provenance", () => {
       );
       const machine = f.machineRepo.getCurrent();
       if (machine === null) throw new Error("fixture lacks machine manifest");
-      const { target, other, otherRef } = ownedAndOtherCatalogues(TOOL.claude, toolId, otherHost);
+      const { target, other, otherRef } = ownedAndOtherCatalogues(
+        SYNTHETIC_NATIVE_TOOL,
+        toolId,
+        otherHost
+      );
       machine.addTool(toolId, "0.9.0", []);
       machine.setNativeRegistrations(toolId, {
         binary: toolId,

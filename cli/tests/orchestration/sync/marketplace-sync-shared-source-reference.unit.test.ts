@@ -18,9 +18,13 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_NATIVE_CATALOGUE,
+  SYNTHETIC_NATIVE_TOOL,
+  syntheticSyncCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
-const { claude } = TOOL;
+const claude = SYNTHETIC_NATIVE_TOOL;
 
 const PROJECT_ROOT = "/test-project";
 const VERSION = "1.0.0";
@@ -36,7 +40,7 @@ async function manifestRepoWithClaudeInstalled(): Promise<InMemoryManifestReposi
 
 function seedFrameworkCatalog(fs: InMemoryFileAdapter): void {
   fs.setFile(
-    "/built/claude/.claude-plugin/marketplace.json",
+    `/built/${SYNTHETIC_NATIVE_TOOL}/${SYNTHETIC_NATIVE_CATALOGUE}`,
     JSON.stringify({ name: FRAMEWORK_MARKETPLACE_NAME, version: VERSION, plugins: [] })
   );
 }
@@ -52,7 +56,8 @@ function freshHostProof(activator: FakeHostActions) {
         new FakeHostMarketplaceSources(
           activator,
           "registry",
-          (path) => (path === "/built/claude" ? FRAMEWORK_MARKETPLACE_NAME : undefined),
+          (path) =>
+            path === `/built/${SYNTHETIC_NATIVE_TOOL}` ? FRAMEWORK_MARKETPLACE_NAME : undefined,
           new Map()
         ),
       ],
@@ -85,7 +90,7 @@ describe("the shared source's own reference, recorded by sync", () => {
     const proof = freshHostProof(activator);
 
     const useCase = marketplaceSync({
-      tools: registeredTools(),
+      tools: syntheticSyncCatalog(),
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
@@ -122,7 +127,7 @@ describe("the shared source's own reference, recorded by sync", () => {
     const proof = freshHostProof(activator);
 
     const useCase = marketplaceSync({
-      tools: registeredTools(),
+      tools: syntheticSyncCatalog(),
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
@@ -163,7 +168,7 @@ describe("the shared source's own reference, recorded by sync", () => {
     );
 
     const useCase = marketplaceSync({
-      tools: registeredTools(),
+      tools: syntheticSyncCatalog(),
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
@@ -202,7 +207,7 @@ describe("the shared source's own reference, recorded by sync", () => {
     const proof = freshHostProof(activator);
 
     const useCase = marketplaceSync({
-      tools: registeredTools(),
+      tools: syntheticSyncCatalog(),
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
@@ -224,7 +229,7 @@ describe("the shared source's own reference, recorded by sync", () => {
     expect((await registry.list(PROJECT_ROOT)).map((m) => m.name)).toContain(
       FRAMEWORK_MARKETPLACE_NAME
     );
-    expect(activator.addedMarketplaces).toEqual(["/built/claude"]);
+    expect(activator.addedMarketplaces).toEqual([`/built/${SYNTHETIC_NATIVE_TOOL}`]);
     await useCase.execute({ projectRoot: PROJECT_ROOT });
     expect(await userSourceReferences.listAllReferencingProjects()).toContain(PROJECT_ROOT);
   });
@@ -235,7 +240,7 @@ describe("the shared source's own reference, recorded by sync", () => {
     const registry = new InMemoryMarketplaceRegistry();
 
     const useCase = marketplaceSync({
-      tools: registeredTools(),
+      tools: syntheticSyncCatalog(),
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
@@ -271,7 +276,7 @@ describe("the shared source's own reference, recorded by sync", () => {
     };
 
     const useCase = marketplaceSync({
-      tools: registeredTools(),
+      tools: syntheticSyncCatalog(),
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
@@ -290,7 +295,7 @@ describe("the shared source's own reference, recorded by sync", () => {
 
   it("stays a silent no-op when asked to recreate with nothing wired to do it", async () => {
     const useCase = marketplaceSync({
-      tools: registeredTools(),
+      tools: syntheticSyncCatalog(),
       fs: new InMemoryFileAdapter({}),
       manifestRepo: await manifestRepoWithClaudeInstalled(),
       marketplaceRegistry: new InMemoryMarketplaceRegistry(),
@@ -325,7 +330,7 @@ describe("a project with no manifest to sync", () => {
     await registry.save(PROJECT_ROOT, frameworkMarketplace());
     const activator = new FakeHostActions({ available: true });
     const useCase = marketplaceSync({
-      tools: registeredTools(),
+      tools: syntheticSyncCatalog(),
       fs: new InMemoryFileAdapter({}),
       manifestRepo: new InMemoryManifestRepository(),
       marketplaceRegistry: registry,
@@ -352,7 +357,7 @@ describe("a project with no manifest to sync", () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, frameworkMarketplace());
     const useCase = marketplaceSync({
-      tools: registeredTools(),
+      tools: syntheticSyncCatalog(),
       fs: new InMemoryFileAdapter({}),
       manifestRepo: new UnloadableManifestRepository(),
       marketplaceRegistry: registry,

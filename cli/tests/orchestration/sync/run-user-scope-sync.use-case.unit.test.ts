@@ -7,9 +7,11 @@ import {
 } from "../../../src/orchestration/orchestration.error.js";
 import { RunUserScopeSync } from "../../../src/orchestration/sync/run-user-scope-sync.use-case.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
-import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 import { manifestRepositoryLoading } from "../../shared/testing/partial-ports.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_NATIVE_TOOL,
+  syntheticSyncCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import { ACTIVATED_NOTHING } from "../testing/run-sync.builder.js";
 
 const GIVEN = { projectRoot: "/p", files: [] };
@@ -19,9 +21,9 @@ function aRun(failed = false) {
   const refreshes: unknown[] = [];
   const syncs: unknown[] = [];
   const machine = aManifest()
-    .withTool(TOOL.claude, [])
+    .withTool(SYNTHETIC_NATIVE_TOOL, [])
     .withPlugin(
-      TOOL.claude,
+      SYNTHETIC_NATIVE_TOOL,
       RecordedPlugin.fromMetadata({
         name: "aidd-dev",
         version: "1.0.0",
@@ -46,12 +48,16 @@ function aRun(failed = false) {
           calls.push("syncSettings");
           syncs.push(command);
           return failed
-            ? { ...ACTIVATED_NOTHING, errors: [{ scope: "claude", error: "x" }], failed: true }
-            : { ...ACTIVATED_NOTHING, activated: [TOOL.claude] };
+            ? {
+                ...ACTIVATED_NOTHING,
+                errors: [{ scope: SYNTHETIC_NATIVE_TOOL, error: "x" }],
+                failed: true,
+              }
+            : { ...ACTIVATED_NOTHING, activated: [SYNTHETIC_NATIVE_TOOL] };
         },
       },
     },
-    catalogOf()
+    syntheticSyncCatalog()
   );
   const report = {
     activated: () => calls.push("report activated"),
@@ -87,7 +93,7 @@ describe("RunUserScopeSync", () => {
 
     expect(run.calls).toEqual(["refresh", "syncSettings", "report activated", "report synced"]);
     expect(run.refreshes).toEqual([
-      { toolIds: [TOOL.claude], projectRoot: "/p", scope: "user", rebuild: true },
+      { toolIds: [SYNTHETIC_NATIVE_TOOL], projectRoot: "/p", scope: "user", rebuild: true },
     ]);
   });
 
@@ -95,7 +101,7 @@ describe("RunUserScopeSync", () => {
     const run = aRun(true);
 
     await expect(run.useCase.execute(GIVEN, run.report)).rejects.toThrow(
-      new SyncFailedError([{ scope: "claude", error: "x" }])
+      new SyncFailedError([{ scope: SYNTHETIC_NATIVE_TOOL, error: "x" }])
     );
     expect(run.calls.at(-1)).toBe("report activated");
   });

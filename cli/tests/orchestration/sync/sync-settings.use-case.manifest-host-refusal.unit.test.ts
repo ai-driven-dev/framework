@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { NativeRegistrations } from "../../../src/contexts/installation/domain/manifest/native-registrations.js";
 import { builtMarketplaceDir } from "../../../src/shared/domain/layout/aidd-layout.js";
-import { registeredAiId, registeredCatalog } from "../../shared/testing/catalog-of.builder.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { hostRecord } from "../../shared/testing/host-record-reading.builder.js";
+import {
+  SYNTHETIC_NATIVE_TOOL,
+  syntheticSyncCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   FRAMEWORK_ONLY,
   MARKETPLACE,
@@ -13,7 +16,7 @@ import {
   PROJECT_ROOT,
 } from "../testing/manifest-writes.builder.js";
 
-const { build, recorded } = manifestWrites(registeredCatalog(), registeredAiId("claude"));
+const { build, recorded } = manifestWrites(syntheticSyncCatalog(), SYNTHETIC_NATIVE_TOOL);
 
 describe("a marketplace the host refused is not this project's to remove", () => {
   function refusingHost(registrationState: "live" | "dead"): FakeHostActions {
@@ -37,7 +40,7 @@ describe("a marketplace the host refused is not this project's to remove", () =>
       activator: refusingHost("live"),
       existingMachineRegistrations: ownedMachineEntry(MARKETPLACE, MARKETPLACE),
       existingRegistrations: {
-        binary: "claude",
+        binary: SYNTHETIC_NATIVE_TOOL,
         marketplaces: [{ alias: MARKETPLACE, hostName: MARKETPLACE }],
         pluginRefs: [],
       },
@@ -70,9 +73,9 @@ describe("a marketplace the host refused is not this project's to remove", () =>
       existingMachineRegistrations: ownedMachineEntry(
         MARKETPLACE,
         MARKETPLACE,
-        builtMarketplaceDir(PROJECT_ROOT, MARKETPLACE, "claude")
+        builtMarketplaceDir(PROJECT_ROOT, MARKETPLACE, SYNTHETIC_NATIVE_TOOL)
       ),
-      hostRegisteredSource: builtMarketplaceDir(PROJECT_ROOT, MARKETPLACE, "claude"),
+      hostRegisteredSource: builtMarketplaceDir(PROJECT_ROOT, MARKETPLACE, SYNTHETIC_NATIVE_TOOL),
     });
 
     await useCase.execute({ projectRoot: PROJECT_ROOT });
@@ -106,7 +109,7 @@ describe("registration changes isolated from the catalogue provenance", () => {
           {
             alias: MARKETPLACE,
             hostName: MARKETPLACE,
-            provenance: { kind: "registry", source: "/built/old/claude" },
+            provenance: { kind: "registry", source: `/built/old/${SYNTHETIC_NATIVE_TOOL}` },
           },
         ],
       },
