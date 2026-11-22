@@ -6,12 +6,12 @@ import { PluginDistributionReaderAdapter } from "../../../src/contexts/distribut
 import { RefreshHostPlugin } from "../../../src/contexts/host-registration/application/refresh-host-plugin.use-case.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { PluginMaterializer } from "../../../src/contexts/installation/application/plugin/files/plugin-materializer.js";
-import { UpdateUserPluginFiles } from "../../../src/contexts/installation/application/plugin/update-user-plugin-files.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { isStrictlyWithinUserScope } from "../../../src/contexts/machine-claims/domain/user-scope-containment.js";
 import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.use-case.js";
 import { resolveHomeDir } from "../../../src/shared/infrastructure/home-dir.js";
+import { buildMachinePluginUpdate } from "../../contexts/installation/testing/build-update-plugin.builder.js";
 import { fakeBuiltDeps } from "../../contexts/installation/testing/fake-build-sources.fake.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
 import {
@@ -147,7 +147,7 @@ for (const [toolId, catalogPath] of [
       expect(user.records.get(toolId)?.pluginClaims).toEqual([{ ref, dependents: ["/A", "/B"] }]);
       const updateFs = new InMemoryFileAdapter({}, ["/A", "/B"]);
       const update = new UpdateUserPlugin(
-        new UpdateUserPluginFiles(
+        buildMachinePluginUpdate(
           {
             repo: user,
             materializer: new PluginMaterializer({
@@ -186,7 +186,7 @@ for (const [toolId, catalogPath] of [
         expect(activator.updatedPlugins).toEqual([ref]);
         const failed = new FakeHostActions({ available: true, failOnUpdate: [ref] });
         const failingUpdate = new UpdateUserPlugin(
-          new UpdateUserPluginFiles(
+          buildMachinePluginUpdate(
             {
               repo: user,
               materializer: new PluginMaterializer({

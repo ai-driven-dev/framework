@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { registrationRecordRules } from "../../../../../src/composition/installation.js";
 import type { ProvenNativeRefresh } from "../../../../../src/contexts/installation/application/plugin/update-native-refs.js";
-import {
-  UpdateUserPluginFiles,
-  type UpdateUserPluginFilesRequest,
-} from "../../../../../src/contexts/installation/application/plugin/update-user-plugin-files.use-case.js";
+import type {
+  MachinePluginUpdate,
+  UpdatePluginRequest,
+} from "../../../../../src/contexts/installation/application/plugin/update-plugin-command.js";
 import { PluginNotFoundError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { RegistrationRecords } from "../../../../../src/contexts/installation/ports/record/registration-records.js";
@@ -13,6 +13,7 @@ import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { buildMachinePluginUpdate } from "../../testing/build-update-plugin.builder.js";
 import {
   FakeUserPluginMaterialization,
   NEXT_VERSION,
@@ -70,26 +71,41 @@ function fixture(
   const logger = new CapturingLogger();
   const refreshed: { ref: string; tool: AiToolId }[] = [];
   const applied: string[] = [];
-  const refreshNative: UpdateUserPluginFilesRequest["refreshNative"] = async (request) => {
+  const refreshNative: MachinePluginUpdate["refreshNative"] = async (request) => {
     refreshed.push({ ref: request.ref, tool: request.tool.toolId });
     const refresh: ProvenNativeRefresh = { apply: () => applied.push(request.ref) };
     return refresh;
   };
-  const update = new UpdateUserPluginFiles({ repo, materializer, logger }, registeredTools());
-  const run = (command: Partial<UpdateUserPluginFilesRequest> = {}) =>
+  const update = buildMachinePluginUpdate({ repo, materializer, logger }, registeredTools());
+  const run = (
+    command: Partial<UpdatePluginRequest> = {},
+    machine: Partial<MachinePluginUpdate> = {}
+  ) =>
     update.execute({
       toolIds: [TOOL.codex],
       projectRoot: ROOT,
-      isWithinUserScope: () => true,
-      refreshNative,
-      refSelection: registrationRecordRules,
-      afterPreflight: (_toolId, apply) => apply(),
       ...command,
+      machine: {
+        isWithinUserScope: () => true,
+        refreshNative,
+        refSelection: registrationRecordRules,
+        afterPreflight: (_toolId, apply) => apply(),
+        ...machine,
+      },
     });
-  return { repo, materializer, logger, refreshed, applied, run };
+  return { repo, materializer, logger, refreshed, applied, update, run };
 }
 
 describe("updating the user-scope plugins", () => {
+  it("refuses a user-scope update without the machine's update context", async () => {
+    const { repo, update } = fixture();
+
+    await expect(
+      update.execute({ toolIds: [TOOL.codex], projectRoot: ROOT, scope: "user" })
+    ).rejects.toThrow("A user-scope plugin update needs the machine's update context.");
+    expect(repo.saveCount).toBe(0);
+  });
+
   it("refuses without a machine manifest", async () => {
     await expect(fixture({ manifest: null }).run()).rejects.toThrow("No machine manifest");
   });
@@ -158,12 +174,15 @@ describe("updating the user-scope plugins", () => {
     const { run } = fixture();
     const tools: AiToolId[] = [];
 
-    await run({
-      afterPreflight: (toolId, apply) => {
-        tools.push(toolId);
-        return apply();
-      },
-    });
+    await run(
+      {},
+      {
+        afterPreflight: (toolId, apply) => {
+          tools.push(toolId);
+          return apply();
+        },
+      }
+    );
 
     expect(tools).toEqual([TOOL.codex]);
   });
@@ -177,7 +196,7 @@ describe("updating the user-scope plugins", () => {
   });
 });
 
-describe("UpdateUserPluginFiles native refs", () => {
+describe("updating the user-scope native refs", () => {
   const claims = [{ ref: "aidd-dev@framework" }];
 
   it("refreshes each claimed ref and names it", async () => {

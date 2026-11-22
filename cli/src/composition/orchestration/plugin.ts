@@ -15,7 +15,7 @@ import { AddPluginToProject } from "../../contexts/installation/application/plug
 import { PluginMaterializer } from "../../contexts/installation/application/plugin/files/plugin-materializer.js";
 import { PlanPluginInstall } from "../../contexts/installation/application/plugin/plan-plugin-install.use-case.js";
 import { UpdatePlugin } from "../../contexts/installation/application/plugin/update-plugin.use-case.js";
-import { UpdateUserPluginFiles } from "../../contexts/installation/application/plugin/update-user-plugin-files.use-case.js";
+import { UpdateProjectPlugins } from "../../contexts/installation/application/plugin/update-project-plugins.use-case.js";
 import type { ClaimedRefWithdrawal } from "../../contexts/installation/application/removal/project-plugin-withdrawal.js";
 import { RemovePlugin as RemoveProjectPluginFiles } from "../../contexts/installation/application/removal/remove-plugin.use-case.js";
 import {
@@ -167,22 +167,19 @@ function wirePluginUpdate(base: Base, inst: Installation) {
   const pluginMaterializer = pluginMaterializerOf(base, inst);
   const pluginUpdateUseCase = new UpdatePlugin(
     {
-      manifestRepo,
-      loadDistribution: base.loadDistribution,
-      replacePluginFiles: new ReplacePluginFiles(fs, builtMaterializationDeps, tools),
-      pluginRuntime: new EnsurePluginRuntimeFiles({ fs, assets: inst.assetProvider }),
+      manifests: { project: manifestRepo, user: userManifestRepo },
+      updateProject: new UpdateProjectPlugins({
+        loadDistribution: base.loadDistribution,
+        replacePluginFiles: new ReplacePluginFiles(fs, builtMaterializationDeps, tools),
+        pluginRuntime: new EnsurePluginRuntimeFiles({ fs, assets: inst.assetProvider }),
+      }),
+      materializer: pluginMaterializer,
+      logger,
     },
     tools
   );
   const userPluginUpdateUseCase = new UpdateUserPlugin(
-    new UpdateUserPluginFiles(
-      {
-        repo: userManifestRepo,
-        materializer: pluginMaterializer,
-        logger,
-      },
-      tools
-    ),
+    pluginUpdateUseCase,
     new RefreshHostPlugin(
       base.nativePluginActivators,
       base.hostPluginRegistries,

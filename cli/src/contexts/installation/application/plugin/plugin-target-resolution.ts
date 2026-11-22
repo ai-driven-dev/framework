@@ -34,3 +34,21 @@ export function scopeBaseOf(
     toolId: tool.toolId,
   });
 }
+
+/** The machine-scope plugins a user-scope update covers: every one, or only the ones named. */
+export function userPluginTargets(
+  manifest: Manifest,
+  toolIds: readonly AiToolId[],
+  pluginNames: readonly string[] | undefined
+) {
+  return toolIds.flatMap((toolId) =>
+    manifest
+      .getRecordedPlugins(toolId)
+      .filter(
+        ({ plugin }) =>
+          plugin.scope === "user" &&
+          (pluginNames === undefined || pluginNames.includes(plugin.name))
+      )
+      .map((plugin) => ({ toolId, plugin }))
+  );
+}

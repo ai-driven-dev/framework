@@ -5,7 +5,6 @@ import { RefreshHostPlugin } from "../../../src/contexts/host-registration/appli
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { PluginMaterializer } from "../../../src/contexts/installation/application/plugin/files/plugin-materializer.js";
-import { UpdateUserPluginFiles } from "../../../src/contexts/installation/application/plugin/update-user-plugin-files.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
@@ -14,6 +13,7 @@ import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-
 import { PluginDistribution } from "../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
+import { buildMachinePluginUpdate } from "../../contexts/installation/testing/build-update-plugin.builder.js";
 import { fakeBuiltDeps } from "../../contexts/installation/testing/fake-build-sources.fake.js";
 import { userScopeFileGuard } from "../../contexts/installation/testing/user-scope-file-guard.fake.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
@@ -92,7 +92,7 @@ function fixture(
   const logger = new CapturingLogger();
   const distribution = options.distribution;
   const update = new UpdateUserPlugin(
-    new UpdateUserPluginFiles(
+    buildMachinePluginUpdate(
       {
         repo,
         materializer: new PluginMaterializer({

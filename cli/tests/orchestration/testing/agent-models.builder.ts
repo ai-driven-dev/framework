@@ -5,7 +5,7 @@ import { MainSessionModels } from "../../../src/contexts/installation/applicatio
 import { RecordAgentProviders } from "../../../src/contexts/installation/application/agents/record-agent-providers.use-case.js";
 import { RestoreAgentProviders } from "../../../src/contexts/installation/application/agents/restore-agent-providers.use-case.js";
 import { RestoreMainSessionModels } from "../../../src/contexts/installation/application/agents/restore-main-session-models.use-case.js";
-import type { UpdatePluginRequest } from "../../../src/contexts/installation/application/plugin/update-plugin.use-case.js";
+import type { UpdatePluginRequest } from "../../../src/contexts/installation/application/plugin/update-plugin-command.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { AgentModelStoreAdapter } from "../../../src/contexts/installation/infrastructure/agent-model-store-adapter.js";

@@ -2,7 +2,6 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
 import type { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.use-case.js";
-import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.use-case.js";
 import type { BuiltMaterializationDeps } from "../../../../../src/contexts/installation/application/shared/built-materialization-deps.js";
 import type { PluginSource } from "../../../../../src/shared/domain/plugin/source.js";
 import { FixturePluginFetcher } from "../../../../shared/testing/fixture-plugin-fetcher.fake.js";
@@ -15,6 +14,7 @@ import { registeredTools, TOOL } from "../../../../shared/testing/registered-too
 import { saying } from "../../../../shared/testing/saying.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
+import { buildProjectPluginUpdate } from "../../testing/build-update-plugin.builder.js";
 import { fakeBuildSources, fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
@@ -56,7 +56,7 @@ async function setup(
     },
     registeredTools()
   );
-  const updateUseCase = new UpdatePlugin(
+  const updateUseCase = buildProjectPluginUpdate(
     {
       manifestRepo: deps.manifestRepo,
       loadDistribution: loadDistributionOf(options.fetcher ?? deps.pluginFetcher, reader),

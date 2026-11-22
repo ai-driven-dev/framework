@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
-import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.use-case.js";
+import type { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.use-case.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import {
   buildInstallationDeps,
@@ -11,6 +11,7 @@ import { loadDistributionOf } from "../../../../shared/testing/load-distribution
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
+import { buildProjectPluginUpdate } from "../../testing/build-update-plugin.builder.js";
 import { fakeBuildSources, fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
 
@@ -43,7 +44,7 @@ async function makeGithubRegistry(): Promise<FakeMarketplaceRegistry> {
 }
 
 function makeUpdateUseCase(deps: Deps, registry: FakeMarketplaceRegistry): UpdatePlugin {
-  return new UpdatePlugin(
+  return buildProjectPluginUpdate(
     {
       manifestRepo: deps.manifestRepo,
       loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),

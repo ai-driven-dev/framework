@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { UpdateUserPluginFilesRequest } from "../../../src/contexts/installation/application/plugin/update-user-plugin-files.use-case.js";
+import type { AfterPreflight } from "../../../src/contexts/installation/application/plugin/update-plugin-command.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { IsWithinUserScope } from "../../../src/contexts/machine-claims/contract/user-scope-containment.js";
 import { UserPluginUpdatePartialError } from "../../../src/orchestration/orchestration.error.js";
@@ -21,7 +21,7 @@ describe("updating a user plugin", () => {
     const update = new UpdateUserPlugin(
       {
         execute: async (options) => {
-          seen = options.refSelection;
+          seen = options.machine?.refSelection;
           return [];
         },
       },
@@ -41,8 +41,8 @@ describe("updating a user plugin", () => {
     const update = new UpdateUserPlugin(
       {
         execute: async (options) => {
-          seen.within = options.isWithinUserScope;
-          await options.refreshNative({
+          seen.within = options.machine?.isWithinUserScope;
+          await options.machine?.refreshNative({
             tool: syntheticCatalog().aiProfile(SYNTHETIC_TOOL),
             ref: "a@b",
             projectRoot: "/A",
@@ -74,11 +74,11 @@ describe("updating a user plugin", () => {
 
   describe("once a tool's preflight passed", () => {
     const afterPreflight = async () => {
-      let seen: UpdateUserPluginFilesRequest["afterPreflight"] | undefined;
+      let seen: AfterPreflight | undefined;
       await new UpdateUserPlugin(
         {
           execute: async (options) => {
-            seen = options.afterPreflight;
+            seen = options.machine?.afterPreflight;
             return [];
           },
         },

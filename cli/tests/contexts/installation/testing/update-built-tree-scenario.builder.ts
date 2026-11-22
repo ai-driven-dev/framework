@@ -1,7 +1,6 @@
 import { join } from "node:path";
 import { RefreshHostPlugin } from "../../../../src/contexts/host-registration/application/refresh-host-plugin.use-case.js";
 import { PluginMaterializer } from "../../../../src/contexts/installation/application/plugin/files/plugin-materializer.js";
-import { UpdateUserPluginFiles } from "../../../../src/contexts/installation/application/plugin/update-user-plugin-files.use-case.js";
 import type { BuiltMarketplaceEnsurer } from "../../../../src/contexts/installation/contract/built-marketplace.js";
 import type { IsWithinUserScope } from "../../../../src/contexts/machine-claims/contract/user-scope-containment.js";
 import { UpdateUserPlugin } from "../../../../src/orchestration/plugin/update-user-plugin.use-case.js";
@@ -12,6 +11,7 @@ import { loadDistributionOf } from "../../../shared/testing/load-distribution.bu
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "./build-add-plugin.builder.js";
+import { buildMachinePluginUpdate } from "./build-update-plugin.builder.js";
 import { fakeBuildSources, fakeBuiltDeps } from "./fake-build-sources.fake.js";
 import { FakeMarketplaceRegistry } from "./fake-marketplace-registry.fake.js";
 import { userScopeFileGuard } from "./user-scope-file-guard.fake.js";
@@ -58,7 +58,7 @@ export function makeUpdateUseCase(
   ensureBuilt: BuiltMarketplaceEnsurer = fakeEnsureBuiltMarketplace()
 ): UpdateUserPlugin {
   return new UpdateUserPlugin(
-    new UpdateUserPluginFiles(
+    buildMachinePluginUpdate(
       {
         repo: deps.userManifestRepo,
         materializer: new PluginMaterializer({
