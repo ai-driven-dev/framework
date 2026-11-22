@@ -261,9 +261,9 @@ test("no generated contract scope matches a raw template under a plugin's assets
   let globs = 0;
   for (const plugin of ["aidd-context", "aidd-dev", "aidd-pm"]) {
     const root = path.join(REPO, "plugins", plugin, "hooks/lib/contracts");
-    for (const name of fs.readdirSync(root)) {
+    for (const name of fs.readdirSync(root).filter((entry) => entry !== "lib")) {
       const contract = JSON.parse(fs.readFileSync(path.join(root, name, "scripts/contract.json"), "utf8"));
-      const { globRegex } = require(path.join(root, name, "scripts/lib/engine.cjs"));
+      const { globRegex } = require(path.join(root, "lib/engine.cjs"));
       for (const glob of contract.scope ?? []) {
         globs += 1;
         const regex = globRegex(glob);
@@ -366,7 +366,8 @@ test("a shell turn reads each in-scope file once, however deep, though two contr
   // each scope glob checks each folder of the tree about once more (measured: 79 extra stats for 5 globs x 14 folders), so the slack
   // is allowed twice globs x folders: it grows with the globs, never with the files, and stays under one stat per file
   const root = hookFor("aidd-dev", "claude");
-  const globs = fs.readdirSync(path.join(root, "lib/contracts")).reduce((sum, name) => sum + (JSON.parse(fs.readFileSync(path.join(root, "lib/contracts", name, "scripts/contract.json"), "utf8")).scope ?? []).length, 0);
+  const contracts = fs.readdirSync(path.join(root, "lib/contracts")).map((name) => path.join(root, "lib/contracts", name, "scripts/contract.json")).filter((file) => fs.existsSync(file));
+  const globs = contracts.reduce((sum, file) => sum + (JSON.parse(fs.readFileSync(file, "utf8")).scope ?? []).length, 0);
   const folders = new Set(tree.flatMap((rel) => { const dirs = []; for (let at = path.posix.dirname(rel); at !== "."; at = path.posix.dirname(at)) dirs.push(at); return dirs; })).size;
   const slack = 2 * globs * folders;
   assert.ok(slack < files, "a slack under one stat per file still catches a per-file re-read");
@@ -423,7 +424,7 @@ test("a bad entry in scope does not silence the turn: a dangling link, an unread
 
 test("a custom check that throws on a file names the file, the contract and the message", () => {
   const s = session("aidd-pm", "claude", { [STORY]: BROKEN_STORY });
-  const engine = path.join(hookFor("aidd-pm", "claude"), "lib/contracts/02-user-stories/scripts/lib/engine.cjs");
+  const engine = path.join(hookFor("aidd-pm", "claude"), "lib/contracts/lib/engine.cjs");
   const original = fs.readFileSync(engine, "utf8");
   fs.writeFileSync(engine, `${original}\nmodule.exports.check = () => {\n  throw new Error("boom");\n};\n`);
   try {
@@ -549,6 +550,19 @@ for (const host of HOSTS) {
     assert.equal(s.stop(), "");
   });
 }
+
+// Only the hosts whose writer output passes the shared contract unchanged are in scope.
+test("aidd-context: answers an agent or command written for another host in scope, not one out of scope", () => {
+  const inScope = [".cursor/agents/a.md", ".github/prompts/c.prompt.md", ".opencode/commands/c.md", ".kilo/commands/c.md"];
+  const outOfScope = [".opencode/agents/a.md", ".cursor/commands/c.md"];
+  const all = [...inScope, ...outOfScope];
+  const s = session("aidd-context", "claude", contextFiles(Object.fromEntries(all.map((rel) => [rel, "# nope\n"]))));
+  s.start();
+  for (const rel of all) s.wrote(rel);
+  const found = lines(s.stop());
+  for (const rel of inScope) assert.ok(found.some((line) => line.startsWith(`${rel}:`)), rel);
+  for (const rel of outOfScope) assert.ok(!found.some((line) => line.startsWith(`${rel}:`)), rel);
+});
 
 test("aidd-context: the shell turn answers the rule modified after the reference, not the older one", () => {
   const s = session("aidd-context", "claude", contextFiles({ "aidd_docs/rules/x/r.md": "# nope\n", "aidd_docs/rules/x/old.md": "# nope\n" }));

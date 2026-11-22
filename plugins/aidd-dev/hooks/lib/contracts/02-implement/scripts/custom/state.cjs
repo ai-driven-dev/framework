@@ -3,8 +3,8 @@
 // Reads a plan folder once: the plan status, and per listed phase its status, dependencies and task numbers.
 const fs = require("node:fs");
 const path = require("node:path");
-const { readText, frontmatter, proseLines } = require("../lib/markdown.cjs");
-const { shape, cells } = require("../lib/ops.cjs");
+const { readText, frontmatter, proseLines } = require("../../../lib/markdown.cjs");
+const { shape, cells } = require("../../../lib/ops.cjs");
 
 const TASK_HEADING = /^###\s*`?(\d+)\)/gmu;
 const CLOSED = ["implemented", "blocked"];
