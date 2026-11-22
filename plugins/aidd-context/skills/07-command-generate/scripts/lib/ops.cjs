@@ -155,18 +155,33 @@ const ops = {
 };
 
 /** Doc headings against the template headings of one parent: unknown, out of order (unless it repeats), missing (unless optional), table headers on every instance, then each matched pair one level down. */
-function checkChildren(expectedList, actualList, parent, optional, say) {
+function checkChildren(expectedList, actualList, parent, optional, say, root = expectedList) {
   const kind = (node) => (node.level === 2 ? "section" : "heading");
   // A slotted name is shown as the heading to write, its slots as <fill-ins>.
   const slotsOf = (node) => node.name.match(new RegExp(SLOT.source, "gu")) ?? [];
   const fillIn = (s) => s.replace(/\{\{([^}]*)\}\}/gu, "<$1>");
-  const shape = (node) => (node.repeat ? `"${"#".repeat(node.level)} ${fillIn(node.name)}"` : `"${node.name}"`);
+  const written = (node) => `"${"#".repeat(node.level)} ${fillIn(node.name)}"`;
+  const shape = (node) => (node.repeat ? written(node) : `"${node.name}"`);
   const rankOf = (name) => expectedList.findIndex((e) => e.match.test(name));
+  // Where an unknown heading belongs, so the fix is written once, not guessed: its place elsewhere in the template, else what this level holds.
+  const placeOf = (name, list = root, above = null) => {
+    for (const node of list) {
+      if (node.match.test(name)) return { node, above };
+      const deeper = placeOf(name, node.children, node);
+      if (deeper) return deeper;
+    }
+    return undefined;
+  };
+  const hint = (name) => {
+    const place = placeOf(name);
+    if (place) return `: write it as ${written(place.node)}${place.above ? ` under ${written(place.above)}` : ""}`;
+    return expectedList.length ? `; here the template has ${expectedList.map(written).join(", ")}` : "; remove it or move its text into the parent";
+  };
   let last = -1;
   for (const actual of actualList) {
     const rank = rankOf(actual.name);
     const shown = `${"#".repeat(actual.level)} ${actual.name}`;
-    if (rank < 0) say(actual.line, shown, `${kind(actual)} "${actual.name}" is not in the template${parent ? ` under "${parent.name}"` : ""}`);
+    if (rank < 0) say(actual.line, shown, `${kind(actual)} "${actual.name}" is not in the template${parent ? ` under "${parent.name}"` : ""}${hint(actual.name)}`);
     else if (rank < last && !expectedList[rank].repeat) say(actual.line, shown, `${kind(actual)} "${actual.name}" is out of order`);
     else last = rank;
   }
@@ -178,7 +193,7 @@ function checkChildren(expectedList, actualList, parent, optional, say) {
     }
     for (const actual of actuals) {
       for (const header of expected.headers) if (!actual.headers.includes(header)) say(actual.line, header, `${kind(expected)} ${shape(expected)}: table header differs from the template`);
-      checkChildren(expected.children, actual.children, actual, optional, say);
+      checkChildren(expected.children, actual.children, actual, optional, say, root);
     }
   }
 }
