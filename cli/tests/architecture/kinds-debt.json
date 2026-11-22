@@ -169,11 +169,6 @@
     }
   },
   {
-    "rule": "real-tool-list:builder",
-    "closesWhen": "the builder takes the registry from its caller instead of wiring the registered catalog",
-    "entries": {}
-  },
-  {
     "rule": "real-tool-list:catalog-of",
     "closesWhen": "the test is converted to SYNTHETIC_TOOL once catalog-of.builder takes an injected registry",
     "entries": {
