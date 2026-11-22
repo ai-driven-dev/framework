@@ -1,5 +1,6 @@
 import { join, relative } from "node:path";
 import { describeError } from "../../../../shared/domain/describe-error.js";
+import { tryParseJson } from "../../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
@@ -43,10 +44,8 @@ async function readSharedHooksTarget(
 }
 
 function assertParsableJson(content: string, outDir: string, destPath: string): void {
-  try {
-    JSON.parse(content);
-  } catch (err) {
-    const shown = relative(outDir, destPath).replace(/\\/g, "/");
-    throw new FlatMergeTargetNotJsonError(shown, describeError(err));
-  }
+  const parsed = tryParseJson(content);
+  if (parsed.ok) return;
+  const shown = relative(outDir, destPath).replace(/\\/g, "/");
+  throw new FlatMergeTargetNotJsonError(shown, describeError(parsed.error));
 }

@@ -21,9 +21,7 @@
       "src/contexts/installation/application/update/update-tool.use-case.ts": 1,
       "src/contexts/machine-claims/application/purge-declared-cache.ts": 1,
       "src/contexts/machine-claims/application/shared-source-reference-support.ts": 1,
-      "src/contexts/recipes/application/validate-recipes.use-case.ts": 1,
-      "src/contexts/translate/application/build-native-tree.use-case.ts": 2,
-      "src/contexts/translate/application/sinks/flat-hooks-writer.ts": 1
+      "src/contexts/recipes/application/validate-recipes.use-case.ts": 1
     }
   },
   {
