@@ -118,6 +118,57 @@ describe("ops", () => {
     assert.deepEqual(findings(rule, "---\nmodel: sonnet\n---\n\n# T\n"), []);
   });
 
+  describe("template heading tree", () => {
+    const tree = "# T {{x}}\n\n## Round {{n}}\n\n### A\n\n### B\n\n| h1 | h2 |\n| -- | -- |\n";
+    const rule = { op: "template", template: "t.md" };
+    const round = (body) => `## Round 1\n\n${body}\n`;
+    const ok = "### A\n\n### B\n\n| h1 | h2 |\n| -- | -- |\n";
+    beforeEach(() => fs.writeFileSync(path.join(dir, "t.md"), tree));
+
+    it("accepts two rounds, each A then B", () => {
+      assert.deepEqual(findings(rule, `# T demo\n\n${round(ok)}\n${round(ok).replace("Round 1", "Round 2")}`), []);
+    });
+
+    it("names an unknown child", () => {
+      const hit = findings(rule, `# T demo\n\n${round(ok + "\n### C\n")}`);
+      assert.equal(hit.length, 1);
+      assert.match(hit[0].message, /"C" is not in the template/u);
+    });
+
+    it("names a child out of order", () => {
+      const hit = findings(rule, "# T demo\n\n## Round 1\n\n### B\n\n| h1 | h2 |\n| -- | -- |\n\n### A\n");
+      assert.equal(hit.length, 1);
+      assert.match(hit[0].message, /"A" is out of order/u);
+    });
+
+    it("reports a missing child unless it is optional", () => {
+      const doc = "# T demo\n\n## Round 1\n\n### A\n\n| h1 | h2 |\n| -- | -- |\n";
+      assert.match(findings(rule, doc)[0].message, /"B" missing under "Round 1"/u);
+      assert.deepEqual(findings({ ...rule, optional: ["B"] }, doc), []);
+    });
+
+    it("flags a second title", () => {
+      const hit = findings(rule, `# T demo\n\n${round(ok)}\n# T demo\n`);
+      assert.equal(hit.length, 1);
+      assert.match(hit[0].message, /one title only/u);
+    });
+
+    it("ignores headings in a fence or a comment", () => {
+      const doc = `# T demo\n\n${round(ok)}\n\`\`\`\n### C\n\`\`\`\n`;
+      assert.deepEqual(findings(rule, doc), []);
+      assert.match(findings(rule, `${doc}<!--\n### C\n-->\n`)[0].message, /comment left/u);
+      assert.equal(findings(rule, `${doc}<!--\n### C\n-->\n`).length, 1);
+    });
+
+    it("checks the table header of every round", () => {
+      const bad = ok.replace("h2", "zz");
+      const hit = findings(rule, `# T demo\n\n${round(ok)}\n${round(bad).replace("Round 1", "Round 2")}`);
+      assert.equal(hit.length, 1);
+      assert.match(hit[0].message, /table header differs/u);
+      assert.equal(hit[0].line, 17);
+    });
+  });
+
   it("json validates against a schema", () => {
     fs.writeFileSync(path.join(dir, "s.json"), JSON.stringify({ type: "object", required: ["a"] }));
     const rule = { op: "json", schema: "s.json", fix: "{problem}" };
