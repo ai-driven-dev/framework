@@ -32,3 +32,6 @@ export class TaskDeclaredNoneWithNameError extends AiddError {
 export class TaskNameMissingError extends AiddError {
   readonly code = "task-name-missing";
 }
+
+/** A stream that decompressed to another size than its frame declares. */
+export class FrameSizeMismatch extends Error {}

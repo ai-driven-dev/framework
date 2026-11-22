@@ -4,8 +4,8 @@ import { RememberedClones } from "../../../../../src/contexts/telemetry/applicat
 import type { BranchSnapshot } from "../../../../../src/contexts/telemetry/domain/branch-binding.js";
 import { repositoryIdOf } from "../../../../../src/contexts/telemetry/domain/repository-identity.js";
 import { resolutionKey } from "../../../../../src/contexts/telemetry/domain/repository-resolution.js";
+import type { LocatedDirectory } from "../../../../../src/contexts/telemetry/domain/resolution/located-directory.js";
 import type { ErasureEntry } from "../../../../../src/contexts/telemetry/ports/forget/measurement-erasure.js";
-import type { LocatedDirectory } from "../../../../../src/contexts/telemetry/ports/repository-locator.js";
 import { cloneOf } from "../../testing/clone.builder.js";
 import { InMemoryConsentHistory } from "../../testing/in-memory-consent-history.fake.js";
 import { InMemoryLedger } from "../../testing/in-memory-ledger.fake.js";

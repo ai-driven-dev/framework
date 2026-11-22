@@ -5,7 +5,7 @@ import { DeclareTask } from "../../../../../src/contexts/telemetry/application/d
 import { SnapshotBindings } from "../../../../../src/contexts/telemetry/application/snapshot-bindings.use-case.js";
 import type { DeclarationRequest } from "../../../../../src/contexts/telemetry/contract/task-declaration.js";
 import { HOOK_LOCK_WAIT_MS } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
-import type { LocatedDirectory } from "../../../../../src/contexts/telemetry/ports/repository-locator.js";
+import type { LocatedDirectory } from "../../../../../src/contexts/telemetry/domain/resolution/located-directory.js";
 import { cloneOf, grantedBy } from "../../testing/clone.builder.js";
 import { FakeBindings } from "../../testing/fake-bindings.fake.js";
 import { FakeBranchStore } from "../../testing/fake-branch-store.fake.js";

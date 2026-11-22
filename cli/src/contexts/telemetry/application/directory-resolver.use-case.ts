@@ -7,7 +7,11 @@ import type { ConsentHistory } from "../ports/consent-history.js";
 import type { ConsentSource } from "../ports/consent-source.js";
 import type { RepositoryLocator } from "../ports/repository-locator.js";
 import type { ResolutionStore } from "../ports/resolution-store.js";
-import { type ResolutionEnvironment, ResolutionRun } from "./resolution-run.js";
+import {
+  type ResolutionEnvironment,
+  type ResolutionRun,
+  startResolutionRun,
+} from "./resolution-run.js";
 
 interface DirectoryResolverDeps {
   readonly locator: RepositoryLocator;
@@ -32,9 +36,9 @@ export class DirectoryResolver {
   async execute<T>(work: (run: ResolutionRun) => Promise<T>): Promise<T> {
     const remembered = new RememberedResolutions(await this.deps.store.load());
     const { consents, unreadable } = await this.observeOpenConsents();
-    const run = new ResolutionRun({
-      locator: this.deps.locator,
-      consentSource: this.deps.consentSource,
+    const run = startResolutionRun({
+      locate: (cwd) => this.deps.locator.locate(cwd),
+      readClone: (clone) => this.deps.consentSource.readClone(clone),
       environment: this.deps.environment,
       remembered,
       consents,

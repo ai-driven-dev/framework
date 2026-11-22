@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ConsentedRepositories } from "../../../../src/contexts/telemetry/application/consented-repositories.js";
 import { ReadCurrentBranch } from "../../../../src/contexts/telemetry/application/declaration/read-current-branch.use-case.js";
 import { ReadTelemetryStatus } from "../../../../src/contexts/telemetry/application/read-telemetry-status.use-case.js";
-import type { LocatedDirectory } from "../../../../src/contexts/telemetry/ports/repository-locator.js";
+import type { LocatedDirectory } from "../../../../src/contexts/telemetry/domain/resolution/located-directory.js";
 import { cloneOf, grantedBy } from "../testing/clone.builder.js";
 import { FakeBindings } from "../testing/fake-bindings.fake.js";
 import { FakeBranchStore } from "../testing/fake-branch-store.fake.js";

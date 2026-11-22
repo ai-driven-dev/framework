@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ResolutionRun } from "../../../../src/contexts/telemetry/application/resolution-run.js";
+import { startResolutionRun } from "../../../../src/contexts/telemetry/application/resolution-run.js";
 import { cloneKey } from "../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import { ConsentLog } from "../../../../src/contexts/telemetry/domain/consent/consent-log.js";
 import { RememberedResolutions } from "../../../../src/contexts/telemetry/domain/remembered-resolutions.js";
@@ -34,9 +34,9 @@ function world(
   const remembered = new RememberedResolutions(
     new Map(options.remembered ? [[resolutionKey(DIR, A), sighting]] : [])
   );
-  const run = new ResolutionRun({
-    locator,
-    consentSource: consents,
+  const run = startResolutionRun({
+    locate: (cwd) => locator.locate(cwd),
+    readClone: (clone) => consents.readClone(clone),
     environment: { caseInsensitiveFileSystem: false, now: () => new Date(CALL) },
     remembered,
     consents: new ConsentLog({ events: options.events ?? [], damaged: options.damaged ?? false }),
@@ -155,5 +155,43 @@ describe("what a run says of the directory a call was made in", () => {
     });
     locator.directories.set(DIR, repository(DIR));
     expect(await run.resolve(DIR, CALL)).toEqual({ skipped: "no-consent" });
+  });
+});
+
+describe("the moment a run remembers a directory at", () => {
+  function clockedRun(directory: Parameters<FakeLocator["directories"]["set"]>[1]) {
+    const reads: string[] = [];
+    let instant = Date.parse(CALL);
+    const run = startResolutionRun({
+      locate: async () => {
+        instant += 60_000;
+        return directory;
+      },
+      readClone: (clone) => new FakeConsents().readClone(clone),
+      environment: {
+        caseInsensitiveFileSystem: false,
+        now: () => {
+          reads.push(new Date(instant).toISOString());
+          return new Date(instant);
+        },
+      },
+      remembered: new RememberedResolutions(new Map()),
+      consents: new ConsentLog({ events: opened, damaged: false }),
+      unreadable: new Set(),
+    });
+    return { run, reads };
+  }
+
+  it("is the time after the directory was looked at, not before", async () => {
+    const { run } = clockedRun(repository(DIR));
+    await run.resolve(DIR, CALL);
+    const [seen] = [...run.learned.sightings.values()];
+    expect(seen?.seen_at).toBe("2026-03-01T00:01:00.000Z");
+  });
+
+  it("is not asked for a directory that is not remembered", async () => {
+    const { run, reads } = clockedRun({ status: "outside-repository" });
+    await run.resolve(DIR, CALL);
+    expect(reads).toEqual([]);
   });
 });

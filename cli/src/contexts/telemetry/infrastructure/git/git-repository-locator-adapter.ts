@@ -1,7 +1,8 @@
 import { existsSync, realpath } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
-import type { LocatedDirectory, RepositoryLocator } from "../../ports/repository-locator.js";
+import type { LocatedDirectory } from "../../domain/resolution/located-directory.js";
+import type { RepositoryLocator } from "../../ports/repository-locator.js";
 import { isAbsent } from "../reading/text-file.js";
 import {
   type CloneIdentityReader,

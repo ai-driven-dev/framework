@@ -1,6 +1,6 @@
+import type { EachTranscriptLine } from "../../../../src/contexts/telemetry/domain/transcript/line-splitter.js";
 import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
 import type {
-  EachTranscriptLine,
   TranscriptRead,
   TranscriptRequest,
   UsageSource,

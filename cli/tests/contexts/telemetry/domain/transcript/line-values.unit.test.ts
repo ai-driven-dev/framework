@@ -3,7 +3,7 @@ import {
   counter,
   expected,
   text,
-} from "../../../../../src/contexts/telemetry/infrastructure/sources/line-values.js";
+} from "../../../../../src/contexts/telemetry/domain/transcript/line-values.js";
 
 describe("counter", () => {
   it("accepts a non-negative integer and nothing else", () => {

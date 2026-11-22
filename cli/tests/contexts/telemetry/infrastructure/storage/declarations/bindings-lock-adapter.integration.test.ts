@@ -3,11 +3,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SnapshotBindings } from "../../../../../../src/contexts/telemetry/application/snapshot-bindings.use-case.js";
-import { BindingsLockAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/declarations/bindings-lock-adapter.js";
 import { BindingSnapshotStoreAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/binding-snapshot-store-adapter.js";
 import { PrivateStorageAdapter } from "../../../../../../src/shared/infrastructure/private-storage-adapter.js";
 import { FakeBindings } from "../../../testing/fake-bindings.fake.js";
 import { ledgerOver } from "../../../testing/ledger-adapters.builder.js";
+import { bindingsLockOver } from "../../../testing/lock-adapters.builder.js";
 import { NO_ALIASES } from "../../../testing/no-aliases.fake.js";
 
 let root: string;
@@ -23,7 +23,7 @@ afterEach(async () => {
 describe("the bindings lock", () => {
   it("is granted while another process holds the ledger lock", async () => {
     const ledger = ledgerOver(join(root, "ledger"), storage);
-    const bindings = new BindingsLockAdapter(join(root, "bindings"), storage, {
+    const bindings = bindingsLockOver(join(root, "bindings"), storage, {
       waitMs: 200,
       pollMs: 10,
     });
@@ -38,7 +38,7 @@ describe("the bindings lock", () => {
       join(dir, ".lock"),
       JSON.stringify({ pid: 4242, created_at: new Date().toISOString() })
     );
-    const bindings = new BindingsLockAdapter(dir, storage, {
+    const bindings = bindingsLockOver(dir, storage, {
       isAlive: () => true,
       waitMs: 0,
     });
@@ -57,7 +57,7 @@ describe("the bindings lock", () => {
       join(dir, ".lock"),
       JSON.stringify({ pid: 4242, created_at: new Date().toISOString() })
     );
-    const bindings = new BindingsLockAdapter(dir, storage, {
+    const bindings = bindingsLockOver(dir, storage, {
       isAlive: () => true,
       waitMs: 60_000,
       sleep: () => Promise.reject(new Error("waited the adapter's own minute")),
@@ -85,7 +85,7 @@ describe("the bindings lock", () => {
       new SnapshotBindings({
         source,
         store: new BindingSnapshotStoreAdapter(dir, storage, NO_ALIASES),
-        lock: new BindingsLockAdapter(dir, storage),
+        lock: bindingsLockOver(dir, storage),
         now: () => new Date("2026-10-09T09:00:00.000Z"),
       });
     const added = await Promise.all([

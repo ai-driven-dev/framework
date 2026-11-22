@@ -3,8 +3,8 @@ import { DirectoryResolver } from "../../../../src/contexts/telemetry/applicatio
 import { IngestUsage } from "../../../../src/contexts/telemetry/application/ingest-usage.use-case.js";
 import { ReadUsage } from "../../../../src/contexts/telemetry/application/read-usage.use-case.js";
 import { SnapshotBindings } from "../../../../src/contexts/telemetry/application/snapshot-bindings.use-case.js";
+import type { LocatedDirectory } from "../../../../src/contexts/telemetry/domain/resolution/located-directory.js";
 import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
-import type { LocatedDirectory } from "../../../../src/contexts/telemetry/ports/repository-locator.js";
 import { cloneOf, grantedBy } from "./clone.builder.js";
 import { FakeBindings } from "./fake-bindings.fake.js";
 import { FakeConsents } from "./fake-consents.fake.js";

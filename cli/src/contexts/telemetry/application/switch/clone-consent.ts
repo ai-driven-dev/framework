@@ -1,5 +1,6 @@
+import type { LocatedDirectory } from "../../domain/resolution/located-directory.js";
 import type { ConsentSource } from "../../ports/consent-source.js";
-import type { LocatedDirectory, RepositoryLocator } from "../../ports/repository-locator.js";
+import type { RepositoryLocator } from "../../ports/repository-locator.js";
 
 export type Located = Extract<LocatedDirectory, { status: "repository" }>;
 

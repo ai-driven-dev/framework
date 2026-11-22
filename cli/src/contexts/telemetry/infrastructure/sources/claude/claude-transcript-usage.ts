@@ -1,7 +1,7 @@
 import { asPlainObject } from "../../../../../shared/domain/reading/plain-object.js";
 import type { UsageRecord } from "../../../contract/usage-record.js";
+import { counter, expected, type Json, text } from "../../../domain/transcript/line-values.js";
 import type { LineNames } from "../../../domain/transcript-position.js";
-import { counter, expected, type Json, text } from "../line-values.js";
 import { cacheWrites, messageIterations } from "./claude-usage-iterations.js";
 
 export interface ClaudeUsageLine {

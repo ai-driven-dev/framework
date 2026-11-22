@@ -1,5 +1,6 @@
 import type { NotStoredReason } from "../contract/repository-resolution.js";
 import type { UsageRecord } from "../contract/usage-record.js";
+import type { DirectoryOutcome } from "../domain/resolution/resolution-judgement.js";
 import {
   dayOf,
   isRequestless,
@@ -8,7 +9,7 @@ import {
 } from "../domain/stored-usage.js";
 import type { LeftOutEntry } from "../ports/usage-ledger.js";
 import type { ReadUsageResult } from "./read-usage.use-case.js";
-import type { DirectoryOutcome, ResolutionRun } from "./resolution-run.js";
+import type { ResolutionRun } from "./resolution-run.js";
 
 export const NOT_STORED: Readonly<Record<NotStoredReason, number>> = {
   "outside-repo": 0,

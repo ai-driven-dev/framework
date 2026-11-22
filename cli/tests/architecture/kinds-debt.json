@@ -46,20 +46,6 @@
     }
   },
   {
-    "rule": "construction",
-    "closesWhen": "the per-operation values of telemetry (run, line splitter, codex context, frame mismatch) are models and errors of its domain, and the directory lock is handed in by composition",
-    "entries": {
-      "src/contexts/telemetry/application/directory-resolver.use-case.ts :: new ResolutionRun": 1,
-      "src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.ts :: new FrameSizeMismatch": 1,
-      "src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.ts :: new LineSplitter": 1,
-      "src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-usage.ts :: new CodexContext": 1,
-      "src/contexts/telemetry/infrastructure/sources/transcript-files.ts :: new LineSplitter": 1,
-      "src/contexts/telemetry/infrastructure/storage/declarations/bindings-lock-adapter.ts :: new DirectoryLock": 1,
-      "src/contexts/telemetry/infrastructure/storage/ledger/directory-lock.ts :: new LedgerLock": 1,
-      "src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.ts :: new DirectoryLock": 1
-    }
-  },
-  {
     "rule": "real-tool-list:behaviour",
     "closesWhen": "the generic test runs on a synthetic profile carrying the section it needs",
     "entries": {
