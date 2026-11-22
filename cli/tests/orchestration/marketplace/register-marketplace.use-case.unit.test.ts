@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
 import type { TokenProvider } from "../../../src/contexts/auth/contract/token-provider.js";
-import type { RefreshMarketplace } from "../../../src/contexts/distribution/application/refresh-marketplace.use-case.js";
 import type { RegisterFrameworkMarketplace } from "../../../src/contexts/distribution/application/register-framework-marketplace.use-case.js";
 import {
   localFrameworkSource,
@@ -10,6 +9,7 @@ import type { RepositoryVisibility } from "../../../src/contexts/distribution/po
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
 import { SetupFlow } from "../../../src/orchestration/domain/setup-flow.model.js";
+import type { RefreshMarketplaces } from "../../../src/orchestration/marketplace/refresh-marketplaces.use-case.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import { CatalogFetchAuthError } from "../../../src/shared/domain/shared.error.js";
 import type { ReleaseLister } from "../../../src/shared/ports/release-lister.js";
@@ -50,10 +50,10 @@ function makeUseCase(
   collaborators: Collaborators = {}
 ): {
   useCase: ReturnType<typeof setupMarketplaceRegistrar>;
-  refresh: Pick<RefreshMarketplace, "execute">;
+  refresh: Pick<RefreshMarketplaces, "execute">;
   register: Pick<RegisterFrameworkMarketplace, "execute">;
 } {
-  const refresh: Pick<RefreshMarketplace, "execute"> = {
+  const refresh: Pick<RefreshMarketplaces, "execute"> = {
     execute: vi.fn().mockResolvedValue({ results: [], failedCount: 0 }),
   };
   const register = makeRegisterFramework(collaborators.registeredScope ?? "user");
@@ -74,7 +74,7 @@ function makeUseCase(
 
 async function register(
   environment: InMemoryEnvironment
-): Promise<Pick<RefreshMarketplace, "execute">> {
+): Promise<Pick<RefreshMarketplaces, "execute">> {
   const { useCase, refresh } = makeUseCase(environment);
   const flow = new SetupFlow({
     ...flowTools(),

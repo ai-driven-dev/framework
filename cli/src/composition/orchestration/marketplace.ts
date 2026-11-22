@@ -28,6 +28,7 @@ import { userScopeFilesSafeToDelete } from "../../contexts/machine-claims/applic
 import { AddMarketplace } from "../../orchestration/marketplace/add-marketplace.use-case.js";
 import { CheckMarketplaceUpstream } from "../../orchestration/marketplace/check-marketplace-upstream.use-case.js";
 import { ListMarketplaceCatalogs } from "../../orchestration/marketplace/list-marketplace-catalogs.use-case.js";
+import { RefreshMarketplaces } from "../../orchestration/marketplace/refresh-marketplaces.use-case.js";
 import { RegisterMarketplace } from "../../orchestration/marketplace/register-marketplace.use-case.js";
 import { RemoveProjectMarketplace } from "../../orchestration/marketplace/remove-project-marketplace.use-case.js";
 import { RemoveRegisteredMarketplace } from "../../orchestration/marketplace/remove-registered-marketplace.use-case.js";
@@ -259,7 +260,7 @@ function wireSetupSource(base: Base, recordSourceReference: RecordSourceReferenc
       releaseResolver
     ),
     recordReference: recordSourceReference,
-    refresh: base.refreshMarketplace,
+    refresh: new RefreshMarketplaces(base.refreshMarketplaceUseCase),
     environment,
   });
   return {
@@ -283,7 +284,8 @@ function wireMarketplaceReads(base: Base) {
     resolveMarketplaceUseCase,
     base.logger
   );
-  return { marketplaceCheckUseCase, listMarketplaceCatalogs };
+  const refreshMarketplace = new RefreshMarketplaces(base.refreshMarketplaceUseCase);
+  return { marketplaceCheckUseCase, listMarketplaceCatalogs, refreshMarketplace };
 }
 
 /** Marketplace removal, check and sync, and the setup steps that register a marketplace. */

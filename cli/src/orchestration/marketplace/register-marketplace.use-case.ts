@@ -1,9 +1,9 @@
 import type { EnsureFrameworkMarketplace } from "../../contexts/distribution/application/ensure-framework-marketplace.use-case.js";
-import type { RefreshMarketplace } from "../../contexts/distribution/application/refresh-marketplace.use-case.js";
 import type { FrameworkSource } from "../../contexts/distribution/contract/framework-source.js";
 import type { RecordSourceReference } from "../../contexts/machine-claims/application/record-source-reference.use-case.js";
 import type { Scope } from "../../shared/domain/scope.js";
 import type { Environment } from "../../shared/ports/environment.js";
+import type { RefreshMarketplaces } from "./refresh-marketplaces.use-case.js";
 
 export interface RegisterMarketplaceRequest {
   projectRoot: string;
@@ -15,7 +15,7 @@ export interface RegisterMarketplaceRequest {
 export interface RegisterMarketplaceDeps {
   readonly ensure: EnsureFrameworkMarketplace;
   readonly recordReference: RecordSourceReference;
-  readonly refresh: Pick<RefreshMarketplace, "execute">;
+  readonly refresh: Pick<RefreshMarketplaces, "execute">;
   readonly environment: Environment;
 }
 

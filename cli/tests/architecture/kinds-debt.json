@@ -4,7 +4,7 @@
     "closesWhen": "a scenario collects the partial failure and the use case lets its typed error travel",
     "entries": {
       "src/contexts/distribution/application/fetch-marketplace-source.use-case.ts": 2,
-      "src/contexts/distribution/application/refresh-marketplace.use-case.ts": 2,
+      "src/contexts/distribution/application/refresh-marketplace.use-case.ts": 1,
       "src/contexts/host-registration/application/confirmation.ts": 1,
       "src/contexts/host-registration/application/native-marketplace-source-proof.ts": 2,
       "src/contexts/host-registration/application/register/register-marketplace.ts": 1,
