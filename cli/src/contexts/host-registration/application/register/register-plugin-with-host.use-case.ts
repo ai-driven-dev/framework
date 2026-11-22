@@ -6,9 +6,10 @@ import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { BuiltCatalogs } from "../../contract/built-catalogs.js";
 import type { ClaimsView } from "../../contract/claims-view.js";
 import { judgeRegistration } from "../../domain/policy/registration-policy.js";
+import type { CatalogIdentityReader } from "../../ports/catalog-identity-reader.js";
 import type { HostActions } from "../../ports/host-actions.js";
 import type { CatalogProbeTool, NativeHostTool } from "../../ports/host-tool.js";
-import { bestEffortNativeCall, skippedWarning } from "../confirmation.js";
+import { bestEffortNativeCall, skippedWarning } from "../confirm-native-call.use-case.js";
 import { enableRefs } from "./enable-refs.js";
 import { nativeCatalogProof } from "./native-catalog-proof.js";
 import type {
@@ -52,6 +53,7 @@ export type RegisterPluginWithHostResult =
  * in `hosts`, so a tool absent from a map still registers. */
 export interface RegisterPluginWithHostDeps {
   readonly fs: FileReader;
+  readonly identities: CatalogIdentityReader;
   readonly activators: ReadonlyMap<string, HostActions>;
   readonly hosts: HostRegistries;
   readonly platform: string;
@@ -101,12 +103,13 @@ export class RegisterPluginWithHost {
     { profile, activator }: NativeHost
   ): RegistrationRun {
     const { toolId, projectRoot, claims, userCacheRoot, sink } = command;
-    const { fs, hosts, platform } = this.deps;
+    const { fs, identities, hosts, platform } = this.deps;
     return {
       toolId,
       profile,
       activator,
       fs,
+      identities,
       hosts,
       projectRoot,
       claims,

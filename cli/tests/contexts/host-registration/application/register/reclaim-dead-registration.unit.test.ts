@@ -4,6 +4,7 @@ import type { RegistrationRun } from "../../../../../src/contexts/host-registrat
 import type { ClaimsView } from "../../../../../src/contexts/host-registration/contract/claims-view.js";
 import type { HostPluginRegistryReading } from "../../../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
+import { catalogIdentityReader } from "../../../../../src/contexts/host-registration/infrastructure/marketplace-registry-reader.js";
 import {
   builtMarketplaceDir,
   userBuiltMarketplaceDir,
@@ -69,11 +70,13 @@ function setup(
   };
   const profile = registeredTools().aiProfileIfAny(TOOL.claude);
   if (profile === null) throw new Error("claude is an AI tool");
+  const fs = new InMemoryFileAdapter();
   const run: RegistrationRun = {
     toolId: TOOL.claude,
     profile,
     activator,
-    fs: new InMemoryFileAdapter(),
+    fs,
+    identities: catalogIdentityReader(fs),
     hosts,
     projectRoot: "/p",
     claims: {

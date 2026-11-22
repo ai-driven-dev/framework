@@ -33,7 +33,7 @@ export interface MarketplaceHostTarget {
  * applied, so a host that refuses stops the removal before anything is withdrawn. */
 export interface MarketplaceHostRemoval<Plan> {
   plan(target: MarketplaceHostTarget): Promise<Plan>;
-  apply(plan: Plan): void;
+  apply(plan: Plan): void | Promise<void>;
 }
 
 /** What a catalogue removal asks of a tool's record, the caller's to answer. */
@@ -122,7 +122,7 @@ export class PurgeMarketplacePlugins {
         hostRemoval.plan({ tool: this.tools.aiProfile(toolId), registrations, registration })
       )
     );
-    for (const plan of plans) hostRemoval.apply(plan);
+    for (const plan of plans) await hostRemoval.apply(plan);
   }
 
   private claimsOn(manifest: Manifest, marketplace: string, records: MarketplaceRecords) {

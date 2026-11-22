@@ -3,11 +3,8 @@ import type {
   NativeMarketplaceRegistration,
   NativeMarketplaceSource,
 } from "../../domain/record/native-marketplace-source.js";
+import { marketplaceCatalogProbePath } from "../../domain/source/catalog-probe-path.js";
 import type { MarketplaceCatalogIdentity } from "../../domain/source/marketplace-source-conflict.js";
-import {
-  marketplaceCatalogProbePath,
-  readCatalogIdentity,
-} from "../read-marketplace-catalog-identity.js";
 import { type CatalogRequest, guardAgainstConflict } from "./catalog-source-guard.js";
 import { followsRequestedSource, untouchedReason } from "./marketplace-registration-guard.js";
 import { nativeCatalogProof, proveAddedSource } from "./native-catalog-proof.js";
@@ -90,7 +87,7 @@ async function builtIdentityOf(
   run: RegistrationRun,
   builtDir: string
 ): Promise<MarketplaceCatalogIdentity> {
-  const identity = await readCatalogIdentity(run.fs, run.profile, builtDir);
+  const identity = await run.identities.read(run.profile, builtDir);
   if (identity !== undefined) return identity;
   throw new UnreadableBuiltCatalogError(
     marketplaceCatalogProbePath(run.profile, builtDir) ?? builtDir

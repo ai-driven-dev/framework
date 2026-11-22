@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import { registrationRecordRules } from "../../../src/composition/installation.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-distribution-reader-adapter.js";
-import { NativeHostRegistrationGate } from "../../../src/contexts/host-registration/application/native-host-registration-gate.js";
 import { RefreshHostPlugin } from "../../../src/contexts/host-registration/application/refresh-host-plugin.use-case.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { PluginMaterializer } from "../../../src/contexts/installation/application/plugin/plugin-materializer.js";
@@ -24,6 +23,7 @@ import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { FixturePluginFetcher } from "../../shared/testing/fixture-plugin-fetcher.fake.js";
+import { hostWithdrawal } from "../../shared/testing/host-withdrawal.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
@@ -244,11 +244,7 @@ for (const [toolId, catalogPath] of [
         new InMemoryFileAdapter({}, ["/A", "/B"]),
         user,
         registry,
-        new NativeHostRegistrationGate(
-          new Map([[toolId, activator]]),
-          new Map([[toolId, hostReader]]),
-          sources
-        )
+        hostWithdrawal(new Map([[toolId, activator]]), new Map([[toolId, hostReader]]), sources)
       );
       await expect(
         removeMarketplace.execute({

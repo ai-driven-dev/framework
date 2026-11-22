@@ -1,3 +1,4 @@
+import { RegistrationRefusedError } from "../../domain/host-registration.error.js";
 import { judgeRegistration } from "../../domain/policy/registration-policy.js";
 import { isRefOnHost } from "../../domain/record/host-ref.js";
 import {
@@ -25,7 +26,7 @@ export async function proveClaimedRef(
   const activator = reachableActivator(deps.ports.activators, registrations.binary);
   const reader = deps.ports.pluginRegistries.get(claim.tool);
   if (activator === undefined || reader === undefined) {
-    throw new Error(
+    throw new RegistrationRefusedError(
       `Cannot prove or remove AIDD-owned native ref '${claim.ref}': ${registrations.binary} CLI or host registry is unavailable.`
     );
   }
@@ -43,7 +44,7 @@ export async function proveClaimedRef(
         : undefined,
   });
   if (verdict.outcome === "refuse")
-    throw new Error(refusalMessage(verdict, claim.ref, registrations.binary));
+    throw new RegistrationRefusedError(refusalMessage(verdict, claim.ref, registrations.binary));
   return { activator, ref: claim.ref, scope: onHost?.scope ?? "user" };
 }
 

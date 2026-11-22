@@ -6,14 +6,12 @@ import type {
   InspectHostRegistrationResult,
 } from "../../contract/inspect-host-registration-result.js";
 import { answeredRegistry } from "../../domain/reading/host-registration-answers.js";
+import type { HostMarketplaceSourceCheck } from "../../domain/source/marketplace-source-drift.js";
+import type { CatalogIdentityReader } from "../../ports/catalog-identity-reader.js";
 import type { HostMarketplaceRegistry } from "../../ports/host-marketplace-registry.js";
 import type { HostPluginRegistry } from "../../ports/host-plugin-registry.js";
 import type { CatalogProbeTool } from "../../ports/host-tool.js";
-import {
-  type HostMarketplaceSourceCheck,
-  hostMarketplaceSourceConflict,
-} from "../host-marketplace-source-conflict.js";
-import { readCatalogIdentity } from "../read-marketplace-catalog-identity.js";
+import { hostMarketplaceSourceConflict } from "../check-marketplace-source.use-case.js";
 import { pluginFinding, sourceFinding } from "./host-registration-findings.js";
 
 /** A plugin the host is expected to carry, and the ref to look it up by: `ref` is absent exactly
@@ -46,6 +44,7 @@ export interface InspectHostRegistrationRequest {
  * registry is ever looked up in `marketplaceRegistries`. */
 export interface InspectHostRegistrationDeps {
   readonly fs: FileReader;
+  readonly identities: CatalogIdentityReader;
   /** Host plugin registry readers, one per tool whose own CLI activates plugins. */
   readonly pluginRegistries: ReadonlyMap<AiToolId, HostPluginRegistry>;
   readonly marketplaceRegistries: ReadonlyMap<AiToolId, HostMarketplaceRegistry>;
@@ -119,11 +118,11 @@ export class InspectHostRegistration {
     marketplace: InspectedMarketplace
   ): Promise<HostMarketplaceSourceCheck | undefined> {
     const { command, tool, profile, reader } = scene;
-    const { fs, platform } = this.deps;
-    const requestedIdentity = await readCatalogIdentity(fs, profile, marketplace.builtDir);
+    const { fs, identities, platform } = this.deps;
+    const requestedIdentity = await identities.read(profile, marketplace.builtDir);
     if (requestedIdentity === undefined) return undefined;
     return hostMarketplaceSourceConflict(
-      { fs, tool: profile, reader },
+      { fs, identities, tool: profile, reader },
       {
         requestedSource: marketplace.builtDir,
         requestedIdentity,

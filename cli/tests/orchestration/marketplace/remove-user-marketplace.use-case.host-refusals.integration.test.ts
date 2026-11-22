@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { MarketplaceRegistry } from "../../../src/contexts/distribution/ports/marketplace-registry.js";
-import { NativeHostRegistrationGate } from "../../../src/contexts/host-registration/application/native-host-registration-gate.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { hostRecord } from "../../shared/testing/host-record-reading.builder.js";
+import { hostWithdrawal } from "../../shared/testing/host-withdrawal.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import {
@@ -37,7 +37,7 @@ for (const toolId of [SYNTHETIC_NATIVE_TOOL]) {
         new InMemoryFileAdapter(),
         absent,
         f.registry,
-        new NativeHostRegistrationGate(new Map([[toolId, f.activator]]), new Map())
+        hostWithdrawal(new Map([[toolId, f.activator]]), new Map())
       );
       await expect(useCase.execute(options())).rejects.toThrow(/no user manifest/);
       expect(f.activator.uninstalledPlugins).toEqual([]);
@@ -61,7 +61,7 @@ for (const toolId of [SYNTHETIC_NATIVE_TOOL]) {
 
     it("refuses an unreadable host registry before any host mutation", async () => {
       const f = await fixture(enabled());
-      const unreadable = new NativeHostRegistrationGate(
+      const unreadable = hostWithdrawal(
         new Map([[toolId, f.activator]]),
         new Map([
           [
@@ -164,7 +164,7 @@ for (const toolId of [SYNTHETIC_NATIVE_TOOL]) {
           withExclusiveAccess: (action) => action(),
         },
         registry,
-        new NativeHostRegistrationGate(
+        hostWithdrawal(
           new Map([[toolId, f.activator]]),
           new Map([
             [toolId, { read: async () => ({ location: "/host/registry", refs: enabled() }) }],

@@ -35,7 +35,9 @@ export async function uninstallProjectRef(run: ProjectToolRun, ref: string): Pro
   const reader = deps.ports.pluginRegistries.get(withdrawal.tool.toolId);
   const held = await inspectForeignRefs(deps, run, sourceRegistration.hostName);
   if ("refusal" in held) {
-    deps.logger.warn(`${registrations.binary}: '${ref}' left enabled; ${String(held.refusal)}`);
+    deps.logger.warn(
+      `${registrations.binary}: '${ref}' left enabled; Error: ${held.refusal.detail}`
+    );
     return;
   }
   const order = await resolveUninstallScopeOrder({

@@ -84,4 +84,15 @@ describe("proveAddedSource", () => {
       "claude: catalogue 'aidd' add returned but effective host source could not be proven as '/built/aidd'; no AIDD claim or enablement recorded. Reconcile manually.",
     ]);
   });
+
+  it("returns an effective-list entry only when its root is the built directory and its type local", async () => {
+    const own = { kind: "effective-list" as const, root: DIR, sourceType: "local", source: DIR };
+    const accepted = setup({ sources: new Map([["aidd", own]]) });
+    const otherRoot = setup({ sources: new Map([["aidd", { ...own, root: "/elsewhere" }]]) });
+    const otherType = setup({ sources: new Map([["aidd", { ...own, sourceType: "git" }]]) });
+
+    expect(await proveAddedSource(accepted.run, "aidd", DIR)).toEqual(own);
+    expect(await proveAddedSource(otherRoot.run, "aidd", DIR)).toBeUndefined();
+    expect(await proveAddedSource(otherType.run, "aidd", DIR)).toBeUndefined();
+  });
 });

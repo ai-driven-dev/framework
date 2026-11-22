@@ -2,7 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 import type { WithdrawFromHost } from "../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import type {
   ProveClaimedRefRequest,
+  ProveMarketplaceRemovalRequest,
   ProvenHostRef,
+  ProvenMarketplaceRemoval,
   WithdrawalRequest,
   WithdrawalStepRequest,
   WithdrawPluginRequest,
@@ -26,6 +28,7 @@ class RecordingHost implements Pick<WithdrawFromHost, "execute"> {
   readonly requests: WithdrawalRequest[] = [];
   execute(command: WithdrawPluginRequest): Promise<boolean | undefined>;
   execute(command: ProveClaimedRefRequest): Promise<ProvenHostRef>;
+  execute(command: ProveMarketplaceRemovalRequest): Promise<ProvenMarketplaceRemoval>;
   execute(command: WithdrawalStepRequest): Promise<void>;
   async execute(command: WithdrawalRequest): Promise<unknown> {
     this.requests.push(command);

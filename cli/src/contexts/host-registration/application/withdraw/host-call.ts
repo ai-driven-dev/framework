@@ -5,7 +5,7 @@ import type { HintedMessage } from "../../../../shared/domain/describe-error.js"
 import type { Scope } from "../../../../shared/domain/scope.js";
 import type { RegistrationRecord } from "../../domain/record/registration-record.js";
 import type { HostActions, HostRefusal } from "../../ports/host-actions.js";
-import { bestEffortNativeCall } from "../confirmation.js";
+import { bestEffortNativeCall } from "../confirm-native-call.use-case.js";
 import { type HostRefsVerdict, inspectNativeRefs } from "../native-marketplace-source-proof.js";
 import type {
   ProjectCleanFacts,

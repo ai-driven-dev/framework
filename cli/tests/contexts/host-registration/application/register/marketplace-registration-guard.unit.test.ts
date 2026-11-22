@@ -7,6 +7,7 @@ import type { NativeCatalogProof } from "../../../../../src/contexts/host-regist
 import type { RegistrationRun } from "../../../../../src/contexts/host-registration/application/register/registration-run.js";
 import type { HostMarketplaceRegistryReading } from "../../../../../src/contexts/host-registration/domain/reading/marketplace-registry-reading.js";
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
+import { catalogIdentityReader } from "../../../../../src/contexts/host-registration/infrastructure/marketplace-registry-reader.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
@@ -25,11 +26,13 @@ const CLEAN: NativeCatalogProof = {
 function runWith(registry: HostMarketplaceRegistryReading): RegistrationRun {
   const profile = registeredTools().aiProfileIfAny(TOOL.claude);
   if (profile === null) throw new Error("claude is an AI tool");
+  const fs = new InMemoryFileAdapter({});
   return {
     toolId: TOOL.claude,
     profile,
     activator: new FakeHostActions({ available: true }),
-    fs: new InMemoryFileAdapter({}),
+    fs,
+    identities: catalogIdentityReader(fs),
     hosts: {
       marketplaceRegistries: new Map([[TOOL.claude, new FakeHostMarketplaceRegistry(registry)]]),
       pluginRegistries: new Map(),

@@ -1,57 +1,35 @@
+import { RegistrationRefusedError } from "../domain/host-registration.error.js";
 import { judgeRegistration, type SourceProof } from "../domain/policy/registration-policy.js";
 import type { HostPluginRegistryEntry } from "../domain/reading/plugin-registry-reading.js";
-import { isRefOnHost } from "../domain/record/host-ref.js";
 import type { NativeMarketplaceRegistration } from "../domain/record/native-marketplace-source.js";
 import {
-  type NativeMarketplaceSource,
-  sameNativeMarketplaceSource,
-} from "../domain/record/native-marketplace-source.js";
+  findForeignRef,
+  inspectSourceReading,
+  type NativeMarketplaceSourceInspection,
+} from "../domain/source-proof.js";
 import type { HostMarketplaceSources } from "../ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../ports/host-plugin-registry.js";
 import type { HostRefCounter } from "../ports/host-tool.js";
-
-export interface NativeMarketplaceSourceInspection {
-  readonly status: "absent" | "owned" | "unproven";
-  readonly current?: NativeMarketplaceSource;
-  readonly reason?: string;
-}
 
 export async function inspectHostSource(
   reader: HostMarketplaceSources | undefined,
   projectRoot: string,
   registration: NativeMarketplaceRegistration
 ): Promise<NativeMarketplaceSourceInspection> {
-  const name = registration.hostName;
-  const unproven = (why: string): NativeMarketplaceSourceInspection => ({
-    status: "unproven",
-    reason: `Catalogue '${name}': ${why}; reconcile manually.`,
-  });
-  if (reader === undefined) return unproven("host source reader unavailable");
-  const reading = await reader.read(projectRoot);
-  if (reading.entries === undefined)
-    return unproven(reading.unreadable ?? `host source unreadable at ${reading.location}`);
-  if (!reading.entries.has(name)) return { status: "absent" };
-  const current = reading.entries.get(name);
-  if (current === undefined || current === null) return unproven("current host source is unproven");
-  const why = provenanceDisproof(registration.provenance, current);
-  return why === undefined ? { status: "owned", current } : unproven(why);
-}
-
-/** Why the recorded source does not vouch for the current one, or `undefined` when it does. */
-function provenanceDisproof(
-  provenance: NativeMarketplaceSource | undefined,
-  current: NativeMarketplaceSource
-): string | undefined {
-  if (provenance === undefined) return "legacy claim has no source proof";
-  return sameNativeMarketplaceSource(provenance, current)
-    ? undefined
-    : "current host source differs from AIDD's recorded source";
+  if (reader === undefined)
+    return {
+      status: "unproven",
+      reason: `Catalogue '${registration.hostName}': host source reader unavailable; reconcile manually.`,
+    };
+  return inspectSourceReading(await reader.read(projectRoot), registration);
 }
 
 type HostPluginRefs = ReadonlyMap<string, HostPluginRegistryEntry>;
 
 /** What the host's plugin registry lets a mutation do: its refs, or the refusal naming why not. */
-export type HostRefsVerdict = { readonly refs: HostPluginRefs } | { readonly refusal: Error };
+export type HostRefsVerdict =
+  | { readonly refs: HostPluginRefs }
+  | { readonly refusal: RegistrationRefusedError };
 
 /** A source may be AIDD-owned while the host still carries somebody else's plugin from it. */
 export async function inspectNativeRefs(
@@ -69,15 +47,14 @@ export async function inspectNativeRefs(
   const { hostName, ownedRefs, projectRoot } = claim;
   const read = await readPluginRefs(host.reader, hostName, projectRoot);
   if ("refusal" in read) return read;
-  const foreign = [...read.refs].find(
-    ([ref, entry]) =>
-      (tool?.hostRefInUse(entry.enabled) ?? true) &&
-      isRefOnHost(ref, hostName) &&
-      !ownedRefs.has(ref)
-  )?.[0];
+  const foreign = findForeignRef(read.refs, {
+    hostName,
+    ownedRefs,
+    inUse: (enabled) => tool?.hostRefInUse(enabled) ?? true,
+  });
   if (foreign === undefined) return read;
   return {
-    refusal: new Error(
+    refusal: new RegistrationRefusedError(
       `Catalogue '${hostName}' includes foreign host ref '${foreign}'; no host mutation made.`
     ),
   };
@@ -99,7 +76,9 @@ async function readPluginRefs(
   projectRoot: string
 ): Promise<HostRefsVerdict> {
   const refuse = (why: string): HostRefsVerdict => ({
-    refusal: new Error(`Catalogue '${hostName}': ${why}; no host mutation made.`),
+    refusal: new RegistrationRefusedError(
+      `Catalogue '${hostName}': ${why}; no host mutation made.`
+    ),
   });
   if (reader === undefined) return refuse("host plugin registry reader unavailable");
   const reading = await reader.read(projectRoot);
@@ -114,7 +93,8 @@ export function assertSourceOwned(
   unproven: string
 ): void {
   const verdict = judgeCatalogueWithdrawal(proof);
-  if (verdict.outcome === "refuse") throw new Error(verdict.reconcile ?? unproven);
+  if (verdict.outcome === "refuse")
+    throw new RegistrationRefusedError(verdict.reconcile ?? unproven);
 }
 
 /** A catalogue withdrawal's verdict: the source must be owned and, when named, `unenabledClaim` is a

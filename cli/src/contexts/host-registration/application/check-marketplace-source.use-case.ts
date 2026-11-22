@@ -1,33 +1,17 @@
 import type { FileReader } from "../../../shared/ports/file-reader.js";
-import type {
-  MarketplaceSourceDrift,
-  MarketplaceSourceDriftFound,
-} from "../contract/marketplace-source-drift.js";
+import type { MarketplaceSourceDrift } from "../contract/marketplace-source-drift.js";
 import {
   type MarketplaceCatalogIdentity,
-  type MarketplaceSourceConflict,
   marketplaceSourceConflict,
 } from "../domain/source/marketplace-source-conflict.js";
 import {
+  type HostMarketplaceSourceCheck,
   type MarketplaceSourceDriftContext,
   marketplaceSourceDrift,
 } from "../domain/source/marketplace-source-drift.js";
+import type { CatalogIdentityReader } from "../ports/catalog-identity-reader.js";
 import type { HostMarketplaceRegistry } from "../ports/host-marketplace-registry.js";
 import type { CatalogProbeTool } from "../ports/host-tool.js";
-import { readCatalogIdentity } from "./read-marketplace-catalog-identity.js";
-
-export type HostMarketplaceSourceCheck =
-  | MarketplaceSourceConflict
-  | MarketplaceSourceDriftFound
-  | undefined;
-
-/** `drift` is the one field `MarketplaceSourceConflict` does not have, so its presence alone
- * discriminates. */
-export function isDriftFound(
-  check: HostMarketplaceSourceCheck
-): check is MarketplaceSourceDriftFound {
-  return check !== undefined && "drift" in check;
-}
 
 /** `fs.realpath`, falling back to the path itself when it cannot resolve: a dead registration must
  * not cost every other comparison its answer. */
@@ -50,6 +34,7 @@ async function resolvedOrSelf(fs: FileReader, path: string): Promise<string> {
 export async function hostMarketplaceSourceConflict(
   host: {
     readonly fs: FileReader;
+    readonly identities: CatalogIdentityReader;
     readonly tool: CatalogProbeTool;
     readonly reader: HostMarketplaceRegistry;
   },
@@ -62,7 +47,7 @@ export async function hostMarketplaceSourceConflict(
     readonly driftContext?: MarketplaceSourceDriftContext;
   }
 ): Promise<HostMarketplaceSourceCheck> {
-  const { fs, tool, reader } = host;
+  const { fs, identities, tool, reader } = host;
   const { requestedSource, requestedIdentity, driftContext } = request;
   const reading = await reader.read();
   const registeredSource = reading.entries?.get(requestedIdentity.name);
@@ -79,7 +64,7 @@ export async function hostMarketplaceSourceConflict(
       };
     }
   }
-  const registeredIdentity = await readCatalogIdentity(fs, tool, registeredSource);
+  const registeredIdentity = await identities.read(tool, registeredSource);
   return marketplaceSourceConflict(reading, requestedIdentity.name, {
     requestedSource,
     registeredIdentity,

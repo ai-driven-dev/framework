@@ -5,7 +5,7 @@ import {
   parseBuiltMarketplaceDir,
   parseUserBuiltMarketplaceDir,
 } from "../../domain/source/built-marketplace-location.js";
-import { bestEffortNativeCall, skippedWarning } from "../confirmation.js";
+import { bestEffortNativeCall, skippedWarning } from "../confirm-native-call.use-case.js";
 import { nativeCatalogProof } from "./native-catalog-proof.js";
 import {
   type RegistrationRun,

@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  isDriftFound,
   judgeDrift,
   marketplaceSourceDrift,
 } from "../../../../../src/contexts/host-registration/domain/source/marketplace-source-drift.js";
@@ -177,5 +178,34 @@ describe("judgeDrift", () => {
     { kind: "unmigrated-foreign-project-source", projectRoot: "/other" },
   ] as const)("proceeds on a pre-migration source, $kind", (drift) => {
     expect(judgeDrift(drift)).toStrictEqual({ outcome: "proceed", evidence: drift });
+  });
+});
+
+describe("isDriftFound", () => {
+  const source = { name: "aidd-framework", registeredSource: "/a", requestedSource: "/b" };
+
+  it("is false for no check at all", () => {
+    expect(isDriftFound(undefined)).toBe(false);
+  });
+
+  it("is false for a different-catalog conflict, which carries no drift", () => {
+    expect(
+      isDriftFound({
+        ...source,
+        location: "/registry.json",
+        registeredIdentity: { name: "aidd-framework", pluginNames: ["a"] },
+        requestedIdentity: { name: "aidd-framework", pluginNames: [] },
+      })
+    ).toBe(false);
+  });
+
+  it("is true for a found drift", () => {
+    expect(
+      isDriftFound({
+        ...source,
+        location: "/registry.json",
+        drift: { kind: "unmigrated-project-source" },
+      })
+    ).toBe(true);
   });
 });

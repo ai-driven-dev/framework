@@ -4,13 +4,14 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { WithdrawalClaimsView } from "../../contract/claims-view.js";
+import type { NativeMarketplaceRegistration } from "../../domain/record/native-marketplace-source.js";
 import type {
   RegistrationRecord,
   RegistrationRecordData,
 } from "../../domain/record/registration-record.js";
 import type { HostActions } from "../../ports/host-actions.js";
 import type { HostPorts } from "../../ports/host-ports.js";
-import type { NativeHostTool } from "../../ports/host-tool.js";
+import type { HostedTool, HostRefCounter, NativeHostTool } from "../../ports/host-tool.js";
 
 /** One installed plugin the host may have registered, by aidd's own marketplace alias. */
 export interface WithdrawnPlugin {
@@ -77,6 +78,15 @@ export interface WithdrawalDeps {
   readonly ports: HostPorts;
 }
 
+/** A catalogue proven removable, with the refs this machine claims on it and the scope the host
+ * holds each at, held until the removal acts. */
+export interface ProvenMarketplaceRemoval {
+  readonly hostName: string;
+  readonly activator: HostActions;
+  readonly refs: readonly string[];
+  readonly scopes: ReadonlyMap<string, Scope | undefined>;
+}
+
 /** A host ref proven removable, held until every proof of the batch has passed. */
 export interface ProvenHostRef {
   readonly activator: HostActions;
@@ -114,6 +124,16 @@ export interface ProjectCleanFacts {
 /** Every question a withdrawal answers, told apart by `kind`: the proofs refuse before any host
  * change, the withdrawals act. */
 export type WithdrawalRequest =
+  | {
+      readonly kind: "prove-marketplace-removal";
+      readonly tool: HostedTool & HostRefCounter;
+      readonly registrations: RegistrationRecordData;
+      readonly registration: NativeMarketplaceRegistration;
+      readonly projectRoot: string;
+      /** The refs the caller's own claims hold on the registrations. */
+      readonly claimedRefs: readonly string[];
+    }
+  | { readonly kind: "withdraw-proven-marketplace"; readonly proven: ProvenMarketplaceRemoval }
   | ({ readonly kind: "withdraw-plugin" } & WithdrawFromHostRequest)
   | ({ readonly kind: "prove-project-source" } & ProjectSourceRequest)
   | {
@@ -150,7 +170,11 @@ export type WithdrawalRequest =
 
 export type WithdrawPluginRequest = Extract<WithdrawalRequest, { kind: "withdraw-plugin" }>;
 export type ProveClaimedRefRequest = Extract<WithdrawalRequest, { kind: "prove-claimed-ref" }>;
+export type ProveMarketplaceRemovalRequest = Extract<
+  WithdrawalRequest,
+  { kind: "prove-marketplace-removal" }
+>;
 export type WithdrawalStepRequest = Exclude<
   WithdrawalRequest,
-  WithdrawPluginRequest | ProveClaimedRefRequest
+  WithdrawPluginRequest | ProveClaimedRefRequest | ProveMarketplaceRemovalRequest
 >;

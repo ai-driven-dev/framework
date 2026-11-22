@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  type EnableReadings,
   judgeRegistration,
   type RefreshReadings,
   type RegisterReadings,
@@ -157,4 +158,43 @@ describe("judgeRegistration, withdraw-catalog", () => {
       })
     ).toMatchObject({ reason: "source-not-owned" });
   });
+});
+
+describe("judgeRegistration, enable", () => {
+  const ENABLEABLE: EnableReadings = {
+    intent: "enable",
+    ref: "p@catalog",
+    enabledOnHost: false,
+    claimedByMachine: false,
+    recordedByProject: false,
+    projectClaimStands: true,
+  };
+
+  it("proceeds for a ref the host does not enable, whoever recorded it", () => {
+    expect(judgeRegistration(ENABLEABLE)).toStrictEqual({
+      outcome: "proceed",
+      evidence: ENABLEABLE,
+    });
+    const recorded = { ...ENABLEABLE, recordedByProject: true, claimedByMachine: true };
+    expect(judgeRegistration(recorded)).toMatchObject({ outcome: "proceed" });
+  });
+
+  it.each([
+    ["claimed by the machine", { claimedByMachine: true }, "owned"],
+    ["recorded by this project, its claim standing", { recordedByProject: true }, "owned"],
+    [
+      "recorded by this project, its claim no longer standing",
+      { recordedByProject: true, projectClaimStands: false },
+      "kept",
+    ],
+    ["recorded by nobody", {}, "foreign"],
+  ] satisfies [string, Partial<EnableReadings>, string][])(
+    "skips a ref the host already enables, %s",
+    (_, held, reason) => {
+      expect(judgeRegistration({ ...ENABLEABLE, enabledOnHost: true, ...held })).toStrictEqual({
+        outcome: "skip",
+        reason,
+      });
+    }
+  );
 });

@@ -8,8 +8,8 @@ import { FindMarketplaceToRemove } from "../../contexts/distribution/application
 import { FindUserMarketplace } from "../../contexts/distribution/application/remove/find-user-marketplace.use-case.js";
 import { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.use-case.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
-import { NativeHostRegistrationGate } from "../../contexts/host-registration/application/native-host-registration-gate.js";
 import { RegisterPluginWithHost } from "../../contexts/host-registration/application/register/register-plugin-with-host.use-case.js";
+import { catalogIdentityReader } from "../../contexts/host-registration/infrastructure/marketplace-registry-reader.js";
 import { ListPluginSources } from "../../contexts/installation/application/marketplace/list-plugin-sources.use-case.js";
 import { PurgeMarketplacePlugins } from "../../contexts/installation/application/marketplace/purge-marketplace-plugins.use-case.js";
 import { RemovePluginsFromMarketplace } from "../../contexts/installation/application/marketplace/remove-plugins-from-marketplace.use-case.js";
@@ -91,11 +91,6 @@ export function registerForFlow(
 /** Removing a marketplace from the machine: its user-scope plugins, files and host registrations. */
 function wireUserMarketplaceRemoval(base: Base, inst: Installation) {
   const { tools, fs, userManifestRepo, marketplaceRegistry } = base;
-  const nativeHostRegistrationGate = new NativeHostRegistrationGate(
-    base.nativePluginActivators,
-    base.hostPluginRegistries,
-    base.nativeSources
-  );
   return new RemoveUserMarketplace({
     find: new FindUserMarketplace(marketplaceRegistry),
     purge: new PurgeMarketplacePlugins(
@@ -106,7 +101,7 @@ function wireUserMarketplaceRemoval(base: Base, inst: Installation) {
       tools
     ),
     remove: new RemoveMarketplace(marketplaceRegistry),
-    hostGate: nativeHostRegistrationGate,
+    host: base.withdrawFromHost,
     home: resolveHomeDir(),
     records: inst.registrationRecordRules,
   });
@@ -144,6 +139,7 @@ function nativeActivationOf(
     registerPluginWithHost: new RegisterPluginWithHost(
       {
         fs,
+        identities: catalogIdentityReader(fs),
         activators: base.nativePluginActivators,
         hosts: {
           marketplaceRegistries: base.hostMarketplaceRegistries,

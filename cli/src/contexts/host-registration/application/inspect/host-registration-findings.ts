@@ -7,7 +7,7 @@ import {
 import {
   type HostMarketplaceSourceCheck,
   isDriftFound,
-} from "../host-marketplace-source-conflict.js";
+} from "../../domain/source/marketplace-source-drift.js";
 
 /** What one expected plugin says about the host's registry: nothing when it is there and enabled. */
 export function pluginFinding(

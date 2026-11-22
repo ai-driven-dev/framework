@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
-import {
-  hostMarketplaceSourceConflict,
-  isDriftFound,
-} from "../../../../src/contexts/host-registration/application/host-marketplace-source-conflict.js";
+import { hostMarketplaceSourceConflict } from "../../../../src/contexts/host-registration/application/check-marketplace-source.use-case.js";
+import { isDriftFound } from "../../../../src/contexts/host-registration/domain/source/marketplace-source-drift.js";
+import { catalogIdentityReader } from "../../../../src/contexts/host-registration/infrastructure/marketplace-registry-reader.js";
 import { userBuiltMarketplaceDir } from "../../../../src/shared/domain/layout/aidd-layout.js";
 import {
   errnoError,
@@ -43,7 +42,12 @@ describe("hostMarketplaceSourceConflict - resolving every path through the same 
     });
 
     const check = await hostMarketplaceSourceConflict(
-      { fs, tool: registeredTools().profile(TOOL.claude), reader },
+      {
+        fs,
+        identities: catalogIdentityReader(fs),
+        tool: registeredTools().profile(TOOL.claude),
+        reader,
+      },
       {
         requestedSource,
         requestedIdentity: { name: NAME, pluginNames: [] },
@@ -87,7 +91,12 @@ describe("hostMarketplaceSourceConflict - resolving every path through the same 
     });
 
     const check = await hostMarketplaceSourceConflict(
-      { fs, tool: registeredTools().profile(TOOL.claude), reader },
+      {
+        fs,
+        identities: catalogIdentityReader(fs),
+        tool: registeredTools().profile(TOOL.claude),
+        reader,
+      },
       {
         requestedSource,
         requestedIdentity: { name: NAME, pluginNames: [] },
@@ -125,7 +134,12 @@ describe("hostMarketplaceSourceConflict - without a drift context", () => {
     });
 
     const check = await hostMarketplaceSourceConflict(
-      { fs, tool: registeredTools().profile(TOOL.claude), reader },
+      {
+        fs,
+        identities: catalogIdentityReader(fs),
+        tool: registeredTools().profile(TOOL.claude),
+        reader,
+      },
       {
         requestedSource: "/requested",
         requestedIdentity: {
@@ -143,11 +157,5 @@ describe("hostMarketplaceSourceConflict - without a drift context", () => {
       requestedIdentity: { name: NAME, pluginNames: ["aidd-dev", "aidd-vcs"] },
       location: LOCATION,
     });
-  });
-});
-
-describe("isDriftFound", () => {
-  it("is false for no check at all", () => {
-    expect(isDriftFound(undefined)).toBe(false);
   });
 });

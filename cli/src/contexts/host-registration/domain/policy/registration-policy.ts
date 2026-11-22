@@ -39,8 +39,20 @@ export interface WithdrawCatalogReadings {
   readonly unenabledClaim: string | undefined;
 }
 
+/** What the host and the records hold about one ref a run asks to enable. */
+export interface EnableReadings {
+  readonly intent: "enable";
+  readonly ref: string;
+  readonly enabledOnHost: boolean;
+  readonly claimedByMachine: boolean;
+  readonly recordedByProject: boolean;
+  /** Whether this project's own claim on a ref it recorded still stands. */
+  readonly projectClaimStands: boolean;
+}
+
 export type Readings =
   | RegisterReadings
+  | EnableReadings
   | RefreshReadings
   | WithdrawRefReadings
   | WithdrawCatalogReadings;
@@ -54,6 +66,10 @@ export type Refusal =
   | "no-canonical-source"
   | "claim-not-enabled";
 
+/** Why a ref already enabled on the host is left alone: a claim covers it, this project's
+ * claim was handed on, or somebody else enabled it first. */
+export type EnableSkip = "owned" | "kept" | "foreign";
+
 type Found = { readonly reason: Refusal; readonly reconcile: string | undefined } | undefined;
 
 const found = (reason: Refusal, reconcile: string | undefined): Found => ({ reason, reconcile });
@@ -63,14 +79,28 @@ const found = (reason: Refusal, reconcile: string | undefined): Found => ({ reas
  * readings already made. A refusal names the first proof that failed; `reconcile` is what a
  * person must look at to lift it, never a message.
  */
-export function judgeRegistration<R extends Readings>(readings: R): Verdict<R, Refusal> {
+export function judgeRegistration(
+  readings: EnableReadings
+): Verdict<EnableReadings, never, EnableSkip>;
+export function judgeRegistration<R extends Exclude<Readings, EnableReadings>>(
+  readings: R
+): Verdict<R, Refusal>;
+export function judgeRegistration(readings: Readings): Verdict<Readings, Refusal, EnableSkip> {
+  if (readings.intent === "enable") return judgeEnable(readings);
   const refusal = firstRefusal(readings);
   return refusal === undefined
     ? { outcome: "proceed", evidence: readings }
     : { outcome: "refuse", ...refusal };
 }
 
-function firstRefusal(readings: Readings): Found {
+function judgeEnable(readings: EnableReadings): Verdict<EnableReadings, never, EnableSkip> {
+  if (!readings.enabledOnHost) return { outcome: "proceed", evidence: readings };
+  if (readings.claimedByMachine) return { outcome: "skip", reason: "owned" };
+  if (!readings.recordedByProject) return { outcome: "skip", reason: "foreign" };
+  return { outcome: "skip", reason: readings.projectClaimStands ? "owned" : "kept" };
+}
+
+function firstRefusal(readings: Exclude<Readings, EnableReadings>): Found {
   switch (readings.intent) {
     case "register":
       return registerRefusal(readings);

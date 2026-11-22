@@ -1,6 +1,7 @@
 import type { Scope } from "../../../../shared/domain/scope.js";
+import { type EnableReadings, judgeRegistration } from "../../domain/policy/registration-policy.js";
 import { pluginRefsOf } from "../../domain/record/registration-record.js";
-import { bestEffortNativeCall, skippedWarning } from "../confirmation.js";
+import { bestEffortNativeCall, skippedWarning } from "../confirm-native-call.use-case.js";
 import type { RegisteredMarketplace } from "./registration-outcome.js";
 import { type RegistrationRun, warnRegistration } from "./registration-run.js";
 
@@ -30,8 +31,6 @@ export async function enableRefs(
   return enabledRefs;
 }
 
-type Stance = "enable" | "owned" | "kept" | "foreign";
-
 /** What the host and the records hold about the refs, read once. */
 interface HeldRefs {
   readonly onHost: ReadonlyMap<string, { readonly enabled: boolean }> | undefined;
@@ -47,13 +46,18 @@ async function sortRefs(
 ): Promise<{ toEnable: string[]; alreadyOwned: string[] }> {
   const held = await heldRefs(run);
   if (held === undefined) return { toEnable: refs, alreadyOwned: [] };
-  const sorted: Record<Stance, string[]> = { enable: [], owned: [], kept: [], foreign: [] };
-  for (const ref of refs) sorted[stanceOn(ref, held)].push(ref);
-  for (const ref of sorted.foreign)
-    run.logger.info(
-      `${run.toolId}: '${ref}' was already enabled before this project asked for it — left as it is, and this project's clean will leave it enabled.`
-    );
-  return { toEnable: sorted.enable, alreadyOwned: sorted.owned };
+  const toEnable: string[] = [];
+  const alreadyOwned: string[] = [];
+  for (const ref of refs) {
+    const verdict = judgeRegistration(readingsOf(ref, held));
+    if (verdict.outcome === "proceed") toEnable.push(ref);
+    else if (verdict.reason === "owned") alreadyOwned.push(ref);
+    else if (verdict.reason === "foreign")
+      run.logger.info(
+        `${run.toolId}: '${ref}' was already enabled before this project asked for it — left as it is, and this project's clean will leave it enabled.`
+      );
+  }
+  return { toEnable, alreadyOwned };
 }
 
 /** What the host and the records hold, or nothing when the tool keeps no plugin registry. */
@@ -69,9 +73,13 @@ async function heldRefs(run: RegistrationRun): Promise<HeldRefs | undefined> {
   };
 }
 
-function stanceOn(ref: string, held: HeldRefs): Stance {
-  if (held.onHost?.get(ref)?.enabled !== true) return "enable";
-  if (held.machineClaimed.has(ref)) return "owned";
-  if (held.ownRefs?.includes(ref) !== true) return "foreign";
-  return held.ownClaimStands ? "owned" : "kept";
+function readingsOf(ref: string, held: HeldRefs): EnableReadings {
+  return {
+    intent: "enable",
+    ref,
+    enabledOnHost: held.onHost?.get(ref)?.enabled === true,
+    claimedByMachine: held.machineClaimed.has(ref),
+    recordedByProject: held.ownRefs?.includes(ref) === true,
+    projectClaimStands: held.ownClaimStands,
+  };
 }

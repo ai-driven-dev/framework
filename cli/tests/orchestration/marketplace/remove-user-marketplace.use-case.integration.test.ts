@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import { NativeHostRegistrationGate } from "../../../src/contexts/host-registration/application/native-host-registration-gate.js";
 import type { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import {
   REWRITTEN_BINARY,
   spiedRecordRules,
 } from "../../contexts/installation/testing/spy-record-rules.fake.js";
 import { claimsRecorded } from "../../shared/testing/host-record-reading.builder.js";
+import { hostWithdrawal } from "../../shared/testing/host-withdrawal.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { saying } from "../../shared/testing/saying.builder.js";
 import {
@@ -185,7 +185,7 @@ for (const toolId of [SYNTHETIC_TOOL]) {
         new InMemoryFileAdapter(),
         lockedRepo,
         f.registry,
-        new NativeHostRegistrationGate(new Map([[toolId, f.activator]]), new Map())
+        hostWithdrawal(new Map([[toolId, f.activator]]), new Map())
       );
       await expect(useCase.execute(options())).rejects.toThrow(
         /changed while waiting for the machine lock/

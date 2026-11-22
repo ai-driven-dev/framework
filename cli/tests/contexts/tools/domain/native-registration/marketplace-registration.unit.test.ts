@@ -37,6 +37,16 @@ describe("MarketplaceRegistration", () => {
     expect(enabling.enabledPluginsKey()).toBe("enabledPlugins");
   });
 
+  it("requires native proof only for a tool whose declarative plugin activation asks for it", () => {
+    const proving = new MarketplaceRegistration(
+      { ...settings, declarativePluginActivationRequiresNativeProof: true },
+      activation
+    );
+
+    expect(proving.requiresNativeProof()).toBe(true);
+    expect(new MarketplaceRegistration(settings, activation).requiresNativeProof()).toBe(false);
+  });
+
   it("refuses a registration the tool has no native activation to drive", () => {
     expect(() => new MarketplaceRegistration(settings, null)).toThrow(CapabilityConfigError);
   });
