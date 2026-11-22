@@ -4,7 +4,7 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { hostRecord } from "../../shared/testing/host-record-reading.builder.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   catalogueFilesystem,
   codexSourceAfterAdd,
@@ -49,6 +49,7 @@ describe("native catalogue activation refused until the host source is proven", 
       const fs = foreignCacheFilesystem(CODEX_CATALOGUE);
       const activator = new FakeHostActions({ available: true });
       const sync = syncOfDeclaredPlugin({
+        tools: registeredTools(),
         toolId: codex,
         fs,
         projectRepo,
@@ -121,6 +122,7 @@ describe("native catalogue activation refused until the host source is proven", 
       const activator = new FakeHostActions({ available: true });
       const source: HostMarketplaceSources = { read: async () => reading };
       const sync = syncOfDeclaredPlugin({
+        tools: registeredTools(),
         toolId: copilot,
         fs,
         projectRepo,
@@ -154,6 +156,7 @@ describe("native catalogue activation refused until the host source is proven", 
       }),
     };
     const sync = syncOfDeclaredPlugin({
+      tools: registeredTools(),
       toolId: codex,
       fs,
       projectRepo,
@@ -172,6 +175,7 @@ describe("native catalogue activation refused until the host source is proven", 
     ).toEqual(CODEX_SOURCE);
     const { projectRepo: projectB, registry: registryB } = await codexProject("/B");
     const syncB = syncOfDeclaredPlugin({
+      tools: registeredTools(),
       toolId: codex,
       fs,
       projectRepo: projectB,

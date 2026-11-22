@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { hostPluginProofFixture } from "../testing/source-provenance.builder.js";
 
 const { claude, codex } = TOOL;
+
+const REAL = { tools: registeredTools(), ids: TOOL };
 
 describe("native catalogue source provenance", () => {
   it.each(["project", "user"] as const)(
@@ -11,6 +13,7 @@ describe("native catalogue source provenance", () => {
       const f = await hostPluginProofFixture(
         { location: "/host/plugins.json", refs: new Map() },
         {
+          ...REAL,
           toolId: claude,
           marketplaceScope,
           catalogue: { location: "/host/catalogues.json", unreadable: "permission denied" },
@@ -35,6 +38,7 @@ describe("native catalogue source provenance", () => {
       const f = await hostPluginProofFixture(
         { location: "/host/plugins.json", refs: new Map() },
         {
+          ...REAL,
           toolId: claude,
           marketplaceScope,
           catalogue: {
@@ -67,7 +71,7 @@ describe("native catalogue source provenance", () => {
   it("allows fresh Claude registration when the catalogue registry is explicitly absent", async () => {
     const f = await hostPluginProofFixture(
       { location: "/host/plugins.json", absent: true },
-      { toolId: claude, catalogue: { location: "/host/catalogues.json", absent: true } }
+      { ...REAL, toolId: claude, catalogue: { location: "/host/catalogues.json", absent: true } }
     );
     const result = await f.sync.execute({ projectRoot: "/A" });
     expect(result.errors).toEqual([]);
@@ -97,7 +101,7 @@ describe("native catalogue source provenance", () => {
       reason: "/host/plugins.json",
     },
   ])("refuses fresh Codex activation with $label", async ({ reading, reason }) => {
-    const f = await hostPluginProofFixture(reading);
+    const f = await hostPluginProofFixture(reading, { ...REAL });
     const result = await f.sync.execute({ projectRoot: "/A" });
     expect(result.warnings.join(" ")).toContain("unreadable host plugin registry");
     expect(result.warnings.join(" ")).toContain(reason);
@@ -115,7 +119,10 @@ describe("native catalogue source provenance", () => {
   });
 
   it("accepts an explicitly absent host plugin registry only after proving the newly added source", async () => {
-    const f = await hostPluginProofFixture({ location: "/host/plugins.json", absent: true });
+    const f = await hostPluginProofFixture(
+      { location: "/host/plugins.json", absent: true },
+      { ...REAL }
+    );
     const result = await f.sync.execute({ projectRoot: "/A" });
     expect(result.errors).toEqual([]);
     expect(result.warnings).toEqual([]);
