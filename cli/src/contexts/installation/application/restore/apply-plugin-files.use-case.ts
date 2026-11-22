@@ -79,7 +79,7 @@ export class ApplyPluginFiles {
       await deleteOldFiles(plugin.files, baseDir, this.deps.fs);
     }
     return rematerializePlugin(
-      { dist, tool, plugin, projectRoot, manifest, hooksGuard: { overwriteEdited: force } },
+      { dist, tool, mode, plugin, projectRoot, manifest, hooksGuard: { overwriteEdited: force } },
       { fs: this.deps.fs, built: this.deps.builtDeps }
     );
   }

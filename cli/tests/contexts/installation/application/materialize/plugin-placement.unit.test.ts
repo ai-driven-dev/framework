@@ -12,6 +12,6 @@ describe("placementModeOf", () => {
   });
 
   it("copies the built tree for a tool whose plugins materialize from it", () => {
-    expect(placementModeOf(registeredTools().aiProfile(TOOL.cursor))).toBe("flat");
+    expect(placementModeOf(registeredTools().aiProfile(TOOL.cursor))).toBe("built-tree");
   });
 });

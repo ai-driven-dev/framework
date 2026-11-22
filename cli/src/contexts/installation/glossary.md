@@ -15,7 +15,7 @@ The language of the `installation` context. A name in the code means what this p
 | Restore | Writing again what the manifest says is installed, from the source, after it was deleted or changed | `Restore`, `RestoreToolFiles` |
 | Config artifact | A file of the canonical source a profile consumes to build a tool's config, named by a `ConfigRef` | `ConfigRef`, `configRefsOf` |
 | Drift | A tracked file whose content no longer matches its recorded hash | `DetectPluginDrift` |
-| Materialization | Turning a plugin's canonical content into the files of a tool, in marketplace or flat mode | `placePlugin`, `placementModeOf` |
+| Materialization | Turning a plugin's canonical content into the files of a tool, in marketplace or built-tree mode | `placementModeOf` |
 | Plugin update | Replacing an installed plugin's files with a newer version of its source | `UpdatePlugin`, `ApplyPluginFiles` |
 | Status | What the manifest and the files on disk say about a project, side by side | `ReportStatus` |
 | Distribution loading | The function that brings a plugin source to its distribution, wired from distribution | `LoadDistribution` |

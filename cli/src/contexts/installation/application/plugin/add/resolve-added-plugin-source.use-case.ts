@@ -66,7 +66,7 @@ export class ResolveAddedPluginSource {
       return { isGithubMarketplace: false, distribution: await this.read(source, projectRoot) };
     }
     const isFlat = (toolId: AiToolId): boolean =>
-      placementModeOf(this.tools.aiProfile(toolId)) === "flat";
+      placementModeOf(this.tools.aiProfile(toolId)) === "built-tree";
     const flat = toolIds.filter(isFlat);
     const native = toolIds.filter((toolId) => !isFlat(toolId));
     // Without a catalog entry a github add is refused before it places anything.

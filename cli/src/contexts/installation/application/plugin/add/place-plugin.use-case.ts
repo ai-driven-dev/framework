@@ -15,7 +15,8 @@ import type { Manifest } from "../../../domain/manifest.js";
 import { InstalledPlugin } from "../../../domain/plugins/installed-plugin.js";
 import type { ProjectHooksProvenance } from "../../../domain/plugins/plugin-entry.js";
 import type { InstallRuntimeConfig } from "../../install/config/install-runtime-config.use-case.js";
-import { placementModeOf, placePlugin } from "../../materialize/plugin-placement.js";
+import { placeBuiltTreePlugin } from "../../materialize/place-built-tree-plugin.js";
+import { placementModeOf } from "../../materialize/plugin-placement.js";
 import { registerMarketplacePlugin } from "../../materialize/register-marketplace-plugin.js";
 import type { BuiltMaterializationDeps } from "../../shared/built-materialization-deps.js";
 import { hashOutputFiles } from "../../shared/hash-output-files.js";
@@ -101,21 +102,22 @@ export class PlacePlugin {
     const { command, tool, userScopeDirTaken } = placement;
     const { dist, source, projectRoot, manifest, marketplace } = command;
     const mode = placementModeOf(tool);
-    if (mode === "flat") {
-      const result = await placePlugin(
-        {
-          dist,
-          tool,
-          source,
-          projectRoot,
-          manifest,
-          marketplace,
-          previousMcpEntries: command.previousMcpEntries.get(tool.toolId) ?? new Map(),
-          userScopeDirTaken,
-          previousProjectHooks: command.previousProjectHooks.get(tool.toolId),
-        },
-        { fs: this.deps.fs, built: this.deps.built }
-      );
+    if (mode === "built-tree") {
+      const request = {
+        dist,
+        tool,
+        source,
+        projectRoot,
+        manifest,
+        marketplace,
+        previousMcpEntries: command.previousMcpEntries.get(tool.toolId) ?? new Map(),
+        userScopeDirTaken,
+        previousProjectHooks: command.previousProjectHooks.get(tool.toolId),
+      };
+      const result = await placeBuiltTreePlugin(request, {
+        fs: this.deps.fs,
+        built: this.deps.built,
+      });
       return { ...result, notices: [] };
     }
     const output = this.deps.built.translate.execute({ distribution: dist, tool });

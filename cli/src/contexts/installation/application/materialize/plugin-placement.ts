@@ -1,10 +1,5 @@
-// biome-ignore lint/plugin: hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input
-import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { PluginTranslationMode } from "../../../tools/contract/tool-vocabulary.js";
 import type { PluginPlacement } from "../../ports/tool-sections.js";
-import type { AddPluginRequest, AddPluginResult, PlacementDeps } from "./add-plugin-request.js";
-import { placeBuiltTreePlugin } from "./place-built-tree-plugin.js";
-import { registerMarketplacePlugin } from "./register-marketplace-plugin.js";
 
 /**
  * How a tool takes a plugin: a materializing tool copies the per-target BUILT tree, so installed
@@ -17,15 +12,5 @@ export function placementModeOf(
   if (tool.kind !== "ai") return null;
   const plugins = tool.plugins();
   if (plugins === null) return null;
-  return plugins.materializesFromBuiltTree() ? "flat" : "marketplace";
-}
-
-/** Places one plugin the way its tool takes it. The tool must have a placement mode. */
-export async function placePlugin(
-  request: AddPluginRequest & { tool: AiToolProfile },
-  deps: PlacementDeps
-): Promise<AddPluginResult> {
-  return placementModeOf(request.tool) === "flat"
-    ? placeBuiltTreePlugin(request, deps)
-    : registerMarketplacePlugin(request);
+  return plugins.materializesFromBuiltTree() ? "built-tree" : "marketplace";
 }

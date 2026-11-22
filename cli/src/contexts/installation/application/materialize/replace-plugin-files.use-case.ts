@@ -39,9 +39,10 @@ export class ReplacePluginFiles {
       homedir: this.builtDeps.homedir,
     });
     await deleteOldFiles(plugin.files, baseDir, this.fs);
-    if (placementModeOf(tool) !== null && plugin.marketplace !== undefined) {
+    const mode = placementModeOf(tool);
+    if (mode !== null && plugin.marketplace !== undefined) {
       await rematerializePlugin(
-        { dist, tool, plugin, projectRoot, manifest },
+        { dist, tool, mode, plugin, projectRoot, manifest },
         { fs: this.fs, built: this.builtDeps }
       );
       return;
