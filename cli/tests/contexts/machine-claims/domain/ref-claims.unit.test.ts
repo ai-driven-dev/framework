@@ -65,16 +65,10 @@ describe("mergeRefClaims", () => {
 });
 
 describe("claimsKeeping", () => {
-  it("keeps the claims whose ref passes, by identity", () => {
-    const kept = { ref: "a@catalog" };
-    expect(claimsKeeping([kept, { ref: "b@other" }], (ref) => ref.endsWith("@catalog"))).toEqual([
-      kept,
-    ]);
-    expect(claimsKeeping([kept], () => true)[0]).toBe(kept);
-  });
-
-  it("keeps none when there were none", () => {
-    expect(claimsKeeping(undefined, () => true)).toEqual([]);
+  it("keeps the claims whose ref passes", () => {
+    const kept = { ref: "a@catalog", dependents: [] };
+    const dropped = { ref: "b@other", dependents: [] };
+    expect(claimsKeeping([kept, dropped], (ref) => ref.endsWith("@catalog"))).toEqual([kept]);
   });
 });
 

@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { claimsViewOf } from "../../../src/orchestration/sync/claims-view-of.js";
+import { claimsRecorded } from "../../shared/testing/host-record-reading.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
+const rules = { claimsOf: claimsRecorded };
 const tool = TOOL.copilot;
 const other = TOOL.codex;
 
@@ -22,11 +24,11 @@ describe("the claims a host registration is checked against", () => {
       persistedProject: async () => undefined,
     };
 
-    expect(claimsViewOf(context, tool).recorded).toEqual({
+    expect(claimsViewOf(context, tool, rules).recorded).toEqual({
       binary: "copilot",
       pluginRefs: ["a@catalog"],
     });
-    expect(claimsViewOf(context, other).recorded).toBeUndefined();
+    expect(claimsViewOf(context, other, rules).recorded).toBeUndefined();
   });
 
   it("reads the machine record only when asked, and says whether one is kept", async () => {
@@ -41,7 +43,7 @@ describe("the claims a host registration is checked against", () => {
       persistedProject: async () => undefined,
     };
 
-    const view = claimsViewOf(context, tool);
+    const view = claimsViewOf(context, tool, rules);
 
     expect(reads).toBe(0);
     expect(view.machineKept).toBe(true);
@@ -57,7 +59,8 @@ describe("the claims a host registration is checked against", () => {
         machineKept: false,
         persistedProject: async () => undefined,
       },
-      tool
+      tool,
+      rules
     );
 
     expect(view.machineKept).toBe(false);
@@ -72,9 +75,31 @@ describe("the claims a host registration is checked against", () => {
         machineKept: false,
         persistedProject: async () => manifestWith(["saved@catalog"]),
       },
-      tool
+      tool,
+      rules
     );
 
     expect((await view.persistedProject())?.pluginRefs).toEqual(["saved@catalog"]);
+  });
+
+  it("refuses a machine claim that keeps no dependents", async () => {
+    const machine = Manifest.create();
+    machine.addTool(tool, "test", []);
+    machine.setNativeRegistrations(tool, {
+      binary: "copilot",
+      pluginClaims: [{ ref: "a@catalog" }],
+    });
+    const view = claimsViewOf(
+      {
+        manifest: manifestWith([]),
+        machineManifest: async () => machine,
+        machineKept: true,
+        persistedProject: async () => undefined,
+      },
+      tool,
+      rules
+    );
+
+    await expect(view.machine()).rejects.toThrow("expected a ref and its dependents");
   });
 });

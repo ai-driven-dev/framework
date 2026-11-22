@@ -29,10 +29,10 @@ export interface RecordClaimRules {
    * it did not write. */
   readonly dependentsOf: (plugin: { readonly machineClaim?: unknown }) => readonly string[];
   /** The claims on the refs sitting on the host name the alias was registered under. */
-  readonly claimsOnMarketplace: <Claim extends { readonly ref: string }>(
-    record: ClaimedRecordView<Claim>,
+  readonly claimsOnMarketplace: (
+    record: ClaimedRecordView,
     alias: string
-  ) => readonly Claim[];
+  ) => readonly DependentClaimView[];
   /** The record without a marketplace, nor any ref or claim on the host name it was registered
    * under, its claims list always written. */
   readonly withoutMarketplace: <R extends ClaimedRecordView>(
@@ -41,7 +41,7 @@ export interface RecordClaimRules {
   ) => R & { readonly pluginClaims: readonly { readonly ref: string }[] };
   /** A machine's record with the claims of one run merged in, and whether that changed it. */
   readonly mergeCatalogueClaims: (
-    existing: ClaimedRecordView<DependentClaimView> | undefined,
+    existing: ClaimedRecordView | undefined,
     claimed: CatalogueClaimsView,
     fallbackBinary: string
   ) => {

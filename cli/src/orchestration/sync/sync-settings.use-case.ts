@@ -3,6 +3,7 @@ import type { LoadSyncContext } from "../../contexts/installation/application/sy
 import type { RecordActivation } from "../../contexts/installation/application/sync/record-activation.use-case.js";
 import type { SharedFrameworkSource } from "../../contexts/machine-claims/application/shared-source/shared-framework-source.use-case.js";
 import type { MachineClaimsRecording } from "../../contexts/machine-claims/contract/machine-claims-recording.js";
+import type { RecordClaimRules } from "../../contexts/machine-claims/contract/record-claim-rules.js";
 import type { Scope } from "../../shared/domain/scope.js";
 import type { SyncSettingsRequest, SyncSettingsResult } from "../domain/sync-settings.model.js";
 import type { ActivateNativeTools } from "./activate-native-tools.use-case.js";
@@ -33,7 +34,8 @@ export interface SyncSettingsDeps {
   readonly recordActivation: RecordActivation;
   readonly machineClaims: MachineClaimsRecording;
   readonly sharedSource: SharedFrameworkSource;
-  readonly records: Pick<RegistrationRecordRules, "afterActivation">;
+  readonly records: Pick<RegistrationRecordRules, "afterActivation"> &
+    Pick<RecordClaimRules, "claimsOf">;
 }
 
 function resultOf(activation: ActivationRecording["activation"]): SyncSettingsResult {
@@ -97,7 +99,7 @@ export class SyncSettings {
     return this.deps.activateNativeTools.execute({
       projectRoot: options.projectRoot,
       context,
-      claims: (toolId) => claimsViewOf(context, toolId),
+      claims: (toolId) => claimsViewOf(context, toolId, this.deps.records),
       scope,
       enablePlugins: options.enablePlugins ?? [],
     });
@@ -144,19 +146,18 @@ export class SyncSettings {
 
   private async recordMachineClaims(run: ActivationRecording): Promise<void> {
     const { options, scope, context, activation } = run;
-    const { projectRoot } = options;
     const { manifest, marketplaces } = context;
     await this.deps.machineClaims.execute({
       project: manifest,
       outcomes: activation.outcomes,
       marketplaces,
       scope,
-      projectRoot: scope === "project" ? projectRoot : undefined,
+      projectRoot: scope === "project" ? options.projectRoot : undefined,
     });
     if (options.recreateFrameworkIfMissing === true && scope === "project") {
       await this.deps.sharedSource.execute({
         kind: "purge-stale-project-cache",
-        projectRoot,
+        projectRoot: options.projectRoot,
         marketplaces,
         activation,
       });

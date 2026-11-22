@@ -64,10 +64,10 @@ function holdRef(entries: OpenClaim[], ref: string, dependent: string | undefine
   return true;
 }
 
-/** The claims whose ref is kept, by identity, none when there were none. */
-export function claimsKeeping<Claim extends { readonly ref: string }>(
-  claims: readonly Claim[] | undefined,
+/** The claims whose ref is kept. */
+export function claimsKeeping(
+  claims: readonly HeldRefClaim[],
   keep: (ref: string) => boolean
-): Claim[] {
-  return (claims ?? []).filter((claim) => keep(claim.ref));
+): HeldRefClaim[] {
+  return claims.filter((claim) => keep(claim.ref));
 }
