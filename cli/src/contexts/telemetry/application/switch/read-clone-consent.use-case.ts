@@ -14,16 +14,20 @@ export type CloneConsent =
     };
 
 /** The clone a directory is in, and what its git config says about measuring it. */
-export async function readCloneConsent(
-  locator: RepositoryLocator,
-  consents: ConsentSource,
-  cwd: string
-): Promise<CloneConsent> {
-  const located = await locator.locate(cwd);
-  if (located.status === "unreadable")
-    return { status: "refused", reason: "unreadable-git-config" };
-  if (located.status !== "repository") return { status: "refused", reason: "outside-repository" };
-  const reading = await consents.read(located.root);
-  if (reading.kind === "unreadable") return { status: "refused", reason: "unreadable-git-config" };
-  return { status: "read", located, value: reading.value };
+export class ReadCloneConsent {
+  constructor(
+    private readonly locator: RepositoryLocator,
+    private readonly consents: ConsentSource
+  ) {}
+
+  async execute(cwd: string): Promise<CloneConsent> {
+    const located = await this.locator.locate(cwd);
+    if (located.status === "unreadable")
+      return { status: "refused", reason: "unreadable-git-config" };
+    if (located.status !== "repository") return { status: "refused", reason: "outside-repository" };
+    const reading = await this.consents.read(located.root);
+    if (reading.kind === "unreadable")
+      return { status: "refused", reason: "unreadable-git-config" };
+    return { status: "read", located, value: reading.value };
+  }
 }

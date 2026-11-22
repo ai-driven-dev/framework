@@ -27,6 +27,7 @@ import { CheckTelemetryOn } from "../contexts/telemetry/application/switch/check
 import { DisableTelemetry } from "../contexts/telemetry/application/switch/disable-telemetry.use-case.js";
 import { EnableTelemetry } from "../contexts/telemetry/application/switch/enable-telemetry.use-case.js";
 import { GrantConsent } from "../contexts/telemetry/application/switch/grant-consent.use-case.js";
+import { ReadCloneConsent } from "../contexts/telemetry/application/switch/read-clone-consent.use-case.js";
 import { ReadTranscriptRetention } from "../contexts/telemetry/application/switch/read-transcript-retention.use-case.js";
 import { RememberOwnRoot } from "../contexts/telemetry/application/switch/remember-own-root.use-case.js";
 import { WithdrawConsent } from "../contexts/telemetry/application/switch/withdraw-consent.use-case.js";
@@ -276,13 +277,13 @@ function forgetTelemetryOf(stores: Stores, git: Git, homedir: () => string) {
 function wireConsent(stores: Stores, git: Git, homedir: () => string) {
   const { locator, consents } = git;
   const { ledger, resolutionStore, consentHistory } = stores;
+  const cloneConsent = new ReadCloneConsent(locator, consents);
   return {
     readTranscriptRetention: new ReadTranscriptRetention(
       new ClaudeSettingsAdapter(claudeConfigDir(process.env.CLAUDE_CONFIG_DIR, homedir()))
     ),
     enableTelemetry: new EnableTelemetry({
-      locator,
-      consents,
+      cloneConsent,
       grant: new GrantConsent({
         consents,
         writer: consents,
@@ -297,8 +298,7 @@ function wireConsent(stores: Stores, git: Git, homedir: () => string) {
       identities: stores.identity,
     }),
     disableTelemetry: new DisableTelemetry(
-      locator,
-      consents,
+      cloneConsent,
       new WithdrawConsent({
         writer: consents,
         history: consentHistory,

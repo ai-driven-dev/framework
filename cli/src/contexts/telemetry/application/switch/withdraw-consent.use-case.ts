@@ -5,7 +5,7 @@ import { CONSENT_WITHDRAWN } from "../../domain/telemetry-consent.js";
 import type { ConsentHistory } from "../../ports/consent-history.js";
 import type { ConsentWriter } from "../../ports/switch/consent-writer.js";
 import type { UsageLedger } from "../../ports/usage-ledger.js";
-import type { Located } from "./clone-consent.js";
+import type { Located } from "./read-clone-consent.use-case.js";
 
 export interface WithdrawConsentRequest {
   readonly located: Located;

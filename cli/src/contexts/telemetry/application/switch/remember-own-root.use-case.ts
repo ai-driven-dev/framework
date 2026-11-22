@@ -4,7 +4,7 @@ import { cwdKey } from "../../domain/repository-resolution.js";
 import type { ResolutionStore } from "../../ports/resolution-store.js";
 import type { UsageLedger } from "../../ports/usage-ledger.js";
 import type { ResolutionEnvironment } from "../resolution-run.js";
-import type { Located } from "./clone-consent.js";
+import type { Located } from "./read-clone-consent.use-case.js";
 
 /** Remembers the root `on` ran in, seen alive in its clone, so a declaration made there is
  * known to belong to a repository `forget` can find, though no session ever ran there. A

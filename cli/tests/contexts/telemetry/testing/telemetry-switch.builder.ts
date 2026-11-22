@@ -1,6 +1,7 @@
 import { DisableTelemetry } from "../../../../src/contexts/telemetry/application/switch/disable-telemetry.use-case.js";
 import { EnableTelemetry } from "../../../../src/contexts/telemetry/application/switch/enable-telemetry.use-case.js";
 import { GrantConsent } from "../../../../src/contexts/telemetry/application/switch/grant-consent.use-case.js";
+import { ReadCloneConsent } from "../../../../src/contexts/telemetry/application/switch/read-clone-consent.use-case.js";
 import { RememberOwnRoot } from "../../../../src/contexts/telemetry/application/switch/remember-own-root.use-case.js";
 import { WithdrawConsent } from "../../../../src/contexts/telemetry/application/switch/withdraw-consent.use-case.js";
 import type { RepositoryResolution } from "../../../../src/contexts/telemetry/domain/repository-resolution.js";
@@ -71,9 +72,9 @@ export function setup() {
     }),
   });
   const withdraw = new WithdrawConsent({ writer, history, ledger, now: () => clock.now });
+  const cloneConsent = new ReadCloneConsent(locator, consents);
   const on = new EnableTelemetry({
-    locator,
-    consents,
+    cloneConsent,
     grant,
     roots: new RememberOwnRoot(ledger, resolutions, {
       caseInsensitiveFileSystem: false,
@@ -81,7 +82,7 @@ export function setup() {
     }),
     identities,
   });
-  const off = new DisableTelemetry(locator, consents, withdraw);
+  const off = new DisableTelemetry(cloneConsent, withdraw);
   locator.directories.set("/w/repo", repository("/w/repo", "/w/main"));
   return {
     on,
