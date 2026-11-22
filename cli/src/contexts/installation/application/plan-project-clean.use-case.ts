@@ -5,7 +5,24 @@ import type { NativeRegistrations } from "../domain/manifest/native-registration
 import type { Manifest } from "../domain/manifest.js";
 import type { InstalledPlugin } from "../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
-import type { ProjectRegistrationWithdrawal, RegistrationPreview } from "../ports/native-host.js";
+import type { NativeHostTool } from "../ports/tool-sections.js";
+
+/** What a clean announces of one tool's recorded registration. */
+export interface RegistrationPreview {
+  readonly binary: string;
+  readonly marketplaceCount: number;
+  readonly pluginRefCount: number;
+  readonly cachePaths: readonly string[];
+}
+
+/** A tool's recorded registration the project clean withdraws from its host. */
+export interface ProjectRegistrationWithdrawal {
+  readonly tool: NativeHostTool;
+  readonly registrations: NativeRegistrations;
+  readonly cacheRoot: string | undefined;
+  /** The scope the manifest recorded for each plugin ref, by ref. */
+  readonly refScopes: ReadonlyMap<string, Scope>;
+}
 
 /** What a clean plan asks of the host registration about each record the project kept. */
 export interface ProjectCleanRecords {

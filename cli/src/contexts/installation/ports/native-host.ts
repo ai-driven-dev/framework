@@ -1,17 +1,7 @@
-import type { Scope } from "../../../shared/domain/scope.js";
 import type {
   NativePluginClaim,
   NativeRegistrations,
 } from "../domain/manifest/native-registrations.js";
-import type { NativeHostTool } from "./tool-sections.js";
-
-/** What a clean announces of one tool's recorded registration. */
-export interface RegistrationPreview {
-  readonly binary: string;
-  readonly marketplaceCount: number;
-  readonly pluginRefCount: number;
-  readonly cachePaths: readonly string[];
-}
 
 /** A claim the manifest keeps on a ref: only the ref is the host's business. */
 interface RecordedClaim {
@@ -77,7 +67,12 @@ export interface RegistrationRecordRules {
   readonly registrationPreview: (
     record: NativeRegistrations,
     cacheRoot: string | undefined
-  ) => RegistrationPreview;
+  ) => {
+    readonly binary: string;
+    readonly marketplaceCount: number;
+    readonly pluginRefCount: number;
+    readonly cachePaths: readonly string[];
+  };
   /** The record without one ref, every other entry untouched. */
   readonly withoutRef: <R extends NativeRegistrations>(record: R, ref: string) => R;
   /** The record without a ref and the claim the manifest keeps on it, claims list always written. */
@@ -96,29 +91,6 @@ export interface RegistrationRecordRules {
     claimed: CatalogueClaims,
     fallbackBinary: string
   ) => MergedClaims;
-}
-
-/** The path under `cacheRoot` when it stays inside it, else `null`. */
-export type CacheCandidateResolver = (
-  cacheRoot: string,
-  relativeSegments: string,
-  label: string
-) => Promise<string | null>;
-
-interface RegisteredTool {
-  readonly tool: NativeHostTool;
-  readonly registrations: NativeRegistrations;
-  readonly cacheRoot: string | undefined;
-}
-
-export interface ProjectRegistrationWithdrawal extends RegisteredTool {
-  /** The scope the manifest recorded for each plugin ref, by ref. */
-  readonly refScopes: ReadonlyMap<string, Scope>;
-}
-
-export interface UserRegistrationWithdrawal extends RegisteredTool {
-  /** The refs a machine claim owns for this tool. */
-  readonly claimedRefs: readonly string[];
 }
 
 /** A marketplace the host registered: the manifest reads the two names and keeps the rest. */

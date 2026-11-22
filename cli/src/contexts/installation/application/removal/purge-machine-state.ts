@@ -6,8 +6,14 @@ import { isErrnoException } from "../../../../shared/domain/reading/json-file.js
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import type { CacheCandidateResolver } from "../../ports/native-host.js";
 import type { MachineStatePurge } from "../../ports/user-scope-purge.js";
+
+/** The path under `cacheRoot` when it stays inside it, else `null`. */
+export type CacheCandidateResolver = (
+  cacheRoot: string,
+  relativeSegments: string,
+  label: string
+) => Promise<string | null>;
 
 /** What a machine-scope purge asks of the machine, answered where each one lives. */
 export interface MachineStateGuards {

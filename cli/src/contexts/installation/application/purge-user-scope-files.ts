@@ -5,10 +5,10 @@ import { ActiveMachineDependentsError } from "../domain/installation.error.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { InstalledPlugin } from "../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
-import type { UserRegistrationWithdrawal } from "../ports/native-host.js";
 import type { UserScopePluginFileRemoval } from "../ports/user-scope-plugin-files.js";
 import type {
   MachineStatePurge,
+  UserRegistrationWithdrawal,
   UserScopeInspection,
   UserScopePurge,
 } from "../ports/user-scope-purge.js";
