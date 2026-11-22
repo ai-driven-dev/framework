@@ -6,9 +6,7 @@
 
 import {
   type FlatArtifactLayout,
-  flatAgentFilePath,
   flatArtifactLayout,
-  flatSkillPath,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
 import type { AgentMarkdown, ToolBuildContract } from "../../../contract/build-contract.js";
 import { mergeAdditiveMcp } from "../../formats/additive-mcp-merge.js";
@@ -56,13 +54,13 @@ export function buildClaudeFlatContract(hooks: FlatHooks): ToolBuildContract {
       skills: {
         supported: true,
         source: { kind: "fullTree", srcDir: "skills" },
-        path: (plugin, rel) => flatSkillPath(CLAUDE_FLAT_LAYOUT, plugin, rel),
+        layout: CLAUDE_FLAT_LAYOUT,
         rewriteSkillName: true,
       },
       agents: {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        path: (plugin, rel) => flatAgentFilePath(CLAUDE_FLAT_LAYOUT, plugin, rel),
+        layout: CLAUDE_FLAT_LAYOUT,
         agentMarkdown: claudeFlatAgentMarkdown,
       },
       mcp: {

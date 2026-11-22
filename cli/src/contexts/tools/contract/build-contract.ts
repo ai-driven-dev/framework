@@ -1,4 +1,5 @@
 import type { ConfigAsset, SchemaName } from "../../../shared/domain/config-asset.js";
+import type { FlatArtifactLayout } from "../../../shared/domain/materialization/flat-paths.js";
 
 /** All a marketplace builder reads of the output tree. */
 export interface BuildFileReader {
@@ -49,7 +50,10 @@ export type ArtifactContract =
   | {
       readonly supported: true;
       readonly source: ArtifactSource;
-      readonly path: (plugin: string, relPath: string) => string;
+      /** Where a file lands. Absent for a skills or agents artifact that declares `layout`. */
+      readonly path?: (plugin: string, relPath: string) => string;
+      /** A flat skills or agents artifact's placement, as data the engine reads. */
+      readonly layout?: FlatArtifactLayout;
       /** An agent's markdown, as the tool keeps it. Wins over `transform` for an agent. */
       readonly agentMarkdown?: AgentMarkdown;
       /** A skill entry's frontmatter, as the tool keeps it: absent, the entry is a byte-copy. */

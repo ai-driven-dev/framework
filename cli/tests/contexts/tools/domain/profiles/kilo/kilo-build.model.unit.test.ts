@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { artifactPath } from "../../../../../../src/contexts/tools/contract/artifact-path.js";
 import type {
   ConfigArtifact,
   ConfigArtifactFile,
@@ -34,17 +35,19 @@ function emit(input: {
 describe("buildKiloFlatContract", () => {
   it("places agents, skills, hook scripts and its generated bridge under .kilo", () => {
     const { artifacts } = present(kilo.buildContracts.flat)();
-    expect(supported(artifacts.agents).path("aidd-dev", "agents/reviewer.md")).toBe(
+    expect(artifactPath(supported(artifacts.agents), "aidd-dev", "agents/reviewer.md")).toBe(
       ".kilo/agents/aidd-dev-reviewer.md"
     );
-    expect(supported(artifacts.skills).path("aidd-dev", "skills/01-plan/SKILL.md")).toBe(
+    expect(artifactPath(supported(artifacts.skills), "aidd-dev", "skills/01-plan/SKILL.md")).toBe(
       ".kilo/skills/aidd-dev/01-plan/SKILL.md"
     );
     const hooks = supported(artifacts.hooks);
-    expect(hooks.path("aidd-context", "hooks/update_memory.js")).toBe(
+    expect(artifactPath(hooks, "aidd-context", "hooks/update_memory.js")).toBe(
       ".kilo/hooks/aidd-context/update_memory.js"
     );
-    expect(hooks.path("aidd-context", "hooks/kilo-plugin.js")).toBe(".kilo/plugin/aidd-context.js");
+    expect(artifactPath(hooks, "aidd-context", "hooks/kilo-plugin.js")).toBe(
+      ".kilo/plugin/aidd-context.js"
+    );
     expect(hooks.hooksBridge?.path("aidd-context")).toBe(".kilo/plugin/aidd-context-hooks.js");
   });
 

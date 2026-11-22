@@ -1,4 +1,5 @@
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
+import { artifactPath } from "../../../tools/contract/artifact-path.js";
 import type {
   SupportedArtifact,
   ToolBuildContract,
@@ -54,7 +55,7 @@ function flatAgents(
 function flatHooks(canon: PluginDistribution, artifact: SupportedArtifact): ComponentPlan[] {
   const plugin = canon.manifest.name;
   return flatHookPlans(canon, {
-    place: (relativePath) => artifact.path(plugin, relativePath),
+    place: (relativePath) => artifactPath(artifact, plugin, relativePath),
     script: (relativePath, content) => artifact.script?.(relativePath, content) ?? content,
     bridge: artifact.skipHooksJson ? (artifact.hooksBridge ?? null) : null,
     bridgeFirst: true,
@@ -69,7 +70,7 @@ function flatSkills(
 ): ComponentPlan[] {
   const plugin = canon.manifest.name;
   return canon.components.skills.map(({ relativePath, content }) => {
-    const path = artifact.path(plugin, relativePath);
+    const path = artifactPath(artifact, plugin, relativePath);
     if (!relativePath.endsWith(".md")) return { source: relativePath, path, content };
     return {
       source: relativePath,

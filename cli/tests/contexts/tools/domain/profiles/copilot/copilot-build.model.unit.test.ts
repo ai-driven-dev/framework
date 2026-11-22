@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { artifactPath } from "../../../../../../src/contexts/tools/contract/artifact-path.js";
 import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/copilot.profile.js";
 import { parseFrontmatter } from "../../../../../../src/shared/domain/markdown.js";
 import { builtAgent } from "../../../../../shared/testing/built-agent.builder.js";
@@ -144,8 +145,8 @@ describe("present(copilot.buildContracts.flat)()", () => {
     const hooks = supported(present(copilot.buildContracts.flat)().artifacts.hooks);
 
     expect({
-      declaration: hooks.path("aidd-dev", "hooks/aidd-dev.hooks.json"),
-      script: hooks.path("aidd-dev", "hooks/journal.cjs"),
+      declaration: artifactPath(hooks, "aidd-dev", "hooks/aidd-dev.hooks.json"),
+      script: artifactPath(hooks, "aidd-dev", "hooks/journal.cjs"),
     }).toStrictEqual({
       declaration: ".github/hooks/aidd-dev.hooks.json",
       script: ".github/hooks/aidd-dev/journal.cjs",
@@ -180,7 +181,7 @@ describe("present(copilot.buildContracts.flat)()", () => {
     const mcp = supported(present(copilot.buildContracts.flat)().artifacts.mcp);
 
     expect({
-      path: mcp.path("aidd-dev", ".mcp.json"),
+      path: artifactPath(mcp, "aidd-dev", ".mcp.json"),
       mcpServersKey: mcp.mcpServersKey,
       mergeDest: mcp.mergeDest?.("/out"),
       merged: mcp.merge?.(null, { "aidd-dev-context": { command: "node" } }, false),
@@ -199,19 +200,19 @@ describe("present(copilot.buildContracts.flat)()", () => {
   it("renames a skill folder after its plugin, only for a path that starts with skills/", () => {
     const skills = supported(present(copilot.buildContracts.flat)().artifacts.skills);
 
-    expect(skills.path("aidd-dev", "skills/01-plan/SKILL.md")).toBe(
+    expect(artifactPath(skills, "aidd-dev", "skills/01-plan/SKILL.md")).toBe(
       ".github/skills/aidd-dev-01-plan/SKILL.md"
     );
-    expect(skills.path("aidd-dev", "docs/skills/x.md")).toBe(
+    expect(artifactPath(skills, "aidd-dev", "docs/skills/x.md")).toBe(
       ".github/skills/aidd-dev-docs/skills/x.md"
     );
     expect(skills.rewriteSkillName).toBe(true);
   });
 
   it("names a flat agent from its path, dropping agents/ only at the start", () => {
-    const { path } = supported(present(copilot.buildContracts.flat)().artifacts.agents);
+    const agents = supported(present(copilot.buildContracts.flat)().artifacts.agents);
 
-    expect(path("aidd-dev", "docs/agents/x.md")).toBe(
+    expect(artifactPath(agents, "aidd-dev", "docs/agents/x.md")).toBe(
       ".github/agents/aidd-dev-docs/agents/x.agent.md"
     );
   });

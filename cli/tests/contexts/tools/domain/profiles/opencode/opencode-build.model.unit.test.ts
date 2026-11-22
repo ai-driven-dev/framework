@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { artifactPath } from "../../../../../../src/contexts/tools/contract/artifact-path.js";
 import type {
   ConfigArtifact,
   ConfigArtifactFile,
@@ -157,8 +158,8 @@ describe("present(opencode.buildContracts.flat)()", () => {
     const hooks = supported(present(opencode.buildContracts.flat)().artifacts.hooks);
 
     expect({
-      loaderEntry: hooks.path("aidd-dev", "hooks/opencode-plugin.js"),
-      script: hooks.path("aidd-dev", "hooks/journal.cjs"),
+      loaderEntry: artifactPath(hooks, "aidd-dev", "hooks/opencode-plugin.js"),
+      script: artifactPath(hooks, "aidd-dev", "hooks/journal.cjs"),
       skipHooksJson: hooks.skipHooksJson,
       bridgePath: hooks.hooksBridge?.path("aidd-dev"),
       skipIfSourceHas: hooks.hooksBridge?.skipIfSourceHas,
@@ -220,7 +221,8 @@ describe("present(opencode.buildContracts.flat)()", () => {
 });
 
 describe("opencode flat hooks path", () => {
-  const path = supported(present(opencode.buildContracts.flat)().artifacts.hooks).path;
+  const hooks = supported(present(opencode.buildContracts.flat)().artifacts.hooks);
+  const path = (plugin: string, rel: string) => artifactPath(hooks, plugin, rel);
 
   it("namespaces a plain hook script under .opencode/hooks/<plugin>/", () => {
     expect(path("aidd-context", "hooks/update_memory.js")).toBe(

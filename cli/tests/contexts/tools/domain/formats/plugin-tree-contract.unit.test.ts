@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { artifactPath } from "../../../../../src/contexts/tools/contract/artifact-path.js";
 import { pluginTreeContract } from "../../../../../src/contexts/tools/domain/formats/plugin-tree-contract.js";
 import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
 import { present } from "../../../../shared/testing/present.builder.js";
@@ -28,9 +29,9 @@ describe("pluginTreeContract", () => {
 
   it("keeps skills and agents where the plugin has them, and MCP at its root", () => {
     expect({
-      skill: supported(contract.artifacts.skills).path("p", "skills/a/SKILL.md"),
-      agent: supported(contract.artifacts.agents).path("p", "agents/a.md"),
-      mcp: supported(contract.artifacts.mcp).path("p", ".mcp.json"),
+      skill: artifactPath(supported(contract.artifacts.skills), "p", "skills/a/SKILL.md"),
+      agent: artifactPath(supported(contract.artifacts.agents), "p", "agents/a.md"),
+      mcp: artifactPath(supported(contract.artifacts.mcp), "p", ".mcp.json"),
     }).toStrictEqual({
       skill: "skills/a/SKILL.md",
       agent: "agents/a.md",

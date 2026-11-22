@@ -1,4 +1,5 @@
 import { basename } from "node:path";
+import { artifactPath } from "../../tools/contract/artifact-path.js";
 import type {
   FlatHooksBridge,
   SupportedArtifact,
@@ -43,7 +44,7 @@ export function flatAgentPath(
   pluginName: string,
   agentFile: string
 ): string {
-  return artifact.path(pluginName, `agents/${basename(agentFile)}`);
+  return artifactPath(artifact, pluginName, `agents/${basename(agentFile)}`);
 }
 
 /** Where a path inside a plugin lands in the flat layout: agents, skills and hooks move, anything
@@ -58,10 +59,10 @@ export function flatPathOfPluginSuffix(
     return flatAgentPath(art.agents, pluginName, suffix);
   }
   if (suffix.startsWith("skills/") && art.skills.supported) {
-    return art.skills.path(pluginName, suffix);
+    return artifactPath(art.skills, pluginName, suffix);
   }
   if (suffix.startsWith("hooks/") && art.hooks.supported) {
-    return art.hooks.path(pluginName, suffix);
+    return artifactPath(art.hooks, pluginName, suffix);
   }
   return suffix;
 }

@@ -2,6 +2,7 @@ import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createPluginTranslation } from "../../../../../src/composition/translate.js";
+import { artifactPath } from "../../../../../src/contexts/tools/contract/artifact-path.js";
 import {
   type PluginComponentFile,
   PluginDistribution,
@@ -50,7 +51,9 @@ function builtTreeSkillPaths(dist: PluginDistribution): string[] {
   if (contract === null) throw new Error("opencode declares no flat build contract");
   const skillsArtifact = contract.artifacts.skills;
   if (!skillsArtifact.supported) throw new Error("opencode flat skills artifact unsupported");
-  return dist.components.skills.map((f) => skillsArtifact.path(PLUGIN_NAME, f.relativePath)).sort();
+  return dist.components.skills
+    .map((f) => artifactPath(skillsArtifact, PLUGIN_NAME, f.relativePath))
+    .sort();
 }
 
 describe("opencode flat skills - built-tree route agrees with mode-B install route", () => {

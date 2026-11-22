@@ -7,6 +7,7 @@ import type {
   PluginTranslationSkip,
   ReadonlySkipList,
 } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
+import { artifactPath } from "../../../tools/contract/artifact-path.js";
 import type { FlatPluginAnswers } from "../../../tools/contract/tool-profile.js";
 import { flatLinkTarget } from "../flat-layout.js";
 import { basename, isProse } from "../plugin-paths.js";
@@ -98,7 +99,7 @@ function agentPlan(file: PluginComponentFile, at: FlatAt): ComponentPlan | null 
   const contract = tool.buildContract("flat");
   const artifact = contract?.artifacts.agents;
   if (contract === null || !artifact?.supported) return null;
-  const path = artifact.path(pluginName, file.relativePath);
+  const path = artifactPath(artifact, pluginName, file.relativePath);
   const place = {
     plugin: pluginName,
     outName: file.relativePath.slice("agents/".length),

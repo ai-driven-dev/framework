@@ -4,9 +4,7 @@
 import type { FlatHooksLoaderEntry } from "../../../../../shared/domain/materialization/flat-paths.js";
 import {
   type FlatArtifactLayout,
-  flatAgentFilePath,
   flatArtifactLayout,
-  flatSkillPath,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
 import type {
   AgentMarkdown,
@@ -72,13 +70,13 @@ export function buildKiloFlatContract(hooks: KiloHooks): ToolBuildContract {
       skills: {
         supported: true,
         source: { kind: "fullTree", srcDir: "skills" },
-        path: (plugin, rel) => flatSkillPath(KILO_FLAT_LAYOUT, plugin, rel),
+        layout: KILO_FLAT_LAYOUT,
         rewriteSkillName: true,
       },
       agents: {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        path: (plugin, rel) => flatAgentFilePath(KILO_FLAT_LAYOUT, plugin, rel),
+        layout: KILO_FLAT_LAYOUT,
         agentMarkdown: kiloAgentMarkdown,
       },
       mcp: { supported: false },

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { artifactPath } from "../../../../../../src/contexts/tools/contract/artifact-path.js";
 import { codexProfile } from "../../../../../../src/contexts/tools/domain/profiles/codex/codex.profile.js";
 import { SmolTomlCodec } from "../../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { PLUGIN_TREE_SOURCES, supported } from "../../../testing/build-artifacts.builder.js";
@@ -34,7 +35,8 @@ describe("codex build and conversion tables", () => {
   it("sources the plugin tree as it ships, and stages an agent named with an inner .md as .toml", () => {
     expect(marketplaceSourcesOf(codex)).toStrictEqual(PLUGIN_TREE_SOURCES);
     expect(
-      supported(contractOf(codex, "marketplace").artifacts.agents).path(
+      artifactPath(
+        supported(contractOf(codex, "marketplace").artifacts.agents),
         "aidd-dev",
         "agents/notes.md-helper.md"
       )

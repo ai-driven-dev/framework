@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { artifactPath } from "../../../../../../src/contexts/tools/contract/artifact-path.js";
 import type {
   ArtifactContract,
   ShippedHooks,
@@ -40,13 +41,13 @@ describe("a flat build's hooks artifact", () => {
     );
 
     expect(artifact.source).toStrictEqual(SOURCE);
-    expect(artifact.path("aidd-dev", "hooks/lib/journal.cjs")).toBe(
+    expect(artifactPath(artifact, "aidd-dev", "hooks/lib/journal.cjs")).toBe(
       ".tool/hooks/aidd-dev/lib/journal.cjs"
     );
-    expect(artifact.path("aidd-dev", "hooks/lib/hooks/a.cjs")).toBe(
+    expect(artifactPath(artifact, "aidd-dev", "hooks/lib/hooks/a.cjs")).toBe(
       ".tool/hooks/aidd-dev/lib/hooks/a.cjs"
     );
-    expect(artifact.path("aidd-dev", "hooks/aidd-dev.hooks.json")).toBe(
+    expect(artifactPath(artifact, "aidd-dev", "hooks/aidd-dev.hooks.json")).toBe(
       ".tool/hooks/aidd-dev.hooks.json"
     );
   });
@@ -169,8 +170,12 @@ describe("a flat build's hooks artifact", () => {
       })
     );
 
-    expect(artifact.path("aidd-dev", "hooks/tool-plugin.js")).toBe(".tool/plugin/aidd-dev.js");
-    expect(artifact.path("aidd-dev", "hooks/journal.cjs")).toBe(".tool/hooks/aidd-dev/journal.cjs");
+    expect(artifactPath(artifact, "aidd-dev", "hooks/tool-plugin.js")).toBe(
+      ".tool/plugin/aidd-dev.js"
+    );
+    expect(artifactPath(artifact, "aidd-dev", "hooks/journal.cjs")).toBe(
+      ".tool/hooks/aidd-dev/journal.cjs"
+    );
   });
 
   it("replaces the hooks file with a generated bridge for a loader", () => {

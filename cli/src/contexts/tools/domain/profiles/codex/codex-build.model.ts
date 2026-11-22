@@ -5,9 +5,7 @@
 
 import {
   type FlatArtifactLayout,
-  flatAgentFilePath,
   flatArtifactLayout,
-  flatSkillPath,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
 import type { ToolBuildContract } from "../../../contract/build-contract.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
@@ -118,13 +116,13 @@ function codexFlatArtifacts(toml: TomlCodec, hooks: FlatHooks): ToolBuildContrac
     skills: {
       supported: true,
       source: { kind: "fullTree", srcDir: "skills" },
-      path: (plugin, rel) => flatSkillPath(CODEX_FLAT_LAYOUT, plugin, rel),
+      layout: CODEX_FLAT_LAYOUT,
       rewriteSkillName: true,
     },
     agents: {
       supported: true,
       source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-      path: (plugin, rel) => flatAgentFilePath(CODEX_FLAT_LAYOUT, plugin, rel),
+      layout: CODEX_FLAT_LAYOUT,
       transform: tomlAgentMarkdownToToml(toml),
     },
     mcp: { supported: false }, // handled by configArtifact (config.toml mcp_servers)

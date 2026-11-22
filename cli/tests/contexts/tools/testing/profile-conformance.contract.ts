@@ -1,5 +1,6 @@
 import { isAbsolute } from "node:path";
 import { describe, expect, it } from "vitest";
+import { artifactPath } from "../../../../src/contexts/tools/contract/artifact-path.js";
 import type {
   ArtifactContract,
   ToolBuildContract,
@@ -89,8 +90,8 @@ function installedPaths(profile: AiTool): string[] {
 function flatPathsUnderDirectory(contract: ToolBuildContract): string[] {
   const { agents, hooks } = contract.artifacts;
   return [
-    agents.supported ? agents.path("plug", SAMPLE_PATHS.agents) : "",
-    hooks.supported ? hooks.path("plug", SAMPLE_PATHS.hooks) : "",
+    agents.supported ? artifactPath(agents, "plug", SAMPLE_PATHS.agents) : "",
+    hooks.supported ? artifactPath(hooks, "plug", SAMPLE_PATHS.hooks) : "",
     hooks.supported && hooks.hooksFile !== undefined ? hooks.hooksFile.path("plug") : "",
   ].filter((path) => path !== "");
 }
@@ -133,7 +134,7 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
       }
       for (const contract of contractsOf(profile)) {
         for (const [name, artifact] of supportedArtifacts(contract)) {
-          expectRelative(artifact.path("plug", SAMPLE_PATHS[name] ?? "x"), `${name} path`);
+          expectRelative(artifactPath(artifact, "plug", SAMPLE_PATHS[name] ?? "x"), `${name} path`);
         }
       }
       const flat = profile.buildContracts?.flat?.();
@@ -153,7 +154,7 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
   aiCheck("gives every supported artifact a non-empty path", (profile) => {
     for (const contract of contractsOf(profile)) {
       for (const [name, artifact] of supportedArtifacts(contract)) {
-        expect(artifact.path("plug", SAMPLE_PATHS[name] ?? "x"), name).not.toBe("");
+        expect(artifactPath(artifact, "plug", SAMPLE_PATHS[name] ?? "x"), name).not.toBe("");
       }
     }
   }),

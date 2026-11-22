@@ -6,9 +6,7 @@
 
 import {
   type FlatArtifactLayout,
-  flatAgentFilePath,
   flatArtifactLayout,
-  flatSkillPath,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
 import type { AgentMarkdown, ToolBuildContract } from "../../../contract/build-contract.js";
 import { mergeAdditiveMcp } from "../../formats/additive-mcp-merge.js";
@@ -89,14 +87,14 @@ export function buildCopilotFlatContract(hooks: FlatHooks): ToolBuildContract {
       skills: {
         supported: true,
         source: { kind: "fullTree", srcDir: "skills" },
-        path: (plugin, rel) => flatSkillPath(COPILOT_FLAT_LAYOUT, plugin, rel),
+        layout: COPILOT_FLAT_LAYOUT,
         // VS Code Copilot requires SKILL.md frontmatter name === parent folder name.
         rewriteSkillName: true,
       },
       agents: {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        path: (plugin, rel) => flatAgentFilePath(COPILOT_FLAT_LAYOUT, plugin, rel),
+        layout: COPILOT_FLAT_LAYOUT,
         agentMarkdown: copilotFlatAgentMarkdown,
       },
       mcp: {
