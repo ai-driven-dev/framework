@@ -1,4 +1,5 @@
 import type { CheckMarketplaces } from "../../contexts/distribution/application/check-marketplaces.use-case.js";
+import type { ResolveMarketplace } from "../../contexts/distribution/application/resolve-marketplace.use-case.js";
 import type { StaleMarketplace } from "../../contexts/distribution/contract/marketplace-catalogs.js";
 import type { MarketplaceView } from "../../contexts/distribution/contract/marketplace-view.js";
 import type { ListPluginSources } from "../../contexts/installation/application/marketplace/list-plugin-sources.use-case.js";
@@ -33,7 +34,8 @@ interface CatalogReading {
  * stale, which plugins the catalog dropped, and which catalogs could not be read. */
 export class CheckMarketplaceUpstream {
   constructor(
-    private readonly marketplaces: Pick<CheckMarketplaces, "execute" | "readPluginNames">,
+    private readonly marketplaces: Pick<CheckMarketplaces, "execute">,
+    private readonly resolveMarketplace: Pick<ResolveMarketplace, "execute">,
     private readonly sources: Pick<ListPluginSources, "execute">
   ) {}
 
@@ -42,8 +44,8 @@ export class CheckMarketplaceUpstream {
       projectRoot: command.projectRoot,
       staleMaxDays: command.staleMaxDays,
     });
-    const installed = await this.sources.execute();
     const readings = await this.readEach(marketplaces, command.projectRoot);
+    const installed = await this.sources.execute();
     const skipped: SkippedMarketplace[] = readings.flatMap(({ marketplace, plugins, error }) =>
       plugins === null && error !== undefined ? [{ marketplace, error }] : []
     );
@@ -57,7 +59,6 @@ export class CheckMarketplaceUpstream {
     return { stale, upstreamRemoved, skipped };
   }
 
-  // A catalog that cannot be read is skipped with its error: it must not stop the others.
   private async readEach(
     marketplaces: readonly MarketplaceView[],
     projectRoot: string
@@ -69,12 +70,15 @@ export class CheckMarketplaceUpstream {
     return readings;
   }
 
+  // @policy report-and-continue: a single unreadable catalog must not abort the
+  // overall report. Errors are surfaced on the reading for the caller to report.
   private async readOne(
     marketplace: MarketplaceView,
     projectRoot: string
   ): Promise<CatalogReading> {
     try {
-      const plugins = await this.marketplaces.readPluginNames(marketplace, projectRoot);
+      const { catalog } = await this.resolveMarketplace.execute({ marketplace, projectRoot });
+      const plugins = catalog === null ? null : new Set(catalog.plugins.map((p) => p.name));
       return { marketplace: marketplace.name, plugins };
     } catch (error) {
       return { marketplace: marketplace.name, plugins: null, error };

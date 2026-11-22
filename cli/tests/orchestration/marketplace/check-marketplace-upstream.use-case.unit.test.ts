@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
+import type { ResolveMarketplaceRequest } from "../../../src/contexts/distribution/application/resolve-marketplace.use-case.js";
+import type { PluginCatalog } from "../../../src/contexts/distribution/contract/catalog.js";
 import type { PluginSource } from "../../../src/contexts/installation/contract/plugin-sources.js";
 import { CheckMarketplaceUpstream } from "../../../src/orchestration/marketplace/check-marketplace-upstream.use-case.js";
 import { SYNTHETIC_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
@@ -18,16 +20,28 @@ function checkOf(
     execute: vi
       .fn()
       .mockResolvedValue({ stale, marketplaces: readings.map((r) => ({ name: r.marketplace })) }),
-    readPluginNames: vi.fn(async (marketplace: { name: string }) => {
+  };
+  const resolve = {
+    execute: vi.fn(async ({ marketplace }: ResolveMarketplaceRequest) => {
       const reading = readings.find((r) => r.marketplace === marketplace.name);
       if (reading?.error !== undefined) throw reading.error;
-      return reading?.plugins ?? null;
+      const catalog: PluginCatalog | null =
+        reading?.plugins == null
+          ? null
+          : {
+              plugins: [...reading.plugins].map((name) => ({
+                name,
+                source: { kind: "local", path: "." },
+                recommended: false,
+                strict: false,
+              })),
+            };
+      return { marketplace, localPath: "/cache", catalog };
     }),
   };
-  const useCase = new CheckMarketplaceUpstream(marketplaces, {
-    execute: vi.fn().mockResolvedValue(sources),
-  });
-  return { useCase, marketplaces };
+  const sourcesOf = { execute: vi.fn().mockResolvedValue(sources) };
+  const useCase = new CheckMarketplaceUpstream(marketplaces, resolve, sourcesOf);
+  return { useCase, marketplaces, resolve, sourcesOf };
 }
 
 describe("CheckMarketplaceUpstream", () => {
@@ -102,5 +116,19 @@ describe("CheckMarketplaceUpstream", () => {
 
     expect(result.stale).toEqual([{ name: "old" }]);
     expect(marketplaces.execute).toHaveBeenCalledWith({ projectRoot: "/project", staleMaxDays: 7 });
+  });
+
+  it("reads the catalogs before it loads the manifest, so a manifest failure still follows them", async () => {
+    const { useCase, resolve, sourcesOf } = checkOf(
+      [{ marketplace: "market", plugins: new Set(["kept"]) }],
+      []
+    );
+    sourcesOf.execute.mockRejectedValue(new Error("manifest unreadable"));
+
+    await expect(useCase.execute({ projectRoot: "/project" })).rejects.toThrow(
+      "manifest unreadable"
+    );
+
+    expect(resolve.execute).toHaveBeenCalledTimes(1);
   });
 });

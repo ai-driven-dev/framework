@@ -289,7 +289,8 @@ export function wireMarketplace(base: Base, inst: Installation) {
     prompter,
   });
   const marketplaceCheckUseCase = new CheckMarketplaceUpstream(
-    new CheckMarketplaces(marketplaceRegistry, resolveMarketplaceUseCase),
+    new CheckMarketplaces(marketplaceRegistry),
+    resolveMarketplaceUseCase,
     new ListPluginSources(manifestRepo, tools)
   );
   const setup = wireSetupSource(base, recordSourceReference);
