@@ -39,8 +39,9 @@ describe("ChooseIdentity", () => {
   });
 
   it("keeps the identity already set, asking nothing", async () => {
-    const { choose, select, propose } = chooser(NAMED);
+    const { choose, select, propose, manage } = chooser(NAMED);
     expect(await choose.execute(ASK)).toBe("keep");
+    expect(manage).toHaveBeenCalledWith({ action: "show" });
     expect(select).not.toHaveBeenCalled();
     expect(propose).not.toHaveBeenCalled();
   });
@@ -66,7 +67,14 @@ describe("ChooseIdentity", () => {
       "another",
       "none",
     ]);
-    expect(choices[0]?.name).toContain("Ada Example");
+    expect(choices.map((c: { name: string }) => c.name)).toEqual([
+      'As "Ada Example", your git name',
+      "As another identifier, typed next",
+      "Anonymously",
+    ]);
+    expect(select.mock.calls[0]?.[0]).toBe(
+      "How should your own measurement name you? The identity stays on this machine."
+    );
   });
 
   it("offers no proposal when there is none", async () => {

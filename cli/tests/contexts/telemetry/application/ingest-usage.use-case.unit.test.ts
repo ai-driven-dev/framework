@@ -345,4 +345,19 @@ describe("how far back the transcripts on disk reach", () => {
     expect((await setup().ingest.execute()).oldestTranscriptAt).toBeNull();
     expect((await setup({ refused: true }).ingest.execute()).oldestTranscriptAt).toBeNull();
   });
+
+  it("says a refused read found nothing, damaged nothing and stored nothing", async () => {
+    const result = await setup({ refused: true }).ingest.execute();
+    expect(result).toMatchObject({
+      refused: true,
+      filesRead: 0,
+      added: 0,
+      updated: 0,
+      unrecognised: 0,
+      skippedLedgerLines: 0,
+      snapshots: 0,
+      consentLogDamaged: false,
+    });
+    expect(Object.values(result.notStored).every((n) => n === 0)).toBe(true);
+  });
 });

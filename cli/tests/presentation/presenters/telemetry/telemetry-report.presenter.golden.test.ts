@@ -28,6 +28,13 @@ describe("printing a usage report", () => {
     );
   });
 
+  it("sets the unknown counter note apart from the table by a blank line", () => {
+    const partial = tally(3, [1, 1, 5, 1], 2);
+    const lines = printed(result("total", [[value("total"), partial]], partial));
+    expect(lines.at(-4)).toBe("");
+    expect(lines.at(-3)).toContain("had an unknown counter");
+  });
+
   it("names the period whichever of its ends are open", () => {
     const head = (period: Period) =>
       printed(result("total", [], tally(0, [0, 0, 0, 0]), {}, period))[0];
