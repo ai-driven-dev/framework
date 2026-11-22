@@ -4,6 +4,7 @@ import type { UpdatePluginRequest } from "../../contexts/installation/applicatio
 import type { UpdateUserPluginFiles } from "../../contexts/installation/application/plugin/update-user-plugin-files.use-case.js";
 import type { RecordClaimRules } from "../../contexts/machine-claims/contract/record-claim-rules.js";
 import type { IsWithinUserScope } from "../../contexts/machine-claims/contract/user-scope-containment.js";
+import { UserPluginUpdatePartialError } from "../orchestration.error.js";
 
 export type UpdateUserPluginRequest = UpdatePluginRequest;
 
@@ -29,6 +30,10 @@ export class UpdateUserPlugin {
       isWithinUserScope: this.isWithinUserScope,
       refreshNative: (request) => this.refreshHostPlugin.execute(request),
       refSelection: this.refSelection,
+      afterPreflight: (toolId, apply) =>
+        apply().catch((cause: unknown) => {
+          throw new UserPluginUpdatePartialError(toolId, { cause });
+        }),
     });
   }
 }

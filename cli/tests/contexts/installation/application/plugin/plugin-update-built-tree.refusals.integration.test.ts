@@ -219,10 +219,10 @@ describe("UpdatePlugin - built-tree materialization", () => {
       projectRoot: PROJECT_ROOT,
       scope: "user",
     });
-    await expect(operation).rejects.toThrow(
-      /native ref may already have been updated.*reconcile manually/
-    );
-    await expect(operation).rejects.toMatchObject({ cause: writeFailure });
+    await expect(operation).rejects.toMatchObject({
+      code: "user-plugin-update-partial",
+      cause: writeFailure,
+    });
 
     expect(activator.updatedPlugins).toEqual(["native-plugin@aidd-catalog"]);
     expect(deps.userManifestRepo.saveCount).toBe(savesBefore);

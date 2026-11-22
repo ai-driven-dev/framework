@@ -21,9 +21,16 @@ import {
 } from "./update-native-refs.js";
 import type { UpdatePluginRequest } from "./update-plugin.use-case.js";
 
+/** Runs a tool's file update once its preflight passed, so the scenario names a partial failure. */
+export type AfterPreflight = (
+  toolId: AiToolId,
+  apply: () => Promise<RecordedPlugin>
+) => Promise<RecordedPlugin>;
+
 /** What a machine-scope update needs beyond the plugins it names. */
 export interface UpdateUserPluginFilesRequest extends UpdatePluginRequest {
   readonly isWithinUserScope: ContainmentCheck;
+  readonly afterPreflight: AfterPreflight;
   readonly refreshNative: RefreshNativeRef;
   readonly refSelection: RefSelection;
 }
@@ -123,16 +130,11 @@ export class UpdateUserPluginFiles {
       this.deps.logger.warn(
         `${toolId}: updating user-scope '${plugin.plugin.name}' affects ${dependents.join(", ")}; each project must refresh its own integration afterward.`
       );
-    try {
-      return await this.deps.materializer.applyUpdate(plan, {
+    return options.afterPreflight(toolId, () =>
+      this.deps.materializer.applyUpdate(plan, {
         logger: this.deps.logger,
         isWithinUserScope: options.isWithinUserScope,
-      });
-    } catch (error) {
-      throw new Error(
-        `${toolId}: user plugin file update failed after preflight; a native ref may already have been updated and file bytes may be partial. Canonical claim not saved; reconcile manually before retrying.`,
-        { cause: error }
-      );
-    }
+      })
+    );
   }
 }

@@ -71,6 +71,8 @@ export const INSTALLATION: MessagesOf<InstallationOwners> = {
   "sync-failed": (error) =>
     `Sync failed for: ${error.errors.map((failure) => failure.scope).join(", ")}. See the warnings above.`,
   "trust-denied": (error) => `Trust denied for marketplace '${error.marketplace}'. Aborting.`,
+  "user-plugin-update-partial": (error) =>
+    `${error.toolId}: user plugin file update failed after preflight; a native ref may already have been updated and file bytes may be partial. Canonical claim not saved; reconcile manually before retrying.`,
   "unknown-ai-tool-id": (error) =>
     `Unknown AI tool: ${error.tool}. Valid AI tools: ${error.validIds.join(", ")}`,
   "user-scope-filter-unsupported": (error) =>

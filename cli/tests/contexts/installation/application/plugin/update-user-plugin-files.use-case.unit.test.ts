@@ -83,6 +83,7 @@ function fixture(
       isWithinUserScope: () => true,
       refreshNative,
       refSelection: registrationRecordRules,
+      afterPreflight: (_toolId, apply) => apply(),
       ...command,
     });
   return { repo, materializer, logger, refreshed, applied, run };
@@ -153,10 +154,25 @@ describe("updating the user-scope plugins", () => {
     expect(logger.warnMessages.join("\n")).toContain("/other");
   });
 
-  it("saves nothing and says the update is partial when applying fails", async () => {
-    const { repo, run } = fixture({ materializer: { applyFails: new Error("disk full") } });
+  it("applies each tool's files through the scenario once preflight passed", async () => {
+    const { run } = fixture();
+    const tools: AiToolId[] = [];
 
-    await expect(run()).rejects.toThrow("user plugin file update failed after preflight");
+    await run({
+      afterPreflight: (toolId, apply) => {
+        tools.push(toolId);
+        return apply();
+      },
+    });
+
+    expect(tools).toEqual([TOOL.codex]);
+  });
+
+  it("saves nothing when applying fails", async () => {
+    const failure = new Error("disk full");
+    const { repo, run } = fixture({ materializer: { applyFails: failure } });
+
+    await expect(run()).rejects.toBe(failure);
     expect(repo.saveCount).toBe(0);
   });
 });
