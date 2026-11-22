@@ -9,10 +9,10 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
 import { catalogOf, registeredAiProfile } from "../../shared/testing/catalog-of.builder.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
+import { hostInspector } from "../../shared/testing/host-inspector.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { registeredHostInspector } from "../../shared/testing/registered-host-inspector.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { buildCheckRegistration } from "../testing/build-check-registration.builder.js";
 
 const { copilot } = TOOL;
@@ -129,11 +129,11 @@ async function doctorSays(registry: HostPluginRegistryReading): Promise<string> 
     new InMemoryFileAdapter(),
     new InMemoryMarketplaceRegistry(),
     () => false,
-    registeredHostInspector(
-      new InMemoryFileAdapter(),
-      new Map([[copilot, new FakeHostPluginRegistry(registry)]]),
-      new Map()
-    ),
+    hostInspector(registeredTools(), {
+      fs: new InMemoryFileAdapter(),
+      pluginRegistries: new Map([[copilot, new FakeHostPluginRegistry(registry)]]),
+      marketplaceRegistries: new Map(),
+    }),
     () => "/user-cache",
     { get: () => "1.0.0" },
     catalogOf()

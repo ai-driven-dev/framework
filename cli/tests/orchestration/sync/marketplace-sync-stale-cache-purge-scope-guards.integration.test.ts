@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { RegisterFrameworkMarketplaceRequest } from "../../../src/contexts/distribution/application/register-framework-marketplace.use-case.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
+import { registeredCatalog } from "../../shared/testing/catalog-of.builder.js";
 import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { fsAt } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
@@ -13,7 +14,6 @@ import {
   manifestWithClaude,
   PROJECT_ROOT,
 } from "../testing/marketplace-sync-settings-migration.builder.js";
-
 import {
   OLD_CACHE_FILE,
   projectWithMigratableEntry,
@@ -26,6 +26,7 @@ describe("SyncSettings - when the stale cache is left alone", () => {
   it("leaves the stale built tree alone at user scope, where no project file is this run's to touch", async () => {
     const fs = staleCacheAndCatalog();
     const useCase = marketplaceSync({
+      tools: registeredCatalog(),
       fs,
       manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
       marketplaceRegistry: registryWithSharedFramework(),
@@ -46,6 +47,7 @@ describe("SyncSettings - when the stale cache is left alone", () => {
   it("leaves the stale built tree alone unless the caller asked to recreate the framework entry", async () => {
     const fs = staleCacheAndCatalog();
     const useCase = marketplaceSync({
+      tools: registeredCatalog(),
       fs,
       manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
       marketplaceRegistry: registryWithSharedFramework(),
@@ -64,6 +66,7 @@ describe("SyncSettings - when the stale cache is left alone", () => {
   it("leaves the stale built tree alone while the framework entry is still at project scope", async () => {
     const fs = staleCacheAndCatalog();
     const useCase = marketplaceSync({
+      tools: registeredCatalog(),
       fs,
       manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
       marketplaceRegistry: projectWithMigratableEntry(),
@@ -93,6 +96,7 @@ describe("SyncSettings - when the stale cache is left alone", () => {
     );
     const calls: RegisterFrameworkMarketplaceRequest[] = [];
     const useCase = marketplaceSync({
+      tools: registeredCatalog(),
       fs: fsAt(PROJECT_ROOT, catalogFixture(CLAUDE_BUILT_DIR)),
       manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
       marketplaceRegistry: registry,
@@ -122,6 +126,7 @@ describe("SyncSettings - when the stale cache is left alone", () => {
     );
     const calls: RegisterFrameworkMarketplaceRequest[] = [];
     const useCase = marketplaceSync({
+      tools: registeredCatalog(),
       fs: fsAt(PROJECT_ROOT, catalogFixture(CLAUDE_BUILT_DIR)),
       manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
       marketplaceRegistry: registry,

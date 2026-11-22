@@ -5,6 +5,7 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
+import { registeredCatalog } from "../../shared/testing/catalog-of.builder.js";
 import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
@@ -150,6 +151,7 @@ export function makeSync(toolId: AiToolId, options: SyncOptions = {}) {
       knownSources(currentSource)
     );
   const useCase = marketplaceSync({
+    tools: registeredCatalog(),
     fs,
     manifestRepo: projectRepo,
     marketplaceRegistry: registry,

@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { translate } from "../../../../src/contexts/translate/domain/engine.js";
-import { registeredManifestPaths } from "../../../shared/testing/registered-manifest-probes.builder.js";
+import { manifestPathsOf } from "../../../shared/testing/manifest-probes-of.builder.js";
+import { registeredTools } from "../../../shared/testing/registered-tools.builder.js";
 import { aCanon } from "../testing/canon-distribution.builder.js";
 import { claude, cursor } from "../testing/registered-profiles.builder.js";
 
-const manifestPaths = registeredManifestPaths();
+const manifestPaths = manifestPathsOf(registeredTools());
 const dist = aCanon("plug", { "hooks/hooks.json": `{"hooks":{}}`, "hooks/run.js": "run" });
 
 describe("the built plugin files an install leaves out", () => {

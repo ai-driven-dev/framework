@@ -11,11 +11,11 @@ import {
 } from "../../../src/shared/domain/layout/aidd-layout.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
+import { hostInspector } from "../../shared/testing/host-inspector.builder.js";
 import { fsAt } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { registeredHostInspector } from "../../shared/testing/registered-host-inspector.builder.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { buildCheckRegistration } from "../testing/build-check-registration.builder.js";
 import {
@@ -114,16 +114,16 @@ describe("settings migration: legacy host entries", () => {
         }),
         registry,
         () => false,
-        registeredHostInspector(
-          fsAt(PROJECT_ROOT, {
+        hostInspector(registeredTools(), {
+          fs: fsAt(PROJECT_ROOT, {
             [`${sharedBuiltDir}/${CATALOG_RELATIVE}`]: JSON.stringify({
               name: FRAMEWORK_MARKETPLACE_NAME,
               plugins: [],
             }),
           }),
-          new Map(),
-          new Map([[TOOL.claude, hostReader]])
-        ),
+          pluginRegistries: new Map(),
+          marketplaceRegistries: new Map([[TOOL.claude, hostReader]]),
+        }),
         () => USER_CACHE_ROOT,
         fakeVersion(CURRENT_VERSION),
         registeredTools()
@@ -167,6 +167,7 @@ describe("settings migration: legacy host entries", () => {
         pluginClaims: [],
       });
       const sync = marketplaceSync({
+        tools: registeredTools(),
         fs: syncFs,
         manifestRepo: new InMemoryManifestRepository(manifest),
         marketplaceRegistry: registry,

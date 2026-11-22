@@ -36,7 +36,7 @@ async function installVscode(deps: Deps, propagate: PropagateAiSettingsToIde) {
 
 describe("InstallIdeTool", () => {
   it("propagates the AI tools' settings once the IDE config is installed", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);
     const installedWhenPropagating: boolean[] = [];
     const { propagate, execute } = propagateAnswering(deps, async () => {
@@ -56,7 +56,7 @@ describe("InstallIdeTool", () => {
   });
 
   it("has propagated by the time the install resolves", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);
     let propagated = false;
     const { propagate } = propagateAnswering(deps, async () => {
@@ -70,7 +70,7 @@ describe("InstallIdeTool", () => {
   });
 
   it("returns skipped and does not propagate when the IDE is already installed", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);
     await installTool(deps, PROJECT_ROOT, TOOL.vscode);
     const { propagate, execute } = propagateAnswering(deps, async () => {});
@@ -82,7 +82,7 @@ describe("InstallIdeTool", () => {
   });
 
   it("installs on a fresh manifest when the project has none yet", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     const { propagate } = propagateAnswering(deps, async () => {});
     expect(await deps.manifestRepo.load()).toBeNull();
 

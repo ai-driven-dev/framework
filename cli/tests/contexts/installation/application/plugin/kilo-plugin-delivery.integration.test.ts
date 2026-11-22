@@ -26,7 +26,7 @@ const USER_CONFIG = `{
 }\n`;
 
 async function existingProject(configPath: string) {
-  const deps = await buildInstallationDeps();
+  const deps = await buildInstallationDeps({ tools: registeredTools() });
   await initProject(deps, ROOT);
   await deps.fs.writeFile(join(ROOT, configPath), USER_CONFIG);
   const setup = new InstallTools(

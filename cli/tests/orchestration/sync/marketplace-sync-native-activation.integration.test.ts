@@ -3,6 +3,7 @@ import { answeredRegistry } from "../../../src/contexts/host-registration/domain
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
+import { registeredCatalog } from "../../shared/testing/catalog-of.builder.js";
 import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
@@ -150,6 +151,7 @@ describe("native activation", () => {
       });
       const manifestRepo = manifestWithPlugin();
       const useCase = marketplaceSync({
+        tools: registeredCatalog(),
         fs,
         manifestRepo,
         marketplaceRegistry: registry,
@@ -191,6 +193,7 @@ describe("native activation", () => {
       manifest.addTool(claude, "test", []);
       const manifestRepo = new InMemoryManifestRepository(manifest);
       const useCase = marketplaceSync({
+        tools: registeredCatalog(),
         fs,
         manifestRepo,
         marketplaceRegistry: registry,
@@ -218,6 +221,7 @@ describe("native activation", () => {
       const settingsAbsolutePath = settingsPathIn(PROJECT_ROOT);
       const activator = new ActivatorThatWritesSettings(fs, settingsAbsolutePath);
       const useCase = marketplaceSync({
+        tools: registeredCatalog(),
         fs,
         manifestRepo,
         marketplaceRegistry: registry,
@@ -250,6 +254,7 @@ describe("native activation", () => {
       const manifestRepo = manifestWithPlugin();
       const settingsAbsolutePath = settingsPathIn(PROJECT_ROOT);
       const useCase = marketplaceSync({
+        tools: registeredCatalog(),
         fs,
         manifestRepo,
         marketplaceRegistry: registry,

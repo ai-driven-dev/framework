@@ -30,7 +30,7 @@ function buildUseCase(
 
 describe("InstallIdeConfig", () => {
   it("writes settings files on fresh install", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
@@ -52,7 +52,7 @@ describe("InstallIdeConfig", () => {
   });
 
   it("answers an empty skipped result for an installed IDE", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
     await buildUseCase(deps).execute({
@@ -81,7 +81,7 @@ describe("InstallIdeConfig", () => {
   });
 
   it("writes an asset answered as text verbatim", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
     const text = '[\n  // user comment\n  {"key": "ctrl+k"}\n]';
@@ -99,7 +99,7 @@ describe("InstallIdeConfig", () => {
   });
 
   it("returns skipped without writing when already installed and no force", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
@@ -125,7 +125,7 @@ describe("InstallIdeConfig", () => {
   });
 
   it("re-runs install when force is true and preserves user-prime keys", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
@@ -156,7 +156,7 @@ describe("InstallIdeConfig", () => {
   });
 
   it("leaves a user-owned untracked settings file out of the files it installs", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);
     const settingsPath = join(PROJECT_ROOT, ".vscode/settings.json");
     await deps.fs.writeFile(settingsPath, '{"user": true}');

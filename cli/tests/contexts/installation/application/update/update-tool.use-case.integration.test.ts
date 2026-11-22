@@ -7,7 +7,7 @@ import {
   buildUpdateTool,
   initAndInstall,
 } from "../../../../shared/testing/installation-deps.builder.js";
-import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -23,7 +23,7 @@ function commandOf(overwriteModified: UpdateToolRequest["overwriteModified"]): U
 }
 
 async function installWithModifiedFile(): Promise<{ deps: Deps; relativePath: string }> {
-  const deps = await buildInstallationDeps();
+  const deps = await buildInstallationDeps({ tools: registeredTools() });
   await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
   const first = (await deps.manifestRepo.load())?.getToolFiles(TOOL.claude)[0];
   if (!first) throw new Error("the installed tool tracks no file");
@@ -33,7 +33,7 @@ async function installWithModifiedFile(): Promise<{ deps: Deps; relativePath: st
 
 describe("UpdateTool integration", () => {
   it("writes an unmodified file without asking", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const ask = vi.fn();
 
@@ -44,7 +44,7 @@ describe("UpdateTool integration", () => {
   });
 
   it("writes back a tracked file the user deleted, without asking", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const first = (await deps.manifestRepo.load())?.getToolFiles(TOOL.claude)[0];
     if (!first) throw new Error("the installed tool tracks no file");
@@ -87,7 +87,7 @@ describe("UpdateTool integration", () => {
   });
 
   it("answers skipped when the installer skipped the tool", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     vi.spyOn(deps.installRuntimeConfigUseCase, "execute").mockResolvedValue({
       toolId: TOOL.claude,
@@ -106,7 +106,7 @@ describe("UpdateTool integration", () => {
     ["an Error", new Error("disk full")],
     ["a plain string", "plain string"],
   ])("answers failed with %s the installer rejected with", async (_name, rejection) => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     vi.spyOn(deps.installRuntimeConfigUseCase, "execute").mockRejectedValue(rejection);
 

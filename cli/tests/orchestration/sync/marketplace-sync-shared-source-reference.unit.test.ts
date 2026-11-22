@@ -18,7 +18,7 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const { claude } = TOOL;
 
@@ -85,6 +85,7 @@ describe("the shared source's own reference, recorded by sync", () => {
     const proof = freshHostProof(activator);
 
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
@@ -121,6 +122,7 @@ describe("the shared source's own reference, recorded by sync", () => {
     const proof = freshHostProof(activator);
 
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
@@ -161,6 +163,7 @@ describe("the shared source's own reference, recorded by sync", () => {
     );
 
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
@@ -199,6 +202,7 @@ describe("the shared source's own reference, recorded by sync", () => {
     const proof = freshHostProof(activator);
 
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
@@ -231,6 +235,7 @@ describe("the shared source's own reference, recorded by sync", () => {
     const registry = new InMemoryMarketplaceRegistry();
 
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
@@ -266,6 +271,7 @@ describe("the shared source's own reference, recorded by sync", () => {
     };
 
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
@@ -284,6 +290,7 @@ describe("the shared source's own reference, recorded by sync", () => {
 
   it("stays a silent no-op when asked to recreate with nothing wired to do it", async () => {
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs: new InMemoryFileAdapter({}),
       manifestRepo: await manifestRepoWithClaudeInstalled(),
       marketplaceRegistry: new InMemoryMarketplaceRegistry(),
@@ -318,6 +325,7 @@ describe("a project with no manifest to sync", () => {
     await registry.save(PROJECT_ROOT, frameworkMarketplace());
     const activator = new FakeHostActions({ available: true });
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs: new InMemoryFileAdapter({}),
       manifestRepo: new InMemoryManifestRepository(),
       marketplaceRegistry: registry,
@@ -344,6 +352,7 @@ describe("a project with no manifest to sync", () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, frameworkMarketplace());
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs: new InMemoryFileAdapter({}),
       manifestRepo: new UnloadableManifestRepository(),
       marketplaceRegistry: registry,

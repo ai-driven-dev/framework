@@ -33,7 +33,7 @@ const { opencode } = TOOL;
 describe("AddPlugin", () => {
   describe("add local plugin for claude", () => {
     it("writes plugin files and updates manifest", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const useCase = await makeUseCase(deps);
       await useCase.execute(localAdd(TOOL.claude));
@@ -48,7 +48,7 @@ describe("AddPlugin", () => {
 
   describe("duplicate plugin add", () => {
     it("throws DuplicatePluginError on second add of same plugin", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const useCase = await makeUseCase(deps);
       await useCase.execute(localAdd(TOOL.claude));
@@ -59,7 +59,7 @@ describe("AddPlugin", () => {
   describe("per-tool install strategy (local marketplace)", () => {
     describe("opencode", () => {
       it("materializes flat files even when source is local marketplace", async () => {
-        const deps = await buildInstallationDeps();
+        const deps = await buildInstallationDeps({ tools: registeredTools() });
         await initAndInstall(deps, PROJECT_ROOT, opencode);
         // OpenCode copies its per-target flat BUILT tree (skills nested under
         // <plugin>/, agents namespaced <plugin>-<name>).
@@ -107,7 +107,7 @@ describe("AddPlugin", () => {
     it("native tool + local source + marketplace + zero-translation distribution → manifest entry NOT added", async () => {
       // A distribution with no recognized manifest path produces zero translated files for a
       // native tool, and a plugin with zero files is never added to the manifest.
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const loadZeroFiles: LoadDistribution = async () =>
         new PluginDistribution({
@@ -148,7 +148,7 @@ describe("AddPlugin", () => {
 
   describe("marketplace resolution", () => {
     it("treats a marketplace name the registry does not list as a local marketplace", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const useCase = await makeUseCase(deps);
 
@@ -165,7 +165,7 @@ describe("AddPlugin", () => {
     });
 
     it("never consults the registry for a local add without a marketplace", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
 
@@ -177,7 +177,7 @@ describe("AddPlugin", () => {
 
   describe("duplicate and replace for a local add", () => {
     it("re-adds an installed plugin in place when replace is requested", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const useCase = await makeUseCase(deps);
       await useCase.execute(localAdd(TOOL.claude));
@@ -188,7 +188,7 @@ describe("AddPlugin", () => {
     });
 
     it("leaves another installed plugin registered when replacing", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const useCase = await makeUseCase(deps);
       await seedFromDirectory(deps.fs, EXTRA_PLUGIN_FIXTURE, { useAbsolutePaths: true });
@@ -200,7 +200,7 @@ describe("AddPlugin", () => {
     });
 
     it("accepts a second plugin with a different name", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const useCase = await makeUseCase(deps);
       await seedFromDirectory(deps.fs, EXTRA_PLUGIN_FIXTURE, { useAbsolutePaths: true });
@@ -212,7 +212,7 @@ describe("AddPlugin", () => {
     });
 
     it("leaves the installed files untouched when refusing a duplicate", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const useCase = await makeUseCase(deps);
       await useCase.execute(localAdd(TOOL.claude));
@@ -233,7 +233,7 @@ describe("AddPlugin", () => {
 
   describe("required version", () => {
     it("accepts a required version equal to the plugin's own", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const useCase = await makeUseCase(deps);
 
@@ -248,7 +248,7 @@ describe("AddPlugin", () => {
 
   describe("native tool from a local marketplace", () => {
     it("registers a claude plugin from a local marketplace without writing its files", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
       const registry = new FakeMarketplaceRegistry();
@@ -271,7 +271,7 @@ describe("AddPlugin", () => {
     });
 
     it("materializes a plugin a local marketplace catalogs from github", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
       deps.pluginFetcher.register(GITHUB_SOURCE, PLUGIN_FIXTURE);
@@ -301,7 +301,7 @@ describe("AddPlugin", () => {
 
   describe("install notices", () => {
     it("logs no install notice for a flat add", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initAndInstall(deps, PROJECT_ROOT, opencode);
       await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
       const logger = new CapturingLogger();

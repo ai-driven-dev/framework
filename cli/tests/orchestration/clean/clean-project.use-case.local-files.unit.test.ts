@@ -18,7 +18,7 @@ import {
 } from "../../shared/testing/installation-deps.builder.js";
 import { present } from "../../shared/testing/present.builder.js";
 import { RecordingPrompter } from "../../shared/testing/recording-prompter.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
 import {
   AT_PROJECT,
@@ -30,7 +30,7 @@ import {
 describe("clean: local files", () => {
   describe("machine-local files a tool's own materialization writes outside the manifest", () => {
     it("removes .claude/settings.local.json, which install writes but the manifest never tracks", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const settingsLocalPath = join(PROJECT_ROOT, ".claude", "settings.local.json");
       await deps.fs.writeFile(settingsLocalPath, "{}");

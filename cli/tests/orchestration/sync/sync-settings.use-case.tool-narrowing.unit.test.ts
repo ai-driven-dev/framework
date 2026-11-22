@@ -9,7 +9,7 @@ import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js"
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   distribution,
   freshClaudeSource,
@@ -50,6 +50,7 @@ describe("toolIds narrows which tool's CLI is driven", () => {
     const claudeActivator = new FakeHostActions({ available: true });
     const codexActivator = new FakeHostActions({ available: true });
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
@@ -97,6 +98,7 @@ describe("toolIds narrows which tool's CLI is driven", () => {
     const claudeActivator = new FakeHostActions({ available: true });
     const codexActivator = new FakeHostActions({ available: true });
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo: new InMemoryManifestRepository(manifest),
       marketplaceRegistry: registry,
@@ -146,6 +148,7 @@ describe("a project whose manifest also lists a tool with no plugin system", () 
     );
     const activator = new FakeHostActions({ available: true });
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo: new InMemoryManifestRepository(manifest),
       marketplaceRegistry: registry,

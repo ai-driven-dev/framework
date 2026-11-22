@@ -7,10 +7,10 @@ import {
   OutDirNotDirectoryError,
 } from "../../../../../src/contexts/translate/domain/translate.error.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
+import { buildContractOf } from "../../../../shared/testing/build-contract-of.builder.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
-import { buildContractOf } from "../../../../shared/testing/registered-build-contracts.builder.js";
-import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildTree } from "../../testing/build-tree.builder.js";
 import { aDiskSink } from "../../testing/disk-sink.builder.js";
@@ -40,7 +40,7 @@ function makeUseCase(
     v,
     ap,
     new CapturingLogger(),
-    buildContractOf(TOOL.copilot, "flat"),
+    buildContractOf(registeredTools(), TOOL.copilot, "flat"),
     "flat",
     force
   );
@@ -76,7 +76,7 @@ describe("FlatOutputStrategy integration", () => {
         v,
         ap,
         new CapturingLogger(),
-        buildContractOf(TOOL.copilot, "flat"),
+        buildContractOf(registeredTools(), TOOL.copilot, "flat"),
         "flat"
       );
       await expect(
@@ -95,7 +95,7 @@ describe("FlatOutputStrategy integration", () => {
         v2,
         ap2,
         new CapturingLogger(),
-        buildContractOf(TOOL.copilot, "flat"),
+        buildContractOf(registeredTools(), TOOL.copilot, "flat"),
         "flat"
       );
       await expect(
@@ -122,7 +122,7 @@ describe("FlatOutputStrategy integration", () => {
       });
       const sink = aDiskSink(mcpOnly, makeValidator(), makeAssetProvider(), new CapturingLogger());
       const target = {
-        contract: buildContractOf(TOOL.copilot, "flat"),
+        contract: buildContractOf(registeredTools(), TOOL.copilot, "flat"),
         mode: "flat",
         force: false,
         sourceDir: FIXTURE_DIR,
@@ -140,7 +140,7 @@ describe("FlatOutputStrategy integration", () => {
       const captLogger = new CapturingLogger();
       // No shipped flat contract declares hooks unsupported any more, so this exercises
       // writeHooks's own unsupported branch on a contract built for that case.
-      const base = buildContractOf(TOOL.opencode, "flat");
+      const base = buildContractOf(registeredTools(), TOOL.opencode, "flat");
       const useCase = buildTree(
         memFs,
         makeValidator(),

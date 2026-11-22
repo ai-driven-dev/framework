@@ -290,7 +290,7 @@ describe("ReportStatus", () => {
 
 describe("status", () => {
   it("reports no drift when no tools are installed", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await new InitProject(
       { fs: deps.fs, manifestRepo: deps.manifestRepo, updateGitignore: deps.updateGitignore },
       registeredTools()
@@ -315,7 +315,7 @@ describe("status", () => {
   });
 
   it("does not call a machine-local file an addition, whatever the profile declares", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await new InitProject(
       { fs: deps.fs, manifestRepo: deps.manifestRepo, updateGitignore: deps.updateGitignore },
       registeredTools()

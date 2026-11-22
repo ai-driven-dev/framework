@@ -6,10 +6,11 @@ import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
 import { fakeEnsureBuiltMarketplace } from "../../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { registeredManifestProbes } from "../../../shared/testing/registered-manifest-probes.builder.js";
+import { manifestProbesOf } from "../../../shared/testing/manifest-probes-of.builder.js";
+import { registeredTools } from "../../../shared/testing/registered-tools.builder.js";
 
 /** The real translation: pure, so a test needs no fake of it. */
-export const translateDistribution = new TranslateDistribution(registeredManifestProbes());
+export const translateDistribution = new TranslateDistribution(manifestProbesOf(registeredTools()));
 
 /** The build and translation sources an AddPlugin reads, both faked or real-and-pure. */
 export function fakeBuildSources() {

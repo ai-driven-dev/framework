@@ -22,7 +22,7 @@ const PROJECT_ROOT = "/test-project";
 describe("AddPlugin skip warnings", () => {
   describe("when a plugin's hooks are now accepted (no skip entry)", () => {
     it("emits no logger.warn - OpenCode delivers sample-plugin's hooks instead of skipping them", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initAndInstall(deps, PROJECT_ROOT, TOOL.opencode);
       await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
       const capturingLogger = new CapturingLogger();

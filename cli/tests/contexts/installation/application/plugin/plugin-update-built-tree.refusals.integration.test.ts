@@ -26,7 +26,7 @@ const { cursor, copilot } = TOOL;
 
 describe("UpdatePlugin - built-tree materialization", () => {
   it("refuses an escaped old user file before writing a fetched build or changing its claim", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
@@ -48,7 +48,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
   });
 
   it("refuses to overwrite a user-edited Cursor plugin file and retains its installed digest", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
@@ -72,7 +72,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
   });
 
   it("refuses a new built file that the user created after v1 without changing bytes or claims", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
@@ -100,7 +100,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
   });
 
   it("refuses an untracked identical file without changing its bytes or claiming it", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
@@ -124,7 +124,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
   });
 
   it("preflights a Cursor user-file collision before any selected native host update", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
@@ -151,7 +151,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
   });
 
   it("refuses a tracked old path redirected outside the user boundary between plan and apply", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
@@ -198,7 +198,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
   });
 
   it("reports manual reconciliation when user-file I/O fails after an irreversible native update", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
@@ -233,7 +233,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
   });
 
   it("prunes only old owned paths and keeps dependent roots when replacing the user files", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);

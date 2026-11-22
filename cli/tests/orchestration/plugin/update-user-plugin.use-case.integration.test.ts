@@ -21,7 +21,7 @@ import { FixturePluginFetcher } from "../../shared/testing/fixture-plugin-fetche
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { loadDistributionOf } from "../../shared/testing/load-distribution.builder.js";
-import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.builder.js";
+import { manifestProbesOf } from "../../shared/testing/manifest-probes-of.builder.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
 
@@ -89,7 +89,7 @@ function fixture(
             new FixturePluginFetcher(),
             distribution
               ? { read: async () => distribution }
-              : new PluginDistributionReaderAdapter(fs, registeredManifestProbes())
+              : new PluginDistributionReaderAdapter(fs, manifestProbesOf(registeredTools()))
           ),
           guard: userScopeFileGuard,
           builtDeps: fakeBuiltDeps(fs),

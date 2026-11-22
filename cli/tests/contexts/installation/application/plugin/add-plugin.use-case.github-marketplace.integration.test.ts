@@ -28,7 +28,7 @@ const { opencode, codex } = TOOL;
 describe("AddPlugin", () => {
   describe("github marketplace plugin", () => {
     it("registers a plugin reference without materializing files", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const registry = new FakeMarketplaceRegistry();
       registry.seed(PROJECT_ROOT, {
@@ -58,7 +58,7 @@ describe("AddPlugin", () => {
     });
 
     it("throws MissingPluginMetadataError when pluginMetadata is absent for github marketplace", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const registry = new FakeMarketplaceRegistry();
       registry.seed(PROJECT_ROOT, {
@@ -93,7 +93,7 @@ describe("AddPlugin", () => {
     });
 
     it("preserves fetch behavior for local marketplace plugin", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const registry = new FakeMarketplaceRegistry();
       registry.seed(PROJECT_ROOT, {
@@ -151,7 +151,7 @@ describe("AddPlugin", () => {
     }
 
     it("re-registers the plugin when replace is requested", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initAndInstall(deps, PROJECT_ROOT, codex);
 
       await registerTwice(deps, true);
@@ -160,14 +160,14 @@ describe("AddPlugin", () => {
     });
 
     it("refuses a second registration without replace", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initAndInstall(deps, PROJECT_ROOT, codex);
 
       await expect(registerTwice(deps, undefined)).rejects.toThrow(DuplicatePluginError);
     });
 
     it("fetches the distribution once for a flat tool when the catalog omits the version", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initAndInstall(deps, PROJECT_ROOT, opencode);
       deps.fs.setFile("/built/opencode/.opencode/skills/sample-plugin/demo/SKILL.md", "# Demo");
       await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });

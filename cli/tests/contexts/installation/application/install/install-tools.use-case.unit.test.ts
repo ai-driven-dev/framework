@@ -13,7 +13,7 @@ const PROJECT_ROOT = "/test-project";
 const VERSION = "1.0.0";
 
 async function build() {
-  const deps = await buildInstallationDeps();
+  const deps = await buildInstallationDeps({ tools: registeredTools() });
   const useCase = new InstallTools(
     deps.manifestRepo,
     deps.installRuntimeConfigUseCase,

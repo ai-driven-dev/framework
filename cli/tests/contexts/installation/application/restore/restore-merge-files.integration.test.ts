@@ -6,7 +6,7 @@ import {
   initProject,
   installTool,
 } from "../../../../shared/testing/installation-deps.builder.js";
-import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../../../shared/testing/saying.builder.js";
 import { KeepPrompter } from "../../../../shared/testing/scripted-prompter.fake.js";
 
@@ -15,7 +15,7 @@ import { makeRestoreUseCase, PROJECT_ROOT } from "../../testing/restore-scenario
 describe("restore", () => {
   describe("merge file restore", () => {
     it("reports nothing to restore when merge file keys are unmodified", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initProject(deps, PROJECT_ROOT);
       await installTool(deps, PROJECT_ROOT, TOOL.vscode);
 
@@ -30,7 +30,7 @@ describe("restore", () => {
     });
 
     it("restores merge file when a tracked key has drifted", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initProject(deps, PROJECT_ROOT);
       await installTool(deps, PROJECT_ROOT, TOOL.vscode);
 
@@ -52,7 +52,7 @@ describe("restore", () => {
     });
 
     it("recreates deleted merge file", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initProject(deps, PROJECT_ROOT);
       await installTool(deps, PROJECT_ROOT, TOOL.vscode);
 
@@ -72,7 +72,7 @@ describe("restore", () => {
     });
 
     it("keeps merge file when prompter returns keep", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initProject(deps, PROJECT_ROOT);
       await installTool(deps, PROJECT_ROOT, TOOL.vscode);
 
@@ -97,7 +97,7 @@ describe("restore", () => {
     });
 
     it("throws in non-interactive mode without --force when merge file is modified", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initProject(deps, PROJECT_ROOT);
       await installTool(deps, PROJECT_ROOT, TOOL.vscode);
 
@@ -119,7 +119,7 @@ describe("restore", () => {
     });
 
     it("file filter skips merge files not matching the filter", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initProject(deps, PROJECT_ROOT);
       await installTool(deps, PROJECT_ROOT, TOOL.vscode);
 

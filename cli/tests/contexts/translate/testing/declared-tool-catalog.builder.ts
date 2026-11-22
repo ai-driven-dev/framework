@@ -5,7 +5,7 @@ import type {
   FrameworkBuildMode,
 } from "../../../../src/contexts/tools/contract/tool-profile.js";
 import type { AiToolId } from "../../../../src/shared/domain/tool.js";
-import { buildContractOf } from "../../../shared/testing/registered-build-contracts.builder.js";
+import { buildContractOf } from "../../../shared/testing/build-contract-of.builder.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { ownMembers } from "./contract-tool-profile.builder.js";
 
@@ -18,7 +18,7 @@ export interface DeclaredTool {
 }
 
 /** A contract that stands for any declared mode: the code under test asks whether one exists. */
-const standInContract = () => buildContractOf(TOOL.opencode, "flat");
+const standInContract = () => buildContractOf(registeredTools(), TOOL.opencode, "flat");
 
 type Built = ConstructorParameters<typeof RegisteredToolCatalog>[0][number];
 

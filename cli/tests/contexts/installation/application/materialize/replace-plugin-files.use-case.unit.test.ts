@@ -36,7 +36,7 @@ function greetDistribution(): PluginDistribution {
 }
 
 async function replaceOnClaude(marketplace: string | undefined) {
-  const deps = await buildInstallationDeps();
+  const deps = await buildInstallationDeps({ tools: registeredTools() });
   await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
   deps.fs.setFile(join(PROJECT_ROOT, STALE_FILE), "old");
   const manifest = await deps.manifestRepo.load();

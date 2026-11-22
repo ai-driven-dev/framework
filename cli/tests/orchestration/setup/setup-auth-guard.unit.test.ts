@@ -23,7 +23,7 @@ import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.fa
 import { InMemoryEnvironment } from "../../shared/testing/in-memory-environment.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { buildInstallationDeps } from "../../shared/testing/installation-deps.builder.js";
-import { flowTools } from "../../shared/testing/registered-tools.builder.js";
+import { flowTools, registeredTools } from "../../shared/testing/registered-tools.builder.js";
 import { OverwritePrompter } from "../../shared/testing/scripted-prompter.fake.js";
 import { askMarketplaceSource } from "../testing/ask-marketplace-source.builder.js";
 import { runSetupOf } from "../testing/run-setup-of.builder.js";
@@ -95,7 +95,7 @@ function makeTokenProvider(token: string | null): TokenProvider {
 const PROJECT_ROOT = "/test-project";
 
 async function buildSetupUseCase(tokenProvider: TokenProvider, isRepoPublic = false) {
-  const deps = await buildInstallationDeps();
+  const deps = await buildInstallationDeps({ tools: registeredTools() });
   const prompter = new OverwritePrompter();
   const askSource = askMarketplaceSource(prompter, makeReleaseResolver(true));
   const setupToolsUseCase = new InstallTools(

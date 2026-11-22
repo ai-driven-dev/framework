@@ -9,11 +9,11 @@ import { FakeHostMarketplaceSources } from "../../contexts/host-registration/tes
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
+import { hostInspector } from "../../shared/testing/host-inspector.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { registeredHostInspector } from "../../shared/testing/registered-host-inspector.builder.js";
 import { registeredTools } from "../../shared/testing/registered-tools.builder.js";
 import { buildCheckRegistration } from "../testing/build-check-registration.builder.js";
 import {
@@ -48,11 +48,11 @@ describe("native activation: recorded refs", () => {
         fs,
         registry,
         (binary) => binary === claude && activator.isAvailable(),
-        registeredHostInspector(
-          fs,
-          new Map([[claude, new RegistryBoundToActivator(activator)]]),
-          new Map()
-        ),
+        hostInspector(registeredTools(), {
+          fs: fs,
+          pluginRegistries: new Map([[claude, new RegistryBoundToActivator(activator)]]),
+          marketplaceRegistries: new Map(),
+        }),
         () => "/user-cache",
         { get: () => "1.0.0" },
         registeredTools()
@@ -127,6 +127,7 @@ describe("native activation: recorded refs", () => {
       );
       const manifestRepo = new InMemoryManifestRepository(manifest);
       const useCase = marketplaceSync({
+        tools: registeredTools(),
         fs,
         manifestRepo,
         marketplaceRegistry: registry,
@@ -227,6 +228,7 @@ describe("native activation: recorded refs", () => {
       );
       const manifestRepo = new InMemoryManifestRepository(manifest);
       const useCase = marketplaceSync({
+        tools: registeredTools(),
         fs,
         manifestRepo,
         marketplaceRegistry: registry,

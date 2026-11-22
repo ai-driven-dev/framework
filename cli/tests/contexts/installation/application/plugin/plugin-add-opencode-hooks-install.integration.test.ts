@@ -20,7 +20,7 @@ const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format
 const PROJECT_ROOT = "/test-project";
 
 async function installSamplePlugin() {
-  const deps = await buildInstallationDeps();
+  const deps = await buildInstallationDeps({ tools: registeredTools() });
   await initAndInstall(deps, PROJECT_ROOT, TOOL.opencode);
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const capturingLogger = new CapturingLogger();

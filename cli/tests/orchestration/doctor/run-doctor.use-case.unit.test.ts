@@ -14,7 +14,7 @@ import {
   buildInstallationDeps,
   initAndInstall,
 } from "../../shared/testing/installation-deps.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -24,7 +24,7 @@ const issueOf =
 
 async function reportOf(category?: "ai", severity: DoctorIssue["severity"] = "warning") {
   const issue = issueOf(severity);
-  const deps = await buildInstallationDeps();
+  const deps = await buildInstallationDeps({ tools: registeredTools() });
   await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
   const loadManifest = new LoadManifest(deps.manifestRepo);
   const checks = {

@@ -8,7 +8,7 @@ import { VersionMismatchError } from "../../../src/shared/domain/shared.error.js
 import { buildAddPlugin } from "../../contexts/installation/testing/build-add-plugin.builder.js";
 import { fakeBuildSources } from "../../contexts/installation/testing/fake-build-sources.fake.js";
 import { loadDistributionOf } from "../../shared/testing/load-distribution.builder.js";
-import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.builder.js";
+import { manifestProbesOf } from "../../shared/testing/manifest-probes-of.builder.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   type AddPluginFor,
@@ -27,7 +27,7 @@ const addPluginOver: AddPluginFor = (deps, registry) =>
     {
       loadDistribution: loadDistributionOf(
         deps.pluginFetcher,
-        new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+        new PluginDistributionReaderAdapter(deps.fs, manifestProbesOf(registeredTools()))
       ),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),

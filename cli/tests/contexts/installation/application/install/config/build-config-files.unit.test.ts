@@ -12,7 +12,7 @@ import { StubAssetProvider } from "../../../../../shared/testing/stub-asset-prov
 const PROJECT_ROOT = "/test-project";
 
 async function setup(assetContent: string) {
-  const deps = await buildInstallationDeps();
+  const deps = await buildInstallationDeps({ tools: registeredTools() });
   await initProject(deps, PROJECT_ROOT);
   const assets = new StubAssetProvider(
     { "claude/settings.json": assetContent },

@@ -12,7 +12,7 @@ import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manif
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { parseJsonRecord } from "../../shared/testing/json-value.builder.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { FakeHostMarketplaceSources } from "./fake-host-marketplace-sources.fake.js";
 import { FakeHostPluginRegistry } from "./fake-host-plugin-registry.fake.js";
 
@@ -112,6 +112,7 @@ export function buildSync(activator: FakeHostActions, pluginMarketplace?: string
     fs,
     manifestRepo,
     useCase: marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
@@ -199,6 +200,7 @@ export function buildSyncReadingHost(
     });
   }
   const useCase = marketplaceSync({
+    tools: registeredTools(),
     fs: seededBuiltCatalog(),
     manifestRepo,
     marketplaceRegistry: registry,

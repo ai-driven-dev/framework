@@ -23,7 +23,7 @@ class RecordingGitignoreUseCase extends UpdateGitignore {
 
 describe("post-install pipeline", () => {
   it("saves manifest and updates gitignore after file write", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     const manifest = await deps.manifestRepo.load();
@@ -48,7 +48,7 @@ describe("post-install pipeline", () => {
   });
 
   it("calls gitignore exactly once, with all three families of entries", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const manifest = await deps.manifestRepo.load();
     if (manifest === null) throw new Error("manifest not found");
@@ -70,7 +70,7 @@ describe("post-install pipeline", () => {
   });
 
   it("ignores the cache, and nothing wider than aidd_docs", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const manifest = await deps.manifestRepo.load();
     if (manifest === null) throw new Error("manifest not found");

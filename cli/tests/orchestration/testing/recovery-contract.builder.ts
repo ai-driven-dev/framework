@@ -17,7 +17,7 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { FakeHostMarketplaceSources } from "./fake-host-marketplace-sources.fake.js";
 
 export const ROOT = "/project";
@@ -203,6 +203,7 @@ export async function recovery(options: RecoveryOptions = {}) {
     read: async () => ({ location: "host marketplaces", entries: new Map([[HOST, source]]) }),
   };
   const useCase = marketplaceSync({
+    tools: registeredTools(),
     fs,
     manifestRepo: repo,
     marketplaceRegistry: registry,

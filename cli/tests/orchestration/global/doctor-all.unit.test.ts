@@ -9,7 +9,7 @@ import {
   initAndInstall,
   installTool,
 } from "../../shared/testing/installation-deps.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { buildRunDoctor } from "../testing/build-run-doctor.builder.js";
 
 const PROJECT_ROOT = "/test-project";
@@ -17,7 +17,7 @@ const NO_MANIFEST = expect.any(ManifestUnavailableError);
 const PLUGIN_FILE = ".claude/plugins/sample/agents/reviewer.md";
 
 async function depsWithBothCategories() {
-  const deps = await buildInstallationDeps();
+  const deps = await buildInstallationDeps({ tools: registeredTools() });
   await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
   await installTool(deps, PROJECT_ROOT, TOOL.vscode);
   const manifest = await deps.manifestRepo.load();
@@ -57,7 +57,7 @@ function doctorAllOver(deps: Awaited<ReturnType<typeof buildInstallationDeps>>) 
 
 describe("doctorAll", () => {
   it("records one error per scope, and no report, when no manifest exists", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     const useCase = doctorAllOver(deps);
 
     const result = await useCase.execute(PROJECT_ROOT);

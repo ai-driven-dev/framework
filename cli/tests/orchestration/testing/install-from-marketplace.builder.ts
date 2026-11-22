@@ -15,7 +15,7 @@ import {
   initAndInstall,
 } from "../../shared/testing/installation-deps.builder.js";
 import { cloneRequiringRawCatalog } from "../../shared/testing/raw-catalog.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
 import { seedFromDirectory } from "../../shared/testing/seed-from-directory.builder.js";
 
@@ -51,7 +51,7 @@ export async function buildUseCase(
   addPluginFor: AddPluginFor,
   options: { logger?: Logger | null; prompter?: Prompter } = {}
 ) {
-  const deps = await buildInstallationDeps();
+  const deps = await buildInstallationDeps({ tools: registeredTools() });
   await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const registry = new InMemoryMarketplaceRegistry();

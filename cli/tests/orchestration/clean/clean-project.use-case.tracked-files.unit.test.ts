@@ -9,7 +9,7 @@ import {
   buildInstallationDeps,
   initAndInstall,
 } from "../../shared/testing/installation-deps.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   AT_PROJECT,
   CleanWithKnownHostSource,
@@ -20,7 +20,7 @@ import {
 
 describe("clean: tracked project files", () => {
   it("with force removes .aidd/cache/ entry from .gitignore", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     const gitignorePath = join(PROJECT_ROOT, ".gitignore");
@@ -41,7 +41,7 @@ describe("clean: tracked project files", () => {
   });
 
   it("with force leaves .gitignore unchanged when entry absent", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     const gitignorePath = join(PROJECT_ROOT, ".gitignore");
@@ -60,7 +60,7 @@ describe("clean: tracked project files", () => {
   });
 
   it("preserves untracked user files", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     const userFile = join(PROJECT_ROOT, "my-custom-file.txt");
@@ -78,7 +78,7 @@ describe("clean: tracked project files", () => {
   });
 
   it("keeps .aidd/config.json and deletes .aidd/cache/ when config.json exists", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     const configPath = join(PROJECT_ROOT, ".aidd", "config.json");
@@ -100,7 +100,7 @@ describe("clean: tracked project files", () => {
   });
 
   it("removes .aidd/plugin-cache/, which no install writes but plugin add does", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     const pluginCacheFile = join(PROJECT_ROOT, ".aidd", "plugin-cache", "some-plugin", "x.json");
@@ -119,7 +119,7 @@ describe("clean: tracked project files", () => {
   });
 
   it("removes .aidd/ entirely when nothing but the manifest and cache lived there", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     const cacheFile = join(PROJECT_ROOT, ".aidd", "cache", "built", "leftover.json");
@@ -136,7 +136,7 @@ describe("clean: tracked project files", () => {
     expect(deps.fs.listUnder(join(PROJECT_ROOT, ".aidd")).length).toBe(0);
   });
   it("removes the marketplaces this project registered, which `marketplace add` wrote", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     // Written by `marketplace add`, not by an install - so it survived a clean that removed
@@ -157,7 +157,7 @@ describe("clean: tracked project files", () => {
   });
 
   it("removes the registry and still keeps config.json, when a project has both", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     // The interaction the two rules meet in: one file clean wrote and must take back, one it

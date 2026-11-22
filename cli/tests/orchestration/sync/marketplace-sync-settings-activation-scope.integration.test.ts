@@ -12,7 +12,7 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   freshHostProof,
   MARKETPLACE,
@@ -29,6 +29,7 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
     await registry.save(PROJECT_ROOT, marketplace());
     const proof = freshHostProof(activator);
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs: seededBuiltCatalog(),
       manifestRepo: manifestWithTool(),
       marketplaceRegistry: registry,
@@ -78,6 +79,7 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
     );
     const proof = freshHostProof(activator);
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs: catalog,
       manifestRepo: new InMemoryManifestRepository(manifest),
       marketplaceRegistry: registry,
@@ -137,6 +139,7 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
     await registry.save(PROJECT_ROOT, marketplace());
     const { fs, manifestRepo } = await pluginFixture();
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
@@ -172,6 +175,7 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
       [PROJECT_ROOT]
     );
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo: new InMemoryManifestRepository(manifest),
       marketplaceRegistry: registry,
@@ -213,6 +217,7 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
     await registry.save(PROJECT_ROOT, marketplace());
     const { fs, manifestRepo } = await pluginFixture();
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
@@ -236,6 +241,7 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
     const constructedRepo = manifestWithTool();
     const machineRepo = manifestWithTool();
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs: seededBuiltCatalog(),
       manifestRepo: constructedRepo,
       userManifestRepo: machineRepo,
@@ -268,6 +274,7 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
       listAllReferencingProjects: async () => [],
     };
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs: seededBuiltCatalog(),
       manifestRepo: manifestWithTool(),
       marketplaceRegistry: registry,
@@ -300,6 +307,7 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
       listAllReferencingProjects: async () => [],
     };
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs: seededBuiltCatalog(),
       manifestRepo: manifestWithTool(),
       marketplaceRegistry: registry,

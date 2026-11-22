@@ -6,10 +6,10 @@ import {
   JsonSchemaValidationError,
 } from "../../../../src/contexts/translate/domain/translate.error.js";
 import type { PluginTreeSink } from "../../../../src/contexts/translate/ports/plugin-tree-sink.js";
+import { buildContractOf } from "../../../shared/testing/build-contract-of.builder.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import type { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
-import { buildContractOf } from "../../../shared/testing/registered-build-contracts.builder.js";
-import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import {
   makeAssetProvider,
   makeSeededFs,
@@ -38,7 +38,7 @@ describe("BuildNativeTree", () => {
         v,
         ap,
         logger,
-        buildContractOf(TOOL.copilot, "marketplace"),
+        buildContractOf(registeredTools(), TOOL.copilot, "marketplace"),
         "marketplace"
       );
       await expect(
@@ -231,7 +231,7 @@ describe("BuildNativeTree", () => {
         v,
         ap,
         logger,
-        buildContractOf(TOOL.copilot, "marketplace"),
+        buildContractOf(registeredTools(), TOOL.copilot, "marketplace"),
         "marketplace"
       );
       const result = await uc.execute({
@@ -299,7 +299,7 @@ describe("BuildNativeTree", () => {
         v,
         ap,
         logger,
-        buildContractOf(TOOL.copilot, "marketplace"),
+        buildContractOf(registeredTools(), TOOL.copilot, "marketplace"),
         "marketplace",
         true
       );
@@ -321,7 +321,7 @@ describe("BuildNativeTree", () => {
 /** Each layout step reports what it wrote, and the use case is the only place those counts are
  * added up; a stub layout states them so the arithmetic is readable. */
 const LAYOUT = {
-  contract: buildContractOf(TOOL.copilot, "marketplace"),
+  contract: buildContractOf(registeredTools(), TOOL.copilot, "marketplace"),
   mode: "marketplace",
   force: false,
 } as const;

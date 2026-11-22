@@ -15,7 +15,7 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { ownedNativeSettings } from "../testing/owned-native-settings.builder.js";
 import { CLEAN_RUN, ROOT } from "../testing/recovery-contract.builder.js";
 
@@ -162,6 +162,7 @@ describe("shared framework references follow any successful native tool outcome"
         listAllReferencingProjects: async () => [],
       };
       const sync = marketplaceSync({
+        tools: registeredTools(),
         fs,
         manifestRepo: new InMemoryManifestRepository(project),
         marketplaceRegistry: registry,

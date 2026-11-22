@@ -19,7 +19,7 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const REGISTRY_LOCATION = "/home/.claude/plugins/known_marketplaces.json";
@@ -96,6 +96,7 @@ async function sync(options: {
       options.registeredPath === undefined ? new Map() : new Map([[name, options.registeredPath]]),
   });
   const useCase = marketplaceSync({
+    tools: registeredTools(),
     fs,
     manifestRepo,
     marketplaceRegistry: registry,

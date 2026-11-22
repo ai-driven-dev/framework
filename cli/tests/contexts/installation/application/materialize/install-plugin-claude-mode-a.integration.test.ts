@@ -25,6 +25,7 @@ function syncWithProvenFreshHost(
   activator: FakeHostActions
 ): SyncSettings {
   return marketplaceSync({
+    tools: registeredTools(),
     fs,
     manifestRepo,
     marketplaceRegistry: registry,

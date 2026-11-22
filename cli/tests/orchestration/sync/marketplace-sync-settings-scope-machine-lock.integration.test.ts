@@ -4,7 +4,7 @@ import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-bui
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   freshHostProof,
   manifestWithTool,
@@ -41,6 +41,7 @@ describe("settings synchronization under the machine ownership lock", () => {
       }
     };
     const sync = marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo: projectRepo,
       marketplaceRegistry: registry,

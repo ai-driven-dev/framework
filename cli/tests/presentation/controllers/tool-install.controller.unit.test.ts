@@ -1,10 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { toolConfigHarness } from "../../shared/testing/tool-config-command.builder.js";
 
 const PROJECT_ROOT = process.cwd();
-const { installAiTool, installIdeTool, errors, run } = toolConfigHarness();
+const CATALOG = registeredTools();
+const { installAiTool, installIdeTool, errors, run } = toolConfigHarness({
+  tools: CATALOG,
+  ideTool: TOOL.vscode,
+  aiTool: TOOL.claude,
+});
 
 describe("aidd framework install", () => {
   it("installs an AI tool at the version the graph reports, plugins carried along", async () => {

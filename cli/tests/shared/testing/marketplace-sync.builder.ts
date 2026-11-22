@@ -23,6 +23,7 @@ import {
   SharedFrameworkSource,
   type SharedFrameworkSourceDeps,
 } from "../../../src/contexts/machine-claims/application/shared-source/shared-framework-source.use-case.js";
+import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import {
   ActivateNativeTools,
   type ActivationMarketplace,
@@ -30,13 +31,13 @@ import {
 import { SyncSettings } from "../../../src/orchestration/sync/sync-settings.use-case.js";
 import { SyncToolSettingsFiles } from "../../../src/orchestration/sync/sync-tool-settings-files.use-case.js";
 import { FakeCurrentVersion } from "./fake-current-version.fake.js";
-import { registeredTools } from "./registered-tools.builder.js";
 
 type Deps = RegisterPluginWithHostDeps;
 type Loader = LoadSyncContextDeps;
 
 /** What a test names; the host maps and every optional collaborator default to empty or absent. */
 export interface MarketplaceSyncParts {
+  tools: ToolCatalog;
   fs: SharedFrameworkSourceDeps["fs"];
   manifestRepo: Loader["manifestRepo"];
   marketplaceRegistry: Loader["marketplaceRegistry"];
@@ -54,7 +55,7 @@ export interface MarketplaceSyncParts {
 }
 
 export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
-  const build = new BuildMarketplaceForTool(parts.ensureBuilt, parts.logger, registeredTools());
+  const build = new BuildMarketplaceForTool(parts.ensureBuilt, parts.logger, parts.tools);
   return new SyncSettings({
     loadContext: new LoadSyncContext({
       manifestRepo: parts.manifestRepo,
@@ -70,7 +71,7 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
         declaration: settingsDeclaration,
         refs: registrationRecordRules,
       },
-      registeredTools()
+      parts.tools
     ),
     activateNativeTools: new ActivateNativeTools({
       registerPluginWithHost: new RegisterPluginWithHost(
@@ -84,7 +85,7 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
           },
           platform: process.platform,
         },
-        registeredTools()
+        parts.tools
       ),
       buildMarketplace: build,
       logger: parts.logger,
@@ -94,7 +95,7 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
       },
       records: registrationRecordRules,
     }),
-    recordActivation: new RecordActivation({ fs: parts.fs }, registeredTools()),
+    recordActivation: new RecordActivation({ fs: parts.fs }, parts.tools),
     machineClaims: new RecordMachineClaims(
       {
         fs: parts.fs,
@@ -102,7 +103,7 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
         emptyManifest: Manifest.create,
         mergeClaims: registrationRecordRules.mergeCatalogueClaims,
       },
-      registeredTools()
+      parts.tools
     ),
     sharedSource: new SharedFrameworkSource({
       fs: parts.fs,

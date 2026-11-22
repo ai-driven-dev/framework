@@ -21,7 +21,7 @@ const PROJECT_ROOT = "/test-project";
 const GREET_PATH = join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md");
 
 async function installedSample(pluginRuntime?: UpdatePluginRuntime) {
-  const deps = await buildInstallationDeps();
+  const deps = await buildInstallationDeps({ tools: registeredTools() });
   await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const loader = loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader);

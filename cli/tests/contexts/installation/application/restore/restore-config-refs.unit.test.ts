@@ -7,7 +7,7 @@ import {
   initAndInstall,
 } from "../../../../shared/testing/installation-deps.builder.js";
 import { loadDistributionOf } from "../../../../shared/testing/load-distribution.builder.js";
-import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { OverwritePrompter } from "../../../../shared/testing/scripted-prompter.fake.js";
 import { restoreAllPluginsOf, restoreOf } from "../../testing/build-restore.builder.js";
 import { fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
@@ -34,7 +34,7 @@ describe("restore reads every config artifact a profile consumes", () => {
 });
 
 async function installedThenDeleted(toolId: ToolId, relativePath: string) {
-  const deps = await buildInstallationDeps();
+  const deps = await buildInstallationDeps({ tools: registeredTools() });
   await initAndInstall(deps, PROJECT_ROOT, toolId);
   const target = join(PROJECT_ROOT, relativePath);
   expect(deps.fs.has(target)).toBe(true);

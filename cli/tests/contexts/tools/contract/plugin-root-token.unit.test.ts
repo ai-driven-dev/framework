@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { rewritePluginRootToken } from "../../../../src/contexts/tools/contract/plugin-root-token.js";
 import { SOURCE_PLUGIN_ROOT_TOKEN } from "../../../../src/shared/domain/materialization/plugin-root-path-rewrite.js";
+import { buildContractOf } from "../../../shared/testing/build-contract-of.builder.js";
 import { registeredAiConfig } from "../../../shared/testing/catalog-of.builder.js";
 import { nativeOf } from "../../../shared/testing/native-plugin-answers.builder.js";
-import { buildContractOf } from "../../../shared/testing/registered-build-contracts.builder.js";
-import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
 // Avoid biome noTemplateCurlyInString: split literals
 const CLAUDE_TOKEN = "$" + "{CLAUDE_PLUGIN_ROOT}";
@@ -130,24 +130,32 @@ describe("rewritePluginRootToken", () => {
 
 describe("per-tool pluginRootToken contract values", () => {
   it("claude contract uses the claude native token", () => {
-    expect(buildContractOf(TOOL.claude, "marketplace").pluginRootToken).toBe(CLAUDE_TOKEN);
+    expect(buildContractOf(registeredTools(), TOOL.claude, "marketplace").pluginRootToken).toBe(
+      CLAUDE_TOKEN
+    );
   });
 
   it("cursor contract uses the cursor native token", () => {
-    expect(buildContractOf(TOOL.cursor, "marketplace").pluginRootToken).toBe(CURSOR_TOKEN);
+    expect(buildContractOf(registeredTools(), TOOL.cursor, "marketplace").pluginRootToken).toBe(
+      CURSOR_TOKEN
+    );
   });
 
   it("codex contract uses the codex native token", () => {
-    expect(buildContractOf(TOOL.codex, "marketplace").pluginRootToken).toBe(CODEX_TOKEN);
+    expect(buildContractOf(registeredTools(), TOOL.codex, "marketplace").pluginRootToken).toBe(
+      CODEX_TOKEN
+    );
   });
 
   it("copilot marketplace contract uses the OpenPlugin native token", () => {
-    expect(buildContractOf(TOOL.copilot, "marketplace").pluginRootToken).toBe(CODEX_TOKEN);
+    expect(buildContractOf(registeredTools(), TOOL.copilot, "marketplace").pluginRootToken).toBe(
+      CODEX_TOKEN
+    );
   });
 
   it("flat contracts do not set pluginRootToken", () => {
     for (const tool of [TOOL.claude, TOOL.cursor, TOOL.copilot, TOOL.codex]) {
-      expect(buildContractOf(tool, "flat").pluginRootToken).toBeUndefined();
+      expect(buildContractOf(registeredTools(), tool, "flat").pluginRootToken).toBeUndefined();
     }
   });
 });
@@ -157,7 +165,7 @@ describe("the route that builds a marketplace bundle", () => {
     const native = nativeOf(registeredAiConfig(TOOL.claude).plugins());
     const authored = `node ${native.rootToken()}/hooks/journal.cjs`;
 
-    const token = buildContractOf(TOOL.claude, "marketplace").pluginRootToken;
+    const token = buildContractOf(registeredTools(), TOOL.claude, "marketplace").pluginRootToken;
 
     expect(rewritePluginRootToken(authored, token ?? "")).toBe(authored);
   });

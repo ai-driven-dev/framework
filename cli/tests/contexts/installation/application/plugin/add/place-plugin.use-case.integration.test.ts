@@ -27,7 +27,7 @@ const CURSOR_SKILL = "sample-plugin/skills/demo/SKILL.md";
 const FOUND_DIR = join(homedir(), ".cursor/plugins/local", "sample-plugin");
 
 async function placeForCursor(foundFile: string | undefined) {
-  const deps = await buildInstallationDeps();
+  const deps = await buildInstallationDeps({ tools: registeredTools() });
   await initAndInstall(deps, PROJECT_ROOT, cursor);
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);

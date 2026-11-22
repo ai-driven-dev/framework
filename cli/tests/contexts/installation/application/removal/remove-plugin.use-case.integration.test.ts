@@ -6,6 +6,7 @@ import type { PluginEntryData } from "../../../../../src/contexts/installation/d
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
+import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import {
@@ -20,6 +21,13 @@ import { cursorHookScriptDir } from "../../testing/cursor-hook-scripts.builder.j
 import { fakeBuildSources } from "../../testing/fake-build-sources.fake.js";
 import { aManifest } from "../../testing/manifest.builder.js";
 import { pluginRemover } from "../../testing/plugin-remover.builder.js";
+
+function withCodexActivator() {
+  return {
+    tools: registeredTools(),
+    nativePluginActivators: new Map([[TOOL.codex, new FakeHostActions()]]),
+  };
+}
 
 class RecordingFileAdapter extends InMemoryFileAdapter {
   readonly deletedPaths: string[] = [];
@@ -114,7 +122,7 @@ function removeUseCaseOver(
 describe("RemovePlugin", () => {
   describe("remove installed plugin", () => {
     it("deletes plugin files and updates manifest", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps(withCodexActivator());
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await installPlugin(deps);
 
@@ -141,7 +149,7 @@ describe("RemovePlugin", () => {
 
   describe("remove missing plugin", () => {
     it("throws PluginNotFoundError", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps(withCodexActivator());
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
       const removeUseCase = pluginRemover({
@@ -196,7 +204,7 @@ describe("RemovePlugin", () => {
 
   describe("only the named plugin", () => {
     it("deletes only the named plugin's files when another plugin is installed", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps(withCodexActivator());
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await installPlugin(deps);
       await installPlugin(deps, EXTRA_PLUGIN_FIXTURE);

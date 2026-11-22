@@ -1,7 +1,6 @@
 import { resolve } from "node:path";
 import { registrationRecordRules } from "../../../src/composition/installation.js";
 import { createOutput } from "../../../src/composition/shared.js";
-import { wireTools } from "../../../src/composition/tools.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-distribution-reader-adapter.js";
 import { InitProject } from "../../../src/contexts/installation/application/init-project.use-case.js";
 import { InstallIdeConfig } from "../../../src/contexts/installation/application/install/config/install-ide-config.use-case.js";
@@ -12,54 +11,57 @@ import { ResolveSyncConflict } from "../../../src/contexts/installation/applicat
 import { UpdateTool } from "../../../src/contexts/installation/application/update/update-tool.use-case.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import type { AiToolId, IdeToolId } from "../../../src/shared/domain/tool.js";
+import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
+import type { AiToolId, IdeToolId, ToolId } from "../../../src/shared/domain/tool.js";
 import { BundledAssetProviderAdapter } from "../../../src/shared/infrastructure/asset-loader.js";
-import { FakeHostActions } from "./fake-host-actions.fake.js";
+import type { FakeHostActions } from "./fake-host-actions.fake.js";
 import { FixturePluginFetcher } from "./fixture-plugin-fetcher.fake.js";
 import { InMemoryFileAdapter } from "./in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "./in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "./in-memory-marketplace-registry.fake.js";
-import { registeredManifestProbes } from "./registered-manifest-probes.builder.js";
-import { registeredTools, TOOL } from "./registered-tools.builder.js";
+import { manifestProbesOf } from "./manifest-probes-of.builder.js";
 import { seedFromDirectory } from "./seed-from-directory.builder.js";
 
 const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
 
+export interface InstallationDepsOptions {
+  /** The tools every command is wired over. */
+  readonly tools: ToolCatalog;
+  /** The host activators a native-plugin removal reaches, none by default. */
+  readonly nativePluginActivators?: ReadonlyMap<ToolId, FakeHostActions>;
+}
+
 /** The installation commands over in-memory ports, the file adapter pre-seeded with the framework
  * fixture content under absolute paths. */
-export async function buildInstallationDeps() {
+export async function buildInstallationDeps({
+  tools,
+  nativePluginActivators = new Map(),
+}: InstallationDepsOptions) {
   const fs = new InMemoryFileAdapter({});
   const manifestRepo = new InMemoryManifestRepository();
   const userManifestRepo = new InMemoryManifestRepository();
   const logger = createOutput(false);
-  const assetProvider = new BundledAssetProviderAdapter(wireTools());
+  const assetProvider = new BundledAssetProviderAdapter(tools);
   const pluginFetcher = new FixturePluginFetcher();
-  const pluginDistributionReader = new PluginDistributionReaderAdapter(
-    fs,
-    registeredManifestProbes()
-  );
+  const pluginDistributionReader = new PluginDistributionReaderAdapter(fs, manifestProbesOf(tools));
   const marketplaceRegistry = new InMemoryMarketplaceRegistry();
   const updateGitignore = new UpdateGitignore(fs);
-  const runPostInstallPipeline = new RunPostInstallPipeline(
-    manifestRepo,
-    updateGitignore,
-    registeredTools()
-  );
+  const runPostInstallPipeline = new RunPostInstallPipeline(manifestRepo, updateGitignore, tools);
   const trackedConfigFiles = new TrackedConfigFiles(fs, logger);
   const installRuntimeConfigUseCase = new InstallRuntimeConfig(
     { trackedConfigFiles, fs, assets: assetProvider, runPostInstallPipeline },
-    registeredTools()
+    tools
   );
   const installIdeConfig = new InstallIdeConfig(
     { trackedConfigFiles, assets: assetProvider, runPostInstallPipeline },
-    registeredTools()
+    tools
   );
   const resolveSyncConflict = new ResolveSyncConflict(fs);
-  const nativePluginActivators = new Map([[TOOL.codex, new FakeHostActions()]]);
 
   await seedFromDirectory(fs, FIXTURE_DIR, { useAbsolutePaths: true });
 
   return {
+    tools,
     fs,
     manifestRepo,
     userManifestRepo,
@@ -84,7 +86,7 @@ type InstallationDeps = Awaited<ReturnType<typeof buildInstallationDeps>>;
 export async function initProject(deps: InstallationDeps, projectRoot: string): Promise<void> {
   const initUseCase = new InitProject(
     { fs: deps.fs, manifestRepo: deps.manifestRepo, updateGitignore: deps.updateGitignore },
-    registeredTools()
+    deps.tools
   );
   await initUseCase.execute({ projectRoot });
 }
@@ -96,7 +98,7 @@ export async function installTool(
 ) {
   const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
   const version = "test";
-  if (registeredTools().isIdeTool(toolId)) {
+  if (deps.tools.isIdeTool(toolId)) {
     return deps.installIdeConfig.execute({
       toolId,
       projectRoot,
@@ -131,7 +133,7 @@ export function buildUpdateTool(deps: InstallationDeps): UpdateTool {
       resolveSyncConflict: deps.resolveSyncConflict,
       manifestRepo: deps.manifestRepo,
     },
-    registeredTools()
+    deps.tools
   );
 }
 
