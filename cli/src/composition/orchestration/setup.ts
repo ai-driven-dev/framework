@@ -8,6 +8,7 @@ import { RestoreMainSessionModels } from "../../contexts/installation/applicatio
 import { InitProject } from "../../contexts/installation/application/init-project.use-case.js";
 import { jsoncMainSessionSettings } from "../../contexts/installation/infrastructure/jsonc-main-session-settings.js";
 import { RefreshAgentPlugins } from "../../orchestration/agent-models/refresh-agent-plugins.use-case.js";
+import { ResetAgentModels } from "../../orchestration/agent-models/reset-agent-models.use-case.js";
 import { SetAgentModels } from "../../orchestration/agent-models/set-agent-models.use-case.js";
 import { RunSetup } from "../../orchestration/setup/run-setup.use-case.js";
 import { ChoosePlugins } from "../../orchestration/setup/steps/choose-plugins.use-case.js";
@@ -47,13 +48,19 @@ export function wireAgentModels({
     updateUserPlugin: p.userPluginUpdateUseCase,
     syncSettings: m.syncSettingsUseCase,
   });
-  return new SetAgentModels({
-    recordProviders: new RecordAgentProviders(agentModelStore, base.tools),
-    restoreProviders: new RestoreAgentProviders(agentModelStore),
-    mainSessions,
-    restoreMainSessions: new RestoreMainSessionModels(agentModelStore, mainSessions),
-    refresh,
-  });
+  const restoreProviders = new RestoreAgentProviders(agentModelStore);
+  return {
+    setAgentModels: new SetAgentModels({
+      recordProviders: new RecordAgentProviders(agentModelStore, base.tools),
+      restoreProviders,
+      mainSessions,
+      refresh,
+    }),
+    resetAgentModels: new ResetAgentModels({
+      restoreProviders,
+      restoreMainSessions: new RestoreMainSessionModels(agentModelStore, mainSessions),
+    }),
+  };
 }
 
 /** `setup`: the questions it asks about plugins and tools, and the scenario that runs them. */

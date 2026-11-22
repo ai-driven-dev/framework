@@ -5,12 +5,11 @@ import type {
   UpdateToolResult,
 } from "../../contexts/installation/application/update/update-tool.use-case.js";
 import { InputRequiredError } from "../../shared/domain/shared.error.js";
-import type { ToolCategory, ToolId } from "../../shared/domain/tool.js";
+import type { ToolId } from "../../shared/domain/tool.js";
 import { BulkConflictState } from "../domain/bulk-conflict-state.js";
 import type { GlobalExecutionError } from "../domain/global-execution.model.js";
+import { forEachCategory } from "./for-each-category.js";
 import type { ResolveUpdateDecision } from "./resolve-update-decision.use-case.js";
-
-const CATEGORIES: readonly ToolCategory[] = ["ai", "ide"];
 
 export interface UpdateToolsRequest {
   toolArg?: ToolId;
@@ -41,14 +40,12 @@ export class UpdateTools {
   async execute(command: UpdateToolsRequest): Promise<UpdateToolsResult> {
     const { toolArg } = command;
     if (toolArg !== undefined) return this.updateTools(command, [toolArg]);
-    const perCategory: UpdateToolsResult[] = [];
-    for (const category of CATEGORIES) {
-      const installed = await this.deps.listInstalledTools.execute({ category });
-      perCategory.push(await this.updateTools(command, installed));
-    }
+    const { results, errors } = await forEachCategory(async (category) =>
+      this.updateTools(command, await this.deps.listInstalledTools.execute({ category }))
+    );
     return {
-      updatedTools: perCategory.flatMap((r) => r.updatedTools),
-      errors: perCategory.flatMap((r) => r.errors),
+      updatedTools: [results.ai, results.ide].flatMap((r) => r?.updatedTools ?? []),
+      errors: [...errors, ...[results.ai, results.ide].flatMap((r) => r?.errors ?? [])],
     };
   }
 

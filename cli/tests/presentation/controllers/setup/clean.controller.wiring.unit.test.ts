@@ -13,7 +13,7 @@ const resetModels = vi.fn();
 const createDeps = vi.fn(async () => ({
   cleanUseCase: { execute: cleanProject },
   cleanUserScopeUseCase: { execute: cleanUserScope },
-  setAgentModels: { execute: vi.fn(), reset: resetModels },
+  resetAgentModels: { execute: resetModels },
 }));
 
 const { registerCleanCommand } = await import(

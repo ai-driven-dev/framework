@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { forEachCategory } from "../../../src/orchestration/sync/for-each-category.js";
+import { InputRequiredError } from "../../../src/shared/domain/shared.error.js";
 
 describe("running a step per category", () => {
   it("runs ai then ide, one after the other, and returns each result", async () => {
@@ -39,5 +40,18 @@ describe("running a step per category", () => {
       { scope: "ai", error: new Error("ai") },
       { scope: "ide", error: new Error("ide") },
     ]);
+  });
+
+  it("stops at a category that needs a question nobody can answer", async () => {
+    const ran: string[] = [];
+
+    await expect(
+      forEachCategory(async (category) => {
+        ran.push(category);
+        throw new InputRequiredError("use --force");
+      })
+    ).rejects.toThrow(InputRequiredError);
+
+    expect(ran).toStrictEqual(["ai"]);
   });
 });

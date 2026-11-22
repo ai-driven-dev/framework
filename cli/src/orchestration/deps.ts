@@ -34,6 +34,7 @@ import type { RefreshUpdateCheck } from "../contexts/update/application/refresh-
 import type { SelfUpdate } from "../contexts/update/application/self-update.use-case.js";
 import type { Environment } from "../shared/ports/environment.js";
 import type { Logger } from "../shared/ports/logger.js";
+import type { ResetAgentModels } from "./agent-models/reset-agent-models.use-case.js";
 import type { SetAgentModels } from "./agent-models/set-agent-models.use-case.js";
 import type { CleanProject } from "./clean/clean-project.use-case.js";
 import type { CleanUserScope } from "./clean/clean-user-scope.use-case.js";
@@ -131,7 +132,8 @@ export interface Deps {
   runUserScopeDoctor: Pick<RunUserScopeDoctor, "execute">;
   runSetup: Pick<RunSetup, "execute">;
   /** The agents' provider and the main session's model: set by `setup`, forgotten by `clean`. */
-  setAgentModels: Pick<SetAgentModels, "execute" | "reset">;
+  setAgentModels: Pick<SetAgentModels, "execute">;
+  resetAgentModels: Pick<ResetAgentModels, "execute">;
   selfUpdate: Pick<SelfUpdate, "execute">;
   statusUseCase: Pick<ReportStatus, "execute">;
   statusAllUseCase: { execute: ReportAllStatus };
