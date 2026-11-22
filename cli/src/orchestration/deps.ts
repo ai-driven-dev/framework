@@ -49,6 +49,7 @@ import type { ReportAllStatus } from "./global/report-all-status.js";
 import type { UpdateTools } from "./global/update-tools.use-case.js";
 import type { AddMarketplace } from "./marketplace/add-marketplace.use-case.js";
 import type { CheckMarketplaceUpstream } from "./marketplace/check-marketplace-upstream.use-case.js";
+import type { ListMarketplaceCatalogs } from "./marketplace/list-marketplace-catalogs.use-case.js";
 import type { RemoveProjectMarketplace } from "./marketplace/remove-project-marketplace.use-case.js";
 import type { RemoveUserMarketplace } from "./marketplace/remove-user-marketplace.use-case.js";
 import type { InstallPlugin } from "./plugin/install-plugin.use-case.js";
@@ -115,6 +116,7 @@ export interface Deps {
   userPluginUpdateUseCase: Pick<UpdateUserPlugin, "execute">;
   addMarketplace: Pick<AddMarketplace, "execute">;
   listMarketplaces: Pick<ListMarketplaces, "execute">;
+  listMarketplaceCatalogs: Pick<ListMarketplaceCatalogs, "execute">;
   marketplaceRemoveUseCase: Pick<RemoveProjectMarketplace, "execute">;
   userMarketplaceRemoveUseCase: Pick<RemoveUserMarketplace, "execute">;
   refreshMarketplace: Pick<RefreshMarketplace, "execute">;

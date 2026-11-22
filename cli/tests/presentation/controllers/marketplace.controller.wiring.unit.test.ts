@@ -9,6 +9,7 @@ import { prompterAnswering } from "../../shared/testing/partial-ports.builder.js
 
 const marketplaceAdd = vi.fn();
 const marketplaceList = vi.fn();
+const marketplaceCatalogs = vi.fn();
 const marketplaceRemove = vi.fn();
 const userMarketplaceRemove = vi.fn();
 const marketplaceRefresh = vi.fn();
@@ -21,6 +22,7 @@ const spawn = vi.fn();
 const createDeps = vi.fn(async () => ({
   addMarketplace: { execute: marketplaceAdd },
   listMarketplaces: { execute: marketplaceList },
+  listMarketplaceCatalogs: { execute: marketplaceCatalogs },
   marketplaceRemoveUseCase: { execute: marketplaceRemove },
   userMarketplaceRemoveUseCase: { execute: userMarketplaceRemove },
   refreshMarketplace: { execute: marketplaceRefresh },
@@ -221,23 +223,19 @@ it("names a failed registration on stderr and fails the process", async () => {
 describe("aidd marketplace list", () => {
   it("leaves the catalogs unfetched unless they were asked for", async () => {
     expect(await run("list")).toEqual(["No marketplaces registered."]);
-    expect(marketplaceList).toHaveBeenCalledWith({
-      projectRoot: PROJECT_ROOT,
-      withCatalogs: false,
-    });
+    expect(marketplaceList).toHaveBeenCalledWith({ projectRoot: PROJECT_ROOT });
+    expect(marketplaceCatalogs).not.toHaveBeenCalled();
   });
 
   it("fetches every catalog when the plugins were asked for", async () => {
-    marketplaceList.mockResolvedValue({
+    marketplaceCatalogs.mockResolvedValue({
       marketplaces: [{ name: "market-b", version: "1.2.3", scope: "project" }],
       catalogs: new Map(),
     });
 
     expect(await run("list", "--plugins")).toEqual(["market-b v1.2.3 [project]"]);
-    expect(marketplaceList).toHaveBeenCalledWith({
-      projectRoot: PROJECT_ROOT,
-      withCatalogs: true,
-    });
+    expect(marketplaceCatalogs).toHaveBeenCalledWith({ projectRoot: PROJECT_ROOT });
+    expect(marketplaceList).not.toHaveBeenCalled();
     expect(errors.join("")).toBe("Warning:   (could not fetch catalog for 'market-b')\n");
   });
 });

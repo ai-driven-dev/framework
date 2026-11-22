@@ -49,6 +49,7 @@ const OWNER: { [Member in Passthrough]: OwnerOf<Member> } = {
   pluginListUseCase: "installation",
   addMarketplace: "marketplace",
   askMarketplaceSource: "marketplace",
+  listMarketplaceCatalogs: "marketplace",
   marketplaceCheckUseCase: "marketplace",
   marketplaceRemoveUseCase: "marketplace",
   syncNativeActivation: "marketplace",

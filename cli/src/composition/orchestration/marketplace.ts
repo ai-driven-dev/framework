@@ -28,6 +28,7 @@ import { SharedFrameworkSource } from "../../contexts/machine-claims/application
 import { userScopeFilesSafeToDelete } from "../../contexts/machine-claims/application/user-scope-plugin-files.js";
 import { AddMarketplace } from "../../orchestration/marketplace/add-marketplace.use-case.js";
 import { CheckMarketplaceUpstream } from "../../orchestration/marketplace/check-marketplace-upstream.use-case.js";
+import { ListMarketplaceCatalogs } from "../../orchestration/marketplace/list-marketplace-catalogs.use-case.js";
 import { RegisterMarketplace } from "../../orchestration/marketplace/register-marketplace.use-case.js";
 import { RemoveProjectMarketplace } from "../../orchestration/marketplace/remove-project-marketplace.use-case.js";
 import { RemoveRegisteredMarketplace } from "../../orchestration/marketplace/remove-registered-marketplace.use-case.js";
@@ -268,9 +269,26 @@ function wireSetupSource(base: Base, recordSourceReference: RecordSourceReferenc
   };
 }
 
+/** What a person reads of the registered marketplaces: the upstream check and the catalog list. */
+function wireMarketplaceReads(base: Base) {
+  const { tools, manifestRepo, marketplaceRegistry } = base;
+  const { resolveMarketplaceUseCase, listMarketplaces } = base;
+  const marketplaceCheckUseCase = new CheckMarketplaceUpstream(
+    new CheckMarketplaces(marketplaceRegistry),
+    resolveMarketplaceUseCase,
+    new ListPluginSources(manifestRepo, tools)
+  );
+  const listMarketplaceCatalogs = new ListMarketplaceCatalogs(
+    listMarketplaces,
+    resolveMarketplaceUseCase,
+    base.logger
+  );
+  return { marketplaceCheckUseCase, listMarketplaceCatalogs };
+}
+
 /** Marketplace removal, check and sync, and the setup steps that register a marketplace. */
 export function wireMarketplace(base: Base, inst: Installation) {
-  const { tools, prompter, manifestRepo, marketplaceRegistry } = base;
+  const { prompter, marketplaceRegistry } = base;
   const { marketplaceTrustStore, resolveMarketplaceUseCase, listMarketplaces } = base;
   const removal = wireMarketplaceRemoval(base, inst);
   const { recordSourceReference, ...sync } = wireMarketplaceSync(base, inst);
@@ -288,17 +306,13 @@ export function wireMarketplace(base: Base, inst: Installation) {
     record: new RecordMarketplace(marketplaceRegistry, marketplaceTrustStore),
     prompter,
   });
-  const marketplaceCheckUseCase = new CheckMarketplaceUpstream(
-    new CheckMarketplaces(marketplaceRegistry),
-    resolveMarketplaceUseCase,
-    new ListPluginSources(manifestRepo, tools)
-  );
+  const reads = wireMarketplaceReads(base);
   const setup = wireSetupSource(base, recordSourceReference);
   return {
     ...removal,
     ...sync,
     addMarketplace,
-    marketplaceCheckUseCase,
+    ...reads,
     ...setup,
   };
 }

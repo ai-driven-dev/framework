@@ -83,11 +83,7 @@ function marketplaceUseCasesOf(inputs: MarketplaceUseCaseInputs): MarketplaceUse
     inputs.pluginCatalogRepository,
     userConfigDir
   );
-  const listMarketplaces = new ListMarketplaces(
-    marketplaceRegistry,
-    resolveMarketplaceUseCase,
-    shared.logger
-  );
+  const listMarketplaces = new ListMarketplaces(marketplaceRegistry);
   const refreshMarketplace = new RefreshMarketplace({
     registry: marketplaceRegistry,
     resolveMarketplace: resolveMarketplaceUseCase,

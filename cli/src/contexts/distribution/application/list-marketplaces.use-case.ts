@@ -1,59 +1,18 @@
-import type { Logger } from "../../../shared/ports/logger.js";
-import type { PluginCatalog } from "../contract/catalog.js";
 import type { MarketplaceView } from "../contract/marketplace-view.js";
 import type { MarketplaceRegistry } from "../ports/marketplace-registry.js";
-import type { ResolveMarketplace } from "./resolve-marketplace.use-case.js";
 
 export interface ListMarketplacesRequest {
   projectRoot: string;
-  withCatalogs?: boolean;
 }
 
 export interface ListMarketplacesResult {
   marketplaces: readonly MarketplaceView[];
-  catalogs?: Map<string, PluginCatalog>;
 }
 
 export class ListMarketplaces {
-  constructor(
-    private readonly registry: MarketplaceRegistry,
-    private readonly resolveMarketplace?: ResolveMarketplace,
-    private readonly logger?: Logger
-  ) {}
+  constructor(private readonly registry: MarketplaceRegistry) {}
 
   async execute(options: ListMarketplacesRequest): Promise<ListMarketplacesResult> {
-    const marketplaces = await this.registry.list(options.projectRoot);
-    if (!options.withCatalogs) return { marketplaces };
-    const catalogs = await this.fetchCatalogs(marketplaces, options.projectRoot);
-    return { marketplaces, catalogs };
-  }
-
-  private async fetchCatalogs(
-    marketplaces: readonly MarketplaceView[],
-    projectRoot: string
-  ): Promise<Map<string, PluginCatalog>> {
-    const catalogs = new Map<string, PluginCatalog>();
-    for (const m of marketplaces) {
-      await this.fetchOneCatalog(m, projectRoot, catalogs);
-    }
-    return catalogs;
-  }
-
-  private async fetchOneCatalog(
-    marketplace: MarketplaceView,
-    projectRoot: string,
-    catalogs: Map<string, PluginCatalog>
-  ): Promise<void> {
-    if (this.resolveMarketplace === undefined) return;
-    try {
-      const { catalog } = await this.resolveMarketplace.execute({
-        marketplace,
-        projectRoot,
-        forceRefresh: true,
-      });
-      if (catalog !== null) catalogs.set(marketplace.name, catalog);
-    } catch (err) {
-      this.logger?.warn(`Skipping marketplace '${marketplace.name}': `, err);
-    }
+    return { marketplaces: await this.registry.list(options.projectRoot) };
   }
 }
