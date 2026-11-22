@@ -23,6 +23,9 @@ import {
   CleanUserScope,
   type CleanUserScopeDeps,
 } from "../../../src/orchestration/clean/clean-user-scope.use-case.js";
+import { ConfirmRemoval } from "../../../src/orchestration/clean/confirm-removal.use-case.js";
+import { InspectUserScope } from "../../../src/orchestration/clean/inspect-user-scope.use-case.js";
+import { RemoveUserScope } from "../../../src/orchestration/clean/remove-user-scope.use-case.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
@@ -37,7 +40,7 @@ export interface UserScopeCleanerParts extends Partial<HostPorts> {
   userConfigDir?: () => string;
   homeDir?: () => string;
   userSourceReferences?: UserSourceReferences;
-  prompter?: CleanUserScopeDeps["prompter"];
+  prompter?: ConstructorParameters<typeof ConfirmRemoval>[0];
 }
 
 function hostPortsOf(parts: Partial<HostPorts>): HostPorts {
@@ -49,7 +52,7 @@ function hostPortsOf(parts: Partial<HostPorts>): HostPorts {
   };
 }
 
-export function userScopeCleaner(parts: UserScopeCleanerParts): CleanUserScope {
+export function userScopeCleanerDeps(parts: UserScopeCleanerParts): CleanUserScopeDeps {
   const fs = parts.fs ?? new InMemoryFileAdapter();
   const logger = parts.logger ?? new CapturingLogger();
   const homeDir = parts.homeDir ?? (() => "/fake-home");
@@ -60,31 +63,40 @@ export function userScopeCleaner(parts: UserScopeCleanerParts): CleanUserScope {
       purgeCache.resolveCandidate(cacheRoot, segments, label),
     frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
   };
-  return new CleanUserScope({
-    purgeFiles: new PurgeUserScopeFiles(
-      {
-        userManifestRepo: parts.repo,
-        claims: registrationRecordRules,
-        purgeMachineState: new PurgeMachineState({ fs, logger, guards }),
-        homeDir,
-        userScopePluginFiles: new UserScopePluginFiles(fs, (plugin, tool, home) =>
-          userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
-        ),
-      },
-      parts.tools
-    ),
-    withdrawFromHost: new WithdrawFromHost(fs, logger, hostPortsOf(parts)),
-    removeMarketplace: new RemoveMarketplace(
-      parts.marketplaceRegistry ?? new InMemoryMarketplaceRegistry()
-    ),
-    claims: wireCleanClaims({
-      fs,
-      logger,
+  const purgeFiles = new PurgeUserScopeFiles(
+    {
       userManifestRepo: parts.repo,
-      userSourceReferences: parts.userSourceReferences,
-      purgeCache,
-    }),
+      claims: registrationRecordRules,
+      purgeMachineState: new PurgeMachineState({ fs, logger, guards }),
+      homeDir,
+      userScopePluginFiles: new UserScopePluginFiles(fs, (plugin, tool, home) =>
+        userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
+      ),
+    },
+    parts.tools
+  );
+  const claims = wireCleanClaims({
+    fs,
     logger,
-    prompter: parts.prompter,
+    userManifestRepo: parts.repo,
+    userSourceReferences: parts.userSourceReferences,
+    purgeCache,
   });
+  return {
+    purgeFiles,
+    inspect: new InspectUserScope({ purgeFiles, claims, logger }),
+    confirm: new ConfirmRemoval(parts.prompter),
+    remove: new RemoveUserScope({
+      purgeFiles,
+      withdrawFromHost: new WithdrawFromHost(fs, logger, hostPortsOf(parts)),
+      removeMarketplace: new RemoveMarketplace(
+        parts.marketplaceRegistry ?? new InMemoryMarketplaceRegistry()
+      ),
+      claims,
+    }),
+  };
+}
+
+export function userScopeCleaner(parts: UserScopeCleanerParts): CleanUserScope {
+  return new CleanUserScope(userScopeCleanerDeps(parts));
 }

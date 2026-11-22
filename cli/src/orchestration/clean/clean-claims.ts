@@ -18,6 +18,6 @@ export interface CleanClaims {
   readonly detach: ReturnType<typeof detachProjectClaims>;
   readonly machineClaims: ReturnType<typeof readMachineClaims>;
   readonly exclusive: Lock;
-  readonly purgeCache: PurgeDeclaredCache;
+  readonly purgeCache: Pick<PurgeDeclaredCache, "resolveCandidate">;
   readonly frameworkMarketplaceName: string;
 }
