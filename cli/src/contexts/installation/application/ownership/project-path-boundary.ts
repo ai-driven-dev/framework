@@ -1,5 +1,5 @@
 import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
-import { isErrnoException } from "../../../../shared/domain/reading/json-file.js";
+import { whenAbsent } from "../../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 
 /** Resolve an existing file or its nearest existing parent before mutating project-local content. */
@@ -31,11 +31,8 @@ async function realpathOfNearest(
   candidate: string,
   root: string
 ): Promise<string | null> {
-  try {
-    return await fs.realpath(candidate);
-  } catch (error) {
-    if (!(isErrnoException(error) && error.code === "ENOENT")) throw error;
-  }
+  const resolved = await whenAbsent(() => fs.realpath(candidate), null);
+  if (resolved !== null) return resolved;
   if (candidate === root) return null;
   return realpathOfNearest(fs, dirname(candidate), root);
 }

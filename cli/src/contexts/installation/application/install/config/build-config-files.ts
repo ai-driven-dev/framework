@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { InstallationFile } from "../../../../../shared/domain/installation-file.js";
-import { isErrnoException } from "../../../../../shared/domain/reading/json-file.js";
+import { whenAbsent } from "../../../../../shared/domain/reading/json-file.js";
 import type { AssetProvider } from "../../../../../shared/ports/asset-provider.js";
 import type { FileReader } from "../../../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../../../tools/contract/tool-catalog.js";
@@ -72,10 +72,5 @@ async function readExistingConfig(
   relativePath: string,
   projectRoot: string
 ): Promise<string | null> {
-  try {
-    return await fs.readFile(join(projectRoot, relativePath));
-  } catch (error) {
-    if (isErrnoException(error) && error.code === "ENOENT") return null;
-    throw error;
-  }
+  return whenAbsent(() => fs.readFile(join(projectRoot, relativePath)), null);
 }

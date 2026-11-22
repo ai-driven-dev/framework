@@ -36,6 +36,12 @@ export class JsonFileMergerAdapter implements FileReader, FileWriter, FileMerger
   realpath(path: string): Promise<string> {
     return this.files.realpath(path);
   }
+  readFileIfReadable(path: string): Promise<string | undefined> {
+    return this.files.readFileIfReadable(path);
+  }
+  realpathIfResolvable(path: string): Promise<string | undefined> {
+    return this.files.realpathIfResolvable(path);
+  }
   writeFile(path: string, content: string): Promise<void> {
     return this.files.writeFile(path, content);
   }

@@ -27,4 +27,10 @@ export interface FileReader {
    * does not exist, so a caller checks `fileExists` first when that matters.
    */
   realpath(path: string): Promise<string>;
+
+  /** `readFile`, or `undefined` when the file cannot be read for any reason. */
+  readFileIfReadable(path: string): Promise<string | undefined>;
+
+  /** `realpath`, or `undefined` when the path cannot be resolved for any reason. */
+  realpathIfResolvable(path: string): Promise<string | undefined>;
 }

@@ -117,10 +117,8 @@ export class RecordActivation {
     const settingsPath = this.marketplaceSettingsOf(toolId)?.sharedSettingsFile();
     const tracked = manifest.getToolFiles(toolId).find((f) => f.relativePath === settingsPath);
     if (settingsPath === undefined || tracked === undefined) return false;
-    const content = await this.deps.fs
-      .readFile(resolve(projectRoot, settingsPath))
-      .catch(() => null);
-    if (content === null) return false;
+    const content = await this.deps.fs.readFileIfReadable(resolve(projectRoot, settingsPath));
+    if (content === undefined) return false;
     const hash = FileHash.of(content);
     if (driftOf(tracked.hash.value, hash) === "ok") return false;
     manifest.recordFileHash(toolId, settingsPath, hash);

@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { isErrnoException } from "../../../../shared/domain/reading/json-file.js";
+import { whenAbsent } from "../../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import { assertProjectPathWithinRoot } from "../ownership/project-path-boundary.js";
@@ -26,10 +26,5 @@ export async function removeFlatMcpEntries(
 }
 
 async function readExistingJson(fs: FileReader, path: string): Promise<string | null> {
-  try {
-    return await fs.readFile(path);
-  } catch (err) {
-    if (isErrnoException(err) && err.code === "ENOENT") return null;
-    throw err;
-  }
+  return whenAbsent(() => fs.readFile(path), null);
 }

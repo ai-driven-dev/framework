@@ -1,12 +1,14 @@
-export type ParsedJson = { readonly ok: true; readonly value: unknown } | { readonly ok: false };
+export type ParsedJson =
+  | { readonly ok: true; readonly value: unknown }
+  | { readonly ok: false; readonly error: unknown };
 
-/** `JSON.parse` that says whether it parsed, so a caller holding text it may not trust has no
- * `try` of its own to get wrong. */
+/** `JSON.parse` that says whether it parsed, and why not, so a caller holding text it may not
+ * trust has no `try` of its own to get wrong. */
 export function tryParseJson(text: string): ParsedJson {
   try {
     return { ok: true, value: JSON.parse(text) };
-  } catch {
-    return { ok: false };
+  } catch (error) {
+    return { ok: false, error };
   }
 }
 

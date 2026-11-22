@@ -28,9 +28,9 @@ describe("tryParseJson", () => {
     expect(tryParseJson("null")).toEqual({ ok: true, value: null });
   });
 
-  it("says so when the text is not JSON", () => {
-    expect(tryParseJson("{nope")).toEqual({ ok: false });
-    expect(tryParseJson("")).toEqual({ ok: false });
+  it("says so when the text is not JSON, with the parse error", () => {
+    expect(tryParseJson("{nope")).toEqual({ ok: false, error: expect.any(SyntaxError) });
+    expect(tryParseJson("")).toEqual({ ok: false, error: expect.any(SyntaxError) });
   });
 });
 

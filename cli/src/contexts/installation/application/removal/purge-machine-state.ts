@@ -2,7 +2,7 @@ import {
   USER_SOURCE_REFERENCES_FILENAME,
   userBuiltCacheRoot,
 } from "../../../../shared/domain/layout/aidd-layout.js";
-import { isErrnoException } from "../../../../shared/domain/reading/json-file.js";
+import { whenAbsent } from "../../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
@@ -39,13 +39,8 @@ export class PurgeMachineState implements MachineStatePurge {
    * never trusted from any one tool's own manifest entry. */
   async builtVersions(): Promise<readonly string[]> {
     const root = userBuiltCacheRoot(this.deps.guards.userConfigDir());
-    let entries: string[];
-    try {
-      entries = await this.deps.fs.listDirectory(root);
-    } catch (error) {
-      if (isErrnoException(error) && error.code === "ENOENT") return [];
-      throw error;
-    }
+    const entries = await whenAbsent(() => this.deps.fs.listDirectory(root), null);
+    if (entries === null) return [];
     const versions = new Set<string>();
     for (const entry of entries) {
       const version = entry.split("/")[0];
@@ -92,13 +87,8 @@ export class PurgeMachineState implements MachineStatePurge {
       `user scope: ${path}`
     );
     if (candidate === null) return;
-    let entries: string[];
-    try {
-      entries = await this.deps.fs.listDirectory(candidate);
-    } catch (error) {
-      if (isErrnoException(error) && error.code === "ENOENT") return;
-      throw error;
-    }
+    const entries = await whenAbsent(() => this.deps.fs.listDirectory(candidate), null);
+    if (entries === null) return;
     if (entries.length > 0) return;
     await this.deps.fs.deleteDirectory(candidate);
     this.deps.logger.info(`user scope: ${path} purged: ${candidate}`);

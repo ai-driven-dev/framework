@@ -151,8 +151,7 @@ export class CacheBuiltMarketplace {
     if (sentinel.split(":")[1] === UNVERSIONED) return false;
     const path = join(builtDir, SENTINEL_FILE);
     if (!(await this.deps.fs.fileExists(path))) return false;
-    const current = await this.deps.fs.readFile(path).catch(() => "");
-    return current === sentinel;
+    return (await this.deps.fs.readFileIfReadable(path)) === sentinel;
   }
 
   private async build(job: BuildJob): Promise<void> {

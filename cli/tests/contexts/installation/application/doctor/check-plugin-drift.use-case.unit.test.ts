@@ -18,6 +18,8 @@ function readerOf(disk: Record<string, string>): FileReader {
     isExecutable: async () => false,
     isDirectory: async () => false,
     realpath: async (path) => path,
+    readFileIfReadable: async () => undefined,
+    realpathIfResolvable: async (path) => path,
     readFileHash: async (p) =>
       new FileHash(Object.entries(disk).find(([name]) => p.endsWith(name))?.[1] ?? TRACKED),
     readFile: async () => "",

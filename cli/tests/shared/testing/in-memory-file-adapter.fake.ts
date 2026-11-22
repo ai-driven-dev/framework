@@ -88,6 +88,14 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
     return this.files.has(normalizedPath) || this.directories.has(dirKey(path));
   }
 
+  async readFileIfReadable(path: string): Promise<string | undefined> {
+    return this.readFile(path).catch(() => undefined);
+  }
+
+  async realpathIfResolvable(path: string): Promise<string | undefined> {
+    return this.realpath(path).catch(() => undefined);
+  }
+
   async readFileHash(path: string): Promise<FileHash> {
     const content = await this.readFile(path);
     return FileHash.of(content);
