@@ -6,6 +6,10 @@
     return template ? template.replace("{count}", String(count)) : String(count);
   }
 
+  function needsDiffDialog(lineCount) {
+    return lineCount > 5;
+  }
+
   function elapsedSeconds(start, end) {
     const seconds = (Date.parse(end) - Date.parse(start)) / 1000;
     return Number.isFinite(seconds) && seconds >= 0 ? seconds : NaN;
@@ -44,7 +48,7 @@
     return lines.join("\n");
   }
 
-  if (typeof module !== "undefined") module.exports = { composePrompt, formatCount, elapsedSeconds, formatDuration };
+  if (typeof module !== "undefined") module.exports = { composePrompt, formatCount, elapsedSeconds, formatDuration, needsDiffDialog };
   if (typeof document === "undefined") return;
 
   const report = document.querySelector("#report");
@@ -65,6 +69,70 @@
     node.textContent = `${known ? node.dataset.prefix || "" : ""}${label}`;
     node.classList.toggle("is-slow", known && seconds > 60);
   });
+
+  document.querySelectorAll(".git-diff").forEach((diff) => {
+    const lines = [...diff.querySelectorAll(".diff-line")];
+    if (!needsDiffDialog(lines.length)) return;
+
+    const dialog = document.createElement("dialog");
+    dialog.className = "diff-dialog";
+    const title = document.createElement("h2");
+    title.textContent = report.dataset.diffTitle || "Full changes";
+    dialog.setAttribute("aria-label", title.textContent);
+    const close = document.createElement("button");
+    close.type = "button";
+    close.className = "diff-close";
+    close.textContent = report.dataset.diffClose || "Close";
+    close.addEventListener("click", () => dialog.close());
+    const columns = document.createElement("div");
+    columns.className = "dialog-columns";
+    for (const [kind, label] of [["diff-del", report.dataset.diffRemoved || "Removed"], ["diff-add", report.dataset.diffAdded || "Added"]]) {
+      const section = document.createElement("section");
+      const heading = document.createElement("h3");
+      heading.textContent = label;
+      const content = document.createElement("pre");
+      content.className = "dialog-code";
+      const code = document.createElement("code");
+      lines.filter((line) => line.classList.contains(kind)).forEach((line) => {
+        const copy = line.cloneNode(true);
+        copy.hidden = false;
+        code.appendChild(copy);
+      });
+      content.appendChild(code);
+      section.append(heading, content);
+      columns.appendChild(section);
+    }
+    dialog.append(title, close, columns);
+    const open = document.createElement("button");
+    open.type = "button";
+    open.className = "diff-open";
+    open.textContent = report.dataset.diffOpen || "View all changes";
+    open.addEventListener("click", () => dialog.showModal());
+    lines.slice(5).forEach((line) => { line.hidden = true; });
+    diff.insertAdjacentElement("afterend", open);
+    open.insertAdjacentElement("afterend", dialog);
+  });
+
+  function revealEvidence() {
+    let id;
+    try { id = decodeURIComponent(window.location.hash.slice(1)); } catch { return; }
+    const target = id && document.getElementById(id);
+    if (!target) return;
+    for (let node = target.parentElement; node; node = node.parentElement) {
+      if (node.tagName === "DETAILS") node.open = true;
+    }
+    if (target.tagName === "DETAILS") target.open = true;
+    target.scrollIntoView({ block: "center" });
+  }
+  if (typeof window.addEventListener === "function") {
+    window.addEventListener("hashchange", revealEvidence);
+    document.querySelectorAll('a[href^="#"]').forEach((link) => {
+      link.addEventListener("click", () => {
+        if (link.hash && link.hash === window.location.hash) window.setTimeout(revealEvidence, 0);
+      });
+    });
+    if (window.location?.hash) revealEvidence();
+  }
 
   function updatePrompt() {
     const accepted = findings.filter((finding) => finding.querySelector(".accept-input").checked);
@@ -88,7 +156,7 @@
     });
   });
 
-  document.querySelector("#copy-prompt").addEventListener("click", async (event) => {
+  document.querySelector("#copy-prompt")?.addEventListener("click", async (event) => {
     const button = event.currentTarget;
     const original = button.textContent;
     try {

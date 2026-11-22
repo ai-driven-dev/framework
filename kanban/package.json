@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "cli-table3": "0.6.5",
-    "commander": "^15.0.0",
+    "commander": "^15.1.0",
     "gray-matter": "^4.0.3",
     "ink": "8.0.0",
     "react": "19.3.1"

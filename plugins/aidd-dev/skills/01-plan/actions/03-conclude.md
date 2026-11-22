@@ -15,7 +15,7 @@ The explored source.
 3. Write the feature folder in the project's `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<feature-slug>/`, or in the source's own folder:
    - `plan.md` from the [plan template](../assets/plan-template.md).
    - One `phase-<n>.md` per phase from the [phase template](../assets/phase-template.md).
-4. From the project root, run the skill's `scripts/validate-plan.cjs` with node on the feature folder, and fix what it reports until it prints `VALID`.
+4. From the project root, run this skill's `scripts/validate-plan.cjs` on the feature folder written, fix each finding and validate again, and after 3 passes stop and show what is left.
 5. Have a read-only subagent, independent of its author, check the plan against [plan-checks](../references/plan-checks.md), once.
 6. Reply with only the folder path, the ✗ lines, and "Approve, correct, or explore more?".
 

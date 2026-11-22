@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "kind": "memory",
+  "unit": "folder",
+  "targets": "plugins/aidd-context/skills/02-project-memory",
+  "marker": "SKILL.md",
+  "rules": {
+    "MEMORY-01": {
+      "op": "custom",
+      "in": "references/memory-rules.md",
+      "check": "memory-rules-table",
+      "why": "a rule the table omits or states differently is a limit the writer follows wrongly"
+    },
+    "MEMORY-02": {
+      "op": "forbidden",
+      "in": ["SKILL.md", "actions/*.md", "references/*.md"],
+      "notIn": "references/memory-rules.md",
+      "scope": "nofence",
+      "regex": "\\b(?:\\d+|(?:[Uu]nder|[Oo]ver|[Mm]ax|[Mm]aximum|[Tt]han)\\s+[a-z]+(?:-[a-z]+)?)\\s+[Ww]ords\\b|\\b(?:TODO|TBD|todo|tbd)\\b",
+      "why": "a limit stated beside the table drifts from the engine",
+      "fix": "point at references/memory-rules.md instead of stating the limit"
+    },
+    "MEMORY-03": {
+      "op": "custom",
+      "in": ["assets/templates/README.md", "assets/templates/memory/*.md"],
+      "check": "memory-template-lint",
+      "why": "a template is copied into a project as it is, and must raise no error besides its questions"
+    },
+    "MEMORY-05": {
+      "op": "forbidden",
+      "in": ["assets/templates/README.md", "assets/templates/memory/*.md"],
+      "scope": "nofence",
+      "regex": "<!--|<(?!https?:)[^>\\n]+>|\\b(?:TODO|TBD)\\b",
+      "why": "a placeholder or a guidance comment left in a template is copied into every project",
+      "fix": "ask it as a {{question}} or delete it"
+    },
+    "MEMORY-06": {
+      "op": "custom",
+      "in": "references/capabilities.md",
+      "check": "memory-capabilities",
+      "why": "a template no capability names is never written, and a name with no template is written from nothing"
+    },
+    "MEMORY-07": {
+      "op": "forbidden",
+      "in": "**/*.md",
+      "scope": "nofence",
+      "regex": "(?<![\\w-])memory\\.cjs\\b|`node [^`]*`|\\$\\{CLAUDE_[A-Z_]+\\}",
+      "why": "the skill names no engine, command line or host variable: the hook owns them",
+      "fix": "describe what happens, not the command that does it"
+    }
+  }
+}

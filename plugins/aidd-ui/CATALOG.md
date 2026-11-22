@@ -8,6 +8,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 - [`.claude-plugin`](#claude-plugin)
 - [`hooks`](#hooks)
+  - [`hooks/lib`](#hookslib)
 - [`skills`](#skills)
   - [`skills/01-journeys`](#skills01-journeys)
   - [`skills/02-brand`](#skills02-brand)
@@ -26,7 +27,36 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | File |
 |------|
+| [aidd-ui.cjs](hooks/aidd-ui.cjs) |
 | [hooks.json](hooks/hooks.json) |
+
+#### `hooks/lib`
+
+| File |
+|------|
+| [bump.cjs](hooks/lib/bump.cjs) |
+| [cli.cjs](hooks/lib/cli.cjs) |
+| [code.cjs](hooks/lib/code.cjs) |
+| [common-rules.cjs](hooks/lib/common-rules.cjs) |
+| [css.cjs](hooks/lib/css.cjs) |
+| [drafts.cjs](hooks/lib/drafts.cjs) |
+| [extract.cjs](hooks/lib/extract.cjs) |
+| [graph.cjs](hooks/lib/graph.cjs) |
+| [help.cjs](hooks/lib/help.cjs) |
+| [history.cjs](hooks/lib/history.cjs) |
+| [hook.cjs](hooks/lib/hook.cjs) |
+| [host.cjs](hooks/lib/host.cjs) |
+| [literals.cjs](hooks/lib/literals.cjs) |
+| [markdown.cjs](hooks/lib/markdown.cjs) |
+| [model.cjs](hooks/lib/model.cjs) |
+| [page.cjs](hooks/lib/page.cjs) |
+| [project.cjs](hooks/lib/project.cjs) |
+| [records.cjs](hooks/lib/records.cjs) |
+| [renders.cjs](hooks/lib/renders.cjs) |
+| [resolver.cjs](hooks/lib/resolver.cjs) |
+| [script.cjs](hooks/lib/script.cjs) |
+| [tokens.cjs](hooks/lib/tokens.cjs) |
+| [values.cjs](hooks/lib/values.cjs) |
 
 ### `skills`
 

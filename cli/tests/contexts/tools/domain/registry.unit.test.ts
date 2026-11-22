@@ -1,11 +1,11 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import type { ProjectHooksFormat } from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
 import {
   type NativePluginsParams,
   PluginsCapability,
 } from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
 import type { AiTool } from "../../../../src/contexts/tools/domain/contracts.js";
-import { cursorProjectHooksFormat } from "../../../../src/contexts/tools/domain/formats/cursor-hooks-project-merge.js";
 import {
   getToolConfig,
   hasToolSignals,
@@ -17,6 +17,15 @@ import {
 } from "../../../../src/contexts/tools/domain/registry.js";
 import type { AiToolId } from "../../../../src/kernel/tool.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/index.js";
+
+const projectHooksFormat: ProjectHooksFormat = {
+  merge: () => ({ content: "", warnings: [] }),
+  unmerge: () => "",
+  contributedEntries: () => [],
+  isEmpty: () => true,
+  scriptPath: () => "",
+  scriptDir: () => "",
+};
 
 function stubTool(
   toolId: AiToolId,
@@ -120,7 +129,7 @@ describe("what a tool's plugin capability declares about activation", () => {
           plugins: nativePlugins({
             hooksDestination: "project",
             projectHooksRelativePath: ".cursor/hooks.json",
-            projectHooksFormat: cursorProjectHooksFormat,
+            projectHooksFormat: projectHooksFormat,
           }),
         },
         null

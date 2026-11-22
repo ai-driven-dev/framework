@@ -4,11 +4,11 @@ description: Project contribution guidelines template
 argument-hint: N/A
 ---
 
-# Contributing to [Project Name]
+# Contributing to {{project name}}
 
-Welcome to the [Project Name] contribution guide! We appreciate your interest in helping us improve and grow this project. This document outlines how you can contribute effectively.
+Welcome to the {{project name}} contribution guide! We appreciate your interest in helping us improve and grow this project. This document outlines how you can contribute effectively.
 
-> [Vision Statement or Mission of the Project, our Why]
+> {{vision statement or mission of the project, our why}}
 
 ## 📐 Contributing Guidelines
 
@@ -26,7 +26,7 @@ Welcome to the [Project Name] contribution guide! We appreciate your interest in
 - ... 
 -->
 
-### <action>
+### {{action}}
 
 1. ...
 
@@ -38,7 +38,7 @@ Welcome to the [Project Name] contribution guide! We appreciate your interest in
 
 ### Documentation links
 
-- [<filename>](./)
+- [{{filename}}](./)
 
 ### Pre-requisites environment setup (optional)
 

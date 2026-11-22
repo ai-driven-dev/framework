@@ -11,7 +11,7 @@ Unify **engineering teams** around **standardized workflows** and **shared best 
 🧱 **IDE agnostic** · 🏗️ **Legacy systems** · 🌱 **Token-optimized** · 🇫🇷 **Made in France**
 
 <p>
-  <!--counts:start--><kbd>9 plugins</kbd> · <kbd>55 skills</kbd> · <kbd>4 agents</kbd><!--counts:end-->
+  <!--counts:start--><kbd>9 plugins</kbd> · <kbd>56 skills</kbd> · <kbd>4 agents</kbd><!--counts:end-->
 </p>
 
 [![Open Source](https://img.shields.io/badge/Open_Source-Yes-yellow?logo=open-source-initiative&logoColor=white)](https://opensource.org/)
@@ -68,7 +68,7 @@ npx @ai-driven-dev/cli@latest setup
 ```
 
 <p align="center">
-  <img src="docs/assets/install-demo.svg" alt="Terminal recording: npx @ai-driven-dev/cli setup installs the six recommended plugins into a new project" width="720" />
+  <img src="docs/assets/install-demo.svg" alt="Terminal recording: npx @ai-driven-dev/cli setup installs the recommended plugins into a new project" width="720" />
 </p>
 
 Marketplace, flat files, update, remove: [install guide](docs/INSTALL.md).
@@ -122,9 +122,8 @@ flowchart TD
 
 ## Plugins
 
-Install the stable ones.
-
-Beta, alpha and preview plugins are off the recommended path.
+- Stable: the recommended path.
+- Beta, alpha and preview: off it.
 
 <!--plugins:start-->
 
@@ -134,7 +133,7 @@ Beta, alpha and preview plugins are off the recommended path.
 <a href="plugins/aidd-context/README.md">
 <img align="right" alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" />
 <h3>🧭 aidd-context</h3>
-14 skills · 1 hook<br />
+14 skills · 3 hooks<br />
 Project memory, context generation, learning
 </a>
 </td>
@@ -142,7 +141,7 @@ Project memory, context generation, learning
 <a href="plugins/aidd-dev/README.md">
 <img align="right" alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" />
 <h3>⚙️ aidd-dev</h3>
-10 skills<br />
+10 skills · 3 hooks<br />
 Plan, build, review, test, debug
 </a>
 </td>
@@ -150,7 +149,7 @@ Plan, build, review, test, debug
 <a href="plugins/aidd-vcs/README.md">
 <img align="right" alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" />
 <h3>🌿 aidd-vcs</h3>
-6 skills<br />
+7 skills<br />
 Commits, pull requests, release tags, issues
 </a>
 </td>
@@ -160,7 +159,7 @@ Commits, pull requests, release tags, issues
 <a href="plugins/aidd-pm/README.md">
 <img align="right" alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" />
 <h3>📋 aidd-pm</h3>
-10 skills<br />
+10 skills · 3 hooks<br />
 Briefs, Epics, Stories, specs, Spikes, Defects
 </a>
 </td>

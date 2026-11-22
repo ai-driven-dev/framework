@@ -1,0 +1,94 @@
+{
+  "host": "cursor",
+  "event": "stop",
+  "samples": [
+    {
+      "run": "continue",
+      "payload": {
+        "conversation_id": "00000000-0000-4000-8000-000000000000",
+        "generation_id": "00000000-0000-4000-8000-000000000000",
+        "model": "default",
+        "status": "completed",
+        "loop_count": 0,
+        "input_tokens": 20966,
+        "output_tokens": 90,
+        "cache_read_tokens": 14336,
+        "cache_write_tokens": 0,
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "stop",
+        "cursor_version": "2026.10.22-27dcf5f",
+        "workspace_roots": [
+          "/Users/user/project"
+        ],
+        "user_email": "user@example.com",
+        "transcript_path": null
+      },
+      "hookAnswer": {
+        "followup_message": "Reply with only this exact token: STOPTOKEN-4K9M"
+      }
+    },
+    {
+      "run": "continue",
+      "payload": {
+        "conversation_id": "00000000-0000-4000-8000-000000000000",
+        "generation_id": "00000000-0000-4000-8000-000000000000",
+        "model": "default",
+        "status": "completed",
+        "loop_count": 1,
+        "input_tokens": 10617,
+        "output_tokens": 30,
+        "cache_read_tokens": 10496,
+        "cache_write_tokens": 0,
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "stop",
+        "cursor_version": "2026.10.22-27dcf5f",
+        "workspace_roots": [
+          "/Users/user/project"
+        ],
+        "user_email": "user@example.com",
+        "transcript_path": null
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "continue",
+      "payload": {
+        "conversation_id": "00000000-0000-4000-8000-000000000000",
+        "generation_id": "00000000-0000-4000-8000-000000000000",
+        "model": "default",
+        "status": "aborted",
+        "loop_count": 0,
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "stop",
+        "cursor_version": "2026.10.22-27dcf5f",
+        "workspace_roots": [
+          "/Users/user/project"
+        ],
+        "user_email": "user@example.com",
+        "transcript_path": null
+      },
+      "hookAnswer": {
+        "followup_message": "Reply with only this exact token: STOPTOKEN-4K9M"
+      }
+    },
+    {
+      "run": "continue",
+      "payload": {
+        "conversation_id": "00000000-0000-4000-8000-000000000000",
+        "generation_id": "00000000-0000-4000-8000-000000000000",
+        "model": "default",
+        "status": "error",
+        "loop_count": 0,
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "stop",
+        "cursor_version": "2026.10.22-27dcf5f",
+        "workspace_roots": [
+          "/Users/user/project"
+        ],
+        "user_email": "user@example.com",
+        "transcript_path": null
+      },
+      "hookAnswer": null
+    }
+  ]
+}

@@ -1,5 +1,96 @@
 # Changelog
 
+## [5.7.0](https://github.com/ai-driven-dev/framework/compare/cli-v5.6.0...cli-v5.7.0) (2026-11-13)
+
+
+### Features
+
+* **aidd-context:** build project memory from a checked fact sheet and refresh it from what changed ([48b5d46](https://github.com/ai-driven-dev/framework/commit/48b5d469e87b14f000a31f8e83e73a90394b6fb7))
+* **aidd-context:** lint memory files and hand a write's own errors back to the model ([2e808b6](https://github.com/ai-driven-dev/framework/commit/2e808b6444aa7872383630a55d794d3dc8a41b9a))
+* **aidd-context:** one memory entry on the hook contract ([76d6351](https://github.com/ai-driven-dev/framework/commit/76d63510706d332c495a287e9cfc7b296367591d))
+* **aidd-context:** one shared hook library for dead paths, shell writes and the findings format ([51138e4](https://github.com/ai-driven-dev/framework/commit/51138e4828d15db4a90e8b6dddbe1415dfcb18c7))
+* **aidd-context:** require an unfilled memory slot once at the turn end ([e9b2be9](https://github.com/ai-driven-dev/framework/commit/e9b2be94c0a0ab431e726302848b288fad7092cc))
+* **aidd-context:** route project memory facts through one checked sheet ([6a956ff](https://github.com/ai-driven-dev/framework/commit/6a956ffcfdfe13bd017b438c16ee4653d4804a32))
+* **aidd-context:** start a memory refresh from what changed since the bank was written ([4a327fd](https://github.com/ai-driven-dev/framework/commit/4a327fd7001009e09109831179878d173c1fb89d))
+* **cli:** add Antigravity CLI as a flat host for skills ([c5d03f6](https://github.com/ai-driven-dev/framework/commit/c5d03f605ad0c70a07a17f16aa619e73d9905264))
+* **cli:** add Antigravity CLI as a flat host for skills ([bb041da](https://github.com/ai-driven-dev/framework/commit/bb041da93e07af6e9b3732e916dde9217ba464f4)), closes [#511](https://github.com/ai-driven-dev/framework/issues/511)
+* **cli:** emit antigravity agents as portable .agents/agents/&lt;name&gt;/agent.md ([3f2633a](https://github.com/ai-driven-dev/framework/commit/3f2633a8c3d5e3d7c41f86356db5ad004ded14ac))
+* **cli:** emit antigravity agents as portable .agents/agents/&lt;name&gt;/agent.md ([9139cf3](https://github.com/ai-driven-dev/framework/commit/9139cf35653995ddebfa7de59e94721b7894b06c))
+* **cli:** host events carry the text each write put in a file ([810c8a1](https://github.com/ai-driven-dev/framework/commit/810c8a1d9f7b7f2839b689f681366345e0e40fdd))
+* **cli:** install the framework for every project with setup --global ([#1142](https://github.com/ai-driven-dev/framework/issues/1142)) ([140d936](https://github.com/ai-driven-dev/framework/commit/140d936c55aa49b6052ed32b772181fc4f8e699a))
+* **cli:** merge plugin hooks into antigravity's .agents/hooks.json ([f5a45cd](https://github.com/ai-driven-dev/framework/commit/f5a45cddf2ef288328fcd246084e65fa59d1907b))
+* **cli:** merge plugin hooks into antigravity's .agents/hooks.json ([184c833](https://github.com/ai-driven-dev/framework/commit/184c833f980b7d3993432eac5c87c8c27f3d2b57))
+* **cli:** one host adapter per tool, placed at build time ([7fa8e6b](https://github.com/ai-driven-dev/framework/commit/7fa8e6b364f7f9ed45e4bf6ad1e330849f5679dc))
+* **cli:** read Antigravity's SessionStart through its own host adapter ([d5ec151](https://github.com/ai-driven-dev/framework/commit/d5ec1512c13da923c97ce51d5f77844ed7afa855))
+* **context:** simplify service setup and connection checks ([4b2b63d](https://github.com/ai-driven-dev/framework/commit/4b2b63d2dada7c0070aa6c65b8f778dc6396c04a))
+* **framework:** ship generic sub-agents across six hosts ([#1027](https://github.com/ai-driven-dev/framework/issues/1027)) ([7c67ca3](https://github.com/ai-driven-dev/framework/commit/7c67ca37a19dc30b8ba8933f7561f79e91736e2b))
+
+
+### Bug Fixes
+
+* **aidd-context:** answer only what a write produced, and stay silent when a rule fails ([e849332](https://github.com/ai-driven-dev/framework/commit/e849332e2f5f7e5649433cb566582107d5412a7a))
+* **aidd-context:** blame a write only for the lines it changed, and leave missing files to check ([325935e](https://github.com/ai-driven-dev/framework/commit/325935e046da711b7eff944c8e5e0dbf01989cee))
+* **aidd-context:** compare the bank to the plan's own snapshot, and drop the turn-end git check ([479236c](https://github.com/ai-driven-dev/framework/commit/479236cdf97e12324089230bfeb3e71368db1fdf))
+* **aidd-context:** keep Antigravity guidance minimal and host-specific ([46a3bd2](https://github.com/ai-driven-dev/framework/commit/46a3bd2cfc2e802d37c42f0d5a04757ad9653a13)), closes [#511](https://github.com/ai-driven-dev/framework/issues/511)
+* **aidd-context:** keep the memory hook's answer surgical and see shell writes ([874e410](https://github.com/ai-driven-dev/framework/commit/874e410823d256a0cc6b976d5ee01a13f841119f)), closes [#1141](https://github.com/ai-driven-dev/framework/issues/1141)
+* **aidd-context:** let cursor deletes reach the memory hook ([95d2e40](https://github.com/ai-driven-dev/framework/commit/95d2e40852bc246f885562473957808fef23514b))
+* **aidd-context:** let the skill check the memory it writes, keep the hook to block sync ([1cd3b3b](https://github.com/ai-driven-dev/framework/commit/1cd3b3bd22e1daeb649a84c14c59685b68c4ad4c))
+* **aidd-context:** resolve dead paths from the repository root, inform on a team's memory folder ([22fb2f0](https://github.com/ai-driven-dev/framework/commit/22fb2f069c4b31d1aebfb89055f53505a2acaa08))
+* **aidd-context:** ship the host adapter only to plugins whose hooks read it ([08807a7](https://github.com/ai-driven-dev/framework/commit/08807a73200413cf26e27014ad6cbac71720d247))
+* **cli:** cursor hook entries keep their group's matcher ([9f18709](https://github.com/ai-driven-dev/framework/commit/9f18709d62a81ff291e9009960c4d8c0e6ef5d3f))
+* **cli:** cursor hook entries keep their timeout ([02b009f](https://github.com/ai-driven-dev/framework/commit/02b009f616a0dadb446b476c6ee18290ac676f63)), closes [#1141](https://github.com/ai-driven-dev/framework/issues/1141)
+* **cli:** emit JSON for silent Antigravity hooks ([331755e](https://github.com/ai-driven-dev/framework/commit/331755e9ca0745533d2df8b670803fcc863cf7cb))
+* **cli:** give integration hooks the same timeout as integration tests ([#1132](https://github.com/ai-driven-dev/framework/issues/1132)) ([cc8aa8c](https://github.com/ai-driven-dev/framework/commit/cc8aa8c15bffd70857ad37060c99dbd455ae2950))
+* **cli:** hand a hook's problems back to the model on OpenCode, Kilo and Copilot ([#1134](https://github.com/ai-driven-dev/framework/issues/1134)) ([4665c22](https://github.com/ai-driven-dev/framework/commit/4665c2241189c9f8b73fec5b36beff10188ea1db))
+* **cli:** host adapters ask once at stop and keep cwd at the session root ([153abbe](https://github.com/ai-driven-dev/framework/commit/153abbef90694211e12e02552b5603e6bfdb9670))
+* **cli:** keep what a plugin ships and what the old merges did on unseen hooks ([3bbb80b](https://github.com/ai-driven-dev/framework/commit/3bbb80b78bfa768cc6bb8c67bcc26c3c30ac962a))
+* **cli:** pin each tool's kept items and match only declared root tokens ([235affc](https://github.com/ai-driven-dev/framework/commit/235affcbbfc0a989f1bc836af4f418e82c7c101d))
+* **cli:** restore project hooks and preserve their enabled state ([3f31b6c](https://github.com/ai-driven-dev/framework/commit/3f31b6c9f5e0ab4388810c62e1905ef7882b2675)), closes [#511](https://github.com/ai-driven-dev/framework/issues/511)
+* **cli:** rewrite the plugin root in every flat mcp config and resolve nested agents once ([d79eb05](https://github.com/ai-driven-dev/framework/commit/d79eb05bba926909487c29111319f58bfd662279))
+* **cli:** synchronize the Antigravity support record after rebase ([d763de3](https://github.com/ai-driven-dev/framework/commit/d763de3ece51f7cd4b7062c83935ab020db166f5)), closes [#511](https://github.com/ai-driven-dev/framework/issues/511)
+* **cli:** tell aidd-ui when a patch removed nothing, and cover it on every host ([4df6794](https://github.com/ai-driven-dev/framework/commit/4df6794df7b8db55e65693491d62a5f3c375d28e))
+* **cli:** use the portable agent contract for local plugins ([9afbb73](https://github.com/ai-driven-dev/framework/commit/9afbb73ce06148376e0086964142a664b1b1d6f6)), closes [#511](https://github.com/ai-driven-dev/framework/issues/511)
+* **cli:** wait on a lock file windows is still removing instead of failing ([d918c66](https://github.com/ai-driven-dev/framework/commit/d918c66384cec1983e8932f3d0082229fbe6da66))
+* **cli:** wait on a lock file windows is still removing instead of failing ([95d37b6](https://github.com/ai-driven-dev/framework/commit/95d37b6b4ce6c5692b5834b40a7e47b3e7948c05))
+
+
+### Miscellaneous
+
+* **cli:** carry validated Antigravity contract fixes ([a300a45](https://github.com/ai-driven-dev/framework/commit/a300a4569b13281917dbbc4e3ca71344a6c1441b))
+* **cli:** inherit the Antigravity hook protocol fix ([74714a2](https://github.com/ai-driven-dev/framework/commit/74714a2f4948bcf54d27ac09bb9f37ee80624155))
+* **cli:** propagate the Antigravity hook protocol fix ([28a8b5f](https://github.com/ai-driven-dev/framework/commit/28a8b5fc716e52a5677e281f67c517a981fc5975))
+* **deps:** bump @inquirer/prompts from 8.7.3 to 8.7.4 in /cli ([#1109](https://github.com/ai-driven-dev/framework/issues/1109)) ([829a5db](https://github.com/ai-driven-dev/framework/commit/829a5db6d31a8e80217f9d8609eba122917fd058))
+* **deps:** bump @inquirer/prompts from 8.7.4 to 8.7.5 in /cli ([#1138](https://github.com/ai-driven-dev/framework/issues/1138)) ([c7a23b6](https://github.com/ai-driven-dev/framework/commit/c7a23b657123f7df97f1fa4b889da86ff39b63a5))
+* **deps:** passer à pnpm 12.16.1 ([f0df90f](https://github.com/ai-driven-dev/framework/commit/f0df90fc14599817ece2739ad56f0a71ba6a2b93))
+* **deps:** passer à pnpm 12.16.1 ([c26c47f](https://github.com/ai-driven-dev/framework/commit/c26c47fe05df8c00f83beb5c53491081d75ac8b0))
+
+
+### Documentation
+
+* **aidd-context:** remove aiddy installation guide ([#1157](https://github.com/ai-driven-dev/framework/issues/1157)) ([3304634](https://github.com/ai-driven-dev/framework/commit/33046340352f22f21e8b0bb21b081d613df5a69f))
+* **aidd-context:** state the memory rules as built and name every framework hook ([4d85543](https://github.com/ai-driven-dev/framework/commit/4d85543269424bcc98a5d46b161b97a757536bea))
+* list antigravity cli as a supported flat host ([e0b0efc](https://github.com/ai-driven-dev/framework/commit/e0b0efcb9a246aacbee027870fc3adda9ddb85b3)), closes [#511](https://github.com/ai-driven-dev/framework/issues/511)
+* list antigravity cli as a supported flat host, with a local runtime smoke ([bebfd1a](https://github.com/ai-driven-dev/framework/commit/bebfd1a570fd47a761948bea510c2c4c4d09b82d))
+* rewrite the documentation set by audience ([#1131](https://github.com/ai-driven-dev/framework/issues/1131)) ([b90bffa](https://github.com/ai-driven-dev/framework/commit/b90bffada166c69f4e3952dd5e56abfcad540264))
+* scope the hook contract to the hooks on it, and make hook intent real per tool ([434601e](https://github.com/ai-driven-dev/framework/commit/434601e379293a656769961556b9d770884cb14a))
+
+
+### Refactoring
+
+* **aidd-context:** check the memory at the turn end, keep only judgment in the skill ([40fa8ff](https://github.com/ai-driven-dev/framework/commit/40fa8ff2d05c812450f7b50f26f88541cc7cc50e))
+* **aidd-context:** drop the memory turn-end check, check stays the only gate ([9dac78d](https://github.com/ai-driven-dev/framework/commit/9dac78d5649bfe78ae1b83b1d548e85d779885ec))
+* **aidd-context:** keep in the shared hook lib only what both plugins call ([52d0842](https://github.com/ai-driven-dev/framework/commit/52d08426c89a23e448f7e811d9708fbfc8c03f90))
+* **aidd-context:** lean project memory, one hook contract and one hook path in the CLI ([05f0bce](https://github.com/ai-driven-dev/framework/commit/05f0bce8444891a9df6c717431ddeea7f0e23a3b))
+* **aidd-context:** move the memory lint into the skill, drop the lost-lines guard ([e68f07d](https://github.com/ai-driven-dev/framework/commit/e68f07db92d3952429d5be3f657f199f5bcda85b))
+* **aidd-context:** name the memory hook's goal, load or guard, and format findings locally ([200f118](https://github.com/ai-driven-dev/framework/commit/200f1189cac9498a45a4136d5405987035dd3c07))
+* **aidd-context:** stop sync from keeping a file list in the memory README ([7e8714d](https://github.com/ai-driven-dev/framework/commit/7e8714d085ca6a6daad303cee276adf9d36c686e))
+* **cli:** domain returns what to write, and agents keep one extension ([833d3bf](https://github.com/ai-driven-dev/framework/commit/833d3bf06ef7c28539d3762c4d2924256519fd1f))
+* **cli:** keep each tool's hook format in its own profile, behind the capability ([e400270](https://github.com/ai-driven-dev/framework/commit/e40027069d43f383a1ccbff1b8d5ea829b55c3d2))
+* **cli:** keep the hooks descriptor data only ([e3e4c61](https://github.com/ai-driven-dev/framework/commit/e3e4c6120dd23eff913f4a7737f962132c186451))
+* **cli:** one hooks descriptor per tool ([8cb482c](https://github.com/ai-driven-dev/framework/commit/8cb482c0145784f2c375e589878d569d59b2590f))
+* **cli:** one hooks merge engine for every route ([e60b991](https://github.com/ai-driven-dev/framework/commit/e60b991736eed4c100e70eafe466802004a241a3))
+* **cli:** one host adapter for both bridged hosts ([9a58108](https://github.com/ai-driven-dev/framework/commit/9a58108638ca86915e9db2ba07d43c5744276afe))
+
 ## [5.6.0](https://github.com/ai-driven-dev/framework/compare/cli-v5.5.0...cli-v5.6.0) (2026-10-26)
 
 

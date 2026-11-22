@@ -1,228 +1,61 @@
 {
+  "intro": {},
   "scenes": [
     {
-      "template": "terminal-demo",
-      "pill": "Telemetry",
-      "title": "See what your AI costs,",
-      "accent": "in Codex too.",
-      "surfaces": [
-        "aidd telemetry"
-      ],
-      "window": {
-        "label": "Codex · ~/acme-app",
-        "rows": [
-          {
-            "prompt": "what did my work cost this week?"
-          },
-          {
-            "text": "$ aidd telemetry report --tool codex --axis task",
-            "tone": "dim"
-          },
-          {
-            "table": {
-              "head": [
-                "Task",
-                "Requests",
-                "Usage"
-              ],
-              "rows": [
-                [
-                  "fix the login bug",
-                  "38",
-                  "120k"
-                ],
-                [
-                  "add dark mode",
-                  "41",
-                  "190k"
-                ],
-                [
-                  "no task declared",
-                  "17",
-                  "100k"
-                ]
-              ]
-            }
-          }
-        ]
-      },
-      "note": "Example figures."
-    },
-    {
-      "template": "terminal-demo",
-      "pill": "Telemetry",
-      "title": "Know which tool",
-      "accent": "costs what.",
-      "surfaces": [
-        "aidd-telemetry:00-init"
-      ],
-      "window": {
-        "label": "Terminal · ~/acme-app",
-        "rows": [
-          {
-            "text": "$ aidd telemetry report --axis tool"
-          },
-          {
-            "table": {
-              "head": [
-                "Tool",
-                "Requests",
-                "Usage"
-              ],
-              "rows": [
-                [
-                  "Claude Code",
-                  "412",
-                  "1.8M"
-                ],
-                [
-                  "Codex",
-                  "96",
-                  "410k"
-                ]
-              ]
-            }
-          }
-        ]
-      },
-      "note": "Example figures."
-    },
-    {
-      "template": "before-after",
-      "pill": "Brainstorm",
-      "title": "38% leaner Brainstorm",
-      "accent": "for small models.",
-      "before": {
-        "label": "Before · 01-capture.md",
-        "rows": [
-          {
-            "del": "Require. If no idea is present, ask for one and wait."
-          },
-          {
-            "del": "Restate. Capture the idea in short bullets, preserving uncertainty."
-          },
-          {
-            "del": "Scan. Apply interview depth and discovery map silently."
-          },
-          {
-            "del": "Open. Hand the highest-impact open point to probe."
-          }
-        ]
-      },
-      "after": {
-        "label": "After · 01-capture.md",
-        "rows": [
-          {
-            "add": "With no idea, ask for one and stop."
-          },
-          {
-            "add": "Say the idea back briefly, in the user's words, keeping what is still uncertain."
-          },
-          {
-            "add": "Go to explore."
-          }
-        ]
-      }
-    },
-    {
-      "template": "terminal-demo",
-      "pill": "Brainstorm",
-      "title": "See what your AI",
-      "accent": "only guessed.",
-      "surfaces": [
-        "aidd-refine:01-brainstorm"
-      ],
-      "window": {
-        "label": "Claude Code · ~/acme-app",
-        "rows": [
-          {
-            "prompt": "/aidd-refine:01-brainstorm a way to share reports"
-          },
-          {
-            "text": "Who reads these reports, a teammate or a client?",
-            "tone": "amb"
-          },
-          {
-            "text": "Clear: clients read the reports",
-            "tone": "grn"
-          },
-          {
-            "text": "Assumed: a weekly report is enough",
-            "tone": "amb"
-          },
-          {
-            "text": "Open: who owns the data?",
-            "tone": "blu"
-          },
-          {
-            "text": "Approve, correct, or explore more?",
-            "tone": "amb"
-          }
-        ]
-      }
-    },
-    {
-      "template": "before-after",
-      "pill": "Planning",
-      "title": "51% leaner Planning",
-      "accent": "for small models.",
-      "before": {
-        "label": "Before · 01-gather.md",
-        "rows": [
-          {
-            "del": "Find. Identify what the request points to: a file path, a ticket URL or id, or raw text."
-          },
-          {
-            "del": "Pull. Read the file, fetch the ticket, or take the text as given."
-          },
-          {
-            "del": "Restate. Summarize the source in a few bullets: what is asked, and the hard constraints it states."
-          }
-        ]
-      },
-      "after": {
-        "label": "After · 01-capture.md",
-        "rows": [
-          {
-            "add": "With no source to plan from (file, ticket, or text), ask for one and stop."
-          },
-          {
-            "add": "Read it, noting what it asks and the constraints it states."
-          },
-          {
-            "add": "Read explore."
-          }
-        ]
-      }
-    },
-    {
       "template": "two-panels",
-      "pill": "Planning",
-      "title": "Know what a plan",
-      "accent": "will change.",
+      "pill": "Antigravity",
+      "title": "AIDD supports",
+      "accent": "Antigravity CLI.",
+      "surfaces": [
+        "aidd translate",
+        "aidd-context:04-skill-generate",
+        "aidd-context:11-explore",
+        "aidd-context:05-rule-generate",
+        "aidd-context:08-hook-generate"
+      ],
+      "note": "Example run.",
       "panels": [
         {
-          "label": "plan.md · Phases",
+          "label": "Terminal · ~/acme-app",
           "flex": 1,
           "rows": [
             {
+              "text": "$ aidd setup --ide antigravity",
+              "tone": "dim"
+            },
+            {
               "table": {
                 "head": [
-                  "Phase",
-                  "Depends on"
+                  "Installed in",
+                  "Holds"
                 ],
                 "rows": [
                   [
-                    "1 safety net",
-                    "none"
+                    ".agents/skills/",
+                    {
+                      "checking": {
+                        "status": "48 skills"
+                      },
+                      "pending": "installing…"
+                    }
                   ],
                   [
-                    "2 theme switch",
-                    "1"
+                    ".agents/agents/",
+                    {
+                      "checking": {
+                        "status": "4 agents"
+                      },
+                      "pending": "installing…"
+                    }
                   ],
                   [
-                    "3 settings page",
-                    "2"
+                    ".agents/hooks.json",
+                    {
+                      "checking": {
+                        "status": "hooks"
+                      },
+                      "pending": "installing…"
+                    }
                   ]
                 ]
               }
@@ -230,154 +63,639 @@
           ]
         },
         {
-          "label": "plan.md · Impact",
+          "label": "Antigravity CLI · ~/acme-app",
           "flex": 1,
           "rows": [
             {
-              "text": "Runtime: the theme is read at startup",
-              "tone": "grn"
+              "text": "$ agy",
+              "tone": "dim"
             },
             {
-              "text": "Regression: print pages stay light",
-              "tone": "amb"
+              "prompt": "plan the login page"
             },
             {
-              "text": "Architecture: one theme provider",
+              "text": "Using skill aidd-dev:01-plan",
               "tone": "blu"
             },
             {
-              "text": "Documentation: a settings guide section",
-              "tone": "pnk"
+              "text": "Plan written: 3 phases",
+              "tone": "grn"
             }
-          ]
+          ],
+          "afterWork": true
         }
       ]
     },
     {
       "template": "terminal-demo",
-      "pill": "Planning",
-      "title": "Catch plan gaps",
-      "accent": "before you build.",
+      "pill": "Agents",
+      "title": "4 new",
+      "accent": "agents.",
       "surfaces": [
-        "aidd-dev:01-plan"
+        "aidd-context:06-agent-generate",
+        "aidd-dev:10-batch",
+        "aidd-orchestrator:01-sdlc",
+        "aidd-dev:01-plan",
+        "aidd-dev:02-implement"
       ],
       "window": {
         "label": "Claude Code · ~/acme-app",
         "rows": [
           {
-            "prompt": "/aidd-dev:01-plan add dark mode"
-          },
-          {
-            "text": "plan written, an independent reader checks it…",
-            "tone": "dim"
-          },
-          {
-            "text": "✗ Reading: the login page was not read",
-            "tone": "amb"
-          },
-          {
-            "text": "✗ Evidence: the settings page impact was assumed",
-            "tone": "amb"
-          },
-          {
-            "text": "Approve, correct, or explore more?",
-            "tone": "amb"
+            "prompt": "/aidd-orchestrator:01-sdlc add a login page"
           }
         ]
-      }
+      },
+      "flow": [
+        {
+          "n": "1",
+          "title": "explorer",
+          "sub": "maps the code",
+          "icon": "search",
+          "log": [
+            "src/",
+            "└ auth/",
+            "  └ session.ts"
+          ]
+        },
+        {
+          "n": "2",
+          "title": "executor",
+          "sub": "builds and tests",
+          "icon": "build",
+          "runs": [
+            {
+              "log": [
+                "+ login.tsx",
+                "+ login.test.ts",
+                "✓ tests pass"
+              ]
+            },
+            {
+              "log": [
+                "+ error message",
+                "✓ tests pass"
+              ]
+            }
+          ]
+        },
+        {
+          "n": "3",
+          "title": "validator",
+          "sub": "checks the goal",
+          "icon": "check",
+          "runs": [
+            {
+              "log": [
+                "goal: login page",
+                "✗ no error shown"
+              ],
+              "fail": true
+            },
+            {
+              "log": [
+                "goal: login page",
+                "✓ error shown",
+                "✓ goal met"
+              ]
+            }
+          ]
+        },
+        {
+          "n": "4",
+          "title": "reviewer",
+          "sub": "reviews the diff",
+          "icon": "review",
+          "log": [
+            "reads the diff",
+            "0 critical",
+            "✓ approve"
+          ]
+        }
+      ],
+      "note": "Example run."
     },
     {
       "template": "terminal-demo",
-      "pill": "Rules",
-      "title": "Rules that never",
-      "accent": "contradict each other.",
+      "pill": "Connections",
+      "title": "Check your",
+      "accent": "AI access.",
       "surfaces": [
-        "aidd-context:05-rule-generate"
+        "aidd-context:13-access-check",
+        "aidd-context:00-onboard",
+        "aidd-context:12-cook"
       ],
       "window": {
         "label": "Claude Code · ~/acme-app",
         "rows": [
           {
-            "prompt": "/aidd-context:05-rule-generate always use named exports"
+            "prompt": "/aidd-context:13-access-check"
           },
           {
-            "text": "checking your existing rules…",
+            "table": {
+              "head": [
+                "Tool",
+                "Status",
+                "Next step"
+              ],
+              "rows": [
+                [
+                  "GitHub",
+                  {
+                    "checking": {
+                      "status": "Target read"
+                    }
+                  },
+                  {
+                    "result": {
+                      "dim": "none"
+                    }
+                  }
+                ],
+                [
+                  "Jira",
+                  {
+                    "checking": {
+                      "tone": "pnk",
+                      "text": "Read failed"
+                    }
+                  },
+                  {
+                    "result": "sign in to the Jira server"
+                  }
+                ],
+                [
+                  "Postgres",
+                  {
+                    "checking": {
+                      "tone": "amb",
+                      "text": "Not configured"
+                    }
+                  },
+                  {
+                    "result": "name the database in memory"
+                  }
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "note": "Example run.",
+      "lead": "See which services your AI really reaches, and how to fix each one."
+    },
+    {
+      "template": "terminal-demo",
+      "pill": "Quality",
+      "title": "Assert, rewritten:",
+      "accent": "judges, never fixes.",
+      "surfaces": [
+        "aidd-dev:03-assert"
+      ],
+      "window": {
+        "label": "Claude Code · ~/acme-app",
+        "rows": [
+          {
+            "prompt": "/aidd-dev:03-assert"
+          },
+          {
+            "table": {
+              "head": [
+                "Check",
+                "Result"
+              ],
+              "rows": [
+                [
+                  "pnpm lint",
+                  {
+                    "checking": {
+                      "tone": "grn",
+                      "text": "✓ exit 0"
+                    },
+                    "pending": "running…"
+                  }
+                ],
+                [
+                  "pnpm test",
+                  {
+                    "checking": {
+                      "tone": "pnk",
+                      "text": "✗ exit 1 · expected 200, got 401"
+                    },
+                    "pending": "running…"
+                  }
+                ]
+              ]
+            }
+          },
+          {
+            "verdict": "FAIL",
+            "tone": "pnk",
+            "detail": "code untouched",
+            "afterWork": true
+          }
+        ]
+      },
+      "note": "Example run.",
+      "lead": "Runs your checks, gives the verdict, never edits code."
+    },
+    {
+      "template": "terminal-demo",
+      "pill": "Quality",
+      "title": "Review, rewritten:",
+      "accent": "every finding proven.",
+      "surfaces": [
+        "aidd-dev:05-review",
+        "aidd-refine:05-review-conversation"
+      ],
+      "window": {
+        "label": "Claude Code · ~/acme-app",
+        "rows": [
+          {
+            "prompt": "/aidd-dev:05-review"
+          },
+          {
+            "table": {
+              "head": [
+                "Claim",
+                "Proof"
+              ],
+              "rows": [
+                [
+                  "assumes tokens expire",
+                  {
+                    "checking": {
+                      "tone": "pnk",
+                      "text": "✗ false · session.ts:17"
+                    },
+                    "pending": "proving…"
+                  }
+                ],
+                [
+                  "token never expires",
+                  {
+                    "checking": {
+                      "tone": "pnk",
+                      "text": "critical · login.ts:42"
+                    },
+                    "pending": "proving…"
+                  }
+                ],
+                [
+                  "rate limiting",
+                  {
+                    "checking": {
+                      "tone": "dim",
+                      "text": "not provable from this diff"
+                    },
+                    "pending": "proving…"
+                  }
+                ]
+              ]
+            }
+          },
+          {
+            "verdict": "CHANGES REQUESTED",
+            "tone": "amb",
+            "detail": "1 critical finding",
+            "afterWork": true
+          }
+        ]
+      },
+      "note": "Example run.",
+      "lead": "Checks what the diff assumes, proves each finding, explains its verdict."
+    },
+    {
+      "template": "terminal-demo",
+      "pill": "Memory",
+      "title": "Memory, rewritten:",
+      "accent": "one message.",
+      "surfaces": [
+        "aidd-context:02-project-memory"
+      ],
+      "window": {
+        "label": "Claude Code · ~/acme-app",
+        "rows": [
+          {
+            "prompt": "/aidd-context:02-project-memory"
+          },
+          {
+            "table": {
+              "rows": [
+                [
+                  "changed files",
+                  {
+                    "checking": {
+                      "tone": "grn",
+                      "text": "✓ 12 since the last memory update"
+                    },
+                    "pending": "reading…"
+                  }
+                ],
+                [
+                  "memory review",
+                  {
+                    "checking": {
+                      "tone": "amb",
+                      "text": "✓ 1 stale line, 1 question"
+                    },
+                    "pending": "reviewing…"
+                  }
+                ]
+              ]
+            }
+          },
+          {
+            "text": "1. testing.md",
+            "afterWork": true
+          },
+          {
+            "del": "Run the tests: pnpm test",
+            "afterWork": true
+          },
+          {
+            "add": "Run the tests: pnpm test:changed",
+            "afterWork": true
+          },
+          {
+            "text": "Q1. Does the CI run the e2e suite?",
+            "tone": "amb",
+            "afterWork": true
+          },
+          {
+            "prompt": "ok · Q1: no",
+            "afterWork": true
+          },
+          {
+            "text": "✓ testing.md written",
+            "tone": "grn",
+            "afterWork": true
+          }
+        ]
+      },
+      "note": "Example run."
+    },
+    {
+      "template": "terminal-demo",
+      "pill": "Install",
+      "title": "One install,",
+      "accent": "every project.",
+      "surfaces": [
+        "aidd setup",
+        "aidd sync",
+        "aidd doctor",
+        "aidd clean"
+      ],
+      "window": {
+        "label": "Terminal · ~",
+        "rows": [
+          {
+            "text": "$ aidd setup --global --ide claude,codex,copilot,cursor,kilo,opencode --plugins recommended",
             "tone": "dim"
           },
           {
-            "text": "Conflict: another rule allows default exports",
-            "tone": "red"
-          },
-          {
-            "text": "Which one should win?  1 named exports   2 default exports",
-            "tone": "amb"
-          },
-          {
-            "text": "nothing is saved until you decide",
-            "tone": "grn"
+            "table": {
+              "head": [
+                "Tool",
+                "Installed"
+              ],
+              "rows": [
+                [
+                  "Claude Code",
+                  {
+                    "checking": {
+                      "tone": "grn",
+                      "text": "✓ enabled"
+                    },
+                    "pending": "installing…"
+                  }
+                ],
+                [
+                  "Codex",
+                  {
+                    "checking": {
+                      "tone": "grn",
+                      "text": "✓ enabled"
+                    },
+                    "pending": "installing…"
+                  }
+                ],
+                [
+                  "Copilot",
+                  {
+                    "checking": {
+                      "tone": "grn",
+                      "text": "✓ enabled"
+                    },
+                    "pending": "installing…"
+                  }
+                ],
+                [
+                  "Cursor",
+                  {
+                    "checking": {
+                      "tone": "grn",
+                      "text": "✓ enabled"
+                    },
+                    "pending": "installing…"
+                  }
+                ],
+                [
+                  "Kilo",
+                  {
+                    "checking": {
+                      "tone": "grn",
+                      "text": "✓ enabled"
+                    },
+                    "pending": "installing…"
+                  }
+                ],
+                [
+                  "OpenCode",
+                  {
+                    "checking": {
+                      "tone": "grn",
+                      "text": "✓ enabled"
+                    },
+                    "pending": "installing…"
+                  }
+                ]
+              ],
+              "together": true
+            }
           }
         ]
-      }
+      },
+      "note": "Example run."
     },
     {
       "template": "contributors",
       "pill": "Team",
-      "title": "Shipped by",
-      "accent": "3 contributors.",
+      "title": "Shipped by 6 contributors.",
       "logins": [
         "alexsoyes",
         "blafourcade",
-        "waewoo"
+        "dkp-consult",
+        "tkman59",
+        "waewoo",
+        "Yoann53"
       ]
     }
   ],
   "skipped": [
     {
-      "surface": "aidd-telemetry:01-usage",
-      "reason": "internal report format change; the command and the answer a user reads are the same"
+      "surface": "aidd-ui:01-journeys",
+      "reason": "alpha plugin, off the recommended install: a normal install never shows it."
+    },
+    {
+      "surface": "aidd-ui:02-brand",
+      "reason": "alpha plugin, off the recommended install: a normal install never shows it."
+    },
+    {
+      "surface": "aidd-ui:03-foundations",
+      "reason": "alpha plugin, off the recommended install: a normal install never shows it."
+    },
+    {
+      "surface": "aidd-ui:04-components",
+      "reason": "alpha plugin, off the recommended install: a normal install never shows it."
+    },
+    {
+      "surface": "aidd-context:10-learn",
+      "reason": "only its sync step left, now done by the memory refresh: nothing new to see."
+    },
+    {
+      "surface": "aidd-dev:09-for-sure",
+      "reason": "one comment in its plan template renamed: nothing a user notices."
+    },
+    {
+      "surface": "aidd-qa:01-acceptance-qa",
+      "reason": "keeps one browser tab per scenario: fewer tabs, no new output to show."
+    },
+    {
+      "surface": "aidd-refine:04-fact-check",
+      "reason": "already shipped; only a test example path changed."
+    },
+    {
+      "surface": "aidd-context:01-bootstrap",
+      "reason": "only says where the readme and install guide live: nothing new to see."
+    },
+    {
+      "surface": "aidd-vcs:05-resolve-conflict",
+      "reason": "renamed to match its folder: same behavior."
     }
   ],
-  "intro": {
-    "highlights": [
-      "See what Codex costs you",
-      "Lean skills small models follow",
-      "See what your AI guessed",
-      "Catch plan gaps before building",
-      "No more contradicting rules"
-    ]
-  },
   "youtube": {
     "themes": [
-      "Télémétrie",
-      "Plan",
-      "Brainstorm",
-      "Règles"
+      "Antigravity",
+      "Agents",
+      "Connexions",
+      "Qualité"
     ],
     "programme": [
       {
-        "surface": "aidd telemetry",
-        "theme": "Télémétrie",
-        "text": "compter aussi ce que coûte le travail fait avec Codex, avec le rapport complet."
+        "surface": "aidd translate",
+        "theme": "Antigravity",
+        "text": "générer le framework pour Antigravity CLI."
       },
       {
-        "surface": "aidd-telemetry:00-init",
-        "theme": "Télémétrie",
-        "text": "activer la mesure, avec votre accord, du travail fait avec Claude Code et Codex."
-      },
-      {
-        "surface": "aidd-dev:01-plan",
-        "theme": "Plan",
-        "text": "alléger le plan de moitié, y lister l'ordre des phases et l'impact, et le faire relire par un juge indépendant."
-      },
-      {
-        "surface": "aidd-refine:01-brainstorm",
-        "theme": "Brainstorm",
-        "text": "alléger le brainstorm et distinguer ce qui est établi, supposé ou resté ouvert."
+        "surface": "aidd-context:04-skill-generate",
+        "theme": "Antigravity",
+        "text": "créer des skills qui tournent aussi dans Antigravity CLI."
       },
       {
         "surface": "aidd-context:05-rule-generate",
-        "theme": "Règles",
-        "text": "vérifier qu'une règle n'en contredit pas une autre, et décider laquelle garder."
+        "theme": "Antigravity",
+        "text": "écrire des règles que lit aussi Antigravity CLI."
+      },
+      {
+        "surface": "aidd-context:11-explore",
+        "theme": "Antigravity",
+        "text": "explorer un projet configuré pour Antigravity CLI."
+      },
+      {
+        "surface": "aidd-context:08-hook-generate",
+        "theme": "Antigravity",
+        "text": "créer des automatisations, Antigravity compris, en choisissant ce qu’elles doivent faire."
+      },
+      {
+        "surface": "aidd setup",
+        "theme": "Antigravity",
+        "text": "installer le framework une seule fois pour tous les projets de la machine."
+      },
+      {
+        "surface": "aidd sync",
+        "theme": "Antigravity",
+        "text": "rafraîchir cette installation globale depuis la source du framework."
+      },
+      {
+        "surface": "aidd doctor",
+        "theme": "Antigravity",
+        "text": "vérifier que l'installation globale est saine."
+      },
+      {
+        "surface": "aidd clean",
+        "theme": "Antigravity",
+        "text": "retirer l'installation globale sans toucher à vos propres fichiers."
+      },
+      {
+        "surface": "aidd-context:06-agent-generate",
+        "theme": "Agents",
+        "text": "créer des agents pour tous vos outils, Antigravity compris."
+      },
+      {
+        "surface": "aidd-dev:10-batch",
+        "theme": "Agents",
+        "text": "confier chaque tâche à l'agent d'implémentation que votre outil propose."
+      },
+      {
+        "surface": "aidd-dev:01-plan",
+        "theme": "Agents",
+        "text": "vérifier les opérations de fichiers du plan sur toutes ses phases."
+      },
+      {
+        "surface": "aidd-dev:02-implement",
+        "theme": "Agents",
+        "text": "implémenter sans jamais committer un fichier que vous aviez déjà modifié."
+      },
+      {
+        "surface": "aidd-orchestrator:01-sdlc",
+        "theme": "Agents",
+        "text": "faire vérifier chaque changement par trois agents distincts avant la pull request."
+      },
+      {
+        "surface": "aidd-context:13-access-check",
+        "theme": "Connexions",
+        "text": "voir quels services votre IA atteint vraiment, avec une correction par échec."
+      },
+      {
+        "surface": "aidd-context:00-onboard",
+        "theme": "Connexions",
+        "text": "terminer l'onboarding par la vérification des accès."
+      },
+      {
+        "surface": "aidd-context:12-cook",
+        "theme": "Connexions",
+        "text": "comparer CLI, MCP, API et SDK pour connecter vos services."
+      },
+      {
+        "surface": "aidd-dev:03-assert",
+        "theme": "Qualité",
+        "text": "juger le travail sur vos vérifications, sans jamais toucher au code."
+      },
+      {
+        "surface": "aidd-dev:05-review",
+        "theme": "Qualité",
+        "text": "rendre un verdict où chaque problème est prouvé par une ligne de code."
+      },
+      {
+        "surface": "aidd-refine:05-review-conversation",
+        "theme": "Qualité",
+        "text": "comprendre pourquoi une session a déraillé et accepter les corrections proposées."
+      },
+      {
+        "surface": "aidd-context:02-project-memory",
+        "theme": "Connexions",
+        "text": "rafraîchir la mémoire depuis ce qui a changé, en validant chaque ligne."
       }
     ]
   }

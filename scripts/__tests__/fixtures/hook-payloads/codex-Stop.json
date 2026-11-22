@@ -1,0 +1,54 @@
+{
+  "host": "codex",
+  "event": "Stop",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "turn_id": "01a1a9cb-9b85-7b20-95a9-7736bf3af82f",
+        "transcript_path": "/Users/user/.codex/sessions/1970/01/01/rollout-1970-01-01T00-00-00-000000000000.jsonl",
+        "cwd": "/Users/user/project",
+        "hook_event_name": "Stop",
+        "model": "gpt-5.6-luna",
+        "permission_mode": "bypassPermissions",
+        "stop_hook_active": false,
+        "last_assistant_message": "done"
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "level2",
+      "payload": {
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "turn_id": "01a1a9cd-db23-7c60-84b9-6eb066120b7c",
+        "transcript_path": "/Users/user/.codex/sessions/1970/01/01/rollout-1970-01-01T00-00-00-000000000000.jsonl",
+        "cwd": "/Users/user/project",
+        "hook_event_name": "Stop",
+        "model": "gpt-5.6-luna",
+        "permission_mode": "bypassPermissions",
+        "stop_hook_active": false,
+        "last_assistant_message": "PTUTOKEN-7Q2X"
+      },
+      "hookAnswer": {
+        "decision": "block",
+        "reason": "Reply with only this exact token: STOPTOKEN-4K9M"
+      }
+    },
+    {
+      "run": "level2",
+      "payload": {
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "turn_id": "01a1a9cd-db23-7c60-84b9-6eb066120b7c",
+        "transcript_path": "/Users/user/.codex/sessions/1970/01/01/rollout-1970-01-01T00-00-00-000000000000.jsonl",
+        "cwd": "/Users/user/project",
+        "hook_event_name": "Stop",
+        "model": "gpt-5.6-luna",
+        "permission_mode": "bypassPermissions",
+        "stop_hook_active": true,
+        "last_assistant_message": "STOPTOKEN-4K9M"
+      },
+      "hookAnswer": null
+    }
+  ]
+}

@@ -87,7 +87,7 @@ export class ProjectHooksMaterializer {
           pluginName: dist.manifest.name,
           component: "hooks",
           toolId,
-          reason,
+          reason: `${toolId}: ${reason}`,
         })
       ),
       projectHooks: { entries, scripts },
@@ -141,7 +141,10 @@ export class ProjectHooksMaterializer {
     for (const file of dist.components.hooks) {
       if (file.relativePath === HOOKS_MANIFEST_PATH) continue;
       const dest = delivery.format.scriptPath(dist.manifest.name, file.relativePath);
-      await this.fs.writeFile(join(projectRoot, dest), file.content);
+      await this.fs.writeFile(
+        join(projectRoot, dest),
+        delivery.hookScript(file.relativePath, file.content)
+      );
       scripts.set(dest, (await this.fs.readFileHash(join(projectRoot, dest))).value);
     }
     return scripts;

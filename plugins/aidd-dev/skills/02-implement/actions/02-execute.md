@@ -19,4 +19,4 @@ The prepared plan.
 
 ## Output
 
-Every phase `done`, and the script's `OK`.
+Every phase `done`, and the script reporting no finding.

@@ -16,11 +16,12 @@ import type {
   HasSkills,
 } from "../../contracts.js";
 import { convertCommandFrontmatter, stripToolSuffix } from "../../formats/command.js";
-import { CLAUDE_PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
+import { nativeHooksSupport } from "../../formats/hooks-descriptor.js";
 import { claudeStyleMarketplaceKey } from "../../marketplace-entry.js";
 import { registerTool } from "../../registry.js";
 import { buildClaudeContract, buildClaudeFlatContract } from "./build.js";
 import { claudeAgentFrontmatter } from "./claude-agent.js";
+import { CLAUDE_HOOKS } from "./hooks.js";
 
 const DIRECTORY = ".claude/";
 const TOOL_SUFFIX = ".claude.md";
@@ -105,8 +106,7 @@ export const claude: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
         mode: "native",
         pluginsDir: ".claude/plugins/",
         pluginManifestRelativePath: "plugin.json",
-        acceptsHooks: true,
-        pluginRootToken: CLAUDE_PLUGIN_ROOT_TOKEN,
+        ...nativeHooksSupport(CLAUDE_HOOKS),
         acceptsMcp: true,
         translationMode: "marketplace",
         // Claude registers its own marketplaces and enables its own plugins, both driven here.
@@ -133,8 +133,10 @@ export const claude: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
           // marks an orphaned tree `.orphaned_at` but never deletes it itself.
           pluginCacheDir: (h) => join(h, ".claude", "plugins", "cache"),
           // Where a `--scope user` install or marketplace add lands, measured against the real
-          // binary. Never written by aidd; named here for a diagnostic alone.
-          userSettingsPath: (h) => join(h, ".claude", "settings.json"),
+          // binary, under `CLAUDE_CONFIG_DIR` when set. aidd writes the main session's model
+          // there, nothing else.
+          userSettingsPath: (h, env) =>
+            join(env("CLAUDE_CONFIG_DIR") || join(h, ".claude"), "settings.json"),
         },
         marketplaceSettings: {
           settingsPath: ".claude/settings.json",

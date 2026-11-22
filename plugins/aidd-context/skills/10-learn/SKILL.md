@@ -1,35 +1,27 @@
 ---
 name: 10-learn
-description: Capture durable project learnings. Use when the user wants to remember, record, or formalize a decision, convention, lesson, pitfall, reusable workflow, or review finding. Not for preferences or temporary notes.
+description: Captures durable project learnings as memory, decisions or generated rules, when the user wants to remember, record or formalize one.
 argument-hint: conversation | file | diff | review
 ---
+
 # Learn
 
 ```mermaid
 flowchart LR
-  source --> gather --> assess --> write
-  source -->|"missing, empty, or ambiguous"| sourceStop([stop])
-  gather -->|"no candidates"| gatherEnd([end])
-  assess -->|"all covered"| assessEnd([end])
-  write -->|"memory or ADR"| sync
-  write -->|"rule or skill"| handoff([handoff])
-  sync -->|"failure"| syncStop([stop])
+  entry([request]) --> find["actions/01-find.md"]
+  find --> propose["actions/02-propose.md"]
+  propose <-->|"table to decide, per row"| user((user answers))
+  propose --> write["actions/03-write.md"]
+  write <-->|"task folder to confirm"| user
+  find -->|"source unreadable or nothing new"| stopped((stopped))
+  find -->|"memory absent: asked, then handed to project memory"| stopped
+  propose -->|"every row skipped"| stopped
+  write --> written((written))
 ```
-
-## Actions
-
-Run the flow above. Read only the next action file.
-
-| Action | Does |
-| ------ | ---- |
-| source | identify and challenge the origin |
-| gather | read the origin and extract candidates |
-| assess | score, reconcile, show, and confirm |
-| write | write or hand off approved lessons |
-| sync | refresh memory references |
 
 ## Transversal rules
 
-- Write only the user-approved plan.
-- Preserve user edits and touch affected files only.
+- If a cited reference cannot be read, stop and report the missing file.
+- Write only what the user validated.
+- Touch only the files a lesson names.
 - Write project files only, never personal or global memory.

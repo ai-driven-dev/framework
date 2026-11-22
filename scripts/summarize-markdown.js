@@ -120,6 +120,7 @@ function isScannableFile(filename) {
 		filename.endsWith(".txt") ||
 		filename.endsWith(".json") ||
 		filename.endsWith(".js") ||
+		filename.endsWith(".cjs") ||
 		filename.endsWith(".sh")
 	);
 }

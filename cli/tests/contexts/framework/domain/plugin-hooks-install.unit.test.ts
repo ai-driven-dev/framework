@@ -62,23 +62,12 @@ describe("installing a plugin that ships hooks", () => {
 
   it("writes a command naming the variable that tool expands, never another tool's", () => {
     for (const tool of HOOK_HOSTS) {
-      if (tool.capabilities.plugins.hooksContentFormat !== "matchers") continue;
       const manifest = contentEndingWith(installedFor(tool), "hooks.json") ?? "";
 
       expect(manifest, tool.toolId).toContain(tool.capabilities.plugins.pluginRootToken);
       if (tool.capabilities.plugins.pluginRootToken === SOURCE_TOKEN) continue;
       expect(manifest, tool.toolId).not.toContain(SOURCE_TOKEN);
     }
-  });
-
-  it("resolves the root itself for a tool whose whole hook format is rewritten", () => {
-    // Cursor's converter turns the root into a path relative to the plugin, a third answer
-    // to the same question, and its hooks are the one set that could not be observed running.
-    const manifest = contentEndingWith(installedFor(cursor), "hooks.json") ?? "";
-
-    expect(manifest).toContain('"command": "node ./hooks/journal.cjs session-start"');
-    expect(manifest).not.toContain(SOURCE_TOKEN);
-    expect(cursor.capabilities.plugins.pluginRootToken).not.toBe("./");
   });
 
   it("leaves a script beside the hook byte for byte, its plugin root untouched", () => {

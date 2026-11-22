@@ -1,0 +1,154 @@
+{
+  "host": "opencode",
+  "event": "tool.execute.after",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "call": {
+          "tool": "write",
+          "sessionID": "00000000-0000-4000-8000-000000000000",
+          "callID": "call_d50bb13595a04b648512e912",
+          "args": {
+            "content": "hello\n",
+            "filePath": "/Users/user/project/notes.md"
+          }
+        },
+        "output": {
+          "title": "notes.md",
+          "metadata": {
+            "diagnostics": {},
+            "filepath": "/Users/user/project/notes.md",
+            "exists": false,
+            "truncated": false
+          },
+          "output": "Wrote file successfully."
+        }
+      }
+    },
+    {
+      "run": "log",
+      "payload": {
+        "call": {
+          "tool": "bash",
+          "sessionID": "00000000-0000-4000-8000-000000000000",
+          "callID": "call_81c509161a8a4e358cc7d1a1",
+          "args": {
+            "command": "echo hi"
+          }
+        },
+        "output": {
+          "title": "echo hi",
+          "metadata": {
+            "output": "hi\n",
+            "exit": 0,
+            "truncated": false
+          },
+          "output": "hi\n"
+        }
+      }
+    },
+    {
+      "run": "level2",
+      "payload": {
+        "call": {
+          "tool": "write",
+          "sessionID": "00000000-0000-4000-8000-000000000000",
+          "callID": "call_e8d4a3d20abc44fc93b9720d",
+          "args": {
+            "filePath": "/Users/user/project/notes.md",
+            "content": "hello\n"
+          }
+        },
+        "output": {
+          "title": "notes.md",
+          "metadata": {
+            "diagnostics": {},
+            "filepath": "/Users/user/project/notes.md",
+            "exists": false,
+            "truncated": false
+          },
+          "output": "Wrote file successfully."
+        }
+      }
+    },
+    {
+      "run": "log",
+      "payload": {
+        "call": {
+          "tool": "edit",
+          "sessionID": "00000000-0000-4000-8000-000000000000",
+          "callID": "call_96b9445cd2794bc9ae6610fd",
+          "args": {
+            "filePath": "/Users/user/project/notes.md",
+            "oldString": "hello",
+            "newString": "hello world"
+          }
+        },
+        "output": {
+          "metadata": {
+            "diagnostics": {},
+            "diff": "Index: /Users/user/project/notes.md\n===================================================================\n--- /Users/user/project/notes.md\n+++ /Users/user/project/notes.md\n@@ -1,2 +1,2 @@\n-hello\n+hello world\n keep\n",
+            "filediff": {
+              "file": "/Users/user/project/notes.md",
+              "patch": "Index: /Users/user/project/notes.md\n===================================================================\n--- /Users/user/project/notes.md\n+++ /Users/user/project/notes.md\n@@ -1,2 +1,2 @@\n-hello\n+hello world\n keep\n",
+              "additions": 1,
+              "deletions": 1
+            },
+            "truncated": false
+          },
+          "title": "notes.md",
+          "output": "Edit applied successfully."
+        }
+      }
+    },
+    {
+      "run": "log",
+      "payload": {
+        "call": {
+          "tool": "apply_patch",
+          "sessionID": "00000000-0000-4000-8000-000000000000",
+          "callID": "toolu_c0fbdcc6d016403f8c9958ad",
+          "args": {
+            "patchText": "*** Begin Patch\n*** Update File: notes.md\n@@\n-hello\n+hello world\n*** Add File: added.md\n+new\n*** Delete File: old.md\n*** End Patch"
+          }
+        },
+        "output": {
+          "title": "Success. Updated the following files:\nM notes.md\nA added.md\nD old.md",
+          "metadata": {
+            "diff": "Index: /Users/user/project/notes.md\n===================================================================\n--- /Users/user/project/notes.md\n+++ /Users/user/project/notes.md\n@@ -1,2 +1,2 @@\n-hello\n+hello world\n keep\n\nIndex: /Users/user/project/added.md\n===================================================================\n--- /Users/user/project/added.md\n+++ /Users/user/project/added.md\n@@ -0,0 +1,1 @@\n+new\n\nIndex: /Users/user/project/old.md\n===================================================================\n--- /Users/user/project/old.md\n+++ /Users/user/project/old.md\n@@ -1,1 +0,0 @@\n-old\n\n",
+            "files": [
+              {
+                "filePath": "/Users/user/project/notes.md",
+                "relativePath": "notes.md",
+                "type": "update",
+                "patch": "Index: /Users/user/project/notes.md\n===================================================================\n--- /Users/user/project/notes.md\n+++ /Users/user/project/notes.md\n@@ -1,2 +1,2 @@\n-hello\n+hello world\n keep\n",
+                "additions": 1,
+                "deletions": 1
+              },
+              {
+                "filePath": "/Users/user/project/added.md",
+                "relativePath": "added.md",
+                "type": "add",
+                "patch": "Index: /Users/user/project/added.md\n===================================================================\n--- /Users/user/project/added.md\n+++ /Users/user/project/added.md\n@@ -0,0 +1,1 @@\n+new\n",
+                "additions": 1,
+                "deletions": 0
+              },
+              {
+                "filePath": "/Users/user/project/old.md",
+                "relativePath": "old.md",
+                "type": "delete",
+                "patch": "Index: /Users/user/project/old.md\n===================================================================\n--- /Users/user/project/old.md\n+++ /Users/user/project/old.md\n@@ -1,1 +0,0 @@\n-old\n",
+                "additions": 0,
+                "deletions": 2
+              }
+            ],
+            "diagnostics": {},
+            "truncated": false
+          },
+          "output": "Success. Updated the following files:\nM notes.md\nA added.md\nD old.md"
+        }
+      }
+    }
+  ]
+}

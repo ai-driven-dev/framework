@@ -1,14 +1,17 @@
 ---
-<frontmatter per tool, see references/tool-paths.md. Always a description (what it does + explicit triggers + Do NOT use for ...). Other fields only where the tool supports them.>
+description: "{{what the command does, one line}}"
+argument-hint:
+model:
+agent:
+allowed-tools:
+disable-model-invocation:
 ---
 
-# <Command title>
+# {{Command title}}
 
-<One line: the single objective.>
+{{The single objective, in one line.}}
 
-## Steps
+1. {{Imperative step.}}
+2. {{Next step.}}
 
-1. <Imperative step. Read any user input with `$ARGUMENTS`.>
-2. <Next step.>
-
-<!-- Single objective, fewer than ten steps. No Role section. For a CLI call, use injection only where the target tool supports it (see references/command-authoring.md). -->
+> Fill every `{{...}}`, delete each front matter key the command does not keep, and delete this line.

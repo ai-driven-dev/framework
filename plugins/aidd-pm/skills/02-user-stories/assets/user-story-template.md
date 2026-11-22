@@ -3,16 +3,16 @@ type: story
 status: proposed
 ---
 
-# Story: <title>
+# Story: {{title}}
 
-**As** <a or an actor>
-**I want** <need>
-**So that** <outcome>
+**As** {{a or an actor}}
+**I want** {{need}}
+**So that** {{outcome}}
 
 ## Acceptance
 
-- <observable condition>
+- {{observable condition}}
 
 ## Cancellation
 
-<why it is no longer pursued>
+{{why it is no longer pursued}}

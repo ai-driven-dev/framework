@@ -4,11 +4,11 @@ description: VCS release notes template
 argument-hint: N/A
 ---
 
-# Release Notes [version]
+# Release Notes {{version}}
 
 ## 🚀 New Features
 
-- `feature`: [Description of the new feature]
+- `feature`: {{description of the new feature}}
 
 ## 🔧 Improvements
 

@@ -18,6 +18,9 @@ The session drafts or the created and updated Story identities. After a write, r
 4. **Link.** Apply [relations](../references/relations.md).
 5. **Write.** Create or update only the authorized Stories and preserve fields outside the authorized change.
 6. **Verify.** Read the affected graph back and report what changed.
+   - Markdown: run `scripts/validate-story.cjs`, next to the loaded `SKILL.md`, on each file written, fix each finding and validate again, and after 3 passes stop and show what is left.
+     - Exit 2: quote the output, then stop.
+     - Fix that changes approved content: show the diff to the user before rewriting.
 7. **Report.** Return every persisted identity, then apply [handoffs](../references/handoffs.md) to the next move.
 
 ## Test

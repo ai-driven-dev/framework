@@ -1,14 +1,15 @@
-# Tool detection
+# Host detection
 
-Which AI tools a project has installed.
+Which hosts a project has installed.
 
-| Tool           | Detected when                     |
+| Host           | Detected when                     |
 | -------------- | --------------------------------- |
 | Claude Code    | `.claude/` or `CLAUDE.md`         |
 | Cursor         | `.cursor/`                        |
-| OpenCode       | `.opencode/`                      |
-| GitHub Copilot | `.github/copilot-instructions.md` |
+| OpenCode       | `.opencode/`, `opencode.json` or `opencode.jsonc` |
+| GitHub Copilot | `.github/copilot-instructions.md` or `.github/instructions/` |
 | Codex CLI      | `.codex/`                         |
-| Antigravity CLI | `.agents/agents/`, `.agents/rules/` or `.agents/hooks.json` |
+| Kilo Code      | `.kilo/`                          |
+| Antigravity    | `.agents/agents/`, `.agents/rules/`, `.agent/rules/` or `.agents/hooks.json` |
 
-A bare `AGENTS.md` may serve Cursor, OpenCode, Codex or Antigravity. Resolve shared paths from declared tools or the AIDD manifest; otherwise confirm the host. Several signals can coexist.
+Every host reads `AGENTS.md`, so it signals none. Test each listed path itself, never its parent: `.agents/skills/` alone signals no host. When no signal matches, confirm the host.

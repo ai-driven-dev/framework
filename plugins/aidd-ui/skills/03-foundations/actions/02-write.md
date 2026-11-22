@@ -11,11 +11,13 @@ The output of [prepare](01-prepare.md).
 1. From the code, [read it](../references/extraction.md).
 2. If the user asks for variants, propose and choose per [variants](../references/variants.md).
    - Compare the set per [engine](../references/engine.md).
-   - Give the user the page. Ask them to paste the copied feedback here.
+   - Give the user the page.
+   - Ask them to paste the copied feedback here.
    - Wait for the feedback.
      - Read a comment against the tokens it names.
-     - Keep: a candidate as it is. Discard: out.
-     - Revise: a lead. Its comment says what to change.
+     - Keep: a candidate as it is.
+     - Discard: out.
+     - Revise: a lead whose comment says what to change.
      - Several kept: keep the one nearer the brand.
      - Only revise: revise per the comments, then compare again.
    - Keep the chosen variant per [engine](../references/engine.md).
