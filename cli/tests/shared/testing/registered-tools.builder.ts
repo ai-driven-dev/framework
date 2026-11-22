@@ -35,14 +35,3 @@ export const TOOL = (() => {
     vscode: ide("vscode"),
   } as const;
 })();
-
-/** The tool ids a setup flow is built over, read from the registered catalog: a flow test names no
- * tool list of its own. */
-export function flowTools() {
-  const tools = registeredTools();
-  return {
-    registeredToolIds: tools.idsInCanonicalOrder(),
-    aiToolIds: tools.idsInCanonicalOrder("ai"),
-    ideToolIds: tools.idsInCanonicalOrder("ide"),
-  };
-}

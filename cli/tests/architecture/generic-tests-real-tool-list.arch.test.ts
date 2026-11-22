@@ -25,7 +25,7 @@ const GENERIC_FOLDERS = [
 ];
 const REAL_LIST = [
   /registered-tools\.builder\.js["']/,
-  /\b(?:registeredCatalog|registeredAiId|registeredAiProfile|registeredAiConfig|registeredProfile|registeredConfig)\b/,
+  /\b(?:registeredCatalog|registeredAiProfile|registeredAiConfig|registeredProfile|registeredConfig)\b/,
   /\bcatalogOf\(\)/,
   /\bREGISTERED_PROFILES\b/,
 ];
