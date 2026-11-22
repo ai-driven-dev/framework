@@ -53,11 +53,15 @@ function registerList(
     .action(async (cmdOptions: { plugins?: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const deps = await createDeps(projectRoot, { verbose }, output);
-      const { marketplaces, catalogs } = await deps.listMarketplaces.execute({
-        projectRoot,
-        withCatalogs: cmdOptions.plugins ?? false,
-      });
-      printRegisteredMarketplaces(output, marketplaces, catalogs);
+      if (cmdOptions.plugins) {
+        const { marketplaces, catalogs } = await deps.listMarketplaceCatalogs.execute({
+          projectRoot,
+        });
+        printRegisteredMarketplaces(output, marketplaces, catalogs);
+        return;
+      }
+      const { marketplaces } = await deps.listMarketplaces.execute({ projectRoot });
+      printRegisteredMarketplaces(output, marketplaces, undefined);
     });
 }
 

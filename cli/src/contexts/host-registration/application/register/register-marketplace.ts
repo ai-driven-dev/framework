@@ -64,7 +64,7 @@ export async function registerMarketplace(
     warnRegistration(run, untouched);
     return undefined;
   }
-  const requestedSource = await run.fs.realpath(builtDir).catch(() => builtDir);
+  const requestedSource = (await run.fs.realpathIfResolvable(builtDir)) ?? builtDir;
   if (followsRequestedSource(proof, requestedSource, run.platform))
     return { hostName, provenance: proof.source };
   const decision = await guardAgainstConflict(run, request);

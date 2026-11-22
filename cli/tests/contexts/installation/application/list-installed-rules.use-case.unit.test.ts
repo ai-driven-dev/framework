@@ -22,6 +22,8 @@ function readerOf(files: Readonly<Record<string, string>>): FileReader {
     isExecutable: unused("isExecutable"),
     isDirectory: unused("isDirectory"),
     realpath: unused("realpath"),
+    readFileIfReadable: unused("readFileIfReadable"),
+    realpathIfResolvable: unused("realpathIfResolvable"),
   };
 }
 

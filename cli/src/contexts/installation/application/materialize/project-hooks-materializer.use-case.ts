@@ -4,7 +4,7 @@ import type {
   PluginTranslationSkip,
   ReadonlySkipList,
 } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
-import { isErrnoException } from "../../../../shared/domain/reading/json-file.js";
+import { whenAbsent } from "../../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.js";
@@ -126,12 +126,7 @@ export class ProjectHooksMaterializer {
   }
 
   private async readExistingJson(path: string): Promise<string | null> {
-    try {
-      return await this.fs.readFile(path);
-    } catch (err) {
-      if (isErrnoException(err) && err.code === "ENOENT") return null;
-      throw err;
-    }
+    return whenAbsent(() => this.fs.readFile(path), null);
   }
 }
 

@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { tryParseJson } from "../../../shared/domain/reading/json-file.js";
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { MarketplaceCatalogIdentity } from "../domain/source/marketplace-source-conflict.js";
@@ -19,16 +20,13 @@ export async function readCatalogIdentity(
 ): Promise<MarketplaceCatalogIdentity | undefined> {
   const path = marketplaceCatalogProbePath(tool, dir);
   if (path === undefined) return undefined;
-  const content = await fs.readFile(path).catch(() => undefined);
+  const content = await fs.readFileIfReadable(path);
   if (content === undefined) return undefined;
-  try {
-    const parsed = JSON.parse(content) as { name?: unknown; plugins?: unknown };
-    if (typeof parsed.name !== "string") return undefined;
-    const pluginNames = Array.isArray(parsed.plugins) ? pluginNamesOf(parsed.plugins) : [];
-    return { name: parsed.name, pluginNames };
-  } catch {
-    return undefined;
-  }
+  const parsed = tryParseJson(content);
+  const catalog = parsed.ok ? asPlainObject(parsed.value) : null;
+  if (catalog === null || typeof catalog.name !== "string") return undefined;
+  const pluginNames = Array.isArray(catalog.plugins) ? pluginNamesOf(catalog.plugins) : [];
+  return { name: catalog.name, pluginNames };
 }
 
 /** The exact path {@link readCatalogIdentity} reads, named so a caller whose read came

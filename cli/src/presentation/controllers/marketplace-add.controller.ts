@@ -12,6 +12,7 @@ export type MarketplaceKeys =
   | "prompter"
   | "addMarketplace"
   | "listMarketplaces"
+  | "listMarketplaceCatalogs"
   | "userMarketplaceRemoveUseCase"
   | "marketplaceRemoveUseCase"
   | "refreshMarketplace"

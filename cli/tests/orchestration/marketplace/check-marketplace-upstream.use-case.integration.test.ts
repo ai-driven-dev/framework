@@ -37,7 +37,8 @@ async function buildUseCase() {
     new PluginCatalogRepositoryAdapter(fs)
   );
   const useCase = new CheckMarketplaceUpstream(
-    new CheckMarketplaces(registry, resolveMarketplace),
+    new CheckMarketplaces(registry),
+    resolveMarketplace,
     new ListPluginSources(manifestRepo, syntheticCatalog())
   );
   return { useCase, registry, manifestRepo };

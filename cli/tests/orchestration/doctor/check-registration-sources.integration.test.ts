@@ -60,6 +60,12 @@ class UnresolvableFileReader implements FileReader {
     error.code = "ENOENT";
     throw error;
   }
+  async readFileIfReadable(): Promise<string | undefined> {
+    return undefined;
+  }
+  async realpathIfResolvable(): Promise<string | undefined> {
+    return undefined;
+  }
 }
 
 interface CatalogAt {

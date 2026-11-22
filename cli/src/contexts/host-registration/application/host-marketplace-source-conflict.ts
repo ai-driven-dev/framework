@@ -32,7 +32,7 @@ export function isDriftFound(
 /** `fs.realpath`, falling back to the path itself when it cannot resolve: a dead registration must
  * not cost every other comparison its answer. */
 async function resolvedOrSelf(fs: FileReader, path: string): Promise<string> {
-  return fs.realpath(path).catch(() => path);
+  return (await fs.realpathIfResolvable(path)) ?? path;
 }
 
 /**

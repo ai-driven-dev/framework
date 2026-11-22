@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { isErrnoException } from "../../../../shared/domain/reading/json-file.js";
+import { whenAbsent } from "../../../../shared/domain/reading/json-file.js";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
@@ -40,13 +40,9 @@ async function planProjectMcpRemoval(
     await mcp.resolveOutputPath((relativePath) => fs.fileExists(join(projectRoot, relativePath)))
   );
   await assertProjectPathWithinRoot(fs, projectRoot, output);
-  try {
-    const existing = await fs.readFile(output);
-    return { output, content: mcp.removePluginServers(existing, plugin.provenance.mcpEntries) };
-  } catch (error) {
-    if (isErrnoException(error) && error.code === "ENOENT") return undefined;
-    throw error;
-  }
+  const existing = await whenAbsent(() => fs.readFile(output), undefined);
+  if (existing === undefined) return undefined;
+  return { output, content: mcp.removePluginServers(existing, plugin.provenance.mcpEntries) };
 }
 
 /** The machine claims a removal lets go of, supplied by the composition root. */

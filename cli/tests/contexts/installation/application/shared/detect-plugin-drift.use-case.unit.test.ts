@@ -35,6 +35,8 @@ function makeFs(missing: Set<string>): FileReader {
     isExecutable: async () => false,
     isDirectory: async () => false,
     realpath: async (path: string) => path,
+    readFileIfReadable: async () => "",
+    realpathIfResolvable: async (path: string) => path,
     // Present files always match their own manifest hash: this fixture is about which
     // files are missing, not about hash mismatches, which the other unit tests cover.
     readFileHash: async (p: string) => new FileHash(p.endsWith("two.md") ? HASH_B : HASH_A),
@@ -135,6 +137,8 @@ describe("DetectPluginDrift - the manifest's recorded scope wins over the profil
       isExecutable: async () => false,
       isDirectory: async () => false,
       realpath: async (path: string) => path,
+      readFileIfReadable: async () => "",
+      realpathIfResolvable: async (path: string) => path,
       readFileHash: async () => new FileHash(HASH_A),
       readFile: async () => "",
       listDirectory: async () => [],

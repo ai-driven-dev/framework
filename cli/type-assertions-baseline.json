@@ -1,7 +1,6 @@
 {
   "src/contexts/distribution/infrastructure/marketplace-registry-adapter.ts": 1,
   "src/contexts/distribution/infrastructure/marketplace-trust-store-adapter.ts": 1,
-  "src/contexts/host-registration/application/read-marketplace-catalog-identity.ts": 1,
   "src/contexts/host-registration/infrastructure/host-cli-adapter.ts": 1,
   "src/contexts/host-registration/infrastructure/marketplace-list-parsers.ts": 2,
   "src/contexts/host-registration/infrastructure/marketplace-registry-reader.ts": 1,

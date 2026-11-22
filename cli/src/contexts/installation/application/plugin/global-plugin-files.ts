@@ -2,7 +2,7 @@ import { dirname, join, posix } from "node:path";
 import { FileHash } from "../../../../shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
-import { isErrnoException } from "../../../../shared/domain/reading/json-file.js";
+import { whenAbsent } from "../../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
@@ -71,13 +71,8 @@ export async function assertGlobalFilesWritable(write: {
   return boundary;
 }
 
-async function tryRealpath(fs: FileReader, path: string): Promise<string | null> {
-  try {
-    return await fs.realpath(path);
-  } catch (err) {
-    if (isErrnoException(err) && err.code === "ENOENT") return null;
-    throw err;
-  }
+async function realpathWhenPresent(fs: FileReader, path: string): Promise<string | null> {
+  return whenAbsent(() => fs.realpath(path), null);
 }
 
 /** The nearest existing parent of the file must resolve inside the boundary; nothing to check
@@ -96,7 +91,7 @@ async function assertParentWithin(
   const { fs, tool, pluginName, file, boundary, resolvedBoundary } = write;
   let parent = dirname(join(boundary, file.relativePath));
   while (parent !== boundary) {
-    const resolved = await tryRealpath(fs, parent);
+    const resolved = await realpathWhenPresent(fs, parent);
     if (resolved !== null) {
       if (isWithinUserScope(resolved, resolvedBoundary)) return;
       throw new Error(`${tool.toolId}: '${pluginName}' parent '${parent}' escapes ${boundary}.`);

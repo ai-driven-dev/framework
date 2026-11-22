@@ -90,7 +90,7 @@ export async function proveAddedSource(
   const { toolId } = run;
   const reading = await run.hosts.sources.get(run.profile.toolId)?.read(run.projectRoot);
   const current = reading?.entries?.get(hostName);
-  const expected = await run.fs.realpath(builtDir).catch(() => builtDir);
+  const expected = (await run.fs.realpathIfResolvable(builtDir)) ?? builtDir;
   const sourceMatches =
     current?.source === expected &&
     (current.kind === "registry" ||

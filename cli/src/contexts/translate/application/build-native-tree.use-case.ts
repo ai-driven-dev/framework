@@ -1,6 +1,7 @@
 import { join, resolve } from "node:path";
 import { describeError } from "../../../shared/domain/describe-error.js";
 import { pathsOverlap } from "../../../shared/domain/paths.js";
+import { tryParseJson } from "../../../shared/domain/reading/json-file.js";
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import { InvalidSourceMarketplaceError } from "../../../shared/domain/shared.error.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
@@ -76,19 +77,15 @@ export class BuildNativeTree {
 
   private async readSourceMarketplace(sourceDir: string): Promise<SourceMarketplaceRef> {
     const marketplacePath = join(sourceDir, SOURCE_MARKETPLACE_RELATIVE);
-    let raw: string;
-    try {
-      raw = await this.deps.fs.readFile(marketplacePath);
-    } catch {
+    const raw = await this.deps.fs.readFileIfReadable(marketplacePath);
+    if (raw === undefined) {
       throw new InvalidSourceMarketplaceError(`cannot read ${marketplacePath}`);
     }
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(raw);
-    } catch (err) {
-      throw new InvalidSourceMarketplaceError(`malformed JSON: ${describeError(err)}`);
+    const parsed = tryParseJson(raw);
+    if (!parsed.ok) {
+      throw new InvalidSourceMarketplaceError(`malformed JSON: ${describeError(parsed.error)}`);
     }
-    return this.validateSourceMarketplace(parsed);
+    return this.validateSourceMarketplace(parsed.value);
   }
 
   private validateSourceMarketplace(parsed: unknown): SourceMarketplaceRef {

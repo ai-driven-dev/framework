@@ -91,18 +91,18 @@ async function builtByThisCli(
     await run.hosts.marketplaceRegistries.get(run.profile.toolId)?.read()
   )?.entries?.get(hostName);
   if (registeredSource === undefined) return false;
-  const source = await fs.realpath(registeredSource).catch(() => registeredSource);
+  const source = (await fs.realpathIfResolvable(registeredSource)) ?? registeredSource;
   const userRoot = run.userCacheRoot();
   const locations = [
     parseBuiltMarketplaceDir(
-      await fs.realpath(projectRoot).catch(() => projectRoot),
+      (await fs.realpathIfResolvable(projectRoot)) ?? projectRoot,
       source,
       platform
     ),
     userRoot === ""
       ? undefined
       : parseUserBuiltMarketplaceDir(
-          await fs.realpath(userRoot).catch(() => userRoot),
+          (await fs.realpathIfResolvable(userRoot)) ?? userRoot,
           source,
           platform
         ),

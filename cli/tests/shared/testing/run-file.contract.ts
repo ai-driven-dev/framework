@@ -36,7 +36,13 @@ export type ContractCaseId =
   | "C20"
   | "C21"
   | "C22"
-  | "C23";
+  | "C23"
+  | "C24"
+  | "C25"
+  | "C26"
+  | "C27"
+  | "C28"
+  | "C29";
 
 /**
  * Cases a subject is known to fail, keyed by case, each with the divergence it stands for.
@@ -277,6 +283,50 @@ export function describeFileContract(
       expect(await subject.files.isDirectory(path("d"))).toBe(true);
       expect(await subject.files.isDirectory(path("d", "f.txt"))).toBe(false);
       expect(await subject.files.isDirectory(path("missing"))).toBe(false);
+    });
+
+    contractCase("C24", "reads a file through readFileIfReadable", async () => {
+      await subject.files.writeFile(path("f.txt"), "content");
+
+      expect(await subject.files.readFileIfReadable(path("f.txt"))).toBe("content");
+    });
+
+    contractCase("C25", "answers undefined, not an error, for a file it cannot read", async () => {
+      expect(await subject.files.readFileIfReadable(path("missing.txt"))).toBeUndefined();
+    });
+
+    contractCase("C26", "resolves a real path through realpathIfResolvable", async () => {
+      await subject.files.writeFile(path("target", "x"), "x");
+      await subject.link(path("target"), path("link"));
+
+      expect(await subject.files.realpathIfResolvable(path("link", "x"))).toBe(
+        await subject.files.realpath(path("target", "x"))
+      );
+    });
+
+    contractCase(
+      "C27",
+      "answers undefined, not an error, for a path it cannot resolve",
+      async () => {
+        expect(await subject.files.realpathIfResolvable(path("missing", "x"))).toBeUndefined();
+      }
+    );
+
+    contractCase(
+      "C28",
+      "answers undefined for a path that is a directory, not a file",
+      async () => {
+        await subject.files.writeFile(path("d", "f.txt"), "x");
+
+        expect(await subject.files.readFileIfReadable(path("d"))).toBeUndefined();
+      }
+    );
+
+    contractCase("C29", "answers undefined for a symlink loop it cannot resolve", async () => {
+      await subject.link(path("loop-b"), path("loop-a"));
+      await subject.link(path("loop-a"), path("loop-b"));
+
+      expect(await subject.files.realpathIfResolvable(path("loop-a"))).toBeUndefined();
     });
 
     contractCase("C22", "accepts a directory spelled with a trailing separator", async () => {

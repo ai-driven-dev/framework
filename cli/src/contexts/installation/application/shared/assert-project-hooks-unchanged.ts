@@ -1,6 +1,7 @@
 import { join } from "node:path";
+import { errorMessage } from "../../../../shared/domain/describe-error.js";
 import { FileHash } from "../../../../shared/domain/file-hash.js";
-import { isErrnoException } from "../../../../shared/domain/reading/json-file.js";
+import { tryParseJson, whenAbsent } from "../../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type {
   ProjectHookEntry,
@@ -131,20 +132,13 @@ export function digestEntry(entry: ProjectHookEntry): string {
 
 /** Merging into a file AIDD cannot parse would mean guessing what it holds. */
 function assertParsableJson(content: string, relativePath: string): void {
-  try {
-    JSON.parse(content);
-  } catch (err) {
+  const parsed = tryParseJson(content);
+  if (!parsed.ok)
     throw new Error(
-      `${relativePath} is not valid JSON (${err instanceof Error ? err.message : String(err)}); left untouched.`
+      `${relativePath} is not valid JSON (${errorMessage(parsed.error)}); left untouched.`
     );
-  }
 }
 
 async function readExistingJson(fs: FileReader, path: string): Promise<string | null> {
-  try {
-    return await fs.readFile(path);
-  } catch (err) {
-    if (isErrnoException(err) && err.code === "ENOENT") return null;
-    throw err;
-  }
+  return whenAbsent(() => fs.readFile(path), null);
 }

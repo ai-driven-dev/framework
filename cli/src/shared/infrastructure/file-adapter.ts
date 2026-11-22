@@ -102,6 +102,14 @@ export class FileAdapter implements FileReader, FileWriter {
     return realpath(path);
   }
 
+  async readFileIfReadable(path: string): Promise<string | undefined> {
+    return readFile(path, "utf-8").catch(() => undefined);
+  }
+
+  async realpathIfResolvable(path: string): Promise<string | undefined> {
+    return realpath(path).catch(() => undefined);
+  }
+
   async readFileHash(path: string): Promise<FileHash> {
     const content = await this.readFile(path);
     return FileHash.of(content);
