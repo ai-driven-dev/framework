@@ -17,13 +17,14 @@ Where the project runs and how it ships: CI/CD, environments, and release.
 | `dependabot-auto-merge.yml` | merges dependency PRs that pass |
 | `close-finished-milestones.yml` | closes a milestone once its issues are |
 | `star-history.yml` | refreshes the README star chart |
-| `opencode.yml` | runs the OpenCode agent on a `/opencode` comment from the repository owner, nobody else |
+| `opencode.yml` | runs the OpenCode agent on a `/opencode` comment from the configured GitHub user |
+| `opencode-review.yml` | reviews configured submissions on a restricted, dedicated runner |
 
 Push to `main` is automatic. Manual runs: `promote.yml`, `close-finished-milestones.yml`, `star-history.yml`.
 
 ## Environments
 
-No server, container or IaC. What ships are release assets and packages.
+Release assets and packages ship without a production application server. The optional review runner uses a dedicated server; its setup is in [`docker/aidd-opencode/runner/README.md`](../../docker/aidd-opencode/runner/README.md).
 
 | Target | Where |
 | --- | --- |
