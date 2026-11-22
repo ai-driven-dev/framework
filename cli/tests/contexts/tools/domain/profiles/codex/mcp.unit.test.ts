@@ -6,7 +6,7 @@ const TOML = new SmolTomlCodec();
 const codex = codexProfile(TOML);
 
 describe("codex mcp", () => {
-  describe("capabilities.mcp", () => {
+  describe("with Codex's mcp capability", () => {
     it("outputs to .codex/config.toml", () => {
       expect(codex.section("mcp").config?.accepts(".codex/config.toml")).toBe(true);
     });

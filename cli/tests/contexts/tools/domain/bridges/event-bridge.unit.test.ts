@@ -15,7 +15,7 @@ const hooksOf = (event: string, ...commands: (string | undefined)[]) =>
 const stopCalls = (...commands: (string | undefined)[]) =>
   parseHooksJsonForBridge(hooksOf("Stop", ...commands)).stop;
 
-describe("parseHooksJsonForBridge", () => {
+describe("reading a hooks file for the bridge", () => {
   it.each([
     [
       "splits arguments on any run of whitespace",
@@ -53,7 +53,7 @@ describe("parseHooksJsonForBridge", () => {
   });
 });
 
-describe("replaysNothing", () => {
+describe("when no event has a replayable command", () => {
   it.each([
     ["no hooks key", "{}"],
     ["no event", JSON.stringify({ hooks: {} })],
@@ -82,7 +82,7 @@ describe("replaysNothing", () => {
   });
 });
 
-describe("pascalCasePluginName", () => {
+describe("naming a plugin in Pascal case", () => {
   it.each([
     ["aidd-sample", "AiddSample"],
     ["aidd--sample", "AiddSample"],

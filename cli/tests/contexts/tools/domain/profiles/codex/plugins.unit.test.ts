@@ -7,7 +7,7 @@ import { nativeOf } from "../../../../../shared/testing/native-plugin-answers.bu
 const codex = codexProfile(new SmolTomlCodec());
 
 describe("codex plugins", () => {
-  describe("capabilities.plugins", () => {
+  describe("with Codex's plugins capability", () => {
     it("declares native codex CLI activation, with the verbs codex uses, and nothing else", () => {
       const activation = codex.nativeActivation();
       // Exhaustive, not `toMatchObject`: a verb added by mistake must fail here rather than escape.
@@ -30,7 +30,7 @@ describe("codex plugins", () => {
       );
     });
 
-    describe("nativeActivation.userSettingsFile()", () => {
+    describe("when the user settings file is located", () => {
       const environment = (vars: Record<string, string>) => (name: string) => vars[name];
 
       it("falls back to ~/.codex/config.toml when CODEX_HOME is unset", () => {

@@ -2,13 +2,13 @@ import { describe, expect, it } from "vitest";
 import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/copilot.profile.js";
 
 describe("copilot mcp", () => {
-  describe("capabilities.mcp", () => {
+  describe("with Copilot's mcp capability", () => {
     it("maps mcp to .vscode/mcp.json", () => {
       expect(copilot.section("mcp").config?.accepts(".vscode/mcp.json")).toBe(true);
     });
   });
 
-  describe("capabilities.mcp.transform()", () => {
+  describe("when Copilot's mcp config is transformed", () => {
     const transform = (content: string): string | undefined =>
       copilot.section("mcp").config?.transform(content);
 

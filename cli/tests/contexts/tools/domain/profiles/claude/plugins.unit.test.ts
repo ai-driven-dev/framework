@@ -4,7 +4,7 @@ import { claude } from "../../../../../../src/contexts/tools/domain/profiles/cla
 import { nativeOf } from "../../../../../shared/testing/native-plugin-answers.builder.js";
 
 describe("claude plugins", () => {
-  describe("capabilities.plugins", () => {
+  describe("with Claude's plugins capability", () => {
     it("is native mode", () => {
       expect(claude.plugins()?.kind).toBe("native");
     });

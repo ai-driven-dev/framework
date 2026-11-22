@@ -30,7 +30,7 @@ function cursorStop(index: number): Record<string, unknown> {
   return sample("cursor-stop.json", index).payload;
 }
 
-describe("Cursor", () => {
+describe("reading Cursor hook payloads", () => {
   it("reads sessionStart from its captured payload, its folder the first workspace root", () => {
     const { payload } = sample("cursor-sessionStart.json", 0);
 

@@ -3,7 +3,7 @@ import { AgentsSection } from "../../../../../src/contexts/tools/domain/sections
 
 const identity = (fm: Record<string, unknown>) => fm;
 
-describe("AgentsSection", () => {
+describe("an agents section", () => {
   const markdownParams = {
     directory: ".claude/",
     toolSuffix: ".claude.md",

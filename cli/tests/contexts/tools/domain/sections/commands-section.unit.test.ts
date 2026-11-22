@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CommandsSection } from "../../../../../src/contexts/tools/domain/sections/commands-section.js";
 
-describe("CommandsSection", () => {
+describe("a commands section", () => {
   it("converts the frontmatter by the file's relative name", () => {
     const section = new CommandsSection({
       toolSuffix: ".claude.md",

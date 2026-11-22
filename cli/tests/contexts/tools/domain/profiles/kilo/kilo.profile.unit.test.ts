@@ -21,7 +21,7 @@ function _makeFs(existingPaths: string[]): FileReader {
   };
 }
 
-describe("kilo", () => {
+describe("the Kilo profile", () => {
   it("turns agents into Kilo subagents without copying host-specific metadata", () => {
     expect(
       kilo.section("agents").convertFrontmatter({

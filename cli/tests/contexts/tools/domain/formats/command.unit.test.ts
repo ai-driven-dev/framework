@@ -5,7 +5,7 @@ import {
   convertCommandFrontmatterNoHint,
 } from "../../../../../src/contexts/tools/domain/formats/command.js";
 
-describe("convertCommandFrontmatter", () => {
+describe("converting a command's frontmatter", () => {
   it("namespaces the name under the phase its directory is numbered with", () => {
     expect(
       convertCommandFrontmatter({ name: "plan", description: "d" }, "01-plan/plan.md")
@@ -48,7 +48,7 @@ describe("convertCommandFrontmatter", () => {
   });
 });
 
-describe("buildAiddCommandFilePath", () => {
+describe("filing a command", () => {
   it("files a command under its numbered phase", () => {
     expect(buildAiddCommandFilePath(".claude/", "01-plan/plan.md")).toBe(
       ".claude/commands/aidd/01/plan.md"

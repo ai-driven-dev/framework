@@ -12,7 +12,7 @@ const CURSOR_TOKEN = "$" + "{CURSOR_PLUGIN_ROOT}";
 const CODEX_TOKEN = "$" + "{PLUGIN_ROOT}";
 const COPILOT_TOKEN = "$" + "{COPILOT_PLUGIN_ROOT}";
 
-describe("rewritePluginRootToken", () => {
+describe("rewriting the plugin root token", () => {
   describe("claude no-op (token equals source)", () => {
     it("returns content unchanged when target equals the source token", () => {
       const content = `node ${CLAUDE_TOKEN}/hooks/update.js`;

@@ -7,7 +7,7 @@ import { SmolTomlCodec } from "../../../../../../src/contexts/tools/infrastructu
 
 const TOML = new SmolTomlCodec();
 
-describe("tomlAgentMarkdownToToml()", () => {
+describe("converting an agent's markdown to TOML", () => {
   describe("name resolution", () => {
     it("prefixes the file's base name with the plugin, whatever the frontmatter name", () => {
       expect(
@@ -90,7 +90,7 @@ developer_instructions = "No frontmatter here."
     });
   });
 
-  describe("idempotency", () => {
+  describe("when converted twice", () => {
     it("produces byte-identical output on two consecutive calls with identical input", () => {
       const content =
         "---\nname: planner\ndescription: A planner.\nmodel: opus\n---\n\nBody with code:\n```bash\necho hi\n```\n";

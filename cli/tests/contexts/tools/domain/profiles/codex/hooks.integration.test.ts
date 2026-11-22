@@ -10,7 +10,7 @@ const TOML = new SmolTomlCodec();
 const codex = codexProfile(TOML);
 
 describe("codex hooks", () => {
-  describe("capabilities.hooks", () => {
+  describe("with Codex's hooks capability", () => {
     it("outputs to .codex/hooks.json", () => {
       expect(codex.section("hooks").config?.fileOf("{}").relativePath).toBe(".codex/hooks.json");
     });

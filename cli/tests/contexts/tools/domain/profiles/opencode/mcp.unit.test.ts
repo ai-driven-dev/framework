@@ -20,7 +20,7 @@ function _makeFs(existingPaths: string[]): FileReader {
 }
 
 describe("opencode mcp", () => {
-  describe("capabilities.mcp", () => {
+  describe("with OpenCode's mcp capability", () => {
     it("maps both opencode and mcp config names to opencode.json", () => {
       expect(opencode.section("mcp").config?.accepts("opencode.json")).toBe(true);
       expect(opencode.section("mcp").config?.consumes("opencode")).toBe(true);

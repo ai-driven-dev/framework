@@ -8,7 +8,7 @@ import type { AiTool } from "../../../../../src/contexts/tools/domain/profile.js
 import { aiSpec, ideSpec, refusalOf, settings } from "../../testing/define-tool-spec.builder.js";
 import { flatPlugins, nativePlugins, sectionsOf } from "../../testing/plugin-mode.builder.js";
 
-describe("defineAiTool", () => {
+describe("defining an AI tool", () => {
   it("builds a section with the directory and the suffix the profile stated once", () => {
     const tool = defineAiTool({
       ...aiSpec,
@@ -145,7 +145,7 @@ describe("defineAiTool", () => {
   });
 });
 
-describe("defineIdeTool", () => {
+describe("defining an IDE tool", () => {
   it("refuses an absolute directory", () => {
     expect(refusalOf(() => defineIdeTool({ ...ideSpec, directory: "/abs/" })).invariant).toBe(
       "directory-not-relative"

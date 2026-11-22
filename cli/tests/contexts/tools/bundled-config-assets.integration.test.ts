@@ -9,14 +9,14 @@ const { vscode } = TOOL;
 const provider = new BundledAssetProviderAdapter(wireTools());
 
 describe("BundledAssetProviderAdapter.loadConfigAsset, per registered tool", () => {
-  describe("claude", () => {
+  describe("for the claude config assets", () => {
     it("returns parsed settings.json with permissions", () => {
       const asset = provider.loadConfigAsset(TOOL.claude, "settings.json");
       expect(asset).toHaveProperty("permissions");
     });
   });
 
-  describe("opencode", () => {
+  describe("for the opencode config assets", () => {
     it("bundles the shared event adapter as executable source text", () => {
       const asset = provider.loadConfigAsset(TOOL.opencode, "opencode-events.js");
 
@@ -30,7 +30,7 @@ describe("BundledAssetProviderAdapter.loadConfigAsset, per registered tool", () 
     });
   });
 
-  describe("kilo", () => {
+  describe("for the kilo config assets", () => {
     it("returns parsed kilo.json with its schema", () => {
       const asset = provider.loadConfigAsset(TOOL.kilo, "kilo.json");
       expect(asset).toMatchObject({
@@ -40,7 +40,7 @@ describe("BundledAssetProviderAdapter.loadConfigAsset, per registered tool", () 
     });
   });
 
-  describe("codex", () => {
+  describe("for the codex config assets", () => {
     it("returns config.toml as raw string", () => {
       const asset = provider.loadConfigAsset(TOOL.codex, "config.toml");
       expect(typeof asset).toBe("string");
@@ -55,7 +55,7 @@ describe("BundledAssetProviderAdapter.loadConfigAsset, per registered tool", () 
     });
   });
 
-  describe("copilot", () => {
+  describe("for the copilot config assets", () => {
     it("returns merged vscode-settings.json with ≥26 keys including both asset origins", () => {
       const asset = provider.loadConfigAsset(TOOL.copilot, "vscode-settings.json");
       expect(Object.keys(asset).length).toBeGreaterThanOrEqual(26);
@@ -66,7 +66,7 @@ describe("BundledAssetProviderAdapter.loadConfigAsset, per registered tool", () 
     });
   });
 
-  describe("vscode", () => {
+  describe("for the vscode config assets", () => {
     it("returns settings.json as object", () => {
       const asset = provider.loadConfigAsset(vscode, "settings.json");
       expect(asset).toHaveProperty("editor.formatOnSave");

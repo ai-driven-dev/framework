@@ -5,7 +5,7 @@ import type { PluginSource } from "../../../../src/shared/domain/plugin/source.j
 const keyOf = (source: PluginSource): string | null =>
   sharedMarketplaceKey({ name: "aidd", source });
 
-describe("sharedMarketplaceKey", () => {
+describe("keying a shared marketplace", () => {
   it.each<PluginSource>([
     { kind: "local", path: "/marketplace" },
     { kind: "github", repo: "owner/repo" },

@@ -3,7 +3,7 @@ import { SmolTomlCodec } from "../../../../src/contexts/tools/infrastructure/smo
 
 const toml = new SmolTomlCodec();
 
-describe("SmolTomlCodec.parse()", () => {
+describe("when TOML is parsed", () => {
   it("parses a simple TOML string into an object", () => {
     const result = toml.parse('name = "my-tool"\nenabled = true\n');
     expect(result).toEqual({ name: "my-tool", enabled: true });
@@ -20,7 +20,7 @@ describe("SmolTomlCodec.parse()", () => {
   });
 });
 
-describe("SmolTomlCodec.stringify()", () => {
+describe("when an object is written as TOML", () => {
   it("serializes a simple object to TOML string", () => {
     const result = toml.stringify({ name: "my-tool" });
     expect(result).toContain('name = "my-tool"');

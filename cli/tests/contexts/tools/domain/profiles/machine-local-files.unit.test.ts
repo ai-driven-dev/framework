@@ -5,7 +5,7 @@ import {
 } from "../../../../shared/testing/catalog-of.builder.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
-describe("ToolProfile.machineLocalFiles()", () => {
+describe("asking a profile for its machine-local files", () => {
   it("answers none for an editor", () => {
     expect(registeredProfile(TOOL.vscode).machineLocalFiles()).toEqual([]);
   });

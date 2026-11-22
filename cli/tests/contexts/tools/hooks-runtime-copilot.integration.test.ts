@@ -19,7 +19,7 @@ import {
 
 afterEach(restoreHostIo);
 
-describe("Copilot", () => {
+describe("reading Copilot hook payloads", () => {
   it("reads SessionStart from its captured payload", () => {
     const { payload } = sample("copilot-SessionStart.json", 0);
 

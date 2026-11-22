@@ -6,7 +6,7 @@ import {
   serializeFrontmatter,
 } from "../../../../../../src/shared/domain/markdown.js";
 
-describe("portableAgentFrontmatter", () => {
+describe("writing a portable agent's frontmatter", () => {
   it("names the agent, keeps its description and inherits the session model", () => {
     expect(
       portableAgentFrontmatter(

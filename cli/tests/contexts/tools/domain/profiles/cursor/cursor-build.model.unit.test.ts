@@ -25,7 +25,7 @@ const AGENT_SOURCE = [
   "",
 ].join("\n");
 
-describe("buildCursorContract(HOOKS)", () => {
+describe("building Cursor's marketplace contract", () => {
   it("gives same-named plugin roles distinct native identities", () => {
     const transform = builtAgent(buildCursorContract(HOOKS), "marketplace");
     const first = transform?.(AGENT_SOURCE, "first-plugin", "planner.md") ?? "";
@@ -97,7 +97,7 @@ describe("buildCursorContract(HOOKS)", () => {
   });
 });
 
-describe("present(cursor.buildContracts.flat)()", () => {
+describe("building Cursor's flat contract", () => {
   it("lands a plugin's hooks declaration beside Cursor's hooks and its scripts under the plugin's own folder", () => {
     const hooks = supported(present(cursor.buildContracts.flat)().artifacts.hooks);
 

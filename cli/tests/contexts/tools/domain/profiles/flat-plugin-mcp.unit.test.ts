@@ -8,7 +8,7 @@ import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { flatPlugins } from "../../testing/plugin-mode.builder.js";
 import { aProfile } from "../../testing/profiles.builder.js";
 
-describe("AiToolProfile.flatPluginMcp()", () => {
+describe("asking a profile for its flat plugin mcp capability", () => {
   it("answers the MCP capability of a flat tool merging framework-prime", () => {
     expect(registeredAiProfile(TOOL.opencode).flatPluginMcp()).toBe(
       registeredAiConfig(TOOL.opencode).section("mcp")?.config

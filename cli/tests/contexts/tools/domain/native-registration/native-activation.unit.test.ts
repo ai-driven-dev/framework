@@ -4,7 +4,7 @@ import { NativeActivation } from "../../../../../src/contexts/tools/domain/nativ
 
 const driven = { binary: "claude", enableVerb: "install", disableVerb: "uninstall" } as const;
 
-describe("NativeActivation", () => {
+describe("a tool's native activation", () => {
   it("reads back what the tool declares", () => {
     const activation = new NativeActivation({ ...driven, upgradeVerb: "update" });
     expect([

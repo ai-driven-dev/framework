@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 import { HooksConfigPart } from "../../../../../src/contexts/tools/domain/sections/hooks-section.js";
 import { CapabilityConfigError } from "../../../../../src/contexts/tools/domain/tools.error.js";
 
-describe("HooksConfigPart", () => {
+describe("a hooks config part", () => {
   const params = { outputPath: ".codex/hooks.json" };
 
-  describe("accepts", () => {
+  describe("when asked whether it accepts a path", () => {
     it("returns true for the exact output path", () => {
       const cap = new HooksConfigPart(params);
       expect(cap.accepts(".codex/hooks.json")).toBe(true);
@@ -17,7 +17,7 @@ describe("HooksConfigPart", () => {
     });
   });
 
-  describe("equals", () => {
+  describe("when compared with another part", () => {
     it("returns true for identical params", () => {
       const a = new HooksConfigPart(params);
       const b = new HooksConfigPart({ ...params });

@@ -9,7 +9,7 @@ import {
   InvalidToolProfileError,
 } from "../../../../src/contexts/tools/domain/tools.error.js";
 
-describe("CapabilityConfigError", () => {
+describe("when CapabilityConfigError is raised", () => {
   it("carries its data and says nothing itself", () => {
     const error = new CapabilityConfigError("cap broke");
     expect({ name: error.name, detail: error.detail, message: error.message }).toStrictEqual({
@@ -24,7 +24,7 @@ describe("CapabilityConfigError", () => {
   });
 });
 
-describe("DuplicateToolIdError", () => {
+describe("when DuplicateToolIdError is raised", () => {
   it("carries its data and says nothing itself", () => {
     const error = new DuplicateToolIdError("t");
     expect({ name: error.name, toolId: error.toolId, message: error.message }).toStrictEqual({
@@ -39,7 +39,7 @@ describe("DuplicateToolIdError", () => {
   });
 });
 
-describe("InvalidAgentFrontmatterError", () => {
+describe("when InvalidAgentFrontmatterError is raised", () => {
   it("carries its data and says nothing itself", () => {
     const error = new InvalidAgentFrontmatterError("a", "d");
     expect({
@@ -60,7 +60,7 @@ describe("InvalidAgentFrontmatterError", () => {
   });
 });
 
-describe("InvalidHooksDescriptorError", () => {
+describe("when InvalidHooksDescriptorError is raised", () => {
   it("carries its data and says nothing itself", () => {
     const error = new InvalidHooksDescriptorError("t", "unknown-event", "d");
     expect({
@@ -85,7 +85,7 @@ describe("InvalidHooksDescriptorError", () => {
   });
 });
 
-describe("InvalidMcpServerConfigError", () => {
+describe("when InvalidMcpServerConfigError is raised", () => {
   it("carries its data and says nothing itself", () => {
     const error = new InvalidMcpServerConfigError("db");
     expect({
@@ -104,7 +104,7 @@ describe("InvalidMcpServerConfigError", () => {
   });
 });
 
-describe("InvalidToolProfileError", () => {
+describe("when InvalidToolProfileError is raised", () => {
   it("carries its data and says nothing itself", () => {
     const error = new InvalidToolProfileError("t", "unknown-section", "d");
     expect({
@@ -129,7 +129,7 @@ describe("InvalidToolProfileError", () => {
   });
 });
 
-describe("DualConfigError", () => {
+describe("when DualConfigError is raised", () => {
   const kilo = "Kilo JSON and JSONC config variants exist at the same location";
   const opencode = "opencode.json and opencode.jsonc exist";
 

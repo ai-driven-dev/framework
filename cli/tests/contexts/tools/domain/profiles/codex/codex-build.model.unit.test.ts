@@ -30,7 +30,7 @@ function configArtifactOf(): ConfigArtifact {
   return step;
 }
 
-describe("present(codex.buildContracts.marketplace)()", () => {
+describe("building Codex's marketplace contract", () => {
   it("declares Codex's own plugin manifest path, schema and root token", () => {
     const contract = present(codex.buildContracts.marketplace)();
 
@@ -175,7 +175,7 @@ describe("present(codex.buildContracts.marketplace)()", () => {
   });
 });
 
-describe("present(codex.buildContracts.flat)()", () => {
+describe("building Codex's flat contract", () => {
   it("writes no manifest and no marketplace of its own", () => {
     const contract = present(codex.buildContracts.flat)();
 

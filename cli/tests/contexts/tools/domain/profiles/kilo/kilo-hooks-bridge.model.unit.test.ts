@@ -5,7 +5,7 @@ const STOP_HOOK = JSON.stringify({
   hooks: { Stop: [{ hooks: [{ command: "node $" + "{CLAUDE_PLUGIN_ROOT}/hooks/a.cjs" }] }] },
 });
 
-describe("generateKiloHooksBridge", () => {
+describe("generating Kilo's hooks bridge", () => {
   it("exports a descriptor named after the plugin, serving the plugin's own server", () => {
     expect(generateKiloHooksBridge(STOP_HOOK, "aidd-test")).toContain(
       'export default { id: "aidd-test-hooks", server: AiddTestKiloHooks };'

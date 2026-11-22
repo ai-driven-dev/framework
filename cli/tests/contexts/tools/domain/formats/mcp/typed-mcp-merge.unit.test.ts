@@ -18,7 +18,7 @@ function makeExisting(servers: Record<string, unknown>): string {
   return JSON.stringify({ mcp: servers }, null, 2);
 }
 
-describe("mergeTypedMcp", () => {
+describe("merging typed mcp servers", () => {
   it("merges into empty target", () => {
     const { mergedContent, contributedEntries, collisions } = mergeTypedMcp(
       null,
@@ -184,7 +184,7 @@ describe("tolerates a JSONC user-owned opencode.json", () => {
   });
 });
 
-describe("buildTypedMcpFlatConfig", () => {
+describe("building the flat typed mcp config", () => {
   const BASE = JSON.stringify({
     $schema: "https://opencode.ai/config.json",
     instructions: [".opencode/rules/**/*.md"],
@@ -293,7 +293,7 @@ describe("buildTypedMcpFlatConfig merged list keys", () => {
   });
 });
 
-describe("unmergeTypedMcp", () => {
+describe("removing merged typed mcp servers", () => {
   it("removes only the tracked entries, preserving other servers", () => {
     const existing = makeExisting({ plugin: LOCAL_SERVER, user: REMOTE_SERVER });
     const entries = new Map([["plugin", FileHash.of(JSON.stringify(LOCAL_SERVER)).value]]);

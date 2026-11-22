@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { modelWithEffort } from "../../../../../../src/contexts/tools/domain/formats/agents/agent-format.js";
 
-describe("modelWithEffort()", () => {
+describe("joining a model and an effort", () => {
   it("joins the model and the effort between the given delimiters", () => {
     expect(modelWithEffort({ model: "m", effort: "high" }, "[effort=", "]")).toBe("m[effort=high]");
     expect(modelWithEffort({ model: "m", effort: "high" }, "#")).toBe("m#high");

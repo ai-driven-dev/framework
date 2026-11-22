@@ -21,7 +21,7 @@ function distributionCarrying(manifests: readonly string[]): PluginDistribution 
   });
 }
 
-describe("translatePlugin", () => {
+describe("translating a plugin for a test", () => {
   // Order is behaviour: the translation carries the first manifest a probe finds, and the
   // composition probes the deepest path first.
   it("carries the deepest manifest the distribution holds, as the composition probes", () => {

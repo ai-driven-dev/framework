@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { claude } from "../../../../../../src/contexts/tools/domain/profiles/claude/claude.profile.js";
 
 describe("claude mcp", () => {
-  describe("capabilities.mcp", () => {
+  describe("with Claude's mcp capability", () => {
     it("outputs to .mcp.json", () => {
       expect(claude.section("mcp").config?.accepts(".mcp.json")).toBe(true);
     });

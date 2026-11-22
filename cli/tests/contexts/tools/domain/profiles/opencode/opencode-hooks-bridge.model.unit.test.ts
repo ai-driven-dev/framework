@@ -5,7 +5,7 @@ const STOP_HOOK = JSON.stringify({
   hooks: { Stop: [{ hooks: [{ command: "node $" + "{CLAUDE_PLUGIN_ROOT}/hooks/a.cjs" }] }] },
 });
 
-describe("generateOpencodeHooksBridge", () => {
+describe("generating OpenCode's hooks bridge", () => {
   it("exports a descriptor that hands the plugin's server to the shared events adapter", () => {
     const bridge = generateOpencodeHooksBridge(STOP_HOOK, "aidd-test");
 

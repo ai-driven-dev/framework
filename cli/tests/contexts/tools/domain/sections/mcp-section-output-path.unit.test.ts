@@ -27,7 +27,7 @@ describe("the file a tool's MCP config goes in", () => {
     expect(asked).toStrictEqual([".kilo/kilo.json", ".kilo/kilo.jsonc"]);
   });
 
-  describe("opencode", () => {
+  describe("for the opencode output path", () => {
     const resolve = (...files: string[]) =>
       opencode.section("mcp").config?.resolveOutputPath(withFiles(...files));
 
@@ -48,7 +48,7 @@ describe("the file a tool's MCP config goes in", () => {
     });
   });
 
-  describe("kilo", () => {
+  describe("for the kilo output path", () => {
     const resolve = (...files: string[]) =>
       kilo.section("mcp").config?.resolveOutputPath(withFiles(...files));
 

@@ -20,13 +20,13 @@ const EVERY_SECTION: Record<ProfileSectionKey, true> = {
   models: true,
 };
 
-describe("PROFILE_SECTION_KEYS", () => {
+describe("the section keys a profile can declare", () => {
   it("lists every section a profile can declare, once", () => {
     expect([...PROFILE_SECTION_KEYS].sort()).toStrictEqual(Object.keys(EVERY_SECTION).sort());
   });
 });
 
-describe("isProfileSectionKey", () => {
+describe("telling a section key from another name", () => {
   it.each([...PROFILE_SECTION_KEYS])("accepts %s", (key) => {
     expect(isProfileSectionKey(key)).toBe(true);
   });

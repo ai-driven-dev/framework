@@ -13,7 +13,7 @@ function mcpJson(servers: Record<string, unknown>): string {
   return JSON.stringify({ mcpServers: servers });
 }
 
-describe("mcpJsonToToml", () => {
+describe("converting mcp JSON to TOML", () => {
   describe("a stdio server", () => {
     it("carries its command alone when nothing else is declared", () => {
       expect(mcpJsonToToml(TOML, mcpJson({ fs: { command: "npx" } }))).toBe(
@@ -145,7 +145,7 @@ describe("mcpJsonToToml", () => {
   });
 });
 
-describe("mergeJsonUserPrime", () => {
+describe("merging JSON with the user's side first", () => {
   it("takes the incoming document whole when nothing existed", () => {
     expect(mergeJsonUserPrime("", '{"mcpServers":{"a":{"command":"x"}}}')).toBe(
       JSON.stringify({ mcpServers: { a: { command: "x" } } }, null, 2)
@@ -176,7 +176,7 @@ describe("mergeJsonUserPrime", () => {
   });
 });
 
-describe("deepMerge", () => {
+describe("merging objects deeply", () => {
   it("replaces an array rather than merging it as an object", () => {
     expect(deepMerge({ a: { b: 1 } }, { a: [1] })).toStrictEqual({ a: [1] });
     expect(deepMerge({ a: [1, 2] }, { a: [3] })).toStrictEqual({ a: [3] });
