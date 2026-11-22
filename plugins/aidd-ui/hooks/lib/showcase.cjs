@@ -12,7 +12,7 @@ const { text, UI_DIR } = require("./project.cjs");
 const { escaped, documentOf, inlined, STYLESHEET_LINK } = require("./html.cjs");
 const { catalog, citations, resolvedValues } = require("./tokens.cjs");
 const { charteOf } = require("./charte.cjs");
-const { charteSectionsOf, identitySectionsOf, columnsNamed, sectionHtml, subNavigationOf, CHARTE_STYLE } = require("./charte-page.cjs");
+const { charteSectionsOf, identitySectionsOf, columnsNamed, sectionsHtml, subNavigationOf, CHARTE_STYLE } = require("./charte-page.cjs");
 const variants = require("./variants.cjs");
 const { STEPS, CATEGORIES, stepOf, categoryOf, setStepOf, awaitingOf } = require("./steps.cjs");
 
@@ -37,7 +37,7 @@ const LABELS = {
     title: "Showcase",
     choose: "Variants",
     checks: "Checks",
-    kindNames: { brand: "Brand identity", system: "Design system" },
+    kindNames: { brand: "Brand identity", system: "Foundations" },
     whole: "Whole",
     stepNames: { journeys: "Journeys", identity: "Identity", foundations: "Foundations", components: "Elements", screens: "Screens" },
     categories: { input: "Input", action: "Actions", display: "Display", navigation: "Navigation", group: "Groups", asset: "Assets" },
@@ -82,6 +82,8 @@ const LABELS = {
     uses: "Uses",
     appearsIn: "Appears in",
     myReview: "My review",
+    themeChange: "Change the theme",
+    themeModes: { auto: "Theme: system", light: "Theme: light", dark: "Theme: dark" },
     ok: "OK",
     revise: "Revise",
     comment: "What should change?",
@@ -101,7 +103,7 @@ const LABELS = {
     nextRecord: "Next item \u2192",
     backToOverview: "Back to the overview \u2192",
     close: "Close",
-    nothing: "Nothing to review.",
+    nothing: "Everything is reviewed.",
     overviewNext: "{count} to review, in {steps}.",
     overviewAgree: "{count} awaiting your agreement, in {steps}.",
     overviewProposed: "Nothing to review here. {count} awaiting your agreement, in {steps}. Agree with the assistant in the conversation.",
@@ -133,6 +135,9 @@ const LABELS = {
       aaLarge: "AA large text",
       fail: "insufficient",
       decimal: ".",
+      durations: "Durations",
+      misc: "Misc",
+      showPalette: "Show the colours of the palette ({n})",
       pill: "pill",
       reference: "reference 44 px",
       sample: "The quick brown fox jumps over the lazy dog",
@@ -146,17 +151,20 @@ const LABELS = {
     sections: {},
     themeNames: {},
     columns: {},
+    glossary: { say: "We say", never: "We never say" },
     noRender: "No render",
     statuses: { proposed: "proposed", validated: "validated", deprecated: "deprecated" },
     stepOf: "Step {at} of {count}",
     previousStep: "Previous step",
+    lastStep: "Last step",
+    backToJourney: "Back to the journey",
     nextStep: "Next step",
   },
   fr: {
     title: "La vitrine",
     choose: "Variantes",
     checks: "V\u00e9rifications",
-    kindNames: { brand: "Identité visuelle", system: "Charte graphique" },
+    kindNames: { brand: "Identité visuelle", system: "Charte" },
     whole: "L'ensemble",
     stepNames: { journeys: "Parcours", identity: "Identité", foundations: "Charte", components: "Éléments", screens: "Écrans" },
     categories: { input: "Saisie", action: "Actions", display: "Affichage", navigation: "Navigation", group: "Ensembles", asset: "Ressources" },
@@ -201,6 +209,8 @@ const LABELS = {
     uses: "Utilise",
     appearsIn: "Apparaît dans",
     myReview: "Ma revue",
+    themeChange: "Changer de thème",
+    themeModes: { auto: "Thème : système", light: "Thème : clair", dark: "Thème : sombre" },
     ok: "OK",
     revise: "À revoir",
     comment: "Que faut-il changer ?",
@@ -220,7 +230,7 @@ const LABELS = {
     nextRecord: "\u00c9l\u00e9ment suivant \u2192",
     backToOverview: "Retour \u00e0 l'aper\u00e7u \u2192",
     close: "Fermer",
-    nothing: "Rien à relire.",
+    nothing: "Tout est relu.",
     overviewNext: "{count} à relire, dans {steps}.",
     overviewAgree: "{count} en attente de votre accord, dans {steps}.",
     overviewProposed: "Rien à relire ici. {count} en attente de votre accord, dans {steps}. À valider avec l'assistant dans la conversation.",
@@ -253,6 +263,9 @@ const LABELS = {
       aaLarge: "AA gros texte",
       fail: "insuffisant",
       decimal: ",",
+      durations: "Durées",
+      misc: "Divers",
+      showPalette: "Afficher les couleurs de la palette ({n})",
       pill: "pilule",
       reference: "repère 44 px",
       sample: "Portez ce vieux whisky au juge blond qui fume",
@@ -264,11 +277,14 @@ const LABELS = {
     states: "États",
     stateNames: { default: "par défaut", empty: "vide", loading: "chargement", error: "erreur", hover: "survol", focus: "focus clavier", disabled: "désactivé", pressed: "appuyé", selected: "sélectionné", checked: "coché", "no-rights": "sans droits" },
     columns: { Word: "Mot", Forbidden: "Interdit" },
+    glossary: { say: "On dit", never: "On ne dit jamais" },
     sections: { Usage: "Utilisation", Keyboard: "Clavier", Steps: "Étapes", Persona: "Persona", Users: "Utilisateurs", Domain: "Domaine", "Personality and tone": "Personnalité et ton", "Anti-references": "Anti-références", References: "Références", "Imposed charter": "Charte imposée", Breakpoints: "Points de rupture", Project: "Projet", Glossary: "Glossaire" },
     noRender: "Aucun rendu",
     statuses: { proposed: "proposé", validated: "validé", deprecated: "déprécié" },
     stepOf: "Étape {at} sur {count}",
     previousStep: "Étape précédente",
+    lastStep: "Dernière étape",
+    backToJourney: "Retour au parcours",
     nextStep: "Étape suivante",
   },
 };
@@ -295,19 +311,34 @@ const chevron = (stroke) => `url("data:image/svg+xml,%3Csvg xmlns='http%3A//www.
 const rowBoards = () => Array.from({ length: ROW_MAX_STEPS - 1 }, (_, at) => {
   const n = at + 2;
   const board = `.board[data-steps="${n}"]`;
-  return `@container (min-width: ${n * CARD_MIN + (n - 1) * CARD_GAP}px) { ${board} { display: grid; grid-template-columns: repeat(var(--steps), minmax(0, ${CARD_MAX}px)); column-gap: ${CARD_GAP}px; } ${board} .card { display: flex; flex-direction: column; gap: var(--s2); } ${board} .screen { align-self: stretch; } ${board} .card:not(:first-child)::before { left: auto; right: 100%; top: 0; inline-size: ${CARD_GAP}px; padding-top: 62.5%; background: var(--line-strong); mask: ${ARROW_RIGHT} center / 20px 12px no-repeat; } }`;
+  return `@container (min-width: ${n * CARD_MIN + (n - 1) * CARD_GAP}px) { ${board} { display: grid; grid-template-columns: repeat(var(--steps), minmax(0, ${CARD_MAX}px)); column-gap: ${CARD_GAP}px; } ${board} .card { display: flex; flex-direction: column; gap: var(--s2); } ${board} .screen { align-self: stretch; } ${board} .card:not(:first-child)::before { left: auto; right: 100%; top: 0; inline-size: ${CARD_GAP}px; padding-top: 62.5%; background: var(--control); mask: ${ARROW_RIGHT} center / 20px 12px no-repeat; } }`;
 }).join("\n");
 
 /** The look of the showcase: a graphite instrument, the project's own design the only saturated thing on screen.
  * One scale for space, type, radius and motion, one set of role tokens in a light and a dark scheme, the system
  * fonts only. The stage behind a render is a mid neutral, so a dark shell does not glare against light renders;
  * a render keeps its own paper in both schemes. Colour is written once, in the tokens. */
+/** The dark chrome, a soft grey: written once, applied under the system preference and under the dark theme chosen. */
+const DARK_CHROME = `
+    color-scheme: dark;
+    --bg: #262624; --surface: #2f2f2c; --sunken: #383835; --stage: #3b3b37; --stage-dot: #4c4c47; --line: #40403c; --line-strong: #52524d; --control: #88887f;
+    --text: #efefec; --text-2: #d6d6d0; --muted: #b8b8b0; --faint: #a8a8a0;
+    --accent: #efefec; --accent-hover: #d6d6d0; --on-accent: #262624; --accent-soft: #3b3b37;
+    --ok: #7bd09a; --on-ok: #10261a; --ok-soft: #26392d; --revise: #e8b06a; --revise-soft: #3c3020;
+    --focus: #efefec; --scrim: rgba(0, 0, 0, 0.55);
+    --shadow-1: 0 0 0 1px var(--line);
+    --shadow-2: 0 0 0 1px var(--line-strong), 0 12px 32px rgba(0, 0, 0, 0.4);
+    --shadow-frame: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 16px 40px -8px rgba(0, 0, 0, 0.5);
+    --shadow-drawer: -1px 0 0 var(--line), -16px 0 40px -12px rgba(0, 0, 0, 0.5);
+    --chevron: ${chevron("b8b8b0")};`;
+
+
 const SHELL = `
 :root { color-scheme: light;
   --bg: #f7f7f5; --surface: #ffffff; --sunken: #f0f0ed; --stage: #e9e9e5; --stage-dot: #d3d3cd; --line: #e5e5e0; --line-strong: #d3d3cd; --control: #8a8a83;
   --text: #1b1b19; --text-2: #3a3a36; --muted: #55554e; --faint: #6b6b64;
   --accent: #1b1b19; --accent-hover: #33332f; --on-accent: #ffffff; --accent-soft: #ecece8;
-  --ok: #166534; --ok-soft: #e7f3ec; --revise: #92400e; --revise-soft: #fbf0e1;
+  --ok: #166534; --on-ok: #ffffff; --ok-soft: #e7f3ec; --revise: #92400e; --revise-soft: #fbf0e1;
   --focus: #1b1b19; --focus-halo: var(--bg); --scrim: rgba(20, 20, 18, 0.4); --paper: #ffffff; --mask: #000000;
   --shadow-1: 0 1px 2px rgba(20, 20, 18, 0.06);
   --shadow-2: 0 1px 2px rgba(20, 20, 18, 0.06), 0 8px 24px rgba(20, 20, 18, 0.1);
@@ -323,17 +354,8 @@ const SHELL = `
   --font: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 @media (prefers-color-scheme: dark) {
-  :root { color-scheme: dark;
-    --bg: #151514; --surface: #1d1d1b; --sunken: #262623; --stage: #2b2b28; --stage-dot: #3a3a36; --line: #2e2e2b; --line-strong: #3d3d39; --control: #6f6f68;
-    --text: #ededea; --text-2: #cfcfca; --muted: #a8a8a0; --faint: #8f8f87;
-    --accent: #ededea; --accent-hover: #d4d4ce; --on-accent: #151514; --accent-soft: #2a2a27;
-    --ok: #6cc48b; --ok-soft: #16271c; --revise: #e3a75f; --revise-soft: #2c2114;
-    --focus: #ededea; --scrim: rgba(0, 0, 0, 0.6);
-    --shadow-1: 0 0 0 1px var(--line);
-    --shadow-2: 0 0 0 1px var(--line-strong), 0 12px 32px rgba(0, 0, 0, 0.5);
-    --shadow-frame: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 16px 40px -8px rgba(0, 0, 0, 0.6);
-    --shadow-drawer: -1px 0 0 var(--line), -16px 0 40px -12px rgba(0, 0, 0, 0.6);
-    --chevron: ${chevron("a8a8a0")}; } }
+  :root:not([data-theme="light"]) {${DARK_CHROME} } }
+:root[data-theme="dark"] {${DARK_CHROME} }
 @media (prefers-reduced-motion: reduce) { *, ::before, ::after { transition-duration: .01ms !important; animation-duration: .01ms !important; scroll-behavior: auto !important; } }
 * { box-sizing: border-box; }
 [hidden]:not(.drawer) { display: none !important; }
@@ -360,6 +382,9 @@ main, main.wide { padding-bottom: calc(var(--s5) + var(--h-touch) + var(--s6)); 
 nav .brand { display: flex; align-items: center; gap: var(--s1); padding: var(--s1) 0 var(--s4); font-size: var(--t-sm); font-weight: 600; }
 nav .brand-mark { inline-size: 20px; block-size: 20px; border-radius: var(--r1); background: var(--text); flex: none; }
 nav .home { margin: 0; }
+.brand { display: flex; align-items: center; gap: var(--s2); }
+.brand-name { flex: 1; min-width: 0; }
+.theme-toggle { flex: none; height: var(--h-control); padding: 0 var(--s2); font-size: var(--t-xs); color: var(--muted); border-color: var(--line-strong); }
 nav .steps { list-style: none; margin: var(--s3) 0 var(--s4); padding: 0; }
 nav .steps > li { display: block; }
 nav summary { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: var(--s2); padding: 6px var(--s2) 6px var(--s5); background: var(--surface); cursor: pointer; font-size: var(--t-md); font-weight: 600; border-radius: var(--r2); list-style: none; }
@@ -424,7 +449,7 @@ nav a[aria-current="page"] { color: var(--text); font-weight: 500; }
 .journey { padding: var(--s2) 0 var(--s4); container-type: inline-size; }
 .board { list-style: none; margin: 0; padding: 0 0 var(--s4); display: flex; flex-direction: column; gap: var(--s5); }
 .board .card { position: relative; display: grid; grid-template-columns: 280px minmax(0, 1fr); grid-template-rows: auto 1fr; column-gap: var(--s4); row-gap: var(--s1); align-items: start; }
-.board .card:not(:first-child)::before { content: ""; position: absolute; left: 134px; top: calc(var(--s5) * -1); inline-size: 12px; block-size: var(--s5); background: var(--line-strong); mask: ${ARROW_DOWN} center / contain no-repeat; }
+.board .card:not(:first-child)::before { content: ""; position: absolute; left: 134px; top: calc(var(--s5) * -1); inline-size: 12px; block-size: var(--s5); background: var(--control); mask: ${ARROW_DOWN} center / contain no-repeat; }
 .board .step { display: contents; }
 .board .mini { grid-column: 1; grid-row: 1 / span 2; align-self: start; }
 .board .screen { grid-column: 2; grid-row: 1; align-self: end; }
@@ -474,22 +499,18 @@ label { font-size: var(--t-sm); color: var(--muted); }
 .colvote[data-verdict="revise"][aria-pressed="true"] { background: var(--revise-soft); box-shadow: inset 0 0 0 1.5px var(--revise); color: var(--revise); }
 .colvote[data-verdict="discard"][aria-pressed="true"] { background: var(--sunken); color: var(--muted); }
 .verdict-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s3); position: sticky; bottom: 0; z-index: 2; padding: var(--s3) var(--s4); background: var(--surface); border-top: 1px solid var(--line); }
-.verdict-bar .choose { margin-left: 0; padding: 0; gap: 0; background: transparent; }
-.verdict-bar .verdict { height: var(--h-control-lg); padding: 0 var(--s5); border: 1px solid var(--control); border-radius: 0; background: var(--surface); color: var(--text); font-size: var(--t-md); }
-.verdict-bar .verdict:first-child { border-radius: var(--r2) 0 0 var(--r2); }
-.verdict-bar .verdict:last-child { border-radius: 0 var(--r2) var(--r2) 0; }
-.verdict-bar .verdict + .verdict { margin-inline-start: -1px; }
+.verdict-bar .choose { margin-left: 0; padding: 0; gap: var(--s2); background: transparent; }
+.verdict-bar .verdict { height: var(--h-control-lg); padding: 0 var(--s5); border: 1px solid var(--control); border-radius: var(--r2); background: transparent; color: var(--text); font-size: var(--t-md); }
 .verdict-bar .verdict:hover { background: var(--sunken); color: var(--text); }
+.verdict-bar .verdict[data-verdict="ok"] { background: var(--ok); border-color: var(--ok); color: var(--on-ok); font-weight: 600; }
+.verdict-bar .verdict[data-verdict="ok"]:hover { background: var(--ok); box-shadow: 0 0 0 3px var(--ok-soft); }
 .verdict-bar .verdict[aria-pressed="true"]::before { content: "\\2713\\00a0"; }
 .verdict-bar .verdict[data-verdict="revise"][aria-pressed="true"]::before { content: "\\270E\\00a0"; }
-.verdict-bar .verdict[data-verdict="ok"][aria-pressed="true"] { position: relative; background: var(--ok-soft); border-color: var(--ok); box-shadow: inset 0 0 0 1px var(--ok); color: var(--ok); }
-.verdict-bar .verdict[data-verdict="revise"][aria-pressed="true"] { position: relative; background: var(--revise-soft); border-color: var(--revise); box-shadow: inset 0 0 0 1px var(--revise); color: var(--revise); }
+.verdict-bar .verdict[data-verdict="ok"][aria-pressed="true"] { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ok); }
+.verdict-bar .verdict[data-verdict="revise"][aria-pressed="true"] { background: var(--revise-soft); border-color: var(--revise); box-shadow: inset 0 0 0 1px var(--revise); color: var(--revise); }
 .verdict-bar .reviewed { color: var(--muted); font-size: var(--t-sm); }
-.verdict-bar .next-state, .verdict-bar .next-record { display: inline-flex; align-items: center; height: var(--h-control-lg); padding: 0 var(--s4); border-radius: var(--r2); font-size: var(--t-md); font-weight: 500; }
-.verdict-bar .next-state { border: 1px solid var(--control); color: var(--text); transition: background-color var(--d1) var(--ease), color var(--d1) var(--ease); }
-.verdict-bar:has(.verdict[aria-pressed="true"]) .next-state { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
-.verdict-bar .next-record { background: var(--accent); color: var(--on-accent); }
-.verdict-bar .next-record:hover { background: var(--accent-hover); text-decoration: none; }
+.verdict-bar .next-state, .verdict-bar .next-record { display: inline-flex; align-items: center; height: var(--h-control-lg); padding: 0 var(--s2); border: 0; background: none; color: var(--muted); font-size: var(--t-sm); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.verdict-bar .next-state:hover, .verdict-bar .next-record:hover { color: var(--text); }
 .verdict-bar textarea.comment { max-inline-size: 520px; }
 textarea.comment, textarea.colcomment { display: block; flex-basis: 100%; inline-size: 100%; font: inherit; font-size: var(--t-md); color: var(--text); background: var(--surface); border: 1px solid var(--control); border-radius: var(--r2); padding: var(--s2) var(--s3); resize: vertical; }
 textarea.comment:focus, textarea.colcomment:focus { border-color: var(--accent); }
@@ -542,22 +563,15 @@ textarea.comment:focus, textarea.colcomment:focus { border-color: var(--accent);
 .sketches .rows { margin-top: var(--s2); }
 .palette { display: flex; block-size: 56px; border-radius: var(--r2); overflow: hidden; border: 1px solid var(--line); }
 .palette i { flex: 1; }
-.stepper { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0; border: 1px solid var(--line); border-radius: var(--r3); background: var(--surface); overflow: clip; }
-.stepper li > a, .stepper li > .cell { display: flex; align-items: center; gap: var(--s3); min-block-size: var(--h-touch); padding: var(--s2) var(--s4); border: 0; border-top: 1px solid var(--line); border-radius: 0; background: var(--surface); color: var(--text); text-decoration: none; }
-.stepper li:first-child > a, .stepper li:first-child > .cell { border-top: 0; }
-.stepper li > a:hover { background: var(--sunken); }
-.stepper li[data-state="todo"] > a { box-shadow: inset 0 -2px 0 var(--revise); }
-.stepper li[data-state="done"] > a { box-shadow: inset 0 -2px 0 var(--ok); }
-.stepper .no { flex: none; inline-size: 24px; block-size: 24px; display: grid; place-items: center; border-radius: var(--r-pill); background: var(--sunken); font-size: var(--t-xs); font-weight: 600; }
-.stepper .name { font-weight: 600; }
-.stepper .state { margin-left: auto; color: var(--text); font-size: var(--t-sm); font-weight: 600; }
-.stepper li[data-state="done"] .state { color: var(--muted); font-weight: 500; }
-.stepper li[data-state="empty"] > .cell { color: var(--muted); background: var(--sunken); }
-.stepper li[data-state="empty"] .state { color: var(--muted); font-weight: 500; }
+.waiting { list-style: none; margin: var(--s3) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--s2); }
+.waiting li[hidden] { display: none; }
+.waiting li > a { display: flex; align-items: center; gap: var(--s3); min-block-size: var(--h-touch); padding: var(--s2) var(--s4); border: 1px solid var(--line); border-radius: var(--r3); background: var(--surface); color: var(--text); text-decoration: none; box-shadow: inset 3px 0 0 var(--revise); }
+.waiting li > a:hover { background: var(--sunken); }
+.waiting .name { font-weight: 600; }
+.waiting .state { margin-left: auto; font-size: var(--t-sm); font-weight: 600; }
 .start-row { margin: var(--s3) 0 0; }
 .start { display: inline-flex; align-items: center; min-block-size: var(--h-touch); padding: 0 var(--s5); border-radius: var(--r2); background: var(--accent); color: var(--on-accent); font-weight: 600; text-decoration: none; }
 .start:hover { background: var(--accent-hover); }
-@media (min-width: 900px) { .stepper { flex-direction: row; } .stepper li { flex: 1 1 0; min-width: 0; } .stepper li > a, .stepper li > .cell { flex-direction: column; align-items: flex-start; block-size: 100%; gap: var(--s2); border-top: 0; border-inline-start: 1px solid var(--line); } .stepper li:first-child > a, .stepper li:first-child > .cell { border-inline-start: 0; } .stepper .state { margin-left: 0; } }
 .progress { margin-left: auto; color: var(--faint); }
 .progress[data-complete="true"] { color: var(--ok); }
 .appears { display: flex; flex-direction: column; gap: var(--s3); padding-top: var(--s5); border-top: 1px solid var(--line); }
@@ -1049,8 +1063,8 @@ function paint() {
     const say = todo ? filled(words.template, todo) : proposed ? own.proposedWord : own.restWord;
     const mark = todo ? String(todo) : proposed ? AGREE_MARK : own.restMark;
     const write = (selector, text) => document.querySelectorAll(selector).forEach((each) => { each.textContent = text; });
-    write('.stepper li[data-step="' + step + '"] .state', say);
-    document.querySelectorAll('.stepper li[data-step="' + step + '"]').forEach((each) => { each.dataset.state = count ? "todo" : own.restState; });
+    write('.waiting li[data-step="' + step + '"] .state', count ? say : "");
+    document.querySelectorAll('.waiting li[data-step="' + step + '"]').forEach((each) => { each.hidden = !count; });
     marks.forEach((each) => {
       each.textContent = mark;
       each.setAttribute("aria-label", say);
@@ -1451,7 +1465,7 @@ function navigationOf(project, records, labels, current, sets = [], rows = [], a
   };
   const foot = `<div class="review-foot"><button type="button" class="open-review" id="open-review" aria-controls="review" aria-expanded="false"><span class="label">${labels.myReview}</span>${pendingOf(labels, total)}</button></div>`;
   const bar = `<div class="nav-bar"><span class="nav-title">${labels.title}</span><button type="button" id="nav-toggle" aria-controls="nav-sheet" aria-expanded="false">${labels.contents}</button></div>`;
-  return `<nav aria-label="${escaped(labels.list)}">${bar}<div class="nav-scroll" id="nav-sheet"><div class="brand"><span class="brand-mark"></span>${labels.title}</div><p class="home"><a href="index.html"${current === null ? ' aria-current="page"' : ""}>${labels.home}</a></p><ol class="steps">${held.map(stepItem).join("")}</ol></div>${foot}</nav>`;
+  return `<nav aria-label="${escaped(labels.list)}">${bar}<div class="nav-scroll" id="nav-sheet"><div class="brand"><span class="brand-mark"></span><span class="brand-name">${labels.title}</span><button type="button" id="theme-toggle" class="theme-toggle" data-mode="auto" title="${escaped(labels.themeChange)}" data-modes="${escaped(JSON.stringify(labels.themeModes))}">${escaped(labels.themeModes.auto)}</button></div><p class="home"><a href="index.html"${current === null ? ' aria-current="page"' : ""}>${labels.home}</a></p><ol class="steps">${held.map(stepItem).join("")}</ol></div>${foot}</nav>`;
 }
 
 /** The state a miniature shows: `default` when the record has it, else its first. */
@@ -1494,8 +1508,9 @@ function journeyOf({ project, record, recordsById, tokens, labels }) {
   return `<section class="journey"><ol class="board" data-steps="${steps.length}" style="--steps: ${steps.length}">${steps.map(card).join("")}</ol></section>`;
 }
 
-/** The bars of a page a journey passes through, one per step that names it, hidden until the address names
- * that journey and step: the journey to go back to, where the step stands, the steps around. */
+/** The bars of a page a journey passes through, one per step that names it, hidden until the script shows the
+ * one the address names, else the first: the journey to go back to, where the step stands, the steps around. The
+ * last step has no next, and links back to the journey instead. */
 function barsOf({ project, record, journeys, recordsById, labels }) {
   const id = fm(record).id;
   const bars = [];
@@ -1508,18 +1523,18 @@ function barsOf({ project, record, journeys, recordsById, labels }) {
         const target = recordsById.get(steps[to]?.Screen);
         return target ? `<a class="${name}" href="${escaped(stepAddress(journeyId, target, to + 1))}"><small>${caption}</small>${escaped(titleOf(project, target))}</a>` : "";
       };
-      bars.push(`<nav class="journey-bar" data-journey="${escaped(journeyId)}" data-step="${at + 1}" aria-label="${escaped(titleOf(project, journey))}" hidden><a class="journey-title" href="${escaped(pageNameOf(journey))}">${escaped(titleOf(project, journey))}</a><span class="where">${escaped(filled(labels.stepOf, { at: at + 1, count: steps.length }))}</span>${around(at - 1, "prev", labels.previousStep)}${around(at + 1, "next", labels.nextStep)}</nav>`);
+      bars.push(`<nav class="journey-bar" data-journey="${escaped(journeyId)}" data-step="${at + 1}" aria-label="${escaped(titleOf(project, journey))}" hidden><a class="journey-title" href="${escaped(pageNameOf(journey))}">${escaped(titleOf(project, journey))}</a><span class="where">${escaped(filled(labels.stepOf, { at: at + 1, count: steps.length }))}</span>${around(at - 1, "prev", labels.previousStep)}${at === steps.length - 1 ? `<a class="next" href="${escaped(pageNameOf(journey))}"><small>${labels.lastStep}</small>${labels.backToJourney}</a>` : around(at + 1, "next", labels.nextStep)}</nav>`);
     });
   }
   return bars;
 }
 
-/** The script of the journey bars: shows the one the query of the address names. The hash is the tabs'. */
+/** The script of the journey bars: shows the one the query of the address names, else the first of the page. The hash is the tabs'. */
 const JOURNEY_BARS = `
 const query = new URLSearchParams(location.search);
-for (const bar of document.querySelectorAll(".journey-bar")) {
-  if (bar.dataset.journey === query.get("journey") && bar.dataset.step === query.get("step")) bar.hidden = false;
-}
+const journeyBars = [...document.querySelectorAll(".journey-bar")];
+const shownBar = journeyBars.find((bar) => bar.dataset.journey === query.get("journey") && bar.dataset.step === query.get("step")) || journeyBars[0];
+if (shownBar) shownBar.hidden = false;
 `;
 
 const statusOf = (record, labels) => (fm(record).status === undefined ? "" : `<span class="chip" data-status="${escaped(fm(record).status)}">${escaped(statusLabel(labels, fm(record).status))}</span>`);
@@ -1810,17 +1825,15 @@ const hrefOf = (each, order) => {
   return each.sets.length ? variants.setFileOf(each.sets[0].id) : null;
 };
 
-/** The five steps as a stepper in order, each a link to the first thing to open, with its state in words. */
-function stepperOf(held, labels, order) {
-  const item = (each, at) => {
-    const rest = restOf(labels, each);
-    const state = each.count ? "todo" : rest.state;
-    const word = each.count ? leftWordOf(labels, each) : rest.word;
+/** The steps that wait on the person, in order, each a link to the first thing to open with its count in words. Every step with
+ * something to open is drawn, hidden while nothing is left in it, so the page script shows or hides it as verdicts are given. */
+function waitingOf(held, labels, order) {
+  const item = (each) => {
     const href = hrefOf(each, order);
-    const inner = `<span class="no">${at + 1}</span><span class="name">${labels.stepNames[each.step]}</span><span class="state">${escaped(word)}</span>`;
-    return `<li data-step="${each.step}" data-state="${state}">${href ? `<a href="${escaped(href)}">${inner}</a>` : `<span class="cell">${inner}</span>`}</li>`;
+    if (!href) return "";
+    return `<li data-step="${each.step}"${each.count ? "" : " hidden"}><a href="${escaped(href)}"><span class="name">${labels.stepNames[each.step]}</span><span class="state">${each.count ? escaped(leftWordOf(labels, each)) : ""}</span></a></li>`;
   };
-  return `<ol class="stepper">${held.map(item).join("")}</ol>`;
+  return `<ul class="waiting">${held.map(item).join("")}</ul>`;
 }
 
 /** The line that says what awaits review, with the way in: a primary link to the first step that has work.
@@ -1848,7 +1861,7 @@ function thumbOf(project, record, tokens, labels, size) {
   return `<span class="thumb ${size}" aria-hidden="true"><iframe tabindex="-1" loading="lazy" sandbox title="${escaped(titleOf(project, record, labels))}" srcdoc="${escaped(doc)}"></iframe></span>`;
 }
 
-/** The overview: under the stepper, a section per step that holds something, in step order. Journeys are cards with a strip of
+/** The overview: under what waits, a section per step that holds something, in step order. Journeys are cards with a strip of
  * their screens, the identity and the charter one card each, the elements small cards by category, the screens a grid of
  * thumbnails. Every number is the drawer's: `counted` marks what the step counts, `orderedStates` the progress. */
 function overviewOf({ project, held, records, rows, labels, tokens, palette, order }) {
@@ -1902,10 +1915,34 @@ function overviewOf({ project, held, records, rows, labels, tokens, palette, ord
     return grids.join("") + apart + (each.open.length ? `<ul class="ovcards screens">${each.open.map(setTile).join("")}</ul>` : "");
   };
   const section = (each) => `<section class="ov-step" data-step="${each.step}"><h3>${labels.stepNames[each.step]}${each.count ? `<span>${each.count}</span>` : ""}</h3>${body(each)}</section>`;
-  return [stepperOf(held, labels, order), `<div class="overview">${held.filter((each) => each.records.length || each.open.length).map(section).join("")}</div>`].join("\n");
+  return [waitingOf(held, labels, order), `<div class="overview">${held.filter((each) => each.records.length || each.open.length).map(section).join("")}</div>`].join("\n");
 }
 
 /** The script of the navigation sheet a narrow page opens from its top bar: Escape closes it and gives the focus back to the button. */
+/** The theme of the chrome: system, light or dark, cycled by one button and kept in the browser's storage when it has one. */
+const THEME_KEY = "aidd-ui-theme";
+const THEME_INIT = `try { var chosen = localStorage.getItem("${THEME_KEY}"); if (chosen === "light" || chosen === "dark") document.documentElement.dataset.theme = chosen; } catch (error) {}`;
+const THEME = `
+const themeButton = document.getElementById("theme-toggle");
+if (themeButton) {
+  const modes = ["auto", "light", "dark"];
+  const words = JSON.parse(themeButton.dataset.modes);
+  const root = document.documentElement;
+  let mode = modes.includes(root.dataset.theme) ? root.dataset.theme : "auto";
+  const show = () => {
+    if (mode === "auto") delete root.dataset.theme; else root.dataset.theme = mode;
+    themeButton.dataset.mode = mode;
+    themeButton.textContent = words[mode];
+  };
+  themeButton.addEventListener("click", () => {
+    mode = modes[(modes.indexOf(mode) + 1) % modes.length];
+    show();
+    try { localStorage.setItem("${THEME_KEY}", mode); } catch (error) {}
+  });
+  show();
+}
+`;
+
 const NAVIGATION = `
 const navToggle = document.getElementById("nav-toggle");
 function sheet(on) {
@@ -1934,7 +1971,7 @@ if (navToggle) {
 }
 `;
 
-const pageOf = ({ title, lang, navigation, body, drawer, script, wide }) => ["<!doctype html>", `<html lang="${lang}">`, "<head>", '<meta charset="utf-8">', '<meta name="viewport" content="width=device-width, initial-scale=1">', `<title>${escaped(title)}</title>`, `<style>${SHELL}${variants.STYLE}${CHARTE_STYLE}</style>`, "</head>", "<body>", '<div class="shell">', navigation, wide ? '<main class="wide">' : "<main>", body, "</main>", "</div>", drawer, `<script>${script}${NAVIGATION}</script>`, "</body>", "</html>", ""].join("\n");
+const pageOf = ({ title, lang, navigation, body, drawer, script, wide }) => ["<!doctype html>", `<html lang="${lang}">`, "<head>", '<meta charset="utf-8">', '<meta name="viewport" content="width=device-width, initial-scale=1">', `<script data-theme-init>${THEME_INIT}</script>`, `<title>${escaped(title)}</title>`, `<style>${SHELL}${variants.STYLE}${CHARTE_STYLE}</style>`, "</head>", "<body>", '<div class="shell">', navigation, wide ? '<main class="wide">' : "<main>", body, "</main>", "</div>", drawer, `<script>${script}${NAVIGATION}${THEME}</script>`, "</body>", "</html>", ""].join("\n");
 
 /** The pages of the showcase by file name: `index.html`, one page per record that is not a review and one per set of variants.
  * `tokens` is the stylesheet text or null, `captures` the png paths beside
@@ -1980,7 +2017,7 @@ function showcaseOf({ project, tokens, captures, lang, sets: found = [] }) {
       journey ? "" : linksOf("uses", labels.uses, uses.map((each) => recordsById.get(each)), (each) => titleOf(project, each, labels)),
       journey ? journeyOf({ project, record, recordsById, tokens, labels }) : "",
       reviewed ? reviewOf({ project, system, record, rows, tokens, captures, labels }) : "",
-      sectionsById.has(id) ? sectionsById.get(id).map(sectionHtml).join("\n") : specOf(project, record, labels),
+      sectionsById.has(id) ? sectionsHtml(sectionsById.get(id)) : specOf(project, record, labels),
       appearsOf({ project, ids: usedBy, recordsById, labels }),
     ].filter(Boolean).join("\n");
     const script = (reviewed ? FRAMES + PANEL + TABS + (widthOf(system, labels) ? WIDTH : "") : id === SYSTEM_ID ? FRAMES + PANEL : PANEL) + (bars.length ? JOURNEY_BARS : "");
@@ -1996,4 +2033,4 @@ function showcaseOf({ project, tokens, captures, lang, sets: found = [] }) {
   return pages;
 }
 
-module.exports = { showcaseOf, stateDocument, copiedOf, decisionsOf, keptOf, WIDTH, entriesOf, blockedOf, remainingOf, pickedOf, nextToReviewOf, nextOpenOf, languageOf, LABELS };
+module.exports = { THEME, showcaseOf, stateDocument, copiedOf, decisionsOf, keptOf, WIDTH, entriesOf, blockedOf, remainingOf, pickedOf, nextToReviewOf, nextOpenOf, languageOf, LABELS };

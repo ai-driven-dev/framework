@@ -153,7 +153,7 @@ describe("the verdicts beside the state tabs", () => {
     const order = JSON.parse(html.match(/id="review-order">([^<]*)</)[1]);
     const firstScreen = order.find((id) => id === "aaa-screen" || id === "zzz-screen" || id === "home");
     assert.equal(firstScreen, "zzz-screen");
-    assert.equal(html.match(/<li data-step="screens" data-state="todo"><a href="([^"]*)">/)[1], "zzz-screen.html");
+    assert.equal(html.match(/<li data-step="screens"><a href="([^"]*)">/)[1], "zzz-screen.html");
   });
 
   it("leaves out of the order a wireframe whose screen has nothing left to review, as it leaves the count", () => {
@@ -280,10 +280,21 @@ describe("the verdicts beside the state tabs", () => {
       const unescapedText = (text) => text.replaceAll("&quot;", '"').replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&amp;", "&");
       const datasetOf = (tag) => Object.fromEntries([...tag.matchAll(/ data-([a-z-]+)="([^"]*)"/g)].map(([, name, value]) => [name.replace(/-(\w)/g, (_, letter) => letter.toUpperCase()), unescapedText(value)]));
       const marks = (html) => ({
-        stepper: html.match(/<li data-step="screens" data-state="(\w+)"><a[^>]*><span class="no">\d<\/span><span class="name">[^<]*<\/span><span class="state">([^<]*)<\/span>/),
+        stepper: html.match(/<li data-step="screens"( hidden)?><a[^>]*><span class="name">[^<]*<\/span><span class="state">([^<]*)<\/span>/),
         sidebar: html.match(/<li data-step="screens" data-todo="\d+">[\s\S]*?(<span class="step-mark( agree)?"[^>]*aria-label="([^"]*)"[^>]*>([^<]*)<\/span>)/),
         overview: html.match(/<section class="ov-step" data-step="screens"><h3>[^<]*(?:<span>(\d+)<\/span>)?<\/h3>/),
       });
+
+      for (const [lang, line] of [["en", "Everything is reviewed."], ["fr", "Tout est relu."]]) {
+        it(`lists no step and says in one calm line that everything is reviewed once the last verdict is given, ${lang}`, () => {
+          require("node:fs").rmSync(path.join(tmp, UI, "components"), { recursive: true, force: true });
+          put(tmp, `${UI}/reviews/first-pass.md`, settledReview("ok"));
+          const index = pagesOf(lang)["index.html"];
+          const items = [...index.match(/<ul class="waiting">[\s\S]*?<\/ul>/)[0].matchAll(/<li data-step="\w+"( hidden)?>/g)];
+          assert.ok(items.length > 0 && items.every((match) => match[1]), index.match(/<ul class="waiting">[\s\S]*?<\/ul>/)[0]);
+          assert.equal(index.match(/<p class="lede"[^>]*>([^<]*)<\/p>/)[1], line);
+        });
+      }
 
       for (const lang of ["en", "fr"]) {
         for (const proposed of [false, true]) {
@@ -294,17 +305,17 @@ describe("the verdicts beside the state tabs", () => {
             put(tmp, `${UI}/reviews/first-pass.md`, settledReview("ok"));
             const fresh = marks(pagesOf(lang)["index.html"]);
             const was = marks(before);
-            assert.equal(was.stepper[1], "todo", "the step starts with a verdict to give");
-            const spots = { state: element(), li: element({ state: "todo" }), mark: element(datasetOf(was.sidebar[1])), span: element() };
+            assert.equal(was.stepper[1], undefined, "the step starts with a verdict to give, so it is listed");
+            const spots = { state: element(), li: element(), mark: element(datasetOf(was.sidebar[1])), span: element() };
             const page = open({}, { extra: (selector) => ({
-              '.stepper li[data-step="screens"] .state': [spots.state],
-              '.stepper li[data-step="screens"]': [spots.li],
+              '.waiting li[data-step="screens"] .state': [spots.state],
+              '.waiting li[data-step="screens"]': [spots.li],
               '.steps > li[data-step="screens"] .step-mark': [spots.mark],
               '.ov-step[data-step="screens"] h3 span': [spots.span],
             })[selector] });
             page.rowVotes[0].listeners.click();
             assert.equal(spots.state.textContent, unescapedText(fresh.stepper[2]));
-            assert.equal(spots.li.dataset.state, fresh.stepper[1]);
+            assert.equal(spots.li.hidden, Boolean(fresh.stepper[1]));
             assert.equal(spots.mark.textContent, fresh.sidebar[4]);
             assert.equal(spots.mark.attrs["aria-label"], unescapedText(fresh.sidebar[3]));
             assert.equal(spots.mark.on.has("agree"), Boolean(fresh.sidebar[2]));
@@ -371,10 +382,10 @@ describe("the verdicts beside the state tabs", () => {
       assert.deepEqual(marks.map((mark) => mark.hidden), [true, false]);
     });
 
-    it("gives the stepper, the sidebar, the overview and the drawer the one count of the review button, as verdicts are given", () => {
+    it("gives the waiting list, the sidebar, the overview and the drawer the one count of the review button, as verdicts are given", () => {
       const spots = { stepper: element(), sidebar: element(), overview: element(), drawer: element() };
       const extra = (selector) => ({
-        '.stepper li[data-step="screens"] .state': [spots.stepper],
+        '.waiting li[data-step="screens"] .state': [spots.stepper],
         '.steps > li[data-step="screens"] .step-mark': [spots.sidebar],
         '.ov-step[data-step="screens"] h3 span': [spots.overview],
         '.step-group[data-step="screens"] .step-count': [spots.drawer],

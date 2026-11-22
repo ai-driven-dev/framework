@@ -54,10 +54,10 @@ describe("aidd-ui showcase journey pages", () => {
     assert.equal(card[1], "share.html?journey=share&amp;step=1");
   });
 
-  it("opens the journey from the stepper", () => {
+  it("opens the journey from the list of what waits", () => {
     shared();
-    const stepper = pagesOf()["index.html"].match(/<ol class="stepper">[\s\S]*?<\/ol>/)[0];
-    assert.match(stepper, new RegExp(`<li data-step="journeys"[^>]*><a href="${JOURNEY_FILE}">`));
+    const waiting = pagesOf()["index.html"].match(/<ul class="waiting">[\s\S]*?<\/ul>/)[0];
+    assert.match(waiting, new RegExp(`<li data-step="journeys"[^>]*><a href="${JOURNEY_FILE}">`));
   });
 
   it("marks only the page shown as current in the sidebar, and opens only its own record in the drawer", () => {

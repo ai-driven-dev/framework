@@ -8,7 +8,7 @@ const PATH_SEPARATOR = ".";
 const WORD_SEPARATOR = /[.-]/;
 
 /** The sections a token can land in, in the order a page shows them and the order they claim a token. */
-const SECTIONS = ["palette", "roles", "typographie", "espacements", "arrondis", "tailles", "points-de-rupture", "autres"];
+const SECTIONS = ["roles", "palette", "typographie", "espacements", "arrondis", "tailles", "points-de-rupture", "autres"];
 
 const TYPE_WORDS = ["font", "type", "text"];
 const SPACE_WORDS = ["space", "spacing", "gap", "inset", "padding", "margin"];

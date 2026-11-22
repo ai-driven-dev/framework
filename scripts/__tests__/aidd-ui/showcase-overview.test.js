@@ -45,10 +45,11 @@ const idsIn = (block) => [...block.matchAll(/<li data-(?:id|set)="([^"]+)"/g)].m
 const drawerOf = (html) => html.match(/<aside class="drawer" id="review"[\s\S]*?<\/aside>/)[0];
 
 describe("aidd-ui showcase overview", () => {
-  it("lists the steps that hold something as sections in step order, journeys last, under the stepper", () => {
+  it("lists the steps that hold something as sections in step order, journeys last, under what waits", () => {
     crowd();
     const index = pagesOf([SET])["index.html"];
-    assert.ok(index.indexOf('<ol class="stepper">') < index.indexOf('<div class="overview">'));
+    assert.ok(index.indexOf('<ul class="waiting">') < index.indexOf('<div class="overview">'));
+    assert.doesNotMatch(index, /class="stepper"/);
     const steps = [...overviewOf(index).matchAll(/<section class="ov-step" data-step="(\w+)">/g)].map((match) => match[1]);
     assert.deepEqual(steps, ["identity", "foundations", "components", "screens", "journeys"]);
   });
@@ -163,16 +164,16 @@ describe("aidd-ui showcase overview", () => {
     put(tmp, `${UI}/screens/zzz.md`, SCREEN("zzz", "aaa"));
     put(tmp, `${UI}/screens/zzz.html`, RENDER);
     const index = pagesOf()["index.html"];
-    const href = index.match(/<li data-step="screens" data-state="\w+"><a href="([^"]*)"/)[1];
+    const href = index.match(/<li data-step="screens"><a href="([^"]*)"/)[1];
     assert.notEqual(href, "aaa.html");
   });
 
-  it("shows the steps in one order, identity to journeys, numbered by that order, in the stepper, sidebar and sections", () => {
+  it("shows the steps in one order, identity to journeys, numbered by that order, in the sidebar and sections", () => {
     crowd();
     const order = ["identity", "foundations", "components", "screens", "journeys"];
     const index = pagesOf()["index.html"];
-    const stepper = [...index.matchAll(/<li data-step="(\w+)" data-state="\w+"><a href="[^"]*"><span class="no">(\d)<\/span>/g)].map((match) => [match[1], match[2]]);
-    assert.deepEqual(stepper, order.map((step, at) => [step, String(at + 1)]));
+    const waiting = [...index.matchAll(/<ul class="waiting">[\s\S]*?<\/ul>/g)][0][0].matchAll(/<li data-step="(\w+)"/g);
+    assert.deepEqual([...waiting].map((match) => match[1]), order);
     const nav = [...index.matchAll(/<li data-step="(\w+)" data-todo="\d+"><details[^>]*><summary><span class="stepno">(\d)<\/span>/g)].map((match) => [match[1], match[2]]);
     assert.deepEqual(nav, order.map((step, at) => [step, String(at + 1)]));
     const sections = [...overviewOf(index).matchAll(/<section class="ov-step" data-step="(\w+)">/g)].map((match) => match[1]);

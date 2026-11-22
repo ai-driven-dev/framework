@@ -44,7 +44,7 @@ const pagesOf = (sets = [], lang = "en") => showcaseOf({ project: load(tmp), tok
 const navOf = (html) => html.match(/<nav aria-label="[^"]*">[\s\S]*?<\/nav>/)[0];
 const drawerOf = (html) => html.match(/<aside class="drawer" id="review"[\s\S]*?<\/aside>/)[0];
 const sidebarCount = (html, step) => Number(navOf(html).match(new RegExp(`<li data-step="${step}" data-todo="\\d+"><details[^>]*><summary>.*?class="step-mark"[^>]*>(\\d+)<`))?.[1]);
-const stepperCount = (html, step) => Number(html.match(new RegExp(`<li data-step="${step}" data-state="\\w+"><a href="[^"]*"><span class="no">\\d</span><span class="name">[^<]*</span><span class="state">(\\d+) `))?.[1]);
+const stepperCount = (html, step) => Number(html.match(new RegExp(`<li data-step="${step}"><a href="[^"]*"><span class="name">[^<]*</span><span class="state">(\\d+) `))?.[1]);
 const listCount = (html, step) => Number(html.match(new RegExp(`<section class="ov-step" data-step="${step}"><h3>[^<]*<span>(\\d+)</span>`))?.[1]);
 const drawerCount = (html, step) => Number(drawerOf(html).match(new RegExp(`<details class="step-group" data-step="${step}"[^>]*><summary><span class="step-name">[^<]*</span><span class="step-count">\\((\\d+)\\)`))?.[1]);
 const blockOf = (html, step) => html.match(new RegExp(`<section class="ov-step" data-step="${step}">[\\s\\S]*?</section>`))?.[0] ?? "";

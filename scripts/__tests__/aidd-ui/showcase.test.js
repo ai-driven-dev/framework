@@ -5,6 +5,7 @@ const { describe, it, beforeEach, afterEach } = require("node:test");
 const { UI, LIB, makeTmp, removeTmp, filesUnder, engine, validate, writeProject, put, edit, editTokens, record } = require("../fixtures/aidd-ui/project.js");
 const { load } = require(path.join(LIB, "project.cjs"));
 const colour = require(path.join(LIB, "colour.cjs"));
+const { charteSectionsOf } = require(path.join(LIB, "charte-page.cjs"));
 const { showcaseOf, copiedOf, keptOf, WIDTH, LABELS } = require(path.join(LIB, "showcase.cjs"));
 
 // The showcase is a pure module that renders pages and a command that writes them: the pages are
@@ -390,14 +391,14 @@ describe("aidd-ui showcase", () => {
   describe("the charte page", () => {
     const sheet = () => read(`${UI}/tokens.css`);
     const systemPage = (options = {}) => pagesOf({ tokens: sheet(), ...options })["system.html"];
-    const idsIn = (html) => [...html.matchAll(/<section id="([^"]+)" aria-labelledby="([^"]+)"/g)].map((match) => match[1]);
+    const idsIn = (html) => [...html.matchAll(/<section id="([^"]+)"(?: class="[^"]*")? aria-labelledby="([^"]+)"/g)].map((match) => match[1]);
     const sectionOf = (html, id) => html.match(new RegExp(`<section id="${id}" aria-labelledby[\\s\\S]*?</section>`))[0];
     const subOf = (html, page) => [...navOf(html).matchAll(new RegExp(`<a href="${page}\\.html#([^"]+)"`, "g"))].map((match) => match[1]);
 
     it("builds one native section per kind of token, each with its heading, in the order of the page", () => {
       const html = systemPage();
-      assert.deepEqual(idsIn(html), ["palette", "roles", "typographie", "espacements", "points-de-rupture", "autres"]);
-      for (const [, id, labelled] of html.matchAll(/<section id="([^"]+)" aria-labelledby="([^"]+)"/g)) assert.match(html, new RegExp(`<h2 id="${labelled}">[^<]+</h2>`), id);
+      assert.deepEqual(idsIn(html), ["roles", "palette", "typographie", "espacements", "points-de-rupture", "autres"]);
+      for (const [, id, labelled] of html.matchAll(/<section id="([^"]+)"(?: class="[^"]*")? aria-labelledby="([^"]+)"/g)) assert.match(html, new RegExp(`<h2 id="${labelled}">[^<]+</h2>`), id);
     });
 
     it("writes each section a French heading and one plain sentence under it", () => {
@@ -420,10 +421,65 @@ describe("aidd-ui showcase", () => {
       assert.match(roles, /<li data-token="color\.text\.default">[\s\S]*?= color\.brand\.primary/);
     });
 
-    it("draws a space as a square of its real size, in rem and in pixels", () => {
+    it("draws a space as a bar as long as its value, in the accent of the project, with its name and its value in rem and in pixels", () => {
       const spaces = sectionOf(systemPage(), "espacements");
-      assert.match(spaces, /<li data-token="space\.md"><i class="square" style="inline-size: 1rem; block-size: 1rem"><\/i>/);
+      assert.match(spaces, /<li data-token="space\.md"><i class="bar" style="inline-size: 1rem; background: #336699"><\/i>/);
       assert.ok(spaces.includes("1rem \u00b7 16 px"));
+      assert.doesNotMatch(spaces, /class="square"/);
+    });
+
+    it("draws the bar of a space in a neutral tone when no colour of the project is an accent", () => {
+      const entries = [{ name: "color.brand.ink", type: "color", property: "--c" }, { name: "space.md", type: "dimension", property: "--s" }];
+      const sections = charteSectionsOf({ entries, values: new Map([["color.brand.ink", "#123456"], ["space.md", "1rem"]]), citations: new Map(), primitives: [], rows: [], notes: "", tokens: "", labels: LABELS.en, language: "en" });
+      assert.match(sections.find(({ id }) => id === "espacements").body, /<i class="bar" style="inline-size: 1rem"><\/i>/);
+    });
+
+    it("keeps the bar and the tile of a space and a radius legible in both themes: an edge in a chrome role, no fixed colour", () => {
+      const css = systemPage().match(/<style>([\s\S]*?)<\/style>/)[1];
+      assert.match(css, /\.bar \{[^}]*border: 1px solid var\(--line-strong\)[^}]*background: var\(--faint\)/);
+      assert.match(css, /\.tile \{[^}]*border: 2px solid var\(--text\)/);
+    });
+
+    it("shows the roles before the palette, and the palette collapsed under a line that counts its colours", () => {
+      const html = systemPage();
+      assert.ok(html.indexOf('<section id="roles"') < html.indexOf('<section id="palette"'));
+      const palette = sectionOf(html, "palette");
+      assert.match(palette, /<details class="raw-palette"><summary>Show the colours of the palette \(\d+\)<\/summary><ul class="swatches">/);
+      assert.doesNotMatch(palette, /<details[^>]* open/);
+      assert.ok(palette.includes('data-token="color.brand.primary"'));
+      assert.match(systemPage({ lang: "fr" }).match(/<section id="palette"[\s\S]*?<\/section>/)[0], /<summary>Afficher les couleurs de la palette \(\d+\)<\/summary>/);
+    });
+
+    describe("the other settings", () => {
+      const groupsOf = (html) => [...sectionOf(html, "autres").matchAll(/<h3>([^<]+)<\/h3><ul class="plain">([\s\S]*?)<\/ul>/g)].map((match) => [match[1], [...match[2].matchAll(/data-token="([^"]+)"/g)].map((token) => token[1])]);
+      const dimension = (value) => ({ $type: "dimension", $value: { value, unit: "rem" } });
+      const duration = (value) => ({ $type: "duration", $value: { value, unit: "ms" } });
+      const withUi = () => editTokens(tmp, (tree) => {
+        tree.ui = { button: { lift: dimension(1), edge: dimension(2) }, table: { lift: dimension(3), edge: dimension(4) }, menu: { lift: dimension(5) }, duration: { fast: duration(100), slow: duration(300) } };
+      });
+
+      it("groups by family, the second word of the path, one sub-heading each, in the order of the families", () => {
+        withUi();
+        const groups = groupsOf(systemPage());
+        assert.deepEqual(groups.filter(([title]) => ["Button", "Table"].includes(title)), [["Button", ["ui.button.lift", "ui.button.edge"]], ["Table", ["ui.table.lift", "ui.table.edge"]]]);
+      });
+
+      it("gathers the durations in a group of their own, and a family of one token in a last group", () => {
+        withUi();
+        const titles = groupsOf(systemPage()).map(([title]) => title);
+        assert.ok(titles.includes("Durations"));
+        assert.ok(!titles.includes("Menu"), "a family of one token has no group");
+        assert.equal(titles.at(-1), "Misc");
+        assert.ok(groupsOf(systemPage()).find(([title]) => title === "Misc")[1].includes("ui.menu.lift"));
+        assert.deepEqual(groupsOf(systemPage()).find(([title]) => title === "Durations")[1].filter((name) => name.startsWith("ui.")), ["ui.duration.fast", "ui.duration.slow"]);
+      });
+
+      it("takes the words of the engine from the labels, in both languages", () => {
+        withUi();
+        assert.ok(groupsOf(systemPage({ lang: "fr" })).some(([title]) => title === "Durées"));
+        assert.ok(groupsOf(systemPage({ lang: "fr" })).some(([title]) => title === "Divers"));
+        assert.ok(LABELS.en.charte.durations && LABELS.en.charte.misc && LABELS.en.charte.showPalette);
+      });
     });
 
     it("sets typography in one small frame that holds the stylesheet, and nothing else in a frame", () => {
@@ -554,7 +610,7 @@ describe("aidd-ui showcase", () => {
 
     it("gives the identity a section per heading of the brand, named in the language", () => {
       const html = pagesOf({ lang: "fr" })["brand.html"];
-      assert.deepEqual(idsIn(html).slice(0, 3), ["project", "users", "domain"]);
+      assert.deepEqual(idsIn(html).slice(0, 7), ["personality-and-tone", "references", "anti-references", "project", "users", "domain", "imposed-charter"]);
       assert.match(html, /<h2 id="project-title">Projet<\/h2>/);
       assert.match(navOf(pagesOf({ lang: "fr" })["home.html"]), /<a href="brand\.html#project">Projet<\/a>/);
     });
@@ -676,9 +732,9 @@ describe("aidd-ui showcase", () => {
       assert.match(narrow, /\.open-review \{[^}]*position: static;/, "back in the top bar");
     });
 
-    it("fills the chosen verdict of a record, with a mark, and leaves the other outlined", () => {
+    it("marks the chosen verdict of a record with a ring and a mark, the revision with a soft fill", () => {
       const style = pagesOf()["home.html"].match(/<style>([\s\S]*?)<\/style>/)[1];
-      assert.match(style, /\.verdict-bar \.verdict\[data-verdict="ok"\]\[aria-pressed="true"\] \{[^}]*background: var\(--ok-soft\);/);
+      assert.match(style, /\.verdict-bar \.verdict\[data-verdict="ok"\]\[aria-pressed="true"\] \{[^}]*box-shadow: [^;]*var\(--ok\);/);
       assert.match(style, /\.verdict-bar \.verdict\[data-verdict="revise"\]\[aria-pressed="true"\] \{[^}]*background: var\(--revise-soft\);/);
       assert.match(style, /\.verdict-bar \.verdict\[aria-pressed="true"\]::before \{ content: "/);
       assert.match(style, /\.verdict-bar \.verdict \{[^}]*border: 1px solid var\(--control\);/);
@@ -961,19 +1017,19 @@ describe("aidd-ui showcase", () => {
       assert.ok(block.match(/<h4 /g).length >= 1);
     });
 
-    it("draws the steps as a stepper in order, each with its state in words, replacing the meter", () => {
+    it("draws no five-cell strip, and lists in order only the steps that wait, each with its count in words and a link to act", () => {
       const index = pagesOf()["index.html"];
-      assert.doesNotMatch(index, /<meter/);
-      const stepper = index.match(/<ol class="stepper">[\s\S]*?<\/ol>/)[0];
-      const items = [...stepper.matchAll(/<li data-step="(\w+)" data-state="(\w+)">([\s\S]*?)<\/li>/g)];
+      assert.doesNotMatch(index, /<meter|class="stepper"|class="no"/);
+      const waiting = index.match(/<ul class="waiting">[\s\S]*?<\/ul>/)[0];
+      const items = [...waiting.matchAll(/<li data-step="(\w+)"( hidden)?>([\s\S]*?)<\/li>/g)];
       assert.deepEqual(items.map((match) => match[1]), ["identity", "foundations", "components", "screens", "journeys"]);
       const steps = stepsOf(index);
-      for (const [, step, state, html] of items) {
+      for (const [, step, hidden, html] of items) {
         const held = steps.find((each) => each.step === step);
-        assert.equal(state, held.todo !== "0" ? "todo" : held.mark === "\u2014" ? "empty" : "done", step);
-        assert.match(html, /<span class="state">[^<]+<\/span>/, step);
+        assert.equal(Boolean(hidden), held.todo === "0", step);
+        if (!hidden) assert.match(html, /<a href="[^"]+\.html"><span class="name">[^<]+<\/span><span class="state">\d+ [^<]+<\/span><\/a>/, step);
       }
-      assert.match(items.find((match) => match[1] === "components")[3], /<a href="[^"]+\.html">/);
+      assert.ok(items.some((match) => !match[2]), "something waits");
     });
 
     it("says what awaits review and starts the review on the first record awaiting, by step order", () => {
@@ -1274,7 +1330,7 @@ describe("aidd-ui showcase", () => {
       edit(tmp, `${UI}/assets/icon-search.md`, "status: validated", "status: proposed");
       const index = pagesOf()["index.html"];
       assert.equal(stepOf(index, "components").mark, "\u25CF", "awaiting agreement is a dot, not a count of states to review");
-      assert.match(index, /<li data-step="components" data-state="todo">/);
+      assert.match(index, /<li data-step="components">/);
       assert.match(index, /<span class="state">1 awaiting your agreement<\/span>/);
       assert.match(stepOf(index, "components").html, /aria-label="1 awaiting your agreement"/);
     });
@@ -1284,17 +1340,17 @@ describe("aidd-ui showcase", () => {
       edit(tmp, `${UI}/assets/icon-search.md`, "status: validated", "status: proposed");
       const index = pagesOf()["index.html"];
       assert.deepEqual([stepOf(index, "components").todo, stepOf(index, "components").mark], [before.todo, before.todo]);
-      assert.match(index, new RegExp(`<li data-step="components" data-state="todo">[\\s\\S]*?<span class="state">${before.todo} to review</span>`));
+      assert.match(index, new RegExp(`<li data-step="components">[\\s\\S]*?<span class="state">${before.todo} to review</span>`));
     });
 
     it("does not mark a step done while a journey in it is still proposed, and leaves the drawer count alone", () => {
       edit(tmp, `${UI}/journeys/onboarding.md`, "status: validated", "status: proposed");
       const index = pagesOf()["index.html"];
       assert.deepEqual([stepOf(index, "journeys").todo, stepOf(index, "journeys").mark], ["0", "\u25CF"]);
-      assert.match(index, /<li data-step="journeys" data-state="todo">[\s\S]*?<span class="state">1 awaiting your agreement<\/span>/);
-      assert.match(index, /<li data-step="components" data-state="todo">[\s\S]*?<span class="state">\d+ to review<\/span>/);
+      assert.match(index, /<li data-step="journeys">[\s\S]*?<span class="state">1 awaiting your agreement<\/span>/);
+      assert.match(index, /<li data-step="components">[\s\S]*?<span class="state">\d+ to review<\/span>/);
       assert.ok(!itemsOf(index).some((item) => item.record === "onboarding"));
-      assert.match(pagesOf({ lang: "fr" })["index.html"], /<li data-step="journeys" data-state="todo">[\s\S]*?<span class="state">1 en attente de votre accord<\/span>/);
+      assert.match(pagesOf({ lang: "fr" })["index.html"], /<li data-step="journeys">[\s\S]*?<span class="state">1 en attente de votre accord<\/span>/);
     });
 
     it("says what is still proposed on the overview lede when nothing awaits the drawer", () => {
@@ -1388,6 +1444,16 @@ describe("aidd-ui showcase", () => {
       assert.deepEqual(cards.map((card) => unescaped(card.match(/<a class="step" href="([^"]+)"/)[1])), ["home.html?journey=onboarding&step=1", "home.html?journey=onboarding&step=2", "search-flow.html?journey=onboarding&step=3"]);
     });
 
+    it("draws the arrows between the steps of a journey in the control colour, which reads on the page", () => {
+      const css = pagesOf()["_journey-onboarding.html"].match(/<style>([\s\S]*?)<\/style>/)[1];
+      const rules = [...css.matchAll(/\.card:not\(:first-child\)::before \{([^}]*)\}/g)].map((match) => match[1]).filter((rule) => rule.includes("mask:"));
+      assert.ok(rules.length >= 2, "the column arrow and the row arrow");
+      for (const rule of rules) {
+        assert.match(rule, /background: var\(--control\)/);
+        assert.doesNotMatch(rule, /--line-strong/);
+      }
+    });
+
     it("draws one hidden bar per step a page holds in a journey, under the header", () => {
       const page = pagesOf()["home.html"];
       const bars = barsOf(page);
@@ -1407,8 +1473,12 @@ describe("aidd-ui showcase", () => {
       assert.deepEqual(hrefsOf(first), ["_journey-onboarding.html", "home.html?journey=onboarding&step=2"]);
       assert.doesNotMatch(first, /class="prev"/);
       const last = barsOf(pagesOf()["search-flow.html"])[0];
-      assert.deepEqual(hrefsOf(last), ["_journey-onboarding.html", "home.html?journey=onboarding&step=2"]);
-      assert.doesNotMatch(last, /class="next"/);
+      assert.deepEqual(hrefsOf(last), ["_journey-onboarding.html", "home.html?journey=onboarding&step=2", "_journey-onboarding.html"]);
+      assert.equal(textOf(last, "next"), "Last step Back to the journey");
+    });
+
+    it("words the way back from the last step in the language, in both", () => {
+      assert.equal(textOf(barsOf(pagesOf({ lang: "fr" })["search-flow.html"])[0], "next"), "Dernière étape Retour au parcours");
     });
 
     it("writes the bar in the language", () => {
@@ -1445,9 +1515,13 @@ describe("aidd-ui showcase", () => {
         const page = pagesOf()["home.html"];
         assert.deepEqual(run(page, "?journey=onboarding&step=2"), [true, false]);
         assert.deepEqual(run(page, "?journey=onboarding&step=1"), [false, true]);
-        assert.deepEqual(run(page, ""), [true, true]);
-        assert.deepEqual(run(page, "?journey=other&step=1"), [true, true]);
-        assert.deepEqual(run(page, "?journey=onboarding"), [true, true]);
+      });
+
+      it("shows the first bar of the page when the address names no journey and step of it, so a page reached from the sidebar still reads as a step", () => {
+        const page = pagesOf()["home.html"];
+        assert.deepEqual(run(page, ""), [false, true]);
+        assert.deepEqual(run(page, "?journey=other&step=1"), [false, true]);
+        assert.deepEqual(run(page, "?journey=onboarding"), [false, true]);
       });
 
       it("leaves the tab of the hash to the tabs", () => {
@@ -1469,7 +1543,7 @@ describe("aidd-ui showcase", () => {
 
     it("names them in the language wherever a title shows, the records themselves untouched", () => {
       awaitingBrandAndSystem();
-      for (const [lang, names] of [["en", ["Brand identity", "Design system"]], ["fr", ["Identité visuelle", "Charte graphique"]]]) {
+      for (const [lang, names] of [["en", ["Brand identity", "Foundations"]], ["fr", ["Identité visuelle", "Charte"]]]) {
         const pages = pagesOf({ lang });
         [["brand", names[0]], ["system", names[1]]].forEach(([id, name]) => {
           assert.match(headerOf(pages[`${id}.html`]), new RegExp(`<h1>${name}</h1>`), `${lang} ${id} h1`);
@@ -1477,6 +1551,9 @@ describe("aidd-ui showcase", () => {
           assert.match(todoOf(pages["index.html"]), new RegExp(`<a class="ovcard" href="${id}.html">[\\s\\S]*?<span class="title">${name}</span>`), `${lang} ${id} overview`);
           assert.match(itemsOf(pages["index.html"]).find((item) => item.record === id).html, new RegExp(`<summary><span>${name}</span>`), `${lang} ${id} drawer`);
         });
+      }
+      for (const [lang, stale] of [["en", "Design system"], ["fr", "Charte graphique"]]) {
+        for (const [name, html] of Object.entries(pagesOf({ lang }))) assert.doesNotMatch(html.replace(/<style>[\s\S]*?<\/style>|<script[\s\S]*?<\/script>/g, ""), new RegExp(stale), `${lang} ${name} still says ${stale}`);
       }
       assert.match(read(`${UI}/brand.md`), /^# Brand$/m);
       assert.match(headerOf(pagesOf({ lang: "fr" })["button.html"]), /<h1>Button<\/h1>/);
@@ -1526,10 +1603,10 @@ describe("aidd-ui showcase", () => {
       assert.equal(LABELS.fr.stateNames["no-rights"], "sans droits");
       const glossary = "## Glossary\n\n| Concept | Word | Forbidden |\n| --- | --- | --- |\n| Patient | patient | client |";
       put(tmp, `${UI}/brand.md`, read(`${UI}/brand.md`) + "\n\n" + glossary + "\n");
-      const heads = (html) => [...html.matchAll(/<th[^>]*>([^<]*)<\/th>/g)].map((match) => match[1]);
-      assert.deepEqual(heads(pagesOf({ lang: "fr" })["brand.html"]), ["Concept", "Mot", "Interdit"]);
-      assert.deepEqual(heads(pagesOf()["brand.html"]), ["Concept", "Word", "Forbidden"]);
-      assert.match(pagesOf({ lang: "fr" })["brand.html"], /<td>patient<\/td>/);
+      const heads = (html) => [...html.matchAll(/<span class="(?:concept|say|never)">([^<]*)<\/span>/g)].slice(0, 3).map((match) => match[1]);
+      assert.deepEqual(heads(pagesOf({ lang: "fr" })["brand.html"]), ["Concept", "On dit", "On ne dit jamais"]);
+      assert.deepEqual(heads(pagesOf()["brand.html"]), ["Concept", "We say", "We never say"]);
+      assert.match(pagesOf({ lang: "fr" })["brand.html"], /<span class="say">patient<\/span>/);
     });
 
     it("names the one state of the brand and of the system as the whole, linking the page with no anchor", () => {
@@ -1557,6 +1634,59 @@ describe("aidd-ui showcase", () => {
       awaitingBrandAndSystem("search-flow", "home");
       assert.equal(itemsOf(pagesOf()["index.html"]).length, 4);
       assert.deepEqual(groupsOf(pagesOf()["index.html"]), [["identity", true], ["foundations", false], ["screens", false]]);
+    });
+  });
+
+  describe("the identity page as a brand page", () => {
+    const BRAND_LINES = [
+      "---", "id: brand", "kind: brand", "status: proposed", "version: 1", "---", "", "# Brand", "",
+      "## Project", "", "A search tool.", "", "## Users", "", "Analysts.", "", "## Domain", "", "Public records.", "",
+      "## Personality and tone", "", "Plain and calm.", "",
+      "## References", "", "- Printed charts: a paper ground.", "- Public records: no ornament.", "",
+      "## Anti-references", "", "- Scoreboards: ranks and badges.", "- Hype: neon gradients.", "",
+      "## Glossary", "", "| Concept | Word | Forbidden |", "| --- | --- | --- |", "| Training | formation | cours |", "| Trainee | participant | eleve, apprenant |", "",
+    ];
+    const brandPage = (lang = "en") => { put(tmp, `${UI}/brand.md`, BRAND_LINES.join("\n")); return pagesOf({ lang })["brand.html"]; };
+    const rule = (html, selector) => html.match(new RegExp(`(?:^|\\n)${selector.replaceAll(".", "\\.")} \\{([^}]*)\\}`))?.[1] ?? "";
+    const idsOf = (html) => [...html.matchAll(/<section id="([^"]+)"/g)].map((match) => match[1]);
+
+    it("leads with the personality and tone, in larger type, before the rest", () => {
+      const html = brandPage();
+      assert.equal(idsOf(html)[0], "personality-and-tone");
+      assert.match(html, /<section id="personality-and-tone" class="personality"/);
+      assert.match(rule(html, "section.personality > .doc"), /font-size: var\(--t-xl\)/);
+    });
+
+    it("sets the references and the anti-references side by side, one item per line, stacked on a narrow screen", () => {
+      const html = brandPage();
+      const sides = html.match(/<div class="sides">([\s\S]*?)<\/div>\s*(?=<section|<\/main)/)[1];
+      assert.deepEqual(idsOf(sides), ["references", "anti-references"]);
+      assert.equal([...sides.matchAll(/<li>/g)].length, 4);
+      assert.match(rule(html, ".sides"), /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+      assert.match(html, /@media \(max-width: 640px\) \{[^@]*\.sides \{ grid-template-columns: 1fr/);
+    });
+
+    it("sets the glossary as rows of the word we say and the word we never say, with no table", () => {
+      const html = brandPage();
+      const glossary = html.match(/<ul class="glossary">[\s\S]*?<\/ul>/)[0];
+      assert.doesNotMatch(html.slice(html.indexOf('id="glossary"')), /<table/);
+      const rows = [...glossary.matchAll(/<li>([\s\S]*?)<\/li>/g)].map((match) => [...match[1].matchAll(/<span class="(\w+)">([^<]*)<\/span>/g)].map((cell) => [cell[1], cell[2]]));
+      assert.deepEqual(rows[0], [["concept", "Training"], ["say", "formation"], ["never", "cours"]]);
+      assert.deepEqual(rows[1], [["concept", "Trainee"], ["say", "participant"], ["never", "eleve, apprenant"]]);
+    });
+
+    it("keeps the project, the users and the domain as compact text blocks, their words as written", () => {
+      const html = brandPage();
+      for (const [id, text] of [["project", "A search tool."], ["users", "Analysts."], ["domain", "Public records."]]) {
+        assert.match(html, new RegExp(`<section id="${id}" class="compact"[^>]*>[\\s\\S]*?<p>${text.replace(".", "\\.")}</p>`), id);
+      }
+      assert.match(rule(html, "section.compact > .doc"), /font-size: var\(--t-sm\)/);
+    });
+
+    it("keeps one anchor per section in the navigation, in the page's order", () => {
+      const html = brandPage();
+      const sub = [...navOf(html).matchAll(/href="brand\.html#([^"]+)"/g)].map((match) => match[1]);
+      assert.deepEqual(sub, idsOf(html));
     });
   });
 

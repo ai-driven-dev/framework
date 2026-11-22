@@ -37,7 +37,7 @@ describe("the classification of the tokens of a charte", () => {
   for (const [name, type, section] of CASES) it(`puts ${name} (${type ?? "untyped"}) in ${section}`, () => assert.equal(sectionOf(name, type), section));
 
   it("lists the breakpoints between the sizes and the rest, so the page and its navigation read one order", () => {
-    assert.deepEqual(SECTIONS, ["palette", "roles", "typographie", "espacements", "arrondis", "tailles", "points-de-rupture", "autres"]);
+    assert.deepEqual(SECTIONS, ["roles", "palette", "typographie", "espacements", "arrondis", "tailles", "points-de-rupture", "autres"]);
   });
 
   it("keeps the order of the entries in each section, and puts each token in exactly one", () => {
