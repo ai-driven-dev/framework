@@ -123,6 +123,8 @@
       "tests/orchestration/sync/marketplace-sync-machine-projection-codex-claims.integration.test.ts": 1,
       "tests/orchestration/sync/marketplace-sync-machine-projection-refused-activation.integration.test.ts": 1,
       "tests/orchestration/sync/marketplace-sync-narrowing.integration.test.ts": 1,
+      "tests/orchestration/sync/marketplace-sync-native-activation.integration.test.ts": 1,
+      "tests/orchestration/sync/marketplace-sync-native-activation.reclaim.integration.test.ts": 1,
       "tests/orchestration/sync/marketplace-sync-native-activation.recorded-refs.integration.test.ts": 1,
       "tests/orchestration/sync/marketplace-sync-native-provenance-refused-reads.integration.test.ts": 1,
       "tests/orchestration/sync/marketplace-sync-native-provenance.integration.test.ts": 1,
@@ -142,6 +144,9 @@
       "tests/orchestration/sync/native-plugin-claims-refusal.integration.test.ts": 1,
       "tests/orchestration/sync/run-user-scope-sync.use-case.unit.test.ts": 1,
       "tests/orchestration/sync/sync-settings.use-case.activation-reporting.unit.test.ts": 1,
+      "tests/orchestration/sync/sync-settings.use-case.file-and-build.unit.test.ts": 1,
+      "tests/orchestration/sync/sync-settings.use-case.manifest-host-refusal.unit.test.ts": 1,
+      "tests/orchestration/sync/sync-settings.use-case.manifest-replaced-registration.unit.test.ts": 1,
       "tests/orchestration/sync/sync-settings.use-case.manifest-write-count.unit.test.ts": 1,
       "tests/orchestration/sync/sync-settings.use-case.tool-narrowing.unit.test.ts": 1,
       "tests/orchestration/sync/sync-tool-settings-files.use-case.unit.test.ts": 1,
@@ -166,7 +171,9 @@
     "rule": "real-tool-list:catalog-of",
     "closesWhen": "the test is converted to SYNTHETIC_TOOL once catalog-of.builder takes an injected registry",
     "entries": {
-      "tests/orchestration/doctor/run-doctor.use-case.unit.test.ts": 1
+      "tests/orchestration/doctor/run-doctor.use-case.unit.test.ts": 1,
+      "tests/orchestration/testing/native-provenance.builder.ts": 1,
+      "tests/shared/testing/list-command-contract.builder.ts": 1
     }
   }
 ]

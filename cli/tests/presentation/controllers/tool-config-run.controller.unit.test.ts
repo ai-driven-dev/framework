@@ -1,23 +1,28 @@
 import { describe, expect, it } from "vitest";
 import { assertKnownToolId } from "../../../src/presentation/controllers/tool-config-run.controller.js";
-import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
+import {
+  SECOND_SYNTHETIC_TOOL,
+  SYNTHETIC_IDE_TOOL,
+  SYNTHETIC_TOOL,
+  syntheticMixedCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
 describe("assertKnownToolId", () => {
   it("accepts an AI tool id", () => {
-    expect(() => assertKnownToolId("claude", catalogOf())).not.toThrow();
+    expect(() => assertKnownToolId(SYNTHETIC_TOOL, syntheticMixedCatalog())).not.toThrow();
   });
 
   it("accepts an IDE tool id", () => {
-    expect(() => assertKnownToolId("vscode", catalogOf())).not.toThrow();
+    expect(() => assertKnownToolId(SYNTHETIC_IDE_TOOL, syntheticMixedCatalog())).not.toThrow();
   });
 
   it("refuses an unknown id and lists every one it would have taken", () => {
-    expect(() => assertKnownToolId("emacs", catalogOf())).toThrow(
-      "Unknown tool: emacs. Valid tools: claude, cursor, copilot, opencode, kilo, codex, antigravity, vscode"
+    expect(() => assertKnownToolId("emacs", syntheticMixedCatalog())).toThrow(
+      `Unknown tool: emacs. Valid tools: ${SYNTHETIC_TOOL}, ${SECOND_SYNTHETIC_TOOL}, ${SYNTHETIC_IDE_TOOL}`
     );
   });
 
   it("refuses an empty id rather than treating it as no filter", () => {
-    expect(() => assertKnownToolId("", catalogOf())).toThrow("Unknown tool: .");
+    expect(() => assertKnownToolId("", syntheticMixedCatalog())).toThrow("Unknown tool: .");
   });
 });

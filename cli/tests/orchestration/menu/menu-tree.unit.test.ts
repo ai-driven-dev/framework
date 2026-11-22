@@ -5,7 +5,7 @@ import {
   type MenuNode,
 } from "../../../src/orchestration/menu/menu-node.js";
 import { installedNodes } from "../../../src/orchestration/menu/menu-tree.js";
-import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
+import { syntheticCatalog } from "../../shared/testing/synthetic-tool-id.builder.js";
 
 function leavesOf(nodes: MenuNode[]): MenuLeaf[] {
   return nodes.flatMap((node) => (isBranch(node) ? leavesOf(node.children) : [node]));
@@ -16,7 +16,7 @@ function valuesOf(nodes: MenuNode[]): string[] {
 }
 
 describe("menu tree", () => {
-  const nodes = installedNodes(catalogOf());
+  const nodes = installedNodes(syntheticCatalog());
 
   it("gives every node a value no other node shares, so a pick names one node", () => {
     const values = valuesOf(nodes);
@@ -36,7 +36,7 @@ describe("menu tree", () => {
   });
 
   it("lists the tools of the catalog, AI tools first, in the prompt that asks for one", () => {
-    const catalog = catalogOf();
+    const catalog = syntheticCatalog();
     const prompt = leavesOf(nodes).find((leaf) => leaf.value === "doctor-tool")?.inputPrompt;
 
     expect(prompt).toBe(

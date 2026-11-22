@@ -8,7 +8,12 @@ import {
   requireAgentHosts,
 } from "../../../src/presentation/controllers/setup-flags.controller.js";
 import { CapturingOutput, ExitRequested } from "../../shared/testing/capturing-output.fake.js";
-import { catalogOf, registeredCatalog } from "../../shared/testing/catalog-of.builder.js";
+import {
+  SECOND_SYNTHETIC_TOOL,
+  SYNTHETIC_IDE_TOOL,
+  SYNTHETIC_TOOL,
+  syntheticMixedCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
 describe("parseSourceFlag", () => {
   it("chooses no source at all when --source was not given", () => {
@@ -44,22 +49,24 @@ describe("parseSourceFlag", () => {
 
 describe("parseToolIds", () => {
   it("selects no tool at all when neither category was given", () => {
-    expect(parseToolIds({}, registeredCatalog())).toEqual({
+    expect(parseToolIds({}, syntheticMixedCatalog())).toEqual({
       aiTools: [],
       ideTools: [],
     });
   });
 
   it("splits the ids given per category", () => {
-    expect(parseToolIds({ ai: "claude", ide: "vscode" }, registeredCatalog())).toEqual({
-      aiTools: ["claude"],
-      ideTools: ["vscode"],
+    expect(
+      parseToolIds({ ai: SYNTHETIC_TOOL, ide: SYNTHETIC_IDE_TOOL }, syntheticMixedCatalog())
+    ).toEqual({
+      aiTools: [SYNTHETIC_TOOL],
+      ideTools: [SYNTHETIC_IDE_TOOL],
     });
   });
 
   it("expands --ai all into every AI tool and no IDE tool", () => {
-    expect(parseToolIds({ ai: "all" }, registeredCatalog())).toEqual({
-      aiTools: [...catalogOf().idsInCanonicalOrder("ai")],
+    expect(parseToolIds({ ai: "all" }, syntheticMixedCatalog())).toEqual({
+      aiTools: [...syntheticMixedCatalog().idsInCanonicalOrder("ai")],
       ideTools: [],
     });
   });
@@ -67,23 +74,27 @@ describe("parseToolIds", () => {
 
 describe("expandAllKeyword", () => {
   it("selects nothing when the flag was not given", () => {
-    expect(expandAllKeyword(undefined, catalogOf().idsInCanonicalOrder("ai"))).toEqual([]);
+    expect(expandAllKeyword(undefined, syntheticMixedCatalog().idsInCanonicalOrder("ai"))).toEqual(
+      []
+    );
   });
 
   it("expands 'all' into every id of that category, spacing and all", () => {
-    expect(expandAllKeyword("all", catalogOf().idsInCanonicalOrder("ide"))).toEqual([
-      ...catalogOf().idsInCanonicalOrder("ide"),
+    expect(expandAllKeyword("all", syntheticMixedCatalog().idsInCanonicalOrder("ide"))).toEqual([
+      ...syntheticMixedCatalog().idsInCanonicalOrder("ide"),
     ]);
-    expect(expandAllKeyword("  all  ", catalogOf().idsInCanonicalOrder("ide"))).toEqual([
-      ...catalogOf().idsInCanonicalOrder("ide"),
-    ]);
+    expect(expandAllKeyword("  all  ", syntheticMixedCatalog().idsInCanonicalOrder("ide"))).toEqual(
+      [...syntheticMixedCatalog().idsInCanonicalOrder("ide")]
+    );
   });
 
   it("splits a comma-separated list, dropping the spacing and the empty entries", () => {
-    expect(expandAllKeyword(" claude , , cursor ", catalogOf().idsInCanonicalOrder("ai"))).toEqual([
-      "claude",
-      "cursor",
-    ]);
+    expect(
+      expandAllKeyword(
+        ` ${SYNTHETIC_TOOL} , , ${SECOND_SYNTHETIC_TOOL} `,
+        syntheticMixedCatalog().idsInCanonicalOrder("ai")
+      )
+    ).toEqual([SYNTHETIC_TOOL, SECOND_SYNTHETIC_TOOL]);
   });
 });
 
