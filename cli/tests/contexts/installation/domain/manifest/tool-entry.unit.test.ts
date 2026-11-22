@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { PluginNotFoundError } from "../../../../../src/contexts/installation/domain/installation.error.js";
+import {
+  DuplicatePluginError,
+  PluginNotFoundError,
+} from "../../../../../src/contexts/installation/domain/installation.error.js";
 import {
   createToolEntry,
   parseToolEntry,
@@ -118,6 +121,17 @@ describe("a tool's manifest entry", () => {
           })
         ).plugins
       );
+
+    it("refuses a document that records one plugin twice", () => {
+      expect(() =>
+        parseToolEntry(TOOL.claude, {
+          toolId: "claude",
+          version: "3.0.0",
+          files: [],
+          plugins: [storedPlugin({}), storedPlugin({ version: "2.0.0" })],
+        })
+      ).toThrow(DuplicatePluginError);
+    });
 
     it("writes every field of a stored plugin back in its stored order", () => {
       const full = storedPlugin({

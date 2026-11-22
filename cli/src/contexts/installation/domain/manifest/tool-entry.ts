@@ -97,12 +97,20 @@ export function serializeToolEntry(entry: ToolEntry): ToolEntryData {
 }
 
 export function parseToolEntry(toolId: ToolId, data: ToolEntryData): ToolEntry {
+  const plugins: RecordedPlugin[] = [];
+  for (const stored of data.plugins ?? []) {
+    const plugin = RecordedPlugin.fromJSON(stored);
+    if (plugins.some((p) => p.plugin.name === plugin.plugin.name)) {
+      throw new DuplicatePluginError(plugin.plugin.name);
+    }
+    plugins.push(plugin);
+  }
   return {
     toolId,
     version: data.version,
     files: parseTrackedFiles(data.files),
     mergeFiles: parseMergeFileEntries(data.mergeFiles ?? []),
-    plugins: (data.plugins ?? []).map((p) => RecordedPlugin.fromJSON(p)),
+    plugins,
     nativeRegistrations: parseNativeRegistrations(data.nativeRegistrations),
   };
 }
