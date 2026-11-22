@@ -14,12 +14,18 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_TOOL,
+  syntheticNativeCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
+
+const tool = SYNTHETIC_TOOL;
 
 const PROJECT_ROOT = "/test-project";
-const REGISTRY_LOCATION = "/home/.claude/plugins/known_marketplaces.json";
+const CATALOG_RELATIVE = ".plugin/marketplace.json";
+const REGISTRY_LOCATION = `/home/.${tool}/known_marketplaces.json`;
 
-interface RegisteredCatalog {
+interface HeldCatalog {
   /** Where the host's registry resolves the name to - the directory a catalog would
    * be read from, if anything was ever written there. */
   readonly path: string;
@@ -29,7 +35,8 @@ interface RegisteredCatalog {
 }
 
 interface Setup {
-  readonly toolId?: AiToolId;
+  /** The host lists its marketplaces itself instead of keeping a registry file. */
+  readonly listed?: boolean;
   /** `name` written into the built catalog's own marketplace.json - defaults to the
    * aidd-side name so most scenarios agree by construction. */
   readonly catalogName?: string;
@@ -39,7 +46,7 @@ interface Setup {
   readonly hostReader?: FakeHostMarketplaceRegistry;
   /** Catalog content to pre-write at the path this test's `hostReader` names as registered;
    * omitted, that path holds nothing readable, standing in for a directory that is gone. */
-  readonly registeredCatalog?: RegisteredCatalog;
+  readonly heldCatalog?: HeldCatalog;
   /** Skips writing at the built dir this project just "built" to, standing in for a build that
    * reported success but left nothing readable where its own tool profile probes. */
   readonly omitRequestedCatalog?: boolean;
@@ -59,14 +66,6 @@ class RealpathRefusingFileAdapter extends InMemoryFileAdapter {
   }
 }
 
-function catalogRelativeOf(toolId: AiToolId): string {
-  // Written at whichever relative path this tool's own `distributionProbes.marketplace` names,
-  // codex's differing from claude's, so the `marketplaceRegistry` gate is exercised for codex too.
-  return toolId === "codex"
-    ? ".agents/plugins/marketplace.json"
-    : ".claude-plugin/marketplace.json";
-}
-
 function catalogJson(name: string, version: string | undefined, pluginNames: readonly string[]) {
   return JSON.stringify({
     name,
@@ -81,14 +80,14 @@ async function writeCatalogs(
   catalogName: string,
   builtDir: string
 ) {
-  const relative = catalogRelativeOf(setup.toolId ?? TOOL.claude);
+  const relative = CATALOG_RELATIVE;
   if (!setup.omitRequestedCatalog) {
     await fs.writeFile(
       `${builtDir}/${relative}`,
       catalogJson(catalogName, setup.requestedVersion, setup.requestedPluginNames ?? [])
     );
   }
-  const rc = setup.registeredCatalog;
+  const rc = setup.heldCatalog;
   if (rc === undefined) return;
   await fs.writeFile(
     `${rc.path}/${relative}`,
@@ -96,9 +95,9 @@ async function writeCatalogs(
   );
 }
 
-function provenanceOf(toolId: AiToolId, registeredSource: string | undefined) {
+function provenanceOf(listed: boolean, registeredSource: string | undefined) {
   if (registeredSource === undefined) return undefined;
-  if (toolId === "claude") return { kind: "registry", source: registeredSource } as const;
+  if (!listed) return { kind: "registry", source: registeredSource } as const;
   return {
     kind: "effective-list",
     root: registeredSource,
@@ -131,7 +130,7 @@ function ownedMachineManifest(
 }
 
 function nativeSourceReader(
-  toolId: AiToolId,
+  listed: boolean,
   activator: FakeHostActions,
   hostReading: Awaited<ReturnType<FakeHostMarketplaceRegistry["read"]>> | undefined,
   catalogName: string,
@@ -144,7 +143,7 @@ function nativeSourceReader(
   }
   return new FakeHostMarketplaceSources(
     activator,
-    toolId === "claude" ? "registry" : "effective-list",
+    listed ? "effective-list" : "registry",
     (path) => (path === builtDir ? catalogName : undefined),
     currentSource === undefined ? new Map() : new Map([[catalogName, currentSource]])
   );
@@ -157,7 +156,7 @@ function ownedMachineOf(
   currentSource: ReturnType<typeof provenanceOf>
 ) {
   if (!setup.ownedCatalog) return undefined;
-  return ownedMachineManifest(setup.toolId ?? TOOL.claude, aiddName, catalogName, currentSource);
+  return ownedMachineManifest(tool, aiddName, catalogName, currentSource);
 }
 
 async function projectWithOneMarketplace(toolId: AiToolId, aiddName: string) {
@@ -179,7 +178,8 @@ async function projectWithOneMarketplace(toolId: AiToolId, aiddName: string) {
 }
 
 async function sync(setup: Setup = {}) {
-  const toolId = setup.toolId ?? TOOL.claude;
+  const toolId = tool;
+  const listed = setup.listed ?? false;
   const aiddName = setup.aiddName ?? "probe-mkt";
   const catalogName = setup.catalogName ?? aiddName;
   const fs = setup.fs ?? new InMemoryFileAdapter({}, [PROJECT_ROOT]);
@@ -187,16 +187,16 @@ async function sync(setup: Setup = {}) {
   const builtDir = `/built/${toolId}`;
   await writeCatalogs(fs, setup, catalogName, builtDir);
   const activator = new FakeHostActions({ available: true });
-  const hostReading = toolId === "claude" ? await setup.hostReader?.read() : undefined;
-  const currentSource = provenanceOf(toolId, hostReading?.entries?.get(catalogName));
+  const hostReading = listed ? undefined : await setup.hostReader?.read();
+  const currentSource = provenanceOf(listed, hostReading?.entries?.get(catalogName));
   const machine = ownedMachineOf(setup, aiddName, catalogName, currentSource);
   const useCase = marketplaceSync({
-    tools: registeredTools(),
+    tools: syntheticNativeCatalog(tool, listed ? "list-command" : "registry"),
     fs,
     manifestRepo,
     marketplaceRegistry: registry,
     logger: new CapturingLogger(),
-    activators: new Map([[toolId === "claude" ? "claude" : "codex", activator]]),
+    activators: new Map([[toolId, activator]]),
     ensureBuilt: fakeEnsureBuiltMarketplace((target) => `/built/${target}`),
     hostMarketplaceRegistries: new Map(
       setup.hostReader === undefined ? [] : [[toolId, setup.hostReader]]
@@ -205,7 +205,7 @@ async function sync(setup: Setup = {}) {
       [
         toolId,
         new FakeHostPluginRegistry({
-          location: `/home/${toolId}/plugins/installed_plugins.json`,
+          location: "/home/dev/.host/plugins/installed_plugins.json",
           refs: new Map(),
         }),
       ],
@@ -214,12 +214,12 @@ async function sync(setup: Setup = {}) {
     nativeSources: new Map([
       [
         toolId,
-        nativeSourceReader(toolId, activator, hostReading, catalogName, builtDir, currentSource),
+        nativeSourceReader(listed, activator, hostReading, catalogName, builtDir, currentSource),
       ],
     ]),
   });
   const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
-  return { result, activator, manifestRepo, builtDir, catalogRelative: catalogRelativeOf(toolId) };
+  return { result, activator, manifestRepo, builtDir, catalogRelative: CATALOG_RELATIVE };
 }
 
 describe("the sync guard against a marketplace name a host already holds", () => {
@@ -232,7 +232,7 @@ describe("the sync guard against a marketplace name a host already holds", () =>
     const { result, activator } = await sync({
       hostReader,
       requestedPluginNames: ["sample-plugin"],
-      registeredCatalog: { path: "/other/src", pluginNames: ["different-plugin"] },
+      heldCatalog: { path: "/other/src", pluginNames: ["different-plugin"] },
     });
 
     expect(activator.addedMarketplaces).toHaveLength(0);
@@ -255,10 +255,10 @@ describe("the sync guard against a marketplace name a host already holds", () =>
       requestedVersion: "2.0.0",
       ownedCatalog: true,
       requestedPluginNames: ["sample-plugin"],
-      registeredCatalog: { path: "/other/src", version: "1.0.0", pluginNames: ["sample-plugin"] },
+      heldCatalog: { path: "/other/src", version: "1.0.0", pluginNames: ["sample-plugin"] },
     });
 
-    expect(activator.addedMarketplaces).toEqual(["/built/claude"]);
+    expect(activator.addedMarketplaces).toEqual([`/built/${tool}`]);
     expect(result.errors).toEqual([]);
   });
 
@@ -272,7 +272,7 @@ describe("the sync guard against a marketplace name a host already holds", () =>
       hostReader,
       requestedVersion: "2.0.0",
       requestedPluginNames: ["sample-plugin"],
-      registeredCatalog: { path: "/other/src", version: "1.0.0", pluginNames: ["sample-plugin"] },
+      heldCatalog: { path: "/other/src", version: "1.0.0", pluginNames: ["sample-plugin"] },
     });
 
     expect(result.errors).toEqual([]);
@@ -284,7 +284,7 @@ describe("the sync guard against a marketplace name a host already holds", () =>
       location: REGISTRY_LOCATION,
       // InMemoryFileAdapter.realpath is identity absent a declared symlink, so this is exactly what
       // the guard resolves `builtDir` to: both reads land on the same catalog.
-      entries: new Map([["probe-mkt", "/built/claude"]]),
+      entries: new Map([["probe-mkt", `/built/${tool}`]]),
     });
 
     const { result, activator } = await sync({ hostReader, ownedCatalog: true });
@@ -298,7 +298,7 @@ describe("the sync guard against a marketplace name a host already holds", () =>
     // register under the same name: same version, same plugins, only a different directory.
     const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
-      entries: new Map([["probe-mkt", "/other-project/built/claude"]]),
+      entries: new Map([["probe-mkt", `/other-project/built/${tool}`]]),
     });
 
     const { result, activator } = await sync({
@@ -306,14 +306,14 @@ describe("the sync guard against a marketplace name a host already holds", () =>
       requestedVersion: "1.0.0",
       ownedCatalog: true,
       requestedPluginNames: ["sample-plugin"],
-      registeredCatalog: {
-        path: "/other-project/built/claude",
+      heldCatalog: {
+        path: `/other-project/built/${tool}`,
         version: "1.0.0",
         pluginNames: ["sample-plugin"],
       },
     });
 
-    expect(activator.addedMarketplaces).toEqual(["/built/claude"]);
+    expect(activator.addedMarketplaces).toEqual([`/built/${tool}`]);
     expect(result.errors).toEqual([]);
   });
 
@@ -323,7 +323,7 @@ describe("the sync guard against a marketplace name a host already holds", () =>
       entries: new Map([["probe-mkt", "/gone"]]),
     });
 
-    // No `registeredCatalog` - nothing is ever written at "/gone", so reading its
+    // No `heldCatalog` - nothing is ever written at "/gone", so reading its
     // catalog fails exactly as it would for a directory that no longer exists.
     const { result, activator } = await sync({ hostReader });
 
@@ -344,26 +344,26 @@ describe("the sync guard against a marketplace name a host already holds", () =>
       hostReader,
     });
 
-    expect(activator.addedMarketplaces).toEqual(["/built/claude"]);
+    expect(activator.addedMarketplaces).toEqual([`/built/${tool}`]);
     expect(result.errors).toEqual([]);
-    const registrations = (await manifestRepo.load())?.getNativeRegistrations(TOOL.claude);
+    const registrations = (await manifestRepo.load())?.getNativeRegistrations(tool);
     expect(registrations?.marketplaces).toEqual([
       expect.objectContaining({ alias: "mon-nom", hostName: "upstream" }),
     ]);
   });
 
   it("never reads a host registry for a tool whose profile declares none, and still registers it", async () => {
-    // Codex's own profile declares no `marketplaceRegistry` - this reader would refuse
+    // A listed host's profile declares no `marketplaceRegistry` - this reader would refuse
     // every request if it were ever consulted, which is exactly what proves it is not.
     const hostReader = new FakeHostMarketplaceRegistry({
       location: "/wherever",
       entries: new Map([["probe-mkt", "/anything-else"]]),
     });
 
-    const { result, activator } = await sync({ toolId: TOOL.codex, hostReader });
+    const { result, activator } = await sync({ listed: true, hostReader });
 
     expect(hostReader.reads).toBe(0);
-    expect(activator.addedMarketplaces).toEqual(["/built/codex"]);
+    expect(activator.addedMarketplaces).toEqual([`/built/${tool}`]);
     expect(result.errors).toEqual([]);
   });
 
@@ -376,30 +376,30 @@ describe("the sync guard against a marketplace name a host already holds", () =>
     const { result } = await sync({
       hostReader,
       requestedPluginNames: ["sample-plugin"],
-      registeredCatalog: { path: "/other/src", pluginNames: ["different-plugin"] },
+      heldCatalog: { path: "/other/src", pluginNames: ["different-plugin"] },
     });
 
     expect(result.errors).toHaveLength(1);
     expect(render(result.errors[0]?.error)).toBe(
-      "Marketplace 'probe-mkt' is already registered from a different catalog: /other/src differs from the one requested, /built/claude — plugins differ (+sample-plugin, -different-plugin), per /home/.claude/plugins/known_marketplaces.json. Do not remove a catalogue another user or project may depend on. Reconcile the host source manually before retrying `aidd sync`."
+      `Marketplace 'probe-mkt' is already registered from a different catalog: /other/src differs from the one requested, /built/${tool} — plugins differ (+sample-plugin, -different-plugin), per ${REGISTRY_LOCATION}. Do not remove a catalogue another user or project may depend on. Reconcile the host source manually before retrying \`aidd sync\`.`
     );
   });
 
   it("registers from the built path as given when that path cannot be resolved", async () => {
     const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
-      entries: new Map([["probe-mkt", "/old/claude"]]),
+      entries: new Map([["probe-mkt", `/old/${tool}`]]),
     });
 
     const { result, activator } = await sync({
       hostReader,
-      fs: new RealpathRefusingFileAdapter("/built/claude"),
+      fs: new RealpathRefusingFileAdapter(`/built/${tool}`),
       ownedCatalog: true,
-      registeredCatalog: { path: "/old/claude" },
+      heldCatalog: { path: `/old/${tool}` },
     });
 
     expect(result.errors).toStrictEqual([]);
-    expect(activator.addedMarketplaces).toStrictEqual(["/built/claude"]);
+    expect(activator.addedMarketplaces).toStrictEqual([`/built/${tool}`]);
   });
 });
 
@@ -418,6 +418,6 @@ describe("when the catalog this project just built cannot be read back", () => {
     // Never written as `hostName` - a manifest that guessed the alias would go on
     // claiming a registration the host was never asked to hold.
     const reloaded = await manifestRepo.load();
-    expect(reloaded?.getNativeRegistrations(TOOL.claude)).toBeUndefined();
+    expect(reloaded?.getNativeRegistrations(tool)).toBeUndefined();
   });
 });

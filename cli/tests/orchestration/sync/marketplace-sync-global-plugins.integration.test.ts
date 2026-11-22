@@ -14,11 +14,18 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_TOOL,
+  type SyntheticNativeSources,
+  syntheticNativeCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
+
+const tool = SYNTHETIC_TOOL;
 
 const REF = "test-plugin@aidd-framework";
 
-async function globalActivation(toolId: AiToolId) {
+async function globalActivation(kind: SyntheticNativeSources) {
+  const toolId = tool;
   const refs = new Map<string, HostPluginRegistryEntry>();
   class StatefulActivator extends FakeHostActions {
     override enablePlugin(ref: string, scope: Scope = "project"): void {
@@ -41,15 +48,14 @@ async function globalActivation(toolId: AiToolId) {
     })
   );
   const builtDir = `/built/${toolId}`;
-  const catalogDir = toolId === "claude" ? ".claude-plugin" : ".plugin";
   const fs = new InMemoryFileAdapter({
-    [`${builtDir}/${catalogDir}/marketplace.json`]: JSON.stringify({
+    [`${builtDir}/.plugin/marketplace.json`]: JSON.stringify({
       name: "aidd-framework",
       plugins: [{ name: "test-plugin" }],
     }),
   });
   const sync = marketplaceSync({
-    tools: registeredTools(),
+    tools: syntheticNativeCatalog(tool, kind),
     fs,
     manifestRepo: new InMemoryManifestRepository(Manifest.create()),
     marketplaceRegistry: registry,
@@ -57,10 +63,7 @@ async function globalActivation(toolId: AiToolId) {
     activators: new Map([[toolId, activator]]),
     ensureBuilt: fakeEnsureBuiltMarketplace(),
     hostMarketplaceRegistries: new Map([
-      [
-        TOOL.claude,
-        new FakeHostMarketplaceRegistry({ location: "catalogues", entries: new Map() }),
-      ],
+      [tool, new FakeHostMarketplaceRegistry({ location: "catalogues", entries: new Map() })],
     ]),
     hostPluginRegistries: new Map([
       [toolId, new FakeHostPluginRegistry({ location: "plugins", refs })],
@@ -71,7 +74,7 @@ async function globalActivation(toolId: AiToolId) {
         toolId,
         new FakeHostMarketplaceSources(
           activator,
-          toolId === "claude" ? "registry" : "effective-list",
+          kind === "registry" ? "registry" : "effective-list",
           (path) => (path === builtDir ? "aidd-framework" : undefined),
           new Map()
         ),
@@ -86,7 +89,7 @@ async function globalActivation(toolId: AiToolId) {
   expect(setup.errors).toEqual([]);
   expect(setup.warnings).toEqual([]);
   expect(userRepo.getCurrent()?.getPlugins(toolId)).toEqual([]);
-  expect(userRepo.getCurrent()?.getNativeRegistrations(toolId)?.pluginRefs).toEqual([REF]);
+  expect(userRepo.getCurrent()?.getNativeRegistrations(tool)?.pluginRefs).toEqual([REF]);
   return { refs, activator, userRepo, sync, options };
 }
 
@@ -98,7 +101,7 @@ async function dropRegisteredRefs(
   userRepo: Awaited<ReturnType<typeof globalActivation>>["userRepo"]
 ) {
   const manifest = await userRepo.load();
-  const registrations = manifest?.getNativeRegistrations(toolId);
+  const registrations = manifest?.getNativeRegistrations(tool);
   if (manifest === null || registrations === undefined) throw new Error("missing setup record");
   manifest.setNativeRegistrations(toolId, { ...registrations, pluginRefs: [] });
   await userRepo.save(manifest);
@@ -107,29 +110,28 @@ async function dropRegisteredRefs(
 
 async function applyRefState(
   state: RefState,
-  toolId: AiToolId,
   refs: Map<string, HostPluginRegistryEntry>,
   userRepo: Awaited<ReturnType<typeof globalActivation>>["userRepo"]
 ) {
   if (state === "missing") refs.delete(REF);
   if (state === "disabled") refs.set(REF, { enabled: false, scope: "user" });
-  if (state === "claims only") await dropRegisteredRefs(toolId, refs, userRepo);
+  if (state === "claims only") await dropRegisteredRefs(tool, refs, userRepo);
 }
 
-describe.each([TOOL.claude, TOOL.copilot] as const)("global %s native plugins", (toolId) => {
+describe.each(["registry", "list-command"] as const)("global %s native plugins", (kind) => {
   it.each(["enabled", "missing", "disabled", "claims only"] as const)(
     "sync retains and restores a successful selection when the ref is %s",
     async (state) => {
-      const { refs, activator, userRepo, sync, options } = await globalActivation(toolId);
-      await applyRefState(state, toolId, refs, userRepo);
+      const { refs, activator, userRepo, sync, options } = await globalActivation(kind);
+      await applyRefState(state, refs, userRepo);
 
       const result = await sync.execute({ ...options });
 
       expect(result.errors).toEqual([]);
       expect(result.warnings).toEqual([]);
       expect(refs.get(REF)?.enabled).toBe(true);
-      expect(userRepo.getCurrent()?.getNativeRegistrations(toolId)?.pluginRefs).toEqual([REF]);
-      expect(userRepo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
+      expect(userRepo.getCurrent()?.getNativeRegistrations(tool)?.pluginRefs).toEqual([REF]);
+      expect(userRepo.getCurrent()?.getNativeRegistrations(tool)?.pluginClaims).toEqual([
         { ref: REF, dependents: [] },
       ]);
       expect(activator.enabledPluginScopes).toEqual(
