@@ -11,7 +11,11 @@ import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SECOND_SYNTHETIC_TOOL,
+  SYNTHETIC_TOOL,
+  syntheticCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   buildUseCase,
   OTHER_PROJECT,
@@ -32,9 +36,9 @@ describe("clean releases a project's claims only once its local cleanup succeeds
       seedReferences(fs, [OTHER_PROJECT]);
       const ref = "aidd-vcs@aidd-framework";
       const otherRef = "plugin-b@other-mkt";
-      const registration = provenRegistration(TOOL.codex, "aidd-framework", "aidd-framework");
-      const project = seedManifest(TOOL.codex, [registration], [ref]);
-      project.addTool(TOOL.cursor, "1.0.0", []);
+      const registration = provenRegistration(SYNTHETIC_TOOL, "aidd-framework", "aidd-framework");
+      const project = seedManifest(SYNTHETIC_TOOL, [registration], [ref]);
+      project.addTool(SECOND_SYNTHETIC_TOOL, "1.0.0", []);
       const record = (name: string, scope: Scope = "user") =>
         RecordedPlugin.fromJSON({
           name,
@@ -45,22 +49,25 @@ describe("clean releases a project's claims only once its local cleanup succeeds
           files: {},
           dependents: [PROJECT_ROOT, OTHER_PROJECT],
         });
-      project.addPlugin(TOOL.cursor, record("shared").withMachineClaim([]));
-      project.addPlugin(TOOL.cursor, record("local-only", "project").withMachineClaim([]));
+      project.addPlugin(SECOND_SYNTHETIC_TOOL, record("shared").withMachineClaim([]));
+      project.addPlugin(
+        SECOND_SYNTHETIC_TOOL,
+        record("local-only", "project").withMachineClaim([])
+      );
       const machine = Manifest.create();
-      machine.addTool(TOOL.codex, "1.0.0", []);
-      machine.setNativeRegistrations(TOOL.codex, {
-        binary: TOOL.codex,
-        marketplaces: [registration, provenRegistration(TOOL.codex, "other-mkt", "other-mkt")],
+      machine.addTool(SYNTHETIC_TOOL, "1.0.0", []);
+      machine.setNativeRegistrations(SYNTHETIC_TOOL, {
+        binary: SYNTHETIC_TOOL,
+        marketplaces: [registration, provenRegistration(SYNTHETIC_TOOL, "other-mkt", "other-mkt")],
         pluginRefs: [ref, otherRef],
         pluginClaims: [ref, otherRef].map((ref) => ({
           ref,
           dependents: [PROJECT_ROOT, OTHER_PROJECT],
         })),
       });
-      machine.addTool(TOOL.cursor, "1.0.0", []);
+      machine.addTool(SECOND_SYNTHETIC_TOOL, "1.0.0", []);
       for (const name of ["shared", "local-only", "unrelated"])
-        machine.addPlugin(TOOL.cursor, record(name));
+        machine.addPlugin(SECOND_SYNTHETIC_TOOL, record(name));
       const machineRepo = new InMemoryManifestRepository(machine);
       const gitignore = new UpdateGitignore(fs);
       if (outcome === "fails")
@@ -72,11 +79,11 @@ describe("clean releases a project's claims only once its local cleanup succeeds
       fs.setFile(sharedPath, "shared plugin bytes");
       const activator = new FakeHostActions({ available: true });
       const useCase = buildUseCase({
-        tools: registeredTools(),
+        tools: syntheticCatalog(),
         fs,
         manifest: project,
         activator,
-        binary: TOOL.codex,
+        binary: SYNTHETIC_TOOL,
         logger: new CapturingLogger(),
         aiddMarketplaceRegistry: seedSharedMarketplaceRegistry(),
         userManifestRepo: machineRepo,
@@ -97,18 +104,20 @@ describe("clean releases a project's claims only once its local cleanup succeeds
         });
 
       const dependents = outcome === "succeeds" ? [OTHER_PROJECT] : [PROJECT_ROOT, OTHER_PROJECT];
-      expect(machineRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.pluginClaims).toEqual([
+      expect(
+        machineRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_TOOL)?.pluginClaims
+      ).toEqual([
         { ref, dependents },
         { ref: otherRef, dependents: [PROJECT_ROOT, OTHER_PROJECT] },
       ]);
-      expect(machineRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.pluginRefs).toEqual([
+      expect(machineRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_TOOL)?.pluginRefs).toEqual([
         ref,
         otherRef,
       ]);
       expect(
         machineRepo
           .getCurrent()
-          ?.getRecordedPlugins(TOOL.cursor)
+          ?.getRecordedPlugins(SECOND_SYNTHETIC_TOOL)
           .map((plugin) => ({
             name: plugin.plugin.name,
             dependents: plugin.machineClaim,

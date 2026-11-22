@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import { withdrawalClaimsOf } from "../../../src/orchestration/plugin/withdrawal-claims.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_TOOL,
+  syntheticCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
 type PluginRemovalClaims = Parameters<typeof withdrawalClaimsOf>[0];
 
@@ -16,27 +19,27 @@ function machineClaims(overrides: Partial<PluginRemovalClaims> = {}): PluginRemo
   };
 }
 
-const claude = registeredTools().aiProfile(TOOL.claude);
+const claude = syntheticCatalog().aiProfile(SYNTHETIC_TOOL);
 
 describe("the claims a host withdrawal is checked against", () => {
   it("asks machine ownership about the tool being withdrawn", async () => {
     const isMachineOwned = vi.fn(async () => true);
 
     const view = withdrawalClaimsOf(machineClaims({ isMachineOwned }), {
-      toolId: TOOL.claude,
+      toolId: SYNTHETIC_TOOL,
       tool: claude,
       projectRoot: "/p",
     });
 
     expect(await view.isMachineOwned("a@catalog")).toBe(true);
-    expect(isMachineOwned).toHaveBeenCalledWith(TOOL.claude, "a@catalog");
+    expect(isMachineOwned).toHaveBeenCalledWith(SYNTHETIC_TOOL, "a@catalog");
   });
 
   it("asks the guard about the project being removed, through the tool's own reach", async () => {
     const guardMessage = vi.fn(async () => "kept for /other");
 
     const view = withdrawalClaimsOf(machineClaims({ guardMessage }), {
-      toolId: TOOL.claude,
+      toolId: SYNTHETIC_TOOL,
       tool: claude,
       projectRoot: "/p",
     });
@@ -55,7 +58,7 @@ describe("the claims a host withdrawal is checked against", () => {
     const resolveCacheCandidate = vi.fn(async () => "/cache/a");
 
     const view = withdrawalClaimsOf(machineClaims({ resolveCacheCandidate }), {
-      toolId: TOOL.claude,
+      toolId: SYNTHETIC_TOOL,
       tool: claude,
       projectRoot: "/p",
     });
