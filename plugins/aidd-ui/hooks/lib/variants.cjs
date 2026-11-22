@@ -327,7 +327,7 @@ const STYLE = `
 .fit { position: relative; overflow: hidden; margin-inline: auto; border-radius: var(--r2); box-shadow: var(--shadow-frame); background: var(--paper); }
 .fit iframe { position: absolute; top: 0; left: 0; border: 0; transform-origin: 0 0; background: var(--paper); }
 @media (max-width: 900px) { .variants { grid-template-columns: minmax(0, 1fr); } }
-@media (max-width: 768px) { .column-head { top: 56px; } }
+@media (max-width: 768px) { .column-head { top: var(--bar); } }
 `;
 
 /** The script of a set's page: each frame scaled to the width of its column, again when the page resizes. */
@@ -351,7 +351,7 @@ function alignRows() {
     const groups = [columns.map((column) => column.querySelector(".column-head"))];
     columns.forEach((column) => [...column.querySelectorAll(".axes tr")].forEach((row, at) => (groups[at + 1] = groups[at + 1] || []).push(row)));
     for (const group of groups) group.filter(Boolean).forEach((part) => (part.style.minHeight = ""));
-    if (columns.length < 2 || columns.some((column) => column.offsetTop !== columns[0].offsetTop)) continue;
+    if (columns.some((column) => column.offsetTop !== columns[0].offsetTop)) continue;
     for (const group of groups) {
       const parts = group.filter(Boolean);
       const tallest = Math.max(...parts.map((part) => part.offsetHeight));

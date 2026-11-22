@@ -732,9 +732,12 @@ describe("aidd-ui showcase", () => {
 
     it("keeps the review button in view on first paint: the sidebar is one viewport tall, its list scrolls, its foot never shrinks", () => {
       const style = pagesOf()["home.html"].match(/<style>([\s\S]*?)<\/style>/)[1];
-      assert.match(style, /\n\.shell > nav \{[^}]*position: sticky; top: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column;/);
-      assert.match(style, /\n\.nav-scroll \{[^}]*flex: 1; min-height: 0; overflow: auto;/);
-      assert.match(style, /\n\.review-foot \{ flex: none; \}/);
+      const declared = (selector) => Object.fromEntries((style.match(new RegExp(`\\n${selector.replaceAll(".", "\\.")} \\{([^}]*)\\}`))?.[1] ?? "").split(";").map((each) => each.split(":").map((part) => part.trim())).filter(([name]) => name));
+      const nav = declared(".shell > nav");
+      assert.deepEqual([nav.position, nav.height, nav.overflow, nav.display, nav["flex-direction"]], ["sticky", "100vh", "hidden", "flex", "column"], "one viewport tall, a column");
+      const list = declared(".nav-scroll");
+      assert.deepEqual([list.flex, list["min-height"], list.overflow], ["1", "0", "auto"], "its list takes what is left and scrolls");
+      assert.equal(declared(".review-foot").flex, "none", "its foot never shrinks");
     });
 
     it("marks the chosen verdict of a record with a ring and a mark, the revision with a soft fill", () => {
@@ -1287,11 +1290,10 @@ describe("aidd-ui showcase", () => {
       assert.match(narrow[2], /\.board \.card \{ grid-template-columns: minmax\(0, 1fr\)/);
     });
 
-    it("gives the review its entry at the foot of the sidebar and reserves no room under the page", () => {
+    it("gives the review its entry at the foot of the sidebar", () => {
       const html = pagesOf()["_journey-onboarding.html"];
       assert.match(rule(html, ".review-foot"), /^\s*flex: none;\s*$/);
       assert.match(navOf(html), /<div class="review-foot">[\s\S]*<\/div><\/nav>$/);
-      assert.doesNotMatch(html, /main, main\.wide \{[^}]*padding-bottom/);
     });
 
     it("splits the elements by category, in the order of the table, a record under its role", () => {

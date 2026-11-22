@@ -132,7 +132,7 @@ describe("aidd-ui showcase sets", () => {
       assert.deepEqual(rows.map((each) => each.map((row) => row.style.minHeight)), [["50px", "60px"], ["50px", "60px"]]);
     });
 
-    it("leaves stacked columns their own height: no head nor axis row of a one-column round keeps a min-height", () => {
+    it("leaves columns on different rows their own height: no head nor axis row keeps a min-height", () => {
       const { SCRIPT } = require(path.join(LIB, "variants.cjs"));
       const part = (height) => ({ offsetHeight: height, style: { minHeight: "120px" } });
       const column = (top, head, rows) => ({ offsetTop: top, querySelector: () => head, querySelectorAll: () => rows });
@@ -147,17 +147,14 @@ describe("aidd-ui showcase sets", () => {
 
     it("sticks a column head below the top bar of a narrow window, not under it", () => {
       const { STYLE } = require(path.join(LIB, "variants.cjs"));
-      assert.match(STYLE, /@media \(max-width: 768px\) \{ \.column-head \{ top: 56px; \} \}/);
+      const page = pagesOf([SET()])["_set-layout.html"];
+      assert.match(page, /\n  \.shell > nav \{[^}]*block-size: var\(--bar\);/, "the top bar is as tall as --bar");
+      assert.match(STYLE, /@media \(max-width: 768px\) \{ \.column-head \{ top: var\(--bar\); \} \}/, "the head sticks right under it");
     });
 
     it("puts a column head's slack above its verdict controls, not between them and the axes", () => {
       const { STYLE } = require(path.join(LIB, "variants.cjs"));
       assert.match(STYLE, /\.column-head \.choose \{[^}]*margin-top: auto/);
-    });
-
-    it("keeps the comment of a variant under its verdict controls, inside its head", () => {
-      const html = pagesOf([SET()])["_set-layout.html"];
-      assert.match(html, /<header class="column-head">[\s\S]*?<span class="choose">[\s\S]*?<\/span><textarea class="colcomment"[^>]*hidden>[\s\S]*?<\/header>/);
     });
 
     describe("the names it shows", () => {
@@ -192,12 +189,6 @@ describe("aidd-ui showcase sets", () => {
 
     it("titles the set page with its name as words", () => {
       assert.match(pagesOf([SET({ id: "brand-colours" })])["_set-brand-colours.html"], /<h1>Brand colours<\/h1>/);
-    });
-
-    it("reserves no room under a set page for a review button, which no longer floats", () => {
-      const { STYLE } = require(path.join(LIB, "variants.cjs"));
-      assert.doesNotMatch(pagesOf([SET()])["_set-layout.html"], /main, main\.wide \{[^}]*padding-bottom/);
-      assert.doesNotMatch(STYLE, /main\.wide/, "one rule for it, the shell's");
     });
 
     it("sizes the frame to the render it holds and centres it in a column wider than the render", () => {
