@@ -12,14 +12,6 @@ import { antigravityHooksFormat } from "./antigravity-hooks.model.js";
 
 const DIRECTORY = ".agents/";
 const TOOL_SUFFIX = ".antigravity.md";
-const SKILLS_PREFIX = "aidd-";
-
-function skillName(fileName: string): string {
-  const base = fileName.split("/")[0] as string;
-  return base.endsWith(TOOL_SUFFIX)
-    ? base.slice(0, -TOOL_SUFFIX.length)
-    : base.replace(/\.md$/, "");
-}
 
 const hooks = declareHooks(
   { toolId: "antigravity", directory: DIRECTORY, adapter },
@@ -53,9 +45,6 @@ export const antigravity = defineAiTool({
   capabilities: (bound) => ({
     skills: bound.skills({
       agentsSkillsDirectory: true,
-      buildInstallPath: (fileName) =>
-        `${bound.installUnder(`skills/${SKILLS_PREFIX}`)(skillName(fileName))}/SKILL.md`,
-      convertFrontmatter: (fm) => fm,
     }),
     hooks: { delivery: hooksDelivery },
     layout: flatPlacement({

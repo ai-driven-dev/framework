@@ -76,7 +76,7 @@ function capabilityAnswers(spec: AiToolSpec<ProfileSections>, capabilities: Prof
     plugins: () => plugins,
     supportsUserScopeActivation: () => plugins?.supportsUserScopeActivation() ?? false,
     markdownSection: (kind: "commands" | "agents" | "rules") => capabilities[kind] ?? null,
-    skillsSection: () => capabilities.skills ?? null,
+    declaresSkills: () => capabilities.skills !== undefined,
     nativeActivation: () => nativeActivationOf(capabilities),
     agentModels: () => models,
     hostRefInUse: (enabled: boolean) =>

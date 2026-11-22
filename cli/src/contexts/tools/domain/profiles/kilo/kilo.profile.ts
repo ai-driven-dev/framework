@@ -45,10 +45,7 @@ export const kilo = defineAiTool({
       format: "markdown",
       frontmatter: kiloAgentFrontmatter,
     }),
-    skills: bound.skills({
-      buildInstallPath: bound.installUnder("skills/"),
-      convertFrontmatter: (fm) => fm,
-    }),
+    skills: bound.skills({}),
     commands: bound.commands({
       buildInstallPath: (fileName) => buildAiddCommandFilePath(KILO_DIRECTORY, fileName),
       convertFrontmatter: convertCommandFrontmatterNoHint,

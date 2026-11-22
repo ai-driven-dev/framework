@@ -35,7 +35,6 @@ describe("cursor declarations the rest of the CLI reads", () => {
   });
 
   it.each<[InstallKind, string, string | null]>([
-    ["skills", "commit.cursor.md", ".cursor/skills/commit.md"],
     ["commands", "04_code/implement.md", ".cursor/commands/aidd/04/implement.md"],
     ["rules", "01-standards/naming.md", ".cursor/rules/01-standards/naming.mdc"],
   ])("installs %s file %s at %s", (kind, built, path) => {

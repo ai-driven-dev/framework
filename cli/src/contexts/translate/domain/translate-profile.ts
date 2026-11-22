@@ -6,7 +6,6 @@ import type {
   FrameworkBuildMode,
   MarkdownSectionAnswers,
   PluginAnswers,
-  SkillsSectionAnswers,
 } from "../../tools/contract/tool-profile.js";
 import type { ProjectHooksLocation } from "../../tools/contract/tool-vocabulary.js";
 
@@ -23,7 +22,7 @@ export interface TranslatedAiTool {
   /** Where the tool keeps a plugin's hooks in the project, or null when its plugins carry their own. */
   projectHooksDelivery(): ProjectHooksLocation | null;
   markdownSection(kind: "commands" | "agents" | "rules"): MarkdownSectionAnswers | null;
-  skillsSection(): SkillsSectionAnswers | null;
+  declaresSkills(): boolean;
   /** The config a flat install folds the plugin's servers into, or null when plugins carry their own. */
   flatPluginMcp(): { transform(mcpJson: string): string } | null;
 }

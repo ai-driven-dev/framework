@@ -17,11 +17,6 @@ describe("codex profile", () => {
   });
 
   it.each<[InstallKind, string, string]>([
-    ["skills", "my-skill/SKILL.md", ".agents/skills/aidd-my-skill/SKILL.md"],
-    ["skills", "my-skill.codex.md", ".agents/skills/aidd-my-skill/SKILL.md"],
-    ["skills", "my-skill.md", ".agents/skills/aidd-my-skill/SKILL.md"],
-    ["skills", "my-skill", ".agents/skills/aidd-my-skill/SKILL.md"],
-    ["skills", "notes.md/SKILL.md", ".agents/skills/aidd-notes.md/SKILL.md"],
     ["agents", "alexia.md", ".codex/agents/alexia.toml"],
     ["rules", "01-standards/naming.codex.md", ".codex/rules/01-standards/naming.md"],
     ["commands", "04_code/implement.md", ".codex/commands/aidd/04/implement.md"],

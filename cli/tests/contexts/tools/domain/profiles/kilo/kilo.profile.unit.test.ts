@@ -32,11 +32,6 @@ describe("kilo", () => {
     ).toEqual({ description: "Review code", mode: "subagent" });
   });
 
-  it("preserves skill metadata", () => {
-    const metadata = { name: "plan", description: "Plan work", license: "MIT" };
-    expect(kilo.section("skills").convertFrontmatter(metadata)).toEqual(metadata);
-  });
-
   it("namespaces commands by phase and omits argument hints unsupported by Kilo", () => {
     expect(
       kilo
@@ -54,7 +49,6 @@ describe("kilo", () => {
 
   it.each<[InstallKind, string, string]>([
     ["agents", "reviewer.kilo.md", ".kilo/agents/reviewer.md"],
-    ["skills", "01-plan/SKILL.kilo.md", ".kilo/skills/01-plan/SKILL.md"],
     ["commands", "01-plan/greet.md", ".kilo/commands/aidd/01/greet.md"],
     ["rules", "standards.kilo.md", ".kilo/rules/standards.md"],
   ])("installs %s file %s at %s", (kind, built, path) => {

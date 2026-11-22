@@ -98,17 +98,6 @@ export const rulesHandler = {
   },
 };
 
-export const skillsHandler = {
-  buildFilePath(fileName: string): string | null {
-    const base = basename(fileName);
-    if (base === GITKEEP_FILE) return null;
-    return `${DIRECTORY}skills/${fileName}`;
-  },
-  convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-    return fm;
-  },
-};
-
 const INSTALLED_SECTIONS = [
   ["agents/", "agents/", agentsHandler],
   ["commands/", "prompts/", commandsHandler],

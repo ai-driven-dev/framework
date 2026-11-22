@@ -34,7 +34,6 @@ import {
   EXT_INSTRUCTIONS,
   EXT_PROMPT,
   rulesHandler,
-  skillsHandler,
   TOOL_SUFFIX,
 } from "./copilot-content.model.js";
 
@@ -201,8 +200,6 @@ export const copilot = defineAiTool({
     skills: new SkillsSection({
       directory: DIRECTORY,
       toolSuffix: TOOL_SUFFIX,
-      buildInstallPath: (fileName) => skillsHandler.buildFilePath(fileName),
-      convertFrontmatter: (fm) => skillsHandler.convertFrontmatter(fm),
     }),
     commands: new CommandsSection({
       toolSuffix: EXT_PROMPT,

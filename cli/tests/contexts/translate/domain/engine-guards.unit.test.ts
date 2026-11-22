@@ -59,6 +59,25 @@ describe("a plugin component a target declares no section for", () => {
   });
 });
 
+describe("a native skill's frontmatter", () => {
+  it("is shaped the way the tool's marketplace build shapes it", () => {
+    const base = anEmptyContract();
+    const marketplaceContract = anEmptyContract({
+      artifacts: {
+        ...base.artifacts,
+        skills: {
+          supported: true,
+          source: { kind: "filteredTree", srcDir: "skills", inputExt: ".md" },
+          placement: { kind: "relative" },
+          skillFrontmatter: (fm) => ({ ...fm, shaped: true }),
+        },
+      },
+    });
+    const tree = treeOf(contractToolProfile(claude, { marketplaceContract }), skillDist());
+    expect(tree[".claude/plugins/sample-plugin/skills/hello/SKILL.md"]).toContain("shaped: true");
+  });
+});
+
 describe("an agent a flat target hosts without a section of its own", () => {
   const hostsAgents = hostingAgents(
     agentsIn(flatArtifactLayout(".fake/hosted/", { skills: "nested", agent: { ext: ".md" } }))

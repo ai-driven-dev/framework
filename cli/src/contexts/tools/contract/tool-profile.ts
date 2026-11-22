@@ -115,11 +115,6 @@ export interface MarkdownSectionAnswers {
   serialize(fm: Record<string, unknown>, body: string): string;
 }
 
-/** The skills section a tool declares. */
-export interface SkillsSectionAnswers extends Omit<MarkdownSectionAnswers, "convertFrontmatter"> {
-  convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown>;
-}
-
 /** What merging a plugin's mcp servers into a tool's shared file produced. */
 export interface McpPluginMerge {
   mergedContent: string;
@@ -297,8 +292,8 @@ export interface AiToolProfile {
   supportsUserScopeActivation(): boolean;
   /** The commands, agents or rules section the tool declares, or null. */
   markdownSection(kind: "commands" | "agents" | "rules"): MarkdownSectionAnswers | null;
-  /** The skills section the tool declares, or null. */
-  skillsSection(): SkillsSectionAnswers | null;
+  /** Whether the tool declares a skills section. */
+  declaresSkills(): boolean;
   /** The tool's native plugin CLI declaration, or undefined when it has none. */
   nativeActivation(): NativeActivationAnswers | undefined;
   /** The providers its main session and agents can run on, or null when it runs none. */

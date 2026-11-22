@@ -100,10 +100,7 @@ export const opencode = defineAiTool({
       format: "markdown",
       frontmatter: opencodeAgentFrontmatter,
     }),
-    skills: bound.skills({
-      buildInstallPath: bound.installUnder("skills/"),
-      convertFrontmatter: (fm) => fm,
-    }),
+    skills: bound.skills({}),
     commands: bound.commands({
       buildInstallPath: (fileName) => buildAiddCommandFilePath(DIRECTORY, fileName),
       convertFrontmatter: convertCommandFrontmatterNoHint,

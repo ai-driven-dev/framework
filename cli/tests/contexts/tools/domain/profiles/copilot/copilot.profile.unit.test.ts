@@ -83,8 +83,6 @@ describe("copilot declarations the rest of the CLI reads", () => {
       ".github/instructions/04-ide-mapping.instructions.md",
     ],
     ["rules", "00-architecture/.gitkeep", null],
-    ["skills", ".gitkeep", null],
-    ["skills", "01-plan/SKILL.md", ".github/skills/01-plan/SKILL.md"],
   ])("installs %s file %s at %s", (kind, built, path) => {
     expect(installPathOf(copilot, kind, built)).toBe(path);
   });

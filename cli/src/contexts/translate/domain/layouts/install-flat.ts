@@ -79,7 +79,7 @@ function sectionPlan(
   const { tool, pluginName } = at;
   const { relativePath: source, content } = file;
   const declared =
-    section === "skills" ? tool.skillsSection() !== null : tool.markdownSection(section) !== null;
+    section === "skills" ? tool.declaresSkills() : tool.markdownSection(section) !== null;
   if (!declared && (section !== "agents" || !isProse(source))) return null;
   // Same rule as the native path: prose is rewritten, an artefact is carried. Rewriting every
   // flat file left a script intact only where a tool's own rewrite happened to spare it.
