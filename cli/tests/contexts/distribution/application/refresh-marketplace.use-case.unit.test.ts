@@ -29,7 +29,7 @@ async function refreshOver(catalogs: Parameters<typeof resolvingCatalogs>[0], ..
   return { refresh, registry, cache };
 }
 
-describe("RefreshMarketplace", () => {
+describe("refreshing marketplaces", () => {
   it("targets every registered marketplace, or only the one named", async () => {
     const { refresh } = await refreshOver({}, "a", "b");
 

@@ -29,7 +29,7 @@ function ensureOver(
   );
 }
 
-describe("EnsureFrameworkMarketplace", () => {
+describe("ensuring the framework marketplace is registered", () => {
   it("registers the framework marketplace from the source and names where it landed", async () => {
     const registry = new InMemoryMarketplaceRegistry();
 

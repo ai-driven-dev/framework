@@ -51,7 +51,7 @@ function byPath(a: PluginComponentFile, b: PluginComponentFile): number {
   return a.relativePath.localeCompare(b.relativePath);
 }
 
-describe("PluginDistributionReaderAdapter", () => {
+describe("reading a plugin distribution from disk", () => {
   it("looks for a manifest only where the probes it was given say one can sit", async () => {
     const fs = new InMemoryFileAdapter({
       [`${IN_MEMORY_ROOT}/custom/plugin.json`]: JSON.stringify({ name: "p", version: "1.0.0" }),

@@ -28,7 +28,7 @@ const VALID_RAW = {
   ],
 };
 
-describe("hasRelativePluginSources", () => {
+describe("telling whether a catalog has relative plugin sources", () => {
   it("returns true for catalog with a local relative path entry", () => {
     const catalog = parsePluginCatalog({
       plugins: [{ name: "x", source: { kind: "local", path: "./plugins/x" } }],
@@ -66,7 +66,7 @@ describe("hasRelativePluginSources", () => {
   });
 });
 
-describe("parsePluginCatalog", () => {
+describe("parsing a plugin catalog", () => {
   describe("valid input", () => {
     it("parses two entries from valid fixture", () => {
       const catalog = parsePluginCatalog(VALID_RAW);
@@ -162,7 +162,7 @@ describe("parsePluginCatalog", () => {
   });
 });
 
-describe("tryParsePluginCatalog", () => {
+describe("parsing a text that may not be a catalog", () => {
   it("answers the catalog a text holds", () => {
     expect(tryParsePluginCatalog(JSON.stringify(VALID_RAW))).toEqual({
       ok: true,

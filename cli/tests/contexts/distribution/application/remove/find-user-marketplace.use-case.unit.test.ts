@@ -26,7 +26,7 @@ class ListingRegistry extends InMemoryMarketplaceRegistry {
   }
 }
 
-describe("FindUserMarketplace", () => {
+describe("finding a user-scope marketplace", () => {
   it("does not take a project-scope marketplace of the same name for the user one", async () => {
     const find = new FindUserMarketplace(new ListingRegistry([entry("project")]));
 

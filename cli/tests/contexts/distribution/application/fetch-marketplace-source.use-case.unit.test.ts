@@ -62,7 +62,7 @@ function makeSpyFileAdapter(
   return Object.assign(adapter, { deletedFiles });
 }
 
-describe("FetchMarketplaceSource", () => {
+describe("fetching a marketplace source", () => {
   describe("local source", () => {
     it("delegates to pluginFetcher for local sources", async () => {
       const fetcher = new FixturePluginFetcher();

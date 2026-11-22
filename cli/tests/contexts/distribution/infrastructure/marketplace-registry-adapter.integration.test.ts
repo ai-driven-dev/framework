@@ -19,7 +19,7 @@ const baseData = (overrides: Partial<MarketplaceData> = {}): MarketplaceData => 
 
 // What the registry promises whatever holds it is in `ports/marketplace-registry.contract`;
 // what stays here is what only a real file can show.
-describe("MarketplaceRegistryAdapter", () => {
+describe("storing the marketplace registry in files", () => {
   let projectRoot: string;
   let configDir: string;
   let userFile: string;

@@ -4,7 +4,7 @@ import {
   remoteFrameworkSource,
 } from "../../../../src/contexts/distribution/contract/framework-source.js";
 
-describe("remoteFrameworkSource", () => {
+describe("naming the framework's remote source", () => {
   it("names the framework's own repository, at its tip, when given nothing", () => {
     expect(DEFAULT_FRAMEWORK_REPO).toBe("ai-driven-dev/framework");
     expect(remoteFrameworkSource()).toStrictEqual({

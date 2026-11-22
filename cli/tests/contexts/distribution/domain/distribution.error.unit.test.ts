@@ -9,7 +9,7 @@ import {
   UnreadableMarketplaceRegistryError,
 } from "../../../../src/contexts/distribution/domain/distribution.error.js";
 
-describe("InvalidMarketplaceScopeError", () => {
+describe("when InvalidMarketplaceScopeError is raised", () => {
   it("carries its data and says nothing itself", () => {
     const error = new InvalidMarketplaceScopeError("global");
     expect({ name: error.name, scope: error.scope, message: error.message }).toStrictEqual({
@@ -24,7 +24,7 @@ describe("InvalidMarketplaceScopeError", () => {
   });
 });
 
-describe("MalformedMarketplaceCatalogError", () => {
+describe("when MalformedMarketplaceCatalogError is raised", () => {
   it("carries its data and says nothing itself", () => {
     const error = new MalformedMarketplaceCatalogError("/c.json", "not json", true);
     expect({
@@ -66,7 +66,7 @@ describe("MalformedMarketplaceCatalogError", () => {
   });
 });
 
-describe("MarketplaceAlreadyRegisteredError", () => {
+describe("when MarketplaceAlreadyRegisteredError is raised", () => {
   it("carries its data and says nothing itself", () => {
     const error = new MarketplaceAlreadyRegisteredError("aidd");
     expect({
@@ -87,7 +87,7 @@ describe("MarketplaceAlreadyRegisteredError", () => {
   });
 });
 
-describe("MarketplaceNotFoundError", () => {
+describe("when MarketplaceNotFoundError is raised", () => {
   it("carries its data and says nothing itself", () => {
     const error = new MarketplaceNotFoundError("aidd");
     expect({
@@ -106,7 +106,7 @@ describe("MarketplaceNotFoundError", () => {
   });
 });
 
-describe("PluginFetchError", () => {
+describe("when PluginFetchError is raised", () => {
   it("carries its data and says nothing itself", () => {
     const error = new PluginFetchError("clone refused");
     expect({ name: error.name, detail: error.detail, message: error.message }).toStrictEqual({
@@ -121,7 +121,7 @@ describe("PluginFetchError", () => {
   });
 });
 
-describe("PluginNotInMarketplaceError", () => {
+describe("when PluginNotInMarketplaceError is raised", () => {
   it("carries its data and says nothing itself", () => {
     const error = new PluginNotInMarketplaceError("aidd-dev");
     expect({ name: error.name, plugin: error.plugin, message: error.message }).toStrictEqual({
@@ -136,7 +136,7 @@ describe("PluginNotInMarketplaceError", () => {
   });
 });
 
-describe("UnreadableMarketplaceRegistryError", () => {
+describe("when UnreadableMarketplaceRegistryError is raised", () => {
   it("carries its data and says nothing itself", () => {
     const error = new UnreadableMarketplaceRegistryError("/r.json", "EACCES");
     expect({

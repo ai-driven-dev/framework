@@ -12,7 +12,7 @@ describe("injectTokenIntoUrl, Azure DevOps", () => {
   });
 });
 
-describe("withoutCredentials", () => {
+describe("stripping credentials from a URL", () => {
   it("strips a credential from an http URL as well", () => {
     expect(withoutCredentials("http://user:pw@host/repo.git")).toBe("http://host/repo.git");
   });

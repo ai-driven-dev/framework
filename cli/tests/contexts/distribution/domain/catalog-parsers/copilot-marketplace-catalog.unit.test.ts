@@ -16,7 +16,7 @@ const SAMPLE_CATALOG = JSON.stringify({
   ],
 });
 
-describe("parseCopilotMarketplaceCatalog", () => {
+describe("parsing a Copilot marketplace catalog", () => {
   describe("valid multi-plugin catalog", () => {
     it("returns a catalog with the correct number of plugins", () => {
       const catalog = parseCopilotMarketplaceCatalog(SAMPLE_CATALOG);

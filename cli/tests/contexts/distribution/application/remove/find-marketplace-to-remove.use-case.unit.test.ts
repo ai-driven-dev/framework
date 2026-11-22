@@ -26,7 +26,7 @@ class ListingRegistry extends InMemoryMarketplaceRegistry {
   }
 }
 
-describe("FindMarketplaceToRemove", () => {
+describe("finding the marketplace to remove", () => {
   it("does not take a user-scope marketplace of the same name for the project one", async () => {
     const find = new FindMarketplaceToRemove(new ListingRegistry([entry("user")]));
 

@@ -39,7 +39,7 @@ async function registryOf(...marketplaces: Marketplace[]): Promise<InMemoryMarke
 
 const PLUGIN_ON_GITHUB: PluginSource = { kind: "github", repo: "owner/plugin" };
 
-describe("ResolvePluginSource", () => {
+describe("resolving where a plugin comes from", () => {
   it("answers one match per marketplace that catalogues the plugin", async () => {
     const registry = await registryOf(localMarketplace("a"), localMarketplace("b"));
     const resolve = new ResolvePluginSource(

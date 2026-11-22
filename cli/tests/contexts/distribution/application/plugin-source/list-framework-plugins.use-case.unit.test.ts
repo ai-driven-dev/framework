@@ -41,7 +41,7 @@ function setup(marketplaces: Marketplace[]) {
   };
 }
 
-describe("ListFrameworkPlugins", () => {
+describe("listing the plugins of the framework source", () => {
   it("lists every plugin of the user-scope framework source, under its marketplace", async () => {
     const { useCase } = setup([framework("user", { kind: "local", path: "/fw" })]);
 

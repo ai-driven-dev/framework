@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { ListFrameworkReleases } from "../../../../src/contexts/distribution/application/list-framework-releases.use-case.js";
 
-describe("ListFrameworkReleases", () => {
+describe("listing the framework's releases", () => {
   it("lists the root releases of a repository, newest first, without component tags", async () => {
     const lister = {
       listReleaseTags: vi

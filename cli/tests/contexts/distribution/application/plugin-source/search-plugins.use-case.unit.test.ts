@@ -41,7 +41,7 @@ function buildUseCase(
   return new SearchPlugins(registry, resolveMarketplace);
 }
 
-describe("SearchPlugins", () => {
+describe("searching plugins across marketplaces", () => {
   it("matches by name and description across marketplaces", async () => {
     const fs = new InMemoryFileAdapter();
     seedMarketplace(fs, MKT1_PATH, [

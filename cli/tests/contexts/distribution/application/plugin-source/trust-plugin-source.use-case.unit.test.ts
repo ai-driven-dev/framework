@@ -5,7 +5,7 @@ import { InMemoryMarketplaceTrustStore } from "../../../../shared/testing/in-mem
 const ROOT = "/project";
 const SOURCE = { kind: "local" as const, path: "/plugins/one" };
 
-describe("TrustPluginSource", () => {
+describe("trusting a plugin source", () => {
   it("reports trusted for a source already trusted", async () => {
     const store = new InMemoryMarketplaceTrustStore();
     await store.trust(ROOT, SOURCE);
