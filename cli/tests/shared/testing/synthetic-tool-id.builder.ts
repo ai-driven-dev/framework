@@ -5,6 +5,8 @@ import {
   defineIdeTool,
 } from "../../../src/contexts/tools/domain/profile/define-tool.js";
 import { ConfigSection } from "../../../src/contexts/tools/domain/sections/config-section.js";
+import { nativeLayout } from "../../../src/contexts/tools/domain/sections/layout-section.js";
+import { manifestSection } from "../../../src/contexts/tools/domain/sections/manifest-section.js";
 import { ModelsSection } from "../../../src/contexts/tools/domain/sections/models-section.js";
 import { anEmptyContract } from "./empty-build-contract.builder.js";
 
@@ -94,4 +96,37 @@ export function syntheticMixedCatalog(): ToolCatalog {
 /** A catalog listing only the synthetic tools: what a generic test hands code that asks its tools. */
 export function syntheticCatalog(): ToolCatalog {
   return new RegisteredToolCatalog(CONFIGS);
+}
+
+/** A catalog listing one synthetic AI tool under the given id, driven through its own host CLI
+ * the way a native tool is: for a test of the native activation flow that names no real tool. */
+export function syntheticNativeCatalog(id: string): ToolCatalog {
+  return new RegisteredToolCatalog([
+    defineAiTool({
+      toolId: id,
+      distributionProbes: {
+        manifest: [".plugin/plugin.json"],
+        marketplace: [".plugin/marketplace.json"],
+      },
+      directory: `.${id}/`,
+      toolSuffix: `.${id}.md`,
+      signalDir: null,
+      displayName: id,
+      buildContracts: { flat: () => anEmptyContract() },
+      capabilities: () => ({
+        layout: nativeLayout({
+          pluginsDir: `.${id}/plugins/`,
+          nativeActivation: {
+            binary: id,
+            upgradeVerb: "upgrade",
+            enableVerb: "add",
+            disableVerb: "remove",
+          },
+        }),
+        manifest: manifestSection({ manifestRelativePath: "plugin.json", pluginRootToken: "." }),
+        hooks: { delivery: { kind: "plugin-file" } },
+      }),
+      linkSyntax: [],
+    }),
+  ]);
 }

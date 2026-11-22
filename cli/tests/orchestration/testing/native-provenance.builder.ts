@@ -5,13 +5,13 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
-import { registeredCatalog } from "../../shared/testing/catalog-of.builder.js";
 import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
+import { syntheticNativeCatalog } from "../../shared/testing/synthetic-tool-id.builder.js";
 import { FakeHostMarketplaceSources } from "./fake-host-marketplace-sources.fake.js";
 import { FakeHostPluginRegistry } from "./fake-host-plugin-registry.fake.js";
 
@@ -41,16 +41,10 @@ export interface SyncOptions {
   sourceReader?: HostMarketplaceSources;
 }
 
-function catalogPathOf(toolId: AiToolId, builtDir: string): string {
-  return toolId === "codex"
-    ? `${builtDir}/.agents/plugins/marketplace.json`
-    : `${builtDir}/.plugin/marketplace.json`;
-}
-
-function seededFiles(toolId: AiToolId, builtDir: string, hostCatalogBytes: string) {
+function seededFiles(builtDir: string, hostCatalogBytes: string) {
   return new InMemoryFileAdapter(
     {
-      [catalogPathOf(toolId, builtDir)]: JSON.stringify({
+      [`${builtDir}/.plugin/marketplace.json`]: JSON.stringify({
         name: CATALOG,
         version: "1.0.0",
         plugins: [{ name: "aidd-dev" }],
@@ -116,7 +110,7 @@ export function makeSync(toolId: AiToolId, options: SyncOptions = {}) {
   const hostCatalogBytes = options.machine
     ? '{"name":"aidd-framework","source":"aidd-owned","marker":7}'
     : FOREIGN_CATALOG_BYTES;
-  const fs = seededFiles(toolId, builtDir, hostCatalogBytes);
+  const fs = seededFiles(builtDir, hostCatalogBytes);
   const projectRepo = new InMemoryManifestRepository(
     projectManifestOf(toolId, options.projectNativePluginRefs),
     PROJECT_ROOT
@@ -151,7 +145,7 @@ export function makeSync(toolId: AiToolId, options: SyncOptions = {}) {
       knownSources(currentSource)
     );
   const useCase = marketplaceSync({
-    tools: registeredCatalog(),
+    tools: syntheticNativeCatalog(toolId),
     fs,
     manifestRepo: projectRepo,
     marketplaceRegistry: registry,
