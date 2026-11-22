@@ -7,6 +7,7 @@ import type { NativeMarketplaceSource } from "../../../src/contexts/host-registr
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
@@ -47,16 +48,19 @@ export function sourceReader(): HostMarketplaceSources {
   };
 }
 
+export type NativeFixtureOptions = {
+  tools: ToolCatalog;
+  dependents?: readonly string[];
+  available?: boolean;
+  failOnUninstall?: boolean;
+  throwOnRemove?: boolean;
+  records?: RecordRules;
+};
+
 export async function nativeFixture(
   toolId: AiToolId,
   refs: ReadonlyMap<string, { enabled: boolean; scope?: Scope }>,
-  options: {
-    dependents?: readonly string[];
-    available?: boolean;
-    failOnUninstall?: boolean;
-    throwOnRemove?: boolean;
-    records?: RecordRules;
-  } = {}
+  options: NativeFixtureOptions
 ) {
   const machine = Manifest.create();
   machine.addTool(toolId, "1.0.0", []);
@@ -86,6 +90,7 @@ export async function nativeFixture(
     read: async () => ({ location: "/host/registry", refs }),
   };
   const useCase = userMarketplaceRemover(
+    options.tools,
     new InMemoryFileAdapter(),
     repo,
     registry,

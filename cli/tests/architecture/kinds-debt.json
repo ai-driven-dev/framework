@@ -98,7 +98,6 @@
       "tests/orchestration/global/restore-all.use-case.integration.test.ts": 1,
       "tests/orchestration/global/update-tools.use-case.unit.test.ts": 1,
       "tests/orchestration/marketplace/check-marketplace-upstream.use-case.integration.test.ts": 1,
-      "tests/orchestration/marketplace/ensure-built-marketplace.use-case.unit.test.ts": 1,
       "tests/orchestration/marketplace/register-marketplace.use-case.unit.test.ts": 1,
       "tests/orchestration/marketplace/remove-project-marketplace-native-claims.integration.test.ts": 1,
       "tests/orchestration/marketplace/remove-project-marketplace.use-case.orphan-protection.unit.test.ts": 1,
@@ -107,7 +106,6 @@
       "tests/orchestration/marketplace/remove-user-marketplace.use-case.host-refusals.integration.test.ts": 1,
       "tests/orchestration/plugin/install-from-marketplace.use-case.integration.test.ts": 1,
       "tests/orchestration/plugin/install-from-marketplace.use-case.matches-and-versions.integration.test.ts": 1,
-      "tests/orchestration/plugin/install-plugin.use-case.delegation.unit.test.ts": 1,
       "tests/orchestration/plugin/install-plugin.use-case.unit.test.ts": 1,
       "tests/orchestration/plugin/pick-plugins.use-case.integration.test.ts": 1,
       "tests/orchestration/plugin/update-user-plugin.use-case.integration.test.ts": 1,
@@ -120,8 +118,6 @@
       "tests/orchestration/setup/setup-machine-scope.use-case.unit.test.ts": 1,
       "tests/orchestration/setup/setup-marketplace-conflict.integration.test.ts": 1,
       "tests/orchestration/setup/steps/choose-tools.use-case.unit.test.ts": 1,
-      "tests/orchestration/sync/activate-native-tools.use-case.unit.test.ts": 1,
-      "tests/orchestration/sync/claims-view-of.unit.test.ts": 1,
       "tests/orchestration/sync/machine-record-activation.integration.test.ts": 1,
       "tests/orchestration/sync/marketplace-source-conflict.integration.test.ts": 1,
       "tests/orchestration/sync/marketplace-sync-global-plugins.integration.test.ts": 1,
@@ -146,7 +142,6 @@
       "tests/orchestration/sync/marketplace-sync-source-provenance.integration.test.ts": 1,
       "tests/orchestration/sync/marketplace-sync-stale-cache-purge-order-and-messages.integration.test.ts": 1,
       "tests/orchestration/sync/marketplace-sync-stale-cache-purge-outcome.integration.test.ts": 1,
-      "tests/orchestration/sync/marketplace-sync-stale-cache-purge-scope-guards.integration.test.ts": 1,
       "tests/orchestration/sync/native-plugin-claims-attachment.integration.test.ts": 1,
       "tests/orchestration/sync/native-plugin-claims-refusal.integration.test.ts": 1,
       "tests/orchestration/sync/run-sync.use-case.unit.test.ts": 1,
@@ -167,16 +162,7 @@
       "tests/presentation/controllers/tool-maintain.controller.unit.test.ts": 1,
       "tests/presentation/in-process-cli.integration.test.ts": 1,
       "tests/presentation/presenters/agent-models.presenter.unit.test.ts": 1,
-      "tests/presentation/presenters/clean.presenter.unit.test.ts": 1,
       "tests/presentation/presenters/doctor.presenter.unit.test.ts": 1,
-      "tests/presentation/presenters/installed-rules.presenter.unit.test.ts": 1,
-      "tests/presentation/presenters/marketplace.presenter.unit.test.ts": 1,
-      "tests/presentation/presenters/restore.presenter.unit.test.ts": 1,
-      "tests/presentation/presenters/setup.presenter.unit.test.ts": 1,
-      "tests/presentation/presenters/status.presenter.unit.test.ts": 1,
-      "tests/presentation/presenters/sync.presenter.unit.test.ts": 1,
-      "tests/presentation/presenters/telemetry/telemetry-report.presenter.unit.test.ts": 1,
-      "tests/presentation/presenters/tool-config.presenter.unit.test.ts": 1,
       "tests/shared/infrastructure/asset-loader-config-assets.integration.test.ts": 1,
       "tests/shared/infrastructure/asset-loader.integration.test.ts": 1,
       "tests/shared/ports/asset-provider.contract.test.ts": 1
@@ -199,7 +185,6 @@
       "tests/orchestration/testing/marketplace-sync-settings-migration.builder.ts": 1,
       "tests/orchestration/testing/owned-native-settings.builder.ts": 1,
       "tests/orchestration/testing/project-cleaner.builder.ts": 1,
-      "tests/orchestration/testing/project-marketplace-remover.builder.ts": 1,
       "tests/orchestration/testing/recovery-contract.builder.ts": 1,
       "tests/orchestration/testing/run-setup-of.builder.ts": 1,
       "tests/orchestration/testing/run-setup-scenario.builder.ts": 1,
@@ -207,7 +192,6 @@
       "tests/orchestration/testing/settings-scope.builder.ts": 1,
       "tests/orchestration/testing/source-provenance.builder.ts": 1,
       "tests/orchestration/testing/sync-settings.builder.ts": 1,
-      "tests/orchestration/testing/user-marketplace-remover.builder.ts": 1,
       "tests/orchestration/testing/user-scope-cleaner.builder.ts": 1,
       "tests/shared/testing/built-agent.builder.ts": 1,
       "tests/shared/testing/catalog-of.builder.ts": 1,
@@ -225,23 +209,7 @@
     "rule": "real-tool-list:catalog-of",
     "closesWhen": "the test is converted to SYNTHETIC_TOOL once catalog-of.builder takes an injected registry",
     "entries": {
-      "tests/orchestration/doctor/run-doctor.use-case.unit.test.ts": 1,
-      "tests/orchestration/domain/ai-tool-selection.model.unit.test.ts": 1
-    }
-  },
-  {
-    "rule": "real-tool-list:project-marketplace-remover",
-    "closesWhen": "the test is converted to SYNTHETIC_TOOL once project-marketplace-remover.builder takes an injected registry",
-    "entries": {
-      "tests/orchestration/marketplace/remove-project-marketplace-record-rewrite.unit.test.ts": 1,
-      "tests/orchestration/marketplace/remove-project-marketplace.use-case.orphan-cleanup.unit.test.ts": 1
-    }
-  },
-  {
-    "rule": "real-tool-list:user-marketplace-remover",
-    "closesWhen": "the test is converted to SYNTHETIC_TOOL once user-marketplace-remover.builder takes an injected registry",
-    "entries": {
-      "tests/orchestration/marketplace/remove-user-marketplace.use-case.integration.test.ts": 1
+      "tests/orchestration/doctor/run-doctor.use-case.unit.test.ts": 1
     }
   }
 ]

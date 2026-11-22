@@ -10,8 +10,11 @@ import {
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
+import {
+  SYNTHETIC_TOOL,
+  syntheticCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import { projectMarketplaceRemover } from "../testing/project-marketplace-remover.builder.js";
 
 const PROJECT_ROOT = "/test-project";
@@ -24,6 +27,7 @@ describe("the record a project marketplace removal writes", () => {
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new InMemoryMarketplaceRegistry();
     const useCase = projectMarketplaceRemover(
+      syntheticCatalog(),
       new RemoveProjectPlugin(fs, () => "/home/dev"),
       manifestRepo,
       registry,
@@ -31,9 +35,9 @@ describe("the record a project marketplace removal writes", () => {
       spy.rules
     );
     const manifest = aManifest()
-      .withTool(TOOL.claude, [])
+      .withTool(SYNTHETIC_TOOL, [])
       .withPlugin(
-        TOOL.claude,
+        SYNTHETIC_TOOL,
         RecordedPlugin.fromMetadata({
           name: "sample",
           version: "1.0.0",
@@ -44,8 +48,8 @@ describe("the record a project marketplace removal writes", () => {
         })
       )
       .build();
-    manifest.setNativeRegistrations(TOOL.claude, {
-      binary: TOOL.claude,
+    manifest.setNativeRegistrations(SYNTHETIC_TOOL, {
+      binary: SYNTHETIC_TOOL,
       marketplaces: [{ alias: "awesome", hostName: "host-awesome" }],
       pluginRefs: ["sample@host-awesome"],
     });
@@ -59,7 +63,7 @@ describe("the record a project marketplace removal writes", () => {
         addedAt: EPOCH,
       })
     );
-    const before = structuredClone(manifest.getNativeRegistrations(TOOL.claude));
+    const before = structuredClone(manifest.getNativeRegistrations(SYNTHETIC_TOOL));
 
     await useCase.execute({
       name: "awesome",
@@ -68,7 +72,7 @@ describe("the record a project marketplace removal writes", () => {
     });
 
     expect(spy.withoutRef).toHaveBeenCalledExactlyOnceWith(before, "sample@host-awesome");
-    expect((await manifestRepo.load())?.getNativeRegistrations(TOOL.claude)).toStrictEqual({
+    expect((await manifestRepo.load())?.getNativeRegistrations(SYNTHETIC_TOOL)).toStrictEqual({
       ...before,
       binary: REWRITTEN_BINARY,
     });

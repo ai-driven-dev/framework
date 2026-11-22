@@ -5,10 +5,15 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { hostRecord } from "../../shared/testing/host-record-reading.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
-import { resolveRegisteredToolId, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  registeredTools,
+  resolveRegisteredToolId,
+  TOOL,
+} from "../../shared/testing/registered-tools.builder.js";
 import {
   ALIAS,
   HOST,
+  type NativeFixtureOptions,
   nativeFixture,
   options,
   REF,
@@ -20,8 +25,8 @@ for (const toolId of [TOOL.codex]) {
   describe(`${toolId} targeted user marketplace removal: host refusals and retries`, () => {
     const fixture = (
       refs: Parameters<typeof nativeFixture>[1],
-      opts: Parameters<typeof nativeFixture>[2] = {}
-    ) => nativeFixture(toolId, refs, opts);
+      opts: Omit<NativeFixtureOptions, "tools"> = {}
+    ) => nativeFixture(toolId, refs, { ...opts, tools: registeredTools() });
 
     const enabled = () => new Map([[REF, { enabled: true, scope: "user" as const }]]);
 
@@ -29,6 +34,7 @@ for (const toolId of [TOOL.codex]) {
       const f = await fixture(enabled());
       const absent = new InMemoryManifestRepository();
       const useCase = userMarketplaceRemover(
+        registeredTools(),
         new InMemoryFileAdapter(),
         absent,
         f.registry,
@@ -67,6 +73,7 @@ for (const toolId of [TOOL.codex]) {
         new Map([[toolId, sourceReader()]])
       );
       const useCase = userMarketplaceRemover(
+        registeredTools(),
         new InMemoryFileAdapter(),
         f.repo,
         f.registry,
@@ -140,6 +147,7 @@ for (const toolId of [TOOL.codex]) {
         updateVersion: (root, key, version) => f.registry.updateVersion(root, key, version),
       };
       const useCase = userMarketplaceRemover(
+        registeredTools(),
         new InMemoryFileAdapter(),
         {
           path: f.repo.path,

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { MarketplaceTrustStore } from "../../../src/contexts/distribution/ports/marketplace-trust-store.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { SYNTHETIC_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   makeAlwaysTrustStore,
   makeSilentPrompter,
@@ -27,13 +27,13 @@ describe("InstallPlugin: what it delegates", () => {
 
       await makeUseCase({ pickExecute }).execute({
         pluginArg: undefined,
-        toolIds: [TOOL.claude],
+        toolIds: [SYNTHETIC_TOOL],
         projectRoot: PROJECT_ROOT,
         interactive: true,
       });
 
       expect(pickExecute).toHaveBeenCalledWith({
-        toolIds: ["claude"],
+        toolIds: ["synthetic"],
         projectRoot: PROJECT_ROOT,
         interactive: true,
       });
@@ -44,14 +44,14 @@ describe("InstallPlugin: what it delegates", () => {
 
       const result = await makeUseCase({ addExecute }).execute({
         pluginArg: PLUGIN_FIXTURE,
-        toolIds: [TOOL.claude],
+        toolIds: [SYNTHETIC_TOOL],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       });
 
       expect(addExecute).toHaveBeenCalledWith({
         source: { kind: "local", path: PLUGIN_FIXTURE },
-        toolIds: ["claude"],
+        toolIds: ["synthetic"],
         projectRoot: PROJECT_ROOT,
         interactive: false,
         githubMarketplace: false,
@@ -64,7 +64,7 @@ describe("InstallPlugin: what it delegates", () => {
 
       await makeUseCase({ marketplaceExecute }).execute({
         pluginArg: "my-plugin@1.2.3",
-        toolIds: [TOOL.claude],
+        toolIds: [SYNTHETIC_TOOL],
         projectRoot: PROJECT_ROOT,
         interactive: false,
         fromMarketplace: "mkt",
@@ -75,7 +75,7 @@ describe("InstallPlugin: what it delegates", () => {
         pluginName: "my-plugin",
         version: "1.2.3",
         fromMarketplace: "mkt",
-        toolIds: ["claude"],
+        toolIds: ["synthetic"],
         projectRoot: PROJECT_ROOT,
         interactive: false,
         autoSelect: true,
@@ -87,7 +87,7 @@ describe("InstallPlugin: what it delegates", () => {
 
       await makeUseCase({ marketplaceExecute }).execute({
         pluginArg: "my-plugin",
-        toolIds: [TOOL.claude],
+        toolIds: [SYNTHETIC_TOOL],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       });
@@ -96,7 +96,7 @@ describe("InstallPlugin: what it delegates", () => {
         pluginName: "my-plugin",
         version: undefined,
         fromMarketplace: undefined,
-        toolIds: ["claude"],
+        toolIds: ["synthetic"],
         projectRoot: PROJECT_ROOT,
         interactive: false,
         autoSelect: false,

@@ -4,7 +4,10 @@ import {
   printUserScopeCleanOutcome,
 } from "../../../src/presentation/presenters/clean.presenter.js";
 import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SECOND_SYNTHETIC_TOOL,
+  SYNTHETIC_TOOL,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
 const NO_PREVIEW = { tools: [], nativeRegistrations: [], totalFileCount: 0 };
 
@@ -43,12 +46,12 @@ describe("printProjectCleanOutcome", () => {
         dryRun: true,
         preview: {
           tools: [
-            { toolId: TOOL.claude, fileCount: 3 },
-            { toolId: TOOL.cursor, fileCount: 1 },
+            { toolId: SYNTHETIC_TOOL, fileCount: 3 },
+            { toolId: SECOND_SYNTHETIC_TOOL, fileCount: 1 },
           ],
           nativeRegistrations: [
             {
-              toolId: TOOL.claude,
+              toolId: SYNTHETIC_TOOL,
               binary: "claude",
               pluginRefCount: 2,
               marketplaceCount: 1,
@@ -64,10 +67,10 @@ describe("printProjectCleanOutcome", () => {
 
     expect(output.lines).toEqual([
       "The following will be removed:",
-      "  claude: 3 files",
-      "  cursor: 1 files",
+      "  synthetic: 3 files",
+      "  syntheticb: 1 files",
       "  manifest: .aidd/ (config.json, if present, is kept)",
-      "  claude: claude will be asked to unregister 2 plugin ref(s) and 1 marketplace(s)",
+      "  synthetic: claude will be asked to unregister 2 plugin ref(s) and 1 marketplace(s)",
       "    cache to purge once unregistered: /home/me/.claude/plugins/cache",
       "No files removed.",
     ]);
@@ -123,7 +126,7 @@ describe("printProjectCleanOutcome", () => {
         manifestFound: true,
         dryRun: true,
         preview: {
-          tools: [{ toolId: TOOL.claude, fileCount: 1 }],
+          tools: [{ toolId: SYNTHETIC_TOOL, fileCount: 1 }],
           nativeRegistrations: [],
           totalFileCount: 1,
         },
@@ -147,8 +150,8 @@ describe("printProjectCleanOutcome", () => {
         dryRun: true,
         preview: {
           tools: [
-            { toolId: TOOL.claude, fileCount: 1 },
-            { toolId: TOOL.cursor, fileCount: 1 },
+            { toolId: SYNTHETIC_TOOL, fileCount: 1 },
+            { toolId: SECOND_SYNTHETIC_TOOL, fileCount: 1 },
           ],
           nativeRegistrations: [],
           totalFileCount: 2,
@@ -174,7 +177,7 @@ describe("printUserScopeCleanOutcome", () => {
         dryRun: true,
         manifestFound: true,
         preview: {
-          toolIds: ["claude", "codex"],
+          toolIds: [SYNTHETIC_TOOL, SECOND_SYNTHETIC_TOOL],
           builtVersions: ["7.0.0", "7.1.0"],
           referencingProjects: ["/work/api", "/work/web"],
         },
@@ -184,8 +187,8 @@ describe("printUserScopeCleanOutcome", () => {
 
     expect(output.lines).toEqual([
       "The following will be removed for this machine:",
-      "  claude: registration will be undone through its own CLI",
-      "  codex: registration will be undone through its own CLI",
+      `  ${SYNTHETIC_TOOL}: registration will be undone through its own CLI`,
+      `  ${SECOND_SYNTHETIC_TOOL}: registration will be undone through its own CLI`,
       "  aidd-framework: shared source (versions: 7.0.0, 7.1.0)",
       "  still referenced by: /work/api, /work/web",
       "No files removed.",

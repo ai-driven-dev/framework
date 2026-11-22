@@ -227,6 +227,7 @@ for (const [toolId, catalogPath] of [
         expect(activator.updatedPlugins).toEqual([]);
       }
       const removeMarketplace = userMarketplaceRemover(
+        registeredTools(),
         new InMemoryFileAdapter({}, ["/A", "/B"]),
         user,
         registry,

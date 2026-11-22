@@ -6,10 +6,13 @@ import {
   printWelcomeBanner,
 } from "../../../src/presentation/presenters/setup.presenter.js";
 import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SECOND_SYNTHETIC_TOOL,
+  SYNTHETIC_TOOL,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
 const CLAUDE_INSTALLED = {
-  toolId: TOOL.claude,
+  toolId: SYNTHETIC_TOOL,
   fileCount: 2,
   files: [{ relativePath: "skills/plan.md" }, { relativePath: "skills/test.md" }],
   skipped: false,
@@ -129,7 +132,7 @@ describe("printSetupOutcome", () => {
       false
     );
 
-    expect(output.lines).toEqual(["Project is up to date.", "claude is already installed."]);
+    expect(output.lines).toEqual(["Project is up to date.", "synthetic is already installed."]);
   });
 
   it("surfaces each installed tool's own warnings", () => {
@@ -156,7 +159,7 @@ describe("printSetupOutcome", () => {
       false
     );
 
-    expect(output.at("success")).toEqual(["Project initialized.", "Installed claude (2 files)"]);
+    expect(output.at("success")).toEqual(["Project initialized.", "Installed synthetic (2 files)"]);
     expect(output.at("debug")).toEqual([]);
   });
 
@@ -170,7 +173,7 @@ describe("printSetupOutcome", () => {
         install: {
           results: [
             CLAUDE_INSTALLED,
-            { ...CLAUDE_INSTALLED, toolId: TOOL.cursor, fileCount: 3, files: [] },
+            { ...CLAUDE_INSTALLED, toolId: SECOND_SYNTHETIC_TOOL, fileCount: 3, files: [] },
           ],
         },
       },
@@ -179,7 +182,7 @@ describe("printSetupOutcome", () => {
 
     expect(output.at("success")).toEqual([
       "Project initialized.",
-      "Installed claude, cursor (5 files)",
+      "Installed synthetic, syntheticb (5 files)",
     ]);
   });
 
@@ -193,7 +196,7 @@ describe("printSetupOutcome", () => {
     );
 
     expect(output.at("debug")).toEqual([
-      "Tool: claude",
+      "Tool: synthetic",
       "  + skills/plan.md",
       "  + skills/test.md",
     ]);

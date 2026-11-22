@@ -6,15 +6,20 @@ import {
   printUpdateResult,
 } from "../../../src/presentation/presenters/tool-config.presenter.js";
 import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SECOND_SYNTHETIC_TOOL,
+  SYNTHETIC_TOOL,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
 describe("printToolAlreadyInstalled", () => {
   it("warns that the tool is there and names the flag that reinstalls it", () => {
     const output = new CapturingOutput(false);
 
-    printToolAlreadyInstalled(output, TOOL.claude);
+    printToolAlreadyInstalled(output, SYNTHETIC_TOOL);
 
-    expect(output.at("warn")).toEqual(["claude is already installed. Use `--force` to reinstall."]);
+    expect(output.at("warn")).toEqual([
+      "synthetic is already installed. Use `--force` to reinstall.",
+    ]);
   });
 });
 
@@ -22,16 +27,16 @@ describe("printToolInstalled", () => {
   it("announces the tool and its file count when nothing warned", () => {
     const output = new CapturingOutput(false);
 
-    printToolInstalled(output, { toolId: TOOL.cursor, fileCount: 12, warnings: [] });
+    printToolInstalled(output, { toolId: SECOND_SYNTHETIC_TOOL, fileCount: 12, warnings: [] });
 
-    expect(output.at("success")).toEqual(["Installed cursor (12 files)"]);
+    expect(output.at("success")).toEqual(["Installed syntheticb (12 files)"]);
   });
 
   it("puts every warning before the success line, in the order given", () => {
     const output = new CapturingOutput(false);
 
     printToolInstalled(output, {
-      toolId: TOOL.codex,
+      toolId: SYNTHETIC_TOOL,
       fileCount: 3,
       warnings: ["first", "second"],
     });
@@ -39,7 +44,7 @@ describe("printToolInstalled", () => {
     expect(output.captured).toEqual([
       { level: "warn", message: "first" },
       { level: "warn", message: "second" },
-      { level: "success", message: "Installed codex (3 files)" },
+      { level: "success", message: "Installed synthetic (3 files)" },
     ]);
   });
 });
@@ -48,9 +53,9 @@ describe("printToolRemoved", () => {
   it("announces the tool and how many files went with it", () => {
     const output = new CapturingOutput(false);
 
-    printToolRemoved(output, TOOL.claude, 7);
+    printToolRemoved(output, SYNTHETIC_TOOL, 7);
 
-    expect(output.at("success")).toEqual(["Removed claude (7 files removed)"]);
+    expect(output.at("success")).toEqual(["Removed synthetic (7 files removed)"]);
   });
 });
 
@@ -69,32 +74,32 @@ describe("printUpdateResult", () => {
     printUpdateResult(
       output,
       [
-        { toolId: TOOL.claude, fileCount: 4 },
-        { toolId: TOOL.cursor, fileCount: 1 },
+        { toolId: SYNTHETIC_TOOL, fileCount: 4 },
+        { toolId: SECOND_SYNTHETIC_TOOL, fileCount: 1 },
       ],
-      [{ scope: "codex", error: "binary missing" }]
+      [{ scope: SYNTHETIC_TOOL, error: "binary missing" }]
     );
 
     expect(output.captured).toEqual([
-      { level: "success", message: "Updated claude (4 files)" },
-      { level: "success", message: "Updated cursor (1 files)" },
-      { level: "warn", message: "[codex] binary missing" },
+      { level: "success", message: "Updated synthetic (4 files)" },
+      { level: "success", message: "Updated syntheticb (1 files)" },
+      { level: "warn", message: "[synthetic] binary missing" },
     ]);
   });
 
   it("stays silent about missing tools once an update alone came back", () => {
     const output = new CapturingOutput(false);
 
-    printUpdateResult(output, [{ toolId: TOOL.claude, fileCount: 2 }], []);
+    printUpdateResult(output, [{ toolId: SYNTHETIC_TOOL, fileCount: 2 }], []);
 
-    expect(output.captured).toEqual([{ level: "success", message: "Updated claude (2 files)" }]);
+    expect(output.captured).toEqual([{ level: "success", message: "Updated synthetic (2 files)" }]);
   });
 
   it("stays silent about missing tools once an error alone came back", () => {
     const output = new CapturingOutput(false);
 
-    printUpdateResult(output, [], [{ scope: "claude", error: "refused" }]);
+    printUpdateResult(output, [], [{ scope: "synthetic", error: "refused" }]);
 
-    expect(output.captured).toEqual([{ level: "warn", message: "[claude] refused" }]);
+    expect(output.captured).toEqual([{ level: "warn", message: "[synthetic] refused" }]);
   });
 });

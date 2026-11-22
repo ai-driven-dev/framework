@@ -10,7 +10,7 @@ import {
   printRegisteredMarketplaces,
 } from "../../../src/presentation/presenters/marketplace.presenter.js";
 import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { SYNTHETIC_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
 
 function marketplace(name: string, version?: string): Marketplace {
   return Marketplace.fromJSON({
@@ -162,13 +162,13 @@ describe("printMarketplaceCheck", () => {
 
     printMarketplaceCheck(output, {
       stale: [marketplace("acme")],
-      upstreamRemoved: [{ marketplace: "beta", plugin: "widget", toolId: TOOL.claude }],
+      upstreamRemoved: [{ marketplace: "beta", plugin: "widget", toolId: SYNTHETIC_TOOL }],
       skipped: [{ marketplace: "gamma", error: "unreachable" }],
     });
 
     expect(output.captured).toEqual([
       { level: "print", message: "stale: acme" },
-      { level: "print", message: "removed: beta/widget (claude)" },
+      { level: "print", message: "removed: beta/widget (synthetic)" },
       { level: "warn", message: "skipped: gamma — unreachable" },
     ]);
   });
@@ -190,11 +190,13 @@ describe("printMarketplaceCheck", () => {
 
     printMarketplaceCheck(output, {
       stale: [],
-      upstreamRemoved: [{ marketplace: "beta", plugin: "widget", toolId: TOOL.claude }],
+      upstreamRemoved: [{ marketplace: "beta", plugin: "widget", toolId: SYNTHETIC_TOOL }],
       skipped: [],
     });
 
-    expect(output.captured).toEqual([{ level: "print", message: "removed: beta/widget (claude)" }]);
+    expect(output.captured).toEqual([
+      { level: "print", message: "removed: beta/widget (synthetic)" },
+    ]);
   });
 
   it("withholds the all-fresh line as soon as one marketplace was skipped", () => {

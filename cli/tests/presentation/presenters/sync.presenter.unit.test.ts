@@ -7,7 +7,10 @@ import {
   printUserScopeSyncOutcome,
 } from "../../../src/presentation/presenters/sync.presenter.js";
 import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SECOND_SYNTHETIC_TOOL,
+  SYNTHETIC_TOOL,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
 describe("printRestoreOutcome", () => {
   it("says nothing was modified when nothing errored, restored or resisted restoration", () => {
@@ -28,15 +31,15 @@ describe("printRestoreOutcome", () => {
     const output = new CapturingOutput(false);
 
     printRestoreOutcome(output, {
-      errors: [{ scope: "claude", error: "settings unreadable" }],
+      errors: [{ scope: "synthetic", error: "settings unreadable" }],
       totalRestored: 0,
       totalKept: 0,
       pluginNamesRestored: [],
       unrestorable: [],
     });
 
-    expect(output.lines).toEqual(["[claude] settings unreadable"]);
-    expect(output.at("warn")).toEqual(["[claude] settings unreadable"]);
+    expect(output.lines).toEqual(["[synthetic] settings unreadable"]);
+    expect(output.at("warn")).toEqual(["[synthetic] settings unreadable"]);
   });
 
   it("counts restored and kept files when files were the only thing restored", () => {
@@ -154,13 +157,13 @@ describe("printActivationOutcome", () => {
     const output = new CapturingOutput(false);
 
     printActivationOutcome(output, {
-      binaryMissing: [{ toolId: TOOL.claude, binary: "claude" }],
-      errors: [{ scope: "codex", error: "add refused" }],
+      binaryMissing: [{ toolId: SYNTHETIC_TOOL, binary: "claude" }],
+      errors: [{ scope: SECOND_SYNTHETIC_TOOL, error: "add refused" }],
     });
 
     expect(output.at("warn")).toEqual([
-      "claude: the plugin will not load until the claude CLI has run.",
-      "[codex] add refused",
+      `${SYNTHETIC_TOOL}: the plugin will not load until the claude CLI has run.`,
+      `[${SECOND_SYNTHETIC_TOOL}] add refused`,
     ]);
   });
 });
@@ -177,11 +180,11 @@ describe("printUserScopeSyncOutcome", () => {
   it("reports both the rebuilt files and the hosts driven", () => {
     const output = new CapturingOutput(false);
 
-    printUserScopeSyncOutcome(output, ["claude"], ["aidd-dev"]);
+    printUserScopeSyncOutcome(output, [SYNTHETIC_TOOL], ["aidd-dev"]);
 
     expect(output.at("success")).toEqual([
       "Refreshed global files for: aidd-dev",
-      "Synced native activation for: claude",
+      `Synced native activation for: ${SYNTHETIC_TOOL}`,
     ]);
   });
 
@@ -198,9 +201,11 @@ describe("printUserScopeSyncOutcome", () => {
   it("names every tool whose native activation was synced", () => {
     const output = new CapturingOutput(false);
 
-    printUserScopeSyncOutcome(output, ["claude", "codex"]);
+    printUserScopeSyncOutcome(output, [SYNTHETIC_TOOL, SECOND_SYNTHETIC_TOOL]);
 
-    expect(output.at("success")).toEqual(["Synced native activation for: claude, codex"]);
+    expect(output.at("success")).toEqual([
+      `Synced native activation for: ${SYNTHETIC_TOOL}, ${SECOND_SYNTHETIC_TOOL}`,
+    ]);
   });
 });
 
@@ -217,10 +222,13 @@ describe("printScopedFailures", () => {
     const output = new CapturingOutput(false);
 
     printScopedFailures(output, [
-      { scope: "claude", error: "add refused" },
-      { scope: "codex", error: "not on PATH" },
+      { scope: SYNTHETIC_TOOL, error: "add refused" },
+      { scope: SECOND_SYNTHETIC_TOOL, error: "not on PATH" },
     ]);
 
-    expect(output.at("warn")).toEqual(["[claude] add refused", "[codex] not on PATH"]);
+    expect(output.at("warn")).toEqual([
+      `[${SYNTHETIC_TOOL}] add refused`,
+      `[${SECOND_SYNTHETIC_TOOL}] not on PATH`,
+    ]);
   });
 });

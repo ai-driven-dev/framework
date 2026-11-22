@@ -10,7 +10,7 @@ import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js"
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
 import { ALIAS, HOST, options, REF } from "../testing/user-marketplace-removal.builder.js";
 import { userMarketplaceRemover } from "../testing/user-marketplace-remover.builder.js";
@@ -57,7 +57,7 @@ describe("Copilot 1.0.83 targeted user marketplace removal", () => {
         ],
       ])
     );
-    const useCase = userMarketplaceRemover(fs, repo, registry, gate);
+    const useCase = userMarketplaceRemover(registeredTools(), fs, repo, registry, gate);
 
     await expect(useCase.execute(options())).rejects.toThrow(/host source reader unavailable/);
 
@@ -118,6 +118,7 @@ describe("Cursor targeted user marketplace removal", () => {
     fs.setFile(join(options.escape ? foreign : pluginDir, "skills/demo/SKILL.md"), "bytes");
     if (options.escape) fs.setSymlink(pluginDir, foreign);
     const useCase = userMarketplaceRemover(
+      registeredTools(),
       fs,
       repo,
       registry,
