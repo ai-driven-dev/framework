@@ -15,4 +15,9 @@ The language of the `telemetry` context. A name in the code means what this page
 | Consent | Whether a clone allows its calls to be stored | `domain/telemetry-consent.ts`, `domain/consent/` |
 | Declaration | The task a person named for the work that follows, bound to a branch or a session | `domain/declaration/`, `ports/bindings/` |
 | Attribution | Which task, repository and person a call belongs to, derived at report time | `domain/report/attribution.ts` |
+| Identity | Who, if anyone, the measurement names: the identifier a person chose, kept apart from the data | `domain/identity/`, `PersonIdentityStore` |
+| Clone | A working directory of a repository. It is told from another at the same path by its identity, never by its path | `domain/consent/clone-identity.ts` |
+| Stored usage | A usage record plus the repository id resolved when it was ingested | `StoredUsage`, `domain/stored-usage.ts` |
+| Binding | The link between a branch or a session and a task | `domain/branch-binding.ts`, `domain/declaration/` |
+| Branch role | A branch's place in a declaration | `domain/declaration/branch-role.ts` |
 | Report | The totals of a period, split by one axis, as text or the versioned envelope | `contract/usage-report.ts`, `application/report/` |
