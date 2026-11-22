@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   hasRelativePluginSources,
   parsePluginCatalog,
-} from "../../../../src/contexts/distribution/domain/catalog.js";
+} from "../../../../../src/contexts/distribution/domain/catalog-parsers/claude-marketplace-catalog.js";
 import {
   InvalidPluginManifestError,
   InvalidPluginSourceError,
-} from "../../../../src/shared/domain/shared.error.js";
+} from "../../../../../src/shared/domain/shared.error.js";
 
 const VALID_RAW = {
   plugins: [
