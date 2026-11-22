@@ -1,25 +1,25 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
-import { FileHash } from "../../../src/shared/domain/file-hash.js";
-import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
-import { hostWithdrawal } from "../../shared/testing/host-withdrawal.builder.js";
-import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
-import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
-import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { saying } from "../../shared/testing/saying.builder.js";
+import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
+import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
+import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import type { RegistrationRecords } from "../../../../src/contexts/installation/ports/record/registration-records.js";
+import { FileHash } from "../../../../src/shared/domain/file-hash.js";
+import { FakeHostActions } from "../../../shared/testing/fake-host-actions.fake.js";
+import { hostWithdrawal } from "../../../shared/testing/host-withdrawal.builder.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../../shared/testing/in-memory-manifest-repository.fake.js";
+import { InMemoryMarketplaceRegistry } from "../../../shared/testing/in-memory-marketplace-registry.fake.js";
+import { saying } from "../../../shared/testing/saying.builder.js";
 import {
   SYNTHETIC_UPDATING_NATIVE_TOOL,
   SYNTHETIC_USER_PLUGINS,
   SYNTHETIC_USER_TOOL,
   syntheticNativeFamilyCatalog,
-} from "../../shared/testing/synthetic-native-tool.builder.js";
-import { ALIAS, HOST, options, REF } from "../testing/user-marketplace-removal.builder.js";
-import { userMarketplaceRemover } from "../testing/user-marketplace-remover.builder.js";
+} from "../../../shared/testing/synthetic-native-tool.builder.js";
+import { ALIAS, HOST, options, REF } from "../../testing/user-marketplace-removal.builder.js";
+import { userMarketplaceRemover } from "../../testing/user-marketplace-remover.builder.js";
 
 describe("updating native tool targeted user marketplace removal", () => {
   it("refuses an otherwise claimed and enabled catalogue without a verified current source, preserving settings and claims", async () => {

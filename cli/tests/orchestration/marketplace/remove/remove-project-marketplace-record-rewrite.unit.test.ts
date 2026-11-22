@@ -1,21 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import { RemoveProjectPlugin } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
-import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
+import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
+import { RemoveProjectPlugin } from "../../../../src/contexts/installation/application/removal/remove-project-plugin.js";
+import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import { aManifest } from "../../../contexts/installation/testing/manifest.builder.js";
 import {
   REWRITTEN_BINARY,
   spiedRecordRules,
-} from "../../contexts/installation/testing/spy-record-rules.fake.js";
-import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
-import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
-import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
+} from "../../../contexts/installation/testing/spy-record-rules.fake.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../../shared/testing/in-memory-manifest-repository.fake.js";
+import { InMemoryMarketplaceRegistry } from "../../../shared/testing/in-memory-marketplace-registry.fake.js";
+import { KeepPrompter } from "../../../shared/testing/scripted-prompter.fake.js";
 import {
   SYNTHETIC_TOOL,
   syntheticCatalog,
-} from "../../shared/testing/synthetic-tool-id.builder.js";
-import { projectMarketplaceRemover } from "../testing/project-marketplace-remover.builder.js";
+} from "../../../shared/testing/synthetic-tool-id.builder.js";
+import { projectMarketplaceRemover } from "../../testing/project-marketplace-remover.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const EPOCH = "1970-01-01T00:00:00.000Z";

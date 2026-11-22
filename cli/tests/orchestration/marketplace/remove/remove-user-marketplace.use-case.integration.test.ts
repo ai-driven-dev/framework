@@ -1,20 +1,20 @@
 import { describe, expect, it, vi } from "vitest";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
-import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import type { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../src/contexts/distribution/contract/marketplace.js";
+import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
+import type { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
+import type { RegistrationRecords } from "../../../../src/contexts/installation/ports/record/registration-records.js";
 import {
   REWRITTEN_BINARY,
   spiedRecordRules,
-} from "../../contexts/installation/testing/spy-record-rules.fake.js";
-import { claimsRecorded } from "../../shared/testing/host-record-reading.builder.js";
-import { hostWithdrawal } from "../../shared/testing/host-withdrawal.builder.js";
-import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
-import { saying } from "../../shared/testing/saying.builder.js";
+} from "../../../contexts/installation/testing/spy-record-rules.fake.js";
+import { claimsRecorded } from "../../../shared/testing/host-record-reading.builder.js";
+import { hostWithdrawal } from "../../../shared/testing/host-withdrawal.builder.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
+import { saying } from "../../../shared/testing/saying.builder.js";
 import {
   SYNTHETIC_TOOL,
   syntheticCatalog,
-} from "../../shared/testing/synthetic-tool-id.builder.js";
+} from "../../../shared/testing/synthetic-tool-id.builder.js";
 import {
   ALIAS,
   HOST,
@@ -23,8 +23,8 @@ import {
   options,
   proofFor,
   REF,
-} from "../testing/user-marketplace-removal.builder.js";
-import { userMarketplaceRemover } from "../testing/user-marketplace-remover.builder.js";
+} from "../../testing/user-marketplace-removal.builder.js";
+import { userMarketplaceRemover } from "../../testing/user-marketplace-remover.builder.js";
 
 for (const toolId of [SYNTHETIC_TOOL]) {
   describe(`${toolId} targeted user marketplace removal: catalogue selection and claims`, () => {

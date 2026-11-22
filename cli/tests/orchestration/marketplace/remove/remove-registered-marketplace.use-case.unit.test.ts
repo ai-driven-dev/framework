@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.use-case.js";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
-import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import { RemoveRegisteredMarketplace } from "../../../src/orchestration/marketplace/remove-registered-marketplace.use-case.js";
-import type { Scope } from "../../../src/shared/domain/scope.js";
-import { InvalidMarketplaceNameError } from "../../../src/shared/domain/shared.error.js";
-import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
+import { ListMarketplaces } from "../../../../src/contexts/distribution/application/list-marketplaces.use-case.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../src/contexts/distribution/contract/marketplace.js";
+import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
+import { RemoveRegisteredMarketplace } from "../../../../src/orchestration/marketplace/remove/remove-registered-marketplace.use-case.js";
+import type { Scope } from "../../../../src/shared/domain/scope.js";
+import { InvalidMarketplaceNameError } from "../../../../src/shared/domain/shared.error.js";
+import { InMemoryMarketplaceRegistry } from "../../../shared/testing/in-memory-marketplace-registry.fake.js";
 
 const PROJECT_ROOT = "/test-project";
 const OUTCOME = { marketplace: { name: "awesome" }, removedPluginCount: 0, orphanCount: 0 };

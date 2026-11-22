@@ -1,30 +1,30 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../src/contexts/distribution/contract/marketplace.js";
 import {
   MarketplaceNotFoundError,
   SharedMarketplaceRemovalError,
-} from "../../../src/contexts/distribution/domain/distribution.error.js";
-import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import { RemoveProjectPlugin } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
-import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import { saying } from "../../shared/testing/saying.builder.js";
-import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
+} from "../../../../src/contexts/distribution/domain/distribution.error.js";
+import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
+import { RemoveProjectPlugin } from "../../../../src/contexts/installation/application/removal/remove-project-plugin.js";
+import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
+import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import { saying } from "../../../shared/testing/saying.builder.js";
+import { KeepPrompter } from "../../../shared/testing/scripted-prompter.fake.js";
 import {
   SYNTHETIC_USER_TOOL,
   syntheticNativeFamilyCatalog,
-} from "../../shared/testing/synthetic-native-tool.builder.js";
+} from "../../../shared/testing/synthetic-native-tool.builder.js";
 import {
   SYNTHETIC_TOOL,
   syntheticCatalog,
-} from "../../shared/testing/synthetic-tool-id.builder.js";
+} from "../../../shared/testing/synthetic-tool-id.builder.js";
 import {
   buildUseCase,
   marketplaceNamed,
   PROJECT_ROOT,
-} from "../testing/project-marketplace-removal.builder.js";
-import { projectMarketplaceRemover } from "../testing/project-marketplace-remover.builder.js";
+} from "../../testing/project-marketplace-removal.builder.js";
+import { projectMarketplaceRemover } from "../../testing/project-marketplace-remover.builder.js";
 
 describe("RemoveProjectMarketplace", () => {
   it("throws MarketplaceNotFoundError when entry does not exist", async () => {

@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
-import type { MarketplaceRegistry } from "../../../src/contexts/distribution/ports/marketplace-registry.js";
-import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { hostRecord } from "../../shared/testing/host-record-reading.builder.js";
-import { hostWithdrawal } from "../../shared/testing/host-withdrawal.builder.js";
-import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
-import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
+import type { MarketplaceRegistry } from "../../../../src/contexts/distribution/ports/marketplace-registry.js";
+import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
+import { hostRecord } from "../../../shared/testing/host-record-reading.builder.js";
+import { hostWithdrawal } from "../../../shared/testing/host-withdrawal.builder.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../../shared/testing/in-memory-manifest-repository.fake.js";
 import {
   SYNTHETIC_NATIVE_TOOL,
   syntheticNativeFamilyCatalog,
-} from "../../shared/testing/synthetic-native-tool.builder.js";
+} from "../../../shared/testing/synthetic-native-tool.builder.js";
 import {
   ALIAS,
   HOST,
@@ -17,8 +17,8 @@ import {
   options,
   REF,
   sourceReader,
-} from "../testing/user-marketplace-removal.builder.js";
-import { userMarketplaceRemover } from "../testing/user-marketplace-remover.builder.js";
+} from "../../testing/user-marketplace-removal.builder.js";
+import { userMarketplaceRemover } from "../../testing/user-marketplace-remover.builder.js";
 
 for (const toolId of [SYNTHETIC_NATIVE_TOOL]) {
   describe(`${toolId} targeted user marketplace removal: host refusals and retries`, () => {

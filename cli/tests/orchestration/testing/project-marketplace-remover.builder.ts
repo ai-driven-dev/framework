@@ -6,7 +6,8 @@ import { RemovePluginsFromMarketplace } from "../../../src/contexts/installation
 import type { RemoveProjectPlugin } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
-import { RemoveProjectMarketplace } from "../../../src/orchestration/marketplace/remove-project-marketplace.use-case.js";
+import { RemoveMarketplacePlugins } from "../../../src/orchestration/marketplace/remove/remove-marketplace-plugins.use-case.js";
+import { RemoveProjectMarketplace } from "../../../src/orchestration/marketplace/remove/remove-project-marketplace.use-case.js";
 import type { Prompter } from "../../../src/orchestration/ports/prompter.js";
 
 type RecordRules = typeof registrationRecordRules;
@@ -22,11 +23,13 @@ export function projectMarketplaceRemover(
 ): RemoveProjectMarketplace {
   return new RemoveProjectMarketplace({
     find: new FindMarketplaceToRemove(registry),
-    plugins: new RemovePluginsFromMarketplace({ manifestRepo, cleanup }, tools),
+    removePlugins: new RemoveMarketplacePlugins(
+      new RemovePluginsFromMarketplace({ manifestRepo, cleanup }, tools),
+      prompter,
+      records
+    ),
     remove: new RemoveMarketplace(registry),
     detachClaims: (projectRoot, { nativeRefs, plugins }) =>
       cleanup.detachClaims(projectRoot, nativeRefs, plugins),
-    prompter,
-    records,
   });
 }

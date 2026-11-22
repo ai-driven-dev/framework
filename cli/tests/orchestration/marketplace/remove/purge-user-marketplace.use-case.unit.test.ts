@@ -1,23 +1,22 @@
 import { describe, expect, it, vi } from "vitest";
-import type { WithdrawFromHost } from "../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
+import type { WithdrawFromHost } from "../../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import type {
   ProveMarketplaceRemovalRequest,
   ProvenMarketplaceRemoval,
   WithdrawalRequest,
-} from "../../../src/contexts/host-registration/application/withdraw/withdrawal.js";
-import type { PurgeMarketplacePlugins } from "../../../src/contexts/installation/application/marketplace/purge-marketplace-plugins.use-case.js";
+} from "../../../../src/contexts/host-registration/application/withdraw/withdrawal.js";
+import type { PurgeMarketplacePlugins } from "../../../../src/contexts/installation/application/marketplace/purge-marketplace-plugins.use-case.js";
 import {
   type MarketplaceRemovalHost,
-  RemoveUserMarketplace,
-  type RemoveUserMarketplaceDeps,
-} from "../../../src/orchestration/marketplace/remove-user-marketplace.use-case.js";
-import { syntheticToolProfile } from "../../contexts/translate/testing/synthetic-tool-profile.builder.js";
-import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
-import { hostWithdrawal } from "../../shared/testing/host-withdrawal.builder.js";
+  PurgeUserMarketplace,
+  type PurgeUserMarketplaceDeps,
+} from "../../../../src/orchestration/marketplace/remove/purge-user-marketplace.use-case.js";
+import { syntheticToolProfile } from "../../../contexts/translate/testing/synthetic-tool-profile.builder.js";
+import { FakeHostActions } from "../../../shared/testing/fake-host-actions.fake.js";
+import { hostWithdrawal } from "../../../shared/testing/host-withdrawal.builder.js";
 
 type PurgeCommand = Parameters<PurgeMarketplacePlugins["execute"]>[0];
 
-const FOUND = { name: "market", scope: "user", fingerprint: "fp" } as const;
 const REGISTRATION = { alias: "market", hostName: "aidd-market" };
 const TARGET: Parameters<PurgeCommand["hostRemoval"]["plan"]>[0] = {
   tool: syntheticToolProfile(),
@@ -29,6 +28,12 @@ const TARGET: Parameters<PurgeCommand["hostRemoval"]["plan"]>[0] = {
     ],
   },
   registration: REGISTRATION,
+};
+const REQUEST = {
+  marketplace: "market",
+  projectRoot: "/project",
+  whileLocked: async () => undefined,
+  forget: async () => undefined,
 };
 
 /** Proves every catalogue removable with the claimed refs, and withdraws through a real host. */
@@ -55,73 +60,36 @@ class ProvingHost implements MarketplaceRemovalHost {
   }
 }
 
-function removerWith(purge: (command: PurgeCommand) => Promise<number>) {
-  const records: RemoveUserMarketplaceDeps["records"] = {
+function purgerWith(purge: (command: PurgeCommand) => Promise<number>) {
+  const records: PurgeUserMarketplaceDeps["records"] = {
     marketplaceOf: vi.fn(() => REGISTRATION),
     holdersOf: vi.fn(() => []),
     claimedRefs: vi.fn(() => ["scoped@aidd-market", "unscoped@aidd-market"]),
     claimsOnMarketplace: vi.fn(() => []),
     withoutMarketplace: vi.fn((record) => ({ ...record, pluginClaims: [] })),
   };
-  const find = { execute: vi.fn().mockResolvedValue(FOUND) };
-  const remove = { execute: vi.fn().mockResolvedValue(undefined) };
   const activator = new FakeHostActions();
   const host = new ProvingHost(activator);
-  const useCase = new RemoveUserMarketplace({
-    find,
+  const useCase = new PurgeUserMarketplace({
     purge: { execute: purge },
-    remove,
     host,
     home: "/home",
     records,
   });
-  return { useCase, find, remove, host, activator, records };
+  return { useCase, host, activator, records };
 }
 
-describe("RemoveUserMarketplace", () => {
-  it("purges what the machine holds for the marketplace it found, under the machine home", async () => {
+describe("purging what the machine holds for a user marketplace", () => {
+  it("hands the purge the marketplace, the project and the machine home", async () => {
     const purge = vi.fn().mockResolvedValue(3);
-    const { useCase } = removerWith(purge);
+    const { useCase } = purgerWith(purge);
 
-    const result = await useCase.execute({
-      name: "market",
-      projectRoot: "/project",
-      autoConfirm: true,
-    });
+    const removed = await useCase.execute(REQUEST);
 
     expect(purge).toHaveBeenCalledWith(
       expect.objectContaining({ marketplace: "market", projectRoot: "/project", home: "/home" })
     );
-    expect(result).toEqual({ marketplace: FOUND, removedPluginCount: 3, orphanCount: 0 });
-  });
-
-  it("proves under the lock that the marketplace is still the one it found", async () => {
-    const purge = vi.fn(async (command: PurgeCommand) => {
-      await command.whileLocked();
-      return 0;
-    });
-    const { useCase, find } = removerWith(purge);
-
-    await useCase.execute({ name: "market", projectRoot: "/project", autoConfirm: true });
-
-    expect(find.execute).toHaveBeenLastCalledWith({
-      name: "market",
-      projectRoot: "/project",
-      unchangedSince: "fp",
-    });
-  });
-
-  it("forgets the marketplace only when the purge asks for it", async () => {
-    const purge = vi.fn(async (command: PurgeCommand) => {
-      await command.forget();
-      return 0;
-    });
-    const { useCase, remove } = removerWith(purge);
-    expect(remove.execute).not.toHaveBeenCalled();
-
-    await useCase.execute({ name: "market", projectRoot: "/project", autoConfirm: true });
-
-    expect(remove.execute).toHaveBeenCalledWith({ projectRoot: "/project", marketplace: FOUND });
+    expect(removed).toBe(3);
   });
 
   it("plans the host removal of a recorded catalogue for this project", async () => {
@@ -129,9 +97,9 @@ describe("RemoveUserMarketplace", () => {
       await command.hostRemoval.plan(TARGET);
       return 0;
     });
-    const { useCase, host, activator } = removerWith(purge);
+    const { useCase, host, activator } = purgerWith(purge);
 
-    await useCase.execute({ name: "market", projectRoot: "/project", autoConfirm: true });
+    await useCase.execute(REQUEST);
 
     expect(host.requests[0]).toEqual({
       kind: "prove-marketplace-removal",
@@ -150,7 +118,7 @@ describe("RemoveUserMarketplace", () => {
       command.hostRemoval.apply(await command.hostRemoval.plan(TARGET));
       return 0;
     });
-    const { useCase, activator } = removerWith(purge);
+    const { useCase, activator } = purgerWith(purge);
     vi.spyOn(activator, "uninstallPlugin").mockImplementation((ref, scope) => {
       calls.push(`${ref}:${scope}`);
     });
@@ -158,7 +126,7 @@ describe("RemoveUserMarketplace", () => {
       calls.push(`${name}:${scope}`);
     });
 
-    await useCase.execute({ name: "market", projectRoot: "/project", autoConfirm: true });
+    await useCase.execute(REQUEST);
 
     expect(calls).toStrictEqual([
       "scoped@aidd-market:project",
@@ -169,12 +137,12 @@ describe("RemoveUserMarketplace", () => {
 
   it("reads and drops the catalogue in each record through the host registration's rules", async () => {
     let records: PurgeCommand["records"] | undefined;
-    const { useCase, records: rules } = removerWith(async (command) => {
+    const { useCase, records: rules } = purgerWith(async (command) => {
       records = command.records;
       return 0;
     });
 
-    await useCase.execute({ name: "market", projectRoot: "/project", autoConfirm: true });
+    await useCase.execute(REQUEST);
     const record = { marketplaces: [REGISTRATION] };
 
     expect(records?.registrationOf(record, "market")).toStrictEqual(REGISTRATION);
@@ -188,14 +156,19 @@ describe("RemoveUserMarketplace", () => {
     expect(rules.withoutMarketplace).toHaveBeenCalledWith(record, "market");
   });
 
-  it("purges nothing when the marketplace is not found", async () => {
-    const purge = vi.fn();
-    const { useCase, find } = removerWith(purge);
-    find.execute.mockRejectedValue(new Error("not found"));
+  it("passes the lock proof and the forgetting on to the purge", async () => {
+    const whileLocked = vi.fn(async () => undefined);
+    const forget = vi.fn(async () => undefined);
+    const purge = vi.fn(async (command: PurgeCommand) => {
+      await command.whileLocked();
+      await command.forget();
+      return 0;
+    });
+    const { useCase } = purgerWith(purge);
 
-    await expect(
-      useCase.execute({ name: "ghost", projectRoot: "/project", autoConfirm: true })
-    ).rejects.toThrow("not found");
-    expect(purge).not.toHaveBeenCalled();
+    await useCase.execute({ ...REQUEST, whileLocked, forget });
+
+    expect(whileLocked).toHaveBeenCalledOnce();
+    expect(forget).toHaveBeenCalledOnce();
   });
 });

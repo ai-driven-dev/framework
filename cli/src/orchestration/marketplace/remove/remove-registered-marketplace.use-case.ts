@@ -1,5 +1,5 @@
-import type { ListMarketplaces } from "../../contexts/distribution/application/list-marketplaces.use-case.js";
-import { assertNotReservedMarketplaceName } from "../../contexts/distribution/contract/marketplace.js";
+import type { ListMarketplaces } from "../../../contexts/distribution/application/list-marketplaces.use-case.js";
+import { assertNotReservedMarketplaceName } from "../../../contexts/distribution/contract/marketplace.js";
 import type { RemoveProjectMarketplace } from "./remove-project-marketplace.use-case.js";
 import type { RemoveUserMarketplace } from "./remove-user-marketplace.use-case.js";
 

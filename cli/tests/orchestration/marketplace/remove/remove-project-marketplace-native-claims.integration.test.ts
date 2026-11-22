@@ -1,30 +1,30 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import { RemoveProjectPlugin } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
-import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
-import { removalClaims } from "../../../src/contexts/machine-claims/application/removal/removal-claims.js";
-import type { RemoveProjectMarketplace } from "../../../src/orchestration/marketplace/remove-project-marketplace.use-case.js";
-import { FileHash } from "../../../src/shared/domain/file-hash.js";
-import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
+import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
+import { RemoveProjectPlugin } from "../../../../src/contexts/installation/application/removal/remove-project-plugin.js";
+import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
+import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import type { RegistrationRecords } from "../../../../src/contexts/installation/ports/record/registration-records.js";
+import { removalClaims } from "../../../../src/contexts/machine-claims/application/removal/removal-claims.js";
+import type { RemoveProjectMarketplace } from "../../../../src/orchestration/marketplace/remove/remove-project-marketplace.use-case.js";
+import { FileHash } from "../../../../src/shared/domain/file-hash.js";
+import { aManifest } from "../../../contexts/installation/testing/manifest.builder.js";
 import {
   errnoError,
   FaultingFileAdapter,
-} from "../../shared/testing/faulting-file-adapter.fake.js";
-import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
-import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
-import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { KeepPrompter, ScriptedPrompter } from "../../shared/testing/scripted-prompter.fake.js";
+} from "../../../shared/testing/faulting-file-adapter.fake.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../../shared/testing/in-memory-manifest-repository.fake.js";
+import { InMemoryMarketplaceRegistry } from "../../../shared/testing/in-memory-marketplace-registry.fake.js";
+import { KeepPrompter, ScriptedPrompter } from "../../../shared/testing/scripted-prompter.fake.js";
 import {
   SYNTHETIC_NATIVE_TOOL,
   SYNTHETIC_USER_PLUGINS,
   SYNTHETIC_USER_TOOL,
   syntheticNativeFamilyCatalog,
-} from "../../shared/testing/synthetic-native-tool.builder.js";
-import { projectMarketplaceRemover } from "../testing/project-marketplace-remover.builder.js";
+} from "../../../shared/testing/synthetic-native-tool.builder.js";
+import { projectMarketplaceRemover } from "../../testing/project-marketplace-remover.builder.js";
 
 const HOOKS_FILE = `.${SYNTHETIC_USER_TOOL}/hooks.json`;
 const PLUGIN_HOME = join(SYNTHETIC_USER_PLUGINS(homedir()), "sample-plugin");

@@ -161,6 +161,7 @@ src/
 │   ├── doctor/
 │   ├── domain/
 │   ├── marketplace/
+│   │   └── remove/
 │   ├── menu/
 │   ├── plugin/
 │   ├── ports/    # the Prompter port, implemented by presentation

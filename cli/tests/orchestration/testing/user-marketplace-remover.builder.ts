@@ -9,9 +9,10 @@ import type { ManifestRepository } from "../../../src/contexts/installation/port
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import type {
   MarketplaceRemovalHost,
-  RemoveUserMarketplaceDeps,
-} from "../../../src/orchestration/marketplace/remove-user-marketplace.use-case.js";
-import { RemoveUserMarketplace } from "../../../src/orchestration/marketplace/remove-user-marketplace.use-case.js";
+  PurgeUserMarketplaceDeps,
+} from "../../../src/orchestration/marketplace/remove/purge-user-marketplace.use-case.js";
+import { PurgeUserMarketplace } from "../../../src/orchestration/marketplace/remove/purge-user-marketplace.use-case.js";
+import { RemoveUserMarketplace } from "../../../src/orchestration/marketplace/remove/remove-user-marketplace.use-case.js";
 import { resolveHomeDir } from "../../../src/shared/infrastructure/home-dir.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../src/shared/ports/file-writer.js";
@@ -24,20 +25,22 @@ export function userMarketplaceRemover(
   repo: ManifestRepository & Lock,
   registry: MarketplaceRegistry,
   host: MarketplaceRemovalHost,
-  records: RemoveUserMarketplaceDeps["records"] = registrationRecordRules
+  records: PurgeUserMarketplaceDeps["records"] = registrationRecordRules
 ): RemoveUserMarketplace {
   return new RemoveUserMarketplace({
     find: new FindUserMarketplace(registry),
-    purge: new PurgeMarketplacePlugins(
-      {
-        repo,
-        userScopePluginFiles: new UserScopePluginFiles(fs, quietUserScopeFilesSafeToDelete(fs)),
-      },
-      tools
-    ),
+    purge: new PurgeUserMarketplace({
+      purge: new PurgeMarketplacePlugins(
+        {
+          repo,
+          userScopePluginFiles: new UserScopePluginFiles(fs, quietUserScopeFilesSafeToDelete(fs)),
+        },
+        tools
+      ),
+      host,
+      home: resolveHomeDir(),
+      records,
+    }),
     remove: new RemoveMarketplace(registry),
-    host,
-    home: resolveHomeDir(),
-    records,
   });
 }
