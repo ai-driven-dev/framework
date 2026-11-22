@@ -9,12 +9,14 @@ import { LoadManifestForDoctor } from "../../../src/contexts/installation/applic
 import { DetectPluginDrift } from "../../../src/contexts/installation/application/shared/detect-plugin-drift.use-case.js";
 import type { DoctorIssue } from "../../../src/contexts/installation/contract/doctor-issue.js";
 import { RunDoctor } from "../../../src/orchestration/doctor/run-doctor.use-case.js";
-import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 import {
   buildInstallationDeps,
   initAndInstall,
 } from "../../shared/testing/installation-deps.builder.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_TOOL,
+  syntheticCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -24,17 +26,17 @@ const issueOf =
 
 async function reportOf(category?: "ai", severity: DoctorIssue["severity"] = "warning") {
   const issue = issueOf(severity);
-  const deps = await buildInstallationDeps({ tools: registeredTools() });
-  await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+  const deps = await buildInstallationDeps({ tools: syntheticCatalog() });
+  await initAndInstall(deps, PROJECT_ROOT, SYNTHETIC_TOOL);
   const loadManifest = new LoadManifest(deps.manifestRepo);
   const checks = {
     tracked: new CheckTrackedFiles(loadManifest, deps.fs),
     merge: new CheckMergeFiles(loadManifest, deps.fs),
     references: new CheckFileReferences(loadManifest, deps.fs),
-    layout: new CheckProjectLayout(loadManifest, deps.fs, catalogOf()),
+    layout: new CheckProjectLayout(loadManifest, deps.fs, syntheticCatalog()),
     plugin: new CheckPluginDrift(
       loadManifest,
-      new DetectPluginDrift(deps.fs, catalogOf(), () => "/home/dev")
+      new DetectPluginDrift(deps.fs, syntheticCatalog(), () => "/home/dev")
     ),
   };
   vi.spyOn(checks.tracked, "execute").mockResolvedValue([issue("tracked")]);
@@ -50,7 +52,7 @@ async function reportOf(category?: "ai", severity: DoctorIssue["severity"] = "wa
       registration,
       authentication,
     },
-    catalogOf()
+    syntheticCatalog()
   ).execute({ projectRoot: PROJECT_ROOT, category });
 }
 

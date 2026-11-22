@@ -28,7 +28,7 @@ import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
 import { seedFromDirectory } from "../../shared/testing/seed-from-directory.builder.js";
 import {
   SYNTHETIC_NATIVE_TOOL,
-  syntheticNativeCatalog,
+  syntheticNativeFamilyCatalog,
 } from "../../shared/testing/synthetic-native-tool.builder.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
@@ -61,7 +61,7 @@ function registerMarketplace(
 }
 
 async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
-  const deps = await buildInstallationDeps({ tools: syntheticNativeCatalog() });
+  const deps = await buildInstallationDeps({ tools: syntheticNativeFamilyCatalog() });
   await initAndInstall(deps, PROJECT_ROOT, SYNTHETIC_NATIVE_TOOL);
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const registry = new InMemoryMarketplaceRegistry();
@@ -71,12 +71,15 @@ async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
     {
       loadDistribution: loadDistributionOf(
         deps.pluginFetcher,
-        new PluginDistributionReaderAdapter(deps.fs, manifestProbesOf(syntheticNativeCatalog()))
+        new PluginDistributionReaderAdapter(
+          deps.fs,
+          manifestProbesOf(syntheticNativeFamilyCatalog())
+        )
       ),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
     },
-    syntheticNativeCatalog()
+    syntheticNativeFamilyCatalog()
   );
   const fetchMarketplaceSource = new FetchMarketplaceSource({
     pluginFetcher: deps.pluginFetcher,

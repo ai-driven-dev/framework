@@ -15,7 +15,7 @@ import {
   SYNTHETIC_UPDATING_NATIVE_TOOL,
   SYNTHETIC_USER_PLUGINS,
   SYNTHETIC_USER_TOOL,
-  syntheticNativeCatalog,
+  syntheticNativeFamilyCatalog,
 } from "../../shared/testing/synthetic-native-tool.builder.js";
 import { ALIAS, HOST, options, REF } from "../testing/user-marketplace-removal.builder.js";
 import { userMarketplaceRemover } from "../testing/user-marketplace-remover.builder.js";
@@ -62,7 +62,13 @@ describe("updating native tool targeted user marketplace removal", () => {
         ],
       ])
     );
-    const useCase = userMarketplaceRemover(syntheticNativeCatalog(), fs, repo, registry, gate);
+    const useCase = userMarketplaceRemover(
+      syntheticNativeFamilyCatalog(),
+      fs,
+      repo,
+      registry,
+      gate
+    );
 
     await expect(useCase.execute(options())).rejects.toThrow(/host source reader unavailable/);
 
@@ -125,7 +131,7 @@ describe("user-scope tool targeted user marketplace removal", () => {
     fs.setFile(join(options.escape ? foreign : pluginDir, "skills/demo/SKILL.md"), "bytes");
     if (options.escape) fs.setSymlink(pluginDir, foreign);
     const useCase = userMarketplaceRemover(
-      syntheticNativeCatalog(),
+      syntheticNativeFamilyCatalog(),
       fs,
       repo,
       registry,

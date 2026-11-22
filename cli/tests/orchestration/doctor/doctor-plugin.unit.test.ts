@@ -21,7 +21,7 @@ import {
   SYNTHETIC_NATIVE_TOOL,
   SYNTHETIC_USER_PLUGINS,
   SYNTHETIC_USER_TOOL,
-  syntheticNativeCatalog,
+  syntheticNativeFamilyCatalog,
 } from "../../shared/testing/synthetic-native-tool.builder.js";
 import { checkRegistrationOver } from "../testing/build-check-registration.builder.js";
 
@@ -77,7 +77,7 @@ function makeManifestRepo(manifest: Manifest): ManifestRepository {
 function pluginCheck(fs: FileReader, manifest: Manifest): CheckPluginDrift {
   return new CheckPluginDrift(
     new LoadManifest(makeManifestRepo(manifest)),
-    new DetectPluginDrift(fs, syntheticNativeCatalog(), homedir)
+    new DetectPluginDrift(fs, syntheticNativeFamilyCatalog(), homedir)
   );
 }
 
@@ -90,10 +90,10 @@ function makeDoctorUseCase(fs: FileReader, manifest: Manifest): RunDoctor {
         tracked: new CheckTrackedFiles(loadManifest, fs),
         merge: new CheckMergeFiles(loadManifest, fs),
         references: new CheckFileReferences(loadManifest, fs),
-        layout: new CheckProjectLayout(loadManifest, fs, syntheticNativeCatalog()),
+        layout: new CheckProjectLayout(loadManifest, fs, syntheticNativeFamilyCatalog()),
         plugin: new CheckPluginDrift(
           loadManifest,
-          new DetectPluginDrift(fs, syntheticNativeCatalog(), homedir)
+          new DetectPluginDrift(fs, syntheticNativeFamilyCatalog(), homedir)
         ),
       },
       registration: checkRegistrationOver(
@@ -101,18 +101,18 @@ function makeDoctorUseCase(fs: FileReader, manifest: Manifest): RunDoctor {
         fs,
         new InMemoryMarketplaceRegistry(),
         () => false,
-        hostInspector(syntheticNativeCatalog(), {
+        hostInspector(syntheticNativeFamilyCatalog(), {
           fs: fs,
           pluginRegistries: new Map(),
           marketplaceRegistries: new Map(),
         }),
         () => "/user-cache",
         { get: () => "1.0.0" },
-        syntheticNativeCatalog()
+        syntheticNativeFamilyCatalog()
       ),
       authentication: { execute: async () => [] },
     },
-    syntheticNativeCatalog()
+    syntheticNativeFamilyCatalog()
   );
 }
 

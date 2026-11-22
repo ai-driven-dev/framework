@@ -23,7 +23,7 @@ import {
   SYNTHETIC_NATIVE_TOOL,
   SYNTHETIC_UPDATING_NATIVE_TOOL,
   SYNTHETIC_USER_TOOL,
-  syntheticNativeCatalog,
+  syntheticNativeFamilyCatalog,
 } from "../../shared/testing/synthetic-native-tool.builder.js";
 import { SYNTHETIC_IDE_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
 import { buildCheckRegistration } from "../testing/build-check-registration.builder.js";
@@ -77,14 +77,14 @@ async function issuesFor(
     fs,
     registry,
     (binary) => activators.get(binary)?.isAvailable() ?? false,
-    hostInspector(syntheticNativeCatalog(), {
+    hostInspector(syntheticNativeFamilyCatalog(), {
       fs: fs,
       pluginRegistries: new Map(),
       marketplaceRegistries: new Map(),
     }),
     () => "/user-cache",
     { get: () => "1.0.0" },
-    syntheticNativeCatalog()
+    syntheticNativeFamilyCatalog()
   ).execute({
     manifest,
     projectRoot: PROJECT_ROOT,
@@ -219,14 +219,14 @@ async function nativeIssuesFor(
     fs,
     registry,
     (binary) => activators.get(binary)?.isAvailable() ?? false,
-    hostInspector(syntheticNativeCatalog(), {
+    hostInspector(syntheticNativeFamilyCatalog(), {
       fs: fs,
       pluginRegistries: hostRegistries,
       marketplaceRegistries: new Map(),
     }),
     () => "/user-cache",
     { get: () => "1.0.0" },
-    syntheticNativeCatalog()
+    syntheticNativeFamilyCatalog()
   ).execute({
     manifest,
     projectRoot: PROJECT_ROOT,
@@ -389,11 +389,11 @@ describe("the tools whose built marketplaces are resolved", () => {
         declared: new InspectDeclaredMarketplaces(
           new InMemoryFileAdapter(),
           () => false,
-          syntheticNativeCatalog()
+          syntheticNativeFamilyCatalog()
         ),
         inspectHost: { execute: async () => ({ findings: [] }) },
       },
-      syntheticNativeCatalog()
+      syntheticNativeFamilyCatalog()
     );
 
     await check.execute({
@@ -427,7 +427,7 @@ describe("the hosts handed to the registry inspection", () => {
         declared: new InspectDeclaredMarketplaces(
           new InMemoryFileAdapter(),
           () => false,
-          syntheticNativeCatalog()
+          syntheticNativeFamilyCatalog()
         ),
         inspectHost: {
           execute: async ({ hosts }) => {
@@ -436,7 +436,7 @@ describe("the hosts handed to the registry inspection", () => {
           },
         },
       },
-      syntheticNativeCatalog()
+      syntheticNativeFamilyCatalog()
     );
 
     await check.execute({ projectRoot: PROJECT_ROOT, allowedIds: null, globalInstall: true });

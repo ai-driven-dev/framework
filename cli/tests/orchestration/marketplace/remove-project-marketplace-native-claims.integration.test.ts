@@ -21,7 +21,7 @@ import {
   SYNTHETIC_NATIVE_TOOL,
   SYNTHETIC_USER_PLUGINS,
   SYNTHETIC_USER_TOOL,
-  syntheticNativeCatalog,
+  syntheticNativeFamilyCatalog,
 } from "../../shared/testing/synthetic-native-tool.builder.js";
 import { projectMarketplaceRemover } from "../testing/project-marketplace-remover.builder.js";
 
@@ -105,7 +105,7 @@ async function fixture(options: { nativeMapping?: "absent" | "unrelated" } = {})
   );
   const fs = new InMemoryFileAdapter({}, ["/A", "/B"]);
   const useCase = projectMarketplaceRemover(
-    syntheticNativeCatalog(),
+    syntheticNativeFamilyCatalog(),
     new RemoveProjectPlugin(fs, () => "/home/dev", removalClaims(machineRepo, fs)),
     projectRepo,
     registry,
@@ -206,7 +206,7 @@ describe("project marketplace removal against machine native claims", () => {
       })
     );
     const useCase = projectMarketplaceRemover(
-      syntheticNativeCatalog(),
+      syntheticNativeFamilyCatalog(),
       new RemoveProjectPlugin(fs, () => "/home/dev", removalClaims(machineRepo, fs)),
       projectRepo,
       registry,
@@ -239,7 +239,7 @@ describe("project marketplace removal against machine native claims", () => {
   it("removes only the project catalogue when its project manifest is absent", async () => {
     const f = await fixture();
     const useCase = projectMarketplaceRemover(
-      syntheticNativeCatalog(),
+      syntheticNativeFamilyCatalog(),
       new RemoveProjectPlugin(f.fs, () => "/home/dev", removalClaims(f.machineRepo, f.fs)),
       new InMemoryManifestRepository(),
       f.registry,
@@ -283,7 +283,7 @@ describe("project marketplace removal against machine native claims", () => {
       plugin.withFiles(new Map([[`.${SYNTHETIC_NATIVE_TOOL}/skills/demo.md`, "abc"]]))
     );
     const useCase = projectMarketplaceRemover(
-      syntheticNativeCatalog(),
+      syntheticNativeFamilyCatalog(),
       new RemoveProjectPlugin(
         new RefusingFileAdapter(),
         () => "/home/dev",
@@ -304,7 +304,7 @@ describe("project marketplace removal against machine native claims", () => {
     const f = await fixture();
     const prompter = new ScriptedPrompter([{ type: "confirm", value: false }]);
     const useCase = projectMarketplaceRemover(
-      syntheticNativeCatalog(),
+      syntheticNativeFamilyCatalog(),
       new RemoveProjectPlugin(f.fs, () => "/home/dev", removalClaims(f.machineRepo, f.fs)),
       f.projectRepo,
       f.registry,
@@ -390,7 +390,7 @@ describe("project marketplace removal against machine native claims", () => {
     fs.setFile(ownedPath, "B's bytes");
     fs.setFile(ownedMcp, "B's MCP");
     const useCase = projectMarketplaceRemover(
-      syntheticNativeCatalog(),
+      syntheticNativeFamilyCatalog(),
       new RemoveProjectPlugin(fs, () => "/home/dev", removalClaims(machineRepo, fs)),
       projectRepo,
       registry,

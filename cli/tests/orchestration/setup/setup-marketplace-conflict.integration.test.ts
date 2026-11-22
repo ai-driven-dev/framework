@@ -25,7 +25,7 @@ import {
   SYNTHETIC_NATIVE_MARKETPLACE_FILE,
   SYNTHETIC_NATIVE_MARKETPLACE_REGISTRY,
   SYNTHETIC_NATIVE_TOOL,
-  syntheticNativeCatalog,
+  syntheticNativeFamilyCatalog,
 } from "../../shared/testing/synthetic-native-tool.builder.js";
 import { syntheticFlowTools } from "../../shared/testing/synthetic-tool-id.builder.js";
 import { askMarketplaceSource } from "../testing/ask-marketplace-source.builder.js";
@@ -60,7 +60,7 @@ function makeNoOpPluginInstallFromMarketplace(): PluginInstallFromMarketplace {
 /** A REAL `SyncSettings`, not the no-op double the other setup suites
  * substitute, behind a host registry already holding a different catalog under that name. */
 async function buildUseCaseWithConflict() {
-  const deps = await buildInstallationDeps({ tools: syntheticNativeCatalog() });
+  const deps = await buildInstallationDeps({ tools: syntheticNativeFamilyCatalog() });
   const prompter = new OverwritePrompter();
   const askSource = askMarketplaceSource(prompter, makeNoOpLatestResolver());
   const setupToolsUseCase = new InstallTools(
@@ -100,7 +100,7 @@ async function buildUseCaseWithConflict() {
   });
   const activator = new FakeHostActions({ available: true });
   const syncSettingsUseCase = marketplaceSync({
-    tools: syntheticNativeCatalog(),
+    tools: syntheticNativeFamilyCatalog(),
     fs: deps.fs,
     manifestRepo: deps.manifestRepo,
     marketplaceRegistry: deps.marketplaceRegistry,
@@ -121,7 +121,7 @@ async function buildUseCaseWithConflict() {
     new InMemoryEnvironment()
   );
   const useCase = runSetupOf({
-    tools: syntheticNativeCatalog(),
+    tools: syntheticNativeFamilyCatalog(),
     fs: deps.fs,
     manifestRepo: deps.manifestRepo,
     steps: {
@@ -137,7 +137,7 @@ async function buildUseCaseWithConflict() {
 
 function remoteFlow(aiTools: ToolId[]): SetupFlow {
   return new SetupFlow({
-    ...syntheticFlowTools(syntheticNativeCatalog()),
+    ...syntheticFlowTools(syntheticNativeFamilyCatalog()),
     supportsUserScopeActivation: () => true,
     projectRoot: PROJECT_ROOT,
     source: remoteFrameworkSource(),

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { NativeMarketplaceSourceReaderAdapter } from "../../../../src/contexts/host-registration/infrastructure/native-marketplace-source-reader-adapter.js";
-import { listContractOf } from "../../../shared/testing/list-command-contract.builder.js";
 import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { listContractOf } from "../testing/list-command-contract.builder.js";
 
 const spawn = vi.hoisted(() => vi.fn());
 vi.mock("node:child_process", () => ({ spawnSync: spawn }));

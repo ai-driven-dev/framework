@@ -13,7 +13,7 @@ import { saying } from "../../shared/testing/saying.builder.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
 import {
   SYNTHETIC_USER_TOOL,
-  syntheticNativeCatalog,
+  syntheticNativeFamilyCatalog,
 } from "../../shared/testing/synthetic-native-tool.builder.js";
 import {
   SYNTHETIC_TOOL,
@@ -111,9 +111,9 @@ describe("RemoveProjectMarketplace", () => {
   });
 
   it("removes a project marketplace's orphan projection without deleting shared user-scope files", async () => {
-    const { registry, manifestRepo, fs } = buildUseCase(syntheticNativeCatalog());
+    const { registry, manifestRepo, fs } = buildUseCase(syntheticNativeFamilyCatalog());
     const useCase = projectMarketplaceRemover(
-      syntheticNativeCatalog(),
+      syntheticNativeFamilyCatalog(),
       new RemoveProjectPlugin(fs, () => "/home/dev"),
       manifestRepo,
       registry,
@@ -162,9 +162,9 @@ describe("RemoveProjectMarketplace", () => {
   });
 
   it("removes a user-scope tool orphan's file under projectRoot, not the home plugins directory, when the manifest says scope: project", async () => {
-    const { registry, manifestRepo, fs } = buildUseCase(syntheticNativeCatalog());
+    const { registry, manifestRepo, fs } = buildUseCase(syntheticNativeFamilyCatalog());
     const useCase = projectMarketplaceRemover(
-      syntheticNativeCatalog(),
+      syntheticNativeFamilyCatalog(),
       new RemoveProjectPlugin(fs, () => "/home/dev"),
       manifestRepo,
       registry,

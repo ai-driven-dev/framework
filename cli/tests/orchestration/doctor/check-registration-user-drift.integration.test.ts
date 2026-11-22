@@ -14,7 +14,7 @@ import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-mark
 import {
   SYNTHETIC_NATIVE_MARKETPLACE_REGISTRY,
   SYNTHETIC_NATIVE_TOOL,
-  syntheticNativeCatalog,
+  syntheticNativeFamilyCatalog,
 } from "../../shared/testing/synthetic-native-tool.builder.js";
 import { buildCheckRegistration } from "../testing/build-check-registration.builder.js";
 
@@ -69,14 +69,14 @@ describe("CheckRegistration - user-scope marketplace source drift", () => {
       fs,
       registry,
       () => false,
-      hostInspector(syntheticNativeCatalog(), {
+      hostInspector(syntheticNativeFamilyCatalog(), {
         fs: fs,
         pluginRegistries: new Map(),
         marketplaceRegistries: new Map([[SYNTHETIC_NATIVE_TOOL, hostReader]]),
       }),
       () => USER_CACHE_ROOT,
       fakeVersion(CURRENT_VERSION),
-      syntheticNativeCatalog()
+      syntheticNativeFamilyCatalog()
     );
     return useCase.execute({
       manifest,

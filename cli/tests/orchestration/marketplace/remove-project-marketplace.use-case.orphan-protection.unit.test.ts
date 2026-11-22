@@ -14,7 +14,7 @@ import {
   SYNTHETIC_MCP_FILE,
   SYNTHETIC_MCP_TOOL,
   SYNTHETIC_USER_TOOL,
-  syntheticNativeCatalog,
+  syntheticNativeFamilyCatalog,
 } from "../../shared/testing/synthetic-native-tool.builder.js";
 import {
   buildUseCase,
@@ -68,7 +68,7 @@ describe("which plugins a removal orphans: what it protects", () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
     const useCase = projectMarketplaceRemover(
-      syntheticNativeCatalog(),
+      syntheticNativeFamilyCatalog(),
       new RemoveProjectPlugin(fs, () => "/home/dev", removalClaims(machineRepo, fs)),
       projectRepo,
       registry,
@@ -125,7 +125,7 @@ describe("which plugins a removal orphans: what it protects", () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
     const useCase = projectMarketplaceRemover(
-      syntheticNativeCatalog(),
+      syntheticNativeFamilyCatalog(),
       new RemoveProjectPlugin(fs, () => "/home/dev"),
       manifestRepo,
       registry,
@@ -183,7 +183,7 @@ describe("which plugins a removal orphans: what it protects", () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
     const useCase = projectMarketplaceRemover(
-      syntheticNativeCatalog(),
+      syntheticNativeFamilyCatalog(),
       new RemoveProjectPlugin(fs, () => "/home/dev"),
       manifestRepo,
       registry,
@@ -207,7 +207,7 @@ describe("which plugins a removal orphans: what it protects", () => {
   });
 
   it("unmerges only the orphan's contributed MCP server from the project", async () => {
-    const { useCase, registry, manifestRepo, fs } = buildUseCase(syntheticNativeCatalog());
+    const { useCase, registry, manifestRepo, fs } = buildUseCase(syntheticNativeFamilyCatalog());
     const manifest = aManifest()
       .withTool(SYNTHETIC_MCP_TOOL, [])
       .withPlugin(
@@ -267,7 +267,7 @@ describe("which plugins a removal orphans: what it protects", () => {
   });
 
   it("preflights every orphan before touching A when B's MCP contribution was edited", async () => {
-    const { useCase, registry, manifestRepo, fs } = buildUseCase(syntheticNativeCatalog());
+    const { useCase, registry, manifestRepo, fs } = buildUseCase(syntheticNativeFamilyCatalog());
     const manifest = Manifest.create();
     manifest.addTool(SYNTHETIC_MCP_TOOL, "1.0.0", []);
     for (const name of ["alpha", "beta"]) {

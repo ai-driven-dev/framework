@@ -179,7 +179,7 @@ const USER_CONFIG = defineAiTool({
 export const SYNTHETIC_USER_TOOL = USER_CONFIG.toolId;
 
 /** The native and user-scope synthetic tools, the plain synthetic tools and the synthetic IDE tool. */
-export function syntheticNativeCatalog(): ToolCatalog {
+export function syntheticNativeFamilyCatalog(): ToolCatalog {
   return new RegisteredToolCatalog([
     NATIVE_CONFIG,
     UPDATING_CONFIG,

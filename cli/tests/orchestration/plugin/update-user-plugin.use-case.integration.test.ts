@@ -27,7 +27,7 @@ import {
   SYNTHETIC_NATIVE_TOOL,
   SYNTHETIC_UPDATING_NATIVE_TOOL,
   SYNTHETIC_USER_TOOL,
-  syntheticNativeCatalog,
+  syntheticNativeFamilyCatalog,
 } from "../../shared/testing/synthetic-native-tool.builder.js";
 
 const copilot = SYNTHETIC_UPDATING_NATIVE_TOOL;
@@ -95,14 +95,17 @@ function fixture(
             new FixturePluginFetcher(),
             distribution
               ? { read: async () => distribution }
-              : new PluginDistributionReaderAdapter(fs, manifestProbesOf(syntheticNativeCatalog()))
+              : new PluginDistributionReaderAdapter(
+                  fs,
+                  manifestProbesOf(syntheticNativeFamilyCatalog())
+                )
           ),
           guard: userScopeFileGuard,
           builtDeps: fakeBuiltDeps(fs),
         }),
         logger,
       },
-      syntheticNativeCatalog()
+      syntheticNativeFamilyCatalog()
     ),
     new RefreshHostPlugin(
       new Map([[toolId, activator]]),

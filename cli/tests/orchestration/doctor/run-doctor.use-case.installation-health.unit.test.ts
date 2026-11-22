@@ -16,14 +16,14 @@ import { saying } from "../../shared/testing/saying.builder.js";
 import {
   SYNTHETIC_NATIVE_TOOL,
   SYNTHETIC_UPDATING_NATIVE_TOOL,
-  syntheticNativeCatalog,
+  syntheticNativeFamilyCatalog,
 } from "../../shared/testing/synthetic-native-tool.builder.js";
 import { SYNTHETIC_IDE_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
 import { buildRunDoctor } from "../testing/build-run-doctor.builder.js";
 
 function withCodexActivator() {
   return {
-    tools: syntheticNativeCatalog(),
+    tools: syntheticNativeFamilyCatalog(),
     nativePluginActivators: new Map([[SYNTHETIC_UPDATING_NATIVE_TOOL, new FakeHostActions()]]),
   };
 }

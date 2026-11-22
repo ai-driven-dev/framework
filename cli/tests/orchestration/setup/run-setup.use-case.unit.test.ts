@@ -222,8 +222,8 @@ describe("setup without TTY", () => {
       );
       expect(result.kind).toBe("initialized");
       if (result.kind === "initialized") {
-        const claudeResult = result.install.results.find((r) => r.toolId === SYNTHETIC_TOOL);
-        expect(claudeResult).toBeDefined();
+        const firstToolResult = result.install.results.find((r) => r.toolId === SYNTHETIC_TOOL);
+        expect(firstToolResult).toBeDefined();
       }
     });
   });
@@ -300,9 +300,9 @@ describe("setup without TTY", () => {
 
       expect(result.kind).toBe("initialized");
       if (result.kind === "initialized") {
-        const opencodeTool = result.install.results.find((r) => r.toolId === SECOND_SYNTHETIC_TOOL);
-        expect(opencodeTool).toBeDefined();
-        expect(opencodeTool?.skipped).toBe(false);
+        const secondToolResult = result.install.results.find((r) => r.toolId === SECOND_SYNTHETIC_TOOL);
+        expect(secondToolResult).toBeDefined();
+        expect(secondToolResult?.skipped).toBe(false);
       }
     });
 

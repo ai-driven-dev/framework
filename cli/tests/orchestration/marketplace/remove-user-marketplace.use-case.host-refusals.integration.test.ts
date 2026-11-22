@@ -7,7 +7,7 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import {
   SYNTHETIC_NATIVE_TOOL,
-  syntheticNativeCatalog,
+  syntheticNativeFamilyCatalog,
 } from "../../shared/testing/synthetic-native-tool.builder.js";
 import {
   ALIAS,
@@ -25,7 +25,7 @@ for (const toolId of [SYNTHETIC_NATIVE_TOOL]) {
     const fixture = (
       refs: Parameters<typeof nativeFixture>[1],
       opts: Omit<NativeFixtureOptions, "tools"> = {}
-    ) => nativeFixture(toolId, refs, { ...opts, tools: syntheticNativeCatalog() });
+    ) => nativeFixture(toolId, refs, { ...opts, tools: syntheticNativeFamilyCatalog() });
 
     const enabled = () => new Map([[REF, { enabled: true, scope: "user" as const }]]);
 
@@ -33,7 +33,7 @@ for (const toolId of [SYNTHETIC_NATIVE_TOOL]) {
       const f = await fixture(enabled());
       const absent = new InMemoryManifestRepository();
       const useCase = userMarketplaceRemover(
-        syntheticNativeCatalog(),
+        syntheticNativeFamilyCatalog(),
         new InMemoryFileAdapter(),
         absent,
         f.registry,
@@ -72,7 +72,7 @@ for (const toolId of [SYNTHETIC_NATIVE_TOOL]) {
         new Map([[toolId, sourceReader()]])
       );
       const useCase = userMarketplaceRemover(
-        syntheticNativeCatalog(),
+        syntheticNativeFamilyCatalog(),
         new InMemoryFileAdapter(),
         f.repo,
         f.registry,
@@ -146,7 +146,7 @@ for (const toolId of [SYNTHETIC_NATIVE_TOOL]) {
         updateVersion: (root, key, version) => f.registry.updateVersion(root, key, version),
       };
       const useCase = userMarketplaceRemover(
-        syntheticNativeCatalog(),
+        syntheticNativeFamilyCatalog(),
         new InMemoryFileAdapter(),
         {
           path: f.repo.path,
@@ -154,7 +154,9 @@ for (const toolId of [SYNTHETIC_NATIVE_TOOL]) {
             const current = await f.repo.load();
             return current === null
               ? null
-              : Manifest.fromJSON(current.toJSON(), (raw) => syntheticNativeCatalog().toolId(raw));
+              : Manifest.fromJSON(current.toJSON(), (raw) =>
+                  syntheticNativeFamilyCatalog().toolId(raw)
+                );
           },
           loadIfReadable: async () => null,
           save: (manifest) => f.repo.save(manifest),

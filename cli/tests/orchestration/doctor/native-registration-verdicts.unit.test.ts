@@ -13,7 +13,7 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import {
   SYNTHETIC_UPDATING_NATIVE_TOOL,
-  syntheticNativeCatalog,
+  syntheticNativeFamilyCatalog,
 } from "../../shared/testing/synthetic-native-tool.builder.js";
 import { buildCheckRegistration } from "../testing/build-check-registration.builder.js";
 
@@ -117,7 +117,7 @@ function hostOver(registry: HostPluginRegistryReading, sources?: HostMarketplace
 
 const refreshOf = (registry: HostPluginRegistryReading, sources?: HostMarketplaceSources) =>
   new RefreshHostPlugin(...hostOver(registry, sources)).execute({
-    tool: syntheticNativeCatalog().aiProfile(tool),
+    tool: syntheticNativeFamilyCatalog().aiProfile(tool),
     ref: REF,
     projectRoot: "/A",
     registrations,
@@ -131,14 +131,14 @@ async function doctorSays(registry: HostPluginRegistryReading): Promise<string> 
     new InMemoryFileAdapter(),
     new InMemoryMarketplaceRegistry(),
     () => false,
-    hostInspector(syntheticNativeCatalog(), {
+    hostInspector(syntheticNativeFamilyCatalog(), {
       fs: new InMemoryFileAdapter(),
       pluginRegistries: new Map([[tool, new FakeHostPluginRegistry(registry)]]),
       marketplaceRegistries: new Map(),
     }),
     () => "/user-cache",
     { get: () => "1.0.0" },
-    syntheticNativeCatalog()
+    syntheticNativeFamilyCatalog()
   ).execute({ manifest, projectRoot: "/A", allowedIds: null });
   return issues.length === 0 ? "none" : issues.map((i) => `${i.severity}: ${i.message}`).join("\n");
 }
@@ -159,7 +159,7 @@ describe("registration verdicts across intents", () => {
         ...hostOver(row.registry, ownedSource(provenance))
       );
       const attempt = gate.planMarketplaceRemoval(
-        syntheticNativeCatalog().aiProfile(tool),
+        syntheticNativeFamilyCatalog().aiProfile(tool),
         registrations,
         {
           registration: registrations.marketplaces[0],
@@ -192,11 +192,15 @@ describe("registration verdicts across intents", () => {
           ? refreshOf(registry, ownedSource(entry))
           : new NativeHostRegistrationGate(
               ...hostOver(registry, ownedSource(entry))
-            ).planMarketplaceRemoval(syntheticNativeCatalog().aiProfile(tool), registrations, {
-              registration: registrations.marketplaces[0],
-              projectRoot: "/A",
-              claimedRefs: [REF],
-            });
+            ).planMarketplaceRemoval(
+              syntheticNativeFamilyCatalog().aiProfile(tool),
+              registrations,
+              {
+                registration: registrations.marketplaces[0],
+                projectRoot: "/A",
+                claimedRefs: [REF],
+              }
+            );
       expect(await outcomeOf(attempt)).toBe(refused);
     });
   });

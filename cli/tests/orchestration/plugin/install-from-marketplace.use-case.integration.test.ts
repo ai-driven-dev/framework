@@ -11,7 +11,7 @@ import { loadDistributionOf } from "../../shared/testing/load-distribution.build
 import { manifestProbesOf } from "../../shared/testing/manifest-probes-of.builder.js";
 import {
   SYNTHETIC_NATIVE_TOOL,
-  syntheticNativeCatalog,
+  syntheticNativeFamilyCatalog,
 } from "../../shared/testing/synthetic-native-tool.builder.js";
 import {
   type AddPluginFor,
@@ -30,19 +30,22 @@ const addPluginOver: AddPluginFor = (deps, registry) =>
     {
       loadDistribution: loadDistributionOf(
         deps.pluginFetcher,
-        new PluginDistributionReaderAdapter(deps.fs, manifestProbesOf(syntheticNativeCatalog()))
+        new PluginDistributionReaderAdapter(
+          deps.fs,
+          manifestProbesOf(syntheticNativeFamilyCatalog())
+        )
       ),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
     },
-    syntheticNativeCatalog()
+    syntheticNativeFamilyCatalog()
   );
 
 const buildUseCase = (
   options: Omit<Parameters<typeof buildUseCaseWith>[1], "tools" | "claude"> = {}
 ) =>
   buildUseCaseWith(addPluginOver, {
-    tools: syntheticNativeCatalog(),
+    tools: syntheticNativeFamilyCatalog(),
     claude: SYNTHETIC_NATIVE_TOOL,
     ...options,
   });

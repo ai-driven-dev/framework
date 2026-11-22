@@ -13,7 +13,7 @@ import {
   SYNTHETIC_NATIVE_MARKETPLACE_REGISTRY,
   SYNTHETIC_NATIVE_TOOL,
   SYNTHETIC_UPDATING_NATIVE_TOOL,
-  syntheticNativeCatalog,
+  syntheticNativeFamilyCatalog,
 } from "../../shared/testing/synthetic-native-tool.builder.js";
 import { buildCheckRegistration } from "../testing/build-check-registration.builder.js";
 
@@ -122,14 +122,14 @@ async function issuesFor(
     fs,
     registry,
     () => false,
-    hostInspector(syntheticNativeCatalog(), {
+    hostInspector(syntheticNativeFamilyCatalog(), {
       fs: fs,
       pluginRegistries: new Map(),
       marketplaceRegistries: new Map([[SYNTHETIC_NATIVE_TOOL, hostReader]]),
     }),
     () => "/user-cache",
     fakeVersion("1.0.0"),
-    syntheticNativeCatalog()
+    syntheticNativeFamilyCatalog()
   );
   const issues = await useCase.execute({
     manifest,
@@ -298,14 +298,14 @@ describe("CheckRegistration - marketplace source conflicts", () => {
       fs,
       registry,
       () => false,
-      hostInspector(syntheticNativeCatalog(), {
+      hostInspector(syntheticNativeFamilyCatalog(), {
         fs: fs,
         pluginRegistries: new Map(),
         marketplaceRegistries: new Map(),
       }),
       () => "/user-cache",
       fakeVersion("1.0.0"),
-      syntheticNativeCatalog()
+      syntheticNativeFamilyCatalog()
     );
 
     await expect(
@@ -318,11 +318,11 @@ describe("CheckRegistration - marketplace source conflicts", () => {
   });
 
   it("reports nothing for a tool whose profile declares no marketplace registry, whatever a reader would answer", async () => {
-    const codexCatalog = ".agents/plugins/marketplace.json";
+    const otherCatalog = ".agents/plugins/marketplace.json";
     const fs = new InMemoryFileAdapter({
-      [`${resolve(builtMarketplaceDir(PROJECT_ROOT, NAME, SYNTHETIC_UPDATING_NATIVE_TOOL))}/${codexCatalog}`]:
+      [`${resolve(builtMarketplaceDir(PROJECT_ROOT, NAME, SYNTHETIC_UPDATING_NATIVE_TOOL))}/${otherCatalog}`]:
         JSON.stringify({ name: NAME, plugins: [{ name: "sample-plugin" }] }),
-      [`/other/src/${codexCatalog}`]: JSON.stringify({
+      [`/other/src/${otherCatalog}`]: JSON.stringify({
         name: NAME,
         plugins: [{ name: "different-plugin" }],
       }),
@@ -347,14 +347,14 @@ describe("CheckRegistration - marketplace source conflicts", () => {
       fs,
       registry,
       () => false,
-      hostInspector(syntheticNativeCatalog(), {
+      hostInspector(syntheticNativeFamilyCatalog(), {
         fs: fs,
         pluginRegistries: new Map(),
         marketplaceRegistries: new Map([[SYNTHETIC_UPDATING_NATIVE_TOOL, hostReader]]),
       }),
       () => "/user-cache",
       fakeVersion("1.0.0"),
-      syntheticNativeCatalog()
+      syntheticNativeFamilyCatalog()
     );
 
     const issues = await useCase.execute({
@@ -405,14 +405,14 @@ describe("CheckRegistration - marketplace source conflicts", () => {
       fs,
       registry,
       () => false,
-      hostInspector(syntheticNativeCatalog(), {
+      hostInspector(syntheticNativeFamilyCatalog(), {
         fs: fs,
         pluginRegistries: new Map(),
         marketplaceRegistries: new Map([[SYNTHETIC_NATIVE_TOOL, hostReader]]),
       }),
       () => "/user-cache",
       fakeVersion("1.0.0"),
-      syntheticNativeCatalog()
+      syntheticNativeFamilyCatalog()
     );
 
     await useCase.execute({
