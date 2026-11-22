@@ -1,5 +1,7 @@
+import { join } from "node:path";
 import { RegisteredToolCatalog } from "../../../src/contexts/tools/application/registered-tool-catalog.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
+import { sharedMarketplaceKey } from "../../../src/contexts/tools/domain/marketplace-entry.js";
 import {
   defineAiTool,
   defineIdeTool,
@@ -78,6 +80,18 @@ export function syntheticNativeCatalog(id: string): ToolCatalog {
             upgradeVerb: "upgrade",
             enableVerb: "add",
             disableVerb: "remove",
+            marketplaceRegistry: {
+              location: (home) => join(home, `.${id}`, "known_marketplaces.json"),
+              layout: "install-locations-by-name",
+            },
+            marketplaceSources: { from: "marketplace-registry" },
+          },
+          marketplaceSettings: {
+            settingsPath: `.${id}/settings.json`,
+            settingsKey: "extraKnownMarketplaces",
+            marketplacesSettingsPath: `.${id}/settings.local.json`,
+            enabledPluginsKey: "enabledPlugins",
+            toEntryKey: sharedMarketplaceKey,
           },
         }),
         manifest: manifestSection({ manifestRelativePath: "plugin.json", pluginRootToken: "." }),

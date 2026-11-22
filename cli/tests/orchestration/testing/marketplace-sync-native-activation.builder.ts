@@ -17,10 +17,10 @@ import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.j
 import { FakeHostMarketplaceSources } from "./fake-host-marketplace-sources.fake.js";
 import { FakeHostPluginRegistry } from "./fake-host-plugin-registry.fake.js";
 
-/** The catalog and the claude id a scenario runs against, handed in by the test. */
+/** The catalog and the tool id a scenario runs against, handed in by the test. */
 export interface NativeActivationHost {
   readonly tools: ToolCatalog;
-  readonly claude: AiToolId;
+  readonly tool: AiToolId;
 }
 
 export const PROJECT_ROOT = "/test-project";
@@ -38,13 +38,13 @@ export function marketplace(): Marketplace {
 }
 
 function manifestWithPluginOf(
-  { claude }: NativeActivationHost,
+  { tool }: NativeActivationHost,
   marketplace: string = MARKETPLACE
 ): InMemoryManifestRepository {
   const manifest = Manifest.create();
-  manifest.addTool(claude, "test", []);
+  manifest.addTool(tool, "test", []);
   manifest.addPlugin(
-    claude,
+    tool,
     RecordedPlugin.fromMetadata({
       name: PLUGIN,
       version: "1.0.0",
@@ -58,10 +58,10 @@ function manifestWithPluginOf(
 }
 
 /** An unreadable built catalog is a hard failure (`UnreadableBuiltCatalogError`), so this
- * fixture must leave a readable one where `fakeEnsureBuiltMarketplace()` resolves "claude". */
-export function seededBuiltCatalog(): InMemoryFileAdapter {
+ * fixture must leave a readable one where `fakeEnsureBuiltMarketplace()` resolves the tool. */
+export function seededBuiltCatalog(tool: AiToolId): InMemoryFileAdapter {
   return new InMemoryFileAdapter({
-    "/built/claude/.claude-plugin/marketplace.json": JSON.stringify({
+    [`/built/${tool}/.plugin/marketplace.json`]: JSON.stringify({
       name: MARKETPLACE,
       version: "1.0.0",
       plugins: [{ name: PLUGIN }],
@@ -69,12 +69,12 @@ export function seededBuiltCatalog(): InMemoryFileAdapter {
   });
 }
 
-function readableHostPluginsOf({ claude }: NativeActivationHost, refs: readonly string[] = []) {
+function readableHostPluginsOf({ tool }: NativeActivationHost, refs: readonly string[] = []) {
   return new Map([
     [
-      claude,
+      tool,
       new FakeHostPluginRegistry({
-        location: "/home/dev/.claude/plugins/installed_plugins.json",
+        location: "/home/dev/.host/plugins/installed_plugins.json",
         refs: new Map(refs.map((ref) => [ref, { enabled: true }])),
       }),
     ],
@@ -87,15 +87,15 @@ interface NativeSourceSetup {
   readonly initial?: ReadonlyMap<string, { kind: "registry"; source: string } | null>;
 }
 
-function nativeSourceOf({ claude }: NativeActivationHost, setup: NativeSourceSetup) {
+function nativeSourceOf({ tool }: NativeActivationHost, setup: NativeSourceSetup) {
   const { activator, name = MARKETPLACE, initial = new Map() } = setup;
   return new Map([
     [
-      claude,
+      tool,
       new FakeHostMarketplaceSources(
         activator,
         "registry",
-        (path) => (path === "/built/claude" ? name : undefined),
+        (path) => (path === `/built/${tool}` ? name : undefined),
         initial
       ),
     ],
@@ -103,14 +103,14 @@ function nativeSourceOf({ claude }: NativeActivationHost, setup: NativeSourceSet
 }
 
 function ownedMachineCatalogOf(
-  { claude }: NativeActivationHost,
+  { tool }: NativeActivationHost,
   entry: { readonly hostName: string; readonly source: string }
 ): InMemoryManifestRepository {
   const { hostName, source } = entry;
   const machine = Manifest.create();
-  machine.addTool(claude, "test", []);
-  machine.setNativeRegistrations(claude, {
-    binary: "claude",
+  machine.addTool(tool, "test", []);
+  machine.setNativeRegistrations(tool, {
+    binary: tool,
     marketplaces: [{ alias: MARKETPLACE, hostName, provenance: { kind: "registry", source } }],
     pluginRefs: [],
     pluginClaims: [],
@@ -123,9 +123,9 @@ function buildSyncOf(
   activator: FakeHostActions,
   pluginMarketplace?: string
 ) {
-  const { claude } = host;
+  const { tool } = host;
   const registry = new InMemoryMarketplaceRegistry();
-  const fs = seededBuiltCatalog();
+  const fs = seededBuiltCatalog(tool);
   const manifestRepo = manifestWithPluginOf(host, pluginMarketplace);
   return {
     registry,
@@ -137,7 +137,7 @@ function buildSyncOf(
       manifestRepo,
       marketplaceRegistry: registry,
       logger: new CapturingLogger(),
-      activators: new Map([[claude, activator]]),
+      activators: new Map([[tool, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       hostPluginRegistries: readableHostPluginsOf(host),
       nativeSources: nativeSourceOf(host, { activator }),
@@ -145,12 +145,14 @@ function buildSyncOf(
   };
 }
 
-export const SETTINGS_PATH = ".claude/settings.json";
+export function settingsPathOf(tool: AiToolId): string {
+  return `.${tool}/settings.json`;
+}
 
 /** `resolve`, exactly as `syncMarketplacesFile` does: on Windows the production key is
- * `C:\\test-project\\.claude\\settings.json`, which a `/`-joined literal never addresses. */
-export function settingsPathIn(projectRoot: string): string {
-  return resolve(projectRoot, SETTINGS_PATH);
+ * the settings path under `C:\\test-project`, which a `/`-joined literal never addresses. */
+export function settingsPathIn(projectRoot: string, tool: AiToolId): string {
+  return resolve(projectRoot, settingsPathOf(tool));
 }
 
 /** The host's own CLI writes its `marketplace add` and `plugin enable` results into the very
@@ -190,7 +192,7 @@ export class ActivatorThatWritesSettings extends FakeHostActions {
 
 export function hostReadingOf(refs: readonly string[], enabled = true): HostPluginRegistryReading {
   return {
-    location: "/home/dev/.claude/plugins/installed_plugins.json",
+    location: "/home/dev/.host/plugins/installed_plugins.json",
     refs: new Map(refs.map((ref) => [ref, { enabled }])),
   };
 }
@@ -203,21 +205,21 @@ function buildSyncReadingHostOf(
     readonly catalogOwned: boolean;
   }
 ) {
-  const { claude } = host;
+  const { tool } = host;
   const { activator, hostRegistry, catalogOwned } = reading;
   const registry = new InMemoryMarketplaceRegistry();
   const manifestRepo = manifestWithPluginOf(host);
   const logger = new CapturingLogger();
   const machine = catalogOwned ? Manifest.create() : undefined;
   if (machine !== undefined) {
-    machine.addTool(claude, "test", []);
-    machine.setNativeRegistrations(claude, {
-      binary: "claude",
+    machine.addTool(tool, "test", []);
+    machine.setNativeRegistrations(tool, {
+      binary: tool,
       marketplaces: [
         {
           alias: MARKETPLACE,
           hostName: MARKETPLACE,
-          provenance: { kind: "registry", source: "/built/claude" },
+          provenance: { kind: "registry", source: `/built/${tool}` },
         },
       ],
       pluginRefs: [],
@@ -226,28 +228,28 @@ function buildSyncReadingHostOf(
   }
   const useCase = marketplaceSync({
     tools: host.tools,
-    fs: seededBuiltCatalog(),
+    fs: seededBuiltCatalog(tool),
     manifestRepo,
     marketplaceRegistry: registry,
     logger,
-    activators: new Map([[claude, activator]]),
+    activators: new Map([[tool, activator]]),
     ensureBuilt: fakeEnsureBuiltMarketplace(),
-    hostPluginRegistries: new Map([[claude, hostRegistry]]),
+    hostPluginRegistries: new Map([[tool, hostRegistry]]),
     userManifestRepo: machine === undefined ? undefined : new InMemoryManifestRepository(machine),
     nativeSources: nativeSourceOf(host, {
       activator,
       initial: catalogOwned
-        ? new Map([[MARKETPLACE, { kind: "registry", source: "/built/claude" }]])
+        ? new Map([[MARKETPLACE, { kind: "registry", source: `/built/${tool}` }]])
         : new Map(),
     }),
   });
   return { useCase, registry, manifestRepo, logger };
 }
 
-/** The scenario's builders, bound to the catalog and the claude id its test names. */
+/** The scenario's builders, bound to the catalog and the tool id its test names. */
 export function nativeActivationOf(host: NativeActivationHost) {
   return {
-    claude: host.claude,
+    tool: host.tool,
     manifestWithPlugin: (marketplace?: string) => manifestWithPluginOf(host, marketplace),
     readableHostPlugins: (refs?: readonly string[]) => readableHostPluginsOf(host, refs),
     nativeSource: (

@@ -14,7 +14,10 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_TOOL,
+  syntheticNativeCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import { buildCheckRegistration } from "../testing/build-check-registration.builder.js";
 import {
   marketplace,
@@ -22,9 +25,10 @@ import {
   PROJECT_ROOT,
 } from "../testing/marketplace-sync-native-activation.builder.js";
 
-const { buildSync, claude, nativeSource, readableHostPlugins } = nativeActivationOf({
-  tools: registeredTools(),
-  claude: TOOL.claude,
+const tool = SYNTHETIC_TOOL;
+const { buildSync, nativeSource, readableHostPlugins } = nativeActivationOf({
+  tools: syntheticNativeCatalog(tool),
+  tool,
 });
 
 describe("native activation: recorded refs", () => {
@@ -36,7 +40,7 @@ describe("native activation: recorded refs", () => {
 
       async read(): Promise<HostPluginRegistryReading> {
         return {
-          location: "/home/dev/.claude/plugins/installed_plugins.json",
+          location: "/home/dev/.host/plugins/installed_plugins.json",
           refs: new Map(this.activator.enabledPlugins.map((ref) => [ref, { enabled: true }])),
         };
       }
@@ -49,15 +53,15 @@ describe("native activation: recorded refs", () => {
       const doctorRegistration = buildCheckRegistration(
         fs,
         registry,
-        (binary) => binary === claude && activator.isAvailable(),
-        hostInspector(registeredTools(), {
+        (binary) => binary === tool && activator.isAvailable(),
+        hostInspector(syntheticNativeCatalog(tool), {
           fs: fs,
-          pluginRegistries: new Map([[claude, new RegistryBoundToActivator(activator)]]),
+          pluginRegistries: new Map([[tool, new RegistryBoundToActivator(activator)]]),
           marketplaceRegistries: new Map(),
         }),
         () => "/user-cache",
         { get: () => "1.0.0" },
-        registeredTools()
+        syntheticNativeCatalog(tool)
       );
       // `SyncSettings.execute` mutates the loaded manifest in place, so one
       // load kept across both doctor calls sees the sync that runs in between.
@@ -108,16 +112,16 @@ describe("native activation: recorded refs", () => {
     function buildLiveSync(activator: FakeHostActions) {
       const registry = new InMemoryMarketplaceRegistry();
       const fs = new InMemoryFileAdapter({
-        "/built/claude/.claude-plugin/marketplace.json": JSON.stringify({
+        [`/built/${tool}/.plugin/marketplace.json`]: JSON.stringify({
           name: LIVE_MARKETPLACE,
           version: "1.0.0",
           plugins: [{ name: LIVE_PLUGIN }],
         }),
       });
       const manifest = Manifest.create();
-      manifest.addTool(claude, "test", []);
+      manifest.addTool(tool, "test", []);
       manifest.addPlugin(
-        claude,
+        tool,
         RecordedPlugin.fromMetadata({
           name: LIVE_PLUGIN,
           version: "1.0.0",
@@ -129,12 +133,12 @@ describe("native activation: recorded refs", () => {
       );
       const manifestRepo = new InMemoryManifestRepository(manifest);
       const useCase = marketplaceSync({
-        tools: registeredTools(),
+        tools: syntheticNativeCatalog(tool),
         fs,
         manifestRepo,
         marketplaceRegistry: registry,
         logger: new CapturingLogger(),
-        activators: new Map([[claude, activator]]),
+        activators: new Map([[tool, activator]]),
         ensureBuilt: fakeEnsureBuiltMarketplace(),
         hostPluginRegistries: readableHostPlugins(),
         nativeSources: nativeSource(activator, LIVE_MARKETPLACE),
@@ -147,8 +151,8 @@ describe("native activation: recorded refs", () => {
       const { useCase, registry, manifestRepo } = buildLiveSync(activator);
       await registry.save(PROJECT_ROOT, liveMarketplace());
       const staleManifest = await manifestRepo.load();
-      staleManifest?.setNativeRegistrations(claude, {
-        binary: "claude",
+      staleManifest?.setNativeRegistrations(tool, {
+        binary: tool,
         marketplaces: [{ alias: "market-dead", hostName: "host-dead" }],
         pluginRefs: ["plugin-dead@host-dead"],
       });
@@ -157,7 +161,7 @@ describe("native activation: recorded refs", () => {
       // Unnarrowed - no `marketplaceNames`, the shape `sync` and `setup` both run.
       await useCase.execute({ projectRoot: PROJECT_ROOT });
 
-      const recorded = (await manifestRepo.load())?.getNativeRegistrations(claude);
+      const recorded = (await manifestRepo.load())?.getNativeRegistrations(tool);
       expect(recorded?.pluginRefs).not.toContain("plugin-dead@host-dead");
       expect(recorded?.marketplaces).not.toContainEqual({
         alias: "market-dead",
@@ -198,16 +202,16 @@ describe("native activation: recorded refs", () => {
       const activator = new FakeHostActions({ available: true });
       const registry = new InMemoryMarketplaceRegistry();
       const fs = new InMemoryFileAdapter({
-        "/built/by-alias/shared/.claude-plugin/marketplace.json": JSON.stringify({
+        "/built/by-alias/shared/.plugin/marketplace.json": JSON.stringify({
           name: SHARED_HOST_NAME,
           version: "1.0.0",
           plugins: [{ name: PLUGIN_X }, { name: PLUGIN_Y }],
         }),
       });
       const manifest = Manifest.create();
-      manifest.addTool(claude, "test", []);
+      manifest.addTool(tool, "test", []);
       manifest.addPlugin(
-        claude,
+        tool,
         RecordedPlugin.fromMetadata({
           name: PLUGIN_X,
           version: "1.0.0",
@@ -218,7 +222,7 @@ describe("native activation: recorded refs", () => {
         })
       );
       manifest.addPlugin(
-        claude,
+        tool,
         RecordedPlugin.fromMetadata({
           name: PLUGIN_Y,
           version: "1.0.0",
@@ -230,17 +234,17 @@ describe("native activation: recorded refs", () => {
       );
       const manifestRepo = new InMemoryManifestRepository(manifest);
       const useCase = marketplaceSync({
-        tools: registeredTools(),
+        tools: syntheticNativeCatalog(tool),
         fs,
         manifestRepo,
         marketplaceRegistry: registry,
         logger: new CapturingLogger(),
-        activators: new Map([[claude, activator]]),
+        activators: new Map([[tool, activator]]),
         ensureBuilt: ensureBuiltSharedCatalog(),
         hostPluginRegistries: readableHostPlugins(),
         nativeSources: new Map([
           [
-            claude,
+            tool,
             new FakeHostMarketplaceSources(
               activator,
               "registry",
@@ -254,7 +258,7 @@ describe("native activation: recorded refs", () => {
       await registry.save(PROJECT_ROOT, aliasMarketplace(ALIAS_Y));
 
       await useCase.execute({ projectRoot: PROJECT_ROOT });
-      const beforeNarrow = (await manifestRepo.load())?.getNativeRegistrations(claude);
+      const beforeNarrow = (await manifestRepo.load())?.getNativeRegistrations(tool);
       expect(beforeNarrow?.pluginRefs, "both refs recorded before the narrowed run").toEqual(
         expect.arrayContaining([
           `${PLUGIN_X}@${SHARED_HOST_NAME}`,
@@ -267,7 +271,7 @@ describe("native activation: recorded refs", () => {
         marketplaceNames: [ALIAS_X],
       });
 
-      const recorded = (await manifestRepo.load())?.getNativeRegistrations(claude);
+      const recorded = (await manifestRepo.load())?.getNativeRegistrations(tool);
       expect(recorded?.pluginRefs).toContain(`${PLUGIN_Y}@${SHARED_HOST_NAME}`);
       expect(recorded?.marketplaces).toContainEqual({
         alias: ALIAS_Y,
