@@ -8,7 +8,10 @@ import { aManifest } from "../../testing/manifest.builder.js";
 describe("RecordMachineClaims", () => {
   it("changes nothing without a machine manifest to write to", async () => {
     const record = new RecordMachineClaims(
-      { fs: new InMemoryFileAdapter({}) },
+      {
+        fs: new InMemoryFileAdapter({}),
+        mergeClaims: registrationRecordRules.mergeCatalogueClaims,
+      },
       registeredCatalog()
     );
 
@@ -19,7 +22,6 @@ describe("RecordMachineClaims", () => {
         outcomes: new Map(),
         marketplaces: [],
         scope: "user",
-        mergeClaims: registrationRecordRules.mergeCatalogueClaims,
       })
     ).resolves.toBe(false);
   });

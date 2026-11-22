@@ -31,7 +31,7 @@ export interface SyncSettingsDeps {
   readonly activateNativeTools: ActivateNativeTools;
   readonly recordActivation: RecordActivation;
   readonly sharedSource: SharedFrameworkSource;
-  readonly records: Pick<RegistrationRecordRules, "afterActivation" | "mergeCatalogueClaims">;
+  readonly records: Pick<RegistrationRecordRules, "afterActivation">;
 }
 
 function resultOf(activation: ActivationRecording["activation"]): SyncSettingsResult {
@@ -151,7 +151,6 @@ export class SyncSettings {
       marketplaces,
       scope,
       projectRoot: scope === "project" ? projectRoot : undefined,
-      mergeClaims: this.deps.records.mergeCatalogueClaims,
     });
     if (options.recreateFrameworkIfMissing === true && scope === "project") {
       await this.deps.sharedSource.execute({

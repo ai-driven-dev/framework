@@ -7,6 +7,7 @@ import type {
   MarketplaceRecords,
   PurgeMarketplacePlugins,
 } from "../../contexts/installation/application/marketplace/purge-marketplace-plugins.use-case.js";
+import type { RecordClaimRules } from "../../contexts/machine-claims/contract/record-claim-rules.js";
 import type { Scope } from "../../shared/domain/scope.js";
 
 export interface RemoveUserMarketplaceRequest {
@@ -22,10 +23,8 @@ export interface RemoveUserMarketplaceDeps {
   readonly remove: Pick<RemoveMarketplace, "execute">;
   readonly hostGate: Pick<NativeHostRegistrationGate, "planMarketplaceRemoval">;
   readonly home: string;
-  readonly records: Pick<
-    RegistrationRecordRules,
-    "marketplaceOf" | "claimsOnMarketplace" | "withoutMarketplace"
-  >;
+  readonly records: Pick<RegistrationRecordRules, "marketplaceOf"> &
+    Pick<RecordClaimRules, "claimsOnMarketplace" | "withoutMarketplace">;
 }
 
 type HostRemovalPlan = Awaited<ReturnType<NativeHostRegistrationGate["planMarketplaceRemoval"]>>;

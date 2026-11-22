@@ -34,9 +34,6 @@ export interface DependentClaim extends RecordedClaim {
   readonly dependents: readonly string[];
 }
 
-/** The record with its claims list always written, as the manifest rewrites it. */
-type WithClaims<R> = R & { readonly pluginClaims: readonly RecordedClaim[] };
-
 interface RegistrationPreview {
   readonly binary: string;
   readonly marketplaceCount: number;
@@ -119,16 +116,6 @@ const hostNameOf = (
   alias: string | undefined
 ): string | undefined => marketplaceOf(record, alias)?.hostName;
 
-/** The claims on the refs sitting on the host name the alias was registered under. */
-export function claimsOnMarketplace<Claim extends RecordedClaim>(
-  record: RegistrationRecordData & { readonly pluginClaims?: readonly Claim[] },
-  alias: string
-): readonly Claim[] {
-  const hostName = hostNameOf(record, alias);
-  if (hostName === undefined) return [];
-  return (record.pluginClaims ?? []).filter((claim) => isRefOnHost(claim.ref, hostName));
-}
-
 /**
  * The ref a plugin has on the host, `undefined` when nothing was recorded for the alias.
  * Limit: a plugin without a marketplace has no alias to look up and so no ref; only a
@@ -147,29 +134,15 @@ export function withoutRef<R extends RegistrationRecordData>(record: R, ref: str
   return { ...record, pluginRefs: pluginRefsOf(record).filter((recorded) => recorded !== ref) };
 }
 
-/** The ref and the claim the manifest keeps on it, always writing the claims list. */
-export function withoutClaimedRef<R extends ClaimedRegistrationRecord>(
-  record: R,
-  ref: string
-): WithClaims<R> {
-  return {
-    ...withoutRef(record, ref),
-    pluginClaims: (record.pluginClaims ?? []).filter((claim) => claim.ref !== ref),
-  };
-}
-
-/** The marketplace and every ref and claim on the host name it was registered under. */
-export function withoutMarketplace<R extends ClaimedRegistrationRecord>(
-  record: R,
-  alias: string
-): WithClaims<R> {
+/** The marketplace and every ref on the host name it was registered under. Every ref stays for
+ * an alias that was never registered. */
+export function withoutMarketplace<R extends RegistrationRecordData>(record: R, alias: string): R {
   const hostName = hostNameOf(record, alias);
   const offHost = (ref: string): boolean => hostName === undefined || !isRefOnHost(ref, hostName);
   return {
     ...record,
     marketplaces: recordedMarketplaces(record).filter((entry) => entry.alias !== alias),
     pluginRefs: pluginRefsOf(record).filter(offHost),
-    pluginClaims: (record.pluginClaims ?? []).filter((claim) => offHost(claim.ref)),
   };
 }
 

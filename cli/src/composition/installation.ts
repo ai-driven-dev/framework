@@ -1,10 +1,12 @@
 import { homedir, tmpdir } from "node:os";
 import type { RegistrationRecordRules } from "../contexts/host-registration/contract/registration-record-rules.js";
-import { mergeCatalogueClaims } from "../contexts/host-registration/domain/record/catalogue-claims.js";
-import { refOnHostName } from "../contexts/host-registration/domain/record/host-ref.js";
+import { mergeCatalogueMarketplaces } from "../contexts/host-registration/domain/record/catalogue-marketplaces.js";
+import {
+  isRefOnHost,
+  refOnHostName,
+} from "../contexts/host-registration/domain/record/host-ref.js";
 import { afterActivation } from "../contexts/host-registration/domain/record/registration-projection.js";
 import {
-  claimsOnMarketplace,
   isQualifiedRef,
   marketplaceOf,
   pluginRefsOf,
@@ -12,7 +14,6 @@ import {
   refSelectedBy,
   refsOnHosts,
   registrationPreview,
-  withoutClaimedRef,
   withoutMarketplace,
   withoutRef,
 } from "../contexts/host-registration/domain/record/registration-record.js";
@@ -36,6 +37,8 @@ import { AgentModelStoreAdapter } from "../contexts/installation/infrastructure/
 import type { AgentModelStore } from "../contexts/installation/ports/agent-model-store.js";
 import type { ManifestRepository } from "../contexts/installation/ports/manifest-repository.js";
 import type { PluginTranslation } from "../contexts/installation/ports/plugin/plugin-translation.js";
+import { recordClaimRules } from "../contexts/machine-claims/application/record/record-claim-rules.js";
+import type { RecordClaimRules } from "../contexts/machine-claims/contract/record-claim-rules.js";
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import { EnsureBuiltMarketplace } from "../orchestration/marketplace/ensure-built-marketplace.use-case.js";
 import { BundledAssetProviderAdapter } from "../shared/infrastructure/asset-loader.js";
@@ -53,11 +56,11 @@ export function projectSetupOf(manifestRepo: ManifestRepository): ProjectSetupSt
   return { isSetUp: async () => (await manifestRepo.load()) !== null };
 }
 
-/** The rules over a recorded registration, answered by the host registration that owns its meaning. */
-export const registrationRecordRules: RegistrationRecordRules = {
+/** The rules over a recorded registration: the host registration answers for the host data, the
+ * machine claims for the claims kept beside it. */
+export const registrationRecordRules: RegistrationRecordRules & RecordClaimRules = {
   pluginRefsOf,
   marketplaceOf,
-  claimsOnMarketplace,
   refOnHostName,
   isQualifiedRef,
   refSelectedBy,
@@ -65,10 +68,14 @@ export const registrationRecordRules: RegistrationRecordRules = {
   refsOnHosts,
   registrationPreview,
   withoutRef,
-  withoutClaimedRef,
-  withoutMarketplace,
   afterActivation,
-  mergeCatalogueClaims,
+  ...recordClaimRules({
+    marketplaceOf,
+    isRefOnHost,
+    withoutRef,
+    withoutMarketplace,
+    mergeCatalogueMarketplaces,
+  }),
 };
 
 /** Builds a distribution into the aidd-owned cache, overwriting what a previous build left there. */

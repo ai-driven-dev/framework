@@ -179,7 +179,10 @@ function syncSettingsOf(base: Base, inst: Installation, sources: SyncSources): S
       tools
     ),
     activateNativeTools: nativeActivationOf(base, inst, buildMarketplaceForTool),
-    recordActivation: new RecordActivation({ fs, userManifestRepo }, tools),
+    recordActivation: new RecordActivation(
+      { fs, userManifestRepo, mergeClaims: registrationRecordRules.mergeCatalogueClaims },
+      tools
+    ),
     sharedSource: new SharedFrameworkSource({
       fs,
       logger,

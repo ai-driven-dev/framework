@@ -64,6 +64,7 @@ src/
 │   │       └── plugin/
 │   ├── machine-claims/    # which projects claim a machine-wide plugin or source
 │   │   ├── application/
+│   │   │   ├── record/
 │   │   │   └── shared-source/
 │   │   ├── contract/
 │   │   ├── domain/

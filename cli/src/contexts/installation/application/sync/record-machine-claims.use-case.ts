@@ -36,7 +36,6 @@ export interface RecordMachineClaimsRequest {
   readonly marketplaces: readonly DeclaredMarketplace[];
   readonly scope: Scope;
   readonly projectRoot?: string;
-  readonly mergeClaims: MachineClaimsMerge;
 }
 
 interface MachineClaim {
@@ -49,6 +48,7 @@ interface MachineClaim {
 export interface RecordMachineClaimsDeps {
   readonly fs: FileReader & FileWriter;
   readonly userManifestRepo?: ManifestRepository & Lock;
+  readonly mergeClaims: MachineClaimsMerge;
 }
 
 /** The machine-wide record of the plugins and marketplaces a project's host registration claimed. */
@@ -85,7 +85,7 @@ export class RecordMachineClaims {
     const claims = this.machineClaimsOf(toolId, outcome, request);
     if (claims.refs.length === 0 && claims.marketplaces.length === 0) return null;
     if (!this.machineTracks(machine, request.project, toolId)) return null;
-    return request.mergeClaims(
+    return this.deps.mergeClaims(
       machine.getNativeRegistrations(toolId),
       { ...claims, dependent: root },
       this.nativeActivationBinary(toolId) ?? toolId

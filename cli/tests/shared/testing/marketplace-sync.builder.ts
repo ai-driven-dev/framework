@@ -91,7 +91,11 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
       records: registrationRecordRules,
     }),
     recordActivation: new RecordActivation(
-      { fs: parts.fs, userManifestRepo: parts.userManifestRepo },
+      {
+        fs: parts.fs,
+        userManifestRepo: parts.userManifestRepo,
+        mergeClaims: registrationRecordRules.mergeCatalogueClaims,
+      },
       registeredTools()
     ),
     sharedSource: new SharedFrameworkSource({

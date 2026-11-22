@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { registrationRecordRules } from "../../../../../src/composition/installation.js";
 import { RecordActivation } from "../../../../../src/contexts/installation/application/sync/record-activation.use-case.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
@@ -26,7 +27,10 @@ function setup(onDisk: string) {
   const manifest = aManifest()
     .withTool(claude, [trackedSettings("{}")])
     .build();
-  const record = new RecordActivation({ fs }, registeredCatalog());
+  const record = new RecordActivation(
+    { fs, mergeClaims: registrationRecordRules.mergeCatalogueClaims },
+    registeredCatalog()
+  );
   return { manifest, record };
 }
 

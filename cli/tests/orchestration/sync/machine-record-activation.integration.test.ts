@@ -40,7 +40,11 @@ describe("the machine record is saved once any tool of the run changed it", () =
     });
     const repo = new InMemoryManifestRepository(machine);
     const record = new RecordActivation(
-      { fs: new InMemoryFileAdapter(), userManifestRepo: repo },
+      {
+        fs: new InMemoryFileAdapter(),
+        userManifestRepo: repo,
+        mergeClaims: registrationRecordRules.mergeCatalogueClaims,
+      },
       registeredCatalog()
     );
 
@@ -53,7 +57,6 @@ describe("the machine record is saved once any tool of the run changed it", () =
       ]),
       marketplaces: [],
       scope: "user",
-      mergeClaims: registrationRecordRules.mergeCatalogueClaims,
     });
 
     expect(repo.saveCount).toBe(1);
