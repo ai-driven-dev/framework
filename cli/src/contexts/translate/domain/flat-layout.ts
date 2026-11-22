@@ -38,7 +38,8 @@ export function sourceShipsHooksBridge(
 }
 
 /** Where an agent lands, whatever folder under `agents/` holds it: the one path its writer, a
- * command naming it and a link to it all resolve to. */
+ * command naming it and a link to it all resolve to. A nested agent lands by its file name; real
+ * data has none. */
 export function flatAgentPath(
   artifact: SupportedArtifact,
   pluginName: string,

@@ -135,7 +135,7 @@ describe("the agents a marketplace layout writes", () => {
     const contract = stubContract({
       artifacts: {
         ...stubContract().artifacts,
-        agents: supportedArtifact({ kind: "relative", under: `${PLUGIN}/` }),
+        agents: supportedArtifact({ kind: "agentFiles", dir: `${PLUGIN}/agents`, ext: ".md" }),
       },
     });
     expect(await sinkFor(fs, contract).write()).toBe(1);

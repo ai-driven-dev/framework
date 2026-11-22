@@ -9,7 +9,10 @@ import {
 } from "../../testing/stub-build-contract.builder.js";
 
 function stepFor(over: Parameters<typeof aSupportedArtifact>[0] = {}) {
-  const artifact = aSupportedArtifact({ placement: { kind: "relative", under: "flat/" }, ...over });
+  const artifact = aSupportedArtifact({
+    placement: { kind: "hooks", scriptsDir: "flat/hooks/" },
+    ...over,
+  });
   if (!artifact.supported) throw new Error("stub artifact is supported");
   return {
     target: aDiskTarget(aStubBuildContract(), { mode: "flat", force: false }),

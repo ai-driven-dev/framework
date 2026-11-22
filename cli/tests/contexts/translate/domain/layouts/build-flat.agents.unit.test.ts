@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { skillsIn } from "../../../../../src/contexts/tools/contract/artifact-path.js";
 import { FrameworkPlaceholderInPluginError } from "../../../../../src/contexts/translate/domain/translate.error.js";
+import { flatArtifactLayout } from "../../../../../src/shared/domain/materialization/flat-paths.js";
 import { translateBuildLayout } from "../../../../shared/testing/build-files.builder.js";
 import { aCanon } from "../../testing/canon-distribution.builder.js";
 import { CLAUDE_ROOT_TOKEN } from "../../testing/engine-kit.builder.js";
@@ -9,7 +11,7 @@ import {
 } from "../../testing/stub-build-contract.builder.js";
 
 const PLUGIN = "plug";
-const FLAT = { placement: { kind: "relative", under: "flat/" } } as const;
+const FLAT = { placement: { kind: "agentFiles", dir: "flat/agents", ext: ".md" } } as const;
 
 function flatAgents(
   files: Record<string, string>,
@@ -23,7 +25,11 @@ function flatAgents(
       artifacts: {
         ...contract.artifacts,
         agents: aSupportedArtifact({ ...FLAT, ...over }),
-        skills: aSupportedArtifact(FLAT),
+        skills: aSupportedArtifact({
+          placement: skillsIn(
+            flatArtifactLayout("flat/", { skills: "nested", agent: { ext: ".md" } })
+          ),
+        }),
         hooks: { supported: false },
         mcp: { supported: false },
       },
@@ -48,7 +54,7 @@ describe("the flat layout of a plugin's agents", () => {
     const built = flatAgents({
       "agents/a.md": `---\nname: a\n---\nSee @${CLAUDE_ROOT_TOKEN}/skills/x/SKILL.md\n`,
     });
-    expect(built["flat/agents/a.md"]).toContain("See [SKILL.md](../skills/x/SKILL.md)");
+    expect(built["flat/agents/a.md"]).toContain("See [SKILL.md](../skills/plug/x/SKILL.md)");
   });
 
   it("hands the agent to the tool's transform instead of resolving its links", () => {

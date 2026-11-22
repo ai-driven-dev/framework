@@ -25,7 +25,7 @@ export function artifactPath(artifact: SupportedArtifact, plugin: string, relPat
         relPath
       );
     case "relative":
-      return `${placement.under ?? ""}${relPath}`;
+      return relPath;
     case "file":
       return placement.at;
     case "agentFiles":

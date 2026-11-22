@@ -50,14 +50,14 @@ export interface AgentMarkdown {
 }
 
 /** Where an artifact's files land, as data: a skills or agents layout, the path a file has in its
- * plugin (under a directory when one is named), one shared file, or a hooks route. */
+ * plugin, one shared file, or a hooks route. */
 export type ArtifactPlacement =
   | {
       readonly kind: "layout";
       readonly layout: FlatArtifactLayout;
       readonly of: "skill" | "agent";
     }
-  | { readonly kind: "relative"; readonly under?: string }
+  | { readonly kind: "relative" }
   | { readonly kind: "file"; readonly at: string }
   | { readonly kind: "agentFiles"; readonly dir: string; readonly ext: string }
   | {

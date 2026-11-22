@@ -29,9 +29,8 @@ describe("artifactPath", () => {
     expect(artifactPath(placed(agentsIn(layout)), "p", "agents/a.md")).toBe(".t/agents/p-a.md");
   });
 
-  it("keeps a file's path in its plugin, under a directory when one is named", () => {
+  it("keeps a file's path in its plugin", () => {
     expect(artifactPath(placed({ kind: "relative" }), "p", "x/y")).toBe("x/y");
-    expect(artifactPath(placed({ kind: "relative", under: "u/" }), "p", "x/y")).toBe("u/x/y");
   });
 
   it("lands every file at the one shared file", () => {

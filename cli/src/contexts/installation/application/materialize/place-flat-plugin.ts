@@ -45,31 +45,37 @@ export async function placeFlatPlugin(
   const ctx = flatContextOf(tool, dist, { projectRoot, deps });
   if (ctx === null) return { skipped: [] };
   const mcp = await materializeRequestedMcp(deps.fs, request, ctx.installedMcp);
-  const hooks = await deps.projectHooks.execute({
-    dist,
-    hooks: ctx.projectHooks,
-    tool,
-    projectRoot,
-    previous: request.previousProjectHooks,
-    guard: request.hooksGuard ?? {},
-  });
+  const hooks = await placeProjectHooks(request, { ctx, deps });
   const skipped: ReadonlySkipList = [...ctx.skipped, ...mcp.mcpSkips, ...hooks.skipped];
   if (ctx.files.length === 0 && mcp.mcpEntries.size === 0 && hooks.projectHooks === undefined)
     return { skipped };
   const files = request.userScopeDirTaken === true ? [] : ctx.files;
   const written = await writeChangedPluginFiles(deps.fs, files, ctx.baseDir);
-  const { componentPaths, scope } = ctx;
   const plugin = InstalledPlugin.fromDistributionWithMcp({
     dist,
     source,
     files,
     mcpEntries: mcp.mcpEntries,
-    scope,
-    componentPaths,
+    scope: ctx.scope,
+    componentPaths: ctx.componentPaths,
     marketplace,
   });
   manifest.addPlugin(tool.toolId, InstalledPlugin.withProjectHooks(plugin, hooks.projectHooks));
   return { skipped, written };
+}
+
+function placeProjectHooks(
+  { dist, tool, projectRoot, previousProjectHooks, hooksGuard }: AddPluginRequest,
+  { ctx, deps }: { ctx: FlatContext; deps: FlatPlacementDeps }
+) {
+  return deps.projectHooks.execute({
+    dist,
+    hooks: ctx.projectHooks,
+    tool,
+    projectRoot,
+    previous: previousProjectHooks,
+    guard: hooksGuard ?? {},
+  });
 }
 
 function flatContextOf(
