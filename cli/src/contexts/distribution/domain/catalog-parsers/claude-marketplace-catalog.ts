@@ -1,6 +1,10 @@
 import { isAbsolute } from "node:path";
+import { tryParseJson } from "../../../../shared/domain/reading/json-file.js";
 import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
-import { InvalidPluginManifestError } from "../../../../shared/domain/shared.error.js";
+import {
+  InvalidPluginManifestError,
+  InvalidPluginSourceError,
+} from "../../../../shared/domain/shared.error.js";
 import { parsePluginSource } from "../../../../shared/domain/source-parsing.js";
 import type { PluginCatalog, PluginCatalogEntry } from "../../contract/catalog.js";
 
@@ -59,4 +63,22 @@ export function parsePluginCatalog(raw: unknown): PluginCatalog {
   if (typeof obj.name === "string" && obj.name.length > 0) catalog.name = obj.name;
   if (typeof obj.version === "string" && obj.version.length > 0) catalog.version = obj.version;
   return catalog;
+}
+
+export type ParsedPluginCatalog =
+  | { readonly ok: true; readonly catalog: PluginCatalog }
+  | { readonly ok: false; readonly error: unknown };
+
+/** `parsePluginCatalog` over catalog text, saying whether it parsed and why not: a caller
+ * holding a cache it may not trust has no `try` of its own to get wrong. */
+export function tryParsePluginCatalog(text: string): ParsedPluginCatalog {
+  const json = tryParseJson(text);
+  if (!json.ok) return json;
+  try {
+    return { ok: true, catalog: parsePluginCatalog(json.value) };
+  } catch (error) {
+    if (error instanceof InvalidPluginManifestError || error instanceof InvalidPluginSourceError)
+      return { ok: false, error };
+    throw error;
+  }
 }

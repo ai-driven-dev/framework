@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   hasRelativePluginSources,
   parsePluginCatalog,
+  tryParsePluginCatalog,
 } from "../../../../../src/contexts/distribution/domain/catalog-parsers/claude-marketplace-catalog.js";
 import {
   InvalidPluginManifestError,
@@ -158,5 +159,29 @@ describe("parsePluginCatalog", () => {
       const raw = { plugins: [{ name: "", source: { kind: "local", path: "./x" } }] };
       expect(() => parsePluginCatalog(raw)).toThrow(InvalidPluginManifestError);
     });
+  });
+});
+
+describe("tryParsePluginCatalog", () => {
+  it("answers the catalog a text holds", () => {
+    expect(tryParsePluginCatalog(JSON.stringify(VALID_RAW))).toEqual({
+      ok: true,
+      catalog: parsePluginCatalog(VALID_RAW),
+    });
+  });
+
+  it.each([
+    ["text that is not JSON", "not-json", SyntaxError],
+    ["a catalog the manifest refuses", '{"plugins":"x"}', InvalidPluginManifestError],
+    [
+      "a plugin source it refuses",
+      '{"plugins":[{"name":"a","source":7}]}',
+      InvalidPluginSourceError,
+    ],
+  ])("names %s as not parsed, with its error", (_name, text, errorClass) => {
+    const parsed = tryParsePluginCatalog(text);
+
+    expect(parsed.ok).toBe(false);
+    expect(parsed).toMatchObject({ error: expect.any(errorClass) });
   });
 });

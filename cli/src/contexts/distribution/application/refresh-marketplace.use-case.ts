@@ -5,7 +5,7 @@ import type { PluginCatalog } from "../contract/catalog.js";
 import type { MarketplaceView } from "../contract/marketplace-view.js";
 import {
   hasRelativePluginSources,
-  parsePluginCatalog,
+  tryParsePluginCatalog,
 } from "../domain/catalog-parsers/claude-marketplace-catalog.js";
 import { MARKETPLACE_CATALOG_RELATIVE } from "../domain/marketplace-cache-layout.js";
 import type { MarketplaceCachePort } from "../ports/marketplace-cache.js";
@@ -73,15 +73,11 @@ export class RefreshMarketplace {
   }
 
   private async isStaleCache(fs: FileReader, cacheDir: string): Promise<boolean> {
-    try {
-      const catalogFilePath = join(cacheDir, MARKETPLACE_CATALOG_RELATIVE);
-      const raw: unknown = JSON.parse(await fs.readFile(catalogFilePath));
-      const catalog = parsePluginCatalog(raw);
-      if (!hasRelativePluginSources(catalog)) return false;
-      return this.hasAnyMissingPluginPath(fs, catalog, cacheDir);
-    } catch {
-      return false;
-    }
+    const text = await fs.readFileIfReadable(join(cacheDir, MARKETPLACE_CATALOG_RELATIVE));
+    if (text === undefined) return false;
+    const parsed = tryParsePluginCatalog(text);
+    if (!parsed.ok || !hasRelativePluginSources(parsed.catalog)) return false;
+    return this.hasAnyMissingPluginPath(fs, parsed.catalog, cacheDir);
   }
 
   private async hasAnyMissingPluginPath(

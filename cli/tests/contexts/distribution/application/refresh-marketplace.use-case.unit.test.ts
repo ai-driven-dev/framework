@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { RefreshMarketplace } from "../../../../src/contexts/distribution/application/refresh-marketplace.use-case.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
+import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryMarketplaceCache } from "../../../shared/testing/in-memory-marketplace-cache.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { resolvingCatalogs } from "../testing/catalog-resolver.builder.js";
@@ -65,5 +67,19 @@ describe("RefreshMarketplace", () => {
     await refresh.targets({ projectRoot: PROJECT, name: "a", force: true });
 
     expect([unforced, cache.clearCalls]).toEqual([[], ["a"]]);
+  });
+
+  it("detects no stale cache in a catalog it cannot parse", async () => {
+    const { registry, cache } = await refreshOver({ "/mkt/a": { plugins: [] } }, "a");
+    const resolveMarketplace = resolvingCatalogs({ "/mkt/a": { plugins: [] } });
+    const fs = new InMemoryFileAdapter({});
+    const logger = new CapturingLogger();
+    const refresh = new RefreshMarketplace({ registry, resolveMarketplace, cache, logger, fs });
+    const cacheDir = resolveMarketplace.cacheDirOf(marketplaceAt("a"), PROJECT);
+    await fs.writeFile(`${cacheDir}/.claude-plugin/marketplace.json`, "not-json");
+
+    await refresh.execute(PROJECT, marketplaceAt("a"));
+
+    expect(logger.infoMessages.some((line) => line.includes("Detected stale"))).toBe(false);
   });
 });
