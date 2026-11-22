@@ -1,17 +1,13 @@
 import { resolve } from "node:path";
 import { FileHash } from "../../../../shared/domain/file-hash.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
 import { driftOf } from "../../domain/manifest/drift.js";
 import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { HostRegistrationOutcome } from "../../ports/native-host.js";
-import {
-  RecordMachineClaims,
-  type RecordMachineClaimsDeps,
-  type RecordMachineClaimsRequest,
-} from "./record-machine-claims.use-case.js";
 
 /** The record a tool's activation leaves, `undefined` when it equals the one recorded: the host
  * registration's to answer. */
@@ -35,24 +31,21 @@ export type RecordActivationRequest =
       readonly projectRoot: string;
       readonly manifest: Manifest;
       readonly activated: readonly ToolId[];
-    }
-  | RecordMachineClaimsRequest;
+    };
 
 type Of<K extends RecordActivationRequest["kind"]> = Extract<RecordActivationRequest, { kind: K }>;
 
 /** What RecordActivation is built from. */
-export type RecordActivationDeps = RecordMachineClaimsDeps;
+export interface RecordActivationDeps {
+  readonly fs: FileReader;
+}
 
 /** What a run observed or caused, written back into the manifests that track it. */
 export class RecordActivation {
-  private readonly machineClaims: RecordMachineClaims;
-
   constructor(
     private readonly deps: RecordActivationDeps,
     private readonly tools: ToolCatalog
-  ) {
-    this.machineClaims = new RecordMachineClaims(deps, tools);
-  }
+  ) {}
 
   async execute(request: RecordActivationRequest): Promise<boolean> {
     switch (request.kind) {
@@ -60,8 +53,6 @@ export class RecordActivation {
         return this.recordNativeRegistrations(request);
       case "settings-written-by-host":
         return this.recordWhatActivationWrote(request);
-      case "machine-claims":
-        return this.machineClaims.execute(request);
     }
   }
 

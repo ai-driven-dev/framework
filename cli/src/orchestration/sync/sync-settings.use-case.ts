@@ -2,6 +2,7 @@ import type { RegistrationRecordRules } from "../../contexts/host-registration/c
 import type { LoadSyncContext } from "../../contexts/installation/application/sync/load-sync-context.use-case.js";
 import type { RecordActivation } from "../../contexts/installation/application/sync/record-activation.use-case.js";
 import type { SyncToolSettingsFiles } from "../../contexts/installation/application/sync/sync-tool-settings-files.use-case.js";
+import type { RecordMachineClaims } from "../../contexts/machine-claims/application/record/record-machine-claims.use-case.js";
 import type { SharedFrameworkSource } from "../../contexts/machine-claims/application/shared-source/shared-framework-source.use-case.js";
 import type { Scope } from "../../shared/domain/scope.js";
 import type { SyncSettingsRequest, SyncSettingsResult } from "../domain/sync-settings.model.js";
@@ -30,6 +31,7 @@ export interface SyncSettingsDeps {
   readonly settingsFiles: SyncToolSettingsFiles;
   readonly activateNativeTools: ActivateNativeTools;
   readonly recordActivation: RecordActivation;
+  readonly machineClaims: RecordMachineClaims;
   readonly sharedSource: SharedFrameworkSource;
   readonly records: Pick<RegistrationRecordRules, "afterActivation">;
 }
@@ -144,8 +146,7 @@ export class SyncSettings {
     const { options, scope, context, activation } = run;
     const { projectRoot } = options;
     const { manifest, marketplaces } = context;
-    await this.deps.recordActivation.execute({
-      kind: "machine-claims",
+    await this.deps.machineClaims.execute({
       project: manifest,
       outcomes: activation.outcomes,
       marketplaces,

@@ -11,7 +11,9 @@ import {
 } from "../../../src/contexts/installation/application/sync/load-sync-context.use-case.js";
 import { RecordActivation } from "../../../src/contexts/installation/application/sync/record-activation.use-case.js";
 import { SyncToolSettingsFiles } from "../../../src/contexts/installation/application/sync/sync-tool-settings-files.use-case.js";
+import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { PurgeDeclaredCache } from "../../../src/contexts/machine-claims/application/purge-declared-cache.js";
+import { RecordMachineClaims } from "../../../src/contexts/machine-claims/application/record/record-machine-claims.use-case.js";
 import {
   RecordSourceReference,
   type RecordSourceReferenceDeps,
@@ -90,10 +92,12 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
       },
       records: registrationRecordRules,
     }),
-    recordActivation: new RecordActivation(
+    recordActivation: new RecordActivation({ fs: parts.fs }, registeredTools()),
+    machineClaims: new RecordMachineClaims(
       {
         fs: parts.fs,
         userManifestRepo: parts.userManifestRepo,
+        emptyManifest: Manifest.create,
         mergeClaims: registrationRecordRules.mergeCatalogueClaims,
       },
       registeredTools()

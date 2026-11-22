@@ -19,7 +19,9 @@ import { BuildMarketplaceForTool } from "../../contexts/installation/application
 import { LoadSyncContext } from "../../contexts/installation/application/sync/load-sync-context.use-case.js";
 import { RecordActivation } from "../../contexts/installation/application/sync/record-activation.use-case.js";
 import { SyncToolSettingsFiles } from "../../contexts/installation/application/sync/sync-tool-settings-files.use-case.js";
+import { Manifest } from "../../contexts/installation/domain/manifest.js";
 import { PurgeDeclaredCache } from "../../contexts/machine-claims/application/purge-declared-cache.js";
+import { RecordMachineClaims } from "../../contexts/machine-claims/application/record/record-machine-claims.use-case.js";
 import { RecordSourceReference } from "../../contexts/machine-claims/application/record-source-reference.use-case.js";
 import { removalClaims } from "../../contexts/machine-claims/application/removal-claims.js";
 import { SharedFrameworkSource } from "../../contexts/machine-claims/application/shared-source/shared-framework-source.use-case.js";
@@ -179,8 +181,14 @@ function syncSettingsOf(base: Base, inst: Installation, sources: SyncSources): S
       tools
     ),
     activateNativeTools: nativeActivationOf(base, inst, buildMarketplaceForTool),
-    recordActivation: new RecordActivation(
-      { fs, userManifestRepo, mergeClaims: registrationRecordRules.mergeCatalogueClaims },
+    recordActivation: new RecordActivation({ fs }, tools),
+    machineClaims: new RecordMachineClaims(
+      {
+        fs,
+        userManifestRepo,
+        emptyManifest: Manifest.create,
+        mergeClaims: registrationRecordRules.mergeCatalogueClaims,
+      },
       tools
     ),
     sharedSource: new SharedFrameworkSource({

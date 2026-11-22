@@ -1,7 +1,3 @@
-/** A record the host registration keeps: opaque here but for the claims kept beside it. */
-export type ClaimedRecord<Claim extends { readonly ref: string } = { readonly ref: string }> =
-  Readonly<Record<string, unknown>> & { readonly pluginClaims?: readonly Claim[] };
-
 /** A marketplace a run claims: only its two names are read, by the host registration. */
 export type ClaimedMarketplace = Readonly<Record<string, unknown>> & {
   readonly alias: string;

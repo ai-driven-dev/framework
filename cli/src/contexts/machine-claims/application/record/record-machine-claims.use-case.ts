@@ -1,67 +1,55 @@
 import type { Scope } from "../../../../shared/domain/scope.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { Lock } from "../../../../shared/ports/lock.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import type { RecordClaimRules } from "../../contract/record-claim-rules.js";
+import type { ClaimedMarketplace } from "../../ports/host-record.js";
 import type {
-  NativePluginClaim,
-  NativeRegistrations,
-} from "../../domain/manifest/native-registrations.js";
-import { Manifest } from "../../domain/manifest.js";
-import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { DeclaredMarketplace } from "../../ports/marketplace-sources.js";
-import type { HostRegistrationOutcome, RegisteredMarketplace } from "../../ports/native-host.js";
+  ClaimingMachineManifest,
+  MachineManifestRepository,
+} from "../../ports/machine-manifest.js";
+import type { ClaimingTools } from "../../ports/user-scope-tool.js";
 
-/** A machine's record with one run's claims merged in, and whether that changed it: the host
- * registration's to answer. */
-export type MachineClaimsMerge = (
-  existing: NativeRegistrations | undefined,
-  claimed: {
-    readonly marketplaces: readonly RegisteredMarketplace[];
-    readonly refs: readonly string[];
-    readonly dependent: string | undefined;
-  },
-  fallbackBinary: string
-) => {
-  readonly record: NativeRegistrations & { readonly pluginClaims: readonly NativePluginClaim[] };
-  readonly changed: boolean;
-};
+/** What one tool's host registration claimed, as far as the machine record keeps it. */
+interface ClaimedOutcome {
+  readonly catalogClaims: readonly ClaimedMarketplace[];
+  readonly pluginRefs: readonly string[];
+}
 
 /** Which plugins and marketplaces a project's activation claimed on the machine, and for whom. */
 export interface RecordMachineClaimsRequest {
-  readonly kind: "machine-claims";
-  readonly project: Manifest;
-  readonly outcomes: ReadonlyMap<ToolId, HostRegistrationOutcome>;
-  readonly marketplaces: readonly DeclaredMarketplace[];
+  readonly project: { getToolVersion(toolId: ToolId): string | undefined };
+  readonly outcomes: ReadonlyMap<ToolId, ClaimedOutcome>;
+  readonly marketplaces: readonly { readonly name: string; readonly scope: Scope }[];
   readonly scope: Scope;
   readonly projectRoot?: string;
 }
 
 interface MachineClaim {
-  machine: Manifest;
+  machine: ClaimingMachineManifest;
   request: RecordMachineClaimsRequest;
   root: string | undefined;
 }
 
-/** What RecordMachineClaims is built from. */
+/** What RecordMachineClaims is built from. The installation owns the record and hands over the
+ * real repository, and an empty record for a machine that has none yet. */
 export interface RecordMachineClaimsDeps {
-  readonly fs: FileReader & FileWriter;
-  readonly userManifestRepo?: ManifestRepository & Lock;
-  readonly mergeClaims: MachineClaimsMerge;
+  readonly fs: Pick<FileReader, "realpath">;
+  readonly userManifestRepo?: MachineManifestRepository<ClaimingMachineManifest>;
+  readonly emptyManifest: () => ClaimingMachineManifest;
+  readonly mergeClaims: RecordClaimRules["mergeCatalogueClaims"];
 }
 
 /** The machine-wide record of the plugins and marketplaces a project's host registration claimed. */
 export class RecordMachineClaims {
   constructor(
     private readonly deps: RecordMachineClaimsDeps,
-    private readonly tools: ToolCatalog
+    private readonly tools: ClaimingTools
   ) {}
 
   /** True when the machine record changed; false without a machine manifest to write to. */
   async execute(request: RecordMachineClaimsRequest): Promise<boolean> {
     if (this.deps.userManifestRepo === undefined) return false;
-    const machine = (await this.deps.userManifestRepo.load()) ?? Manifest.create();
+    const machine = (await this.deps.userManifestRepo.load()) ?? this.deps.emptyManifest();
     const root = await this.realRootOf(request.projectRoot);
     const claim: MachineClaim = { machine, request, root };
     let changed = false;
@@ -80,7 +68,7 @@ export class RecordMachineClaims {
   }
 
   /** The tool's claims merged into the machine record; null when it has none to add. */
-  private mergeInto(claim: MachineClaim, toolId: ToolId, outcome: HostRegistrationOutcome) {
+  private mergeInto(claim: MachineClaim, toolId: ToolId, outcome: ClaimedOutcome) {
     const { machine, request, root } = claim;
     const claims = this.machineClaimsOf(toolId, outcome, request);
     if (claims.refs.length === 0 && claims.marketplaces.length === 0) return null;
@@ -93,7 +81,11 @@ export class RecordMachineClaims {
   }
 
   /** Adds the tool to the machine record at the project's version; false when the project has none. */
-  private machineTracks(machine: Manifest, project: Manifest, toolId: ToolId): boolean {
+  private machineTracks(
+    machine: ClaimingMachineManifest,
+    project: RecordMachineClaimsRequest["project"],
+    toolId: ToolId
+  ): boolean {
     if (machine.hasTool(toolId)) return true;
     const version = project.getToolVersion(toolId);
     if (version === undefined) return false;
@@ -104,7 +96,7 @@ export class RecordMachineClaims {
   /** What of one tool's outcome reaches the machine record. */
   private machineClaimsOf(
     toolId: ToolId,
-    outcome: HostRegistrationOutcome,
+    outcome: ClaimedOutcome,
     { scope, marketplaces }: Pick<RecordMachineClaimsRequest, "scope" | "marketplaces">
   ) {
     const global = this.enablementIsMachineGlobal(toolId);
