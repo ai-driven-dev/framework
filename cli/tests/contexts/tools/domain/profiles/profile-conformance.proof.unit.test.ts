@@ -26,15 +26,21 @@ import {
   type FileConformanceSubject,
   PROFILE_FILE_CHECKS,
 } from "../../testing/profile-file-conformance.contract.js";
-import { PROFILE_TRANSLATION_CHECKS } from "../../testing/profile-translation-conformance.contract.js";
+import {
+  PROFILE_TRANSLATION_CHECKS,
+  type TranslationSubject,
+} from "../../testing/profile-translation-conformance.contract.js";
 import { translatePlugin } from "../../testing/translate-plugin.builder.js";
+import { vendoredSchemas } from "../../testing/vendored-schemas.builder.js";
 
 /**
  * A conformance check that nothing fails is a comment. For each check, one subject broken in
  * exactly that one way: the check must fail on it, and every other check must still hold.
  */
 
-const ALL_CHECKS: readonly ConformanceCheck<FileConformanceSubject>[] = [
+type ProofSubject = FileConformanceSubject & TranslationSubject;
+
+const ALL_CHECKS: readonly ConformanceCheck<ProofSubject>[] = [
   ...PROFILE_CHECKS,
   ...PROFILE_FILE_CHECKS,
   ...PROFILE_TRANSLATION_CHECKS,
@@ -60,13 +66,11 @@ function capturedPayloadsOf(profile: AiTool): string[] {
   );
 }
 
-function subjectOf(
-  profile: AiTool,
-  broken: Partial<FileConformanceSubject> = {}
-): FileConformanceSubject {
+function subjectOf(profile: AiTool, broken: Partial<ProofSubject> = {}): ProofSubject {
   return {
     profile,
     registration: REGISTERED_PROFILES,
+    schemas: vendoredSchemas,
     profileFolders: REGISTERED_PROFILES.map((registered) => registered.toolId),
     hooks: profile.hooks,
     payloadFixtures: capturedPayloadsOf(profile),
@@ -226,7 +230,7 @@ function withHooksMergeForgetting(profile: AiTool): AiTool {
 }
 
 /** What each check is fed so that it, and only it, has a case to fail. */
-const BROKEN: Readonly<Record<string, () => FileConformanceSubject>> = {
+const BROKEN: Readonly<Record<string, () => ProofSubject>> = {
   "is registered once, under its own id": () =>
     subjectOf(NATIVE, { registration: [...REGISTERED_PROFILES, NATIVE] }),
   "has a well-formed shape": () => subjectOf({ ...NATIVE, toolSuffix: "md" }),
@@ -333,7 +337,7 @@ const BROKEN: Readonly<Record<string, () => FileConformanceSubject>> = {
     subjectOf(withHooksMergeForgetting(HOOKED)),
 };
 
-async function failuresOf(subject: FileConformanceSubject): Promise<string[]> {
+async function failuresOf(subject: ProofSubject): Promise<string[]> {
   const failed: string[] = [];
   for (const check of ALL_CHECKS) {
     try {
