@@ -1,3 +1,4 @@
+import { ProjectHooksMaterializer } from "../../../../../src/contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 /**
  * hooks.json is not tracked in Plugin.files: hooksDestination:"project" merges its entries
  * into the project's own .cursor/hooks.json, which baseDir-relative deletion cannot find.
@@ -90,7 +91,12 @@ async function installPlugin(
   name: string,
   previous?: ProjectHooksProvenance
 ) {
-  const adapter = { fs: fs, homedir: () => STUB_HOME, translate: translateDistribution };
+  const adapter = {
+    fs: fs,
+    homedir: () => STUB_HOME,
+    translate: translateDistribution,
+    projectHooks: new ProjectHooksMaterializer(fs),
+  };
   await placeFlatPlugin(
     {
       dist: buildDist(name),
@@ -174,7 +180,12 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     await installPlugin(fs, manifest, PLUGIN_NAME);
     const previous = manifest.getPlugins(TOOL.cursor)[0].projectHooks;
     manifest.removePlugin(TOOL.cursor, PLUGIN_NAME);
-    const translator = { fs: fs, homedir: () => STUB_HOME, translate: translateDistribution };
+    const translator = {
+      fs: fs,
+      homedir: () => STUB_HOME,
+      translate: translateDistribution,
+      projectHooks: new ProjectHooksMaterializer(fs),
+    };
     await placeFlatPlugin(
       {
         dist: buildWithoutHooks(PLUGIN_NAME),

@@ -6,10 +6,10 @@ import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/too
 import { driftOf } from "../../domain/manifest/drift.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { HostRegistrationOutcome } from "../../ports/native-host.js";
-import {
+import type {
   RecordMachineClaims,
-  type RecordMachineClaimsDeps,
-  type RecordMachineClaimsRequest,
+  RecordMachineClaimsDeps,
+  RecordMachineClaimsRequest,
 } from "./record-machine-claims.use-case.js";
 
 /** What a run observed or caused. Each answer says whether it changed a manifest. */
@@ -31,18 +31,16 @@ export type RecordActivationRequest =
 type Of<K extends RecordActivationRequest["kind"]> = Extract<RecordActivationRequest, { kind: K }>;
 
 /** What RecordActivation is built from. */
-export type RecordActivationDeps = RecordMachineClaimsDeps;
+export type RecordActivationDeps = RecordMachineClaimsDeps & {
+  readonly machineClaims: RecordMachineClaims;
+};
 
 /** What a run observed or caused, written back into the manifests that track it. */
 export class RecordActivation {
-  private readonly machineClaims: RecordMachineClaims;
-
   constructor(
     private readonly deps: RecordActivationDeps,
     private readonly tools: ToolCatalog
-  ) {
-    this.machineClaims = new RecordMachineClaims(deps, tools);
-  }
+  ) {}
 
   async execute(request: RecordActivationRequest): Promise<boolean> {
     switch (request.kind) {
@@ -51,7 +49,7 @@ export class RecordActivation {
       case "settings-written-by-host":
         return this.recordWhatActivationWrote(request);
       case "machine-claims":
-        return this.machineClaims.execute(request);
+        return this.deps.machineClaims.execute(request);
     }
   }
 

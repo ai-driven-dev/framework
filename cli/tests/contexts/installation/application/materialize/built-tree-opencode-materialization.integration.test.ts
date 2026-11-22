@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { placeBuiltTreePlugin } from "../../../../../src/contexts/installation/application/materialize/place-built-tree-plugin.js";
+import { ProjectHooksMaterializer } from "../../../../../src/contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
@@ -75,6 +76,7 @@ describe("placeBuiltTreePlugin - opencode (integration)", () => {
         ensureBuilt: fakeEnsureBuiltMarketplace(),
         marketplaceRegistry: await makeRegistry(),
         translate: translateDistribution,
+        projectHooks: new ProjectHooksMaterializer(fs),
       },
     };
 
@@ -118,6 +120,7 @@ describe("placeBuiltTreePlugin - opencode (integration)", () => {
         ensureBuilt: fakeEnsureBuiltMarketplace(),
         marketplaceRegistry: await makeRegistry(),
         translate: translateDistribution,
+        projectHooks: new ProjectHooksMaterializer(fs),
       },
     };
 
@@ -159,6 +162,7 @@ describe("placeBuiltTreePlugin - what the opencode flat tree never yields", () =
         ensureBuilt: fakeEnsureBuiltMarketplace(),
         marketplaceRegistry: await makeRegistry(),
         translate: translateDistribution,
+        projectHooks: new ProjectHooksMaterializer(fs),
       },
     };
     return placeBuiltTreePlugin(
@@ -237,6 +241,7 @@ describe("placeBuiltTreePlugin - kilo (integration)", () => {
         ensureBuilt: fakeEnsureBuiltMarketplace(),
         marketplaceRegistry: await makeRegistry(),
         translate: translateDistribution,
+        projectHooks: new ProjectHooksMaterializer(fs),
       },
     };
     const distribution = new PluginDistribution({

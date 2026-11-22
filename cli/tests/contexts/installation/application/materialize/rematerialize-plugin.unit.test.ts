@@ -28,9 +28,10 @@ function rematerialize() {
     files: [],
     components: NO_COMPONENTS,
   });
+  const fs = new InMemoryFileAdapter();
   const count = rematerializePlugin(
     { dist, tool, plugin, projectRoot: "/root", manifest },
-    { fs: new InMemoryFileAdapter(), built: fakeBuiltDeps() }
+    { fs, built: fakeBuiltDeps(fs) }
   );
   return { count, manifest };
 }

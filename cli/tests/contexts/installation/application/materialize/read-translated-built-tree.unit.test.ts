@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { ProjectHooksMaterializer } from "../../../../../src/contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 import { readTranslatedBuiltTree } from "../../../../../src/contexts/installation/application/materialize/read-translated-built-tree.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
@@ -38,6 +39,7 @@ describe("readTranslatedBuiltTree", () => {
             ensureBuilt: fakeEnsureBuiltMarketplace(),
             marketplaceRegistry: new FakeMarketplaceRegistry(),
             translate: translateDistribution,
+            projectHooks: new ProjectHooksMaterializer(fs),
           },
         },
         marketplace: {

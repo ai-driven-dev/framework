@@ -3,7 +3,7 @@ import type { FrameworkSource } from "../../contexts/distribution/contract/frame
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { DepsSliceFactory } from "../../orchestration/deps.js";
 import type { Output } from "../../orchestration/domain/output.js";
-import { type PluginInstallMode, SetupFlow } from "../../orchestration/setup/setup-flow.js";
+import { type PluginInstallMode, SetupFlow } from "../../orchestration/domain/setup-flow.model.js";
 import { agentModelsRequest, isInteractiveRun } from "../../orchestration/setup/setup-request.js";
 import { reportAgentModels } from "../presenters/agent-models.presenter.js";
 import {

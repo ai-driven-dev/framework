@@ -28,6 +28,7 @@ export async function placeBuiltTreePlugin(
       fs: deps.fs,
       homedir: deps.built.homedir,
       translate: deps.built.translate,
+      projectHooks: deps.built.projectHooks,
     });
   }
   const mode = tool.frameworkBuildMode();

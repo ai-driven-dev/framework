@@ -2,7 +2,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { ConsentHistoryAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/consent/consent-history-adapter.js";
-import { PrivateStorageAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
+import { PrivateStorageAdapter } from "../../../../src/shared/infrastructure/private-storage-adapter.js";
 import {
   type ConsentHistorySubject,
   describeConsentHistoryContract,

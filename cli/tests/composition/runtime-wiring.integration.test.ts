@@ -1,13 +1,8 @@
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
-import { homedir, tmpdir } from "node:os";
+import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  builtMaterializationDepsOf,
-  cacheBuildFor,
-  debugOnly,
-  wireInstallation,
-} from "../../src/composition/installation.js";
+import { cacheBuildFor, debugOnly, wireInstallation } from "../../src/composition/installation.js";
 import { hostBinaryAvailableIn } from "../../src/composition/orchestration/doctor.js";
 import { userScopeSyncOf } from "../../src/composition/orchestration/global.js";
 import {
@@ -258,22 +253,6 @@ describe("debugOnly", () => {
     logger.warn("w", cause);
 
     expect(debug.mock.calls).toStrictEqual([["d", undefined], ["i"], ["w", cause]]);
-  });
-});
-
-describe("builtMaterializationDepsOf", () => {
-  it("hands a restore the build, the registry, the home directory resolver, the translation and the platform", () => {
-    const ensureBuilt = {} as Parameters<typeof builtMaterializationDepsOf>[0];
-    const marketplaceRegistry = {} as Parameters<typeof builtMaterializationDepsOf>[1];
-    const translate = {} as Parameters<typeof builtMaterializationDepsOf>[2];
-
-    expect(builtMaterializationDepsOf(ensureBuilt, marketplaceRegistry, translate)).toStrictEqual({
-      ensureBuilt,
-      marketplaceRegistry,
-      homedir,
-      translate,
-      platform: process.platform,
-    });
   });
 });
 

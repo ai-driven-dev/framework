@@ -25,12 +25,13 @@ import { REPORT_AXES } from "../../../../../src/contexts/telemetry/contract/usag
 import { declarationOf } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
 import { conflictsOf } from "../../../../../src/contexts/telemetry/domain/report/report-filter.js";
 import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/stored-usage.js";
-import { UsageLedgerAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
-import { PrivateStorageAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
+import type { UsageLedgerAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
+import { PrivateStorageAdapter } from "../../../../../src/shared/infrastructure/private-storage-adapter.js";
 import { FakeLocator } from "../../testing/fake-locator.fake.js";
 import { InMemoryIdentity } from "../../testing/in-memory-identity.fake.js";
 import { InMemorySessions } from "../../testing/in-memory-sessions.fake.js";
 import { InMemorySnapshots } from "../../testing/in-memory-snapshots.fake.js";
+import { ledgerOver } from "../../testing/ledger-adapters.builder.js";
 
 /* The figures of a report, every field of its envelope but `run`, depend on what is stored,
  * declared and asked, and on nothing else: not on how the calls reached the ledger, not on what
@@ -205,7 +206,7 @@ async function ledgerWith(
   for (const record of earlier) put(record.at.slice(0, 10), JSON.stringify(record));
   for (const { day, text } of damaged) put(day, text);
   for (const [name, text] of files) await writeFile(join(dir, `${name}.jsonl`), text);
-  return new UsageLedgerAdapter(dir, new PrivateStorageAdapter());
+  return ledgerOver(dir, new PrivateStorageAdapter());
 }
 
 function ingestResultOf(facts: Run): IngestUsageResult {

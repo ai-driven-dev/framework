@@ -72,13 +72,6 @@ export class InvalidManifestToolIdError extends AiddError {
   }
 }
 
-export class InvalidPluginNameError extends AiddError {
-  readonly code = "invalid-plugin-name";
-  constructor(readonly pluginName: string) {
-    super();
-  }
-}
-
 export class InvalidPluginScopeError extends AiddError {
   readonly code = "invalid-plugin-scope";
   constructor(
@@ -86,13 +79,6 @@ export class InvalidPluginScopeError extends AiddError {
     readonly requested: Scope,
     readonly supported: Scope
   ) {
-    super();
-  }
-}
-
-export class InvalidPluginVersionError extends AiddError {
-  readonly code = "invalid-plugin-version";
-  constructor(readonly version: string) {
     super();
   }
 }

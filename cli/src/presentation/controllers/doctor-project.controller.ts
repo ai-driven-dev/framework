@@ -1,4 +1,5 @@
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
+import { isDoctorHealthy } from "../../orchestration/global/doctor-all.js";
 import type { ToolCategory } from "../../shared/domain/tool.js";
 import {
   printAllToolsDrift,
@@ -9,16 +10,6 @@ import {
   printToolDrift,
 } from "../presenters/doctor.presenter.js";
 import { concludeDoctor, type DoctorRun } from "./doctor-run.controller.js";
-
-/** Drift is informational and never gates the exit code; only structural health issues do.
- * `--plugin` narrows that gate to one plugin's issues, so a warning this view never prints
- * cannot flip the exit code: the silent-exit-1 shape the narrowing exists to prevent. */
-function isHealthy(
-  report: { readonly pluginIssues: readonly unknown[]; readonly healthy: boolean },
-  pluginName: string | undefined
-): boolean {
-  return pluginName !== undefined ? report.pluginIssues.length === 0 : report.healthy;
-}
 
 export async function runFullDoctor({
   deps,
@@ -47,7 +38,7 @@ export async function runFullDoctor({
     printScopeIssues(output, "IDE", doctorResult.ide);
   }
   printPluginIssues(output, doctorResult.pluginIssues);
-  concludeDoctor(output, isHealthy(doctorResult, pluginName), "\nInstallation is healthy");
+  concludeDoctor(output, doctorResult.healthy, "\nInstallation is healthy");
 }
 
 export async function runScopedDoctor({
@@ -85,5 +76,5 @@ export async function runScopedDoctor({
     printScopeIssues(output, toolId, doctorReport);
   }
   printPluginIssues(output, doctorReport.pluginIssues);
-  concludeDoctor(output, isHealthy(doctorReport, pluginName), "\nInstallation is healthy");
+  concludeDoctor(output, isDoctorHealthy(doctorReport, pluginName), "\nInstallation is healthy");
 }

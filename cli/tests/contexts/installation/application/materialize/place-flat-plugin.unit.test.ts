@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { placeFlatPlugin } from "../../../../../src/contexts/installation/application/materialize/place-flat-plugin.js";
+import { ProjectHooksMaterializer } from "../../../../../src/contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 import { ProjectScopeUnsupportedError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
@@ -38,7 +39,12 @@ function buildDist(name = "test-plugin"): PluginDistribution {
 function buildAdapter(homedir = "/stub-home") {
   const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
   return {
-    adapter: { fs: fs, homedir: () => homedir, translate: translateDistribution },
+    adapter: {
+      fs: fs,
+      homedir: () => homedir,
+      translate: translateDistribution,
+      projectHooks: new ProjectHooksMaterializer(fs),
+    },
     fs,
   };
 }
@@ -318,7 +324,12 @@ describe("placeFlatPlugin", () => {
     it("propagates a failure to read the MCP config other than the file being absent", async () => {
       const fs = new FaultingFileAdapter();
       fs.failOn("readFile", join(PROJECT_ROOT, "opencode.json"), errnoError("EACCES"));
-      const adapter = { fs: fs, homedir: () => "/stub-home", translate: translateDistribution };
+      const adapter = {
+        fs: fs,
+        homedir: () => "/stub-home",
+        translate: translateDistribution,
+        projectHooks: new ProjectHooksMaterializer(fs),
+      };
       const manifest = Manifest.create();
       manifest.addTool(TOOL.opencode, "test", []);
 

@@ -3,8 +3,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { StoredUsage } from "../../../../../../src/contexts/telemetry/domain/stored-usage.js";
-import { UsageLedgerAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
-import { PrivateStorageAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
+import type { UsageLedgerAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
+import { PrivateStorageAdapter } from "../../../../../../src/shared/infrastructure/private-storage-adapter.js";
+import { ledgerOver } from "../../../testing/ledger-adapters.builder.js";
 import { aUsageRecord } from "../../../testing/usage-record.builder.js";
 
 let root: string;
@@ -16,7 +17,7 @@ beforeEach(async () => {
   root = await mkdtemp(join(tmpdir(), "aidd-usage-ledger-"));
   dir = join(root, "ledger");
   storage = new PrivateStorageAdapter();
-  ledger = new UsageLedgerAdapter(dir, storage);
+  ledger = ledgerOver(dir, storage);
 });
 afterEach(async () => {
   await rm(root, { recursive: true, force: true });
@@ -131,9 +132,7 @@ describe("the ledger on disk", () => {
   it("fails to load from a ledger directory it cannot list, instead of reading it as empty", async () => {
     const file = join(root, "not-a-directory");
     await writeFile(file, "x");
-    await expect(
-      new UsageLedgerAdapter(file, new PrivateStorageAdapter()).load()
-    ).rejects.toThrow();
+    await expect(ledgerOver(file, new PrivateStorageAdapter()).load()).rejects.toThrow();
   });
 
   it("folds a call found in two days down to its best snapshot, and says both are unsettled", async () => {

@@ -3,6 +3,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { placeFlatPlugin } from "../../../../../src/contexts/installation/application/materialize/place-flat-plugin.js";
+import { ProjectHooksMaterializer } from "../../../../../src/contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
@@ -84,7 +85,12 @@ function buildDist(): PluginDistribution {
 describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
   it("merges converted hooks.json into the project's .cursor/hooks.json with camelCase events", async () => {
     const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-    const adapter = { fs: fs, homedir: () => STUB_HOME, translate: translateDistribution };
+    const adapter = {
+      fs: fs,
+      homedir: () => STUB_HOME,
+      translate: translateDistribution,
+      projectHooks: new ProjectHooksMaterializer(fs),
+    };
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
 
@@ -114,7 +120,12 @@ describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
   // biome-ignore lint/suspicious/noTemplateCurlyInString: describes the Claude hook placeholder
   it("rewrites ${CLAUDE_PLUGIN_ROOT}/ to the project's own .cursor/hooks/<plugin>/ in hook commands", async () => {
     const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-    const adapter = { fs: fs, homedir: () => STUB_HOME, translate: translateDistribution };
+    const adapter = {
+      fs: fs,
+      homedir: () => STUB_HOME,
+      translate: translateDistribution,
+      projectHooks: new ProjectHooksMaterializer(fs),
+    };
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
 
@@ -139,7 +150,12 @@ describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
 
   it("writes mcp.json at plugin root with the source content unchanged", async () => {
     const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-    const adapter = { fs: fs, homedir: () => STUB_HOME, translate: translateDistribution };
+    const adapter = {
+      fs: fs,
+      homedir: () => STUB_HOME,
+      translate: translateDistribution,
+      projectHooks: new ProjectHooksMaterializer(fs),
+    };
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
 
@@ -165,7 +181,12 @@ describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
 
   it("tracks mcp.json in Plugin.files for uninstall; hooks.json is not (it isn't under the plugin's own baseDir)", async () => {
     const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-    const adapter = { fs: fs, homedir: () => STUB_HOME, translate: translateDistribution };
+    const adapter = {
+      fs: fs,
+      homedir: () => STUB_HOME,
+      translate: translateDistribution,
+      projectHooks: new ProjectHooksMaterializer(fs),
+    };
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
 
@@ -191,7 +212,12 @@ describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
 
   it("emits no skip warnings for hooks or mcp", async () => {
     const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-    const adapter = { fs: fs, homedir: () => STUB_HOME, translate: translateDistribution };
+    const adapter = {
+      fs: fs,
+      homedir: () => STUB_HOME,
+      translate: translateDistribution,
+      projectHooks: new ProjectHooksMaterializer(fs),
+    };
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
 

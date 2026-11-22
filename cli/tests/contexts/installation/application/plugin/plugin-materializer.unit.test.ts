@@ -1,6 +1,5 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { PluginMaterializer } from "../../../../../src/contexts/installation/application/plugin/plugin-materializer.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../../../../src/contexts/installation/domain/project-layout.js";
@@ -10,6 +9,7 @@ import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plug
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { FixturePluginFetcher } from "../../../../shared/testing/fixture-plugin-fetcher.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { loadDistributionOf } from "../../../../shared/testing/load-distribution.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../../../shared/testing/saying.builder.js";
 import { fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
@@ -40,9 +40,9 @@ function fixture(installedVersion = "0.0.1", options: { globalCacheDir?: () => s
   };
   const updater = new PluginMaterializer({
     fs,
-    loader: new PluginDistributionLoader(fetcher, { read: async () => dist }),
+    loadDistribution: loadDistributionOf(fetcher, { read: async () => dist }),
     guard: userScopeFileGuard,
-    builtDeps: { ...fakeBuiltDeps(), homedir },
+    builtDeps: { ...fakeBuiltDeps(fs), homedir },
     globalCacheDir: options.globalCacheDir,
   });
   const plugin = InstalledPlugin.fromMetadata({

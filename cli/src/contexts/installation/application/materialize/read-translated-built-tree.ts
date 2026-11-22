@@ -6,7 +6,6 @@ import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.j
 import type { PluginTranslationResult } from "../../ports/plugin/plugin-translation.js";
 import type { AddPluginRequest, PlacementDeps } from "./add-plugin-request.js";
 import { materializeRequestedMcp } from "./flat-mcp-materializer.js";
-import { ProjectHooksMaterializer } from "./project-hooks-materializer.use-case.js";
 import {
   readBuiltFlatFiles,
   readBuiltUserPluginFiles,
@@ -62,7 +61,7 @@ async function readBuiltContent(
       : await readBuiltUserPluginFiles(deps.fs, { builtDir, name, platform });
   const files = withoutDroppedFiles(builtRead, name, translated.dropsBuiltFile);
   if (!deliversHooksToProject) return { files, hooks: { skipped: [] } };
-  const hooks = await new ProjectHooksMaterializer(deps.fs).execute({
+  const hooks = await deps.built.projectHooks.execute({
     dist,
     hooks: translated.projectHooks,
     tool,

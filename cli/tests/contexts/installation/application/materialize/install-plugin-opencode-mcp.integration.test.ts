@@ -4,6 +4,7 @@ import {
   type FlatPlacementDeps,
   placeFlatPlugin,
 } from "../../../../../src/contexts/installation/application/materialize/place-flat-plugin.js";
+import { ProjectHooksMaterializer } from "../../../../../src/contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
@@ -44,7 +45,12 @@ function buildAdapter(seed: Record<string, string> = {}): {
   fs: InMemoryFileAdapter;
 } {
   const fs = new InMemoryFileAdapter(seed);
-  const adapter = { fs: fs, homedir: () => STUB_HOME, translate: translateDistribution };
+  const adapter = {
+    fs: fs,
+    homedir: () => STUB_HOME,
+    translate: translateDistribution,
+    projectHooks: new ProjectHooksMaterializer(fs),
+  };
   return { adapter, fs };
 }
 

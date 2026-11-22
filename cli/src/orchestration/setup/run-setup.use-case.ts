@@ -8,14 +8,10 @@ import type {
 import type { ProjectContext } from "../../contexts/installation/contract/project-context.js";
 import type { AiToolId, IdeToolId } from "../../shared/domain/tool.js";
 import type { VersionReader } from "../../shared/ports/version-reader.js";
+import type { PluginInstallMode, SetupFlow } from "../domain/setup-flow.model.js";
 import { UserScopeUnavailableError } from "../orchestration.error.js";
 import type { ResolveSetupSource } from "./resolve-setup-source.use-case.js";
-import type {
-  PluginInstallMode,
-  RegisterFrameworkSource,
-  SetupFlow,
-  SetupResult,
-} from "./setup-flow.js";
+import type { RegisterFrameworkSource, SetupResult } from "./setup-flow.js";
 import type { SetupMachineScope } from "./setup-machine-scope.use-case.js";
 
 /** What a project-scope setup does, one entry per stage. */

@@ -9,7 +9,7 @@ import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js"
 // biome-ignore lint/plugin: filters the catalog's whole profiles to the AI tools active at user scope with a type guard, then reads five members; presentation has no ports/ to name a section in
 import type { AiToolProfile, ToolProfile } from "../../contexts/tools/contract/tool-profile.js";
 import type { Output } from "../../orchestration/domain/output.js";
-import type { PluginInstallMode } from "../../orchestration/setup/setup-flow.js";
+import type { PluginInstallMode } from "../../orchestration/domain/setup-flow.model.js";
 import { selectTools } from "../../orchestration/setup/setup-request.js";
 
 export interface SetupCmdOptions {

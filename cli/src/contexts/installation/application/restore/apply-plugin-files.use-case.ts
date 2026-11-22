@@ -8,8 +8,7 @@ import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { PluginTranslationMode } from "../../../tools/contract/tool-vocabulary.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
-import type { PluginFetcher } from "../../ports/marketplace-sources.js";
-import type { PluginDistributionReader } from "../../ports/plugin/plugin-distribution-reader.js";
+import type { LoadDistribution } from "../../ports/plugin/load-plugin-distribution.js";
 import { placementModeOf } from "../materialize/plugin-placement.js";
 import { rematerializePlugin } from "../materialize/rematerialize-plugin.js";
 import { isPluginFileAtDesiredState } from "../plugin/check-plugin-file-state.js";
@@ -37,8 +36,7 @@ function deliversHooksToProject(tool: AiToolProfile): boolean {
 /** What ApplyPluginFiles is built from. */
 export interface ApplyPluginFilesDeps {
   readonly fs: FileReader & FileWriter;
-  readonly pluginFetcher: PluginFetcher;
-  readonly pluginDistributionReader: PluginDistributionReader;
+  readonly loadDistribution: LoadDistribution;
   readonly builtDeps: BuiltMaterializationDeps;
 }
 
@@ -47,8 +45,7 @@ export class ApplyPluginFiles {
 
   async execute(options: ApplyPluginFilesRequest): Promise<number> {
     if (options.plugin.scope === "user") return 0;
-    const localPath = await this.deps.pluginFetcher.fetch(options.plugin.source, options.cacheDir);
-    const dist = await this.deps.pluginDistributionReader.read(localPath);
+    const dist = await this.deps.loadDistribution(options.plugin.source, options.cacheDir);
     const mode = placementModeOf(options.tool);
     if (
       mode !== null &&

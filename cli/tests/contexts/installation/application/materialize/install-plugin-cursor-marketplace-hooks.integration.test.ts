@@ -3,6 +3,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { placeBuiltTreePlugin } from "../../../../../src/contexts/installation/application/materialize/place-built-tree-plugin.js";
+import { ProjectHooksMaterializer } from "../../../../../src/contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../shared/testing/fake-ensure-built-marketplace.fake.js";
@@ -71,6 +72,7 @@ describe("placeBuiltTreePlugin - cursor marketplace hooks (Phase 7)", () => {
         ensureBuilt: fakeEnsureBuiltMarketplace(),
         marketplaceRegistry: await makeRegistry(),
         translate: translateDistribution,
+        projectHooks: new ProjectHooksMaterializer(fs),
       },
     };
 
@@ -107,6 +109,7 @@ describe("placeBuiltTreePlugin - cursor marketplace hooks (Phase 7)", () => {
         ensureBuilt: fakeEnsureBuiltMarketplace(),
         marketplaceRegistry: await makeRegistry(),
         translate: translateDistribution,
+        projectHooks: new ProjectHooksMaterializer(fs),
       },
     };
 

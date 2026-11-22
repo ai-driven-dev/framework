@@ -8,11 +8,11 @@ import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../domain/project-layout.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import type { LoadDistribution } from "../../ports/plugin/load-plugin-distribution.js";
 import type { RuntimeConfigSection } from "../../ports/tool-sections.js";
 import type { InstallRuntimeConfig } from "../install/config/install-runtime-config.use-case.js";
 import type { ReplacePluginFiles } from "../materialize/replace-plugin-files.use-case.js";
 import { requireManifest } from "../shared/require-manifest.js";
-import type { PluginDistributionLoader } from "./plugin-distribution-loader.js";
 import { resolvePluginToolIds } from "./plugin-target-resolution.js";
 
 export interface UpdatePluginRequest {
@@ -35,7 +35,7 @@ interface ProjectUpdateScope {
 /** What UpdatePlugin is built from. */
 export interface UpdatePluginDeps {
   readonly manifestRepo: ManifestRepository;
-  readonly distributionLoader: PluginDistributionLoader;
+  readonly loadDistribution: LoadDistribution;
   readonly replacePluginFiles: ReplacePluginFiles;
   readonly pluginRuntime?: Pick<InstallRuntimeConfig, "ensurePluginRuntimeFiles">;
 }
@@ -96,7 +96,7 @@ export class UpdatePlugin {
     const { projectRoot, cacheDir, manifest, rebuild } = scope;
     const toolId = tool.toolId;
     if (plugin.scope === "user") throw new InvalidPluginScopeError(toolId, "project", "user");
-    const dist = await this.deps.distributionLoader.load(plugin.source, cacheDir, {
+    const dist = await this.deps.loadDistribution(plugin.source, cacheDir, {
       forceRefresh: true,
     });
     await this.deps.pluginRuntime?.ensurePluginRuntimeFiles(tool, projectRoot, manifest);

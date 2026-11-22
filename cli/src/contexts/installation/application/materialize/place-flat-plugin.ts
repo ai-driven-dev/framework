@@ -17,12 +17,13 @@ import { writeChangedPluginFiles } from "../plugin/write-changed-plugin-files.js
 import { hashOutputFiles } from "../shared/hash-output-files.js";
 import type { AddPluginRequest, AddPluginResult } from "./add-plugin-request.js";
 import { materializeRequestedMcp } from "./flat-mcp-materializer.js";
-import { ProjectHooksMaterializer } from "./project-hooks-materializer.use-case.js";
+import type { ProjectHooksMaterializer } from "./project-hooks-materializer.use-case.js";
 
 export interface FlatPlacementDeps {
   fs: FileWriter & FileReader;
   homedir: () => string;
   translate: PluginTranslation;
+  projectHooks: ProjectHooksMaterializer;
 }
 
 interface FlatContext {
@@ -44,7 +45,7 @@ export async function placeFlatPlugin(
   const ctx = flatContextOf(tool, dist, { projectRoot, deps });
   if (ctx === null) return { skipped: [] };
   const mcp = await materializeRequestedMcp(deps.fs, request, ctx.installedMcp);
-  const hooks = await new ProjectHooksMaterializer(deps.fs).execute({
+  const hooks = await deps.projectHooks.execute({
     dist,
     hooks: ctx.projectHooks,
     tool,

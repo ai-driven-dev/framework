@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
+import { GitCloner } from "../../../../src/contexts/distribution/infrastructure/git-cloner-adapter.js";
 import { PluginFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
 import { FixturePluginFetcher } from "../../../shared/testing/fixture-plugin-fetcher.fake.js";
@@ -70,7 +71,7 @@ describePluginFetcherContract(
 describePluginFetcherContract("by PluginFetcherAdapter on a local git remote", async () => {
   const { root, repository } = await sandbox();
   return {
-    fetcher: new PluginFetcherAdapter(new FileAdapter()),
+    fetcher: new PluginFetcherAdapter(new FileAdapter(), new GitCloner()),
     cacheDir: join(root, "cache"),
     remote: { kind: "url", url: pathToFileURL(repository).href },
     unknownRemote: { kind: "url", url: pathToFileURL(join(root, "absent")).href },

@@ -29,16 +29,15 @@ import {
   CacheBuiltMarketplace,
   type FrameworkBuilds,
 } from "../contexts/installation/application/marketplace/cache-built-marketplace.use-case.js";
+import { ProjectHooksMaterializer } from "../contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 import { ListPlugins } from "../contexts/installation/application/plugin/list-plugins.use-case.js";
 import { DetectPluginDrift } from "../contexts/installation/application/shared/detect-plugin-drift.use-case.js";
 import { UpdateGitignore } from "../contexts/installation/application/update-gitignore.use-case.js";
-import type { BuiltMarketplaceEnsurer } from "../contexts/installation/contract/built-marketplace.js";
 import type { ProjectSetupState } from "../contexts/installation/contract/project-setup-state.js";
 import { AgentModelStoreAdapter } from "../contexts/installation/infrastructure/agent-model-store-adapter.js";
 import type { AgentModelStore } from "../contexts/installation/ports/agent-model-store.js";
 import type { ManifestRepository } from "../contexts/installation/ports/manifest-repository.js";
 import type { RegistrationRecordRules } from "../contexts/installation/ports/native-host.js";
-import type { PluginTranslation } from "../contexts/installation/ports/plugin/plugin-translation.js";
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import { EnsureBuiltMarketplace } from "../orchestration/marketplace/ensure-built-marketplace.use-case.js";
 import { BundledAssetProviderAdapter } from "../shared/infrastructure/asset-loader.js";
@@ -116,15 +115,6 @@ export function debugOnly(logger: Logger): Logger {
   };
 }
 
-/** What a restore needs to rebuild through the build pipeline. */
-export function builtMaterializationDepsOf(
-  ensureBuilt: BuiltMarketplaceEnsurer,
-  marketplaceRegistry: Base["marketplaceRegistry"],
-  translate: PluginTranslation
-) {
-  return { ensureBuilt, marketplaceRegistry, homedir, translate, platform: process.platform };
-}
-
 /** What installing a tool's configuration writes, and the steps that follow each install. */
 function wireConfigInstallation(base: Base, assetProvider: BundledAssetProviderAdapter) {
   const { tools, fs, logger, manifestRepo } = base;
@@ -189,11 +179,14 @@ export function wireInstallation(base: Base) {
   );
   // Restore re-materializes through the build pipeline, matching what install wrote:
   // rewriting raw content instead would itself be drift.
-  const builtMaterializationDeps = builtMaterializationDepsOf(
-    ensureBuiltMarketplaceUseCase,
+  const builtMaterializationDeps = {
+    ensureBuilt: ensureBuiltMarketplaceUseCase,
     marketplaceRegistry,
-    createPluginTranslation(tools)
-  );
+    homedir,
+    translate: createPluginTranslation(tools),
+    projectHooks: new ProjectHooksMaterializer(fs),
+    platform: process.platform,
+  };
   return {
     assetProvider,
     agentModelStore,

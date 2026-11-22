@@ -6,9 +6,9 @@ import type { FileReader } from "../../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../../shared/ports/file-writer.js";
 import type { ToolCatalog } from "../../../../tools/contract/tool-catalog.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../../domain/project-layout.js";
+import type { LoadDistribution } from "../../../ports/plugin/load-plugin-distribution.js";
 import { placementModeOf } from "../../materialize/plugin-placement.js";
 import type { BuiltMaterializationDeps } from "../../shared/built-materialization-deps.js";
-import type { PluginDistributionLoader } from "../plugin-distribution-loader.js";
 
 export interface ResolveAddedPluginSourceRequest {
   readonly source: PluginSource;
@@ -47,7 +47,7 @@ export type ResolveAddedPluginSourceResult = LocalAddedPluginSource | GithubAdde
 
 /** What ResolveAddedPluginSource is built from. */
 export interface ResolveAddedPluginSourceDeps {
-  readonly distributionLoader: PluginDistributionLoader;
+  readonly loadDistribution: LoadDistribution;
   readonly fs: FileWriter & FileReader;
   readonly built: BuiltMaterializationDeps;
 }
@@ -83,6 +83,6 @@ export class ResolveAddedPluginSource {
   }
 
   private read(source: PluginSource, projectRoot: string): Promise<PluginDistribution> {
-    return this.deps.distributionLoader.load(source, join(projectRoot, PLUGIN_CACHE_SUBDIR));
+    return this.deps.loadDistribution(source, join(projectRoot, PLUGIN_CACHE_SUBDIR));
   }
 }

@@ -1,14 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { registrationRecordRules } from "../../../src/composition/installation.js";
+import { PluginDistributionReaderAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-distribution-reader-adapter.js";
 import { RefreshHostPlugin } from "../../../src/contexts/host-registration/application/refresh-host-plugin.use-case.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
-import { PluginDistributionLoader } from "../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { PluginMaterializer } from "../../../src/contexts/installation/application/plugin/plugin-materializer.js";
 import { UpdateUserPluginFiles } from "../../../src/contexts/installation/application/plugin/update-user-plugin-files.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { isStrictlyWithinUserScope } from "../../../src/contexts/machine-claims/domain/user-scope-containment.js";
 import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.use-case.js";
 import { PluginDistribution } from "../../../src/shared/domain/plugin/plugin-distribution.js";
@@ -21,6 +20,7 @@ import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js"
 import { FixturePluginFetcher } from "../../shared/testing/fixture-plugin-fetcher.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
+import { loadDistributionOf } from "../../shared/testing/load-distribution.builder.js";
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.builder.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
@@ -85,14 +85,14 @@ function fixture(
         repo,
         materializer: new PluginMaterializer({
           fs,
-          loader: new PluginDistributionLoader(
+          loadDistribution: loadDistributionOf(
             new FixturePluginFetcher(),
             distribution
               ? { read: async () => distribution }
               : new PluginDistributionReaderAdapter(fs, registeredManifestProbes())
           ),
           guard: userScopeFileGuard,
-          builtDeps: fakeBuiltDeps(),
+          builtDeps: fakeBuiltDeps(fs),
         }),
         logger,
         records: registrationRecordRules,

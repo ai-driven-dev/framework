@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { ProjectHooksMaterializer } from "../../../../../src/contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
-import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.use-case.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../shared/testing/fake-ensure-built-marketplace.fake.js";
@@ -9,6 +9,7 @@ import {
   buildInstallationDeps,
   initAndInstall,
 } from "../../../../shared/testing/installation-deps.builder.js";
+import { loadDistributionOf } from "../../../../shared/testing/load-distribution.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
@@ -47,10 +48,7 @@ function makeUpdateUseCase(deps: Deps, registry: FakeMarketplaceRegistry): Updat
   return new UpdatePlugin(
     {
       manifestRepo: deps.manifestRepo,
-      distributionLoader: new PluginDistributionLoader(
-        deps.pluginFetcher,
-        deps.pluginDistributionReader
-      ),
+      loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
       replacePluginFiles: new ReplacePluginFiles(
         deps.fs,
         {
@@ -59,6 +57,7 @@ function makeUpdateUseCase(deps: Deps, registry: FakeMarketplaceRegistry): Updat
           platform: process.platform,
           homedir: () => HOME,
           translate: translateDistribution,
+          projectHooks: new ProjectHooksMaterializer(deps.fs),
         },
         registeredTools()
       ),
@@ -81,10 +80,7 @@ async function installStaleGithubPlugin(
     { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
-      distributionLoader: new PluginDistributionLoader(
-        deps.pluginFetcher,
-        deps.pluginDistributionReader
-      ),
+      loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
     },

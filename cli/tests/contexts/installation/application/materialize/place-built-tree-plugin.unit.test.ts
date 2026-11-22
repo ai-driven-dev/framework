@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { placeBuiltTreePlugin } from "../../../../../src/contexts/installation/application/materialize/place-built-tree-plugin.js";
+import { ProjectHooksMaterializer } from "../../../../../src/contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../shared/testing/fake-ensure-built-marketplace.fake.js";
@@ -43,6 +44,7 @@ describe("placeBuiltTreePlugin - cursor", () => {
         ensureBuilt: fakeEnsureBuiltMarketplace(),
         marketplaceRegistry: await makeRegistry(),
         translate: translateDistribution,
+        projectHooks: new ProjectHooksMaterializer(fs),
       },
     };
     const install = () => {
@@ -87,6 +89,7 @@ describe("placeBuiltTreePlugin - cursor", () => {
         ensureBuilt: fakeEnsureBuiltMarketplace(),
         marketplaceRegistry: await makeRegistry(),
         translate: { execute },
+        projectHooks: new ProjectHooksMaterializer(fs),
       },
     };
     const manifest = Manifest.create();
@@ -127,6 +130,7 @@ describe("placeBuiltTreePlugin - cursor", () => {
         ensureBuilt: fakeEnsureBuiltMarketplace(),
         marketplaceRegistry: await makeRegistry(),
         translate: translateDistribution,
+        projectHooks: new ProjectHooksMaterializer(fs),
       },
     };
 
@@ -167,6 +171,7 @@ describe("placeBuiltTreePlugin - cursor", () => {
         ensureBuilt: fakeEnsureBuiltMarketplace(),
         marketplaceRegistry: await makeRegistry(),
         translate: translateDistribution,
+        projectHooks: new ProjectHooksMaterializer(fs),
       },
     };
 
@@ -200,6 +205,7 @@ describe("placeBuiltTreePlugin - cursor", () => {
         ensureBuilt: fakeEnsureBuiltMarketplace(),
         marketplaceRegistry: await makeRegistry(),
         translate: translateDistribution,
+        projectHooks: new ProjectHooksMaterializer(fs),
       },
     };
     const result = await placeBuiltTreePlugin(
@@ -249,6 +255,7 @@ describe("placeBuiltTreePlugin - when no built tree applies", () => {
         ensureBuilt: fakeEnsureBuiltMarketplace(),
         marketplaceRegistry: await makeRegistry(),
         translate: translateDistribution,
+        projectHooks: new ProjectHooksMaterializer(fs),
       },
     };
     await placeBuiltTreePlugin(

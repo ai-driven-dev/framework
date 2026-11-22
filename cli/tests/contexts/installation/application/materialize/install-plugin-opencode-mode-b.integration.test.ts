@@ -2,6 +2,7 @@
 // section-specific native paths, never under one `.opencode/plugins/<name>/` root.
 import { describe, expect, it } from "vitest";
 import { placeFlatPlugin } from "../../../../../src/contexts/installation/application/materialize/place-flat-plugin.js";
+import { ProjectHooksMaterializer } from "../../../../../src/contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
@@ -41,7 +42,12 @@ function buildDist(name = "aidd-context"): PluginDistribution {
 describe("install opencode plugin via Mode B (integration)", () => {
   it("materializes project commands and namespaced native agents", async () => {
     const fs = new InMemoryFileAdapter();
-    const adapter = { fs: fs, homedir: () => STUB_HOME, translate: translateDistribution };
+    const adapter = {
+      fs: fs,
+      homedir: () => STUB_HOME,
+      translate: translateDistribution,
+      projectHooks: new ProjectHooksMaterializer(fs),
+    };
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
 
@@ -66,7 +72,12 @@ describe("install opencode plugin via Mode B (integration)", () => {
 
   it("does not write any file under user home for project-scope flat tools", async () => {
     const fs = new InMemoryFileAdapter();
-    const adapter = { fs: fs, homedir: () => STUB_HOME, translate: translateDistribution };
+    const adapter = {
+      fs: fs,
+      homedir: () => STUB_HOME,
+      translate: translateDistribution,
+      projectHooks: new ProjectHooksMaterializer(fs),
+    };
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
 
@@ -87,7 +98,12 @@ describe("install opencode plugin via Mode B (integration)", () => {
 
   it("registers plugin in manifest with files map keyed by relative path", async () => {
     const fs = new InMemoryFileAdapter();
-    const adapter = { fs: fs, homedir: () => STUB_HOME, translate: translateDistribution };
+    const adapter = {
+      fs: fs,
+      homedir: () => STUB_HOME,
+      translate: translateDistribution,
+      projectHooks: new ProjectHooksMaterializer(fs),
+    };
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
 

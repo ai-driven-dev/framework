@@ -2,12 +2,12 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { InstallTools } from "../../../../../src/contexts/installation/application/install/install-tools.use-case.js";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
-import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.use-case.js";
 import {
   buildInstallationDeps,
   initProject,
 } from "../../../../shared/testing/installation-deps.builder.js";
+import { loadDistributionOf } from "../../../../shared/testing/load-distribution.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { REPOSITORY_ROOT } from "../../../../shared/testing/repository-root.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
@@ -44,15 +44,12 @@ async function existingProject(configPath: string) {
   };
   await setup.execute(setupOptions);
   await seedFromDirectory(deps.fs, FIXTURE, { useAbsolutePaths: true });
-  const distribution = new PluginDistributionLoader(
-    deps.pluginFetcher,
-    deps.pluginDistributionReader
-  );
+  const distribution = loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader);
   const add = buildAddPlugin(
     { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
-      distributionLoader: distribution,
+      loadDistribution: distribution,
       marketplaceRegistry: deps.marketplaceRegistry,
       ...fakeBuildSources(),
     },
@@ -70,8 +67,12 @@ async function existingProject(configPath: string) {
   const update = new UpdatePlugin(
     {
       manifestRepo: deps.manifestRepo,
-      distributionLoader: distribution,
-      replacePluginFiles: new ReplacePluginFiles(deps.fs, fakeBuiltDeps(), registeredTools()),
+      loadDistribution: distribution,
+      replacePluginFiles: new ReplacePluginFiles(
+        deps.fs,
+        fakeBuiltDeps(deps.fs),
+        registeredTools()
+      ),
       pluginRuntime: deps.installRuntimeConfigUseCase,
     },
     registeredTools()

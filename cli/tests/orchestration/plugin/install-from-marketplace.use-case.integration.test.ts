@@ -2,12 +2,12 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PluginNotInMarketplaceError } from "../../../src/contexts/distribution/domain/distribution.error.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import { PluginDistributionLoader } from "../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
-import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
+import { PluginDistributionReaderAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-distribution-reader-adapter.js";
 import { AmbiguousPluginMatchError } from "../../../src/orchestration/orchestration.error.js";
 import { VersionMismatchError } from "../../../src/shared/domain/shared.error.js";
 import { buildAddPlugin } from "../../contexts/installation/testing/build-add-plugin.builder.js";
 import { fakeBuildSources } from "../../contexts/installation/testing/fake-build-sources.fake.js";
+import { loadDistributionOf } from "../../shared/testing/load-distribution.builder.js";
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.builder.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
@@ -25,7 +25,7 @@ const addPluginOver: AddPluginFor = (deps, registry) =>
     { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
-      distributionLoader: new PluginDistributionLoader(
+      loadDistribution: loadDistributionOf(
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
       ),

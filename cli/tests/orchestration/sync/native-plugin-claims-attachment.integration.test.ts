@@ -2,15 +2,14 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { registrationRecordRules } from "../../../src/composition/installation.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import { PluginDistributionReaderAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-distribution-reader-adapter.js";
 import { NativeHostRegistrationGate } from "../../../src/contexts/host-registration/application/native-host-registration-gate.js";
 import { RefreshHostPlugin } from "../../../src/contexts/host-registration/application/refresh-host-plugin.use-case.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
-import { PluginDistributionLoader } from "../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { PluginMaterializer } from "../../../src/contexts/installation/application/plugin/plugin-materializer.js";
 import { UpdateUserPluginFiles } from "../../../src/contexts/installation/application/plugin/update-user-plugin-files.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { isStrictlyWithinUserScope } from "../../../src/contexts/machine-claims/domain/user-scope-containment.js";
 import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.use-case.js";
 import { resolveHomeDir } from "../../../src/shared/infrastructure/home-dir.js";
@@ -28,6 +27,7 @@ import { FixturePluginFetcher } from "../../shared/testing/fixture-plugin-fetche
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
+import { loadDistributionOf } from "../../shared/testing/load-distribution.builder.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.builder.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
@@ -147,12 +147,12 @@ for (const [toolId, catalogPath] of [
             repo: user,
             materializer: new PluginMaterializer({
               fs: updateFs,
-              loader: new PluginDistributionLoader(
+              loadDistribution: loadDistributionOf(
                 new FixturePluginFetcher(),
                 new PluginDistributionReaderAdapter(updateFs, registeredManifestProbes())
               ),
               guard: userScopeFileGuard,
-              builtDeps: fakeBuiltDeps(),
+              builtDeps: fakeBuiltDeps(updateFs),
             }),
             logger: new CapturingLogger(),
             records: registrationRecordRules,
@@ -183,12 +183,12 @@ for (const [toolId, catalogPath] of [
               repo: user,
               materializer: new PluginMaterializer({
                 fs: updateFs,
-                loader: new PluginDistributionLoader(
+                loadDistribution: loadDistributionOf(
                   new FixturePluginFetcher(),
                   new PluginDistributionReaderAdapter(updateFs, registeredManifestProbes())
                 ),
                 guard: userScopeFileGuard,
-                builtDeps: fakeBuiltDeps(),
+                builtDeps: fakeBuiltDeps(updateFs),
               }),
               logger: new CapturingLogger(),
               records: registrationRecordRules,

@@ -8,8 +8,8 @@ import {
 } from "../../../src/contexts/distribution/contract/framework-source.js";
 import { InitProject } from "../../../src/contexts/installation/application/init-project.use-case.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
+import type { SetupFlow } from "../../../src/orchestration/domain/setup-flow.model.js";
 import { RunSetup } from "../../../src/orchestration/setup/run-setup.use-case.js";
-import type { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
 import { bindOutput } from "../../../src/presentation/controllers/global-options.controller.js";
 import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";

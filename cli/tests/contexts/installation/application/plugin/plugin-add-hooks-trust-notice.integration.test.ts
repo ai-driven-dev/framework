@@ -3,13 +3,13 @@
 
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import {
   buildInstallationDeps,
   initAndInstall,
 } from "../../../../shared/testing/installation-deps.builder.js";
+import { loadDistributionOf } from "../../../../shared/testing/load-distribution.builder.js";
 import { nativeOf } from "../../../../shared/testing/native-plugin-answers.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
@@ -29,10 +29,7 @@ async function installWithLogger(toolId: AiToolId) {
     { fs: deps.fs, logger: logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
-      distributionLoader: new PluginDistributionLoader(
-        deps.pluginFetcher,
-        deps.pluginDistributionReader
-      ),
+      loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
       marketplaceRegistry: new FakeMarketplaceRegistry(),
       ...fakeBuildSources(),
     },

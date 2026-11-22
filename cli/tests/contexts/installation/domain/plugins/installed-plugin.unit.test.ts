@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parsePluginSpec } from "../../../../../src/contexts/installation/contract/plugin-spec.js";
-import {
-  InvalidPluginNameError,
-  InvalidPluginVersionError,
-  MalformedPluginScopeError,
-} from "../../../../../src/contexts/installation/domain/installation.error.js";
+import { MalformedPluginScopeError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type {
   ComponentPathMap,
@@ -12,6 +8,10 @@ import type {
   PluginEntryData,
 } from "../../../../../src/contexts/installation/domain/plugins/plugin-entry.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import {
+  InvalidPluginNameError,
+  InvalidPluginVersionError,
+} from "../../../../../src/shared/domain/shared.error.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../../../shared/testing/saying.builder.js";
 

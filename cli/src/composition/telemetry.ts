@@ -51,16 +51,17 @@ import { BindingsLockAdapter } from "../contexts/telemetry/infrastructure/storag
 import { RepositoryDeclarationsAdapter } from "../contexts/telemetry/infrastructure/storage/declarations/repository-declarations-adapter.js";
 import { SessionBindingStoreAdapter } from "../contexts/telemetry/infrastructure/storage/declarations/session-binding-store-adapter.js";
 import { BindingSnapshotStoreAdapter } from "../contexts/telemetry/infrastructure/storage/ledger/binding-snapshot-store-adapter.js";
+import { LeftOutAdapter } from "../contexts/telemetry/infrastructure/storage/ledger/left-out-adapter.js";
 import { ResolutionStoreAdapter } from "../contexts/telemetry/infrastructure/storage/ledger/resolution-store-adapter.js";
 import { UsageLedgerAdapter } from "../contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { MeasurementErasureAdapter } from "../contexts/telemetry/infrastructure/storage/measurement-erasure-adapter.js";
 import { PersonIdentityAdapter } from "../contexts/telemetry/infrastructure/storage/person-identity-adapter.js";
-import { PrivateStorageAdapter } from "../contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 import type { UsageSource } from "../contexts/telemetry/ports/usage-source.js";
 import type { TelemetryDeps, TelemetryRequests } from "../orchestration/deps.js";
 import type { Prompter } from "../orchestration/ports/prompter.js";
 import { ChooseIdentity } from "../orchestration/telemetry/choose-identity.use-case.js";
 import { EnvironmentAdapter } from "../shared/infrastructure/environment-adapter.js";
+import { PrivateStorageAdapter } from "../shared/infrastructure/private-storage-adapter.js";
 import { userConfigDirOf } from "./user-config-dir.js";
 
 /** The requests a command checks before anything is wired: no file, no process, only the clock. */
@@ -110,8 +111,11 @@ function wireStores(root: string) {
   const aliases = new RepositoryAliasStoreAdapter(ledgerDir);
   return {
     root,
-    ledger: new UsageLedgerAdapter(ledgerDir, storage),
-    resolutionStore: new ResolutionStoreAdapter(ledgerDir, storage),
+    ledger: new UsageLedgerAdapter(ledgerDir, storage, {
+      leftOut: new LeftOutAdapter(ledgerDir, storage),
+      aliases,
+    }),
+    resolutionStore: new ResolutionStoreAdapter(ledgerDir, storage, aliases),
     consentHistory: new ConsentHistoryAdapter(ledgerDir, storage),
     snapshotStore: new BindingSnapshotStoreAdapter(bindingsDir, storage, aliases),
     bindingsLock: new BindingsLockAdapter(bindingsDir, storage),

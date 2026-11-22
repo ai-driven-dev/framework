@@ -1,11 +1,10 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { ProjectHooksMaterializer } from "../../../../../src/contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
 import type { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.use-case.js";
-import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.use-case.js";
 import type { BuiltMaterializationDeps } from "../../../../../src/contexts/installation/application/shared/built-materialization-deps.js";
-import type { PluginFetchOptions } from "../../../../../src/contexts/installation/ports/marketplace-sources.js";
 import type { PluginSource } from "../../../../../src/shared/domain/source.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { FixturePluginFetcher } from "../../../../shared/testing/fixture-plugin-fetcher.fake.js";
@@ -13,6 +12,7 @@ import {
   buildInstallationDeps,
   initAndInstall,
 } from "../../../../shared/testing/installation-deps.builder.js";
+import { loadDistributionOf } from "../../../../shared/testing/load-distribution.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../../../shared/testing/saying.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
@@ -34,12 +34,12 @@ const GREET_PATH = join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/gr
 type Deps = Awaited<ReturnType<typeof buildInstallationDeps>>;
 
 class RecordingFetcher extends FixturePluginFetcher {
-  readonly fetchOptions: Array<PluginFetchOptions | undefined> = [];
+  readonly fetchOptions: Array<{ forceRefresh?: boolean } | undefined> = [];
 
   override fetch(
     source: PluginSource,
     cacheDir: string,
-    options?: PluginFetchOptions
+    options?: { forceRefresh?: boolean }
   ): Promise<string> {
     this.fetchOptions.push(options);
     return super.fetch(source, cacheDir, options);
@@ -56,7 +56,7 @@ async function setup(
     { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
-      distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, reader),
+      loadDistribution: loadDistributionOf(deps.pluginFetcher, reader),
       marketplaceRegistry: deps.marketplaceRegistry,
       ...fakeBuildSources(),
     },
@@ -65,13 +65,10 @@ async function setup(
   const updateUseCase = new UpdatePlugin(
     {
       manifestRepo: deps.manifestRepo,
-      distributionLoader: new PluginDistributionLoader(
-        options.fetcher ?? deps.pluginFetcher,
-        reader
-      ),
+      loadDistribution: loadDistributionOf(options.fetcher ?? deps.pluginFetcher, reader),
       replacePluginFiles: new ReplacePluginFiles(
         deps.fs,
-        options.builtDeps ?? fakeBuiltDeps(),
+        options.builtDeps ?? fakeBuiltDeps(deps.fs),
         registeredTools()
       ),
     },
@@ -292,6 +289,7 @@ describe("UpdatePlugin", () => {
           platform: process.platform,
           homedir: () => "/home/u",
           translate: translateDistribution,
+          projectHooks: new ProjectHooksMaterializer(deps.fs),
         },
       });
       await addLocal(addUseCase);

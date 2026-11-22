@@ -29,9 +29,9 @@ import {
 } from "../../../../../src/contexts/telemetry/domain/report/report-filter.js";
 import { buildReport } from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
 import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/stored-usage.js";
-import { UsageLedgerAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
-import { PrivateStorageAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
+import type { UsageLedgerAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import type { UsageLedger } from "../../../../../src/contexts/telemetry/ports/usage-ledger.js";
+import { PrivateStorageAdapter } from "../../../../../src/shared/infrastructure/private-storage-adapter.js";
 import { FakeBindings } from "../../testing/fake-bindings.fake.js";
 import { FakeConsents } from "../../testing/fake-consents.fake.js";
 import { FakeLocator } from "../../testing/fake-locator.fake.js";
@@ -41,6 +41,7 @@ import { InMemoryIdentity } from "../../testing/in-memory-identity.fake.js";
 import { InMemoryResolutions } from "../../testing/in-memory-resolutions.fake.js";
 import { InMemorySessions } from "../../testing/in-memory-sessions.fake.js";
 import { InMemorySnapshots } from "../../testing/in-memory-snapshots.fake.js";
+import { ledgerOver } from "../../testing/ledger-adapters.builder.js";
 
 let root: string;
 let runs = 0;
@@ -184,7 +185,7 @@ async function ledgerWith(files: ReadonlyMap<string, string>): Promise<UsageLedg
   const dir = join(root, `ledger-${runs}`);
   await mkdir(dir, { recursive: true });
   for (const [name, text] of files) await writeFile(join(dir, name), text);
-  return new UsageLedgerAdapter(dir, new PrivateStorageAdapter());
+  return ledgerOver(dir, new PrivateStorageAdapter());
 }
 
 /** An ingest that finds nothing new, so the report reads the ledger as laid out. */

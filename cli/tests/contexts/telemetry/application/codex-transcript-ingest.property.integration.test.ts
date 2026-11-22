@@ -13,8 +13,7 @@ import { ReadUsage } from "../../../../src/contexts/telemetry/application/read-u
 import { SnapshotBindings } from "../../../../src/contexts/telemetry/application/snapshot-bindings.use-case.js";
 import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
 import { CodexTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.js";
-import { UsageLedgerAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
-import { PrivateStorageAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
+import { PrivateStorageAdapter } from "../../../../src/shared/infrastructure/private-storage-adapter.js";
 import { cloneOf, grantedBy } from "../testing/clone.builder.js";
 import { FakeBindings } from "../testing/fake-bindings.fake.js";
 import { FakeConsents } from "../testing/fake-consents.fake.js";
@@ -23,6 +22,7 @@ import { InMemoryBindingsLock } from "../testing/in-memory-bindings-lock.fake.js
 import { InMemoryConsentHistory } from "../testing/in-memory-consent-history.fake.js";
 import { InMemoryResolutions } from "../testing/in-memory-resolutions.fake.js";
 import { InMemorySnapshots } from "../testing/in-memory-snapshots.fake.js";
+import { ledgerOver } from "../testing/ledger-adapters.builder.js";
 
 let root: string;
 let runs = 0;
@@ -43,7 +43,7 @@ const PLACES = ["/work/in", "/work/out", "/work/none", undefined] as const;
 function machine(sessions: string, projects?: string) {
   runs += 1;
   const dir = join(root, `ledger-${runs}`);
-  const ledger = new UsageLedgerAdapter(dir, new PrivateStorageAdapter());
+  const ledger = ledgerOver(dir, new PrivateStorageAdapter());
   const locator = new FakeLocator();
   const consents = new FakeConsents();
   const history = new InMemoryConsentHistory();

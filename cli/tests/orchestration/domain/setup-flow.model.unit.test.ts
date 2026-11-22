@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { SetupFlow } from "../../../src/orchestration/domain/setup-flow.model.js";
 import {
   InvalidPluginModeConfigError,
   InvalidSetupToolIdError,
@@ -7,7 +8,6 @@ import {
   UserScopePluginModeError,
   UserScopeUnsupportedAiToolsError,
 } from "../../../src/orchestration/orchestration.error.js";
-import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
 import { flowTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const ROOT = "/project";

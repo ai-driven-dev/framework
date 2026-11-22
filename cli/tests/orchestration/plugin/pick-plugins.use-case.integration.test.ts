@@ -5,8 +5,7 @@ import { ListMarketplaces } from "../../../src/contexts/distribution/application
 import { ResolveMarketplace } from "../../../src/contexts/distribution/application/resolve-marketplace.use-case.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
-import { PluginDistributionLoader } from "../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
-import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
+import { PluginDistributionReaderAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-distribution-reader-adapter.js";
 import {
   InteractiveOnlyError,
   NoMarketplacesRegisteredError,
@@ -23,6 +22,7 @@ import {
   buildInstallationDeps,
   initAndInstall,
 } from "../../shared/testing/installation-deps.builder.js";
+import { loadDistributionOf } from "../../shared/testing/load-distribution.builder.js";
 import { unusedRawCatalog } from "../../shared/testing/raw-catalog.fake.js";
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
@@ -67,7 +67,7 @@ async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
     { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
-      distributionLoader: new PluginDistributionLoader(
+      loadDistribution: loadDistributionOf(
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
       ),

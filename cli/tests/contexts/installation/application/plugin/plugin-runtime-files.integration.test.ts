@@ -1,12 +1,12 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
-import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
 import { buildInstallationDeps } from "../../../../shared/testing/installation-deps.builder.js";
+import { loadDistributionOf } from "../../../../shared/testing/load-distribution.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { REPOSITORY_ROOT } from "../../../../shared/testing/repository-root.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
@@ -35,10 +35,7 @@ async function legacyProject() {
     { fs: deps.fs, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
-      distributionLoader: new PluginDistributionLoader(
-        deps.pluginFetcher,
-        deps.pluginDistributionReader
-      ),
+      loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
       marketplaceRegistry: deps.marketplaceRegistry,
       ...fakeBuildSources(),
     },
@@ -48,11 +45,12 @@ async function legacyProject() {
   const update = new UpdatePlugin(
     {
       manifestRepo: deps.manifestRepo,
-      distributionLoader: new PluginDistributionLoader(
-        deps.pluginFetcher,
-        deps.pluginDistributionReader
+      loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
+      replacePluginFiles: new ReplacePluginFiles(
+        deps.fs,
+        fakeBuiltDeps(deps.fs),
+        registeredTools()
       ),
-      replacePluginFiles: new ReplacePluginFiles(deps.fs, fakeBuiltDeps(), registeredTools()),
       pluginRuntime: deps.installRuntimeConfigUseCase,
     },
     registeredTools()
