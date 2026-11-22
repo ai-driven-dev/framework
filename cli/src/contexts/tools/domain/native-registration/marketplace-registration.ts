@@ -23,13 +23,15 @@ export class MarketplaceRegistration {
     return this.#settings.settingsPath;
   }
 
-  /** A parsed shared file without its marketplaces declaration, or null when it declared none. */
-  withoutMarketplaces(shared: Record<string, unknown>): Record<string, unknown> | null {
-    const key = this.#settings.settingsKey;
-    if (!(key in shared)) return null;
-    const rest = { ...shared };
-    delete rest[key];
-    return rest;
+  /** The key under which a shared file declares its marketplaces. */
+  marketplacesKey(): string {
+    return this.#settings.settingsKey;
+  }
+
+  /** The key under which a shared file enables plugins, or null for a tool that enables none
+   * there. */
+  enabledPluginsKey(): string | null {
+    return this.#settings.enabledPluginsKey ?? null;
   }
 
   /** The marketplace names a parsed settings file declares, whether as a list or as a map. */
@@ -38,22 +40,6 @@ export class MarketplaceRegistration {
     if (Array.isArray(value)) return new Set(value.map(String));
     if (value !== null && typeof value === "object") return new Set(Object.keys(value));
     return new Set();
-  }
-
-  /** A parsed shared file with each ref not yet enabled added as enabled, or null when there is
-   * nothing to add: every ref already there, or a tool that enables no plugin in this file. */
-  withEnabledPlugins(
-    shared: Record<string, unknown>,
-    refs: readonly string[]
-  ): Record<string, unknown> | null {
-    const key = this.#settings.enabledPluginsKey;
-    if (key == null) return null;
-    const raw = shared[key];
-    const existing = asPlainObject(raw) ?? {};
-    const toAdd: Record<string, boolean> = {};
-    for (const ref of refs) if (!(ref in existing)) toAdd[ref] = true;
-    if (Object.keys(toAdd).length === 0) return null;
-    return { ...shared, [key]: { ...existing, ...toAdd } };
   }
 
   /** The name a marketplace is keyed by in the enabled-plugins map, or null when the tool cannot

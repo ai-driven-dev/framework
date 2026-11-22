@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { registrationIssueOf } from "../../../src/orchestration/doctor/registration-issues.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { SYNTHETIC_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
 
-const tool = TOOL.claude;
+const tool = SYNTHETIC_TOOL;
 const found = {
   name: "aidd-framework",
   registeredSource: "/registered",

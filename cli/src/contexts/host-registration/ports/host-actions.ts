@@ -4,9 +4,9 @@ import type { Scope } from "../../../shared/domain/scope.js";
  * Drives a tool's native plugin CLI, so the tool writes its own configuration.
  *
  * What each tool delegates differs: Codex and Copilot load plugins only from user-global state
- * their own `plugin` subcommands populate, so both steps are driven, while Claude registers its
- * marketplaces through its command but reads enabled plugins from a project file this CLI
- * writes, so only the registration is. Implementations shell out to the binary declared by
+ * their own `plugin` subcommands populate, and Claude enables plugins through its own `install`
+ * verb, so all three drive both steps. A tool whose profile declares no enable verb is driven
+ * for its registration only. Implementations shell out to the binary declared by
  * `NativeActivation.binary`.
  */
 export interface HostActions {

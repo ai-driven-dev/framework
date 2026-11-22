@@ -8,7 +8,7 @@ import {
 import { VersionMismatchError } from "../../../src/shared/domain/shared.error.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { ChoosingPrompter } from "../../shared/testing/choosing-prompter.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { SYNTHETIC_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
 
 function match(marketplaceName: string, version?: string, github = false): PluginSourceMatch {
   return {
@@ -27,7 +27,7 @@ function match(marketplaceName: string, version?: string, github = false): Plugi
 
 const request: InstallFromMarketplaceRequest = {
   pluginName: "alpha",
-  toolIds: [TOOL.claude],
+  toolIds: [SYNTHETIC_TOOL],
   projectRoot: "/project",
   interactive: true,
 };
@@ -68,7 +68,7 @@ describe("InstallFromMarketplace", () => {
     expect(added).toEqual([
       {
         source: { kind: "local", path: "/one/alpha" },
-        toolIds: [TOOL.claude],
+        toolIds: [SYNTHETIC_TOOL],
         projectRoot: "/project",
         interactive: true,
         marketplace: "one",

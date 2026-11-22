@@ -11,12 +11,12 @@ import type { Scope } from "../../../../src/shared/domain/scope.js";
 import { FakeCurrentVersion } from "../../../shared/testing/fake-current-version.fake.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { SYNTHETIC_TOOL } from "../../../shared/testing/synthetic-tool-id.builder.js";
 
 const PROJECT = resolve("/project");
 const USER_ROOT = resolve("/user-config");
 const VERSION = "1.2.3";
-const TOOL_ID = TOOL.claude;
+const TOOL_ID = SYNTHETIC_TOOL;
 
 /** What the in-memory `realpath` answers: `resolve`d, spelled with "/" as the fake spells every path. */
 function virtual(path: string): string {

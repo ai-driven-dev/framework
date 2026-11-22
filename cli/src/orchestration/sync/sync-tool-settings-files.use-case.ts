@@ -1,22 +1,15 @@
-import { resolve } from "node:path";
-import { FileHash } from "../../../../shared/domain/file-hash.js";
-import { tryParseJson } from "../../../../shared/domain/reading/json-file.js";
-import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
-import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
-import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { Logger } from "../../../../shared/ports/logger.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
-import type { Manifest } from "../../domain/manifest.js";
-import type { DeclaredMarketplace } from "../../ports/marketplace-sources.js";
-import type { HostRegistrationOutcome, RegistrationRecordRules } from "../../ports/native-host.js";
-import type { BuildMarketplaceForTool } from "./build-marketplace-for-tool.use-case.js";
+import type { HostRegistrationOutcome } from "../../contexts/host-registration/application/register/registration-outcome.js";
+import type { BuildMarketplaceForTool } from "../../contexts/installation/application/sync/build-marketplace-for-tool.use-case.js";
+import type { TrackedSharedSettings } from "../../contexts/installation/application/sync/tracked-shared-settings.js";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
+import type { MarketplaceRegistrationAnswers } from "../../contexts/tools/contract/tool-profile.js";
+import type { AiToolId, ToolId } from "../../shared/domain/tool.js";
+import type { RefRules, SyncedManifest, SyncedMarketplaces } from "./plugin-refs-run.js";
 
 interface SyncRun {
   readonly projectRoot: string;
-  readonly manifest: Manifest;
-  readonly marketplaces: readonly DeclaredMarketplace[];
+  readonly manifest: SyncedManifest;
+  readonly marketplaces: SyncedMarketplaces;
 }
 
 /** One tool's shared settings file within a run. */
@@ -35,12 +28,25 @@ export type SyncToolSettingsFilesRequest =
       readonly outcomes: ReadonlyMap<ToolId, HostRegistrationOutcome>;
     });
 
+/** The new content of a parsed shared settings file, null when there is nothing to change. */
+export interface SettingsDeclarationRules {
+  readonly withoutMarketplaces: (
+    shared: Record<string, unknown>,
+    settingsKey: string
+  ) => Record<string, unknown> | null;
+  readonly withEnabledPlugins: (
+    shared: Record<string, unknown>,
+    enabledPluginsKey: string | null,
+    refs: readonly string[]
+  ) => Record<string, unknown> | null;
+}
+
 /** What SyncToolSettingsFiles is built from. */
 export interface SyncToolSettingsFilesDeps {
-  readonly fs: FileReader & FileWriter;
-  readonly logger: Logger;
+  readonly tracked: TrackedSharedSettings;
   readonly buildMarketplace: BuildMarketplaceForTool;
-  readonly records: RegistrationRecordRules;
+  readonly declaration: SettingsDeclarationRules;
+  readonly refs: RefRules;
 }
 
 /** The project settings files a tool shares with its host, kept in step with the manifest. */
@@ -78,16 +84,13 @@ export class SyncToolSettingsFiles {
       const profile = this.tools.aiProfileIfAny(toolId);
       const settings = profile?.marketplaceRegistration();
       if (profile == null || settings?.requiresNativeProof() !== true) continue;
-      const provenRefs = this.deps.records.refsOnHosts(
-        outcome,
+      const provenRefs = this.deps.refs.refsOnHosts(
+        { pluginRefs: outcome.pluginRefs },
         outcome.marketplaces.map((entry) => entry.hostName)
       );
       if (
         provenRefs.length > 0 &&
-        (await this.syncEnabledPluginsFile(
-          { ...run, toolId: profile.toolId, settings },
-          provenRefs
-        ))
+        (await this.enablePlugins({ ...run, toolId: profile.toolId, settings }, provenRefs))
       )
         declarativeChanged = true;
     }
@@ -95,86 +98,75 @@ export class SyncToolSettingsFiles {
   }
 
   private async syncToolSettings(target: ToolSettings): Promise<boolean> {
-    const marketplaceChanged = await this.syncMarketplacesFile(target);
-    const pluginsChanged = await this.syncEnabledPluginsFile(target);
+    const marketplaceChanged = await this.syncMarketplaces(target);
+    const pluginsChanged = await this.enablePlugins(target);
     return marketplaceChanged || pluginsChanged;
   }
 
   // The marketplaces key names built trees by absolute path, so a profile may send it to a file
   // of its own. That file is written but never hashed: an absolute path recorded in the manifest
   // would read as drift on every other machine.
-  private async syncMarketplacesFile(target: ToolSettings): Promise<boolean> {
+  private async syncMarketplaces(target: ToolSettings): Promise<boolean> {
     // Building the tree is this CLI's job whoever registers it: a tool that is not installed
     // today may be tomorrow, and the tree is what any registration points at.
     for (const m of target.marketplaces)
       await this.deps.buildMarketplace.execute(target.toolId, m, target.projectRoot);
-    return this.evictMarketplacesFromSharedFile(target);
+    return this.evictMarketplaces(target);
   }
 
   // The key kept an absolute path in the shared, committed file, wrong for everyone but its
   // author. Take it out and re-hash, so the move reaches projects that already exist.
-  private async evictMarketplacesFromSharedFile(target: ToolSettings): Promise<boolean> {
-    const shared = await this.load(target);
-    const without = target.settings.withoutMarketplaces(shared);
+  private async evictMarketplaces(target: ToolSettings): Promise<boolean> {
+    const without = this.deps.declaration.withoutMarketplaces(
+      await this.read(target),
+      target.settings.marketplacesKey()
+    );
     if (without === null) return false;
     await this.write(target, without);
     return true;
   }
 
-  private async syncEnabledPluginsFile(
+  private async enablePlugins(
     target: ToolSettings,
     provenRefs?: readonly string[]
   ): Promise<boolean> {
-    const json = await this.load(target);
-    const enabled = target.settings.withEnabledPlugins(json, this.refsToEnable(target, provenRefs));
+    const enabled = this.deps.declaration.withEnabledPlugins(
+      await this.read(target),
+      target.settings.enabledPluginsKey(),
+      provenRefs ?? this.refsToEnable(target)
+    );
     if (enabled === null) return false;
     await this.write(target, enabled);
     return true;
   }
 
-  private refsToEnable(
-    { settings, toolId, manifest, marketplaces }: ToolSettings,
-    provenRefs?: readonly string[]
-  ): readonly string[] {
-    if (provenRefs !== undefined) return provenRefs;
+  private refsToEnable({
+    settings,
+    toolId,
+    manifest,
+    marketplaces,
+  }: ToolSettings): readonly string[] {
     const refs: string[] = [];
     const marketplaceByName = new Map(marketplaces.map((m) => [m.name, m]));
     for (const plugin of manifest.getPlugins(toolId)) {
       if (plugin.marketplace == null) continue;
       const marketplace = marketplaceByName.get(plugin.marketplace);
       if (marketplace == null) continue;
-      const entryKey = settings.entryKeyFor({
-        name: marketplace.name,
-        source: marketplace.source,
-      });
-      if (entryKey == null) continue;
-      refs.push(this.deps.records.refOnHostName(plugin.name, entryKey));
+      const entryKey = settings.entryKeyFor({ name: marketplace.name, source: marketplace.source });
+      if (entryKey != null) refs.push(this.deps.refs.refOnHostName(plugin.name, entryKey));
     }
     return refs;
   }
 
-  // These files are co-owned and the machine-local one is untracked and gitignored, which is
-  // exactly the kind of file people hand-edit: a trailing comma must not take the whole sync
-  // down with it.
-  private async load({ projectRoot, settings }: ToolSettings): Promise<Record<string, unknown>> {
-    const absPath = resolve(projectRoot, settings.sharedSettingsFile());
-    if (!(await this.deps.fs.fileExists(absPath))) return {};
-    const parsed = tryParseJson(await this.deps.fs.readFile(absPath));
-    if (!parsed.ok) {
-      this.deps.logger.warn(
-        `Ignoring malformed JSON in ${absPath}; rewriting the keys this CLI owns.`
-      );
-      return {};
-    }
-    return asPlainObject(parsed.value) ?? {};
+  private read({ projectRoot, settings }: ToolSettings): Promise<Record<string, unknown>> {
+    return this.deps.tracked.read(projectRoot, settings.sharedSettingsFile());
   }
 
-  private async write(
+  private write(
     { projectRoot, settings, manifest, toolId }: ToolSettings,
     json: Record<string, unknown>
   ): Promise<void> {
-    const content = JSON.stringify(json, null, 2);
-    await this.deps.fs.writeFile(resolve(projectRoot, settings.sharedSettingsFile()), content);
-    manifest.recordFileHash(toolId, settings.sharedSettingsFile(), FileHash.of(content));
+    const path = settings.sharedSettingsFile();
+    return this.deps.tracked.write({ projectRoot, path, manifest, toolId }, json);
   }
 }
