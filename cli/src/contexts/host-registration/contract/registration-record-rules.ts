@@ -6,9 +6,8 @@ export type RegisteredMarketplaceView = Readonly<Record<string, unknown>> & {
   readonly hostName: string;
 };
 
-/** A record with the claims kept on its refs. */
-type ClaimedRecordView<Claim extends { readonly ref: string } = { readonly ref: string }> =
-  RegistrationRecordView & { readonly pluginClaims?: readonly Claim[] };
+/** A record with the claims block kept beside it, carried through as is. */
+type ClaimedRecordView = RegistrationRecordView & { readonly pluginClaims?: unknown };
 
 /** The marketplaces and refs one activation reported, which a record is rebuilt from. */
 export interface ActivationOutcomeView {
@@ -47,11 +46,11 @@ export interface RegistrationRecordRules {
     alias: string | undefined
   ) => RegisteredMarketplaceView | undefined;
   /** The record an activation leaves, `undefined` when it equals the one recorded. */
-  readonly afterActivation: <Claim extends { readonly ref: string }>(
-    existing: ClaimedRecordView<Claim> | undefined,
+  readonly afterActivation: (
+    existing: ClaimedRecordView | undefined,
     outcome: ActivationOutcomeView,
     run: { readonly binary: string; readonly narrowed: boolean }
-  ) => ClaimedRecordView<Claim> | undefined;
+  ) => ClaimedRecordView | undefined;
   /** The refs, then the claimed refs, that sit on one of the host names. */
   readonly refsOnHosts: (
     record: RegistrationRecordView,

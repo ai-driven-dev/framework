@@ -18,16 +18,10 @@ export type RegistrationRecord = {
  * through {@link readRegistrationRecord}. */
 export type RegistrationRecordData = Readonly<Record<string, unknown>>;
 
-/** A claim the manifest keeps on a ref: only the ref is the host's business. */
-export interface RecordedClaim {
-  readonly ref: string;
-}
-
-/** A record together with the claims the manifest keeps beside it. */
-export type ClaimedRegistrationRecord<Claim extends RecordedClaim = RecordedClaim> =
-  RegistrationRecordData & {
-    readonly pluginClaims?: readonly Claim[];
-  };
+/** A record together with the claims block the manifest keeps beside it, carried through as is. */
+export type ClaimedRegistrationRecord = RegistrationRecordData & {
+  readonly pluginClaims?: unknown;
+};
 
 interface RegistrationPreview {
   readonly binary: string;

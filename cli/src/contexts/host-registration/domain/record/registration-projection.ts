@@ -5,7 +5,6 @@ import {
 } from "./native-marketplace-source.js";
 import {
   type ClaimedRegistrationRecord,
-  type RecordedClaim,
   type RegistrationRecord,
   readRegistrationRecord,
   registrationRecordData,
@@ -31,11 +30,11 @@ export interface ActivationRun {
  * the host name they sit on, and only for a host name no retained marketplace still owns: two
  * aliases may share one. Order counts, both sides being built in the same order each run.
  */
-export function afterActivation<Claim extends RecordedClaim>(
-  existing: ClaimedRegistrationRecord<Claim> | undefined,
+export function afterActivation(
+  existing: ClaimedRegistrationRecord | undefined,
   outcome: ActivationOutcome,
   { binary, narrowed }: ActivationRun
-): ClaimedRegistrationRecord<Claim> | undefined {
+): ClaimedRegistrationRecord | undefined {
   const recorded = readRegistrationRecord(existing);
   const projected = [...outcome.marketplaces, ...outcome.preservedMarketplaces];
   const recordedRefs = recorded?.pluginRefs ?? [];
@@ -49,7 +48,7 @@ export function afterActivation<Claim extends RecordedClaim>(
     marketplaces: [...retainedMarketplaces, ...projected],
     pluginRefs: [...new Set([...retainedRefs, ...preservedRefs, ...outcome.pluginRefs])],
   };
-  const activated: ClaimedRegistrationRecord<Claim> = {
+  const activated: ClaimedRegistrationRecord = {
     ...registrationRecordData(rebuilt),
     ...(existing?.pluginClaims === undefined ? {} : { pluginClaims: existing.pluginClaims }),
   };
