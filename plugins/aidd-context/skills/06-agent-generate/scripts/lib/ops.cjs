@@ -157,6 +157,10 @@ const ops = {
 /** Doc headings against the template headings of one parent: unknown, out of order (unless it repeats), missing (unless optional), table headers on every instance, then each matched pair one level down. */
 function checkChildren(expectedList, actualList, parent, optional, say) {
   const kind = (node) => (node.level === 2 ? "section" : "heading");
+  // A slotted name is shown as the heading to write, its slots as <fill-ins>.
+  const slotsOf = (node) => node.name.match(new RegExp(SLOT.source, "gu")) ?? [];
+  const fillIn = (s) => s.replace(/\{\{([^}]*)\}\}/gu, "<$1>");
+  const shape = (node) => (node.repeat ? `"${"#".repeat(node.level)} ${fillIn(node.name)}"` : `"${node.name}"`);
   const rankOf = (name) => expectedList.findIndex((e) => e.match.test(name));
   let last = -1;
   for (const actual of actualList) {
@@ -169,11 +173,11 @@ function checkChildren(expectedList, actualList, parent, optional, say) {
   for (const expected of expectedList) {
     const actuals = actualList.filter((a) => expected.match.test(a.name));
     if (!actuals.length) {
-      if (!optional.includes(expected.name)) say(parent ? parent.line : 1, undefined, `${kind(expected)} ${expected.repeat ? "shaped like " : ""}"${expected.name}" missing${parent ? ` under "${parent.name}"` : ""}`);
+      if (!optional.includes(expected.name)) say(parent ? parent.line : 1, undefined, `${kind(expected)} ${shape(expected)} missing${parent ? ` under "${parent.name}"` : ""}${expected.repeat ? `: write it with ${slotsOf(expected).map(fillIn).join(", ")} filled in` : ""}`);
       continue;
     }
     for (const actual of actuals) {
-      for (const header of expected.headers) if (!actual.headers.includes(header)) say(actual.line, header, `${kind(expected)} "${expected.name}": table header differs from the template`);
+      for (const header of expected.headers) if (!actual.headers.includes(header)) say(actual.line, header, `${kind(expected)} ${shape(expected)}: table header differs from the template`);
       checkChildren(expected.children, actual.children, actual, optional, say);
     }
   }
