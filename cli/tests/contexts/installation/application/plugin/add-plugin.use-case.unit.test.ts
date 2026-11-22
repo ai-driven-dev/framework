@@ -9,6 +9,7 @@ import {
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { VersionMismatchError } from "../../../../../src/shared/domain/shared.error.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
@@ -24,7 +25,7 @@ const DISTRIBUTION = new PluginDistribution({
   components: { commands: [], agents: [], rules: [], skills: [], hooks: [], mcp: [] },
 });
 
-function addTo(manifest: Manifest) {
+function addTo(manifest: Manifest, options: { scope?: Scope } = {}) {
   const project = new InMemoryManifestRepository(manifest);
   const user = new InMemoryManifestRepository(Manifest.create());
   const placed: PlacePluginRequest[] = [];
@@ -48,8 +49,8 @@ function addTo(manifest: Manifest) {
                 version: "1.0.0",
                 source: SOURCE,
                 strict: false,
-                scope: "project",
-              })
+                scope: options.scope ?? "project",
+              }).withFiles(new Map([["skills/a.md", `sha256:${"a".repeat(64)}`]]))
             );
           }
         },
@@ -57,7 +58,7 @@ function addTo(manifest: Manifest) {
     },
     registeredTools()
   );
-  return { add, project, placed };
+  return { add, project, user, placed };
 }
 
 function manifestWithClaude(): Manifest {
@@ -119,5 +120,20 @@ describe("AddPlugin", () => {
     await expect(add.execute({ ...ADD, githubMarketplace: true })).rejects.toThrow(
       MissingPluginMetadataError
     );
+  });
+
+  it("leaves the machine claim saved when the project save then fails", async () => {
+    const { add, project, user } = addTo(manifestWithClaude(), { scope: "user" });
+    project.save = async () => {
+      throw new Error("disk full");
+    };
+
+    await expect(add.execute(ADD)).rejects.toThrow("disk full");
+
+    const claimed = user.getCurrent()?.getPlugins(TOOL.claude);
+    expect([user.saveCount, claimed?.map((p) => [p.name, p.dependents])]).toStrictEqual([
+      1,
+      [["sample-plugin", [PROJECT_ROOT]]],
+    ]);
   });
 });
