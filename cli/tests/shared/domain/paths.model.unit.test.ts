@@ -6,7 +6,7 @@ import {
   posixRelative,
   samePath,
   samePathSegment,
-} from "../../../src/shared/domain/paths.js";
+} from "../../../src/shared/domain/paths.model.js";
 
 describe("comparing two path segments across platforms", () => {
   it("tells two different names apart on win32 too", () => {

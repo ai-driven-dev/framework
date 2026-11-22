@@ -2,7 +2,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { PluginCatalog } from "../../../src/contexts/distribution/contract/catalog.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import { marketplaceCacheDir } from "../../../src/contexts/distribution/domain/marketplace-cache-layout.js";
+import { marketplaceCacheDir } from "../../../src/contexts/distribution/domain/marketplace-cache-paths.model.js";
 import { resolvingCatalogs } from "../../contexts/distribution/testing/catalog-resolver.builder.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";

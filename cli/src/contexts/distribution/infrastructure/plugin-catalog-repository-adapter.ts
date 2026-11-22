@@ -7,7 +7,10 @@ import type { PluginCatalog } from "../contract/catalog.js";
 import { parsePluginCatalog } from "../domain/catalog-parsers/claude-marketplace-catalog.js";
 import { parseCopilotMarketplaceCatalog } from "../domain/catalog-parsers/copilot-marketplace-catalog.js";
 import { MalformedMarketplaceCatalogError } from "../domain/distribution.error.js";
-import { CATALOG_LOCATIONS, MARKETPLACE_CACHE_SUBDIR } from "../domain/marketplace-cache-layout.js";
+import {
+  CATALOG_LOCATIONS,
+  MARKETPLACE_CACHE_SUBDIR,
+} from "../domain/marketplace-cache-paths.model.js";
 import type { PluginCatalogRepository } from "../ports/plugin-catalog-repository.js";
 
 export class PluginCatalogRepositoryAdapter implements PluginCatalogRepository {

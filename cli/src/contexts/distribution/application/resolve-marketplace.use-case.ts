@@ -1,6 +1,6 @@
 import type { PluginCatalog } from "../contract/catalog.js";
 import type { Marketplace } from "../domain/marketplace.js";
-import { fetchedMarketplaceDir } from "../domain/marketplace-cache-layout.js";
+import { fetchedMarketplaceDir } from "../domain/marketplace-cache-paths.model.js";
 import type { PluginCatalogRepository } from "../ports/plugin-catalog-repository.js";
 import type { FetchMarketplaceSource } from "./fetch-marketplace-source.use-case.js";
 

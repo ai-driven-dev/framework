@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { RefreshMarketplace } from "../../../../../src/contexts/distribution/application/refresh/refresh-marketplace.use-case.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { marketplaceCacheDir } from "../../../../../src/contexts/distribution/domain/marketplace-cache-layout.js";
+import { marketplaceCacheDir } from "../../../../../src/contexts/distribution/domain/marketplace-cache-paths.model.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../../../shared/testing/in-memory-marketplace-registry.fake.js";

@@ -10,7 +10,7 @@ import {
 import {
   fetchedMarketplaceDir,
   MARKETPLACE_CATALOG_RELATIVE,
-} from "../../domain/marketplace-cache-layout.js";
+} from "../../domain/marketplace-cache-paths.model.js";
 import type { MarketplaceRegistry } from "../../ports/marketplace-registry.js";
 import type { ResolveMarketplace } from "../resolve-marketplace.use-case.js";
 

@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { FetchMarketplaceSource } from "../../../src/contexts/distribution/application/fetch-marketplace-source.use-case.js";
 import { ResolveMarketplace } from "../../../src/contexts/distribution/application/resolve-marketplace.use-case.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import { MARKETPLACE_CACHE_SUBDIR } from "../../../src/contexts/distribution/domain/marketplace-cache-layout.js";
+import { MARKETPLACE_CACHE_SUBDIR } from "../../../src/contexts/distribution/domain/marketplace-cache-paths.model.js";
 import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { serializePluginSource } from "../../../src/shared/domain/plugin/source.js";
 import { FixturePluginFetcher } from "../../shared/testing/fixture-plugin-fetcher.fake.js";

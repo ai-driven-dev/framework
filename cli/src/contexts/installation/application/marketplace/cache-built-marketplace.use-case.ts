@@ -3,7 +3,7 @@ import {
   builtMarketplaceDir,
   userBuiltMarketplaceDir,
 } from "../../../../shared/domain/layout/aidd-layout.js";
-import { pathsOverlap } from "../../../../shared/domain/paths.js";
+import { pathsOverlap } from "../../../../shared/domain/paths.model.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";

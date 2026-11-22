@@ -1,5 +1,5 @@
 import type { HintedMessage } from "../../../shared/domain/describe-error.js";
-import { samePathSegment } from "../../../shared/domain/paths.js";
+import { samePathSegment } from "../../../shared/domain/paths.model.js";
 import { whenAbsent } from "../../../shared/domain/reading/json-file.js";
 import type { Scope } from "../../../shared/domain/scope.js";
 import { UnreadableUserSourceReferencesError } from "../../../shared/domain/shared.error.js";

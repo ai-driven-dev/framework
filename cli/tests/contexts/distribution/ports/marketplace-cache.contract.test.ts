@@ -1,7 +1,7 @@
 import { mkdir, mkdtemp, readdir, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { MARKETPLACE_CACHE_SUBDIR } from "../../../../src/contexts/distribution/domain/marketplace-cache-layout.js";
+import { MARKETPLACE_CACHE_SUBDIR } from "../../../../src/contexts/distribution/domain/marketplace-cache-paths.model.js";
 import { MarketplaceCacheAdapter } from "../../../../src/contexts/distribution/infrastructure/marketplace-cache-adapter.js";
 import { InMemoryMarketplaceCache } from "../../../shared/testing/in-memory-marketplace-cache.fake.js";
 import { describeMarketplaceCacheContract } from "../testing/marketplace-cache.contract.js";
