@@ -3,6 +3,7 @@ import { dirname } from "node:path";
 import { setTimeout as pause } from "node:timers/promises";
 import { isErrnoException } from "../../../shared/domain/reading/json-file.js";
 import type { ToolIdResolver } from "../../../shared/domain/tool.js";
+import type { AtomicWrite } from "../../../shared/ports/file-writer.js";
 import type { Lock } from "../../../shared/ports/lock.js";
 import type { Manifest } from "../domain/manifest.js";
 import { userManifestPath } from "../domain/project-layout.js";
@@ -21,7 +22,7 @@ import { readManifestFile } from "./manifest-file-io.js";
 export class UserManifestRepositoryAdapter implements ManifestRepository, Lock {
   constructor(
     private readonly userConfigDir: () => string,
-    private readonly atomicWriter: (path: string, content: string) => Promise<void>,
+    private readonly atomicWriter: AtomicWrite,
     private readonly resolveToolId: ToolIdResolver
   ) {}
 

@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import { AIDD_DIR, AIDD_MARKETPLACES_FILENAME } from "../../../shared/domain/layout/aidd-layout.js";
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import type { Scope } from "../../../shared/domain/scope.js";
+import type { AtomicWrite } from "../../../shared/ports/file-writer.js";
 import { UnreadableMarketplaceRegistryError } from "../domain/distribution.error.js";
 import { Marketplace, type MarketplaceData } from "../domain/marketplace.js";
 import type { MarketplaceKey, MarketplaceRegistry } from "../ports/marketplace-registry.js";
@@ -39,7 +40,7 @@ function registryEntries(raw: string, path: string): MarketplaceData[] {
 export class MarketplaceRegistryAdapter implements MarketplaceRegistry {
   constructor(
     private readonly userConfigDir: () => string,
-    private readonly writeFileAtomically: (path: string, text: string) => Promise<void>
+    private readonly writeFileAtomically: AtomicWrite
   ) {}
 
   async list(projectRoot: string): Promise<readonly Marketplace[]> {

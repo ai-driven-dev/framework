@@ -5,3 +5,6 @@ export interface FileWriter {
   deleteEmptyDirectories(path: string): Promise<void>;
   deleteDirectory(path: string): Promise<void>;
 }
+
+/** Replaces the file at `path` with `content` so a reader never sees it half written. */
+export type AtomicWrite = (path: string, content: string) => Promise<void>;
