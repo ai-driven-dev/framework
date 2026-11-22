@@ -1,12 +1,13 @@
 import { cloneKey } from "../domain/consent/clone-identity.js";
 import { closeEvent } from "../domain/consent/consent-history.js";
-import { ConsentLog } from "../domain/consent/consent-log.js";
+import type { ConsentLog } from "../domain/consent/consent-log.js";
 import { RememberedResolutions } from "../domain/remembered-resolutions.js";
 import { tokenOfKey } from "../domain/telemetry-consent.js";
-import type { ConsentHistory } from "../ports/consent-history.js";
 import type { ConsentSource } from "../ports/consent-source.js";
 import type { RepositoryLocator } from "../ports/repository-locator.js";
 import type { ResolutionStore } from "../ports/resolution-store.js";
+import type { LoadConsentLog } from "./consent/load-consent-log.use-case.js";
+import type { RecordConsentEvent } from "./consent/record-consent-event.use-case.js";
 import {
   type ResolutionEnvironment,
   type ResolutionRun,
@@ -17,7 +18,7 @@ interface DirectoryResolverDeps {
   readonly locator: RepositoryLocator;
   readonly consentSource: ConsentSource;
   readonly store: ResolutionStore;
-  readonly history: ConsentHistory;
+  readonly consent: { readonly load: LoadConsentLog; readonly record: RecordConsentEvent };
   readonly environment: ResolutionEnvironment;
 }
 
@@ -58,7 +59,7 @@ export class DirectoryResolver {
     consents: ConsentLog;
     unreadable: ReadonlySet<string>;
   }> {
-    let consents = new ConsentLog(await this.deps.history.read());
+    let consents = await this.deps.consent.load.execute();
     const unreadable = new Set<string>();
     for (const interval of consents.openIntervals()) {
       const reading = await this.deps.consentSource.readClone(interval.clone);
@@ -69,8 +70,10 @@ export class DirectoryResolver {
       if (reading.kind === "absent") continue;
       const named = reading.kind === "value" && tokenOfKey(reading.value) === interval.token;
       if (!named) {
-        await this.deps.history.append(closeEvent(interval.token, this.deps.environment.now()));
-        consents = new ConsentLog(await this.deps.history.read());
+        await this.deps.consent.record.execute(
+          closeEvent(interval.token, this.deps.environment.now())
+        );
+        consents = await this.deps.consent.load.execute();
       }
     }
     return { consents, unreadable };

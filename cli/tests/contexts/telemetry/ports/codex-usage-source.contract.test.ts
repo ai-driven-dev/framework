@@ -1,7 +1,7 @@
 import { appendFile, mkdir, mkdtemp, rm, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { CodexTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.js";
+import { CodexUsageSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/codex/codex-usage-source-adapter.js";
 import {
   describeUsageSourceContract,
   type UsageSourceSubject,
@@ -16,7 +16,7 @@ describeUsageSourceContract(
     const sessions = join(root, "sessions");
     await mkdir(sessions, { recursive: true });
     return {
-      source: new CodexTranscriptSourceAdapter({ roots: [sessions] }),
+      source: new CodexUsageSourceAdapter({ roots: [sessions] }),
       write: async (session, lines) => {
         const path = join(sessions, "2026", "10", "07", `rollout-${session}.jsonl`);
         await mkdir(dirname(path), { recursive: true });

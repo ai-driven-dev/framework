@@ -89,6 +89,7 @@ src/
 │   │   └── ports/
 │   ├── telemetry/    # what each billed model call consumed
 │   │   ├── application/
+│   │   │   ├── consent/
 │   │   │   ├── declaration/
 │   │   │   ├── forget/
 │   │   │   ├── identity/
@@ -100,14 +101,12 @@ src/
 │   │   │   ├── declaration/
 │   │   │   ├── identity/
 │   │   │   ├── ledger/
-│   │   │   ├── legacy/
 │   │   │   ├── report/
 │   │   │   ├── resolution/
 │   │   │   ├── switch/
 │   │   │   └── transcript/
 │   │   ├── infrastructure/
 │   │   │   ├── git/
-│   │   │   ├── legacy/
 │   │   │   ├── reading/
 │   │   │   ├── sources/
 │   │   │   │   ├── claude/

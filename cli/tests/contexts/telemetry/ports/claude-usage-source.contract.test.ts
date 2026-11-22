@@ -1,7 +1,7 @@
 import { appendFile, mkdir, mkdtemp, rm, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
+import { ClaudeUsageSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-usage-source-adapter.js";
 import { InMemoryTranscripts } from "../testing/in-memory-transcripts.fake.js";
 import {
   describeUsageSourceContract,
@@ -36,7 +36,7 @@ describeUsageSourceContract(
     const projects = join(root, "projects");
     await mkdir(projects, { recursive: true });
     return {
-      source: new ClaudeTranscriptSourceAdapter(projects),
+      source: new ClaudeUsageSourceAdapter(projects),
       write: async (session, lines) => {
         const path = join(projects, "p", `${session}.jsonl`);
         await mkdir(dirname(path), { recursive: true });

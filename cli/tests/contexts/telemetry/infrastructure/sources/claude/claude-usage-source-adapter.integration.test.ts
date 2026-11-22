@@ -14,7 +14,7 @@ import { tmpdir } from "node:os";
 import { join, relative, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { TranscriptPosition } from "../../../../../../src/contexts/telemetry/domain/transcript-position.js";
-import { ClaudeTranscriptSourceAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
+import { ClaudeUsageSourceAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-usage-source-adapter.js";
 import type { UsageSource } from "../../../../../../src/contexts/telemetry/ports/usage-source.js";
 
 /** Read every file, whatever its age. */
@@ -23,13 +23,13 @@ const FIXTURES = resolve(import.meta.dirname, "../../../../../fixtures/claude-us
 
 let root: string;
 let projects: string;
-let adapter: ClaudeTranscriptSourceAdapter;
+let adapter: ClaudeUsageSourceAdapter;
 
 beforeEach(async () => {
   root = await mkdtemp(join(tmpdir(), "aidd-claude-transcripts-"));
   projects = join(root, "projects");
   await mkdir(projects, { recursive: true });
-  adapter = new ClaudeTranscriptSourceAdapter(projects);
+  adapter = new ClaudeUsageSourceAdapter(projects);
 });
 
 afterEach(async () => {
@@ -91,7 +91,7 @@ describe("listing the transcripts under the projects root", () => {
   it("fails on a projects root it cannot list, instead of reading it as empty", async () => {
     const file = join(root, "not-a-directory");
     await writeFile(file, "x");
-    await expect(new ClaudeTranscriptSourceAdapter(file).list()).rejects.toThrow();
+    await expect(new ClaudeUsageSourceAdapter(file).list()).rejects.toThrow();
   });
 
   it("ignores files that are not transcripts", async () => {
@@ -102,7 +102,7 @@ describe("listing the transcripts under the projects root", () => {
   });
 
   it("lists nothing when the projects root does not exist yet", async () => {
-    const absent = new ClaudeTranscriptSourceAdapter(join(root, "never"));
+    const absent = new ClaudeUsageSourceAdapter(join(root, "never"));
     expect(await absent.list()).toEqual([]);
   });
 });
@@ -271,7 +271,7 @@ describe("reading a transcript a block at a time", () => {
 });
 
 describe("reading a transcript in blocks of a few bytes", () => {
-  const inBlocksOf = (bytes: number) => new ClaudeTranscriptSourceAdapter(projects, bytes);
+  const inBlocksOf = (bytes: number) => new ClaudeUsageSourceAdapter(projects, bytes);
   const file = async (content: string | Buffer) => {
     const path = join(projects, "t.jsonl");
     await writeFile(path, content);

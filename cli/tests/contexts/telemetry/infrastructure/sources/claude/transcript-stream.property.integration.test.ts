@@ -4,7 +4,7 @@ import { join } from "node:path";
 import * as fc from "fast-check";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { TranscriptPosition } from "../../../../../../src/contexts/telemetry/domain/transcript-position.js";
-import { ClaudeTranscriptSourceAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
+import { ClaudeUsageSourceAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-usage-source-adapter.js";
 import type { UsageSource } from "../../../../../../src/contexts/telemetry/ports/usage-source.js";
 import { WholeTranscriptReader } from "../../../testing/whole-transcript-reader.fake.js";
 
@@ -71,11 +71,7 @@ describe("a transcript read as a stream", () => {
                   size: Math.min(saved.size, bytes.length),
                   identity: saved.sameFile ? identity : "another",
                 };
-          const streamed = await readLines(
-            new ClaudeTranscriptSourceAdapter(root, block),
-            path,
-            since
-          );
+          const streamed = await readLines(new ClaudeUsageSourceAdapter(root, block), path, since);
           expect(streamed).toEqual(await readLines(oracle, path, since));
         }
       ),

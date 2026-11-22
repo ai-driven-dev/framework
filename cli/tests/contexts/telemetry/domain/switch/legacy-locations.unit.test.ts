@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   DAY_FILE,
   legacyLocations,
-} from "../../../../../src/contexts/telemetry/domain/legacy/legacy-locations.js";
+} from "../../../../../src/contexts/telemetry/domain/switch/legacy-locations.js";
 
 describe("where the previous version wrote", () => {
   it("names the home default, whatever XDG_CONFIG_HOME says, and the telemetry directory", () => {

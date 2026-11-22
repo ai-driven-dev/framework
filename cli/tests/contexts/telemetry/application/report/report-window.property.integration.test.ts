@@ -3,13 +3,15 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import * as fc from "fast-check";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { LoadConsentLog } from "../../../../../src/contexts/telemetry/application/consent/load-consent-log.use-case.js";
+import { RecordConsentEvent } from "../../../../../src/contexts/telemetry/application/consent/record-consent-event.use-case.js";
 import { DirectoryResolver } from "../../../../../src/contexts/telemetry/application/directory-resolver.use-case.js";
 import {
   IngestUsage,
   type IngestUsageResult,
 } from "../../../../../src/contexts/telemetry/application/ingest-usage.use-case.js";
 import { storeCalls } from "../../../../../src/contexts/telemetry/application/ledger-upkeep.js";
-import { DeclaredBindings } from "../../../../../src/contexts/telemetry/application/report/declared-bindings.js";
+import { ReadDeclaredBindings } from "../../../../../src/contexts/telemetry/application/report/read-declared-bindings.use-case.js";
 import { ReportUsage } from "../../../../../src/contexts/telemetry/application/report/report-usage.use-case.js";
 import { SnapshotBindings } from "../../../../../src/contexts/telemetry/application/snapshot-bindings.use-case.js";
 import type { Period } from "../../../../../src/contexts/telemetry/contract/period.js";
@@ -211,6 +213,7 @@ const NOTHING_NEW: IngestUsageResult = {
 };
 /** An ingest that reads no tool, so it finds nothing new: `NOTHING_NEW`. */
 function ingestOf(ledger: UsageLedger): IngestUsage {
+  const consentHistory = new InMemoryConsentHistory();
   const now = () => new Date("2026-10-09T00:00:00.000Z");
   return new IngestUsage({
     readers: [],
@@ -219,7 +222,10 @@ function ingestOf(ledger: UsageLedger): IngestUsage {
       locator: new FakeLocator(),
       consentSource: new FakeConsents(),
       store: new InMemoryResolutions(),
-      history: new InMemoryConsentHistory(),
+      consent: {
+        load: new LoadConsentLog(consentHistory),
+        record: new RecordConsentEvent(consentHistory),
+      },
       environment: { caseInsensitiveFileSystem: false, now },
     }),
     snapshots: new SnapshotBindings({
@@ -255,13 +261,13 @@ async function referenceOf(input: {
   full: Awaited<ReturnType<UsageLedgerAdapter["load"]>>;
   kept: readonly StoredUsage[];
   fullLedger: UsageLedgerAdapter;
-  declared: DeclaredBindings;
+  declared: ReadDeclaredBindings;
   resolved: Typed;
   period: Period;
   axis: (typeof REPORT_AXES)[number];
 }) {
   const { full, kept, fullLedger, declared, resolved, period, axis } = input;
-  const { facts, person } = await declared.read();
+  const { facts, person } = await declared.execute();
   const selected = kept.filter((record) =>
     matchesFilter({ filters: resolved, record, attribution: attribute(record, facts), person })
   );
@@ -298,7 +304,7 @@ describe("a report on a bounded period", () => {
         const files = filesOf(calls);
         const identity = new InMemoryIdentity();
         identity.personId = "person-a";
-        const declared = new DeclaredBindings(
+        const declared = new ReadDeclaredBindings(
           new InMemorySessions(),
           new InMemorySnapshots(),
           identity

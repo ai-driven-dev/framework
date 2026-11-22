@@ -2,7 +2,7 @@ import { mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { RepositoryAliasStoreAdapter } from "../../../../../src/contexts/telemetry/infrastructure/legacy/repository-alias-store-adapter.js";
+import { RepositoryAliasStoreAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/repository-alias-store-adapter.js";
 
 let ledgerDir: string;
 beforeEach(() => {

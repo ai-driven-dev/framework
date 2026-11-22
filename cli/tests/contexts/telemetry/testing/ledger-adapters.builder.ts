@@ -1,5 +1,5 @@
-import { RepositoryAliasStoreAdapter } from "../../../../src/contexts/telemetry/infrastructure/legacy/repository-alias-store-adapter.js";
 import { LeftOutAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/ledger/left-out-adapter.js";
+import { RepositoryAliasStoreAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/ledger/repository-alias-store-adapter.js";
 import { ResolutionStoreAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/ledger/resolution-store-adapter.js";
 import { UsageLedgerAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import type { PrivateStorage } from "../../../../src/shared/ports/private-storage.js";

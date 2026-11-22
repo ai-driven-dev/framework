@@ -41,7 +41,7 @@ function unread(since: TranscriptPosition | null, reason: string): LinesRead {
  * file than the call, so a file that moved is read from its start, the lines before the saved
  * offset handed on as not counted. Codex compresses a file it no longer writes to
  * `.jsonl.zst`: that one is read whole, once, as a stream. */
-export class CodexTranscriptSourceAdapter implements UsageSource {
+export class CodexUsageSourceAdapter implements UsageSource {
   private readonly roots: readonly string[];
   private readonly decompress: (() => Duplex) | null;
   private readonly blockBytes: number;

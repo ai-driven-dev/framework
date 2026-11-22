@@ -51,7 +51,7 @@ flowchart LR
 | What counts as consent, and when a clone consented | `domain/telemetry-consent.ts`, `domain/consent/consent-history.ts`, `infrastructure/git/git-consent-adapter.ts` |
 | What a clone is | `domain/consent/clone-identity.ts` |
 | How a transcript is read from its saved offset | `infrastructure/sources/transcript-files.ts`, `domain/transcript-position.ts` |
-| Why a Codex file that moved is read from its start | `infrastructure/sources/codex/codex-transcript-source-adapter.ts` |
+| Why a Codex file that moved is read from its start | `infrastructure/sources/codex/codex-usage-source-adapter.ts` |
 | How the ledger lies on disk | `infrastructure/storage/ledger/usage-ledger-adapter.ts`, `application/ledger-upkeep.ts` |
 | What an ingest measured and could not store | `infrastructure/storage/ledger/left-out-adapter.ts` |
 | How an id an earlier version gave a repository joins the id of now | `domain/legacy/repository-aliases.ts` |

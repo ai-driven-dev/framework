@@ -6,8 +6,8 @@ import {
   renderResolutions,
 } from "../../../domain/repository-resolution.js";
 import type { ResolutionStore } from "../../../ports/resolution-store.js";
-import type { RepositoryAliasStoreAdapter } from "../../legacy/repository-alias-store-adapter.js";
 import { readTextIfPresent } from "../../reading/text-file.js";
+import type { RepositoryAliasStoreAdapter } from "./repository-alias-store-adapter.js";
 
 /** `roots.json`, beside the ledger. */
 export class ResolutionStoreAdapter implements ResolutionStore {

@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { LoadConsentLog } from "../../../../../src/contexts/telemetry/application/consent/load-consent-log.use-case.js";
+import { RecordConsentEvent } from "../../../../../src/contexts/telemetry/application/consent/record-consent-event.use-case.js";
 import { DirectoryResolver } from "../../../../../src/contexts/telemetry/application/directory-resolver.use-case.js";
 import { RememberOwnRoot } from "../../../../../src/contexts/telemetry/application/switch/remember-own-root.use-case.js";
 import {
@@ -163,7 +165,7 @@ describe("aidd telemetry on", () => {
         locator: s.locator,
         consentSource: s.consents,
         store: s.resolutions,
-        history: s.history,
+        consent: { load: new LoadConsentLog(s.history), record: new RecordConsentEvent(s.history) },
         environment: {
           caseInsensitiveFileSystem: false,
           now: () => s.clock.now,

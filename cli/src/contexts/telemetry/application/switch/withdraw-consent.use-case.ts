@@ -1,10 +1,11 @@
 import { sameClone } from "../../domain/consent/clone-identity.js";
 import { closeEvent } from "../../domain/consent/consent-history.js";
-import { ConsentLog } from "../../domain/consent/consent-log.js";
+import type { ConsentLog } from "../../domain/consent/consent-log.js";
 import { CONSENT_WITHDRAWN } from "../../domain/telemetry-consent.js";
-import type { ConsentHistory } from "../../ports/consent-history.js";
 import type { ConsentWriter } from "../../ports/switch/consent-writer.js";
 import type { UsageLedger } from "../../ports/usage-ledger.js";
+import type { LoadConsentLog } from "../consent/load-consent-log.use-case.js";
+import type { RecordConsentEvent } from "../consent/record-consent-event.use-case.js";
 import type { Located } from "./read-clone-consent.use-case.js";
 
 export interface WithdrawConsentRequest {
@@ -15,7 +16,7 @@ export interface WithdrawConsentRequest {
 
 interface WithdrawConsentDeps {
   readonly writer: ConsentWriter;
-  readonly history: ConsentHistory;
+  readonly consent: { readonly load: LoadConsentLog; readonly record: RecordConsentEvent };
   readonly ledger: UsageLedger;
   readonly now: () => Date;
 }
@@ -31,11 +32,12 @@ export class WithdrawConsent {
     token,
   }: WithdrawConsentRequest): Promise<{ readonly changed: boolean } | "damaged"> {
     return this.deps.ledger.exclusively(async () => {
-      const log = new ConsentLog(await this.deps.history.read());
+      const log = await this.deps.consent.load.execute();
       if (log.damaged) return "damaged";
       const ours = intervalsOf(log, located, token);
       const at = this.deps.now();
-      for (const interval of ours) await this.deps.history.append(closeEvent(interval.token, at));
+      for (const interval of ours)
+        await this.deps.consent.record.execute(closeEvent(interval.token, at));
       if (token !== null) await this.deps.writer.set(located.root, CONSENT_WITHDRAWN);
       return { changed: token !== null || ours.length > 0 };
     });

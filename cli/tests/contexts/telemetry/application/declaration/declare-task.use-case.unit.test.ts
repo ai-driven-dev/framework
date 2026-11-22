@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { ConsentedRepositories } from "../../../../../src/contexts/telemetry/application/consented-repositories.js";
+import { LoadConsentLog } from "../../../../../src/contexts/telemetry/application/consent/load-consent-log.use-case.js";
 import { DeclareOnBranch } from "../../../../../src/contexts/telemetry/application/declaration/declare-on-branch.use-case.js";
 import { DeclareTask } from "../../../../../src/contexts/telemetry/application/declaration/declare-task.use-case.js";
+import { FindConsentedRepository } from "../../../../../src/contexts/telemetry/application/find-consented-repository.use-case.js";
 import { SnapshotBindings } from "../../../../../src/contexts/telemetry/application/snapshot-bindings.use-case.js";
 import type { DeclarationRequest } from "../../../../../src/contexts/telemetry/contract/task-declaration.js";
 import { HOOK_LOCK_WAIT_MS } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
@@ -47,7 +48,7 @@ function setup(options: { refusedByEnvironment?: boolean; sessionId?: string | n
     now: () => new Date("2026-10-09T10:00:01.000Z"),
   });
   const useCase = new DeclareTask({
-    repositories: new ConsentedRepositories(locator, consents, history),
+    repositories: new FindConsentedRepository(locator, consents, new LoadConsentLog(history)),
     sessions,
     branches: new DeclareOnBranch(branches, snapshots),
     lock,

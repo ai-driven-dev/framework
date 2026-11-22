@@ -9,7 +9,7 @@ import type {
   IngestUsageResult,
 } from "../../../../../src/contexts/telemetry/application/ingest-usage.use-case.js";
 import { storeCalls } from "../../../../../src/contexts/telemetry/application/ledger-upkeep.js";
-import { DeclaredBindings } from "../../../../../src/contexts/telemetry/application/report/declared-bindings.js";
+import { ReadDeclaredBindings } from "../../../../../src/contexts/telemetry/application/report/read-declared-bindings.use-case.js";
 import {
   ReportUsage,
   type ReportUsageRequest,
@@ -277,7 +277,7 @@ async function report(
     const result = await new ReportUsage({
       ingest,
       ledger,
-      declared: new DeclaredBindings(sessions, new InMemorySnapshots(), identity),
+      declared: new ReadDeclaredBindings(sessions, new InMemorySnapshots(), identity),
       locator: new FakeLocator(),
       environment: { get: () => undefined },
     }).execute(request);

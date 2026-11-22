@@ -5,7 +5,10 @@ import { declarationOf, lockWaitFor } from "../../domain/declaration/task-declar
 import { MEASUREMENT_SWITCH, measurementRefused } from "../../domain/telemetry-consent.js";
 import type { BindingsLock } from "../../ports/bindings/bindings-lock.js";
 import type { SessionBindingStore } from "../../ports/bindings/session-binding-store.js";
-import type { ConsentedRepositories, RefusalReason } from "../consented-repositories.js";
+import type {
+  FindConsentedRepository,
+  RefusalReason,
+} from "../find-consented-repository.use-case.js";
 import type { DeclareOnBranch, DeclareOnBranchResult } from "./declare-on-branch.use-case.js";
 
 export interface DeclareTaskRequest {
@@ -33,7 +36,7 @@ export interface DeclareOptions {
 }
 
 interface DeclareTaskDeps {
-  readonly repositories: ConsentedRepositories;
+  readonly repositories: FindConsentedRepository;
   readonly sessions: SessionBindingStore;
   readonly branches: DeclareOnBranch;
   readonly lock: BindingsLock;
@@ -50,7 +53,7 @@ export class DeclareTask {
   async execute(input: DeclareTaskRequest): Promise<DeclareTaskResult> {
     if (measurementRefused(this.deps.options.environment.get(MEASUREMENT_SWITCH)))
       return { status: "refused", reason: "environment" };
-    const repository = await this.deps.repositories.open(input.cwd);
+    const repository = await this.deps.repositories.execute(input.cwd);
     if (repository.status === "refused") return repository;
     const declaration = declarationOf(input.request, this.deps.options.now(), input.by);
     const { sessionId } = this.deps.options;
