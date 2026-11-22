@@ -1,5 +1,6 @@
 import type { Output } from "../../orchestration/domain/output.js";
 import { AiddError } from "../../shared/domain/shared.error.js";
+import { EXIT_CODES, UNCATALOGUED_EXIT } from "./error-exit-codes.presenter.js";
 import { MESSAGES } from "./error-messages.presenter.js";
 
 /** The words a failure shows: a catalogued error through its table entry, anything else as it came. */
@@ -14,8 +15,8 @@ export function describeCause(cause: unknown): string {
   return cause instanceof AiddError ? `${cause.name}: ${render(cause)}` : String(cause);
 }
 
-/** Reports the error and ends the process with a failure code. */
+/** Reports the error and ends the process with the exit code its table entry gives. */
 export function failCommand(output: Output, error: unknown): never {
   output.error(render(error));
-  return output.exit(1);
+  return output.exit(error instanceof AiddError ? EXIT_CODES[error.code] : UNCATALOGUED_EXIT);
 }
