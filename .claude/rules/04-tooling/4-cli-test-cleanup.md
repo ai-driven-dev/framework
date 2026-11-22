@@ -1,1 +1,0 @@
-- After every CLI test of an AI agent (Claude, Codex, etc.), delete the chat created for that test.

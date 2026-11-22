@@ -2,7 +2,7 @@
 
 - No user accounts: one GitHub token gates private marketplaces and plugin sources.
 - Language: `src/contexts/auth/glossary.md`.
-- Shape: the `reference-context.md` rule.
+- Shape: `references/architecture.md`, Context shape, of the `working-on-cli` skill.
 
 ## Credentials
 

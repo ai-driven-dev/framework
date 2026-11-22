@@ -41,8 +41,7 @@ const READER_CREATED = new Set([".aidd/config.json", ".agents/hooks.json"]);
 /** Where `cli/` prose instructs a reader; a finished plan under `aidd_docs/tasks/` is a record,
  * and holding it true would forbid ever moving a file. */
 const CLI_SCANNED = [
-  ".claude/rules",
-  ".claude/skills",
+  "../.claude/skills/working-on-cli",
   "aidd_docs/memory",
   "ARCHITECTURE.md",
   "README.md",
@@ -58,10 +57,10 @@ const FENCED_BLOCK = /```[\s\S]*?```/g;
  * A `cli/` citation is rooted at the package (`src/…`, `tests/…`) or written relative to `src/`,
  * naming a top-level area (`shared/…`, `contexts/…`). A bare `application/` or `domain/` is not
  * matched: `application/json` is a media type. A name continuing a longer path
- * (an `application/` prefix before `shared/`) or a hyphenated folder (`cli-contexts/`) is not an area.
+ * (an `application/` prefix before `shared/`), a hyphenated folder (`extra-contexts/`) or a folder of a skill (`references/contexts/`) is not an area.
  */
 const CLI_CITED_PATH =
-  /\b(?:src|tests)\/[A-Za-z0-9_./-]+|(?<!-)\b(?:kernel|contexts|presentation|runtime)\/[A-Za-z0-9_./-]+|(?<!\/)\bshared\/[A-Za-z0-9_./-]+/g;
+  /\b(?:src|tests)\/[A-Za-z0-9_./-]+|(?<![-/])\b(?:kernel|contexts|presentation|runtime)\/[A-Za-z0-9_./-]+|(?<!\/)\bshared\/[A-Za-z0-9_./-]+/g;
 
 const BACKTICKED = /`([^`\n]+)`/gu;
 

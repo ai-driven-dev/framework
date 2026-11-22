@@ -4,5 +4,5 @@ language js
 // Constructors are JsConstructorParameters, not JsParameters, and have their own limit.
 JsParameters(items=$items) as $params where {
   $items <: [$a, $b, $c, $d, ...],
-  register_diagnostic(span=$params, message="A function takes at most 3 parameters: pass a named object instead (cli/.claude/rules/cli-architecture.md)", severity="error")
+  register_diagnostic(span=$params, message="A function takes at most 3 parameters: pass a named object instead (.claude/skills/working-on-cli/references/architecture.md)", severity="error")
 }

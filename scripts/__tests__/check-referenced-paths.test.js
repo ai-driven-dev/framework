@@ -86,7 +86,8 @@ test("deadCliReferences resolves a cli citation against the package and ignores 
     const deadRelative = cite("contexts", "gone.ts");
     const deadShared = cite("shared", "gone.ts");
     const longerPath = cite("application", "shared", "x.ts");
-    const hyphenated = cite(".claude", "rules", "cli-contexts", "gone.md");
+    const skillRelative = cite("references", "contexts", "gone.md");
+    const hyphenated = cite("extra-contexts", "gone.md");
     fs.mkdirSync(path.join(cliRoot, "src"), { recursive: true });
     fs.writeFileSync(path.join(cliRoot, alive), "");
     const page = path.join(cliRoot, "rule.md");
@@ -99,6 +100,7 @@ test("deadCliReferences resolves a cli citation against the package and ignores 
         `Dead, under shared: \`${deadShared}\`.`,
         `A longer path holding shared: \`${longerPath}\`.`,
         `A hyphenated folder holding contexts: \`${hyphenated}\`.`,
+        `A folder of a skill holding contexts: \`${skillRelative}\`.`,
         "```ts",
         `// ${cite("src", "invented.ts")}`,
         "```",

@@ -27,4 +27,4 @@ What must be green for `cli/` code to count as done. The repository's own gates 
 | `cli-mutation` | floors on `telemetry` and `shared`: [`testing.md`](testing.md) |
 
 - Every job fans into the required check `cli / gate` (`.github/workflows/cli-ci.yml`).
-- Test first, and see it fail for the reason it names: [`cli-tests.md`](../../.claude/rules/cli-tests.md).
+- Test first, and see it fail for the reason it names: [`actions/05-test.md`](../../../.claude/skills/working-on-cli/actions/05-test.md).

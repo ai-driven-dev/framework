@@ -20,7 +20,7 @@ Read them live: `aidd --help`, then each group's; `tests/golden/help-surface.gol
 - No argument on a TTY opens the interactive menu; without a TTY it prints help to stderr and exits 1.
 - Global flags: `--version`, `--verbose` (or `AIDD_VERBOSE=true`).
 - `--scope project|user` picks where a plugin or marketplace lives; `--global` makes `setup`, `doctor`, `sync` and `clean` run machine-wide.
-- Channels and exit codes: [`3-cli-process.md`](../../.claude/rules/03-frameworks-and-libraries/3-cli-process.md).
+- Channels and exit codes: [`references/architecture.md`](../../../.claude/skills/working-on-cli/references/architecture.md), Process.
 - `doctor` drift is informational and never gates the exit code.
 - `sync` restores tracked files, rewrites each tool's settings file, drives each host's native activation, then mirrors the proven plugins into the settings file; a user-scope run skips the restore and the settings-file steps.
 - `clean` leaves the shared `aidd-framework` registration; `clean --scope user` purges it: [`clean-drives-the-host-cli.md`](internal/decisions/clean-drives-the-host-cli.md).

@@ -3,6 +3,7 @@
 The root `CLAUDE.md` sets behaviour and also loads here. This file loads the CLI's own memory.
 
 - Do not commit or push unless the user asks.
+- Before editing anything here, load the `working-on-cli` skill and follow the action for your change.
 
 ## Project memory
 

@@ -1,6 +1,6 @@
 # Host registration
 
-What a host (Claude Code, Codex, Copilot) says it has registered, and the calls that change it. Language: `src/contexts/host-registration/glossary.md`; shape: `reference-context.md`; record rules: the `host-registration` rule page.
+What a host (Claude Code, Codex, Copilot) says it has registered, and the calls that change it. Language: `src/contexts/host-registration/glossary.md`; shape: `references/architecture.md`, Context shape; record rules: `references/contexts/host-registration.md`, both in the `working-on-cli` skill.
 
 ## Shape
 

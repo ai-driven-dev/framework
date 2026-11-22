@@ -17,7 +17,7 @@
 | `placement` | where one file lands, as data: `layout` (a flat skills or agents layout), `relative` (its path in the plugin), `file` (one shared file), `agentFiles` (`dir`, `ext`) or `hooks` (`scriptsDir`, `loaderEntry?`); `artifactPath` reads it |
 | `transform?` | per-kind content transform, the identity by default |
 | `mcpServersKey?` | merge into one shared config file, at the path the layout declares, instead of a per-plugin write |
-| `hooksFile?` | the hooks file a plugin's `hooks.json` becomes, at `at`: `{shared}` for one file every plugin folds into, `{own}` for one per plugin; build its `merge` with `flatHooksArtifact` in `domain/formats/hooks-descriptor.ts` |
+| `hooksFile?` | the hooks file a plugin's `hooks.json` becomes, at `at`: `{shared}` for one file every plugin folds into, `{own}` for one per plugin; build its `merge` with `flatHooksArtifact` in `domain/formats/hooks/flat-routes.ts` |
 | `script?`, `skipHooksJson?`, `hooksBridge?` | a tool's own hook script, delivery without `hooks.json`, and a generated event bridge, which names its `dir` |
 
 - Contract level: the manifest trio (`manifestFileRelative`, `synthesizeManifest`, `manifestSchemaName`), `pluginRootToken`, `configArtifact`, and the two marketplace builders.
@@ -31,7 +31,7 @@
 
 ## Where it lives
 
-- `domain/profiles/<tool>/build.ts` exports `build<Tool>Contract`, `build<Tool>MarketplaceContract` (copilot) or `build<Tool>FlatContract`.
+- `domain/profiles/<tool>/<tool>-build.model.ts` exports `build<Tool>Contract`, `build<Tool>MarketplaceContract` (copilot) or `build<Tool>FlatContract`.
 - The profile lists them in `buildContracts: { marketplace?, flat? }`; a mode left out answers `null` from `buildContract(mode, provider)`.
 - `createFrameworkBuildUseCase` in `composition/translate.ts` returns `undefined` for a pair with no contract, and `presentation/controllers/translate.controller.ts` reports it as an unsupported target and mode combination.
 - The MCP namespacing rule is in `plugin-sections.md`.
