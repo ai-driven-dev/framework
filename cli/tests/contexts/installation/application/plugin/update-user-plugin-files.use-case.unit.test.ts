@@ -69,16 +69,14 @@ function fixture(
     const refresh: ProvenNativeRefresh = { apply: () => applied.push(request.ref) };
     return refresh;
   };
-  const update = new UpdateUserPluginFiles(
-    { repo, materializer, logger, records: registrationRecordRules },
-    registeredTools()
-  );
+  const update = new UpdateUserPluginFiles({ repo, materializer, logger }, registeredTools());
   const run = (command: Partial<UpdateUserPluginFilesRequest> = {}) =>
     update.execute({
       toolIds: [TOOL.codex],
       projectRoot: ROOT,
       isWithinUserScope: () => true,
       refreshNative,
+      refSelection: registrationRecordRules,
       ...command,
     });
   return { repo, materializer, logger, refreshed, applied, run };

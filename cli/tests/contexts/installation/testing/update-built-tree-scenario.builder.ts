@@ -74,12 +74,12 @@ export function makeUpdateUseCase(
           },
         }),
         logger: deps.logger,
-        records: deps.registrationRecordRules,
       },
       registeredTools()
     ),
     nativeHost,
-    insideUserScope
+    insideUserScope,
+    deps.registrationRecordRules
   );
 }
 

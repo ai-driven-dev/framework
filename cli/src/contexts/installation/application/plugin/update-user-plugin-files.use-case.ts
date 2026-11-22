@@ -5,7 +5,6 @@ import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { RegistrationRecordRules } from "../../ports/native-host.js";
 import type {
   ContainmentCheck,
   PlannedUserPluginFileUpdate,
@@ -16,6 +15,7 @@ import {
   assertSelectionResolves,
   nativeTargets,
   type RefreshNativeRef,
+  type RefSelection,
   refreshNativeRefs,
 } from "./update-native-refs.js";
 import type { UpdatePluginRequest } from "./update-plugin.use-case.js";
@@ -24,6 +24,7 @@ import type { UpdatePluginRequest } from "./update-plugin.use-case.js";
 export interface UpdateUserPluginFilesRequest extends UpdatePluginRequest {
   readonly isWithinUserScope: ContainmentCheck;
   readonly refreshNative: RefreshNativeRef;
+  readonly refSelection: RefSelection;
 }
 
 /** What UpdateUserPluginFiles is built from. */
@@ -31,7 +32,6 @@ export interface UpdateUserPluginFilesDeps {
   readonly repo: ManifestRepository & Lock;
   readonly materializer: UserPluginMaterialization;
   readonly logger: Logger;
-  readonly records: RegistrationRecordRules;
 }
 
 /** Brings the machine-scope plugins, and the native refs aidd owns, to their latest version. */
@@ -55,8 +55,9 @@ export class UpdateUserPluginFiles {
     const manifest = Manifest.fromJSON(loaded.toJSON(), (raw) => this.tools.toolId(raw));
     const toolIds = resolvePluginToolIds(options.toolIds, manifest, this.tools);
     const targets = this.fileTargets(manifest, toolIds, options);
-    const natives = nativeTargets(this.deps.records, manifest, { toolIds, options });
-    assertSelectionResolves(this.deps.records, options, { files: targets.length, native: natives });
+    const { refSelection } = options;
+    const natives = nativeTargets(refSelection, manifest, { toolIds, options });
+    assertSelectionResolves(refSelection, options, { files: targets.length, native: natives });
     // One plan at a time: plans for one tool share its built tree, which the first one builds.
     const filePlans = [];
     for (const { toolId, plugin } of targets) {

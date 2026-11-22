@@ -87,6 +87,10 @@ export interface RegistrationRecordRules {
     };
     readonly changed: boolean;
   };
+  /** Whether a plugin selector names its catalogue, so it can only mean one exact ref. */
+  readonly isQualifiedRef: (selector: string) => boolean;
+  /** A qualified selector is one exact ref; a bare plugin name selects it in every catalogue. */
+  readonly refSelectedBy: (ref: string, selector: string) => boolean;
   /** The record without one ref, every other entry untouched. */
   readonly withoutRef: <R extends RegistrationRecordView>(record: R, ref: string) => R;
 }

@@ -181,7 +181,6 @@ function wirePluginUpdate(base: Base, inst: Installation) {
         repo: userManifestRepo,
         materializer: pluginMaterializer,
         logger,
-        records: registrationRecordRules,
       },
       tools
     ),
@@ -190,7 +189,8 @@ function wirePluginUpdate(base: Base, inst: Installation) {
       base.hostPluginRegistries,
       base.nativeSources
     ),
-    isStrictlyWithinUserScope
+    isStrictlyWithinUserScope,
+    registrationRecordRules
   );
   return {
     pluginUpdateUseCase,

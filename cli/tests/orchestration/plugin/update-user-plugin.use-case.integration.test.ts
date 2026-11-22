@@ -95,7 +95,6 @@ function fixture(
           builtDeps: fakeBuiltDeps(),
         }),
         logger,
-        records: registrationRecordRules,
       },
       registeredTools()
     ),
@@ -104,7 +103,8 @@ function fixture(
       new Map([[toolId, reader]]),
       options.ownsSource ? new Map([[toolId, sources]]) : undefined
     ),
-    isStrictlyWithinUserScope
+    isStrictlyWithinUserScope,
+    registrationRecordRules
   );
   const execute = (pluginName: string | readonly string[], rebuild?: boolean) =>
     update.execute({

@@ -155,7 +155,6 @@ for (const [toolId, catalogPath] of [
               builtDeps: fakeBuiltDeps(),
             }),
             logger: new CapturingLogger(),
-            records: registrationRecordRules,
           },
           registeredTools()
         ),
@@ -164,7 +163,8 @@ for (const [toolId, catalogPath] of [
           new Map([[toolId, hostReader]]),
           sources
         ),
-        isStrictlyWithinUserScope
+        isStrictlyWithinUserScope,
+        registrationRecordRules
       );
       if (toolId === "copilot") {
         expect(
@@ -191,7 +191,6 @@ for (const [toolId, catalogPath] of [
                 builtDeps: fakeBuiltDeps(),
               }),
               logger: new CapturingLogger(),
-              records: registrationRecordRules,
             },
             registeredTools()
           ),
@@ -200,7 +199,8 @@ for (const [toolId, catalogPath] of [
             new Map([[toolId, hostReader]]),
             sources
           ),
-          isStrictlyWithinUserScope
+          isStrictlyWithinUserScope,
+          registrationRecordRules
         );
         await expect(
           failingUpdate.execute({
