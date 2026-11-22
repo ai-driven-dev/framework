@@ -93,6 +93,11 @@ export interface RegistrationRecordRules {
   readonly isQualifiedRef: (selector: string) => boolean;
   /** A qualified selector is one exact ref; a bare plugin name selects it in every catalogue. */
   readonly refSelectedBy: (ref: string, selector: string) => boolean;
+  /** The record without a ref and the claim kept on it, claims list always written. */
+  readonly withoutClaimedRef: <R extends ClaimedRecordView>(
+    record: R,
+    ref: string
+  ) => R & { readonly pluginClaims: readonly { readonly ref: string }[] };
   /** The record without one ref, every other entry untouched. */
   readonly withoutRef: <R extends RegistrationRecordView>(record: R, ref: string) => R;
 }

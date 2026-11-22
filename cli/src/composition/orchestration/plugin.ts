@@ -39,6 +39,7 @@ import { ConfirmPluginSourceTrust } from "../../orchestration/plugin/confirm-plu
 import { InstallFromMarketplace } from "../../orchestration/plugin/install-from-marketplace.use-case.js";
 import { InstallPlugin } from "../../orchestration/plugin/install-plugin.use-case.js";
 import { PickPlugins } from "../../orchestration/plugin/pick-plugins.use-case.js";
+import { RemoveMachinePlugin } from "../../orchestration/plugin/remove-machine-plugin.use-case.js";
 import { RemovePlugin } from "../../orchestration/plugin/remove-plugin.use-case.js";
 import { UpdateUserPlugin } from "../../orchestration/plugin/update-user-plugin.use-case.js";
 import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
@@ -92,9 +93,9 @@ export function claimedRefWithdrawal(
 }
 
 /** A user-scope removal under the machine's home directory, which the command line does not know. */
-export function underMachineHome(removal: Pick<RemoveUserPlugin<unknown>, "execute">) {
+export function underMachineHome(removal: Pick<RemoveMachinePlugin, "execute">) {
   return {
-    execute: (options: Omit<RemoveUserPluginRequest, "home">) =>
+    execute: (options: Omit<RemoveUserPluginRequest, "home" | "records">) =>
       removal.execute({ ...options, home: resolveHomeDir() }),
   };
 }
@@ -102,19 +103,17 @@ export function underMachineHome(removal: Pick<RemoveUserPlugin<unknown>, "execu
 /** Removing a plugin from the machine, under its home directory. */
 function wireUserPluginRemoval(base: Base, inst: Installation) {
   const { tools, fs, logger, userManifestRepo, withdrawFromHost } = base;
-  return underMachineHome(
-    new RemoveUserPlugin(
-      {
-        userRepo: userManifestRepo,
-        withdrawFromHost: claimedRefWithdrawal(withdrawFromHost),
-        records: inst.registrationRecordRules,
-        userScopePluginFiles: new UserScopePluginFiles(fs, (plugin, tool, home) =>
-          userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
-        ),
-      },
-      tools
-    )
+  const removal = new RemoveUserPlugin(
+    {
+      userRepo: userManifestRepo,
+      withdrawFromHost: claimedRefWithdrawal(withdrawFromHost),
+      userScopePluginFiles: new UserScopePluginFiles(fs, (plugin, tool, home) =>
+        userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
+      ),
+    },
+    tools
   );
+  return underMachineHome(new RemoveMachinePlugin(removal, inst.registrationRecordRules));
 }
 
 /** Removing a plugin from a project or from the machine, and the claims it leaves behind. */

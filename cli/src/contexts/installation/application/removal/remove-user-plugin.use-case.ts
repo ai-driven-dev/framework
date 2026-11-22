@@ -5,13 +5,19 @@ import {
   ActiveMachineDependentsError,
   PluginNotFoundError,
 } from "../../domain/installation.error.js";
+import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { RegistrationRecordRules } from "../../ports/native-host.js";
 import type { UserScopePluginFileRemoval } from "../../ports/user-scope-plugin-files.js";
 import { resolvePluginToolIds } from "../plugin/plugin-target-resolution.js";
+import type { RefSelection } from "../plugin/update-native-refs.js";
 import { requireManifest } from "../shared/require-manifest.js";
 import type { ClaimedRefWithdrawal } from "./project-plugin-withdrawal.js";
+
+/** How a machine-scope removal selects and drops a claimed native ref: the host registration's to answer. */
+export interface ClaimedRefRecords extends RefSelection {
+  withoutClaimedRef(record: NativeRegistrations, ref: string): NativeRegistrations;
+}
 
 export interface RemoveUserPluginRequest {
   pluginName: string;
@@ -19,6 +25,7 @@ export interface RemoveUserPluginRequest {
   projectRoot: string;
   /** The home directory the plugin's files are proven under. */
   home: string;
+  records: ClaimedRefRecords;
 }
 
 type FileTargets = ReturnType<RemoveUserPlugin<unknown>["fileTargets"]>;
@@ -28,7 +35,6 @@ type NativeTargets = ReturnType<RemoveUserPlugin<unknown>["nativeTargets"]>;
 export interface RemoveUserPluginDeps<Proof> {
   readonly userRepo: ManifestRepository & Lock;
   readonly withdrawFromHost: ClaimedRefWithdrawal<Proof>;
-  readonly records: RegistrationRecordRules;
   readonly userScopePluginFiles: UserScopePluginFileRemoval;
 }
 
@@ -55,7 +61,7 @@ export class RemoveUserPlugin<Proof> {
       await this.deps.withdrawFromHost.uninstallProven(target.proven);
       manifest.setNativeRegistrations(
         target.toolId,
-        this.deps.records.withoutClaimedRef(target.registrations, target.claim.ref)
+        options.records.withoutClaimedRef(target.registrations, target.claim.ref)
       );
     }
     for (const { toolId, plugin, files } of safeFiles) {
@@ -90,7 +96,7 @@ export class RemoveUserPlugin<Proof> {
       const registrations = manifest.getNativeRegistrations(toolId);
       if (registrations === undefined) return [];
       return (registrations.pluginClaims ?? [])
-        .filter((claim) => this.deps.records.refSelectedBy(claim.ref, options.pluginName))
+        .filter((claim) => options.records.refSelectedBy(claim.ref, options.pluginName))
         .map((claim) => ({ toolId, registrations, claim }));
     });
   }
@@ -102,7 +108,7 @@ export class RemoveUserPlugin<Proof> {
   ): void {
     if (targets.length === 0 && nativeTargets.length === 0)
       throw new PluginNotFoundError(options.pluginName);
-    if (!this.deps.records.isQualifiedRef(options.pluginName) && nativeTargets.length > 1) {
+    if (!options.records.isQualifiedRef(options.pluginName) && nativeTargets.length > 1) {
       throw new Error(
         `Native plugin '${options.pluginName}' has multiple catalogues; use the exact <plugin>@<catalogue> ref.`
       );

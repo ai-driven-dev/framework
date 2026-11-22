@@ -107,7 +107,9 @@ export interface Deps {
   checkStatus: Pick<CheckStatus, "execute">;
   pluginRemoveUseCase: Pick<RemovePlugin, "execute">;
   /** The user-scope removal, its home directory already bound. */
-  userPluginRemove: { execute: (options: Omit<RemoveUserPluginRequest, "home">) => Promise<void> };
+  userPluginRemove: {
+    execute: (options: Omit<RemoveUserPluginRequest, "home" | "records">) => Promise<void>;
+  };
   pluginListUseCase: Pick<ListPlugins, "execute">;
   pluginUpdateUseCase: Pick<UpdatePlugin, "execute">;
   userPluginUpdateUseCase: Pick<UpdateUserPlugin, "execute">;

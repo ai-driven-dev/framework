@@ -51,13 +51,18 @@ function fixture(
     {
       userRepo: repo,
       withdrawFromHost: host,
-      records: registrationRecordRules,
       userScopePluginFiles: files,
     },
     registeredTools()
   );
   const run = (pluginName = NAME, toolId: AiToolId = TOOL.claude) =>
-    remove.execute({ pluginName, toolIds: [toolId], projectRoot: ROOT, home: HOME });
+    remove.execute({
+      pluginName,
+      toolIds: [toolId],
+      projectRoot: ROOT,
+      home: HOME,
+      records: registrationRecordRules,
+    });
   return { repo, files, host, run };
 }
 

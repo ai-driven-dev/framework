@@ -17,6 +17,7 @@ import {
 } from "../../../../src/contexts/machine-claims/application/plugin-removal-claims.js";
 import { PurgeDeclaredCache } from "../../../../src/contexts/machine-claims/application/purge-declared-cache.js";
 import { userScopeFilesSafeToDelete } from "../../../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
+import { RemoveMachinePlugin } from "../../../../src/orchestration/plugin/remove-machine-plugin.use-case.js";
 import { RemovePlugin } from "../../../../src/orchestration/plugin/remove-plugin.use-case.js";
 import { resolveHomeDir } from "../../../../src/shared/infrastructure/home-dir.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
@@ -88,17 +89,17 @@ export function userPluginRemover(
 ) {
   const fs = parts.fs ?? new InMemoryFileAdapter();
   const logger = parts.logger ?? new CapturingLogger();
+  const removal = new RemoveUserPlugin(
+    {
+      userRepo: parts.userManifestRepo,
+      withdrawFromHost: claimedRefWithdrawal(withdrawing({ ...parts, logger }, fs)),
+      userScopePluginFiles: new UserScopePluginFiles(fs, (plugin, tool, home) =>
+        userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
+      ),
+    },
+    registeredTools()
+  );
   return underMachineHome(
-    new RemoveUserPlugin(
-      {
-        userRepo: parts.userManifestRepo,
-        withdrawFromHost: claimedRefWithdrawal(withdrawing({ ...parts, logger }, fs)),
-        records: parts.records ?? registrationRecordRules,
-        userScopePluginFiles: new UserScopePluginFiles(fs, (plugin, tool, home) =>
-          userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
-        ),
-      },
-      registeredTools()
-    )
+    new RemoveMachinePlugin(removal, parts.records ?? registrationRecordRules)
   );
 }
