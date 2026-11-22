@@ -4,7 +4,6 @@
  */
 import { describe, expect, it } from "vitest";
 import { entries, expectNone, src, textsOf } from "./kind-rule-fixtures.js";
-import { debtEntries } from "./kind-rule-support.js";
 import {
   compositionViolations,
   constructionViolations,
@@ -349,9 +348,7 @@ describe("only composition builds a command, a use case or an adapter", () => {
   it("holds the tree", () => {
     const tree = src();
     expect(Object.keys(tree).some((path) => path.startsWith("src/presentation/"))).toBe(true);
-    expect(entries(constructionViolations(tree)).sort()).toEqual(
-      Object.keys(debtEntries("construction")).sort()
-    );
+    expect(entries(constructionViolations(tree))).toEqual([]);
   });
 });
 

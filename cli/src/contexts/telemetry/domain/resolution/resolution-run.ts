@@ -1,12 +1,11 @@
-import type { NotStoredReason } from "../contract/repository-resolution.js";
-import { type CloneIdentity, cloneKey, sameClone } from "../domain/consent/clone-identity.js";
-import type { ConsentLog } from "../domain/consent/consent-log.js";
-import type { RememberedResolutions } from "../domain/remembered-resolutions.js";
-import { repositoryIdOf } from "../domain/repository-identity.js";
-import { cwdKey, ownerAt, type RepositoryResolution } from "../domain/repository-resolution.js";
-import { tokenOfKey } from "../domain/telemetry-consent.js";
-import type { ConsentSource } from "../ports/consent-source.js";
-import type { RepositoryLocator } from "../ports/repository-locator.js";
+import type { NotStoredReason } from "../../contract/repository-resolution.js";
+import { type CloneIdentity, cloneKey, sameClone } from "../consent/clone-identity.js";
+import type { ConsentLog } from "../consent/consent-log.js";
+import type { RememberedResolutions } from "../remembered-resolutions.js";
+import { repositoryIdOf } from "../repository-identity.js";
+import { cwdKey, ownerAt, type RepositoryResolution } from "../repository-resolution.js";
+import { type CloneConsentReading, tokenOfKey } from "../telemetry-consent.js";
+import type { LocatedDirectory } from "./located-directory.js";
 
 /** What the machine decides for a run: how it spells a directory, and what time it is. */
 export interface ResolutionEnvironment {
@@ -48,8 +47,10 @@ export interface ResolutionState {
 }
 
 interface ResolutionRunDeps extends ResolutionState {
-  readonly locator: RepositoryLocator;
-  readonly consentSource: ConsentSource;
+  /** What a working directory is, as it stands now. */
+  readonly locate: (cwd: string) => Promise<LocatedDirectory>;
+  /** A clone's own word on whether it is measured. */
+  readonly readClone: (clone: CloneIdentity) => Promise<CloneConsentReading>;
   readonly environment: ResolutionEnvironment;
 }
 
@@ -61,16 +62,16 @@ export class ResolutionRun {
   private remembered: RememberedResolutions;
   private readonly consents: ConsentLog;
   private readonly unreadable: ReadonlySet<string>;
-  private readonly locator: RepositoryLocator;
-  private readonly consentSource: ConsentSource;
+  private readonly locate: ResolutionRunDeps["locate"];
+  private readonly readClone: ResolutionRunDeps["readClone"];
   private readonly environment: ResolutionEnvironment;
 
   constructor(deps: ResolutionRunDeps) {
     this.remembered = deps.remembered;
     this.consents = deps.consents;
     this.unreadable = deps.unreadable;
-    this.locator = deps.locator;
-    this.consentSource = deps.consentSource;
+    this.locate = deps.locate;
+    this.readClone = deps.readClone;
     this.environment = deps.environment;
   }
 
@@ -138,7 +139,7 @@ export class ResolutionRun {
   /** Whether the clone's own key, as it stands, names an interval of it that was closed: it
    * opted in once, so the person is told to run `on` again, not that it never did. */
   private async keyNamesClosedInterval(clone: CloneIdentity): Promise<boolean> {
-    const reading = await this.consentSource.readClone(clone);
+    const reading = await this.readClone(clone);
     const token = reading.kind === "value" ? tokenOfKey(reading.value) : null;
     return token !== null && this.consents.hasClosed(clone, token);
   }
@@ -153,7 +154,7 @@ export class ResolutionRun {
 
   private async look(cwd: string): Promise<Directory> {
     const dir = cwdKey(cwd, this.environment.caseInsensitiveFileSystem);
-    const located = await this.locator.locate(cwd);
+    const located = await this.locate(cwd);
     if (located.status === "gone") {
       const [first, ...others] = this.remembered.ownersOf(dir);
       return first === undefined

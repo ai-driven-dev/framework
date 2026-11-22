@@ -4,7 +4,7 @@ import { GrantConsent } from "../../../../src/contexts/telemetry/application/swi
 import { RememberOwnRoot } from "../../../../src/contexts/telemetry/application/switch/remember-own-root.use-case.js";
 import { WithdrawConsent } from "../../../../src/contexts/telemetry/application/switch/withdraw-consent.use-case.js";
 import type { RepositoryResolution } from "../../../../src/contexts/telemetry/domain/repository-resolution.js";
-import type { LocatedDirectory } from "../../../../src/contexts/telemetry/ports/repository-locator.js";
+import type { LocatedDirectory } from "../../../../src/contexts/telemetry/domain/resolution/located-directory.js";
 import { cloneOf } from "./clone.builder.js";
 import { FakeConsents } from "./fake-consents.fake.js";
 import { FakeLocator } from "./fake-locator.fake.js";

@@ -91,6 +91,7 @@ src/
 │   │   │   ├── identity/
 │   │   │   ├── legacy/
 │   │   │   ├── report/
+│   │   │   ├── resolution/
 │   │   │   ├── switch/
 │   │   │   └── transcript/
 │   │   ├── infrastructure/

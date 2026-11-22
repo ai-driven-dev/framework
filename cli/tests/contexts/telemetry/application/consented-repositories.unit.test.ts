@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { ConsentedRepositories } from "../../../../src/contexts/telemetry/application/consented-repositories.js";
 import { repositoryIdOf } from "../../../../src/contexts/telemetry/domain/repository-identity.js";
+import type { LocatedDirectory } from "../../../../src/contexts/telemetry/domain/resolution/located-directory.js";
 import {
   CONSENT_WITHDRAWN,
   consentValue,
 } from "../../../../src/contexts/telemetry/domain/telemetry-consent.js";
-import type { LocatedDirectory } from "../../../../src/contexts/telemetry/ports/repository-locator.js";
 import { grantedBy, tokenOf } from "../testing/clone.builder.js";
 import { FakeConsents } from "../testing/fake-consents.fake.js";
 import { FakeLocator } from "../testing/fake-locator.fake.js";

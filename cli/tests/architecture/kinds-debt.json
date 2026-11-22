@@ -46,13 +46,6 @@
     }
   },
   {
-    "rule": "construction",
-    "closesWhen": "the per-operation values of telemetry (run, line splitter, codex context, frame mismatch) are models and errors of its domain, and the directory lock is handed in by composition",
-    "entries": {
-      "src/contexts/telemetry/application/directory-resolver.use-case.ts :: new ResolutionRun": 1
-    }
-  },
-  {
     "rule": "real-tool-list:behaviour",
     "closesWhen": "the test moves under tests/contexts/tools/ beside the profile it exercises",
     "entries": {

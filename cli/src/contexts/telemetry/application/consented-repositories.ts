@@ -1,5 +1,6 @@
 import { ConsentLog } from "../domain/consent/consent-log.js";
 import { repositoryIdOf } from "../domain/repository-identity.js";
+import type { LocatedDirectory } from "../domain/resolution/located-directory.js";
 import {
   type ConsentReading,
   consentOf,
@@ -8,7 +9,7 @@ import {
 } from "../domain/telemetry-consent.js";
 import type { ConsentHistory } from "../ports/consent-history.js";
 import type { ConsentSource } from "../ports/consent-source.js";
-import type { LocatedDirectory, RepositoryLocator } from "../ports/repository-locator.js";
+import type { RepositoryLocator } from "../ports/repository-locator.js";
 
 export type RefusalReason =
   | "environment"

@@ -1,9 +1,9 @@
 import { RememberedResolutions } from "../../domain/remembered-resolutions.js";
 import { repositoryIdOf } from "../../domain/repository-identity.js";
 import { cwdKey } from "../../domain/repository-resolution.js";
+import type { ResolutionEnvironment } from "../../domain/resolution/resolution-run.js";
 import type { ResolutionStore } from "../../ports/resolution-store.js";
 import type { UsageLedger } from "../../ports/usage-ledger.js";
-import type { ResolutionEnvironment } from "../resolution-run.js";
 import type { Located } from "./clone-consent.js";
 
 /** Remembers the root `on` ran in, seen alive in its clone, so a declaration made there is

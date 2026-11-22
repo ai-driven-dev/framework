@@ -2,12 +2,12 @@ import { cloneKey } from "../domain/consent/clone-identity.js";
 import { closeEvent } from "../domain/consent/consent-history.js";
 import { ConsentLog } from "../domain/consent/consent-log.js";
 import { RememberedResolutions } from "../domain/remembered-resolutions.js";
+import { type ResolutionEnvironment, ResolutionRun } from "../domain/resolution/resolution-run.js";
 import { tokenOfKey } from "../domain/telemetry-consent.js";
 import type { ConsentHistory } from "../ports/consent-history.js";
 import type { ConsentSource } from "../ports/consent-source.js";
 import type { RepositoryLocator } from "../ports/repository-locator.js";
 import type { ResolutionStore } from "../ports/resolution-store.js";
-import { type ResolutionEnvironment, ResolutionRun } from "./resolution-run.js";
 
 interface DirectoryResolverDeps {
   readonly locator: RepositoryLocator;
@@ -33,8 +33,8 @@ export class DirectoryResolver {
     const remembered = new RememberedResolutions(await this.deps.store.load());
     const { consents, unreadable } = await this.observeOpenConsents();
     const run = new ResolutionRun({
-      locator: this.deps.locator,
-      consentSource: this.deps.consentSource,
+      locate: (cwd) => this.deps.locator.locate(cwd),
+      readClone: (clone) => this.deps.consentSource.readClone(clone),
       environment: this.deps.environment,
       remembered,
       consents,
