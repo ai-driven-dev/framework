@@ -29,6 +29,8 @@
 - **Batch independent operations** in one pass, not one at a time.
 - **Before adding any instruction, finding, or rule, check whether an existing one already covers or contradicts it.** If so, don't add a parallel: delete it, merge it into the stronger one, or rewrite with explicit scope and priority.
 - **Name by intention, not mechanism:** describe the goal or responsibility, not the tool or file format.
+- **No dates or ticket/run IDs** in code, comments, tests, CI or docs.
+- Before editing anything under `cli/`, load the `working-on-cli` skill and follow the action for your change.
 
 ## Agents
 
