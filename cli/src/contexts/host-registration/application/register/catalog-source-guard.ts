@@ -42,7 +42,7 @@ export async function guardAgainstConflict(
   const { profile } = run;
   const reader = marketplaceRegistryOf(run);
   if (reader === undefined) return undefined;
-  const requestedSource = await run.fs.realpath(builtDir).catch(() => builtDir);
+  const requestedSource = (await run.fs.realpathIfResolvable(builtDir)) ?? builtDir;
   const check = await hostMarketplaceSourceConflict(
     { fs: run.fs, tool: profile, reader },
     {

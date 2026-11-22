@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { tryParseJson } from "../../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
@@ -68,13 +69,10 @@ export class InspectDeclaredMarketplaces {
     settings: { file: string; registration: MarketplaceRegistrationAnswers }
   ): Promise<Set<string>> {
     const path = join(projectRoot, settings.file);
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(await this.fs.readFile(path));
-    } catch {
-      return new Set();
-    }
-    return new Set(settings.registration.declaredMarketplaceNames(parsed));
+    const content = await this.fs.readFileIfReadable(path);
+    const parsed = content === undefined ? undefined : tryParseJson(content);
+    if (parsed?.ok !== true) return new Set();
+    return new Set(settings.registration.declaredMarketplaceNames(parsed.value));
   }
 
   private canRegisterItself(tool: SettingsDeclaringTool): boolean {
