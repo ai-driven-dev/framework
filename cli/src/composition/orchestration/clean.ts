@@ -7,8 +7,11 @@ import {
   CleanProjectFiles,
   type ProjectCleanAsks,
 } from "../../contexts/installation/application/clean/clean-project-files.use-case.js";
+import { InspectUserScope } from "../../contexts/installation/application/clean/inspect-user-scope.use-case.js";
 import { PlanProjectClean } from "../../contexts/installation/application/clean/plan-project-clean.use-case.js";
+import { ProveUserScopeWithdrawals } from "../../contexts/installation/application/clean/prove-user-scope-withdrawals.js";
 import { PurgeUserScopeFiles } from "../../contexts/installation/application/clean/purge-user-scope-files.js";
+import { PurgeUserScopeMachine } from "../../contexts/installation/application/clean/purge-user-scope-machine.js";
 import { RemoveProjectFiles } from "../../contexts/installation/application/removal/project/remove-project-files.js";
 import { RemoveToolFiles } from "../../contexts/installation/application/removal/project/remove-tool-files.js";
 import type { MachineStateGuards } from "../../contexts/installation/application/removal/purge-machine-state.js";
@@ -44,18 +47,21 @@ function wireCleanUserScope(
       purgeCache.resolveCandidate(cacheRoot, segments, label),
     frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
   };
-  const purgeUserScopeFiles = new PurgeUserScopeFiles(
-    {
-      userManifestRepo,
-      claims: inst.registrationRecordRules,
-      purgeMachineState: new PurgeMachineState({ fs, logger, guards }),
-      homeDir: homedir,
-      userScopePluginFiles: new UserScopePluginFiles(fs, (plugin, tool, home) =>
-        userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
-      ),
-    },
-    tools
-  );
+  const userScopeParts = {
+    userManifestRepo,
+    claims: inst.registrationRecordRules,
+    purgeMachineState: new PurgeMachineState({ fs, logger, guards }),
+    homeDir: homedir,
+    userScopePluginFiles: new UserScopePluginFiles(fs, (plugin, tool, home) =>
+      userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
+    ),
+  };
+  const purgeUserScopeFiles = new PurgeUserScopeFiles({
+    userManifestRepo,
+    inspection: new InspectUserScope(userScopeParts, tools),
+    withdrawals: new ProveUserScopeWithdrawals(userScopeParts, tools),
+    machinePurge: new PurgeUserScopeMachine(userScopeParts, tools),
+  });
   return new CleanUserScope({
     purgeFiles: purgeUserScopeFiles,
     withdrawFromHost,

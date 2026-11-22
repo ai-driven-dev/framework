@@ -5,10 +5,13 @@ import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/c
 import type { MarketplaceRegistry } from "../../../src/contexts/distribution/ports/marketplace-registry.js";
 import { WithdrawFromHost } from "../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import type { HostPorts } from "../../../src/contexts/host-registration/ports/host-ports.js";
+import { InspectUserScope } from "../../../src/contexts/installation/application/clean/inspect-user-scope.use-case.js";
+import { ProveUserScopeWithdrawals } from "../../../src/contexts/installation/application/clean/prove-user-scope-withdrawals.js";
 import {
   PurgeUserScopeFiles,
   type PurgeUserScopeFilesDeps,
 } from "../../../src/contexts/installation/application/clean/purge-user-scope-files.js";
+import { PurgeUserScopeMachine } from "../../../src/contexts/installation/application/clean/purge-user-scope-machine.js";
 import type { MachineStateGuards } from "../../../src/contexts/installation/application/removal/purge-machine-state.js";
 import {
   PurgeMachineState,
@@ -60,19 +63,22 @@ export function userScopeCleaner(parts: UserScopeCleanerParts): CleanUserScope {
       purgeCache.resolveCandidate(cacheRoot, segments, label),
     frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
   };
-  return new CleanUserScope({
-    purgeFiles: new PurgeUserScopeFiles(
-      {
-        userManifestRepo: parts.repo,
-        claims: registrationRecordRules,
-        purgeMachineState: new PurgeMachineState({ fs, logger, guards }),
-        homeDir,
-        userScopePluginFiles: new UserScopePluginFiles(fs, (plugin, tool, home) =>
-          userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
-        ),
-      },
-      parts.tools
+  const userScopeParts = {
+    userManifestRepo: parts.repo,
+    claims: registrationRecordRules,
+    purgeMachineState: new PurgeMachineState({ fs, logger, guards }),
+    homeDir,
+    userScopePluginFiles: new UserScopePluginFiles(fs, (plugin, tool, home) =>
+      userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
     ),
+  };
+  return new CleanUserScope({
+    purgeFiles: new PurgeUserScopeFiles({
+      userManifestRepo: parts.repo,
+      inspection: new InspectUserScope(userScopeParts, parts.tools),
+      withdrawals: new ProveUserScopeWithdrawals(userScopeParts, parts.tools),
+      machinePurge: new PurgeUserScopeMachine(userScopeParts, parts.tools),
+    }),
     withdrawFromHost: new WithdrawFromHost(fs, logger, hostPortsOf(parts)),
     removeMarketplace: new RemoveMarketplace(
       parts.marketplaceRegistry ?? new InMemoryMarketplaceRegistry()
