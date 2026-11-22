@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import type {
   ArtifactContract,
+  ArtifactPlacement,
   SourceMarketplaceRef,
   ToolBuildContract,
 } from "../../../../src/contexts/tools/contract/build-contract.js";
@@ -36,10 +37,10 @@ export function assetProviderNaming(loaded: string[]): AssetProvider {
 }
 
 export function supportedArtifact(
-  path: (plugin: string, relPath: string) => string,
+  placement: ArtifactPlacement,
   extra: Partial<Extract<ArtifactContract, { supported: true }>> = {}
 ): ArtifactContract {
-  return { supported: true, source: { kind: "fullTree", srcDir: "." }, path, ...extra };
+  return { supported: true, source: { kind: "fullTree", srcDir: "." }, placement, ...extra };
 }
 
 export function stubContract(over: Partial<ToolBuildContract> = {}): ToolBuildContract {
@@ -48,10 +49,10 @@ export function stubContract(over: Partial<ToolBuildContract> = {}): ToolBuildCo
     synthesizeManifest: null,
     manifestSchemaName: null,
     artifacts: {
-      agents: supportedArtifact((_plugin, rel) => rel),
-      skills: supportedArtifact((_plugin, rel) => rel),
-      hooks: supportedArtifact((_plugin, rel) => rel),
-      mcp: supportedArtifact((_plugin, rel) => rel),
+      agents: supportedArtifact({ kind: "relative" }),
+      skills: supportedArtifact({ kind: "relative" }),
+      hooks: supportedArtifact({ kind: "relative" }),
+      mcp: supportedArtifact({ kind: "relative" }),
       rules: { supported: false },
       commands: { supported: false },
     },

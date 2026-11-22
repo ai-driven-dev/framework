@@ -1,8 +1,8 @@
 import type { SupportedArtifact, ToolBuildContract } from "../../tools/contract/build-contract.js";
 import type { BuiltPlugin } from "./plugin-tree-sink.js";
 
-/** What a flat MCP merge needs of its artifact: the merge, and where its file lives. */
-export type FlatMcpTarget = Required<Pick<SupportedArtifact, "merge" | "mergeDest">>;
+/** What a flat MCP merge needs of its artifact: the server map's property, and its path. */
+export type FlatMcpTarget = SupportedArtifact & Required<Pick<SupportedArtifact, "mcpServersKey">>;
 
 /** What a flat write needs of a build: the contract, the overwrite flag and the output directory. */
 export interface FlatTarget {

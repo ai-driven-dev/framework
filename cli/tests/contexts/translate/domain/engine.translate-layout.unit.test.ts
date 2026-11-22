@@ -8,10 +8,7 @@ import { aStubBuildContract, aSupportedArtifact } from "../testing/stub-build-co
 
 // Written as a split literal to avoid biome's noTemplateCurlyInString warning.
 const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
-const MERGES = {
-  merge: () => ({ mergedContent: "", collisions: [] }),
-  mergeDest: (outDir: string) => `${outDir}/mcp.json`,
-};
+const MERGES = { mcpServersKey: "mcpServers" };
 
 function flatContract(mcp = aSupportedArtifact(MERGES)) {
   const contract = aStubBuildContract();
@@ -20,7 +17,7 @@ function flatContract(mcp = aSupportedArtifact(MERGES)) {
     artifacts: {
       ...contract.artifacts,
       mcp,
-      hooks: aSupportedArtifact({ path: (plugin, rel) => `hooks/${plugin}/${rel}` }),
+      hooks: aSupportedArtifact({ placement: { kind: "hooks", scriptsDir: "hooks/" } }),
     },
   };
 }
@@ -50,14 +47,14 @@ describe("translate with a build layout", () => {
       ".mcp.json": JSON.stringify({ mcpServers: { db: { args: [`${ROOT}/hooks/run.sh`] } } }),
     });
 
-    expect(result.mcp?.servers).toEqual({ "plug-db": { args: ["/out/hooks/plug/hooks/run.sh"] } });
+    expect(result.mcp?.servers).toEqual({ "plug-db": { args: ["/out/hooks/plug/run.sh"] } });
   });
 
   it("hands the sink the plugin's whole MCP declaration, pointed at the plugin's root and its keys prefixed", () => {
     const declared = JSON.stringify({ mcpServers: { db: { args: [`${ROOT}/hooks/run.sh`] } } });
 
     expect(JSON.parse(build({ ".mcp.json": declared }).mcp?.declared ?? "")).toEqual({
-      mcpServers: { "plug-db": { args: ["/out/hooks/plug/hooks/run.sh"] } },
+      mcpServers: { "plug-db": { args: ["/out/hooks/plug/run.sh"] } },
     });
   });
 

@@ -16,7 +16,6 @@ import { defineAiTool } from "../../profile/define-tool.js";
 import { flatGlobalFilePath, flatPlacement } from "../../sections/layout-section.js";
 import { McpConfigPart } from "../../sections/mcp-section.js";
 import { ModelsSection } from "../../sections/models-section.js";
-import { DualConfigError } from "../../tools.error.js";
 import { opencodeAgentFrontmatter } from "./opencode-agent.model.js";
 import { buildOpencodeFlatContract, OPENCODE_FLAT_LAYOUT } from "./opencode-build.model.js";
 import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.model.js";
@@ -27,8 +26,8 @@ const TOOL_SUFFIX = ".opencode.md";
 const OUTPUT_PATH_CANDIDATES = {
   tiers: [["opencode.json", "opencode.jsonc"]],
   fallback: "opencode.json",
-  conflict: () => {
-    throw new DualConfigError("opencode", "opencode.json and opencode.jsonc exist");
+  onMultipleCandidates: {
+    error: { toolId: "opencode", detail: "opencode.json and opencode.jsonc exist" },
   },
 };
 

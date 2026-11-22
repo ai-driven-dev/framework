@@ -16,6 +16,17 @@ describe("the file a tool's MCP config goes in", () => {
     expect(await fixed.resolveOutputPath(withFiles(".mcp.jsonc"))).toBe(".mcp.json");
   });
 
+  it("asks about no file in a tier after the first one that has any", async () => {
+    const asked: string[] = [];
+
+    await kilo.section("mcp").config?.resolveOutputPath(async (relativePath) => {
+      asked.push(relativePath);
+      return relativePath === ".kilo/kilo.json";
+    });
+
+    expect(asked).toStrictEqual([".kilo/kilo.json", ".kilo/kilo.jsonc"]);
+  });
+
   describe("opencode", () => {
     const resolve = (...files: string[]) =>
       opencode.section("mcp").config?.resolveOutputPath(withFiles(...files));

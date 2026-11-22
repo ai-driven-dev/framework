@@ -1,8 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { builtMaterializationDepsOf } from "../../../../../src/composition/installation.js";
 import type { RestoreAllPlugins } from "../../../../../src/contexts/installation/application/restore/restore-all-plugins.use-case.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import {
   buildInstallationDeps,
   initAndInstall,
@@ -12,7 +10,7 @@ import { registeredTools, TOOL } from "../../../../shared/testing/registered-too
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
 import { restoreAllPluginsOf } from "../../testing/build-restore.builder.js";
-import { fakeBuildSources, translateDistribution } from "../../testing/fake-build-sources.fake.js";
+import { fakeBuildSources, fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
@@ -45,13 +43,7 @@ function makeRestoreUseCase(deps: Deps, registry: FakeMarketplaceRegistry): Rest
   return restoreAllPluginsOf({
     ...deps,
     loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
-    builtDeps: builtMaterializationDepsOf(deps.fs, {
-      ensureBuilt: fakeEnsureBuiltMarketplace(),
-      marketplaceRegistry: registry,
-      platform: process.platform,
-      homedir: () => HOME,
-      translate: translateDistribution,
-    }),
+    builtDeps: fakeBuiltDeps(deps.fs, { marketplaceRegistry: registry, homedir: () => HOME }),
   });
 }
 

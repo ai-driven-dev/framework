@@ -6,12 +6,10 @@
 
 import {
   type FlatArtifactLayout,
-  flatAgentFilePath,
   flatArtifactLayout,
-  flatSkillPath,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
+import { agentsIn, skillsIn } from "../../../contract/artifact-path.js";
 import type { AgentMarkdown, ToolBuildContract } from "../../../contract/build-contract.js";
-import { mergeAdditiveMcp } from "../../formats/additive-mcp-merge.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
 import { pluginTreeContract } from "../../formats/plugin-tree-contract.js";
@@ -53,23 +51,20 @@ export function buildCursorFlatContract(hooks: FlatHooks): ToolBuildContract {
       skills: {
         supported: true,
         source: { kind: "fullTree", srcDir: "skills" },
-        path: (plugin, rel) => flatSkillPath(CURSOR_FLAT_LAYOUT, plugin, rel),
+        placement: skillsIn(CURSOR_FLAT_LAYOUT),
         rewriteSkillName: true,
       },
       agents: {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        path: (plugin, rel) => flatAgentFilePath(CURSOR_FLAT_LAYOUT, plugin, rel),
+        placement: agentsIn(CURSOR_FLAT_LAYOUT),
         agentMarkdown: cursorAgentMarkdown,
       },
       mcp: {
         supported: true,
         source: { kind: "configFile", srcPath: ".mcp.json" },
-        path: () => ".cursor/mcp.json",
-        merge: (existing, incoming, force) =>
-          mergeAdditiveMcp(existing, incoming, { force, serversKey: "mcpServers" }),
+        placement: { kind: "file", at: ".cursor/mcp.json" },
         mcpServersKey: "mcpServers",
-        mergeDest: (outDir) => `${outDir}/.cursor/mcp.json`,
       },
       hooks: flatHooksArtifact(hooks, { tool: "cursor" }),
       rules: { supported: false },

@@ -1,14 +1,18 @@
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 // biome-ignore lint/plugin: hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
+import type { PluginTranslationMode } from "../../../tools/contract/tool-vocabulary.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ProjectHooksGuard } from "../shared/assert-project-hooks-unchanged.js";
-import type { PluginTranslator } from "./plugin-translator.js";
+import type { PlacementDeps } from "./add-plugin-request.js";
+import { placeBuiltTreePlugin } from "./place-built-tree-plugin.js";
+import { registerMarketplacePlugin } from "./register-marketplace-plugin.js";
 
 export interface PluginRematerialization {
   readonly dist: PluginDistribution;
   readonly tool: AiToolProfile;
+  readonly mode: PluginTranslationMode;
   readonly plugin: InstalledPlugin;
   readonly projectRoot: string;
   readonly manifest: Manifest;
@@ -16,21 +20,21 @@ export interface PluginRematerialization {
 }
 
 /**
- * Re-registers a marketplace-sourced plugin through its resolved translator: drops the existing
- * manifest entry and lets the translator re-add it, so update and restore both end with the same
+ * Re-registers a marketplace-sourced plugin the way its tool takes it: drops the existing
+ * manifest entry and places the plugin again, so update and restore both end with the same
  * single entry an install would have produced.
  *
- * Returns how many files the translator actually (re)wrote: not the plugin's total file count: so
- * a no-op restore reports zero. `written` is undefined for a translator that writes no files, and
+ * Returns how many files were actually (re)written: not the plugin's total file count: so
+ * a no-op restore reports zero. `written` is undefined for a placement that writes no files, and
  * is reported as 0 rather than guessed.
  */
-export async function materializeViaTranslator(
-  translator: PluginTranslator,
-  rematerialization: PluginRematerialization
+export async function rematerializePlugin(
+  rematerialization: PluginRematerialization,
+  deps: PlacementDeps
 ): Promise<number> {
-  const { dist, tool, plugin, projectRoot, manifest, hooksGuard = {} } = rematerialization;
+  const { dist, tool, mode, plugin, projectRoot, manifest, hooksGuard = {} } = rematerialization;
   manifest.removePlugin(tool.toolId, plugin.name);
-  const { written } = await translator.addPlugin({
+  const request = {
     dist,
     tool,
     source: plugin.source,
@@ -41,6 +45,10 @@ export async function materializeViaTranslator(
     userScopeDirTaken: false,
     previousProjectHooks: plugin.projectHooks,
     hooksGuard,
-  });
-  return written ?? 0;
+  };
+  if (mode === "marketplace") {
+    registerMarketplacePlugin(request);
+    return 0;
+  }
+  return (await placeBuiltTreePlugin(request, deps)).written ?? 0;
 }

@@ -1,16 +1,14 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { builtMaterializationDepsOf } from "../../../../../src/composition/installation.js";
 import { PluginMaterializer } from "../../../../../src/contexts/installation/application/plugin/plugin-materializer.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import {
   buildInstallationDeps,
   initAndInstall,
 } from "../../../../shared/testing/installation-deps.builder.js";
 import { loadDistributionOf } from "../../../../shared/testing/load-distribution.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { translateDistribution } from "../../testing/fake-build-sources.fake.js";
+import { fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
 import {
   attachFutureSupportedNativeClaim,
   HOME,
@@ -166,13 +164,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
       fs: deps.fs,
       loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
       guard: userScopeFileGuard,
-      builtDeps: builtMaterializationDepsOf(deps.fs, {
-        ensureBuilt: fakeEnsureBuiltMarketplace(),
-        marketplaceRegistry: registry,
-        platform: process.platform,
-        homedir: () => HOME,
-        translate: translateDistribution,
-      }),
+      builtDeps: fakeBuiltDeps(deps.fs, { marketplaceRegistry: registry, homedir: () => HOME }),
     });
     const plan = await updater.planUpdate({
       plugin: machine.getPlugins(cursor)[0],

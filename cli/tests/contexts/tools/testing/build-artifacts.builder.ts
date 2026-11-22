@@ -1,3 +1,4 @@
+import { artifactPath } from "../../../../src/contexts/tools/contract/artifact-path.js";
 import type {
   ArtifactContract,
   ArtifactSource,
@@ -48,9 +49,9 @@ export const PLUGIN_RELATIVE_PATHS = {
 
 export function pluginRelativePathsOf(artifacts: Artifacts) {
   return {
-    skill: supported(artifacts.skills).path("aidd-dev", "skills/01-plan/SKILL.md"),
-    agent: supported(artifacts.agents).path("aidd-dev", "agents/planner.md"),
-    mcp: supported(artifacts.mcp).path("aidd-dev", ".mcp.json"),
-    hook: supported(artifacts.hooks).path("aidd-dev", "hooks/journal.cjs"),
+    skill: artifactPath(supported(artifacts.skills), "aidd-dev", "skills/01-plan/SKILL.md"),
+    agent: artifactPath(supported(artifacts.agents), "aidd-dev", "agents/planner.md"),
+    mcp: artifactPath(supported(artifacts.mcp), "aidd-dev", ".mcp.json"),
+    hook: artifactPath(supported(artifacts.hooks), "aidd-dev", "hooks/journal.cjs"),
   };
 }

@@ -10,7 +10,7 @@ import {
 const MANIFEST = "hooks/hooks.json";
 
 function bridge(generate: FlatHooksBridge["generate"] = () => "bridge"): FlatHooksBridge {
-  return { path: (plugin) => `flat/${plugin}-bridge.js`, skipIfSourceHas: "own.js", generate };
+  return { dir: "flat/", skipIfSourceHas: "own.js", generate };
 }
 
 function flatHooks(
@@ -24,7 +24,10 @@ function flatHooks(
       ...contract,
       artifacts: {
         ...contract.artifacts,
-        hooks: aSupportedArtifact({ path: (_p, rel) => `flat/${rel}`, ...over }),
+        hooks: aSupportedArtifact({
+          placement: { kind: "hooks", scriptsDir: "flat/hooks/" },
+          ...over,
+        }),
         agents: { supported: false },
         skills: { supported: false },
         mcp: { supported: false },
@@ -38,8 +41,8 @@ function flatHooks(
 describe("the flat layout of a plugin's hooks", () => {
   it("carries every script below hooks, keeping its folders, and leaves the manifest to the merge", () => {
     expect(flatHooks({ [MANIFEST]: "{}", "hooks/run.sh": "a", "hooks/lib/x.js": "b" })).toEqual({
-      "flat/hooks/run.sh": "a",
-      "flat/hooks/lib/x.js": "b",
+      "flat/hooks/plug/run.sh": "a",
+      "flat/hooks/plug/lib/x.js": "b",
     });
   });
 
@@ -47,8 +50,8 @@ describe("the flat layout of a plugin's hooks", () => {
     expect(
       flatHooks({ [MANIFEST]: "{}", "hooks/sub/hooks.json": "n", "hooks/my-hooks.json": "m" })
     ).toEqual({
-      "flat/hooks/sub/hooks.json": "n",
-      "flat/hooks/my-hooks.json": "m",
+      "flat/hooks/plug/sub/hooks.json": "n",
+      "flat/hooks/plug/my-hooks.json": "m",
     });
   });
 
@@ -59,7 +62,7 @@ describe("the flat layout of a plugin's hooks", () => {
   it("hands each script to the tool's own script rewrite", () => {
     const script = (path: string, content: string) => `${path}:${content}`;
     expect(flatHooks({ [MANIFEST]: "{}", "hooks/run.sh": "a" }, { script })).toEqual({
-      "flat/hooks/run.sh": "hooks/run.sh:a",
+      "flat/hooks/plug/run.sh": "hooks/run.sh:a",
     });
   });
 
@@ -67,7 +70,7 @@ describe("the flat layout of a plugin's hooks", () => {
     const hooksBridge = bridge((raw, plugin) => `${plugin}:${raw}`);
     expect(
       flatHooks({ [MANIFEST]: "{raw}", "hooks/run.sh": "a" }, { skipHooksJson: true, hooksBridge })
-    ).toEqual({ "flat/plug-bridge.js": "plug:{raw}", "flat/hooks/run.sh": "a" });
+    ).toEqual({ "flat/plug-hooks.js": "plug:{raw}", "flat/hooks/plug/run.sh": "a" });
   });
 
   it("builds no bridge when the plugin ships the file the bridge replaces, wherever it sits", () => {
@@ -77,7 +80,7 @@ describe("the flat layout of a plugin's hooks", () => {
         { [MANIFEST]: "{}", "hooks/sub/own.js": "mine" },
         { skipHooksJson: true, hooksBridge }
       )
-    ).toEqual({ "flat/hooks/sub/own.js": "mine" });
+    ).toEqual({ "flat/hooks/plug/sub/own.js": "mine" });
   });
 
   it("builds no bridge when no event maps to it", () => {

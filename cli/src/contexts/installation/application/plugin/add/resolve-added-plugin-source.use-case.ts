@@ -7,7 +7,7 @@ import type { FileWriter } from "../../../../../shared/ports/file-writer.js";
 import type { ToolCatalog } from "../../../../tools/contract/tool-catalog.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../../domain/project-layout.js";
 import type { LoadDistribution } from "../../../ports/plugin/load-plugin-distribution.js";
-import { resolvePluginTranslator } from "../../materialize/resolve-plugin-translator.js";
+import { placementModeOf } from "../../materialize/plugin-placement.js";
 import type { BuiltMaterializationDeps } from "../../shared/built-materialization-deps.js";
 
 export interface ResolveAddedPluginSourceRequest {
@@ -66,8 +66,7 @@ export class ResolveAddedPluginSource {
       return { isGithubMarketplace: false, distribution: await this.read(source, projectRoot) };
     }
     const isFlat = (toolId: AiToolId): boolean =>
-      resolvePluginTranslator(this.tools.aiProfile(toolId), this.deps.built.translators)?.mode ===
-      "flat";
+      placementModeOf(this.tools.aiProfile(toolId)) === "built-tree";
     const flat = toolIds.filter(isFlat);
     const native = toolIds.filter((toolId) => !isFlat(toolId));
     // Without a catalog entry a github add is refused before it places anything.

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { artifactPath } from "../../../../../../src/contexts/tools/contract/artifact-path.js";
 import type { ArtifactContract } from "../../../../../../src/contexts/tools/contract/build-contract.js";
 import { claude } from "../../../../../../src/contexts/tools/domain/profiles/claude/claude.profile.js";
 import { builtAgent } from "../../../../../shared/testing/built-agent.builder.js";
@@ -87,13 +88,13 @@ describe("present(claude.buildContracts.flat)()", () => {
     const hooks = supported(present(claude.buildContracts.flat)().artifacts.hooks);
 
     expect({
-      declaration: hooks.path("aidd-dev", "hooks/aidd-dev.hooks.json"),
-      script: hooks.path("aidd-dev", "hooks/journal.cjs"),
-      file: [hooks.hooksFile?.path("aidd-dev"), hooks.hooksFile?.shared],
+      declaration: artifactPath(hooks, "aidd-dev", "hooks/aidd-dev.hooks.json"),
+      script: artifactPath(hooks, "aidd-dev", "hooks/journal.cjs"),
+      file: hooks.hooksFile?.at,
     }).toStrictEqual({
       declaration: ".claude/hooks/aidd-dev.hooks.json",
       script: ".claude/hooks/aidd-dev/journal.cjs",
-      file: [".claude/settings.json", true],
+      file: { shared: ".claude/settings.json" },
     });
   });
 
@@ -123,19 +124,11 @@ describe("present(claude.buildContracts.flat)()", () => {
     const mcp = supported(present(claude.buildContracts.flat)().artifacts.mcp);
 
     expect({
-      path: mcp.path("aidd-dev", ".mcp.json"),
+      path: artifactPath(mcp, "aidd-dev", ".mcp.json"),
       mcpServersKey: mcp.mcpServersKey,
-      mergeDest: mcp.mergeDest?.("/out"),
-      merged: mcp.merge?.(null, { "aidd-dev-context": { command: "node" } }, false),
     }).toStrictEqual({
       path: ".mcp.json",
       mcpServersKey: "mcpServers",
-      mergeDest: "/out/.mcp.json",
-      merged: {
-        mergedContent:
-          '{\n  "mcpServers": {\n    "aidd-dev-context": {\n      "command": "node"\n    }\n  }\n}\n',
-        collisions: [],
-      },
     });
   });
 

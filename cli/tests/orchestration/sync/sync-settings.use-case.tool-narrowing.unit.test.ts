@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import { ModeAMarketplaceTranslator } from "../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
+import { registerMarketplacePlugin } from "../../../src/contexts/installation/application/materialize/register-marketplace-plugin.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { registeredAiProfile } from "../../shared/testing/catalog-of.builder.js";
@@ -29,7 +29,7 @@ describe("toolIds narrows which tool's CLI is driven", () => {
       .withTool(TOOL.claude, [], { version: "test" })
       .withTool(TOOL.codex, [], { version: "test" })
       .build();
-    await new ModeAMarketplaceTranslator().addPlugin({
+    await registerMarketplacePlugin({
       dist: distribution("aidd-context"),
       tool: registeredAiProfile(TOOL.claude),
       source: { kind: "local", path: "/plugin-source" },

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import type { ToolBuildContract } from "../../../../src/contexts/tools/contract/build-contract.js";
+import { agentsIn } from "../../../../src/contexts/tools/contract/artifact-path.js";
+import type {
+  ArtifactPlacement,
+  ToolBuildContract,
+} from "../../../../src/contexts/tools/contract/build-contract.js";
+import { flatArtifactLayout } from "../../../../src/shared/domain/materialization/flat-paths.js";
 import { anEmptyContract } from "../../../shared/testing/empty-build-contract.builder.js";
 import { contractToolProfile } from "../testing/contract-tool-profile.builder.js";
 import {
@@ -20,14 +25,14 @@ import { syntheticToolProfile } from "../testing/synthetic-tool-profile.builder.
 const agents = [makeFile("agents/rev.md", "---\nname: rev\n---\n\nReview.\n")];
 const agentDist = distOf([...agents], { agents });
 
-const hostingAgents = (path: (plugin: string, rel: string) => string): ToolBuildContract =>
+const hostingAgents = (placement: ArtifactPlacement): ToolBuildContract =>
   anEmptyContract({
     artifacts: {
       ...anEmptyContract().artifacts,
       agents: {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        path,
+        placement,
       },
     },
   });
@@ -55,11 +60,13 @@ describe("a plugin component a target declares no section for", () => {
 });
 
 describe("an agent a flat target hosts without a section of its own", () => {
-  const hostsAgents = hostingAgents((plugin, rel) => `.fake/hosted/${plugin}-${rel}`);
+  const hostsAgents = hostingAgents(
+    agentsIn(flatArtifactLayout(".fake/hosted/", { skills: "nested", agent: { ext: ".md" } }))
+  );
   const declaringAgents = { agents: markdownSectionInstalling() };
 
   it("is carried as the plugin wrote it, declared or not, by a contract that rewrites nothing", () => {
-    const carried = { ".fake/hosted/sample-plugin-agents/rev.md": agents[0].content };
+    const carried = { ".fake/hosted/agents/sample-plugin-rev.md": agents[0].content };
     const undeclared = syntheticToolProfile({ flatContract: hostsAgents });
     const declared = syntheticToolProfile({
       flatContract: hostsAgents,

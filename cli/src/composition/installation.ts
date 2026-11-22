@@ -29,15 +29,9 @@ import {
   CacheBuiltMarketplace,
   type FrameworkBuilds,
 } from "../contexts/installation/application/marketplace/cache-built-marketplace.use-case.js";
-import { BuiltTreeMaterializationTranslator } from "../contexts/installation/application/materialize/built-tree-materialization-translator.js";
-import { ModeAMarketplaceTranslator } from "../contexts/installation/application/materialize/mode-a-marketplace-translator.js";
-import { ModeBFlatMaterializationTranslator } from "../contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
 import { ProjectHooksMaterializer } from "../contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 import { ListPlugins } from "../contexts/installation/application/plugin/list-plugins.use-case.js";
-import type {
-  BuiltBuildDeps,
-  BuiltMaterializationDeps,
-} from "../contexts/installation/application/shared/built-materialization-deps.js";
+import type { BuiltMaterializationDeps } from "../contexts/installation/application/shared/built-materialization-deps.js";
 import { DetectPluginDrift } from "../contexts/installation/application/shared/detect-plugin-drift.use-case.js";
 import { UpdateGitignore } from "../contexts/installation/application/update-gitignore.use-case.js";
 import type { ProjectSetupState } from "../contexts/installation/contract/project-setup-state.js";
@@ -127,22 +121,9 @@ export function debugOnly(logger: Logger): Logger {
 /** What a restore needs to rebuild through the build pipeline. */
 export function builtMaterializationDepsOf(
   fs: FileReader & FileWriter,
-  build: BuiltBuildDeps
+  build: Omit<BuiltMaterializationDeps, "projectHooks">
 ): BuiltMaterializationDeps {
-  const projectHooks = new ProjectHooksMaterializer(fs);
-  const flat = new ModeBFlatMaterializationTranslator(
-    fs,
-    build.homedir,
-    build.translate,
-    projectHooks
-  );
-  return {
-    ...build,
-    translators: {
-      builtTree: new BuiltTreeMaterializationTranslator(fs, build, projectHooks, flat),
-      marketplace: new ModeAMarketplaceTranslator(),
-    },
-  };
+  return { ...build, projectHooks: new ProjectHooksMaterializer(fs) };
 }
 
 /** What installing a tool's configuration writes, and the steps that follow each install. */

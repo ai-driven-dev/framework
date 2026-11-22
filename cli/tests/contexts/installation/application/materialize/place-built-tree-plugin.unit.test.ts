@@ -1,11 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
+import { placeBuiltTreePlugin } from "../../../../../src/contexts/installation/application/materialize/place-built-tree-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { builtTreeTranslator } from "../../testing/built-translators.builder.js";
-import { translateDistribution } from "../../testing/fake-build-sources.fake.js";
+import { fakeBuiltDeps, translateDistribution } from "../../testing/fake-build-sources.fake.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
 
 const PROJECT_ROOT = "/proj";
@@ -31,28 +30,28 @@ async function makeRegistry(): Promise<FakeMarketplaceRegistry> {
   return registry;
 }
 
-describe("BuiltTreeMaterializationTranslator - cursor", () => {
+describe("placeBuiltTreePlugin - cursor", () => {
   it("counts changed files and skips byte-identical files on repeated materialization", async () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(`${BUILT}/plugins/sample-plugin/skills/demo/SKILL.md`, "built skill");
-    const translator = builtTreeTranslator(fs, {
-      platform: process.platform,
-      homedir: () => HOME,
-      ensureBuilt: fakeEnsureBuiltMarketplace(),
-      marketplaceRegistry: await makeRegistry(),
-      translate: translateDistribution,
-    });
+    const translator = {
+      fs: fs,
+      built: fakeBuiltDeps(fs, { homedir: () => HOME, marketplaceRegistry: await makeRegistry() }),
+    };
     const install = () => {
       const restored = Manifest.create();
       restored.addTool(TOOL.cursor, "test", []);
-      return translator.addPlugin({
-        dist: dist(),
-        tool: registeredTools().aiProfile(TOOL.cursor),
-        source: { kind: "local", path: "/source" },
-        projectRoot: PROJECT_ROOT,
-        manifest: restored,
-        marketplace: "aidd-framework",
-      });
+      return placeBuiltTreePlugin(
+        {
+          dist: dist(),
+          tool: registeredTools().aiProfile(TOOL.cursor),
+          source: { kind: "local", path: "/source" },
+          projectRoot: PROJECT_ROOT,
+          manifest: restored,
+          marketplace: "aidd-framework",
+        },
+        translator
+      );
     };
     const first = await install();
     expect(first.written).toBe(1);
@@ -73,23 +72,27 @@ describe("BuiltTreeMaterializationTranslator - cursor", () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(`${BUILT}/plugins/sample-plugin/skills/demo/SKILL.md`, "built skill");
     const execute = vi.fn(translateDistribution.execute.bind(translateDistribution));
-    const translator = builtTreeTranslator(fs, {
-      platform: process.platform,
-      homedir: () => HOME,
-      ensureBuilt: fakeEnsureBuiltMarketplace(),
-      marketplaceRegistry: await makeRegistry(),
-      translate: { execute },
-    });
+    const translator = {
+      fs: fs,
+      built: fakeBuiltDeps(fs, {
+        homedir: () => HOME,
+        marketplaceRegistry: await makeRegistry(),
+        translate: { execute },
+      }),
+    };
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
-    await translator.addPlugin({
-      dist: dist(),
-      tool: registeredTools().aiProfile(TOOL.cursor),
-      source: { kind: "local", path: "/source" },
-      projectRoot: PROJECT_ROOT,
-      manifest,
-      marketplace: "aidd-framework",
-    });
+    await placeBuiltTreePlugin(
+      {
+        dist: dist(),
+        tool: registeredTools().aiProfile(TOOL.cursor),
+        source: { kind: "local", path: "/source" },
+        projectRoot: PROJECT_ROOT,
+        manifest,
+        marketplace: "aidd-framework",
+      },
+      translator
+    );
     expect(execute).toHaveBeenCalledTimes(1);
   });
 
@@ -107,22 +110,22 @@ describe("BuiltTreeMaterializationTranslator - cursor", () => {
 
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
-    const translator = builtTreeTranslator(fs, {
-      platform: process.platform,
-      homedir: () => HOME,
-      ensureBuilt: fakeEnsureBuiltMarketplace(),
-      marketplaceRegistry: await makeRegistry(),
-      translate: translateDistribution,
-    });
+    const translator = {
+      fs: fs,
+      built: fakeBuiltDeps(fs, { homedir: () => HOME, marketplaceRegistry: await makeRegistry() }),
+    };
 
-    await translator.addPlugin({
-      dist: dist(),
-      tool: registeredTools().aiProfile(TOOL.cursor),
-      source: { kind: "local", path: "/plugin-source" },
-      projectRoot: PROJECT_ROOT,
-      manifest,
-      marketplace: "aidd-framework",
-    });
+    await placeBuiltTreePlugin(
+      {
+        dist: dist(),
+        tool: registeredTools().aiProfile(TOOL.cursor),
+        source: { kind: "local", path: "/plugin-source" },
+        projectRoot: PROJECT_ROOT,
+        manifest,
+        marketplace: "aidd-framework",
+      },
+      translator
+    );
 
     const base = `${HOME}/.cursor/plugins/local/sample-plugin`;
     // Byte-equal to the built tree, with the plugins/<name> prefix stripped.
@@ -141,24 +144,24 @@ describe("BuiltTreeMaterializationTranslator - cursor", () => {
     fs.setFile(occupied, "foreign bytes");
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
-    const translator = builtTreeTranslator(fs, {
-      platform: process.platform,
-      homedir: () => HOME,
-      ensureBuilt: fakeEnsureBuiltMarketplace(),
-      marketplaceRegistry: await makeRegistry(),
-      translate: translateDistribution,
-    });
+    const translator = {
+      fs: fs,
+      built: fakeBuiltDeps(fs, { homedir: () => HOME, marketplaceRegistry: await makeRegistry() }),
+    };
 
-    const result = await translator.addPlugin({
-      dist: dist(),
-      tool: registeredTools().aiProfile(TOOL.cursor),
-      source: { kind: "local", path: "/plugin-source" },
-      projectRoot: PROJECT_ROOT,
-      manifest,
-      marketplace: "aidd-framework",
-      previousMcpEntries: new Map(),
-      userScopeDirTaken: true,
-    });
+    const result = await placeBuiltTreePlugin(
+      {
+        dist: dist(),
+        tool: registeredTools().aiProfile(TOOL.cursor),
+        source: { kind: "local", path: "/plugin-source" },
+        projectRoot: PROJECT_ROOT,
+        manifest,
+        marketplace: "aidd-framework",
+        previousMcpEntries: new Map(),
+        userScopeDirTaken: true,
+      },
+      translator
+    );
     expect(result.written).toBe(0);
     expect(fs.getFile(occupied)).toBe("foreign bytes");
     expect(manifest.getPlugins(TOOL.cursor)[0]?.files.size).toBe(0);
@@ -168,26 +171,26 @@ describe("BuiltTreeMaterializationTranslator - cursor", () => {
     const fs = new InMemoryFileAdapter();
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
-    const translator = builtTreeTranslator(fs, {
-      platform: process.platform,
-      homedir: () => HOME,
-      ensureBuilt: fakeEnsureBuiltMarketplace(),
-      marketplaceRegistry: await makeRegistry(),
-      translate: translateDistribution,
-    });
-    const result = await translator.addPlugin({
-      dist: dist(),
-      tool: registeredTools().aiProfile(TOOL.cursor),
-      source: { kind: "local", path: "/plugin-source" },
-      projectRoot: PROJECT_ROOT,
-      manifest,
-      marketplace: undefined,
-    });
+    const translator = {
+      fs: fs,
+      built: fakeBuiltDeps(fs, { homedir: () => HOME, marketplaceRegistry: await makeRegistry() }),
+    };
+    const result = await placeBuiltTreePlugin(
+      {
+        dist: dist(),
+        tool: registeredTools().aiProfile(TOOL.cursor),
+        source: { kind: "local", path: "/plugin-source" },
+        projectRoot: PROJECT_ROOT,
+        manifest,
+        marketplace: undefined,
+      },
+      translator
+    );
     expect(result.skipped).toEqual([]);
   });
 });
 
-describe("BuiltTreeMaterializationTranslator - when no built tree applies", () => {
+describe("placeBuiltTreePlugin - when no built tree applies", () => {
   const COMMAND = "---\nname: aidd:01:hello\n---\n# Hello";
 
   function distWithCommand(): PluginDistribution {
@@ -211,21 +214,21 @@ describe("BuiltTreeMaterializationTranslator - when no built tree applies", () =
     fs.setFile(`${BUILT}/plugins/sample-plugin/skills/demo/SKILL.md`, "built skill");
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
-    const translator = builtTreeTranslator(fs, {
-      platform: process.platform,
-      homedir: () => HOME,
-      ensureBuilt: fakeEnsureBuiltMarketplace(),
-      marketplaceRegistry: await makeRegistry(),
-      translate: translateDistribution,
-    });
-    await translator.addPlugin({
-      dist: distWithCommand(),
-      tool: registeredTools().aiProfile(TOOL.cursor),
-      source: { kind: "local", path: "/plugin-source" },
-      projectRoot: PROJECT_ROOT,
-      manifest,
-      marketplace,
-    });
+    const translator = {
+      fs: fs,
+      built: fakeBuiltDeps(fs, { homedir: () => HOME, marketplaceRegistry: await makeRegistry() }),
+    };
+    await placeBuiltTreePlugin(
+      {
+        dist: distWithCommand(),
+        tool: registeredTools().aiProfile(TOOL.cursor),
+        source: { kind: "local", path: "/plugin-source" },
+        projectRoot: PROJECT_ROOT,
+        manifest,
+        marketplace,
+      },
+      translator
+    );
     return fs;
   }
 

@@ -1,5 +1,4 @@
 import { homedir as nodeHomedir, platform as nodePlatform } from "node:os";
-import { builtMaterializationDepsOf } from "../../../../src/composition/installation.js";
 import type { InstallRuntimeConfig } from "../../../../src/contexts/installation/application/install/config/install-runtime-config.use-case.js";
 import { PlacePlugin } from "../../../../src/contexts/installation/application/plugin/add/place-plugin.use-case.js";
 import { ResolveAddedPluginSource } from "../../../../src/contexts/installation/application/plugin/add/resolve-added-plugin-source.use-case.js";
@@ -15,6 +14,7 @@ import type { ToolCatalog } from "../../../../src/contexts/tools/contract/tool-c
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
 import type { Logger } from "../../../../src/shared/ports/logger.js";
+import { fakeBuiltDeps } from "./fake-build-sources.fake.js";
 
 /** What an AddPlugin writes through and reports with. */
 interface AddPluginHost {
@@ -38,7 +38,7 @@ export function buildAddPlugin(
   tools: ToolCatalog,
   pluginRuntime?: Pick<InstallRuntimeConfig, "ensurePluginRuntimeFiles">
 ): AddPlugin {
-  const built = builtMaterializationDepsOf(host.fs, {
+  const built = fakeBuiltDeps(host.fs, {
     homedir: nodeHomedir,
     ensureBuilt: sources.ensureBuilt,
     marketplaceRegistry: sources.marketplaceRegistry,

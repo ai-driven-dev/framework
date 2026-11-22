@@ -1,7 +1,6 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { builtMaterializationDepsOf } from "../../../../../../src/composition/installation.js";
 import { PlacePlugin } from "../../../../../../src/contexts/installation/application/plugin/add/place-plugin.use-case.js";
 import { ResolveAddedPluginSource } from "../../../../../../src/contexts/installation/application/plugin/add/resolve-added-plugin-source.use-case.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
@@ -13,7 +12,7 @@ import {
 import { loadDistributionOf } from "../../../../../shared/testing/load-distribution.builder.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../../shared/testing/seed-from-directory.builder.js";
-import { fakeBuildSources } from "../../../testing/fake-build-sources.fake.js";
+import { fakeBuiltDeps } from "../../../testing/fake-build-sources.fake.js";
 import { FakeMarketplaceRegistry } from "../../../testing/fake-marketplace-registry.fake.js";
 
 const { cursor } = TOOL;
@@ -40,12 +39,7 @@ async function placeForCursor(foundFile: string | undefined) {
     source: { kind: "github", repo: "ai-driven-dev/framework" },
     scope: "project",
   });
-  const built = builtMaterializationDepsOf(deps.fs, {
-    ...fakeBuildSources(),
-    marketplaceRegistry: registry,
-    homedir,
-    platform: process.platform,
-  });
+  const built = fakeBuiltDeps(deps.fs, { marketplaceRegistry: registry, homedir });
   const added = await new ResolveAddedPluginSource(
     {
       loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),

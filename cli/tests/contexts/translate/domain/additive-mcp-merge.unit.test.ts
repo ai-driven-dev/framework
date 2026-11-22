@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mergeAdditiveMcp } from "../../../../../src/contexts/tools/domain/formats/additive-mcp-merge.js";
+import { mergeAdditiveMcp } from "../../../../src/contexts/translate/domain/additive-mcp-merge.js";
 
 const PLUGIN_SERVER = { command: "node", args: ["server.js"] };
 
@@ -9,7 +9,7 @@ describe("mergeAdditiveMcp", () => {
       const { mergedContent, collisions } = mergeAdditiveMcp(
         null,
         { "aidd-dev-mcp": PLUGIN_SERVER },
-        { force: false }
+        { force: false, serversKey: "servers" }
       );
       const parsed = JSON.parse(mergedContent) as { servers: Record<string, unknown> };
       expect(parsed.servers["aidd-dev-mcp"]).toEqual(PLUGIN_SERVER);
@@ -20,7 +20,7 @@ describe("mergeAdditiveMcp", () => {
       const { mergedContent } = mergeAdditiveMcp(
         null,
         { "aidd-dev-mcp": PLUGIN_SERVER },
-        { force: false }
+        { force: false, serversKey: "servers" }
       );
       expect(mergedContent).toBe(
         `${JSON.stringify({ servers: { "aidd-dev-mcp": PLUGIN_SERVER } }, null, 2)}\n`
@@ -36,7 +36,7 @@ describe("mergeAdditiveMcp", () => {
       const { mergedContent, collisions } = mergeAdditiveMcp(
         existing,
         { "aidd-dev-mcp": PLUGIN_SERVER },
-        { force: false }
+        { force: false, serversKey: "servers" }
       );
       const parsed = JSON.parse(mergedContent) as { servers: Record<string, unknown> };
       expect(parsed.servers["user-custom"]).toEqual({ command: "myserver" });
@@ -49,7 +49,7 @@ describe("mergeAdditiveMcp", () => {
       const { mergedContent } = mergeAdditiveMcp(
         existing,
         { "aidd-dev-mcp": PLUGIN_SERVER },
-        { force: false }
+        { force: false, serversKey: "servers" }
       );
       const parsed = JSON.parse(mergedContent) as { inputs: unknown[]; servers: unknown };
       expect(parsed.inputs).toEqual([]);
@@ -64,7 +64,7 @@ describe("mergeAdditiveMcp", () => {
       const { mergedContent, collisions } = mergeAdditiveMcp(
         existing,
         { "aidd-dev-mcp": PLUGIN_SERVER },
-        { force: false }
+        { force: false, serversKey: "servers" }
       );
       const parsed = JSON.parse(mergedContent) as { servers: Record<string, unknown> };
       expect(parsed.servers["aidd-personal"]).toEqual({ command: "mine" });
@@ -81,7 +81,7 @@ describe("mergeAdditiveMcp", () => {
       const { mergedContent, collisions } = mergeAdditiveMcp(
         existing,
         { "aidd-dev-mcp": PLUGIN_SERVER },
-        { force: false }
+        { force: false, serversKey: "servers" }
       );
       const parsed = JSON.parse(mergedContent) as { servers: Record<string, unknown> };
       expect((parsed.servers["aidd-dev-mcp"] as { command: string }).command).toBe("old");
@@ -97,7 +97,7 @@ describe("mergeAdditiveMcp", () => {
       const { mergedContent, collisions } = mergeAdditiveMcp(
         existing,
         { "aidd-dev-mcp": PLUGIN_SERVER },
-        { force: true }
+        { force: true, serversKey: "servers" }
       );
       const parsed = JSON.parse(mergedContent) as { servers: Record<string, unknown> };
       expect(parsed.servers["aidd-dev-mcp"]).toEqual(PLUGIN_SERVER);
@@ -110,12 +110,12 @@ describe("mergeAdditiveMcp", () => {
       const { mergedContent: firstRun } = mergeAdditiveMcp(
         null,
         { "aidd-dev-mcp": PLUGIN_SERVER },
-        { force: true }
+        { force: true, serversKey: "servers" }
       );
       const { mergedContent: secondRun } = mergeAdditiveMcp(
         firstRun,
         { "aidd-dev-mcp": PLUGIN_SERVER },
-        { force: true }
+        { force: true, serversKey: "servers" }
       );
       expect(secondRun).toBe(firstRun);
     });
@@ -127,7 +127,7 @@ describe("mergeAdditiveMcp", () => {
       const { mergedContent } = mergeAdditiveMcp(
         existing,
         { "c-server": PLUGIN_SERVER },
-        { force: false }
+        { force: false, serversKey: "servers" }
       );
       const parsed = JSON.parse(mergedContent) as { servers: Record<string, unknown> };
       const keys = Object.keys(parsed.servers);

@@ -1,4 +1,8 @@
-import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
+import type {
+  PluginComponentFile,
+  PluginDistribution,
+} from "../../../../shared/domain/plugin/plugin-distribution.js";
+import { artifactPath, hooksFilePath } from "../../../tools/contract/artifact-path.js";
 import type {
   SupportedArtifact,
   ToolBuildContract,
@@ -30,31 +34,46 @@ function flatAgents(
   artifact: SupportedArtifact
 ): ComponentPlan[] {
   const plugin = canon.manifest.name;
-  return agentFiles(canon).map(({ relativePath, content }) => {
-    const base = baseOf(relativePath);
-    const path = flatAgentPath(artifact, plugin, base);
-    const place = {
-      plugin,
-      outName: base,
-      from: path,
-      resolveTarget: (rel: string) => flatLinkTarget(contract, plugin, rel),
-      unshaped: "links",
-    } as const;
-    return {
-      source: relativePath,
-      path,
-      content,
-      guard: { plugin, name: relativePath },
-      links: agentLinks(artifact, place),
-      shape: agentShape(artifact, place),
-    };
-  });
+  return agentFiles(canon).map((file) => ({
+    ...flatAgentPlan(file, { plugin, contract, artifact, unshaped: "links" }),
+    guard: { plugin, name: file.relativePath },
+  }));
+}
+
+/** An agent in a flat layout, placed, linked and shaped the one way a build and an install share. */
+export function flatAgentPlan(
+  { relativePath, content }: PluginComponentFile,
+  at: {
+    plugin: string;
+    contract: ToolBuildContract;
+    artifact: SupportedArtifact;
+    /** What an agent the tool does not reshape goes through: a build rewrites its links, an install carries it. */
+    unshaped: "links" | "carry";
+  }
+): ComponentPlan {
+  const { plugin, contract, artifact, unshaped } = at;
+  const base = baseOf(relativePath);
+  const path = flatAgentPath(artifact, plugin, base);
+  const place = {
+    plugin,
+    outName: base,
+    from: path,
+    resolveTarget: (rel: string) => flatLinkTarget(contract, plugin, rel),
+    unshaped,
+  } as const;
+  return {
+    source: relativePath,
+    path,
+    content,
+    links: agentLinks(artifact, place),
+    shape: agentShape(artifact, place),
+  };
 }
 
 function flatHooks(canon: PluginDistribution, artifact: SupportedArtifact): ComponentPlan[] {
   const plugin = canon.manifest.name;
   return flatHookPlans(canon, {
-    place: (relativePath) => artifact.path(plugin, relativePath),
+    place: (relativePath) => artifactPath(artifact, plugin, relativePath),
     script: (relativePath, content) => artifact.script?.(relativePath, content) ?? content,
     bridge: artifact.skipHooksJson ? (artifact.hooksBridge ?? null) : null,
     bridgeFirst: true,
@@ -69,7 +88,7 @@ function flatSkills(
 ): ComponentPlan[] {
   const plugin = canon.manifest.name;
   return canon.components.skills.map(({ relativePath, content }) => {
-    const path = artifact.path(plugin, relativePath);
+    const path = artifactPath(artifact, plugin, relativePath);
     if (!relativePath.endsWith(".md")) return { source: relativePath, path, content };
     return {
       source: relativePath,
@@ -95,11 +114,11 @@ export function flatOwnHooksFile(
   const { hooks } = contract.artifacts;
   const file = hooks.supported && !hooks.skipHooksJson ? hooks.hooksFile : undefined;
   const manifest = canon.components.hooks.find((f) => f.relativePath === PLUGIN_HOOKS_RELATIVE);
-  if (file === undefined || file.shared || manifest === undefined) return null;
+  if (file === undefined || "shared" in file.at || manifest === undefined) return null;
   const plugin = canon.manifest.name;
   const { content, warnings } = mergeFlatHooks({ file, contract }, null, {
     json: manifest.content,
     plugin,
   });
-  return { plan: { source: "", path: file.path(plugin), content }, warnings };
+  return { plan: { source: "", path: hooksFilePath(file, plugin), content }, warnings };
 }

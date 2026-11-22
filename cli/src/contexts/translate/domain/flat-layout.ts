@@ -1,4 +1,5 @@
 import { basename } from "node:path";
+import { artifactPath, hooksBridgeFilePath } from "../../tools/contract/artifact-path.js";
 import type {
   FlatHooksBridge,
   SupportedArtifact,
@@ -25,7 +26,7 @@ export function flatHooksBridgeFile({
   if (sourceShipsItsOwn) return null;
   const content = bridge.generate(rawHooksJson, pluginName);
   if (content === null) return null;
-  return { relativePath: bridge.path(pluginName), content };
+  return { relativePath: hooksBridgeFilePath(bridge, pluginName), content };
 }
 
 /** Whether a plugin's own hooks already carry the file a bridge would replace, in any folder. */
@@ -37,13 +38,14 @@ export function sourceShipsHooksBridge(
 }
 
 /** Where an agent lands, whatever folder under `agents/` holds it: the one path its writer, a
- * command naming it and a link to it all resolve to. */
+ * command naming it and a link to it all resolve to. A nested agent lands by its file name; real
+ * data has none. */
 export function flatAgentPath(
   artifact: SupportedArtifact,
   pluginName: string,
   agentFile: string
 ): string {
-  return artifact.path(pluginName, `agents/${basename(agentFile)}`);
+  return artifactPath(artifact, pluginName, `agents/${basename(agentFile)}`);
 }
 
 /** Where a path inside a plugin lands in the flat layout: agents, skills and hooks move, anything
@@ -58,10 +60,10 @@ export function flatPathOfPluginSuffix(
     return flatAgentPath(art.agents, pluginName, suffix);
   }
   if (suffix.startsWith("skills/") && art.skills.supported) {
-    return art.skills.path(pluginName, suffix);
+    return artifactPath(art.skills, pluginName, suffix);
   }
   if (suffix.startsWith("hooks/") && art.hooks.supported) {
-    return art.hooks.path(pluginName, suffix);
+    return artifactPath(art.hooks, pluginName, suffix);
   }
   return suffix;
 }

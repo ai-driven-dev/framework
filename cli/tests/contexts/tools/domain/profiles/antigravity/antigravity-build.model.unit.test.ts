@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { artifactPath } from "../../../../../../src/contexts/tools/contract/artifact-path.js";
 import { antigravity } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/antigravity.profile.js";
 import { builtAgent } from "../../../../../shared/testing/built-agent.builder.js";
 import { present } from "../../../../../shared/testing/present.builder.js";
@@ -7,7 +8,7 @@ import { supported } from "../../../testing/build-artifacts.builder.js";
 describe("buildAntigravityFlatContract", () => {
   it("sits a skill one level under .agents/skills, the plugin hyphenated onto its name", () => {
     const skills = supported(present(antigravity.buildContracts.flat)().artifacts.skills);
-    expect(skills.path("aidd-dev", "skills/01-plan/SKILL.md")).toBe(
+    expect(artifactPath(skills, "aidd-dev", "skills/01-plan/SKILL.md")).toBe(
       ".agents/skills/aidd-dev-01-plan/SKILL.md"
     );
     expect(skills.rewriteSkillName).toBe(true);
@@ -28,13 +29,10 @@ describe("buildAntigravityFlatContract", () => {
       },
     });
 
-    expect(hooks.path("aidd-context", "hooks/update_memory.js")).toBe(
+    expect(artifactPath(hooks, "aidd-context", "hooks/update_memory.js")).toBe(
       ".agents/hooks/aidd-context/update_memory.js"
     );
-    expect([hooks.hooksFile?.path("aidd-context"), hooks.hooksFile?.shared]).toEqual([
-      ".agents/hooks.json",
-      true,
-    ]);
+    expect(hooks.hooksFile?.at).toEqual({ shared: ".agents/hooks.json" });
     expect(
       JSON.parse(
         hooks.hooksFile?.merge(null, {
@@ -60,10 +58,10 @@ describe("buildAntigravityFlatContract", () => {
   it("writes an agent only in the nested layout, named after its plugin", () => {
     const agents = supported(present(antigravity.buildContracts.flat)().artifacts.agents);
 
-    expect(agents.path("aidd-dev", "agents/executor.md")).toBe(
+    expect(artifactPath(agents, "aidd-dev", "agents/executor.md")).toBe(
       ".agents/agents/aidd-dev-executor/agent.md"
     );
-    expect(agents.path("aidd-dev", "agents/executor.agent.md")).toBe(
+    expect(artifactPath(agents, "aidd-dev", "agents/executor.agent.md")).toBe(
       ".agents/agents/aidd-dev-executor/agent.md"
     );
   });
@@ -94,18 +92,20 @@ describe("buildAntigravityFlatContract", () => {
   });
 
   it("places a path outside skills/ and agents/ by the skills rule only for a skills/ prefix", () => {
-    const { path } = supported(present(antigravity.buildContracts.flat)().artifacts.skills);
+    const skills = supported(present(antigravity.buildContracts.flat)().artifacts.skills);
 
-    expect(path("aidd-dev", "docs/skills/01-plan/SKILL.md")).toBe(
+    expect(artifactPath(skills, "aidd-dev", "docs/skills/01-plan/SKILL.md")).toBe(
       ".agents/skills/aidd-dev-docs/skills/01-plan/SKILL.md"
     );
   });
 
   it("names an agent by stripping only a trailing .md or .agent.md and a leading agents/", () => {
-    const { path } = supported(present(antigravity.buildContracts.flat)().artifacts.agents);
+    const agents = supported(present(antigravity.buildContracts.flat)().artifacts.agents);
 
-    expect(path("aidd-dev", "agents/a.md.agent.md")).toBe(".agents/agents/aidd-dev-a.md/agent.md");
-    expect(path("aidd-dev", "docs/agents/a.md")).toBe(
+    expect(artifactPath(agents, "aidd-dev", "agents/a.md.agent.md")).toBe(
+      ".agents/agents/aidd-dev-a.md/agent.md"
+    );
+    expect(artifactPath(agents, "aidd-dev", "docs/agents/a.md")).toBe(
       ".agents/agents/aidd-dev-docs/agents/a/agent.md"
     );
   });

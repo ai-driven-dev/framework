@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { artifactPath } from "../../../../../../src/contexts/tools/contract/artifact-path.js";
 import { cursor } from "../../../../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
 import { buildCursorContract } from "../../../../../../src/contexts/tools/domain/profiles/cursor/cursor-build.model.js";
 import { parseFrontmatter } from "../../../../../../src/shared/domain/markdown.js";
@@ -101,13 +102,13 @@ describe("present(cursor.buildContracts.flat)()", () => {
     const hooks = supported(present(cursor.buildContracts.flat)().artifacts.hooks);
 
     expect({
-      declaration: hooks.path("aidd-dev", "hooks/aidd-dev.hooks.json"),
-      script: hooks.path("aidd-dev", "hooks/journal.cjs"),
-      file: [hooks.hooksFile?.path("aidd-dev"), hooks.hooksFile?.shared],
+      declaration: artifactPath(hooks, "aidd-dev", "hooks/aidd-dev.hooks.json"),
+      script: artifactPath(hooks, "aidd-dev", "hooks/journal.cjs"),
+      file: hooks.hooksFile?.at,
     }).toStrictEqual({
       declaration: ".cursor/hooks/aidd-dev.hooks.json",
       script: ".cursor/hooks/aidd-dev/journal.cjs",
-      file: [".cursor/hooks.json", true],
+      file: { shared: ".cursor/hooks.json" },
     });
   });
 
@@ -115,19 +116,11 @@ describe("present(cursor.buildContracts.flat)()", () => {
     const mcp = supported(present(cursor.buildContracts.flat)().artifacts.mcp);
 
     expect({
-      path: mcp.path("aidd-dev", ".mcp.json"),
+      path: artifactPath(mcp, "aidd-dev", ".mcp.json"),
       mcpServersKey: mcp.mcpServersKey,
-      mergeDest: mcp.mergeDest?.("/out"),
-      merged: mcp.merge?.(null, { "aidd-dev-context": { command: "node" } }, false),
     }).toStrictEqual({
       path: ".cursor/mcp.json",
       mcpServersKey: "mcpServers",
-      mergeDest: "/out/.cursor/mcp.json",
-      merged: {
-        mergedContent:
-          '{\n  "mcpServers": {\n    "aidd-dev-context": {\n      "command": "node"\n    }\n  }\n}\n',
-        collisions: [],
-      },
     });
   });
 
@@ -160,10 +153,10 @@ describe("present(cursor.buildContracts.flat)()", () => {
   it("strips only the leading agents/ or skills/ segment from a flat destination", () => {
     const { agents, skills } = present(cursor.buildContracts.flat)().artifacts;
 
-    expect(supported(agents).path("aidd-dev", "deep/agents/x.md")).toBe(
+    expect(artifactPath(supported(agents), "aidd-dev", "deep/agents/x.md")).toBe(
       ".cursor/agents/aidd-dev-deep/agents/x.md"
     );
-    expect(supported(skills).path("aidd-dev", "deep/skills/x")).toBe(
+    expect(artifactPath(supported(skills), "aidd-dev", "deep/skills/x")).toBe(
       ".cursor/skills/aidd-dev-deep/skills/x"
     );
   });

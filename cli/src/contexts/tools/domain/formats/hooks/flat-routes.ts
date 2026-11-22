@@ -1,17 +1,13 @@
 /** The flat routes of a descriptor: where a flat build and a flat install write a tool's hooks. */
 
-import {
-  type FlatHooksLoaderEntry,
-  flatHooksPathWithLoaderEntry,
-  genericFlatHooksFile,
-} from "../../../../../shared/domain/materialization/flat-paths.js";
+import type { FlatHooksLoaderEntry } from "../../../../../shared/domain/materialization/flat-paths.js";
 import type {
   ArtifactContract,
   FlatHooksBridge,
-  ShippedHooks,
+  SupportedArtifact,
 } from "../../../contract/build-contract.js";
 import type { ProjectHooksFormat } from "../../../contract/tool-vocabulary.js";
-import { mergeHooks, pluginScriptPath } from "../../hooks/hooks-merge.js";
+import { mergeHooks } from "../../hooks/hooks-merge.js";
 import type {
   BridgeDelivery,
   HooksFlatPart,
@@ -51,35 +47,45 @@ export function flatHooksArtifact(
   ownMerge?: HooksFileMerge
 ): ArtifactContract {
   const route = descriptor.flat;
-  const { sharedFile, loaderEntry } = route;
-  const { file } = descriptor;
+  const { loaderEntry } = route;
   const tool = "tool" in reader ? reader.tool : undefined;
   const bridge = "bridge" in reader ? reader.bridge : undefined;
+  const hooksFile = tool === undefined ? undefined : hooksFileOf(descriptor, tool, ownMerge);
+  return {
+    supported: true,
+    source: PLUGIN_HOOKS_SOURCE,
+    placement: {
+      kind: "hooks",
+      scriptsDir: route.scriptsDir,
+      ...(loaderEntry === undefined ? {} : { loaderEntry }),
+    },
+    script: hookScript(descriptor),
+    ...(hooksFile === undefined ? {} : { hooksFile }),
+    ...(loaderEntry !== undefined && bridge !== undefined
+      ? { skipHooksJson: true, hooksBridge: hooksBridge(loaderEntry, bridge) }
+      : {}),
+  };
+}
+
+function hooksFileOf(
+  descriptor: HooksRouting & { readonly flat: FlatHooksRoute },
+  tool: string,
+  ownMerge?: HooksFileMerge
+): NonNullable<SupportedArtifact["hooksFile"]> | undefined {
+  const { file } = descriptor;
+  const route = descriptor.flat;
   const merge: HooksFileMerge | undefined =
     ownMerge ??
     (file === undefined
       ? undefined
       : (existing, shipped) => mergeHooks(existing, shipped, mergeTarget(descriptor, file, route)));
+  if (merge === undefined) return undefined;
   return {
-    supported: true,
-    source: PLUGIN_HOOKS_SOURCE,
-    path: (plugin, rel) => flatHooksPath(route, plugin, rel),
-    script: hookScript(descriptor),
-    ...(merge === undefined || tool === undefined
-      ? {}
-      : {
-          hooksFile: {
-            path: (plugin: string) => sharedFile ?? genericFlatHooksFile(route.scriptsDir, plugin),
-            shared: sharedFile !== undefined,
-            merge: (existing: string | null, shipped: ShippedHooks) => {
-              const merged = merge(existing, shipped);
-              return { ...merged, warnings: merged.warnings.map((w) => `${tool}: ${w}`) };
-            },
-          },
-        }),
-    ...(loaderEntry !== undefined && bridge !== undefined
-      ? { skipHooksJson: true, hooksBridge: hooksBridge(loaderEntry, bridge) }
-      : {}),
+    at: route.sharedFile === undefined ? { own: route.scriptsDir } : { shared: route.sharedFile },
+    merge: (existing, shipped) => {
+      const merged = merge(existing, shipped);
+      return { ...merged, warnings: merged.warnings.map((w) => `${tool}: ${w}`) };
+    },
   };
 }
 
@@ -95,24 +101,9 @@ function hooksBridge(
 ): FlatHooksBridge {
   return {
     generate,
-    path: (plugin) => hooksBridgePath(loaderEntry, plugin),
+    dir: loaderEntry.dir,
     skipIfSourceHas: loaderEntry.baseName,
   };
-}
-
-function flatHooksPath(route: FlatHooksRoute, plugin: string, rel: string): string {
-  if (route.loaderEntry !== undefined) {
-    return flatHooksPathWithLoaderEntry({
-      perPluginHooksDir: route.scriptsDir,
-      loaderEntry: route.loaderEntry,
-      plugin,
-      hooksRelativePath: rel,
-    });
-  }
-  if (rel === `${PLUGIN_HOOKS_SOURCE.scriptDir}/${plugin}.hooks.json`) {
-    return genericFlatHooksFile(route.scriptsDir, plugin);
-  }
-  return pluginScriptPath(route.scriptsDir, plugin, rel);
 }
 
 /** A flat tool's hooks, as far as plugins go: a loader reads them from its own directory. */

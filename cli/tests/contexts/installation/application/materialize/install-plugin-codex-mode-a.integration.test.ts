@@ -2,7 +2,7 @@
 // `~/.codex/config.toml` and plugin cache, so a project-local settings file is inert.
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
+import { registerMarketplacePlugin } from "../../../../../src/contexts/installation/application/materialize/register-marketplace-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { SyncSettings } from "../../../../../src/orchestration/sync/sync-settings.use-case.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
@@ -85,7 +85,7 @@ async function seedCodexPlugin(
 ): Promise<void> {
   const manifest = Manifest.create();
   manifest.addTool(TOOL.codex, "test", []);
-  await new ModeAMarketplaceTranslator().addPlugin({
+  await registerMarketplacePlugin({
     dist: buildDist(),
     tool: registeredTools().aiProfile(TOOL.codex),
     source: { kind: "local", path: "/plugin-source" },
@@ -107,9 +107,8 @@ async function seedTwoCodexPlugins(
 ): Promise<void> {
   const manifest = Manifest.create();
   manifest.addTool(TOOL.codex, "test", []);
-  const translator = new ModeAMarketplaceTranslator();
   for (const name of ["aidd-context", "aidd-vcs"]) {
-    await translator.addPlugin({
+    await registerMarketplacePlugin({
       dist: buildDist(name),
       tool: registeredTools().aiProfile(TOOL.codex),
       source: { kind: "local", path: "/plugin-source" },

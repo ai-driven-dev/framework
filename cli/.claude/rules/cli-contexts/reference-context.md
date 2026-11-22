@@ -111,6 +111,7 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 | `InstalledPlugin.dependents`, `NativePluginClaim` and the claim recording (`record-machine-claims`, `user-scope-claims`, `purge-user-scope-files`) stay typed and interpreted in `installation`, and `catalogue-claims.ts` with the claim filters of `registration-record.ts` stay in `host-registration/domain` | the manifest moves past v8 (phase 2), the claims block turns opaque in installation and the claim merge and detach move to `machine-claims/domain` |
 | `InstalledPlugin` carries 11 fields unsplit (provenance and dependents beside the core) | the same v9 step splits out a provenance value and drops `dependents` |
 | `AddPlugin` saves the machine manifest before the project one, so a failed project save leaves the machine claim behind (pinned by a unit test) | a compensation or a single save order is agreed, which changes behaviour |
+| opencode's build picks `opencode.jsonc` when both files exist, where install refuses with the dual-config error | both paths read `onMultipleCandidates`, which changes what the build does |
 | `folder-size.arch.test.ts` lets the folders it lists hold more than 10 source files: each was grown before the cap was checked, and a split moves files between kits and imports | the folder is split or shrinks to 10, and its line leaves the list: the list only ever gets shorter |
 
 ## 10. Checklist for a context's migration PR

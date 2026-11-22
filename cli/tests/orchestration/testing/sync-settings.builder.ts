@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import { ModeAMarketplaceTranslator } from "../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
+import { registerMarketplacePlugin } from "../../../src/contexts/installation/application/materialize/register-marketplace-plugin.js";
 import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/contract/built-marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../src/shared/domain/plugin/plugin-distribution.js";
@@ -113,7 +113,7 @@ async function projectManifestWithPlugin(marketplace: string): Promise<InMemoryM
   const manifestRepo = new InMemoryManifestRepository();
   const manifest = Manifest.create();
   manifest.addTool(TOOL.claude, "test", []);
-  await new ModeAMarketplaceTranslator().addPlugin({
+  await registerMarketplacePlugin({
     dist: distribution("aidd-context"),
     tool: registeredAiProfile(TOOL.claude),
     source: { kind: "local", path: "/plugin-source" },
