@@ -107,7 +107,7 @@ export class HostCliAdapter implements HostActions {
   }
 
   enablesPlugins(): boolean {
-    return this.shape.enableVerb !== undefined;
+    return true;
   }
 
   /** A tool that cannot tell a dead registration from a live one answers `"unknown"`, which

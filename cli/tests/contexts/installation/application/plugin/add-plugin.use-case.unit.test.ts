@@ -50,7 +50,11 @@ function addTo(manifest: Manifest, options: { scope?: Scope } = {}) {
                 source: SOURCE,
                 strict: false,
                 scope: options.scope ?? "project",
-              }).withFiles(new Map([["skills/a.md", `sha256:${"a".repeat(64)}`]]))
+              }).withFiles(
+                options.scope === "user"
+                  ? new Map([["skills/a.md", `sha256:${"a".repeat(64)}`]])
+                  : new Map()
+              )
             );
           }
         },
@@ -122,7 +126,7 @@ describe("AddPlugin", () => {
     );
   });
 
-  it("leaves the machine claim saved when the project save then fails", async () => {
+  it("characterizes the known orphan claim: the machine save stays when the project save fails", async () => {
     const { add, project, user } = addTo(manifestWithClaude(), { scope: "user" });
     project.save = async () => {
       throw new Error("disk full");
