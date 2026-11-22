@@ -76,3 +76,14 @@ export function debtEntries(rule: string): Record<string, number> {
   }
   return entries;
 }
+
+/** The files held by every debt of a family in `kinds-debt.json`: the rules named `<family>:<class>`. */
+export function debtFamilyEntries(family: string): string[] {
+  const debts: unknown = JSON.parse(
+    readFileSync(new URL("kinds-debt.json", import.meta.url), "utf8")
+  );
+  if (!Array.isArray(debts)) throw new Error("kinds-debt.json is not a list");
+  return debts
+    .filter((item) => typeof item?.rule === "string" && item.rule.startsWith(`${family}:`))
+    .flatMap((item) => Object.keys(debtEntries(item.rule)));
+}
