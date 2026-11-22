@@ -10,12 +10,12 @@ import type {
 } from "../../../../../src/contexts/telemetry/application/ingest-usage.use-case.js";
 import { storeCalls } from "../../../../../src/contexts/telemetry/application/ledger-upkeep.js";
 import { DeclaredBindings } from "../../../../../src/contexts/telemetry/application/report/declared-bindings.js";
-import { reportEnvelopeOf } from "../../../../../src/contexts/telemetry/application/report/report-envelope.js";
 import {
   ReportUsage,
   type ReportUsageRequest,
 } from "../../../../../src/contexts/telemetry/application/report/report-usage.use-case.js";
 import type { Period } from "../../../../../src/contexts/telemetry/contract/period.js";
+import { reportEnvelopeOf } from "../../../../../src/contexts/telemetry/contract/report-envelope.js";
 import type { ReportFilters } from "../../../../../src/contexts/telemetry/contract/report-filter.js";
 import {
   USAGE_AGENTS,

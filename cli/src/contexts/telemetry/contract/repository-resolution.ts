@@ -9,3 +9,9 @@ export type NotStoredReason =
   | "unreadable-consent"
   | "no-cwd"
   | "undated";
+
+/** What is measured and cannot be stored: a call with no usable time, a transcript line that is
+ * no usage line, a call with no request id. Only of a clone that consents, at the time of the
+ * thing or, with none, of the read: a clone that never opted in, or work after `off`, leaves
+ * nothing here. */
+export type LeftOutReason = "undated" | "unrecognised" | "requestless";

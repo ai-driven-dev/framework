@@ -1,3 +1,4 @@
+import type { LeftOutReason } from "../contract/repository-resolution.js";
 import type { StoredUsage } from "../domain/stored-usage.js";
 import type { TranscriptPosition } from "../domain/transcript-position.js";
 
@@ -14,12 +15,6 @@ export interface LoadedLedger {
    * otherwise. Saving them settles them. */
   readonly unsettled: ReadonlySet<string>;
 }
-
-/** What is measured and cannot be stored: a call with no usable time, a transcript line that is
- * no usage line, a call with no request id. Only of a clone that consents, at the time of the
- * thing or, with none, of the read: a clone that never opted in, or work after `off`, leaves
- * nothing here. */
-export type LeftOutReason = "undated" | "unrecognised" | "requestless";
 
 /** One thing left out, named by what it is: a call by its tool and key, a line by its text. */
 export interface LeftOutEntry {

@@ -7,10 +7,10 @@ import { DirectoryResolver } from "../../../../../src/contexts/telemetry/applica
 import { IngestUsage } from "../../../../../src/contexts/telemetry/application/ingest-usage.use-case.js";
 import { ReadUsage } from "../../../../../src/contexts/telemetry/application/read-usage.use-case.js";
 import { DeclaredBindings } from "../../../../../src/contexts/telemetry/application/report/declared-bindings.js";
-import { reportEnvelopeOf } from "../../../../../src/contexts/telemetry/application/report/report-envelope.js";
 import { ReportUsage } from "../../../../../src/contexts/telemetry/application/report/report-usage.use-case.js";
 import { SnapshotBindings } from "../../../../../src/contexts/telemetry/application/snapshot-bindings.use-case.js";
 import type { Period } from "../../../../../src/contexts/telemetry/contract/period.js";
+import { reportEnvelopeOf } from "../../../../../src/contexts/telemetry/contract/report-envelope.js";
 import { cloneKey } from "../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import { PrivateStorageAdapter } from "../../../../../src/shared/infrastructure/private-storage-adapter.js";
 import { cloneOf, grantedBy } from "../../testing/clone.builder.js";

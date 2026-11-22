@@ -10,10 +10,10 @@ import {
 } from "../../../../../src/contexts/telemetry/application/ingest-usage.use-case.js";
 import { storeCalls } from "../../../../../src/contexts/telemetry/application/ledger-upkeep.js";
 import { DeclaredBindings } from "../../../../../src/contexts/telemetry/application/report/declared-bindings.js";
-import { reportEnvelopeOf } from "../../../../../src/contexts/telemetry/application/report/report-envelope.js";
 import { ReportUsage } from "../../../../../src/contexts/telemetry/application/report/report-usage.use-case.js";
 import { SnapshotBindings } from "../../../../../src/contexts/telemetry/application/snapshot-bindings.use-case.js";
 import type { Period } from "../../../../../src/contexts/telemetry/contract/period.js";
+import { reportEnvelopeOf } from "../../../../../src/contexts/telemetry/contract/report-envelope.js";
 import type { ReportFilters } from "../../../../../src/contexts/telemetry/contract/report-filter.js";
 import {
   USAGE_AGENTS,
@@ -266,7 +266,6 @@ async function referenceOf(input: {
     matchesFilter({ filters: resolved, record, attribution: attribute(record, facts), person })
   );
   return reportEnvelopeOf({
-    status: "reported",
     period,
     filters: resolved,
     report: buildReport({ records: selected, facts, person, axis }),

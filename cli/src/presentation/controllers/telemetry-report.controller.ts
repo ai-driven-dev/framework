@@ -1,9 +1,9 @@
 import { type Command, InvalidArgumentError, Option } from "commander";
+import type { RequestReportResult } from "../../contexts/telemetry/application/report/request-report.use-case.js";
 import {
   REFUSED_ENVELOPE,
   reportEnvelopeOf,
-} from "../../contexts/telemetry/application/report/report-envelope.js";
-import type { RequestReportResult } from "../../contexts/telemetry/application/report/request-report.use-case.js";
+} from "../../contexts/telemetry/contract/report-envelope.js";
 import {
   ABSENT_AXES,
   type ReportFilters,

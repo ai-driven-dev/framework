@@ -2,7 +2,6 @@ import {
   FILTER_AXES,
   FILTER_FLAGS,
   type FilterFlag,
-  NO_FILTERS,
   type ReportFilters,
   type Selector,
 } from "../../contract/report-filter.js";
@@ -11,13 +10,6 @@ import type { StoredUsage } from "../stored-usage.js";
 import { compareText } from "../text-order.js";
 import type { Attribution } from "./attribution.js";
 import { axisValueOf } from "./usage-report.js";
-
-/** Every flag, in the envelope's order, `null` unless `given` names it; nothing else. */
-export function filtersOf(given: Partial<ReportFilters>): ReportFilters {
-  const filters = { ...NO_FILTERS };
-  for (const flag of FILTER_FLAGS) Object.assign(filters, { [flag]: given[flag] ?? null });
-  return filters;
-}
 
 /** What each flag given asks the call's axis to be, as a row of that axis holds it, in the
  * order the flags are printed. An unattributed call is unattributed on task and ticket alike,

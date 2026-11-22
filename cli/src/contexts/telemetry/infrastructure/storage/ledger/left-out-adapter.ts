@@ -1,8 +1,9 @@
 import { createHash } from "node:crypto";
 import { join } from "node:path";
 import type { PrivateStorage } from "../../../../../shared/ports/private-storage.js";
+import type { LeftOutReason } from "../../../contract/repository-resolution.js";
 import { compareText } from "../../../domain/text-order.js";
-import type { LeftOutEntry, LeftOutReason, LeftOutStore } from "../../../ports/usage-ledger.js";
+import type { LeftOutEntry, LeftOutStore } from "../../../ports/usage-ledger.js";
 import { readTextIfPresent } from "../../reading/text-file.js";
 
 /** What ingests measured and could not store, in one file beside the ledger: `<reason> <hash>`
