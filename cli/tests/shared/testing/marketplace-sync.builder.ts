@@ -1,3 +1,4 @@
+import { settingsDeclaration } from "../../../src/composition/host-registration.js";
 import { registrationRecordRules } from "../../../src/composition/installation.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import {
@@ -10,7 +11,7 @@ import {
   type LoadSyncContextDeps,
 } from "../../../src/contexts/installation/application/sync/load-sync-context.use-case.js";
 import { RecordActivation } from "../../../src/contexts/installation/application/sync/record-activation.use-case.js";
-import { SyncToolSettingsFiles } from "../../../src/contexts/installation/application/sync/sync-tool-settings-files.use-case.js";
+import { trackedSharedSettings } from "../../../src/contexts/installation/application/sync/tracked-shared-settings.js";
 import { PurgeDeclaredCache } from "../../../src/contexts/machine-claims/application/purge-declared-cache.js";
 import {
   RecordSourceReference,
@@ -25,6 +26,7 @@ import {
   type ActivationMarketplace,
 } from "../../../src/orchestration/sync/activate-native-tools.use-case.js";
 import { SyncSettings } from "../../../src/orchestration/sync/sync-settings.use-case.js";
+import { SyncToolSettingsFiles } from "../../../src/orchestration/sync/sync-tool-settings-files.use-case.js";
 import { FakeCurrentVersion } from "./fake-current-version.fake.js";
 import { registeredTools } from "./registered-tools.builder.js";
 
@@ -61,10 +63,10 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
     }),
     settingsFiles: new SyncToolSettingsFiles(
       {
-        fs: parts.fs,
-        logger: parts.logger,
+        tracked: trackedSharedSettings({ fs: parts.fs, logger: parts.logger }),
         buildMarketplace: build,
-        records: registrationRecordRules,
+        declaration: settingsDeclaration,
+        refs: registrationRecordRules,
       },
       registeredTools()
     ),

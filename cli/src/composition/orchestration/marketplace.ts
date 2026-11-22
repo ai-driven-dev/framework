@@ -18,7 +18,7 @@ import { UserScopePluginFiles } from "../../contexts/installation/application/re
 import { BuildMarketplaceForTool } from "../../contexts/installation/application/sync/build-marketplace-for-tool.use-case.js";
 import { LoadSyncContext } from "../../contexts/installation/application/sync/load-sync-context.use-case.js";
 import { RecordActivation } from "../../contexts/installation/application/sync/record-activation.use-case.js";
-import { SyncToolSettingsFiles } from "../../contexts/installation/application/sync/sync-tool-settings-files.use-case.js";
+import { trackedSharedSettings } from "../../contexts/installation/application/sync/tracked-shared-settings.js";
 import { PurgeDeclaredCache } from "../../contexts/machine-claims/application/purge-declared-cache.js";
 import { RecordSourceReference } from "../../contexts/machine-claims/application/record-source-reference.use-case.js";
 import { removalClaims } from "../../contexts/machine-claims/application/removal-claims.js";
@@ -36,7 +36,9 @@ import type { RegisterFrameworkSource } from "../../orchestration/setup/setup-fl
 import { ActivateNativeTools } from "../../orchestration/sync/activate-native-tools.use-case.js";
 import { SyncNativeActivation } from "../../orchestration/sync/sync-native-activation.use-case.js";
 import { SyncSettings } from "../../orchestration/sync/sync-settings.use-case.js";
+import { SyncToolSettingsFiles } from "../../orchestration/sync/sync-tool-settings-files.use-case.js";
 import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
+import { settingsDeclaration } from "../host-registration.js";
 import type { Installation } from "../installation.js";
 import type { Base } from "../shared.js";
 import { userConfigDir } from "../user-config-dir.js";
@@ -177,7 +179,12 @@ function syncSettingsOf(base: Base, inst: Installation, sources: SyncSources): S
       userManifestRepo,
     }),
     settingsFiles: new SyncToolSettingsFiles(
-      { fs, logger, buildMarketplace: buildMarketplaceForTool, records: registrationRecordRules },
+      {
+        tracked: trackedSharedSettings({ fs, logger }),
+        buildMarketplace: buildMarketplaceForTool,
+        declaration: settingsDeclaration,
+        refs: registrationRecordRules,
+      },
       tools
     ),
     activateNativeTools: nativeActivationOf(base, inst, buildMarketplaceForTool),

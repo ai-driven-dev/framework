@@ -140,8 +140,22 @@ export const STORED_ANSWERS: readonly {
     file: `${ANSWER_FILE}/native-registration/marketplace-registration.ts`,
     member: "MarketplaceRegistration.sharedSettingsFile",
     caller:
-      "installation/application/sync/sync-tool-settings-files.use-case.ts, installation/application/sync/record-activation.use-case.ts",
+      "orchestration/sync/sync-tool-settings-files.use-case.ts, installation/application/sync/record-activation.use-case.ts",
     reason: "the path is read, written, hashed and matched against the manifest",
+  },
+  {
+    file: `${ANSWER_FILE}/native-registration/marketplace-registration.ts`,
+    member: "MarketplaceRegistration.marketplacesKey",
+    caller: "orchestration/sync/sync-tool-settings-files.use-case.ts",
+    reason:
+      "the key names a member of a parsed settings file that host-registration's pure settings-declaration edits",
+  },
+  {
+    file: `${ANSWER_FILE}/native-registration/marketplace-registration.ts`,
+    member: "MarketplaceRegistration.enabledPluginsKey",
+    caller: "orchestration/sync/sync-tool-settings-files.use-case.ts",
+    reason:
+      "the key names a member of a parsed settings file that host-registration's pure settings-declaration edits",
   },
   {
     file: `${ANSWER_FILE}/native-registration/native-activation.ts`,

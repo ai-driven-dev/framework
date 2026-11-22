@@ -2,7 +2,6 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { claude } from "../../../../../../src/contexts/tools/domain/profiles/claude/claude.profile.js";
 import { nativeOf } from "../../../../../shared/testing/native-plugin-answers.builder.js";
-import { keyAskedOf } from "../../../testing/settings-key-probe.builder.js";
 
 describe("claude plugins", () => {
   describe("capabilities.plugins", () => {
@@ -67,9 +66,9 @@ describe("claude plugins", () => {
 
       expect({
         settingsPath: settings?.sharedSettingsFile(),
-        settingsKey: keyAskedOf((shared) => settings?.withoutMarketplaces(shared)),
+        settingsKey: settings?.marketplacesKey(),
         marketplacesSettingsPath: settings?.machineLocalFiles()[0] ?? null,
-        enabledPluginsKey: keyAskedOf((shared) => settings?.withEnabledPlugins(shared, ["p@m"])),
+        enabledPluginsKey: settings?.enabledPluginsKey(),
         entryKey: settings?.entryKeyFor({
           name: "aidd-framework",
           source: { kind: "local", path: "/abs/cache" },

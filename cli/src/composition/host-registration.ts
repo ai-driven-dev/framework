@@ -1,3 +1,7 @@
+import {
+  withEnabledPlugins,
+  withoutMarketplaces,
+} from "../contexts/host-registration/domain/settings-declaration.js";
 import { EnabledPluginsMapReader } from "../contexts/host-registration/infrastructure/enabled-plugins-map-reader.js";
 import { HostCliAdapter } from "../contexts/host-registration/infrastructure/host-cli-adapter.js";
 import { HostRegistryMarketplaceSourceReaderAdapter } from "../contexts/host-registration/infrastructure/host-registry-marketplace-source-reader-adapter.js";
@@ -22,6 +26,9 @@ import { UnregisteredToolError } from "../shared/domain/shared.error.js";
 import type { AiToolId, ToolId } from "../shared/domain/tool.js";
 import { resolveHomeDir } from "../shared/infrastructure/home-dir.js";
 import { REGISTERED_PROFILES } from "./tool-profiles.js";
+
+/** The new content of a tool's shared settings file, answered by the host registration that owns it. */
+export const settingsDeclaration = { withoutMarketplaces, withEnabledPlugins };
 
 /** One line per layout: a layout declared in a profile with no line here fails to compile. */
 const PLUGIN_READERS = {

@@ -221,14 +221,11 @@ export type ConfigWrite =
 export interface MarketplaceRegistrationAnswers {
   /** The project file shared with teammates, where marketplaces are declared. */
   sharedSettingsFile(): string;
-  /** A parsed shared file without its marketplaces declaration, or null when it declared none. */
-  withoutMarketplaces(shared: Record<string, unknown>): Record<string, unknown> | null;
-  /** A parsed shared file with each ref not yet enabled added as enabled, or null when there is
-   * nothing to add: every ref already there, or a tool that enables no plugin in this file. */
-  withEnabledPlugins(
-    shared: Record<string, unknown>,
-    refs: readonly string[]
-  ): Record<string, unknown> | null;
+  /** The key under which a shared file declares its marketplaces. */
+  marketplacesKey(): string;
+  /** The key under which a shared file enables plugins, or null for a tool that enables none
+   * there. */
+  enabledPluginsKey(): string | null;
   /** The name a marketplace is keyed by in the enabled-plugins map, or null when the tool cannot
    * express its source. */
   entryKeyFor(input: MarketplaceSettingsInput): string | null;
