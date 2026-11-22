@@ -19,7 +19,7 @@ function restoreEnv(saved: Record<(typeof ENV_KEYS)[number], string | undefined>
   }
 }
 
-describe("userConfigDir", () => {
+describe("locating the user config dir", () => {
   const saved = saveEnv();
   afterEach(() => restoreEnv(saved));
 

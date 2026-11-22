@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { expectGolden } from "./testing/expect-golden.builder.js";
 
-describe("expectGolden", () => {
+describe("comparing against a golden", () => {
   let dir: string;
   let file: string;
 

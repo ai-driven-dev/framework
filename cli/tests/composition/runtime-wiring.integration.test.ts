@@ -40,7 +40,7 @@ import { InMemoryMarketplaceRegistry } from "../shared/testing/in-memory-marketp
 import { registeredTools, TOOL } from "../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../shared/testing/seed-from-directory.builder.js";
 
-describe("hostBinaryAvailableIn", () => {
+describe("asking whether a host binary is available", () => {
   const available = hostBinaryAvailableIn(
     new Map([
       ["here", { isAvailable: () => true }],
@@ -58,7 +58,7 @@ describe("hostBinaryAvailableIn", () => {
   });
 });
 
-describe("userScopeSyncOf", () => {
+describe("syncing the user scope", () => {
   it("syncs what it is handed, for the user scope", async () => {
     const execute = vi.fn().mockResolvedValue({ binaryMissing: [], errors: [] });
     const options = {
@@ -74,7 +74,7 @@ describe("userScopeSyncOf", () => {
   });
 });
 
-describe("registerForFlow", () => {
+describe("registering for a flow", () => {
   it("registers the source for the project and scope of the flow", async () => {
     const execute = vi.fn().mockResolvedValue(undefined);
     const source = { kind: "local" as const, repo: "", ref: undefined, path: "/marketplace" };
@@ -85,7 +85,7 @@ describe("registerForFlow", () => {
   });
 });
 
-describe("quietUserScopeFilesSafeToDelete", () => {
+describe("deleting quiet user-scope files", () => {
   it("leaves a file outside the user-scope directory in place without reporting it", async () => {
     const plugin = RecordedPlugin.fromJSON({
       name: "aidd-test",
@@ -163,7 +163,7 @@ describe("the user marketplace removal the composition binds", () => {
   });
 });
 
-describe("pluginCacheDir", () => {
+describe("locating the plugin cache", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
   });
@@ -175,7 +175,7 @@ describe("pluginCacheDir", () => {
   });
 });
 
-describe("withinUserScope", () => {
+describe("updating within the user scope", () => {
   type Bound = ReturnType<typeof withinUserScope>;
   const plugin = {} as Parameters<Bound["planUpdate"]>[0]["plugin"];
   const tool = {} as Parameters<Bound["planUpdate"]>[0]["tool"];
@@ -214,7 +214,7 @@ describe("withinUserScope", () => {
   });
 });
 
-describe("cacheBuildFor", () => {
+describe("building into the cache", () => {
   const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
   const COLLIDING = ".github/agents/aidd-test-code-reviewer.agent.md";
   const STALE = "stale content from a previous build";
@@ -245,7 +245,7 @@ describe("cacheBuildFor", () => {
   });
 });
 
-describe("debugOnly", () => {
+describe("logging at debug level", () => {
   it("lands every level at debug", () => {
     const debug = vi.fn();
     const logger = debugOnly({ debug, info: vi.fn(), warn: vi.fn() });
@@ -259,7 +259,7 @@ describe("debugOnly", () => {
   });
 });
 
-describe("builtMaterializationDepsOf", () => {
+describe("materializing a built restore", () => {
   it("hands a restore the build it was given and the project hooks built over its file system", () => {
     const build = {
       ...fakeBuildSources(),
@@ -275,7 +275,7 @@ describe("builtMaterializationDepsOf", () => {
   });
 });
 
-describe("purgeCandidateResolverOf", () => {
+describe("resolving a purge candidate", () => {
   it("resolves a candidate through the purge that owns the rule", async () => {
     const resolveCandidate = vi.fn().mockResolvedValue("/cache/x");
 
@@ -286,7 +286,7 @@ describe("purgeCandidateResolverOf", () => {
   });
 });
 
-describe("userScopeFileGuard", () => {
+describe("guarding user-scope files", () => {
   it("names the three rules a machine-scope write is held to", () => {
     expect(Object.keys(userScopeFileGuard).sort()).toStrictEqual([
       "assertWriteBoundary",
@@ -297,7 +297,7 @@ describe("userScopeFileGuard", () => {
   });
 });
 
-describe("detachClaimsOf", () => {
+describe("detaching claims", () => {
   it("detaches the claims of what a removal summarized", async () => {
     const detachClaims = vi.fn().mockResolvedValue(undefined);
     const nativeRefs = new Map();
@@ -309,7 +309,7 @@ describe("detachClaimsOf", () => {
   });
 });
 
-describe("askedFrom", () => {
+describe("asking from the setup options", () => {
   it("asks the marketplace question with the options it is given", async () => {
     const execute = vi.fn().mockResolvedValue("answer");
     const options = { projectRoot: "/project" } as Parameters<ReturnType<typeof askedFrom>>[0];
