@@ -1,12 +1,12 @@
 import { isAbsolute } from "node:path";
-import { InvalidPluginSourceError } from "../../shared/domain/shared.error.js";
 import {
   GITHUB_REPO_REGEX,
   type PluginSource,
   type PluginSourceGitHub,
   type PluginSourceUrl,
-} from "../../shared/domain/source.js";
-import { parsePluginSource } from "../../shared/domain/source-parsing.js";
+} from "../../shared/domain/plugin/source.js";
+import { parsePluginSource } from "../../shared/domain/plugin/source-parsing.js";
+import { InvalidPluginSourceError } from "../../shared/domain/shared.error.js";
 
 const GITLAB_PREFIX = "gitlab:";
 

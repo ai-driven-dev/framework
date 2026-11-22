@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { compareSemver } from "../../../../shared/domain/semver.js";
+import { compareSemver } from "../../../../shared/domain/plugin/semver.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";

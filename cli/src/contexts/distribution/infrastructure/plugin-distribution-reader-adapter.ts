@@ -6,8 +6,8 @@ import {
   type PluginManifestFields,
 } from "../../../shared/domain/plugin/plugin-distribution.js";
 import { PLUGIN_NAME_REGEX } from "../../../shared/domain/plugin/plugin-name.js";
+import { isSemver } from "../../../shared/domain/plugin/semver.js";
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
-import { isSemver } from "../../../shared/domain/semver.js";
 import {
   InvalidPluginManifestError,
   InvalidPluginNameError,

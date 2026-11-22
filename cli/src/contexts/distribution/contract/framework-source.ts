@@ -1,5 +1,8 @@
+import type {
+  PluginSourceGitHub,
+  PluginSourceLocal,
+} from "../../../shared/domain/plugin/source.js";
 import type { Scope } from "../../../shared/domain/scope.js";
-import type { PluginSourceGitHub, PluginSourceLocal } from "../../../shared/domain/source.js";
 
 export const DEFAULT_FRAMEWORK_REPO = "ai-driven-dev/framework";
 

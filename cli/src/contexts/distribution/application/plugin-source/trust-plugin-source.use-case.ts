@@ -1,4 +1,4 @@
-import type { PluginSource } from "../../../../shared/domain/source.js";
+import type { PluginSource } from "../../../../shared/domain/plugin/source.js";
 import type { MarketplaceTrustStore } from "../../ports/marketplace-trust-store.js";
 
 export interface TrustPluginSourceRequest {

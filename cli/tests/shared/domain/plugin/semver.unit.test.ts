@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { compareSemver, isSemver } from "../../../src/shared/domain/semver.js";
+import { compareSemver, isSemver } from "../../../../src/shared/domain/plugin/semver.js";
 
 describe("isSemver()", () => {
   it("accepts a plain release version", () => {

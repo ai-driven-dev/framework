@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { describePluginSource } from "../../../src/shared/domain/source.js";
+import { describePluginSource } from "../../../../src/shared/domain/plugin/source.js";
 
 /** A wrong line here tells the user their project points somewhere it does not. */
 describe("the source shown back to a user", () => {

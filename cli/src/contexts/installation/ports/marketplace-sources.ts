@@ -1,5 +1,5 @@
+import type { PluginSource } from "../../../shared/domain/plugin/source.js";
 import type { Scope } from "../../../shared/domain/scope.js";
-import type { PluginSource } from "../../../shared/domain/source.js";
 
 /** A marketplace a project or the machine registered, as far as an installation needs to know:
  * the name plugins are filed under, where it is fetched from, and the scope it lives at. */

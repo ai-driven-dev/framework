@@ -1,6 +1,6 @@
 import { isAbsolute } from "node:path";
-import { asPlainObject } from "./reading/plain-object.js";
-import { InvalidPluginSourceError } from "./shared.error.js";
+import { asPlainObject } from "../reading/plain-object.js";
+import { InvalidPluginSourceError } from "../shared.error.js";
 import {
   GITHUB_REPO_REGEX,
   NPM_PACKAGE_NAME_REGEX,

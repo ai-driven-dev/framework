@@ -4,7 +4,7 @@ import { ReplacePluginFiles } from "../../../../../src/contexts/installation/app
 import type { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.use-case.js";
 import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.use-case.js";
 import type { BuiltMaterializationDeps } from "../../../../../src/contexts/installation/application/shared/built-materialization-deps.js";
-import type { PluginSource } from "../../../../../src/shared/domain/source.js";
+import type { PluginSource } from "../../../../../src/shared/domain/plugin/source.js";
 import { FixturePluginFetcher } from "../../../../shared/testing/fixture-plugin-fetcher.fake.js";
 import {
   buildInstallationDeps,

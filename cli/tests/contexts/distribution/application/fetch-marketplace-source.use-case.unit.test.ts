@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { FetchMarketplaceSource } from "../../../../src/contexts/distribution/application/fetch-marketplace-source.use-case.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
-import type { PluginSourceGitHub } from "../../../../src/shared/domain/source.js";
+import type { PluginSourceGitHub } from "../../../../src/shared/domain/plugin/source.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import { FixturePluginFetcher } from "../../../shared/testing/fixture-plugin-fetcher.fake.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";

@@ -1,4 +1,4 @@
-import type { PluginSource } from "../../../shared/domain/source.js";
+import type { PluginSource } from "../../../shared/domain/plugin/source.js";
 
 export interface PluginCatalogEntry {
   name: string;

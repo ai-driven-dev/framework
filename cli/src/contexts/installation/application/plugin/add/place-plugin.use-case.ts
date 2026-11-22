@@ -1,7 +1,7 @@
 import type { InstallationFile } from "../../../../../shared/domain/installation-file.js";
 import type { PluginDistribution } from "../../../../../shared/domain/plugin/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../../../shared/domain/plugin/plugin-translation-skip.js";
-import type { PluginSource } from "../../../../../shared/domain/source.js";
+import type { PluginSource } from "../../../../../shared/domain/plugin/source.js";
 import type { AiToolId } from "../../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../../shared/ports/file-writer.js";

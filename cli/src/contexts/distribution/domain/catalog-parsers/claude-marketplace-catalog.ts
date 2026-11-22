@@ -1,11 +1,11 @@
 import { isAbsolute } from "node:path";
+import { parsePluginSource } from "../../../../shared/domain/plugin/source-parsing.js";
 import { tryParseJson } from "../../../../shared/domain/reading/json-file.js";
 import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 import {
   InvalidPluginManifestError,
   InvalidPluginSourceError,
 } from "../../../../shared/domain/shared.error.js";
-import { parsePluginSource } from "../../../../shared/domain/source-parsing.js";
 import type { PluginCatalog, PluginCatalogEntry } from "../../contract/catalog.js";
 
 function parseEntry(raw: unknown, index: number): PluginCatalogEntry {

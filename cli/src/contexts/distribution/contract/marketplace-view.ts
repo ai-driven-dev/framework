@@ -1,5 +1,5 @@
+import type { PluginSource } from "../../../shared/domain/plugin/source.js";
 import type { Scope } from "../../../shared/domain/scope.js";
-import type { PluginSource } from "../../../shared/domain/source.js";
 
 /** A registered marketplace as distribution hands it out: what a caller reads, nothing it can change. */
 export interface MarketplaceView {

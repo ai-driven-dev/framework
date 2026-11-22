@@ -20,7 +20,6 @@ const OVER_THE_CAP: Readonly<Record<string, number>> = {
   "contexts/installation/application/removal": 11,
   "contexts/installation/ports": 11,
   "contexts/machine-claims/application": 12,
-  "shared/domain": 13,
 };
 
 function folderSizes(files: readonly string[]): Map<string, number> {

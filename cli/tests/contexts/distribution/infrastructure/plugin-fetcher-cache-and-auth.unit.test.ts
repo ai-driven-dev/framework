@@ -27,7 +27,7 @@ import type { TokenProvider } from "../../../../src/contexts/auth/contract/token
 import { PluginFetchError } from "../../../../src/contexts/distribution/domain/distribution.error.js";
 import { GitCloner } from "../../../../src/contexts/distribution/infrastructure/git-cloner-adapter.js";
 import { PluginFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
-import type { PluginSource } from "../../../../src/shared/domain/source.js";
+import type { PluginSource } from "../../../../src/shared/domain/plugin/source.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { FakeNpmInstaller } from "../testing/npm-installer.fake.js";
 

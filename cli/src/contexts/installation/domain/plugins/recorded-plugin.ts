@@ -1,7 +1,10 @@
 import type { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
+import {
+  type PluginSource,
+  serializePluginSource,
+} from "../../../../shared/domain/plugin/source.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
-import { type PluginSource, serializePluginSource } from "../../../../shared/domain/source.js";
 import type { FileProvenance } from "./file-provenance.js";
 import type { InstalledPlugin } from "./installed-plugin.js";
 import {

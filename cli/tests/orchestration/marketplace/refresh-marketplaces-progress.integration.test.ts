@@ -4,7 +4,7 @@ import { FetchMarketplaceSource } from "../../../src/contexts/distribution/appli
 import { ResolveMarketplace } from "../../../src/contexts/distribution/application/resolve-marketplace.use-case.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
-import { serializePluginSource } from "../../../src/shared/domain/source.js";
+import { serializePluginSource } from "../../../src/shared/domain/plugin/source.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { FixturePluginFetcher } from "../../shared/testing/fixture-plugin-fetcher.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";

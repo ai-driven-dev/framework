@@ -2,7 +2,7 @@ import type {
   TrustPluginSource,
   TrustPluginSourceRequest,
 } from "../../contexts/distribution/application/plugin-source/trust-plugin-source.use-case.js";
-import { describePluginSource } from "../../shared/domain/source.js";
+import { describePluginSource } from "../../shared/domain/plugin/source.js";
 import { TrustDeniedError } from "../orchestration.error.js";
 import type { Prompter } from "../ports/prompter.js";
 

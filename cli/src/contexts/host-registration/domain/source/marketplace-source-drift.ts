@@ -1,5 +1,5 @@
 import { samePathSegment } from "../../../../shared/domain/paths.js";
-import { compareSemver, isSemver } from "../../../../shared/domain/semver.js";
+import { compareSemver, isSemver } from "../../../../shared/domain/plugin/semver.js";
 import type {
   MarketplaceSourceDrift,
   MarketplaceSourceDriftFound,

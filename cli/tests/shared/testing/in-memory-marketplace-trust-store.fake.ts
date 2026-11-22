@@ -1,6 +1,6 @@
 import type { MarketplaceTrustStore } from "../../../src/contexts/distribution/ports/marketplace-trust-store.js";
-import type { PluginSource } from "../../../src/shared/domain/source.js";
-import { serializePluginSource } from "../../../src/shared/domain/source.js";
+import type { PluginSource } from "../../../src/shared/domain/plugin/source.js";
+import { serializePluginSource } from "../../../src/shared/domain/plugin/source.js";
 
 /** Pure in-memory MarketplaceTrustStore, one set per project, keyed by the canonical serialized source. */
 export class InMemoryMarketplaceTrustStore implements MarketplaceTrustStore {

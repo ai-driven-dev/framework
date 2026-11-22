@@ -1,5 +1,5 @@
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
-import type { PluginSource } from "../../../../shared/domain/source.js";
+import type { PluginSource } from "../../../../shared/domain/plugin/source.js";
 import type { PluginDistributionReader } from "../../ports/plugin-distribution-reader.js";
 import type { PluginFetcher } from "../../ports/plugin-fetcher.js";
 

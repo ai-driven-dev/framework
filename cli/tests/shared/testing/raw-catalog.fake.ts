@@ -1,5 +1,5 @@
 import type { RawCatalogFetcher } from "../../../src/contexts/distribution/ports/raw-catalog-fetcher.js";
-import type { PluginSourceGitHub } from "../../../src/shared/domain/source.js";
+import type { PluginSourceGitHub } from "../../../src/shared/domain/plugin/source.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../src/shared/ports/file-writer.js";
 import { InMemoryFileAdapter } from "./in-memory-file-adapter.fake.js";

@@ -2,7 +2,7 @@ import { mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { FileHash } from "../../../shared/domain/file-hash.js";
 import { AIDD_DIR } from "../../../shared/domain/layout/aidd-layout.js";
-import { type PluginSource, serializePluginSource } from "../../../shared/domain/source.js";
+import { type PluginSource, serializePluginSource } from "../../../shared/domain/plugin/source.js";
 import type { PrivateStorage } from "../../../shared/ports/private-storage.js";
 import type { MarketplaceTrustStore } from "../ports/marketplace-trust-store.js";
 

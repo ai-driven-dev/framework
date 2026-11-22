@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MarketplaceTrustStoreAdapter } from "../../../../src/contexts/distribution/infrastructure/marketplace-trust-store-adapter.js";
-import type { PluginSource } from "../../../../src/shared/domain/source.js";
+import type { PluginSource } from "../../../../src/shared/domain/plugin/source.js";
 import { PrivateStorageAdapter } from "../../../../src/shared/infrastructure/private-storage-adapter.js";
 
 const githubSource: PluginSource = { kind: "github", repo: "owner/repo" };

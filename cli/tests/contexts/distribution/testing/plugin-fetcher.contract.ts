@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { PluginFetchError } from "../../../../src/contexts/distribution/domain/distribution.error.js";
 import type { PluginFetcher } from "../../../../src/contexts/distribution/ports/plugin-fetcher.js";
-import type { PluginSource } from "../../../../src/shared/domain/source.js";
+import type { PluginSource } from "../../../../src/shared/domain/plugin/source.js";
 
 /** The file every plugin the subject can fetch holds. */
 export const PLUGIN_MANIFEST = join(".claude-plugin", "plugin.json");

@@ -6,7 +6,7 @@ import { registerMarketplacePlugin } from "../../../../../src/contexts/installat
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { SyncSettings } from "../../../../../src/orchestration/sync/sync-settings.use-case.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import type { PluginSource } from "../../../../../src/shared/domain/source.js";
+import type { PluginSource } from "../../../../../src/shared/domain/plugin/source.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";

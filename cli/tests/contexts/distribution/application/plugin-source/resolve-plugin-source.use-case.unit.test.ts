@@ -3,7 +3,7 @@ import { ResolvePluginSource } from "../../../../../src/contexts/distribution/ap
 import type { PluginCatalog } from "../../../../../src/contexts/distribution/contract/catalog.js";
 import { PluginNotInMarketplaceError } from "../../../../../src/contexts/distribution/domain/distribution.error.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import type { PluginSource } from "../../../../../src/shared/domain/source.js";
+import type { PluginSource } from "../../../../../src/shared/domain/plugin/source.js";
 import { InMemoryMarketplaceRegistry } from "../../../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { fetchedPathOf, resolvingCatalogs } from "../../testing/catalog-resolver.builder.js";
 

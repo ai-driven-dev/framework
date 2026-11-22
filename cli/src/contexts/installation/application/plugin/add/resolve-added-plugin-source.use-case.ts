@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import type { PluginDistribution } from "../../../../../shared/domain/plugin/plugin-distribution.js";
-import type { PluginSource } from "../../../../../shared/domain/source.js";
+import type { PluginSource } from "../../../../../shared/domain/plugin/source.js";
 import type { AiToolId } from "../../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../../shared/ports/file-writer.js";

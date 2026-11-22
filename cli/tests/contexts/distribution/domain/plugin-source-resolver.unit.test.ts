@@ -12,7 +12,7 @@ vi.mock("node:path", async (importOriginal) => {
 
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import { resolvePluginSourceFromMarketplace } from "../../../../src/contexts/distribution/domain/plugin-source-resolver.js";
-import type { PluginSource } from "../../../../src/shared/domain/source.js";
+import type { PluginSource } from "../../../../src/shared/domain/plugin/source.js";
 
 const MARKETPLACE_LOCAL_PATH = "/home/user/.aidd/cache/marketplaces/aidd-framework";
 

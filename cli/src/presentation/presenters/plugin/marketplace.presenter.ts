@@ -2,7 +2,7 @@ import type { PluginCatalog } from "../../../contexts/distribution/contract/cata
 import type { MarketplaceView } from "../../../contexts/distribution/contract/marketplace-view.js";
 import type { Output } from "../../../orchestration/domain/output.js";
 import type { RefreshEntryResult } from "../../../orchestration/marketplace/refresh-marketplaces.use-case.js";
-import { describePluginSource } from "../../../shared/domain/source.js";
+import { describePluginSource } from "../../../shared/domain/plugin/source.js";
 import { render } from "../../errors/error-translator.presenter.js";
 
 interface MarketplaceCheckOutcome {

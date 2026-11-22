@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
 import type { RawCatalogFetcher } from "../../../../src/contexts/distribution/ports/raw-catalog-fetcher.js";
+import type { PluginSourceGitHub } from "../../../../src/shared/domain/plugin/source.js";
 import {
   CatalogFetchAuthError,
   CatalogFetchNotFoundError,
 } from "../../../../src/shared/domain/shared.error.js";
-import type { PluginSourceGitHub } from "../../../../src/shared/domain/source.js";
 
 export const CATALOG_PATH = ".claude-plugin/marketplace.json";
 

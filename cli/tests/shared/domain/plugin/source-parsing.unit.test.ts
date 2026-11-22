@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { InvalidPluginSourceError } from "../../../src/shared/domain/shared.error.js";
-import { serializePluginSource } from "../../../src/shared/domain/source.js";
-import { parsePluginSource } from "../../../src/shared/domain/source-parsing.js";
-import { saying } from "../testing/saying.builder.js";
+import { serializePluginSource } from "../../../../src/shared/domain/plugin/source.js";
+import { parsePluginSource } from "../../../../src/shared/domain/plugin/source-parsing.js";
+import { InvalidPluginSourceError } from "../../../../src/shared/domain/shared.error.js";
+import { saying } from "../../testing/saying.builder.js";
 
 /** The message every npm name refusal shares. */
 const npmNameDetail = (got: string): string =>

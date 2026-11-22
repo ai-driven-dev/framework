@@ -1,3 +1,4 @@
+import type { PluginSourceGitHub } from "../domain/plugin/source.js";
 import { asPlainObject } from "../domain/reading/plain-object.js";
 import {
   AuthenticationError,
@@ -6,7 +7,6 @@ import {
   CatalogFetchNotFoundError,
   HttpNotFoundError,
 } from "../domain/shared.error.js";
-import type { PluginSourceGitHub } from "../domain/source.js";
 import type { HttpGet } from "../ports/http-get.js";
 
 // biome-ignore lint/plugin: the one place the GitHub API base is written

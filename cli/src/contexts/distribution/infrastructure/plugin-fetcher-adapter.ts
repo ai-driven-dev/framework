@@ -5,7 +5,7 @@ import type {
   PluginSourceGitSubdir,
   PluginSourceNpm,
   PluginSourceUrl,
-} from "../../../shared/domain/source.js";
+} from "../../../shared/domain/plugin/source.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { TokenProvider } from "../../auth/contract/token-provider.js";

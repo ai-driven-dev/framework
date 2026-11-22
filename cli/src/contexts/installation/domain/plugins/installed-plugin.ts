@@ -1,5 +1,5 @@
+import type { PluginSource } from "../../../../shared/domain/plugin/source.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
-import type { PluginSource } from "../../../../shared/domain/source.js";
 import { asPathHashMap, type PathHashMap } from "./plugin-entry.js";
 
 /** What installation owns of a plugin, so a changed copy spreads one plugin into another. */

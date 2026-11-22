@@ -1,6 +1,6 @@
 import { join } from "node:path";
+import { compareSemver } from "../../../../shared/domain/plugin/semver.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
-import { compareSemver } from "../../../../shared/domain/semver.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { InvalidPluginScopeError } from "../../domain/installation.error.js";

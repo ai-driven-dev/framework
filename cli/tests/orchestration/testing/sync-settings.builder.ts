@@ -6,7 +6,7 @@ import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { PluginDistribution } from "../../../src/shared/domain/plugin/plugin-distribution.js";
-import type { PluginSource } from "../../../src/shared/domain/source.js";
+import type { PluginSource } from "../../../src/shared/domain/plugin/source.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";

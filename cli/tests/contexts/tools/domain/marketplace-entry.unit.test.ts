@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { sharedMarketplaceKey } from "../../../../src/contexts/tools/domain/marketplace-entry.js";
-import type { PluginSource } from "../../../../src/shared/domain/source.js";
+import type { PluginSource } from "../../../../src/shared/domain/plugin/source.js";
 
 const keyOf = (source: PluginSource): string | null =>
   sharedMarketplaceKey({ name: "aidd", source });
