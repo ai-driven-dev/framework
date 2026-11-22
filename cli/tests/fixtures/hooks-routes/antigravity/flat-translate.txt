@@ -41,6 +41,7 @@ script, identical to the plugin source
   "unit": "folder",
   "targets": "plugins/*/skills/*",
   "scope": [".claude/skills/*", ".cursor/skills/*", ".opencode/skills/*", ".kilo/skills/*", ".github/skills/*", ".agents/skills/*"],
+  "shell": false,
   "marker": "SKILL.md",
   "rules": {
     "SKILL-01": { "op": "max", "measure": "chars", "in": "SKILL.md", "field": "description", "max": 150,
@@ -167,6 +168,7 @@ script, identical to the plugin source
   "unit": "file",
   "targets": "plugins/*/agents/*.md",
   "scope": [".claude/agents/*.md"],
+  "shell": false,
   "rules": {
     "AGENT-02": {
       "op": "equals",
@@ -248,6 +250,7 @@ disable-model-invocation:
   "kind": "command",
   "unit": "file",
   "scope": [".claude/commands/*.md"],
+  "shell": false,
   "rules": {
     "COMMAND-01": {
       "op": "template",
