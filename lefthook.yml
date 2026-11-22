@@ -53,15 +53,6 @@ pre-commit:
             exit 1
           fi
         done
-    recipe-validity:
-      run: |
-        if ! command -v node >/dev/null 2>&1; then
-          echo '❌ node not available; cannot validate recipes'
-          exit 1
-        fi
-        pnpm --dir cli build && \
-        AIDD_SKIP_UPDATE_CHECK=1 node cli/dist/cli.js framework validate-recipes --all \
-          --bundled plugins/aidd-context/skills/12-cook/assets/recipes
     check-skill-argument-hints:
       glob: "plugins/*/skills/**"
       run: |
@@ -203,9 +194,20 @@ pre-push:
       run: >-
         node scripts/gate-witness.js cli-debt-ratchet --
         pnpm --dir cli exec vitest run --project=architecture tests/architecture/debt-only-shrinks.arch.test.ts
+    # The architecture project runs in pre-commit and in `cli-ci.yml`'s cli-architecture, and the
+    # debt ratchet above runs it here: the full suite is not replayed.
     cli-test:
       glob: "cli/**"
-      run: node scripts/gate-witness.js cli-test -- pnpm --dir cli test
+      run: >-
+        node scripts/gate-witness.js cli-test --
+        pnpm --dir cli exec vitest run --project=!tooling --project=!architecture
+    # A full build to read the embedded recipes: too slow for every commit, run in `cli-ci.yml` too.
+    recipe-validity:
+      glob: "{cli/**,plugins/aidd-context/skills/12-cook/assets/recipes/**}"
+      run: >-
+        node scripts/gate-witness.js recipe-validity --
+        sh -c 'pnpm --dir cli build && AIDD_SKIP_UPDATE_CHECK=1 node cli/dist/cli.js framework validate-recipes --all
+        --bundled plugins/aidd-context/skills/12-cook/assets/recipes'
 
 commit-msg:
   commands:

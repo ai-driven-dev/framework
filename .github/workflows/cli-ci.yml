@@ -82,6 +82,10 @@ jobs:
               plugins/*/skills/*/scripts/*|plugins/*/hooks/*)
                 relevant=true
                 ;;
+              # The recipes the cli-build job validates against the built binary.
+              plugins/aidd-context/skills/12-cook/assets/recipes/*)
+                relevant=true
+                ;;
               # This file: a change to how the suite runs matches nothing else here, so the
               # workflow deciding whether the suite passes would land unverified.
               .github/workflows/cli-ci.yml)
@@ -385,6 +389,8 @@ jobs:
           restore-keys: pnpm-${{ runner.os }}-
       - run: cd cli && pnpm install --frozen-lockfile
       - run: cd cli && pnpm build
+      - name: The embedded recipes validate against the built binary
+        run: AIDD_SKIP_UPDATE_CHECK=1 node cli/dist/cli.js framework validate-recipes --all --bundled plugins/aidd-context/skills/12-cook/assets/recipes
 
   cli-knip:
     name: cli / Knip (dead code)
