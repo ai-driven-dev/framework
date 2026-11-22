@@ -8,6 +8,8 @@ import { FindMarketplaceToRemove } from "../../contexts/distribution/application
 import { FindUserMarketplace } from "../../contexts/distribution/application/remove/find-user-marketplace.use-case.js";
 import { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.use-case.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
+import { PlanRefsToEnable } from "../../contexts/host-registration/application/register/plan-refs-to-enable.use-case.js";
+import { RecordNativeRegistrations } from "../../contexts/host-registration/application/register/record-native-registrations.use-case.js";
 import { RegisterPluginWithHost } from "../../contexts/host-registration/application/register/register-plugin-with-host.use-case.js";
 import { ResolveNativeHost } from "../../contexts/host-registration/application/register/resolve-native-host.use-case.js";
 import { ListPluginSources } from "../../contexts/installation/application/marketplace/list-plugin-sources.use-case.js";
@@ -142,6 +144,7 @@ function nativeActivationOf(
   build: BuildMarketplaceForTool
 ): ActivateNativeTools {
   const { tools, fs, logger } = base;
+  const { claimedRefs } = inst.registrationRecordRules;
   return new ActivateNativeTools({
     registerPluginWithHost: new RegisterPluginWithHost({
       fs,
@@ -156,8 +159,8 @@ function nativeActivationOf(
     }),
     buildMarketplace: build,
     logger,
-    marketplace: { name: FRAMEWORK_MARKETPLACE_NAME, userCacheRoot: userConfigDir },
-    records: inst.registrationRecordRules,
+    marketplace: { userCacheRoot: userConfigDir },
+    planRefs: new PlanRefsToEnable({ frameworkName: FRAMEWORK_MARKETPLACE_NAME, claimedRefs }),
   });
 }
 
@@ -214,7 +217,7 @@ function syncSettingsOf(base: Base, inst: Installation, sources: SyncSources): S
         purgeCache: new ResolvePurgeCandidate(fs, logger),
         frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
       }),
-      records: registrationRecordRules,
+      recordRegistrations: new RecordNativeRegistrations(tools),
     }),
     records: registrationRecordRules,
   });

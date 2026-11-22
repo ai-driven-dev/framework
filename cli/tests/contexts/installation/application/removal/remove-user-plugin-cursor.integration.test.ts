@@ -48,7 +48,7 @@ describe("Cursor user plugin boundary", () => {
         toolIds: [TOOL.cursor],
         projectRoot: "/A",
       })
-    ).rejects.toThrow(/edited.*plugin.json|plugin.json.*edited/);
+    ).rejects.toMatchObject({ code: "edited-after-install" });
     expect(fs.getFile(path)).toBe("user-edited plugin.json");
     expect(repo.getCurrent()?.getPlugins(TOOL.cursor)).toHaveLength(1);
     fs.setFile(path, "owned bytes");
