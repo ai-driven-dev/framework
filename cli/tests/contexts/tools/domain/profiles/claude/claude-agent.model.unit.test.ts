@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { claudeAgentFrontmatter } from "../../../../../../src/contexts/tools/domain/profiles/claude/claude-agent.model.js";
 
-describe("claudeAgentFrontmatter", () => {
+describe("writing a Claude agent's frontmatter", () => {
   it("keeps Claude's own keys, in its order, and drops any other", () => {
     expect(
       claudeAgentFrontmatter({

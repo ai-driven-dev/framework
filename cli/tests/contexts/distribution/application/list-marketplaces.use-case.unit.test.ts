@@ -10,7 +10,7 @@ const SAMPLE_MARKETPLACE = Marketplace.create({
   addedAt: "2026-04-29T10:00:00.000Z",
 });
 
-describe("ListMarketplaces", () => {
+describe("listing the registered marketplaces", () => {
   const projectRoot = "/project";
   let registry: InMemoryMarketplaceRegistry;
 
@@ -19,7 +19,7 @@ describe("ListMarketplaces", () => {
     await registry.save(projectRoot, SAMPLE_MARKETPLACE);
   });
 
-  describe("listing", () => {
+  describe("when marketplaces are listed", () => {
     it("returns marketplaces from the registry", async () => {
       const useCase = new ListMarketplaces(registry);
       const result = await useCase.execute({ projectRoot });

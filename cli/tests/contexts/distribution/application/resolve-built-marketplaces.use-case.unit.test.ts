@@ -47,7 +47,7 @@ async function resolverOver(
   });
 }
 
-describe("ResolveBuiltMarketplaces", () => {
+describe("finding the builds of registered marketplaces", () => {
   it("finds a project marketplace's build under the project", async () => {
     const dir = builtMarketplaceDir(PROJECT, "mine", TOOL_ID);
     const resolver = await resolverOver([dir], registered("mine", "project"));

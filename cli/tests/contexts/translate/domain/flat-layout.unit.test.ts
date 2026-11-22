@@ -44,7 +44,7 @@ const SKILLS = supportedAs(
 );
 const HOOKS = supportedAs({ kind: "hooks", scriptsDir: "H/hooks/" });
 
-describe("flatHooksBridgeFile", () => {
+describe("naming the hooks bridge file", () => {
   const bridge: FlatHooksBridge = {
     skipIfSourceHas: "own.js",
     dir: "bridge/",
@@ -85,13 +85,13 @@ describe("flatHooksBridgeFile", () => {
   });
 });
 
-describe("flatAgentPath", () => {
+describe("placing a flat agent", () => {
   it("drops the folders under agents/ so every nesting lands at one path", () => {
     expect(flatAgentPath(AGENTS, "p", "agents/team/a.md")).toBe("A/agents/a.md");
   });
 });
 
-describe("flatPathOfPluginSuffix", () => {
+describe("placing a path with the plugin suffix", () => {
   const contract = contractWith({ agents: AGENTS, skills: SKILLS, hooks: HOOKS });
 
   it.each([
@@ -108,7 +108,7 @@ describe("flatPathOfPluginSuffix", () => {
   });
 });
 
-describe("flatLinkTarget", () => {
+describe("retargeting a link in a flat layout", () => {
   const contract = contractWith({ agents: AGENTS, skills: SKILLS, hooks: HOOKS });
 
   it("moves an agent and a skill, and nothing else", () => {
@@ -119,7 +119,7 @@ describe("flatLinkTarget", () => {
   });
 });
 
-describe("sourceShipsHooksBridge", () => {
+describe("telling whether a source ships its hooks bridge", () => {
   const bridge: FlatHooksBridge = {
     skipIfSourceHas: "bridge.js",
     dir: "bridge/",

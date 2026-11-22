@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { rootReleaseTags } from "../../../../src/contexts/distribution/domain/root-release.js";
 
-describe("rootReleaseTags", () => {
+describe("picking the root release tags", () => {
   it("drops release-please per-component tags", () => {
     expect(rootReleaseTags(["aidd-refine-v1.0.0", "v4.0.0", "aidd-context-v1.0.0"])).toEqual([
       "v4.0.0",

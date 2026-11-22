@@ -3,7 +3,7 @@ import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/co
 import { nativeOf } from "../../../../../shared/testing/native-plugin-answers.builder.js";
 
 describe("copilot plugins", () => {
-  describe("capabilities.plugins", () => {
+  describe("with Copilot's plugins capability", () => {
     it("is native mode", () => {
       expect(copilot.plugins()?.kind).toBe("native");
     });
@@ -23,7 +23,7 @@ describe("copilot plugins", () => {
     });
   });
 
-  describe("capabilities.plugins.marketplaceSettings", () => {
+  describe("with Copilot's marketplace settings", () => {
     const ms = copilot.marketplaceRegistration();
 
     it("has marketplaceSettings configured", () => {

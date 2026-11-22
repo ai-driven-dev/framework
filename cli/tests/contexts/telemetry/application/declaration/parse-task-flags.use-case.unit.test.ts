@@ -7,7 +7,7 @@ import {
 
 const resolve = new ParseTaskFlags();
 
-describe("ParseTaskFlags", () => {
+describe("reading the task flags", () => {
   it("makes a task of a typed name and ticket", () => {
     expect(resolve.execute({ name: " Fix login ", ticket: "T-1", none: false }).request).toEqual({
       kind: "task",

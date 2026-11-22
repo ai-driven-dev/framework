@@ -16,7 +16,7 @@ const REQUEST = {
   targetDir: "/cache/repo",
 };
 
-describe("GitCloner", () => {
+describe("cloning a repository", () => {
   beforeEach(() => {
     clone.mockReset().mockResolvedValue(undefined);
     raw.mockReset().mockResolvedValue(undefined);

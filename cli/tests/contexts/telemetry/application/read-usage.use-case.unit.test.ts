@@ -61,7 +61,7 @@ function source(files: Readonly<Record<string, Transcript>>) {
 const read = (files: Readonly<Record<string, Transcript>>, since = new Map()) =>
   new ReadUsage(source(files).subject).execute({ since });
 
-describe("ReadUsage", () => {
+describe("reading usage from transcripts", () => {
   it("hands back each call with its file and where the file now ends", async () => {
     const reading = await read({ "/t/a": { lines: [["call:k1", true]] } });
     expect(reading.records.map((record) => record.key)).toEqual(["k1"]);

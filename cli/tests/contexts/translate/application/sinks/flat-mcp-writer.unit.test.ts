@@ -26,7 +26,7 @@ function stepOf(over: Partial<FlatMcpStep["target"]> = {}): FlatMcpStep {
   };
 }
 
-describe("writeFlatMcp", () => {
+describe("writing mcp servers into a flat config", () => {
   it("merges the servers under the declared key into the file the artifact's path names", async () => {
     const fs = new InMemoryFileAdapter({});
 

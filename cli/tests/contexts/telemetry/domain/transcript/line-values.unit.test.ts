@@ -5,7 +5,7 @@ import {
   text,
 } from "../../../../../src/contexts/telemetry/domain/transcript/line-values.js";
 
-describe("counter", () => {
+describe("reading a counter", () => {
   it("accepts a non-negative integer and nothing else", () => {
     expect(counter(0)).toBe(0);
     expect(counter(7)).toBe(7);
@@ -15,7 +15,7 @@ describe("counter", () => {
   });
 });
 
-describe("text", () => {
+describe("reading a text", () => {
   it("accepts a non-empty string and nothing else", () => {
     expect(text("a")).toBe("a");
     expect(text("")).toBeNull();
@@ -23,7 +23,7 @@ describe("text", () => {
   });
 });
 
-describe("expected", () => {
+describe("reading an expected field", () => {
   it("returns the count and notes nothing when it is there", () => {
     const notes: string[] = [];
     expect(expected("usage", notes)({ input_tokens: 5 }, "input_tokens")).toBe(5);

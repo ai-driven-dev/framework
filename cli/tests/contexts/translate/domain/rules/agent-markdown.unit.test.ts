@@ -15,7 +15,7 @@ const base: Supported = {
 };
 const at = { plugin: "p", outName: "x.md", from: "agents/x.md" };
 
-describe("agentContent", () => {
+describe("writing an agent's content", () => {
   it("writes the frontmatter the tool keeps and leaves the links to the plan", () => {
     const artifact: Supported = {
       ...base,
@@ -71,7 +71,7 @@ describe("agentContent", () => {
   });
 });
 
-describe("agentLinks", () => {
+describe("reading an agent's links", () => {
   it("reads the links from where the layout puts the agent", () => {
     expect(agentLinks(base, { ...at, unshaped: "links" })).toEqual({
       kind: "relative",

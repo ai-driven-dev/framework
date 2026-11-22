@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { descriptionOnlyRule } from "../../../../../src/contexts/tools/domain/formats/rule-frontmatter.js";
 
-describe("descriptionOnlyRule", () => {
+describe("keeping only a rule's description", () => {
   it("keeps the description of an on-request rule and nothing else", () => {
     expect(
       descriptionOnlyRule({ alwaysApply: false, description: "When asked", paths: ["a/**"] })

@@ -6,7 +6,7 @@ import { InMemoryMarketplaceRegistry } from "../../../shared/testing/in-memory-m
 
 const PROJECT_ROOT = "/test-project";
 
-describe("RegisterFrameworkMarketplace", () => {
+describe("registering the framework marketplace", () => {
   it("registers using github source when pluginSource is github", async () => {
     const registry = new InMemoryMarketplaceRegistry();
     const useCase = new RegisterFrameworkMarketplace(registry);

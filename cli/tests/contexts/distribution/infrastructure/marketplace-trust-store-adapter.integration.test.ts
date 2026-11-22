@@ -11,7 +11,7 @@ const posix = process.platform === "win32" ? it.skip : it;
 
 // What trust promises whatever holds it is in `ports/marketplace-trust-store.contract`;
 // what stays here is the file it is written to.
-describe("MarketplaceTrustStoreAdapter", () => {
+describe("storing trusted marketplace sources", () => {
   let projectRoot: string;
   let store: MarketplaceTrustStoreAdapter;
 

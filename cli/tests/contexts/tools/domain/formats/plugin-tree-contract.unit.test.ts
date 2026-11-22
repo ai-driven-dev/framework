@@ -13,7 +13,7 @@ const LAYOUT = {
 
 const contract = pluginTreeContract(present(cursor.hooks), LAYOUT);
 
-describe("pluginTreeContract", () => {
+describe("building a plugin tree contract", () => {
   it("names the tool's own manifest and shapes agents with its own frontmatter", () => {
     expect({
       manifest: contract.manifestFileRelative,

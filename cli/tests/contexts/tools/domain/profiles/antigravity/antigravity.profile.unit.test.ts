@@ -3,7 +3,7 @@ import { PROFILE_SECTION_KEYS } from "../../../../../../src/contexts/tools/domai
 import { antigravity } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/antigravity.profile.js";
 import { flatOf } from "../../../testing/plugin-mode.builder.js";
 
-describe("antigravity", () => {
+describe("the Antigravity profile", () => {
   it("is named for the person reading it and declares a flat build only", () => {
     expect(antigravity.displayName).toBe("Antigravity CLI");
     expect(antigravity.directory).toBe(".agents/");

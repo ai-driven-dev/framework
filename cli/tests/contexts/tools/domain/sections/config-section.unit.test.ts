@@ -3,8 +3,8 @@ import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
-describe("ConfigSection", () => {
-  describe("constructor", () => {
+describe("a config section", () => {
+  describe("when a config section is built", () => {
     it("accepts consumes without staticContent", () => {
       const cap = new ConfigSection({
         outputPath: ".vscode/settings.json",
@@ -143,7 +143,7 @@ describe("ConfigSection", () => {
     });
   });
 
-  describe("resolveStaticContent", () => {
+  describe("when static content is resolved", () => {
     const fromAsset = new ConfigSection({
       outputPath: ".vscode/settings.json",
       mergeStrategy: "framework-prime",
@@ -184,7 +184,7 @@ describe("ConfigSection", () => {
     });
   });
 
-  describe("writes", () => {
+  describe("when asked whether it writes a destination", () => {
     it("answers whether the section writes the destination", () => {
       const cap = new ConfigSection({
         outputPath: ".vscode/settings.json",
@@ -197,7 +197,7 @@ describe("ConfigSection", () => {
     });
   });
 
-  describe("outputPath", () => {
+  describe("when its output path is read", () => {
     it("returns the configured output path", () => {
       const cap = new ConfigSection({
         outputPath: ".vscode/settings.json",
@@ -207,7 +207,7 @@ describe("ConfigSection", () => {
     });
   });
 
-  describe("fileOf", () => {
+  describe("when its file is produced", () => {
     it("writes the content at its path, merged its way, from the canonical file named", () => {
       const cap = new ConfigSection({
         outputPath: ".vscode/settings.json",

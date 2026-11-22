@@ -3,7 +3,7 @@ import { noticeFor } from "../../../../src/contexts/update/domain/update-notice.
 
 const entry = (latest: string) => ({ checkedAt: 0, latest });
 
-describe("noticeFor", () => {
+describe("writing the update notice", () => {
   it("names both versions without their v", () => {
     expect(noticeFor(entry("v2.0.0"), "v1.0.0")).toStrictEqual({
       current: "1.0.0",

@@ -5,7 +5,7 @@ import { aStubBuildContract } from "../../testing/stub-build-contract.builder.js
 
 const canon = aCanon("plug", { "skills/hello/SKILL.md": "# hi\n" });
 
-describe("translateBuildLayout", () => {
+describe("translating a build layout", () => {
   it("builds a plugin's skills for a tool that has them", () => {
     expect(
       translateBuildLayout(canon, aStubBuildContract(), "marketplace").map((f) => f.relativePath)

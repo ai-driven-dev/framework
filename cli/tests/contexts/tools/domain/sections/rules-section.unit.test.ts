@@ -7,12 +7,12 @@ const stubParams = {
   reverseConvertFrontmatter: (fm: Record<string, unknown>): Record<string, unknown> => fm,
 };
 
-describe("RulesSection", () => {
+describe("a rules section", () => {
   const params = { toolSuffix: ".claude.md", ...stubParams };
 
   // Where a rule lands is `buildInstallPath`, a closure per tool.
   // Asking it with a sentinel keeps the answer where the knowledge is, not in a path parser here.
-  describe("installedLocation", () => {
+  describe("when an installed rule is located", () => {
     it("answers the directory and the extension an installed rule actually carries", () => {
       const cap = new RulesSection({
         ...params,

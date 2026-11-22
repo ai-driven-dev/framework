@@ -30,7 +30,7 @@ function setup() {
   };
 }
 
-describe("RememberedClones", () => {
+describe("listing the clones remembered", () => {
   it("holds nothing when nothing was kept", async () => {
     expect(await setup().read()).toEqual({ clones: [], consenting: new Set(), unlocated: 0 });
   });

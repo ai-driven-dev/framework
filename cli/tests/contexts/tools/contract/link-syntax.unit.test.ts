@@ -4,7 +4,7 @@ import {
   REFERENCE_CHARS,
 } from "../../../../src/contexts/tools/contract/link-syntax.js";
 
-describe("applyLinkSyntax", () => {
+describe("applying link syntax rules", () => {
   it("applies each rule in turn, so a later rule reads what an earlier one wrote", () => {
     expect(
       applyLinkSyntax("a", [
@@ -28,7 +28,7 @@ describe("applyLinkSyntax", () => {
   });
 });
 
-describe("REFERENCE_CHARS", () => {
+describe("where a reference ends", () => {
   it("ends a reference at a space, a quote, a backtick, a comma or a closing bracket", () => {
     const match = (text: string) => new RegExp(REFERENCE_CHARS).exec(text)?.[0];
     expect(match("a/b.md rest")).toBe("a/b.md");

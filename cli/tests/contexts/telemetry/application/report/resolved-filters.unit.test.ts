@@ -8,7 +8,7 @@ const records = [
   aUsageRecord().with({ session_id: "a1b2-second", repository_id: "r-two" }).build(),
 ];
 
-describe("resolvedFilters", () => {
+describe("when the filters of a report are resolved", () => {
   it("keeps the filters as asked when no session or repository is typed", () => {
     expect(resolvedFilters(records, NO_FILTERS, undefined)).toEqual(NO_FILTERS);
   });

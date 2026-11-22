@@ -2,7 +2,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { localTargetFile } from "../../../../src/contexts/recipes/domain/local-target-file.js";
 
-describe("localTargetFile", () => {
+describe("finding the file a link points to", () => {
   it("names the linking file itself when the link gives no path", () => {
     expect(localTargetFile("/r/a.md", "")).toBe("/r/a.md");
   });

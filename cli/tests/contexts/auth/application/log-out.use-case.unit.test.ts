@@ -3,7 +3,7 @@ import { aLogOut } from "../testing/auth.builder.js";
 import { anExternalRecord, aStoredRecord } from "../testing/credential-record.builder.js";
 import { InMemoryCredentialRecordRepository } from "../testing/in-memory-credential-record-repository.fake.js";
 
-describe("LogOut", () => {
+describe("logging out of a stored credential", () => {
   describe("when nothing is stored", () => {
     it("reports nothing found", async () => {
       expect(await aLogOut().build().execute()).toStrictEqual({ found: false });

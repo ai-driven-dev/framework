@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ToolSuffix } from "../../../../../src/contexts/tools/domain/profile/tool-suffix.js";
 import { CapabilityConfigError } from "../../../../../src/contexts/tools/domain/tools.error.js";
 
-describe("ToolSuffix", () => {
+describe("a tool's file suffix", () => {
   it.each([".claude.md", ".agent.md", ".instructions.md"])("accepts %s", (value) => {
     expect(new ToolSuffix(value).value).toBe(value);
   });
@@ -19,7 +19,7 @@ describe("ToolSuffix", () => {
     expect(() => new ToolSuffix(value)).toThrow(CapabilityConfigError);
   });
 
-  describe("strip", () => {
+  describe("when the suffix is stripped", () => {
     const suffix = new ToolSuffix(".claude.md");
 
     it("swaps the suffix of the file name for a plain markdown extension, keeping its directory", () => {
@@ -31,7 +31,7 @@ describe("ToolSuffix", () => {
     });
   });
 
-  describe("isForeign", () => {
+  describe("when a name is checked for the suffix", () => {
     const suffix = new ToolSuffix(".cursor.md");
 
     it("tells a file name carrying the suffix, whatever its directory", () => {

@@ -39,7 +39,7 @@ const BASE_SOURCE = {
   keywords: ["ai", "dev"],
 };
 
-describe("synthesizeSharedManifest", () => {
+describe("synthesizing a plugin manifest", () => {
   describe("passthrough fields", () => {
     it("preserves name, description, version, author, homepage, repository, license, keywords", () => {
       const result = synthesizeSharedManifest(BASE_SOURCE, EMPTY_PRESENCE, {
@@ -202,7 +202,7 @@ describe("synthesizeSharedManifest", () => {
   });
 });
 
-describe("buildSharedMarketplace", () => {
+describe("building the shared marketplace", () => {
   const ENTRIES = [
     { name: "aidd-dev", source: "./plugins/aidd-dev", description: "Dev", version: "1.0.0" },
   ];
@@ -238,7 +238,7 @@ describe("buildSharedMarketplace", () => {
   });
 });
 
-describe("buildSharedCatalogEntry", () => {
+describe("building a shared catalog entry", () => {
   it("builds entry with name, source, description, version", () => {
     const entry = buildSharedCatalogEntry({
       name: "aidd-dev",

@@ -43,7 +43,7 @@ function makeUrlMarketplace(): Marketplace {
   });
 }
 
-describe("resolvePluginSourceFromMarketplace", () => {
+describe("resolving a plugin source from its marketplace", () => {
   describe("github marketplace + local entry source (relative path)", () => {
     it("transforms ./path to git-subdir with normalized path and ref", () => {
       const entrySource: PluginSource = { kind: "local", path: "./plugins/aidd-context" };

@@ -5,7 +5,7 @@ import {
 } from "../../../../../../src/contexts/tools/domain/formats/mcp/typed-mcp-section.js";
 import { saying } from "../../../../../shared/testing/saying.builder.js";
 
-describe("toTypedMcpSection()", () => {
+describe("turning an mcp server into a typed one", () => {
   it("turns a command server into a local one, its arguments folded into the command line", () => {
     const converted = toTypedMcpSection(
       JSON.stringify({
@@ -52,7 +52,7 @@ describe("toTypedMcpSection()", () => {
   });
 });
 
-describe("collectTypedMcp()", () => {
+describe("collecting the typed servers of built plugins", () => {
   it("gathers the typed servers of the built plugins that ship an mcp file, later plugins winning", () => {
     const raw = (command: string) => JSON.stringify({ mcpServers: { shared: { command } } });
     const mcp = new Map([

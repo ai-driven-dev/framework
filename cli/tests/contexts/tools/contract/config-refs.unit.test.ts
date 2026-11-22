@@ -5,7 +5,7 @@ import {
   MCP_CONFIG_REF,
 } from "../../../../src/contexts/tools/contract/config-refs.js";
 
-describe("MCP_CONFIG_REF", () => {
+describe("referring to the mcp config", () => {
   it("names the artifact a tool consumes and finds it under the config directory of the source", () => {
     expect(MCP_CONFIG_REF.name).toBe(CONFIG_MCP);
     expect(MCP_CONFIG_REF.path).toBe(`${CONFIG_PREFIX}mcp.json`);

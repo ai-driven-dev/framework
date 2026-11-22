@@ -11,7 +11,7 @@ const dist = new PluginDistribution({
   components: { commands: [], agents: [], rules: [], skills: [], hooks: [], mcp: [] },
 });
 
-describe("LoadPluginDistribution", () => {
+describe("loading a plugin's distribution", () => {
   it("fetches the requested source and reads its fetched path", async () => {
     const fetch = vi.fn().mockResolvedValue("/cache/fetched");
     const read = vi.fn().mockResolvedValue(dist);

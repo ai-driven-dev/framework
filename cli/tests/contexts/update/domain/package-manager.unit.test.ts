@@ -4,7 +4,7 @@ import {
   packageManagerOf,
 } from "../../../../src/contexts/update/domain/package-manager.js";
 
-describe("packageManagerOf", () => {
+describe("naming the update command of a package manager", () => {
   it.each([
     ["/home/me/.local/share/pnpm/aidd", "pnpm"],
     ["/home/me/.yarn/bin/aidd", "yarn"],

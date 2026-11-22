@@ -26,7 +26,7 @@ function setup(located: LocatedDirectory = repository(ROOT)) {
 
 const refused = (reason: string) => ({ status: "refused", reason });
 
-describe("ConsentedRepositories", () => {
+describe("opening the repositories that consented", () => {
   it("opens the repository whose key names an interval open for its clone", async () => {
     const { consents, history, open, located } = setup();
     if (located.status !== "repository" || located.clone === null) throw new Error("setup");

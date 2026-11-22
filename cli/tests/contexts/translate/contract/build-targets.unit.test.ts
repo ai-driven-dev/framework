@@ -6,7 +6,7 @@ import {
 import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { catalogDeclaring } from "../testing/declared-tool-catalog.builder.js";
 
-describe("buildTargetModesOf", () => {
+describe("listing the build modes of tools", () => {
   it("pairs each tool with every mode its profile declares a contract for", () => {
     const tools = catalogDeclaring([
       { id: TOOL.claude, buildModes: ["marketplace", "flat"] },
@@ -40,7 +40,7 @@ describe("buildTargetModesOf", () => {
   });
 });
 
-describe("supportedBuildTargets", () => {
+describe("listing the supported build targets", () => {
   it("names each target once, however many modes it supports", () => {
     const tools = catalogDeclaring([
       { id: TOOL.claude, buildModes: ["marketplace", "flat"] },

@@ -16,7 +16,7 @@ const existingJson = JSON.stringify({
   },
 });
 
-describe("McpConfigPart", () => {
+describe("an mcp config part", () => {
   describe("outputPath / accepts", () => {
     it("accepts the exact output path", () => {
       const cap = new McpConfigPart({ outputPath: ".claude/mcp.json", format: "json" });
@@ -29,7 +29,7 @@ describe("McpConfigPart", () => {
     });
   });
 
-  describe("transform", () => {
+  describe("when its config is transformed", () => {
     it("returns JSON as-is when format is json", () => {
       const cap = new McpConfigPart({ outputPath: ".claude/mcp.json", format: "json" });
       expect(cap.transform(sampleMcpJson)).toBe(sampleMcpJson);
@@ -43,7 +43,7 @@ describe("McpConfigPart", () => {
     });
   });
 
-  describe("merge", () => {
+  describe("when its config is merged", () => {
     it("uses injected mergeFn when provided", () => {
       const mergeFn = (_existing: string, incoming: string) => incoming;
       const cap = new McpConfigPart({ outputPath: ".mcp.json", format: "json", mergeFn });
@@ -74,7 +74,7 @@ describe("McpConfigPart", () => {
     });
   });
 
-  describe("equals", () => {
+  describe("when compared with another part", () => {
     it("returns true for identical params", () => {
       const a = new McpConfigPart({ outputPath: ".mcp.json", format: "json" });
       const b = new McpConfigPart({ outputPath: ".mcp.json", format: "json" });
@@ -180,7 +180,7 @@ function makeConfig(servers: Record<string, object>): string {
   return JSON.stringify({ mcpServers: servers }, null, 2);
 }
 
-describe("transformFor()", () => {
+describe("when a platform's transform is asked for", () => {
   it("returns undefined for linux", () => {
     expect(transformFor("linux")).toBeUndefined();
   });

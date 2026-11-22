@@ -27,7 +27,7 @@ const HOOKS_JSON = JSON.stringify({
   hooks: { Stop: [{ hooks: [{ type: "command", command: "node journal.cjs" }] }] },
 });
 
-describe("present(claude.buildContracts.marketplace)()", () => {
+describe("building Claude's marketplace contract", () => {
   it("declares Claude's own plugin manifest path, schema and root token", () => {
     const contract = present(claude.buildContracts.marketplace)();
 
@@ -83,7 +83,7 @@ describe("present(claude.buildContracts.marketplace)()", () => {
   });
 });
 
-describe("present(claude.buildContracts.flat)()", () => {
+describe("building Claude's flat contract", () => {
   it("lands a plugin's hooks declaration beside Claude's hooks and its scripts under the plugin's own folder", () => {
     const hooks = supported(present(claude.buildContracts.flat)().artifacts.hooks);
 

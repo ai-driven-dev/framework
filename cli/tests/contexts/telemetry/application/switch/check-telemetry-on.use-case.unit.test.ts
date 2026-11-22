@@ -10,7 +10,7 @@ import { InputRequiredError } from "../../../../../src/shared/domain/shared.erro
 const check = new CheckTelemetryOn(new CheckIdentity());
 const GIVEN = { yes: true, anonymous: false, interactive: true };
 
-describe("CheckTelemetryOn", () => {
+describe("checking a request to turn measurement on", () => {
   it("accepts a request that can be answered", () => {
     expect(() => check.execute({ ...GIVEN, as: "Ada Example" })).not.toThrow();
     expect(() => check.execute({ ...GIVEN, yes: false })).not.toThrow();

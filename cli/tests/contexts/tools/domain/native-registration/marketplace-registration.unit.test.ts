@@ -15,7 +15,7 @@ const activation = new NativeActivation({
   disableVerb: "uninstall",
 });
 
-describe("MarketplaceRegistration", () => {
+describe("a tool's marketplace registration", () => {
   it("reads back where and how the tool records its marketplaces", () => {
     const registration = new MarketplaceRegistration(settings, activation);
     expect(registration.sharedSettingsFile()).toBe(".claude/settings.json");
@@ -51,7 +51,7 @@ describe("MarketplaceRegistration", () => {
     expect(() => new MarketplaceRegistration(settings, null)).toThrow(CapabilityConfigError);
   });
 
-  describe("declaredMarketplaceNames", () => {
+  describe("reading the marketplaces a file declares", () => {
     const registration = new MarketplaceRegistration(settings, activation);
 
     it("is empty for a file that is not an object", () => {

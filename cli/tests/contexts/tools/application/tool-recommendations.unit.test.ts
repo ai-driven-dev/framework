@@ -14,7 +14,7 @@ function ctx(over: Partial<ConstructorParameters<typeof ProjectContext>[0]> = {}
 }
 
 describe("tool recommendations", () => {
-  describe("recommendAiTools", () => {
+  describe("when AI tools are recommended", () => {
     it("defaults to claude when no context", () => {
       expect(recommendAiTools(undefined)).toEqual(["claude"]);
     });
@@ -47,7 +47,7 @@ describe("tool recommendations", () => {
     });
   });
 
-  describe("recommendIdeTools", () => {
+  describe("when IDE tools are recommended", () => {
     it("returns nothing without context", () => {
       expect(recommendIdeTools(undefined)).toEqual([]);
     });

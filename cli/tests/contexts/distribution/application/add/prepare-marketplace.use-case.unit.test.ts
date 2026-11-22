@@ -29,7 +29,7 @@ function prepareOver(
   return { prepare, registry, trustStore };
 }
 
-describe("PrepareMarketplace", () => {
+describe("preparing a marketplace to add", () => {
   it("reports an untrusted source and saves nothing", async () => {
     const { prepare, registry } = prepareOver();
 

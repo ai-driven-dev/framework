@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CheckIdentity } from "../../../../../src/contexts/telemetry/application/identity/check-identity.use-case.js";
 
-describe("CheckIdentity", () => {
+describe("checking an identity", () => {
   it("accepts what can name a person, trimmed", () => {
     expect(new CheckIdentity().execute({ typed: "  Ada Example " })).toEqual({
       status: "valid",

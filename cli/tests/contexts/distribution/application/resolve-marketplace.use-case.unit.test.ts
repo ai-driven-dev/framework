@@ -36,7 +36,7 @@ function makeMarketplace(name: string): Marketplace {
   });
 }
 
-describe("ResolveMarketplace", () => {
+describe("resolving a marketplace and its catalog", () => {
   it("keeps a user-scope source's clone out of the project, and a project-scope one in it", () => {
     const useCase = new ResolveMarketplace(
       new FetchMarketplaceSource({

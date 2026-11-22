@@ -19,7 +19,7 @@ import {
 
 afterEach(restoreHostIo);
 
-describe("Codex", () => {
+describe("reading Codex hook payloads", () => {
   it("reads SessionStart from its captured payload", () => {
     const { payload } = sample("codex-SessionStart.json", 0);
 

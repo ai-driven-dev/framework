@@ -5,7 +5,7 @@ import { InvalidReportPeriodError } from "../../../../../src/contexts/telemetry/
 const resolve = new ParseReportFlags(() => new Date("2026-10-09T12:00:00.000Z"));
 const BASE = { axis: "day", filters: {}, cwd: "/work/a" } as const;
 
-describe("ParseReportFlags", () => {
+describe("reading the report flags", () => {
   it("covers the last n days ending today", () => {
     expect(resolve.execute({ ...BASE, days: "3" }).request.period).toEqual({
       from: "2026-10-07",

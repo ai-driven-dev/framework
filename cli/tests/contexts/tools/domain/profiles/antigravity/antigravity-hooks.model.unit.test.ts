@@ -26,7 +26,7 @@ function parse(content: string): Record<string, Record<string, unknown[]>> {
 }
 
 describe("antigravity's project hooks format", () => {
-  describe("merge", () => {
+  describe("when plugin hooks are merged", () => {
     it("writes one key named after the plugin, its handlers directly under SessionStart, run from the repo root", () => {
       const { content, warnings } = format.merge(null, MEMORY_HOOKS, "aidd-context");
 
@@ -128,7 +128,7 @@ describe("antigravity's project hooks format", () => {
     });
   });
 
-  describe("unmerge", () => {
+  describe("when plugin hooks are removed", () => {
     it("removes the plugin's key and leaves the user's untouched", () => {
       const { content } = format.merge(USER_HOOKS, MEMORY_HOOKS, "aidd-context");
 
@@ -136,7 +136,7 @@ describe("antigravity's project hooks format", () => {
     });
   });
 
-  describe("contributedEntries", () => {
+  describe("when the entries a plugin contributed are listed", () => {
     it.each([false, true])("reads handlers when the named hook has enabled: %s", (enabled) => {
       const { content } = format.merge(null, MEMORY_HOOKS, "aidd-context");
       const existing = JSON.parse(content);
@@ -175,7 +175,7 @@ describe("antigravity's project hooks format", () => {
     });
   });
 
-  describe("isEmpty", () => {
+  describe("when asked whether any hook is left", () => {
     it("is true only once no named hook is left", () => {
       expect(format.isEmpty("{}\n")).toBe(true);
       expect(format.isEmpty(USER_HOOKS)).toBe(false);

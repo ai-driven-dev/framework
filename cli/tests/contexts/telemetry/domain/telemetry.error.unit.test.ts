@@ -8,7 +8,7 @@ import {
   TaskNameMissingError,
 } from "../../../../src/contexts/telemetry/domain/telemetry.error.js";
 
-describe("ConflictingIdentityFlagsError", () => {
+describe("when ConflictingIdentityFlagsError is raised", () => {
   it("says nothing itself", () => {
     const error = new ConflictingIdentityFlagsError();
     expect({ name: error.name, message: error.message }).toStrictEqual({
@@ -22,7 +22,7 @@ describe("ConflictingIdentityFlagsError", () => {
   });
 });
 
-describe("InvalidIdentityError", () => {
+describe("when InvalidIdentityError is raised", () => {
   it("says nothing itself", () => {
     const error = new InvalidIdentityError();
     expect({ name: error.name, message: error.message }).toStrictEqual({
@@ -36,7 +36,7 @@ describe("InvalidIdentityError", () => {
   });
 });
 
-describe("InvalidReportPeriodError", () => {
+describe("when InvalidReportPeriodError is raised", () => {
   it("carries its detail and says nothing itself", () => {
     const error = new InvalidReportPeriodError("m");
     expect({ name: error.name, detail: error.detail, message: error.message }).toStrictEqual({
@@ -51,7 +51,7 @@ describe("InvalidReportPeriodError", () => {
   });
 });
 
-describe("TaskDeclaredNoneWithNameError", () => {
+describe("when TaskDeclaredNoneWithNameError is raised", () => {
   it("says nothing itself", () => {
     const error = new TaskDeclaredNoneWithNameError();
     expect({ name: error.name, message: error.message }).toStrictEqual({
@@ -65,7 +65,7 @@ describe("TaskDeclaredNoneWithNameError", () => {
   });
 });
 
-describe("TaskNameMissingError", () => {
+describe("when TaskNameMissingError is raised", () => {
   it("says nothing itself", () => {
     const error = new TaskNameMissingError();
     expect({ name: error.name, message: error.message }).toStrictEqual({
@@ -79,7 +79,7 @@ describe("TaskNameMissingError", () => {
   });
 });
 
-describe("IdentityOffWithIdentifierError", () => {
+describe("when IdentityOffWithIdentifierError is raised", () => {
   it("says nothing itself", () => {
     const error = new IdentityOffWithIdentifierError();
     expect({ name: error.name, message: error.message }).toStrictEqual({

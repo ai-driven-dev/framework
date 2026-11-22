@@ -14,7 +14,7 @@ const at = (relativePath: string, content: string) => ({
   content,
 });
 
-describe("hookScripts", () => {
+describe("placing hook scripts", () => {
   it("places every script and leaves out the plugin's own manifest", () => {
     const files = [
       { relativePath: PLUGIN_HOOKS_RELATIVE, content: "{}" },
@@ -61,7 +61,7 @@ function distWith(hooks: readonly { relativePath: string; content: string }[]) {
   });
 }
 
-describe("projectHooks", () => {
+describe("projecting a plugin's hooks", () => {
   const location = cursor.projectHooksDelivery();
   if (location === null) throw new Error("cursor delivers project hooks");
 
@@ -94,7 +94,7 @@ describe("projectHooks", () => {
   });
 });
 
-describe("withoutHooks", () => {
+describe("leaving a plugin's hooks out", () => {
   it("drops every hooks file from the file list and the hooks component alike", () => {
     const stripped = withoutHooks(distWith([MANIFEST, SCRIPT]));
 

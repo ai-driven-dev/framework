@@ -15,7 +15,7 @@ function registered(name: string, scope: Scope): Marketplace {
   });
 }
 
-describe("RemoveMarketplace", () => {
+describe("removing a marketplace", () => {
   it("forgets the marketplace at the scope named and no other", async () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT, registered("keep", "project"));

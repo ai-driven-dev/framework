@@ -3,7 +3,7 @@ import { namedAfterFolder } from "../../../../../src/contexts/translate/domain/r
 
 const SKILL = "---\nname: old\ndescription: Does it\n---\nBody\n";
 
-describe("namedAfterFolder", () => {
+describe("naming a skill after its folder", () => {
   it("names the skill after the folder its entry sits in", () => {
     expect(namedAfterFolder(SKILL, ".github/skills/aidd-dev-01-plan/SKILL.md")).toBe(
       "---\nname: 'aidd-dev-01-plan'\ndescription: 'Does it'\n---\nBody\n"

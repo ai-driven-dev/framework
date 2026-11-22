@@ -43,7 +43,7 @@ const COMMAND = {
   projectRoot: PROJECT_ROOT,
 };
 
-describe("PrepareMarketplace", () => {
+describe("preparing a marketplace against real files", () => {
   it("reports an untrusted source and saves nothing", async () => {
     const { prepare, registry, trustStore } = await build();
 

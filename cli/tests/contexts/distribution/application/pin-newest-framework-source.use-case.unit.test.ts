@@ -18,7 +18,7 @@ function releasesOf(tags: string[]): ReleaseLister {
 const pinNewestFrom = (lister: ReleaseLister) =>
   new PinNewestFrameworkSource(new ListFrameworkReleases(lister));
 
-describe("PinNewestFrameworkSource", () => {
+describe("pinning a source to the newest framework release", () => {
   it("returns a source that already names its release unchanged", async () => {
     const lister = releasesOf(["v9.9.9"]);
     const source = remoteFrameworkSource(undefined, "v1.0.0");

@@ -34,7 +34,7 @@ const REPORTED: ReportUsageResult = {
 const asking = (result: ReportUsageResult) =>
   new RequestReport({ execute: async () => result }).execute(COMMAND);
 
-describe("RequestReport", () => {
+describe("requesting a report", () => {
   it("adds what each filter selects to a reported result", async () => {
     expect(await asking(REPORTED)).toMatchObject({
       status: "reported",

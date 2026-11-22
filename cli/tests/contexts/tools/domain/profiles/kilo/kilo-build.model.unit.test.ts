@@ -32,7 +32,7 @@ function emit(input: {
   });
 }
 
-describe("buildKiloFlatContract", () => {
+describe("building Kilo's flat contract", () => {
   it("places agents, skills, hook scripts and its generated bridge under .kilo", () => {
     const { artifacts } = present(kilo.buildContracts.flat)();
     expect(artifactPath(supported(artifacts.agents), "aidd-dev", "agents/reviewer.md")).toBe(

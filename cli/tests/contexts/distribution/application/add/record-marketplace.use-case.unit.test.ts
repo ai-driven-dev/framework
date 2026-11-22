@@ -19,7 +19,7 @@ function build() {
   return { record: new RecordMarketplace(registry, trustStore), registry, trustStore, marketplace };
 }
 
-describe("RecordMarketplace", () => {
+describe("recording a prepared marketplace", () => {
   it("saves the marketplace and trusts its source when asked", async () => {
     const { record, registry, trustStore, marketplace } = build();
 

@@ -5,7 +5,7 @@ import { builtAgent } from "../../../../../shared/testing/built-agent.builder.js
 import { present } from "../../../../../shared/testing/present.builder.js";
 import { supported } from "../../../testing/build-artifacts.builder.js";
 
-describe("buildAntigravityFlatContract", () => {
+describe("building Antigravity's flat contract", () => {
   it("sits a skill one level under .agents/skills, the plugin hyphenated onto its name", () => {
     const skills = supported(present(antigravity.buildContracts.flat)().artifacts.skills);
     expect(artifactPath(skills, "aidd-dev", "skills/01-plan/SKILL.md")).toBe(

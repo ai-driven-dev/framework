@@ -3,7 +3,7 @@ import { CheckFilterValue } from "../../../../../src/contexts/telemetry/applicat
 
 const check = new CheckFilterValue();
 
-describe("CheckFilterValue", () => {
+describe("checking a filter value", () => {
   it("keeps the value trimmed", () => {
     expect(check.execute({ value: "  fix-login " })).toEqual({
       status: "valid",

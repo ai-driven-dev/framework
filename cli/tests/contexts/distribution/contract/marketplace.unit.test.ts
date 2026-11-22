@@ -5,7 +5,7 @@ import {
 } from "../../../../src/contexts/distribution/contract/marketplace.js";
 import { InvalidMarketplaceNameError } from "../../../../src/shared/domain/shared.error.js";
 
-describe("assertNotReservedMarketplaceName", () => {
+describe("when a marketplace name may be reserved", () => {
   it("refuses the name the framework registers itself under", () => {
     expect(() => assertNotReservedMarketplaceName(FRAMEWORK_MARKETPLACE_NAME)).toThrow(
       InvalidMarketplaceNameError

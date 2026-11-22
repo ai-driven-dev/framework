@@ -29,7 +29,7 @@ const HOOKS_JSON = JSON.stringify({
   },
 });
 
-describe("present(copilot.buildContracts.marketplace)()", () => {
+describe("building Copilot's marketplace contract", () => {
   it("declares Copilot's own plugin manifest path and root token, and validates it against no schema", () => {
     const contract = present(copilot.buildContracts.marketplace)();
 
@@ -140,7 +140,7 @@ describe("present(copilot.buildContracts.marketplace)()", () => {
   });
 });
 
-describe("present(copilot.buildContracts.flat)()", () => {
+describe("building Copilot's flat contract", () => {
   it("lands a plugin's hooks declaration beside the other hooks and its scripts under the plugin's own folder", () => {
     const hooks = supported(present(copilot.buildContracts.flat)().artifacts.hooks);
 

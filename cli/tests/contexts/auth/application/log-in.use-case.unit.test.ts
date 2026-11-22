@@ -8,7 +8,7 @@ import { FakeCliAuthProvider } from "../testing/fake-cli-auth-provider.fake.js";
 import { FakeIdentityVerifier } from "../testing/fake-identity-verifier.fake.js";
 import { InMemoryCredentialRecordRepository } from "../testing/in-memory-credential-record-repository.fake.js";
 
-describe("LogIn", () => {
+describe("logging in with a token or a provider", () => {
   describe("when a stored token is handed", () => {
     it("verifies that token and reports its login at the level asked", async () => {
       const identity = new FakeIdentityVerifier({ ghp_secret: "octocat" });

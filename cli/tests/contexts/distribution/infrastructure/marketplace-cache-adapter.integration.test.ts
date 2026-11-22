@@ -7,7 +7,7 @@ import { MarketplaceCacheAdapter } from "../../../../src/contexts/distribution/i
 
 // What clearing promises whatever holds the cache is in `ports/marketplace-cache.contract`;
 // what stays here is a cache directory that is not there.
-describe("MarketplaceCacheAdapter", () => {
+describe("clearing a marketplace cache", () => {
   let projectRoot: string;
 
   beforeEach(async () => {

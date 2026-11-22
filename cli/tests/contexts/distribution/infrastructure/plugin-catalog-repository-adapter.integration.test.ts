@@ -13,7 +13,7 @@ function makeAdapter(): PluginCatalogRepositoryAdapter {
   return new PluginCatalogRepositoryAdapter(new FileAdapter());
 }
 
-describe("PluginCatalogRepositoryAdapter", () => {
+describe("reading a plugin catalog from a marketplace", () => {
   describe("marketplace-sample fixture", () => {
     it("resolves relative local source path against framework directory", async () => {
       const adapter = makeAdapter();

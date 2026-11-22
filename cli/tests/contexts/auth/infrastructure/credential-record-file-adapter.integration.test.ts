@@ -26,7 +26,7 @@ async function asWin32<T>(run: () => Promise<T>, account: string | null = "teste
 
 const STORED = { method: "stored", token: "ghp_x" } as const;
 
-describe("CredentialRecordFileAdapter", () => {
+describe("storing a credential record in a file", () => {
   let root: string;
   let userDir: string;
   let records: CredentialRecordFileAdapter;

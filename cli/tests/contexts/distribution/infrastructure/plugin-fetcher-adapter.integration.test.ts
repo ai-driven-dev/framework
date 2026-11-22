@@ -54,7 +54,7 @@ function makeAdapter(): PluginFetcherAdapter {
   return new PluginFetcherAdapter(new FileAdapter(), new GitCloner(), new PnpmInstallerAdapter());
 }
 
-describe("PluginFetcherAdapter", () => {
+describe("fetching a plugin source", () => {
   describe("url source (file:// remote)", () => {
     it("returns cached path on second fetch (skips re-clone)", async () => {
       const sandbox = await mkdtemp(join(tmpdir(), "aidd-fetcher-cache-"));

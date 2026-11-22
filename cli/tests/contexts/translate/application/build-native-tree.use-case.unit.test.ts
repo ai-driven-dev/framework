@@ -34,7 +34,7 @@ function buildOver(files: Record<string, string>, sink = new RecordingSink()) {
 const catalogOf = (...names: string[]): string =>
   JSON.stringify({ plugins: names.map((name) => ({ name })) });
 
-describe("BuildNativeTree", () => {
+describe("building a native tree", () => {
   it("prepares the tree, writes each plugin in catalog order, then closes it", async () => {
     const { run, sink } = buildOver({
       [CATALOG]: catalogOf("a", "b"),

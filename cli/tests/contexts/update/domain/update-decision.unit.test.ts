@@ -6,7 +6,7 @@ import {
 
 const flags = (check: boolean, dryRun: boolean, force: boolean) => ({ check, dryRun, force });
 
-describe("decideUpdate", () => {
+describe("deciding what an update run does", () => {
   it.each<[string, string, string, ReturnType<typeof flags>, UpdateDecision]>([
     ["check, outdated", "2.5.0", "2.6.0", flags(true, false, false), "check-available"],
     ["check, current", "2.5.0", "2.5.0", flags(true, false, false), "check-current"],

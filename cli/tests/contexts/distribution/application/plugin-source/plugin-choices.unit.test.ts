@@ -15,7 +15,7 @@ function entry(fields: Partial<PluginCatalogEntry> & { name: string }): PluginCa
   };
 }
 
-describe("marketplaceChoices", () => {
+describe("offering marketplaces as choices", () => {
   it("offers each marketplace by name and scope", () => {
     const first: MarketplaceView = {
       name: "first",
@@ -32,7 +32,7 @@ describe("marketplaceChoices", () => {
   });
 });
 
-describe("pluginChoices", () => {
+describe("offering plugins as choices", () => {
   it("offers a described plugin with its description, and a bare one by name alone", () => {
     const described = entry({ name: "sample-plugin", description: "A sample", recommended: true });
     const bare = entry({ name: "bare-plugin" });

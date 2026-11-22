@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { injectTokenIntoUrl } from "../../../../src/contexts/distribution/infrastructure/inject-token.js";
 
-describe("injectTokenIntoUrl", () => {
+describe("injecting a token into a URL", () => {
   it("returns the URL unchanged when token is undefined", () => {
     const url = "https://github.com/owner/repo.git";
     expect(injectTokenIntoUrl(url, undefined)).toBe(url);

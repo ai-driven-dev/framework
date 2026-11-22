@@ -10,7 +10,7 @@ command = "npx"
 args = ["-y", "@anthropic-ai/mcp-playwright"]
 `;
 
-describe("mergeCodexConfigToml", () => {
+describe("merging Codex's config file", () => {
   it("writes full payload into empty file", () => {
     const result = mergeCodexConfigToml(TOML)("", MCP_PAYLOAD);
     expect(result).toContain("mcp_servers");

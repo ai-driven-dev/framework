@@ -18,7 +18,7 @@ function decider(identity: ManageIdentityResult, proposal: string | null = "Ada 
 
 const REQUEST = { cwd: "/repo", yes: false, anonymous: false };
 
-describe("DecideIdentity", () => {
+describe("deciding who is named on the measurement", () => {
   it("names the person a flag names, asking nothing", async () => {
     const { decide, manage } = decider(UNSET);
     expect(await decide.execute({ ...REQUEST, as: "Ada Example" })).toEqual({ set: "Ada Example" });

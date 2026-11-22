@@ -33,7 +33,7 @@ function releasesAnswering(answer: string | null | Error) {
   return { releases, asked };
 }
 
-describe("NpmRegistryReleaseAdapter", () => {
+describe("reading releases from the npm registry", () => {
   it("asks npm for plain JSON, then the releases for the notes of the cli tag", async () => {
     const { client, calls } = http({ [NPM_URL]: { latest: "1.2.3" } });
     const { releases, asked } = releasesAnswering("notes");

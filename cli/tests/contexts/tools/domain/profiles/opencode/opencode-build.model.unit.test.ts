@@ -50,7 +50,7 @@ function emit(input: {
   });
 }
 
-describe("present(opencode.buildContracts.flat)()", () => {
+describe("building OpenCode's flat contract", () => {
   it("reads both config spellings, and only checks each plugin's native and generated loader exists", () => {
     expect(configArtifactOf().reads(["aidd-dev"])).toStrictEqual([
       "opencode.jsonc",

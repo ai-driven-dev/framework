@@ -4,7 +4,7 @@ import { FakeCliReleaseSource } from "../testing/fake-cli-release-source.fake.js
 import { InMemoryUpdateCheckCache } from "../testing/in-memory-update-check-cache.fake.js";
 import { aRefreshUpdateCheck } from "../testing/update.builder.js";
 
-describe("RefreshUpdateCheck", () => {
+describe("refreshing the update check", () => {
   it("keeps the latest version with the time it was asked", async () => {
     const cache = new InMemoryUpdateCheckCache();
 

@@ -30,7 +30,7 @@ describe("the kilo config path chosen", () => {
   );
 });
 
-describe("KILO_OUTPUT_PATH_CANDIDATES", () => {
+describe("where Kilo's output may be written", () => {
   it("lists the project tier before the legacy root tier and falls back to the project jsonc", () => {
     expect(KILO_OUTPUT_PATH_CANDIDATES.tiers).toStrictEqual([
       [".kilo/kilo.json", ".kilo/kilo.jsonc"],

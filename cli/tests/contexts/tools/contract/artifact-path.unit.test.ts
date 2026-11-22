@@ -18,7 +18,7 @@ function placed(placement: ArtifactPlacement): SupportedArtifact {
   return { supported: true, source: { kind: "fullTree", srcDir: "." }, placement };
 }
 
-describe("artifactPath", () => {
+describe("placing an artifact", () => {
   it("places a skill from its layout", () => {
     expect(artifactPath(placed(skillsIn(layout)), "p", "skills/x/SKILL.md")).toBe(
       ".t/skills/p/x/SKILL.md"

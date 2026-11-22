@@ -7,7 +7,7 @@ const ANTIGRAVITY_HOOK_COMMANDS = [
   'node "./.agents/hooks/aidd-context/a b.js" --flag="x y"',
 ];
 
-describe("toBase64()", () => {
+describe("encoding a text as base64", () => {
   it.each([...ANTIGRAVITY_HOOK_COMMANDS, "", "a", "ab", "abc", "é漢😀", "node ./hooks/é.js"])(
     "matches Buffer's UTF-8 base64 for %j",
     (text) => {

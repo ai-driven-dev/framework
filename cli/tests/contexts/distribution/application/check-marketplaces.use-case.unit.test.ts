@@ -22,7 +22,7 @@ async function registryOf(...marketplaces: Marketplace[]): Promise<InMemoryMarke
   return registry;
 }
 
-describe("CheckMarketplaces", () => {
+describe("checking which marketplaces are stale", () => {
   it("hands out every registered marketplace", async () => {
     const registry = await registryOf(marketplaceAt("a", new Date()), marketplaceAt("b"));
     const check = new CheckMarketplaces(registry);
