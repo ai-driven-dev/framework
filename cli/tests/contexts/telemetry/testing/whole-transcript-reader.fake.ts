@@ -1,9 +1,9 @@
 import { constants, type Stats } from "node:fs";
 import { open } from "node:fs/promises";
+import type { EachTranscriptLine } from "../../../../src/contexts/telemetry/domain/transcript/line-splitter.js";
 import { resumeOffset } from "../../../../src/contexts/telemetry/domain/transcript-position.js";
 import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
 import type {
-  EachTranscriptLine,
   TranscriptRead,
   TranscriptRequest,
 } from "../../../../src/contexts/telemetry/ports/usage-source.js";

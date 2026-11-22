@@ -65,11 +65,9 @@ function lookingAtDirectories(deps: ResolutionRunDeps, memory: Memory) {
   const directories = new Map<string, Directory>();
   const { environment } = deps;
   const look = async (cwd: string): Promise<Directory> => {
-    const seen = {
-      dir: cwdKey(cwd, environment.caseInsensitiveFileSystem),
-      at: environment.now().toISOString(),
-    };
-    const looked = directoryFrom(await deps.locate(cwd), seen, memory.remembered);
+    const dir = cwdKey(cwd, environment.caseInsensitiveFileSystem);
+    const at = () => environment.now().toISOString();
+    const looked = directoryFrom(await deps.locate(cwd), { dir, at }, memory.remembered);
     memory.remembered = looked.remembered;
     return looked.directory;
   };

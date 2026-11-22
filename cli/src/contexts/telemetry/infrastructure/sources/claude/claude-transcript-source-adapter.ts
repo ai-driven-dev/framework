@@ -1,5 +1,5 @@
+import type { EachTranscriptLine } from "../../../domain/transcript/line-splitter.js";
 import type {
-  EachTranscriptLine,
   LineUsage,
   TranscriptRead,
   TranscriptRequest,

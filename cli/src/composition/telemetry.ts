@@ -47,7 +47,10 @@ import { ClaudeTranscriptSourceAdapter } from "../contexts/telemetry/infrastruct
 import { codexSessionRoots } from "../contexts/telemetry/infrastructure/sources/codex/codex-session-roots.js";
 import { CodexTranscriptSourceAdapter } from "../contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.js";
 import { ConsentHistoryAdapter } from "../contexts/telemetry/infrastructure/storage/consent/consent-history-adapter.js";
-import { BindingsLockAdapter } from "../contexts/telemetry/infrastructure/storage/declarations/bindings-lock-adapter.js";
+import {
+  BINDINGS_LOCK_NAME,
+  BindingsLockAdapter,
+} from "../contexts/telemetry/infrastructure/storage/declarations/bindings-lock-adapter.js";
 import { RepositoryDeclarationsAdapter } from "../contexts/telemetry/infrastructure/storage/declarations/repository-declarations-adapter.js";
 import { SessionBindingStoreAdapter } from "../contexts/telemetry/infrastructure/storage/declarations/session-binding-store-adapter.js";
 import { BindingSnapshotStoreAdapter } from "../contexts/telemetry/infrastructure/storage/ledger/binding-snapshot-store-adapter.js";
@@ -132,9 +135,7 @@ function wireStores(root: string) {
     resolutionStore: new ResolutionStoreAdapter(ledgerDir, storage, aliases),
     consentHistory: new ConsentHistoryAdapter(ledgerDir, storage),
     snapshotStore: new BindingSnapshotStoreAdapter(bindingsDir, storage, aliases),
-    bindingsLock: new BindingsLockAdapter(
-      directoryLock(bindingsDir, storage, "telemetry bindings store")
-    ),
+    bindingsLock: new BindingsLockAdapter(directoryLock(bindingsDir, storage, BINDINGS_LOCK_NAME)),
     sessions: new SessionBindingStoreAdapter(bindingsDir, storage),
     identity: new PersonIdentityAdapter(root, storage),
   };

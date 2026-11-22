@@ -5,10 +5,10 @@ import * as zlib from "node:zlib";
 import { isErrnoException } from "../../../../../shared/domain/reading/json-file.js";
 import type { UsageTool } from "../../../contract/usage-record.js";
 import { FrameSizeMismatch } from "../../../domain/telemetry.error.js";
+import type { EachTranscriptLine } from "../../../domain/transcript/line-splitter.js";
 import { LineSplitter } from "../../../domain/transcript/line-splitter.js";
 import type { TranscriptPosition } from "../../../domain/transcript-position.js";
 import type {
-  EachTranscriptLine,
   LineUsage,
   TranscriptRead,
   TranscriptRequest,

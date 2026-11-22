@@ -1,5 +1,8 @@
 import { join } from "node:path";
-import { BindingsLockAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/declarations/bindings-lock-adapter.js";
+import {
+  BINDINGS_LOCK_NAME,
+  BindingsLockAdapter,
+} from "../../../../src/contexts/telemetry/infrastructure/storage/declarations/bindings-lock-adapter.js";
 import { DirectoryLock } from "../../../../src/contexts/telemetry/infrastructure/storage/ledger/directory-lock.js";
 import {
   LedgerLock,
@@ -23,6 +26,6 @@ export function bindingsLockOver(
   options: Partial<LockOptions> = {}
 ): BindingsLockAdapter {
   return new BindingsLockAdapter(
-    directoryLockOver(dir, storage, { ...options, name: "telemetry bindings store" })
+    directoryLockOver(dir, storage, { ...options, name: BINDINGS_LOCK_NAME })
   );
 }

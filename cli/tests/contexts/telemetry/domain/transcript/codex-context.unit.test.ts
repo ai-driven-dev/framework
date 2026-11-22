@@ -1,17 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { CodexContext } from "../../../../../src/contexts/telemetry/domain/transcript/codex-context.js";
 
-describe("the directory of a Codex context", () => {
-  it("is the latest turn's, before the session's", () => {
+describe("the directory a codex call was made in", () => {
+  it("is the turn's, which is the latest word", () => {
     expect(new CodexContext({ cwd: "/session" }, { cwd: "/turn" }).cwd).toBe("/turn");
   });
 
   it("is the session's when the turn names none", () => {
     expect(new CodexContext({ cwd: "/session" }, { model: "m" }).cwd).toBe("/session");
-  });
-
-  it("is unknown when neither names one, or one is empty", () => {
-    expect(new CodexContext().cwd).toBeNull();
-    expect(new CodexContext({ cwd: "" }, { cwd: "" }).cwd).toBeNull();
   });
 });

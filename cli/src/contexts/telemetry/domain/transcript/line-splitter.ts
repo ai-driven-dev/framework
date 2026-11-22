@@ -1,7 +1,7 @@
 const NEWLINE = 0x0a;
 
 /** Receives each complete line, and whether it ends at or after the offset counting began. */
-type EachLine = (line: string, counted: boolean) => void;
+export type EachTranscriptLine = (line: string, counted: boolean) => void;
 
 /** Cuts bytes pushed in order into complete lines, split on byte 0x0a only. A line split
  * across pushes is kept in pieces and decoded once whole: byte 0x0a is never inside a UTF-8
@@ -16,7 +16,7 @@ export class LineSplitter {
   constructor(
     from: number,
     private readonly countFrom: number,
-    private readonly each: EachLine
+    private readonly each: EachTranscriptLine
   ) {
     this.at = from;
     this.consumed = from;

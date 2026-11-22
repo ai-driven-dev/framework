@@ -157,3 +157,41 @@ describe("what a run says of the directory a call was made in", () => {
     expect(await run.resolve(DIR, CALL)).toEqual({ skipped: "no-consent" });
   });
 });
+
+describe("the moment a run remembers a directory at", () => {
+  function clockedRun(directory: Parameters<FakeLocator["directories"]["set"]>[1]) {
+    const reads: string[] = [];
+    let instant = Date.parse(CALL);
+    const run = startResolutionRun({
+      locate: async () => {
+        instant += 60_000;
+        return directory;
+      },
+      readClone: (clone) => new FakeConsents().readClone(clone),
+      environment: {
+        caseInsensitiveFileSystem: false,
+        now: () => {
+          reads.push(new Date(instant).toISOString());
+          return new Date(instant);
+        },
+      },
+      remembered: new RememberedResolutions(new Map()),
+      consents: new ConsentLog({ events: opened, damaged: false }),
+      unreadable: new Set(),
+    });
+    return { run, reads };
+  }
+
+  it("is the time after the directory was looked at, not before", async () => {
+    const { run } = clockedRun(repository(DIR));
+    await run.resolve(DIR, CALL);
+    const [seen] = [...run.learned.sightings.values()];
+    expect(seen?.seen_at).toBe("2026-03-01T00:01:00.000Z");
+  });
+
+  it("is not asked for a directory that is not remembered", async () => {
+    const { run, reads } = clockedRun({ status: "outside-repository" });
+    await run.resolve(DIR, CALL);
+    expect(reads).toEqual([]);
+  });
+});

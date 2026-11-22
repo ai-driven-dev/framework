@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ConsentLog } from "../../../../../src/contexts/telemetry/domain/consent/consent-log.js";
 import { RememberedResolutions } from "../../../../../src/contexts/telemetry/domain/remembered-resolutions.js";
+import { resolutionKey } from "../../../../../src/contexts/telemetry/domain/repository-resolution.js";
 import {
   directoryFrom,
   type ResolutionState,
@@ -11,14 +12,16 @@ import { tokenOf } from "../../testing/clone.builder.js";
 import { A, repository } from "../../testing/ingest-usage-setup.builder.js";
 
 const DIR = "/work/a";
-const AT = "2026-03-01T00:00:00.000Z";
-const never = async () => false;
+const OPENED = "2026-01-01T00:00:00.000Z";
+const BEFORE = "2025-12-01T00:00:00.000Z";
+const AFTER = "2026-03-01T00:00:00.000Z";
+const sighting = { dir: DIR, repository_id: "r", root: DIR, clone: A, seen_at: OPENED };
 
 function stateOf(damaged = false): ResolutionState {
   return {
-    remembered: new RememberedResolutions(new Map()),
+    remembered: new RememberedResolutions(new Map([[resolutionKey(DIR, A), sighting]])),
     consents: new ConsentLog({
-      events: [{ kind: "open", token: tokenOf(A), clone: A, at: "2026-01-01T00:00:00.000Z" }],
+      events: [{ kind: "open", token: tokenOf(A), clone: A, at: OPENED }],
       damaged,
     }),
     unreadable: new Set(),
@@ -26,60 +29,43 @@ function stateOf(damaged = false): ResolutionState {
   };
 }
 
-describe("what a directory is", () => {
-  it("is never seen alive when it is gone and nothing remembers it", () => {
+describe("a verdict no read can give yet", () => {
+  it("allows consent for a directory a clone that consented was seen in", () => {
+    expect(unreadableAt(stateOf(), DIR, AFTER)).toMatchObject({ mayConsent: true });
+  });
+
+  it("allows none while the consent log is damaged", () => {
+    expect(unreadableAt(stateOf(true), DIR, AFTER)).toMatchObject({ mayConsent: false });
+  });
+});
+
+describe("what a gone directory is", () => {
+  it("is a directory seen alive before, in no clone now", () => {
     const { directory } = directoryFrom(
       { status: "gone" },
-      { dir: DIR, at: AT },
+      { dir: DIR, at: () => AFTER },
       stateOf().remembered
     );
-    expect(directory).toEqual({ skipped: "never-seen-alive" });
+    expect(directory).toMatchObject({ current: null, owners: [{ dir: DIR }] });
   });
+});
 
-  it("is outside any repository when git says so", () => {
+describe("the verdict on a call before its clone consented", () => {
+  const verdict = async (closed: boolean) => {
+    const state = stateOf();
     const { directory } = directoryFrom(
-      { status: "outside-repository" },
-      { dir: DIR, at: AT },
-      stateOf().remembered
-    );
-    expect(directory).toEqual({ skipped: "outside-repo" });
-  });
-
-  it("is remembered as alive, in its clone, once seen in a repository", () => {
-    const { directory, remembered } = directoryFrom(
       repository(DIR),
-      { dir: DIR, at: AT },
-      stateOf().remembered
+      { dir: DIR, at: () => AFTER },
+      state.remembered
     );
-    expect("owners" in directory && directory.current).not.toBeNull();
-    expect(remembered.changed).toBe(true);
-  });
-});
+    return verdictOn(directory, { cwd: DIR, at: BEFORE, closed: async () => closed }, state);
+  };
 
-describe("a verdict no read can give yet", () => {
-  it("never allows consent while the consent log is damaged", () => {
-    expect(unreadableAt(stateOf(true), DIR, AT)).toEqual({
-      skipped: "unreadable-consent",
-      mayConsent: false,
-    });
-  });
-});
-
-describe("the verdict on a call", () => {
-  it("gives the reason a directory was left out for", async () => {
-    const state = stateOf();
-    const outcome = await verdictOn(
-      { skipped: "outside-repo" },
-      { cwd: DIR, at: AT, closed: never },
-      state
-    );
-    expect(outcome).toEqual({ skipped: "outside-repo" });
+  it("says the consent closed when the clone's key names a closed interval", async () => {
+    expect(await verdict(true)).toEqual({ skipped: "consent-closed" });
   });
 
-  it("stores a call of a live clone that consented", async () => {
-    const state = stateOf();
-    const { directory } = directoryFrom(repository(DIR), { dir: DIR, at: AT }, state.remembered);
-    const outcome = await verdictOn(directory, { cwd: DIR, at: AT, closed: never }, state);
-    expect(outcome).toMatchObject({ live: true });
+  it("says there was none otherwise", async () => {
+    expect(await verdict(false)).toEqual({ skipped: "no-consent" });
   });
 });

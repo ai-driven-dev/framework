@@ -2,17 +2,14 @@ import { constants, type Stats } from "node:fs";
 import { type FileHandle, open, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { isErrnoException } from "../../../../shared/domain/reading/json-file.js";
+import type { EachTranscriptLine } from "../../domain/transcript/line-splitter.js";
 import { LineSplitter } from "../../domain/transcript/line-splitter.js";
 import {
   resumeOffset,
   type TranscriptPosition,
   type TranscriptStat,
 } from "../../domain/transcript-position.js";
-import type {
-  EachTranscriptLine,
-  TranscriptRead,
-  TranscriptRequest,
-} from "../../ports/usage-source.js";
+import type { TranscriptRead, TranscriptRequest } from "../../ports/usage-source.js";
 import { modifiedAtIfPresent } from "../reading/text-file.js";
 
 const NEWLINE = 0x0a;

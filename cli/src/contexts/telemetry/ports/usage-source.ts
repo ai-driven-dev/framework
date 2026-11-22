@@ -1,4 +1,5 @@
 import type { UsageRecord } from "../contract/usage-record.js";
+import type { EachTranscriptLine } from "../domain/transcript/line-splitter.js";
 import type { LineNames, TranscriptPosition } from "../domain/transcript-position.js";
 
 /** Which transcript to read, and from where.
@@ -8,9 +9,6 @@ export interface TranscriptRequest {
   readonly since: TranscriptPosition | null;
   readonly writtenFrom: number;
 }
-
-/** Receives each complete line, and whether it is counted. */
-export type EachTranscriptLine = (line: string, counted: boolean) => void;
 
 export interface TranscriptRead {
   /** `null`: the file shrank while it was read. The lines handed over

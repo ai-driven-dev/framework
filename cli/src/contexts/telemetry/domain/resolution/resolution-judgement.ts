@@ -51,13 +51,14 @@ export function unreadableAt(state: ResolutionState, cwd: string, at: string): D
   return { skipped: "unreadable-consent", mayConsent };
 }
 
-/** What a directory is, once looked at `at`, and what is remembered of it after. */
+/** What a directory is, once looked at, and what is remembered of it after. `at` gives the
+ * moment, and is asked only for a directory that is remembered. */
 export function directoryFrom(
   located: LocatedDirectory,
-  seen: { readonly dir: string; readonly at: string },
+  seen: { readonly dir: string; readonly at: () => string },
   remembered: RememberedResolutions
 ): { readonly directory: Directory; readonly remembered: RememberedResolutions } {
-  const { dir, at } = seen;
+  const { dir } = seen;
   if (located.status === "gone") {
     const [first, ...others] = remembered.ownersOf(dir);
     const directory: Directory =
@@ -86,7 +87,7 @@ export function directoryFrom(
     repositoryId: id,
     root: located.root,
     clone: located.clone,
-    at,
+    at: seen.at(),
   });
   const others = learned.ownersOf(dir).filter((owner) => !sameClone(owner.clone, current.clone));
   return { directory: { owners: [current, ...others], current }, remembered: learned };
