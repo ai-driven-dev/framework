@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { cloneKey } from "../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
-import { ConsentLog } from "../../../../../src/contexts/telemetry/domain/consent/consent-log.js";
-import { RememberedResolutions } from "../../../../../src/contexts/telemetry/domain/remembered-resolutions.js";
-import { resolutionKey } from "../../../../../src/contexts/telemetry/domain/repository-resolution.js";
-import { ResolutionRun } from "../../../../../src/contexts/telemetry/domain/resolution/resolution-run.js";
-import { cloneOf, grantedBy, tokenOf } from "../../testing/clone.builder.js";
-import { FakeConsents } from "../../testing/fake-consents.fake.js";
-import { FakeLocator } from "../../testing/fake-locator.fake.js";
-import { A, repository } from "../../testing/ingest-usage-setup.builder.js";
+import { startResolutionRun } from "../../../../src/contexts/telemetry/application/resolution-run.js";
+import { cloneKey } from "../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
+import { ConsentLog } from "../../../../src/contexts/telemetry/domain/consent/consent-log.js";
+import { RememberedResolutions } from "../../../../src/contexts/telemetry/domain/remembered-resolutions.js";
+import { resolutionKey } from "../../../../src/contexts/telemetry/domain/repository-resolution.js";
+import { cloneOf, grantedBy, tokenOf } from "../testing/clone.builder.js";
+import { FakeConsents } from "../testing/fake-consents.fake.js";
+import { FakeLocator } from "../testing/fake-locator.fake.js";
+import { A, repository } from "../testing/ingest-usage-setup.builder.js";
 
 const OPENED = "2026-01-01T00:00:00.000Z";
 const CLOSED = "2026-02-01T00:00:00.000Z";
@@ -34,7 +34,7 @@ function world(
   const remembered = new RememberedResolutions(
     new Map(options.remembered ? [[resolutionKey(DIR, A), sighting]] : [])
   );
-  const run = new ResolutionRun({
+  const run = startResolutionRun({
     locate: (cwd) => locator.locate(cwd),
     readClone: (clone) => consents.readClone(clone),
     environment: { caseInsensitiveFileSystem: false, now: () => new Date(CALL) },

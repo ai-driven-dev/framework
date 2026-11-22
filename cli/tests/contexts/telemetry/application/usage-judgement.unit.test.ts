@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { ReadUsageResult } from "../../../../src/contexts/telemetry/application/read-usage.use-case.js";
+import { startResolutionRun } from "../../../../src/contexts/telemetry/application/resolution-run.js";
 import { judgeReading } from "../../../../src/contexts/telemetry/application/usage-judgement.js";
 import { ConsentLog } from "../../../../src/contexts/telemetry/domain/consent/consent-log.js";
 import { RememberedResolutions } from "../../../../src/contexts/telemetry/domain/remembered-resolutions.js";
-import { ResolutionRun } from "../../../../src/contexts/telemetry/domain/resolution/resolution-run.js";
 import { tokenOf } from "../testing/clone.builder.js";
 import { FakeConsents } from "../testing/fake-consents.fake.js";
 import { FakeLocator } from "../testing/fake-locator.fake.js";
@@ -16,7 +16,7 @@ const AT = "2026-03-01T00:00:00.000Z";
 function runWith(directory: ReturnType<typeof repository> | undefined) {
   const locator = new FakeLocator();
   if (directory) locator.directories.set(DIR, directory);
-  return new ResolutionRun({
+  return startResolutionRun({
     locate: (cwd) => locator.locate(cwd),
     readClone: (clone) => new FakeConsents().readClone(clone),
     environment: { caseInsensitiveFileSystem: false, now: () => new Date(AT) },
