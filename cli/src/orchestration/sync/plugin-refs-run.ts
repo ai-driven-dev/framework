@@ -9,8 +9,12 @@ export type SyncedMarketplaces = SyncContext["marketplaces"];
  * refs sit on which host. */
 export interface RefRules {
   readonly refOnHostName: (plugin: string, hostName: string) => string;
+  readonly claimedRefs: (
+    record: NonNullable<ReturnType<SyncedManifest["getNativeRegistrations"]>>
+  ) => readonly string[];
   readonly refsOnHosts: (
     record: NonNullable<ReturnType<SyncedManifest["getNativeRegistrations"]>>,
+    claimedRefs: readonly string[],
     hostNames: Iterable<string>
   ) => string[];
 }

@@ -63,7 +63,7 @@ async function heldRefs(run: RegistrationRun): Promise<HeldRefs | undefined> {
   if (hostRegistry === undefined) return undefined;
   return {
     onHost: (await hostRegistry.read(run.projectRoot)).refs,
-    machineClaimed: new Set(((await claims.machine())?.pluginClaims ?? []).map((c) => c.ref)),
+    machineClaimed: new Set((await claims.machine())?.claimedRefs),
     ownRefs: pluginRefsOf(claims.recorded),
     ownClaimStands: !profile.pluginEnablementIsMachineGlobal() || !claims.machineKept,
   };

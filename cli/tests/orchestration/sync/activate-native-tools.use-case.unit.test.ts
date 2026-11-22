@@ -64,6 +64,7 @@ function activatorOf(register: Register["execute"]) {
   const logger = new CapturingLogger();
   const records = {
     refOnHostName: (name: string, hostName: string) => `${name}@${hostName}`,
+    claimedRefs: vi.fn(() => []),
     refsOnHosts: vi.fn(() => ["recorded@host-market"]),
   };
   const useCase = new ActivateNativeTools({
@@ -196,6 +197,7 @@ describe("ActivateNativeTools", () => {
       expect(user.asked).toEqual(["recorded@host-market"]);
       expect(user.records.refsOnHosts).toHaveBeenCalledWith(
         expect.objectContaining({ pluginRefs: ["recorded@host-market"] }),
+        [],
         ["host-market", "host-framework"]
       );
       expect(project.asked).toEqual([]);

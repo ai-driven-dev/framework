@@ -41,6 +41,7 @@ function mergeCatalogue(
 export function recordClaimRules(host: HostRecordRules): RecordClaimRules {
   return {
     claimsOf: (record) => readHeldClaims(record?.pluginClaims),
+    claimedRefs: (record) => readHeldClaims(record?.pluginClaims).map((claim) => claim.ref),
     holdersOf,
     claimsOnMarketplace: (record, alias) => {
       const off = offMarketplace(host, record, alias);

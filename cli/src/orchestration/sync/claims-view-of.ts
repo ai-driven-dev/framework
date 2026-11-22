@@ -14,7 +14,7 @@ export type RecordFacts = Pick<
 export function claimsViewOf(
   facts: RecordFacts,
   toolId: ToolId,
-  rules: Pick<RecordClaimRules, "claimsOf">
+  rules: Pick<RecordClaimRules, "claimedRefs">
 ): ClaimsView {
   return {
     recorded: facts.manifest.getNativeRegistrations(toolId),
@@ -22,7 +22,7 @@ export function claimsViewOf(
       const registrations = (await facts.machineManifest())?.getNativeRegistrations(toolId);
       return registrations === undefined
         ? undefined
-        : { ...registrations, pluginClaims: rules.claimsOf(registrations) };
+        : { ...registrations, claimedRefs: rules.claimedRefs(registrations) };
     },
     machineKept: facts.machineKept,
     persistedProject: async () => (await facts.persistedProject())?.getNativeRegistrations(toolId),

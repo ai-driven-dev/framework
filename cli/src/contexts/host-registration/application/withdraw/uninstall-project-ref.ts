@@ -56,11 +56,8 @@ async function leftEnabledForMachine(run: ProjectToolRun, ref: string): Promise<
   const { deps, withdrawal, registrations, facts } = run;
   const { tool } = withdrawal;
   const { binary } = registrations;
-  const claim = (await facts.machineClaims(tool.toolId))?.find(
-    (candidate) => candidate.ref === ref
-  );
-  if (claim !== undefined) {
-    const others = claim.dependents.filter((dependent) => dependent !== facts.projectRoot);
+  if ((await facts.machine.claimedRefs(tool.toolId))?.includes(ref) === true) {
+    const others = await facts.machine.othersHolding(tool.toolId, [ref], facts.projectRoot);
     deps.logger.warn(
       `${binary}: '${ref}' is an AIDD-owned machine plugin ref — left enabled; project claim detached after local clean.${stillNeededBy(others)}`
     );

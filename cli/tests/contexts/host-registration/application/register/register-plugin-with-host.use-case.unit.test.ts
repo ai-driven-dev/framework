@@ -93,9 +93,9 @@ function setup(
 }
 
 const EARLIER = { alias: "aidd", hostName: "aidd", provenance: OWN };
-const CLAIMED = { marketplaces: [EARLIER] };
+const CLAIMED = { marketplaces: [EARLIER], claimedRefs: [] };
 const REF = "p@aidd";
-const RECORD = { marketplaces: [], pluginRefs: [REF], pluginClaims: [], binary: "claude" };
+const RECORD = { marketplaces: [], pluginRefs: [REF], binary: "claude" };
 const enabled = (...refs: string[]) => ({
   location: "p",
   refs: new Map(refs.map((ref) => [ref, { enabled: true }])),
@@ -212,7 +212,6 @@ describe("register plugin with host", () => {
     const recorded = {
       marketplaces: [EARLIER],
       pluginRefs: [],
-      pluginClaims: [],
       binary: "claude",
     };
     const { run } = setup({
@@ -238,7 +237,7 @@ describe("register plugin with host", () => {
     const host = { sources: new Map([["aidd", OWN]]), plugins: enabled(REF), refs: [REF] };
 
     it.each([
-      ["machine claim", { machine: async () => ({ ...CLAIMED, pluginClaims: [{ ref: REF }] }) }],
+      ["machine claim", { machine: async () => ({ ...CLAIMED, claimedRefs: [REF] }) }],
       [
         "own record",
         {

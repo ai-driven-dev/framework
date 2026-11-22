@@ -35,7 +35,7 @@ export interface SyncSettingsDeps {
   readonly machineClaims: MachineClaimsRecording;
   readonly sharedSource: SharedFrameworkSource;
   readonly records: Pick<RegistrationRecordRules, "afterActivation"> &
-    Pick<RecordClaimRules, "claimsOf">;
+    Pick<RecordClaimRules, "claimedRefs">;
 }
 
 function resultOf(activation: ActivationRecording["activation"]): SyncSettingsResult {

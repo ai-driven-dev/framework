@@ -122,22 +122,16 @@ async function heldByMachine(
   const { tool } = withdrawal;
   if (!tool.pluginEnablementIsMachineGlobal()) return false;
   const { binary } = registrations;
-  const machine = await facts.machineClaims(tool.toolId);
+  const machine = await facts.machine.claimedRefs(tool.toolId);
   if (machine === undefined && alias !== facts.frameworkAlias) {
     deps.logger.warn(
       `${binary}: '${hostName}' is machine-global but no user manifest can prove no other project still uses it — left registered for manual cleanup.`
     );
     return true;
   }
-  const claims = (machine ?? []).filter((claim) => isRefOnHost(claim.ref, hostName));
-  if (claims.length === 0) return false;
-  const others = [
-    ...new Set(
-      claims.flatMap((claim) =>
-        claim.dependents.filter((dependent) => dependent !== facts.projectRoot)
-      )
-    ),
-  ];
+  const refs = (machine ?? []).filter((ref) => isRefOnHost(ref, hostName));
+  if (refs.length === 0) return false;
+  const others = await facts.machine.othersHolding(tool.toolId, refs, facts.projectRoot);
   deps.logger.warn(
     `${binary}: '${hostName}' carries AIDD-owned machine plugin refs — left registered for explicit user-scope removal.${stillNeededBy(others)}`
   );

@@ -230,9 +230,11 @@ describe("registration record queries and removals", () => {
   });
 
   describe("refsOnHosts", () => {
+    const claimed = ["a@catalog", "b@second"];
+
     it("keeps the refs and claimed refs on a proven host, refs first", () => {
-      expect(refsOnHosts(recordWith(), ["second"])).toEqual(["b@second", "b@second"]);
-      expect(refsOnHosts(recordWith(), ["catalog"])).toEqual([
+      expect(refsOnHosts(recordWith(), claimed, ["second"])).toEqual(["b@second", "b@second"]);
+      expect(refsOnHosts(recordWith(), claimed, ["catalog"])).toEqual([
         "a@catalog",
         "c@catalog",
         "a@catalog",
@@ -240,12 +242,11 @@ describe("registration record queries and removals", () => {
     });
 
     it("keeps nothing for a host that is not proven", () => {
-      expect(refsOnHosts(recordWith(), [])).toEqual([]);
+      expect(refsOnHosts(recordWith(), claimed, [])).toEqual([]);
     });
 
-    it("reads a record without claims", () => {
-      const { pluginClaims: _claims, ...bare } = recordWith();
-      expect(refsOnHosts(bare, ["catalog"])).toEqual(["a@catalog", "c@catalog"]);
+    it("reads a record without claimed refs", () => {
+      expect(refsOnHosts(recordWith(), [], ["catalog"])).toEqual(["a@catalog", "c@catalog"]);
     });
   });
 

@@ -106,12 +106,12 @@ export async function assertNoForeignRefs(
 ): Promise<void> {
   const { withdrawal, registrations, facts } = held;
   const { tool } = withdrawal;
-  const claims = (await facts.machineClaims(tool.toolId)) ?? [];
+  const claimed = (await facts.machine.claimedRefs(tool.toolId)) ?? [];
   await assertNoForeignNativeRefs(
     { reader: deps.ports.pluginRegistries.get(tool.toolId), tool },
     {
       hostName,
-      ownedRefs: new Set([...registrations.pluginRefs, ...claims.map((claim) => claim.ref)]),
+      ownedRefs: new Set([...registrations.pluginRefs, ...claimed]),
       projectRoot: facts.projectRoot,
     }
   );

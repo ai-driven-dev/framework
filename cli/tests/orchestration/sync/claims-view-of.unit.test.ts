@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
+import type { NativeRegistrations } from "../../../src/contexts/installation/domain/manifest/native-registrations.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { claimsViewOf } from "../../../src/orchestration/sync/claims-view-of.js";
 import { claimsRecorded } from "../../shared/testing/host-record-reading.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
-const rules = { claimsOf: claimsRecorded };
+const rules = {
+  claimedRefs: (registrations: NativeRegistrations | undefined) =>
+    claimsRecorded(registrations).map((claim) => claim.ref),
+};
 const tool = TOOL.copilot;
 const other = TOOL.codex;
 
@@ -47,7 +51,9 @@ describe("the claims a host registration is checked against", () => {
 
     expect(reads).toBe(0);
     expect(view.machineKept).toBe(true);
-    expect((await view.machine())?.pluginRefs).toEqual(["machine@catalog"]);
+    const machine = await view.machine();
+    expect(machine?.pluginRefs).toEqual(["machine@catalog"]);
+    expect(machine?.claimedRefs).toEqual([]);
     expect(reads).toBe(1);
   });
 

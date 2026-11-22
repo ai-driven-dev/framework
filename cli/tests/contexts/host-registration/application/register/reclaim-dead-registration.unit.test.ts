@@ -24,7 +24,10 @@ const USER_ROOT = "/home/.config/aidd";
 const ADD_ERROR = new NativePluginCliError("already added");
 const SUBJECT = { name: "aidd", scope: "project" as const };
 const KNOWN: Partial<ClaimsView> = {
-  machine: async () => ({ marketplaces: [{ alias: "aidd", hostName: "aidd", provenance: OWN }] }),
+  machine: async () => ({
+    marketplaces: [{ alias: "aidd", hostName: "aidd", provenance: OWN }],
+    claimedRefs: [],
+  }),
 };
 
 function setup(

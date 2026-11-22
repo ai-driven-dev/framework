@@ -24,7 +24,10 @@ export interface RemoveUserMarketplaceDeps {
   readonly hostGate: Pick<NativeHostRegistrationGate, "planMarketplaceRemoval">;
   readonly home: string;
   readonly records: Pick<RegistrationRecordRules, "marketplaceOf"> &
-    Pick<RecordClaimRules, "claimsOnMarketplace" | "withoutMarketplace" | "holdersOf">;
+    Pick<
+      RecordClaimRules,
+      "claimsOnMarketplace" | "withoutMarketplace" | "claimedRefs" | "holdersOf"
+    >;
 }
 
 type HostRemovalPlan = Awaited<ReturnType<NativeHostRegistrationGate["planMarketplaceRemoval"]>>;
@@ -32,7 +35,7 @@ type HostRemovalPlan = Awaited<ReturnType<NativeHostRegistrationGate["planMarket
 /** Uninstalls each plugin ref the plan kept at the scope the host holds it, the user scope when
  * the host names none, then the catalogue itself at the user scope. */
 function withdrawFromHost(hostName: string, { activator, refs, scopes }: HostRemovalPlan): void {
-  for (const claim of refs) activator.uninstallPlugin(claim.ref, scopes.get(claim.ref) ?? "user");
+  for (const ref of refs) activator.uninstallPlugin(ref, scopes.get(ref) ?? "user");
   activator.removeMarketplace(hostName, "user");
 }
 
@@ -72,6 +75,7 @@ export class RemoveUserMarketplace {
           plan: await this.deps.hostGate.planMarketplaceRemoval(tool, registrations, {
             registration,
             projectRoot,
+            claimedRefs: this.deps.records.claimedRefs(registrations),
           }),
         }),
         apply: ({ hostName, plan }) => withdrawFromHost(hostName, plan),

@@ -5,7 +5,6 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { WithdrawalClaimsView } from "../../contract/claims-view.js";
 import type {
-  DependentClaim,
   RegistrationRecord,
   RegistrationRecordData,
 } from "../../domain/record/registration-record.js";
@@ -96,8 +95,17 @@ export interface ProjectCleanFacts {
     | undefined;
   /** The alias the framework's own marketplace is registered under. */
   readonly frameworkAlias: string;
-  /** The machine-wide claims on `tool`'s refs; `undefined` when no machine record exists. */
-  readonly machineClaims: (tool: AiToolId) => Promise<readonly DependentClaim[] | undefined>;
+  /** The machine-wide claims, answered by the caller that keeps them. */
+  readonly machine: {
+    /** The refs claimed on `tool`; `undefined` when no machine record exists. */
+    readonly claimedRefs: (tool: AiToolId) => Promise<readonly string[] | undefined>;
+    /** The projects other than `projectRoot` holding any of `refs`, once each. */
+    readonly othersHolding: (
+      tool: AiToolId,
+      refs: readonly string[],
+      projectRoot: string
+    ) => Promise<readonly string[]>;
+  };
   /** Runs `action` holding the machine record's lock when there is one to lock. */
   readonly exclusive: <T>(action: () => Promise<T>) => Promise<T>;
   readonly resolveCacheCandidate: CacheCandidateResolver;

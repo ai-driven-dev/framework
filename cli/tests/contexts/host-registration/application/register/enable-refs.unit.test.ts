@@ -35,7 +35,7 @@ describe("enableRefs", () => {
   it("counts a ref the machine already claims as owned without enabling it again", async () => {
     const { run, activator } = setup({
       plugins: enabled("x@aidd"),
-      claims: { machine: async () => ({ marketplaces: [], pluginClaims: [{ ref: "x@aidd" }] }) },
+      claims: { machine: async () => ({ marketplaces: [], claimedRefs: ["x@aidd"] }) },
     });
     expect(await enableRefs(run, ask("x@aidd"), proven)).toEqual(["x@aidd"]);
     expect(activator.enabledPlugins).toEqual([]);

@@ -7,27 +7,36 @@ import {
 } from "../testing/in-memory-machine-manifest.fake.js";
 
 describe("reading the machine-wide claims on a tool's refs", () => {
-  it("names the claims the record holds for the tool", async () => {
+  const held = [
+    { ref: "p@aidd", dependents: ["/a", "/b"] },
+    { ref: "q@aidd", dependents: ["/b", "/c"] },
+    { ref: "r@aidd", dependents: ["/d"] },
+  ];
+  const readerOf = (pluginClaims?: typeof held) => {
     const manifest = new InMemoryMachineManifest(TOOL.claude);
-    const pluginClaims = [{ ref: "p@aidd", dependents: ["/project"] }];
-    manifest.setNativeRegistrations(TOOL.claude, { pluginClaims });
+    if (pluginClaims) manifest.setNativeRegistrations(TOOL.claude, { pluginClaims });
+    return readMachineClaims(new InMemoryMachineManifestRepository(manifest));
+  };
 
-    const claims = await readMachineClaims(new InMemoryMachineManifestRepository(manifest))(
-      TOOL.claude
-    );
-
-    expect(claims).toEqual(pluginClaims);
+  it("names the refs the record claims for the tool", async () => {
+    expect(await readerOf(held).claimedRefs(TOOL.claude)).toEqual(["p@aidd", "q@aidd", "r@aidd"]);
   });
 
-  it("holds no claim for a tool the record keeps no registration of", async () => {
-    const repo = new InMemoryMachineManifestRepository(new InMemoryMachineManifest(TOOL.claude));
-
-    expect(await readMachineClaims(repo)(TOOL.claude)).toEqual([]);
+  it("claims no ref for a tool the record keeps no registration of", async () => {
+    expect(await readerOf().claimedRefs(TOOL.claude)).toEqual([]);
   });
 
   it("answers nothing when no machine record exists", async () => {
-    const repo = new InMemoryMachineManifestRepository(null);
+    const reader = readMachineClaims(new InMemoryMachineManifestRepository(null));
+    expect(await reader.claimedRefs(TOOL.claude)).toBeUndefined();
+  });
 
-    expect(await readMachineClaims(repo)(TOOL.claude)).toBeUndefined();
+  it("names the other projects holding the refs, once each", async () => {
+    const others = await readerOf(held).othersHolding(TOOL.claude, ["p@aidd", "q@aidd"], "/a");
+    expect(others).toEqual(["/b", "/c"]);
+  });
+
+  it("names no project when none holds the refs", async () => {
+    expect(await readerOf(held).othersHolding(TOOL.claude, ["x@aidd"], "/a")).toEqual([]);
   });
 });

@@ -159,6 +159,7 @@ describe("registration verdicts across intents", () => {
       const attempt = gate.planMarketplaceRemoval(registeredAiProfile(copilot), registrations, {
         registration: registrations.marketplaces[0],
         projectRoot: "/A",
+        claimedRefs: [REF],
       });
       expect(await outcomeOf(attempt)).toBe(row.removal);
     });
@@ -184,6 +185,7 @@ describe("registration verdicts across intents", () => {
             ).planMarketplaceRemoval(registeredAiProfile(copilot), registrations, {
               registration: registrations.marketplaces[0],
               projectRoot: "/A",
+              claimedRefs: [REF],
             });
       expect(await outcomeOf(attempt)).toBe(refused);
     });

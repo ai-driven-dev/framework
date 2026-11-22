@@ -25,6 +25,11 @@ export interface RecordClaimRules {
   readonly claimsOf: (
     record: Readonly<Record<string, unknown>> | undefined
   ) => readonly DependentClaimView[];
+  /** The refs a record keeps claims on, none for a record that is absent or keeps none. Refuses a
+   * claims block it did not write. */
+  readonly claimedRefs: (
+    record: Readonly<Record<string, unknown>> | undefined
+  ) => readonly string[];
   /** The project roots holding these plugins or these refs, once each, none when nothing is
    * held. Refuses a plugin claim it did not write. */
   readonly holdersOf: (

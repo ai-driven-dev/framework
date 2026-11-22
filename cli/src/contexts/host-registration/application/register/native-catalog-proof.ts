@@ -77,7 +77,7 @@ function registrationOf(
  * enables plugins per project. */
 function claimedRefs(run: RegistrationRun, { machine, persisted }: HeldRecords): Set<string> {
   return new Set([
-    ...(machine?.pluginClaims ?? []).map((claim) => claim.ref),
+    ...(machine?.claimedRefs ?? []),
     ...(run.profile.pluginEnablementIsMachineGlobal() ? [] : pluginRefsOf(persisted)),
   ]);
 }
