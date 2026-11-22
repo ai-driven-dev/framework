@@ -3,6 +3,23 @@ import type { NativeRegistrations } from "../../domain/manifest/native-registrat
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { NativeHostTool } from "../../ports/tool-sections.js";
 
+/** A ref a machine claim holds on one tool. */
+export interface ClaimedHostRef {
+  readonly tool: AiToolId;
+  readonly ref: string;
+}
+
+/** What a machine-scope removal asks the host, the caller's. `Proof` is the host's own proof that
+ * a claimed ref is removable: installation only hands back what `proveClaimedRef` gave it. */
+export interface ClaimedRefWithdrawal<Proof> {
+  readonly proveClaimedRef: (
+    registrations: NativeRegistrations,
+    claim: ClaimedHostRef,
+    projectRoot: string
+  ) => Promise<Proof>;
+  readonly uninstallProven: (proof: Proof) => Promise<void>;
+}
+
 /** The plugin a removal asks its host about, and where. */
 export interface PluginHostReach {
   readonly tool: NativeHostTool;

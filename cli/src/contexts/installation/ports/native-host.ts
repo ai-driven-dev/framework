@@ -1,5 +1,4 @@
 import type { Scope } from "../../../shared/domain/scope.js";
-import type { AiToolId } from "../../../shared/domain/tool.js";
 import type {
   NativePluginClaim,
   NativeRegistrations,
@@ -97,51 +96,6 @@ export interface RegistrationRecordRules {
     claimed: CatalogueClaims,
     fallbackBinary: string
   ) => MergedClaims;
-}
-
-/**
- * What installation asks of a host to remove a plugin. `Proof` is the host's own proof that a ref
- * is removable: installation only hands back what `proveClaimedRef` gave it, never reads it.
- */
-export interface HostWithdrawal<Proof> {
-  readonly assertProjectSource: (command: ProjectSourceRequest) => Promise<void>;
-  readonly proveClaimedRef: (
-    registrations: NativeRegistrations,
-    claim: ClaimedHostRef,
-    projectRoot: string
-  ) => Promise<Proof>;
-  readonly uninstallProven: (proof: Proof) => Promise<void>;
-  /** `undefined` when nothing was registered, else whether the host confirmed. */
-  readonly execute: (command: WithdrawFromHostRequest) => Promise<boolean | undefined>;
-}
-
-/** An installed plugin to withdraw, by this project's marketplace alias. */
-interface WithdrawnPlugin {
-  readonly name: string;
-  readonly marketplace: string;
-  readonly scope: Scope;
-}
-
-export interface WithdrawFromHostRequest {
-  readonly tool: NativeHostTool;
-  readonly plugin: WithdrawnPlugin;
-  readonly projectRoot: string;
-  readonly registrations: NativeRegistrations | undefined;
-  /** Absent when the host keeps no plugin cache. */
-  readonly pluginCacheRoot: string | undefined;
-}
-
-export type ProjectSourceRequest = Pick<
-  WithdrawFromHostRequest,
-  "tool" | "projectRoot" | "registrations"
-> & {
-  readonly plugin: WithdrawnPlugin;
-  readonly isMachineOwned: (ref: string) => Promise<boolean>;
-};
-
-export interface ClaimedHostRef {
-  readonly tool: AiToolId;
-  readonly ref: string;
 }
 
 /** The path under `cacheRoot` when it stays inside it, else `null`. */

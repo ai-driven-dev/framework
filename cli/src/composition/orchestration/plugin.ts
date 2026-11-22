@@ -15,13 +15,13 @@ import { PluginDistributionLoader } from "../../contexts/installation/applicatio
 import { PluginMaterializer } from "../../contexts/installation/application/plugin/plugin-materializer.js";
 import { UpdatePlugin } from "../../contexts/installation/application/plugin/update-plugin.use-case.js";
 import { UpdateUserPluginFiles } from "../../contexts/installation/application/plugin/update-user-plugin-files.use-case.js";
+import type { ClaimedRefWithdrawal } from "../../contexts/installation/application/removal/project-plugin-withdrawal.js";
 import { RemovePlugin as RemoveProjectPluginFiles } from "../../contexts/installation/application/removal/remove-plugin.use-case.js";
 import {
   RemoveUserPlugin,
   type RemoveUserPluginRequest,
 } from "../../contexts/installation/application/removal/remove-user-plugin.use-case.js";
 import { UserScopePluginFiles } from "../../contexts/installation/application/removal/user-scope-plugin-files.js";
-import type { HostWithdrawal } from "../../contexts/installation/ports/native-host.js";
 import type {
   BoundPluginMaterializer,
   UserPluginMaterialization,
@@ -83,7 +83,7 @@ export const userScopeFileGuard: UserScopeFileGuard = {
 /** The host's two steps a user-scope removal takes: prove a claimed ref removable, then withdraw it. */
 export function claimedRefWithdrawal(
   withdrawFromHost: WithdrawFromHost
-): Pick<HostWithdrawal<ProvenHostRef>, "proveClaimedRef" | "uninstallProven"> {
+): ClaimedRefWithdrawal<ProvenHostRef> {
   return {
     proveClaimedRef: (registrationData, claim, projectRoot) =>
       withdrawFromHost.execute({ kind: "prove-claimed-ref", registrationData, claim, projectRoot }),

@@ -7,10 +7,11 @@ import {
 } from "../../domain/installation.error.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { HostWithdrawal, RegistrationRecordRules } from "../../ports/native-host.js";
+import type { RegistrationRecordRules } from "../../ports/native-host.js";
 import type { UserScopePluginFileRemoval } from "../../ports/user-scope-plugin-files.js";
 import { resolvePluginToolIds } from "../plugin/plugin-target-resolution.js";
 import { requireManifest } from "../shared/require-manifest.js";
+import type { ClaimedRefWithdrawal } from "./project-plugin-withdrawal.js";
 
 export interface RemoveUserPluginRequest {
   pluginName: string;
@@ -26,7 +27,7 @@ type NativeTargets = ReturnType<RemoveUserPlugin<unknown>["nativeTargets"]>;
 /** What RemoveUserPlugin is built from. */
 export interface RemoveUserPluginDeps<Proof> {
   readonly userRepo: ManifestRepository & Lock;
-  readonly withdrawFromHost: Pick<HostWithdrawal<Proof>, "proveClaimedRef" | "uninstallProven">;
+  readonly withdrawFromHost: ClaimedRefWithdrawal<Proof>;
   readonly records: RegistrationRecordRules;
   readonly userScopePluginFiles: UserScopePluginFileRemoval;
 }
