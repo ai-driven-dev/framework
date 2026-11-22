@@ -16,7 +16,7 @@
 | `source` | `filteredTree`, `fullTree`, `configFile` or `hooksBundle`: where input files come from |
 | `path(plugin, relPath)` | output path of one file; reuse the profile's own install path, the sink adds the plugin namespace in flat mode |
 | `transform?` | per-kind content transform, the identity by default |
-| `merge?`, `mergeDest?`, `mcpServersKey?` | merge into one shared config file instead of a per-plugin write |
+| `mcpServersKey?` | merge into one shared config file, at the path the layout declares, instead of a per-plugin write |
 | `hooksFile?` | the hooks file a plugin's `hooks.json` becomes; build its `merge` with `flatHooksArtifact` in `domain/formats/hooks-descriptor.ts` |
 | `script?`, `skipHooksJson?`, `hooksBridge?` | a tool's own hook script, delivery without `hooks.json`, and a generated event bridge |
 
