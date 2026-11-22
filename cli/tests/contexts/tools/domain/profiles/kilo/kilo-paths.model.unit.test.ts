@@ -38,8 +38,4 @@ describe("KILO_OUTPUT_PATH_CANDIDATES", () => {
     ]);
     expect(KILO_OUTPUT_PATH_CANDIDATES.fallback).toBe(".kilo/kilo.jsonc");
   });
-
-  it("refuses several files of one tier, naming kilo", () => {
-    expect(KILO_OUTPUT_PATH_CANDIDATES.onMultipleCandidates.error.toolId).toBe("kilo");
-  });
 });

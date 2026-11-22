@@ -323,21 +323,22 @@ const BROKEN: Readonly<Record<string, () => FileConformanceSubject>> = {
     subjectOf(withHooksMergeForgetting(HOOKED)),
 };
 
-function failuresOf(subject: FileConformanceSubject): string[] {
-  return ALL_CHECKS.filter((check) => {
+async function failuresOf(subject: FileConformanceSubject): Promise<string[]> {
+  const failed: string[] = [];
+  for (const check of ALL_CHECKS) {
     try {
-      check.holds(subject);
-      return false;
+      await check.holds(subject);
     } catch {
-      return true;
+      failed.push(check.title);
     }
-  }).map((check) => check.title);
+  }
+  return failed;
 }
 
 describe("the profile conformance checks, each against a subject broken for it alone", () => {
-  it("passes every check on the subjects it is broken from", () => {
+  it("passes every check on the subjects it is broken from", async () => {
     for (const profile of [NATIVE, FLAT, HOOKED, SCHEMED]) {
-      expect(failuresOf(subjectOf(profile))).toEqual([]);
+      expect(await failuresOf(subjectOf(profile))).toEqual([]);
     }
   });
 
@@ -346,7 +347,7 @@ describe("the profile conformance checks, each against a subject broken for it a
     expect(new Set(ALL_CHECKS.map((check) => check.title)).size).toBe(ALL_CHECKS.length);
   });
 
-  it.each(ALL_CHECKS.map((check) => check.title))("%s", (title) => {
-    expect(failuresOf(BROKEN[title]?.() ?? subjectOf(NATIVE))).toEqual([title]);
+  it.each(ALL_CHECKS.map((check) => check.title))("%s", async (title) => {
+    expect(await failuresOf(BROKEN[title]?.() ?? subjectOf(NATIVE))).toEqual([title]);
   });
 });

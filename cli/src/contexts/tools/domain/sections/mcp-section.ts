@@ -40,6 +40,19 @@ export function chooseOutputPath(
   return candidates.fallback;
 }
 
+/** The candidate files the project has, asked tier by tier until a tier has one. */
+async function presentUpToFirstTier(
+  candidates: McpOutputPathCandidates,
+  exists: (relativePath: string) => Promise<boolean>
+): Promise<Set<string>> {
+  const present = new Set<string>();
+  for (const tier of candidates.tiers) {
+    for (const path of tier) if (await exists(path)) present.add(path);
+    if (present.size > 0) break;
+  }
+  return present;
+}
+
 /** A TOML file is written through the codec the profile was given. */
 export type McpConfigParams = ({ format: "json" } | { format: "toml"; toml: TomlCodec }) & {
   outputPath: string;
@@ -109,28 +122,14 @@ export class McpConfigPart {
     return platform === "win32" ? transformMcpForWin32 : undefined;
   }
 
-  /** The files a project may already keep this tool's MCP config in, best first, one tier each. */
-  candidateTiers(): readonly (readonly string[])[] {
-    return (this.#params.outputPathCandidates?.tiers ?? []).map((tier) => [...tier]);
-  }
-
-  /** The project-relative file this tool's MCP config goes in, `exists` asking the project. */
-  chooseOutputPath(exists: (relativePath: string) => boolean): string {
-    const candidates = this.#params.outputPathCandidates;
-    return candidates === undefined
-      ? this.#params.outputPath
-      : chooseOutputPath(candidates, exists);
-  }
-
   /** The project-relative file this tool's MCP config goes in: the candidate a project already
-   * keeps (reusing user-owned configuration), the fallback when none does. */
+   * keeps (reusing user-owned configuration), the fallback when none does. A tier is only asked
+   * about while no earlier tier has a file. */
   async resolveOutputPath(exists: (relativePath: string) => Promise<boolean>): Promise<string> {
-    const present = new Set<string>();
-    for (const tier of this.candidateTiers()) {
-      for (const path of tier) if (await exists(path)) present.add(path);
-      if (present.size > 0) break;
-    }
-    return this.chooseOutputPath((path) => present.has(path));
+    const candidates = this.#params.outputPathCandidates;
+    if (candidates === undefined) return this.#params.outputPath;
+    const present = await presentUpToFirstTier(candidates, exists);
+    return chooseOutputPath(candidates, (path) => present.has(path));
   }
 
   /** Adds the plugin's transformed servers to the existing file: what the plugin contributed

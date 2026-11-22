@@ -18,15 +18,13 @@ describe("the file a tool's MCP config goes in", () => {
 
   it("asks about no file in a tier after the first one that has any", async () => {
     const asked: string[] = [];
-    const tiered = kilo.section("mcp").config;
-    const [first, ...later] = tiered?.candidateTiers() ?? [];
 
-    await tiered?.resolveOutputPath(async (relativePath) => {
+    await kilo.section("mcp").config?.resolveOutputPath(async (relativePath) => {
       asked.push(relativePath);
-      return relativePath === first?.[0];
+      return relativePath === ".kilo/kilo.json";
     });
 
-    expect(asked.filter((path) => later.flat().includes(path))).toStrictEqual([]);
+    expect(asked).toStrictEqual([".kilo/kilo.json", ".kilo/kilo.jsonc"]);
   });
 
   describe("opencode", () => {

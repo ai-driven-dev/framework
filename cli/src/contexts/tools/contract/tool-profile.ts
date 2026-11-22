@@ -161,10 +161,6 @@ export interface McpConfigAnswers {
   accepts(relativePath: string): boolean;
   /** Whether the config asset named `fileName` is that file, merged over what a person keeps. */
   isFrameworkPrimeJson(fileName: string): boolean;
-  /** The files a project may already keep its mcp config in, best first, one tier each. */
-  candidateTiers(): readonly (readonly string[])[];
-  /** The file the mcp config goes in, `exists` asking the project. */
-  chooseOutputPath(exists: (relativePath: string) => boolean): string;
   /** The file a project already keeps its mcp servers in, `exists` asking the project. */
   resolveOutputPath(exists: (relativePath: string) => Promise<boolean>): Promise<string>;
   /** The tool's framework-owned config merged over what a person already keeps in the file. */

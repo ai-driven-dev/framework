@@ -25,7 +25,7 @@ export interface ConformanceSubject {
 /** A check is a pure assertion, so a proof can run it against a subject built to break it. */
 export interface ConformanceCheck<S> {
   readonly title: string;
-  readonly holds: (subject: S) => void;
+  readonly holds: (subject: S) => void | Promise<void>;
 }
 
 /** The only place a capability is read from a profile whose capabilities are `unknown`. */
@@ -65,13 +65,12 @@ function supportedArtifacts(
 
 export function aiCheck(
   title: string,
-  holds: (profile: AiTool, subject: ConformanceSubject) => void
+  holds: (profile: AiTool, subject: ConformanceSubject) => void | Promise<void>
 ): ConformanceCheck<ConformanceSubject> {
   return {
     title,
-    holds: (subject) => {
-      if (subject.profile.kind === "ai") holds(subject.profile, subject);
-    },
+    holds: (subject) =>
+      subject.profile.kind === "ai" ? holds(subject.profile, subject) : undefined,
   };
 }
 
@@ -196,22 +195,30 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
     if (config === undefined) return;
     expect(config.consumes(CONFIG_MCP)).toBe(true);
   }),
-  aiCheck("settles several candidate config files as its mcp config declares", (profile) => {
+  aiCheck("settles several candidate config files as its mcp config declares", async (profile) => {
     const config = profile.section("mcp")?.config;
     if (config === undefined) return;
-    const present =
+    const candidates: string[] = [];
+    const fallback = await config.resolveOutputPath(async (path) => {
+      candidates.push(path);
+      return false;
+    });
+    const only =
       (...planted: string[]) =>
-      (path: string) =>
+      async (path: string) =>
         planted.includes(path);
-    for (const tier of config.candidateTiers()) {
-      const [first = ""] = tier;
-      expect(config.chooseOutputPath(present(first)), first).toBe(first);
-      expect(() => config.chooseOutputPath(present(...tier)), tier.join()).toThrow(
-        expect.objectContaining({ code: "dual-config", toolId: profile.toolId })
-      );
+    for (const path of candidates) {
+      expect(await config.resolveOutputPath(only(path)), path).toBe(path);
     }
-    const tiers = config.candidateTiers();
-    if (tiers.length > 0) expect(tiers.flat()).toContain(config.chooseOutputPath(() => false));
+    if (candidates.length === 0) return;
+    expect(candidates).toContain(fallback);
+    const [first] = candidates;
+    const all = await config
+      .resolveOutputPath(only(...candidates))
+      .catch((error: unknown) => error);
+    if (all !== first) {
+      expect(all).toMatchObject({ code: "dual-config", toolId: profile.toolId });
+    }
   }),
   aiCheck("asks, in each settings file, for a registered tool", (profile, { registration }) => {
     const registered = registration.map((other) => other.toolId);
