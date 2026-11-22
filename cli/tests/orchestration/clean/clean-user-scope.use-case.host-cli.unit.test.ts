@@ -10,7 +10,6 @@ import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js"
 import { claimsRecorded, hostRecord } from "../../shared/testing/host-record-reading.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   CODEX_CACHE,
   manifestWithClaude,
@@ -21,17 +20,18 @@ import {
   seedClaudeCache,
   USER_CONFIG_DIR,
 } from "../testing/clean-user-scope.builder.js";
+import { HOST, hostCatalog } from "../testing/synthetic-hosts.builder.js";
 import { userScopeCleaner } from "../testing/user-scope-cleaner.builder.js";
 
 type HostFault = "missing catalogue" | "duplicate claim" | "disabled ref" | "missing ref";
 
 function applyHostFault(manifest: Manifest, fault: HostFault): void {
-  const registration = manifest.getNativeRegistrations(TOOL.claude);
+  const registration = manifest.getNativeRegistrations(HOST.claude);
   if (registration === undefined) throw new Error("fixture missing registration");
   if (fault === "missing catalogue")
-    manifest.setNativeRegistrations(TOOL.claude, { ...registration, marketplaces: [] });
+    manifest.setNativeRegistrations(HOST.claude, { ...registration, marketplaces: [] });
   if (fault === "duplicate claim")
-    manifest.setNativeRegistrations(TOOL.claude, {
+    manifest.setNativeRegistrations(HOST.claude, {
       ...registration,
       pluginClaims: [
         ...claimsRecorded(registration),
@@ -64,23 +64,23 @@ describe("clean --scope user: host cli", () => {
       activator: HostActions;
     }) {
       return userScopeCleaner({
-        tools: registeredTools(),
+        tools: hostCatalog(),
         fs: deps.fs,
         repo:
-          deps.repo ?? new InMemoryManifestRepository(deps.manifest ?? manifestWithClaude(TOOL)),
+          deps.repo ?? new InMemoryManifestRepository(deps.manifest ?? manifestWithClaude(HOST)),
         logger: deps.logger,
-        activators: new Map([[deps.binary ?? TOOL.claude, deps.activator]]),
-        sources: deps.nativeSources ?? provenClaudeSources(TOOL),
+        activators: new Map([[deps.binary ?? HOST.claude, deps.activator]]),
+        sources: deps.nativeSources ?? provenClaudeSources(HOST),
         pluginRegistries:
-          deps.hostPlugins ?? provenHostPlugins(TOOL, deps.manifest ?? manifestWithClaude(TOOL)),
+          deps.hostPlugins ?? provenHostPlugins(HOST, deps.manifest ?? manifestWithClaude(HOST)),
       });
     }
 
     it("cleans an empty native registration without inventing any plugin uninstall", async () => {
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.claude, "1.0.0", []);
-      manifest.setNativeRegistrations(TOOL.claude, {
-        binary: "claude",
+      manifest.addTool(HOST.claude, "1.0.0", []);
+      manifest.setNativeRegistrations(HOST.claude, {
+        binary: HOST.claude,
         marketplaces: [],
         pluginRefs: [],
       });
@@ -104,7 +104,7 @@ describe("clean --scope user: host cli", () => {
         dryRun: false,
         manifestFound: true,
         preview: {
-          toolIds: ["claude"],
+          toolIds: [HOST.claude],
           activePluginDependents: [],
           builtVersions: ["1.0.0"],
           referencingProjects: [],
@@ -117,7 +117,7 @@ describe("clean --scope user: host cli", () => {
     });
 
     it("retains canonical state when the recorded host catalogue is absent", async () => {
-      const manifest = manifestWithClaude(TOOL);
+      const manifest = manifestWithClaude(HOST);
       const repo = new InMemoryManifestRepository(manifest);
       const fs = new RecordingFileAdapter();
       const marker = join(seedClaudeCache(fs), "marker.json");
@@ -133,9 +133,9 @@ describe("clean --scope user: host cli", () => {
           repo,
           activator,
           logger: new CapturingLogger(),
-          nativeSources: new Map([[TOOL.claude, source]]),
+          nativeSources: new Map([[HOST.claude, source]]),
         }).execute({ projectRoot: "/wherever", force: true })
-      ).rejects.toThrow("claude: catalogue source unproven.");
+      ).rejects.toThrow(`${HOST.claude}: catalogue source unproven.`);
 
       expect(fs.order).toEqual([]);
       expect(fs.getFile(marker)).toBe("{}");
@@ -147,7 +147,7 @@ describe("clean --scope user: host cli", () => {
     it.each<HostFault>(["missing catalogue", "duplicate claim", "disabled ref", "missing ref"])(
       "refuses %s before native or cache cleanup and retains the canonical manifest",
       async (fault) => {
-        const manifest = manifestWithClaude(TOOL);
+        const manifest = manifestWithClaude(HOST);
         applyHostFault(manifest, fault);
         const before = manifest.toJSON();
         const repo = new InMemoryManifestRepository(manifest);
@@ -155,7 +155,7 @@ describe("clean --scope user: host cli", () => {
         const cacheMarker = join(seedClaudeCache(fs), "marker.json");
         const cacheBytes = fs.getFile(cacheMarker);
         const activator = new FakeHostActions({ available: true });
-        const hostPlugins = new Map([[TOOL.claude, hostPluginRegistryFor(fault)]]);
+        const hostPlugins = new Map([[HOST.claude, hostPluginRegistryFor(fault)]]);
 
         await expect(
           buildUseCase({
@@ -177,10 +177,10 @@ describe("clean --scope user: host cli", () => {
     );
 
     it("refuses a second missing native binary before uninstalling the first tool", async () => {
-      const manifest = manifestWithClaude(TOOL);
-      manifest.addTool(TOOL.copilot, "1.0.0", []);
-      manifest.setNativeRegistrations(TOOL.copilot, {
-        binary: "copilot",
+      const manifest = manifestWithClaude(HOST);
+      manifest.addTool(HOST.copilot, "1.0.0", []);
+      manifest.setNativeRegistrations(HOST.copilot, {
+        binary: HOST.copilot,
         marketplaces: [
           {
             alias: "copilot-catalog",
@@ -214,18 +214,18 @@ describe("clean --scope user: host cli", () => {
       expect(claude.uninstalledPlugins).toEqual([]);
       expect(claude.removedMarketplaces).toEqual([]);
       expect(await fs.readFile(cacheMarker)).toBe(before);
-      expect(repo.getCurrent()?.getNativeRegistrations(TOOL.claude)?.pluginClaims).toEqual(
-        manifest.getNativeRegistrations(TOOL.claude)?.pluginClaims
+      expect(repo.getCurrent()?.getNativeRegistrations(HOST.claude)?.pluginClaims).toEqual(
+        manifest.getNativeRegistrations(HOST.claude)?.pluginClaims
       );
     });
 
     it.each(["claim", "projection"] as const)(
       "refuses an orphan machine %s before uninstalling a proven catalogue's own ref",
       async (placement) => {
-        const manifest = manifestWithClaude(TOOL);
-        const registrations = hostRecord(manifest.getNativeRegistrations(TOOL.claude));
+        const manifest = manifestWithClaude(HOST);
+        const registrations = hostRecord(manifest.getNativeRegistrations(HOST.claude));
         if (registrations === undefined) throw new Error("fixture missing native registration");
-        manifest.setNativeRegistrations(TOOL.claude, {
+        manifest.setNativeRegistrations(HOST.claude, {
           ...registrations,
           pluginRefs: [...registrations.pluginRefs, "x@B"],
           pluginClaims:
@@ -255,16 +255,16 @@ describe("clean --scope user: host cli", () => {
         expect(activator.uninstalledPlugins).toEqual([]);
         expect(activator.removedMarketplaces).toEqual([]);
         expect(await fs.readFile(cacheMarker)).toBe(before);
-        expect(repo.getCurrent()?.getNativeRegistrations(TOOL.claude)?.pluginClaims).toEqual(
-          manifest.getNativeRegistrations(TOOL.claude)?.pluginClaims
+        expect(repo.getCurrent()?.getNativeRegistrations(HOST.claude)?.pluginClaims).toEqual(
+          manifest.getNativeRegistrations(HOST.claude)?.pluginClaims
         );
       }
     );
 
     it("refuses duplicate host catalogue registrations before uninstall or cache purge", async () => {
-      const manifest = manifestWithClaude(TOOL);
-      const registrations = hostRecord(manifest.getNativeRegistrations(TOOL.claude));
-      manifest.setNativeRegistrations(TOOL.claude, {
+      const manifest = manifestWithClaude(HOST);
+      const registrations = hostRecord(manifest.getNativeRegistrations(HOST.claude));
+      manifest.setNativeRegistrations(HOST.claude, {
         ...registrations,
         marketplaces: [
           ...(registrations?.marketplaces ?? []),
@@ -290,8 +290,8 @@ describe("clean --scope user: host cli", () => {
       expect(activator.uninstalledPlugins).toEqual([]);
       expect(activator.removedMarketplaces).toEqual([]);
       expect(await fs.readFile(cacheMarker)).toBe(before);
-      expect(repo.getCurrent()?.getNativeRegistrations(TOOL.claude)?.marketplaces).toEqual(
-        manifest.getNativeRegistrations(TOOL.claude)?.marketplaces
+      expect(repo.getCurrent()?.getNativeRegistrations(HOST.claude)?.marketplaces).toEqual(
+        manifest.getNativeRegistrations(HOST.claude)?.marketplaces
       );
     });
 
@@ -314,9 +314,9 @@ describe("clean --scope user: host cli", () => {
 
     it("never treats a refused removal as one the host confirmed, so codex's cache stays", async () => {
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.codex, "1.0.0", []);
-      manifest.setNativeRegistrations(TOOL.codex, {
-        binary: "codex",
+      manifest.addTool(HOST.codex, "1.0.0", []);
+      manifest.setNativeRegistrations(HOST.codex, {
+        binary: HOST.codex,
         marketplaces: [
           {
             alias: "aidd-framework",
@@ -339,10 +339,10 @@ describe("clean --scope user: host cli", () => {
         fs,
         logger,
         manifest,
-        binary: "codex",
+        binary: HOST.codex,
         nativeSources: new Map([
           [
-            TOOL.codex,
+            HOST.codex,
             {
               read: async () => ({
                 location: "host",
@@ -370,7 +370,7 @@ describe("clean --scope user: host cli", () => {
 
       expect(fs.has(leftover)).toBe(true);
       expect(logger.warnMessages).toStrictEqual([
-        "codex marketplace remove 'aidd-framework' failed: marketplace remove aidd-framework failed: 'aidd-framework' is not configured or installed",
+        `${HOST.codex} marketplace remove 'aidd-framework' failed: marketplace remove aidd-framework failed: 'aidd-framework' is not configured or installed`,
       ]);
     });
   });

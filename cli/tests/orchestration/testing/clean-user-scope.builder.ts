@@ -9,11 +9,12 @@ import { claimsRecorded } from "../../shared/testing/host-record-reading.builder
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import type { NamedTools } from "../../shared/testing/named-tools.builder.js";
 import { FakeHostPluginRegistry } from "./fake-host-plugin-registry.fake.js";
+import { HOST, hostCacheRoot } from "./synthetic-hosts.builder.js";
 
 export const USER_CONFIG_DIR = "/fake-home/.config/aidd";
 export const HOME = "/fake-home";
-export const CLAUDE_CACHE = join(HOME, ".claude", "plugins", "cache");
-export const CODEX_CACHE = join(HOME, ".codex", "plugins", "cache");
+export const CLAUDE_CACHE = hostCacheRoot("claude", HOME);
+export const CODEX_CACHE = hostCacheRoot("codex", HOME);
 export const WHITELIST_PURGE_MESSAGES = [
   `user scope: cache/built purged: ${join(USER_CONFIG_DIR, "cache", "built")}`,
   `user scope: cache/marketplaces/aidd-framework purged: ${join(USER_CONFIG_DIR, "cache", "marketplaces", FRAMEWORK_MARKETPLACE_NAME)}`,
@@ -115,7 +116,7 @@ export function manifestWithClaude(ids: NamedTools<"claude">): Manifest {
   const manifest = Manifest.create();
   manifest.addTool(ids.claude, "1.0.0", []);
   manifest.setNativeRegistrations(ids.claude, {
-    binary: "claude",
+    binary: HOST.claude,
     marketplaces: [
       {
         alias: "aidd-framework",
@@ -168,7 +169,7 @@ export function provenHostPlugins(
 /** Seeds the cache path claude's own profile declares with a marker file: an empty or absent
  * directory is silently skipped rather than purged. */
 export function seedClaudeCache(fs: InMemoryFileAdapter, hostName = "aidd-framework"): string {
-  const cachePath = join(HOME, ".claude", "plugins", "cache", hostName);
+  const cachePath = join(hostCacheRoot("claude", HOME), hostName);
   fs.setFile(join(cachePath, "marker.json"), "{}");
   return cachePath;
 }

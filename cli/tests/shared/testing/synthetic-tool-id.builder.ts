@@ -1,11 +1,16 @@
+import { join } from "node:path";
 import { RegisteredToolCatalog } from "../../../src/contexts/tools/application/registered-tool-catalog.js";
+import type { NativeActivationSpec } from "../../../src/contexts/tools/contract/native-registration-spec.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import {
   defineAiTool,
   defineIdeTool,
 } from "../../../src/contexts/tools/domain/profile/define-tool.js";
 import { ConfigSection } from "../../../src/contexts/tools/domain/sections/config-section.js";
-import { nativeLayout } from "../../../src/contexts/tools/domain/sections/layout-section.js";
+import {
+  type NativeLayoutParams,
+  nativeLayout,
+} from "../../../src/contexts/tools/domain/sections/layout-section.js";
 import { manifestSection } from "../../../src/contexts/tools/domain/sections/manifest-section.js";
 import { ModelsSection } from "../../../src/contexts/tools/domain/sections/models-section.js";
 import { anEmptyContract } from "./empty-build-contract.builder.js";
@@ -98,35 +103,47 @@ export function syntheticCatalog(): ToolCatalog {
   return new RegisteredToolCatalog(CONFIGS);
 }
 
+/** One synthetic AI tool driven through its own host CLI the way a native tool is. */
+export function syntheticNativeTool(
+  id: string,
+  native: Partial<NativeActivationSpec> = {},
+  layout: Partial<NativeLayoutParams> = {},
+  models?: ModelsSection
+) {
+  return defineAiTool({
+    toolId: id,
+    distributionProbes: {
+      manifest: [".plugin/plugin.json"],
+      marketplace: [".plugin/marketplace.json"],
+    },
+    directory: `.${id}/`,
+    toolSuffix: `.${id}.md`,
+    signalDir: null,
+    displayName: id,
+    buildContracts: { flat: () => anEmptyContract() },
+    capabilities: () => ({
+      layout: nativeLayout({
+        pluginsDir: `.${id}/plugins/`,
+        nativeActivation: {
+          binary: id,
+          upgradeVerb: "upgrade",
+          enableVerb: "add",
+          disableVerb: "remove",
+          pluginCacheDir: (home) => join(home, `.${id}`, "plugins", "cache"),
+          ...native,
+        },
+        ...layout,
+      }),
+      manifest: manifestSection({ manifestRelativePath: "plugin.json", pluginRootToken: "." }),
+      hooks: { delivery: { kind: "plugin-file" } },
+      ...(models === undefined ? {} : { models }),
+    }),
+    linkSyntax: [],
+  });
+}
+
 /** A catalog listing one synthetic AI tool under the given id, driven through its own host CLI
  * the way a native tool is: for a test of the native activation flow that names no real tool. */
 export function syntheticNativeCatalog(id: string): ToolCatalog {
-  return new RegisteredToolCatalog([
-    defineAiTool({
-      toolId: id,
-      distributionProbes: {
-        manifest: [".plugin/plugin.json"],
-        marketplace: [".plugin/marketplace.json"],
-      },
-      directory: `.${id}/`,
-      toolSuffix: `.${id}.md`,
-      signalDir: null,
-      displayName: id,
-      buildContracts: { flat: () => anEmptyContract() },
-      capabilities: () => ({
-        layout: nativeLayout({
-          pluginsDir: `.${id}/plugins/`,
-          nativeActivation: {
-            binary: id,
-            upgradeVerb: "upgrade",
-            enableVerb: "add",
-            disableVerb: "remove",
-          },
-        }),
-        manifest: manifestSection({ manifestRelativePath: "plugin.json", pluginRootToken: "." }),
-        hooks: { delivery: { kind: "plugin-file" } },
-      }),
-      linkSyntax: [],
-    }),
-  ]);
+  return new RegisteredToolCatalog([syntheticNativeTool(id)]);
 }

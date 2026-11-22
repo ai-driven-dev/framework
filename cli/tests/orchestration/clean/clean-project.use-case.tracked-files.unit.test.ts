@@ -9,7 +9,6 @@ import {
   buildInstallationDeps,
   initAndInstall,
 } from "../../shared/testing/installation-deps.builder.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   atProject,
   knownHostSourceCleaner,
@@ -17,14 +16,15 @@ import {
   PROJECT_ROOT,
   RecordingFileAdapter,
 } from "../testing/clean-project.builder.js";
+import { HOST, hostCatalog, hostUserPluginsDir } from "../testing/synthetic-hosts.builder.js";
 
-const AT_PROJECT = atProject(registeredTools());
-const CleanWithKnownHostSource = knownHostSourceCleaner(registeredTools(), TOOL);
+const AT_PROJECT = atProject(hostCatalog());
+const CleanWithKnownHostSource = knownHostSourceCleaner(hostCatalog(), HOST);
 
 describe("clean: tracked project files", () => {
   it("with force removes .aidd/cache/ entry from .gitignore", async () => {
-    const deps = await buildInstallationDeps({ tools: registeredTools() });
-    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+    const deps = await buildInstallationDeps({ tools: hostCatalog() });
+    await initAndInstall(deps, PROJECT_ROOT, HOST.claude);
 
     const gitignorePath = join(PROJECT_ROOT, ".gitignore");
     await deps.fs.writeFile(gitignorePath, "node_modules/\n.aidd/cache/\ndist/\n");
@@ -44,8 +44,8 @@ describe("clean: tracked project files", () => {
   });
 
   it("with force leaves .gitignore unchanged when entry absent", async () => {
-    const deps = await buildInstallationDeps({ tools: registeredTools() });
-    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+    const deps = await buildInstallationDeps({ tools: hostCatalog() });
+    await initAndInstall(deps, PROJECT_ROOT, HOST.claude);
 
     const gitignorePath = join(PROJECT_ROOT, ".gitignore");
     await deps.fs.writeFile(gitignorePath, "node_modules/\n");
@@ -63,8 +63,8 @@ describe("clean: tracked project files", () => {
   });
 
   it("preserves untracked user files", async () => {
-    const deps = await buildInstallationDeps({ tools: registeredTools() });
-    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+    const deps = await buildInstallationDeps({ tools: hostCatalog() });
+    await initAndInstall(deps, PROJECT_ROOT, HOST.claude);
 
     const userFile = join(PROJECT_ROOT, "my-custom-file.txt");
     await deps.fs.writeFile(userFile, "user content");
@@ -81,8 +81,8 @@ describe("clean: tracked project files", () => {
   });
 
   it("keeps .aidd/config.json and deletes .aidd/cache/ when config.json exists", async () => {
-    const deps = await buildInstallationDeps({ tools: registeredTools() });
-    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+    const deps = await buildInstallationDeps({ tools: hostCatalog() });
+    await initAndInstall(deps, PROJECT_ROOT, HOST.claude);
 
     const configPath = join(PROJECT_ROOT, ".aidd", "config.json");
     const cacheFile = join(PROJECT_ROOT, ".aidd", "cache", "built", "leftover.json");
@@ -103,8 +103,8 @@ describe("clean: tracked project files", () => {
   });
 
   it("removes .aidd/plugin-cache/, which no install writes but plugin add does", async () => {
-    const deps = await buildInstallationDeps({ tools: registeredTools() });
-    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+    const deps = await buildInstallationDeps({ tools: hostCatalog() });
+    await initAndInstall(deps, PROJECT_ROOT, HOST.claude);
 
     const pluginCacheFile = join(PROJECT_ROOT, ".aidd", "plugin-cache", "some-plugin", "x.json");
     await deps.fs.writeFile(pluginCacheFile, "{}");
@@ -122,8 +122,8 @@ describe("clean: tracked project files", () => {
   });
 
   it("removes .aidd/ entirely when nothing but the manifest and cache lived there", async () => {
-    const deps = await buildInstallationDeps({ tools: registeredTools() });
-    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+    const deps = await buildInstallationDeps({ tools: hostCatalog() });
+    await initAndInstall(deps, PROJECT_ROOT, HOST.claude);
 
     const cacheFile = join(PROJECT_ROOT, ".aidd", "cache", "built", "leftover.json");
     await deps.fs.writeFile(cacheFile, "{}");
@@ -139,8 +139,8 @@ describe("clean: tracked project files", () => {
     expect(deps.fs.listUnder(join(PROJECT_ROOT, ".aidd")).length).toBe(0);
   });
   it("removes the marketplaces this project registered, which `marketplace add` wrote", async () => {
-    const deps = await buildInstallationDeps({ tools: registeredTools() });
-    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+    const deps = await buildInstallationDeps({ tools: hostCatalog() });
+    await initAndInstall(deps, PROJECT_ROOT, HOST.claude);
 
     // Written by `marketplace add`, not by an install - so it survived a clean that removed
     // only the caches and the manifest, and its presence kept `.aidd/` alive with it.
@@ -160,8 +160,8 @@ describe("clean: tracked project files", () => {
   });
 
   it("removes the registry and still keeps config.json, when a project has both", async () => {
-    const deps = await buildInstallationDeps({ tools: registeredTools() });
-    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+    const deps = await buildInstallationDeps({ tools: hostCatalog() });
+    await initAndInstall(deps, PROJECT_ROOT, HOST.claude);
 
     // The interaction the two rules meet in: one file clean wrote and must take back, one it
     // never wrote and must leave. Each proven alone says nothing about the pair.
@@ -184,9 +184,9 @@ describe("clean: tracked project files", () => {
 
   it("leaves a user-scope Cursor plugin's files to explicit user cleanup", async () => {
     const manifest = Manifest.create();
-    manifest.addTool(TOOL.cursor, "1.0.0", []);
+    manifest.addTool(HOST.cursor, "1.0.0", []);
     manifest.addPlugin(
-      TOOL.cursor,
+      HOST.cursor,
       RecordedPlugin.fromJSON({
         name: "aidd-context",
         source: { kind: "local", path: "/some/path" },
@@ -207,17 +207,17 @@ describe("clean: tracked project files", () => {
     );
     await useCase.execute({ ...AT_PROJECT, force: true });
 
-    expect(
-      fs.deletedPaths.some((p) => p.endsWith(join(".cursor", "plugins", "local", PLUGIN_KEY)))
-    ).toBe(false);
+    expect(fs.deletedPaths.some((p) => p.endsWith(join(hostUserPluginsDir(""), PLUGIN_KEY)))).toBe(
+      false
+    );
     expect(fs.deletedPaths).not.toContain(join(PROJECT_ROOT, PLUGIN_KEY));
   });
 
   it("deletes a cursor plugin's file under projectRoot, not ~/.cursor/plugins/local, when the manifest says scope: project", async () => {
     const manifest = Manifest.create();
-    manifest.addTool(TOOL.cursor, "1.0.0", []);
+    manifest.addTool(HOST.cursor, "1.0.0", []);
     manifest.addPlugin(
-      TOOL.cursor,
+      HOST.cursor,
       RecordedPlugin.fromJSON({
         name: "aidd-context",
         source: { kind: "local", path: "/some/path" },
@@ -240,8 +240,6 @@ describe("clean: tracked project files", () => {
     await useCase.execute({ ...AT_PROJECT, force: true });
 
     expect(fs.deletedPaths).toContain(join(PROJECT_ROOT, PLUGIN_KEY));
-    expect(fs.deletedPaths.some((p) => p.includes(join(".cursor", "plugins", "local")))).toBe(
-      false
-    );
+    expect(fs.deletedPaths.some((p) => p.includes(hostUserPluginsDir("")))).toBe(false);
   });
 });

@@ -10,7 +10,6 @@ import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js"
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   AssertingActivator,
   atProject,
@@ -25,24 +24,25 @@ import {
   seedManifestWithNativeRegistrations,
   seedMarketplaceRegistry,
 } from "../testing/clean-project.builder.js";
+import { HOST, hostCacheRoot, hostCatalog } from "../testing/synthetic-hosts.builder.js";
 
-const AT_PROJECT = atProject(registeredTools());
-const CleanWithKnownHostSource = knownHostSourceCleaner(registeredTools(), TOOL);
+const AT_PROJECT = atProject(hostCatalog());
+const CleanWithKnownHostSource = knownHostSourceCleaner(hostCatalog(), HOST);
 
 const homedir = (): string => "/home/dev";
 
 describe("clean: native registration undo order", () => {
   describe("undoing a host's own native registration", () => {
     describe("uninstalling at the scope a plugin was actually registered at", () => {
-      const CLAUDE_BINARY = "claude";
+      const CLAUDE_BINARY = HOST.claude;
       const CLAUDE_MARKETPLACE = "aidd-framework";
       const CLAUDE_REF = "aidd-context@aidd-framework";
 
       function seedClaudeManifest(pluginScope: Scope): Manifest {
         const manifest = Manifest.create();
-        manifest.addTool(TOOL.claude, "1.0.0", []);
+        manifest.addTool(HOST.claude, "1.0.0", []);
         manifest.addPlugin(
-          TOOL.claude,
+          HOST.claude,
           RecordedPlugin.fromMetadata({
             name: "aidd-context",
             version: "1.0.0",
@@ -52,7 +52,7 @@ describe("clean: native registration undo order", () => {
             marketplace: CLAUDE_MARKETPLACE,
           })
         );
-        manifest.setNativeRegistrations(TOOL.claude, {
+        manifest.setNativeRegistrations(HOST.claude, {
           binary: CLAUDE_BINARY,
           marketplaces: [
             {
@@ -107,7 +107,7 @@ describe("clean: native registration undo order", () => {
     });
 
     it("warns and leaves the registration in place when the tool's CLI is not on PATH", async () => {
-      const manifest = seedManifestWithNativeRegistrations(TOOL);
+      const manifest = seedManifestWithNativeRegistrations(HOST);
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
       const activator = new FakeHostActions({ available: false });
@@ -126,11 +126,11 @@ describe("clean: native registration undo order", () => {
       expect(activator.uninstalledPlugins).toEqual([]);
       expect(activator.removedMarketplaces).toEqual([]);
       expect(logger.warnMessages).toHaveLength(1);
-      expect(logger.warnMessages[0]).toContain("the codex CLI is not on the PATH.");
+      expect(logger.warnMessages[0]).toContain(`the ${HOST.codex} CLI is not on the PATH.`);
     });
 
     it("uninstalls the plugin ref before removing the marketplace, for the same tool", async () => {
-      const manifest = seedClaudeNativeRegistrations(TOOL);
+      const manifest = seedClaudeNativeRegistrations(HOST);
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
       const calls: string[] = [];
@@ -140,13 +140,13 @@ describe("clean: native registration undo order", () => {
         manifestRepo,
         new CapturingLogger(),
         new UpdateGitignore(fs),
-        new Map([[TOOL.claude, activator]]),
+        new Map([[HOST.claude, activator]]),
         seedMarketplaceRegistry(),
         undefined,
         new Map(),
         undefined,
         undefined,
-        claudeRefOnHost(TOOL, "project")
+        claudeRefOnHost(HOST, "project")
       );
 
       await useCase.execute({ ...AT_PROJECT, force: true });
@@ -155,7 +155,7 @@ describe("clean: native registration undo order", () => {
     });
 
     it("undoes the native registration before the built marketplace tree it points at is deleted", async () => {
-      const manifest = seedManifestWithNativeRegistrations(TOOL);
+      const manifest = seedManifestWithNativeRegistrations(HOST);
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const builtPath = join(
         PROJECT_ROOT,
@@ -187,7 +187,7 @@ describe("clean: native registration undo order", () => {
     });
 
     it("names the native registration a dry-run preview will undo, without touching it", async () => {
-      const manifest = seedManifestWithNativeRegistrations(TOOL);
+      const manifest = seedManifestWithNativeRegistrations(HOST);
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
       const activator = new FakeHostActions({ available: true });
@@ -205,11 +205,11 @@ describe("clean: native registration undo order", () => {
       expect(result.dryRun).toBe(true);
       expect(result.preview.nativeRegistrations).toEqual([
         {
-          toolId: TOOL.codex,
+          toolId: HOST.codex,
           binary: BINARY,
           marketplaceCount: 1,
           pluginRefCount: 1,
-          cachePaths: [join(homedir(), ".codex", "plugins", "cache", MARKETPLACE)],
+          cachePaths: [join(hostCacheRoot("codex", homedir()), MARKETPLACE)],
         },
       ]);
       expect(activator.uninstalledPlugins).toEqual([]);

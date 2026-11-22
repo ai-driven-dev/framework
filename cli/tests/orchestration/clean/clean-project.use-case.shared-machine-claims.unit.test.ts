@@ -11,7 +11,6 @@ import { hostRecord } from "../../shared/testing/host-record-reading.builder.js"
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   atProject,
   BINARY,
@@ -23,15 +22,16 @@ import {
   seedManifestWithNativeRegistrations,
   seedMarketplaceRegistry,
 } from "../testing/clean-project.builder.js";
+import { HOST, hostCacheRoot, hostCatalog } from "../testing/synthetic-hosts.builder.js";
 
-const AT_PROJECT = atProject(registeredTools());
-const CleanWithKnownHostSource = knownHostSourceCleaner(registeredTools(), TOOL);
+const AT_PROJECT = atProject(hostCatalog());
+const CleanWithKnownHostSource = knownHostSourceCleaner(hostCatalog(), HOST);
 
 function addUnclaimedCatalogueToCodex(manifest: Manifest): void {
-  manifest.setNativeRegistrations(TOOL.codex, {
+  manifest.setNativeRegistrations(HOST.codex, {
     binary: BINARY,
     marketplaces: [
-      ...(hostRecord(manifest.getNativeRegistrations(TOOL.codex))?.marketplaces ?? []),
+      ...(hostRecord(manifest.getNativeRegistrations(HOST.codex))?.marketplaces ?? []),
       {
         alias: "other",
         hostName: "other-host",
@@ -66,7 +66,7 @@ const FOREIGN_REF_CASES: {
     claimed: false,
     uninstalled: [],
     leadingWarnings: [
-      `claude: '${REF}' left enabled; Error: Catalogue '${MARKETPLACE}' includes foreign host ref 'machine-plugin@aidd-framework'; no host mutation made.`,
+      `${HOST.claude}: '${REF}' left enabled; Error: Catalogue '${MARKETPLACE}' includes foreign host ref 'machine-plugin@aidd-framework'; no host mutation made.`,
     ],
   },
   { claimed: true, uninstalled: [REF], leadingWarnings: [] },
@@ -76,7 +76,7 @@ describe("clean: shared source machine claims", () => {
   describe("undoing a host's own native registration", () => {
     describe("machine claims survive project cleanup", () => {
       it("names shared-source dependents only on refs belonging to that source", async () => {
-        const manifest = seedManifestWithNativeRegistrations(TOOL);
+        const manifest = seedManifestWithNativeRegistrations(HOST);
         addUnclaimedCatalogueToCodex(manifest);
         const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const references = await referencesFromProjects(fs, [
@@ -126,25 +126,29 @@ describe("clean: shared source machine claims", () => {
         expect(activator.removedMarketplaces).toEqual(["other-host"]);
         expect(await references.listAllReferencingProjects()).toEqual(["/project-b", "/project-c"]);
         expect(logger.warnMessages.slice(0, 2)).toEqual([
-          `codex: '${REF}' has no canonical machine claim — left enabled for manual reconciliation; project claim detached after local clean. Still needed by /project-b, /project-c.`,
-          "codex: 'unclaimed@other-host' has no canonical machine claim — left enabled for manual reconciliation; project claim detached after local clean.",
+          `${HOST.codex}: '${REF}' has no canonical machine claim — left enabled for manual reconciliation; project claim detached after local clean. Still needed by /project-b, /project-c.`,
+          `${HOST.codex}: 'unclaimed@other-host' has no canonical machine claim — left enabled for manual reconciliation; project claim detached after local clean.`,
         ]);
       });
 
       it("keeps canonical refs and reports remaining dependents", async () => {
         const others = ["/project-b", "/project-c"];
         const suffix = " Still needed by /project-b, /project-c.";
-        const manifest = seedManifestWithNativeRegistrations(TOOL);
+        const manifest = seedManifestWithNativeRegistrations(HOST);
         const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         fs.setFile(join(PROJECT_ROOT, "marker"), "project");
-        const cachePath = "/fake-home/.codex/plugins/cache/aidd-framework/plugin.json";
+        const cachePath = join(
+          hostCacheRoot("codex", "/fake-home"),
+          "aidd-framework",
+          "plugin.json"
+        );
         fs.setFile(cachePath, "cache");
         const extraRef = "another@aidd-framework";
         const machine = Manifest.create();
-        machine.addTool(TOOL.codex, "1.0.0", []);
-        machine.setNativeRegistrations(TOOL.codex, {
+        machine.addTool(HOST.codex, "1.0.0", []);
+        machine.setNativeRegistrations(HOST.codex, {
           binary: BINARY,
-          marketplaces: manifest.getNativeRegistrations(TOOL.codex)?.marketplaces ?? [],
+          marketplaces: manifest.getNativeRegistrations(HOST.codex)?.marketplaces ?? [],
           pluginRefs: [REF, extraRef],
           pluginClaims: [
             { ref: REF, dependents: [PROJECT_ROOT, ...others] },
@@ -174,7 +178,7 @@ describe("clean: shared source machine claims", () => {
           new Map(),
           () => "/fake-home",
           undefined,
-          new Map([[TOOL.codex, hostRefs]]),
+          new Map([[HOST.codex, hostRefs]]),
           machineRepo
         );
 
@@ -184,15 +188,15 @@ describe("clean: shared source machine claims", () => {
         expect(activator.removedMarketplaces).toEqual([]);
         expect(fs.getFile(cachePath)).toBe("cache");
         expect(projectRepo.getCurrent()).toBeNull();
-        expect(machineRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.pluginClaims).toEqual([
+        expect(machineRepo.getCurrent()?.getNativeRegistrations(HOST.codex)?.pluginClaims).toEqual([
           { ref: REF, dependents: others },
           { ref: extraRef, dependents: [PROJECT_ROOT, ...others] },
           { ref: "unrelated@other-host", dependents: ["/unrelated"] },
         ]);
         expect(logger.warnMessages).toEqual([
-          `codex: '${REF}' is an AIDD-owned machine plugin ref — left enabled; project claim detached after local clean.${suffix}`,
-          `codex: '${MARKETPLACE}' carries AIDD-owned machine plugin refs — left registered for explicit user-scope removal.${suffix}`,
-          `codex: cache for '${MARKETPLACE}' left in place, its own removal was not confirmed: ${join("/fake-home", ".codex", "plugins", "cache", MARKETPLACE)}`,
+          `${HOST.codex}: '${REF}' is an AIDD-owned machine plugin ref — left enabled; project claim detached after local clean.${suffix}`,
+          `${HOST.codex}: '${MARKETPLACE}' carries AIDD-owned machine plugin refs — left registered for explicit user-scope removal.${suffix}`,
+          `${HOST.codex}: cache for '${MARKETPLACE}' left in place, its own removal was not confirmed: ${join(hostCacheRoot("codex", "/fake-home"), MARKETPLACE)}`,
         ]);
       });
 
@@ -200,15 +204,15 @@ describe("clean: shared source machine claims", () => {
         "removes an empty project catalogue when the machine has no matching claims: %j",
         async (machineRegistrations) => {
           const machine = Manifest.create();
-          machine.addTool(TOOL.codex, "1.0.0", []);
+          machine.addTool(HOST.codex, "1.0.0", []);
           if (machineRegistrations !== undefined)
-            machine.setNativeRegistrations(TOOL.codex, machineRegistrations);
+            machine.setNativeRegistrations(HOST.codex, machineRegistrations);
           const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
           const logger = new CapturingLogger();
           const activator = new FakeHostActions({ available: true });
           const useCase = new CleanWithKnownHostSource(
             fs,
-            new InMemoryManifestRepository(seedManifestWithNativeRegistrations(TOOL), PROJECT_ROOT),
+            new InMemoryManifestRepository(seedManifestWithNativeRegistrations(HOST), PROJECT_ROOT),
             logger,
             new UpdateGitignore(fs),
             new Map([[BINARY, activator]]),
@@ -225,7 +229,7 @@ describe("clean: shared source machine claims", () => {
 
           expect(activator.removedMarketplaces).toEqual([MARKETPLACE]);
           expect(logger.warnMessages).toEqual([
-            `codex: '${REF}' has no canonical machine claim — left enabled for manual reconciliation; project claim detached after local clean.`,
+            `${HOST.codex}: '${REF}' has no canonical machine claim — left enabled for manual reconciliation; project claim detached after local clean.`,
           ]);
         }
       );
@@ -247,10 +251,10 @@ describe("clean: shared source machine claims", () => {
       }
 
       it("warns about a ref whose host catalogue was not recorded", async () => {
-        const manifest = seedClaudeNativeRegistrations(TOOL);
-        manifest.setNativeRegistrations(TOOL.claude, {
-          binary: "claude",
-          marketplaces: manifest.getNativeRegistrations(TOOL.claude)?.marketplaces ?? [],
+        const manifest = seedClaudeNativeRegistrations(HOST);
+        manifest.setNativeRegistrations(HOST.claude, {
+          binary: HOST.claude,
+          marketplaces: manifest.getNativeRegistrations(HOST.claude)?.marketplaces ?? [],
           pluginRefs: ["orphan@unrecorded"],
         });
         const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
@@ -261,7 +265,7 @@ describe("clean: shared source machine claims", () => {
           new InMemoryManifestRepository(manifest, PROJECT_ROOT),
           logger,
           new UpdateGitignore(fs),
-          new Map([[TOOL.claude, activator]]),
+          new Map([[HOST.claude, activator]]),
           await sharedClaudeRegistry()
         );
 
@@ -269,7 +273,7 @@ describe("clean: shared source machine claims", () => {
 
         expect(activator.uninstalledPlugins).toEqual([]);
         expect(logger.warnMessages[0]).toBe(
-          "claude: 'orphan@unrecorded' has no recorded host catalogue — left enabled."
+          `${HOST.claude}: 'orphan@unrecorded' has no recorded host catalogue — left enabled.`
         );
       });
 
@@ -280,9 +284,9 @@ describe("clean: shared source machine claims", () => {
           const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
           fs.setFile(join(PROJECT_ROOT, "marker"), "project");
           const machine = Manifest.create();
-          machine.addTool(TOOL.claude, "1.0.0", []);
-          machine.setNativeRegistrations(TOOL.claude, {
-            binary: "claude",
+          machine.addTool(HOST.claude, "1.0.0", []);
+          machine.setNativeRegistrations(HOST.claude, {
+            binary: HOST.claude,
             marketplaces: [],
             pluginRefs: [extraRef],
             pluginClaims: claimed ? [{ ref: extraRef, dependents: ["/other-project"] }] : [],
@@ -298,16 +302,16 @@ describe("clean: shared source machine claims", () => {
           const activator = new FakeHostActions({ available: true });
           const useCase = new CleanWithKnownHostSource(
             fs,
-            new InMemoryManifestRepository(seedClaudeNativeRegistrations(TOOL), PROJECT_ROOT),
+            new InMemoryManifestRepository(seedClaudeNativeRegistrations(HOST), PROJECT_ROOT),
             logger,
             new UpdateGitignore(fs),
-            new Map([[TOOL.claude, activator]]),
+            new Map([[HOST.claude, activator]]),
             await sharedClaudeRegistry(),
             undefined,
             new Map(),
             () => "/fake-home",
             undefined,
-            new Map([[TOOL.claude, hostRefs]]),
+            new Map([[HOST.claude, hostRefs]]),
             new InMemoryManifestRepository(machine, "/fake-home")
           );
 

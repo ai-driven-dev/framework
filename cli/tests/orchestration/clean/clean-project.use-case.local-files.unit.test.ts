@@ -6,7 +6,6 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import { pluginScriptDir } from "../../../src/contexts/tools/domain/hooks/hooks-merge.js";
-import { cursor } from "../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
@@ -18,7 +17,6 @@ import {
 } from "../../shared/testing/installation-deps.builder.js";
 import { present } from "../../shared/testing/present.builder.js";
 import { RecordingPrompter } from "../../shared/testing/recording-prompter.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
 import {
   atProject,
@@ -26,16 +24,24 @@ import {
   md5,
   PROJECT_ROOT,
 } from "../testing/clean-project.builder.js";
+import {
+  HOST,
+  HOST_HOOKS_FILE,
+  HOST_LOCAL_SETTINGS,
+  HOST_MCP_FILE,
+  hostCatalog,
+  hostProjectHooks,
+} from "../testing/synthetic-hosts.builder.js";
 
-const AT_PROJECT = atProject(registeredTools());
-const CleanWithKnownHostSource = knownHostSourceCleaner(registeredTools(), TOOL);
+const AT_PROJECT = atProject(hostCatalog());
+const CleanWithKnownHostSource = knownHostSourceCleaner(hostCatalog(), HOST);
 
 describe("clean: local files", () => {
   describe("machine-local files a tool's own materialization writes outside the manifest", () => {
-    it("removes .claude/settings.local.json, which install writes but the manifest never tracks", async () => {
-      const deps = await buildInstallationDeps({ tools: registeredTools() });
-      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
-      const settingsLocalPath = join(PROJECT_ROOT, ".claude", "settings.local.json");
+    it("removes the claude host settings.local.json, which install writes but the manifest never tracks", async () => {
+      const deps = await buildInstallationDeps({ tools: hostCatalog() });
+      await initAndInstall(deps, PROJECT_ROOT, HOST.claude);
+      const settingsLocalPath = join(PROJECT_ROOT, HOST_LOCAL_SETTINGS);
       await deps.fs.writeFile(settingsLocalPath, "{}");
 
       const useCase = new CleanWithKnownHostSource(
@@ -49,15 +55,15 @@ describe("clean: local files", () => {
       expect(deps.fs.has(settingsLocalPath)).toBe(false);
     });
 
-    it("deletes .cursor/hooks.json entirely once unmerging leaves it empty, and its script directory", async () => {
+    it("deletes the cursor host hooks.json entirely once unmerging leaves it empty, and its script directory", async () => {
       const pluginName = "aidd-context";
-      const scriptMarker = pluginScriptDir(present(cursor.hooks?.project).scriptsDir, pluginName);
+      const scriptMarker = pluginScriptDir(present(hostProjectHooks).scriptsDir, pluginName);
       const command = `./${scriptMarker}run.js`;
       const scriptContent = "// hook script";
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.cursor, "1.0.0", []);
+      manifest.addTool(HOST.cursor, "1.0.0", []);
       manifest.addPlugin(
-        TOOL.cursor,
+        HOST.cursor,
         RecordedPlugin.fromJSON({
           name: pluginName,
           source: { kind: "local", path: "/some/path" },
@@ -72,7 +78,7 @@ describe("clean: local files", () => {
         })
       );
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-      const hooksPath = join(PROJECT_ROOT, ".cursor", "hooks.json");
+      const hooksPath = join(PROJECT_ROOT, HOST_HOOKS_FILE);
       await fs.writeFile(
         hooksPath,
         JSON.stringify({
@@ -96,15 +102,15 @@ describe("clean: local files", () => {
       expect(fs.has(scriptPath)).toBe(false);
     });
 
-    it("keeps .cursor/hooks.json when another plugin's entries remain in it", async () => {
+    it("keeps the cursor host hooks.json when another plugin's entries remain in it", async () => {
       const pluginName = "aidd-context";
       const otherPluginName = "aidd-dev";
-      const scriptMarker = pluginScriptDir(present(cursor.hooks?.project).scriptsDir, pluginName);
+      const scriptMarker = pluginScriptDir(present(hostProjectHooks).scriptsDir, pluginName);
       const command = `./${scriptMarker}run.js`;
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.cursor, "1.0.0", []);
+      manifest.addTool(HOST.cursor, "1.0.0", []);
       manifest.addPlugin(
-        TOOL.cursor,
+        HOST.cursor,
         RecordedPlugin.fromJSON({
           name: pluginName,
           source: { kind: "local", path: "/some/path" },
@@ -119,9 +125,9 @@ describe("clean: local files", () => {
         })
       );
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-      const hooksPath = join(PROJECT_ROOT, ".cursor", "hooks.json");
+      const hooksPath = join(PROJECT_ROOT, HOST_HOOKS_FILE);
       const otherScriptMarker = pluginScriptDir(
-        present(cursor.hooks?.project).scriptsDir,
+        present(hostProjectHooks).scriptsDir,
         otherPluginName
       );
       await fs.writeFile(
@@ -157,15 +163,15 @@ describe("clean: local files", () => {
 
     it("rejects an edited Cursor hook on a confirmed clean without --force, before dropping a shared source reference or touching native state", async () => {
       const pluginName = "aidd-context";
-      const scriptMarker = pluginScriptDir(present(cursor.hooks?.project).scriptsDir, pluginName);
+      const scriptMarker = pluginScriptDir(present(hostProjectHooks).scriptsDir, pluginName);
       const command = `./${scriptMarker}run.js`;
       const scriptPath = join(PROJECT_ROOT, scriptMarker, "run.js");
       const installedScript = "// installed hook";
       const editedScript = "// edited by the user";
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.cursor, "1.0.0", []);
+      manifest.addTool(HOST.cursor, "1.0.0", []);
       manifest.addPlugin(
-        TOOL.cursor,
+        HOST.cursor,
         RecordedPlugin.fromJSON({
           name: pluginName,
           source: { kind: "local", path: "/some/path" },
@@ -179,9 +185,9 @@ describe("clean: local files", () => {
           },
         })
       );
-      manifest.addTool(TOOL.codex, "1.0.0", []);
-      manifest.setNativeRegistrations(TOOL.codex, {
-        binary: "codex",
+      manifest.addTool(HOST.codex, "1.0.0", []);
+      manifest.setNativeRegistrations(HOST.codex, {
+        binary: HOST.codex,
         marketplaces: [
           {
             alias: "aidd-framework",
@@ -207,7 +213,7 @@ describe("clean: local files", () => {
         pluginRefs: ["aidd-context@aidd-framework"],
       });
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-      const hooksPath = join(PROJECT_ROOT, ".cursor", "hooks.json");
+      const hooksPath = join(PROJECT_ROOT, HOST_HOOKS_FILE);
       await fs.writeFile(
         hooksPath,
         JSON.stringify({ version: 1, hooks: { PreToolUse: [{ command }] } })
@@ -244,7 +250,7 @@ describe("clean: local files", () => {
         manifestRepo,
         new CapturingLogger(),
         new UpdateGitignore(fs),
-        new Map([[TOOL.codex, activator]]),
+        new Map([[HOST.codex, activator]]),
         registry,
         new RecordingPrompter(true),
         new Map(),
@@ -271,13 +277,13 @@ describe("clean: local files", () => {
     });
   });
 
-  it("rejects an edited OpenCode MCP entry before dropping the shared source reference", async () => {
+  it("rejects an edited MCP entry before dropping the shared source reference", async () => {
     const originalServer = { type: "local" };
     const editedConfig = JSON.stringify({ mcp: { mine: { type: "remote" } } });
     const manifest = Manifest.create();
-    manifest.addTool(TOOL.opencode, "1.0.0", []);
+    manifest.addTool(HOST.mcp, "1.0.0", []);
     manifest.addPlugin(
-      TOOL.opencode,
+      HOST.mcp,
       RecordedPlugin.fromJSON({
         name: "aidd-context",
         source: { kind: "local", path: "/some/path" },
@@ -288,9 +294,9 @@ describe("clean: local files", () => {
         scope: "project",
       })
     );
-    manifest.addTool(TOOL.codex, "1.0.0", []);
-    manifest.setNativeRegistrations(TOOL.codex, {
-      binary: "codex",
+    manifest.addTool(HOST.codex, "1.0.0", []);
+    manifest.setNativeRegistrations(HOST.codex, {
+      binary: HOST.codex,
       marketplaces: [
         {
           alias: "aidd-framework",
@@ -306,7 +312,7 @@ describe("clean: local files", () => {
       pluginRefs: ["aidd-context@aidd-framework"],
     });
     const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-    const configPath = join(PROJECT_ROOT, "opencode.json");
+    const configPath = join(PROJECT_ROOT, HOST_MCP_FILE);
     await fs.writeFile(configPath, editedConfig);
     fs.setFile(join(PROJECT_ROOT, "marker"), "");
     fs.setFile("/other-project/marker", "");
@@ -319,7 +325,7 @@ describe("clean: local files", () => {
       new InMemoryManifestRepository(manifest, PROJECT_ROOT),
       new CapturingLogger(),
       new UpdateGitignore(fs),
-      new Map([[TOOL.codex, activator]]),
+      new Map([[HOST.codex, activator]]),
       undefined,
       undefined,
       new Map(),

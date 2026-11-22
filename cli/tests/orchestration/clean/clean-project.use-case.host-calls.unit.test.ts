@@ -13,7 +13,6 @@ import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js"
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   atProject,
   BINARY,
@@ -27,15 +26,16 @@ import {
   seedManifestWithNativeRegistrations,
   seedMarketplaceRegistry,
 } from "../testing/clean-project.builder.js";
+import { HOST, hostCacheRoot, hostCatalog } from "../testing/synthetic-hosts.builder.js";
 
-const AT_PROJECT = atProject(registeredTools());
-const CleanWithKnownHostSource = knownHostSourceCleaner(registeredTools(), TOOL);
+const AT_PROJECT = atProject(hostCatalog());
+const CleanWithKnownHostSource = knownHostSourceCleaner(hostCatalog(), HOST);
 
 describe("clean: host calls", () => {
   describe("undoing a host's own native registration", () => {
     describe("what the host is told, word for word", () => {
       const HOME = "/fake-home";
-      const CODEX_CACHE = join(HOME, ".codex", "plugins", "cache");
+      const CODEX_CACHE = hostCacheRoot("codex", HOME);
 
       function buildUseCase(deps: {
         manifest: Manifest;
@@ -76,7 +76,7 @@ describe("clean: host calls", () => {
           })
         );
         const useCase = buildUseCase({
-          manifest: seedManifestWithNativeRegistrations(TOOL),
+          manifest: seedManifestWithNativeRegistrations(HOST),
           fs,
           logger,
           activators: new Map([[BINARY, activator]]),
@@ -88,9 +88,9 @@ describe("clean: host calls", () => {
         expect(activator.uninstalledPlugins).toStrictEqual([]);
         expect(activator.removedMarketplaces).toStrictEqual([]);
         expect(logger.warnMessages).toStrictEqual([
-          `codex: '${REF}' has no canonical machine claim — left enabled for manual reconciliation; project claim detached after local clean.`,
-          `codex: '${MARKETPLACE}' is no longer a registered marketplace here, so its scope cannot be resolved — its codex registration was left in place.`,
-          `codex: cache for '${MARKETPLACE}' left in place, its own removal was not confirmed: ${join(CODEX_CACHE, MARKETPLACE)}`,
+          `${HOST.codex}: '${REF}' has no canonical machine claim — left enabled for manual reconciliation; project claim detached after local clean.`,
+          `${HOST.codex}: '${MARKETPLACE}' is no longer a registered marketplace here, so its scope cannot be resolved — its ${HOST.codex} registration was left in place.`,
+          `${HOST.codex}: cache for '${MARKETPLACE}' left in place, its own removal was not confirmed: ${join(CODEX_CACHE, MARKETPLACE)}`,
         ]);
       });
 
@@ -99,7 +99,7 @@ describe("clean: host calls", () => {
         const logger = new CapturingLogger();
         const activator = new FakeHostActions({ available: true });
         const useCase = buildUseCase({
-          manifest: seedManifestWithNativeRegistrations(TOOL),
+          manifest: seedManifestWithNativeRegistrations(HOST),
           fs,
           logger,
           activators: new Map([[BINARY, activator]]),
@@ -111,9 +111,9 @@ describe("clean: host calls", () => {
         expect(activator.uninstalledPlugins).toStrictEqual([]);
         expect(activator.removedMarketplaces).toStrictEqual([]);
         expect(logger.warnMessages).toStrictEqual([
-          `codex: '${REF}' has no canonical machine claim — left enabled for manual reconciliation; project claim detached after local clean.`,
-          `codex: '${MARKETPLACE}' is no longer a registered marketplace here, so its scope cannot be resolved — its codex registration was left in place.`,
-          `codex: cache for '${MARKETPLACE}' left in place, its own removal was not confirmed: ${join(CODEX_CACHE, MARKETPLACE)}`,
+          `${HOST.codex}: '${REF}' has no canonical machine claim — left enabled for manual reconciliation; project claim detached after local clean.`,
+          `${HOST.codex}: '${MARKETPLACE}' is no longer a registered marketplace here, so its scope cannot be resolved — its ${HOST.codex} registration was left in place.`,
+          `${HOST.codex}: cache for '${MARKETPLACE}' left in place, its own removal was not confirmed: ${join(CODEX_CACHE, MARKETPLACE)}`,
         ]);
       });
 
@@ -125,31 +125,31 @@ describe("clean: host calls", () => {
           failOnUninstall: [REF],
         });
         const useCase = buildUseCase({
-          manifest: seedClaudeNativeRegistrations(TOOL),
+          manifest: seedClaudeNativeRegistrations(HOST),
           fs,
           logger,
-          activators: new Map([[TOOL.claude, activator]]),
+          activators: new Map([[HOST.claude, activator]]),
           registry: seedMarketplaceRegistry(),
-          hostPluginRegistries: claudeRefOnHost(TOOL),
+          hostPluginRegistries: claudeRefOnHost(HOST),
         });
 
         await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(activator.uninstalledPluginScopes).toStrictEqual(["project", "user"]);
         expect(logger.warnMessages).toStrictEqual([
-          `claude plugin uninstall '${REF}' failed: plugin \`${REF}\` is not installed`,
+          `${HOST.claude} plugin uninstall '${REF}' failed: plugin \`${REF}\` is not installed`,
         ]);
       });
 
       it("propagates an activator failure that is not the host refusing", async () => {
         const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const useCase = buildUseCase({
-          manifest: seedClaudeNativeRegistrations(TOOL),
+          manifest: seedClaudeNativeRegistrations(HOST),
           fs,
           logger: new CapturingLogger(),
-          activators: new Map([[TOOL.claude, new CrashingUninstallActivator()]]),
+          activators: new Map([[HOST.claude, new CrashingUninstallActivator()]]),
           registry: seedMarketplaceRegistry(),
-          hostPluginRegistries: claudeRefOnHost(TOOL, "project"),
+          hostPluginRegistries: claudeRefOnHost(HOST, "project"),
         });
 
         await expect(useCase.execute({ ...AT_PROJECT, force: true })).rejects.toThrow(
@@ -197,17 +197,17 @@ describe("clean: host calls", () => {
         const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const logger = new CapturingLogger();
         const useCase = buildUseCase({
-          manifest: seedRegistrations(TOOL.copilot, "copilot"),
+          manifest: seedRegistrations(HOST.copilot, HOST.copilot),
           fs,
           logger,
-          activators: new Map([[TOOL.copilot, new FakeHostActions({ available: true })]]),
+          activators: new Map([[HOST.copilot, new FakeHostActions({ available: true })]]),
           registry: seedSharedRegistry(),
         });
 
         await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(logger.warnMessages).toStrictEqual([
-          `copilot: '${MARKETPLACE}' is shared by every project on this machine — left registered. Its entry survives at userConfigDir()/marketplaces.json.`,
+          `${HOST.copilot}: '${MARKETPLACE}' is shared by every project on this machine — left registered. Its entry survives at userConfigDir()/marketplaces.json.`,
         ]);
       });
 
@@ -221,10 +221,13 @@ describe("clean: host calls", () => {
         const activator = new FakeHostActions({ available: true });
         const useCase = new CleanWithKnownHostSource(
           fs,
-          new InMemoryManifestRepository(seedRegistrations(TOOL.copilot, "copilot"), PROJECT_ROOT),
+          new InMemoryManifestRepository(
+            seedRegistrations(HOST.copilot, HOST.copilot),
+            PROJECT_ROOT
+          ),
           new CapturingLogger(),
           new UpdateGitignore(fs),
-          new Map([[TOOL.copilot, activator]]),
+          new Map([[HOST.copilot, activator]]),
           seedSharedRegistry(),
           undefined,
           new Map(),
@@ -248,10 +251,10 @@ describe("clean: host calls", () => {
         fs.setFile(join(PROJECT_ROOT, "marker"), "");
         const references = new UserSourceReferencesAdapter(fs, () => "/fake-home/.config/aidd");
         await references.addReference("1.0.0", PROJECT_ROOT);
-        const manifest = seedRegistrations(TOOL.copilot, "copilot");
-        manifest.setNativeRegistrations(TOOL.copilot, {
-          binary: "copilot",
-          marketplaces: manifest.getNativeRegistrations(TOOL.copilot)?.marketplaces ?? [],
+        const manifest = seedRegistrations(HOST.copilot, HOST.copilot);
+        manifest.setNativeRegistrations(HOST.copilot, {
+          binary: HOST.copilot,
+          marketplaces: manifest.getNativeRegistrations(HOST.copilot)?.marketplaces ?? [],
           pluginRefs: [`demo@${MARKETPLACE}`],
         });
         const activator = new FakeHostActions({ available: true });
@@ -260,7 +263,7 @@ describe("clean: host calls", () => {
           new InMemoryManifestRepository(manifest, PROJECT_ROOT),
           new CapturingLogger(),
           new UpdateGitignore(fs),
-          new Map([[TOOL.copilot, activator]]),
+          new Map([[HOST.copilot, activator]]),
           seedSharedRegistry(),
           undefined,
           new Map(),
@@ -283,16 +286,16 @@ describe("clean: host calls", () => {
         fs.setFile(join(PROJECT_ROOT, "marker"), "");
         const references = new UserSourceReferencesAdapter(fs, () => "/fake-home/.config/aidd");
         await references.addReference("1.0.0", PROJECT_ROOT);
-        const manifest = seedRegistrations(TOOL.codex, "codex");
-        manifest.setNativeRegistrations(TOOL.codex, {
-          binary: "codex",
-          marketplaces: manifest.getNativeRegistrations(TOOL.codex)?.marketplaces ?? [],
+        const manifest = seedRegistrations(HOST.codex, HOST.codex);
+        manifest.setNativeRegistrations(HOST.codex, {
+          binary: HOST.codex,
+          marketplaces: manifest.getNativeRegistrations(HOST.codex)?.marketplaces ?? [],
           pluginRefs: [`demo@${MARKETPLACE}`],
         });
         const activator = new FakeHostActions({ available: true });
         const hostRefs = new Map<AiToolId, HostPluginRegistry>([
           [
-            TOOL.codex,
+            HOST.codex,
             new FakeHostPluginRegistry({
               location: "Codex user-global registry",
               refs: new Map([[`demo@${MARKETPLACE}`, { enabled: true }]]),
@@ -304,7 +307,7 @@ describe("clean: host calls", () => {
           new InMemoryManifestRepository(manifest, PROJECT_ROOT),
           new CapturingLogger(),
           new UpdateGitignore(fs),
-          new Map([[TOOL.codex, activator]]),
+          new Map([[HOST.codex, activator]]),
           seedSharedRegistry(),
           undefined,
           new Map(),
@@ -324,17 +327,17 @@ describe("clean: host calls", () => {
         const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const logger = new CapturingLogger();
         const useCase = buildUseCase({
-          manifest: seedRegistrations(TOOL.cursor, "cursor"),
+          manifest: seedRegistrations(HOST.cursor, HOST.cursor),
           fs,
           logger,
-          activators: new Map([[TOOL.cursor, new FakeHostActions({ available: true })]]),
+          activators: new Map([[HOST.cursor, new FakeHostActions({ available: true })]]),
           registry: seedSharedRegistry(),
         });
 
         await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(logger.warnMessages).toStrictEqual([
-          `cursor: '${MARKETPLACE}' is shared by every project on this machine — left registered. Its entry survives at userConfigDir()/marketplaces.json.`,
+          `${HOST.cursor}: '${MARKETPLACE}' is shared by every project on this machine — left registered. Its entry survives at userConfigDir()/marketplaces.json.`,
         ]);
       });
 
@@ -343,7 +346,7 @@ describe("clean: host calls", () => {
         fs.setFile(join(CODEX_CACHE, MARKETPLACE, "leftover.json"), "{}");
         const logger = new CapturingLogger();
         const useCase = buildUseCase({
-          manifest: seedRegistrations(TOOL.codex, BINARY),
+          manifest: seedRegistrations(HOST.codex, BINARY),
           fs,
           logger,
           activators: new Map([[BINARY, new FakeHostActions({ available: true })]]),
@@ -354,8 +357,8 @@ describe("clean: host calls", () => {
 
         expect(fs.has(join(CODEX_CACHE, MARKETPLACE, "leftover.json"))).toBe(true);
         expect(logger.warnMessages).toStrictEqual([
-          `codex: '${MARKETPLACE}' is shared by every project on this machine — left registered. Its entry survives at userConfigDir()/marketplaces.json, and its cache at: ${join(CODEX_CACHE, MARKETPLACE)}.`,
-          `codex: cache for '${MARKETPLACE}' left in place, its own removal was not confirmed: ${join(CODEX_CACHE, MARKETPLACE)}`,
+          `${HOST.codex}: '${MARKETPLACE}' is shared by every project on this machine — left registered. Its entry survives at userConfigDir()/marketplaces.json, and its cache at: ${join(CODEX_CACHE, MARKETPLACE)}.`,
+          `${HOST.codex}: cache for '${MARKETPLACE}' left in place, its own removal was not confirmed: ${join(CODEX_CACHE, MARKETPLACE)}`,
         ]);
       });
 
@@ -363,7 +366,7 @@ describe("clean: host calls", () => {
         const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const logger = new CapturingLogger();
         const useCase = buildUseCase({
-          manifest: seedRegistrations(TOOL.copilot, "copilot"),
+          manifest: seedRegistrations(HOST.copilot, HOST.copilot),
           fs,
           logger,
           activators: new Map(),
@@ -373,7 +376,7 @@ describe("clean: host calls", () => {
         await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(logger.warnMessages).toStrictEqual([
-          "copilot: registration left in place, the copilot CLI is not on the PATH.",
+          `${HOST.copilot}: registration left in place, the ${HOST.copilot} CLI is not on the PATH.`,
         ]);
       });
 
@@ -381,7 +384,7 @@ describe("clean: host calls", () => {
         const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const logger = new CapturingLogger();
         const useCase = buildUseCase({
-          manifest: seedRegistrations(TOOL.cursor, "cursor"),
+          manifest: seedRegistrations(HOST.cursor, HOST.cursor),
           fs,
           logger,
           activators: new Map(),
@@ -391,14 +394,14 @@ describe("clean: host calls", () => {
         await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(logger.warnMessages).toStrictEqual([
-          "cursor: registration left in place, the cursor CLI is not on the PATH.",
+          `${HOST.cursor}: registration left in place, the ${HOST.cursor} CLI is not on the PATH.`,
         ]);
       });
 
       it("names no surviving cache when the absent binary registered no marketplace", async () => {
         const manifest = Manifest.create();
-        manifest.addTool(TOOL.codex, "1.0.0", []);
-        manifest.setNativeRegistrations(TOOL.codex, {
+        manifest.addTool(HOST.codex, "1.0.0", []);
+        manifest.setNativeRegistrations(HOST.codex, {
           binary: BINARY,
           marketplaces: [],
           pluginRefs: [REF],
@@ -416,7 +419,7 @@ describe("clean: host calls", () => {
         await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(logger.warnMessages).toStrictEqual([
-          "codex: registration left in place, the codex CLI is not on the PATH.",
+          `${HOST.codex}: registration left in place, the ${HOST.codex} CLI is not on the PATH.`,
         ]);
       });
     });

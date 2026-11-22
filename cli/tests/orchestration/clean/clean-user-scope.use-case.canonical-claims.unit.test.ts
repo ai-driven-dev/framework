@@ -5,7 +5,6 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
 import {
   CLAUDE_CACHE,
@@ -17,6 +16,7 @@ import {
   seedClaudeCache,
   USER_CONFIG_DIR,
 } from "../testing/clean-user-scope.builder.js";
+import { HOST, hostCatalog } from "../testing/synthetic-hosts.builder.js";
 import { userScopeCleaner } from "../testing/user-scope-cleaner.builder.js";
 
 describe("clean --scope user: canonical claims", () => {
@@ -24,15 +24,15 @@ describe("clean --scope user: canonical claims", () => {
     "Copilot cleans past an unclaimed uninstall tombstone, but protects a foreign enabled=%s ref",
     async (foreignEnabled) => {
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.copilot, "1.0.0", []);
+      manifest.addTool(HOST.copilot, "1.0.0", []);
       const source = {
         kind: "effective-list" as const,
         root: "/built/copilot",
         sourceType: "local",
         source: "/built/copilot",
       };
-      manifest.setNativeRegistrations(TOOL.copilot, {
-        binary: "copilot",
+      manifest.setNativeRegistrations(HOST.copilot, {
+        binary: HOST.copilot,
         marketplaces: [{ alias: "aidd-framework", hostName: "aidd-framework", provenance: source }],
         pluginRefs: ["aidd-dev@aidd-framework"],
         pluginClaims: [{ ref: "aidd-dev@aidd-framework", dependents: [] }],
@@ -44,12 +44,12 @@ describe("clean --scope user: canonical claims", () => {
       ]);
       const activator = new FakeHostActions({ available: true });
       const clean = userScopeCleaner({
-        tools: registeredTools(),
+        tools: hostCatalog(),
         repo,
-        activators: new Map([[TOOL.copilot, activator]]),
+        activators: new Map([[HOST.copilot, activator]]),
         sources: new Map([
           [
-            TOOL.copilot,
+            HOST.copilot,
             {
               read: async () => ({
                 location: "marketplace list",
@@ -59,7 +59,7 @@ describe("clean --scope user: canonical claims", () => {
           ],
         ]),
         pluginRegistries: new Map([
-          [TOOL.copilot, new FakeHostPluginRegistry({ location: "plugins", refs: hostRefs })],
+          [HOST.copilot, new FakeHostPluginRegistry({ location: "plugins", refs: hostRefs })],
         ]),
       });
 
@@ -83,13 +83,13 @@ describe("clean --scope user: canonical claims", () => {
   );
 
   it("reads canonical dependents after acquiring the machine lock", async () => {
-    const machine = manifestWithClaude(TOOL);
+    const machine = manifestWithClaude(HOST);
     class LockedRepository extends InMemoryManifestRepository {
       async withExclusiveAccess<T>(action: () => Promise<T>): Promise<T> {
         // A concurrent install completed while clean was waiting for the lock.
-        const registration = machine.getNativeRegistrations(TOOL.claude);
+        const registration = machine.getNativeRegistrations(HOST.claude);
         if (registration === undefined) throw new Error("fixture missing native registration");
-        machine.setNativeRegistrations(TOOL.claude, {
+        machine.setNativeRegistrations(HOST.claude, {
           ...registration,
           pluginClaims: [{ ref: "aidd-context@aidd-framework", dependents: ["/project-b"] }],
         });
@@ -113,12 +113,12 @@ describe("clean --scope user: canonical claims", () => {
     fs.setFile(plugins, "plugin clone");
     const activator = new FakeHostActions({ available: true });
     const useCase = userScopeCleaner({
-      tools: registeredTools(),
+      tools: hostCatalog(),
       fs,
       repo,
-      activators: new Map([[TOOL.claude, activator]]),
-      sources: provenClaudeSources(TOOL),
-      pluginRegistries: provenHostPlugins(TOOL, machine),
+      activators: new Map([[HOST.claude, activator]]),
+      sources: provenClaudeSources(HOST),
+      pluginRegistries: provenHostPlugins(HOST, machine),
     });
 
     await expect(useCase.execute({ projectRoot: "/wherever", force: true })).rejects.toThrow(
@@ -131,13 +131,13 @@ describe("clean --scope user: canonical claims", () => {
     expect(fs.getFile(cacheMarker)).toBe("{}");
     expect(fs.getFile(fetched)).toBe("framework clone");
     expect(fs.getFile(plugins)).toBe("plugin clone");
-    expect(repo.getCurrent()?.getNativeRegistrations(TOOL.claude)?.pluginClaims).toEqual([
+    expect(repo.getCurrent()?.getNativeRegistrations(HOST.claude)?.pluginClaims).toEqual([
       { ref: "aidd-context@aidd-framework", dependents: ["/project-b"] },
     ]);
   });
 
   it("refuses an owned catalogue with a foreign enabled plugin ref before any global clean effect", async () => {
-    const machine = manifestWithClaude(TOOL);
+    const machine = manifestWithClaude(HOST);
     const repo = new InMemoryManifestRepository(machine);
     const fs = new RecordingFileAdapter();
     const foreignCache = join(CLAUDE_CACHE, "aidd-framework", "foreign-payload", "bytes");
@@ -151,12 +151,12 @@ describe("clean --scope user: canonical claims", () => {
       ]),
     });
     const useCase = userScopeCleaner({
-      tools: registeredTools(),
+      tools: hostCatalog(),
       fs,
       repo,
-      activators: new Map([[TOOL.claude, activator]]),
-      sources: provenClaudeSources(TOOL),
-      pluginRegistries: new Map([[TOOL.claude, hostPlugins]]),
+      activators: new Map([[HOST.claude, activator]]),
+      sources: provenClaudeSources(HOST),
+      pluginRegistries: new Map([[HOST.claude, hostPlugins]]),
     });
     await expect(useCase.execute({ projectRoot: "/A", force: true })).rejects.toThrow(
       /foreign.*ref.*foreign@aidd-framework/
@@ -164,6 +164,6 @@ describe("clean --scope user: canonical claims", () => {
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(activator.removedMarketplaces).toEqual([]);
     expect(await fs.readFile(foreignCache)).toBe("foreign bytes");
-    expect(repo.getCurrent()?.getNativeRegistrations(TOOL.claude)?.pluginClaims).toHaveLength(1);
+    expect(repo.getCurrent()?.getNativeRegistrations(HOST.claude)?.pluginClaims).toHaveLength(1);
   });
 });

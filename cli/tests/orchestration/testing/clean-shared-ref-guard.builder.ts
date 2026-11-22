@@ -15,6 +15,7 @@ import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manif
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { FakeHostPluginRegistry } from "./fake-host-plugin-registry.fake.js";
 import { projectCleaner } from "./project-cleaner.builder.js";
+import { HOST } from "./synthetic-hosts.builder.js";
 
 export const PROJECT_ROOT = "/test-project";
 export const OTHER_PROJECT = "/other-project";
@@ -31,7 +32,7 @@ export function provenRegistration(
     alias,
     hostName,
     provenance:
-      toolId === "claude"
+      toolId === HOST.claude
         ? { kind: "registry", source }
         : { kind: "effective-list", root: source, sourceType: "local", source },
   };
@@ -45,7 +46,7 @@ function currentHostSource(toolId: AiToolId): HostMarketplaceSources {
       entries: new Map([
         [
           "aidd-framework",
-          toolId === "claude"
+          toolId === HOST.claude
             ? { kind: "registry" as const, source: "/some/built/path" }
             : {
                 kind: "effective-list" as const,
