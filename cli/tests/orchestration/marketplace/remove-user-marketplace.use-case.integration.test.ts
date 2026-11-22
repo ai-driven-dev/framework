@@ -8,8 +8,11 @@ import {
   spiedRecordRules,
 } from "../../contexts/installation/testing/spy-record-rules.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
+import {
+  SYNTHETIC_TOOL,
+  syntheticCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   ALIAS,
   HOST,
@@ -20,12 +23,12 @@ import {
 } from "../testing/user-marketplace-removal.builder.js";
 import { userMarketplaceRemover } from "../testing/user-marketplace-remover.builder.js";
 
-for (const toolId of [TOOL.codex]) {
+for (const toolId of [SYNTHETIC_TOOL]) {
   describe(`${toolId} targeted user marketplace removal: catalogue selection and claims`, () => {
     const fixture = (
-      refs: Parameters<typeof nativeFixture>[1],
-      opts: Parameters<typeof nativeFixture>[2] = {}
-    ) => nativeFixture(toolId, refs, opts);
+      refs: Parameters<typeof nativeFixture>[2],
+      opts: Parameters<typeof nativeFixture>[3] = {}
+    ) => nativeFixture(syntheticCatalog(), toolId, refs, opts);
 
     const enabled = () => new Map([[REF, { enabled: true, scope: "user" as const }]]);
 
@@ -175,6 +178,7 @@ for (const toolId of [TOOL.codex]) {
         },
       };
       const useCase = userMarketplaceRemover(
+        syntheticCatalog(),
         new InMemoryFileAdapter(),
         lockedRepo,
         f.registry,

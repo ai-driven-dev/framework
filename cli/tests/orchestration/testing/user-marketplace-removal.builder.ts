@@ -7,6 +7,7 @@ import type { NativeMarketplaceSource } from "../../../src/contexts/host-registr
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
@@ -48,6 +49,7 @@ export function sourceReader(): HostMarketplaceSources {
 }
 
 export async function nativeFixture(
+  tools: ToolCatalog,
   toolId: AiToolId,
   refs: ReadonlyMap<string, { enabled: boolean; scope?: Scope }>,
   options: {
@@ -86,6 +88,7 @@ export async function nativeFixture(
     read: async () => ({ location: "/host/registry", refs }),
   };
   const useCase = userMarketplaceRemover(
+    tools,
     new InMemoryFileAdapter(),
     repo,
     registry,

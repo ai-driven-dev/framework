@@ -9,7 +9,7 @@ import { aManifest } from "../../contexts/installation/testing/manifest.builder.
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
 import {
   buildUseCase,
@@ -58,6 +58,7 @@ describe("which plugins a removal orphans: what it protects", () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
     const useCase = projectMarketplaceRemover(
+      registeredTools(),
       new RemoveProjectPlugin(fs, () => "/home/dev", removalClaims(machineRepo, fs)),
       projectRepo,
       registry,
@@ -115,6 +116,7 @@ describe("which plugins a removal orphans: what it protects", () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
     const useCase = projectMarketplaceRemover(
+      registeredTools(),
       new RemoveProjectPlugin(fs, () => "/home/dev"),
       manifestRepo,
       registry,
@@ -172,6 +174,7 @@ describe("which plugins a removal orphans: what it protects", () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
     const useCase = projectMarketplaceRemover(
+      registeredTools(),
       new RemoveProjectPlugin(fs, () => "/home/dev"),
       manifestRepo,
       registry,
@@ -195,7 +198,7 @@ describe("which plugins a removal orphans: what it protects", () => {
   });
 
   it("unmerges only the orphan's contributed OpenCode MCP server from the project", async () => {
-    const { useCase, registry, manifestRepo, fs } = buildUseCase();
+    const { useCase, registry, manifestRepo, fs } = buildUseCase(registeredTools());
     const manifest = aManifest()
       .withTool(TOOL.opencode, [])
       .withPlugin(
@@ -255,7 +258,7 @@ describe("which plugins a removal orphans: what it protects", () => {
   });
 
   it("preflights every orphan before touching A when B's MCP contribution was edited", async () => {
-    const { useCase, registry, manifestRepo, fs } = buildUseCase();
+    const { useCase, registry, manifestRepo, fs } = buildUseCase(registeredTools());
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "1.0.0", []);
     for (const name of ["alpha", "beta"]) {

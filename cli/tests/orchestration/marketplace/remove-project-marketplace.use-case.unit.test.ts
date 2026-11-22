@@ -9,9 +9,12 @@ import { Marketplace } from "../../../src/contexts/distribution/domain/marketpla
 import { RemoveProjectPlugin } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
+import {
+  SYNTHETIC_TOOL,
+  syntheticCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   buildUseCase,
   marketplaceNamed,
@@ -21,7 +24,7 @@ import { projectMarketplaceRemover } from "../testing/project-marketplace-remove
 
 describe("RemoveProjectMarketplace", () => {
   it("throws MarketplaceNotFoundError when entry does not exist", async () => {
-    const { useCase, registry } = buildUseCase();
+    const { useCase, registry } = buildUseCase(syntheticCatalog());
     await registry.save(
       PROJECT_ROOT,
       Marketplace.create({
@@ -41,7 +44,7 @@ describe("RemoveProjectMarketplace", () => {
   });
 
   it("removes registry entry when no orphans tracked", async () => {
-    const { useCase, registry } = buildUseCase();
+    const { useCase, registry } = buildUseCase(syntheticCatalog());
     await registry.save(
       PROJECT_ROOT,
       Marketplace.create({
@@ -63,9 +66,9 @@ describe("RemoveProjectMarketplace", () => {
   });
 
   it("removes orphan plugins and their files when autoConfirm is true", async () => {
-    const { useCase, registry, manifestRepo, fs } = buildUseCase();
+    const { useCase, registry, manifestRepo, fs } = buildUseCase(syntheticCatalog());
     const manifest = Manifest.create();
-    manifest.addTool(TOOL.claude, "1.0.0", []);
+    manifest.addTool(SYNTHETIC_TOOL, "1.0.0", []);
     const plugin = RecordedPlugin.fromJSON({
       name: "sample",
       source: { kind: "github", repo: "owner/sample" },
@@ -75,7 +78,7 @@ describe("RemoveProjectMarketplace", () => {
       scope: "project",
       marketplace: "awesome",
     });
-    manifest.addPlugin(TOOL.claude, plugin);
+    manifest.addPlugin(SYNTHETIC_TOOL, plugin);
     await manifestRepo.save(manifest);
 
     const filePath = join(PROJECT_ROOT, ".claude/plugins/sample/CLAUDE.md");
@@ -100,22 +103,23 @@ describe("RemoveProjectMarketplace", () => {
     expect(result.removedPluginCount).toBe(1);
     expect(fs.has(filePath)).toBe(false);
     const reloaded = await manifestRepo.load();
-    expect(reloaded?.getPlugins(TOOL.claude)).toHaveLength(0);
+    expect(reloaded?.getPlugins(SYNTHETIC_TOOL)).toHaveLength(0);
   });
 
   it("removes a project marketplace's orphan projection without deleting shared Cursor files", async () => {
-    const { registry, manifestRepo, fs } = buildUseCase();
+    const { registry, manifestRepo, fs } = buildUseCase(syntheticCatalog());
     const useCase = projectMarketplaceRemover(
+      syntheticCatalog(),
       new RemoveProjectPlugin(fs, () => "/home/dev"),
       manifestRepo,
       registry,
       new KeepPrompter()
     );
     const manifest = Manifest.create();
-    manifest.addTool(TOOL.cursor, "1.0.0", []);
+    manifest.addTool(SYNTHETIC_TOOL, "1.0.0", []);
     const pluginKey = "aidd-context/commands/hello.md";
     manifest.addPlugin(
-      TOOL.cursor,
+      SYNTHETIC_TOOL,
       RecordedPlugin.fromJSON({
         name: "aidd-context",
         source: { kind: "github", repo: "owner/aidd-context" },
@@ -152,18 +156,19 @@ describe("RemoveProjectMarketplace", () => {
   });
 
   it("removes a cursor orphan's file under projectRoot, not ~/.cursor/plugins/local, when the manifest says scope: project", async () => {
-    const { registry, manifestRepo, fs } = buildUseCase();
+    const { registry, manifestRepo, fs } = buildUseCase(syntheticCatalog());
     const useCase = projectMarketplaceRemover(
+      syntheticCatalog(),
       new RemoveProjectPlugin(fs, () => "/home/dev"),
       manifestRepo,
       registry,
       new KeepPrompter()
     );
     const manifest = Manifest.create();
-    manifest.addTool(TOOL.cursor, "1.0.0", []);
+    manifest.addTool(SYNTHETIC_TOOL, "1.0.0", []);
     const pluginKey = "aidd-context/commands/hello.md";
     manifest.addPlugin(
-      TOOL.cursor,
+      SYNTHETIC_TOOL,
       RecordedPlugin.fromJSON({
         name: "aidd-context",
         source: { kind: "github", repo: "owner/aidd-context" },
@@ -203,7 +208,7 @@ describe("RemoveProjectMarketplace", () => {
   // `aidd-framework` is machine-scope: removing it from one project would orphan the host's
   // own registration for every other project. `marketplace add` already refuses that name.
   it("refuses to remove the reserved aidd-framework marketplace, leaving the registry untouched", async () => {
-    const { useCase, registry } = buildUseCase();
+    const { useCase, registry } = buildUseCase(syntheticCatalog());
     await registry.save(
       PROJECT_ROOT,
       Marketplace.create({
@@ -228,7 +233,7 @@ describe("RemoveProjectMarketplace", () => {
   });
 
   it("refuses the reserved name with a message naming the command that does remove it", async () => {
-    const { useCase } = buildUseCase();
+    const { useCase } = buildUseCase(syntheticCatalog());
 
     await expect(
       useCase.execute({
@@ -246,7 +251,7 @@ describe("RemoveProjectMarketplace", () => {
 
 describe("which marketplace a removal takes out", () => {
   it("removes the named marketplace, never the first one registered", async () => {
-    const { useCase, registry } = buildUseCase();
+    const { useCase, registry } = buildUseCase(syntheticCatalog());
     await registry.save(PROJECT_ROOT, marketplaceNamed("alpha"));
     const awesome = marketplaceNamed("awesome");
     await registry.save(PROJECT_ROOT, awesome);
@@ -266,7 +271,7 @@ describe("which marketplace a removal takes out", () => {
   });
 
   it("reports zero orphans when the project has no manifest at all", async () => {
-    const { useCase, registry } = buildUseCase();
+    const { useCase, registry } = buildUseCase(syntheticCatalog());
     const awesome = marketplaceNamed("awesome");
     await registry.save(PROJECT_ROOT, awesome);
 

@@ -3,8 +3,11 @@ import { RemoveProjectPlugin } from "../../../src/contexts/installation/applicat
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { ScriptedPrompter } from "../../shared/testing/scripted-prompter.fake.js";
+import {
+  SYNTHETIC_TOOL,
+  syntheticCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   buildUseCase,
   marketplaceNamed,
@@ -43,14 +46,14 @@ function pluginFrom(marketplace: string, name: string): RecordedPlugin {
 
 function manifestWithPlugins(...plugins: readonly RecordedPlugin[]): Manifest {
   const manifest = Manifest.create();
-  manifest.addTool(TOOL.claude, "1.0.0", []);
-  for (const plugin of plugins) manifest.addPlugin(TOOL.claude, plugin);
+  manifest.addTool(SYNTHETIC_TOOL, "1.0.0", []);
+  for (const plugin of plugins) manifest.addPlugin(SYNTHETIC_TOOL, plugin);
   return manifest;
 }
 
 describe("which plugins a removal orphans: the cleanup it offers", () => {
   it("removes the marketplace's own plugins and leaves another marketplace's in place", async () => {
-    const { useCase, registry, manifestRepo } = buildUseCase();
+    const { useCase, registry, manifestRepo } = buildUseCase(syntheticCatalog());
     await manifestRepo.save(
       manifestWithPlugins(pluginFrom("awesome", "sample"), pluginFrom("elsewhere", "other"))
     );
@@ -68,15 +71,16 @@ describe("which plugins a removal orphans: the cleanup it offers", () => {
       removedPluginCount: 1,
       orphanCount: 1,
     });
-    expect((await manifestRepo.load())?.getPlugins(TOOL.claude).map((p) => p.name)).toStrictEqual([
-      "other",
-    ]);
+    expect(
+      (await manifestRepo.load())?.getPlugins(SYNTHETIC_TOOL).map((p) => p.name)
+    ).toStrictEqual(["other"]);
   });
 
   it("keeps every orphan when the person declines the cleanup, and still drops the marketplace", async () => {
-    const { registry, manifestRepo, fs } = buildUseCase();
+    const { registry, manifestRepo, fs } = buildUseCase(syntheticCatalog());
     const prompter = new ConfirmRecordingPrompter([ScriptedPrompter.answer.confirm(false)]);
     const useCase = projectMarketplaceRemover(
+      syntheticCatalog(),
       new RemoveProjectPlugin(fs, () => "/home/dev"),
       manifestRepo,
       registry,
@@ -97,16 +101,17 @@ describe("which plugins a removal orphans: the cleanup it offers", () => {
       removedPluginCount: 0,
       orphanCount: 1,
     });
-    expect((await manifestRepo.load())?.getPlugins(TOOL.claude).map((p) => p.name)).toStrictEqual([
-      "sample",
-    ]);
+    expect(
+      (await manifestRepo.load())?.getPlugins(SYNTHETIC_TOOL).map((p) => p.name)
+    ).toStrictEqual(["sample"]);
     expect(await registry.list(PROJECT_ROOT)).toStrictEqual([]);
   });
 
   it("asks once, naming how many plugins the cleanup would remove", async () => {
-    const { registry, manifestRepo, fs } = buildUseCase();
+    const { registry, manifestRepo, fs } = buildUseCase(syntheticCatalog());
     const prompter = new ConfirmRecordingPrompter([ScriptedPrompter.answer.confirm(true)]);
     const useCase = projectMarketplaceRemover(
+      syntheticCatalog(),
       new RemoveProjectPlugin(fs, () => "/home/dev"),
       manifestRepo,
       registry,
@@ -130,12 +135,13 @@ describe("which plugins a removal orphans: the cleanup it offers", () => {
   });
 
   it("neither asks nor rewrites the manifest when nothing was installed from the marketplace", async () => {
-    const { registry, fs } = buildUseCase();
+    const { registry, fs } = buildUseCase(syntheticCatalog());
     const manifestRepo = new SaveCountingManifestRepository(
       manifestWithPlugins(pluginFrom("elsewhere", "other"))
     );
     const prompter = new ConfirmRecordingPrompter([ScriptedPrompter.answer.confirm(true)]);
     const useCase = projectMarketplaceRemover(
+      syntheticCatalog(),
       new RemoveProjectPlugin(fs, () => "/home/dev"),
       manifestRepo,
       registry,
@@ -154,9 +160,10 @@ describe("which plugins a removal orphans: the cleanup it offers", () => {
   });
 
   it("cleans up without asking when the caller auto-confirms", async () => {
-    const { registry, manifestRepo, fs } = buildUseCase();
+    const { registry, manifestRepo, fs } = buildUseCase(syntheticCatalog());
     const prompter = new ConfirmRecordingPrompter([ScriptedPrompter.answer.confirm(false)]);
     const useCase = projectMarketplaceRemover(
+      syntheticCatalog(),
       new RemoveProjectPlugin(fs, () => "/home/dev"),
       manifestRepo,
       registry,

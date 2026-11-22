@@ -102,7 +102,6 @@
       "tests/orchestration/marketplace/register-marketplace.use-case.unit.test.ts": 1,
       "tests/orchestration/marketplace/remove-project-marketplace-native-claims.integration.test.ts": 1,
       "tests/orchestration/marketplace/remove-project-marketplace.use-case.orphan-protection.unit.test.ts": 1,
-      "tests/orchestration/marketplace/remove-project-marketplace.use-case.unit.test.ts": 1,
       "tests/orchestration/marketplace/remove-user-marketplace.use-case.copilot-and-cursor.integration.test.ts": 1,
       "tests/orchestration/marketplace/remove-user-marketplace.use-case.host-refusals.integration.test.ts": 1,
       "tests/orchestration/plugin/install-from-marketplace.use-case.integration.test.ts": 1,
@@ -199,7 +198,6 @@
       "tests/orchestration/testing/marketplace-sync-settings-migration.builder.ts": 1,
       "tests/orchestration/testing/owned-native-settings.builder.ts": 1,
       "tests/orchestration/testing/project-cleaner.builder.ts": 1,
-      "tests/orchestration/testing/project-marketplace-remover.builder.ts": 1,
       "tests/orchestration/testing/recovery-contract.builder.ts": 1,
       "tests/orchestration/testing/run-setup-of.builder.ts": 1,
       "tests/orchestration/testing/run-setup-scenario.builder.ts": 1,
@@ -207,7 +205,6 @@
       "tests/orchestration/testing/settings-scope.builder.ts": 1,
       "tests/orchestration/testing/source-provenance.builder.ts": 1,
       "tests/orchestration/testing/sync-settings.builder.ts": 1,
-      "tests/orchestration/testing/user-marketplace-remover.builder.ts": 1,
       "tests/orchestration/testing/user-scope-cleaner.builder.ts": 1,
       "tests/shared/testing/built-agent.builder.ts": 1,
       "tests/shared/testing/catalog-of.builder.ts": 1,
@@ -227,21 +224,6 @@
     "entries": {
       "tests/orchestration/doctor/run-doctor.use-case.unit.test.ts": 1,
       "tests/orchestration/domain/ai-tool-selection.model.unit.test.ts": 1
-    }
-  },
-  {
-    "rule": "real-tool-list:project-marketplace-remover",
-    "closesWhen": "the test is converted to SYNTHETIC_TOOL once project-marketplace-remover.builder takes an injected registry",
-    "entries": {
-      "tests/orchestration/marketplace/remove-project-marketplace-record-rewrite.unit.test.ts": 1,
-      "tests/orchestration/marketplace/remove-project-marketplace.use-case.orphan-cleanup.unit.test.ts": 1
-    }
-  },
-  {
-    "rule": "real-tool-list:user-marketplace-remover",
-    "closesWhen": "the test is converted to SYNTHETIC_TOOL once user-marketplace-remover.builder takes an injected registry",
-    "entries": {
-      "tests/orchestration/marketplace/remove-user-marketplace.use-case.integration.test.ts": 1
     }
   }
 ]

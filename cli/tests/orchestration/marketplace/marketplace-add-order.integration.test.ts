@@ -28,6 +28,7 @@ import { InMemoryMarketplaceTrustStore } from "../../shared/testing/in-memory-ma
 import { unusedRawCatalog } from "../../shared/testing/raw-catalog.fake.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
 import { seedFromDirectory } from "../../shared/testing/seed-from-directory.builder.js";
+import { syntheticCatalog } from "../../shared/testing/synthetic-tool-id.builder.js";
 import { projectMarketplaceRemover } from "../testing/project-marketplace-remover.builder.js";
 
 const MARKETPLACE_FIXTURE = join(process.cwd(), "tests/fixtures/framework/marketplace-sample");
@@ -84,6 +85,7 @@ async function marketplaceAdd(makePrompter: (events: string[]) => Prompter) {
   const prompter = makePrompter(events);
   const manifestRepo = new InMemoryManifestRepository(Manifest.create());
   const remove = projectMarketplaceRemover(
+    syntheticCatalog(),
     new RemoveProjectPlugin(fs, () => "/home/dev", removalClaims(manifestRepo, fs)),
     manifestRepo,
     registry,
