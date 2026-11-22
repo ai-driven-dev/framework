@@ -16,6 +16,31 @@ describe("NativeActivation", () => {
     expect(activation.cliShape().scopeArgs).toBeUndefined();
   });
 
+  it("hands the host CLI every argument and verb the tool declares", () => {
+    const declared = {
+      ...driven,
+      scopeArgs: { project: ["--scope", "local"], user: ["--scope", "user"] },
+      userRemoveArgs: ["--everywhere"],
+      forceRemoveArgs: ["--force"],
+      sourceCheckVerb: "list",
+      upgradeVerb: "upgrade",
+      updateVerb: "update",
+      pluginArgs: ["--yes"],
+    } as const;
+
+    expect(new NativeActivation(declared).cliShape()).toStrictEqual({
+      scopeArgs: declared.scopeArgs,
+      userRemoveArgs: declared.userRemoveArgs,
+      forceRemoveArgs: declared.forceRemoveArgs,
+      sourceCheckVerb: declared.sourceCheckVerb,
+      upgradeVerb: declared.upgradeVerb,
+      updateVerb: declared.updateVerb,
+      enableVerb: declared.enableVerb,
+      disableVerb: declared.disableVerb,
+      pluginArgs: declared.pluginArgs,
+    });
+  });
+
   it("does not compile without an enable verb", () => {
     // @ts-expect-error enableVerb is required
     const spec: NativeActivationSpec = { binary: "codex", disableVerb: "remove" };
