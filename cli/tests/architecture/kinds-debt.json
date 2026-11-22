@@ -21,18 +21,6 @@
   {
     "rule": "real-tool-list:behaviour",
     "closesWhen": "the generic test runs on a synthetic profile carrying the section it needs",
-    "entries": {
-      "tests/presentation/controllers/doctor-project.controller.unit.test.ts": 1,
-      "tests/presentation/controllers/doctor-user-scope.controller.unit.test.ts": 1,
-      "tests/presentation/controllers/plugin.controller.wiring.unit.test.ts": 1,
-      "tests/presentation/controllers/setup.controller.wiring.unit.test.ts": 1,
-      "tests/presentation/controllers/shared-home-plugins.integration.test.ts": 1,
-      "tests/presentation/controllers/sync.controller.wiring.unit.test.ts": 1,
-      "tests/presentation/in-process-cli.integration.test.ts": 1,
-      "tests/presentation/presenters/agent-models.presenter.unit.test.ts": 1,
-      "tests/shared/infrastructure/asset-loader-config-assets.integration.test.ts": 1,
-      "tests/shared/infrastructure/asset-loader.integration.test.ts": 1,
-      "tests/shared/ports/asset-provider.contract.test.ts": 1
-    }
+    "entries": {}
   }
 ]

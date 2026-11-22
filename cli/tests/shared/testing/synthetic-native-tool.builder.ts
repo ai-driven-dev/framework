@@ -20,6 +20,7 @@ import {
   SYNTHETIC_IDE_CONFIG,
   settingsFile,
   syntheticMixedConfigs,
+  syntheticNativeTool,
   syntheticSourcedTool,
 } from "./synthetic-tool-id.builder.js";
 
@@ -105,6 +106,22 @@ export const SYNTHETIC_LISTED_TOOL = LISTED_CONFIG.toolId;
 export const SYNTHETIC_PROVEN_TOOL = PROVEN_CONFIG.toolId;
 /** The shared settings file the proof-requiring synthetic tool declares its catalogues in. */
 export const SYNTHETIC_PROVEN_SETTINGS = settingsFile(SYNTHETIC_PROVEN_TOOL);
+const ACTIVATED_NAME = "syntheticactivated";
+
+/** The settings file the activated native tool keeps under a home directory. */
+export const syntheticActivatedSettingsFile = homeDir(ACTIVATED_NAME, "settings.json");
+
+/** The profile of a native tool whose own CLI activates plugins at user scope and nothing else:
+ * for a catalog of a test that reads its activation. */
+export const ACTIVATED_SYNTHETIC_CONFIG = syntheticNativeTool(ACTIVATED_NAME, {
+  enableVerb: "install",
+  disableVerb: "uninstall",
+  userSettingsPath: syntheticActivatedSettingsFile,
+});
+
+/** An AI tool id no registry lists, whose plugins its own CLI activates at user scope. */
+export const ACTIVATED_SYNTHETIC_TOOL = ACTIVATED_SYNTHETIC_CONFIG.toolId;
+
 /** The synthetic native tools and the synthetic IDE tool: what a generic sync test hands code that drives hosts. */
 export function syntheticSyncCatalog(): ToolCatalog {
   return new RegisteredToolCatalog([

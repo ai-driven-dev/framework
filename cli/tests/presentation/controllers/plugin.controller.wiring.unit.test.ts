@@ -2,11 +2,14 @@ import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { bindOutput } from "../../../src/presentation/controllers/global-options.controller.js";
 import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";
-import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
 import { parseToExit } from "../../shared/testing/parse-to-exit.builder.js";
 import { prompterAnswering } from "../../shared/testing/partial-ports.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SECOND_SYNTHETIC_TOOL,
+  SYNTHETIC_TOOL,
+  syntheticCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
 const pluginRemove = vi.fn();
 const userPluginRemove = vi.fn();
@@ -36,7 +39,7 @@ const { registerPluginCommand } = await import(
 );
 
 const PROJECT_ROOT = process.cwd();
-const CATALOG = catalogOf();
+const CATALOG = syntheticCatalog();
 
 let written: string[] = [];
 let errors: string[] = [];
@@ -60,7 +63,9 @@ beforeEach(() => {
   });
   pluginRemove.mockResolvedValue(undefined);
   userPluginRemove.mockResolvedValue(undefined);
-  pluginList.mockResolvedValue(new Map([["claude", [{ name: "aidd-dev", version: "1.0.0" }]]]));
+  pluginList.mockResolvedValue(
+    new Map([[SYNTHETIC_TOOL, [{ name: "aidd-dev", version: "1.0.0" }]]])
+  );
   pluginInstall.mockResolvedValue({ kind: "marketplace", installed: ["aidd-dev"] });
   pluginSearch.mockResolvedValue({ hits: [] });
   pluginUpdate.mockResolvedValue(["aidd-dev"]);
@@ -112,14 +117,14 @@ describe("aidd plugin - the group with no subcommand", () => {
 
 describe("aidd plugin list", () => {
   it("sweeps every installed tool when none was named", async () => {
-    expect(await run("list")).toEqual(["claude:", "  aidd-dev@1.0.0"]);
+    expect(await run("list")).toEqual([`${SYNTHETIC_TOOL}:`, "  aidd-dev@1.0.0"]);
     expect(pluginList).toHaveBeenCalledWith({ toolIds: "all" });
   });
 
   it("narrows to the one tool that was named", async () => {
-    await run("list", "--tool", "codex");
+    await run("list", "--tool", SECOND_SYNTHETIC_TOOL);
 
-    expect(pluginList).toHaveBeenCalledWith({ toolIds: ["codex"] });
+    expect(pluginList).toHaveBeenCalledWith({ toolIds: [SECOND_SYNTHETIC_TOOL] });
   });
 
   it("refuses a tool no profile declares, before any use case runs", async () => {
@@ -130,7 +135,7 @@ describe("aidd plugin list", () => {
     await expect(run("list", "--tool", "emacs")).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe(
-      "Error: Unknown AI tool: emacs. Valid AI tools: claude, cursor, copilot, opencode, kilo, codex, antigravity\n"
+      `Error: Unknown AI tool: emacs. Valid AI tools: ${SYNTHETIC_TOOL}, ${SECOND_SYNTHETIC_TOOL}\n`
     );
     expect(pluginList).not.toHaveBeenCalled();
   });
@@ -168,7 +173,7 @@ describe("aidd plugin remove", () => {
   it("names a refused activation and fails the process, saying nothing was removed", async () => {
     activation.mockResolvedValue({
       binaryMissing: [],
-      errors: [{ scope: "claude", error: "claude CLI refused" }],
+      errors: [{ scope: SYNTHETIC_TOOL, error: `${SYNTHETIC_TOOL} CLI refused` }],
       failed: true,
     });
     const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
@@ -178,7 +183,7 @@ describe("aidd plugin remove", () => {
     await expect(run("remove", "aidd-dev")).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe(
-      "Warning: [claude] claude CLI refused\nError: Sync failed for: claude. See the warnings above.\n"
+      `Warning: [${SYNTHETIC_TOOL}] ${SYNTHETIC_TOOL} CLI refused\nError: Sync failed for: ${SYNTHETIC_TOOL}. See the warnings above.\n`
     );
     expect(exit).toHaveBeenCalledWith(1);
     expect(written.join("")).toBe("");
@@ -204,10 +209,10 @@ describe("aidd plugin install", () => {
   });
 
   it("narrows an install from a local path to the one tool that was named", async () => {
-    await run("install", "/plugins/sample-plugin", "--tool", "claude");
+    await run("install", "/plugins/sample-plugin", "--tool", SYNTHETIC_TOOL);
 
     expect(pluginInstall).toHaveBeenCalledWith(
-      expect.objectContaining({ pluginArg: "/plugins/sample-plugin", toolIds: ["claude"] })
+      expect.objectContaining({ pluginArg: "/plugins/sample-plugin", toolIds: [SYNTHETIC_TOOL] })
     );
   });
 
@@ -244,11 +249,11 @@ describe("aidd plugin install", () => {
       "ghp_x",
       "--yes",
       "--tool",
-      "claude"
+      SYNTHETIC_TOOL
     );
 
     expect(pluginInstall).toHaveBeenCalledWith(
-      expect.objectContaining({ scope: "user", yes: true, toolIds: ["claude"] })
+      expect.objectContaining({ scope: "user", yes: true, toolIds: [SYNTHETIC_TOOL] })
     );
   });
 
@@ -300,7 +305,7 @@ describe("aidd plugin search", () => {
 });
 
 describe("aidd plugin update", () => {
-  it.each([TOOL.copilot, TOOL.cursor])(
+  it.each([SYNTHETIC_TOOL, SECOND_SYNTHETIC_TOOL])(
     "routes %s --scope user to machine ownership",
     async (toolId) => {
       expect(await run("update", "aidd-vcs", "--tool", toolId, "--scope", "user")).toEqual([

@@ -70,13 +70,6 @@ describe("running a command in process", () => {
     expect(existsSync(join(realHome ?? root, ".aidd"))).toBe(before);
   });
 
-  it("lists every registered profile in setup --help, kilo included", async () => {
-    const result = await runInProcess(["setup", "--help"], { cwd: project, home });
-
-    expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("--ide claude,codex,copilot,cursor,kilo,opencode");
-  });
-
   it("explains the user-scope restrictions in setup --help", async () => {
     const result = await runInProcess(["setup", "--help"], { cwd: project, home });
 
@@ -166,9 +159,11 @@ describe("running a command in process", () => {
             "../../src/composition/orchestration/deps-graph.js"
           );
           const { createOutput } = await import("../../src/composition/shared.js");
-          const { registeredTools } = await import("../shared/testing/registered-tools.builder.js");
+          const { syntheticCatalog } = await import(
+            "../shared/testing/synthetic-tool-id.builder.js"
+          );
           built.push(
-            await bindContainer(registeredTools())(
+            await bindContainer(syntheticCatalog())(
               process.cwd(),
               { verbose: false },
               createOutput(false)

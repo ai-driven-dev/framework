@@ -7,11 +7,15 @@ import { RunUserScopeSync } from "../../../src/orchestration/sync/run-user-scope
 import { bindOutput } from "../../../src/presentation/controllers/global-options.controller.js";
 import { UnregisteredToolError } from "../../../src/shared/domain/shared.error.js";
 import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";
-import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
 import { parseToExit } from "../../shared/testing/parse-to-exit.builder.js";
 import { manifestRepositoryLoading } from "../../shared/testing/partial-ports.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SECOND_SYNTHETIC_TOOL,
+  SYNTHETIC_IDE_TOOL,
+  SYNTHETIC_TOOL,
+  syntheticMixedCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
 const restoreAll = vi.fn();
 const restoreOne = vi.fn();
@@ -20,7 +24,7 @@ const loadUserManifest = vi.fn();
 const userManifestRepo = manifestRepositoryLoading(loadUserManifest);
 const userPluginUpdate = vi.fn();
 
-const CATALOG = catalogOf();
+const CATALOG = syntheticMixedCatalog();
 
 const createDeps = vi.fn(async () => ({
   runSync: new RunSync({ execute: restoreAll }, { execute: restoreOne }, { execute: activation }),
@@ -71,14 +75,14 @@ beforeEach(() => {
   });
   restoreAll.mockResolvedValue(NOTHING_RESTORED);
   restoreOne.mockResolvedValue({
-    tools: [{ toolId: TOOL.claude, nothingToRestore: true }],
+    tools: [{ toolId: SYNTHETIC_TOOL, nothingToRestore: true }],
     totalRestored: 0,
     totalKept: 0,
     unrestorable: [],
   });
   activation.mockResolvedValue({ binaryMissing: [], errors: [], failed: false, activated: [] });
   loadUserManifest.mockResolvedValue({
-    getInstalledToolIds: () => ["claude"],
+    getInstalledToolIds: () => [SYNTHETIC_TOOL],
     getPlugins: () => [],
   });
 });
@@ -124,12 +128,12 @@ describe("aidd sync - the whole project", () => {
   it("names both the restoration's and the activation's refusals, and fails the process", async () => {
     restoreAll.mockResolvedValue({
       ...NOTHING_RESTORED,
-      errors: [{ scope: "claude", error: "file is not ours" }],
+      errors: [{ scope: SYNTHETIC_TOOL, error: "file is not ours" }],
       failed: true,
     });
     activation.mockResolvedValue({
       binaryMissing: [],
-      errors: [{ scope: "codex", error: "codex CLI refused" }],
+      errors: [{ scope: SECOND_SYNTHETIC_TOOL, error: `${SECOND_SYNTHETIC_TOOL} CLI refused` }],
       failed: true,
       activated: [],
     });
@@ -140,9 +144,9 @@ describe("aidd sync - the whole project", () => {
     await expect(run()).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe(
-      "Warning: [claude] file is not ours\n" +
-        "Warning: [codex] codex CLI refused\n" +
-        "Error: Sync failed for: claude, codex. See the warnings above.\n"
+      `Warning: [${SYNTHETIC_TOOL}] file is not ours\n` +
+        `Warning: [${SECOND_SYNTHETIC_TOOL}] ${SECOND_SYNTHETIC_TOOL} CLI refused\n` +
+        `Error: Sync failed for: ${SYNTHETIC_TOOL}, ${SECOND_SYNTHETIC_TOOL}. See the warnings above.\n`
     );
     expect(exit).toHaveBeenCalledWith(1);
   });
@@ -150,7 +154,7 @@ describe("aidd sync - the whole project", () => {
   it("fails the process on the restoration's refusal alone, the activation being clean", async () => {
     restoreAll.mockResolvedValue({
       ...NOTHING_RESTORED,
-      errors: [{ scope: "claude", error: "file is not ours" }],
+      errors: [{ scope: SYNTHETIC_TOOL, error: "file is not ours" }],
       failed: true,
     });
     const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
@@ -164,7 +168,7 @@ describe("aidd sync - the whole project", () => {
 
   it("warns about a binary off PATH without failing the run", async () => {
     activation.mockResolvedValue({
-      binaryMissing: [{ toolId: TOOL.claude, binary: "claude" }],
+      binaryMissing: [{ toolId: SYNTHETIC_TOOL, binary: SYNTHETIC_TOOL }],
       errors: [],
       failed: false,
       activated: [],
@@ -173,19 +177,19 @@ describe("aidd sync - the whole project", () => {
     await run();
 
     expect(errors.join("")).toBe(
-      "Warning: claude: the plugin will not load until the claude CLI has run.\n"
+      `Warning: ${SYNTHETIC_TOOL}: the plugin will not load until the ${SYNTHETIC_TOOL} CLI has run.\n`
     );
   });
 });
 
 describe("aidd sync --tool", () => {
   it("restores that tool, then activates it alone", async () => {
-    expect(await run("--tool", "claude")).toEqual([
+    expect(await run("--tool", SYNTHETIC_TOOL)).toEqual([
       "Nothing to restore — all files are unmodified.",
     ]);
     expect(restoreOne).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
-      toolId: "claude",
+      toolId: SYNTHETIC_TOOL,
       files: undefined,
       force: false,
       interactive: false,
@@ -193,7 +197,7 @@ describe("aidd sync --tool", () => {
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
-      toolIds: ["claude"],
+      toolIds: [SYNTHETIC_TOOL],
       recreateFrameworkIfMissing: true,
     });
     expect(restoreAll).not.toHaveBeenCalled();
@@ -212,7 +216,7 @@ describe("aidd sync --tool", () => {
   });
 
   it("narrows to the files and the plugin that were named", async () => {
-    await run("--tool", "claude", "--plugin", "aidd-dev", "a.md", "b.md");
+    await run("--tool", SYNTHETIC_TOOL, "--plugin", "aidd-dev", "a.md", "b.md");
 
     expect(restoreOne).toHaveBeenCalledWith(
       expect.objectContaining({ files: ["a.md", "b.md"], pluginName: "aidd-dev" })
@@ -225,7 +229,7 @@ describe("aidd sync --tool", () => {
       throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("--tool", "claude")).rejects.toThrow(ExitRequested);
+    await expect(run("--tool", SYNTHETIC_TOOL)).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe(
       "Error: No AIDD manifest found. Run `aidd setup` to initialize your project.\n"
@@ -238,7 +242,7 @@ describe("aidd sync --tool - a refused activation", () => {
   it("names the refusal and fails the process rather than calling one tool synced", async () => {
     activation.mockResolvedValue({
       binaryMissing: [],
-      errors: [{ scope: "claude", error: "claude CLI refused" }],
+      errors: [{ scope: SYNTHETIC_TOOL, error: `${SYNTHETIC_TOOL} CLI refused` }],
       failed: true,
       activated: [],
     });
@@ -246,11 +250,11 @@ describe("aidd sync --tool - a refused activation", () => {
       throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("--tool", "claude")).rejects.toThrow(ExitRequested);
+    await expect(run("--tool", SYNTHETIC_TOOL)).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe(
-      "Warning: [claude] claude CLI refused\n" +
-        "Error: Sync failed for: claude. See the warnings above.\n"
+      `Warning: [${SYNTHETIC_TOOL}] ${SYNTHETIC_TOOL} CLI refused\n` +
+        `Error: Sync failed for: ${SYNTHETIC_TOOL}. See the warnings above.\n`
     );
     expect(exit).toHaveBeenCalledWith(1);
   });
@@ -262,10 +266,12 @@ describe("aidd sync --scope user", () => {
       binaryMissing: [],
       errors: [],
       failed: false,
-      activated: ["claude"],
+      activated: [SYNTHETIC_TOOL],
     });
 
-    expect(await run("--scope", "user")).toEqual(["Synced native activation for: claude"]);
+    expect(await run("--scope", "user")).toEqual([
+      `Synced native activation for: ${SYNTHETIC_TOOL}`,
+    ]);
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
       scope: "user",
@@ -285,14 +291,16 @@ describe("aidd sync --scope user", () => {
 
   it("rebuilds the global files a tool owns before driving activation, under --global", async () => {
     loadUserManifest.mockResolvedValue({
-      getInstalledToolIds: () => ["claude", "opencode"],
-      getPlugins: (toolId: string) => [{ scope: toolId === "opencode" ? "user" : "project" }],
+      getInstalledToolIds: () => [SYNTHETIC_TOOL, SECOND_SYNTHETIC_TOOL],
+      getPlugins: (toolId: string) => [
+        { scope: toolId === SECOND_SYNTHETIC_TOOL ? "user" : "project" },
+      ],
     });
     userPluginUpdate.mockResolvedValue(["aidd-dev", "aidd-dev"]);
 
     expect(await run("--global")).toEqual(["Refreshed global files for: aidd-dev"]);
     expect(userPluginUpdate).toHaveBeenCalledWith({
-      toolIds: ["opencode"],
+      toolIds: [SECOND_SYNTHETIC_TOOL],
       projectRoot: PROJECT_ROOT,
       scope: "user",
       rebuild: true,
@@ -301,23 +309,26 @@ describe("aidd sync --scope user", () => {
   });
 
   it("narrows to the one tool named, still off the machine-wide manifest", async () => {
-    await run("--scope", "user", "--tool", "claude");
+    await run("--scope", "user", "--tool", SYNTHETIC_TOOL);
 
-    expect(activation).toHaveBeenCalledWith(expect.objectContaining({ toolIds: ["claude"] }));
+    expect(activation).toHaveBeenCalledWith(expect.objectContaining({ toolIds: [SYNTHETIC_TOOL] }));
   });
 
-  it.each(["vscode", "bogus"])("narrows to nothing for %s, an AI tool it is not", async (name) => {
-    await run("--scope", "user", "--tool", name);
+  it.each([SYNTHETIC_IDE_TOOL, "bogus"])(
+    "narrows to nothing for %s, an AI tool it is not",
+    async (name) => {
+      await run("--scope", "user", "--tool", name);
 
-    expect(userPluginUpdate).not.toHaveBeenCalled();
-    expect(activation).toHaveBeenCalledWith(expect.objectContaining({ toolIds: [] }));
-  });
+      expect(userPluginUpdate).not.toHaveBeenCalled();
+      expect(activation).toHaveBeenCalledWith(expect.objectContaining({ toolIds: [] }));
+    }
+  );
 
   it("refreshes no file and still activates when the machine records no manifest", async () => {
     loadUserManifest.mockResolvedValue(null);
 
     await run("--scope", "user");
-    await run("--scope", "user", "--tool", "claude");
+    await run("--scope", "user", "--tool", SYNTHETIC_TOOL);
 
     expect(userPluginUpdate).not.toHaveBeenCalled();
     expect(activation).toHaveBeenCalledTimes(2);
@@ -354,9 +365,9 @@ describe("aidd sync --scope user", () => {
   it("names a refused user-scope activation and fails before reporting success", async () => {
     activation.mockResolvedValue({
       binaryMissing: [],
-      errors: [{ scope: "claude", error: "claude CLI refused" }],
+      errors: [{ scope: SYNTHETIC_TOOL, error: `${SYNTHETIC_TOOL} CLI refused` }],
       failed: true,
-      activated: ["claude"],
+      activated: [SYNTHETIC_TOOL],
     });
     const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
       throw new ExitRequested(Number(code ?? 0));

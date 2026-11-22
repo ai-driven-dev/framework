@@ -1,13 +1,14 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, type Mock, vi } from "vitest";
-import { wireTools } from "../../../src/composition/tools.js";
 import { ReadMachineInstallation } from "../../../src/contexts/installation/application/doctor/read-machine-installation.use-case.js";
+import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { RunUserScopeDoctor } from "../../../src/orchestration/doctor/run-user-scope-doctor.use-case.js";
 import { registerDoctorCommand } from "../../../src/presentation/controllers/doctor.controller.js";
 import { bindOutput } from "../../../src/presentation/controllers/global-options.controller.js";
 import { processOutputFactory } from "./output-factory.builder.js";
 import { parseToExit } from "./parse-to-exit.builder.js";
 import { manifestRepositoryLoading } from "./partial-ports.builder.js";
+import { SYNTHETIC_TOOL, syntheticMixedCatalog } from "./synthetic-tool-id.builder.js";
 
 /** A scope with nothing to report. */
 export const HEALTHY_SCOPE = { toolHealth: [], issues: [] };
@@ -24,12 +25,12 @@ export interface DoctorHarness {
   readonly createDeps: Mock;
   readonly written: string[];
   readonly errors: string[];
-  readonly catalog: ReturnType<typeof wireTools>;
+  readonly catalog: ToolCatalog;
   readonly run: (...args: string[]) => Promise<string[]>;
 }
 
 /** Wires the doctor command to healthy doubles before each case and restores the process after. */
-export function doctorHarness(): DoctorHarness {
+export function doctorHarness(catalog: ToolCatalog = syntheticMixedCatalog()): DoctorHarness {
   const doctorAll: Mock = vi.fn();
   const statusAll: Mock = vi.fn();
   const doctorScoped: Mock = vi.fn();
@@ -49,7 +50,6 @@ export function doctorHarness(): DoctorHarness {
     homedir,
     environment: { get: () => undefined, set: () => undefined },
   }));
-  const catalog = wireTools();
   const written: string[] = [];
   const errors: string[] = [];
 
@@ -82,7 +82,7 @@ export function doctorHarness(): DoctorHarness {
     statusScoped.mockResolvedValue({ tools: [], pluginDrift: [] });
     doctorRegistration.mockResolvedValue([]);
     loadUserManifest.mockResolvedValue({
-      getInstalledToolIds: () => ["claude"],
+      getInstalledToolIds: () => [SYNTHETIC_TOOL],
       getToolVersion: () => "5.2.2",
     });
   });
