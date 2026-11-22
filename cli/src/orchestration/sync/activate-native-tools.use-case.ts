@@ -164,6 +164,8 @@ export class ActivateNativeTools {
     if (run.scope !== "user") return [];
     const native = run.manifest.getNativeRegistrations(run.toolId);
     if (native === undefined) return [];
-    return this.deps.records.refsOnHosts(native, [...run.hostNameByAlias.values()]);
+    return this.deps.records.refsOnHosts(native, this.deps.records.claimedRefs(native), [
+      ...run.hostNameByAlias.values(),
+    ]);
   }
 }

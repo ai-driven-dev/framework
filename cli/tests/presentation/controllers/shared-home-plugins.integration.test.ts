@@ -47,7 +47,7 @@ describe("two projects on one home that installed the same cursor plugins", () =
     const owned = machine
       .getRecordedPlugins(TOOL.cursor)
       .find((plugin) => plugin.plugin.name === "aidd-context");
-    expect(owned?.dependents).toEqual([await realpath(first), await realpath(second)]);
+    expect(owned?.machineClaim).toEqual([await realpath(first), await realpath(second)]);
     const contextDir = join(userPlugins(), "aidd-context");
     const devDir = join(userPlugins(), "aidd-dev");
     const remove = ["plugin", "remove", "aidd-context", "--tool", "cursor", "--scope", "user"];

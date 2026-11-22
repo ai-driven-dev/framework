@@ -190,7 +190,7 @@ describe("clean --scope user: native preflight", () => {
       scope: "user",
     })
       .withFiles(new Map([["shared/skills/x.md", FileHash.of("shared bytes").value]]))
-      .withDependents(["/B"]);
+      .withMachineClaim(["/B"]);
     machine.addPlugin(TOOL.cursor, shared);
     machine.addPlugin(
       TOOL.cursor,
@@ -202,7 +202,7 @@ describe("clean --scope user: native preflight", () => {
         scope: "project",
       })
         .withFiles(new Map([["skills/local.md", "hash"]]))
-        .withDependents(["/project-foreign"])
+        .withMachineClaim(["/project-foreign"])
     );
     const repo = new InMemoryManifestRepository(machine);
     const useCase = userScopeCleaner({ fs, repo, homeDir: homedir });
@@ -219,10 +219,10 @@ describe("clean --scope user: native preflight", () => {
       repo
         .getCurrent()
         ?.getRecordedPlugins(TOOL.cursor)
-        .find((plugin) => plugin.plugin.name === "shared")?.dependents
+        .find((plugin) => plugin.plugin.name === "shared")?.machineClaim
     ).toEqual(["/B"]);
 
-    machine.updatePlugin(TOOL.cursor, shared.withDependents([]));
+    machine.updatePlugin(TOOL.cursor, shared.withMachineClaim(undefined));
     await useCase.execute({ projectRoot: "/A", force: true });
     expect(repo.getCurrent()).toBeNull();
     expect(fs.has(userFile)).toBe(false);

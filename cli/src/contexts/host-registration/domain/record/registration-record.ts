@@ -29,11 +29,6 @@ export type ClaimedRegistrationRecord<Claim extends RecordedClaim = RecordedClai
     readonly pluginClaims?: readonly Claim[];
   };
 
-/** A claim with the projects that hold it. */
-export interface DependentClaim extends RecordedClaim {
-  readonly dependents: readonly string[];
-}
-
 interface RegistrationPreview {
   readonly binary: string;
   readonly marketplaceCount: number;
@@ -164,10 +159,9 @@ export function registrationPreview(
 
 /** The refs, then the claimed refs, that sit on one of the proven host names. */
 export function refsOnHosts(
-  record: ClaimedRegistrationRecord,
+  record: RegistrationRecordData,
+  claimedRefs: readonly string[],
   hostNames: Iterable<string>
 ): string[] {
-  return [...pluginRefsOf(record), ...(record.pluginClaims ?? []).map((claim) => claim.ref)].filter(
-    (ref) => refOnAnyHost(ref, hostNames)
-  );
+  return [...pluginRefsOf(record), ...claimedRefs].filter((ref) => refOnAnyHost(ref, hostNames));
 }

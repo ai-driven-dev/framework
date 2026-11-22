@@ -4,6 +4,7 @@ import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import { ActiveMachineDependentsError } from "../domain/installation.error.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { InstalledPlugin } from "../domain/plugins/installed-plugin.js";
+import type { MachineClaimsReading } from "../ports/machine-claims-reading.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
 import type { UserScopePluginFileRemoval } from "../ports/user-scope-plugin-files.js";
 import type {
@@ -16,6 +17,7 @@ import type {
 /** What PurgeUserScopeFiles is built from. */
 export interface PurgeUserScopeFilesDeps {
   readonly userManifestRepo: ManifestRepository & Lock;
+  readonly claims: MachineClaimsReading;
   readonly purgeMachineState: MachineStatePurge;
   /** The one resolver for the OS home directory a user-scope plugin's files sit under. */
   readonly homeDir: () => string;
@@ -90,23 +92,16 @@ export class PurgeUserScopeFiles implements UserScopePurge {
   }
 
   private activeDependents(manifest: Manifest | null): readonly string[] {
-    return [
-      ...new Set(
-        manifest?.getInstalledToolIds().flatMap((toolId) =>
-          this.tools.isAiTool(toolId)
-            ? [
-                ...manifest
-                  .getRecordedPlugins(toolId)
-                  .filter(({ plugin }) => plugin.scope === "user")
-                  .flatMap(({ dependents }) => dependents),
-                ...(manifest.getNativeRegistrations(toolId)?.pluginClaims ?? []).flatMap(
-                  (claim) => claim.dependents
-                ),
-              ]
-            : []
-        ) ?? []
+    if (manifest === null) return [];
+    const toolIds = manifest.getInstalledToolIds().filter((toolId) => this.tools.isAiTool(toolId));
+    return this.deps.claims.holdersOf(
+      toolIds.flatMap((toolId) =>
+        manifest.getRecordedPlugins(toolId).filter(({ plugin }) => plugin.scope === "user")
       ),
-    ];
+      toolIds.flatMap((toolId) =>
+        this.deps.claims.claimsOf(manifest.getNativeRegistrations(toolId))
+      )
+    );
   }
 
   private async assertTrackedUserPluginFilesSafe(manifest: Manifest): Promise<void> {
@@ -154,7 +149,7 @@ export class PurgeUserScopeFiles implements UserScopePurge {
         {
           tool,
           registrations,
-          claimedRefs: (registrations.pluginClaims ?? []).map((claim) => claim.ref),
+          claimedRefs: this.deps.claims.claimsOf(registrations).map((claim) => claim.ref),
           cacheRoot: tool.nativeActivation()?.pluginCacheRoot(home),
         },
       ];

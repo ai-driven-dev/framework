@@ -27,6 +27,8 @@ const TARGET: Parameters<PurgeCommand["hostRemoval"]["plan"]>[0] = {
 function removerWith(purge: (command: PurgeCommand) => Promise<number>) {
   const records: RemoveUserMarketplaceDeps["records"] = {
     marketplaceOf: vi.fn(() => REGISTRATION),
+    holdersOf: vi.fn(() => []),
+    claimedRefs: vi.fn(() => ["scoped@aidd-market", "unscoped@aidd-market"]),
     claimsOnMarketplace: vi.fn(() => []),
     withoutMarketplace: vi.fn((record) => ({ ...record, pluginClaims: [] })),
   };
@@ -34,9 +36,9 @@ function removerWith(purge: (command: PurgeCommand) => Promise<number>) {
   const remove = { execute: vi.fn().mockResolvedValue(undefined) };
   const activator = new FakeHostActions();
   const hostGate: Pick<NativeHostRegistrationGate, "planMarketplaceRemoval"> = {
-    planMarketplaceRemoval: async (_tool, registrations) => ({
+    planMarketplaceRemoval: async (_tool, _registrations, { claimedRefs }) => ({
       activator,
-      refs: registrations.pluginClaims ?? [],
+      refs: claimedRefs,
       scopes: new Map([["scoped@aidd-market", "project"]]),
     }),
   };
@@ -110,6 +112,7 @@ describe("RemoveUserMarketplace", () => {
     expect(plan).toHaveBeenCalledWith(TARGET.tool, TARGET.registrations, {
       registration: REGISTRATION,
       projectRoot: "/project",
+      claimedRefs: ["scoped@aidd-market", "unscoped@aidd-market"],
     });
     expect(activator.uninstalledPlugins).toStrictEqual([]);
   });

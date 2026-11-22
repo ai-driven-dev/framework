@@ -3,6 +3,7 @@ import type { HostPluginRegistry } from "../../../src/contexts/host-registration
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
+import { claimsRecorded } from "../../shared/testing/host-record-reading.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
@@ -76,7 +77,7 @@ for (const [toolId, catalogPath] of [
       );
       expect(failing.uninstalledPlugins).toEqual([]);
       expect(
-        repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims?.[0]?.dependents
+        claimsRecorded(repo.getCurrent()?.getNativeRegistrations(toolId))[0]?.dependents
       ).toEqual(["/B"]);
       const registrations = machine.getNativeRegistrations(toolId);
       if (registrations === undefined) throw new Error("seeded machine claim missing");

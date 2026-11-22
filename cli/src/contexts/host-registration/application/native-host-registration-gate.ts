@@ -24,35 +24,34 @@ export class NativeHostRegistrationGate {
     private readonly sources: ReadonlyMap<AiToolId, HostMarketplaceSources> = new Map()
   ) {}
 
-  /** `registrations` carries the claims on its refs beside the host data: the gate reads only
-   * their `ref` and hands the claims it kept back as they came. */
-  async planMarketplaceRemoval<Claim extends { readonly ref: string }>(
+  /** `claimedRefs` are the refs the caller's own claims hold on the registrations: the gate
+   * never reads the claims, it names those sitting on the catalogue's host. */
+  async planMarketplaceRemoval(
     tool: HostedTool & HostRefCounter,
-    registrations: RegistrationRecordData & { readonly pluginClaims?: readonly Claim[] },
+    registrations: RegistrationRecordData,
     removal: {
       readonly registration: NativeMarketplaceRegistration;
       readonly projectRoot: string;
+      readonly claimedRefs: readonly string[];
     }
   ): Promise<{
     activator: HostActions;
-    refs: readonly Claim[];
+    refs: readonly string[];
     scopes: ReadonlyMap<string, Scope | undefined>;
   }> {
     const { toolId } = tool;
-    const { registration, projectRoot } = removal;
+    const { registration, projectRoot, claimedRefs } = removal;
     const { activator, reader } = this.hostOf(tool, registrations, registration);
     const proof = await inspectHostSource(this.sources.get(toolId), projectRoot, registration);
-    const owned = new Set((registrations.pluginClaims ?? []).map((claim) => claim.ref));
+    const owned = new Set(claimedRefs);
     const hostRefs = await assertNoForeignNativeRefs(
       { reader, tool },
       { hostName: registration.hostName, ownedRefs: owned, projectRoot }
     );
-    const refs = (registrations.pluginClaims ?? []).filter((claim) =>
-      isRefOnHost(claim.ref, registration.hostName)
-    );
+    const refs = claimedRefs.filter((ref) => isRefOnHost(ref, registration.hostName));
     const verdict = judgeCatalogueWithdrawal(
       proof,
-      refs.find((claim) => hostRefs.get(claim.ref)?.enabled !== true)?.ref
+      refs.find((ref) => hostRefs.get(ref)?.enabled !== true)
     );
     if (verdict.outcome === "refuse") throw new Error(refusalMessage(toolId, verdict));
     return {

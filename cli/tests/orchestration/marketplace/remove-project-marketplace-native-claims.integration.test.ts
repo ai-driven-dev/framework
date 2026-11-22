@@ -208,7 +208,7 @@ describe("project marketplace removal against machine native claims", () => {
 
     expect(projectRepo.saveCount).toBe(0);
     expect(projectRepo.getCurrent()?.getRecordedPlugins(cursor)).toHaveLength(1);
-    expect(machineRepo.getCurrent()?.getRecordedPlugins(cursor)[0]?.dependents).toEqual([
+    expect(machineRepo.getCurrent()?.getRecordedPlugins(cursor)[0]?.machineClaim).toEqual([
       "/A",
       "/B",
     ]);
@@ -401,7 +401,7 @@ describe("project marketplace removal against machine native claims", () => {
     expect(fs.getFile(aScript)).toBeUndefined();
     expect(fs.getFile(bHooks)).toBe(hooks);
     expect(fs.getFile(bScript)).toBe("B's hook");
-    expect(machineRepo.getCurrent()?.getRecordedPlugins(cursor)[0]?.dependents).toEqual(["/B"]);
+    expect(machineRepo.getCurrent()?.getRecordedPlugins(cursor)[0]?.machineClaim).toEqual(["/B"]);
     expect(projectRepo.getCurrent()?.getRecordedPlugins(cursor)).toEqual([]);
   });
 });

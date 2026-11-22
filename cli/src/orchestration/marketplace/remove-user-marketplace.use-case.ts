@@ -24,7 +24,10 @@ export interface RemoveUserMarketplaceDeps {
   readonly hostGate: Pick<NativeHostRegistrationGate, "planMarketplaceRemoval">;
   readonly home: string;
   readonly records: Pick<RegistrationRecordRules, "marketplaceOf"> &
-    Pick<RecordClaimRules, "claimsOnMarketplace" | "withoutMarketplace">;
+    Pick<
+      RecordClaimRules,
+      "claimsOnMarketplace" | "withoutMarketplace" | "claimedRefs" | "holdersOf"
+    >;
 }
 
 type HostRemovalPlan = Awaited<ReturnType<NativeHostRegistrationGate["planMarketplaceRemoval"]>>;
@@ -32,13 +35,14 @@ type HostRemovalPlan = Awaited<ReturnType<NativeHostRegistrationGate["planMarket
 /** Uninstalls each plugin ref the plan kept at the scope the host holds it, the user scope when
  * the host names none, then the catalogue itself at the user scope. */
 function withdrawFromHost(hostName: string, { activator, refs, scopes }: HostRemovalPlan): void {
-  for (const claim of refs) activator.uninstallPlugin(claim.ref, scopes.get(claim.ref) ?? "user");
+  for (const ref of refs) activator.uninstallPlugin(ref, scopes.get(ref) ?? "user");
   activator.removeMarketplace(hostName, "user");
 }
 
 /** A catalogue's place in a tool's record, as the host registration reads and drops it. */
 function marketplaceRecordsOf(records: RemoveUserMarketplaceDeps["records"]): MarketplaceRecords {
   return {
+    holdersOf: records.holdersOf,
     registrationOf: (registrations, alias) => records.marketplaceOf(registrations, alias),
     claimsOn: (registrations, alias) => records.claimsOnMarketplace(registrations, alias),
     withoutMarketplace: (registrations, alias) => records.withoutMarketplace(registrations, alias),
@@ -71,6 +75,7 @@ export class RemoveUserMarketplace {
           plan: await this.deps.hostGate.planMarketplaceRemoval(tool, registrations, {
             registration,
             projectRoot,
+            claimedRefs: this.deps.records.claimedRefs(registrations),
           }),
         }),
         apply: ({ hostName, plan }) => withdrawFromHost(hostName, plan),

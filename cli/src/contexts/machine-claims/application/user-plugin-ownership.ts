@@ -1,6 +1,7 @@
 import type { AiToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Lock } from "../../../shared/ports/lock.js";
+import { dependentsClaim, readDependents } from "../domain/plugin-dependents.js";
 import type { MachineManifestRepository } from "../ports/machine-manifest.js";
 
 /** Release only this project's claim; global files remain until explicit user cleanup. */
@@ -29,10 +30,11 @@ async function detachUserPluginUnlocked(request: {
   const plugin = manifest.getRecordedPlugins(toolId).find((p) => p.plugin.name === name);
   if (plugin === undefined || plugin.plugin.scope !== "user") return;
   const root = await fs.realpath(projectRoot);
-  if (!plugin.dependents.includes(root)) return;
+  const dependents = readDependents(plugin.machineClaim);
+  if (!dependents.includes(root)) return;
   manifest.updatePlugin(
     toolId,
-    plugin.withDependents(plugin.dependents.filter((dependent) => dependent !== root))
+    plugin.withMachineClaim(dependentsClaim(dependents.filter((dependent) => dependent !== root)))
   );
   await repo.save(manifest);
 }

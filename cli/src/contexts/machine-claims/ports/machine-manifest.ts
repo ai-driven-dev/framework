@@ -1,22 +1,15 @@
 import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 
-/** One plugin ref the machine-wide record claims, with the projects that still need it. */
-export interface MachinePluginClaim {
-  readonly ref: string;
-  readonly dependents: readonly string[];
-}
-
-/** What the machine-wide record keeps of one tool's host registration, as far as a claim over
- * it needs to read. Whatever else the record holds travels through a rewrite untouched. */
-export interface MachineNativeRegistrations {
-  readonly pluginClaims?: readonly MachinePluginClaim[];
-}
+/** What the machine-wide record keeps of one tool's host registration. The claims block is read
+ * by machine-claims alone; whatever else the record holds travels through a rewrite untouched. */
+export type MachineNativeRegistrations = Readonly<Record<string, unknown>>;
 
 /** A user-scope plugin the machine-wide record holds, as far as a claim over it needs to know. */
 export interface MachineUserPlugin {
   readonly plugin: { readonly name: string; readonly scope: string };
-  readonly dependents: readonly string[];
-  withDependents(dependents: readonly string[]): MachineUserPlugin;
+  /** The claim on its files, as the record keeps it: only machine claims read it. */
+  readonly machineClaim?: unknown;
+  withMachineClaim(machineClaim: unknown): MachineUserPlugin;
 }
 
 /** The machine-wide record, narrowed to what the claims read and rewrite. The installation owns
@@ -35,11 +28,18 @@ export interface MachineManifestRepository<M extends MachineManifest = MachineMa
 
 /** The machine-wide record as a run's claims grow it: a tool the project tracks joins it. */
 export interface ClaimingMachineManifest extends MachineManifest {
-  getNativeRegistrations(
-    toolId: ToolId
-  ): (Readonly<Record<string, unknown>> & MachineNativeRegistrations) | undefined;
   hasTool(toolId: ToolId): boolean;
   addTool(toolId: ToolId, version: string, files: []): void;
+}
+
+/** The machine-wide record as an add hands it a plugin: recorded again, or recorded new. */
+export interface OwnershipMachineManifest extends ClaimingMachineManifest {
+  withPlugin(toolId: AiToolId, plugin: MachineUserPlugin): void;
+}
+
+/** A plugin a project hands to the machine: recorded there as it is, without its entry provenance. */
+export interface UserPluginToClaim extends MachineUserPlugin {
+  withMcpEntries(entries: ReadonlyMap<string, string>): MachineUserPlugin;
 }
 
 /** A plugin's recorded files, as far as the user-scope containment proof needs them. `P` is the

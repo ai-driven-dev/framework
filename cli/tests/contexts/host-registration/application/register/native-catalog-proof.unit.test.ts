@@ -28,7 +28,12 @@ describe("nativeCatalogProof", () => {
 
   it("is canonical through a machine record of the name", async () => {
     const { run } = setup({
-      claims: { machine: async () => ({ marketplaces: [{ alias: "aidd", hostName: "aidd" }] }) },
+      claims: {
+        machine: async () => ({
+          marketplaces: [{ alias: "aidd", hostName: "aidd" }],
+          claimedRefs: [],
+        }),
+      },
     });
     expect(await nativeCatalogProof(run, "aidd")).toMatchObject({ canonical: true });
   });
@@ -44,7 +49,7 @@ describe("nativeCatalogProof", () => {
   it("does not name a ref the machine already claims", async () => {
     const { run } = setup({
       plugins: enabled("x@aidd"),
-      claims: { machine: async () => ({ marketplaces: [], pluginClaims: [{ ref: "x@aidd" }] }) },
+      claims: { machine: async () => ({ marketplaces: [], claimedRefs: ["x@aidd"] }) },
     });
     expect(await nativeCatalogProof(run, "aidd")).not.toHaveProperty("foreignRef");
   });

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { claimsRecorded } from "../../../../shared/testing/host-record-reading.builder.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../../../shared/testing/saying.builder.js";
 import {
@@ -123,7 +124,7 @@ for (const toolId of [TOOL.codex, TOOL.copilot]) {
       );
       expect(f.activator.uninstalledPlugins).toEqual([]);
       expect(
-        f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims?.[0]?.dependents
+        claimsRecorded(f.repo.getCurrent()?.getNativeRegistrations(toolId))[0]?.dependents
       ).toEqual(["/B"]);
     });
 

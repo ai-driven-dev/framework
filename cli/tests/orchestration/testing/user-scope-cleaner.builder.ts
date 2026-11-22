@@ -1,3 +1,4 @@
+import { registrationRecordRules } from "../../../src/composition/installation.js";
 import { wireCleanClaims } from "../../../src/composition/orchestration/clean-claims.js";
 import { RemoveMarketplace } from "../../../src/contexts/distribution/application/remove/remove-marketplace.use-case.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
@@ -62,6 +63,7 @@ export function userScopeCleaner(parts: UserScopeCleanerParts): CleanUserScope {
     purgeFiles: new PurgeUserScopeFiles(
       {
         userManifestRepo: parts.repo,
+        claims: registrationRecordRules,
         purgeMachineState: new PurgeMachineState({ fs, logger, guards }),
         homeDir,
         userScopePluginFiles: new UserScopePluginFiles(fs, (plugin, tool, home) =>

@@ -3,6 +3,7 @@ import {
   detachNativePluginRefs,
   isMachineOwnedNativeRef,
 } from "../../../../src/contexts/machine-claims/application/native-plugin-ownership.js";
+import { readHeldClaims } from "../../../../src/contexts/machine-claims/domain/ref-claims.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import {
@@ -138,7 +139,8 @@ describe("one project's exact native host ref claim", () => {
       refsByTool: new Map([[codex, [TARGET]]]),
     });
     expect(
-      f.repo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims?.[0]?.dependents
+      readHeldClaims(f.repo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims)[0]
+        ?.dependents
     ).toEqual(["/B"]);
   });
 });

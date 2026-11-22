@@ -26,7 +26,7 @@ describe("recordedPluginFromEntry", () => {
     expect(fields.plugin.files.get("a.md")).toBe("h1");
     expect(fields.provenance.componentPaths.size).toBe(0);
     expect(fields.provenance.mcpEntries.size).toBe(0);
-    expect(fields.dependents).toEqual([]);
+    expect(fields.machineClaim).toBeUndefined();
   });
 
   it("rejects an invalid name, version and scope", () => {

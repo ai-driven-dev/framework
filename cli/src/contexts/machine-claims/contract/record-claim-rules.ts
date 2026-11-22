@@ -20,11 +20,27 @@ export interface CatalogueClaimsView {
 
 /** What the machine claims answer over the claims a record keeps beside the host data. */
 export interface RecordClaimRules {
+  /** The claims a record keeps on its refs with the projects holding each, none for a record
+   * that is absent or keeps none. Refuses a claims block it did not write. */
+  readonly claimsOf: (
+    record: Readonly<Record<string, unknown>> | undefined
+  ) => readonly DependentClaimView[];
+  /** The refs a record keeps claims on, none for a record that is absent or keeps none. Refuses a
+   * claims block it did not write. */
+  readonly claimedRefs: (
+    record: Readonly<Record<string, unknown>> | undefined
+  ) => readonly string[];
+  /** The project roots holding these plugins or these refs, once each, none when nothing is
+   * held. Refuses a plugin claim it did not write. */
+  readonly holdersOf: (
+    plugins: readonly { readonly machineClaim?: unknown }[],
+    refClaims: readonly { readonly dependents: readonly string[] }[]
+  ) => readonly string[];
   /** The claims on the refs sitting on the host name the alias was registered under. */
-  readonly claimsOnMarketplace: <Claim extends { readonly ref: string }>(
-    record: ClaimedRecordView<Claim>,
+  readonly claimsOnMarketplace: (
+    record: ClaimedRecordView,
     alias: string
-  ) => readonly Claim[];
+  ) => readonly DependentClaimView[];
   /** The record without a marketplace, nor any ref or claim on the host name it was registered
    * under, its claims list always written. */
   readonly withoutMarketplace: <R extends ClaimedRecordView>(
@@ -33,7 +49,7 @@ export interface RecordClaimRules {
   ) => R & { readonly pluginClaims: readonly { readonly ref: string }[] };
   /** A machine's record with the claims of one run merged in, and whether that changed it. */
   readonly mergeCatalogueClaims: (
-    existing: ClaimedRecordView<DependentClaimView> | undefined,
+    existing: ClaimedRecordView | undefined,
     claimed: CatalogueClaimsView,
     fallbackBinary: string
   ) => {

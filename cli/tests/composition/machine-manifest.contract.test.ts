@@ -51,7 +51,7 @@ const real: MachineManifestKind = {
       source: PLUGIN_SOURCE,
       strict: false,
       scope: "user",
-    }).withDependents(dependents),
+    }).withMachineClaim(dependents),
 };
 
 const REGISTRATIONS: MachineNativeRegistrations & Record<string, unknown> = {
@@ -102,7 +102,9 @@ describe.each([fake, real])("the machine-wide record, as $name answers it", (kin
     record.updatePlugin(cursor, kind.aUserPlugin("sample-plugin", ["/B"]));
 
     expect(record.getNativeRegistrations(codex)?.pluginClaims).toEqual(REGISTRATIONS.pluginClaims);
-    expect(record.getRecordedPlugins(cursor).map((plugin) => plugin.dependents)).toEqual([["/B"]]);
+    expect(record.getRecordedPlugins(cursor).map((plugin) => plugin.machineClaim)).toEqual([
+      ["/B"],
+    ]);
   });
 
   it("releases only the detaching project from a user plugin", async () => {
@@ -118,7 +120,7 @@ describe.each([fake, real])("the machine-wide record, as $name answers it", (kin
       projectRoot: "/A",
     });
 
-    expect(repo.getCurrent()?.getRecordedPlugins(cursor)[0]?.dependents).toEqual(["/B"]);
+    expect(repo.getCurrent()?.getRecordedPlugins(cursor)[0]?.machineClaim).toEqual(["/B"]);
     expect(repo.saveCount).toBe(1);
   });
 

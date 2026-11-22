@@ -46,7 +46,7 @@ describe("releasing a project's claims on the machine manifest", () => {
     expect(current?.getNativeRegistrations(TOOL.codex)?.pluginClaims).toEqual([
       { ref: REF, dependents: ["/B"] },
     ]);
-    expect(current?.getRecordedPlugins(TOOL.cursor).map((plugin) => plugin.dependents)).toEqual([
+    expect(current?.getRecordedPlugins(TOOL.cursor).map((plugin) => plugin.machineClaim)).toEqual([
       ["/B"],
       ["/B"],
     ]);
@@ -61,7 +61,7 @@ describe("releasing a project's claims on the machine manifest", () => {
       f.repo
         .getCurrent()
         ?.getRecordedPlugins(TOOL.cursor)
-        .map((plugin) => plugin.dependents)
+        .map((plugin) => plugin.machineClaim)
     ).toEqual([["/B"], ["/A", "/B"]]);
   });
 

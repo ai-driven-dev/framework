@@ -106,9 +106,10 @@ export class UpdateUserPluginFiles {
     options: UpdateUserPluginFilesRequest
   ): Promise<RecordedPlugin> {
     const { toolId, plugin, plan } = planned;
-    if (plugin.dependents.length > 0)
+    const dependents = options.refSelection.holdersOf([plugin], []);
+    if (dependents.length > 0)
       this.deps.logger.warn(
-        `${toolId}: updating user-scope '${plugin.plugin.name}' affects ${plugin.dependents.join(", ")}; each project must refresh its own integration afterward.`
+        `${toolId}: updating user-scope '${plugin.plugin.name}' affects ${dependents.join(", ")}; each project must refresh its own integration afterward.`
       );
     try {
       return await this.deps.materializer.applyUpdate(plan, {

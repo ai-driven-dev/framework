@@ -5,7 +5,7 @@ export type RegistrationRecordView = Readonly<Record<string, unknown>>;
 
 /** What the machine-wide record holds for a tool. Read when needed, never ahead of it. */
 export type MachineRegistrationsView = RegistrationRecordView & {
-  readonly pluginClaims?: readonly { readonly ref: string }[];
+  readonly claimedRefs: readonly string[];
 };
 
 /** What other records say about a tool's registrations, handed over by the caller that owns

@@ -86,6 +86,7 @@ export class SyncToolSettingsFiles {
       if (profile == null || settings?.requiresNativeProof() !== true) continue;
       const provenRefs = this.deps.refs.refsOnHosts(
         { pluginRefs: outcome.pluginRefs },
+        [],
         outcome.marketplaces.map((entry) => entry.hostName)
       );
       if (

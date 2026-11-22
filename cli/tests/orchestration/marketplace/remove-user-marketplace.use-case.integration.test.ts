@@ -7,6 +7,7 @@ import {
   REWRITTEN_BINARY,
   spiedRecordRules,
 } from "../../contexts/installation/testing/spy-record-rules.fake.js";
+import { claimsRecorded } from "../../shared/testing/host-record-reading.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { saying } from "../../shared/testing/saying.builder.js";
 import {
@@ -133,7 +134,7 @@ for (const toolId of [SYNTHETIC_TOOL]) {
       );
       expect(f.activator.uninstalledPlugins).toEqual([]);
       expect(
-        f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims?.[0]?.dependents
+        claimsRecorded(f.repo.getCurrent()?.getNativeRegistrations(toolId))[0]?.dependents
       ).toEqual(["/B"]);
     });
 

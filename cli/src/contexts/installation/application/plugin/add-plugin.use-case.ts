@@ -7,6 +7,11 @@ import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { MissingPluginMetadataError } from "../../domain/installation.error.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import {
+  claimUserScopePlugins,
+  pluginsHeld,
+  type UserScopeOwnership,
+} from "../ownership/claim-user-scope-plugins.js";
 import { assertRequestedVersion } from "./add/existing-plugin.js";
 import { loadAddManifests } from "./add/load-add-manifests.js";
 import type { PlacePlugin } from "./add/place-plugin.use-case.js";
@@ -17,7 +22,6 @@ import type {
   ResolveAddedPluginSource,
 } from "./add/resolve-added-plugin-source.use-case.js";
 import { supersedeExisting } from "./add/supersede-existing.js";
-import { pluginsInstalledBefore, recordUserScopeOwnership } from "./add/user-scope-claims.js";
 import { resolvePluginToolIds } from "./plugin-target-resolution.js";
 
 /** The two manifests an add touches: the project's, and the machine's, which guards the lock. */
@@ -39,6 +43,7 @@ export interface AddPluginDeps {
   readonly manifests: AddPluginManifests;
   readonly source: Pick<ResolveAddedPluginSource, "execute">;
   readonly place: Pick<PlacePlugin, "execute">;
+  readonly ownership: UserScopeOwnership;
 }
 
 export class AddPlugin implements PluginAdd {
@@ -57,7 +62,7 @@ export class AddPlugin implements PluginAdd {
     const { toolIds, projectRoot, githubMarketplace } = options;
     const { manifest, machine } = await loadAddManifests(manifests, this.tools);
     const resolvedToolIds = resolvePluginToolIds(toolIds, manifest, this.tools);
-    const installedBefore = pluginsInstalledBefore(manifest, resolvedToolIds);
+    const heldBefore = pluginsHeld(manifest, resolvedToolIds);
     if (githubMarketplace) await this.prepareGithubAdd(options, resolvedToolIds, manifest);
     const added = await source.execute({
       source: options.source,
@@ -75,12 +80,12 @@ export class AddPlugin implements PluginAdd {
         machine,
       });
     }
-    const claimed = await recordUserScopeOwnership(this.deps.fs, {
+    const claimed = await claimUserScopePlugins(this.deps.ownership, {
       project: manifest,
       machine,
       toolIds: resolvedToolIds,
       projectRoot,
-      installedBefore,
+      heldBefore,
     });
     if (claimed) await manifests.user.save(machine);
     await manifests.project.save(manifest);

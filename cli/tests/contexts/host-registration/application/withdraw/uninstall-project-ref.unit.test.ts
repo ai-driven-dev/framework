@@ -12,6 +12,7 @@ import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fak
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { machineFacts } from "../../testing/machine-facts.builder.js";
 
 const HOST_NAME = "aidd-framework";
 const REF = `plugin@${HOST_NAME}`;
@@ -32,14 +33,14 @@ function withdrawalFor(pluginRefs: readonly string[]): ProjectRegistrationWithdr
 
 function factsAt(
   scope: Scope,
-  machineClaims: ProjectCleanFacts["machineClaims"] = async () => undefined
+  machine: ProjectCleanFacts["machine"] = machineFacts(undefined)
 ): ProjectCleanFacts {
   return {
     projectRoot: "/project",
     marketplaceScopes: new Map([[HOST_NAME, scope]]),
     sharedSource: undefined,
     frameworkAlias: HOST_NAME,
-    machineClaims,
+    machine,
     exclusive: (action) => action(),
     resolveCacheCandidate: async () => null,
   };
@@ -85,7 +86,7 @@ describe("uninstalling one plugin ref a project registered", () => {
     await uninstallRef(
       depsOf(activator, logger),
       [withdrawalFor([REF])],
-      factsAt("project", async () => [{ ref: REF, dependents: ["/project"] }])
+      factsAt("project", machineFacts([{ ref: REF, dependents: ["/project"] }]))
     );
 
     expect(activator.uninstalledPlugins).toStrictEqual([]);

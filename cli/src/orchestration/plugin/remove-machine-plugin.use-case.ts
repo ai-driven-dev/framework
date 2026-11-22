@@ -10,7 +10,7 @@ export class RemoveMachinePlugin {
   constructor(
     private readonly removeUserPlugin: Pick<RemoveUserPlugin<unknown>, "execute">,
     private readonly records: Pick<RegistrationRecordRules, "isQualifiedRef" | "refSelectedBy"> &
-      Pick<RecordClaimRules, "withoutClaimedRef">
+      Pick<RecordClaimRules, "withoutClaimedRef" | "claimsOf" | "holdersOf">
   ) {}
 
   execute(command: Omit<RemoveUserPluginRequest, "records">): Promise<void> {

@@ -11,6 +11,7 @@ import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fak
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { machineFacts } from "../../testing/machine-facts.builder.js";
 
 const HOST_NAME = "aidd-framework";
 const REF = `plugin@${HOST_NAME}`;
@@ -33,7 +34,7 @@ function factsAt(scope: Scope): ProjectCleanFacts {
     marketplaceScopes: new Map([[HOST_NAME, scope]]),
     sharedSource: undefined,
     frameworkAlias: HOST_NAME,
-    machineClaims: async () => undefined,
+    machine: machineFacts(undefined),
     exclusive: (action) => action(),
     resolveCacheCandidate: async () => null,
   };

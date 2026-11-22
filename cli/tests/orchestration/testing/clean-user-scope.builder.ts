@@ -5,6 +5,7 @@ import type { HostMarketplaceSources } from "../../../src/contexts/host-registra
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
+import { claimsRecorded } from "../../shared/testing/host-record-reading.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { FakeHostPluginRegistry } from "./fake-host-plugin-registry.fake.js";
@@ -155,9 +156,7 @@ export function provenHostPlugins(
       toolId,
       new FakeHostPluginRegistry({
         location: `${toolId} installed plugins`,
-        refs: new Map(
-          (registrations.pluginClaims ?? []).map(({ ref }) => [ref, { enabled: true }])
-        ),
+        refs: new Map(claimsRecorded(registrations).map(({ ref }) => [ref, { enabled: true }])),
       })
     );
   }

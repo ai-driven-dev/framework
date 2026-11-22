@@ -45,8 +45,8 @@ describe("clean releases a project's claims only once its local cleanup succeeds
           files: {},
           dependents: [PROJECT_ROOT, OTHER_PROJECT],
         });
-      project.addPlugin(TOOL.cursor, record("shared").withDependents([]));
-      project.addPlugin(TOOL.cursor, record("local-only", "project").withDependents([]));
+      project.addPlugin(TOOL.cursor, record("shared").withMachineClaim([]));
+      project.addPlugin(TOOL.cursor, record("local-only", "project").withMachineClaim([]));
       const machine = Manifest.create();
       machine.addTool(TOOL.codex, "1.0.0", []);
       machine.setNativeRegistrations(TOOL.codex, {
@@ -110,7 +110,7 @@ describe("clean releases a project's claims only once its local cleanup succeeds
           ?.getRecordedPlugins(TOOL.cursor)
           .map((plugin) => ({
             name: plugin.plugin.name,
-            dependents: plugin.dependents,
+            dependents: plugin.machineClaim,
           }))
       ).toEqual([
         { name: "shared", dependents },

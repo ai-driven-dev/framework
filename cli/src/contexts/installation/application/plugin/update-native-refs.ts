@@ -4,11 +4,13 @@ import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { PluginNotFoundError } from "../../domain/installation.error.js";
 import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import type { Manifest } from "../../domain/manifest.js";
+import type { MachineClaimsReading } from "../../ports/machine-claims-reading.js";
 import type { ActivatedTool } from "../../ports/tool-sections.js";
 import type { UpdatePluginRequest } from "./update-plugin.use-case.js";
 
-/** How a plugin selection reads a native ref: the host registration's to answer. */
-export interface RefSelection {
+/** How a plugin selection reads a native ref: the host registration's to answer, and the claims
+ * on it the machine claims'. */
+export interface RefSelection extends MachineClaimsReading {
   /** Whether a plugin selector names its catalogue, so it can only mean one exact ref. */
   isQualifiedRef(selector: string): boolean;
   /** A qualified selector is one exact ref; a bare plugin name selects it in every catalogue. */
@@ -41,7 +43,8 @@ export function nativeTargets(
 ) {
   const { toolIds, options } = selection;
   return (options.rebuild === true ? [] : toolIds).flatMap((toolId) =>
-    (manifest.getNativeRegistrations(toolId)?.pluginClaims ?? [])
+    records
+      .claimsOf(manifest.getNativeRegistrations(toolId))
       .filter(
         (claim) =>
           options.pluginNames === undefined ||

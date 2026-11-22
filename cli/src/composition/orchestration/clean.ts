@@ -29,7 +29,12 @@ import { userConfigDir } from "../user-config-dir.js";
 import { wireCleanClaims } from "./clean-claims.js";
 
 /** The machine-scope half of a clean: the user-scope files, the machine state and the host. */
-function wireCleanUserScope(base: Base, purgeCache: PurgeDeclaredCache, claims: CleanClaims) {
+function wireCleanUserScope(
+  base: Base,
+  inst: Installation,
+  wired: { purgeCache: PurgeDeclaredCache; claims: CleanClaims }
+) {
+  const { purgeCache, claims } = wired;
   const { fs, logger, prompter, userManifestRepo, marketplaceRegistry, withdrawFromHost, tools } =
     base;
   const guards: MachineStateGuards = {
@@ -41,6 +46,7 @@ function wireCleanUserScope(base: Base, purgeCache: PurgeDeclaredCache, claims: 
   const purgeUserScopeFiles = new PurgeUserScopeFiles(
     {
       userManifestRepo,
+      claims: inst.registrationRecordRules,
       purgeMachineState: new PurgeMachineState({ fs, logger, guards }),
       homeDir: homedir,
       userScopePluginFiles: new UserScopePluginFiles(fs, (plugin, tool, home) =>
@@ -113,6 +119,6 @@ export function wireClean(base: Base, inst: Installation) {
     prompter,
     records: inst.registrationRecordRules,
   });
-  const cleanUserScopeUseCase = wireCleanUserScope(base, purgeCache, claims);
+  const cleanUserScopeUseCase = wireCleanUserScope(base, inst, { purgeCache, claims });
   return { uninstallTools, cleanUseCase, cleanUserScopeUseCase };
 }

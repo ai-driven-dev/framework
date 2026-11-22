@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { registrationRecordRules } from "../../../../src/composition/installation.js";
 import { PurgeUserScopeFiles } from "../../../../src/contexts/installation/application/purge-user-scope-files.js";
 import { ActiveMachineDependentsError } from "../../../../src/contexts/installation/domain/installation.error.js";
 import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
@@ -44,6 +45,7 @@ function fixture(
   const purge = new PurgeUserScopeFiles(
     {
       userManifestRepo: repo,
+      claims: registrationRecordRules,
       purgeMachineState: machine,
       homeDir: () => HOME,
       userScopePluginFiles: files,

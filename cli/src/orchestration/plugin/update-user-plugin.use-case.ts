@@ -2,6 +2,7 @@ import type { RefreshHostPlugin } from "../../contexts/host-registration/applica
 import type { RegistrationRecordRules } from "../../contexts/host-registration/contract/registration-record-rules.js";
 import type { UpdatePluginRequest } from "../../contexts/installation/application/plugin/update-plugin.use-case.js";
 import type { UpdateUserPluginFiles } from "../../contexts/installation/application/plugin/update-user-plugin-files.use-case.js";
+import type { RecordClaimRules } from "../../contexts/machine-claims/contract/record-claim-rules.js";
 import type { IsWithinUserScope } from "../../contexts/machine-claims/contract/user-scope-containment.js";
 
 export type UpdateUserPluginRequest = UpdatePluginRequest;
@@ -15,7 +16,11 @@ export class UpdateUserPlugin {
     private readonly updateUserPluginFiles: Pick<UpdateUserPluginFiles, "execute">,
     private readonly refreshHostPlugin: Pick<RefreshHostPlugin, "execute">,
     private readonly isWithinUserScope: IsWithinUserScope,
-    private readonly refSelection: Pick<RegistrationRecordRules, "isQualifiedRef" | "refSelectedBy">
+    private readonly refSelection: Pick<
+      RegistrationRecordRules,
+      "isQualifiedRef" | "refSelectedBy"
+    > &
+      Pick<RecordClaimRules, "claimsOf" | "holdersOf">
   ) {}
 
   async execute(command: UpdateUserPluginRequest): Promise<string[]> {
