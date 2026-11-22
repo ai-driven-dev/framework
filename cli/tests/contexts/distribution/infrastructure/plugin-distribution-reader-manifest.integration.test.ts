@@ -7,8 +7,18 @@ import {
   InvalidPluginVersionError,
 } from "../../../../src/shared/domain/shared.error.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
-import { MANIFEST_PROBES } from "../testing/manifest-probes.builder.js";
+import {
+  SECOND_SYNTHETIC_TOOL,
+  SYNTHETIC_TOOL,
+} from "../../../shared/testing/synthetic-tool-id.builder.js";
+import { manifestProbes } from "../testing/manifest-probes.builder.js";
 
+const MANIFEST_PROBES = manifestProbes({
+  claude: SYNTHETIC_TOOL,
+  cursor: SECOND_SYNTHETIC_TOOL,
+  codex: SECOND_SYNTHETIC_TOOL,
+  copilot: SECOND_SYNTHETIC_TOOL,
+});
 const IN_MEMORY_ROOT = "/plugins/in-memory";
 const IN_MEMORY_MANIFEST = ".claude-plugin/plugin.json";
 
