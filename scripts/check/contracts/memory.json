@@ -4,6 +4,7 @@
   "unit": "folder",
   "targets": "plugins/aidd-context/skills/02-project-memory",
   "marker": "SKILL.md",
+  "retired": ["MEMORY-04"],
   "rules": {
     "MEMORY-01": {
       "op": "custom",
@@ -22,15 +23,9 @@
     },
     "MEMORY-03": {
       "op": "custom",
-      "in": "assets/templates/README.md",
+      "in": ["assets/templates/README.md", "assets/templates/memory/*.md"],
       "check": "memory-template-lint",
-      "why": "the README template is copied into a project as it is, and must pass the engine that reads it there"
-    },
-    "MEMORY-04": {
-      "op": "custom",
-      "in": "assets/templates/memory/*.md",
-      "check": "memory-template-lint",
-      "why": "a template that raises an error besides its questions makes the writer fix the template instead of answering"
+      "why": "a template is copied into a project as it is, and must raise no error besides its questions"
     },
     "MEMORY-05": {
       "op": "forbidden",

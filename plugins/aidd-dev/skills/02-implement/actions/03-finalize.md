@@ -13,7 +13,7 @@ The plan, every phase `done`.
 3. Append a run to `run.md` beside the plan, from the [run template](../assets/run-template.md).
 4. Mark the plan `implemented`.
 5. Commit the plan with `run.md`, unless the project's [commit strategy](../references/commits.md) says otherwise.
-6. Run this skill's `scripts/validate-implement.cjs` with node on the feature folder, until it reports no finding.
+6. Run this skill's `scripts/validate-implement.cjs` on the feature folder written, fix each finding and validate again, and after 3 passes stop and show what is left.
 7. Run `git status` and list the uncommitted files.
 
 ## Output
