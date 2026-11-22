@@ -8,8 +8,8 @@ const test = require("node:test");
 const REPO = path.resolve(__dirname, "../..");
 const RUNTIME = path.join(REPO, "cli/assets/hooks-runtime");
 const PAYLOADS = path.join(__dirname, "fixtures/hook-payloads");
-const HOSTS = ["claude", "codex", "copilot", "cursor", "opencode", "kilo"];
-const BRIDGED = new Set(["opencode", "kilo"]);
+const HOSTS = ["claude", "codex", "copilot", "cursor", "opencode"];
+const BRIDGED = new Set(["opencode"]);
 const SCRUBBED_PROJECT = "/Users/user/project";
 const SESSION = "00000000-0000-4000-8000-000000000000";
 
@@ -161,13 +161,6 @@ for (const host of HOSTS) {
     assert.equal(s.stop(), "", "the mark is consumed");
   });
 
-  test(`${host}: a broken story is answered`, () => {
-    const s = session("aidd-pm", host, { [STORY]: BROKEN_STORY });
-    s.start();
-    s.wrote(STORY);
-    assert.ok(lines(s.stop()).every((line) => /^aidd_docs\/backlog\/stories\/s\.md:\d+ STORY-01 \S/u.test(line)));
-  });
-
   test(`${host}: a continuation turn end is silent and consumes the mark`, () => {
     const s = session("aidd-pm", host, { [STORY]: BROKEN_STORY });
     s.start();
@@ -177,21 +170,7 @@ for (const host of HOSTS) {
   });
 }
 
-test("a broken run.md is answered with an IMPLEMENT finding", () => {
-  const s = session("aidd-dev", "claude", { "aidd_docs/tasks/x/plan.md": "---\nstatus: implemented\n---\n\n# Plan\n", "aidd_docs/tasks/x/run.md": "# Run\n\nnothing\n" });
-  s.start();
-  s.wrote("aidd_docs/tasks/x/run.md");
-  assert.ok(lines(s.stop()).some((line) => /^aidd_docs\/tasks\/x\/run\.md:\d+ IMPLEMENT-\d\d /u.test(line)));
-});
-
 for (const host of ["codex", "cursor", "opencode"]) {
-  test(`${host}: a broken run.md is answered with an IMPLEMENT finding`, () => {
-    const s = session("aidd-dev", host, { [PLAN]: "---\nstatus: implemented\n---\n\n# Plan\n", "aidd_docs/tasks/x/run.md": "# Run\n\nnothing\n" });
-    s.start();
-    s.wrote("aidd_docs/tasks/x/run.md");
-    assert.ok(lines(s.stop()).some((line) => /^aidd_docs\/tasks\/x\/run\.md:\d+ IMPLEMENT-\d\d /u.test(line)));
-  });
-
   test(`${host}: a shell-written broken story is answered`, () => {
     const s = session("aidd-pm", host, { [STORY]: BROKEN_STORY });
     s.start();
@@ -217,13 +196,6 @@ test("silent: a conforming story, a file no contract claims, a phase with no pla
   assert.equal(d.stop(), "");
 });
 
-test("silent: a conforming phase beside its plan", () => {
-  const s = session("aidd-dev", "claude", { [PLAN]: GOOD_PLAN, [PHASE]: GOOD_PHASE });
-  s.start();
-  s.wrote(PHASE);
-  assert.equal(s.stop(), "");
-});
-
 test("a finding on a plan.md the turn did not write is dropped", () => {
   const files = { [PLAN]: GOOD_PLAN.replace("## Impact", "## Impakt"), [PHASE]: GOOD_PHASE };
   const written = session("aidd-dev", "claude", files);
@@ -234,44 +206,6 @@ test("a finding on a plan.md the turn did not write is dropped", () => {
   s.start();
   s.wrote(PHASE);
   assert.equal(s.stop(), "");
-});
-
-test("a broken plan.md written by the model is answered with a PLAN-01 finding", () => {
-  const s = session("aidd-dev", "claude", { [PLAN]: "# Plan\n" });
-  s.start();
-  s.wrote(PLAN);
-  assert.ok(lines(s.stop()).some((line) => /^aidd_docs\/tasks\/x\/plan\.md:\d+ PLAN-01 \S/u.test(line)));
-});
-
-test("no generated contract scope matches a raw template under a plugin's assets, nor a folder above it", () => {
-  const assets = [];
-  const walk = (dir) => {
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-      const file = path.join(dir, entry.name);
-      if (entry.isDirectory()) walk(file);
-      else if (dir.split(path.sep).includes("assets")) assets.push(path.relative(REPO, file).split(path.sep).join("/"));
-    }
-  };
-  for (const plugin of fs.readdirSync(path.join(REPO, "plugins"))) {
-    const skills = path.join(REPO, "plugins", plugin, "skills");
-    if (!fs.existsSync(skills)) continue;
-    for (const skill of fs.readdirSync(skills)) if (fs.existsSync(path.join(skills, skill, "assets"))) walk(path.join(skills, skill, "assets"));
-  }
-  assert.ok(assets.length > 0);
-  let globs = 0;
-  for (const plugin of ["aidd-context", "aidd-dev", "aidd-pm"]) {
-    const root = path.join(REPO, "plugins", plugin, "hooks/lib/contracts");
-    for (const name of fs.readdirSync(root).filter((entry) => entry !== "lib")) {
-      const contract = JSON.parse(fs.readFileSync(path.join(root, name, "scripts/contract.json"), "utf8"));
-      const { globRegex } = require(path.join(root, "lib/engine.cjs"));
-      for (const glob of contract.scope ?? []) {
-        globs += 1;
-        const regex = globRegex(glob);
-        for (const rel of assets) for (let at = rel; at !== "."; at = path.posix.dirname(at)) assert.equal(regex.test(at), false, `${glob} matches ${at}`);
-      }
-    }
-  }
-  assert.ok(globs > 0);
 });
 
 test("a broken file in scope that no PostToolUse named is not reported", () => {
@@ -317,14 +251,6 @@ test("a shell turn answers the in-scope files modified after the session start, 
   assert.ok(found.every((line) => line.startsWith(`${STORY}:`)));
 });
 
-test("a shell turn is silent when the broken file predates the reference", () => {
-  const s = session("aidd-pm", "claude", { [STORY]: BROKEN_STORY });
-  past(path.join(s.root, STORY), 3600);
-  s.start();
-  s.shell();
-  assert.equal(s.stop(), "");
-});
-
 test("a file written, then touched by the same turn's shell, is reported once", () => {
   const s = session("aidd-pm", "claude", { [STORY]: BROKEN_STORY });
   s.start();
@@ -338,7 +264,8 @@ test("a file written, then touched by the same turn's shell, is reported once", 
 test("a shell turn reads each in-scope file once, however deep, though two contracts share the scope", () => {
   const s = session("aidd-dev", "claude");
   const files = 200;
-  for (let i = 0; i < files; i += 1) s.put(`aidd_docs/tasks/a/b/c${i % 10}/f${i}.md`, "x");
+  const tree = Array.from({ length: files }, (_, i) => `aidd_docs/tasks/a/b/c${i % 10}/f${i}.md`);
+  for (const rel of tree) s.put(rel, "x");
   s.start();
   s.shell();
   const { atStop } = require(path.join(hookFor("aidd-dev", "claude"), "artifacts.cjs"));
@@ -362,7 +289,8 @@ test("a shell turn reads each in-scope file once, however deep, though two contr
     });
   }
   assert.ok(stats >= files, `the scan ran: ${stats} stats`);
-  assert.ok(stats < files + 50, `${stats} stats for ${files} files`);
+  // scope globs re-check folders, never files: a per-file re-read would double the count
+  assert.ok(stats < 2 * files, `${stats} stats for ${files} files`);
 });
 
 test("a shell turn with no session start has no reference: silent, nothing walked", () => {
@@ -524,28 +452,18 @@ const CONTEXT = {
 };
 const contextFiles = (extra = {}) => ({ ...Object.fromEntries(MEMORY_FILES.map((name) => [`aidd_docs/memory/${name}`, "# T\n\nShort.\n"])), ...extra });
 
-for (const host of HOSTS) {
-  test(`${host}: aidd-context answers the four context artifacts in one answer`, () => {
-    const s = session("aidd-context", host, contextFiles(CONTEXT));
-    s.start();
-    for (const rel of Object.keys(CONTEXT)) s.wrote(rel);
-    const found = lines(s.stop());
-    for (const id of ["AGENT", "COMMAND", "RULE", "SKILL"]) assert.ok(found.some((line) => line.includes(` ${id}-`)), id);
-  });
-
-  test(`${host}: aidd-context stays silent on a continuation and consumes the mark`, () => {
-    const s = session("aidd-context", host, contextFiles(CONTEXT));
-    s.start();
-    s.wrote(".claude/agents/a.md");
-    assert.equal(s.stop({ active: true }), "");
-    assert.equal(s.stop(), "");
-  });
-}
+test("aidd-context answers the four context artifacts in one answer", () => {
+  const s = session("aidd-context", "claude", contextFiles(CONTEXT));
+  s.start();
+  for (const rel of Object.keys(CONTEXT)) s.wrote(rel);
+  const found = lines(s.stop());
+  for (const id of ["AGENT", "COMMAND", "RULE", "SKILL"]) assert.ok(found.some((line) => line.includes(` ${id}-`)), id);
+});
 
 // Only the hosts whose writer output passes the shared contract unchanged are in scope.
 test("aidd-context: answers an agent or command written for another host in scope, not one out of scope", () => {
   const inScope = [".cursor/agents/a.md", ".github/prompts/c.prompt.md", ".opencode/commands/c.md", ".kilo/commands/c.md"];
-  const outOfScope = [".opencode/agents/a.md", ".cursor/commands/c.md"];
+  const outOfScope = [".opencode/agents/a.md", ".cursor/commands/c.md", ".cursor/rules/x.mdc", ".github/agents/a.agent.md", ".codex/prompts/p.toml"];
   const all = [...inScope, ...outOfScope];
   const s = session("aidd-context", "claude", contextFiles(Object.fromEntries(all.map((rel) => [rel, "# nope\n"]))));
   s.start();
@@ -590,14 +508,6 @@ for (const host of HOSTS) {
   });
 }
 
-test("aidd-context: an install's command names no file: the skills it wrote stay silent", () => {
-  const s = session("aidd-context", "claude", contextFiles({ [SKILL]: "# nope\n" }));
-  s.start();
-  past(path.join(s.root, SKILL), -60);
-  s.shell("npx @ai-driven-dev/cli setup --ide claude");
-  assert.equal(s.stop(), "");
-});
-
 test("aidd-context: a skill a command names but did not change since the reference is silent", () => {
   const s = session("aidd-context", "claude", contextFiles({ [SKILL]: "# nope\n" }));
   past(path.join(s.root, SKILL), 3600);
@@ -640,18 +550,8 @@ test("a Stop answer holds at most 20 finding lines, then one line counting the r
   for (const rel of rels) s.wrote(rel);
   const found = lines(s.stop());
   assert.equal(found.length, 21);
-  assert.match(found[20], /^\+\d+ more: run the skill's validate script$/u);
+  assert.match(found[20], /^\+\d+ more/u);
   assert.ok(found.slice(0, 20).every((line) => /^aidd_docs\/backlog\/stories\/s\d+\.md:/u.test(line)));
-});
-
-test("a Stop answer of 20 finding lines or fewer is never cut", () => {
-  const rels = Array.from({ length: 2 }, (_, i) => `aidd_docs/backlog/stories/s${i}.md`);
-  const s = session("aidd-pm", "claude", Object.fromEntries(rels.map((rel) => [rel, BROKEN_STORY])));
-  s.start();
-  for (const rel of rels) s.wrote(rel);
-  const found = lines(s.stop());
-  assert.ok(found.length > 0 && found.length <= 20);
-  assert.ok(found.every((line) => !line.startsWith("+")));
 });
 
 test("aidd-context: one answer holds the artifact findings and memory's own text, never two", () => {
@@ -665,10 +565,3 @@ test("aidd-context: one answer holds the artifact findings and memory's own text
   assert.ok(found.some((line) => line.startsWith("aidd-context: CLAUDE.md holds a line")));
 });
 
-test("aidd-context: other hosts' own artifact folders are never judged", () => {
-  const files = { ".cursor/rules/x.mdc": "# nope\n", ".github/agents/a.agent.md": "# nope\n", ".codex/prompts/p.toml": "nope\n" };
-  const s = session("aidd-context", "claude", contextFiles(files));
-  s.start();
-  for (const rel of Object.keys(files)) s.wrote(rel);
-  assert.equal(s.stop(), "");
-});

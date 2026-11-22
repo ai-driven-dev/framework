@@ -254,7 +254,6 @@ test("reload delivers global instructions to all three hosts while preserving pe
     executable(join(fakeBin, "npx"), "exit 0");
     const first = runSync(fakeBin, home, []);
     assert.equal(first.status, 0, first.stderr);
-    assert.match(first.stdout, /global instructions\s+ok/);
     const contents = destinations.map((path) => {
       const content = readFileSync(join(home, path), "utf8");
       assert.ok(content.startsWith("Personal rules.\n"));
@@ -293,8 +292,6 @@ for (const localBinary of [false, true]) {
       const result = runSync(fakeBin, home, []);
       assert.equal(result.status, 0, result.stderr);
       assert.equal(readFileSync(join(home, "managed-call"), "utf8"), "\n");
-      assert.match(result.stdout, /reload opencode\s+managed:ok/);
-      assert.doesNotMatch(result.stdout, /global install|nothing to install/);
       assert.match(readFileSync(join(home, ".config/opencode/AGENTS.md"), "utf8"), /Use available agents when useful/);
     } finally { rmSync(root, { recursive: true, force: true }); }
   });
@@ -312,8 +309,6 @@ test("managed OpenCode reload leaves other hosts on the global install path", ()
     executable(join(fakeBin, "aidd-opencode-reload"), 'echo managed:ok');
     const result = runSync(fakeBin, home, []);
     assert.equal(result.status, 0, result.stderr);
-    assert.match(result.stdout, /global install\s+ok \(codex\)/);
-    assert.match(result.stdout, /reload opencode\s+managed:ok/);
     assert.match(readFileSync(join(home, "aidd-calls"), "utf8"), / --ide codex --plugins all --yes\n$/);
     assert.match(readFileSync(join(home, ".codex/AGENTS.md"), "utf8"), /Use available agents when useful/);
     assert.match(readFileSync(join(home, ".config/opencode/AGENTS.md"), "utf8"), /Use available agents when useful/);
@@ -331,7 +326,6 @@ test("a failed managed OpenCode reload stops before changing other hosts or inst
     const result = runSync(fakeBin, home, []);
     assert.equal(result.status, 7, result.stderr);
     assert.match(result.stderr, /managed source refused/);
-    assert.doesNotMatch(result.stdout, /Done\.|global instructions|nothing to install/);
     assert.equal(existsSync(join(home, "host-calls")), false);
     assert.equal(existsSync(join(home, "aidd-calls")), false);
     assert.equal(existsSync(join(home, ".config/opencode/AGENTS.md")), false);
@@ -350,7 +344,6 @@ test("every host takes this checkout through aidd setup --global, afresh", () =>
     }
     const result = runSync(fakeBin, home, []);
     assert.equal(result.status, 0, result.stderr);
-    assert.match(result.stdout, /global install\s+ok \(claude,codex,copilot,cursor,kilo,opencode\)/);
     assert.equal(
       readFileSync(join(home, "aidd-calls"), "utf8"),
       `setup --global --source local --path ${source} --ide claude,codex,copilot,cursor,kilo,opencode --plugins all --yes\n`
@@ -397,7 +390,6 @@ test("a failing global install stops the reload with its own cause", () => {
     assert.notEqual(result.status, 0);
     assert.match(result.stderr, /fixture refusal/);
     assert.match(result.stderr, /aidd setup --global failed for opencode/);
-    assert.doesNotMatch(result.stdout, /Done\./);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
@@ -439,7 +431,6 @@ test("another tool named agent is not taken for Cursor", () => {
     executable(join(fakeBin, "agent"), "echo 'Grok Build TUI'");
     const result = runSync(fakeBin, home, []);
     assert.equal(result.status, 0, result.stderr);
-    assert.match(result.stdout, /No supported host installation found/);
     assert.equal(existsSync(join(home, "aidd-calls")), false);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });

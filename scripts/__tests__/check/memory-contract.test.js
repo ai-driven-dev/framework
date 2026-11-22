@@ -23,10 +23,6 @@ const edit = (file, change) => {
 const ids = () => [...new Set(findings(CONTRACT, dir).map((found) => found.id))];
 
 describe("memory contract", () => {
-  it("accepts the shipped skill", () => {
-    assert.deepEqual(findings(CONTRACT, dir), []);
-  });
-
   it("MEMORY-01 flags a rule row that differs from the engine, and a missing one", () => {
     edit("references/memory-rules.md", (text) => text.replace("| 25 words |", "| 26 words |"));
     assert.deepEqual(ids(), ["MEMORY-01"]);

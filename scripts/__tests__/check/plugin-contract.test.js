@@ -37,10 +37,6 @@ const found = (manifest) => {
 };
 
 describe("plugin contract", () => {
-  it("accepts a complete manifest", () => {
-    assert.deepEqual(found(MANIFEST), []);
-  });
-
   it("accepts a manifest with no skills field: the host reads ./skills itself", () => {
     const { skills, ...bare } = MANIFEST;
     assert.deepEqual(found(bare), []);

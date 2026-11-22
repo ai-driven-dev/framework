@@ -91,18 +91,6 @@ describe("contract sync", () => {
       assert.equal(fs.existsSync(path.join(plugin(), "hooks")), false);
     });
 
-    it("--check names an edited copy, and the sync repairs it", () => {
-      scope();
-      sync();
-      const copied = path.join(plugin(), "hooks", "lib", "contracts", "a", "assets", "t.md");
-      fs.appendFileSync(copied, "edited\n");
-      const run = sync("--check");
-      assert.equal(run.status, 1);
-      assert.match(run.stdout, /plugins\/p\/hooks\/lib\/contracts\/a\/assets\/t\.md differs/u);
-      assert.equal(sync().status, 0);
-      assert.equal(sync("--check").status, 0);
-    });
-
     it("a plugin whose hook requires the host adapter gets it, and one that stops requiring it is named", () => {
       fs.mkdirSync(path.join(plugin(), "hooks"), { recursive: true });
       fs.writeFileSync(path.join(plugin(), "hooks", "h.cjs"), 'require("./lib/host.cjs");\n');

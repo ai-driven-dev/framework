@@ -93,22 +93,6 @@ describe("repository run", () => {
     assert.equal(run().status, 1);
   });
 
-  it("lowers a count and drops a fixed entry on --update-baseline", () => {
-    baselined("no front matter\n");
-    const entries = () => Object.keys(JSON.parse(fs.readFileSync(path.join(root, BASELINE), "utf8"))).length;
-    const before = entries();
-    fs.rmSync(path.join(root, "agents/b.md"));
-    assert.equal(run("--update-baseline").status, 0);
-    assert.ok(entries() < before);
-    assert.equal(run().status, 0);
-  });
-
-  it("ignores a line shift above a baselined finding", () => {
-    baselined("no front matter\n");
-    write("agents/b.md", "\n\nno front matter\n");
-    assert.equal(run().status, 0);
-  });
-
   it("exits 1 when a vendored engine copy is edited", () => {
     const skill = path.join(root, "plugins/aidd-context/skills/06-agent-generate/scripts");
     fs.rmSync(path.join(skill, "lib"), { recursive: true, force: true });

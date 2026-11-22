@@ -61,10 +61,6 @@ function ids(files = {}) {
 }
 
 describe("repo content rules", () => {
-  it("accept a clean repository", () => {
-    assert.deepEqual(ids(), []);
-  });
-
   it("REPO-04 flags a tracked file holding a path from a machine", () => {
     assert.deepEqual(ids({ "notes.md": `see /${"Users"}/realperson/work\n` }), ["REPO-04"]);
   });

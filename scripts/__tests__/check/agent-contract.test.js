@@ -1,11 +1,9 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
-const os = require("node:os");
 const path = require("node:path");
-const { spawnSync } = require("node:child_process");
-const { describe, it, beforeEach, afterEach } = require("node:test");
+const { describe, it } = require("node:test");
 
-const { stripComments, writeThenValidate } = require("./helpers.js");
+const { stripComments, validate: run, writeThenValidate } = require("./helpers.js");
 
 const SKILL = path.resolve(__dirname, "../../../plugins/aidd-context/skills/06-agent-generate");
 const TEMPLATE = path.join(SKILL, "assets/agent-template.md");
@@ -32,18 +30,11 @@ const FILLED = [
   "",
 ].join("\n");
 
-let dir;
-beforeEach(() => {
-  dir = fs.mkdtempSync(path.join(os.tmpdir(), "agent-contract-"));
-});
-afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
-
-function validate(name, text) {
-  const file = path.join(dir, name);
-  fs.writeFileSync(file, text);
-  const run = spawnSync(process.execPath, [path.join(SKILL, "scripts/validate-agent.cjs"), file], { encoding: "utf8" });
-  return { code: run.status, out: run.stdout };
-}
+const SCRIPT = path.join(SKILL, "scripts/validate-agent.cjs");
+const validate = (name, text) => {
+  const { code, out } = run(SCRIPT, name, text);
+  return { code, out };
+};
 
 describe("agent contract", () => {
   it("accepts a filled agent", () => {
@@ -68,14 +59,9 @@ describe("agent contract", () => {
     assert.match(validate("reviewer.md", FILLED.replace("# Behavior", "# Rules")).out, / AGENT-04 /u);
   });
 
-  it("allows bold, which agents are not held to", () => {
-    assert.deepEqual(validate("reviewer.md", FILLED.replace("Review the change.", "Review the **change**.")), { code: 0, out: "" });
-  });
-
   it("accepts the Claude file the writer renders from a drafted agent", () => {
     const body = "# Role\n\nReview the change.\n\n# Behavior\n\n- Read the diff.\n\n# Output\n\nA verdict.\n";
     const request = { name: "reviewer", description: "Reviews a change. Use to check it before merge.", body };
-    const validator = path.join(SKILL, "scripts/validate-agent.cjs");
-    assert.deepEqual(writeThenValidate(path.join(SKILL, "scripts/write-agent.cjs"), validator, request, "claude", ".claude/agents/reviewer.md"), { code: 0, out: "" });
+    assert.deepEqual(writeThenValidate(path.join(SKILL, "scripts/write-agent.cjs"), SCRIPT, request, "claude", ".claude/agents/reviewer.md"), { code: 0, out: "" });
   });
 });

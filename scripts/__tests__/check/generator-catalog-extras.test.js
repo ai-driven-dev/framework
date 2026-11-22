@@ -1,21 +1,16 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
-const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 const extras = require("../../check/generators/catalog-extras.cjs");
+const { scratchRoot } = require("./helpers.js");
 
-let root;
-const at = (rel) => path.join(root, rel);
-const write = (rel, text) => {
-  fs.mkdirSync(path.dirname(at(rel)), { recursive: true });
-  fs.writeFileSync(at(rel), text);
-};
+let root, at, write;
 const markers = (name) => `<!--extras-${name}:start-->\n<!--extras-${name}:end-->\n`;
 const catalog = () => fs.readFileSync(at("docs/CATALOG.md"), "utf8");
 
 beforeEach(() => {
-  root = fs.mkdtempSync(path.join(os.tmpdir(), "catalog-extras-"));
+  ({ root, at, write } = scratchRoot("catalog-extras-"));
   write("plugins/aidd-x/agents/helper.md", "---\nname: helper\ndescription: Does a job. Use to help.\n---\n");
   write("plugins/aidd-x/hooks/hooks.json", JSON.stringify({ hooks: { Stop: [{ hooks: [{ command: "node ${CLAUDE_PLUGIN_ROOT}/hooks/a.cjs" }] }] } }));
   write("plugins/aidd-y/skills/a/SKILL.md", "---\nname: a\n---\n");

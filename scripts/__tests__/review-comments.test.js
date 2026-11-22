@@ -4,6 +4,7 @@ const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 const { test } = require("node:test");
+const Ajv2020 = require("ajv/dist/2020");
 const SCRIPT = path.resolve(__dirname, "../../plugins/aidd-vcs/skills/06-answer-comments/scripts/prepare-review.cjs");
 const MARKER = "<!-- aidd-answer-comments-summary -->";
 const posted = (text, kind) => `${text}\n\n<!-- aidd-answer-comments:${kind} -->`;
@@ -15,27 +16,11 @@ const summary = (id = "s1", more = {}) => ({ id, author: "me", body: `## Review 
 const contract = (name) => JSON.parse(fs.readFileSync(path.resolve(path.dirname(SCRIPT), `../references/${name}.schema.json`), "utf8"));
 const INPUT_SCHEMA = contract("review-input");
 const OUTPUT_SCHEMA = contract("review-output");
-// The subset of JSON Schema the contract uses, enough to hold every run to it.
-function violations(value, node, root, at = "$") {
-  if (node.$ref) return violations(value, root.$defs[node.$ref.split("/").pop()], root, at);
-  if (node.oneOf) {
-    const matches = node.oneOf.filter((option) => !violations(value, option, root, at).length).length;
-    return matches === 1 ? [] : [`${at}: matches ${matches} oneOf options`];
-  }
-  const type = Array.isArray(value) ? "array" : value === null ? "null" : typeof value;
-  if (node.type && node.type !== type) return [`${at}: ${type}, expected ${node.type}`];
-  if ("const" in node && value !== node.const) return [`${at}: expected ${node.const}`];
-  if (node.enum && !node.enum.includes(value)) return [`${at}: ${value} outside its enum`];
-  if (node.pattern && !new RegExp(node.pattern).test(value)) return [`${at}: does not match ${node.pattern}`];
-  if (type === "array") return node.items ? value.flatMap((item, i) => violations(item, node.items, root, `${at}[${i}]`)) : [];
-  if (type !== "object") return [];
-  const properties = node.properties ?? {};
-  const missing = (node.required ?? []).filter((key) => !(key in value)).map((key) => `${at}.${key}: missing`);
-  const extra = Object.entries(value).flatMap(([key, item]) => key in properties
-    ? violations(item, properties[key], root, `${at}.${key}`)
-    : node.additionalProperties === false ? [`${at}.${key}: not in the contract`] : []);
-  return [...missing, ...extra];
-}
+const ajv = new Ajv2020({ allErrors: true });
+const violations = (value, schema) => {
+  const validate = ajv.compile(schema);
+  return validate(value) ? [] : validate.errors.map(({ instancePath, message }) => `${instancePath || "$"}: ${message}`);
+};
 function runner(t) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-review-"));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
@@ -46,8 +31,8 @@ function runner(t) {
     const process = spawnSync(global.process.execPath, [SCRIPT, "--input", file], { cwd: dir, env: { PATH: "" }, encoding: "utf8" });
     assert.deepEqual(fs.readdirSync(dir), before, "preparation writes no files");
     const output = JSON.parse(process.stdout);
-    assert.deepEqual(violations(output, OUTPUT_SCHEMA, OUTPUT_SCHEMA), [], "every output follows the output contract");
-    if (process.status === 0) assert.deepEqual(violations(value, INPUT_SCHEMA, INPUT_SCHEMA), [], "every accepted input follows the input contract");
+    assert.deepEqual(violations(output, OUTPUT_SCHEMA), [], "every output follows the output contract");
+    if (process.status === 0) assert.deepEqual(violations(value, INPUT_SCHEMA), [], "every accepted input follows the input contract");
     return { code: process.status, ...output };
   };
 }

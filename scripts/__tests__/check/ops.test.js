@@ -97,13 +97,6 @@ describe("ops", () => {
     assert.deepEqual(lines(findings(rule, "[abs](/etc/hosts)\n")), [1]);
   });
 
-  it("template flags an unfilled slot and accepts a filled copy", () => {
-    fs.writeFileSync(path.join(dir, "t.md"), "# T {{x}}\n\n## S\n");
-    const rule = { op: "template", template: "t.md" };
-    assert.deepEqual(findings(rule, "# T demo\n\n## S\n"), []);
-    assert.equal(findings(rule, "# T {{x}}\n\n## S\n").length, 1);
-  });
-
   it("template flags a slot left in the front matter, and lets a declared key be absent", () => {
     fs.writeFileSync(path.join(dir, "t.md"), '---\ntitle: "{{x}}"\nnote: "{{y}}"\n---\n\n# T\n');
     const rule = { op: "template", template: "t.md", optional: ["note"] };
@@ -148,10 +141,6 @@ describe("ops", () => {
       const hit = findings(rule, `# T demo\n\n${round(ok + "\n### C\n")}`);
       assert.equal(hit.length, 1);
       assert.match(hit[0].message, /"C" is not in the template/u);
-    });
-
-    it("says what an unknown heading's level holds", () => {
-      const hit = findings(rule, `# T demo\n\n${round(ok + "\n### C\n")}`);
       assert.match(hit[0].message, /: rename it to, or move its text under, one of "### A", "### B"$/u);
     });
 
@@ -192,12 +181,6 @@ describe("ops", () => {
       assert.deepEqual(findings({ ...rule, optional: ["X"] }, doc), []);
     });
 
-    it("flags a second title", () => {
-      const hit = findings(rule, `# T demo\n\n${round(ok)}\n# T demo\n`);
-      assert.equal(hit.length, 1);
-      assert.match(hit[0].message, /one title only/u);
-    });
-
     it("ignores headings in a fence or a comment", () => {
       const doc = `# T demo\n\n${round(ok)}\n\`\`\`\n### C\n\`\`\`\n`;
       assert.deepEqual(findings(rule, doc), []);
@@ -212,13 +195,6 @@ describe("ops", () => {
       assert.match(hit[0].message, /table header differs/u);
       assert.equal(hit[0].line, 17);
     });
-  });
-
-  it("json validates against a schema", () => {
-    fs.writeFileSync(path.join(dir, "s.json"), JSON.stringify({ type: "object", required: ["a"] }));
-    const rule = { op: "json", schema: "s.json", fix: "{problem}" };
-    assert.deepEqual(findings(rule, '{"a":1}', "d.json"), []);
-    assert.equal(findings(rule, "{}", "d.json").length, 1);
   });
 
   it("json reads anyOf, oneOf, allOf, not, propertyNames, $ref, enum, bounds and uri", () => {

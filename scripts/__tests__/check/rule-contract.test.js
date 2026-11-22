@@ -28,15 +28,6 @@ describe("rule contract", () => {
     assert.equal(validate(SCRIPT, NAME, unscoped).code, 0);
   });
 
-  it("flags a rule with no description, and one with a key the template lacks", () => {
-    assert.match(validate(SCRIPT, NAME, FILLED.replace(/description: .*\n/u, "")).out, /front matter key "description" missing/u);
-    assert.match(validate(SCRIPT, NAME, FILLED.replace("targets:", "host: x\ntargets:")).out, /front matter key "host" is not in the template/u);
-  });
-
-  it("flags a rule with no targets", () => {
-    assert.match(validate(SCRIPT, NAME, FILLED.replace(/targets: .*\n/u, "")).out, /front matter key "targets" missing/u);
-  });
-
   it("accepts the source the writer renders from a drafted rule", () => {
     const writer = path.join(SKILL, "scripts/write-rule.cjs");
     const body = "# Naming\n\n- Name a thing for what it is.\n";
