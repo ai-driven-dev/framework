@@ -149,4 +149,4 @@ function run(contractFile, targets) {
   }
 }
 
-module.exports = { run, check, loadContract, format, ContractError, isUsage };
+module.exports = { run, check, loadContract, format, ContractError, isUsage, globRegex };
