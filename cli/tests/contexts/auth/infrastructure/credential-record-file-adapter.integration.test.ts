@@ -122,7 +122,7 @@ describe("CredentialRecordFileAdapter", () => {
     });
   });
 
-  describe.skipIf(process.platform === "win32")("on win32, with an icacls script", () => {
+  describe("on win32, with an icacls stub", () => {
     async function givenIcacls(): Promise<StubBinary> {
       const machine = await aMachineWith("icacls", {});
       machines.push(machine);

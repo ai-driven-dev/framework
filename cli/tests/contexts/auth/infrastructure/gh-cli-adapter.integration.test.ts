@@ -7,7 +7,7 @@ import {
   type StubBinary,
 } from "../testing/stub-binary.builder.js";
 
-describe.skipIf(process.platform === "win32")("GhCliAdapter on a machine with a gh script", () => {
+describe("GhCliAdapter on a machine with a gh script", () => {
   let machine: StubBinary;
 
   afterEach(async () => {
@@ -79,7 +79,6 @@ describe.skipIf(process.platform === "win32")("GhCliAdapter on a machine with a 
         { status: 1, stderr: 'unknown command "token" for "gh auth"' },
         "gh CLI is too old to support",
       ],
-      ["says the code is unknown when gh left none", { killed: true }, "exited with code unknown"],
       [
         "names its stderr, trimmed",
         { status: 1, stderr: "  boom  \n" },
@@ -93,6 +92,17 @@ describe.skipIf(process.platform === "win32")("GhCliAdapter on a machine with a 
       );
     });
   });
+
+  it.skipIf(process.platform === "win32")(
+    "says the code is unknown when gh left none",
+    async () => {
+      const gh = await givenGh({ killed: true });
+
+      expect(() => gh.read()).toThrow(
+        expect.objectContaining({ detail: expect.stringContaining("exited with code unknown") })
+      );
+    }
+  );
 
   describe("verifying", () => {
     it("answers the login gh prints, trimmed", async () => {

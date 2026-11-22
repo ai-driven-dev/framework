@@ -1,7 +1,3 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { describe } from "vitest";
 import { GhCliAdapter } from "../../../../src/contexts/auth/infrastructure/gh-cli-adapter.js";
 import {
   type CliScenario,
@@ -9,6 +5,7 @@ import {
   describeCliAuthProviderContract,
 } from "../testing/cli-auth-provider.contract.js";
 import { FakeCliAuthProvider } from "../testing/fake-cli-auth-provider.fake.js";
+import { aMachineWith, type StubBehaviour } from "../testing/stub-binary.builder.js";
 
 describeCliAuthProviderContract(
   "the fake",
@@ -24,32 +21,17 @@ describeCliAuthProviderContract(
   })
 );
 
-/** What `gh` prints for each scenario. */
-function ghScript(scenario: CliScenario): string | undefined {
-  if (scenario.kind === "absent") return undefined;
-  if (scenario.kind === "failing") return "#!/bin/sh\necho 'gh: something broke' >&2\nexit 1\n";
-  return `#!/bin/sh\ncase "$1" in auth) echo ${scenario.token};; api) echo ${scenario.login};; esac\n`;
+/** What `gh` does for each scenario; a machine without `gh` has no command at all. */
+function ghBehaviour(scenario: CliScenario): StubBehaviour | null {
+  if (scenario.kind === "absent") return null;
+  if (scenario.kind === "failing") return { status: 1, stderr: "gh: something broke\n" };
+  return { stdoutByCommand: { auth: `${scenario.token}\n`, api: `${scenario.login}\n` } };
 }
 
-/** A directory that is the whole `PATH` while the subject lives: `gh` is a script there, or
- * nothing is, which is a machine without `gh`. `spawnSync` resolves no `.cmd`, and the
- * repository fakes binaries with `#!/bin/sh` only, so Windows runs the fake arm alone. */
-describe.skipIf(process.platform === "win32")("on a POSIX machine", () => {
-  describeCliAuthProviderContract(
-    "GhCliAdapter over a fake gh",
-    async (scenario: CliScenario): Promise<CliSubject> => {
-      const dir = await mkdtemp(join(tmpdir(), "aidd-auth-gh-"));
-      const script = ghScript(scenario);
-      if (script !== undefined) await writeFile(join(dir, "gh"), script, { mode: 0o755 });
-      const previous = process.env.PATH;
-      process.env.PATH = dir;
-      return {
-        provider: new GhCliAdapter(),
-        dispose: async () => {
-          process.env.PATH = previous;
-          await rm(dir, { recursive: true, force: true });
-        },
-      };
-    }
-  );
-});
+describeCliAuthProviderContract(
+  "GhCliAdapter over a stub gh",
+  async (scenario: CliScenario): Promise<CliSubject> => {
+    const machine = await aMachineWith("gh", ghBehaviour(scenario));
+    return { provider: new GhCliAdapter(), dispose: () => machine.dispose() };
+  }
+);
