@@ -4,9 +4,8 @@
  * real list, by `registered-tools.builder`, by the registered accessors of `catalog-of.builder`,
  * by `catalogOf()` with no profiles or by `REGISTERED_PROFILES`, only from the files the
  * `real-tool-list:*` debts in `kinds-debt.json` hold, each under the change that closes it: a test
- * of a real tool's behaviour moves beside its profile, a nominal-tool test converts once its
- * builder takes an injected registry, and a builder stops wiring the registered catalog. A file
- * that stops reaching it leaves the debt, and a new one is a violation.
+ * of a real tool's behaviour moves beside its profile or runs on a synthetic profile carrying the
+ * section it needs. A file that stops reaching it leaves the debt, and a new one is a violation.
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
