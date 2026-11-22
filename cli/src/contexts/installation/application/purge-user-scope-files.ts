@@ -163,7 +163,7 @@ export class PurgeUserScopeFiles implements UserScopePurge {
     for (const { toolId, plugin } of this.userPluginsOf(manifest)) {
       const tool = this.tools.aiProfile(toolId);
       const files = await this.deps.userScopePluginFiles.proven(plugin, tool, home);
-      await this.deps.userScopePluginFiles.remove(files, tool, projectRoot);
+      await this.deps.userScopePluginFiles.remove(files, tool, { projectRoot, home });
     }
   }
 }

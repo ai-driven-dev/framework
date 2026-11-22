@@ -102,7 +102,7 @@ function wireCleanProjectFiles(base: Base, inst: Installation) {
         records: registrationRecordRules,
       },
       removeProjectFiles: new RemoveProjectFiles(
-        { fs, manifestRepo, logger, updateGitignore },
+        { fs, manifestRepo, logger, updateGitignore, homedir },
         tools
       ),
     },
@@ -118,7 +118,7 @@ export function wireClean(base: Base, inst: Installation) {
       manifestRepo,
       detachClaims: detachProjectClaims(userManifestRepo, fs),
       records: inst.registrationRecordRules,
-      removeToolFiles: new RemoveToolFiles(fs, logger, tools),
+      removeToolFiles: new RemoveToolFiles(fs, logger, tools, homedir),
     },
     tools
   );

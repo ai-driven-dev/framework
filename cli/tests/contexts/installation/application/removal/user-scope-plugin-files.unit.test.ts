@@ -37,10 +37,10 @@ describe("UserScopePluginFiles.remove", () => {
     const target = join(tool.plugins()?.userPluginsBaseDir(homedir()) ?? "", "skills", "x.md");
     fs.setFile(target, "x");
 
-    await new UserScopePluginFiles(fs, async () => new Map(), homedir).remove(
+    await new UserScopePluginFiles(fs, async () => new Map()).remove(
       new Map([["skills/x.md", "digest"]]),
       tool,
-      "/project"
+      { projectRoot: "/project", home: homedir() }
     );
 
     expect(fs.has(target)).toBe(false);

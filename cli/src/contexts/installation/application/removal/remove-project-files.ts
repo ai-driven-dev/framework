@@ -21,6 +21,7 @@ export interface RemoveProjectFilesDeps {
   readonly manifestRepo: ManifestRepository;
   readonly logger: Logger;
   readonly updateGitignore: UpdateGitignore;
+  readonly homedir: () => string;
 }
 
 /**
@@ -141,10 +142,11 @@ export class RemoveProjectFiles {
     projectRoot: string
   ): Promise<number> {
     let count = 0;
+    const { fs, homedir } = this.deps;
     for (const plugin of manifest.getPlugins(tool.toolId)) {
       const deleted = await deletePluginFilesForTool(
-        { files: plugin.files, scope: plugin.scope, tool, projectRoot },
-        this.deps.fs
+        { files: plugin.files, scope: plugin.scope, tool, projectRoot, homedir },
+        fs
       );
       count += deleted.length;
     }

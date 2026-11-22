@@ -58,11 +58,10 @@ export class RemoveUserPlugin<Proof> {
       );
     }
     for (const { toolId, plugin, files } of safeFiles) {
-      await this.deps.userScopePluginFiles.remove(
-        files,
-        this.tools.aiProfile(toolId),
-        options.projectRoot
-      );
+      await this.deps.userScopePluginFiles.remove(files, this.tools.aiProfile(toolId), {
+        projectRoot: options.projectRoot,
+        home: options.home,
+      });
       manifest.removePlugin(toolId, plugin.name);
     }
     await this.deps.userRepo.save(manifest);

@@ -21,7 +21,13 @@ function removalOver(
   gitignore = new UpdateGitignore(fs)
 ): RemoveProjectFiles {
   return new RemoveProjectFiles(
-    { fs, manifestRepo: repo, logger: new CapturingLogger(), updateGitignore: gitignore },
+    {
+      fs,
+      manifestRepo: repo,
+      logger: new CapturingLogger(),
+      updateGitignore: gitignore,
+      homedir: () => "/home/dev",
+    },
     registeredTools()
   );
 }

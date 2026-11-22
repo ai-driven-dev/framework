@@ -22,6 +22,7 @@ describe("deletePluginFilesForTool()", () => {
         scope: "project",
         tool: registeredTools().aiProfile(TOOL.claude),
         projectRoot: PROJECT_ROOT,
+        homedir: () => "/home/dev",
       },
       fs
     );

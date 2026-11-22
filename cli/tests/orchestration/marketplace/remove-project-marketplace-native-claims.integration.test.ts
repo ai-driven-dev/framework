@@ -87,7 +87,7 @@ async function fixture(options: { nativeMapping?: "absent" | "unrelated" } = {})
   );
   const fs = new InMemoryFileAdapter({}, ["/A", "/B"]);
   const useCase = projectMarketplaceRemover(
-    new RemoveProjectPlugin(fs, removalClaims(machineRepo, fs)),
+    new RemoveProjectPlugin(fs, () => "/home/dev", removalClaims(machineRepo, fs)),
     projectRepo,
     registry,
     new KeepPrompter()
@@ -196,7 +196,7 @@ describe("project marketplace removal against machine native claims", () => {
       })
     );
     const useCase = projectMarketplaceRemover(
-      new RemoveProjectPlugin(fs, removalClaims(machineRepo, fs)),
+      new RemoveProjectPlugin(fs, () => "/home/dev", removalClaims(machineRepo, fs)),
       projectRepo,
       registry,
       new KeepPrompter()
@@ -226,7 +226,7 @@ describe("project marketplace removal against machine native claims", () => {
   it("removes only the project catalogue when its project manifest is absent", async () => {
     const f = await fixture();
     const useCase = projectMarketplaceRemover(
-      new RemoveProjectPlugin(f.fs, removalClaims(f.machineRepo, f.fs)),
+      new RemoveProjectPlugin(f.fs, () => "/home/dev", removalClaims(f.machineRepo, f.fs)),
       new InMemoryManifestRepository(),
       f.registry,
       new KeepPrompter()
@@ -264,6 +264,7 @@ describe("project marketplace removal against machine native claims", () => {
     const useCase = projectMarketplaceRemover(
       new RemoveProjectPlugin(
         new RefusingFileAdapter(),
+        () => "/home/dev",
         removalClaims(f.machineRepo, new RefusingFileAdapter())
       ),
       f.projectRepo,
@@ -281,7 +282,7 @@ describe("project marketplace removal against machine native claims", () => {
     const f = await fixture();
     const prompter = new ScriptedPrompter([{ type: "confirm", value: false }]);
     const useCase = projectMarketplaceRemover(
-      new RemoveProjectPlugin(f.fs, removalClaims(f.machineRepo, f.fs)),
+      new RemoveProjectPlugin(f.fs, () => "/home/dev", removalClaims(f.machineRepo, f.fs)),
       f.projectRepo,
       f.registry,
       prompter
@@ -379,7 +380,7 @@ describe("project marketplace removal against machine native claims", () => {
     fs.setFile(ownedPath, "B's bytes");
     fs.setFile(ownedMcp, "B's MCP");
     const useCase = projectMarketplaceRemover(
-      new RemoveProjectPlugin(fs, removalClaims(machineRepo, fs)),
+      new RemoveProjectPlugin(fs, () => "/home/dev", removalClaims(machineRepo, fs)),
       projectRepo,
       registry,
       new KeepPrompter()

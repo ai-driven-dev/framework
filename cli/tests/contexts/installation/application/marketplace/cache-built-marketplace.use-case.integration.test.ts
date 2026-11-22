@@ -72,6 +72,7 @@ function fakeVersion(value: string): VersionReader {
 }
 
 const USER_CACHE_ROOT = "/user-cache";
+const TMP = "/tmp/given";
 
 /** The use case as production wires it: a resolver in front of the cache, the user cache and the
  * version fixed. */
@@ -86,6 +87,7 @@ function buildEnsurer(
     builds,
     version,
     userCacheRoot: () => USER_CACHE_ROOT,
+    tmpdir: () => TMP,
   });
   return new EnsureBuiltMarketplace(resolveMarketplace, cache);
 }

@@ -1,4 +1,3 @@
-import { homedir as nodeHomedir } from "node:os";
 import { join } from "node:path";
 import type { FileReader } from "../../../../../shared/ports/file-reader.js";
 // biome-ignore lint/plugin: hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input
@@ -11,9 +10,9 @@ export async function foreignUserScopeDir(lookup: {
   readonly fs: FileReader;
   readonly command: PlacePluginRequest;
   readonly tool: AiToolProfile;
-  readonly homedir?: () => string;
+  readonly homedir: () => string;
 }): Promise<string | undefined> {
-  const { fs, command, tool, homedir = nodeHomedir } = lookup;
+  const { fs, command, tool, homedir } = lookup;
   const { projectRoot, machine } = command;
   const pluginName = command.dist.manifest.name;
   if (resolveScopeForInstall(tool) !== "user") return undefined;

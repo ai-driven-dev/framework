@@ -79,7 +79,7 @@ function makeRestoreAll(
     {
       fs: deps.fs,
       manifestRepo: deps.manifestRepo,
-      detectPluginDrift: new DetectPluginDrift(deps.fs, registeredTools()),
+      detectPluginDrift: new DetectPluginDrift(deps.fs, registeredTools(), () => "/home/dev"),
     },
     registeredTools()
   );

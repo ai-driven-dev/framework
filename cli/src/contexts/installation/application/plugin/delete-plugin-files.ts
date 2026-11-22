@@ -1,4 +1,3 @@
-import { homedir as nodeHomedir } from "node:os";
 import { dirname, join } from "node:path";
 import type { Scope } from "../../../../shared/domain/scope.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
@@ -23,7 +22,7 @@ export interface PluginFilesRemoval {
   readonly tool: PluginPlacement;
   readonly projectRoot: string;
   readonly ownerScope?: Scope;
-  readonly homedir?: () => string;
+  readonly homedir: () => string;
 }
 
 /**
@@ -36,14 +35,7 @@ export async function deletePluginFilesForTool(
   removal: PluginFilesRemoval,
   fs: FileWriter
 ): Promise<string[]> {
-  const {
-    files,
-    scope,
-    tool,
-    projectRoot,
-    ownerScope = "project",
-    homedir = nodeHomedir,
-  } = removal;
+  const { files, scope, tool, projectRoot, ownerScope = "project", homedir } = removal;
   if (scope === "user" && ownerScope !== "user") return [];
   const baseDir = scopeBaseOf(tool, {
     scope: scope,

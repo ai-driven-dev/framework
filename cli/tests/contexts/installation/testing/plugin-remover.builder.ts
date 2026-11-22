@@ -77,6 +77,7 @@ export function pluginRemover(parts: PluginRemoverParts) {
         removalClaims
       ),
       records: parts.records ?? registrationRecordRules,
+      homedir: () => "/home/dev",
     },
     registeredTools()
   );

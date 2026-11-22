@@ -1,4 +1,4 @@
-import { basename, join, resolve, sep } from "node:path";
+import { join, resolve, sep } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   CacheBuiltMarketplace,
@@ -62,6 +62,7 @@ function fakeVersion(value: string): VersionReader {
 }
 
 const USER_CACHE_ROOT = "/user-cache";
+const TMP = "/tmp/given";
 
 /** The cache as production wires it, with the source already resolved: the user cache and the
  * version fixed. */
@@ -78,6 +79,7 @@ function buildEnsurer(
     builds,
     version,
     userCacheRoot: () => USER_CACHE_ROOT,
+    tmpdir: () => TMP,
   });
   return { execute: (command) => cache.execute(command, resolved) };
 }
@@ -227,7 +229,7 @@ describe("CacheBuiltMarketplace", () => {
     });
     expect(r.builtDir).toBe(resolve(builtMarketplaceDir(PROJECT, "aidd-framework", "codex")));
     expect(fs.getFile(join(r.builtDir, "plugins/aidd-vcs/SKILL.md"))).toBe("built content");
-    expect(fs.listUnder("/").filter((path) => path.includes("aidd-built-"))).toEqual([]);
+    expect(fs.listUnder(TMP)).toEqual([]);
   });
 
   it("memoizes within a run: a second call for the same target/version does not rebuild", async () => {
@@ -391,7 +393,7 @@ describe("outDir invariant for the cache-rebuild build path", () => {
     // resolve(): the direct-path outDir the code passes is itself resolved (drive letter
     // on win32), so the cache root it is compared against must be built the same way.
     const cacheRoot = resolve(join(PROJECT, BUILT_CACHE_SUBDIR));
-    const isTemp = (outDir: string) => basename(outDir).startsWith("aidd-built-");
+    const isTemp = (outDir: string) => outDir.startsWith(TMP);
     for (const outDir of capturedOutDirs) {
       const underCache = outDir === cacheRoot || outDir.startsWith(`${cacheRoot}${sep}`);
       expect(underCache || isTemp(outDir)).toBe(true);

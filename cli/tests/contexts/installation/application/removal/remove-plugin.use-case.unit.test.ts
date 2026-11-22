@@ -54,7 +54,13 @@ function fixture(
   });
   const withdrawal = new FakeProjectPluginWithdrawal(options.answers);
   const remove = new RemovePlugin(
-    { fs, projectRepo: repo, withdrawal, records: registrationRecordRules },
+    {
+      fs,
+      projectRepo: repo,
+      withdrawal,
+      records: registrationRecordRules,
+      homedir: () => "/home/dev",
+    },
     registeredTools()
   );
   const run = (pluginName = NAME) =>

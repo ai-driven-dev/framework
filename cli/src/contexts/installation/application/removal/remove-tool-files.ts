@@ -26,7 +26,8 @@ export class RemoveToolFiles {
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly logger: Logger,
-    private readonly tools: ToolCatalog
+    private readonly tools: ToolCatalog,
+    private readonly homedir: () => string
   ) {}
 
   /** The paths deleted, relative to the project. */
@@ -73,6 +74,7 @@ export class RemoveToolFiles {
           scope: plugin.scope,
           tool: this.tools.aiProfile(toolId),
           projectRoot,
+          homedir: this.homedir,
         },
         this.fs
       );

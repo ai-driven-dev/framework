@@ -42,7 +42,7 @@ function removal(
   allToolIds: ToolId[],
   logger = new CapturingLogger()
 ): Promise<string[]> {
-  return new RemoveToolFiles(target.fs, logger, registeredTools()).remove({
+  return new RemoveToolFiles(target.fs, logger, registeredTools(), () => "/home/dev").remove({
     toolId,
     allToolIds,
     manifest: target.manifest,

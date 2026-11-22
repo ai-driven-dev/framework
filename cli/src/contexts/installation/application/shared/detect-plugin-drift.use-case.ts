@@ -1,4 +1,3 @@
-import { homedir } from "node:os";
 import { join } from "node:path";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
@@ -42,7 +41,8 @@ export interface DetectPluginDriftRequest {
 export class DetectPluginDrift {
   constructor(
     private readonly fs: FileReader,
-    private readonly tools: ToolCatalog
+    private readonly tools: ToolCatalog,
+    private readonly homedir: () => string
   ) {}
 
   async execute(options: DetectPluginDriftRequest): Promise<PluginDrift[]> {
@@ -72,7 +72,11 @@ export class DetectPluginDrift {
     projectRoot: string
   ): Promise<PluginDrift | null> {
     const profile = this.tools.aiProfile(toolId);
-    const baseDir = scopeBaseOf(profile, { scope: plugin.scope, projectRoot, homedir });
+    const baseDir = scopeBaseOf(profile, {
+      scope: plugin.scope,
+      projectRoot,
+      homedir: this.homedir,
+    });
     const files = await this.driftedFiles(plugin.files, baseDir);
     if (files.length === 0) return null;
     const allMissing =

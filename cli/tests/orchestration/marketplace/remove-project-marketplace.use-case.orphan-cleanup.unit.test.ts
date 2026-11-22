@@ -77,7 +77,7 @@ describe("which plugins a removal orphans: the cleanup it offers", () => {
     const { registry, manifestRepo, fs } = buildUseCase();
     const prompter = new ConfirmRecordingPrompter([ScriptedPrompter.answer.confirm(false)]);
     const useCase = projectMarketplaceRemover(
-      new RemoveProjectPlugin(fs),
+      new RemoveProjectPlugin(fs, () => "/home/dev"),
       manifestRepo,
       registry,
       prompter
@@ -107,7 +107,7 @@ describe("which plugins a removal orphans: the cleanup it offers", () => {
     const { registry, manifestRepo, fs } = buildUseCase();
     const prompter = new ConfirmRecordingPrompter([ScriptedPrompter.answer.confirm(true)]);
     const useCase = projectMarketplaceRemover(
-      new RemoveProjectPlugin(fs),
+      new RemoveProjectPlugin(fs, () => "/home/dev"),
       manifestRepo,
       registry,
       prompter
@@ -136,7 +136,7 @@ describe("which plugins a removal orphans: the cleanup it offers", () => {
     );
     const prompter = new ConfirmRecordingPrompter([ScriptedPrompter.answer.confirm(true)]);
     const useCase = projectMarketplaceRemover(
-      new RemoveProjectPlugin(fs),
+      new RemoveProjectPlugin(fs, () => "/home/dev"),
       manifestRepo,
       registry,
       prompter
@@ -157,7 +157,7 @@ describe("which plugins a removal orphans: the cleanup it offers", () => {
     const { registry, manifestRepo, fs } = buildUseCase();
     const prompter = new ConfirmRecordingPrompter([ScriptedPrompter.answer.confirm(false)]);
     const useCase = projectMarketplaceRemover(
-      new RemoveProjectPlugin(fs),
+      new RemoveProjectPlugin(fs, () => "/home/dev"),
       manifestRepo,
       registry,
       prompter

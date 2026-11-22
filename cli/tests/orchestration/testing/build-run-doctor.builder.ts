@@ -28,7 +28,7 @@ export function buildRunDoctor(
         layout: new CheckProjectLayout(loadManifest, deps.fs, registeredTools()),
         plugin: new CheckPluginDrift(
           loadManifest,
-          new DetectPluginDrift(deps.fs, registeredTools())
+          new DetectPluginDrift(deps.fs, registeredTools(), () => "/home/dev")
         ),
       },
       registration: checkRegistrationOver(

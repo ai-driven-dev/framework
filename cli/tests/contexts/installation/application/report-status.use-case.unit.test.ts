@@ -48,7 +48,7 @@ function statusOver(onDisk: Record<string, string>, manifest: Manifest | null) {
     {
       fs,
       manifestRepo: new InMemoryManifestRepository(manifest, PROJECT_ROOT),
-      detectPluginDrift: new DetectPluginDrift(fs, registeredTools()),
+      detectPluginDrift: new DetectPluginDrift(fs, registeredTools(), () => "/home/dev"),
     },
     registeredTools()
   );
@@ -302,7 +302,7 @@ describe("status", () => {
       {
         fs: deps.fs,
         manifestRepo: deps.manifestRepo,
-        detectPluginDrift: new DetectPluginDrift(deps.fs, registeredTools()),
+        detectPluginDrift: new DetectPluginDrift(deps.fs, registeredTools(), () => "/home/dev"),
       },
       registeredTools()
     );
@@ -346,7 +346,7 @@ describe("status", () => {
       {
         fs: deps.fs,
         manifestRepo: deps.manifestRepo,
-        detectPluginDrift: new DetectPluginDrift(deps.fs, registeredTools()),
+        detectPluginDrift: new DetectPluginDrift(deps.fs, registeredTools(), () => "/home/dev"),
       },
       registeredTools()
     ).execute({ projectRoot: PROJECT_ROOT });

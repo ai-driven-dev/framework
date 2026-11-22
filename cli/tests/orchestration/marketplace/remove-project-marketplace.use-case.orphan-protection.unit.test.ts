@@ -58,7 +58,7 @@ describe("which plugins a removal orphans: what it protects", () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
     const useCase = projectMarketplaceRemover(
-      new RemoveProjectPlugin(fs, removalClaims(machineRepo, fs)),
+      new RemoveProjectPlugin(fs, () => "/home/dev", removalClaims(machineRepo, fs)),
       projectRepo,
       registry,
       new KeepPrompter()
@@ -115,7 +115,7 @@ describe("which plugins a removal orphans: what it protects", () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
     const useCase = projectMarketplaceRemover(
-      new RemoveProjectPlugin(fs),
+      new RemoveProjectPlugin(fs, () => "/home/dev"),
       manifestRepo,
       registry,
       new KeepPrompter()
@@ -172,7 +172,7 @@ describe("which plugins a removal orphans: what it protects", () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
     const useCase = projectMarketplaceRemover(
-      new RemoveProjectPlugin(fs),
+      new RemoveProjectPlugin(fs, () => "/home/dev"),
       manifestRepo,
       registry,
       new KeepPrompter()

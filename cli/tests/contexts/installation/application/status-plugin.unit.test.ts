@@ -62,7 +62,7 @@ describe("ReportStatus - plugin drift", () => {
         {
           fs,
           manifestRepo: makeManifestRepo(manifest),
-          detectPluginDrift: new DetectPluginDrift(fs, registeredTools()),
+          detectPluginDrift: new DetectPluginDrift(fs, registeredTools(), () => "/home/dev"),
         },
         registeredTools()
       );
@@ -87,7 +87,7 @@ describe("ReportStatus - plugin drift", () => {
         {
           fs,
           manifestRepo: makeManifestRepo(manifest),
-          detectPluginDrift: new DetectPluginDrift(fs, registeredTools()),
+          detectPluginDrift: new DetectPluginDrift(fs, registeredTools(), () => "/home/dev"),
         },
         registeredTools()
       );
@@ -108,7 +108,7 @@ describe("ReportStatus - plugin drift", () => {
         {
           fs,
           manifestRepo: makeManifestRepo(manifest),
-          detectPluginDrift: new DetectPluginDrift(fs, registeredTools()),
+          detectPluginDrift: new DetectPluginDrift(fs, registeredTools(), () => "/home/dev"),
         },
         registeredTools()
       );
@@ -130,7 +130,7 @@ describe("ReportStatus - plugin drift", () => {
         {
           fs,
           manifestRepo: makeManifestRepo(manifest),
-          detectPluginDrift: new DetectPluginDrift(fs, registeredTools()),
+          detectPluginDrift: new DetectPluginDrift(fs, registeredTools(), () => "/home/dev"),
         },
         registeredTools()
       );

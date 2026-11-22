@@ -73,7 +73,11 @@ describe("RemoveProjectPlugin.removeLocalIntegration", () => {
     withUserServer.mcp.mine = { type: "local", command: ["keep"], enabled: true };
     fs.setFile(MCP_FILE, JSON.stringify(withUserServer));
 
-    await new RemoveProjectPlugin(fs).removeLocalIntegration(tool, plugin({ mcp: entries }), ROOT);
+    await new RemoveProjectPlugin(fs, () => "/home/dev").removeLocalIntegration(
+      tool,
+      plugin({ mcp: entries }),
+      ROOT
+    );
 
     const left = JSON.parse(await fs.readFile(MCP_FILE));
     expect(Object.keys(left.mcp)).toEqual(["mine"]);
@@ -83,7 +87,11 @@ describe("RemoveProjectPlugin.removeLocalIntegration", () => {
     const fs = new InMemoryFileAdapter({}, [ROOT]);
     const { entries } = contributedConfig();
 
-    await new RemoveProjectPlugin(fs).removeLocalIntegration(tool, plugin({ mcp: entries }), ROOT);
+    await new RemoveProjectPlugin(fs, () => "/home/dev").removeLocalIntegration(
+      tool,
+      plugin({ mcp: entries }),
+      ROOT
+    );
 
     expect(fs.has(MCP_FILE)).toBe(false);
   });
@@ -92,7 +100,11 @@ describe("RemoveProjectPlugin.removeLocalIntegration", () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(MCP_FILE, "{}");
 
-    await new RemoveProjectPlugin(fs).removeLocalIntegration(tool, plugin(), ROOT);
+    await new RemoveProjectPlugin(fs, () => "/home/dev").removeLocalIntegration(
+      tool,
+      plugin(),
+      ROOT
+    );
 
     expect(await fs.readFile(MCP_FILE)).toBe("{}");
   });
@@ -103,7 +115,11 @@ describe("RemoveProjectPlugin.removeLocalIntegration hooks", () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(join(ROOT, HOOK_SCRIPT), "// installed");
 
-    await new RemoveProjectPlugin(fs).removeLocalIntegration(cursor, pluginWithHookScript(), ROOT);
+    await new RemoveProjectPlugin(fs, () => "/home/dev").removeLocalIntegration(
+      cursor,
+      pluginWithHookScript(),
+      ROOT
+    );
 
     expect(fs.has(join(ROOT, HOOK_SCRIPT))).toBe(false);
   });
@@ -115,7 +131,7 @@ describe("RemoveProjectPlugin.assertLocalIntegrationRemovable", () => {
     fs.setFile(join(ROOT, HOOK_SCRIPT), "// edited");
 
     await expect(
-      new RemoveProjectPlugin(fs).assertLocalIntegrationRemovable(
+      new RemoveProjectPlugin(fs, () => "/home/dev").assertLocalIntegrationRemovable(
         cursor,
         pluginWithHookScript(),
         ROOT
@@ -129,7 +145,7 @@ describe("RemoveProjectPlugin.assertLocalIntegrationRemovable", () => {
     fs.setFile(MCP_FILE, content);
 
     await expect(
-      new RemoveProjectPlugin(fs).assertLocalIntegrationRemovable(
+      new RemoveProjectPlugin(fs, () => "/home/dev").assertLocalIntegrationRemovable(
         tool,
         plugin({ mcp: entries }),
         ROOT
@@ -145,7 +161,7 @@ describe("RemoveProjectPlugin.assertLocalIntegrationRemovable", () => {
     fs.setFile(MCP_FILE, JSON.stringify(edited));
 
     await expect(
-      new RemoveProjectPlugin(fs).assertLocalIntegrationRemovable(
+      new RemoveProjectPlugin(fs, () => "/home/dev").assertLocalIntegrationRemovable(
         tool,
         plugin({ mcp: entries }),
         ROOT
@@ -162,7 +178,7 @@ describe("RemoveProjectPlugin.deleteLocalFiles", () => {
     fs.setFile(join(ROOT, "skills/b.md"), "b");
     fs.setFile(join(ROOT, "skills/mine.md"), "mine");
 
-    await new RemoveProjectPlugin(fs).deleteLocalFiles(tool, plugin(), ROOT);
+    await new RemoveProjectPlugin(fs, () => "/home/dev").deleteLocalFiles(tool, plugin(), ROOT);
 
     expect(fs.has(join(ROOT, "skills/a.md"))).toBe(false);
     expect(fs.has(join(ROOT, "skills/b.md"))).toBe(false);
@@ -176,7 +192,11 @@ describe("RemoveProjectPlugin.detachClaims", () => {
   it("lets go of the native refs and of each removed user-scope plugin only", async () => {
     const claims = new RecordingClaims();
 
-    await new RemoveProjectPlugin(new InMemoryFileAdapter(), claims).detachClaims(ROOT, refs, [
+    await new RemoveProjectPlugin(
+      new InMemoryFileAdapter(),
+      () => "/home/dev",
+      claims
+    ).detachClaims(ROOT, refs, [
       { toolId: TOOL.claude, plugin: plugin({ scope: "user" }) },
       { toolId: TOOL.cursor, plugin: plugin({ scope: "project" }) },
     ]);
@@ -187,9 +207,11 @@ describe("RemoveProjectPlugin.detachClaims", () => {
 
   it("holds no claim to let go of when none was supplied", async () => {
     await expect(
-      new RemoveProjectPlugin(new InMemoryFileAdapter()).detachClaims(ROOT, refs, [
-        { toolId: TOOL.claude, plugin: plugin({ scope: "user" }) },
-      ])
+      new RemoveProjectPlugin(new InMemoryFileAdapter(), () => "/home/dev").detachClaims(
+        ROOT,
+        refs,
+        [{ toolId: TOOL.claude, plugin: plugin({ scope: "user" }) }]
+      )
     ).resolves.toBeUndefined();
   });
 });
