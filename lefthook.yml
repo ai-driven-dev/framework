@@ -217,10 +217,7 @@ pre-push:
       glob: "{cli/**,plugins/aidd-context/skills/12-cook/assets/recipes/**}"
       env:
         AIDD_SKIP_UPDATE_CHECK: "1"
-      run: >-
-        node scripts/gate-witness.js recipe-validity --
-        "pnpm --dir cli build && node cli/dist/cli.js framework validate-recipes --all
-        --bundled plugins/aidd-context/skills/12-cook/assets/recipes"
+      run: node scripts/gate-witness.js recipe-validity -- pnpm --dir cli validate:recipes
 
 commit-msg:
   commands:
