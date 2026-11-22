@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { hostRecord } from "../../shared/testing/host-record-reading.builder.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
@@ -91,7 +91,7 @@ async function addSiblingPlugin(fixture: Fixture, toolId: AiToolId, alias: strin
   );
   fixture.projectRepo.getCurrent()?.addPlugin(
     toolId,
-    InstalledPlugin.fromMetadata({
+    RecordedPlugin.fromMetadata({
       name: "sibling-plugin",
       version: "1.0.0",
       source: { kind: "local", path: "/framework" },

@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.use-case.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
-import type { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import type { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import {
   buildInstallationDeps,
@@ -71,11 +71,11 @@ function addLocal(useCase: AddPlugin, path: string, replace?: boolean): Promise<
   });
 }
 
-function installedMcpPlugin(deps: Deps): InstalledPlugin | undefined {
+function installedMcpPlugin(deps: Deps): RecordedPlugin | undefined {
   return deps.manifestRepo
     .getCurrent()
-    ?.getPlugins(TOOL.opencode)
-    .find((p) => p.name === "mcp-plugin");
+    ?.getRecordedPlugins(TOOL.opencode)
+    .find((p) => p.plugin.name === "mcp-plugin");
 }
 
 describe("AddPlugin and opencode MCP servers", () => {
@@ -149,8 +149,8 @@ describe("AddPlugin and opencode MCP servers", () => {
     }
     const otherBefore = deps.manifestRepo
       .getCurrent()
-      ?.getPlugins(TOOL.cursor)
-      .find((p) => p.name === "other-hook-plugin")
+      ?.getRecordedPlugins(TOOL.cursor)
+      .find((p) => p.plugin.name === "other-hook-plugin")
       ?.toJSON();
     deps.fs.setFile(join(MCP_PLUGIN_DIR, "hooks/pre.js"), "mcp-plugin updated script");
 
@@ -177,15 +177,15 @@ describe("AddPlugin and opencode MCP servers", () => {
     expect(
       deps.manifestRepo
         .getCurrent()
-        ?.getPlugins(TOOL.cursor)
-        .find((p) => p.name === "other-hook-plugin")
+        ?.getRecordedPlugins(TOOL.cursor)
+        .find((p) => p.plugin.name === "other-hook-plugin")
         ?.toJSON()
     ).toStrictEqual(otherBefore);
     expect(
       deps.manifestRepo
         .getCurrent()
-        ?.getPlugins(TOOL.cursor)
-        .find((p) => p.name === "mcp-plugin")?.provenance.projectHooks?.scripts.size
+        ?.getRecordedPlugins(TOOL.cursor)
+        .find((p) => p.plugin.name === "mcp-plugin")?.provenance.projectHooks?.scripts.size
     ).toBe(1);
   });
 
@@ -221,17 +221,17 @@ describe("AddPlugin and opencode MCP servers", () => {
       expect(logger.warnMessages).toStrictEqual([]);
       const installed = deps.manifestRepo
         .getCurrent()
-        ?.getPlugins(TOOL.codex)
-        .find((p) => p.name === "mcp-plugin");
+        ?.getRecordedPlugins(TOOL.codex)
+        .find((p) => p.plugin.name === "mcp-plugin");
       expect(installed).toBeDefined();
       expect(installed?.marketplace).toBe(marketplace);
       if (marketplace === undefined) {
         expect(deps.fs.getFile(join(PROJECT_ROOT, ".codex/plugins/mcp-plugin/hooks/pre.js"))).toBe(
           "console.log('hook');"
         );
-        expect(installed?.files.size).toBeGreaterThan(0);
+        expect(installed?.plugin.files.size).toBeGreaterThan(0);
       } else {
-        expect(installed?.files.size).toBe(0);
+        expect(installed?.plugin.files.size).toBe(0);
       }
     }
   );
@@ -246,7 +246,10 @@ describe("AddPlugin and opencode MCP servers", () => {
       const installed = installedMcpPlugin(deps);
       if (installed === undefined) throw new Error("fixture missing MCP plugin");
       const filesBefore = new Map(
-        [...installed.files.keys()].map((path) => [path, deps.fs.getFile(join(PROJECT_ROOT, path))])
+        [...installed.plugin.files.keys()].map((path) => [
+          path,
+          deps.fs.getFile(join(PROJECT_ROOT, path)),
+        ])
       );
       const manifestBefore = deps.manifestRepo.getCurrent()?.toJSON();
       const savesBefore = deps.manifestRepo.saveCount;
@@ -311,8 +314,8 @@ describe("AddPlugin and opencode MCP servers", () => {
     deps.fs.setFile(OPENCODE_JSON, JSON.stringify(current));
     const otherBefore = deps.manifestRepo
       .getCurrent()
-      ?.getPlugins(TOOL.opencode)
-      .find((plugin) => plugin.name === "other-mcp-plugin");
+      ?.getRecordedPlugins(TOOL.opencode)
+      .find((plugin) => plugin.plugin.name === "other-mcp-plugin");
 
     await addLocal(useCase, MCP_PLUGIN_DIR, true);
 
@@ -322,8 +325,8 @@ describe("AddPlugin and opencode MCP servers", () => {
     expect(
       deps.manifestRepo
         .getCurrent()
-        ?.getPlugins(TOOL.opencode)
-        .find((plugin) => plugin.name === "other-mcp-plugin")
+        ?.getRecordedPlugins(TOOL.opencode)
+        .find((plugin) => plugin.plugin.name === "other-mcp-plugin")
     ).toEqual(otherBefore);
     expect(installedMcpPlugin(deps)?.provenance.mcpEntries.size).toBe(1);
   });

@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { removeProjectHooks } from "../../../../../src/contexts/installation/application/shared/remove-project-hooks.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
@@ -31,7 +31,7 @@ describe("removeProjectHooks refuses what it cannot prove", () => {
       const fs = new InMemoryFileAdapter(
         present === "entries" ? { [HOOKS_PATH]: content } : { [SCRIPT_PATH]: "legacy" }
       );
-      const legacy = InstalledPlugin.fromJSON({ ...plugin().toJSON(), projectHooks: undefined });
+      const legacy = RecordedPlugin.fromJSON({ ...plugin().toJSON(), projectHooks: undefined });
 
       await expect(
         removeProjectHooks({
@@ -57,7 +57,7 @@ describe("removeProjectHooks refuses what it cannot prove", () => {
       const content = hooksFile(PLUGIN, OTHER);
       const fs = new InMemoryFileAdapter({ [HOOKS_PATH]: content, [SCRIPT_PATH]: script });
       const installed = plugin({ entry: true }).toJSON();
-      const invalid = InstalledPlugin.fromJSON({
+      const invalid = RecordedPlugin.fromJSON({
         ...installed,
         projectHooks: {
           entries: installed.projectHooks?.entries ?? [],
@@ -95,7 +95,7 @@ describe("removeProjectHooks refuses what it cannot prove", () => {
       [join(PROJECT_ROOT, path)]: script,
     });
     const installed = plugin({ entry: true }).toJSON();
-    const invalid = InstalledPlugin.fromJSON({
+    const invalid = RecordedPlugin.fromJSON({
       ...installed,
       projectHooks: {
         entries: installed.projectHooks?.entries ?? [],
@@ -125,7 +125,7 @@ describe("removeProjectHooks refuses what it cannot prove", () => {
         [join(PROJECT_ROOT, path)]: script,
       });
       const installed = plugin({ entry: true }).toJSON();
-      const invalid = InstalledPlugin.fromJSON({
+      const invalid = RecordedPlugin.fromJSON({
         ...installed,
         projectHooks: {
           entries: installed.projectHooks?.entries ?? [],
@@ -151,7 +151,7 @@ describe("removeProjectHooks refuses what it cannot prove", () => {
 
   it("refuses an unproven entry digest even when told to overwrite edits", async () => {
     const installed = plugin({ entry: true }).toJSON();
-    const invalid = InstalledPlugin.fromJSON({
+    const invalid = RecordedPlugin.fromJSON({
       ...installed,
       projectHooks: {
         entries: (installed.projectHooks?.entries ?? []).map((e) => ({ ...e, digest: "x" })),
@@ -226,7 +226,7 @@ describe("removeProjectHooks refuses what it cannot prove", () => {
       [HOOKS_PATH]: hooksFile(PLUGIN),
       [SCRIPT_PATH]: "legacy",
     });
-    const legacy = InstalledPlugin.fromJSON({
+    const legacy = RecordedPlugin.fromJSON({
       name: PLUGIN,
       source: { kind: "local", path: "/src" },
       version: "1.0.0",

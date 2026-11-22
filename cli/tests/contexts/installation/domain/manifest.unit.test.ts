@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../src/shared/domain/installation-file.js";
 import type { MergeFileEntry } from "../../../../src/shared/domain/merge.js";
@@ -286,7 +286,7 @@ describe("Manifest", () => {
       manifest.addTool(TOOL.claude, "3.0.0", claudeFiles);
       manifest.addPlugin(
         TOOL.claude,
-        InstalledPlugin.fromJSON({
+        RecordedPlugin.fromJSON({
           name: "aidd-context",
           source: { kind: "local", path: "/fixture" },
           version: "1.0.0",
@@ -322,7 +322,7 @@ describe("Manifest", () => {
       manifest.addTool(TOOL.cursor, "1.0.0", [makeFile(".cursor/rules/b.mdc", "cc")]);
       manifest.addPlugin(
         TOOL.claude,
-        InstalledPlugin.fromJSON({
+        RecordedPlugin.fromJSON({
           name: "aidd-context",
           source: { kind: "local", path: "/fixture" },
           version: "1.0.0",

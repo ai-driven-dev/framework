@@ -150,8 +150,8 @@ export class ActivateNativeTools {
   private declaredRefs(run: PluginRefsRun): string[] {
     const { toolId, manifest, marketplaces, hostNameByAlias } = run;
     const known = new Set(marketplaces.map((m) => m.name));
-    return manifest.getPlugins(toolId).flatMap((plugin) => {
-      const alias = plugin.marketplace == null ? undefined : plugin.marketplace;
+    return manifest.getRecordedPlugins(toolId).flatMap(({ plugin, marketplace }) => {
+      const alias = marketplace == null ? undefined : marketplace;
       const hostName =
         alias !== undefined && known.has(alias) ? hostNameByAlias.get(alias) : undefined;
       return hostName === undefined ? [] : [this.deps.records.refOnHostName(plugin.name, hostName)];

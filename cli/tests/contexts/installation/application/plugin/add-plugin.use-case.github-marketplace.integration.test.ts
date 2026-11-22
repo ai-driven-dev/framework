@@ -51,10 +51,10 @@ describe("AddPlugin", () => {
         pluginMetadata: { name: "aidd-context", version: "1.0.0", strict: false },
       });
       const manifest = await deps.manifestRepo.load();
-      const plugins = manifest?.getPlugins(TOOL.claude) ?? [];
-      const installed = plugins.find((p) => p.name === "aidd-context");
+      const plugins = manifest?.getRecordedPlugins(TOOL.claude) ?? [];
+      const installed = plugins.find((p) => p.plugin.name === "aidd-context");
       expect(installed?.marketplace).toBe("aidd-framework");
-      expect(installed?.files.size).toBe(0);
+      expect(installed?.plugin.files.size).toBe(0);
     });
 
     it("throws MissingPluginMetadataError when pluginMetadata is absent for github marketplace", async () => {
@@ -129,8 +129,8 @@ describe("AddPlugin", () => {
       });
       expect(fetchSpy).toHaveBeenCalled();
       const manifest = await deps.manifestRepo.load();
-      const plugins = manifest?.getPlugins(TOOL.claude) ?? [];
-      expect(plugins.some((p) => p.name === "sample-plugin")).toBe(true);
+      const plugins = manifest?.getRecordedPlugins(TOOL.claude) ?? [];
+      expect(plugins.some((p) => p.plugin.name === "sample-plugin")).toBe(true);
     });
   });
 

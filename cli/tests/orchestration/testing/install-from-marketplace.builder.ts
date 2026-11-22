@@ -92,6 +92,6 @@ export async function saveLocalMarketplace(
 export function installedSamplePlugin(deps: InstallationDeps) {
   return deps.manifestRepo
     .getCurrent()
-    ?.getPlugins(TOOL.claude)
-    .find((p) => p.name === "sample-plugin");
+    ?.getRecordedPlugins(TOOL.claude)
+    .find(({ plugin }) => plugin.name === "sample-plugin");
 }

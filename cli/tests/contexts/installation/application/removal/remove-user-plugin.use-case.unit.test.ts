@@ -5,7 +5,7 @@ import {
   ActiveMachineDependentsError,
   PluginNotFoundError,
 } from "../../../../../src/contexts/installation/domain/installation.error.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
@@ -18,7 +18,7 @@ const ROOT = "/project";
 const NAME = "aidd-dev";
 
 function userPlugin(dependents: string[] = []) {
-  return InstalledPlugin.fromJSON({
+  return RecordedPlugin.fromJSON({
     name: NAME,
     source: { kind: "local", path: "/fixture" },
     version: "1.0.0",
@@ -104,7 +104,7 @@ describe("RemoveUserPlugin", () => {
   });
 
   it("leaves a project-scope plugin of the same name in place", async () => {
-    const projectScoped = InstalledPlugin.fromMetadata({
+    const projectScoped = RecordedPlugin.fromMetadata({
       name: NAME,
       version: "1.0.0",
       source: { kind: "local", path: "/fixture" },

@@ -9,7 +9,7 @@ import { LoadManifest } from "../../../src/contexts/installation/application/doc
 import { LoadManifestForDoctor } from "../../../src/contexts/installation/application/doctor/load-manifest-for-doctor.use-case.js";
 import { DetectPluginDrift } from "../../../src/contexts/installation/application/shared/detect-plugin-drift.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
 import { RunDoctor } from "../../../src/orchestration/doctor/run-doctor.use-case.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
@@ -32,7 +32,7 @@ function makeManifest(pluginFileHash: string): Manifest {
     .withTool(TOOL.claude, [])
     .withPlugin(
       TOOL.claude,
-      InstalledPlugin.fromJSON({
+      RecordedPlugin.fromJSON({
         name: "my-plugin",
         source: { kind: "local", path: "/some/path" },
         version: "1.0.0",
@@ -200,7 +200,7 @@ describe("DoctorUseCase - plugin integrity", () => {
         .withTool(TOOL.cursor, [])
         .withPlugin(
           TOOL.cursor,
-          InstalledPlugin.fromJSON({
+          RecordedPlugin.fromJSON({
             name: "aidd-test",
             source: { kind: "local", path: "/some/path" },
             version: "1.0.0",
@@ -233,7 +233,7 @@ describe("DoctorUseCase - plugin integrity", () => {
       const userScopeRelPath = "aidd-context/skills/06-discovery/SKILL.md";
       manifest.addPlugin(
         TOOL.cursor,
-        InstalledPlugin.fromJSON({
+        RecordedPlugin.fromJSON({
           name: "aidd-context",
           source: { kind: "local", path: "/some/path" },
           version: "1.0.0",

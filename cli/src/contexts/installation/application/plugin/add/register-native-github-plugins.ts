@@ -1,6 +1,6 @@
 import type { ToolCatalog } from "../../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../../domain/manifest.js";
-import { InstalledPlugin } from "../../../domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../domain/plugins/recorded-plugin.js";
 import { resolveScopeForInstall } from "../plugin-target-resolution.js";
 import type { AddPluginRequest } from "./plugin-add.js";
 import type { GithubAddedPluginSource } from "./resolve-added-plugin-source.use-case.js";
@@ -17,7 +17,7 @@ export function registerNativeGithubPlugins(
   for (const toolId of native) {
     manifest.addPlugin(
       toolId,
-      InstalledPlugin.fromMetadata({
+      RecordedPlugin.fromMetadata({
         name: pluginMetadata.name,
         version,
         source,

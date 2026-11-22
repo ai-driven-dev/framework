@@ -5,7 +5,7 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { PluginNotFoundError } from "../../domain/installation.error.js";
 import type { Manifest } from "../../domain/manifest.js";
-import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { RegistrationRecordRules } from "../../ports/native-host.js";
 import { resolvePluginToolIds, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
@@ -41,7 +41,7 @@ export class RemovePlugin {
     const manifest = await requireManifest(this.deps.projectRepo);
     const resolvedToolIds = resolvePluginToolIds(toolIds, manifest, this.tools);
     const named = resolvedToolIds.flatMap((toolId) => {
-      const plugin = manifest.getPlugins(toolId).find((p) => p.name === pluginName);
+      const plugin = manifest.getRecordedPlugins(toolId).find((p) => p.plugin.name === pluginName);
       return plugin === undefined ? [] : [{ toolId, plugin }];
     });
     await this.assertRemovable(manifest, named, { projectRoot, withdrawal });
@@ -70,7 +70,7 @@ export class RemovePlugin {
 
   private async assertRemovable(
     manifest: Manifest,
-    named: readonly { toolId: AiToolId; plugin: InstalledPlugin }[],
+    named: readonly { toolId: AiToolId; plugin: RecordedPlugin }[],
     { projectRoot, withdrawal }: Pick<RemovePluginRequest, "projectRoot" | "withdrawal">
   ): Promise<void> {
     for (const { toolId, plugin } of named) {
@@ -95,9 +95,9 @@ export class RemovePlugin {
     let removed = false;
     for (const toolId of toolIds) {
       const tool = this.tools.aiProfile(toolId);
-      const plugins = manifest.getPlugins(toolId);
-      const plugin = plugins.find((p) => p.name === pluginName);
-      if (plugin === undefined) continue;
+      const entry = manifest.getRecordedPlugins(toolId).find((p) => p.plugin.name === pluginName);
+      if (entry === undefined) continue;
+      const { plugin } = entry;
       const registrations = manifest.getNativeRegistrations(toolId);
       const baseDir = scopeBaseOf(tool, {
         scope: plugin.scope,
@@ -106,14 +106,14 @@ export class RemovePlugin {
       });
       const confirmed = await withdrawal.withdraw({
         tool,
-        plugin,
+        plugin: entry,
         projectRoot,
         registrations,
       });
       if (plugin.scope !== "user") await this.deletePluginFiles(plugin.files, baseDir);
-      await removeFlatMcpEntries(this.deps.fs, { plugin, tool, projectRoot });
-      await removeProjectHooks({ fs: this.deps.fs, plugin, tool, projectRoot });
-      const ref = this.deps.records.refOf(registrations, plugin.name, plugin.marketplace);
+      await removeFlatMcpEntries(this.deps.fs, { plugin: entry, tool, projectRoot });
+      await removeProjectHooks({ fs: this.deps.fs, plugin: entry, tool, projectRoot });
+      const ref = this.deps.records.refOf(registrations, plugin.name, entry.marketplace);
       if (
         ref !== undefined &&
         registrations !== undefined &&

@@ -4,7 +4,7 @@ import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 // biome-ignore lint/plugin: hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
-import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../domain/project-layout.js";
 import type { ApplyPluginFiles } from "./apply-plugin-files.use-case.js";
 
@@ -74,15 +74,15 @@ export class RestoreAllPlugins {
     toolId: AiToolId,
     manifest: Manifest,
     pluginName: string | undefined
-  ): readonly InstalledPlugin[] {
-    const plugins = manifest.getPlugins(toolId);
-    return pluginName !== undefined ? plugins.filter((p) => p.name === pluginName) : plugins;
+  ): readonly RecordedPlugin[] {
+    const plugins = manifest.getRecordedPlugins(toolId);
+    return pluginName !== undefined ? plugins.filter((p) => p.plugin.name === pluginName) : plugins;
   }
 
-  private isNativeOnly(targets: readonly InstalledPlugin[], toolConfig: AiToolProfile): boolean {
+  private isNativeOnly(targets: readonly RecordedPlugin[], toolConfig: AiToolProfile): boolean {
     return (
       targets.length > 0 &&
-      targets.every((plugin) => plugin.files.size === 0) &&
+      targets.every(({ plugin }) => plugin.files.size === 0) &&
       Boolean(toolConfig.nativeActivation())
     );
   }
@@ -108,7 +108,7 @@ export class RestoreAllPlugins {
         force,
       });
       totalFiles += filesWritten;
-      if (filesWritten > 0) pluginNames.push(plugin.name);
+      if (filesWritten > 0) pluginNames.push(plugin.plugin.name);
     }
     return { totalFiles, pluginNames };
   }

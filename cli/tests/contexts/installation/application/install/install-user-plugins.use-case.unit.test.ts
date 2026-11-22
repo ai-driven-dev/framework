@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { PluginSourceMatch } from "../../../../../src/contexts/distribution/contract/plugin-source-match.js";
 import { InstallUserPlugins } from "../../../../../src/contexts/installation/application/install/install-user-plugins.use-case.js";
 import type { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { PlannedUserPluginFileUpdate } from "../../../../../src/contexts/installation/ports/plugin/user-plugin-materialization.js";
 import type { AiToolProfile } from "../../../../../src/contexts/tools/contract/tool-profile.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
@@ -39,10 +39,10 @@ function setup(seed: Manifest | null = defaultManifest()) {
       plugin,
       tool,
     }: {
-      plugin: InstalledPlugin;
+      plugin: RecordedPlugin;
       tool: AiToolProfile;
     }): Promise<PlannedUserPluginFileUpdate> => {
-      const relativePath = `agents/${plugin.name}-reviewer.md`;
+      const relativePath = `agents/${plugin.plugin.name}-reviewer.md`;
       return {
         plugin,
         tool,
@@ -84,13 +84,13 @@ describe("InstallUserPlugins", () => {
     const manifest = repo.getCurrent();
     expect(
       manifest
-        ?.getPlugins(TOOL.opencode)
-        .map((p) => [p.name, p.scope, p.marketplace, [...p.files.keys()]])
+        ?.getRecordedPlugins(TOOL.opencode)
+        .map((p) => [p.plugin.name, p.plugin.scope, p.marketplace, [...p.plugin.files.keys()]])
     ).toEqual([
       ["aidd-dev", "user", "aidd-framework", ["agents/aidd-dev-reviewer.md"]],
       ["aidd-pm", "user", "aidd-framework", ["agents/aidd-pm-reviewer.md"]],
     ]);
-    expect(manifest?.getPlugins(TOOL.claude)).toEqual([]);
+    expect(manifest?.getRecordedPlugins(TOOL.claude)).toEqual([]);
     expect(planUpdate).toHaveBeenCalledTimes(2);
   });
 
@@ -99,7 +99,7 @@ describe("InstallUserPlugins", () => {
 
     await run(useCase, [DEV], [TOOL.opencode]);
 
-    expect(planUpdate.mock.calls[0][0].plugin.source).toEqual(DEV.source);
+    expect(planUpdate.mock.calls[0][0].plugin.plugin.source).toEqual(DEV.source);
   });
 
   it("also writes the plugins of a tool installing into a user plugins directory", async () => {
@@ -116,7 +116,7 @@ describe("InstallUserPlugins", () => {
         .map((p) => [p.name, p.scope])
     ).toEqual([["aidd-dev", "user"]]);
     expect(planUpdate).toHaveBeenCalledWith({
-      plugin: expect.objectContaining({ name: "aidd-dev" }),
+      plugin: expect.objectContaining({ plugin: expect.objectContaining({ name: "aidd-dev" }) }),
       tool: expect.objectContaining({ toolId: TOOL.cursor }),
       projectRoot: "/project",
       logger: expect.anything(),
@@ -128,7 +128,7 @@ describe("InstallUserPlugins", () => {
     const seed = defaultManifest();
     seed.addPlugin(
       TOOL.opencode,
-      InstalledPlugin.fromMetadata({
+      RecordedPlugin.fromMetadata({
         name: "aidd-dev",
         version: "1.0.0",
         source: { kind: "local", path: "/moved-away" },
@@ -142,8 +142,8 @@ describe("InstallUserPlugins", () => {
     await run(useCase, [DEV], [TOOL.opencode]);
 
     const planned = planUpdate.mock.calls[0][0].plugin;
-    expect(planned.source).not.toEqual({ kind: "local", path: "/moved-away" });
-    expect([...planned.files.keys()]).toEqual(["agents/old.md"]);
+    expect(planned.plugin.source).not.toEqual({ kind: "local", path: "/moved-away" });
+    expect([...planned.plugin.files.keys()]).toEqual(["agents/old.md"]);
   });
 
   it("writes nothing when a later plugin's plan is refused", async () => {
@@ -169,8 +169,8 @@ describe("InstallUserPlugins", () => {
     expect(
       repo
         .getCurrent()
-        ?.getPlugins(TOOL.opencode)
-        .map((plugin) => plugin.name)
+        ?.getRecordedPlugins(TOOL.opencode)
+        .map((plugin) => plugin.plugin.name)
     ).toEqual(["aidd-dev"]);
   });
 

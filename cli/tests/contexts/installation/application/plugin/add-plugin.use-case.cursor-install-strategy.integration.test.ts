@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { Logger } from "../../../../../src/shared/ports/logger.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
@@ -65,15 +65,15 @@ describe("AddPlugin", () => {
         });
         expect(fetchSpy).toHaveBeenCalled();
         const manifest = await deps.manifestRepo.load();
-        const plugins = manifest?.getPlugins(cursor) ?? [];
-        const installed = plugins.find((p) => p.name === "sample-plugin");
+        const plugins = manifest?.getRecordedPlugins(cursor) ?? [];
+        const installed = plugins.find((p) => p.plugin.name === "sample-plugin");
         expect(installed).toBeDefined();
-        expect(installed?.files.size).toBe(0);
+        expect(installed?.plugin.files.size).toBe(0);
         const machine = deps.userManifestRepo
           .getCurrent()
-          ?.getPlugins(cursor)
-          .find((p) => p.name === "sample-plugin");
-        expect(machine?.files.size).toBeGreaterThan(0);
+          ?.getRecordedPlugins(cursor)
+          .find((p) => p.plugin.name === "sample-plugin");
+        expect(machine?.plugin.files.size).toBeGreaterThan(0);
         expect(machine?.dependents).toEqual([PROJECT_ROOT]);
       });
 
@@ -110,7 +110,7 @@ describe("AddPlugin", () => {
         const manifest = await deps.manifestRepo.load();
         manifest?.addPlugin(
           cursor,
-          InstalledPlugin.fromMetadata({
+          RecordedPlugin.fromMetadata({
             name: "other-plugin",
             version: "1.0.0",
             source: GIT_SUBDIR_SOURCE,
@@ -126,9 +126,11 @@ describe("AddPlugin", () => {
 
         expect(deps.fs.getFile(cursorSkillAt())).toBe("# Their own skill");
         expect(pluginNames(deps, cursor)).toEqual(["other-plugin", "sample-plugin"]);
-        expect(deps.manifestRepo.getCurrent()?.getPlugins(cursor)[0]?.files.size).toBe(1);
+        expect(
+          deps.manifestRepo.getCurrent()?.getRecordedPlugins(cursor)[0]?.plugin.files.size
+        ).toBe(1);
         expect(deps.userManifestRepo.saveCount).toBe(machineWritesBefore);
-        expect(deps.userManifestRepo.getCurrent()?.getPlugins(cursor) ?? []).toEqual([]);
+        expect(deps.userManifestRepo.getCurrent()?.getRecordedPlugins(cursor) ?? []).toEqual([]);
       });
 
       it("still delivers the plugin's project hooks when its user-scope dir is someone else's", async () => {
@@ -149,7 +151,9 @@ describe("AddPlugin", () => {
         await buildAddUseCase(deps).execute(localAdd(cursor));
 
         expect(deps.fs.getFile(cursorSkillAt())).toBe("# Their own skill");
-        expect(deps.manifestRepo.getCurrent()?.getPlugins(cursor)[0]?.files.size).toBe(0);
+        expect(
+          deps.manifestRepo.getCurrent()?.getRecordedPlugins(cursor)[0]?.plugin.files.size
+        ).toBe(0);
       });
 
       it("project replace refuses legacy hooks without an install digest and preserves shared files", async () => {
@@ -169,9 +173,9 @@ describe("AddPlugin", () => {
         expect(deps.manifestRepo.saveCount).toBe(savesBefore);
         expect(deps.userManifestRepo.saveCount).toBe(machineSavesBefore);
         expect(pluginNames(deps, cursor)).toEqual(["sample-plugin"]);
-        expect(deps.userManifestRepo.getCurrent()?.getPlugins(cursor)[0]?.dependents).toEqual([
-          PROJECT_ROOT,
-        ]);
+        expect(
+          deps.userManifestRepo.getCurrent()?.getRecordedPlugins(cursor)[0]?.dependents
+        ).toEqual([PROJECT_ROOT]);
       });
 
       it("attaches project B to A's canonical Cursor file without rewriting A's bytes", async () => {
@@ -207,11 +211,10 @@ describe("AddPlugin", () => {
           pluginMetadata: PLUGIN_METADATA,
         });
         expect(deps.fs.getFile(ownedPath)).toBe("A's own bytes");
-        expect(projectBRepo.getCurrent()?.getPlugins(cursor)[0]?.files.size).toBe(0);
-        expect(deps.userManifestRepo.getCurrent()?.getPlugins(cursor)[0]?.dependents).toEqual([
-          PROJECT_ROOT,
-          "/B",
-        ]);
+        expect(projectBRepo.getCurrent()?.getRecordedPlugins(cursor)[0]?.plugin.files.size).toBe(0);
+        expect(
+          deps.userManifestRepo.getCurrent()?.getRecordedPlugins(cursor)[0]?.dependents
+        ).toEqual([PROJECT_ROOT, "/B"]);
         expect(logger.warnMessages.slice(warningsBeforeB).join("\n")).not.toContain(
           "was already there and this project did not install it"
         );

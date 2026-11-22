@@ -1,4 +1,4 @@
-import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type {
   PlannedUserPluginFileUpdate,
   UserPluginMaterialization,
@@ -18,7 +18,7 @@ export class FakeUserPluginMaterialization implements UserPluginMaterialization 
     } = {}
   ) {}
 
-  async update(): Promise<InstalledPlugin | null> {
+  async update(): Promise<RecordedPlugin | null> {
     throw new Error("a machine-scope update plans, then applies");
   }
 
@@ -26,7 +26,7 @@ export class FakeUserPluginMaterialization implements UserPluginMaterialization 
     request: UserPluginUpdateRequest & { readonly rebuild: boolean }
   ): Promise<PlannedUserPluginFileUpdate | null> {
     this.planned.push(request);
-    if (this.options.upToDate?.includes(request.plugin.name)) return null;
+    if (this.options.upToDate?.includes(request.plugin.plugin.name)) return null;
     return {
       plugin: request.plugin,
       tool: request.tool,
@@ -38,7 +38,7 @@ export class FakeUserPluginMaterialization implements UserPluginMaterialization 
     };
   }
 
-  async applyUpdate(plan: PlannedUserPluginFileUpdate): Promise<InstalledPlugin> {
+  async applyUpdate(plan: PlannedUserPluginFileUpdate): Promise<RecordedPlugin> {
     if (this.options.applyFails !== undefined) throw this.options.applyFails;
     this.applied.push(plan);
     return plan.next;
@@ -47,6 +47,6 @@ export class FakeUserPluginMaterialization implements UserPluginMaterialization 
 
 export const NEXT_VERSION = "2.0.0";
 
-function nextVersionOf(plugin: InstalledPlugin): InstalledPlugin {
-  return InstalledPlugin.fromJSON({ ...plugin.toJSON(), version: NEXT_VERSION });
+function nextVersionOf(plugin: RecordedPlugin): RecordedPlugin {
+  return RecordedPlugin.fromJSON({ ...plugin.toJSON(), version: NEXT_VERSION });
 }

@@ -6,7 +6,7 @@ import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 // biome-ignore lint/plugin: hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
-import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import { deleteOldFiles } from "../plugin/delete-plugin-files.js";
 import { scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import { writePluginFiles } from "../plugin/write-plugin-files.js";
@@ -17,7 +17,7 @@ import type { PluginTranslator } from "./plugin-translator.js";
 import { resolvePluginTranslator } from "./resolve-plugin-translator.js";
 
 export interface ReplacePluginFilesRequest {
-  readonly plugin: InstalledPlugin;
+  readonly plugin: RecordedPlugin;
   readonly dist: PluginDistribution;
   readonly toolId: AiToolId;
   readonly projectRoot: string;
@@ -34,7 +34,8 @@ export class ReplacePluginFiles {
   ) {}
 
   async execute(command: ReplacePluginFilesRequest): Promise<void> {
-    const { plugin, dist, toolId, projectRoot, manifest } = command;
+    const { dist, toolId, projectRoot, manifest } = command;
+    const { plugin } = command.plugin;
     const tool = this.tools.aiProfile(toolId);
     const baseDir = scopeBaseOf(tool, {
       scope: plugin.scope,
@@ -43,8 +44,14 @@ export class ReplacePluginFiles {
     });
     await deleteOldFiles(plugin.files, baseDir, this.fs);
     const translator = this.resolveTranslator(tool);
-    if (translator !== null && plugin.marketplace !== undefined) {
-      await materializeViaTranslator(translator, { dist, tool, plugin, projectRoot, manifest });
+    if (translator !== null && command.plugin.marketplace !== undefined) {
+      await materializeViaTranslator(translator, {
+        dist,
+        tool,
+        plugin: command.plugin,
+        projectRoot,
+        manifest,
+      });
       return;
     }
     const translated = this.builtDeps.translate.execute({ distribution: dist, tool });
@@ -52,7 +59,7 @@ export class ReplacePluginFiles {
     await writePluginFiles(newFiles, baseDir, this.fs);
     manifest.updatePlugin(
       tool.toolId,
-      InstalledPlugin.fromDistribution({
+      RecordedPlugin.fromDistribution({
         dist,
         source: plugin.source,
         files: newFiles,

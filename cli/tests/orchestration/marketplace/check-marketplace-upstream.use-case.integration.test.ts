@@ -7,7 +7,7 @@ import { Marketplace } from "../../../src/contexts/distribution/domain/marketpla
 import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { ListPluginSources } from "../../../src/contexts/installation/application/marketplace/list-plugin-sources.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { CheckMarketplaceUpstream } from "../../../src/orchestration/marketplace/check-marketplace-upstream.use-case.js";
 import { FixturePluginFetcher } from "../../shared/testing/fixture-plugin-fetcher.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
@@ -49,8 +49,8 @@ function fixtureMarketplace(name: string): Marketplace {
   });
 }
 
-function installedFrom(marketplace: string, name: string): InstalledPlugin {
-  return InstalledPlugin.fromJSON({
+function installedFrom(marketplace: string, name: string): RecordedPlugin {
+  return RecordedPlugin.fromJSON({
     name,
     source: { kind: "github", repo: `owner/${name}` },
     version: "1.0.0",
@@ -63,7 +63,7 @@ function installedFrom(marketplace: string, name: string): InstalledPlugin {
 
 async function manifestWith(
   manifestRepo: InMemoryManifestRepository,
-  ...plugins: readonly InstalledPlugin[]
+  ...plugins: readonly RecordedPlugin[]
 ): Promise<void> {
   const manifest = Manifest.create();
   manifest.addTool(TOOL.claude, "1.0.0", []);

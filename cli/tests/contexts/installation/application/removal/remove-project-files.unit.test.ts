@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { RemoveProjectFiles } from "../../../../../src/contexts/installation/application/removal/remove-project-files.js";
 import { UpdateGitignore } from "../../../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
@@ -32,8 +32,8 @@ function removalOver(
   );
 }
 
-function localPlugin(name: string): InstalledPlugin {
-  return InstalledPlugin.fromMetadata({
+function localPlugin(name: string): RecordedPlugin {
+  return RecordedPlugin.fromMetadata({
     name,
     version: "1.0.0",
     source: { kind: "local", path: "/p" },
@@ -81,7 +81,7 @@ describe("RemoveProjectFiles.remove", () => {
       .withTool(TOOL.cursor, [])
       .withPlugin(
         TOOL.cursor,
-        InstalledPlugin.withProjectHooks(localPlugin("aidd-context"), {
+        localPlugin("aidd-context").withProjectHooks({
           entries: [],
           scripts: new Map([[script, FileHash.of("// installed").value]]),
         })

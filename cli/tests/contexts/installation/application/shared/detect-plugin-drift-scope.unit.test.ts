@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { DetectPluginDrift } from "../../../../../src/contexts/installation/application/shared/detect-plugin-drift.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
@@ -20,7 +20,7 @@ function manifestWith(plugins: Record<string, Record<string, string>>): Manifest
   for (const [name, files] of Object.entries(plugins)) {
     manifest.addPlugin(
       TOOL.cursor,
-      InstalledPlugin.fromJSON({
+      RecordedPlugin.fromJSON({
         name,
         source: { kind: "local", path: "/some/path" },
         version: "1.0.0",

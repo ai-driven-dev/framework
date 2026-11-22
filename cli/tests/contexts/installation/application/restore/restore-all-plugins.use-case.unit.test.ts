@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { RestoreAllPlugins } from "../../../../../src/contexts/installation/application/restore/restore-all-plugins.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { PluginFetcher } from "../../../../../src/contexts/installation/ports/marketplace-sources.js";
 import type { PluginDistributionReader } from "../../../../../src/contexts/installation/ports/plugin/plugin-distribution-reader.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
@@ -47,8 +47,8 @@ const emptyDistributionReader: PluginDistributionReader = {
 function nativePlugin(
   files: Record<string, string> = {},
   scope: Scope = "project"
-): InstalledPlugin {
-  return InstalledPlugin.fromJSON({
+): RecordedPlugin {
+  return RecordedPlugin.fromJSON({
     name: "aidd-test",
     source: { kind: "local", path: "/some/path" },
     version: "1.0.0",
@@ -125,8 +125,8 @@ describe("RestoreAllPlugins - native-activation tools", () => {
   });
 });
 
-function trackedPlugin(name: string): InstalledPlugin {
-  return InstalledPlugin.fromJSON({
+function trackedPlugin(name: string): RecordedPlugin {
+  return RecordedPlugin.fromJSON({
     name,
     source: { kind: "local", path: "/some/path" },
     version: "1.0.0",

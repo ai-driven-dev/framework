@@ -1,47 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parsePluginSpec } from "../../../../../src/contexts/installation/contract/plugin-spec.js";
-import {
-  InvalidPluginNameError,
-  InvalidPluginVersionError,
-  MalformedPluginScopeError,
-} from "../../../../../src/contexts/installation/domain/installation.error.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import type {
-  ComponentPathMap,
-  McpDigestMap,
-  PluginEntryData,
-} from "../../../../../src/contexts/installation/domain/plugins/plugin-entry.js";
-import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { saying } from "../../../../shared/testing/saying.builder.js";
-
-it("round-trips exact Cursor project hook provenance through the plugin manifest", () => {
-  const data = makePluginData({
-    projectHooks: {
-      entries: [
-        {
-          event: "preToolUse",
-          command: "node ./.cursor/hooks/my-plugin/pre.js",
-          digest: "a".repeat(32),
-        },
-      ],
-      scripts: { ".cursor/hooks/my-plugin/pre.js": "b".repeat(32) },
-    },
-  });
-  const installed = InstalledPlugin.fromJSON(data);
-  expect(installed.provenance.projectHooks?.scripts.get(".cursor/hooks/my-plugin/pre.js")).toBe(
-    "b".repeat(32)
-  );
-  expect(InstalledPlugin.fromJSON(installed.toJSON()).toJSON()).toEqual(data);
-});
-
-const makeDistribution = (strict?: boolean): PluginDistribution =>
-  new PluginDistribution({
-    manifest: { name: "my-plugin", version: "1.0.0", ...(strict === undefined ? {} : { strict }) },
-    format: TOOL.claude,
-    files: [],
-    components: { skills: [], commands: [], agents: [], rules: [], hooks: [], mcp: [] },
-  });
+import type { PluginEntryData } from "../../../../../src/contexts/installation/domain/plugins/plugin-entry.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 
 const makePluginData = (overrides: Partial<PluginEntryData> = {}): PluginEntryData => ({
   name: "my-plugin",
@@ -53,115 +13,31 @@ const makePluginData = (overrides: Partial<PluginEntryData> = {}): PluginEntryDa
   ...overrides,
 });
 
+const installed = () => RecordedPlugin.fromJSON(makePluginData()).plugin;
+
 describe("InstalledPlugin", () => {
-  describe("fromJSON()", () => {
-    it("creates a plugin from valid data", () => {
-      const plugin = InstalledPlugin.fromJSON(makePluginData());
-      expect(plugin.name).toBe("my-plugin");
-      expect(plugin.version).toBe("1.0.0");
-      expect(plugin.strict).toBe(false);
-    });
-
-    it("throws InvalidPluginNameError when name is invalid", () => {
-      expect(() => InstalledPlugin.fromJSON(makePluginData({ name: "My Plugin!" }))).toThrow(
-        InvalidPluginNameError
-      );
-    });
-
-    it("throws InvalidPluginNameError for names with uppercase letters", () => {
-      expect(() => InstalledPlugin.fromJSON(makePluginData({ name: "MyPlugin" }))).toThrow(
-        InvalidPluginNameError
-      );
-    });
-
-    it("throws InvalidPluginNameError for names with leading hyphens", () => {
-      expect(() => InstalledPlugin.fromJSON(makePluginData({ name: "-plugin" }))).toThrow(
-        InvalidPluginNameError
-      );
-    });
-
-    it("throws InvalidPluginVersionError when version is not semver", () => {
-      expect(() => InstalledPlugin.fromJSON(makePluginData({ version: "not-a-version" }))).toThrow(
-        InvalidPluginVersionError
-      );
-    });
-
-    it("throws MalformedPluginScopeError, naming the plugin, when scope is missing", () => {
-      const data = makePluginData();
-      // Proving the runtime guard a missing field trips, which a type-level `Omit`
-      // cannot construct as invalid data.
-      delete (data as { scope?: unknown }).scope;
-      expect(() => InstalledPlugin.fromJSON(data)).toThrow(MalformedPluginScopeError);
-      expect(() => InstalledPlugin.fromJSON(data)).toThrow(saying(/my-plugin/));
-    });
-
-    it("throws MalformedPluginScopeError when scope is neither project nor user", () => {
-      // A value the type forbids, written the way a hand-edited file would carry it.
-      const data = makePluginData();
-      (data as { scope: string }).scope = "global";
-      expect(() => InstalledPlugin.fromJSON(data)).toThrow(MalformedPluginScopeError);
-    });
-
-    it("accepts scope: user", () => {
-      const plugin = InstalledPlugin.fromJSON(makePluginData({ scope: "user" }));
-      expect(plugin.scope).toBe("user");
-    });
-
-    it("accepts single-segment names", () => {
-      const plugin = InstalledPlugin.fromJSON(makePluginData({ name: "plugin" }));
-      expect(plugin.name).toBe("plugin");
-    });
-
-    it("accepts multi-segment names", () => {
-      const plugin = InstalledPlugin.fromJSON(makePluginData({ name: "my-cool-plugin" }));
-      expect(plugin.name).toBe("my-cool-plugin");
-    });
-
-    it("parses files into a ReadonlyMap", () => {
-      const plugin = InstalledPlugin.fromJSON(makePluginData());
-      expect(plugin.files.get(".claude/plugins/my-plugin/CLAUDE.md")).toBe("abc123");
-    });
-  });
-
-  describe("toJSON()", () => {
-    it("round-trips via fromJSON/toJSON", () => {
-      const data = makePluginData();
-      const plugin = InstalledPlugin.fromJSON(data);
-      expect(plugin.toJSON()).toEqual(data);
-    });
-
-    it("round-trips scope, project and user alike", () => {
-      expect(InstalledPlugin.fromJSON(makePluginData({ scope: "project" })).toJSON().scope).toBe(
-        "project"
-      );
-      expect(InstalledPlugin.fromJSON(makePluginData({ scope: "user" })).toJSON().scope).toBe(
-        "user"
-      );
-    });
-  });
-
   describe("isFileTracked()", () => {
     it("returns true for a tracked file path", () => {
-      const plugin = InstalledPlugin.fromJSON(makePluginData());
+      const plugin = installed();
       expect(plugin.isFileTracked(".claude/plugins/my-plugin/CLAUDE.md")).toBe(true);
     });
 
     it("returns false for an untracked file path", () => {
-      const plugin = InstalledPlugin.fromJSON(makePluginData());
+      const plugin = installed();
       expect(plugin.isFileTracked(".claude/agents/alexia.md")).toBe(false);
     });
   });
 
   describe("withVersion()", () => {
     it("returns a new plugin with the updated version", () => {
-      const plugin = InstalledPlugin.fromJSON(makePluginData());
+      const plugin = installed();
       const updated = plugin.withVersion("2.0.0");
       expect(updated.version).toBe("2.0.0");
       expect(plugin.version).toBe("1.0.0");
     });
 
     it("preserves all other fields", () => {
-      const plugin = InstalledPlugin.fromJSON(makePluginData());
+      const plugin = installed();
       const updated = plugin.withVersion("2.0.0");
       expect(updated.name).toBe(plugin.name);
       expect(updated.strict).toBe(plugin.strict);
@@ -172,7 +48,7 @@ describe("InstalledPlugin", () => {
 
   describe("withFiles()", () => {
     it("returns a new plugin with updated files", () => {
-      const plugin = InstalledPlugin.fromJSON(makePluginData());
+      const plugin = installed();
       const newFiles = new Map([["new/path.md", "hash-value"]]);
       const updated = plugin.withFiles(newFiles);
       expect(updated.files.get("new/path.md")).toBe("hash-value");
@@ -180,98 +56,11 @@ describe("InstalledPlugin", () => {
     });
 
     it("preserves all other fields", () => {
-      const plugin = InstalledPlugin.fromJSON(makePluginData());
+      const plugin = installed();
       const updated = plugin.withFiles(new Map());
       expect(updated.name).toBe(plugin.name);
       expect(updated.version).toBe(plugin.version);
       expect(updated.scope).toBe(plugin.scope);
-    });
-  });
-
-  describe("fromJSON() on a name that starts well and ends badly", () => {
-    it("throws InvalidPluginNameError for a name whose tail is not a segment", () => {
-      expect(() => InstalledPlugin.fromJSON(makePluginData({ name: "my-plugin_" }))).toThrow(
-        InvalidPluginNameError
-      );
-    });
-  });
-
-  describe("toJSON() for a plugin installed from no marketplace", () => {
-    it("writes no marketplace key at all", () => {
-      const data = makePluginData();
-
-      expect(InstalledPlugin.fromJSON(data).toJSON()).toStrictEqual(data);
-    });
-  });
-
-  describe("fromDistribution()", () => {
-    const source = { kind: "github", repo: "owner/my-plugin" } as const;
-
-    it("is strict only where the distribution's manifest says so", () => {
-      expect(
-        InstalledPlugin.fromDistribution({
-          dist: makeDistribution(true),
-          source,
-          files: [],
-          scope: "project",
-        }).strict
-      ).toBe(true);
-    });
-
-    it("is lenient where the distribution's manifest says nothing", () => {
-      expect(
-        InstalledPlugin.fromDistribution({
-          dist: makeDistribution(),
-          source,
-          files: [],
-          scope: "project",
-        }).strict
-      ).toBe(false);
-    });
-
-    it("keeps each installed path's component path", () => {
-      const componentPaths = new Map([[".claude/rules/naming.md", "rules/naming.md"]]);
-
-      const plugin = InstalledPlugin.fromDistribution({
-        dist: makeDistribution(),
-        source,
-        files: [],
-        scope: "project",
-        componentPaths,
-      });
-
-      expect([...plugin.provenance.componentPaths]).toStrictEqual([
-        [".claude/rules/naming.md", "rules/naming.md"],
-      ]);
-    });
-
-    it("keeps no component path when handed none", () => {
-      const plugin = InstalledPlugin.fromDistribution({
-        dist: makeDistribution(),
-        source,
-        files: [],
-        scope: "project",
-      });
-
-      expect([...plugin.provenance.componentPaths]).toStrictEqual([]);
-    });
-  });
-
-  describe("the three maps cannot be swapped", () => {
-    it("fails to compile when one map's field is passed where another is expected", () => {
-      const plugin = InstalledPlugin.fromJSON(makePluginData());
-
-      function acceptsComponentPaths(_m: ComponentPathMap): void {}
-      // @ts-expect-error files is a PathHashMap, not a ComponentPathMap - same runtime
-      // shape (ReadonlyMap<string, string>), different brand.
-      acceptsComponentPaths(plugin.files);
-
-      function acceptsMcpEntries(_m: McpDigestMap): void {}
-      // @ts-expect-error componentPaths is a ComponentPathMap, not a McpDigestMap.
-      acceptsMcpEntries(plugin.componentPaths);
-
-      // The types are branded, but the underlying maps are still plain ReadonlyMaps at runtime.
-      expect(plugin.files).toBeInstanceOf(Map);
     });
   });
 });

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { RemoveProjectPlugin } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { ScriptedPrompter } from "../../shared/testing/scripted-prompter.fake.js";
@@ -30,8 +30,8 @@ class SaveCountingManifestRepository extends InMemoryManifestRepository {
   }
 }
 
-function pluginFrom(marketplace: string, name: string): InstalledPlugin {
-  return InstalledPlugin.fromMetadata({
+function pluginFrom(marketplace: string, name: string): RecordedPlugin {
+  return RecordedPlugin.fromMetadata({
     name,
     version: "1.0.0",
     source: { kind: "github", repo: `owner/${name}` },
@@ -41,7 +41,7 @@ function pluginFrom(marketplace: string, name: string): InstalledPlugin {
   });
 }
 
-function manifestWithPlugins(...plugins: readonly InstalledPlugin[]): Manifest {
+function manifestWithPlugins(...plugins: readonly RecordedPlugin[]): Manifest {
   const manifest = Manifest.create();
   manifest.addTool(TOOL.claude, "1.0.0", []);
   for (const plugin of plugins) manifest.addPlugin(TOOL.claude, plugin);

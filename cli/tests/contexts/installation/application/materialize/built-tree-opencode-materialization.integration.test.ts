@@ -88,8 +88,10 @@ describe("BuiltTreeMaterializationTranslator - opencode (integration)", () => {
     expect(fs.getFile(`${PROJECT_ROOT}/.opencode/agents/aidd-vcs-helper.md`)).toBe("agent body");
     expect(fs.has(`${PROJECT_ROOT}/.opencode/skills/aidd-dev/00-sdlc/SKILL.md`)).toBe(false);
     expect(fs.has(`${PROJECT_ROOT}/.build-version`)).toBe(false);
-    const installed = manifest.getPlugins(TOOL.opencode).find((p) => p.name === "aidd-vcs");
-    expect(installed?.files.size).toBe(2);
+    const installed = manifest
+      .getRecordedPlugins(TOOL.opencode)
+      .find((p) => p.plugin.name === "aidd-vcs");
+    expect(installed?.plugin.files.size).toBe(2);
   });
 
   // Hook paths follow none of the "<plugin>-" naming `belongsToPlugin` reads, so they are
@@ -262,8 +264,8 @@ describe("BuiltTreeMaterializationTranslator - kilo (integration)", () => {
     expect(config.mcp.context.type).toBe("local");
     expect(
       manifest
-        .getPlugins(TOOL.kilo)
-        .find((p) => p.name === "aidd-vcs")
+        .getRecordedPlugins(TOOL.kilo)
+        .find((p) => p.plugin.name === "aidd-vcs")
         ?.provenance.mcpEntries.get("context")
     ).toBeTruthy();
     expect(manifest.getToolFiles(TOOL.kilo)[0]?.hash).toEqual(

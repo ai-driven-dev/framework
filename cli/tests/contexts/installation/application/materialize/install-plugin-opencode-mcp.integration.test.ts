@@ -108,7 +108,9 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
       marketplace: undefined,
     });
 
-    const installed = manifest.getPlugins(TOOL.opencode).find((p) => p.name === PLUGIN_NAME);
+    const installed = manifest
+      .getRecordedPlugins(TOOL.opencode)
+      .find((p) => p.plugin.name === PLUGIN_NAME);
     expect(installed).toBeDefined();
     expect(installed?.provenance.mcpEntries.size).toBe(3);
     expect(installed?.provenance.mcpEntries.has("local-tool")).toBe(true);
@@ -130,7 +132,9 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
       marketplace: undefined,
     });
     const firstContent = await fs.readFile(OPENCODE_JSON);
-    const firstPlugin = manifest.getPlugins(TOOL.opencode).find((p) => p.name === PLUGIN_NAME);
+    const firstPlugin = manifest
+      .getRecordedPlugins(TOOL.opencode)
+      .find((p) => p.plugin.name === PLUGIN_NAME);
     const firstMcpEntries = firstPlugin?.provenance.mcpEntries ?? new Map();
 
     // The replace path: the previous install is removed, then re-added.
@@ -169,7 +173,9 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
       marketplace: undefined,
     });
 
-    const v1Plugin = manifest.getPlugins(TOOL.opencode).find((p) => p.name === PLUGIN_NAME);
+    const v1Plugin = manifest
+      .getRecordedPlugins(TOOL.opencode)
+      .find((p) => p.plugin.name === PLUGIN_NAME);
     const v1McpEntries = v1Plugin?.provenance.mcpEntries ?? new Map();
     manifest.removePlugin(TOOL.opencode, PLUGIN_NAME);
 
@@ -196,7 +202,9 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
     expect(final.mcp).toHaveProperty("server-c");
     expect(final.mcp).not.toHaveProperty("server-b");
 
-    const v2Plugin = manifest.getPlugins(TOOL.opencode).find((p) => p.name === PLUGIN_NAME);
+    const v2Plugin = manifest
+      .getRecordedPlugins(TOOL.opencode)
+      .find((p) => p.plugin.name === PLUGIN_NAME);
     expect(v2Plugin?.provenance.mcpEntries.has("server-a")).toBe(true);
     expect(v2Plugin?.provenance.mcpEntries.has("server-c")).toBe(true);
     expect(v2Plugin?.provenance.mcpEntries.has("server-b")).toBe(false);
@@ -242,8 +250,8 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
     });
 
     expect(fs.has(OPENCODE_JSON)).toBe(false);
-    const plugins = manifest.getPlugins(TOOL.opencode);
-    expect(plugins.find((p) => p.name === PLUGIN_NAME)).toBeUndefined();
+    const plugins = manifest.getRecordedPlugins(TOOL.opencode);
+    expect(plugins.find((p) => p.plugin.name === PLUGIN_NAME)).toBeUndefined();
   });
 
   it("preserves instructions key from framework-default opencode.json shape after merge", async () => {
@@ -301,7 +309,9 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
     };
     expect(parsed.mcp["local-tool"]).toEqual(userServer);
 
-    const installed = manifest.getPlugins(TOOL.opencode).find((p) => p.name === PLUGIN_NAME);
+    const installed = manifest
+      .getRecordedPlugins(TOOL.opencode)
+      .find((p) => p.plugin.name === PLUGIN_NAME);
     expect(installed?.provenance.mcpEntries.has("local-tool")).toBe(false);
     expect(installed?.provenance.mcpEntries.has("remote-tool")).toBe(true);
   });

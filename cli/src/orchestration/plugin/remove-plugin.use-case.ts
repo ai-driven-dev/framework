@@ -17,8 +17,9 @@ export interface RemovePluginDeps {
 }
 
 /** The marketplace a withdrawn plugin came from, `undefined` when it carries none. */
-function withdrawnOf({ plugin }: PluginHostReach) {
-  const { name, marketplace, scope } = plugin;
+function withdrawnOf(reach: PluginHostReach) {
+  const { name, scope } = reach.plugin.plugin;
+  const { marketplace } = reach.plugin;
   return marketplace === undefined ? undefined : { name, marketplace, scope };
 }
 

@@ -5,6 +5,7 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { RemovedPlugin } from "../../contract/plugin-claims.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ProjectIntegrationCleanup } from "../../ports/project-integration-cleanup.js";
 import type { FlatMcpSection, ProjectPluginIntegration } from "../../ports/tool-sections.js";
 import { assertProjectPathWithinRoot } from "../ownership/project-path-boundary.js";
@@ -21,7 +22,7 @@ export async function assertProjectMcpEntriesRemovable(
 
 /** The plugin whose MCP servers leave the project config of one tool. */
 export interface ProjectMcpRemoval {
-  readonly plugin: InstalledPlugin;
+  readonly plugin: RecordedPlugin;
   readonly tool: FlatMcpSection;
   readonly projectRoot: string;
 }
@@ -66,7 +67,7 @@ export class RemoveProjectPlugin implements ProjectIntegrationCleanup {
 
   async assertLocalIntegrationRemovable(
     tool: ProjectPluginIntegration,
-    plugin: InstalledPlugin,
+    plugin: RecordedPlugin,
     projectRoot: string
   ): Promise<void> {
     await assertProjectMcpEntriesRemovable(this.fs, { plugin, tool, projectRoot });
@@ -75,7 +76,7 @@ export class RemoveProjectPlugin implements ProjectIntegrationCleanup {
 
   async removeLocalIntegration(
     tool: ProjectPluginIntegration,
-    plugin: InstalledPlugin,
+    plugin: RecordedPlugin,
     projectRoot: string
   ): Promise<void> {
     const mcpUpdate = await planProjectMcpRemoval(this.fs, { plugin, tool, projectRoot });

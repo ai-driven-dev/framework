@@ -74,10 +74,12 @@ export class RemoveUserPlugin<Proof> {
     options: RemoveUserPluginRequest
   ) {
     return toolIds.flatMap((toolId) => {
-      const plugin = manifest
-        .getPlugins(toolId)
-        .find((p) => p.name === options.pluginName && p.scope === "user");
-      return plugin === undefined ? [] : [{ toolId, plugin }];
+      const recorded = manifest
+        .getRecordedPlugins(toolId)
+        .find((p) => p.plugin.name === options.pluginName && p.plugin.scope === "user");
+      return recorded === undefined
+        ? []
+        : [{ toolId, plugin: recorded.plugin, dependents: recorded.dependents }];
     });
   }
 
@@ -109,7 +111,7 @@ export class RemoveUserPlugin<Proof> {
     }
     const dependents = [
       ...new Set([
-        ...targets.flatMap(({ plugin }) => plugin.dependents),
+        ...targets.flatMap((target) => target.dependents),
         ...nativeTargets.flatMap(({ claim }) => claim.dependents),
       ]),
     ];

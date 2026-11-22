@@ -1,5 +1,5 @@
 import type { ReadonlySkipList } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
-import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { PluginPlacement } from "../../ports/tool-sections.js";
 import { resolveScopeForInstall } from "../plugin/plugin-target-resolution.js";
 import type { AddPluginRequest, PluginTranslator } from "./plugin-translator.js";
@@ -20,7 +20,7 @@ export class ModeAMarketplaceTranslator implements PluginTranslator {
     const { dist, tool, source, manifest, marketplace } = request;
     manifest.addPlugin(
       tool.toolId,
-      InstalledPlugin.fromDistribution({
+      RecordedPlugin.fromDistribution({
         dist,
         source,
         files: [],

@@ -5,7 +5,7 @@ import { CleanProjectFiles } from "../../../../src/contexts/installation/applica
 import { RemoveProjectFiles } from "../../../../src/contexts/installation/application/removal/remove-project-files.js";
 import { UpdateGitignore } from "../../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../src/shared/domain/file-hash.js";
 import type { Scope } from "../../../../src/shared/domain/scope.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
@@ -44,8 +44,8 @@ function cleanOver(manifest: Manifest | null, fs: InMemoryFileAdapter): CleanPro
   );
 }
 
-function localPlugin(name: string, scope: Scope = "project"): InstalledPlugin {
-  return InstalledPlugin.fromMetadata({
+function localPlugin(name: string, scope: Scope = "project"): RecordedPlugin {
+  return RecordedPlugin.fromMetadata({
     name,
     version: "1.0.0",
     source: { kind: "local", path: "/p" },
@@ -60,7 +60,7 @@ describe("CleanProjectFiles assert-removable", () => {
     const installed = FileHash.of("// installed").value;
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "1.0.0", []);
-    const plugin = InstalledPlugin.fromMetadata({
+    const plugin = RecordedPlugin.fromMetadata({
       name: "aidd-context",
       version: "1.0.0",
       source: { kind: "local", path: "/p" },
@@ -69,7 +69,7 @@ describe("CleanProjectFiles assert-removable", () => {
     });
     manifest.addPlugin(
       TOOL.cursor,
-      InstalledPlugin.withProjectHooks(plugin, {
+      plugin.withProjectHooks({
         entries: [],
         scripts: new Map([[script, installed]]),
       })

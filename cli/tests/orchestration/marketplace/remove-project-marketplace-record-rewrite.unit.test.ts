@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { RemoveProjectPlugin } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
 import {
   REWRITTEN_BINARY,
@@ -34,7 +34,7 @@ describe("the record a project marketplace removal writes", () => {
       .withTool(TOOL.claude, [])
       .withPlugin(
         TOOL.claude,
-        InstalledPlugin.fromMetadata({
+        RecordedPlugin.fromMetadata({
           name: "sample",
           version: "1.0.0",
           source: { kind: "github", repo: "owner/sample" },

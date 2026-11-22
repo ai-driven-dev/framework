@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../src/shared/domain/file-hash.js";
 
 export const PROJECT_ROOT = "/test-project";
@@ -18,9 +18,9 @@ export function hooksFile(...plugins: string[]): string {
 
 export function aCursorHooksPlugin(
   options: { entry?: boolean; script?: string } = {}
-): InstalledPlugin {
+): RecordedPlugin {
   const command = entry(PLUGIN).command;
-  return InstalledPlugin.fromJSON({
+  return RecordedPlugin.fromJSON({
     name: PLUGIN,
     source: { kind: "local", path: "/src" },
     version: "1.0.0",

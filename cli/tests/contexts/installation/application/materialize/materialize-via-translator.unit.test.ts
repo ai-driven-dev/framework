@@ -6,7 +6,7 @@ import type {
   PluginTranslator,
 } from "../../../../../src/contexts/installation/application/materialize/plugin-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
@@ -14,7 +14,7 @@ const NO_COMPONENTS = { skills: [], commands: [], agents: [], rules: [], hooks: 
 
 function rematerialize(result: AddPluginResult) {
   const tool = registeredTools().aiProfile(TOOL.claude);
-  const plugin = InstalledPlugin.fromMetadata({
+  const plugin = RecordedPlugin.fromMetadata({
     name: "aidd-dev",
     version: "1.0.0",
     source: { kind: "local", path: "/p" },

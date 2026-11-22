@@ -44,7 +44,9 @@ describe("two projects on one home that installed the same cursor plugins", () =
       JSON.parse(await readFile(join(home, ".config", "aidd", "manifest.json"), "utf-8")),
       resolveRegisteredToolId
     );
-    const owned = machine.getPlugins(TOOL.cursor).find((plugin) => plugin.name === "aidd-context");
+    const owned = machine
+      .getRecordedPlugins(TOOL.cursor)
+      .find((plugin) => plugin.plugin.name === "aidd-context");
     expect(owned?.dependents).toEqual([await realpath(first), await realpath(second)]);
     const contextDir = join(userPlugins(), "aidd-context");
     const devDir = join(userPlugins(), "aidd-dev");

@@ -19,7 +19,7 @@ export function previousInstall(
   const mcpEntries = new Map<AiToolId, ReadonlyMap<string, string>>();
   const projectHooks = new Map<AiToolId, ProjectHooksProvenance>();
   for (const toolId of toolIds) {
-    const existing = manifest.getPlugins(toolId).find((p) => p.name === pluginName);
+    const existing = manifest.getRecordedPlugins(toolId).find((p) => p.plugin.name === pluginName);
     if (existing === undefined) continue;
     if (existing.provenance.mcpEntries.size > 0)
       mcpEntries.set(toolId, existing.provenance.mcpEntries);

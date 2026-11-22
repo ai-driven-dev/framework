@@ -10,7 +10,7 @@ import type { RegistrationRecordRules } from "../../ports/native-host.js";
 import type { HostRefCountingTool } from "../../ports/tool-sections.js";
 import type { UserScopePluginFileRemoval } from "../../ports/user-scope-plugin-files.js";
 
-type PluginOf = { toolId: AiToolId; plugin: InstalledPlugin };
+type PluginOf = { toolId: AiToolId; plugin: InstalledPlugin; dependents: readonly string[] };
 type NativeOf = {
   toolId: AiToolId;
   registrations: NativeRegistrations;
@@ -51,12 +51,12 @@ export interface PurgeMarketplacePluginsDeps {
 
 /** Who still depends on the plugins or the native references about to be removed, once each. */
 function dependentsOf(
-  plugins: readonly { plugin: { dependents: readonly string[] } }[],
+  plugins: readonly { dependents: readonly string[] }[],
   refs: readonly { dependents: readonly string[] }[]
 ): string[] {
   return [
     ...new Set([
-      ...plugins.flatMap(({ plugin }) => plugin.dependents),
+      ...plugins.flatMap((claim) => claim.dependents),
       ...refs.flatMap((claim) => claim.dependents),
     ]),
   ];
@@ -118,11 +118,11 @@ export class PurgeMarketplacePlugins {
   }
 
   private claimsOn(manifest: Manifest, marketplace: string) {
-    const plugins = this.tools.idsInCanonicalOrder("ai").flatMap((toolId) =>
+    const plugins: PluginOf[] = this.tools.idsInCanonicalOrder("ai").flatMap((toolId) =>
       manifest
-        .getPlugins(toolId)
-        .filter((plugin) => plugin.scope === "user" && plugin.marketplace === marketplace)
-        .map((plugin) => ({ toolId, plugin }))
+        .getRecordedPlugins(toolId)
+        .filter((p) => p.plugin.scope === "user" && p.marketplace === marketplace)
+        .map(({ plugin, dependents }) => ({ toolId, plugin, dependents }))
     );
     const native = this.tools.idsInCanonicalOrder("ai").flatMap((toolId) => {
       const registrations = manifest.getNativeRegistrations(toolId);

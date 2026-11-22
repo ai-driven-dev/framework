@@ -107,8 +107,8 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
     });
 
     const loaded = await manifestRepo.load();
-    const plugins = loaded?.getPlugins(TOOL.opencode) ?? [];
-    expect(plugins.some((p) => p.name === PLUGIN_NAME)).toBe(false);
+    const plugins = loaded?.getRecordedPlugins(TOOL.opencode) ?? [];
+    expect(plugins.some((p) => p.plugin.name === PLUGIN_NAME)).toBe(false);
   });
 
   it("is safe to call when opencode.json does not exist (first install never completed)", async () => {
@@ -160,7 +160,7 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
       manifest,
       marketplace: undefined,
     });
-    const prior = manifest.getPlugins(TOOL.opencode)[0].provenance.mcpEntries;
+    const prior = manifest.getRecordedPlugins(TOOL.opencode)[0].provenance.mcpEntries;
     const config = JSON.parse(fs.getFile(OPENCODE_JSON) ?? "null") as {
       mcp: Record<string, unknown>;
     };

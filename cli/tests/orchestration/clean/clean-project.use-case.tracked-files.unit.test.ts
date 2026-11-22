@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import {
@@ -184,7 +184,7 @@ describe("clean: tracked project files", () => {
     manifest.addTool(TOOL.cursor, "1.0.0", []);
     manifest.addPlugin(
       TOOL.cursor,
-      InstalledPlugin.fromJSON({
+      RecordedPlugin.fromJSON({
         name: "aidd-context",
         source: { kind: "local", path: "/some/path" },
         version: "1.0.0",
@@ -215,7 +215,7 @@ describe("clean: tracked project files", () => {
     manifest.addTool(TOOL.cursor, "1.0.0", []);
     manifest.addPlugin(
       TOOL.cursor,
-      InstalledPlugin.fromJSON({
+      RecordedPlugin.fromJSON({
         name: "aidd-context",
         source: { kind: "local", path: "/some/path" },
         version: "1.0.0",

@@ -42,8 +42,8 @@ describe("registerNativeGithubPlugins", () => {
       manifest: target,
     });
 
-    const [recorded] = target.getPlugins(TOOL.claude);
-    expect([recorded?.name, recorded?.version, recorded?.marketplace]).toStrictEqual([
+    const [recorded] = target.getRecordedPlugins(TOOL.claude);
+    expect([recorded?.plugin.name, recorded?.plugin.version, recorded?.marketplace]).toStrictEqual([
       "sample",
       "2.0.0",
       "market",
@@ -64,6 +64,6 @@ describe("registerNativeGithubPlugins", () => {
       manifest: target,
     });
 
-    expect(target.getPlugins(TOOL.claude)).toStrictEqual([]);
+    expect(target.getRecordedPlugins(TOOL.claude)).toStrictEqual([]);
   });
 });

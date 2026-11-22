@@ -18,7 +18,9 @@ export async function assertExistingContributionsUnchanged(
 ): Promise<void> {
   const { pluginName, toolIds, manifest, projectRoot } = existing;
   for (const toolId of toolIds) {
-    const previous = manifest.getPlugins(toolId).find((plugin) => plugin.name === pluginName);
+    const previous = manifest
+      .getRecordedPlugins(toolId)
+      .find(({ plugin }) => plugin.name === pluginName);
     if (previous === undefined) continue;
     const tool = tools.aiProfile(toolId);
     await assertProjectMcpEntriesRemovable(fs, { plugin: previous, tool, projectRoot });

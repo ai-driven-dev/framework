@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { RemoveToolFiles } from "../../../../../src/contexts/installation/application/removal/remove-tool-files.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
 import type { MergeFileEntry } from "../../../../../src/shared/domain/merge.js";
@@ -111,7 +111,7 @@ describe("RemoveToolFiles.remove", () => {
     target.manifest.addTool(TOOL.codex, "test", []);
     target.manifest.addPlugin(
       TOOL.claude,
-      InstalledPlugin.fromJSON({
+      RecordedPlugin.fromJSON({
         name: "project-plugin",
         source: { kind: "local", path: "/plugins/project-plugin" },
         version: "1.0.0",
@@ -137,7 +137,7 @@ describe("RemoveToolFiles.remove", () => {
     target.manifest.addTool(TOOL.cursor, "test", []);
     target.manifest.addPlugin(
       TOOL.cursor,
-      InstalledPlugin.fromJSON({
+      RecordedPlugin.fromJSON({
         name: "aidd-context",
         source: { kind: "local", path: "/some/path" },
         version: "1.0.0",

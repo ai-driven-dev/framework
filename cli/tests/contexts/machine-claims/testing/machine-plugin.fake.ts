@@ -25,6 +25,11 @@ export class MachinePlugin implements MachineUserPlugin, UserScopePluginFiles<Ma
     this.files = new Map(Object.entries(fields.files ?? {}));
   }
 
+  /** The plugin itself: the fake is its own plugin, as the claims read one. */
+  get plugin(): { readonly name: string; readonly scope: string } {
+    return this;
+  }
+
   withDependents(dependents: readonly string[]): MachinePlugin {
     return new MachinePlugin({ ...this.fields(), dependents });
   }

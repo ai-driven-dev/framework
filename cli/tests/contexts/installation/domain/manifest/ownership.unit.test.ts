@@ -4,14 +4,14 @@ import {
   createToolEntry,
   type ToolEntry,
 } from "../../../../../src/contexts/installation/domain/manifest/tool-entry.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 const HASH = new FileHash("a".repeat(32));
 
-const plugin = InstalledPlugin.fromJSON({
+const plugin = RecordedPlugin.fromJSON({
   name: "demo",
   source: { kind: "github", repo: "owner/demo" },
   version: "1.0.0",

@@ -1,6 +1,6 @@
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
-import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { NativeHostTool } from "../../ports/tool-sections.js";
 
 /** A ref a machine claim holds on one tool. */
@@ -23,7 +23,7 @@ export interface ClaimedRefWithdrawal<Proof> {
 /** The plugin a removal asks its host about, and where. */
 export interface PluginHostReach {
   readonly tool: NativeHostTool;
-  readonly plugin: InstalledPlugin;
+  readonly plugin: RecordedPlugin;
   readonly projectRoot: string;
   readonly registrations: NativeRegistrations | undefined;
 }

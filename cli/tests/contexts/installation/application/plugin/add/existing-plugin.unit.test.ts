@@ -7,15 +7,15 @@ import {
 } from "../../../../../../src/contexts/installation/application/plugin/add/existing-plugin.js";
 import { DuplicatePluginError } from "../../../../../../src/contexts/installation/domain/installation.error.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { PluginDistribution } from "../../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { VersionMismatchError } from "../../../../../../src/shared/domain/shared.error.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 
 const SOURCE = { kind: "local" as const, path: "/plugin" };
 
-function plugin(name: string): InstalledPlugin {
-  return InstalledPlugin.fromMetadata({
+function plugin(name: string): RecordedPlugin {
+  return RecordedPlugin.fromMetadata({
     name,
     version: "1.0.0",
     source: SOURCE,
@@ -24,7 +24,7 @@ function plugin(name: string): InstalledPlugin {
   });
 }
 
-function manifestWith(...plugins: InstalledPlugin[]): Manifest {
+function manifestWith(...plugins: RecordedPlugin[]): Manifest {
   const manifest = Manifest.create();
   manifest.addTool(TOOL.claude, "1.0.0", []);
   for (const p of plugins) manifest.addPlugin(TOOL.claude, p);
@@ -33,10 +33,7 @@ function manifestWith(...plugins: InstalledPlugin[]): Manifest {
 
 describe("previousInstall", () => {
   it("collects the recorded MCP entries and project hooks of the named plugin only", () => {
-    const withMcp = InstalledPlugin.withMcpEntries(
-      plugin("sample"),
-      new Map([["server", "digest"]])
-    );
+    const withMcp = plugin("sample").withMcpEntries(new Map([["server", "digest"]]));
     const manifest = manifestWith(withMcp, plugin("other"));
 
     const previous = previousInstall("sample", [TOOL.claude], manifest);

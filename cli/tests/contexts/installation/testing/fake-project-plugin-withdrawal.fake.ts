@@ -23,7 +23,7 @@ export class FakeProjectPluginWithdrawal implements ProjectPluginWithdrawalSteps
   }
 
   async withdraw(reach: PluginHostReach): Promise<boolean | undefined> {
-    this.calls.push(`withdraw:${reach.plugin.name}`);
+    this.calls.push(`withdraw:${reach.plugin.plugin.name}`);
     return true;
   }
 

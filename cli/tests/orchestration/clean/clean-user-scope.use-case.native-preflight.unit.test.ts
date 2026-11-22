@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
@@ -182,7 +182,7 @@ describe("clean --scope user: native preflight", () => {
     fs.setFile(projectFile, "project bytes");
     const machine = Manifest.create();
     machine.addTool(TOOL.cursor, "1.0.0", []);
-    const shared = InstalledPlugin.fromMetadata({
+    const shared = RecordedPlugin.fromMetadata({
       name: "shared",
       version: "1.0.0",
       source: { kind: "local", path: "/source" },
@@ -194,7 +194,7 @@ describe("clean --scope user: native preflight", () => {
     machine.addPlugin(TOOL.cursor, shared);
     machine.addPlugin(
       TOOL.cursor,
-      InstalledPlugin.fromMetadata({
+      RecordedPlugin.fromMetadata({
         name: "local",
         version: "1.0.0",
         source: { kind: "local", path: "/source" },
@@ -218,8 +218,8 @@ describe("clean --scope user: native preflight", () => {
     expect(
       repo
         .getCurrent()
-        ?.getPlugins(TOOL.cursor)
-        .find((plugin) => plugin.name === "shared")?.dependents
+        ?.getRecordedPlugins(TOOL.cursor)
+        .find((plugin) => plugin.plugin.name === "shared")?.dependents
     ).toEqual(["/B"]);
 
     machine.updatePlugin(TOOL.cursor, shared.withDependents([]));

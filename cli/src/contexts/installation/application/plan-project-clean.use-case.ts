@@ -3,7 +3,7 @@ import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { NativeRegistrations } from "../domain/manifest/native-registrations.js";
 import type { Manifest } from "../domain/manifest.js";
-import type { InstalledPlugin } from "../domain/plugins/installed-plugin.js";
+import type { RecordedPlugin } from "../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
 import type {
   ProjectRegistrationWithdrawal,
@@ -98,7 +98,7 @@ export class PlanProjectClean {
           tool,
           registrations,
           cacheRoot: tool.nativeActivation()?.pluginCacheRoot(home),
-          refScopes: this.refScopesOf(manifest.getPlugins(toolId), registrations),
+          refScopes: this.refScopesOf(manifest.getRecordedPlugins(toolId), registrations),
         },
       ];
     });
@@ -106,12 +106,12 @@ export class PlanProjectClean {
 
   /** The scope of each plugin the host registered, keyed by its ref. */
   private refScopesOf(
-    plugins: readonly InstalledPlugin[],
+    plugins: readonly RecordedPlugin[],
     registrations: NativeRegistrations
   ): Map<string, Scope> {
     const refScopes = new Map<string, Scope>();
-    for (const plugin of plugins) {
-      const ref = this.deps.asks.records.refOf(registrations, plugin.name, plugin.marketplace);
+    for (const { plugin, marketplace } of plugins) {
+      const ref = this.deps.asks.records.refOf(registrations, plugin.name, marketplace);
       if (ref !== undefined) refScopes.set(ref, plugin.scope);
     }
     return refScopes;

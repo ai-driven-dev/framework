@@ -8,46 +8,52 @@ import {
   MalformedPluginScopeError,
 } from "../installation.error.js";
 import type { FileProvenance } from "./file-provenance.js";
+import { InstalledPlugin } from "./installed-plugin.js";
 import {
   asComponentPathMap,
   asMcpDigestMap,
   asPathHashMap,
   PLUGIN_NAME_REGEX,
   type PluginEntryData,
-  type PluginFields,
 } from "./plugin-entry.js";
+import type { RecordedPluginParts } from "./recorded-plugin.js";
 
-/** Validates a stored entry and reads it into the fields of an installed plugin. */
-export function pluginFieldsFromEntry(data: PluginEntryData): PluginFields {
+/** Validates a stored entry and reads it into the parts a manifest records for a plugin. */
+export function recordedPluginFromEntry(data: PluginEntryData): RecordedPluginParts {
   if (!PLUGIN_NAME_REGEX.test(data.name)) throw new InvalidPluginNameError(data.name);
   if (!isSemver(data.version)) throw new InvalidPluginVersionError(data.version);
   if (!isScope(data.scope)) throw new MalformedPluginScopeError(data.name, data.scope);
-  return {
+  const plugin = new InstalledPlugin({
     name: data.name,
     source: parsePluginSource(data.source),
     version: data.version,
     strict: data.strict,
     files: asPathHashMap(new Map(Object.entries(data.files))),
     scope: data.scope,
+  });
+  return {
+    plugin,
     provenance: provenanceFromEntry(data),
     marketplace: data.marketplace,
     dependents: data.dependents ?? [],
   };
 }
 
-/** Writes the fields of an installed plugin as a stored entry, leaving out what is empty. */
-export function entryFromPluginFields(fields: PluginFields): PluginEntryData {
+/** Writes a recorded plugin back as one stored entry, in the stored key order, leaving out what
+ * is empty: the installed plugin first, then its provenance, its marketplace, its dependents. */
+export function entryFromRecordedPlugin(recorded: RecordedPluginParts): PluginEntryData {
+  const { plugin } = recorded;
   const data: PluginEntryData = {
-    name: fields.name,
-    source: serializePluginSource(fields.source),
-    version: fields.version,
-    strict: fields.strict,
-    files: Object.fromEntries(fields.files),
-    scope: fields.scope,
+    name: plugin.name,
+    source: serializePluginSource(plugin.source),
+    version: plugin.version,
+    strict: plugin.strict,
+    files: Object.fromEntries(plugin.files),
+    scope: plugin.scope,
   };
-  writeProvenance(data, fields.provenance);
-  if (fields.marketplace !== undefined) data.marketplace = fields.marketplace;
-  if (fields.dependents.length > 0) data.dependents = [...fields.dependents];
+  writeProvenance(data, recorded.provenance);
+  if (recorded.marketplace !== undefined) data.marketplace = recorded.marketplace;
+  if (recorded.dependents.length > 0) data.dependents = [...recorded.dependents];
   return data;
 }
 

@@ -5,7 +5,7 @@ import {
   assertProjectHooksRemovable,
   removeProjectHooks,
 } from "../../../../../src/contexts/installation/application/shared/remove-project-hooks.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import {
   errnoError,
@@ -92,7 +92,7 @@ describe("removeProjectHooks", () => {
       hooks: { postToolUse: [second], preToolUse: [entry(OTHER), first] },
     });
     const fs = new InMemoryFileAdapter({ [HOOKS_PATH]: content, [SCRIPT_PATH]: "script" });
-    const installed = InstalledPlugin.fromJSON({
+    const installed = RecordedPlugin.fromJSON({
       ...plugin().toJSON(),
       projectHooks: {
         entries: [

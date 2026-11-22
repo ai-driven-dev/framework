@@ -1,19 +1,19 @@
-import type { InstallationFile } from "../../../../shared/domain/installation-file.js";
-import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
-import { type PluginSource, serializePluginSource } from "../../../../shared/domain/source.js";
-import type { FileProvenance } from "./file-provenance.js";
-import {
-  asMcpDigestMap,
-  asPathHashMap,
-  type PathHashMap,
-  type PluginEntryData,
-  type PluginFields,
-  type ProjectHooksProvenance,
-} from "./plugin-entry.js";
-import { entryFromPluginFields, pluginFieldsFromEntry } from "./plugin-entry-codec.js";
+import type { PluginSource } from "../../../../shared/domain/source.js";
+import { asPathHashMap, type PathHashMap } from "./plugin-entry.js";
 
-export class InstalledPlugin {
+/** What installation owns of a plugin, so a changed copy spreads one plugin into another. */
+export interface InstalledPluginFields {
+  readonly name: string;
+  readonly source: PluginSource;
+  readonly version: string;
+  readonly strict: boolean;
+  readonly files: PathHashMap;
+  readonly scope: Scope;
+}
+
+/** A plugin as installation knows it: what it is, where it came from, and the files it wrote. */
+export class InstalledPlugin implements InstalledPluginFields {
   readonly name: string;
   readonly source: PluginSource;
   readonly version: string;
@@ -23,102 +23,14 @@ export class InstalledPlugin {
    * directory. Recorded once, at install, and never re-derived from a tool's current profile,
    * which can disagree with what was true when the entry was written. */
   readonly scope: Scope;
-  readonly provenance: FileProvenance;
-  readonly marketplace?: string;
-  readonly dependents: readonly string[];
 
-  private constructor(params: PluginFields) {
-    this.name = params.name;
-    this.source = params.source;
-    this.version = params.version;
-    this.strict = params.strict;
-    this.files = params.files;
-    this.scope = params.scope;
-    this.provenance = params.provenance;
-    this.marketplace = params.marketplace;
-    this.dependents = params.dependents;
-  }
-
-  static fromMetadata(metadata: {
-    name: string;
-    version: string;
-    source: PluginSource;
-    strict: boolean;
-    scope: Scope;
-    marketplace?: string;
-  }): InstalledPlugin {
-    const { name, version, source, strict, scope, marketplace } = metadata;
-    const data: PluginEntryData = {
-      name,
-      source: serializePluginSource(source),
-      version,
-      strict,
-      files: {},
-      scope,
-    };
-    if (marketplace !== undefined) data.marketplace = marketplace;
-    return InstalledPlugin.fromJSON(data);
-  }
-
-  static withMcpEntries(
-    plugin: InstalledPlugin,
-    mcpEntries: ReadonlyMap<string, string>
-  ): InstalledPlugin {
-    return new InstalledPlugin({
-      ...plugin,
-      provenance: { ...plugin.provenance, mcpEntries: asMcpDigestMap(mcpEntries) },
-    });
-  }
-
-  static withProjectHooks(
-    plugin: InstalledPlugin,
-    projectHooks: ProjectHooksProvenance | undefined
-  ): InstalledPlugin {
-    return new InstalledPlugin({ ...plugin, provenance: { ...plugin.provenance, projectHooks } });
-  }
-
-  static fromDistribution(installed: {
-    dist: PluginDistribution;
-    source: PluginSource;
-    files: InstallationFile[];
-    scope: Scope;
-    componentPaths?: ReadonlyMap<string, string>;
-    marketplace?: string;
-  }): InstalledPlugin {
-    const { dist, source, files, scope, componentPaths, marketplace } = installed;
-    const filesRecord = Object.fromEntries(files.map((f) => [f.relativePath, f.hash.value]));
-    const componentPathsRecord = Object.fromEntries(componentPaths ?? []);
-    const data: PluginEntryData = {
-      name: dist.manifest.name,
-      source: serializePluginSource(source),
-      version: dist.manifest.version,
-      strict: dist.manifest.strict ?? false,
-      files: filesRecord,
-      scope,
-      componentPaths: componentPathsRecord,
-    };
-    if (marketplace !== undefined) data.marketplace = marketplace;
-    return InstalledPlugin.fromJSON(data);
-  }
-
-  static fromDistributionWithMcp(
-    installed: Parameters<typeof InstalledPlugin.fromDistribution>[0] & {
-      mcpEntries: ReadonlyMap<string, string>;
-    }
-  ): InstalledPlugin {
-    const { mcpEntries, ...distribution } = installed;
-    return InstalledPlugin.withMcpEntries(
-      InstalledPlugin.fromDistribution(distribution),
-      mcpEntries
-    );
-  }
-
-  static fromJSON(data: PluginEntryData): InstalledPlugin {
-    return new InstalledPlugin(pluginFieldsFromEntry(data));
-  }
-
-  toJSON(): PluginEntryData {
-    return entryFromPluginFields(this);
+  constructor(fields: InstalledPluginFields) {
+    this.name = fields.name;
+    this.source = fields.source;
+    this.version = fields.version;
+    this.strict = fields.strict;
+    this.files = fields.files;
+    this.scope = fields.scope;
   }
 
   isFileTracked(relPath: string): boolean {
@@ -131,9 +43,5 @@ export class InstalledPlugin {
 
   withFiles(f: ReadonlyMap<string, string>): InstalledPlugin {
     return new InstalledPlugin({ ...this, files: asPathHashMap(f) });
-  }
-
-  withDependents(dependents: readonly string[]): InstalledPlugin {
-    return new InstalledPlugin({ ...this, dependents: [...new Set(dependents)] });
   }
 }

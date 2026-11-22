@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/contract/built-marketplace.js";
 import type { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.fake.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
@@ -61,7 +61,7 @@ function manifestWithTwoPlugins(): Manifest {
     .withTool(TOOL.claude, [], { version: "test" })
     .withPlugin(
       TOOL.claude,
-      InstalledPlugin.fromMetadata({
+      RecordedPlugin.fromMetadata({
         name: "plugin-a",
         version: "1.0.0",
         source: { kind: "github", repo: "ai-driven-dev/A" },
@@ -72,7 +72,7 @@ function manifestWithTwoPlugins(): Manifest {
     )
     .withPlugin(
       TOOL.claude,
-      InstalledPlugin.fromMetadata({
+      RecordedPlugin.fromMetadata({
         name: "plugin-b",
         version: "1.0.0",
         source: { kind: "github", repo: "ai-driven-dev/B" },

@@ -36,20 +36,22 @@ export class InMemoryMachineManifest implements MachineManifest {
     this.registrations.set(toolId, registrations);
   }
 
-  getPlugins(toolId: string): readonly MachineUserPlugin[] {
+  getRecordedPlugins(toolId: string): readonly MachineUserPlugin[] {
     return this.plugins.get(toolId) ?? [];
   }
 
   addPlugin(toolId: AiToolId, plugin: MachineUserPlugin): void {
     this.requireInstalled(toolId);
-    this.plugins.set(toolId, [...this.getPlugins(toolId), plugin]);
+    this.plugins.set(toolId, [...this.getRecordedPlugins(toolId), plugin]);
   }
 
   updatePlugin(toolId: AiToolId, plugin: MachineUserPlugin): void {
     this.requireInstalled(toolId);
     this.plugins.set(
       toolId,
-      this.getPlugins(toolId).map((held) => (held.name === plugin.name ? plugin : held))
+      this.getRecordedPlugins(toolId).map((held) =>
+        held.plugin.name === plugin.plugin.name ? plugin : held
+      )
     );
   }
 

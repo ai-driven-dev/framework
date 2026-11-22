@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { supersedeExisting } from "../../../../../../src/contexts/installation/application/plugin/add/supersede-existing.js";
 import { DuplicatePluginError } from "../../../../../../src/contexts/installation/domain/installation.error.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 
@@ -11,16 +11,13 @@ function installedManifest(): Manifest {
   manifest.addTool(TOOL.claude, "1.0.0", []);
   manifest.addPlugin(
     TOOL.claude,
-    InstalledPlugin.withMcpEntries(
-      InstalledPlugin.fromMetadata({
-        name: "sample",
-        version: "1.0.0",
-        source: { kind: "local", path: "/plugin" },
-        strict: false,
-        scope: "project",
-      }),
-      new Map([["server", "digest"]])
-    )
+    RecordedPlugin.fromMetadata({
+      name: "sample",
+      version: "1.0.0",
+      source: { kind: "local", path: "/plugin" },
+      strict: false,
+      scope: "project",
+    }).withMcpEntries(new Map([["server", "digest"]]))
   );
   return manifest;
 }

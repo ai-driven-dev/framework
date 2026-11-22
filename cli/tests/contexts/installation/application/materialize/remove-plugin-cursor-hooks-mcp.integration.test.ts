@@ -144,7 +144,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
     await installPlugin(fs, manifest, PLUGIN_NAME);
-    const previous = manifest.getPlugins(TOOL.cursor)[0].provenance.projectHooks;
+    const previous = manifest.getRecordedPlugins(TOOL.cursor)[0].provenance.projectHooks;
     manifest.removePlugin(TOOL.cursor, PLUGIN_NAME);
     await installPlugin(fs, manifest, PLUGIN_NAME, previous);
 
@@ -159,7 +159,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
     await installPlugin(fs, manifest, PLUGIN_NAME);
-    const previous = manifest.getPlugins(TOOL.cursor)[0].provenance.projectHooks;
+    const previous = manifest.getRecordedPlugins(TOOL.cursor)[0].provenance.projectHooks;
     fs.setFile(SCRIPT_PATH, "edited by user");
     manifest.removePlugin(TOOL.cursor, PLUGIN_NAME);
     await expect(installPlugin(fs, manifest, PLUGIN_NAME, previous)).rejects.toThrow(
@@ -173,7 +173,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
     await installPlugin(fs, manifest, PLUGIN_NAME);
-    const previous = manifest.getPlugins(TOOL.cursor)[0].provenance.projectHooks;
+    const previous = manifest.getRecordedPlugins(TOOL.cursor)[0].provenance.projectHooks;
     manifest.removePlugin(TOOL.cursor, PLUGIN_NAME);
     const translator = new ModeBFlatMaterializationTranslator(
       fs,
@@ -193,7 +193,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     });
     expect(fs.has(HOOKS_PATH)).toBe(false);
     expect(fs.has(SCRIPT_PATH)).toBe(false);
-    expect(manifest.getPlugins(TOOL.cursor)[0].provenance.projectHooks).toBeUndefined();
+    expect(manifest.getRecordedPlugins(TOOL.cursor)[0].provenance.projectHooks).toBeUndefined();
   });
 
   it("refuses to remove an edited project hook script without detaching the plugin record", async () => {
@@ -215,8 +215,8 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     expect(
       repo
         .getCurrent()
-        ?.getPlugins(TOOL.cursor)
-        .some((p) => p.name === PLUGIN_NAME)
+        ?.getRecordedPlugins(TOOL.cursor)
+        .some((p) => p.plugin.name === PLUGIN_NAME)
     ).toBe(true);
   });
 
@@ -242,7 +242,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     ).rejects.toThrow(saying(/edited.*hooks|hooks.*edited/));
     expect(fs.getFile(HOOKS_PATH)).toContain("--user-flag");
     expect(fs.has(OTHER_SCRIPT_PATH)).toBe(true);
-    expect(repo.getCurrent()?.getPlugins(TOOL.cursor)).toHaveLength(2);
+    expect(repo.getCurrent()?.getRecordedPlugins(TOOL.cursor)).toHaveLength(2);
   });
 
   it("does not delete an untracked user script just because it shares a plugin directory", async () => {

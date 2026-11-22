@@ -1,6 +1,6 @@
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
-import type { InstalledPlugin } from "../domain/plugins/installed-plugin.js";
+import type { RecordedPlugin } from "../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
 import type { RegistrationRecordRules } from "../ports/native-host.js";
 import type { ProjectPluginIntegration } from "../ports/tool-sections.js";
@@ -14,7 +14,7 @@ export interface ProjectCleanAsks {
   readonly homeDir: () => string;
   /** Read-only proof that a plugin's MCP entries can be removed from the project. */
   readonly assertMcpRemovable: (
-    plugin: InstalledPlugin,
+    plugin: RecordedPlugin,
     tool: ProjectPluginIntegration,
     projectRoot: string
   ) => Promise<void>;
@@ -88,7 +88,7 @@ export class CleanProjectFiles {
     if (manifest === null) return;
     for (const toolId of manifest.getInstalledToolIds()) {
       if (!this.tools.isAiTool(toolId)) continue;
-      for (const plugin of manifest.getPlugins(toolId)) {
+      for (const plugin of manifest.getRecordedPlugins(toolId)) {
         const tool = this.tools.aiProfile(toolId);
         await assertProjectHooksRemovable({
           fs: this.deps.fs,
