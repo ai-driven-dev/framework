@@ -82,9 +82,18 @@ jobs:
               plugins/*/skills/*/scripts/*|plugins/*/hooks/*)
                 relevant=true
                 ;;
+              # The recipes the cli-build job validates against the built binary.
+              plugins/aidd-context/skills/12-cook/assets/recipes/*)
+                relevant=true
+                ;;
               # This file: a change to how the suite runs matches nothing else here, so the
               # workflow deciding whether the suite passes would land unverified.
               .github/workflows/cli-ci.yml)
+                relevant=true
+                ;;
+              # The local gates and the other workflows decide what a change must pass; the
+              # architecture and test jobs here are the ones that replay them.
+              lefthook.yml|.github/workflows/*)
                 relevant=true
                 ;;
             esac
@@ -385,6 +394,8 @@ jobs:
           restore-keys: pnpm-${{ runner.os }}-
       - run: cd cli && pnpm install --frozen-lockfile
       - run: cd cli && pnpm build
+      - name: The embedded recipes validate against the built binary
+        run: AIDD_SKIP_UPDATE_CHECK=1 node cli/dist/cli.js framework validate-recipes --all --bundled plugins/aidd-context/skills/12-cook/assets/recipes
 
   cli-knip:
     name: cli / Knip (dead code)
@@ -497,6 +508,7 @@ jobs:
           restore-keys: pnpm-${{ runner.os }}-
       - run: cd cli && pnpm install --frozen-lockfile
       - run: cd cli && pnpm jscpd
+      - run: cd cli && pnpm jscpd:profiles
 
   kanban-checks:
     name: kanban / Typecheck, Lint & Test
@@ -682,7 +694,14 @@ jobs:
           path: ${{ env.LEG_DIR }}/incremental.json
           key: mutation--${{ env.LEG }}--${{ github.run_id }}
           restore-keys: mutation--${{ env.LEG }}--
-      - run: cd cli && node scripts/run-mutation.mjs "${{ matrix.scope }}" ${{ matrix.of > 1 && format('--shard {0}/{1}', matrix.shard, matrix.of) || '' }} ${{ github.event_name != 'pull_request' && github.event_name != 'push' && '--force' || '' }}
+      - name: Mutate the leg
+        run: |
+          set -o pipefail
+          cd cli && node scripts/run-mutation.mjs "${{ matrix.scope }}" ${{ matrix.of > 1 && format('--shard {0}/{1}', matrix.shard, matrix.of) || '' }} ${{ github.event_name != 'pull_request' && github.event_name != 'push' && '--force' || '' }} | tee "$RUNNER_TEMP/score.txt"
+      # Each run's score line lands in its job summary: the weekly runs are the score trend.
+      - name: Record the score in the job summary
+        if: always()
+        run: grep -hE '^(Report|Shard )' "$RUNNER_TEMP/score.txt" >> "$GITHUB_STEP_SUMMARY" || true
       - name: Save this leg's incremental file
         if: always()
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -731,7 +750,12 @@ jobs:
           pattern: mutation-${{ matrix.scope }}-shard-*
           path: shards
       - name: Score the scope over every shard, against its floor
-        run: node cli/scripts/run-mutation.mjs "${{ matrix.scope }}" --aggregate "$GITHUB_WORKSPACE/shards"
+        run: |
+          set -o pipefail
+          node cli/scripts/run-mutation.mjs "${{ matrix.scope }}" --aggregate "$GITHUB_WORKSPACE/shards" | tee "$RUNNER_TEMP/score.txt"
+      - name: Record the score in the job summary
+        if: always()
+        run: grep -hE '^Report' "$RUNNER_TEMP/score.txt" >> "$GITHUB_STEP_SUMMARY" || true
 
   gate:
     name: cli / gate

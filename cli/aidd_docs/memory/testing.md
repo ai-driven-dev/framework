@@ -21,6 +21,23 @@ How `cli/` is tested. Levels, guards and the review grid: [`actions/05-test.md`]
 | `pnpm smoke:full`, `smoke:collision` | the remote fetch; a person's own install left as seeded |
 | `pnpm smoke:real` | real host registries: [`smoke-real.md`](internal/smoke-real.md) |
 
+## Where each guard runs
+
+| Guard | Pre-commit | Pre-push | CI |
+| --- | --- | --- | --- |
+| Biome, typecheck, `architecture` project, type honesty | yes | no, replayed by CI | `cli-lint`, `cli-typecheck`, `cli-architecture` |
+| Debt shrink, knip, `jscpd`, `jscpd:profiles`, recipe validity | no | yes | the debt shrink runs in `cli-architecture`; `cli-knip`, `cli-jscpd`, `cli-build` |
+| `unit`, `contract`, `integration`, `e2e`, `golden` | no | yes | `cli-coverage` |
+| `tooling` project | no | no, CI only: it is the slowest and needs a real tool config | `cli-coverage` (every project) and the Windows and macOS jobs |
+
+CI only, because each costs minutes or needs a runner the machine lacks:
+
+- Bundle size budget: runs in `cli-build`, which builds the binary.
+- Coverage thresholds: `cli-coverage`, a full instrumented run.
+- Smoke, kilo runtime, identifier join, claude tokens: `cli-smoke`, `cli-kilo-runtime`, `identifier-join`, `claude-tokens`; each starts a real host binary or a pseudo-terminal.
+- Mutation and its score: `cli-mutation`, `cli-mutation-score`; hours of work, scoped per change.
+- `kanban` suite: `kanban-checks`; no local job fires on `kanban/` alone.
+
 ## Mutation
 
 - Scopes and floors: `mutation-scopes.json`. A scope with a floor (`telemetry`, `shared`) runs per pull request when its source or its declared tests changed, and the canary runs only with the full set; a change to `stryker.conf.json`, `vitest.mutation.config.ts` or the scopes file runs all. Scopes without a floor run in the weekly schedule and by `workflow_dispatch`, and never fail. Selection: `scripts/mutation-scopes-to-run.mjs`.

@@ -2,6 +2,8 @@
 import type { Plant } from "./biome-plants.js";
 
 const githubUrl = 'export const url = "https://api.github.com/repos/a/b/releases";\n';
+// Built in two parts so the plant source holds a real placeholder without tripping the string lint.
+const githubTemplate = `export const url = \`https://api.github.com/repos/$${"{"}a}/releases\`;\n`;
 const OUTSIDE_AUTH = "src/contexts/update/infrastructure";
 
 export const PLUGIN_PLANTS: readonly Plant[] = [
@@ -16,6 +18,7 @@ export const PLUGIN_PLANTS: readonly Plant[] = [
   ],
   // A GitHub API URL is written by the GitHub adapter only.
   ["src/contexts/update/infrastructure/builds-github-url.ts", githubUrl, "plugin", 1],
+  ["src/contexts/update/infrastructure/builds-github-template.ts", githubTemplate, "plugin", 1],
   [
     "src/shared/infrastructure/github-adapter.ts",
     `// biome-ignore lint/plugin: the one place the GitHub API base is written\n${githubUrl}`,

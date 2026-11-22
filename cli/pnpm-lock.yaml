@@ -209,9 +209,6 @@ importers:
       '@commitlint/cli':
         specifier: ^21.2.1
         version: 21.2.3(@types/node@26.6.5)(conventional-commits-parser@7.1.2)(typescript@7.0.2)
-      '@commitlint/config-conventional':
-        specifier: ^21.2.0
-        version: 21.2.3
       '@stryker-mutator/core':
         specifier: ^10.0.0
         version: 10.0.0(@types/node@26.6.5)

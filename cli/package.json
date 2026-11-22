@@ -64,7 +64,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "biome check --error-on-warnings .",
     "format": "biome format --write .",
-    "jscpd": "jscpd src/ --threshold 3.3",
+    "jscpd": "jscpd src/ --threshold 3.3 && jscpd tests/ --ignore \"tests/fixtures/**,tests/golden/**\" --format typescript --threshold 7.2",
     "biome:boundaries": "node --experimental-strip-types scripts/generate-biome-boundaries.mjs",
     "jscpd:profiles": "node scripts/profile-copies.mjs",
     "pack:local": "pnpm build && pnpm pack --pack-destination ./dist",
@@ -98,7 +98,6 @@
   "devDependencies": {
     "@biomejs/biome": "^2.4.7",
     "@commitlint/cli": "^21.2.1",
-    "@commitlint/config-conventional": "^21.2.0",
     "@stryker-mutator/core": "^10.0.0",
     "@stryker-mutator/instrumenter": "^10.0.0",
     "@stryker-mutator/vitest-runner": "^10.0.0",

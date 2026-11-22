@@ -30,6 +30,7 @@
       "style": {
         "noExportedImports": "error",
         "useTemplate": "error",
+        "useImportType": "error",
         "useFilenamingConvention": {
           "level": "error",
           "options": {
