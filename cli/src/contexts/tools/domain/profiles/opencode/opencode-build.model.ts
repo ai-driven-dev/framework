@@ -96,7 +96,7 @@ export function buildOpencodeFlatContract(hooks: OpencodeHooks): ToolBuildContra
         placement: agentsIn(OPENCODE_FLAT_LAYOUT),
         agentMarkdown: opencodeAgentMarkdown,
       },
-      mcp: { supported: false }, // handled by configArtifact (opencode.json mcp)
+      mcp: { supported: false, reason: "carried by the config artifact (opencode.json mcp)" },
       hooks: flatHooksArtifact(hooks, { bridge: generateOpencodeHooksBridge }),
     },
     buildMarketplaceCatalog: null,

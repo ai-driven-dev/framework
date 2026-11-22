@@ -15,7 +15,7 @@ import {
 } from "../../../../src/contexts/translate/domain/flat-layout.js";
 import { flatArtifactLayout } from "../../../../src/shared/domain/materialization/flat-paths.js";
 
-const unsupported: ArtifactContract = { supported: false };
+const unsupported: ArtifactContract = { supported: false, reason: "off in this test" };
 
 function supportedAs(placement: ArtifactPlacement): Extract<ArtifactContract, { supported: true }> {
   return { supported: true, source: { kind: "configFile", srcPath: "x" }, placement };

@@ -68,7 +68,7 @@ describe("translate with a build layout", () => {
   });
 
   it("leaves a malformed MCP declaration alone for a tool that merges none of it", () => {
-    const contract = flatContract({ supported: false });
+    const contract = flatContract({ supported: false, reason: "off in this test" });
 
     expect(build({ ".mcp.json": "{ not json" }, contract).mcp).toBeNull();
   });

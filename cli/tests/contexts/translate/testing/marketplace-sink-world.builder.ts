@@ -2,10 +2,10 @@ import { resolve } from "node:path";
 import type {
   ArtifactContract,
   ArtifactPlacement,
-  SourceMarketplaceRef,
   ToolBuildContract,
 } from "../../../../src/contexts/tools/contract/build-contract.js";
 import type { JsonSchemaValidator } from "../../../../src/contexts/translate/ports/json-schema-validator.js";
+import type { SourceMarketplaceRef } from "../../../../src/shared/domain/plugin/source-refs.js";
 import type { AssetProvider } from "../../../../src/shared/ports/asset-provider.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import type { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";

@@ -13,7 +13,14 @@ function agentsBuilt(files: Record<string, string>, agents = aSupportedArtifact(
   const contract = aStubBuildContract();
   const built = translateBuildLayout(
     aCanon(PLUGIN, files),
-    { ...contract, artifacts: { ...contract.artifacts, agents, skills: { supported: false } } },
+    {
+      ...contract,
+      artifacts: {
+        ...contract.artifacts,
+        agents,
+        skills: { supported: false, reason: "off in this test" },
+      },
+    },
     "marketplace"
   );
   return Object.fromEntries(built.map((file) => [file.relativePath, file.content]));
@@ -54,6 +61,8 @@ describe("the marketplace layout of a plugin's agents", () => {
   });
 
   it("builds no agent for a tool that has none", () => {
-    expect(agentsBuilt({ "agents/a.md": "# a\n" }, { supported: false })).toEqual({});
+    expect(
+      agentsBuilt({ "agents/a.md": "# a\n" }, { supported: false, reason: "off in this test" })
+    ).toEqual({});
   });
 });

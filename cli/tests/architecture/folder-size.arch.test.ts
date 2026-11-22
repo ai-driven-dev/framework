@@ -22,7 +22,6 @@ const OVER_THE_CAP: Readonly<Record<string, number>> = {
   "contexts/machine-claims/application": 12,
   "contexts/telemetry/domain": 14,
   "contexts/tools/domain/formats": 11,
-  "contexts/tools/domain/sections": 11,
   "presentation/controllers": 30,
   "presentation/presenters": 15,
   "shared/domain": 14,

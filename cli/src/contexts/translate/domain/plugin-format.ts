@@ -1,6 +1,6 @@
+import { SOURCE_PLUGIN_MANIFEST_RELATIVE } from "../../../shared/domain/plugin/canon-paths.js";
 import type { AiToolId } from "../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
-import { SOURCE_PLUGIN_MANIFEST_RELATIVE } from "./canon-format.js";
 
 export interface DistributionProbe {
   /** The tool whose layout a plugin distribution follows. */

@@ -16,7 +16,10 @@ describe("translateBuildLayout", () => {
     const contract = aStubBuildContract();
     const bare = {
       ...contract,
-      artifacts: { ...contract.artifacts, skills: { supported: false as const } },
+      artifacts: {
+        ...contract.artifacts,
+        skills: { supported: false as const, reason: "off in this test" },
+      },
     };
     expect(translateBuildLayout(canon, bare, "marketplace")).toEqual([]);
   });

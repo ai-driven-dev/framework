@@ -1,26 +1,24 @@
 import { join, resolve } from "node:path";
 import { describeError } from "../../../shared/domain/describe-error.js";
 import { pathsOverlap } from "../../../shared/domain/paths.js";
+import { SOURCE_MARKETPLACE_RELATIVE } from "../../../shared/domain/plugin/canon-paths.js";
+import type {
+  SourceMarketplaceRef,
+  SourcePluginEntryRef,
+} from "../../../shared/domain/plugin/source-refs.js";
 import { tryParseJson } from "../../../shared/domain/reading/json-file.js";
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import { InvalidSourceMarketplaceError } from "../../../shared/domain/shared.error.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../shared/ports/logger.js";
-import type {
-  SourceMarketplaceRef,
-  SourcePluginEntryRef,
-} from "../../tools/contract/build-contract.js";
 import type { FrameworkBuildMode } from "../../tools/contract/tool-profile.js";
 import type {
   BuildPluginResult,
   FrameworkBuildRequest,
   FrameworkBuildResult,
 } from "../contract/build-targets.js";
-import {
-  OUT_OF_SCOPE_PLUGIN_SECTIONS,
-  SOURCE_MARKETPLACE_RELATIVE,
-} from "../domain/canon-format.js";
+import { OUT_OF_SCOPE_PLUGIN_SECTIONS } from "../domain/canon-format.js";
 import { InvalidBuildPathsError } from "../domain/translate.error.js";
 import type {
   BuiltPlugin,

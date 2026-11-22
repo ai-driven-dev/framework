@@ -26,9 +26,9 @@ function flatSkills(
       artifacts: {
         ...contract.artifacts,
         skills,
-        agents: { supported: false },
-        hooks: { supported: false },
-        mcp: { supported: false },
+        agents: { supported: false, reason: "off in this test" },
+        hooks: { supported: false, reason: "off in this test" },
+        mcp: { supported: false, reason: "off in this test" },
       },
     },
     "flat"

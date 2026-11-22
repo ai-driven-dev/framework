@@ -53,7 +53,10 @@ describe("the agents a flat layout writes", () => {
   it("writes nothing for a layout hosting no agent", async () => {
     const memFs = new InMemoryFileAdapter({ [`${STUB_PLUGIN_SRC}/agents/reviewer.md`]: reviewer });
     const contract = stubContract({
-      artifacts: { ...stubContract().artifacts, agents: { supported: false } },
+      artifacts: {
+        ...stubContract().artifacts,
+        agents: { supported: false, reason: "off in this test" },
+      },
     });
     expect(await stubWrite(memFs, contract)).toBe(0);
     expect(writtenUnder(memFs, STUB_OUT)).toEqual({});
@@ -139,7 +142,10 @@ describe("the skills a flat layout writes", () => {
   it("writes nothing for a layout hosting no skill", async () => {
     const memFs = skillFs();
     const contract = stubContract({
-      artifacts: { ...stubContract().artifacts, skills: { supported: false } },
+      artifacts: {
+        ...stubContract().artifacts,
+        skills: { supported: false, reason: "off in this test" },
+      },
     });
     expect(await stubWrite(memFs, contract)).toBe(0);
     expect(writtenUnder(memFs, STUB_OUT)).toEqual({});

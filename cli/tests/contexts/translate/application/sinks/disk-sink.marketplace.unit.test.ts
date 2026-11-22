@@ -166,7 +166,10 @@ describe("the agents a marketplace layout writes", () => {
   it("writes none for a layout hosting no agent", async () => {
     const fs = new InMemoryFileAdapter({ [`${PLUGIN_SRC}/agents/reviewer.md`]: reviewer });
     const contract = stubContract({
-      artifacts: { ...stubContract().artifacts, agents: { supported: false } },
+      artifacts: {
+        ...stubContract().artifacts,
+        agents: { supported: false, reason: "off in this test" },
+      },
     });
     expect(await sinkFor(fs, contract).write()).toBe(0);
     expect(writtenUnder(fs, OUT_DIR)).toEqual({});
@@ -189,7 +192,10 @@ describe("the skills a marketplace layout writes", () => {
   it("writes none for a layout hosting no skill", async () => {
     const fs = new InMemoryFileAdapter({ [`${PLUGIN_SRC}/skills/hello/SKILL.md`]: "# Hello\n" });
     const contract = stubContract({
-      artifacts: { ...stubContract().artifacts, skills: { supported: false } },
+      artifacts: {
+        ...stubContract().artifacts,
+        skills: { supported: false, reason: "off in this test" },
+      },
     });
     expect(await sinkFor(fs, contract).write()).toBe(0);
     expect(writtenUnder(fs, OUT_DIR)).toEqual({});
@@ -288,7 +294,10 @@ describe("the mcp declaration a marketplace layout writes", () => {
   it("writes none for a layout hosting no mcp declaration", async () => {
     const fs = new InMemoryFileAdapter({ [`${PLUGIN_SRC}/.mcp.json`]: mcpJson });
     const contract = stubContract({
-      artifacts: { ...stubContract().artifacts, mcp: { supported: false } },
+      artifacts: {
+        ...stubContract().artifacts,
+        mcp: { supported: false, reason: "off in this test" },
+      },
     });
     expect(await sinkFor(fs, contract).write()).toBe(0);
     expect(writtenUnder(fs, OUT_DIR)).toEqual({});

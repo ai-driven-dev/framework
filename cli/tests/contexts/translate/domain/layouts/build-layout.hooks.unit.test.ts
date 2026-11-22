@@ -23,8 +23,8 @@ function hooksBuilt(
       artifacts: {
         ...contract.artifacts,
         hooks,
-        agents: { supported: false },
-        skills: { supported: false },
+        agents: { supported: false, reason: "off in this test" },
+        skills: { supported: false, reason: "off in this test" },
       },
     },
     "marketplace"
@@ -77,6 +77,8 @@ describe("the marketplace layout of a plugin's hooks", () => {
   });
 
   it("builds no hook for a tool that has none", () => {
-    expect(hooksBuilt({ "hooks/hooks.json": "{}" }, { supported: false })).toEqual({});
+    expect(
+      hooksBuilt({ "hooks/hooks.json": "{}" }, { supported: false, reason: "off in this test" })
+    ).toEqual({});
   });
 });

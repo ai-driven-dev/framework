@@ -1,8 +1,8 @@
 import { join } from "node:path";
+import { SOURCE_PLUGIN_MANIFEST_RELATIVE } from "../../../../shared/domain/plugin/canon-paths.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
+import type { SourceMarketplaceRef } from "../../../../shared/domain/plugin/source-refs.js";
 import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
-import type { SourceMarketplaceRef } from "../../../tools/contract/build-contract.js";
-import { SOURCE_PLUGIN_MANIFEST_RELATIVE } from "../../domain/canon-format.js";
 import { translate } from "../../domain/engine.js";
 import type { OutputFile } from "../../domain/output-file.js";
 import {
