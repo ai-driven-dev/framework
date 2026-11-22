@@ -2,7 +2,9 @@ pre-commit:
   output: true
   commands:
     json-validity:
-      glob: "**/*.json"
+      glob:
+        - "*.json"
+        - "**/*.json"
       exclude:
         - "cli/tests/fixtures/**"
       run: |
@@ -10,9 +12,11 @@ pre-commit:
           echo '❌ node not available; cannot validate JSON'
           exit 1
         fi
-        node scripts/validate-json.mjs {files}
+        node scripts/validate-json.mjs {staged_files}
     yaml-validity:
-      glob: "**/*.{yml,yaml}"
+      glob:
+        - "*.{yml,yaml}"
+        - "**/*.{yml,yaml}"
       exclude:
         - "plugins/*/skills/*/assets/**"
       run: |
@@ -20,7 +24,7 @@ pre-commit:
           echo '❌ node not available; cannot validate YAML'
           exit 1
         fi
-        node scripts/validate-yaml.mjs {files}
+        node scripts/validate-yaml.mjs {staged_files}
     scripts-tests:
       glob: "{scripts,plugins,cli/src}/**"
       run: |
@@ -42,7 +46,7 @@ pre-commit:
     skill-frontmatter:
       glob: "plugins/*/skills/*/SKILL.md"
       run: |
-        for f in {files}; do
+        for f in {staged_files}; do
           [ -f $f ] || continue
           if ! head -10 $f | grep -q '^name:'; then
             echo '❌ missing name: frontmatter:' $f
@@ -68,7 +72,7 @@ pre-commit:
           echo 'ℹ️  node not available; skipping architecture-rules'
           exit 0
         fi
-        node scripts/check-architecture-rules.js {files}
+        node scripts/check-architecture-rules.js {staged_files}
     context-imports:
       # Two patterns: "**/" needs a literal slash, so it never matches a repository-root file.
       glob:
@@ -111,7 +115,9 @@ pre-commit:
         node scripts/check-hook-rule-copies.js
 
     doc-duplication:
-      glob: "**/*.md"
+      glob:
+        - "*.md"
+        - "**/*.md"
       run: |
         if ! command -v node >/dev/null 2>&1; then
           echo 'ℹ️  node not available; skipping doc-duplication'
@@ -120,7 +126,9 @@ pre-commit:
         node scripts/check-doc-duplication.js
 
     markdown-links:
-      glob: "**/*.md"
+      glob:
+        - "*.md"
+        - "**/*.md"
       run: |
         if ! command -v node >/dev/null 2>&1; then
           echo 'ℹ️  node not available; skipping markdown-links'
