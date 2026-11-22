@@ -18,7 +18,8 @@ How `cli/` is tested. Levels, guards and the review grid: [`actions/05-test.md`]
 | `pnpm test:unit`, `test:contract`, `test:integration`, `test:e2e`, `test:golden`, `test:arch` | one project |
 | `pnpm golden:update [name]` | rewrites the stored goldens, or those under `tests/golden/<name>*`; refused in CI |
 | `pnpm smoke` | the built binary over `scripts/smoke-tools.sh`, hermetic |
-| `pnpm smoke:full`, `smoke:collision` | the remote fetch; a person's own install left as seeded |
+| `pnpm smoke:full`, `smoke:collision` | the remote fetch; a person's own install left as seeded. `cli-build` runs the collision script in CI |
+| `pnpm test:host-contract` | the recorded host behaviour replayed on the installed host binaries, no login. The weekly `host-contract` job runs it |
 | `pnpm smoke:real` | real host registries: [`smoke-real.md`](internal/smoke-real.md) |
 
 ## Where each guard runs

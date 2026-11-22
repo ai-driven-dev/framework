@@ -348,6 +348,41 @@ jobs:
       # token and no network. `smoke:full` adds the remote-fetch section on demand.
       - run: cd cli && pnpm smoke
 
+  # Weekly and on demand only. Installs the newest host binary and replays the recorded host
+  # behaviour against it, in a throwaway HOME over local marketplaces: no model, no login, no
+  # secret. A red run means a host changed its word, so tests/fixtures/hosts needs a new recording.
+  host-contract:
+    name: cli / Host contract (${{ matrix.host }})
+    needs: [changes]
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { host: claude, package: "@anthropic-ai/claude-code" }
+          - { host: codex, package: "@openai/codex" }
+          - { host: copilot, package: "@github/copilot" }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install pnpm
+        run: corepack enable
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      - name: Cache pnpm store
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.local/share/pnpm/store
+          key: pnpm-${{ runner.os }}-${{ hashFiles('cli/pnpm-lock.yaml') }}
+          restore-keys: pnpm-${{ runner.os }}-
+      - run: cd cli && pnpm install --frozen-lockfile
+      - name: Install the host binary
+        run: npm install -g ${{ matrix.package }}@latest
+      - name: The host answers as recorded
+        run: cd cli && pnpm test:host-contract
+
   cli-kilo-runtime:
     name: cli / Kilo runtime smoke
     needs: [changes]
@@ -396,6 +431,9 @@ jobs:
       - run: cd cli && pnpm build
       - name: The embedded recipes validate against the built binary
         run: AIDD_SKIP_UPDATE_CHECK=1 node cli/dist/cli.js framework validate-recipes --all --bundled plugins/aidd-context/skills/12-cook/assets/recipes
+      # Cursor only: no codex or copilot binary is on the runner, so the script skips them.
+      - name: A person's own registration survives setup and clean
+        run: cd cli && bash scripts/smoke-collision.sh
 
   cli-knip:
     name: cli / Knip (dead code)

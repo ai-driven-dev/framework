@@ -4,7 +4,8 @@
 # `smoke-real.sh` gives every run a unique name so it never meets a real install, which is
 # exactly why it cannot see this collision. Everything here runs in a throwaway HOME (and
 # CODEX_HOME); the person's install is seeded there, never read from the real one.
-# Never in CI, never in lefthook: `pnpm smoke:collision`.
+# CI runs it on a built binary with whichever of these hosts is installed; never in lefthook.
+# Locally: `pnpm smoke:collision`.
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
