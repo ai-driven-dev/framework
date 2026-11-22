@@ -1,8 +1,6 @@
 import type { HintedMessage } from "../../../../shared/domain/describe-error.js";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
-import type { Logger } from "../../../../shared/ports/logger.js";
 import { Manifest } from "../../domain/manifest.js";
-import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type {
   InstallRuntimeConfig,
@@ -32,49 +30,25 @@ export interface InstallAiToolRequest {
   propagatePlugins: boolean;
 }
 
-/** A warning's words, with the failure it tails when one caused it: the presentation words that. */
-export interface PropagationWarning {
-  text: string;
-  cause?: unknown;
+/** A plugin another tool carries, as propagation reads it to put it on the new tool. */
+export interface PluginToPropagate {
+  readonly name: string;
+  readonly version: string | undefined;
+  /** Where it came from; a plugin recorded without one cannot be propagated. */
+  readonly marketplace: string | undefined;
 }
 
 export interface InstallAiToolResult {
   runtimeResult: InstallRuntimeConfigResult;
-  propagatedPlugins: string[];
-  propagationWarnings: PropagationWarning[];
-  /** What native activation did while re-registering the plugins this run propagated -
-   * `undefined` when nothing was propagated, so activation never ran. */
-  activation?: NativeActivationReport;
-}
-
-/** Re-registers the native settings of what a run propagated. Supplied by the composition root. */
-export interface ActivatePropagatedPlugins {
-  execute(options: { projectRoot: string }): Promise<NativeActivationReport>;
-}
-
-/** The one thing propagation asks of the plugin installer: put a named marketplace plugin on a
- * tool, quietly. Supplied by the composition root. */
-export interface MarketplacePluginInstaller {
-  execute(options: {
-    pluginName: string;
-    version: string | undefined;
-    fromMarketplace: string | undefined;
-    toolIds: AiToolId[];
-    projectRoot: string;
-    interactive: boolean;
-    autoSelect: boolean;
-    replace: boolean;
-    requestedVersionPolicy: "prefer-catalog";
-  }): Promise<unknown>;
+  /** What the caller may carry onto the new tool; empty when the install was skipped, plugins
+   * were not asked for, or no manifest remained to read them from. */
+  pluginsToPropagate: readonly PluginToPropagate[];
 }
 
 /** What InstallAiTool is built from. */
 export interface InstallAiToolDeps {
   readonly installRuntimeConfig: InstallRuntimeConfig;
   readonly manifestRepo: ManifestRepository;
-  readonly pluginInstallFromMarketplace: MarketplacePluginInstaller;
-  readonly activatePropagated: ActivatePropagatedPlugins;
-  readonly logger: Logger;
 }
 
 export class InstallAiTool {
@@ -91,73 +65,17 @@ export class InstallAiTool {
       version,
     });
     if (runtimeResult.skipped || !propagatePlugins) {
-      return { runtimeResult, propagatedPlugins: [], propagationWarnings: [] };
+      return { runtimeResult, pluginsToPropagate: [] };
     }
-    return this.propagateAndSync(toolId, projectRoot, runtimeResult);
-  }
-
-  private async propagateAndSync(
-    toolId: AiToolId,
-    projectRoot: string,
-    runtimeResult: InstallRuntimeConfigResult
-  ): Promise<InstallAiToolResult> {
-    const freshManifest = await this.deps.manifestRepo.load();
-    if (freshManifest === null) {
-      return { runtimeResult, propagatedPlugins: [], propagationWarnings: [] };
-    }
-    const plugins = pluginsOnOtherTools(freshManifest, toolId);
-    const propagated: string[] = [];
-    const warnings: PropagationWarning[] = [];
-    for (const plugin of plugins) {
-      const outcome = await this.propagatePlugin({ plugin, toolId, projectRoot });
-      if (outcome.propagated !== undefined) propagated.push(outcome.propagated);
-      if (outcome.warning !== undefined) warnings.push(outcome.warning);
-    }
-    const activation =
-      propagated.length > 0
-        ? await this.deps.activatePropagated.execute({ projectRoot })
-        : undefined;
+    const fresh = await this.deps.manifestRepo.load();
+    const plugins = fresh === null ? [] : pluginsOnOtherTools(fresh, toolId);
     return {
       runtimeResult,
-      propagatedPlugins: propagated,
-      propagationWarnings: warnings,
-      activation,
-    };
-  }
-
-  private async propagatePlugin(request: {
-    plugin: RecordedPlugin;
-    toolId: AiToolId;
-    projectRoot: string;
-  }): Promise<{ propagated?: string; warning?: PropagationWarning }> {
-    const { plugin: recorded, toolId, projectRoot } = request;
-    const { plugin, marketplace } = recorded;
-    if (marketplace === undefined) {
-      return { warning: { text: this.warnNoMarketplace(plugin.name, toolId) } };
-    }
-    try {
-      await this.deps.pluginInstallFromMarketplace.execute({
-        pluginName: plugin.name,
+      pluginsToPropagate: plugins.map(({ plugin, marketplace }) => ({
+        name: plugin.name,
         version: plugin.version,
-        fromMarketplace: marketplace,
-        toolIds: [toolId],
-        projectRoot,
-        interactive: false,
-        autoSelect: true,
-        replace: true,
-        requestedVersionPolicy: "prefer-catalog",
-      });
-      return { propagated: plugin.name };
-    } catch (err) {
-      const text = `Plugin '${plugin.name}' could not be propagated to ${toolId}: `;
-      this.deps.logger.warn(text, err);
-      return { warning: { text, cause: err } };
-    }
-  }
-
-  private warnNoMarketplace(pluginName: string, toolId: AiToolId): string {
-    const msg = `Plugin '${pluginName}' has no marketplace — cannot propagate to ${toolId}. Add it manually.`;
-    this.deps.logger.warn(msg);
-    return msg;
+        marketplace,
+      })),
+    };
   }
 }

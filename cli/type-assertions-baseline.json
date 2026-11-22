@@ -46,7 +46,6 @@
   "tests/contexts/host-registration/testing/fake-host-marketplace-registry.fake.ts": 1,
   "tests/contexts/installation/application/doctor/load-manifest.use-case.unit.test.ts": 1,
   "tests/contexts/installation/application/install/config/install-runtime-config.use-case.unit.test.ts": 3,
-  "tests/contexts/installation/application/install/install-ai-tool.use-case.unit.test.ts": 1,
   "tests/contexts/installation/application/materialize/built-tree-opencode-materialization.integration.test.ts": 1,
   "tests/contexts/installation/application/materialize/install-plugin-claude-mode-a.integration.test.ts": 4,
   "tests/contexts/installation/application/materialize/install-plugin-cursor-hooks-mcp.integration.test.ts": 3,

@@ -1,11 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import {
-  type ActivatePropagatedPlugins,
-  InstallAiTool,
-} from "../../../../../src/contexts/installation/application/install/install-ai-tool.use-case.js";
+import { InstallAiTool } from "../../../../../src/contexts/installation/application/install/install-ai-tool.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { PluginInstallFromMarketplace } from "../../../../../src/orchestration/plugin/install-from-marketplace.use-case.js";
 import {
   buildInstallationDeps,
   initAndInstall,
@@ -14,9 +10,8 @@ import {
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 const PROJECT_ROOT = "/test-project";
-const VERSION = "1.0.0";
 
-function makeMockPlugin(name: string, marketplace = "aidd"): RecordedPlugin {
+function recorded(name: string, marketplace?: string): RecordedPlugin {
   return RecordedPlugin.fromJSON({
     name,
     source: { kind: "github", repo: "acme/plugins", ref: "main" },
@@ -24,413 +19,73 @@ function makeMockPlugin(name: string, marketplace = "aidd"): RecordedPlugin {
     strict: false,
     files: {},
     scope: "project",
-    marketplace,
+    ...(marketplace === undefined ? {} : { marketplace }),
   });
 }
 
-function makeMockOrphanPlugin(name: string): RecordedPlugin {
-  return RecordedPlugin.fromJSON({
-    name,
-    source: { kind: "github", repo: "acme/plugins", ref: "main" },
-    version: "1.0.0",
-    strict: false,
-    files: {},
-    scope: "project",
-  });
-}
-
-function buildUseCase(
-  deps: Awaited<ReturnType<typeof buildInstallationDeps>>,
-  pluginInstall: Partial<PluginInstallFromMarketplace> = {},
-  syncSettings: Partial<ActivatePropagatedPlugins> = {}
-) {
-  const pluginInstallMock: PluginInstallFromMarketplace = {
-    execute: vi.fn().mockResolvedValue({ marketplace: {}, entry: {} }),
-    ...pluginInstall,
-  };
-  const syncSettingsMock: ActivatePropagatedPlugins = {
-    execute: vi.fn().mockResolvedValue({ updatedTools: [] }),
-    ...syncSettings,
-  };
-  return {
-    useCase: new InstallAiTool({
-      installRuntimeConfig: deps.installRuntimeConfigUseCase,
-      manifestRepo: deps.manifestRepo,
-      pluginInstallFromMarketplace: pluginInstallMock,
-      activatePropagated: syncSettingsMock,
-      logger: deps.logger,
-    }),
-    pluginInstallMock,
-    syncSettingsMock,
-  };
-}
-
-async function addPlugin(
-  deps: Awaited<ReturnType<typeof buildInstallationDeps>>,
-  toolId: string,
-  plugin: RecordedPlugin
-): Promise<void> {
+async function setup(propagatePlugins = true, own = false) {
+  const deps = await buildInstallationDeps({ tools: registeredTools() });
+  await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+  if (own) await installTool(deps, PROJECT_ROOT, TOOL.opencode);
   const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
-  manifest.addPlugin(toolId as Parameters<typeof manifest.addPlugin>[0], plugin);
+  manifest.addPlugin(TOOL.claude, recorded("shared", "aidd"));
+  manifest.addPlugin(TOOL.claude, recorded("orphan"));
+  if (own) manifest.addPlugin(TOOL.opencode, recorded("own", "aidd"));
   await deps.manifestRepo.save(manifest);
+  const useCase = new InstallAiTool({
+    installRuntimeConfig: deps.installRuntimeConfigUseCase,
+    manifestRepo: deps.manifestRepo,
+  });
+  const run = (force = false) =>
+    useCase.execute({
+      toolId: TOOL.opencode,
+      projectRoot: PROJECT_ROOT,
+      force,
+      version: "1.0.0",
+      propagatePlugins,
+    });
+  return { deps, run };
 }
 
 describe("InstallAiTool", () => {
-  describe("empty manifest - no prior tools", () => {
-    it("installs the tool and returns no propagation when no plugins exist on other tools", async () => {
-      const deps = await buildInstallationDeps({ tools: registeredTools() });
-      const { useCase } = buildUseCase(deps);
+  it("hands back the plugins of the other tools, one named and one with no marketplace", async () => {
+    const { run } = await setup();
 
-      const result = await useCase.execute({
-        toolId: TOOL.opencode,
-        projectRoot: PROJECT_ROOT,
-        force: false,
-        version: VERSION,
-        propagatePlugins: true,
-      });
+    const { pluginsToPropagate } = await run();
 
-      expect(result.runtimeResult.skipped).toBe(false);
-      expect(result.propagatedPlugins).toHaveLength(0);
-      expect(result.propagationWarnings).toHaveLength(0);
-    });
+    expect(pluginsToPropagate).toEqual([
+      { name: "shared", version: "1.0.0", marketplace: "aidd" },
+      { name: "orphan", version: "1.0.0", marketplace: undefined },
+    ]);
   });
 
-  describe("installed tools without plugins", () => {
-    it("runs no activation when nothing was propagated", async () => {
-      const deps = await buildInstallationDeps({ tools: registeredTools() });
-      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
-      const { useCase, syncSettingsMock } = buildUseCase(deps);
+  it("leaves out the plugins of the tool it installs, on a forced reinstall", async () => {
+    const { run } = await setup(true, true);
 
-      const result = await useCase.execute({
-        toolId: TOOL.opencode,
-        projectRoot: PROJECT_ROOT,
-        force: false,
-        version: VERSION,
-        propagatePlugins: true,
-      });
+    const { pluginsToPropagate } = await run(true);
 
-      expect(syncSettingsMock.execute).not.toHaveBeenCalled();
-      expect(result).toStrictEqual({
-        runtimeResult: result.runtimeResult,
-        propagatedPlugins: [],
-        propagationWarnings: [],
-        activation: undefined,
-      });
-    });
-
-    it("propagates nothing when the manifest vanished right after the install", async () => {
-      const deps = await buildInstallationDeps({ tools: registeredTools() });
-      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
-      const loaded = await deps.manifestRepo.load();
-      vi.spyOn(deps.manifestRepo, "load").mockResolvedValueOnce(loaded).mockResolvedValueOnce(null);
-      const { useCase } = buildUseCase(deps);
-
-      const result = await useCase.execute({
-        toolId: TOOL.opencode,
-        projectRoot: PROJECT_ROOT,
-        force: false,
-        version: VERSION,
-        propagatePlugins: true,
-      });
-
-      expect(result).toStrictEqual({
-        runtimeResult: result.runtimeResult,
-        propagatedPlugins: [],
-        propagationWarnings: [],
-      });
-    });
+    expect(pluginsToPropagate.map((p) => p.name)).toEqual(["shared", "orphan"]);
   });
 
-  describe("manifest with plugins on another tool", () => {
-    it("propagates with the exact non-interactive replace request", async () => {
-      const deps = await buildInstallationDeps({ tools: registeredTools() });
-      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
-      await addPlugin(deps, "claude", makeMockPlugin("my-plugin"));
-      const { useCase, pluginInstallMock } = buildUseCase(deps);
+  it("hands back none when plugins were not asked for", async () => {
+    const { run } = await setup(false);
 
-      await useCase.execute({
-        toolId: TOOL.opencode,
-        projectRoot: PROJECT_ROOT,
-        force: false,
-        version: VERSION,
-        propagatePlugins: true,
-      });
-
-      expect(pluginInstallMock.execute).toHaveBeenCalledWith({
-        pluginName: "my-plugin",
-        version: "1.0.0",
-        fromMarketplace: "aidd",
-        toolIds: ["opencode"],
-        projectRoot: PROJECT_ROOT,
-        interactive: false,
-        autoSelect: true,
-        replace: true,
-        requestedVersionPolicy: "prefer-catalog",
-      });
-    });
-
-    it("does not propagate the tool's own plugins back onto it on a forced reinstall", async () => {
-      const deps = await buildInstallationDeps({ tools: registeredTools() });
-      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
-      await installTool(deps, PROJECT_ROOT, TOOL.opencode);
-      await addPlugin(deps, "opencode", makeMockPlugin("own-plugin"));
-      const { useCase, pluginInstallMock } = buildUseCase(deps);
-
-      const result = await useCase.execute({
-        toolId: TOOL.opencode,
-        projectRoot: PROJECT_ROOT,
-        force: true,
-        version: VERSION,
-        propagatePlugins: true,
-      });
-
-      expect(result.propagatedPlugins).toStrictEqual([]);
-      expect(pluginInstallMock.execute).not.toHaveBeenCalled();
-    });
-
-    it("propagates plugins from existing tools onto the new tool", async () => {
-      const deps = await buildInstallationDeps({ tools: registeredTools() });
-      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
-      await addPlugin(deps, "claude", makeMockPlugin("my-plugin"));
-
-      const { useCase, pluginInstallMock } = buildUseCase(deps);
-
-      const result = await useCase.execute({
-        toolId: TOOL.opencode,
-        projectRoot: PROJECT_ROOT,
-        force: false,
-        version: VERSION,
-        propagatePlugins: true,
-      });
-
-      expect(result.propagatedPlugins).toContain("my-plugin");
-      expect(pluginInstallMock.execute).toHaveBeenCalledOnce();
-      expect(pluginInstallMock.execute).toHaveBeenCalledWith(
-        expect.objectContaining({
-          pluginName: "my-plugin",
-          toolIds: ["opencode"],
-          replace: true,
-          autoSelect: true,
-        })
-      );
-    });
-
-    it("runs settings sync after propagation", async () => {
-      const deps = await buildInstallationDeps({ tools: registeredTools() });
-      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
-      await addPlugin(deps, "claude", makeMockPlugin("my-plugin"));
-
-      const { useCase, syncSettingsMock } = buildUseCase(deps);
-      await useCase.execute({
-        toolId: TOOL.opencode,
-        projectRoot: PROJECT_ROOT,
-        force: false,
-        version: VERSION,
-        propagatePlugins: true,
-      });
-
-      expect(syncSettingsMock.execute).toHaveBeenCalledOnce();
-      expect(syncSettingsMock.execute).toHaveBeenCalledWith({
-        projectRoot: PROJECT_ROOT,
-      });
-    });
-
-    it("surfaces the sync's own errors in its result rather than discarding them", async () => {
-      const deps = await buildInstallationDeps({ tools: registeredTools() });
-      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
-      await addPlugin(deps, "claude", makeMockPlugin("my-plugin"));
-
-      const conflictError = { scope: "opencode", message: "different catalog" };
-      const { useCase } = buildUseCase(
-        deps,
-        {},
-        {
-          execute: vi.fn().mockResolvedValue({
-            activated: [],
-            binaryMissing: [],
-            warnings: [],
-            errors: [conflictError],
-          }),
-        }
-      );
-
-      const result = await useCase.execute({
-        toolId: TOOL.opencode,
-        projectRoot: PROJECT_ROOT,
-        force: false,
-        version: VERSION,
-        propagatePlugins: true,
-      });
-
-      expect(result.activation?.errors).toEqual([conflictError]);
-    });
-
-    it("skips propagation and sync when --no-plugins flag is set", async () => {
-      const deps = await buildInstallationDeps({ tools: registeredTools() });
-      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
-      await addPlugin(deps, "claude", makeMockPlugin("my-plugin"));
-
-      const { useCase, pluginInstallMock, syncSettingsMock } = buildUseCase(deps);
-      const result = await useCase.execute({
-        toolId: TOOL.opencode,
-        projectRoot: PROJECT_ROOT,
-        force: false,
-        version: VERSION,
-        propagatePlugins: false,
-      });
-
-      expect(result.propagatedPlugins).toHaveLength(0);
-      expect(pluginInstallMock.execute).not.toHaveBeenCalled();
-      expect(syncSettingsMock.execute).not.toHaveBeenCalled();
-    });
-
-    it("deduplicates plugins appearing on multiple source tools", async () => {
-      const deps = await buildInstallationDeps({ tools: registeredTools() });
-      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
-
-      const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
-      manifest.addTool(TOOL.cursor, VERSION, []);
-      manifest.addPlugin(TOOL.claude, makeMockPlugin("shared-plugin"));
-      manifest.addPlugin(TOOL.cursor, makeMockPlugin("shared-plugin"));
-      await deps.manifestRepo.save(manifest);
-
-      const { useCase, pluginInstallMock } = buildUseCase(deps);
-      const result = await useCase.execute({
-        toolId: TOOL.opencode,
-        projectRoot: PROJECT_ROOT,
-        force: false,
-        version: VERSION,
-        propagatePlugins: true,
-      });
-
-      expect(result.propagatedPlugins).toEqual(["shared-plugin"]);
-      expect(pluginInstallMock.execute).toHaveBeenCalledOnce();
-    });
+    expect((await run()).pluginsToPropagate).toEqual([]);
   });
 
-  describe("tool already installed (skipped)", () => {
-    it("returns skipped without propagation when tool is already installed", async () => {
-      const deps = await buildInstallationDeps({ tools: registeredTools() });
-      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
-      await addPlugin(deps, "claude", makeMockPlugin("some-plugin"));
+  it("hands back none when the install was skipped", async () => {
+    const { run } = await setup(true, true);
 
-      // Pre-install opencode so the next orchestrator call will skip
-      await installTool(deps, PROJECT_ROOT, TOOL.opencode);
+    const result = await run();
 
-      const { useCase, pluginInstallMock } = buildUseCase(deps);
-      const result = await useCase.execute({
-        toolId: TOOL.opencode,
-        projectRoot: PROJECT_ROOT,
-        force: false,
-        version: VERSION,
-        propagatePlugins: true,
-      });
-
-      expect(result.runtimeResult.skipped).toBe(true);
-      expect(result.propagatedPlugins).toHaveLength(0);
-      expect(pluginInstallMock.execute).not.toHaveBeenCalled();
-    });
-
-    it("answers the skipped install alone, with nothing propagated and no warning", async () => {
-      const deps = await buildInstallationDeps({ tools: registeredTools() });
-      await initAndInstall(deps, PROJECT_ROOT, TOOL.opencode);
-      const { useCase } = buildUseCase(deps);
-
-      const result = await useCase.execute({
-        toolId: TOOL.opencode,
-        projectRoot: PROJECT_ROOT,
-        force: false,
-        version: VERSION,
-        propagatePlugins: true,
-      });
-
-      expect(result).toStrictEqual({
-        runtimeResult: {
-          toolId: TOOL.opencode,
-          fileCount: 0,
-          files: [],
-          skipped: true,
-          warnings: [],
-        },
-        propagatedPlugins: [],
-        propagationWarnings: [],
-      });
-    });
+    expect([result.runtimeResult.skipped, result.pluginsToPropagate]).toEqual([true, []]);
   });
 
-  describe("orphaned plugin (no marketplace)", () => {
-    it("emits a warning and does not throw when plugin has no marketplace", async () => {
-      const deps = await buildInstallationDeps({ tools: registeredTools() });
-      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
-      await addPlugin(deps, "claude", makeMockOrphanPlugin("orphan-plugin"));
+  it("hands back none when the manifest vanished right after the install", async () => {
+    const { deps, run } = await setup();
+    const loaded = await deps.manifestRepo.load();
+    vi.spyOn(deps.manifestRepo, "load").mockResolvedValueOnce(loaded).mockResolvedValueOnce(null);
 
-      const warnSpy = vi.spyOn(deps.logger, "warn");
-      const { useCase, pluginInstallMock } = buildUseCase(deps);
-      const result = await useCase.execute({
-        toolId: TOOL.opencode,
-        projectRoot: PROJECT_ROOT,
-        force: false,
-        version: VERSION,
-        propagatePlugins: true,
-      });
-
-      expect(result.propagationWarnings).toHaveLength(1);
-      expect(result.propagationWarnings[0]?.text).toContain("orphan-plugin");
-      expect(pluginInstallMock.execute).not.toHaveBeenCalled();
-      expect(warnSpy).toHaveBeenCalled();
-    });
-  });
-
-  describe("propagation version policy", () => {
-    it("passes prefer-catalog policy to pluginInstallFromMarketplace on propagation", async () => {
-      const deps = await buildInstallationDeps({ tools: registeredTools() });
-      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
-      await addPlugin(deps, "claude", makeMockPlugin("my-plugin"));
-
-      const { useCase, pluginInstallMock } = buildUseCase(deps);
-
-      await useCase.execute({
-        toolId: TOOL.opencode,
-        projectRoot: PROJECT_ROOT,
-        force: false,
-        version: VERSION,
-        propagatePlugins: true,
-      });
-
-      expect(pluginInstallMock.execute).toHaveBeenCalledWith(
-        expect.objectContaining({ requestedVersionPolicy: "prefer-catalog" })
-      );
-    });
-  });
-
-  describe("propagation failure", () => {
-    it("records a warning and continues when plugin installation fails", async () => {
-      const deps = await buildInstallationDeps({ tools: registeredTools() });
-      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
-      await addPlugin(deps, "claude", makeMockPlugin("fail-plugin"));
-      await addPlugin(deps, "claude", makeMockPlugin("ok-plugin"));
-
-      const { useCase } = buildUseCase(deps, {
-        execute: vi
-          .fn()
-          .mockRejectedValueOnce(new Error("catalog unavailable"))
-          .mockResolvedValueOnce({ marketplace: {}, entry: {} }),
-      });
-
-      const result = await useCase.execute({
-        toolId: TOOL.opencode,
-        projectRoot: PROJECT_ROOT,
-        force: false,
-        version: VERSION,
-        propagatePlugins: true,
-      });
-
-      expect(result.propagatedPlugins).toContain("ok-plugin");
-      expect(result.propagationWarnings).toHaveLength(1);
-      expect(result.propagationWarnings[0]).toEqual({
-        text: expect.stringContaining("fail-plugin"),
-        cause: new Error("catalog unavailable"),
-      });
-    });
+    expect((await run()).pluginsToPropagate).toEqual([]);
   });
 });
