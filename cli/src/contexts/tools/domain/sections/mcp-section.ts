@@ -126,7 +126,10 @@ export class McpConfigPart {
    * keeps (reusing user-owned configuration), the fallback when none does. */
   async resolveOutputPath(exists: (relativePath: string) => Promise<boolean>): Promise<string> {
     const present = new Set<string>();
-    for (const path of this.candidateTiers().flat()) if (await exists(path)) present.add(path);
+    for (const tier of this.candidateTiers()) {
+      for (const path of tier) if (await exists(path)) present.add(path);
+      if (present.size > 0) break;
+    }
     return this.chooseOutputPath((path) => present.has(path));
   }
 
