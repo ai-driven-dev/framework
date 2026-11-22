@@ -9,7 +9,7 @@ import { SmolTomlCodec } from "../../../../../src/contexts/tools/infrastructure/
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { nativeOf } from "../../../../shared/testing/native-plugin-answers.builder.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { flatOf, hooksAcceptanceOf } from "../../testing/plugin-mode.builder.js";
+import { hooksAcceptanceOf } from "../../testing/plugin-mode.builder.js";
 import { translatePluginIntoProject } from "../../testing/translate-plugin.builder.js";
 import type { WithSections } from "../../testing/with-sections.builder.js";
 
@@ -111,7 +111,7 @@ describe("installing a plugin that ships hooks", () => {
     const result = installedFor(opencode);
 
     expect(result.skipped).toEqual([]);
-    const flatHooksDir = flatOf(opencode.plugins()).flatLayout().hooksDir ?? "";
+    const flatHooksDir = ".opencode/hooks/";
     expect(contentEndingWith(result, "journal.cjs")).toBe(SCRIPT);
     expect(result.files.some((file) => file.relativePath === `${flatHooksDir}hooks.json`)).toBe(
       false

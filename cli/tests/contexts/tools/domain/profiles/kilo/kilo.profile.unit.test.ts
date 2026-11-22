@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { artifactPath } from "../../../../../../src/contexts/tools/contract/artifact-path.js";
 import { kilo } from "../../../../../../src/contexts/tools/domain/profiles/kilo/kilo.profile.js";
 import { FileHash } from "../../../../../../src/shared/domain/file-hash.js";
-import { flatHooksPathWithLoaderEntry } from "../../../../../../src/shared/domain/materialization/flat-paths.js";
 import type { FileReader } from "../../../../../../src/shared/ports/file-reader.js";
-import { flatOf } from "../../../testing/plugin-mode.builder.js";
 import { rulesRows, WRITES_NOTHING } from "../../../testing/profile-tables.builder.js";
 import { type InstallKind, installPathOf } from "../../../testing/profiles.builder.js";
 
@@ -56,29 +55,19 @@ describe("kilo", () => {
   });
 
   it("delivers hook scripts under .kilo/hooks and generates a bridge under .kilo/plugin", () => {
-    const plugins = flatOf(kilo.plugins());
-    expect([
-      plugins.kind,
-      plugins.hooksAcceptance().accepts,
-      plugins.flatLayout().hooksDir,
-    ]).toStrictEqual(["flat", true, ".kilo/hooks/"]);
-    expect(plugins.flatLayout().hooksBridge?.dir).toBe(".kilo/plugin/");
-    expect(
-      flatHooksPathWithLoaderEntry({
-        perPluginHooksDir: plugins.flatLayout().hooksDir ?? "",
-        loaderEntry: plugins.flatLayout().hooksLoaderEntry,
-        plugin: "aidd-context",
-        hooksRelativePath: "hooks/kilo-plugin.js",
-      })
-    ).toBe(".kilo/plugin/aidd-context.js");
-    expect(
-      flatHooksPathWithLoaderEntry({
-        perPluginHooksDir: plugins.flatLayout().hooksDir ?? "",
-        loaderEntry: plugins.flatLayout().hooksLoaderEntry,
-        plugin: "aidd-context",
-        hooksRelativePath: "hooks/capture.cjs",
-      })
-    ).toBe(".kilo/hooks/aidd-context/capture.cjs");
+    const hooks = kilo.buildContract("flat")?.artifacts.hooks;
+    if (hooks?.supported !== true) throw new Error("kilo builds no flat hooks");
+    expect([kilo.plugins()?.kind, kilo.plugins()?.hooksAcceptance().accepts]).toStrictEqual([
+      "flat",
+      true,
+    ]);
+    expect(hooks.hooksBridge?.dir).toBe(".kilo/plugin/");
+    expect(artifactPath(hooks, "aidd-context", "hooks/kilo-plugin.js")).toBe(
+      ".kilo/plugin/aidd-context.js"
+    );
+    expect(artifactPath(hooks, "aidd-context", "hooks/capture.cjs")).toBe(
+      ".kilo/hooks/aidd-context/capture.cjs"
+    );
   });
 });
 

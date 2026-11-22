@@ -1,11 +1,8 @@
 import type { ConfigAsset } from "../../../shared/domain/config-asset.js";
 import type { InstallationFile } from "../../../shared/domain/installation-file.js";
-import type {
-  FlatArtifactLayout,
-  FlatHooksLoaderEntry,
-} from "../../../shared/domain/materialization/flat-paths.js";
+import type { FlatArtifactLayout } from "../../../shared/domain/materialization/flat-paths.js";
 import type { AiToolId, IdeToolId } from "../../../shared/domain/tool.js";
-import type { FlatHooksBridge, ToolBuildContract } from "./build-contract.js";
+import type { ToolBuildContract } from "./build-contract.js";
 import type { ConfigRef } from "./config-refs.js";
 import type { LinkSyntax } from "./link-syntax.js";
 import type {
@@ -70,9 +67,6 @@ export type FlatInstallSection = "commands" | "agents" | "rules" | "skills";
 export interface FlatLayout {
   skillLayout: FlatSkillLayout;
   namespacePrefix: string;
-  hooksDir: string | null;
-  hooksLoaderEntry: FlatHooksLoaderEntry | null;
-  hooksBridge: FlatHooksBridge | null;
 }
 
 /** A tool that installs a plugin through its own plugin CLI, as an outside caller asks it. */
@@ -95,8 +89,6 @@ export interface NativePluginAnswers extends PluginDelivery {
 export interface FlatPluginAnswers extends PluginDelivery {
   readonly kind: "flat";
   flatLayout(): FlatLayout;
-  /** Where a plugin's hook file lands, or null when the tool places no hooks of its own. */
-  hooksInstallPath(pluginName: string, hooksRelativePath: string): string | null;
   hookScript(pluginPath: string, content: string): string;
 }
 

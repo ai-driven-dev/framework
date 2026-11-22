@@ -28,7 +28,6 @@ describe("antigravity", () => {
       flatLayout: {
         namespacePrefix: "aidd-",
         skillLayout: "single-level",
-        hooksDir: ".agents/hooks/",
       },
       acceptsHooks: true,
       deliversHooksToProject: true,

@@ -42,10 +42,6 @@ describe("what a flat tool answers", () => {
     ]);
   });
 
-  it("names no loader entry unless it declares one", () => {
-    expect(answers.flatLayout().hooksLoaderEntry).toBeNull();
-  });
-
   it("takes a fresh install at project scope, and copies the built tree", () => {
     expect([answers.requiresUserScope(), answers.materializesFromBuiltTree()]).toEqual([
       false,
@@ -59,14 +55,6 @@ describe("what a flat tool answers", () => {
     );
 
     expect(merging.deliversHooksToProject()).toBe(true);
-  });
-});
-
-describe("where a flat tool puts the hooks of a plugin", () => {
-  it("names no path when it declares no hooks directory", () => {
-    const answers = flatOf(answersOf(flatPlugins("refuses")));
-
-    expect(answers.hooksInstallPath("p", "hooks/hooks.json")).toBeNull();
   });
 });
 

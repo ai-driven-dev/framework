@@ -136,7 +136,10 @@ describe("a hooks manifest a native target keeps below the plugin root", () => {
 
 describe("a hook a flat target cannot place", () => {
   it("installs none", () => {
-    const tool = contractToolProfile(opencode, { plugins: flatPluginsStub() });
+    const tool = contractToolProfile(opencode, {
+      plugins: flatPluginsStub(),
+      flatContract: anEmptyContract(),
+    });
     expect(installedPathsOf(tool, hooksDist())).toEqual([]);
   });
 });
