@@ -817,6 +817,7 @@ jobs:
       - kanban-checks
       - windows
       - macos
+      - host-contract
     steps:
       - name: Fail unless changes decided cleanly and every gated job passed or was skipped
         run: |
@@ -840,7 +841,8 @@ jobs:
             "${{ needs.cli-mutation-score.result }}" \
             "${{ needs.kanban-checks.result }}" \
             "${{ needs.windows.result }}" \
-            "${{ needs.macos.result }}"; do
+            "${{ needs.macos.result }}" \
+            "${{ needs.host-contract.result }}"; do
             if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
               echo "::error::a required job did not pass (result: $result)"
               exit 1
