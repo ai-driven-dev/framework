@@ -17,15 +17,20 @@ import {
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
-  CATALOG_RELATIVE,
+  SYNTHETIC_TOOL,
+  syntheticNativeCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
+import {
   canonicallyOwned,
   fakeVersion,
   noSourceReferences,
   PROJECT_ROOT,
   readableHostPlugins,
 } from "../testing/marketplace-sync-settings-migration.builder.js";
+
+const tool = SYNTHETIC_TOOL;
+const CATALOG_RELATIVE = ".plugin/marketplace.json";
 
 describe("settings migration: legacy host entries", () => {
   describe("SyncSettings - the host still tracks another, unmigrated project's cache", () => {
@@ -37,7 +42,7 @@ describe("settings migration: legacy host entries", () => {
         userConfigDir: USER_CACHE_ROOT,
         cliVersion: CURRENT_VERSION,
         marketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-        target: "claude",
+        target: tool,
       });
     }
 
@@ -45,7 +50,7 @@ describe("settings migration: legacy host entries", () => {
       const foreignProjectCache = builtMarketplaceDir(
         "/other-project",
         FRAMEWORK_MARKETPLACE_NAME,
-        "claude"
+        tool
       );
       const registry = new InMemoryMarketplaceRegistry();
       await registry.seed(
@@ -58,7 +63,7 @@ describe("settings migration: legacy host entries", () => {
         })
       );
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.claude, "test", []);
+      manifest.addTool(tool, "test", []);
       const activator = new FakeHostActions({ available: true });
       const fs = fsAt(PROJECT_ROOT, {
         [`${sharedBuiltDir()}/${CATALOG_RELATIVE}`]: JSON.stringify({
@@ -75,24 +80,24 @@ describe("settings migration: legacy host entries", () => {
         }),
       });
       const hostReader = new FakeHostMarketplaceRegistry({
-        location: "/home/.claude/plugins/known_marketplaces.json",
+        location: `/home/.${tool}/known_marketplaces.json`,
         entries: new Map([[FRAMEWORK_MARKETPLACE_NAME, foreignProjectCache]]),
       });
       const added: Array<{ version: string; projectRoot: string }> = [];
       const useCase = marketplaceSync({
-        tools: registeredTools(),
+        tools: syntheticNativeCatalog(tool),
         fs,
         manifestRepo: new InMemoryManifestRepository(manifest),
         marketplaceRegistry: registry,
         logger: new CapturingLogger(),
-        activators: new Map([[TOOL.claude, activator]]),
+        activators: new Map([[tool, activator]]),
         ensureBuilt: fakeEnsureBuiltMarketplace(() => sharedBuiltDir()),
-        hostMarketplaceRegistries: new Map([[TOOL.claude, hostReader]]),
+        hostMarketplaceRegistries: new Map([[tool, hostReader]]),
         userCacheRoot: () => USER_CACHE_ROOT,
         userSourceReferences: noSourceReferences(added),
         currentVersionProvider: fakeVersion(CURRENT_VERSION),
-        hostPluginRegistries: readableHostPlugins(TOOL.claude),
-        userManifestRepo: new InMemoryManifestRepository(canonicallyOwned(TOOL.claude)),
+        hostPluginRegistries: readableHostPlugins(tool),
+        userManifestRepo: new InMemoryManifestRepository(canonicallyOwned(tool)),
       });
 
       const before = await fs.readFile(`${foreignProjectCache}/${CATALOG_RELATIVE}`);
@@ -111,7 +116,7 @@ describe("settings migration: legacy host entries", () => {
       const foreignProjectCache = builtMarketplaceDir(
         "/gone-project",
         FRAMEWORK_MARKETPLACE_NAME,
-        "claude"
+        tool
       );
       const registry = new InMemoryMarketplaceRegistry();
       await registry.seed(
@@ -124,7 +129,7 @@ describe("settings migration: legacy host entries", () => {
         })
       );
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.claude, "test", []);
+      manifest.addTool(tool, "test", []);
       const activator = new FakeHostActions({ available: true });
       // Nothing is seeded under `foreignProjectCache` at all - the directory a real
       // `rm -rf` would have removed after the fact.
@@ -136,24 +141,24 @@ describe("settings migration: legacy host entries", () => {
         }),
       });
       const hostReader = new FakeHostMarketplaceRegistry({
-        location: "/home/.claude/plugins/known_marketplaces.json",
+        location: `/home/.${tool}/known_marketplaces.json`,
         entries: new Map([[FRAMEWORK_MARKETPLACE_NAME, foreignProjectCache]]),
       });
       const added: Array<{ version: string; projectRoot: string }> = [];
       const useCase = marketplaceSync({
-        tools: registeredTools(),
+        tools: syntheticNativeCatalog(tool),
         fs,
         manifestRepo: new InMemoryManifestRepository(manifest),
         marketplaceRegistry: registry,
         logger: new CapturingLogger(),
-        activators: new Map([[TOOL.claude, activator]]),
+        activators: new Map([[tool, activator]]),
         ensureBuilt: fakeEnsureBuiltMarketplace(() => sharedBuiltDir()),
-        hostMarketplaceRegistries: new Map([[TOOL.claude, hostReader]]),
+        hostMarketplaceRegistries: new Map([[tool, hostReader]]),
         userCacheRoot: () => USER_CACHE_ROOT,
         userSourceReferences: noSourceReferences(added),
         currentVersionProvider: fakeVersion(CURRENT_VERSION),
-        hostPluginRegistries: readableHostPlugins(TOOL.claude),
-        userManifestRepo: new InMemoryManifestRepository(canonicallyOwned(TOOL.claude)),
+        hostPluginRegistries: readableHostPlugins(tool),
+        userManifestRepo: new InMemoryManifestRepository(canonicallyOwned(tool)),
       });
 
       const before = await fs.readFile(`${sharedBuiltDir()}/${CATALOG_RELATIVE}`);
@@ -177,7 +182,7 @@ describe("settings migration: legacy host entries", () => {
       const foreignProjectCache = builtMarketplaceDir(
         "/other-project",
         FRAMEWORK_MARKETPLACE_NAME,
-        "claude"
+        tool
       );
       const registry = new InMemoryMarketplaceRegistry();
       registry.seed(
@@ -190,7 +195,7 @@ describe("settings migration: legacy host entries", () => {
         })
       );
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.claude, "test", []);
+      manifest.addTool(tool, "test", []);
       const fs = fsAt(PROJECT_ROOT, {
         [`${sharedBuiltDir()}/${CATALOG_RELATIVE}`]: JSON.stringify({
           name: FRAMEWORK_MARKETPLACE_NAME,
@@ -204,7 +209,7 @@ describe("settings migration: legacy host entries", () => {
         }),
       });
       const hostReader = new FakeHostMarketplaceRegistry({
-        location: "/home/.claude/plugins/known_marketplaces.json",
+        location: `/home/.${tool}/known_marketplaces.json`,
         entries: new Map([[FRAMEWORK_MARKETPLACE_NAME, foreignProjectCache]]),
       });
       const activator = new FakeHostActions({ available: true });
@@ -214,17 +219,17 @@ describe("settings migration: legacy host entries", () => {
     it("does not repoint a legacy host entry when no reference ledger is available", async () => {
       const { fs, hostReader, registry, manifest, activator } = hostOnForeignCache();
       const useCase = marketplaceSync({
-        tools: registeredTools(),
+        tools: syntheticNativeCatalog(tool),
         fs,
         manifestRepo: new InMemoryManifestRepository(manifest),
         marketplaceRegistry: registry,
         logger: new CapturingLogger(),
-        activators: new Map([[TOOL.claude, activator]]),
+        activators: new Map([[tool, activator]]),
         ensureBuilt: fakeEnsureBuiltMarketplace(() => sharedBuiltDir()),
-        hostMarketplaceRegistries: new Map([[TOOL.claude, hostReader]]),
+        hostMarketplaceRegistries: new Map([[tool, hostReader]]),
         userCacheRoot: () => USER_CACHE_ROOT,
-        hostPluginRegistries: readableHostPlugins(TOOL.claude),
-        userManifestRepo: new InMemoryManifestRepository(canonicallyOwned(TOOL.claude)),
+        hostPluginRegistries: readableHostPlugins(tool),
+        userManifestRepo: new InMemoryManifestRepository(canonicallyOwned(tool)),
       });
 
       const result = await useCase.execute({
@@ -241,18 +246,18 @@ describe("settings migration: legacy host entries", () => {
       const { fs, hostReader, registry, manifest, activator } = hostOnForeignCache();
       const added: Array<{ version: string; projectRoot: string }> = [];
       const useCase = marketplaceSync({
-        tools: registeredTools(),
+        tools: syntheticNativeCatalog(tool),
         fs,
         manifestRepo: new InMemoryManifestRepository(manifest),
         marketplaceRegistry: registry,
         logger: new CapturingLogger(),
-        activators: new Map([[TOOL.claude, activator]]),
+        activators: new Map([[tool, activator]]),
         ensureBuilt: fakeEnsureBuiltMarketplace(() => sharedBuiltDir()),
-        hostMarketplaceRegistries: new Map([[TOOL.claude, hostReader]]),
+        hostMarketplaceRegistries: new Map([[tool, hostReader]]),
         userCacheRoot: () => USER_CACHE_ROOT,
         userSourceReferences: noSourceReferences(added),
-        hostPluginRegistries: readableHostPlugins(TOOL.claude),
-        userManifestRepo: new InMemoryManifestRepository(canonicallyOwned(TOOL.claude)),
+        hostPluginRegistries: readableHostPlugins(tool),
+        userManifestRepo: new InMemoryManifestRepository(canonicallyOwned(tool)),
       });
 
       const result = await useCase.execute({

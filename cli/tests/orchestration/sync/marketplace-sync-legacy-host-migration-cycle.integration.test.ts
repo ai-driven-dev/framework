@@ -16,15 +16,20 @@ import { fsAt } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_TOOL,
+  syntheticNativeCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import { buildCheckRegistration } from "../testing/build-check-registration.builder.js";
 import {
-  CATALOG_RELATIVE,
   canonicallyOwned,
   fakeVersion,
   PROJECT_ROOT,
   readableHostPlugins,
 } from "../testing/marketplace-sync-settings-migration.builder.js";
+
+const tool = SYNTHETIC_TOOL;
+const CATALOG_RELATIVE = ".plugin/marketplace.json";
 
 describe("settings migration: legacy host entries", () => {
   describe("SyncSettings + CheckRegistration - the full migration cycle", () => {
@@ -61,7 +66,7 @@ describe("settings migration: legacy host entries", () => {
     it("goes from doctor warning to doctor healthy across one sync, leaving another project's own marketplace untouched", async () => {
       const PROJECT_A = "/project-a";
       const PROJECT_B = "/project-b";
-      const REGISTRY_LOCATION = "/home/.claude/plugins/known_marketplaces.json";
+      const REGISTRY_LOCATION = `/home/.${tool}/known_marketplaces.json`;
       const CURRENT_VERSION = "2.0.0";
       // resolve(): doctor's `resolvedBuiltDir()` and the sync guard's `realpath(builtDir)` both
       // compare against a resolved path, so a drive-less key is never looked up on win32.
@@ -71,11 +76,11 @@ describe("settings migration: legacy host entries", () => {
           userConfigDir: USER_CACHE_ROOT,
           cliVersion: CURRENT_VERSION,
           marketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-          target: "claude",
+          target: tool,
         })
       );
       const preMigrationCache = resolve(
-        builtMarketplaceDir(PROJECT_A, FRAMEWORK_MARKETPLACE_NAME, "claude")
+        builtMarketplaceDir(PROJECT_A, FRAMEWORK_MARKETPLACE_NAME, tool)
       );
 
       const registry = new InMemoryMarketplaceRegistry();
@@ -103,7 +108,7 @@ describe("settings migration: legacy host entries", () => {
       ]);
       const hostReader = new LiveHostMarketplaceRegistryReader(hostEntries, REGISTRY_LOCATION);
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.claude, "test", []);
+      manifest.addTool(tool, "test", []);
 
       const doctor = buildCheckRegistration(
         fsAt(PROJECT_ROOT, {
@@ -114,7 +119,7 @@ describe("settings migration: legacy host entries", () => {
         }),
         registry,
         () => false,
-        hostInspector(registeredTools(), {
+        hostInspector(syntheticNativeCatalog(tool), {
           fs: fsAt(PROJECT_ROOT, {
             [`${sharedBuiltDir}/${CATALOG_RELATIVE}`]: JSON.stringify({
               name: FRAMEWORK_MARKETPLACE_NAME,
@@ -122,11 +127,11 @@ describe("settings migration: legacy host entries", () => {
             }),
           }),
           pluginRegistries: new Map(),
-          marketplaceRegistries: new Map([[TOOL.claude, hostReader]]),
+          marketplaceRegistries: new Map([[tool, hostReader]]),
         }),
         () => USER_CACHE_ROOT,
         fakeVersion(CURRENT_VERSION),
-        registeredTools()
+        syntheticNativeCatalog(tool)
       );
 
       const before = await doctor.execute({
@@ -153,9 +158,9 @@ describe("settings migration: legacy host entries", () => {
           plugins: [],
         }),
       });
-      const machine = canonicallyOwned(TOOL.claude);
-      machine.setNativeRegistrations(TOOL.claude, {
-        binary: "claude",
+      const machine = canonicallyOwned(tool);
+      machine.setNativeRegistrations(tool, {
+        binary: tool,
         marketplaces: [
           {
             alias: FRAMEWORK_MARKETPLACE_NAME,
@@ -167,22 +172,22 @@ describe("settings migration: legacy host entries", () => {
         pluginClaims: [],
       });
       const sync = marketplaceSync({
-        tools: registeredTools(),
+        tools: syntheticNativeCatalog(tool),
         fs: syncFs,
         manifestRepo: new InMemoryManifestRepository(manifest),
         marketplaceRegistry: registry,
         logger: new CapturingLogger(),
-        activators: new Map([[TOOL.claude, activator]]),
+        activators: new Map([[tool, activator]]),
         ensureBuilt: fakeEnsureBuiltMarketplace(() => sharedBuiltDir),
-        hostMarketplaceRegistries: new Map([[TOOL.claude, hostReader]]),
+        hostMarketplaceRegistries: new Map([[tool, hostReader]]),
         userCacheRoot: () => USER_CACHE_ROOT,
         marketplaceRegisterFrameworkUseCase: new RegisterFrameworkMarketplace(registry),
         currentVersionProvider: fakeVersion(CURRENT_VERSION),
-        hostPluginRegistries: readableHostPlugins(TOOL.claude),
+        hostPluginRegistries: readableHostPlugins(tool),
         userManifestRepo: new InMemoryManifestRepository(machine),
         nativeSources: new Map([
           [
-            TOOL.claude,
+            tool,
             {
               read: async () => ({
                 location: REGISTRY_LOCATION,

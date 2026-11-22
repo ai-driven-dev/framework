@@ -19,10 +19,15 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_TOOL,
+  syntheticNativeCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
+
+const tool = SYNTHETIC_TOOL;
 
 const PROJECT_ROOT = "/test-project";
-const REGISTRY_LOCATION = "/home/.claude/plugins/known_marketplaces.json";
+const REGISTRY_LOCATION = `/home/.${tool}/known_marketplaces.json`;
 const USER_CACHE_ROOT = "/user-cache";
 const MARKETPLACE_NAME = "probe-mkt";
 
@@ -31,7 +36,7 @@ function sharedPath(version: string, name: string = MARKETPLACE_NAME): string {
     userConfigDir: USER_CACHE_ROOT,
     cliVersion: version,
     marketplaceName: name,
-    target: "claude",
+    target: tool,
   });
 }
 
@@ -50,11 +55,11 @@ async function sync(options: {
   const registry = new InMemoryMarketplaceRegistry();
   const logger = new CapturingLogger();
   const manifest = Manifest.create();
-  manifest.addTool(TOOL.claude, "test", []);
+  manifest.addTool(tool, "test", []);
   const machine = Manifest.create();
-  machine.addTool(TOOL.claude, "test", []);
-  machine.setNativeRegistrations(TOOL.claude, {
-    binary: "claude",
+  machine.addTool(tool, "test", []);
+  machine.setNativeRegistrations(tool, {
+    binary: tool,
     marketplaces: [
       {
         alias: name,
@@ -79,12 +84,12 @@ async function sync(options: {
   );
   const builtDir = sharedPath(options.requestedVersion, name);
   await fs.writeFile(
-    `${builtDir}/.claude-plugin/marketplace.json`,
+    `${builtDir}/.plugin/marketplace.json`,
     JSON.stringify({ name, version: options.requestedVersion, plugins: [] })
   );
   if (options.registeredPath !== undefined) {
     await fs.writeFile(
-      `${options.registeredPath}/.claude-plugin/marketplace.json`,
+      `${options.registeredPath}/.plugin/marketplace.json`,
       JSON.stringify({ name, version: options.registeredVersion, plugins: [] })
     );
   }
@@ -96,20 +101,20 @@ async function sync(options: {
       options.registeredPath === undefined ? new Map() : new Map([[name, options.registeredPath]]),
   });
   const useCase = marketplaceSync({
-    tools: registeredTools(),
+    tools: syntheticNativeCatalog(tool),
     fs,
     manifestRepo,
     marketplaceRegistry: registry,
     logger,
-    activators: new Map([[TOOL.claude, activator]]),
+    activators: new Map([[tool, activator]]),
     ensureBuilt: fakeEnsureBuiltMarketplace(() => builtDir),
-    hostMarketplaceRegistries: new Map([[TOOL.claude, hostReader]]),
+    hostMarketplaceRegistries: new Map([[tool, hostReader]]),
     userCacheRoot: () => USER_CACHE_ROOT,
     hostPluginRegistries: new Map([
       [
-        TOOL.claude,
+        tool,
         new FakeHostPluginRegistry({
-          location: "/home/.claude/plugins/installed_plugins.json",
+          location: "/home/dev/.host/plugins/installed_plugins.json",
           refs: new Map(),
         }),
       ],
@@ -117,7 +122,7 @@ async function sync(options: {
     userManifestRepo: new InMemoryManifestRepository(machine),
     nativeSources: new Map([
       [
-        TOOL.claude,
+        tool,
         new FakeHostMarketplaceSources(
           activator,
           "registry",
@@ -161,7 +166,7 @@ describe("the sync write path refuses to roll a host back to an older aidd-frame
   it("proceeds when the host still points at this project's own pre-migration cache", async () => {
     const { result, activator } = await sync({
       requestedVersion: "1.0.0",
-      registeredPath: `${PROJECT_ROOT}/.aidd/cache/built/${MARKETPLACE_NAME}/claude`,
+      registeredPath: `${PROJECT_ROOT}/.aidd/cache/built/${MARKETPLACE_NAME}/${tool}`,
     });
 
     expect(activator.addedMarketplaces).toEqual([sharedPath("1.0.0")]);
@@ -198,8 +203,7 @@ describe("the sync write path refuses to roll a host back to an older aidd-frame
       registeredVersion: "2.0.0",
     });
 
-    const refusal =
-      "claude's marketplace registry (/home/.claude/plugins/known_marketplaces.json) already carries a newer aidd-framework build, 2.0.0, than this run's own 1.0.0 — not registering this run's build over it. Run `aidd update` to bring this project's CLI to at least the version the host already follows.";
+    const refusal = `${tool}'s marketplace registry (${REGISTRY_LOCATION}) already carries a newer aidd-framework build, 2.0.0, than this run's own 1.0.0 — not registering this run's build over it. Run \`aidd update\` to bring this project's CLI to at least the version the host already follows.`;
     expect(result.warnings.map(describeMessage)).toStrictEqual([refusal]);
     expect(logger.warnMessages).toStrictEqual([refusal]);
   });
@@ -211,8 +215,8 @@ describe("the sync write path refuses to roll a host back to an older aidd-frame
       registeredVersion: "2.0.0",
     });
 
-    expect((await manifestRepo.load())?.getNativeRegistrations(TOOL.claude)).toStrictEqual({
-      binary: "claude",
+    expect((await manifestRepo.load())?.getNativeRegistrations(tool)).toStrictEqual({
+      binary: tool,
       marketplaces: [
         {
           alias: MARKETPLACE_NAME,
@@ -229,7 +233,7 @@ describe("the sync write path refuses to roll a host back to an older aidd-frame
       PROJECT_ROOT,
       BUILT_CACHE_SUBDIR,
       FRAMEWORK_MARKETPLACE_NAME,
-      "claude",
+      tool,
       "agents",
       "some-agent.md"
     );
