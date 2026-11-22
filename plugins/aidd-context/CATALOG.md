@@ -108,15 +108,16 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [04-validate.md](skills/04-skill-generate/actions/04-validate.md) | - |
 | `assets` | [action-template.md](skills/04-skill-generate/assets/action-template.md) | - |
 | `assets` | [scope-frame.md](skills/04-skill-generate/assets/scope-frame.md) | - |
-| `assets` | [skill-template.md](skills/04-skill-generate/assets/skill-template.md) | `<description>` |
+| `assets` | [skill-template.md](skills/04-skill-generate/assets/skill-template.md) | `{{description}}` |
 | `references` | [naming.md](skills/04-skill-generate/references/naming.md) | - |
 | `references` | [runtime-validation.md](skills/04-skill-generate/references/runtime-validation.md) | - |
 | `references` | [skill-authoring.md](skills/04-skill-generate/references/skill-authoring.md) | - |
 | `references` | [skill-tree.md](skills/04-skill-generate/references/skill-tree.md) | - |
 | `references` | [tool-detect.md](skills/04-skill-generate/references/tool-detect.md) | - |
 | `references` | [tool-write.md](skills/04-skill-generate/references/tool-write.md) | - |
-| `scripts` | [check-skill.cjs](skills/04-skill-generate/scripts/check-skill.cjs) | - |
+| `scripts` | [contract.json](skills/04-skill-generate/scripts/contract.json) | - |
 | `scripts` | [scaffold-skill.cjs](skills/04-skill-generate/scripts/scaffold-skill.cjs) | - |
+| `scripts` | [validate-skill.cjs](skills/04-skill-generate/scripts/validate-skill.cjs) | - |
 | `-` | [SKILL.md](skills/04-skill-generate/SKILL.md) | `Creates or updates a skill across the host AI tools, when the user wants to create a skill, or to refactor, rewrite or reformat an existing one.` |
 
 #### `skills/05-rule-generate`
@@ -127,12 +128,14 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-draft.md](skills/05-rule-generate/actions/02-draft.md) | - |
 | `actions` | [03-plan.md](skills/05-rule-generate/actions/03-plan.md) | - |
 | `actions` | [04-write.md](skills/05-rule-generate/actions/04-write.md) | - |
-| `assets` | [rule-template.md](skills/05-rule-generate/assets/rule-template.md) | - |
+| `assets` | [rule-template.md](skills/05-rule-generate/assets/rule-template.md) | `{{when the rule applies, one line}}` |
 | `references` | [hosts.md](skills/05-rule-generate/references/hosts.md) | - |
 | `references` | [policy-discovery.md](skills/05-rule-generate/references/policy-discovery.md) | - |
 | `references` | [rule-assessment.md](skills/05-rule-generate/references/rule-assessment.md) | - |
 | `references` | [rule-authoring.md](skills/05-rule-generate/references/rule-authoring.md) | - |
 | `references` | [writer.md](skills/05-rule-generate/references/writer.md) | - |
+| `scripts` | [contract.json](skills/05-rule-generate/scripts/contract.json) | - |
+| `scripts` | [validate-rule.cjs](skills/05-rule-generate/scripts/validate-rule.cjs) | - |
 | `scripts` | [write-rule.cjs](skills/05-rule-generate/scripts/write-rule.cjs) | - |
 | `-` | [SKILL.md](skills/05-rule-generate/SKILL.md) | `Creates, updates, publishes or removes a coding rule across hosts when a convention is set, changed or dropped, not for skills, agents or hooks.` |
 
@@ -143,10 +146,12 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [01-frame.md](skills/06-agent-generate/actions/01-frame.md) | - |
 | `actions` | [02-plan.md](skills/06-agent-generate/actions/02-plan.md) | - |
 | `actions` | [03-write.md](skills/06-agent-generate/actions/03-write.md) | - |
-| `assets` | [agent-template.md](skills/06-agent-generate/assets/agent-template.md) | `<what it does>. Use to <when to call it>.` |
+| `assets` | [agent-template.md](skills/06-agent-generate/assets/agent-template.md) | `{{what it does}}. Use to {{when to call it}}.` |
 | `references` | [agent-authoring.md](skills/06-agent-generate/references/agent-authoring.md) | - |
 | `references` | [hosts.md](skills/06-agent-generate/references/hosts.md) | - |
 | `references` | [writer.md](skills/06-agent-generate/references/writer.md) | - |
+| `scripts` | [contract.json](skills/06-agent-generate/scripts/contract.json) | - |
+| `scripts` | [validate-agent.cjs](skills/06-agent-generate/scripts/validate-agent.cjs) | - |
 | `scripts` | [write-agent.cjs](skills/06-agent-generate/scripts/write-agent.cjs) | - |
 | `-` | [SKILL.md](skills/06-agent-generate/SKILL.md) | `Creates or updates an agent, a focused role, across the host AI tools, when the user wants a new agent or to refactor one.` |
 
@@ -157,10 +162,12 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [01-frame.md](skills/07-command-generate/actions/01-frame.md) | - |
 | `actions` | [02-plan.md](skills/07-command-generate/actions/02-plan.md) | - |
 | `actions` | [03-write.md](skills/07-command-generate/actions/03-write.md) | - |
-| `assets` | [command-template.md](skills/07-command-generate/assets/command-template.md) | - |
+| `assets` | [command-template.md](skills/07-command-generate/assets/command-template.md) | `{{what the command does, one line}}` |
 | `references` | [command-authoring.md](skills/07-command-generate/references/command-authoring.md) | - |
 | `references` | [hosts.md](skills/07-command-generate/references/hosts.md) | - |
 | `references` | [writer.md](skills/07-command-generate/references/writer.md) | - |
+| `scripts` | [contract.json](skills/07-command-generate/scripts/contract.json) | - |
+| `scripts` | [validate-command.cjs](skills/07-command-generate/scripts/validate-command.cjs) | - |
 | `scripts` | [write-command.cjs](skills/07-command-generate/scripts/write-command.cjs) | - |
 | `-` | [SKILL.md](skills/07-command-generate/SKILL.md) | `Creates or updates a slash command, a one-shot prompt typed as /name, across the host AI tools, when the user wants a new command or to refactor one.` |
 
@@ -172,10 +179,10 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-plan.md](skills/08-hook-generate/actions/02-plan.md) | - |
 | `actions` | [03-write.md](skills/08-hook-generate/actions/03-write.md) | - |
 | `actions` | [04-verify.md](skills/08-hook-generate/actions/04-verify.md) | - |
+| `assets` | [hook-template.md](skills/08-hook-generate/assets/hook-template.md) | - |
 | `references` | [hook-authoring.md](skills/08-hook-generate/references/hook-authoring.md) | - |
 | `references` | [hosts.md](skills/08-hook-generate/references/hosts.md) | - |
 | `references` | [writer.md](skills/08-hook-generate/references/writer.md) | - |
-| `scripts` | [verify-hook.cjs](skills/08-hook-generate/scripts/verify-hook.cjs) | - |
 | `scripts` | [write-hook.cjs](skills/08-hook-generate/scripts/write-hook.cjs) | - |
 | `-` | [SKILL.md](skills/08-hook-generate/SKILL.md) | `Creates, updates or removes a hook that runs a script at a lifecycle event, in each chosen host's native format, not for skills or rules.` |
 

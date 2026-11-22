@@ -8,12 +8,12 @@ The files written.
 
 ## Process
 
-1. List the findings of [check-skill.cjs](../scripts/check-skill.cjs) on each written skill folder.
+1. Run [validate-skill.cjs](../scripts/validate-skill.cjs) on each written skill folder, fix each finding and validate again, and after 3 passes stop and show what is left.
 2. List each written file's breaches of [skill-authoring.md](../references/skill-authoring.md), compared with the rules and with the skill's other files and scripts.
    - A breach in a file the plan does not list: add it to the plan and confirm it with the user.
 3. Find each kept item and each change in the written files with its `file:line`.
    - Unconfirmed addition: list it as a breach.
-4. Fix each finding and breach, and repeat from step 1 until every list is empty.
+4. Fix each breach, and repeat from step 2 until the list is empty.
    - Fix declined or impossible: report the blocker and stop.
 5. Propose a trial per [runtime-validation.md](../references/runtime-validation.md), then end the turn and wait for the user's own answer.
    - Declined, no subagent, or running in a subagent: go to step 7, runtime unverified.

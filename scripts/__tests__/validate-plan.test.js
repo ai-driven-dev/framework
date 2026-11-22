@@ -57,8 +57,15 @@ const good = (tree, laterTree) => ({
 function run(files, skill = SKILL) {
   const dir = write(files);
   const r = spawnSync(process.execPath, [path.join(skill, "scripts/validate-plan.cjs"), dir], { cwd: project, encoding: "utf8" });
-  return { out: r.stdout.trim(), code: r.status };
+  return { code: r.status, out: `${r.stdout}${r.stderr}` };
 }
+
+const OK = { code: 0, out: "" };
+
+const refused = (result, expected) => {
+  assert.equal(result.code, 1);
+  assert.match(result.out, expected);
+};
 
 const mutate = (file, edit, tree) => {
   const files = good(tree);
@@ -78,62 +85,64 @@ after(() => fs.rmSync(root, { recursive: true, force: true }));
 describe("validate-plan", () => {
   it("accepts a plan filled from the templates", () => {
     const r = run(good());
-    assert.equal(r.code, 0);
-    assert.match(r.out, /^VALID$/);
+    assert.deepEqual(r, OK);
   });
 
   it("accepts the same plan saved with Windows line endings", () => {
     const files = Object.fromEntries(Object.entries(good()).map(([name, text]) => [name, text.replace(/\n/g, "\r\n")]));
-    assert.match(run(files).out, /^VALID$/);
+    assert.deepEqual(run(files), OK);
   });
 
   it("asks for the files when the folder holds no plan", () => {
-    assert.match(run({}).out, /^INVALID\n.*plan\.md: missing/);
+    const r = run({});
+    assert.equal(r.code, 2);
+    assert.match(r.out, /plan\.md: missing/);
   });
 
   it("accepts dependencies on earlier phases and none", () => {
     for (const deps of ["none", "`none`", "1"]) {
       const r = run(mutate("plan.md", (s) => s.replace(/\| 2\s+\|(.*)\| 1 \|/, `| 2 |$1| ${deps} |`)));
-      assert.equal(r.code, 0, deps);
+      assert.deepEqual(r, OK, deps);
     }
   });
 
   it("rejects a dependency that is not an earlier phase number", () => {
     for (const deps of ["2", "3", "x", "", "1, 2"]) {
       const r = run(mutate("plan.md", (s) => s.replace(/\| 2\s+\|(.*)\| 1 \|/, `| 2 |$1| ${deps} |`)));
-      assert.match(r.out, /phase 2 "Depends on" must be/, JSON.stringify(deps));
+      assert.equal(r.code, 1, JSON.stringify(deps));
+      assert.match(r.out, /plan\.md:\d+ PLAN-03 phase 2 "Depends on" must be/, JSON.stringify(deps));
     }
   });
 
   it("rejects a wireframe without numbered regions", () => {
     for (const body of ["none", "N/A", "(1) x", "1. x"]) {
       const r = run(mutate("phase-1.md", (s) => s.replace(/(## Wireframe\n\n)[\s\S]*?(?=## Tasks)/, `$1\`\`\`txt\n${body}\n\`\`\`\n\n`)));
-      assert.match(r.out, /phase-1\.md: section "Wireframe" needs a frame/, body);
+      assert.equal(r.code, 1, body);
+      assert.match(r.out, /phase-1\.md:\d+ PLAN-06 section "Wireframe" needs a frame/, body);
     }
   });
 
   it("accepts a phase that omits the wireframe", () => {
-    const r = run(mutate("phase-1.md", (s) => s.replace(/## Wireframe\n\n[\s\S]*?(?=## Tasks)/, "")));
-    assert.equal(r.code, 0);
+    assert.deepEqual(run(mutate("phase-1.md", (s) => s.replace(/## Wireframe\n\n[\s\S]*?(?=## Tasks)/, ""))), OK);
   });
 
   const cases = [
-    ["a comment left", "plan.md", (s) => `${s}\n<!-- x -->`, /comment left/],
-    ["a placeholder left", "plan.md", (s) => s.replace("Source: x", "Source: {{file}}"), /placeholder/],
-    ["a required section missing", "phase-1.md", (s) => s.replace(/## Test Scope[\s\S]*?(?=## Wireframe)/, ""), /section "Test Scope" missing/],
-    ["an unknown section", "plan.md", (s) => `${s}\n## Extra\n`, /section "Extra" is not in the template/],
+    ["a comment left", "plan.md", (s) => `${s}\n<!-- x -->`, /plan\.md:\d+ PLAN-01 comment left/],
+    ["a placeholder left", "plan.md", (s) => s.replace("Source: x", "Source: {{file}}"), /plan\.md:\d+ PLAN-01 placeholder/],
+    ["a required section missing", "phase-1.md", (s) => s.replace(/## Test Scope[\s\S]*?(?=## Wireframe)/, ""), /phase-1\.md:\d+ PLAN-02 section "Test Scope" missing/],
+    ["an unknown section", "plan.md", (s) => `${s}\n## Extra\n`, /plan\.md:\d+ PLAN-01 section "Extra" is not in the template/],
     ["sections out of order", "plan.md", (s) => s.replace("## Rules", "## Zzz").replace("## Impact", "## Rules").replace("## Zzz", "## Impact"), /out of order/],
     ["a table header renamed", "plan.md", (s) => s.replace("| Rule ", "| Law  "), /table header differs/],
     ["a front matter key missing", "plan.md", (s) => s.replace(/objective:.*\n/, ""), /front matter key "objective" missing/],
-    ["a front matter value changed", "phase-1.md", (s) => s.replace("status: pending", "status: done"), /"status" must be "pending"/],
+    ["a status outside the lifecycle", "phase-1.md", (s) => s.replace("status: pending", "status: implemented"), /phase-1\.md:\d+ PLAN-02 front matter "status" must be one of pending, in-progress, done/],
     ["an empty objective", "plan.md", (s) => s.replace(/objective:.*\n/, 'objective: ""\n'), /"objective" empty/],
     ["a source without a URL", "plan.md", (s) => s.replace("https://example.test", "somewhere"), /without a URL/],
     ["a gap in the task numbers", "phase-1.md", (s) => s.replace("### `1)`", "### `2)`"), /task numbers must run 1 to 1 with no gap/],
     ["a criterion mapping no task", "phase-1.md", (s) => s.replace(/^\| 1 \| x/m, "| 9 | x"), /acceptance row 9 maps to no task/],
     ["a title that leaves the template", "plan.md", (s) => s.replace("# Plan: x", "# Overview: x"), /title must start with "# Plan:"/],
-    ["a front matter key the template lacks", "plan.md", (s) => s.replace(/^---\n/, "---\nowner: x\n"), /front matter key "owner" is not in the template/],
-    ["a plan listing no phase", "plan.md", (s) => s.replace(/^\| [12] +\|.*\n/gm, ""), /no row in ## Phases/],
-    ["a listed phase missing", "plan.md", (s) => s.replace(/(\| 2 .*\n)/, "$1| 3 | x | x |\n"), /phase-3\.md: listed in plan\.md, file missing/],
+    ["a front matter key the template lacks", "plan.md", (s) => s.replace(/^---\n/, "---\nowner: x\n"), /plan\.md:\d+ PLAN-01 front matter key "owner" is not in the template/],
+    ["a plan listing no phase", "plan.md", (s) => s.replace(/^\| [12] +\|.*\n/gm, ""), /plan\.md:\d+ PLAN-03 no row in ## Phases/],
+    ["a listed phase missing", "plan.md", (s) => s.replace(/(\| 2 .*\n)/, "$1| 3 | x | x |\n"), /phase-3\.md:\d+ PLAN-03 listed in plan\.md, file missing/],
   ];
   for (const [name, file, edit, expected] of cases) {
     it(`refuses ${name}`, () => {
@@ -143,77 +152,74 @@ describe("validate-plan", () => {
     });
   }
 
+  it("accepts a plan in progress with a phase done", () => {
+    const files = mutate("plan.md", (s) => s.replace("status: pending", "status: in-progress"));
+    files["phase-1.md"] = files["phase-1.md"].replace("status: pending", "status: done");
+    assert.deepEqual(run(files), OK);
+  });
+
   it("accepts an omitted optional section and a placeholder inside code", () => {
     const files = mutate("plan.md", (s) => s.replace(/## Rules[\s\S]*?(?=## Decisions)/, "").replace("Source: x", "Source: `{{kept}}`"));
-    assert.match(run(files).out, /^VALID$/);
+    assert.deepEqual(run(files), OK);
   });
 
   it("accepts a placeholder inside a fenced block", () => {
-    assert.match(run(mutate("plan.md", (s) => `${s}\n\`\`\`txt\n{{kept}}\n\`\`\`\n`)).out, /^VALID$/);
+    assert.deepEqual(run(mutate("plan.md", (s) => `${s}\n\`\`\`txt\n{{kept}}\n\`\`\`\n`)), OK);
   });
 
   it("accepts a sources table that says none", () => {
     const files = mutate("plan.md", (s) => s.replace(/\| https:\/\/example\.test \|.*\n/, "| `none` | no external doc |\n"));
-    assert.match(run(files).out, /^VALID$/);
+    assert.deepEqual(run(files), OK);
   });
 
   it("refuses a phase file the plan does not list", () => {
-    assert.match(run({ ...good(), "phase-3.md": good()["phase-1.md"] }).out, /phase-3\.md: not listed/);
+    refused(run({ ...good(), "phase-3.md": good()["phase-1.md"] }), /phase-3\.md:\d+ PLAN-03 not listed/);
   });
 
   describe("files to modify and delete", () => {
     const tree = (lines) => lines.join("\n");
     it("resolves a nested tree against the project", () => {
-      assert.match(run(good(tree(["└── src/", "    └── ✏️ a.js"]))).out, /^VALID$/);
+      assert.deepEqual(run(good(tree(["└── src/", "    └── ✏️ a.js"]))), OK);
     });
     it("refuses a file to modify that does not exist", () => {
-      assert.match(run(good(tree(["└── src/", "    └── ✏️ ghost.js"]))).out, /src\/ghost\.js is marked modify/);
+      refused(run(good(tree(["└── src/", "    └── ✏️ ghost.js"]))), /PLAN-05 src\/ghost\.js is marked modify/);
     });
     it("refuses a file to delete that does not exist", () => {
-      assert.match(run(good(tree(["└── ❌ src/ghost.js"]))).out, /marked delete but does not exist/);
+      refused(run(good(tree(["└── ❌ src/ghost.js"]))), /PLAN-05 .*marked delete but does not exist/);
     });
     it("skips names that are not plain paths: globs, braces, notes", () => {
-      assert.match(run(good(tree(["├── ✏️ src/**/*.ts", "├── ✏️ src/{a,b}.js", "└── ✏️ (several files)"]))).out, /^VALID$/);
+      assert.deepEqual(run(good(tree(["├── ✏️ src/**/*.ts", "├── ✏️ src/{a,b}.js", "└── ✏️ (several files)"]))), OK);
     });
     it("accepts a file to create that is absent", () => {
-      assert.match(run(good(tree(["└── ✅ src/new.js"]))).out, /^VALID$/);
+      assert.deepEqual(run(good(tree(["└── ✅ src/new.js"]))), OK);
     });
     it("accepts a file an earlier phase creates, modified by a later one", () => {
-      assert.match(run(good(tree(["└── ✅ src/new.js"]), tree(["└── ✏️ src/new.js"]))).out, /^VALID$/);
+      assert.deepEqual(run(good(tree(["└── ✅ src/new.js"]), tree(["└── ✏️ src/new.js"]))), OK);
     });
     it("refuses a file no phase creates and the disk lacks, in a later phase", () => {
-      assert.match(run(good(undefined, tree(["└── ✏️ src/ghost.js"]))).out, /phase-2\.md: src\/ghost\.js is marked modify but does not exist/);
+      refused(run(good(undefined, tree(["└── ✏️ src/ghost.js"]))), /phase-2\.md:\d+ PLAN-05 src\/ghost\.js is marked modify but does not exist/);
     });
     it("refuses a file an earlier phase deletes, modified by a later one", () => {
       const r = run(good(tree(["└── ❌ src/old.js"]), tree(["└── ✏️ src/old.js"])));
-      assert.match(r.out, /phase-2\.md: src\/old\.js is marked modify but does not exist/);
+      refused(r, /phase-2\.md:\d+ PLAN-05 src\/old\.js is marked modify but does not exist/);
     });
     it("accepts a file an earlier phase deletes, a later phase creates again and a third modifies", () => {
       const files = good(tree(["└── ❌ src/old.js"]), tree(["└── ✅ src/old.js"]));
       files["plan.md"] = files["plan.md"].replace(/(\| 2 .*\n)/, "$1| 3 | x | x | none |\n");
       files["phase-3.md"] = fill(template("phase-template.md"), tree(["└── ✏️ src/old.js"]));
-      assert.match(run(files).out, /^VALID$/);
+      assert.deepEqual(run(files), OK);
     });
     it("refuses a file only a later phase creates, modified by an earlier one", () => {
       const r = run(good(tree(["└── ✏️ src/late.js"]), tree(["└── ✅ src/late.js"])));
-      assert.match(r.out, /phase-1\.md: src\/late\.js is marked modify but does not exist/);
+      refused(r, /phase-1\.md:\d+ PLAN-05 src\/late\.js is marked modify but does not exist/);
     });
-  });
-
-  it("refuses a folder inside the skill itself", () => {
-    const copy = path.join(root, "skill-inside");
-    fs.cpSync(SKILL, copy, { recursive: true });
-    const inside = path.join(copy, "runs/x");
-    fs.mkdirSync(inside, { recursive: true });
-    for (const [name, content] of Object.entries(good())) fs.writeFileSync(path.join(inside, name), content);
-    const r = spawnSync(process.execPath, [path.join(copy, "scripts/validate-plan.cjs"), inside], { cwd: project, encoding: "utf8" });
-    assert.match(r.stdout, /folder is inside the skill itself/);
   });
 
   it("follows the template: a section added there becomes required", () => {
     const copy = path.join(root, "skill");
     fs.cpSync(SKILL, copy, { recursive: true });
     fs.appendFileSync(path.join(copy, "assets/plan-template.md"), "\n## Added\n\nx\n");
-    assert.match(run(good(), copy).out, /plan\.md: section "Added" missing/);
+    refused(run(good(), copy), /plan\.md:\d+ PLAN-01 section "Added" missing/);
   });
+
 });

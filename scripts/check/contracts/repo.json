@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "kind": "repo",
+  "unit": "file",
+  "targets": ".claude-plugin/marketplace.json",
+  "watch": ["**"],
+  "rules": {
+    "REPO-02": {
+      "op": "custom",
+      "in": "marketplace.json",
+      "check": "release-coverage",
+      "why": "a plugin missing from the release matrix is tagged with no archive, in silence"
+    },
+    "REPO-03": {
+      "op": "custom",
+      "in": "marketplace.json",
+      "check": "sdlc-demo",
+      "why": "a skill named in the guides or the animation that does not exist sends the reader to nothing"
+    },
+    "REPO-04": {
+      "op": "custom",
+      "in": "marketplace.json",
+      "check": "no-local-paths",
+      "why": "a path from one machine names its owner and stays in history once pushed"
+    },
+    "REPO-05": {
+      "op": "custom",
+      "in": "marketplace.json",
+      "check": "json-valid",
+      "why": "a JSON file that does not parse, or a manifest missing a field or a path, breaks the host reading it"
+    },
+    "REPO-06": {
+      "op": "custom",
+      "in": "marketplace.json",
+      "check": "hook-rule-copies",
+      "why": "each plugin ships its own copy of the hook library and the host adapter, and a copy that drifts runs different rules"
+    },
+    "REPO-07": {
+      "op": "custom",
+      "in": "marketplace.json",
+      "check": "text-no-nul",
+      "why": "a NUL byte makes a source file binary to grep and diff, so a search over it fails in silence"
+    },
+    "REPO-08": {
+      "op": "custom",
+      "in": "marketplace.json",
+      "check": "no-model-override",
+      "why": "a model set in a bundled skill or agent overrides the model the user chose"
+    },
+    "REPO-09": {
+      "op": "json",
+      "in": "marketplace.json",
+      "schema": "schemas/official/claude-code-marketplace.json",
+      "why": "the host rejects a marketplace that breaks its published schema",
+      "fix": "{problem}"
+    },
+    "REPO-10": {
+      "op": "custom",
+      "in": "marketplace.json",
+      "check": "settings-schema",
+      "why": "the host ignores a settings file that breaks its published schema, in silence"
+    }
+  }
+}

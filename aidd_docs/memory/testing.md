@@ -8,14 +8,15 @@ How the project is tested: the layers, the tools, and the conventions. Where tes
 
 | Surface | Validated by |
 | --- | --- |
-| Skills (markdown) | the skill generator's validate step, and the pre-commit guards `skill-frontmatter`, `check-skill-argument-hints` and `architecture-rules` |
-| Agents (markdown) | `architecture-rules` over `plugins/*/agents/`, then run end to end against a real project |
-| Rules (markdown) | run end to end against a real project; no pre-commit guard reads them |
+| Skills, agents, hook configs, plugin manifests | the contract of each kind, run over the tree by `node scripts/check/run.cjs` (CI job `contracts`): only findings absent from the baseline in `scripts/check/baseline.json` fail. Skills and agents are also read by the pre-commit guards `skill-frontmatter`, `check-skill-argument-hints` and `architecture-rules` |
+| Plans, runs, rules, commands, stories | the contract beside the skill that writes them, run by its `validate-<kind>.cjs`; archived plans are not validated in CI. New kind: copy `02-user-stories/scripts/` (`contract.json`, `validate-story.cjs`), then run `node scripts/check/engine/sync.cjs` |
 | `scripts/` and bundled hooks | `node --test` under the wrapper below |
 | `cli/` | vitest, four projects — see the CLI bank |
 | `kanban/` | its own vitest suite. It shares no code with `cli/` |
 | Per-tool distributions | golden snapshots in `cli/tests/golden/`, mirrored by the `build-per-tool` CI matrix; Claude Code's own `plugin validate` over a fresh claude build, in `cli-ci.yml` |
 | Browser journeys | `aidd-qa:01-acceptance-qa`, see below |
+
+Baseline keys in `scripts/check/baseline.json` start with the file path. On a skill rename, rewrite that path prefix in its keys in the same commit, or `run.cjs` reports the old findings as fresh and the old keys as gone.
 
 ## Tools
 

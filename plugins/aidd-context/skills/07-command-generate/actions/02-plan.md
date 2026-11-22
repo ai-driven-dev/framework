@@ -8,7 +8,7 @@ The draft, name and targets.
 
 ## Process
 
-1. Fill [command-template.md](../assets/command-template.md) with the draft.
+1. Shape the draft on [command-template.md](../assets/command-template.md): the front matter keys are writer input fields, and the body is the template after its front matter.
 2. Check the draft against [command-authoring.md](../references/command-authoring.md), and fix each breach.
 3. Plugin source: plan the canonical command's path per [hosts.md](../references/hosts.md).
 4. Hosts: write the draft's fields and body to the input file.

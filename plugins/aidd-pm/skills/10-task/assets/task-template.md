@@ -3,25 +3,25 @@ type: task
 status: proposed
 ---
 
-# Task: <delivery outcome>
+# Task: {{delivery outcome}}
 
 ## Outcome
 
-<one verifiable delivery result>
+{{one verifiable delivery result}}
 
 ## Scope
 
-- Includes: <boundary>
-- Excludes: <boundary>
+- Includes: {{boundary}}
+- Excludes: {{boundary}}
 
 ## Done When
 
-- <observable completion condition>
+- {{observable completion condition}}
 
 ## Completion Evidence
 
-- <evidence produced after completion>
+- {{evidence produced after completion}}
 
 ## Cancellation
 
-<why it is no longer pursued>
+{{why it is no longer pursued}}

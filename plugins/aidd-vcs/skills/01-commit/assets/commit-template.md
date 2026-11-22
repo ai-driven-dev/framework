@@ -11,9 +11,9 @@ argument-hint: N/A
 ```text
 type(scope): description
 
-[optional body]
+{{optional body}}
 
-[optional footer]
+{{optional footer}}
 ```
 
 ## Types

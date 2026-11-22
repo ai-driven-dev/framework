@@ -12,93 +12,16 @@
  * `cli/` carries its own ratchet (cli/tests/architecture/referenced-paths.arch.test.ts).
  */
 
-const fs = require("node:fs");
 const path = require("node:path");
 
 const ROOT = path.resolve(__dirname, "..");
 
-/** Prose this repository owns and can keep true. */
-const SCANNED = ["docs", "aidd_docs/memory"];
+const core = require("./check/contracts/custom/referenced-paths.cjs");
 
-/** Read from disk: a new directory joins the check by existing, and a deleted one stops
- * being an anchor rather than becoming a false positive. */
-function topLevelEntries() {
-  return new Set(fs.readdirSync(ROOT).filter((entry) => entry !== ".git"));
-}
-
-/**
- * Paths this repository's prose names as something the reader creates, never as its own content.
- * `.aidd/config.json` is the telemetry opt-in switch a repository commits to turn measurement on;
- * this one has not, so that absence is the state the prose describes. The anchor appears as soon
- * as a contributor runs the CLI in this checkout, which is what turned a page into a refusal.
- * `.agents/hooks.json` is the hooks file an Antigravity install writes into the reader's project;
- * this repository tracks `.agents/` for its own skills only.
- */
-const READER_CREATED = new Set([".aidd/config.json", ".agents/hooks.json"]);
-
-const BACKTICKED = /`([^`\n]+)`/gu;
-
-function referencedPaths(content, entries = topLevelEntries()) {
-  const found = [];
-  const lines = content.split("\n");
-
-  for (const [index, line] of lines.entries()) {
-    for (const match of line.matchAll(BACKTICKED)) {
-      const token = match[1].trim();
-      // A command, a placeholder, a version range or a glob is not a path to resolve.
-      if (/[\s<>*$|…]/u.test(token)) continue;
-      if (token.startsWith(">") || token.startsWith("=")) continue;
-
-      // Files only: a bare directory is usually a shape rather than a location, and
-      // directories drift far less than the files inside them.
-      if (!path.extname(token)) continue;
-
-      if (READER_CREATED.has(token)) continue;
-
-      const head = token.split("/")[0];
-      if (!entries.has(head)) continue;
-
-      found.push({ target: token, line: index + 1 });
-    }
-  }
-
-  return found;
-}
-
-function deadReferences(files) {
-  const entries = topLevelEntries();
-  const dead = [];
-
-  for (const file of files) {
-    const content = fs.readFileSync(file, "utf8");
-    for (const { target, line } of referencedPaths(content, entries)) {
-      if (!fs.existsSync(path.resolve(ROOT, target))) {
-        dead.push({ file, line, target });
-      }
-    }
-  }
-
-  return dead;
-}
-
-function markdownUnder(dir) {
-  const absolute = path.resolve(ROOT, dir);
-  if (!fs.existsSync(absolute)) return [];
-
-  return fs
-    .readdirSync(absolute, { withFileTypes: true, recursive: true })
-    .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
-    .map((entry) => path.join(entry.parentPath ?? entry.path, entry.name));
-}
-
-function scannedFiles() {
-  const rootMarkdown = fs
-    .readdirSync(ROOT, { withFileTypes: true })
-    .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
-    .map((entry) => path.join(ROOT, entry.name));
-
-  return [...rootMarkdown, ...SCANNED.flatMap(markdownUnder)];
-}
+const topLevelEntries = () => core.topLevelEntries(ROOT);
+const referencedPaths = (content, entries = topLevelEntries()) => core.referencedPaths(content, entries);
+const deadReferences = (files) => core.deadReferences(ROOT, files);
+const scannedFiles = () => core.scannedFiles(ROOT);
 
 function scanRepository() {
   const files = scannedFiles();

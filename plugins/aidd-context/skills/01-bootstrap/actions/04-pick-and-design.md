@@ -21,6 +21,6 @@ Three artifacts held in conversation context: the checklist with block 4 filled 
 
 ## Test
 
-- Block 4 has all six items filled with no remaining `<...>` placeholders.
+- Block 4 has all six items filled with no remaining `{{...}}` slots.
 - A folder-structure code block is rendered, and a fenced `mermaid` block is present and parses without error.
 - The user confirmed in writing.
