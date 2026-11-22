@@ -49,6 +49,5 @@
       "why": "a link leaving the skill is dead in every installed copy", "fix": "name the file in prose, {target} is outside the skill" },
     "SKILL-22": { "op": "custom", "in": ["SKILL.md", "actions/**/*.md", "references/**/*.md"], "check": "sibling-plugin",
       "why": "a plugin works without its siblings installed" }
-  },
-  "retired": []
+  }
 }
