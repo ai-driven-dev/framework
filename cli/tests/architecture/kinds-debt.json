@@ -105,18 +105,7 @@
       "tests/orchestration/sync/sync-settings.use-case.manifest-replaced-registration.unit.test.ts": 1,
       "tests/orchestration/sync/sync-settings.use-case.manifest-write-count.unit.test.ts": 1,
       "tests/orchestration/sync/sync-settings.use-case.tool-narrowing.unit.test.ts": 1,
-      "tests/orchestration/sync/sync-tool-settings-files.use-case.unit.test.ts": 1,
-      "tests/presentation/controllers/doctor-project.controller.unit.test.ts": 1,
-      "tests/presentation/controllers/doctor-user-scope.controller.unit.test.ts": 1,
-      "tests/presentation/controllers/plugin.controller.wiring.unit.test.ts": 1,
-      "tests/presentation/controllers/setup.controller.wiring.unit.test.ts": 1,
-      "tests/presentation/controllers/shared-home-plugins.integration.test.ts": 1,
-      "tests/presentation/controllers/sync.controller.wiring.unit.test.ts": 1,
-      "tests/presentation/in-process-cli.integration.test.ts": 1,
-      "tests/presentation/presenters/agent-models.presenter.unit.test.ts": 1,
-      "tests/shared/infrastructure/asset-loader-config-assets.integration.test.ts": 1,
-      "tests/shared/infrastructure/asset-loader.integration.test.ts": 1,
-      "tests/shared/ports/asset-provider.contract.test.ts": 1
+      "tests/orchestration/sync/sync-tool-settings-files.use-case.unit.test.ts": 1
     }
   }
 ]

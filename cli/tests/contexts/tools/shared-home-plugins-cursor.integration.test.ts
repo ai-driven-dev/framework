@@ -2,11 +2,13 @@ import { existsSync } from "node:fs";
 import { mkdir, readdir, readFile, realpath, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import {
+  FRAMEWORK_REAL,
+  setupFromFixture,
+} from "../../presentation/testing/fixture-setup.builder.js";
 import { copyFixtureTree, createTestEnv } from "../../shared/testing/cli-sandbox.builder.js";
 import { runInProcess } from "../../shared/testing/in-process-cli.builder.js";
-import { resolveRegisteredToolId, TOOL } from "../../shared/testing/registered-tools.builder.js";
-import { FRAMEWORK_REAL, setupFromFixture } from "../testing/fixture-setup.builder.js";
+import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 let first: string;
 let second: string;
@@ -39,14 +41,13 @@ describe("two projects on one home that installed the same cursor plugins", () =
         "update_memory"
       );
     }
-    const machine = Manifest.fromJSON(
-      JSON.parse(await readFile(join(home, ".config", "aidd", "manifest.json"), "utf-8")),
-      resolveRegisteredToolId
+    const machine = JSON.parse(
+      await readFile(join(home, ".config", "aidd", "manifest.json"), "utf-8")
     );
-    const owned = machine
-      .getRecordedPlugins(TOOL.cursor)
-      .find((plugin) => plugin.plugin.name === "aidd-context");
-    expect(owned?.machineClaim).toEqual([await realpath(first), await realpath(second)]);
+    const owned = machine.tools[TOOL.cursor]?.plugins.find(
+      (plugin: { name: string }) => plugin.name === "aidd-context"
+    );
+    expect(owned?.dependents).toEqual([await realpath(first), await realpath(second)]);
     const contextDir = join(userPlugins(), "aidd-context");
     const devDir = join(userPlugins(), "aidd-dev");
     const remove = ["plugin", "remove", "aidd-context", "--tool", "cursor", "--scope", "user"];

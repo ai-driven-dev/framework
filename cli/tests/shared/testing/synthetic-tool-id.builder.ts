@@ -1,6 +1,7 @@
 import { RegisteredToolCatalog } from "../../../src/contexts/tools/application/registered-tool-catalog.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import {
+  type BuiltToolConfig,
   defineAiTool,
   defineIdeTool,
 } from "../../../src/contexts/tools/domain/profile/define-tool.js";
@@ -9,7 +10,8 @@ import { manifestSection } from "../../../src/contexts/tools/domain/sections/man
 import { ModelsSection } from "../../../src/contexts/tools/domain/sections/models-section.js";
 import { anEmptyContract } from "./empty-build-contract.builder.js";
 
-function syntheticConfig(name: string, providers: readonly string[] = []) {
+/** A flat synthetic AI tool under `name`, running the agents on the given providers when any. */
+export function syntheticConfig(name: string, providers: readonly string[] = []) {
   return defineAiTool({
     toolId: name,
     directory: `.${name}/`,
@@ -41,12 +43,14 @@ const IDE_CONFIG = defineIdeTool({
 export const SYNTHETIC_IDE_TOOL = IDE_CONFIG.toolId;
 
 /** The synthetic IDE tool and both AI tools, the first running the agents on anthropic and the
- * second on openai: for a test that reads both categories or the providers the tools run. */
-export function syntheticMixedCatalog(): ToolCatalog {
+ * second on openai: for a test that reads both categories or the providers the tools run. Any
+ * `extra` profile is listed after them. */
+export function syntheticMixedCatalog(extra: readonly BuiltToolConfig[] = []): ToolCatalog {
   return new RegisteredToolCatalog([
     syntheticConfig(SYNTHETIC_TOOL, ["anthropic"]),
     syntheticConfig(SECOND_SYNTHETIC_TOOL, ["openai"]),
     IDE_CONFIG,
+    ...extra,
   ]);
 }
 

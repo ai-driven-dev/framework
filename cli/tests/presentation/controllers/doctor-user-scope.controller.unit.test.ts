@@ -1,19 +1,31 @@
 import { describe, expect, it, vi } from "vitest";
 import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";
-import { registeredAiConfig } from "../../shared/testing/catalog-of.builder.js";
 import { doctorHarness } from "../../shared/testing/doctor-command.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  ACTIVATED_SYNTHETIC_CONFIG,
+  ACTIVATED_SYNTHETIC_TOOL,
+  syntheticActivatedSettingsFile,
+} from "../../shared/testing/synthetic-activated-tool.builder.js";
+import {
+  SECOND_SYNTHETIC_TOOL,
+  SYNTHETIC_TOOL,
+  syntheticMixedCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
 const PROJECT_ROOT = process.cwd();
-const { doctorAll, doctorRegistration, loadUserManifest, errors, run } = doctorHarness();
+const { doctorAll, doctorRegistration, loadUserManifest, errors, run } = doctorHarness(
+  syntheticMixedCatalog([ACTIVATED_SYNTHETIC_CONFIG])
+);
 
 describe("aidd doctor --scope user", () => {
   it("reads the machine-wide manifest and checks registrations alone", async () => {
+    loadUserManifest.mockResolvedValue({
+      getInstalledToolIds: () => [ACTIVATED_SYNTHETIC_TOOL],
+      getToolVersion: () => "5.2.2",
+    });
     expect(await run("--scope", "user")).toEqual([
       "User-scope tools:",
-      `  claude (v5.2.2): expects activation in ${registeredAiConfig(TOOL.claude)
-        .nativeActivation()
-        ?.userSettingsFile("/home/dev", () => undefined)}`,
+      `  ${ACTIVATED_SYNTHETIC_TOOL} (v5.2.2): expects activation in ${syntheticActivatedSettingsFile("/home/dev")}`,
       "",
       "User-scope installation is healthy",
     ]);
@@ -26,9 +38,9 @@ describe("aidd doctor --scope user", () => {
   });
 
   it("narrows the registration check to the one tool named", async () => {
-    await run("--scope", "user", "--tool", "claude");
+    await run("--scope", "user", "--tool", SYNTHETIC_TOOL);
 
-    expect(doctorRegistration.mock.calls[0][0].allowedIds).toEqual(new Set(["claude"]));
+    expect(doctorRegistration.mock.calls[0][0].allowedIds).toEqual(new Set([SYNTHETIC_TOOL]));
   });
 
   it("refuses a tool no profile declares, naming it unregistered", async () => {
@@ -95,13 +107,13 @@ describe("aidd doctor --scope user", () => {
 describe("aidd doctor --scope user - what a tool without user-scope settings reports", () => {
   it("names the tool asked for, and says so when it has no user-scope settings file", async () => {
     loadUserManifest.mockResolvedValue({
-      getInstalledToolIds: () => ["claude"],
+      getInstalledToolIds: () => [SYNTHETIC_TOOL],
       getToolVersion: () => undefined,
     });
 
-    expect(await run("--scope", "user", "--tool", "cursor")).toEqual([
+    expect(await run("--scope", "user", "--tool", SECOND_SYNTHETIC_TOOL)).toEqual([
       "User-scope tools:",
-      "  cursor (vunknown): expects activation in no user-scope settings file",
+      `  ${SECOND_SYNTHETIC_TOOL} (vunknown): expects activation in no user-scope settings file`,
       "",
       "User-scope installation is healthy",
     ]);

@@ -1,7 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";
 import { doctorHarness, HEALTHY_SCOPE } from "../../shared/testing/doctor-command.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SECOND_SYNTHETIC_TOOL,
+  SYNTHETIC_IDE_TOOL,
+  SYNTHETIC_TOOL,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
 const PROJECT_ROOT = process.cwd();
 const { doctorAll, statusAll, doctorScoped, statusScoped, written, errors, run } = doctorHarness();
@@ -27,13 +31,16 @@ describe("aidd doctor - every tool at once", () => {
   it("names each equipped tool with its version and what it carries", async () => {
     doctorAll.mockResolvedValue({
       errors: [],
-      ai: { toolHealth: [{ toolId: TOOL.claude, fileCount: 12, mergeFileCount: 1 }], issues: [] },
+      ai: {
+        toolHealth: [{ toolId: SYNTHETIC_TOOL, fileCount: 12, mergeFileCount: 1 }],
+        issues: [],
+      },
       ide: HEALTHY_SCOPE,
       pluginIssues: [],
       healthy: true,
     });
     statusAll.mockResolvedValue({
-      aiTools: { tools: [{ toolId: TOOL.claude, version: "5.2.2", drifted: [] }] },
+      aiTools: { tools: [{ toolId: SYNTHETIC_TOOL, version: "5.2.2", drifted: [] }] },
       ideTools: { tools: [] },
       pluginDrift: [],
     });
@@ -41,11 +48,11 @@ describe("aidd doctor - every tool at once", () => {
     expect(await run()).toEqual([
       "",
       "AI tools:",
-      "  claude (v5.2.2): 12 files, 1 merge files",
+      `  ${SYNTHETIC_TOOL} (v5.2.2): 12 files, 1 merge files`,
       "",
       "Drift:",
       "AI tools:",
-      "  claude (v5.2.2): in sync",
+      `  ${SYNTHETIC_TOOL} (v5.2.2): in sync`,
       "IDE tools:",
       "  (none installed)",
       "Plugins:",
@@ -132,7 +139,7 @@ describe("aidd doctor - every tool at once", () => {
       pluginIssues: [
         {
           pluginName: "aidd-dev",
-          toolId: TOOL.claude,
+          toolId: SYNTHETIC_TOOL,
           issue: "drifted",
           filePath: ".claude/a.md",
         },
@@ -146,7 +153,7 @@ describe("aidd doctor - every tool at once", () => {
     await expect(run("--plugin", "aidd-dev")).rejects.toThrow(ExitRequested);
 
     expect(errors[0]).toBe(
-      "Error:   Plugin aidd-dev (claude): drifted — .claude/a.md\n    Fix: Run `aidd sync`\n"
+      `Error:   Plugin aidd-dev (${SYNTHETIC_TOOL}): drifted — .claude/a.md\n    Fix: Run \`aidd sync\`\n`
     );
     expect(exit).toHaveBeenCalledWith(1);
   });
@@ -157,7 +164,7 @@ describe("aidd doctor - the two categories, told apart", () => {
     doctorAll.mockResolvedValue({
       errors: [],
       ai: {
-        toolHealth: [{ toolId: TOOL.claude, fileCount: 1, mergeFileCount: 0 }],
+        toolHealth: [{ toolId: SYNTHETIC_TOOL, fileCount: 1, mergeFileCount: 0 }],
         issues: [
           {
             severity: "info",
@@ -167,7 +174,7 @@ describe("aidd doctor - the two categories, told apart", () => {
         ],
       },
       ide: {
-        toolHealth: [{ toolId: TOOL.vscode, fileCount: 2, mergeFileCount: 0 }],
+        toolHealth: [{ toolId: SYNTHETIC_IDE_TOOL, fileCount: 2, mergeFileCount: 0 }],
         issues: [
           {
             severity: "info",
@@ -183,10 +190,10 @@ describe("aidd doctor - the two categories, told apart", () => {
     expect(await run()).toEqual([
       "",
       "AI tools:",
-      "  claude (vunknown): 1 files, 0 merge files",
+      `  ${SYNTHETIC_TOOL} (vunknown): 1 files, 0 merge files`,
       "",
       "IDE tools:",
-      "  vscode (vunknown): 2 files, 0 merge files",
+      `  ${SYNTHETIC_IDE_TOOL} (vunknown): 2 files, 0 merge files`,
       "",
       "Drift:",
       "AI tools:",
@@ -213,25 +220,25 @@ describe("aidd doctor --tool", () => {
   it("asks the category the tool belongs to, then narrows the inventory to that tool", async () => {
     doctorScoped.mockResolvedValue({
       toolHealth: [
-        { toolId: TOOL.claude, fileCount: 12, mergeFileCount: 1 },
-        { toolId: TOOL.codex, fileCount: 9, mergeFileCount: 0 },
+        { toolId: SYNTHETIC_TOOL, fileCount: 12, mergeFileCount: 1 },
+        { toolId: SECOND_SYNTHETIC_TOOL, fileCount: 9, mergeFileCount: 0 },
       ],
       issues: [],
       pluginIssues: [],
       healthy: true,
     });
     statusScoped.mockResolvedValue({
-      tools: [{ toolId: TOOL.claude, version: "5.2.2", drifted: [] }],
+      tools: [{ toolId: SYNTHETIC_TOOL, version: "5.2.2", drifted: [] }],
       pluginDrift: [],
     });
 
-    expect(await run("--tool", "claude")).toEqual([
+    expect(await run("--tool", SYNTHETIC_TOOL)).toEqual([
       "",
-      "claude tools:",
-      "  claude (v5.2.2): 12 files, 1 merge files",
+      `${SYNTHETIC_TOOL} tools:`,
+      `  ${SYNTHETIC_TOOL} (v5.2.2): 12 files, 1 merge files`,
       "",
       "Drift:",
-      "  claude (v5.2.2): in sync",
+      `  ${SYNTHETIC_TOOL} (v5.2.2): in sync`,
       "Plugins:",
       "  (all in sync)",
       "",
@@ -244,14 +251,14 @@ describe("aidd doctor --tool", () => {
     });
     expect(statusScoped).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
-      filterToolId: "claude",
+      filterToolId: SYNTHETIC_TOOL,
       pluginName: undefined,
     });
     expect(doctorAll).not.toHaveBeenCalled();
   });
 
   it("calls an IDE tool an IDE tool when it asks its category", async () => {
-    await run("--tool", "vscode");
+    await run("--tool", SYNTHETIC_IDE_TOOL);
 
     expect(doctorScoped).toHaveBeenCalledWith(expect.objectContaining({ category: "ide" }));
   });
@@ -264,7 +271,7 @@ describe("aidd doctor --tool", () => {
   });
 
   it("carries the named plugin into both reads", async () => {
-    await run("--tool", "claude", "--plugin", "aidd-dev");
+    await run("--tool", SYNTHETIC_TOOL, "--plugin", "aidd-dev");
 
     expect(doctorScoped).toHaveBeenCalledWith(expect.objectContaining({ pluginName: "aidd-dev" }));
     expect(statusScoped).toHaveBeenCalledWith(expect.objectContaining({ pluginName: "aidd-dev" }));
@@ -287,7 +294,7 @@ describe("aidd doctor --tool", () => {
       throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("--tool", "claude")).rejects.toThrow(ExitRequested);
+    await expect(run("--tool", SYNTHETIC_TOOL)).rejects.toThrow(ExitRequested);
 
     expect(errors[0]).toBe(
       "Error:   claude is not registered\n    Fix: Run `aidd sync` to re-register it.\n"
@@ -305,7 +312,7 @@ describe("aidd doctor --tool", () => {
       throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("--tool", "claude")).rejects.toThrow(ExitRequested);
+    await expect(run("--tool", SYNTHETIC_TOOL)).rejects.toThrow(ExitRequested);
 
     expect(exit).toHaveBeenCalledWith(1);
   });
@@ -326,7 +333,7 @@ describe("aidd doctor --tool with a plugin named", () => {
       healthy: false,
     });
 
-    const lines = await run("--tool", "claude", "--plugin", "aidd-dev");
+    const lines = await run("--tool", SYNTHETIC_TOOL, "--plugin", "aidd-dev");
 
     expect(errors.join("")).toBe("");
     expect(lines[lines.length - 1]).toBe("Installation is healthy");
@@ -337,7 +344,7 @@ describe("aidd doctor --tool with a plugin named", () => {
       toolHealth: [],
       issues: [],
       pluginIssues: [
-        { pluginName: "aidd-dev", toolId: TOOL.claude, issue: "not-installed-on-machine" },
+        { pluginName: "aidd-dev", toolId: SYNTHETIC_TOOL, issue: "not-installed-on-machine" },
       ],
       healthy: true,
     });
@@ -345,10 +352,12 @@ describe("aidd doctor --tool with a plugin named", () => {
       throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("--tool", "claude", "--plugin", "aidd-dev")).rejects.toThrow(ExitRequested);
+    await expect(run("--tool", SYNTHETIC_TOOL, "--plugin", "aidd-dev")).rejects.toThrow(
+      ExitRequested
+    );
 
     expect(errors[0]).toBe(
-      "Error:   claude: plugins not installed on this machine, run `aidd sync`\n"
+      `Error:   ${SYNTHETIC_TOOL}: plugins not installed on this machine, run \`aidd sync\`\n`
     );
   });
 });

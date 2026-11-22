@@ -1,7 +1,6 @@
 import { resolve } from "node:path";
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { wireTools } from "../../../src/composition/tools.js";
 import {
   localFrameworkSource,
   remoteFrameworkSource,
@@ -16,7 +15,16 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
 import { parseToExit } from "../../shared/testing/parse-to-exit.builder.js";
 import { manifestRepositoryLoading } from "../../shared/testing/partial-ports.builder.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  ACTIVATED_SYNTHETIC_CONFIG,
+  ACTIVATED_SYNTHETIC_TOOL,
+} from "../../shared/testing/synthetic-activated-tool.builder.js";
+import {
+  SECOND_SYNTHETIC_TOOL,
+  SYNTHETIC_IDE_TOOL,
+  SYNTHETIC_TOOL,
+  syntheticMixedCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
 const resolveSourceIfNeeded = vi.fn();
 const registerIfPresent = vi.fn();
@@ -28,6 +36,8 @@ const detectContext = vi.fn();
 const setupMachineScope = vi.fn();
 const loadManifest = vi.fn();
 const setAgentModel = vi.fn();
+
+const CATALOG = syntheticMixedCatalog([ACTIVATED_SYNTHETIC_CONFIG]);
 
 const createDeps = vi.fn(async () => {
   const fs = new InMemoryFileAdapter();
@@ -49,7 +59,7 @@ const createDeps = vi.fn(async () => {
           manifestRepo: manifestRepositoryLoading(loadManifest),
           updateGitignore: new UpdateGitignore(fs),
         },
-        registeredTools()
+        CATALOG
       )
     ),
     setAgentModels: { execute: setAgentModel, reset: vi.fn() },
@@ -61,7 +71,6 @@ const { registerSetupCommand } = await import(
 );
 
 const PROJECT_ROOT = process.cwd();
-const CATALOG = wireTools();
 
 let written: string[] = [];
 let errors: string[] = [];
@@ -94,7 +103,7 @@ beforeEach(() => {
   activation.mockResolvedValue({ binaryMissing: [], errors: [], failed: false });
   setupTools.mockResolvedValue({ results: [] });
   setupPluginsPrompt.mockResolvedValue(undefined);
-  setupToolsPrompt.mockResolvedValue({ aiTools: ["claude"], ideTools: [] });
+  setupToolsPrompt.mockResolvedValue({ aiTools: [SYNTHETIC_TOOL], ideTools: [] });
   detectContext.mockResolvedValue({ describe: () => "a TypeScript project" });
   setupMachineScope.mockResolvedValue({
     kind: "up-to-date",
@@ -120,11 +129,11 @@ async function run(...args: string[]): Promise<string[]> {
 
 describe("aidd setup - the flow a scripted run builds", () => {
   it("names the tools it was given, installs no plugin, and registers the default source", async () => {
-    expect(await run("--ai", "claude")).toEqual(["Project is up to date."]);
+    expect(await run("--ai", SYNTHETIC_TOOL)).toEqual(["Project is up to date."]);
     expect({ ...builtFlow() }).toEqual({
       projectRoot: PROJECT_ROOT,
       source: undefined,
-      aiTools: ["claude"],
+      aiTools: [SYNTHETIC_TOOL],
       ideTools: [],
       pluginMode: "none",
       pluginNames: [],
@@ -135,7 +144,7 @@ describe("aidd setup - the flow a scripted run builds", () => {
     });
     expect(setupTools).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
-      aiTools: ["claude"],
+      aiTools: [SYNTHETIC_TOOL],
       ideTools: [],
       force: false,
       version: "5.2.2",
@@ -145,11 +154,11 @@ describe("aidd setup - the flow a scripted run builds", () => {
   it("expands the all keyword to every tool of that category", async () => {
     await run("--ai", "all");
 
-    expect(builtFlow().aiTools).toEqual([...registeredTools().idsInCanonicalOrder("ai")]);
+    expect(builtFlow().aiTools).toEqual([...CATALOG.idsInCanonicalOrder("ai")]);
   });
 
   it("carries a named plugin list, and its mode, into the plugin prompt", async () => {
-    await run("--ai", "claude", "--plugins", "aidd-dev,aidd-pm");
+    await run("--ai", SYNTHETIC_TOOL, "--plugins", "aidd-dev,aidd-pm");
 
     expect(builtFlow().pluginMode).toBe("named");
     expect(setupPluginsPrompt).toHaveBeenCalledWith({
@@ -161,26 +170,26 @@ describe("aidd setup - the flow a scripted run builds", () => {
   });
 
   it("asks for no plugin at all when the default marketplace is refused", async () => {
-    await run("--ai", "claude", "--no-default-marketplace");
+    await run("--ai", SYNTHETIC_TOOL, "--no-default-marketplace");
 
     expect(builtFlow().registerDefaultMarketplace).toBe(false);
     expect(setupPluginsPrompt).not.toHaveBeenCalled();
   });
 
   it("resolves a local source against the working directory", async () => {
-    await run("--source", "local", "--path", "vendor/framework", "--ai", "claude");
+    await run("--source", "local", "--path", "vendor/framework", "--ai", SYNTHETIC_TOOL);
 
     expect(builtFlow().source).toEqual(localFrameworkSource(resolve("vendor/framework")));
   });
 
   it("carries the release tag a remote source was pinned to", async () => {
-    await run("--source", "remote", "--release", "v1.2.3", "--ai", "claude");
+    await run("--source", "remote", "--release", "v1.2.3", "--ai", SYNTHETIC_TOOL);
 
     expect(builtFlow().source).toEqual(remoteFrameworkSource(undefined, "v1.2.3"));
   });
 
   it("hands a user scope to the machine-wide setup alone", async () => {
-    await run("--ai", "claude", "--scope", "user");
+    await run("--ai", ACTIVATED_SYNTHETIC_TOOL, "--scope", "user");
 
     const flow = setupMachineScope.mock.calls[0][0] as SetupFlow;
     expect(flow.scope).toBe("user");
@@ -194,12 +203,12 @@ const OTHER_PROJECTS = (ide: string, provider: string) =>
 
 describe("aidd setup - the agents' provider", () => {
   it("sets the provider and the main session's model only once the install has succeeded", async () => {
-    await run("--ide", "opencode,vscode", "--provider", "mistral");
+    await run("--ide", `${SECOND_SYNTHETIC_TOOL},${SYNTHETIC_IDE_TOOL}`, "--provider", "openai");
 
     expect(setAgentModel).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
-      hosts: ["opencode"],
-      provider: "mistral",
+      hosts: [SECOND_SYNTHETIC_TOOL],
+      provider: "openai",
       scope: "project",
     });
     expect(setAgentModel.mock.invocationCallOrder[0]).toBeGreaterThan(
@@ -213,24 +222,29 @@ describe("aidd setup - the agents' provider", () => {
       throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("--ide", "opencode", "--provider", "mistral")).rejects.toThrow(ExitRequested);
+    await expect(run("--ide", SECOND_SYNTHETIC_TOOL, "--provider", "openai")).rejects.toThrow(
+      ExitRequested
+    );
 
     expect(setAgentModel).not.toHaveBeenCalled();
   });
 
   it("gives the main session and the agents back the IDE's model with none", async () => {
-    const lines = await run("--ide", "opencode", "--provider", "none");
+    const lines = await run("--ide", SECOND_SYNTHETIC_TOOL, "--provider", "none");
 
     expect(setAgentModel).toHaveBeenCalledWith(
-      expect.objectContaining({ hosts: ["opencode"], provider: undefined })
+      expect.objectContaining({ hosts: [SECOND_SYNTHETIC_TOOL], provider: undefined })
     );
-    expect(lines).toContain("opencode: the agents run on the IDE's model again.");
-    expect(lines).toContain(OTHER_PROJECTS("opencode", "none"));
+    expect(lines).toContain(`${SECOND_SYNTHETIC_TOOL}: the agents run on the IDE's model again.`);
+    expect(lines).toContain(OTHER_PROJECTS(SECOND_SYNTHETIC_TOOL, "none"));
   });
 
   it.each([
-    [["--global", "--ide", "claude,vscode", "--provider", "anthropic"], "vscode"],
-    [["--ide", "vscode", "--provider", "bogus"], 'Unknown provider "bogus"'],
+    [
+      ["--global", "--ide", `${SYNTHETIC_TOOL},${SYNTHETIC_IDE_TOOL}`, "--provider", "anthropic"],
+      SYNTHETIC_IDE_TOOL,
+    ],
+    [["--ide", SYNTHETIC_IDE_TOOL, "--provider", "bogus"], 'Unknown provider "bogus"'],
   ])("refuses %j before building or writing anything", async (args, message) => {
     vi.spyOn(process, "exit").mockImplementation((code) => {
       throw new ExitRequested(Number(code ?? 0));
@@ -248,7 +262,7 @@ describe("aidd setup - a person at a terminal", () => {
   it("greets, names what it detected, and ends with what to do next", async () => {
     pretendTerminal(true);
     setupTools.mockResolvedValue({
-      results: [{ toolId: TOOL.claude, fileCount: 9, files: [], skipped: false, warnings: [] }],
+      results: [{ toolId: SYNTHETIC_TOOL, fileCount: 9, files: [], skipped: false, warnings: [] }],
     });
 
     expect(await run()).toEqual([
@@ -259,7 +273,7 @@ describe("aidd setup - a person at a terminal", () => {
       "",
       "Detected: a TypeScript project.",
       "Project is up to date.",
-      "Installed claude (9 files)",
+      `Installed ${SYNTHETIC_TOOL} (9 files)`,
       "",
       "Next steps:",
       "  aidd doctor             # verify drift",
@@ -285,7 +299,7 @@ describe("aidd setup - a person at a terminal", () => {
     setupTools.mockResolvedValue({
       results: [
         {
-          toolId: TOOL.claude,
+          toolId: SYNTHETIC_TOOL,
           fileCount: 1,
           files: [{ relativePath: "CLAUDE.md" }],
           skipped: false,
@@ -294,9 +308,9 @@ describe("aidd setup - a person at a terminal", () => {
       ],
     });
 
-    await run("--verbose", "--ai", "claude");
+    await run("--verbose", "--ai", SYNTHETIC_TOOL);
 
-    expect(errors).toEqual(["[verbose] Tool: claude\n", "[verbose]   + CLAUDE.md\n"]);
+    expect(errors).toEqual([`[verbose] Tool: ${SYNTHETIC_TOOL}\n`, "[verbose]   + CLAUDE.md\n"]);
   });
 });
 
@@ -304,8 +318,8 @@ describe("aidd setup - every flag that makes a run a scripted one", () => {
   it.each([
     [["--source", "remote"]],
     [["--release", "v1.2.3"]],
-    [["--ai", "claude"]],
-    [["--ide", "vscode"]],
+    [["--ai", SYNTHETIC_TOOL]],
+    [["--ide", SYNTHETIC_IDE_TOOL]],
     [["--plugins", "none"]],
     [["--yes"]],
   ])("stops prompting on its own once %j is given", async (args) => {
@@ -339,8 +353,8 @@ describe("aidd setup - what it refuses and what it reports", () => {
   it.each([
     { args: [], cause: "with no --ide", remedy: "Pass `--ide <ids>`" },
     {
-      args: ["--ide", "claude,vscode"],
-      cause: "an editor (vscode)",
+      args: ["--ide", `${SYNTHETIC_TOOL},${SYNTHETIC_IDE_TOOL}`],
+      cause: `an editor (${SYNTHETIC_IDE_TOOL})`,
       remedy: "Drop it from --ide",
     },
   ])("renders global validation for $cause before building dependencies", async (test) => {
@@ -385,7 +399,7 @@ describe("aidd setup - what it refuses and what it reports", () => {
       throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("--ai", "vscode")).rejects.toThrow(ExitRequested);
+    await expect(run("--ai", SYNTHETIC_IDE_TOOL)).rejects.toThrow(ExitRequested);
 
     expect(exit).toHaveBeenCalledWith(1);
     expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
@@ -395,16 +409,16 @@ describe("aidd setup - what it refuses and what it reports", () => {
     activation.mockResolvedValue({
       binaryMissing: [],
       failed: true,
-      errors: [{ scope: "claude", error: "claude CLI refused" }],
+      errors: [{ scope: SYNTHETIC_TOOL, error: `${SYNTHETIC_TOOL} CLI refused` }],
     });
     const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
       throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("--ai", "claude")).rejects.toThrow(ExitRequested);
+    await expect(run("--ai", SYNTHETIC_TOOL)).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe(
-      "Warning: [claude] claude CLI refused\nError: Sync failed for: claude. See the warnings above.\n"
+      `Warning: [${SYNTHETIC_TOOL}] ${SYNTHETIC_TOOL} CLI refused\nError: Sync failed for: ${SYNTHETIC_TOOL}. See the warnings above.\n`
     );
     expect(exit).toHaveBeenCalledWith(1);
   });
@@ -415,14 +429,14 @@ describe("aidd setup - what it refuses and what it reports", () => {
       throw new ExitRequested(Number(code ?? 0));
     });
 
-    await expect(run("--ai", "claude")).rejects.toThrow(ExitRequested);
+    await expect(run("--ai", SYNTHETIC_TOOL)).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toBe("Error: assets are missing\n");
     expect(exit).toHaveBeenCalledWith(1);
   });
 
   it("builds the graph for this project at this run's verbosity", async () => {
-    await run("--verbose", "--ai", "claude");
+    await run("--verbose", "--ai", SYNTHETIC_TOOL);
 
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
