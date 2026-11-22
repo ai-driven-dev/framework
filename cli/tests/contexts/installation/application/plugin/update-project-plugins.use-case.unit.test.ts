@@ -67,6 +67,15 @@ describe("updating a plugin in a project", () => {
     expect([updated, deps.fs.has(GREET_PATH)]).toStrictEqual([[], false]);
   });
 
+  it("saves the project manifest once the tools were updated", async () => {
+    const { deps, update } = await installedSample();
+    const before = deps.manifestRepo.saveCount;
+
+    await update.execute({ toolIds: [TOOL.claude], projectRoot: PROJECT_ROOT });
+
+    expect(deps.manifestRepo.saveCount).toBe(before + 1);
+  });
+
   it("re-materializes a plugin at the same version when rebuild is asked", async () => {
     const { deps, update } = await installedSample();
     await deps.fs.deleteFile(GREET_PATH);
