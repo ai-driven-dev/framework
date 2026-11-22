@@ -14,6 +14,7 @@ import { AddPlugin } from "../../contexts/installation/application/plugin/add-pl
 import { AddPluginToProject } from "../../contexts/installation/application/plugin/add-plugin-to-project.use-case.js";
 import { PluginMaterializer } from "../../contexts/installation/application/plugin/files/plugin-materializer.js";
 import { PlanPluginInstall } from "../../contexts/installation/application/plugin/plan-plugin-install.use-case.js";
+import { supportedScopeOf } from "../../contexts/installation/application/plugin/plugin-target-resolution.js";
 import { UpdatePlugin } from "../../contexts/installation/application/plugin/update-plugin.use-case.js";
 import { UpdateProjectPlugins } from "../../contexts/installation/application/plugin/update-project-plugins.use-case.js";
 import type { ClaimedRefWithdrawal } from "../../contexts/installation/application/removal/project-plugin-withdrawal.js";
@@ -245,7 +246,7 @@ export function wirePlugin(base: Base, inst: Installation) {
     prompter,
   });
   const pluginInstallUseCase = new InstallPlugin({
-    planPluginInstall: new PlanPluginInstall(manifestRepo, tools),
+    planPluginInstall: new PlanPluginInstall(manifestRepo, tools, supportedScopeOf(tools)),
     pickPlugin: pickPlugins,
     addPlugin: pluginAddUseCase,
     installFromMarketplace: pluginInstallFromMarketplaceUseCase,

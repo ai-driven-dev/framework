@@ -4,6 +4,7 @@ import {
   resolvePluginToolIds,
   resolveScopeForInstall,
   scopeBaseOf,
+  supportedScopeOf,
 } from "../../../../../src/contexts/installation/application/plugin/plugin-target-resolution.js";
 import { UnresolvableUserScopeError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
@@ -28,6 +29,15 @@ describe("resolving the scope of a fresh install", () => {
   it("reads the scope a fresh install writes from the tool's own profile", () => {
     expect(resolveScopeForInstall(registeredTools().aiProfile(cursor))).toBe("user");
     expect(resolveScopeForInstall(registeredTools().aiProfile(TOOL.claude))).toBe("project");
+  });
+
+  it("answers the scope each tool of the catalog installs under", () => {
+    const supportedScope = supportedScopeOf(registeredTools());
+
+    expect([supportedScope(cursor), supportedScope(TOOL.claude)]).toStrictEqual([
+      "user",
+      "project",
+    ]);
   });
 });
 

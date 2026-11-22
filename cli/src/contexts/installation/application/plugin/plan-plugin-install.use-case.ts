@@ -1,4 +1,4 @@
-import { getToolSupportedScope, type Scope } from "../../../../shared/domain/scope.js";
+import type { Scope } from "../../../../shared/domain/scope.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { InvalidPluginScopeError } from "../../domain/installation.error.js";
@@ -9,19 +9,21 @@ export interface PlanPluginInstallRequest {
   readonly scope: Scope;
 }
 
+/** The one scope a tool's plugins install under, as the caller reads it from the tool. */
+export type SupportedScope = (toolId: AiToolId) => Scope;
+
 /** Refuses a plugin install whose scope a targeted tool cannot honour, before anything is fetched. */
 export class PlanPluginInstall {
   constructor(
     private readonly manifestRepo: ManifestRepository,
-    private readonly tools: ToolCatalog
+    private readonly tools: ToolCatalog,
+    private readonly supportedScope: SupportedScope
   ) {}
 
   async execute(command: PlanPluginInstallRequest): Promise<void> {
     const { scope } = command;
     for (const toolId of await this.targets(command.toolIds)) {
-      const requiresUserScope =
-        this.tools.aiProfile(toolId).plugins()?.requiresUserScope() === true;
-      const supported = getToolSupportedScope(requiresUserScope);
+      const supported = this.supportedScope(toolId);
       if (supported !== scope) throw new InvalidPluginScopeError(toolId, scope, supported);
     }
   }

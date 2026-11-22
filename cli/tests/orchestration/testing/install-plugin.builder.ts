@@ -5,6 +5,7 @@ import { TrustPluginSource } from "../../../src/contexts/distribution/applicatio
 import type { MarketplaceTrustStore } from "../../../src/contexts/distribution/ports/marketplace-trust-store.js";
 import type { PluginAdd } from "../../../src/contexts/installation/application/plugin/add/plugin-add.js";
 import { PlanPluginInstall } from "../../../src/contexts/installation/application/plugin/plan-plugin-install.use-case.js";
+import { supportedScopeOf } from "../../../src/contexts/installation/application/plugin/plugin-target-resolution.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { ConfirmPluginSourceTrust } from "../../../src/orchestration/plugin/confirm-plugin-source-trust.use-case.js";
@@ -89,7 +90,11 @@ export function makeUseCase(
     prompter,
   } = makeUseCases(overrides);
   return new InstallPlugin({
-    planPluginInstall: new PlanPluginInstall(manifestRepo, overrides.tools),
+    planPluginInstall: new PlanPluginInstall(
+      manifestRepo,
+      overrides.tools,
+      supportedScopeOf(overrides.tools)
+    ),
     pickPlugin: pickPlugins,
     addPlugin: pluginAddUseCase,
     installFromMarketplace: pluginInstallFromMarketplaceUseCase,

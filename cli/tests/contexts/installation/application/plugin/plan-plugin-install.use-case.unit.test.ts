@@ -14,7 +14,9 @@ const userOnly = present(aiIds.find(requiresUser));
 const projectOnly = present(aiIds.find((id) => !requiresUser(id)));
 
 function planner(installed: Manifest | null = null): PlanPluginInstall {
-  return new PlanPluginInstall(new InMemoryManifestRepository(installed), tools);
+  return new PlanPluginInstall(new InMemoryManifestRepository(installed), tools, (id) =>
+    requiresUser(id) ? "user" : "project"
+  );
 }
 
 describe("planning a plugin install", () => {
