@@ -18,7 +18,7 @@ function buildFakePrompter(
   };
 }
 
-describe("ResolveUpdateDecision", () => {
+describe("resolving an update decision", () => {
   describe("non-TTY without force", () => {
     it("throws InputRequiredError for modified file", async () => {
       const prompter = buildFakePrompter("overwrite");

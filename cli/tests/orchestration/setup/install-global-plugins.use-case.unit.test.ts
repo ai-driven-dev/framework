@@ -46,7 +46,7 @@ function run(
   });
 }
 
-describe("InstallGlobalPlugins", () => {
+describe("installing global plugins", () => {
   it("hands every plugin of the catalogue to the installer for --plugins all, and names them", async () => {
     const { useCase, install } = setup();
 

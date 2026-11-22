@@ -66,7 +66,7 @@ function aRun(failed = false) {
   return { useCase, report, calls, refreshes, syncs };
 }
 
-describe("RunUserScopeSync", () => {
+describe("syncing the user scope", () => {
   it.each([
     [
       { ...GIVEN, plugin: "aidd-dev" },

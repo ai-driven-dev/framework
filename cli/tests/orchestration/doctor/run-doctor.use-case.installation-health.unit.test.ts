@@ -30,7 +30,7 @@ function withCodexActivator() {
 
 const PROJECT_ROOT = "/test-project";
 
-describe("extractAtReferences", () => {
+describe("extracting @path references", () => {
   it("extracts @path references with at least one slash", () => {
     expect(extractAtReferences("See @.claude/agents/iris.md for details")).toEqual([
       ".claude/agents/iris.md",
@@ -67,7 +67,7 @@ describe("extractAtReferences", () => {
   });
 });
 
-describe("extractMarkdownLinkTargets", () => {
+describe("extracting markdown link targets", () => {
   it("extracts relative markdown link targets", () => {
     expect(extractMarkdownLinkTargets("[doc](aidd_docs/memory/architecture.md)")).toEqual([
       "aidd_docs/memory/architecture.md",
@@ -98,7 +98,7 @@ describe("extractMarkdownLinkTargets", () => {
   });
 });
 
-describe("doctor", () => {
+describe("running the doctor on installation health", () => {
   it("reports healthy when all files are in sync", async () => {
     const deps = await buildInstallationDeps(withCodexActivator());
     await initAndInstall(deps, PROJECT_ROOT, SYNTHETIC_NATIVE_TOOL);

@@ -11,7 +11,7 @@ function removerWith(purge: (command: PurgeUserMarketplaceRequest) => Promise<nu
   return { useCase, find, remove };
 }
 
-describe("RemoveUserMarketplace", () => {
+describe("removing a user-scope marketplace", () => {
   it("purges what the machine holds for the marketplace it found", async () => {
     const purge = vi.fn().mockResolvedValue(3);
     const { useCase } = removerWith(purge);

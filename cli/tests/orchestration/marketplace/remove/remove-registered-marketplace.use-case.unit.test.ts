@@ -42,7 +42,7 @@ async function removalOf(registeredScope: Scope | undefined) {
   return { removal, removed };
 }
 
-describe("RemoveRegisteredMarketplace", () => {
+describe("removing a registered marketplace", () => {
   it.each(["user", "project"] as const)(
     "removes a %s-scope entry through that scope's scenario",
     async (scope) => {

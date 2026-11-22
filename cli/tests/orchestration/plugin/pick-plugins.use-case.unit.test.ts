@@ -92,7 +92,7 @@ function build(options: {
 
 const command = { toolIds: [SYNTHETIC_TOOL], projectRoot: PROJECT, interactive: true };
 
-describe("PickPlugins", () => {
+describe("picking plugins", () => {
   it("refuses a run that cannot ask", async () => {
     const { useCase } = build({ marketplaces: [marketplace("one")] });
 

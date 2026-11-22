@@ -3,7 +3,7 @@ import type { UninstallToolsRequest } from "../../../src/contexts/installation/a
 import { UninstallProjectTools } from "../../../src/orchestration/clean/uninstall-project-tools.use-case.js";
 import { SYNTHETIC_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
 
-describe("UninstallProjectTools", () => {
+describe("uninstalling a project's tools", () => {
   it("hands the command and the host registration's ref reading to the tool removal", async () => {
     const records = { pluginRefsOf: () => [] };
     const asked: UninstallToolsRequest[] = [];

@@ -18,7 +18,7 @@ import {
   PROJECT_ROOT,
 } from "../testing/install-plugin.builder.js";
 
-describe("InstallPlugin", () => {
+describe("installing a plugin", () => {
   describe("no-arg routing", () => {
     it("delegates to PickPlugins when no arg and interactive", async () => {
       const pickExecute = vi

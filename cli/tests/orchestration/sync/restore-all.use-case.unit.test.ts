@@ -47,7 +47,7 @@ function build(options: {
   return { useCase, execute, prompter, reportStatus };
 }
 
-describe("RestoreAll", () => {
+describe("restoring all files", () => {
   it("restores everything and reports the counts when the run is not interactive", async () => {
     const { useCase, execute, reportStatus } = build({});
 

@@ -38,7 +38,7 @@ function fakeStatus(byCategory: (o: Options) => Report) {
   return { useCase, calls };
 }
 
-describe("reportAllStatus", () => {
+describe("reporting status across scopes", () => {
   it("queries each category exactly once and never runs an unscoped pass", async () => {
     const { useCase, calls } = fakeStatus(() => report());
 

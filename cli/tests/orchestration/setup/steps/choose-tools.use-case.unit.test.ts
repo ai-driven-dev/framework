@@ -8,7 +8,7 @@ import {
   syntheticMixedCatalog,
 } from "../../../shared/testing/synthetic-tool-id.builder.js";
 
-describe("ChooseTools", () => {
+describe("choosing tools", () => {
   describe("non-interactive mode", () => {
     it("returns flow tools unchanged without prompting", async () => {
       const prompter = new ScriptedPrompter([]); // no prompts expected

@@ -43,7 +43,7 @@ const COMMAND = {
   autoTrust: false,
 } as const;
 
-describe("AddMarketplace", () => {
+describe("adding a marketplace", () => {
   it("prepares with the name accepted, then removes the registered marketplace, when overwriting", async () => {
     const { useCase, removeRegistered, prepare, calls } = addWith(true);
 

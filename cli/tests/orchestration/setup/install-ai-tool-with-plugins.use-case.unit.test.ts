@@ -60,7 +60,7 @@ function setup(
   return { run, pluginInstall, activatePropagated, logger, order };
 }
 
-describe("InstallAiToolWithPlugins", () => {
+describe("installing an AI tool with its plugins", () => {
   it("installs the tool, then each plugin, then activates once", async () => {
     const { run, order, pluginInstall } = setup([named("a"), named("b")]);
 

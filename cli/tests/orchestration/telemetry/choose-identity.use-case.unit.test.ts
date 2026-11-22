@@ -19,7 +19,7 @@ function chooser(decision: IdentityDecision) {
 const OPEN = { ask: { proposal: "Ada Example" } };
 const ASK = { cwd: "/repo", yes: false, anonymous: false, onRefused: () => undefined };
 
-describe("ChooseIdentity", () => {
+describe("choosing an identity", () => {
   it.each<IdentityDecision>([{ set: "Ada Example" }, "none", "keep"])(
     "never reaches the prompter for a decision that asks nothing: %j",
     async (decision) => {

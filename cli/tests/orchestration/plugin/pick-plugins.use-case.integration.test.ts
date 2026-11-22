@@ -98,7 +98,7 @@ async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
   return { useCase, deps, registry, pluginAdd };
 }
 
-describe("PickPlugins", () => {
+describe("picking plugins end to end", () => {
   it("refuses a non-interactive run with InteractiveOnlyError, naming the command to rerun", async () => {
     const { useCase } = await buildUseCase();
     const run = useCase.execute({

@@ -50,7 +50,7 @@ const buildUseCase = (
     ...options,
   });
 
-describe("InstallFromMarketplace", () => {
+describe("installing a plugin from a marketplace end to end", () => {
   it("installs a plugin found in a single marketplace and tags it", async () => {
     const { useCase, deps, registry } = await buildUseCase();
     seedMarketplaceFile(deps.fs, MKT1_DIR, [

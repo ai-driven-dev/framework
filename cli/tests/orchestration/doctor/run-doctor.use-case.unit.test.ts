@@ -60,7 +60,7 @@ async function runDoctor(category?: "ai") {
   return (await reportOf(category)).issues.map((i) => i.message);
 }
 
-describe("RunDoctor", () => {
+describe("running the doctor", () => {
   it("lists issues in the order of the checks: tracked, merge, references, registration, layout, authentication", async () => {
     expect(await runDoctor()).toEqual([
       "tracked",

@@ -92,7 +92,7 @@ const request = (context: SyncContext, scope: Scope = "project", enablePlugins: 
 
 const emptyManifest = () => aManifest().withTool(SYNTHETIC_TOOL, []).build();
 
-describe("ActivateNativeTools", () => {
+describe("activating native tools", () => {
   it("reports each tool the host activated, with what the host registered", async () => {
     const { useCase } = activatorOf(async () => ({ status: "activated", outcome: OUTCOME }));
 

@@ -19,7 +19,7 @@ import { HOST, hostCatalog, hostUserPluginsDir } from "../testing/synthetic-host
 import { userScopeCleaner } from "../testing/user-scope-cleaner.builder.js";
 
 describe("clean --scope user: whitelist purge", () => {
-  describe("whitelist", () => {
+  describe("purging with the whitelist", () => {
     it("purges fetched framework and plugin caches while preserving another marketplace's source", async () => {
       const fs = new RecordingFileAdapter();
       const framework = join(USER_CONFIG_DIR, "cache", "marketplaces", FRAMEWORK_MARKETPLACE_NAME);
@@ -261,7 +261,7 @@ describe("clean --scope user: whitelist purge", () => {
     });
   });
 
-  describe("confirmation", () => {
+  describe("confirming a shared-source removal", () => {
     it("names the versions built and the projects still referencing the source", async () => {
       const fs = new InMemoryFileAdapter();
       fs.setFile(

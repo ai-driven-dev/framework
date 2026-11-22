@@ -26,7 +26,7 @@ import {
 } from "../../testing/project-marketplace-removal.builder.js";
 import { projectMarketplaceRemover } from "../../testing/project-marketplace-remover.builder.js";
 
-describe("RemoveProjectMarketplace", () => {
+describe("removing a project marketplace", () => {
   it("throws MarketplaceNotFoundError when entry does not exist", async () => {
     const { useCase, registry } = buildUseCase(syntheticCatalog());
     await registry.save(

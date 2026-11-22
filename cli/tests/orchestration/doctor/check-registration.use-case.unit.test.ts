@@ -95,7 +95,7 @@ async function issuesFor(
   });
 }
 
-describe("CheckRegistration", () => {
+describe("checking registrations", () => {
   it("says nothing when the tool still declares the marketplace", async () => {
     expect(await issuesFor(settingsDeclaring(["aidd-framework"]))).toStrictEqual([]);
   });

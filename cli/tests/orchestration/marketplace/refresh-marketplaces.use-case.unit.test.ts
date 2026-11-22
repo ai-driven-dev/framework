@@ -35,7 +35,7 @@ async function refreshOver(catalogs: Parameters<typeof resolvingCatalogs>[0], ..
 
 const EMPTY: PluginCatalog = { plugins: [] };
 
-describe("RefreshMarketplace", () => {
+describe("refreshing marketplaces", () => {
   it("stamps each marketplace it fetched", async () => {
     const { refresh, registry } = await refreshOver({ "/mkt/a": EMPTY }, "a");
 

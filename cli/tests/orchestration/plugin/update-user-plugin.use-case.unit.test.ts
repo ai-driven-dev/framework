@@ -6,7 +6,7 @@ import {
   syntheticCatalog,
 } from "../../shared/testing/synthetic-tool-id.builder.js";
 
-describe("UpdateUserPlugin", () => {
+describe("updating a user plugin", () => {
   it("hands the host registration's ref selection to the file update", async () => {
     const selection = {
       isQualifiedRef: () => false,

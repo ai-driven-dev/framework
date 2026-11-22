@@ -28,7 +28,7 @@ function aRun(machine: Manifest | null) {
   return { useCase, report, checked, seen };
 }
 
-describe("RunUserScopeDoctor", () => {
+describe("running the doctor at user scope", () => {
   it("refuses a plugin filter before reading the machine", async () => {
     const run = aRun(aManifest().withTool(SYNTHETIC_TOOL, []).build());
 

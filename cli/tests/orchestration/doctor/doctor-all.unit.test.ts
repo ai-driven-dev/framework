@@ -59,7 +59,7 @@ function doctorAllOver(deps: Awaited<ReturnType<typeof buildInstallationDeps>>) 
   };
 }
 
-describe("doctorAll", () => {
+describe("running the doctor over every scope", () => {
   it("records one error per scope, and no report, when no manifest exists", async () => {
     const deps = await buildInstallationDeps({ tools: syntheticMixedCatalog() });
     const useCase = doctorAllOver(deps);

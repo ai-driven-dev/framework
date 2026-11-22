@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { BulkConflictState } from "../../../src/orchestration/domain/bulk-conflict-state.js";
 
-describe("BulkConflictState", () => {
+describe("remembering a bulk conflict decision", () => {
   it("holds no decision until one is recorded", () => {
     expect(new BulkConflictState().get()).toBeNull();
   });
