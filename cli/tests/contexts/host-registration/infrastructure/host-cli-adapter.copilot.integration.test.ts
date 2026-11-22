@@ -3,7 +3,6 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { NativePluginCliError } from "../../../../src/contexts/host-registration/domain/host-registration.error.js";
 import { HostCliAdapter } from "../../../../src/contexts/host-registration/infrastructure/host-cli-adapter.js";
 
 vi.mock("node:child_process", () => ({
@@ -128,29 +127,29 @@ describe("CopilotCliAdapter", () => {
   it("reports a failed targeted Copilot update without retrying a catalogue refresh", () => {
     mockSpawnSync.mockClear();
     mockSpawnSync.mockReturnValue(makeResult({ status: 1, stderr: "plugin update failed" }));
-    expect(() =>
+    expect(
       new HostCliAdapter("copilot", { updateVerb: "update" }).updatePlugin(
         "aidd-context@real-catalog"
       )
-    ).toThrow(NativePluginCliError);
+    ).toMatchObject({ detail: expect.any(String) });
     expect(mockSpawnSync).toHaveBeenCalledTimes(1);
   });
 
-  it("throws NativePluginCliError with stderr detail on non-zero exit", () => {
+  it("refuses with stderr detail on non-zero exit", () => {
     mockSpawnSync.mockReturnValue(makeResult({ status: 1, stderr: 'Marketplace "m1" not found' }));
 
-    expect(() =>
+    expect(
       new HostCliAdapter("copilot", {
         upgradeVerb: "update",
         enableVerb: "install",
       }).enablePlugin("ghost@m1")
-    ).toThrow(NativePluginCliError);
-    expect(() =>
+    ).toMatchObject({ detail: expect.any(String) });
+    expect(
       new HostCliAdapter("copilot", {
         upgradeVerb: "update",
         enableVerb: "install",
       }).enablePlugin("ghost@m1")
-    ).toThrow(expect.objectContaining({ detail: expect.stringContaining("Marketplace") }));
+    ).toEqual(expect.objectContaining({ detail: expect.stringContaining("Marketplace") }));
   });
 
   it("uninstalls a plugin via `copilot plugin uninstall <ref>`", () => {
@@ -167,22 +166,22 @@ describe("CopilotCliAdapter", () => {
     );
   });
 
-  it("throws NativePluginCliError when uninstalling an already-absent plugin", () => {
+  it("refuses when uninstalling an already-absent plugin", () => {
     mockSpawnSync.mockReturnValue(makeResult({ status: 1, stderr: "Plugin not found" }));
 
-    expect(() =>
+    expect(
       new HostCliAdapter("copilot", { disableVerb: "uninstall" }).uninstallPlugin("ghost@m1")
-    ).toThrow(NativePluginCliError);
+    ).toMatchObject({ detail: expect.any(String) });
   });
 
-  it("throws NativePluginCliError when the process fails to spawn", () => {
+  it("refuses when the process fails to spawn", () => {
     mockSpawnSync.mockReturnValue(makeResult({ error: new Error("spawn EACCES"), status: null }));
 
-    expect(() =>
+    expect(
       new HostCliAdapter("copilot", {
         upgradeVerb: "update",
         enableVerb: "install",
       }).addMarketplace("/abs/mkt", "project")
-    ).toThrow(NativePluginCliError);
+    ).toMatchObject({ detail: expect.any(String) });
   });
 });

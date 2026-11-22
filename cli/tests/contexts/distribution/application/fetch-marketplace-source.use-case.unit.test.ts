@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { FetchMarketplaceSource } from "../../../../src/contexts/distribution/application/fetch-marketplace-source.use-case.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import type { PluginSourceGitHub } from "../../../../src/shared/domain/source.js";
+import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import { FixturePluginFetcher } from "../../../shared/testing/fixture-plugin-fetcher.fake.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryRawCatalog, unusedRawCatalog } from "../../../shared/testing/raw-catalog.fake.js";
@@ -240,6 +241,35 @@ describe("FetchMarketplaceSource", () => {
 
       expect(result).toBe(CACHE_DIR);
       expect(fetchSpy).not.toHaveBeenCalled();
+    });
+
+    it("names the parse failure in a warning when the catalog is not JSON", async () => {
+      const logger = new CapturingLogger();
+      const uc = new FetchMarketplaceSource({
+        pluginFetcher: new FixturePluginFetcher(),
+        rawCatalog: { fetcher: recordingCatalog("not-json").fetcher, fs: makeSpyFileAdapter() },
+        logger,
+      });
+
+      await uc.execute({ marketplace: makeGitHubMarketplace(), cacheDir: CACHE_DIR });
+
+      expect(logger.warnMessages).toEqual([
+        expect.stringContaining(`Could not load raw catalog from ${CACHE_DIR}: `),
+      ]);
+    });
+
+    it("lets a failing fallback fetch travel instead of answering the cache", async () => {
+      const spy = recordingCatalog(RELATIVE_CATALOG_JSON);
+      const fetcher = new FixturePluginFetcher();
+      fetcher.fetch = vi.fn().mockRejectedValue(new Error("clone failed"));
+      const uc = new FetchMarketplaceSource({
+        pluginFetcher: fetcher,
+        rawCatalog: { fetcher: spy.fetcher, fs: makeSpyFileAdapter() },
+      });
+
+      await expect(
+        uc.execute({ marketplace: makeGitHubMarketplace(), cacheDir: CACHE_DIR })
+      ).rejects.toThrow("clone failed");
     });
   });
 

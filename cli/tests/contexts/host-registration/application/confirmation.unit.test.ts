@@ -3,11 +3,8 @@ import {
   bestEffortNativeCall,
   skippedWarning,
 } from "../../../../src/contexts/host-registration/application/confirmation.js";
-import { NativePluginCliError } from "../../../../src/contexts/host-registration/domain/host-registration.error.js";
 
-const refused = (): never => {
-  throw new NativePluginCliError("exit 1");
-};
+const refused = () => ({ detail: "exit 1" });
 
 describe("bestEffortNativeCall", () => {
   it("confirms a call that ran to completion, with no warning", () => {
@@ -39,7 +36,7 @@ describe("bestEffortNativeCall", () => {
   it("propagates any failure that is not the host CLI refusing", () => {
     expect(() =>
       bestEffortNativeCall(
-        () => {
+        (): never => {
           throw new Error("activator bug");
         },
         (reason) => reason,

@@ -1,5 +1,5 @@
 import { samePathSegment } from "../../../../shared/domain/paths.js";
-import type { NativePluginCliError } from "../../domain/host-registration.error.js";
+import type { NativeRefusal } from "../../domain/native-refusal.js";
 import { judgeRegistration } from "../../domain/policy/registration-policy.js";
 import {
   parseBuiltMarketplaceDir,
@@ -26,7 +26,7 @@ export interface DeadRegistration {
 export async function reclaimOrReport(
   run: RegistrationRun,
   registration: DeadRegistration,
-  addError: NativePluginCliError
+  addError: NativeRefusal
 ): Promise<boolean> {
   const { marketplace, hostName } = registration;
   const warn = (message: string): void => warnRegistration(run, message);
@@ -56,7 +56,7 @@ export async function reclaimOrReport(
 async function refusalToReclaim(
   run: RegistrationRun,
   { marketplace, hostName }: DeadRegistration,
-  addError: NativePluginCliError
+  addError: NativeRefusal
 ): Promise<string | undefined> {
   const judged = judgeRegistration({
     intent: "register",

@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { HostPluginRegistryReading } from "../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
+import type { HostRefusal } from "../../../src/contexts/host-registration/ports/host-actions.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
@@ -179,14 +180,16 @@ export class ActivatorThatWritesSettings extends FakeHostActions {
     await this.fs.writeFile(this.settingsAbsolutePath, JSON.stringify(json, null, 2));
   }
 
-  override addMarketplace(source: string): void {
+  override addMarketplace(source: string): HostRefusal {
     super.addMarketplace(source);
     this.writes.push(this.appendHostState());
+    return undefined;
   }
 
-  override enablePlugin(pluginRef: string): void {
+  override enablePlugin(pluginRef: string): HostRefusal {
     super.enablePlugin(pluginRef);
     this.writes.push(this.appendHostState());
+    return undefined;
   }
 }
 

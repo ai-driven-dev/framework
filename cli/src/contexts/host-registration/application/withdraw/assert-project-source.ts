@@ -1,7 +1,5 @@
-import { errorMessage } from "../../../../shared/domain/describe-error.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import { judgeRegistration, type SourceProof } from "../../domain/policy/registration-policy.js";
-import type { HostPluginRegistryReading } from "../../domain/reading/plugin-registry-reading.js";
 import type { NativeMarketplaceRegistration } from "../../domain/record/native-marketplace-source.js";
 import { readRegistrationRecord } from "../../domain/record/registration-record.js";
 import { assertSourceOwned, inspectHostSource } from "../native-marketplace-source-proof.js";
@@ -83,14 +81,7 @@ async function assertRefEnabled(deps: WithdrawalDeps, request: RefEnabledRequest
     throw new Error(
       `${toolId}: '${ref}' has no readable host plugin registry; uninstall refused before project changes.`
     );
-  let reading: HostPluginRegistryReading;
-  try {
-    reading = await reader.read(projectRoot);
-  } catch (error) {
-    throw new Error(
-      `${toolId}: '${ref}' host plugin registry read failed (${errorMessage(error)}); uninstall refused.`
-    );
-  }
+  const reading = await reader.read(projectRoot);
   const current = reading.refs?.get(ref);
   const enabledWithExactScope =
     current?.enabled === true && (current.scope === "project" || current.scope === "user");

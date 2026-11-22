@@ -2,7 +2,7 @@ import {
   type RegistrationRecord,
   recordedRegistrations,
 } from "../../domain/record/registration-record.js";
-import type { HostActions } from "../../ports/host-actions.js";
+import type { HostActions, HostRefusal } from "../../ports/host-actions.js";
 import { reachableActivator } from "../reachable-activator.js";
 import { callHost, survivingCachePaths } from "./host-call.js";
 import type { RemovedFromHost, UserRegistrationWithdrawal, WithdrawalDeps } from "./withdrawal.js";
@@ -55,12 +55,12 @@ function withdrawUserTool(
   { withdrawal, registrations }: UserTool
 ): ReadonlySet<string> {
   const { binary, marketplaces } = registrations;
-  const steps: [string, () => void][] = [
-    ...withdrawal.claimedRefs.map((ref): [string, () => void] => [
+  const steps: [string, () => HostRefusal][] = [
+    ...withdrawal.claimedRefs.map((ref): [string, () => HostRefusal] => [
       `plugin uninstall '${ref}'`,
       () => activator.uninstallPlugin(ref, "user"),
     ]),
-    ...marketplaces.map(({ hostName }): [string, () => void] => [
+    ...marketplaces.map(({ hostName }): [string, () => HostRefusal] => [
       `marketplace remove '${hostName}'`,
       () => activator.removeMarketplace(hostName, "user"),
     ]),

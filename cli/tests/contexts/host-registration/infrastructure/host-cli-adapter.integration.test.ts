@@ -3,7 +3,6 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { NativePluginCliError } from "../../../../src/contexts/host-registration/domain/host-registration.error.js";
 import { windowsCommandLine } from "../../../../src/contexts/host-registration/infrastructure/executable-on-path.js";
 import { HostCliAdapter } from "../../../../src/contexts/host-registration/infrastructure/host-cli-adapter.js";
 import type { HostCliShape } from "../../../../src/contexts/host-registration/ports/host-cli-shape.js";
@@ -148,37 +147,37 @@ describe("naming a failure by the tool, the step and what the tool said", () => 
   it("carries the spawn error's own message when the process never started", () => {
     mockSpawnSync.mockReturnValue(makeResult({ error: new Error("spawn ENOENT") }));
 
-    expect(() => adapter().addMarketplace("/src", "project")).toThrow(
-      new NativePluginCliError("probe-tool marketplace add /src failed: spawn ENOENT")
-    );
+    expect(adapter().addMarketplace("/src", "project")).toStrictEqual({
+      detail: "probe-tool marketplace add /src failed: spawn ENOENT",
+    });
   });
 
   it("carries the tool's trimmed stderr on a non-zero exit", () => {
     mockSpawnSync.mockReturnValue(makeResult({ status: 1, stderr: "  boom \n" }));
 
-    expect(() => adapter().upgradeMarketplaces("owned-catalog")).toThrow(
-      new NativePluginCliError("probe-tool marketplace update owned-catalog failed: boom")
-    );
+    expect(adapter().upgradeMarketplaces("owned-catalog")).toStrictEqual({
+      detail: "probe-tool marketplace update owned-catalog failed: boom",
+    });
   });
 
   it("names the exit code when the tool said nothing, and unknown when there is no code", () => {
     mockSpawnSync.mockReturnValueOnce(makeResult({ status: 2, stderr: "" }));
-    expect(() => adapter().enablePlugin("p@m")).toThrow(
-      new NativePluginCliError("probe-tool plugin install p@m failed: exited with code 2")
-    );
+    expect(adapter().enablePlugin("p@m")).toStrictEqual({
+      detail: "probe-tool plugin install p@m failed: exited with code 2",
+    });
 
     mockSpawnSync.mockReturnValueOnce(makeResult({ status: null, signal: "SIGKILL", stderr: "" }));
-    expect(() => adapter().uninstallPlugin("p@m")).toThrow(
-      new NativePluginCliError("probe-tool plugin uninstall p@m failed: exited with code unknown")
-    );
+    expect(adapter().uninstallPlugin("p@m")).toStrictEqual({
+      detail: "probe-tool plugin uninstall p@m failed: exited with code unknown",
+    });
   });
 
   it("names the marketplace removal that failed", () => {
     mockSpawnSync.mockReturnValue(makeResult({ status: 1, stderr: "not found" }));
 
-    expect(() => adapter().removeMarketplace("m", "project")).toThrow(
-      new NativePluginCliError("probe-tool marketplace remove m failed: not found")
-    );
+    expect(adapter().removeMarketplace("m", "project")).toStrictEqual({
+      detail: "probe-tool marketplace remove m failed: not found",
+    });
   });
 });
 

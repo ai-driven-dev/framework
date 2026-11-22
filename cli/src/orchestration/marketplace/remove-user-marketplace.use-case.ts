@@ -2,6 +2,7 @@ import type { FindUserMarketplace } from "../../contexts/distribution/applicatio
 import type { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.use-case.js";
 import type { MarketplaceRemovalResult } from "../../contexts/distribution/contract/marketplace-removal.js";
 import type { NativeHostRegistrationGate } from "../../contexts/host-registration/application/native-host-registration-gate.js";
+import { throwRefusal } from "../../contexts/host-registration/application/throw-refusal.js";
 import type { RegistrationRecordRules } from "../../contexts/host-registration/contract/registration-record-rules.js";
 import type {
   MarketplaceRecords,
@@ -35,8 +36,8 @@ type HostRemovalPlan = Awaited<ReturnType<NativeHostRegistrationGate["planMarket
 /** Uninstalls each plugin ref the plan kept at the scope the host holds it, the user scope when
  * the host names none, then the catalogue itself at the user scope. */
 function withdrawFromHost(hostName: string, { activator, refs, scopes }: HostRemovalPlan): void {
-  for (const ref of refs) activator.uninstallPlugin(ref, scopes.get(ref) ?? "user");
-  activator.removeMarketplace(hostName, "user");
+  for (const ref of refs) throwRefusal(activator.uninstallPlugin(ref, scopes.get(ref) ?? "user"));
+  throwRefusal(activator.removeMarketplace(hostName, "user"));
 }
 
 /** A catalogue's place in a tool's record, as the host registration reads and drops it. */

@@ -1,9 +1,8 @@
 import { type SpawnSyncReturns, spawnSync } from "node:child_process";
 import { homedir } from "node:os";
 import type { Scope } from "../../../shared/domain/scope.js";
-import { NativePluginCliError } from "../domain/host-registration.error.js";
 import { isRefOnHost } from "../domain/record/host-ref.js";
-import type { HostActions } from "../ports/host-actions.js";
+import type { HostActions, HostRefusal } from "../ports/host-actions.js";
 import type { HostCliShape } from "../ports/host-cli-shape.js";
 import {
   hostExecutableLookup,
@@ -67,20 +66,20 @@ export class HostCliAdapter implements HostActions {
     return spawnSync(this.binary, [...args], options);
   }
 
-  addMarketplace(source: string, scope: Scope): void {
-    this.run(
+  addMarketplace(source: string, scope: Scope): HostRefusal {
+    return this.run(
       ["plugin", "marketplace", "add", source, ...this.scopeArgsFor(scope)],
       `marketplace add ${source}`
     );
   }
 
-  removeMarketplace(name: string, scope: Scope, options?: { force?: boolean }): void {
+  removeMarketplace(name: string, scope: Scope, options?: { force?: boolean }): HostRefusal {
     const force = options?.force === true ? this.forceRemoveArgs() : [];
     const userArgs = scope === "user" ? this.userRemoveArgs() : undefined;
     // Removing from every scope also uninstalls what a project installed from this marketplace,
     // with its saved options: only a marketplace no project uses goes that far.
     const everywhere = userArgs !== undefined && !this.usedAtAnotherScope(name);
-    this.run(
+    return this.run(
       [
         "plugin",
         "marketplace",
@@ -114,36 +113,36 @@ export class HostCliAdapter implements HostActions {
     return this.succeeds(["plugin", "marketplace", verb, name]) ? "live" : "dead";
   }
 
-  upgradeMarketplaces(name: string): void {
+  upgradeMarketplaces(name: string): HostRefusal {
     const verb = this.shape.upgradeVerb;
-    if (verb === undefined) return;
+    if (verb === undefined) return undefined;
     if (name.length === 0) throw new Error("A named marketplace is required for native refresh.");
-    this.run(["plugin", "marketplace", verb, name], `marketplace ${verb} ${name}`);
+    return this.run(["plugin", "marketplace", verb, name], `marketplace ${verb} ${name}`);
   }
 
-  enablePlugin(pluginRef: string, scope: Scope = "project"): void {
+  enablePlugin(pluginRef: string, scope: Scope = "project"): HostRefusal {
     const verb = this.shape.enableVerb;
-    if (verb === undefined) return;
-    this.run(
+    if (verb === undefined) return undefined;
+    return this.run(
       ["plugin", verb, pluginRef, ...(this.shape.pluginArgs ?? []), ...this.scopeArgsFor(scope)],
       `plugin ${verb} ${pluginRef}`
     );
   }
 
-  updatePlugin(pluginRef: string): void {
+  updatePlugin(pluginRef: string): HostRefusal {
     const verb = this.shape.updateVerb;
     if (verb === undefined)
       throw new Error(`${this.binary} does not support targeted native plugin update.`);
-    this.run(["plugin", verb, pluginRef], `plugin ${verb} ${pluginRef}`);
+    return this.run(["plugin", verb, pluginRef], `plugin ${verb} ${pluginRef}`);
   }
 
   /** Undoes what `enablePlugin` did. `scope` must match what `enablePlugin` was called with: a
    * tool that installed at one scope and uninstalls at its default would silently miss the
    * entry it wrote. */
-  uninstallPlugin(pluginRef: string, scope: Scope = "project"): void {
+  uninstallPlugin(pluginRef: string, scope: Scope = "project"): HostRefusal {
     const verb = this.shape.disableVerb;
-    if (verb === undefined) return;
-    this.run(
+    if (verb === undefined) return undefined;
+    return this.run(
       ["plugin", verb, pluginRef, ...(this.shape.pluginArgs ?? []), ...this.scopeArgsFor(scope)],
       `plugin ${verb} ${pluginRef}`
     );
@@ -167,16 +166,17 @@ export class HostCliAdapter implements HostActions {
     return result.error === undefined && result.status === 0;
   }
 
-  private run(args: readonly string[], label: string, cwd?: string): void {
+  private run(args: readonly string[], label: string, cwd?: string): HostRefusal {
     const result = this.spawn(args, ["ignore", "pipe", "pipe"], cwd);
     if (result.error) {
-      throw new NativePluginCliError(`${this.binary} ${label} failed: ${result.error.message}`);
+      return { detail: `${this.binary} ${label} failed: ${result.error.message}` };
     }
     if (result.status !== 0) {
       const detail = result.stderr?.trim() ?? "";
-      throw new NativePluginCliError(
-        `${this.binary} ${label} failed: ${detail || `exited with code ${result.status ?? "unknown"}`}`
-      );
+      return {
+        detail: `${this.binary} ${label} failed: ${detail || `exited with code ${result.status ?? "unknown"}`}`,
+      };
     }
+    return undefined;
   }
 }

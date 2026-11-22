@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { NativePluginCliError } from "../../../src/contexts/host-registration/domain/host-registration.error.js";
 import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/contract/built-marketplace.js";
 import { describeMessage } from "../../../src/presentation/errors/describe-message.presenter.js";
 import {
@@ -134,7 +133,7 @@ describe("what a step that could not complete leaves in warnings and errors", ()
   });
 
   it("warns about a refused marketplace upgrade and still enables the plugin", async () => {
-    const activator = new ActivatorFailingAtUpgrade(new NativePluginCliError("registry locked"));
+    const activator = new ActivatorFailingAtUpgrade({ detail: "registry locked" });
 
     const { result } = await sync({ activator, ownedCatalog: true });
 

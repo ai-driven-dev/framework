@@ -14,6 +14,7 @@ import {
   type NativeMarketplaceSourceInspection,
 } from "./native-marketplace-source-proof.js";
 import { reachableActivator } from "./reachable-activator.js";
+import { throwRefusal } from "./throw-refusal.js";
 
 export interface RefreshHostPluginRequest {
   readonly tool: ActivatedTool;
@@ -58,7 +59,7 @@ export class RefreshHostPlugin {
       source: await this.sourceProofOf(tool, ref, command),
     });
     if (verdict.outcome === "refuse") throw new Error(refusalMessage(toolId, ref, verdict));
-    return { apply: () => activator.updatePlugin(ref) };
+    return { apply: () => throwRefusal(activator.updatePlugin(ref)) };
   }
 
   /** The proof of the catalogue the ref comes from, when this project recorded one. */

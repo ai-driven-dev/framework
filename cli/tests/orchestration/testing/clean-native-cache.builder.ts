@@ -2,6 +2,7 @@ import { homedir } from "node:os";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { HostMarketplaceRegistryReading } from "../../../src/contexts/host-registration/domain/reading/marketplace-registry-reading.js";
 import { HostRegistryMarketplaceSourceReaderAdapter } from "../../../src/contexts/host-registration/infrastructure/host-registry-marketplace-source-reader-adapter.js";
+import type { HostRefusal } from "../../../src/contexts/host-registration/ports/host-actions.js";
 import type { HostMarketplaceRegistry } from "../../../src/contexts/host-registration/ports/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
@@ -87,9 +88,14 @@ export class LockAwareActivator extends FakeHostActions {
     super({ available: true });
   }
 
-  override removeMarketplace(name: string, scope?: unknown, options?: { force?: boolean }): void {
+  override removeMarketplace(
+    name: string,
+    scope?: unknown,
+    options?: { force?: boolean }
+  ): HostRefusal {
     this.removalsUnderLock.push(this.machineRepo.locked);
     super.removeMarketplace(name, scope, options);
+    return undefined;
   }
 }
 

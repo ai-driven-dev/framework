@@ -3,11 +3,10 @@
 import { join } from "node:path";
 import type { HintedMessage } from "../../../../shared/domain/describe-error.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
-import { NativePluginCliError } from "../../domain/host-registration.error.js";
 import type { RegistrationRecord } from "../../domain/record/registration-record.js";
-import type { HostActions } from "../../ports/host-actions.js";
+import type { HostActions, HostRefusal } from "../../ports/host-actions.js";
 import { bestEffortNativeCall } from "../confirmation.js";
-import { assertNoForeignNativeRefs } from "../native-marketplace-source-proof.js";
+import { type HostRefsVerdict, inspectNativeRefs } from "../native-marketplace-source-proof.js";
 import type {
   ProjectCleanFacts,
   ProjectRegistrationWithdrawal,
@@ -15,7 +14,7 @@ import type {
 } from "./withdrawal.js";
 
 /** Runs `action` against the host, naming a failure in a warning instead of throwing it. */
-export function callHost(deps: WithdrawalDeps, action: () => void, label: string): boolean {
+export function callHost(deps: WithdrawalDeps, action: () => HostRefusal, label: string): boolean {
   return bestEffortNativeCall(
     action,
     (reason) => `${label} failed: ${reason}`,
@@ -36,13 +35,9 @@ export function uninstallAtFirstAcceptedScope(
 ): string | undefined {
   let lastMessage = "";
   for (const scope of order) {
-    try {
-      activator.uninstallPlugin(ref, scope);
-      return undefined;
-    } catch (error) {
-      if (!(error instanceof NativePluginCliError)) throw error;
-      lastMessage = error.detail;
-    }
+    const refusal = activator.uninstallPlugin(ref, scope);
+    if (refusal === undefined) return undefined;
+    lastMessage = refusal.detail;
   }
   return lastMessage;
 }
@@ -94,8 +89,9 @@ export function hostNameFor(
   return registrations?.marketplaces.find((m) => m.alias === alias)?.hostName;
 }
 
-/** Refuses `hostName` when the host carries a ref neither this project nor a machine claim owns. */
-export async function assertNoForeignRefs(
+/** What the host carries of `hostName`: its refs, or the refusal when a ref neither this project nor
+ * a machine claim owns is there. */
+export async function inspectForeignRefs(
   deps: WithdrawalDeps,
   held: {
     readonly withdrawal: ProjectRegistrationWithdrawal;
@@ -103,11 +99,11 @@ export async function assertNoForeignRefs(
     readonly facts: ProjectCleanFacts;
   },
   hostName: string
-): Promise<void> {
+): Promise<HostRefsVerdict> {
   const { withdrawal, registrations, facts } = held;
   const { tool } = withdrawal;
   const claimed = (await facts.machine.claimedRefs(tool.toolId)) ?? [];
-  await assertNoForeignNativeRefs(
+  return inspectNativeRefs(
     { reader: deps.ports.pluginRegistries.get(tool.toolId), tool },
     {
       hostName,
@@ -115,4 +111,14 @@ export async function assertNoForeignRefs(
       projectRoot: facts.projectRoot,
     }
   );
+}
+
+/** `inspectForeignRefs`, its refusal thrown. */
+export async function assertNoForeignRefs(
+  deps: WithdrawalDeps,
+  held: Parameters<typeof inspectForeignRefs>[1],
+  hostName: string
+): Promise<void> {
+  const verdict = await inspectForeignRefs(deps, held, hostName);
+  if ("refusal" in verdict) throw verdict.refusal;
 }

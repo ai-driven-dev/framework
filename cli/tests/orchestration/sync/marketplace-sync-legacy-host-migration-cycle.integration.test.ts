@@ -3,7 +3,10 @@ import { describe, expect, it } from "vitest";
 import { RegisterFrameworkMarketplace } from "../../../src/contexts/distribution/application/register-framework-marketplace.use-case.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import type { HostActions } from "../../../src/contexts/host-registration/ports/host-actions.js";
+import type {
+  HostActions,
+  HostRefusal,
+} from "../../../src/contexts/host-registration/ports/host-actions.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import {
   builtMarketplaceDir,
@@ -50,17 +53,28 @@ describe("settings migration: legacy host entries", () => {
       isAvailable(): boolean {
         return true;
       }
-      addMarketplace(source: string): void {
+      addMarketplace(source: string): HostRefusal {
         this.hostEntries.set(FRAMEWORK_MARKETPLACE_NAME, source);
+        return undefined;
       }
-      removeMarketplace(): void {}
+      removeMarketplace(): HostRefusal {
+        return undefined;
+      }
       registrationState(): "live" | "dead" | "unknown" {
         return "unknown";
       }
-      upgradeMarketplaces(): void {}
-      enablePlugin(): void {}
-      updatePlugin(): void {}
-      uninstallPlugin(): void {}
+      upgradeMarketplaces(): HostRefusal {
+        return undefined;
+      }
+      enablePlugin(): HostRefusal {
+        return undefined;
+      }
+      updatePlugin(): HostRefusal {
+        return undefined;
+      }
+      uninstallPlugin(): HostRefusal {
+        return undefined;
+      }
     }
 
     it("goes from doctor warning to doctor healthy across one sync, leaving another project's own marketplace untouched", async () => {

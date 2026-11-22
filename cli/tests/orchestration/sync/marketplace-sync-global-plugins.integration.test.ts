@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { HostPluginRegistryEntry } from "../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
+import type { HostRefusal } from "../../../src/contexts/host-registration/ports/host-actions.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
@@ -28,9 +29,10 @@ async function globalActivation(kind: SyntheticNativeSources) {
   const toolId = tool;
   const refs = new Map<string, HostPluginRegistryEntry>();
   class StatefulActivator extends FakeHostActions {
-    override enablePlugin(ref: string, scope: Scope = "project"): void {
+    override enablePlugin(ref: string, scope: Scope = "project"): HostRefusal {
       super.enablePlugin(ref, scope);
       refs.set(ref, { enabled: true, scope });
+      return undefined;
     }
   }
   const activator = new StatefulActivator({ available: true });

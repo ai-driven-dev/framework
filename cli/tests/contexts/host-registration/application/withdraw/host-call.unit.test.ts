@@ -7,7 +7,6 @@ import {
   uninstallAtFirstAcceptedScope,
 } from "../../../../../src/contexts/host-registration/application/withdraw/host-call.js";
 import type { WithdrawalDeps } from "../../../../../src/contexts/host-registration/application/withdraw/withdrawal.js";
-import { NativePluginCliError } from "../../../../../src/contexts/host-registration/domain/host-registration.error.js";
 import { recordedRegistrations } from "../../../../../src/contexts/host-registration/domain/record/registration-record.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
@@ -41,13 +40,7 @@ describe("calling the host without throwing", () => {
   it("names a refused call in a warning and does not confirm it", () => {
     const logger = new CapturingLogger();
 
-    const confirmed = callHost(
-      depsOf(logger),
-      () => {
-        throw new NativePluginCliError("denied");
-      },
-      "claude plugin list"
-    );
+    const confirmed = callHost(depsOf(logger), () => ({ detail: "denied" }), "claude plugin list");
 
     expect(confirmed).toBe(false);
     expect(logger.warnMessages).toStrictEqual(["claude plugin list failed: denied"]);

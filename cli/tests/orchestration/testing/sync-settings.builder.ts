@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import type { HostRefusal } from "../../../src/contexts/host-registration/ports/host-actions.js";
 import { registerMarketplacePlugin } from "../../../src/contexts/installation/application/materialize/register-marketplace-plugin.js";
 import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/contract/built-marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
@@ -47,7 +48,7 @@ export interface SyncSetup {
   readonly available?: boolean;
   /** Makes the activator crash on `addMarketplace` with a plain `Error`. */
   readonly crashOnAddMarketplace?: boolean;
-  /** Refs that fail to enable, a recoverable, best-effort `NativePluginCliError`. */
+  /** Refs that fail to enable, a recoverable, best-effort refusal. */
   readonly failOnPlugins?: readonly string[];
   readonly activator?: FakeHostActions;
   /** Explicitly prove the catalogue is already AIDD-owned before testing exact host refresh. */
@@ -56,12 +57,13 @@ export interface SyncSetup {
 }
 
 export class ActivatorFailingAtUpgrade extends FakeHostActions {
-  constructor(private readonly failure: Error) {
+  constructor(private readonly failure: NonNullable<HostRefusal> | Error) {
     super({ available: true });
   }
 
-  override upgradeMarketplaces(): void {
-    throw this.failure;
+  override upgradeMarketplaces(): HostRefusal {
+    if (this.failure instanceof Error) throw this.failure;
+    return this.failure;
   }
 }
 
