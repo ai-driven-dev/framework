@@ -10,7 +10,7 @@ import { PLUGIN_CACHE_SUBDIR } from "../../domain/project-layout.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { LoadDistribution } from "../../ports/plugin/load-plugin-distribution.js";
 import type { RuntimeConfigSection } from "../../ports/tool-sections.js";
-import type { InstallRuntimeConfig } from "../install/config/install-runtime-config.use-case.js";
+import type { EnsurePluginRuntimeFiles } from "../install/config/ensure-plugin-runtime-files.use-case.js";
 import type { ReplacePluginFiles } from "../materialize/replace-plugin-files.use-case.js";
 import { requireManifest } from "../shared/require-manifest.js";
 import { resolvePluginToolIds } from "./plugin-target-resolution.js";
@@ -37,7 +37,7 @@ export interface UpdatePluginDeps {
   readonly manifestRepo: ManifestRepository;
   readonly loadDistribution: LoadDistribution;
   readonly replacePluginFiles: ReplacePluginFiles;
-  readonly pluginRuntime?: Pick<InstallRuntimeConfig, "ensurePluginRuntimeFiles">;
+  readonly pluginRuntime?: Pick<EnsurePluginRuntimeFiles, "execute">;
 }
 
 export class UpdatePlugin {
@@ -100,7 +100,7 @@ export class UpdatePlugin {
     const dist = await this.deps.loadDistribution(plugin.source, cacheDir, {
       forceRefresh: true,
     });
-    await this.deps.pluginRuntime?.ensurePluginRuntimeFiles(tool, projectRoot, manifest);
+    await this.deps.pluginRuntime?.execute(tool, projectRoot, manifest);
     if (!rebuild && compareSemver(dist.manifest.version, plugin.version) <= 0) return false;
     await this.deps.replacePluginFiles.execute({
       plugin: recorded,

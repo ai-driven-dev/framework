@@ -3,6 +3,7 @@ import { registrationRecordRules } from "../../../src/composition/installation.j
 import { createOutput } from "../../../src/composition/shared.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-distribution-reader-adapter.js";
 import { InitProject } from "../../../src/contexts/installation/application/init-project.use-case.js";
+import { EnsurePluginRuntimeFiles } from "../../../src/contexts/installation/application/install/config/ensure-plugin-runtime-files.use-case.js";
 import { InstallIdeConfig } from "../../../src/contexts/installation/application/install/config/install-ide-config.use-case.js";
 import { InstallRuntimeConfig } from "../../../src/contexts/installation/application/install/config/install-runtime-config.use-case.js";
 import { TrackedConfigFiles } from "../../../src/contexts/installation/application/install/config/tracked-config-files.use-case.js";
@@ -79,6 +80,7 @@ export async function buildInstallationDeps({
     nativePluginActivators,
     trackedConfigFiles,
     installRuntimeConfigUseCase,
+    ensurePluginRuntimeFiles: new EnsurePluginRuntimeFiles({ fs, assets: assetProvider }),
     installIdeConfig,
     updateGitignore,
     runPostInstallPipeline,

@@ -40,7 +40,7 @@ async function legacyProject() {
       ...fakeBuildSources(),
     },
     registeredTools(),
-    deps.installRuntimeConfigUseCase
+    deps.ensurePluginRuntimeFiles
   );
   const update = new UpdatePlugin(
     {
@@ -51,7 +51,7 @@ async function legacyProject() {
         fakeBuiltDeps(deps.fs),
         registeredTools()
       ),
-      pluginRuntime: deps.installRuntimeConfigUseCase,
+      pluginRuntime: deps.ensurePluginRuntimeFiles,
     },
     registeredTools()
   );

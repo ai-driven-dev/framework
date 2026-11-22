@@ -6,6 +6,7 @@ import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract
 import { RefreshHostPlugin } from "../../contexts/host-registration/application/refresh-host-plugin.use-case.js";
 import type { WithdrawFromHost } from "../../contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import type { ProvenHostRef } from "../../contexts/host-registration/application/withdraw/withdrawal.js";
+import { EnsurePluginRuntimeFiles } from "../../contexts/installation/application/install/config/ensure-plugin-runtime-files.use-case.js";
 import { ReplacePluginFiles } from "../../contexts/installation/application/materialize/replace-plugin-files.use-case.js";
 import { PlacePlugin } from "../../contexts/installation/application/plugin/add/place-plugin.use-case.js";
 import { ResolveAddedPluginSource } from "../../contexts/installation/application/plugin/add/resolve-added-plugin-source.use-case.js";
@@ -162,14 +163,14 @@ function pluginMaterializerOf(base: Base, inst: Installation) {
 /** Updating a plugin in a project or on the machine. */
 function wirePluginUpdate(base: Base, inst: Installation) {
   const { tools, fs, logger, manifestRepo, userManifestRepo } = base;
-  const { installRuntimeConfigUseCase, builtMaterializationDeps, registrationRecordRules } = inst;
+  const { builtMaterializationDeps, registrationRecordRules } = inst;
   const pluginMaterializer = pluginMaterializerOf(base, inst);
   const pluginUpdateUseCase = new UpdatePlugin(
     {
       manifestRepo,
       loadDistribution: base.loadDistribution,
       replacePluginFiles: new ReplacePluginFiles(fs, builtMaterializationDeps, tools),
-      pluginRuntime: installRuntimeConfigUseCase,
+      pluginRuntime: new EnsurePluginRuntimeFiles({ fs, assets: inst.assetProvider }),
     },
     tools
   );
@@ -200,7 +201,7 @@ function wirePluginUpdate(base: Base, inst: Installation) {
 /** Adding a plugin to a project or to the machine, resolving its source and placing its files. */
 function pluginAddOf(base: Base, inst: Installation) {
   const { tools, fs, logger, manifestRepo, userManifestRepo } = base;
-  const { installRuntimeConfigUseCase, builtMaterializationDeps } = inst;
+  const { builtMaterializationDeps } = inst;
   return new AddPlugin(
     {
       ownership: userScopeOwnership(fs),
@@ -217,7 +218,7 @@ function pluginAddOf(base: Base, inst: Installation) {
               fs,
               logger,
               built: builtMaterializationDeps,
-              pluginRuntime: installRuntimeConfigUseCase,
+              pluginRuntime: new EnsurePluginRuntimeFiles({ fs, assets: inst.assetProvider }),
             },
             tools
           ),

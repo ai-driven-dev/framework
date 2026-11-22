@@ -54,7 +54,7 @@ async function existingProject(configPath: string) {
       ...fakeBuildSources(),
     },
     registeredTools(),
-    deps.installRuntimeConfigUseCase
+    deps.ensurePluginRuntimeFiles
   );
   const install = () =>
     add.execute({
@@ -73,7 +73,7 @@ async function existingProject(configPath: string) {
         fakeBuiltDeps(deps.fs),
         registeredTools()
       ),
-      pluginRuntime: deps.installRuntimeConfigUseCase,
+      pluginRuntime: deps.ensurePluginRuntimeFiles,
     },
     registeredTools()
   );

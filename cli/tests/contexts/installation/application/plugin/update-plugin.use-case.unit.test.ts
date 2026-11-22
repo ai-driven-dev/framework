@@ -93,7 +93,7 @@ describe("updating a plugin in a project", () => {
   it("refreshes the tool's runtime files even when the plugin is current", async () => {
     const seen: string[] = [];
     const { update } = await installedSample({
-      ensurePluginRuntimeFiles: async (tool: RuntimeConfigSection) => {
+      execute: async (tool: RuntimeConfigSection) => {
         seen.push(tool.toolId);
       },
     });
