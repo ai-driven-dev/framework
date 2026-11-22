@@ -102,6 +102,7 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 | A plugin's `dependents` is kept as it was written, so a stored empty list is written back as an empty list, not left out | the writer never stores an empty list, only a hand-edited manifest can | none, a written limit |
 | The serializer no longer moves the claims key last | a stored record whose keys are in another order is written back in its own order; writers keep the current order, so only a hand-edited manifest differs | none, a written limit |
 | `Prompter` has no contract suite | it answers a person at a terminal, and a prompt has nothing to read back: the doubles script answers, and the real adapter is checked by the e2e journeys that drive it | none, accepted: an interactive port is not a store |
+| The file port recovers any read or realpath failure as absence (`readFileIfReadable`, `realpathIfResolvable` in `shared/infrastructure/file-adapter.ts`), for best-effort callers only | a best-effort caller treats unreadable as missing and a use case may not catch, so the swallow sits in infrastructure; the contract cases C25, C27, C28 and C29 pin it | no caller needs the any-failure answer, and both methods are removed |
 
 ### Migration state
 | Deviation | Closes when |
