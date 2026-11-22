@@ -56,6 +56,11 @@ describe("contract sync", () => {
       fs.writeFileSync(contract, JSON.stringify({ scope: ["x/*.md"], rules: { R: { template: "../assets/t.md" } } }));
       fs.mkdirSync(path.join(plugin(), "skills", "a", "assets"), { recursive: true });
       fs.writeFileSync(path.join(plugin(), "skills", "a", "assets", "t.md"), "# t\n");
+      wire("start", "mark", "check");
+    };
+    const wire = (...goals) => {
+      fs.mkdirSync(path.join(plugin(), "hooks"), { recursive: true });
+      fs.writeFileSync(path.join(plugin(), "hooks", "hooks.json"), JSON.stringify(goals.map((goal) => `node \${CLAUDE_PLUGIN_ROOT}/hooks/artifacts.cjs ${goal}`)));
     };
 
     it("a plugin with a scoped contract gets artifacts.cjs and the contract, engine and named template", () => {
@@ -64,6 +69,18 @@ describe("contract sync", () => {
       const hooks = path.join(plugin(), "hooks");
       assert.ok(fs.existsSync(path.join(hooks, "artifacts.cjs")));
       for (const file of ["scripts/contract.json", "scripts/lib/engine.cjs", "assets/t.md"]) assert.ok(fs.existsSync(path.join(hooks, "lib", "contracts", "a", file)), file);
+      assert.equal(sync("--check").status, 0);
+    });
+
+    it("names each goal the plugin's hooks.json does not call, and a Stop relayed by another hook script passes", () => {
+      scope();
+      wire("start");
+      const run = sync();
+      assert.equal(run.status, 1);
+      assert.match(run.stdout, /plugins\/p\/hooks\/hooks\.json does not call artifacts\.cjs mark \(PostToolUse\)/u);
+      assert.match(run.stdout, /does not call artifacts\.cjs check \(Stop\)/u);
+      wire("start", "mark");
+      fs.writeFileSync(path.join(plugin(), "hooks", "memory.cjs"), 'require("./artifacts.cjs");\n');
       assert.equal(sync("--check").status, 0);
     });
 

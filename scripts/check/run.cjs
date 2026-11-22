@@ -37,7 +37,7 @@ function globMatch(glob, file) {
 const watches = (globs, given) => given.some((g) => (globs ?? []).some((glob) => globMatch(glob, g)));
 
 const USAGE = "usage: run.cjs [--fix] [--update-baseline] [--root <dir>] [<file>...]";
-const ENGINE_PATH = /^(scripts\/check\/engine\/|plugins\/[^/]+\/skills\/[^/]+\/(?:scripts|assets)\/|plugins\/[^/]+\/hooks\/(?:artifacts\.cjs|lib\/contracts\/))/u;
+const ENGINE_PATH = /^(scripts\/check\/engine\/|plugins\/[^/]+\/skills\/[^/]+\/(?:scripts|assets)\/|plugins\/[^/]+\/hooks\/(?:artifacts\.cjs|hooks\.json|lib\/contracts\/))/u;
 
 function main(argv, { generators = require("./generators/index.cjs"), out = (text) => process.stdout.write(text) } = {}) {
   const at = argv.indexOf("--root");

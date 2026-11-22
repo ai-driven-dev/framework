@@ -3,6 +3,7 @@
 // Usage: node scripts/check/engine/sync.cjs [--check] [--root <dir>]
 // Copies the engine files of this folder into the scripts/lib folder of every skill holding scripts/contract.json.
 // It also generates, for each plugin holding a contract with a `scope`, hooks/artifacts.cjs (from hook.cjs) and hooks/lib/contracts/<skill>/ (the contract, its lib, its custom checks and the files its rules name), and names the files there with no source.
+// It names a plugin whose hooks.json does not call the generated artifacts.cjs; that one it cannot repair.
 // With --check it writes nothing and names each copy that differs, is missing or has no source; exit 1 when any does.
 const fs = require("node:fs");
 const path = require("node:path");
@@ -107,12 +108,25 @@ function syncHooks({ root = ROOT, write = false } = {}) {
       if (write) fs.rmSync(file);
     }
     if (write && fs.existsSync(generated)) pruneEmpty(generated);
+    if (copies.size) for (const goal of unwired(plugin)) found.push({ path: rel(path.join(plugin, "hooks", "hooks.json")), kind: "unwired", goal });
     if (!copies.size && fs.existsSync(path.join(plugin, "hooks", "artifacts.cjs"))) {
       found.push({ path: rel(path.join(plugin, "hooks", "artifacts.cjs")), kind: "orphan" });
       if (write) fs.rmSync(path.join(plugin, "hooks", "artifacts.cjs"));
     }
   }
   return found;
+}
+
+// The event each artifacts.cjs goal answers; a Stop may instead run through another hook script that requires it.
+const GOAL_EVENTS = { start: "SessionStart", mark: "PostToolUse", check: "Stop" };
+
+/** The artifacts.cjs goals the plugin's hooks.json never calls. */
+function unwired(plugin) {
+  const hooks = path.join(plugin, "hooks");
+  const read = (file) => (fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "");
+  const config = read(path.join(hooks, "hooks.json"));
+  const relayed = fs.existsSync(hooks) && fs.readdirSync(hooks).some((file) => file.endsWith(".cjs") && file !== "artifacts.cjs" && read(path.join(hooks, file)).includes('require("./artifacts.cjs")'));
+  return Object.keys(GOAL_EVENTS).filter((goal) => !config.includes(`hooks/artifacts.cjs ${goal}`) && !(goal === "check" && relayed));
 }
 
 /** Removes empty folders below `dir`, and `dir` itself when it ends empty. */
@@ -122,7 +136,10 @@ function pruneEmpty(dir) {
 }
 
 /** The line that names a stale hook file. */
-const describeHook = ({ path: file, kind }) => (kind === "orphan" ? `${file} has no source in a skill contract, run node scripts/check/engine/sync.cjs` : `${file} differs from its source, run node scripts/check/engine/sync.cjs`);
+const describeHook = ({ path: file, kind, goal }) => {
+  if (kind === "unwired") return `${file} does not call artifacts.cjs ${goal} (${GOAL_EVENTS[goal]}), copy its entry from plugins/aidd-pm/hooks/hooks.json`;
+  return kind === "orphan" ? `${file} has no source in a skill contract, run node scripts/check/engine/sync.cjs` : `${file} differs from its source, run node scripts/check/engine/sync.cjs`;
+};
 
 if (require.main === module) {
   const args = process.argv.slice(2);
@@ -141,7 +158,8 @@ if (require.main === module) {
     process.exitCode = stale.length || hooks.length ? 1 : 0;
   } else {
     for (const copy of stale) process.stdout.write(`synced ${copy}\n`);
-    for (const copy of hooks) process.stdout.write(`${copy.kind === "orphan" ? "removed" : "synced"} ${copy.path}\n`);
+    for (const copy of hooks) process.stdout.write(copy.kind === "unwired" ? `${describeHook(copy)}\n` : `${copy.kind === "orphan" ? "removed" : "synced"} ${copy.path}\n`);
+    process.exitCode = hooks.some((copy) => copy.kind === "unwired") ? 1 : 0;
   }
 }
 

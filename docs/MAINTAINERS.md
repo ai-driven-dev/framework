@@ -31,6 +31,7 @@ flowchart LR
 | Branch protection | `.github/rulesets/main.json` |
 | Releases | `ci.yml` and `release-please-config.json` |
 | Pre-commit checks | `lefthook.yml` and `scripts/` |
+| Content checks | `scripts/check/`: engine, repository contracts, `baseline.json` |
 | Labels | `.github/labels.yml`, not synced: edit both by hand |
 
 ## Board fields
@@ -91,3 +92,4 @@ Release rules: [Release](../RELEASE.md#rules).
 | --- | --- |
 | Tool list in the README, `COMPATIBILITY.md` | `node scripts/sync-generated-docs.mjs` |
 | Counts, tables and plugin cards in the README, `CATALOG.md` files, `docs/ARCHITECTURE.md` blocks | `node scripts/check/run.cjs --fix` (the pre-commit hook runs it) |
+| `skills/*/scripts/lib/`, `hooks/artifacts.cjs`, `hooks/lib/contracts/` | `node scripts/check/engine/sync.cjs`, from `scripts/check/engine/` and each `contract.json` |

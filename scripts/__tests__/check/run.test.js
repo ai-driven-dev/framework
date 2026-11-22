@@ -27,6 +27,7 @@ beforeEach(() => {
   fs.writeFileSync(contractFile, fs.readFileSync(contractFile, "utf8").replace("plugins/*/agents/*.md", "agents/*.md"));
   fs.mkdirSync(path.join(root, "agents"));
   fs.cpSync(path.join(REPO, "plugins/aidd-orchestrator/agents/executor.md"), path.join(root, "agents/executor.md"));
+  fs.cpSync(path.join(REPO, "plugins/aidd-pm/hooks/hooks.json"), path.join(root, "plugins/aidd-context/hooks/hooks.json"));
   syncHooks({ root, write: true });
   catalogs.run({ root, write: true });
 });
