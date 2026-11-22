@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import type { HostRefusal } from "../../../src/contexts/host-registration/domain/native-refusal.js";
 import type { HostPluginRegistryReading } from "../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
-import type { HostRefusal } from "../../../src/contexts/host-registration/ports/host-actions.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";

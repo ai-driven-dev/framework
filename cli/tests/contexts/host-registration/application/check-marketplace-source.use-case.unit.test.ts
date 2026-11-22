@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hostMarketplaceSourceConflict } from "../../../../src/contexts/host-registration/application/check-marketplace-source.js";
+import { CheckMarketplaceSource } from "../../../../src/contexts/host-registration/application/check-marketplace-source.use-case.js";
 import { isDriftFound } from "../../../../src/contexts/host-registration/domain/source/marketplace-source-drift.js";
 import { catalogIdentityReader } from "../../../../src/contexts/host-registration/infrastructure/marketplace/marketplace-registry-reader.js";
 import { userBuiltMarketplaceDir } from "../../../../src/shared/domain/layout/aidd-layout.js";
@@ -18,7 +18,7 @@ const LOCATION = "/home/.claude/plugins/known_marketplaces.json";
  * `userConfigDir()` can sit behind a symlink the OS resolves on its own (macOS's `/var` →
  * `/private/var`), so an unresolved `userCacheRoot` never matches the realpath'd sources.
  */
-describe("hostMarketplaceSourceConflict - resolving every path through the same realpath", () => {
+describe("CheckMarketplaceSource - resolving every path through the same realpath", () => {
   it("still decides a version-behind drift when userCacheRoot is reached through a symlink", async () => {
     const fs = new InMemoryFileAdapter({}, ["/private/var-home/.config/aidd"]);
     fs.setSymlink("/var-home", "/private/var-home");
@@ -41,10 +41,8 @@ describe("hostMarketplaceSourceConflict - resolving every path through the same 
       entries: new Map([[NAME, registeredSource]]),
     });
 
-    const check = await hostMarketplaceSourceConflict(
+    const check = await new CheckMarketplaceSource(fs, catalogIdentityReader(fs)).execute(
       {
-        fs,
-        identities: catalogIdentityReader(fs),
         tool: registeredTools().profile(TOOL.claude),
         reader,
       },
@@ -90,10 +88,8 @@ describe("hostMarketplaceSourceConflict - resolving every path through the same 
       entries: new Map([[NAME, registeredSource]]),
     });
 
-    const check = await hostMarketplaceSourceConflict(
+    const check = await new CheckMarketplaceSource(fs, catalogIdentityReader(fs)).execute(
       {
-        fs,
-        identities: catalogIdentityReader(fs),
         tool: registeredTools().profile(TOOL.claude),
         reader,
       },
@@ -120,7 +116,7 @@ describe("hostMarketplaceSourceConflict - resolving every path through the same 
   });
 });
 
-describe("hostMarketplaceSourceConflict - without a drift context", () => {
+describe("CheckMarketplaceSource - without a drift context", () => {
   it("reports the different catalog the host's registry points at", async () => {
     const fs = new InMemoryFileAdapter({
       "/registered/.claude-plugin/marketplace.json": JSON.stringify({
@@ -133,10 +129,8 @@ describe("hostMarketplaceSourceConflict - without a drift context", () => {
       entries: new Map([[NAME, "/registered"]]),
     });
 
-    const check = await hostMarketplaceSourceConflict(
+    const check = await new CheckMarketplaceSource(fs, catalogIdentityReader(fs)).execute(
       {
-        fs,
-        identities: catalogIdentityReader(fs),
         tool: registeredTools().profile(TOOL.claude),
         reader,
       },

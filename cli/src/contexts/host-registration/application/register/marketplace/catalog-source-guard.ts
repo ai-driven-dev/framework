@@ -7,7 +7,6 @@ import {
   pluginSetDifference,
 } from "../../../domain/source/marketplace-source-conflict.js";
 import { isDriftFound, judgeDrift } from "../../../domain/source/marketplace-source-drift.js";
-import { hostMarketplaceSourceConflict } from "../../check-marketplace-source.js";
 import {
   marketplaceRegistryOf,
   type RegistrationRun,
@@ -40,8 +39,8 @@ export async function guardAgainstConflict(
   const reader = marketplaceRegistryOf(run);
   if (reader === undefined) return undefined;
   const requestedSource = (await run.fs.realpathIfResolvable(builtDir)) ?? builtDir;
-  const check = await hostMarketplaceSourceConflict(
-    { fs: run.fs, identities: run.identities, tool: profile, reader },
+  const check = await run.catalogs.checkSource.execute(
+    { tool: profile, reader },
     {
       requestedSource,
       requestedIdentity,

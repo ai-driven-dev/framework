@@ -3,9 +3,10 @@
 import { join } from "node:path";
 import type { HintedMessage } from "../../../../shared/domain/describe-error.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
+import { bestEffortNativeCall } from "../../domain/confirmation.js";
+import type { HostRefusal } from "../../domain/native-refusal.js";
 import type { RegistrationRecord } from "../../domain/record/registration-record.js";
-import type { HostActions, HostRefusal } from "../../ports/host-actions.js";
-import { bestEffortNativeCall } from "../confirm-native-call.js";
+import type { HostActions } from "../../ports/host-actions.js";
 import { type HostRefsVerdict, inspectNativeRefs } from "../native-marketplace-source-proof.js";
 import type {
   ProjectCleanFacts,

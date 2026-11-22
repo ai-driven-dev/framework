@@ -1,7 +1,5 @@
-import type {
-  HostActions,
-  HostRefusal,
-} from "../../../src/contexts/host-registration/ports/host-actions.js";
+import type { HostRefusal } from "../../../src/contexts/host-registration/domain/native-refusal.js";
+import type { HostActions } from "../../../src/contexts/host-registration/ports/host-actions.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 
 /** Records native plugin CLI calls instead of shelling out. Two measured shapes: a real

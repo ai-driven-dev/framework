@@ -87,7 +87,7 @@ async function builtIdentityOf(
   run: RegistrationRun,
   builtDir: string
 ): Promise<MarketplaceCatalogIdentity> {
-  const identity = await run.identities.read(run.profile, builtDir);
+  const identity = await run.catalogs.identities.read(run.profile, builtDir);
   if (identity !== undefined) return identity;
   throw new UnreadableBuiltCatalogError(
     marketplaceCatalogProbePath(run.profile, builtDir) ?? builtDir

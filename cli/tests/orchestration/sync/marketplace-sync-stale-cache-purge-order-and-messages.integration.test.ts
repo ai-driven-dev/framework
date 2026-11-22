@@ -1,10 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { RegisterFrameworkMarketplace } from "../../../src/contexts/distribution/application/register-framework-marketplace.use-case.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
-import type {
-  HostActions,
-  HostRefusal,
-} from "../../../src/contexts/host-registration/ports/host-actions.js";
+import type { HostRefusal } from "../../../src/contexts/host-registration/domain/native-refusal.js";
+import type { HostActions } from "../../../src/contexts/host-registration/ports/host-actions.js";
 import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/contract/built-marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";

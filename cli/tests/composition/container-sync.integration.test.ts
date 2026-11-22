@@ -7,7 +7,7 @@ import { wireInstallation } from "../../src/composition/installation.js";
 import { wireMarketplace } from "../../src/composition/orchestration/marketplace.js";
 import { wireBase } from "../../src/composition/shared.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../src/contexts/distribution/contract/marketplace.js";
-import type { HostRefusal } from "../../src/contexts/host-registration/ports/host-actions.js";
+import type { HostRefusal } from "../../src/contexts/host-registration/domain/native-refusal.js";
 import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
 import { BUILT_CACHE_SUBDIR } from "../../src/shared/domain/layout/aidd-layout.js";
 import { FakeHostMarketplaceSources } from "../contexts/host-registration/testing/fake-host-marketplace-sources.fake.js";

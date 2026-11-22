@@ -10,7 +10,6 @@ import { RemoveMarketplace } from "../../contexts/distribution/application/remov
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
 import { RegisterPluginWithHost } from "../../contexts/host-registration/application/register/register-plugin-with-host.use-case.js";
 import { ResolveNativeHost } from "../../contexts/host-registration/application/register/resolve-native-host.use-case.js";
-import { catalogIdentityReader } from "../../contexts/host-registration/infrastructure/marketplace/marketplace-registry-reader.js";
 import { ListPluginSources } from "../../contexts/installation/application/marketplace/list-plugin-sources.use-case.js";
 import { PurgeMarketplacePlugins } from "../../contexts/installation/application/marketplace/purge-marketplace-plugins.use-case.js";
 import { RemovePluginsFromMarketplace } from "../../contexts/installation/application/marketplace/remove-plugins-from-marketplace.use-case.js";
@@ -46,7 +45,7 @@ import { SyncNativeActivation } from "../../orchestration/sync/settings/sync-nat
 import { SyncSettings } from "../../orchestration/sync/settings/sync-settings.use-case.js";
 import { SyncToolSettingsFiles } from "../../orchestration/sync/settings/sync-tool-settings-files.use-case.js";
 import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
-import { settingsDeclaration } from "../host-registration.js";
+import { catalogReaders, settingsDeclaration } from "../host-registration.js";
 import type { Installation } from "../installation.js";
 import type { Base } from "../shared.js";
 import { userConfigDir } from "../user-config-dir.js";
@@ -146,7 +145,7 @@ function nativeActivationOf(
   return new ActivateNativeTools({
     registerPluginWithHost: new RegisterPluginWithHost({
       fs,
-      identities: catalogIdentityReader(fs),
+      catalogs: catalogReaders(fs),
       nativeHosts: new ResolveNativeHost(base.nativePluginActivators, tools),
       hosts: {
         marketplaceRegistries: base.hostMarketplaceRegistries,

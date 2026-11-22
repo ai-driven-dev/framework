@@ -1,12 +1,11 @@
 import { samePathSegment } from "../../../../../shared/domain/paths.js";
-import { skippedWarning } from "../../../domain/confirmation.js";
+import { bestEffortNativeCall, skippedWarning } from "../../../domain/confirmation.js";
 import type { NativeRefusal } from "../../../domain/native-refusal.js";
 import { judgeRegistration } from "../../../domain/policy/registration-policy.js";
 import {
   parseBuiltMarketplaceDir,
   parseUserBuiltMarketplaceDir,
 } from "../../../domain/source/built-marketplace-location.js";
-import { bestEffortNativeCall } from "../../confirm-native-call.js";
 import { nativeCatalogProof } from "../native-catalog-proof.js";
 import {
   type RegistrationRun,
