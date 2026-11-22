@@ -9,29 +9,13 @@ import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adap
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../shared/testing/seed-from-directory.builder.js";
 import { buildTree } from "./build-tree.builder.js";
+import { minimalSchemas } from "./schema-provider.builder.js";
 
 const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
 export const SOURCE_DIR = FIXTURE_DIR;
 // resolve(), not the bare literal: on Windows a leading "/" is drive-relative, so
 // production's own resolve(outDir) would key the tree differently from this constant.
 export const OUT_DIR = resolve("/tmp/aidd-build-test-out");
-
-const MINIMAL_MANIFEST_SCHEMA = {
-  type: "object",
-  required: ["name"],
-  properties: { name: { type: "string" } },
-};
-
-const MINIMAL_MARKETPLACE_SCHEMA = {
-  type: "object",
-  required: ["name", "metadata", "owner", "plugins"],
-  properties: {
-    name: { type: "string" },
-    metadata: { type: "object" },
-    owner: { type: "object" },
-    plugins: { type: "array" },
-  },
-};
 
 export function makeValidator(fail = false): JsonSchemaValidator {
   return {
@@ -41,18 +25,10 @@ export function makeValidator(fail = false): JsonSchemaValidator {
   };
 }
 
-export function makeAssetProvider(
-  manifestSchema: object = MINIMAL_MANIFEST_SCHEMA,
-  marketplaceSchema: object = MINIMAL_MARKETPLACE_SCHEMA
-): AssetProvider {
+export function makeAssetProvider(): AssetProvider {
   return {
     loadConfigAsset: () => {
       throw new Error("not used");
-    },
-    loadSchema: (name) => {
-      if (name === "plugin-manifest") return manifestSchema;
-      if (name === "marketplace") return marketplaceSchema;
-      return {};
     },
   };
 }
@@ -76,6 +52,8 @@ export function makeUseCase(
     ap,
     new CapturingLogger(),
     buildContractOf(registeredTools(), TOOL.copilot, "marketplace"),
-    "marketplace"
+    "marketplace",
+    false,
+    minimalSchemas
   );
 }

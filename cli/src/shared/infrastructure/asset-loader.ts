@@ -1,6 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import type { ConfigAsset, SchemaName } from "../domain/config-asset.js";
+import type { ConfigAsset } from "../domain/config-asset.js";
 import { AssetNotFoundError } from "../domain/shared.error.js";
 import type { AssetProvider } from "../ports/asset-provider.js";
 
@@ -11,23 +9,7 @@ interface ConfigAssetCatalog {
   };
 }
 
-const SCHEMA_FILE = "claude-code-plugin-manifest.json";
-const MARKETPLACE_SCHEMA_FILE = "copilot-plugin-marketplace.json";
-const CLAUDE_MARKETPLACE_SCHEMA_FILE = "claude-marketplace-manifest.json";
-const CODEX_MARKETPLACE_SCHEMA_FILE = "codex-marketplace-manifest.json";
-const CODEX_PLUGIN_MANIFEST_SCHEMA_FILE = "codex-plugin-manifest.json";
-
-const SCHEMA_FILES: Record<SchemaName, string> = {
-  "plugin-manifest": SCHEMA_FILE,
-  marketplace: MARKETPLACE_SCHEMA_FILE,
-  "claude-marketplace": CLAUDE_MARKETPLACE_SCHEMA_FILE,
-  "codex-marketplace": CODEX_MARKETPLACE_SCHEMA_FILE,
-  "codex-plugin-manifest": CODEX_PLUGIN_MANIFEST_SCHEMA_FILE,
-};
-
 export class BundledAssetProviderAdapter implements AssetProvider {
-  private readonly schemaCache = new Map<SchemaName, object>();
-
   constructor(private readonly tools: ConfigAssetCatalog) {}
 
   loadConfigAsset(toolId: string, fileName: string): ConfigAsset {
@@ -36,27 +18,5 @@ export class BundledAssetProviderAdapter implements AssetProvider {
       throw new AssetNotFoundError(`${toolId}/${fileName}`);
     }
     return shipped.content;
-  }
-
-  loadSchema(name: SchemaName): object {
-    const cached = this.schemaCache.get(name);
-    if (cached !== undefined) return cached;
-    const schema = this.readSchemaFileFromDisk(SCHEMA_FILES[name]);
-    this.schemaCache.set(name, schema);
-    return schema;
-  }
-
-  private readSchemaFileFromDisk(fileName: string): object {
-    const candidates = [
-      new URL(`../../../assets/schemas/${fileName}`, import.meta.url),
-      new URL(`./${fileName}`, import.meta.url),
-    ];
-    for (const url of candidates) {
-      const p = fileURLToPath(url);
-      if (existsSync(p)) {
-        return JSON.parse(readFileSync(p, "utf8")) as object;
-      }
-    }
-    throw new AssetNotFoundError(fileName);
   }
 }

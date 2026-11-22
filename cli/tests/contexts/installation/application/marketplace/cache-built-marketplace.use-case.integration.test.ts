@@ -23,18 +23,11 @@ const PROJECT = "/proj";
 const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
 const PLUGIN = "aidd-test";
 
-const MINIMAL_MANIFEST_SCHEMA = {
-  type: "object",
-  required: ["name"],
-  properties: { name: { type: "string" } },
-};
-
 function stubAssetProvider(): AssetProvider {
   return {
     loadConfigAsset: () => {
       throw new Error("not used");
     },
-    loadSchema: (name) => (name === "plugin-manifest" ? MINIMAL_MANIFEST_SCHEMA : {}),
   };
 }
 

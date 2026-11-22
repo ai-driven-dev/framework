@@ -13,7 +13,6 @@ describe("the flat config artefact", () => {
         loadConfigAsset: () => {
           throw new Error("not used");
         },
-        loadSchema: () => ({}),
       },
       new CapturingLogger()
     );

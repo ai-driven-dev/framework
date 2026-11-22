@@ -6,10 +6,17 @@ import type {
   ToolBuildContract,
 } from "../../../../src/contexts/tools/contract/build-contract.js";
 import type { JsonSchemaValidator } from "../../../../src/contexts/translate/ports/json-schema-validator.js";
+import type { SchemaProvider } from "../../../../src/contexts/translate/ports/schema-provider.js";
 import type { AssetProvider } from "../../../../src/shared/ports/asset-provider.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import type { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { aDiskSink } from "./disk-sink.builder.js";
+
+const NO_ASSETS: AssetProvider = {
+  loadConfigAsset: () => {
+    throw new Error("not used");
+  },
+};
 
 export const PLUGIN = "aidd-test";
 // resolve(): on Windows a leading "/" is drive-relative. Posix after: the adapter keys writes so.
@@ -23,18 +30,6 @@ export const STUB_ROOT_TOKEN = "$" + "{STUB_PLUGIN_ROOT}";
 const passingValidator: JsonSchemaValidator = {
   validate(_schema: object, _data: unknown): void {},
 };
-
-export function assetProviderNaming(loaded: string[]): AssetProvider {
-  return {
-    loadConfigAsset: () => {
-      throw new Error("not used");
-    },
-    loadSchema: (name) => {
-      loaded.push(name);
-      return { schemaFor: name };
-    },
-  };
-}
 
 export function supportedArtifact(
   placement: ArtifactPlacement,
@@ -64,13 +59,18 @@ export function stubContract(over: Partial<ToolBuildContract> = {}): ToolBuildCo
 export function sinkFor(
   fs: InMemoryFileAdapter,
   contract: ToolBuildContract,
-  options: { force?: boolean; validator?: JsonSchemaValidator; assetProvider?: AssetProvider } = {}
+  options: {
+    force?: boolean;
+    validator?: JsonSchemaValidator;
+    schemaProvider?: SchemaProvider;
+  } = {}
 ) {
   const sink = aDiskSink(
     fs,
     options.validator ?? passingValidator,
-    options.assetProvider ?? assetProviderNaming([]),
-    new CapturingLogger()
+    NO_ASSETS,
+    new CapturingLogger(),
+    options.schemaProvider
   );
   const target = {
     contract,

@@ -7,6 +7,7 @@ import { DiskSink } from "../contexts/translate/application/sinks/disk-sink.js";
 import { FlatWriter } from "../contexts/translate/application/sinks/flat-writer.js";
 import { TranslateDistribution } from "../contexts/translate/application/translate-distribution.use-case.js";
 import { canonFormatOf, pluginManifestProbes } from "../contexts/translate/domain/plugin-format.js";
+import { BundledSchemaProviderAdapter } from "../contexts/translate/infrastructure/schema-provider.js";
 import { AjvSchemaValidatorAdapter } from "../contexts/translate/infrastructure/schema-validator.js";
 import type { AssetProvider } from "../shared/ports/asset-provider.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
@@ -36,6 +37,7 @@ export function createFrameworkBuildUseCase(
     fs: deps.fs,
     jsonSchemaValidator: new AjvSchemaValidatorAdapter(),
     assetProvider: deps.assetProvider,
+    schemaProvider: new BundledSchemaProviderAdapter(),
     logger: deps.logger,
     flat: new FlatWriter(deps.fs, deps.assetProvider, deps.logger),
     canonFormat,

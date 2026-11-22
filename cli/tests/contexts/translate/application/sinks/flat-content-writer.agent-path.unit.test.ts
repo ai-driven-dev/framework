@@ -23,7 +23,6 @@ const ASSETS: AssetProvider = {
   loadConfigAsset: () => {
     throw new Error("not used");
   },
-  loadSchema: () => ({}),
 };
 
 /** The registered tools that build flat and declare an agents artifact. */

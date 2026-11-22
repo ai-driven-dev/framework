@@ -5,6 +5,7 @@ import type { ToolBuildContract } from "../../../../src/contexts/tools/contract/
 import type { FrameworkBuildMode } from "../../../../src/contexts/tools/contract/tool-profile.js";
 import { translate } from "../../../../src/contexts/translate/domain/engine.js";
 import type { OutputFile } from "../../../../src/contexts/translate/domain/output-file.js";
+import { BundledSchemaProviderAdapter } from "../../../../src/contexts/translate/infrastructure/schema-provider.js";
 import { AjvSchemaValidatorAdapter } from "../../../../src/contexts/translate/infrastructure/schema-validator.js";
 import { BundledAssetProviderAdapter } from "../../../../src/shared/infrastructure/asset-loader.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
@@ -45,7 +46,9 @@ async function build(
     assets,
     new CapturingLogger(),
     contract,
-    mode
+    mode,
+    false,
+    new BundledSchemaProviderAdapter()
   );
   await use.execute({ sourceDir: FRAMEWORK_SOURCE, outDir: OUT, target: id, mode });
   return fs;

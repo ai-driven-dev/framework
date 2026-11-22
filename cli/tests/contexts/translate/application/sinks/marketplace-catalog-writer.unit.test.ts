@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { writeMarketplaceCatalog } from "../../../../../src/contexts/translate/application/sinks/marketplace-catalog-writer.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { openSchemas } from "../../testing/schema-provider.builder.js";
 import { aDiskTarget, aStubBuildContract } from "../../testing/stub-build-contract.builder.js";
 
 const SOURCE = { name: "market", plugins: [] };
@@ -13,7 +14,7 @@ function depsOver(fs: InMemoryFileAdapter, validated: unknown[] = []) {
         validated.push(data);
       },
     },
-    assetProvider: { loadConfigAsset: () => "", loadSchema: () => ({}) },
+    schemaProvider: openSchemas,
   };
 }
 

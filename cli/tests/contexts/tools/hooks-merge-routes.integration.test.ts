@@ -56,7 +56,6 @@ const unused: AssetProvider = {
   loadConfigAsset: () => {
     throw new Error("not used");
   },
-  loadSchema: () => ({}),
 };
 
 function sourceFs(seed: Record<string, string>): InMemoryFileAdapter {
@@ -78,6 +77,7 @@ async function flatMerge(
     fs,
     jsonSchemaValidator: { validate() {} },
     assetProvider: unused,
+    schemaProvider: { loadSchema: () => ({}) },
     logger,
     flat: new FlatWriter(fs, unused, logger),
     canonFormat: TOOL.claude,
