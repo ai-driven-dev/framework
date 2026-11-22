@@ -4,5 +4,5 @@ const { findingsOf } = require("./report-model.cjs");
 
 module.exports = (ctx) =>
   findingsOf(ctx, "To decide")
-    .filter(({ item }) => !item.text.trimEnd().endsWith("?"))
-    .map(({ item }) => ({ line: item.line, offending: item.text, fix: "end with the question for whoever owns the request" }));
+    .filter((item) => !item.text.trimEnd().endsWith("?"))
+    .map((item) => ({ line: item.line, offending: item.text, fix: "end with the question for whoever owns the request" }));

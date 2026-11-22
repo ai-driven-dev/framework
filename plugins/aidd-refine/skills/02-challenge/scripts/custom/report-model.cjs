@@ -1,39 +1,36 @@
 "use strict";
-// The rounds of a challenge.md, read once per file: each with its aim, its sections, their items, and the lines that are neither.
-const ROUND = /^# Round (\d+)\s*$/u;
-const SECTION = /^# (.+?)\s*$/u;
-const AIM = /^Aim:(.*)$/u;
+// The sections of a challenge.md, read once per file: each `###` section with its items, and the lines outside any item. Headings are the template op's.
+const HEADING = /^(#{1,6}) (.+?)\s*$/u;
+const AIM = /^Aim:/u;
 const ITEM = /^- /u;
+const NONE = "- None";
 
 const models = new WeakMap();
 
-/** `{ before, rounds }`: content lines before any round, and each round `{ number, line, aim, sections, stray }`. */
+/** `{ sections, stray }`: each section `{ name, line, items, stray }`, and the lines other than an aim outside any section. */
 function report(ctx) {
   if (models.has(ctx)) return models.get(ctx);
-  const model = { before: [], rounds: [] };
+  const model = { sections: [], stray: [] };
+  let current = null;
   ctx.prose.forEach((prose, index) => {
     if (!prose.trim()) return;
     const at = { line: index + 1, text: ctx.lines[index].trimEnd() };
-    const round = ROUND.exec(prose);
-    const current = model.rounds.at(-1);
-    if (round) model.rounds.push({ number: Number(round[1]), line: at.line, aim: null, sections: [], stray: [] });
-    else if (!current) model.before.push(at);
-    else if (current.aim === null && current.sections.length === 0 && AIM.test(prose)) current.aim = { ...at, value: AIM.exec(at.text)[1].trim() };
-    else if (SECTION.test(prose)) current.sections.push({ name: SECTION.exec(prose)[1], line: at.line, items: [] });
-    else if (!current.sections.length) current.stray.push(at);
-    else if (ITEM.test(prose)) current.sections.at(-1).items.push({ ...at });
-    else if (/^\s/u.test(prose) && current.sections.at(-1).items.length) current.sections.at(-1).items.at(-1).text += ` ${at.text.trim()}`;
-    else current.sections.at(-1).stray = [...(current.sections.at(-1).stray ?? []), at];
+    const heading = HEADING.exec(prose);
+    if (heading) {
+      current = heading[1].length === 3 ? { name: heading[2], line: at.line, items: [], stray: [] } : null;
+      if (current) model.sections.push(current);
+    } else if (!current) {
+      if (!AIM.test(prose)) model.stray.push(at);
+    } else if (ITEM.test(prose)) current.items.push(at);
+    else if (/^\s/u.test(prose) && current.items.length) current.items.at(-1).text += ` ${at.text.trim()}`;
+    else current.stray.push(at);
   });
   models.set(ctx, model);
   return model;
 }
 
-const SECTIONS = ["Deal breakers", "To decide", "Suggestions", "Holds"];
-const NONE = "- None";
-
-/** Each section of each round that holds findings: not empty and not `- None`. */
+/** The items of every `name` section that holds findings rather than `- None`. */
 const findingsOf = (ctx, name) =>
-  report(ctx).rounds.flatMap((round) => round.sections.filter((s) => s.name === name && !s.items.some((item) => item.text.trim() === NONE)).flatMap((s) => s.items.map((item) => ({ round, item }))));
+  report(ctx).sections.filter((s) => s.name === name && !s.items.some((item) => item.text.trim() === NONE)).flatMap((s) => s.items);
 
-module.exports = { report, findingsOf, SECTIONS, NONE };
+module.exports = { report, findingsOf, NONE };

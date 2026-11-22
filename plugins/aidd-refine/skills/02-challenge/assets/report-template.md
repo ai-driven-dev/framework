@@ -1,17 +1,21 @@
-Aim: <what the work serves, one line>
+# Challenge: {{the work challenged, one line}}
 
-# Deal breakers
+## Round {{round count}}
 
-- <it breaks when ...>, evidence <command and output, or where> → <smallest change>
+Aim: {{what the work serves, one line}}
 
-# To decide
+### Deal breakers
 
-- <what was asked misses the aim when ...>, evidence <where> → <question for whoever owns the request>?
+- {{it breaks when ...}}, evidence {{command and output, or where}} → {{smallest change}}
 
-# Suggestions
+### To decide
 
-- <what would be better> → <change>
+- {{what was asked misses the aim when ...}}, evidence {{where}} → {{question for whoever owns the request}}?
 
-# Holds
+### Suggestions
 
-- <attack tried that the work survived>
+- {{what would be better}} → {{change}}
+
+### Holds
+
+- {{attack tried that the work survived}}

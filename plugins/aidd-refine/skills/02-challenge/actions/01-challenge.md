@@ -17,7 +17,7 @@ Attack the work and report what breaks its aim, so the caller knows whether it h
 4. Classify each finding with the first question of [decision.md](../references/decision.md) that answers yes.
 5. Keep at most three items in To decide and three in Suggestions, those that matter most to the aim.
 6. Fill [report-template.md](../assets/report-template.md).
-7. Write it to `challenge.md` under a `# Round <n>` heading, after any earlier round, in the first folder that exists:
+7. Write it to `challenge.md`, in the first folder that exists, and when the file exists append only its round after the last one:
    - the task folder named;
    - the folder of the plan or spec the work follows;
    - a new `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<slug>/`, its slug naming the work.
