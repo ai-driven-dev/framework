@@ -5,8 +5,8 @@ import {
   type RegistrationRecordData,
   recordedRegistrations,
 } from "../../../domain/record/registration-record.js";
-import { inspectHostSource } from "../../native-marketplace-source-proof.js";
 import { reachableActivator } from "../../reachable-activator.js";
+import { inspectHostSource } from "../../read-host.js";
 import type { ClaimedHostRef, ProvenHostRef, WithdrawalDeps } from "../withdrawal.js";
 
 export interface ClaimedRefRequest {

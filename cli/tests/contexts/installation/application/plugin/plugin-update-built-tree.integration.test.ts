@@ -71,7 +71,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
         projectRoot: PROJECT_ROOT,
         scope: "user",
       })
-    ).rejects.toThrow(/edited after install/);
+    ).rejects.toMatchObject({ code: "edited-after-install" });
 
     expect(acquired).toBe(true);
     expect(deps.fs.getFile(path)).toBe("user edit at lock acquisition");

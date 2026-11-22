@@ -67,19 +67,15 @@ function contextOf(
 
 function activatorOf(register: Register["execute"]) {
   const logger = new CapturingLogger();
-  const records = {
-    refOnHostName: (name: string, hostName: string) => `${name}@${hostName}`,
-    claimedRefs: vi.fn(() => []),
-    refsOnHosts: vi.fn(() => ["recorded@host-market"]),
-  };
+  const planRefs = { execute: vi.fn(() => ["planned@host-market"]) };
   const useCase = new ActivateNativeTools({
     registerPluginWithHost: { execute: register },
     buildMarketplace: { execute: vi.fn() },
     logger,
-    marketplace: { name: "framework", userCacheRoot: () => "/cache" },
-    records,
+    marketplace: { userCacheRoot: () => "/cache" },
+    planRefs,
   });
-  return { useCase, logger, records };
+  return { useCase, logger, planRefs };
 }
 
 const request = (context: SyncContext, scope: Scope = "project", enablePlugins: string[] = []) => ({
@@ -146,70 +142,55 @@ describe("activating native tools", () => {
   });
 
   describe("the refs it asks the host to enable", () => {
-    async function refsAsked(
+    async function planFor(
       manifest: SyncContext["manifest"],
       scope: Scope,
       enablePlugins: string[],
       held: SyncContext["records"] = new Map()
     ) {
       let asked: string[] = [];
-      const { useCase, records } = activatorOf(async (command) => {
-        asked = command.refsToEnable(
-          new Map([
-            ["market", "host-market"],
-            ["framework", "host-framework"],
-          ])
-        );
+      const { useCase, planRefs } = activatorOf(async (command) => {
+        asked = command.refsToEnable(new Map([["market", "host-market"]]));
         return { status: "activated", outcome: OUTCOME };
       });
       await useCase.execute(
         request(contextOf(manifest, [SYNTHETIC_TOOL], held), scope, enablePlugins)
       );
-      return { asked, records };
+      return { asked, planRefs };
     }
 
-    it("is each manifest plugin under the name its marketplace answers to at the host", async () => {
-      const manifest = aManifest()
-        .withTool(SYNTHETIC_TOOL, [])
-        .withPlugin(SYNTHETIC_TOOL, plugin("kept", "market"))
-        .withPlugin(SYNTHETIC_TOOL, plugin("orphan", "unregistered"))
-        .build();
-
-      const { asked } = await refsAsked(manifest, "project", []);
-
-      expect(asked).toEqual(["kept@host-market"]);
-    });
-
-    it("adds the framework plugins a caller asked for, once", async () => {
+    it("is what the plan answers for the manifest, the marketplaces and the host names", async () => {
       const manifest = aManifest()
         .withTool(SYNTHETIC_TOOL, [])
         .withPlugin(SYNTHETIC_TOOL, plugin("kept", "market"))
         .build();
 
-      const { asked } = await refsAsked(manifest, "project", ["extra", "extra"]);
+      const { asked, planRefs } = await planFor(manifest, "user", ["extra"]);
 
-      expect(asked).toEqual(["kept@host-market", "extra@host-framework"]);
+      expect(asked).toEqual(["planned@host-market"]);
+      expect(planRefs.execute).toHaveBeenCalledWith({
+        scope: "user",
+        recordedPlugins: [{ pluginName: "kept", marketplace: "market" }],
+        marketplaceAliases: ["market"],
+        hostNameByAlias: new Map([["market", "host-market"]]),
+        nativeRecord: undefined,
+        enablePlugins: ["extra"],
+      });
     });
 
-    it("recovers the refs a machine-scope record holds, at user scope only", async () => {
-      const manifest = emptyManifest();
-      const held = new Map([
-        [
-          SYNTHETIC_TOOL,
-          { binary: "claude", marketplaces: [], pluginRefs: ["recorded@host-market"] },
-        ],
-      ]);
+    it("hands the plan the tool's record", async () => {
+      const record = { binary: "claude", marketplaces: [], pluginRefs: ["recorded@host-market"] };
 
-      const user = await refsAsked(manifest, "user", [], held);
-      const project = await refsAsked(manifest, "project", [], held);
-
-      expect(user.asked).toEqual(["recorded@host-market"]);
-      expect(user.records.refsOnHosts).toHaveBeenCalledWith(
-        expect.objectContaining({ pluginRefs: ["recorded@host-market"] }),
+      const { planRefs } = await planFor(
+        emptyManifest(),
+        "user",
         [],
-        ["host-market", "host-framework"]
+        new Map([[SYNTHETIC_TOOL, record]])
       );
-      expect(project.asked).toEqual([]);
+
+      expect(planRefs.execute).toHaveBeenCalledWith(
+        expect.objectContaining({ nativeRecord: record })
+      );
     });
   });
 });

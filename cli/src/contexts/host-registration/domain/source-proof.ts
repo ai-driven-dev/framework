@@ -1,3 +1,5 @@
+import { RegistrationRefusedError } from "./host-registration.error.js";
+import { judgeRegistration, type SourceProof } from "./policy/registration-policy.js";
 import type { HostPluginRegistryEntry } from "./reading/plugin-registry-reading.js";
 import { isRefOnHost } from "./record/host-ref.js";
 import {
@@ -59,3 +61,24 @@ export function findForeignRef(
     ([ref, entry]) => inUse(entry.enabled) && isRefOnHost(ref, hostName) && !ownedRefs.has(ref)
   )?.[0];
 }
+
+/** Refuses a catalogue whose host source the proof does not show owned, saying why when it can. */
+export function assertSourceOwned(
+  proof: NativeMarketplaceSourceInspection,
+  unproven: string
+): void {
+  const verdict = judgeCatalogueWithdrawal(proof);
+  if (verdict.outcome === "refuse")
+    throw new RegistrationRefusedError(verdict.reconcile ?? unproven);
+}
+
+/** A catalogue withdrawal's verdict: the source must be owned and, when named, `unenabledClaim` is a
+ * claimed ref the host does not provably enable. */
+export function judgeCatalogueWithdrawal(source: SourceProof, unenabledClaim?: string) {
+  return judgeRegistration({ intent: "withdraw-catalog", source, unenabledClaim });
+}
+
+/** What the host's plugin registry lets a mutation do: its refs, or the refusal naming why not. */
+export type HostRefsVerdict =
+  | { readonly refs: ReadonlyMap<string, HostPluginRegistryEntry> }
+  | { readonly refusal: RegistrationRefusedError };

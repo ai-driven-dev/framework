@@ -3,8 +3,9 @@ import { RegistrationRefusedError } from "../../../domain/host-registration.erro
 import { judgeRegistration, type SourceProof } from "../../../domain/policy/registration-policy.js";
 import type { NativeMarketplaceRegistration } from "../../../domain/record/native-marketplace-source.js";
 import { readRegistrationRecord } from "../../../domain/record/registration-record.js";
-import { assertSourceOwned, inspectHostSource } from "../../native-marketplace-source-proof.js";
+import { assertSourceOwned } from "../../../domain/source-proof.js";
 import { reachableActivator } from "../../reachable-activator.js";
+import { inspectHostSource } from "../../read-host.js";
 import type { ProjectSourceRequest, WithdrawalDeps } from "../withdrawal.js";
 
 /** Refuses, before any change, a removal the host's own state does not prove safe. */

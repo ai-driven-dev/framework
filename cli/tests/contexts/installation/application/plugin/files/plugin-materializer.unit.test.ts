@@ -159,9 +159,7 @@ describe("PluginMaterializer public update contract", () => {
     f.fs.setSymlink(join(f.base, "sample-plugin"), "/foreign");
     await expect(
       f.updater.applyUpdate(plan, { logger: f.logger, isWithinUserScope: outsideUserScope })
-    ).rejects.toThrow(
-      `cursor: 'sample-plugin' directory is not safely inside ${f.base}; update refused.`
-    );
+    ).rejects.toMatchObject({ code: "plugin-directory-outside-boundary" });
     expect(await f.fs.readFile("/foreign/skills/demo/SKILL.md")).toBe("foreign");
   });
 
