@@ -1,10 +1,18 @@
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { RegisteredPlugin, RegisteredPlugins } from "../../contract/registered-plugins.js";
-import type { RegistrationRecordRules } from "../../ports/native-host.js";
+import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import type { InstallationScope } from "./installation-scope.js";
 import type { LoadManifest } from "./load-manifest.use-case.js";
 
-export type ListRegisteredPluginsRequest = Pick<InstallationScope, "allowedIds">;
+/** How the expected plugins read a host registration: the host registration's to answer. */
+export interface RegisteredRefRecords {
+  pluginRefsOf(record: NativeRegistrations | undefined): readonly string[];
+  refOnHostName(plugin: string, hostName: string): string;
+}
+
+export interface ListRegisteredPluginsRequest extends Pick<InstallationScope, "allowedIds"> {
+  readonly records: RegisteredRefRecords;
+}
 
 /**
  * The plugins each installed tool's host is expected to carry: the native registrations the
@@ -13,10 +21,7 @@ export type ListRegisteredPluginsRequest = Pick<InstallationScope, "allowedIds">
  * assembles the same shape.
  */
 export class ListRegisteredPlugins {
-  constructor(
-    private readonly loadManifest: LoadManifest,
-    private readonly records: RegistrationRecordRules
-  ) {}
+  constructor(private readonly loadManifest: LoadManifest) {}
 
   async execute(command: ListRegisteredPluginsRequest): Promise<RegisteredPlugins> {
     const manifest = await this.loadManifest.execute();
@@ -26,14 +31,14 @@ export class ListRegisteredPlugins {
       const recorded = manifest.getNativeRegistrations(toolId);
       const expectedPlugins =
         recorded !== undefined
-          ? this.records.pluginRefsOf(recorded).map((ref) => ({ plugin: ref, ref }))
+          ? command.records.pluginRefsOf(recorded).map((ref) => ({ plugin: ref, ref }))
           : manifest.getPlugins(toolId).map((plugin) => ({
               plugin: plugin.name,
               // Limit: with no recorded registration the fallback assumes the alias equals the host name.
               ref:
                 plugin.marketplace === undefined
                   ? undefined
-                  : this.records.refOnHostName(plugin.name, plugin.marketplace),
+                  : command.records.refOnHostName(plugin.name, plugin.marketplace),
             }));
       tools.push({ toolId, expectedPlugins });
     }

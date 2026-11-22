@@ -350,9 +350,9 @@ describe("the tools whose built marketplaces are resolved", () => {
     const check = new CheckRegistration(
       {
         listPlugins: new ListRegisteredPlugins(
-          new LoadManifest(new InMemoryManifestRepository(manifest)),
-          registrationRecordRules
+          new LoadManifest(new InMemoryManifestRepository(manifest))
         ),
+        records: registrationRecordRules,
         builds,
         declared: new InspectDeclaredMarketplaces(
           new InMemoryFileAdapter(),
@@ -382,9 +382,9 @@ describe("the hosts handed to the registry inspection", () => {
     const check = new CheckRegistration(
       {
         listPlugins: new ListRegisteredPlugins(
-          new LoadManifest(new InMemoryManifestRepository(manifest)),
-          registrationRecordRules
+          new LoadManifest(new InMemoryManifestRepository(manifest))
         ),
+        records: registrationRecordRules,
         builds: {
           execute: async () => ({
             registeredNames: [],

@@ -6,6 +6,7 @@ import type {
   InspectHostRegistration,
 } from "../../contexts/host-registration/application/inspect/inspect-host-registration.use-case.js";
 import type { InspectDeclaredMarketplacesResult } from "../../contexts/host-registration/contract/inspect-declared-marketplaces-result.js";
+import type { RegistrationRecordRules } from "../../contexts/host-registration/contract/registration-record-rules.js";
 import type { ListRegisteredPlugins } from "../../contexts/installation/application/doctor/list-registered-plugins.use-case.js";
 import type { DoctorIssue } from "../../contexts/installation/contract/doctor-issue.js";
 import type { RegisteredPluginsOfTool } from "../../contexts/installation/contract/registered-plugins.js";
@@ -22,6 +23,7 @@ export interface CheckRegistrationRequest {
 
 export interface CheckRegistrationDeps {
   readonly listPlugins: ListRegisteredPlugins;
+  readonly records: Pick<RegistrationRecordRules, "pluginRefsOf" | "refOnHostName">;
   readonly builds: Pick<ResolveBuiltMarketplaces, "execute">;
   readonly declared: InspectDeclaredMarketplaces;
   readonly inspectHost: Pick<InspectHostRegistration, "execute">;
@@ -45,7 +47,10 @@ export class CheckRegistration {
 
   async execute(command: CheckRegistrationRequest): Promise<DoctorIssue[]> {
     const { projectRoot, allowedIds } = command;
-    const registered = await this.deps.listPlugins.execute({ allowedIds });
+    const registered = await this.deps.listPlugins.execute({
+      allowedIds,
+      records: this.deps.records,
+    });
     const aiToolIds: AiToolId[] = [];
     for (const { toolId } of registered.tools) {
       if (this.tools.isAiTool(toolId)) aiToolIds.push(toolId);
