@@ -11,7 +11,6 @@ import type { ListPlugins } from "../contexts/installation/application/plugin/li
 import type { UpdatePlugin } from "../contexts/installation/application/plugin/update-plugin.use-case.js";
 import type { RemoveUserPluginRequest } from "../contexts/installation/application/removal/remove-user-plugin.use-case.js";
 import type { ReportStatus } from "../contexts/installation/application/report-status.use-case.js";
-import type { UninstallTools } from "../contexts/installation/application/uninstall-tools.use-case.js";
 import type { ValidateRecipes } from "../contexts/recipes/application/validate-recipes.use-case.js";
 import type { DeclareTask } from "../contexts/telemetry/application/declaration/declare-task.use-case.js";
 import type { ParseTaskFlags } from "../contexts/telemetry/application/declaration/parse-task-flags.use-case.js";
@@ -41,6 +40,7 @@ import type { VersionReader } from "../shared/ports/version-reader.js";
 import type { SetAgentModels } from "./agent-models/set-agent-models.use-case.js";
 import type { CleanProject } from "./clean/clean-project.use-case.js";
 import type { CleanUserScope } from "./clean/clean-user-scope.use-case.js";
+import type { UninstallProjectTools } from "./clean/uninstall-project-tools.use-case.js";
 import type { RunDoctor } from "./doctor/run-doctor.use-case.js";
 import type { RunUserScopeDoctor } from "./doctor/run-user-scope-doctor.use-case.js";
 import type { Output } from "./domain/output.js";
@@ -119,7 +119,7 @@ export interface Deps {
   marketplaceCheckUseCase: Pick<CheckMarketplaceUpstream, "execute">;
   installAiToolUseCase: Pick<InstallAiTool, "execute">;
   installIdeToolUseCase: Pick<InstallIdeTool, "execute">;
-  uninstallTools: Pick<UninstallTools, "execute">;
+  uninstallTools: Pick<UninstallProjectTools, "execute">;
   searchPlugins: Pick<SearchPlugins, "execute">;
   pluginInstallUseCase: Pick<InstallPlugin, "execute">;
   syncSettingsUseCase: Pick<SyncSettings, "execute">;

@@ -22,6 +22,7 @@ import type { UserSourceReferences } from "../../contexts/machine-claims/ports/u
 import type { CleanClaims } from "../../orchestration/clean/clean-claims.js";
 import { CleanProject } from "../../orchestration/clean/clean-project.use-case.js";
 import { CleanUserScope } from "../../orchestration/clean/clean-user-scope.use-case.js";
+import { UninstallProjectTools } from "../../orchestration/clean/uninstall-project-tools.use-case.js";
 import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
 import type { FileReader } from "../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../shared/ports/file-writer.js";
@@ -114,14 +115,16 @@ function wireCleanProjectFiles(base: Base, inst: Installation) {
 /** Clean and uninstall. */
 export function wireClean(base: Base, inst: Installation) {
   const { fs, logger, prompter, manifestRepo, userManifestRepo, marketplaceRegistry, tools } = base;
-  const uninstallTools = new UninstallTools(
-    {
-      manifestRepo,
-      detachClaims: detachProjectClaims(userManifestRepo, fs),
-      records: inst.registrationRecordRules,
-      removeToolFiles: new RemoveToolFiles(fs, logger, tools, homedir),
-    },
-    tools
+  const uninstallTools = new UninstallProjectTools(
+    new UninstallTools(
+      {
+        manifestRepo,
+        detachClaims: detachProjectClaims(userManifestRepo, fs),
+        removeToolFiles: new RemoveToolFiles(fs, logger, tools, homedir),
+      },
+      tools
+    ),
+    inst.registrationRecordRules
   );
   const purgeCache = new PurgeDeclaredCache(fs, logger);
   const claims = wireCleanClaims({

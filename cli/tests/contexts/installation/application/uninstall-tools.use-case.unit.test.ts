@@ -5,6 +5,7 @@ import { RemoveToolFiles } from "../../../../src/contexts/installation/applicati
 import {
   type DetachProjectClaims,
   UninstallTools,
+  type UninstallToolsRequest,
 } from "../../../../src/contexts/installation/application/uninstall-tools.use-case.js";
 import {
   ManifestUnavailableError,
@@ -42,16 +43,19 @@ function uninstaller(
   manifestRepo: InMemoryManifestRepository,
   logger: Logger = new CapturingLogger(),
   detachClaims: DetachProjectClaims = noClaims
-): UninstallTools {
-  return new UninstallTools(
+) {
+  const uninstall = new UninstallTools(
     {
       manifestRepo,
       detachClaims,
-      records: registrationRecordRules,
       removeToolFiles: new RemoveToolFiles(fs, logger, registeredTools(), () => "/home/dev"),
     },
     registeredTools()
   );
+  return {
+    execute: (command: Omit<UninstallToolsRequest, "records">) =>
+      uninstall.execute({ ...command, records: registrationRecordRules }),
+  };
 }
 
 const SETTINGS = ".claude/settings.json";
