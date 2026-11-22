@@ -29,7 +29,7 @@ Before running an action, read its file in `actions/`, not only the table or ass
 - Scope: run the one named pillar, or for an unscoped request ask once "all seven pillars, or one?" before running. Never silently default to one pillar, never blind-run all without offering the choice.
 - One folder per run, `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_audit/`, like a feature folder. Every pillar that runs always writes its own `<pillar>.md` there, alone or in a full run. A full run additionally writes a merged `report.md`: one Findings table (category = pillar, severity-first), one Top-actions list, and one Coverage section over all seven pillars.
 - Unscannable pillar: skip it, record it under `Coverage > Skipped` with the reason, and never invent findings for it.
-- Every file written: run `scripts/validate-audit.cjs`, next to the loaded `SKILL.md`, on it, and fix each finding.
+- Every file written: run `scripts/validate-audit.cjs`, next to the loaded `SKILL.md`, on it, fix each finding and validate again, and after 3 passes stop and show what is left.
 - Every finding row carries a severity, its pillar, a concrete `file:line`, the issue, a suggested fix, and an effort.
 
 ## Assets

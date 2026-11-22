@@ -169,7 +169,7 @@ function checkChildren(expectedList, actualList, parent, optional, say) {
   for (const expected of expectedList) {
     const actuals = actualList.filter((a) => expected.match.test(a.name));
     if (!actuals.length) {
-      if (!optional.includes(expected.name)) say(parent ? parent.line : 1, undefined, `${kind(expected)} "${expected.name}" missing${parent ? ` under "${parent.name}"` : ""}`);
+      if (!optional.includes(expected.name)) say(parent ? parent.line : 1, undefined, `${kind(expected)} ${expected.repeat ? "shaped like " : ""}"${expected.name}" missing${parent ? ` under "${parent.name}"` : ""}`);
       continue;
     }
     for (const actual of actuals) {
@@ -308,6 +308,7 @@ function shape(text, prose, fm) {
     if (h?.[1] === "#") {
       if (!doc.title.text) doc.title = { text: raw[index], line: index + 1 };
       else doc.extraTitles.push({ text: raw[index], line: index + 1 });
+      stack.length = 0;
       return;
     }
     if (h) {

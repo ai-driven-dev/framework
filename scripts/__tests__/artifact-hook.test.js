@@ -336,7 +336,8 @@ test("a file written, then touched by the same turn's shell, is reported once", 
 test("a shell turn reads each in-scope file once, however deep, though two contracts share the scope", () => {
   const s = session("aidd-dev", "claude");
   const files = 200;
-  for (let i = 0; i < files; i += 1) s.put(`aidd_docs/tasks/a/b/c${i % 10}/f${i}.md`, "x");
+  const tree = Array.from({ length: files }, (_, i) => `aidd_docs/tasks/a/b/c${i % 10}/f${i}.md`);
+  for (const rel of tree) s.put(rel, "x");
   s.start();
   s.shell();
   const { atStop } = require(path.join(hookFor("aidd-dev", "claude"), "artifacts.cjs"));
@@ -360,8 +361,14 @@ test("a shell turn reads each in-scope file once, however deep, though two contr
     });
   }
   assert.ok(stats >= files, `the scan ran: ${stats} stats`);
-  // each scope glob checks the 14 folders of the tree once more, so the slack grows with the globs, never with the files
-  assert.ok(stats < files + 120, `${stats} stats for ${files} files`);
+  // each scope glob checks each folder of the tree about once more (measured: 79 extra stats for 5 globs x 14 folders), so the slack
+  // is allowed twice globs x folders: it grows with the globs, never with the files, and stays under one stat per file
+  const root = hookFor("aidd-dev", "claude");
+  const globs = fs.readdirSync(path.join(root, "lib/contracts")).reduce((sum, name) => sum + (JSON.parse(fs.readFileSync(path.join(root, "lib/contracts", name, "scripts/contract.json"), "utf8")).scope ?? []).length, 0);
+  const folders = new Set(tree.flatMap((rel) => { const dirs = []; for (let at = path.posix.dirname(rel); at !== "."; at = path.posix.dirname(at)) dirs.push(at); return dirs; })).size;
+  const slack = 2 * globs * folders;
+  assert.ok(slack < files, "a slack under one stat per file still catches a per-file re-read");
+  assert.ok(stats < files + slack, `${stats} stats for ${files} files, ${globs} globs, ${folders} folders`);
 });
 
 test("a shell turn with no session start has no reference: silent, nothing walked", () => {
