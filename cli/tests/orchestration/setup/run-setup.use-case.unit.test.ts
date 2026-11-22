@@ -10,12 +10,13 @@ import { initAndInstall, initProject } from "../../shared/testing/installation-d
 import { flowTools, registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
 import {
-  buildUseCase,
   CURRENT_VERSION,
   makeRecordingUserSourceReferences,
   PROJECT_ROOT,
-  remoteFlow,
+  runSetupScenarioOf,
 } from "../testing/run-setup-scenario.builder.js";
+
+const { buildUseCase, remoteFlow } = runSetupScenarioOf(registeredTools());
 
 describe("setup validates before any side effect", () => {
   it("non-interactive with no --source rejects without writing a manifest or .gitignore", async () => {

@@ -7,13 +7,14 @@ import { SetupFlow } from "../../../src/orchestration/domain/setup-flow.model.js
 import { UserScopeUnavailableError } from "../../../src/orchestration/orchestration.error.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
-import { flowTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { flowTools, registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
-  buildUseCase,
   makeRecordingUserSourceReferences,
   PROJECT_ROOT,
-  remoteFlow,
+  runSetupScenarioOf,
 } from "../testing/run-setup-scenario.builder.js";
+
+const { buildUseCase, remoteFlow } = runSetupScenarioOf(registeredTools());
 
 describe("setup interactive tool selection", () => {
   function _interactiveFlow(
