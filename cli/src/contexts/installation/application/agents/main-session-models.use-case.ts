@@ -62,7 +62,9 @@ export class MainSessionModels {
 
   /** Points each host's main session at its chosen provider, or restores what it replaced once
    * none is chosen. A settings file it cannot safely rewrite is skipped, never half-written.
-   * `dryRun` says what it would change and changes nothing. */
+   * `dryRun` says what it would change and changes nothing.
+   *
+   * Limit: a settings file that exists but cannot be read stops the run; none was observed. */
   async execute({
     hosts,
     chosen,
@@ -116,19 +118,16 @@ export class MainSessionModels {
     { models, path }: MainSessionLocation
   ): Promise<PlannedChange> {
     if (provider === undefined || path === undefined || models === null) return {};
-    try {
-      const plan = this.deps.settings.planInstall({
-        path,
-        content: await this.readIfAny(path),
-        values: models.mainSettingsValues(provider),
-        record: mainModels[host],
-        schema: models.mainSettings()?.schema,
-      });
-      mainModels[host] = plan.record;
-      return { change: { host, path, content: plan.content } };
-    } catch (error) {
-      return { skip: { host, path, reason: (error as Error).message } };
-    }
+    const plan = this.deps.settings.planInstall({
+      path,
+      content: await this.readIfAny(path),
+      values: models.mainSettingsValues(provider),
+      record: mainModels[host],
+      schema: models.mainSettings()?.schema,
+    });
+    if ("refused" in plan) return { skip: { host, path, reason: plan.refused } };
+    mainModels[host] = plan.record;
+    return { change: { host, path, content: plan.content } };
   }
 
   private async restore(
@@ -136,14 +135,13 @@ export class MainSessionModels {
     record: MainModelRecord,
     mainModels: MainModels
   ): Promise<PlannedChange> {
-    try {
-      const content = await this.readIfAny(record.path);
-      const next = this.deps.settings.planRemoval(content, record);
-      delete mainModels[host];
-      return next === content ? {} : { change: { host, path: record.path, content: next } };
-    } catch (error) {
-      return { skip: { host, path: record.path, reason: (error as Error).message } };
-    }
+    const content = await this.readIfAny(record.path);
+    const next = this.deps.settings.planRemoval(content, record);
+    if ("refused" in next) return { skip: { host, path: record.path, reason: next.refused } };
+    delete mainModels[host];
+    return next.content === content
+      ? {}
+      : { change: { host, path: record.path, content: next.content } };
   }
 
   private async readIfAny(path: string): Promise<string | null> {

@@ -35,9 +35,9 @@ interface Case {
   files?: Record<string, string>;
   stored?: Record<string, MainModelRecord>;
   located?: Record<string, MainSessionLocation>;
-  /** What planInstall answers, or throws when it is an Error. */
+  /** What planInstall answers, or refuses with when it is an Error. */
   install?: { content: string; record: MainModelRecord } | Error;
-  /** What planRemoval answers, or throws when it is an Error. */
+  /** What planRemoval answers, or refuses with when it is an Error. */
   removal?: string | null | Error;
 }
 
@@ -100,14 +100,12 @@ function harness(given: Case = {}) {
     planInstall: ({ path, content: current, values, record: previous, schema }) => {
       installs.push({ path, current, values, previous, schema });
       const answer = given.install ?? { content: "installed", record: record(A, "new") };
-      if (answer instanceof Error) throw answer;
-      return answer;
+      return answer instanceof Error ? { refused: answer.message } : answer;
     },
     planRemoval: (current, recorded) => {
       removals.push({ current, recorded });
       const answer = given.removal === undefined ? "restored" : given.removal;
-      if (answer instanceof Error) throw answer;
-      return answer;
+      return answer instanceof Error ? { refused: answer.message } : { content: answer };
     },
   };
   const locator = {

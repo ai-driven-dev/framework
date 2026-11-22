@@ -4,6 +4,7 @@ import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import type {
   MainModelInstall,
   MainModelRecord,
+  MainModelRefusal,
   MainSessionSettings,
 } from "../ports/main-session-settings.js";
 
@@ -82,11 +83,20 @@ export function planMainModelRemoval(
 }
 
 /** The main-session settings file, edited through jsonc-parser so comments and trailing commas
- * survive. */
+ * survive. A file either plan refuses is answered as a refusal naming why. */
 export const jsoncMainSessionSettings: MainSessionSettings = {
-  planInstall: planMainModelInstall,
-  planRemoval: planMainModelRemoval,
+  planInstall: (request) => refusedUnless(() => planMainModelInstall(request)),
+  planRemoval: (content, record) =>
+    refusedUnless(() => ({ content: planMainModelRemoval(content, record) })),
 };
+
+function refusedUnless<T>(plan: () => T): T | MainModelRefusal {
+  try {
+    return plan();
+  } catch (error) {
+    return { refused: error instanceof Error ? error.message : String(error) };
+  }
+}
 
 /** Nothing the person added: no key but the schema aidd headed the file with, and no comment. */
 function holdsOnlyWhatAiddCreated(content: string): boolean {

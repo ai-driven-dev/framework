@@ -148,9 +148,8 @@ describe("updating an installed tool", () => {
       expect(await gate(TRACKED)).toBe("write");
       expect(ask).not.toHaveBeenCalled();
       expect(conflict).toHaveBeenCalledWith({
-        diskTargetPath: join(PROJECT, TRACKED),
-        targetRelativePath: TRACKED,
-        targetManifestMap: new Map([[TRACKED, FileHash.of("original")]]),
+        diskPath: join(PROJECT, TRACKED),
+        recorded: FileHash.of("original"),
       });
     });
 
@@ -159,9 +158,7 @@ describe("updating an installed tool", () => {
 
       await gate("other.md");
 
-      expect(conflict).toHaveBeenCalledWith(
-        expect.objectContaining({ targetManifestMap: new Map() })
-      );
+      expect(conflict).toHaveBeenCalledWith(expect.objectContaining({ recorded: undefined }));
     });
 
     it("writes a modified file the answer says to overwrite", async () => {
