@@ -1,6 +1,7 @@
 import path from "node:path";
 import { InputRequiredError } from "../../../shared/domain/shared.error.js";
 import { headingAnchors, normalizedAnchor } from "../domain/heading-anchors.js";
+import { localTargetFile } from "../domain/local-target-file.js";
 import type { RecipeFinding, RecipeLink } from "../domain/markdown-scan.js";
 import { inspectRecipe, type RecipeInspection } from "../domain/recipe-rules.js";
 import type { RecipeDirectory, RecipeFiles } from "../ports/recipe-files.js";
@@ -106,16 +107,6 @@ export class ValidateRecipes {
         : { anchors: markdown ? headingAnchors(source.content) : null };
     cache.set(targetFile, target);
     return target;
-  }
-}
-
-/** The file a link points at, the linking file itself when it names none, undefined when its path is not valid URI encoding. */
-function localTargetFile(file: string, rawPath: string): string | undefined {
-  if (!rawPath) return file;
-  try {
-    return path.resolve(path.dirname(file), decodeURI(rawPath));
-  } catch {
-    return undefined;
   }
 }
 
