@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { pluginRefRecords } from "../../../src/orchestration/plugin/plugin-ref-records.js";
 
 type Rules = Parameters<typeof pluginRefRecords>[0];
@@ -12,7 +12,7 @@ function recordsOf() {
   return { rules, records: pluginRefRecords(rules) };
 }
 
-const plugin = InstalledPlugin.fromJSON({
+const plugin = RecordedPlugin.fromJSON({
   name: "aidd-dev",
   source: { kind: "local", path: "/fixture" },
   version: "1.0.0",

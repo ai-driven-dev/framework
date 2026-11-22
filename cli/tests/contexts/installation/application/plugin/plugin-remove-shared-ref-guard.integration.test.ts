@@ -4,7 +4,7 @@
 import { describe, expect, it } from "vitest";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribution/contract/marketplace.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
@@ -51,7 +51,7 @@ function seedManifest(
     .withTool(TOOL.codex, [])
     .withPlugin(
       TOOL.codex,
-      InstalledPlugin.fromJSON({
+      RecordedPlugin.fromJSON({
         name: PLUGIN_NAME,
         source: { kind: "local", path: "/plugin-source" },
         version: "1.0.0",
@@ -159,7 +159,7 @@ describe("plugin remove guards a ref another project on this machine still needs
     const project = seedManifest();
     project.addPlugin(
       TOOL.codex,
-      InstalledPlugin.fromJSON({
+      RecordedPlugin.fromJSON({
         name: "aidd-dev",
         source: { kind: "local", path: "/plugin-source" },
         version: "1.0.0",

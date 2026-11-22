@@ -25,6 +25,8 @@ export interface UserPluginSource {
   readonly dist: PluginDistribution;
   readonly tool: AiToolProfile;
   readonly plugin: InstalledPlugin;
+  /** The marketplace the plugin was installed from, whose built tree the rebuild reads. */
+  readonly marketplace?: string;
   readonly projectRoot: string;
 }
 
@@ -39,12 +41,12 @@ export async function rebuildUserPluginFiles(
   deps: UserPluginRebuild,
   source: UserPluginSource
 ): Promise<RebuiltUserPluginFiles> {
-  const { plugin, projectRoot } = source;
+  const { projectRoot } = source;
   const marketplace =
-    plugin.marketplace === undefined
+    source.marketplace === undefined
       ? undefined
       : (await deps.builtDeps.marketplaceRegistry.list(projectRoot))?.find(
-          (entry) => entry.name === plugin.marketplace
+          (entry) => entry.name === source.marketplace
         );
   if (marketplace === undefined) return translateUserPluginFiles(deps, source);
   return readBuiltFiles(deps, source, marketplace);

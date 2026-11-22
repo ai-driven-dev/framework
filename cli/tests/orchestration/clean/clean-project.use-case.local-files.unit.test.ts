@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import { pluginScriptDir } from "../../../src/contexts/tools/domain/hooks/hooks-merge.js";
 import { cursor } from "../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
@@ -55,7 +55,7 @@ describe("clean: local files", () => {
       manifest.addTool(TOOL.cursor, "1.0.0", []);
       manifest.addPlugin(
         TOOL.cursor,
-        InstalledPlugin.fromJSON({
+        RecordedPlugin.fromJSON({
           name: pluginName,
           source: { kind: "local", path: "/some/path" },
           version: "1.0.0",
@@ -102,7 +102,7 @@ describe("clean: local files", () => {
       manifest.addTool(TOOL.cursor, "1.0.0", []);
       manifest.addPlugin(
         TOOL.cursor,
-        InstalledPlugin.fromJSON({
+        RecordedPlugin.fromJSON({
           name: pluginName,
           source: { kind: "local", path: "/some/path" },
           version: "1.0.0",
@@ -163,7 +163,7 @@ describe("clean: local files", () => {
       manifest.addTool(TOOL.cursor, "1.0.0", []);
       manifest.addPlugin(
         TOOL.cursor,
-        InstalledPlugin.fromJSON({
+        RecordedPlugin.fromJSON({
           name: pluginName,
           source: { kind: "local", path: "/some/path" },
           version: "1.0.0",
@@ -275,7 +275,7 @@ describe("clean: local files", () => {
     manifest.addTool(TOOL.opencode, "1.0.0", []);
     manifest.addPlugin(
       TOOL.opencode,
-      InstalledPlugin.fromJSON({
+      RecordedPlugin.fromJSON({
         name: "aidd-context",
         source: { kind: "local", path: "/some/path" },
         version: "1.0.0",

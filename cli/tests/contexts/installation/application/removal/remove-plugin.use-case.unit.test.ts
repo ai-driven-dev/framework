@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { RemovePlugin } from "../../../../../src/contexts/installation/application/removal/remove-plugin.use-case.js";
 import { PluginNotFoundError } from "../../../../../src/contexts/installation/domain/installation.error.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
@@ -18,7 +18,7 @@ const NAME = "aidd-dev";
 const REF = "aidd-dev@framework";
 
 function plugin(scope: Scope = "project") {
-  return InstalledPlugin.fromJSON({
+  return RecordedPlugin.fromJSON({
     name: NAME,
     source: { kind: "local", path: "/fixture" },
     version: "1.0.0",

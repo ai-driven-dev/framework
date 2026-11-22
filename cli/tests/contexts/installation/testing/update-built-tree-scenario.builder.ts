@@ -114,18 +114,18 @@ export async function installStalePlugin(
   });
   const manifest = await deps.manifestRepo.load();
   if (manifest === null) throw new Error("manifest not found");
-  const plugin = manifest.getPlugins(cursor).find((p) => p.name === "sample-plugin");
+  const plugin = manifest.getRecordedPlugins(cursor).find((p) => p.plugin.name === "sample-plugin");
   if (plugin === undefined) throw new Error("plugin not found");
-  manifest.updatePlugin(cursor, plugin.withVersion("0.0.1"));
+  manifest.updatePlugin(cursor, plugin.withPlugin(plugin.plugin.withVersion("0.0.1")));
   await deps.manifestRepo.save(manifest);
   const machine = deps.userManifestRepo.getCurrent();
   if (machine === null) throw new Error("user manifest not found");
-  const owned = machine.getPlugins(cursor).find((p) => p.name === "sample-plugin");
+  const owned = machine.getRecordedPlugins(cursor).find((p) => p.plugin.name === "sample-plugin");
   if (owned === undefined) throw new Error("machine plugin not found");
   // The fake built-tree install records this file but its test adapter does not deliver it.
   // Supply the recorded install bytes so the provenance guard has a real current file.
   deps.fs.setFile(join(USER_PLUGINS_DIR, "sample-plugin/skills/demo/SKILL.md"), "# Demo skill");
-  machine.updatePlugin(cursor, owned.withVersion("0.0.1"));
+  machine.updatePlugin(cursor, owned.withPlugin(owned.plugin.withVersion("0.0.1")));
   await deps.userManifestRepo.save(machine);
 }
 

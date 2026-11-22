@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { CheckFileReferences } from "../../../../../src/contexts/installation/application/doctor/check-file-references.use-case.js";
 import { LoadManifest } from "../../../../../src/contexts/installation/application/doctor/load-manifest.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
@@ -28,7 +28,7 @@ function manifestWithPluginDoc(content: string): Manifest {
     .withTool(TOOL.claude, [])
     .withPlugin(
       TOOL.claude,
-      InstalledPlugin.fromJSON({
+      RecordedPlugin.fromJSON({
         name: "sample",
         source: { kind: "local", path: "/some/path" },
         version: "1.0.0",

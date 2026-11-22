@@ -52,12 +52,12 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
     await registry.save(PROJECT_ROOT, marketplace());
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "test", []);
-    const { InstalledPlugin } = await import(
-      "../../../src/contexts/installation/domain/plugins/installed-plugin.js"
+    const { RecordedPlugin } = await import(
+      "../../../src/contexts/installation/domain/plugins/recorded-plugin.js"
     );
     manifest.addPlugin(
       TOOL.claude,
-      InstalledPlugin.fromMetadata({
+      RecordedPlugin.fromMetadata({
         name: "aidd-telemetry",
         version: "1.0.0",
         source: { kind: "github", repo: "ai-driven-dev/framework" },
@@ -104,12 +104,12 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
   }> {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "test", []);
-    const { InstalledPlugin } = await import(
-      "../../../src/contexts/installation/domain/plugins/installed-plugin.js"
+    const { RecordedPlugin } = await import(
+      "../../../src/contexts/installation/domain/plugins/recorded-plugin.js"
     );
     manifest.addPlugin(
       TOOL.claude,
-      InstalledPlugin.fromMetadata({
+      RecordedPlugin.fromMetadata({
         name: "aidd-telemetry",
         version: "1.0.0",
         source: { kind: "github", repo: "ai-driven-dev/framework" },

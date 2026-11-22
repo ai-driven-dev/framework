@@ -8,7 +8,7 @@ import type { HostPluginRegistry } from "../../../src/contexts/host-registration
 import { ListRegisteredPlugins } from "../../../src/contexts/installation/application/doctor/list-registered-plugins.use-case.js";
 import { LoadManifest } from "../../../src/contexts/installation/application/doctor/load-manifest.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { CheckRegistration } from "../../../src/orchestration/doctor/check-registration.use-case.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
@@ -161,7 +161,7 @@ function manifestWithPlugin(marketplace?: string, toolId: AiToolId = TOOL.claude
     .withTool(toolId, [], { version: "test" })
     .withPlugin(
       toolId,
-      InstalledPlugin.fromMetadata({
+      RecordedPlugin.fromMetadata({
         name: marketplace === undefined ? "hand-copied" : "aidd-context",
         version: "1.0.0",
         source: { kind: "github", repo: "ai-driven-dev/framework" },

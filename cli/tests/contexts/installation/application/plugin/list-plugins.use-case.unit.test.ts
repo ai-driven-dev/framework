@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ListPlugins } from "../../../../../src/contexts/installation/application/plugin/list-plugins.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../../../../src/contexts/installation/ports/manifest-repository.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { aManifest } from "../../testing/manifest.builder.js";
@@ -9,7 +9,7 @@ import { aManifest } from "../../testing/manifest.builder.js";
 function makeManifestWithPlugin(): Manifest {
   const manifest = Manifest.create();
   manifest.addTool(TOOL.claude, "1.0.0", []);
-  const plugin = InstalledPlugin.fromJSON({
+  const plugin = RecordedPlugin.fromJSON({
     name: "sample-plugin",
     source: { kind: "local", path: "./sample" },
     version: "1.0.0",

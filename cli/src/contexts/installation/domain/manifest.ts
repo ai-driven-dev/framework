@@ -27,6 +27,7 @@ import {
   serializeManifestTools,
 } from "./manifest-serialization.js";
 import type { InstalledPlugin } from "./plugins/installed-plugin.js";
+import type { RecordedPlugin } from "./plugins/recorded-plugin.js";
 
 export class Manifest {
   private readonly _tools: Map<string, ToolEntry>;
@@ -75,10 +76,7 @@ export class Manifest {
   recordFileHash(toolId: ToolId, relativePath: string, hash: FileHash): void {
     const entry = this._tools.get(toolId);
     if (!entry) return;
-    this._tools.set(toolId, {
-      ...entry,
-      files: withUpdatedHash(entry.files, relativePath, hash),
-    });
+    this._tools.set(toolId, { ...entry, files: withUpdatedHash(entry.files, relativePath, hash) });
   }
 
   updateToolMergeFiles(toolId: ToolId, mergeFiles: MergeFileEntry[]): void {
@@ -86,9 +84,7 @@ export class Manifest {
   }
 
   removeTool(toolId: ToolId): void {
-    if (!this._tools.has(toolId)) {
-      throw new ToolNotInManifestError(toolId);
-    }
+    if (!this._tools.has(toolId)) throw new ToolNotInManifestError(toolId);
     this._tools.delete(toolId);
   }
 
@@ -96,11 +92,17 @@ export class Manifest {
     return this._tools.has(toolId);
   }
 
+  /** What installation owns of each plugin the tool records. */
   getPlugins(toolId: string): readonly InstalledPlugin[] {
+    return this.getRecordedPlugins(toolId).map((recorded) => recorded.plugin);
+  }
+
+  /** Each plugin the tool records, with its provenance, host reference and machine claim. */
+  getRecordedPlugins(toolId: string): readonly RecordedPlugin[] {
     return this._tools.get(toolId)?.plugins ?? [];
   }
 
-  addPlugin(toolId: ToolId, plugin: InstalledPlugin): void {
+  addPlugin(toolId: ToolId, plugin: RecordedPlugin): void {
     this.changeEntry(toolId, (entry) => addPluginToEntry(entry, plugin));
   }
 
@@ -108,13 +110,13 @@ export class Manifest {
     this.changeEntry(toolId, (entry) => removePluginFromEntry(entry, name));
   }
 
-  updatePlugin(toolId: ToolId, plugin: InstalledPlugin): void {
+  updatePlugin(toolId: ToolId, plugin: RecordedPlugin): void {
     this.changeEntry(toolId, (entry) => updatePluginInEntry(entry, plugin));
   }
 
   /** Records the plugin, replacing the one of the same name in place when there is one. */
-  withPlugin(toolId: ToolId, plugin: InstalledPlugin): void {
-    const recorded = this.getPlugins(toolId).some((p) => p.name === plugin.name);
+  withPlugin(toolId: ToolId, plugin: RecordedPlugin): void {
+    const recorded = this.getPlugins(toolId).some((p) => p.name === plugin.plugin.name);
     if (recorded) this.updatePlugin(toolId, plugin);
     else this.addPlugin(toolId, plugin);
   }

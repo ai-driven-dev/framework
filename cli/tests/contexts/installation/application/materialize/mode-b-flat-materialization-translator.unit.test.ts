@@ -82,10 +82,10 @@ describe("ModeBFlatMaterializationTranslator", () => {
         manifest,
         marketplace: undefined,
       });
-      const plugins = manifest.getPlugins(TOOL.opencode);
-      const installed = plugins.find((p) => p.name === "test-plugin");
+      const plugins = manifest.getRecordedPlugins(TOOL.opencode);
+      const installed = plugins.find((p) => p.plugin.name === "test-plugin");
       expect(installed).toBeDefined();
-      expect(installed?.files.size).toBeGreaterThan(0);
+      expect(installed?.plugin.files.size).toBeGreaterThan(0);
     });
   });
 
@@ -109,8 +109,8 @@ describe("ModeBFlatMaterializationTranslator", () => {
         marketplace: undefined,
       });
       expect(fs.listAll().length).toBe(0);
-      const plugins = manifest.getPlugins(TOOL.opencode);
-      expect(plugins.find((p) => p.name === "empty-plugin")).toBeUndefined();
+      const plugins = manifest.getRecordedPlugins(TOOL.opencode);
+      expect(plugins.find((p) => p.plugin.name === "empty-plugin")).toBeUndefined();
     });
   });
 
@@ -179,8 +179,8 @@ describe("ModeBFlatMaterializationTranslator", () => {
         marketplace: undefined,
       });
       expect(fs.listAll().length).toBe(0);
-      const plugins = manifest.getPlugins(TOOL.opencode);
-      expect(plugins.find((p) => p.name === "mcp-plugin")).toBeUndefined();
+      const plugins = manifest.getRecordedPlugins(TOOL.opencode);
+      expect(plugins.find((p) => p.plugin.name === "mcp-plugin")).toBeUndefined();
     });
   });
 
@@ -229,7 +229,9 @@ describe("ModeBFlatMaterializationTranslator", () => {
         manifest,
         marketplace: undefined,
       });
-      const installed = manifest.getPlugins(TOOL.cursor).find((p) => p.name === "hooks-plugin");
+      const installed = manifest
+        .getRecordedPlugins(TOOL.cursor)
+        .find((p) => p.plugin.name === "hooks-plugin");
       fs.setFile(scriptPath, "user edit");
       const reinstall = (guard?: { overwriteEdited: boolean }) =>
         adapter.addPlugin({
@@ -241,7 +243,7 @@ describe("ModeBFlatMaterializationTranslator", () => {
           marketplace: undefined,
           previousMcpEntries: new Map(),
           userScopeDirTaken: false,
-          previousProjectHooks: installed?.projectHooks,
+          previousProjectHooks: installed?.provenance.projectHooks,
           hooksGuard: guard,
         });
 
@@ -292,7 +294,7 @@ describe("ModeBFlatMaterializationTranslator", () => {
       ).rejects.toThrow(saying(/edited after install/));
 
       expect(fs.getFile(configPath)).toBe(userContent);
-      expect(manifest.getPlugins(TOOL.opencode)).toEqual([]);
+      expect(manifest.getRecordedPlugins(TOOL.opencode)).toEqual([]);
     });
 
     it("propagates a failure to read the MCP config other than the file being absent", async () => {

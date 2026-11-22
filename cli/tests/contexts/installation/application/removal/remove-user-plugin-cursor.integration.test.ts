@@ -1,7 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { userScopeFilesSafeToDelete } from "../../../../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { resolveHomeDir } from "../../../../../src/shared/infrastructure/home-dir.js";
@@ -19,7 +19,7 @@ describe("Cursor user plugin boundary", () => {
       .withTool(TOOL.cursor, [])
       .withPlugin(
         TOOL.cursor,
-        InstalledPlugin.fromJSON({
+        RecordedPlugin.fromJSON({
           name: "sample-plugin",
           source: { kind: "local", path: "/fixture" },
           version: "1.0.0",
@@ -67,7 +67,7 @@ describe("Cursor user plugin boundary", () => {
       .withTool(TOOL.cursor, [])
       .withPlugin(
         TOOL.cursor,
-        InstalledPlugin.fromJSON({
+        RecordedPlugin.fromJSON({
           name: "sample-plugin",
           source: { kind: "local", path: "/fixture" },
           version: "1.0.0",

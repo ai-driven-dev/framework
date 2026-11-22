@@ -47,16 +47,20 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
       projectRoot: SELECTION_ROOT,
     });
 
-    expect(project.getPlugins(cursor).map((entry) => entry.name)).toEqual(["other-plugin"]);
-    expect(project.getPlugins(claude).map((entry) => entry.name)).toEqual([
+    expect(project.getRecordedPlugins(cursor).map((entry) => entry.plugin.name)).toEqual([
+      "other-plugin",
+    ]);
+    expect(project.getRecordedPlugins(claude).map((entry) => entry.plugin.name)).toEqual([
       "other-plugin",
       SELECTED_PLUGIN,
     ]);
-    expect(machine.getPlugins(cursor).map((entry) => [entry.name, entry.dependents])).toEqual([
+    expect(
+      machine.getRecordedPlugins(cursor).map((entry) => [entry.plugin.name, entry.dependents])
+    ).toEqual([
       ["other-plugin", [SELECTION_ROOT, SELECTION_OTHER_ROOT]],
       [SELECTED_PLUGIN, [SELECTION_OTHER_ROOT]],
     ]);
-    expect(machine.getPlugins(claude).map((entry) => entry.dependents)).toEqual([
+    expect(machine.getRecordedPlugins(claude).map((entry) => entry.dependents)).toEqual([
       [SELECTION_ROOT, SELECTION_OTHER_ROOT],
       [SELECTION_ROOT, SELECTION_OTHER_ROOT],
     ]);
@@ -109,7 +113,9 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     expect(fs.getFile(join(SELECTION_ROOT, "foreign.md"))).toBe("foreign");
     expect(machine.toJSON()).toEqual(before);
     expect(userRepo.saveCount).toBe(0);
-    expect(project.getPlugins(cursor).map((entry) => entry.name)).toEqual(["other-plugin"]);
+    expect(project.getRecordedPlugins(cursor).map((entry) => entry.plugin.name)).toEqual([
+      "other-plugin",
+    ]);
   });
 
   it("user removal skips a project-scoped copy and other names with active dependents", async () => {
@@ -123,8 +129,8 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
       claude,
       anInstalledPlugin({ scope: "project", dependents: [SELECTION_OTHER_ROOT] })
     );
-    const otherBefore = machine.getPlugins(cursor)[0].toJSON();
-    const claudeBefore = machine.getPlugins(claude)[0].toJSON();
+    const otherBefore = machine.getRecordedPlugins(cursor)[0].toJSON();
+    const claudeBefore = machine.getRecordedPlugins(claude)[0].toJSON();
     const userRepo = new InMemoryManifestRepository(machine);
     const remove = userPluginRemover({ userManifestRepo: userRepo });
 
@@ -134,8 +140,12 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
       projectRoot: SELECTION_ROOT,
     });
 
-    expect(machine.getPlugins(cursor).map((entry) => entry.toJSON())).toEqual([otherBefore]);
-    expect(machine.getPlugins(claude).map((entry) => entry.toJSON())).toEqual([claudeBefore]);
+    expect(machine.getRecordedPlugins(cursor).map((entry) => entry.toJSON())).toEqual([
+      otherBefore,
+    ]);
+    expect(machine.getRecordedPlugins(claude).map((entry) => entry.toJSON())).toEqual([
+      claudeBefore,
+    ]);
     expect(userRepo.saveCount).toBe(1);
   });
 
@@ -185,7 +195,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
 
     expect(await fs.fileExists(userPath)).toBe(false);
     expect(fs.getFile(projectPath)).toBe("project bytes");
-    expect(machine.getPlugins(cursor)).toEqual([]);
+    expect(machine.getRecordedPlugins(cursor)).toEqual([]);
     expect(userRepo.saveCount).toBe(1);
   });
 
@@ -300,7 +310,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     expect(machine.getNativeRegistrations(claude)?.pluginClaims).toEqual([
       { ref, dependents: [SELECTION_OTHER_ROOT] },
     ]);
-    expect(project.getPlugins(claude)).toEqual([]);
+    expect(project.getRecordedPlugins(claude)).toEqual([]);
     expect(userRepo.saveCount).toBe(1);
     expect(repo.saveCount).toBe(1);
   });

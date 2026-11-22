@@ -41,8 +41,8 @@ describe("AddPlugin", () => {
         deps.fs.has(join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md"))
       ).toBe(true);
       const manifest = await deps.manifestRepo.load();
-      const plugins = manifest?.getPlugins(TOOL.claude) ?? [];
-      expect(plugins.some((p) => p.name === "sample-plugin")).toBe(true);
+      const plugins = manifest?.getRecordedPlugins(TOOL.claude) ?? [];
+      expect(plugins.some((p) => p.plugin.name === "sample-plugin")).toBe(true);
     });
   });
 
@@ -98,10 +98,10 @@ describe("AddPlugin", () => {
         });
         expect(fetchSpy).toHaveBeenCalled();
         const manifest = await deps.manifestRepo.load();
-        const plugins = manifest?.getPlugins(opencode) ?? [];
-        const installed = plugins.find((p) => p.name === "sample-plugin");
+        const plugins = manifest?.getRecordedPlugins(opencode) ?? [];
+        const installed = plugins.find((p) => p.plugin.name === "sample-plugin");
         expect(installed).toBeDefined();
-        expect(installed?.files.size).toBeGreaterThan(0);
+        expect(installed?.plugin.files.size).toBeGreaterThan(0);
       });
     });
   });
@@ -146,8 +146,8 @@ describe("AddPlugin", () => {
         interactive: false,
       });
       const manifest = await deps.manifestRepo.load();
-      const plugins = manifest?.getPlugins(TOOL.claude) ?? [];
-      expect(plugins.find((p) => p.name === "zero-plugin")).toBeUndefined();
+      const plugins = manifest?.getRecordedPlugins(TOOL.claude) ?? [];
+      expect(plugins.find((p) => p.plugin.name === "zero-plugin")).toBeUndefined();
     });
   });
 
@@ -164,8 +164,8 @@ describe("AddPlugin", () => {
 
       const installed = deps.manifestRepo
         .getCurrent()
-        ?.getPlugins(TOOL.claude)
-        .find((p) => p.name === "sample-plugin");
+        ?.getRecordedPlugins(TOOL.claude)
+        .find((p) => p.plugin.name === "sample-plugin");
       expect(installed?.marketplace).toBe("ghost");
     });
 
@@ -266,11 +266,11 @@ describe("AddPlugin", () => {
 
       const installed = deps.manifestRepo
         .getCurrent()
-        ?.getPlugins(TOOL.claude)
-        .find((p) => p.name === "sample-plugin");
+        ?.getRecordedPlugins(TOOL.claude)
+        .find((p) => p.plugin.name === "sample-plugin");
       expect([
         installed?.marketplace,
-        installed?.files.size,
+        installed?.plugin.files.size,
         deps.fs.has(GREET_PATH),
       ]).toStrictEqual(["local-mkt", 0, false]);
     });
@@ -294,11 +294,11 @@ describe("AddPlugin", () => {
 
       const installed = deps.manifestRepo
         .getCurrent()
-        ?.getPlugins(TOOL.claude)
-        .find((p) => p.name === "sample-plugin");
+        ?.getRecordedPlugins(TOOL.claude)
+        .find((p) => p.plugin.name === "sample-plugin");
       expect([
         installed?.marketplace,
-        installed?.files.has(".claude/plugins/sample-plugin/commands/greet.md"),
+        installed?.plugin.files.has(".claude/plugins/sample-plugin/commands/greet.md"),
         deps.fs.has(GREET_PATH),
       ]).toStrictEqual(["local-mkt", true, true]);
     });

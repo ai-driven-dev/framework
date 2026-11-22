@@ -4,7 +4,7 @@ import type { RegistrationRecord } from "../../../src/contexts/host-registration
 import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/contract/built-marketplace.js";
 import type { NativeRegistrations } from "../../../src/contexts/installation/domain/manifest/native-registrations.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../src/shared/domain/installation-file.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
@@ -98,8 +98,8 @@ function trackedFilesOf(setup: Setup): InstallationFile[] {
   return tracked;
 }
 
-function installedPlugin(): InstalledPlugin {
-  return InstalledPlugin.fromMetadata({
+function installedPlugin(): RecordedPlugin {
+  return RecordedPlugin.fromMetadata({
     name: PLUGIN,
     version: "1.0.0",
     source: { kind: "github", repo: "ai-driven-dev/framework" },

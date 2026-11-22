@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { CheckPluginDrift } from "../../../../../src/contexts/installation/application/doctor/check-plugin-drift.use-case.js";
 import { LoadManifest } from "../../../../../src/contexts/installation/application/doctor/load-manifest.use-case.js";
 import { DetectPluginDrift } from "../../../../../src/contexts/installation/application/shared/detect-plugin-drift.use-case.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import type { FileReader } from "../../../../../src/shared/ports/file-reader.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
@@ -31,7 +31,7 @@ function checkerOver(disk: Record<string, string>) {
     .withTool(TOOL.claude, [])
     .withPlugin(
       TOOL.claude,
-      InstalledPlugin.fromJSON({
+      RecordedPlugin.fromJSON({
         name: "aidd-test",
         source: { kind: "local", path: "/p" },
         version: "1.0.0",

@@ -14,9 +14,9 @@ export class ListPluginSources {
     if (manifest === null) return [];
     const sources: PluginSource[] = [];
     for (const toolId of this.tools.idsInCanonicalOrder("ai")) {
-      for (const plugin of manifest.getPlugins(toolId)) {
-        if (plugin.marketplace === undefined) continue;
-        sources.push({ toolId, plugin: plugin.name, marketplace: plugin.marketplace });
+      for (const { plugin, marketplace } of manifest.getRecordedPlugins(toolId)) {
+        if (marketplace === undefined) continue;
+        sources.push({ toolId, plugin: plugin.name, marketplace });
       }
     }
     return sources;

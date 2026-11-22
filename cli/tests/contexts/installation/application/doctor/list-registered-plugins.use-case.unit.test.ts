@@ -5,7 +5,7 @@ import {
   type ListRegisteredPluginsRequest,
 } from "../../../../../src/contexts/installation/application/doctor/list-registered-plugins.use-case.js";
 import { LoadManifest } from "../../../../../src/contexts/installation/application/doctor/load-manifest.use-case.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { aManifest } from "../../testing/manifest.builder.js";
@@ -41,7 +41,7 @@ describe("ListRegisteredPlugins", () => {
       .withTool(TOOL.claude, [])
       .withPlugin(
         TOOL.claude,
-        InstalledPlugin.fromMetadata({
+        RecordedPlugin.fromMetadata({
           name: "a",
           version: "1.0.0",
           source,
@@ -52,7 +52,7 @@ describe("ListRegisteredPlugins", () => {
       )
       .withPlugin(
         TOOL.claude,
-        InstalledPlugin.fromMetadata({
+        RecordedPlugin.fromMetadata({
           name: "b",
           version: "1.0.0",
           source,

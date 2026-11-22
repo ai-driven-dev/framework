@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ReadMachineInstallation } from "../../../src/contexts/installation/application/doctor/read-machine-installation.use-case.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import {
   SyncFailedError,
   UserScopeFilterUnsupportedError,
@@ -22,7 +22,7 @@ function aRun(failed = false) {
     .withTool(TOOL.claude, [])
     .withPlugin(
       TOOL.claude,
-      InstalledPlugin.fromMetadata({
+      RecordedPlugin.fromMetadata({
         name: "aidd-dev",
         version: "1.0.0",
         source: { kind: "github", repo: "ai-driven-dev/framework" },

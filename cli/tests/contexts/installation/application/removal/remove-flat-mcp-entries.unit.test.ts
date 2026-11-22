@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { removeFlatMcpEntries } from "../../../../../src/contexts/installation/application/removal/remove-flat-mcp-entries.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
@@ -9,15 +9,15 @@ const ROOT = "/project";
 const MCP_FILE = join(ROOT, "opencode.json");
 const tool = registeredTools().aiProfile(TOOL.opencode);
 
-function plugin(entries?: ReadonlyMap<string, string>): InstalledPlugin {
-  const base = InstalledPlugin.fromMetadata({
+function plugin(entries?: ReadonlyMap<string, string>): RecordedPlugin {
+  const base = RecordedPlugin.fromMetadata({
     name: "aidd-dev",
     version: "1.0.0",
     source: { kind: "local", path: "/fixture" },
     strict: false,
     scope: "project",
   });
-  return entries === undefined ? base : InstalledPlugin.withMcpEntries(base, entries);
+  return entries === undefined ? base : base.withMcpEntries(entries);
 }
 
 function contributed() {

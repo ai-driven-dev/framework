@@ -5,13 +5,13 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { FrameworkBuildMode } from "../../../tools/contract/tool-profile.js";
 import type { MarketplaceToBuild } from "../../contract/built-marketplace.js";
+import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.js";
 /**
  * Materializes plugin content by copying the per-target BUILT tree verbatim into the tool's plugin
  * directory, bypassing the per-file transform the build already applied. Marketplace-sourced
  * installs only; a raw local-path install falls back to flat materialization.
  */
-import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
-import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.js";
+import { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { PluginTranslationResult } from "../../ports/plugin/plugin-translation.js";
 import { resolveScopeForInstall, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import { writeChangedPluginFiles } from "../plugin/write-changed-plugin-files.js";
@@ -54,18 +54,15 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     );
     manifest.addPlugin(
       tool.toolId,
-      InstalledPlugin.withProjectHooks(
-        InstalledPlugin.fromDistributionWithMcp({
-          dist,
-          source,
-          files: owned,
-          mcpEntries: mcp.mcpEntries,
-          scope,
-          componentPaths: new Map(),
-          marketplace,
-        }),
-        hooks.projectHooks
-      )
+      RecordedPlugin.fromDistributionWithMcp({
+        dist,
+        source,
+        files: owned,
+        mcpEntries: mcp.mcpEntries,
+        scope,
+        componentPaths: new Map(),
+        marketplace,
+      }).withProjectHooks(hooks.projectHooks)
     );
     return { skipped: [...mcp.mcpSkips, ...hooks.skipped], written };
   }

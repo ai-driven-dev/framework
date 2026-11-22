@@ -1,6 +1,6 @@
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
-import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { NativeHostTool } from "../../ports/tool-sections.js";
 
 /** A ref a machine claim holds on one tool. */
@@ -25,7 +25,7 @@ export interface RecordedPluginRef {
   /** The ref the record holds for the plugin, `undefined` when nothing was recorded for it. */
   recordedRef(
     registrations: NativeRegistrations | undefined,
-    plugin: InstalledPlugin
+    plugin: RecordedPlugin
   ): string | undefined;
   /** The record without one ref, every other entry untouched. */
   withoutRef(registrations: NativeRegistrations, ref: string): NativeRegistrations;
@@ -34,7 +34,7 @@ export interface RecordedPluginRef {
 /** The plugin a removal asks its host about, and where. */
 export interface PluginHostReach {
   readonly tool: NativeHostTool;
-  readonly plugin: InstalledPlugin;
+  readonly plugin: RecordedPlugin;
   readonly projectRoot: string;
   readonly registrations: NativeRegistrations | undefined;
 }

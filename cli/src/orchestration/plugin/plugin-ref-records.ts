@@ -7,8 +7,8 @@ export function pluginRefRecords(
   records: Pick<RegistrationRecordRules, "refOf" | "withoutRef">
 ): RecordedPluginRef {
   return {
-    recordedRef: (registrations, { name, marketplace }) =>
-      records.refOf(registrations, name, marketplace),
+    recordedRef: (registrations, { plugin, marketplace }) =>
+      records.refOf(registrations, plugin.name, marketplace),
     withoutRef: (registrations, ref) => records.withoutRef(registrations, ref),
   };
 }

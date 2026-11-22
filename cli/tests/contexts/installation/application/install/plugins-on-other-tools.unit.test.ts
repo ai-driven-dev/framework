@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { pluginsOnOtherTools } from "../../../../../src/contexts/installation/application/install/plugins-on-other-tools.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { aManifest } from "../../testing/manifest.builder.js";
 
-function plugin(name: string): InstalledPlugin {
-  return InstalledPlugin.fromMetadata({
+function plugin(name: string): RecordedPlugin {
+  return RecordedPlugin.fromMetadata({
     name,
     version: "1.0.0",
     source: { kind: "local", path: "/fixture" },
@@ -26,7 +26,7 @@ describe("pluginsOnOtherTools", () => {
       .withPlugin(TOOL.opencode, plugin("opencode-only"))
       .build();
 
-    const names = pluginsOnOtherTools(manifest, TOOL.claude).map((p) => p.name);
+    const names = pluginsOnOtherTools(manifest, TOOL.claude).map((p) => p.plugin.name);
 
     expect(names).toEqual(["shared", "opencode-only"]);
   });

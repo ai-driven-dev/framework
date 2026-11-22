@@ -2,7 +2,7 @@ import { Marketplace } from "../../../src/contexts/distribution/domain/marketpla
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
@@ -66,7 +66,7 @@ function projectManifestOf(toolId: AiToolId, nativePluginRefs: readonly string[]
   project.addTool(toolId, "test", []);
   project.addPlugin(
     toolId,
-    InstalledPlugin.fromMetadata({
+    RecordedPlugin.fromMetadata({
       name: "aidd-dev",
       version: "1.0.0",
       source: { kind: "local", path: "/framework" },

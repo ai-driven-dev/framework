@@ -96,9 +96,9 @@ export class PurgeUserScopeFiles implements UserScopePurge {
           this.tools.isAiTool(toolId)
             ? [
                 ...manifest
-                  .getPlugins(toolId)
-                  .filter((plugin) => plugin.scope === "user")
-                  .flatMap((plugin) => plugin.dependents),
+                  .getRecordedPlugins(toolId)
+                  .filter(({ plugin }) => plugin.scope === "user")
+                  .flatMap(({ dependents }) => dependents),
                 ...(manifest.getNativeRegistrations(toolId)?.pluginClaims ?? []).flatMap(
                   (claim) => claim.dependents
                 ),

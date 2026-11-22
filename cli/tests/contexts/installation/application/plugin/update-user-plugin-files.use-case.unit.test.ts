@@ -6,7 +6,7 @@ import {
   type UpdateUserPluginFilesRequest,
 } from "../../../../../src/contexts/installation/application/plugin/update-user-plugin-files.use-case.js";
 import { PluginNotFoundError } from "../../../../../src/contexts/installation/domain/installation.error.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
@@ -21,7 +21,7 @@ import { aManifest } from "../../testing/manifest.builder.js";
 const ROOT = "/project";
 
 function plugin(name: string, options: { scope?: Scope; dependents?: string[] } = {}) {
-  return InstalledPlugin.fromJSON({
+  return RecordedPlugin.fromJSON({
     name,
     source: { kind: "local", path: "/fixture" },
     version: "1.0.0",
@@ -39,7 +39,7 @@ interface Claim {
 
 function fixture(
   options: {
-    plugins?: InstalledPlugin[];
+    plugins?: RecordedPlugin[];
     claims?: Claim[];
     materializer?: ConstructorParameters<typeof FakeUserPluginMaterialization>[0];
     manifest?: null;
@@ -122,7 +122,7 @@ describe("UpdateUserPluginFiles", () => {
     const { materializer, run } = fixture({ plugins: [plugin("aidd-dev"), plugin("aidd-pm")] });
 
     await expect(run({ pluginNames: ["aidd-pm"] })).resolves.toEqual(["aidd-pm"]);
-    expect(materializer.planned.map((request) => request.plugin.name)).toEqual(["aidd-pm"]);
+    expect(materializer.planned.map((request) => request.plugin.plugin.name)).toEqual(["aidd-pm"]);
   });
 
   it("names a selection that matches no plugin and no native ref", async () => {

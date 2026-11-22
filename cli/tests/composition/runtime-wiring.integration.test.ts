@@ -28,7 +28,7 @@ import { wireBase } from "../../src/composition/shared.js";
 import { wireTools } from "../../src/composition/tools.js";
 import { Marketplace } from "../../src/contexts/distribution/domain/marketplace.js";
 import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { isStrictlyWithinUserScope } from "../../src/contexts/machine-claims/domain/user-scope-containment.js";
 import { BundledAssetProviderAdapter } from "../../src/shared/infrastructure/asset-loader.js";
 import { CapturingLogger } from "../shared/testing/capturing-logger.fake.js";
@@ -85,14 +85,14 @@ describe("registerForFlow", () => {
 
 describe("quietUserScopeFilesSafeToDelete", () => {
   it("leaves a file outside the user-scope directory in place without reporting it", async () => {
-    const plugin = InstalledPlugin.fromJSON({
+    const plugin = RecordedPlugin.fromJSON({
       name: "aidd-test",
       source: { kind: "local", path: "/some/path" },
       version: "1.0.0",
       strict: false,
       files: { "../escape.md": "0".repeat(32) },
       scope: "user",
-    });
+    }).plugin;
 
     const safe = await quietUserScopeFilesSafeToDelete(new InMemoryFileAdapter())(
       plugin,
@@ -125,7 +125,7 @@ describe("the user marketplace removal the composition binds", () => {
     machine.addTool(TOOL.cursor, "1.0.0", []);
     machine.addPlugin(
       TOOL.cursor,
-      InstalledPlugin.fromJSON({
+      RecordedPlugin.fromJSON({
         name: "aidd-test",
         source: { kind: "local", path: "/some/path" },
         version: "1.0.0",

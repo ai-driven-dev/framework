@@ -8,7 +8,7 @@ import { RestoreAgentProviders } from "../../../src/contexts/installation/applic
 import { RestoreMainSessionModels } from "../../../src/contexts/installation/application/agents/restore-main-session-models.use-case.js";
 import type { UpdatePluginRequest } from "../../../src/contexts/installation/application/plugin/update-plugin.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { AgentModelStoreAdapter } from "../../../src/contexts/installation/infrastructure/agent-model-store-adapter.js";
 import { jsoncMainSessionSettings } from "../../../src/contexts/installation/infrastructure/jsonc-main-session-settings.js";
 import { RefreshAgentPlugins } from "../../../src/orchestration/agent-models/refresh-agent-plugins.use-case.js";
@@ -27,8 +27,8 @@ const CLAUDE_SETTINGS = join(HOME, ".claude", "settings.json");
 const OPENCODE_SETTINGS = join(HOME, ".config", "opencode", "opencode.jsonc");
 const OPENCODE_SCHEMA = '"$schema": "https://opencode.ai/config.json"';
 
-function plugin(scope: Scope): InstalledPlugin {
-  return InstalledPlugin.fromJSON({
+function plugin(scope: Scope): RecordedPlugin {
+  return RecordedPlugin.fromJSON({
     name: "aidd-orchestrator",
     source: { kind: "local", path: "./orchestrator" },
     version: "1.0.0",

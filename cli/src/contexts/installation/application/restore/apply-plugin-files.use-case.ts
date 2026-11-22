@@ -6,7 +6,7 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 // biome-ignore lint/plugin: hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
-import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { PluginFetcher } from "../../ports/marketplace-sources.js";
 import type { PluginDistributionReader } from "../../ports/plugin/plugin-distribution-reader.js";
 import { materializeViaTranslator } from "../materialize/materialize-via-translator.js";
@@ -20,7 +20,7 @@ import { hashOutputFiles } from "../shared/hash-output-files.js";
 
 interface ApplyPluginFilesRequest {
   toolId: AiToolId;
-  plugin: InstalledPlugin;
+  plugin: RecordedPlugin;
   tool: AiToolProfile;
   projectRoot: string;
   cacheDir: string;
@@ -46,8 +46,11 @@ export class ApplyPluginFiles {
   constructor(private readonly deps: ApplyPluginFilesDeps) {}
 
   async execute(options: ApplyPluginFilesRequest): Promise<number> {
-    if (options.plugin.scope === "user") return 0;
-    const localPath = await this.deps.pluginFetcher.fetch(options.plugin.source, options.cacheDir);
+    if (options.plugin.plugin.scope === "user") return 0;
+    const localPath = await this.deps.pluginFetcher.fetch(
+      options.plugin.plugin.source,
+      options.cacheDir
+    );
     const dist = await this.deps.pluginDistributionReader.read(localPath);
     const translator = this.resolveTranslator(options.tool);
     if (
@@ -82,11 +85,11 @@ export class ApplyPluginFiles {
     // directory scan: so it cannot touch files the plugin never wrote.
     if (translator.mode === "marketplace") {
       const baseDir = scopeBaseOf(tool, {
-        scope: plugin.scope,
+        scope: plugin.plugin.scope,
         projectRoot: projectRoot,
         homedir: () => this.deps.builtDeps.homedir(),
       });
-      await deleteOldFiles(plugin.files, baseDir, this.deps.fs);
+      await deleteOldFiles(plugin.plugin.files, baseDir, this.deps.fs);
     }
     return materializeViaTranslator(translator, {
       dist,

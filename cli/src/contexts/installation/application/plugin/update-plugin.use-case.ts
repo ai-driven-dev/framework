@@ -5,7 +5,7 @@ import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { InvalidPluginScopeError } from "../../domain/installation.error.js";
 import type { Manifest } from "../../domain/manifest.js";
-import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../domain/project-layout.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { RuntimeConfigSection } from "../../ports/tool-sections.js";
@@ -76,24 +76,25 @@ export class UpdatePlugin {
     pluginNames: string[] | undefined,
     scope: ProjectUpdateScope
   ): Promise<string[]> {
-    const plugins = scope.manifest.getPlugins(tool.toolId);
+    const plugins = scope.manifest.getRecordedPlugins(tool.toolId);
     const targets = pluginNames
-      ? plugins.filter((p) => pluginNames.includes(p.name))
-      : plugins.filter((plugin) => plugin.scope !== "user");
+      ? plugins.filter((p) => pluginNames.includes(p.plugin.name))
+      : plugins.filter((p) => p.plugin.scope !== "user");
     const updated: string[] = [];
-    for (const plugin of targets) {
-      const didUpdate = await this.updateOnePlugin(plugin, tool, scope);
-      if (didUpdate) updated.push(plugin.name);
+    for (const recorded of targets) {
+      const didUpdate = await this.updateOnePlugin(recorded, tool, scope);
+      if (didUpdate) updated.push(recorded.plugin.name);
     }
     return updated;
   }
 
   private async updateOnePlugin(
-    plugin: InstalledPlugin,
+    recorded: RecordedPlugin,
     tool: RuntimeConfigSection,
     scope: ProjectUpdateScope
   ): Promise<boolean> {
     const { projectRoot, cacheDir, manifest, rebuild } = scope;
+    const { plugin } = recorded;
     const toolId = tool.toolId;
     if (plugin.scope === "user") throw new InvalidPluginScopeError(toolId, "project", "user");
     const dist = await this.deps.distributionLoader.load(plugin.source, cacheDir, {
@@ -102,7 +103,7 @@ export class UpdatePlugin {
     await this.deps.pluginRuntime?.ensurePluginRuntimeFiles(tool, projectRoot, manifest);
     if (!rebuild && compareSemver(dist.manifest.version, plugin.version) <= 0) return false;
     await this.deps.replacePluginFiles.execute({
-      plugin,
+      plugin: recorded,
       dist,
       toolId,
       projectRoot,

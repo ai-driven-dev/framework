@@ -9,7 +9,7 @@ import { PluginDistributionLoader } from "../../../src/contexts/installation/app
 import { PluginMaterializer } from "../../../src/contexts/installation/application/plugin/plugin-materializer.js";
 import { UpdateUserPluginFiles } from "../../../src/contexts/installation/application/plugin/update-user-plugin-files.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { isStrictlyWithinUserScope } from "../../../src/contexts/machine-claims/domain/user-scope-containment.js";
 import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.use-case.js";
@@ -60,7 +60,7 @@ for (const [toolId, catalogPath] of [
           .withTool(toolId, [])
           .withPlugin(
             toolId,
-            InstalledPlugin.fromMetadata({
+            RecordedPlugin.fromMetadata({
               name: "test-plugin",
               version: "1.0.0",
               source: { kind: "local", path: "/src" },

@@ -10,8 +10,8 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import { ProjectScopeUnsupportedError } from "../../domain/installation.error.js";
 import type { Manifest } from "../../domain/manifest.js";
-import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.js";
+import { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type {
   PluginTranslation,
   PluginTranslationResult,
@@ -147,7 +147,7 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
       manifest,
     } = registration;
     const written = await writeChangedPluginFiles(this.fs, files, baseDir);
-    const plugin = InstalledPlugin.fromDistributionWithMcp({
+    const plugin = RecordedPlugin.fromDistributionWithMcp({
       dist,
       source,
       files,
@@ -156,7 +156,7 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
       componentPaths,
       marketplace,
     });
-    manifest.addPlugin(toolId, InstalledPlugin.withProjectHooks(plugin, projectHooks));
+    manifest.addPlugin(toolId, plugin.withProjectHooks(projectHooks));
     return written;
   }
 }

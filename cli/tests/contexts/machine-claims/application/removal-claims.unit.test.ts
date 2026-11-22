@@ -43,7 +43,7 @@ describe("the claims a plugin removal releases", () => {
 
     await f.claims.detachUserPlugin(TOOL.cursor, "sample-plugin", "/A");
 
-    expect(f.repo.getCurrent()?.getPlugins(TOOL.cursor)[0]?.dependents).toEqual(["/B"]);
+    expect(f.repo.getCurrent()?.getRecordedPlugins(TOOL.cursor)[0]?.dependents).toEqual(["/B"]);
   });
 
   it("releases nothing when no machine manifest is bound", async () => {

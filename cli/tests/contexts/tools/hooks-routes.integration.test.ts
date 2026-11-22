@@ -299,18 +299,19 @@ async function describeHookFiles(ws: Workspace, bases: readonly string[]): Promi
 
 type RecordedManifest = NonNullable<Awaited<ReturnType<Deps["manifestRepo"]["load"]>>>;
 
-type RecordedPlugin = ReturnType<RecordedManifest["getPlugins"]>[number];
+type RecordedPlugin = ReturnType<RecordedManifest["getRecordedPlugins"]>[number];
 
 function recordedPluginLines(
   ws: Workspace,
   header: { scope: string; toolId: string },
-  plugin: RecordedPlugin
+  recorded: RecordedPlugin
 ): string[] {
+  const { plugin } = recorded;
   const hookFiles = [...plugin.files.keys()]
     .filter((f) => /hook/i.test(f) && !f.includes("/skills/"))
     .sort();
-  const projectHooks = JSON.stringify(plugin.projectHooks ?? null, null, 2);
-  const dependents = plugin.dependents.map(
+  const projectHooks = JSON.stringify(recorded.provenance.projectHooks ?? null, null, 2);
+  const dependents = recorded.dependents.map(
     (dependent) => `<root>/${relative(ws.root, dependent).split(sep).join("/")}`
   );
   return [
@@ -329,7 +330,7 @@ async function recordedPlugins(
   if (manifest === null) return [`${scope}: no manifest`];
   const lines: string[] = [];
   for (const toolId of manifest.getInstalledToolIds()) {
-    for (const plugin of manifest.getPlugins(toolId)) {
+    for (const plugin of manifest.getRecordedPlugins(toolId)) {
       lines.push(...recordedPluginLines(ws, { scope, toolId }, plugin));
     }
     const registrations = manifest.getNativeRegistrations(toolId);

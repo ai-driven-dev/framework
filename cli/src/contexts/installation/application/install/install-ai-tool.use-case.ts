@@ -2,7 +2,7 @@ import type { HintedMessage } from "../../../../shared/domain/describe-error.js"
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import { Manifest } from "../../domain/manifest.js";
-import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type {
   InstallRuntimeConfig,
@@ -126,19 +126,20 @@ export class InstallAiTool {
   }
 
   private async propagatePlugin(request: {
-    plugin: InstalledPlugin;
+    plugin: RecordedPlugin;
     toolId: AiToolId;
     projectRoot: string;
   }): Promise<{ propagated?: string; warning?: PropagationWarning }> {
-    const { plugin, toolId, projectRoot } = request;
-    if (plugin.marketplace === undefined) {
+    const { plugin: recorded, toolId, projectRoot } = request;
+    const { plugin, marketplace } = recorded;
+    if (marketplace === undefined) {
       return { warning: { text: this.warnNoMarketplace(plugin.name, toolId) } };
     }
     try {
       await this.deps.pluginInstallFromMarketplace.execute({
         pluginName: plugin.name,
         version: plugin.version,
-        fromMarketplace: plugin.marketplace,
+        fromMarketplace: marketplace,
         toolIds: [toolId],
         projectRoot,
         interactive: false,

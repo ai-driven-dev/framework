@@ -9,7 +9,7 @@ import type {
 } from "../../../src/contexts/host-registration/application/withdraw/withdrawal.js";
 import type { ProjectPluginWithdrawalSteps } from "../../../src/contexts/installation/application/removal/project-plugin-withdrawal.js";
 import type { RemovePluginRequest } from "../../../src/contexts/installation/application/removal/remove-plugin.use-case.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import {
   RemovePlugin,
   type RemovePluginDeps,
@@ -32,7 +32,7 @@ class RecordingHost implements Pick<WithdrawFromHost, "execute"> {
 }
 
 function plugin(marketplace: string | undefined) {
-  return InstalledPlugin.fromJSON({
+  return RecordedPlugin.fromJSON({
     name: "aidd-dev",
     source: { kind: "local", path: "/fixture" },
     version: "1.0.0",

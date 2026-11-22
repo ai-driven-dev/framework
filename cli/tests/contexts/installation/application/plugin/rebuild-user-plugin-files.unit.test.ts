@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { rebuildUserPluginFiles } from "../../../../../src/contexts/installation/application/plugin/rebuild-user-plugin-files.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
@@ -14,13 +14,13 @@ const dist = new PluginDistribution({
   files: [skill],
   components: { commands: [], agents: [], rules: [], skills: [skill], hooks: [], mcp: [] },
 });
-const plugin = InstalledPlugin.fromMetadata({
+const plugin = RecordedPlugin.fromMetadata({
   name: "sample-plugin",
   version: "0.0.1",
   source: { kind: "local", path: "/source" },
   strict: false,
   scope: "user",
-});
+}).plugin;
 const deps = { fs: new InMemoryFileAdapter(), builtDeps: fakeBuiltDeps() };
 
 describe("rebuildUserPluginFiles", () => {

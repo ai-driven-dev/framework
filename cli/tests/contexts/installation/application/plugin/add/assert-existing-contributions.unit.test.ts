@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { assertExistingContributionsUnchanged } from "../../../../../../src/contexts/installation/application/plugin/add/assert-existing-contributions.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 
-function manifestWith(plugin: InstalledPlugin): Manifest {
+function manifestWith(plugin: RecordedPlugin): Manifest {
   const manifest = Manifest.create();
   manifest.addTool(TOOL.cursor, "1.0.0", []);
   manifest.addPlugin(TOOL.cursor, plugin);
@@ -22,7 +22,7 @@ const BASE = {
 
 describe("assertExistingContributionsUnchanged", () => {
   it("accepts a plugin that contributed nothing to the project", async () => {
-    const manifest = manifestWith(InstalledPlugin.fromMetadata(BASE));
+    const manifest = manifestWith(RecordedPlugin.fromMetadata(BASE));
 
     await expect(
       assertExistingContributionsUnchanged(
@@ -39,7 +39,7 @@ describe("assertExistingContributionsUnchanged", () => {
   });
 
   it("skips a tool that does not hold the plugin", async () => {
-    const manifest = manifestWith(InstalledPlugin.fromMetadata(BASE));
+    const manifest = manifestWith(RecordedPlugin.fromMetadata(BASE));
 
     await expect(
       assertExistingContributionsUnchanged(
@@ -56,8 +56,8 @@ describe("assertExistingContributionsUnchanged", () => {
   });
 
   it("refuses a hook entry recorded without a digest, which proves nothing", async () => {
-    const plugin = InstalledPlugin.fromJSON({
-      ...InstalledPlugin.fromMetadata(BASE).toJSON(),
+    const plugin = RecordedPlugin.fromJSON({
+      ...RecordedPlugin.fromMetadata(BASE).toJSON(),
       projectHooks: {
         entries: [{ event: "preToolUse", command: "node ./x.js", digest: "not-a-digest" }],
         scripts: {},

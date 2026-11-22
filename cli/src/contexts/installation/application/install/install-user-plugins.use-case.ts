@@ -2,7 +2,7 @@ import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
-import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { UserPluginChoice } from "../../ports/marketplace-sources.js";
 import type {
@@ -67,7 +67,9 @@ export class InstallUserPlugins {
     if (tool.kind !== "ai" || tool.plugins()?.copiesFilesGlobally() !== true) return [];
     const plans: PlannedUserPluginFileUpdate[] = [];
     for (const choice of command.plugins) {
-      const owned = manifest.getPlugins(toolId).find((plugin) => plugin.name === choice.entry.name);
+      const owned = manifest
+        .getRecordedPlugins(toolId)
+        .find(({ plugin }) => plugin.name === choice.entry.name);
       const plan = await this.deps.materializer.planUpdate({
         plugin: this.resolvedPlugin(choice, owned),
         tool,
@@ -83,9 +85,9 @@ export class InstallUserPlugins {
 
   private resolvedPlugin(
     { entry, source, marketplaceName }: UserPluginChoice,
-    owned: InstalledPlugin | undefined
-  ): InstalledPlugin {
-    const resolved = InstalledPlugin.fromMetadata({
+    owned: RecordedPlugin | undefined
+  ): RecordedPlugin {
+    const resolved = RecordedPlugin.fromMetadata({
       name: entry.name,
       version: entry.version ?? "0.0.0",
       source,
@@ -95,6 +97,6 @@ export class InstallUserPlugins {
     });
     return owned === undefined
       ? resolved
-      : resolved.withFiles(owned.files).withDependents(owned.dependents);
+      : resolved.withFiles(owned.plugin.files).withDependents(owned.dependents);
   }
 }

@@ -30,8 +30,8 @@ describe("one project's canonical user plugin claim", () => {
       name: "sample-plugin",
       projectRoot: "/link-to-A",
     });
-    expect(f.repo.getCurrent()?.getPlugins(TOOL.cursor)[0]?.dependents).toEqual(["/B"]);
-    expect(f.repo.getCurrent()?.getPlugins(TOOL.cursor)).toHaveLength(1);
+    expect(f.repo.getCurrent()?.getRecordedPlugins(TOOL.cursor)[0]?.dependents).toEqual(["/B"]);
+    expect(f.repo.getCurrent()?.getRecordedPlugins(TOOL.cursor)).toHaveLength(1);
     expect(f.repo.saveCount).toBe(1);
   });
 
@@ -44,7 +44,10 @@ describe("one project's canonical user plugin claim", () => {
       name: "sample-plugin",
       projectRoot: "/C",
     });
-    expect(f.repo.getCurrent()?.getPlugins(TOOL.cursor)[0]?.dependents).toEqual(["/A", "/B"]);
+    expect(f.repo.getCurrent()?.getRecordedPlugins(TOOL.cursor)[0]?.dependents).toEqual([
+      "/A",
+      "/B",
+    ]);
     expect(f.repo.saveCount).toBe(0);
   });
 
@@ -61,7 +64,10 @@ describe("one project's canonical user plugin claim", () => {
         name: name,
         projectRoot: "/A",
       });
-      expect(f.repo.getCurrent()?.getPlugins(TOOL.cursor)[0]?.dependents).toEqual(["/A", "/B"]);
+      expect(f.repo.getCurrent()?.getRecordedPlugins(TOOL.cursor)[0]?.dependents).toEqual([
+        "/A",
+        "/B",
+      ]);
       expect(f.repo.saveCount).toBe(0);
     }
   });
@@ -97,6 +103,6 @@ describe("one project's canonical user plugin claim", () => {
       name: "sample-plugin",
       projectRoot: "/A",
     });
-    expect(f.repo.getCurrent()?.getPlugins(TOOL.cursor)[0]?.dependents).toEqual(["/B"]);
+    expect(f.repo.getCurrent()?.getRecordedPlugins(TOOL.cursor)[0]?.dependents).toEqual(["/B"]);
   });
 });

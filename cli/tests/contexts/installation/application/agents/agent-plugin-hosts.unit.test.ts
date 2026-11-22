@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { AgentPluginHosts } from "../../../../../src/contexts/installation/application/agents/agent-plugin-hosts.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
@@ -8,7 +8,7 @@ import { aManifest } from "../../testing/manifest.builder.js";
 
 const source = { kind: "local", path: "/p" } as const;
 const plugin = (scope: Scope) =>
-  InstalledPlugin.fromMetadata({ name: "a", version: "1.0.0", source, strict: false, scope });
+  RecordedPlugin.fromMetadata({ name: "a", version: "1.0.0", source, strict: false, scope });
 const HOSTS = [TOOL.claude, TOOL.cursor, TOOL.codex];
 
 describe("AgentPluginHosts", () => {

@@ -18,7 +18,7 @@ export function ownerOf(entries: readonly ToolEntry[], relativePath: string): Ow
     if (entry.files.some((f) => f.relativePath === relativePath)) return { owner: "aidd" };
     const merged = entry.mergeFiles.find((m) => m.relativePath === relativePath);
     if (merged !== undefined) return { owner: "co-owned", keys: Object.keys(merged.entries) };
-    if (entry.plugins.some((p) => p.isFileTracked(relativePath))) return { owner: "aidd" };
+    if (entry.plugins.some((p) => p.plugin.isFileTracked(relativePath))) return { owner: "aidd" };
   }
   return { owner: "user" };
 }

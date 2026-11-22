@@ -4,7 +4,7 @@ import type {
   ProjectPluginWithdrawalSteps,
 } from "../../../../src/contexts/installation/application/removal/project-plugin-withdrawal.js";
 import type { NativeRegistrations } from "../../../../src/contexts/installation/domain/manifest/native-registrations.js";
-import type { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import type { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { AiToolId, ToolId } from "../../../../src/shared/domain/tool.js";
 
 interface Answers {
@@ -26,7 +26,7 @@ export class FakeProjectPluginWithdrawal implements ProjectPluginWithdrawalSteps
   }
 
   async withdraw(reach: PluginHostReach): Promise<boolean | undefined> {
-    this.calls.push(`withdraw:${reach.plugin.name}`);
+    this.calls.push(`withdraw:${reach.plugin.plugin.name}`);
     return true;
   }
 
@@ -36,9 +36,9 @@ export class FakeProjectPluginWithdrawal implements ProjectPluginWithdrawalSteps
 
   recordedRef(
     registrations: NativeRegistrations | undefined,
-    plugin: InstalledPlugin
+    recorded: RecordedPlugin
   ): string | undefined {
-    return registrationRecordRules.refOf(registrations, plugin.name, plugin.marketplace);
+    return registrationRecordRules.refOf(registrations, recorded.plugin.name, recorded.marketplace);
   }
 
   withoutRef(registrations: NativeRegistrations, ref: string): NativeRegistrations {

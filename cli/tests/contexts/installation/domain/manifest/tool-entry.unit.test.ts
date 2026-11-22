@@ -9,13 +9,14 @@ import {
   trackedPathsInDirectory,
   updatePluginInEntry,
 } from "../../../../../src/contexts/installation/domain/manifest/tool-entry.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import type { PluginEntryData } from "../../../../../src/contexts/installation/domain/plugins/plugin-entry.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
-const makePlugin = (name: string, version = "1.0.0"): InstalledPlugin =>
-  InstalledPlugin.fromJSON({
+const makePlugin = (name: string, version = "1.0.0"): RecordedPlugin =>
+  RecordedPlugin.fromJSON({
     name,
     source: { kind: "github", repo: `owner/${name}` },
     version,
@@ -24,7 +25,7 @@ const makePlugin = (name: string, version = "1.0.0"): InstalledPlugin =>
     scope: "project",
   });
 
-const makeEntry = (plugins: InstalledPlugin[]): ToolEntry =>
+const makeEntry = (plugins: RecordedPlugin[]): ToolEntry =>
   createToolEntry({
     toolId: TOOL.claude,
     version: "3.0.0",
@@ -46,7 +47,7 @@ describe("a tool's manifest entry", () => {
 
       const updated = removePluginFromEntry(entry, "drop");
 
-      expect(updated.plugins.map((p) => p.name)).toStrictEqual(["keep-a", "keep-b"]);
+      expect(updated.plugins.map((p) => p.plugin.name)).toStrictEqual(["keep-a", "keep-b"]);
     });
 
     it("refuses a plugin that is not installed even while others are", () => {
@@ -62,7 +63,7 @@ describe("a tool's manifest entry", () => {
 
       const updated = updatePluginInEntry(entry, makePlugin("target", "2.0.0"));
 
-      expect(updated.plugins.map((p) => [p.name, p.version])).toStrictEqual([
+      expect(updated.plugins.map((p) => [p.plugin.name, p.plugin.version])).toStrictEqual([
         ["other", "1.0.0"],
         ["target", "2.0.0"],
       ]);
@@ -96,6 +97,45 @@ describe("a tool's manifest entry", () => {
       expect(parseToolEntry(TOOL.claude, data).nativeRegistrations).toStrictEqual(
         entry.nativeRegistrations
       );
+    });
+
+    const storedPlugin = (extra: Record<string, unknown>): PluginEntryData => ({
+      name: "aidd-dev",
+      source: { kind: "github", repo: "owner/aidd-dev" },
+      version: "1.0.0",
+      strict: false,
+      files: { "a.md": "h1" },
+      scope: "user",
+      ...extra,
+    });
+    const rewritten = (plugin: PluginEntryData): string =>
+      JSON.stringify(
+        serializeToolEntry(
+          parseToolEntry(TOOL.claude, {
+            toolId: "claude",
+            version: "3.0.0",
+            files: [],
+            plugins: [plugin],
+          })
+        ).plugins
+      );
+
+    it("writes every field of a stored plugin back in its stored order", () => {
+      const full = storedPlugin({
+        componentPaths: { "a.md": "rules/a.md" },
+        mcpEntries: { srv: "d" },
+        projectHooks: { entries: [{ event: "e", command: "c", digest: "d" }], scripts: { s: "h" } },
+        marketplace: "aidd-framework",
+        dependents: ["/project"],
+      });
+
+      expect(rewritten(full)).toBe(JSON.stringify([full]));
+    });
+
+    it("leaves out an empty component map, server map and dependent list", () => {
+      const empty = storedPlugin({ componentPaths: {}, mcpEntries: {}, dependents: [] });
+
+      expect(rewritten(empty)).toBe(JSON.stringify([storedPlugin({})]));
     });
   });
 });

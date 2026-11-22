@@ -1,5 +1,4 @@
 import type { Scope } from "../../../../shared/domain/scope.js";
-import type { PluginSource } from "../../../../shared/domain/source.js";
 
 export const PLUGIN_NAME_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
@@ -56,19 +55,4 @@ export interface PluginEntryData {
   marketplace?: string;
   /** Canonical project roots using machine-owned user-scope files. Only the user manifest owns this list. */
   dependents?: string[];
-}
-
-/** What an installed plugin is made of, so a changed copy spreads one plugin into another. */
-export interface PluginFields {
-  name: string;
-  source: PluginSource;
-  version: string;
-  strict: boolean;
-  files: PathHashMap;
-  scope: Scope;
-  componentPaths: ComponentPathMap;
-  mcpEntries: McpDigestMap;
-  projectHooks?: ProjectHooksProvenance;
-  marketplace?: string;
-  dependents: readonly string[];
 }

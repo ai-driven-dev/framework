@@ -6,7 +6,7 @@ import {
 } from "../../../../../src/contexts/installation/application/marketplace/purge-marketplace-plugins.use-case.js";
 import { ActiveMachineDependentsError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
@@ -45,8 +45,8 @@ class LockedRepository extends InMemoryManifestRepository {
 function plugin(
   name: string,
   options: { marketplace?: string; scope?: Scope; dependents?: string[] } = {}
-): InstalledPlugin {
-  return InstalledPlugin.fromJSON({
+): RecordedPlugin {
+  return RecordedPlugin.fromJSON({
     name,
     source: { kind: "local", path: `/src/${name}` },
     version: "1.0.0",
@@ -66,7 +66,7 @@ const record = (...claims: { ref: string; dependents: string[] }[]) => ({
 });
 
 interface Seed {
-  plugins?: InstalledPlugin[];
+  plugins?: RecordedPlugin[];
   native?: ReturnType<typeof record>;
   /** A plugin whose proven files fall short of what it tracks. */
   partial?: string;
@@ -88,8 +88,8 @@ function setup(seed: Seed = {}) {
   const withdraw = vi.fn();
   const proven = new Map(
     (seed.plugins ?? [plugin("one")]).map((p) => [
-      p.name,
-      new Map(p.name === seed.partial ? [] : p.files),
+      p.plugin.name,
+      new Map(p.plugin.name === seed.partial ? [] : p.plugin.files),
     ])
   );
   const files = new FakeUserScopePluginFiles(proven);

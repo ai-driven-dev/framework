@@ -43,7 +43,9 @@ describe("UpdatePlugin - built-tree materialization", () => {
       })
     ).rejects.toThrow(/unsafe recorded files/);
     expect(deps.fs.getFile(join(foreign, "skills/demo/SKILL.md"))).toBe("foreign bytes");
-    expect(deps.userManifestRepo.getCurrent()?.getPlugins(cursor)[0]?.version).toBe("0.0.1");
+    expect(deps.userManifestRepo.getCurrent()?.getRecordedPlugins(cursor)[0]?.plugin.version).toBe(
+      "0.0.1"
+    );
   });
 
   it("refuses to overwrite a user-edited Cursor plugin file and retains its installed digest", async () => {
@@ -52,7 +54,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
     const path = join(USER_PLUGINS_DIR, "sample-plugin/skills/demo/SKILL.md");
-    const before = deps.userManifestRepo.getCurrent()?.getPlugins(cursor)[0];
+    const before = deps.userManifestRepo.getCurrent()?.getRecordedPlugins(cursor)[0];
     if (before === undefined) throw new Error("fixture missing plugin claim");
     deps.fs.setFile(path, "# User edited skill\n");
     const savesBefore = deps.userManifestRepo.saveCount;
@@ -65,7 +67,9 @@ describe("UpdatePlugin - built-tree materialization", () => {
     ).rejects.toThrow(/edited.*SKILL.md|SKILL.md.*edited/);
     expect(deps.fs.getFile(path)).toBe("# User edited skill\n");
     expect(deps.userManifestRepo.saveCount).toBe(savesBefore);
-    expect(deps.userManifestRepo.getCurrent()?.getPlugins(cursor)[0].files).toEqual(before.files);
+    expect(deps.userManifestRepo.getCurrent()?.getRecordedPlugins(cursor)[0].plugin.files).toEqual(
+      before.plugin.files
+    );
   });
 
   it("refuses a new built file that the user created after v1 without changing bytes or claims", async () => {
@@ -75,7 +79,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
     await installStalePlugin(deps, registry);
     const newRelativePath = "sample-plugin/skills/demo/new.md";
     const destination = join(USER_PLUGINS_DIR, newRelativePath);
-    const machineBefore = deps.userManifestRepo.getCurrent()?.getPlugins(cursor)[0];
+    const machineBefore = deps.userManifestRepo.getCurrent()?.getRecordedPlugins(cursor)[0];
     if (machineBefore === undefined) throw new Error("fixture missing plugin claim");
     const savesBefore = deps.userManifestRepo.saveCount;
     deps.fs.setFile(join("/built/cursor/plugins", newRelativePath), "# Built v2\n");
@@ -91,7 +95,9 @@ describe("UpdatePlugin - built-tree materialization", () => {
 
     expect(deps.fs.getFile(destination)).toBe("# User-created\n");
     expect(deps.userManifestRepo.saveCount).toBe(savesBefore);
-    expect(deps.userManifestRepo.getCurrent()?.getPlugins(cursor)[0]).toEqual(machineBefore);
+    expect(deps.userManifestRepo.getCurrent()?.getRecordedPlugins(cursor)[0]).toEqual(
+      machineBefore
+    );
   });
 
   it("refuses an untracked identical file without changing its bytes or claiming it", async () => {
@@ -103,7 +109,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
     deps.fs.setFile(join("/built/cursor/plugins", newRelativePath), "# Built v2\n");
     deps.fs.setFile(join(USER_PLUGINS_DIR, newRelativePath), "# Built v2\n");
 
-    const before = deps.userManifestRepo.getCurrent()?.getPlugins(cursor)[0];
+    const before = deps.userManifestRepo.getCurrent()?.getRecordedPlugins(cursor)[0];
     const savesBefore = deps.userManifestRepo.saveCount;
     await expect(
       makeUpdateUseCase(deps, registry).execute({
@@ -115,7 +121,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
 
     expect(deps.fs.getFile(join(USER_PLUGINS_DIR, newRelativePath))).toBe("# Built v2\n");
     expect(deps.userManifestRepo.saveCount).toBe(savesBefore);
-    expect(deps.userManifestRepo.getCurrent()?.getPlugins(cursor)[0]).toEqual(before);
+    expect(deps.userManifestRepo.getCurrent()?.getRecordedPlugins(cursor)[0]).toEqual(before);
   });
 
   it("preflights a Cursor user-file collision before any selected native host update", async () => {
@@ -151,14 +157,16 @@ describe("UpdatePlugin - built-tree materialization", () => {
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
     const machine = deps.userManifestRepo.getCurrent();
-    const stale = machine?.getPlugins(cursor).find((plugin) => plugin.name === "sample-plugin");
+    const stale = machine
+      ?.getRecordedPlugins(cursor)
+      .find((plugin) => plugin.plugin.name === "sample-plugin");
     if (machine === null || stale === undefined) throw new Error("fixture missing plugin");
     const oldRelativePath = "sample-plugin/skills/obsolete/SKILL.md";
     deps.fs.setFile(join(USER_PLUGINS_DIR, oldRelativePath), "old owned bytes");
     machine.updatePlugin(
       cursor,
       stale.withFiles(
-        new Map([...stale.files, [oldRelativePath, FileHash.of("old owned bytes").value]])
+        new Map([...stale.plugin.files, [oldRelativePath, FileHash.of("old owned bytes").value]])
       )
     );
     const updater = new PluginMaterializer({
@@ -174,7 +182,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
       },
     });
     const plan = await updater.planUpdate({
-      plugin: machine.getPlugins(cursor)[0],
+      plugin: machine.getRecordedPlugins(cursor)[0],
       tool: registeredTools().aiProfile(cursor),
       projectRoot: PROJECT_ROOT,
       logger: deps.logger,
@@ -193,7 +201,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
 
     expect(writeSpy).not.toHaveBeenCalled();
     expect(deps.fs.getFile(join(foreign, "SKILL.md"))).toBe("outside user bytes");
-    expect(machine.getPlugins(cursor)[0]?.version).toBe("0.0.1");
+    expect(machine.getRecordedPlugins(cursor)[0]?.plugin.version).toBe("0.0.1");
   });
 
   it("reports manual reconciliation when user-file I/O fails after an irreversible native update", async () => {
@@ -225,7 +233,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
 
     expect(activator.updatedPlugins).toEqual(["native-plugin@aidd-catalog"]);
     expect(deps.userManifestRepo.saveCount).toBe(savesBefore);
-    expect(machine.getPlugins(cursor)[0]?.version).toBe("0.0.1");
+    expect(machine.getRecordedPlugins(cursor)[0]?.plugin.version).toBe("0.0.1");
     expect(machine.getNativeRegistrations(copilot)?.pluginClaims).toEqual([
       { ref: "native-plugin@aidd-catalog", dependents: [PROJECT_ROOT] },
     ]);
@@ -237,7 +245,9 @@ describe("UpdatePlugin - built-tree materialization", () => {
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
     const machine = deps.userManifestRepo.getCurrent();
-    const stale = machine?.getPlugins(cursor).find((plugin) => plugin.name === "sample-plugin");
+    const stale = machine
+      ?.getRecordedPlugins(cursor)
+      .find((plugin) => plugin.plugin.name === "sample-plugin");
     if (machine === null || stale === undefined) throw new Error("fixture missing plugin");
     const oldPath = "sample-plugin/skills/obsolete/SKILL.md";
     const oldAbsolute = join(USER_PLUGINS_DIR, oldPath);
@@ -245,7 +255,9 @@ describe("UpdatePlugin - built-tree materialization", () => {
     machine.updatePlugin(
       cursor,
       stale
-        .withFiles(new Map([...stale.files, [oldPath, FileHash.of("old owned bytes").value]]))
+        .withFiles(
+          new Map([...stale.plugin.files, [oldPath, FileHash.of("old owned bytes").value]])
+        )
         .withDependents([PROJECT_ROOT, "/B"])
     );
     expect(
@@ -256,8 +268,8 @@ describe("UpdatePlugin - built-tree materialization", () => {
       })
     ).toEqual(["sample-plugin"]);
     expect(deps.fs.getFile(oldAbsolute)).toBeUndefined();
-    const owned = deps.userManifestRepo.getCurrent()?.getPlugins(cursor)[0];
+    const owned = deps.userManifestRepo.getCurrent()?.getRecordedPlugins(cursor)[0];
     expect(owned?.dependents).toEqual([PROJECT_ROOT, "/B"]);
-    expect(owned?.files.has(oldPath)).toBe(false);
+    expect(owned?.plugin.files.has(oldPath)).toBe(false);
   });
 });

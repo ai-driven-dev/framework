@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { DetectPluginDrift } from "../../../../../src/contexts/installation/application/shared/detect-plugin-drift.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import type { FileReader } from "../../../../../src/shared/ports/file-reader.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
@@ -16,7 +16,7 @@ function cursorManifestWithFiles(files: Record<string, string>): Manifest {
     .withTool(TOOL.cursor, [])
     .withPlugin(
       TOOL.cursor,
-      InstalledPlugin.fromJSON({
+      RecordedPlugin.fromJSON({
         name: "aidd-test",
         source: { kind: "local", path: "/some/path" },
         version: "1.0.0",
@@ -85,7 +85,7 @@ describe("DetectPluginDrift - user-scope tool never installed on this machine", 
       .withTool(TOOL.claude, [])
       .withPlugin(
         TOOL.claude,
-        InstalledPlugin.fromJSON({
+        RecordedPlugin.fromJSON({
           name: "aidd-test",
           source: { kind: "local", path: "/some/path" },
           version: "1.0.0",
@@ -116,7 +116,7 @@ describe("DetectPluginDrift - the manifest's recorded scope wins over the profil
     manifest.addTool(TOOL.cursor, "1.0.0", []);
     manifest.addPlugin(
       TOOL.cursor,
-      InstalledPlugin.fromJSON({
+      RecordedPlugin.fromJSON({
         name: "aidd-test",
         source: { kind: "local", path: "/some/path" },
         version: "1.0.0",
@@ -160,7 +160,7 @@ describe("DetectPluginDrift - the manifest's recorded scope wins over the profil
       .withTool(TOOL.cursor, [])
       .withPlugin(
         TOOL.cursor,
-        InstalledPlugin.fromJSON({
+        RecordedPlugin.fromJSON({
           name: "aidd-test",
           source: { kind: "local", path: "/some/path" },
           version: "1.0.0",

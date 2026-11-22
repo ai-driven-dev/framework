@@ -12,7 +12,7 @@ import {
   ToolNotInstalledError,
 } from "../../../../src/contexts/installation/domain/installation.error.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { detachProjectClaims } from "../../../../src/contexts/machine-claims/application/detach-project-claims.js";
 import { FileHash } from "../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../src/shared/domain/installation-file.js";
@@ -233,7 +233,7 @@ async function seedSharedClaims(deps: Awaited<ReturnType<typeof buildInstallatio
   const project = deps.manifestRepo.getCurrent();
   if (project === null) throw new Error("fixture missing project");
   const record = (name: string, scope: Scope) =>
-    InstalledPlugin.fromMetadata({
+    RecordedPlugin.fromMetadata({
       name,
       version: "1.0.0",
       source: { kind: "local", path: "/shared" },
@@ -261,8 +261,8 @@ async function seedSharedClaims(deps: Awaited<ReturnType<typeof buildInstallatio
 }
 
 function userPluginDependents(deps: Awaited<ReturnType<typeof buildInstallationDeps>>) {
-  const plugins = deps.userManifestRepo.getCurrent()?.getPlugins(TOOL.cursor) ?? [];
-  return plugins.map((plugin) => ({ name: plugin.name, dependents: plugin.dependents }));
+  const plugins = deps.userManifestRepo.getCurrent()?.getRecordedPlugins(TOOL.cursor) ?? [];
+  return plugins.map((plugin) => ({ name: plugin.plugin.name, dependents: plugin.dependents }));
 }
 
 function codexClaims(deps: Awaited<ReturnType<typeof buildInstallationDeps>>) {

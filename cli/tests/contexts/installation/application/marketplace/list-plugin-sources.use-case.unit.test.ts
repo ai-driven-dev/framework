@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ListPluginSources } from "../../../../../src/contexts/installation/application/marketplace/list-plugin-sources.use-case.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { aManifest } from "../../testing/manifest.builder.js";
@@ -19,7 +19,7 @@ describe("ListPluginSources", () => {
       .withTool(TOOL.claude, [])
       .withPlugin(
         TOOL.claude,
-        InstalledPlugin.fromMetadata({
+        RecordedPlugin.fromMetadata({
           name: "a",
           version: "1.0.0",
           source,
@@ -30,7 +30,7 @@ describe("ListPluginSources", () => {
       )
       .withPlugin(
         TOOL.claude,
-        InstalledPlugin.fromMetadata({
+        RecordedPlugin.fromMetadata({
           name: "b",
           version: "1.0.0",
           source,

@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { ReadMachineInstallation } from "../../../../../src/contexts/installation/application/doctor/read-machine-installation.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { manifestRepositoryLoading } from "../../../../shared/testing/partial-ports.builder.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 const pluginAt = (scope: Scope) =>
-  InstalledPlugin.fromJSON({
+  RecordedPlugin.fromJSON({
     name: "my-plugin",
     source: { kind: "github", repo: "owner/my-plugin" },
     version: "1.0.0",
@@ -16,7 +16,7 @@ const pluginAt = (scope: Scope) =>
     scope,
   });
 
-function machineWith(plugin?: InstalledPlugin): Manifest {
+function machineWith(plugin?: RecordedPlugin): Manifest {
   const manifest = Manifest.create();
   manifest.addTool(TOOL.claude, "3.0.0", []);
   manifest.addTool(TOOL.codex, "2.0.0", []);

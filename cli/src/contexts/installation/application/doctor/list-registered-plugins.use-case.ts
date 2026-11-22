@@ -32,13 +32,13 @@ export class ListRegisteredPlugins {
       const expectedPlugins =
         recorded !== undefined
           ? command.records.pluginRefsOf(recorded).map((ref) => ({ plugin: ref, ref }))
-          : manifest.getPlugins(toolId).map((plugin) => ({
+          : manifest.getRecordedPlugins(toolId).map(({ plugin, marketplace }) => ({
               plugin: plugin.name,
               // Limit: with no recorded registration the fallback assumes the alias equals the host name.
               ref:
-                plugin.marketplace === undefined
+                marketplace === undefined
                   ? undefined
-                  : command.records.refOnHostName(plugin.name, plugin.marketplace),
+                  : command.records.refOnHostName(plugin.name, marketplace),
             }));
       tools.push({ toolId, expectedPlugins });
     }

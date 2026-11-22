@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { RemoveProjectPlugin } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { removalClaims } from "../../../src/contexts/machine-claims/application/removal-claims.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
@@ -29,7 +29,7 @@ describe("which plugins a removal orphans: what it protects", () => {
       PROJECT_ROOT,
     ]);
     fs.setSymlink(hooksPath, foreignPath);
-    const plugin = InstalledPlugin.fromJSON({
+    const plugin = RecordedPlugin.fromJSON({
       name: "sample",
       source: { kind: "local", path: "/fixture" },
       version: "1.0.0",
@@ -72,8 +72,8 @@ describe("which plugins a removal orphans: what it protects", () => {
       })
     ).rejects.toThrow(/outside.*project/);
 
-    expect(projectRepo.getCurrent()?.getPlugins(TOOL.cursor)).toHaveLength(1);
-    expect(machineRepo.getCurrent()?.getPlugins(TOOL.cursor)[0]?.dependents).toEqual([
+    expect(projectRepo.getCurrent()?.getRecordedPlugins(TOOL.cursor)).toHaveLength(1);
+    expect(machineRepo.getCurrent()?.getRecordedPlugins(TOOL.cursor)[0]?.dependents).toEqual([
       PROJECT_ROOT,
       "/B",
     ]);
@@ -97,7 +97,7 @@ describe("which plugins a removal orphans: what it protects", () => {
       .withTool(TOOL.opencode, [])
       .withPlugin(
         TOOL.opencode,
-        InstalledPlugin.fromJSON({
+        RecordedPlugin.fromJSON({
           name: "sample",
           source: { kind: "local", path: "/fixture" },
           version: "1.0.0",
@@ -130,7 +130,7 @@ describe("which plugins a removal orphans: what it protects", () => {
     ).rejects.toThrow(/outside.*project|escapes.*project/);
 
     expect(manifestRepo.saveCount).toBe(0);
-    expect(manifestRepo.getCurrent()?.getPlugins(TOOL.opencode)).toHaveLength(1);
+    expect(manifestRepo.getCurrent()?.getRecordedPlugins(TOOL.opencode)).toHaveLength(1);
     expect(fs.getFile(foreignPath)).toBe(content);
     expect(fs.getFile(mcpPath)).toBe(content);
     expect((await registry.list(PROJECT_ROOT)).some((entry) => entry.name === "awesome")).toBe(
@@ -154,7 +154,7 @@ describe("which plugins a removal orphans: what it protects", () => {
       .withTool(TOOL.opencode, [])
       .withPlugin(
         TOOL.opencode,
-        InstalledPlugin.fromJSON({
+        RecordedPlugin.fromJSON({
           name: "sample",
           source: { kind: "local", path: "/fixture" },
           version: "1.0.0",
@@ -187,7 +187,7 @@ describe("which plugins a removal orphans: what it protects", () => {
     ).rejects.toThrow(/MCP write refused/);
 
     expect(manifestRepo.saveCount).toBe(0);
-    expect(manifestRepo.getCurrent()?.getPlugins(TOOL.opencode)).toHaveLength(1);
+    expect(manifestRepo.getCurrent()?.getRecordedPlugins(TOOL.opencode)).toHaveLength(1);
     expect(fs.getFile(mcpPath)).toBe(content);
     expect((await registry.list(PROJECT_ROOT)).some((entry) => entry.name === "awesome")).toBe(
       true
@@ -200,7 +200,7 @@ describe("which plugins a removal orphans: what it protects", () => {
       .withTool(TOOL.opencode, [])
       .withPlugin(
         TOOL.opencode,
-        InstalledPlugin.fromJSON({
+        RecordedPlugin.fromJSON({
           name: "sample",
           source: { kind: "local", path: "/fixture" },
           version: "1.0.0",
@@ -233,7 +233,7 @@ describe("which plugins a removal orphans: what it protects", () => {
         autoConfirm: true,
       })
     ).rejects.toThrow(/edited/);
-    expect((await manifestRepo.load())?.getPlugins(TOOL.opencode)).toHaveLength(1);
+    expect((await manifestRepo.load())?.getRecordedPlugins(TOOL.opencode)).toHaveLength(1);
     expect((await registry.list(PROJECT_ROOT)).some((entry) => entry.name === "awesome")).toBe(
       true
     );
@@ -251,7 +251,7 @@ describe("which plugins a removal orphans: what it protects", () => {
     expect(JSON.parse(fs.getFile(mcpPath) ?? "null")).toEqual({
       mcp: { theirs: { type: "remote" } },
     });
-    expect((await manifestRepo.load())?.getPlugins(TOOL.opencode)).toEqual([]);
+    expect((await manifestRepo.load())?.getRecordedPlugins(TOOL.opencode)).toEqual([]);
   });
 
   it("preflights every orphan before touching A when B's MCP contribution was edited", async () => {
@@ -261,7 +261,7 @@ describe("which plugins a removal orphans: what it protects", () => {
     for (const name of ["alpha", "beta"]) {
       manifest.addPlugin(
         TOOL.opencode,
-        InstalledPlugin.fromJSON({
+        RecordedPlugin.fromJSON({
           name,
           source: { kind: "local", path: "/fixture" },
           version: "1.0.0",
@@ -290,10 +290,9 @@ describe("which plugins a removal orphans: what it protects", () => {
       })
     ).rejects.toThrow(/edited.*beta|beta.*edited/);
     expect(fs.getFile(path)).toBe(edited);
-    expect((await manifestRepo.load())?.getPlugins(TOOL.opencode).map((p) => p.name)).toEqual([
-      "alpha",
-      "beta",
-    ]);
+    expect(
+      (await manifestRepo.load())?.getRecordedPlugins(TOOL.opencode).map((p) => p.plugin.name)
+    ).toEqual(["alpha", "beta"]);
     expect((await registry.list(PROJECT_ROOT)).some((m) => m.name === "awesome")).toBe(true);
   });
 });
