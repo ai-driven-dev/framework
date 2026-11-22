@@ -542,6 +542,19 @@ for (const host of HOSTS) {
   });
 }
 
+// Only the hosts whose writer output passes the shared contract unchanged are in scope.
+test("aidd-context: answers an agent or command written for another host in scope, not one out of scope", () => {
+  const inScope = [".cursor/agents/a.md", ".github/prompts/c.prompt.md", ".opencode/commands/c.md", ".kilo/commands/c.md"];
+  const outOfScope = [".opencode/agents/a.md", ".cursor/commands/c.md"];
+  const all = [...inScope, ...outOfScope];
+  const s = session("aidd-context", "claude", contextFiles(Object.fromEntries(all.map((rel) => [rel, "# nope\n"]))));
+  s.start();
+  for (const rel of all) s.wrote(rel);
+  const found = lines(s.stop());
+  for (const rel of inScope) assert.ok(found.some((line) => line.startsWith(`${rel}:`)), rel);
+  for (const rel of outOfScope) assert.ok(!found.some((line) => line.startsWith(`${rel}:`)), rel);
+});
+
 test("aidd-context: the shell turn answers the rule modified after the reference, not the older one", () => {
   const s = session("aidd-context", "claude", contextFiles({ "aidd_docs/rules/x/r.md": "# nope\n", "aidd_docs/rules/x/old.md": "# nope\n" }));
   past(path.join(s.root, "aidd_docs/rules/x/old.md"), 3600);
