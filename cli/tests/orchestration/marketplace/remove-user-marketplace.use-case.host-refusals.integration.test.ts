@@ -54,9 +54,7 @@ for (const toolId of [SYNTHETIC_NATIVE_TOOL]) {
       );
       expect(f.activator.uninstalledPlugins).toEqual([]);
       expect(f.activator.removedMarketplaces).toEqual([]);
-      expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
-        { ref: REF, dependents: [] },
-      ]);
+      expect(f.repo.records.get(toolId)?.pluginClaims).toEqual([{ ref: REF, dependents: [] }]);
     });
 
     it("refuses an unreadable host registry before any host mutation", async () => {
@@ -80,9 +78,7 @@ for (const toolId of [SYNTHETIC_NATIVE_TOOL]) {
       );
       await expect(useCase.execute(options())).rejects.toThrow(/host plugin registry unreadable/);
       expect(f.activator.uninstalledPlugins).toEqual([]);
-      expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
-        { ref: REF, dependents: [] },
-      ]);
+      expect(f.repo.records.get(toolId)?.pluginClaims).toEqual([{ ref: REF, dependents: [] }]);
     });
 
     it("refuses an unavailable host CLI", async () => {
@@ -91,9 +87,7 @@ for (const toolId of [SYNTHETIC_NATIVE_TOOL]) {
         /CLI or host registry unavailable/
       );
       expect(f.activator.uninstalledPlugins).toEqual([]);
-      expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
-        { ref: REF, dependents: [] },
-      ]);
+      expect(f.repo.records.get(toolId)?.pluginClaims).toEqual([{ ref: REF, dependents: [] }]);
     });
 
     it("refuses a missing or disabled owned ref", async () => {
@@ -104,9 +98,7 @@ for (const toolId of [SYNTHETIC_NATIVE_TOOL]) {
         const f = await fixture(refs);
         await expect(f.useCase.execute(options())).rejects.toThrow(/still enabled/);
         expect(f.activator.uninstalledPlugins).toEqual([]);
-        expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
-          { ref: REF, dependents: [] },
-        ]);
+        expect(f.repo.records.get(toolId)?.pluginClaims).toEqual([{ ref: REF, dependents: [] }]);
       }
     });
 
@@ -115,9 +107,7 @@ for (const toolId of [SYNTHETIC_NATIVE_TOOL]) {
       await expect(f.useCase.execute(options())).rejects.toThrow(
         expect.objectContaining({ detail: expect.stringMatching(/not installed/) })
       );
-      expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
-        { ref: REF, dependents: [] },
-      ]);
+      expect(f.repo.records.get(toolId)?.pluginClaims).toEqual([{ ref: REF, dependents: [] }]);
       expect((await f.registry.list("/A")).find((entry) => entry.name === ALIAS)).toBeDefined();
       expect(f.activator.removedMarketplaces).toEqual([]);
     });
@@ -128,9 +118,7 @@ for (const toolId of [SYNTHETIC_NATIVE_TOOL]) {
         expect.objectContaining({ detail: expect.stringMatching(/marketplace remove.*failed/) })
       );
       expect(f.activator.uninstalledPlugins).toEqual([REF]);
-      expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
-        { ref: REF, dependents: [] },
-      ]);
+      expect(f.repo.records.get(toolId)?.pluginClaims).toEqual([{ ref: REF, dependents: [] }]);
       expect((await f.registry.list("/A")).find((entry) => entry.name === ALIAS)).toBeDefined();
     });
 
@@ -161,6 +149,8 @@ for (const toolId of [SYNTHETIC_NATIVE_TOOL]) {
           loadIfReadable: async () => null,
           save: (manifest) => f.repo.save(manifest),
           delete: () => f.repo.delete(),
+          loadRecords: () => f.repo.loadRecords(),
+          saveRecords: (records) => f.repo.saveRecords(records),
           withExclusiveAccess: (action) => action(),
         },
         registry,
@@ -173,9 +163,7 @@ for (const toolId of [SYNTHETIC_NATIVE_TOOL]) {
         )
       );
       await expect(useCase.execute(options())).rejects.toThrow(/registry delete failed/);
-      expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
-        { ref: REF, dependents: [] },
-      ]);
+      expect(f.repo.records.get(toolId)?.pluginClaims).toEqual([{ ref: REF, dependents: [] }]);
       expect((await f.registry.list("/A")).find((entry) => entry.name === ALIAS)).toBeDefined();
     });
 
@@ -185,7 +173,7 @@ for (const toolId of [SYNTHETIC_NATIVE_TOOL]) {
       expect(f.activator.uninstalledPlugins).toEqual([REF]);
       expect(f.activator.uninstalledPluginScopes).toEqual(["user"]);
       expect(f.activator.removedMarketplaces).toEqual([HOST]);
-      expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([]);
+      expect(f.repo.records.get(toolId)?.pluginClaims).toEqual([]);
       expect((await f.registry.list("/A")).find((entry) => entry.name === ALIAS)).toBeUndefined();
     });
 
@@ -195,16 +183,15 @@ for (const toolId of [SYNTHETIC_NATIVE_TOOL]) {
       expect(f.activator.uninstalledPlugins).toEqual([REF]);
       expect(f.activator.uninstalledPluginScopes).toEqual(["project"]);
       expect(f.activator.removedMarketplaces).toEqual([HOST]);
-      expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([]);
+      expect(f.repo.records.get(toolId)?.pluginClaims).toEqual([]);
     });
 
     it("preserves a different canonical host catalogue and its dependent ref", async () => {
       const f = await fixture(enabled());
-      const current = f.repo.getCurrent();
-      const registration = hostRecord(current?.getNativeRegistrations(toolId));
+      const registration = hostRecord(f.repo.records.get(toolId));
       expect(registration).toBeDefined();
-      if (current === null || registration === undefined) throw new Error("fixture lacks registry");
-      current.setNativeRegistrations(toolId, {
+      if (registration === undefined) throw new Error("fixture lacks registry");
+      f.repo.records.set(toolId, {
         ...registration,
         marketplaces: [
           ...registration.marketplaces,
@@ -219,13 +206,11 @@ for (const toolId of [SYNTHETIC_NATIVE_TOOL]) {
       expect(await f.useCase.execute(options())).toMatchObject({ removedPluginCount: 1 });
       expect(f.activator.uninstalledPlugins).toEqual([REF]);
       expect(f.activator.removedMarketplaces).toEqual([HOST]);
-      expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
+      expect(f.repo.records.get(toolId)?.pluginClaims).toEqual([
         { ref: "other-plugin@other-catalog", dependents: ["/B"] },
       ]);
-      expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginRefs).toEqual([
-        "other-plugin@other-catalog",
-      ]);
-      expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.marketplaces).toEqual([
+      expect(f.repo.records.get(toolId)?.pluginRefs).toEqual(["other-plugin@other-catalog"]);
+      expect(f.repo.records.get(toolId)?.marketplaces).toEqual([
         { alias: "other-alias", hostName: "other-catalog" },
       ]);
     });

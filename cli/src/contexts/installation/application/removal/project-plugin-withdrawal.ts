@@ -1,6 +1,6 @@
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
-import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
+import type { RegistrationRecordData } from "../../ports/record/registration-records.js";
 import type { NativeHostTool } from "../../ports/tool-sections.js";
 
 /** A ref a machine claim holds on one tool. */
@@ -13,7 +13,7 @@ export interface ClaimedHostRef {
  * a claimed ref is removable: installation only hands back what `proveClaimedRef` gave it. */
 export interface ClaimedRefWithdrawal<Proof> {
   readonly proveClaimedRef: (
-    registrations: NativeRegistrations,
+    registrations: RegistrationRecordData,
     claim: ClaimedHostRef,
     projectRoot: string
   ) => Promise<Proof>;
@@ -24,11 +24,11 @@ export interface ClaimedRefWithdrawal<Proof> {
 export interface RecordedPluginRef {
   /** The ref the record holds for the plugin, `undefined` when nothing was recorded for it. */
   recordedRef(
-    registrations: NativeRegistrations | undefined,
+    registrations: RegistrationRecordData | undefined,
     plugin: RecordedPlugin
   ): string | undefined;
   /** The record without one ref, every other entry untouched. */
-  withoutRef(registrations: NativeRegistrations, ref: string): NativeRegistrations;
+  withoutRef(registrations: RegistrationRecordData, ref: string): RegistrationRecordData;
 }
 
 /** The plugin a removal asks its host about, and where. */
@@ -36,7 +36,7 @@ export interface PluginHostReach {
   readonly tool: NativeHostTool;
   readonly plugin: RecordedPlugin;
   readonly projectRoot: string;
-  readonly registrations: NativeRegistrations | undefined;
+  readonly registrations: RegistrationRecordData | undefined;
 }
 
 /** What a project removal asks the host and the machine claims, the caller's: whether the host

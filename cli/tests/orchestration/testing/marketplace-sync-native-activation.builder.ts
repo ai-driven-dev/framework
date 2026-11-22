@@ -110,13 +110,18 @@ function ownedMachineCatalogOf(
   const { hostName, source } = entry;
   const machine = Manifest.create();
   machine.addTool(tool, "test", []);
-  machine.setNativeRegistrations(tool, {
-    binary: tool,
-    marketplaces: [{ alias: MARKETPLACE, hostName, provenance: { kind: "registry", source } }],
-    pluginRefs: [],
-    pluginClaims: [],
-  });
-  return new InMemoryManifestRepository(machine);
+  const records = new Map([
+    [
+      tool,
+      {
+        binary: tool,
+        marketplaces: [{ alias: MARKETPLACE, hostName, provenance: { kind: "registry", source } }],
+        pluginRefs: [],
+        pluginClaims: [],
+      },
+    ],
+  ]);
+  return new InMemoryManifestRepository(machine, undefined, records);
 }
 
 function buildSyncOf(
@@ -213,22 +218,9 @@ function buildSyncReadingHostOf(
   const registry = new InMemoryMarketplaceRegistry();
   const manifestRepo = manifestWithPluginOf(host);
   const logger = new CapturingLogger();
-  const machine = catalogOwned ? Manifest.create() : undefined;
-  if (machine !== undefined) {
-    machine.addTool(tool, "test", []);
-    machine.setNativeRegistrations(tool, {
-      binary: tool,
-      marketplaces: [
-        {
-          alias: MARKETPLACE,
-          hostName: MARKETPLACE,
-          provenance: { kind: "registry", source: `/built/${tool}` },
-        },
-      ],
-      pluginRefs: [],
-      pluginClaims: [],
-    });
-  }
+  const machine = catalogOwned
+    ? ownedMachineCatalogOf(host, { hostName: MARKETPLACE, source: `/built/${tool}` })
+    : undefined;
   const useCase = marketplaceSync({
     tools: host.tools,
     fs: seededBuiltCatalog(tool),
@@ -238,7 +230,7 @@ function buildSyncReadingHostOf(
     activators: new Map([[tool, activator]]),
     ensureBuilt: fakeEnsureBuiltMarketplace(),
     hostPluginRegistries: new Map([[tool, hostRegistry]]),
-    userManifestRepo: machine === undefined ? undefined : new InMemoryManifestRepository(machine),
+    userManifestRepo: machine,
     nativeSources: nativeSourceOf(host, {
       activator,
       initial: catalogOwned

@@ -29,7 +29,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const useCase = buildUseCase({
       tools: hostCatalog(),
       fs,
-      manifest: seedManifest(
+      ...seedManifest(
         HOST.codex,
         [provenRegistration(HOST.codex, "aidd-framework", "aidd-framework")],
         ["aidd-vcs@aidd-framework"]
@@ -61,7 +61,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const useCase = buildUseCase({
       tools: hostCatalog(),
       fs,
-      manifest: seedManifest(
+      ...seedManifest(
         HOST.codex,
         [provenRegistration(HOST.codex, "aidd-framework", "aidd-framework")],
         ["aidd-vcs@aidd-framework"]
@@ -92,7 +92,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const useCase = buildUseCase({
       tools: hostCatalog(),
       fs,
-      manifest: seedManifest(
+      ...seedManifest(
         HOST.claude,
         [provenRegistration(HOST.claude, "aidd-framework", "aidd-framework")],
         ["aidd-vcs@aidd-framework"]
@@ -121,7 +121,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const useCase = buildUseCase({
       tools: hostCatalog(),
       fs,
-      manifest: seedManifest(
+      ...seedManifest(
         HOST.codex,
         [
           provenRegistration(HOST.codex, "aidd-framework", "aidd-framework"),
@@ -157,7 +157,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const useCase = buildUseCase({
       tools: hostCatalog(),
       fs,
-      manifest: seedManifest(
+      ...seedManifest(
         HOST.codex,
         [
           provenRegistration(HOST.codex, "other-mkt", "other-mkt"),
@@ -191,7 +191,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const useCase = buildUseCase({
       tools: hostCatalog(),
       fs,
-      manifest: seedManifest(
+      ...seedManifest(
         HOST.codex,
         [provenRegistration(HOST.codex, "aidd-framework", "aidd-framework")],
         ["aidd-vcs@aidd-framework"]
@@ -223,7 +223,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const useCase = buildUseCase({
       tools: hostCatalog(),
       fs,
-      manifest: seedManifest(
+      ...seedManifest(
         HOST.codex,
         [provenRegistration(HOST.codex, "aidd-framework", "aidd-framework")],
         ["aidd-vcs@aidd-framework"]

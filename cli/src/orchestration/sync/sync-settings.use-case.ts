@@ -135,7 +135,7 @@ export class SyncSettings {
     });
     const wroteRegistrations = await this.deps.recordActivation.execute({
       kind: "native-registrations",
-      manifest,
+      records: context.records,
       activated: activation.outcomes,
       narrowed: options.marketplaceNames !== undefined,
       afterActivation: this.deps.records.afterActivation,

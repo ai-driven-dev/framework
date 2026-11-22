@@ -4,6 +4,7 @@ import { registrationRecordRules } from "../../../../src/composition/installatio
 import { PurgeUserScopeFiles } from "../../../../src/contexts/installation/application/purge-user-scope-files.js";
 import { ActiveMachineDependentsError } from "../../../../src/contexts/installation/domain/installation.error.js";
 import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import type { RegistrationRecords } from "../../../../src/contexts/installation/ports/record/registration-records.js";
 import type { UserScopeInspection } from "../../../../src/contexts/installation/ports/user-scope-purge.js";
 import { InMemoryManifestRepository } from "../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
@@ -30,6 +31,7 @@ function userPlugin(dependents: string[] = []) {
 function fixture(
   options: {
     manifest?: ReturnType<ReturnType<typeof aManifest>["build"]> | null;
+    records?: RegistrationRecords;
     proven?: string[];
   } = {}
 ) {
@@ -37,7 +39,7 @@ function fixture(
     options.manifest === undefined
       ? aManifest().withTool(TOOL.claude, []).withPlugin(TOOL.claude, userPlugin()).build()
       : options.manifest;
-  const repo = new InMemoryManifestRepository(manifest);
+  const repo = new InMemoryManifestRepository(manifest, undefined, options.records);
   const files = new FakeUserScopePluginFiles(
     new Map([[NAME, new Map((options.proven ?? ["a.md", "b.md"]).map((f) => [f, "h"]))]])
   );
@@ -96,13 +98,18 @@ describe("PurgeUserScopeFiles.proveWithdrawals", () => {
 
   it("answers the host registration each tool recorded, with its claimed refs", async () => {
     const manifest = aManifest().withTool(TOOL.codex, []).build();
-    manifest.setNativeRegistrations(TOOL.codex, {
-      binary: "codex",
-      marketplaces: [],
-      pluginRefs: ["p@c"],
-      pluginClaims: [{ ref: "p@c", dependents: [] }],
-    });
-    const { purge } = fixture({ manifest });
+    const records: RegistrationRecords = new Map([
+      [
+        TOOL.codex,
+        {
+          binary: "codex",
+          marketplaces: [],
+          pluginRefs: ["p@c"],
+          pluginClaims: [{ ref: "p@c", dependents: [] }],
+        },
+      ],
+    ]);
+    const { purge } = fixture({ manifest, records });
 
     const withdrawals = await purge.proveWithdrawals();
 
@@ -111,12 +118,10 @@ describe("PurgeUserScopeFiles.proveWithdrawals", () => {
 
   it("names the host plugin cache under the home it was given", async () => {
     const manifest = aManifest().withTool(TOOL.codex, []).build();
-    manifest.setNativeRegistrations(TOOL.codex, {
-      binary: "codex",
-      marketplaces: [],
-      pluginRefs: [],
-    });
-    const { purge } = fixture({ manifest });
+    const records: RegistrationRecords = new Map([
+      [TOOL.codex, { binary: "codex", marketplaces: [], pluginRefs: [] }],
+    ]);
+    const { purge } = fixture({ manifest, records });
 
     const [withdrawal] = await purge.proveWithdrawals();
 

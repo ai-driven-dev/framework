@@ -5,6 +5,7 @@ import {
 } from "../../../../../src/contexts/installation/application/sync/load-sync-context.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { DeclaredMarketplace } from "../../../../../src/contexts/installation/ports/marketplace-sources.js";
+import type { RegistrationRecords } from "../../../../../src/contexts/installation/ports/record/registration-records.js";
 import type { Lock } from "../../../../../src/shared/ports/lock.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
@@ -42,6 +43,7 @@ function setup(
   options: {
     project?: Manifest | null;
     user?: Manifest | null;
+    userRecords?: RegistrationRecords;
     marketplaces?: readonly DeclaredMarketplace[];
     register?: boolean;
   } = {}
@@ -52,7 +54,10 @@ function setup(
     options.project === undefined ? manifestWith(TOOL.claude, TOOL.cursor) : options.project,
     PROJECT
   );
-  const user = options.user === undefined ? undefined : new LockedRepository(options.user, PROJECT);
+  const user =
+    options.user === undefined
+      ? undefined
+      : new LockedRepository(options.user, PROJECT, options.userRecords);
   const register = vi.fn(async ({ pluginSource }: { pluginSource?: unknown }) => {
     registry.seed(PROJECT, { ...userMarketplace(FRAMEWORK), source: { kind: "local", path: "." } });
     return pluginSource;
@@ -139,22 +144,26 @@ describe("LoadSyncContext.execute", () => {
     expect((await project.load())?.getInstalledToolIds()).toContain(TOOL.codex);
   });
 
-  it("answers the machine manifest when kept and the project one as last saved", async () => {
-    const { load, project } = setup({ user: manifestWith(TOOL.codex) });
+  it("answers the machine records when kept and the project ones as last saved", async () => {
+    const machineRecord = { binary: "codex", pluginRefs: ["p@c"] };
+    const { load, project } = setup({
+      user: manifestWith(TOOL.codex),
+      userRecords: new Map([[TOOL.codex, machineRecord]]),
+    });
 
     const context = await load.execute(request());
     context?.manifest.addTool(TOOL.codex, "1.0.0", []);
 
     expect(context?.machineKept).toBe(true);
-    expect((await context?.machineManifest())?.getInstalledToolIds()).toStrictEqual([TOOL.codex]);
-    expect(await context?.persistedProject()).toBe(await project.load());
+    expect(await context?.machineRecords()).toStrictEqual(new Map([[TOOL.codex, machineRecord]]));
+    expect(await context?.persistedProject()).toStrictEqual(await project.loadRecords());
   });
 
-  it("answers no machine manifest when none is kept", async () => {
+  it("answers no machine records when none is kept", async () => {
     const context = await setup().load.execute(request());
 
     expect(context?.machineKept).toBe(false);
-    expect(await context?.machineManifest()).toBeUndefined();
+    expect(await context?.machineRecords()).toStrictEqual(new Map());
   });
 
   it("treats an unreadable manifest as none", async () => {

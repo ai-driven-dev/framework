@@ -52,7 +52,7 @@ describe("proven native catalogues update declarative settings only when require
     expect(f.projectRepo.getCurrent()?.getToolFiles(tool)[0]?.hash.value).toBe(
       FileHash.of(content).value
     );
-    expect(f.projectRepo.getCurrent()?.getNativeRegistrations(tool)).toEqual({
+    expect(f.projectRepo.records.get(tool)).toEqual({
       binary: tool,
       marketplaces: f.registrations,
       pluginRefs: f.refs,
@@ -99,13 +99,13 @@ describe("proven native catalogues update declarative settings only when require
     expect(f.activator.addedMarketplaces).toEqual([`/built/${tool}/first`]);
     expect(f.activator.removedMarketplaces).toEqual([]);
     expect(f.activator.enabledPlugins).toEqual([]);
-    expect(firstSourceOf(f.projectRepo.getCurrent()?.getNativeRegistrations(tool))).toEqual({
+    expect(firstSourceOf(f.projectRepo.records.get(tool))).toEqual({
       kind: "effective-list",
       root: `/built/${tool}/first`,
       sourceType: "local",
       source: `/built/${tool}/first`,
     });
-    expect(firstSourceOf(f.machineRepo.getCurrent()?.getNativeRegistrations(tool))).toEqual({
+    expect(firstSourceOf(f.machineRepo.records.get(tool))).toEqual({
       kind: "effective-list",
       root: `/built/${tool}/first`,
       sourceType: "local",
@@ -128,12 +128,8 @@ describe("proven native catalogues update declarative settings only when require
       ...registration,
       provenance: { ...registration.provenance, root: registration.provenance.source },
     }));
-    expect(f.projectRepo.getCurrent()?.getNativeRegistrations(tool)?.marketplaces).toEqual(
-      expected
-    );
-    expect(f.machineRepo.getCurrent()?.getNativeRegistrations(tool)?.marketplaces).toEqual(
-      expected
-    );
+    expect(f.projectRepo.records.get(tool)?.marketplaces).toEqual(expected);
+    expect(f.machineRepo.records.get(tool)?.marketplaces).toEqual(expected);
     expect(f.projectRepo.saveCount).toBe(1);
     expect(f.machineRepo.saveCount).toBe(1);
   });

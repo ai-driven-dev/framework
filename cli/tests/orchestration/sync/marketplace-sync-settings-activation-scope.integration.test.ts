@@ -258,8 +258,8 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
     });
 
     expect(result.activated).toEqual([tool]);
-    expect(machineRepo.getCurrent()?.getNativeRegistrations(tool)).toBeDefined();
-    expect(constructedRepo.getCurrent()?.getNativeRegistrations(tool)).toBeUndefined();
+    expect(machineRepo.records.get(tool)).toBeDefined();
+    expect(constructedRepo.records.get(tool)).toBeUndefined();
   });
 
   it("records no shared-source reference at user scope - no project-scope manifest exists for a later clean to ever decrement it from", async () => {

@@ -7,10 +7,12 @@ import { Manifest } from "../../../../src/contexts/installation/domain/manifest.
 import { resolveRegisteredToolId } from "../../../shared/testing/registered-tools.builder.js";
 
 const FIXTURES_DIR = join(__dirname, "../../../fixtures/manifests");
+/** A v8 capture, never rewritten as it came: the manifest repository contract splits it. */
+const V8_CAPTURE = "native-registrations.json";
 
 function fixtureNames(): string[] {
   return readdirSync(FIXTURES_DIR)
-    .filter((f) => f.endsWith(".json"))
+    .filter((f) => f.endsWith(".json") && f !== V8_CAPTURE)
     .sort();
 }
 
@@ -31,6 +33,5 @@ describe("Manifest round-trip: every fixture rewrites byte-identical", () => {
     expect(names).toContain("merge-files.json");
     expect(names).toContain("plugins.json");
     expect(names).toContain("full.json");
-    expect(names).toContain("native-registrations.json");
   });
 });

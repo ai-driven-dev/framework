@@ -3,6 +3,7 @@ import type { Scope } from "../../../../shared/domain/scope.js";
 import { UnsupportedManifestVersionError } from "../installation.error.js";
 import { MANIFEST_VERSION } from "../manifest-serialization.js";
 import { MANIFEST_FILENAME } from "../project-layout.js";
+import { V8_MANIFEST_VERSION } from "./v8-manifest.js";
 
 // The project-scope default, named in the refusal below so a person can act on it without hunting
 // for the path. A caller reading the user-scope manifest passes its own `ManifestFileContext`, so
@@ -25,13 +26,14 @@ export interface ManifestFileContext {
   readonly scope: Scope;
 }
 
-// This CLI reads exactly MANIFEST_VERSION and refuses every other one, naming a fix for each
-// side. Too new means this CLI is behind, so `aidd update` is a real answer.
+// This CLI reads MANIFEST_VERSION, splits a v8 document into it before this guard, and refuses
+// every other version, naming a fix for each side. Too new means this CLI is behind, so
+// `aidd update` is a real answer.
 //
-// Too old has none: no published CLI ever wrote v7's mandatory per-plugin `scope` or v8's
-// host-name-beside-alias pair, and `load()` calls `fromJSON` before any command reaches a save,
-// so every write path refuses an old document before it could overwrite it. Deleting the
-// document is the only correction that does not pass back through this same guard.
+// Too old has none: no published CLI ever wrote v7's mandatory per-plugin `scope`, and `load()`
+// calls `fromJSON` before any command reaches a save, so every write path refuses an old document
+// before it could overwrite it. Deleting the document is the only correction that does not pass
+// back through this same guard.
 export function assertSupportedManifestVersion(
   raw: Record<string, unknown>,
   context: ManifestFileContext
@@ -56,7 +58,7 @@ export function assertSupportedManifestVersion(
         "is gone, nothing can drive that anymore. Then delete"
       : "No published CLI can write this version: delete";
   throw new UnsupportedManifestVersionError(
-    `manifest version ${String(version)} predates version ${MANIFEST_VERSION}, the only one this CLI reads. ` +
+    `manifest version ${String(version)} predates version ${V8_MANIFEST_VERSION}, the oldest one this CLI reads. ` +
       `${remedy} ${context.path} ${context.location}`,
     context.scope
   );

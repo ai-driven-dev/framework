@@ -1,57 +1,39 @@
-import { mkdir, rm, rmdir } from "node:fs/promises";
+import { mkdir, rmdir } from "node:fs/promises";
 import { dirname } from "node:path";
 import { setTimeout as pause } from "node:timers/promises";
 import { isErrnoException } from "../../../shared/domain/reading/json-file.js";
-import type { ToolIdResolver } from "../../../shared/domain/tool.js";
-import type { AtomicWrite } from "../../../shared/ports/file-writer.js";
 import type { Lock } from "../../../shared/ports/lock.js";
-import type { Manifest } from "../domain/manifest.js";
+import type { ManifestFileContext } from "../domain/manifest/assert-supported-version.js";
 import { userManifestPath } from "../domain/project-layout.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
-import { readManifestFile } from "./manifest-file-io.js";
+import { ManifestFile, type ManifestFileDeps } from "./manifest-file-io.js";
 
 /**
  * The user-scope counterpart of `ManifestRepositoryAdapter`: same schema, same version and refusal
  * rule, same file I/O. Only the path differs, and what a version-refusal message names to fix it.
  *
- * `delete()` removes only `manifest.json` itself, never its parent directory: `userConfigDir()`
- * also holds `auth.json`, `marketplaces.json`, and `references.json`, none of which
- * this repository owns. Pruning it once empty, as the project adapter does with `.aidd/`, would be
+ * `delete()` removes only `manifest.json` and the record files beside it, never their parent
+ * directory: `userConfigDir()` also holds `auth.json`, `marketplaces.json`, and `references.json`,
+ * none of which this repository owns. Pruning it once empty, as the project adapter does with `.aidd/`, would be
  * a live bug here.
  */
-export class UserManifestRepositoryAdapter implements ManifestRepository, Lock {
+export class UserManifestRepositoryAdapter
+  extends ManifestFile
+  implements ManifestRepository, Lock
+{
   constructor(
     private readonly userConfigDir: () => string,
-    private readonly atomicWriter: AtomicWrite,
-    private readonly resolveToolId: ToolIdResolver
-  ) {}
-
-  get path(): string {
-    return userManifestPath(this.userConfigDir());
+    deps: ManifestFileDeps
+  ) {
+    super(deps);
   }
 
-  async load(): Promise<Manifest | null> {
-    return readManifestFile(
-      {
-        path: this.path,
-        location: "for this machine",
-        scope: "user",
-      },
-      this.resolveToolId
-    );
-  }
-
-  async loadIfReadable(): Promise<Manifest | null> {
-    return this.load().catch(() => null);
-  }
-
-  async save(manifest: Manifest): Promise<void> {
-    await mkdir(dirname(this.path), { recursive: true });
-    await this.atomicWriter(this.path, JSON.stringify(manifest.toJSON(), null, 2));
-  }
-
-  async delete(): Promise<void> {
-    await rm(this.path, { force: true });
+  protected context(): ManifestFileContext {
+    return {
+      path: userManifestPath(this.userConfigDir()),
+      location: "for this machine",
+      scope: "user",
+    };
   }
 
   async withExclusiveAccess<T>(action: () => Promise<T>): Promise<T> {

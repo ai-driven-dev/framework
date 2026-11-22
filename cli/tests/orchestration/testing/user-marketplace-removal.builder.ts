@@ -6,6 +6,7 @@ import type { NativeMarketplaceSource } from "../../../src/contexts/host-registr
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
@@ -64,13 +65,18 @@ export async function nativeFixture(
 ) {
   const machine = Manifest.create();
   machine.addTool(toolId, "1.0.0", []);
-  machine.setNativeRegistrations(toolId, {
-    binary: toolId,
-    marketplaces: [{ alias: ALIAS, hostName: HOST, provenance: proofFor() }],
-    pluginRefs: [REF],
-    pluginClaims: [{ ref: REF, dependents: [...(options.dependents ?? [])] }],
-  });
-  const repo = new InMemoryManifestRepository(machine);
+  const records: RegistrationRecords = new Map([
+    [
+      toolId,
+      {
+        binary: toolId,
+        marketplaces: [{ alias: ALIAS, hostName: HOST, provenance: proofFor() }],
+        pluginRefs: [REF],
+        pluginClaims: [{ ref: REF, dependents: [...(options.dependents ?? [])] }],
+      },
+    ],
+  ]);
+  const repo = new InMemoryManifestRepository(machine, undefined, records);
   const registry = new InMemoryMarketplaceRegistry();
   await registry.save(
     "/A",

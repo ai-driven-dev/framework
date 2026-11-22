@@ -48,7 +48,7 @@ describe("the record a project marketplace removal writes", () => {
         })
       )
       .build();
-    manifest.setNativeRegistrations(SYNTHETIC_TOOL, {
+    manifestRepo.records.set(SYNTHETIC_TOOL, {
       binary: SYNTHETIC_TOOL,
       marketplaces: [{ alias: "awesome", hostName: "host-awesome" }],
       pluginRefs: ["sample@host-awesome"],
@@ -63,7 +63,7 @@ describe("the record a project marketplace removal writes", () => {
         addedAt: EPOCH,
       })
     );
-    const before = structuredClone(manifest.getNativeRegistrations(SYNTHETIC_TOOL));
+    const before = structuredClone(manifestRepo.records.get(SYNTHETIC_TOOL));
 
     await useCase.execute({
       name: "awesome",
@@ -72,7 +72,7 @@ describe("the record a project marketplace removal writes", () => {
     });
 
     expect(spy.withoutRef).toHaveBeenCalledExactlyOnceWith(before, "sample@host-awesome");
-    expect((await manifestRepo.load())?.getNativeRegistrations(SYNTHETIC_TOOL)).toStrictEqual({
+    expect(manifestRepo.records.get(SYNTHETIC_TOOL)).toStrictEqual({
       ...before,
       binary: REWRITTEN_BINARY,
     });

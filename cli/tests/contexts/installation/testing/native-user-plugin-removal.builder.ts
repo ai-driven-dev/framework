@@ -45,17 +45,22 @@ const catalogueOf = (ref: string): string => ref.split("@")[1];
 function claimedMachine(toolId: AiToolId, refs: readonly string[], options: NativeRemovalOptions) {
   const machine = Manifest.create();
   machine.addTool(toolId, "1.0.0", []);
-  machine.setNativeRegistrations(toolId, {
-    binary: toolId,
-    marketplaces: refs.map((ref) => ({
-      alias: catalogueOf(ref),
-      hostName: catalogueOf(ref),
-      ...(options.legacy ? {} : { provenance: nativeSourceFor(toolId, catalogueOf(ref)) }),
-    })),
-    pluginRefs: [...refs],
-    pluginClaims: refs.map((ref) => ({ ref, dependents: [...(options.dependents ?? [])] })),
-  });
-  return machine;
+  const records = new Map([
+    [
+      toolId,
+      {
+        binary: toolId,
+        marketplaces: refs.map((ref) => ({
+          alias: catalogueOf(ref),
+          hostName: catalogueOf(ref),
+          ...(options.legacy ? {} : { provenance: nativeSourceFor(toolId, catalogueOf(ref)) }),
+        })),
+        pluginRefs: [...refs],
+        pluginClaims: refs.map((ref) => ({ ref, dependents: [...(options.dependents ?? [])] })),
+      },
+    ],
+  ]);
+  return { machine, records };
 }
 
 function hostRegistryOf(refs: readonly string[], options: NativeRemovalOptions): FixedHostRegistry {
@@ -89,8 +94,8 @@ function catalogueSourcesOf(toolId: AiToolId, refs: readonly string[], mismatch:
  * sources and its uninstall answering as the options say. */
 export function nativeUserPluginRemoval(toolId: AiToolId, options: NativeRemovalOptions = {}) {
   const refs = options.refs ?? [NATIVE_REF];
-  const machine = claimedMachine(toolId, refs, options);
-  const repo = new InMemoryManifestRepository(machine);
+  const { machine, records } = claimedMachine(toolId, refs, options);
+  const repo = new InMemoryManifestRepository(machine, undefined, records);
   const fs = new InMemoryFileAdapter();
   const activator = new FakeHostActions({
     available: options.available ?? true,

@@ -4,6 +4,7 @@ import { Marketplace } from "../../../src/contexts/distribution/domain/marketpla
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
@@ -31,7 +32,8 @@ describe("clean: native registration refusals", () => {
     it("refuses a repointed native catalogue before shared reference or local deletion", async () => {
       const manifest = Manifest.create();
       manifest.addTool(HOST.codex, "1.0.0", []);
-      manifest.setNativeRegistrations(HOST.codex, {
+      const records: RegistrationRecords = new Map();
+      records.set(HOST.codex, {
         binary: BINARY,
         marketplaces: [
           {
@@ -72,7 +74,7 @@ describe("clean: native registration refusals", () => {
       };
       const useCase = new CleanWithKnownHostSource(
         fs,
-        new InMemoryManifestRepository(manifest, PROJECT_ROOT),
+        new InMemoryManifestRepository(manifest, PROJECT_ROOT, records),
         new CapturingLogger(),
         new UpdateGitignore(fs),
         new Map([[BINARY, activator]]),
@@ -98,7 +100,8 @@ describe("clean: native registration refusals", () => {
     it("refuses a foreign enabled ref inside an otherwise AIDD-owned catalogue", async () => {
       const manifest = Manifest.create();
       manifest.addTool(HOST.codex, "1.0.0", []);
-      manifest.setNativeRegistrations(HOST.codex, {
+      const records: RegistrationRecords = new Map();
+      records.set(HOST.codex, {
         binary: BINARY,
         marketplaces: [
           {
@@ -130,7 +133,7 @@ describe("clean: native registration refusals", () => {
       });
       const useCase = new CleanWithKnownHostSource(
         fs,
-        new InMemoryManifestRepository(manifest, PROJECT_ROOT),
+        new InMemoryManifestRepository(manifest, PROJECT_ROOT, records),
         new CapturingLogger(),
         new UpdateGitignore(fs),
         new Map([[BINARY, activator]]),
@@ -152,9 +155,9 @@ describe("clean: native registration refusals", () => {
     });
 
     it("leaves an unclaimed machine-global ref enabled while removing its empty project catalogue", async () => {
-      const manifest = seedManifestWithNativeRegistrations(HOST);
+      const { manifest, records } = seedManifestWithNativeRegistrations(HOST);
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-      const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
+      const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT, records);
       const activator = new FakeHostActions({ available: true });
       const useCase = new CleanWithKnownHostSource(
         fs,
@@ -173,9 +176,9 @@ describe("clean: native registration refusals", () => {
     });
 
     it("leaves both an unclaimed machine-global ref and its shared catalogue registered", async () => {
-      const manifest = seedManifestWithNativeRegistrations(HOST);
+      const { manifest, records } = seedManifestWithNativeRegistrations(HOST);
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-      const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
+      const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT, records);
       const activator = new FakeHostActions({ available: true });
       const registry = new InMemoryMarketplaceRegistry();
       registry.seed(

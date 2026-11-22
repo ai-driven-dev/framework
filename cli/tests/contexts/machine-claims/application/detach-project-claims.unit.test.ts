@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { detachProjectClaims } from "../../../../src/contexts/machine-claims/application/detach-project-claims.js";
+import type { MachineRecords } from "../../../../src/contexts/machine-claims/ports/machine-manifest.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import {
@@ -12,19 +13,24 @@ const REF = "sample-plugin@real-catalog";
 
 function fixture() {
   const manifest = new InMemoryMachineManifest(TOOL.codex, TOOL.cursor);
-  manifest.setNativeRegistrations(TOOL.codex, {
-    binary: "codex",
-    marketplaces: [{ alias: "real-catalog", hostName: "real-catalog" }],
-    pluginRefs: [REF],
-    pluginClaims: [{ ref: REF, dependents: ["/A", "/B"] }],
-  });
+  const records: MachineRecords = new Map([
+    [
+      TOOL.codex,
+      {
+        binary: "codex",
+        marketplaces: [{ alias: "real-catalog", hostName: "real-catalog" }],
+        pluginRefs: [REF],
+        pluginClaims: [{ ref: REF, dependents: ["/A", "/B"] }],
+      },
+    ],
+  ]);
   for (const name of ["first", "second"]) {
     manifest.addPlugin(
       TOOL.cursor,
       new MachinePlugin({ name, scope: "user", dependents: ["/A", "/B"] })
     );
   }
-  const repo = new InMemoryMachineManifestRepository(manifest);
+  const repo = new InMemoryMachineManifestRepository(manifest, records);
   const fs = new InMemoryFileAdapter({}, ["/A", "/B"]);
   return { repo, detach: detachProjectClaims(repo, fs) };
 }
@@ -43,7 +49,7 @@ describe("releasing a project's claims on the machine manifest", () => {
     );
 
     const current = f.repo.getCurrent();
-    expect(current?.getNativeRegistrations(TOOL.codex)?.pluginClaims).toEqual([
+    expect(f.repo.records.get(TOOL.codex)?.pluginClaims).toEqual([
       { ref: REF, dependents: ["/B"] },
     ]);
     expect(current?.getRecordedPlugins(TOOL.cursor).map((plugin) => plugin.machineClaim)).toEqual([

@@ -74,7 +74,7 @@ describe("native catalogue ownership recorded from source provenance", () => {
         otherHost
       );
       machine.addTool(toolId, "0.9.0", []);
-      machine.setNativeRegistrations(toolId, {
+      f.machineRepo.records.set(toolId, {
         binary: toolId,
         marketplaces: [other],
         pluginRefs: [otherRef],
@@ -86,12 +86,12 @@ describe("native catalogue ownership recorded from source provenance", () => {
         const result = await f.sync.execute({ projectRoot: "/A" });
         expect(result.errors).toEqual([]);
         expect(result.warnings).toEqual([]);
-        expect(f.projectRepo.getCurrent()?.getNativeRegistrations(toolId)).toEqual({
+        expect(f.projectRepo.records.get(toolId)).toEqual({
           binary: toolId,
           marketplaces: [target],
           pluginRefs: [],
         });
-        expect(f.machineRepo.getCurrent()?.getNativeRegistrations(toolId)).toEqual({
+        expect(f.machineRepo.records.get(toolId)).toEqual({
           binary: toolId,
           marketplaces: machineMarketplaces,
           pluginRefs: [otherRef],
@@ -120,7 +120,7 @@ describe("native catalogue ownership recorded from source provenance", () => {
       expect(result.warnings).toEqual([]);
       expect(f.machineRepo.getCurrent()?.hasTool(toolId)).toBe(true);
       expect(f.machineRepo.getCurrent()?.getToolVersion(toolId)).toBe("1.0.0");
-      expect(f.machineRepo.getCurrent()?.getNativeRegistrations(toolId)).toMatchObject({
+      expect(f.machineRepo.records.get(toolId)).toMatchObject({
         binary: toolId,
         marketplaces: [{ alias: "alias", hostName: "same-name" }],
         pluginRefs: [],

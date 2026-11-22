@@ -1,12 +1,12 @@
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { RegisteredPlugin, RegisteredPlugins } from "../../contract/registered-plugins.js";
-import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
+import type { RegistrationRecordData } from "../../ports/record/registration-records.js";
 import type { InstallationScope } from "./installation-scope.js";
 import type { LoadManifest } from "./load-manifest.use-case.js";
 
 /** How the expected plugins read a host registration: the host registration's to answer. */
 export interface RegisteredRefRecords {
-  pluginRefsOf(record: NativeRegistrations | undefined): readonly string[];
+  pluginRefsOf(record: RegistrationRecordData | undefined): readonly string[];
   refOnHostName(plugin: string, hostName: string): string;
 }
 
@@ -25,10 +25,11 @@ export class ListRegisteredPlugins {
 
   async execute(command: ListRegisteredPluginsRequest): Promise<RegisteredPlugins> {
     const manifest = await this.loadManifest.execute();
+    const registered = await this.loadManifest.records();
     const tools: { toolId: ToolId; expectedPlugins: readonly RegisteredPlugin[] }[] = [];
     for (const toolId of manifest.getInstalledToolIds()) {
       if (command.allowedIds && !command.allowedIds.has(toolId)) continue;
-      const recorded = manifest.getNativeRegistrations(toolId);
+      const recorded = registered.get(toolId);
       const expectedPlugins =
         recorded !== undefined
           ? command.records.pluginRefsOf(recorded).map((ref) => ({ plugin: ref, ref }))

@@ -2,15 +2,16 @@ import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { ActiveMachineDependentsError } from "../../domain/installation.error.js";
-import type {
-  NativeRefClaim,
-  NativeRegistrations,
-} from "../../domain/manifest/native-registrations.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { MachineClaimsReading } from "../../ports/machine-claims-reading.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import type {
+  NativeRefClaim,
+  RegistrationRecordData,
+  RegistrationRecords,
+} from "../../ports/record/registration-records.js";
 import type { HostRefCountingTool } from "../../ports/tool-sections.js";
 import type { UserScopePluginFileRemoval } from "../../ports/user-scope-plugin-files.js";
 import type { RegisteredMarketplace } from "../sync/record-activation.use-case.js";
@@ -18,14 +19,14 @@ import type { RegisteredMarketplace } from "../sync/record-activation.use-case.j
 type PluginOf = { toolId: AiToolId; plugin: InstalledPlugin; recorded: RecordedPlugin };
 type NativeOf = {
   toolId: AiToolId;
-  registrations: NativeRegistrations;
+  registrations: RegistrationRecordData;
   registration: RegisteredMarketplace;
 };
 
 /** One tool's record of the catalogue being removed. */
 export interface MarketplaceHostTarget {
   readonly tool: HostRefCountingTool;
-  readonly registrations: NativeRegistrations;
+  readonly registrations: RegistrationRecordData;
   readonly registration: NativeOf["registration"];
 }
 
@@ -40,13 +41,13 @@ export interface MarketplaceHostRemoval<Plan> {
 export interface MarketplaceRecords extends Pick<MachineClaimsReading, "holdersOf"> {
   /** The registration the alias stands for, `undefined` when it was never registered. */
   registrationOf(
-    registrations: NativeRegistrations,
+    registrations: RegistrationRecordData,
     alias: string
   ): RegisteredMarketplace | undefined;
   /** The claims on the refs sitting on the host name the alias was registered under. */
-  claimsOn(registrations: NativeRegistrations, alias: string): readonly NativeRefClaim[];
+  claimsOn(registrations: RegistrationRecordData, alias: string): readonly NativeRefClaim[];
   /** The record without the marketplace, nor any ref or claim on its host name. */
-  withoutMarketplace(registrations: NativeRegistrations, alias: string): NativeRegistrations;
+  withoutMarketplace(registrations: RegistrationRecordData, alias: string): RegistrationRecordData;
 }
 
 export interface PurgeMarketplacePluginsRequest<Plan> {
@@ -88,7 +89,8 @@ export class PurgeMarketplacePlugins {
       throw new Error(
         `Cannot prove AIDD ownership of user-scope marketplace '${marketplace}': no user manifest.`
       );
-    const { plugins, native, nativeRefs } = this.claimsOn(manifest, marketplace, records);
+    const held = { manifest, registered: await this.deps.repo.loadRecords() };
+    const { plugins, native, nativeRefs } = this.claimsOn(held, marketplace, records);
     const holders = records.holdersOf(
       plugins.map(({ recorded }) => recorded),
       nativeRefs
@@ -103,12 +105,10 @@ export class PurgeMarketplacePlugins {
       manifest.removePlugin(toolId, plugin.name);
     }
     for (const { toolId, registrations, registration } of native) {
-      manifest.setNativeRegistrations(
-        toolId,
-        records.withoutMarketplace(registrations, registration.alias)
-      );
+      held.registered.set(toolId, records.withoutMarketplace(registrations, registration.alias));
     }
     await command.forget();
+    await this.deps.repo.saveRecords(held.registered);
     await this.deps.repo.save(manifest);
     return plugins.length + nativeRefs.length;
   }
@@ -125,7 +125,11 @@ export class PurgeMarketplacePlugins {
     for (const plan of plans) await hostRemoval.apply(plan);
   }
 
-  private claimsOn(manifest: Manifest, marketplace: string, records: MarketplaceRecords) {
+  private claimsOn(
+    { manifest, registered }: { manifest: Manifest; registered: RegistrationRecords },
+    marketplace: string,
+    records: MarketplaceRecords
+  ) {
     const plugins: PluginOf[] = this.tools.idsInCanonicalOrder("ai").flatMap((toolId) =>
       manifest
         .getRecordedPlugins(toolId)
@@ -133,7 +137,7 @@ export class PurgeMarketplacePlugins {
         .map((recorded) => ({ toolId, recorded, plugin: recorded.plugin }))
     );
     const native = this.tools.idsInCanonicalOrder("ai").flatMap((toolId) => {
-      const registrations = manifest.getNativeRegistrations(toolId);
+      const registrations = registered.get(toolId);
       if (registrations === undefined) return [];
       const registration = records.registrationOf(registrations, marketplace);
       return registration === undefined ? [] : [{ toolId, registrations, registration }];

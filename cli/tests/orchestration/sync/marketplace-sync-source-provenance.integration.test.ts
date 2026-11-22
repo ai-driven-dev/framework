@@ -33,8 +33,8 @@ describe("native catalogue source provenance", () => {
       expect(f.activator.addedMarketplaces).toEqual([]);
       expect(f.activator.enabledPlugins).toEqual([]);
       expect(f.activator.removedMarketplaces).toEqual([]);
-      expect(f.machineRepo.getCurrent()?.getNativeRegistrations(claude)).toBeUndefined();
-      expect(f.projectRepo.getCurrent()?.getNativeRegistrations(claude)?.marketplaces).toEqual([]);
+      expect(f.machineRepo.records.get(claude)).toBeUndefined();
+      expect(f.projectRepo.records.get(claude)?.marketplaces).toEqual([]);
       expect(f.machineRepo.saveCount).toBe(0);
       expect(f.fs.getFile("/foreign/cache/marker.json")).toBe("foreign bytes");
     }
@@ -63,14 +63,14 @@ describe("native catalogue source provenance", () => {
       const result = await f.sync.execute({ projectRoot: "/A" });
       expect(result.errors).toEqual([]);
       expect(result.warnings.join(" ")).toContain("without a canonical AIDD claim");
-      expect(f.projectRepo.getCurrent()?.getNativeRegistrations(claude)).toMatchObject({
+      expect(f.projectRepo.records.get(claude)).toMatchObject({
         marketplaces: [],
         pluginRefs: [],
       });
       expect(f.activator.addedMarketplaces).toEqual([]);
       expect(f.activator.enabledPlugins).toEqual([]);
       expect(f.activator.removedMarketplaces).toEqual([]);
-      expect(f.machineRepo.getCurrent()?.getNativeRegistrations(claude)).toBeUndefined();
+      expect(f.machineRepo.records.get(claude)).toBeUndefined();
       expect(f.machineRepo.saveCount).toBe(0);
       expect(f.fs.getFile("/foreign/claude/.claude-plugin/marketplace.json")).toBe(foreignCatalog);
     }
@@ -86,14 +86,14 @@ describe("native catalogue source provenance", () => {
     expect(result.warnings).toEqual([]);
     expect(f.activator.addedMarketplaces).toEqual([`/built/${SYNTHETIC_NATIVE_TOOL}`]);
     expect(f.activator.enabledPlugins).toEqual(["test-plugin@same-name"]);
-    expect(f.projectRepo.getCurrent()?.getNativeRegistrations(claude)?.marketplaces).toEqual([
+    expect(f.projectRepo.records.get(claude)?.marketplaces).toEqual([
       {
         alias: "alias",
         hostName: "same-name",
         provenance: { kind: "registry", source: `/built/${SYNTHETIC_NATIVE_TOOL}` },
       },
     ]);
-    expect(f.machineRepo.getCurrent()?.getNativeRegistrations(claude)).toBeUndefined();
+    expect(f.machineRepo.records.get(claude)).toBeUndefined();
   });
 
   it.each([
@@ -117,11 +117,11 @@ describe("native catalogue source provenance", () => {
     expect(f.activator.enabledPlugins).toEqual([]);
     expect(f.activator.removedMarketplaces).toEqual([]);
     expect(f.activator.upgradeCount).toBe(0);
-    expect(f.projectRepo.getCurrent()?.getNativeRegistrations(codex)).toMatchObject({
+    expect(f.projectRepo.records.get(codex)).toMatchObject({
       marketplaces: [],
       pluginRefs: [],
     });
-    expect(f.machineRepo.getCurrent()?.getNativeRegistrations(codex)).toBeUndefined();
+    expect(f.machineRepo.records.get(codex)).toBeUndefined();
     expect(f.machineRepo.saveCount).toBe(0);
     expect(f.fs.getFile("/foreign/cache/marker.json")).toBe("foreign bytes");
   });
@@ -136,10 +136,10 @@ describe("native catalogue source provenance", () => {
     expect(result.warnings).toEqual([]);
     expect(f.activator.addedMarketplaces).toEqual([`/built/${SYNTHETIC_LISTED_TOOL}`]);
     expect(f.activator.enabledPlugins).toEqual(["test-plugin@same-name"]);
-    expect(f.machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
+    expect(f.machineRepo.records.get(codex)?.pluginClaims).toEqual([
       { ref: "test-plugin@same-name", dependents: ["/A"] },
     ]);
-    expect(f.machineRepo.getCurrent()?.getNativeRegistrations(codex)?.marketplaces).toEqual([
+    expect(f.machineRepo.records.get(codex)?.marketplaces).toEqual([
       {
         alias: "alias",
         hostName: "same-name",

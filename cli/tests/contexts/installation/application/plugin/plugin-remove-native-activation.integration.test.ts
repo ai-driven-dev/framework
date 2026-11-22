@@ -4,6 +4,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
+import type { RegistrationRecords } from "../../../../../src/contexts/installation/ports/record/registration-records.js";
 import { describeCause } from "../../../../../src/presentation/errors/error-translator.presenter.js";
 import { UnreadableUserSourceReferencesError } from "../../../../../src/shared/domain/shared.error.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
@@ -38,15 +39,17 @@ describe("RemovePlugin undoes native activation", () => {
     async (missing) => {
       const manifest = Manifest.create();
       manifest.addTool(claude, "test", []);
-      await installViaModeA(manifest);
+      const records: RegistrationRecords = new Map();
+      await installViaModeA(manifest, records);
       if (missing === "unrecorded activation") {
-        const registrations = manifest.getNativeRegistrations(claude);
+        const registrations = records.get(claude);
         if (registrations === undefined) throw new Error("Expected native registration");
-        manifest.setNativeRegistrations(claude, { ...registrations, pluginRefs: [] });
+        records.set(claude, { ...registrations, pluginRefs: [] });
       }
       const before = manifest.toJSON();
+      const recordsBefore = structuredClone(records);
       const activator = new FakeHostActions({ available: true });
-      const repo = new InMemoryManifestRepository(manifest);
+      const repo = new InMemoryManifestRepository(manifest, undefined, records);
       const remove = pluginRemover({
         manifestRepo: repo,
         activators: new Map([[claude, activator]]),
@@ -66,7 +69,9 @@ describe("RemovePlugin undoes native activation", () => {
           : `claude: catalogue '${MARKETPLACE_NAME}' has unproven host source; reconcile manually.`
       );
       expect(manifest.toJSON()).toEqual(before);
+      expect(repo.records).toStrictEqual(recordsBefore);
       expect(repo.saveCount).toBe(0);
+      expect(repo.recordSaveCount).toBe(0);
       expect(activator.uninstalledPlugins).toEqual([]);
     }
   );
@@ -80,8 +85,9 @@ describe("RemovePlugin undoes native activation", () => {
     async ({ name, scope, readsLedger }) => {
       const manifest = Manifest.create();
       manifest.addTool(claude, "test", []);
-      await installViaModeA(manifest);
-      const repo = new InMemoryManifestRepository(manifest);
+      const records: RegistrationRecords = new Map();
+      await installViaModeA(manifest, records);
+      const repo = new InMemoryManifestRepository(manifest, undefined, records);
       const activator = new FakeHostActions({ available: true });
       const logger = new CapturingLogger();
       const registry = new FakeMarketplaceRegistry();
@@ -129,7 +135,7 @@ describe("RemovePlugin undoes native activation", () => {
       expect(logger.warnMessages).toEqual(readsLedger ? [describeCause(ledgerError)] : []);
       expect(activator.uninstalledPlugins).toEqual([REF]);
       expect(activator.uninstalledPluginScopes).toEqual(["project"]);
-      expect(manifest.getNativeRegistrations(claude)?.pluginRefs).toEqual([]);
+      expect(repo.records.get(claude)?.pluginRefs).toEqual([]);
     }
   );
 
@@ -186,9 +192,11 @@ describe("RemovePlugin undoes native activation", () => {
         const fs = new InMemoryFileAdapter();
         const manifest = Manifest.create();
         manifest.addTool(claude, "test", []);
-        await installViaModeA(manifest);
-        const manifestRepo = new InMemoryManifestRepository(manifest);
+        const records: RegistrationRecords = new Map();
+        await installViaModeA(manifest, records);
+        const manifestRepo = new InMemoryManifestRepository(manifest, undefined, records);
         const before = manifest.toJSON();
+        const recordsBefore = structuredClone(records);
         const cacheFile = join(
           homedir(),
           ".claude/plugins/cache",
@@ -216,6 +224,8 @@ describe("RemovePlugin undoes native activation", () => {
 
         expect(activator.uninstalledPlugins).toEqual([]);
         expect(manifestRepo.saveCount).toBe(0);
+        expect(manifestRepo.recordSaveCount).toBe(0);
+        expect(manifestRepo.records).toStrictEqual(recordsBefore);
         expect(manifest.toJSON()).toEqual(before);
         expect(await fs.readFile(cacheFile)).toBe("cached plugin");
       }
@@ -230,8 +240,8 @@ describe("RemovePlugin undoes only the activation this project made", () => {
     const { removeUseCase, manifestRepo } = buildRemoveUseCase(activator, logger);
     const manifest = Manifest.create();
     manifest.addTool(claude, "test", []);
-    await installViaModeA(manifest);
-    manifest.setNativeRegistrations(claude, {
+    await installViaModeA(manifest, manifestRepo.records);
+    manifestRepo.records.set(claude, {
       binary: "claude",
       marketplaces: [
         {

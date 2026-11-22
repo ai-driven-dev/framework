@@ -1,11 +1,11 @@
 import type { ToolId } from "../../../shared/domain/tool.js";
-import type { NativeRegistrations } from "../domain/manifest/native-registrations.js";
+import type { RegistrationRecordData } from "../ports/record/registration-records.js";
 import type { NativeHostTool } from "./tool-sections.js";
 
 /** A tool's recorded registration the machine clean withdraws from its host. */
 export interface UserRegistrationWithdrawal {
   readonly tool: NativeHostTool;
-  readonly registrations: NativeRegistrations;
+  readonly registrations: RegistrationRecordData;
   readonly cacheRoot: string | undefined;
   /** The refs a machine claim owns for this tool. */
   readonly claimedRefs: readonly string[];

@@ -81,8 +81,7 @@ describe("native activation", () => {
 
       await useCase.execute({ projectRoot: PROJECT_ROOT });
 
-      const reloaded = await manifestRepo.load();
-      expect(reloaded?.getNativeRegistrations(tool)).toEqual({
+      expect(manifestRepo.records.get(tool)).toEqual({
         binary: tool,
         marketplaces: [
           {
@@ -102,15 +101,13 @@ describe("native activation", () => {
 
       await useCase.execute({ projectRoot: PROJECT_ROOT });
 
-      const reloaded = await manifestRepo.load();
-      expect(reloaded?.getNativeRegistrations(tool)).toBeUndefined();
+      expect(manifestRepo.records.get(tool)).toBeUndefined();
     });
 
     it("re-registers through the host CLI when the manifest's record has gone stale", async () => {
       const activator = new FakeHostActions({ available: true });
       const { useCase, registry, manifestRepo } = buildSync(activator);
-      const staleManifest = await manifestRepo.load();
-      staleManifest?.setNativeRegistrations(tool, {
+      manifestRepo.records.set(tool, {
         binary: tool,
         marketplaces: [
           {
@@ -121,14 +118,12 @@ describe("native activation", () => {
         ],
         pluginRefs: [REF],
       });
-      if (staleManifest) await manifestRepo.save(staleManifest);
       await registry.save(PROJECT_ROOT, marketplace());
 
       await useCase.execute({ projectRoot: PROJECT_ROOT });
 
       expect(activator.enabledPlugins).toContain(REF);
-      const reloaded = await manifestRepo.load();
-      expect(reloaded?.getNativeRegistrations(tool)).toEqual({
+      expect(manifestRepo.records.get(tool)).toEqual({
         binary: tool,
         marketplaces: [
           {
@@ -172,8 +167,7 @@ describe("native activation", () => {
 
       expect(activator.enabledPlugins).toEqual([`${PLUGIN}@${CATALOG_NAME}`]);
       expect(activator.enabledPlugins).not.toContain(REF);
-      const reloaded = await manifestRepo.load();
-      expect(reloaded?.getNativeRegistrations(tool)).toEqual({
+      expect(manifestRepo.records.get(tool)).toEqual({
         binary: tool,
         marketplaces: [
           {

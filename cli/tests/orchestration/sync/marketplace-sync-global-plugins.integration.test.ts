@@ -91,7 +91,7 @@ async function globalActivation(kind: SyntheticNativeSources) {
   expect(setup.errors).toEqual([]);
   expect(setup.warnings).toEqual([]);
   expect(userRepo.getCurrent()?.getPlugins(toolId)).toEqual([]);
-  expect(userRepo.getCurrent()?.getNativeRegistrations(tool)?.pluginRefs).toEqual([REF]);
+  expect(userRepo.records.get(tool)?.pluginRefs).toEqual([REF]);
   return { refs, activator, userRepo, sync, options };
 }
 
@@ -102,11 +102,9 @@ async function dropRegisteredRefs(
   refs: Map<string, HostPluginRegistryEntry>,
   userRepo: Awaited<ReturnType<typeof globalActivation>>["userRepo"]
 ) {
-  const manifest = await userRepo.load();
-  const registrations = manifest?.getNativeRegistrations(tool);
-  if (manifest === null || registrations === undefined) throw new Error("missing setup record");
-  manifest.setNativeRegistrations(toolId, { ...registrations, pluginRefs: [] });
-  await userRepo.save(manifest);
+  const registrations = userRepo.records.get(tool);
+  if (registrations === undefined) throw new Error("missing setup record");
+  userRepo.records.set(toolId, { ...registrations, pluginRefs: [] });
   refs.delete(REF);
 }
 
@@ -132,10 +130,8 @@ describe.each(["registry", "list-command"] as const)("global %s native plugins",
       expect(result.errors).toEqual([]);
       expect(result.warnings).toEqual([]);
       expect(refs.get(REF)?.enabled).toBe(true);
-      expect(userRepo.getCurrent()?.getNativeRegistrations(tool)?.pluginRefs).toEqual([REF]);
-      expect(userRepo.getCurrent()?.getNativeRegistrations(tool)?.pluginClaims).toEqual([
-        { ref: REF, dependents: [] },
-      ]);
+      expect(userRepo.records.get(tool)?.pluginRefs).toEqual([REF]);
+      expect(userRepo.records.get(tool)?.pluginClaims).toEqual([{ ref: REF, dependents: [] }]);
       expect(activator.enabledPluginScopes).toEqual(
         state === "enabled" ? ["user"] : ["user", "user"]
       );

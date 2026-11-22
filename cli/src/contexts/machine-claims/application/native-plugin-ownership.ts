@@ -2,7 +2,7 @@ import type { ToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Lock } from "../../../shared/ports/lock.js";
 import { type HeldRefClaim, readHeldClaims } from "../domain/ref-claims.js";
-import type { MachineManifest, MachineManifestRepository } from "../ports/machine-manifest.js";
+import type { MachineManifestRepository, MachineRecords } from "../ports/machine-manifest.js";
 
 export async function machineNativePluginClaim(
   repo: MachineManifestRepository | undefined,
@@ -10,10 +10,8 @@ export async function machineNativePluginClaim(
   ref: string
 ): Promise<HeldRefClaim | undefined> {
   if (repo === undefined) return undefined;
-  const machine = await repo.load();
-  return readHeldClaims(machine?.getNativeRegistrations(toolId)?.pluginClaims).find(
-    (claim) => claim.ref === ref
-  );
+  const records = await repo.loadRecords();
+  return readHeldClaims(records.get(toolId)?.pluginClaims).find((claim) => claim.ref === ref);
 }
 
 export async function isMachineOwnedNativeRef(
@@ -33,14 +31,14 @@ export async function detachNativePluginRefs(request: {
   const { repo, fs, projectRoot, refsByTool } = request;
   if (repo === undefined || refsByTool.size === 0) return;
   const action = async () => {
-    const machine = await repo.load();
-    if (machine === null) return;
+    if ((await repo.load()) === null) return;
+    const records = await repo.loadRecords();
     const root = await fs.realpath(projectRoot);
     let changed = false;
     for (const [toolId, refs] of refsByTool) {
-      changed = detachFromTool(machine, toolId, { refs, root }) || changed;
+      changed = detachFromTool(records, toolId, { refs, root }) || changed;
     }
-    if (changed) await repo.save(machine);
+    if (changed) await repo.saveRecords(records);
   };
   await repo.withExclusiveAccess(action);
 }
@@ -48,11 +46,11 @@ export async function detachNativePluginRefs(request: {
 /** Drops `root` from the dependents of the targeted refs one tool claims, and says whether any
  * claim changed. */
 function detachFromTool(
-  machine: MachineManifest,
+  records: MachineRecords,
   toolId: ToolId,
   { refs, root }: { readonly refs: readonly string[]; readonly root: string }
 ): boolean {
-  const registration = machine.getNativeRegistrations(toolId);
+  const registration = records.get(toolId);
   if (registration?.pluginClaims === undefined) return false;
   const targeted = new Set(refs);
   let changed = false;
@@ -64,6 +62,6 @@ function detachFromTool(
       dependents: claim.dependents.filter((dependent) => dependent !== root),
     };
   });
-  if (changed) machine.setNativeRegistrations(toolId, { ...registration, pluginClaims: claims });
+  if (changed) records.set(toolId, { ...registration, pluginClaims: claims });
   return changed;
 }

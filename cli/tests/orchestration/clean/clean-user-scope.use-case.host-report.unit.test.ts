@@ -24,10 +24,11 @@ import { userScopeCleaner } from "../testing/user-scope-cleaner.builder.js";
 describe("clean --scope user: host report", () => {
   describe("what the run reports", () => {
     function buildClaudeUseCase(fs: InMemoryFileAdapter, logger: CapturingLogger) {
+      const { manifest, records } = manifestWithClaude(HOST);
       return userScopeCleaner({
         tools: hostCatalog(),
         fs,
-        repo: new InMemoryManifestRepository(manifestWithClaude(HOST)),
+        repo: new InMemoryManifestRepository(manifest, undefined, records),
         logger,
         activators: new Map([[HOST.claude, new FakeHostActions({ available: true })]]),
         marketplaceRegistries: new Map([
@@ -40,7 +41,7 @@ describe("clean --scope user: host report", () => {
           ],
         ]),
         sources: provenClaudeSources(HOST),
-        pluginRegistries: provenHostPlugins(HOST, manifestWithClaude(HOST)),
+        pluginRegistries: provenHostPlugins(HOST, records),
       });
     }
 

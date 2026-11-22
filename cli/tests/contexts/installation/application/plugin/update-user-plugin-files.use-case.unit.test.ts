@@ -7,6 +7,7 @@ import {
 } from "../../../../../src/contexts/installation/application/plugin/update-user-plugin-files.use-case.js";
 import { PluginNotFoundError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import type { RegistrationRecords } from "../../../../../src/contexts/installation/ports/record/registration-records.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
@@ -48,8 +49,9 @@ function fixture(
   const builder = aManifest().withTool(TOOL.codex, []);
   for (const p of options.plugins ?? [plugin("aidd-dev")]) builder.withPlugin(TOOL.codex, p);
   const manifest = builder.build();
+  const records: RegistrationRecords = new Map();
   if (options.claims !== undefined) {
-    manifest.setNativeRegistrations(TOOL.codex, {
+    records.set(TOOL.codex, {
       binary: "codex",
       marketplaces: [],
       pluginRefs: options.claims.map((claim) => claim.ref),
@@ -59,7 +61,11 @@ function fixture(
       })),
     });
   }
-  const repo = new InMemoryManifestRepository(options.manifest === null ? null : manifest);
+  const repo = new InMemoryManifestRepository(
+    options.manifest === null ? null : manifest,
+    undefined,
+    records
+  );
   const materializer = new FakeUserPluginMaterialization(options.materializer);
   const logger = new CapturingLogger();
   const refreshed: { ref: string; tool: AiToolId }[] = [];

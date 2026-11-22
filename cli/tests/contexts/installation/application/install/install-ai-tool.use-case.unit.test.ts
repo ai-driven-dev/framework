@@ -67,6 +67,19 @@ describe("InstallAiTool", () => {
     expect(pluginsToPropagate.map((p) => p.name)).toEqual(["shared", "orphan"]);
   });
 
+  // The record lives beside the manifest, not in the tool's entry, so re-adding the tool no
+  // longer drops it: uninstall is what forgets a tool's record.
+  it("keeps the tool's registration record on a forced reinstall", async () => {
+    const { deps, run } = await setup(true, true);
+    deps.manifestRepo.records.set(TOOL.opencode, { binary: "opencode", pluginRefs: ["own@aidd"] });
+    const before = structuredClone(deps.manifestRepo.records);
+
+    const { runtimeResult } = await run(true);
+
+    expect(runtimeResult.skipped).toBe(false);
+    expect(deps.manifestRepo.records).toStrictEqual(before);
+  });
+
   it("hands back none when plugins were not asked for", async () => {
     const { run } = await setup(false);
 

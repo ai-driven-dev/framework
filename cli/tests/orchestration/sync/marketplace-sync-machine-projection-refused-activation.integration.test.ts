@@ -18,29 +18,26 @@ describe("a Codex plugin the host did not activate is never claimed", () => {
     { name: "host enable refused", available: true, failOnPlugins: ["test-plugin@real-catalog"] },
   ])("does not add a project dependency after $name", async (failure) => {
     const ref = "test-plugin@real-catalog";
-    const machine = manifestWithTool(tool);
-    machine.setNativeRegistrations(tool, {
-      binary: tool,
-      marketplaces: [{ alias: "local-catalog", hostName: "real-catalog" }],
-      pluginRefs: [],
-      pluginClaims: [{ ref, dependents: ["/A"] }],
-    });
     const activator = new FakeHostActions(failure);
     const { sync, projectRepo, machineRepo } = await singleListedCatalog({
       tools: syntheticNativeCatalog(tool, "list-command"),
       tool,
       projectRoot: "/B",
-      machine,
+      machine: manifestWithTool(tool),
       activator,
+    });
+    machineRepo.records.set(tool, {
+      binary: tool,
+      marketplaces: [{ alias: "local-catalog", hostName: "real-catalog" }],
+      pluginRefs: [],
+      pluginClaims: [{ ref, dependents: ["/A"] }],
     });
 
     const result = await sync.execute({ projectRoot: "/B" });
 
     expect(result.errors).toEqual([]);
-    expect(projectRepo.getCurrent()?.getNativeRegistrations(tool)?.pluginRefs ?? []).toEqual([]);
-    expect(machineRepo.getCurrent()?.getNativeRegistrations(tool)?.pluginClaims).toEqual([
-      { ref, dependents: ["/A"] },
-    ]);
+    expect(projectRepo.records.get(tool)?.pluginRefs ?? []).toEqual([]);
+    expect(machineRepo.records.get(tool)?.pluginClaims).toEqual([{ ref, dependents: ["/A"] }]);
     if (failure.available) {
       expect(result.warnings).toEqual([expect.stringContaining("enable plugin")]);
       expect(activator.enabledPlugins).toEqual([]);
@@ -67,25 +64,18 @@ describe("a Codex plugin the host did not activate is never claimed", () => {
       { scope: tool, error: new Error("host plugin registry unreadable") },
     ]);
     expect(activator.enabledPlugins).toEqual([]);
-    expect(projectRepo.getCurrent()?.getNativeRegistrations(tool)?.pluginRefs ?? []).toEqual([]);
-    expect(machineRepo.getCurrent()?.getNativeRegistrations(tool)?.pluginClaims ?? []).toEqual([]);
+    expect(projectRepo.records.get(tool)?.pluginRefs ?? []).toEqual([]);
+    expect(machineRepo.records.get(tool)?.pluginClaims ?? []).toEqual([]);
   });
 
   it("does not attach to a foreign enabled host ref just because another catalog has the same plugin name", async () => {
     const otherRef = "test-plugin@other-catalog";
-    const machine = manifestWithTool(tool);
-    machine.setNativeRegistrations(tool, {
-      binary: tool,
-      marketplaces: [{ alias: "other", hostName: "other-catalog" }],
-      pluginRefs: [],
-      pluginClaims: [{ ref: otherRef, dependents: ["/A"] }],
-    });
     const activator = new FakeHostActions({ available: true });
     const { sync, projectRepo, machineRepo } = await singleListedCatalog({
       tools: syntheticNativeCatalog(tool, "list-command"),
       tool,
       projectRoot: "/B",
-      machine,
+      machine: manifestWithTool(tool),
       activator,
       hostPluginRegistries: new Map([
         [
@@ -99,13 +89,19 @@ describe("a Codex plugin the host did not activate is never claimed", () => {
         ],
       ]),
     });
+    machineRepo.records.set(tool, {
+      binary: tool,
+      marketplaces: [{ alias: "other", hostName: "other-catalog" }],
+      pluginRefs: [],
+      pluginClaims: [{ ref: otherRef, dependents: ["/A"] }],
+    });
 
     const result = await sync.execute({ projectRoot: "/B" });
 
     expect(result.errors).toEqual([]);
     expect(activator.enabledPlugins).toEqual([]);
-    expect(projectRepo.getCurrent()?.getNativeRegistrations(tool)?.pluginRefs).toEqual([]);
-    expect(machineRepo.getCurrent()?.getNativeRegistrations(tool)?.pluginClaims).toEqual([
+    expect(projectRepo.records.get(tool)?.pluginRefs).toEqual([]);
+    expect(machineRepo.records.get(tool)?.pluginClaims).toEqual([
       { ref: otherRef, dependents: ["/A"] },
     ]);
   });

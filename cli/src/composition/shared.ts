@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import pkg from "../../package.json" with { type: "json" };
 import { WithdrawFromHost } from "../contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import { JsonFileMergerAdapter } from "../contexts/installation/infrastructure/json-file-merger-adapter.js";
@@ -12,6 +13,7 @@ import { InquirerPrompterAdapter } from "../presentation/terminal/inquirer-promp
 import { OutputAdapter } from "../presentation/terminal/output.adapter.js";
 import { SilentPrompterAdapter } from "../presentation/terminal/silent-prompter.adapter.js";
 import type { HintedMessage } from "../shared/domain/describe-error.js";
+import { AIDD_DIR } from "../shared/domain/layout/aidd-layout.js";
 import { atomicWriteFile } from "../shared/infrastructure/atomic-write.js";
 import { EnvironmentAdapter } from "../shared/infrastructure/environment-adapter.js";
 import { FileAdapter } from "../shared/infrastructure/file-adapter.js";
@@ -19,7 +21,7 @@ import { HttpClient } from "../shared/infrastructure/http-client.js";
 import { wireAuth } from "./auth.js";
 import { wireDistribution } from "./distribution.js";
 import { wireHostRegistration } from "./host-registration.js";
-import { wireMachineClaims } from "./machine-claims.js";
+import { registrationRecordStore, wireMachineClaims } from "./machine-claims.js";
 import { userConfigDir } from "./user-config-dir.js";
 
 const plainText = (message: string | HintedMessage): string =>
@@ -79,12 +81,15 @@ type Logging = ReturnType<typeof createOutput>;
 function wireStorage({ projectRoot, tools }: BaseOptions, logger: Logging) {
   const fs = new JsonFileMergerAdapter(new FileAdapter(logger));
   const resolveToolId = (raw: string) => tools.toolId(raw);
-  const manifestRepo = new ManifestRepositoryAdapter(projectRoot, resolveToolId);
-  const userManifestRepo = new UserManifestRepositoryAdapter(
-    userConfigDir,
-    atomicWriteFile,
-    resolveToolId
-  );
+  const files = { atomicWriter: atomicWriteFile, resolveToolId };
+  const manifestRepo = new ManifestRepositoryAdapter(projectRoot, {
+    ...files,
+    records: registrationRecordStore(() => join(projectRoot, AIDD_DIR), files),
+  });
+  const userManifestRepo = new UserManifestRepositoryAdapter(userConfigDir, {
+    ...files,
+    records: registrationRecordStore(userConfigDir, files),
+  });
   return { fs, manifestRepo, userManifestRepo };
 }
 

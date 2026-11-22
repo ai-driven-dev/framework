@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { NativeRegistrations } from "../../../src/contexts/installation/domain/manifest/native-registrations.js";
-import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type {
+  RegistrationRecordData,
+  RegistrationRecords,
+} from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { claimsViewOf } from "../../../src/orchestration/sync/claims-view-of.js";
 import { claimsRecorded } from "../../shared/testing/host-record-reading.builder.js";
 import {
@@ -9,26 +11,23 @@ import {
 } from "../../shared/testing/synthetic-tool-id.builder.js";
 
 const rules = {
-  claimedRefs: (registrations: NativeRegistrations | undefined) =>
+  claimedRefs: (registrations: RegistrationRecordData | undefined) =>
     claimsRecorded(registrations).map((claim) => claim.ref),
 };
 const tool = SYNTHETIC_TOOL;
 const other = SECOND_SYNTHETIC_TOOL;
 
-function manifestWith(pluginRefs: readonly string[]): Manifest {
-  const manifest = Manifest.create();
-  manifest.addTool(tool, "test", []);
-  manifest.setNativeRegistrations(tool, { binary: "copilot", pluginRefs });
-  return manifest;
+function recordsWith(pluginRefs: readonly string[]): RegistrationRecords {
+  return new Map([[tool, { binary: "copilot", pluginRefs }]]);
 }
 
 describe("the claims a host registration is checked against", () => {
   it("holds the run's own record for the tool, and none for a tool it never recorded", () => {
     const context = {
-      manifest: manifestWith(["a@catalog"]),
-      machineManifest: async () => undefined,
+      records: recordsWith(["a@catalog"]),
+      machineRecords: async () => new Map(),
       machineKept: false,
-      persistedProject: async () => undefined,
+      persistedProject: async () => new Map(),
     };
 
     expect(claimsViewOf(context, tool, rules).recorded).toEqual({
@@ -41,13 +40,13 @@ describe("the claims a host registration is checked against", () => {
   it("reads the machine record only when asked, and says whether one is kept", async () => {
     let reads = 0;
     const context = {
-      manifest: manifestWith([]),
-      machineManifest: async () => {
+      records: recordsWith([]),
+      machineRecords: async () => {
         reads += 1;
-        return manifestWith(["machine@catalog"]);
+        return recordsWith(["machine@catalog"]);
       },
       machineKept: true,
-      persistedProject: async () => undefined,
+      persistedProject: async () => new Map(),
     };
 
     const view = claimsViewOf(context, tool, rules);
@@ -63,10 +62,10 @@ describe("the claims a host registration is checked against", () => {
   it("has no machine record when none is kept", async () => {
     const view = claimsViewOf(
       {
-        manifest: manifestWith([]),
-        machineManifest: async () => undefined,
+        records: recordsWith([]),
+        machineRecords: async () => new Map(),
         machineKept: false,
-        persistedProject: async () => undefined,
+        persistedProject: async () => new Map(),
       },
       tool,
       rules
@@ -79,10 +78,10 @@ describe("the claims a host registration is checked against", () => {
   it("reads the project record as last saved, not the one this run is changing", async () => {
     const view = claimsViewOf(
       {
-        manifest: manifestWith(["new@catalog"]),
-        machineManifest: async () => undefined,
+        records: recordsWith(["new@catalog"]),
+        machineRecords: async () => new Map(),
         machineKept: false,
-        persistedProject: async () => manifestWith(["saved@catalog"]),
+        persistedProject: async () => recordsWith(["saved@catalog"]),
       },
       tool,
       rules
@@ -92,18 +91,13 @@ describe("the claims a host registration is checked against", () => {
   });
 
   it("refuses a machine claim that keeps no dependents", async () => {
-    const machine = Manifest.create();
-    machine.addTool(tool, "test", []);
-    machine.setNativeRegistrations(tool, {
-      binary: "copilot",
-      pluginClaims: [{ ref: "a@catalog" }],
-    });
+    const machine = new Map([[tool, { binary: "copilot", pluginClaims: [{ ref: "a@catalog" }] }]]);
     const view = claimsViewOf(
       {
-        manifest: manifestWith([]),
-        machineManifest: async () => machine,
+        records: recordsWith([]),
+        machineRecords: async () => machine,
         machineKept: true,
-        persistedProject: async () => undefined,
+        persistedProject: async () => new Map(),
       },
       tool,
       rules

@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { hostWithdrawal } from "../../shared/testing/host-withdrawal.builder.js";
@@ -24,19 +25,24 @@ describe("updating native tool targeted user marketplace removal", () => {
   it("refuses an otherwise claimed and enabled catalogue without a verified current source, preserving settings and claims", async () => {
     const machine = Manifest.create();
     machine.addTool(SYNTHETIC_UPDATING_NATIVE_TOOL, "1.0.0", []);
-    machine.setNativeRegistrations(SYNTHETIC_UPDATING_NATIVE_TOOL, {
-      binary: SYNTHETIC_UPDATING_NATIVE_TOOL,
-      marketplaces: [
+    const records: RegistrationRecords = new Map([
+      [
+        SYNTHETIC_UPDATING_NATIVE_TOOL,
         {
-          alias: ALIAS,
-          hostName: HOST,
-          provenance: { kind: "registry", source: "/previous/aidd/source" },
+          binary: SYNTHETIC_UPDATING_NATIVE_TOOL,
+          marketplaces: [
+            {
+              alias: ALIAS,
+              hostName: HOST,
+              provenance: { kind: "registry", source: "/previous/aidd/source" },
+            },
+          ],
+          pluginRefs: [REF],
+          pluginClaims: [{ ref: REF, dependents: [] }],
         },
       ],
-      pluginRefs: [REF],
-      pluginClaims: [{ ref: REF, dependents: [] }],
-    });
-    const repo = new InMemoryManifestRepository(machine);
+    ]);
+    const repo = new InMemoryManifestRepository(machine, undefined, records);
     const registry = new InMemoryMarketplaceRegistry();
     const marketplace = Marketplace.create({
       name: ALIAS,
@@ -75,12 +81,11 @@ describe("updating native tool targeted user marketplace removal", () => {
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(activator.removedMarketplaces).toEqual([]);
     expect(repo.saveCount).toBe(0);
-    expect(
-      repo.getCurrent()?.getNativeRegistrations(SYNTHETIC_UPDATING_NATIVE_TOOL)?.pluginClaims
-    ).toEqual([{ ref: REF, dependents: [] }]);
-    expect(
-      repo.getCurrent()?.getNativeRegistrations(SYNTHETIC_UPDATING_NATIVE_TOOL)?.marketplaces
-    ).toEqual([
+    expect(repo.recordSaveCount).toBe(0);
+    expect(repo.records.get(SYNTHETIC_UPDATING_NATIVE_TOOL)?.pluginClaims).toEqual([
+      { ref: REF, dependents: [] },
+    ]);
+    expect(repo.records.get(SYNTHETIC_UPDATING_NATIVE_TOOL)?.marketplaces).toEqual([
       {
         alias: ALIAS,
         hostName: HOST,

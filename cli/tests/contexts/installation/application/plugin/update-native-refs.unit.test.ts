@@ -6,20 +6,22 @@ import {
   refreshNativeRefs,
 } from "../../../../../src/contexts/installation/application/plugin/update-native-refs.js";
 import { PluginNotFoundError } from "../../../../../src/contexts/installation/domain/installation.error.js";
-import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
+import type { RegistrationRecords } from "../../../../../src/contexts/installation/ports/record/registration-records.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
-function manifestWithRefs(...refs: string[]): Manifest {
-  const manifest = Manifest.create();
-  manifest.addTool(TOOL.codex, "1.0.0", []);
-  manifest.setNativeRegistrations(TOOL.codex, {
-    binary: "codex",
-    marketplaces: [],
-    pluginRefs: refs,
-    pluginClaims: refs.map((ref) => ({ ref, dependents: ["/A"] })),
-  });
-  return manifest;
+function recordsWithRefs(...refs: string[]): RegistrationRecords {
+  return new Map([
+    [
+      TOOL.codex,
+      {
+        binary: "codex",
+        marketplaces: [],
+        pluginRefs: refs,
+        pluginClaims: refs.map((ref) => ({ ref, dependents: ["/A"] })),
+      },
+    ],
+  ]);
 }
 
 const toolIds = [TOOL.codex];
@@ -27,9 +29,9 @@ const command = { projectRoot: "/A", toolIds };
 
 describe("nativeTargets", () => {
   it("lists every native ref of the selected tools when no plugin is named", () => {
-    const manifest = manifestWithRefs("aidd-dev@aidd", "other@aidd");
+    const records = recordsWithRefs("aidd-dev@aidd", "other@aidd");
 
-    const targets = nativeTargets(registrationRecordRules, manifest, {
+    const targets = nativeTargets(registrationRecordRules, records, {
       toolIds,
       options: command,
     });
@@ -38,13 +40,13 @@ describe("nativeTargets", () => {
   });
 
   it("narrows to the plugin named, and lists none on a rebuild", () => {
-    const manifest = manifestWithRefs("aidd-dev@aidd", "other@aidd");
+    const records = recordsWithRefs("aidd-dev@aidd", "other@aidd");
 
-    const named = nativeTargets(registrationRecordRules, manifest, {
+    const named = nativeTargets(registrationRecordRules, records, {
       toolIds,
       options: { ...command, pluginNames: ["other"] },
     });
-    const rebuilt = nativeTargets(registrationRecordRules, manifest, {
+    const rebuilt = nativeTargets(registrationRecordRules, records, {
       toolIds,
       options: { ...command, rebuild: true },
     });
@@ -66,9 +68,9 @@ describe("assertSelectionResolves", () => {
   });
 
   it("refuses a bare name that matches several catalogues", () => {
-    const manifest = manifestWithRefs("aidd-dev@one", "aidd-dev@two");
+    const records = recordsWithRefs("aidd-dev@one", "aidd-dev@two");
     const options = { ...command, pluginNames: ["aidd-dev"] };
-    const native = nativeTargets(registrationRecordRules, manifest, { toolIds, options });
+    const native = nativeTargets(registrationRecordRules, records, { toolIds, options });
 
     expect(() =>
       assertSelectionResolves(registrationRecordRules, options, { files: 0, native })
@@ -84,8 +86,8 @@ describe("assertSelectionResolves", () => {
 
 describe("refreshNativeRefs", () => {
   it("warns about dependents, applies each refresh and returns the refs", async () => {
-    const manifest = manifestWithRefs("aidd-dev@aidd");
-    const targets = nativeTargets(registrationRecordRules, manifest, { toolIds, options: command });
+    const records = recordsWithRefs("aidd-dev@aidd");
+    const targets = nativeTargets(registrationRecordRules, records, { toolIds, options: command });
     const logger = new CapturingLogger();
     const applied: string[] = [];
 

@@ -6,6 +6,7 @@ import {
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { ProjectIntegrationCleanup } from "../../../../../src/contexts/installation/ports/project-integration-cleanup.js";
+import type { RegistrationRecords } from "../../../../../src/contexts/installation/ports/record/registration-records.js";
 import { pluginRefRecords } from "../../../../../src/orchestration/plugin/plugin-ref-records.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
@@ -28,7 +29,7 @@ const plugin = (name: string, marketplace = MARKET) =>
 
 function setup(options: { manifest?: Manifest | null; refuse?: Error } = {}) {
   const manifest = options.manifest === undefined ? seeded() : options.manifest;
-  const repo = new InMemoryManifestRepository(manifest, PROJECT);
+  const repo = new InMemoryManifestRepository(manifest, PROJECT, seededRecords());
   const calls: string[] = [];
   const cleanup: ProjectIntegrationCleanup = {
     assertLocalIntegrationRemovable: async (_tool, p) => {
@@ -60,13 +61,20 @@ function seeded(): Manifest {
   manifest.addPlugin(TOOL.claude, plugin("one"));
   manifest.addPlugin(TOOL.claude, plugin("kept", "other"));
   manifest.addPlugin(TOOL.cursor, plugin("two"));
-  manifest.setNativeRegistrations(TOOL.claude, {
-    binary: "claude",
-    marketplaces: [{ alias: MARKET, hostName: HOST_NAME }],
-    pluginRefs: [`one@${HOST_NAME}`],
-  });
   return manifest;
 }
+
+const seededRecords = (): RegistrationRecords =>
+  new Map([
+    [
+      TOOL.claude,
+      {
+        binary: "claude",
+        marketplaces: [{ alias: MARKET, hostName: HOST_NAME }],
+        pluginRefs: [`one@${HOST_NAME}`],
+      },
+    ],
+  ]);
 
 type Command = Omit<RemovePluginsFromMarketplaceRequest, "records">;
 
@@ -149,7 +157,7 @@ describe("RemovePluginsFromMarketplace", () => {
     const result = await useCase.execute(command());
 
     expect(withoutRef).toHaveBeenCalledExactlyOnceWith(expect.anything(), `one@${HOST_NAME}`);
-    expect((await repo.load())?.getNativeRegistrations(TOOL.claude)).toMatchObject({
+    expect(repo.records.get(TOOL.claude)).toMatchObject({
       binary: REWRITTEN_BINARY,
     });
     expect(result.claims?.nativeRefs).toStrictEqual(new Map([[TOOL.claude, [`one@${HOST_NAME}`]]]));

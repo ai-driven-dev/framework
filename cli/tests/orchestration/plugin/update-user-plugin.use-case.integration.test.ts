@@ -8,6 +8,7 @@ import { PluginMaterializer } from "../../../src/contexts/installation/applicati
 import { UpdateUserPluginFiles } from "../../../src/contexts/installation/application/plugin/update-user-plugin-files.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { isStrictlyWithinUserScope } from "../../../src/contexts/machine-claims/domain/user-scope-containment.js";
 import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.use-case.js";
 import { PluginDistribution } from "../../../src/shared/domain/plugin/plugin-distribution.js";
@@ -52,18 +53,23 @@ function fixture(
   const refs = options.refs ?? [REF];
   const machine = Manifest.create();
   machine.addTool(toolId, "1.0.0", []);
-  machine.setNativeRegistrations(toolId, {
-    binary: toolId,
-    marketplaces: refs.map((ref) => ({
-      alias: ref.split("@")[1],
-      hostName: ref.split("@")[1],
-      provenance: { kind: "registry" as const, source: "/previous/aidd/source" },
-    })),
-    pluginRefs: [...refs],
-    pluginClaims: refs.map((ref) => ({ ref, dependents: [...(options.dependents ?? [])] })),
-  });
+  const records: RegistrationRecords = new Map([
+    [
+      toolId,
+      {
+        binary: toolId,
+        marketplaces: refs.map((ref) => ({
+          alias: ref.split("@")[1],
+          hostName: ref.split("@")[1],
+          provenance: { kind: "registry" as const, source: "/previous/aidd/source" },
+        })),
+        pluginRefs: [...refs],
+        pluginClaims: refs.map((ref) => ({ ref, dependents: [...(options.dependents ?? [])] })),
+      },
+    ],
+  ]);
   if (options.installed) machine.addPlugin(toolId, options.installed);
-  const repo = new InMemoryManifestRepository(machine);
+  const repo = new InMemoryManifestRepository(machine, undefined, records);
   const fs = new InMemoryFileAdapter();
   const activator = new FakeHostActions({
     available: options.available ?? true,
@@ -147,11 +153,12 @@ describe("targeted machine native plugin update", () => {
     const f = fixture(copilot, { refs: [REF, OTHER], dependents: ["/A", "/B"] });
     await expect(f.execute(REF)).rejects.toThrow(/host source reader unavailable/);
     expect(f.activator.updatedPlugins).toEqual([]);
-    expect(f.repo.getCurrent()?.getNativeRegistrations(copilot)?.pluginClaims).toEqual([
+    expect(f.repo.records.get(copilot)?.pluginClaims).toEqual([
       { ref: REF, dependents: ["/A", "/B"] },
       { ref: OTHER, dependents: ["/A", "/B"] },
     ]);
     expect(f.repo.saveCount).toBe(0);
+    expect(f.repo.recordSaveCount).toBe(0);
   });
 
   it("refuses ambiguous catalogue names before updating any ref", async () => {
@@ -171,7 +178,7 @@ describe("targeted machine native plugin update", () => {
     const f = fixture(copilot, { refs, dependents: ["/B"] });
     await expect(f.execute(names)).rejects.toThrow(/host source reader unavailable/);
     expect(f.activator.updatedPlugins).toEqual([]);
-    expect(f.repo.getCurrent()?.getNativeRegistrations(copilot)?.pluginClaims).toEqual(
+    expect(f.repo.records.get(copilot)?.pluginClaims).toEqual(
       refs.map((ref) => ({ ref, dependents: ["/B"] }))
     );
   });
@@ -187,6 +194,7 @@ describe("targeted machine native plugin update", () => {
     expect(await f.executeAll()).toEqual([]);
     expect(f.activator.updatedPlugins).toEqual([]);
     expect(f.repo.saveCount).toBe(0);
+    expect(f.repo.recordSaveCount).toBe(0);
   });
 
   it("refuses an unavailable CLI or disabled host ref, retaining canonical claims", async () => {
@@ -199,9 +207,7 @@ describe("targeted machine native plugin update", () => {
         /CLI and readable host registry|not provably enabled/
       );
       expect(f.activator.updatedPlugins).toEqual([]);
-      expect(f.repo.getCurrent()?.getNativeRegistrations(copilot)?.pluginClaims).toEqual([
-        { ref: REF, dependents: [] },
-      ]);
+      expect(f.repo.records.get(copilot)?.pluginClaims).toEqual([{ ref: REF, dependents: [] }]);
     }
   });
 
@@ -212,9 +218,7 @@ describe("targeted machine native plugin update", () => {
     const f = fixture(toolId);
     await expect(f.execute(REF)).rejects.toThrow(/does not support targeted native plugin update/);
     expect(f.activator.updatedPlugins).toEqual([]);
-    expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
-      { ref: REF, dependents: [] },
-    ]);
+    expect(f.repo.records.get(toolId)?.pluginClaims).toEqual([{ ref: REF, dependents: [] }]);
   });
 
   it("does not touch a project-scope record when selected updating-tool source is unproved", async () => {
@@ -254,6 +258,7 @@ describe("targeted machine native plugin update", () => {
     await expect(f.execute([REF, OTHER])).rejects.toThrow(/not provably enabled/);
     expect(f.activator.updatedPlugins).toEqual([]);
     expect(f.repo.saveCount).toBe(0);
+    expect(f.repo.recordSaveCount).toBe(0);
   });
 
   it("all-target update refuses an unproved catalogue and preserves project records", async () => {
@@ -280,9 +285,8 @@ describe("targeted machine native plugin update", () => {
     await expect(f.execute(REF)).rejects.toThrow(/host source reader unavailable/);
     expect(f.activator.updatedPlugins).toEqual([]);
     expect(f.repo.saveCount).toBe(0);
-    expect(f.repo.getCurrent()?.getNativeRegistrations(copilot)?.pluginClaims).toEqual([
-      { ref: REF, dependents: [] },
-    ]);
+    expect(f.repo.recordSaveCount).toBe(0);
+    expect(f.repo.records.get(copilot)?.pluginClaims).toEqual([{ ref: REF, dependents: [] }]);
   });
 
   it("names the refs it cannot find when a rebuild leaves no native claim to update", async () => {

@@ -170,22 +170,27 @@ function activatorOf(setup: SyncSetup): FakeHostActions {
   );
 }
 
-function ownedMachineManifest(claude: AiToolId, name: string): Manifest {
+function ownedMachineManifest(claude: AiToolId, name: string): InMemoryManifestRepository {
   const machine = Manifest.create();
   machine.addTool(claude, "test", []);
-  machine.setNativeRegistrations(claude, {
-    binary: SYNTHETIC_NATIVE_TOOL,
-    marketplaces: [
+  const records = new Map([
+    [
+      claude,
       {
-        alias: name,
-        hostName: name,
-        provenance: { kind: "registry", source: `/built/${SYNTHETIC_NATIVE_TOOL}` },
+        binary: SYNTHETIC_NATIVE_TOOL,
+        marketplaces: [
+          {
+            alias: name,
+            hostName: name,
+            provenance: { kind: "registry" as const, source: `/built/${SYNTHETIC_NATIVE_TOOL}` },
+          },
+        ],
+        pluginRefs: [],
+        pluginClaims: [],
       },
     ],
-    pluginRefs: [],
-    pluginClaims: [],
-  });
-  return machine;
+  ]);
+  return new InMemoryManifestRepository(machine, undefined, records);
 }
 
 function ensureBuiltPerMarketplace(primary: string): BuiltMarketplaceEnsurer {
@@ -250,7 +255,7 @@ async function syncWith(setup: SyncSetup) {
     activators: new Map([[claude, activator]]),
     ensureBuilt: setup.ensureBuilt ?? ensureBuiltPerMarketplace(primary),
     hostPluginRegistries: readableClaudePluginRegistry(claude),
-    userManifestRepo: machine === undefined ? undefined : new InMemoryManifestRepository(machine),
+    userManifestRepo: machine,
     nativeSources: nativeSourcesOf(claude, activator, {
       names,
       owned: setup.ownedCatalog === true,

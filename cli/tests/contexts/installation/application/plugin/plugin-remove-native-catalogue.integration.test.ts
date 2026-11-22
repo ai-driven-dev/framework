@@ -2,6 +2,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
+import type { RegistrationRecords } from "../../../../../src/contexts/installation/ports/record/registration-records.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
@@ -45,8 +46,9 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
       claude,
       anInstalledPlugin({ name: "other-plugin", scope: "project", marketplace: "other-alias" })
     );
+    const records: RegistrationRecords = new Map();
     if (options.registrations !== false)
-      record.setNativeRegistrations(claude, {
+      records.set(claude, {
         binary: "claude",
         marketplaces: [
           { alias: "other-alias", hostName: "other-host", provenance },
@@ -82,7 +84,7 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
       failOnUninstall: options.fail ? [REF] : [],
     });
     const logger = new CapturingLogger();
-    const repo = new InMemoryManifestRepository(record, SELECTION_ROOT);
+    const repo = new InMemoryManifestRepository(record, SELECTION_ROOT, records);
     const remove = pluginRemover({
       fs,
       manifestRepo: repo,
@@ -114,7 +116,7 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
 
   it("removes the exact confirmed ref and cache while preserving sibling registrations", async () => {
     const f = fixture();
-    const marketplaces = f.record.getNativeRegistrations(claude)?.marketplaces;
+    const marketplaces = f.repo.records.get(claude)?.marketplaces;
 
     await f.remove.execute({
       pluginName: SELECTED_PLUGIN,
@@ -124,8 +126,8 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
 
     expect(f.activator.uninstalledPlugins).toEqual([REF]);
     expect(f.activator.uninstalledPluginScopes).toEqual(["project"]);
-    expect(f.record.getNativeRegistrations(claude)?.pluginRefs).toEqual([FOREIGN]);
-    expect(f.record.getNativeRegistrations(claude)?.marketplaces).toEqual(marketplaces);
+    expect(f.repo.records.get(claude)?.pluginRefs).toEqual([FOREIGN]);
+    expect(f.repo.records.get(claude)?.marketplaces).toEqual(marketplaces);
     expect(f.record.getPlugins(claude).map((entry) => entry.name)).toEqual(["other-plugin"]);
     expect(await f.fs.fileExists(f.cache)).toBe(false);
     expect(f.fs.getFile(f.foreignCache)).toBe("foreign cache");
@@ -148,7 +150,7 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
         projectRoot: SELECTION_ROOT,
       });
 
-      expect(f.record.getNativeRegistrations(claude)?.pluginRefs).toEqual([FOREIGN, REF]);
+      expect(f.repo.records.get(claude)?.pluginRefs).toEqual([FOREIGN, REF]);
       expect(f.fs.getFile(f.cache)).toBe("target cache");
       expect(f.fs.getFile(f.foreignCache)).toBe("foreign cache");
       expect(f.activator.uninstalledPlugins).toEqual([]);
@@ -170,7 +172,7 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
     });
 
     expect(f.activator.uninstalledPlugins).toEqual([]);
-    expect(f.record.getNativeRegistrations(claude)).toBeUndefined();
+    expect(f.repo.records.get(claude)).toBeUndefined();
     expect(f.fs.getFile(f.cache)).toBe("target cache");
     expect(f.logger.warnMessages).toEqual([
       `claude CLI not found on PATH — '${SELECTED_PLUGIN}@${ALIAS}' was not uninstalled from the host; its ref may remain enabled after local removal.`,
@@ -199,12 +201,18 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
         { ref: REF, dependents: [SELECTION_ROOT, SELECTION_OTHER_ROOT] },
       ],
     };
-    project.setNativeRegistrations(codex, registrations);
     const machine = Manifest.create();
     machine.addTool(codex, "1.0.0", []);
-    machine.setNativeRegistrations(codex, registrations);
-    const userRepo = new InMemoryManifestRepository(machine);
-    const projectRepo = new InMemoryManifestRepository(project, SELECTION_ROOT);
+    const userRepo = new InMemoryManifestRepository(
+      machine,
+      undefined,
+      new Map([[codex, registrations]])
+    );
+    const projectRepo = new InMemoryManifestRepository(
+      project,
+      SELECTION_ROOT,
+      new Map([[codex, registrations]])
+    );
     const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
     const remove = pluginRemover({
@@ -233,15 +241,16 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
     });
 
     expect(activator.uninstalledPlugins).toEqual([]);
-    expect(machine.getNativeRegistrations(codex)?.pluginRefs).toEqual([FOREIGN, REF]);
-    expect(machine.getNativeRegistrations(codex)?.pluginClaims).toEqual([
+    expect(userRepo.records.get(codex)?.pluginRefs).toEqual([FOREIGN, REF]);
+    expect(userRepo.records.get(codex)?.pluginClaims).toEqual([
       { ref: FOREIGN, dependents: [SELECTION_ROOT, SELECTION_OTHER_ROOT] },
       { ref: REF, dependents: [SELECTION_OTHER_ROOT] },
     ]);
-    expect(project.getNativeRegistrations(codex)?.pluginRefs).toEqual([FOREIGN]);
+    expect(projectRepo.records.get(codex)?.pluginRefs).toEqual([FOREIGN]);
     expect(project.getPlugins(codex)).toEqual([]);
     expect(project.getPlugins(cursor)).toEqual([]);
-    expect(userRepo.saveCount).toBe(1);
+    expect(userRepo.recordSaveCount).toBe(1);
+    expect(userRepo.saveCount).toBe(0);
     expect(projectRepo.saveCount).toBe(1);
     expect(logger.warnMessages).toEqual([
       `codex: '${REF}' is an AIDD-owned machine plugin ref — left enabled; this project's claim detaches after local removal.`,

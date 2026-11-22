@@ -10,7 +10,7 @@
       ".gitignore"
     ],
     "manifest": {
-      "version": 8,
+      "version": 9,
       "tools": {
         "claude": {
           "toolId": "claude",
@@ -33,7 +33,7 @@
     "stderr": "Warning: claude CLI not found on PATH — skipping native plugin activation.\n",
     "filesWritten": [],
     "manifest": {
-      "version": 8,
+      "version": 9,
       "tools": {
         "claude": {
           "toolId": "claude",
@@ -64,7 +64,7 @@
       "references.json"
     ],
     "userManifest": {
-      "version": 8,
+      "version": 9,
       "tools": {
         "claude": {
           "toolId": "claude",
@@ -82,7 +82,7 @@
     "stderr": "",
     "filesWritten": [],
     "manifest": {
-      "version": 8,
+      "version": 9,
       "tools": {
         "claude": {
           "toolId": "claude",
@@ -105,7 +105,7 @@
     "stderr": "",
     "filesWritten": [],
     "manifest": {
-      "version": 8,
+      "version": 9,
       "tools": {
         "claude": {
           "toolId": "claude",
@@ -128,7 +128,7 @@
     "stderr": "",
     "filesWritten": [],
     "manifest": {
-      "version": 8,
+      "version": 9,
       "tools": {
         "claude": {
           "toolId": "claude",
@@ -151,7 +151,7 @@
     "stderr": "",
     "filesWritten": [],
     "manifest": {
-      "version": 8,
+      "version": 9,
       "tools": {
         "claude": {
           "toolId": "claude",
@@ -174,7 +174,7 @@
     "stderr": "Warning: claude CLI not found on PATH — skipping native plugin activation.\n",
     "filesWritten": [],
     "manifest": {
-      "version": 8,
+      "version": 9,
       "tools": {
         "claude": {
           "toolId": "claude",
@@ -211,7 +211,7 @@
     "stderr": "",
     "filesWritten": [],
     "manifest": {
-      "version": 8,
+      "version": 9,
       "tools": {
         "claude": {
           "toolId": "claude",
@@ -253,7 +253,7 @@
       ".cursor/settings.json"
     ],
     "manifest": {
-      "version": 8,
+      "version": 9,
       "tools": {
         "claude": {
           "toolId": "claude",
@@ -333,7 +333,7 @@
     "stderr": "Warning:   <HOME>/.claude/plugins/installed_plugins.json could not be read — ENOENT\n    Fix: The plugin does not load until claude's own CLI has run and answered this.\n",
     "filesWritten": [],
     "manifest": {
-      "version": 8,
+      "version": 9,
       "tools": {
         "claude": {
           "toolId": "claude",
@@ -413,7 +413,7 @@
     "stderr": "Warning:   <HOME>/.claude/plugins/installed_plugins.json could not be read — ENOENT\n    Fix: The plugin does not load until claude's own CLI has run and answered this.\nWarning:   Modified tracked file: .claude/settings.json\n    Fix: Run `aidd sync --force` to revert to the framework version.\n",
     "filesWritten": [],
     "manifest": {
-      "version": 8,
+      "version": 9,
       "tools": {
         "claude": {
           "toolId": "claude",
@@ -493,7 +493,7 @@
     "stderr": "Warning: claude CLI not found on PATH — skipping native plugin activation.\nWarning: This project's own pre-migration framework cache kept: a requested tool's CLI was not on PATH this run, so its own registration may still point at it — run `aidd sync` again once every tool's CLI is on PATH.\nWarning: claude: the plugin will not load until the claude CLI has run.\n",
     "filesWritten": [],
     "manifest": {
-      "version": 8,
+      "version": 9,
       "tools": {
         "claude": {
           "toolId": "claude",
@@ -573,7 +573,7 @@
     "stderr": "Warning:   <HOME>/.claude/plugins/installed_plugins.json could not be read — ENOENT\n    Fix: The plugin does not load until claude's own CLI has run and answered this.\n",
     "filesWritten": [],
     "manifest": {
-      "version": 8,
+      "version": 9,
       "tools": {
         "claude": {
           "toolId": "claude",
@@ -653,7 +653,7 @@
     "stderr": "Warning: claude CLI not found on PATH — 'aidd-test@aidd-framework' was not uninstalled from the host; its ref may remain enabled after local removal.\nWarning: claude CLI not found on PATH — skipping native plugin activation.\n",
     "filesWritten": [],
     "manifest": {
-      "version": 8,
+      "version": 9,
       "tools": {
         "claude": {
           "toolId": "claude",
@@ -713,7 +713,7 @@
       "references.json"
     ],
     "userManifest": {
-      "version": 8,
+      "version": 9,
       "tools": {
         "claude": {
           "toolId": "claude",
@@ -836,7 +836,7 @@
       "marketplaces.json"
     ],
     "userManifest": {
-      "version": 8,
+      "version": 9,
       "tools": {
         "claude": {
           "toolId": "claude",

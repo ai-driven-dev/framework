@@ -3,8 +3,9 @@ import { RefreshHostPlugin } from "../../../src/contexts/host-registration/appli
 import type { HostPluginRegistryReading } from "../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { RegistrationRecord } from "../../../src/contexts/host-registration/domain/record/registration-record.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
-import type { NativeRegistrations } from "../../../src/contexts/installation/domain/manifest/native-registrations.js";
+import { LoadManifest } from "../../../src/contexts/installation/application/doctor/load-manifest.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type { RegistrationRecordData } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { hostInspector } from "../../shared/testing/host-inspector.builder.js";
@@ -13,19 +14,20 @@ import {
   proveMarketplaceRemoval,
 } from "../../shared/testing/host-withdrawal.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import {
   SYNTHETIC_UPDATING_NATIVE_TOOL,
   syntheticNativeFamilyCatalog,
 } from "../../shared/testing/synthetic-native-tool.builder.js";
-import { buildCheckRegistration } from "../testing/build-check-registration.builder.js";
+import { checkRegistrationOver } from "../testing/build-check-registration.builder.js";
 
 const tool = SYNTHETIC_UPDATING_NATIVE_TOOL;
 const HOST = "real-catalog";
 const REF = `test-plugin@${HOST}`;
 const LOCATION = "/host/registry";
 const provenance = { kind: "registry" as const, source: "/owned/source" };
-const registrations: NativeRegistrations & RegistrationRecord = {
+const registrations: RegistrationRecordData & RegistrationRecord = {
   binary: SYNTHETIC_UPDATING_NATIVE_TOOL,
   marketplaces: [{ alias: "alias", hostName: HOST, provenance }],
   pluginRefs: [REF],
@@ -129,8 +131,10 @@ const refreshOf = (registry: HostPluginRegistryReading, sources?: HostMarketplac
 async function doctorSays(registry: HostPluginRegistryReading): Promise<string> {
   const manifest = Manifest.create();
   manifest.addTool(tool, "test", []);
-  manifest.setNativeRegistrations(tool, registrations);
-  const issues = await buildCheckRegistration(
+  const issues = await checkRegistrationOver(
+    new LoadManifest(
+      new InMemoryManifestRepository(manifest, undefined, new Map([[tool, registrations]]))
+    ),
     new InMemoryFileAdapter(),
     new InMemoryMarketplaceRegistry(),
     () => false,
@@ -142,7 +146,7 @@ async function doctorSays(registry: HostPluginRegistryReading): Promise<string> 
     () => "/user-cache",
     "1.0.0",
     syntheticNativeFamilyCatalog()
-  ).execute({ manifest, projectRoot: "/A", allowedIds: null });
+  ).execute({ projectRoot: "/A", allowedIds: null });
   return issues.length === 0 ? "none" : issues.map((i) => `${i.severity}: ${i.message}`).join("\n");
 }
 

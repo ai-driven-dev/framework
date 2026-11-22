@@ -282,11 +282,17 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
       pluginRefs: [ref, "other-plugin@host-catalogue"],
       pluginClaims: [{ ref, dependents: [SELECTION_ROOT, SELECTION_OTHER_ROOT] }],
     };
-    project.setNativeRegistrations(claude, registrations);
     const machine = aMachineWithClaudeAndCursor();
-    machine.setNativeRegistrations(claude, registrations);
-    const repo = new InMemoryManifestRepository(project, SELECTION_ROOT);
-    const userRepo = new InMemoryManifestRepository(machine);
+    const repo = new InMemoryManifestRepository(
+      project,
+      SELECTION_ROOT,
+      new Map([[claude, registrations]])
+    );
+    const userRepo = new InMemoryManifestRepository(
+      machine,
+      undefined,
+      new Map([[claude, registrations]])
+    );
     const remove = pluginRemover({
       fs: new InMemoryFileAdapter({}, [SELECTION_ROOT, SELECTION_OTHER_ROOT]),
       manifestRepo: repo,
@@ -299,19 +305,14 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
       projectRoot: SELECTION_ROOT,
     });
 
-    expect(project.getNativeRegistrations(claude)?.pluginRefs).toEqual([
-      ref,
-      "other-plugin@host-catalogue",
-    ]);
-    expect(machine.getNativeRegistrations(claude)?.pluginRefs).toEqual([
-      ref,
-      "other-plugin@host-catalogue",
-    ]);
-    expect(machine.getNativeRegistrations(claude)?.pluginClaims).toEqual([
+    expect(repo.records.get(claude)?.pluginRefs).toEqual([ref, "other-plugin@host-catalogue"]);
+    expect(userRepo.records.get(claude)?.pluginRefs).toEqual([ref, "other-plugin@host-catalogue"]);
+    expect(userRepo.records.get(claude)?.pluginClaims).toEqual([
       { ref, dependents: [SELECTION_OTHER_ROOT] },
     ]);
     expect(project.getRecordedPlugins(claude)).toEqual([]);
-    expect(userRepo.saveCount).toBe(1);
+    expect(userRepo.recordSaveCount).toBe(1);
+    expect(userRepo.saveCount).toBe(0);
     expect(repo.saveCount).toBe(1);
   });
 });

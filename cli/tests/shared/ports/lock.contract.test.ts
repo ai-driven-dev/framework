@@ -16,11 +16,11 @@ describeLockContract(
 describeLockContract("the user manifest lock on a temp dir", async (): Promise<LockSubject> => {
   const root = await mkdtemp(join(tmpdir(), "aidd-lock-contract-"));
   return {
-    lock: new UserManifestRepositoryAdapter(
-      () => root,
-      async () => undefined,
-      () => null
-    ),
+    lock: new UserManifestRepositoryAdapter(() => root, {
+      atomicWriter: async () => undefined,
+      resolveToolId: () => null,
+      records: { load: async () => new Map(), save: async () => undefined },
+    }),
     dispose: () => rm(root, { recursive: true, force: true }),
   };
 });

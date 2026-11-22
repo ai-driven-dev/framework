@@ -300,6 +300,7 @@ async function describeHookFiles(ws: Workspace, bases: readonly string[]): Promi
 
 type RecordedManifest = NonNullable<Awaited<ReturnType<Deps["manifestRepo"]["load"]>>>;
 
+type RegistrationRecords = Awaited<ReturnType<Deps["manifestRepo"]["loadRecords"]>>;
 type RecordedPlugin = ReturnType<RecordedManifest["getRecordedPlugins"]>[number];
 
 function recordedPluginLines(
@@ -326,6 +327,7 @@ function recordedPluginLines(
 async function recordedPlugins(
   ws: Workspace,
   manifest: RecordedManifest | null,
+  records: RegistrationRecords,
   scope: string
 ): Promise<string[]> {
   if (manifest === null) return [`${scope}: no manifest`];
@@ -334,7 +336,7 @@ async function recordedPlugins(
     for (const plugin of manifest.getRecordedPlugins(toolId)) {
       lines.push(...recordedPluginLines(ws, { scope, toolId }, plugin));
     }
-    const registrations = manifest.getNativeRegistrations(toolId);
+    const registrations = records.get(toolId);
     lines.push(
       `${scope} ${toolId} nativeRegistrations pluginRefs ${JSON.stringify(registrations?.pluginRefs ?? null)}`
     );
@@ -345,8 +347,18 @@ async function recordedPlugins(
 async function pluginsRecorded(ws: Workspace): Promise<string> {
   const wired = await deps(ws.project);
   const lines = [
-    ...(await recordedPlugins(ws, await wired.manifestRepo.load(), "project")),
-    ...(await recordedPlugins(ws, await wired.userManifestRepo.load(), "machine")),
+    ...(await recordedPlugins(
+      ws,
+      await wired.manifestRepo.load(),
+      await wired.manifestRepo.loadRecords(),
+      "project"
+    )),
+    ...(await recordedPlugins(
+      ws,
+      await wired.userManifestRepo.load(),
+      await wired.userManifestRepo.loadRecords(),
+      "machine"
+    )),
   ];
   return `${normalize(lines.join("\n"), ws)}\n`;
 }

@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { registrationRecordRules } from "../../../../../src/composition/installation.js";
 import { RecordMachineClaims } from "../../../../../src/contexts/machine-claims/application/record/record-machine-claims.use-case.js";
-import type { ClaimingMachineManifest } from "../../../../../src/contexts/machine-claims/ports/machine-manifest.js";
+import type {
+  ClaimingMachineManifest,
+  MachineRecords,
+} from "../../../../../src/contexts/machine-claims/ports/machine-manifest.js";
 import { registeredCatalog } from "../../../../shared/testing/catalog-of.builder.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
@@ -9,21 +12,14 @@ import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 const { claude } = TOOL;
 const REF = "aidd-telemetry@aidd-framework";
 
-/** A machine record holding tools and their registrations, nothing else. */
+/** A machine record holding tools, nothing else. */
 class MachineRecord implements ClaimingMachineManifest {
   readonly tools = new Set<string>();
-  readonly registrations = new Map<string, Readonly<Record<string, unknown>>>();
   hasTool(toolId: string): boolean {
     return this.tools.has(toolId);
   }
   addTool(toolId: string): void {
     this.tools.add(toolId);
-  }
-  getNativeRegistrations(toolId: string) {
-    return this.registrations.get(toolId);
-  }
-  setNativeRegistrations(toolId: string, registrations: Readonly<Record<string, unknown>>): void {
-    this.registrations.set(toolId, registrations);
   }
   getRecordedPlugins() {
     return [];
@@ -31,7 +27,11 @@ class MachineRecord implements ClaimingMachineManifest {
   updatePlugin(): void {}
 }
 
-function recorderSaving(saved: ClaimingMachineManifest[], loaded: MachineRecord | null) {
+function recorderSaving(
+  saved: ClaimingMachineManifest[],
+  savedRecords: MachineRecords[],
+  loaded: MachineRecord | null
+) {
   return new RecordMachineClaims(
     {
       fs: new InMemoryFileAdapter({}),
@@ -39,6 +39,10 @@ function recorderSaving(saved: ClaimingMachineManifest[], loaded: MachineRecord 
         load: async () => loaded,
         save: async (machine) => {
           saved.push(machine);
+        },
+        loadRecords: async () => new Map(),
+        saveRecords: async (records) => {
+          savedRecords.push(records);
         },
       },
       emptyManifest: () => new MachineRecord(),
@@ -71,21 +75,27 @@ describe("RecordMachineClaims", () => {
 
   it("starts an empty record for a machine that has none, tracking the project's tool", async () => {
     const saved: ClaimingMachineManifest[] = [];
+    const savedRecords: MachineRecords[] = [];
 
-    await expect(recorderSaving(saved, null).execute(claimOf("test"))).resolves.toBe(true);
+    await expect(recorderSaving(saved, savedRecords, null).execute(claimOf("test"))).resolves.toBe(
+      true
+    );
 
     expect(saved).toHaveLength(1);
     expect(saved[0]?.hasTool(claude)).toBe(true);
-    expect(saved[0]?.getNativeRegistrations(claude)?.pluginClaims).toEqual([
-      { ref: REF, dependents: [] },
-    ]);
+    expect(savedRecords).toHaveLength(1);
+    expect(savedRecords[0]?.get(claude)?.pluginClaims).toEqual([{ ref: REF, dependents: [] }]);
   });
 
   it("claims nothing for a tool the project has no version of", async () => {
     const saved: ClaimingMachineManifest[] = [];
+    const savedRecords: MachineRecords[] = [];
 
-    await expect(recorderSaving(saved, null).execute(claimOf(undefined))).resolves.toBe(false);
+    await expect(
+      recorderSaving(saved, savedRecords, null).execute(claimOf(undefined))
+    ).resolves.toBe(false);
 
     expect(saved).toEqual([]);
+    expect(savedRecords).toEqual([]);
   });
 });

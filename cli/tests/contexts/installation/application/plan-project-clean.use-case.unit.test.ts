@@ -3,15 +3,19 @@ import { registrationRecordRules } from "../../../../src/composition/installatio
 import { PlanProjectClean } from "../../../../src/contexts/installation/application/plan-project-clean.use-case.js";
 import type { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import type { RegistrationRecords } from "../../../../src/contexts/installation/ports/record/registration-records.js";
 import type { Scope } from "../../../../src/shared/domain/scope.js";
 import { InMemoryManifestRepository } from "../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { aManifest } from "../testing/manifest.builder.js";
 
-function planOver(manifest: Manifest | null): PlanProjectClean {
+function planOver(
+  manifest: Manifest | null,
+  records: RegistrationRecords = new Map()
+): PlanProjectClean {
   return new PlanProjectClean(
     {
-      manifestRepo: new InMemoryManifestRepository(manifest, "/test-project"),
+      manifestRepo: new InMemoryManifestRepository(manifest, "/test-project", records),
       asks: { homeDir: () => "/home" },
     },
     registeredTools()
@@ -49,13 +53,18 @@ describe("PlanProjectClean", () => {
       .withTool(TOOL.codex, [])
       .withPlugin(TOOL.codex, localPlugin("unregistered"))
       .build();
-    manifest.setNativeRegistrations(TOOL.codex, {
-      binary: "codex",
-      marketplaces: [{ alias: "aidd", hostName: "aidd" }],
-      pluginRefs: [],
-    });
+    const records: RegistrationRecords = new Map([
+      [
+        TOOL.codex,
+        {
+          binary: "codex",
+          marketplaces: [{ alias: "aidd", hostName: "aidd" }],
+          pluginRefs: [],
+        },
+      ],
+    ]);
 
-    const plan = await planOver(manifest).execute(registrationRecordRules);
+    const plan = await planOver(manifest, records).execute(registrationRecordRules);
 
     expect(plan?.withdrawals.map((w) => w.refScopes.size)).toEqual([0]);
   });

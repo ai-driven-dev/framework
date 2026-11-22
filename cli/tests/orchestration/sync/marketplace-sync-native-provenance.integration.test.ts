@@ -89,7 +89,7 @@ describe.each([SYNTHETIC_TOOL, SECOND_SYNTHETIC_TOOL] as const)(
           source: "/other",
         },
       };
-      machine.setNativeRegistrations(toolId, {
+      machine.records.set(toolId, {
         binary: toolId,
         marketplaces: [otherRegistration, targetRegistration],
         pluginRefs: [otherRef],
@@ -117,10 +117,8 @@ describe.each([SYNTHETIC_TOOL, SECOND_SYNTHETIC_TOOL] as const)(
       expect(fixture.activator.addedMarketplaces).toStrictEqual([]);
       expect(fixture.activator.removedMarketplaces).toStrictEqual([]);
       expect(fixture.activator.refreshedCatalogs).toStrictEqual([CATALOG]);
-      expect(
-        fixture.projectRepo.getCurrent()?.getNativeRegistrations(toolId)?.pluginRefs
-      ).toStrictEqual([PLUGIN_REF]);
-      expect(fixture.machineRepo.getCurrent()?.getNativeRegistrations(toolId)).toStrictEqual({
+      expect(fixture.projectRepo.records.get(toolId)?.pluginRefs).toStrictEqual([PLUGIN_REF]);
+      expect(fixture.machineRepo.records.get(toolId)).toStrictEqual({
         binary: toolId,
         marketplaces: [otherRegistration, targetRegistration],
         pluginRefs: [otherRef],
@@ -176,9 +174,7 @@ describe.each([SYNTHETIC_TOOL, SECOND_SYNTHETIC_TOOL] as const)(
       expect(fixture.activator.addedMarketplaces).toEqual([`/built/${toolId}`]);
       expect(fixture.activator.enabledPlugins).toEqual([PLUGIN_REF]);
       expect(fixture.activator.refreshedCatalogs).toEqual([]);
-      expect(
-        fixture.machineRepo.getCurrent()?.getNativeRegistrations(toolId)?.marketplaces
-      ).toEqual([
+      expect(fixture.machineRepo.records.get(toolId)?.marketplaces).toEqual([
         {
           alias: CATALOG,
           hostName: CATALOG,

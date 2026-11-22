@@ -6,9 +6,8 @@ import { setTimeout as pause } from "node:timers/promises";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { UserManifestRepositoryAdapter } from "../../../../src/contexts/installation/infrastructure/user-manifest-repository-adapter.js";
-import { atomicWriteFile } from "../../../../src/shared/infrastructure/atomic-write.js";
-import { resolveRegisteredToolId, TOOL } from "../../../shared/testing/registered-tools.builder.js";
-import { saying } from "../../../shared/testing/saying.builder.js";
+import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { manifestFileDeps } from "../testing/manifest-file-deps.builder.js";
 
 describe("UserManifestRepositoryAdapter", () => {
   let userConfigDir: string;
@@ -18,8 +17,7 @@ describe("UserManifestRepositoryAdapter", () => {
     userConfigDir = await mkdtemp(join(tmpdir(), "aidd-user-manifest-repo-"));
     adapter = new UserManifestRepositoryAdapter(
       () => userConfigDir,
-      atomicWriteFile,
-      resolveRegisteredToolId
+      manifestFileDeps(() => userConfigDir)
     );
   });
 
@@ -27,68 +25,11 @@ describe("UserManifestRepositoryAdapter", () => {
     await rm(userConfigDir, { recursive: true, force: true });
   });
 
-  it("names manifest.json directly under the user config dir, no .aidd nesting", () => {
-    expect(adapter.path).toBe(join(userConfigDir, "manifest.json"));
-  });
-
   describe("loadIfReadable()", () => {
-    it("answers none, rather than rejecting, when manifest.json is truncated", async () => {
-      await writeFile(join(userConfigDir, "manifest.json"), '{"version": 8, "tools": {');
-
-      expect(await adapter.loadIfReadable()).toBeNull();
-    });
-
     it("answers the manifest when it is readable", async () => {
       await adapter.save(Manifest.create());
 
       expect(await adapter.loadIfReadable()).not.toBeNull();
-    });
-  });
-
-  describe("load()", () => {
-    it("returns null when manifest.json does not exist", async () => {
-      expect(await adapter.load()).toBeNull();
-    });
-
-    it("rejects with an instructive error naming the file when manifest.json is truncated", async () => {
-      const manifestPath = join(userConfigDir, "manifest.json");
-      await writeFile(manifestPath, '{"version": 8, "tools": {');
-
-      await expect(adapter.load()).rejects.toThrow(saying(manifestPath));
-    });
-
-    it('rejects a refused manifest version naming the real user manifest path and `aidd setup --global`, never .aidd/manifest.json or "in this project"', async () => {
-      const manifestPath = join(userConfigDir, "manifest.json");
-      await writeFile(manifestPath, '{"version": 7, "tools": {}}');
-
-      await expect(adapter.load()).rejects.toThrow(
-        saying(
-          new RegExp(`${manifestPath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}.*aidd setup --global`)
-        )
-      );
-      await expect(adapter.load()).rejects.not.toThrow(saying(/\.aidd\/manifest\.json/));
-      await expect(adapter.load()).rejects.not.toThrow(saying(/in this project/));
-    });
-
-    it("names this machine as where the refused manifest lives", async () => {
-      const manifestPath = join(userConfigDir, "manifest.json");
-      await writeFile(manifestPath, '{"version": 7, "tools": {}}');
-
-      await expect(adapter.load()).rejects.toThrow(
-        saying(
-          `delete ${manifestPath} for this machine, then run \`aidd setup --global\` to reinstall the framework.`
-        )
-      );
-    });
-  });
-
-  describe("save() + load() roundtrip", () => {
-    it("persists and restores the manifest without data loss", async () => {
-      const manifest = Manifest.create();
-      await adapter.save(manifest);
-
-      const loaded = await adapter.load();
-      expect(loaded?.getInstalledToolIds()).toHaveLength(0);
     });
   });
 
@@ -107,8 +48,7 @@ describe("UserManifestRepositoryAdapter", () => {
     it("serializes two claims so the second reads the first after the lock releases", async () => {
       const second = new UserManifestRepositoryAdapter(
         () => userConfigDir,
-        atomicWriteFile,
-        resolveRegisteredToolId
+        manifestFileDeps(() => userConfigDir)
       );
       let release = () => {};
       const held = new Promise<void>((resolve) => {
@@ -152,10 +92,12 @@ describe("UserManifestRepositoryAdapter", () => {
       await adapter.save(baseline);
       const failing = new UserManifestRepositoryAdapter(
         () => userConfigDir,
-        async () => {
-          throw new Error("write failed before rename");
-        },
-        resolveRegisteredToolId
+        manifestFileDeps(
+          () => userConfigDir,
+          async () => {
+            throw new Error("write failed before rename");
+          }
+        )
       );
       const replacement = Manifest.create();
       replacement.addTool(TOOL.codex, "1.0.0", []);
@@ -202,8 +144,7 @@ describe("UserManifestRepositoryAdapter", () => {
       const freshDir = join(userConfigDir, "not-yet-created");
       const freshAdapter = new UserManifestRepositoryAdapter(
         () => freshDir,
-        atomicWriteFile,
-        resolveRegisteredToolId
+        manifestFileDeps(() => freshDir)
       );
 
       await freshAdapter.save(Manifest.create());

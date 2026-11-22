@@ -79,28 +79,6 @@ describe("a tool's manifest entry", () => {
   });
 
   describe("serialized", () => {
-    it("carries what the tool's own CLI was asked to register through a round trip", () => {
-      const entry: ToolEntry = {
-        ...makeEntry([]),
-        nativeRegistrations: {
-          binary: "claude",
-          marketplaces: [{ alias: "aidd-framework", hostName: "ai-driven-dev" }],
-          pluginRefs: ["aidd-context@ai-driven-dev"],
-        },
-      };
-
-      const data = serializeToolEntry(entry);
-
-      expect(data.nativeRegistrations).toStrictEqual({
-        binary: "claude",
-        marketplaces: [{ alias: "aidd-framework", hostName: "ai-driven-dev" }],
-        pluginRefs: ["aidd-context@ai-driven-dev"],
-      });
-      expect(parseToolEntry(TOOL.claude, data).nativeRegistrations).toStrictEqual(
-        entry.nativeRegistrations
-      );
-    });
-
     const storedPlugin = (extra: Record<string, unknown>): PluginEntryData => ({
       name: "aidd-dev",
       source: { kind: "github", repo: "owner/aidd-dev" },

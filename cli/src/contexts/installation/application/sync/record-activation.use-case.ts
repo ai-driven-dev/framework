@@ -5,8 +5,11 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
 import { driftOf } from "../../domain/manifest/drift.js";
-import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import type { Manifest } from "../../domain/manifest.js";
+import type {
+  RegistrationRecordData,
+  RegistrationRecords,
+} from "../../ports/record/registration-records.js";
 
 /** A marketplace the host registered: the manifest reads the two names and keeps the rest. */
 export type RegisteredMarketplace = Readonly<Record<string, unknown>> & {
@@ -27,16 +30,16 @@ export type HostRegistrationOutcome = {
 /** The record a tool's activation leaves, `undefined` when it equals the one recorded: the host
  * registration's to answer. */
 export type ActivationRecord = (
-  existing: NativeRegistrations | undefined,
+  existing: RegistrationRecordData | undefined,
   outcome: HostRegistrationOutcome,
   run: { readonly binary: string; readonly narrowed: boolean }
-) => NativeRegistrations | undefined;
+) => RegistrationRecordData | undefined;
 
 /** What a run observed or caused. Each answer says whether it changed a manifest. */
 export type RecordActivationRequest =
   | {
       readonly kind: "native-registrations";
-      readonly manifest: Manifest;
+      readonly records: RegistrationRecords;
       readonly activated: ReadonlyMap<ToolId, HostRegistrationOutcome>;
       readonly narrowed: boolean;
       readonly afterActivation: ActivationRecord;
@@ -73,7 +76,7 @@ export class RecordActivation {
 
   /** Only for a tool this run actually activated. */
   private recordNativeRegistrations({
-    manifest,
+    records,
     activated,
     narrowed,
     afterActivation,
@@ -82,12 +85,12 @@ export class RecordActivation {
     for (const [toolId, outcome] of activated) {
       const binary = this.nativeActivationBinary(toolId);
       if (binary === undefined) continue;
-      const registrations = afterActivation(manifest.getNativeRegistrations(toolId), outcome, {
+      const registrations = afterActivation(records.get(toolId), outcome, {
         binary,
         narrowed,
       });
       if (registrations === undefined) continue;
-      manifest.setNativeRegistrations(toolId, registrations);
+      records.set(toolId, registrations);
       changed = true;
     }
     return changed;

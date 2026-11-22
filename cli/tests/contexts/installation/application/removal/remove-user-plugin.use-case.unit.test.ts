@@ -6,6 +6,7 @@ import {
   PluginNotFoundError,
 } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import type { RegistrationRecords } from "../../../../../src/contexts/installation/ports/record/registration-records.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
@@ -34,6 +35,7 @@ function fixture(
     dependents?: string[];
     provenFiles?: string[];
     manifest?: ReturnType<ReturnType<typeof aManifest>["build"]>;
+    records?: RegistrationRecords;
   } = {}
 ) {
   const manifest =
@@ -42,7 +44,7 @@ function fixture(
       .withTool(TOOL.claude, [])
       .withPlugin(TOOL.claude, userPlugin(options.dependents))
       .build();
-  const repo = new InMemoryManifestRepository(manifest);
+  const repo = new InMemoryManifestRepository(manifest, undefined, options.records);
   const files = new FakeUserScopePluginFiles(
     new Map([[NAME, new Map((options.provenFiles ?? ["a.md", "b.md"]).map((f) => [f, "h"]))]])
   );
@@ -129,13 +131,18 @@ describe("RemoveUserPlugin", () => {
   describe("native refs", () => {
     function nativeFixture(refs: string[]) {
       const manifest = aManifest().withTool(TOOL.codex, []).build();
-      manifest.setNativeRegistrations(TOOL.codex, {
-        binary: "codex",
-        marketplaces: [],
-        pluginRefs: refs,
-        pluginClaims: refs.map((ref) => ({ ref, dependents: [] })),
-      });
-      return fixture({ manifest });
+      const records: RegistrationRecords = new Map([
+        [
+          TOOL.codex,
+          {
+            binary: "codex",
+            marketplaces: [],
+            pluginRefs: refs,
+            pluginClaims: refs.map((ref) => ({ ref, dependents: [] })),
+          },
+        ],
+      ]);
+      return fixture({ manifest, records });
     }
 
     it("uninstalls the claimed ref from the host and drops its claim", async () => {
@@ -144,7 +151,7 @@ describe("RemoveUserPlugin", () => {
       await run("p@c", TOOL.codex);
 
       expect(host.uninstalled).toEqual(["p@c"]);
-      expect(repo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.pluginClaims ?? []).toEqual([]);
+      expect(repo.records.get(TOOL.codex)?.pluginClaims ?? []).toEqual([]);
     });
 
     it("refuses a bare name that matches several catalogues, uninstalling nothing", async () => {

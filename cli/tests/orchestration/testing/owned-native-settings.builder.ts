@@ -88,19 +88,26 @@ export async function ownedNativeSettings(options: OwnedNativeSettingsOptions) {
   );
   const machine = Manifest.create();
   machine.addTool(toolId, "1.0.0", []);
-  project.setNativeRegistrations(toolId, {
-    binary: toolId,
-    marketplaces: registrations,
-    pluginRefs: refs,
-  });
-  machine.setNativeRegistrations(toolId, {
-    binary: toolId,
-    marketplaces: registrations,
-    pluginRefs: [],
-    pluginClaims: refs.map((ref) => ({ ref, dependents: [ROOT] })),
-  });
-  const projectRepo = new InMemoryManifestRepository(project, ROOT);
-  const machineRepo = new InMemoryManifestRepository(machine);
+  const projectRepo = new InMemoryManifestRepository(
+    project,
+    ROOT,
+    new Map([[toolId, { binary: toolId, marketplaces: registrations, pluginRefs: refs }]])
+  );
+  const machineRepo = new InMemoryManifestRepository(
+    machine,
+    undefined,
+    new Map([
+      [
+        toolId,
+        {
+          binary: toolId,
+          marketplaces: registrations,
+          pluginRefs: [],
+          pluginClaims: refs.map((ref) => ({ ref, dependents: [ROOT] })),
+        },
+      ],
+    ])
+  );
   const registry = new InMemoryMarketplaceRegistry();
   const fs = new InMemoryFileAdapter({ [resolve(ROOT, settingsPath)]: settings });
   const identities = new Map<string, string>();

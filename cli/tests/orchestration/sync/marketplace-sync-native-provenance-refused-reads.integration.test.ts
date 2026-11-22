@@ -118,7 +118,7 @@ function expectedProjectRefs(otherRef: string, recovered: boolean, sharedAlias: 
 }
 
 function canonicalTarget(machine: ReturnType<typeof canonicallyOwned>, toolId: AiToolId) {
-  const target = hostRecord(machine.getNativeRegistrations(toolId))?.marketplaces[0];
+  const target = hostRecord(machine.records.get(toolId))?.marketplaces[0];
   if (target === undefined) throw new Error("fixture lacks canonical catalogue");
   return target;
 }
@@ -142,7 +142,7 @@ describe.each([SYNTHETIC_TOOL, SECOND_SYNTHETIC_TOOL] as const)(
         const target = canonicalTarget(machine, toolId);
         const otherRef = sharedAlias ? `sibling-plugin@${CATALOG}` : "aidd-dev@other-catalog";
         const other = siblingRegistration(toolId, sharedAlias);
-        machine.setNativeRegistrations(toolId, {
+        machine.records.set(toolId, {
           binary: toolId,
           marketplaces: [other, target],
           pluginRefs: [otherRef],
@@ -157,7 +157,7 @@ describe.each([SYNTHETIC_TOOL, SECOND_SYNTHETIC_TOOL] as const)(
           hostReader: pluginRegistryChangingAfterFirstRead(change, otherRef),
         });
         if (sharedAlias) await addSiblingPlugin(f, toolId, other.alias);
-        f.projectRepo.getCurrent()?.setNativeRegistrations(toolId, {
+        f.projectRepo.records.set(toolId, {
           binary: toolId,
           marketplaces: [other, target],
           pluginRefs: [otherRef, PLUGIN_REF, `obsolete-plugin@${CATALOG}`],
@@ -171,12 +171,12 @@ describe.each([SYNTHETIC_TOOL, SECOND_SYNTHETIC_TOOL] as const)(
         expect(result.errors).toEqual([]);
         expect(result.warnings.join(" ")).toContain("transient permissions error");
         expectNoHostMutationExceptRefresh(f, recovered);
-        expect(f.projectRepo.getCurrent()?.getNativeRegistrations(toolId)).toEqual({
+        expect(f.projectRepo.records.get(toolId)).toEqual({
           binary: toolId,
           marketplaces: [other, target],
           pluginRefs: expectedProjectRefs(otherRef, recovered, sharedAlias),
         });
-        expect(f.machineRepo.getCurrent()?.getNativeRegistrations(toolId)).toEqual({
+        expect(f.machineRepo.records.get(toolId)).toEqual({
           binary: toolId,
           marketplaces: [other, target],
           pluginRefs: [otherRef],
@@ -245,12 +245,10 @@ describe.each([SYNTHETIC_TOOL, SECOND_SYNTHETIC_TOOL] as const)(
         expect(fixture.activator.removedMarketplaces).toEqual([]);
         expect(fixture.activator.refreshedCatalogs).toEqual([]);
         expect(fixture.activator.enabledPlugins).toEqual([]);
-        expect(
-          fixture.machineRepo.getCurrent()?.getNativeRegistrations(toolId)?.pluginRefs
-        ).toEqual([]);
-        expect(
-          fixture.machineRepo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims ?? []
-        ).toEqual([{ ref: PLUGIN_REF, dependents: [PROJECT_ROOT] }]);
+        expect(fixture.machineRepo.records.get(toolId)?.pluginRefs).toEqual([]);
+        expect(fixture.machineRepo.records.get(toolId)?.pluginClaims ?? []).toEqual([
+          { ref: PLUGIN_REF, dependents: [PROJECT_ROOT] },
+        ]);
         expect(await fixture.fs.readFile(HOST_CATALOG_WITNESS)).toBe(fixture.hostCatalogBytes);
         expect(await fixture.fs.readFile(CACHE_WITNESS)).toBe("foreign bytes stay byte-for-byte");
       }

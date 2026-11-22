@@ -41,12 +41,17 @@ function fixture(
     .withTool(toolId, [])
     .withPlugin(toolId, plugin(options.scope))
     .build();
-  manifest.setNativeRegistrations(toolId, {
-    binary: "claude",
-    marketplaces: [{ alias: "framework", hostName: "framework" }],
-    pluginRefs: [REF],
-  });
-  const repo = new InMemoryManifestRepository(manifest, ROOT);
+  const records = new Map([
+    [
+      toolId,
+      {
+        binary: "claude",
+        marketplaces: [{ alias: "framework", hostName: "framework" }],
+        pluginRefs: [REF],
+      },
+    ],
+  ]);
+  const repo = new InMemoryManifestRepository(manifest, ROOT, records);
   const fs = new InMemoryFileAdapter({
     [join(ROOT, "skills/a.md")]: "a",
     [join(ROOT, "keep.md")]: "k",
@@ -114,7 +119,7 @@ describe("RemovePlugin", () => {
 
     await run();
 
-    expect(repo.getCurrent()?.getNativeRegistrations(TOOL.claude)?.pluginRefs).toEqual([]);
+    expect(repo.records.get(TOOL.claude)?.pluginRefs).toEqual([]);
   });
 
   it("keeps the ref in the registration record when the host does not let it go", async () => {
@@ -122,7 +127,7 @@ describe("RemovePlugin", () => {
 
     await run();
 
-    expect(repo.getCurrent()?.getNativeRegistrations(TOOL.claude)?.pluginRefs).toEqual([REF]);
+    expect(repo.records.get(TOOL.claude)?.pluginRefs).toEqual([REF]);
   });
 
   it("detaches a user-scope plugin from the machine without deleting its files", async () => {

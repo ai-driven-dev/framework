@@ -1,58 +1,42 @@
-import { readdir, rm, rmdir } from "node:fs/promises";
+import { readdir, rmdir } from "node:fs/promises";
 import { join } from "node:path";
 import { AIDD_DIR } from "../../../shared/domain/layout/aidd-layout.js";
-import type { ToolIdResolver } from "../../../shared/domain/tool.js";
-import type { Manifest } from "../domain/manifest.js";
+import type { ManifestFileContext } from "../domain/manifest/assert-supported-version.js";
 import { MANIFEST_FILENAME } from "../domain/project-layout.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
-import { readManifestFile, writeManifestFile } from "./manifest-file-io.js";
+import { ManifestFile, type ManifestFileDeps } from "./manifest-file-io.js";
 
-export class ManifestRepositoryAdapter implements ManifestRepository {
+export class ManifestRepositoryAdapter extends ManifestFile implements ManifestRepository {
   constructor(
     private readonly projectRoot: string,
-    private readonly resolveToolId: ToolIdResolver
-  ) {}
-
-  get path(): string {
-    return join(this.projectRoot, AIDD_DIR, MANIFEST_FILENAME);
+    deps: ManifestFileDeps
+  ) {
+    super(deps);
   }
 
-  private get aiddDir(): string {
-    return join(this.projectRoot, AIDD_DIR);
+  protected context(): ManifestFileContext {
+    return {
+      path: join(this.projectRoot, AIDD_DIR, MANIFEST_FILENAME),
+      location: "in this project",
+      scope: "project",
+    };
   }
 
-  async load(): Promise<Manifest | null> {
-    return readManifestFile(
-      {
-        path: this.path,
-        location: "in this project",
-        scope: "project",
-      },
-      this.resolveToolId
-    );
-  }
-
-  async loadIfReadable(): Promise<Manifest | null> {
-    return this.load().catch(() => null);
-  }
-
-  async save(manifest: Manifest): Promise<void> {
-    await writeManifestFile(this.path, manifest);
-  }
-
-  async delete(): Promise<void> {
+  /** Also removes `.aidd/` once nothing else is left in it. */
+  override async delete(): Promise<void> {
     // biome-ignore lint/plugin: deleting a manifest must not fail an uninstall midway
     try {
-      await rm(this.path, { force: true });
+      await super.delete();
     } catch {
       // No error if missing
     }
 
+    const aiddDir = join(this.projectRoot, AIDD_DIR);
     // biome-ignore lint/plugin: removing the empty directory must not fail an uninstall midway
     try {
-      const entries = await readdir(this.aiddDir);
+      const entries = await readdir(aiddDir);
       if (entries.length === 0) {
-        await rmdir(this.aiddDir);
+        await rmdir(aiddDir);
       }
     } catch {
       // No error if dir missing

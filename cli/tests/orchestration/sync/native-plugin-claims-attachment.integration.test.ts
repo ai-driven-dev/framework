@@ -83,7 +83,8 @@ for (const [toolId, catalogPath] of [
       const foreign = project();
       const machine = Manifest.create();
       machine.addTool(toolId, "1.0.0", []);
-      machine.setNativeRegistrations(toolId, {
+      const user = new InMemoryManifestRepository(machine);
+      user.records.set(toolId, {
         binary: toolId,
         marketplaces: [
           {
@@ -100,7 +101,6 @@ for (const [toolId, catalogPath] of [
         pluginRefs: [],
         pluginClaims: [],
       });
-      const user = new InMemoryManifestRepository(machine);
       const activator = new FakeHostActions({ available: true });
       const sources = effectiveListSources(toolId, hostName, builtDir);
       let enabled = false;
@@ -143,10 +143,8 @@ for (const [toolId, catalogPath] of [
         toolIds: [toolId],
       });
       expect(activator.enabledPlugins).toEqual([ref]);
-      expect(b.getCurrent()?.getNativeRegistrations(toolId)?.pluginRefs).toContain(ref);
-      expect(user.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
-        { ref, dependents: ["/A", "/B"] },
-      ]);
+      expect(b.records.get(toolId)?.pluginRefs).toContain(ref);
+      expect(user.records.get(toolId)?.pluginClaims).toEqual([{ ref, dependents: ["/A", "/B"] }]);
       const updateFs = new InMemoryFileAdapter({}, ["/A", "/B"]);
       const update = new UpdateUserPlugin(
         new UpdateUserPluginFiles(
@@ -225,9 +223,7 @@ for (const [toolId, catalogPath] of [
         ).rejects.toThrow(
           expect.objectContaining({ detail: expect.stringMatching(/plugin update.*failed/) })
         );
-        expect(user.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
-          { ref, dependents: ["/A", "/B"] },
-        ]);
+        expect(user.records.get(toolId)?.pluginClaims).toEqual([{ ref, dependents: ["/A", "/B"] }]);
       } else {
         await expect(
           update.execute({
@@ -282,10 +278,8 @@ for (const [toolId, catalogPath] of [
         projectRoot: "/foreign",
         toolIds: [toolId],
       });
-      expect(foreign.getCurrent()?.getNativeRegistrations(toolId)?.pluginRefs).toEqual([]);
-      expect(foreignUser.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims ?? []).toEqual(
-        []
-      );
+      expect(foreign.records.get(toolId)?.pluginRefs).toEqual([]);
+      expect(foreignUser.records.get(toolId)?.pluginClaims ?? []).toEqual([]);
       const removeFs = new InMemoryFileAdapter({}, ["/A", "/B"]);
       const cacheRoot = syntheticSyncCatalog()
         .aiProfile(toolId)
@@ -314,25 +308,21 @@ for (const [toolId, catalogPath] of [
       expect(activator.uninstalledPlugins).toEqual([]);
       if (cachedBytes !== undefined)
         expect(removeFs.getFile(cachedBytes)).toBe("B still uses this cached plugin");
-      expect(user.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
-        { ref, dependents: ["/B"] },
-      ]);
+      expect(user.records.get(toolId)?.pluginClaims).toEqual([{ ref, dependents: ["/B"] }]);
       await remove(b).execute({
         pluginName: "test-plugin",
         toolIds: [toolId],
         projectRoot: "/B",
       });
       expect(activator.uninstalledPlugins).toEqual([]);
-      expect(user.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
-        { ref, dependents: [] },
-      ]);
+      expect(user.records.get(toolId)?.pluginClaims).toEqual([{ ref, dependents: [] }]);
       await userPluginRemover(removing(a)).execute({
         pluginName: "test-plugin",
         toolIds: [toolId],
         projectRoot: "/A",
       });
       expect(activator.uninstalledPlugins).toEqual([ref]);
-      expect(user.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([]);
+      expect(user.records.get(toolId)?.pluginClaims).toEqual([]);
       enabled = false;
       await removeMarketplace.execute({
         name: alias,

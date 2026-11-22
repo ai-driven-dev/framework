@@ -5,6 +5,7 @@ import type { HostActions } from "../../../src/contexts/host-registration/ports/
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
@@ -39,6 +40,7 @@ describe("clean: host calls", () => {
 
       function buildUseCase(deps: {
         manifest: Manifest;
+        records?: RegistrationRecords;
         fs: InMemoryFileAdapter;
         logger: CapturingLogger;
         activators: ReadonlyMap<string, HostActions>;
@@ -47,7 +49,7 @@ describe("clean: host calls", () => {
       }): InstanceType<typeof CleanWithKnownHostSource> {
         return new CleanWithKnownHostSource(
           deps.fs,
-          new InMemoryManifestRepository(deps.manifest, PROJECT_ROOT),
+          new InMemoryManifestRepository(deps.manifest, PROJECT_ROOT, deps.records),
           deps.logger,
           new UpdateGitignore(deps.fs),
           deps.activators,
@@ -76,7 +78,7 @@ describe("clean: host calls", () => {
           })
         );
         const useCase = buildUseCase({
-          manifest: seedManifestWithNativeRegistrations(HOST),
+          ...seedManifestWithNativeRegistrations(HOST),
           fs,
           logger,
           activators: new Map([[BINARY, activator]]),
@@ -99,7 +101,7 @@ describe("clean: host calls", () => {
         const logger = new CapturingLogger();
         const activator = new FakeHostActions({ available: true });
         const useCase = buildUseCase({
-          manifest: seedManifestWithNativeRegistrations(HOST),
+          ...seedManifestWithNativeRegistrations(HOST),
           fs,
           logger,
           activators: new Map([[BINARY, activator]]),
@@ -125,7 +127,7 @@ describe("clean: host calls", () => {
           failOnUninstall: [REF],
         });
         const useCase = buildUseCase({
-          manifest: seedClaudeNativeRegistrations(HOST),
+          ...seedClaudeNativeRegistrations(HOST),
           fs,
           logger,
           activators: new Map([[HOST.claude, activator]]),
@@ -144,7 +146,7 @@ describe("clean: host calls", () => {
       it("propagates an activator failure that is not the host refusing", async () => {
         const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const useCase = buildUseCase({
-          manifest: seedClaudeNativeRegistrations(HOST),
+          ...seedClaudeNativeRegistrations(HOST),
           fs,
           logger: new CapturingLogger(),
           activators: new Map([[HOST.claude, new CrashingUninstallActivator()]]),
@@ -171,10 +173,14 @@ describe("clean: host calls", () => {
         return registry;
       }
 
-      function seedRegistrations(toolId: ToolId, binary: string): Manifest {
+      function seedRegistrations(
+        toolId: ToolId,
+        binary: string
+      ): { manifest: Manifest; records: RegistrationRecords } {
         const manifest = Manifest.create();
         manifest.addTool(toolId, "1.0.0", []);
-        manifest.setNativeRegistrations(toolId, {
+        const records: RegistrationRecords = new Map();
+        records.set(toolId, {
           binary,
           marketplaces: [
             {
@@ -190,14 +196,14 @@ describe("clean: host calls", () => {
           ],
           pluginRefs: [],
         });
-        return manifest;
+        return { manifest, records };
       }
 
       it("names no cache for a shared marketplace at a host whose profile declares no cache directory (copilot)", async () => {
         const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const logger = new CapturingLogger();
         const useCase = buildUseCase({
-          manifest: seedRegistrations(HOST.copilot, HOST.copilot),
+          ...seedRegistrations(HOST.copilot, HOST.copilot),
           fs,
           logger,
           activators: new Map([[HOST.copilot, new FakeHostActions({ available: true })]]),
@@ -219,12 +225,10 @@ describe("clean: host calls", () => {
         await references.addReference("1.0.0", PROJECT_ROOT);
         await references.addReference("1.0.0", "/other-project");
         const activator = new FakeHostActions({ available: true });
+        const { manifest, records } = seedRegistrations(HOST.copilot, HOST.copilot);
         const useCase = new CleanWithKnownHostSource(
           fs,
-          new InMemoryManifestRepository(
-            seedRegistrations(HOST.copilot, HOST.copilot),
-            PROJECT_ROOT
-          ),
+          new InMemoryManifestRepository(manifest, PROJECT_ROOT, records),
           new CapturingLogger(),
           new UpdateGitignore(fs),
           new Map([[HOST.copilot, activator]]),
@@ -251,16 +255,16 @@ describe("clean: host calls", () => {
         fs.setFile(join(PROJECT_ROOT, "marker"), "");
         const references = new UserSourceReferencesAdapter(fs, () => "/fake-home/.config/aidd");
         await references.addReference("1.0.0", PROJECT_ROOT);
-        const manifest = seedRegistrations(HOST.copilot, HOST.copilot);
-        manifest.setNativeRegistrations(HOST.copilot, {
+        const { manifest, records } = seedRegistrations(HOST.copilot, HOST.copilot);
+        records.set(HOST.copilot, {
           binary: HOST.copilot,
-          marketplaces: manifest.getNativeRegistrations(HOST.copilot)?.marketplaces ?? [],
+          marketplaces: records.get(HOST.copilot)?.marketplaces ?? [],
           pluginRefs: [`demo@${MARKETPLACE}`],
         });
         const activator = new FakeHostActions({ available: true });
         const useCase = new CleanWithKnownHostSource(
           fs,
-          new InMemoryManifestRepository(manifest, PROJECT_ROOT),
+          new InMemoryManifestRepository(manifest, PROJECT_ROOT, records),
           new CapturingLogger(),
           new UpdateGitignore(fs),
           new Map([[HOST.copilot, activator]]),
@@ -286,10 +290,10 @@ describe("clean: host calls", () => {
         fs.setFile(join(PROJECT_ROOT, "marker"), "");
         const references = new UserSourceReferencesAdapter(fs, () => "/fake-home/.config/aidd");
         await references.addReference("1.0.0", PROJECT_ROOT);
-        const manifest = seedRegistrations(HOST.codex, HOST.codex);
-        manifest.setNativeRegistrations(HOST.codex, {
+        const { manifest, records } = seedRegistrations(HOST.codex, HOST.codex);
+        records.set(HOST.codex, {
           binary: HOST.codex,
-          marketplaces: manifest.getNativeRegistrations(HOST.codex)?.marketplaces ?? [],
+          marketplaces: records.get(HOST.codex)?.marketplaces ?? [],
           pluginRefs: [`demo@${MARKETPLACE}`],
         });
         const activator = new FakeHostActions({ available: true });
@@ -304,7 +308,7 @@ describe("clean: host calls", () => {
         ]);
         const useCase = new CleanWithKnownHostSource(
           fs,
-          new InMemoryManifestRepository(manifest, PROJECT_ROOT),
+          new InMemoryManifestRepository(manifest, PROJECT_ROOT, records),
           new CapturingLogger(),
           new UpdateGitignore(fs),
           new Map([[HOST.codex, activator]]),
@@ -327,7 +331,7 @@ describe("clean: host calls", () => {
         const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const logger = new CapturingLogger();
         const useCase = buildUseCase({
-          manifest: seedRegistrations(HOST.cursor, HOST.cursor),
+          ...seedRegistrations(HOST.cursor, HOST.cursor),
           fs,
           logger,
           activators: new Map([[HOST.cursor, new FakeHostActions({ available: true })]]),
@@ -346,7 +350,7 @@ describe("clean: host calls", () => {
         fs.setFile(join(CODEX_CACHE, MARKETPLACE, "leftover.json"), "{}");
         const logger = new CapturingLogger();
         const useCase = buildUseCase({
-          manifest: seedRegistrations(HOST.codex, BINARY),
+          ...seedRegistrations(HOST.codex, BINARY),
           fs,
           logger,
           activators: new Map([[BINARY, new FakeHostActions({ available: true })]]),
@@ -366,7 +370,7 @@ describe("clean: host calls", () => {
         const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const logger = new CapturingLogger();
         const useCase = buildUseCase({
-          manifest: seedRegistrations(HOST.copilot, HOST.copilot),
+          ...seedRegistrations(HOST.copilot, HOST.copilot),
           fs,
           logger,
           activators: new Map(),
@@ -384,7 +388,7 @@ describe("clean: host calls", () => {
         const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const logger = new CapturingLogger();
         const useCase = buildUseCase({
-          manifest: seedRegistrations(HOST.cursor, HOST.cursor),
+          ...seedRegistrations(HOST.cursor, HOST.cursor),
           fs,
           logger,
           activators: new Map(),
@@ -401,15 +405,14 @@ describe("clean: host calls", () => {
       it("names no surviving cache when the absent binary registered no marketplace", async () => {
         const manifest = Manifest.create();
         manifest.addTool(HOST.codex, "1.0.0", []);
-        manifest.setNativeRegistrations(HOST.codex, {
-          binary: BINARY,
-          marketplaces: [],
-          pluginRefs: [REF],
-        });
+        const records = new Map([
+          [HOST.codex, { binary: BINARY, marketplaces: [], pluginRefs: [REF] }],
+        ]);
         const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const logger = new CapturingLogger();
         const useCase = buildUseCase({
           manifest,
+          records,
           fs,
           logger,
           activators: new Map(),

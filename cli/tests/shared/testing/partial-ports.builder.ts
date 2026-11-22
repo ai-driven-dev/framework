@@ -33,6 +33,8 @@ export function manifestRepositoryLoading(
     load,
     loadIfReadable: refuse("manifestRepo.loadIfReadable"),
     save: refuse("manifestRepo.save"),
+    loadRecords: async () => new Map(),
+    saveRecords: refuse("manifestRepo.saveRecords"),
     delete: refuse("manifestRepo.delete"),
     withExclusiveAccess: refuse("manifestRepo.withExclusiveAccess"),
   };

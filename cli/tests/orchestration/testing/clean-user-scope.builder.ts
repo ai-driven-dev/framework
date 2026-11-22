@@ -6,6 +6,7 @@ import type {
 } from "../../../src/contexts/host-registration/ports/host-actions.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { claimsRecorded } from "../../shared/testing/host-record-reading.builder.js";
@@ -125,10 +126,14 @@ export class StrictListingFileAdapter extends InMemoryFileAdapter {
   }
 }
 
-export function manifestWithClaude(ids: NamedTools<"claude">): Manifest {
+export function manifestWithClaude(ids: NamedTools<"claude">): {
+  manifest: Manifest;
+  records: RegistrationRecords;
+} {
   const manifest = Manifest.create();
   manifest.addTool(ids.claude, "1.0.0", []);
-  manifest.setNativeRegistrations(ids.claude, {
+  const records: RegistrationRecords = new Map();
+  records.set(ids.claude, {
     binary: HOST.claude,
     marketplaces: [
       {
@@ -140,7 +145,7 @@ export function manifestWithClaude(ids: NamedTools<"claude">): Manifest {
     pluginRefs: ["aidd-context@aidd-framework"],
     pluginClaims: [{ ref: "aidd-context@aidd-framework", dependents: [] }],
   });
-  return manifest;
+  return { manifest, records };
 }
 
 export function provenClaudeSources(
@@ -162,11 +167,11 @@ export function provenClaudeSources(
 
 export function provenHostPlugins(
   ids: NamedTools<"claude" | "codex">,
-  manifest: Manifest
+  records: RegistrationRecords
 ): ReadonlyMap<AiToolId, FakeHostPluginRegistry> {
   const readers = new Map<AiToolId, FakeHostPluginRegistry>();
   for (const toolId of [ids.claude, ids.codex]) {
-    const registrations = manifest.getNativeRegistrations(toolId);
+    const registrations = records.get(toolId);
     if (registrations === undefined) continue;
     readers.set(
       toolId,

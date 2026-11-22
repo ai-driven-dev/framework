@@ -6,15 +6,19 @@ import {
 } from "../../../../../src/contexts/installation/application/doctor/list-registered-plugins.use-case.js";
 import { LoadManifest } from "../../../../../src/contexts/installation/application/doctor/load-manifest.use-case.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import type { RegistrationRecords } from "../../../../../src/contexts/installation/ports/record/registration-records.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { aManifest } from "../../testing/manifest.builder.js";
 
 const source = { kind: "local", path: "/p" } as const;
 
-function listerOver(manifest: ReturnType<ReturnType<typeof aManifest>["build"]>) {
+function listerOver(
+  manifest: ReturnType<ReturnType<typeof aManifest>["build"]>,
+  records: RegistrationRecords = new Map()
+) {
   const lister = new ListRegisteredPlugins(
-    new LoadManifest(new InMemoryManifestRepository(manifest))
+    new LoadManifest(new InMemoryManifestRepository(manifest, undefined, records))
   );
   return {
     execute: (command: Pick<ListRegisteredPluginsRequest, "allowedIds">) =>
@@ -25,13 +29,18 @@ function listerOver(manifest: ReturnType<ReturnType<typeof aManifest>["build"]>)
 describe("ListRegisteredPlugins", () => {
   it("expects the refs a tool's host registration recorded", async () => {
     const manifest = aManifest().withTool(TOOL.claude, []).build();
-    manifest.setNativeRegistrations(TOOL.claude, {
-      binary: "claude",
-      marketplaces: [{ alias: "m", hostName: "m" }],
-      pluginRefs: ["a@m"],
-    });
+    const records: RegistrationRecords = new Map([
+      [
+        TOOL.claude,
+        {
+          binary: "claude",
+          marketplaces: [{ alias: "m", hostName: "m" }],
+          pluginRefs: ["a@m"],
+        },
+      ],
+    ]);
 
-    await expect(listerOver(manifest).execute({ allowedIds: null })).resolves.toEqual({
+    await expect(listerOver(manifest, records).execute({ allowedIds: null })).resolves.toEqual({
       tools: [{ toolId: TOOL.claude, expectedPlugins: [{ plugin: "a@m", ref: "a@m" }] }],
     });
   });

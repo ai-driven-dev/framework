@@ -38,19 +38,24 @@ describe("clean purges a host's own plugin cache: claims", () => {
     );
     const machine = Manifest.create();
     machine.addTool(HOST.codex, "1.0.0", []);
-    machine.setNativeRegistrations(HOST.codex, {
-      binary: HOST.codex,
-      marketplaces: [{ alias: MARKETPLACE, hostName: MARKETPLACE }],
-      pluginRefs: [REF],
-      pluginClaims: [{ ref: REF, dependents: [PROJECT_ROOT, "/project-b"] }],
-    });
-    const userRepo = new InMemoryManifestRepository(machine);
+    const machineRecords = new Map([
+      [
+        HOST.codex,
+        {
+          binary: HOST.codex,
+          marketplaces: [{ alias: MARKETPLACE, hostName: MARKETPLACE }],
+          pluginRefs: [REF],
+          pluginClaims: [{ ref: REF, dependents: [PROJECT_ROOT, "/project-b"] }],
+        },
+      ],
+    ]);
+    const userRepo = new InMemoryManifestRepository(machine, undefined, machineRecords);
     const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
     const useCase = buildUseCase({
       tools: hostCatalog(),
       fs,
-      manifest: seedManifest(HOST.codex, MARKETPLACE, MARKETPLACE),
+      ...seedManifest(HOST.codex, MARKETPLACE, MARKETPLACE),
       activator,
       binary: HOST.codex,
       logger,
@@ -66,7 +71,7 @@ describe("clean purges a host's own plugin cache: claims", () => {
     expect(fs.getFile(cacheEntry)).toBe("B still uses these bytes");
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(activator.removedMarketplaces).toEqual([]);
-    expect(userRepo.getCurrent()?.getNativeRegistrations(HOST.codex)?.pluginClaims).toEqual([
+    expect(userRepo.records.get(HOST.codex)?.pluginClaims).toEqual([
       { ref: REF, dependents: ["/project-b"] },
     ]);
     expect(logger.warnMessages.join("\n")).toContain("Still needed by /project-b");
@@ -84,18 +89,23 @@ describe("clean purges a host's own plugin cache: claims", () => {
     );
     const machine = Manifest.create();
     machine.addTool(HOST.codex, "1.0.0", []);
-    machine.setNativeRegistrations(HOST.codex, {
-      binary: HOST.codex,
-      marketplaces: [{ alias: "other-alias", hostName: "other-catalog" }],
-      pluginRefs: ["other-plugin@other-catalog"],
-      pluginClaims: [{ ref: "other-plugin@other-catalog", dependents: ["/project-b"] }],
-    });
-    const userRepo = new InMemoryManifestRepository(machine);
+    const machineRecords = new Map([
+      [
+        HOST.codex,
+        {
+          binary: HOST.codex,
+          marketplaces: [{ alias: "other-alias", hostName: "other-catalog" }],
+          pluginRefs: ["other-plugin@other-catalog"],
+          pluginClaims: [{ ref: "other-plugin@other-catalog", dependents: ["/project-b"] }],
+        },
+      ],
+    ]);
+    const userRepo = new InMemoryManifestRepository(machine, undefined, machineRecords);
     const activator = new FakeHostActions({ available: true });
     const useCase = buildUseCase({
       tools: hostCatalog(),
       fs: new RecordingFileAdapter({}, EXISTING_DIRECTORIES),
-      manifest: seedManifest(HOST.codex, MARKETPLACE, MARKETPLACE),
+      ...seedManifest(HOST.codex, MARKETPLACE, MARKETPLACE),
       activator,
       binary: HOST.codex,
       logger: new CapturingLogger(),
@@ -108,29 +118,34 @@ describe("clean purges a host's own plugin cache: claims", () => {
       force: true,
     });
     expect(activator.removedMarketplaces).toEqual([MARKETPLACE]);
-    expect(userRepo.getCurrent()?.getNativeRegistrations(HOST.codex)?.pluginClaims).toEqual([
+    expect(userRepo.records.get(HOST.codex)?.pluginClaims).toEqual([
       { ref: "other-plugin@other-catalog", dependents: ["/project-b"] },
     ]);
   });
   it("holds the machine lock through native catalogue removal after checking its claims", async () => {
     const project = Manifest.create();
     project.addTool(HOST.codex, "1.0.0", []);
-    project.setNativeRegistrations(HOST.codex, {
-      binary: HOST.codex,
-      marketplaces: [
+    const projectRecords = new Map([
+      [
+        HOST.codex,
         {
-          alias: MARKETPLACE,
-          hostName: MARKETPLACE,
-          provenance: {
-            kind: "effective-list",
-            root: "/some/built/path",
-            sourceType: "local",
-            source: "/some/built/path",
-          },
+          binary: HOST.codex,
+          marketplaces: [
+            {
+              alias: MARKETPLACE,
+              hostName: MARKETPLACE,
+              provenance: {
+                kind: "effective-list",
+                root: "/some/built/path",
+                sourceType: "local",
+                source: "/some/built/path",
+              },
+            },
+          ],
+          pluginRefs: [],
         },
       ],
-      pluginRefs: [],
-    });
+    ]);
     const machine = Manifest.create();
     machine.addTool(HOST.codex, "1.0.0", []);
     const userRepo = new LockTrackingManifestRepository(machine);
@@ -139,6 +154,7 @@ describe("clean purges a host's own plugin cache: claims", () => {
       tools: hostCatalog(),
       fs: new RecordingFileAdapter({}, EXISTING_DIRECTORIES),
       manifest: project,
+      records: projectRecords,
       activator,
       binary: HOST.codex,
       logger: new CapturingLogger(),
@@ -173,7 +189,7 @@ describe("clean purges a host's own plugin cache: claims", () => {
     const useCase = buildUseCase({
       tools: hostCatalog(),
       fs,
-      manifest: seedManifest(HOST.codex, MARKETPLACE, MARKETPLACE),
+      ...seedManifest(HOST.codex, MARKETPLACE, MARKETPLACE),
       activator,
       binary: HOST.codex,
       logger,
@@ -197,7 +213,7 @@ describe("clean purges a host's own plugin cache: claims", () => {
     const noRepoUseCase = buildUseCase({
       tools: hostCatalog(),
       fs: noRepoFs,
-      manifest: seedManifest(HOST.codex, MARKETPLACE, MARKETPLACE),
+      ...seedManifest(HOST.codex, MARKETPLACE, MARKETPLACE),
       activator: noRepoActivator,
       binary: HOST.codex,
       logger: noRepoLogger,
@@ -216,24 +232,34 @@ describe("clean purges a host's own plugin cache: claims", () => {
   it("keeps a project-labelled framework catalogue when B still has an exact native machine claim", async () => {
     const framework = "aidd-framework";
     const ref = `plugin-a@${framework}`;
-    const project = seedManifest(HOST.codex, framework, framework);
-    const projectRegistrations = project.getNativeRegistrations(HOST.codex);
+    const { manifest: project, records: projectRecords } = seedManifest(
+      HOST.codex,
+      framework,
+      framework
+    );
+    const projectRegistrations = projectRecords.get(HOST.codex);
     if (projectRegistrations === undefined) throw new Error("fixture missing project native state");
-    project.setNativeRegistrations(HOST.codex, { ...projectRegistrations, pluginRefs: [ref] });
+    projectRecords.set(HOST.codex, { ...projectRegistrations, pluginRefs: [ref] });
     const machine = Manifest.create();
     machine.addTool(HOST.codex, "1.0.0", []);
-    machine.setNativeRegistrations(HOST.codex, {
-      binary: HOST.codex,
-      marketplaces: [{ alias: framework, hostName: framework }],
-      pluginRefs: [ref],
-      pluginClaims: [{ ref, dependents: [PROJECT_ROOT, "/project-b"] }],
-    });
-    const userRepo = new InMemoryManifestRepository(machine);
+    const machineRecords = new Map([
+      [
+        HOST.codex,
+        {
+          binary: HOST.codex,
+          marketplaces: [{ alias: framework, hostName: framework }],
+          pluginRefs: [ref],
+          pluginClaims: [{ ref, dependents: [PROJECT_ROOT, "/project-b"] }],
+        },
+      ],
+    ]);
+    const userRepo = new InMemoryManifestRepository(machine, undefined, machineRecords);
     const activator = new FakeHostActions({ available: true });
     const useCase = buildUseCase({
       tools: hostCatalog(),
       fs: new RecordingFileAdapter({}, EXISTING_DIRECTORIES),
       manifest: project,
+      records: projectRecords,
       activator,
       binary: HOST.codex,
       logger: new CapturingLogger(),
@@ -247,7 +273,7 @@ describe("clean purges a host's own plugin cache: claims", () => {
     });
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(activator.removedMarketplaces).toEqual([]);
-    expect(userRepo.getCurrent()?.getNativeRegistrations(HOST.codex)?.pluginClaims).toEqual([
+    expect(userRepo.records.get(HOST.codex)?.pluginClaims).toEqual([
       { ref, dependents: ["/project-b"] },
     ]);
   });
@@ -267,19 +293,24 @@ describe("clean purges a host's own plugin cache: claims", () => {
     );
     const machine = Manifest.create();
     machine.addTool(HOST.codex, "1.0.0", []);
-    machine.setNativeRegistrations(HOST.codex, {
-      binary: HOST.codex,
-      marketplaces: [],
-      pluginRefs: [REF],
-      pluginClaims: [{ ref: REF, dependents: [PROJECT_ROOT, "/project-b"] }],
-    });
-    const userRepo = new InMemoryManifestRepository(machine);
+    const machineRecords = new Map([
+      [
+        HOST.codex,
+        {
+          binary: HOST.codex,
+          marketplaces: [],
+          pluginRefs: [REF],
+          pluginClaims: [{ ref: REF, dependents: [PROJECT_ROOT, "/project-b"] }],
+        },
+      ],
+    ]);
+    const userRepo = new InMemoryManifestRepository(machine, undefined, machineRecords);
     const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
     const useCase = buildUseCase({
       tools: hostCatalog(),
       fs,
-      manifest: seedManifest(HOST.codex, MARKETPLACE, MARKETPLACE),
+      ...seedManifest(HOST.codex, MARKETPLACE, MARKETPLACE),
       activator,
       binary: HOST.codex,
       logger,
@@ -293,7 +324,7 @@ describe("clean purges a host's own plugin cache: claims", () => {
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(activator.removedMarketplaces).toEqual([]);
     expect(fs.getFile(cacheEntry)).toBe("B still uses these bytes");
-    expect(userRepo.getCurrent()?.getNativeRegistrations(HOST.codex)?.pluginClaims).toEqual([
+    expect(userRepo.records.get(HOST.codex)?.pluginClaims).toEqual([
       { ref: REF, dependents: ["/project-b"] },
     ]);
     expect(logger.warnMessages.join("\n")).toContain("Still needed by /project-b");
@@ -303,18 +334,23 @@ describe("clean purges a host's own plugin cache: claims", () => {
     const fs = new RecordingFileAdapter({}, [...EXISTING_DIRECTORIES, emptyCache]);
     const machine = Manifest.create();
     machine.addTool(HOST.codex, "1.0.0", []);
-    machine.setNativeRegistrations(HOST.codex, {
-      binary: HOST.codex,
-      marketplaces: [],
-      pluginRefs: [REF],
-      pluginClaims: [{ ref: REF, dependents: [PROJECT_ROOT, "/project-b"] }],
-    });
-    const userRepo = new InMemoryManifestRepository(machine);
+    const machineRecords = new Map([
+      [
+        HOST.codex,
+        {
+          binary: HOST.codex,
+          marketplaces: [],
+          pluginRefs: [REF],
+          pluginClaims: [{ ref: REF, dependents: [PROJECT_ROOT, "/project-b"] }],
+        },
+      ],
+    ]);
+    const userRepo = new InMemoryManifestRepository(machine, undefined, machineRecords);
     const activator = new FakeHostActions({ available: true });
     const useCase = buildUseCase({
       tools: hostCatalog(),
       fs,
-      manifest: seedManifest(HOST.codex, MARKETPLACE, MARKETPLACE),
+      ...seedManifest(HOST.codex, MARKETPLACE, MARKETPLACE),
       activator,
       binary: HOST.codex,
       logger: new CapturingLogger(),
@@ -328,7 +364,7 @@ describe("clean purges a host's own plugin cache: claims", () => {
     });
     expect(activator.removedMarketplaces).toEqual([]);
     expect(fs.deletedDirectories).not.toContain(emptyCache);
-    expect(userRepo.getCurrent()?.getNativeRegistrations(HOST.codex)?.pluginClaims).toEqual([
+    expect(userRepo.records.get(HOST.codex)?.pluginClaims).toEqual([
       { ref: REF, dependents: ["/project-b"] },
     ]);
   });
