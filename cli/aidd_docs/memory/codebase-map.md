@@ -62,7 +62,8 @@ src/
 │   │   ├── infrastructure/
 │   │   │   └── assets/
 │   │   └── ports/
-│   │       └── plugin/
+│   │       ├── plugin/
+│   │       └── record/
 │   ├── machine-claims/    # which projects claim a machine-wide plugin or source
 │   │   ├── application/
 │   │   │   ├── ownership/

@@ -3,8 +3,8 @@ import type {
   PluginHostReach,
   ProjectPluginWithdrawalSteps,
 } from "../../../../src/contexts/installation/application/removal/project-plugin-withdrawal.js";
-import type { NativeRegistrations } from "../../../../src/contexts/installation/domain/manifest/native-registrations.js";
 import type { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import type { RegistrationRecordData } from "../../../../src/contexts/installation/ports/record/registration-records.js";
 import type { AiToolId, ToolId } from "../../../../src/shared/domain/tool.js";
 
 interface Answers {
@@ -35,13 +35,13 @@ export class FakePluginRemovalSteps implements ProjectPluginWithdrawalSteps {
   }
 
   recordedRef(
-    registrations: NativeRegistrations | undefined,
+    registrations: RegistrationRecordData | undefined,
     recorded: RecordedPlugin
   ): string | undefined {
     return registrationRecordRules.refOf(registrations, recorded.plugin.name, recorded.marketplace);
   }
 
-  withoutRef(registrations: NativeRegistrations, ref: string): NativeRegistrations {
+  withoutRef(registrations: RegistrationRecordData, ref: string): RegistrationRecordData {
     return registrationRecordRules.withoutRef(registrations, ref);
   }
 

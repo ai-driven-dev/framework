@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { NativeRegistrations } from "../../../src/contexts/installation/domain/manifest/native-registrations.js";
+import type { RegistrationRecordData } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { builtMarketplaceDir } from "../../../src/shared/domain/layout/aidd-layout.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { hostRecord } from "../../shared/testing/host-record-reading.builder.js";
@@ -115,7 +115,7 @@ describe("registration changes isolated from the catalogue provenance", () => {
       },
     ],
     ["removed ref", { ...FRAMEWORK_ONLY, pluginRefs: [`retired@${MARKETPLACE}`] }],
-  ] satisfies [string, NativeRegistrations][])(
+  ] satisfies [string, RegistrationRecordData][])(
     "persists a changed %s even when every other recorded field agrees",
     async (_field, existingRegistrations) => {
       const { useCase, manifest, manifestRepo } = await build({ existingRegistrations });

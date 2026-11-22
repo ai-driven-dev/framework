@@ -5,9 +5,9 @@ import {
   ActiveMachineDependentsError,
   PluginNotFoundError,
 } from "../../domain/installation.error.js";
-import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import type { RegistrationRecordData } from "../../ports/record/registration-records.js";
 import type { UserScopePluginFileRemoval } from "../../ports/user-scope-plugin-files.js";
 import { resolvePluginToolIds } from "../plugin/plugin-target-resolution.js";
 import type { RefSelection } from "../plugin/update-native-refs.js";
@@ -16,7 +16,7 @@ import type { ClaimedRefWithdrawal } from "./project-plugin-withdrawal.js";
 
 /** How a machine-scope removal selects and drops a claimed native ref: the host registration's to answer. */
 export interface ClaimedRefRecords extends RefSelection {
-  withoutClaimedRef(record: NativeRegistrations, ref: string): NativeRegistrations;
+  withoutClaimedRef(record: RegistrationRecordData, ref: string): RegistrationRecordData;
 }
 
 export interface RemoveUserPluginRequest {

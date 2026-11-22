@@ -2,9 +2,9 @@ import { resolve } from "node:path";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { RegistrationRecord } from "../../../src/contexts/host-registration/domain/record/registration-record.js";
 import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/contract/built-marketplace.js";
-import type { NativeRegistrations } from "../../../src/contexts/installation/domain/manifest/native-registrations.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import type { RegistrationRecordData } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../src/shared/domain/installation-file.js";
@@ -53,8 +53,8 @@ export interface Setup {
   readonly trackedSettings?: string;
   readonly settingsOnDisk?: string;
   readonly otherTrackedFiles?: readonly string[];
-  readonly existingRegistrations?: NativeRegistrations;
-  readonly existingMachineRegistrations?: NativeRegistrations;
+  readonly existingRegistrations?: RegistrationRecordData;
+  readonly existingMachineRegistrations?: RegistrationRecordData;
   readonly hostRegisteredSource?: string;
 }
 
@@ -153,7 +153,7 @@ async function registeredMarketplaces(
 
 function machineRepoOf(
   claude: AiToolId,
-  registrations: NativeRegistrations | undefined
+  registrations: RegistrationRecordData | undefined
 ): SaveCountingManifestRepository | undefined {
   if (registrations === undefined) return undefined;
   const machine = Manifest.create();
@@ -239,7 +239,7 @@ async function buildWith(setup: Setup) {
 export function manifestWrites(tools: ToolCatalog, claude: AiToolId) {
   return {
     build: (setup: Omit<Setup, "tools" | "claude"> = {}) => buildWith({ ...setup, tools, claude }),
-    recorded: (manifest: Manifest | null | undefined): NativeRegistrations | undefined =>
+    recorded: (manifest: Manifest | null | undefined): RegistrationRecordData | undefined =>
       manifest?.getNativeRegistrations(claude),
     trackedSettingsHash: (manifest: Manifest): string | undefined =>
       manifest.getToolFiles(claude).find((file) => file.relativePath === SETTINGS_PATH)?.hash.value,
@@ -262,7 +262,7 @@ export function ownedMachineEntry(
   alias: string,
   hostName: string,
   source?: string
-): NativeRegistrations {
+): RegistrationRecordData {
   return {
     binary: SYNTHETIC_NATIVE_TOOL,
     marketplaces: [

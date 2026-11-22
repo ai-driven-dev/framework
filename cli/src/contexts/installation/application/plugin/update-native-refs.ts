@@ -2,9 +2,9 @@ import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { PluginNotFoundError } from "../../domain/installation.error.js";
-import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { MachineClaimsReading } from "../../ports/machine-claims-reading.js";
+import type { RegistrationRecordData } from "../../ports/record/registration-records.js";
 import type { ActivatedTool } from "../../ports/tool-sections.js";
 import type { UpdatePluginRequest } from "./update-plugin.use-case.js";
 
@@ -27,7 +27,7 @@ export type RefreshNativeRef = (request: {
   readonly tool: ActivatedTool;
   readonly ref: string;
   readonly projectRoot: string;
-  readonly registrations: NativeRegistrations | undefined;
+  readonly registrations: RegistrationRecordData | undefined;
 }) => Promise<ProvenNativeRefresh>;
 
 /** The native refs a machine-scope update refreshes. */

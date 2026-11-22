@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { NativeRegistrations } from "../../../src/contexts/installation/domain/manifest/native-registrations.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type { RegistrationRecordData } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { claimsViewOf } from "../../../src/orchestration/sync/claims-view-of.js";
 import { claimsRecorded } from "../../shared/testing/host-record-reading.builder.js";
 import {
@@ -9,7 +9,7 @@ import {
 } from "../../shared/testing/synthetic-tool-id.builder.js";
 
 const rules = {
-  claimedRefs: (registrations: NativeRegistrations | undefined) =>
+  claimedRefs: (registrations: RegistrationRecordData | undefined) =>
     claimsRecorded(registrations).map((claim) => claim.ref),
 };
 const tool = SYNTHETIC_TOOL;

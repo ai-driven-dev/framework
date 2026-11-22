@@ -1,12 +1,12 @@
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { RegisteredPlugin, RegisteredPlugins } from "../../contract/registered-plugins.js";
-import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
+import type { RegistrationRecordData } from "../../ports/record/registration-records.js";
 import type { InstallationScope } from "./installation-scope.js";
 import type { LoadManifest } from "./load-manifest.use-case.js";
 
 /** How the expected plugins read a host registration: the host registration's to answer. */
 export interface RegisteredRefRecords {
-  pluginRefsOf(record: NativeRegistrations | undefined): readonly string[];
+  pluginRefsOf(record: RegistrationRecordData | undefined): readonly string[];
   refOnHostName(plugin: string, hostName: string): string;
 }
 

@@ -2,15 +2,15 @@ import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { ActiveMachineDependentsError } from "../../domain/installation.error.js";
-import type {
-  NativeRefClaim,
-  NativeRegistrations,
-} from "../../domain/manifest/native-registrations.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { MachineClaimsReading } from "../../ports/machine-claims-reading.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import type {
+  NativeRefClaim,
+  RegistrationRecordData,
+} from "../../ports/record/registration-records.js";
 import type { HostRefCountingTool } from "../../ports/tool-sections.js";
 import type { UserScopePluginFileRemoval } from "../../ports/user-scope-plugin-files.js";
 import type { RegisteredMarketplace } from "../sync/record-activation.use-case.js";
@@ -18,14 +18,14 @@ import type { RegisteredMarketplace } from "../sync/record-activation.use-case.j
 type PluginOf = { toolId: AiToolId; plugin: InstalledPlugin; recorded: RecordedPlugin };
 type NativeOf = {
   toolId: AiToolId;
-  registrations: NativeRegistrations;
+  registrations: RegistrationRecordData;
   registration: RegisteredMarketplace;
 };
 
 /** One tool's record of the catalogue being removed. */
 export interface MarketplaceHostTarget {
   readonly tool: HostRefCountingTool;
-  readonly registrations: NativeRegistrations;
+  readonly registrations: RegistrationRecordData;
   readonly registration: NativeOf["registration"];
 }
 
@@ -40,13 +40,13 @@ export interface MarketplaceHostRemoval<Plan> {
 export interface MarketplaceRecords extends Pick<MachineClaimsReading, "holdersOf"> {
   /** The registration the alias stands for, `undefined` when it was never registered. */
   registrationOf(
-    registrations: NativeRegistrations,
+    registrations: RegistrationRecordData,
     alias: string
   ): RegisteredMarketplace | undefined;
   /** The claims on the refs sitting on the host name the alias was registered under. */
-  claimsOn(registrations: NativeRegistrations, alias: string): readonly NativeRefClaim[];
+  claimsOn(registrations: RegistrationRecordData, alias: string): readonly NativeRefClaim[];
   /** The record without the marketplace, nor any ref or claim on its host name. */
-  withoutMarketplace(registrations: NativeRegistrations, alias: string): NativeRegistrations;
+  withoutMarketplace(registrations: RegistrationRecordData, alias: string): RegistrationRecordData;
 }
 
 export interface PurgeMarketplacePluginsRequest<Plan> {

@@ -1,10 +1,10 @@
 import type { Scope } from "../../../shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
-import type { NativeRegistrations } from "../domain/manifest/native-registrations.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { RecordedPlugin } from "../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
+import type { RegistrationRecordData } from "../ports/record/registration-records.js";
 import type {
   CleanNativeRegistrationPreview,
   ProjectCleanPlan,
@@ -21,7 +21,7 @@ export interface PlanProjectCleanDeps {
 /** The scope of each plugin the host registered, keyed by its ref. */
 function refScopesOf(
   plugins: readonly RecordedPlugin[],
-  registrations: NativeRegistrations,
+  registrations: RegistrationRecordData,
   records: ProjectCleanRecords
 ): Map<string, Scope> {
   const refScopes = new Map<string, Scope>();

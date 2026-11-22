@@ -5,8 +5,8 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
 import { driftOf } from "../../domain/manifest/drift.js";
-import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import type { Manifest } from "../../domain/manifest.js";
+import type { RegistrationRecordData } from "../../ports/record/registration-records.js";
 
 /** A marketplace the host registered: the manifest reads the two names and keeps the rest. */
 export type RegisteredMarketplace = Readonly<Record<string, unknown>> & {
@@ -27,10 +27,10 @@ export type HostRegistrationOutcome = {
 /** The record a tool's activation leaves, `undefined` when it equals the one recorded: the host
  * registration's to answer. */
 export type ActivationRecord = (
-  existing: NativeRegistrations | undefined,
+  existing: RegistrationRecordData | undefined,
   outcome: HostRegistrationOutcome,
   run: { readonly binary: string; readonly narrowed: boolean }
-) => NativeRegistrations | undefined;
+) => RegistrationRecordData | undefined;
 
 /** What a run observed or caused. Each answer says whether it changed a manifest. */
 export type RecordActivationRequest =

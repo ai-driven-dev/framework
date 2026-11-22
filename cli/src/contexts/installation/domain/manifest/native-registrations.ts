@@ -1,25 +1,8 @@
 import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 import { InvalidManifestDataError } from "../installation.error.js";
 
-/**
- * What the manifest stores for a tool's host registration, as it came. The record is opaque here:
- * host registration reads its host data and machine claims the claims block it keeps beside it,
- * so nothing is read, checked or reordered on the way in or out.
- *
- * Limit: a hand-edited record keeps what the host's rewrites pass through. Every host read goes
- * through `validProvenance`, so nothing invalid is acted on. A rewrite through the host codec
- * normalizes: `withoutMarketplace` drops entry-level unknown keys and invalid provenance but keeps
- * the top-level keys, and `afterActivation` and `mergeCatalogueClaims` drop all of it. A
- * pass-through rewrite (`withoutRef`) keeps unknown keys and invalid provenance as they came. No
- * manifest has been seen to hold either.
- */
+/** What the manifest stores for a tool's host registration, kept opaque as it came. */
 export type NativeRegistrations = Readonly<Record<string, unknown>>;
-
-/** A claim on a native ref, with the project roots still holding it. */
-export interface NativeRefClaim {
-  readonly ref: string;
-  readonly dependents: readonly string[];
-}
 
 /** The record as it came, copied so the manifest owns its top level. */
 export function serializeNativeRegistrations(
