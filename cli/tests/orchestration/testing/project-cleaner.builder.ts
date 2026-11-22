@@ -3,6 +3,7 @@ import { wireCleanClaims } from "../../../src/composition/orchestration/clean-cl
 import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.use-case.js";
 import { WithdrawFromHost } from "../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import type { HostPorts } from "../../../src/contexts/host-registration/ports/host-ports.js";
+import { AssertProjectRemovable } from "../../../src/contexts/installation/application/clean/assert-project-removable.use-case.js";
 import type { ProjectCleanAsks } from "../../../src/contexts/installation/application/clean/clean-project-files.use-case.js";
 import { CleanProjectFiles } from "../../../src/contexts/installation/application/clean/clean-project-files.use-case.js";
 import { PlanProjectClean } from "../../../src/contexts/installation/application/clean/plan-project-clean.use-case.js";
@@ -47,28 +48,30 @@ export function projectCleanerDeps(parts: ProjectCleanerParts): CleanProjectDeps
       assertProjectMcpEntriesRemovable(parts.fs, { plugin, tool, projectRoot }),
   };
   return {
-    cleanProject: new CleanProjectFiles(
-      {
-        fs: parts.fs,
-        manifestRepo: parts.manifestRepo,
-        asks,
-        planProjectClean: new PlanProjectClean(
-          { manifestRepo: parts.manifestRepo, asks },
-          parts.tools
-        ),
-        removeProjectFiles: new RemoveProjectFiles(
-          {
-            fs: parts.fs,
-            manifestRepo: parts.manifestRepo,
-            logger: parts.logger,
-            updateGitignore: parts.gitignore,
-            homedir,
-          },
-          parts.tools
-        ),
-      },
-      parts.tools
-    ),
+    cleanProject: new CleanProjectFiles({
+      assertProjectRemovable: new AssertProjectRemovable(
+        {
+          fs: parts.fs,
+          manifestRepo: parts.manifestRepo,
+          assertMcpRemovable: asks.assertMcpRemovable,
+        },
+        parts.tools
+      ),
+      planProjectClean: new PlanProjectClean(
+        { manifestRepo: parts.manifestRepo, asks },
+        parts.tools
+      ),
+      removeProjectFiles: new RemoveProjectFiles(
+        {
+          fs: parts.fs,
+          manifestRepo: parts.manifestRepo,
+          logger: parts.logger,
+          updateGitignore: parts.gitignore,
+          homedir,
+        },
+        parts.tools
+      ),
+    }),
     withdrawFromHost: new WithdrawFromHost(parts.fs, parts.logger, {
       activators: parts.activators ?? new Map(),
       pluginRegistries: parts.pluginRegistries ?? new Map(),

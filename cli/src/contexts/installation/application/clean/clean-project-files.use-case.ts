@@ -1,10 +1,7 @@
-import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
-import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { ProjectPluginIntegration } from "../../ports/tool-sections.js";
 import type { RemoveProjectFiles } from "../removal/project/remove-project-files.js";
-import { assertProjectHooksRemovable } from "../shared/remove-project-hooks.use-case.js";
+import type { AssertProjectRemovable } from "./assert-project-removable.use-case.js";
 import type { PlanProjectClean } from "./plan-project-clean.use-case.js";
 import type { ProjectCleanPlan, ProjectCleanRecords } from "./project-clean-plan.js";
 
@@ -45,9 +42,7 @@ export type AnyCleanProjectFilesRequest =
 
 /** What CleanProjectFiles is built from. */
 export interface CleanProjectFilesDeps {
-  readonly fs: FileReader;
-  readonly manifestRepo: ManifestRepository;
-  readonly asks: ProjectCleanAsks;
+  readonly assertProjectRemovable: AssertProjectRemovable;
   readonly removeProjectFiles: RemoveProjectFiles;
   readonly planProjectClean: PlanProjectClean;
 }
@@ -58,10 +53,7 @@ export interface CleanProjectFilesDeps {
  * registration and releasing the machine claims sit around those and are the caller's.
  */
 export class CleanProjectFiles {
-  constructor(
-    private readonly deps: CleanProjectFilesDeps,
-    private readonly tools: ToolCatalog
-  ) {}
+  constructor(private readonly deps: CleanProjectFilesDeps) {}
 
   /** `plan` answers `null` when this project installed nothing. `assert-removable` refuses while a
    * hook or an MCP entry of a tracked plugin could not be removed cleanly. `remove` answers how
@@ -74,30 +66,9 @@ export class CleanProjectFiles {
       case "plan":
         return this.deps.planProjectClean.execute(command.records);
       case "assert-removable":
-        return this.assertRemovable(command.projectRoot, command.force);
+        return this.deps.assertProjectRemovable.execute(command);
       case "remove":
         return this.deps.removeProjectFiles.remove(command.projectRoot, command.force);
-    }
-  }
-
-  private async assertRemovable(projectRoot: string, force: boolean): Promise<void> {
-    const manifest = await this.deps.manifestRepo.load();
-    if (manifest === null) return;
-    for (const toolId of manifest.getInstalledToolIds()) {
-      if (!this.tools.isAiTool(toolId)) continue;
-      for (const plugin of manifest.getRecordedPlugins(toolId)) {
-        const tool = this.tools.aiProfile(toolId);
-        await assertProjectHooksRemovable({
-          fs: this.deps.fs,
-          plugin,
-          tool,
-          projectRoot,
-          guard: {
-            overwriteEdited: force,
-          },
-        });
-        await this.deps.asks.assertMcpRemovable(plugin, tool, projectRoot);
-      }
     }
   }
 }

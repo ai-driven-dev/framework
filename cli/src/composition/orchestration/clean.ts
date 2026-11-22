@@ -2,6 +2,7 @@ import { homedir } from "node:os";
 import { ListMarketplaces } from "../../contexts/distribution/application/list-marketplaces.use-case.js";
 import { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.use-case.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
+import { AssertProjectRemovable } from "../../contexts/installation/application/clean/assert-project-removable.use-case.js";
 import {
   CleanProjectFiles,
   type ProjectCleanAsks,
@@ -74,19 +75,17 @@ function wireCleanProjectFiles(base: Base, inst: Installation) {
     assertMcpRemovable: (plugin, tool, projectRoot) =>
       assertProjectMcpEntriesRemovable(fs, { plugin, tool, projectRoot }),
   };
-  return new CleanProjectFiles(
-    {
-      fs,
-      manifestRepo,
-      asks,
-      planProjectClean: new PlanProjectClean({ manifestRepo, asks }, tools),
-      removeProjectFiles: new RemoveProjectFiles(
-        { fs, manifestRepo, logger, updateGitignore, homedir },
-        tools
-      ),
-    },
-    tools
-  );
+  return new CleanProjectFiles({
+    assertProjectRemovable: new AssertProjectRemovable(
+      { fs, manifestRepo, assertMcpRemovable: asks.assertMcpRemovable },
+      tools
+    ),
+    planProjectClean: new PlanProjectClean({ manifestRepo, asks }, tools),
+    removeProjectFiles: new RemoveProjectFiles(
+      { fs, manifestRepo, logger, updateGitignore, homedir },
+      tools
+    ),
+  });
 }
 
 /** Clean and uninstall. */
