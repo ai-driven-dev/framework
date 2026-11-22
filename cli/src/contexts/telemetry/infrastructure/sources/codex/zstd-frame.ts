@@ -28,6 +28,3 @@ function readSize(header: Buffer, at: number, width: number): number {
   if (width === 4) return header.readUInt32LE(at);
   return Number(header.readBigUInt64LE(at));
 }
-
-/** A stream that decompressed to another size than its frame declares. */
-export class FrameSizeMismatch extends Error {}

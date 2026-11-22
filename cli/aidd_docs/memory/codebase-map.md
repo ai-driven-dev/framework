@@ -91,7 +91,8 @@ src/
 │   │   │   ├── identity/
 │   │   │   ├── legacy/
 │   │   │   ├── report/
-│   │   │   └── switch/
+│   │   │   ├── switch/
+│   │   │   └── transcript/
 │   │   ├── infrastructure/
 │   │   │   ├── git/
 │   │   │   ├── legacy/

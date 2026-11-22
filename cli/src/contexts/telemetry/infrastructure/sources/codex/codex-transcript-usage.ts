@@ -1,7 +1,8 @@
 import { asPlainObject } from "../../../../../shared/domain/reading/plain-object.js";
 import type { UsageRecord, UsageTool } from "../../../contract/usage-record.js";
+import { CodexContext } from "../../../domain/transcript/codex-context.js";
+import { expected, type Json, text } from "../../../domain/transcript/line-values.js";
 import type { LineNames } from "../../../domain/transcript-position.js";
-import { expected, type Json, text } from "../line-values.js";
 
 export interface CodexUsageLine {
   readonly records: readonly UsageRecord[];
@@ -15,19 +16,6 @@ export interface CodexUsageLine {
 
 const CALL = "token_usage_record";
 const NONE: CodexUsageLine = { records: [], unrecognised: [] };
-
-/** What the lines of a file before a call say about it: the file's first `session_meta` and
- * its latest `turn_context`. */
-export class CodexContext {
-  constructor(
-    readonly session: Json | null = null,
-    readonly turn: Json | null = null
-  ) {}
-
-  get cwd(): string | null {
-    return text(this.turn?.cwd) ?? text(this.session?.cwd);
-  }
-}
 
 /** What one line of a Codex session file says, given the context before it. A call's model and
  * directory are written before it, in the latest `turn_context`, and its version and branch in
