@@ -41,6 +41,7 @@
 
 - Fan out genuinely independent subtasks to agents by responsibility when coordination costs less than serial work.
 - You stay the caller: you own scope, delegation, and final acceptance.
+- Archive each chat session you spawn after its work is complete and its result is collected. Verify the archive succeeded.
 
 | Responsibility | Agent |
 | --- | --- |
