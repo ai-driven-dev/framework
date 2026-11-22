@@ -183,17 +183,9 @@ describe("present(copilot.buildContracts.flat)()", () => {
     expect({
       path: artifactPath(mcp, "aidd-dev", ".mcp.json"),
       mcpServersKey: mcp.mcpServersKey,
-      mergeDest: mcp.mergeDest?.("/out"),
-      merged: mcp.merge?.(null, { "aidd-dev-context": { command: "node" } }, false),
     }).toStrictEqual({
       path: ".vscode/mcp.json",
       mcpServersKey: "servers",
-      mergeDest: "/out/.vscode/mcp.json",
-      merged: {
-        mergedContent:
-          '{\n  "servers": {\n    "aidd-dev-context": {\n      "command": "node"\n    }\n  }\n}\n',
-        collisions: [],
-      },
     });
   });
 

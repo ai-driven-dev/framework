@@ -8,10 +8,7 @@ import { aStubBuildContract, aSupportedArtifact } from "../testing/stub-build-co
 
 // Written as a split literal to avoid biome's noTemplateCurlyInString warning.
 const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
-const MERGES = {
-  merge: () => ({ mergedContent: "", collisions: [] }),
-  mergeDest: (outDir: string) => `${outDir}/mcp.json`,
-};
+const MERGES = { mcpServersKey: "mcpServers" };
 
 function flatContract(mcp = aSupportedArtifact(MERGES)) {
   const contract = aStubBuildContract();

@@ -202,11 +202,8 @@ describe("a flat MCP artifact", () => {
       hooks: COPY,
       mcp: {
         ...COPY,
-        merge: (_existing, incoming) => ({
-          mergedContent: JSON.stringify(incoming),
-          collisions: [],
-        }),
-        mergeDest: (outDir) => `${outDir}/mcp.json`,
+        path: () => "mcp.json",
+        mcpServersKey: "mcpServers",
       },
     });
     const outDir = `${OUT}\\nested`;

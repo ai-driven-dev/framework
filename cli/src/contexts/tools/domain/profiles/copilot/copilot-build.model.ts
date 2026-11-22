@@ -9,7 +9,6 @@ import {
   flatArtifactLayout,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
 import type { AgentMarkdown, ToolBuildContract } from "../../../contract/build-contract.js";
-import { mergeAdditiveMcp } from "../../formats/additive-mcp-merge.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
 import { pluginTreeContract } from "../../formats/plugin-tree-contract.js";
@@ -101,9 +100,7 @@ export function buildCopilotFlatContract(hooks: FlatHooks): ToolBuildContract {
         supported: true,
         source: { kind: "configFile", srcPath: ".mcp.json" },
         path: () => FLAT_VSCODE_MCP_PATH,
-        merge: (existing, incoming, force) => mergeAdditiveMcp(existing, incoming, { force }),
         mcpServersKey: "servers",
-        mergeDest: (outDir) => `${outDir}/${FLAT_VSCODE_MCP_PATH}`,
       },
       hooks: flatHooksArtifact(hooks, { tool: "copilot" }),
       rules: { supported: false },

@@ -64,18 +64,10 @@ export type ArtifactContract =
       /** VS Code Copilot discovers a skill by its parent folder name, so flat mode rewrites
        * SKILL.md's `name` frontmatter to match. Meaningless outside a flat skill artifact. */
       readonly rewriteSkillName?: boolean;
-      /** Additive merge into an existing config file, for a config-kind artifact that merges
-       * rather than writing once per plugin. */
-      readonly merge?: (
-        existing: string | null,
-        incomingPrefixed: Record<string, unknown>,
-        force: boolean
-      ) => { mergedContent: string; collisions: ReadonlyArray<string> };
-      /** servers-key of the mcp merge target: `servers` for copilot, `mcpServers` for claude.
-       * Only meaningful alongside `merge`. */
+      /** Present for an mcp artifact every plugin's servers are merged into, one shared file at
+       * `path`: the property holding the server map, `servers` for VS Code, `mcpServers` for
+       * Claude and Cursor. */
       readonly mcpServersKey?: string;
-      /** Absolute path to the shared merge target; only for merge contracts. */
-      readonly mergeDest?: (outDir: string) => string;
       /** The hooks file a plugin's hooks.json becomes: one every plugin shares, merged into,
        * or one of the plugin's own, written whole. Warnings are surfaced to the user. */
       readonly hooksFile?: {

@@ -134,7 +134,7 @@ function flatMcpOf(
   { contract, outDir }: Extract<TranslateLayout, { kind: "build" }>
 ): PluginMcp | null {
   const { mcp } = contract.artifacts;
-  const foldsMcp = mcp.supported && mcp.merge !== undefined && mcp.mergeDest !== undefined;
+  const foldsMcp = mcp.supported && mcp.mcpServersKey !== undefined;
   return foldsMcp || contract.configArtifact ? flatMcp(dist, { contract, outDir }) : null;
 }
 

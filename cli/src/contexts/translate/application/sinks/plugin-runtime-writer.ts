@@ -40,11 +40,11 @@ export async function writePluginMcp(
 ): Promise<number> {
   const artifact = t.contract.artifacts.mcp;
   if (!artifact.supported || mcp === null) return 0;
-  const { merge, mergeDest } = artifact;
-  if (!merge || !mergeDest) return 0;
+  const { mcpServersKey } = artifact;
+  if (mcpServersKey === undefined) return 0;
   return deps.flat.writeMcp({
     target: t,
-    mcp: { merge, mergeDest },
+    mcp: { ...artifact, mcpServersKey },
     pluginName: name,
     servers: mcp.servers,
   });

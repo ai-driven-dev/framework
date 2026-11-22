@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mergeAdditiveMcp } from "../../../../../src/contexts/tools/domain/formats/additive-mcp-merge.js";
+import { mergeAdditiveMcp } from "../../../../src/contexts/translate/domain/additive-mcp-merge.js";
 
 const PLUGIN_SERVER = { command: "node", args: ["server.js"] };
 

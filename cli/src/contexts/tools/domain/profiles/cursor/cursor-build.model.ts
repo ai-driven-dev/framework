@@ -9,7 +9,6 @@ import {
   flatArtifactLayout,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
 import type { AgentMarkdown, ToolBuildContract } from "../../../contract/build-contract.js";
-import { mergeAdditiveMcp } from "../../formats/additive-mcp-merge.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
 import { pluginTreeContract } from "../../formats/plugin-tree-contract.js";
@@ -64,10 +63,7 @@ export function buildCursorFlatContract(hooks: FlatHooks): ToolBuildContract {
         supported: true,
         source: { kind: "configFile", srcPath: ".mcp.json" },
         path: () => ".cursor/mcp.json",
-        merge: (existing, incoming, force) =>
-          mergeAdditiveMcp(existing, incoming, { force, serversKey: "mcpServers" }),
         mcpServersKey: "mcpServers",
-        mergeDest: (outDir) => `${outDir}/.cursor/mcp.json`,
       },
       hooks: flatHooksArtifact(hooks, { tool: "cursor" }),
       rules: { supported: false },

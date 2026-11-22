@@ -126,17 +126,9 @@ describe("present(claude.buildContracts.flat)()", () => {
     expect({
       path: artifactPath(mcp, "aidd-dev", ".mcp.json"),
       mcpServersKey: mcp.mcpServersKey,
-      mergeDest: mcp.mergeDest?.("/out"),
-      merged: mcp.merge?.(null, { "aidd-dev-context": { command: "node" } }, false),
     }).toStrictEqual({
       path: ".mcp.json",
       mcpServersKey: "mcpServers",
-      mergeDest: "/out/.mcp.json",
-      merged: {
-        mergedContent:
-          '{\n  "mcpServers": {\n    "aidd-dev-context": {\n      "command": "node"\n    }\n  }\n}\n',
-        collisions: [],
-      },
     });
   });
 
