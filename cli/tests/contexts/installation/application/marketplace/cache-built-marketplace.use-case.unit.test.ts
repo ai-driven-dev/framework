@@ -393,7 +393,7 @@ describe("outDir invariant for the cache-rebuild build path", () => {
     // resolve(): the direct-path outDir the code passes is itself resolved (drive letter
     // on win32), so the cache root it is compared against must be built the same way.
     const cacheRoot = resolve(join(PROJECT, BUILT_CACHE_SUBDIR));
-    const isTemp = (outDir: string) => outDir.startsWith(TMP);
+    const isTemp = (outDir: string) => outDir.startsWith(`${join(TMP)}${sep}`);
     for (const outDir of capturedOutDirs) {
       const underCache = outDir === cacheRoot || outDir.startsWith(`${cacheRoot}${sep}`);
       expect(underCache || isTemp(outDir)).toBe(true);
