@@ -1,35 +1,32 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { PluginDistributionReaderAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-distribution-reader-adapter.js";
-import { ReportStatus } from "../../../src/contexts/installation/application/report-status.use-case.js";
-import { RestoreGlobal } from "../../../src/contexts/installation/application/restore/project/restore-global.use-case.js";
-import { DetectPluginDrift } from "../../../src/contexts/installation/application/shared/detect-plugin-drift.use-case.js";
-import { RestoreAll } from "../../../src/orchestration/global/restore-all.use-case.js";
-import { render } from "../../../src/presentation/errors/error-translator.presenter.js";
-import type { AiToolId } from "../../../src/shared/domain/tool.js";
-import { buildAddPlugin } from "../../contexts/installation/testing/build-add-plugin.builder.js";
+import { PluginDistributionReaderAdapter } from "../../src/contexts/distribution/infrastructure/plugin-distribution-reader-adapter.js";
+import { ReportStatus } from "../../src/contexts/installation/application/report-status.use-case.js";
+import { RestoreGlobal } from "../../src/contexts/installation/application/restore/project/restore-global.use-case.js";
+import { DetectPluginDrift } from "../../src/contexts/installation/application/shared/detect-plugin-drift.use-case.js";
+import { RestoreAll } from "../../src/orchestration/global/restore-all.use-case.js";
+import { render } from "../../src/presentation/errors/error-translator.presenter.js";
+import type { AiToolId } from "../../src/shared/domain/tool.js";
+import { buildAddPlugin } from "../contexts/installation/testing/build-add-plugin.builder.js";
 import {
   restoreAllPluginsOf,
   restoreOf,
-} from "../../contexts/installation/testing/build-restore.builder.js";
+} from "../contexts/installation/testing/build-restore.builder.js";
 import {
   fakeBuildSources,
   fakeBuiltDeps,
-} from "../../contexts/installation/testing/fake-build-sources.fake.js";
+} from "../contexts/installation/testing/fake-build-sources.fake.js";
 import {
   buildInstallationDeps,
   initAndInstall,
   installTool,
-} from "../../shared/testing/installation-deps.builder.js";
-import { loadDistributionOf } from "../../shared/testing/load-distribution.builder.js";
-import { manifestProbesOf } from "../../shared/testing/manifest-probes-of.builder.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
-import {
-  OverwritePrompter,
-  ScriptedPrompter,
-} from "../../shared/testing/scripted-prompter.fake.js";
-import { seedFromDirectory } from "../../shared/testing/seed-from-directory.builder.js";
+} from "../shared/testing/installation-deps.builder.js";
+import { loadDistributionOf } from "../shared/testing/load-distribution.builder.js";
+import { manifestProbesOf } from "../shared/testing/manifest-probes-of.builder.js";
+import { registeredTools, TOOL } from "../shared/testing/registered-tools.builder.js";
+import { OverwritePrompter, ScriptedPrompter } from "../shared/testing/scripted-prompter.fake.js";
+import { seedFromDirectory } from "../shared/testing/seed-from-directory.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");

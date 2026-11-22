@@ -28,7 +28,6 @@
       "tests/orchestration/doctor/doctor-plugin.unit.test.ts": 1,
       "tests/orchestration/doctor/native-registration-verdicts.unit.test.ts": 1,
       "tests/orchestration/doctor/run-doctor.use-case.installation-health.unit.test.ts": 1,
-      "tests/orchestration/global/restore-all.use-case.integration.test.ts": 1,
       "tests/orchestration/marketplace/register-marketplace.use-case.unit.test.ts": 1,
       "tests/orchestration/marketplace/remove-project-marketplace-native-claims.integration.test.ts": 1,
       "tests/orchestration/marketplace/remove-project-marketplace.use-case.orphan-protection.unit.test.ts": 1,
