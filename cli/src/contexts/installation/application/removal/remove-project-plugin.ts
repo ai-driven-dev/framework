@@ -31,7 +31,7 @@ async function planProjectMcpRemoval(
   removal: ProjectMcpRemoval
 ): Promise<{ output: string; content: string } | undefined> {
   const { plugin, tool, projectRoot } = removal;
-  if (plugin.mcpEntries.size === 0) return undefined;
+  if (plugin.provenance.mcpEntries.size === 0) return undefined;
   const mcp = tool.flatPluginMcp();
   if (mcp === null) return undefined;
   const output = join(
@@ -41,7 +41,7 @@ async function planProjectMcpRemoval(
   await assertProjectPathWithinRoot(fs, projectRoot, output);
   try {
     const existing = await fs.readFile(output);
-    return { output, content: mcp.removePluginServers(existing, plugin.mcpEntries) };
+    return { output, content: mcp.removePluginServers(existing, plugin.provenance.mcpEntries) };
   } catch (error) {
     if (isErrnoException(error) && error.code === "ENOENT") return undefined;
     throw error;

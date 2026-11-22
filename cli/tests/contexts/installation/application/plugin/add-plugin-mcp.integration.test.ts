@@ -107,7 +107,9 @@ describe("AddPlugin and opencode MCP servers", () => {
       environment: { MODE: "plugin" },
       enabled: true,
     });
-    expect([...(installedMcpPlugin(deps)?.mcpEntries.keys() ?? [])]).toStrictEqual(["new-tool"]);
+    expect([...(installedMcpPlugin(deps)?.provenance.mcpEntries.keys() ?? [])]).toStrictEqual([
+      "new-tool",
+    ]);
     expect(logger.warnMessages).toStrictEqual([
       'Plugin "mcp-plugin": mcp skipped for opencode — local-tool: server already exists in opencode.json (user-owned); plugin entry skipped',
     ]);
@@ -183,7 +185,7 @@ describe("AddPlugin and opencode MCP servers", () => {
       deps.manifestRepo
         .getCurrent()
         ?.getPlugins(TOOL.cursor)
-        .find((p) => p.name === "mcp-plugin")?.projectHooks?.scripts.size
+        .find((p) => p.name === "mcp-plugin")?.provenance.projectHooks?.scripts.size
     ).toBe(1);
   });
 
@@ -323,7 +325,7 @@ describe("AddPlugin and opencode MCP servers", () => {
         ?.getPlugins(TOOL.opencode)
         .find((plugin) => plugin.name === "other-mcp-plugin")
     ).toEqual(otherBefore);
-    expect(installedMcpPlugin(deps)?.mcpEntries.size).toBe(1);
+    expect(installedMcpPlugin(deps)?.provenance.mcpEntries.size).toBe(1);
   });
 
   it("keeps its own MCP server, without a collision, when re-added with replace", async () => {
@@ -331,12 +333,14 @@ describe("AddPlugin and opencode MCP servers", () => {
     await seedFromDirectory(deps.fs, EXTRA_PLUGIN_FIXTURE, { useAbsolutePaths: true });
     await addLocal(useCase, EXTRA_PLUGIN_FIXTURE);
     await addLocal(useCase, MCP_PLUGIN_DIR);
-    const firstEntries = [...(installedMcpPlugin(deps)?.mcpEntries ?? [])];
+    const firstEntries = [...(installedMcpPlugin(deps)?.provenance.mcpEntries ?? [])];
 
     await addLocal(useCase, MCP_PLUGIN_DIR, true);
 
     expect(firstEntries.map(([name]) => name)).toStrictEqual(["local-tool"]);
-    expect([...(installedMcpPlugin(deps)?.mcpEntries ?? [])]).toStrictEqual(firstEntries);
+    expect([...(installedMcpPlugin(deps)?.provenance.mcpEntries ?? [])]).toStrictEqual(
+      firstEntries
+    );
     expect(logger.warnMessages).toStrictEqual([]);
   });
 
@@ -352,6 +356,6 @@ describe("AddPlugin and opencode MCP servers", () => {
     expect(logger.warnMessages).toStrictEqual([
       'Plugin "mcp-plugin": mcp skipped for opencode — local-tool: server already exists in opencode.json (user-owned); plugin entry skipped',
     ]);
-    expect([...(installedMcpPlugin(deps)?.mcpEntries ?? [])]).toStrictEqual([]);
+    expect([...(installedMcpPlugin(deps)?.provenance.mcpEntries ?? [])]).toStrictEqual([]);
   });
 });

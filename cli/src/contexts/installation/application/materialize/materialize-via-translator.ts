@@ -37,9 +37,9 @@ export async function materializeViaTranslator(
     projectRoot,
     manifest,
     marketplace: plugin.marketplace,
-    previousMcpEntries: plugin.mcpEntries,
+    previousMcpEntries: plugin.provenance.mcpEntries,
     userScopeDirTaken: false,
-    previousProjectHooks: plugin.projectHooks,
+    previousProjectHooks: plugin.provenance.projectHooks,
     hooksGuard,
   });
   return written ?? 0;

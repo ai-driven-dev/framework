@@ -264,7 +264,7 @@ describe("BuiltTreeMaterializationTranslator - kilo (integration)", () => {
       manifest
         .getPlugins(TOOL.kilo)
         .find((p) => p.name === "aidd-vcs")
-        ?.mcpEntries.get("context")
+        ?.provenance.mcpEntries.get("context")
     ).toBeTruthy();
     expect(manifest.getToolFiles(TOOL.kilo)[0]?.hash).toEqual(
       FileHash.of(await fs.readFile(configPath))

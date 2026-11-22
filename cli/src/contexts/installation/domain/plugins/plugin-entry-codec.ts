@@ -7,6 +7,7 @@ import {
   InvalidPluginVersionError,
   MalformedPluginScopeError,
 } from "../installation.error.js";
+import type { FileProvenance } from "./file-provenance.js";
 import {
   asComponentPathMap,
   asMcpDigestMap,
@@ -28,15 +29,7 @@ export function pluginFieldsFromEntry(data: PluginEntryData): PluginFields {
     strict: data.strict,
     files: asPathHashMap(new Map(Object.entries(data.files))),
     scope: data.scope,
-    componentPaths: asComponentPathMap(new Map(Object.entries(data.componentPaths ?? {}))),
-    mcpEntries: asMcpDigestMap(new Map(Object.entries(data.mcpEntries ?? {}))),
-    projectHooks:
-      data.projectHooks === undefined
-        ? undefined
-        : {
-            entries: data.projectHooks.entries,
-            scripts: new Map(Object.entries(data.projectHooks.scripts)),
-          },
+    provenance: provenanceFromEntry(data),
     marketplace: data.marketplace,
     dependents: data.dependents ?? [],
   };
@@ -52,16 +45,34 @@ export function entryFromPluginFields(fields: PluginFields): PluginEntryData {
     files: Object.fromEntries(fields.files),
     scope: fields.scope,
   };
-  if (fields.componentPaths.size > 0)
-    data.componentPaths = Object.fromEntries(fields.componentPaths);
-  if (fields.mcpEntries.size > 0) data.mcpEntries = Object.fromEntries(fields.mcpEntries);
-  if (fields.projectHooks !== undefined) {
-    data.projectHooks = {
-      entries: [...fields.projectHooks.entries],
-      scripts: Object.fromEntries(fields.projectHooks.scripts),
-    };
-  }
+  writeProvenance(data, fields.provenance);
   if (fields.marketplace !== undefined) data.marketplace = fields.marketplace;
   if (fields.dependents.length > 0) data.dependents = [...fields.dependents];
   return data;
+}
+
+function provenanceFromEntry(data: PluginEntryData): FileProvenance {
+  return {
+    componentPaths: asComponentPathMap(new Map(Object.entries(data.componentPaths ?? {}))),
+    mcpEntries: asMcpDigestMap(new Map(Object.entries(data.mcpEntries ?? {}))),
+    projectHooks:
+      data.projectHooks === undefined
+        ? undefined
+        : {
+            entries: data.projectHooks.entries,
+            scripts: new Map(Object.entries(data.projectHooks.scripts)),
+          },
+  };
+}
+
+function writeProvenance(data: PluginEntryData, provenance: FileProvenance): void {
+  const { componentPaths, mcpEntries, projectHooks } = provenance;
+  if (componentPaths.size > 0) data.componentPaths = Object.fromEntries(componentPaths);
+  if (mcpEntries.size > 0) data.mcpEntries = Object.fromEntries(mcpEntries);
+  if (projectHooks !== undefined) {
+    data.projectHooks = {
+      entries: [...projectHooks.entries],
+      scripts: Object.fromEntries(projectHooks.scripts),
+    };
+  }
 }

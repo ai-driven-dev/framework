@@ -11,7 +11,7 @@ export async function removeFlatMcpEntries(
   removal: ProjectMcpRemoval
 ): Promise<void> {
   const { plugin, tool, projectRoot } = removal;
-  if (plugin.mcpEntries.size === 0) return;
+  if (plugin.provenance.mcpEntries.size === 0) return;
   const mcpCap = tool.flatPluginMcp();
   if (mcpCap === null) return;
   const outputRelPath = await mcpCap.resolveOutputPath((relativePath) =>
@@ -20,7 +20,7 @@ export async function removeFlatMcpEntries(
   const outputPath = join(projectRoot, outputRelPath);
   const existing = await readExistingJson(fs, outputPath);
   if (existing === null) return;
-  const updated = mcpCap.removePluginServers(existing, plugin.mcpEntries);
+  const updated = mcpCap.removePluginServers(existing, plugin.provenance.mcpEntries);
   await assertProjectPathWithinRoot(fs, projectRoot, outputPath);
   await fs.writeFile(outputPath, updated);
 }

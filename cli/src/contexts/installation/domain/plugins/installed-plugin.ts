@@ -2,11 +2,10 @@ import type { InstallationFile } from "../../../../shared/domain/installation-fi
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
 import { type PluginSource, serializePluginSource } from "../../../../shared/domain/source.js";
+import type { FileProvenance } from "./file-provenance.js";
 import {
   asMcpDigestMap,
   asPathHashMap,
-  type ComponentPathMap,
-  type McpDigestMap,
   type PathHashMap,
   type PluginEntryData,
   type PluginFields,
@@ -24,9 +23,7 @@ export class InstalledPlugin {
    * directory. Recorded once, at install, and never re-derived from a tool's current profile,
    * which can disagree with what was true when the entry was written. */
   readonly scope: Scope;
-  readonly componentPaths: ComponentPathMap;
-  readonly mcpEntries: McpDigestMap;
-  readonly projectHooks?: ProjectHooksProvenance;
+  readonly provenance: FileProvenance;
   readonly marketplace?: string;
   readonly dependents: readonly string[];
 
@@ -37,9 +34,7 @@ export class InstalledPlugin {
     this.strict = params.strict;
     this.files = params.files;
     this.scope = params.scope;
-    this.componentPaths = params.componentPaths;
-    this.mcpEntries = params.mcpEntries;
-    this.projectHooks = params.projectHooks;
+    this.provenance = params.provenance;
     this.marketplace = params.marketplace;
     this.dependents = params.dependents;
   }
@@ -69,14 +64,17 @@ export class InstalledPlugin {
     plugin: InstalledPlugin,
     mcpEntries: ReadonlyMap<string, string>
   ): InstalledPlugin {
-    return new InstalledPlugin({ ...plugin, mcpEntries: asMcpDigestMap(mcpEntries) });
+    return new InstalledPlugin({
+      ...plugin,
+      provenance: { ...plugin.provenance, mcpEntries: asMcpDigestMap(mcpEntries) },
+    });
   }
 
   static withProjectHooks(
     plugin: InstalledPlugin,
     projectHooks: ProjectHooksProvenance | undefined
   ): InstalledPlugin {
-    return new InstalledPlugin({ ...plugin, projectHooks });
+    return new InstalledPlugin({ ...plugin, provenance: { ...plugin.provenance, projectHooks } });
   }
 
   static fromDistribution(installed: {

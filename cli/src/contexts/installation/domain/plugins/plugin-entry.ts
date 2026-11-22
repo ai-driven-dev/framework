@@ -1,5 +1,6 @@
 import type { Scope } from "../../../../shared/domain/scope.js";
 import type { PluginSource } from "../../../../shared/domain/source.js";
+import type { FileProvenance } from "./file-provenance.js";
 
 export const PLUGIN_NAME_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
@@ -66,9 +67,7 @@ export interface PluginFields {
   strict: boolean;
   files: PathHashMap;
   scope: Scope;
-  componentPaths: ComponentPathMap;
-  mcpEntries: McpDigestMap;
-  projectHooks?: ProjectHooksProvenance;
+  provenance: FileProvenance;
   marketplace?: string;
   dependents: readonly string[];
 }

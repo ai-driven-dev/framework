@@ -123,7 +123,7 @@ describe("removeProjectHooks", () => {
       assertProjectHooksUnchanged({
         fs,
         pluginName: PLUGIN,
-        provenance: installed.projectHooks,
+        provenance: installed.provenance.projectHooks,
         tool: registeredTools().aiProfile(cursor),
         projectRoot: PROJECT_ROOT,
       })

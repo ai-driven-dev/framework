@@ -241,7 +241,7 @@ describe("ModeBFlatMaterializationTranslator", () => {
           marketplace: undefined,
           previousMcpEntries: new Map(),
           userScopeDirTaken: false,
-          previousProjectHooks: installed?.projectHooks,
+          previousProjectHooks: installed?.provenance.projectHooks,
           hooksGuard: guard,
         });
 

@@ -29,7 +29,7 @@ it("round-trips exact Cursor project hook provenance through the plugin manifest
     },
   });
   const installed = InstalledPlugin.fromJSON(data);
-  expect(installed.projectHooks?.scripts.get(".cursor/hooks/my-plugin/pre.js")).toBe(
+  expect(installed.provenance.projectHooks?.scripts.get(".cursor/hooks/my-plugin/pre.js")).toBe(
     "b".repeat(32)
   );
   expect(InstalledPlugin.fromJSON(installed.toJSON()).toJSON()).toEqual(data);
@@ -240,7 +240,7 @@ describe("InstalledPlugin", () => {
         componentPaths,
       });
 
-      expect([...plugin.componentPaths]).toStrictEqual([
+      expect([...plugin.provenance.componentPaths]).toStrictEqual([
         [".claude/rules/naming.md", "rules/naming.md"],
       ]);
     });
@@ -253,7 +253,7 @@ describe("InstalledPlugin", () => {
         scope: "project",
       });
 
-      expect([...plugin.componentPaths]).toStrictEqual([]);
+      expect([...plugin.provenance.componentPaths]).toStrictEqual([]);
     });
   });
 

@@ -27,7 +27,7 @@ export async function assertProjectHooksRemovable(
   await assertProjectHooksUnchanged({
     ...rest,
     pluginName: plugin.name,
-    provenance: plugin.projectHooks,
+    provenance: plugin.provenance.projectHooks,
   });
 }
 
@@ -77,7 +77,7 @@ export async function removeProjectHooks(
   return removeRecordedProjectHooks({
     ...rest,
     pluginName: plugin.name,
-    provenance: plugin.projectHooks,
+    provenance: plugin.provenance.projectHooks,
   });
 }
 

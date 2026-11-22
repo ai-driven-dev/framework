@@ -160,7 +160,7 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
       manifest,
       marketplace: undefined,
     });
-    const prior = manifest.getPlugins(TOOL.opencode)[0].mcpEntries;
+    const prior = manifest.getPlugins(TOOL.opencode)[0].provenance.mcpEntries;
     const config = JSON.parse(fs.getFile(OPENCODE_JSON) ?? "null") as {
       mcp: Record<string, unknown>;
     };

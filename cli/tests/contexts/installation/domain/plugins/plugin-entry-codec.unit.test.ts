@@ -24,8 +24,8 @@ describe("pluginFieldsFromEntry", () => {
   it("reads maps and defaults the optional fields", () => {
     const fields = pluginFieldsFromEntry(entry());
     expect(fields.files.get("a.md")).toBe("h1");
-    expect(fields.componentPaths.size).toBe(0);
-    expect(fields.mcpEntries.size).toBe(0);
+    expect(fields.provenance.componentPaths.size).toBe(0);
+    expect(fields.provenance.mcpEntries.size).toBe(0);
     expect(fields.dependents).toEqual([]);
   });
 

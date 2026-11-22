@@ -144,7 +144,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
     await installPlugin(fs, manifest, PLUGIN_NAME);
-    const previous = manifest.getPlugins(TOOL.cursor)[0].projectHooks;
+    const previous = manifest.getPlugins(TOOL.cursor)[0].provenance.projectHooks;
     manifest.removePlugin(TOOL.cursor, PLUGIN_NAME);
     await installPlugin(fs, manifest, PLUGIN_NAME, previous);
 
@@ -159,7 +159,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
     await installPlugin(fs, manifest, PLUGIN_NAME);
-    const previous = manifest.getPlugins(TOOL.cursor)[0].projectHooks;
+    const previous = manifest.getPlugins(TOOL.cursor)[0].provenance.projectHooks;
     fs.setFile(SCRIPT_PATH, "edited by user");
     manifest.removePlugin(TOOL.cursor, PLUGIN_NAME);
     await expect(installPlugin(fs, manifest, PLUGIN_NAME, previous)).rejects.toThrow(
@@ -173,7 +173,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
     await installPlugin(fs, manifest, PLUGIN_NAME);
-    const previous = manifest.getPlugins(TOOL.cursor)[0].projectHooks;
+    const previous = manifest.getPlugins(TOOL.cursor)[0].provenance.projectHooks;
     manifest.removePlugin(TOOL.cursor, PLUGIN_NAME);
     const translator = new ModeBFlatMaterializationTranslator(
       fs,
@@ -193,7 +193,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     });
     expect(fs.has(HOOKS_PATH)).toBe(false);
     expect(fs.has(SCRIPT_PATH)).toBe(false);
-    expect(manifest.getPlugins(TOOL.cursor)[0].projectHooks).toBeUndefined();
+    expect(manifest.getPlugins(TOOL.cursor)[0].provenance.projectHooks).toBeUndefined();
   });
 
   it("refuses to remove an edited project hook script without detaching the plugin record", async () => {

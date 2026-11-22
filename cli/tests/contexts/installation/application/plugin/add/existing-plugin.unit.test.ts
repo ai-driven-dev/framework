@@ -41,7 +41,7 @@ describe("previousInstall", () => {
 
     const previous = previousInstall("sample", [TOOL.claude], manifest);
 
-    expect([...previous.mcpEntries]).toStrictEqual([[TOOL.claude, withMcp.mcpEntries]]);
+    expect([...previous.mcpEntries]).toStrictEqual([[TOOL.claude, withMcp.provenance.mcpEntries]]);
     expect(previous.projectHooks.size).toBe(0);
   });
 

@@ -309,7 +309,7 @@ function recordedPluginLines(
   const hookFiles = [...plugin.files.keys()]
     .filter((f) => /hook/i.test(f) && !f.includes("/skills/"))
     .sort();
-  const projectHooks = JSON.stringify(plugin.projectHooks ?? null, null, 2);
+  const projectHooks = JSON.stringify(plugin.provenance.projectHooks ?? null, null, 2);
   const dependents = plugin.dependents.map(
     (dependent) => `<root>/${relative(ws.root, dependent).split(sep).join("/")}`
   );
