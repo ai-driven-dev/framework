@@ -7,10 +7,13 @@ import { AssertProjectRemovable } from "../../../src/contexts/installation/appli
 import type { ProjectCleanAsks } from "../../../src/contexts/installation/application/clean/clean-project-files.use-case.js";
 import { CleanProjectFiles } from "../../../src/contexts/installation/application/clean/clean-project-files.use-case.js";
 import { PlanProjectClean } from "../../../src/contexts/installation/application/clean/plan-project-clean.use-case.js";
+import { DeleteTrackedProjectFiles } from "../../../src/contexts/installation/application/removal/project/delete-tracked-project-files.js";
 import {
-  RemoveProjectFiles,
-  type RemoveProjectFilesDeps,
-} from "../../../src/contexts/installation/application/removal/project/remove-project-files.js";
+  type AiddTracesDeps,
+  RemoveAiddTraces,
+} from "../../../src/contexts/installation/application/removal/project/remove-aidd-traces.js";
+import { RemoveMachineLocalFiles } from "../../../src/contexts/installation/application/removal/project/remove-machine-local-files.js";
+import { RemoveProjectFiles } from "../../../src/contexts/installation/application/removal/project/remove-project-files.js";
 import { assertProjectMcpEntriesRemovable } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { PurgeDeclaredCache } from "../../../src/contexts/machine-claims/application/purge-declared-cache.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
@@ -24,7 +27,7 @@ import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-mark
 
 const homedir = (): string => "/home/dev";
 
-type Files = RemoveProjectFilesDeps;
+type Files = AiddTracesDeps;
 
 /** What a test names; everything else is the empty default. */
 export interface ProjectCleanerParts extends Partial<HostPorts> {
@@ -61,16 +64,23 @@ export function projectCleanerDeps(parts: ProjectCleanerParts): CleanProjectDeps
         { manifestRepo: parts.manifestRepo, asks },
         parts.tools
       ),
-      removeProjectFiles: new RemoveProjectFiles(
-        {
-          fs: parts.fs,
-          manifestRepo: parts.manifestRepo,
-          logger: parts.logger,
-          updateGitignore: parts.gitignore,
-          homedir,
-        },
-        parts.tools
-      ),
+      removeProjectFiles: new RemoveProjectFiles({
+        manifestRepo: parts.manifestRepo,
+        trackedFiles: new DeleteTrackedProjectFiles(
+          { fs: parts.fs, logger: parts.logger, homedir },
+          parts.tools
+        ),
+        machineLocalFiles: new RemoveMachineLocalFiles(parts.fs, parts.tools),
+        aiddTraces: new RemoveAiddTraces(
+          {
+            fs: parts.fs,
+            manifestRepo: parts.manifestRepo,
+            logger: parts.logger,
+            updateGitignore: parts.gitignore,
+          },
+          parts.tools
+        ),
+      }),
     }),
     withdrawFromHost: new WithdrawFromHost(parts.fs, parts.logger, {
       activators: parts.activators ?? new Map(),

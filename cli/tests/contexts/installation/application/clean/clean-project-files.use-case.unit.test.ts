@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import { AssertProjectRemovable } from "../../../../../src/contexts/installation/application/clean/assert-project-removable.use-case.js";
 import { CleanProjectFiles } from "../../../../../src/contexts/installation/application/clean/clean-project-files.use-case.js";
 import { PlanProjectClean } from "../../../../../src/contexts/installation/application/clean/plan-project-clean.use-case.js";
-import { RemoveProjectFiles } from "../../../../../src/contexts/installation/application/removal/project/remove-project-files.js";
 import { UpdateGitignore } from "../../../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools } from "../../../../shared/testing/registered-tools.builder.js";
+import { removeProjectFilesOver } from "../../testing/remove-project-files.builder.js";
 
 const ROOT = "/test-project";
 
@@ -21,16 +21,14 @@ function cleanOverEmptyProject(): CleanProjectFiles {
       registeredTools()
     ),
     planProjectClean: new PlanProjectClean({ manifestRepo, asks }, registeredTools()),
-    removeProjectFiles: new RemoveProjectFiles(
-      {
-        fs,
-        manifestRepo,
-        logger: new CapturingLogger(),
-        updateGitignore: new UpdateGitignore(fs),
-        homedir: () => "/home/dev",
-      },
-      registeredTools()
-    ),
+    removeProjectFiles: removeProjectFilesOver({
+      fs,
+      manifestRepo,
+      logger: new CapturingLogger(),
+      updateGitignore: new UpdateGitignore(fs),
+      homedir: () => "/home/dev",
+      tools: registeredTools(),
+    }),
   });
 }
 

@@ -12,6 +12,9 @@ import { PlanProjectClean } from "../../contexts/installation/application/clean/
 import { ProveUserScopeWithdrawals } from "../../contexts/installation/application/clean/prove-user-scope-withdrawals.js";
 import { PurgeUserScopeFiles } from "../../contexts/installation/application/clean/purge-user-scope-files.js";
 import { PurgeUserScopeMachine } from "../../contexts/installation/application/clean/purge-user-scope-machine.js";
+import { DeleteTrackedProjectFiles } from "../../contexts/installation/application/removal/project/delete-tracked-project-files.js";
+import { RemoveAiddTraces } from "../../contexts/installation/application/removal/project/remove-aidd-traces.js";
+import { RemoveMachineLocalFiles } from "../../contexts/installation/application/removal/project/remove-machine-local-files.js";
 import { RemoveProjectFiles } from "../../contexts/installation/application/removal/project/remove-project-files.js";
 import { RemoveToolFiles } from "../../contexts/installation/application/removal/project/remove-tool-files.js";
 import type { MachineStateGuards } from "../../contexts/installation/application/removal/purge-machine-state.js";
@@ -87,10 +90,12 @@ function wireCleanProjectFiles(base: Base, inst: Installation) {
       tools
     ),
     planProjectClean: new PlanProjectClean({ manifestRepo, asks }, tools),
-    removeProjectFiles: new RemoveProjectFiles(
-      { fs, manifestRepo, logger, updateGitignore, homedir },
-      tools
-    ),
+    removeProjectFiles: new RemoveProjectFiles({
+      manifestRepo,
+      trackedFiles: new DeleteTrackedProjectFiles({ fs, logger, homedir }, tools),
+      machineLocalFiles: new RemoveMachineLocalFiles(fs, tools),
+      aiddTraces: new RemoveAiddTraces({ fs, manifestRepo, logger, updateGitignore }, tools),
+    }),
   });
 }
 
