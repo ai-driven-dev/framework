@@ -72,13 +72,13 @@ export function pluginRemover(parts: PluginRemoverParts) {
       {
         fs,
         projectRepo: parts.manifestRepo,
-        records: parts.records ?? registrationRecordRules,
         homedir: () => "/home/dev",
       },
       registeredTools()
     ),
     withdrawFromHost: withdrawing({ ...parts, logger }, fs),
     claims: removalClaims,
+    records: parts.records ?? registrationRecordRules,
   });
 }
 

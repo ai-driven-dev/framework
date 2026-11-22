@@ -1,7 +1,10 @@
+import { registrationRecordRules } from "../../../../src/composition/installation.js";
 import type {
   PluginHostReach,
   ProjectPluginWithdrawalSteps,
 } from "../../../../src/contexts/installation/application/removal/project-plugin-withdrawal.js";
+import type { NativeRegistrations } from "../../../../src/contexts/installation/domain/manifest/native-registrations.js";
+import type { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { AiToolId, ToolId } from "../../../../src/shared/domain/tool.js";
 
 interface Answers {
@@ -29,6 +32,17 @@ export class FakeProjectPluginWithdrawal implements ProjectPluginWithdrawalSteps
 
   async canDetachRef(): Promise<boolean> {
     return this.answers.canDetachRef ?? true;
+  }
+
+  recordedRef(
+    registrations: NativeRegistrations | undefined,
+    plugin: InstalledPlugin
+  ): string | undefined {
+    return registrationRecordRules.refOf(registrations, plugin.name, plugin.marketplace);
+  }
+
+  withoutRef(registrations: NativeRegistrations, ref: string): NativeRegistrations {
+    return registrationRecordRules.withoutRef(registrations, ref);
   }
 
   async detachNativeRefs(

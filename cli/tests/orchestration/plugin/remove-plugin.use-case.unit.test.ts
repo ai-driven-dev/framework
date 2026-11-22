@@ -54,19 +54,23 @@ async function stepsOf(owned: (toolId: string, ref: string) => boolean = () => f
     detachNativeRefs: vi.fn(async () => undefined),
     detachUserPlugin: vi.fn(async () => undefined),
   };
+  const records: RemovePluginDeps["records"] = {
+    refOf: vi.fn((_record, plugin, alias) => `${plugin}@${alias}`),
+    withoutRef: vi.fn((record) => ({ ...record, pluginRefs: [] })),
+  };
   let steps: ProjectPluginWithdrawalSteps | undefined;
   const remove = {
     execute: async (request: RemovePluginRequest) => {
       steps = request.withdrawal;
     },
   };
-  await new RemovePlugin({ remove, withdrawFromHost: host, claims }).execute({
+  await new RemovePlugin({ remove, withdrawFromHost: host, claims, records }).execute({
     pluginName: "aidd-dev",
     toolIds: "all",
     projectRoot: ROOT,
   });
   if (steps === undefined) throw new Error("the removal was not handed its steps");
-  return { steps, host, claims };
+  return { steps, host, claims, records };
 }
 
 const claude = registeredTools().aiProfile(TOOL.claude);
@@ -146,6 +150,22 @@ describe("RemovePlugin", () => {
     expect(
       await steps.canDetachRef({ toolId: TOOL.claude, tool: claude, confirmed: false, ref: "r" })
     ).toBe(false);
+  });
+
+  it("reads the plugin's ref from the record under the marketplace it came from", async () => {
+    const { steps, records } = await stepsOf();
+    const recorded = { pluginRefs: ["aidd-dev@framework"] };
+
+    expect(steps.recordedRef(recorded, plugin("framework"))).toBe("aidd-dev@framework");
+    expect(records.refOf).toHaveBeenCalledWith(recorded, "aidd-dev", "framework");
+  });
+
+  it("drops the ref from the record through the host registration's rule", async () => {
+    const { steps, records } = await stepsOf();
+    const recorded = { pluginRefs: ["r"] };
+
+    expect(steps.withoutRef(recorded, "r")).toStrictEqual({ pluginRefs: [] });
+    expect(records.withoutRef).toHaveBeenCalledWith(recorded, "r");
   });
 
   it("lets go of the machine claims the removal held", async () => {

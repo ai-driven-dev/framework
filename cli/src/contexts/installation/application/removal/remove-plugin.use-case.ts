@@ -7,7 +7,6 @@ import { PluginNotFoundError } from "../../domain/installation.error.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { RegistrationRecordRules } from "../../ports/native-host.js";
 import { resolvePluginToolIds, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import { assertProjectHooksRemovable, removeProjectHooks } from "../shared/remove-project-hooks.js";
 import { requireManifest } from "../shared/require-manifest.js";
@@ -26,7 +25,6 @@ export interface RemovePluginRequest {
 export interface RemovePluginDeps {
   readonly fs: FileWriter & FileReader;
   readonly projectRepo: ManifestRepository;
-  readonly records: RegistrationRecordRules;
   readonly homedir: () => string;
 }
 
@@ -51,7 +49,7 @@ export class RemovePlugin {
     const nativeRefs = new Map<ToolId, readonly string[]>();
     for (const { toolId, plugin } of named) {
       const registrations = manifest.getNativeRegistrations(toolId);
-      const ref = this.deps.records.refOf(registrations, pluginName, plugin.marketplace);
+      const ref = withdrawal.recordedRef(registrations, plugin);
       if (ref !== undefined) nativeRefs.set(toolId, [ref]);
     }
     const removed = await this.removeFromTools(manifest, {
@@ -113,13 +111,13 @@ export class RemovePlugin {
       if (plugin.scope !== "user") await this.deletePluginFiles(plugin.files, baseDir);
       await removeFlatMcpEntries(this.deps.fs, { plugin, tool, projectRoot });
       await removeProjectHooks({ fs: this.deps.fs, plugin, tool, projectRoot });
-      const ref = this.deps.records.refOf(registrations, plugin.name, plugin.marketplace);
+      const ref = withdrawal.recordedRef(registrations, plugin);
       if (
         ref !== undefined &&
         registrations !== undefined &&
         (await withdrawal.canDetachRef({ toolId, tool, confirmed, ref }))
       ) {
-        manifest.setNativeRegistrations(toolId, this.deps.records.withoutRef(registrations, ref));
+        manifest.setNativeRegistrations(toolId, withdrawal.withoutRef(registrations, ref));
       }
       manifest.removePlugin(toolId, pluginName);
       removed = true;

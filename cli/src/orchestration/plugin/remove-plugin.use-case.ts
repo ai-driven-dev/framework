@@ -1,4 +1,5 @@
 import type { WithdrawFromHost } from "../../contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
+import type { RegistrationRecordRules } from "../../contexts/host-registration/contract/registration-record-rules.js";
 import type {
   PluginHostReach,
   ProjectPluginWithdrawalSteps,
@@ -14,6 +15,7 @@ export interface RemovePluginDeps {
   readonly remove: Pick<RemoveProjectPluginFiles, "execute">;
   readonly withdrawFromHost: Pick<WithdrawFromHost, "execute">;
   readonly claims: ReturnType<typeof pluginRemovalClaims>;
+  readonly records: Pick<RegistrationRecordRules, "refOf" | "withoutRef">;
 }
 
 /** The marketplace a withdrawn plugin came from, `undefined` when it carries none. */
@@ -32,7 +34,7 @@ export class RemovePlugin {
   }
 
   private withdrawal(): ProjectPluginWithdrawalSteps {
-    const { withdrawFromHost, claims } = this.deps;
+    const { withdrawFromHost, claims, records } = this.deps;
     return {
       assertSource: async (source) => {
         const plugin = withdrawnOf(source);
@@ -51,6 +53,9 @@ export class RemovePlugin {
       canDetachRef: async ({ toolId, tool, confirmed, ref }) =>
         confirmed === true ||
         (tool.pluginEnablementIsMachineGlobal() && (await claims.isMachineOwned(toolId, ref))),
+      recordedRef: (registrations, { name, marketplace }) =>
+        records.refOf(registrations, name, marketplace),
+      withoutRef: (registrations, ref) => records.withoutRef(registrations, ref),
       detachNativeRefs: (projectRoot, refsByTool) =>
         claims.detachNativeRefs(projectRoot, refsByTool),
       detachUserPlugin: (toolId, name, projectRoot) =>

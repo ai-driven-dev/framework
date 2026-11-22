@@ -137,13 +137,13 @@ function wirePluginRemoval(base: Base, inst: Installation) {
       {
         fs,
         projectRepo: manifestRepo,
-        records: registrationRecordRules,
         homedir: inst.builtMaterializationDeps.homedir,
       },
       tools
     ),
     withdrawFromHost,
     claims: removalClaims,
+    records: registrationRecordRules,
   });
   const userPluginRemove = wireUserPluginRemoval(base, inst);
   return { pluginRemoveUseCase, userPluginRemove };

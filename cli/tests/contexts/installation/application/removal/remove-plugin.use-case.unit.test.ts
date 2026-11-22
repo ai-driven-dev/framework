@@ -1,6 +1,5 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { registrationRecordRules } from "../../../../../src/composition/installation.js";
 import { RemovePlugin } from "../../../../../src/contexts/installation/application/removal/remove-plugin.use-case.js";
 import { PluginNotFoundError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
@@ -57,7 +56,6 @@ function fixture(
     {
       fs,
       projectRepo: repo,
-      records: registrationRecordRules,
       homedir: () => "/home/dev",
     },
     registeredTools()

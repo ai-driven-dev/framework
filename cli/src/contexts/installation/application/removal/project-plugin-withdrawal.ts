@@ -42,6 +42,13 @@ export interface ProjectPluginWithdrawalSteps {
     readonly confirmed: boolean | undefined;
     readonly ref: string;
   }): Promise<boolean>;
+  /** The ref the record holds for the plugin, `undefined` when nothing was recorded for it. */
+  recordedRef(
+    registrations: NativeRegistrations | undefined,
+    plugin: InstalledPlugin
+  ): string | undefined;
+  /** The record without one ref, every other entry untouched. */
+  withoutRef(registrations: NativeRegistrations, ref: string): NativeRegistrations;
   detachNativeRefs(
     projectRoot: string,
     refsByTool: ReadonlyMap<ToolId, readonly string[]>
