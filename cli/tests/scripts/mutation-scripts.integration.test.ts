@@ -111,7 +111,7 @@ describe("the mutation scripts", () => {
       shared: {
         mutate: "src/shared/**/*.ts",
         break: 70,
-        tests: ["tests/shared/domain/**", "tests/shared/testing/**"],
+        tests: ["tests/shared/domain/**"],
       },
       tools: { mutate: "src/contexts/tools/**/*.ts", tests: ["tests/contexts/tools/**"] },
     };
@@ -123,9 +123,6 @@ describe("the mutation scripts", () => {
     expect(scopesToRun(["README.md"], mixed)).toEqual([]);
     expect(scopesToRun(["cli/tests/golden/testing/expect-golden.builder.ts"], mixed)).toEqual([]);
     expect(scopesToRun(["cli/tests/shared/domain/paths.unit.test.ts"], mixed)).toEqual(["shared"]);
-    expect(scopesToRun(["cli/tests/shared/testing/capturing-logger.fake.ts"], mixed)).toEqual([
-      "shared",
-    ]);
     expect(
       scopesToRun(["cli/tests/shared/infrastructure/asset-loader.integration.test.ts"], mixed)
     ).toEqual([]);
@@ -134,7 +131,7 @@ describe("the mutation scripts", () => {
     expect(scopesToRun([], mixed, { all: true })).toEqual(["shared", "tools"]);
   });
 
-  it("runs a gated scope when its tests or kit change, never a scope with no floor", () => {
+  it("runs a gated scope when its tests or its own kit change, never a scope with no floor", () => {
     const scopes = declaration().scopes;
     expect(
       scopesToRun(["cli/tests/contexts/telemetry/testing/fake-locator.fake.ts"], scopes)
@@ -145,9 +142,7 @@ describe("the mutation scripts", () => {
         scopes
       )
     ).toEqual(["telemetry"]);
-    expect(scopesToRun(["cli/tests/shared/testing/capturing-logger.fake.ts"], scopes)).toEqual([
-      "shared",
-    ]);
+    expect(scopesToRun(["cli/tests/shared/testing/capturing-logger.fake.ts"], scopes)).toEqual([]);
     expect(
       scopesToRun(["cli/tests/contexts/tools/domain/catalog-registered.unit.test.ts"], scopes)
     ).toEqual([]);
