@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   manifestWithTool,
   singleCodexCatalog,
@@ -24,6 +24,8 @@ describe("a Codex plugin the host did not activate is never claimed", () => {
     });
     const activator = new FakeHostActions(failure);
     const { sync, projectRepo, machineRepo } = await singleCodexCatalog({
+      tools: registeredTools(),
+      codex: TOOL.codex,
       projectRoot: "/B",
       machine,
       activator,
@@ -48,6 +50,8 @@ describe("a Codex plugin the host did not activate is never claimed", () => {
   it("does not enable or claim a global ref when the host plugin registry cannot be read", async () => {
     const activator = new FakeHostActions({ available: true });
     const { sync, projectRepo, machineRepo } = await singleCodexCatalog({
+      tools: registeredTools(),
+      codex: TOOL.codex,
       projectRoot: "/B",
       machine: manifestWithTool(codex),
       activator,
@@ -75,6 +79,8 @@ describe("a Codex plugin the host did not activate is never claimed", () => {
     });
     const activator = new FakeHostActions({ available: true });
     const { sync, projectRepo, machineRepo } = await singleCodexCatalog({
+      tools: registeredTools(),
+      codex: TOOL.codex,
       projectRoot: "/B",
       machine,
       activator,

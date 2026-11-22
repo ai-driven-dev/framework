@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   builtPerMarketplace,
   catalogFile,
@@ -53,6 +53,7 @@ function seedExistingProof(project: Manifest, machine: Manifest, mode: Mode) {
 /** The host's own record, as it reads once a catalogue and plugins already exist there. */
 function existingHostRecord() {
   const catalogs = claudeHostCatalogs(
+    claude,
     new Map([
       [HOST_NAME, "/built/claude"],
       ["other-catalog", "/other/claude"],
@@ -84,6 +85,7 @@ async function catalogueScope(mode: Mode) {
   const activator = new FakeHostActions({ available: true });
   const existing = existingHostRecord();
   const sync = wireSync({
+    tools: registeredTools(),
     toolId: claude,
     fs: fsWithProjects({
       "/built/claude/.claude-plugin/marketplace.json": catalogFile(HOST_NAME, ["test-plugin"]),
@@ -92,7 +94,7 @@ async function catalogueScope(mode: Mode) {
     machineRepo,
     registry: await registryOf("/project", { name: ALIAS, scope: "user" }),
     activator,
-    hostMarketplaceRegistries: fresh ? claudeHostCatalogs() : existing.catalogs,
+    hostMarketplaceRegistries: fresh ? claudeHostCatalogs(claude) : existing.catalogs,
     hostPluginRegistries: fresh ? readablePlugins(claude, new Map(), ".claude") : existing.plugins,
     nativeSources: freshNativeSources(
       claude,
@@ -149,6 +151,7 @@ describe("native plugin ownership follows the host's Claude activation scope", (
     const projectRepo = new InMemoryManifestRepository(Manifest.create());
     const activator = new FakeHostActions({ available: true });
     const sync = wireSync({
+      tools: registeredTools(),
       toolId: claude,
       fs: fsWithProjects({
         "/built/claude/.claude-plugin/marketplace.json": catalogFile("real-catalog", [
@@ -159,7 +162,7 @@ describe("native plugin ownership follows the host's Claude activation scope", (
       machineRepo: userRepo,
       registry: await registryOf("/project", { name: alias, scope: "user" }),
       activator,
-      hostMarketplaceRegistries: claudeHostCatalogs(),
+      hostMarketplaceRegistries: claudeHostCatalogs(claude),
       hostPluginRegistries: readablePlugins(claude),
       nativeSources: freshNativeSources(
         claude,
@@ -191,6 +194,7 @@ describe("native plugin ownership follows the host's Claude activation scope", (
     const machineRepo = new InMemoryManifestRepository(Manifest.create());
     const activator = new FakeHostActions({ available: true });
     const sync = wireSync({
+      tools: registeredTools(),
       toolId: claude,
       fs: fsWithProjects({
         "/built/user-alias/.claude-plugin/marketplace.json": catalogFile("real-user", []),
@@ -205,7 +209,7 @@ describe("native plugin ownership follows the host's Claude activation scope", (
       ),
       activator,
       ensureBuilt: builtPerMarketplace,
-      hostMarketplaceRegistries: claudeHostCatalogs(),
+      hostMarketplaceRegistries: claudeHostCatalogs(claude),
       hostPluginRegistries: readablePlugins(claude, new Map(), ".claude"),
       nativeSources: freshNativeSources(
         claude,
