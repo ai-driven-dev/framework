@@ -17,7 +17,7 @@ Acceptance criteria (issue, spec, user story, or the user) and the reviewed cand
 
 1. **Resolve.** Take criteria from the issue, spec, story, or user; never a plan. Note the candidate reference.
 2. **Filter.** Keep browser-observable criteria; split a partial one and quote the rest out of interface. Never test by reading code.
-3. **Locate.** Create an evidence folder in a temporary directory outside the repository. Resolve the PR or MR and the tested commit when available.
+3. **Locate.** Create an evidence folder in a temporary directory outside the repository, and resolve the PR or MR and its tested commit when available.
 4. **Skip.** Nothing kept: write `qa.md` from [qa-report-template.md](../assets/qa-report-template.md) with verdict `skipped`, follow [publish-evidence.md](../references/publish-evidence.md), return the verdict and publication status, then stop.
 5. **Lock.** 1 happy path from the primary journey; edge cases only when a criterion names them. An edge from the diff, code, tests, or an unmapped plan edge is never a candidate. Ask once when journeys conflict or an edge is external or destructive.
 6. **Validate.** Reject a scenario missing a trigger or an observable outcome; keep the reason.
