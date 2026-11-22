@@ -4,6 +4,21 @@ const REINSTALL = { project: "aidd setup", user: "aidd setup --global" } as cons
 
 /** The words of the errors of installing, registering and orchestrating tools and plugins. */
 export const INSTALLATION: MessagesOf<InstallationOwners> = {
+  "unproven-install-digest": (e) =>
+    `${e.toolId}: '${e.pluginName}' file '${e.relativePath}' has an unproven install digest; removal refused.`,
+  "edited-after-install": (e) =>
+    `${e.toolId}: '${e.pluginName}' file '${e.relativePath}' was edited after install; removal refused.`,
+  "no-user-plugins-directory": (e) => `${e.toolId}: no user plugins directory is declared.`,
+  "plugin-directory-outside-boundary": (e) =>
+    `${e.toolId}: '${e.pluginName}' directory is not safely inside ${e.boundary}; update refused.`,
+  "update-path-escapes-plugin": (e) =>
+    `${e.toolId}: '${e.pluginName}' update path '${e.path}' escapes its plugin directory.`,
+  "update-parent-escapes-boundary": (e) =>
+    `${e.toolId}: '${e.pluginName}' update parent '${e.parent}' escapes ${e.boundary}.`,
+  "plugin-directory-disappeared": (e) =>
+    `${e.toolId}: '${e.pluginName}' directory disappeared during update.`,
+  "user-manifest-busy": (e) =>
+    `User manifest is busy: ${e.lock}. Retry after the other AIDD operation finishes.`,
   "active-machine-dependents": (error) =>
     `Cannot remove ${error.target}: active projects still depend on it: ${error.projects.join(", ")}.`,
   "aidd-files-detected": () =>

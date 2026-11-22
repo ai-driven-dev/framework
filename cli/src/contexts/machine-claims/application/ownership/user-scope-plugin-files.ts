@@ -4,6 +4,15 @@ import type { InstallationFile } from "../../../../shared/domain/installation-fi
 import { whenAbsent } from "../../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
+import {
+  EditedAfterInstallError,
+  NoUserPluginsDirectoryError,
+  PluginDirectoryDisappearedError,
+  PluginDirectoryOutsideBoundaryError,
+  UnprovenInstallDigestError,
+  UpdateParentEscapesBoundaryError,
+  UpdatePathEscapesPluginError,
+} from "../../domain/machine-claims.error.js";
 import { isStrictlyWithinUserScope } from "../../domain/user-scope-containment.js";
 import type { UserScopePluginFiles } from "../../ports/machine-manifest.js";
 import type { UserScopeTool } from "../../ports/user-scope-tool.js";
@@ -35,13 +44,12 @@ async function assertUnedited(
   plugin: UserScopePluginFiles<unknown>,
   file: { path: string; relativePath: string; hash: string }
 ): Promise<void> {
-  const label = `${tool.toolId}: '${plugin.name}' file '${file.relativePath}'`;
   if (!FileHash.isDigest(file.hash)) {
-    throw new Error(`${label} has an unproven install digest; removal refused.`);
+    throw new UnprovenInstallDigestError(tool.toolId, plugin.name, file.relativePath);
   }
   const current = await fs.readFileHash(file.path);
   if (current.value !== file.hash) {
-    throw new Error(`${label} was edited after install; removal refused.`);
+    throw new EditedAfterInstallError(tool.toolId, plugin.name, file.relativePath);
   }
 }
 
@@ -103,9 +111,7 @@ function assertWithinPluginDirectory(
     posix.normalize(rel) !== rel ||
     !rel.startsWith(`${pluginName}/`)
   ) {
-    throw new Error(
-      `${tool.toolId}: '${pluginName}' update path '${rel}' escapes its plugin directory.`
-    );
+    throw new UpdatePathEscapesPluginError(tool.toolId, pluginName, rel);
   }
 }
 
@@ -121,14 +127,12 @@ async function assertParentInside(
     const resolved = await tryRealpath(fs, parent);
     if (resolved !== null) {
       if (!isStrictlyWithinUserScope(resolved, resolvedBoundary)) {
-        throw new Error(
-          `${toolId}: '${pluginName}' update parent '${parent}' escapes ${boundary}.`
-        );
+        throw new UpdateParentEscapesBoundaryError(toolId, pluginName, parent, boundary);
       }
       return;
     }
     if (parent === file.pluginDir) {
-      throw new Error(`${toolId}: '${pluginName}' directory disappeared during update.`);
+      throw new PluginDirectoryDisappearedError(toolId, pluginName);
     }
     parent = dirname(parent);
   }
@@ -143,7 +147,7 @@ export async function assertUserScopeWriteBoundary(
   const { toolId } = tool;
   const { pluginName } = write;
   const boundary = userPluginsBoundary(tool, home);
-  if (boundary === null) throw new Error(`${toolId}: no user plugins directory is declared.`);
+  if (boundary === null) throw new NoUserPluginsDirectoryError(toolId);
   const resolvedBoundary = await tryRealpath(fs, boundary);
   const pluginDir = join(boundary, pluginName);
   const resolvedPluginDir = await tryRealpath(fs, pluginDir);
@@ -152,9 +156,7 @@ export async function assertUserScopeWriteBoundary(
     resolvedPluginDir === null ||
     !isStrictlyWithinUserScope(resolvedPluginDir, resolvedBoundary)
   ) {
-    throw new Error(
-      `${toolId}: '${pluginName}' directory is not safely inside ${boundary}; update refused.`
-    );
+    throw new PluginDirectoryOutsideBoundaryError(toolId, pluginName, boundary);
   }
   const location = { toolId, pluginName, boundary, resolvedBoundary };
   for (const { relativePath } of write.files) {
