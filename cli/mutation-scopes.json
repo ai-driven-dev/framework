@@ -76,6 +76,6 @@
     "src/composition/**/*.ts": "Composition modules construct adapters and hand them to commands, with no rule of their own. What drives them is the in-process command tests and the e2e suite, which the mutation run leaves out (vitest.mutation.config.ts), so every mutant there would survive for a reason that says nothing about the tests.",
     "src/orchestration/**/*.ts": "Scenarios sequencing the contexts, with no rule of their own. The e2e suite and the command tests drive them end to end; a mutant there survives or dies on a journey, not on an assertion about one behaviour.",
     "src/presentation/**/*.ts": "Rendering and prompting, with no business logic. The command tests and the e2e suite pin the output; the telemetry display files are mutated by the telemetry scope.",
-    "src/shared/infrastructure/private-storage-adapter.ts": "Private file permissions on the real disk: a mutant reruns the permission checks on temporary directories, and the modes are pinned by the integration test."
+    "src/shared/infrastructure/private-storage-adapter.ts": "Private file permissions on the real disk: a mutant reruns the permission checks on temporary directories, and the modes and the read of an absent file are pinned by the integration test."
   }
 }
