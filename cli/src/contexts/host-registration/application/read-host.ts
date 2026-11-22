@@ -1,15 +1,17 @@
 import { RegistrationRefusedError } from "../domain/host-registration.error.js";
-import { judgeRegistration, type SourceProof } from "../domain/policy/registration-policy.js";
 import type { HostPluginRegistryEntry } from "../domain/reading/plugin-registry-reading.js";
 import type { NativeMarketplaceRegistration } from "../domain/record/native-marketplace-source.js";
 import {
   findForeignRef,
+  type HostRefsVerdict,
   inspectSourceReading,
   type NativeMarketplaceSourceInspection,
 } from "../domain/source-proof.js";
 import type { HostMarketplaceSources } from "../ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../ports/host-plugin-registry.js";
 import type { HostRefCounter } from "../ports/host-tool.js";
+
+type HostPluginRefs = ReadonlyMap<string, HostPluginRegistryEntry>;
 
 export async function inspectHostSource(
   reader: HostMarketplaceSources | undefined,
@@ -23,13 +25,6 @@ export async function inspectHostSource(
     };
   return inspectSourceReading(await reader.read(projectRoot), registration);
 }
-
-type HostPluginRefs = ReadonlyMap<string, HostPluginRegistryEntry>;
-
-/** What the host's plugin registry lets a mutation do: its refs, or the refusal naming why not. */
-export type HostRefsVerdict =
-  | { readonly refs: HostPluginRefs }
-  | { readonly refusal: RegistrationRefusedError };
 
 /** A source may be AIDD-owned while the host still carries somebody else's plugin from it. */
 export async function inspectNativeRefs(
@@ -85,20 +80,4 @@ async function readPluginRefs(
   if (reading.refs === undefined && reading.absent !== true)
     return refuse(`host plugin registry unreadable (${reading.unreadable ?? reading.location})`);
   return { refs: reading.refs ?? new Map<string, HostPluginRegistryEntry>() };
-}
-
-/** Refuses a catalogue whose host source the proof does not show owned, saying why when it can. */
-export function assertSourceOwned(
-  proof: NativeMarketplaceSourceInspection,
-  unproven: string
-): void {
-  const verdict = judgeCatalogueWithdrawal(proof);
-  if (verdict.outcome === "refuse")
-    throw new RegistrationRefusedError(verdict.reconcile ?? unproven);
-}
-
-/** A catalogue withdrawal's verdict: the source must be owned and, when named, `unenabledClaim` is a
- * claimed ref the host does not provably enable. */
-export function judgeCatalogueWithdrawal(source: SourceProof, unenabledClaim?: string) {
-  return judgeRegistration({ intent: "withdraw-catalog", source, unenabledClaim });
 }
