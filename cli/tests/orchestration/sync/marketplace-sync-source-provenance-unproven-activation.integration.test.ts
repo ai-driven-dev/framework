@@ -4,7 +4,13 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { hostRecord } from "../../shared/testing/host-record-reading.builder.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_LISTED_CATALOGUE,
+  SYNTHETIC_LISTED_TOOL,
+  SYNTHETIC_PROVEN_CATALOGUE,
+  SYNTHETIC_PROVEN_TOOL,
+  syntheticSyncCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   catalogueFilesystem,
   codexSourceAfterAdd,
@@ -15,15 +21,16 @@ import {
   syncOfDeclaredPlugin,
 } from "../testing/source-provenance.builder.js";
 
-const { codex, copilot } = TOOL;
+const codex = SYNTHETIC_LISTED_TOOL;
+const copilot = SYNTHETIC_PROVEN_TOOL;
 
-const CODEX_CATALOGUE = "/built/codex/.agents/plugins/marketplace.json";
+const CODEX_CATALOGUE = `/built/${SYNTHETIC_LISTED_TOOL}/${SYNTHETIC_LISTED_CATALOGUE}`;
 const ENABLED_REF = "test-plugin@same-name";
 const CODEX_SOURCE = {
   kind: "effective-list",
-  root: "/built/codex",
+  root: `/built/${SYNTHETIC_LISTED_TOOL}`,
   sourceType: "local",
-  source: "/built/codex",
+  source: `/built/${SYNTHETIC_LISTED_TOOL}`,
 } as const;
 
 async function codexProject(projectRoot: string) {
@@ -49,7 +56,7 @@ describe("native catalogue activation refused until the host source is proven", 
       const fs = foreignCacheFilesystem(CODEX_CATALOGUE);
       const activator = new FakeHostActions({ available: true });
       const sync = syncOfDeclaredPlugin({
-        tools: registeredTools(),
+        tools: syntheticSyncCatalog(),
         toolId: codex,
         fs,
         projectRepo,
@@ -62,7 +69,7 @@ describe("native catalogue activation refused until the host source is proven", 
       expect(result.warnings.join(" ")).toMatch(
         /post-add|add returned.*effective host source.*reconcile manually/i
       );
-      expect(activator.addedMarketplaces).toEqual(["/built/codex"]);
+      expect(activator.addedMarketplaces).toEqual([`/built/${SYNTHETIC_LISTED_TOOL}`]);
       expect(activator.enabledPlugins).toEqual([]);
       expect(machineRepo.getCurrent()?.getNativeRegistrations(codex)).toBeUndefined();
       expect(
@@ -112,7 +119,9 @@ describe("native catalogue activation refused until the host source is proven", 
       const projectRepo = new InMemoryManifestRepository(projectDeclaring(copilot));
       const machineRepo = new InMemoryManifestRepository(Manifest.create());
       const registry = await registryWithAlias(projectRoot);
-      const fs = catalogueFilesystem("/built/copilot/.plugin/marketplace.json");
+      const fs = catalogueFilesystem(
+        `/built/${SYNTHETIC_PROVEN_TOOL}/${SYNTHETIC_PROVEN_CATALOGUE}`
+      );
       const settingsPath = `${projectRoot}/.github/copilot/settings.json`;
       const foreignSettings = JSON.stringify({
         enabledPlugins: { "foreign@foreign-catalog": true },
@@ -122,7 +131,7 @@ describe("native catalogue activation refused until the host source is proven", 
       const activator = new FakeHostActions({ available: true });
       const source: HostMarketplaceSources = { read: async () => reading };
       const sync = syncOfDeclaredPlugin({
-        tools: registeredTools(),
+        tools: syntheticSyncCatalog(),
         toolId: copilot,
         fs,
         projectRepo,
@@ -156,7 +165,7 @@ describe("native catalogue activation refused until the host source is proven", 
       }),
     };
     const sync = syncOfDeclaredPlugin({
-      tools: registeredTools(),
+      tools: syntheticSyncCatalog(),
       toolId: codex,
       fs,
       projectRepo,
@@ -167,7 +176,7 @@ describe("native catalogue activation refused until the host source is proven", 
     });
     const result = await sync.execute({ projectRoot: "/A" });
     expect(result.errors).toEqual([]);
-    expect(activator.addedMarketplaces).toEqual(["/built/codex"]);
+    expect(activator.addedMarketplaces).toEqual([`/built/${SYNTHETIC_LISTED_TOOL}`]);
     expect(activator.enabledPlugins).toEqual([ENABLED_REF]);
     expect(
       hostRecord(machineRepo.getCurrent()?.getNativeRegistrations(codex))?.marketplaces[0]
@@ -175,7 +184,7 @@ describe("native catalogue activation refused until the host source is proven", 
     ).toEqual(CODEX_SOURCE);
     const { projectRepo: projectB, registry: registryB } = await codexProject("/B");
     const syncB = syncOfDeclaredPlugin({
-      tools: registeredTools(),
+      tools: syntheticSyncCatalog(),
       toolId: codex,
       fs,
       projectRepo: projectB,
@@ -186,7 +195,7 @@ describe("native catalogue activation refused until the host source is proven", 
       pluginRefs: new Map([[ENABLED_REF, { enabled: true }]]),
     });
     await syncB.execute({ projectRoot: "/B" });
-    expect(activator.addedMarketplaces).toEqual(["/built/codex"]);
+    expect(activator.addedMarketplaces).toEqual([`/built/${SYNTHETIC_LISTED_TOOL}`]);
     expect(machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
       { ref: ENABLED_REF, dependents: ["/A", "/B"] },
     ]);

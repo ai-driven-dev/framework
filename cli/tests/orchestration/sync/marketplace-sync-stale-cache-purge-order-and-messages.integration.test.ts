@@ -13,7 +13,11 @@ import {
 } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_LISTED_TOOL,
+  SYNTHETIC_NATIVE_TOOL,
+  syntheticSyncCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   CATALOG_RELATIVE,
   CLAUDE_BUILT_DIR,
@@ -23,7 +27,6 @@ import {
   PROJECT_ROOT,
   readableHostPlugins,
 } from "../testing/marketplace-sync-settings-migration.builder.js";
-
 import {
   OLD_CACHE_DIR,
   OLD_CACHE_FILE,
@@ -59,7 +62,7 @@ describe("SyncSettings - when the stale cache is purged and what it says", () =>
 
     const registry = projectWithMigratableEntry();
     const manifest = Manifest.create();
-    manifest.addTool(TOOL.claude, "test", []);
+    manifest.addTool(SYNTHETIC_NATIVE_TOOL, "test", []);
     const fs = fsAt(PROJECT_ROOT, {
       [OLD_CACHE_FILE]: "stale content",
       [`${CLAUDE_BUILT_DIR}/${CATALOG_RELATIVE}`]: JSON.stringify({
@@ -70,18 +73,18 @@ describe("SyncSettings - when the stale cache is purged and what it says", () =>
     });
     const activator = new OrderObservingActivator(fs, OLD_CACHE_FILE);
     const useCase = marketplaceSync({
-      tools: registeredTools(),
+      tools: syntheticSyncCatalog(),
       fs,
       manifestRepo: new InMemoryManifestRepository(manifest),
       marketplaceRegistry: registry,
       logger: new CapturingLogger(),
-      activators: new Map([[TOOL.claude, activator]]),
+      activators: new Map([[SYNTHETIC_NATIVE_TOOL, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
       marketplaceRegisterFrameworkUseCase: new RegisterFrameworkMarketplace(registry),
-      hostPluginRegistries: readableHostPlugins(TOOL.claude),
+      hostPluginRegistries: readableHostPlugins(SYNTHETIC_NATIVE_TOOL),
       nativeSources: new Map([
         [
-          TOOL.claude,
+          SYNTHETIC_NATIVE_TOOL,
           {
             read: async () => ({
               location: "/host/claude/catalogues",
@@ -114,12 +117,12 @@ describe("SyncSettings - when the stale cache is purged and what it says", () =>
     const logger = new CapturingLogger();
     const registry = projectWithMigratableEntry();
     const useCase = marketplaceSync({
-      tools: registeredTools(),
+      tools: syntheticSyncCatalog(),
       fs: fsAt(PROJECT_ROOT, { [OLD_CACHE_FILE]: "stale content" }),
-      manifestRepo: new InMemoryManifestRepository(manifestWithClaude(TOOL.claude)),
+      manifestRepo: new InMemoryManifestRepository(manifestWithClaude(SYNTHETIC_NATIVE_TOOL)),
       marketplaceRegistry: registry,
       logger,
-      activators: new Map([[TOOL.claude, new FakeHostActions({ available: false })]]),
+      activators: new Map([[SYNTHETIC_NATIVE_TOOL, new FakeHostActions({ available: false })]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
       marketplaceRegisterFrameworkUseCase: new RegisterFrameworkMarketplace(registry),
     });
@@ -130,7 +133,7 @@ describe("SyncSettings - when the stale cache is purged and what it says", () =>
     });
 
     expect(logger.warnMessages).toStrictEqual([
-      "claude CLI not found on PATH — skipping native plugin activation.",
+      `${SYNTHETIC_NATIVE_TOOL} CLI not found on PATH — skipping native plugin activation.`,
       "This project's own pre-migration framework cache kept: a requested tool's CLI was not on PATH this run, so its own registration may still point at it — run `aidd sync` again once every tool's CLI is on PATH.",
     ]);
   });
@@ -139,12 +142,12 @@ describe("SyncSettings - when the stale cache is purged and what it says", () =>
     const logger = new CapturingLogger();
     const registry = projectWithMigratableEntry();
     const useCase = marketplaceSync({
-      tools: registeredTools(),
+      tools: syntheticSyncCatalog(),
       fs: fsAt(PROJECT_ROOT, { [OLD_CACHE_FILE]: "stale content" }),
-      manifestRepo: new InMemoryManifestRepository(manifestWithClaude(TOOL.claude)),
+      manifestRepo: new InMemoryManifestRepository(manifestWithClaude(SYNTHETIC_NATIVE_TOOL)),
       marketplaceRegistry: registry,
       logger,
-      activators: new Map([[TOOL.claude, new FakeHostActions({ available: true })]]),
+      activators: new Map([[SYNTHETIC_NATIVE_TOOL, new FakeHostActions({ available: true })]]),
       ensureBuilt: {
         execute: async () => {
           throw new Error("translator refused the source");
@@ -159,33 +162,34 @@ describe("SyncSettings - when the stale cache is purged and what it says", () =>
     });
 
     expect(logger.warnMessages).toStrictEqual([
-      "Native plugin activation — build 'aidd-framework' for claude skipped: Error: translator refused the source",
-      "Native plugin activation — build 'aidd-framework' for claude skipped: Error: translator refused the source",
+      `Native plugin activation — build 'aidd-framework' for ${SYNTHETIC_NATIVE_TOOL} skipped: Error: translator refused the source`,
+      `Native plugin activation — build 'aidd-framework' for ${SYNTHETIC_NATIVE_TOOL} skipped: Error: translator refused the source`,
       "This project's own pre-migration framework cache kept: a requested tool's build failed this run, so its own registration may still point at it — fix the build warning above, then run `aidd sync` again.",
     ]);
   });
 
   it("keeps the stale built tree when one of two requested tools' builds failed", async () => {
     const registry = projectWithMigratableEntry();
-    const manifest = manifestWithClaude(TOOL.claude);
-    manifest.addTool(TOOL.codex, "test", []);
+    const manifest = manifestWithClaude(SYNTHETIC_NATIVE_TOOL);
+    manifest.addTool(SYNTHETIC_LISTED_TOOL, "test", []);
     const fs = staleCacheAndCatalog();
     const activator = new FakeHostActions({ available: true });
     const codexBuildFails: BuiltMarketplaceEnsurer = {
       execute: async (options) => {
-        if (options.target === "codex") throw new Error("translator refused the source");
+        if (options.target === SYNTHETIC_LISTED_TOOL)
+          throw new Error("translator refused the source");
         return { builtDir: CLAUDE_BUILT_DIR, version: "test", rebuilt: true };
       },
     };
     const useCase = marketplaceSync({
-      tools: registeredTools(),
+      tools: syntheticSyncCatalog(),
       fs,
       manifestRepo: new InMemoryManifestRepository(manifest),
       marketplaceRegistry: registry,
       logger: new CapturingLogger(),
       activators: new Map([
-        [TOOL.claude, activator],
-        [TOOL.codex, activator],
+        [SYNTHETIC_NATIVE_TOOL, activator],
+        [SYNTHETIC_LISTED_TOOL, activator],
       ]),
       ensureBuilt: codexBuildFails,
       marketplaceRegisterFrameworkUseCase: new RegisterFrameworkMarketplace(registry),
@@ -210,16 +214,16 @@ describe("SyncSettings - when the stale cache is purged and what it says", () =>
     fs.setSymlink(OLD_CACHE_DIR, "/etc/evil");
     const activator = new FakeHostActions({ available: true });
     const useCase = marketplaceSync({
-      tools: registeredTools(),
+      tools: syntheticSyncCatalog(),
       fs,
-      manifestRepo: new InMemoryManifestRepository(manifestWithClaude(TOOL.claude)),
+      manifestRepo: new InMemoryManifestRepository(manifestWithClaude(SYNTHETIC_NATIVE_TOOL)),
       marketplaceRegistry: registry,
       logger,
-      activators: new Map([[TOOL.claude, activator]]),
+      activators: new Map([[SYNTHETIC_NATIVE_TOOL, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
       marketplaceRegisterFrameworkUseCase: new RegisterFrameworkMarketplace(registry),
-      hostPluginRegistries: readableHostPlugins(TOOL.claude),
-      nativeSources: freshClaudeSource(TOOL.claude, activator, CLAUDE_BUILT_DIR),
+      hostPluginRegistries: readableHostPlugins(SYNTHETIC_NATIVE_TOOL),
+      nativeSources: freshClaudeSource(SYNTHETIC_NATIVE_TOOL, activator, CLAUDE_BUILT_DIR),
     });
 
     await useCase.execute({
@@ -236,12 +240,12 @@ describe("SyncSettings - when the stale cache is purged and what it says", () =>
     const logger = new CapturingLogger();
     const registry = projectWithMigratableEntry();
     const useCase = marketplaceSync({
-      tools: registeredTools(),
+      tools: syntheticSyncCatalog(),
       fs: staleCacheAndCatalog(),
-      manifestRepo: new InMemoryManifestRepository(manifestWithClaude(TOOL.claude)),
+      manifestRepo: new InMemoryManifestRepository(manifestWithClaude(SYNTHETIC_NATIVE_TOOL)),
       marketplaceRegistry: registry,
       logger,
-      activators: new Map([[TOOL.claude, new FakeHostActions({ available: true })]]),
+      activators: new Map([[SYNTHETIC_NATIVE_TOOL, new FakeHostActions({ available: true })]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
       marketplaceRegisterFrameworkUseCase: new RegisterFrameworkMarketplace(registry),
     });

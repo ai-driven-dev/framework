@@ -13,7 +13,11 @@ import { fsAt } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_LISTED_TOOL,
+  SYNTHETIC_NATIVE_TOOL,
+  syntheticSyncCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   CATALOG_RELATIVE,
   CLAUDE_BUILT_DIR,
@@ -36,7 +40,7 @@ describe("settings migration", () => {
       );
       const manifest = Manifest.create();
       const useCase = marketplaceSync({
-        tools: registeredTools(),
+        tools: syntheticSyncCatalog(),
         fs: fsAt(PROJECT_ROOT, catalogFixture(CLAUDE_BUILT_DIR)),
         manifestRepo: new InMemoryManifestRepository(manifest),
         marketplaceRegistry: registry,
@@ -65,7 +69,7 @@ describe("settings migration", () => {
       await registry.save(PROJECT_ROOT, projectScopeEntry({ kind: "local", path: "/some/path" }));
       const manifest = Manifest.create();
       const useCase = marketplaceSync({
-        tools: registeredTools(),
+        tools: syntheticSyncCatalog(),
         fs: fsAt(PROJECT_ROOT, catalogFixture(CLAUDE_BUILT_DIR)),
         manifestRepo: new InMemoryManifestRepository(manifest),
         marketplaceRegistry: registry,
@@ -98,7 +102,7 @@ describe("settings migration", () => {
       const registry = new InMemoryMarketplaceRegistry();
       await registry.save(PROJECT_ROOT, frameworkAtUserScope());
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.codex, "test", []);
+      manifest.addTool(SYNTHETIC_LISTED_TOOL, "test", []);
       const activator = new FakeHostActions({
         available: true,
         conflictOnAdd: true,
@@ -111,18 +115,18 @@ describe("settings migration", () => {
         }),
       });
       const useCase = marketplaceSync({
-        tools: registeredTools(),
+        tools: syntheticSyncCatalog(),
         fs,
         manifestRepo: new InMemoryManifestRepository(manifest),
         marketplaceRegistry: registry,
         logger: new CapturingLogger(),
-        activators: new Map([[TOOL.codex, activator]]),
+        activators: new Map([[SYNTHETIC_LISTED_TOOL, activator]]),
         ensureBuilt: fakeEnsureBuiltMarketplace(() => CODEX_BUILT_DIR),
-        hostPluginRegistries: readableHostPlugins(TOOL.codex),
-        userManifestRepo: new InMemoryManifestRepository(canonicallyOwned(TOOL.codex)),
+        hostPluginRegistries: readableHostPlugins(SYNTHETIC_LISTED_TOOL),
+        userManifestRepo: new InMemoryManifestRepository(canonicallyOwned(SYNTHETIC_LISTED_TOOL)),
         nativeSources: new Map([
           [
-            TOOL.codex,
+            SYNTHETIC_LISTED_TOOL,
             { read: async () => ({ location: "/host/codex/catalogues", unreadable: "EACCES" }) },
           ],
         ]),
@@ -142,7 +146,7 @@ describe("settings migration", () => {
       const registry = new InMemoryMarketplaceRegistry();
       await registry.save(PROJECT_ROOT, frameworkAtUserScope());
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.codex, "test", []);
+      manifest.addTool(SYNTHETIC_LISTED_TOOL, "test", []);
       const activator = new FakeHostActions({
         available: true,
         conflictOnAdd: true,
@@ -156,12 +160,12 @@ describe("settings migration", () => {
       });
       const logger = new CapturingLogger();
       const useCase = marketplaceSync({
-        tools: registeredTools(),
+        tools: syntheticSyncCatalog(),
         fs,
         manifestRepo: new InMemoryManifestRepository(manifest),
         marketplaceRegistry: registry,
         logger,
-        activators: new Map([[TOOL.codex, activator]]),
+        activators: new Map([[SYNTHETIC_LISTED_TOOL, activator]]),
         ensureBuilt: fakeEnsureBuiltMarketplace(() => CODEX_BUILT_DIR),
       });
 
@@ -189,7 +193,7 @@ describe("settings migration", () => {
         })
       );
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.codex, "test", []);
+      manifest.addTool(SYNTHETIC_LISTED_TOOL, "test", []);
       const activator = new FakeHostActions({
         available: true,
         conflictOnAdd: true,
@@ -203,12 +207,12 @@ describe("settings migration", () => {
         }),
       });
       const useCase = marketplaceSync({
-        tools: registeredTools(),
+        tools: syntheticSyncCatalog(),
         fs,
         manifestRepo: new InMemoryManifestRepository(manifest),
         marketplaceRegistry: registry,
         logger: new CapturingLogger(),
-        activators: new Map([[TOOL.codex, activator]]),
+        activators: new Map([[SYNTHETIC_LISTED_TOOL, activator]]),
         ensureBuilt: fakeEnsureBuiltMarketplace(() => builtDir),
       });
 
@@ -224,7 +228,7 @@ describe("settings migration", () => {
       const registry = new InMemoryMarketplaceRegistry();
       await registry.save(PROJECT_ROOT, frameworkAtUserScope());
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.claude, "test", []);
+      manifest.addTool(SYNTHETIC_NATIVE_TOOL, "test", []);
       const activator = new FakeHostActions({
         available: true,
         conflictOnAdd: true,
@@ -244,26 +248,26 @@ describe("settings migration", () => {
       // No `hostMarketplaceRegistries` reader for claude: `guardAgainstConflict` returns
       // "proceed" without reading one, so the exclusion is decided in `reclaimOrReport`.
       const useCase = marketplaceSync({
-        tools: registeredTools(),
+        tools: syntheticSyncCatalog(),
         fs,
         manifestRepo: new InMemoryManifestRepository(manifest),
         marketplaceRegistry: registry,
         logger: new CapturingLogger(),
-        activators: new Map([[TOOL.claude, activator]]),
+        activators: new Map([[SYNTHETIC_NATIVE_TOOL, activator]]),
         ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
         hostMarketplaceRegistries: new Map([
           [
-            TOOL.claude,
+            SYNTHETIC_NATIVE_TOOL,
             new FakeHostMarketplaceRegistry({
               location: "/host/claude/known_marketplaces.json",
               entries: new Map([[FRAMEWORK_MARKETPLACE_NAME, "/foreign/cache"]]),
             }),
           ],
         ]),
-        hostPluginRegistries: readableHostPlugins(TOOL.claude),
+        hostPluginRegistries: readableHostPlugins(SYNTHETIC_NATIVE_TOOL),
         nativeSources: new Map([
           [
-            TOOL.claude,
+            SYNTHETIC_NATIVE_TOOL,
             {
               read: async () => ({
                 location: "/host/claude/catalogues",
@@ -295,20 +299,20 @@ describe("settings migration", () => {
       const registry = new InMemoryMarketplaceRegistry();
       await registry.save(PROJECT_ROOT, projectScopeEntry({ kind: "local", path: "." }));
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.claude, "test", []);
+      manifest.addTool(SYNTHETIC_NATIVE_TOOL, "test", []);
       const activator = new FakeHostActions({ available: true });
       const logger = new CapturingLogger();
       const useCase = marketplaceSync({
-        tools: registeredTools(),
+        tools: syntheticSyncCatalog(),
         fs: fsAt(PROJECT_ROOT, catalogFixture(CLAUDE_BUILT_DIR)),
         manifestRepo: new InMemoryManifestRepository(manifest),
         marketplaceRegistry: registry,
         logger,
-        activators: new Map([[TOOL.claude, activator]]),
+        activators: new Map([[SYNTHETIC_NATIVE_TOOL, activator]]),
         ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
         hostMarketplaceRegistries: new Map([
           [
-            TOOL.claude,
+            SYNTHETIC_NATIVE_TOOL,
             new FakeHostMarketplaceRegistry({
               location: "/home/.claude/plugins/known_marketplaces.json",
               ...reading,
@@ -317,14 +321,14 @@ describe("settings migration", () => {
         ]),
         hostPluginRegistries: new Map([
           [
-            TOOL.claude,
+            SYNTHETIC_NATIVE_TOOL,
             new FakeHostPluginRegistry({
               location: "/home/.claude/plugins/installed_plugins.json",
               absent: true,
             }),
           ],
         ]),
-        nativeSources: freshClaudeSource(TOOL.claude, activator, CLAUDE_BUILT_DIR),
+        nativeSources: freshClaudeSource(SYNTHETIC_NATIVE_TOOL, activator, CLAUDE_BUILT_DIR),
       });
 
       return {

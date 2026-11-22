@@ -2,12 +2,15 @@ import { describe, expect, it } from "vitest";
 import { NativePluginCliError } from "../../../src/contexts/host-registration/domain/host-registration.error.js";
 import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/contract/built-marketplace.js";
 import { describeMessage } from "../../../src/presentation/errors/describe-message.presenter.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_NATIVE_TOOL,
+  syntheticSyncCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import { ActivatorFailingAtUpgrade, syncOf } from "../testing/sync-settings.builder.js";
 
 /** The build runs for every tool, before the branch that decides who writes the registration
  * down, so a build that fails is on the path of every sync. */
-const sync = syncOf(registeredTools(), TOOL.claude);
+const sync = syncOf(syntheticSyncCatalog(), SYNTHETIC_NATIVE_TOOL);
 
 describe("a marketplace that will not build", () => {
   const failingBuild = (failFor: string): BuiltMarketplaceEnsurer => ({
@@ -24,7 +27,7 @@ describe("a marketplace that will not build", () => {
     });
 
     expect(
-      logger.warnMessages.some((w) => w.includes("'broken'") && w.includes("claude")),
+      logger.warnMessages.some((w) => w.includes("'broken'") && w.includes(SYNTHETIC_NATIVE_TOOL)),
       "the warning must name the marketplace and the tool, or it says nothing actionable"
     ).toBe(true);
   });
@@ -74,7 +77,7 @@ describe("what execute reports about activation", () => {
   it("names the tool whose CLI actually ran, in `activated`", async () => {
     const { result } = await sync();
 
-    expect(result.activated).toEqual(["claude"]);
+    expect(result.activated).toEqual([SYNTHETIC_NATIVE_TOOL]);
     expect(result.failed, "no error was returned, so the run did not fail").toBe(false);
   });
 
@@ -82,7 +85,9 @@ describe("what execute reports about activation", () => {
     const { result } = await sync({ available: false });
 
     expect(result.activated).toEqual([]);
-    expect(result.binaryMissing).toEqual([{ toolId: TOOL.claude, binary: "claude" }]);
+    expect(result.binaryMissing).toEqual([
+      { toolId: SYNTHETIC_NATIVE_TOOL, binary: SYNTHETIC_NATIVE_TOOL },
+    ]);
   });
 
   it("collects a best-effort failure in `warnings`, the same content the logger gets", async () => {
@@ -101,7 +106,7 @@ describe("what execute reports about activation", () => {
     const { result } = await sync({ crashOnAddMarketplace: true });
 
     expect(result.errors).toEqual([
-      { scope: "claude", error: new Error("activator crashed adding a marketplace") },
+      { scope: SYNTHETIC_NATIVE_TOOL, error: new Error("activator crashed adding a marketplace") },
     ]);
     expect(result.activated).toEqual([]);
     expect(result.failed, "one returned error fails the run").toBe(true);
@@ -113,7 +118,7 @@ describe("what a step that could not complete leaves in warnings and errors", ()
     const { logger, result } = await sync({ available: false });
 
     expect(logger.warnMessages).toStrictEqual([
-      "claude CLI not found on PATH — skipping native plugin activation.",
+      `${SYNTHETIC_NATIVE_TOOL} CLI not found on PATH — skipping native plugin activation.`,
     ]);
     expect(result.warnings).toStrictEqual([]);
   });
@@ -145,7 +150,9 @@ describe("what a step that could not complete leaves in warnings and errors", ()
 
     const { result } = await sync({ activator, ownedCatalog: true });
 
-    expect(result.errors).toStrictEqual([{ scope: "claude", error: new Error("activator bug") }]);
+    expect(result.errors).toStrictEqual([
+      { scope: SYNTHETIC_NATIVE_TOOL, error: new Error("activator bug") },
+    ]);
     expect(result.warnings).toStrictEqual([]);
   });
 });

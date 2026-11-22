@@ -2,7 +2,11 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_LISTED_TOOL,
+  SYNTHETIC_NATIVE_TOOL,
+  syntheticSyncCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   FRAMEWORK_ONLY,
   MARKETPLACE,
@@ -12,13 +16,16 @@ import {
   SETTINGS_ABSOLUTE,
 } from "../testing/manifest-writes.builder.js";
 
-const { build, recorded, trackedSettingsHash } = manifestWrites(registeredTools(), TOOL.claude);
+const { build, recorded, trackedSettingsHash } = manifestWrites(
+  syntheticSyncCatalog(),
+  SYNTHETIC_NATIVE_TOOL
+);
 
 describe("how many times the manifest is written back", () => {
   it("zero times when a run changed nothing, writing no project file either", async () => {
     const activator = new FakeHostActions({ available: false });
     const { useCase, manifestRepo, fs } = await build({
-      toolIds: [TOOL.claude, TOOL.codex],
+      toolIds: [SYNTHETIC_NATIVE_TOOL, SYNTHETIC_LISTED_TOOL],
       activator,
     });
 
@@ -128,8 +135,8 @@ describe("what the tracked settings hash follows", () => {
 
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
-    expect(manifest.getToolFiles(TOOL.claude).map((file) => file.relativePath)).toStrictEqual([
-      "CLAUDE.md",
-    ]);
+    expect(
+      manifest.getToolFiles(SYNTHETIC_NATIVE_TOOL).map((file) => file.relativePath)
+    ).toStrictEqual(["CLAUDE.md"]);
   });
 });

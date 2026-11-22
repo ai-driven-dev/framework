@@ -14,11 +14,16 @@ import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manif
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { parseJsonRecord } from "../../shared/testing/json-value.builder.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
+import {
+  SYNTHETIC_NATIVE_CATALOGUE,
+  SYNTHETIC_NATIVE_SETTINGS,
+  SYNTHETIC_NATIVE_TOOL,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import { FakeHostMarketplaceSources } from "./fake-host-marketplace-sources.fake.js";
 import { FakeHostPluginRegistry } from "./fake-host-plugin-registry.fake.js";
 
 export const PROJECT_ROOT = "/test-project";
-export const SHARED_SETTINGS = resolve(PROJECT_ROOT, ".claude/settings.json");
+export const SHARED_SETTINGS = resolve(PROJECT_ROOT, SYNTHETIC_NATIVE_SETTINGS);
 
 export function distribution(claude: AiToolId, name: string): PluginDistribution {
   const files = [{ relativePath: "commands/hello.md", content: "# Hello" }];
@@ -33,7 +38,7 @@ export function distribution(claude: AiToolId, name: string): PluginDistribution
 export interface SyncSetup {
   readonly tools: ToolCatalog;
   readonly claude: AiToolId;
-  /** Content written to `.claude/settings.json` before the sync, when given. */
+  /** Content written to the shared settings file before the sync, when given. */
   readonly settings?: string;
   /** Marketplaces to register; the first is the one plugins are attached to. */
   readonly marketplaceNames?: readonly string[];
@@ -61,10 +66,10 @@ export class ActivatorFailingAtUpgrade extends FakeHostActions {
 }
 
 /** A real build always leaves a catalog where `fakeEnsureBuiltMarketplace()` resolves
- * "claude", and an unreadable one is a hard failure, so the fixture must leave one too. */
+ * the synthetic native tool, and an unreadable one is a hard failure, so the fixture must leave one too. */
 export function seededBuiltCatalog(name = "aidd-framework"): InMemoryFileAdapter {
   return new InMemoryFileAdapter({
-    "/built/claude/.claude-plugin/marketplace.json": JSON.stringify({
+    [`/built/${SYNTHETIC_NATIVE_TOOL}/${SYNTHETIC_NATIVE_CATALOGUE}`]: JSON.stringify({
       name,
       version: "1.0.0",
       plugins: [],
@@ -95,7 +100,7 @@ export function freshClaudeSource(
       new FakeHostMarketplaceSources(
         activator,
         "registry",
-        (path) => (path === "/built/claude" ? name : undefined),
+        (path) => (path === `/built/${SYNTHETIC_NATIVE_TOOL}` ? name : undefined),
         new Map()
       ),
     ],
@@ -106,7 +111,7 @@ async function seededCatalogs(names: readonly string[]): Promise<InMemoryFileAda
   const fs = seededBuiltCatalog(names[0]);
   for (const name of names.slice(1)) {
     await fs.writeFile(
-      `/built/claude-${name}/.claude-plugin/marketplace.json`,
+      `/built/${SYNTHETIC_NATIVE_TOOL}-${name}/${SYNTHETIC_NATIVE_CATALOGUE}`,
       JSON.stringify({ name, version: "1.0.0", plugins: [] })
     );
   }
@@ -167,9 +172,13 @@ function ownedMachineManifest(claude: AiToolId, name: string): Manifest {
   const machine = Manifest.create();
   machine.addTool(claude, "test", []);
   machine.setNativeRegistrations(claude, {
-    binary: "claude",
+    binary: SYNTHETIC_NATIVE_TOOL,
     marketplaces: [
-      { alias: name, hostName: name, provenance: { kind: "registry", source: "/built/claude" } },
+      {
+        alias: name,
+        hostName: name,
+        provenance: { kind: "registry", source: `/built/${SYNTHETIC_NATIVE_TOOL}` },
+      },
     ],
     pluginRefs: [],
     pluginClaims: [],
@@ -196,7 +205,7 @@ function nativeSourcesOf(
   const { names, owned } = catalogs;
   const [primary, ...others] = names;
   const known = owned
-    ? new Map([[primary, { kind: "registry" as const, source: "/built/claude" }]])
+    ? new Map([[primary, { kind: "registry" as const, source: `/built/${SYNTHETIC_NATIVE_TOOL}` }]])
     : new Map();
   return new Map([
     [
@@ -205,9 +214,9 @@ function nativeSourcesOf(
         activator,
         "registry",
         (path) =>
-          path === "/built/claude"
+          path === `/built/${SYNTHETIC_NATIVE_TOOL}`
             ? primary
-            : others.find((name) => path === `/built/claude-${name}`),
+            : others.find((name) => path === `/built/${SYNTHETIC_NATIVE_TOOL}-${name}`),
         known
       ),
     ],

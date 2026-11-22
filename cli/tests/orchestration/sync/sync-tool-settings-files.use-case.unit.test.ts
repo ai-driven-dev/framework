@@ -13,9 +13,14 @@ import { aManifest } from "../../contexts/installation/testing/manifest.builder.
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_NATIVE_TOOL,
+  SYNTHETIC_PROVEN_TOOL,
+  syntheticSyncCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
-const { claude, copilot } = TOOL;
+const claude = SYNTHETIC_NATIVE_TOOL;
+const copilot = SYNTHETIC_PROVEN_TOOL;
 const ROOT = "/project";
 const MARKETPLACE = {
   name: "aidd-framework",
@@ -25,7 +30,8 @@ const MARKETPLACE = {
 
 function settingsOf(tool: typeof claude | typeof copilot): string {
   return (
-    registeredTools().aiProfileIfAny(tool)?.marketplaceRegistration()?.sharedSettingsFile() ?? ""
+    syntheticSyncCatalog().aiProfileIfAny(tool)?.marketplaceRegistration()?.sharedSettingsFile() ??
+    ""
   );
 }
 
@@ -64,12 +70,12 @@ function setup(tool: typeof claude | typeof copilot, onDisk: Record<string, unkn
           },
         },
         logger,
-        registeredTools()
+        syntheticSyncCatalog()
       ),
       declaration: settingsDeclaration,
       refs: registrationRecordRules,
     },
-    registeredTools()
+    syntheticSyncCatalog()
   );
   return { sync, fs, manifest, built, path: resolve(ROOT, path), relative: path };
 }
@@ -114,7 +120,7 @@ describe("SyncToolSettingsFiles project-tools", () => {
     });
 
     expect(changed).toBe(false);
-    expect(built).toEqual(["claude:aidd-framework"]);
+    expect(built).toEqual([`${SYNTHETIC_NATIVE_TOOL}:aidd-framework`]);
   });
 
   it("leaves a tool whose settings file needs the host's proof to the proven-plugins pass", async () => {

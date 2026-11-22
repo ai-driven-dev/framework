@@ -1,12 +1,15 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/contract/built-marketplace.js";
-import { registeredAiId, registeredCatalog } from "../../shared/testing/catalog-of.builder.js";
+import {
+  SYNTHETIC_NATIVE_TOOL,
+  syntheticSyncCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import { PROJECT_ROOT, syncOf } from "../testing/sync-settings.builder.js";
 
 /** This flow writes into a file it does not own: whatever a person put there survives, and a
  * trailing comma they left behind must not take the whole sync down with it. */
-const sync = syncOf(registeredCatalog(), registeredAiId("claude"));
+const sync = syncOf(syntheticSyncCatalog(), SYNTHETIC_NATIVE_TOOL);
 
 describe("the settings file a user also edits", () => {
   it("writes the enabled plugin into a file that did not exist", async () => {

@@ -25,10 +25,11 @@ export function manifestWithTool(claude: AiToolId): InMemoryManifestRepository {
   return new InMemoryManifestRepository(manifest);
 }
 
-export function seededBuiltCatalog(): InMemoryFileAdapter {
+/** The built catalogue `fakeEnsureBuiltMarketplace()` resolves for `toolId`, the registered claude by default, left where a real build leaves it. */
+export function seededBuiltCatalog(toolId?: AiToolId): InMemoryFileAdapter {
   return new InMemoryFileAdapter(
     {
-      "/built/claude/.claude-plugin/marketplace.json": JSON.stringify({
+      [`/built/${toolId ?? "claude"}/.claude-plugin/marketplace.json`]: JSON.stringify({
         name: MARKETPLACE,
         version: "1.0.0",
         plugins: [],
@@ -55,7 +56,7 @@ export function freshHostProof(claude: AiToolId, activator: FakeHostActions) {
         new FakeHostMarketplaceSources(
           activator,
           "registry",
-          (path) => (path === "/built/claude" ? MARKETPLACE : undefined),
+          (path) => (path === `/built/${claude}` ? MARKETPLACE : undefined),
           new Map()
         ),
       ],

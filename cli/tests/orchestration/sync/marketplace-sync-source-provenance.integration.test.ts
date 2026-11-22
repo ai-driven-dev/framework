@@ -1,10 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_LISTED_TOOL,
+  SYNTHETIC_NATIVE_TOOL,
+  syntheticSyncCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import { hostPluginProofFixture } from "../testing/source-provenance.builder.js";
 
-const { claude, codex } = TOOL;
+const claude = SYNTHETIC_NATIVE_TOOL;
+const codex = SYNTHETIC_LISTED_TOOL;
 
-const REAL = { tools: registeredTools(), ids: TOOL };
+const REAL = {
+  tools: syntheticSyncCatalog(),
+  ids: { claude: SYNTHETIC_NATIVE_TOOL, codex: SYNTHETIC_LISTED_TOOL },
+};
 
 describe("native catalogue source provenance", () => {
   it.each(["project", "user"] as const)(
@@ -76,13 +84,13 @@ describe("native catalogue source provenance", () => {
     const result = await f.sync.execute({ projectRoot: "/A" });
     expect(result.errors).toEqual([]);
     expect(result.warnings).toEqual([]);
-    expect(f.activator.addedMarketplaces).toEqual(["/built/claude"]);
+    expect(f.activator.addedMarketplaces).toEqual([`/built/${SYNTHETIC_NATIVE_TOOL}`]);
     expect(f.activator.enabledPlugins).toEqual(["test-plugin@same-name"]);
     expect(f.projectRepo.getCurrent()?.getNativeRegistrations(claude)?.marketplaces).toEqual([
       {
         alias: "alias",
         hostName: "same-name",
-        provenance: { kind: "registry", source: "/built/claude" },
+        provenance: { kind: "registry", source: `/built/${SYNTHETIC_NATIVE_TOOL}` },
       },
     ]);
     expect(f.machineRepo.getCurrent()?.getNativeRegistrations(claude)).toBeUndefined();
@@ -126,7 +134,7 @@ describe("native catalogue source provenance", () => {
     const result = await f.sync.execute({ projectRoot: "/A" });
     expect(result.errors).toEqual([]);
     expect(result.warnings).toEqual([]);
-    expect(f.activator.addedMarketplaces).toEqual(["/built/codex"]);
+    expect(f.activator.addedMarketplaces).toEqual([`/built/${SYNTHETIC_LISTED_TOOL}`]);
     expect(f.activator.enabledPlugins).toEqual(["test-plugin@same-name"]);
     expect(f.machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
       { ref: "test-plugin@same-name", dependents: ["/A"] },
@@ -137,9 +145,9 @@ describe("native catalogue source provenance", () => {
         hostName: "same-name",
         provenance: {
           kind: "effective-list",
-          root: "/built/codex",
+          root: `/built/${SYNTHETIC_LISTED_TOOL}`,
           sourceType: "local",
-          source: "/built/codex",
+          source: `/built/${SYNTHETIC_LISTED_TOOL}`,
         },
       },
     ]);

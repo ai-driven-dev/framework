@@ -16,13 +16,20 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
+import {
+  SYNTHETIC_LISTED_CATALOGUE,
+  SYNTHETIC_LISTED_TOOL,
+  SYNTHETIC_NATIVE_CATALOGUE,
+  SYNTHETIC_NATIVE_SETTINGS,
+  SYNTHETIC_NATIVE_TOOL,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import { FakeHostMarketplaceSources } from "./fake-host-marketplace-sources.fake.js";
 import { FakeHostPluginRegistry } from "./fake-host-plugin-registry.fake.js";
 
 export const PROJECT_ROOT = "/test-project";
 export const MARKETPLACE = "aidd-framework";
 export const PLUGIN = "aidd-telemetry";
-export const SETTINGS_PATH = ".claude/settings.json";
+export const SETTINGS_PATH = SYNTHETIC_NATIVE_SETTINGS;
 export const SETTINGS_ABSOLUTE = resolve(PROJECT_ROOT, SETTINGS_PATH);
 
 export class SaveCountingManifestRepository extends InMemoryManifestRepository {
@@ -53,7 +60,7 @@ export interface Setup {
 
 function catalogPath(marketplace: string, target: string): string {
   const relative =
-    target === "codex" ? ".agents/plugins/marketplace.json" : ".claude-plugin/marketplace.json";
+    target === SYNTHETIC_LISTED_TOOL ? SYNTHETIC_LISTED_CATALOGUE : SYNTHETIC_NATIVE_CATALOGUE;
   return `/built/${marketplace}/${target}/${relative}`;
 }
 
@@ -184,7 +191,7 @@ function nativeSourcesOf(
       new FakeHostMarketplaceSources(
         activator,
         "registry",
-        (path) => names.find((name) => path === `/built/${name}/claude`),
+        (path) => names.find((name) => path === `/built/${name}/${SYNTHETIC_NATIVE_TOOL}`),
         known
       ),
     ],
@@ -238,12 +245,12 @@ export function manifestWrites(tools: ToolCatalog, claude: AiToolId) {
 }
 
 export const FRAMEWORK_ONLY: RegistrationRecord = {
-  binary: "claude",
+  binary: SYNTHETIC_NATIVE_TOOL,
   marketplaces: [
     {
       alias: MARKETPLACE,
       hostName: MARKETPLACE,
-      provenance: { kind: "registry", source: `/built/${MARKETPLACE}/claude` },
+      provenance: { kind: "registry", source: `/built/${MARKETPLACE}/${SYNTHETIC_NATIVE_TOOL}` },
     },
   ],
   pluginRefs: [],
@@ -255,7 +262,7 @@ export function ownedMachineEntry(
   source?: string
 ): NativeRegistrations {
   return {
-    binary: "claude",
+    binary: SYNTHETIC_NATIVE_TOOL,
     marketplaces: [
       {
         alias,
