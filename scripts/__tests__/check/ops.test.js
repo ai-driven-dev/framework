@@ -147,6 +147,26 @@ describe("ops", () => {
       assert.deepEqual(findings({ ...rule, optional: ["B"] }, doc), []);
     });
 
+    it("words a missing slotted heading as a shape", () => {
+      const hit = findings(rule, "# T demo\n");
+      assert.match(hit[0].message, /^section shaped like "Round \{\{n\}\}" missing/u);
+    });
+
+    it("attributes a table after a second title to no heading", () => {
+      const bad = ok.replace("h2", "zz");
+      const hit = findings(rule, `# T demo\n\n${round(bad)}\n# T demo\n\n| h1 | h2 |\n| -- | -- |\n`);
+      assert.equal(hit.length, 2);
+      assert.ok(hit.some((f) => /one title only/u.test(f.message)));
+      assert.ok(hit.some((f) => /table header differs/u.test(f.message)));
+    });
+
+    it("omits a bare optional name under every parent that holds it", () => {
+      fs.writeFileSync(path.join(dir, "t.md"), "# T {{x}}\n\n## P1\n\n### X\n\n## P2\n\n### X\n");
+      const doc = "# T demo\n\n## P1\n\n## P2\n";
+      assert.equal(findings(rule, doc).length, 2);
+      assert.deepEqual(findings({ ...rule, optional: ["X"] }, doc), []);
+    });
+
     it("flags a second title", () => {
       const hit = findings(rule, `# T demo\n\n${round(ok)}\n# T demo\n`);
       assert.equal(hit.length, 1);
