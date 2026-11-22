@@ -41,6 +41,19 @@ describe("comparing against a golden", () => {
     expect(await readFile(file, "utf-8")).toBe(`${JSON.stringify({ a: [1] }, null, 2)}\n`);
   });
 
+  it("compares and writes the text as it is, with no JSON around it, when the format is text", async () => {
+    const stored = join(dir, "stored.txt");
+    await writeFile(stored, "line one\nline two\n");
+
+    await expectGolden(stored, "line one\nline two\n", { env: {}, format: "text" });
+    await expect(
+      expectGolden(stored, "line one\nline 2\n", { env: {}, format: "text" })
+    ).rejects.toThrow();
+    await expectGolden(file, "a\nb\n", { env: { UPDATE_GOLDEN: "1" }, format: "text" });
+
+    expect(await readFile(file, "utf-8")).toBe("a\nb\n");
+  });
+
   it("refuses to regenerate when CI is set", async () => {
     await expect(
       expectGolden(file, { a: 1 }, { env: { UPDATE_GOLDEN: "1", CI: "true" } })

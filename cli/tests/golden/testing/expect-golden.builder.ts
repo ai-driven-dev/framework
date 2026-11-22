@@ -3,6 +3,7 @@ import { dirname } from "node:path";
 import { expect } from "vitest";
 
 /** Compare `actual` to the JSON stored at `file`, or rewrite the file when `UPDATE_GOLDEN=1`.
+ * With `format: "text"` the file holds `actual`, a string, as it is.
  * `compare` runs against the stored value in place of the default equality.
  * Regeneration is refused in CI: a golden changes by a reviewed commit, never silently. */
 export async function expectGolden<T = unknown>(
@@ -10,9 +11,11 @@ export async function expectGolden<T = unknown>(
   actual: T,
   {
     env = process.env,
+    format = "json",
     compare = (stored) => expect(actual).toEqual(stored),
   }: {
     env?: Record<string, string | undefined>;
+    format?: "json" | "text";
     /** Replaces the whole-value comparison, for a golden whose failure needs a shorter report. */
     compare?: (stored: T) => void;
   } = {}
@@ -20,9 +23,14 @@ export async function expectGolden<T = unknown>(
   if (env.UPDATE_GOLDEN === "1") {
     if (env.CI) throw new Error(`UPDATE_GOLDEN is set in CI: refusing to rewrite ${file}`);
     await mkdir(dirname(file), { recursive: true });
-    await writeFile(file, `${JSON.stringify(actual, null, 2)}\n`, "utf-8");
+    await writeFile(
+      file,
+      format === "text" ? String(actual) : `${JSON.stringify(actual, null, 2)}\n`,
+      "utf-8"
+    );
     return;
   }
 
-  compare(JSON.parse(await readFile(file, "utf-8")) as T);
+  const stored = await readFile(file, "utf-8");
+  compare((format === "text" ? stored : JSON.parse(stored)) as T);
 }

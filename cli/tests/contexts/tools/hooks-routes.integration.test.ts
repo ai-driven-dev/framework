@@ -1,7 +1,7 @@
 import { mkdir, mkdtemp, readdir, readFile, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join, relative, sep } from "node:path";
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, it, vi } from "vitest";
 import { createOutput } from "../../../src/composition/shared.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import type { HooksDescriptor } from "../../../src/contexts/tools/domain/formats/hooks/descriptor.js";
@@ -14,6 +14,7 @@ import { opencode } from "../../../src/contexts/tools/domain/profiles/opencode/o
 import { SmolTomlCodec } from "../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { render } from "../../../src/presentation/errors/error-translator.presenter.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
+import { expectGolden } from "../../golden/testing/expect-golden.builder.js";
 import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 import { pathWithoutAidd } from "../../shared/testing/cli-sandbox.builder.js";
 import { dependentsRecorded } from "../../shared/testing/host-record-reading.builder.js";
@@ -453,7 +454,7 @@ describe("the hook files every route writes and removes, per tool", () => {
         it(`${route} leaves exactly the pinned hook files`, async () => {
           const actual = await run(route, toolId);
 
-          await expect(actual).toMatchFileSnapshot(join(FIXTURES, toolId, `${route}.txt`));
+          await expectGolden(join(FIXTURES, toolId, `${route}.txt`), actual, { format: "text" });
         });
       }
     });
