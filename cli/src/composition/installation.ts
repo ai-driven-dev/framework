@@ -31,6 +31,7 @@ import {
 } from "../contexts/installation/application/marketplace/cache-built-marketplace.use-case.js";
 import { ProjectHooksMaterializer } from "../contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 import { ListPlugins } from "../contexts/installation/application/plugin/list-plugins.use-case.js";
+import type { BuiltMaterializationDeps } from "../contexts/installation/application/shared/built-materialization-deps.js";
 import { DetectPluginDrift } from "../contexts/installation/application/shared/detect-plugin-drift.use-case.js";
 import { UpdateGitignore } from "../contexts/installation/application/update-gitignore.use-case.js";
 import type { ProjectSetupState } from "../contexts/installation/contract/project-setup-state.js";
@@ -41,6 +42,8 @@ import type { RegistrationRecordRules } from "../contexts/installation/ports/nat
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import { EnsureBuiltMarketplace } from "../orchestration/marketplace/ensure-built-marketplace.use-case.js";
 import { BundledAssetProviderAdapter } from "../shared/infrastructure/asset-loader.js";
+import type { FileReader } from "../shared/ports/file-reader.js";
+import type { FileWriter } from "../shared/ports/file-writer.js";
 import type { Logger } from "../shared/ports/logger.js";
 import type { Base } from "./shared.js";
 import {
@@ -115,6 +118,14 @@ export function debugOnly(logger: Logger): Logger {
   };
 }
 
+/** What a restore needs to rebuild through the build pipeline. */
+export function builtMaterializationDepsOf(
+  fs: FileReader & FileWriter,
+  build: Omit<BuiltMaterializationDeps, "projectHooks">
+): BuiltMaterializationDeps {
+  return { ...build, projectHooks: new ProjectHooksMaterializer(fs) };
+}
+
 /** What installing a tool's configuration writes, and the steps that follow each install. */
 function wireConfigInstallation(base: Base, assetProvider: BundledAssetProviderAdapter) {
   const { tools, fs, logger, manifestRepo } = base;
@@ -179,14 +190,13 @@ export function wireInstallation(base: Base) {
   );
   // Restore re-materializes through the build pipeline, matching what install wrote:
   // rewriting raw content instead would itself be drift.
-  const builtMaterializationDeps = {
+  const builtMaterializationDeps = builtMaterializationDepsOf(fs, {
     ensureBuilt: ensureBuiltMarketplaceUseCase,
     marketplaceRegistry,
     homedir,
     translate: createPluginTranslation(tools),
-    projectHooks: new ProjectHooksMaterializer(fs),
     platform: process.platform,
-  };
+  });
   return {
     assetProvider,
     agentModelStore,
