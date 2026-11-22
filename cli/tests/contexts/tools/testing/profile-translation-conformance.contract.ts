@@ -1,5 +1,7 @@
+import { Ajv } from "ajv";
 import { describe, expect, it } from "vitest";
 import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domain/profile.js";
+import { BundledAssetProviderAdapter } from "../../../../src/shared/infrastructure/asset-loader.js";
 import {
   aiCheck,
   type ConformanceCheck,
@@ -26,6 +28,13 @@ function filesOf(
 function withPersonKey(content: string): string {
   return JSON.stringify({ ...JSON.parse(content), [PERSON_KEY]: 1 });
 }
+
+const SCHEMAS = new BundledAssetProviderAdapter({
+  profile: () => {
+    throw new Error("a schema needs no tool");
+  },
+});
+const SCHEMA_VALIDATOR = new Ajv({ allErrors: true, strict: false, validateFormats: false });
 
 const PRESENCE = {
   hasAgents: true,
@@ -55,6 +64,14 @@ export const PROFILE_TRANSLATION_CHECKS: readonly ConformanceCheck<ConformanceSu
         name: "alpha",
         version: "1.0.0",
       });
+    }
+  }),
+  aiCheck("builds manifests that satisfy the schema it names", (p) => {
+    for (const { synthesizeManifest, manifestSchemaName } of contractsOf(p)) {
+      if (synthesizeManifest === null || manifestSchemaName === null) continue;
+      const manifest = synthesizeManifest({ name: "alpha", version: "1.0.0" }, PRESENCE);
+      const validate = SCHEMA_VALIDATOR.compile(SCHEMAS.loadSchema(manifestSchemaName));
+      expect(validate(manifest), JSON.stringify(validate.errors)).toBe(true);
     }
   }),
   aiCheck("keeps a person's mcp servers and keys when a plugin's are merged in, and again", (p) => {

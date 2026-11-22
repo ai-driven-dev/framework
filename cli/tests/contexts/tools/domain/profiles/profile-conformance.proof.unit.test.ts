@@ -324,7 +324,9 @@ const BROKEN: Readonly<Record<string, () => FileConformanceSubject>> = {
   "writes no path that two distinct plugins share": () =>
     subjectOf(flatPathIgnoring(FLAT, () => "shared")),
   "builds only manifests that name the plugin and its version": () =>
-    subjectOf(withManifest(SCHEMED, {})),
+    subjectOf(withManifest(SCHEMED, { name: "alpha" })),
+  "builds manifests that satisfy the schema it names": () =>
+    subjectOf(withManifest(SCHEMED, { name: "alpha", version: "1.0.0", description: 42 })),
   "keeps a person's mcp servers and keys when a plugin's are merged in, and again": () =>
     subjectOf(withMcpMergeForgetting(FLAT)),
   "keeps a person's hooks and keys when a plugin's are merged in, and removed again": () =>
