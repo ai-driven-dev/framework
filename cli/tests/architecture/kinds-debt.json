@@ -70,8 +70,6 @@
       "tests/orchestration/setup/setup-auth-guard.unit.test.ts": 1,
       "tests/orchestration/setup/setup-machine-scope.use-case.unit.test.ts": 1,
       "tests/orchestration/setup/setup-marketplace-conflict.integration.test.ts": 1,
-      "tests/orchestration/sync/marketplace-sync-recovery-contract.integration.test.ts": 1,
-      "tests/orchestration/sync/marketplace-sync-recovery-native-settings.integration.test.ts": 1,
       "tests/orchestration/sync/marketplace-sync-settings-migration.integration.test.ts": 1,
       "tests/orchestration/sync/marketplace-sync-settings-scope-machine-lock.integration.test.ts": 1,
       "tests/orchestration/sync/marketplace-sync-shared-source-reference.unit.test.ts": 1,

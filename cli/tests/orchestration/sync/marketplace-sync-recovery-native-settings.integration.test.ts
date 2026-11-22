@@ -15,30 +15,45 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SECOND_SYNTHETIC_TOOL,
+  SYNTHETIC_TOOL,
+  syntheticNativeCatalog,
+  syntheticNativeCatalogOf,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import { ownedNativeSettings } from "../testing/owned-native-settings.builder.js";
 import { CLEAN_RUN, ROOT } from "../testing/recovery-contract.builder.js";
 
 const firstSourceOf = (record: Parameters<typeof hostRecord>[0]) =>
   hostRecord(record)?.marketplaces[0]?.provenance;
 
-const REAL = { tools: registeredTools(), copilot: TOOL.copilot };
+const tool = SYNTHETIC_TOOL;
+const other = SECOND_SYNTHETIC_TOOL;
+const WITH_SETTINGS = {
+  tools: syntheticNativeCatalog(tool, "list-command-with-settings"),
+  toolId: tool,
+};
+const WITHOUT_SETTINGS = {
+  tools: syntheticNativeCatalog(tool, "list-command"),
+  toolId: tool,
+  withSettings: false,
+};
 
 describe("proven native catalogues update declarative settings only when required", () => {
   it("projects enabled refs from two distinct owned Copilot catalogues into the tracked shared settings", async () => {
-    const f = await ownedNativeSettings({ ...REAL, names: ["first", "second"] });
+    const f = await ownedNativeSettings({ ...WITH_SETTINGS, names: ["first", "second"] });
     const result = await f.sync.execute({ projectRoot: ROOT });
     const content = await f.fs.readFile(resolve(ROOT, f.settingsPath));
-    expect(result).toEqual({ activated: ["copilot"], ...CLEAN_RUN });
+    expect(result).toEqual({ activated: [tool], ...CLEAN_RUN });
     expect(JSON.parse(content)).toEqual({
       permissions: { allow: ["Read"] },
       enabledPlugins: { "review-first@first-catalog": true, "review-second@second-catalog": true },
     });
-    expect(f.projectRepo.getCurrent()?.getToolFiles(TOOL.copilot)[0]?.hash.value).toBe(
+    expect(f.projectRepo.getCurrent()?.getToolFiles(tool)[0]?.hash.value).toBe(
       FileHash.of(content).value
     );
-    expect(f.projectRepo.getCurrent()?.getNativeRegistrations(TOOL.copilot)).toEqual({
-      binary: "copilot",
+    expect(f.projectRepo.getCurrent()?.getNativeRegistrations(tool)).toEqual({
+      binary: tool,
       marketplaces: f.registrations,
       pluginRefs: f.refs,
     });
@@ -49,11 +64,11 @@ describe("proven native catalogues update declarative settings only when require
   });
 
   it("persists a missing declarative ref's hash even when native and machine ownership are already unchanged", async () => {
-    const f = await ownedNativeSettings({ ...REAL });
+    const f = await ownedNativeSettings({ ...WITH_SETTINGS });
     await f.sync.execute({ projectRoot: ROOT });
     const content = await f.fs.readFile(resolve(ROOT, f.settingsPath));
     expect(JSON.parse(content).enabledPlugins).toEqual({ "review-first@first-catalog": true });
-    expect(f.projectRepo.getCurrent()?.getToolFiles(TOOL.copilot)[0]?.hash.value).toBe(
+    expect(f.projectRepo.getCurrent()?.getToolFiles(tool)[0]?.hash.value).toBe(
       FileHash.of(content).value
     );
     expect(f.projectRepo.saveCount).toBe(1);
@@ -65,9 +80,9 @@ describe("proven native catalogues update declarative settings only when require
 
   it("leaves malformed Copilot settings untouched without parsing warnings when no native refs are proven", async () => {
     const settings = "{ personalSetting: true,";
-    const f = await ownedNativeSettings({ ...REAL, withPlugins: false, settings });
+    const f = await ownedNativeSettings({ ...WITH_SETTINGS, withPlugins: false, settings });
     const result = await f.sync.execute({ projectRoot: ROOT });
-    expect(result).toEqual({ activated: ["copilot"], ...CLEAN_RUN });
+    expect(result).toEqual({ activated: [tool], ...CLEAN_RUN });
     expect(await f.fs.readFile(resolve(ROOT, f.settingsPath))).toBe(settings);
     expect(f.logger.warnMessages).toEqual([]);
     expect(f.projectRepo.saveCount).toBe(0);
@@ -76,49 +91,47 @@ describe("proven native catalogues update declarative settings only when require
 
   it("re-registers an owned Codex local source whose cached root differs from its original build path", async () => {
     const f = await ownedNativeSettings({
-      ...REAL,
-      toolId: TOOL.codex,
+      ...WITHOUT_SETTINGS,
       cachedRoot: "/host/cache/copied-marketplace",
     });
     const result = await f.sync.execute({ projectRoot: ROOT });
-    expect(result).toEqual({ activated: ["codex"], ...CLEAN_RUN });
-    expect(f.activator.addedMarketplaces).toEqual(["/built/codex/first"]);
+    expect(result).toEqual({ activated: [tool], ...CLEAN_RUN });
+    expect(f.activator.addedMarketplaces).toEqual([`/built/${tool}/first`]);
     expect(f.activator.removedMarketplaces).toEqual([]);
     expect(f.activator.enabledPlugins).toEqual([]);
-    expect(firstSourceOf(f.projectRepo.getCurrent()?.getNativeRegistrations(TOOL.codex))).toEqual({
+    expect(firstSourceOf(f.projectRepo.getCurrent()?.getNativeRegistrations(tool))).toEqual({
       kind: "effective-list",
-      root: "/built/codex/first",
+      root: `/built/${tool}/first`,
       sourceType: "local",
-      source: "/built/codex/first",
+      source: `/built/${tool}/first`,
     });
-    expect(firstSourceOf(f.machineRepo.getCurrent()?.getNativeRegistrations(TOOL.codex))).toEqual({
+    expect(firstSourceOf(f.machineRepo.getCurrent()?.getNativeRegistrations(tool))).toEqual({
       kind: "effective-list",
-      root: "/built/codex/first",
+      root: `/built/${tool}/first`,
       sourceType: "local",
-      source: "/built/codex/first",
+      source: `/built/${tool}/first`,
     });
     expect(f.machineRepo.saveCount).toBe(1);
   });
 
   it("persists a second catalogue's updated source while retaining an already identical first catalogue", async () => {
     const f = await ownedNativeSettings({
-      ...REAL,
-      toolId: TOOL.codex,
+      ...WITHOUT_SETTINGS,
       names: ["first", "second"],
       cachedCatalogue: "second",
       cachedRoot: "/host/cache/second-copy",
     });
     const result = await f.sync.execute({ projectRoot: ROOT });
     expect(result.errors).toEqual([]);
-    expect(f.activator.addedMarketplaces).toEqual(["/built/codex/second"]);
+    expect(f.activator.addedMarketplaces).toEqual([`/built/${tool}/second`]);
     const expected = f.registrations.map((registration) => ({
       ...registration,
       provenance: { ...registration.provenance, root: registration.provenance.source },
     }));
-    expect(f.projectRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.marketplaces).toEqual(
+    expect(f.projectRepo.getCurrent()?.getNativeRegistrations(tool)?.marketplaces).toEqual(
       expected
     );
-    expect(f.machineRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.marketplaces).toEqual(
+    expect(f.machineRepo.getCurrent()?.getNativeRegistrations(tool)?.marketplaces).toEqual(
       expected
     );
     expect(f.projectRepo.saveCount).toBe(1);
@@ -130,7 +143,7 @@ describe("shared framework references follow any successful native tool outcome"
   it.each(["project", "user"] as const)(
     "records references according to the requested %s activation scope despite another tool's refusal",
     async (scope) => {
-      const project = aManifest().withTool(TOOL.claude, []).withTool(TOOL.codex, []).build();
+      const project = aManifest().withTool(tool, []).withTool(other, []).build();
       const registry = new InMemoryMarketplaceRegistry();
       await registry.save(
         ROOT,
@@ -143,11 +156,11 @@ describe("shared framework references follow any successful native tool outcome"
       );
       const fs = new InMemoryFileAdapter(
         {
-          "/built/claude/.claude-plugin/marketplace.json": JSON.stringify({
+          [`/built/${tool}/.plugin/marketplace.json`]: JSON.stringify({
             name: "aidd-framework",
             plugins: [],
           }),
-          "/built/codex/.agents/plugins/marketplace.json": JSON.stringify({
+          [`/built/${other}/.plugin/marketplace.json`]: JSON.stringify({
             name: "aidd-framework",
             plugins: [],
           }),
@@ -155,8 +168,8 @@ describe("shared framework references follow any successful native tool outcome"
         ["/real/project"]
       );
       fs.setSymlink(ROOT, "/real/project");
-      const claude = new FakeHostActions({ available: true });
-      const codex = new FakeHostActions({ available: true });
+      const toolHost = new FakeHostActions({ available: true });
+      const otherHost = new FakeHostActions({ available: true });
       const recorded: Array<{ version: string; projectRoot: string }> = [];
       const references: UserSourceReferences = {
         addReference: async (version, projectRoot) => {
@@ -166,29 +179,29 @@ describe("shared framework references follow any successful native tool outcome"
         listAllReferencingProjects: async () => [],
       };
       const sync = marketplaceSync({
-        tools: registeredTools(),
+        tools: syntheticNativeCatalogOf([tool, "registry"], [other, "list-command"]),
         fs,
         manifestRepo: new InMemoryManifestRepository(project),
         marketplaceRegistry: registry,
         logger: new CapturingLogger(),
         activators: new Map([
-          [TOOL.claude, claude],
-          [TOOL.codex, codex],
+          [tool, toolHost],
+          [other, otherHost],
         ]),
         ensureBuilt: fakeEnsureBuiltMarketplace(),
         userSourceReferences: references,
         currentVersionProvider: { get: () => "2.0.0" },
         hostPluginRegistries: new Map([
-          [TOOL.claude, { read: async () => ({ location: "host plugins", refs: new Map() }) }],
-          [TOOL.codex, { read: async () => ({ location: "host plugins", refs: new Map() }) }],
+          [tool, { read: async () => ({ location: "host plugins", refs: new Map() }) }],
+          [other, { read: async () => ({ location: "host plugins", refs: new Map() }) }],
         ]),
         nativeSources: new Map<AiToolId, HostMarketplaceSources>([
           [
-            TOOL.claude,
-            new FakeHostMarketplaceSources(claude, "registry", () => "aidd-framework", new Map()),
+            tool,
+            new FakeHostMarketplaceSources(toolHost, "registry", () => "aidd-framework", new Map()),
           ],
           [
-            TOOL.codex,
+            other,
             {
               read: async () => ({
                 location: "host sources",
@@ -199,11 +212,11 @@ describe("shared framework references follow any successful native tool outcome"
         ]),
       });
       const result = await sync.execute({ projectRoot: ROOT, scope });
-      expect(result.activated).toEqual(["claude", "codex"]);
+      expect(result.activated).toEqual([tool, other]);
       expect(result.errors).toEqual([]);
       expect(result.warnings.join(" ")).toContain("host source unproven");
-      expect(claude.addedMarketplaces).toEqual(["/built/claude"]);
-      expect(codex.addedMarketplaces).toEqual([]);
+      expect(toolHost.addedMarketplaces).toEqual([`/built/${tool}`]);
+      expect(otherHost.addedMarketplaces).toEqual([]);
       expect(recorded).toEqual(
         scope === "project" ? [{ version: "2.0.0", projectRoot: "/real/project" }] : []
       );

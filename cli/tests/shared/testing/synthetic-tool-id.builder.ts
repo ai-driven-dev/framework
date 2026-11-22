@@ -58,8 +58,9 @@ export function syntheticCatalog(): ToolCatalog {
 }
 
 /** How the synthetic host answers which marketplaces it knows: from a registry file it keeps
- * and a settings file the project carries, or from a list its own command prints. */
-export type SyntheticNativeSources = "registry" | "list-command";
+ * and a settings file the project carries, from a list its own command prints, or from that
+ * list plus a shared settings file that only declares plugins the host proved. */
+export type SyntheticNativeSources = "registry" | "list-command" | "list-command-with-settings";
 
 /** A catalog listing one synthetic AI tool under the given id, driven through its own host CLI
  * the way a native tool is: for a test of the native activation flow that names no real tool. */
@@ -67,64 +68,80 @@ export function syntheticNativeCatalog(
   id: string,
   sources: SyntheticNativeSources = "registry"
 ): ToolCatalog {
-  const registry = sources === "registry";
-  return new RegisteredToolCatalog([
-    defineAiTool({
-      toolId: id,
-      distributionProbes: {
-        manifest: [".plugin/plugin.json"],
-        marketplace: [".plugin/marketplace.json"],
+  return syntheticNativeCatalogOf([id, sources]);
+}
+
+/** A catalog listing several synthetic native tools, each with the way its host answers. */
+export function syntheticNativeCatalogOf(
+  ...tools: ReadonlyArray<readonly [id: string, sources: SyntheticNativeSources]>
+): ToolCatalog {
+  return new RegisteredToolCatalog(
+    tools.map(([id, sources]) => syntheticNativeConfig(id, sources))
+  );
+}
+
+function hostSourcesOf(id: string, registry: boolean) {
+  if (registry)
+    return {
+      scopeArgs: { project: ["--project"], user: ["--user"] },
+      userRemoveArgs: [],
+      marketplaceRegistry: {
+        location: (home: string) => join(home, `.${id}`, "known_marketplaces.json"),
+        layout: "install-locations-by-name" as const,
       },
-      directory: `.${id}/`,
-      toolSuffix: `.${id}.md`,
-      signalDir: null,
-      displayName: id,
-      buildContracts: { flat: () => anEmptyContract() },
-      capabilities: () => ({
-        layout: nativeLayout({
-          pluginsDir: `.${id}/plugins/`,
-          nativeActivation: {
-            binary: id,
-            upgradeVerb: "upgrade",
-            enableVerb: "add",
-            disableVerb: "remove",
-            ...(registry
-              ? {
-                  scopeArgs: { project: ["--project"], user: ["--user"] },
-                  userRemoveArgs: [],
-                  marketplaceRegistry: {
-                    location: (home: string) => join(home, `.${id}`, "known_marketplaces.json"),
-                    layout: "install-locations-by-name" as const,
-                  },
-                  marketplaceSources: { from: "marketplace-registry" as const },
-                }
-              : {
-                  marketplaceSources: {
-                    from: "list-command" as const,
-                    args: ["plugin", "marketplace", "list", "--json"],
-                    layout: "marketplaces-with-source" as const,
-                    hostLabel: id,
-                    unavailableMessage: `${id} marketplace list unavailable; inspect the host CLI and retry`,
-                    unverifiedMessage: `${id} marketplace list output shape is not verified`,
-                  },
-                }),
-          },
-          ...(registry
-            ? {
-                marketplaceSettings: {
-                  settingsPath: `.${id}/settings.json`,
-                  settingsKey: "extraKnownMarketplaces",
-                  marketplacesSettingsPath: `.${id}/settings.local.json`,
-                  enabledPluginsKey: "enabledPlugins",
-                  toEntryKey: sharedMarketplaceKey,
-                },
-              }
-            : {}),
-        }),
-        manifest: manifestSection({ manifestRelativePath: "plugin.json", pluginRootToken: "." }),
-        hooks: { delivery: { kind: "plugin-file" } },
+      marketplaceSources: { from: "marketplace-registry" as const },
+    };
+  return {
+    marketplaceSources: {
+      from: "list-command" as const,
+      args: ["plugin", "marketplace", "list", "--json"],
+      layout: "marketplaces-with-source" as const,
+      hostLabel: id,
+      unavailableMessage: `${id} marketplace list unavailable; inspect the host CLI and retry`,
+      unverifiedMessage: `${id} marketplace list output shape is not verified`,
+    },
+  };
+}
+
+function settingsOf(id: string, registry: boolean) {
+  return {
+    settingsPath: `.${id}/settings.json`,
+    settingsKey: "extraKnownMarketplaces",
+    marketplacesSettingsPath: registry ? `.${id}/settings.local.json` : null,
+    enabledPluginsKey: "enabledPlugins",
+    ...(registry ? {} : { declarativePluginActivationRequiresNativeProof: true }),
+    toEntryKey: sharedMarketplaceKey,
+  };
+}
+
+function syntheticNativeConfig(id: string, sources: SyntheticNativeSources) {
+  const registry = sources === "registry";
+  return defineAiTool({
+    toolId: id,
+    distributionProbes: {
+      manifest: [".plugin/plugin.json"],
+      marketplace: [".plugin/marketplace.json"],
+    },
+    directory: `.${id}/`,
+    toolSuffix: `.${id}.md`,
+    signalDir: null,
+    displayName: id,
+    buildContracts: { flat: () => anEmptyContract() },
+    capabilities: () => ({
+      layout: nativeLayout({
+        pluginsDir: `.${id}/plugins/`,
+        nativeActivation: {
+          binary: id,
+          upgradeVerb: "upgrade",
+          enableVerb: "add",
+          disableVerb: "remove",
+          ...hostSourcesOf(id, registry),
+        },
+        ...(sources === "list-command" ? {} : { marketplaceSettings: settingsOf(id, registry) }),
       }),
-      linkSyntax: [],
+      manifest: manifestSection({ manifestRelativePath: "plugin.json", pluginRootToken: "." }),
+      hooks: { delivery: { kind: "plugin-file" } },
     }),
-  ]);
+    linkSyntax: [],
+  });
 }

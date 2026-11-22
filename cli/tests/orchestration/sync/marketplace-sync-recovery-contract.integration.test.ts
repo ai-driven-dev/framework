@@ -7,7 +7,11 @@ import {
 } from "../../../src/shared/domain/layout/aidd-layout.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.fake.js";
 import { hostRecord } from "../../shared/testing/host-record-reading.builder.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SECOND_SYNTHETIC_TOOL,
+  SYNTHETIC_TOOL,
+  syntheticNativeCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   ADD_ERROR,
   ALIAS,
@@ -22,10 +26,12 @@ import {
   recovery,
 } from "../testing/recovery-contract.builder.js";
 
+const tool = SYNTHETIC_TOOL;
+
 const firstSourceOf = (record: Parameters<typeof hostRecord>[0]) =>
   hostRecord(record)?.marketplaces[0]?.provenance;
 
-const REAL = { tools: registeredTools(), claude: TOOL.claude };
+const REAL = { tools: syntheticNativeCatalog(tool), toolId: tool };
 
 describe("marketplace sync recovery preserves public ownership and failure outcomes", () => {
   it.each(["project", "user"] as const)(
@@ -42,15 +48,15 @@ describe("marketplace sync recovery preserves public ownership and failure outco
       expect(activator.removals).toEqual([{ name: HOST, scope, force: true }]);
       expect(activator.enabledPlugins).toEqual([REF]);
       expect(result).toEqual({
-        activated: ["claude"],
+        activated: [tool],
         binaryMissing: [],
         warnings: [RECLAIM],
         errors: [],
         failed: false,
       });
       expect(logger.warnMessages).toEqual([RECLAIM]);
-      expect(manifest.getNativeRegistrations(TOOL.claude)).toEqual({
-        binary: "claude",
+      expect(manifest.getNativeRegistrations(tool)).toEqual({
+        binary: tool,
         marketplaces: [
           { alias: ALIAS, hostName: HOST, provenance: { kind: "registry", source: BUILT } },
         ],
@@ -73,7 +79,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
       userConfigDir: userRoot,
       cliVersion: "1.0.0",
       marketplaceName: ALIAS,
-      target: "claude",
+      target: tool,
     });
     const { activator, result } = await recovery({
       ...REAL,
@@ -102,13 +108,13 @@ describe("marketplace sync recovery preserves public ownership and failure outco
 
   it.each([
     "/foreign/cache",
-    builtMarketplaceDir(ROOT, "different-marketplace", "claude"),
-    builtMarketplaceDir(ROOT, ALIAS, "codex"),
+    builtMarketplaceDir(ROOT, "different-marketplace", tool),
+    builtMarketplaceDir(ROOT, ALIAS, SECOND_SYNTHETIC_TOOL),
     userBuiltMarketplaceDir({
       userConfigDir: "/users/alice/aidd",
       cliVersion: "1.0.0",
       marketplaceName: ALIAS,
-      target: "claude",
+      target: tool,
     }),
   ])(
     "refuses force removal for a source outside this catalogue's recognized cache: %s",
@@ -119,7 +125,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
       expect(result.warnings).toEqual([
         `Native plugin activation — catalogue '${HOST}' host catalogue source is unproven; host registration left untouched. ${ADD_ERROR}`,
       ]);
-      expect(firstSourceOf(manifest.getNativeRegistrations(TOOL.claude))).toEqual({
+      expect(firstSourceOf(manifest.getNativeRegistrations(tool))).toEqual({
         kind: "registry",
         source,
       });
@@ -136,7 +142,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
     ]);
     expect(logger.warnMessages).toEqual(result.warnings);
     expect(result.errors).toEqual([]);
-    expect(firstSourceOf(manifest.getNativeRegistrations(TOOL.claude))).toEqual({
+    expect(firstSourceOf(manifest.getNativeRegistrations(tool))).toEqual({
       kind: "registry",
       source: OLD,
     });
@@ -163,10 +169,10 @@ describe("marketplace sync recovery preserves public ownership and failure outco
       activated: [],
       binaryMissing: [],
       warnings: [RECLAIM],
-      errors: [{ scope: "claude", error: new Error("retry crashed") }],
+      errors: [{ scope: tool, error: new Error("retry crashed") }],
       failed: true,
     });
-    expect(firstSourceOf(manifest.getNativeRegistrations(TOOL.claude))).toEqual({
+    expect(firstSourceOf(manifest.getNativeRegistrations(tool))).toEqual({
       kind: "registry",
       source: OLD,
     });
@@ -181,7 +187,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
       expect(result.warnings).toEqual([
         `Native plugin activation — catalogue '${HOST}' collides with unproven AIDD ownership; host registration left untouched. ${ADD_ERROR}`,
       ]);
-      expect(manifest.getNativeRegistrations(TOOL.claude)?.marketplaces).toEqual([
+      expect(manifest.getNativeRegistrations(tool)?.marketplaces).toEqual([
         { alias: ALIAS, hostName: HOST, provenance: { kind: "registry", source: OLD } },
       ]);
       expect(result.errors).toEqual([]);
@@ -229,7 +235,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
     });
     expect(activator.removedMarketplaces).toEqual([HOST]);
     expect(activator.enabledPlugins).toEqual([]);
-    expect(manifest.getNativeRegistrations(TOOL.claude)?.pluginRefs).toEqual([REF]);
+    expect(manifest.getNativeRegistrations(tool)?.pluginRefs).toEqual([REF]);
     expect(result.errors).toEqual([]);
   });
 
@@ -244,11 +250,11 @@ describe("marketplace sync recovery preserves public ownership and failure outco
     expect(result.errors).toEqual([]);
     const saveCount = repo.saveCount;
     const second = await useCase.execute({ projectRoot: ROOT });
-    expect(second).toEqual({ activated: ["claude"], ...CLEAN_RUN });
+    expect(second).toEqual({ activated: [tool], ...CLEAN_RUN });
     expect(repo.saveCount).toBe(saveCount);
     expect(activator.addedMarketplaces).toEqual([BUILT]);
-    expect(manifest.getToolFiles(TOOL.claude)[0]?.hash.value).toBe(
-      FileHash.of(await fs.readFile(resolve(ROOT, ".claude/settings.json"))).value
+    expect(manifest.getToolFiles(tool)[0]?.hash.value).toBe(
+      FileHash.of(await fs.readFile(resolve(ROOT, `.${tool}/settings.json`))).value
     );
   });
 
@@ -256,9 +262,9 @@ describe("marketplace sync recovery preserves public ownership and failure outco
     "rebuilds managed settings from a JSON root that is not a settings object: %s",
     async (settings) => {
       const { fs, manifest, result, logger } = await recovery({ ...REAL, settings });
-      const content = await fs.readFile(resolve(ROOT, ".claude/settings.json"));
+      const content = await fs.readFile(resolve(ROOT, `.${tool}/settings.json`));
       expect(JSON.parse(content)).toEqual({ enabledPlugins: { [`review@${ALIAS}`]: true } });
-      expect(manifest.getToolFiles(TOOL.claude)[0]?.hash.value).toBe(FileHash.of(content).value);
+      expect(manifest.getToolFiles(tool)[0]?.hash.value).toBe(FileHash.of(content).value);
       expect(logger.warnMessages).toEqual([RECLAIM]);
       expect(result.errors).toEqual([]);
     }
@@ -273,12 +279,12 @@ describe("marketplace sync recovery preserves public ownership and failure outco
         enabledPlugins: { [`review@${ALIAS}`]: false, "personal@external": true },
       }),
     });
-    const content = await fs.readFile(resolve(ROOT, ".claude/settings.json"));
+    const content = await fs.readFile(resolve(ROOT, `.${tool}/settings.json`));
     expect(JSON.parse(content)).toEqual({
       permissions: { allow: ["Read"] },
       enabledPlugins: { [`review@${ALIAS}`]: false, "personal@external": true },
     });
-    expect(manifest.getToolFiles(TOOL.claude)[0]?.hash.value).toBe(FileHash.of(content).value);
+    expect(manifest.getToolFiles(tool)[0]?.hash.value).toBe(FileHash.of(content).value);
     expect(result.errors).toEqual([]);
   });
 });
