@@ -11,5 +11,5 @@ language js
   },
   $source <: r".*/contexts/[^/]+/[^/]+/.*",
   $source <: not r".*/contexts/[^/]+/(?:application|contract)/.*",
-  register_diagnostic(span=$statement, message="a helper aliases a type of a closed folder or a context kit: import it where it is used, from application/ or contract/ only", severity="error")
+  register_diagnostic(span=$statement, message="a test file aliases a type of a closed folder or a context kit: import it where it is used, from application/ or contract/ only", severity="error")
 }
