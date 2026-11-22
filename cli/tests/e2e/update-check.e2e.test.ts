@@ -153,4 +153,16 @@ describe("update-check piggyback", () => {
       await t.cleanup();
     }
   });
+
+  it("update --check reports the newer version without installing", async () => {
+    const t = await setupEnv("check");
+    try {
+      const { exitCode, stdout } = await runCli(["update", "--check"], t.projectDir, t.env);
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("New version available: 999.0.0");
+    } finally {
+      await t.cleanup();
+    }
+  });
 });
