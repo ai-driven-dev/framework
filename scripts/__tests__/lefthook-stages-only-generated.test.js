@@ -9,11 +9,14 @@ const yaml = require("js-yaml");
 const root = path.resolve(__dirname, "../..");
 const hook = yaml.load(fs.readFileSync(path.join(root, "lefthook.yml"), "utf8"))["pre-commit"].commands["framework-content"].run;
 
+// Run from a git hook, an inherited GIT_DIR or GIT_INDEX_FILE would point this repo's git at the real one.
+const CLEAN_ENV = Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.startsWith("GIT_")));
+
 // The hook restages what --fix regenerated; a hand edit left unstaged must stay unstaged.
 test("framework-content stages the files --fix rewrote, not an unstaged hand edit", (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-hook-"));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
-  const sh = (cmd) => execFileSync("sh", ["-c", cmd], { cwd: dir, encoding: "utf8" });
+  const sh = (cmd) => execFileSync("sh", ["-c", cmd], { cwd: dir, encoding: "utf8", env: CLEAN_ENV });
   const write = (file, text) => {
     fs.mkdirSync(path.dirname(path.join(dir, file)), { recursive: true });
     fs.writeFileSync(path.join(dir, file), text);
