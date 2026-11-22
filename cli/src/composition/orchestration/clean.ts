@@ -22,7 +22,6 @@ import { PurgeMachineState } from "../../contexts/installation/application/remov
 import { assertProjectMcpEntriesRemovable } from "../../contexts/installation/application/removal/remove-project-plugin.js";
 import { UserScopePluginFiles } from "../../contexts/installation/application/removal/user-scope-plugin-files.js";
 import { UninstallTools } from "../../contexts/installation/application/uninstall-tools.use-case.js";
-import { userScopeFilesSafeToDelete } from "../../contexts/machine-claims/application/ownership/user-scope-plugin-files.js";
 import { detachProjectClaims } from "../../contexts/machine-claims/application/removal/detach-project-claims.js";
 import { ResolvePurgeCandidate } from "../../contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
 import type { CleanClaims } from "../../orchestration/clean/clean-claims.js";
@@ -36,6 +35,7 @@ import { RemoveUserScope } from "../../orchestration/clean/remove-user-scope.use
 import { UninstallProjectTools } from "../../orchestration/clean/uninstall-project-tools.use-case.js";
 import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
 import type { Installation } from "../installation.js";
+import { machineOwnership, userScopeFilesSafeToDelete } from "../machine-claims.js";
 import type { Base } from "../shared.js";
 import { userConfigDir } from "../user-config-dir.js";
 import { wireCleanClaims } from "./clean-claims.js";
@@ -131,11 +131,15 @@ function wireCleanProject(base: Base, inst: Installation, claims: CleanClaims) {
 /** Clean and uninstall. */
 export function wireClean(base: Base, inst: Installation) {
   const { fs, logger, manifestRepo, userManifestRepo, tools } = base;
+  const ownership = machineOwnership(userManifestRepo, fs);
   const uninstallTools = new UninstallProjectTools(
     new UninstallTools(
       {
         manifestRepo,
-        detachClaims: detachProjectClaims(userManifestRepo, fs),
+        detachClaims: detachProjectClaims(
+          ownership.detachNativePluginRefs,
+          ownership.detachUserPlugin
+        ),
         removeToolFiles: new RemoveToolFiles(fs, logger, tools, homedir),
       },
       tools

@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  detachNativePluginRefs,
-  isMachineOwnedNativeRef,
-} from "../../../../../src/contexts/machine-claims/application/ownership/native-plugin-ownership.js";
+import { DetachNativePluginRefs } from "../../../../../src/contexts/machine-claims/application/ownership/detach-native-plugin-refs.use-case.js";
 import { readHeldClaims } from "../../../../../src/contexts/machine-claims/domain/plugin-claim.model.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
@@ -43,36 +40,10 @@ function fixture() {
 }
 
 describe("one project's exact native host ref claim", () => {
-  it("recognizes only canonical machine claims, not another catalogue or missing manifests", async () => {
-    const f = fixture();
-    expect(await isMachineOwnedNativeRef(f.repo, codex, TARGET)).toBe(true);
-    expect(await isMachineOwnedNativeRef(f.repo, codex, "foreign@real-catalog")).toBe(false);
-    expect(await isMachineOwnedNativeRef(f.repo, TOOL.copilot, TARGET)).toBe(false);
-    expect(
-      await isMachineOwnedNativeRef(new InMemoryMachineManifestRepository(), codex, TARGET)
-    ).toBe(false);
-    expect(await isMachineOwnedNativeRef(undefined, codex, TARGET)).toBe(false);
-  });
-
-  it("recognizes no claim on a registration that records none", async () => {
-    const machine = new InMemoryMachineManifest(codex);
-    const records = new Map([[codex, { binary: "codex", marketplaces: [], pluginRefs: [TARGET] }]]);
-
-    expect(
-      await isMachineOwnedNativeRef(
-        new InMemoryMachineManifestRepository(machine, records),
-        codex,
-        TARGET
-      )
-    ).toBe(false);
-  });
-
   it("detaches A's realpath only from the exact ref, preserving B and other catalogue claims", async () => {
     const f = fixture();
     f.fs.setSymlink("/link-to-A", "/A");
-    await detachNativePluginRefs({
-      repo: f.repo,
-      fs: f.fs,
+    await new DetachNativePluginRefs(f.repo, f.fs).execute({
       projectRoot: "/link-to-A",
       refsByTool: new Map([[codex, [TARGET]]]),
     });
@@ -90,9 +61,7 @@ describe("one project's exact native host ref claim", () => {
       ["/A", "foreign@real-catalog"],
     ] as const) {
       const f = fixture();
-      await detachNativePluginRefs({
-        repo: f.repo,
-        fs: f.fs,
+      await new DetachNativePluginRefs(f.repo, f.fs).execute({
         projectRoot: root,
         refsByTool: new Map([[codex, [ref]]]),
       });
@@ -107,28 +76,20 @@ describe("one project's exact native host ref claim", () => {
 
   it("does not act with no repo, no refs, no manifest, or no host claim record", async () => {
     const fs = new InMemoryFileAdapter({}, ["/A", "/B", "/C"]);
-    await detachNativePluginRefs({
-      repo: undefined,
-      fs: fs,
+    await new DetachNativePluginRefs(undefined, fs).execute({
       projectRoot: "/A",
       refsByTool: new Map([[codex, [TARGET]]]),
     });
     const f = fixture();
-    await detachNativePluginRefs({
-      repo: f.repo,
-      fs: fs,
+    await new DetachNativePluginRefs(f.repo, fs).execute({
       projectRoot: "/A",
       refsByTool: new Map(),
     });
-    await detachNativePluginRefs({
-      repo: new InMemoryMachineManifestRepository(),
-      fs: fs,
+    await new DetachNativePluginRefs(new InMemoryMachineManifestRepository(), fs).execute({
       projectRoot: "/A",
       refsByTool: new Map([[codex, [TARGET]]]),
     });
-    await detachNativePluginRefs({
-      repo: f.repo,
-      fs: fs,
+    await new DetachNativePluginRefs(f.repo, fs).execute({
       projectRoot: "/A",
       refsByTool: new Map([[TOOL.copilot, [TARGET]]]),
     });
@@ -139,9 +100,7 @@ describe("one project's exact native host ref claim", () => {
   it("holds exclusive access while loading the latest machine claims", async () => {
     const f = fixture();
     const repo = loadingOnlyUnderLock(f.repo);
-    await detachNativePluginRefs({
-      repo: repo,
-      fs: f.fs,
+    await new DetachNativePluginRefs(repo, f.fs).execute({
       projectRoot: "/A",
       refsByTool: new Map([[codex, [TARGET]]]),
     });

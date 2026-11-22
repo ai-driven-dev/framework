@@ -1,4 +1,8 @@
 import { describe, expect, it } from "vitest";
+import {
+  machineOwnership,
+  sharedSourceReads,
+} from "../../../../../src/composition/machine-claims.js";
 import { pluginRemovalClaims } from "../../../../../src/contexts/machine-claims/application/removal/plugin-removal-claims.js";
 import type { ListedMarketplace } from "../../../../../src/contexts/machine-claims/ports/marketplace-listing.js";
 import type { UserSourceReferences } from "../../../../../src/contexts/machine-claims/ports/user-source-references.js";
@@ -16,13 +20,12 @@ async function guard(options: {
   listed?: readonly ListedMarketplace[];
 }) {
   const { references, listed } = options;
+  const fs = new InMemoryFileAdapter();
   const claims = pluginRemovalClaims({
-    repo: undefined,
-    fs: new InMemoryFileAdapter(),
+    ...machineOwnership(undefined, fs),
+    ...sharedSourceReads({ fs, platform: process.platform, references }),
     logger: new CapturingLogger(),
     home: "/home/u",
-    platform: process.platform,
-    userSourceReferences: references,
     marketplaceRegistry: listed === undefined ? undefined : { list: async () => listed },
     resolveCacheCandidate: async () => null,
     frameworkMarketplaceName: "aidd-framework",

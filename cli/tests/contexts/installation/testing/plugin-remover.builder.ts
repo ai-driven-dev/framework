@@ -1,5 +1,10 @@
 import { registrationRecordRules } from "../../../../src/composition/installation.js";
 import {
+  machineOwnership,
+  sharedSourceReads,
+  userScopeFilesSafeToDelete,
+} from "../../../../src/composition/machine-claims.js";
+import {
   claimedRefWithdrawal,
   underMachineHome,
 } from "../../../../src/composition/orchestration/plugin.js";
@@ -11,11 +16,7 @@ import { UserScopePluginFiles } from "../../../../src/contexts/installation/appl
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
 import type { InstallationMarketplaceRegistry } from "../../../../src/contexts/installation/ports/marketplace-sources.js";
 import type { RecordsBesideManifest } from "../../../../src/contexts/installation/ports/record/registration-records.js";
-import { userScopeFilesSafeToDelete } from "../../../../src/contexts/machine-claims/application/ownership/user-scope-plugin-files.js";
-import {
-  type PluginRemovalClaimsDeps,
-  pluginRemovalClaims,
-} from "../../../../src/contexts/machine-claims/application/removal/plugin-removal-claims.js";
+import { pluginRemovalClaims } from "../../../../src/contexts/machine-claims/application/removal/plugin-removal-claims.js";
 import { ResolvePurgeCandidate } from "../../../../src/contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
 import type { ToolCatalog } from "../../../../src/contexts/tools/contract/tool-catalog.js";
 import { RemoveMachinePlugin } from "../../../../src/orchestration/plugin/remove-machine-plugin.use-case.js";
@@ -40,7 +41,7 @@ export interface PluginRemoverParts {
   logger?: Logger;
   activators?: Withdrawing[2]["activators"];
   hostPluginRegistries?: Withdrawing[2]["pluginRegistries"];
-  userSourceReferences?: PluginRemovalClaimsDeps["userSourceReferences"];
+  userSourceReferences?: Parameters<typeof sharedSourceReads>[0]["references"];
   marketplaceRegistry?: InstallationMarketplaceRegistry;
   userManifestRepo?: ManifestRepository & RecordsBesideManifest & Lock;
   nativeMarketplaceSources?: Withdrawing[2]["sources"];
@@ -61,13 +62,15 @@ export function pluginRemover(parts: PluginRemoverParts) {
   const fs = parts.fs ?? new InMemoryFileAdapter();
   const logger = parts.logger ?? new CapturingLogger();
   const removalClaims = pluginRemovalClaims({
-    repo: parts.userManifestRepo,
-    fs,
+    ...machineOwnership(parts.userManifestRepo, fs),
+    ...sharedSourceReads({
+      fs,
+      platform: process.platform,
+      references: parts.userSourceReferences,
+    }),
     logger,
     home: resolveHomeDir(),
-    platform: process.platform,
     frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-    userSourceReferences: parts.userSourceReferences,
     marketplaceRegistry: parts.marketplaceRegistry,
     resolveCacheCandidate: (cacheRoot, relativeSegments, label) =>
       new ResolvePurgeCandidate(fs, logger).execute(cacheRoot, relativeSegments, label),

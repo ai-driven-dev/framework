@@ -1,19 +1,16 @@
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
-import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { Lock } from "../../../../shared/ports/lock.js";
-import type { MachineManifestRepository } from "../../ports/machine-manifest.js";
-import { detachNativePluginRefs } from "../ownership/native-plugin-ownership.js";
-import { detachUserPlugin } from "../ownership/user-plugin-ownership.js";
+import type { DetachNativePluginRefs } from "../ownership/detach-native-plugin-refs.use-case.js";
+import type { DetachUserPlugin } from "../ownership/detach-user-plugin.use-case.js";
 
-/** The claims a plugin removal releases, bound to the machine manifest it releases them from. */
+/** The claims a plugin removal releases, through the two use cases that release them. */
 export function removalClaims(
-  repo: (MachineManifestRepository & Lock) | undefined,
-  fs: FileReader
+  detachNativePluginRefs: DetachNativePluginRefs,
+  detachUserPlugin: DetachUserPlugin
 ) {
   return {
     detachNativeRefs: (projectRoot: string, refsByTool: ReadonlyMap<ToolId, readonly string[]>) =>
-      detachNativePluginRefs({ repo, fs, projectRoot, refsByTool }),
+      detachNativePluginRefs.execute({ projectRoot, refsByTool }),
     detachUserPlugin: (toolId: AiToolId, name: string, projectRoot: string) =>
-      detachUserPlugin({ repo, fs, toolId, name, projectRoot }),
+      detachUserPlugin.execute({ toolId, name, projectRoot }),
   };
 }

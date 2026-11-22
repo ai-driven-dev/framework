@@ -20,6 +20,7 @@ import {
   RecordSourceReference,
   type RecordSourceReferenceDeps,
 } from "../../../src/contexts/machine-claims/application/shared-source/record-source-reference.use-case.js";
+import { ResolveReferenceRoot } from "../../../src/contexts/machine-claims/application/shared-source/resolve-reference-root.use-case.js";
 import {
   SharedFrameworkSource,
   type SharedFrameworkSourceDeps,
@@ -111,7 +112,7 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
         fs: parts.fs,
         logger: parts.logger,
         recordReference: new RecordSourceReference({
-          fs: parts.fs,
+          resolveReferenceRoot: new ResolveReferenceRoot(parts.fs),
           currentVersion: parts.currentVersion ?? "0.0.0-test",
           logger: parts.logger,
           frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,

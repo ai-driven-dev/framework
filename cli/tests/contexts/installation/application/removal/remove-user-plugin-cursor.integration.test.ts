@@ -1,8 +1,8 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { userScopeFilesSafeToDelete } from "../../../../../src/composition/machine-claims.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import { userScopeFilesSafeToDelete } from "../../../../../src/contexts/machine-claims/application/ownership/user-scope-plugin-files.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { resolveHomeDir } from "../../../../../src/shared/infrastructure/home-dir.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";

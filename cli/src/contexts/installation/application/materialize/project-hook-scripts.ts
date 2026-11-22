@@ -3,6 +3,7 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { ProjectHooksLocation } from "../../../tools/contract/tool-vocabulary.js";
 import { ProjectHooksEditedError } from "../../domain/installation.error.js";
+import { driftOf } from "../../domain/manifest/drift.js";
 import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.js";
 import type { TranslatedFile } from "../../ports/plugin/plugin-translation.js";
 import type { ProjectHooksGuard } from "../shared/assert-project-hooks-unchanged.js";
@@ -67,7 +68,7 @@ async function assertUnedited(
   script: { path: string; relativePath: string; digest: string }
 ): Promise<void> {
   if (guard.overwriteEdited === true) return;
-  if ((await fs.readFileHash(script.path)).value === script.digest) return;
+  if (driftOf(script.digest, await fs.readFileHash(script.path)) === "ok") return;
   throw new ProjectHooksEditedError(
     `${location.toolName} hook script '${script.relativePath}' was edited during reinstall; removal refused.`
   );

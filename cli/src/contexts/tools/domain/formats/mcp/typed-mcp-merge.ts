@@ -121,7 +121,10 @@ function stripPreviousEntries(
   const editedPreviousEntries: string[] = [];
   for (const [name, digest] of previous) {
     if (!(name in result)) continue;
-    if (FileHash.of(JSON.stringify(result[name])).value === digest) delete result[name];
+    const unedited =
+      FileHash.isDigest(digest) &&
+      FileHash.of(JSON.stringify(result[name])).equals(new FileHash(digest));
+    if (unedited) delete result[name];
     else editedPreviousEntries.push(name);
   }
   return { cleaned: result, editedPreviousEntries };

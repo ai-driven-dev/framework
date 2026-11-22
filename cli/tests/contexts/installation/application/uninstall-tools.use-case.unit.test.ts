@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { registrationRecordRules } from "../../../../src/composition/installation.js";
+import { machineOwnership } from "../../../../src/composition/machine-claims.js";
 import { RemoveToolFiles } from "../../../../src/contexts/installation/application/removal/project/remove-tool-files.js";
 import {
   type DetachProjectClaims,
@@ -278,12 +279,13 @@ describe("UninstallTools - a project's tools", () => {
       for (const toolId of [TOOL.cursor, TOOL.codex]) await installTool(deps, PROJECT_ROOT, toolId);
       await seedSharedClaims(deps);
       const retainedTool = selected === TOOL.cursor ? TOOL.codex : TOOL.cursor;
+      const owned = machineOwnership(deps.userManifestRepo, deps.fs);
 
       await uninstaller(
         deps.fs,
         deps.manifestRepo,
         deps.logger,
-        detachProjectClaims(deps.userManifestRepo, deps.fs)
+        detachProjectClaims(owned.detachNativePluginRefs, owned.detachUserPlugin)
       ).execute({
         toolIds: [selected],
         projectRoot: PROJECT_ROOT,

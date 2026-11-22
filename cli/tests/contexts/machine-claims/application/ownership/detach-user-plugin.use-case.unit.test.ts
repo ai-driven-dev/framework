@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { detachUserPlugin } from "../../../../../src/contexts/machine-claims/application/ownership/user-plugin-ownership.js";
+import { DetachUserPlugin } from "../../../../../src/contexts/machine-claims/application/ownership/detach-user-plugin.use-case.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
@@ -23,9 +23,7 @@ describe("one project's canonical user plugin claim", () => {
   it("detaches only A's realpath, retaining B and the owned plugin bytes/record", async () => {
     const f = fixture();
     f.fs.setSymlink("/link-to-A", "/A");
-    await detachUserPlugin({
-      repo: f.repo,
-      fs: f.fs,
+    await new DetachUserPlugin(f.repo, f.fs).execute({
       toolId: TOOL.cursor,
       name: "sample-plugin",
       projectRoot: "/link-to-A",
@@ -37,9 +35,7 @@ describe("one project's canonical user plugin claim", () => {
 
   it("does not drop B or save for an unrelated project", async () => {
     const f = fixture();
-    await detachUserPlugin({
-      repo: f.repo,
-      fs: f.fs,
+    await new DetachUserPlugin(f.repo, f.fs).execute({
       toolId: TOOL.cursor,
       name: "sample-plugin",
       projectRoot: "/C",
@@ -57,9 +53,7 @@ describe("one project's canonical user plugin claim", () => {
       ["project", "sample-plugin"],
     ] as const) {
       const f = fixture(scope);
-      await detachUserPlugin({
-        repo: f.repo,
-        fs: f.fs,
+      await new DetachUserPlugin(f.repo, f.fs).execute({
         toolId: TOOL.cursor,
         name: name,
         projectRoot: "/A",
@@ -74,17 +68,13 @@ describe("one project's canonical user plugin claim", () => {
 
   it("ignores a missing repo or manifest without inventing ownership", async () => {
     const fs = new InMemoryFileAdapter({}, ["/A", "/B", "/C"]);
-    await detachUserPlugin({
-      repo: undefined,
-      fs: fs,
+    await new DetachUserPlugin(undefined, fs).execute({
       toolId: TOOL.cursor,
       name: "sample-plugin",
       projectRoot: "/A",
     });
     const repo = new InMemoryMachineManifestRepository();
-    await detachUserPlugin({
-      repo: repo,
-      fs: fs,
+    await new DetachUserPlugin(repo, fs).execute({
       toolId: TOOL.cursor,
       name: "sample-plugin",
       projectRoot: "/A",
@@ -96,9 +86,7 @@ describe("one project's canonical user plugin claim", () => {
   it("loads the latest machine record under exclusive access before detaching", async () => {
     const f = fixture();
     const locked = loadingOnlyUnderLock(f.repo);
-    await detachUserPlugin({
-      repo: locked,
-      fs: f.fs,
+    await new DetachUserPlugin(locked, f.fs).execute({
       toolId: TOOL.cursor,
       name: "sample-plugin",
       projectRoot: "/A",

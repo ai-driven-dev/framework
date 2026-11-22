@@ -25,14 +25,8 @@ import { UserScopePluginFiles } from "../../contexts/installation/application/re
 import type {
   BoundPluginMaterializer,
   UserPluginMaterialization,
-  UserScopeFileGuard,
 } from "../../contexts/installation/ports/plugin/user-plugin-materialization.js";
 import { userScopeOwnership } from "../../contexts/machine-claims/application/ownership/user-scope-ownership.js";
-import {
-  assertUserScopeWriteBoundary,
-  userScopeFilesSafeToDelete,
-  withoutMissingFiles,
-} from "../../contexts/machine-claims/application/ownership/user-scope-plugin-files.js";
 import { pluginRemovalClaims } from "../../contexts/machine-claims/application/removal/plugin-removal-claims.js";
 import { ResolvePurgeCandidate } from "../../contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
 import { isStrictlyWithinUserScope } from "../../contexts/machine-claims/domain/user-scope-containment.js";
@@ -45,6 +39,12 @@ import { RemovePlugin } from "../../orchestration/plugin/remove-plugin.use-case.
 import { UpdateUserPlugin } from "../../orchestration/plugin/update-user-plugin.use-case.js";
 import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
 import type { Installation } from "../installation.js";
+import {
+  machineOwnership,
+  sharedSourceReads,
+  userScopeFileGuard,
+  userScopeFilesSafeToDelete,
+} from "../machine-claims.js";
 import type { Base } from "../shared.js";
 import { userConfigDir } from "../user-config-dir.js";
 
@@ -73,13 +73,6 @@ export function withinUserScope(
 export function purgeCandidateResolverOf(purge: Pick<ResolvePurgeCandidate, "execute">) {
   return (...args: Parameters<ResolvePurgeCandidate["execute"]>) => purge.execute(...args);
 }
-
-// One writer for a machine-scope plugin's files, whether setup installs it or update rebuilds it.
-export const userScopeFileGuard: UserScopeFileGuard = {
-  safeToDelete: userScopeFilesSafeToDelete,
-  withoutMissing: withoutMissingFiles,
-  assertWriteBoundary: assertUserScopeWriteBoundary,
-};
 
 /** The host's two steps a user-scope removal takes: prove a claimed ref removable, then withdraw it. */
 export function claimedRefWithdrawal(
@@ -121,13 +114,15 @@ function wirePluginRemoval(base: Base, inst: Installation) {
   const { tools, fs, logger, manifestRepo, userManifestRepo, withdrawFromHost } = base;
   const { registrationRecordRules } = inst;
   const removalClaims = pluginRemovalClaims({
-    repo: userManifestRepo,
-    fs,
+    ...machineOwnership(userManifestRepo, fs),
+    ...sharedSourceReads({
+      fs,
+      platform: process.platform,
+      references: base.userSourceReferences,
+    }),
     logger,
     home: resolveHomeDir(),
-    platform: process.platform,
     frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-    userSourceReferences: base.userSourceReferences,
     marketplaceRegistry: base.marketplaceRegistry,
     resolveCacheCandidate: purgeCandidateResolverOf(new ResolvePurgeCandidate(fs, logger)),
   });

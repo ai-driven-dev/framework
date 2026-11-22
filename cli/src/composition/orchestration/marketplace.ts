@@ -19,11 +19,11 @@ import { LoadSyncContext } from "../../contexts/installation/application/sync/lo
 import { RecordActivation } from "../../contexts/installation/application/sync/record-activation.use-case.js";
 import { trackedSharedSettings } from "../../contexts/installation/application/sync/tracked-shared-settings.js";
 import { Manifest } from "../../contexts/installation/domain/manifest.js";
-import { userScopeFilesSafeToDelete } from "../../contexts/machine-claims/application/ownership/user-scope-plugin-files.js";
 import { RecordMachineClaims } from "../../contexts/machine-claims/application/record/record-machine-claims.use-case.js";
 import { removalClaims } from "../../contexts/machine-claims/application/removal/removal-claims.js";
 import { ResolvePurgeCandidate } from "../../contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
 import { RecordSourceReference } from "../../contexts/machine-claims/application/shared-source/record-source-reference.use-case.js";
+import { ResolveReferenceRoot } from "../../contexts/machine-claims/application/shared-source/resolve-reference-root.use-case.js";
 import { SharedFrameworkSource } from "../../contexts/machine-claims/application/shared-source/shared-framework-source.use-case.js";
 import { AddMarketplace } from "../../orchestration/marketplace/add-marketplace.use-case.js";
 import { CheckMarketplaceUpstream } from "../../orchestration/marketplace/check-marketplace-upstream.use-case.js";
@@ -47,6 +47,7 @@ import { SyncToolSettingsFiles } from "../../orchestration/sync/settings/sync-to
 import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
 import { catalogReaders, settingsDeclaration } from "../host-registration.js";
 import type { Installation } from "../installation.js";
+import { machineOwnership, userScopeFilesSafeToDelete } from "../machine-claims.js";
 import type { Base } from "../shared.js";
 import { userConfigDir } from "../user-config-dir.js";
 
@@ -116,10 +117,11 @@ function wireUserMarketplaceRemoval(base: Base, inst: Installation) {
 function wireMarketplaceRemoval(base: Base, inst: Installation) {
   const { tools, fs, prompter, manifestRepo, userManifestRepo, marketplaceRegistry } = base;
   const { registrationRecordRules } = inst;
+  const ownership = machineOwnership(userManifestRepo, fs);
   const projectCleanup = new RemoveProjectPlugin(
     fs,
     inst.builtMaterializationDeps.homedir,
-    removalClaims(userManifestRepo, fs)
+    removalClaims(ownership.detachNativePluginRefs, ownership.detachUserPlugin)
   );
   const marketplaceRemoveUseCase = new RemoveProjectMarketplace({
     find: new FindMarketplaceToRemove(marketplaceRegistry),
@@ -230,7 +232,7 @@ function wireMarketplaceSync(base: Base, inst: Installation) {
     tools
   );
   const recordSourceReference = new RecordSourceReference({
-    fs,
+    resolveReferenceRoot: new ResolveReferenceRoot(fs),
     currentVersion,
     logger,
     frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,

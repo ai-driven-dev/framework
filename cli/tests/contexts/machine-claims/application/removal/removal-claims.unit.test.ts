@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { removalClaims } from "../../../../../src/contexts/machine-claims/application/removal/removal-claims.js";
 import type { MachineRecords } from "../../../../../src/contexts/machine-claims/ports/machine-manifest.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { removalClaimsOf } from "../../testing/claims-release.builder.js";
 import {
   InMemoryMachineManifest,
   InMemoryMachineManifestRepository,
@@ -30,7 +30,7 @@ function fixture() {
   );
   const repo = new InMemoryMachineManifestRepository(manifest, records);
   const fs = new InMemoryFileAdapter({}, ["/A", "/B"]);
-  return { repo, claims: removalClaims(repo, fs) };
+  return { repo, claims: removalClaimsOf(repo, fs) };
 }
 
 describe("the claims a plugin removal releases", () => {
@@ -53,7 +53,7 @@ describe("the claims a plugin removal releases", () => {
   });
 
   it("releases nothing when no machine manifest is bound", async () => {
-    const claims = removalClaims(undefined, new InMemoryFileAdapter());
+    const claims = removalClaimsOf(undefined, new InMemoryFileAdapter());
 
     await claims.detachNativeRefs("/A", new Map([[TOOL.codex, [REF]]]));
     await claims.detachUserPlugin(TOOL.cursor, "sample-plugin", "/A");

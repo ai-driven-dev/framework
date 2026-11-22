@@ -1,12 +1,9 @@
 import type { Scope } from "../../../../shared/domain/scope.js";
-import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
+import { frameworkSourceIsShared } from "../../domain/shared-source-reference.model.js";
 import type { UserSourceReferences } from "../../ports/user-source-references.js";
-import {
-  frameworkSourceIsShared,
-  resolveReferenceRoot,
-  toleratingUnreadableRefs,
-} from "../shared-source-reference-support.js";
+import { toleratingUnreadableRefs } from "../shared-source-reference-support.js";
+import type { ResolveReferenceRoot } from "./resolve-reference-root.use-case.js";
 
 export interface RecordSourceReferenceRequest {
   projectRoot: string;
@@ -14,7 +11,7 @@ export interface RecordSourceReferenceRequest {
 }
 
 export interface RecordSourceReferenceDeps {
-  readonly fs: FileReader;
+  readonly resolveReferenceRoot: ResolveReferenceRoot;
   readonly currentVersion: string;
   readonly logger: Logger;
   readonly frameworkMarketplaceName: string;
@@ -33,12 +30,17 @@ export class RecordSourceReference {
     // `references.json`: always true today, but a future change must not silently start writing a
     // reference for a registration that is no longer the shared one.
     const { name, scope } = command.marketplace;
-    const { fs, currentVersion, logger, frameworkMarketplaceName, userSourceReferences } =
-      this.deps;
+    const {
+      resolveReferenceRoot,
+      currentVersion,
+      logger,
+      frameworkMarketplaceName,
+      userSourceReferences,
+    } = this.deps;
     if (!frameworkSourceIsShared(name, scope, frameworkMarketplaceName)) return;
     if (userSourceReferences === undefined) return;
     await toleratingUnreadableRefs(logger, undefined, async () => {
-      const resolvedRoot = await resolveReferenceRoot(fs, command.projectRoot);
+      const resolvedRoot = await resolveReferenceRoot.execute(command.projectRoot);
       await userSourceReferences.addReference(currentVersion, resolvedRoot);
     });
   }

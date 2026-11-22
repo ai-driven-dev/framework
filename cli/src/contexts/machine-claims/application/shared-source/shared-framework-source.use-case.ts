@@ -4,9 +4,9 @@ import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
+import { frameworkSourceIsShared } from "../../domain/shared-source-reference.model.js";
 import type { ListedMarketplace } from "../../ports/marketplace-listing.js";
 import type { ResolvePurgeCandidate } from "../resolve-purge-candidate.use-case.js";
-import { frameworkSourceIsShared } from "../shared-source-reference-support.js";
 import type { RecordSourceReference } from "./record-source-reference.use-case.js";
 
 /** What one tool's host registration observed, as far as the shared source is concerned. */

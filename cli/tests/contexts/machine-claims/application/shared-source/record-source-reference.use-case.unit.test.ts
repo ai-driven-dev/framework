@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { RecordSourceReference } from "../../../../../src/contexts/machine-claims/application/shared-source/record-source-reference.use-case.js";
+import { ResolveReferenceRoot } from "../../../../../src/contexts/machine-claims/application/shared-source/resolve-reference-root.use-case.js";
 import type { UserSourceReferences } from "../../../../../src/contexts/machine-claims/ports/user-source-references.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { UnreadableUserSourceReferencesError } from "../../../../../src/shared/domain/shared.error.js";
@@ -15,7 +16,7 @@ function recorder(
   logger = new CapturingLogger()
 ) {
   return new RecordSourceReference({
-    fs,
+    resolveReferenceRoot: new ResolveReferenceRoot(fs),
     currentVersion: "1.2.3",
     logger,
     frameworkMarketplaceName: NAME,

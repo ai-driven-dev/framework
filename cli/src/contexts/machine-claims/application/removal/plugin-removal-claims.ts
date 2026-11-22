@@ -1,37 +1,35 @@
 import type { HintedMessage } from "../../../../shared/domain/describe-error.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
-import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type {
   PluginRefGuardQuery,
   PluginRemovalClaims,
 } from "../../contract/plugin-removal-claims.js";
-import type { MachineManifestRepository } from "../../ports/machine-manifest.js";
-import type { MarketplaceListing } from "../../ports/marketplace-listing.js";
-import type { UserSourceReferences } from "../../ports/user-source-references.js";
-import { isMachineOwnedNativeRef } from "../ownership/native-plugin-ownership.js";
 import {
   describeGuardedPluginRefMessage,
   frameworkSourceIsShared,
-  otherProjectsReferencing,
   refAnotherProjectStillNeeds,
-  resolveReferenceRoot,
-  toleratingUnreadableRefs,
-} from "../shared-source-reference-support.js";
+} from "../../domain/shared-source-reference.model.js";
+import type { MarketplaceListing } from "../../ports/marketplace-listing.js";
+import type { DetachNativePluginRefs } from "../ownership/detach-native-plugin-refs.use-case.js";
+import type { DetachUserPlugin } from "../ownership/detach-user-plugin.use-case.js";
+import type { IsMachineOwnedNativeRef } from "../ownership/is-machine-owned-native-ref.use-case.js";
+import type { OtherProjectsReferencing } from "../shared-source/other-projects-referencing.use-case.js";
+import type { ResolveReferenceRoot } from "../shared-source/resolve-reference-root.use-case.js";
+import { toleratingUnreadableRefs } from "../shared-source-reference-support.js";
 import { removalClaims } from "./removal-claims.js";
 
 export interface PluginRemovalClaimsDeps {
-  readonly repo: (MachineManifestRepository & Lock) | undefined;
-  readonly fs: FileReader;
+  readonly isMachineOwnedNativeRef: IsMachineOwnedNativeRef;
+  readonly detachNativePluginRefs: DetachNativePluginRefs;
+  readonly detachUserPlugin: DetachUserPlugin;
   readonly logger: Logger;
   readonly home: string;
-  /** The platform whose path rules decide whether two project roots are the same one. */
-  readonly platform: string;
   /** The framework marketplace's reserved name, owned by the distribution. */
   readonly frameworkMarketplaceName: string;
   /** Absent skips the another-project guard entirely. */
-  readonly userSourceReferences?: UserSourceReferences;
+  readonly otherProjectsReferencing?: OtherProjectsReferencing;
+  readonly resolveReferenceRoot: ResolveReferenceRoot;
   /** Absent treats every marketplace as not shared. */
   readonly marketplaceRegistry?: MarketplaceListing;
   readonly resolveCacheCandidate: (
@@ -55,21 +53,21 @@ async function marketplaceIsSharedSource(
 
 function otherProjectsOf(
   deps: PluginRemovalClaimsDeps,
-  userSourceReferences: UserSourceReferences,
+  otherProjectsReferencing: OtherProjectsReferencing,
   projectRoot: string
 ): Promise<readonly string[]> {
   return toleratingUnreadableRefs<readonly string[]>(deps.logger, [], async () => {
-    const ownRoot = await resolveReferenceRoot(deps.fs, projectRoot);
-    return otherProjectsReferencing(userSourceReferences, ownRoot, deps.platform);
+    const ownRoot = await deps.resolveReferenceRoot.execute(projectRoot);
+    return otherProjectsReferencing.execute(ownRoot);
   });
 }
 
 function pluginRefGuardMessage(deps: PluginRemovalClaimsDeps) {
   return async (query: PluginRefGuardQuery): Promise<string | HintedMessage | undefined> => {
-    const { userSourceReferences } = deps;
-    if (userSourceReferences === undefined) return undefined;
+    const { otherProjectsReferencing } = deps;
+    if (otherProjectsReferencing === undefined) return undefined;
     if (!(await marketplaceIsSharedSource(deps, query))) return undefined;
-    const otherProjects = await otherProjectsOf(deps, userSourceReferences, query.projectRoot);
+    const otherProjects = await otherProjectsOf(deps, otherProjectsReferencing, query.projectRoot);
     const guarded = refAnotherProjectStillNeeds({
       enablementIsMachineGlobal: query.tool.pluginEnablementIsMachineGlobal(),
       otherProjects,
@@ -91,12 +89,12 @@ function pluginRefGuardMessage(deps: PluginRemovalClaimsDeps) {
  * `marketplaceAlias` stays the key this project's registry is read by; both must move together.
  */
 export function pluginRemovalClaims(deps: PluginRemovalClaimsDeps): PluginRemovalClaims {
-  const { repo, fs } = deps;
   return {
     home: deps.home,
-    isMachineOwned: (toolId: ToolId, ref: string) => isMachineOwnedNativeRef(repo, toolId, ref),
+    isMachineOwned: (toolId: ToolId, ref: string) =>
+      deps.isMachineOwnedNativeRef.execute(toolId, ref),
     guardMessage: pluginRefGuardMessage(deps),
     resolveCacheCandidate: deps.resolveCacheCandidate,
-    ...removalClaims(repo, fs),
+    ...removalClaims(deps.detachNativePluginRefs, deps.detachUserPlugin),
   };
 }

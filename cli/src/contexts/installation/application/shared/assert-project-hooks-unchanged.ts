@@ -8,6 +8,7 @@ import type {
   ProjectHooksFormat,
 } from "../../../tools/contract/tool-vocabulary.js";
 import { ProjectHooksEditedError } from "../../domain/installation.error.js";
+import { driftOf } from "../../domain/manifest/drift.js";
 import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.js";
 import type { ProjectHooksSection } from "../../ports/tool-sections.js";
 import { assertScriptPath } from "../ownership/assert-script-path.js";
@@ -118,7 +119,7 @@ async function assertScriptDigest(
       `${toolName} hook script '${relativePath}' has an unproven install digest; detach refused.`
     );
   }
-  if (!overwriteEdited && (await fs.readFileHash(path)).value !== digest) {
+  if (!overwriteEdited && driftOf(digest, await fs.readFileHash(path)) !== "ok") {
     throw new ProjectHooksEditedError(
       `${toolName} hook script '${relativePath}' was edited after install; detach refused.`
     );
