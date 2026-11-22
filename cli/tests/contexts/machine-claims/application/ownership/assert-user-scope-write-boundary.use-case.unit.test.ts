@@ -5,6 +5,13 @@ import type {
   UserScopeReach,
   UserScopeWrite,
 } from "../../../../../src/contexts/machine-claims/application/ownership/user-scope-boundary.js";
+import {
+  NoUserPluginsDirectoryError,
+  PluginDirectoryDisappearedError,
+  PluginDirectoryOutsideBoundaryError,
+  UpdateParentEscapesBoundaryError,
+  UpdatePathEscapesPluginError,
+} from "../../../../../src/contexts/machine-claims/domain/machine-claims.error.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
 import {
@@ -46,7 +53,7 @@ describe("before writing inside a user-scope directory", () => {
         registeredTools().aiProfile(TOOL.claude),
         { pluginName: "aidd-test", files: [file("aidd-test/a.md")] }
       )
-    ).rejects.toThrow(/no user plugins directory/);
+    ).rejects.toThrow(NoUserPluginsDirectoryError);
   });
 
   it.each([BOUNDARY, join(BOUNDARY, "aidd-test")])(
@@ -93,7 +100,7 @@ describe("before writing inside a user-scope directory", () => {
         pluginName: "aidd-test",
         files: [file("aidd-test/skills/new/SKILL.md")],
       })
-    ).rejects.toThrow(/directory disappeared during update/);
+    ).rejects.toThrow(PluginDirectoryDisappearedError);
   });
 
   it("allows a new file only within the owned plugin directory", async () => {
@@ -119,7 +126,7 @@ describe("before writing inside a user-scope directory", () => {
         registeredTools().aiProfile(TOOL.cursor),
         { pluginName: "aidd-test", files: [file(relativePath)] }
       )
-    ).rejects.toThrow(/escapes its plugin directory/);
+    ).rejects.toThrow(UpdatePathEscapesPluginError);
   });
 
   it("refuses a plugin directory symlink that resolves outside its user-scope base", async () => {
@@ -130,7 +137,7 @@ describe("before writing inside a user-scope directory", () => {
         pluginName: "aidd-test",
         files: [file("aidd-test/skills/demo/SKILL.md")],
       })
-    ).rejects.toThrow(/directory is not safely inside/);
+    ).rejects.toThrow(PluginDirectoryOutsideBoundaryError);
   });
 
   it("refuses a nested parent symlink before writing new bytes", async () => {
@@ -141,7 +148,7 @@ describe("before writing inside a user-scope directory", () => {
         pluginName: "aidd-test",
         files: [file("aidd-test/skills/demo/SKILL.md")],
       })
-    ).rejects.toThrow(/update parent.*escapes/);
+    ).rejects.toThrow(UpdateParentEscapesBoundaryError);
   });
 
   it("refuses an absent plugin directory rather than inventing a safe write base", async () => {
@@ -152,7 +159,7 @@ describe("before writing inside a user-scope directory", () => {
         pluginName: "aidd-test",
         files: [file("aidd-test/skills/demo/SKILL.md")],
       })
-    ).rejects.toThrow(/directory is not safely inside/);
+    ).rejects.toThrow(PluginDirectoryOutsideBoundaryError);
   });
 });
 
@@ -172,7 +179,7 @@ describe("a write boundary that vanished while its plugin directory resolves", (
           }),
         ],
       })
-    ).rejects.toThrow(/directory is not safely inside/);
+    ).rejects.toThrow(PluginDirectoryOutsideBoundaryError);
   });
 });
 
@@ -191,6 +198,6 @@ describe("a profile that declares no plugins at all", () => {
         noPlugins,
         { pluginName: "aidd-test", files: [file] }
       )
-    ).rejects.toThrow(/no user plugins directory/);
+    ).rejects.toThrow(NoUserPluginsDirectoryError);
   });
 });

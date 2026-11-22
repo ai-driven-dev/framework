@@ -1,4 +1,3 @@
-import { homedir } from "node:os";
 import { ListMarketplaces } from "../../contexts/distribution/application/list-marketplaces.use-case.js";
 import { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.use-case.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
@@ -9,17 +8,16 @@ import {
 } from "../../contexts/installation/application/clean/clean-project-files.use-case.js";
 import { InspectUserScopeFiles } from "../../contexts/installation/application/clean/inspect-user-scope-files.use-case.js";
 import { PlanProjectClean } from "../../contexts/installation/application/clean/plan-project-clean.use-case.js";
-import { ProveUserScopeWithdrawals } from "../../contexts/installation/application/clean/prove-user-scope-withdrawals.js";
+import { ProveUserScopeWithdrawals } from "../../contexts/installation/application/clean/prove-user-scope-withdrawals.use-case.js";
 import { PurgeUserScopeFiles } from "../../contexts/installation/application/clean/purge-user-scope-files.js";
-import { PurgeUserScopeMachine } from "../../contexts/installation/application/clean/purge-user-scope-machine.js";
-import { DeleteTrackedProjectFiles } from "../../contexts/installation/application/removal/project/delete-tracked-project-files.js";
-import { RemoveAiddTraces } from "../../contexts/installation/application/removal/project/remove-aidd-traces.js";
-import { RemoveMachineLocalFiles } from "../../contexts/installation/application/removal/project/remove-machine-local-files.js";
-import { RemoveProjectFiles } from "../../contexts/installation/application/removal/project/remove-project-files.js";
-import { RemoveToolFiles } from "../../contexts/installation/application/removal/project/remove-tool-files.js";
+import { PurgeUserScopeMachine } from "../../contexts/installation/application/clean/purge-user-scope-machine.use-case.js";
+import { DeleteTrackedProjectFiles } from "../../contexts/installation/application/removal/project/delete-tracked-project-files.use-case.js";
+import { RemoveAiddTraces } from "../../contexts/installation/application/removal/project/remove-aidd-traces.use-case.js";
+import { RemoveMachineLocalFiles } from "../../contexts/installation/application/removal/project/remove-machine-local-files.use-case.js";
+import { RemoveProjectFiles } from "../../contexts/installation/application/removal/project/remove-project-files.use-case.js";
+import { RemoveToolFiles } from "../../contexts/installation/application/removal/project/remove-tool-files.use-case.js";
 import type { MachineStateGuards } from "../../contexts/installation/application/removal/purge-machine-state.js";
 import { PurgeMachineState } from "../../contexts/installation/application/removal/purge-machine-state.js";
-import { assertProjectMcpEntriesRemovable } from "../../contexts/installation/application/removal/remove-project-plugin.js";
 import { UserScopePluginFiles } from "../../contexts/installation/application/removal/user-scope-plugin-files.js";
 import { UninstallTools } from "../../contexts/installation/application/uninstall-tools.use-case.js";
 import { detachProjectClaims } from "../../contexts/machine-claims/application/removal/detach-project-claims.js";
@@ -33,7 +31,6 @@ import { PreviewProjectClean } from "../../orchestration/clean/preview-project-c
 import { RemoveProjectInOrder } from "../../orchestration/clean/remove-project-in-order.use-case.js";
 import { RemoveUserScope } from "../../orchestration/clean/remove-user-scope.use-case.js";
 import { UninstallProjectTools } from "../../orchestration/clean/uninstall-project-tools.use-case.js";
-import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
 import type { Installation } from "../installation.js";
 import { machineOwnership, userScopeFilesSafeToDelete } from "../machine-claims.js";
 import type { Base } from "../shared.js";
@@ -59,7 +56,7 @@ function wireCleanUserScope(
     userManifestRepo,
     claims: inst.registrationRecordRules,
     purgeMachineState: new PurgeMachineState({ fs, logger, guards }),
-    homeDir: homedir,
+    homeDir: base.homedir,
     userScopePluginFiles: new UserScopePluginFiles(fs, (plugin, tool, home) =>
       userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
     ),
@@ -86,22 +83,26 @@ function wireCleanUserScope(
 /** What a project clean removes: its files, with the records the registrations left. */
 function wireCleanProjectFiles(base: Base, inst: Installation) {
   const { fs, logger, manifestRepo, tools } = base;
-  const { updateGitignore } = inst;
+  const { updateGitignore, projectIntegration } = inst;
   const asks: ProjectCleanAsks = {
-    homeDir: resolveHomeDir,
+    homeDir: base.homedir,
     assertMcpRemovable: (plugin, tool, projectRoot) =>
-      assertProjectMcpEntriesRemovable(fs, { plugin, tool, projectRoot }),
+      projectIntegration.assertMcpRemovable.execute({ plugin, tool, projectRoot }),
   };
   return new CleanProjectFiles({
     assertProjectRemovable: new AssertProjectRemovable(
-      { fs, manifestRepo, assertMcpRemovable: asks.assertMcpRemovable },
+      {
+        assertHooksRemovable: projectIntegration.assertHooksRemovable,
+        manifestRepo,
+        assertMcpRemovable: asks.assertMcpRemovable,
+      },
       tools
     ),
     planProjectClean: new PlanProjectClean({ manifestRepo, asks }, tools),
     removeProjectFiles: new RemoveProjectFiles({
       manifestRepo,
-      trackedFiles: new DeleteTrackedProjectFiles({ fs, logger, homedir }, tools),
-      machineLocalFiles: new RemoveMachineLocalFiles(fs, tools),
+      trackedFiles: new DeleteTrackedProjectFiles({ fs, logger, homedir: base.homedir }, tools),
+      machineLocalFiles: new RemoveMachineLocalFiles(fs, tools, projectIntegration.removeHooks),
       aiddTraces: new RemoveAiddTraces({ fs, manifestRepo, logger, updateGitignore }, tools),
     }),
   });
@@ -140,7 +141,7 @@ export function wireClean(base: Base, inst: Installation) {
           ownership.detachNativePluginRefs,
           ownership.detachUserPlugin
         ),
-        removeToolFiles: new RemoveToolFiles(fs, logger, tools, homedir),
+        removeToolFiles: new RemoveToolFiles(fs, logger, tools, base.homedir),
       },
       tools
     ),

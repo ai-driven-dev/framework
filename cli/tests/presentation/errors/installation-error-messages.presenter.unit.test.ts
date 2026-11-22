@@ -25,6 +25,16 @@ import {
   UnsupportedManifestVersionError,
 } from "../../../src/contexts/installation/domain/installation.error.js";
 import {
+  EditedAfterInstallError,
+  NoUserPluginsDirectoryError,
+  PluginDirectoryDisappearedError,
+  PluginDirectoryOutsideBoundaryError,
+  UnprovenInstallDigestError,
+  UpdateParentEscapesBoundaryError,
+  UpdatePathEscapesPluginError,
+  UserManifestBusyError,
+} from "../../../src/contexts/machine-claims/domain/machine-claims.error.js";
+import {
   AmbiguousPluginMatchError,
   CategoryMismatchError,
   InteractiveOnlyError,
@@ -190,6 +200,38 @@ const cases: [() => Error, string][] = [
   [
     () => new UserScopeUnsupportedAiToolsError(["x"]),
     "--global installs through an IDE's own plugin CLI or its user configuration directory, and neither exists for: x. Drop them from --ide, or run `aidd setup --ide <ids>` in the project instead.",
+  ],
+  [
+    () => new UnprovenInstallDigestError("cursor", "p", "a.md"),
+    "cursor: 'p' file 'a.md' has an unproven install digest; removal refused.",
+  ],
+  [
+    () => new EditedAfterInstallError("cursor", "p", "a.md"),
+    "cursor: 'p' file 'a.md' was edited after install; removal refused.",
+  ],
+  [
+    () => new NoUserPluginsDirectoryError("cursor"),
+    "cursor: no user plugins directory is declared.",
+  ],
+  [
+    () => new PluginDirectoryOutsideBoundaryError("cursor", "p", "/base"),
+    "cursor: 'p' directory is not safely inside /base; update refused.",
+  ],
+  [
+    () => new UpdatePathEscapesPluginError("cursor", "p", "../x"),
+    "cursor: 'p' update path '../x' escapes its plugin directory.",
+  ],
+  [
+    () => new UpdateParentEscapesBoundaryError("cursor", "p", "/out", "/base"),
+    "cursor: 'p' update parent '/out' escapes /base.",
+  ],
+  [
+    () => new PluginDirectoryDisappearedError("cursor", "p"),
+    "cursor: 'p' directory disappeared during update.",
+  ],
+  [
+    () => new UserManifestBusyError("/m.lock"),
+    "User manifest is busy: /m.lock. Retry after the other AIDD operation finishes.",
   ],
 ];
 

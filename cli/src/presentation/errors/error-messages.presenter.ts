@@ -4,14 +4,17 @@ import type {
   CatalogOwners,
   InstallationOwners,
   MessagesOf,
+  PresentationOwners,
   SharedOwners,
   Words,
 } from "./error-messages.types.js";
 import { INSTALLATION } from "./installation-error-messages.presenter.js";
+import { PRESENTATION } from "./presentation-error-messages.presenter.js";
 
 /** What each catalogued error says, by its code: a code a table lacks is a type error here. */
 export const MESSAGES: Readonly<Record<string, Words["say"]>> = {
   ...CORE,
   ...INSTALLATION,
   ...CATALOG,
-} satisfies MessagesOf<SharedOwners | InstallationOwners | CatalogOwners>;
+  ...PRESENTATION,
+} satisfies MessagesOf<SharedOwners | InstallationOwners | CatalogOwners | PresentationOwners>;

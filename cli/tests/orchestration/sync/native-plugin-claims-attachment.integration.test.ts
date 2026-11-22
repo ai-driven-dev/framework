@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { registrationRecordRules } from "../../../src/composition/installation.js";
+import { homeDirResolver } from "../../../src/composition/user-config-dir.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-distribution-reader-adapter.js";
 import { RefreshHostPlugin } from "../../../src/contexts/host-registration/application/refresh-host-plugin.use-case.js";
@@ -11,7 +12,6 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { isStrictlyWithinUserScope } from "../../../src/contexts/machine-claims/domain/user-scope-containment.js";
 import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.use-case.js";
-import { resolveHomeDir } from "../../../src/shared/infrastructure/home-dir.js";
 import { fakeBuiltDeps } from "../../contexts/installation/testing/fake-build-sources.fake.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
 import {
@@ -284,7 +284,7 @@ for (const [toolId, catalogPath] of [
       const cacheRoot = syntheticSyncCatalog()
         .aiProfile(toolId)
         .nativeActivation()
-        ?.pluginCacheRoot(resolveHomeDir());
+        ?.pluginCacheRoot(homeDirResolver()());
       const cachedBytes =
         cacheRoot === undefined ? undefined : join(cacheRoot, hostName, "test-plugin", "skill.md");
       if (cachedBytes !== undefined)

@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { PluginCatalog } from "../../../src/contexts/distribution/contract/catalog.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import { marketplaceCacheDir } from "../../../src/contexts/distribution/domain/marketplace-cache-paths.model.js";
 import { resolvingCatalogs } from "../../contexts/distribution/testing/catalog-resolver.builder.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
@@ -94,7 +95,7 @@ describe("refreshing marketplaces", () => {
 
   it("says a cache is stale when a plugin its catalog points at is gone", async () => {
     const { registry, cache, resolver } = await refreshOver({ "/mkt/a": EMPTY }, "a");
-    const cacheDir = resolver.cacheDirOf(marketplaceAt("a"), PROJECT);
+    const cacheDir = marketplaceCacheDir(PROJECT, "a");
     const fs = new InMemoryFileAdapter({
       [`${cacheDir}/.claude-plugin/marketplace.json`]: JSON.stringify({
         plugins: [{ name: "x", source: "./plugins/x" }],
@@ -117,7 +118,7 @@ describe("refreshing marketplaces", () => {
 
   it("stays silent about a cache whose plugins are all present", async () => {
     const { registry, cache, resolver } = await refreshOver({ "/mkt/a": EMPTY }, "a");
-    const cacheDir = resolver.cacheDirOf(marketplaceAt("a"), PROJECT);
+    const cacheDir = marketplaceCacheDir(PROJECT, "a");
     const fs = new InMemoryFileAdapter({
       [`${cacheDir}/.claude-plugin/marketplace.json`]: JSON.stringify({
         plugins: [{ name: "x", source: "./plugins/x" }],

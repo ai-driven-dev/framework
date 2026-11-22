@@ -1,4 +1,4 @@
-import { samePathSegment } from "../../../../shared/domain/paths.js";
+import { samePathSegment } from "../../../../shared/domain/paths.model.js";
 import type { UserSourceReferences } from "../../ports/user-source-references.js";
 
 export class OtherProjectsReferencing {

@@ -1,6 +1,10 @@
 import { join } from "node:path";
 import { FileHash } from "../../../../shared/domain/file-hash.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import {
+  EditedAfterInstallError,
+  UnprovenInstallDigestError,
+} from "../../domain/machine-claims.error.js";
 import { isStrictlyWithinUserScope } from "../../domain/user-scope-containment.js";
 import type { UserScopePluginFiles } from "../../ports/machine-manifest.js";
 import type { UserScopeTool } from "../../ports/user-scope-tool.js";
@@ -16,13 +20,12 @@ async function assertUnedited(
   plugin: UserScopePluginFiles<unknown>,
   file: { path: string; relativePath: string; hash: string }
 ): Promise<void> {
-  const label = `${tool.toolId}: '${plugin.name}' file '${file.relativePath}'`;
   if (!FileHash.isDigest(file.hash)) {
-    throw new Error(`${label} has an unproven install digest; removal refused.`);
+    throw new UnprovenInstallDigestError(tool.toolId, plugin.name, file.relativePath);
   }
   const current = await fs.readFileHash(file.path);
   if (!current.equals(new FileHash(file.hash))) {
-    throw new Error(`${label} was edited after install; removal refused.`);
+    throw new EditedAfterInstallError(tool.toolId, plugin.name, file.relativePath);
   }
 }
 

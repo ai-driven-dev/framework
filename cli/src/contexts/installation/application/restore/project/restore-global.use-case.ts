@@ -22,7 +22,7 @@ export interface RestoreGlobalResult {
   nativeOnlyToolIds: AiToolId[];
 }
 
-/** A restore bound to the record `RestoreGlobal.open` read, so a run reads it once. */
+/** A restore bound to the record `RestoreGlobal.execute` read, so a run reads it once. */
 export interface OpenRestore {
   /** The record that was read, for a caller that must ask something of it before restoring. */
   readonly manifest: Manifest;
@@ -37,7 +37,7 @@ export class RestoreGlobal {
   ) {}
 
   /** Reads the project's record, failing when it has none, and answers the restore it permits. */
-  async open(): Promise<OpenRestore> {
+  async execute(): Promise<OpenRestore> {
     const manifest = await requireManifest(this.manifestRepo);
     return { manifest, execute: (command) => this.restoreFrom(manifest, command) };
   }

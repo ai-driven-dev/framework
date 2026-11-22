@@ -2,6 +2,10 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ResolveSafeUserScopeFiles } from "../../../../../src/contexts/machine-claims/application/ownership/resolve-safe-user-scope-files.use-case.js";
 import type { ReportingUserScopeReach } from "../../../../../src/contexts/machine-claims/application/ownership/user-scope-boundary.js";
+import {
+  EditedAfterInstallError,
+  UnprovenInstallDigestError,
+} from "../../../../../src/contexts/machine-claims/domain/machine-claims.error.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import {
@@ -112,7 +116,7 @@ describe("choosing the user-scope files safe to delete", () => {
         plugin({ "aidd-test/plugin.json": HASH }),
         registeredTools().aiProfile(TOOL.cursor)
       )
-    ).rejects.toThrow(/edited.*plugin.json|plugin.json.*edited/);
+    ).rejects.toThrow(EditedAfterInstallError);
     expect(fs.getFile(path)).toBe("user-edited bytes");
   });
 
@@ -126,7 +130,7 @@ describe("choosing the user-scope files safe to delete", () => {
         plugin({ "aidd-test/script.js": "" }),
         registeredTools().aiProfile(TOOL.cursor)
       )
-    ).rejects.toThrow(/unproven.*script.js|script.js.*unproven/);
+    ).rejects.toThrow(UnprovenInstallDigestError);
     fs.failOn("readFile", path, errnoError("EACCES"));
     await expect(
       userScopeFilesSafeToDelete(
@@ -151,7 +155,7 @@ describe("a recorded install digest", () => {
         plugin({ "aidd-test/script.js": digest }),
         registeredTools().aiProfile(TOOL.cursor)
       )
-    ).rejects.toThrow(/unproven/);
+    ).rejects.toThrow(UnprovenInstallDigestError);
   });
 });
 

@@ -1,4 +1,4 @@
-import type { RegistrationRecordRules } from "../../../contexts/host-registration/contract/registration-record-rules.js";
+import type { RecordNativeRegistrations } from "../../../contexts/host-registration/application/register/record-native-registrations.use-case.js";
 import type { LoadSyncContext } from "../../../contexts/installation/application/sync/load-sync-context.use-case.js";
 import type { RecordActivation } from "../../../contexts/installation/application/sync/record-activation.use-case.js";
 import type { SharedFrameworkSource } from "../../../contexts/machine-claims/application/shared-source/shared-framework-source.use-case.js";
@@ -20,7 +20,7 @@ export interface RecordSyncActivationDeps {
   readonly recordActivation: Pick<RecordActivation, "execute">;
   readonly machineClaims: MachineClaimsRecording;
   readonly sharedSource: Pick<SharedFrameworkSource, "execute">;
-  readonly records: Pick<RegistrationRecordRules, "afterActivation">;
+  readonly recordRegistrations: Pick<RecordNativeRegistrations, "execute">;
 }
 
 /** Writes down what a sync activated: the source this project references, the hashes and
@@ -48,12 +48,10 @@ export class RecordSyncActivation {
       manifest,
       activated: [...activation.outcomes.keys()],
     });
-    const wroteRegistrations = await this.deps.recordActivation.execute({
-      kind: "native-registrations",
+    const wroteRegistrations = this.deps.recordRegistrations.execute({
       records: context.records,
       activated: activation.outcomes,
       narrowed: options.marketplaceNames !== undefined,
-      afterActivation: this.deps.records.afterActivation,
     });
     if (wroteHashes || wroteRegistrations) await context.save();
     await this.recordMachineClaims(run);

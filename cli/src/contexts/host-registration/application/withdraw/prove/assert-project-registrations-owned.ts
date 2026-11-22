@@ -1,7 +1,8 @@
 import type { NativeMarketplaceRegistration } from "../../../domain/record/native-marketplace-source.js";
 import { recordedRegistrations } from "../../../domain/record/registration-record.js";
-import { assertSourceOwned, inspectHostSource } from "../../native-marketplace-source-proof.js";
+import { assertSourceOwned } from "../../../domain/source-proof.js";
 import { reachableActivator } from "../../reachable-activator.js";
+import { inspectHostSource } from "../../read-host.js";
 import { assertNoForeignRefs } from "../host-call.js";
 import type {
   ProjectCleanFacts,

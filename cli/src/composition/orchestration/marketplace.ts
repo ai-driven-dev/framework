@@ -7,24 +7,13 @@ import { PinNewestFrameworkSource } from "../../contexts/distribution/applicatio
 import { FindMarketplaceToRemove } from "../../contexts/distribution/application/remove/find-marketplace-to-remove.use-case.js";
 import { FindUserMarketplace } from "../../contexts/distribution/application/remove/find-user-marketplace.use-case.js";
 import { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.use-case.js";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
-import { RegisterPluginWithHost } from "../../contexts/host-registration/application/register/register-plugin-with-host.use-case.js";
-import { ResolveNativeHost } from "../../contexts/host-registration/application/register/resolve-native-host.use-case.js";
 import { ListPluginSources } from "../../contexts/installation/application/marketplace/list-plugin-sources.use-case.js";
 import { PurgeMarketplacePlugins } from "../../contexts/installation/application/marketplace/purge-marketplace-plugins.use-case.js";
 import { RemovePluginsFromMarketplace } from "../../contexts/installation/application/marketplace/remove-plugins-from-marketplace.use-case.js";
 import { RemoveProjectPlugin } from "../../contexts/installation/application/removal/remove-project-plugin.js";
 import { UserScopePluginFiles } from "../../contexts/installation/application/removal/user-scope-plugin-files.js";
-import { LoadSyncContext } from "../../contexts/installation/application/sync/load-sync-context.use-case.js";
-import { RecordActivation } from "../../contexts/installation/application/sync/record-activation.use-case.js";
-import { trackedSharedSettings } from "../../contexts/installation/application/sync/tracked-shared-settings.js";
-import { Manifest } from "../../contexts/installation/domain/manifest.js";
-import { RecordMachineClaims } from "../../contexts/machine-claims/application/record/record-machine-claims.use-case.js";
 import { removalClaims } from "../../contexts/machine-claims/application/removal/removal-claims.js";
-import { ResolvePurgeCandidate } from "../../contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
-import { RecordSourceReference } from "../../contexts/machine-claims/application/shared-source/record-source-reference.use-case.js";
-import { ResolveReferenceRoot } from "../../contexts/machine-claims/application/shared-source/resolve-reference-root.use-case.js";
-import { SharedFrameworkSource } from "../../contexts/machine-claims/application/shared-source/shared-framework-source.use-case.js";
+import type { RecordSourceReference } from "../../contexts/machine-claims/application/shared-source/record-source-reference.use-case.js";
 import { AddMarketplace } from "../../orchestration/marketplace/add-marketplace.use-case.js";
 import { CheckMarketplaceUpstream } from "../../orchestration/marketplace/check-marketplace-upstream.use-case.js";
 import { ListMarketplaceCatalogs } from "../../orchestration/marketplace/list-marketplace-catalogs.use-case.js";
@@ -38,18 +27,10 @@ import { RemoveUserMarketplace } from "../../orchestration/marketplace/remove/re
 import { AskMarketplaceSource } from "../../orchestration/setup/ask-marketplace-source.use-case.js";
 import { ResolveSetupSource } from "../../orchestration/setup/resolve-setup-source.use-case.js";
 import type { RegisterFrameworkSource } from "../../orchestration/setup/setup-flow.js";
-import { ActivateNativeTools } from "../../orchestration/sync/settings/activate-native-tools.use-case.js";
-import { BuildMarketplaceForTool } from "../../orchestration/sync/settings/build-marketplace-for-tool.use-case.js";
-import { RecordSyncActivation } from "../../orchestration/sync/settings/record-sync-activation.use-case.js";
-import { SyncNativeActivation } from "../../orchestration/sync/settings/sync-native-activation.use-case.js";
-import { SyncSettings } from "../../orchestration/sync/settings/sync-settings.use-case.js";
-import { SyncToolSettingsFiles } from "../../orchestration/sync/settings/sync-tool-settings-files.use-case.js";
-import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
-import { catalogReaders, settingsDeclaration } from "../host-registration.js";
 import type { Installation } from "../installation.js";
 import { machineOwnership, userScopeFilesSafeToDelete } from "../machine-claims.js";
 import type { Base } from "../shared.js";
-import { userConfigDir } from "../user-config-dir.js";
+import { wireMarketplaceSync } from "./marketplace-sync.js";
 
 /** Detaches what a removal's plugins held on the machine, from the removal's own summary. */
 export function detachClaimsOf(cleanup: Pick<RemoveProjectPlugin, "detachClaims">) {
@@ -106,7 +87,7 @@ function wireUserMarketplaceRemoval(base: Base, inst: Installation) {
         tools
       ),
       host: base.withdrawFromHost,
-      home: resolveHomeDir(),
+      home: base.homedir(),
       records: inst.registrationRecordRules,
     }),
     remove: new RemoveMarketplace(marketplaceRegistry),
@@ -118,11 +99,13 @@ function wireMarketplaceRemoval(base: Base, inst: Installation) {
   const { tools, fs, prompter, manifestRepo, userManifestRepo, marketplaceRegistry } = base;
   const { registrationRecordRules } = inst;
   const ownership = machineOwnership(userManifestRepo, fs);
-  const projectCleanup = new RemoveProjectPlugin(
+  const projectCleanup = new RemoveProjectPlugin({
     fs,
-    inst.builtMaterializationDeps.homedir,
-    removalClaims(ownership.detachNativePluginRefs, ownership.detachUserPlugin)
-  );
+    homedir: inst.builtMaterializationDeps.homedir,
+    assertIntegration: inst.projectIntegration.assertIntegration,
+    removeIntegration: inst.projectIntegration.removeIntegration,
+    claims: removalClaims(ownership.detachNativePluginRefs, ownership.detachUserPlugin),
+  });
   const marketplaceRemoveUseCase = new RemoveProjectMarketplace({
     find: new FindMarketplaceToRemove(marketplaceRegistry),
     removePlugins: new RemoveMarketplacePlugins(
@@ -135,118 +118,6 @@ function wireMarketplaceRemoval(base: Base, inst: Installation) {
   });
   const userMarketplaceRemoveUseCase = wireUserMarketplaceRemoval(base, inst);
   return { marketplaceRemoveUseCase, userMarketplaceRemoveUseCase };
-}
-
-/** Registering the built marketplace's plugins with the hosts that load them natively. */
-function nativeActivationOf(
-  base: Base,
-  inst: Installation,
-  build: BuildMarketplaceForTool
-): ActivateNativeTools {
-  const { tools, fs, logger } = base;
-  return new ActivateNativeTools({
-    registerPluginWithHost: new RegisterPluginWithHost({
-      fs,
-      catalogs: catalogReaders(fs),
-      nativeHosts: new ResolveNativeHost(base.nativePluginActivators, tools),
-      hosts: {
-        marketplaceRegistries: base.hostMarketplaceRegistries,
-        pluginRegistries: base.hostPluginRegistries,
-        sources: base.nativeSources,
-      },
-      platform: process.platform,
-    }),
-    buildMarketplace: build,
-    logger,
-    marketplace: { name: FRAMEWORK_MARKETPLACE_NAME, userCacheRoot: userConfigDir },
-    records: inst.registrationRecordRules,
-  });
-}
-
-interface SyncSources {
-  buildMarketplaceForTool: BuildMarketplaceForTool;
-  recordSourceReference: RecordSourceReference;
-}
-
-/** The shared settings files of every tool, synced against the project's marketplaces. */
-function settingsFilesOf(
-  base: Base,
-  inst: Installation,
-  buildMarketplace: BuildMarketplaceForTool
-): SyncToolSettingsFiles {
-  const tracked = trackedSharedSettings({ fs: base.fs, logger: base.logger });
-  const refs = inst.registrationRecordRules;
-  return new SyncToolSettingsFiles(
-    { tracked, buildMarketplace, declaration: settingsDeclaration, refs },
-    base.tools
-  );
-}
-
-/** The settings sync of a project: its context, its files, its native activation and its claims. */
-function syncSettingsOf(base: Base, inst: Installation, sources: SyncSources): SyncSettings {
-  const { tools, fs, logger, manifestRepo, userManifestRepo } = base;
-  const { buildMarketplaceForTool, recordSourceReference } = sources;
-  const { marketplaceRegistry, registerFrameworkMarketplace } = base;
-  const { registrationRecordRules } = inst;
-  return new SyncSettings({
-    loadContext: new LoadSyncContext({
-      manifestRepo,
-      marketplaceRegistry,
-      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-      marketplaceRegisterFrameworkUseCase: registerFrameworkMarketplace,
-      userManifestRepo,
-    }),
-    settingsFiles: settingsFilesOf(base, inst, buildMarketplaceForTool),
-    activateNativeTools: nativeActivationOf(base, inst, buildMarketplaceForTool),
-    recordActivation: new RecordSyncActivation({
-      recordActivation: new RecordActivation({ fs }, tools),
-      machineClaims: new RecordMachineClaims(
-        {
-          fs,
-          userManifestRepo,
-          emptyManifest: Manifest.create,
-          mergeClaims: registrationRecordRules.mergeCatalogueClaims,
-        },
-        tools
-      ),
-      sharedSource: new SharedFrameworkSource({
-        fs,
-        logger,
-        recordReference: recordSourceReference,
-        purgeCache: new ResolvePurgeCandidate(fs, logger),
-        frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-      }),
-      records: registrationRecordRules,
-    }),
-    records: registrationRecordRules,
-  });
-}
-
-/** Syncing a project's settings and native activation against its marketplaces. */
-function wireMarketplaceSync(base: Base, inst: Installation) {
-  const { tools, fs, logger, currentVersion } = base;
-  const { ensureBuiltMarketplaceUseCase } = inst;
-  const buildMarketplaceForTool = new BuildMarketplaceForTool(
-    ensureBuiltMarketplaceUseCase,
-    logger,
-    tools
-  );
-  const recordSourceReference = new RecordSourceReference({
-    resolveReferenceRoot: new ResolveReferenceRoot(fs),
-    currentVersion,
-    logger,
-    frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-    userSourceReferences: base.userSourceReferences,
-  });
-  const syncSettingsUseCase = syncSettingsOf(base, inst, {
-    buildMarketplaceForTool,
-    recordSourceReference,
-  });
-  return {
-    recordSourceReference,
-    syncSettingsUseCase,
-    syncNativeActivation: new SyncNativeActivation(syncSettingsUseCase),
-  };
 }
 
 /** Choosing the framework source of a setup, and registering it for the scope the flow runs in. */
@@ -265,7 +136,7 @@ function wireSetupSource(base: Base, recordSourceReference: RecordSourceReferenc
       releaseResolver
     ),
     recordReference: recordSourceReference,
-    refresh: new RefreshMarketplaces(base.refreshMarketplaceUseCase),
+    refresh: new RefreshMarketplaces(base.marketplacesToRefresh, base.refreshMarketplaceUseCase),
     environment,
   });
   return {
@@ -289,7 +160,10 @@ function wireMarketplaceReads(base: Base) {
     resolveMarketplaceUseCase,
     base.logger
   );
-  const refreshMarketplace = new RefreshMarketplaces(base.refreshMarketplaceUseCase);
+  const refreshMarketplace = new RefreshMarketplaces(
+    base.marketplacesToRefresh,
+    base.refreshMarketplaceUseCase
+  );
   return { marketplaceCheckUseCase, listMarketplaceCatalogs, refreshMarketplace };
 }
 

@@ -2,13 +2,16 @@ import type { TokenProvider } from "../contexts/auth/contract/token-provider.js"
 import { FetchMarketplaceSource } from "../contexts/distribution/application/fetch-marketplace-source.use-case.js";
 import { ListMarketplaces } from "../contexts/distribution/application/list-marketplaces.use-case.js";
 import { LoadPluginDistribution } from "../contexts/distribution/application/plugin-source/load-plugin-distribution.use-case.js";
-import { RefreshMarketplace } from "../contexts/distribution/application/refresh-marketplace.use-case.js";
+import { ListMarketplacesToRefresh } from "../contexts/distribution/application/refresh/list-marketplaces-to-refresh.use-case.js";
+import { RefreshMarketplace } from "../contexts/distribution/application/refresh/refresh-marketplace.use-case.js";
 import { RegisterFrameworkMarketplace } from "../contexts/distribution/application/register-framework-marketplace.use-case.js";
 import { ResolveMarketplace } from "../contexts/distribution/application/resolve-marketplace.use-case.js";
 import { GitCloner } from "../contexts/distribution/infrastructure/git-cloner-adapter.js";
+import { GitSourceFetcher } from "../contexts/distribution/infrastructure/git-source-fetcher.js";
 import { MarketplaceCacheAdapter } from "../contexts/distribution/infrastructure/marketplace-cache-adapter.js";
 import { MarketplaceRegistryAdapter } from "../contexts/distribution/infrastructure/marketplace-registry-adapter.js";
 import { MarketplaceTrustStoreAdapter } from "../contexts/distribution/infrastructure/marketplace-trust-store-adapter.js";
+import { NpmSourceFetcher } from "../contexts/distribution/infrastructure/npm-source-fetcher.js";
 import { PluginCatalogRepositoryAdapter } from "../contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import {
   type ManifestProbe,
@@ -51,6 +54,7 @@ export interface DistributionDeps {
   releaseResolver: ReleaseLister & RepositoryVisibility;
   resolveMarketplaceUseCase: ResolveMarketplace;
   listMarketplaces: ListMarketplaces;
+  marketplacesToRefresh: ListMarketplacesToRefresh;
   refreshMarketplaceUseCase: RefreshMarketplace;
   registerFrameworkMarketplace: RegisterFrameworkMarketplace;
 }
@@ -68,6 +72,7 @@ type MarketplaceUseCases = Pick<
   DistributionDeps,
   | "resolveMarketplaceUseCase"
   | "listMarketplaces"
+  | "marketplacesToRefresh"
   | "refreshMarketplaceUseCase"
   | "registerFrameworkMarketplace"
 >;
@@ -88,22 +93,30 @@ function marketplaceUseCasesOf(inputs: MarketplaceUseCaseInputs): MarketplaceUse
   const refreshMarketplaceUseCase = new RefreshMarketplace({
     registry: marketplaceRegistry,
     resolveMarketplace: resolveMarketplaceUseCase,
-    cache: inputs.marketplaceCache,
+    userConfigDir,
     logger: shared.logger,
     fs: shared.fs,
   });
+  const marketplacesToRefresh = new ListMarketplacesToRefresh(
+    marketplaceRegistry,
+    inputs.marketplaceCache
+  );
   const registerFrameworkMarketplace = new RegisterFrameworkMarketplace(marketplaceRegistry);
   return {
     resolveMarketplaceUseCase,
     listMarketplaces,
+    marketplacesToRefresh,
     refreshMarketplaceUseCase,
     registerFrameworkMarketplace,
   };
 }
 
 function pluginFetcherOf(shared: DistributionWiringShared): PluginFetcher {
-  const npm = new PnpmInstallerAdapter();
-  return new PluginFetcherAdapter(shared.fs, new GitCloner(), npm, shared.tokenProvider);
+  return new PluginFetcherAdapter(
+    shared.fs,
+    new GitSourceFetcher(shared.fs, new GitCloner(), shared.tokenProvider),
+    new NpmSourceFetcher(shared.fs, new PnpmInstallerAdapter())
+  );
 }
 
 export function wireDistribution(shared: DistributionWiringShared): DistributionDeps {

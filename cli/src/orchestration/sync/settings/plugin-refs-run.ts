@@ -1,6 +1,4 @@
 import type { SyncContext } from "../../../contexts/installation/application/sync/load-sync-context.use-case.js";
-import type { Scope } from "../../../shared/domain/scope.js";
-import type { ToolId } from "../../../shared/domain/tool.js";
 
 export type SyncedManifest = SyncContext["manifest"];
 type SyncedRecord = NonNullable<ReturnType<SyncContext["records"]["get"]>>;
@@ -16,13 +14,4 @@ export interface RefRules {
     claimedRefs: readonly string[],
     hostNames: Iterable<string>
   ) => string[];
-}
-
-export interface PluginRefsRun {
-  toolId: ToolId;
-  manifest: SyncedManifest;
-  records: SyncContext["records"];
-  marketplaces: SyncedMarketplaces;
-  hostNameByAlias: ReadonlyMap<string, string>;
-  scope: Scope;
 }

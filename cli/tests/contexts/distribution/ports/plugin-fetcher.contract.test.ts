@@ -5,6 +5,8 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 import { GitCloner } from "../../../../src/contexts/distribution/infrastructure/git-cloner-adapter.js";
+import { GitSourceFetcher } from "../../../../src/contexts/distribution/infrastructure/git-source-fetcher.js";
+import { NpmSourceFetcher } from "../../../../src/contexts/distribution/infrastructure/npm-source-fetcher.js";
 import { PluginFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
 import { PnpmInstallerAdapter } from "../../../../src/contexts/distribution/infrastructure/pnpm-installer-adapter.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
@@ -74,8 +76,8 @@ describePluginFetcherContract("by PluginFetcherAdapter on a local git remote", a
   return {
     fetcher: new PluginFetcherAdapter(
       new FileAdapter(),
-      new GitCloner(),
-      new PnpmInstallerAdapter()
+      new GitSourceFetcher(new FileAdapter(), new GitCloner()),
+      new NpmSourceFetcher(new FileAdapter(), new PnpmInstallerAdapter())
     ),
     cacheDir: join(root, "cache"),
     remote: { kind: "url", url: pathToFileURL(repository).href },

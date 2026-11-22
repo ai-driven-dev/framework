@@ -6,7 +6,8 @@ import {
   printToolAlreadyInstalled,
   printToolInstalled,
 } from "../../presenters/tools/tool-config.presenter.js";
-import { assertKnownToolId, type ToolRun } from "./tool-config-run.controller.js";
+import { assertKnownToolId } from "../../presenters/tools/tool-id.presenter.js";
+import type { ToolRun } from "./tool-config-run.controller.js";
 
 export async function installTool({
   raw,

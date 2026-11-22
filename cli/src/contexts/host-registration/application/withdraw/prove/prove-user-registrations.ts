@@ -6,12 +6,8 @@ import {
   type RegistrationRecord,
   recordedRegistrations,
 } from "../../../domain/record/registration-record.js";
-import {
-  assertNoForeignNativeRefs,
-  assertSourceOwned,
-  inspectHostSource,
-  judgeCatalogueWithdrawal,
-} from "../../native-marketplace-source-proof.js";
+import { assertSourceOwned, judgeCatalogueWithdrawal } from "../../../domain/source-proof.js";
+import { assertNoForeignNativeRefs, inspectHostSource } from "../../read-host.js";
 import type { UserRegistrationWithdrawal, WithdrawalDeps } from "../withdrawal.js";
 
 /**

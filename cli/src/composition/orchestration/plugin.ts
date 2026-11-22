@@ -37,7 +37,6 @@ import { PickPlugins } from "../../orchestration/plugin/pick-plugins.use-case.js
 import { RemoveMachinePlugin } from "../../orchestration/plugin/remove-machine-plugin.use-case.js";
 import { RemovePlugin } from "../../orchestration/plugin/remove-plugin.use-case.js";
 import { UpdateUserPlugin } from "../../orchestration/plugin/update-user-plugin.use-case.js";
-import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
 import type { Installation } from "../installation.js";
 import {
   machineOwnership,
@@ -86,10 +85,10 @@ export function claimedRefWithdrawal(
 }
 
 /** A user-scope removal under the machine's home directory, which the command line does not know. */
-export function underMachineHome(removal: Pick<RemoveMachinePlugin, "execute">) {
+export function underMachineHome(removal: Pick<RemoveMachinePlugin, "execute">, home: string) {
   return {
     execute: (options: Omit<RemoveUserPluginRequest, "home" | "records">) =>
-      removal.execute({ ...options, home: resolveHomeDir() }),
+      removal.execute({ ...options, home }),
   };
 }
 
@@ -106,7 +105,10 @@ function wireUserPluginRemoval(base: Base, inst: Installation) {
     },
     tools
   );
-  return underMachineHome(new RemoveMachinePlugin(removal, inst.registrationRecordRules));
+  return underMachineHome(
+    new RemoveMachinePlugin(removal, inst.registrationRecordRules),
+    base.homedir()
+  );
 }
 
 /** Removing a plugin from a project or from the machine, and the claims it leaves behind. */
@@ -121,7 +123,7 @@ function wirePluginRemoval(base: Base, inst: Installation) {
       references: base.userSourceReferences,
     }),
     logger,
-    home: resolveHomeDir(),
+    home: base.homedir(),
     frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
     marketplaceRegistry: base.marketplaceRegistry,
     resolveCacheCandidate: purgeCandidateResolverOf(new ResolvePurgeCandidate(fs, logger)),
@@ -132,6 +134,10 @@ function wirePluginRemoval(base: Base, inst: Installation) {
         fs,
         projectRepo: manifestRepo,
         homedir: inst.builtMaterializationDeps.homedir,
+        integration: {
+          assert: inst.projectIntegration.assertIntegration,
+          remove: inst.projectIntegration.removeIntegration,
+        },
       },
       tools
     ),
@@ -202,7 +208,7 @@ function pluginAddOf(base: Base, inst: Installation) {
       manifests: { project: manifestRepo, user: userManifestRepo },
       addToProject: new AddPluginToProject(
         {
-          fs,
+          assertIntegration: inst.projectIntegration.assertIntegration,
           source: new ResolveAddedPluginSource(
             { loadDistribution: base.loadDistribution, fs, built: builtMaterializationDeps },
             tools

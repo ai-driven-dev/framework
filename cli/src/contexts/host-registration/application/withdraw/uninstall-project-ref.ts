@@ -1,7 +1,8 @@
 import { isRefOnHost } from "../../domain/record/host-ref.js";
 import type { RegistrationRecord } from "../../domain/record/registration-record.js";
+import { judgeCatalogueWithdrawal } from "../../domain/source-proof.js";
 import type { HostActions } from "../../ports/host-actions.js";
-import { inspectHostSource, judgeCatalogueWithdrawal } from "../native-marketplace-source-proof.js";
+import { inspectHostSource } from "../read-host.js";
 import { inspectForeignRefs, stillNeededBy, uninstallAtFirstAcceptedScope } from "./host-call.js";
 import { resolveUninstallScopeOrder } from "./uninstall-scope-order.js";
 import type {

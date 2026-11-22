@@ -1,7 +1,8 @@
-import { DeleteTrackedProjectFiles } from "../../../../src/contexts/installation/application/removal/project/delete-tracked-project-files.js";
-import { RemoveAiddTraces } from "../../../../src/contexts/installation/application/removal/project/remove-aidd-traces.js";
-import { RemoveMachineLocalFiles } from "../../../../src/contexts/installation/application/removal/project/remove-machine-local-files.js";
-import { RemoveProjectFiles } from "../../../../src/contexts/installation/application/removal/project/remove-project-files.js";
+import { projectIntegrationOf } from "../../../../src/composition/installation.js";
+import { DeleteTrackedProjectFiles } from "../../../../src/contexts/installation/application/removal/project/delete-tracked-project-files.use-case.js";
+import { RemoveAiddTraces } from "../../../../src/contexts/installation/application/removal/project/remove-aidd-traces.use-case.js";
+import { RemoveMachineLocalFiles } from "../../../../src/contexts/installation/application/removal/project/remove-machine-local-files.use-case.js";
+import { RemoveProjectFiles } from "../../../../src/contexts/installation/application/removal/project/remove-project-files.use-case.js";
 import type { UpdateGitignore } from "../../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
 import type { ToolCatalog } from "../../../../src/contexts/tools/contract/tool-catalog.js";
@@ -24,7 +25,7 @@ export function removeProjectFilesOver(parts: RemoveProjectFilesParts): RemovePr
   return new RemoveProjectFiles({
     manifestRepo,
     trackedFiles: new DeleteTrackedProjectFiles({ fs, logger, homedir }, tools),
-    machineLocalFiles: new RemoveMachineLocalFiles(fs, tools),
+    machineLocalFiles: new RemoveMachineLocalFiles(fs, tools, projectIntegrationOf(fs).removeHooks),
     aiddTraces: new RemoveAiddTraces({ fs, manifestRepo, logger, updateGitignore }, tools),
   });
 }

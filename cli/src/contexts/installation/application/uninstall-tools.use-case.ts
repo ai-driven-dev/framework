@@ -8,7 +8,7 @@ import type {
   RecordsBesideManifest,
   RegistrationRecordData,
 } from "../ports/record/registration-records.js";
-import type { RemoveToolFiles, ToolRemoval } from "./removal/project/remove-tool-files.js";
+import type { RemoveToolFiles, ToolRemoval } from "./removal/project/remove-tool-files.use-case.js";
 import { requireManifest } from "./shared/require-manifest.js";
 
 /** How a removal reads the refs a tool's host registration recorded: the host registration's to answer. */
@@ -102,7 +102,7 @@ export class UninstallTools {
 
   private async removeOneTool(removal: ToolRemoval): Promise<UninstallToolsResult> {
     const { toolId, manifest } = removal;
-    const deletedFiles = await this.deps.removeToolFiles.remove(removal);
+    const deletedFiles = await this.deps.removeToolFiles.execute(removal);
     manifest.removeTool(toolId);
     return { toolId, fileCount: deletedFiles.length, deletedFiles };
   }

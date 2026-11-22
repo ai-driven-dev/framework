@@ -6,7 +6,7 @@ import { ProjectHooksEditedError } from "../../domain/installation.error.js";
 import { driftOf } from "../../domain/manifest/drift.js";
 import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.js";
 import type { TranslatedFile } from "../../ports/plugin/plugin-translation.js";
-import type { ProjectHooksGuard } from "../shared/assert-project-hooks-unchanged.js";
+import type { ProjectHooksGuard } from "../shared/assert-project-hooks-unchanged.use-case.js";
 
 /** One delivery of a plugin's hooks to the destination its tool declares: the scripts arrive
  * already placed and rewritten by the translation, so this only puts them down. */

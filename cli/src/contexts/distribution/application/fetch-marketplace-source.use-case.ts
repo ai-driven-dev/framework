@@ -6,7 +6,7 @@ import {
   tryParsePluginCatalog,
 } from "../domain/catalog-parsers/claude-marketplace-catalog.js";
 import type { Marketplace } from "../domain/marketplace.js";
-import { MARKETPLACE_CATALOG_RELATIVE } from "../domain/marketplace-cache-layout.js";
+import { MARKETPLACE_CATALOG_RELATIVE } from "../domain/marketplace-cache-paths.model.js";
 import type { PluginFetcher, PluginFetchOptions } from "../ports/plugin-fetcher.js";
 import type { RawCatalogFetcher } from "../ports/raw-catalog-fetcher.js";
 

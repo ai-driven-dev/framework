@@ -1,6 +1,8 @@
 import { settingsDeclaration } from "../../../src/composition/host-registration.js";
 import { registrationRecordRules } from "../../../src/composition/installation.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
+import { PlanRefsToEnable } from "../../../src/contexts/host-registration/application/register/plan-refs-to-enable.use-case.js";
+import { RecordNativeRegistrations } from "../../../src/contexts/host-registration/application/register/record-native-registrations.use-case.js";
 import {
   RegisterPluginWithHost,
   type RegisterPluginWithHostDeps,
@@ -91,11 +93,11 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
       }),
       buildMarketplace: build,
       logger: parts.logger,
-      marketplace: {
-        name: FRAMEWORK_MARKETPLACE_NAME,
-        userCacheRoot: parts.userCacheRoot ?? (() => ""),
-      },
-      records: registrationRecordRules,
+      marketplace: { userCacheRoot: parts.userCacheRoot ?? (() => "") },
+      planRefs: new PlanRefsToEnable({
+        frameworkName: FRAMEWORK_MARKETPLACE_NAME,
+        claimedRefs: registrationRecordRules.claimedRefs,
+      }),
     }),
     recordActivation: new RecordSyncActivation({
       recordActivation: new RecordActivation({ fs: parts.fs }, parts.tools),
@@ -121,7 +123,7 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
         purgeCache: new ResolvePurgeCandidate(parts.fs, parts.logger),
         frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
       }),
-      records: registrationRecordRules,
+      recordRegistrations: new RecordNativeRegistrations(parts.tools),
     }),
     records: registrationRecordRules,
   });

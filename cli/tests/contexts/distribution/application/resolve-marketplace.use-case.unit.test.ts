@@ -37,10 +37,16 @@ function makeMarketplace(name: string): Marketplace {
 }
 
 describe("resolving a marketplace and its catalog", () => {
-  it("keeps a user-scope source's clone out of the project, and a project-scope one in it", () => {
+  it("keeps a user-scope source's clone out of the project, and a project-scope one in it", async () => {
+    const cacheDirs: string[] = [];
     const useCase = new ResolveMarketplace(
       new FetchMarketplaceSource({
-        pluginFetcher: new FixturePluginFetcher(),
+        pluginFetcher: {
+          fetch: async (source, cacheDir) => {
+            cacheDirs.push(cacheDir);
+            return source.kind === "local" ? source.path : cacheDir;
+          },
+        },
         rawCatalog: unusedRawCatalog(),
       }),
       new PluginCatalogRepositoryAdapter(new InMemoryFileAdapter({})),
@@ -53,12 +59,13 @@ describe("resolving a marketplace and its catalog", () => {
       addedAt: "2026-05-01T10:00:00.000Z",
     });
 
-    expect(useCase.cacheDirOf(shared, PROJECT_ROOT)).toBe(
-      join("/config/aidd", "cache", "marketplaces", "shared")
-    );
-    expect(useCase.cacheDirOf(makeMarketplace("own"), PROJECT_ROOT)).toBe(
-      join(PROJECT_ROOT, ".aidd", "cache", "marketplaces", "own")
-    );
+    await useCase.execute({ marketplace: shared, projectRoot: PROJECT_ROOT });
+    await useCase.execute({ marketplace: makeMarketplace("own"), projectRoot: PROJECT_ROOT });
+
+    expect(cacheDirs).toEqual([
+      join("/config/aidd", "cache", "marketplaces", "shared"),
+      join(PROJECT_ROOT, ".aidd", "cache", "marketplaces", "own"),
+    ]);
   });
 
   it("returns the parsed catalog for a local marketplace", async () => {

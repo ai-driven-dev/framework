@@ -1,15 +1,13 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import {
-  type RemovalClaims,
-  RemoveProjectPlugin,
-} from "../../../../../src/contexts/installation/application/removal/remove-project-plugin.js";
+import type { RemovalClaims } from "../../../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../../../src/shared/domain/tool.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { removeProjectPluginOf } from "../../../../shared/testing/remove-project-plugin.builder.js";
 import { saying } from "../../../../shared/testing/saying.builder.js";
 import { cursorHookScriptDir } from "../../testing/cursor-hook-scripts.builder.js";
 
@@ -73,11 +71,7 @@ describe("removing a plugin's local integration", () => {
     withUserServer.mcp.mine = { type: "local", command: ["keep"], enabled: true };
     fs.setFile(MCP_FILE, JSON.stringify(withUserServer));
 
-    await new RemoveProjectPlugin(fs, () => "/home/dev").removeLocalIntegration(
-      tool,
-      plugin({ mcp: entries }),
-      ROOT
-    );
+    await removeProjectPluginOf(fs).removeLocalIntegration(tool, plugin({ mcp: entries }), ROOT);
 
     const left = JSON.parse(await fs.readFile(MCP_FILE));
     expect(Object.keys(left.mcp)).toEqual(["mine"]);
@@ -87,11 +81,7 @@ describe("removing a plugin's local integration", () => {
     const fs = new InMemoryFileAdapter({}, [ROOT]);
     const { entries } = contributedConfig();
 
-    await new RemoveProjectPlugin(fs, () => "/home/dev").removeLocalIntegration(
-      tool,
-      plugin({ mcp: entries }),
-      ROOT
-    );
+    await removeProjectPluginOf(fs).removeLocalIntegration(tool, plugin({ mcp: entries }), ROOT);
 
     expect(fs.has(MCP_FILE)).toBe(false);
   });
@@ -100,11 +90,7 @@ describe("removing a plugin's local integration", () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(MCP_FILE, "{}");
 
-    await new RemoveProjectPlugin(fs, () => "/home/dev").removeLocalIntegration(
-      tool,
-      plugin(),
-      ROOT
-    );
+    await removeProjectPluginOf(fs).removeLocalIntegration(tool, plugin(), ROOT);
 
     expect(await fs.readFile(MCP_FILE)).toBe("{}");
   });
@@ -115,11 +101,7 @@ describe("RemoveProjectPlugin.removeLocalIntegration hooks", () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(join(ROOT, HOOK_SCRIPT), "// installed");
 
-    await new RemoveProjectPlugin(fs, () => "/home/dev").removeLocalIntegration(
-      cursor,
-      pluginWithHookScript(),
-      ROOT
-    );
+    await removeProjectPluginOf(fs).removeLocalIntegration(cursor, pluginWithHookScript(), ROOT);
 
     expect(fs.has(join(ROOT, HOOK_SCRIPT))).toBe(false);
   });
@@ -131,7 +113,7 @@ describe("before removing a plugin's local integration", () => {
     fs.setFile(join(ROOT, HOOK_SCRIPT), "// edited");
 
     await expect(
-      new RemoveProjectPlugin(fs, () => "/home/dev").assertLocalIntegrationRemovable(
+      removeProjectPluginOf(fs).assertLocalIntegrationRemovable(
         cursor,
         pluginWithHookScript(),
         ROOT
@@ -145,7 +127,7 @@ describe("before removing a plugin's local integration", () => {
     fs.setFile(MCP_FILE, content);
 
     await expect(
-      new RemoveProjectPlugin(fs, () => "/home/dev").assertLocalIntegrationRemovable(
+      removeProjectPluginOf(fs).assertLocalIntegrationRemovable(
         tool,
         plugin({ mcp: entries }),
         ROOT
@@ -161,7 +143,7 @@ describe("before removing a plugin's local integration", () => {
     fs.setFile(MCP_FILE, JSON.stringify(edited));
 
     await expect(
-      new RemoveProjectPlugin(fs, () => "/home/dev").assertLocalIntegrationRemovable(
+      removeProjectPluginOf(fs).assertLocalIntegrationRemovable(
         tool,
         plugin({ mcp: entries }),
         ROOT
@@ -178,11 +160,7 @@ describe("deleting a plugin's local files", () => {
     fs.setFile(join(ROOT, "skills/b.md"), "b");
     fs.setFile(join(ROOT, "skills/mine.md"), "mine");
 
-    await new RemoveProjectPlugin(fs, () => "/home/dev").deleteLocalFiles(
-      tool,
-      plugin().plugin,
-      ROOT
-    );
+    await removeProjectPluginOf(fs).deleteLocalFiles(tool, plugin().plugin, ROOT);
 
     expect(fs.has(join(ROOT, "skills/a.md"))).toBe(false);
     expect(fs.has(join(ROOT, "skills/b.md"))).toBe(false);
@@ -196,11 +174,7 @@ describe("detaching a plugin's claims", () => {
   it("lets go of the native refs and of each removed user-scope plugin only", async () => {
     const claims = new RecordingClaims();
 
-    await new RemoveProjectPlugin(
-      new InMemoryFileAdapter(),
-      () => "/home/dev",
-      claims
-    ).detachClaims(ROOT, refs, [
+    await removeProjectPluginOf(new InMemoryFileAdapter(), claims).detachClaims(ROOT, refs, [
       { toolId: TOOL.claude, plugin: plugin({ scope: "user" }).plugin },
       { toolId: TOOL.cursor, plugin: plugin({ scope: "project" }).plugin },
     ]);
@@ -211,11 +185,9 @@ describe("detaching a plugin's claims", () => {
 
   it("holds no claim to let go of when none was supplied", async () => {
     await expect(
-      new RemoveProjectPlugin(new InMemoryFileAdapter(), () => "/home/dev").detachClaims(
-        ROOT,
-        refs,
-        [{ toolId: TOOL.claude, plugin: plugin({ scope: "user" }).plugin }]
-      )
+      removeProjectPluginOf(new InMemoryFileAdapter()).detachClaims(ROOT, refs, [
+        { toolId: TOOL.claude, plugin: plugin({ scope: "user" }).plugin },
+      ])
     ).resolves.toBeUndefined();
   });
 });

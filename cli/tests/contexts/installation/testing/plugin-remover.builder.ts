@@ -8,6 +8,7 @@ import {
   claimedRefWithdrawal,
   underMachineHome,
 } from "../../../../src/composition/orchestration/plugin.js";
+import { homeDirResolver } from "../../../../src/composition/user-config-dir.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../src/contexts/distribution/contract/marketplace.js";
 import { WithdrawFromHost } from "../../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import { RemovePlugin as RemoveProjectPluginFiles } from "../../../../src/contexts/installation/application/removal/remove-plugin.use-case.js";
@@ -21,7 +22,6 @@ import { ResolvePurgeCandidate } from "../../../../src/contexts/machine-claims/a
 import type { ToolCatalog } from "../../../../src/contexts/tools/contract/tool-catalog.js";
 import { RemoveMachinePlugin } from "../../../../src/orchestration/plugin/remove-machine-plugin.use-case.js";
 import { RemovePlugin } from "../../../../src/orchestration/plugin/remove-plugin.use-case.js";
-import { resolveHomeDir } from "../../../../src/shared/infrastructure/home-dir.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
 import type { Lock } from "../../../../src/shared/ports/lock.js";
@@ -29,6 +29,7 @@ import type { Logger } from "../../../../src/shared/ports/logger.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools } from "../../../shared/testing/registered-tools.builder.js";
+import { pickIntegration } from "../../../shared/testing/remove-project-plugin.builder.js";
 
 type RecordRules = typeof registrationRecordRules;
 
@@ -69,7 +70,7 @@ export function pluginRemover(parts: PluginRemoverParts) {
       references: parts.userSourceReferences,
     }),
     logger,
-    home: resolveHomeDir(),
+    home: homeDirResolver()(),
     frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
     marketplaceRegistry: parts.marketplaceRegistry,
     resolveCacheCandidate: (cacheRoot, relativeSegments, label) =>
@@ -81,6 +82,7 @@ export function pluginRemover(parts: PluginRemoverParts) {
         fs,
         projectRepo: parts.manifestRepo,
         homedir: () => "/home/dev",
+        integration: pickIntegration(fs),
       },
       parts.tools ?? registeredTools()
     ),
@@ -109,6 +111,7 @@ export function userPluginRemover(
     registeredTools()
   );
   return underMachineHome(
-    new RemoveMachinePlugin(removal, parts.records ?? registrationRecordRules)
+    new RemoveMachinePlugin(removal, parts.records ?? registrationRecordRules),
+    homeDirResolver()()
   );
 }

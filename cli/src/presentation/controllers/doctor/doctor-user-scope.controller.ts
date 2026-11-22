@@ -21,12 +21,7 @@ export async function runUserScopeDoctor({
           output,
           toolIds.map((id) => {
             const profile = tools.profile(id);
-            const settingsFile =
-              profile.kind === "ai"
-                ? profile
-                    .nativeActivation()
-                    ?.userSettingsFile(deps.homedir(), (name) => deps.environment.get(name))
-                : undefined;
+            const settingsFile = deps.userSettingsFileOf(id);
             return {
               toolId: profile.toolId,
               version: manifest.versionOf(id) ?? "unknown",

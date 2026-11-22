@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { RegistrationRefusedError } from "../../../../src/contexts/host-registration/domain/host-registration.error.js";
 import type { NativeMarketplaceSourceReading } from "../../../../src/contexts/host-registration/domain/record/native-marketplace-source-reading.js";
 import {
+  assertSourceOwned,
   findForeignRef,
   inspectSourceReading,
 } from "../../../../src/contexts/host-registration/domain/source-proof.js";
@@ -89,5 +91,24 @@ describe("the foreign ref on a catalogue", () => {
         inUse,
       })
     ).toBeUndefined();
+  });
+});
+
+describe("asserting a catalogue source is owned", () => {
+  it("accepts an owned source", () => {
+    expect(() => assertSourceOwned({ status: "owned" }, "fallback")).not.toThrow();
+  });
+
+  it("names the reconcile reason the proof carries", () => {
+    expect(() =>
+      assertSourceOwned({ status: "unproven", reason: "host says no" }, "fallback")
+    ).toThrow("host says no");
+  });
+
+  it("falls back to the caller's message when the proof names no reason", () => {
+    expect(() => assertSourceOwned({ status: "absent" }, "fallback")).toThrow("fallback");
+    expect(() => assertSourceOwned({ status: "absent" }, "fallback")).toThrow(
+      RegistrationRefusedError
+    );
   });
 });

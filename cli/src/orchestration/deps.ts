@@ -96,9 +96,8 @@ export interface TelemetryRequests {
 }
 
 export interface Deps {
-  /** The one home-directory resolver presentation calls, never `os.homedir()` directly, so a
-   * test can point it elsewhere. */
-  homedir: () => string;
+  /** The settings file a tool's host keeps at user scope, or undefined when it has none. */
+  userSettingsFileOf: (toolId: string) => string | undefined;
   environment: Environment;
   logger: Logger;
   currentVersion: string;

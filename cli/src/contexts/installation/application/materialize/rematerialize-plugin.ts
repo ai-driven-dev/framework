@@ -4,7 +4,7 @@ import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { PluginTranslationMode } from "../../../tools/contract/tool-vocabulary.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
-import type { ProjectHooksGuard } from "../shared/assert-project-hooks-unchanged.js";
+import type { ProjectHooksGuard } from "../shared/assert-project-hooks-unchanged.use-case.js";
 import type { PlacementDeps } from "./add-plugin-request.js";
 import { placeBuiltTreePlugin } from "./built/place-built-tree-plugin.js";
 import { registerMarketplacePlugin } from "./register-marketplace-plugin.js";

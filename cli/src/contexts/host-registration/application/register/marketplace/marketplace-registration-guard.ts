@@ -1,4 +1,4 @@
-import { samePath } from "../../../../../shared/domain/paths.js";
+import { samePath } from "../../../../../shared/domain/paths.model.js";
 import type { HostMarketplaceRegistryReading } from "../../../domain/reading/marketplace-registry-reading.js";
 import type { NativeCatalogProof } from "../native-catalog-proof.js";
 import { marketplaceRegistryOf, type RegistrationRun } from "../registration-run.js";

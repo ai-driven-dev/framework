@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as pause } from "node:timers/promises";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { UserManifestBusyError } from "../../../../src/contexts/machine-claims/domain/machine-claims.error.js";
 import { UserScopeLockAdapter } from "../../../../src/contexts/machine-claims/infrastructure/lock.js";
 
 describe("holding the machine lock on disk", () => {
@@ -24,9 +25,7 @@ describe("holding the machine lock on disk", () => {
   it("fails closed at the bounded deadline without stealing another process's lock", async () => {
     await mkdir(lockPath);
     const now = vi.spyOn(Date, "now").mockReturnValueOnce(0).mockReturnValue(30_000);
-    await expect(lock.withExclusiveAccess(async () => {})).rejects.toThrow(
-      /User manifest is busy.*\.lock/
-    );
+    await expect(lock.withExclusiveAccess(async () => {})).rejects.toThrow(UserManifestBusyError);
     now.mockRestore();
     expect(existsSync(lockPath)).toBe(true);
   });

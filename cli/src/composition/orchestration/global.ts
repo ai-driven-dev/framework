@@ -15,6 +15,9 @@ import { RestoreGlobal } from "../../contexts/installation/application/restore/p
 import { RestoreTool } from "../../contexts/installation/application/restore/project/restore-tool.use-case.js";
 import { Restore } from "../../contexts/installation/application/restore/restore.use-case.js";
 import { RestoreAllPlugins } from "../../contexts/installation/application/restore/restore-all-plugins.use-case.js";
+import { RestoreDriftEntries } from "../../contexts/installation/application/restore/restore-drift-entries.use-case.js";
+import { RestoreMergeFiles } from "../../contexts/installation/application/restore/restore-merge-files.use-case.js";
+import { RestoreRegularFiles } from "../../contexts/installation/application/restore/restore-regular-files.use-case.js";
 import { RestoreToolFiles } from "../../contexts/installation/application/restore/restore-tool-files.use-case.js";
 import { UpdateTool } from "../../contexts/installation/application/update/update-tool.use-case.js";
 import { reportAllStatus } from "../../orchestration/doctor/report-all-status.js";
@@ -97,6 +100,7 @@ function wireToolLifecycle({ base, installation, marketplace, plugin }: GlobalPa
 /** Restoring a project from its manifest, one tool or all of them. */
 function wireRestore(base: Base, installation: Installation, statusUseCase: ReportStatus) {
   const { fs, prompter, logger, manifestRepo, currentVersion, platform, tools } = base;
+  const drift = new RestoreDriftEntries(prompter);
   const restoreToolFiles = new RestoreToolFiles(
     {
       generateToolDistribution: new GenerateToolDistribution(
@@ -104,8 +108,8 @@ function wireRestore(base: Base, installation: Installation, statusUseCase: Repo
         platform,
         installation.assetProvider
       ),
-      fs,
-      conflicts: prompter,
+      restoreRegularFiles: new RestoreRegularFiles(fs, drift),
+      restoreMergeFiles: new RestoreMergeFiles(fs, drift),
       logger,
     },
     tools

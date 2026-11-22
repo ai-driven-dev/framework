@@ -2,18 +2,14 @@ import type { FileHash } from "../../../../shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { MergeFileEntry } from "../../../../shared/domain/merge.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
-import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ConfigRef } from "../../../tools/contract/config-refs.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
-import type { FileMerger } from "../../ports/file-merger.js";
 import type { RestoredTool } from "../../ports/tool-sections.js";
 import type { GenerateToolDistribution } from "./generate-tool-distribution.use-case.js";
-import type { ConflictResolver } from "./resolve-restore-decision.js";
-import { restoreMergeFiles } from "./restore-merge-files.js";
-import { restoreRegularFiles } from "./restore-regular-files.js";
+import type { RestoreMergeFiles } from "./restore-merge-files.use-case.js";
+import type { RestoreRegularFiles } from "./restore-regular-files.use-case.js";
 
 export interface RestoreToolFilesRequest {
   /** Unvalidated text: the restore refuses one no profile declares. */
@@ -53,8 +49,8 @@ export interface RestoreToolFilesResult {
 /** What RestoreToolFiles is built from. */
 export interface RestoreToolFilesDeps {
   readonly generateToolDistribution: GenerateToolDistribution;
-  readonly fs: FileReader & FileWriter & FileMerger;
-  readonly conflicts: ConflictResolver;
+  readonly restoreRegularFiles: Pick<RestoreRegularFiles, "execute">;
+  readonly restoreMergeFiles: Pick<RestoreMergeFiles, "execute">;
   readonly logger: Logger;
 }
 
@@ -101,7 +97,7 @@ export class RestoreToolFiles {
     options: RestoreToolFilesRequest,
     distMap: Map<string, InstallationFile>
   ): Promise<SectionRestoreResult | null> {
-    return restoreRegularFiles(this.deps.fs, this.deps.conflicts, {
+    return this.deps.restoreRegularFiles.execute({
       manifestFiles: options.manifest.getToolFiles(options.toolId),
       distMap,
       projectRoot: options.projectRoot,
@@ -115,7 +111,7 @@ export class RestoreToolFiles {
     options: RestoreToolFilesRequest,
     distMap: Map<string, InstallationFile>
   ): Promise<MergeSectionRestoreResult | null> {
-    return restoreMergeFiles(this.deps.fs, this.deps.conflicts, {
+    return this.deps.restoreMergeFiles.execute({
       mergeFiles: options.manifest.getMergeFiles(options.toolId),
       distMap,
       projectRoot: options.projectRoot,

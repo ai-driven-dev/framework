@@ -7,7 +7,7 @@ import {
   samePathSegment,
   segmentsUnder,
   stripTrailingSeparator,
-} from "../../../../shared/domain/paths.js";
+} from "../../../../shared/domain/paths.model.js";
 
 /** What `userBuiltMarketplaceDir` encoded into a path, read back. */
 export interface UserBuiltMarketplaceLocation {
