@@ -81,8 +81,6 @@
       "tests/orchestration/sync/marketplace-sync-native-activation.integration.test.ts": 1,
       "tests/orchestration/sync/marketplace-sync-native-activation.reclaim.integration.test.ts": 1,
       "tests/orchestration/sync/marketplace-sync-native-activation.recorded-refs.integration.test.ts": 1,
-      "tests/orchestration/sync/marketplace-sync-native-provenance-refused-reads.integration.test.ts": 1,
-      "tests/orchestration/sync/marketplace-sync-native-provenance.integration.test.ts": 1,
       "tests/orchestration/sync/marketplace-sync-recovery-contract.integration.test.ts": 1,
       "tests/orchestration/sync/marketplace-sync-recovery-native-settings.integration.test.ts": 1,
       "tests/orchestration/sync/marketplace-sync-rollback-refusal.integration.test.ts": 1,

@@ -5,7 +5,10 @@ import type { HostPluginRegistry } from "../../../src/contexts/host-registration
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { hostRecord } from "../../shared/testing/host-record-reading.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SECOND_SYNTHETIC_TOOL,
+  SYNTHETIC_TOOL,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   CACHE_WITNESS,
   CATALOG,
@@ -127,7 +130,7 @@ function expectNoHostMutationExceptRefresh(f: Fixture, recovered: boolean) {
   expect(f.activator.refreshedCatalogs).toEqual(recovered ? [CATALOG] : []);
 }
 
-describe.each([TOOL.codex, TOOL.copilot] as const)(
+describe.each([SYNTHETIC_TOOL, SECOND_SYNTHETIC_TOOL] as const)(
   "%s native marketplace provenance across refused reads",
   (toolId) => {
     it.each(RECOVERIES)(
