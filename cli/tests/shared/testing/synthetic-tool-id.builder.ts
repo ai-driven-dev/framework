@@ -180,6 +180,8 @@ export const SYNTHETIC_LISTED_TOOL = NATIVE_CONFIGS[1].toolId;
 export const SYNTHETIC_PROVEN_TOOL = NATIVE_CONFIGS[2].toolId;
 /** The shared settings file the first synthetic native tool declares its catalogues in. */
 export const SYNTHETIC_NATIVE_SETTINGS = settingsFile(SYNTHETIC_NATIVE_TOOL);
+/** The shared settings file the proof-requiring synthetic tool declares its catalogues in. */
+export const SYNTHETIC_PROVEN_SETTINGS = settingsFile(SYNTHETIC_PROVEN_TOOL);
 /** Where each synthetic native tool's build leaves its catalogue, under the built tree. */
 export const SYNTHETIC_NATIVE_CATALOGUE = NATIVE_CATALOGUE;
 export const SYNTHETIC_LISTED_CATALOGUE = LISTED_CATALOGUE;

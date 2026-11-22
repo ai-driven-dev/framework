@@ -8,6 +8,7 @@ import {
   SYNTHETIC_LISTED_CATALOGUE,
   SYNTHETIC_LISTED_TOOL,
   SYNTHETIC_PROVEN_CATALOGUE,
+  SYNTHETIC_PROVEN_SETTINGS,
   SYNTHETIC_PROVEN_TOOL,
   syntheticSyncCatalog,
 } from "../../shared/testing/synthetic-tool-id.builder.js";
@@ -49,7 +50,7 @@ describe("native catalogue activation refused until the host source is proven", 
     "missing catalogue",
     "unproven catalogue",
   ] as const satisfies readonly PostAddProof[])(
-    "keeps foreign bytes and records no claim or enablement when post-add Codex proof is %s",
+    "keeps foreign bytes and records no claim or enablement when post-add proof is %s",
     async (proof) => {
       const { projectRepo, registry } = await codexProject("/A");
       const machineRepo = new InMemoryManifestRepository(Manifest.create());
@@ -88,16 +89,15 @@ describe("native catalogue activation refused until the host source is proven", 
     {
       label: "unreadable CLI source",
       reading: {
-        location: "copilot plugin marketplace list --json",
-        unreadable:
-          "Copilot CLI marketplace list --json unavailable; upgrade to a supported binary and retry",
+        location: `${SYNTHETIC_PROVEN_TOOL} plugin marketplace list --json`,
+        unreadable: `${SYNTHETIC_PROVEN_TOOL} CLI marketplace list --json unavailable; upgrade to a supported binary and retry`,
       },
-      reason: "Copilot CLI marketplace list --json unavailable",
+      reason: `${SYNTHETIC_PROVEN_TOOL} CLI marketplace list --json unavailable`,
     },
     {
       label: "foreign effective source",
       reading: {
-        location: "copilot effective marketplace list",
+        location: `${SYNTHETIC_PROVEN_TOOL} effective marketplace list`,
         entries: new Map([
           [
             "same-name",
@@ -113,7 +113,7 @@ describe("native catalogue activation refused until the host source is proven", 
       reason: "host source unproven",
     },
   ])(
-    "refuses Copilot activation with $label without changing declarative settings",
+    "refuses proof-requiring activation with $label without changing declarative settings",
     async ({ reading, reason }) => {
       const projectRoot = "/A";
       const projectRepo = new InMemoryManifestRepository(projectDeclaring(copilot));
@@ -122,7 +122,7 @@ describe("native catalogue activation refused until the host source is proven", 
       const fs = catalogueFilesystem(
         `/built/${SYNTHETIC_PROVEN_TOOL}/${SYNTHETIC_PROVEN_CATALOGUE}`
       );
-      const settingsPath = `${projectRoot}/.github/copilot/settings.json`;
+      const settingsPath = `${projectRoot}/${SYNTHETIC_PROVEN_SETTINGS}`;
       const foreignSettings = JSON.stringify({
         enabledPlugins: { "foreign@foreign-catalog": true },
         extraKnownMarketplaces: { "foreign-catalog": { source: "github" } },
@@ -150,7 +150,7 @@ describe("native catalogue activation refused until the host source is proven", 
     }
   );
 
-  it("claims a fresh Codex source after post-read and attaches B without replacing it", async () => {
+  it("claims a fresh listed source after post-read and attaches B without replacing it", async () => {
     const { projectRepo, registry } = await codexProject("/A");
     const machineRepo = new InMemoryManifestRepository(Manifest.create());
     const fs = catalogueFilesystem(CODEX_CATALOGUE);

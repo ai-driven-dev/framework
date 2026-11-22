@@ -14,6 +14,7 @@ import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manif
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
 import {
+  SYNTHETIC_LISTED_CATALOGUE,
   SYNTHETIC_LISTED_TOOL,
   SYNTHETIC_NATIVE_TOOL,
   syntheticSyncCatalog,
@@ -108,7 +109,7 @@ describe("settings migration", () => {
         conflictOnAdd: true,
       });
       const fs = fsAt(PROJECT_ROOT, {
-        [`${CODEX_BUILT_DIR}/.agents/plugins/marketplace.json`]: JSON.stringify({
+        [`${CODEX_BUILT_DIR}/${SYNTHETIC_LISTED_CATALOGUE}`]: JSON.stringify({
           name: FRAMEWORK_MARKETPLACE_NAME,
           version: "1.0.0",
           plugins: [],
@@ -127,7 +128,12 @@ describe("settings migration", () => {
         nativeSources: new Map([
           [
             SYNTHETIC_LISTED_TOOL,
-            { read: async () => ({ location: "/host/codex/catalogues", unreadable: "EACCES" }) },
+            {
+              read: async () => ({
+                location: `/host/${SYNTHETIC_LISTED_TOOL}/catalogues`,
+                unreadable: "EACCES",
+              }),
+            },
           ],
         ]),
       });
@@ -152,7 +158,7 @@ describe("settings migration", () => {
         conflictOnAdd: true,
       });
       const fs = fsAt(PROJECT_ROOT, {
-        [`${CODEX_BUILT_DIR}/.agents/plugins/marketplace.json`]: JSON.stringify({
+        [`${CODEX_BUILT_DIR}/${SYNTHETIC_LISTED_CATALOGUE}`]: JSON.stringify({
           name: FRAMEWORK_MARKETPLACE_NAME,
           version: "1.0.0",
           plugins: [],
@@ -198,7 +204,7 @@ describe("settings migration", () => {
         available: true,
         conflictOnAdd: true,
       });
-      const builtDir = "/shared/built/other/codex";
+      const builtDir = `/shared/built/other/${SYNTHETIC_LISTED_TOOL}`;
       const fs = fsAt(PROJECT_ROOT, {
         [`${builtDir}/.agents/plugins/marketplace.json`]: JSON.stringify({
           name: "someones-plugins",
@@ -259,7 +265,7 @@ describe("settings migration", () => {
           [
             SYNTHETIC_NATIVE_TOOL,
             new FakeHostMarketplaceRegistry({
-              location: "/host/claude/known_marketplaces.json",
+              location: `/host/${SYNTHETIC_NATIVE_TOOL}/known_marketplaces.json`,
               entries: new Map([[FRAMEWORK_MARKETPLACE_NAME, "/foreign/cache"]]),
             }),
           ],
@@ -270,7 +276,7 @@ describe("settings migration", () => {
             SYNTHETIC_NATIVE_TOOL,
             {
               read: async () => ({
-                location: "/host/claude/catalogues",
+                location: `/host/${SYNTHETIC_NATIVE_TOOL}/catalogues`,
                 entries: new Map([
                   [
                     FRAMEWORK_MARKETPLACE_NAME,
@@ -314,7 +320,7 @@ describe("settings migration", () => {
           [
             SYNTHETIC_NATIVE_TOOL,
             new FakeHostMarketplaceRegistry({
-              location: "/home/.claude/plugins/known_marketplaces.json",
+              location: `/home/.${SYNTHETIC_NATIVE_TOOL}/plugins/known_marketplaces.json`,
               ...reading,
             }),
           ],
