@@ -166,7 +166,7 @@ export function instructionViolations(
 
 // Composition holds one module per context.
 
-const FIXED_MODULES = ["container", "shared", "tool-profiles", "user-config-dir"];
+const FIXED_MODULES = ["container", "shared", "tool-profiles.composition", "user-config-dir"];
 const ALLOWED_SUBFOLDERS = ["orchestration"];
 
 /** The root, the shared module and one module per context, and only `orchestration/` as a folder. */

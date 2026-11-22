@@ -145,9 +145,14 @@ describe("composition holds one module per context", () => {
     entries(compositionViolations(files, contexts));
 
   it("names the module a context lacks and the module no context owns", () => {
-    const files = ["container", "shared", "tool-profiles", "user-config-dir", "stray", "tools"].map(
-      (m) => `src/composition/${m}.ts`
-    );
+    const files = [
+      "container",
+      "shared",
+      "tool-profiles.composition",
+      "user-config-dir",
+      "stray",
+      "tools",
+    ].map((m) => `src/composition/${m}.ts`);
     expect(found(files, ["tools", "recipes"])).toEqual([
       "missing module: recipes",
       "extra module: stray",
@@ -158,7 +163,7 @@ describe("composition holds one module per context", () => {
     const files = [
       "container",
       "shared",
-      "tool-profiles",
+      "tool-profiles.composition",
       "user-config-dir",
       "orchestration/setup",
       "extras/a",

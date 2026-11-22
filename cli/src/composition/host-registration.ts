@@ -26,7 +26,7 @@ import type { SettingsDeclarationRules } from "../orchestration/sync/sync-tool-s
 import { UnregisteredToolError } from "../shared/domain/shared.error.js";
 import type { AiToolId, ToolId } from "../shared/domain/tool.js";
 import { resolveHomeDir } from "../shared/infrastructure/home-dir.js";
-import { REGISTERED_PROFILES } from "./tool-profiles.js";
+import { REGISTERED_PROFILES } from "./tool-profiles.composition.js";
 
 /** The new content of a tool's shared settings file, answered by the host registration that owns it. */
 export const settingsDeclaration: SettingsDeclarationRules = {
