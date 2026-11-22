@@ -100,14 +100,12 @@ src/
 │   │   │   ├── declaration/
 │   │   │   ├── identity/
 │   │   │   ├── ledger/
-│   │   │   ├── legacy/
 │   │   │   ├── report/
 │   │   │   ├── resolution/
 │   │   │   ├── switch/
 │   │   │   └── transcript/
 │   │   ├── infrastructure/
 │   │   │   ├── git/
-│   │   │   ├── legacy/
 │   │   │   ├── reading/
 │   │   │   ├── sources/
 │   │   │   │   ├── claude/

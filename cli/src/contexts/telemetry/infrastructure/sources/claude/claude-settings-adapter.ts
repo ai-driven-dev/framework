@@ -2,7 +2,11 @@ import { join } from "node:path";
 import type { RetentionSettingsSource } from "../../../ports/switch/retention-settings-source.js";
 import { readTextIfPresent } from "../../reading/text-file.js";
 
-/** Read only: nothing is ever written into a Claude profile. */
+/** Read only: nothing is ever written into a Claude profile.
+ *
+ * Known limit: `host-registration` reads the same settings files. The read is duplicated here
+ * on purpose, because the context map gives `telemetry` no edge to `host-registration`, and a
+ * settings reader published by that context would add one. */
 export class ClaudeSettingsAdapter implements RetentionSettingsSource {
   constructor(
     private readonly claudeConfigDir: string,

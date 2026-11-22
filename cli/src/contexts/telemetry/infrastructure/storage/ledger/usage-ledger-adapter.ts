@@ -16,9 +16,9 @@ import {
   type TranscriptPosition,
 } from "../../../domain/transcript-position.js";
 import type { LeftOutStore, LoadedLedger, UsageLedger } from "../../../ports/usage-ledger.js";
-import type { RepositoryAliasStoreAdapter } from "../../legacy/repository-alias-store-adapter.js";
 import { readTextIfPresent } from "../../reading/text-file.js";
 import type { DirectoryLock } from "./directory-lock.js";
+import type { RepositoryAliasStoreAdapter } from "./repository-alias-store-adapter.js";
 
 const DAILY = /^\d{4}-\d{2}-\d{2}\.jsonl$/;
 const EXTENSION = ".jsonl";

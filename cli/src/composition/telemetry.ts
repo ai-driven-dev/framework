@@ -31,14 +31,13 @@ import { ReadCloneConsent } from "../contexts/telemetry/application/switch/read-
 import { ReadTranscriptRetention } from "../contexts/telemetry/application/switch/read-transcript-retention.use-case.js";
 import { RememberOwnRoot } from "../contexts/telemetry/application/switch/remember-own-root.use-case.js";
 import { WithdrawConsent } from "../contexts/telemetry/application/switch/withdraw-consent.use-case.js";
-import { legacyLocations } from "../contexts/telemetry/domain/legacy/legacy-locations.js";
 import { environmentWithoutGitVariables } from "../contexts/telemetry/domain/resolution/git-environment.js";
+import { legacyLocations } from "../contexts/telemetry/domain/switch/legacy-locations.js";
 import { GitBranchBindingSourceAdapter } from "../contexts/telemetry/infrastructure/git/git-branch-binding-source-adapter.js";
 import { GitBranchBindingStoreAdapter } from "../contexts/telemetry/infrastructure/git/git-branch-binding-store-adapter.js";
 import { GitConsentAdapter } from "../contexts/telemetry/infrastructure/git/git-consent-adapter.js";
 import { GitRepositoryLocatorAdapter } from "../contexts/telemetry/infrastructure/git/git-repository-locator-adapter.js";
 import { GitUserSourceAdapter } from "../contexts/telemetry/infrastructure/git/git-user-source-adapter.js";
-import { RepositoryAliasStoreAdapter } from "../contexts/telemetry/infrastructure/legacy/repository-alias-store-adapter.js";
 import {
   claudeConfigDir,
   claudeProjectsRoot,
@@ -58,6 +57,7 @@ import { BindingSnapshotStoreAdapter } from "../contexts/telemetry/infrastructur
 import { DirectoryLock } from "../contexts/telemetry/infrastructure/storage/ledger/directory-lock.js";
 import { LedgerLock } from "../contexts/telemetry/infrastructure/storage/ledger/ledger-lock.js";
 import { LeftOutAdapter } from "../contexts/telemetry/infrastructure/storage/ledger/left-out-adapter.js";
+import { RepositoryAliasStoreAdapter } from "../contexts/telemetry/infrastructure/storage/ledger/repository-alias-store-adapter.js";
 import { ResolutionStoreAdapter } from "../contexts/telemetry/infrastructure/storage/ledger/resolution-store-adapter.js";
 import { UsageLedgerAdapter } from "../contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { MeasurementErasureAdapter } from "../contexts/telemetry/infrastructure/storage/measurement-erasure-adapter.js";

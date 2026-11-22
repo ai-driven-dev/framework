@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseRepositoryAliases } from "../../../../../src/contexts/telemetry/domain/legacy/repository-aliases.js";
+import { parseRepositoryAliases } from "../../../../../src/contexts/telemetry/domain/ledger/repository-aliases.js";
 
 describe("the table of ids an earlier version gave repositories", () => {
   it("reads the ids an earlier version wrote", () => {

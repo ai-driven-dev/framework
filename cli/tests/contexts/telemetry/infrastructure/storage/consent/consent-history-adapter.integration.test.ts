@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { CloneIdentity } from "../../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import { ConsentHistoryAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/consent/consent-history-adapter.js";
 import { PrivateStorageAdapter } from "../../../../../../src/shared/infrastructure/private-storage-adapter.js";
+import { FailingPrivateStorage } from "../../../testing/failing-private-storage.fake.js";
 
 let root: string;
 beforeEach(async () => {
@@ -24,6 +25,17 @@ const CLONE: CloneIdentity = {
 describe("the consent history", () => {
   const history = () =>
     new ConsentHistoryAdapter(join(root, "ledger"), new PrivateStorageAdapter());
+
+  it("tells the caller when the storage refuses the event, and keeps nothing of it", async () => {
+    const refusing = new ConsentHistoryAdapter(
+      join(root, "ledger"),
+      new FailingPrivateStorage(new Error("disk full"))
+    );
+    await expect(
+      refusing.append({ kind: "open", token: "t1", clone: CLONE, at: "2026-10-01T00:00:00.000Z" })
+    ).rejects.toThrow("disk full");
+    expect((await refusing.read()).events).toEqual([]);
+  });
 
   it("creates nothing when read before anything is written", async () => {
     await history().read();

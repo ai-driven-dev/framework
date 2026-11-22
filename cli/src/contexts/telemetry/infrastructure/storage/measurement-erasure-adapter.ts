@@ -1,6 +1,6 @@
 import { readdir, rm, stat } from "node:fs/promises";
 import { join } from "node:path";
-import { DAY_FILE, type LegacyLocations } from "../../domain/legacy/legacy-locations.js";
+import { DAY_FILE, type LegacyLocations } from "../../domain/switch/legacy-locations.js";
 import type { ErasureEntry, MeasurementErasure } from "../../ports/forget/measurement-erasure.js";
 import { isAbsent } from "../reading/text-file.js";
 
