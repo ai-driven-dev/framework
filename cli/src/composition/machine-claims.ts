@@ -55,7 +55,10 @@ export function registrationRecordStore(
 }
 
 /** Every tool's claims, in one file beside the manifest of its scope. */
-function pluginClaimsFile(dir: () => string, deps: ToolKeyedJsonFileDeps): PluginClaimsRepository {
+export function pluginClaimsFile(
+  dir: () => string,
+  deps: ToolKeyedJsonFileDeps
+): PluginClaimsRepository {
   return new ToolKeyedJsonFile(
     () => join(dir(), "plugin-claims.json"),
     deps,
