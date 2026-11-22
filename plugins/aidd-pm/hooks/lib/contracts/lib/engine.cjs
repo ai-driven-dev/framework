@@ -7,7 +7,7 @@ const { readText, frontmatter, proseLines } = require("./markdown.cjs");
 const { ops, OPTIONS, readSchema } = require("./ops.cjs");
 
 const EXIT = { OK: 0, FINDINGS: 1, USAGE: 2 };
-const TOP_KEYS = ["version", "kind", "unit", "targets", "scope", "shell", "marker", "watch", "rules", "retired"];
+const TOP_KEYS = ["version", "kind", "unit", "targets", "scope", "shell", "marker", "watch", "rules"];
 const RULE_KEYS = ["op", "in", "notIn", "why", "fix"];
 const EXCERPT_LIMIT = 40;
 
@@ -57,10 +57,8 @@ function loadContract(file) {
   if (!["folder", "file"].includes(contract.unit)) fail("unit must be folder or file");
   if (contract.unit === "folder" && !contract.marker) fail("marker is required when unit is folder");
   const prefix = `${contract.kind.toUpperCase()}-`;
-  const retired = contract.retired ?? [];
   for (const [id, rule] of Object.entries(contract.rules ?? {})) {
     if (!id.startsWith(prefix) || !/-\d{2}$/u.test(id)) fail(`rule id ${id} must look like ${prefix}NN`);
-    if (retired.includes(id)) fail(`rule id ${id} is retired`);
     if (!(rule.op in ops)) fail(`${id}: unknown op ${rule.op}`);
     for (const key of Object.keys(rule)) if (![...RULE_KEYS, ...OPTIONS[rule.op]].includes(key)) fail(`${id}: unknown key ${key} for op ${rule.op}`);
     for (const key of rule.op === "custom" ? ["in", "why"] : ["in", "why", "fix"]) if (!rule[key]) fail(`${id}: ${key} is required`);

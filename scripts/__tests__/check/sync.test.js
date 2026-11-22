@@ -68,7 +68,9 @@ describe("contract sync", () => {
       sync();
       const hooks = path.join(plugin(), "hooks");
       assert.ok(fs.existsSync(path.join(hooks, "artifacts.cjs")));
-      for (const file of ["scripts/contract.json", "scripts/lib/engine.cjs", "assets/t.md"]) assert.ok(fs.existsSync(path.join(hooks, "lib", "contracts", "a", file)), file);
+      for (const file of ["a/scripts/contract.json", "a/assets/t.md", ...ENGINE_FILES.map((name) => `lib/${name}`)]) assert.ok(fs.existsSync(path.join(hooks, "lib", "contracts", file)), file);
+      assert.equal(fs.existsSync(path.join(hooks, "lib", "contracts", "a", "scripts", "lib")), false);
+      assert.ok(fs.readFileSync(path.join(hooks, "lib", "host.cjs")).equals(fs.readFileSync(path.resolve(__dirname, "../../../cli/assets/hooks-runtime/host-claude.cjs"))));
       assert.equal(sync("--check").status, 0);
     });
 
@@ -99,6 +101,17 @@ describe("contract sync", () => {
       assert.match(run.stdout, /plugins\/p\/hooks\/lib\/contracts\/a\/assets\/t\.md differs/u);
       assert.equal(sync().status, 0);
       assert.equal(sync("--check").status, 0);
+    });
+
+    it("a plugin whose hook requires the host adapter gets it, and one that stops requiring it is named", () => {
+      fs.mkdirSync(path.join(plugin(), "hooks"), { recursive: true });
+      fs.writeFileSync(path.join(plugin(), "hooks", "h.cjs"), 'require("./lib/host.cjs");\n');
+      sync();
+      assert.equal(sync("--check").status, 0);
+      fs.writeFileSync(path.join(plugin(), "hooks", "h.cjs"), "");
+      assert.match(sync("--check").stdout, /hooks\/lib\/host\.cjs has no source/u);
+      sync();
+      assert.equal(fs.existsSync(path.join(plugin(), "hooks", "lib", "host.cjs")), false);
     });
 
     it("an orphan copy and a hook left without a scoped contract are named, then removed", () => {

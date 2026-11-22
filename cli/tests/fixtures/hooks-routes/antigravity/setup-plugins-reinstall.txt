@@ -89,8 +89,7 @@ script, identical to the plugin source
       "why": "a link leaving the skill is dead in every installed copy", "fix": "name the file in prose, {target} is outside the skill" },
     "SKILL-22": { "op": "custom", "in": ["SKILL.md", "actions/**/*.md", "references/**/*.md"], "check": "sibling-plugin",
       "why": "a plugin works without its siblings installed" }
-  },
-  "retired": []
+  }
 }
 
 
@@ -107,15 +106,6 @@ script, identical to the plugin source
 script, identical to the plugin source
 
 ## project/.agents/hooks/aidd-context/lib/contracts/04-skill-generate/scripts/custom/sibling-plugin.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-context/lib/contracts/04-skill-generate/scripts/lib/engine.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-context/lib/contracts/04-skill-generate/scripts/lib/markdown.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-context/lib/contracts/04-skill-generate/scripts/lib/ops.cjs
 script, identical to the plugin source
 
 ## project/.agents/hooks/aidd-context/lib/contracts/05-rule-generate/assets/rule-template.md
@@ -155,22 +145,16 @@ targets: [{{host tools}}]
 }
 
 
-## project/.agents/hooks/aidd-context/lib/contracts/05-rule-generate/scripts/lib/engine.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-context/lib/contracts/05-rule-generate/scripts/lib/markdown.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-context/lib/contracts/05-rule-generate/scripts/lib/ops.cjs
-script, identical to the plugin source
-
 ## project/.agents/hooks/aidd-context/lib/contracts/06-agent-generate/scripts/contract.json
 {
   "version": 1,
   "kind": "agent",
   "unit": "file",
   "targets": "plugins/*/agents/*.md",
-  "scope": [".claude/agents/*.md"],
+  "scope": [
+    ".claude/agents/*.md",
+    ".cursor/agents/*.md"
+  ],
   "shell": false,
   "rules": {
     "AGENT-02": {
@@ -218,15 +202,6 @@ script, identical to the plugin source
 }
 
 
-## project/.agents/hooks/aidd-context/lib/contracts/06-agent-generate/scripts/lib/engine.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-context/lib/contracts/06-agent-generate/scripts/lib/markdown.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-context/lib/contracts/06-agent-generate/scripts/lib/ops.cjs
-script, identical to the plugin source
-
 ## project/.agents/hooks/aidd-context/lib/contracts/07-command-generate/assets/command-template.md
 ---
 description: "{{what the command does, one line}}"
@@ -252,7 +227,12 @@ disable-model-invocation:
   "version": 1,
   "kind": "command",
   "unit": "file",
-  "scope": [".claude/commands/*.md"],
+  "scope": [
+    ".claude/commands/*.md",
+    ".github/prompts/*.prompt.md",
+    ".opencode/commands/*.md",
+    ".kilo/commands/*.md"
+  ],
   "shell": false,
   "rules": {
     "COMMAND-01": {
@@ -273,13 +253,13 @@ disable-model-invocation:
 }
 
 
-## project/.agents/hooks/aidd-context/lib/contracts/07-command-generate/scripts/lib/engine.cjs
+## project/.agents/hooks/aidd-context/lib/contracts/lib/engine.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-context/lib/contracts/07-command-generate/scripts/lib/markdown.cjs
+## project/.agents/hooks/aidd-context/lib/contracts/lib/markdown.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-context/lib/contracts/07-command-generate/scripts/lib/ops.cjs
+## project/.agents/hooks/aidd-context/lib/contracts/lib/ops.cjs
 script, identical to the plugin source
 
 ## project/.agents/hooks/aidd-context/lib/host.cjs

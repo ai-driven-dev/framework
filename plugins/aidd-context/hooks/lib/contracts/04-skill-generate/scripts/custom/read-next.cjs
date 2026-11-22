@@ -1,7 +1,7 @@
 "use strict";
 // An action the diagram chains to another ends its Process with a step that links the next action.
 const { flowOf, edges, actionBoxes } = require("./mermaid.cjs");
-const { headings } = require("../lib/markdown.cjs");
+const { headings } = require("../../../lib/markdown.cjs");
 
 const ACTION_LINK = /\]\((?:\.\/)?(\d\d-[^)/]+\.md)\)/u;
 

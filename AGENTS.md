@@ -24,6 +24,7 @@
 - **Solve your own issues first:** genuinely try to resolve it yourself before escalating to the human.
 - **Don't assume your knowledge is current.**
 - **Placement discipline:** for every plugin change, place the responsibility in the plugin whose concern owns it, per `docs/ARCHITECTURE.md`.
+- **A template and its contract move together:** change a skill's template => change the contract beside it, then run `node scripts/check/engine/sync.cjs` and `node scripts/check/run.cjs`.
 - **Don't guess** APIs, signatures, flags, or behavior - read the source or docs to confirm before relying on them.
 - **Ambiguous or expensive task:** ask one sharp question to pin down scope before building, rather than guess.
 - **Batch independent operations** in one pass, not one at a time.

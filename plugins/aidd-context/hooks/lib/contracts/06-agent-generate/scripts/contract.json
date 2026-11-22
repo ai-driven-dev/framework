@@ -3,7 +3,10 @@
   "kind": "agent",
   "unit": "file",
   "targets": "plugins/*/agents/*.md",
-  "scope": [".claude/agents/*.md"],
+  "scope": [
+    ".claude/agents/*.md",
+    ".cursor/agents/*.md"
+  ],
   "shell": false,
   "rules": {
     "AGENT-02": {

@@ -3,11 +3,15 @@ pre-commit:
   commands:
     framework-content:
       # The one content check: contracts and generated docs. --fix regenerates. stage_fixed
-      # re-stages only the staged files, so the generated outputs are added by name.
+      # re-stages only the staged files, so the generated outputs --fix rewrote are added by name,
+      # never one that already held an unstaged edit.
       # Given no staged file lefthook skips it; CI runs the full check itself.
       run: |
+        before=$(mktemp)
+        git diff --name-only -- README.md docs/CATALOG.md 'plugins/*/CATALOG.md' > $before
         node scripts/check/run.cjs --fix {staged_files} || exit 1
-        git add -u -- README.md docs/CATALOG.md 'plugins/*/CATALOG.md'
+        git diff --name-only -- README.md docs/CATALOG.md 'plugins/*/CATALOG.md' | grep -vxFf $before | xargs git add --
+        rm $before
       stage_fixed: true
     yaml-validity:
       glob: "**/*.{yml,yaml}"
@@ -68,8 +72,11 @@ pre-commit:
           echo 'ℹ️  node not available; skipping sync-generated-docs'
           exit 0
         fi
+        before=$(mktemp)
+        git diff --name-only -- README.md docs/COMPATIBILITY.md > $before
         node scripts/sync-generated-docs.mjs >/dev/null
-        git add README.md docs/COMPATIBILITY.md 2>/dev/null || true
+        git diff --name-only -- README.md docs/COMPATIBILITY.md | grep -vxFf $before | xargs git add --
+        rm $before
     cli-biome:
       glob: "cli/**"
       run: cd cli && pnpm lint

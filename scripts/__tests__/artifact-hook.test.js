@@ -69,10 +69,12 @@ function writePayload(host, root, rel) {
   return payload;
 }
 
-/** A PostToolUse running a shell command: no file in it. */
-function shellPayload(host, root) {
-  if (BRIDGED.has(host)) return { hook_event_name: "PostToolUse", session_id: SESSION, cwd: root, tool_name: "bash", tool_input: { command: "node write.cjs" } };
-  return captured(FILES[host].post, 1, root);
+/** A PostToolUse running a shell command, the captured one unless `command` is given: no file in it. */
+function shellPayload(host, root, command) {
+  if (BRIDGED.has(host)) return { hook_event_name: "PostToolUse", session_id: SESSION, cwd: root, tool_name: "bash", tool_input: { command: command ?? "node write.cjs" } };
+  const payload = captured(FILES[host].post, 1, root);
+  if (command !== undefined) payload.tool_input.command = command;
+  return payload;
 }
 
 function stopPayload(host, root, { active = false } = {}) {
@@ -118,7 +120,7 @@ function session(plugin, host, files = {}) {
     put,
     start: () => step("start", startPayload(host, root)),
     wrote: (rel) => step("mark", writePayload(host, root, rel)),
-    shell: () => step("mark", shellPayload(host, root)),
+    shell: (command) => step("mark", shellPayload(host, root, command)),
     stop: (options) => step("check", stopPayload(host, root, options)),
     raw: (goal, payload) => run(plugin, host, goal, payload, { tmp }),
   };
@@ -259,9 +261,9 @@ test("no generated contract scope matches a raw template under a plugin's assets
   let globs = 0;
   for (const plugin of ["aidd-context", "aidd-dev", "aidd-pm"]) {
     const root = path.join(REPO, "plugins", plugin, "hooks/lib/contracts");
-    for (const name of fs.readdirSync(root)) {
+    for (const name of fs.readdirSync(root).filter((entry) => entry !== "lib")) {
       const contract = JSON.parse(fs.readFileSync(path.join(root, name, "scripts/contract.json"), "utf8"));
-      const { globRegex } = require(path.join(root, name, "scripts/lib/engine.cjs"));
+      const { globRegex } = require(path.join(root, "lib/engine.cjs"));
       for (const glob of contract.scope ?? []) {
         globs += 1;
         const regex = globRegex(glob);
@@ -413,7 +415,7 @@ test("a bad entry in scope does not silence the turn: a dangling link, an unread
 
 test("a custom check that throws on a file names the file, the contract and the message", () => {
   const s = session("aidd-pm", "claude", { [STORY]: BROKEN_STORY });
-  const engine = path.join(hookFor("aidd-pm", "claude"), "lib/contracts/02-user-stories/scripts/lib/engine.cjs");
+  const engine = path.join(hookFor("aidd-pm", "claude"), "lib/contracts/lib/engine.cjs");
   const original = fs.readFileSync(engine, "utf8");
   fs.writeFileSync(engine, `${original}\nmodule.exports.check = () => {\n  throw new Error("boom");\n};\n`);
   try {
@@ -540,6 +542,19 @@ for (const host of HOSTS) {
   });
 }
 
+// Only the hosts whose writer output passes the shared contract unchanged are in scope.
+test("aidd-context: answers an agent or command written for another host in scope, not one out of scope", () => {
+  const inScope = [".cursor/agents/a.md", ".github/prompts/c.prompt.md", ".opencode/commands/c.md", ".kilo/commands/c.md"];
+  const outOfScope = [".opencode/agents/a.md", ".cursor/commands/c.md"];
+  const all = [...inScope, ...outOfScope];
+  const s = session("aidd-context", "claude", contextFiles(Object.fromEntries(all.map((rel) => [rel, "# nope\n"]))));
+  s.start();
+  for (const rel of all) s.wrote(rel);
+  const found = lines(s.stop());
+  for (const rel of inScope) assert.ok(found.some((line) => line.startsWith(`${rel}:`)), rel);
+  for (const rel of outOfScope) assert.ok(!found.some((line) => line.startsWith(`${rel}:`)), rel);
+});
+
 test("aidd-context: the shell turn answers the rule modified after the reference, not the older one", () => {
   const s = session("aidd-context", "claude", contextFiles({ "aidd_docs/rules/x/r.md": "# nope\n", "aidd_docs/rules/x/old.md": "# nope\n" }));
   past(path.join(s.root, "aidd_docs/rules/x/old.md"), 3600);
@@ -551,13 +566,63 @@ test("aidd-context: the shell turn answers the rule modified after the reference
   assert.ok(found.every((line) => line.startsWith("aidd_docs/rules/x/r.md:")));
 });
 
-test("aidd-context: a shell turn never scans skills, agents or commands, which an install writes", () => {
+test("aidd-context: a shell turn naming none of them never answers skills, agents or commands, which an install writes", () => {
   const files = { ".claude/skills/s/SKILL.md": "# nope\n", ".claude/agents/a.md": "# nope\n", ".claude/commands/c.md": "# nope\n" };
   const s = session("aidd-context", "claude", contextFiles(files));
   s.start();
   for (const rel of Object.keys(files)) past(path.join(s.root, rel), -60);
   s.shell();
   assert.equal(s.stop(), "");
+});
+
+const SKILL = ".claude/skills/s/SKILL.md";
+const heredoc = (rel) => `mkdir -p ${path.posix.dirname(rel)} && cat > ${rel} <<'EOF'\n# nope\nEOF`;
+
+for (const host of HOSTS) {
+  test(`${host}: aidd-context answers a skill, an agent and a command a shell command names and wrote`, () => {
+    const files = { [SKILL]: "# nope\n", ".claude/agents/a.md": "# nope\n", ".claude/commands/c.md": "# nope\n" };
+    const s = session("aidd-context", host, contextFiles(files));
+    s.start();
+    for (const rel of Object.keys(files)) past(path.join(s.root, rel), -60);
+    s.shell(Object.keys(files).map(heredoc).join(" && "));
+    const found = lines(s.stop());
+    for (const id of ["AGENT", "COMMAND", "SKILL"]) assert.ok(found.some((line) => line.includes(` ${id}-`)), id);
+  });
+}
+
+test("aidd-context: an install's command names no file: the skills it wrote stay silent", () => {
+  const s = session("aidd-context", "claude", contextFiles({ [SKILL]: "# nope\n" }));
+  s.start();
+  past(path.join(s.root, SKILL), -60);
+  s.shell("npx @ai-driven-dev/cli setup --ide claude");
+  assert.equal(s.stop(), "");
+});
+
+test("aidd-context: a skill a command names but did not change since the reference is silent", () => {
+  const s = session("aidd-context", "claude", contextFiles({ [SKILL]: "# nope\n" }));
+  past(path.join(s.root, SKILL), 3600);
+  s.start();
+  s.shell(`cat ${SKILL}`);
+  assert.equal(s.stop(), "");
+});
+
+test("aidd-context: a skill named with Windows separators, or by its absolute path, is answered", () => {
+  for (const name of [(root) => SKILL.replaceAll("/", "\\"), (root) => path.join(root, SKILL)]) {
+    const s = session("aidd-context", "claude", contextFiles({ [SKILL]: "# nope\n" }));
+    s.start();
+    past(path.join(s.root, SKILL), -60);
+    s.shell(`Set-Content ${name(s.root)} '# nope'`);
+    assert.ok(lines(s.stop()).some((line) => line.startsWith(`${SKILL}:`)));
+  }
+});
+
+test("aidd-context: a command naming a skill in one call is still read when another call of the turn names none", () => {
+  const s = session("aidd-context", "claude", contextFiles({ [SKILL]: "# nope\n" }));
+  s.start();
+  past(path.join(s.root, SKILL), -60);
+  s.shell(heredoc(SKILL));
+  s.shell("echo done");
+  assert.ok(lines(s.stop()).some((line) => line.startsWith(`${SKILL}:`)));
 });
 
 test("aidd-context: a skill the model wrote is still answered after a shell turn", () => {
