@@ -162,9 +162,9 @@ describe("ops", () => {
       assert.deepEqual(findings({ ...rule, optional: ["B"] }, doc), []);
     });
 
-    it("words a missing slotted heading as a shape", () => {
+    it("shows a missing slotted heading as a fill-in", () => {
       const hit = findings(rule, "# T demo\n");
-      assert.match(hit[0].message, /^section shaped like "Round \{\{n\}\}" missing/u);
+      assert.match(hit[0].message, /^section "## Round <n>" missing: write it with <n> filled in$/u);
     });
 
     it("attributes a table after a second title to no heading", () => {
