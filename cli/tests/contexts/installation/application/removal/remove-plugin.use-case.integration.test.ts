@@ -2,8 +2,8 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PluginNotFoundError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { PluginEntryData } from "../../../../../src/contexts/installation/domain/plugins/plugin-entry.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
@@ -91,7 +91,7 @@ function manifestHolding(
     .withTool(toolId, [])
     .withPlugin(
       toolId,
-      InstalledPlugin.fromJSON({
+      RecordedPlugin.fromJSON({
         source: { kind: "local", path: "/some/path" },
         version: "1.0.0",
         strict: false,
@@ -167,7 +167,7 @@ describe("RemovePlugin", () => {
       const pluginKey = "aidd-context/commands/hello.md";
       manifest.addPlugin(
         TOOL.cursor,
-        InstalledPlugin.fromJSON({
+        RecordedPlugin.fromJSON({
           name: "aidd-context",
           source: { kind: "local", path: "/some/path" },
           version: "1.0.0",
@@ -248,24 +248,21 @@ describe("RemovePlugin", () => {
         .withTool(TOOL.cursor, [])
         .withPlugin(
           TOOL.cursor,
-          InstalledPlugin.withProjectHooks(
-            InstalledPlugin.fromJSON({
-              name: "other",
-              source: { kind: "local", path: "/other" },
-              version: "1.0.0",
-              strict: false,
-              files: {},
-              scope: "project",
-            }),
-            {
-              entries: [],
-              scripts: new Map([[script, FileHash.of("// installed").value]]),
-            }
-          )
+          RecordedPlugin.fromJSON({
+            name: "other",
+            source: { kind: "local", path: "/other" },
+            version: "1.0.0",
+            strict: false,
+            files: {},
+            scope: "project",
+          }).withProjectHooks({
+            entries: [],
+            scripts: new Map([[script, FileHash.of("// installed").value]]),
+          })
         )
         .withPlugin(
           TOOL.cursor,
-          InstalledPlugin.fromJSON({
+          RecordedPlugin.fromJSON({
             name: "target",
             source: { kind: "local", path: "/target" },
             version: "1.0.0",

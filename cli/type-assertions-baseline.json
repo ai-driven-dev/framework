@@ -58,7 +58,7 @@
   "tests/contexts/installation/application/restore/restore.use-case.integration.test.ts": 2,
   "tests/contexts/installation/application/shared/require-manifest.unit.test.ts": 1,
   "tests/contexts/installation/application/uninstall-tools.use-case.unit.test.ts": 1,
-  "tests/contexts/installation/domain/plugins/installed-plugin.unit.test.ts": 2,
+  "tests/contexts/installation/domain/plugins/recorded-plugin.unit.test.ts": 2,
   "tests/contexts/telemetry/domain/report/attribution-fixture.integration.test.ts": 2,
   "tests/contexts/telemetry/telemetry-bindings-fixture.integration.test.ts": 2,
   "tests/contexts/telemetry/testing/telemetry-report-seed.builder.ts": 1,

@@ -4,14 +4,14 @@ import {
   recordUserScopeOwnership,
 } from "../../../../../../src/contexts/installation/application/plugin/add/user-scope-claims.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 
 const ROOT = "/test-project";
 
-function userPlugin(files: Record<string, string>): InstalledPlugin {
-  return InstalledPlugin.fromJSON({
+function userPlugin(files: Record<string, string>): RecordedPlugin {
+  return RecordedPlugin.fromJSON({
     name: "sample",
     source: { kind: "local", path: "/plugin" },
     version: "1.0.0",
@@ -21,7 +21,7 @@ function userPlugin(files: Record<string, string>): InstalledPlugin {
   });
 }
 
-function project(plugin: InstalledPlugin): Manifest {
+function project(plugin: RecordedPlugin): Manifest {
   const manifest = Manifest.create();
   manifest.addTool(TOOL.claude, "1.0.0", []);
   manifest.addPlugin(TOOL.claude, plugin);
@@ -55,10 +55,10 @@ describe("recordUserScopeOwnership", () => {
 
     expect(await claim(manifest, machine, new Set())).toBe(true);
 
-    const [owned] = machine.getPlugins(TOOL.claude);
-    expect(owned?.files.size).toBe(1);
+    const [owned] = machine.getRecordedPlugins(TOOL.claude);
+    expect(owned?.plugin.files.size).toBe(1);
     expect(owned?.dependents).toStrictEqual([ROOT]);
-    expect(manifest.getPlugins(TOOL.claude)[0]?.files.size).toBe(0);
+    expect(manifest.getRecordedPlugins(TOOL.claude)[0]?.plugin.files.size).toBe(0);
   });
 
   it("leaves a plugin installed before this add, or one with no files, with the project", async () => {
@@ -76,6 +76,6 @@ describe("recordUserScopeOwnership", () => {
 
     await claim(project(userPlugin(FILES)), machine, new Set([`${TOOL.claude}/sample`]));
 
-    expect(machine.getPlugins(TOOL.claude)[0]?.dependents).toStrictEqual(["/other", ROOT]);
+    expect(machine.getRecordedPlugins(TOOL.claude)[0]?.dependents).toStrictEqual(["/other", ROOT]);
   });
 });

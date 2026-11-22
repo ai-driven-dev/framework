@@ -1,6 +1,6 @@
 import type { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
-import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import { resolveScopeForInstall, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import { writeChangedPluginFiles } from "../plugin/write-changed-plugin-files.js";
 import type { AddPluginRequest, AddPluginResult, PlacementDeps } from "./add-plugin-request.js";
@@ -51,19 +51,16 @@ export async function placeBuiltTreePlugin(
 function builtTreeEntry(
   request: AddPluginRequest,
   placed: { owned: InstallationFile[]; scope: Scope } & Pick<BuiltTreeRead, "mcp" | "hooks">
-): InstalledPlugin {
+): RecordedPlugin {
   const { dist, source, marketplace } = request;
   const { owned, scope, mcp, hooks } = placed;
-  return InstalledPlugin.withProjectHooks(
-    InstalledPlugin.fromDistributionWithMcp({
-      dist,
-      source,
-      files: owned,
-      mcpEntries: mcp.mcpEntries,
-      scope,
-      componentPaths: new Map(),
-      marketplace,
-    }),
-    hooks.projectHooks
-  );
+  return RecordedPlugin.fromDistributionWithMcp({
+    dist,
+    source,
+    files: owned,
+    mcpEntries: mcp.mcpEntries,
+    scope,
+    componentPaths: new Map(),
+    marketplace,
+  }).withProjectHooks(hooks.projectHooks);
 }

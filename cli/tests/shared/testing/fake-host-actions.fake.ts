@@ -19,7 +19,6 @@ export class FakeHostActions implements HostActions {
   private readonly failOnPlugins: ReadonlySet<string>;
   private readonly conflictOnAdd: boolean;
   private readonly throwOnRemove: boolean;
-  private readonly pluginsEnabledHere: boolean;
   private readonly state: "live" | "dead" | "unknown";
   private readonly failOnUninstall: ReadonlySet<string>;
   private readonly failOnUpdate: ReadonlySet<string>;
@@ -33,8 +32,6 @@ export class FakeHostActions implements HostActions {
       failOnPlugins?: readonly string[];
       conflictOnAdd?: boolean;
       throwOnRemove?: boolean;
-      /** False for a tool whose plugins are enabled by a file this CLI writes. */
-      enablesPlugins?: boolean;
       /** What the tool answers about a name already registered. */
       registrationState?: "live" | "dead" | "unknown";
       failOnUninstall?: readonly string[];
@@ -49,7 +46,6 @@ export class FakeHostActions implements HostActions {
       failOnPlugins = [],
       conflictOnAdd = false,
       throwOnRemove = false,
-      enablesPlugins = true,
       registrationState = "unknown",
       failOnUninstall = [],
       failOnUpdate = [],
@@ -61,7 +57,6 @@ export class FakeHostActions implements HostActions {
     this.failOnPlugins = new Set(failOnPlugins);
     this.conflictOnAdd = conflictOnAdd;
     this.throwOnRemove = throwOnRemove;
-    this.pluginsEnabledHere = enablesPlugins;
     this.state = registrationState;
     this.failOnUninstall = new Set(failOnUninstall);
     this.failOnUpdate = new Set(failOnUpdate);
@@ -72,10 +67,6 @@ export class FakeHostActions implements HostActions {
 
   registrationState(): "live" | "dead" | "unknown" {
     return this.state;
-  }
-
-  enablesPlugins(): boolean {
-    return this.pluginsEnabledHere;
   }
 
   isAvailable(): boolean {

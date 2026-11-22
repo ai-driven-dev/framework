@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { MalformedPluginScopeError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import type { PluginEntryData } from "../../../../../src/contexts/installation/domain/plugins/plugin-entry.js";
 import {
-  entryFromPluginFields,
-  pluginFieldsFromEntry,
+  entryFromRecordedPlugin,
+  recordedPluginFromEntry,
 } from "../../../../../src/contexts/installation/domain/plugins/plugin-entry-codec.js";
 import {
   InvalidPluginNameError,
@@ -20,29 +20,31 @@ const entry = (overrides: Partial<PluginEntryData> = {}): PluginEntryData => ({
   ...overrides,
 });
 
-describe("pluginFieldsFromEntry", () => {
+describe("recordedPluginFromEntry", () => {
   it("reads maps and defaults the optional fields", () => {
-    const fields = pluginFieldsFromEntry(entry());
-    expect(fields.files.get("a.md")).toBe("h1");
-    expect(fields.componentPaths.size).toBe(0);
-    expect(fields.mcpEntries.size).toBe(0);
+    const fields = recordedPluginFromEntry(entry());
+    expect(fields.plugin.files.get("a.md")).toBe("h1");
+    expect(fields.provenance.componentPaths.size).toBe(0);
+    expect(fields.provenance.mcpEntries.size).toBe(0);
     expect(fields.dependents).toEqual([]);
   });
 
   it("rejects an invalid name, version and scope", () => {
-    expect(() => pluginFieldsFromEntry(entry({ name: "Bad Name" }))).toThrow(
+    expect(() => recordedPluginFromEntry(entry({ name: "Bad Name" }))).toThrow(
       InvalidPluginNameError
     );
-    expect(() => pluginFieldsFromEntry(entry({ version: "x" }))).toThrow(InvalidPluginVersionError);
-    expect(() => pluginFieldsFromEntry(Object.assign(entry(), { scope: "nowhere" }))).toThrow(
+    expect(() => recordedPluginFromEntry(entry({ version: "x" }))).toThrow(
+      InvalidPluginVersionError
+    );
+    expect(() => recordedPluginFromEntry(Object.assign(entry(), { scope: "nowhere" }))).toThrow(
       MalformedPluginScopeError
     );
   });
 });
 
-describe("entryFromPluginFields", () => {
+describe("entryFromRecordedPlugin", () => {
   it("leaves out what is empty", () => {
-    const data = entryFromPluginFields(pluginFieldsFromEntry(entry()));
+    const data = entryFromRecordedPlugin(recordedPluginFromEntry(entry()));
     expect(Object.keys(data).sort()).toEqual(
       ["files", "name", "scope", "source", "strict", "version"].sort()
     );
@@ -56,6 +58,6 @@ describe("entryFromPluginFields", () => {
       marketplace: "mk",
       dependents: ["/root"],
     });
-    expect(entryFromPluginFields(pluginFieldsFromEntry(full))).toEqual(full);
+    expect(entryFromRecordedPlugin(recordedPluginFromEntry(full))).toEqual(full);
   });
 });

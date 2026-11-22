@@ -7,7 +7,7 @@ import {
   MissingPluginMetadataError,
 } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { VersionMismatchError } from "../../../../../src/shared/domain/shared.error.js";
@@ -44,13 +44,17 @@ function addTo(manifest: Manifest, options: { scope?: Scope } = {}) {
           for (const toolId of command.toolIds) {
             command.manifest.addPlugin(
               toolId,
-              InstalledPlugin.fromMetadata({
+              RecordedPlugin.fromMetadata({
                 name: "sample-plugin",
                 version: "1.0.0",
                 source: SOURCE,
                 strict: false,
                 scope: options.scope ?? "project",
-              }).withFiles(new Map([["skills/a.md", `sha256:${"a".repeat(64)}`]]))
+              }).withFiles(
+                options.scope === "user"
+                  ? new Map([["skills/a.md", `sha256:${"a".repeat(64)}`]])
+                  : new Map()
+              )
             );
           }
         },
@@ -83,7 +87,7 @@ describe("AddPlugin", () => {
 
     expect([
       placed.map((p) => [p.dist, p.toolIds]),
-      project.getCurrent()?.getPlugins(TOOL.claude).length,
+      project.getCurrent()?.getRecordedPlugins(TOOL.claude).length,
       project.saveCount,
     ]).toStrictEqual([[[DISTRIBUTION, [TOOL.claude]]], 1, 1]);
   });
@@ -122,7 +126,7 @@ describe("AddPlugin", () => {
     );
   });
 
-  it("leaves the machine claim saved when the project save then fails", async () => {
+  it("characterizes the known orphan claim: the machine save stays when the project save fails", async () => {
     const { add, project, user } = addTo(manifestWithClaude(), { scope: "user" });
     project.save = async () => {
       throw new Error("disk full");
@@ -130,8 +134,8 @@ describe("AddPlugin", () => {
 
     await expect(add.execute(ADD)).rejects.toThrow("disk full");
 
-    const claimed = user.getCurrent()?.getPlugins(TOOL.claude);
-    expect([user.saveCount, claimed?.map((p) => [p.name, p.dependents])]).toStrictEqual([
+    const claimed = user.getCurrent()?.getRecordedPlugins(TOOL.claude);
+    expect([user.saveCount, claimed?.map((p) => [p.plugin.name, p.dependents])]).toStrictEqual([
       1,
       [["sample-plugin", [PROJECT_ROOT]]],
     ]);

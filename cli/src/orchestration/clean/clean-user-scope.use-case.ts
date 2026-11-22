@@ -1,3 +1,4 @@
+import type { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.use-case.js";
 import type { WithdrawFromHost } from "../../contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import type { PurgeUserScopeFiles } from "../../contexts/installation/application/purge-user-scope-files.js";
 import type { HintedMessage } from "../../shared/domain/describe-error.js";
@@ -7,7 +8,7 @@ import type { Prompter } from "../ports/prompter.js";
 import type { CleanClaims } from "./clean-claims.js";
 
 export interface CleanUserScopeRequest {
-  /** Threaded only to `MarketplaceRegistry.delete`, whose signature takes one for the
+  /** Threaded only to `RemoveMarketplace`, whose signature takes one for the
    * project-scope caller it usually serves: discarded by the adapter for scope `"user"`, since
    * this operation has no one project of its own. */
   projectRoot: string;
@@ -35,6 +36,7 @@ export interface CleanUserScopeResult {
 export interface CleanUserScopeDeps {
   readonly purgeFiles: PurgeUserScopeFiles;
   readonly withdrawFromHost: WithdrawFromHost;
+  readonly removeMarketplace: Pick<RemoveMarketplace, "execute">;
   readonly claims: CleanClaims;
   readonly logger: Logger;
   readonly prompter?: Prompter;
@@ -84,6 +86,11 @@ export class CleanUserScope {
         this.deps.claims.purgeCache.resolveCandidate(cacheRoot, relativeSegments, label),
     });
     await this.deps.purgeFiles.purge(options.projectRoot);
+    await this.deps.removeMarketplace.execute({
+      projectRoot: options.projectRoot,
+      marketplace: { name: this.deps.claims.frameworkMarketplaceName, scope: "user" },
+    });
+    await this.deps.purgeFiles.deleteManifest();
 
     return { dryRun: false, manifestFound, preview };
   }

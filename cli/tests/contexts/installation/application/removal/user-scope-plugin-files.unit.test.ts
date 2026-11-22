@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { UserScopePluginFiles } from "../../../../../src/contexts/installation/application/removal/user-scope-plugin-files.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
@@ -9,13 +9,13 @@ const homedir = (): string => "/home/dev";
 
 const HOME = "/fake-home";
 const tool = registeredTools().aiProfile(TOOL.cursor);
-const plugin = InstalledPlugin.fromMetadata({
+const plugin = RecordedPlugin.fromMetadata({
   name: "aidd-context",
   version: "1.0.0",
   source: { kind: "local", path: "/p" },
   strict: false,
   scope: "user",
-});
+}).plugin;
 
 describe("UserScopePluginFiles.proven", () => {
   it("answers what the proof answers for this plugin, tool and home", async () => {

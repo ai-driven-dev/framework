@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import {
   buildInstallationDeps,
@@ -41,7 +41,7 @@ async function replaceOnClaude(marketplace: string | undefined) {
   deps.fs.setFile(join(PROJECT_ROOT, STALE_FILE), "old");
   const manifest = await deps.manifestRepo.load();
   if (manifest === null) throw new Error("manifest not found");
-  const installed = InstalledPlugin.fromMetadata({
+  const installed = RecordedPlugin.fromMetadata({
     name: "sample-plugin",
     version: "0.0.1",
     source: SOURCE,
@@ -59,7 +59,7 @@ async function replaceOnClaude(marketplace: string | undefined) {
   });
   return {
     fs: deps.fs,
-    entry: manifest.getPlugins(TOOL.claude).find((p) => p.name === "sample-plugin"),
+    entry: manifest.getRecordedPlugins(TOOL.claude).find((p) => p.plugin.name === "sample-plugin"),
   };
 }
 
@@ -70,8 +70,8 @@ describe("ReplacePluginFiles", () => {
     expect([
       fs.has(join(PROJECT_ROOT, STALE_FILE)),
       fs.has(join(PROJECT_ROOT, GREET_FILE)),
-      entry?.version,
-      entry?.files.has(GREET_FILE),
+      entry?.plugin.version,
+      entry?.plugin.files.has(GREET_FILE),
     ]).toStrictEqual([false, true, "1.0.0", true]);
   });
 
@@ -82,7 +82,7 @@ describe("ReplacePluginFiles", () => {
       fs.has(join(PROJECT_ROOT, STALE_FILE)),
       fs.has(join(PROJECT_ROOT, GREET_FILE)),
       entry?.marketplace,
-      entry?.files.size,
+      entry?.plugin.files.size,
     ]).toStrictEqual([false, false, "aidd-framework", 0]);
   });
 });

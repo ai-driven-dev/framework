@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { detachNativePluginRefs } from "../../src/contexts/machine-claims/application/native-plugin-ownership.js";
 import { detachUserPlugin } from "../../src/contexts/machine-claims/application/user-plugin-ownership.js";
 import type {
@@ -45,7 +45,7 @@ const real: MachineManifestKind = {
     return manifest;
   },
   aUserPlugin: (name, dependents) =>
-    InstalledPlugin.fromMetadata({
+    RecordedPlugin.fromMetadata({
       name,
       version: PLUGIN_VERSION,
       source: PLUGIN_SOURCE,
@@ -68,7 +68,7 @@ describe.each([fake, real])("the machine-wide record, as $name answers it", (kin
     const record = kind.recordHolding();
 
     expect(record.getNativeRegistrations(codex)).toBeUndefined();
-    expect(record.getPlugins(cursor)).toEqual([]);
+    expect(record.getRecordedPlugins(cursor)).toEqual([]);
   });
 
   it("refuses a registration written for a tool it does not hold", () => {
@@ -102,7 +102,7 @@ describe.each([fake, real])("the machine-wide record, as $name answers it", (kin
     record.updatePlugin(cursor, kind.aUserPlugin("sample-plugin", ["/B"]));
 
     expect(record.getNativeRegistrations(codex)?.pluginClaims).toEqual(REGISTRATIONS.pluginClaims);
-    expect(record.getPlugins(cursor).map((plugin) => plugin.dependents)).toEqual([["/B"]]);
+    expect(record.getRecordedPlugins(cursor).map((plugin) => plugin.dependents)).toEqual([["/B"]]);
   });
 
   it("releases only the detaching project from a user plugin", async () => {
@@ -118,7 +118,7 @@ describe.each([fake, real])("the machine-wide record, as $name answers it", (kin
       projectRoot: "/A",
     });
 
-    expect(repo.getCurrent()?.getPlugins(cursor)[0]?.dependents).toEqual(["/B"]);
+    expect(repo.getCurrent()?.getRecordedPlugins(cursor)[0]?.dependents).toEqual(["/B"]);
     expect(repo.saveCount).toBe(1);
   });
 

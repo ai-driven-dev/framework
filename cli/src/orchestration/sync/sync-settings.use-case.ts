@@ -1,6 +1,8 @@
+import type { RegistrationRecordRules } from "../../contexts/host-registration/contract/registration-record-rules.js";
 import type { LoadSyncContext } from "../../contexts/installation/application/sync/load-sync-context.use-case.js";
 import type { RecordActivation } from "../../contexts/installation/application/sync/record-activation.use-case.js";
 import type { SharedFrameworkSource } from "../../contexts/machine-claims/application/shared-source/shared-framework-source.use-case.js";
+import type { MachineClaimsRecording } from "../../contexts/machine-claims/contract/machine-claims-recording.js";
 import type { Scope } from "../../shared/domain/scope.js";
 import type { SyncSettingsRequest, SyncSettingsResult } from "../domain/sync-settings.model.js";
 import type { ActivateNativeTools } from "./activate-native-tools.use-case.js";
@@ -29,7 +31,9 @@ export interface SyncSettingsDeps {
   readonly settingsFiles: SyncToolSettingsFiles;
   readonly activateNativeTools: ActivateNativeTools;
   readonly recordActivation: RecordActivation;
+  readonly machineClaims: MachineClaimsRecording;
   readonly sharedSource: SharedFrameworkSource;
+  readonly records: Pick<RegistrationRecordRules, "afterActivation">;
 }
 
 function resultOf(activation: ActivationRecording["activation"]): SyncSettingsResult {
@@ -132,6 +136,7 @@ export class SyncSettings {
       manifest,
       activated: activation.outcomes,
       narrowed: options.marketplaceNames !== undefined,
+      afterActivation: this.deps.records.afterActivation,
     });
     if (wroteHashes || wroteRegistrations) await context.save();
     await this.recordMachineClaims(run);
@@ -141,8 +146,7 @@ export class SyncSettings {
     const { options, scope, context, activation } = run;
     const { projectRoot } = options;
     const { manifest, marketplaces } = context;
-    await this.deps.recordActivation.execute({
-      kind: "machine-claims",
+    await this.deps.machineClaims.execute({
       project: manifest,
       outcomes: activation.outcomes,
       marketplaces,

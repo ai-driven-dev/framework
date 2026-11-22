@@ -1,5 +1,5 @@
+import type { registrationRecordRules } from "../../../../src/composition/installation.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
-import type { RegistrationRecordRules } from "../../../../src/contexts/installation/ports/native-host.js";
 import type { Scope } from "../../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../../src/shared/domain/tool.js";
 import { FakeHostActions } from "../../../shared/testing/fake-host-actions.fake.js";
@@ -9,6 +9,8 @@ import type { FakeNativeSource } from "./fake-host-marketplace-sources.fake.js";
 import type { FixedHostRegistry } from "./fake-host-plugin-registry.fake.js";
 import { FakeMarketplaceRegistry } from "./fake-marketplace-registry.fake.js";
 import { userPluginRemover } from "./plugin-remover.builder.js";
+
+type RecordRules = typeof registrationRecordRules;
 
 export const NATIVE_REF = "test-plugin@real-catalog";
 export const OTHER_NATIVE_REF = "test-plugin@other-catalog";
@@ -35,7 +37,7 @@ export interface NativeRemovalOptions {
   legacy?: boolean;
   hostRegistryUnavailable?: boolean;
   hostRegistryUnreadable?: boolean;
-  records?: RegistrationRecordRules;
+  records?: RecordRules;
 }
 
 const catalogueOf = (ref: string): string => ref.split("@")[1];

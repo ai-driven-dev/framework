@@ -3,9 +3,12 @@ import type { ToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Lock } from "../../../shared/ports/lock.js";
 import type { Logger } from "../../../shared/ports/logger.js";
+import type {
+  PluginRefGuardQuery,
+  PluginRemovalClaims,
+} from "../contract/plugin-removal-claims.js";
 import type { MachineManifestRepository } from "../ports/machine-manifest.js";
 import type { MarketplaceListing } from "../ports/marketplace-listing.js";
-import type { PluginEnablementReach } from "../ports/user-scope-tool.js";
 import type { UserSourceReferences } from "../ports/user-source-references.js";
 import { isMachineOwnedNativeRef } from "./native-plugin-ownership.js";
 import { removalClaims } from "./removal-claims.js";
@@ -36,15 +39,6 @@ export interface PluginRemovalClaimsDeps {
     relativeSegments: string,
     label: string
   ) => Promise<string | null>;
-}
-
-/** The plugin ref a removal is about to disable, and the project it is removed from. */
-export interface PluginRefGuardQuery {
-  readonly binary: string;
-  readonly tool: PluginEnablementReach;
-  readonly ref: string;
-  readonly marketplaceAlias: string;
-  readonly projectRoot: string;
 }
 
 async function marketplaceIsSharedSource(
@@ -96,7 +90,7 @@ function pluginRefGuardMessage(deps: PluginRemovalClaimsDeps) {
  * read itself back as "another project". `ref` carries the host's own name for the marketplace,
  * `marketplaceAlias` stays the key this project's registry is read by; both must move together.
  */
-export function pluginRemovalClaims(deps: PluginRemovalClaimsDeps) {
+export function pluginRemovalClaims(deps: PluginRemovalClaimsDeps): PluginRemovalClaims {
   const { repo, fs } = deps;
   return {
     home: deps.home,

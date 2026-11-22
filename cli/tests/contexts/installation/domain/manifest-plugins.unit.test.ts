@@ -4,7 +4,7 @@ import {
   PluginNotFoundError,
 } from "../../../../src/contexts/installation/domain/installation.error.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../src/shared/domain/installation-file.js";
 import { ToolNotInManifestError } from "../../../../src/shared/domain/shared.error.js";
@@ -23,11 +23,11 @@ const makeManifest = (): Manifest => {
   return manifest;
 };
 
-const makePlugin = (name = "my-plugin") =>
-  InstalledPlugin.fromJSON({
+const makePlugin = (name = "my-plugin", version = "1.0.0") =>
+  RecordedPlugin.fromJSON({
     name,
     source: { kind: "github", repo: "owner/my-plugin" },
-    version: "1.0.0",
+    version,
     strict: false,
     files: { [`.claude/plugins/${name}/README.md`]: "c".repeat(32) },
     scope: "project",
@@ -92,7 +92,7 @@ describe("updatePlugin()", () => {
     manifest.addPlugin(CLAUDE, makePlugin("other"));
     manifest.addPlugin(CLAUDE, makePlugin("target"));
 
-    manifest.updatePlugin(CLAUDE, makePlugin("target").withVersion("2.0.0"));
+    manifest.updatePlugin(CLAUDE, makePlugin("target", "2.0.0"));
 
     expect(manifest.getPlugins(CLAUDE).map((p) => [p.name, p.version])).toStrictEqual([
       ["other", "1.0.0"],
@@ -119,7 +119,7 @@ describe("withPlugin()", () => {
     manifest.addPlugin(CLAUDE, makePlugin("target"));
     manifest.addPlugin(CLAUDE, makePlugin("last"));
 
-    manifest.withPlugin(CLAUDE, makePlugin("target").withVersion("2.0.0"));
+    manifest.withPlugin(CLAUDE, makePlugin("target", "2.0.0"));
 
     expect(manifest.getPlugins(CLAUDE).map((p) => [p.name, p.version])).toStrictEqual([
       ["first", "1.0.0"],

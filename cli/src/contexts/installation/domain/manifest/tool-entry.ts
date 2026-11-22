@@ -2,8 +2,8 @@ import type { InstallationFile } from "../../../../shared/domain/installation-fi
 import type { MergeFileEntry } from "../../../../shared/domain/merge.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import { DuplicatePluginError, PluginNotFoundError } from "../installation.error.js";
-import { InstalledPlugin } from "../plugins/installed-plugin.js";
 import type { PluginEntryData } from "../plugins/plugin-entry.js";
+import { RecordedPlugin } from "../plugins/recorded-plugin.js";
 import {
   type MergeFileEntryData,
   parseMergeFileEntries,
@@ -27,7 +27,7 @@ export interface ToolEntry {
   readonly version: string;
   readonly files: readonly TrackedFile[];
   readonly mergeFiles: readonly MergeFileEntry[];
-  readonly plugins: readonly InstalledPlugin[];
+  readonly plugins: readonly RecordedPlugin[];
   /** What this tool's own CLI was asked to register, or `undefined` for a tool with
    * no `nativeActivation`: see {@link NativeRegistrations}. */
   readonly nativeRegistrations?: NativeRegistrations;
@@ -47,7 +47,7 @@ export function createToolEntry(params: {
   version: string;
   files: InstallationFile[];
   mergeFiles: readonly MergeFileEntry[];
-  existingPlugins: readonly InstalledPlugin[];
+  existingPlugins: readonly RecordedPlugin[];
 }): ToolEntry {
   return {
     toolId: params.toolId,
@@ -58,27 +58,28 @@ export function createToolEntry(params: {
   };
 }
 
-export function addPluginToEntry(entry: ToolEntry, plugin: InstalledPlugin): ToolEntry {
-  if (entry.plugins.some((p) => p.name === plugin.name)) {
-    throw new DuplicatePluginError(plugin.name);
+export function addPluginToEntry(entry: ToolEntry, plugin: RecordedPlugin): ToolEntry {
+  if (entry.plugins.some((p) => p.plugin.name === plugin.plugin.name)) {
+    throw new DuplicatePluginError(plugin.plugin.name);
   }
   return { ...entry, plugins: [...entry.plugins, plugin] };
 }
 
 export function removePluginFromEntry(entry: ToolEntry, name: string): ToolEntry {
-  if (!entry.plugins.some((p) => p.name === name)) {
+  if (!entry.plugins.some((p) => p.plugin.name === name)) {
     throw new PluginNotFoundError(name);
   }
-  return { ...entry, plugins: entry.plugins.filter((p) => p.name !== name) };
+  return { ...entry, plugins: entry.plugins.filter((p) => p.plugin.name !== name) };
 }
 
-export function updatePluginInEntry(entry: ToolEntry, plugin: InstalledPlugin): ToolEntry {
-  if (!entry.plugins.some((p) => p.name === plugin.name)) {
-    throw new PluginNotFoundError(plugin.name);
-  }
+/** Replaces the plugin of that name. A recorded plugin replaces it whole; an installed plugin
+ * replaces only what installation owns, keeping the recorded provenance, host reference and claim. */
+export function updatePluginInEntry(entry: ToolEntry, plugin: RecordedPlugin): ToolEntry {
+  const { name } = plugin.plugin;
+  if (!entry.plugins.some((p) => p.plugin.name === name)) throw new PluginNotFoundError(name);
   return {
     ...entry,
-    plugins: entry.plugins.map((p) => (p.name === plugin.name ? plugin : p)),
+    plugins: entry.plugins.map((p) => (p.plugin.name === name ? plugin : p)),
   };
 }
 
@@ -89,7 +90,7 @@ export function trackedPathsInDirectory(entries: Iterable<ToolEntry>, dir: strin
     const paths = [
       ...entry.files.map((f) => f.relativePath),
       ...entry.mergeFiles.map((m) => m.relativePath),
-      ...entry.plugins.flatMap((plugin) => [...plugin.files.keys()]),
+      ...entry.plugins.flatMap((p) => [...p.plugin.files.keys()]),
     ];
     for (const path of paths) if (path.startsWith(dir)) tracked.add(path);
   }
@@ -115,7 +116,7 @@ export function parseToolEntry(toolId: ToolId, data: ToolEntryData): ToolEntry {
     version: data.version,
     files: parseTrackedFiles(data.files),
     mergeFiles: parseMergeFileEntries(data.mergeFiles ?? []),
-    plugins: (data.plugins ?? []).map((p) => InstalledPlugin.fromJSON(p)),
+    plugins: (data.plugins ?? []).map((p) => RecordedPlugin.fromJSON(p)),
     nativeRegistrations: parseNativeRegistrations(data.nativeRegistrations),
   };
 }

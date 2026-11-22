@@ -88,9 +88,9 @@ async function installStaleGithubPlugin(
 
   const manifest = await deps.manifestRepo.load();
   if (manifest === null) throw new Error("manifest not found");
-  const plugin = manifest.getPlugins(toolId).find((p) => p.name === "sample-plugin");
+  const plugin = manifest.getRecordedPlugins(toolId).find((p) => p.plugin.name === "sample-plugin");
   if (plugin === undefined) throw new Error("plugin not found");
-  manifest.updatePlugin(toolId, plugin.withVersion("0.0.1"));
+  manifest.updatePlugin(toolId, plugin.withPlugin(plugin.plugin.withVersion("0.0.1")));
   await deps.manifestRepo.save(manifest);
 }
 
@@ -102,8 +102,10 @@ describe("UpdatePlugin - Mode A marketplace tools (claude/codex/copilot)", () =>
     await installStaleGithubPlugin(deps, registry, TOOL.claude);
 
     const beforeManifest = await deps.manifestRepo.load();
-    const before = beforeManifest?.getPlugins(TOOL.claude).find((p) => p.name === "sample-plugin");
-    expect(before?.files.size).toBe(0);
+    const before = beforeManifest
+      ?.getRecordedPlugins(TOOL.claude)
+      .find((p) => p.plugin.name === "sample-plugin");
+    expect(before?.plugin.files.size).toBe(0);
     expect(deps.fs.listAll().some((p) => p.includes(".claude/plugins/"))).toBe(false);
 
     const updated = await makeUpdateUseCase(deps, registry).execute({
@@ -113,11 +115,13 @@ describe("UpdatePlugin - Mode A marketplace tools (claude/codex/copilot)", () =>
 
     expect(updated).toContain("sample-plugin");
     const manifest = await deps.manifestRepo.load();
-    const plugin = manifest?.getPlugins(TOOL.claude).find((p) => p.name === "sample-plugin");
-    expect(plugin?.version).toBe("1.0.0");
+    const plugin = manifest
+      ?.getRecordedPlugins(TOOL.claude)
+      .find((p) => p.plugin.name === "sample-plugin");
+    expect(plugin?.plugin.version).toBe("1.0.0");
     // Mode A's whole contract: register the reference, materialize nothing. Update must
     // not write plugin files that install never wrote, nor record them in the manifest.
-    expect(plugin?.files.size).toBe(0);
+    expect(plugin?.plugin.files.size).toBe(0);
     expect(deps.fs.listAll().some((p) => p.includes(".claude/plugins/"))).toBe(false);
   });
 
@@ -134,10 +138,11 @@ describe("UpdatePlugin - Mode A marketplace tools (claude/codex/copilot)", () =>
 
     const manifest = await deps.manifestRepo.load();
     const plugins =
-      manifest?.getPlugins(TOOL.claude).filter((p) => p.name === "sample-plugin") ?? [];
+      manifest?.getRecordedPlugins(TOOL.claude).filter((p) => p.plugin.name === "sample-plugin") ??
+      [];
     expect(plugins).toHaveLength(1);
     expect(plugins[0]?.marketplace).toBe("aidd-framework");
-    expect(plugins[0]?.source.kind).toBe("git-subdir");
+    expect(plugins[0]?.plugin.source.kind).toBe("git-subdir");
   });
 });
 
@@ -156,9 +161,11 @@ describe("UpdatePlugin - flat-mode tools are unaffected (regression guard)", () 
 
     expect(updated).toContain("sample-plugin");
     const manifest = await deps.manifestRepo.load();
-    const plugin = manifest?.getPlugins(TOOL.opencode).find((p) => p.name === "sample-plugin");
-    expect(plugin?.version).toBe("1.0.0");
-    expect(plugin?.files.size).toBeGreaterThan(0);
+    const plugin = manifest
+      ?.getRecordedPlugins(TOOL.opencode)
+      .find((p) => p.plugin.name === "sample-plugin");
+    expect(plugin?.plugin.version).toBe("1.0.0");
+    expect(plugin?.plugin.files.size).toBeGreaterThan(0);
     expect(
       deps.fs.getFile(join(PROJECT_ROOT, ".opencode/skills/sample-plugin/demo/SKILL.md"))
     ).toBe("# Demo skill v2");

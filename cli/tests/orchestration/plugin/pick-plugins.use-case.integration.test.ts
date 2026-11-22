@@ -145,8 +145,8 @@ describe("PickPlugins", () => {
     expect(result.marketplace.name).toBe("local");
     expect(result.installed).toEqual(["sample-plugin"]);
     const manifest = await deps.manifestRepo.load();
-    const plugins = manifest?.getPlugins(TOOL.claude) ?? [];
-    const installed = plugins.find((p) => p.name === "sample-plugin");
+    const plugins = manifest?.getRecordedPlugins(TOOL.claude) ?? [];
+    const installed = plugins.find((p) => p.plugin.name === "sample-plugin");
     expect(installed?.marketplace).toBe("local");
   });
 

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.fake.js";
@@ -236,7 +236,7 @@ describe("clean --scope user: report", () => {
       manifest.addTool(TOOL.cursor, "1.0.0", []);
       manifest.addPlugin(
         TOOL.cursor,
-        InstalledPlugin.fromMetadata({
+        RecordedPlugin.fromMetadata({
           name: "aidd-context",
           version: "1.0.0",
           source: { kind: "local", path: "/whatever" },

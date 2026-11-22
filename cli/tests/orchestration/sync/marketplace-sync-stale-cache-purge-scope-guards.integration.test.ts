@@ -32,9 +32,7 @@ describe("SyncSettings - when the stale cache is left alone", () => {
       manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
       marketplaceRegistry: registryWithSharedFramework(),
       logger: new CapturingLogger(),
-      activators: new Map([
-        [TOOL.claude, new FakeHostActions({ available: true, enablesPlugins: false })],
-      ]),
+      activators: new Map([[TOOL.claude, new FakeHostActions({ available: true })]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
     });
 
@@ -55,9 +53,7 @@ describe("SyncSettings - when the stale cache is left alone", () => {
       manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
       marketplaceRegistry: registryWithSharedFramework(),
       logger: new CapturingLogger(),
-      activators: new Map([
-        [TOOL.claude, new FakeHostActions({ available: true, enablesPlugins: false })],
-      ]),
+      activators: new Map([[TOOL.claude, new FakeHostActions({ available: true })]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
     });
 
@@ -76,9 +72,7 @@ describe("SyncSettings - when the stale cache is left alone", () => {
       manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
       marketplaceRegistry: projectWithMigratableEntry(),
       logger: new CapturingLogger(),
-      activators: new Map([
-        [TOOL.claude, new FakeHostActions({ available: true, enablesPlugins: false })],
-      ]),
+      activators: new Map([[TOOL.claude, new FakeHostActions({ available: true })]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
     });
 

@@ -4,7 +4,7 @@ import type { HostPluginRegistryReading } from "../../../src/contexts/host-regis
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/contract/built-marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.fake.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
@@ -116,7 +116,7 @@ describe("native activation: recorded refs", () => {
       manifest.addTool(claude, "test", []);
       manifest.addPlugin(
         claude,
-        InstalledPlugin.fromMetadata({
+        RecordedPlugin.fromMetadata({
           name: LIVE_PLUGIN,
           version: "1.0.0",
           source: { kind: "github", repo: "ai-driven-dev/framework" },
@@ -205,7 +205,7 @@ describe("native activation: recorded refs", () => {
       manifest.addTool(claude, "test", []);
       manifest.addPlugin(
         claude,
-        InstalledPlugin.fromMetadata({
+        RecordedPlugin.fromMetadata({
           name: PLUGIN_X,
           version: "1.0.0",
           source: { kind: "github", repo: "ai-driven-dev/framework" },
@@ -216,7 +216,7 @@ describe("native activation: recorded refs", () => {
       );
       manifest.addPlugin(
         claude,
-        InstalledPlugin.fromMetadata({
+        RecordedPlugin.fromMetadata({
           name: PLUGIN_Y,
           version: "1.0.0",
           source: { kind: "github", repo: "ai-driven-dev/framework" },

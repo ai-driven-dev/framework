@@ -6,9 +6,14 @@ import { isErrnoException } from "../../../../shared/domain/reading/json-file.js
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import type { MachineStatePurge } from "../../ports/machine-state-purge.js";
-import type { InstallationMarketplaceRegistry } from "../../ports/marketplace-sources.js";
-import type { CacheCandidateResolver } from "../../ports/native-host.js";
+import type { MachineStatePurge } from "../../ports/user-scope-purge.js";
+
+/** The path under `cacheRoot` when it stays inside it, else `null`. */
+export type CacheCandidateResolver = (
+  cacheRoot: string,
+  relativeSegments: string,
+  label: string
+) => Promise<string | null>;
 
 /** What a machine-scope purge asks of the machine, answered where each one lives. */
 export interface MachineStateGuards {
@@ -22,7 +27,6 @@ export interface MachineStateGuards {
 export interface PurgeMachineStateDeps {
   readonly fs: FileReader & FileWriter;
   readonly logger: Logger;
-  readonly marketplaceRegistry: InstallationMarketplaceRegistry;
   readonly guards: MachineStateGuards;
 }
 
@@ -50,8 +54,8 @@ export class PurgeMachineState implements MachineStatePurge {
     return [...versions].sort();
   }
 
-  /** Removes the whitelisted machine state, then the framework marketplace's user registration. */
-  async purge(projectRoot: string): Promise<void> {
+  /** Removes the whitelisted machine state. */
+  async purge(): Promise<void> {
     await this.purgeWhitelistedPath("cache/built", (candidate) =>
       this.deps.fs.deleteDirectory(candidate)
     );
@@ -76,11 +80,6 @@ export class PurgeMachineState implements MachineStatePurge {
     );
     await this.purgeWhitelistedPath(USER_SOURCE_REFERENCES_FILENAME, (candidate) =>
       this.deps.fs.deleteFile(candidate)
-    );
-    await this.deps.marketplaceRegistry.delete(
-      projectRoot,
-      this.deps.guards.frameworkMarketplaceName,
-      "user"
     );
   }
 

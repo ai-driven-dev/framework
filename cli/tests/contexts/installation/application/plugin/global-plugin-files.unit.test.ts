@@ -4,7 +4,7 @@ import {
   assertGlobalFilesWritable,
   readGlobalPluginFiles,
 } from "../../../../../src/contexts/installation/application/plugin/global-plugin-files.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { IsWithinUserScope } from "../../../../../src/contexts/machine-claims/contract/user-scope-containment.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
@@ -169,13 +169,13 @@ describe("assertGlobalFilesWritable", () => {
 
   it("allows rewriting a file the plugin owns", async () => {
     const fs = new InMemoryFileAdapter({ [under("agents", "owned.md")]: "old" });
-    const owned = InstalledPlugin.fromMetadata({
+    const owned = RecordedPlugin.fromMetadata({
       name: "aidd-dev",
       version: "1.0.0",
       source: { kind: "local", path: "/fw/plugins/aidd-dev" },
       strict: true,
       scope: "user",
-    }).withFiles(new Map([["agents/owned.md", "0".repeat(32)]]));
+    }).withFiles(new Map([["agents/owned.md", "0".repeat(32)]])).plugin;
 
     await expect(
       assertGlobalFilesWritable({

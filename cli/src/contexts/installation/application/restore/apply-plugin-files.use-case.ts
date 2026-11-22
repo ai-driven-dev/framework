@@ -7,7 +7,7 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { PluginTranslationMode } from "../../../tools/contract/tool-vocabulary.js";
 import type { Manifest } from "../../domain/manifest.js";
-import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { LoadDistribution } from "../../ports/plugin/load-plugin-distribution.js";
 import { placementModeOf } from "../materialize/plugin-placement.js";
 import { rematerializePlugin } from "../materialize/rematerialize-plugin.js";
@@ -19,7 +19,7 @@ import { hashOutputFiles } from "../shared/hash-output-files.js";
 
 interface ApplyPluginFilesRequest {
   toolId: AiToolId;
-  plugin: InstalledPlugin;
+  plugin: RecordedPlugin;
   tool: AiToolProfile;
   projectRoot: string;
   cacheDir: string;
@@ -44,8 +44,8 @@ export class ApplyPluginFiles {
   constructor(private readonly deps: ApplyPluginFilesDeps) {}
 
   async execute(options: ApplyPluginFilesRequest): Promise<number> {
-    if (options.plugin.scope === "user") return 0;
-    const dist = await this.deps.loadDistribution(options.plugin.source, options.cacheDir);
+    if (options.plugin.plugin.scope === "user") return 0;
+    const dist = await this.deps.loadDistribution(options.plugin.plugin.source, options.cacheDir);
     const mode = placementModeOf(options.tool);
     if (
       mode !== null &&
@@ -72,11 +72,11 @@ export class ApplyPluginFiles {
     // directory scan: so it cannot touch files the plugin never wrote.
     if (mode === "marketplace") {
       const baseDir = scopeBaseOf(tool, {
-        scope: plugin.scope,
+        scope: plugin.plugin.scope,
         projectRoot: projectRoot,
         homedir: () => this.deps.builtDeps.homedir(),
       });
-      await deleteOldFiles(plugin.files, baseDir, this.deps.fs);
+      await deleteOldFiles(plugin.plugin.files, baseDir, this.deps.fs);
     }
     return rematerializePlugin(
       { dist, tool, mode, plugin, projectRoot, manifest, hooksGuard: { overwriteEdited: force } },

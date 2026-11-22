@@ -5,7 +5,8 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 // biome-ignore lint/plugin: hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
-import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../domain/project-layout.js";
 import type { LoadDistribution } from "../../ports/plugin/load-plugin-distribution.js";
 import type {
@@ -38,7 +39,7 @@ export interface PluginMaterializerDeps {
 export class PluginMaterializer implements UserPluginMaterialization {
   constructor(private readonly deps: PluginMaterializerDeps) {}
 
-  async update(request: UserPluginUpdateRequest): Promise<InstalledPlugin | null> {
+  async update(request: UserPluginUpdateRequest): Promise<RecordedPlugin | null> {
     const plan = await this.planUpdate({ ...request, rebuild: false });
     return plan === null ? null : this.applyUpdate(plan, request);
   }
@@ -46,7 +47,8 @@ export class PluginMaterializer implements UserPluginMaterialization {
   async planUpdate(
     request: UserPluginUpdateRequest & { readonly rebuild: boolean }
   ): Promise<PlannedUserPluginFileUpdate | null> {
-    const { plugin, tool, projectRoot, logger, rebuild, isWithinUserScope } = request;
+    const { plugin: recorded, tool, projectRoot, logger, rebuild, isWithinUserScope } = request;
+    const { plugin, marketplace } = recorded;
     const cacheDir = this.deps.globalCacheDir?.() ?? join(projectRoot, PLUGIN_CACHE_SUBDIR);
     const dist = await this.deps.loadDistribution(plugin.source, cacheDir, { forceRefresh: true });
     if (!rebuild && compareSemver(dist.manifest.version, plugin.version) <= 0) return null;
@@ -54,6 +56,7 @@ export class PluginMaterializer implements UserPluginMaterialization {
       dist,
       tool,
       plugin,
+      marketplace,
       projectRoot,
     });
     const home = this.deps.builtDeps.homedir();
@@ -65,22 +68,23 @@ export class PluginMaterializer implements UserPluginMaterialization {
     }
     await assertUserPluginWritable(this.deps, { plugin, tool, files, home, isWithinUserScope });
     const baseDir = scopeBaseOf(tool, { scope: "user", projectRoot, homedir: () => home });
-    const next = InstalledPlugin.fromDistribution({
+    const next = RecordedPlugin.fromDistribution({
       dist,
       source: plugin.source,
       files,
       scope: "user",
       componentPaths,
-      marketplace: plugin.marketplace,
-    }).withDependents(plugin.dependents);
-    return { plugin, tool, home, baseDir, files, oldSafe, next };
+      marketplace,
+    }).withDependents(recorded.dependents);
+    return { plugin: recorded, tool, home, baseDir, files, oldSafe, next };
   }
 
   async applyUpdate(
     plan: PlannedUserPluginFileUpdate,
     request: Pick<UserPluginUpdateRequest, "logger" | "isWithinUserScope">
-  ): Promise<InstalledPlugin> {
-    const { plugin, tool, home, files, baseDir } = plan;
+  ): Promise<RecordedPlugin> {
+    const { tool, home, files, baseDir } = plan;
+    const { plugin } = plan.plugin;
     const { present, oldSafe } = await this.recordedSafeFiles(plugin, tool, {
       logger: request.logger,
       home,

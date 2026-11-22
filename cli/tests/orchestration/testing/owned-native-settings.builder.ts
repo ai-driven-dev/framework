@@ -2,7 +2,7 @@ import { resolve } from "node:path";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { NativeMarketplaceSource } from "../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../src/shared/domain/installation-file.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
@@ -60,7 +60,7 @@ function settingsFilesOf(toolId: AiToolId, settings: string) {
 }
 
 function reviewPlugin(name: string, alias: string) {
-  return InstalledPlugin.fromMetadata({
+  return RecordedPlugin.fromMetadata({
     name: `review-${name}`,
     version: "1.0.0",
     source: { kind: "local", path: `/sources/${name}/review` },

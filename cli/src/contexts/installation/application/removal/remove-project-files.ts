@@ -97,7 +97,7 @@ export class RemoveProjectFiles {
     const { projectRoot, hooksGuard } = project;
     if (!this.tools.isAiTool(toolId)) return 0;
     let count = 0;
-    for (const plugin of manifest.getPlugins(toolId)) {
+    for (const plugin of manifest.getRecordedPlugins(toolId)) {
       if (
         await removeProjectHooks({
           fs: this.deps.fs,

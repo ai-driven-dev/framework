@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
@@ -17,6 +17,8 @@ import {
   provenHostPlugins,
   RecordingActivator,
   RecordingFileAdapter,
+  seedWhitelist,
+  USER_CONFIG_DIR,
 } from "../testing/clean-user-scope.builder.js";
 import { userScopeCleaner } from "../testing/user-scope-cleaner.builder.js";
 
@@ -180,7 +182,7 @@ describe("clean --scope user: native preflight", () => {
     fs.setFile(projectFile, "project bytes");
     const machine = Manifest.create();
     machine.addTool(TOOL.cursor, "1.0.0", []);
-    const shared = InstalledPlugin.fromMetadata({
+    const shared = RecordedPlugin.fromMetadata({
       name: "shared",
       version: "1.0.0",
       source: { kind: "local", path: "/source" },
@@ -192,7 +194,7 @@ describe("clean --scope user: native preflight", () => {
     machine.addPlugin(TOOL.cursor, shared);
     machine.addPlugin(
       TOOL.cursor,
-      InstalledPlugin.fromMetadata({
+      RecordedPlugin.fromMetadata({
         name: "local",
         version: "1.0.0",
         source: { kind: "local", path: "/source" },
@@ -216,8 +218,8 @@ describe("clean --scope user: native preflight", () => {
     expect(
       repo
         .getCurrent()
-        ?.getPlugins(TOOL.cursor)
-        .find((plugin) => plugin.name === "shared")?.dependents
+        ?.getRecordedPlugins(TOOL.cursor)
+        .find((plugin) => plugin.plugin.name === "shared")?.dependents
     ).toEqual(["/B"]);
 
     machine.updatePlugin(TOOL.cursor, shared.withDependents([]));
@@ -226,6 +228,37 @@ describe("clean --scope user: native preflight", () => {
     expect(fs.has(userFile)).toBe(false);
     expect(fs.order).toContain(`deleteFile:${userFile}`);
     expect(fs.has(projectFile)).toBe(true);
+  });
+
+  it("unregisters the framework marketplace after the last whitelisted file, before the manifest", async () => {
+    const order: string[] = [];
+    class RecordingRegistry extends InMemoryMarketplaceRegistry {
+      override async delete(root: string, name: string, scope: Scope): Promise<void> {
+        order.push(`unregister:${name}:${scope}`);
+        return super.delete(root, name, scope);
+      }
+    }
+    class RecordingRepository extends InMemoryManifestRepository {
+      override async delete(): Promise<void> {
+        order.push("deleteManifest");
+        return super.delete();
+      }
+    }
+    const fs = new RecordingFileAdapter(order);
+    await seedWhitelist(fs);
+    const useCase = userScopeCleaner({
+      fs,
+      repo: new RecordingRepository(Manifest.create()),
+      marketplaceRegistry: new RecordingRegistry(),
+    });
+
+    await useCase.execute({ projectRoot: "/A", force: true });
+
+    expect(order.slice(-3)).toEqual([
+      `deleteFile:${join(USER_CONFIG_DIR, "references.json")}`,
+      "unregister:aidd-framework:user",
+      "deleteManifest",
+    ]);
   });
 
   it("retains canonical claims if the user catalogue registry refuses the final delete", async () => {

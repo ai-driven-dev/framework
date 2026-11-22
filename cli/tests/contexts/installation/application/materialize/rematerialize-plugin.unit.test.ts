@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { rematerializePlugin } from "../../../../../src/contexts/installation/application/materialize/rematerialize-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
@@ -12,7 +12,7 @@ const NO_COMPONENTS = { skills: [], commands: [], agents: [], rules: [], hooks: 
 
 function rematerialize() {
   const tool = registeredTools().aiProfile(TOOL.claude);
-  const plugin = InstalledPlugin.fromMetadata({
+  const plugin = RecordedPlugin.fromMetadata({
     name: "aidd-dev",
     version: "1.0.0",
     source: { kind: "local", path: "/p" },
@@ -39,7 +39,7 @@ function rematerialize() {
 
 async function rematerializeOnCursor(): Promise<number> {
   const tool = registeredTools().aiProfile(TOOL.cursor);
-  const plugin = InstalledPlugin.fromMetadata({
+  const plugin = RecordedPlugin.fromMetadata({
     name: "aidd-dev",
     version: "1.0.0",
     source: { kind: "local", path: "/p" },
@@ -76,9 +76,9 @@ describe("rematerializePlugin()", () => {
 
     await count;
 
-    expect(manifest.getPlugins(TOOL.claude).map((p) => [p.name, p.marketplace])).toStrictEqual([
-      ["aidd-dev", "aidd-framework"],
-    ]);
+    expect(
+      manifest.getRecordedPlugins(TOOL.claude).map((p) => [p.plugin.name, p.marketplace])
+    ).toStrictEqual([["aidd-dev", "aidd-framework"]]);
   });
 
   it("reports zero for a placement that writes no files", async () => {

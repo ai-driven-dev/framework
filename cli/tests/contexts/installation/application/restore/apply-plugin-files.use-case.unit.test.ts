@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ApplyPluginFiles } from "../../../../../src/contexts/installation/application/restore/apply-plugin-files.use-case.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import {
   buildInstallationDeps,
   initAndInstall,
@@ -39,7 +39,7 @@ async function installedSample() {
   });
   const manifest = await deps.manifestRepo.load();
   if (manifest === null) throw new Error("the project manifest was not initialised");
-  const plugin = present(manifest.getPlugins(TOOL.claude)[0]);
+  const plugin = present(manifest.getRecordedPlugins(TOOL.claude)[0]);
   const apply = new ApplyPluginFiles({
     fs: deps.fs,
     loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
@@ -84,7 +84,7 @@ describe("ApplyPluginFiles", () => {
   it("leaves a user-scope plugin to its own restore", async () => {
     const { deps, apply, command } = await installedSample();
     await deps.fs.deleteFile(GREET_PATH);
-    const plugin = InstalledPlugin.fromJSON({ ...command.plugin.toJSON(), scope: "user" });
+    const plugin = RecordedPlugin.fromJSON({ ...command.plugin.toJSON(), scope: "user" });
 
     const restored = await apply.execute({ ...command, plugin, fileFilter: () => true });
 

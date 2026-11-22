@@ -29,10 +29,10 @@ describe("registerMarketplacePlugin", () => {
         manifest,
         marketplace: "aidd-framework",
       });
-      const plugins = manifest.getPlugins(TOOL.claude);
-      const installed = plugins.find((p) => p.name === "aidd-context");
+      const plugins = manifest.getRecordedPlugins(TOOL.claude);
+      const installed = plugins.find((p) => p.plugin.name === "aidd-context");
       expect(installed).toBeDefined();
-      expect(installed?.files.size).toBe(0);
+      expect(installed?.plugin.files.size).toBe(0);
       expect(installed?.marketplace).toBe("aidd-framework");
     });
 
@@ -66,11 +66,11 @@ describe("registerMarketplacePlugin", () => {
         manifest,
         marketplace: undefined,
       });
-      const plugins = manifest.getPlugins(TOOL.claude);
-      const installed = plugins.find((p) => p.name === "test-plugin");
+      const plugins = manifest.getRecordedPlugins(TOOL.claude);
+      const installed = plugins.find((p) => p.plugin.name === "test-plugin");
       expect(installed).toBeDefined();
       expect(installed?.marketplace).toBeUndefined();
-      expect(installed?.files.size).toBe(0);
+      expect(installed?.plugin.files.size).toBe(0);
     });
   });
 });

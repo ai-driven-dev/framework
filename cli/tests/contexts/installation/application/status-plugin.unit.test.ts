@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ReportStatus } from "../../../../src/contexts/installation/application/report-status.use-case.js";
 import { DetectPluginDrift } from "../../../../src/contexts/installation/application/shared/detect-plugin-drift.use-case.js";
 import type { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
 import { FileHash } from "../../../../src/shared/domain/file-hash.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
@@ -18,7 +18,7 @@ function makeManifest(pluginFileHash: string): Manifest {
     .withTool(TOOL.claude, [])
     .withPlugin(
       TOOL.claude,
-      InstalledPlugin.fromJSON({
+      RecordedPlugin.fromJSON({
         name: "test-plugin",
         source: { kind: "local", path: "/some/path" },
         version: "1.0.0",

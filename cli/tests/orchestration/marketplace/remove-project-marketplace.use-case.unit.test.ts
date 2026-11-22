@@ -8,7 +8,7 @@ import {
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { RemoveProjectPlugin } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
@@ -66,7 +66,7 @@ describe("RemoveProjectMarketplace", () => {
     const { useCase, registry, manifestRepo, fs } = buildUseCase();
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "1.0.0", []);
-    const plugin = InstalledPlugin.fromJSON({
+    const plugin = RecordedPlugin.fromJSON({
       name: "sample",
       source: { kind: "github", repo: "owner/sample" },
       version: "1.0.0",
@@ -116,7 +116,7 @@ describe("RemoveProjectMarketplace", () => {
     const pluginKey = "aidd-context/commands/hello.md";
     manifest.addPlugin(
       TOOL.cursor,
-      InstalledPlugin.fromJSON({
+      RecordedPlugin.fromJSON({
         name: "aidd-context",
         source: { kind: "github", repo: "owner/aidd-context" },
         version: "1.0.0",
@@ -164,7 +164,7 @@ describe("RemoveProjectMarketplace", () => {
     const pluginKey = "aidd-context/commands/hello.md";
     manifest.addPlugin(
       TOOL.cursor,
-      InstalledPlugin.fromJSON({
+      RecordedPlugin.fromJSON({
         name: "aidd-context",
         source: { kind: "github", repo: "owner/aidd-context" },
         version: "1.0.0",

@@ -4,7 +4,7 @@ import {
   type RemovalClaims,
   RemoveProjectPlugin,
 } from "../../../../../src/contexts/installation/application/removal/remove-project-plugin.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../../../src/shared/domain/tool.js";
@@ -18,7 +18,7 @@ const MCP_FILE = join(ROOT, "opencode.json");
 const tool = registeredTools().aiProfile(TOOL.opencode);
 
 function plugin(options: { scope?: Scope; mcp?: ReadonlyMap<string, string> } = {}) {
-  const base = InstalledPlugin.fromJSON({
+  const base = RecordedPlugin.fromJSON({
     name: "aidd-dev",
     source: { kind: "local", path: "/fixture" },
     version: "1.0.0",
@@ -26,7 +26,7 @@ function plugin(options: { scope?: Scope; mcp?: ReadonlyMap<string, string> } = 
     files: { "skills/a.md": "h1", "skills/b.md": "h2" },
     scope: options.scope ?? "project",
   });
-  return options.mcp === undefined ? base : InstalledPlugin.withMcpEntries(base, options.mcp);
+  return options.mcp === undefined ? base : base.withMcpEntries(options.mcp);
 }
 
 /** An opencode config holding one server contributed by the plugin, and its recorded digests. */
@@ -46,7 +46,7 @@ const HOOK_SCRIPT = `${cursorHookScriptDir("aidd-dev")}run.js`;
 
 /** A plugin that copied one hook script, recorded by the digest of its installed bytes. */
 function pluginWithHookScript() {
-  return InstalledPlugin.withProjectHooks(plugin(), {
+  return plugin().withProjectHooks({
     entries: [],
     scripts: new Map([[HOOK_SCRIPT, FileHash.of("// installed").value]]),
   });
@@ -178,7 +178,11 @@ describe("RemoveProjectPlugin.deleteLocalFiles", () => {
     fs.setFile(join(ROOT, "skills/b.md"), "b");
     fs.setFile(join(ROOT, "skills/mine.md"), "mine");
 
-    await new RemoveProjectPlugin(fs, () => "/home/dev").deleteLocalFiles(tool, plugin(), ROOT);
+    await new RemoveProjectPlugin(fs, () => "/home/dev").deleteLocalFiles(
+      tool,
+      plugin().plugin,
+      ROOT
+    );
 
     expect(fs.has(join(ROOT, "skills/a.md"))).toBe(false);
     expect(fs.has(join(ROOT, "skills/b.md"))).toBe(false);
@@ -197,8 +201,8 @@ describe("RemoveProjectPlugin.detachClaims", () => {
       () => "/home/dev",
       claims
     ).detachClaims(ROOT, refs, [
-      { toolId: TOOL.claude, plugin: plugin({ scope: "user" }) },
-      { toolId: TOOL.cursor, plugin: plugin({ scope: "project" }) },
+      { toolId: TOOL.claude, plugin: plugin({ scope: "user" }).plugin },
+      { toolId: TOOL.cursor, plugin: plugin({ scope: "project" }).plugin },
     ]);
 
     expect(claims.nativeRefs).toEqual([refs]);
@@ -210,7 +214,7 @@ describe("RemoveProjectPlugin.detachClaims", () => {
       new RemoveProjectPlugin(new InMemoryFileAdapter(), () => "/home/dev").detachClaims(
         ROOT,
         refs,
-        [{ toolId: TOOL.claude, plugin: plugin({ scope: "user" }) }]
+        [{ toolId: TOOL.claude, plugin: plugin({ scope: "user" }).plugin }]
       )
     ).resolves.toBeUndefined();
   });

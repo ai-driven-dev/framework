@@ -186,7 +186,7 @@ async function sync(setup: Setup = {}) {
   const { manifestRepo, registry } = await projectWithOneMarketplace(toolId, aiddName);
   const builtDir = `/built/${toolId}`;
   await writeCatalogs(fs, setup, catalogName, builtDir);
-  const activator = new FakeHostActions({ available: true, enablesPlugins: false });
+  const activator = new FakeHostActions({ available: true });
   const hostReading = toolId === "claude" ? await setup.hostReader?.read() : undefined;
   const currentSource = provenanceOf(toolId, hostReading?.entries?.get(catalogName));
   const machine = ownedMachineOf(setup, aiddName, catalogName, currentSource);

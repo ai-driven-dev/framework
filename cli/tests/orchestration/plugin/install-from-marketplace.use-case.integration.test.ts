@@ -63,8 +63,8 @@ describe("InstallFromMarketplace", () => {
 
     expect(result.marketplaceName).toBe("mkt1");
     const manifest = await deps.manifestRepo.load();
-    const plugins = manifest?.getPlugins(TOOL.claude) ?? [];
-    const installed = plugins.find((p) => p.name === "sample-plugin");
+    const plugins = manifest?.getRecordedPlugins(TOOL.claude) ?? [];
+    const installed = plugins.find((p) => p.plugin.name === "sample-plugin");
     expect(installed?.marketplace).toBe("mkt1");
   });
 
@@ -259,12 +259,12 @@ describe("InstallFromMarketplace", () => {
     });
 
     const manifest = await deps.manifestRepo.load();
-    const installed = (manifest?.getPlugins(TOOL.claude) ?? []).find(
-      (p) => p.name === "sample-plugin"
+    const installed = (manifest?.getRecordedPlugins(TOOL.claude) ?? []).find(
+      (p) => p.plugin.name === "sample-plugin"
     );
     expect(installed?.marketplace).toBe("aidd-framework");
-    expect(installed?.version).toBe("1.0.0");
-    expect(installed?.files.size).toBe(0);
+    expect(installed?.plugin.version).toBe("1.0.0");
+    expect(installed?.plugin.files.size).toBe(0);
   });
 
   it("autoSelect resolves multi-match in non-interactive mode", async () => {

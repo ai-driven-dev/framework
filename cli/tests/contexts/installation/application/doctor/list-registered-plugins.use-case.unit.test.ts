@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { registrationRecordRules } from "../../../../../src/composition/installation.js";
-import { ListRegisteredPlugins } from "../../../../../src/contexts/installation/application/doctor/list-registered-plugins.use-case.js";
+import {
+  ListRegisteredPlugins,
+  type ListRegisteredPluginsRequest,
+} from "../../../../../src/contexts/installation/application/doctor/list-registered-plugins.use-case.js";
 import { LoadManifest } from "../../../../../src/contexts/installation/application/doctor/load-manifest.use-case.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { aManifest } from "../../testing/manifest.builder.js";
@@ -10,10 +13,13 @@ import { aManifest } from "../../testing/manifest.builder.js";
 const source = { kind: "local", path: "/p" } as const;
 
 function listerOver(manifest: ReturnType<ReturnType<typeof aManifest>["build"]>) {
-  return new ListRegisteredPlugins(
-    new LoadManifest(new InMemoryManifestRepository(manifest)),
-    registrationRecordRules
+  const lister = new ListRegisteredPlugins(
+    new LoadManifest(new InMemoryManifestRepository(manifest))
   );
+  return {
+    execute: (command: Pick<ListRegisteredPluginsRequest, "allowedIds">) =>
+      lister.execute({ ...command, records: registrationRecordRules }),
+  };
 }
 
 describe("ListRegisteredPlugins", () => {
@@ -35,7 +41,7 @@ describe("ListRegisteredPlugins", () => {
       .withTool(TOOL.claude, [])
       .withPlugin(
         TOOL.claude,
-        InstalledPlugin.fromMetadata({
+        RecordedPlugin.fromMetadata({
           name: "a",
           version: "1.0.0",
           source,
@@ -46,7 +52,7 @@ describe("ListRegisteredPlugins", () => {
       )
       .withPlugin(
         TOOL.claude,
-        InstalledPlugin.fromMetadata({
+        RecordedPlugin.fromMetadata({
           name: "b",
           version: "1.0.0",
           source,

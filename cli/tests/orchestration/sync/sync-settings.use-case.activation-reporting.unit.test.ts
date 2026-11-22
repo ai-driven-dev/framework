@@ -53,26 +53,15 @@ describe("a marketplace no plugin points at", () => {
     await sync({
       marketplaceNames: ["aidd-framework", "unused"],
       ensureBuilt: recordingBuild,
-      enablesPlugins: true,
     });
 
     expect(built).toContain("unused");
   });
-  it("is registered anyway, whether or not the tool enables its own plugins", async () => {
+  it("is registered anyway, without a plugin attached to it", async () => {
     // Declaring a marketplace and installing a plugin from it are two acts, and a person does
     // the first alone all the time; measured, the real binary knew of neither registered one.
     const { activator } = await sync({
       marketplaceNames: ["aidd-framework", "unused"],
-      enablesPlugins: true,
-    });
-
-    expect(activator.addedMarketplaces).toHaveLength(2);
-  });
-
-  it("is registered anyway when the tool does not enable plugins itself", async () => {
-    const { activator } = await sync({
-      marketplaceNames: ["aidd-framework", "unused"],
-      enablesPlugins: false,
     });
 
     expect(activator.addedMarketplaces).toHaveLength(2);
@@ -96,7 +85,6 @@ describe("what execute reports about activation", () => {
 
   it("collects a best-effort failure in `warnings`, the same content the logger gets", async () => {
     const { result, logger } = await sync({
-      enablesPlugins: true,
       failOnPlugins: ["aidd-context@aidd-framework"],
     });
 
@@ -130,7 +118,6 @@ describe("what a step that could not complete leaves in warnings and errors", ()
 
   it("names the plugin ref and the CLI's own reason when enabling it fails", async () => {
     const { result } = await sync({
-      enablesPlugins: true,
       failOnPlugins: ["aidd-context@aidd-framework"],
     });
 

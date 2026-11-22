@@ -2,7 +2,6 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { NativeMarketplaceRegistration } from "../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
 import {
-  claimsOnMarketplace,
   isQualifiedRef,
   marketplaceOf,
   pluginRefsOf,
@@ -14,7 +13,6 @@ import {
   refsOnHosts,
   registrationPreview,
   registrationRecordData,
-  withoutClaimedRef,
   withoutMarketplace,
   withoutRef,
 } from "../../../../../src/contexts/host-registration/domain/record/registration-record.js";
@@ -191,57 +189,28 @@ describe("registration record queries and removals", () => {
     });
   });
 
-  describe("withoutClaimedRef", () => {
-    it("drops the ref and its claim, keeping the other claims by identity", () => {
-      const record = recordWith();
-      const next = withoutClaimedRef(record, "a@catalog");
-      expect(next.pluginRefs).toEqual(["b@second", "c@catalog"]);
-      expect(next.pluginClaims).toEqual([claim("b@second")]);
-      expect(next.pluginClaims?.[0]).toBe(record.pluginClaims[1]);
-    });
-
-    it("writes an empty claims list when the record had none, after the existing keys", () => {
-      const { pluginClaims: _claims, ...bare } = recordWith();
-      const next = withoutClaimedRef(bare, "a@catalog");
-      expect(next.pluginClaims).toEqual([]);
-      expect(Object.keys(next)).toEqual(["binary", "marketplaces", "pluginRefs", "pluginClaims"]);
-    });
-  });
-
   describe("withoutMarketplace", () => {
-    it("drops the alias, and the refs and claims on its host name", () => {
+    it("drops the alias, and the refs on its host name, leaving the claims as they were", () => {
       const record = recordWith();
       const next = withoutMarketplace(record, "local");
       expect(next.marketplaces).toEqual([{ alias: "other", hostName: "second" }]);
       expect(next.marketplaces[0]).toEqual(record.marketplaces[1]);
       expect(next.pluginRefs).toEqual(["b@second"]);
-      expect(next.pluginClaims).toEqual([claim("b@second")]);
-      expect(next.pluginClaims[0]).toBe(record.pluginClaims[1]);
+      expect(next.pluginClaims).toBe(record.pluginClaims);
     });
 
     it("keeps every ref when the alias is unknown, even one ending in the word undefined", () => {
-      const record = {
-        ...recordWith(),
-        pluginRefs: ["a@undefined"],
-        pluginClaims: [claim("a@undefined")],
-      };
-      const next = withoutMarketplace(record, "missing");
-      expect(next.pluginRefs).toEqual(["a@undefined"]);
-      expect(next.pluginClaims).toEqual([claim("a@undefined")]);
+      const record = { ...recordWith(), pluginRefs: ["a@undefined"] };
+      expect(withoutMarketplace(record, "missing").pluginRefs).toEqual(["a@undefined"]);
     });
 
-    it("always writes the claims list and keeps the key order", () => {
+    it("keeps the key order and writes no claims key a record never had", () => {
       const { pluginClaims: _claims, ...bare } = recordWith();
-      const next = withoutMarketplace(bare, "local");
-      expect(next.pluginClaims).toEqual([]);
-      expect(Object.keys(withoutMarketplace(recordWith(), "local"))).toEqual(
-        Object.keys(recordWith())
-      );
-    });
-
-    it("returns the record unchanged in content when the alias is unknown", () => {
-      const record = recordWith();
-      expect(withoutMarketplace(record, "missing")).toEqual(record);
+      expect(Object.keys(withoutMarketplace(bare, "local"))).toEqual([
+        "binary",
+        "marketplaces",
+        "pluginRefs",
+      ]);
     });
   });
 
@@ -288,25 +257,6 @@ describe("registration record queries and removals", () => {
 
     it("finds nothing for an alias that was never registered", () => {
       expect(marketplaceOf(recordWith(), "missing")).toBeUndefined();
-    });
-  });
-
-  describe("claimsOnMarketplace", () => {
-    it("keeps the claims on the host name of the alias, by identity", () => {
-      const record = recordWith();
-      const claims = claimsOnMarketplace(record, "other");
-      expect(claims).toEqual([claim("b@second")]);
-      expect(claims[0]).toBe(record.pluginClaims[1]);
-    });
-
-    it("keeps no claim for an alias that was never registered", () => {
-      const record = { ...recordWith(), pluginClaims: [claim("a@undefined")] };
-      expect(claimsOnMarketplace(record, "missing")).toEqual([]);
-    });
-
-    it("reads a record without claims", () => {
-      const { pluginClaims: _claims, ...bare } = recordWith();
-      expect(claimsOnMarketplace(bare, "local")).toEqual([]);
     });
   });
 

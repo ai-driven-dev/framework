@@ -1,5 +1,4 @@
 import type { Scope } from "../../../../shared/domain/scope.js";
-import type { PluginSource } from "../../../../shared/domain/source.js";
 
 // Branding closes a hole the compiler could not see: three `ReadonlyMap<string, string>` fields
 // told apart only by name meant a value meant for one could be assigned to another. The brand is a
@@ -54,19 +53,4 @@ export interface PluginEntryData {
   marketplace?: string;
   /** Canonical project roots using machine-owned user-scope files. Only the user manifest owns this list. */
   dependents?: string[];
-}
-
-/** What an installed plugin is made of, so a changed copy spreads one plugin into another. */
-export interface PluginFields {
-  name: string;
-  source: PluginSource;
-  version: string;
-  strict: boolean;
-  files: PathHashMap;
-  scope: Scope;
-  componentPaths: ComponentPathMap;
-  mcpEntries: McpDigestMap;
-  projectHooks?: ProjectHooksProvenance;
-  marketplace?: string;
-  dependents: readonly string[];
 }

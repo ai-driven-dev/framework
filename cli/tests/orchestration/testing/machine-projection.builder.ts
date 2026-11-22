@@ -5,7 +5,7 @@ import type { HostMarketplaceRegistry } from "../../../src/contexts/host-registr
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/contract/built-marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
@@ -96,7 +96,7 @@ export function catalogFile(name: string, pluginNames: readonly string[]): strin
 }
 
 export function pluginIn(alias: string, scope: Scope, name = "test-plugin", path = "/source") {
-  return InstalledPlugin.fromMetadata({
+  return RecordedPlugin.fromMetadata({
     name,
     version: "1.0.0",
     source: { kind: "local", path },

@@ -7,7 +7,7 @@ import type { HostPluginRegistry } from "../../../src/contexts/host-registration
 import { PluginMaterializer } from "../../../src/contexts/installation/application/plugin/plugin-materializer.js";
 import { UpdateUserPluginFiles } from "../../../src/contexts/installation/application/plugin/update-user-plugin-files.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { isStrictlyWithinUserScope } from "../../../src/contexts/machine-claims/domain/user-scope-containment.js";
 import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.use-case.js";
 import { PluginDistribution } from "../../../src/shared/domain/plugin/plugin-distribution.js";
@@ -38,7 +38,7 @@ function fixture(
     available?: boolean;
     hostRefs?: ReadonlyMap<string, { enabled: boolean; scope?: Scope }>;
     failOnUpdate?: boolean;
-    installed?: InstalledPlugin;
+    installed?: RecordedPlugin;
     distribution?: PluginDistribution;
     ownsSource?: boolean;
   } = {}
@@ -95,7 +95,6 @@ function fixture(
           builtDeps: fakeBuiltDeps(fs),
         }),
         logger,
-        records: registrationRecordRules,
       },
       registeredTools()
     ),
@@ -104,7 +103,8 @@ function fixture(
       new Map([[toolId, reader]]),
       options.ownsSource ? new Map([[toolId, sources]]) : undefined
     ),
-    isStrictlyWithinUserScope
+    isStrictlyWithinUserScope,
+    registrationRecordRules
   );
   const execute = (pluginName: string | readonly string[], rebuild?: boolean) =>
     update.execute({
@@ -214,7 +214,7 @@ describe("targeted machine native plugin update", () => {
     if (machine === null) throw new Error("fixture missing machine manifest");
     machine.addPlugin(
       copilot,
-      InstalledPlugin.fromMetadata({
+      RecordedPlugin.fromMetadata({
         name: "project-plugin",
         version: "0.0.1",
         source: { kind: "local", path: "/fixture" },
@@ -253,7 +253,7 @@ describe("targeted machine native plugin update", () => {
     if (machine === null) throw new Error("fixture missing machine manifest");
     machine.addPlugin(
       copilot,
-      InstalledPlugin.fromMetadata({
+      RecordedPlugin.fromMetadata({
         name: "project-plugin",
         version: "0.0.1",
         source: { kind: "local", path: "/fixture" },
@@ -283,7 +283,7 @@ describe("targeted machine native plugin update", () => {
   });
 
   it("rebuilds an installed user plugin that is already current, and only when asked", async () => {
-    const installed = InstalledPlugin.fromMetadata({
+    const installed = RecordedPlugin.fromMetadata({
       name: "sample-plugin",
       version: "1.0.0",
       source: { kind: "local", path: "/source" },

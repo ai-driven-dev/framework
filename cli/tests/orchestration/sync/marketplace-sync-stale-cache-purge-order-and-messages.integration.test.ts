@@ -43,9 +43,6 @@ describe("SyncSettings - when the stale cache is purged and what it says", () =>
       isAvailable(): boolean {
         return true;
       }
-      enablesPlugins(): boolean {
-        return false;
-      }
       addMarketplace(source: string): void {
         this.addedSource = source;
         this.cacheStillPresentAtAdd.push(this.fs.has(this.probe));
@@ -170,7 +167,7 @@ describe("SyncSettings - when the stale cache is purged and what it says", () =>
     const manifest = manifestWithClaude();
     manifest.addTool(TOOL.codex, "test", []);
     const fs = staleCacheAndCatalog();
-    const activator = new FakeHostActions({ available: true, enablesPlugins: false });
+    const activator = new FakeHostActions({ available: true });
     const codexBuildFails: BuiltMarketplaceEnsurer = {
       execute: async (options) => {
         if (options.target === "codex") throw new Error("translator refused the source");
@@ -207,7 +204,7 @@ describe("SyncSettings - when the stale cache is purged and what it says", () =>
       ...catalogFixture(CLAUDE_BUILT_DIR),
     });
     fs.setSymlink(OLD_CACHE_DIR, "/etc/evil");
-    const activator = new FakeHostActions({ available: true, enablesPlugins: false });
+    const activator = new FakeHostActions({ available: true });
     const useCase = marketplaceSync({
       fs,
       manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
@@ -238,9 +235,7 @@ describe("SyncSettings - when the stale cache is purged and what it says", () =>
       manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
       marketplaceRegistry: registry,
       logger,
-      activators: new Map([
-        [TOOL.claude, new FakeHostActions({ available: true, enablesPlugins: false })],
-      ]),
+      activators: new Map([[TOOL.claude, new FakeHostActions({ available: true })]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
       marketplaceRegisterFrameworkUseCase: new RegisterFrameworkMarketplace(registry),
     });

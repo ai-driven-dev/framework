@@ -89,7 +89,7 @@ async function sync(options: {
     );
   }
   if (options.staleCacheFile !== undefined) await fs.writeFile(options.staleCacheFile, "stale");
-  const activator = new FakeHostActions({ available: true, enablesPlugins: false });
+  const activator = new FakeHostActions({ available: true });
   const hostReader = new FakeHostMarketplaceRegistry({
     location: REGISTRY_LOCATION,
     entries:

@@ -8,7 +8,7 @@ import type { HostPluginRegistry } from "../../../src/contexts/host-registration
 import { ListRegisteredPlugins } from "../../../src/contexts/installation/application/doctor/list-registered-plugins.use-case.js";
 import { LoadManifest } from "../../../src/contexts/installation/application/doctor/load-manifest.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { CheckRegistration } from "../../../src/orchestration/doctor/check-registration.use-case.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
@@ -60,7 +60,7 @@ async function issuesFor(
   const manifest = Manifest.create();
   manifest.addTool(toolId, "test", []);
   const activators = new Map<string, FakeHostActions>([
-    [TOOL.claude, new FakeHostActions({ available: toolInstalled, enablesPlugins: false })],
+    [TOOL.claude, new FakeHostActions({ available: toolInstalled })],
   ]);
   return buildCheckRegistration(
     fs,
@@ -161,7 +161,7 @@ function manifestWithPlugin(marketplace?: string, toolId: AiToolId = TOOL.claude
     .withTool(toolId, [], { version: "test" })
     .withPlugin(
       toolId,
-      InstalledPlugin.fromMetadata({
+      RecordedPlugin.fromMetadata({
         name: marketplace === undefined ? "hand-copied" : "aidd-context",
         version: "1.0.0",
         source: { kind: "github", repo: "ai-driven-dev/framework" },
@@ -183,7 +183,7 @@ async function nativeIssuesFor(
   const registry = new InMemoryMarketplaceRegistry();
   if (registered) await registry.save(PROJECT_ROOT, registered);
   const activators = new Map<string, FakeHostActions>([
-    [TOOL.claude, new FakeHostActions({ available: true, enablesPlugins: true })],
+    [TOOL.claude, new FakeHostActions({ available: true })],
   ]);
   const hostRegistries = new Map<AiToolId, HostPluginRegistry>();
   if (reading !== "unreachable") {
@@ -350,9 +350,9 @@ describe("the tools whose built marketplaces are resolved", () => {
     const check = new CheckRegistration(
       {
         listPlugins: new ListRegisteredPlugins(
-          new LoadManifest(new InMemoryManifestRepository(manifest)),
-          registrationRecordRules
+          new LoadManifest(new InMemoryManifestRepository(manifest))
         ),
+        records: registrationRecordRules,
         builds,
         declared: new InspectDeclaredMarketplaces(
           new InMemoryFileAdapter(),
@@ -382,9 +382,9 @@ describe("the hosts handed to the registry inspection", () => {
     const check = new CheckRegistration(
       {
         listPlugins: new ListRegisteredPlugins(
-          new LoadManifest(new InMemoryManifestRepository(manifest)),
-          registrationRecordRules
+          new LoadManifest(new InMemoryManifestRepository(manifest))
         ),
+        records: registrationRecordRules,
         builds: {
           execute: async () => ({
             registeredNames: [],

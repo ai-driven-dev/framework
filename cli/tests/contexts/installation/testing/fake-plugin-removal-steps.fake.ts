@@ -1,7 +1,10 @@
+import { registrationRecordRules } from "../../../../src/composition/installation.js";
 import type {
   PluginHostReach,
   ProjectPluginWithdrawalSteps,
-} from "../../../../src/contexts/installation/ports/project-plugin-withdrawal.js";
+} from "../../../../src/contexts/installation/application/removal/project-plugin-withdrawal.js";
+import type { NativeRegistrations } from "../../../../src/contexts/installation/domain/manifest/native-registrations.js";
+import type { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { AiToolId, ToolId } from "../../../../src/shared/domain/tool.js";
 
 interface Answers {
@@ -10,7 +13,7 @@ interface Answers {
 }
 
 /** A host that lets a plugin go as told, recording what a removal asked of it and in what order. */
-export class FakeProjectPluginWithdrawal implements ProjectPluginWithdrawalSteps {
+export class FakePluginRemovalSteps implements ProjectPluginWithdrawalSteps {
   readonly calls: string[] = [];
   readonly detachedRefs: ReadonlyMap<ToolId, readonly string[]>[] = [];
   readonly detachedUserPlugins: [AiToolId, string][] = [];
@@ -23,12 +26,23 @@ export class FakeProjectPluginWithdrawal implements ProjectPluginWithdrawalSteps
   }
 
   async withdraw(reach: PluginHostReach): Promise<boolean | undefined> {
-    this.calls.push(`withdraw:${reach.plugin.name}`);
+    this.calls.push(`withdraw:${reach.plugin.plugin.name}`);
     return true;
   }
 
   async canDetachRef(): Promise<boolean> {
     return this.answers.canDetachRef ?? true;
+  }
+
+  recordedRef(
+    registrations: NativeRegistrations | undefined,
+    recorded: RecordedPlugin
+  ): string | undefined {
+    return registrationRecordRules.refOf(registrations, recorded.plugin.name, recorded.marketplace);
+  }
+
+  withoutRef(registrations: NativeRegistrations, ref: string): NativeRegistrations {
+    return registrationRecordRules.withoutRef(registrations, ref);
   }
 
   async detachNativeRefs(

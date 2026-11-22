@@ -39,10 +39,6 @@ export function describeHostActionsContract(
       expect((await given("absent")).isAvailable()).toBe(false);
     });
 
-    it("enables plugins through the CLI", async () => {
-      expect((await given("accepting")).enablesPlugins()).toBe(true);
-    });
-
     it("takes every call an accepting host is given", async () => {
       const actions = await given("accepting");
 

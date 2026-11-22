@@ -1,7 +1,8 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { assertUserPluginWritable } from "../../../../../src/contexts/installation/application/plugin/assert-user-plugin-writable.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import type { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
@@ -13,13 +14,13 @@ const BASE = join(HOME, ".cursor/plugins/local");
 const FILE = InstallationFile.hashing("sample-plugin/skills/demo/SKILL.md", "# Skill");
 
 function plugin(): InstalledPlugin {
-  return InstalledPlugin.fromMetadata({
+  return RecordedPlugin.fromMetadata({
     name: "sample-plugin",
     version: "1.0.0",
     source: { kind: "local", path: "/source" },
     strict: false,
     scope: "user",
-  });
+  }).plugin;
 }
 
 function write(owned: InstalledPlugin) {

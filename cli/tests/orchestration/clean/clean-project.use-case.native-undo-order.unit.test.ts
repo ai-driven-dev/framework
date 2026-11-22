@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
@@ -40,7 +40,7 @@ describe("clean: native registration undo order", () => {
         manifest.addTool(TOOL.claude, "1.0.0", []);
         manifest.addPlugin(
           TOOL.claude,
-          InstalledPlugin.fromMetadata({
+          RecordedPlugin.fromMetadata({
             name: "aidd-context",
             version: "1.0.0",
             source: { kind: "github", repo: "ai-driven-dev/framework" },

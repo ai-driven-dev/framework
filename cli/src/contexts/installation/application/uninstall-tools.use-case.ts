@@ -2,15 +2,21 @@ import { InputRequiredError } from "../../../shared/domain/shared.error.js";
 import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import { ToolNotInstalledError } from "../domain/installation.error.js";
+import type { NativeRegistrations } from "../domain/manifest/native-registrations.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
-import type { RegistrationRecordRules } from "../ports/native-host.js";
 import type { RemoveToolFiles, ToolRemoval } from "./removal/remove-tool-files.js";
 import { requireManifest } from "./shared/require-manifest.js";
+
+/** How a removal reads the refs a tool's host registration recorded: the host registration's to answer. */
+export interface RecordedRefs {
+  pluginRefsOf(record: NativeRegistrations | undefined): readonly string[];
+}
 
 export interface UninstallToolsRequest {
   toolIds: ToolId[];
   projectRoot: string;
+  records: RecordedRefs;
 }
 
 export interface UninstallToolsResult {
@@ -36,7 +42,6 @@ export type DetachProjectClaims = (
 export interface UninstallToolsDeps {
   readonly manifestRepo: ManifestRepository;
   readonly detachClaims: DetachProjectClaims;
-  readonly records: RegistrationRecordRules;
   readonly removeToolFiles: RemoveToolFiles;
 }
 
@@ -66,7 +71,7 @@ export class UninstallTools {
     const nativeRefs = new Map<ToolId, readonly string[]>();
     for (const toolId of toolIds) {
       const recorded = manifest.getNativeRegistrations(toolId);
-      const refs = this.deps.records.pluginRefsOf(recorded);
+      const refs = command.records.pluginRefsOf(recorded);
       if (refs.length > 0) nativeRefs.set(toolId, refs);
     }
 

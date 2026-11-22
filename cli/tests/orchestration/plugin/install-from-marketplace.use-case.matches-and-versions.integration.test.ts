@@ -247,7 +247,7 @@ describe("InstallFromMarketplace: matches and versions", () => {
         interactive: false,
       });
 
-      expect(installedSamplePlugin(deps)?.version).toBe("1.0.0");
+      expect(installedSamplePlugin(deps)?.plugin.version).toBe("1.0.0");
     });
 
     it("logs nothing under prefer-catalog when no version was requested", async () => {

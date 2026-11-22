@@ -1,16 +1,36 @@
 import { resolve } from "node:path";
 import { FileHash } from "../../../../shared/domain/file-hash.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
 import { driftOf } from "../../domain/manifest/drift.js";
+import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import type { Manifest } from "../../domain/manifest.js";
-import type { HostRegistrationOutcome } from "../../ports/native-host.js";
-import type {
-  RecordMachineClaims,
-  RecordMachineClaimsDeps,
-  RecordMachineClaimsRequest,
-} from "./record-machine-claims.use-case.js";
+
+/** A marketplace the host registered: the manifest reads the two names and keeps the rest. */
+export type RegisteredMarketplace = Readonly<Record<string, unknown>> & {
+  readonly alias: string;
+  readonly hostName: string;
+};
+
+/** What the manifest records after one tool's registration. */
+export type HostRegistrationOutcome = {
+  readonly marketplaces: readonly RegisteredMarketplace[];
+  readonly preservedMarketplaces: readonly RegisteredMarketplace[];
+  readonly catalogClaims: readonly RegisteredMarketplace[];
+  readonly pluginRefs: readonly string[];
+  /** True when a build failed, so the host keeps its earlier registration for it. */
+  readonly buildFailed: boolean;
+};
+
+/** The record a tool's activation leaves, `undefined` when it equals the one recorded: the host
+ * registration's to answer. */
+export type ActivationRecord = (
+  existing: NativeRegistrations | undefined,
+  outcome: HostRegistrationOutcome,
+  run: { readonly binary: string; readonly narrowed: boolean }
+) => NativeRegistrations | undefined;
 
 /** What a run observed or caused. Each answer says whether it changed a manifest. */
 export type RecordActivationRequest =
@@ -19,21 +39,21 @@ export type RecordActivationRequest =
       readonly manifest: Manifest;
       readonly activated: ReadonlyMap<ToolId, HostRegistrationOutcome>;
       readonly narrowed: boolean;
+      readonly afterActivation: ActivationRecord;
     }
   | {
       readonly kind: "settings-written-by-host";
       readonly projectRoot: string;
       readonly manifest: Manifest;
       readonly activated: readonly ToolId[];
-    }
-  | RecordMachineClaimsRequest;
+    };
 
 type Of<K extends RecordActivationRequest["kind"]> = Extract<RecordActivationRequest, { kind: K }>;
 
 /** What RecordActivation is built from. */
-export type RecordActivationDeps = RecordMachineClaimsDeps & {
-  readonly machineClaims: RecordMachineClaims;
-};
+export interface RecordActivationDeps {
+  readonly fs: FileReader;
+}
 
 /** What a run observed or caused, written back into the manifests that track it. */
 export class RecordActivation {
@@ -48,8 +68,6 @@ export class RecordActivation {
         return this.recordNativeRegistrations(request);
       case "settings-written-by-host":
         return this.recordWhatActivationWrote(request);
-      case "machine-claims":
-        return this.deps.machineClaims.execute(request);
     }
   }
 
@@ -58,16 +76,16 @@ export class RecordActivation {
     manifest,
     activated,
     narrowed,
+    afterActivation,
   }: Of<"native-registrations">): boolean {
     let changed = false;
     for (const [toolId, outcome] of activated) {
       const binary = this.nativeActivationBinary(toolId);
       if (binary === undefined) continue;
-      const registrations = this.deps.records.afterActivation(
-        manifest.getNativeRegistrations(toolId),
-        outcome,
-        { binary, narrowed }
-      );
+      const registrations = afterActivation(manifest.getNativeRegistrations(toolId), outcome, {
+        binary,
+        narrowed,
+      });
       if (registrations === undefined) continue;
       manifest.setNativeRegistrations(toolId, registrations);
       changed = true;

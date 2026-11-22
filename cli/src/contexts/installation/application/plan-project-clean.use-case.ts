@@ -3,42 +3,33 @@ import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { NativeRegistrations } from "../domain/manifest/native-registrations.js";
 import type { Manifest } from "../domain/manifest.js";
-import type { InstalledPlugin } from "../domain/plugins/installed-plugin.js";
+import type { RecordedPlugin } from "../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
 import type {
+  CleanNativeRegistrationPreview,
+  ProjectCleanPlan,
+  ProjectCleanRecords,
   ProjectRegistrationWithdrawal,
-  RegistrationPreview,
-  RegistrationRecordRules,
-} from "../ports/native-host.js";
-
-/** `cachePaths` are the absolute paths a `--force` run will attempt to purge: empty for a tool
- * whose profile declares no `NativeActivation.pluginCacheDir`. An announcement, not a guarantee:
- * whether a path is still there, and safe to purge, is known only once the host's CLI ran. */
-export type CleanNativeRegistrationPreview = RegistrationPreview & { readonly toolId: ToolId };
-
-/** What a project clean would do, read before anything is touched. */
-export interface ProjectCleanPlan {
-  tools: Array<{ toolId: ToolId; fileCount: number }>;
-  totalFileCount: number;
-  /** What a `--force` run will ask each tool's own CLI to undo: that step drives an external
-   * binary, the one part of `clean` a file count cannot express. */
-  nativeRegistrations: CleanNativeRegistrationPreview[];
-  /** The AI tools whose host holds registrations this project made. A non-AI tool never does;
-   * were one recorded, it is left out rather than guessed at. */
-  withdrawals: ProjectRegistrationWithdrawal[];
-  /** The native plugin refs this project recorded, by tool. */
-  nativeRefs: ReadonlyMap<ToolId, readonly string[]>;
-  /** The plugins installed at user scope, whose machine claim this project releases. */
-  userPlugins: Array<{ toolId: AiToolId; name: string }>;
-}
+} from "./clean/project-clean-plan.js";
 
 /** What PlanProjectClean is built from. */
 export interface PlanProjectCleanDeps {
   readonly manifestRepo: ManifestRepository;
-  readonly asks: {
-    readonly homeDir: () => string;
-    readonly records: RegistrationRecordRules;
-  };
+  readonly asks: { readonly homeDir: () => string };
+}
+
+/** The scope of each plugin the host registered, keyed by its ref. */
+function refScopesOf(
+  plugins: readonly RecordedPlugin[],
+  registrations: NativeRegistrations,
+  records: ProjectCleanRecords
+): Map<string, Scope> {
+  const refScopes = new Map<string, Scope>();
+  for (const { plugin, marketplace } of plugins) {
+    const ref = records.refOf(registrations, plugin.name, marketplace);
+    if (ref !== undefined) refScopes.set(ref, plugin.scope);
+  }
+  return refScopes;
 }
 
 /** Reads what this project installed and what a clean would undo, touching nothing. */
@@ -49,7 +40,7 @@ export class PlanProjectClean {
   ) {}
 
   /** Null when this project installed nothing. */
-  async execute(): Promise<ProjectCleanPlan | null> {
+  async execute(records: ProjectCleanRecords): Promise<ProjectCleanPlan | null> {
     const manifest = await this.deps.manifestRepo.load();
     if (manifest === null) return null;
     const home = this.deps.asks.homeDir();
@@ -60,18 +51,21 @@ export class PlanProjectClean {
     return {
       tools: toolFiles,
       totalFileCount: toolFiles.reduce((sum, t) => sum + t.fileCount, 0),
-      nativeRegistrations: this.previewNativeRegistrations(manifest, home),
-      withdrawals: this.projectWithdrawals(manifest, home),
-      nativeRefs: this.nativeRefs(manifest),
+      nativeRegistrations: this.previewNativeRegistrations(manifest, home, records),
+      withdrawals: this.projectWithdrawals(manifest, home, records),
+      nativeRefs: this.nativeRefs(manifest, records),
       userPlugins: this.userPlugins(manifest),
     };
   }
 
-  private nativeRefs(manifest: Manifest): ReadonlyMap<ToolId, readonly string[]> {
+  private nativeRefs(
+    manifest: Manifest,
+    records: ProjectCleanRecords
+  ): ReadonlyMap<ToolId, readonly string[]> {
     const nativeRefs = new Map<ToolId, readonly string[]>();
     for (const toolId of manifest.getInstalledToolIds()) {
       const recorded = manifest.getNativeRegistrations(toolId);
-      const refs = this.deps.asks.records.pluginRefsOf(recorded);
+      const refs = records.pluginRefsOf(recorded);
       if (refs.length > 0) nativeRefs.set(toolId, refs);
     }
     return nativeRefs;
@@ -88,7 +82,11 @@ export class PlanProjectClean {
     return plugins;
   }
 
-  private projectWithdrawals(manifest: Manifest, home: string): ProjectRegistrationWithdrawal[] {
+  private projectWithdrawals(
+    manifest: Manifest,
+    home: string,
+    records: ProjectCleanRecords
+  ): ProjectRegistrationWithdrawal[] {
     return manifest.getInstalledToolIds().flatMap((toolId) => {
       const registrations = manifest.getNativeRegistrations(toolId);
       if (registrations === undefined || !this.tools.isAiTool(toolId)) return [];
@@ -98,28 +96,16 @@ export class PlanProjectClean {
           tool,
           registrations,
           cacheRoot: tool.nativeActivation()?.pluginCacheRoot(home),
-          refScopes: this.refScopesOf(manifest.getPlugins(toolId), registrations),
+          refScopes: refScopesOf(manifest.getRecordedPlugins(toolId), registrations, records),
         },
       ];
     });
   }
 
-  /** The scope of each plugin the host registered, keyed by its ref. */
-  private refScopesOf(
-    plugins: readonly InstalledPlugin[],
-    registrations: NativeRegistrations
-  ): Map<string, Scope> {
-    const refScopes = new Map<string, Scope>();
-    for (const plugin of plugins) {
-      const ref = this.deps.asks.records.refOf(registrations, plugin.name, plugin.marketplace);
-      if (ref !== undefined) refScopes.set(ref, plugin.scope);
-    }
-    return refScopes;
-  }
-
   private previewNativeRegistrations(
     manifest: Manifest,
-    home: string
+    home: string,
+    records: ProjectCleanRecords
   ): CleanNativeRegistrationPreview[] {
     const preview: CleanNativeRegistrationPreview[] = [];
     for (const toolId of manifest.getInstalledToolIds()) {
@@ -130,7 +116,7 @@ export class PlanProjectClean {
         : undefined;
       preview.push({
         toolId,
-        ...this.deps.asks.records.registrationPreview(registrations, cacheRoot),
+        ...records.registrationPreview(registrations, cacheRoot),
       });
     }
     return preview;

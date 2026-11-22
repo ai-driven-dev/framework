@@ -1,10 +1,10 @@
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
-import type { InstalledPlugin } from "../domain/plugins/installed-plugin.js";
+import type { RecordedPlugin } from "../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
-import type { RegistrationRecordRules } from "../ports/native-host.js";
 import type { ProjectPluginIntegration } from "../ports/tool-sections.js";
-import type { PlanProjectClean, ProjectCleanPlan } from "./plan-project-clean.use-case.js";
+import type { ProjectCleanPlan, ProjectCleanRecords } from "./clean/project-clean-plan.js";
+import type { PlanProjectClean } from "./plan-project-clean.use-case.js";
 import type { RemoveProjectFiles } from "./removal/remove-project-files.js";
 import { assertProjectHooksRemovable } from "./shared/remove-project-hooks.js";
 
@@ -14,16 +14,16 @@ export interface ProjectCleanAsks {
   readonly homeDir: () => string;
   /** Read-only proof that a plugin's MCP entries can be removed from the project. */
   readonly assertMcpRemovable: (
-    plugin: InstalledPlugin,
+    plugin: RecordedPlugin,
     tool: ProjectPluginIntegration,
     projectRoot: string
   ) => Promise<void>;
-  /** What the host registration says of the registrations this project recorded. */
-  readonly records: RegistrationRecordRules;
 }
 
 export interface CleanProjectFilesRequest {
   kind: "plan";
+  /** What the host registration says of the registrations this project recorded. */
+  records: ProjectCleanRecords;
 }
 
 export interface AssertProjectRemovableRequest {
@@ -72,7 +72,7 @@ export class CleanProjectFiles {
   async execute(command: AnyCleanProjectFilesRequest): Promise<unknown> {
     switch (command.kind) {
       case "plan":
-        return this.deps.planProjectClean.execute();
+        return this.deps.planProjectClean.execute(command.records);
       case "assert-removable":
         return this.assertRemovable(command.projectRoot, command.force);
       case "remove":
@@ -85,7 +85,7 @@ export class CleanProjectFiles {
     if (manifest === null) return;
     for (const toolId of manifest.getInstalledToolIds()) {
       if (!this.tools.isAiTool(toolId)) continue;
-      for (const plugin of manifest.getPlugins(toolId)) {
+      for (const plugin of manifest.getRecordedPlugins(toolId)) {
         const tool = this.tools.aiProfile(toolId);
         await assertProjectHooksRemovable({
           fs: this.deps.fs,

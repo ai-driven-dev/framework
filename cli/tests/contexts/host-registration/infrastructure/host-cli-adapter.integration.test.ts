@@ -140,8 +140,6 @@ describe("driving the verbs a tool declares, and only those", () => {
     adapter({}).enablePlugin("p@m");
     adapter({}).uninstallPlugin("p@m");
 
-    expect(adapter({}).enablesPlugins()).toBe(false);
-    expect(adapter().enablesPlugins()).toBe(true);
     expect(mockSpawnSync).not.toHaveBeenCalled();
   });
 });

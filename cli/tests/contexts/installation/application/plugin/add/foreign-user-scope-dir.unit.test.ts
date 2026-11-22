@@ -7,7 +7,7 @@ import {
   scopeBaseOf,
 } from "../../../../../../src/contexts/installation/application/plugin/plugin-target-resolution.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { PluginDistribution } from "../../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
@@ -77,7 +77,7 @@ describe("foreignUserScopeDir", () => {
       machine.addTool(tool.toolId, "1.0.0", []);
       machine.addPlugin(
         tool.toolId,
-        InstalledPlugin.fromMetadata({
+        RecordedPlugin.fromMetadata({
           name: "sample",
           version: "1.0.0",
           source: { kind: "local", path: "/plugin" },

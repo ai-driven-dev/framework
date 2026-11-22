@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { NativeHostRegistrationGate } from "../../../src/contexts/host-registration/application/native-host-registration-gate.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
@@ -89,7 +89,7 @@ describe("Cursor targeted user marketplace removal", () => {
     if (options.claim !== false) {
       machine.addPlugin(
         TOOL.cursor,
-        InstalledPlugin.fromJSON({
+        RecordedPlugin.fromJSON({
           name: "sample-plugin",
           source: { kind: "local", path: "/fixture" },
           version: "1.0.0",
@@ -151,7 +151,7 @@ describe("Cursor targeted user marketplace removal", () => {
     const f = await fixture();
     f.repo.getCurrent()?.addPlugin(
       TOOL.cursor,
-      InstalledPlugin.fromJSON({
+      RecordedPlugin.fromJSON({
         name: "other-plugin",
         source: { kind: "local", path: "/fixture" },
         version: "1.0.0",
@@ -164,7 +164,7 @@ describe("Cursor targeted user marketplace removal", () => {
     );
     f.repo.getCurrent()?.addPlugin(
       TOOL.cursor,
-      InstalledPlugin.fromJSON({
+      RecordedPlugin.fromJSON({
         name: "project-plugin",
         source: { kind: "local", path: "/fixture" },
         version: "1.0.0",

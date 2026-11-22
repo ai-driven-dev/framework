@@ -44,7 +44,7 @@ async function refLeftEnabledUnless(
     readonly binary: string;
   }
 ): Promise<string | undefined> {
-  const { command, activator, binary } = request;
+  const { command, binary } = request;
   const { tool, plugin, claims } = command;
   const toolId = tool.toolId;
   const registrations = readRegistrationRecord(command.registrations);
@@ -62,11 +62,7 @@ async function refLeftEnabledUnless(
     );
     return undefined;
   }
-  if (
-    registeredHostName !== undefined &&
-    activator.enablesPlugins() &&
-    registrations?.pluginRefs.includes(ref) !== true
-  ) {
+  if (registeredHostName !== undefined && registrations?.pluginRefs.includes(ref) !== true) {
     deps.logger.warn(`${toolId}: '${ref}' is not a ref this project enabled — left enabled.`);
     return undefined;
   }

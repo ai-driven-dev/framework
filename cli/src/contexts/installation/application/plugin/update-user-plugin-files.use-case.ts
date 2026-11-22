@@ -3,9 +3,8 @@ import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { Manifest } from "../../domain/manifest.js";
-import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { RegistrationRecordRules } from "../../ports/native-host.js";
 import type {
   ContainmentCheck,
   PlannedUserPluginFileUpdate,
@@ -16,6 +15,7 @@ import {
   assertSelectionResolves,
   nativeTargets,
   type RefreshNativeRef,
+  type RefSelection,
   refreshNativeRefs,
 } from "./update-native-refs.js";
 import type { UpdatePluginRequest } from "./update-plugin.use-case.js";
@@ -24,6 +24,7 @@ import type { UpdatePluginRequest } from "./update-plugin.use-case.js";
 export interface UpdateUserPluginFilesRequest extends UpdatePluginRequest {
   readonly isWithinUserScope: ContainmentCheck;
   readonly refreshNative: RefreshNativeRef;
+  readonly refSelection: RefSelection;
 }
 
 /** What UpdateUserPluginFiles is built from. */
@@ -31,7 +32,6 @@ export interface UpdateUserPluginFilesDeps {
   readonly repo: ManifestRepository & Lock;
   readonly materializer: UserPluginMaterialization;
   readonly logger: Logger;
-  readonly records: RegistrationRecordRules;
 }
 
 /** Brings the machine-scope plugins, and the native refs aidd owns, to their latest version. */
@@ -55,8 +55,9 @@ export class UpdateUserPluginFiles {
     const manifest = Manifest.fromJSON(loaded.toJSON(), (raw) => this.tools.toolId(raw));
     const toolIds = resolvePluginToolIds(options.toolIds, manifest, this.tools);
     const targets = this.fileTargets(manifest, toolIds, options);
-    const natives = nativeTargets(this.deps.records, manifest, { toolIds, options });
-    assertSelectionResolves(this.deps.records, options, { files: targets.length, native: natives });
+    const { refSelection } = options;
+    const natives = nativeTargets(refSelection, manifest, { toolIds, options });
+    assertSelectionResolves(refSelection, options, { files: targets.length, native: natives });
     // One plan at a time: plans for one tool share its built tree, which the first one builds.
     const filePlans = [];
     for (const { toolId, plugin } of targets) {
@@ -77,7 +78,7 @@ export class UpdateUserPluginFiles {
     for (const { toolId, plugin, plan } of filePlans) {
       if (plan === null) continue;
       manifest.updatePlugin(toolId, await this.applyFilePlan({ toolId, plugin, plan }, options));
-      updated.push(plugin.name);
+      updated.push(plugin.plugin.name);
     }
     if (updated.length > 0) await this.deps.repo.save(manifest);
     return updated;
@@ -90,9 +91,9 @@ export class UpdateUserPluginFiles {
   ) {
     return toolIds.flatMap((toolId) =>
       manifest
-        .getPlugins(toolId)
+        .getRecordedPlugins(toolId)
         .filter(
-          (plugin) =>
+          ({ plugin }) =>
             plugin.scope === "user" &&
             (options.pluginNames === undefined || options.pluginNames.includes(plugin.name))
         )
@@ -101,13 +102,13 @@ export class UpdateUserPluginFiles {
   }
 
   private async applyFilePlan(
-    planned: { toolId: AiToolId; plugin: InstalledPlugin; plan: PlannedUserPluginFileUpdate },
+    planned: { toolId: AiToolId; plugin: RecordedPlugin; plan: PlannedUserPluginFileUpdate },
     options: UpdateUserPluginFilesRequest
-  ): Promise<InstalledPlugin> {
+  ): Promise<RecordedPlugin> {
     const { toolId, plugin, plan } = planned;
     if (plugin.dependents.length > 0)
       this.deps.logger.warn(
-        `${toolId}: updating user-scope '${plugin.name}' affects ${plugin.dependents.join(", ")}; each project must refresh its own integration afterward.`
+        `${toolId}: updating user-scope '${plugin.plugin.name}' affects ${plugin.dependents.join(", ")}; each project must refresh its own integration afterward.`
       );
     try {
       return await this.deps.materializer.applyUpdate(plan, {

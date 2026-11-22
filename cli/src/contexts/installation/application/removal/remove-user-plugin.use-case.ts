@@ -5,12 +5,19 @@ import {
   ActiveMachineDependentsError,
   PluginNotFoundError,
 } from "../../domain/installation.error.js";
+import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { HostWithdrawal, RegistrationRecordRules } from "../../ports/native-host.js";
 import type { UserScopePluginFileRemoval } from "../../ports/user-scope-plugin-files.js";
 import { resolvePluginToolIds } from "../plugin/plugin-target-resolution.js";
+import type { RefSelection } from "../plugin/update-native-refs.js";
 import { requireManifest } from "../shared/require-manifest.js";
+import type { ClaimedRefWithdrawal } from "./project-plugin-withdrawal.js";
+
+/** How a machine-scope removal selects and drops a claimed native ref: the host registration's to answer. */
+export interface ClaimedRefRecords extends RefSelection {
+  withoutClaimedRef(record: NativeRegistrations, ref: string): NativeRegistrations;
+}
 
 export interface RemoveUserPluginRequest {
   pluginName: string;
@@ -18,6 +25,7 @@ export interface RemoveUserPluginRequest {
   projectRoot: string;
   /** The home directory the plugin's files are proven under. */
   home: string;
+  records: ClaimedRefRecords;
 }
 
 type FileTargets = ReturnType<RemoveUserPlugin<unknown>["fileTargets"]>;
@@ -26,8 +34,7 @@ type NativeTargets = ReturnType<RemoveUserPlugin<unknown>["nativeTargets"]>;
 /** What RemoveUserPlugin is built from. */
 export interface RemoveUserPluginDeps<Proof> {
   readonly userRepo: ManifestRepository & Lock;
-  readonly withdrawFromHost: Pick<HostWithdrawal<Proof>, "proveClaimedRef" | "uninstallProven">;
-  readonly records: RegistrationRecordRules;
+  readonly withdrawFromHost: ClaimedRefWithdrawal<Proof>;
   readonly userScopePluginFiles: UserScopePluginFileRemoval;
 }
 
@@ -54,7 +61,7 @@ export class RemoveUserPlugin<Proof> {
       await this.deps.withdrawFromHost.uninstallProven(target.proven);
       manifest.setNativeRegistrations(
         target.toolId,
-        this.deps.records.withoutClaimedRef(target.registrations, target.claim.ref)
+        options.records.withoutClaimedRef(target.registrations, target.claim.ref)
       );
     }
     for (const { toolId, plugin, files } of safeFiles) {
@@ -73,10 +80,12 @@ export class RemoveUserPlugin<Proof> {
     options: RemoveUserPluginRequest
   ) {
     return toolIds.flatMap((toolId) => {
-      const plugin = manifest
-        .getPlugins(toolId)
-        .find((p) => p.name === options.pluginName && p.scope === "user");
-      return plugin === undefined ? [] : [{ toolId, plugin }];
+      const recorded = manifest
+        .getRecordedPlugins(toolId)
+        .find((p) => p.plugin.name === options.pluginName && p.plugin.scope === "user");
+      return recorded === undefined
+        ? []
+        : [{ toolId, plugin: recorded.plugin, dependents: recorded.dependents }];
     });
   }
 
@@ -89,7 +98,7 @@ export class RemoveUserPlugin<Proof> {
       const registrations = manifest.getNativeRegistrations(toolId);
       if (registrations === undefined) return [];
       return (registrations.pluginClaims ?? [])
-        .filter((claim) => this.deps.records.refSelectedBy(claim.ref, options.pluginName))
+        .filter((claim) => options.records.refSelectedBy(claim.ref, options.pluginName))
         .map((claim) => ({ toolId, registrations, claim }));
     });
   }
@@ -101,14 +110,14 @@ export class RemoveUserPlugin<Proof> {
   ): void {
     if (targets.length === 0 && nativeTargets.length === 0)
       throw new PluginNotFoundError(options.pluginName);
-    if (!this.deps.records.isQualifiedRef(options.pluginName) && nativeTargets.length > 1) {
+    if (!options.records.isQualifiedRef(options.pluginName) && nativeTargets.length > 1) {
       throw new Error(
         `Native plugin '${options.pluginName}' has multiple catalogues; use the exact <plugin>@<catalogue> ref.`
       );
     }
     const dependents = [
       ...new Set([
-        ...targets.flatMap(({ plugin }) => plugin.dependents),
+        ...targets.flatMap((target) => target.dependents),
         ...nativeTargets.flatMap(({ claim }) => claim.dependents),
       ]),
     ];

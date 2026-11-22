@@ -84,9 +84,9 @@ async function addLocal(addUseCase: AddPlugin, path = PLUGIN_FIXTURE): Promise<v
 async function recordVersion(deps: Deps, name: string, version: string): Promise<void> {
   const manifest = await deps.manifestRepo.load();
   if (manifest === null) throw new Error("manifest not found");
-  const plugin = manifest.getPlugins(TOOL.claude).find((p) => p.name === name);
+  const plugin = manifest.getRecordedPlugins(TOOL.claude).find((p) => p.plugin.name === name);
   if (plugin === undefined) throw new Error("plugin not found");
-  manifest.updatePlugin(TOOL.claude, plugin.withVersion(version));
+  manifest.updatePlugin(TOOL.claude, plugin.withPlugin(plugin.plugin.withVersion(version)));
   await deps.manifestRepo.save(manifest);
 }
 
@@ -183,9 +183,11 @@ describe("UpdatePlugin", () => {
       // Lower the recorded version so the fixture appears newer
       const manifest = await deps.manifestRepo.load();
       if (manifest === null) throw new Error("manifest not found");
-      const plugin = manifest.getPlugins(TOOL.claude).find((p) => p.name === "sample-plugin");
+      const plugin = manifest
+        .getRecordedPlugins(TOOL.claude)
+        .find((p) => p.plugin.name === "sample-plugin");
       if (plugin === undefined) throw new Error("plugin not found");
-      manifest.updatePlugin(TOOL.claude, plugin.withVersion("0.0.1"));
+      manifest.updatePlugin(TOOL.claude, plugin.withPlugin(plugin.plugin.withVersion("0.0.1")));
       await deps.manifestRepo.save(manifest);
 
       await updateUseCase.execute({

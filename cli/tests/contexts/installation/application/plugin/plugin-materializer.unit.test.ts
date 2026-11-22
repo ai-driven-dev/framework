@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { PluginMaterializer } from "../../../../../src/contexts/installation/application/plugin/plugin-materializer.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../../../../src/contexts/installation/domain/project-layout.js";
 import type { IsWithinUserScope } from "../../../../../src/contexts/machine-claims/contract/user-scope-containment.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
@@ -45,7 +45,7 @@ function fixture(installedVersion = "0.0.1", options: { globalCacheDir?: () => s
     builtDeps: { ...fakeBuiltDeps(fs), homedir },
     globalCacheDir: options.globalCacheDir,
   });
-  const plugin = InstalledPlugin.fromMetadata({
+  const plugin = RecordedPlugin.fromMetadata({
     name: "sample-plugin",
     version: installedVersion,
     source: { kind: "local", path: "/source" },
@@ -71,7 +71,7 @@ describe("PluginMaterializer public update contract", () => {
         })
       ).toBeNull();
       expect(await f.fs.fileExists(join(f.base, "sample-plugin/skills/demo/SKILL.md"))).toBe(false);
-      expect(f.plugin.version).toBe(version);
+      expect(f.plugin.plugin.version).toBe(version);
       expect(f.plugin.dependents).toEqual(["/A", "/B"]);
     }
   );
@@ -85,11 +85,11 @@ describe("PluginMaterializer public update contract", () => {
       logger: f.logger,
       isWithinUserScope: insideUserScope,
     });
-    expect(result?.version).toBe("1.0.0");
-    expect(result?.scope).toBe("user");
+    expect(result?.plugin.version).toBe("1.0.0");
+    expect(result?.plugin.scope).toBe("user");
     expect(result?.dependents).toEqual(["/A", "/B"]);
     expect(await f.fs.readFile(join(f.base, "sample-plugin/skills/demo/SKILL.md"))).toBe(f.content);
-    expect(result?.files.get("sample-plugin/skills/demo/SKILL.md")).toBe(
+    expect(result?.plugin.files.get("sample-plugin/skills/demo/SKILL.md")).toBe(
       FileHash.of(f.content).value
     );
   });
@@ -127,7 +127,7 @@ describe("PluginMaterializer public update contract", () => {
     });
 
     expect(await f.fs.readFile(join(f.base, path))).toBe(f.content);
-    expect(result?.files.has(path)).toBe(true);
+    expect(result?.plugin.files.has(path)).toBe(true);
     expect(f.logger.warnMessages.filter((m) => m.includes("left in place"))).toEqual([]);
   });
 
@@ -175,9 +175,13 @@ describe("PluginMaterializer public update contract", () => {
       rebuild: false,
       isWithinUserScope: insideUserScope,
     });
-    expect(f.fetcher.fetch).toHaveBeenCalledWith(f.plugin.source, join("/A", PLUGIN_CACHE_SUBDIR), {
-      forceRefresh: true,
-    });
+    expect(f.fetcher.fetch).toHaveBeenCalledWith(
+      f.plugin.plugin.source,
+      join("/A", PLUGIN_CACHE_SUBDIR),
+      {
+        forceRefresh: true,
+      }
+    );
   });
 
   it("refreshes a global install's plugin in the given cache, outside the project", async () => {
@@ -190,7 +194,7 @@ describe("PluginMaterializer public update contract", () => {
       rebuild: false,
       isWithinUserScope: insideUserScope,
     });
-    expect(f.fetcher.fetch).toHaveBeenCalledWith(f.plugin.source, "/config/cache", {
+    expect(f.fetcher.fetch).toHaveBeenCalledWith(f.plugin.plugin.source, "/config/cache", {
       forceRefresh: true,
     });
   });

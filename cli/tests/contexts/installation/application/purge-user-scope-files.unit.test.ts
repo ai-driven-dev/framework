@@ -2,11 +2,11 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PurgeUserScopeFiles } from "../../../../src/contexts/installation/application/purge-user-scope-files.js";
 import { ActiveMachineDependentsError } from "../../../../src/contexts/installation/domain/installation.error.js";
-import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { UserScopeInspection } from "../../../../src/contexts/installation/ports/user-scope-purge.js";
 import { InMemoryManifestRepository } from "../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
-import { FakeMachineStatePurge } from "../testing/fake-machine-state-purge.fake.js";
+import { FakeMachineState } from "../testing/fake-machine-state.fake.js";
 import { FakeUserScopePluginFiles } from "../testing/fake-user-scope-plugin-files.fake.js";
 import { aManifest } from "../testing/manifest.builder.js";
 
@@ -15,7 +15,7 @@ const ROOT = "/project";
 const NAME = "aidd-dev";
 
 function userPlugin(dependents: string[] = []) {
-  return InstalledPlugin.fromJSON({
+  return RecordedPlugin.fromJSON({
     name: NAME,
     source: { kind: "local", path: "/fixture" },
     version: "1.0.0",
@@ -40,7 +40,7 @@ function fixture(
   const files = new FakeUserScopePluginFiles(
     new Map([[NAME, new Map((options.proven ?? ["a.md", "b.md"]).map((f) => [f, "h"]))]])
   );
-  const machine = new FakeMachineStatePurge(["1.0.0"]);
+  const machine = new FakeMachineState(["1.0.0"]);
   const purge = new PurgeUserScopeFiles(
     {
       userManifestRepo: repo,
@@ -123,18 +123,18 @@ describe("PurgeUserScopeFiles.proveWithdrawals", () => {
 });
 
 describe("PurgeUserScopeFiles.purge", () => {
-  it("removes the proven plugin files, purges the machine state, then deletes the manifest", async () => {
+  it("removes the proven plugin files and purges the machine state, keeping the manifest", async () => {
     const { repo, files, machine, purge } = fixture();
 
     await purge.purge(ROOT);
 
     expect(files.removed.map((removed) => [...removed.keys()])).toEqual([["a.md", "b.md"]]);
-    expect(machine.purgedRoots).toEqual([ROOT]);
-    expect(repo.getCurrent()).toBeNull();
+    expect(machine.purgeCount).toBe(1);
+    expect(repo.getCurrent()).not.toBeNull();
   });
 
   it("leaves a project-scope plugin's files alone", async () => {
-    const projectPlugin = InstalledPlugin.fromJSON({
+    const projectPlugin = RecordedPlugin.fromJSON({
       name: "kept",
       source: { kind: "local", path: "/fixture" },
       version: "1.0.0",
@@ -160,7 +160,17 @@ describe("PurgeUserScopeFiles.purge", () => {
     await purge.purge(ROOT);
 
     expect(files.removed).toEqual([]);
-    expect(machine.purgedRoots).toEqual([ROOT]);
+    expect(machine.purgeCount).toBe(1);
+  });
+});
+
+describe("PurgeUserScopeFiles.deleteManifest", () => {
+  it("deletes the user manifest", async () => {
+    const { repo, purge } = fixture();
+
+    await purge.deleteManifest();
+
+    expect(repo.getCurrent()).toBeNull();
   });
 });
 

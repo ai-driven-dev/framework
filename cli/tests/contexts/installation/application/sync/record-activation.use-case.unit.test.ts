@@ -1,8 +1,6 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { registrationRecordRules } from "../../../../../src/composition/installation.js";
 import { RecordActivation } from "../../../../../src/contexts/installation/application/sync/record-activation.use-case.js";
-import { RecordMachineClaims } from "../../../../../src/contexts/installation/application/sync/record-machine-claims.use-case.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
 import { registeredCatalog } from "../../../../shared/testing/catalog-of.builder.js";
@@ -28,11 +26,7 @@ function setup(onDisk: string) {
   const manifest = aManifest()
     .withTool(claude, [trackedSettings("{}")])
     .build();
-  const deps = { fs, records: registrationRecordRules };
-  const record = new RecordActivation(
-    { ...deps, machineClaims: new RecordMachineClaims(deps, registeredCatalog()) },
-    registeredCatalog()
-  );
+  const record = new RecordActivation({ fs }, registeredCatalog());
   return { manifest, record };
 }
 

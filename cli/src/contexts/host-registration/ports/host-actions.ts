@@ -5,8 +5,7 @@ import type { Scope } from "../../../shared/domain/scope.js";
  *
  * What each tool delegates differs: Codex and Copilot load plugins only from user-global state
  * their own `plugin` subcommands populate, and Claude enables plugins through its own `install`
- * verb, so all three drive both steps. A tool whose profile declares no enable verb is driven
- * for its registration only. Implementations shell out to the binary declared by
+ * verb, so all three drive both steps. Implementations shell out to the binary declared by
  * `NativeActivation.binary`.
  */
 export interface HostActions {
@@ -14,8 +13,6 @@ export interface HostActions {
   isAvailable(): boolean;
   /** Registers a marketplace source (local path, `owner/repo[@ref]`, or git URL). Idempotent. */
   addMarketplace(source: string, scope: Scope): void;
-  /** True when this tool enables plugins through its CLI rather than through a file. */
-  enablesPlugins(): boolean;
   /** Unregisters a marketplace by name, in the scope it was added to. May throw when absent. */
   removeMarketplace(name: string, scope: Scope, options?: { force?: boolean }): void;
   /** Whether the registration under this name still resolves to something. `"unknown"` where

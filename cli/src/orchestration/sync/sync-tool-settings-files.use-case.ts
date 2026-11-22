@@ -148,12 +148,12 @@ export class SyncToolSettingsFiles {
   }: ToolSettings): readonly string[] {
     const refs: string[] = [];
     const marketplaceByName = new Map(marketplaces.map((m) => [m.name, m]));
-    for (const plugin of manifest.getPlugins(toolId)) {
-      if (plugin.marketplace == null) continue;
-      const marketplace = marketplaceByName.get(plugin.marketplace);
+    for (const recorded of manifest.getRecordedPlugins(toolId)) {
+      if (recorded.marketplace == null) continue;
+      const marketplace = marketplaceByName.get(recorded.marketplace);
       if (marketplace == null) continue;
       const entryKey = settings.entryKeyFor({ name: marketplace.name, source: marketplace.source });
-      if (entryKey != null) refs.push(this.deps.refs.refOnHostName(plugin.name, entryKey));
+      if (entryKey != null) refs.push(this.deps.refs.refOnHostName(recorded.plugin.name, entryKey));
     }
     return refs;
   }

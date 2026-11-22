@@ -92,7 +92,7 @@ async function buildUseCaseWithConflict() {
     location: REGISTRY_LOCATION,
     entries: new Map([["probe-mkt", "/other/src"]]),
   });
-  const activator = new FakeHostActions({ available: true, enablesPlugins: false });
+  const activator = new FakeHostActions({ available: true });
   const syncSettingsUseCase = marketplaceSync({
     fs: deps.fs,
     manifestRepo: deps.manifestRepo,

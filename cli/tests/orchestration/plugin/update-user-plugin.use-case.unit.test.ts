@@ -4,6 +4,26 @@ import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 describe("UpdateUserPlugin", () => {
+  it("hands the host registration's ref selection to the file update", async () => {
+    const selection = { isQualifiedRef: () => false, refSelectedBy: () => true };
+    let seen: unknown;
+    const update = new UpdateUserPlugin(
+      {
+        execute: async (options) => {
+          seen = options.refSelection;
+          return [];
+        },
+      },
+      { execute: async () => ({ apply() {} }) },
+      () => true,
+      selection
+    );
+
+    await update.execute({ toolIds: [], projectRoot: "/A", scope: "user" });
+
+    expect(seen).toBe(selection);
+  });
+
   it("hands the injected containment rule and the host refresh to the file update", async () => {
     const seen: { within?: IsWithinUserScope; refreshed: number } = { refreshed: 0 };
     const contained: IsWithinUserScope = () => false;
@@ -26,7 +46,8 @@ describe("UpdateUserPlugin", () => {
           return { apply() {} };
         },
       },
-      contained
+      contained,
+      { isQualifiedRef: () => false, refSelectedBy: () => false }
     );
 
     await update.execute({ toolIds: [], projectRoot: "/A", scope: "user" });

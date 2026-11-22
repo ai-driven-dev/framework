@@ -11,9 +11,10 @@ import {
   type LoadSyncContextDeps,
 } from "../../../src/contexts/installation/application/sync/load-sync-context.use-case.js";
 import { RecordActivation } from "../../../src/contexts/installation/application/sync/record-activation.use-case.js";
-import { RecordMachineClaims } from "../../../src/contexts/installation/application/sync/record-machine-claims.use-case.js";
 import { trackedSharedSettings } from "../../../src/contexts/installation/application/sync/tracked-shared-settings.js";
+import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { PurgeDeclaredCache } from "../../../src/contexts/machine-claims/application/purge-declared-cache.js";
+import { RecordMachineClaims } from "../../../src/contexts/machine-claims/application/record/record-machine-claims.use-case.js";
 import {
   RecordSourceReference,
   type RecordSourceReferenceDeps,
@@ -54,11 +55,6 @@ export interface MarketplaceSyncParts {
 
 export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
   const build = new BuildMarketplaceForTool(parts.ensureBuilt, parts.logger, registeredTools());
-  const claimsDeps = {
-    fs: parts.fs,
-    records: registrationRecordRules,
-    userManifestRepo: parts.userManifestRepo,
-  };
   return new SyncSettings({
     loadContext: new LoadSyncContext({
       manifestRepo: parts.manifestRepo,
@@ -98,8 +94,14 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
       },
       records: registrationRecordRules,
     }),
-    recordActivation: new RecordActivation(
-      { ...claimsDeps, machineClaims: new RecordMachineClaims(claimsDeps, registeredTools()) },
+    recordActivation: new RecordActivation({ fs: parts.fs }, registeredTools()),
+    machineClaims: new RecordMachineClaims(
+      {
+        fs: parts.fs,
+        userManifestRepo: parts.userManifestRepo,
+        emptyManifest: Manifest.create,
+        mergeClaims: registrationRecordRules.mergeCatalogueClaims,
+      },
       registeredTools()
     ),
     sharedSource: new SharedFrameworkSource({
@@ -115,5 +117,6 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
       purgeCache: new PurgeDeclaredCache(parts.fs, parts.logger),
       frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
     }),
+    records: registrationRecordRules,
   });
 }

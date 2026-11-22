@@ -5,7 +5,7 @@ import type { HostPluginRegistryReading } from "../../../src/contexts/host-regis
 import type { HostMarketplaceRegistry } from "../../../src/contexts/host-registration/ports/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../src/shared/domain/installation-file.js";
 import { builtMarketplaceDir } from "../../../src/shared/domain/layout/aidd-layout.js";
@@ -96,7 +96,7 @@ function ownedProject(options: RecoveryOptions) {
   ]);
   manifest.addPlugin(
     TOOL.claude,
-    InstalledPlugin.fromMetadata({
+    RecordedPlugin.fromMetadata({
       name: "review",
       version: "1.0.0",
       source: { kind: "local", path: "/plugins/review" },

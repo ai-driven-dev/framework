@@ -99,7 +99,6 @@ describe("settings migration", () => {
       manifest.addTool(TOOL.codex, "test", []);
       const activator = new FakeHostActions({
         available: true,
-        enablesPlugins: false,
         conflictOnAdd: true,
       });
       const fs = fsAt(PROJECT_ROOT, {
@@ -143,7 +142,6 @@ describe("settings migration", () => {
       manifest.addTool(TOOL.codex, "test", []);
       const activator = new FakeHostActions({
         available: true,
-        enablesPlugins: false,
         conflictOnAdd: true,
       });
       const fs = fsAt(PROJECT_ROOT, {
@@ -190,7 +188,6 @@ describe("settings migration", () => {
       manifest.addTool(TOOL.codex, "test", []);
       const activator = new FakeHostActions({
         available: true,
-        enablesPlugins: false,
         conflictOnAdd: true,
       });
       const builtDir = "/shared/built/other/codex";
@@ -225,7 +222,6 @@ describe("settings migration", () => {
       manifest.addTool(TOOL.claude, "test", []);
       const activator = new FakeHostActions({
         available: true,
-        enablesPlugins: false,
         conflictOnAdd: true,
       });
       const fs = fsAt(PROJECT_ROOT, {
@@ -294,7 +290,7 @@ describe("settings migration", () => {
       await registry.save(PROJECT_ROOT, projectScopeEntry({ kind: "local", path: "." }));
       const manifest = Manifest.create();
       manifest.addTool(TOOL.claude, "test", []);
-      const activator = new FakeHostActions({ available: true, enablesPlugins: false });
+      const activator = new FakeHostActions({ available: true });
       const logger = new CapturingLogger();
       const useCase = marketplaceSync({
         fs: fsAt(PROJECT_ROOT, catalogFixture(CLAUDE_BUILT_DIR)),

@@ -1,89 +1,61 @@
-import type { HintedMessage } from "../../../../shared/domain/describe-error.js";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
-import type { HostWithdrawal } from "../../ports/native-host.js";
-import type {
-  PluginHostReach,
-  ProjectPluginWithdrawalSteps,
-} from "../../ports/project-plugin-withdrawal.js";
-import type { NativeHostTool, PluginEnablementReach } from "../../ports/tool-sections.js";
-import type { RemovalClaims } from "./remove-project-plugin.js";
+import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
+import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
+import type { NativeHostTool } from "../../ports/tool-sections.js";
 
-/** What a project removal asks the machine scope, supplied by the composition root: who else owns a
- * ref, whether another project still needs it, which cache path is provably inside its root, and
- * the home directory the host's plugin cache is read under. */
-export interface PluginRemovalClaims extends RemovalClaims {
-  readonly home: string;
-  readonly isMachineOwned: (toolId: ToolId, ref: string) => Promise<boolean>;
-  readonly guardMessage: (query: {
-    readonly binary: string;
-    readonly tool: PluginEnablementReach;
-    readonly ref: string;
-    readonly marketplaceAlias: string;
-    readonly projectRoot: string;
-  }) => Promise<string | HintedMessage | undefined>;
-  readonly resolveCacheCandidate: (
-    cacheRoot: string,
-    relativeSegments: string,
-    label: string
-  ) => Promise<string | null>;
+/** A ref a machine claim holds on one tool. */
+export interface ClaimedHostRef {
+  readonly tool: AiToolId;
+  readonly ref: string;
 }
 
-/** What a project removal asks the host and the machine claims: whether the host lets the plugin
- * go, whether its ref may then leave the record, and the claims the removal lets go of. */
-export class ProjectPluginWithdrawal<Proof> implements ProjectPluginWithdrawalSteps {
-  constructor(
-    private readonly withdrawFromHost: HostWithdrawal<Proof>,
-    private readonly claims: PluginRemovalClaims
-  ) {}
+/** What a machine-scope removal asks the host, the caller's. `Proof` is the host's own proof that
+ * a claimed ref is removable: installation only hands back what `proveClaimedRef` gave it. */
+export interface ClaimedRefWithdrawal<Proof> {
+  readonly proveClaimedRef: (
+    registrations: NativeRegistrations,
+    claim: ClaimedHostRef,
+    projectRoot: string
+  ) => Promise<Proof>;
+  readonly uninstallProven: (proof: Proof) => Promise<void>;
+}
 
+/** What a removal asks of the record a plugin's ref sits in, the caller's to answer. */
+export interface RecordedPluginRef {
+  /** The ref the record holds for the plugin, `undefined` when nothing was recorded for it. */
+  recordedRef(
+    registrations: NativeRegistrations | undefined,
+    plugin: RecordedPlugin
+  ): string | undefined;
+  /** The record without one ref, every other entry untouched. */
+  withoutRef(registrations: NativeRegistrations, ref: string): NativeRegistrations;
+}
+
+/** The plugin a removal asks its host about, and where. */
+export interface PluginHostReach {
+  readonly tool: NativeHostTool;
+  readonly plugin: RecordedPlugin;
+  readonly projectRoot: string;
+  readonly registrations: NativeRegistrations | undefined;
+}
+
+/** What a project removal asks the host and the machine claims, the caller's: whether the host
+ * lets the plugin go, whether its ref may then leave the record, and the claims it lets go of. */
+export interface ProjectPluginWithdrawalSteps extends RecordedPluginRef {
   /** Refuses, before anything is deleted, a plugin the host cannot let go. */
-  async assertSource(source: PluginHostReach & { readonly toolId: AiToolId }): Promise<void> {
-    const { toolId, tool, plugin, projectRoot, registrations } = source;
-    if (plugin.marketplace === undefined) return;
-    await this.withdrawFromHost.assertProjectSource({
-      tool,
-      plugin: { name: plugin.name, marketplace: plugin.marketplace, scope: plugin.scope },
-      projectRoot,
-      registrations,
-      isMachineOwned: (ref) => this.claims.isMachineOwned(toolId, ref),
-    });
-  }
-
+  assertSource(source: PluginHostReach & { readonly toolId: AiToolId }): Promise<void>;
   /** `undefined` when the plugin carries no marketplace, else whether the host confirmed. */
-  async withdraw(reach: PluginHostReach): Promise<boolean | undefined> {
-    const { tool, plugin, projectRoot, registrations } = reach;
-    if (plugin.marketplace === undefined) return undefined;
-    return this.withdrawFromHost.execute({
-      tool,
-      plugin: { name: plugin.name, marketplace: plugin.marketplace, scope: plugin.scope },
-      projectRoot,
-      registrations,
-      pluginCacheRoot: tool.nativeActivation()?.pluginCacheRoot(this.claims.home),
-    });
-  }
-
-  /** The host confirmed the withdrawal, or it enables plugins machine-wide and nobody else holds `ref`. */
-  async canDetachRef(request: {
+  withdraw(reach: PluginHostReach): Promise<boolean | undefined>;
+  /** Whether the ref may leave the record once the host answered `confirmed`. */
+  canDetachRef(ref: {
     readonly toolId: AiToolId;
     readonly tool: NativeHostTool;
     readonly confirmed: boolean | undefined;
     readonly ref: string;
-  }): Promise<boolean> {
-    const { toolId, tool, confirmed, ref } = request;
-    return (
-      confirmed === true ||
-      (tool.pluginEnablementIsMachineGlobal() && (await this.claims.isMachineOwned(toolId, ref)))
-    );
-  }
-
+  }): Promise<boolean>;
   detachNativeRefs(
     projectRoot: string,
     refsByTool: ReadonlyMap<ToolId, readonly string[]>
-  ): Promise<void> {
-    return this.claims.detachNativeRefs(projectRoot, refsByTool);
-  }
-
-  detachUserPlugin(toolId: AiToolId, name: string, projectRoot: string): Promise<void> {
-    return this.claims.detachUserPlugin(toolId, name, projectRoot);
-  }
+  ): Promise<void>;
+  detachUserPlugin(toolId: AiToolId, name: string, projectRoot: string): Promise<void>;
 }

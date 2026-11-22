@@ -39,6 +39,7 @@ src/
 │   ├── installation/    # the installation record and what installs, restores and materializes it
 │   │   ├── application/
 │   │   │   ├── agents/
+│   │   │   ├── clean/
 │   │   │   ├── doctor/
 │   │   │   ├── install/
 │   │   │   │   └── config/
@@ -64,6 +65,7 @@ src/
 │   │       └── plugin/
 │   ├── machine-claims/    # which projects claim a machine-wide plugin or source
 │   │   ├── application/
+│   │   │   ├── record/
 │   │   │   └── shared-source/
 │   │   ├── contract/
 │   │   ├── domain/

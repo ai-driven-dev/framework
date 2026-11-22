@@ -18,9 +18,10 @@ import { UserScopePluginFiles } from "../../contexts/installation/application/re
 import { BuildMarketplaceForTool } from "../../contexts/installation/application/sync/build-marketplace-for-tool.use-case.js";
 import { LoadSyncContext } from "../../contexts/installation/application/sync/load-sync-context.use-case.js";
 import { RecordActivation } from "../../contexts/installation/application/sync/record-activation.use-case.js";
-import { RecordMachineClaims } from "../../contexts/installation/application/sync/record-machine-claims.use-case.js";
 import { trackedSharedSettings } from "../../contexts/installation/application/sync/tracked-shared-settings.js";
+import { Manifest } from "../../contexts/installation/domain/manifest.js";
 import { PurgeDeclaredCache } from "../../contexts/machine-claims/application/purge-declared-cache.js";
+import { RecordMachineClaims } from "../../contexts/machine-claims/application/record/record-machine-claims.use-case.js";
 import { RecordSourceReference } from "../../contexts/machine-claims/application/record-source-reference.use-case.js";
 import { removalClaims } from "../../contexts/machine-claims/application/removal-claims.js";
 import { SharedFrameworkSource } from "../../contexts/machine-claims/application/shared-source/shared-framework-source.use-case.js";
@@ -98,14 +99,14 @@ function wireUserMarketplaceRemoval(base: Base, inst: Installation) {
     purge: new PurgeMarketplacePlugins(
       {
         repo: userManifestRepo,
-        nativeHost: nativeHostRegistrationGate,
         userScopePluginFiles: new UserScopePluginFiles(fs, quietUserScopeFilesSafeToDelete(fs)),
-        records: inst.registrationRecordRules,
       },
       tools
     ),
     remove: new RemoveMarketplace(marketplaceRegistry),
+    hostGate: nativeHostRegistrationGate,
     home: resolveHomeDir(),
+    records: inst.registrationRecordRules,
   });
 }
 
@@ -120,13 +121,11 @@ function wireMarketplaceRemoval(base: Base, inst: Installation) {
   );
   const marketplaceRemoveUseCase = new RemoveProjectMarketplace({
     find: new FindMarketplaceToRemove(marketplaceRegistry),
-    plugins: new RemovePluginsFromMarketplace(
-      { manifestRepo, cleanup: projectCleanup, records: registrationRecordRules },
-      tools
-    ),
+    plugins: new RemovePluginsFromMarketplace({ manifestRepo, cleanup: projectCleanup }, tools),
     remove: new RemoveMarketplace(marketplaceRegistry),
     detachClaims: detachClaimsOf(projectCleanup),
     prompter,
+    records: registrationRecordRules,
   });
   const userMarketplaceRemoveUseCase = wireUserMarketplaceRemoval(base, inst);
   return { marketplaceRemoveUseCase, userMarketplaceRemoveUseCase };
@@ -195,15 +194,13 @@ function syncSettingsOf(base: Base, inst: Installation, sources: SyncSources): S
     }),
     settingsFiles: settingsFilesOf(base, inst, buildMarketplaceForTool),
     activateNativeTools: nativeActivationOf(base, inst, buildMarketplaceForTool),
-    recordActivation: new RecordActivation(
+    recordActivation: new RecordActivation({ fs }, tools),
+    machineClaims: new RecordMachineClaims(
       {
         fs,
-        records: registrationRecordRules,
         userManifestRepo,
-        machineClaims: new RecordMachineClaims(
-          { fs, records: registrationRecordRules, userManifestRepo },
-          tools
-        ),
+        emptyManifest: Manifest.create,
+        mergeClaims: registrationRecordRules.mergeCatalogueClaims,
       },
       tools
     ),
@@ -214,6 +211,7 @@ function syncSettingsOf(base: Base, inst: Installation, sources: SyncSources): S
       purgeCache: new PurgeDeclaredCache(fs, logger),
       frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
     }),
+    records: registrationRecordRules,
   });
 }
 

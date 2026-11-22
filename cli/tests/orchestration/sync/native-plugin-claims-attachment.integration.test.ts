@@ -9,7 +9,7 @@ import type { HostPluginRegistry } from "../../../src/contexts/host-registration
 import { PluginMaterializer } from "../../../src/contexts/installation/application/plugin/plugin-materializer.js";
 import { UpdateUserPluginFiles } from "../../../src/contexts/installation/application/plugin/update-user-plugin-files.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { isStrictlyWithinUserScope } from "../../../src/contexts/machine-claims/domain/user-scope-containment.js";
 import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.use-case.js";
 import { resolveHomeDir } from "../../../src/shared/infrastructure/home-dir.js";
@@ -60,7 +60,7 @@ for (const [toolId, catalogPath] of [
           .withTool(toolId, [])
           .withPlugin(
             toolId,
-            InstalledPlugin.fromMetadata({
+            RecordedPlugin.fromMetadata({
               name: "test-plugin",
               version: "1.0.0",
               source: { kind: "local", path: "/src" },
@@ -155,7 +155,6 @@ for (const [toolId, catalogPath] of [
               builtDeps: fakeBuiltDeps(updateFs),
             }),
             logger: new CapturingLogger(),
-            records: registrationRecordRules,
           },
           registeredTools()
         ),
@@ -164,7 +163,8 @@ for (const [toolId, catalogPath] of [
           new Map([[toolId, hostReader]]),
           sources
         ),
-        isStrictlyWithinUserScope
+        isStrictlyWithinUserScope,
+        registrationRecordRules
       );
       if (toolId === "copilot") {
         expect(
@@ -191,7 +191,6 @@ for (const [toolId, catalogPath] of [
                 builtDeps: fakeBuiltDeps(updateFs),
               }),
               logger: new CapturingLogger(),
-              records: registrationRecordRules,
             },
             registeredTools()
           ),
@@ -200,7 +199,8 @@ for (const [toolId, catalogPath] of [
             new Map([[toolId, hostReader]]),
             sources
           ),
-          isStrictlyWithinUserScope
+          isStrictlyWithinUserScope,
+          registrationRecordRules
         );
         await expect(
           failingUpdate.execute({

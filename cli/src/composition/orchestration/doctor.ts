@@ -31,7 +31,8 @@ function registrationCheckOver(base: Base, inst: Installation, manifests: LoadMa
   const { fs, tools } = base;
   return new CheckRegistration(
     {
-      listPlugins: new ListRegisteredPlugins(manifests, inst.registrationRecordRules),
+      listPlugins: new ListRegisteredPlugins(manifests),
+      records: inst.registrationRecordRules,
       builds: new ResolveBuiltMarketplaces({
         fs,
         registry: base.marketplaceRegistry,

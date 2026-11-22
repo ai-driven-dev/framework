@@ -4,7 +4,7 @@
 import { describe, expect, it } from "vitest";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
@@ -36,7 +36,7 @@ describe("clean releases a project's claims only once its local cleanup succeeds
       const project = seedManifest(TOOL.codex, [registration], [ref]);
       project.addTool(TOOL.cursor, "1.0.0", []);
       const record = (name: string, scope: Scope = "user") =>
-        InstalledPlugin.fromJSON({
+        RecordedPlugin.fromJSON({
           name,
           source: { kind: "local", path: "/shared/plugins" },
           version: "1.0.0",
@@ -107,9 +107,9 @@ describe("clean releases a project's claims only once its local cleanup succeeds
       expect(
         machineRepo
           .getCurrent()
-          ?.getPlugins(TOOL.cursor)
+          ?.getRecordedPlugins(TOOL.cursor)
           .map((plugin) => ({
-            name: plugin.name,
+            name: plugin.plugin.name,
             dependents: plugin.dependents,
           }))
       ).toEqual([

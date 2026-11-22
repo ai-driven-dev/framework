@@ -82,7 +82,9 @@ describe("RestoreAllPlugins - Mode A marketplace tools (claude/codex/copilot)", 
 
     const manifest = await deps.manifestRepo.load();
     if (manifest === null) throw new Error("manifest not found");
-    const plugin = manifest.getPlugins(TOOL.claude).find((p) => p.name === "sample-plugin");
+    const plugin = manifest
+      .getRecordedPlugins(TOOL.claude)
+      .find((p) => p.plugin.name === "sample-plugin");
     if (plugin === undefined) throw new Error("plugin not found");
 
     // Files materialized and recorded on the manifest entry, though Mode A's own contract
@@ -105,8 +107,10 @@ describe("RestoreAllPlugins - Mode A marketplace tools (claude/codex/copilot)", 
     for (const relativePath of strayFiles.keys()) {
       expect(deps.fs.getFile(join(PROJECT_ROOT, relativePath))).toBeUndefined();
     }
-    const after = manifest.getPlugins(TOOL.claude).find((p) => p.name === "sample-plugin");
-    expect(after?.files.size).toBe(0);
+    const after = manifest
+      .getRecordedPlugins(TOOL.claude)
+      .find((p) => p.plugin.name === "sample-plugin");
+    expect(after?.plugin.files.size).toBe(0);
     expect(result.totalFiles).toBe(0);
   });
 
@@ -118,7 +122,9 @@ describe("RestoreAllPlugins - Mode A marketplace tools (claude/codex/copilot)", 
 
     const manifest = await deps.manifestRepo.load();
     if (manifest === null) throw new Error("manifest not found");
-    const plugin = manifest.getPlugins(TOOL.claude).find((p) => p.name === "sample-plugin");
+    const plugin = manifest
+      .getRecordedPlugins(TOOL.claude)
+      .find((p) => p.plugin.name === "sample-plugin");
     if (plugin === undefined) throw new Error("plugin not found");
 
     const trackedPath = ".claude/plugins/sample-plugin/commands/greet.md";
@@ -147,8 +153,10 @@ describe("RestoreAllPlugins - Mode A marketplace tools (claude/codex/copilot)", 
 
     const manifest = await deps.manifestRepo.load();
     if (manifest === null) throw new Error("manifest not found");
-    const before = manifest.getPlugins(TOOL.claude).find((p) => p.name === "sample-plugin");
-    expect(before?.files.size).toBe(0);
+    const before = manifest
+      .getRecordedPlugins(TOOL.claude)
+      .find((p) => p.plugin.name === "sample-plugin");
+    expect(before?.plugin.files.size).toBe(0);
 
     const result = await makeRestoreUseCase(deps, registry).execute({
       projectRoot: PROJECT_ROOT,
@@ -161,10 +169,12 @@ describe("RestoreAllPlugins - Mode A marketplace tools (claude/codex/copilot)", 
     expect(result.totalFiles).toBe(0);
     expect(deps.fs.listAll().some((p) => p.includes(".claude/plugins/"))).toBe(false);
 
-    const plugins = manifest.getPlugins(TOOL.claude).filter((p) => p.name === "sample-plugin");
+    const plugins = manifest
+      .getRecordedPlugins(TOOL.claude)
+      .filter((p) => p.plugin.name === "sample-plugin");
     expect(plugins).toHaveLength(1);
-    expect(plugins[0]?.files.size).toBe(0);
+    expect(plugins[0]?.plugin.files.size).toBe(0);
     expect(plugins[0]?.marketplace).toBe("aidd-framework");
-    expect(plugins[0]?.source.kind).toBe("git-subdir");
+    expect(plugins[0]?.plugin.source.kind).toBe("git-subdir");
   });
 });

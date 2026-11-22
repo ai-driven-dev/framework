@@ -3,7 +3,7 @@ import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { PluginTranslationMode } from "../../../tools/contract/tool-vocabulary.js";
 import type { Manifest } from "../../domain/manifest.js";
-import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ProjectHooksGuard } from "../shared/assert-project-hooks-unchanged.js";
 import type { PlacementDeps } from "./add-plugin-request.js";
 import { placeBuiltTreePlugin } from "./place-built-tree-plugin.js";
@@ -13,7 +13,7 @@ export interface PluginRematerialization {
   readonly dist: PluginDistribution;
   readonly tool: AiToolProfile;
   readonly mode: PluginTranslationMode;
-  readonly plugin: InstalledPlugin;
+  readonly plugin: RecordedPlugin;
   readonly projectRoot: string;
   readonly manifest: Manifest;
   readonly hooksGuard?: ProjectHooksGuard;
@@ -32,7 +32,8 @@ export async function rematerializePlugin(
   rematerialization: PluginRematerialization,
   deps: PlacementDeps
 ): Promise<number> {
-  const { dist, tool, mode, plugin, projectRoot, manifest, hooksGuard = {} } = rematerialization;
+  const { dist, tool, mode, projectRoot, manifest, hooksGuard = {} } = rematerialization;
+  const { plugin, provenance, marketplace } = rematerialization.plugin;
   manifest.removePlugin(tool.toolId, plugin.name);
   const request = {
     dist,
@@ -40,10 +41,10 @@ export async function rematerializePlugin(
     source: plugin.source,
     projectRoot,
     manifest,
-    marketplace: plugin.marketplace,
-    previousMcpEntries: plugin.mcpEntries,
+    marketplace,
+    previousMcpEntries: provenance.mcpEntries,
     userScopeDirTaken: false,
-    previousProjectHooks: plugin.projectHooks,
+    previousProjectHooks: provenance.projectHooks,
     hooksGuard,
   };
   if (mode === "marketplace") {

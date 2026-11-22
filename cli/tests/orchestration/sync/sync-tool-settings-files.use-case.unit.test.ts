@@ -5,7 +5,7 @@ import { registrationRecordRules } from "../../../src/composition/installation.j
 import type { HostRegistrationOutcome } from "../../../src/contexts/host-registration/application/register/registration-outcome.js";
 import { BuildMarketplaceForTool } from "../../../src/contexts/installation/application/sync/build-marketplace-for-tool.use-case.js";
 import { trackedSharedSettings } from "../../../src/contexts/installation/application/sync/tracked-shared-settings.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { SyncToolSettingsFiles } from "../../../src/orchestration/sync/sync-tool-settings-files.use-case.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../src/shared/domain/installation-file.js";
@@ -29,8 +29,8 @@ function settingsOf(tool: typeof claude | typeof copilot): string {
   );
 }
 
-function pluginOf(name: string): InstalledPlugin {
-  return InstalledPlugin.fromJSON({
+function pluginOf(name: string): RecordedPlugin {
+  return RecordedPlugin.fromJSON({
     name,
     source: { kind: "github", repo: `owner/${name}` },
     version: "1.0.0",

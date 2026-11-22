@@ -2,7 +2,7 @@ import { ToolNotInManifestError } from "../../../../../shared/domain/shared.erro
 import type { AiToolId } from "../../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../../shared/ports/file-reader.js";
 import type { Manifest } from "../../../domain/manifest.js";
-import { InstalledPlugin } from "../../../domain/plugins/installed-plugin.js";
+import type { RecordedPlugin } from "../../../domain/plugins/recorded-plugin.js";
 
 /** The `tool/plugin` keys the project manifest held before this add. */
 export type PluginsInstalledBefore = ReadonlySet<string>;
@@ -19,7 +19,7 @@ interface PluginClaim {
   readonly project: Manifest;
   readonly machine: Manifest;
   readonly toolId: AiToolId;
-  readonly plugin: InstalledPlugin;
+  readonly plugin: RecordedPlugin;
   readonly root: string;
   readonly installedBefore: PluginsInstalledBefore;
 }
@@ -48,7 +48,7 @@ export async function recordUserScopeOwnership(
   const root = await fs.realpath(claim.projectRoot);
   const claims = toolIds.flatMap((toolId) =>
     project
-      .getPlugins(toolId)
+      .getRecordedPlugins(toolId)
       .map((plugin) => ({ project, machine, toolId, plugin, root, installedBefore }))
   );
   return claims.map(claimUserPlugin).includes(true);
@@ -56,26 +56,28 @@ export async function recordUserScopeOwnership(
 
 /** Moves a user-scope plugin's ownership from the project manifest to the machine's. */
 function claimUserPlugin(claim: PluginClaim): boolean {
-  const { project, machine, toolId, plugin, root } = claim;
-  const owned = machine.getPlugins(toolId).find((p) => p.name === plugin.name);
+  const { project, machine, toolId, plugin: recorded, root } = claim;
+  const { plugin } = recorded;
+  const owned = machine.getRecordedPlugins(toolId).find((p) => p.plugin.name === plugin.name);
   if (!isClaimable(claim, owned)) return false;
   if (!machine.hasTool(toolId)) {
     const version = project.getToolVersion(toolId);
     if (version === undefined) throw new ToolNotInManifestError(toolId);
     machine.addTool(toolId, version, []);
   }
-  const canonical = (owned ?? InstalledPlugin.withMcpEntries(plugin, new Map())).withDependents([
+  const canonical = (owned ?? recorded.withMcpEntries(new Map())).withDependents([
     ...(owned?.dependents ?? []),
     root,
   ]);
   machine.withPlugin(toolId, canonical);
-  project.updatePlugin(toolId, plugin.withFiles(new Map()));
+  project.updatePlugin(toolId, recorded.withFiles(new Map()));
   return true;
 }
 
 /** An unowned plugin is claimed only when this add installed it and it carries files. */
-function isClaimable(claim: PluginClaim, owned: InstalledPlugin | undefined): boolean {
-  const { toolId, plugin, installedBefore } = claim;
+function isClaimable(claim: PluginClaim, owned: RecordedPlugin | undefined): boolean {
+  const { toolId, installedBefore } = claim;
+  const { plugin } = claim.plugin;
   if (plugin.scope !== "user") return false;
   if (owned !== undefined) return true;
   return !installedBefore.has(installedKey(toolId, plugin.name)) && plugin.files.size > 0;

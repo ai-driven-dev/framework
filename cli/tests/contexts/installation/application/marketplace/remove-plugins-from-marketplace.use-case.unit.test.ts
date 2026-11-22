@@ -4,8 +4,9 @@ import {
   type RemovePluginsFromMarketplaceRequest,
 } from "../../../../../src/contexts/installation/application/marketplace/remove-plugins-from-marketplace.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { ProjectIntegrationCleanup } from "../../../../../src/contexts/installation/ports/project-integration-cleanup.js";
+import { pluginRefRecords } from "../../../../../src/orchestration/plugin/plugin-ref-records.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { REWRITTEN_BINARY, spiedRecordRules } from "../../testing/spy-record-rules.fake.js";
@@ -15,7 +16,7 @@ const HOST_NAME = "host-mkt";
 const PROJECT = "/proj";
 
 const plugin = (name: string, marketplace = MARKET) =>
-  InstalledPlugin.fromJSON({
+  RecordedPlugin.fromJSON({
     name,
     source: { kind: "local", path: `/src/${name}` },
     version: "1.0.0",
@@ -31,21 +32,24 @@ function setup(options: { manifest?: Manifest | null; refuse?: Error } = {}) {
   const calls: string[] = [];
   const cleanup: ProjectIntegrationCleanup = {
     assertLocalIntegrationRemovable: async (_tool, p) => {
-      calls.push(`assert:${p.name}`);
+      calls.push(`assert:${p.plugin.name}`);
       if (options.refuse !== undefined) throw options.refuse;
     },
     removeLocalIntegration: async (_tool, p, root) => {
-      calls.push(`integration:${p.name}:${root}`);
+      calls.push(`integration:${p.plugin.name}:${root}`);
     },
     deleteLocalFiles: async (_tool, p, root) => {
       calls.push(`files:${p.name}:${root}`);
     },
   };
   const { rules, withoutRef } = spiedRecordRules();
-  const useCase = new RemovePluginsFromMarketplace(
-    { manifestRepo: repo, cleanup, records: rules },
+  const removal = new RemovePluginsFromMarketplace(
+    { manifestRepo: repo, cleanup },
     registeredTools()
   );
+  const useCase = {
+    execute: (asked: Command) => removal.execute({ ...asked, records: pluginRefRecords(rules) }),
+  };
   return { useCase, repo, calls, withoutRef };
 }
 
@@ -64,9 +68,11 @@ function seeded(): Manifest {
   return manifest;
 }
 
+type Command = Omit<RemovePluginsFromMarketplaceRequest, "records">;
+
 const command = (
   confirm: RemovePluginsFromMarketplaceRequest["confirm"] = async () => true
-): RemovePluginsFromMarketplaceRequest => ({ marketplace: MARKET, projectRoot: PROJECT, confirm });
+): Command => ({ marketplace: MARKET, projectRoot: PROJECT, confirm });
 
 describe("RemovePluginsFromMarketplace", () => {
   it("answers nothing to remove when no manifest is saved, without asking", async () => {

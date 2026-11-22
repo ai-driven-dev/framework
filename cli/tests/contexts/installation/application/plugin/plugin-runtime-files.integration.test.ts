@@ -86,9 +86,9 @@ describe("plugin runtime files on an existing tool", () => {
     await addPlugin();
     await deps.fs.deleteFile(join(ROOT, EVENTS_FILE));
     const manifest = deps.manifestRepo.getCurrent();
-    const plugin = manifest?.getPlugins(TOOL.opencode)[0];
+    const plugin = manifest?.getRecordedPlugins(TOOL.opencode)[0];
     if (!manifest || !plugin) throw new Error("fixture plugin was not installed");
-    manifest.updatePlugin(TOOL.opencode, plugin.withVersion("0.0.0"));
+    manifest.updatePlugin(TOOL.opencode, plugin.withPlugin(plugin.plugin.withVersion("0.0.0")));
     await update.execute({
       toolIds: [TOOL.opencode],
       projectRoot: ROOT,

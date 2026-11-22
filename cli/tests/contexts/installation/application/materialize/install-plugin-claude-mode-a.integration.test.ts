@@ -79,8 +79,7 @@ describe("install claude plugin via Mode A (integration)", () => {
     await seedBuiltCatalog(fs);
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new FakeMarketplaceRegistry();
-    // Claude drives its own registration; it does not enable plugins that way.
-    const activator = new FakeHostActions({ available: true, enablesPlugins: false });
+    const activator = new FakeHostActions({ available: true });
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "test", []);
 
@@ -112,12 +111,9 @@ describe("install claude plugin via Mode A (integration)", () => {
     expect(await fs.fileExists(resolve(PROJECT_ROOT, ".claude/settings.local.json"))).toBe(false);
     expect(activator.addedMarketplaces).toEqual(["/built/claude"]);
 
-    // Enabled plugins stay here: `claude plugin install --scope project` writes this
-    // very object, so driving it would be a second way of doing the same thing.
     expect(
       (shared.enabledPlugins as Record<string, boolean>)[`aidd-context@${MARKETPLACE_NAME}`]
     ).toBe(true);
-    expect(activator.enabledPlugins).toEqual([]);
   });
 
   it("takes a registration left in the shared file by an older install out of it", async () => {
@@ -125,8 +121,7 @@ describe("install claude plugin via Mode A (integration)", () => {
     await seedBuiltCatalog(fs);
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new FakeMarketplaceRegistry();
-    // Claude drives its own registration; it does not enable plugins that way.
-    const activator = new FakeHostActions({ available: true, enablesPlugins: false });
+    const activator = new FakeHostActions({ available: true });
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "test", []);
 

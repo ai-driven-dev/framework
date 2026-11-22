@@ -76,9 +76,6 @@ export class RecordingActivator implements HostActions {
     return true;
   }
   addMarketplace(): void {}
-  enablesPlugins(): boolean {
-    return true;
-  }
   removeMarketplace(name: string, scope: Scope): void {
     this.order.push(`removeMarketplace:${name}`);
     this.removedMarketplaces.push(name);

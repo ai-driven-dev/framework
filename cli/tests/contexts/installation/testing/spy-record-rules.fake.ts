@@ -1,14 +1,13 @@
 import { vi } from "vitest";
 import { registrationRecordRules } from "../../../../src/composition/installation.js";
-import type { RegistrationRecordRules } from "../../../../src/contexts/installation/ports/native-host.js";
+
+type RecordRules = typeof registrationRecordRules;
 
 /** What every rewrite of the spied rules stamps on the record it hands back, so a test can tell
  * a record the host rewrote from one the use case built itself. */
 export const REWRITTEN_BINARY = "rewritten-by-the-host";
 
-type CallOf<Rule extends keyof RegistrationRecordRules> = (
-  ...asked: Parameters<RegistrationRecordRules[Rule]>
-) => void;
+type CallOf<Rule extends keyof RecordRules> = (...asked: Parameters<RecordRules[Rule]>) => void;
 
 /** The record rules with each rewrite spied and answering a record only the host could have
  * produced. The lookups stay the real ones. A spy records what the rule was asked: a mock cannot
@@ -17,7 +16,7 @@ export function spiedRecordRules() {
   const withoutRef = vi.fn<CallOf<"withoutRef">>();
   const withoutClaimedRef = vi.fn<CallOf<"withoutClaimedRef">>();
   const withoutMarketplace = vi.fn<CallOf<"withoutMarketplace">>();
-  const rules: RegistrationRecordRules = {
+  const rules: RecordRules = {
     ...registrationRecordRules,
     withoutRef: (record, ref) => {
       withoutRef(record, ref);

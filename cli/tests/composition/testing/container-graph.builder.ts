@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { vi } from "vitest";
 import { bindContainer } from "../../../src/composition/orchestration/deps-graph.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { Output } from "../../../src/orchestration/domain/output.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { catalogOf } from "../../shared/testing/catalog-of.builder.js";
@@ -34,7 +34,7 @@ export function stubMachineEnv(root: string): void {
 }
 
 export const aPlugin = (scope: Scope, extra: { mcpEntries?: Record<string, string> } = {}) =>
-  InstalledPlugin.fromJSON({
+  RecordedPlugin.fromJSON({
     name: "aidd-dev",
     source: { kind: "github", repo: "ai-driven-dev/framework" },
     version: "1.0.0",

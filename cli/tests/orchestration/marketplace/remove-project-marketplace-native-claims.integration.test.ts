@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { RemoveProjectPlugin } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { removalClaims } from "../../../src/contexts/machine-claims/application/removal-claims.js";
 import type { RemoveProjectMarketplace } from "../../../src/orchestration/marketplace/remove-project-marketplace.use-case.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
@@ -44,7 +44,7 @@ async function fixture(options: { nativeMapping?: "absent" | "unrelated" } = {})
     .withTool(codex, [])
     .withPlugin(
       codex,
-      InstalledPlugin.fromMetadata({
+      RecordedPlugin.fromMetadata({
         name: "sample-plugin",
         version: "1.0.0",
         source: { kind: "local", path: "/fixture" },
@@ -102,7 +102,7 @@ describe("project marketplace removal against machine native claims", () => {
       const f = await fixture({ nativeMapping });
       const before = f.projectRepo.getCurrent()?.getNativeRegistrations(codex);
       expect(await remove(f.useCase)).toMatchObject({ removedPluginCount: 1, orphanCount: 1 });
-      expect(f.projectRepo.getCurrent()?.getPlugins(codex)).toEqual([]);
+      expect(f.projectRepo.getCurrent()?.getRecordedPlugins(codex)).toEqual([]);
       expect(f.projectRepo.getCurrent()?.getNativeRegistrations(codex)).toEqual(before);
       expect(f.machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
         { ref: REF, dependents: ["/A", "/B"] },
@@ -143,7 +143,7 @@ describe("project marketplace removal against machine native claims", () => {
       .withTool(cursor, [])
       .withPlugin(
         cursor,
-        InstalledPlugin.fromJSON({
+        RecordedPlugin.fromJSON({
           name: "sample-plugin",
           source: { kind: "local", path: "/fixture" },
           version: "1.0.0",
@@ -172,7 +172,7 @@ describe("project marketplace removal against machine native claims", () => {
       .withTool(cursor, [])
       .withPlugin(
         cursor,
-        InstalledPlugin.fromJSON({
+        RecordedPlugin.fromJSON({
           name: "sample-plugin",
           source: { kind: "local", path: "/fixture" },
           version: "1.0.0",
@@ -205,8 +205,11 @@ describe("project marketplace removal against machine native claims", () => {
     await expect(remove(useCase)).rejects.toThrow(/EACCES/);
 
     expect(projectRepo.saveCount).toBe(0);
-    expect(projectRepo.getCurrent()?.getPlugins(cursor)).toHaveLength(1);
-    expect(machineRepo.getCurrent()?.getPlugins(cursor)[0]?.dependents).toEqual(["/A", "/B"]);
+    expect(projectRepo.getCurrent()?.getRecordedPlugins(cursor)).toHaveLength(1);
+    expect(machineRepo.getCurrent()?.getRecordedPlugins(cursor)[0]?.dependents).toEqual([
+      "/A",
+      "/B",
+    ]);
     expect(fs.getFile(hooksPath)).toBe(hooks);
     expect(fs.getFile(globalMcp)).toBe("B's MCP");
     expect((await registry.list("/A")).some((entry) => entry.name === NAME)).toBe(true);
@@ -241,7 +244,7 @@ describe("project marketplace removal against machine native claims", () => {
   it("deletes A's exact orphan projection but preserves B and a different host catalogue", async () => {
     const f = await fixture();
     expect(await remove(f.useCase)).toMatchObject({ removedPluginCount: 1, orphanCount: 1 });
-    expect(f.projectRepo.getCurrent()?.getPlugins(codex)).toEqual([]);
+    expect(f.projectRepo.getCurrent()?.getRecordedPlugins(codex)).toEqual([]);
     expect(f.projectRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginRefs).toEqual([OTHER]);
     expect(f.machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
       { ref: REF, dependents: ["/B"] },
@@ -258,7 +261,7 @@ describe("project marketplace removal against machine native claims", () => {
     }
     const f = await fixture();
     const project = f.projectRepo.getCurrent();
-    const plugin = project?.getPlugins(codex)[0];
+    const plugin = project?.getRecordedPlugins(codex)[0];
     if (project === null || plugin === undefined) throw new Error("fixture missing plugin");
     project.updatePlugin(codex, plugin.withFiles(new Map([[".codex/skills/demo.md", "abc"]])));
     const useCase = projectMarketplaceRemover(
@@ -291,7 +294,7 @@ describe("project marketplace removal against machine native claims", () => {
       removedPluginCount: 0,
       orphanCount: 1,
     });
-    expect(f.projectRepo.getCurrent()?.getPlugins(codex)).toHaveLength(1);
+    expect(f.projectRepo.getCurrent()?.getRecordedPlugins(codex)).toHaveLength(1);
     expect(f.machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
       { ref: REF, dependents: ["/A", "/B"] },
     ]);
@@ -302,7 +305,7 @@ describe("project marketplace removal against machine native claims", () => {
       .withTool(cursor, [])
       .withPlugin(
         cursor,
-        InstalledPlugin.fromJSON({
+        RecordedPlugin.fromJSON({
           name: "sample-plugin",
           source: { kind: "local", path: "/fixture" },
           version: "1.0.0",
@@ -331,7 +334,7 @@ describe("project marketplace removal against machine native claims", () => {
       .withTool(cursor, [])
       .withPlugin(
         cursor,
-        InstalledPlugin.fromJSON({
+        RecordedPlugin.fromJSON({
           name: "sample-plugin",
           source: { kind: "local", path: "/fixture" },
           version: "1.0.0",
@@ -392,7 +395,7 @@ describe("project marketplace removal against machine native claims", () => {
     expect(fs.getFile(aScript)).toBeUndefined();
     expect(fs.getFile(bHooks)).toBe(hooks);
     expect(fs.getFile(bScript)).toBe("B's hook");
-    expect(machineRepo.getCurrent()?.getPlugins(cursor)[0]?.dependents).toEqual(["/B"]);
-    expect(projectRepo.getCurrent()?.getPlugins(cursor)).toEqual([]);
+    expect(machineRepo.getCurrent()?.getRecordedPlugins(cursor)[0]?.dependents).toEqual(["/B"]);
+    expect(projectRepo.getCurrent()?.getRecordedPlugins(cursor)).toEqual([]);
   });
 });

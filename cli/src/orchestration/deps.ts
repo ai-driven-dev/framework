@@ -9,10 +9,8 @@ import type { InstallIdeTool } from "../contexts/installation/application/instal
 import type { ListInstalledRules } from "../contexts/installation/application/list-installed-rules.use-case.js";
 import type { ListPlugins } from "../contexts/installation/application/plugin/list-plugins.use-case.js";
 import type { UpdatePlugin } from "../contexts/installation/application/plugin/update-plugin.use-case.js";
-import type { RemovePlugin } from "../contexts/installation/application/removal/remove-plugin.use-case.js";
 import type { RemoveUserPluginRequest } from "../contexts/installation/application/removal/remove-user-plugin.use-case.js";
 import type { ReportStatus } from "../contexts/installation/application/report-status.use-case.js";
-import type { UninstallTools } from "../contexts/installation/application/uninstall-tools.use-case.js";
 import type { ValidateRecipes } from "../contexts/recipes/application/validate-recipes.use-case.js";
 import type { DeclareTask } from "../contexts/telemetry/application/declaration/declare-task.use-case.js";
 import type { ParseTaskFlags } from "../contexts/telemetry/application/declaration/parse-task-flags.use-case.js";
@@ -42,6 +40,7 @@ import type { VersionReader } from "../shared/ports/version-reader.js";
 import type { SetAgentModels } from "./agent-models/set-agent-models.use-case.js";
 import type { CleanProject } from "./clean/clean-project.use-case.js";
 import type { CleanUserScope } from "./clean/clean-user-scope.use-case.js";
+import type { UninstallProjectTools } from "./clean/uninstall-project-tools.use-case.js";
 import type { RunDoctor } from "./doctor/run-doctor.use-case.js";
 import type { RunUserScopeDoctor } from "./doctor/run-user-scope-doctor.use-case.js";
 import type { Output } from "./domain/output.js";
@@ -53,6 +52,7 @@ import type { CheckMarketplaceUpstream } from "./marketplace/check-marketplace-u
 import type { RemoveProjectMarketplace } from "./marketplace/remove-project-marketplace.use-case.js";
 import type { RemoveUserMarketplace } from "./marketplace/remove-user-marketplace.use-case.js";
 import type { InstallPlugin } from "./plugin/install-plugin.use-case.js";
+import type { RemovePlugin } from "./plugin/remove-plugin.use-case.js";
 import type { UpdateUserPlugin } from "./plugin/update-user-plugin.use-case.js";
 import type { Prompter } from "./ports/prompter.js";
 import type { RunSetup } from "./setup/run-setup.use-case.js";
@@ -107,7 +107,9 @@ export interface Deps {
   checkStatus: Pick<CheckStatus, "execute">;
   pluginRemoveUseCase: Pick<RemovePlugin, "execute">;
   /** The user-scope removal, its home directory already bound. */
-  userPluginRemove: { execute: (options: Omit<RemoveUserPluginRequest, "home">) => Promise<void> };
+  userPluginRemove: {
+    execute: (options: Omit<RemoveUserPluginRequest, "home" | "records">) => Promise<void>;
+  };
   pluginListUseCase: Pick<ListPlugins, "execute">;
   pluginUpdateUseCase: Pick<UpdatePlugin, "execute">;
   userPluginUpdateUseCase: Pick<UpdateUserPlugin, "execute">;
@@ -119,7 +121,7 @@ export interface Deps {
   marketplaceCheckUseCase: Pick<CheckMarketplaceUpstream, "execute">;
   installAiToolUseCase: Pick<InstallAiTool, "execute">;
   installIdeToolUseCase: Pick<InstallIdeTool, "execute">;
-  uninstallTools: Pick<UninstallTools, "execute">;
+  uninstallTools: Pick<UninstallProjectTools, "execute">;
   searchPlugins: Pick<SearchPlugins, "execute">;
   pluginInstallUseCase: Pick<InstallPlugin, "execute">;
   syncSettingsUseCase: Pick<SyncSettings, "execute">;

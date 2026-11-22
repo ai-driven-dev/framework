@@ -7,7 +7,7 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 // biome-ignore lint/plugin: hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import { ProjectScopeUnsupportedError } from "../../domain/installation.error.js";
-import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type {
   PluginTranslation,
   PluginTranslationResult,
@@ -51,7 +51,7 @@ export async function placeFlatPlugin(
     return { skipped };
   const files = request.userScopeDirTaken === true ? [] : ctx.files;
   const written = await writeChangedPluginFiles(deps.fs, files, ctx.baseDir);
-  const plugin = InstalledPlugin.fromDistributionWithMcp({
+  const plugin = RecordedPlugin.fromDistributionWithMcp({
     dist,
     source,
     files,
@@ -60,7 +60,7 @@ export async function placeFlatPlugin(
     componentPaths: ctx.componentPaths,
     marketplace,
   });
-  manifest.addPlugin(tool.toolId, InstalledPlugin.withProjectHooks(plugin, hooks.projectHooks));
+  manifest.addPlugin(tool.toolId, plugin.withProjectHooks(hooks.projectHooks));
   return { skipped, written };
 }
 

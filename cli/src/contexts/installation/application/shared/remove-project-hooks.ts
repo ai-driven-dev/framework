@@ -2,8 +2,8 @@ import { dirname, join } from "node:path";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { ProjectHooksFormat } from "../../../tools/contract/tool-vocabulary.js";
-import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.js";
+import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ProjectHooksSection } from "../../ports/tool-sections.js";
 import { assertProjectPathWithinRoot } from "../ownership/project-path-boundary.js";
 import {
@@ -14,7 +14,7 @@ import {
 } from "./assert-project-hooks-unchanged.js";
 
 interface PluginProjectHooks {
-  readonly plugin: InstalledPlugin;
+  readonly plugin: RecordedPlugin;
   readonly tool: ProjectHooksSection;
   readonly projectRoot: string;
   readonly guard?: ProjectHooksGuard;
@@ -26,8 +26,8 @@ export async function assertProjectHooksRemovable(
   const { plugin, ...rest } = request;
   await assertProjectHooksUnchanged({
     ...rest,
-    pluginName: plugin.name,
-    provenance: plugin.projectHooks,
+    pluginName: plugin.plugin.name,
+    provenance: plugin.provenance.projectHooks,
   });
 }
 
@@ -76,8 +76,8 @@ export async function removeProjectHooks(
   const { plugin, ...rest } = request;
   return removeRecordedProjectHooks({
     ...rest,
-    pluginName: plugin.name,
-    provenance: plugin.projectHooks,
+    pluginName: plugin.plugin.name,
+    provenance: plugin.provenance.projectHooks,
   });
 }
 

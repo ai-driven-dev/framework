@@ -4,7 +4,7 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
-import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import { deleteOldFiles } from "../plugin/delete-plugin-files.js";
 import { scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import { writePluginFiles } from "../plugin/write-plugin-files.js";
@@ -14,7 +14,7 @@ import { placementModeOf } from "./plugin-placement.js";
 import { rematerializePlugin } from "./rematerialize-plugin.js";
 
 export interface ReplacePluginFilesRequest {
-  readonly plugin: InstalledPlugin;
+  readonly plugin: RecordedPlugin;
   readonly dist: PluginDistribution;
   readonly toolId: AiToolId;
   readonly projectRoot: string;
@@ -31,7 +31,8 @@ export class ReplacePluginFiles {
   ) {}
 
   async execute(command: ReplacePluginFilesRequest): Promise<void> {
-    const { plugin, dist, toolId, projectRoot, manifest } = command;
+    const { dist, toolId, projectRoot, manifest } = command;
+    const { plugin } = command.plugin;
     const tool = this.tools.aiProfile(toolId);
     const baseDir = scopeBaseOf(tool, {
       scope: plugin.scope,
@@ -40,9 +41,9 @@ export class ReplacePluginFiles {
     });
     await deleteOldFiles(plugin.files, baseDir, this.fs);
     const mode = placementModeOf(tool);
-    if (mode !== null && plugin.marketplace !== undefined) {
+    if (mode !== null && command.plugin.marketplace !== undefined) {
       await rematerializePlugin(
-        { dist, tool, mode, plugin, projectRoot, manifest },
+        { dist, tool, mode, plugin: command.plugin, projectRoot, manifest },
         { fs: this.fs, built: this.builtDeps }
       );
       return;
@@ -52,7 +53,7 @@ export class ReplacePluginFiles {
     await writePluginFiles(newFiles, baseDir, this.fs);
     manifest.updatePlugin(
       tool.toolId,
-      InstalledPlugin.fromDistribution({
+      RecordedPlugin.fromDistribution({
         dist,
         source: plugin.source,
         files: newFiles,

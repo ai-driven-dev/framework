@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ManifestUnavailableError } from "../../../src/contexts/installation/domain/installation.error.js";
 import type { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { doctorAll } from "../../../src/orchestration/global/doctor-all.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 import {
@@ -144,7 +144,7 @@ describe("doctorAll", () => {
     const { deps, manifest } = await depsWithBothCategories();
     manifest.addPlugin(
       TOOL.claude,
-      InstalledPlugin.fromJSON({
+      RecordedPlugin.fromJSON({
         name: "sample",
         source: { kind: "local", path: "/some/path" },
         version: "1.0.0",
@@ -175,7 +175,7 @@ describe("doctorAll", () => {
     const { deps, manifest } = await depsWithBothCategories();
     manifest.addPlugin(
       TOOL.claude,
-      InstalledPlugin.fromJSON({
+      RecordedPlugin.fromJSON({
         name: "sample",
         source: { kind: "local", path: "/some/path" },
         version: "1.0.0",
