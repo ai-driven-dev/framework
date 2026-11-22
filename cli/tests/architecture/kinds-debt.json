@@ -101,6 +101,7 @@
       "tests/orchestration/marketplace/register-marketplace.use-case.unit.test.ts": 1,
       "tests/orchestration/marketplace/remove-project-marketplace-native-claims.integration.test.ts": 1,
       "tests/orchestration/marketplace/remove-project-marketplace.use-case.orphan-protection.unit.test.ts": 1,
+      "tests/orchestration/marketplace/remove-project-marketplace.use-case.unit.test.ts": 1,
       "tests/orchestration/marketplace/remove-user-marketplace.use-case.copilot-and-cursor.integration.test.ts": 1,
       "tests/orchestration/marketplace/remove-user-marketplace.use-case.host-refusals.integration.test.ts": 1,
       "tests/orchestration/plugin/install-from-marketplace.use-case.integration.test.ts": 1,

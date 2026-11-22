@@ -16,6 +16,7 @@ import {
 import {
   ALIAS,
   HOST,
+  type NativeFixtureOptions,
   nativeFixture,
   options,
   proofFor,
@@ -26,9 +27,9 @@ import { userMarketplaceRemover } from "../testing/user-marketplace-remover.buil
 for (const toolId of [SYNTHETIC_TOOL]) {
   describe(`${toolId} targeted user marketplace removal: catalogue selection and claims`, () => {
     const fixture = (
-      refs: Parameters<typeof nativeFixture>[2],
-      opts: Parameters<typeof nativeFixture>[3] = {}
-    ) => nativeFixture(syntheticCatalog(), toolId, refs, opts);
+      refs: Parameters<typeof nativeFixture>[1],
+      opts: Omit<NativeFixtureOptions, "tools"> = {}
+    ) => nativeFixture(toolId, refs, { ...opts, tools: syntheticCatalog() });
 
     const enabled = () => new Map([[REF, { enabled: true, scope: "user" as const }]]);
 

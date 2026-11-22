@@ -177,7 +177,7 @@ describe("printUserScopeCleanOutcome", () => {
         dryRun: true,
         manifestFound: true,
         preview: {
-          toolIds: ["synthetic", "codex"],
+          toolIds: [SYNTHETIC_TOOL, SECOND_SYNTHETIC_TOOL],
           builtVersions: ["7.0.0", "7.1.0"],
           referencingProjects: ["/work/api", "/work/web"],
         },
@@ -187,8 +187,8 @@ describe("printUserScopeCleanOutcome", () => {
 
     expect(output.lines).toEqual([
       "The following will be removed for this machine:",
-      "  synthetic: registration will be undone through its own CLI",
-      "  codex: registration will be undone through its own CLI",
+      `  ${SYNTHETIC_TOOL}: registration will be undone through its own CLI`,
+      `  ${SECOND_SYNTHETIC_TOOL}: registration will be undone through its own CLI`,
       "  aidd-framework: shared source (versions: 7.0.0, 7.1.0)",
       "  still referenced by: /work/api, /work/web",
       "No files removed.",

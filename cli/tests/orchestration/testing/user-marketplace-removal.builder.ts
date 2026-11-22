@@ -48,17 +48,19 @@ export function sourceReader(): HostMarketplaceSources {
   };
 }
 
+export type NativeFixtureOptions = {
+  tools: ToolCatalog;
+  dependents?: readonly string[];
+  available?: boolean;
+  failOnUninstall?: boolean;
+  throwOnRemove?: boolean;
+  records?: RecordRules;
+};
+
 export async function nativeFixture(
-  tools: ToolCatalog,
   toolId: AiToolId,
   refs: ReadonlyMap<string, { enabled: boolean; scope?: Scope }>,
-  options: {
-    dependents?: readonly string[];
-    available?: boolean;
-    failOnUninstall?: boolean;
-    throwOnRemove?: boolean;
-    records?: RecordRules;
-  } = {}
+  options: NativeFixtureOptions
 ) {
   const machine = Manifest.create();
   machine.addTool(toolId, "1.0.0", []);
@@ -88,7 +90,7 @@ export async function nativeFixture(
     read: async () => ({ location: "/host/registry", refs }),
   };
   const useCase = userMarketplaceRemover(
-    tools,
+    options.tools,
     new InMemoryFileAdapter(),
     repo,
     registry,

@@ -7,7 +7,10 @@ import {
   printUserScopeSyncOutcome,
 } from "../../../src/presentation/presenters/sync.presenter.js";
 import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
-import { SYNTHETIC_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
+import {
+  SECOND_SYNTHETIC_TOOL,
+  SYNTHETIC_TOOL,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 
 describe("printRestoreOutcome", () => {
   it("says nothing was modified when nothing errored, restored or resisted restoration", () => {
@@ -155,12 +158,12 @@ describe("printActivationOutcome", () => {
 
     printActivationOutcome(output, {
       binaryMissing: [{ toolId: SYNTHETIC_TOOL, binary: "claude" }],
-      errors: [{ scope: "codex", error: "add refused" }],
+      errors: [{ scope: SECOND_SYNTHETIC_TOOL, error: "add refused" }],
     });
 
     expect(output.at("warn")).toEqual([
-      "synthetic: the plugin will not load until the claude CLI has run.",
-      "[codex] add refused",
+      `${SYNTHETIC_TOOL}: the plugin will not load until the claude CLI has run.`,
+      `[${SECOND_SYNTHETIC_TOOL}] add refused`,
     ]);
   });
 });
@@ -177,11 +180,11 @@ describe("printUserScopeSyncOutcome", () => {
   it("reports both the rebuilt files and the hosts driven", () => {
     const output = new CapturingOutput(false);
 
-    printUserScopeSyncOutcome(output, ["synthetic"], ["aidd-dev"]);
+    printUserScopeSyncOutcome(output, [SYNTHETIC_TOOL], ["aidd-dev"]);
 
     expect(output.at("success")).toEqual([
       "Refreshed global files for: aidd-dev",
-      "Synced native activation for: synthetic",
+      `Synced native activation for: ${SYNTHETIC_TOOL}`,
     ]);
   });
 
@@ -198,9 +201,11 @@ describe("printUserScopeSyncOutcome", () => {
   it("names every tool whose native activation was synced", () => {
     const output = new CapturingOutput(false);
 
-    printUserScopeSyncOutcome(output, ["synthetic", "codex"]);
+    printUserScopeSyncOutcome(output, [SYNTHETIC_TOOL, SECOND_SYNTHETIC_TOOL]);
 
-    expect(output.at("success")).toEqual(["Synced native activation for: synthetic, codex"]);
+    expect(output.at("success")).toEqual([
+      `Synced native activation for: ${SYNTHETIC_TOOL}, ${SECOND_SYNTHETIC_TOOL}`,
+    ]);
   });
 });
 
@@ -217,10 +222,13 @@ describe("printScopedFailures", () => {
     const output = new CapturingOutput(false);
 
     printScopedFailures(output, [
-      { scope: "synthetic", error: "add refused" },
-      { scope: "codex", error: "not on PATH" },
+      { scope: SYNTHETIC_TOOL, error: "add refused" },
+      { scope: SECOND_SYNTHETIC_TOOL, error: "not on PATH" },
     ]);
 
-    expect(output.at("warn")).toEqual(["[synthetic] add refused", "[codex] not on PATH"]);
+    expect(output.at("warn")).toEqual([
+      `[${SYNTHETIC_TOOL}] add refused`,
+      `[${SECOND_SYNTHETIC_TOOL}] not on PATH`,
+    ]);
   });
 });

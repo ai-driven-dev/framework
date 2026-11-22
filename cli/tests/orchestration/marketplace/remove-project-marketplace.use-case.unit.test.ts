@@ -9,6 +9,7 @@ import { Marketplace } from "../../../src/contexts/distribution/domain/marketpla
 import { RemoveProjectPlugin } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
 import {
@@ -107,19 +108,19 @@ describe("RemoveProjectMarketplace", () => {
   });
 
   it("removes a project marketplace's orphan projection without deleting shared Cursor files", async () => {
-    const { registry, manifestRepo, fs } = buildUseCase(syntheticCatalog());
+    const { registry, manifestRepo, fs } = buildUseCase(registeredTools());
     const useCase = projectMarketplaceRemover(
-      syntheticCatalog(),
+      registeredTools(),
       new RemoveProjectPlugin(fs, () => "/home/dev"),
       manifestRepo,
       registry,
       new KeepPrompter()
     );
     const manifest = Manifest.create();
-    manifest.addTool(SYNTHETIC_TOOL, "1.0.0", []);
+    manifest.addTool(TOOL.cursor, "1.0.0", []);
     const pluginKey = "aidd-context/commands/hello.md";
     manifest.addPlugin(
-      SYNTHETIC_TOOL,
+      TOOL.cursor,
       RecordedPlugin.fromJSON({
         name: "aidd-context",
         source: { kind: "github", repo: "owner/aidd-context" },
@@ -156,19 +157,19 @@ describe("RemoveProjectMarketplace", () => {
   });
 
   it("removes a cursor orphan's file under projectRoot, not ~/.cursor/plugins/local, when the manifest says scope: project", async () => {
-    const { registry, manifestRepo, fs } = buildUseCase(syntheticCatalog());
+    const { registry, manifestRepo, fs } = buildUseCase(registeredTools());
     const useCase = projectMarketplaceRemover(
-      syntheticCatalog(),
+      registeredTools(),
       new RemoveProjectPlugin(fs, () => "/home/dev"),
       manifestRepo,
       registry,
       new KeepPrompter()
     );
     const manifest = Manifest.create();
-    manifest.addTool(SYNTHETIC_TOOL, "1.0.0", []);
+    manifest.addTool(TOOL.cursor, "1.0.0", []);
     const pluginKey = "aidd-context/commands/hello.md";
     manifest.addPlugin(
-      SYNTHETIC_TOOL,
+      TOOL.cursor,
       RecordedPlugin.fromJSON({
         name: "aidd-context",
         source: { kind: "github", repo: "owner/aidd-context" },

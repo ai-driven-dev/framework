@@ -3,12 +3,10 @@ import type { RegisterFrameworkMarketplaceRequest } from "../../../src/contexts/
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
-import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { fsAt } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { SYNTHETIC_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   CLAUDE_BUILT_DIR,
   catalogFixture,
@@ -32,7 +30,6 @@ describe("SyncSettings - when the stale cache is left alone", () => {
       manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
       marketplaceRegistry: registryWithSharedFramework(),
       logger: new CapturingLogger(),
-      activators: new Map([[SYNTHETIC_TOOL, new FakeHostActions({ available: true })]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
     });
 
@@ -53,7 +50,6 @@ describe("SyncSettings - when the stale cache is left alone", () => {
       manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
       marketplaceRegistry: registryWithSharedFramework(),
       logger: new CapturingLogger(),
-      activators: new Map([[SYNTHETIC_TOOL, new FakeHostActions({ available: true })]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
     });
 
@@ -72,7 +68,6 @@ describe("SyncSettings - when the stale cache is left alone", () => {
       manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
       marketplaceRegistry: projectWithMigratableEntry(),
       logger: new CapturingLogger(),
-      activators: new Map([[SYNTHETIC_TOOL, new FakeHostActions({ available: true })]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
     });
 

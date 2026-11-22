@@ -9,7 +9,6 @@ import { CapturingOutput } from "../../shared/testing/capturing-output.fake.js";
 import {
   SECOND_SYNTHETIC_TOOL,
   SYNTHETIC_TOOL,
-  THIRD_SYNTHETIC_TOOL,
 } from "../../shared/testing/synthetic-tool-id.builder.js";
 
 describe("printToolAlreadyInstalled", () => {
@@ -37,7 +36,7 @@ describe("printToolInstalled", () => {
     const output = new CapturingOutput(false);
 
     printToolInstalled(output, {
-      toolId: THIRD_SYNTHETIC_TOOL,
+      toolId: SYNTHETIC_TOOL,
       fileCount: 3,
       warnings: ["first", "second"],
     });
@@ -45,7 +44,7 @@ describe("printToolInstalled", () => {
     expect(output.captured).toEqual([
       { level: "warn", message: "first" },
       { level: "warn", message: "second" },
-      { level: "success", message: "Installed syntheticc (3 files)" },
+      { level: "success", message: "Installed synthetic (3 files)" },
     ]);
   });
 });
@@ -78,13 +77,13 @@ describe("printUpdateResult", () => {
         { toolId: SYNTHETIC_TOOL, fileCount: 4 },
         { toolId: SECOND_SYNTHETIC_TOOL, fileCount: 1 },
       ],
-      [{ scope: "syntheticc", error: "binary missing" }]
+      [{ scope: SYNTHETIC_TOOL, error: "binary missing" }]
     );
 
     expect(output.captured).toEqual([
       { level: "success", message: "Updated synthetic (4 files)" },
       { level: "success", message: "Updated syntheticb (1 files)" },
-      { level: "warn", message: "[syntheticc] binary missing" },
+      { level: "warn", message: "[synthetic] binary missing" },
     ]);
   });
 
