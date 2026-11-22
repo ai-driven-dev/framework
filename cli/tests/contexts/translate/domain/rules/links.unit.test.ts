@@ -18,7 +18,7 @@ const STABLE_OPTS = { currentFilePluginRelative: "skills/foo/SKILL.md" };
 // Written as split literals to avoid biome's noTemplateCurlyInString warning.
 const CLAUDE_ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
 
-describe("rewriteRelativeLinks", () => {
+describe("rewriting relative links", () => {
   describe("rewrites @./X to [X](./X)", () => {
     it("rewrites a single @./ reference", () => {
       expect(rewriteRelativeLinks("See @./SKILL.md for details.", STABLE_OPTS)).toBe(
@@ -182,7 +182,7 @@ describe("rewriteRelativeLinks", () => {
   });
 });
 
-describe("rewriteLinks", () => {
+describe("rewriting links by layout", () => {
   it("reads a link the way the tool does when the layout keeps the tool's form", () => {
     expect(
       rewriteLinks("a @./x", {

@@ -3,7 +3,7 @@ import { mergeAdditiveMcp } from "../../../../src/contexts/translate/domain/addi
 
 const PLUGIN_SERVER = { command: "node", args: ["server.js"] };
 
-describe("mergeAdditiveMcp", () => {
+describe("merging mcp servers additively", () => {
   describe("empty existing", () => {
     it("writes all incoming keys into a fresh servers object", () => {
       const { mergedContent, collisions } = mergeAdditiveMcp(

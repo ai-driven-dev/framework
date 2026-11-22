@@ -7,7 +7,7 @@ import { REPOSITORY_ROOT } from "../../../shared/testing/repository-root.builder
 
 const SCHEMAS = join(REPOSITORY_ROOT, "cli", "assets", "schemas");
 
-describe("BundledSchemaProviderAdapter.loadSchema", () => {
+describe("loading a bundled schema", () => {
   it.each([
     ["plugin-manifest", "claude-code-plugin-manifest.json"],
     ["marketplace", "copilot-plugin-marketplace.json"],

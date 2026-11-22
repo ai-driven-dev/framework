@@ -7,7 +7,7 @@ import { distributionProbesOf } from "../../../../src/contexts/translate/domain/
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { catalogDeclaring } from "../testing/declared-tool-catalog.builder.js";
 
-describe("distributionProbesOf", () => {
+describe("listing the probes that detect a distribution", () => {
   // Order is behaviour: the reader takes the first probe that resolves, and a bare
   // `plugin.json` at the root is satisfied by almost any directory.
   it("puts the deepest path first and a bare filename last", () => {
@@ -58,7 +58,7 @@ describe("distributionProbesOf", () => {
   });
 });
 
-describe("buildTargetModesOf", () => {
+describe("listing the build modes of tools", () => {
   it("gives a tool one pair per contract it declares, and none for what it omits", () => {
     const catalog = catalogDeclaring([
       { id: TOOL.claude, buildModes: ["marketplace", "flat"] },
@@ -73,7 +73,7 @@ describe("buildTargetModesOf", () => {
   });
 });
 
-describe("supportedBuildTargets", () => {
+describe("listing the supported build targets", () => {
   it("lists the registered targets in the shared tool order, which the usage message prints", () => {
     expect(supportedBuildTargets(registeredTools())).toEqual([
       "claude",

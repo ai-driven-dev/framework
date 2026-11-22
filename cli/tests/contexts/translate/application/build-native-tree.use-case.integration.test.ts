@@ -20,7 +20,7 @@ import {
 } from "../testing/build-native-tree-world.builder.js";
 import { buildTree } from "../testing/build-tree.builder.js";
 
-describe("BuildNativeTree", () => {
+describe("building a native tree on disk", () => {
   let fs: InMemoryFileAdapter;
   let logger: CapturingLogger;
 
@@ -272,7 +272,7 @@ describe("BuildNativeTree", () => {
     });
   });
 
-  describe("idempotency", () => {
+  describe("when built twice", () => {
     it("produces byte-identical output on a second run with identical inputs", async () => {
       const uc = makeUseCase(fs);
       const opts = { sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: TOOL.copilot };

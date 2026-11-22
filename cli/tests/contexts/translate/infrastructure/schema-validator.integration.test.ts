@@ -12,8 +12,8 @@ const OBJECT_SCHEMA = {
   required: ["name"],
 };
 
-describe("AjvSchemaValidatorAdapter", () => {
-  describe("validate", () => {
+describe("validating data against a schema", () => {
+  describe("when data is validated", () => {
     it("does not throw for valid data against string schema", () => {
       const validator = new AjvSchemaValidatorAdapter();
       expect(() => validator.validate(STRING_SCHEMA, "hello")).not.toThrow();

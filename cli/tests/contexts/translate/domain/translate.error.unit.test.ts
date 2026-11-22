@@ -9,7 +9,7 @@ import {
   OutDirNotDirectoryError,
 } from "../../../../src/contexts/translate/domain/translate.error.js";
 
-describe("FlatMergeTargetNotJsonError", () => {
+describe("when FlatMergeTargetNotJsonError is raised", () => {
   it("carries its data and says nothing itself", () => {
     const error = new FlatMergeTargetNotJsonError("f.json", "Unexpected token");
     expect({
@@ -32,7 +32,7 @@ describe("FlatMergeTargetNotJsonError", () => {
   });
 });
 
-describe("FlatTargetExistsError", () => {
+describe("when FlatTargetExistsError is raised", () => {
   it("carries its data and says nothing itself", () => {
     const error = new FlatTargetExistsError("/out/a.md", "aidd-dev");
     expect({
@@ -53,7 +53,7 @@ describe("FlatTargetExistsError", () => {
   });
 });
 
-describe("FrameworkPlaceholderInPluginError", () => {
+describe("when FrameworkPlaceholderInPluginError is raised", () => {
   it("carries its data and says nothing itself", () => {
     const error = new FrameworkPlaceholderInPluginError("aidd-dev", "skills/x.md");
     expect({
@@ -76,7 +76,7 @@ describe("FrameworkPlaceholderInPluginError", () => {
   });
 });
 
-describe("InvalidBuildPathsError", () => {
+describe("when InvalidBuildPathsError is raised", () => {
   it("carries its data and says nothing itself", () => {
     const error = new InvalidBuildPathsError("/src", "/src/out");
     expect({
@@ -97,7 +97,7 @@ describe("InvalidBuildPathsError", () => {
   });
 });
 
-describe("JsonSchemaValidationError", () => {
+describe("when JsonSchemaValidationError is raised", () => {
   it("carries its data and says nothing itself", () => {
     const error = new JsonSchemaValidationError(["a", "b"]);
     expect({ name: error.name, errors: error.errors, message: error.message }).toStrictEqual({
@@ -112,7 +112,7 @@ describe("JsonSchemaValidationError", () => {
   });
 });
 
-describe("MarketplaceOutDirNotEmptyError", () => {
+describe("when MarketplaceOutDirNotEmptyError is raised", () => {
   it("carries its data and says nothing itself", () => {
     const error = new MarketplaceOutDirNotEmptyError("/out");
     expect({ name: error.name, outDir: error.outDir, message: error.message }).toStrictEqual({
@@ -127,7 +127,7 @@ describe("MarketplaceOutDirNotEmptyError", () => {
   });
 });
 
-describe("OutDirNotDirectoryError", () => {
+describe("when OutDirNotDirectoryError is raised", () => {
   it("carries its data and says nothing itself", () => {
     const error = new OutDirNotDirectoryError("/out");
     expect({ name: error.name, outDir: error.outDir, message: error.message }).toStrictEqual({

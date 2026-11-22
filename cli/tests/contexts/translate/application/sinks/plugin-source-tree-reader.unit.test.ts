@@ -14,7 +14,7 @@ function canonOf(files: Record<string, string>, fs = new InMemoryFileAdapter(fil
   return readPluginCanon(fs, PLUGIN, TOOL.claude);
 }
 
-describe("readPluginCanon", () => {
+describe("reading a plugin's source tree", () => {
   it("holds every file under the plugin folder, named from the plugin root", async () => {
     const canon = await canonOf({
       [`${PLUGIN_SRC}/README.md`]: "# Readme",
@@ -54,7 +54,7 @@ describe("readPluginCanon", () => {
   });
 });
 
-describe("presenceOf", () => {
+describe("telling what a plugin ships", () => {
   it("names each agent markdown file relative to the agents directory, in order, and nothing else", async () => {
     const canon = await canonOf({
       [`${PLUGIN_SRC}/agents/planner.md`]: "# Planner",

@@ -4,7 +4,7 @@ import { FrameworkPlaceholderInPluginError } from "../../../../../src/contexts/t
 
 const PLAN = { source: "skills/a/SKILL.md", path: "out/a/SKILL.md", content: "body" };
 
-describe("applyPlan", () => {
+describe("applying a component plan", () => {
   it("writes the content as it is when the layout names no rule", () => {
     expect(applyPlan(PLAN)).toEqual({ relativePath: "out/a/SKILL.md", content: "body" });
   });
