@@ -1,22 +1,17 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
-const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 const readme = require("../../check/generators/readme.cjs");
+const { scratchRoot } = require("./helpers.js");
 
 const EMPTY = "# R\n\n<!--counts:start-->old<!--counts:end-->\n\n<!--plugins:start-->\n<!--plugins:end-->\n";
 
-let root;
-const at = (rel) => path.join(root, rel);
-const write = (rel, text) => {
-  fs.mkdirSync(path.dirname(at(rel)), { recursive: true });
-  fs.writeFileSync(at(rel), text);
-};
+let root, at, write;
 const text = () => fs.readFileSync(at("README.md"), "utf8");
 
 beforeEach(() => {
-  root = fs.mkdtempSync(path.join(os.tmpdir(), "readme-"));
+  ({ root, at, write } = scratchRoot("readme-"));
   write("README.md", EMPTY);
   write("plugins/aidd-x/skills/01-a/SKILL.md", "---\nname: 01-a\n---\n");
   write("plugins/aidd-x/skills/no-skill-file/notes.md", "x\n");

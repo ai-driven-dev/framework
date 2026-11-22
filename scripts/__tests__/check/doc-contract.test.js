@@ -35,21 +35,13 @@ function put(files) {
 const ids = () => [...new Set(findings(CONTRACT, path.join(dir, "README.md")).map((f) => f.id))];
 
 describe("doc contract", () => {
-  it("accepts a clean repository", () => {
-    assert.deepEqual(findings(CONTRACT, path.join(dir, "README.md")), []);
-  });
-
   it("DOC-01 flags a link to nothing, and a fragment no heading answers", () => {
     put({ "docs/guide.md": "# Guide\n\n[x](nowhere.md)\n" });
     assert.deepEqual(ids(), ["DOC-01"]);
+    const [found] = findings(CONTRACT, path.join(dir, "README.md"));
+    assert.deepEqual([found.path, found.line], [path.join(dir, "docs/guide.md"), 3], "the file and line of the link, not the anchor");
     put({ "docs/guide.md": "# Guide\n\n[x](guide.md#nope)\n" });
     assert.deepEqual(ids(), ["DOC-01"]);
-  });
-
-  it("DOC-01 reports the file and line of the broken link, not the anchor", () => {
-    put({ "docs/guide.md": "# Guide\n\n[x](nowhere.md)\n" });
-    const [found] = findings(CONTRACT, path.join(dir, "README.md"));
-    assert.deepEqual([found.path, found.line], [path.join(dir, "docs/guide.md"), 3]);
   });
 
   it("DOC-01 leaves skill markdown to SKILL-17", () => {

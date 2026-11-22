@@ -264,5 +264,5 @@ test("removing a real router's citation is caught, for every action in the tree"
   }
 
   assert.deepEqual(missed, [], `a deleted citation went unnoticed:\n${missed.join("\n")}`);
-  assert.ok(checked > 5, `expected the tree to offer more than 100 citations to remove, got ${checked}`);
+  assert.ok(checked > 50, `expected the tree to offer more than 50 citations to remove, got ${checked}`);
 });

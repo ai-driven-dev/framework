@@ -1,19 +1,14 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
-const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 const catalogs = require("../../check/generators/catalogs.cjs");
+const { scratchRoot } = require("./helpers.js");
 
-let root;
-const at = (rel) => path.join(root, rel);
-const write = (rel, text) => {
-  fs.mkdirSync(path.dirname(at(rel)), { recursive: true });
-  fs.writeFileSync(at(rel), text);
-};
+let root, at, write;
 
 beforeEach(() => {
-  root = fs.mkdtempSync(path.join(os.tmpdir(), "catalogs-"));
+  ({ root, at, write } = scratchRoot("catalogs-"));
   write("plugins/aidd-x/agents/helper.md", "---\nname: helper\ndescription: Does a job\n---\n");
   write("plugins/aidd-y/skills/a/SKILL.md", "---\nname: a\ndescription: Skill a\n---\n");
 });

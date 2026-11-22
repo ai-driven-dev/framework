@@ -64,4 +64,15 @@ function writeThenValidate(writer, validator, request, tools, produced) {
   }
 }
 
-module.exports = { stripComments, fill, validate, lint, findings, writeThenValidate };
+/** A scratch folder, with `at` resolving a path in it and `write` creating a file there. */
+function scratchRoot(prefix) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  const at = (rel) => path.join(root, rel);
+  const write = (rel, text) => {
+    fs.mkdirSync(path.dirname(at(rel)), { recursive: true });
+    fs.writeFileSync(at(rel), text);
+  };
+  return { root, at, write };
+}
+
+module.exports = { stripComments, fill, validate, lint, findings, writeThenValidate, scratchRoot };

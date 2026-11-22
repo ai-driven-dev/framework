@@ -2,7 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { describe, it, beforeEach, afterEach } = require("node:test");
+const { describe, it, before, after, afterEach } = require("node:test");
 const engine = require("../../check/engine/engine.cjs");
 const { findings } = require("./helpers.js");
 
@@ -17,22 +17,28 @@ function anchorFindings(target) {
   return engine.check(contract, target);
 }
 
-/** A copy of the repository's anchor files, mutated per test. */
+/** A copy of the repository's anchor files, made once; each test's mutated file is restored after it. */
 let copy;
-beforeEach(() => {
+const originals = new Map();
+before(() => {
   copy = fs.mkdtempSync(path.join(os.tmpdir(), "repo-contract-"));
   for (const piece of PIECES) {
     fs.mkdirSync(path.dirname(path.join(copy, piece)), { recursive: true });
     fs.cpSync(path.join(ROOT, piece), path.join(copy, piece), { recursive: true });
   }
 });
-afterEach(() => fs.rmSync(copy, { recursive: true, force: true }));
+after(() => fs.rmSync(copy, { recursive: true, force: true }));
+afterEach(() => {
+  for (const [file, text] of originals) fs.writeFileSync(file, text);
+  originals.clear();
+});
 
 /** Ids found after one replacement in one file of the copy. */
 function ids(file, from, to) {
   const target = path.join(copy, file);
   const text = fs.readFileSync(target, "utf8");
   assert.ok(text.includes(from), `${file} no longer holds ${from}`);
+  if (!originals.has(target)) originals.set(target, text);
   fs.writeFileSync(target, text.replace(from, to));
   return [...new Set(anchorFindings(path.join(copy, ".claude-plugin/marketplace.json")).map((f) => f.id))];
 }
