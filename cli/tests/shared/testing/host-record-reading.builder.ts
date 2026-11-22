@@ -3,11 +3,11 @@ import {
   readRegistrationRecord,
 } from "../../../src/contexts/host-registration/domain/record/registration-record.js";
 import type { RegistrationRecordData } from "../../../src/contexts/installation/ports/record/registration-records.js";
-import { holdersOf as holdersRead } from "../../../src/contexts/machine-claims/domain/plugin-dependents.js";
 import {
   type HeldRefClaim,
+  holdersOf as holdersRead,
   readHeldClaims,
-} from "../../../src/contexts/machine-claims/domain/ref-claims.js";
+} from "../../../src/contexts/machine-claims/domain/plugin-claim.model.js";
 
 type ClaimedRecord = RegistrationRecord & { readonly pluginClaims?: readonly HeldRefClaim[] };
 

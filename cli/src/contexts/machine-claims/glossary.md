@@ -6,7 +6,7 @@ The language of the `machine-claims` context. A name in the code means what this
 | --- | --- | --- |
 | Claim | A statement kept on the machine that one project, or one tool, holds a plugin, a ref or a marketplace | `HeldRefClaim`, `ClaimedOutcome` |
 | Plugin claims | The per-tool file recording which refs and which project roots hold each plugin | `plugin-claims.json`, `PluginClaimsRepository` |
-| Dependent | A project root that holds a machine plugin, listed in that plugin's claim | `readDependents`, `plugin-dependents.ts` |
+| Dependent | A project root that holds a machine plugin, listed in that plugin's claim | `readDependents`, `plugin-claim.model.ts` |
 | Ref claim | The claim on one native plugin ref, merged when a project claims it again and dropped when none holds it | `mergeRefClaims`, `claimsKeeping` |
 | Machine record | What the machine manifest holds for a tool: its native registrations, split from and joined back to the plugin claims | `MachineManifest`, `splitPluginClaims`, `joinPluginClaims` |
 | Shared source reference | The project that points at the machine's single shared framework source, counted before the source is dropped | `UserSourceReferences` |

@@ -3,7 +3,7 @@ import type { RegistrationRecordStore } from "../contexts/installation/ports/rec
 import {
   joinPluginClaims,
   splitPluginClaims,
-} from "../contexts/machine-claims/domain/record-claims.js";
+} from "../contexts/machine-claims/domain/plugin-claim.model.js";
 import { UserScopeLockAdapter } from "../contexts/machine-claims/infrastructure/lock.js";
 import { UserSourceReferencesAdapter } from "../contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import type { PluginClaimsRepository } from "../contexts/machine-claims/ports/plugin-claims-repository.js";

@@ -1,7 +1,7 @@
 import { ToolNotInManifestError } from "../../../../shared/domain/shared.error.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import { dependentsClaim, readDependents } from "../../domain/plugin-dependents.js";
+import { dependentsClaim, readDependents } from "../../domain/plugin-claim.model.js";
 import type { OwnershipMachineManifest, UserPluginToClaim } from "../../ports/machine-manifest.js";
 
 /** A user-scope plugin a project hands to the machine, with the project that holds it. */

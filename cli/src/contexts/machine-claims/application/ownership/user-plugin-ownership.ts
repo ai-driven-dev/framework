@@ -1,7 +1,7 @@
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
-import { dependentsClaim, readDependents } from "../../domain/plugin-dependents.js";
+import { dependentsClaim, readDependents } from "../../domain/plugin-claim.model.js";
 import type { MachineManifestRepository } from "../../ports/machine-manifest.js";
 
 /** Release only this project's claim; global files remain until explicit user cleanup. */
