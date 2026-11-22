@@ -20,6 +20,17 @@ export interface ClaimedRefWithdrawal<Proof> {
   readonly uninstallProven: (proof: Proof) => Promise<void>;
 }
 
+/** What a removal asks of the record a plugin's ref sits in, the caller's to answer. */
+export interface RecordedPluginRef {
+  /** The ref the record holds for the plugin, `undefined` when nothing was recorded for it. */
+  recordedRef(
+    registrations: NativeRegistrations | undefined,
+    plugin: InstalledPlugin
+  ): string | undefined;
+  /** The record without one ref, every other entry untouched. */
+  withoutRef(registrations: NativeRegistrations, ref: string): NativeRegistrations;
+}
+
 /** The plugin a removal asks its host about, and where. */
 export interface PluginHostReach {
   readonly tool: NativeHostTool;
@@ -30,7 +41,7 @@ export interface PluginHostReach {
 
 /** What a project removal asks the host and the machine claims, the caller's: whether the host
  * lets the plugin go, whether its ref may then leave the record, and the claims it lets go of. */
-export interface ProjectPluginWithdrawalSteps {
+export interface ProjectPluginWithdrawalSteps extends RecordedPluginRef {
   /** Refuses, before anything is deleted, a plugin the host cannot let go. */
   assertSource(source: PluginHostReach & { readonly toolId: AiToolId }): Promise<void>;
   /** `undefined` when the plugin carries no marketplace, else whether the host confirmed. */
@@ -42,13 +53,6 @@ export interface ProjectPluginWithdrawalSteps {
     readonly confirmed: boolean | undefined;
     readonly ref: string;
   }): Promise<boolean>;
-  /** The ref the record holds for the plugin, `undefined` when nothing was recorded for it. */
-  recordedRef(
-    registrations: NativeRegistrations | undefined,
-    plugin: InstalledPlugin
-  ): string | undefined;
-  /** The record without one ref, every other entry untouched. */
-  withoutRef(registrations: NativeRegistrations, ref: string): NativeRegistrations;
   detachNativeRefs(
     projectRoot: string,
     refsByTool: ReadonlyMap<ToolId, readonly string[]>

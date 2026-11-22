@@ -9,6 +9,7 @@ import type {
   RemovePlugin as RemoveProjectPluginFiles,
 } from "../../contexts/installation/application/removal/remove-plugin.use-case.js";
 import type { pluginRemovalClaims } from "../../contexts/machine-claims/application/plugin-removal-claims.js";
+import { pluginRefRecords } from "./plugin-ref-records.js";
 import { withdrawalClaimsOf } from "./withdrawal-claims.js";
 
 export interface RemovePluginDeps {
@@ -53,9 +54,7 @@ export class RemovePlugin {
       canDetachRef: async ({ toolId, tool, confirmed, ref }) =>
         confirmed === true ||
         (tool.pluginEnablementIsMachineGlobal() && (await claims.isMachineOwned(toolId, ref))),
-      recordedRef: (registrations, { name, marketplace }) =>
-        records.refOf(registrations, name, marketplace),
-      withoutRef: (registrations, ref) => records.withoutRef(registrations, ref),
+      ...pluginRefRecords(records),
       detachNativeRefs: (projectRoot, refsByTool) =>
         claims.detachNativeRefs(projectRoot, refsByTool),
       detachUserPlugin: (toolId, name, projectRoot) =>

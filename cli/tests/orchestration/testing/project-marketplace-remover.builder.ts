@@ -20,13 +20,11 @@ export function projectMarketplaceRemover(
 ): RemoveProjectMarketplace {
   return new RemoveProjectMarketplace({
     find: new FindMarketplaceToRemove(registry),
-    plugins: new RemovePluginsFromMarketplace(
-      { manifestRepo, cleanup, records },
-      registeredTools()
-    ),
+    plugins: new RemovePluginsFromMarketplace({ manifestRepo, cleanup }, registeredTools()),
     remove: new RemoveMarketplace(registry),
     detachClaims: (projectRoot, { nativeRefs, plugins }) =>
       cleanup.detachClaims(projectRoot, nativeRefs, plugins),
     prompter,
+    records,
   });
 }

@@ -55,8 +55,8 @@ async function stepsOf(owned: (toolId: string, ref: string) => boolean = () => f
     detachUserPlugin: vi.fn(async () => undefined),
   };
   const records: RemovePluginDeps["records"] = {
-    refOf: vi.fn((_record, plugin, alias) => `${plugin}@${alias}`),
-    withoutRef: vi.fn((record) => ({ ...record, pluginRefs: [] })),
+    refOf: () => undefined,
+    withoutRef: (record) => record,
   };
   let steps: ProjectPluginWithdrawalSteps | undefined;
   const remove = {
@@ -70,7 +70,7 @@ async function stepsOf(owned: (toolId: string, ref: string) => boolean = () => f
     projectRoot: ROOT,
   });
   if (steps === undefined) throw new Error("the removal was not handed its steps");
-  return { steps, host, claims, records };
+  return { steps, host, claims };
 }
 
 const claude = registeredTools().aiProfile(TOOL.claude);
@@ -150,22 +150,6 @@ describe("RemovePlugin", () => {
     expect(
       await steps.canDetachRef({ toolId: TOOL.claude, tool: claude, confirmed: false, ref: "r" })
     ).toBe(false);
-  });
-
-  it("reads the plugin's ref from the record under the marketplace it came from", async () => {
-    const { steps, records } = await stepsOf();
-    const recorded = { pluginRefs: ["aidd-dev@framework"] };
-
-    expect(steps.recordedRef(recorded, plugin("framework"))).toBe("aidd-dev@framework");
-    expect(records.refOf).toHaveBeenCalledWith(recorded, "aidd-dev", "framework");
-  });
-
-  it("drops the ref from the record through the host registration's rule", async () => {
-    const { steps, records } = await stepsOf();
-    const recorded = { pluginRefs: ["r"] };
-
-    expect(steps.withoutRef(recorded, "r")).toStrictEqual({ pluginRefs: [] });
-    expect(records.withoutRef).toHaveBeenCalledWith(recorded, "r");
   });
 
   it("lets go of the machine claims the removal held", async () => {

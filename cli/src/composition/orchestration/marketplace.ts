@@ -117,13 +117,11 @@ function wireMarketplaceRemoval(base: Base, inst: Installation) {
   );
   const marketplaceRemoveUseCase = new RemoveProjectMarketplace({
     find: new FindMarketplaceToRemove(marketplaceRegistry),
-    plugins: new RemovePluginsFromMarketplace(
-      { manifestRepo, cleanup: projectCleanup, records: registrationRecordRules },
-      tools
-    ),
+    plugins: new RemovePluginsFromMarketplace({ manifestRepo, cleanup: projectCleanup }, tools),
     remove: new RemoveMarketplace(marketplaceRegistry),
     detachClaims: detachClaimsOf(projectCleanup),
     prompter,
+    records: registrationRecordRules,
   });
   const userMarketplaceRemoveUseCase = wireUserMarketplaceRemoval(base, inst);
   return { marketplaceRemoveUseCase, userMarketplaceRemoveUseCase };

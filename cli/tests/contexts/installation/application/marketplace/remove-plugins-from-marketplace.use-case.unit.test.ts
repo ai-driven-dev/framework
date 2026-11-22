@@ -6,6 +6,7 @@ import {
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { ProjectIntegrationCleanup } from "../../../../../src/contexts/installation/ports/project-integration-cleanup.js";
+import { pluginRefRecords } from "../../../../../src/orchestration/plugin/plugin-ref-records.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { REWRITTEN_BINARY, spiedRecordRules } from "../../testing/spy-record-rules.fake.js";
@@ -42,10 +43,13 @@ function setup(options: { manifest?: Manifest | null; refuse?: Error } = {}) {
     },
   };
   const { rules, withoutRef } = spiedRecordRules();
-  const useCase = new RemovePluginsFromMarketplace(
-    { manifestRepo: repo, cleanup, records: rules },
+  const removal = new RemovePluginsFromMarketplace(
+    { manifestRepo: repo, cleanup },
     registeredTools()
   );
+  const useCase = {
+    execute: (asked: Command) => removal.execute({ ...asked, records: pluginRefRecords(rules) }),
+  };
   return { useCase, repo, calls, withoutRef };
 }
 
@@ -64,9 +68,11 @@ function seeded(): Manifest {
   return manifest;
 }
 
+type Command = Omit<RemovePluginsFromMarketplaceRequest, "records">;
+
 const command = (
   confirm: RemovePluginsFromMarketplaceRequest["confirm"] = async () => true
-): RemovePluginsFromMarketplaceRequest => ({ marketplace: MARKET, projectRoot: PROJECT, confirm });
+): Command => ({ marketplace: MARKET, projectRoot: PROJECT, confirm });
 
 describe("RemovePluginsFromMarketplace", () => {
   it("answers nothing to remove when no manifest is saved, without asking", async () => {
