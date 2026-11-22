@@ -350,13 +350,18 @@ jobs:
 
   # Weekly and on demand only. Installs the newest host binary and replays the recorded host
   # behaviour against it, in a throwaway HOME over local marketplaces: no model, no login, no
-  # secret. A red run means a host changed its word, so tests/fixtures/hosts needs a new recording.
+  # secret. A red run means a host changed its word, so tests/fixtures/hosts needs a new recording:
+  # it opens or updates one issue per host.
   host-contract:
     name: cli / Host contract (${{ matrix.host }})
     needs: [changes]
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      actions: read
+      contents: read
+      issues: write
     strategy:
       fail-fast: false
       matrix:
@@ -381,7 +386,24 @@ jobs:
       - name: Install the host binary
         run: npm install -g ${{ matrix.package }}@latest
       - name: The host answers as recorded
+        id: contract
         run: cd cli && pnpm test:host-contract
+      # One issue per host, found by its title, so the three legs never open duplicates.
+      - name: Report a mismatch
+        if: failure() && steps.contract.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          TITLE: "Host contract mismatch: ${{ matrix.host }}"
+        run: |
+          body="The ${{ matrix.host }} binary no longer answers as tests/fixtures/hosts recorded it. Run: $RUN_URL"
+          number=$(gh issue list --repo "$REPO" --state open --search "\"$TITLE\" in:title" --json number,title --jq "map(select(.title == \"$TITLE\")) | .[0].number // empty")
+          if [ -n "$number" ]; then
+            gh issue comment "$number" --repo "$REPO" --body "$body"
+          else
+            gh issue create --repo "$REPO" --title "$TITLE" --body "$body"
+          fi
 
   cli-kilo-runtime:
     name: cli / Kilo runtime smoke
