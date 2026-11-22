@@ -65,7 +65,7 @@ async function oneMergeFileDrift(
 /** What to scan a tool directory for. */
 export interface AddedFileScan {
   directory: string;
-  trackedSet: Set<string>;
+  isTracked: (relativePath: string) => boolean;
   projectRoot: string;
   // Written by this CLI on purpose and never tracked: reporting one as something the user added
   // would be a lie. The `.backup` skip below is not the same thing: nothing here writes such a
@@ -76,13 +76,13 @@ export interface AddedFileScan {
 // User-scope plugin dirs (e.g. ~/.cursor/plugins/local/) are not scanned for added files;
 // only tracked-file drift is detected for user-scope plugins.
 export async function addedFileDrift(fs: FileReader, scan: AddedFileScan): Promise<FileDrift[]> {
-  const { directory, trackedSet, projectRoot, machineLocal } = scan;
+  const { directory, isTracked, projectRoot, machineLocal } = scan;
   const toolDir = join(projectRoot, directory);
   if (!(await fs.fileExists(toolDir))) return [];
   const diskFiles = await fs.listDirectory(toolDir);
   return diskFiles
     .filter((diskRelPath) => !diskRelPath.endsWith(".backup"))
     .map((diskRelPath) => `${directory}${diskRelPath}`)
-    .filter((fullRelPath) => !machineLocal.includes(fullRelPath) && !trackedSet.has(fullRelPath))
+    .filter((fullRelPath) => !machineLocal.includes(fullRelPath) && !isTracked(fullRelPath))
     .map((relativePath) => ({ relativePath, status: "added" as const }));
 }

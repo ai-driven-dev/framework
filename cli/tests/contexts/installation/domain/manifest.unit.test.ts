@@ -29,14 +29,6 @@ describe("Manifest", () => {
       manifest.addTool(TOOL.claude, "3.0.0", claudeFiles);
       expect(manifest.hasTool(TOOL.claude)).toBe(true);
     });
-
-    it("replaces an existing tool entry", () => {
-      const manifest = Manifest.create();
-      manifest.addTool(TOOL.claude, "3.0.0", claudeFiles);
-      const newFiles = [makeFile(".claude/agents/new-agent.md", "112233")];
-      manifest.addTool(TOOL.claude, "3.1.0", newFiles);
-      expect(manifest.getToolVersion(TOOL.claude)).toBe("3.1.0");
-    });
   });
 
   describe("removeTool()", () => {
@@ -308,18 +300,13 @@ describe("Manifest", () => {
     });
   });
 
-  describe("getTrackedPathsInDirectory()", () => {
-    it("lists the tracked, merged and plugin files under the directory, across tools, and no other", () => {
+  describe("re-adding a tool, what it keeps", () => {
+    it("replaces version and files, empties merge files, keeps plugins", () => {
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.claude, "3.0.0", [
-        makeFile(".claude/rules/a.md", "aa"),
-        makeFile("CLAUDE.md", "bb"),
-      ]);
+      manifest.addTool(TOOL.claude, "3.0.0", claudeFiles);
       manifest.updateToolMergeFiles(TOOL.claude, [
-        { relativePath: ".claude/settings.json", sectionKey: "hooks", entries: {} },
         { relativePath: ".mcp.json", sectionKey: "mcpServers", entries: {} },
       ]);
-      manifest.addTool(TOOL.cursor, "1.0.0", [makeFile(".cursor/rules/b.mdc", "cc")]);
       manifest.addPlugin(
         TOOL.claude,
         RecordedPlugin.fromJSON({
@@ -327,16 +314,19 @@ describe("Manifest", () => {
           source: { kind: "local", path: "/fixture" },
           version: "1.0.0",
           strict: false,
-          files: { ".claude/skills/x.md": "d".repeat(32), "AGENTS.md": "e".repeat(32) },
+          files: {},
           scope: "project",
         })
       );
 
-      expect([...manifest.getTrackedPathsInDirectory(".claude/")]).toStrictEqual([
-        ".claude/rules/a.md",
-        ".claude/settings.json",
-        ".claude/skills/x.md",
+      manifest.addTool(TOOL.claude, "3.1.0", [makeFile(".claude/agents/new-agent.md", "112233")]);
+
+      expect(manifest.getToolVersion(TOOL.claude)).toBe("3.1.0");
+      expect(manifest.getToolFiles(TOOL.claude).map((f) => f.relativePath)).toStrictEqual([
+        ".claude/agents/new-agent.md",
       ]);
+      expect(manifest.getMergeFiles(TOOL.claude)).toStrictEqual([]);
+      expect(manifest.getPlugins(TOOL.claude).map((p) => p.name)).toStrictEqual(["aidd-context"]);
     });
   });
 

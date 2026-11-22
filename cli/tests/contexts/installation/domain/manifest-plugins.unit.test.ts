@@ -181,13 +181,3 @@ describe("a tool that is not installed", () => {
     expect(() => makeManifest().updatePlugin(ABSENT, makePlugin())).toThrow(ToolNotInManifestError);
   });
 });
-
-describe("addTool() preserves existing plugins on re-add", () => {
-  it("keeps plugins when addTool is called again", () => {
-    const manifest = makeManifest();
-    manifest.addPlugin(CLAUDE, makePlugin("keep-me"));
-    manifest.addTool(CLAUDE, "4.0.0", []);
-    expect(manifest.getPlugins(CLAUDE)).toHaveLength(1);
-    expect(manifest.getPlugins(CLAUDE)[0].name).toBe("keep-me");
-  });
-});

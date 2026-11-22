@@ -65,7 +65,7 @@ describe("mergeFileDrift", () => {
 describe("addedFileDrift", () => {
   const scan = {
     directory: ".tool/",
-    trackedSet: new Set([".tool/kept.md"]),
+    isTracked: (path: string) => path === ".tool/kept.md",
     projectRoot: ROOT,
     machineLocal: [".tool/local.json"],
   };
