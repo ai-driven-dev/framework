@@ -11,7 +11,7 @@ import { manifestRepositoryLoading } from "../../shared/testing/partial-ports.bu
 import {
   SYNTHETIC_NATIVE_TOOL,
   syntheticSyncCatalog,
-} from "../../shared/testing/synthetic-tool-id.builder.js";
+} from "../../shared/testing/synthetic-native-tool.builder.js";
 import { ACTIVATED_NOTHING } from "../testing/run-sync.builder.js";
 
 const GIVEN = { projectRoot: "/p", files: [] };

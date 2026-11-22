@@ -20,8 +20,14 @@ import { InMemoryEnvironment } from "../../shared/testing/in-memory-environment.
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { buildInstallationDeps } from "../../shared/testing/installation-deps.builder.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { flowTools, registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { OverwritePrompter } from "../../shared/testing/scripted-prompter.fake.js";
+import {
+  SYNTHETIC_NATIVE_MARKETPLACE_FILE,
+  SYNTHETIC_NATIVE_MARKETPLACE_REGISTRY,
+  SYNTHETIC_NATIVE_TOOL,
+  syntheticNativeFamilyCatalog,
+} from "../../shared/testing/synthetic-native-tool.builder.js";
+import { syntheticFlowTools } from "../../shared/testing/synthetic-tool-id.builder.js";
 import { askMarketplaceSource } from "../testing/ask-marketplace-source.builder.js";
 import { runSetupOf } from "../testing/run-setup-of.builder.js";
 import { setupMarketplaceRegistrar } from "../testing/setup-marketplace-registrar.builder.js";
@@ -29,7 +35,7 @@ import { setupMarketplaceRegistrar } from "../testing/setup-marketplace-registra
 const CURRENT_VERSION = new FakeCurrentVersion();
 
 const PROJECT_ROOT = "/test-project";
-const REGISTRY_LOCATION = "/home/.claude/plugins/known_marketplaces.json";
+const REGISTRY_LOCATION = SYNTHETIC_NATIVE_MARKETPLACE_REGISTRY("/home");
 
 function makeNoOpLatestResolver(): ReleaseLister & RepositoryVisibility {
   return {
@@ -54,7 +60,7 @@ function makeNoOpPluginInstallFromMarketplace(): PluginInstallFromMarketplace {
 /** A REAL `SyncSettings`, not the no-op double the other setup suites
  * substitute, behind a host registry already holding a different catalog under that name. */
 async function buildUseCaseWithConflict() {
-  const deps = await buildInstallationDeps({ tools: registeredTools() });
+  const deps = await buildInstallationDeps({ tools: syntheticNativeFamilyCatalog() });
   const prompter = new OverwritePrompter();
   const askSource = askMarketplaceSource(prompter, makeNoOpLatestResolver());
   const setupToolsUseCase = new InstallTools(
@@ -81,11 +87,11 @@ async function buildUseCaseWithConflict() {
     })
   );
   await deps.fs.writeFile(
-    "/built/claude/.claude-plugin/marketplace.json",
+    `/built/${SYNTHETIC_NATIVE_TOOL}/${SYNTHETIC_NATIVE_MARKETPLACE_FILE}`,
     JSON.stringify({ name: "probe-mkt", version: "1.0.0", plugins: [{ name: "sample-plugin" }] })
   );
   await deps.fs.writeFile(
-    "/other/src/.claude-plugin/marketplace.json",
+    `/other/src/${SYNTHETIC_NATIVE_MARKETPLACE_FILE}`,
     JSON.stringify({ name: "probe-mkt", version: "2.0.0", plugins: [{ name: "different-plugin" }] })
   );
   const hostReader = new FakeHostMarketplaceRegistry({
@@ -94,15 +100,15 @@ async function buildUseCaseWithConflict() {
   });
   const activator = new FakeHostActions({ available: true });
   const syncSettingsUseCase = marketplaceSync({
-    tools: registeredTools(),
+    tools: syntheticNativeFamilyCatalog(),
     fs: deps.fs,
     manifestRepo: deps.manifestRepo,
     marketplaceRegistry: deps.marketplaceRegistry,
 
     logger: deps.logger,
-    activators: new Map([["claude", activator]]),
+    activators: new Map([[SYNTHETIC_NATIVE_TOOL, activator]]),
     ensureBuilt: fakeEnsureBuiltMarketplace((target) => `/built/${target}`),
-    hostMarketplaceRegistries: new Map([[TOOL.claude, hostReader]]),
+    hostMarketplaceRegistries: new Map([[SYNTHETIC_NATIVE_TOOL, hostReader]]),
   });
 
   const setupMarketplaceRegistration = setupMarketplaceRegistrar(
@@ -115,7 +121,7 @@ async function buildUseCaseWithConflict() {
     new InMemoryEnvironment()
   );
   const useCase = runSetupOf({
-    tools: registeredTools(),
+    tools: syntheticNativeFamilyCatalog(),
     fs: deps.fs,
     manifestRepo: deps.manifestRepo,
     steps: {
@@ -131,7 +137,7 @@ async function buildUseCaseWithConflict() {
 
 function remoteFlow(aiTools: ToolId[]): SetupFlow {
   return new SetupFlow({
-    ...flowTools(),
+    ...syntheticFlowTools(syntheticNativeFamilyCatalog()),
     supportsUserScopeActivation: () => true,
     projectRoot: PROJECT_ROOT,
     source: remoteFrameworkSource(),
@@ -146,7 +152,7 @@ describe("setup surfaces a marketplace source conflict instead of exiting clean"
   it("reports the conflict in its own activation result rather than discarding it", async () => {
     const { useCase, activator } = await buildUseCaseWithConflict();
 
-    const result = await useCase.execute(remoteFlow([TOOL.claude]));
+    const result = await useCase.execute(remoteFlow([SYNTHETIC_NATIVE_TOOL]));
 
     expect(activator.addedMarketplaces).toHaveLength(0);
     expect(result.activation.errors).toHaveLength(1);

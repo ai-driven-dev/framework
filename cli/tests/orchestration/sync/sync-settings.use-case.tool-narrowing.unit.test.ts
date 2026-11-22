@@ -9,12 +9,12 @@ import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manif
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
 import {
-  SYNTHETIC_IDE_TOOL,
   SYNTHETIC_LISTED_CATALOGUE,
   SYNTHETIC_LISTED_TOOL,
   SYNTHETIC_NATIVE_TOOL,
   syntheticSyncCatalog,
-} from "../../shared/testing/synthetic-tool-id.builder.js";
+} from "../../shared/testing/synthetic-native-tool.builder.js";
+import { SYNTHETIC_IDE_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   distribution,
   freshClaudeSource,

@@ -68,7 +68,8 @@ const IDE_FILES = [
   { name: "settings.json", merge: "user-prime", content: { "editor.tabSize": 2 } },
 ] as const;
 
-const IDE_CONFIG = defineIdeTool({
+/** The synthetic IDE tool profile, for a catalog that lists it beside other synthetic tools. */
+export const SYNTHETIC_IDE_CONFIG = defineIdeTool({
   toolId: "syntheticide",
   directory: IDE_DIRECTORY,
   signalDir: null,
@@ -87,21 +88,36 @@ const IDE_CONFIG = defineIdeTool({
 });
 
 /** An IDE tool id no registry lists, for a test that tells the two categories apart. */
-export const SYNTHETIC_IDE_TOOL = IDE_CONFIG.toolId;
+export const SYNTHETIC_IDE_TOOL = SYNTHETIC_IDE_CONFIG.toolId;
 
 /** The synthetic IDE tool and both AI tools, the first running the agents on anthropic and the
  * second on openai: for a test that reads both categories or the providers the tools run. */
 export function syntheticMixedCatalog(): ToolCatalog {
-  return new RegisteredToolCatalog([
+  return new RegisteredToolCatalog(syntheticMixedConfigs());
+}
+
+/** The profiles of the mixed catalog, for a catalog that lists more tools beside them. */
+export function syntheticMixedConfigs() {
+  return [
     syntheticConfig(SYNTHETIC_TOOL, ["anthropic"]),
     syntheticConfig(SECOND_SYNTHETIC_TOOL, ["openai"]),
-    IDE_CONFIG,
-  ]);
+    SYNTHETIC_IDE_CONFIG,
+  ];
 }
 
 /** A catalog listing only the synthetic tools: what a generic test hands code that asks its tools. */
 export function syntheticCatalog(): ToolCatalog {
   return new RegisteredToolCatalog(CONFIGS);
+}
+
+/** The tool ids a setup flow is built over, read from the given synthetic catalog, the mixed one by
+ * default: a flow test names no registered tool. */
+export function syntheticFlowTools(tools: ToolCatalog = syntheticMixedCatalog()) {
+  return {
+    registeredToolIds: tools.idsInCanonicalOrder(),
+    aiToolIds: tools.idsInCanonicalOrder("ai"),
+    ideToolIds: tools.idsInCanonicalOrder("ide"),
+  };
 }
 
 /** What a host keeps under its own home directory, the root every host path derives from. */
@@ -123,6 +139,14 @@ function installingHost(id: string): Partial<NativeActivationSpec> {
   };
 }
 
+/** A host that also takes its scope as a flag. */
+function scopedHost(id: string): Partial<NativeActivationSpec> {
+  return {
+    ...installingHost(id),
+    scopeArgs: { project: ["--scope", "local"], user: ["--scope", "user"] },
+  };
+}
+
 /** A host that lists its catalogue sources by command: the one shape every listing host shares. */
 function listedHost(id: string): Partial<NativeActivationSpec> {
   return {
@@ -140,8 +164,7 @@ function listedHost(id: string): Partial<NativeActivationSpec> {
 /** A host that keeps its catalogue sources in a registry file: the one shape every registry host shares. */
 export function registryHost(id: string): Partial<NativeActivationSpec> {
   return {
-    ...installingHost(id),
-    scopeArgs: { project: ["--scope", "local"], user: ["--scope", "user"] },
+    ...scopedHost(id),
     marketplaceSources: { from: "marketplace-registry" },
     marketplaceRegistry: {
       location: homeDir(id, "plugins", "known_marketplaces.json"),
@@ -155,6 +178,9 @@ interface NativeToolParts {
   readonly layout?: Partial<NativeLayoutParams>;
   readonly models?: ModelsSection;
   readonly catalogue?: string;
+  readonly rootToken?: string;
+  readonly manifestFile?: string;
+  readonly buildsMarketplace?: boolean;
 }
 
 /** One synthetic AI tool driven through its own host CLI the way a native tool is. */
@@ -166,14 +192,17 @@ export function syntheticNativeTool(
   return defineAiTool({
     toolId: id,
     distributionProbes: {
-      manifest: [".plugin/plugin.json"],
+      manifest: [parts.manifestFile ?? ".plugin/plugin.json"],
       marketplace: [parts.catalogue ?? ".plugin/marketplace.json"],
     },
     directory: `.${id}/`,
     toolSuffix: `.${id}.md`,
     signalDir: null,
     displayName: id,
-    buildContracts: { flat: () => anEmptyContract() },
+    buildContracts: {
+      flat: () => anEmptyContract(),
+      ...(parts.buildsMarketplace ? { marketplace: () => anEmptyContract() } : {}),
+    },
     capabilities: () => ({
       layout: nativeLayout({
         pluginsDir: `.${id}/plugins/`,
@@ -187,7 +216,10 @@ export function syntheticNativeTool(
         },
         ...parts.layout,
       }),
-      manifest: manifestSection({ manifestRelativePath: "plugin.json", pluginRootToken: "." }),
+      manifest: manifestSection({
+        manifestRelativePath: "plugin.json",
+        pluginRootToken: parts.rootToken ?? ".",
+      }),
       hooks: { delivery: { kind: "plugin-file" } },
       ...(parts.models === undefined ? {} : { models: parts.models }),
     }),
@@ -200,9 +232,8 @@ export function syntheticNativeTool(
  * list plus a shared settings file that only declares plugins the host proved. */
 export type SyntheticNativeSources = "registry" | "list-command" | "list-command-with-settings";
 
-function settingsFile(name: string): string {
-  return `.${name}/settings.json`;
-}
+/** The shared settings file a synthetic tool declares its catalogues in. */
+export const settingsFile = (id: string) => `.${id}/settings.json`;
 
 function sourcedActivation(id: string, sources: SyntheticNativeSources) {
   if (sources === "registry") return registryHost(id);
@@ -226,11 +257,22 @@ function sourcedSettings(id: string, sources: SyntheticNativeSources): Partial<N
   };
 }
 
-function syntheticSourcedTool(id: string, sources: SyntheticNativeSources, catalogue?: string) {
-  return syntheticNativeTool(id, sourcedActivation(id, sources), {
-    layout: sourcedSettings(id, sources),
-    catalogue,
-  });
+/** What a sourced synthetic tool takes beyond what its kind of host answers. */
+interface SourcedParts extends NativeToolParts {
+  readonly native?: Partial<NativeActivationSpec>;
+}
+
+/** A synthetic native tool whose host answers the way its kind says. */
+export function syntheticSourcedTool(
+  id: string,
+  sources: SyntheticNativeSources,
+  parts: SourcedParts = {}
+) {
+  return syntheticNativeTool(
+    id,
+    { ...sourcedActivation(id, sources), ...parts.native },
+    { ...parts, layout: { ...sourcedSettings(id, sources), ...parts.layout } }
+  );
 }
 
 /** A catalog listing several synthetic native tools, each with the way its host answers. */
@@ -247,36 +289,4 @@ export function syntheticNativeCatalog(
   sources: SyntheticNativeSources = "registry"
 ): ToolCatalog {
   return syntheticNativeCatalogOf([id, sources]);
-}
-
-const NATIVE_CATALOGUE = ".claude-plugin/marketplace.json";
-const LISTED_CATALOGUE = ".agents/plugins/marketplace.json";
-const PROVEN_CATALOGUE = ".plugin/marketplace.json";
-
-const NATIVE_CONFIGS = [
-  syntheticSourcedTool("syntheticnative", "registry", NATIVE_CATALOGUE),
-  syntheticSourcedTool("syntheticlisted", "list-command", LISTED_CATALOGUE),
-  syntheticSourcedTool("syntheticproven", "list-command-with-settings", PROVEN_CATALOGUE),
-] as const;
-
-/** A native tool no registry lists: its host keeps catalogue sources in a registry file and its
- * settings file takes the plugins it enables without proof. */
-export const SYNTHETIC_NATIVE_TOOL = NATIVE_CONFIGS[0].toolId;
-/** A native tool whose host lists catalogue sources by command and keeps no shared settings file. */
-export const SYNTHETIC_LISTED_TOOL = NATIVE_CONFIGS[1].toolId;
-/** A native tool whose host lists catalogue sources by command, updates a plugin itself, and whose
- * settings file takes a plugin only once the host proved it. */
-export const SYNTHETIC_PROVEN_TOOL = NATIVE_CONFIGS[2].toolId;
-/** The shared settings file the first synthetic native tool declares its catalogues in. */
-export const SYNTHETIC_NATIVE_SETTINGS = settingsFile(SYNTHETIC_NATIVE_TOOL);
-/** The shared settings file the proof-requiring synthetic tool declares its catalogues in. */
-export const SYNTHETIC_PROVEN_SETTINGS = settingsFile(SYNTHETIC_PROVEN_TOOL);
-/** Where each synthetic native tool's build leaves its catalogue, under the built tree. */
-export const SYNTHETIC_NATIVE_CATALOGUE = NATIVE_CATALOGUE;
-export const SYNTHETIC_LISTED_CATALOGUE = LISTED_CATALOGUE;
-export const SYNTHETIC_PROVEN_CATALOGUE = PROVEN_CATALOGUE;
-
-/** The synthetic native tools and the synthetic IDE tool: what a generic sync test hands code that drives hosts. */
-export function syntheticSyncCatalog(): ToolCatalog {
-  return new RegisteredToolCatalog([...NATIVE_CONFIGS, IDE_CONFIG]);
 }

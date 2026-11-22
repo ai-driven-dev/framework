@@ -3,7 +3,7 @@ import {
   SYNTHETIC_LISTED_TOOL,
   SYNTHETIC_NATIVE_TOOL,
   syntheticSyncCatalog,
-} from "../../shared/testing/synthetic-tool-id.builder.js";
+} from "../../shared/testing/synthetic-native-tool.builder.js";
 import {
   hostPluginProofFixture,
   ownedAndOtherCatalogues,

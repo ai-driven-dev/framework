@@ -9,8 +9,13 @@ import { aManifest } from "../../contexts/installation/testing/manifest.builder.
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
+import {
+  SYNTHETIC_MCP_FILE,
+  SYNTHETIC_MCP_TOOL,
+  SYNTHETIC_USER_TOOL,
+  syntheticNativeFamilyCatalog,
+} from "../../shared/testing/synthetic-native-tool.builder.js";
 import {
   buildUseCase,
   marketplaceNamed,
@@ -18,11 +23,13 @@ import {
 } from "../testing/project-marketplace-removal.builder.js";
 import { projectMarketplaceRemover } from "../testing/project-marketplace-remover.builder.js";
 
+const HOOKS_FILE = `.${SYNTHETIC_USER_TOOL}/hooks.json`;
+
 describe("which plugins a removal orphans: what it protects", () => {
-  it("keeps A and B Cursor claims when project hooks.json resolves outside the project", async () => {
-    const hooksPath = join(PROJECT_ROOT, ".cursor/hooks.json");
+  it("keeps A and B hook claims when project hooks.json resolves outside the project", async () => {
+    const hooksPath = join(PROJECT_ROOT, HOOKS_FILE);
     const foreignPath = "/foreign/hooks.json";
-    const command = "node ./.cursor/hooks/sample/pre.js";
+    const command = `node ./.${SYNTHETIC_USER_TOOL}/hooks/sample/pre.js`;
     const entry = { command };
     const content = JSON.stringify({ version: 1, hooks: { preToolUse: [entry] } });
     const fs = new InMemoryFileAdapter({ [hooksPath]: content, [foreignPath]: content }, [
@@ -48,17 +55,20 @@ describe("which plugins a removal orphans: what it protects", () => {
         scripts: {},
       },
     });
-    const project = aManifest().withTool(TOOL.cursor, []).withPlugin(TOOL.cursor, plugin).build();
+    const project = aManifest()
+      .withTool(SYNTHETIC_USER_TOOL, [])
+      .withPlugin(SYNTHETIC_USER_TOOL, plugin)
+      .build();
     const projectRepo = new InMemoryManifestRepository(project);
     const machine = aManifest()
-      .withTool(TOOL.cursor, [])
-      .withPlugin(TOOL.cursor, plugin.withMachineClaim([PROJECT_ROOT, "/B"]))
+      .withTool(SYNTHETIC_USER_TOOL, [])
+      .withPlugin(SYNTHETIC_USER_TOOL, plugin.withMachineClaim([PROJECT_ROOT, "/B"]))
       .build();
     const machineRepo = new InMemoryManifestRepository(machine);
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
     const useCase = projectMarketplaceRemover(
-      registeredTools(),
+      syntheticNativeFamilyCatalog(),
       new RemoveProjectPlugin(fs, () => "/home/dev", removalClaims(machineRepo, fs)),
       projectRepo,
       registry,
@@ -73,20 +83,19 @@ describe("which plugins a removal orphans: what it protects", () => {
       })
     ).rejects.toThrow(/outside.*project/);
 
-    expect(projectRepo.getCurrent()?.getRecordedPlugins(TOOL.cursor)).toHaveLength(1);
-    expect(machineRepo.getCurrent()?.getRecordedPlugins(TOOL.cursor)[0]?.machineClaim).toEqual([
-      PROJECT_ROOT,
-      "/B",
-    ]);
+    expect(projectRepo.getCurrent()?.getRecordedPlugins(SYNTHETIC_USER_TOOL)).toHaveLength(1);
+    expect(
+      machineRepo.getCurrent()?.getRecordedPlugins(SYNTHETIC_USER_TOOL)[0]?.machineClaim
+    ).toEqual([PROJECT_ROOT, "/B"]);
     expect(fs.getFile(foreignPath)).toBe(content);
     expect((await registry.list(PROJECT_ROOT)).some((entry) => entry.name === "awesome")).toBe(
       true
     );
   });
 
-  it("retains the OpenCode orphan and catalogue when MCP output is a symlink outside the project", async () => {
-    const mcpPath = join(PROJECT_ROOT, "opencode.json");
-    const foreignPath = "/foreign/opencode.json";
+  it("retains the MCP orphan and catalogue when MCP output is a symlink outside the project", async () => {
+    const mcpPath = join(PROJECT_ROOT, SYNTHETIC_MCP_FILE);
+    const foreignPath = `/foreign/${SYNTHETIC_MCP_FILE}`;
     const content = JSON.stringify({
       mcp: { mine: { type: "local" }, theirs: { type: "remote" } },
     });
@@ -95,9 +104,9 @@ describe("which plugins a removal orphans: what it protects", () => {
     ]);
     fs.setSymlink(mcpPath, foreignPath);
     const manifest = aManifest()
-      .withTool(TOOL.opencode, [])
+      .withTool(SYNTHETIC_MCP_TOOL, [])
       .withPlugin(
-        TOOL.opencode,
+        SYNTHETIC_MCP_TOOL,
         RecordedPlugin.fromJSON({
           name: "sample",
           source: { kind: "local", path: "/fixture" },
@@ -116,7 +125,7 @@ describe("which plugins a removal orphans: what it protects", () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
     const useCase = projectMarketplaceRemover(
-      registeredTools(),
+      syntheticNativeFamilyCatalog(),
       new RemoveProjectPlugin(fs, () => "/home/dev"),
       manifestRepo,
       registry,
@@ -132,7 +141,7 @@ describe("which plugins a removal orphans: what it protects", () => {
     ).rejects.toThrow(/outside.*project|escapes.*project/);
 
     expect(manifestRepo.saveCount).toBe(0);
-    expect(manifestRepo.getCurrent()?.getRecordedPlugins(TOOL.opencode)).toHaveLength(1);
+    expect(manifestRepo.getCurrent()?.getRecordedPlugins(SYNTHETIC_MCP_TOOL)).toHaveLength(1);
     expect(fs.getFile(foreignPath)).toBe(content);
     expect(fs.getFile(mcpPath)).toBe(content);
     expect((await registry.list(PROJECT_ROOT)).some((entry) => entry.name === "awesome")).toBe(
@@ -140,8 +149,8 @@ describe("which plugins a removal orphans: what it protects", () => {
     );
   });
 
-  it("retains the OpenCode orphan and catalogue when its project MCP config cannot be rewritten", async () => {
-    const mcpPath = join(PROJECT_ROOT, "opencode.json");
+  it("retains the MCP orphan and catalogue when its project MCP config cannot be rewritten", async () => {
+    const mcpPath = join(PROJECT_ROOT, SYNTHETIC_MCP_FILE);
     const content = JSON.stringify({
       mcp: { mine: { type: "local" }, theirs: { type: "remote" } },
     });
@@ -153,9 +162,9 @@ describe("which plugins a removal orphans: what it protects", () => {
     }
     const fs = new RefusingMcpWriteAdapter({ [mcpPath]: content });
     const manifest = aManifest()
-      .withTool(TOOL.opencode, [])
+      .withTool(SYNTHETIC_MCP_TOOL, [])
       .withPlugin(
-        TOOL.opencode,
+        SYNTHETIC_MCP_TOOL,
         RecordedPlugin.fromJSON({
           name: "sample",
           source: { kind: "local", path: "/fixture" },
@@ -174,7 +183,7 @@ describe("which plugins a removal orphans: what it protects", () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
     const useCase = projectMarketplaceRemover(
-      registeredTools(),
+      syntheticNativeFamilyCatalog(),
       new RemoveProjectPlugin(fs, () => "/home/dev"),
       manifestRepo,
       registry,
@@ -190,19 +199,19 @@ describe("which plugins a removal orphans: what it protects", () => {
     ).rejects.toThrow(/MCP write refused/);
 
     expect(manifestRepo.saveCount).toBe(0);
-    expect(manifestRepo.getCurrent()?.getRecordedPlugins(TOOL.opencode)).toHaveLength(1);
+    expect(manifestRepo.getCurrent()?.getRecordedPlugins(SYNTHETIC_MCP_TOOL)).toHaveLength(1);
     expect(fs.getFile(mcpPath)).toBe(content);
     expect((await registry.list(PROJECT_ROOT)).some((entry) => entry.name === "awesome")).toBe(
       true
     );
   });
 
-  it("unmerges only the orphan's contributed OpenCode MCP server from the project", async () => {
-    const { useCase, registry, manifestRepo, fs } = buildUseCase(registeredTools());
+  it("unmerges only the orphan's contributed MCP server from the project", async () => {
+    const { useCase, registry, manifestRepo, fs } = buildUseCase(syntheticNativeFamilyCatalog());
     const manifest = aManifest()
-      .withTool(TOOL.opencode, [])
+      .withTool(SYNTHETIC_MCP_TOOL, [])
       .withPlugin(
-        TOOL.opencode,
+        SYNTHETIC_MCP_TOOL,
         RecordedPlugin.fromJSON({
           name: "sample",
           source: { kind: "local", path: "/fixture" },
@@ -218,7 +227,7 @@ describe("which plugins a removal orphans: what it protects", () => {
       )
       .build();
     await manifestRepo.save(manifest);
-    const mcpPath = join(PROJECT_ROOT, "opencode.json");
+    const mcpPath = join(PROJECT_ROOT, SYNTHETIC_MCP_FILE);
     fs.setFile(
       mcpPath,
       JSON.stringify({ mcp: { mine: { type: "local" }, theirs: { type: "remote" } } })
@@ -236,7 +245,7 @@ describe("which plugins a removal orphans: what it protects", () => {
         autoConfirm: true,
       })
     ).rejects.toThrow(/edited/);
-    expect((await manifestRepo.load())?.getRecordedPlugins(TOOL.opencode)).toHaveLength(1);
+    expect((await manifestRepo.load())?.getRecordedPlugins(SYNTHETIC_MCP_TOOL)).toHaveLength(1);
     expect((await registry.list(PROJECT_ROOT)).some((entry) => entry.name === "awesome")).toBe(
       true
     );
@@ -254,16 +263,16 @@ describe("which plugins a removal orphans: what it protects", () => {
     expect(JSON.parse(fs.getFile(mcpPath) ?? "null")).toEqual({
       mcp: { theirs: { type: "remote" } },
     });
-    expect((await manifestRepo.load())?.getRecordedPlugins(TOOL.opencode)).toEqual([]);
+    expect((await manifestRepo.load())?.getRecordedPlugins(SYNTHETIC_MCP_TOOL)).toEqual([]);
   });
 
   it("preflights every orphan before touching A when B's MCP contribution was edited", async () => {
-    const { useCase, registry, manifestRepo, fs } = buildUseCase(registeredTools());
+    const { useCase, registry, manifestRepo, fs } = buildUseCase(syntheticNativeFamilyCatalog());
     const manifest = Manifest.create();
-    manifest.addTool(TOOL.opencode, "1.0.0", []);
+    manifest.addTool(SYNTHETIC_MCP_TOOL, "1.0.0", []);
     for (const name of ["alpha", "beta"]) {
       manifest.addPlugin(
-        TOOL.opencode,
+        SYNTHETIC_MCP_TOOL,
         RecordedPlugin.fromJSON({
           name,
           source: { kind: "local", path: "/fixture" },
@@ -280,7 +289,7 @@ describe("which plugins a removal orphans: what it protects", () => {
     }
     await manifestRepo.save(manifest);
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
-    const path = join(PROJECT_ROOT, "opencode.json");
+    const path = join(PROJECT_ROOT, SYNTHETIC_MCP_FILE);
     const edited = JSON.stringify({
       mcp: { alpha: { type: "local" }, beta: { type: "user-edited" } },
     });
@@ -294,7 +303,7 @@ describe("which plugins a removal orphans: what it protects", () => {
     ).rejects.toThrow(/edited.*beta|beta.*edited/);
     expect(fs.getFile(path)).toBe(edited);
     expect(
-      (await manifestRepo.load())?.getRecordedPlugins(TOOL.opencode).map((p) => p.plugin.name)
+      (await manifestRepo.load())?.getRecordedPlugins(SYNTHETIC_MCP_TOOL).map((p) => p.plugin.name)
     ).toEqual(["alpha", "beta"]);
     expect((await registry.list(PROJECT_ROOT)).some((m) => m.name === "awesome")).toBe(true);
   });

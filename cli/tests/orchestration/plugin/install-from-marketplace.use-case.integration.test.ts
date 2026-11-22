@@ -9,7 +9,10 @@ import { buildAddPlugin } from "../../contexts/installation/testing/build-add-pl
 import { fakeBuildSources } from "../../contexts/installation/testing/fake-build-sources.fake.js";
 import { loadDistributionOf } from "../../shared/testing/load-distribution.builder.js";
 import { manifestProbesOf } from "../../shared/testing/manifest-probes-of.builder.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_NATIVE_TOOL,
+  syntheticNativeFamilyCatalog,
+} from "../../shared/testing/synthetic-native-tool.builder.js";
 import {
   type AddPluginFor,
   buildUseCase as buildUseCaseWith,
@@ -27,17 +30,25 @@ const addPluginOver: AddPluginFor = (deps, registry) =>
     {
       loadDistribution: loadDistributionOf(
         deps.pluginFetcher,
-        new PluginDistributionReaderAdapter(deps.fs, manifestProbesOf(registeredTools()))
+        new PluginDistributionReaderAdapter(
+          deps.fs,
+          manifestProbesOf(syntheticNativeFamilyCatalog())
+        )
       ),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
     },
-    registeredTools()
+    syntheticNativeFamilyCatalog()
   );
 
 const buildUseCase = (
   options: Omit<Parameters<typeof buildUseCaseWith>[1], "tools" | "claude"> = {}
-) => buildUseCaseWith(addPluginOver, { tools: registeredTools(), claude: TOOL.claude, ...options });
+) =>
+  buildUseCaseWith(addPluginOver, {
+    tools: syntheticNativeFamilyCatalog(),
+    claude: SYNTHETIC_NATIVE_TOOL,
+    ...options,
+  });
 
 describe("InstallFromMarketplace", () => {
   it("installs a plugin found in a single marketplace and tags it", async () => {
@@ -57,14 +68,14 @@ describe("InstallFromMarketplace", () => {
 
     const result = await useCase.execute({
       pluginName: "sample-plugin",
-      toolIds: [TOOL.claude],
+      toolIds: [SYNTHETIC_NATIVE_TOOL],
       projectRoot: PROJECT_ROOT,
       interactive: false,
     });
 
     expect(result.marketplaceName).toBe("mkt1");
     const manifest = await deps.manifestRepo.load();
-    const plugins = manifest?.getRecordedPlugins(TOOL.claude) ?? [];
+    const plugins = manifest?.getRecordedPlugins(SYNTHETIC_NATIVE_TOOL) ?? [];
     const installed = plugins.find((p) => p.plugin.name === "sample-plugin");
     expect(installed?.marketplace).toBe("mkt1");
   });
@@ -85,7 +96,7 @@ describe("InstallFromMarketplace", () => {
     await expect(
       useCase.execute({
         pluginName: "missing",
-        toolIds: [TOOL.claude],
+        toolIds: [SYNTHETIC_NATIVE_TOOL],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       })
@@ -123,7 +134,7 @@ describe("InstallFromMarketplace", () => {
     await expect(
       useCase.execute({
         pluginName: "sample-plugin",
-        toolIds: [TOOL.claude],
+        toolIds: [SYNTHETIC_NATIVE_TOOL],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       })
@@ -161,7 +172,7 @@ describe("InstallFromMarketplace", () => {
     const result = await useCase.execute({
       pluginName: "sample-plugin",
       fromMarketplace: "mkt2",
-      toolIds: [TOOL.claude],
+      toolIds: [SYNTHETIC_NATIVE_TOOL],
       projectRoot: PROJECT_ROOT,
       interactive: false,
     });
@@ -188,7 +199,7 @@ describe("InstallFromMarketplace", () => {
       useCase.execute({
         pluginName: "sample-plugin",
         version: "1.0.0",
-        toolIds: [TOOL.claude],
+        toolIds: [SYNTHETIC_NATIVE_TOOL],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       })
@@ -214,7 +225,7 @@ describe("InstallFromMarketplace", () => {
       useCase.execute({
         pluginName: "sample-plugin",
         version: "9.9.9",
-        toolIds: [TOOL.claude],
+        toolIds: [SYNTHETIC_NATIVE_TOOL],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       })
@@ -252,7 +263,7 @@ describe("InstallFromMarketplace", () => {
 
     await useCase.execute({
       pluginName: "sample-plugin",
-      toolIds: [TOOL.claude],
+      toolIds: [SYNTHETIC_NATIVE_TOOL],
       projectRoot: PROJECT_ROOT,
       interactive: false,
       autoSelect: true,
@@ -260,7 +271,7 @@ describe("InstallFromMarketplace", () => {
     });
 
     const manifest = await deps.manifestRepo.load();
-    const installed = (manifest?.getRecordedPlugins(TOOL.claude) ?? []).find(
+    const installed = (manifest?.getRecordedPlugins(SYNTHETIC_NATIVE_TOOL) ?? []).find(
       (p) => p.plugin.name === "sample-plugin"
     );
     expect(installed?.marketplace).toBe("aidd-framework");
@@ -298,7 +309,7 @@ describe("InstallFromMarketplace", () => {
 
     const result = await useCase.execute({
       pluginName: "sample-plugin",
-      toolIds: [TOOL.claude],
+      toolIds: [SYNTHETIC_NATIVE_TOOL],
       projectRoot: PROJECT_ROOT,
       interactive: false,
       autoSelect: true,

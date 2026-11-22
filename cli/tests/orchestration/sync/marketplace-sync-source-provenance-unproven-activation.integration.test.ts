@@ -11,7 +11,7 @@ import {
   SYNTHETIC_PROVEN_SETTINGS,
   SYNTHETIC_PROVEN_TOOL,
   syntheticSyncCatalog,
-} from "../../shared/testing/synthetic-tool-id.builder.js";
+} from "../../shared/testing/synthetic-native-tool.builder.js";
 import {
   catalogueFilesystem,
   codexSourceAfterAdd,

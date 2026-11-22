@@ -37,7 +37,7 @@ import {
   SYNTHETIC_PROVEN_CATALOGUE,
   SYNTHETIC_PROVEN_TOOL,
   syntheticSyncCatalog,
-} from "../../shared/testing/synthetic-tool-id.builder.js";
+} from "../../shared/testing/synthetic-native-tool.builder.js";
 import { effectiveListSources } from "../testing/effective-list-sources.builder.js";
 import { userMarketplaceRemover } from "../testing/user-marketplace-remover.builder.js";
 

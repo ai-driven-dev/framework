@@ -15,10 +15,10 @@ import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-mark
 import { parseJsonRecord } from "../../shared/testing/json-value.builder.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
 import {
-  SYNTHETIC_NATIVE_CATALOGUE,
+  SYNTHETIC_NATIVE_MARKETPLACE_FILE,
   SYNTHETIC_NATIVE_SETTINGS,
   SYNTHETIC_NATIVE_TOOL,
-} from "../../shared/testing/synthetic-tool-id.builder.js";
+} from "../../shared/testing/synthetic-native-tool.builder.js";
 import { FakeHostMarketplaceSources } from "./fake-host-marketplace-sources.fake.js";
 import { FakeHostPluginRegistry } from "./fake-host-plugin-registry.fake.js";
 
@@ -69,7 +69,7 @@ export class ActivatorFailingAtUpgrade extends FakeHostActions {
  * the synthetic native tool, and an unreadable one is a hard failure, so the fixture must leave one too. */
 export function seededBuiltCatalog(name = "aidd-framework"): InMemoryFileAdapter {
   return new InMemoryFileAdapter({
-    [`/built/${SYNTHETIC_NATIVE_TOOL}/${SYNTHETIC_NATIVE_CATALOGUE}`]: JSON.stringify({
+    [`/built/${SYNTHETIC_NATIVE_TOOL}/${SYNTHETIC_NATIVE_MARKETPLACE_FILE}`]: JSON.stringify({
       name,
       version: "1.0.0",
       plugins: [],
@@ -111,7 +111,7 @@ async function seededCatalogs(names: readonly string[]): Promise<InMemoryFileAda
   const fs = seededBuiltCatalog(names[0]);
   for (const name of names.slice(1)) {
     await fs.writeFile(
-      `/built/${SYNTHETIC_NATIVE_TOOL}-${name}/${SYNTHETIC_NATIVE_CATALOGUE}`,
+      `/built/${SYNTHETIC_NATIVE_TOOL}-${name}/${SYNTHETIC_NATIVE_MARKETPLACE_FILE}`,
       JSON.stringify({ name, version: "1.0.0", plugins: [] })
     );
   }

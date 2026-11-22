@@ -19,10 +19,10 @@ import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.j
 import {
   SYNTHETIC_LISTED_CATALOGUE,
   SYNTHETIC_LISTED_TOOL,
-  SYNTHETIC_NATIVE_CATALOGUE,
+  SYNTHETIC_NATIVE_MARKETPLACE_FILE,
   SYNTHETIC_NATIVE_SETTINGS,
   SYNTHETIC_NATIVE_TOOL,
-} from "../../shared/testing/synthetic-tool-id.builder.js";
+} from "../../shared/testing/synthetic-native-tool.builder.js";
 import { FakeHostMarketplaceSources } from "./fake-host-marketplace-sources.fake.js";
 import { FakeHostPluginRegistry } from "./fake-host-plugin-registry.fake.js";
 
@@ -60,7 +60,9 @@ export interface Setup {
 
 function catalogPath(marketplace: string, target: string): string {
   const relative =
-    target === SYNTHETIC_LISTED_TOOL ? SYNTHETIC_LISTED_CATALOGUE : SYNTHETIC_NATIVE_CATALOGUE;
+    target === SYNTHETIC_LISTED_TOOL
+      ? SYNTHETIC_LISTED_CATALOGUE
+      : SYNTHETIC_NATIVE_MARKETPLACE_FILE;
   return `/built/${marketplace}/${target}/${relative}`;
 }
 

@@ -15,23 +15,27 @@ import { RunDoctor } from "../../../src/orchestration/doctor/run-doctor.use-case
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
-import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 import { hostInspector } from "../../shared/testing/host-inspector.builder.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_NATIVE_TOOL,
+  SYNTHETIC_USER_PLUGINS,
+  SYNTHETIC_USER_TOOL,
+  syntheticNativeFamilyCatalog,
+} from "../../shared/testing/synthetic-native-tool.builder.js";
 import { checkRegistrationOver } from "../testing/build-check-registration.builder.js";
 
 const homedir = (): string => "/home/dev";
 
 const EXPECTED_HASH = "abc123abc123abc123abc123abc123ab";
 const DRIFTED_HASH = "def456def456def456def456def456de";
-const PLUGIN_FILE = ".claude/plugins/my-plugin/commands/cmd.md";
+const PLUGIN_FILE = `.${SYNTHETIC_NATIVE_TOOL}/plugins/my-plugin/commands/cmd.md`;
 
 function makeManifest(pluginFileHash: string): Manifest {
   const manifest = aManifest()
-    .withTool(TOOL.claude, [])
+    .withTool(SYNTHETIC_NATIVE_TOOL, [])
     .withPlugin(
-      TOOL.claude,
+      SYNTHETIC_NATIVE_TOOL,
       RecordedPlugin.fromJSON({
         name: "my-plugin",
         source: { kind: "local", path: "/some/path" },
@@ -73,7 +77,7 @@ function makeManifestRepo(manifest: Manifest): ManifestRepository {
 function pluginCheck(fs: FileReader, manifest: Manifest): CheckPluginDrift {
   return new CheckPluginDrift(
     new LoadManifest(makeManifestRepo(manifest)),
-    new DetectPluginDrift(fs, catalogOf(), homedir)
+    new DetectPluginDrift(fs, syntheticNativeFamilyCatalog(), homedir)
   );
 }
 
@@ -86,26 +90,29 @@ function makeDoctorUseCase(fs: FileReader, manifest: Manifest): RunDoctor {
         tracked: new CheckTrackedFiles(loadManifest, fs),
         merge: new CheckMergeFiles(loadManifest, fs),
         references: new CheckFileReferences(loadManifest, fs),
-        layout: new CheckProjectLayout(loadManifest, fs, catalogOf()),
-        plugin: new CheckPluginDrift(loadManifest, new DetectPluginDrift(fs, catalogOf(), homedir)),
+        layout: new CheckProjectLayout(loadManifest, fs, syntheticNativeFamilyCatalog()),
+        plugin: new CheckPluginDrift(
+          loadManifest,
+          new DetectPluginDrift(fs, syntheticNativeFamilyCatalog(), homedir)
+        ),
       },
       registration: checkRegistrationOver(
         loadManifest,
         fs,
         new InMemoryMarketplaceRegistry(),
         () => false,
-        hostInspector(registeredTools(), {
+        hostInspector(syntheticNativeFamilyCatalog(), {
           fs: fs,
           pluginRegistries: new Map(),
           marketplaceRegistries: new Map(),
         }),
         () => "/user-cache",
         { get: () => "1.0.0" },
-        catalogOf()
+        syntheticNativeFamilyCatalog()
       ),
       authentication: { execute: async () => [] },
     },
-    catalogOf()
+    syntheticNativeFamilyCatalog()
   );
 }
 
@@ -140,7 +147,7 @@ describe("DoctorUseCase - plugin integrity", () => {
 
       expect(report.pluginIssues).toHaveLength(1);
       expect(report.pluginIssues[0].issue).toBe("hash-mismatch");
-      expect(report.pluginIssues[0].toolId).toBe("claude");
+      expect(report.pluginIssues[0].toolId).toBe(SYNTHETIC_NATIVE_TOOL);
     });
   });
 
@@ -180,7 +187,7 @@ describe("DoctorUseCase - plugin integrity", () => {
 
       const issues = await useCase.execute({
         projectRoot: "/proj",
-        allowedIds: new Set(["cursor"]),
+        allowedIds: new Set([SYNTHETIC_USER_TOOL]),
       });
 
       expect(issues).toStrictEqual([]);
@@ -192,11 +199,16 @@ describe("DoctorUseCase - plugin integrity", () => {
 
       const issues = await useCase.execute({
         projectRoot: "/proj",
-        allowedIds: new Set(["claude"]),
+        allowedIds: new Set([SYNTHETIC_NATIVE_TOOL]),
       });
 
       expect(issues).toStrictEqual([
-        { toolId: TOOL.claude, pluginName: "my-plugin", issue: "missing", filePath: PLUGIN_FILE },
+        {
+          toolId: SYNTHETIC_NATIVE_TOOL,
+          pluginName: "my-plugin",
+          issue: "missing",
+          filePath: PLUGIN_FILE,
+        },
       ]);
     });
   });
@@ -204,9 +216,9 @@ describe("DoctorUseCase - plugin integrity", () => {
   describe("when a user-scope plugin was never installed on this machine", () => {
     it("reports one not-installed-on-machine issue, not one 'missing' issue per file", async () => {
       const manifest = aManifest()
-        .withTool(TOOL.cursor, [])
+        .withTool(SYNTHETIC_USER_TOOL, [])
         .withPlugin(
-          TOOL.cursor,
+          SYNTHETIC_USER_TOOL,
           RecordedPlugin.fromJSON({
             name: "aidd-test",
             source: { kind: "local", path: "/some/path" },
@@ -227,19 +239,19 @@ describe("DoctorUseCase - plugin integrity", () => {
 
       expect(issues).toHaveLength(1);
       expect(issues[0].issue).toBe("not-installed-on-machine");
-      expect(issues[0].toolId).toBe("cursor");
+      expect(issues[0].toolId).toBe(SYNTHETIC_USER_TOOL);
       expect(issues.filter((i) => i.issue === "missing")).toHaveLength(0);
     });
   });
 
-  describe("when plugin is installed under user-scope (Cursor Mode B)", () => {
+  describe("when plugin is installed under user-scope (user-scope tool)", () => {
     it("checks files under the resolved user-scope base dir, not projectRoot", async () => {
       const manifest = Manifest.create();
-      manifest.addTool(TOOL.cursor, "1.0.0", []);
-      const cursorBaseDir = join(homedir(), ".cursor", "plugins", "local");
+      manifest.addTool(SYNTHETIC_USER_TOOL, "1.0.0", []);
+      const userBaseDir = SYNTHETIC_USER_PLUGINS(homedir());
       const userScopeRelPath = "aidd-context/skills/06-discovery/SKILL.md";
       manifest.addPlugin(
-        TOOL.cursor,
+        SYNTHETIC_USER_TOOL,
         RecordedPlugin.fromJSON({
           name: "aidd-context",
           source: { kind: "local", path: "/some/path" },
@@ -272,7 +284,7 @@ describe("DoctorUseCase - plugin integrity", () => {
         allowedIds: null,
       });
 
-      const expectedAbs = join(cursorBaseDir, userScopeRelPath);
+      const expectedAbs = join(userBaseDir, userScopeRelPath);
       expect(checkedPaths).toContain(expectedAbs);
       expect(checkedPaths.every((p) => !p.startsWith("/proj/aidd-context"))).toBe(true);
     });

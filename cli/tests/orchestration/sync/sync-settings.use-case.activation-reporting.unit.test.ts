@@ -5,7 +5,7 @@ import { describeMessage } from "../../../src/presentation/errors/describe-messa
 import {
   SYNTHETIC_NATIVE_TOOL,
   syntheticSyncCatalog,
-} from "../../shared/testing/synthetic-tool-id.builder.js";
+} from "../../shared/testing/synthetic-native-tool.builder.js";
 import { ActivatorFailingAtUpgrade, syncOf } from "../testing/sync-settings.builder.js";
 
 /** The build runs for every tool, before the branch that decides who writes the registration

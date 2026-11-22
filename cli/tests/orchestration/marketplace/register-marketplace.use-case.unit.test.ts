@@ -17,9 +17,9 @@ import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.fake.js";
 import { InMemoryEnvironment } from "../../shared/testing/in-memory-environment.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
-import { flowTools } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
+import { syntheticFlowTools } from "../../shared/testing/synthetic-tool-id.builder.js";
 import { askMarketplaceSource } from "../testing/ask-marketplace-source.builder.js";
 import { setupMarketplaceRegistrar } from "../testing/setup-marketplace-registrar.builder.js";
 
@@ -77,7 +77,7 @@ async function register(
 ): Promise<Pick<RefreshMarketplaces, "execute">> {
   const { useCase, refresh } = makeUseCase(environment);
   const flow = new SetupFlow({
-    ...flowTools(),
+    ...syntheticFlowTools(),
     supportsUserScopeActivation: () => true,
     projectRoot: PROJECT_ROOT,
   });
@@ -113,7 +113,7 @@ describe("RegisterMarketplace", () => {
         releaseResolver: makeNoOpLatestResolver(false),
       });
       const flow = new SetupFlow({
-        ...flowTools(),
+        ...syntheticFlowTools(),
         supportsUserScopeActivation: () => true,
         projectRoot: PROJECT_ROOT,
       });
@@ -134,7 +134,7 @@ describe("RegisterMarketplace", () => {
         releaseResolver: makeNoOpLatestResolver(false),
       });
       const flow = new SetupFlow({
-        ...flowTools(),
+        ...syntheticFlowTools(),
         supportsUserScopeActivation: () => true,
         projectRoot: PROJECT_ROOT,
       });
@@ -149,7 +149,7 @@ describe("RegisterMarketplace", () => {
     it("registers a local source at the project root, forcing the registration", async () => {
       const { useCase, register } = makeUseCase(new InMemoryEnvironment());
       const flow = new SetupFlow({
-        ...flowTools(),
+        ...syntheticFlowTools(),
         supportsUserScopeActivation: () => true,
         projectRoot: PROJECT_ROOT,
       });
@@ -166,7 +166,7 @@ describe("RegisterMarketplace", () => {
     it("registers a remote source by repository and ref", async () => {
       const { useCase, register } = makeUseCase(new InMemoryEnvironment());
       const flow = new SetupFlow({
-        ...flowTools(),
+        ...syntheticFlowTools(),
         supportsUserScopeActivation: () => true,
         projectRoot: PROJECT_ROOT,
       });
@@ -189,7 +189,7 @@ describe("RegisterMarketplace", () => {
       );
       const { useCase } = makeUseCase(new InMemoryEnvironment(), { userSourceReferences });
       const flow = new SetupFlow({
-        ...flowTools(),
+        ...syntheticFlowTools(),
         supportsUserScopeActivation: () => true,
         projectRoot: PROJECT_ROOT,
       });
@@ -209,7 +209,7 @@ describe("RegisterMarketplace", () => {
         registeredScope: "project",
       });
       const flow = new SetupFlow({
-        ...flowTools(),
+        ...syntheticFlowTools(),
         supportsUserScopeActivation: () => true,
         projectRoot: PROJECT_ROOT,
       });

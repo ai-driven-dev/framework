@@ -4,7 +4,7 @@ import { hostRecord } from "../../shared/testing/host-record-reading.builder.js"
 import {
   SYNTHETIC_NATIVE_TOOL,
   syntheticSyncCatalog,
-} from "../../shared/testing/synthetic-tool-id.builder.js";
+} from "../../shared/testing/synthetic-native-tool.builder.js";
 import {
   FRAMEWORK_ONLY,
   MARKETPLACE,

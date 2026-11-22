@@ -16,11 +16,29 @@ import {
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { KeepPrompter, ScriptedPrompter } from "../../shared/testing/scripted-prompter.fake.js";
+import {
+  SYNTHETIC_NATIVE_TOOL,
+  SYNTHETIC_USER_PLUGINS,
+  SYNTHETIC_USER_TOOL,
+  syntheticNativeFamilyCatalog,
+} from "../../shared/testing/synthetic-native-tool.builder.js";
 import { projectMarketplaceRemover } from "../testing/project-marketplace-remover.builder.js";
 
-const { cursor, codex } = TOOL;
+const HOOKS_FILE = `.${SYNTHETIC_USER_TOOL}/hooks.json`;
+const PLUGIN_HOME = join(SYNTHETIC_USER_PLUGINS(homedir()), "sample-plugin");
+const PRE_SCRIPT = `.${SYNTHETIC_USER_TOOL}/hooks/sample-plugin/pre.js`;
+const PRE_COMMAND = `node ./${PRE_SCRIPT}`;
+const PROJECT_HOOKS = {
+  entries: [
+    {
+      event: "preToolUse",
+      command: PRE_COMMAND,
+      digest: FileHash.of(JSON.stringify({ command: PRE_COMMAND })).value,
+    },
+  ],
+  scripts: { [PRE_SCRIPT]: FileHash.of("A's hook").value },
+};
 
 const REF = "sample-plugin@real-catalog";
 const OTHER = "other-plugin@other-catalog";
@@ -41,9 +59,9 @@ function remove(
 
 async function fixture(options: { nativeMapping?: "absent" | "unrelated" } = {}) {
   const project = aManifest()
-    .withTool(codex, [])
+    .withTool(SYNTHETIC_NATIVE_TOOL, [])
     .withPlugin(
-      codex,
+      SYNTHETIC_NATIVE_TOOL,
       RecordedPlugin.fromMetadata({
         name: "sample-plugin",
         version: "1.0.0",
@@ -55,8 +73,8 @@ async function fixture(options: { nativeMapping?: "absent" | "unrelated" } = {})
     )
     .build();
   if (options.nativeMapping !== "absent")
-    project.setNativeRegistrations(codex, {
-      binary: "codex",
+    project.setNativeRegistrations(SYNTHETIC_NATIVE_TOOL, {
+      binary: SYNTHETIC_NATIVE_TOOL,
       marketplaces: [
         { alias: "other-alias", hostName: "other-catalog" },
         ...(options.nativeMapping === "unrelated"
@@ -66,9 +84,9 @@ async function fixture(options: { nativeMapping?: "absent" | "unrelated" } = {})
       pluginRefs: [REF, OTHER],
     });
   const machine = Manifest.create();
-  machine.addTool(codex, "1.0.0", []);
-  machine.setNativeRegistrations(codex, {
-    binary: "codex",
+  machine.addTool(SYNTHETIC_NATIVE_TOOL, "1.0.0", []);
+  machine.setNativeRegistrations(SYNTHETIC_NATIVE_TOOL, {
+    binary: SYNTHETIC_NATIVE_TOOL,
     marketplaces: [{ alias: NAME, hostName: "real-catalog" }],
     pluginRefs: [REF],
     pluginClaims: [{ ref: REF, dependents: ["/A", "/B"] }],
@@ -87,7 +105,7 @@ async function fixture(options: { nativeMapping?: "absent" | "unrelated" } = {})
   );
   const fs = new InMemoryFileAdapter({}, ["/A", "/B"]);
   const useCase = projectMarketplaceRemover(
-    registeredTools(),
+    syntheticNativeFamilyCatalog(),
     new RemoveProjectPlugin(fs, () => "/home/dev", removalClaims(machineRepo, fs)),
     projectRepo,
     registry,
@@ -101,13 +119,15 @@ describe("project marketplace removal against machine native claims", () => {
     "removes a local orphan with %s native mapping without guessing or detaching machine refs",
     async (nativeMapping) => {
       const f = await fixture({ nativeMapping });
-      const before = f.projectRepo.getCurrent()?.getNativeRegistrations(codex);
+      const before = f.projectRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_NATIVE_TOOL);
       expect(await remove(f.useCase)).toMatchObject({ removedPluginCount: 1, orphanCount: 1 });
-      expect(f.projectRepo.getCurrent()?.getRecordedPlugins(codex)).toEqual([]);
-      expect(f.projectRepo.getCurrent()?.getNativeRegistrations(codex)).toEqual(before);
-      expect(f.machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
-        { ref: REF, dependents: ["/A", "/B"] },
-      ]);
+      expect(f.projectRepo.getCurrent()?.getRecordedPlugins(SYNTHETIC_NATIVE_TOOL)).toEqual([]);
+      expect(f.projectRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_NATIVE_TOOL)).toEqual(
+        before
+      );
+      expect(
+        f.machineRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_NATIVE_TOOL)?.pluginClaims
+      ).toEqual([{ ref: REF, dependents: ["/A", "/B"] }]);
       expect(f.machineRepo.saveCount).toBe(0);
       expect(await f.registry.list("/A")).toEqual([]);
     }
@@ -115,35 +135,37 @@ describe("project marketplace removal against machine native claims", () => {
 
   it("does not detach machine claims when removing a project catalogue without orphans", async () => {
     const f = await fixture();
-    f.projectRepo.getCurrent()?.removePlugin(codex, "sample-plugin");
-    const before = f.projectRepo.getCurrent()?.getNativeRegistrations(codex);
+    f.projectRepo.getCurrent()?.removePlugin(SYNTHETIC_NATIVE_TOOL, "sample-plugin");
+    const before = f.projectRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_NATIVE_TOOL);
     expect(await remove(f.useCase)).toMatchObject({ removedPluginCount: 0, orphanCount: 0 });
-    expect(f.projectRepo.getCurrent()?.getNativeRegistrations(codex)).toEqual(before);
+    expect(f.projectRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_NATIVE_TOOL)).toEqual(
+      before
+    );
     expect(f.projectRepo.saveCount).toBe(0);
     expect(f.machineRepo.saveCount).toBe(0);
-    expect(f.machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
-      { ref: REF, dependents: ["/A", "/B"] },
-    ]);
+    expect(
+      f.machineRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_NATIVE_TOOL)?.pluginClaims
+    ).toEqual([{ ref: REF, dependents: ["/A", "/B"] }]);
     expect(await f.registry.list("/A")).toEqual([]);
   });
 
-  it("retains A's projection and machine claim when its Cursor hooks cannot be read", async () => {
-    const hooksPath = join("/A", ".cursor/hooks.json");
+  it("retains A's projection and machine claim when its user-tool hooks cannot be read", async () => {
+    const hooksPath = join("/A", HOOKS_FILE);
     const hooks = JSON.stringify({
       version: 1,
-      hooks: { preToolUse: [{ command: "node ./.cursor/hooks/sample-plugin/pre.js" }] },
+      hooks: { preToolUse: [{ command: `node ./${PRE_SCRIPT}` }] },
     });
     const fs = new FaultingFileAdapter({}, ["/A", "/B"]);
     fs.setFile(hooksPath, hooks);
-    fs.setFile(join("/A", ".cursor/hooks/sample-plugin/pre.js"), "A's hook");
-    fs.setFile(join("/B", ".cursor/hooks.json"), hooks);
-    const globalMcp = join(homedir(), ".cursor/plugins/local/sample-plugin/mcp.json");
+    fs.setFile(join("/A", PRE_SCRIPT), "A's hook");
+    fs.setFile(join("/B", HOOKS_FILE), hooks);
+    const globalMcp = join(PLUGIN_HOME, "mcp.json");
     fs.setFile(globalMcp, "B's MCP");
     fs.failOn("readFile", hooksPath, errnoError("EACCES"));
     const project = aManifest()
-      .withTool(cursor, [])
+      .withTool(SYNTHETIC_USER_TOOL, [])
       .withPlugin(
-        cursor,
+        SYNTHETIC_USER_TOOL,
         RecordedPlugin.fromJSON({
           name: "sample-plugin",
           source: { kind: "local", path: "/fixture" },
@@ -152,27 +174,14 @@ describe("project marketplace removal against machine native claims", () => {
           files: {},
           scope: "user",
           marketplace: NAME,
-          projectHooks: {
-            entries: [
-              {
-                event: "preToolUse",
-                command: "node ./.cursor/hooks/sample-plugin/pre.js",
-                digest: FileHash.of(
-                  JSON.stringify({ command: "node ./.cursor/hooks/sample-plugin/pre.js" })
-                ).value,
-              },
-            ],
-            scripts: {
-              ".cursor/hooks/sample-plugin/pre.js": FileHash.of("A's hook").value,
-            },
-          },
+          projectHooks: PROJECT_HOOKS,
         })
       )
       .build();
     const machine = aManifest()
-      .withTool(cursor, [])
+      .withTool(SYNTHETIC_USER_TOOL, [])
       .withPlugin(
-        cursor,
+        SYNTHETIC_USER_TOOL,
         RecordedPlugin.fromJSON({
           name: "sample-plugin",
           source: { kind: "local", path: "/fixture" },
@@ -197,7 +206,7 @@ describe("project marketplace removal against machine native claims", () => {
       })
     );
     const useCase = projectMarketplaceRemover(
-      registeredTools(),
+      syntheticNativeFamilyCatalog(),
       new RemoveProjectPlugin(fs, () => "/home/dev", removalClaims(machineRepo, fs)),
       projectRepo,
       registry,
@@ -207,11 +216,10 @@ describe("project marketplace removal against machine native claims", () => {
     await expect(remove(useCase)).rejects.toThrow(/EACCES/);
 
     expect(projectRepo.saveCount).toBe(0);
-    expect(projectRepo.getCurrent()?.getRecordedPlugins(cursor)).toHaveLength(1);
-    expect(machineRepo.getCurrent()?.getRecordedPlugins(cursor)[0]?.machineClaim).toEqual([
-      "/A",
-      "/B",
-    ]);
+    expect(projectRepo.getCurrent()?.getRecordedPlugins(SYNTHETIC_USER_TOOL)).toHaveLength(1);
+    expect(
+      machineRepo.getCurrent()?.getRecordedPlugins(SYNTHETIC_USER_TOOL)[0]?.machineClaim
+    ).toEqual(["/A", "/B"]);
     expect(fs.getFile(hooksPath)).toBe(hooks);
     expect(fs.getFile(globalMcp)).toBe("B's MCP");
     expect((await registry.list("/A")).some((entry) => entry.name === NAME)).toBe(true);
@@ -223,15 +231,15 @@ describe("project marketplace removal against machine native claims", () => {
       /User-scope marketplace removal requires/
     );
     expect((await f.registry.list("/A")).find((entry) => entry.name === NAME)).toBeDefined();
-    expect(f.machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
-      { ref: REF, dependents: ["/A", "/B"] },
-    ]);
+    expect(
+      f.machineRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_NATIVE_TOOL)?.pluginClaims
+    ).toEqual([{ ref: REF, dependents: ["/A", "/B"] }]);
   });
 
   it("removes only the project catalogue when its project manifest is absent", async () => {
     const f = await fixture();
     const useCase = projectMarketplaceRemover(
-      registeredTools(),
+      syntheticNativeFamilyCatalog(),
       new RemoveProjectPlugin(f.fs, () => "/home/dev", removalClaims(f.machineRepo, f.fs)),
       new InMemoryManifestRepository(),
       f.registry,
@@ -239,20 +247,24 @@ describe("project marketplace removal against machine native claims", () => {
     );
     expect(await remove(useCase)).toMatchObject({ removedPluginCount: 0, orphanCount: 0 });
     expect((await f.registry.list("/A")).find((entry) => entry.name === NAME)).toBeUndefined();
-    expect(f.machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
-      { ref: REF, dependents: ["/A", "/B"] },
-    ]);
+    expect(
+      f.machineRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_NATIVE_TOOL)?.pluginClaims
+    ).toEqual([{ ref: REF, dependents: ["/A", "/B"] }]);
   });
 
   it("deletes A's exact orphan projection but preserves B and a different host catalogue", async () => {
     const f = await fixture();
     expect(await remove(f.useCase)).toMatchObject({ removedPluginCount: 1, orphanCount: 1 });
-    expect(f.projectRepo.getCurrent()?.getRecordedPlugins(codex)).toEqual([]);
-    expect(f.projectRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginRefs).toEqual([OTHER]);
-    expect(f.machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
-      { ref: REF, dependents: ["/B"] },
-    ]);
-    expect(f.machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginRefs).toEqual([REF]);
+    expect(f.projectRepo.getCurrent()?.getRecordedPlugins(SYNTHETIC_NATIVE_TOOL)).toEqual([]);
+    expect(
+      f.projectRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_NATIVE_TOOL)?.pluginRefs
+    ).toEqual([OTHER]);
+    expect(
+      f.machineRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_NATIVE_TOOL)?.pluginClaims
+    ).toEqual([{ ref: REF, dependents: ["/B"] }]);
+    expect(
+      f.machineRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_NATIVE_TOOL)?.pluginRefs
+    ).toEqual([REF]);
     expect((await f.registry.list("/A")).find((entry) => entry.name === NAME)).toBeUndefined();
   });
 
@@ -264,11 +276,14 @@ describe("project marketplace removal against machine native claims", () => {
     }
     const f = await fixture();
     const project = f.projectRepo.getCurrent();
-    const plugin = project?.getRecordedPlugins(codex)[0];
+    const plugin = project?.getRecordedPlugins(SYNTHETIC_NATIVE_TOOL)[0];
     if (project === null || plugin === undefined) throw new Error("fixture missing plugin");
-    project.updatePlugin(codex, plugin.withFiles(new Map([[".codex/skills/demo.md", "abc"]])));
+    project.updatePlugin(
+      SYNTHETIC_NATIVE_TOOL,
+      plugin.withFiles(new Map([[`.${SYNTHETIC_NATIVE_TOOL}/skills/demo.md`, "abc"]]))
+    );
     const useCase = projectMarketplaceRemover(
-      registeredTools(),
+      syntheticNativeFamilyCatalog(),
       new RemoveProjectPlugin(
         new RefusingFileAdapter(),
         () => "/home/dev",
@@ -279,9 +294,9 @@ describe("project marketplace removal against machine native claims", () => {
       new KeepPrompter()
     );
     await expect(remove(useCase)).rejects.toThrow(/local file delete failed/);
-    expect(f.machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
-      { ref: REF, dependents: ["/A", "/B"] },
-    ]);
+    expect(
+      f.machineRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_NATIVE_TOOL)?.pluginClaims
+    ).toEqual([{ ref: REF, dependents: ["/A", "/B"] }]);
     expect((await f.registry.list("/A")).find((entry) => entry.name === NAME)).toBeDefined();
   });
 
@@ -289,7 +304,7 @@ describe("project marketplace removal against machine native claims", () => {
     const f = await fixture();
     const prompter = new ScriptedPrompter([{ type: "confirm", value: false }]);
     const useCase = projectMarketplaceRemover(
-      registeredTools(),
+      syntheticNativeFamilyCatalog(),
       new RemoveProjectPlugin(f.fs, () => "/home/dev", removalClaims(f.machineRepo, f.fs)),
       f.projectRepo,
       f.registry,
@@ -299,17 +314,17 @@ describe("project marketplace removal against machine native claims", () => {
       removedPluginCount: 0,
       orphanCount: 1,
     });
-    expect(f.projectRepo.getCurrent()?.getRecordedPlugins(codex)).toHaveLength(1);
-    expect(f.machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
-      { ref: REF, dependents: ["/A", "/B"] },
-    ]);
+    expect(f.projectRepo.getCurrent()?.getRecordedPlugins(SYNTHETIC_NATIVE_TOOL)).toHaveLength(1);
+    expect(
+      f.machineRepo.getCurrent()?.getNativeRegistrations(SYNTHETIC_NATIVE_TOOL)?.pluginClaims
+    ).toEqual([{ ref: REF, dependents: ["/A", "/B"] }]);
   });
 
-  it("releases only A's Cursor file claim, leaving B's user bytes intact", async () => {
+  it("releases only A's user-scope file claim, leaving B's user bytes intact", async () => {
     const project = aManifest()
-      .withTool(cursor, [])
+      .withTool(SYNTHETIC_USER_TOOL, [])
       .withPlugin(
-        cursor,
+        SYNTHETIC_USER_TOOL,
         RecordedPlugin.fromJSON({
           name: "sample-plugin",
           source: { kind: "local", path: "/fixture" },
@@ -318,27 +333,14 @@ describe("project marketplace removal against machine native claims", () => {
           files: {},
           scope: "user",
           marketplace: NAME,
-          projectHooks: {
-            entries: [
-              {
-                event: "preToolUse",
-                command: "node ./.cursor/hooks/sample-plugin/pre.js",
-                digest: FileHash.of(
-                  JSON.stringify({ command: "node ./.cursor/hooks/sample-plugin/pre.js" })
-                ).value,
-              },
-            ],
-            scripts: {
-              ".cursor/hooks/sample-plugin/pre.js": FileHash.of("A's hook").value,
-            },
-          },
+          projectHooks: PROJECT_HOOKS,
         })
       )
       .build();
     const machine = aManifest()
-      .withTool(cursor, [])
+      .withTool(SYNTHETIC_USER_TOOL, [])
       .withPlugin(
-        cursor,
+        SYNTHETIC_USER_TOOL,
         RecordedPlugin.fromJSON({
           name: "sample-plugin",
           source: { kind: "local", path: "/fixture" },
@@ -366,13 +368,13 @@ describe("project marketplace removal against machine native claims", () => {
     const hooks = JSON.stringify({
       version: 1,
       hooks: {
-        preToolUse: [{ command: "node ./.cursor/hooks/sample-plugin/pre.js" }],
+        preToolUse: [{ command: `node ./${PRE_SCRIPT}` }],
       },
     });
-    const aHooks = join("/A", ".cursor/hooks.json");
-    const bHooks = join("/B", ".cursor/hooks.json");
-    const aScript = join("/A", ".cursor/hooks/sample-plugin/pre.js");
-    const bScript = join("/B", ".cursor/hooks/sample-plugin/pre.js");
+    const aHooks = join("/A", HOOKS_FILE);
+    const bHooks = join("/B", HOOKS_FILE);
+    const aScript = join("/A", PRE_SCRIPT);
+    const bScript = join("/B", PRE_SCRIPT);
     const fs = new InMemoryFileAdapter(
       {
         [aHooks]: hooks,
@@ -383,12 +385,12 @@ describe("project marketplace removal against machine native claims", () => {
       },
       ["/A", "/B"]
     );
-    const ownedPath = join(homedir(), ".cursor/plugins/local/sample-plugin/skills/demo.md");
-    const ownedMcp = join(homedir(), ".cursor/plugins/local/sample-plugin/mcp.json");
+    const ownedPath = join(PLUGIN_HOME, "skills/demo.md");
+    const ownedMcp = join(PLUGIN_HOME, "mcp.json");
     fs.setFile(ownedPath, "B's bytes");
     fs.setFile(ownedMcp, "B's MCP");
     const useCase = projectMarketplaceRemover(
-      registeredTools(),
+      syntheticNativeFamilyCatalog(),
       new RemoveProjectPlugin(fs, () => "/home/dev", removalClaims(machineRepo, fs)),
       projectRepo,
       registry,
@@ -401,7 +403,9 @@ describe("project marketplace removal against machine native claims", () => {
     expect(fs.getFile(aScript)).toBeUndefined();
     expect(fs.getFile(bHooks)).toBe(hooks);
     expect(fs.getFile(bScript)).toBe("B's hook");
-    expect(machineRepo.getCurrent()?.getRecordedPlugins(cursor)[0]?.machineClaim).toEqual(["/B"]);
-    expect(projectRepo.getCurrent()?.getRecordedPlugins(cursor)).toEqual([]);
+    expect(
+      machineRepo.getCurrent()?.getRecordedPlugins(SYNTHETIC_USER_TOOL)[0]?.machineClaim
+    ).toEqual(["/B"]);
+    expect(projectRepo.getCurrent()?.getRecordedPlugins(SYNTHETIC_USER_TOOL)).toEqual([]);
   });
 });

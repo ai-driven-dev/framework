@@ -19,10 +19,10 @@ import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manif
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
 import {
-  SYNTHETIC_NATIVE_CATALOGUE,
+  SYNTHETIC_NATIVE_MARKETPLACE_FILE,
   SYNTHETIC_NATIVE_TOOL,
   syntheticSyncCatalog,
-} from "../../shared/testing/synthetic-tool-id.builder.js";
+} from "../../shared/testing/synthetic-native-tool.builder.js";
 
 const claude = SYNTHETIC_NATIVE_TOOL;
 
@@ -40,7 +40,7 @@ async function manifestRepoWithClaudeInstalled(): Promise<InMemoryManifestReposi
 
 function seedFrameworkCatalog(fs: InMemoryFileAdapter): void {
   fs.setFile(
-    `/built/${SYNTHETIC_NATIVE_TOOL}/${SYNTHETIC_NATIVE_CATALOGUE}`,
+    `/built/${SYNTHETIC_NATIVE_TOOL}/${SYNTHETIC_NATIVE_MARKETPLACE_FILE}`,
     JSON.stringify({ name: FRAMEWORK_MARKETPLACE_NAME, version: VERSION, plugins: [] })
   );
 }

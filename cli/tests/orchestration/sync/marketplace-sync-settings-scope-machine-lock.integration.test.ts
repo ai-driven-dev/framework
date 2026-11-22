@@ -8,7 +8,7 @@ import {
   SYNTHETIC_NATIVE_SETTINGS,
   SYNTHETIC_NATIVE_TOOL,
   syntheticSyncCatalog,
-} from "../../shared/testing/synthetic-tool-id.builder.js";
+} from "../../shared/testing/synthetic-native-tool.builder.js";
 import {
   freshHostProof,
   manifestWithTool,

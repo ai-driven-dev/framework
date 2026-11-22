@@ -13,21 +13,27 @@ import { CheckRegistration } from "../../../src/orchestration/doctor/check-regis
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
-import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { hostInspector } from "../../shared/testing/host-inspector.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_NATIVE_PLUGIN_REGISTRY,
+  SYNTHETIC_NATIVE_TOOL,
+  SYNTHETIC_UPDATING_NATIVE_TOOL,
+  SYNTHETIC_USER_TOOL,
+  syntheticNativeFamilyCatalog,
+} from "../../shared/testing/synthetic-native-tool.builder.js";
+import { SYNTHETIC_IDE_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
 import { buildCheckRegistration } from "../testing/build-check-registration.builder.js";
 
 const PROJECT_ROOT = "/project";
-const LOCAL_SETTINGS = `${PROJECT_ROOT}/.claude/settings.local.json`;
+const LOCAL_SETTINGS = `${PROJECT_ROOT}/.${SYNTHETIC_NATIVE_TOOL}/settings.local.json`;
 const UNDECLARED = {
   severity: "warning",
-  message: "claude no longer declares marketplace 'aidd-framework'",
-  fix: { code: "refresh-marketplace", file: ".claude/settings.local.json" },
+  message: `${SYNTHETIC_NATIVE_TOOL} no longer declares marketplace 'aidd-framework'`,
+  fix: { code: "refresh-marketplace", file: `.${SYNTHETIC_NATIVE_TOOL}/settings.local.json` },
 };
 
 function settingsDeclaring(names: string[]): string {
@@ -44,7 +50,12 @@ async function issuesFor(
     machine?: boolean;
   } = {}
 ) {
-  const { toolId = TOOL.claude, toolInstalled = true, allowedIds = null, machine } = options;
+  const {
+    toolId = SYNTHETIC_NATIVE_TOOL,
+    toolInstalled = true,
+    allowedIds = null,
+    machine,
+  } = options;
   const fs = new InMemoryFileAdapter();
   if (settings !== null) await fs.writeFile(LOCAL_SETTINGS, settings);
   const registry = new InMemoryMarketplaceRegistry();
@@ -60,20 +71,20 @@ async function issuesFor(
   const manifest = Manifest.create();
   manifest.addTool(toolId, "test", []);
   const activators = new Map<string, FakeHostActions>([
-    [TOOL.claude, new FakeHostActions({ available: toolInstalled })],
+    [SYNTHETIC_NATIVE_TOOL, new FakeHostActions({ available: toolInstalled })],
   ]);
   return buildCheckRegistration(
     fs,
     registry,
     (binary) => activators.get(binary)?.isAvailable() ?? false,
-    hostInspector(registeredTools(), {
+    hostInspector(syntheticNativeFamilyCatalog(), {
       fs: fs,
       pluginRegistries: new Map(),
       marketplaceRegistries: new Map(),
     }),
     () => "/user-cache",
     { get: () => "1.0.0" },
-    catalogOf()
+    syntheticNativeFamilyCatalog()
   ).execute({
     manifest,
     projectRoot: PROJECT_ROOT,
@@ -119,34 +130,38 @@ describe("CheckRegistration", () => {
   });
 
   it("stays silent for a tool that keeps its registrations in a tracked file", async () => {
-    expect(await issuesFor(null, { toolId: TOOL.cursor })).toStrictEqual([]);
+    expect(await issuesFor(null, { toolId: SYNTHETIC_USER_TOOL })).toStrictEqual([]);
   });
 
   // Copilot declares no place at all rather than a path, and a guard rejecting only `undefined`
   // lets `null` reach `join(root, null)`, which throws and takes `plugin doctor` down.
   it("stays silent, and does not throw, for a tool that declares no place at all", async () => {
-    await expect(issuesFor(null, { toolId: TOOL.copilot })).resolves.toStrictEqual([]);
+    await expect(
+      issuesFor(null, { toolId: SYNTHETIC_UPDATING_NATIVE_TOOL })
+    ).resolves.toStrictEqual([]);
   });
 
   it("stays silent, and does not throw, for an IDE tool", async () => {
-    await expect(issuesFor(null, { toolId: TOOL.vscode })).resolves.toStrictEqual([]);
+    await expect(issuesFor(null, { toolId: SYNTHETIC_IDE_TOOL })).resolves.toStrictEqual([]);
   });
 
   describe("narrowed to a set of tools", () => {
     it("ignores a tool outside the set", async () => {
-      expect(await issuesFor(null, { allowedIds: new Set(["cursor"]) })).toStrictEqual([]);
+      expect(await issuesFor(null, { allowedIds: new Set([SYNTHETIC_USER_TOOL]) })).toStrictEqual(
+        []
+      );
     });
 
     it("still reports a tool inside the set", async () => {
-      expect(await issuesFor(null, { allowedIds: new Set(["claude"]) })).toStrictEqual([
-        UNDECLARED,
-      ]);
+      expect(await issuesFor(null, { allowedIds: new Set([SYNTHETIC_NATIVE_TOOL]) })).toStrictEqual(
+        [UNDECLARED]
+      );
     });
   });
 });
 
 const REF = "aidd-context@aidd-framework";
-const REGISTRY_LOCATION = "/home/dev/.claude/plugins/installed_plugins.json";
+const REGISTRY_LOCATION = SYNTHETIC_NATIVE_PLUGIN_REGISTRY("/home/dev");
 
 function manifestWithNativeRegistrations(
   pluginRefs: string[],
@@ -155,12 +170,19 @@ function manifestWithNativeRegistrations(
   ]
 ): Manifest {
   const manifest = Manifest.create();
-  manifest.addTool(TOOL.claude, "test", []);
-  manifest.setNativeRegistrations(TOOL.claude, { binary: "claude", marketplaces, pluginRefs });
+  manifest.addTool(SYNTHETIC_NATIVE_TOOL, "test", []);
+  manifest.setNativeRegistrations(SYNTHETIC_NATIVE_TOOL, {
+    binary: SYNTHETIC_NATIVE_TOOL,
+    marketplaces,
+    pluginRefs,
+  });
   return manifest;
 }
 
-function manifestWithPlugin(marketplace?: string, toolId: AiToolId = TOOL.claude): Manifest {
+function manifestWithPlugin(
+  marketplace?: string,
+  toolId: AiToolId = SYNTHETIC_NATIVE_TOOL
+): Manifest {
   const manifest = aManifest()
     .withTool(toolId, [], { version: "test" })
     .withPlugin(
@@ -187,24 +209,24 @@ async function nativeIssuesFor(
   const registry = new InMemoryMarketplaceRegistry();
   if (registered) await registry.save(PROJECT_ROOT, registered);
   const activators = new Map<string, FakeHostActions>([
-    [TOOL.claude, new FakeHostActions({ available: true })],
+    [SYNTHETIC_NATIVE_TOOL, new FakeHostActions({ available: true })],
   ]);
   const hostRegistries = new Map<AiToolId, HostPluginRegistry>();
   if (reading !== "unreachable") {
-    hostRegistries.set(TOOL.claude, new FakeHostPluginRegistry(reading));
+    hostRegistries.set(SYNTHETIC_NATIVE_TOOL, new FakeHostPluginRegistry(reading));
   }
   return buildCheckRegistration(
     fs,
     registry,
     (binary) => activators.get(binary)?.isAvailable() ?? false,
-    hostInspector(registeredTools(), {
+    hostInspector(syntheticNativeFamilyCatalog(), {
       fs: fs,
       pluginRegistries: hostRegistries,
       marketplaceRegistries: new Map(),
     }),
     () => "/user-cache",
     { get: () => "1.0.0" },
-    catalogOf()
+    syntheticNativeFamilyCatalog()
   ).execute({
     manifest,
     projectRoot: PROJECT_ROOT,
@@ -235,7 +257,7 @@ describe("CheckRegistration - native registrations against the host's own regist
     expect(issues[0].fix).toEqual({ code: "sync-reregister" });
   });
 
-  it("reports an error naming `aidd framework install --tool claude` when the registry disabled it", async () => {
+  it(`reports an error naming \`aidd framework install --tool ${SYNTHETIC_NATIVE_TOOL}\` when the registry disabled it`, async () => {
     const issues = await nativeIssuesFor(manifestWithNativeRegistrations([REF]), {
       location: REGISTRY_LOCATION,
       refs: new Map([[REF, { enabled: false }]]),
@@ -245,7 +267,7 @@ describe("CheckRegistration - native registrations against the host's own regist
     expect(issues[0].severity).toBe("error");
     expect(issues[0].message).toContain(REF);
     expect(issues[0].message).toContain("disabled");
-    expect(issues[0].fix).toEqual({ code: "install-framework", tool: "claude" });
+    expect(issues[0].fix).toEqual({ code: "install-framework", tool: SYNTHETIC_NATIVE_TOOL });
   });
 
   it("names the registry nobody has measured, never an error, when nothing here can read it", async () => {
@@ -254,8 +276,8 @@ describe("CheckRegistration - native registrations against the host's own regist
     expect(issues).toStrictEqual([
       {
         severity: "info",
-        message: "claude keeps a plugin registry, and nothing here has established its shape",
-        fix: "The plugin does not load until claude's own CLI has run and answered this.",
+        message: `${SYNTHETIC_NATIVE_TOOL} keeps a plugin registry, and nothing here has established its shape`,
+        fix: `The plugin does not load until ${SYNTHETIC_NATIVE_TOOL}'s own CLI has run and answered this.`,
       },
     ]);
   });
@@ -307,18 +329,20 @@ describe("CheckRegistration - native registrations against the host's own regist
     expect(issues).toStrictEqual([
       {
         severity: "info",
-        message:
-          "AIDD records no marketplace for hand-copied (claude), so its registry cannot be asked",
-        fix: "claude will not load it until a marketplace is recorded for it.",
+        message: `AIDD records no marketplace for hand-copied (${SYNTHETIC_NATIVE_TOOL}), so its registry cannot be asked`,
+        fix: `${SYNTHETIC_NATIVE_TOOL} will not load it until a marketplace is recorded for it.`,
       },
     ]);
   });
 
   it("says nothing for a tool whose plugins are enabled by a file this CLI writes", async () => {
-    const issues = await nativeIssuesFor(manifestWithPlugin("aidd-framework", TOOL.cursor), {
-      location: REGISTRY_LOCATION,
-      refs: new Map(),
-    });
+    const issues = await nativeIssuesFor(
+      manifestWithPlugin("aidd-framework", SYNTHETIC_USER_TOOL),
+      {
+        location: REGISTRY_LOCATION,
+        refs: new Map(),
+      }
+    );
 
     expect(issues).toStrictEqual([]);
   });
@@ -345,8 +369,8 @@ describe("CheckRegistration - order", () => {
 describe("the tools whose built marketplaces are resolved", () => {
   it("are the AI tools the manifest holds, and no IDE tool", async () => {
     const manifest = aManifest()
-      .withTool(TOOL.claude, [], { version: "test" })
-      .withTool(TOOL.vscode, [], { version: "test" })
+      .withTool(SYNTHETIC_NATIVE_TOOL, [], { version: "test" })
+      .withTool(SYNTHETIC_IDE_TOOL, [], { version: "test" })
       .build();
     const resolved: (readonly string[])[] = [];
     const builds: Pick<ResolveBuiltMarketplaces, "execute"> = {
@@ -365,11 +389,11 @@ describe("the tools whose built marketplaces are resolved", () => {
         declared: new InspectDeclaredMarketplaces(
           new InMemoryFileAdapter(),
           () => false,
-          catalogOf()
+          syntheticNativeFamilyCatalog()
         ),
         inspectHost: { execute: async () => ({ findings: [] }) },
       },
-      catalogOf()
+      syntheticNativeFamilyCatalog()
     );
 
     await check.execute({
@@ -378,14 +402,14 @@ describe("the tools whose built marketplaces are resolved", () => {
       globalInstall: true,
     });
 
-    expect(resolved).toStrictEqual([[TOOL.claude]]);
+    expect(resolved).toStrictEqual([[SYNTHETIC_NATIVE_TOOL]]);
   });
 });
 
 describe("the hosts handed to the registry inspection", () => {
   it("carry no marketplaces for a tool with no built marketplace", async () => {
     const manifest = Manifest.create();
-    manifest.addTool(TOOL.claude, "test", []);
+    manifest.addTool(SYNTHETIC_NATIVE_TOOL, "test", []);
     const inspected: unknown[] = [];
     const check = new CheckRegistration(
       {
@@ -403,7 +427,7 @@ describe("the hosts handed to the registry inspection", () => {
         declared: new InspectDeclaredMarketplaces(
           new InMemoryFileAdapter(),
           () => false,
-          catalogOf()
+          syntheticNativeFamilyCatalog()
         ),
         inspectHost: {
           execute: async ({ hosts }) => {
@@ -412,11 +436,13 @@ describe("the hosts handed to the registry inspection", () => {
           },
         },
       },
-      catalogOf()
+      syntheticNativeFamilyCatalog()
     );
 
     await check.execute({ projectRoot: PROJECT_ROOT, allowedIds: null, globalInstall: true });
 
-    expect(inspected).toStrictEqual([{ tool: TOOL.claude, expectedPlugins: [], marketplaces: [] }]);
+    expect(inspected).toStrictEqual([
+      { tool: SYNTHETIC_NATIVE_TOOL, expectedPlugins: [], marketplaces: [] },
+    ]);
   });
 });

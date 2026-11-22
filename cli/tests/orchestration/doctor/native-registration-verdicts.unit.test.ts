@@ -7,21 +7,23 @@ import type { HostMarketplaceSources } from "../../../src/contexts/host-registra
 import type { NativeRegistrations } from "../../../src/contexts/installation/domain/manifest/native-registrations.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
-import { catalogOf, registeredAiProfile } from "../../shared/testing/catalog-of.builder.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { hostInspector } from "../../shared/testing/host-inspector.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SYNTHETIC_UPDATING_NATIVE_TOOL,
+  syntheticNativeFamilyCatalog,
+} from "../../shared/testing/synthetic-native-tool.builder.js";
 import { buildCheckRegistration } from "../testing/build-check-registration.builder.js";
 
-const { copilot } = TOOL;
+const tool = SYNTHETIC_UPDATING_NATIVE_TOOL;
 const HOST = "real-catalog";
 const REF = `test-plugin@${HOST}`;
 const LOCATION = "/host/registry";
 const provenance = { kind: "registry" as const, source: "/owned/source" };
 const registrations: NativeRegistrations & RegistrationRecord = {
-  binary: "copilot",
+  binary: SYNTHETIC_UPDATING_NATIVE_TOOL,
   marketplaces: [{ alias: "alias", hostName: HOST, provenance }],
   pluginRefs: [REF],
   pluginClaims: [{ ref: REF, dependents: [] }],
@@ -55,28 +57,28 @@ const REGISTRY_VERDICTS: ReadonlyArray<{
     reading: "absent",
     registry: { location: LOCATION, absent: true },
     doctor: `info: ${LOCATION} could not be read — ENOENT`,
-    update: `copilot: ref '${REF}' is not provably enabled on the host; update refused.`,
+    update: `${SYNTHETIC_UPDATING_NATIVE_TOOL}: ref '${REF}' is not provably enabled on the host; update refused.`,
     removal: `Cannot prove AIDD-owned host ref '${REF}' is still enabled; refusing user-scope removal.`,
   },
   {
     reading: "unreadable",
     registry: { location: LOCATION, unreadable: "EACCES" },
     doctor: `info: ${LOCATION} could not be read — EACCES`,
-    update: `copilot: ref '${REF}' is not provably enabled on the host; update refused.`,
+    update: `${SYNTHETIC_UPDATING_NATIVE_TOOL}: ref '${REF}' is not provably enabled on the host; update refused.`,
     removal: `Catalogue '${HOST}': host plugin registry unreadable (EACCES); no host mutation made.`,
   },
   {
     reading: "ref missing",
     registry: { location: LOCATION, refs: new Map() },
-    doctor: `error: copilot's registry (${LOCATION}) does not carry ${REF}`,
-    update: `copilot: ref '${REF}' is not provably enabled on the host; update refused.`,
+    doctor: `error: ${SYNTHETIC_UPDATING_NATIVE_TOOL}'s registry (${LOCATION}) does not carry ${REF}`,
+    update: `${SYNTHETIC_UPDATING_NATIVE_TOOL}: ref '${REF}' is not provably enabled on the host; update refused.`,
     removal: `Cannot prove AIDD-owned host ref '${REF}' is still enabled; refusing user-scope removal.`,
   },
   {
     reading: "ref disabled",
     registry: { location: LOCATION, refs: new Map([[REF, { enabled: false }]]) },
-    doctor: `error: copilot's registry (${LOCATION}) carries ${REF} and records it disabled`,
-    update: `copilot: ref '${REF}' is not provably enabled on the host; update refused.`,
+    doctor: `error: ${SYNTHETIC_UPDATING_NATIVE_TOOL}'s registry (${LOCATION}) carries ${REF} and records it disabled`,
+    update: `${SYNTHETIC_UPDATING_NATIVE_TOOL}: ref '${REF}' is not provably enabled on the host; update refused.`,
     removal: `Cannot prove AIDD-owned host ref '${REF}' is still enabled; refusing user-scope removal.`,
   },
   {
@@ -107,15 +109,15 @@ async function outcomeOf(attempt: Promise<unknown>): Promise<Outcome> {
 
 function hostOver(registry: HostPluginRegistryReading, sources?: HostMarketplaceSources) {
   return [
-    new Map([[copilot, new FakeHostActions({ available: true })]]),
-    new Map([[copilot, new FakeHostPluginRegistry(registry)]]),
-    new Map(sources === undefined ? [] : [[copilot, sources]]),
+    new Map([[tool, new FakeHostActions({ available: true })]]),
+    new Map([[tool, new FakeHostPluginRegistry(registry)]]),
+    new Map(sources === undefined ? [] : [[tool, sources]]),
   ] as const;
 }
 
 const refreshOf = (registry: HostPluginRegistryReading, sources?: HostMarketplaceSources) =>
   new RefreshHostPlugin(...hostOver(registry, sources)).execute({
-    tool: registeredAiProfile(copilot),
+    tool: syntheticNativeFamilyCatalog().aiProfile(tool),
     ref: REF,
     projectRoot: "/A",
     registrations,
@@ -123,20 +125,20 @@ const refreshOf = (registry: HostPluginRegistryReading, sources?: HostMarketplac
 
 async function doctorSays(registry: HostPluginRegistryReading): Promise<string> {
   const manifest = Manifest.create();
-  manifest.addTool(copilot, "test", []);
-  manifest.setNativeRegistrations(copilot, registrations);
+  manifest.addTool(tool, "test", []);
+  manifest.setNativeRegistrations(tool, registrations);
   const issues = await buildCheckRegistration(
     new InMemoryFileAdapter(),
     new InMemoryMarketplaceRegistry(),
     () => false,
-    hostInspector(registeredTools(), {
+    hostInspector(syntheticNativeFamilyCatalog(), {
       fs: new InMemoryFileAdapter(),
-      pluginRegistries: new Map([[copilot, new FakeHostPluginRegistry(registry)]]),
+      pluginRegistries: new Map([[tool, new FakeHostPluginRegistry(registry)]]),
       marketplaceRegistries: new Map(),
     }),
     () => "/user-cache",
     { get: () => "1.0.0" },
-    catalogOf()
+    syntheticNativeFamilyCatalog()
   ).execute({ manifest, projectRoot: "/A", allowedIds: null });
   return issues.length === 0 ? "none" : issues.map((i) => `${i.severity}: ${i.message}`).join("\n");
 }
@@ -156,17 +158,25 @@ describe("registration verdicts across intents", () => {
       const gate = new NativeHostRegistrationGate(
         ...hostOver(row.registry, ownedSource(provenance))
       );
-      const attempt = gate.planMarketplaceRemoval(registeredAiProfile(copilot), registrations, {
-        registration: registrations.marketplaces[0],
-        projectRoot: "/A",
-        claimedRefs: [REF],
-      });
+      const attempt = gate.planMarketplaceRemoval(
+        syntheticNativeFamilyCatalog().aiProfile(tool),
+        registrations,
+        {
+          registration: registrations.marketplaces[0],
+          projectRoot: "/A",
+          claimedRefs: [REF],
+        }
+      );
       expect(await outcomeOf(attempt)).toBe(row.removal);
     });
   });
 
   describe.each([
-    { source: "absent", entry: undefined, refused: "copilot: catalogue source unproven." },
+    {
+      source: "absent",
+      entry: undefined,
+      refused: `${SYNTHETIC_UPDATING_NATIVE_TOOL}: catalogue source unproven.`,
+    },
     {
       source: "foreign",
       entry: { ...provenance, source: "/foreign/source" },
@@ -182,11 +192,15 @@ describe("registration verdicts across intents", () => {
           ? refreshOf(registry, ownedSource(entry))
           : new NativeHostRegistrationGate(
               ...hostOver(registry, ownedSource(entry))
-            ).planMarketplaceRemoval(registeredAiProfile(copilot), registrations, {
-              registration: registrations.marketplaces[0],
-              projectRoot: "/A",
-              claimedRefs: [REF],
-            });
+            ).planMarketplaceRemoval(
+              syntheticNativeFamilyCatalog().aiProfile(tool),
+              registrations,
+              {
+                registration: registrations.marketplaces[0],
+                projectRoot: "/A",
+                claimedRefs: [REF],
+              }
+            );
       expect(await outcomeOf(attempt)).toBe(refused);
     });
   });

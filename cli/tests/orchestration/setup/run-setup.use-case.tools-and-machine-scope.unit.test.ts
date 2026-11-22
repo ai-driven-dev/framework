@@ -7,21 +7,27 @@ import { SetupFlow } from "../../../src/orchestration/domain/setup-flow.model.js
 import { UserScopeUnavailableError } from "../../../src/orchestration/orchestration.error.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
-import { flowTools, registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import {
+  SECOND_SYNTHETIC_TOOL,
+  SYNTHETIC_IDE_TOOL,
+  SYNTHETIC_TOOL,
+  syntheticFlowTools,
+  syntheticMixedCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   makeRecordingUserSourceReferences,
   PROJECT_ROOT,
   runSetupScenarioOf,
 } from "../testing/run-setup-scenario.builder.js";
 
-const { buildUseCase, remoteFlow } = runSetupScenarioOf(registeredTools());
+const { buildUseCase, remoteFlow } = runSetupScenarioOf(syntheticMixedCatalog());
 
 describe("setup interactive tool selection", () => {
   function _interactiveFlow(
     opts: Partial<{ aiTools: ToolId[]; ideTools: ToolId[] }> = {}
   ): SetupFlow {
     return new SetupFlow({
-      ...flowTools(),
+      ...syntheticFlowTools(),
       supportsUserScopeActivation: () => true,
       projectRoot: PROJECT_ROOT,
       source: remoteFrameworkSource(),
@@ -33,24 +39,27 @@ describe("setup interactive tool selection", () => {
   }
 
   it("hands the tools question the flow's whole request, and installs the answer", async () => {
-    const answer = vi.fn(async () => ({ aiTools: [TOOL.cursor], ideTools: [] }));
+    const answer = vi.fn(async () => ({ aiTools: [SECOND_SYNTHETIC_TOOL], ideTools: [] }));
     const { useCase, deps } = await buildUseCase({ execute: answer }, undefined, undefined, {
       detectContext: true,
     });
     deps.fs.setFile(join(PROJECT_ROOT, "tsconfig.json"), "{}");
 
     const result = await useCase.execute(
-      remoteFlow({ aiTools: [TOOL.claude, TOOL.cursor], ideTools: [TOOL.vscode] })
+      remoteFlow({
+        aiTools: [SYNTHETIC_TOOL, SECOND_SYNTHETIC_TOOL],
+        ideTools: [SYNTHETIC_IDE_TOOL],
+      })
     );
 
     expect(answer).toHaveBeenCalledWith({
       interactive: false,
-      aiTools: [TOOL.claude, TOOL.cursor],
-      ideTools: [TOOL.vscode],
+      aiTools: [SYNTHETIC_TOOL, SECOND_SYNTHETIC_TOOL],
+      ideTools: [SYNTHETIC_IDE_TOOL],
       context: new ProjectContext({ stack: "typescript", isMonorepo: false, hasFramework: false }),
     });
     if (result.kind === "initialized") {
-      expect(result.install.results.map((r) => r.toolId)).toEqual(["cursor"]);
+      expect(result.install.results.map((r) => r.toolId)).toEqual([SECOND_SYNTHETIC_TOOL]);
     }
   });
 
@@ -71,7 +80,7 @@ describe("setup --scope user", () => {
     const { useCase } = await buildUseCase();
 
     await expect(
-      useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }))
+      useCase.execute(remoteFlow({ aiTools: [SYNTHETIC_TOOL], scope: "user" }))
     ).rejects.toThrow(UserScopeUnavailableError);
   });
 
@@ -79,7 +88,7 @@ describe("setup --scope user", () => {
     const userManifestRepo = new InMemoryManifestRepository();
     const { useCase } = await buildUseCase(undefined, undefined, undefined, { userManifestRepo });
 
-    const result = await useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }));
+    const result = await useCase.execute(remoteFlow({ aiTools: [SYNTHETIC_TOOL], scope: "user" }));
 
     expect(result).toStrictEqual({
       kind: "initialized",
@@ -94,7 +103,7 @@ describe("setup --scope user", () => {
     const userManifestRepo = new InMemoryManifestRepository(Manifest.create());
     const { useCase } = await buildUseCase(undefined, undefined, undefined, { userManifestRepo });
 
-    const result = await useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }));
+    const result = await useCase.execute(remoteFlow({ aiTools: [SYNTHETIC_TOOL], scope: "user" }));
 
     expect(result).toStrictEqual({
       kind: "up-to-date",
@@ -107,34 +116,37 @@ describe("setup --scope user", () => {
 
   it("keeps the tools an earlier run registered", async () => {
     const seed = Manifest.create();
-    seed.addTool(TOOL.codex, "9.9.9", []);
+    seed.addTool(SECOND_SYNTHETIC_TOOL, "9.9.9", []);
     const userManifestRepo = new InMemoryManifestRepository(seed);
     const { useCase } = await buildUseCase(undefined, undefined, undefined, { userManifestRepo });
 
-    await useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }));
+    await useCase.execute(remoteFlow({ aiTools: [SYNTHETIC_TOOL], scope: "user" }));
 
-    expect(userManifestRepo.getCurrent()?.getInstalledToolIds()).toStrictEqual(["codex", "claude"]);
+    expect(userManifestRepo.getCurrent()?.getInstalledToolIds()).toStrictEqual([
+      SECOND_SYNTHETIC_TOOL,
+      SYNTHETIC_TOOL,
+    ]);
   });
 
   it("registers a new tool with no files and saves the manifest once", async () => {
     const userManifestRepo = new InMemoryManifestRepository(Manifest.create());
     const { useCase } = await buildUseCase(undefined, undefined, undefined, { userManifestRepo });
 
-    await useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }));
+    await useCase.execute(remoteFlow({ aiTools: [SYNTHETIC_TOOL], scope: "user" }));
 
-    expect(userManifestRepo.getCurrent()?.getToolFiles(TOOL.claude)).toStrictEqual([]);
+    expect(userManifestRepo.getCurrent()?.getToolFiles(SYNTHETIC_TOOL)).toStrictEqual([]);
     expect(userManifestRepo.saveCount).toBe(1);
   });
 
   it("leaves an already-registered tool at its recorded version, saving nothing", async () => {
     const seed = Manifest.create();
-    seed.addTool(TOOL.claude, "9.9.9", []);
+    seed.addTool(SYNTHETIC_TOOL, "9.9.9", []);
     const userManifestRepo = new InMemoryManifestRepository(seed);
     const { useCase } = await buildUseCase(undefined, undefined, undefined, { userManifestRepo });
 
-    await useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }));
+    await useCase.execute(remoteFlow({ aiTools: [SYNTHETIC_TOOL], scope: "user" }));
 
-    expect(userManifestRepo.getCurrent()?.getToolVersion(TOOL.claude)).toBe("9.9.9");
+    expect(userManifestRepo.getCurrent()?.getToolVersion(SYNTHETIC_TOOL)).toBe("9.9.9");
     expect(userManifestRepo.saveCount).toBe(0);
   });
 
@@ -144,7 +156,7 @@ describe("setup --scope user", () => {
       userManifestRepo,
     });
 
-    await useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }));
+    await useCase.execute(remoteFlow({ aiTools: [SYNTHETIC_TOOL], scope: "user" }));
 
     expect(deps.fs.listUnder(PROJECT_ROOT)).toEqual([]);
   });
@@ -155,9 +167,9 @@ describe("setup --scope user", () => {
       userManifestRepo,
     });
 
-    await useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }));
+    await useCase.execute(remoteFlow({ aiTools: [SYNTHETIC_TOOL], scope: "user" }));
 
-    expect(userManifestRepo.getCurrent()?.getInstalledToolIds()).toContain("claude");
+    expect(userManifestRepo.getCurrent()?.getInstalledToolIds()).toContain(SYNTHETIC_TOOL);
     expect(await deps.manifestRepo.load()).toBeNull();
   });
 
@@ -169,10 +181,10 @@ describe("setup --scope user", () => {
       syncSettingsUseCase,
     });
 
-    await useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }));
+    await useCase.execute(remoteFlow({ aiTools: [SYNTHETIC_TOOL], scope: "user" }));
 
     expect(syncSettingsUseCase.execute).toHaveBeenCalledWith(
-      expect.objectContaining({ toolIds: [TOOL.claude], enablePlugins: [] })
+      expect.objectContaining({ toolIds: [SYNTHETIC_TOOL], enablePlugins: [] })
     );
   });
 
@@ -188,7 +200,7 @@ describe("setup --scope user", () => {
 
     await useCase.execute(
       remoteFlow({
-        aiTools: [TOOL.claude],
+        aiTools: [SYNTHETIC_TOOL],
         scope: "user",
         pluginMode: "named",
         pluginNames: ["aidd-dev"],
@@ -197,12 +209,12 @@ describe("setup --scope user", () => {
 
     expect(execute).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
-      toolIds: [TOOL.claude],
+      toolIds: [SYNTHETIC_TOOL],
       mode: "named",
       pluginNames: ["aidd-dev"],
     });
     expect(syncSettingsUseCase.execute).toHaveBeenCalledWith(
-      expect.objectContaining({ toolIds: [TOOL.claude], enablePlugins: ["aidd-dev"] })
+      expect.objectContaining({ toolIds: [SYNTHETIC_TOOL], enablePlugins: ["aidd-dev"] })
     );
   });
 
@@ -210,7 +222,7 @@ describe("setup --scope user", () => {
     const userManifestRepo = new InMemoryManifestRepository();
     const { useCase } = await buildUseCase(undefined, undefined, undefined, { userManifestRepo });
 
-    const result = await useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }));
+    const result = await useCase.execute(remoteFlow({ aiTools: [SYNTHETIC_TOOL], scope: "user" }));
 
     expect(result.install.results).toEqual([]);
   });
@@ -222,7 +234,7 @@ describe("setup --scope user", () => {
       userManifestRepo,
     });
 
-    await useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }));
+    await useCase.execute(remoteFlow({ aiTools: [SYNTHETIC_TOOL], scope: "user" }));
 
     expect(userSourceReferences.added).toEqual([]);
   });

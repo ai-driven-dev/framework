@@ -17,7 +17,7 @@ import {
   SYNTHETIC_NATIVE_TOOL,
   SYNTHETIC_PROVEN_TOOL,
   syntheticSyncCatalog,
-} from "../../shared/testing/synthetic-tool-id.builder.js";
+} from "../../shared/testing/synthetic-native-tool.builder.js";
 
 const claude = SYNTHETIC_NATIVE_TOOL;
 const copilot = SYNTHETIC_PROVEN_TOOL;

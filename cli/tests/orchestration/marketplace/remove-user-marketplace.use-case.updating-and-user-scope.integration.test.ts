@@ -10,17 +10,22 @@ import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js"
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
+import {
+  SYNTHETIC_UPDATING_NATIVE_TOOL,
+  SYNTHETIC_USER_PLUGINS,
+  SYNTHETIC_USER_TOOL,
+  syntheticNativeFamilyCatalog,
+} from "../../shared/testing/synthetic-native-tool.builder.js";
 import { ALIAS, HOST, options, REF } from "../testing/user-marketplace-removal.builder.js";
 import { userMarketplaceRemover } from "../testing/user-marketplace-remover.builder.js";
 
-describe("Copilot 1.0.83 targeted user marketplace removal", () => {
+describe("updating native tool targeted user marketplace removal", () => {
   it("refuses an otherwise claimed and enabled catalogue without a verified current source, preserving settings and claims", async () => {
     const machine = Manifest.create();
-    machine.addTool(TOOL.copilot, "1.0.83", []);
-    machine.setNativeRegistrations(TOOL.copilot, {
-      binary: "copilot",
+    machine.addTool(SYNTHETIC_UPDATING_NATIVE_TOOL, "1.0.0", []);
+    machine.setNativeRegistrations(SYNTHETIC_UPDATING_NATIVE_TOOL, {
+      binary: SYNTHETIC_UPDATING_NATIVE_TOOL,
       marketplaces: [
         {
           alias: ALIAS,
@@ -41,13 +46,13 @@ describe("Copilot 1.0.83 targeted user marketplace removal", () => {
     });
     await registry.save("/A", marketplace);
     const fs = new InMemoryFileAdapter();
-    fs.setFile("/A/copilot-user-note.md", "user bytes");
+    fs.setFile("/A/user-note.md", "user bytes");
     const activator = new FakeHostActions({ available: true });
     const gate = new NativeHostRegistrationGate(
-      new Map([[TOOL.copilot, activator]]),
+      new Map([[SYNTHETIC_UPDATING_NATIVE_TOOL, activator]]),
       new Map([
         [
-          TOOL.copilot,
+          SYNTHETIC_UPDATING_NATIVE_TOOL,
           {
             read: async () => ({
               location: "/host/registry",
@@ -57,17 +62,25 @@ describe("Copilot 1.0.83 targeted user marketplace removal", () => {
         ],
       ])
     );
-    const useCase = userMarketplaceRemover(registeredTools(), fs, repo, registry, gate);
+    const useCase = userMarketplaceRemover(
+      syntheticNativeFamilyCatalog(),
+      fs,
+      repo,
+      registry,
+      gate
+    );
 
     await expect(useCase.execute(options())).rejects.toThrow(/host source reader unavailable/);
 
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(activator.removedMarketplaces).toEqual([]);
     expect(repo.saveCount).toBe(0);
-    expect(repo.getCurrent()?.getNativeRegistrations(TOOL.copilot)?.pluginClaims).toEqual([
-      { ref: REF, dependents: [] },
-    ]);
-    expect(repo.getCurrent()?.getNativeRegistrations(TOOL.copilot)?.marketplaces).toEqual([
+    expect(
+      repo.getCurrent()?.getNativeRegistrations(SYNTHETIC_UPDATING_NATIVE_TOOL)?.pluginClaims
+    ).toEqual([{ ref: REF, dependents: [] }]);
+    expect(
+      repo.getCurrent()?.getNativeRegistrations(SYNTHETIC_UPDATING_NATIVE_TOOL)?.marketplaces
+    ).toEqual([
       {
         alias: ALIAS,
         hostName: HOST,
@@ -75,20 +88,20 @@ describe("Copilot 1.0.83 targeted user marketplace removal", () => {
       },
     ]);
     expect(await registry.list("/A")).toEqual([marketplace]);
-    expect(fs.getFile("/A/copilot-user-note.md")).toBe("user bytes");
+    expect(fs.getFile("/A/user-note.md")).toBe("user bytes");
   });
 });
 
-describe("Cursor targeted user marketplace removal", () => {
+describe("user-scope tool targeted user marketplace removal", () => {
   async function fixture(
     options: { claim?: boolean; dependents?: readonly string[]; escape?: boolean } = {}
   ) {
     const machine = Manifest.create();
-    machine.addTool(TOOL.cursor, "1.0.0", []);
+    machine.addTool(SYNTHETIC_USER_TOOL, "1.0.0", []);
     const path = "sample-plugin/skills/demo/SKILL.md";
     if (options.claim !== false) {
       machine.addPlugin(
-        TOOL.cursor,
+        SYNTHETIC_USER_TOOL,
         RecordedPlugin.fromJSON({
           name: "sample-plugin",
           source: { kind: "local", path: "/fixture" },
@@ -113,12 +126,12 @@ describe("Cursor targeted user marketplace removal", () => {
       })
     );
     const fs = new InMemoryFileAdapter();
-    const pluginDir = join(homedir(), ".cursor/plugins/local/sample-plugin");
+    const pluginDir = join(SYNTHETIC_USER_PLUGINS(homedir()), "sample-plugin");
     const foreign = "/foreign/sample-plugin";
     fs.setFile(join(options.escape ? foreign : pluginDir, "skills/demo/SKILL.md"), "bytes");
     if (options.escape) fs.setSymlink(pluginDir, foreign);
     const useCase = userMarketplaceRemover(
-      registeredTools(),
+      syntheticNativeFamilyCatalog(),
       fs,
       repo,
       registry,
@@ -131,27 +144,27 @@ describe("Cursor targeted user marketplace removal", () => {
     const f = await fixture({ claim: false });
     await expect(f.useCase.execute(options())).rejects.toThrow(/Cannot prove AIDD ownership/);
     expect((await f.registry.list("/A")).find((entry) => entry.name === ALIAS)).toBeDefined();
-    expect(f.repo.getCurrent()?.getPlugins(TOOL.cursor)).toEqual([]);
+    expect(f.repo.getCurrent()?.getPlugins(SYNTHETIC_USER_TOOL)).toEqual([]);
   });
 
   it("refuses B's live file claim before deleting any bytes", async () => {
     const f = await fixture({ dependents: ["/B"] });
     await expect(f.useCase.execute(options())).rejects.toThrow(saying(/active projects.*\/B/));
     expect(f.fs.getFile(join(f.pluginDir, "skills/demo/SKILL.md"))).toBe("bytes");
-    expect(f.repo.getCurrent()?.getPlugins(TOOL.cursor)).toHaveLength(1);
+    expect(f.repo.getCurrent()?.getPlugins(SYNTHETIC_USER_TOOL)).toHaveLength(1);
   });
 
   it("refuses a symlinked plugin directory outside the user boundary", async () => {
     const f = await fixture({ escape: true });
     await expect(f.useCase.execute(options())).rejects.toThrow(/tracked file outside its boundary/);
     expect(f.fs.getFile(join(f.foreign, "skills/demo/SKILL.md"))).toBe("bytes");
-    expect(f.repo.getCurrent()?.getPlugins(TOOL.cursor)).toHaveLength(1);
+    expect(f.repo.getCurrent()?.getPlugins(SYNTHETIC_USER_TOOL)).toHaveLength(1);
   });
 
   it("does not sweep another catalogue or a project-scoped record from the machine manifest", async () => {
     const f = await fixture();
     f.repo.getCurrent()?.addPlugin(
-      TOOL.cursor,
+      SYNTHETIC_USER_TOOL,
       RecordedPlugin.fromJSON({
         name: "other-plugin",
         source: { kind: "local", path: "/fixture" },
@@ -164,7 +177,7 @@ describe("Cursor targeted user marketplace removal", () => {
       })
     );
     f.repo.getCurrent()?.addPlugin(
-      TOOL.cursor,
+      SYNTHETIC_USER_TOOL,
       RecordedPlugin.fromJSON({
         name: "project-plugin",
         source: { kind: "local", path: "/fixture" },
@@ -180,7 +193,7 @@ describe("Cursor targeted user marketplace removal", () => {
     expect(
       f.repo
         .getCurrent()
-        ?.getPlugins(TOOL.cursor)
+        ?.getPlugins(SYNTHETIC_USER_TOOL)
         .map((plugin) => plugin.name)
     ).toEqual(["other-plugin", "project-plugin"]);
   });
@@ -189,7 +202,7 @@ describe("Cursor targeted user marketplace removal", () => {
     const f = await fixture();
     expect(await f.useCase.execute(options())).toMatchObject({ removedPluginCount: 1 });
     expect(f.fs.getFile(join(f.pluginDir, "skills/demo/SKILL.md"))).toBeUndefined();
-    expect(f.repo.getCurrent()?.getPlugins(TOOL.cursor)).toEqual([]);
+    expect(f.repo.getCurrent()?.getPlugins(SYNTHETIC_USER_TOOL)).toEqual([]);
     expect((await f.registry.list("/A")).find((entry) => entry.name === ALIAS)).toBeUndefined();
   });
 
@@ -199,7 +212,7 @@ describe("Cursor targeted user marketplace removal", () => {
     f.fs.setFile(path, "user-edited bytes");
     await expect(f.useCase.execute(options())).rejects.toThrow(/edited.*SKILL.md|SKILL.md.*edited/);
     expect(f.fs.getFile(path)).toBe("user-edited bytes");
-    expect(f.repo.getCurrent()?.getPlugins(TOOL.cursor)).toHaveLength(1);
+    expect(f.repo.getCurrent()?.getPlugins(SYNTHETIC_USER_TOOL)).toHaveLength(1);
     expect((await f.registry.list("/A")).find((entry) => entry.name === ALIAS)).toBeDefined();
   });
 });
