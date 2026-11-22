@@ -15,6 +15,7 @@ import {
   PluginDistributionReaderAdapter,
 } from "../contexts/distribution/infrastructure/plugin-distribution-reader-adapter.js";
 import { PluginFetcherAdapter } from "../contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
+import { PnpmInstallerAdapter } from "../contexts/distribution/infrastructure/pnpm-installer-adapter.js";
 import type { MarketplaceCachePort } from "../contexts/distribution/ports/marketplace-cache.js";
 import type { MarketplaceRegistry } from "../contexts/distribution/ports/marketplace-registry.js";
 import type { MarketplaceTrustStore } from "../contexts/distribution/ports/marketplace-trust-store.js";
@@ -100,12 +101,17 @@ function marketplaceUseCasesOf(inputs: MarketplaceUseCaseInputs): MarketplaceUse
   };
 }
 
+function pluginFetcherOf(shared: DistributionWiringShared): PluginFetcher {
+  const npm = new PnpmInstallerAdapter();
+  return new PluginFetcherAdapter(shared.fs, new GitCloner(), npm, shared.tokenProvider);
+}
+
 export function wireDistribution(shared: DistributionWiringShared): DistributionDeps {
   const pluginCatalogRepository = new PluginCatalogRepositoryAdapter(shared.fs);
   const marketplaceCache = new MarketplaceCacheAdapter(shared.projectRoot);
   const marketplaceRegistry = new MarketplaceRegistryAdapter(userConfigDir, atomicWriteFile);
   const marketplaceTrustStore = new MarketplaceTrustStoreAdapter(new PrivateStorageAdapter());
-  const pluginFetcher = new PluginFetcherAdapter(shared.fs, new GitCloner(), shared.tokenProvider);
+  const pluginFetcher = pluginFetcherOf(shared);
   const loadPluginDistribution = new LoadPluginDistribution(
     pluginFetcher,
     new PluginDistributionReaderAdapter(shared.fs, shared.manifestProbes)

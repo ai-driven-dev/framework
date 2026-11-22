@@ -7,6 +7,7 @@ import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
 import { GitCloner } from "../../../../src/contexts/distribution/infrastructure/git-cloner-adapter.js";
 import { PluginFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
+import { PnpmInstallerAdapter } from "../../../../src/contexts/distribution/infrastructure/pnpm-installer-adapter.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
 
 const execFileAsync = promisify(execFile);
@@ -50,7 +51,7 @@ async function setupBareRepoWithPlugin(repoPath: string, workPath: string): Prom
 }
 
 function makeAdapter(): PluginFetcherAdapter {
-  return new PluginFetcherAdapter(new FileAdapter(), new GitCloner());
+  return new PluginFetcherAdapter(new FileAdapter(), new GitCloner(), new PnpmInstallerAdapter());
 }
 
 describe("PluginFetcherAdapter", () => {
