@@ -71,24 +71,14 @@ function setup(tool: typeof claude | typeof copilot, onDisk: Record<string, unkn
     },
     registeredTools()
   );
-  return { sync, fs, manifest, built, logger, path: resolve(ROOT, path), relative: path };
+  return { sync, fs, manifest, built, path: resolve(ROOT, path), relative: path };
 }
 
 const request = (manifest: ReturnType<typeof setup>["manifest"]) =>
   ({ projectRoot: ROOT, manifest, marketplaces: [MARKETPLACE] }) as const;
 
 describe("SyncToolSettingsFiles project-tools", () => {
-  it("warns and starts from nothing when the settings file holds malformed JSON", async () => {
-    const { sync, manifest, logger, path } = setup(claude, '{"enabledPlugins": {},}');
-
-    await sync.execute({ ...request(manifest), kind: "project-tools", toolIds: [claude] });
-
-    expect(logger.warnMessages).toContain(
-      `Ignoring malformed JSON in ${path}; rewriting the keys this CLI owns.`
-    );
-  });
-
-  it("evicts the marketplaces declaration, then enables the manifest's plugins in what was written", async () => {
+  it("enables the manifest's plugins in the file as the eviction wrote it", async () => {
     const { sync, fs, manifest, path, relative } = setup(claude, {
       extraKnownMarketplaces: { stale: {} },
       keep: 1,

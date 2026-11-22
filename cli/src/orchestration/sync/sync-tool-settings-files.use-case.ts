@@ -149,7 +149,8 @@ export class SyncToolSettingsFiles {
     const refs: string[] = [];
     const marketplaceByName = new Map(marketplaces.map((m) => [m.name, m]));
     for (const plugin of manifest.getPlugins(toolId)) {
-      const marketplace = marketplaceByName.get(plugin.marketplace ?? "");
+      if (plugin.marketplace == null) continue;
+      const marketplace = marketplaceByName.get(plugin.marketplace);
       if (marketplace == null) continue;
       const entryKey = settings.entryKeyFor({ name: marketplace.name, source: marketplace.source });
       if (entryKey != null) refs.push(this.deps.refs.refOnHostName(plugin.name, entryKey));

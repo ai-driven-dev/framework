@@ -13,7 +13,8 @@ const ROOT = "/project";
 const PATH = ".claude/settings.json";
 const ABSOLUTE = resolve(ROOT, PATH);
 
-function trackedBy(content: string, onDisk?: string) {
+function trackedBy(onDisk?: string) {
+  const content = "{}";
   const logger = new CapturingLogger();
   const fs = new InMemoryFileAdapter(onDisk === undefined ? {} : { [ABSOLUTE]: onDisk });
   const manifest = aManifest()
@@ -26,20 +27,20 @@ function trackedBy(content: string, onDisk?: string) {
 
 describe("TrackedSharedSettings read", () => {
   it("starts from nothing when the file does not exist", async () => {
-    const { settings, logger } = trackedBy("{}");
+    const { settings, logger } = trackedBy();
 
     await expect(settings.read(ROOT, PATH)).resolves.toEqual({});
     expect(logger.warnMessages).toEqual([]);
   });
 
   it("returns the parsed object", async () => {
-    const { settings } = trackedBy("{}", '{"keep":1}');
+    const { settings } = trackedBy('{"keep":1}');
 
     await expect(settings.read(ROOT, PATH)).resolves.toEqual({ keep: 1 });
   });
 
   it("warns and starts from nothing when the file holds malformed JSON", async () => {
-    const { settings, logger } = trackedBy("{}", '{"enabledPlugins": {},}');
+    const { settings, logger } = trackedBy('{"enabledPlugins": {},}');
 
     await expect(settings.read(ROOT, PATH)).resolves.toEqual({});
     expect(logger.warnMessages).toEqual([
@@ -48,7 +49,7 @@ describe("TrackedSharedSettings read", () => {
   });
 
   it("starts from nothing when the file holds no object", async () => {
-    const { settings } = trackedBy("{}", '["x"]');
+    const { settings } = trackedBy('["x"]');
 
     await expect(settings.read(ROOT, PATH)).resolves.toEqual({});
   });
@@ -56,7 +57,7 @@ describe("TrackedSharedSettings read", () => {
 
 describe("TrackedSharedSettings write", () => {
   it("writes the file indented and records its hash in the manifest", async () => {
-    const { settings, fs, manifest } = trackedBy("{}");
+    const { settings, fs, manifest } = trackedBy();
     const content = JSON.stringify({ keep: 1 }, null, 2);
 
     await settings.write({ projectRoot: ROOT, path: PATH, manifest, toolId: claude }, { keep: 1 });
