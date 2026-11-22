@@ -12,7 +12,7 @@ function _makeFs(existingPaths: string[]): FileReader {
     isExecutable: async () => false,
     isDirectory: async () => false,
     realpath: async (path) => path,
-    readFileIfReadable: async () => undefined,
+    readFileIfReadable: async () => "",
     realpathIfResolvable: async (path) => path,
     readFile: async () => "",
     readFileHash: async () => new FileHash("00000000000000000000000000000000"),

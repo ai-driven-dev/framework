@@ -40,7 +40,9 @@ export type ContractCaseId =
   | "C24"
   | "C25"
   | "C26"
-  | "C27";
+  | "C27"
+  | "C28"
+  | "C29";
 
 /**
  * Cases a subject is known to fail, keyed by case, each with the divergence it stands for.
@@ -309,6 +311,23 @@ export function describeFileContract(
         expect(await subject.files.realpathIfResolvable(path("missing", "x"))).toBeUndefined();
       }
     );
+
+    contractCase(
+      "C28",
+      "answers undefined for a path that is a directory, not a file",
+      async () => {
+        await subject.files.writeFile(path("d", "f.txt"), "x");
+
+        expect(await subject.files.readFileIfReadable(path("d"))).toBeUndefined();
+      }
+    );
+
+    contractCase("C29", "answers undefined for a symlink loop it cannot resolve", async () => {
+      await subject.link(path("loop-b"), path("loop-a"));
+      await subject.link(path("loop-a"), path("loop-b"));
+
+      expect(await subject.files.realpathIfResolvable(path("loop-a"))).toBeUndefined();
+    });
 
     contractCase("C22", "accepts a directory spelled with a trailing separator", async () => {
       await subject.files.writeFile(path("d", "f.txt"), "x");

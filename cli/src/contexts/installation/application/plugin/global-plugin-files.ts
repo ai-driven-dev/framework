@@ -71,7 +71,7 @@ export async function assertGlobalFilesWritable(write: {
   return boundary;
 }
 
-async function tryRealpath(fs: FileReader, path: string): Promise<string | null> {
+async function realpathWhenPresent(fs: FileReader, path: string): Promise<string | null> {
   return whenAbsent(() => fs.realpath(path), null);
 }
 
@@ -91,7 +91,7 @@ async function assertParentWithin(
   const { fs, tool, pluginName, file, boundary, resolvedBoundary } = write;
   let parent = dirname(join(boundary, file.relativePath));
   while (parent !== boundary) {
-    const resolved = await tryRealpath(fs, parent);
+    const resolved = await realpathWhenPresent(fs, parent);
     if (resolved !== null) {
       if (isWithinUserScope(resolved, resolvedBoundary)) return;
       throw new Error(`${tool.toolId}: '${pluginName}' parent '${parent}' escapes ${boundary}.`);

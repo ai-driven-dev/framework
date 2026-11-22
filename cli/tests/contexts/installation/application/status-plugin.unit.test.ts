@@ -37,7 +37,7 @@ function makeFs(fileExists: boolean, diskHash: string): FileReader {
     isExecutable: async () => false,
     isDirectory: async () => false,
     realpath: async (path: string) => path,
-    readFileIfReadable: async () => undefined,
+    readFileIfReadable: async () => "",
     realpathIfResolvable: async (path: string) => path,
     readFileHash: async () => new FileHash(diskHash),
     readFile: async () => "",
