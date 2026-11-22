@@ -10,11 +10,20 @@ const installed = (marketplace: string, plugin: string): PluginSource => ({
 });
 
 function checkOf(
-  readings: { marketplace: string; plugins: ReadonlySet<string> | null; error?: string }[],
+  readings: { marketplace: string; plugins: ReadonlySet<string> | null; error?: unknown }[],
   sources: PluginSource[],
   stale: { name: string }[] = []
 ) {
-  const marketplaces = { execute: vi.fn().mockResolvedValue({ stale, readings }) };
+  const marketplaces = {
+    execute: vi
+      .fn()
+      .mockResolvedValue({ stale, marketplaces: readings.map((r) => ({ name: r.marketplace })) }),
+    readPluginNames: vi.fn(async (marketplace: { name: string }) => {
+      const reading = readings.find((r) => r.marketplace === marketplace.name);
+      if (reading?.error !== undefined) throw reading.error;
+      return reading?.plugins ?? null;
+    }),
+  };
   const useCase = new CheckMarketplaceUpstream(marketplaces, {
     execute: vi.fn().mockResolvedValue(sources),
   });
@@ -57,6 +66,22 @@ describe("CheckMarketplaceUpstream", () => {
 
     expect(result.skipped).toEqual([{ marketplace: "market", error: "offline" }]);
     expect(result.upstreamRemoved).toEqual([]);
+  });
+
+  it("keeps reading the other catalogs after one fails, and keeps the typed error it failed with", async () => {
+    const offline = new Error("offline");
+    const { useCase } = checkOf(
+      [
+        { marketplace: "a", plugins: null, error: offline },
+        { marketplace: "b", plugins: new Set(["kept"]) },
+      ],
+      [installed("b", "kept"), installed("b", "dropped")]
+    );
+
+    const result = await useCase.execute({ projectRoot: "/project" });
+
+    expect(result.skipped[0]?.error).toBe(offline);
+    expect(result.upstreamRemoved).toEqual([installed("b", "dropped")]);
   });
 
   it("neither skips nor accuses a marketplace with no catalog and no error", async () => {

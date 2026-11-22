@@ -80,6 +80,6 @@ export class ResolveBuiltMarketplaces {
             target: toolId,
           })
         : builtMarketplaceDir(projectRoot, marketplace.name, toolId);
-    return this.deps.fs.realpath(resolve(raw)).catch(() => undefined);
+    return this.deps.fs.realpathIfResolvable(resolve(raw));
   }
 }

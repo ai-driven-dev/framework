@@ -36,43 +36,40 @@ async function registryOf(...marketplaces: Marketplace[]): Promise<InMemoryMarke
 }
 
 describe("CheckMarketplaces", () => {
-  it("reads the plugins each catalog lists", async () => {
-    const registry = await registryOf(marketplaceAt("a", new Date()));
+  it("hands out every registered marketplace", async () => {
+    const registry = await registryOf(marketplaceAt("a", new Date()), marketplaceAt("b"));
+    const check = new CheckMarketplaces(registry, resolvingCatalogs({}));
+
+    const { marketplaces } = await check.execute({ projectRoot: PROJECT });
+
+    expect(marketplaces.map((m) => m.name)).toEqual(["a", "b"]);
+  });
+
+  it("reads the plugins a catalog lists", async () => {
     const check = new CheckMarketplaces(
-      registry,
+      await registryOf(),
       resolvingCatalogs({ "/mkt/a": catalogListing("x", "y") })
     );
 
-    const { readings } = await check.execute({ projectRoot: PROJECT });
+    const names = await check.readPluginNames(marketplaceAt("a"), PROJECT);
 
-    expect(readings).toEqual([{ marketplace: "a", plugins: new Set(["x", "y"]) }]);
+    expect(names).toEqual(new Set(["x", "y"]));
   });
 
   it("reads no plugins from a marketplace that has no catalog", async () => {
-    const registry = await registryOf(marketplaceAt("a", new Date()));
-    const check = new CheckMarketplaces(registry, resolvingCatalogs({ "/mkt/a": null }));
+    const check = new CheckMarketplaces(await registryOf(), resolvingCatalogs({ "/mkt/a": null }));
 
-    const { readings } = await check.execute({ projectRoot: PROJECT });
-
-    expect(readings).toEqual([{ marketplace: "a", plugins: null }]);
+    expect(await check.readPluginNames(marketplaceAt("a"), PROJECT)).toBeNull();
   });
 
-  it("reports an unreadable catalog and keeps reading the others", async () => {
-    const registry = await registryOf(
-      marketplaceAt("a", new Date()),
-      marketplaceAt("b", new Date())
-    );
+  it("lets the error of an unreadable catalog travel as it is", async () => {
+    const offline = new Error("offline");
     const check = new CheckMarketplaces(
-      registry,
-      resolvingCatalogs({ "/mkt/a": new Error("offline"), "/mkt/b": catalogListing("x") })
+      await registryOf(),
+      resolvingCatalogs({ "/mkt/a": offline })
     );
 
-    const { readings } = await check.execute({ projectRoot: PROJECT });
-
-    expect(readings).toEqual([
-      { marketplace: "a", plugins: null, error: new Error("offline") },
-      { marketplace: "b", plugins: new Set(["x"]) },
-    ]);
+    await expect(check.readPluginNames(marketplaceAt("a"), PROJECT)).rejects.toBe(offline);
   });
 
   it("lists as stale the marketplaces fetched longer ago than the default window or never", async () => {
