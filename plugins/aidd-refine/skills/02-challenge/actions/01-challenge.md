@@ -21,7 +21,7 @@ Attack the work and report what breaks its aim, so the caller knows whether it h
    - the task folder named;
    - the folder of the plan or spec the work follows;
    - a new `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<slug>/`, its slug naming the work.
-8. Read `challenge.md` back, then emit the filled report and its path on one line, with nothing else.
+8. Read `challenge.md` back, then answer with the filled report and its path on the last line, adding nothing before or after.
 
 ## Output
 
@@ -32,4 +32,4 @@ The filled report, emitted and kept in `challenge.md`.
 - Attack the work as an adversary would, never as its author.
 - Report only what changes a decision, and nothing found is a valid answer.
 - Keep the template's headings and order, and write `- None` in an empty section.
-- List under Holds only attacks the work survived, never a restated requirement.
+- List under Holds only attacks the work survived, never a restated requirement or test result.
