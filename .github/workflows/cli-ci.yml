@@ -91,6 +91,11 @@ jobs:
               .github/workflows/cli-ci.yml)
                 relevant=true
                 ;;
+              # The local gates and the other workflows decide what a change must pass; the
+              # architecture and test jobs here are the ones that replay them.
+              lefthook.yml|.github/workflows/*)
+                relevant=true
+                ;;
             esac
             [[ "$relevant" == "true" ]] && break
           done < <(git diff --name-only "$BASE" "$HEAD")
@@ -503,6 +508,7 @@ jobs:
           restore-keys: pnpm-${{ runner.os }}-
       - run: cd cli && pnpm install --frozen-lockfile
       - run: cd cli && pnpm jscpd
+      - run: cd cli && pnpm jscpd:profiles
 
   kanban-checks:
     name: kanban / Typecheck, Lint & Test
