@@ -171,6 +171,26 @@ describe("doctorAll", () => {
     ]);
   });
 
+  it("is not healthy when the named plugin has issues", async () => {
+    const { deps, manifest } = await depsWithBothCategories();
+    manifest.addPlugin(
+      TOOL.claude,
+      InstalledPlugin.fromJSON({
+        name: "sample",
+        source: { kind: "local", path: "/some/path" },
+        version: "1.0.0",
+        strict: false,
+        files: { [PLUGIN_FILE]: "abc123abc123abc123abc123abc123ab" },
+        scope: "project",
+      })
+    );
+    await deps.manifestRepo.save(manifest);
+
+    const result = await doctorAllOver(deps).execute(PROJECT_ROOT, "sample");
+
+    expect(result.healthy).toBe(false);
+  });
+
   it("judges health on plugin issues alone when a plugin is named", async () => {
     const { deps, manifest } = await depsWithBothCategories();
     await deleteOneTrackedFile(deps, manifest, TOOL.claude);
@@ -181,7 +201,7 @@ describe("doctorAll", () => {
     expect([result.ai?.healthy, result.healthy]).toStrictEqual([false, true]);
   });
 
-  it("calls a named plugin healthy when its scope could not be checked, as the gate always did", async () => {
+  it("calls a named plugin healthy when no scope could be checked", async () => {
     const doctor = {
       execute: () => Promise.reject(new Error("could not be checked")),
     };

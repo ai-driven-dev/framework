@@ -39,11 +39,10 @@ export async function doctorAll(
   const { ai, ide } = results;
   const pluginIssues = ai?.pluginIssues ?? [];
   // A scope that errored is reported by `errors` and has a null report: "could not be checked",
-  // never "checked and fine", so it cannot count as healthy, unless a plugin is named and the
-  // verdict rests on its issues alone.
-  const healthy =
-    pluginName !== undefined
-      ? isDoctorHealthy({ pluginIssues, healthy: false }, pluginName)
-      : ai?.healthy === true && ide?.healthy === true;
+  // never "checked and fine", so it cannot count as healthy.
+  const healthy = isDoctorHealthy(
+    { pluginIssues, healthy: ai?.healthy === true && ide?.healthy === true },
+    pluginName
+  );
   return { ai, ide, pluginIssues, healthy, errors };
 }
