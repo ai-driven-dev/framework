@@ -154,6 +154,35 @@ describe("printTelemetryStatus", () => {
     ).toContain("Bound to no task (declared none)");
   });
 
+  it("says a binding without a date or a session without adding words", () => {
+    const undated = (
+      source: "branch" | "session-declared" | "session-carried",
+      sessionId: string | null
+    ) =>
+      shown({
+        sessionId,
+        binding: {
+          state: "bound",
+          source,
+          task: "checkout",
+          ticket: null,
+          none: false,
+          declaredAt: null,
+        },
+      });
+    const line = (result: ReadTelemetryStatusResult) =>
+      linesOf((o) => printTelemetryStatus(o, result))[1];
+    expect(line(undated("branch", null))).toBe(
+      'Bound to task "checkout", declared on branch feat/x.'
+    );
+    expect(line(undated("session-declared", null))).toBe(
+      'Bound to task "checkout", declared in session .'
+    );
+    expect(line(undated("session-carried", null))).toBe(
+      'Bound to task "checkout", carried into session  from session .'
+    );
+  });
+
   it("explains a refusal", () => {
     expect(
       linesOf((o) => printTelemetryStatus(o, { status: "refused", reason: "no-consent" }))

@@ -57,7 +57,14 @@ describe("ChooseIdentity", () => {
       "another",
       "none",
     ]);
-    expect(choices[0]?.name).toContain("Ada Example");
+    expect(choices.map((c: { name: string }) => c.name)).toEqual([
+      'As "Ada Example", your git name',
+      "As another identifier, typed next",
+      "Anonymously",
+    ]);
+    expect(select.mock.calls[0]?.[0]).toBe(
+      "How should your own measurement name you? The identity stays on this machine."
+    );
   });
 
   it("offers no proposal when there is none", async () => {

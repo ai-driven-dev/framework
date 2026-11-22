@@ -31,8 +31,9 @@ describe("DecideIdentity", () => {
   });
 
   it("keeps the identity already set, proposing nothing", async () => {
-    const { decide, propose } = decider(NAMED);
+    const { decide, propose, manage } = decider(NAMED);
     expect(await decide.execute(REQUEST)).toBe("keep");
+    expect(manage).toHaveBeenCalledWith({ action: "show" });
     expect(propose).not.toHaveBeenCalled();
   });
 
