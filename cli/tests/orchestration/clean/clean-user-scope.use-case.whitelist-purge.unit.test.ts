@@ -9,7 +9,7 @@ import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
 import {
   HOME,
@@ -39,6 +39,7 @@ describe("clean --scope user: whitelist purge", () => {
         })
       );
       const useCase = userScopeCleaner({
+        tools: registeredTools(),
         fs,
         repo: new InMemoryManifestRepository(Manifest.create()),
         marketplaceRegistry: registry,
@@ -65,6 +66,7 @@ describe("clean --scope user: whitelist purge", () => {
       );
       fs.setFile(join(USER_CONFIG_DIR, "cache", "plugin-cache", "source"), "plugin clone");
       const useCase = userScopeCleaner({
+        tools: registeredTools(),
         fs,
         repo: new InMemoryManifestRepository(Manifest.create()),
       });
@@ -91,6 +93,7 @@ describe("clean --scope user: whitelist purge", () => {
         fs.setSymlink(cache, "/elsewhere/clone");
         const logger = new CapturingLogger();
         const useCase = userScopeCleaner({
+          tools: registeredTools(),
           fs,
           repo: new InMemoryManifestRepository(Manifest.create()),
           logger,
@@ -139,6 +142,7 @@ describe("clean --scope user: whitelist purge", () => {
       await userSourceReferences.addReference("1.0.0", "/project-a");
       await userSourceReferences.removeReference("/project-a");
       const useCase = userScopeCleaner({
+        tools: registeredTools(),
         fs,
         repo: manifestRepo,
         marketplaceRegistry: registry,
@@ -170,6 +174,7 @@ describe("clean --scope user: whitelist purge", () => {
       // And where an older CLI wrote the same cache, before it moved under `cache/`.
       fs.setFile(join(USER_CONFIG_DIR, "update-check.json"), '{"latest":"8.0.0"}');
       const useCase = userScopeCleaner({
+        tools: registeredTools(),
         fs,
         repo: new InMemoryManifestRepository(Manifest.create()),
       });
@@ -196,6 +201,7 @@ describe("clean --scope user: whitelist purge", () => {
       fs.setSymlink(join(USER_CONFIG_DIR, "references.json"), USER_CONFIG_DIR);
       const logger = new CapturingLogger();
       const useCase = userScopeCleaner({
+        tools: registeredTools(),
         fs,
         repo: new InMemoryManifestRepository(Manifest.create()),
         logger,
@@ -240,6 +246,7 @@ describe("clean --scope user: whitelist purge", () => {
       );
       const logger = new CapturingLogger();
       const useCase = userScopeCleaner({
+        tools: registeredTools(),
         fs,
         repo: new InMemoryManifestRepository(manifest),
         logger,
@@ -265,6 +272,7 @@ describe("clean --scope user: whitelist purge", () => {
       const userSourceReferences = new UserSourceReferencesAdapter(fs, () => USER_CONFIG_DIR);
       await userSourceReferences.addReference("1.2.3", "/project-a");
       const useCase = userScopeCleaner({
+        tools: registeredTools(),
         fs,
         repo: new InMemoryManifestRepository(Manifest.create()),
         userSourceReferences,
@@ -285,6 +293,7 @@ describe("clean --scope user: whitelist purge", () => {
       const userSourceReferences = new UserSourceReferencesAdapter(fs, () => USER_CONFIG_DIR);
       await userSourceReferences.addReference("1.0.0", "/gone");
       const useCase = userScopeCleaner({
+        tools: registeredTools(),
         fs,
         repo: new InMemoryManifestRepository(Manifest.create()),
         userSourceReferences,
@@ -304,7 +313,12 @@ describe("clean --scope user: whitelist purge", () => {
       const userSourceReferences = new UserSourceReferencesAdapter(fs, () => USER_CONFIG_DIR);
       await userSourceReferences.addReference("1.0.0", "/project-a");
       const manifestRepo = new InMemoryManifestRepository(Manifest.create());
-      const useCase = userScopeCleaner({ fs, repo: manifestRepo, userSourceReferences });
+      const useCase = userScopeCleaner({
+        tools: registeredTools(),
+        fs,
+        repo: manifestRepo,
+        userSourceReferences,
+      });
 
       await expect(useCase.execute({ projectRoot: "/wherever", force: true })).rejects.toThrow(
         saying(/active projects.*\/project-a/)

@@ -273,7 +273,7 @@ describe("UninstallTools - a project's tools", () => {
   it.each([TOOL.cursor, TOOL.codex] as const)(
     "detaches only the selected %s tool's shared claims after local removal",
     async (selected) => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initProject(deps, PROJECT_ROOT);
       for (const toolId of [TOOL.cursor, TOOL.codex]) await installTool(deps, PROJECT_ROOT, toolId);
       await seedSharedClaims(deps);
@@ -302,7 +302,7 @@ describe("UninstallTools - a project's tools", () => {
   );
 
   it("forgets the tool and still reports its tracked files when they were already deleted from disk", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);
     await installTool(deps, PROJECT_ROOT, TOOL.claude);
 
@@ -322,7 +322,7 @@ describe("UninstallTools - a project's tools", () => {
 
   describe("user-prime merge files", () => {
     it("deletes settings.json when empty after stripping all AIDD-managed keys", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initProject(deps, PROJECT_ROOT);
       await installTool(deps, PROJECT_ROOT, TOOL.vscode);
 
@@ -339,7 +339,7 @@ describe("UninstallTools - a project's tools", () => {
     });
 
     it("deletes keybindings.json on uninstall - whole-file ownership, no zombie", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initProject(deps, PROJECT_ROOT);
       await installTool(deps, PROJECT_ROOT, TOOL.vscode);
 
@@ -359,7 +359,7 @@ describe("UninstallTools - a project's tools", () => {
 
 describe("UninstallTools - refusals", () => {
   it("refuses to remove nothing, naming every tool it knows", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);
 
     await expect(
@@ -375,7 +375,7 @@ describe("UninstallTools - refusals", () => {
   });
 
   it("refuses a project that has no manifest", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
 
     const failure = await uninstaller(deps.fs, deps.manifestRepo, deps.logger)
       .execute({ toolIds: [TOOL.claude], projectRoot: PROJECT_ROOT })
@@ -386,7 +386,7 @@ describe("UninstallTools - refusals", () => {
   });
 
   it("refuses a tool that is not installed", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);
 
     await expect(
@@ -404,7 +404,7 @@ function parse(raw: string | undefined): Record<string, unknown> {
 
 describe("UninstallTools, IDE - merge-file entries", () => {
   it("leaves a user-authored key in that shared file untouched", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);
     await installTool(deps, PROJECT_ROOT, TOOL.vscode);
 
@@ -422,7 +422,7 @@ describe("UninstallTools, IDE - merge-file entries", () => {
 
 describe("UninstallTools, IDE - report", () => {
   it("reports every file it removed", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);
     await installTool(deps, PROJECT_ROOT, TOOL.vscode);
 

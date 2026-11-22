@@ -7,7 +7,7 @@ import {
   initProject,
   installTool,
 } from "../../../../shared/testing/installation-deps.builder.js";
-import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../../../shared/testing/saying.builder.js";
 import { KeepPrompter } from "../../../../shared/testing/scripted-prompter.fake.js";
 
@@ -20,7 +20,7 @@ import {
 
 describe("restore", () => {
   it("aborts if project is not initialized", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     const useCase = makeRestoreUseCase(deps);
 
     await expect(
@@ -33,7 +33,7 @@ describe("restore", () => {
   });
 
   it("reports nothing to restore when files are unmodified", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     const result = await makeRestoreUseCase(deps).execute({
@@ -46,7 +46,7 @@ describe("restore", () => {
   });
 
   it("restores a modified file with --force", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
 
     const settingsPath = join(PROJECT_ROOT, ".vscode/settings.json");
@@ -66,7 +66,7 @@ describe("restore", () => {
   });
 
   it("restores a deleted file", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
 
     const settingsPath = join(PROJECT_ROOT, ".vscode/settings.json");
@@ -84,7 +84,7 @@ describe("restore", () => {
   });
 
   it("keeps file when prompter returns keep", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
 
     const settingsPath = join(PROJECT_ROOT, ".vscode/settings.json");
@@ -102,7 +102,7 @@ describe("restore", () => {
   });
 
   it("toolIds filter limits restore to specific tool", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);
     await installTool(deps, PROJECT_ROOT, TOOL.vscode);
     await installTool(deps, PROJECT_ROOT, TOOL.cursor);
@@ -128,7 +128,7 @@ describe("restore", () => {
   });
 
   it("toolIds filter also scopes plugin restore - does not leak to other AI tools", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);
     await installTool(deps, PROJECT_ROOT, TOOL.claude);
     await installTool(deps, PROJECT_ROOT, TOOL.codex);
@@ -153,7 +153,7 @@ describe("restore", () => {
   });
 
   it("ide restore never touches AI plugin files, scoped or unscoped", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);
     await installTool(deps, PROJECT_ROOT, TOOL.vscode);
     await installTool(deps, PROJECT_ROOT, TOOL.claude);
@@ -174,7 +174,7 @@ describe("restore", () => {
   });
 
   it("unscoped restore still restores every installed AI tool's plugins (no regression)", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);
     await installTool(deps, PROJECT_ROOT, TOOL.claude);
     await installTool(deps, PROJECT_ROOT, TOOL.codex);
@@ -198,7 +198,7 @@ describe("restore", () => {
   });
 
   it("does not remove untracked files in tool directory", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     const untrackedPath = join(PROJECT_ROOT, ".claude/rules/user-added-rule.md");
@@ -215,7 +215,7 @@ describe("restore", () => {
   });
 
   it("restores deleted files in non-interactive mode without --force", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
 
     const settingsPath = join(PROJECT_ROOT, ".vscode/settings.json");
@@ -234,7 +234,7 @@ describe("restore", () => {
   });
 
   it("aborts in non-interactive mode when modified files exist and --force is not set", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
 
     const settingsPath = join(PROJECT_ROOT, ".vscode/settings.json");
@@ -252,7 +252,7 @@ describe("restore", () => {
   });
 
   it("restores deleted files without prompting the user", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
 
     const settingsPath = join(PROJECT_ROOT, ".vscode/settings.json");
@@ -271,7 +271,7 @@ describe("restore", () => {
   });
 
   it("passes reason 'modified' to prompter when file is changed on disk", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
 
     const settingsPath = join(PROJECT_ROOT, ".vscode/settings.json");

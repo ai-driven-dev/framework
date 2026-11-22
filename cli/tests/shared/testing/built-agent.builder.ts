@@ -2,7 +2,7 @@ import type { ToolBuildContract } from "../../../src/contexts/tools/contract/bui
 import type { FrameworkBuildMode } from "../../../src/contexts/tools/contract/tool-profile.js";
 import { PluginDistribution } from "../../../src/shared/domain/plugin/plugin-distribution.js";
 import { translateBuildLayout } from "./build-files.builder.js";
-import { TOOL } from "./registered-tools.builder.js";
+import { SYNTHETIC_TOOL } from "./synthetic-tool-id.builder.js";
 
 /** An agent as the engine builds it for the contract in the given mode: its file, its place
  * inside the plugin when the mode keeps one. */
@@ -35,7 +35,7 @@ function canonOfAgent(plugin: string, outName: string, content: string): PluginD
   const agent = { relativePath: `agents/${outName}`, content };
   return new PluginDistribution({
     manifest: { name: plugin, version: "" },
-    format: TOOL.claude,
+    format: SYNTHETIC_TOOL,
     files: [agent],
     components: { commands: [], agents: [agent], skills: [], rules: [], hooks: [], mcp: [] },
   });

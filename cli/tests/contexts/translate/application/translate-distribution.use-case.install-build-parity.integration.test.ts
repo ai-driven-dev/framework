@@ -5,7 +5,7 @@ import { translate } from "../../../../src/contexts/translate/domain/engine.js";
 import { parseFrontmatter } from "../../../../src/shared/domain/markdown.js";
 import type { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
-import { registeredManifestPaths } from "../../../shared/testing/registered-manifest-probes.builder.js";
+import { manifestPathsOf } from "../../../shared/testing/manifest-probes-of.builder.js";
 import { registeredTools } from "../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../shared/testing/seed-from-directory.builder.js";
 import {
@@ -203,7 +203,7 @@ describe("an install against a build of the same plugin", () => {
 
   /** What each side writes for every plugin, all of it. */
   function writtenBy(cell: (typeof CELLS)[number]) {
-    const manifestPaths = registeredManifestPaths();
+    const manifestPaths = manifestPathsOf(registeredTools());
     return readdirSync(join(FRAMEWORK_SOURCE, "plugins")).map((name) => {
       const dist = distributionOf(tree, name);
       return {
@@ -253,7 +253,7 @@ describe("an install against a build of the same plugin", () => {
   it.each(CELLS.filter((cell) => cell.mode === "flat"))(
     "$cell: both put each file at the same path",
     (cell) => {
-      const manifestPaths = registeredManifestPaths();
+      const manifestPaths = manifestPathsOf(registeredTools());
       const moved = readdirSync(join(FRAMEWORK_SOURCE, "plugins")).flatMap((name) => {
         const dist = distributionOf(tree, name);
         const install = placed(dist, { kind: "install", tool: cell.tool, manifestPaths });

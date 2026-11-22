@@ -1,9 +1,9 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { TOOL } from "../../shared/testing/catalog-of.builder.js";
 import { createTestEnv } from "../../shared/testing/cli-sandbox.builder.js";
 import { runInProcess } from "../../shared/testing/in-process-cli.builder.js";
+import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 let project: string;
 let home: string;

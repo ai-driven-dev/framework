@@ -8,8 +8,9 @@ import {
 } from "../../src/composition/host-registration.js";
 import { DuplicateToolIdError } from "../../src/contexts/tools/domain/tools.error.js";
 import { UnregisteredToolError } from "../../src/shared/domain/shared.error.js";
-import { catalogOf, registeredConfig, TOOL } from "../shared/testing/catalog-of.builder.js";
+import { catalogOf, registeredConfig } from "../shared/testing/catalog-of.builder.js";
 import { listContractOf } from "../shared/testing/list-command-contract.builder.js";
+import { TOOL } from "../shared/testing/registered-tools.builder.js";
 
 /**
  * What the host-registration derivation produces today, per native tool: the map keys, the

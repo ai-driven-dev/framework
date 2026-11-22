@@ -29,6 +29,7 @@ function syncWithProvenFreshHost(
   activator: FakeHostActions
 ): SyncSettings {
   return marketplaceSync({
+    tools: registeredTools(),
     fs,
     manifestRepo,
     marketplaceRegistry: registry,
@@ -203,6 +204,7 @@ describe("install codex plugin via Mode A (integration)", () => {
     await seedCodexPlugin(manifestRepo, registry);
 
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo,
       marketplaceRegistry: registry,

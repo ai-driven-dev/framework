@@ -3,10 +3,10 @@ import type { BuildNativeTree } from "../../../../src/contexts/translate/applica
 import { JsonSchemaValidationError } from "../../../../src/contexts/translate/domain/translate.error.js";
 import type { JsonSchemaValidator } from "../../../../src/contexts/translate/ports/json-schema-validator.js";
 import type { AssetProvider } from "../../../../src/shared/ports/asset-provider.js";
+import { buildContractOf } from "../../../shared/testing/build-contract-of.builder.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
-import { buildContractOf } from "../../../shared/testing/registered-build-contracts.builder.js";
-import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../shared/testing/seed-from-directory.builder.js";
 import { buildTree } from "./build-tree.builder.js";
 
@@ -75,7 +75,7 @@ export function makeUseCase(
     v,
     ap,
     new CapturingLogger(),
-    buildContractOf(TOOL.copilot, "marketplace"),
+    buildContractOf(registeredTools(), TOOL.copilot, "marketplace"),
     "marketplace"
   );
 }

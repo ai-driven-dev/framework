@@ -9,7 +9,6 @@ import type { BuiltToolConfig } from "../../../src/contexts/tools/domain/profile
 import type { AiTool } from "../../../src/contexts/tools/domain/profile.js";
 import { UnregisteredToolError } from "../../../src/shared/domain/shared.error.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
-import { TOOL as REGISTERED_TOOL_IDS } from "./registered-tools.builder.js";
 
 /** A catalog over the given profiles, in the given order, the registered ones when none is given.
  * Built inside the `it` that reads it: a catalog is a value, never shared state. */
@@ -46,6 +45,9 @@ export function registeredAiConfig(id: AiToolId): AiTool {
   return config;
 }
 
-/** The registered ids, minted by the shared kit. Transitional alias: callers move to
- * tests/shared/testing/registered-tools.ts, then this goes. */
-export const TOOL = REGISTERED_TOOL_IDS;
+/** The registered AI id a name answers to, for a generic test that needs a real host profile's id. */
+export function registeredAiId(name: string): AiToolId {
+  const id = catalogOf().aiToolId(name);
+  if (id === null) throw new UnregisteredToolError(name);
+  return id;
+}

@@ -13,7 +13,7 @@ const INPUT = { source: SOURCE, projectRoot: PROJECT_ROOT, toolIds: [TOOL.claude
 const fetch = vi.fn(async () => "/fetched");
 
 async function resolver() {
-  const deps = await buildInstallationDeps();
+  const deps = await buildInstallationDeps({ tools: registeredTools() });
   fetch.mockClear();
   const reader = {
     read: async () =>

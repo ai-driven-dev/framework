@@ -19,7 +19,7 @@ const EVENTS_FILE = ".opencode/hooks/opencode-events.js";
 const USER_CONFIG = '{"model":"user/model","permission":{"bash":"ask"}}';
 
 async function legacyProject() {
-  const deps = await buildInstallationDeps();
+  const deps = await buildInstallationDeps({ tools: registeredTools() });
   const manifest = Manifest.create();
   manifest.addTool(TOOL.opencode, "legacy", [
     new InstallationFile({

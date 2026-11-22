@@ -2,10 +2,10 @@ import { join } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import { JsonSchemaValidationError } from "../../../../src/contexts/translate/domain/translate.error.js";
 import { InvalidSourceMarketplaceError } from "../../../../src/shared/domain/shared.error.js";
+import { buildContractOf } from "../../../shared/testing/build-contract-of.builder.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import type { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
-import { buildContractOf } from "../../../shared/testing/registered-build-contracts.builder.js";
-import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../../shared/testing/saying.builder.js";
 import {
   makeAssetProvider,
@@ -234,7 +234,7 @@ describe("BuildNativeTree marketplace", () => {
         failingMarketplaceValidator,
         ap,
         logger,
-        buildContractOf(TOOL.copilot, "marketplace"),
+        buildContractOf(registeredTools(), TOOL.copilot, "marketplace"),
         "marketplace"
       );
       await expect(

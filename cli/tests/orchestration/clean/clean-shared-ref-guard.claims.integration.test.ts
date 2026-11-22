@@ -11,7 +11,7 @@ import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   buildUseCase,
   OTHER_PROJECT,
@@ -72,6 +72,7 @@ describe("clean releases a project's claims only once its local cleanup succeeds
       fs.setFile(sharedPath, "shared plugin bytes");
       const activator = new FakeHostActions({ available: true });
       const useCase = buildUseCase({
+        tools: registeredTools(),
         fs,
         manifest: project,
         activator,

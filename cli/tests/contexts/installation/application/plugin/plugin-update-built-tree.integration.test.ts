@@ -8,7 +8,7 @@ import {
   buildInstallationDeps,
   initAndInstall,
 } from "../../../../shared/testing/installation-deps.builder.js";
-import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
 import {
@@ -28,7 +28,7 @@ const recordedNamed = (manifest: Manifest | null | undefined, name: string) =>
 
 describe("UpdatePlugin - built-tree materialization", () => {
   it("refuses an absent machine manifest before touching user files", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     const registry = await makeRegistry();
     await deps.userManifestRepo.delete();
     const path = join(USER_PLUGINS_DIR, "sample-plugin/skills/demo/SKILL.md");
@@ -49,7 +49,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
   });
 
   it("checks current user bytes inside the machine repository's exclusive-access boundary", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
@@ -82,7 +82,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
   it.each([{ dependents: [] }, { dependents: [PROJECT_ROOT, "/B"] }])(
     "warns only for actual dependent projects when updating shared native and file plugins: $dependents",
     async ({ dependents }) => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initAndInstall(deps, PROJECT_ROOT, cursor);
       const registry = await makeRegistry();
       await installStalePlugin(deps, registry);
@@ -131,7 +131,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
   );
 
   it("updates only the selected user plugin and exact native ref, preserving unrelated claims and project records", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
@@ -189,7 +189,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
   });
 
   it("refuses one ambiguous native name among several selected plugins before any file or host update", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
@@ -228,7 +228,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
   });
 
   it("excludes built Cursor hooks from the updated user plugin and leaves both projects' hooks unchanged", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
@@ -273,7 +273,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
   });
 
   it("uses the plugin's named marketplace build rather than the first registered catalogue", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = new FakeMarketplaceRegistry();
     registry.seed(PROJECT_ROOT, {
@@ -311,7 +311,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
   });
 
   it("re-materializes from the built tree for a marketplace plugin", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
@@ -335,7 +335,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
   });
 
   it("writes the updated plugin under the user-scope base dir, not the project root", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
@@ -357,7 +357,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
   });
 
   it("does not rewrite or advance a plugin already at the fetched version", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await installStalePlugin(deps, registry);
@@ -380,7 +380,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
   });
 
   it("translates a local user plugin without taking an unrelated marketplace's built tree", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, cursor);
     const registry = await makeRegistry();
     await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });

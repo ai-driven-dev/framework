@@ -8,9 +8,8 @@ import { LoadManifest } from "../../../src/contexts/installation/application/doc
 import { LoadManifestForDoctor } from "../../../src/contexts/installation/application/doctor/load-manifest-for-doctor.use-case.js";
 import { DetectPluginDrift } from "../../../src/contexts/installation/application/shared/detect-plugin-drift.use-case.js";
 import { RunDoctor } from "../../../src/orchestration/doctor/run-doctor.use-case.js";
+import { hostInspector } from "../../shared/testing/host-inspector.builder.js";
 import type { buildInstallationDeps } from "../../shared/testing/installation-deps.builder.js";
-import { registeredHostInspector } from "../../shared/testing/registered-host-inspector.builder.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { checkRegistrationOver } from "./build-check-registration.builder.js";
 
 export function buildRunDoctor(
@@ -25,10 +24,10 @@ export function buildRunDoctor(
         tracked: new CheckTrackedFiles(loadManifest, deps.fs),
         merge: new CheckMergeFiles(loadManifest, deps.fs),
         references: new CheckFileReferences(loadManifest, deps.fs),
-        layout: new CheckProjectLayout(loadManifest, deps.fs, registeredTools()),
+        layout: new CheckProjectLayout(loadManifest, deps.fs, deps.tools),
         plugin: new CheckPluginDrift(
           loadManifest,
-          new DetectPluginDrift(deps.fs, registeredTools(), () => "/home/dev")
+          new DetectPluginDrift(deps.fs, deps.tools, () => "/home/dev")
         ),
       },
       registration: checkRegistrationOver(
@@ -36,15 +35,20 @@ export function buildRunDoctor(
         deps.fs,
         deps.marketplaceRegistry,
         (binary) =>
-          binary === TOOL.codex &&
-          deps.nativePluginActivators.get(TOOL.codex)?.isAvailable() === true,
-        registeredHostInspector(deps.fs, hostRegistries, new Map()),
+          [...deps.nativePluginActivators].some(
+            ([id, activator]) => id === binary && activator.isAvailable()
+          ),
+        hostInspector(deps.tools, {
+          fs: deps.fs,
+          pluginRegistries: hostRegistries,
+          marketplaceRegistries: new Map(),
+        }),
         () => "/user-cache",
         { get: () => "1.0.0" },
-        registeredTools()
+        deps.tools
       ),
       authentication: { execute: async () => [] },
     },
-    registeredTools()
+    deps.tools
   );
 }

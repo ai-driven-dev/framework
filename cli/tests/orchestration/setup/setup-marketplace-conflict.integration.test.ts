@@ -20,7 +20,7 @@ import { InMemoryEnvironment } from "../../shared/testing/in-memory-environment.
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { buildInstallationDeps } from "../../shared/testing/installation-deps.builder.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { flowTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { flowTools, registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { OverwritePrompter } from "../../shared/testing/scripted-prompter.fake.js";
 import { askMarketplaceSource } from "../testing/ask-marketplace-source.builder.js";
 import { runSetupOf } from "../testing/run-setup-of.builder.js";
@@ -54,7 +54,7 @@ function makeNoOpPluginInstallFromMarketplace(): PluginInstallFromMarketplace {
 /** A REAL `SyncSettings`, not the no-op double the other setup suites
  * substitute, behind a host registry already holding a different catalog under that name. */
 async function buildUseCaseWithConflict() {
-  const deps = await buildInstallationDeps();
+  const deps = await buildInstallationDeps({ tools: registeredTools() });
   const prompter = new OverwritePrompter();
   const askSource = askMarketplaceSource(prompter, makeNoOpLatestResolver());
   const setupToolsUseCase = new InstallTools(
@@ -94,6 +94,7 @@ async function buildUseCaseWithConflict() {
   });
   const activator = new FakeHostActions({ available: true });
   const syncSettingsUseCase = marketplaceSync({
+    tools: registeredTools(),
     fs: deps.fs,
     manifestRepo: deps.manifestRepo,
     marketplaceRegistry: deps.marketplaceRegistry,
@@ -113,17 +114,18 @@ async function buildUseCaseWithConflict() {
     deps.logger,
     new InMemoryEnvironment()
   );
-  const useCase = runSetupOf(
-    deps.fs,
-    deps.manifestRepo,
-    {
+  const useCase = runSetupOf({
+    tools: registeredTools(),
+    fs: deps.fs,
+    manifestRepo: deps.manifestRepo,
+    steps: {
       ...setupMarketplaceRegistration,
       installTools: setupToolsUseCase,
       syncSettings: (options) => syncSettingsUseCase.execute(options),
       version: CURRENT_VERSION,
     },
-    { plugins: (options) => choosePlugins.execute(options) }
-  );
+    questions: { plugins: (options) => choosePlugins.execute(options) },
+  });
   return { useCase, activator };
 }
 

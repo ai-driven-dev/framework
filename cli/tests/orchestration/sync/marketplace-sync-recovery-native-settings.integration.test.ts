@@ -15,16 +15,18 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { ownedNativeSettings } from "../testing/owned-native-settings.builder.js";
 import { CLEAN_RUN, ROOT } from "../testing/recovery-contract.builder.js";
 
 const firstSourceOf = (record: Parameters<typeof hostRecord>[0]) =>
   hostRecord(record)?.marketplaces[0]?.provenance;
 
+const REAL = { tools: registeredTools(), copilot: TOOL.copilot };
+
 describe("proven native catalogues update declarative settings only when required", () => {
   it("projects enabled refs from two distinct owned Copilot catalogues into the tracked shared settings", async () => {
-    const f = await ownedNativeSettings({ names: ["first", "second"] });
+    const f = await ownedNativeSettings({ ...REAL, names: ["first", "second"] });
     const result = await f.sync.execute({ projectRoot: ROOT });
     const content = await f.fs.readFile(resolve(ROOT, f.settingsPath));
     expect(result).toEqual({ activated: ["copilot"], ...CLEAN_RUN });
@@ -47,7 +49,7 @@ describe("proven native catalogues update declarative settings only when require
   });
 
   it("persists a missing declarative ref's hash even when native and machine ownership are already unchanged", async () => {
-    const f = await ownedNativeSettings();
+    const f = await ownedNativeSettings({ ...REAL });
     await f.sync.execute({ projectRoot: ROOT });
     const content = await f.fs.readFile(resolve(ROOT, f.settingsPath));
     expect(JSON.parse(content).enabledPlugins).toEqual({ "review-first@first-catalog": true });
@@ -63,7 +65,7 @@ describe("proven native catalogues update declarative settings only when require
 
   it("leaves malformed Copilot settings untouched without parsing warnings when no native refs are proven", async () => {
     const settings = "{ personalSetting: true,";
-    const f = await ownedNativeSettings({ withPlugins: false, settings });
+    const f = await ownedNativeSettings({ ...REAL, withPlugins: false, settings });
     const result = await f.sync.execute({ projectRoot: ROOT });
     expect(result).toEqual({ activated: ["copilot"], ...CLEAN_RUN });
     expect(await f.fs.readFile(resolve(ROOT, f.settingsPath))).toBe(settings);
@@ -74,6 +76,7 @@ describe("proven native catalogues update declarative settings only when require
 
   it("re-registers an owned Codex local source whose cached root differs from its original build path", async () => {
     const f = await ownedNativeSettings({
+      ...REAL,
       toolId: TOOL.codex,
       cachedRoot: "/host/cache/copied-marketplace",
     });
@@ -99,6 +102,7 @@ describe("proven native catalogues update declarative settings only when require
 
   it("persists a second catalogue's updated source while retaining an already identical first catalogue", async () => {
     const f = await ownedNativeSettings({
+      ...REAL,
       toolId: TOOL.codex,
       names: ["first", "second"],
       cachedCatalogue: "second",
@@ -162,6 +166,7 @@ describe("shared framework references follow any successful native tool outcome"
         listAllReferencingProjects: async () => [],
       };
       const sync = marketplaceSync({
+        tools: registeredTools(),
         fs,
         manifestRepo: new InMemoryManifestRepository(project),
         marketplaceRegistry: registry,

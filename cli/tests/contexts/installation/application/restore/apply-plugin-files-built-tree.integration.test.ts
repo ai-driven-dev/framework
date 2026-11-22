@@ -99,7 +99,7 @@ function builtSkillContent(deps: Awaited<ReturnType<typeof buildInstallationDeps
 
 describe("RestoreAllPlugins - built-tree materialization", () => {
   it("does not re-materialize a shared user plugin during project restore", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.cursor);
     const registry = await makeRegistry();
     await installMarketplacePlugin(deps, registry);
@@ -133,7 +133,7 @@ describe("RestoreAllPlugins - built-tree materialization", () => {
   });
 
   it("reports zero files restored when a built-tree restore finds nothing drifted", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.cursor);
     const registry = await makeRegistry();
     await installMarketplacePlugin(deps, registry);
@@ -159,7 +159,7 @@ describe("RestoreAllPlugins - built-tree materialization", () => {
   });
 
   it("keeps the manifest's single entry for the plugin after restore (no duplicate registration)", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.cursor);
     const registry = await makeRegistry();
     await installMarketplacePlugin(deps, registry);

@@ -31,7 +31,7 @@ async function buildOpencodeProject(): Promise<{
   logger: CapturingLogger;
   useCase: AddPlugin;
 }> {
-  const deps = await buildInstallationDeps();
+  const deps = await buildInstallationDeps({ tools: registeredTools() });
   await initAndInstall(deps, PROJECT_ROOT, TOOL.opencode);
   deps.fs.setFile(
     join(MCP_PLUGIN_DIR, ".claude-plugin/plugin.json"),

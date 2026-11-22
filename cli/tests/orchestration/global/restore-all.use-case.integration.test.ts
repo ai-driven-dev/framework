@@ -23,7 +23,7 @@ import {
   installTool,
 } from "../../shared/testing/installation-deps.builder.js";
 import { loadDistributionOf } from "../../shared/testing/load-distribution.builder.js";
-import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.builder.js";
+import { manifestProbesOf } from "../../shared/testing/manifest-probes-of.builder.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   OverwritePrompter,
@@ -99,7 +99,7 @@ function countingReader(fs: Deps["fs"]): {
   reader: PluginDistributionReaderAdapter;
   count: () => number;
 } {
-  const reader = new PluginDistributionReaderAdapter(fs, registeredManifestProbes());
+  const reader = new PluginDistributionReaderAdapter(fs, manifestProbesOf(registeredTools()));
   let calls = 0;
   const original = reader.read.bind(reader);
   reader.read = async (...args: Parameters<typeof original>) => {
@@ -119,7 +119,7 @@ describe("RestoreAll - the --force flag", () => {
     reader: PluginDistributionReaderAdapter;
     trackedPath: string;
   }> {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     const manifest = await deps.manifestRepo.load();
@@ -131,7 +131,7 @@ describe("RestoreAll - the --force flag", () => {
 
     return {
       deps,
-      reader: new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes()),
+      reader: new PluginDistributionReaderAdapter(deps.fs, manifestProbesOf(registeredTools())),
       trackedPath,
     };
   }
@@ -161,7 +161,7 @@ describe("RestoreAll - the --force flag", () => {
 
 describe("RestoreAll - an interactive run that ticks nothing", () => {
   it("restores nothing: an empty selection is a decision, not the absence of one", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const manifest = await deps.manifestRepo.load();
     const tracked = manifest?.getToolFiles(TOOL.claude) ?? [];
@@ -171,7 +171,7 @@ describe("RestoreAll - an interactive run that ticks nothing", () => {
 
     const result = await makeRestoreAll(
       deps,
-      new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes()),
+      new PluginDistributionReaderAdapter(deps.fs, manifestProbesOf(registeredTools())),
       prompter
     ).execute(PROJECT_ROOT, false, true);
 
@@ -190,13 +190,13 @@ describe("RestoreAll - an interactive run that ticks nothing", () => {
 
 describe("RestoreAll - plugin materialization", () => {
   it("restores a corrupted plugin file with exactly one materialization call (translate-mode: claude)", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
     await installPlugin(
       deps,
       TOOL.claude,
-      new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+      new PluginDistributionReaderAdapter(deps.fs, manifestProbesOf(registeredTools()))
     );
 
     const pluginFile = join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md");
@@ -213,13 +213,13 @@ describe("RestoreAll - plugin materialization", () => {
   });
 
   it("leaves a corrupted shared user plugin to explicit user-scope repair (cursor)", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.cursor);
     await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
     await installPlugin(
       deps,
       TOOL.cursor,
-      new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+      new PluginDistributionReaderAdapter(deps.fs, manifestProbesOf(registeredTools()))
     );
 
     const manifestAfterInstall = deps.userManifestRepo.getCurrent();
@@ -240,7 +240,7 @@ describe("RestoreAll - plugin materialization", () => {
   });
 
   it("result.pluginNamesRestored lists the restored plugin exactly once", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
     const { reader } = countingReader(deps.fs);
@@ -256,7 +256,7 @@ describe("RestoreAll - plugin materialization", () => {
   });
 
   it("a plugin already up to date is not listed as restored and produces no error", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
     const { reader } = countingReader(deps.fs);
@@ -282,7 +282,7 @@ describe("RestoreAll - plugin materialization", () => {
   it("interactive restore with an explicit file selection also skips unselected plugin files (translate-mode)", async () => {
     // The interactive picker never offers plugin drift, so once the user picks any specific
     // regular file ctx.fileFilter is active and no plugin path can match it.
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     await installTool(deps, PROJECT_ROOT, TOOL.vscode);
     await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
@@ -308,7 +308,7 @@ describe("RestoreAll - plugin materialization", () => {
   });
 
   it("unscoped restore still restores every installed AI tool's plugins (no regression)", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     await installTool(deps, PROJECT_ROOT, TOOL.codex);
     await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });

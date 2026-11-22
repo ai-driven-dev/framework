@@ -17,7 +17,7 @@ import {
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   CATALOG_RELATIVE,
   canonicallyOwned,
@@ -80,6 +80,7 @@ describe("settings migration: legacy host entries", () => {
       });
       const added: Array<{ version: string; projectRoot: string }> = [];
       const useCase = marketplaceSync({
+        tools: registeredTools(),
         fs,
         manifestRepo: new InMemoryManifestRepository(manifest),
         marketplaceRegistry: registry,
@@ -140,6 +141,7 @@ describe("settings migration: legacy host entries", () => {
       });
       const added: Array<{ version: string; projectRoot: string }> = [];
       const useCase = marketplaceSync({
+        tools: registeredTools(),
         fs,
         manifestRepo: new InMemoryManifestRepository(manifest),
         marketplaceRegistry: registry,
@@ -212,6 +214,7 @@ describe("settings migration: legacy host entries", () => {
     it("does not repoint a legacy host entry when no reference ledger is available", async () => {
       const { fs, hostReader, registry, manifest, activator } = hostOnForeignCache();
       const useCase = marketplaceSync({
+        tools: registeredTools(),
         fs,
         manifestRepo: new InMemoryManifestRepository(manifest),
         marketplaceRegistry: registry,
@@ -238,6 +241,7 @@ describe("settings migration: legacy host entries", () => {
       const { fs, hostReader, registry, manifest, activator } = hostOnForeignCache();
       const added: Array<{ version: string; projectRoot: string }> = [];
       const useCase = marketplaceSync({
+        tools: registeredTools(),
         fs,
         manifestRepo: new InMemoryManifestRepository(manifest),
         marketplaceRegistry: registry,

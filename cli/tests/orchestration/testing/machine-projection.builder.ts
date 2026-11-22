@@ -6,6 +6,7 @@ import type { HostPluginRegistry } from "../../../src/contexts/host-registration
 import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/contract/built-marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
@@ -15,7 +16,6 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { FakeHostMarketplaceSources } from "./fake-host-marketplace-sources.fake.js";
 import { FakeHostPluginRegistry } from "./fake-host-plugin-registry.fake.js";
 
@@ -56,10 +56,13 @@ export const readablePlugins = (
     ],
   ]);
 
-export const claudeHostCatalogs = (entries: ReadonlyMap<string, string> = new Map()) =>
+export const claudeHostCatalogs = (
+  claude: AiToolId,
+  entries: ReadonlyMap<string, string> = new Map()
+) =>
   new Map<AiToolId, HostMarketplaceRegistry>([
     [
-      TOOL.claude,
+      claude,
       {
         read: async () => ({
           location: "/home/.claude/plugins/known_marketplaces.json",
@@ -142,6 +145,7 @@ export async function registryOf(projectRoot: string, ...marketplaces: Registere
 }
 
 export interface SyncWiring {
+  readonly tools: ToolCatalog;
   readonly toolId: AiToolId;
   readonly fs: InMemoryFileAdapter;
   readonly projectRepo: InMemoryManifestRepository;
@@ -156,6 +160,7 @@ export interface SyncWiring {
 
 export function wireSync(w: SyncWiring) {
   return marketplaceSync({
+    tools: w.tools,
     fs: w.fs,
     manifestRepo: w.projectRepo,
     marketplaceRegistry: w.registry,
@@ -171,30 +176,31 @@ export function wireSync(w: SyncWiring) {
 
 /** One project-scope codex catalogue, `local-catalog` locally and `real-catalog` on the host. */
 export async function singleCodexCatalog(o: {
+  readonly tools: ToolCatalog;
+  readonly codex: AiToolId;
   readonly projectRoot: string;
   readonly machine: Manifest;
   readonly activator: FakeHostActions;
   /** When given, the host plugin registry is this one and no native source reader is wired. */
   readonly hostPluginRegistries?: SyncWiring["hostPluginRegistries"];
 }) {
-  const projectRepo = new InMemoryManifestRepository(
-    projectWithPlugin(TOOL.codex, "local-catalog")
-  );
+  const projectRepo = new InMemoryManifestRepository(projectWithPlugin(o.codex, "local-catalog"));
   const machineRepo = new InMemoryManifestRepository(o.machine);
   const fs = fsWithProjects({
     "/built/codex/.agents/plugins/marketplace.json": catalogFile("real-catalog", ["test-plugin"]),
   });
   const sync = wireSync({
-    toolId: TOOL.codex,
+    tools: o.tools,
+    toolId: o.codex,
     fs,
     projectRepo,
     machineRepo,
     registry: await registryOf(o.projectRoot, { name: "local-catalog", scope: "project" }),
     activator: o.activator,
-    hostPluginRegistries: o.hostPluginRegistries ?? readablePlugins(TOOL.codex),
+    hostPluginRegistries: o.hostPluginRegistries ?? readablePlugins(o.codex),
     nativeSources:
       o.hostPluginRegistries === undefined
-        ? freshNativeSources(TOOL.codex, o.activator, new Map([["/built/codex", "real-catalog"]]))
+        ? freshNativeSources(o.codex, o.activator, new Map([["/built/codex", "real-catalog"]]))
         : undefined,
   });
   return { sync, fs, projectRepo, machineRepo };

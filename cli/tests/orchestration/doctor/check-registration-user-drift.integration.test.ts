@@ -9,10 +9,10 @@ import {
 import type { VersionReader } from "../../../src/shared/ports/version-reader.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.fake.js";
 import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
+import { hostInspector } from "../../shared/testing/host-inspector.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { registeredHostInspector } from "../../shared/testing/registered-host-inspector.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { buildCheckRegistration } from "../testing/build-check-registration.builder.js";
 
 function fakeVersion(value: string): VersionReader {
@@ -66,7 +66,11 @@ describe("CheckRegistration - user-scope marketplace source drift", () => {
       fs,
       registry,
       () => false,
-      registeredHostInspector(fs, new Map(), new Map([[TOOL.claude, hostReader]])),
+      hostInspector(registeredTools(), {
+        fs: fs,
+        pluginRegistries: new Map(),
+        marketplaceRegistries: new Map([[TOOL.claude, hostReader]]),
+      }),
       () => USER_CACHE_ROOT,
       fakeVersion(CURRENT_VERSION),
       catalogOf()

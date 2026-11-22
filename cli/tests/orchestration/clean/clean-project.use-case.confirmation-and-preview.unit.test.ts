@@ -7,18 +7,21 @@ import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { RecordingPrompter } from "../../shared/testing/recording-prompter.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
-  AT_PROJECT,
-  CleanWithKnownHostSource,
+  atProject,
   fileEntry,
   hash,
+  knownHostSourceCleaner,
   PLUGIN_KEY,
   PROJECT_ROOT,
   previewOf,
   RecordingFileAdapter,
   seedTrackedFiles,
 } from "../testing/clean-project.builder.js";
+
+const AT_PROJECT = atProject(registeredTools());
+const CleanWithKnownHostSource = knownHostSourceCleaner(registeredTools(), TOOL);
 
 const homedir = (): string => "/home/dev";
 
@@ -124,7 +127,7 @@ describe("clean: confirmation and preview", () => {
     ) {
       return new CleanWithKnownHostSource(
         fs,
-        new InMemoryManifestRepository(seedTrackedFiles(fs, ["a.md"]), PROJECT_ROOT),
+        new InMemoryManifestRepository(seedTrackedFiles(TOOL, fs, ["a.md"]), PROJECT_ROOT),
         new CapturingLogger(),
         new UpdateGitignore(fs),
         new Map(),
@@ -195,7 +198,7 @@ describe("clean: confirmation and preview", () => {
   describe("what a dry-run previews", () => {
     it("counts each tool's tracked and merged files, and totals them", async () => {
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-      const manifest = seedTrackedFiles(fs, ["a.md", "b.md"]);
+      const manifest = seedTrackedFiles(TOOL, fs, ["a.md", "b.md"]);
       manifest.addTool(TOOL.claude, "1.0.0", [fileEntry("a.md"), fileEntry("b.md")]);
       manifest.updateToolMergeFiles(TOOL.claude, [
         { relativePath: ".claude/settings.json", sectionKey: null, entries: { owned: hash() } },

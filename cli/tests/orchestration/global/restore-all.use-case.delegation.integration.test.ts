@@ -48,7 +48,7 @@ describe("RestoreAll - consent to overwrite", () => {
   }
 
   async function askedWith(interactive: boolean, force: boolean): Promise<RestoreRequest> {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const prompter = new OverwritePrompter();
     const statusUseCase = new ReportStatus(
@@ -94,7 +94,7 @@ describe("RestoreAll - consent to overwrite", () => {
 
 describe("RestoreAll - native-only tools", () => {
   it("forwards the native-only tool ids the restore it delegates to found", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const prompter = new OverwritePrompter();
     const statusUseCase = new ReportStatus(
@@ -193,7 +193,7 @@ function recordingDelegate(): {
 
 describe("RestoreAll - before delegating", () => {
   it("refuses a project that has no manifest", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     const useCase = restoreAllDelegatingTo(
       deps,
       new OverwritePrompter(),
@@ -210,7 +210,7 @@ describe("RestoreAll - before delegating", () => {
     ["non-interactive", false],
     ["interactive", true],
   ])("reads the manifest once for the whole %s run", async (_mode, interactive) => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     let reads = 0;
     const load = deps.manifestRepo.load.bind(deps.manifestRepo);
@@ -229,7 +229,7 @@ describe("RestoreAll - before delegating", () => {
   });
 
   it("hands the restore the version of the first installed tool", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const { asked, delegate } = recordingDelegate();
 
@@ -243,7 +243,7 @@ describe("RestoreAll - before delegating", () => {
   });
 
   it("hands the restore an unknown version when no tool is installed", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);
     const { asked, delegate } = recordingDelegate();
 
@@ -257,7 +257,7 @@ describe("RestoreAll - before delegating", () => {
   });
 
   it("reports a failing restore as a config-restore error with nothing restored", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const useCase = restoreAllDelegatingTo(deps, new OverwritePrompter(), async () => {
       throw new Error("disk on fire");
@@ -282,7 +282,7 @@ describe("RestoreAll - the interactive file picker", () => {
   const SETTINGS = ".vscode/settings.json";
 
   async function vscodeProject(): Promise<Deps> {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
     return deps;
   }

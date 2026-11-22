@@ -13,10 +13,10 @@ import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/
 import type { DiskTarget } from "../../../../../src/contexts/translate/ports/plugin-tree-sink.js";
 import { flatArtifactLayout } from "../../../../../src/shared/domain/materialization/flat-paths.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
+import { buildContractOf } from "../../../../shared/testing/build-contract-of.builder.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
-import { buildContractOf } from "../../../../shared/testing/registered-build-contracts.builder.js";
-import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { WindowsListingFileAdapter } from "../../../../shared/testing/windows-listing-file-adapter.fake.js";
 import { aDiskSink } from "../../testing/disk-sink.builder.js";
 
@@ -356,7 +356,7 @@ describe("a tool's own config built from a plugin's MCP servers", () => {
   it.each([TOOL.codex, TOOL.opencode, TOOL.kilo] as const)(
     "names the hook script %s's server runs by its place in the output",
     async (tool) => {
-      const contract = buildContractOf(tool, "flat");
+      const contract = buildContractOf(registeredTools(), tool, "flat");
       const fs = seeded({
         [`${PLUGIN_SRC}/hooks/hooks.json`]: "{}",
         [`${PLUGIN_SRC}/hooks/server.js`]: "console.log('up');\n",

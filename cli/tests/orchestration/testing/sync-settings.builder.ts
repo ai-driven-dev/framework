@@ -3,34 +3,36 @@ import { Marketplace } from "../../../src/contexts/distribution/domain/marketpla
 import { registerMarketplacePlugin } from "../../../src/contexts/installation/application/materialize/register-marketplace-plugin.js";
 import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/contract/built-marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { PluginDistribution } from "../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { PluginSource } from "../../../src/shared/domain/source.js";
+import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
-import { registeredAiProfile } from "../../shared/testing/catalog-of.builder.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { parseJsonRecord } from "../../shared/testing/json-value.builder.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { FakeHostMarketplaceSources } from "./fake-host-marketplace-sources.fake.js";
 import { FakeHostPluginRegistry } from "./fake-host-plugin-registry.fake.js";
 
 export const PROJECT_ROOT = "/test-project";
 export const SHARED_SETTINGS = resolve(PROJECT_ROOT, ".claude/settings.json");
 
-export function distribution(name: string): PluginDistribution {
+export function distribution(claude: AiToolId, name: string): PluginDistribution {
   const files = [{ relativePath: "commands/hello.md", content: "# Hello" }];
   return new PluginDistribution({
     manifest: { name, version: "1.0.0" },
-    format: TOOL.claude,
+    format: claude,
     files,
     components: { commands: files, agents: [], rules: [], skills: [], hooks: [], mcp: [] },
   });
 }
 
 export interface SyncSetup {
+  readonly tools: ToolCatalog;
+  readonly claude: AiToolId;
   /** Content written to `.claude/settings.json` before the sync, when given. */
   readonly settings?: string;
   /** Marketplaces to register; the first is the one plugins are attached to. */
@@ -70,10 +72,10 @@ export function seededBuiltCatalog(name = "aidd-framework"): InMemoryFileAdapter
   });
 }
 
-export function readableClaudePluginRegistry() {
+export function readableClaudePluginRegistry(claude: AiToolId) {
   return new Map([
     [
-      TOOL.claude,
+      claude,
       new FakeHostPluginRegistry({
         location: "/home/.claude/plugins/installed_plugins.json",
         refs: new Map(),
@@ -82,10 +84,14 @@ export function readableClaudePluginRegistry() {
   ]);
 }
 
-export function freshClaudeSource(activator: FakeHostActions, name = "aidd-framework") {
+export function freshClaudeSource(
+  claude: AiToolId,
+  activator: FakeHostActions,
+  name = "aidd-framework"
+) {
   return new Map([
     [
-      TOOL.claude,
+      claude,
       new FakeHostMarketplaceSources(
         activator,
         "registry",
@@ -107,13 +113,17 @@ async function seededCatalogs(names: readonly string[]): Promise<InMemoryFileAda
   return fs;
 }
 
-async function projectManifestWithPlugin(marketplace: string): Promise<InMemoryManifestRepository> {
+async function projectManifestWithPlugin(
+  setup: SyncSetup,
+  marketplace: string
+): Promise<InMemoryManifestRepository> {
+  const { claude } = setup;
   const manifestRepo = new InMemoryManifestRepository();
   const manifest = Manifest.create();
-  manifest.addTool(TOOL.claude, "test", []);
+  manifest.addTool(claude, "test", []);
   await registerMarketplacePlugin({
-    dist: distribution("aidd-context"),
-    tool: registeredAiProfile(TOOL.claude),
+    dist: distribution(claude, "aidd-context"),
+    tool: setup.tools.aiProfile(claude),
     source: { kind: "local", path: "/plugin-source" },
     projectRoot: PROJECT_ROOT,
     manifest,
@@ -153,10 +163,10 @@ function activatorOf(setup: SyncSetup): FakeHostActions {
   );
 }
 
-function ownedMachineManifest(name: string): Manifest {
+function ownedMachineManifest(claude: AiToolId, name: string): Manifest {
   const machine = Manifest.create();
-  machine.addTool(TOOL.claude, "test", []);
-  machine.setNativeRegistrations(TOOL.claude, {
+  machine.addTool(claude, "test", []);
+  machine.setNativeRegistrations(claude, {
     binary: "claude",
     marketplaces: [
       { alias: name, hostName: name, provenance: { kind: "registry", source: "/built/claude" } },
@@ -178,14 +188,19 @@ function ensureBuiltPerMarketplace(primary: string): BuiltMarketplaceEnsurer {
   };
 }
 
-function nativeSourcesOf(activator: FakeHostActions, names: readonly string[], owned: boolean) {
+function nativeSourcesOf(
+  claude: AiToolId,
+  activator: FakeHostActions,
+  catalogs: { readonly names: readonly string[]; readonly owned: boolean }
+) {
+  const { names, owned } = catalogs;
   const [primary, ...others] = names;
   const known = owned
     ? new Map([[primary, { kind: "registry" as const, source: "/built/claude" }]])
     : new Map();
   return new Map([
     [
-      TOOL.claude,
+      claude,
       new FakeHostMarketplaceSources(
         activator,
         "registry",
@@ -204,27 +219,37 @@ async function writtenSettings(fs: InMemoryFileAdapter) {
   return parseJsonRecord(await fs.readFile(SHARED_SETTINGS));
 }
 
-export async function sync(setup: SyncSetup = {}) {
+async function syncWith(setup: SyncSetup) {
+  const { claude } = setup;
   const names = setup.marketplaceNames ?? ["aidd-framework"];
   const primary = names[0] ?? "aidd-framework";
   const fs = await seededCatalogs(names);
-  const manifestRepo = await projectManifestWithPlugin(primary);
+  const manifestRepo = await projectManifestWithPlugin(setup, primary);
   const registry = await registeredProjectMarketplaces(names, setup);
   if (setup.settings !== undefined) await fs.writeFile(SHARED_SETTINGS, setup.settings);
   const logger = new CapturingLogger();
   const activator = activatorOf(setup);
-  const machine = setup.ownedCatalog ? ownedMachineManifest(primary) : undefined;
+  const machine = setup.ownedCatalog ? ownedMachineManifest(claude, primary) : undefined;
   const useCase = marketplaceSync({
+    tools: setup.tools,
     fs,
     manifestRepo,
     marketplaceRegistry: registry,
     logger,
-    activators: new Map([[TOOL.claude, activator]]),
+    activators: new Map([[claude, activator]]),
     ensureBuilt: setup.ensureBuilt ?? ensureBuiltPerMarketplace(primary),
-    hostPluginRegistries: readableClaudePluginRegistry(),
+    hostPluginRegistries: readableClaudePluginRegistry(claude),
     userManifestRepo: machine === undefined ? undefined : new InMemoryManifestRepository(machine),
-    nativeSources: nativeSourcesOf(activator, names, setup.ownedCatalog === true),
+    nativeSources: nativeSourcesOf(claude, activator, {
+      names,
+      owned: setup.ownedCatalog === true,
+    }),
   });
   const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
   return { written: await writtenSettings(fs), logger, fs, activator, result };
+}
+
+/** The scenario's sync, over the catalog and the claude id its test names. */
+export function syncOf(tools: ToolCatalog, claude: AiToolId) {
+  return (setup: Omit<SyncSetup, "tools" | "claude"> = {}) => syncWith({ ...setup, tools, claude });
 }

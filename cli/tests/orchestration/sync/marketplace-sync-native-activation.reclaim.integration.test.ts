@@ -5,23 +5,23 @@ import {
   userBuiltMarketplaceDir,
 } from "../../../src/shared/domain/layout/aidd-layout.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
+import { registeredAiId, registeredCatalog } from "../../shared/testing/catalog-of.builder.js";
 import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
 import {
-  buildSyncReadingHost,
-  claude,
   hostReadingOf,
   MARKETPLACE,
-  manifestWithPlugin,
   marketplace,
-  nativeSource,
-  ownedMachineCatalog,
+  nativeActivationOf,
   PROJECT_ROOT,
   REF,
 } from "../testing/marketplace-sync-native-activation.builder.js";
+
+const { buildSyncReadingHost, claude, manifestWithPlugin, nativeSource, ownedMachineCatalog } =
+  nativeActivationOf({ tools: registeredCatalog(), claude: registeredAiId("claude") });
 
 describe("native activation: reclaim", () => {
   describe("reclaiming a dead registration asks and acts on the host's own name", () => {
@@ -42,6 +42,7 @@ describe("native activation: reclaim", () => {
       });
       const manifestRepo = manifestWithPlugin();
       const useCase = marketplaceSync({
+        tools: registeredCatalog(),
         fs,
         manifestRepo,
         marketplaceRegistry: registry,
@@ -119,6 +120,7 @@ describe("native activation: reclaim", () => {
       });
       const logger = new CapturingLogger();
       const useCase = marketplaceSync({
+        tools: registeredCatalog(),
         fs,
         manifestRepo: manifestWithPlugin(),
         marketplaceRegistry: registry,

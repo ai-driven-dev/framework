@@ -13,13 +13,13 @@ import {
 import { assertProjectMcpEntriesRemovable } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { PurgeDeclaredCache } from "../../../src/contexts/machine-claims/application/purge-declared-cache.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
+import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import {
   CleanProject,
   type CleanProjectDeps,
 } from "../../../src/orchestration/clean/clean-project.use-case.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { registeredTools } from "../../shared/testing/registered-tools.builder.js";
 
 const homedir = (): string => "/home/dev";
 
@@ -27,6 +27,7 @@ type Files = RemoveProjectFilesDeps;
 
 /** What a test names; everything else is the empty default. */
 export interface ProjectCleanerParts extends Partial<HostPorts> {
+  tools: ToolCatalog;
   fs: Files["fs"];
   manifestRepo: Files["manifestRepo"];
   logger: Files["logger"];
@@ -53,7 +54,7 @@ export function projectCleanerDeps(parts: ProjectCleanerParts): CleanProjectDeps
         asks,
         planProjectClean: new PlanProjectClean(
           { manifestRepo: parts.manifestRepo, asks },
-          registeredTools()
+          parts.tools
         ),
         removeProjectFiles: new RemoveProjectFiles(
           {
@@ -63,10 +64,10 @@ export function projectCleanerDeps(parts: ProjectCleanerParts): CleanProjectDeps
             updateGitignore: parts.gitignore,
             homedir,
           },
-          registeredTools()
+          parts.tools
         ),
       },
-      registeredTools()
+      parts.tools
     ),
     withdrawFromHost: new WithdrawFromHost(parts.fs, parts.logger, {
       activators: parts.activators ?? new Map(),

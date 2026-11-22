@@ -22,7 +22,7 @@ describe("AddPlugin", () => {
   describe("per-tool install strategy (github marketplace)", () => {
     describe("the catalog's strict", () => {
       it("lands on every installed entry, whatever the plugin's own manifest says", async () => {
-        const deps = await buildInstallationDeps();
+        const deps = await buildInstallationDeps({ tools: registeredTools() });
         await initAndInstall(deps, PROJECT_ROOT, opencode);
         deps.fs.setFile(
           "/built/opencode/.opencode/skills/sample-plugin/demo/SKILL.md",
@@ -57,7 +57,7 @@ describe("AddPlugin", () => {
 
     describe("opencode", () => {
       it("fetches and materializes flat files", async () => {
-        const deps = await buildInstallationDeps();
+        const deps = await buildInstallationDeps({ tools: registeredTools() });
         await initAndInstall(deps, PROJECT_ROOT, opencode);
         // OpenCode copies its per-target flat BUILT tree (skills nested under
         // <plugin>/, agents namespaced <plugin>-<name>).
@@ -99,7 +99,7 @@ describe("AddPlugin", () => {
 
     describe("codex", () => {
       it("reads version from plugin.json when catalog omits it", async () => {
-        const deps = await buildInstallationDeps();
+        const deps = await buildInstallationDeps({ tools: registeredTools() });
         await initAndInstall(deps, PROJECT_ROOT, codex);
         await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
         deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
@@ -134,7 +134,7 @@ describe("AddPlugin", () => {
       });
 
       it("registers only without writing files", async () => {
-        const deps = await buildInstallationDeps();
+        const deps = await buildInstallationDeps({ tools: registeredTools() });
         await initAndInstall(deps, PROJECT_ROOT, codex);
         const registry = await makeGithubRegistry(PROJECT_ROOT);
         const useCase = buildAddPlugin(
@@ -166,7 +166,7 @@ describe("AddPlugin", () => {
 
     describe("claude", () => {
       it("reads version from plugin.json when catalog omits it", async () => {
-        const deps = await buildInstallationDeps();
+        const deps = await buildInstallationDeps({ tools: registeredTools() });
         await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
         await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
         deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
@@ -199,7 +199,7 @@ describe("AddPlugin", () => {
       });
 
       it("registers only without writing files", async () => {
-        const deps = await buildInstallationDeps();
+        const deps = await buildInstallationDeps({ tools: registeredTools() });
         await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
         const registry = await makeGithubRegistry(PROJECT_ROOT);
         const useCase = buildAddPlugin(
@@ -231,7 +231,7 @@ describe("AddPlugin", () => {
 
     describe("copilot", () => {
       it("reads version from plugin.json when catalog omits it", async () => {
-        const deps = await buildInstallationDeps();
+        const deps = await buildInstallationDeps({ tools: registeredTools() });
         await initAndInstall(deps, PROJECT_ROOT, copilot);
         await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
         deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);

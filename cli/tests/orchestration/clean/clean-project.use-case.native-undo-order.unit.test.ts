@@ -10,13 +10,13 @@ import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js"
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   AssertingActivator,
-  AT_PROJECT,
+  atProject,
   BINARY,
-  CleanWithKnownHostSource,
   claudeRefOnHost,
+  knownHostSourceCleaner,
   MARKETPLACE,
   OrderRecordingActivator,
   PROJECT_ROOT,
@@ -25,6 +25,9 @@ import {
   seedManifestWithNativeRegistrations,
   seedMarketplaceRegistry,
 } from "../testing/clean-project.builder.js";
+
+const AT_PROJECT = atProject(registeredTools());
+const CleanWithKnownHostSource = knownHostSourceCleaner(registeredTools(), TOOL);
 
 const homedir = (): string => "/home/dev";
 
@@ -104,7 +107,7 @@ describe("clean: native registration undo order", () => {
     });
 
     it("warns and leaves the registration in place when the tool's CLI is not on PATH", async () => {
-      const manifest = seedManifestWithNativeRegistrations();
+      const manifest = seedManifestWithNativeRegistrations(TOOL);
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
       const activator = new FakeHostActions({ available: false });
@@ -127,7 +130,7 @@ describe("clean: native registration undo order", () => {
     });
 
     it("uninstalls the plugin ref before removing the marketplace, for the same tool", async () => {
-      const manifest = seedClaudeNativeRegistrations();
+      const manifest = seedClaudeNativeRegistrations(TOOL);
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
       const calls: string[] = [];
@@ -143,7 +146,7 @@ describe("clean: native registration undo order", () => {
         new Map(),
         undefined,
         undefined,
-        claudeRefOnHost("project")
+        claudeRefOnHost(TOOL, "project")
       );
 
       await useCase.execute({ ...AT_PROJECT, force: true });
@@ -152,7 +155,7 @@ describe("clean: native registration undo order", () => {
     });
 
     it("undoes the native registration before the built marketplace tree it points at is deleted", async () => {
-      const manifest = seedManifestWithNativeRegistrations();
+      const manifest = seedManifestWithNativeRegistrations(TOOL);
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const builtPath = join(
         PROJECT_ROOT,
@@ -184,7 +187,7 @@ describe("clean: native registration undo order", () => {
     });
 
     it("names the native registration a dry-run preview will undo, without touching it", async () => {
-      const manifest = seedManifestWithNativeRegistrations();
+      const manifest = seedManifestWithNativeRegistrations(TOOL);
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
       const activator = new FakeHostActions({ available: true });

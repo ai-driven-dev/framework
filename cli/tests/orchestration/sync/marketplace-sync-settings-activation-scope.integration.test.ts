@@ -12,7 +12,7 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   freshHostProof,
   MARKETPLACE,
@@ -27,10 +27,11 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
     const activator = new FakeHostActions({ available: true });
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
-    const proof = freshHostProof(activator);
+    const proof = freshHostProof(TOOL.claude, activator);
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs: seededBuiltCatalog(),
-      manifestRepo: manifestWithTool(),
+      manifestRepo: manifestWithTool(TOOL.claude),
       marketplaceRegistry: registry,
       logger: new CapturingLogger(),
       activators: new Map([[TOOL.claude, activator]]),
@@ -76,8 +77,9 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
       },
       [PROJECT_ROOT]
     );
-    const proof = freshHostProof(activator);
+    const proof = freshHostProof(TOOL.claude, activator);
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs: catalog,
       manifestRepo: new InMemoryManifestRepository(manifest),
       marketplaceRegistry: registry,
@@ -137,6 +139,7 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
     await registry.save(PROJECT_ROOT, marketplace());
     const { fs, manifestRepo } = await pluginFixture();
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
@@ -172,6 +175,7 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
       [PROJECT_ROOT]
     );
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo: new InMemoryManifestRepository(manifest),
       marketplaceRegistry: registry,
@@ -213,6 +217,7 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
     await registry.save(PROJECT_ROOT, marketplace());
     const { fs, manifestRepo } = await pluginFixture();
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
@@ -233,9 +238,10 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
     const activator = new FakeHostActions({ available: true });
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
-    const constructedRepo = manifestWithTool();
-    const machineRepo = manifestWithTool();
+    const constructedRepo = manifestWithTool(TOOL.claude);
+    const machineRepo = manifestWithTool(TOOL.claude);
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs: seededBuiltCatalog(),
       manifestRepo: constructedRepo,
       userManifestRepo: machineRepo,
@@ -268,8 +274,9 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
       listAllReferencingProjects: async () => [],
     };
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs: seededBuiltCatalog(),
-      manifestRepo: manifestWithTool(),
+      manifestRepo: manifestWithTool(TOOL.claude),
       marketplaceRegistry: registry,
       logger: new CapturingLogger(),
       activators: new Map([[TOOL.claude, activator]]),
@@ -288,7 +295,7 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
 
   it("still records a shared-source reference at project scope, unaffected", async () => {
     const activator = new FakeHostActions({ available: true });
-    const proof = freshHostProof(activator);
+    const proof = freshHostProof(TOOL.claude, activator);
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
     const added: Array<{ version: string; projectRoot: string }> = [];
@@ -300,8 +307,9 @@ describe("SyncSettings - the activation scope a caller asks for", () => {
       listAllReferencingProjects: async () => [],
     };
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs: seededBuiltCatalog(),
-      manifestRepo: manifestWithTool(),
+      manifestRepo: manifestWithTool(TOOL.claude),
       marketplaceRegistry: registry,
       logger: new CapturingLogger(),
       activators: new Map([[TOOL.claude, activator]]),

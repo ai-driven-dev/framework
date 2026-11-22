@@ -5,10 +5,10 @@ import {
   type PluginComponents,
   PluginDistribution,
 } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { registeredManifestPaths } from "../../../shared/testing/registered-manifest-probes.builder.js";
-import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { manifestPathsOf } from "../../../shared/testing/manifest-probes-of.builder.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
-const manifestPaths = registeredManifestPaths();
+const manifestPaths = manifestPathsOf(registeredTools());
 
 /** The engine's functions with the registered manifest places filled in, as the composition hands them. */
 export const translator = {

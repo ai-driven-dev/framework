@@ -21,7 +21,7 @@ const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format
 const PROJECT_ROOT = "/test-project";
 
 async function installWithLogger(toolId: AiToolId) {
-  const deps = await buildInstallationDeps();
+  const deps = await buildInstallationDeps({ tools: registeredTools() });
   await initAndInstall(deps, PROJECT_ROOT, toolId);
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const logger = new CapturingLogger();

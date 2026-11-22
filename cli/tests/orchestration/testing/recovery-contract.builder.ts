@@ -6,10 +6,12 @@ import type { HostMarketplaceRegistry } from "../../../src/contexts/host-registr
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../src/shared/domain/installation-file.js";
 import { builtMarketplaceDir } from "../../../src/shared/domain/layout/aidd-layout.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
+import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
@@ -17,7 +19,6 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { FakeHostMarketplaceSources } from "./fake-host-marketplace-sources.fake.js";
 
 export const ROOT = "/project";
@@ -56,6 +57,8 @@ export class RecoveringActivator extends FakeHostActions {
 }
 
 export interface RecoveryOptions {
+  tools: ToolCatalog;
+  claude: AiToolId;
   source?: string;
   userRoot?: string;
   scope?: Scope;
@@ -87,7 +90,7 @@ function ownedProject(options: RecoveryOptions) {
   const source = options.source ?? OLD;
   const settings = options.settings ?? "{}";
   const manifest = Manifest.create();
-  manifest.addTool(TOOL.claude, "1.0.0", [
+  manifest.addTool(options.claude, "1.0.0", [
     new InstallationFile({
       relativePath: ".claude/settings.json",
       content: settings,
@@ -95,7 +98,7 @@ function ownedProject(options: RecoveryOptions) {
     }),
   ]);
   manifest.addPlugin(
-    TOOL.claude,
+    options.claude,
     RecordedPlugin.fromMetadata({
       name: "review",
       version: "1.0.0",
@@ -105,7 +108,7 @@ function ownedProject(options: RecoveryOptions) {
       marketplace: ALIAS,
     })
   );
-  manifest.setNativeRegistrations(TOOL.claude, {
+  manifest.setNativeRegistrations(options.claude, {
     binary: "claude",
     marketplaces: [{ alias: ALIAS, hostName: HOST, provenance: { kind: "registry", source } }],
     pluginRefs: options.ownRefs ?? [],
@@ -176,7 +179,7 @@ function pluginsReadInTurn(readings: readonly HostPluginRegistryReading[]) {
   };
 }
 
-export async function recovery(options: RecoveryOptions = {}) {
+export async function recovery(options: RecoveryOptions) {
   const source = options.source ?? OLD;
   const manifest = ownedProject(options);
   const repo = new InMemoryManifestRepository(manifest, ROOT);
@@ -203,22 +206,26 @@ export async function recovery(options: RecoveryOptions = {}) {
     read: async () => ({ location: "host marketplaces", entries: new Map([[HOST, source]]) }),
   };
   const useCase = marketplaceSync({
+    tools: options.tools,
     fs,
     manifestRepo: repo,
     marketplaceRegistry: registry,
     logger,
-    activators: new Map([[TOOL.claude, activator]]),
+    activators: new Map([[options.claude, activator]]),
     ensureBuilt: fakeEnsureBuiltMarketplace(),
-    hostMarketplaceRegistries: new Map([[TOOL.claude, hostCatalogues]]),
+    hostMarketplaceRegistries: new Map([[options.claude, hostCatalogues]]),
     userCacheRoot: () => options.userRoot ?? "",
     hostPluginRegistries: new Map([
       [
-        TOOL.claude,
+        options.claude,
         pluginsReadInTurn(options.plugins ?? [{ location: "host plugins", refs: new Map() }]),
       ],
     ]),
     nativeSources: new Map([
-      [TOOL.claude, hostSourcesThroughRecovery(activator, delegate, options.sourceAfterCollision)],
+      [
+        options.claude,
+        hostSourcesThroughRecovery(activator, delegate, options.sourceAfterCollision),
+      ],
     ]),
   });
   const result = await useCase.execute({ projectRoot: ROOT });

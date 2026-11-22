@@ -23,9 +23,9 @@ import {
   initAndInstall,
 } from "../../shared/testing/installation-deps.builder.js";
 import { loadDistributionOf } from "../../shared/testing/load-distribution.builder.js";
+import { manifestProbesOf } from "../../shared/testing/manifest-probes-of.builder.js";
 import { unusedRawCatalog } from "../../shared/testing/raw-catalog.fake.js";
-import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
 import { seedFromDirectory } from "../../shared/testing/seed-from-directory.builder.js";
 
@@ -59,7 +59,7 @@ function registerMarketplace(
 }
 
 async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
-  const deps = await buildInstallationDeps();
+  const deps = await buildInstallationDeps({ tools: registeredTools() });
   await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const registry = new InMemoryMarketplaceRegistry();
@@ -69,7 +69,7 @@ async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
     {
       loadDistribution: loadDistributionOf(
         deps.pluginFetcher,
-        new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+        new PluginDistributionReaderAdapter(deps.fs, manifestProbesOf(registeredTools()))
       ),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),

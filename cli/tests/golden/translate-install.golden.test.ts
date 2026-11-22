@@ -17,7 +17,7 @@ import {
   FRAMEWORK_SOURCE,
 } from "../contexts/translate/testing/framework-real-distribution.builder.js";
 import { InMemoryFileAdapter } from "../shared/testing/in-memory-file-adapter.fake.js";
-import { registeredManifestProbes } from "../shared/testing/registered-manifest-probes.builder.js";
+import { manifestProbesOf } from "../shared/testing/manifest-probes-of.builder.js";
 import { registeredTools } from "../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../shared/testing/seed-from-directory.builder.js";
 import { expectGolden } from "./testing/expect-golden.builder.js";
@@ -45,7 +45,7 @@ describe("Install translation golden", () => {
   });
 
   it("every tool and framework plugin translates to its stored baseline", async () => {
-    const translate = new TranslateDistribution(registeredManifestProbes());
+    const translate = new TranslateDistribution(manifestProbesOf(registeredTools()));
     const catalog = registeredTools();
     const plugins = readdirSync(join(FRAMEWORK_SOURCE, "plugins")).sort();
     const captured: Record<string, unknown> = {};

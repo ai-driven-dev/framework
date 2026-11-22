@@ -3,10 +3,9 @@ import { mkdir, readdir, readFile, realpath, writeFile } from "node:fs/promises"
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { TOOL } from "../../shared/testing/catalog-of.builder.js";
 import { copyFixtureTree, createTestEnv } from "../../shared/testing/cli-sandbox.builder.js";
 import { runInProcess } from "../../shared/testing/in-process-cli.builder.js";
-import { resolveRegisteredToolId } from "../../shared/testing/registered-tools.builder.js";
+import { resolveRegisteredToolId, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { FRAMEWORK_REAL, setupFromFixture } from "../testing/fixture-setup.builder.js";
 
 let first: string;

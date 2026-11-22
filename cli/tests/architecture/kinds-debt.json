@@ -169,43 +169,6 @@
     }
   },
   {
-    "rule": "real-tool-list:builder",
-    "closesWhen": "the builder takes the registry from its caller instead of wiring the registered catalog",
-    "entries": {
-      "tests/contexts/distribution/testing/manifest-probes.builder.ts": 1,
-      "tests/orchestration/testing/build-run-doctor.builder.ts": 1,
-      "tests/orchestration/testing/clean-native-cache.builder.ts": 1,
-      "tests/orchestration/testing/clean-project.builder.ts": 1,
-      "tests/orchestration/testing/clean-user-scope.builder.ts": 1,
-      "tests/orchestration/testing/install-from-marketplace.builder.ts": 1,
-      "tests/orchestration/testing/install-plugin.builder.ts": 1,
-      "tests/orchestration/testing/machine-projection.builder.ts": 1,
-      "tests/orchestration/testing/manifest-writes.builder.ts": 1,
-      "tests/orchestration/testing/marketplace-sync-native-activation.builder.ts": 1,
-      "tests/orchestration/testing/marketplace-sync-settings-migration.builder.ts": 1,
-      "tests/orchestration/testing/owned-native-settings.builder.ts": 1,
-      "tests/orchestration/testing/project-cleaner.builder.ts": 1,
-      "tests/orchestration/testing/recovery-contract.builder.ts": 1,
-      "tests/orchestration/testing/run-setup-of.builder.ts": 1,
-      "tests/orchestration/testing/run-setup-scenario.builder.ts": 1,
-      "tests/orchestration/testing/run-sync.builder.ts": 1,
-      "tests/orchestration/testing/settings-scope.builder.ts": 1,
-      "tests/orchestration/testing/source-provenance.builder.ts": 1,
-      "tests/orchestration/testing/sync-settings.builder.ts": 1,
-      "tests/orchestration/testing/user-scope-cleaner.builder.ts": 1,
-      "tests/shared/testing/built-agent.builder.ts": 1,
-      "tests/shared/testing/catalog-of.builder.ts": 1,
-      "tests/shared/testing/installation-deps.builder.ts": 1,
-      "tests/shared/testing/marketplace-sync.builder.ts": 1,
-      "tests/shared/testing/project-hooks-delivery.builder.ts": 1,
-      "tests/shared/testing/registered-build-contracts.builder.ts": 1,
-      "tests/shared/testing/registered-host-inspector.builder.ts": 1,
-      "tests/shared/testing/registered-manifest-probes.builder.ts": 1,
-      "tests/shared/testing/registered-tools.unit.test.ts": 1,
-      "tests/shared/testing/tool-config-command.builder.ts": 1
-    }
-  },
-  {
     "rule": "real-tool-list:catalog-of",
     "closesWhen": "the test is converted to SYNTHETIC_TOOL once catalog-of.builder takes an injected registry",
     "entries": {

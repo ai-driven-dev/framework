@@ -96,7 +96,7 @@ async function installStaleGithubPlugin(
 
 describe("UpdatePlugin - Mode A marketplace tools (claude/codex/copilot)", () => {
   it("updates a github-sourced marketplace plugin on claude without materializing any files", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const registry = await makeGithubRegistry();
     await installStaleGithubPlugin(deps, registry, TOOL.claude);
@@ -126,7 +126,7 @@ describe("UpdatePlugin - Mode A marketplace tools (claude/codex/copilot)", () =>
   });
 
   it("keeps the manifest's single entry for the plugin after update (no duplicate registration)", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const registry = await makeGithubRegistry();
     await installStaleGithubPlugin(deps, registry, TOOL.claude);
@@ -148,7 +148,7 @@ describe("UpdatePlugin - Mode A marketplace tools (claude/codex/copilot)", () =>
 
 describe("UpdatePlugin - flat-mode tools are unaffected (regression guard)", () => {
   it("still re-materializes opencode's flat files from the built tree on update", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.opencode);
     const registry = await makeGithubRegistry();
     await installStaleGithubPlugin(deps, registry, TOOL.opencode);

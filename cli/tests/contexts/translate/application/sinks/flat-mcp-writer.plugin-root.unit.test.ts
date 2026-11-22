@@ -5,12 +5,12 @@ import "../../../../../src/composition/translate.js";
 import { McpConfigError } from "../../../../../src/shared/domain/shared.error.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
-import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
-import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import {
   buildContractOf,
   declaredBuildContract,
-} from "../../../../shared/testing/registered-build-contracts.builder.js";
+} from "../../../../shared/testing/build-contract-of.builder.js";
+import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { aDiskSink } from "../../testing/disk-sink.builder.js";
 
@@ -32,13 +32,15 @@ const ASSETS: AssetProvider = {
 function flatTools(): AiToolId[] {
   return registeredTools()
     .idsInCanonicalOrder("ai")
-    .filter((id) => declaredBuildContract(id, "flat") !== null)
+    .filter((id) => declaredBuildContract(registeredTools(), id, "flat") !== null)
     .sort();
 }
 
 /** The flat tools that take a plugin's MCP servers. */
 function mcpTools(): AiToolId[] {
-  return flatTools().filter((id) => declaredBuildContract(id, "flat")?.artifacts.mcp.supported);
+  return flatTools().filter(
+    (id) => declaredBuildContract(registeredTools(), id, "flat")?.artifacts.mcp.supported
+  );
 }
 
 /** A plugin whose MCP server and hook name `paths`, each under the plugin root. */
@@ -65,7 +67,7 @@ function seeded(paths: readonly string[]): InMemoryFileAdapter {
 }
 
 async function build(tool: AiToolId, fs: InMemoryFileAdapter): Promise<void> {
-  const contract = buildContractOf(tool, "flat");
+  const contract = buildContractOf(registeredTools(), tool, "flat");
   const sink = aDiskSink(fs, { validate() {} }, ASSETS, new CapturingLogger());
   const target = { contract, mode: "flat", force: false, sourceDir: SOURCE, outDir: OUT } as const;
   await sink.prepare(target);

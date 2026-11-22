@@ -3,6 +3,7 @@ import { Marketplace } from "../../../src/contexts/distribution/domain/marketpla
 import type { NativeMarketplaceSource } from "../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../src/shared/domain/installation-file.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
@@ -12,11 +13,12 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { FakeHostMarketplaceSources } from "./fake-host-marketplace-sources.fake.js";
 import { ROOT } from "./recovery-contract.builder.js";
 
 export interface OwnedNativeSettingsOptions {
+  tools: ToolCatalog;
+  copilot: AiToolId;
   toolId?: AiToolId;
   names?: readonly string[];
   settings?: string;
@@ -48,8 +50,8 @@ function registrationsOf(
   }));
 }
 
-function settingsFilesOf(toolId: AiToolId, settings: string) {
-  if (toolId !== TOOL.copilot) return [];
+function settingsFilesOf(toolId: AiToolId, copilot: AiToolId, settings: string) {
+  if (toolId !== copilot) return [];
   return [
     new InstallationFile({
       relativePath: SETTINGS_PATH,
@@ -70,12 +72,13 @@ function reviewPlugin(name: string, alias: string) {
   });
 }
 
-function catalogueDirOf(toolId: AiToolId) {
-  return toolId === TOOL.copilot ? ".plugin" : ".agents/plugins";
+function catalogueDirOf(toolId: AiToolId, copilot: AiToolId) {
+  return toolId === copilot ? ".plugin" : ".agents/plugins";
 }
 
-export async function ownedNativeSettings(options: OwnedNativeSettingsOptions = {}) {
-  const toolId = options.toolId ?? TOOL.copilot;
+export async function ownedNativeSettings(options: OwnedNativeSettingsOptions) {
+  const { copilot } = options;
+  const toolId = options.toolId ?? copilot;
   const names = options.names ?? ["first"];
   const settings = options.settings ?? JSON.stringify({ permissions: { allow: ["Read"] } });
   const registrations = registrationsOf(toolId, names, options);
@@ -84,7 +87,7 @@ export async function ownedNativeSettings(options: OwnedNativeSettingsOptions = 
       ? []
       : names.map((name, i) => `review-${name}@${registrations[i].hostName}`);
   const project = Manifest.create();
-  project.addTool(toolId, "1.0.0", settingsFilesOf(toolId, settings));
+  project.addTool(toolId, "1.0.0", settingsFilesOf(toolId, copilot, settings));
   const machine = Manifest.create();
   machine.addTool(toolId, "1.0.0", []);
   project.setNativeRegistrations(toolId, {
@@ -110,7 +113,7 @@ export async function ownedNativeSettings(options: OwnedNativeSettingsOptions = 
     identities.set(builtDir, registration.hostName);
     initial.set(registration.hostName, registration.provenance);
     fs.setFile(
-      `${builtDir}/${catalogueDirOf(toolId)}/marketplace.json`,
+      `${builtDir}/${catalogueDirOf(toolId, copilot)}/marketplace.json`,
       JSON.stringify({ name: registration.hostName, plugins: [{ name: `review-${name}` }] })
     );
     await registry.save(
@@ -128,6 +131,7 @@ export async function ownedNativeSettings(options: OwnedNativeSettingsOptions = 
   const activator = new FakeHostActions({ available: true });
   const logger = new CapturingLogger();
   const sync = marketplaceSync({
+    tools: options.tools,
     fs,
     manifestRepo: projectRepo,
     marketplaceRegistry: registry,

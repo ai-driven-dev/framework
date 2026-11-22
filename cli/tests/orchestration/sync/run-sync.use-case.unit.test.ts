@@ -6,7 +6,7 @@ const GIVEN = { projectRoot: "/project", force: false, interactive: false, files
 
 describe("RunSync of the whole project", () => {
   it("restores first, then activates, each reported as it is known", async () => {
-    const run = aRunSync();
+    const run = aRunSync({ claude: TOOL.claude });
 
     await run.useCase.execute(GIVEN, run.report);
 
@@ -22,7 +22,7 @@ describe("RunSync of the whole project", () => {
   });
 
   it("asks a person only when one can answer and the run is not forced", async () => {
-    const run = aRunSync();
+    const run = aRunSync({ claude: TOOL.claude });
 
     await run.useCase.execute({ ...GIVEN, interactive: true }, run.report);
     await run.useCase.execute({ ...GIVEN, interactive: true, force: true }, run.report);
@@ -35,6 +35,7 @@ describe("RunSync of the whole project", () => {
 
   it("throws naming the scopes of the restore and the activation that failed, after reporting both", async () => {
     const run = aRunSync({
+      claude: TOOL.claude,
       restoreAll: {
         ...RESTORED_NOTHING,
         errors: [{ scope: "claude", error: "file is not ours" }],
@@ -60,6 +61,7 @@ describe("RunSync of the whole project", () => {
 
   it("throws when only the activation failed", async () => {
     const run = aRunSync({
+      claude: TOOL.claude,
       activation: {
         ...ACTIVATED_NOTHING,
         errors: [{ scope: "codex", error: "x" }],
@@ -75,7 +77,7 @@ describe("RunSync of the whole project", () => {
 
 describe("RunSync of one tool", () => {
   it("restores the files and plugin asked, then activates only the tools restored", async () => {
-    const run = aRunSync();
+    const run = aRunSync({ claude: TOOL.claude });
 
     await run.useCase.execute(
       { ...GIVEN, tool: "claude", plugin: "aidd-dev", files: ["a.md"], interactive: true },
@@ -104,7 +106,7 @@ describe("RunSync of one tool", () => {
   });
 
   it("restores every drifted file when none is named", async () => {
-    const run = aRunSync();
+    const run = aRunSync({ claude: TOOL.claude });
 
     await run.useCase.execute({ ...GIVEN, tool: "claude" }, run.report);
 
@@ -113,6 +115,7 @@ describe("RunSync of one tool", () => {
 
   it("throws when the activation failed", async () => {
     const run = aRunSync({
+      claude: TOOL.claude,
       activation: {
         ...ACTIVATED_NOTHING,
         errors: [{ scope: "claude", error: "x" }],

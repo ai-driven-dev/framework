@@ -3,10 +3,10 @@ import { describe, expect, it } from "vitest";
 import { BuildNativeTree } from "../../../../src/contexts/translate/application/build-native-tree.use-case.js";
 import { InvalidBuildPathsError } from "../../../../src/contexts/translate/domain/translate.error.js";
 import { InvalidSourceMarketplaceError } from "../../../../src/shared/domain/shared.error.js";
+import { buildContractOf } from "../../../shared/testing/build-contract-of.builder.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
-import { buildContractOf } from "../../../shared/testing/registered-build-contracts.builder.js";
-import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../../shared/testing/saying.builder.js";
 import { RecordingSink } from "../testing/recording-sink.builder.js";
 
@@ -18,7 +18,7 @@ function buildOver(files: Record<string, string>, sink = new RecordingSink()) {
   const fs = new InMemoryFileAdapter(files);
   const logger = new CapturingLogger();
   const layout = {
-    contract: buildContractOf(TOOL.copilot, "marketplace"),
+    contract: buildContractOf(registeredTools(), TOOL.copilot, "marketplace"),
     mode: "marketplace",
     force: false,
   } as const;

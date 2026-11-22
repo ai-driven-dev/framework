@@ -28,8 +28,8 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { loadDistributionOf } from "../../shared/testing/load-distribution.builder.js";
+import { manifestProbesOf } from "../../shared/testing/manifest-probes-of.builder.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.builder.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
 import { effectiveListSources } from "../testing/effective-list-sources.builder.js";
@@ -106,6 +106,7 @@ for (const [toolId, catalogPath] of [
       };
       const syncOf = (manifestRepo: InMemoryManifestRepository) =>
         marketplaceSync({
+          tools: registeredTools(),
           fs: new InMemoryFileAdapter(
             {
               [`${builtDir}/${catalogPath}`]: JSON.stringify({
@@ -149,7 +150,7 @@ for (const [toolId, catalogPath] of [
               fs: updateFs,
               loadDistribution: loadDistributionOf(
                 new FixturePluginFetcher(),
-                new PluginDistributionReaderAdapter(updateFs, registeredManifestProbes())
+                new PluginDistributionReaderAdapter(updateFs, manifestProbesOf(registeredTools()))
               ),
               guard: userScopeFileGuard,
               builtDeps: fakeBuiltDeps(updateFs),
@@ -185,7 +186,7 @@ for (const [toolId, catalogPath] of [
                 fs: updateFs,
                 loadDistribution: loadDistributionOf(
                   new FixturePluginFetcher(),
-                  new PluginDistributionReaderAdapter(updateFs, registeredManifestProbes())
+                  new PluginDistributionReaderAdapter(updateFs, manifestProbesOf(registeredTools()))
                 ),
                 guard: userScopeFileGuard,
                 builtDeps: fakeBuiltDeps(updateFs),
@@ -248,6 +249,7 @@ for (const [toolId, catalogPath] of [
 
       const foreignUser = new InMemoryManifestRepository(Manifest.create());
       const foreignUseCase = marketplaceSync({
+        tools: registeredTools(),
         fs: new InMemoryFileAdapter(
           {
             [`${builtDir}/${catalogPath}`]: JSON.stringify({

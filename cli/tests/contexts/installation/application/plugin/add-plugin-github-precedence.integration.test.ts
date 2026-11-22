@@ -27,7 +27,7 @@ async function addedOnceWithTheFetchDown(
   builtSkill: string,
   version: string | undefined
 ) {
-  const deps = await buildInstallationDeps();
+  const deps = await buildInstallationDeps({ tools: registeredTools() });
   await initAndInstall(deps, PROJECT_ROOT, tool);
   deps.fs.setFile(builtSkill, "# Demo");
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });

@@ -7,7 +7,7 @@ import {
   initAndInstall,
 } from "../../../../shared/testing/installation-deps.builder.js";
 import { loadDistributionOf } from "../../../../shared/testing/load-distribution.builder.js";
-import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { OverwritePrompter } from "../../../../shared/testing/scripted-prompter.fake.js";
 import { restoreAllPluginsOf, restoreOf } from "../../testing/build-restore.builder.js";
 import { fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
@@ -31,7 +31,7 @@ function restoreFor(deps: Deps) {
 
 describe("Restore", () => {
   it("restores the tools the manifest records when none is named", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     const result = await restoreFor(deps).execute({
@@ -43,7 +43,7 @@ describe("Restore", () => {
   });
 
   it("saves the manifest only when the restore changed something", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const savesBefore = deps.manifestRepo.saveCount;
 
@@ -53,7 +53,7 @@ describe("Restore", () => {
   });
 
   it("counts and saves what it restored", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
     await deps.fs.deleteFile(SETTINGS);
     const savesBefore = deps.manifestRepo.saveCount;
@@ -72,7 +72,7 @@ describe("Restore", () => {
   });
 
   it("restores the manifest it is handed without loading the project's", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
 
     const result = await restoreFor(deps).execute({
       projectRoot: PROJECT_ROOT,

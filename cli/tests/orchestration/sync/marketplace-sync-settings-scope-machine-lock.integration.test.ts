@@ -4,7 +4,7 @@ import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-bui
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   freshHostProof,
   manifestWithTool,
@@ -15,13 +15,13 @@ import {
 
 describe("settings synchronization under the machine ownership lock", () => {
   async function fixture() {
-    const projectRepo = manifestWithTool();
-    const machineRepo = manifestWithTool();
+    const projectRepo = manifestWithTool(TOOL.claude);
+    const machineRepo = manifestWithTool(TOOL.claude);
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
     const fs = seededBuiltCatalog();
     const activator = new FakeHostActions({ available: true });
-    const proof = freshHostProof(activator);
+    const proof = freshHostProof(TOOL.claude, activator);
     let locked = false;
     const accesses: boolean[] = [];
     const originalLoad = projectRepo.load.bind(projectRepo);
@@ -41,6 +41,7 @@ describe("settings synchronization under the machine ownership lock", () => {
       }
     };
     const sync = marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo: projectRepo,
       marketplaceRegistry: registry,

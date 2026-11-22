@@ -1,17 +1,19 @@
 import { describe, expect, it } from "vitest";
 import type { NativeRegistrations } from "../../../src/contexts/installation/domain/manifest/native-registrations.js";
 import { builtMarketplaceDir } from "../../../src/shared/domain/layout/aidd-layout.js";
+import { registeredAiId, registeredCatalog } from "../../shared/testing/catalog-of.builder.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { hostRecord } from "../../shared/testing/host-record-reading.builder.js";
 import {
-  build,
   FRAMEWORK_ONLY,
   MARKETPLACE,
+  manifestWrites,
   ownedMachineEntry,
   PLUGIN,
   PROJECT_ROOT,
-  recorded,
 } from "../testing/manifest-writes.builder.js";
+
+const { build, recorded } = manifestWrites(registeredCatalog(), registeredAiId("claude"));
 
 describe("a marketplace the host refused is not this project's to remove", () => {
   function refusingHost(registrationState: "live" | "dead"): FakeHostActions {

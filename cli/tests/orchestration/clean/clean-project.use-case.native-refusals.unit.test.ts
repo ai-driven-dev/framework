@@ -11,17 +11,20 @@ import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js"
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
-  AT_PROJECT,
+  atProject,
   BINARY,
-  CleanWithKnownHostSource,
+  knownHostSourceCleaner,
   MARKETPLACE,
   PROJECT_ROOT,
   REF,
   seedManifestWithNativeRegistrations,
   seedMarketplaceRegistry,
 } from "../testing/clean-project.builder.js";
+
+const AT_PROJECT = atProject(registeredTools());
+const CleanWithKnownHostSource = knownHostSourceCleaner(registeredTools(), TOOL);
 
 describe("clean: native registration refusals", () => {
   describe("undoing a host's own native registration", () => {
@@ -149,7 +152,7 @@ describe("clean: native registration refusals", () => {
     });
 
     it("leaves an unclaimed machine-global ref enabled while removing its empty project catalogue", async () => {
-      const manifest = seedManifestWithNativeRegistrations();
+      const manifest = seedManifestWithNativeRegistrations(TOOL);
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
       const activator = new FakeHostActions({ available: true });
@@ -170,7 +173,7 @@ describe("clean: native registration refusals", () => {
     });
 
     it("leaves both an unclaimed machine-global ref and its shared catalogue registered", async () => {
-      const manifest = seedManifestWithNativeRegistrations();
+      const manifest = seedManifestWithNativeRegistrations(TOOL);
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
       const activator = new FakeHostActions({ available: true });

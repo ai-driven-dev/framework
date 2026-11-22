@@ -3,12 +3,12 @@ import { describe, expect, it } from "vitest";
 import "../../../../../src/composition/translate.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
-import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
-import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import {
   buildContractOf,
   declaredBuildContract,
-} from "../../../../shared/testing/registered-build-contracts.builder.js";
+} from "../../../../shared/testing/build-contract-of.builder.js";
+import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools } from "../../../../shared/testing/registered-tools.builder.js";
 import { aDiskSink } from "../../testing/disk-sink.builder.js";
 
@@ -30,7 +30,10 @@ const ASSETS: AssetProvider = {
 function flatTools(): AiToolId[] {
   return registeredTools()
     .idsInCanonicalOrder("ai")
-    .filter((id) => declaredBuildContract(id, "flat")?.artifacts.agents.supported === true);
+    .filter(
+      (id) =>
+        declaredBuildContract(registeredTools(), id, "flat")?.artifacts.agents.supported === true
+    );
 }
 
 /** Where the plugin keeps its agent: at the top of `agents/`, or in a folder under it. */
@@ -61,7 +64,7 @@ function seeded(agentFile: string, withReferences: boolean): InMemoryFileAdapter
 }
 
 async function writePlugin(tool: AiToolId, fs: InMemoryFileAdapter): Promise<void> {
-  const contract = buildContractOf(tool, "flat");
+  const contract = buildContractOf(registeredTools(), tool, "flat");
   const sink = aDiskSink(fs, { validate() {} }, ASSETS, new CapturingLogger());
   const target = {
     contract,

@@ -75,7 +75,7 @@ async function installGithubPlugin(deps: Deps, registry: FakeMarketplaceRegistry
 
 describe("RestoreAllPlugins - Mode A marketplace tools (claude/codex/copilot)", () => {
   it("cleans up files a pre-fix update/restore materialized, leaving the manifest entry empty", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const registry = await makeGithubRegistry();
     await installGithubPlugin(deps, registry);
@@ -115,7 +115,7 @@ describe("RestoreAllPlugins - Mode A marketplace tools (claude/codex/copilot)", 
   });
 
   it("leaves a file the manifest never tracked untouched, even inside the plugin's own directory", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const registry = await makeGithubRegistry();
     await installGithubPlugin(deps, registry);
@@ -146,7 +146,7 @@ describe("RestoreAllPlugins - Mode A marketplace tools (claude/codex/copilot)", 
   });
 
   it("restores a github-sourced marketplace plugin on claude without materializing any files", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const registry = await makeGithubRegistry();
     await installGithubPlugin(deps, registry);

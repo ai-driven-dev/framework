@@ -8,7 +8,7 @@ import { FileAdapter } from "../../../src/shared/infrastructure/file-adapter.js"
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { projectCleaner } from "../testing/project-cleaner.builder.js";
 
 let projectRoot: string;
@@ -25,6 +25,7 @@ function buildUseCase(logger: CapturingLogger): CleanProject {
   const fs = new FileAdapter(logger);
   const manifest = aManifest().withTool(TOOL.claude, []).withTool(TOOL.vscode, []).build();
   return projectCleaner({
+    tools: registeredTools(),
     fs,
     manifestRepo: new InMemoryManifestRepository(manifest, projectRoot),
     logger,

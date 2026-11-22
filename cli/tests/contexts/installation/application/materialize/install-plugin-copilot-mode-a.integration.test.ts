@@ -102,6 +102,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
     await fs.writeFile(settingsPath, foreignSettings);
 
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
@@ -122,6 +123,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
     await seedCopilotPlugin(manifestRepo, registry);
 
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
@@ -163,6 +165,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
     await seedCopilotPlugin(manifestRepo, registry);
 
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
@@ -195,6 +198,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
       registrationState: "dead",
     });
     const result = await marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
@@ -226,6 +230,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
     await seedCopilotPlugin(manifestRepo, registry);
 
     await marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
@@ -256,6 +261,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
     await seedCopilotPlugin(manifestRepo, registry);
 
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo,
       marketplaceRegistry: registry,

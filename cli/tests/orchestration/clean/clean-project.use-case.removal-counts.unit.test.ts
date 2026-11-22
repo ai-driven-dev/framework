@@ -10,15 +10,18 @@ import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { present } from "../../shared/testing/present.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
-  AT_PROJECT,
-  CleanWithKnownHostSource,
+  atProject,
   hash,
+  knownHostSourceCleaner,
   md5,
   PROJECT_ROOT,
   seedTrackedFiles,
 } from "../testing/clean-project.builder.js";
+
+const AT_PROJECT = atProject(registeredTools());
+const CleanWithKnownHostSource = knownHostSourceCleaner(registeredTools(), TOOL);
 
 describe("clean: removal counts", () => {
   describe("counting what was removed", () => {
@@ -38,7 +41,11 @@ describe("clean: removal counts", () => {
     it("counts every tracked file and names the tool being removed", async () => {
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       const logger = new CapturingLogger();
-      const useCase = buildCountingUseCase(fs, seedTrackedFiles(fs, ["a.md", "b.md"]), logger);
+      const useCase = buildCountingUseCase(
+        fs,
+        seedTrackedFiles(TOOL, fs, ["a.md", "b.md"]),
+        logger
+      );
 
       const result = await useCase.execute({ ...AT_PROJECT, force: true });
 
@@ -51,7 +58,7 @@ describe("clean: removal counts", () => {
     it("counts the machine-local settings file a tool wrote outside the manifest", async () => {
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
       fs.setFile(join(PROJECT_ROOT, ".claude", "settings.local.json"), "{}");
-      const useCase = buildCountingUseCase(fs, seedTrackedFiles(fs, ["a.md"]));
+      const useCase = buildCountingUseCase(fs, seedTrackedFiles(TOOL, fs, ["a.md"]));
 
       const result = await useCase.execute({ ...AT_PROJECT, force: true });
 
@@ -60,7 +67,7 @@ describe("clean: removal counts", () => {
 
     it("does not count a machine-local settings file that was never written", async () => {
       const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-      const useCase = buildCountingUseCase(fs, seedTrackedFiles(fs, ["a.md"]));
+      const useCase = buildCountingUseCase(fs, seedTrackedFiles(TOOL, fs, ["a.md"]));
 
       const result = await useCase.execute({ ...AT_PROJECT, force: true });
 
@@ -173,7 +180,7 @@ describe("clean: removal counts", () => {
       const logger = new CapturingLogger();
       const useCase = new CleanWithKnownHostSource(
         fs,
-        new InMemoryManifestRepository(seedTrackedFiles(fs, ["a.md"]), PROJECT_ROOT),
+        new InMemoryManifestRepository(seedTrackedFiles(TOOL, fs, ["a.md"]), PROJECT_ROOT),
         logger,
         new UpdateGitignore(fs)
       );
@@ -192,7 +199,7 @@ describe("clean: removal counts", () => {
       const logger = new CapturingLogger();
       const useCase = new CleanWithKnownHostSource(
         fs,
-        new InMemoryManifestRepository(seedTrackedFiles(fs, ["a.md"]), PROJECT_ROOT),
+        new InMemoryManifestRepository(seedTrackedFiles(TOOL, fs, ["a.md"]), PROJECT_ROOT),
         logger,
         new UpdateGitignore(fs)
       );

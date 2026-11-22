@@ -6,6 +6,7 @@ import { InstallationFile } from "../../../../../src/shared/domain/installation-
 import type { MergeFileEntry } from "../../../../../src/shared/domain/merge.js";
 import { InputRequiredError } from "../../../../../src/shared/domain/shared.error.js";
 import { buildInstallationDeps } from "../../../../shared/testing/installation-deps.builder.js";
+import { registeredTools } from "../../../../shared/testing/registered-tools.builder.js";
 import {
   KeepPrompter,
   OverwritePrompter,
@@ -15,7 +16,7 @@ import {
 const PROJECT_ROOT = "/test-project";
 
 async function buildDeps() {
-  return buildInstallationDeps();
+  return buildInstallationDeps({ tools: registeredTools() });
 }
 
 describe("restoreMergeFiles", () => {

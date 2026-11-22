@@ -11,6 +11,7 @@ import {
   installTool,
 } from "../../../../shared/testing/installation-deps.builder.js";
 import {
+  registeredTools,
   resolveRegisteredToolId,
   TOOL,
 } from "../../../../shared/testing/registered-tools.builder.js";
@@ -26,7 +27,7 @@ import {
 
 describe("restore - consent to overwrite", () => {
   it("refuses to overwrite a modified file when neither force nor a TTY was given", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
     await deps.fs.writeFile(join(PROJECT_ROOT, ".vscode/keybindings.json"), "[]");
 
@@ -42,7 +43,7 @@ describe("restore - consent to overwrite", () => {
 
 describe("restore - persisting the manifest", () => {
   it("persists the manifest it was handed once one tool restored a file, even when another had nothing to restore", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);
     await installTool(deps, PROJECT_ROOT, TOOL.vscode);
     await installTool(deps, PROJECT_ROOT, TOOL.cursor);
@@ -64,7 +65,7 @@ describe("restore - persisting the manifest", () => {
   });
 
   it("does not persist anything when no file drifted", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
     const stored = await loadedManifest(deps);
     const handed = Manifest.fromJSON(stored.toJSON(), resolveRegisteredToolId);
@@ -81,7 +82,7 @@ describe("restore - persisting the manifest", () => {
   });
 
   it("persists the manifest when only a plugin file was restored", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     await installPlugin(deps, TOOL.claude);
     const handed = Manifest.fromJSON(
@@ -107,7 +108,7 @@ describe("restore - persisting the manifest", () => {
 
 describe("restore - totals", () => {
   it("counts the files restored and kept across a tool's sections", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
     await deps.fs.writeFile(join(PROJECT_ROOT, ".vscode/keybindings.json"), "[]");
     await deps.fs.writeFile(join(PROJECT_ROOT, ".vscode/settings.json"), '{"editor.tabSize": 3}');
@@ -131,7 +132,7 @@ describe("restore - totals", () => {
 
 describe("restore - the framework path", () => {
   it("reads only the config files the framework path actually holds", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
     const keybindings = join(PROJECT_ROOT, ".vscode/keybindings.json");
     await deps.fs.writeFile("/partial-framework/config/vscode/keybindings.json", "[]");
@@ -153,7 +154,7 @@ describe("restore - the file selection", () => {
   const OTHER = ".claude/hooks/other.js";
 
   async function claudeTrackingGhosts() {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const manifest = await loadedManifest(deps);
     const ghosts = [RUN, OTHER].map(

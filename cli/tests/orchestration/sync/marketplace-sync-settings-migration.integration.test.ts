@@ -13,7 +13,7 @@ import { fsAt } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   CATALOG_RELATIVE,
   CLAUDE_BUILT_DIR,
@@ -36,6 +36,7 @@ describe("settings migration", () => {
       );
       const manifest = Manifest.create();
       const useCase = marketplaceSync({
+        tools: registeredTools(),
         fs: fsAt(PROJECT_ROOT, catalogFixture(CLAUDE_BUILT_DIR)),
         manifestRepo: new InMemoryManifestRepository(manifest),
         marketplaceRegistry: registry,
@@ -64,6 +65,7 @@ describe("settings migration", () => {
       await registry.save(PROJECT_ROOT, projectScopeEntry({ kind: "local", path: "/some/path" }));
       const manifest = Manifest.create();
       const useCase = marketplaceSync({
+        tools: registeredTools(),
         fs: fsAt(PROJECT_ROOT, catalogFixture(CLAUDE_BUILT_DIR)),
         manifestRepo: new InMemoryManifestRepository(manifest),
         marketplaceRegistry: registry,
@@ -109,6 +111,7 @@ describe("settings migration", () => {
         }),
       });
       const useCase = marketplaceSync({
+        tools: registeredTools(),
         fs,
         manifestRepo: new InMemoryManifestRepository(manifest),
         marketplaceRegistry: registry,
@@ -153,6 +156,7 @@ describe("settings migration", () => {
       });
       const logger = new CapturingLogger();
       const useCase = marketplaceSync({
+        tools: registeredTools(),
         fs,
         manifestRepo: new InMemoryManifestRepository(manifest),
         marketplaceRegistry: registry,
@@ -199,6 +203,7 @@ describe("settings migration", () => {
         }),
       });
       const useCase = marketplaceSync({
+        tools: registeredTools(),
         fs,
         manifestRepo: new InMemoryManifestRepository(manifest),
         marketplaceRegistry: registry,
@@ -239,6 +244,7 @@ describe("settings migration", () => {
       // No `hostMarketplaceRegistries` reader for claude: `guardAgainstConflict` returns
       // "proceed" without reading one, so the exclusion is decided in `reclaimOrReport`.
       const useCase = marketplaceSync({
+        tools: registeredTools(),
         fs,
         manifestRepo: new InMemoryManifestRepository(manifest),
         marketplaceRegistry: registry,
@@ -293,6 +299,7 @@ describe("settings migration", () => {
       const activator = new FakeHostActions({ available: true });
       const logger = new CapturingLogger();
       const useCase = marketplaceSync({
+        tools: registeredTools(),
         fs: fsAt(PROJECT_ROOT, catalogFixture(CLAUDE_BUILT_DIR)),
         manifestRepo: new InMemoryManifestRepository(manifest),
         marketplaceRegistry: registry,
@@ -317,7 +324,7 @@ describe("settings migration", () => {
             }),
           ],
         ]),
-        nativeSources: freshClaudeSource(activator, CLAUDE_BUILT_DIR),
+        nativeSources: freshClaudeSource(TOOL.claude, activator, CLAUDE_BUILT_DIR),
       });
 
       return {

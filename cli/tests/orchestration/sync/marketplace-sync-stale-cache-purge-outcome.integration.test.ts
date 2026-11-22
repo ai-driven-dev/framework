@@ -10,7 +10,7 @@ import { fsAt } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   CATALOG_RELATIVE,
   CLAUDE_BUILT_DIR,
@@ -47,6 +47,7 @@ describe("SyncSettings - purging this project's own pre-migration cache", () => 
       }),
     });
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo: new InMemoryManifestRepository(manifest),
       marketplaceRegistry: registry,
@@ -83,6 +84,7 @@ describe("SyncSettings - purging this project's own pre-migration cache", () => 
     const fs = fsAt(PROJECT_ROOT, { [OLD_CACHE_FILE]: "stale content" });
     const logger = new CapturingLogger();
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo: new InMemoryManifestRepository(manifest),
       marketplaceRegistry: registry,
@@ -129,6 +131,7 @@ describe("SyncSettings - purging this project's own pre-migration cache", () => 
       },
     };
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo: new InMemoryManifestRepository(manifest),
       marketplaceRegistry: registry,
@@ -163,6 +166,7 @@ describe("SyncSettings - purging this project's own pre-migration cache", () => 
     // `UnreadableBuiltCatalogError`, which `activateNativeTools` collects as a genuine error.
     const fs = fsAt(PROJECT_ROOT, { [OLD_CACHE_FILE]: "stale content" });
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo: new InMemoryManifestRepository(manifest),
       marketplaceRegistry: registry,
@@ -197,6 +201,7 @@ describe("SyncSettings - purging this project's own pre-migration cache", () => 
     });
     fs.setSymlink(OLD_CACHE_DIR, "/etc/evil");
     const useCase = marketplaceSync({
+      tools: registeredTools(),
       fs,
       manifestRepo: new InMemoryManifestRepository(manifest),
       marketplaceRegistry: registry,

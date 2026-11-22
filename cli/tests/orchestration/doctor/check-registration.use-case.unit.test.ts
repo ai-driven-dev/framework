@@ -15,11 +15,11 @@ import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
 import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
+import { hostInspector } from "../../shared/testing/host-inspector.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { registeredHostInspector } from "../../shared/testing/registered-host-inspector.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { buildCheckRegistration } from "../testing/build-check-registration.builder.js";
 
 const PROJECT_ROOT = "/project";
@@ -66,7 +66,11 @@ async function issuesFor(
     fs,
     registry,
     (binary) => activators.get(binary)?.isAvailable() ?? false,
-    registeredHostInspector(fs, new Map(), new Map()),
+    hostInspector(registeredTools(), {
+      fs: fs,
+      pluginRegistries: new Map(),
+      marketplaceRegistries: new Map(),
+    }),
     () => "/user-cache",
     { get: () => "1.0.0" },
     catalogOf()
@@ -193,7 +197,11 @@ async function nativeIssuesFor(
     fs,
     registry,
     (binary) => activators.get(binary)?.isAvailable() ?? false,
-    registeredHostInspector(fs, hostRegistries, new Map()),
+    hostInspector(registeredTools(), {
+      fs: fs,
+      pluginRegistries: hostRegistries,
+      marketplaceRegistries: new Map(),
+    }),
     () => "/user-cache",
     { get: () => "1.0.0" },
     catalogOf()

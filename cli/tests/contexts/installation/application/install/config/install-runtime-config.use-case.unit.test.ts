@@ -33,7 +33,7 @@ function buildUseCase(
 
 describe("InstallRuntimeConfig", () => {
   it("writes a text config asset verbatim and records its content hash without warnings", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
     const content = '{ "custom": true }\n';
@@ -64,7 +64,7 @@ describe("InstallRuntimeConfig", () => {
   });
 
   it("writes config on fresh install", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
@@ -85,7 +85,7 @@ describe("InstallRuntimeConfig", () => {
   });
 
   it("returns skipped without writing when already installed and no force", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
@@ -116,7 +116,7 @@ describe("InstallRuntimeConfig", () => {
   });
 
   it("overwrites existing tracked files when force is true", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
@@ -146,7 +146,7 @@ describe("InstallRuntimeConfig", () => {
   });
 
   it("writes Kilo's project-local JSONC config on a fresh install", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
@@ -163,7 +163,7 @@ describe("InstallRuntimeConfig", () => {
   });
 
   it("reuses Kilo's existing root JSONC config instead of creating a project-local config", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);
     await deps.fs.writeFile(join(PROJECT_ROOT, "kilo.jsonc"), '{"user": true}');
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
@@ -185,7 +185,7 @@ describe("InstallRuntimeConfig", () => {
     [TOOL.opencode, "opencode.json"],
     [TOOL.kilo, ".kilo/kilo.jsonc"],
   ] as const)("preserves %s MCP entries when updating its runtime config", async (toolId, path) => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
@@ -224,7 +224,7 @@ describe("InstallRuntimeConfig", () => {
 
   describe("copilot requiresTool gate", () => {
     it("does not create .vscode/settings.json when vscode is not installed", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initProject(deps, PROJECT_ROOT);
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
@@ -240,7 +240,7 @@ describe("InstallRuntimeConfig", () => {
     });
 
     it("creates .vscode/settings.json with copilot keys when vscode is already installed", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initProject(deps, PROJECT_ROOT);
       await installTool(deps, PROJECT_ROOT, TOOL.vscode);
 
@@ -262,7 +262,7 @@ describe("InstallRuntimeConfig", () => {
     });
 
     it("records the merged settings file in the manifest", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initProject(deps, PROJECT_ROOT);
       await installTool(deps, PROJECT_ROOT, TOOL.vscode);
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();

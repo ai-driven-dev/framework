@@ -45,7 +45,7 @@ function build(deps: Deps, prompter: Prompter = promptingWith("overwrite-all").p
 }
 
 async function installed(...toolIds: Parameters<typeof installTool>[2][]): Promise<Deps> {
-  const deps = await buildInstallationDeps();
+  const deps = await buildInstallationDeps({ tools: registeredTools() });
   await initProject(deps, PROJECT_ROOT);
   for (const toolId of toolIds) await installTool(deps, PROJECT_ROOT, toolId);
   return deps;
@@ -53,7 +53,7 @@ async function installed(...toolIds: Parameters<typeof installTool>[2][]): Promi
 
 describe("UpdateTools", () => {
   it("returns an empty result when nothing is installed", async () => {
-    const { useCase } = build(await buildInstallationDeps());
+    const { useCase } = build(await buildInstallationDeps({ tools: registeredTools() }));
 
     const result = await useCase.execute({
       projectRoot: PROJECT_ROOT,

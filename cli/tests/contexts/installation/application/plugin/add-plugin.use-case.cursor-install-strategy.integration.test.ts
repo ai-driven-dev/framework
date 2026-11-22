@@ -33,7 +33,7 @@ describe("AddPlugin", () => {
   describe("per-tool install strategy (github marketplace)", () => {
     describe("cursor", () => {
       it("fetches and materializes files in Mode B user-scope", async () => {
-        const deps = await buildInstallationDeps();
+        const deps = await buildInstallationDeps({ tools: registeredTools() });
         await initAndInstall(deps, PROJECT_ROOT, cursor);
         await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
         deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
@@ -94,7 +94,7 @@ describe("AddPlugin", () => {
       }
 
       async function cursorDeps(): Promise<Deps> {
-        const deps = await buildInstallationDeps();
+        const deps = await buildInstallationDeps({ tools: registeredTools() });
         await initAndInstall(deps, PROJECT_ROOT, cursor);
         await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
         deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);

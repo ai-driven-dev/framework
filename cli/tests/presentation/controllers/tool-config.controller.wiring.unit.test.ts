@@ -4,11 +4,16 @@ import { bindOutput } from "../../../src/presentation/controllers/global-options
 import { registerToolConfigCommand } from "../../../src/presentation/controllers/tool-config.controller.js";
 import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";
 import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { toolConfigHarness } from "../../shared/testing/tool-config-command.builder.js";
 
 const PROJECT_ROOT = process.cwd();
-const { listInstalledRules, createDeps, errors, run, catalog: CATALOG } = toolConfigHarness();
+const CATALOG = registeredTools();
+const { listInstalledRules, createDeps, errors, run } = toolConfigHarness({
+  tools: CATALOG,
+  ideTool: TOOL.vscode,
+  aiTool: TOOL.claude,
+});
 
 describe("aidd framework rules", () => {
   it("reads this project's rules and says so when there are none", async () => {

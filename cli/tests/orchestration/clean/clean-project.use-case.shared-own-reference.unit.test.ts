@@ -10,14 +10,29 @@ import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manif
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { saying } from "../../shared/testing/saying.builder.js";
 import {
-  AT_PROJECT,
+  SECOND_SYNTHETIC_TOOL,
+  SYNTHETIC_TOOL,
+  syntheticCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
+import {
+  atProject,
   BINARY,
-  CleanWithKnownHostSource,
+  knownHostSourceCleaner,
   MARKETPLACE,
   PROJECT_ROOT,
   seedManifestWithNativeRegistrations,
 } from "../testing/clean-project.builder.js";
 import { userScopeCleaner } from "../testing/user-scope-cleaner.builder.js";
+
+const CATALOG = syntheticCatalog();
+const TOOL = {
+  claude: SECOND_SYNTHETIC_TOOL,
+  codex: SYNTHETIC_TOOL,
+  copilot: SECOND_SYNTHETIC_TOOL,
+  cursor: SECOND_SYNTHETIC_TOOL,
+};
+const AT_PROJECT = atProject(CATALOG);
+const CleanWithKnownHostSource = knownHostSourceCleaner(CATALOG, TOOL);
 
 describe("clean: shared source own reference", () => {
   describe("undoing a host's own native registration", () => {
@@ -33,7 +48,7 @@ describe("clean: shared source own reference", () => {
       }
 
       it("drops its own claim but leaves the shared marketplace registered - the other project still sees it", async () => {
-        const manifest = seedManifestWithNativeRegistrations();
+        const manifest = seedManifestWithNativeRegistrations(TOOL);
         const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
         const activator = new FakeHostActions({ available: true });
@@ -77,7 +92,7 @@ describe("clean: shared source own reference", () => {
       });
 
       it("keeps its shared source claim when gitignore cleanup fails", async () => {
-        const manifest = seedManifestWithNativeRegistrations();
+        const manifest = seedManifestWithNativeRegistrations(TOOL);
         const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const registry = new InMemoryMarketplaceRegistry();
         await registry.save(
@@ -117,6 +132,7 @@ describe("clean: shared source own reference", () => {
           OTHER_PROJECT_ROOT,
         ]);
         const userClean = userScopeCleaner({
+          tools: syntheticCatalog(),
           fs,
           repo: new InMemoryManifestRepository(),
           marketplaceRegistry: registry,
@@ -132,7 +148,7 @@ describe("clean: shared source own reference", () => {
       // A verb-agreement bug hides in the plural alone: the passive phrasing sidesteps the
       // question for either count, so only the plural case can pin it.
       it("names the other project still referencing the shared source in a dry-run, without dropping anything", async () => {
-        const manifest = seedManifestWithNativeRegistrations();
+        const manifest = seedManifestWithNativeRegistrations(TOOL);
         const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
         const activator = new FakeHostActions({ available: true });
@@ -175,7 +191,7 @@ describe("clean: shared source own reference", () => {
       // Two projects synced under different CLI versions record their claims under two
       // different keys, so only a read across every key sees the other project's.
       it("names the other project in a dry-run even when the two projects were recorded under different CLI versions", async () => {
-        const manifest = seedManifestWithNativeRegistrations();
+        const manifest = seedManifestWithNativeRegistrations(TOOL);
         const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
         const activator = new FakeHostActions({ available: true });
@@ -214,7 +230,7 @@ describe("clean: shared source own reference", () => {
       // A reference sits under the CLI version that wrote it, which the running binary may
       // have moved past; `CleanUseCase` has no version reader and must still find it.
       it("drops this project's reference even though it was recorded under an older CLI version", async () => {
-        const manifest = seedManifestWithNativeRegistrations();
+        const manifest = seedManifestWithNativeRegistrations(TOOL);
         const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
         const activator = new FakeHostActions({ available: true });
@@ -261,7 +277,7 @@ describe("clean: shared source own reference", () => {
       // `references.json` is a help, not an authority - a corrupted copy must never block
       // the destructive command that does not depend on it.
       it("warns and still previews a dry-run when references.json is corrupted", async () => {
-        const manifest = seedManifestWithNativeRegistrations();
+        const manifest = seedManifestWithNativeRegistrations(TOOL);
         const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
         const activator = new FakeHostActions({ available: true });
@@ -302,7 +318,7 @@ describe("clean: shared source own reference", () => {
       });
 
       it("warns and still drops the rest when --force runs against a corrupted references.json", async () => {
-        const manifest = seedManifestWithNativeRegistrations();
+        const manifest = seedManifestWithNativeRegistrations(TOOL);
         const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
         const activator = new FakeHostActions({ available: true });

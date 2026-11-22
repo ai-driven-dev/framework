@@ -4,6 +4,7 @@ import type { HostActions } from "../../../src/contexts/host-registration/ports/
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { CleanProject as ProductionCleanUseCase } from "../../../src/orchestration/clean/clean-project.use-case.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../src/shared/domain/installation-file.js";
@@ -11,16 +12,21 @@ import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
+import type { NamedTools } from "../../shared/testing/named-tools.builder.js";
 import { FakeHostPluginRegistry } from "./fake-host-plugin-registry.fake.js";
 import { type ProjectCleanerParts, projectCleanerDeps } from "./project-cleaner.builder.js";
 
 export const PROJECT_ROOT = "/test-project";
-export const AT_PROJECT = { tools: registeredTools(), projectRoot: PROJECT_ROOT } as const;
+export function atProject(tools: ToolCatalog) {
+  return { tools, projectRoot: PROJECT_ROOT } as const;
+}
 export const md5 = (content: string): string => FileHash.of(content).value;
 
+/** The hosts a clean scenario seeds. */
+export type HostIds = NamedTools<"claude" | "codex" | "copilot" | "cursor">;
+
 /** Test-double host catalogues, deliberately seeded without consulting the manifest claim. */
-export function nativeSourcesOnHost(): ReadonlyMap<AiToolId, HostMarketplaceSources> {
+export function nativeSourcesOnHost(ids: HostIds): ReadonlyMap<AiToolId, HostMarketplaceSources> {
   const codexLike: HostMarketplaceSources = {
     read: async () => ({
       location: "fixture native host catalogue",
@@ -46,24 +52,24 @@ export function nativeSourcesOnHost(): ReadonlyMap<AiToolId, HostMarketplaceSour
     }),
   };
   return new Map([
-    [TOOL.codex, codexLike],
-    [TOOL.copilot, codexLike],
-    [TOOL.cursor, codexLike],
-    [TOOL.claude, claude],
+    [ids.codex, codexLike],
+    [ids.copilot, codexLike],
+    [ids.cursor, codexLike],
+    [ids.claude, claude],
   ]);
 }
 
 /** Independently parsed test registry: no foreign refs unless a test seeds them explicitly. */
-export function nativeRefsOnHost(): ReadonlyMap<AiToolId, HostPluginRegistry> {
+export function nativeRefsOnHost(ids: HostIds): ReadonlyMap<AiToolId, HostPluginRegistry> {
   const empty = new FakeHostPluginRegistry({
     location: "fixture native plugin registry",
     refs: new Map(),
   });
   return new Map([
-    [TOOL.codex, empty],
-    [TOOL.copilot, empty],
-    [TOOL.claude, empty],
-    [TOOL.cursor, empty],
+    [ids.codex, empty],
+    [ids.copilot, empty],
+    [ids.claude, empty],
+    [ids.cursor, empty],
   ]);
 }
 
@@ -84,26 +90,35 @@ export type TestCleanArgs = [
   sources?: ProjectCleanerParts["sources"],
 ];
 
-export class CleanWithKnownHostSource extends ProductionCleanUseCase {
-  constructor(...args: TestCleanArgs) {
-    super(
-      projectCleanerDeps({
-        fs: args[0],
-        manifestRepo: args[1],
-        logger: args[2],
-        gitignore: args[3],
-        activators: args[4],
-        marketplaceRegistry: args[5],
-        prompter: args[6],
-        marketplaceRegistries: args[7],
-        homeDir: args[8],
-        userSourceReferences: args[9],
-        pluginRegistries: args[10]?.size ? args[10] : nativeRefsOnHost(),
-        userManifestRepo: args[11],
-        sources: args[12] ?? nativeSourcesOnHost(),
-      })
-    );
-  }
+/** The production clean use case over the given tools, with each host's catalogue and registry known. */
+export function knownHostSourceCleaner(
+  tools: ToolCatalog,
+  ids: HostIds
+): new (
+  ...args: TestCleanArgs
+) => ProductionCleanUseCase {
+  return class CleanWithKnownHostSource extends ProductionCleanUseCase {
+    constructor(...args: TestCleanArgs) {
+      super(
+        projectCleanerDeps({
+          tools,
+          fs: args[0],
+          manifestRepo: args[1],
+          logger: args[2],
+          gitignore: args[3],
+          activators: args[4],
+          marketplaceRegistry: args[5],
+          prompter: args[6],
+          marketplaceRegistries: args[7],
+          homeDir: args[8],
+          userSourceReferences: args[9],
+          pluginRegistries: args[10]?.size ? args[10] : nativeRefsOnHost(ids),
+          userManifestRepo: args[11],
+          sources: args[12] ?? nativeSourcesOnHost(ids),
+        })
+      );
+    }
+  };
 }
 
 /** Records every path `deleteFile` is called with, to prove where a plugin file got deleted. */
@@ -123,10 +138,10 @@ export const BINARY = "codex";
 export const MARKETPLACE = "aidd-framework";
 export const REF = "aidd-context@aidd-framework";
 
-export function seedManifestWithNativeRegistrations(): Manifest {
+export function seedManifestWithNativeRegistrations(ids: NamedTools<"codex">): Manifest {
   const manifest = Manifest.create();
-  manifest.addTool(TOOL.codex, "1.0.0", []);
-  manifest.setNativeRegistrations(TOOL.codex, {
+  manifest.addTool(ids.codex, "1.0.0", []);
+  manifest.setNativeRegistrations(ids.codex, {
     binary: BINARY,
     marketplaces: [
       {
@@ -145,10 +160,10 @@ export function seedManifestWithNativeRegistrations(): Manifest {
   return manifest;
 }
 
-export function seedClaudeNativeRegistrations(): Manifest {
+export function seedClaudeNativeRegistrations(ids: NamedTools<"claude">): Manifest {
   const manifest = Manifest.create();
-  manifest.addTool(TOOL.claude, "1.0.0", []);
-  manifest.setNativeRegistrations(TOOL.claude, {
+  manifest.addTool(ids.claude, "1.0.0", []);
+  manifest.setNativeRegistrations(ids.claude, {
     binary: "claude",
     marketplaces: [
       {
@@ -163,10 +178,13 @@ export function seedClaudeNativeRegistrations(): Manifest {
 }
 
 /** Explicit host ref evidence for Claude positives, separate from the AIDD manifest. */
-export function claudeRefOnHost(scope?: Scope): ReadonlyMap<AiToolId, HostPluginRegistry> {
+export function claudeRefOnHost(
+  ids: NamedTools<"claude">,
+  scope?: Scope
+): ReadonlyMap<AiToolId, HostPluginRegistry> {
   return new Map([
     [
-      TOOL.claude,
+      ids.claude,
       new FakeHostPluginRegistry({
         location: "fixture Claude installed-plugin registry",
         refs: new Map([[REF, scope === undefined ? { enabled: true } : { enabled: true, scope }]]),
@@ -199,9 +217,13 @@ export function fileEntry(relativePath: string): InstallationFile {
   return new InstallationFile({ relativePath, content: "", hash: hash() });
 }
 
-export function seedTrackedFiles(fs: InMemoryFileAdapter, paths: readonly string[]): Manifest {
+export function seedTrackedFiles(
+  ids: NamedTools<"claude">,
+  fs: InMemoryFileAdapter,
+  paths: readonly string[]
+): Manifest {
   const manifest = Manifest.create();
-  manifest.addTool(TOOL.claude, "1.0.0", paths.map(fileEntry));
+  manifest.addTool(ids.claude, "1.0.0", paths.map(fileEntry));
   for (const path of paths) fs.setFile(join(PROJECT_ROOT, path), "x");
   return manifest;
 }

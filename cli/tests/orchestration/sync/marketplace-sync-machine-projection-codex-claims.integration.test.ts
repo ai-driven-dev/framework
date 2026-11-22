@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   builtPerMarketplace,
   catalogFile,
@@ -45,6 +45,8 @@ describe("native plugin claims recorded on the machine for Codex", () => {
     });
     const activator = new FakeHostActions({ available: true });
     const { sync, fs, projectRepo, machineRepo } = await singleCodexCatalog({
+      tools: registeredTools(),
+      codex: TOOL.codex,
       projectRoot,
       machine,
       activator,
@@ -95,6 +97,7 @@ describe("native plugin claims recorded on the machine for Codex", () => {
     const machineRepo = new InMemoryManifestRepository(Manifest.create());
     const activator = new FakeHostActions({ available: true });
     const sync = wireSync({
+      tools: registeredTools(),
       toolId: codex,
       fs: fsWithProjects({
         "/built/market-a/.agents/plugins/marketplace.json": catalogFile("real-a", ["plugin-a"]),

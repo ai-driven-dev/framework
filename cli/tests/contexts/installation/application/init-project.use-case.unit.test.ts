@@ -30,7 +30,7 @@ function countingLoads(repo: { load: () => Promise<unknown> }): () => number {
 
 describe("init", () => {
   it("reads the manifest once, whether it initializes or refuses", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     const reads = countingLoads(deps.manifestRepo);
     const init = initOf(deps);
     const command = { projectRoot: PROJECT_ROOT };
@@ -43,7 +43,7 @@ describe("init", () => {
   });
 
   it("reads the manifest once when it initializes only if absent", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     const reads = countingLoads(deps.manifestRepo);
 
     await initOf(deps).initializeIfAbsent({
@@ -54,7 +54,7 @@ describe("init", () => {
   });
 
   it("creates a v5 manifest with no tools", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     const result = await initOf(deps).execute({
       projectRoot: PROJECT_ROOT,
     });
@@ -70,7 +70,7 @@ describe("init", () => {
   });
 
   it("does not create an aidd_docs directory", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initOf(deps).execute({
       projectRoot: PROJECT_ROOT,
     });
@@ -80,7 +80,7 @@ describe("init", () => {
   });
 
   it("does not overwrite a pre-existing user file", async () => {
-    const deps = await buildInstallationDeps();
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
     const docFile = join(PROJECT_ROOT, ".claude", "CLAUDE.md");
     await deps.fs.writeFile(docFile, "custom content");
 
@@ -93,7 +93,7 @@ describe("init", () => {
 
   describe("initializeIfAbsent", () => {
     it("creates the manifest and answers true when none exists", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
 
       const created = await initOf(deps).initializeIfAbsent({
         projectRoot: PROJECT_ROOT,
@@ -104,7 +104,7 @@ describe("init", () => {
     });
 
     it("leaves an existing manifest alone and answers false", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initProject(deps, PROJECT_ROOT);
       const before = deps.manifestRepo.saveCount;
 
@@ -119,7 +119,7 @@ describe("init", () => {
 
   describe("execute refuses a project that cannot be initialized", () => {
     it("aborts with guidance when .claude/ contains AIDD frontmatter", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await deps.fs.writeFile(
         join(PROJECT_ROOT, ".claude", "commands", "aidd", "02", "brainstorm.md"),
         "---\nname: aidd:02:brainstorm\ndescription: test\n---\nbody"
@@ -133,7 +133,7 @@ describe("init", () => {
     });
 
     it("passes when .claude/ exists without AIDD frontmatter", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await deps.fs.writeFile(
         join(PROJECT_ROOT, ".claude", "commands", "my-command.md"),
         "---\nname: my-command\ndescription: custom\n---\nbody"
@@ -147,7 +147,7 @@ describe("init", () => {
     });
 
     it("aborts when already initialized without --force", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initOf(deps).execute({
         projectRoot: PROJECT_ROOT,
       });
@@ -161,7 +161,7 @@ describe("init", () => {
     // `aidd init` is not a command this CLI exposes (see the surface in cli.md) - telling
     // a user to run `aidd init --force` points them at something that does not exist.
     it("names a real recovery path, not the nonexistent `aidd init --force`", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initOf(deps).execute({
         projectRoot: PROJECT_ROOT,
       });
@@ -178,7 +178,7 @@ describe("init", () => {
     });
 
     it("--force: fails with guidance when no manifest exists", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await expect(
         initOf(deps).execute({
           projectRoot: PROJECT_ROOT,
@@ -188,7 +188,7 @@ describe("init", () => {
     });
 
     it("--force: passes when manifest exists", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initOf(deps).execute({
         projectRoot: PROJECT_ROOT,
       });
@@ -203,7 +203,7 @@ describe("init", () => {
 
   describe("--force", () => {
     it("does not create or alter gitignore while reusing an existing manifest", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initProject(deps, PROJECT_ROOT);
       await deps.fs.writeFile(join(PROJECT_ROOT, ".gitignore"), "# User-owned\n");
       const before = (await deps.manifestRepo.load())?.toJSON();
@@ -216,7 +216,7 @@ describe("init", () => {
     });
 
     it("preserves existing manifest tools when --force reinitializes", async () => {
-      const deps = await buildInstallationDeps();
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initProject(deps, PROJECT_ROOT);
       await installTool(deps, PROJECT_ROOT, TOOL.claude);
 

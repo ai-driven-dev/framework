@@ -5,7 +5,6 @@ import type { UserSourceReferences } from "../../../src/contexts/machine-claims/
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import type { VersionReader } from "../../../src/shared/ports/version-reader.js";
 import type { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { FakeHostMarketplaceSources } from "./fake-host-marketplace-sources.fake.js";
 import { FakeHostPluginRegistry } from "./fake-host-plugin-registry.fake.js";
 
@@ -38,18 +37,14 @@ export function readableHostPlugins(toolId: AiToolId) {
   ]);
 }
 
-export function freshClaudeSource(
-  activator: FakeHostActions,
-  builtDir: string,
-  name = FRAMEWORK_MARKETPLACE_NAME
-) {
+export function freshClaudeSource(claude: AiToolId, activator: FakeHostActions, builtDir: string) {
   return new Map([
     [
-      TOOL.claude,
+      claude,
       new FakeHostMarketplaceSources(
         activator,
         "registry",
-        (path) => (path === builtDir ? name : undefined),
+        (path) => (path === builtDir ? FRAMEWORK_MARKETPLACE_NAME : undefined),
         new Map()
       ),
     ],
@@ -70,9 +65,9 @@ export function catalogFixture(builtDir: string): Record<string, string> {
   };
 }
 
-export function manifestWithClaude(): Manifest {
+export function manifestWithClaude(claude: AiToolId): Manifest {
   const manifest = Manifest.create();
-  manifest.addTool(TOOL.claude, "test", []);
+  manifest.addTool(claude, "test", []);
   return manifest;
 }
 

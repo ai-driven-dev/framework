@@ -1,4 +1,5 @@
 /** Builds RunSetup over in-memory deps and no-op marketplace and plugin doubles, plus the non-interactive flow it runs. */
+
 import { vi } from "vitest";
 import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.use-case.js";
 import type { RefreshMarketplace } from "../../../src/contexts/distribution/application/refresh-marketplace.use-case.js";
@@ -14,6 +15,7 @@ import { ConfigureMachineScope } from "../../../src/contexts/installation/applic
 import { InstallTools } from "../../../src/contexts/installation/application/install/install-tools.use-case.js";
 import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
+import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { SetupFlow } from "../../../src/orchestration/domain/setup-flow.model.js";
 import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.use-case.js";
 import type { PluginPick } from "../../../src/orchestration/plugin/pick-plugins.use-case.js";
@@ -31,7 +33,6 @@ import { FakeCurrentVersion } from "../../shared/testing/fake-current-version.fa
 import { InMemoryEnvironment } from "../../shared/testing/in-memory-environment.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { buildInstallationDeps } from "../../shared/testing/installation-deps.builder.js";
-import { flowTools } from "../../shared/testing/registered-tools.builder.js";
 import { OverwritePrompter } from "../../shared/testing/scripted-prompter.fake.js";
 import { askMarketplaceSource } from "../testing/ask-marketplace-source.builder.js";
 import { runSetupOf } from "../testing/run-setup-of.builder.js";
@@ -120,20 +121,25 @@ export function makeRecordingUserSourceReferences(): UserSourceReferences & {
   };
 }
 
-export async function buildUseCase(
-  chooseTools?: Pick<ChooseTools, "execute">,
-  userSourceReferences?: UserSourceReferences,
-  logger?: Logger,
-  options?: {
-    userManifestRepo?: ManifestRepository & Lock;
-    syncSettingsUseCase?: Pick<SyncSettings, "execute"> & {
-      execute: ReturnType<typeof vi.fn>;
-    };
-    detectContext?: boolean;
-    installGlobalPlugins?: Pick<InstallGlobalPlugins, "execute">;
-  }
-) {
-  const deps = await buildInstallationDeps();
+interface UseCaseOptions {
+  userManifestRepo?: ManifestRepository & Lock;
+  syncSettingsUseCase?: Pick<SyncSettings, "execute"> & {
+    execute: ReturnType<typeof vi.fn>;
+  };
+  detectContext?: boolean;
+  installGlobalPlugins?: Pick<InstallGlobalPlugins, "execute">;
+}
+
+interface UseCaseArgs {
+  chooseTools?: Pick<ChooseTools, "execute">;
+  userSourceReferences?: UserSourceReferences;
+  logger?: Logger;
+  options?: UseCaseOptions;
+}
+
+async function buildUseCaseOver(tools: ToolCatalog, args: UseCaseArgs) {
+  const { chooseTools, userSourceReferences, logger, options } = args;
+  const deps = await buildInstallationDeps({ tools });
   const prompter = new OverwritePrompter();
   const askSource = askMarketplaceSource(prompter, makeNoOpLatestResolver());
   const setupToolsUseCase = new InstallTools(
@@ -178,10 +184,11 @@ export async function buildUseCase(
             execute: async () => ({ plugins: [] }),
           },
         });
-  const useCase = runSetupOf(
-    deps.fs,
-    deps.manifestRepo,
-    {
+  const useCase = runSetupOf({
+    tools,
+    fs: deps.fs,
+    manifestRepo: deps.manifestRepo,
+    steps: {
       ...setupMarketplaceRegistration,
       installTools: setupToolsUseCase,
       syncSettings: (syncOptions) => syncSettingsUseCase.execute(syncOptions),
@@ -190,14 +197,14 @@ export async function buildUseCase(
         options?.detectContext === true ? new DetectProjectContext(deps.fs) : undefined,
       machineScope,
     },
-    {
+    questions: {
       plugins: (promptOptions) => choosePlugins.execute(promptOptions),
       tools:
         chooseTools === undefined
           ? undefined
           : (promptOptions) => chooseTools.execute(promptOptions),
-    }
-  );
+    },
+  });
   return {
     useCase,
     deps,
@@ -208,7 +215,8 @@ export async function buildUseCase(
   };
 }
 
-export function remoteFlow(
+function remoteFlowOver(
+  tools: ToolCatalog,
   opts: Partial<{
     aiTools: ToolId[];
     ideTools: ToolId[];
@@ -218,7 +226,9 @@ export function remoteFlow(
   }> = {}
 ): SetupFlow {
   return new SetupFlow({
-    ...flowTools(),
+    registeredToolIds: tools.idsInCanonicalOrder(),
+    aiToolIds: tools.idsInCanonicalOrder("ai"),
+    ideToolIds: tools.idsInCanonicalOrder("ide"),
     supportsUserScopeActivation: () => true,
     projectRoot: PROJECT_ROOT,
     source: remoteFrameworkSource(),
@@ -229,4 +239,17 @@ export function remoteFlow(
     interactive: false,
     scope: opts.scope,
   });
+}
+
+/** The scenario's use case and flow, over the catalog its test names. */
+export function runSetupScenarioOf(tools: ToolCatalog) {
+  return {
+    buildUseCase: (
+      chooseTools?: Pick<ChooseTools, "execute">,
+      userSourceReferences?: UserSourceReferences,
+      logger?: Logger,
+      options?: UseCaseOptions
+    ) => buildUseCaseOver(tools, { chooseTools, userSourceReferences, logger, options }),
+    remoteFlow: (opts?: Parameters<typeof remoteFlowOver>[1]) => remoteFlowOver(tools, opts),
+  };
 }

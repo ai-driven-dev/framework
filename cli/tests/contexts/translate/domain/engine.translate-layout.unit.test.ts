@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { translate } from "../../../../src/contexts/translate/domain/engine.js";
 import { McpConfigError } from "../../../../src/shared/domain/shared.error.js";
-import { registeredManifestPaths } from "../../../shared/testing/registered-manifest-probes.builder.js";
+import { manifestPathsOf } from "../../../shared/testing/manifest-probes-of.builder.js";
+import { registeredTools } from "../../../shared/testing/registered-tools.builder.js";
 import { aCanon } from "../testing/canon-distribution.builder.js";
 import { claude } from "../testing/registered-profiles.builder.js";
 import { aStubBuildContract, aSupportedArtifact } from "../testing/stub-build-contract.builder.js";
@@ -89,7 +90,7 @@ describe("translate with an install layout", () => {
     const result = translate(aCanon("plug", { "hooks/hooks.json": "{}", ".mcp.json": "{}" }), {
       kind: "install",
       tool: claude,
-      manifestPaths: registeredManifestPaths(),
+      manifestPaths: manifestPathsOf(registeredTools()),
     });
 
     expect([result.hooks, result.mcp]).toEqual([null, null]);

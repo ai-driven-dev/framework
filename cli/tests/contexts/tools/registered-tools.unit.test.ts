@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { registeredTools, resolveRegisteredToolId, TOOL } from "./registered-tools.builder.js";
+import {
+  registeredTools,
+  resolveRegisteredToolId,
+  TOOL,
+} from "../../shared/testing/registered-tools.builder.js";
 
 describe("the registered tools kit", () => {
   it("mints one id per registered tool, in the catalog's canonical order", () => {

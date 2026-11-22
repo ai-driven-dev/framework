@@ -1,10 +1,11 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, type Mock, vi } from "vitest";
+import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { bindOutput } from "../../../src/presentation/controllers/global-options.controller.js";
 import { registerToolConfigCommand } from "../../../src/presentation/controllers/tool-config.controller.js";
+import type { AiToolId, IdeToolId } from "../../../src/shared/domain/tool.js";
 import { processOutputFactory } from "./output-factory.builder.js";
 import { parseToExit } from "./parse-to-exit.builder.js";
-import { registeredTools, TOOL } from "./registered-tools.builder.js";
 
 /** Makes the process answer as a terminal, or as a pipe. */
 function pretendTerminal(isTTY: boolean): void {
@@ -23,13 +24,24 @@ export interface ToolConfigHarness {
   readonly createDeps: Mock;
   readonly written: string[];
   readonly errors: string[];
-  readonly catalog: ReturnType<typeof registeredTools>;
   readonly pretendTerminal: (isTTY: boolean) => void;
   readonly run: (...args: string[]) => Promise<string[]>;
 }
 
+export interface ToolConfigHarnessOptions {
+  readonly tools: ToolCatalog;
+  /** The editor the install double reports installed. */
+  readonly ideTool: IdeToolId;
+  /** The runtime the uninstall double reports removed. */
+  readonly aiTool: AiToolId;
+}
+
 /** Wires the framework command to succeeding doubles before each case and restores the process after. */
-export function toolConfigHarness(): ToolConfigHarness {
+export function toolConfigHarness({
+  tools,
+  ideTool,
+  aiTool,
+}: ToolConfigHarnessOptions): ToolConfigHarness {
   const installAiTool: Mock = vi.fn();
   const installIdeTool: Mock = vi.fn();
   const uninstallTools: Mock = vi.fn();
@@ -46,7 +58,6 @@ export function toolConfigHarness(): ToolConfigHarness {
     validateRecipes: { execute: validateRecipes },
     currentVersionProvider: { get: currentVersion },
   }));
-  const catalog = registeredTools();
   const written: string[] = [];
   const errors: string[] = [];
 
@@ -71,11 +82,11 @@ export function toolConfigHarness(): ToolConfigHarness {
     });
     installIdeTool.mockResolvedValue({
       skipped: false,
-      toolId: TOOL.vscode,
+      toolId: ideTool,
       fileCount: 2,
       warnings: [],
     });
-    uninstallTools.mockResolvedValue([{ toolId: TOOL.claude, fileCount: 4 }]);
+    uninstallTools.mockResolvedValue([{ toolId: aiTool, fileCount: 4 }]);
     updateTools.mockResolvedValue({ updatedTools: [], errors: [] });
     listInstalledRules.mockResolvedValue({ rules: [] });
     validateRecipes.mockReturnValue({ findings: [], fileCount: 1 });
@@ -91,7 +102,7 @@ export function toolConfigHarness(): ToolConfigHarness {
     bindOutput(program, processOutputFactory());
     program.exitOverride();
     program.option("--verbose");
-    registerToolConfigCommand(program, catalog, createDeps);
+    registerToolConfigCommand(program, tools, createDeps);
     await parseToExit(program, ["node", "aidd", "framework", ...args]);
     return written.join("").split("\n").slice(0, -1);
   }
@@ -107,7 +118,6 @@ export function toolConfigHarness(): ToolConfigHarness {
     createDeps,
     written,
     errors,
-    catalog,
     pretendTerminal,
     run,
   };

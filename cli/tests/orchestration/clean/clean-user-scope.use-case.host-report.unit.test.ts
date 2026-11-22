@@ -7,7 +7,7 @@ import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../shared/testing/saying.builder.js";
 import {
   CLAUDE_CACHE,
@@ -25,8 +25,9 @@ describe("clean --scope user: host report", () => {
   describe("what the run reports", () => {
     function buildClaudeUseCase(fs: InMemoryFileAdapter, logger: CapturingLogger) {
       return userScopeCleaner({
+        tools: registeredTools(),
         fs,
-        repo: new InMemoryManifestRepository(manifestWithClaude()),
+        repo: new InMemoryManifestRepository(manifestWithClaude(TOOL)),
         logger,
         activators: new Map([[TOOL.claude, new FakeHostActions({ available: true })]]),
         marketplaceRegistries: new Map([
@@ -38,8 +39,8 @@ describe("clean --scope user: host report", () => {
             }),
           ],
         ]),
-        sources: provenClaudeSources(),
-        pluginRegistries: provenHostPlugins(manifestWithClaude()),
+        sources: provenClaudeSources(TOOL),
+        pluginRegistries: provenHostPlugins(TOOL, manifestWithClaude(TOOL)),
       });
     }
 
@@ -88,7 +89,12 @@ describe("clean --scope user: host report", () => {
       const fs = new InMemoryFileAdapter();
       await seedWhitelist(fs);
       const logger = new CapturingLogger();
-      const useCase = userScopeCleaner({ fs, repo: new InMemoryManifestRepository(null), logger });
+      const useCase = userScopeCleaner({
+        tools: registeredTools(),
+        fs,
+        repo: new InMemoryManifestRepository(null),
+        logger,
+      });
 
       const result = await useCase.execute({
         projectRoot: "/wherever",
@@ -120,6 +126,7 @@ describe("clean --scope user: host report", () => {
       await userSourceReferences.addReference("1.0.0", "/project-b");
       const logger = new CapturingLogger();
       const useCase = userScopeCleaner({
+        tools: registeredTools(),
         fs,
         repo: new InMemoryManifestRepository(null),
         logger,
@@ -143,6 +150,7 @@ describe("clean --scope user: host report", () => {
       fs.setFile(join(USER_CONFIG_DIR, "references.json"), "not json");
       const logger = new CapturingLogger();
       const useCase = userScopeCleaner({
+        tools: registeredTools(),
         fs,
         repo: new InMemoryManifestRepository(Manifest.create()),
         logger,

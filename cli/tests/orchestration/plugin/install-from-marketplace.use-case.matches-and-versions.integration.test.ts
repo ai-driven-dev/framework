@@ -7,7 +7,7 @@ import { fakeBuildSources } from "../../contexts/installation/testing/fake-build
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { ChoosingPrompter } from "../../shared/testing/choosing-prompter.fake.js";
 import { loadDistributionOf } from "../../shared/testing/load-distribution.builder.js";
-import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.builder.js";
+import { manifestProbesOf } from "../../shared/testing/manifest-probes-of.builder.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   type AddPluginFor,
@@ -29,7 +29,7 @@ const addPluginOver: AddPluginFor = (deps, registry) =>
     {
       loadDistribution: loadDistributionOf(
         deps.pluginFetcher,
-        new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+        new PluginDistributionReaderAdapter(deps.fs, manifestProbesOf(registeredTools()))
       ),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
@@ -37,8 +37,9 @@ const addPluginOver: AddPluginFor = (deps, registry) =>
     registeredTools()
   );
 
-const buildUseCase = (options: Parameters<typeof buildUseCaseWith>[1] = {}) =>
-  buildUseCaseWith(addPluginOver, options);
+const buildUseCase = (
+  options: Omit<Parameters<typeof buildUseCaseWith>[1], "tools" | "claude"> = {}
+) => buildUseCaseWith(addPluginOver, { tools: registeredTools(), claude: TOOL.claude, ...options });
 
 describe("InstallFromMarketplace: matches and versions", () => {
   describe("choosing among several matches", () => {
@@ -247,7 +248,7 @@ describe("InstallFromMarketplace: matches and versions", () => {
         interactive: false,
       });
 
-      expect(installedSamplePlugin(deps)?.plugin.version).toBe("1.0.0");
+      expect(installedSamplePlugin(deps, TOOL.claude)?.plugin.version).toBe("1.0.0");
     });
 
     it("logs nothing under prefer-catalog when no version was requested", async () => {
@@ -293,7 +294,7 @@ describe("InstallFromMarketplace: matches and versions", () => {
         interactive: false,
       });
 
-      expect(installedSamplePlugin(deps)?.marketplace).toBe("mkt1");
+      expect(installedSamplePlugin(deps, TOOL.claude)?.marketplace).toBe("mkt1");
     });
   });
 });

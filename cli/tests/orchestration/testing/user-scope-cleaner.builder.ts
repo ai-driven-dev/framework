@@ -18,6 +18,7 @@ import { UserScopePluginFiles } from "../../../src/contexts/installation/applica
 import { PurgeDeclaredCache } from "../../../src/contexts/machine-claims/application/purge-declared-cache.js";
 import { userScopeFilesSafeToDelete } from "../../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
+import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import {
   CleanUserScope,
   type CleanUserScopeDeps,
@@ -25,10 +26,10 @@ import {
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { registeredTools } from "../../shared/testing/registered-tools.builder.js";
 
 /** What a test names; everything else is the empty or in-memory default. */
 export interface UserScopeCleanerParts extends Partial<HostPorts> {
+  tools: ToolCatalog;
   repo: PurgeUserScopeFilesDeps["userManifestRepo"];
   fs?: PurgeMachineStateDeps["fs"];
   logger?: PurgeMachineStateDeps["logger"];
@@ -70,7 +71,7 @@ export function userScopeCleaner(parts: UserScopeCleanerParts): CleanUserScope {
           userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
         ),
       },
-      registeredTools()
+      parts.tools
     ),
     withdrawFromHost: new WithdrawFromHost(fs, logger, hostPortsOf(parts)),
     removeMarketplace: new RemoveMarketplace(

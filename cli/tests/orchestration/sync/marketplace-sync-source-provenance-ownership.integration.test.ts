@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { TOOL } from "../../shared/testing/registered-tools.builder.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 import {
   hostPluginProofFixture,
   ownedAndOtherCatalogues,
@@ -10,6 +10,8 @@ const { claude, codex } = TOOL;
 function expectedMachineMarketplaces<T>(machineCatalogue: boolean, other: T, target: T) {
   return machineCatalogue ? [other, target] : [other];
 }
+
+const REAL = { tools: registeredTools(), ids: TOOL };
 
 describe("native catalogue ownership recorded from source provenance", () => {
   it.each([
@@ -54,11 +56,11 @@ describe("native catalogue ownership recorded from source provenance", () => {
     async ({ toolId, marketplaceScope, machineCatalogue, otherHost }) => {
       const f = await hostPluginProofFixture(
         { location: "/host/plugins.json", refs: new Map() },
-        { toolId, marketplaceScope, plugin: false }
+        { ...REAL, toolId, marketplaceScope, plugin: false }
       );
       const machine = f.machineRepo.getCurrent();
       if (machine === null) throw new Error("fixture lacks machine manifest");
-      const { target, other, otherRef } = ownedAndOtherCatalogues(toolId, otherHost);
+      const { target, other, otherRef } = ownedAndOtherCatalogues(TOOL.claude, toolId, otherHost);
       machine.addTool(toolId, "0.9.0", []);
       machine.setNativeRegistrations(toolId, {
         binary: toolId,
@@ -99,7 +101,7 @@ describe("native catalogue ownership recorded from source provenance", () => {
     async (toolId) => {
       const f = await hostPluginProofFixture(
         { location: "/host/plugins.json", refs: new Map() },
-        { toolId, marketplaceScope: "user", plugin: false }
+        { ...REAL, toolId, marketplaceScope: "user", plugin: false }
       );
       const result = await f.sync.execute({ projectRoot: "/A" });
       expect(result.errors).toEqual([]);
