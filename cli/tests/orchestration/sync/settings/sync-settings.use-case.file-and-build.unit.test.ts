@@ -1,11 +1,11 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/contract/built-marketplace.js";
+import type { BuiltMarketplaceEnsurer } from "../../../../src/contexts/installation/contract/built-marketplace.js";
 import {
   SYNTHETIC_NATIVE_TOOL,
   syntheticSyncCatalog,
-} from "../../shared/testing/synthetic-native-tool.builder.js";
-import { PROJECT_ROOT, syncOf } from "../testing/sync-settings.builder.js";
+} from "../../../shared/testing/synthetic-native-tool.builder.js";
+import { PROJECT_ROOT, syncOf } from "../../testing/sync-settings.builder.js";
 
 /** This flow writes into a file it does not own: whatever a person put there survives, and a
  * trailing comma they left behind must not take the whole sync down with it. */

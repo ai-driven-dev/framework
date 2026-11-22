@@ -155,7 +155,6 @@ src/
 │   ├── clean/
 │   ├── doctor/
 │   ├── domain/
-│   ├── global/
 │   ├── marketplace/
 │   ├── menu/
 │   ├── plugin/
@@ -163,6 +162,7 @@ src/
 │   ├── setup/
 │   │   └── steps/
 │   ├── sync/
+│   │   └── settings/
 │   └── telemetry/
 ├── presentation/    # everything that talks to a human
 │   ├── controllers/

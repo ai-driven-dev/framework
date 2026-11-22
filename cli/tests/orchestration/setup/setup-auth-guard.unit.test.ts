@@ -16,7 +16,7 @@ import type { RefreshMarketplaces } from "../../../src/orchestration/marketplace
 import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.use-case.js";
 import type { PluginPick } from "../../../src/orchestration/plugin/pick-plugins.use-case.js";
 import { ChoosePlugins } from "../../../src/orchestration/setup/steps/choose-plugins.use-case.js";
-import type { SyncSettings } from "../../../src/orchestration/sync/sync-settings.use-case.js";
+import type { SyncSettings } from "../../../src/orchestration/sync/settings/sync-settings.use-case.js";
 import { CatalogFetchAuthError } from "../../../src/shared/domain/shared.error.js";
 import type { ReleaseLister } from "../../../src/shared/ports/release-lister.js";
 import { InMemoryEnvironment } from "../../shared/testing/in-memory-environment.fake.js";

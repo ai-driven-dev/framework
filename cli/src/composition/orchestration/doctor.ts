@@ -12,9 +12,9 @@ import { LoadManifest } from "../../contexts/installation/application/doctor/loa
 import { LoadManifestForDoctor } from "../../contexts/installation/application/doctor/load-manifest-for-doctor.use-case.js";
 import { CheckAuthentication } from "../../orchestration/doctor/check-authentication.use-case.js";
 import { CheckRegistration } from "../../orchestration/doctor/check-registration.use-case.js";
+import { doctorAll } from "../../orchestration/doctor/doctor-all.js";
 import { RunDoctor } from "../../orchestration/doctor/run-doctor.use-case.js";
 import { RunUserScopeDoctor } from "../../orchestration/doctor/run-user-scope-doctor.use-case.js";
-import { doctorAll } from "../../orchestration/global/doctor-all.js";
 import type { Installation } from "../installation.js";
 import type { Base } from "../shared.js";
 import { userConfigDir } from "../user-config-dir.js";

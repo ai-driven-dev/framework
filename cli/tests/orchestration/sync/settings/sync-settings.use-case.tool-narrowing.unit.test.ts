@@ -1,27 +1,27 @@
 import { describe, expect, it } from "vitest";
-import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import { registerMarketplacePlugin } from "../../../src/contexts/installation/application/materialize/register-marketplace-plugin.js";
-import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
-import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
-import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
-import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
-import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
-import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
-import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
+import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
+import { registerMarketplacePlugin } from "../../../../src/contexts/installation/application/materialize/register-marketplace-plugin.js";
+import { aManifest } from "../../../contexts/installation/testing/manifest.builder.js";
+import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
+import { fakeEnsureBuiltMarketplace } from "../../../shared/testing/fake-ensure-built-marketplace.fake.js";
+import { FakeHostActions } from "../../../shared/testing/fake-host-actions.fake.js";
+import { InMemoryManifestRepository } from "../../../shared/testing/in-memory-manifest-repository.fake.js";
+import { InMemoryMarketplaceRegistry } from "../../../shared/testing/in-memory-marketplace-registry.fake.js";
+import { marketplaceSync } from "../../../shared/testing/marketplace-sync.builder.js";
 import {
   SYNTHETIC_LISTED_CATALOGUE,
   SYNTHETIC_LISTED_TOOL,
   SYNTHETIC_NATIVE_TOOL,
   syntheticSyncCatalog,
-} from "../../shared/testing/synthetic-native-tool.builder.js";
-import { SYNTHETIC_IDE_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
+} from "../../../shared/testing/synthetic-native-tool.builder.js";
+import { SYNTHETIC_IDE_TOOL } from "../../../shared/testing/synthetic-tool-id.builder.js";
 import {
   distribution,
   freshClaudeSource,
   PROJECT_ROOT,
   readableClaudePluginRegistry,
   seededBuiltCatalog,
-} from "../testing/sync-settings.builder.js";
+} from "../../testing/sync-settings.builder.js";
 
 /** `sync --tool <id>` must touch only that tool - otherwise a person fixing one tool's
  * registration would silently re-drive every other tool's CLI too. */

@@ -23,7 +23,7 @@ import type { InstallGlobalPlugins } from "../../../src/orchestration/setup/inst
 import { SetupMachineScope } from "../../../src/orchestration/setup/setup-machine-scope.use-case.js";
 import { ChoosePlugins } from "../../../src/orchestration/setup/steps/choose-plugins.use-case.js";
 import type { ChooseTools } from "../../../src/orchestration/setup/steps/choose-tools.use-case.js";
-import type { SyncSettings } from "../../../src/orchestration/sync/sync-settings.use-case.js";
+import type { SyncSettings } from "../../../src/orchestration/sync/settings/sync-settings.use-case.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 import type { Lock } from "../../../src/shared/ports/lock.js";

@@ -36,11 +36,12 @@ import { RemoveUserMarketplace } from "../../orchestration/marketplace/remove-us
 import { AskMarketplaceSource } from "../../orchestration/setup/ask-marketplace-source.use-case.js";
 import { ResolveSetupSource } from "../../orchestration/setup/resolve-setup-source.use-case.js";
 import type { RegisterFrameworkSource } from "../../orchestration/setup/setup-flow.js";
-import { ActivateNativeTools } from "../../orchestration/sync/activate-native-tools.use-case.js";
-import { BuildMarketplaceForTool } from "../../orchestration/sync/build-marketplace-for-tool.use-case.js";
-import { SyncNativeActivation } from "../../orchestration/sync/sync-native-activation.use-case.js";
-import { SyncSettings } from "../../orchestration/sync/sync-settings.use-case.js";
-import { SyncToolSettingsFiles } from "../../orchestration/sync/sync-tool-settings-files.use-case.js";
+import { ActivateNativeTools } from "../../orchestration/sync/settings/activate-native-tools.use-case.js";
+import { BuildMarketplaceForTool } from "../../orchestration/sync/settings/build-marketplace-for-tool.use-case.js";
+import { RecordSyncActivation } from "../../orchestration/sync/settings/record-sync-activation.use-case.js";
+import { SyncNativeActivation } from "../../orchestration/sync/settings/sync-native-activation.use-case.js";
+import { SyncSettings } from "../../orchestration/sync/settings/sync-settings.use-case.js";
+import { SyncToolSettingsFiles } from "../../orchestration/sync/settings/sync-tool-settings-files.use-case.js";
 import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
 import { settingsDeclaration } from "../host-registration.js";
 import type { Installation } from "../installation.js";
@@ -192,22 +193,25 @@ function syncSettingsOf(base: Base, inst: Installation, sources: SyncSources): S
     }),
     settingsFiles: settingsFilesOf(base, inst, buildMarketplaceForTool),
     activateNativeTools: nativeActivationOf(base, inst, buildMarketplaceForTool),
-    recordActivation: new RecordActivation({ fs }, tools),
-    machineClaims: new RecordMachineClaims(
-      {
+    recordActivation: new RecordSyncActivation({
+      recordActivation: new RecordActivation({ fs }, tools),
+      machineClaims: new RecordMachineClaims(
+        {
+          fs,
+          userManifestRepo,
+          emptyManifest: Manifest.create,
+          mergeClaims: registrationRecordRules.mergeCatalogueClaims,
+        },
+        tools
+      ),
+      sharedSource: new SharedFrameworkSource({
         fs,
-        userManifestRepo,
-        emptyManifest: Manifest.create,
-        mergeClaims: registrationRecordRules.mergeCatalogueClaims,
-      },
-      tools
-    ),
-    sharedSource: new SharedFrameworkSource({
-      fs,
-      logger,
-      recordReference: recordSourceReference,
-      purgeCache: new PurgeDeclaredCache(fs, logger),
-      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+        logger,
+        recordReference: recordSourceReference,
+        purgeCache: new PurgeDeclaredCache(fs, logger),
+        frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+      }),
+      records: registrationRecordRules,
     }),
     records: registrationRecordRules,
   });

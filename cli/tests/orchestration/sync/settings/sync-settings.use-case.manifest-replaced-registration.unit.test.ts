@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
-import { hostRecord } from "../../shared/testing/host-record-reading.builder.js";
+import { FakeHostActions } from "../../../shared/testing/fake-host-actions.fake.js";
+import { hostRecord } from "../../../shared/testing/host-record-reading.builder.js";
 import {
   SYNTHETIC_NATIVE_TOOL,
   syntheticSyncCatalog,
-} from "../../shared/testing/synthetic-native-tool.builder.js";
+} from "../../../shared/testing/synthetic-native-tool.builder.js";
 import {
   FRAMEWORK_ONLY,
   MARKETPLACE,
@@ -12,7 +12,7 @@ import {
   ownedMachineEntry,
   PLUGIN,
   PROJECT_ROOT,
-} from "../testing/manifest-writes.builder.js";
+} from "../../testing/manifest-writes.builder.js";
 
 const { build, recorded } = manifestWrites(syntheticSyncCatalog(), SYNTHETIC_NATIVE_TOOL);
 

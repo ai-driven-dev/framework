@@ -5,7 +5,7 @@ import { PluginDistributionReaderAdapter } from "../../src/contexts/distribution
 import { ReportStatus } from "../../src/contexts/installation/application/report-status.use-case.js";
 import { RestoreGlobal } from "../../src/contexts/installation/application/restore/project/restore-global.use-case.js";
 import { DetectPluginDrift } from "../../src/contexts/installation/application/shared/detect-plugin-drift.use-case.js";
-import { RestoreAll } from "../../src/orchestration/global/restore-all.use-case.js";
+import { RestoreAll } from "../../src/orchestration/sync/restore-all.use-case.js";
 import { render } from "../../src/presentation/errors/error-translator.presenter.js";
 import type { AiToolId } from "../../src/shared/domain/tool.js";
 import { buildAddPlugin } from "../contexts/installation/testing/build-add-plugin.builder.js";

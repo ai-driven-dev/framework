@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
-import type { MarketplaceToBuild } from "../../../src/contexts/installation/contract/built-marketplace.js";
-import { BuildMarketplaceForTool } from "../../../src/orchestration/sync/build-marketplace-for-tool.use-case.js";
-import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
-import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
+import type { MarketplaceToBuild } from "../../../../src/contexts/installation/contract/built-marketplace.js";
+import { BuildMarketplaceForTool } from "../../../../src/orchestration/sync/settings/build-marketplace-for-tool.use-case.js";
+import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
+import { fakeEnsureBuiltMarketplace } from "../../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import {
   SYNTHETIC_IDE_TOOL,
   syntheticMixedCatalog,
-} from "../../shared/testing/synthetic-tool-id.builder.js";
+} from "../../../shared/testing/synthetic-tool-id.builder.js";
 
 const MARKETPLACE: MarketplaceToBuild = {
   name: "aidd",

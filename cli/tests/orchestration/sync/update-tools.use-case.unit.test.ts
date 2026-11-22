@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { ListInstalledTools } from "../../../src/contexts/installation/application/list-installed-tools.use-case.js";
-import { ResolveUpdateDecision } from "../../../src/orchestration/global/resolve-update-decision.use-case.js";
-import { UpdateTools } from "../../../src/orchestration/global/update-tools.use-case.js";
 import type { Prompter } from "../../../src/orchestration/ports/prompter.js";
+import { ResolveUpdateDecision } from "../../../src/orchestration/sync/resolve-update-decision.use-case.js";
+import { UpdateTools } from "../../../src/orchestration/sync/update-tools.use-case.js";
 import { InputRequiredError } from "../../../src/shared/domain/shared.error.js";
 import {
   buildInstallationDeps,

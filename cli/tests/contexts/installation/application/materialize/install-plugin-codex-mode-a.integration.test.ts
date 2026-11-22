@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { registerMarketplacePlugin } from "../../../../../src/contexts/installation/application/materialize/register-marketplace-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import type { SyncSettings } from "../../../../../src/orchestration/sync/sync-settings.use-case.js";
+import type { SyncSettings } from "../../../../../src/orchestration/sync/settings/sync-settings.use-case.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { PluginSource } from "../../../../../src/shared/domain/source.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";

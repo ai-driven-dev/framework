@@ -1,5 +1,5 @@
 import type { ToolCatalog } from "../../../contexts/tools/contract/tool-catalog.js";
-import { isDoctorHealthy } from "../../../orchestration/global/doctor-all.js";
+import { isDoctorHealthy } from "../../../orchestration/doctor/doctor-all.js";
 import type { ToolCategory } from "../../../shared/domain/tool.js";
 import {
   printAllToolsDrift,

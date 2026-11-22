@@ -4,7 +4,7 @@ import {
   type ActivatePropagatedPlugins,
   InstallAiToolWithPlugins,
   type MarketplacePluginInstaller,
-} from "../../../src/orchestration/global/install-ai-tool-with-plugins.use-case.js";
+} from "../../../src/orchestration/setup/install-ai-tool-with-plugins.use-case.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { SYNTHETIC_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
 

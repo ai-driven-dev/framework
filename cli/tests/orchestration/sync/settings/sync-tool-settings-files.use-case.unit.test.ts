@@ -1,23 +1,23 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { settingsDeclaration } from "../../../src/composition/host-registration.js";
-import { registrationRecordRules } from "../../../src/composition/installation.js";
-import type { HostRegistrationOutcome } from "../../../src/contexts/host-registration/application/register/registration-outcome.js";
-import { trackedSharedSettings } from "../../../src/contexts/installation/application/sync/tracked-shared-settings.js";
-import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import { BuildMarketplaceForTool } from "../../../src/orchestration/sync/build-marketplace-for-tool.use-case.js";
-import { SyncToolSettingsFiles } from "../../../src/orchestration/sync/sync-tool-settings-files.use-case.js";
-import { FileHash } from "../../../src/shared/domain/file-hash.js";
-import { InstallationFile } from "../../../src/shared/domain/installation-file.js";
-import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
-import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
-import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
-import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { settingsDeclaration } from "../../../../src/composition/host-registration.js";
+import { registrationRecordRules } from "../../../../src/composition/installation.js";
+import type { HostRegistrationOutcome } from "../../../../src/contexts/host-registration/application/register/registration-outcome.js";
+import { trackedSharedSettings } from "../../../../src/contexts/installation/application/sync/tracked-shared-settings.js";
+import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import { BuildMarketplaceForTool } from "../../../../src/orchestration/sync/settings/build-marketplace-for-tool.use-case.js";
+import { SyncToolSettingsFiles } from "../../../../src/orchestration/sync/settings/sync-tool-settings-files.use-case.js";
+import { FileHash } from "../../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../src/shared/domain/installation-file.js";
+import { aManifest } from "../../../contexts/installation/testing/manifest.builder.js";
+import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
+import { fakeEnsureBuiltMarketplace } from "../../../shared/testing/fake-ensure-built-marketplace.fake.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import {
   SYNTHETIC_NATIVE_TOOL,
   SYNTHETIC_PROVEN_TOOL,
   syntheticSyncCatalog,
-} from "../../shared/testing/synthetic-native-tool.builder.js";
+} from "../../../shared/testing/synthetic-native-tool.builder.js";
 
 const claude = SYNTHETIC_NATIVE_TOOL;
 const copilot = SYNTHETIC_PROVEN_TOOL;

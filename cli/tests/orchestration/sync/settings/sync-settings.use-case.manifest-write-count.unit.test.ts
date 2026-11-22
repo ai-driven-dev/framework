@@ -1,12 +1,12 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { FileHash } from "../../../src/shared/domain/file-hash.js";
-import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
+import { FileHash } from "../../../../src/shared/domain/file-hash.js";
+import { FakeHostActions } from "../../../shared/testing/fake-host-actions.fake.js";
 import {
   SYNTHETIC_LISTED_TOOL,
   SYNTHETIC_NATIVE_TOOL,
   syntheticSyncCatalog,
-} from "../../shared/testing/synthetic-native-tool.builder.js";
+} from "../../../shared/testing/synthetic-native-tool.builder.js";
 import {
   FRAMEWORK_ONLY,
   MARKETPLACE,
@@ -14,7 +14,7 @@ import {
   PLUGIN,
   PROJECT_ROOT,
   SETTINGS_ABSOLUTE,
-} from "../testing/manifest-writes.builder.js";
+} from "../../testing/manifest-writes.builder.js";
 
 const { build, recorded, trackedSettingsHash } = manifestWrites(
   syntheticSyncCatalog(),

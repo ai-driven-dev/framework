@@ -3,7 +3,7 @@ import type {
   StatusQuery,
 } from "../../contexts/installation/application/report-status.use-case.js";
 import type { GlobalExecutionError } from "../domain/global-execution.model.js";
-import { forEachCategory } from "./for-each-category.js";
+import { forEachCategory } from "../sync/for-each-category.js";
 
 export interface ReportAllStatusResult {
   aiTools: ReportStatusResult;

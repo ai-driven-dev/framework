@@ -1,17 +1,17 @@
 import { describe, expect, it, vi } from "vitest";
-import type { RegisterPluginWithHost } from "../../../src/contexts/host-registration/application/register/register-plugin-with-host.use-case.js";
-import type { HostRegistrationOutcome } from "../../../src/contexts/host-registration/application/register/registration-outcome.js";
-import type { ClaimsView } from "../../../src/contexts/host-registration/contract/claims-view.js";
-import type { SyncContext } from "../../../src/contexts/installation/application/sync/load-sync-context.use-case.js";
-import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import { ActivateNativeTools } from "../../../src/orchestration/sync/activate-native-tools.use-case.js";
-import type { Scope } from "../../../src/shared/domain/scope.js";
-import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
-import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
+import type { RegisterPluginWithHost } from "../../../../src/contexts/host-registration/application/register/register-plugin-with-host.use-case.js";
+import type { HostRegistrationOutcome } from "../../../../src/contexts/host-registration/application/register/registration-outcome.js";
+import type { ClaimsView } from "../../../../src/contexts/host-registration/contract/claims-view.js";
+import type { SyncContext } from "../../../../src/contexts/installation/application/sync/load-sync-context.use-case.js";
+import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import { ActivateNativeTools } from "../../../../src/orchestration/sync/settings/activate-native-tools.use-case.js";
+import type { Scope } from "../../../../src/shared/domain/scope.js";
+import { aManifest } from "../../../contexts/installation/testing/manifest.builder.js";
+import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import {
   SECOND_SYNTHETIC_TOOL,
   SYNTHETIC_TOOL,
-} from "../../shared/testing/synthetic-tool-id.builder.js";
+} from "../../../shared/testing/synthetic-tool-id.builder.js";
 
 type Register = Pick<RegisterPluginWithHost, "execute">;
 

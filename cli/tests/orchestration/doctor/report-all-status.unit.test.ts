@@ -4,7 +4,7 @@ import type {
   ReportStatusResult,
   StatusQuery,
 } from "../../../src/contexts/installation/application/report-status.use-case.js";
-import { reportAllStatus } from "../../../src/orchestration/global/report-all-status.js";
+import { reportAllStatus } from "../../../src/orchestration/doctor/report-all-status.js";
 import {
   SYNTHETIC_IDE_TOOL,
   SYNTHETIC_TOOL,

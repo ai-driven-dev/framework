@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/contract/built-marketplace.js";
-import { describeMessage } from "../../../src/presentation/errors/describe-message.presenter.js";
+import type { BuiltMarketplaceEnsurer } from "../../../../src/contexts/installation/contract/built-marketplace.js";
+import { describeMessage } from "../../../../src/presentation/errors/describe-message.presenter.js";
 import {
   SYNTHETIC_NATIVE_TOOL,
   syntheticSyncCatalog,
-} from "../../shared/testing/synthetic-native-tool.builder.js";
-import { ActivatorFailingAtUpgrade, syncOf } from "../testing/sync-settings.builder.js";
+} from "../../../shared/testing/synthetic-native-tool.builder.js";
+import { ActivatorFailingAtUpgrade, syncOf } from "../../testing/sync-settings.builder.js";
 
 /** The build runs for every tool, before the branch that decides who writes the registration
  * down, so a build that fails is on the path of every sync. */

@@ -2,13 +2,13 @@ import { describe, expect, it } from "vitest";
 import type {
   RegistrationRecordData,
   RegistrationRecords,
-} from "../../../src/contexts/installation/ports/record/registration-records.js";
-import { claimsViewOf } from "../../../src/orchestration/sync/claims-view-of.js";
-import { claimsRecorded } from "../../shared/testing/host-record-reading.builder.js";
+} from "../../../../src/contexts/installation/ports/record/registration-records.js";
+import { claimsViewOf } from "../../../../src/orchestration/sync/settings/claims-view-of.js";
+import { claimsRecorded } from "../../../shared/testing/host-record-reading.builder.js";
 import {
   SECOND_SYNTHETIC_TOOL,
   SYNTHETIC_TOOL,
-} from "../../shared/testing/synthetic-tool-id.builder.js";
+} from "../../../shared/testing/synthetic-tool-id.builder.js";
 
 const rules = {
   claimedRefs: (registrations: RegistrationRecordData | undefined) =>

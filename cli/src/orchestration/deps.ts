@@ -38,13 +38,11 @@ import type { SetAgentModels } from "./agent-models/set-agent-models.use-case.js
 import type { CleanProject } from "./clean/clean-project.use-case.js";
 import type { CleanUserScope } from "./clean/clean-user-scope.use-case.js";
 import type { UninstallProjectTools } from "./clean/uninstall-project-tools.use-case.js";
+import type { DoctorAll } from "./doctor/doctor-all.js";
+import type { ReportAllStatus } from "./doctor/report-all-status.js";
 import type { RunDoctor } from "./doctor/run-doctor.use-case.js";
 import type { RunUserScopeDoctor } from "./doctor/run-user-scope-doctor.use-case.js";
 import type { Output } from "./domain/output.js";
-import type { DoctorAll } from "./global/doctor-all.js";
-import type { InstallAiToolWithPlugins } from "./global/install-ai-tool-with-plugins.use-case.js";
-import type { ReportAllStatus } from "./global/report-all-status.js";
-import type { UpdateTools } from "./global/update-tools.use-case.js";
 import type { AddMarketplace } from "./marketplace/add-marketplace.use-case.js";
 import type { CheckMarketplaceUpstream } from "./marketplace/check-marketplace-upstream.use-case.js";
 import type { ListMarketplaceCatalogs } from "./marketplace/list-marketplace-catalogs.use-case.js";
@@ -55,11 +53,13 @@ import type { InstallPlugin } from "./plugin/install-plugin.use-case.js";
 import type { RemovePlugin } from "./plugin/remove-plugin.use-case.js";
 import type { UpdateUserPlugin } from "./plugin/update-user-plugin.use-case.js";
 import type { Prompter } from "./ports/prompter.js";
+import type { InstallAiToolWithPlugins } from "./setup/install-ai-tool-with-plugins.use-case.js";
 import type { RunSetup } from "./setup/run-setup.use-case.js";
 import type { RunSync } from "./sync/run-sync.use-case.js";
 import type { RunUserScopeSync } from "./sync/run-user-scope-sync.use-case.js";
-import type { SyncNativeActivation } from "./sync/sync-native-activation.use-case.js";
-import type { SyncSettings } from "./sync/sync-settings.use-case.js";
+import type { SyncNativeActivation } from "./sync/settings/sync-native-activation.use-case.js";
+import type { SyncSettings } from "./sync/settings/sync-settings.use-case.js";
+import type { UpdateTools } from "./sync/update-tools.use-case.js";
 import type { ChooseIdentity } from "./telemetry/choose-identity.use-case.js";
 
 export interface FactoryOptions {

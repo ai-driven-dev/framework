@@ -5,7 +5,7 @@ import type {
   RestoreGlobalResult,
 } from "../../../src/contexts/installation/application/restore/project/restore-global.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { RestoreAll } from "../../../src/orchestration/global/restore-all.use-case.js";
+import { RestoreAll } from "../../../src/orchestration/sync/restore-all.use-case.js";
 import { CheckboxRecordingPrompter } from "../../shared/testing/checkbox-recording-prompter.fake.js";
 import { SYNTHETIC_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
 

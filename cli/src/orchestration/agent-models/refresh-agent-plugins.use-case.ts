@@ -7,7 +7,7 @@ import type { Scope } from "../../shared/domain/scope.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
 import { AgentPluginActivationError } from "../orchestration.error.js";
 import type { UpdateUserPlugin } from "../plugin/update-user-plugin.use-case.js";
-import type { SyncSettings } from "../sync/sync-settings.use-case.js";
+import type { SyncSettings } from "../sync/settings/sync-settings.use-case.js";
 
 export interface RefreshAgentPluginsRequest {
   readonly projectRoot: string;

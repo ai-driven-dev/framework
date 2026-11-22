@@ -1,4 +1,4 @@
-import type { SyncSettingsResult } from "../domain/sync-settings.model.js";
+import type { SyncSettingsResult } from "../../domain/sync-settings.model.js";
 import type { SyncSettings } from "./sync-settings.use-case.js";
 
 export interface SyncNativeActivationRequest {

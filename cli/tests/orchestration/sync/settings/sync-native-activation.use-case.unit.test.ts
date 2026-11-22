@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { SyncNativeActivation } from "../../../src/orchestration/sync/sync-native-activation.use-case.js";
+import { SyncNativeActivation } from "../../../../src/orchestration/sync/settings/sync-native-activation.use-case.js";
 
 const OUTCOME = {
   activated: [],

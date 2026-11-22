@@ -1,10 +1,10 @@
 import type {
   BuiltMarketplaceEnsurer,
   MarketplaceToBuild,
-} from "../../contexts/installation/contract/built-marketplace.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import type { AiToolId, ToolId } from "../../shared/domain/tool.js";
-import type { Logger } from "../../shared/ports/logger.js";
+} from "../../../contexts/installation/contract/built-marketplace.js";
+import type { ToolCatalog } from "../../../contexts/tools/contract/tool-catalog.js";
+import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
+import type { Logger } from "../../../shared/ports/logger.js";
 
 /** Builds the tree a native activation points a tool at. A tree that cannot be built is warned
  * about and left out, so one marketplace never stops the activation of the others. */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { forEachCategory } from "../../../src/orchestration/global/for-each-category.js";
+import { forEachCategory } from "../../../src/orchestration/sync/for-each-category.js";
 
 describe("forEachCategory", () => {
   it("runs ai then ide, one after the other, and returns each result", async () => {

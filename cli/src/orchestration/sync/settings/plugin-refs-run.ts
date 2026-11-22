@@ -1,6 +1,6 @@
-import type { SyncContext } from "../../contexts/installation/application/sync/load-sync-context.use-case.js";
-import type { Scope } from "../../shared/domain/scope.js";
-import type { ToolId } from "../../shared/domain/tool.js";
+import type { SyncContext } from "../../../contexts/installation/application/sync/load-sync-context.use-case.js";
+import type { Scope } from "../../../shared/domain/scope.js";
+import type { ToolId } from "../../../shared/domain/tool.js";
 
 export type SyncedManifest = SyncContext["manifest"];
 type SyncedRecord = NonNullable<ReturnType<SyncContext["records"]["get"]>>;

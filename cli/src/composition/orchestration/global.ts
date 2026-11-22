@@ -17,19 +17,19 @@ import { Restore } from "../../contexts/installation/application/restore/restore
 import { RestoreAllPlugins } from "../../contexts/installation/application/restore/restore-all-plugins.use-case.js";
 import { RestoreToolFiles } from "../../contexts/installation/application/restore/restore-tool-files.use-case.js";
 import { UpdateTool } from "../../contexts/installation/application/update/update-tool.use-case.js";
-import { InstallAiToolWithPlugins } from "../../orchestration/global/install-ai-tool-with-plugins.use-case.js";
-import { reportAllStatus } from "../../orchestration/global/report-all-status.js";
-import { ResolveUpdateDecision } from "../../orchestration/global/resolve-update-decision.use-case.js";
-import { RestoreAll } from "../../orchestration/global/restore-all.use-case.js";
-import { UpdateTools } from "../../orchestration/global/update-tools.use-case.js";
+import { reportAllStatus } from "../../orchestration/doctor/report-all-status.js";
+import { InstallAiToolWithPlugins } from "../../orchestration/setup/install-ai-tool-with-plugins.use-case.js";
 import { InstallGlobalPlugins } from "../../orchestration/setup/install-global-plugins.use-case.js";
 import {
   SetupMachineScope,
   type SyncMachineScope,
 } from "../../orchestration/setup/setup-machine-scope.use-case.js";
+import { ResolveUpdateDecision } from "../../orchestration/sync/resolve-update-decision.use-case.js";
+import { RestoreAll } from "../../orchestration/sync/restore-all.use-case.js";
 import { RunSync } from "../../orchestration/sync/run-sync.use-case.js";
 import { RunUserScopeSync } from "../../orchestration/sync/run-user-scope-sync.use-case.js";
-import type { SyncSettings } from "../../orchestration/sync/sync-settings.use-case.js";
+import type { SyncSettings } from "../../orchestration/sync/settings/sync-settings.use-case.js";
+import { UpdateTools } from "../../orchestration/sync/update-tools.use-case.js";
 import type { Installation } from "../installation.js";
 import type { Base } from "../shared.js";
 import type { Marketplace } from "./marketplace.js";
