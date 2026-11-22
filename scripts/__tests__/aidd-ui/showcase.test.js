@@ -719,17 +719,22 @@ describe("aidd-ui showcase", () => {
       assert.match(home, /\.drawer \{ position: fixed;/);
     });
 
-    it("floats the one review button at the bottom right on a wide window, and keeps it in the top bar of a narrow one", () => {
+    it("keeps the one review button in the sidebar's foot on a wide window and the top bar on a narrow one, never fixed", () => {
       for (const [name, html] of Object.entries(pagesOf())) {
         if (!name.endsWith(".html")) continue;
         assert.equal(html.match(/id="open-review"/g).length, 1, `${name}: one entry point`);
         assert.match(html, /<button type="button" class="open-review" id="open-review" aria-controls="review" aria-expanded="false">/, name);
       }
-      const home = pagesOf()["home.html"];
-      const style = home.match(/<style>([\s\S]*?)<\/style>/)[1];
-      assert.match(style, /\n\.open-review \{[^}]*position: fixed; right: [^;]+; bottom: [^;]+;/, "fixed bottom right");
-      const narrow = style.match(/@media \(max-width: 768px\) \{([\s\S]*?)\n\}\n/)[1];
-      assert.match(narrow, /\.open-review \{[^}]*position: static;/, "back in the top bar");
+      const style = pagesOf()["home.html"].match(/<style>([\s\S]*?)<\/style>/)[1];
+      assert.match(style, /\n\.open-review \{/, "the base rule");
+      assert.doesNotMatch(style, /\.open-review \{[^}]*position:/, "no position at any width: it sits where its markup is");
+    });
+
+    it("keeps the review button in view on first paint: the sidebar is one viewport tall, its list scrolls, its foot never shrinks", () => {
+      const style = pagesOf()["home.html"].match(/<style>([\s\S]*?)<\/style>/)[1];
+      assert.match(style, /\n\.shell > nav \{[^}]*position: sticky; top: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column;/);
+      assert.match(style, /\n\.nav-scroll \{[^}]*flex: 1; min-height: 0; overflow: auto;/);
+      assert.match(style, /\n\.review-foot \{ flex: none; \}/);
     });
 
     it("marks the chosen verdict of a record with a ring and a mark, the revision with a soft fill", () => {
@@ -1282,11 +1287,11 @@ describe("aidd-ui showcase", () => {
       assert.match(narrow[2], /\.board \.card \{ grid-template-columns: minmax\(0, 1fr\)/);
     });
 
-    it("leaves the sidebar no entry of its own for the review: the button floats, and the page keeps room for it", () => {
+    it("gives the review its entry at the foot of the sidebar and reserves no room under the page", () => {
       const html = pagesOf()["_journey-onboarding.html"];
       assert.match(rule(html, ".review-foot"), /^\s*flex: none;\s*$/);
-      assert.match(rule(html, ".open-review"), /position: fixed/);
-      assert.match(html, /\nmain, main\.wide \{ padding-bottom: calc\(var\(--s5\) \+ var\(--h-touch\) \+ var\(--s6\)\); \}/);
+      assert.match(navOf(html), /<div class="review-foot">[\s\S]*<\/div><\/nav>$/);
+      assert.doesNotMatch(html, /main, main\.wide \{[^}]*padding-bottom/);
     });
 
     it("splits the elements by category, in the order of the table, a record under its role", () => {

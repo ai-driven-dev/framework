@@ -30,6 +30,13 @@ describe("the verdicts beside the state tabs", () => {
     }
   });
 
+  it("lets the verdict bar follow the preview on a narrow window instead of sticking over it", () => {
+    const style = pagesOf()["home.html"].match(/<style>([\s\S]*?)<\/style>/)[1];
+    assert.match(style, /\n\.verdict-bar \{[^}]*position: sticky; bottom: 0;/, "sticky on a wide window");
+    const narrow = style.match(/@media \(max-width: 768px\) \{([\s\S]*?)\n\}\n/)[1];
+    assert.match(narrow, /\.verdict-bar \{[^}]*position: static;/);
+  });
+
   it("hands every page the reviewable records and their states, settled or not, for the copy to cover", () => {
     const html = pagesOf()["_journey-onboarding.html"];
     const records = JSON.parse(html.match(/<script type="application\/json" id="review-records">([^<]*)<\/script>/)[1]);

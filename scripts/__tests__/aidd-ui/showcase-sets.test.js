@@ -122,7 +122,7 @@ describe("aidd-ui showcase sets", () => {
     it("gives each row of a round the height of its tallest twin, the heads and each axis row alike", () => {
       const { SCRIPT } = require(path.join(LIB, "variants.cjs"));
       const part = (height) => ({ offsetHeight: height, style: {} });
-      const column = (head, rows) => ({ querySelector: () => head, querySelectorAll: () => rows });
+      const column = (head, rows) => ({ offsetTop: 0, querySelector: () => head, querySelectorAll: () => rows });
       const heads = [part(80), part(120)];
       const rows = [[part(20), part(60)], [part(50), part(30)]];
       const round = { querySelectorAll: () => [column(heads[0], rows[0]), column(heads[1], rows[1])] };
@@ -130,6 +130,34 @@ describe("aidd-ui showcase sets", () => {
       new Function("document", "window", SCRIPT)({ querySelectorAll: all, querySelector: () => null, getElementById: () => null }, { addEventListener() {} });
       assert.deepEqual(heads.map((each) => each.style.minHeight), ["120px", "120px"]);
       assert.deepEqual(rows.map((each) => each.map((row) => row.style.minHeight)), [["50px", "60px"], ["50px", "60px"]]);
+    });
+
+    it("leaves stacked columns their own height: no head nor axis row of a one-column round keeps a min-height", () => {
+      const { SCRIPT } = require(path.join(LIB, "variants.cjs"));
+      const part = (height) => ({ offsetHeight: height, style: { minHeight: "120px" } });
+      const column = (top, head, rows) => ({ offsetTop: top, querySelector: () => head, querySelectorAll: () => rows });
+      const heads = [part(80), part(120)];
+      const rows = [[part(20)], [part(60)]];
+      const round = { querySelectorAll: () => [column(0, heads[0], rows[0]), column(500, heads[1], rows[1])] };
+      const all = (selector) => (selector === ".variants" ? [round] : []);
+      new Function("document", "window", SCRIPT)({ querySelectorAll: all, querySelector: () => null, getElementById: () => null }, { addEventListener() {} });
+      assert.deepEqual(heads.map((each) => each.style.minHeight), ["", ""]);
+      assert.deepEqual(rows.flat().map((each) => each.style.minHeight), ["", ""]);
+    });
+
+    it("sticks a column head below the top bar of a narrow window, not under it", () => {
+      const { STYLE } = require(path.join(LIB, "variants.cjs"));
+      assert.match(STYLE, /@media \(max-width: 768px\) \{ \.column-head \{ top: 56px; \} \}/);
+    });
+
+    it("puts a column head's slack above its verdict controls, not between them and the axes", () => {
+      const { STYLE } = require(path.join(LIB, "variants.cjs"));
+      assert.match(STYLE, /\.column-head \.choose \{[^}]*margin-top: auto/);
+    });
+
+    it("keeps the comment of a variant under its verdict controls, inside its head", () => {
+      const html = pagesOf([SET()])["_set-layout.html"];
+      assert.match(html, /<header class="column-head">[\s\S]*?<span class="choose">[\s\S]*?<\/span><textarea class="colcomment"[^>]*hidden>[\s\S]*?<\/header>/);
     });
 
     describe("the names it shows", () => {
@@ -166,9 +194,9 @@ describe("aidd-ui showcase sets", () => {
       assert.match(pagesOf([SET({ id: "brand-colours" })])["_set-brand-colours.html"], /<h1>Brand colours<\/h1>/);
     });
 
-    it("leaves room under the content for the floating review button on a set page", () => {
+    it("reserves no room under a set page for a review button, which no longer floats", () => {
       const { STYLE } = require(path.join(LIB, "variants.cjs"));
-      assert.match(pagesOf([SET()])["_set-layout.html"], /main, main\.wide \{[^}]*padding-bottom/);
+      assert.doesNotMatch(pagesOf([SET()])["_set-layout.html"], /main, main\.wide \{[^}]*padding-bottom/);
       assert.doesNotMatch(STYLE, /main\.wide/, "one rule for it, the shell's");
     });
 
