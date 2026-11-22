@@ -5,7 +5,7 @@ const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 const { describe, it, before, after } = require("node:test");
 
-const SCRIPT = path.resolve(__dirname, "../../plugins/aidd-dev/skills/02-implement/scripts/validate-implement.cjs");
+const SCRIPT = path.resolve(__dirname, "../../../plugins/aidd-dev/skills/02-implement/scripts/validate-implement.cjs");
 
 /**
  * A plan folder is described by the plan's status and, per phase, its status and `Depends on`.
@@ -58,7 +58,7 @@ function withoutComments(text) {
   }
   return out;
 }
-const RUN_TEMPLATE = path.resolve(__dirname, "../../plugins/aidd-dev/skills/02-implement/assets/run-template.md");
+const RUN_TEMPLATE = path.resolve(__dirname, "../../../plugins/aidd-dev/skills/02-implement/assets/run-template.md");
 
 function folder(plan, phases, { crlf = false, runs = plan === "implemented" ? RUN_MD : null, into = root } = {}) {
   const dir = fs.mkdtempSync(path.join(into, "plan-"));

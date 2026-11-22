@@ -1,26 +1,21 @@
 #!/usr/bin/env node
-// Renders the tables a person must not type by hand: the agents and hooks each plugin ships
-// (docs/CATALOG.md, from plugins/*/agents/ and plugins/*/hooks/hooks.json) and what each tool is declared to
-// support (docs/COMPATIBILITY.md and the tool list in README.md, from the CLI's stored
-// tool-support record), the plugin grid in README.md
-// (from the tree and docs/assets/plugins/plugins.json). Each block sits between its own
-// markers. `--check` reports instead of writing; `--root <dir>` points the script at another
-// tree, which is how its test runs it.
+// Renders the tables that read the CLI's stored tool-support record, so they stay outside
+// scripts/check/run.cjs (the framework runs without the CLI): docs/COMPATIBILITY.md and the
+// tool list in README.md. Each block sits between its own markers. Everything else generated
+// (catalogs, README grid and counts, docs/CATALOG.md) is `node scripts/check/run.cjs --fix`.
+// `--check` reports instead of writing; `--root <dir>` points the script at another tree,
+// which is how its test runs it.
 
-import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const rootFlag = process.argv.indexOf("--root");
 const ROOT =
   rootFlag === -1 ? fileURLToPath(new URL("..", import.meta.url)) : `${process.argv[rootFlag + 1]}/`;
 const COMPATIBILITY = `${ROOT}docs/COMPATIBILITY.md`;
-const CATALOG = `${ROOT}docs/CATALOG.md`;
 const README = `${ROOT}README.md`;
 const SUPPORT_RECORD = `${ROOT}cli/tests/golden/snapshots/tool-support/surface.json`;
 
-const PLUGIN_CONFIG = `${ROOT}docs/assets/plugins/plugins.json`;
-
-const SCRIPT_REFERENCE = /\$\{CLAUDE_PLUGIN_ROOT\}\/([^\s"]+)/g;
 const SURFACES = [
   ["skills", "Skills"],
   ["agents", "Agents"],
@@ -43,47 +38,6 @@ function replaceBlock(text, name, body) {
 function table(header, rows) {
   const line = (cells) => `| ${cells.join(" | ")} |`;
   return [line(header), line(header.map(() => "---")), ...rows.map(line)].join("\n");
-}
-
-/** The agents and hooks one plugin ships, as tables. Nothing when it ships neither. */
-function extrasBlock(plugin) {
-  const sections = [];
-
-  const agents = agentRows(plugin);
-  if (agents.length > 0) sections.push(`**Agents**\n\n${table(["Agent", "Role"], agents)}`);
-
-  const hooks = hookRows(plugin);
-  if (hooks.length > 0) sections.push(`**Hooks**\n\n${table(["Event", "Runs"], hooks)}`);
-
-  return sections.join("\n\n");
-}
-
-function agentRows(plugin) {
-  const directory = `${ROOT}plugins/${plugin}/agents`;
-  if (!existsSync(directory)) return [];
-  return readdirSync(directory)
-    .sort()
-    .filter((file) => file.endsWith(".md"))
-    .map((file) => {
-      const description = readFileSync(`${directory}/${file}`, "utf8").match(/^description:\s*(.+)$/m)?.[1];
-      if (!description) throw new Error(`${plugin}/agents/${file} has no description`);
-      return [`\`${file.replace(/\.md$/, "")}\``, description.split(". ")[0].replace(/\.$/, "")];
-    });
-}
-
-function hookRows(plugin) {
-  const manifest = `${ROOT}plugins/${plugin}/hooks/hooks.json`;
-  if (!existsSync(manifest)) return [];
-  return Object.entries(JSON.parse(readFileSync(manifest, "utf8")).hooks ?? {}).map(([event, handlers]) => {
-    const scripts = [...new Set([...JSON.stringify(handlers).matchAll(SCRIPT_REFERENCE)].map((match) => match[1]))];
-    return [`\`${event}\``, scripts.map((script) => `\`${script}\``).join(" · ")];
-  });
-}
-
-function pluginsWithExtras() {
-  return readdirSync(`${ROOT}plugins`)
-    .sort()
-    .filter((plugin) => agentRows(plugin).length > 0 || hookRows(plugin).length > 0);
 }
 
 /** One row per tool: how it installs, then what each surface becomes. A surface no tool carries gets no column. */
@@ -143,83 +97,8 @@ function toolsTable() {
   );
 }
 
-function agentCount(plugin) {
-  const agents = `${ROOT}plugins/${plugin}/agents`;
-  if (!existsSync(agents)) return 0;
-  return readdirSync(agents).filter((file) => file.endsWith(".md")).length;
-}
-
-function hookCount(plugin) {
-  const manifest = `${ROOT}plugins/${plugin}/hooks/hooks.json`;
-  if (!existsSync(manifest)) return 0;
-  return Object.keys(JSON.parse(readFileSync(manifest, "utf8")).hooks ?? {}).length;
-}
-
-function skillNames(plugin) {
-  const skills = `${ROOT}plugins/${plugin}/skills`;
-  if (!existsSync(skills)) return [];
-  return readdirSync(skills, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory() && existsSync(`${skills}/${entry.name}/SKILL.md`))
-    .map((entry) => entry.name)
-    .sort()
-    .map((name) => name.replace(/^\d+-/, ""));
-}
-
-/** The plugins in config order, refusing a plugin with no entry or an entry with no plugin. */
-function plugins() {
-  const config = JSON.parse(readFileSync(PLUGIN_CONFIG, "utf8"));
-  const plugins = readdirSync(`${ROOT}plugins`, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name);
-  const missing = plugins.filter((plugin) => !(plugin in config));
-  const unknown = Object.keys(config).filter((plugin) => !plugins.includes(plugin));
-  if (missing.length > 0 || unknown.length > 0) {
-    throw new Error(`plugins.json and plugins/ disagree. No entry: ${missing}. No plugin: ${unknown}`);
-  }
-  return Object.keys(config).map((plugin) => ({ plugin, entry: config[plugin], skills: skillNames(plugin), agents: agentCount(plugin), hooks: hookCount(plugin) }));
-}
-
-const STATUS = {
-  stable: { label: "stable", color: "2da44e" },
-  beta: { label: "beta", color: "bf8700" },
-  alpha: { label: "alpha", color: "cf222e" },
-  preview: { label: "preview", color: "0969da" },
-};
-
-const plural = (count, word) => `${count} ${word}${count === 1 ? "" : "s"}`;
-
-/** A grid of three columns of clickable cards: GitHub shows an HTML table the way the old README did. */
-function pluginGrid() {
-  const cell = ({ plugin, entry, skills, agents, hooks }) => {
-    const status = STATUS[entry.status];
-    const counts = [plural(skills.length, "skill"), agents > 0 && plural(agents, "agent"), hooks > 0 && plural(hooks, "hook")]
-      .filter(Boolean)
-      .join(" · ");
-    return [
-      '<td width="33%" valign="top">',
-      `<a href="plugins/${plugin}/README.md">`,
-      `<img align="right" alt="${status.label}" src="https://img.shields.io/badge/${status.label}-${status.color}?style=flat-square" />`,
-      `<h3>${entry.emoji} ${plugin}</h3>`,
-      `${counts}<br />`,
-      `${entry.description}`,
-      "</a>",
-      "</td>",
-    ].join("\n");
-  };
-  const all = plugins();
-  const rows = [];
-  for (let at = 0; at < all.length; at += 3) {
-    const row = all.slice(at, at + 3).map(cell);
-    while (row.length < 3) row.push('<td width="33%"></td>');
-    rows.push(`<tr>\n${row.join("\n")}\n</tr>`);
-  }
-  return `<table>\n${rows.join("\n")}\n</table>`;
-}
-
 const targets = [
   [README, "tools", toolsTable],
-  [README, "plugins", pluginGrid],
-  ...pluginsWithExtras().map((plugin) => [CATALOG, `extras-${plugin}`, () => extrasBlock(plugin)]),
   [COMPATIBILITY, "support", supportTables],
 ];
 

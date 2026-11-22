@@ -1,8 +1,10 @@
 name: Validate
 
 # Runs the pre-commit hooks against the full tree on every push and pull request, so work
-# that bypassed lefthook locally is gated by the same logic. The generator hooks `git add`
-# what they regenerate instead of failing on drift, so a step below re-checks against HEAD.
+# that bypassed lefthook locally is gated by the same logic. Framework content is checked
+# once, by the step after the hooks: `framework-content` is excluded from the hooks run because
+# it writes with --fix. One job, so the required check `lefthook (framework-local checks)` covers it. The CLI-coupled generator hook `git add`s what it regenerates instead of
+# failing on drift, so a step below re-checks against HEAD.
 
 on:
   push:
@@ -23,7 +25,8 @@ jobs:
       # cli-ci.yml owns these three unconditionally, so running them again buys no coverage.
       # cli-type-honesty is deliberately NOT excluded: no cli-ci.yml job runs it, making this
       # its only CI coverage. Recipe validation builds the CLI and needs its separate install.
-      LEFTHOOK_EXCLUDE: "cli-biome,cli-architecture,cli-typecheck"
+      # framework-content runs in its own step below, without --fix.
+      LEFTHOOK_EXCLUDE: "cli-biome,cli-architecture,cli-typecheck,framework-content"
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -48,31 +51,19 @@ jobs:
           pnpm install --frozen-lockfile --ignore-scripts
           pnpm --dir cli install --frozen-lockfile --ignore-scripts
 
+      # Fails on a finding absent from the baseline in scripts/check/baseline.json, on an engine copy that drifted, or on a stale generated file (no --fix: nothing is written).
+      - name: Check framework content
+        run: node scripts/check/run.cjs
+
       - name: Run pre-commit hooks against the full tree
         run: pnpm exec lefthook run pre-commit --all-files --force
 
-      # The generator hooks `git add` their output and never fail on drift, so a stale
-      # CATALOG.md or README count passes the step above in silence. Against
-      # HEAD, not the index: the generators already staged, so a plain `git diff` is empty.
-      - name: Fail if a generated file drifted from what pre-commit regenerated
+      # The generator hook `git add`s its output and never fails on drift, so a stale tool
+      # list or COMPATIBILITY.md passes the step above in silence. Against HEAD, not the
+      # index: the generator already staged, so a plain `git diff` is empty.
+      - name: Fail if a CLI-coupled generated file drifted from what pre-commit regenerated
         run: |
-          if ! git diff --exit-code HEAD -- 'plugins/*/CATALOG.md' README.md docs/ARCHITECTURE.md docs/COMPATIBILITY.md 'docs/assets/plugins/*.svg'; then
+          if ! git diff --exit-code HEAD -- README.md docs/COMPATIBILITY.md; then
             echo "::error::A generated file is stale. Run 'pnpm exec lefthook run pre-commit --all-files --force' locally and commit the result."
             exit 1
           fi
-
-  contracts:
-    name: contracts (artifact validation)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Setup Node
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: "22"
-
-      # Fails on a finding absent from the baseline in scripts/check/baseline.json, or on an engine copy that drifted.
-      - name: Validate artifacts against their contracts
-        run: node scripts/check/run.cjs

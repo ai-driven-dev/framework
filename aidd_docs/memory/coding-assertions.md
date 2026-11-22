@@ -30,7 +30,7 @@ Never state in a commit message or a report anything not just observed in output
 
 | Order | Command | Checks |
 | ----- | ------- | ------ |
-| 1 | `pnpm exec lefthook run pre-commit --all-files` | JSON and YAML validity, `scripts/` tests, skill frontmatter and argument hints, cross-plugin orthogonality and router coherence (`scripts/check-architecture-rules.js`), context imports and reference form, markdown links, the paths the prose names, a sentence written in two documents (`scripts/check-doc-duplication.js`) and a path from a contributor's machine (`scripts/check-no-local-paths.js`); `cli` lint, architecture, typecheck and type honesty when `cli/` changed. `cli` knip and the full `cli` suite are pre-push, not pre-commit — see below |
+| 1 | `pnpm exec lefthook run pre-commit --all-files` | JSON and YAML validity, `scripts/` tests, router coherence for a skill with no flowchart (`scripts/check-architecture-rules.js`), and the framework content contracts through `node scripts/check/run.cjs --fix` on the staged files (frontmatter, argument hints, context imports, markdown links, the paths the prose names, duplicated sentences, local paths, generated catalogs); `cli` lint, architecture, typecheck and type honesty when `cli/` changed. `cli` knip and the full `cli` suite are pre-push, not pre-commit — see below |
 | 2 | `pnpm exec commitlint --edit` | the message against `commitlint.config.cjs` |
 
 Same hook regenerates each plugin's `CATALOG.md`, and the README counts, and stages them.
@@ -38,7 +38,7 @@ Same hook regenerates each plugin's `CATALOG.md`, and the README counts, and sta
 Every `cli` job is globbed on `cli/**`. A change under `kanban/` alone fires no local job; run `cd kanban && pnpm test` by hand. CI does cover it — `cli-ci.yml`'s `kanban-checks`, see `deployment.md`.
 
 - `context-reference-form` reads only the two files `memory.cjs`'s `TARGET_FILES` names: root `CLAUDE.md` and root `AGENTS.md`. It never walks the tree, so `cli/CLAUDE.md`'s memory block is outside it.
-- `context-imports` walks the whole tree (`scripts/check-context-imports.js`'s `collectContextFiles`).
+- `context-imports` walks the whole tree (`scripts/check/contracts/custom/context-imports.cjs`).
 - `context-reference-form` also globs `plugins/aidd-context/hooks/memory.cjs`, whose table is its source of truth.
 
 ## Before push

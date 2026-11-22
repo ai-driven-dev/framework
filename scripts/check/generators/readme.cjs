@@ -1,6 +1,6 @@
 "use strict";
 // README.md, from the plugin tree and docs/assets/plugins/plugins.json: the hero counts and the plugin grid.
-// The tool list, from the CLI's tool-support record, stays with scripts/sync-generated-docs.mjs.
+// The tool list, from the CLI's tool-support record, stays with scripts/sync-generated-docs.mjs (hook step).
 const fs = require("node:fs");
 const path = require("node:path");
 
