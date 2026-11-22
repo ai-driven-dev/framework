@@ -1,7 +1,7 @@
 import type {
-  AgentPluginHosts,
   AgentPluginPlacement,
-} from "../../contexts/installation/application/agents/agent-plugin-hosts.js";
+  LocateAgentPlugins,
+} from "../../contexts/installation/application/agents/locate-agent-plugins.use-case.js";
 import type { UpdatePlugin } from "../../contexts/installation/application/plugin/update-plugin.use-case.js";
 import type { Scope } from "../../shared/domain/scope.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
@@ -17,7 +17,7 @@ export interface RefreshAgentPluginsRequest {
 }
 
 export interface RefreshAgentPluginsDeps {
-  readonly pluginHosts: Pick<AgentPluginHosts, "locate">;
+  readonly pluginHosts: Pick<LocateAgentPlugins, "execute">;
   readonly updatePlugin: Pick<UpdatePlugin, "execute">;
   readonly updateUserPlugin: Pick<UpdateUserPlugin, "execute">;
   readonly syncSettings: Pick<SyncSettings, "execute">;
@@ -34,7 +34,7 @@ export class RefreshAgentPlugins {
 
   /** The plugins re-installed with the new models. */
   async execute(options: RefreshAgentPluginsRequest): Promise<readonly string[]> {
-    const placed = await this.deps.pluginHosts.locate(options.hosts);
+    const placed = await this.deps.pluginHosts.execute(options.hosts);
     const rewritten = await this.rewrite(placed, options.projectRoot);
     if (placed.installed.length > 0) await this.activate(options, placed.installed);
     if (options.scope === "user" && placed.machine.length > 0) {

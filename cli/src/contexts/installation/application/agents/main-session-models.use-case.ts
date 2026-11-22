@@ -2,7 +2,7 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { AgentModelStore, MainModels } from "../../ports/agent-model-store.js";
 import type { MainModelRecord, MainSessionSettings } from "../../ports/main-session-settings.js";
-import type { MainSessionLocation, MainSessionLocator } from "./main-session-locator.js";
+import type { LocateMainSession, MainSessionLocation } from "./locate-main-session.use-case.js";
 
 /** A tool whose main session's settings file a run changed, and that file. */
 export interface MainSessionChange {
@@ -49,7 +49,7 @@ export interface MainSessionModelsDeps {
   readonly fs: FileReader & FileWriter;
   readonly store: AgentModelStore;
   readonly settings: MainSessionSettings;
-  readonly mainSessionLocator: Pick<MainSessionLocator, "locate">;
+  readonly mainSessionLocator: Pick<LocateMainSession, "execute">;
 }
 
 /**
@@ -93,7 +93,7 @@ export class MainSessionModels {
   private async planHost(
     run: HostRun
   ): Promise<{ changes: FileChange[]; skipped: MainSessionSkip[] }> {
-    const located = await this.deps.mainSessionLocator.locate(run.host);
+    const located = await this.deps.mainSessionLocator.execute(run.host);
     const restored = await this.restoreStale(run, located.path);
     if (restored.skip !== undefined) return { changes: [], skipped: [restored.skip] };
     const installed = await this.install(run, located);

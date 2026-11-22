@@ -12,23 +12,23 @@ export interface MainSessionLocation {
   readonly path: string | undefined;
 }
 
-/** What MainSessionLocator is built from. */
-export interface MainSessionLocatorDeps {
+/** What LocateMainSession is built from. */
+export interface LocateMainSessionDeps {
   readonly fs: FileReader;
   readonly homedir: () => string;
   readonly environment: Environment;
 }
 
 /** Where a host's main session reads its model, and what that host answers about its models. */
-export class MainSessionLocator {
+export class LocateMainSession {
   constructor(
-    private readonly deps: MainSessionLocatorDeps,
+    private readonly deps: LocateMainSessionDeps,
     private readonly tools: ToolCatalog
   ) {}
 
   /** The host's models and the file its main session reads. Both absent for a host aidd does not
    * drive; the path alone absent where aidd leaves the main session alone. */
-  async locate(host: string): Promise<MainSessionLocation> {
+  async execute(host: string): Promise<MainSessionLocation> {
     const id = this.tools.aiToolId(host);
     if (id === null) return { models: null, path: undefined };
     const profile = this.tools.aiProfile(id);

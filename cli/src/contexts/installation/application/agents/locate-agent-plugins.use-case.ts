@@ -13,13 +13,13 @@ export interface AgentPluginPlacement<Host extends string> {
 }
 
 /** Reads this project's manifest and the machine's for where each host's plugins live. */
-export class AgentPluginHosts {
+export class LocateAgentPlugins {
   constructor(
     private readonly manifestRepo: Pick<ManifestRepository, "load">,
     private readonly userManifestRepo: Pick<ManifestRepository, "load">
   ) {}
 
-  async locate<Host extends string>(hosts: readonly Host[]): Promise<AgentPluginPlacement<Host>> {
+  async execute<Host extends string>(hosts: readonly Host[]): Promise<AgentPluginPlacement<Host>> {
     const userManifest = await this.userManifestRepo.load();
     const manifest = await this.manifestRepo.load();
     const installed = hosts.filter((host) => manifest?.hasTool(host) === true);

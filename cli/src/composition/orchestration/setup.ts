@@ -1,6 +1,6 @@
 import { homedir } from "node:os";
-import { AgentPluginHosts } from "../../contexts/installation/application/agents/agent-plugin-hosts.js";
-import { MainSessionLocator } from "../../contexts/installation/application/agents/main-session-locator.js";
+import { LocateAgentPlugins } from "../../contexts/installation/application/agents/locate-agent-plugins.use-case.js";
+import { LocateMainSession } from "../../contexts/installation/application/agents/locate-main-session.use-case.js";
 import { MainSessionModels } from "../../contexts/installation/application/agents/main-session-models.use-case.js";
 import { RecordAgentProviders } from "../../contexts/installation/application/agents/record-agent-providers.use-case.js";
 import { RestoreAgentProviders } from "../../contexts/installation/application/agents/restore-agent-providers.use-case.js";
@@ -40,10 +40,10 @@ export function wireAgentModels({
     fs,
     store: agentModelStore,
     settings: jsoncMainSessionSettings,
-    mainSessionLocator: new MainSessionLocator({ fs, homedir, environment }, base.tools),
+    mainSessionLocator: new LocateMainSession({ fs, homedir, environment }, base.tools),
   });
   const refresh = new RefreshAgentPlugins({
-    pluginHosts: new AgentPluginHosts(manifestRepo, userManifestRepo),
+    pluginHosts: new LocateAgentPlugins(manifestRepo, userManifestRepo),
     updatePlugin: p.pluginUpdateUseCase,
     updateUserPlugin: p.userPluginUpdateUseCase,
     syncSettings: m.syncSettingsUseCase,

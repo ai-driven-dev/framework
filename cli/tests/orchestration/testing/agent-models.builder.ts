@@ -1,6 +1,6 @@
 import { join } from "node:path";
-import { AgentPluginHosts } from "../../../src/contexts/installation/application/agents/agent-plugin-hosts.js";
-import { MainSessionLocator } from "../../../src/contexts/installation/application/agents/main-session-locator.js";
+import { LocateAgentPlugins } from "../../../src/contexts/installation/application/agents/locate-agent-plugins.use-case.js";
+import { LocateMainSession } from "../../../src/contexts/installation/application/agents/locate-main-session.use-case.js";
 import { MainSessionModels } from "../../../src/contexts/installation/application/agents/main-session-models.use-case.js";
 import { RecordAgentProviders } from "../../../src/contexts/installation/application/agents/record-agent-providers.use-case.js";
 import { RestoreAgentProviders } from "../../../src/contexts/installation/application/agents/restore-agent-providers.use-case.js";
@@ -51,7 +51,7 @@ export function setup(
   const activations: SyncSettingsRequest[] = [];
   const store = new AgentModelStoreAdapter(fs, () => CONFIG);
   const refresh = new RefreshAgentPlugins({
-    pluginHosts: new AgentPluginHosts(
+    pluginHosts: new LocateAgentPlugins(
       new InMemoryManifestRepository(manifest, PROJECT),
       new InMemoryManifestRepository(userManifest, CONFIG)
     ),
@@ -80,7 +80,7 @@ export function setup(
     fs,
     store,
     settings: jsoncMainSessionSettings,
-    mainSessionLocator: new MainSessionLocator(
+    mainSessionLocator: new LocateMainSession(
       { fs, homedir: () => HOME, environment: { get: env } },
       tools
     ),

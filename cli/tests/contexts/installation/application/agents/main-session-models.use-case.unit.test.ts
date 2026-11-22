@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { MainSessionLocation } from "../../../../../src/contexts/installation/application/agents/main-session-locator.js";
+import type { MainSessionLocation } from "../../../../../src/contexts/installation/application/agents/locate-main-session.use-case.js";
 import { MainSessionModels } from "../../../../../src/contexts/installation/application/agents/main-session-models.use-case.js";
 import type {
   AgentModelStore,
@@ -109,7 +109,7 @@ function harness(given: Case = {}) {
     },
   };
   const locator = {
-    locate: async (host: string): Promise<MainSessionLocation> =>
+    execute: async (host: string): Promise<MainSessionLocation> =>
       given.located?.[host] ?? { models: models(SCHEMA), path: A },
   };
   const subject = new MainSessionModels({

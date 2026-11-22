@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AgentPluginHosts } from "../../../../../src/contexts/installation/application/agents/agent-plugin-hosts.js";
+import { LocateAgentPlugins } from "../../../../../src/contexts/installation/application/agents/locate-agent-plugins.use-case.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
@@ -13,12 +13,12 @@ const HOSTS = [TOOL.claude, TOOL.cursor, TOOL.codex];
 
 describe("locating the hosts that hold agent plugins", () => {
   it("places nothing when neither manifest exists", async () => {
-    const hosts = new AgentPluginHosts(
+    const hosts = new LocateAgentPlugins(
       new InMemoryManifestRepository(),
       new InMemoryManifestRepository()
     );
 
-    await expect(hosts.locate(HOSTS)).resolves.toEqual({
+    await expect(hosts.execute(HOSTS)).resolves.toEqual({
       userPlugins: [],
       projectPlugins: [],
       installed: [],
@@ -38,12 +38,12 @@ describe("locating the hosts that hold agent plugins", () => {
       .withPlugin(TOOL.codex, plugin("user"))
       .withTool(TOOL.cursor, [])
       .build();
-    const hosts = new AgentPluginHosts(
+    const hosts = new LocateAgentPlugins(
       new InMemoryManifestRepository(project),
       new InMemoryManifestRepository(machine)
     );
 
-    await expect(hosts.locate(HOSTS)).resolves.toEqual({
+    await expect(hosts.execute(HOSTS)).resolves.toEqual({
       userPlugins: [TOOL.codex],
       projectPlugins: [TOOL.claude],
       installed: [TOOL.claude, TOOL.cursor],
