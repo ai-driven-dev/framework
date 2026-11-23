@@ -8,9 +8,9 @@ import { CheckMergeFiles } from "../../contexts/installation/application/doctor/
 import { CheckPluginDrift } from "../../contexts/installation/application/doctor/check-plugin-drift.use-case.js";
 import { CheckProjectLayout } from "../../contexts/installation/application/doctor/check-project-layout.use-case.js";
 import { CheckTrackedFiles } from "../../contexts/installation/application/doctor/check-tracked-files.use-case.js";
+import { InspectInstallation } from "../../contexts/installation/application/doctor/inspect-installation.use-case.js";
 import { ListRegisteredPlugins } from "../../contexts/installation/application/doctor/list-registered-plugins.use-case.js";
 import { LoadManifest } from "../../contexts/installation/application/doctor/load-manifest.use-case.js";
-import { LoadManifestForDoctor } from "../../contexts/installation/application/doctor/load-manifest-for-doctor.use-case.js";
 import type { ManifestRepository } from "../../contexts/installation/ports/manifest-repository.js";
 import type { ScopeRecordsRepository } from "../../contexts/machine-claims/ports/machine-manifest.js";
 import { CheckAuthentication } from "../../orchestration/doctor/check-authentication.use-case.js";
@@ -74,14 +74,14 @@ export function wireDoctor(base: Base, inst: Installation) {
   const loadManifest = new LoadManifest(base.manifestRepo);
   const doctorUseCase = new RunDoctor(
     {
-      load: new LoadManifestForDoctor(loadManifest),
-      checks: {
+      inspect: new InspectInstallation({
+        load: loadManifest,
         tracked: new CheckTrackedFiles(loadManifest, fs),
         merge: new CheckMergeFiles(loadManifest, fs),
         references: new CheckFileReferences(loadManifest, fs),
-        layout: new CheckProjectLayout(loadManifest, fs, tools),
         plugin: new CheckPluginDrift(loadManifest, inst.detectPluginDriftUseCase),
-      },
+      }),
+      layout: new CheckProjectLayout(loadManifest, fs, tools),
       registration: registrationCheckOver(base, base.manifestRepo),
       authentication: new CheckAuthentication(base.tokenProvider),
     },

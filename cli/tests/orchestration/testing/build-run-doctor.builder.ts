@@ -4,8 +4,8 @@ import { CheckMergeFiles } from "../../../src/contexts/installation/application/
 import { CheckPluginDrift } from "../../../src/contexts/installation/application/doctor/check-plugin-drift.use-case.js";
 import { CheckProjectLayout } from "../../../src/contexts/installation/application/doctor/check-project-layout.use-case.js";
 import { CheckTrackedFiles } from "../../../src/contexts/installation/application/doctor/check-tracked-files.use-case.js";
+import { InspectInstallation } from "../../../src/contexts/installation/application/doctor/inspect-installation.use-case.js";
 import { LoadManifest } from "../../../src/contexts/installation/application/doctor/load-manifest.use-case.js";
-import { LoadManifestForDoctor } from "../../../src/contexts/installation/application/doctor/load-manifest-for-doctor.use-case.js";
 import { DetectPluginDrift } from "../../../src/contexts/installation/application/shared/detect-plugin-drift.use-case.js";
 import { RunDoctor } from "../../../src/orchestration/doctor/run-doctor.use-case.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
@@ -20,17 +20,17 @@ export function buildRunDoctor(
   const loadManifest = new LoadManifest(deps.manifestRepo);
   return new RunDoctor(
     {
-      load: new LoadManifestForDoctor(loadManifest),
-      checks: {
+      inspect: new InspectInstallation({
+        load: loadManifest,
         tracked: new CheckTrackedFiles(loadManifest, deps.fs),
         merge: new CheckMergeFiles(loadManifest, deps.fs),
         references: new CheckFileReferences(loadManifest, deps.fs),
-        layout: new CheckProjectLayout(loadManifest, deps.fs, deps.tools),
         plugin: new CheckPluginDrift(
           loadManifest,
           new DetectPluginDrift(deps.fs, deps.tools, () => "/home/dev")
         ),
-      },
+      }),
+      layout: new CheckProjectLayout(loadManifest, deps.fs, deps.tools),
       registration: checkRegistrationOver(
         deps.manifestRepo,
         deps.fs,
