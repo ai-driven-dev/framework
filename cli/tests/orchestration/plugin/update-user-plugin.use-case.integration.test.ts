@@ -109,7 +109,7 @@ function fixture(
                 )
           ),
           guard: userScopeFileGuard,
-          builtDeps: fakeBuiltDeps(fs),
+          builtDeps: fakeBuiltDeps(),
         }),
         logger,
       },

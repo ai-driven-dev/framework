@@ -5,6 +5,7 @@ import {
 } from "../../contexts/translate/application/build-native-tree.use-case.js";
 import { DiskSink } from "../../contexts/translate/application/sinks/disk-sink.js";
 import { FlatWriter } from "../../contexts/translate/application/sinks/flat-writer.js";
+import { SchemaChecker } from "../../contexts/translate/application/sinks/schema-checker.js";
 import { TranslateDistribution } from "../../contexts/translate/application/translate-distribution.use-case.js";
 import {
   canonFormatOf,
@@ -38,9 +39,10 @@ export function createFrameworkBuildUseCase(
   if (canonFormat === null) return undefined;
   const sink = new DiskSink({
     fs: deps.fs,
-    jsonSchemaValidator: new AjvSchemaValidatorAdapter(),
-    assetProvider: deps.assetProvider,
-    schemaProvider: new BundledSchemaProviderAdapter(),
+    schemaCheck: new SchemaChecker(
+      new AjvSchemaValidatorAdapter(),
+      new BundledSchemaProviderAdapter()
+    ),
     logger: deps.logger,
     flat: new FlatWriter(deps.fs, deps.assetProvider, deps.logger),
     canonFormat,

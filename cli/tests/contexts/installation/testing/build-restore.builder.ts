@@ -1,5 +1,6 @@
 import { builtPlacementOf } from "../../../../src/composition/orchestration/built-placement.js";
 import { InstallConfig } from "../../../../src/contexts/installation/application/install/install-config.use-case.js";
+import type { BuiltMaterializationDeps } from "../../../../src/contexts/installation/application/plugin/files/built-materialization-deps.js";
 import { ApplyPluginFiles } from "../../../../src/contexts/installation/application/restore/apply-plugin-files.use-case.js";
 import { GenerateToolDistribution } from "../../../../src/contexts/installation/application/restore/generate-tool-distribution.use-case.js";
 import { Restore } from "../../../../src/contexts/installation/application/restore/restore.use-case.js";
@@ -8,7 +9,6 @@ import { RestoreDriftEntries } from "../../../../src/contexts/installation/appli
 import { RestoreMergeFiles } from "../../../../src/contexts/installation/application/restore/restore-merge-files.use-case.js";
 import { RestoreRegularFiles } from "../../../../src/contexts/installation/application/restore/restore-regular-files.use-case.js";
 import { RestoreToolFiles } from "../../../../src/contexts/installation/application/restore/restore-tool-files.use-case.js";
-import type { BuiltMaterializationDeps } from "../../../../src/contexts/installation/application/shared/built-materialization-deps.js";
 import type { FileMerger } from "../../../../src/contexts/installation/ports/file-merger.js";
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
 import type { Platform } from "../../../../src/contexts/installation/ports/platform.js";

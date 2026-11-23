@@ -89,10 +89,7 @@ export class DiskSink implements PluginTreeSink {
 
   private async validateSourceManifest(pluginSrc: string): Promise<void> {
     const raw = await this.deps.fs.readFile(join(pluginSrc, SOURCE_PLUGIN_MANIFEST_RELATIVE));
-    this.deps.jsonSchemaValidator.validate(
-      this.deps.schemaProvider.loadSchema("plugin-manifest"),
-      JSON.parse(raw)
-    );
+    this.deps.schemaCheck.validate("plugin-manifest", JSON.parse(raw));
   }
 
   /** A built file, at its place under outDir. A flat build refuses one a first build wrote. */
@@ -110,10 +107,7 @@ export class DiskSink implements PluginTreeSink {
     const source = asPlainObject(JSON.parse(raw)) ?? {};
     const synthesized = contract.synthesizeManifest(source, presenceOf(canon));
     if (contract.manifestSchemaName) {
-      this.deps.jsonSchemaValidator.validate(
-        this.deps.schemaProvider.loadSchema(contract.manifestSchemaName),
-        synthesized
-      );
+      this.deps.schemaCheck.validate(contract.manifestSchemaName, synthesized);
     }
     const dest = join(t.outDir, "plugins", canon.manifest.name, contract.manifestFileRelative);
     await this.deps.fs.writeFile(dest, `${JSON.stringify(synthesized, null, 2)}\n`);

@@ -77,9 +77,7 @@ async function flatMerge(
   const logger = new CapturingLogger();
   const sink = new DiskSink({
     fs,
-    jsonSchemaValidator: { validate() {} },
-    assetProvider: unused,
-    schemaProvider: { loadSchema: () => ({}) },
+    schemaCheck: { validate() {} },
     logger,
     flat: new FlatWriter(fs, unused, logger),
     canonFormat: TOOL.claude,

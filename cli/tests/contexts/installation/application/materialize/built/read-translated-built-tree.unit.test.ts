@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { projectIntegrationOf } from "../../../../../../src/composition/contexts/installation.js";
 import { readTranslatedBuiltTree } from "../../../../../../src/contexts/installation/application/materialize/built/read-translated-built-tree.js";
-import type { BuiltMaterializationDeps } from "../../../../../../src/contexts/installation/application/shared/built-materialization-deps.js";
+import type { BuiltMaterializationDeps } from "../../../../../../src/contexts/installation/application/plugin/files/built-materialization-deps.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { parsePluginName } from "../../../../../../src/shared/domain/plugin/plugin-name.js";
@@ -32,11 +33,12 @@ async function readBuilt(
     {
       deps: {
         fs,
-        built: fakeBuiltDeps(fs, {
+        ...fakeBuiltDeps({
           homedir: () => "/home/u",
           marketplaceRegistry: new FakeMarketplaceRegistry(),
           translate,
         }),
+        projectHooks: projectIntegrationOf(fs).materializer,
       },
       marketplace: {
         name: "aidd-framework",

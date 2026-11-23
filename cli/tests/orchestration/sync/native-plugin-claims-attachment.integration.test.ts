@@ -160,7 +160,7 @@ for (const [toolId, catalogPath] of [
                 )
               ),
               guard: userScopeFileGuard,
-              builtDeps: fakeBuiltDeps(updateFs),
+              builtDeps: fakeBuiltDeps(),
             }),
             logger: new CapturingLogger(),
           },
@@ -199,7 +199,7 @@ for (const [toolId, catalogPath] of [
                   )
                 ),
                 guard: userScopeFileGuard,
-                builtDeps: fakeBuiltDeps(updateFs),
+                builtDeps: fakeBuiltDeps(),
               }),
               logger: new CapturingLogger(),
             },

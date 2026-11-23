@@ -1,8 +1,6 @@
 import { projectIntegrationOf } from "../../../src/composition/contexts/installation.js";
-import {
-  type RemovalClaims,
-  RemoveProjectPlugin,
-} from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
+import { RemoveProjectPlugin } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
+import type { RemovalClaims } from "../../../src/contexts/installation/ports/removal-claims.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../src/shared/ports/file-writer.js";
 

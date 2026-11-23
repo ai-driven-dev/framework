@@ -45,7 +45,7 @@ async function installedSample(pluginRuntime?: UpdatePluginRuntime) {
       manifestRepo: deps.manifestRepo,
       loadDistribution: loader,
       replacePluginFiles: new ReplacePluginFiles(
-        { fs: deps.fs, ...builtPlacementOf(deps.fs, fakeBuiltDeps(deps.fs)) },
+        { fs: deps.fs, ...builtPlacementOf(deps.fs, fakeBuiltDeps()) },
         registeredTools()
       ),
       pluginRuntime,

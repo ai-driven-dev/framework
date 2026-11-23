@@ -43,7 +43,7 @@ function fixture(installedVersion = "0.0.1", options: { globalCacheDir?: () => s
     fs,
     loadDistribution: loadDistributionOf(fetcher, { read: async () => dist }),
     guard: userScopeFileGuard,
-    builtDeps: { ...fakeBuiltDeps(fs), homedir },
+    builtDeps: { ...fakeBuiltDeps(), homedir },
     globalCacheDir: options.globalCacheDir,
   });
   const plugin = RecordedPlugin.fromMetadata({

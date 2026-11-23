@@ -31,6 +31,7 @@ import {
 } from "../../contexts/installation/application/marketplace/cache-built-marketplace.use-case.js";
 import { ProjectHooksMaterializer } from "../../contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 import { AssertProjectPathWithinRoot } from "../../contexts/installation/application/ownership/assert-project-path-within-root.use-case.js";
+import type { BuiltMaterializationDeps } from "../../contexts/installation/application/plugin/files/built-materialization-deps.js";
 import { ListPlugins } from "../../contexts/installation/application/plugin/list-plugins.use-case.js";
 import { AssertProjectIntegrationRemovable } from "../../contexts/installation/application/removal/assert-project-integration-removable.use-case.js";
 import { PlanProjectMcpRemoval } from "../../contexts/installation/application/removal/plan-project-mcp-removal.use-case.js";
@@ -38,7 +39,6 @@ import { RemoveProjectHooks } from "../../contexts/installation/application/remo
 import { RemoveProjectIntegration } from "../../contexts/installation/application/removal/remove-project-integration.use-case.js";
 import { AssertProjectHooksRemovable } from "../../contexts/installation/application/shared/assert-project-hooks-removable.use-case.js";
 import { AssertProjectHooksUnchanged } from "../../contexts/installation/application/shared/assert-project-hooks-unchanged.use-case.js";
-import type { BuiltMaterializationDeps } from "../../contexts/installation/application/shared/built-materialization-deps.js";
 import { DetectPluginDrift } from "../../contexts/installation/application/shared/detect-plugin-drift.use-case.js";
 import { RemoveRecordedProjectHooks } from "../../contexts/installation/application/shared/remove-recorded-project-hooks.use-case.js";
 import { UpdateGitignore } from "../../contexts/installation/application/update-gitignore.use-case.js";
@@ -146,14 +146,6 @@ export function debugOnly(logger: Logger): Logger {
   };
 }
 
-/** What a restore needs to rebuild through the build pipeline. */
-export function builtMaterializationDepsOf(
-  fs: FileReader & FileWriter,
-  build: Omit<BuiltMaterializationDeps, "projectHooks">
-): BuiltMaterializationDeps {
-  return { ...build, projectHooks: projectIntegrationOf(fs).materializer };
-}
-
 /** The project hooks and MCP use cases, built once over one file system. */
 export function projectIntegrationOf(fs: FileReader & FileWriter) {
   const withinRoot = new AssertProjectPathWithinRoot(fs);
@@ -242,13 +234,13 @@ export function wireInstallation(base: Base) {
   );
   // Restore re-materializes through the build pipeline, matching what install wrote:
   // rewriting raw content instead would itself be drift.
-  const builtMaterializationDeps = builtMaterializationDepsOf(fs, {
+  const builtMaterializationDeps: BuiltMaterializationDeps = {
     ensureBuilt: ensureBuiltMarketplaceUseCase,
     marketplaceRegistry,
     homedir: base.homedir,
     translate: createPluginTranslation(tools),
     platform: process.platform,
-  });
+  };
   return {
     assetProvider,
     agentModelStore,

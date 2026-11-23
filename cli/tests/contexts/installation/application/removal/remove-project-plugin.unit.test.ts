@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import type { RemovalClaims } from "../../../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import type { RemovalClaims } from "../../../../../src/contexts/installation/ports/removal-claims.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../../../src/shared/domain/tool.js";

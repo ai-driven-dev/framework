@@ -70,7 +70,7 @@ async function existingProject(configPath: string) {
       manifestRepo: deps.manifestRepo,
       loadDistribution: distribution,
       replacePluginFiles: new ReplacePluginFiles(
-        { fs: deps.fs, ...builtPlacementOf(deps.fs, fakeBuiltDeps(deps.fs)) },
+        { fs: deps.fs, ...builtPlacementOf(deps.fs, fakeBuiltDeps()) },
         registeredTools()
       ),
       pluginRuntime: deps.ensurePluginRuntimeFiles,

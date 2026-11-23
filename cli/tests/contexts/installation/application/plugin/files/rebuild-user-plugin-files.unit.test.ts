@@ -23,7 +23,7 @@ const plugin = RecordedPlugin.fromMetadata({
   scope: "user",
 }).plugin;
 const fs = new InMemoryFileAdapter();
-const deps = { fs, builtDeps: fakeBuiltDeps(fs) };
+const deps = { fs, builtDeps: fakeBuiltDeps() };
 
 describe("rebuilding a user plugin's files", () => {
   it("translates the distribution when the plugin has no registered marketplace", async () => {

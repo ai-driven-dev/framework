@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { placementDepsOf } from "../../../../../src/composition/orchestration/built-placement.js";
 import { placeBuiltTreePlugin } from "../../../../../src/contexts/installation/application/materialize/built/place-built-tree-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
@@ -67,13 +68,13 @@ describe("placeBuiltTreePlugin - opencode (integration)", () => {
 
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
-    const translator = {
-      fs: fs,
-      built: fakeBuiltDeps(fs, {
+    const translator = placementDepsOf(
+      fs,
+      fakeBuiltDeps({
         homedir: () => "/home/u",
         marketplaceRegistry: await makeRegistry(),
-      }),
-    };
+      })
+    );
 
     await placeBuiltTreePlugin(
       {
@@ -109,13 +110,13 @@ describe("placeBuiltTreePlugin - opencode (integration)", () => {
 
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
-    const translator = {
-      fs: fs,
-      built: fakeBuiltDeps(fs, {
+    const translator = placementDepsOf(
+      fs,
+      fakeBuiltDeps({
         homedir: () => "/home/u",
         marketplaceRegistry: await makeRegistry(),
-      }),
-    };
+      })
+    );
 
     await placeBuiltTreePlugin(
       {
@@ -147,13 +148,13 @@ describe("placeBuiltTreePlugin - what the opencode flat tree never yields", () =
   ): Promise<{ skipped: readonly unknown[] }> {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
-    const translator = {
-      fs: fs,
-      built: fakeBuiltDeps(fs, {
+    const translator = placementDepsOf(
+      fs,
+      fakeBuiltDeps({
         homedir: () => "/home/u",
         marketplaceRegistry: await makeRegistry(),
-      }),
-    };
+      })
+    );
     return placeBuiltTreePlugin(
       {
         dist: distribution,
@@ -222,13 +223,13 @@ describe("placeBuiltTreePlugin - kilo (integration)", () => {
         hash: FileHash.of(baseConfig),
       }),
     ]);
-    const translator = {
-      fs: fs,
-      built: fakeBuiltDeps(fs, {
+    const translator = placementDepsOf(
+      fs,
+      fakeBuiltDeps({
         homedir: () => "/home/u",
         marketplaceRegistry: await makeRegistry(),
-      }),
-    };
+      })
+    );
     const distribution = new PluginDistribution({
       manifest: { name: parsePluginName("aidd-vcs"), version: "1.0.0" },
       format: TOOL.claude,

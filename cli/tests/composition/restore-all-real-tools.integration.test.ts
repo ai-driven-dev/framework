@@ -34,7 +34,7 @@ const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format
 type Deps = Awaited<ReturnType<typeof buildInstallationDeps>>;
 
 function builtDeps(deps: Deps) {
-  return fakeBuiltDeps(deps.fs, {
+  return fakeBuiltDeps({
     marketplaceRegistry: deps.marketplaceRegistry,
     homedir: () => "/home/test",
   });

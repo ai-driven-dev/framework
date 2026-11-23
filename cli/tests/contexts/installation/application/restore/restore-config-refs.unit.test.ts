@@ -49,7 +49,7 @@ async function restore(deps: Awaited<ReturnType<typeof buildInstallationDeps>>, 
     plugins: restoreAllPluginsOf({
       ...deps,
       loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
-      builtDeps: fakeBuiltDeps(deps.fs),
+      builtDeps: fakeBuiltDeps(),
     }),
   }).execute({
     frameworkPath: FIXTURE_DIR,

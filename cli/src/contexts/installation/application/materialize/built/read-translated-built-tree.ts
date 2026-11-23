@@ -1,21 +1,52 @@
 import type { InstallationFile } from "../../../../../shared/domain/installation-file.js";
 import type { ReadonlySkipList } from "../../../../../shared/domain/plugin/plugin-translation-skip.js";
+import type { FileReader } from "../../../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../../../shared/ports/file-writer.js";
 import type { FrameworkBuildMode } from "../../../../tools/contract/tool-profile.js";
-import type { MarketplaceToBuild } from "../../../contract/built-marketplace.js";
+import type {
+  BuiltMarketplaceEnsurer,
+  MarketplaceToBuild,
+} from "../../../contract/built-marketplace.js";
 import type { ProjectHooksProvenance } from "../../../domain/plugins/plugin-entry.js";
-import type { PluginTranslationResult } from "../../../ports/plugin/plugin-translation.js";
-import type { AddPluginRequest, PlacementDeps } from "../add-plugin-request.js";
+import type {
+  PluginTranslation,
+  PluginTranslationResult,
+} from "../../../ports/plugin/plugin-translation.js";
+import type { AddPluginRequest } from "../add-plugin-request.js";
 import { materializeRequestedMcp } from "../flat-mcp-materializer.js";
+import type { ProjectHooksMaterializer } from "../project-hooks-materializer.use-case.js";
 import {
   readBuiltFlatFiles,
   readBuiltUserPluginFiles,
   withoutDroppedFiles,
 } from "./read-built-plugin-files.js";
 
-export interface BuiltRead {
-  deps: PlacementDeps;
+/** What reading a plugin's built tree reaches: the build, the translation and the project hooks. */
+export interface BuiltTreeReadDeps {
+  fs: FileWriter & FileReader;
+  ensureBuilt: BuiltMarketplaceEnsurer;
+  /** The platform whose path rules spell a built file's relative path. */
+  platform: string;
+  translate: PluginTranslation;
+  /** Delivers a plugin's hooks to the project; composition builds it. */
+  projectHooks: ProjectHooksMaterializer;
+}
+
+interface BuiltRead {
+  deps: BuiltTreeReadDeps;
   marketplace: MarketplaceToBuild;
   mode: FrameworkBuildMode;
+}
+
+/** Reads one registered marketplace's built tree for the request's tool. */
+export type ReadBuiltTree = (
+  request: AddPluginRequest,
+  at: { marketplace: MarketplaceToBuild; mode: FrameworkBuildMode }
+) => Promise<BuiltTreeRead>;
+
+/** The built-tree read, bound to the build and file system it reads. */
+export function builtTreeReader(deps: BuiltTreeReadDeps): ReadBuiltTree {
+  return (request, at) => readTranslatedBuiltTree(request, { deps, ...at });
 }
 
 export type BuiltTreeRead = Awaited<ReturnType<typeof readTranslatedBuiltTree>>;
@@ -23,7 +54,7 @@ export type BuiltTreeRead = Awaited<ReturnType<typeof readTranslatedBuiltTree>>;
 // One translation of the request feeds both the built-tree read and the MCP merge.
 export async function readTranslatedBuiltTree(request: AddPluginRequest, read: BuiltRead) {
   const { deps } = read;
-  const translated = deps.built.translate.execute({
+  const translated = deps.translate.execute({
     distribution: request.dist,
     tool: request.tool,
   });
@@ -45,7 +76,7 @@ async function readBuiltContent(
 }> {
   const { dist, tool, projectRoot, previousProjectHooks, hooksGuard = {} } = request;
   const { deps, marketplace, mode } = read;
-  const { builtDir } = await deps.built.ensureBuilt.execute({
+  const { builtDir } = await deps.ensureBuilt.execute({
     projectRoot,
     marketplace,
     target: tool.toolId,
@@ -53,7 +84,7 @@ async function readBuiltContent(
   });
   const deliversHooksToProject = tool.plugins()?.deliversHooksToProject() === true;
   const name = dist.manifest.name;
-  const platform = deps.built.platform;
+  const platform = deps.platform;
   const extraPaths = deliversHooksToProject ? new Set<string>() : translated.flatHookPaths;
   const builtRead =
     mode === "flat"
@@ -61,7 +92,7 @@ async function readBuiltContent(
       : await readBuiltUserPluginFiles(deps.fs, { builtDir, name, platform });
   const files = withoutDroppedFiles(builtRead, name, translated.dropsBuiltFile);
   if (!deliversHooksToProject) return { files, hooks: { skipped: [] } };
-  const hooks = await deps.built.projectHooks.execute({
+  const hooks = await deps.projectHooks.execute({
     dist,
     hooks: translated.projectHooks,
     tool,

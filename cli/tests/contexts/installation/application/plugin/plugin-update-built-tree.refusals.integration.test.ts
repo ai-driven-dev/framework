@@ -174,7 +174,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
       fs: deps.fs,
       loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
       guard: userScopeFileGuard,
-      builtDeps: fakeBuiltDeps(deps.fs, { marketplaceRegistry: registry, homedir: () => HOME }),
+      builtDeps: fakeBuiltDeps({ marketplaceRegistry: registry, homedir: () => HOME }),
     });
     const plan = await updater.planUpdate({
       plugin: machine.getRecordedPlugins(cursor)[0],

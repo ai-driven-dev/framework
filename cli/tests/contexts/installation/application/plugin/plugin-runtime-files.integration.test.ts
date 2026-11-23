@@ -48,7 +48,7 @@ async function legacyProject() {
       manifestRepo: deps.manifestRepo,
       loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
       replacePluginFiles: new ReplacePluginFiles(
-        { fs: deps.fs, ...builtPlacementOf(deps.fs, fakeBuiltDeps(deps.fs)) },
+        { fs: deps.fs, ...builtPlacementOf(deps.fs, fakeBuiltDeps()) },
         registeredTools()
       ),
       pluginRuntime: deps.ensurePluginRuntimeFiles,

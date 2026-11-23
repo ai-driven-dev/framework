@@ -66,7 +66,7 @@ export function makeUpdateUseCase(
           fs: deps.fs,
           loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
           guard: userScopeFileGuard,
-          builtDeps: fakeBuiltDeps(deps.fs, {
+          builtDeps: fakeBuiltDeps({
             ensureBuilt,
             marketplaceRegistry: registry,
             homedir: () => HOME,

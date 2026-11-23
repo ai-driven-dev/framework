@@ -22,7 +22,7 @@ async function placeForClaude() {
   const deps = await buildInstallationDeps({ tools: registeredTools() });
   await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
-  const built = fakeBuiltDeps(deps.fs, {
+  const built = fakeBuiltDeps({
     marketplaceRegistry: deps.marketplaceRegistry,
     homedir: () => "/home/u",
   });
