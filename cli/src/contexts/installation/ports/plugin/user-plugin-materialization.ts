@@ -1,4 +1,5 @@
 import type { InstallationFile } from "../../../../shared/domain/installation-file.js";
+import type { PathContainment } from "../../../../shared/domain/paths.model.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 // biome-ignore lint/plugin: hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input
@@ -6,11 +7,8 @@ import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 
-/**
- * Whether a resolved path sits strictly inside a resolved boundary. Composition supplies the
- * machine-claims rule, so installation never reaches into that context.
- */
-export type ContainmentCheck = (resolvedCandidate: string, resolvedBoundary: string) => boolean;
+/** The containment rule composition supplies from machine-claims, so installation never reaches into that context. */
+export type ContainmentCheck = PathContainment;
 
 export interface PlannedUserPluginFileUpdate {
   readonly plugin: RecordedPlugin;
@@ -29,11 +27,6 @@ export interface UserScopeFileGuard {
     plugin: InstalledPlugin,
     tool: AiToolProfile
   ): Promise<ReadonlyMap<string, string>>;
-  withoutMissing(
-    reach: { readonly fs: FileReader; readonly home: string },
-    plugin: InstalledPlugin,
-    tool: AiToolProfile
-  ): Promise<InstalledPlugin>;
   assertWriteBoundary(
     reach: { readonly fs: FileReader; readonly home: string },
     tool: AiToolProfile,

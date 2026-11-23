@@ -1,4 +1,5 @@
 import { dirname, join, posix } from "node:path";
+import { isStrictlyWithin } from "../../../../shared/domain/paths.model.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import {
   NoUserPluginsDirectoryError,
@@ -7,7 +8,6 @@ import {
   UpdateParentEscapesBoundaryError,
   UpdatePathEscapesPluginError,
 } from "../../domain/machine-claims.error.js";
-import { isStrictlyWithinUserScope } from "../../domain/user-scope-containment.js";
 import type { UserScopeTool } from "../../ports/user-scope-tool.js";
 import {
   tryRealpath,
@@ -42,7 +42,7 @@ async function assertParentInside(
   while (true) {
     const resolved = await tryRealpath(fs, parent);
     if (resolved !== null) {
-      if (!isStrictlyWithinUserScope(resolved, resolvedBoundary)) {
+      if (!isStrictlyWithin(resolved, resolvedBoundary)) {
         throw new UpdateParentEscapesBoundaryError(toolId, pluginName, parent, boundary);
       }
       return;
@@ -69,7 +69,7 @@ export class AssertUserScopeWriteBoundary {
     if (
       resolvedBoundary === null ||
       resolvedPluginDir === null ||
-      !isStrictlyWithinUserScope(resolvedPluginDir, resolvedBoundary)
+      !isStrictlyWithin(resolvedPluginDir, resolvedBoundary)
     ) {
       throw new PluginDirectoryOutsideBoundaryError(toolId, pluginName, boundary);
     }

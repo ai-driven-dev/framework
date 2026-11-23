@@ -31,7 +31,6 @@ import type {
 import { userScopeOwnership } from "../../contexts/machine-claims/application/ownership/user-scope-ownership.js";
 import { pluginRemovalClaims } from "../../contexts/machine-claims/application/removal/plugin-removal-claims.js";
 import { ResolvePurgeCandidate } from "../../contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
-import { isStrictlyWithinUserScope } from "../../contexts/machine-claims/domain/user-scope-containment.js";
 import { ConfirmPluginSourceTrust } from "../../orchestration/plugin/confirm-plugin-source-trust.use-case.js";
 import { InstallFromMarketplace } from "../../orchestration/plugin/install-from-marketplace.use-case.js";
 import { InstallPlugin } from "../../orchestration/plugin/install-plugin.use-case.js";
@@ -39,6 +38,7 @@ import { PickPlugins } from "../../orchestration/plugin/pick-plugins.use-case.js
 import { RemoveMachinePlugin } from "../../orchestration/plugin/remove-machine-plugin.use-case.js";
 import { RemovePlugin } from "../../orchestration/plugin/remove-plugin.use-case.js";
 import { UpdateUserPlugin } from "../../orchestration/plugin/update-user-plugin.use-case.js";
+import { isStrictlyWithin } from "../../shared/domain/paths.model.js";
 import type { Installation } from "../installation.js";
 import {
   machineOwnership,
@@ -63,10 +63,10 @@ export function withinUserScope(
       materializer.planUpdate({
         ...request,
         rebuild,
-        isWithinUserScope: isStrictlyWithinUserScope,
+        isWithinUserScope: isStrictlyWithin,
       }),
     applyUpdate: (plan, logger) =>
-      materializer.applyUpdate(plan, { logger, isWithinUserScope: isStrictlyWithinUserScope }),
+      materializer.applyUpdate(plan, { logger, isWithinUserScope: isStrictlyWithin }),
   };
 }
 
@@ -187,7 +187,7 @@ function wirePluginUpdate(base: Base, inst: Installation) {
       base.hostPluginRegistries,
       base.nativeSources
     ),
-    isStrictlyWithinUserScope,
+    isStrictlyWithin,
     registrationRecordRules
   );
   return {

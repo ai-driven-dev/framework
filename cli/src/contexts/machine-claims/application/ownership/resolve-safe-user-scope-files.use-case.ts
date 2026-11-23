@@ -1,11 +1,11 @@
 import { join } from "node:path";
 import { FileHash } from "../../../../shared/domain/file-hash.js";
+import { isStrictlyWithin } from "../../../../shared/domain/paths.model.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import {
   EditedAfterInstallError,
   UnprovenInstallDigestError,
 } from "../../domain/machine-claims.error.js";
-import { isStrictlyWithinUserScope } from "../../domain/user-scope-containment.js";
 import type { UserScopePluginFiles } from "../../ports/machine-manifest.js";
 import type { UserScopeTool } from "../../ports/user-scope-tool.js";
 import {
@@ -51,7 +51,7 @@ export class ResolveSafeUserScopeFiles {
     for (const [relativePath, hash] of plugin.files) {
       const path = join(boundary, relativePath);
       const resolved = await tryRealpath(fs, path);
-      if (resolved === null || !isStrictlyWithinUserScope(resolved, resolvedBoundary)) {
+      if (resolved === null || !isStrictlyWithin(resolved, resolvedBoundary)) {
         logger.warn(
           `${tool.toolId}: '${plugin.name}' file '${relativePath}' does not resolve inside ${boundary}; left in place.`
         );

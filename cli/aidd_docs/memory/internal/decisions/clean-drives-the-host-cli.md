@@ -32,7 +32,7 @@
 - Without it, steps 1 to 3 are skipped and said so. A live project in `references.json` still blocks source/cache purge, even with `--force`.
 - Steps 1 and 2 run at scope `"user"` only for native refs AIDD enabled and claimed; a foreign preexisting ref is never uninstalled. Active per-plugin dependents in the user manifest block removal, separately from the `references.json` source claim, even with `--force`. An absent binary, failed host unregister, unreadable source claim or unsafe tracked plugin path aborts without deleting the canonical manifest.
 - Step 3: `purgeAllNativeCaches`, shared with project-scope `clean`.
-- Step 4, always: a hardcoded whitelist under `userConfigDir()`: `cache/built/` in full, `cache/update-check.json`, root `update-check.json`, the `cache/` shell once a fresh `listDirectory` proves it empty, `references.json`; each re-resolved through `realpath` and `isStrictlyWithinUserScope` before deletion.
+- Step 4, always: a hardcoded whitelist under `userConfigDir()`: `cache/built/` in full, `cache/update-check.json`, root `update-check.json`, the `cache/` shell once a fresh `listDirectory` proves it empty, `references.json`; each re-resolved through `realpath` and `isStrictlyWithin` before deletion.
 - `manifest.json` goes through its repository, the `aidd-framework` entry alone out of `marketplaces.json` through the registry; neither takes a path from the manifest.
 - `userConfigDir()` itself is never a candidate.
 - Confirmation, unless `--force`, names the source, every version under `cache/built/`, every live project in `references.json`, and the no-registration note.

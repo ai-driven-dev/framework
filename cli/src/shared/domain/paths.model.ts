@@ -1,4 +1,4 @@
-import { posix, win32 } from "node:path";
+import { isAbsolute, posix, relative, sep, win32 } from "node:path";
 
 /** The path segments of `path` past `base`, `undefined` when `path` does not sit under
  * `base`. Compares spelling, folded by `platform` for the containment test only, so the
@@ -76,3 +76,20 @@ export function posixRelative(base: string, target: string, platform: string): s
   const impl = platform === "win32" ? win32 : posix;
   return impl.relative(base, target).split(impl.sep).join("/");
 }
+
+/** Whether a candidate path sits inside a boundary directory: both resolved by the caller. */
+export type PathContainment = (candidate: string, boundary: string) => boolean;
+
+/**
+ * Whether `candidate` sits inside `boundary`, the boundary itself included. Both arguments must
+ * be resolved: a comparison of unresolved strings catches neither a `..` segment, which
+ * `path.join` erases before the string is built, nor a directory that turned into a symlink.
+ */
+export const isWithin: PathContainment = (candidate, boundary) => {
+  const rel = relative(boundary, candidate);
+  return rel === "" || (rel !== ".." && !rel.startsWith(`..${sep}`) && !isAbsolute(rel));
+};
+
+/** Whether `candidate` sits inside `boundary`, never equal to it. */
+export const isStrictlyWithin: PathContainment = (candidate, boundary) =>
+  relative(boundary, candidate) !== "" && isWithin(candidate, boundary);
