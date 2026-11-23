@@ -53,7 +53,7 @@ async function replaceOnClaude(marketplace: string | undefined) {
   }).withFiles(new Map([[STALE_FILE, "old-hash"]]));
   manifest.addPlugin(TOOL.claude, installed);
   await new ReplacePluginFiles(
-    { fs: deps.fs, ...builtPlacementOf(deps.fs, fakeBuiltDeps(deps.fs)) },
+    { fs: deps.fs, ...builtPlacementOf(deps.fs, fakeBuiltDeps()) },
     registeredTools()
   ).execute({
     plugin: installed,

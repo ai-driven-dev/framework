@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { builtPlacementOf } from "../../../../../src/composition/orchestration/built-placement.js";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
 import type { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.use-case.js";
-import type { BuiltMaterializationDeps } from "../../../../../src/contexts/installation/application/shared/built-materialization-deps.js";
+import type { BuiltMaterializationDeps } from "../../../../../src/contexts/installation/application/plugin/files/built-materialization-deps.js";
 import type { PluginSource } from "../../../../../src/shared/domain/plugin/source.js";
 import { FixturePluginFetcher } from "../../../../shared/testing/fixture-plugin-fetcher.fake.js";
 import {
@@ -62,7 +62,7 @@ async function setup(
       manifestRepo: deps.manifestRepo,
       loadDistribution: loadDistributionOf(options.fetcher ?? deps.pluginFetcher, reader),
       replacePluginFiles: new ReplacePluginFiles(
-        { fs: deps.fs, ...builtPlacementOf(deps.fs, options.builtDeps ?? fakeBuiltDeps(deps.fs)) },
+        { fs: deps.fs, ...builtPlacementOf(deps.fs, options.builtDeps ?? fakeBuiltDeps()) },
         registeredTools()
       ),
     },
@@ -279,7 +279,7 @@ describe("updating a plugin on disk", () => {
       const deps = await buildInstallationDeps({ tools: registeredTools() });
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const { addUseCase, updateUseCase } = await setup(deps, {
-        builtDeps: fakeBuiltDeps(deps.fs, {
+        builtDeps: fakeBuiltDeps({
           marketplaceRegistry: deps.marketplaceRegistry,
           homedir: () => "/home/u",
         }),

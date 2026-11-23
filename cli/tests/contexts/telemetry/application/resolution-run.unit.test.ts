@@ -34,14 +34,18 @@ function world(
   const remembered = new RememberedResolutions(
     new Map(options.remembered ? [[resolutionKey(DIR, A), sighting]] : [])
   );
-  const run = startResolutionRun({
-    locate: (cwd) => locator.locate(cwd),
-    readClone: (clone) => consents.readClone(clone),
-    environment: { caseInsensitiveFileSystem: false, now: () => new Date(CALL) },
-    remembered,
-    consents: new ConsentLog({ events: options.events ?? [], damaged: options.damaged ?? false }),
-    unreadable: new Set(options.unreadable ?? []),
-  });
+  const run = startResolutionRun(
+    {
+      remembered,
+      consents: new ConsentLog({ events: options.events ?? [], damaged: options.damaged ?? false }),
+      unreadable: new Set(options.unreadable ?? []),
+    },
+    {
+      locate: (cwd) => locator.locate(cwd),
+      readClone: (clone) => consents.readClone(clone),
+      environment: { caseInsensitiveFileSystem: false, now: () => new Date(CALL) },
+    }
+  );
   return { run, locator, consents };
 }
 
@@ -162,23 +166,27 @@ describe("the moment a run remembers a directory at", () => {
   function clockedRun(directory: Parameters<FakeLocator["directories"]["set"]>[1]) {
     const reads: string[] = [];
     let instant = Date.parse(CALL);
-    const run = startResolutionRun({
-      locate: async () => {
-        instant += 60_000;
-        return directory;
+    const run = startResolutionRun(
+      {
+        remembered: new RememberedResolutions(new Map()),
+        consents: new ConsentLog({ events: opened, damaged: false }),
+        unreadable: new Set(),
       },
-      readClone: (clone) => new FakeConsents().readClone(clone),
-      environment: {
-        caseInsensitiveFileSystem: false,
-        now: () => {
-          reads.push(new Date(instant).toISOString());
-          return new Date(instant);
+      {
+        locate: async () => {
+          instant += 60_000;
+          return directory;
         },
-      },
-      remembered: new RememberedResolutions(new Map()),
-      consents: new ConsentLog({ events: opened, damaged: false }),
-      unreadable: new Set(),
-    });
+        readClone: (clone) => new FakeConsents().readClone(clone),
+        environment: {
+          caseInsensitiveFileSystem: false,
+          now: () => {
+            reads.push(new Date(instant).toISOString());
+            return new Date(instant);
+          },
+        },
+      }
+    );
     return { run, reads };
   }
 

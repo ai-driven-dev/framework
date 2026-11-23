@@ -1,5 +1,6 @@
 import { DiskSink } from "../../../../src/contexts/translate/application/sinks/disk-sink.js";
 import { FlatWriter } from "../../../../src/contexts/translate/application/sinks/flat-writer.js";
+import { SchemaChecker } from "../../../../src/contexts/translate/application/sinks/schema-checker.js";
 import type { JsonSchemaValidator } from "../../../../src/contexts/translate/ports/json-schema-validator.js";
 import type { SchemaProvider } from "../../../../src/contexts/translate/ports/schema-provider.js";
 import type { AssetProvider } from "../../../../src/shared/ports/asset-provider.js";
@@ -19,9 +20,7 @@ export function aDiskSink(
 ): DiskSink {
   return new DiskSink({
     fs,
-    jsonSchemaValidator: validator,
-    assetProvider,
-    schemaProvider,
+    schemaCheck: new SchemaChecker(validator, schemaProvider),
     logger,
     flat: new FlatWriter(fs, assetProvider, logger),
     canonFormat: TOOL.claude,

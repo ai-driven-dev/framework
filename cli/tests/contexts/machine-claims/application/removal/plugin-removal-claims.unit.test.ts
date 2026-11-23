@@ -20,18 +20,22 @@ async function guard(options: {
 }) {
   const { references, listed } = options;
   const fs = new InMemoryFileAdapter();
-  const claims = pluginRemovalClaims({
-    ...machineOwnership(undefined, fs),
-    ...sharedSourceReads({
-      fs,
-      platform: process.platform,
-      references,
-    }),
-    home: "/home/u",
-    marketplaceRegistry: listed === undefined ? undefined : { list: async () => listed },
-    resolveCacheCandidate: async () => null,
-    frameworkMarketplaceName: "aidd-framework",
-  });
+  const claims = pluginRemovalClaims(
+    {
+      ...machineOwnership(undefined, fs),
+      home: "/home/u",
+      resolveCacheCandidate: async () => null,
+    },
+    {
+      ...sharedSourceReads({
+        fs,
+        platform: process.platform,
+        references,
+      }),
+      marketplaceRegistry: listed === undefined ? undefined : { list: async () => listed },
+      frameworkMarketplaceName: "aidd-framework",
+    }
+  );
   const message = await claims.guardMessage({
     binary: "codex",
     tool: registeredTools().aiProfile(TOOL.codex),

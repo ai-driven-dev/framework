@@ -10,8 +10,8 @@ import {
   readBuiltUserPluginFiles,
   withoutDroppedFiles,
 } from "../../materialize/built/read-built-plugin-files.js";
-import type { BuiltMaterializationDeps } from "../../shared/built-materialization-deps.js";
 import { hashOutputFiles } from "../../shared/hash-output-files.js";
+import type { BuiltMaterializationDeps } from "./built-materialization-deps.js";
 import { readGlobalPluginFiles } from "./global-plugin-files.js";
 
 /** What rebuilding a plugin's machine-scope files reads from. */

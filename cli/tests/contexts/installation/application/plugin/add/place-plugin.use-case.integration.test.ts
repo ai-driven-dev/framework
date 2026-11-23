@@ -39,7 +39,7 @@ async function placeForCursor(foundFile: string | undefined) {
     source: { kind: "github", repo: "ai-driven-dev/framework" },
     scope: "project",
   });
-  const built = fakeBuiltDeps(deps.fs, { marketplaceRegistry: registry, homedir });
+  const built = fakeBuiltDeps({ marketplaceRegistry: registry, homedir });
   const added = await new ResolveAddedPluginSource(
     {
       loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),

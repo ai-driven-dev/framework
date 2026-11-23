@@ -1,21 +1,27 @@
 import type { BuiltPlacement } from "../../contexts/installation/application/materialize/add-plugin-request.js";
-import { builtTreePlacement } from "../../contexts/installation/application/materialize/built/place-built-tree-plugin.js";
+import {
+  builtTreePlacement,
+  type PlacementDeps,
+} from "../../contexts/installation/application/materialize/built/place-built-tree-plugin.js";
+import { builtTreeReader } from "../../contexts/installation/application/materialize/built/read-translated-built-tree.js";
+import { flatPlacement } from "../../contexts/installation/application/materialize/place-flat-plugin.js";
 import { foreignUserScopeDirOf } from "../../contexts/installation/application/plugin/add/foreign-user-scope-dir.js";
 import {
   PlacePlugin,
   type PlacePluginDeps,
   toolPlacementOf,
 } from "../../contexts/installation/application/plugin/add/place-plugin.use-case.js";
+import type { BuiltMaterializationDeps } from "../../contexts/installation/application/plugin/files/built-materialization-deps.js";
 import {
   latestDistributionOf,
   PluginMaterializer,
 } from "../../contexts/installation/application/plugin/files/plugin-materializer.js";
 import { userPluginRebuildOf } from "../../contexts/installation/application/plugin/files/rebuild-user-plugin-files.js";
-import type { BuiltMaterializationDeps } from "../../contexts/installation/application/shared/built-materialization-deps.js";
 import type { LoadDistribution } from "../../contexts/installation/ports/plugin/load-plugin-distribution.js";
 import type { UserScopeFileGuard } from "../../contexts/installation/ports/plugin/user-plugin-materialization.js";
 import type { FileReader } from "../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../shared/ports/file-writer.js";
+import { projectIntegrationOf } from "../contexts/installation.js";
 import type { RegisteredCatalog } from "../contexts/tools.js";
 
 type Files = FileReader & FileWriter;
@@ -25,7 +31,20 @@ export function builtPlacementOf(fs: Files, built: BuiltMaterializationDeps): Bu
   return {
     homedir: built.homedir,
     translate: built.translate,
-    placeBuiltTree: builtTreePlacement({ fs, built }),
+    placeBuiltTree: builtTreePlacement(placementDepsOf(fs, built)),
+  };
+}
+
+/** What placing from a built tree reaches, with the project hooks built over `fs`. */
+export function placementDepsOf(fs: Files, built: BuiltMaterializationDeps): PlacementDeps {
+  const { homedir, translate, marketplaceRegistry, ensureBuilt, platform } = built;
+  const projectHooks = projectIntegrationOf(fs).materializer;
+  return {
+    fs,
+    marketplaceRegistry,
+    homedir,
+    readBuiltTree: builtTreeReader({ fs, ensureBuilt, platform, translate, projectHooks }),
+    placeFlat: flatPlacement({ fs, homedir, translate, projectHooks }),
   };
 }
 

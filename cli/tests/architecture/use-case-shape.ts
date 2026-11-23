@@ -1,8 +1,9 @@
 /**
  * The shape a use case holds, read from the syntax tree: one class named after its file with a
- * public `execute`, at most five constructor dependencies, and the tool catalog arriving at
- * construction, never as a method parameter or a property of an options type, and no repository
- * typed with `ScopeRecords`.
+ * public `execute`, and the tool catalog arriving at construction, never as a method parameter or
+ * a property of an options type, and no repository typed with `ScopeRecords`. Every class of an
+ * application folder, a command or not, takes at most five constructor dependencies, and one that
+ * is not a command implements a port declared in a `ports` or `contract` folder.
  *
  * Written limits: a class a method instantiates inline is not counted as a dependency; a file that
  * declares no class holds a port or a function and owes no shape. How a bag counts is in
@@ -12,10 +13,12 @@ import {
   type ClassDeclaration,
   isClassDeclaration,
   isConstructorDeclaration,
+  isInterfaceDeclaration,
   isIntersectionTypeNode,
   isMethodDeclaration,
   isPropertyDeclaration,
   isPropertySignatureDeclaration,
+  isTypeAliasDeclaration,
   isTypeReferenceNode,
   type Node,
   type SourceFile,
@@ -25,7 +28,7 @@ import {
 import type { Project } from "typescript/unstable/sync";
 import { isUseCase } from "./kinds.js";
 import { walk, withRealProject, withVirtualProject } from "./ts-project.js";
-import { type DependencyReader, dependencyCount } from "./use-case-shape-dependencies.js";
+import { bagCount, type DependencyReader, dependencyCount } from "./use-case-shape-dependencies.js";
 
 const MAX_CONSTRUCTOR_DEPENDENCIES = 5;
 const CATALOG = "ToolCatalog";
@@ -115,14 +118,11 @@ function methodBreaks(
     : [];
 }
 
-/** A class that implements a port is an adapter shaped by that port, so it owes no limit. */
 function constructorBreaks(
   reader: DependencyReader,
-  classes: readonly ClassDeclaration[],
-  ports: ReadonlySet<string>
+  classes: readonly ClassDeclaration[]
 ): string[] {
-  const unported = classes.filter((declaration) => !implementsPort(declaration, ports));
-  return unported.flatMap((declaration) => {
+  return classes.flatMap((declaration) => {
     const constructors = declaration.members.filter(isConstructorDeclaration);
     const widest = Math.max(0, ...constructors.map((c) => dependencyCount(reader, c.parameters)));
     return widest > MAX_CONSTRUCTOR_DEPENDENCIES
@@ -168,20 +168,73 @@ function recordsBreaks(root: SourceFile): string[] {
   return breaks;
 }
 
+const APPLICATION_FILE = /^src\/contexts\/[^/]+\/application\//;
+
+/** A class of an application folder is a command, or the implementation of a port. */
+function portlessBreaks(
+  file: string,
+  root: SourceFile,
+  classes: readonly ClassDeclaration[]
+): string[] {
+  if (!APPLICATION_FILE.test(file) || file.endsWith(".use-case.ts")) return [];
+  const ports = portNames(root.text);
+  return classes.some((declaration) => !implementsPort(declaration, ports))
+    ? ["a class that is neither a command nor an implementation of a port"]
+    : [];
+}
+
+/** A deps object an application folder declares, a type named `*Deps`, is counted as a constructor
+ * counts it: it hides a longer list from the cap unless its fields are counted where it is
+ * declared, whether a class or a function takes it. */
+function bagBreaks(reader: DependencyReader, file: string, root: SourceFile): string[] {
+  if (!APPLICATION_FILE.test(file)) return [];
+  return root.statements
+    .filter((statement) => isInterfaceDeclaration(statement) || isTypeAliasDeclaration(statement))
+    .filter((declaration) => /Deps$/.test(nameOf(declaration) ?? ""))
+    .flatMap((declaration) => {
+      const widest = bagCount(reader, declaration);
+      return widest > MAX_CONSTRUCTOR_DEPENDENCIES
+        ? [
+            `${nameOf(declaration)} declares ${widest} dependencies, at most ${MAX_CONSTRUCTOR_DEPENDENCIES}`,
+          ]
+        : [];
+    });
+}
+
+/** The classes the dependency cap reads: every class of an application folder, and elsewhere
+ * those that implement no port, an adapter being shaped by its port. */
+function cappedClasses(
+  file: string,
+  root: SourceFile,
+  classes: readonly ClassDeclaration[]
+): ClassDeclaration[] {
+  const ports = portNames(root.text);
+  return APPLICATION_FILE.test(file)
+    ? [...classes]
+    : classes.filter((declaration) => !implementsPort(declaration, ports));
+}
+
 function breaksOf(reader: DependencyReader, file: string, root: SourceFile): string[] {
   const classes = root.statements.filter(isClassDeclaration);
   const inClasses =
     classes.length > 0
       ? [
           ...methodBreaks(file, root.text, classes),
-          ...constructorBreaks(reader, classes, portNames(root.text)),
+          ...portlessBreaks(file, root, classes),
+          ...constructorBreaks(reader, cappedClasses(file, root, classes)),
         ]
       : [];
   const ownerless =
     file.endsWith(".use-case.ts") && !exportsExecutingClass(root)
       ? ["no exported class with a public execute"]
       : [];
-  return [...inClasses, ...ownerless, ...catalogBreaks(root), ...recordsBreaks(root)];
+  return [
+    ...inClasses,
+    ...bagBreaks(reader, file, root),
+    ...ownerless,
+    ...catalogBreaks(root),
+    ...recordsBreaks(root),
+  ];
 }
 
 /** The use cases among `files` that break the shape, one entry per file, `root` being the
@@ -194,9 +247,10 @@ function shapeBreaksIn(
   const reader: DependencyReader = {
     checker: project.checker,
     declaredByUseCase: (path) => isUseCase(path.slice(root.length + 1)),
+    declaredByApplication: (path) => APPLICATION_FILE.test(path.slice(root.length + 1)),
   };
   const found = new Map<string, string[]>();
-  for (const file of files.filter(isUseCase)) {
+  for (const file of files.filter((path) => isUseCase(path) || APPLICATION_FILE.test(path))) {
     const source = project.program.getSourceFile(`${root}/${file}`);
     if (!source) throw new Error(`the compiler returned no source for ${file}`);
     const breaks = breaksOf(reader, file, source);

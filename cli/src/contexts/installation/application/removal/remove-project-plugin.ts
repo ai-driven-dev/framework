@@ -1,23 +1,15 @@
-import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
+import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { RemovedPlugin } from "../../contract/records/plugin-claims.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ProjectIntegrationCleanup } from "../../ports/project-integration-cleanup.js";
+import type { RemovalClaims } from "../../ports/removal-claims.js";
 import type { ProjectPluginIntegration } from "../../ports/tool-sections.js";
 import { deletePluginFilesForTool } from "../plugin/files/delete-plugin-files.js";
 import type { AssertProjectIntegrationRemovable } from "./assert-project-integration-removable.use-case.js";
 import type { RemoveProjectIntegration } from "./remove-project-integration.use-case.js";
-
-/** The machine claims a removal lets go of, supplied by the composition root. */
-export interface RemovalClaims {
-  readonly detachNativeRefs: (
-    projectRoot: string,
-    refsByTool: ReadonlyMap<ToolId, readonly string[]>
-  ) => Promise<void>;
-  readonly detachUserPlugin: (toolId: AiToolId, name: string, projectRoot: string) => Promise<void>;
-}
 
 /** What RemoveProjectPlugin is built from. */
 export interface RemoveProjectPluginDeps {

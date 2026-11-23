@@ -116,18 +116,22 @@ function wireUserPluginRemoval(base: Base) {
 /** Removing a plugin from a project or from the machine, and the claims it leaves behind. */
 function wirePluginRemoval(base: Base, inst: Installation) {
   const { tools, fs, logger, manifestRepo, userManifestRepo, withdrawFromHost } = base;
-  const removalClaims = pluginRemovalClaims({
-    ...machineOwnership(userManifestRepo, fs),
-    ...sharedSourceReads({
-      fs,
-      platform: process.platform,
-      references: lenientSourceReferences(base.userSourceReferences, logger),
-    }),
-    home: base.homedir(),
-    frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-    marketplaceRegistry: base.marketplaceRegistry,
-    resolveCacheCandidate: purgeCandidateResolverOf(new ResolvePurgeCandidate(fs, logger)),
-  });
+  const removalClaims = pluginRemovalClaims(
+    {
+      ...machineOwnership(userManifestRepo, fs),
+      home: base.homedir(),
+      resolveCacheCandidate: purgeCandidateResolverOf(new ResolvePurgeCandidate(fs, logger)),
+    },
+    {
+      ...sharedSourceReads({
+        fs,
+        platform: process.platform,
+        references: lenientSourceReferences(base.userSourceReferences, logger),
+      }),
+      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+      marketplaceRegistry: base.marketplaceRegistry,
+    }
+  );
   const removePlugin = new RemovePlugin({
     remove: new RemoveProjectPluginFiles(
       {

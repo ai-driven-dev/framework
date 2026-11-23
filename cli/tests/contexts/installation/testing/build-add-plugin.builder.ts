@@ -42,7 +42,7 @@ export function buildAddPlugin(
   tools: RegisteredCatalog,
   pluginRuntime?: Pick<EnsurePluginRuntimeFiles, "execute">
 ): AddPlugin {
-  const built = fakeBuiltDeps(host.fs, {
+  const built = fakeBuiltDeps({
     homedir: nodeHomedir,
     ensureBuilt: sources.ensureBuilt,
     marketplaceRegistry: sources.marketplaceRegistry,

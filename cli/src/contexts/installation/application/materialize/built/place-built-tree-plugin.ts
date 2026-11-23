@@ -1,16 +1,23 @@
 import type { InstallationFile } from "../../../../../shared/domain/installation-file.js";
 import type { Scope } from "../../../../../shared/domain/scope.js";
+import type { FileReader } from "../../../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../../../shared/ports/file-writer.js";
 import { RecordedPlugin } from "../../../domain/plugins/recorded-plugin.js";
+import type { InstallationMarketplaceRegistry } from "../../../ports/marketplace-sources.js";
 import { writeChangedPluginFiles } from "../../plugin/files/write-changed-plugin-files.js";
 import { resolveScopeForInstall, scopeBaseOf } from "../../plugin/plugin-target-resolution.js";
-import type {
-  AddPluginRequest,
-  AddPluginResult,
-  PlaceBuiltTree,
-  PlacementDeps,
-} from "../add-plugin-request.js";
-import { placeFlatPlugin } from "../place-flat-plugin.js";
-import { type BuiltTreeRead, readTranslatedBuiltTree } from "./read-translated-built-tree.js";
+import type { AddPluginRequest, AddPluginResult, PlaceBuiltTree } from "../add-plugin-request.js";
+import type { PlaceFlat } from "../place-flat-plugin.js";
+import type { BuiltTreeRead, ReadBuiltTree } from "./read-translated-built-tree.js";
+
+/** What placing a plugin from its built tree reaches, and the flat placement it falls back to. */
+export interface PlacementDeps {
+  fs: FileWriter & FileReader;
+  marketplaceRegistry: InstallationMarketplaceRegistry;
+  homedir: () => string;
+  readBuiltTree: ReadBuiltTree;
+  placeFlat: PlaceFlat;
+}
 
 /** The built-tree placement, bound to the build and file system it reads. */
 export function builtTreePlacement(deps: PlacementDeps): PlaceBuiltTree {
@@ -30,29 +37,18 @@ export async function placeBuiltTreePlugin(
   const resolved =
     marketplace === undefined
       ? undefined
-      : (await deps.built.marketplaceRegistry.list(projectRoot)).find(
-          (m) => m.name === marketplace
-        );
+      : (await deps.marketplaceRegistry.list(projectRoot)).find((m) => m.name === marketplace);
   if (marketplace === undefined || resolved === undefined) {
-    return placeFlatPlugin(request, {
-      fs: deps.fs,
-      homedir: deps.built.homedir,
-      translate: deps.built.translate,
-      projectHooks: deps.built.projectHooks,
-    });
+    return deps.placeFlat(request);
   }
   const mode = tool.frameworkBuildMode();
-  const { files, hooks, mcp } = await readTranslatedBuiltTree(request, {
-    deps,
-    marketplace: resolved,
-    mode,
-  });
+  const { files, hooks, mcp } = await deps.readBuiltTree(request, { marketplace: resolved, mode });
   const scope = resolveScopeForInstall(tool);
   const owned = request.userScopeDirTaken === true ? [] : files;
   const baseDir =
     mode === "flat"
       ? projectRoot
-      : scopeBaseOf(tool, { scope, projectRoot, homedir: () => deps.built.homedir() });
+      : scopeBaseOf(tool, { scope, projectRoot, homedir: () => deps.homedir() });
   const written = await writeChangedPluginFiles(deps.fs, owned, baseDir);
   manifest.addPlugin(tool.toolId, builtTreeEntry(request, { owned, scope, mcp, hooks }));
   return { skipped: [...mcp.mcpSkips, ...hooks.skipped], written };

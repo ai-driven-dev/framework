@@ -54,7 +54,7 @@ function makeUpdateUseCase(deps: Deps, registry: FakeMarketplaceRegistry): Updat
           fs: deps.fs,
           ...builtPlacementOf(
             deps.fs,
-            fakeBuiltDeps(deps.fs, { marketplaceRegistry: registry, homedir: () => HOME })
+            fakeBuiltDeps({ marketplaceRegistry: registry, homedir: () => HOME })
           ),
         },
         registeredTools()

@@ -26,6 +26,14 @@ export interface FlatPlacementDeps {
   projectHooks: ProjectHooksMaterializer;
 }
 
+/** Places one plugin flat: written straight into the tool's plugin directory. */
+export type PlaceFlat = (request: AddPluginRequest) => Promise<AddPluginResult>;
+
+/** The flat placement, bound to the file system and translation it reads. */
+export function flatPlacement(deps: FlatPlacementDeps): PlaceFlat {
+  return (request) => placeFlatPlugin(request, deps);
+}
+
 interface FlatContext {
   files: InstallationFile[];
   componentPaths: ReadonlyMap<string, string>;

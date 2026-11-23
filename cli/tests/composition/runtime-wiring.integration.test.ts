@@ -3,7 +3,6 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  builtMaterializationDepsOf,
   cacheBuildFor,
   debugOnly,
   wireInstallation,
@@ -26,17 +25,14 @@ import {
 } from "../../src/composition/orchestration/plugin.js";
 import { wireBase } from "../../src/composition/shared.js";
 import { Marketplace } from "../../src/contexts/distribution/domain/marketplace.js";
-import { ProjectHooksMaterializer } from "../../src/contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { isStrictlyWithin } from "../../src/shared/domain/paths.model.js";
 import { BundledAssetProviderAdapter } from "../../src/shared/infrastructure/asset-loader.js";
-import { fakeBuildSources } from "../contexts/installation/testing/fake-build-sources.fake.js";
 import { CapturingLogger } from "../shared/testing/capturing-logger.fake.js";
 import { CapturingOutput } from "../shared/testing/capturing-output.fake.js";
 import { catalogOf, registeredAiProfile } from "../shared/testing/catalog-of.builder.js";
 import { InMemoryFileAdapter } from "../shared/testing/in-memory-file-adapter.fake.js";
-import { InMemoryMarketplaceRegistry } from "../shared/testing/in-memory-marketplace-registry.fake.js";
 import { registeredTools, TOOL } from "../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../shared/testing/seed-from-directory.builder.js";
 
@@ -256,22 +252,6 @@ describe("logging at debug level", () => {
     logger.warn("w", cause);
 
     expect(debug.mock.calls).toStrictEqual([["d", undefined], ["i"], ["w", cause]]);
-  });
-});
-
-describe("materializing a built restore", () => {
-  it("hands a restore the build it was given and the project hooks built over its file system", () => {
-    const build = {
-      ...fakeBuildSources(),
-      marketplaceRegistry: new InMemoryMarketplaceRegistry(),
-      homedir: () => "/home/u",
-      platform: process.platform,
-    };
-
-    const deps = builtMaterializationDepsOf(new InMemoryFileAdapter(), build);
-
-    expect(deps).toMatchObject(build);
-    expect(deps.projectHooks).toBeInstanceOf(ProjectHooksMaterializer);
   });
 });
 

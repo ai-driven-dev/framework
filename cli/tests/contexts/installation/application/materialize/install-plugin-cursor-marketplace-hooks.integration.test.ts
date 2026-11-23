@@ -1,7 +1,9 @@
 /** A marketplace-sourced Cursor install must deliver hooks where a local-source one does:
  * a built tree's plugin-scoped `hooks/hooks.json` lands in a directory Cursor never reads. */
+
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { placementDepsOf } from "../../../../../src/composition/orchestration/built-placement.js";
 import { placeBuiltTreePlugin } from "../../../../../src/contexts/installation/application/materialize/built/place-built-tree-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
@@ -63,10 +65,10 @@ describe("placeBuiltTreePlugin - cursor marketplace hooks (Phase 7)", () => {
     fs.setFile(`${BUILT}/plugins/${PLUGIN_NAME}/hooks/post.js`, "module.exports = () => {};");
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
-    const translator = {
-      fs: fs,
-      built: fakeBuiltDeps(fs, { homedir: () => HOME, marketplaceRegistry: await makeRegistry() }),
-    };
+    const translator = placementDepsOf(
+      fs,
+      fakeBuiltDeps({ homedir: () => HOME, marketplaceRegistry: await makeRegistry() })
+    );
 
     const { skipped } = await placeBuiltTreePlugin(
       {
@@ -93,10 +95,10 @@ describe("placeBuiltTreePlugin - cursor marketplace hooks (Phase 7)", () => {
     fs.setFile(`${BUILT}/plugins/${PLUGIN_NAME}/hooks/post.js`, "module.exports = () => {};");
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
-    const translator = {
-      fs: fs,
-      built: fakeBuiltDeps(fs, { homedir: () => HOME, marketplaceRegistry: await makeRegistry() }),
-    };
+    const translator = placementDepsOf(
+      fs,
+      fakeBuiltDeps({ homedir: () => HOME, marketplaceRegistry: await makeRegistry() })
+    );
 
     await placeBuiltTreePlugin(
       {

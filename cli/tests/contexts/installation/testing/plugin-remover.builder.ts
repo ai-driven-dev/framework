@@ -71,19 +71,23 @@ function withdrawing(parts: Omit<PluginRemoverParts, "manifestRepo">, fs: FileRe
 export function pluginRemover(parts: PluginRemoverParts) {
   const fs = parts.fs ?? new InMemoryFileAdapter();
   const logger = parts.logger ?? new CapturingLogger();
-  const removalClaims = pluginRemovalClaims({
-    ...machineOwnership(parts.userManifestRepo, fs),
-    ...sharedSourceReads({
-      fs,
-      platform: process.platform,
-      references: lenientSourceReferences(parts.userSourceReferences, logger),
-    }),
-    home: homeDirResolver()(),
-    frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-    marketplaceRegistry: parts.marketplaceRegistry,
-    resolveCacheCandidate: (cacheRoot, relativeSegments, label) =>
-      new ResolvePurgeCandidate(fs, logger).execute(cacheRoot, relativeSegments, label),
-  });
+  const removalClaims = pluginRemovalClaims(
+    {
+      ...machineOwnership(parts.userManifestRepo, fs),
+      home: homeDirResolver()(),
+      resolveCacheCandidate: (cacheRoot, relativeSegments, label) =>
+        new ResolvePurgeCandidate(fs, logger).execute(cacheRoot, relativeSegments, label),
+    },
+    {
+      ...sharedSourceReads({
+        fs,
+        platform: process.platform,
+        references: lenientSourceReferences(parts.userSourceReferences, logger),
+      }),
+      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+      marketplaceRegistry: parts.marketplaceRegistry,
+    }
+  );
   return new RemovePlugin({
     remove: new RemoveProjectPluginFiles(
       {

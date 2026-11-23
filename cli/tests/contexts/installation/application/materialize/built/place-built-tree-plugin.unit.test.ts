@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { placementDepsOf } from "../../../../../../src/composition/orchestration/built-placement.js";
 import { placeBuiltTreePlugin } from "../../../../../../src/contexts/installation/application/materialize/built/place-built-tree-plugin.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../../src/shared/domain/plugin/plugin-distribution.js";
@@ -35,10 +36,10 @@ describe("placeBuiltTreePlugin - cursor", () => {
   it("counts changed files and skips byte-identical files on repeated materialization", async () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(`${BUILT}/plugins/sample-plugin/skills/demo/SKILL.md`, "built skill");
-    const translator = {
-      fs: fs,
-      built: fakeBuiltDeps(fs, { homedir: () => HOME, marketplaceRegistry: await makeRegistry() }),
-    };
+    const translator = placementDepsOf(
+      fs,
+      fakeBuiltDeps({ homedir: () => HOME, marketplaceRegistry: await makeRegistry() })
+    );
     const install = () => {
       const restored = Manifest.create();
       restored.addTool(TOOL.cursor, "test", []);
@@ -73,14 +74,14 @@ describe("placeBuiltTreePlugin - cursor", () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(`${BUILT}/plugins/sample-plugin/skills/demo/SKILL.md`, "built skill");
     const execute = vi.fn(translateDistribution.execute.bind(translateDistribution));
-    const translator = {
-      fs: fs,
-      built: fakeBuiltDeps(fs, {
+    const translator = placementDepsOf(
+      fs,
+      fakeBuiltDeps({
         homedir: () => HOME,
         marketplaceRegistry: await makeRegistry(),
         translate: { execute },
-      }),
-    };
+      })
+    );
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
     await placeBuiltTreePlugin(
@@ -111,10 +112,10 @@ describe("placeBuiltTreePlugin - cursor", () => {
 
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
-    const translator = {
-      fs: fs,
-      built: fakeBuiltDeps(fs, { homedir: () => HOME, marketplaceRegistry: await makeRegistry() }),
-    };
+    const translator = placementDepsOf(
+      fs,
+      fakeBuiltDeps({ homedir: () => HOME, marketplaceRegistry: await makeRegistry() })
+    );
 
     await placeBuiltTreePlugin(
       {
@@ -145,10 +146,10 @@ describe("placeBuiltTreePlugin - cursor", () => {
     fs.setFile(occupied, "foreign bytes");
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
-    const translator = {
-      fs: fs,
-      built: fakeBuiltDeps(fs, { homedir: () => HOME, marketplaceRegistry: await makeRegistry() }),
-    };
+    const translator = placementDepsOf(
+      fs,
+      fakeBuiltDeps({ homedir: () => HOME, marketplaceRegistry: await makeRegistry() })
+    );
 
     const result = await placeBuiltTreePlugin(
       {
@@ -172,10 +173,10 @@ describe("placeBuiltTreePlugin - cursor", () => {
     const fs = new InMemoryFileAdapter();
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
-    const translator = {
-      fs: fs,
-      built: fakeBuiltDeps(fs, { homedir: () => HOME, marketplaceRegistry: await makeRegistry() }),
-    };
+    const translator = placementDepsOf(
+      fs,
+      fakeBuiltDeps({ homedir: () => HOME, marketplaceRegistry: await makeRegistry() })
+    );
     const result = await placeBuiltTreePlugin(
       {
         dist: dist(),
@@ -215,10 +216,10 @@ describe("placeBuiltTreePlugin - when no built tree applies", () => {
     fs.setFile(`${BUILT}/plugins/sample-plugin/skills/demo/SKILL.md`, "built skill");
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
-    const translator = {
-      fs: fs,
-      built: fakeBuiltDeps(fs, { homedir: () => HOME, marketplaceRegistry: await makeRegistry() }),
-    };
+    const translator = placementDepsOf(
+      fs,
+      fakeBuiltDeps({ homedir: () => HOME, marketplaceRegistry: await makeRegistry() })
+    );
     await placeBuiltTreePlugin(
       {
         dist: distWithCommand(),

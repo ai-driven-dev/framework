@@ -43,7 +43,7 @@ function makeRestoreUseCase(deps: Deps, registry: FakeMarketplaceRegistry): Rest
   return restoreAllPluginsOf({
     ...deps,
     loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
-    builtDeps: fakeBuiltDeps(deps.fs, { marketplaceRegistry: registry, homedir }),
+    builtDeps: fakeBuiltDeps({ marketplaceRegistry: registry, homedir }),
   });
 }
 

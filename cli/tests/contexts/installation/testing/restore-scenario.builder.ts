@@ -68,7 +68,7 @@ export function makeRestoreUseCase(
     plugins: restoreAllPluginsOf({
       ...deps,
       loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
-      builtDeps: fakeBuiltDeps(deps.fs),
+      builtDeps: fakeBuiltDeps(),
     }),
   });
 }
