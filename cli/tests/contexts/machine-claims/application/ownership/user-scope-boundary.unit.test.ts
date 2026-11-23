@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   tryRealpath,
@@ -16,7 +17,7 @@ describe("the directory a tool keeps its user plugins in", () => {
 
   it("is the tool's user plugins base directory under the home", () => {
     expect(userPluginsBoundary(registeredTools().aiProfile(TOOL.cursor), "/home/u")).toBe(
-      "/home/u/.cursor/plugins/local"
+      join("/home/u", ".cursor", "plugins", "local")
     );
   });
 });
