@@ -66,10 +66,11 @@ export const KINDS: readonly Kind[] = [
       "src/contexts/*/domain/**/*",
       "src/contexts/*/contract/**/*",
       "src/shared/domain/**/*",
-      // `output.model.ts`: what the terminal adapter implements and presenters and controllers read.
-      "src/presentation/terminal/**/*",
-      // A value a scenario carries between its steps, named `.model.ts` beside that scenario.
-      "src/orchestration/**/*",
+      // What the terminal adapter implements and presenters and controllers read.
+      "src/presentation/terminal/output.model.ts",
+      // The values a scenario carries between its steps, each beside its scenario.
+      "src/orchestration/setup/setup-flow.model.ts",
+      "src/orchestration/sync/bulk-conflict-state.model.ts",
     ],
     fallback: [
       "src/contexts/*/domain/**/*",
