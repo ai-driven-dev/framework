@@ -13,12 +13,16 @@ describe("codex link syntax", () => {
       "Read .agents/skills/aidd-01-plan/SKILL.md\n"
     );
   });
+});
 
-  it("routes a numbered command folder under commands/aidd/<phase>/, with or without the @ prefix", () => {
-    expect(
-      rewriteCodexContent(
-        "Run .codex/commands/04_code/implement.md, then @.codex/commands/02-plan/plan.md.\n"
-      )
-    ).toBe("Run .codex/commands/aidd/04/implement.md, then @.codex/commands/aidd/02/plan.md.\n");
+describe("codex commands", () => {
+  const profile = defineAiTool(codexSpec, { toml: new SmolTomlCodec() });
+
+  it("declares no commands capability, since Codex reads no project command directory", () => {
+    expect(profile.section("commands")).toBeNull();
+  });
+
+  it("keeps no signal directory, since no command file is ever written for it", () => {
+    expect(profile.signalDirectoryIn("/project")).toBeNull();
   });
 });

@@ -136,7 +136,10 @@ describe("restoring a project on disk", () => {
     await installPlugin(deps, TOOL.codex);
 
     const claudePluginFile = join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md");
-    const codexPluginFile = join(PROJECT_ROOT, ".codex/plugins/sample-plugin/commands/greet.md");
+    const codexPluginFile = join(
+      PROJECT_ROOT,
+      ".codex/plugins/sample-plugin/skills/hello/SKILL.md"
+    );
     await deps.fs.writeFile(claudePluginFile, "CORRUPTED CLAUDE");
     await deps.fs.writeFile(codexPluginFile, "CORRUPTED CODEX");
 
@@ -182,7 +185,10 @@ describe("restoring a project on disk", () => {
     await installPlugin(deps, TOOL.codex);
 
     const claudePluginFile = join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md");
-    const codexPluginFile = join(PROJECT_ROOT, ".codex/plugins/sample-plugin/commands/greet.md");
+    const codexPluginFile = join(
+      PROJECT_ROOT,
+      ".codex/plugins/sample-plugin/skills/hello/SKILL.md"
+    );
     await deps.fs.writeFile(claudePluginFile, "CORRUPTED CLAUDE");
     await deps.fs.writeFile(codexPluginFile, "CORRUPTED CODEX");
 
