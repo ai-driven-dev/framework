@@ -8,7 +8,7 @@ import type { Manifest } from "../../domain/manifest.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { InstallationCatalog } from "../../ports/tool-sections.js";
-import { resolvePluginToolIds } from "../plugin/plugin-target-resolution.js";
+import { resolvePluginToolIds, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import { requireManifest } from "../shared/require-manifest.js";
 import type { AssertProjectIntegrationRemovable } from "./assert-project-integration-removable.use-case.js";
 import type { ProjectPluginWithdrawalSteps } from "./project-plugin-withdrawal.js";
@@ -18,6 +18,8 @@ export interface RemovePluginRequest {
   pluginName: string;
   toolIds: AiToolId[] | "all";
   projectRoot: string;
+  /** The machine home, read only for a plugin the manifest recorded at user scope. */
+  home: string;
   withdrawal: ProjectPluginWithdrawalSteps;
 }
 
@@ -38,7 +40,7 @@ export class RemovePlugin {
   ) {}
 
   async execute(options: RemovePluginRequest): Promise<void> {
-    const { pluginName, toolIds, projectRoot, withdrawal } = options;
+    const { pluginName, toolIds, projectRoot, home, withdrawal } = options;
     const manifest = await requireManifest(this.deps.projectRepo);
     const registered = await withdrawal.loadRecords();
     const resolvedToolIds = resolvePluginToolIds(toolIds, manifest, this.tools);
@@ -61,6 +63,7 @@ export class RemovePlugin {
         pluginName,
         toolIds: resolvedToolIds,
         projectRoot,
+        home,
         withdrawal,
       }
     );
@@ -95,7 +98,7 @@ export class RemovePlugin {
     { manifest, registered }: { manifest: Manifest; registered: ToolRecords },
     removal: Omit<RemovePluginRequest, "toolIds"> & { toolIds: AiToolId[] }
   ): Promise<boolean> {
-    const { pluginName, toolIds, projectRoot, withdrawal } = removal;
+    const { pluginName, toolIds, projectRoot, home, withdrawal } = removal;
     let removed = false;
     for (const toolId of toolIds) {
       const tool = this.tools.aiProfile(toolId);
@@ -103,6 +106,11 @@ export class RemovePlugin {
       if (entry === undefined) continue;
       const { plugin } = entry;
       const registrations = registered.get(toolId);
+      const baseDir = scopeBaseOf(tool, {
+        scope: plugin.scope,
+        projectRoot,
+        homedir: () => home,
+      });
       const confirmed = await withdrawal.withdraw({
         tool,
         plugin: entry,
@@ -110,7 +118,7 @@ export class RemovePlugin {
         registrations,
       });
       // A user-scope plugin's files are the machine's, released by its claim, never deleted here.
-      if (plugin.scope !== "user") await this.deletePluginFiles(plugin.files, projectRoot);
+      if (plugin.scope !== "user") await this.deletePluginFiles(plugin.files, baseDir);
       await this.deps.integration.remove.execute({ plugin: entry, tool, projectRoot });
       const ref = withdrawal.recordedRef(registrations, entry);
       if (
@@ -128,10 +136,10 @@ export class RemovePlugin {
 
   private async deletePluginFiles(
     files: ReadonlyMap<string, string>,
-    projectRoot: string
+    baseDir: string
   ): Promise<void> {
     for (const relativePath of files.keys()) {
-      const fullPath = join(projectRoot, relativePath);
+      const fullPath = join(baseDir, relativePath);
       await this.deps.fs.deleteFile(fullPath);
       await this.deps.fs.deleteEmptyDirectories(dirname(fullPath));
     }

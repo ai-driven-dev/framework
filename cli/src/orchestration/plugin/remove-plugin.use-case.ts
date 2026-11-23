@@ -30,8 +30,12 @@ function withdrawnOf(reach: PluginHostReach) {
 export class RemovePlugin {
   constructor(private readonly deps: RemovePluginDeps) {}
 
-  execute(request: Omit<RemovePluginRequest, "withdrawal">): Promise<void> {
-    return this.deps.remove.execute({ ...request, withdrawal: this.withdrawal() });
+  execute(request: Omit<RemovePluginRequest, "home" | "withdrawal">): Promise<void> {
+    return this.deps.remove.execute({
+      ...request,
+      home: this.deps.claims.home,
+      withdrawal: this.withdrawal(),
+    });
   }
 
   private withdrawal(): ProjectPluginWithdrawalSteps {
