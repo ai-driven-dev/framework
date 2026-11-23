@@ -10,7 +10,7 @@ const TOOLING_TESTS = [
   "tests/mutation/stryker-filter.integration.test.ts",
   "tests/shared/testing/realpath-windows.unit.test.ts",
   "tests/mutation/mutation-sequencer.integration.test.ts",
-  "tests/setup/throwaway-profile.integration.test.ts",
+  "tests/shared/testing/throwaway-profile.integration.test.ts",
   "tests/mutation/unloadable-file-as-failed-test.integration.test.ts",
   "tests/mutation/unloadable-file-as-failed-test.unit.test.ts",
 ];
@@ -30,7 +30,7 @@ export default defineConfig({
           environment: "node",
           globalSetup: [
             "./tests/setup/sweep-stale-temp-dirs.ts",
-            "./tests/setup/throwaway-profile.ts",
+            "./tests/shared/testing/throwaway-profile.ts",
           ],
         },
       },
@@ -44,7 +44,7 @@ export default defineConfig({
           environment: "node",
           globalSetup: [
             "./tests/setup/sweep-stale-temp-dirs.ts",
-            "./tests/setup/throwaway-profile.ts",
+            "./tests/shared/testing/throwaway-profile.ts",
           ],
         },
       },
@@ -73,7 +73,7 @@ export default defineConfig({
           hookTimeout: 60000,
           globalSetup: [
             "./tests/setup/sweep-stale-temp-dirs.ts",
-            "./tests/setup/throwaway-profile.ts",
+            "./tests/shared/testing/throwaway-profile.ts",
           ],
         },
       },
@@ -89,7 +89,7 @@ export default defineConfig({
           hookTimeout: 60000,
           globalSetup: [
             "./tests/setup/sweep-stale-temp-dirs.ts",
-            "./tests/setup/throwaway-profile.ts",
+            "./tests/shared/testing/throwaway-profile.ts",
           ],
         },
       },
@@ -144,7 +144,6 @@ export default defineConfig({
       // this file, so a glob cannot outlive the directory it points at again.
       exclude: [
         "src/cli.ts",
-        "src/contexts/*/domain/ports/**",
         "src/contexts/*/ports/**",
         "src/contexts/*/contract/**",
         "src/shared/ports/**",

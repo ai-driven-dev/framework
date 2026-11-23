@@ -44,7 +44,7 @@ describe("git hooks are installed from the repository root only", () => {
   });
 });
 
-const SETUP = "./tests/setup/throwaway-profile.ts";
+const SETUP = "./tests/shared/testing/throwaway-profile.ts";
 const RUNS_SOURCE = ["unit", "contract", "integration"];
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>

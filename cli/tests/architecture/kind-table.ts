@@ -45,6 +45,8 @@ const PURE_BUILTINS = ["node:path", "node:crypto"];
 const ANY_TEST_FOLDER = ["tests/**/*"];
 export const KIT_FOLDER = ["tests/**/testing/**/*"];
 export const SETUP_FOLDER = ["tests/setup/**/*", "tests/mutation/**/*"];
+/** The global setup that redirects HOME: a vitest config loads it, kept beside the kits. */
+const SETUP_FILE = ["tests/shared/testing/throwaway-profile.ts"];
 
 export const KINDS: readonly Kind[] = [
   {
@@ -228,12 +230,12 @@ export const KINDS: readonly Kind[] = [
     tests: [],
   },
   {
-    // A setup file is claimed by its folder alone: a vitest config loads it, nothing imports it. The
+    // A setup file is claimed by its folder or its named file alone: a vitest config loads it, nothing imports it. The
     // mutation run's sequencer and reporter filter sit beside their tests in `tests/mutation/`.
     id: "setup",
     suffix: /(?!)/,
-    folders: SETUP_FOLDER,
-    fallback: SETUP_FOLDER,
+    folders: [...SETUP_FOLDER, ...SETUP_FILE],
+    fallback: [...SETUP_FOLDER, ...SETUP_FILE],
     except: [],
     imports: "any",
     externals: "any",
