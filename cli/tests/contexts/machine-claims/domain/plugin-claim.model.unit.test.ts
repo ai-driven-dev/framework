@@ -262,6 +262,20 @@ describe("a record's claims, kept apart from its host data", () => {
     expect(split.claims.size).toBe(0);
   });
 
+  it("keeps nothing of a tool whose claims were all released and that holds no host data", () => {
+    const split = splitPluginClaims(new Map([[SYNTHETIC_TOOL, { pluginClaims: [] }]]));
+
+    expect(split.host.size).toBe(0);
+    expect(split.claims.size).toBe(0);
+  });
+
+  it("keeps the host data of a tool whose claims were all released", () => {
+    const split = splitPluginClaims(new Map([[SYNTHETIC_TOOL, { ...hostData, pluginClaims: [] }]]));
+
+    expect(split.host).toStrictEqual(new Map([[SYNTHETIC_TOOL, hostData]]));
+    expect(split.claims.size).toBe(0);
+  });
+
   it("joins back to the records it was split from", () => {
     const records: MachineRecords = new Map();
     records.set(SYNTHETIC_TOOL, { ...hostData, pluginClaims: claims });
