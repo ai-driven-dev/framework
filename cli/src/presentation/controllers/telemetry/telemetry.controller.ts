@@ -1,5 +1,5 @@
 import type { Command } from "commander";
-import type { DepsSliceFactory, TelemetryRequests } from "../../../orchestration/deps.js";
+import type { ContainerFactory } from "../menu/global-options.controller.js";
 import {
   configureIngest,
   configureStatus,
@@ -12,17 +12,17 @@ import {
   configureOn,
 } from "./telemetry-lifecycle.controller.js";
 import { configureReport } from "./telemetry-report.controller.js";
-import type { TelemetryCommandKeys } from "./telemetry-surface.controller.js";
+import type { TelemetryContainer, TelemetryRequests } from "./telemetry-surface.controller.js";
 
 export function registerTelemetryCommand(
   program: Command,
-  createDeps: DepsSliceFactory<TelemetryCommandKeys>,
+  containerOf: ContainerFactory<TelemetryContainer>,
   requests: TelemetryRequests
 ): void {
   const telemetry = program
     .command("telemetry")
     .description("Measure what Claude Code and Codex sessions consume, locally");
-  const surface = { program, createDeps, requests };
+  const surface = { program, containerOf, requests };
   configureOn(telemetry.command("on"), surface);
   configureOff(telemetry.command("off"), surface);
   configureForget(telemetry.command("forget"), surface);

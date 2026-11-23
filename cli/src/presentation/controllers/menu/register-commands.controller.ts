@@ -1,5 +1,5 @@
 import type { Command } from "commander";
-import type { CommandRunner, DepsFactory, TelemetryRequests } from "../../../orchestration/deps.js";
+import type { CommandRunner, DepsFactory } from "../../../orchestration/deps.js";
 import { registerAuthCommand } from "../auth.controller.js";
 import { registerDoctorCommand } from "../doctor/doctor.controller.js";
 import type { DoctorContainer } from "../doctor/doctor-run.controller.js";
@@ -12,6 +12,10 @@ import { registerSetupCommand, type SetupContainer } from "../setup/setup.contro
 import type { SetupCatalog } from "../setup/setup-flags.controller.js";
 import { registerSyncCommand, type SyncContainer } from "../setup/sync.controller.js";
 import { registerTelemetryCommand } from "../telemetry/telemetry.controller.js";
+import type {
+  TelemetryContainer,
+  TelemetryRequests,
+} from "../telemetry/telemetry-surface.controller.js";
 import { registerToolConfigCommand } from "../tools/tool-config.controller.js";
 import type { ToolConfigContainer } from "../tools/tool-config-run.controller.js";
 import { registerTranslateCommand } from "../translate.controller.js";
@@ -30,7 +34,8 @@ type CommandsContainer = CleanContainer &
   PluginContainer &
   MarketplaceContainer &
   ToolConfigContainer &
-  RecipesContainer;
+  RecipesContainer &
+  TelemetryContainer;
 
 /** The commands of the binary, in the order `aidd --help` lists them. The binary and the in-process
  * test runner both call it, so a command added here is in both. */
@@ -58,5 +63,5 @@ export function registerCommands(
   registerUpdateCommand(program, createSlice);
   registerDoctorCommand(program, tools, containerOf);
   registerCleanCommand(program, containerOf);
-  registerTelemetryCommand(program, createSlice, telemetryRequests);
+  registerTelemetryCommand(program, containerOf, telemetryRequests);
 }

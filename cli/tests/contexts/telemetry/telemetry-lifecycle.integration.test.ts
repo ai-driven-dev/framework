@@ -17,7 +17,6 @@ import {
 import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { wireTelemetry } from "../../../src/composition/contexts/telemetry.js";
-import type { TelemetryDeps } from "../../../src/orchestration/deps.js";
 import { git } from "../../shared/testing/git-sandbox.builder.js";
 import { prompterAnswering } from "../../shared/testing/partial-ports.builder.js";
 import {
@@ -53,7 +52,7 @@ exit 0
 
 let box: TelemetrySandbox;
 let repo: string;
-let deps: TelemetryDeps;
+let deps: ReturnType<typeof wireTelemetry>;
 
 function useSandbox(): void {
   for (const [name, value] of Object.entries(box.env())) vi.stubEnv(name, value);

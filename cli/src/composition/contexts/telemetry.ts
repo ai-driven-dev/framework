@@ -69,7 +69,6 @@ import { UsageLedgerAdapter } from "../../contexts/telemetry/infrastructure/stor
 import { MeasurementErasureAdapter } from "../../contexts/telemetry/infrastructure/storage/measurement-erasure-adapter.js";
 import { PersonIdentityAdapter } from "../../contexts/telemetry/infrastructure/storage/person-identity-adapter.js";
 import type { UsageSource } from "../../contexts/telemetry/ports/usage-source.js";
-import type { TelemetryDeps, TelemetryRequests } from "../../orchestration/deps.js";
 import type { Prompter } from "../../orchestration/ports/prompter.js";
 import { ChooseIdentity } from "../../orchestration/telemetry/choose-identity.use-case.js";
 import { EnvironmentAdapter } from "../../shared/infrastructure/environment-adapter.js";
@@ -78,7 +77,7 @@ import type { PrivateStorage } from "../../shared/ports/private-storage.js";
 import { MACHINE_PRIVATE_STORAGE_HOST, userConfigDirOf } from "../user-config-dir.js";
 
 /** The requests a command checks before anything is wired: no file, no process, only the clock. */
-export function wireTelemetryRequests(): TelemetryRequests {
+export function wireTelemetryRequests() {
   return {
     parseTaskFlags: new ParseTaskFlags(),
     parseReportFlags: new ParseReportFlags(() => new Date()),
@@ -304,7 +303,7 @@ function wireConsent(stores: Stores, git: Git, homedir: () => string) {
   };
 }
 
-export function wireTelemetry(homedir: () => string, prompter: Prompter): TelemetryDeps {
+export function wireTelemetry(homedir: () => string, prompter: Prompter) {
   const stores = wireStores(telemetryDir());
   const git = wireGit(stores);
   return {

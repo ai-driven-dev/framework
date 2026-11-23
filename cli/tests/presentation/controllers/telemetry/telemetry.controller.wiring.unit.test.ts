@@ -6,7 +6,7 @@ import { registerTelemetryCommand } from "../../../../src/presentation/controlle
 import surface from "../../../golden/snapshots/help/surface.json" with { type: "json" };
 import { processOutputFactory } from "../../../shared/testing/output-factory.builder.js";
 import {
-  createDeps,
+  containerOf,
   forget,
   ingest,
   installTelemetryIo,
@@ -25,7 +25,7 @@ describe("the telemetry command surface", () => {
   it("prints each subcommand's help as the golden pins it", () => {
     const program = new Command().name("aidd");
     bindOutput(program, processOutputFactory());
-    registerTelemetryCommand(program, createDeps, wireTelemetryRequests());
+    registerTelemetryCommand(program, containerOf, wireTelemetryRequests());
     const telemetry = program.commands.find((command) => command.name() === "telemetry");
     const helps = [telemetry, ...(telemetry?.commands ?? [])].map((command) => ({
       invocation: command === telemetry ? "aidd telemetry" : `aidd telemetry ${command?.name()}`,
@@ -41,9 +41,9 @@ describe("the telemetry command surface", () => {
     [["task", "--none", "Name"], "--none declares no task"],
     [["report", "--days", "x"], "days"],
   ])("refuses %s before the graph is built", async (args, message) => {
-    createDeps.mockRejectedValueOnce(new Error("graph built"));
+    containerOf.mockRejectedValueOnce(new Error("graph built"));
     expect(await run(...args)).toBe(1);
-    createDeps.mockReset();
+    containerOf.mockReset();
     expect(stderr()).toContain(message);
   });
 

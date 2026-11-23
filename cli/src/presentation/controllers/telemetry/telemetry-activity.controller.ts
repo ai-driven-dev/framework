@@ -10,14 +10,17 @@ import {
 } from "../../presenters/telemetry/telemetry-task.presenter.js";
 import { commandOf, type TelemetrySurface } from "./telemetry-surface.controller.js";
 
-export function configureIngest(command: Command, { program, createDeps }: TelemetrySurface): void {
+export function configureIngest(
+  command: Command,
+  { program, containerOf }: TelemetrySurface
+): void {
   command
     .description("Read new transcripts into the local ledger, for clones that opted in")
     .option("--quiet", "Print nothing on success (for hooks)", false)
     .action(async (cmdOptions: { quiet: boolean }) => {
-      const { output, run } = commandOf(program, createDeps);
-      await run(async (deps) => {
-        const result = await deps.telemetry.ingestUsage.execute();
+      const { output, run } = commandOf(program, containerOf);
+      await run(async (container) => {
+        const result = await container.telemetry.ingestUsage.execute();
         if (!cmdOptions.quiet) printIngestResult(output, result);
       });
     });
@@ -44,10 +47,10 @@ interface TaskOptions {
 
 export function configureTask(
   command: Command,
-  { program, createDeps, requests }: TelemetrySurface
+  { program, containerOf, requests }: TelemetrySurface
 ): void {
   declareTaskOptions(command).action(async (name: string | undefined, cmdOptions: TaskOptions) => {
-    const { output, projectRoot, runChecked } = commandOf(program, createDeps);
+    const { output, projectRoot, runChecked } = commandOf(program, containerOf);
     await runChecked(
       () =>
         requests.parseTaskFlags.execute({
@@ -55,8 +58,8 @@ export function configureTask(
           ticket: cmdOptions.ticket,
           none: cmdOptions.none,
         }),
-      async (deps, { request }) => {
-        const result = await deps.telemetry.declareTask.execute({
+      async (container, { request }) => {
+        const result = await container.telemetry.declareTask.execute({
           cwd: projectRoot,
           request,
           by: cmdOptions.by,
@@ -68,15 +71,18 @@ export function configureTask(
   });
 }
 
-export function configureStatus(command: Command, { program, createDeps }: TelemetrySurface): void {
+export function configureStatus(
+  command: Command,
+  { program, containerOf }: TelemetrySurface
+): void {
   command
     .description("Show if this clone is measured, since when, and its task")
     .action(async () => {
-      const { output, projectRoot, run } = commandOf(program, createDeps);
-      await run(async (deps) => {
+      const { output, projectRoot, run } = commandOf(program, containerOf);
+      await run(async (container) => {
         printTelemetryStatus(
           output,
-          await deps.telemetry.readTelemetryStatus.execute({ cwd: projectRoot })
+          await container.telemetry.readTelemetryStatus.execute({ cwd: projectRoot })
         );
       });
     });
