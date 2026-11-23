@@ -146,14 +146,11 @@ interface Plugin {
 /** Loads the bridge as the host does: its default descriptor's `server`. */
 async function start(ws: Workspace, input: Record<string, unknown>) {
   const prompts: unknown[] = [];
-  const client = {
-    session: {
-      promptAsync: (request: unknown) => {
-        prompts.push(request);
-        return Promise.resolve();
-      },
-    },
+  const send = (request: unknown) => {
+    prompts.push(request);
+    return Promise.resolve();
   };
+  const client = { session: { promptAsync: send, prompt: send } };
   const mod = (await import(
     pathToFileURL(join(ws.dir, "plugin", "aidd-sample-hooks.mjs")).href
   )) as { default?: { server?: (input: unknown) => Promise<Plugin> } };

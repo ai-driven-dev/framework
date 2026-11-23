@@ -40,7 +40,7 @@ export async function setupOpencodeEvents(ctx, factory) {
   // A Stop script's block becomes the session's next prompt, sent through the V2 session API.
   const client = {
     session: {
-      promptAsync: ({ path, body }) =>
+      prompt: ({ path, body }) =>
         ctx.session.prompt({
           sessionID: path.id,
           text: body.parts.map((part) => part.text).join("\n"),

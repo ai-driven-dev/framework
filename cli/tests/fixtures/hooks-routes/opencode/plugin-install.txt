@@ -329,7 +329,7 @@ export async function setupOpencodeEvents(ctx, factory) {
   // A Stop script's block becomes the session's next prompt, sent through the V2 session API.
   const client = {
     session: {
-      promptAsync: ({ path, body }) =>
+      prompt: ({ path, body }) =>
         ctx.session.prompt({
           sessionID: path.id,
           text: body.parts.map((part) => part.text).join("\n"),
@@ -487,9 +487,13 @@ function postToolUseCallsFor(call, directory) {
   }));
 }
 
+// Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
+// Module-level: the host creates the plugin again, and a fresh set would forget a continuation.
+const continued = new Set();
+
 export const AiddContextHooks = async (input) => {
-  // Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
-  const continued = new Set();
+  // Follow-ups being delivered: `opencode run` exits once the session is idle, so dispose waits.
+  const pending = [];
   // SessionStart's own approximation (module doc comment above): fired once here, never
   // per session. Silent on purpose: a memory refresh
   // that breaks OpenCode's own startup is worse than one that never ran.
@@ -506,6 +510,9 @@ export const AiddContextHooks = async (input) => {
     // Silent on purpose - see above.
   }
   return {
+    dispose: async () => {
+      await Promise.all(pending);
+    },
     event: async ({ event }) => {
       try {
         const directory = event?.properties?.directory ?? input.directory;
@@ -519,9 +526,11 @@ export const AiddContextHooks = async (input) => {
           }
           continued.add(sessionId);
           // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
-          input.client.session
-            .promptAsync({ path: { id: sessionId }, body: { parts: [{ type: "text", text: reason }] } })
-            .catch(() => {});
+          pending.push(
+            input.client.session
+              .prompt({ path: { id: sessionId }, body: { parts: [{ type: "text", text: reason }] } })
+              .catch((error) => console.warn("[aidd] OpenCode follow-up failed: " + String(error)))
+          );
         }
       } catch {
         // Silent on purpose - see above.
@@ -672,9 +681,13 @@ function postToolUseCallsFor(call, directory) {
   }));
 }
 
+// Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
+// Module-level: the host creates the plugin again, and a fresh set would forget a continuation.
+const continued = new Set();
+
 export const AiddTelemetryHooks = async (input) => {
-  // Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
-  const continued = new Set();
+  // Follow-ups being delivered: `opencode run` exits once the session is idle, so dispose waits.
+  const pending = [];
   // SessionStart's own approximation (module doc comment above): fired once here, never
   // per session. Silent on purpose: a memory refresh
   // that breaks OpenCode's own startup is worse than one that never ran.
@@ -691,6 +704,9 @@ export const AiddTelemetryHooks = async (input) => {
     // Silent on purpose - see above.
   }
   return {
+    dispose: async () => {
+      await Promise.all(pending);
+    },
     event: async ({ event }) => {
       try {
         const directory = event?.properties?.directory ?? input.directory;
@@ -704,9 +720,11 @@ export const AiddTelemetryHooks = async (input) => {
           }
           continued.add(sessionId);
           // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
-          input.client.session
-            .promptAsync({ path: { id: sessionId }, body: { parts: [{ type: "text", text: reason }] } })
-            .catch(() => {});
+          pending.push(
+            input.client.session
+              .prompt({ path: { id: sessionId }, body: { parts: [{ type: "text", text: reason }] } })
+              .catch((error) => console.warn("[aidd] OpenCode follow-up failed: " + String(error)))
+          );
         }
       } catch {
         // Silent on purpose - see above.

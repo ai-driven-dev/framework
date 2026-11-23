@@ -55,6 +55,7 @@ const HANG = `require("node:fs").writeFileSync(require("node:path").resolve(__di
 interface Server {
   event: (input: { event: unknown }) => Promise<void>;
   "tool.execute.after": (call: unknown, output: { output: string }) => Promise<void>;
+  dispose: () => Promise<void>;
 }
 interface Descriptor {
   id: string;
@@ -137,7 +138,18 @@ async function open(
   await writeFile(modulePath, host.generate(hooksJson, "probe") ?? "");
   const descriptor: Descriptor = (await import(pathToFileURL(modulePath).href)).default;
   const prompts: unknown[] = [];
-  const client = { session: { promptAsync: async (r: unknown) => void prompts.push(r) } };
+  const delivered: unknown[] = [];
+  // `prompt` is delivered after a delay, as a real turn is: only what it awaits has landed.
+  const client = {
+    session: {
+      promptAsync: async (r: unknown) => void prompts.push(r),
+      prompt: async (r: unknown) => {
+        prompts.push(r);
+        await delay(100);
+        delivered.push(r);
+      },
+    },
+  };
   const server = await descriptor.server({ directory: inputDirectory(directory), client });
   const emit = async (...events: unknown[]) => {
     for (const event of events) if (event !== undefined) await server.event({ event });
@@ -153,7 +165,13 @@ async function open(
     await server["tool.execute.after"]({ tool: name, sessionID: "ses_one", args }, output);
     return output.output;
   };
-  return { directory, descriptor, server, emit, calls, of, tool, prompts };
+  return { directory, descriptor, server, emit, calls, of, tool, prompts, delivered };
+}
+
+function hostNamed(name: string): Host {
+  const host = HOSTS.find((candidate) => candidate.name === name);
+  if (host === undefined) throw new Error(`no host named ${name}`);
+  return host;
 }
 
 describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
@@ -341,6 +359,43 @@ describe("the bridge generated with OpenCode's parameters", () => {
 
     expect(descriptor.setup?.("ctx")).toEqual({ ctx: "ctx", server: descriptor.server });
     await vi.waitFor(async () => expect(await of("record.cjs")).toHaveLength(1), { timeout: 5000 });
+  });
+
+  it("waits for the follow-up it sent when the host shuts the plugin down", async () => {
+    const { server, emit, delivered } = await open(hostNamed("OpenCode"));
+
+    await emit({ type: "session.idle", properties: { sessionID: "s1" } });
+    expect(delivered).toStrictEqual([]);
+    await server.dispose();
+
+    expect(delivered).toHaveLength(1);
+  });
+
+  it("keeps a session's continuation across the plugin being created again", async () => {
+    const { descriptor, directory, emit, of } = await open(hostNamed("OpenCode"));
+    const client = { session: { prompt: async () => undefined } };
+    const again = await descriptor.server({ directory, client });
+    const idle = { type: "session.idle", properties: { sessionID: "s1" } };
+
+    await emit(idle);
+    await again.event({ event: idle });
+
+    expect((await of("stop.cjs")).map((c) => c.payload.stop_hook_active)).toStrictEqual([
+      false,
+      true,
+    ]);
+  });
+
+  it("reports a follow-up the host refused", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const { descriptor, directory } = await open(hostNamed("OpenCode"));
+    const refused = { session: { prompt: async () => Promise.reject(new Error("refused")) } };
+    const server = await descriptor.server({ directory, client: refused });
+
+    await server.event({ event: { type: "session.idle", properties: { sessionID: "s2" } } });
+    await server.dispose();
+
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("refused"));
   });
 
   // Real time: a child process's timeout runs on the clock, so this case costs the bridge's 5 s.
