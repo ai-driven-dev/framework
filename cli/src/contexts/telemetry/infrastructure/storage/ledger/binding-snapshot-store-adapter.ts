@@ -3,7 +3,6 @@ import type { PrivateStorage } from "../../../../../shared/ports/private-storage
 import { type BranchSnapshot, snapshotKey } from "../../../domain/branch-binding.js";
 import { parseBranchSnapshot } from "../../../domain/declaration/branch-snapshot-line.js";
 import type { BindingSnapshotStore } from "../../../ports/bindings/binding-snapshot-store.js";
-import type { RepositoryAliasStore } from "../../../ports/repository-alias-store.js";
 import { readTextIfPresent } from "../../reading/text-file.js";
 
 /** `branches.jsonl`: append-only, one snapshot per line, the latest line of a branch being its
@@ -14,8 +13,7 @@ export class BindingSnapshotStoreAdapter implements BindingSnapshotStore {
 
   constructor(
     private readonly dir: string,
-    private readonly storage: PrivateStorage,
-    private readonly aliases: RepositoryAliasStore
+    private readonly storage: PrivateStorage
   ) {
     this.path = join(dir, "branches.jsonl");
   }
@@ -37,19 +35,10 @@ export class BindingSnapshotStoreAdapter implements BindingSnapshotStore {
     return latest;
   }
 
-  /** Every snapshot, in the order taken, each repository by its id of now: a snapshot taken
-   * under an id an earlier version gave joins the history of the id it has now, and the file
-   * is never rewritten. */
+  /** Every snapshot, in the order taken. */
   private async read(): Promise<BranchSnapshot[]> {
-    const ids = await this.aliases.load();
-    const snapshots: BranchSnapshot[] = [];
-    for (const line of ((await readTextIfPresent(this.path)) ?? "").split("\n")) {
-      const snapshot = parseBranchSnapshot(line);
-      if (snapshot === null) continue;
-      const id = ids?.get(snapshot.repository_id);
-      snapshots.push(id === undefined ? snapshot : { ...snapshot, repository_id: id });
-    }
-    return snapshots;
+    const text = (await readTextIfPresent(this.path)) ?? "";
+    return text.split("\n").flatMap((line) => parseBranchSnapshot(line) ?? []);
   }
 
   async append(snapshots: readonly BranchSnapshot[]): Promise<void> {
