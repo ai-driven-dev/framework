@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { caseInsensitiveFileSystem, declaringSessionOf } from "../../src/composition/telemetry.js";
+import {
+  caseInsensitiveFileSystem,
+  declaringSessionOf,
+} from "../../src/composition/contexts/telemetry.js";
 
 describe("which file systems answer one directory to several spellings", () => {
   it.each([

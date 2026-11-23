@@ -1,40 +1,40 @@
 import { join } from "node:path";
-import type { ManifestRepository } from "../contexts/installation/ports/manifest-repository.js";
-import type { UserScopeFileGuard } from "../contexts/installation/ports/plugin/user-plugin-materialization.js";
-import { AssertUserScopeWriteBoundary } from "../contexts/machine-claims/application/ownership/assert-user-scope-write-boundary.use-case.js";
-import { DetachNativePluginRefs } from "../contexts/machine-claims/application/ownership/detach-native-plugin-refs.use-case.js";
-import { DetachUserPlugin } from "../contexts/machine-claims/application/ownership/detach-user-plugin.use-case.js";
-import { IsMachineOwnedNativeRef } from "../contexts/machine-claims/application/ownership/is-machine-owned-native-ref.use-case.js";
-import { ResolveSafeUserScopeFiles } from "../contexts/machine-claims/application/ownership/resolve-safe-user-scope-files.use-case.js";
-import { OtherProjectsReferencing } from "../contexts/machine-claims/application/shared-source/other-projects-referencing.use-case.js";
-import { readSharedSourceClaim } from "../contexts/machine-claims/application/shared-source/read-shared-source-claim.js";
-import { ResolveReferenceRoot } from "../contexts/machine-claims/application/shared-source/resolve-reference-root.use-case.js";
+import type { ManifestRepository } from "../../contexts/installation/ports/manifest-repository.js";
+import type { UserScopeFileGuard } from "../../contexts/installation/ports/plugin/user-plugin-materialization.js";
+import { AssertUserScopeWriteBoundary } from "../../contexts/machine-claims/application/ownership/assert-user-scope-write-boundary.use-case.js";
+import { DetachNativePluginRefs } from "../../contexts/machine-claims/application/ownership/detach-native-plugin-refs.use-case.js";
+import { DetachUserPlugin } from "../../contexts/machine-claims/application/ownership/detach-user-plugin.use-case.js";
+import { IsMachineOwnedNativeRef } from "../../contexts/machine-claims/application/ownership/is-machine-owned-native-ref.use-case.js";
+import { ResolveSafeUserScopeFiles } from "../../contexts/machine-claims/application/ownership/resolve-safe-user-scope-files.use-case.js";
+import { OtherProjectsReferencing } from "../../contexts/machine-claims/application/shared-source/other-projects-referencing.use-case.js";
+import { readSharedSourceClaim } from "../../contexts/machine-claims/application/shared-source/read-shared-source-claim.js";
+import { ResolveReferenceRoot } from "../../contexts/machine-claims/application/shared-source/resolve-reference-root.use-case.js";
 import {
   joinPluginClaims,
   splitPluginClaims,
-} from "../contexts/machine-claims/domain/plugin-claim.model.js";
-import { LenientUserSourceReferences } from "../contexts/machine-claims/infrastructure/lenient-user-source-references.js";
-import { UserScopeLockAdapter } from "../contexts/machine-claims/infrastructure/lock.js";
-import { UserSourceReferencesAdapter } from "../contexts/machine-claims/infrastructure/user-source-references-adapter.js";
+} from "../../contexts/machine-claims/domain/plugin-claim.model.js";
+import { LenientUserSourceReferences } from "../../contexts/machine-claims/infrastructure/lenient-user-source-references.js";
+import { UserScopeLockAdapter } from "../../contexts/machine-claims/infrastructure/lock.js";
+import { UserSourceReferencesAdapter } from "../../contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import type {
   MachineManifestRepository,
   MachineRecords,
   ScopeRecordsRepository,
-} from "../contexts/machine-claims/ports/machine-manifest.js";
-import type { PluginClaimsRepository } from "../contexts/machine-claims/ports/plugin-claims-repository.js";
-import type { UserSourceReferences } from "../contexts/machine-claims/ports/user-source-references.js";
-import { UnreadableUserSourceReferencesError } from "../shared/domain/shared.error.js";
-import type { ToolId } from "../shared/domain/tool.js";
+} from "../../contexts/machine-claims/ports/machine-manifest.js";
+import type { PluginClaimsRepository } from "../../contexts/machine-claims/ports/plugin-claims-repository.js";
+import type { UserSourceReferences } from "../../contexts/machine-claims/ports/user-source-references.js";
+import { UnreadableUserSourceReferencesError } from "../../shared/domain/shared.error.js";
+import type { ToolId } from "../../shared/domain/tool.js";
 import {
   ToolKeyedJsonFile,
   type ToolKeyedJsonFileDeps,
-} from "../shared/infrastructure/tool-keyed-json-file.js";
-import type { FileReader } from "../shared/ports/file-reader.js";
-import type { FileWriter } from "../shared/ports/file-writer.js";
-import type { Lock } from "../shared/ports/lock.js";
-import type { Logger } from "../shared/ports/logger.js";
+} from "../../shared/infrastructure/tool-keyed-json-file.js";
+import type { FileReader } from "../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../shared/ports/file-writer.js";
+import type { Lock } from "../../shared/ports/lock.js";
+import type { Logger } from "../../shared/ports/logger.js";
+import { userConfigDir } from "../user-config-dir.js";
 import { registrationRecordFile } from "./host-registration.js";
-import { userConfigDir } from "./user-config-dir.js";
 
 export interface MachineClaimsDeps {
   userSourceReferences: UserSourceReferences;

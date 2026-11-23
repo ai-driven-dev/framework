@@ -1,6 +1,6 @@
-import { RegisteredToolCatalog } from "../contexts/tools/application/registered-tool-catalog.js";
-import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
-import { REGISTERED_PROFILES } from "./tool-profiles.composition.js";
+import { RegisteredToolCatalog } from "../../contexts/tools/application/registered-tool-catalog.js";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
+import { REGISTERED_PROFILES } from "../tool-profiles.composition.js";
 
 /** The catalog of every registered tool. Pure and root-independent: the composition root builds
  * it once, and each edge that resolves tools holds it. */

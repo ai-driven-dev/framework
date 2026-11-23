@@ -144,22 +144,24 @@ describe("composition holds one module per context", () => {
   const found = (files: string[], contexts: string[]) =>
     entries(compositionViolations(files, contexts));
 
-  it("names the module a context lacks and the module no context owns", () => {
+  it("names the module a context lacks, the module no context owns and a context module at the root", () => {
     const files = [
       "container",
       "shared",
       "tool-profiles.composition",
       "user-config-dir",
-      "stray",
       "tools",
+      "contexts/tools",
+      "contexts/stray",
     ].map((m) => `src/composition/${m}.ts`);
     expect(found(files, ["tools", "recipes"])).toEqual([
-      "missing module: recipes",
-      "extra module: stray",
+      "extra module: tools",
+      "missing module: contexts/recipes",
+      "extra module: contexts/stray",
     ]);
   });
 
-  it("names a subfolder that is not orchestration, and ignores files inside one", () => {
+  it("names a subfolder that is not contexts or orchestration, and ignores files inside one", () => {
     const files = [
       "container",
       "shared",

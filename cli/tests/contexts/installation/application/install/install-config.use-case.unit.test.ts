@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { wireTools } from "../../../../../src/composition/tools.js";
+import { wireTools } from "../../../../../src/composition/contexts/tools.js";
 import { InstallConfig } from "../../../../../src/contexts/installation/application/install/install-config.use-case.js";
 import type { Platform } from "../../../../../src/contexts/installation/ports/platform.js";
 import { CONFIG_MCP } from "../../../../../src/contexts/tools/contract/config-refs.js";

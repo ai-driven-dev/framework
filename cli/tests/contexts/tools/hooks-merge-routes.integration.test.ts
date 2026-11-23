@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { projectIntegrationOf } from "../../../src/composition/installation.js";
+import { projectIntegrationOf } from "../../../src/composition/contexts/installation.js";
 import type { ToolBuildContract } from "../../../src/contexts/tools/contract/build-contract.js";
 import { claude } from "../../../src/contexts/tools/domain/profiles/claude/claude.profile.js";
 import { codexProfile } from "../../../src/contexts/tools/domain/profiles/codex/codex.profile.js";

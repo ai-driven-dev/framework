@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { recordsOf } from "../../../../src/composition/installation.js";
-import { machineOwnership } from "../../../../src/composition/machine-claims.js";
+import { recordsOf } from "../../../../src/composition/contexts/installation.js";
+import { machineOwnership } from "../../../../src/composition/contexts/machine-claims.js";
 import { RemoveToolFiles } from "../../../../src/contexts/installation/application/removal/project/remove-tool-files.use-case.js";
 import {
   type DetachProjectClaims,

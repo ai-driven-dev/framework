@@ -20,9 +20,9 @@ import { RunSettingsSync } from "../../orchestration/sync/settings/run-settings-
 import { SyncNativeActivation } from "../../orchestration/sync/settings/sync-native-activation.use-case.js";
 import { SyncSettings } from "../../orchestration/sync/settings/sync-settings.use-case.js";
 import { SyncToolSettingsFiles } from "../../orchestration/sync/settings/sync-tool-settings-files.use-case.js";
-import { catalogReaders, settingsDeclaration } from "../host-registration.js";
-import type { Installation } from "../installation.js";
-import { lenientSourceReferences } from "../machine-claims.js";
+import { catalogReaders, settingsDeclaration } from "../contexts/host-registration.js";
+import type { Installation } from "../contexts/installation.js";
+import { lenientSourceReferences } from "../contexts/machine-claims.js";
 import type { Base } from "../shared.js";
 import { userConfigDir } from "../user-config-dir.js";
 

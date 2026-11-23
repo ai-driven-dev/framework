@@ -8,7 +8,7 @@ A map to the code for contributors. Formats, rules and stores: [usage contract](
 | --- | --- |
 | its line format, a pure `decode(line, context?)` returning the context a later line needs | `src/contexts/telemetry/infrastructure/sources/claude/` or `sources/codex/` |
 | its transcript source, on the block reader | `src/contexts/telemetry/infrastructure/sources/transcript-files.ts` |
-| one reader in the ingest list | `src/composition/telemetry.ts` |
+| one reader in the ingest list | `src/composition/contexts/telemetry.ts` |
 | its name | `USAGE_TOOLS` in `src/contexts/telemetry/contract/usage-record.ts` |
 | its home relocated in every sandbox that runs the CLI | `tests/shared/testing/cli-sandbox.builder.ts`, `tests/contexts/telemetry/testing/telemetry-sandbox.builder.ts`, `scripts/check-claude-tokens-end-to-end.cjs`, `scripts/probe-identifier-join.cjs` |
 

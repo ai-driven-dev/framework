@@ -1,4 +1,4 @@
-import { recordsOf } from "../../../../src/composition/installation.js";
+import { recordsOf } from "../../../../src/composition/contexts/installation.js";
 import type { ToolRecords } from "../../../../src/contexts/installation/contract/records/scope-records.js";
 import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { InMemoryManifestRepository } from "../../../shared/testing/in-memory-manifest-repository.fake.js";

@@ -1,4 +1,4 @@
-import { registrationRecordRules } from "../../../../src/composition/installation.js";
+import { registrationRecordRules } from "../../../../src/composition/contexts/installation.js";
 import type {
   PluginHostReach,
   ProjectPluginWithdrawalSteps,

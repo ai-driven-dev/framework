@@ -4,13 +4,14 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import pkg from "../../package.json" with { type: "json" };
 import { createContainer } from "../../src/composition/container.js";
-import { wireInstallation } from "../../src/composition/installation.js";
+import { wireInstallation } from "../../src/composition/contexts/installation.js";
 import { bindContainer } from "../../src/composition/orchestration/deps-graph.js";
 import { createOutput } from "../../src/composition/shared.js";
 import { catalogOf } from "../shared/testing/catalog-of.builder.js";
 
-vi.mock("../../src/composition/installation.js", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../src/composition/installation.js")>();
+vi.mock("../../src/composition/contexts/installation.js", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../../src/composition/contexts/installation.js")>();
   return { ...actual, wireInstallation: vi.fn(actual.wireInstallation) };
 });
 

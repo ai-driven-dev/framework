@@ -1,4 +1,4 @@
-import { builtMaterializationDepsOf } from "../../../../src/composition/installation.js";
+import { builtMaterializationDepsOf } from "../../../../src/composition/contexts/installation.js";
 import type { FlatPlacementDeps } from "../../../../src/contexts/installation/application/materialize/place-flat-plugin.js";
 import type { BuiltMaterializationDeps } from "../../../../src/contexts/installation/application/shared/built-materialization-deps.js";
 import { TranslateDistribution } from "../../../../src/contexts/translate/application/translate-distribution.use-case.js";

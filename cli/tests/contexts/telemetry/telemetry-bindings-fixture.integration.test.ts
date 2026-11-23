@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join, posix, win32 } from "node:path";
 import { describe, expect, it } from "vitest";
-import { telemetryDirOf } from "../../../src/composition/telemetry.js";
+import { telemetryDirOf } from "../../../src/composition/contexts/telemetry.js";
 import { parseBranchConfig } from "../../../src/contexts/telemetry/domain/branch-binding.js";
 import { identityFromStat } from "../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import {

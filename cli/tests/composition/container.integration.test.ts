@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createContainer } from "../../src/composition/container.js";
-import { wireInstallation } from "../../src/composition/installation.js";
+import { wireInstallation } from "../../src/composition/contexts/installation.js";
 import { bindContainer } from "../../src/composition/orchestration/deps-graph.js";
 import { createOutput, wireBase } from "../../src/composition/shared.js";
 import { Manifest } from "../../src/contexts/installation/domain/manifest.js";

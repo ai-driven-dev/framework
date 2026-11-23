@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { createFrameworkBuildUseCase } from "../../../../../src/composition/translate.js";
+import { createFrameworkBuildUseCase } from "../../../../../src/composition/contexts/translate.js";
 import type {
   ResolveMarketplace,
   ResolveMarketplaceRequest,

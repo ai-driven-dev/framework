@@ -27,8 +27,8 @@ import { RemoveUserMarketplace } from "../../orchestration/marketplace/remove/re
 import { AskMarketplaceSource } from "../../orchestration/setup/ask-marketplace-source.use-case.js";
 import { ResolveSetupSource } from "../../orchestration/setup/resolve-setup-source.use-case.js";
 import type { RegisterFrameworkSource } from "../../orchestration/setup/setup-flow.js";
-import { type Installation, recordsOf } from "../installation.js";
-import { machineOwnership, userScopeFilesSafeToDelete } from "../machine-claims.js";
+import { type Installation, recordsOf } from "../contexts/installation.js";
+import { machineOwnership, userScopeFilesSafeToDelete } from "../contexts/machine-claims.js";
 import type { Base } from "../shared.js";
 import { wireMarketplaceSync } from "./marketplace-sync.js";
 

@@ -1,6 +1,6 @@
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { createPluginTranslation } from "../../../../../src/composition/translate.js";
+import { createPluginTranslation } from "../../../../../src/composition/contexts/translate.js";
 import {
   materializeFlatMcp,
   refreshTrackedMcpConfigHash,

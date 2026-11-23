@@ -1,6 +1,6 @@
 /** Seeds a user-scope marketplace removal over a native host, so each removal case states only what it varies. */
 
-import type { registrationRecordRules } from "../../../src/composition/installation.js";
+import type { registrationRecordRules } from "../../../src/composition/contexts/installation.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { NativeMarketplaceSource } from "../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";

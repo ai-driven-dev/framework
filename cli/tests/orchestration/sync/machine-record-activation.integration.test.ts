@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { registrationRecordRules } from "../../../src/composition/installation.js";
+import { registrationRecordRules } from "../../../src/composition/contexts/installation.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordMachineClaims } from "../../../src/contexts/machine-claims/application/record/record-machine-claims.use-case.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";

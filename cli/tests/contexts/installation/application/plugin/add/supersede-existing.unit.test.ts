@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { projectIntegrationOf } from "../../../../../../src/composition/installation.js";
+import { projectIntegrationOf } from "../../../../../../src/composition/contexts/installation.js";
 import { supersedeExisting } from "../../../../../../src/contexts/installation/application/plugin/add/supersede-existing.js";
 import { DuplicatePluginError } from "../../../../../../src/contexts/installation/domain/installation.error.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { registrationRecordRules } from "../../../../../src/composition/installation.js";
+import { registrationRecordRules } from "../../../../../src/composition/contexts/installation.js";
 import {
   ListRegisteredPlugins,
   type ListRegisteredPluginsRequest,

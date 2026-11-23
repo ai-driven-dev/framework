@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { projectIntegrationOf } from "../../../../../src/composition/installation.js";
+import { projectIntegrationOf } from "../../../../../src/composition/contexts/installation.js";
 import type { RemoveRecordedProjectHooks } from "../../../../../src/contexts/installation/application/shared/remove-recorded-project-hooks.use-case.js";
 import {
   type PluginComponentFile,

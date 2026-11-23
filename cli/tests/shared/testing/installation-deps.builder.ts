@@ -1,5 +1,5 @@
 import { resolve } from "node:path";
-import { registrationRecordRules } from "../../../src/composition/installation.js";
+import { registrationRecordRules } from "../../../src/composition/contexts/installation.js";
 import { createOutput } from "../../../src/composition/shared.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-distribution-reader-adapter.js";
 import { InitProject } from "../../../src/contexts/installation/application/init-project.use-case.js";

@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { recordsOf } from "../../../src/composition/installation.js";
+import { recordsOf } from "../../../src/composition/contexts/installation.js";
 import { homeDirResolver } from "../../../src/composition/user-config-dir.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-distribution-reader-adapter.js";

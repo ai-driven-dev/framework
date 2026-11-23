@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { recordsOf } from "../../../../src/composition/installation.js";
+import { recordsOf } from "../../../../src/composition/contexts/installation.js";
 import { RefreshHostPlugin } from "../../../../src/contexts/host-registration/application/refresh-host-plugin.use-case.js";
 import { PluginMaterializer } from "../../../../src/contexts/installation/application/plugin/files/plugin-materializer.js";
 import type { BuiltMarketplaceEnsurer } from "../../../../src/contexts/installation/contract/built-marketplace.js";

@@ -1,10 +1,10 @@
 import { platform } from "node:os";
 import { Command } from "commander";
 import { createContainer } from "./composition/container.js";
+import { wireTelemetryRequests } from "./composition/contexts/telemetry.js";
+import { wireTools } from "./composition/contexts/tools.js";
 import { bindContainer } from "./composition/orchestration/deps-graph.js";
 import { createOutput as createOutputWith } from "./composition/shared.js";
-import { wireTelemetryRequests } from "./composition/telemetry.js";
-import { wireTools } from "./composition/tools.js";
 import { outputOf } from "./presentation/controllers/menu/global-options.controller.js";
 import { runMenuLoop } from "./presentation/controllers/menu/menu.controller.js";
 import { registerCommands } from "./presentation/controllers/menu/register-commands.controller.js";

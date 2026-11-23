@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { wireHostRegistration } from "../../../src/composition/host-registration.js";
+import { wireHostRegistration } from "../../../src/composition/contexts/host-registration.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { AIDD_DIR } from "../../../src/shared/domain/layout/aidd-layout.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.fake.js";

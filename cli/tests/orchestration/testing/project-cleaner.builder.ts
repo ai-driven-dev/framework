@@ -1,4 +1,4 @@
-import { projectIntegrationOf, recordsOf } from "../../../src/composition/installation.js";
+import { projectIntegrationOf, recordsOf } from "../../../src/composition/contexts/installation.js";
 import { wireCleanClaims } from "../../../src/composition/orchestration/clean-claims.js";
 import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.use-case.js";
 import { WithdrawFromHost } from "../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";

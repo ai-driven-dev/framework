@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { nativeRegistrationsOf } from "../../../src/composition/host-registration.js";
+import { nativeRegistrationsOf } from "../../../src/composition/contexts/host-registration.js";
 import { RegisteredToolCatalog } from "../../../src/contexts/tools/application/registered-tool-catalog.js";
 import { MCP_CONFIG_REF } from "../../../src/contexts/tools/contract/config-refs.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";

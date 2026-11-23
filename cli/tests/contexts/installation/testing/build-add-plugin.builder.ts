@@ -1,5 +1,5 @@
 import { homedir as nodeHomedir, platform as nodePlatform } from "node:os";
-import { projectIntegrationOf } from "../../../../src/composition/installation.js";
+import { projectIntegrationOf } from "../../../../src/composition/contexts/installation.js";
 import type { EnsurePluginRuntimeFiles } from "../../../../src/contexts/installation/application/install/config/ensure-plugin-runtime-files.use-case.js";
 import { PlacePlugin } from "../../../../src/contexts/installation/application/plugin/add/place-plugin.use-case.js";
 import { ResolveAddedPluginSource } from "../../../../src/contexts/installation/application/plugin/add/resolve-added-plugin-source.use-case.js";

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { wireTools } from "../../src/composition/tools.js";
-import { createFrameworkBuildUseCase } from "../../src/composition/translate.js";
+import { wireTools } from "../../src/composition/contexts/tools.js";
+import { createFrameworkBuildUseCase } from "../../src/composition/contexts/translate.js";
 import type { FrameworkBuildMode } from "../../src/contexts/tools/contract/tool-profile.js";
 import {
   buildTargetModesOf,

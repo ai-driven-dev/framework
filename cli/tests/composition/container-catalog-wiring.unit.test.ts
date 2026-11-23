@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { wireInstallation } from "../../src/composition/installation.js";
+import { wireInstallation } from "../../src/composition/contexts/installation.js";
 import { bindContainer } from "../../src/composition/orchestration/deps-graph.js";
 import { wireGlobal } from "../../src/composition/orchestration/global.js";
 import { wireMarketplace } from "../../src/composition/orchestration/marketplace.js";

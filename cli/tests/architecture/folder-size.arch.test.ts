@@ -1,18 +1,9 @@
-/**
- * A folder holds at most FOLDER_CAP source files of its own. The folders over it today are
- * listed with their size and may not grow; one that falls back to the cap, or shrinks, must be
- * written down again, so the list only ever gets shorter.
- */
+/** A folder holds at most FOLDER_CAP source files of its own. */
 import { dirname, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 import { SRC, sourceFiles } from "./source-graph.js";
 
 const FOLDER_CAP = 10;
-
-/** Folders over the cap, by path under `src/`, and how many `.ts` files each holds. */
-const OVER_THE_CAP: Readonly<Record<string, number>> = {
-  composition: 14,
-};
 
 function folderSizes(files: readonly string[]): Map<string, number> {
   const sizes = new Map<string, number>();
@@ -31,12 +22,12 @@ describe("folder size", () => {
     expect(overTheCap(sizes, 1)).toEqual(new Map([["a", 2]]));
   });
 
-  it("holds every folder under src to the cap, or to the size written down for it", () => {
+  it("holds every folder under src to the cap", () => {
     const actual = overTheCap(folderSizes(sourceFiles()), FOLDER_CAP);
     const found = Object.fromEntries(
       [...actual].map(([dir, size]) => [relative(SRC, dir).split("\\").join("/"), size])
     );
 
-    expect(found).toEqual(OVER_THE_CAP);
+    expect(found).toEqual({});
   });
 });

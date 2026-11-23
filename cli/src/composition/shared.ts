@@ -18,15 +18,15 @@ import { atomicWriteFile } from "../shared/infrastructure/atomic-write.js";
 import { EnvironmentAdapter } from "../shared/infrastructure/environment-adapter.js";
 import { FileAdapter } from "../shared/infrastructure/file-adapter.js";
 import { HttpClient } from "../shared/infrastructure/http-client.js";
-import { wireAuth } from "./auth.js";
-import { wireDistribution } from "./distribution.js";
-import { wireHostRegistration } from "./host-registration.js";
+import { wireAuth } from "./contexts/auth.js";
+import { wireDistribution } from "./contexts/distribution.js";
+import { wireHostRegistration } from "./contexts/host-registration.js";
 import {
   heldByMachineLock,
   registrationRecordStore,
   wireMachineClaims,
   withRecordsBeside,
-} from "./machine-claims.js";
+} from "./contexts/machine-claims.js";
 import { homeDirResolver, userConfigDir } from "./user-config-dir.js";
 
 const plainText = (message: string | HintedMessage): string =>

@@ -2,7 +2,7 @@ import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js"
 import type { Deps, FactoryOptions } from "../../orchestration/deps.js";
 import type { Output } from "../../orchestration/domain/output.js";
 import { type Container, createContainer } from "../container.js";
-import { createFrameworkBuildUseCase } from "../translate.js";
+import { createFrameworkBuildUseCase } from "../contexts/translate.js";
 
 /** What the composition hands out: the members a command reads, plus the ones only wiring and
  * its tests read, which the presentation's `Deps` leaves out. */

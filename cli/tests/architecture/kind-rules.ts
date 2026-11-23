@@ -167,9 +167,11 @@ export function instructionViolations(
 // Composition holds one module per context.
 
 const FIXED_MODULES = ["container", "shared", "tool-profiles.composition", "user-config-dir"];
-const ALLOWED_SUBFOLDERS = ["orchestration"];
+const CONTEXT_FOLDER = "contexts";
+const ALLOWED_SUBFOLDERS = [CONTEXT_FOLDER, "orchestration"];
 
-/** The root, the shared module and one module per context, and only `orchestration/` as a folder. */
+/** The root, the shared module, one module per context in `contexts/`, and only `contexts/` and
+ * `orchestration/` as folders. */
 export function compositionViolations(
   files: readonly string[],
   contexts: readonly string[],
@@ -178,26 +180,32 @@ export function compositionViolations(
   const inside = files
     .filter((file) => file.startsWith(`${dir}/`))
     .map((f) => f.slice(dir.length + 1));
-  const modules = inside.filter((f) => !f.includes("/")).map((f) => f.replace(/\.ts$/, ""));
+  const modulesOf = (prefix: string) =>
+    inside
+      .filter((f) => f.startsWith(prefix) && !f.slice(prefix.length).includes("/"))
+      .map((f) => f.slice(prefix.length).replace(/\.ts$/, ""));
   const folders = new Set(
     inside.filter((f) => f.includes("/")).map((f) => present(f.split("/")[0]))
   );
-  const expected = [...FIXED_MODULES, ...contexts];
   const report = (entry: string, what: string): Violation =>
     violation(
       "composition",
       entry,
       what,
-      "composition holds container, shared, the tool registration list, the user configuration directory and one module per context, and an orchestration folder",
-      "add the module of the context, or remove the one no context owns"
+      "composition holds container, shared, the tool registration list, the user configuration directory, one module per context in contexts/, and an orchestration folder",
+      "add the module of the context in contexts/, or remove the one no context owns"
     );
-  return [
+  const mismatches = (modules: string[], expected: readonly string[], where: string) => [
     ...expected
       .filter((name) => !modules.includes(name))
-      .map((name) => report(`missing module: ${name}`, `no module wires ${name}`)),
+      .map((name) => report(`missing module: ${where}${name}`, `no module wires ${name}`)),
     ...modules
       .filter((name) => !expected.includes(name))
-      .map((name) => report(`extra module: ${name}`, `${name} wires no context`)),
+      .map((name) => report(`extra module: ${where}${name}`, `${name} does not belong here`)),
+  ];
+  return [
+    ...mismatches(modulesOf(""), FIXED_MODULES, ""),
+    ...mismatches(modulesOf(`${CONTEXT_FOLDER}/`), contexts, `${CONTEXT_FOLDER}/`),
     ...[...folders]
       .filter((name) => !ALLOWED_SUBFOLDERS.includes(name))
       .map((name) => report(`unexpected subfolder: ${name}`, `${dir}/${name} is no module`)),

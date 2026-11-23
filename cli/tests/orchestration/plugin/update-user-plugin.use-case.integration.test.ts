@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { recordsOf } from "../../../src/composition/installation.js";
+import { recordsOf } from "../../../src/composition/contexts/installation.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-distribution-reader-adapter.js";
 import { RefreshHostPlugin } from "../../../src/contexts/host-registration/application/refresh-host-plugin.use-case.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";

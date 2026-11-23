@@ -3,7 +3,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { heldByMachineLock } from "../../src/composition/machine-claims.js";
+import { heldByMachineLock } from "../../src/composition/contexts/machine-claims.js";
 
 describe("the user scope held by the machine lock", () => {
   let dir: string;

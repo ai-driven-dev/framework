@@ -1,6 +1,6 @@
-import { settingsDeclaration } from "../../../src/composition/host-registration.js";
-import { registrationRecordRules } from "../../../src/composition/installation.js";
-import { lenientSourceReferences } from "../../../src/composition/machine-claims.js";
+import { settingsDeclaration } from "../../../src/composition/contexts/host-registration.js";
+import { registrationRecordRules } from "../../../src/composition/contexts/installation.js";
+import { lenientSourceReferences } from "../../../src/composition/contexts/machine-claims.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import { PlanRefsToEnable } from "../../../src/contexts/host-registration/application/register/plan-refs-to-enable.use-case.js";
 import { RecordNativeRegistrations } from "../../../src/contexts/host-registration/application/register/record-native-registrations.use-case.js";

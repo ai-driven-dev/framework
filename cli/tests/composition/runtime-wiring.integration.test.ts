@@ -7,8 +7,9 @@ import {
   cacheBuildFor,
   debugOnly,
   wireInstallation,
-} from "../../src/composition/installation.js";
-import { userScopeFileGuard } from "../../src/composition/machine-claims.js";
+} from "../../src/composition/contexts/installation.js";
+import { userScopeFileGuard } from "../../src/composition/contexts/machine-claims.js";
+import { wireTools } from "../../src/composition/contexts/tools.js";
 import { hostBinaryAvailableIn } from "../../src/composition/orchestration/doctor.js";
 import { userScopeSyncOf } from "../../src/composition/orchestration/global.js";
 import {
@@ -24,7 +25,6 @@ import {
   withinUserScope,
 } from "../../src/composition/orchestration/plugin.js";
 import { wireBase } from "../../src/composition/shared.js";
-import { wireTools } from "../../src/composition/tools.js";
 import { Marketplace } from "../../src/contexts/distribution/domain/marketplace.js";
 import { ProjectHooksMaterializer } from "../../src/contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 import { Manifest } from "../../src/contexts/installation/domain/manifest.js";

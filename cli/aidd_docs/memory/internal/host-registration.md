@@ -19,7 +19,7 @@ What a host (Claude Code, Codex, Copilot) says it has registered, and the calls 
 ## Choosing a reader
 
 - A tool never names itself here: its declared layout selects a reader from a `satisfies Record<Layout, ...>` table, so `tsc` refuses a layout with no row, and a new tool on an existing layout touches nothing here.
-- Registry layouts are tables in `src/composition/host-registration.ts`; list layouts are the parsers in `infrastructure/marketplace-list-parsers.ts`.
+- Registry layouts are tables in `src/composition/contexts/host-registration.ts`; list layouts are the parsers in `infrastructure/marketplace-list-parsers.ts`.
 
 ## Reading and driving
 

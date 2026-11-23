@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { describe, expect, it } from "vitest";
-import { wireTools } from "../../../src/composition/tools.js";
+import { wireTools } from "../../../src/composition/contexts/tools.js";
 import { supportedBuildTargets } from "../../../src/contexts/translate/contract/build-targets.js";
 import type { DepsFactory } from "../../../src/orchestration/deps.js";
 import { bindOutput } from "../../../src/presentation/controllers/menu/global-options.controller.js";

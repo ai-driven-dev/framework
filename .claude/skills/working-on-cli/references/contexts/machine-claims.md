@@ -4,8 +4,8 @@ Which projects still need what lives at machine scope (shared framework source, 
 
 ## Ports
 
-- `UserSourceReferences`: the registry of projects referencing the shared source; one real adapter, wired by `src/composition/machine-claims.ts`.
-- `Lock` (from `shared/`): its real adapter, `infrastructure/lock.ts`, is the machine-wide lock beside the user manifest. It is not re-entrant. `src/composition/machine-claims.ts` attaches it to the user manifest repository.
+- `UserSourceReferences`: the registry of projects referencing the shared source; one real adapter, wired by `src/composition/contexts/machine-claims.ts`.
+- `Lock` (from `shared/`): its real adapter, `infrastructure/lock.ts`, is the machine-wide lock beside the user manifest. It is not re-entrant. `src/composition/contexts/machine-claims.ts` attaches it to the user manifest repository.
 - `MachineManifest`, `MachineManifestRepository`: the machine-wide record narrowed to what a claim reads and rewrites. `MarketplaceListing`: the marketplaces a project registers, narrowed from the distribution registry. `UserScopeTool`, `PluginEnablementReach`: a tool's user-scope directory and whether enabling reaches every project.
 - `contract/user-scope-containment.ts`: `IsWithinUserScope`, the containment proof.
 - Installation, distribution and tools own the real objects behind the narrowed shapes; the caller hands them in.

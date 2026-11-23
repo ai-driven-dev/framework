@@ -1,4 +1,4 @@
-import { projectIntegrationOf } from "../../../../src/composition/installation.js";
+import { projectIntegrationOf } from "../../../../src/composition/contexts/installation.js";
 import { DeleteTrackedProjectFiles } from "../../../../src/contexts/installation/application/removal/project/delete-tracked-project-files.use-case.js";
 import { RemoveAiddTraces } from "../../../../src/contexts/installation/application/removal/project/remove-aidd-traces.use-case.js";
 import { RemoveMachineLocalFiles } from "../../../../src/contexts/installation/application/removal/project/remove-machine-local-files.use-case.js";

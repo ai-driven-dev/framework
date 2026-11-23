@@ -1,4 +1,4 @@
-import { registrationRecordStore } from "../../../../src/composition/machine-claims.js";
+import { registrationRecordStore } from "../../../../src/composition/contexts/machine-claims.js";
 import type { ManifestFileDeps } from "../../../../src/contexts/installation/infrastructure/manifest-file-io.js";
 import { atomicWriteFile } from "../../../../src/shared/infrastructure/atomic-write.js";
 import type { AtomicWrite } from "../../../../src/shared/ports/file-writer.js";

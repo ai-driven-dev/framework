@@ -34,7 +34,7 @@ import { RunSync } from "../../orchestration/sync/run-sync.use-case.js";
 import { RunUserScopeSync } from "../../orchestration/sync/run-user-scope-sync.use-case.js";
 import type { SyncSettings } from "../../orchestration/sync/settings/sync-settings.use-case.js";
 import { UpdateTools } from "../../orchestration/sync/update-tools.use-case.js";
-import type { Installation } from "../installation.js";
+import type { Installation } from "../contexts/installation.js";
 import type { Base } from "../shared.js";
 import type { Marketplace } from "./marketplace.js";
 import type { Plugin } from "./plugin.js";

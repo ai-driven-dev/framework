@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
-import { wireTools } from "../../../../src/composition/tools.js";
+import { wireTools } from "../../../../src/composition/contexts/tools.js";
 import { BuildMenu } from "../../../../src/orchestration/menu/build-menu.use-case.js";
 import { MenuLoop } from "../../../../src/orchestration/menu/menu-loop.use-case.js";
 import { describeMessage } from "../../../../src/presentation/errors/describe-message.presenter.js";

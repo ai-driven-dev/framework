@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { wireTools } from "../../../src/composition/tools.js";
+import { wireTools } from "../../../src/composition/contexts/tools.js";
 import { supportedBuildTargets } from "../../../src/contexts/translate/contract/build-targets.js";
 import { bindOutput } from "../../../src/presentation/controllers/menu/global-options.controller.js";
 import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";

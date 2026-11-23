@@ -1,4 +1,4 @@
-import { lenientSourceReferences } from "../../../src/composition/machine-claims.js";
+import { lenientSourceReferences } from "../../../src/composition/contexts/machine-claims.js";
 import type { TokenProvider } from "../../../src/contexts/auth/contract/token-provider.js";
 import { EnsureFrameworkMarketplace } from "../../../src/contexts/distribution/application/ensure-framework-marketplace.use-case.js";
 import type { RegisterFrameworkMarketplace } from "../../../src/contexts/distribution/application/register-framework-marketplace.use-case.js";

@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import "../../../../../src/composition/translate.js";
+import "../../../../../src/composition/contexts/translate.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import {

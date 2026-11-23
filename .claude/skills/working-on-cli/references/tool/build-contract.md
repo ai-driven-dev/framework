@@ -33,5 +33,5 @@
 
 - `domain/profiles/<tool>/<tool>-build.model.ts` exports `build<Tool>Contract`, `build<Tool>MarketplaceContract` (copilot) or `build<Tool>FlatContract`.
 - The profile lists them in `buildContracts: { marketplace?, flat? }`; a mode left out answers `null` from `buildContract(mode, provider)`.
-- `createFrameworkBuildUseCase` in `composition/translate.ts` returns `undefined` for a pair with no contract, and `presentation/controllers/translate.controller.ts` reports it as an unsupported target and mode combination.
+- `createFrameworkBuildUseCase` in `composition/contexts/translate.ts` returns `undefined` for a pair with no contract, and `presentation/controllers/translate.controller.ts` reports it as an unsupported target and mode combination.
 - The MCP namespacing rule is in `plugin-sections.md`.

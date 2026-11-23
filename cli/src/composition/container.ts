@@ -1,17 +1,17 @@
 import { BuildMenu } from "../orchestration/menu/build-menu.use-case.js";
 import { MenuLoop } from "../orchestration/menu/menu-loop.use-case.js";
 import type { CommandRunner, Pause } from "../orchestration/menu/menu-ports.js";
-import { projectSetupOf, wireInstallation } from "./installation.js";
+import { projectSetupOf, wireInstallation } from "./contexts/installation.js";
+import { wireRecipes } from "./contexts/recipes.js";
+import { wireTelemetry } from "./contexts/telemetry.js";
+import { wireUpdate } from "./contexts/update.js";
 import { wireClean } from "./orchestration/clean.js";
 import { wireDoctor } from "./orchestration/doctor.js";
 import { wireGlobal } from "./orchestration/global.js";
 import { wireMarketplace } from "./orchestration/marketplace.js";
 import { wirePlugin } from "./orchestration/plugin.js";
 import { wireAgentModels, wireSetup } from "./orchestration/setup.js";
-import { wireRecipes } from "./recipes.js";
 import { type BaseOptions, wireBase } from "./shared.js";
-import { wireTelemetry } from "./telemetry.js";
-import { wireUpdate } from "./update.js";
 
 /** Each context's wiring is built the first time it is read, then handed back unchanged. */
 function memoized<T extends object>(build: () => T): () => T {

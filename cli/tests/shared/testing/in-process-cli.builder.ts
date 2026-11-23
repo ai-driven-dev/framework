@@ -103,7 +103,7 @@ function captureStreams(out: string[], err: string[]): MockInstance[] {
 
 /** Registers the real command tree on a fresh program, as `src/cli.ts` does minus its hooks. */
 async function buildProgram(): Promise<Command> {
-  const { wireTools } = await import("../../../src/composition/tools.js");
+  const { wireTools } = await import("../../../src/composition/contexts/tools.js");
   const tools = wireTools();
   const program = new Command();
   program.name("aidd").option("--verbose", "Show detailed diagnostic output", false);
@@ -112,7 +112,7 @@ async function buildProgram(): Promise<Command> {
   const { registerCommands } = await import(
     "../../../src/presentation/controllers/menu/register-commands.controller.js"
   );
-  const { wireTelemetryRequests } = await import("../../../src/composition/telemetry.js");
+  const { wireTelemetryRequests } = await import("../../../src/composition/contexts/telemetry.js");
   registerCommands(program, {
     tools,
     createSlice: depsFactory,

@@ -146,7 +146,9 @@ async function build(
   toolId: AiToolId,
   mode: "marketplace" | "flat"
 ): Promise<string | null> {
-  const { createFrameworkBuildUseCase } = await import("../../../src/composition/translate.js");
+  const { createFrameworkBuildUseCase } = await import(
+    "../../../src/composition/contexts/translate.js"
+  );
   const wired = await deps(ws.project);
   const out = join(ws.root, `out-${mode}`);
   await mkdir(out, { recursive: true });

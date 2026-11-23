@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, type Mock, vi } from "vitest";
-import { wireTelemetryRequests } from "../../../src/composition/telemetry.js";
+import { wireTelemetryRequests } from "../../../src/composition/contexts/telemetry.js";
 import { CheckIdentity } from "../../../src/contexts/telemetry/application/identity/check-identity.use-case.js";
 import { DecideIdentity } from "../../../src/contexts/telemetry/application/identity/decide-identity.use-case.js";
 import { RequestReport } from "../../../src/contexts/telemetry/application/report/request-report.use-case.js";

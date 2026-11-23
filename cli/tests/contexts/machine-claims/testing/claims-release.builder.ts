@@ -1,4 +1,4 @@
-import { machineOwnership } from "../../../../src/composition/machine-claims.js";
+import { machineOwnership } from "../../../../src/composition/contexts/machine-claims.js";
 import { detachProjectClaims } from "../../../../src/contexts/machine-claims/application/removal/detach-project-claims.js";
 import { removalClaims } from "../../../../src/contexts/machine-claims/application/removal/removal-claims.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
