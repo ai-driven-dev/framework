@@ -119,7 +119,7 @@ export class RemovePlugin {
       });
       // A user-scope plugin's files are the machine's, released by its claim, never deleted here.
       if (plugin.scope !== "user") await this.deletePluginFiles(plugin.files, baseDir);
-      await this.deps.integration.remove.execute({ plugin: entry, tool, projectRoot });
+      await this.deps.integration.remove.execute({ plugin: entry, tool, projectRoot, manifest });
       const ref = withdrawal.recordedRef(registrations, entry);
       if (
         ref !== undefined &&

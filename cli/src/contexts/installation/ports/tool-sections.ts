@@ -26,9 +26,8 @@ export interface NativeActivationAnswers {
 }
 
 /** What an AI profile answers about its native registration, once the composition assembled it. */
-export interface NativeRegistrationReach {
+export interface NativeRegistrationReach extends EnabledPluginsSection {
   nativeActivation(): NativeActivationAnswers | undefined;
-  marketplaceRegistration(): { sharedSettingsFile(): string } | null;
   hostRefInUse(enabled: boolean): boolean;
   pluginEnablementIsMachineGlobal(): boolean;
 }
@@ -92,6 +91,14 @@ export interface ProjectHooksSection {
 export interface FlatMcpSection {
   readonly toolId: AiToolId;
   flatPluginMcp(): McpConfigAnswers | null;
+}
+
+/** The shared settings file a tool enables its plugins in. */
+export interface EnabledPluginsSection {
+  marketplaceRegistration(): {
+    sharedSettingsFile(): string;
+    enabledPluginsKey(): string | null;
+  } | null;
 }
 
 export type ProjectPluginIntegration = PluginPlacement & ProjectHooksSection & FlatMcpSection;

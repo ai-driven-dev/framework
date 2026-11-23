@@ -56,3 +56,17 @@ export function withEnabledPlugins(
   if (Object.keys(toAdd).length === 0) return null;
   return { ...shared, [enabledPluginsKey]: { ...existing, ...toAdd } };
 }
+
+/** A parsed shared file without the entry a plugin has on a marketplace, or null when it held none.
+ * The file the caller holds is left as it was. */
+export function withoutEnabledPlugin(
+  shared: Record<string, unknown>,
+  enabledPluginsKey: string | null,
+  plugin: { readonly name: string; readonly marketplace: string }
+): Record<string, unknown> | null {
+  if (enabledPluginsKey === null) return null;
+  const { [refOnHostName(plugin.name, plugin.marketplace)]: removed, ...rest } =
+    asPlainObject(shared[enabledPluginsKey]) ?? {};
+  if (removed === undefined) return null;
+  return { ...shared, [enabledPluginsKey]: rest };
+}

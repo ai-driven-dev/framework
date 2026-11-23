@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { RemovalClaims } from "../../../../../src/contexts/installation/ports/removal-claims.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
@@ -71,7 +72,12 @@ describe("removing a plugin's local integration", () => {
     withUserServer.mcp.mine = { type: "local", command: ["keep"], enabled: true };
     fs.setFile(MCP_FILE, JSON.stringify(withUserServer));
 
-    await removeProjectPluginOf(fs).removeLocalIntegration(tool, plugin({ mcp: entries }), ROOT);
+    await removeProjectPluginOf(fs).removeLocalIntegration({
+      tool: tool,
+      plugin: plugin({ mcp: entries }),
+      projectRoot: ROOT,
+      manifest: Manifest.create(),
+    });
 
     const left = JSON.parse(await fs.readFile(MCP_FILE));
     expect(Object.keys(left.mcp)).toEqual(["mine"]);
@@ -81,7 +87,12 @@ describe("removing a plugin's local integration", () => {
     const fs = new InMemoryFileAdapter({}, [ROOT]);
     const { entries } = contributedConfig();
 
-    await removeProjectPluginOf(fs).removeLocalIntegration(tool, plugin({ mcp: entries }), ROOT);
+    await removeProjectPluginOf(fs).removeLocalIntegration({
+      tool: tool,
+      plugin: plugin({ mcp: entries }),
+      projectRoot: ROOT,
+      manifest: Manifest.create(),
+    });
 
     expect(fs.has(MCP_FILE)).toBe(false);
   });
@@ -90,7 +101,12 @@ describe("removing a plugin's local integration", () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(MCP_FILE, "{}");
 
-    await removeProjectPluginOf(fs).removeLocalIntegration(tool, plugin(), ROOT);
+    await removeProjectPluginOf(fs).removeLocalIntegration({
+      tool: tool,
+      plugin: plugin(),
+      projectRoot: ROOT,
+      manifest: Manifest.create(),
+    });
 
     expect(await fs.readFile(MCP_FILE)).toBe("{}");
   });
@@ -101,7 +117,12 @@ describe("RemoveProjectPlugin.removeLocalIntegration hooks", () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(join(ROOT, HOOK_SCRIPT), "// installed");
 
-    await removeProjectPluginOf(fs).removeLocalIntegration(cursor, pluginWithHookScript(), ROOT);
+    await removeProjectPluginOf(fs).removeLocalIntegration({
+      tool: cursor,
+      plugin: pluginWithHookScript(),
+      projectRoot: ROOT,
+      manifest: Manifest.create(),
+    });
 
     expect(fs.has(join(ROOT, HOOK_SCRIPT))).toBe(false);
   });

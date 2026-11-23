@@ -1,4 +1,5 @@
 import type { FindMarketplaceToRemove } from "../../../contexts/distribution/application/remove/find-marketplace-to-remove.use-case.js";
+import type { RemoveBuiltMarketplace } from "../../../contexts/distribution/application/remove/remove-built-marketplace.use-case.js";
 import type { RemoveMarketplace } from "../../../contexts/distribution/application/remove/remove-marketplace.use-case.js";
 import type { MarketplaceRemovalResult } from "../../../contexts/distribution/contract/marketplace-removal.js";
 import type { DetachPluginClaims } from "../../../contexts/installation/contract/records/plugin-claims.js";
@@ -16,11 +17,12 @@ export interface RemoveProjectMarketplaceDeps {
   readonly find: FindMarketplaceToRemove;
   readonly removePlugins: Pick<RemoveMarketplacePlugins, "execute">;
   readonly remove: RemoveMarketplace;
+  readonly removeBuilt: Pick<RemoveBuiltMarketplace, "execute">;
   readonly detachClaims: DetachPluginClaims;
 }
 
 /** Removes a project marketplace: finds it, removes the plugins installed from it once the person
- * agrees, forgets it, then lets go of what those plugins claimed. */
+ * agrees, forgets it and its built trees, then lets go of what those plugins claimed. */
 export class RemoveProjectMarketplace {
   constructor(private readonly deps: RemoveProjectMarketplaceDeps) {}
 
@@ -33,6 +35,7 @@ export class RemoveProjectMarketplace {
       autoConfirm: command.autoConfirm,
     });
     await this.deps.remove.execute({ projectRoot, marketplace });
+    await this.deps.removeBuilt.execute({ projectRoot, name });
     if (removal.claims !== undefined) await this.deps.detachClaims(projectRoot, removal.claims);
     return {
       marketplace,

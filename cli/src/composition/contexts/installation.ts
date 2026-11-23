@@ -19,6 +19,7 @@ import {
   withoutMarketplace,
   withoutRef,
 } from "../../contexts/host-registration/domain/record/registration-record.js";
+import { withoutEnabledPlugin } from "../../contexts/host-registration/domain/settings-declaration.js";
 import { AssertProjectMcpEntriesRemovable } from "../../contexts/installation/application/assert-project-mcp-entries-removable.use-case.js";
 import { ReadMachineInstallation } from "../../contexts/installation/application/doctor/read-machine-installation.use-case.js";
 import { InstallIdeConfig } from "../../contexts/installation/application/install/config/install-ide-config.use-case.js";
@@ -43,6 +44,8 @@ import { AssertProjectHooksRemovable } from "../../contexts/installation/applica
 import { AssertProjectHooksUnchanged } from "../../contexts/installation/application/shared/assert-project-hooks-unchanged.use-case.js";
 import { DetectPluginDrift } from "../../contexts/installation/application/shared/detect-plugin-drift.use-case.js";
 import { RemoveRecordedProjectHooks } from "../../contexts/installation/application/shared/remove-recorded-project-hooks.use-case.js";
+import { RemoveEnabledPlugin } from "../../contexts/installation/application/sync/remove-enabled-plugin.use-case.js";
+import { trackedSharedSettings } from "../../contexts/installation/application/sync/tracked-shared-settings.js";
 import { UpdateGitignore } from "../../contexts/installation/application/update-gitignore.use-case.js";
 import type { ProjectSetupState } from "../../contexts/installation/contract/project-setup-state.js";
 import { AgentModelStoreAdapter } from "../../contexts/installation/infrastructure/agent-model-store-adapter.js";
@@ -156,6 +159,12 @@ export function projectIntegrationOf(fs: FileReader & FileWriter) {
   const removeHooks = new RemoveProjectHooks(removeRecorded);
   const assertHooksRemovable = new AssertProjectHooksRemovable(unchanged);
   const plan = new PlanProjectMcpRemoval(fs, withinRoot);
+  // A settings file too malformed to read holds no entry to take out, so nothing is worth a warning.
+  const quiet: Logger = { debug() {}, info() {}, warn() {} };
+  const enablement = new RemoveEnabledPlugin(
+    trackedSharedSettings({ fs, logger: quiet }),
+    withoutEnabledPlugin
+  );
   const assertMcpRemovable = new AssertProjectMcpEntriesRemovable(plan);
   return {
     materializer: new ProjectHooksMaterializer(fs, unchanged, removeRecorded),
@@ -168,7 +177,13 @@ export function projectIntegrationOf(fs: FileReader & FileWriter) {
       assertMcpRemovable,
       assertHooksRemovable
     ),
-    removeIntegration: new RemoveProjectIntegration({ fs, plan, hooks: removeHooks, withinRoot }),
+    removeIntegration: new RemoveProjectIntegration({
+      fs,
+      plan,
+      hooks: removeHooks,
+      withinRoot,
+      enablement,
+    }),
   };
 }
 

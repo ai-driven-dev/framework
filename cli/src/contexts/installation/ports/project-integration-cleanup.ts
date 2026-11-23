@@ -1,19 +1,26 @@
+import type { Manifest } from "../domain/manifest.js";
 import type { InstalledPlugin } from "../domain/plugins/installed-plugin.js";
 import type { RecordedPlugin } from "../domain/plugins/recorded-plugin.js";
-import type { ProjectPluginIntegration } from "./tool-sections.js";
+import type { EnabledPluginsSection, ProjectPluginIntegration } from "./tool-sections.js";
 
-/** Takes a plugin's project-scope integration out of a project: hooks, MCP entries and files. */
+/** The recorded plugin whose project-local integration a removal lets go of, in the manifest the
+ * caller saves once it is done. */
+export interface LocalIntegrationRemoval {
+  readonly plugin: RecordedPlugin;
+  readonly tool: ProjectPluginIntegration & EnabledPluginsSection;
+  readonly projectRoot: string;
+  readonly manifest: Manifest;
+}
+
+/** Takes a plugin's project-scope integration out of a project: hooks, MCP entries, its enabled
+ * entry and files. */
 export interface ProjectIntegrationCleanup {
   assertLocalIntegrationRemovable(
     tool: ProjectPluginIntegration,
     plugin: RecordedPlugin,
     projectRoot: string
   ): Promise<void>;
-  removeLocalIntegration(
-    tool: ProjectPluginIntegration,
-    plugin: RecordedPlugin,
-    projectRoot: string
-  ): Promise<void>;
+  removeLocalIntegration(removal: LocalIntegrationRemoval): Promise<void>;
   deleteLocalFiles(
     tool: ProjectPluginIntegration,
     plugin: InstalledPlugin,

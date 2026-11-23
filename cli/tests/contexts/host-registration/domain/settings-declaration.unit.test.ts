@@ -4,6 +4,7 @@ import {
   registersByProvenRefs,
   registersBySettingsFile,
   withEnabledPlugins,
+  withoutEnabledPlugin,
   withoutMarketplaces,
 } from "../../../../src/contexts/host-registration/domain/settings-declaration.js";
 
@@ -88,5 +89,25 @@ describe("how a tool's settings file registers its plugins", () => {
   it("projects only the proven refs for a tool that needs the host's proof", () => {
     expect(registersByProvenRefs(answering(true))).toBe(true);
     expect(registersByProvenRefs(answering(false))).toBe(false);
+  });
+});
+
+describe("the entry a plugin has in a parsed shared file", () => {
+  const plugin = { name: "a", marketplace: "m" };
+
+  it("is taken out of a copy, the file the caller holds left as it was", () => {
+    const shared = { [ENABLED]: { "a@m": true, "b@m": true }, keep: 1 };
+
+    expect(withoutEnabledPlugin(shared, ENABLED, plugin)).toStrictEqual({
+      [ENABLED]: { "b@m": true },
+      keep: 1,
+    });
+    expect(shared[ENABLED]).toStrictEqual({ "a@m": true, "b@m": true });
+  });
+
+  it("answers null when the file holds no entry for it", () => {
+    expect(withoutEnabledPlugin({ [ENABLED]: { "b@m": true } }, ENABLED, plugin)).toBeNull();
+    expect(withoutEnabledPlugin({ keep: 1 }, ENABLED, plugin)).toBeNull();
+    expect(withoutEnabledPlugin({ [ENABLED]: { "a@m": true } }, null, plugin)).toBeNull();
   });
 });

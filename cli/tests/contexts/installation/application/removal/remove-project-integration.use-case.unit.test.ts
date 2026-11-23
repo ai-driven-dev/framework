@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { projectIntegrationOf } from "../../../../../src/composition/contexts/installation.js";
+import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
@@ -40,6 +41,7 @@ describe("removing a plugin's MCP servers from a flat config", () => {
       plugin: plugin(entries),
       tool,
       projectRoot: ROOT,
+      manifest: Manifest.create(),
     });
 
     expect(Object.keys(JSON.parse(await fs.readFile(MCP_FILE)).mcp ?? {})).toStrictEqual([]);
@@ -52,6 +54,7 @@ describe("removing a plugin's MCP servers from a flat config", () => {
       plugin: plugin(),
       tool,
       projectRoot: ROOT,
+      manifest: Manifest.create(),
     });
 
     expect(await fs.readFile(MCP_FILE)).toBe("{}");
@@ -65,6 +68,7 @@ describe("removing a plugin's MCP servers from a flat config", () => {
       plugin: plugin(entries),
       tool,
       projectRoot: ROOT,
+      manifest: Manifest.create(),
     });
 
     expect(await fs.fileExists(MCP_FILE)).toBe(false);

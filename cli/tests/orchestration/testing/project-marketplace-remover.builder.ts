@@ -4,6 +4,7 @@ import {
 } from "../../../src/composition/contexts/installation.js";
 import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { FindMarketplaceToRemove } from "../../../src/contexts/distribution/application/remove/find-marketplace-to-remove.use-case.js";
+import { RemoveBuiltMarketplace } from "../../../src/contexts/distribution/application/remove/remove-built-marketplace.use-case.js";
 import { RemoveMarketplace } from "../../../src/contexts/distribution/application/remove/remove-marketplace.use-case.js";
 import type { MarketplaceRegistry } from "../../../src/contexts/distribution/ports/marketplace-registry.js";
 import { RemovePluginsFromMarketplace } from "../../../src/contexts/installation/application/marketplace/remove-plugins-from-marketplace.use-case.js";
@@ -33,6 +34,7 @@ export function projectMarketplaceRemover(
       { ...recordsOf(manifestRepo), ...records }
     ),
     remove: new RemoveMarketplace(registry),
+    removeBuilt: new RemoveBuiltMarketplace({ deleteDirectory: async () => {} }),
     detachClaims: (projectRoot, { nativeRefs, plugins }) =>
       cleanup.detachClaims(projectRoot, nativeRefs, plugins),
   });

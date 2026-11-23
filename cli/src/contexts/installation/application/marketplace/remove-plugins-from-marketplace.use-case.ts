@@ -1,5 +1,4 @@
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { PluginClaims } from "../../contract/records/plugin-claims.js";
 import type { ToolRecords } from "../../contract/records/scope-records.js";
 import type { Manifest } from "../../domain/manifest.js";
@@ -7,6 +6,7 @@ import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { ProjectIntegrationCleanup } from "../../ports/project-integration-cleanup.js";
+import type { InstallationCatalog } from "../../ports/tool-sections.js";
 import type { RecordedPluginRef } from "../removal/project-plugin-withdrawal.js";
 
 export interface RemovePluginsFromMarketplaceRequest {
@@ -40,7 +40,7 @@ export interface RemovePluginsFromMarketplaceDeps {
 export class RemovePluginsFromMarketplace {
   constructor(
     private readonly deps: RemovePluginsFromMarketplaceDeps,
-    private readonly tools: ToolCatalog
+    private readonly tools: InstallationCatalog
   ) {}
 
   async execute(
@@ -89,7 +89,12 @@ export class RemovePluginsFromMarketplace {
     }
     for (const { toolId, plugin, recorded } of orphans) {
       const tool = this.tools.aiProfile(toolId);
-      await this.deps.cleanup.removeLocalIntegration(tool, recorded, projectRoot);
+      await this.deps.cleanup.removeLocalIntegration({
+        plugin: recorded,
+        tool,
+        projectRoot,
+        manifest,
+      });
       await this.deps.cleanup.deleteLocalFiles(tool, plugin, projectRoot);
       const registrations = registered.get(toolId);
       const ref = records.recordedRef(registrations, recorded);

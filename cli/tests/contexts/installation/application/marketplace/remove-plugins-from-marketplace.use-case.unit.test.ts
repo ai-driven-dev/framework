@@ -37,7 +37,7 @@ function setup(options: { manifest?: Manifest | null; refuse?: Error } = {}) {
       calls.push(`assert:${p.plugin.name}`);
       if (options.refuse !== undefined) throw options.refuse;
     },
-    removeLocalIntegration: async (_tool, p, root) => {
+    removeLocalIntegration: async ({ plugin: p, projectRoot: root }) => {
       calls.push(`integration:${p.plugin.name}:${root}`);
     },
     deleteLocalFiles: async (_tool, p, root) => {

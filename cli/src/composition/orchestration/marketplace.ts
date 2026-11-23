@@ -7,6 +7,7 @@ import { ListMarketplaceReleases } from "../../contexts/distribution/application
 import { PinNewestFrameworkSource } from "../../contexts/distribution/application/pin-newest-framework-source.use-case.js";
 import { FindMarketplaceToRemove } from "../../contexts/distribution/application/remove/find-marketplace-to-remove.use-case.js";
 import { FindUserMarketplace } from "../../contexts/distribution/application/remove/find-user-marketplace.use-case.js";
+import { RemoveBuiltMarketplace } from "../../contexts/distribution/application/remove/remove-built-marketplace.use-case.js";
 import { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.use-case.js";
 import { ListPluginSources } from "../../contexts/installation/application/marketplace/list-plugin-sources.use-case.js";
 import { PurgeMarketplacePlugins } from "../../contexts/installation/application/marketplace/purge-marketplace-plugins.use-case.js";
@@ -114,6 +115,7 @@ function wireMarketplaceRemoval(base: Base, inst: Installation) {
       recordsOf(manifestRepo)
     ),
     remove: new RemoveMarketplace(marketplaceRegistry),
+    removeBuilt: new RemoveBuiltMarketplace(fs),
     detachClaims: detachClaimsOf(projectCleanup),
   });
   const removeUserMarketplace = wireUserMarketplaceRemoval(base);
