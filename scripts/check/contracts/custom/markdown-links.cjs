@@ -4,7 +4,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
-const SKIPPED_DIRS = new Set([".git", "node_modules", "worktrees", ".specstory", ".stryker-tmp", ".e2e-build"]);
+const SKIPPED_DIRS = new Set([".git", "node_modules", "worktrees", ".specstory", ".stryker-tmp", ".e2e-build", ".aidd"]);
 const SKIPPED_DIR_PREFIXES = [".tmp-check-markdown-links-"];
 // Both trees hold targets meant not to resolve: synthetic mock references, and a historical record left as it was written.
 const DEFAULT_IGNORES = ["cli/tests/fixtures", "cli/aidd_docs/tasks"];

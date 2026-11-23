@@ -71,6 +71,14 @@ describe("markdown-links", () => {
     assert.deepEqual(custom("markdown-links")(anchor()), []);
   });
 
+  it("skips the generated .aidd cache but still fails a broken link in a source file", () => {
+    put(".aidd/cache/x.md", "[x](nowhere.md)\n");
+    put("README.md", "fine\n");
+    assert.deepEqual(custom("markdown-links")(anchor()), []);
+    put("docs/src.md", "[x](nowhere.md)\n");
+    assert.equal(custom("markdown-links")(anchor()).length, 1);
+  });
+
   it("reads the markdown, @import and src: forms, and ignores anchors, mail, phone, URLs, placeholders and globs", () => {
     put("real.md", "# Real\n");
     put("page.md", [
