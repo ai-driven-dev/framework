@@ -12,7 +12,7 @@
 
 - One direction, one list of rules, per tool; there is no reverse and no shared base.
 - The CLI writes owned files from the canonical source and never reads a tool's tree back, so an inverse has no caller.
-- `DOCS_DIR` is a constant private to `domain/profiles/copilot/copilot-content.model.ts`, its only user.
+- `DOCS_DIR` is a constant private to `domain/behaviours/copilot/copilot-content.model.ts`, its only user.
 
 ## What a profile does
 
@@ -31,4 +31,4 @@
 
 - An identity rewrite looks the same as one that was forgotten, until a placeholder reaches a user's file verbatim.
 - Prove a rewrite with a fixture that contains the placeholder, and assert the whole rewritten string.
-- `tests/contexts/tools/domain/profiles/copilot/copilot-content.model.unit.test.ts` is the model.
+- `tests/contexts/tools/domain/behaviours/copilot/copilot-content.model.unit.test.ts` is the model.

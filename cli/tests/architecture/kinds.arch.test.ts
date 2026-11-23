@@ -85,7 +85,8 @@ describe("every file is exactly one kind", () => {
     ["src/shared/ports/file-reader.port.ts", "port"],
     ["src/contexts/auth/infrastructure/credential-file.adapter.ts", "adapter"],
     ["src/presentation/terminal/prompter.ts", "adapter"],
-    ["src/contexts/tools/domain/profiles/claude/claude.profile.ts", "profile"],
+    ["src/composition/tool-profiles/claude.ts", "profile"],
+    ["src/composition/tool-profiles.composition.ts", "composition"],
     ["src/contexts/auth/domain/auth.error.ts", "error"],
     ["src/presentation/presentation.error.ts", "error"],
     ["src/presentation/presenters/auth.presenter.ts", "presenter"],
@@ -210,7 +211,7 @@ describe("a source owes a test at its mirror path", () => {
   });
 
   it("owes nothing for the data file of a profile, but a profile function owes a test", () => {
-    const data = "src/contexts/tools/domain/profiles/x/x-paths.ts";
+    const data = "src/contexts/tools/domain/behaviours/x/x-paths.ts";
     expect(missing([data], [], { typeOnly: false, behaviour: false })).toEqual([]);
     expect(missing([data], [], { typeOnly: false, behaviour: true })).toEqual([data]);
   });

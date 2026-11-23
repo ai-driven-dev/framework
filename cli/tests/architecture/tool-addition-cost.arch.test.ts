@@ -1,10 +1,12 @@
 /**
- * A tool identifier may only appear in that tool's own profile and the registration list.
- * Everywhere else behaviour is read from the profile rather than branched on the name, or a
- * sixth tool means editing N files again. Scope is `src/`: a test naming the tool it tests is
- * not coupling. Comments are stripped first - prose about a tool's layout is documentation.
+ * Adding a tool costs one profile file in `composition/tool-profiles/` and one line in the
+ * registration list beside it. A tool identifier may appear only there and in the tool's own
+ * behaviour folder; everywhere else behaviour is read from the profile rather than branched on the
+ * name, or the next tool means editing N files again. Scope is `src/`: a test naming the tool it
+ * tests is not coupling. Comments are stripped first - prose about a tool's layout is documentation.
  */
 import { describe, expect, it } from "vitest";
+import { REGISTERED_PROFILES } from "../../src/composition/tool-profiles.composition.js";
 import { present } from "../shared/testing/present.builder.js";
 import {
   DESCRIPTOR_TYPES,
@@ -15,14 +17,26 @@ import {
 } from "./hooks-facts.js";
 import { read, sourceFiles } from "./source-graph.js";
 
-/** The tools, from the tree: a hand-written list leaves the rule blind to the next tool. */
+const PROFILES = "src/composition/tool-profiles/";
+const REGISTRATION = `${PROFILES}index.ts`;
+const BEHAVIOURS = "src/contexts/tools/domain/behaviours/";
+
+/** The tools, from the profile files: a hand-written list leaves the rule blind to the next tool. */
 function toolIds(files: readonly string[]): string[] {
   const ids = new Set<string>();
   for (const file of files) {
-    const match = /^src\/contexts\/tools\/domain\/profiles\/([^/]+)\//.exec(file);
-    if (match) ids.add(present(match[1]));
+    const match = /^src\/composition\/tool-profiles\/([^/]+)\.ts$/.exec(file);
+    if (match && file !== REGISTRATION) ids.add(present(match[1]));
   }
   return [...ids].sort();
+}
+
+/** The profile files the list does not register, then the ids it registers with no file. */
+function registrationGaps(ids: readonly string[], registered: readonly string[]): string[] {
+  return [
+    ...ids.filter((id) => !registered.includes(id)).map((id) => `unregistered: ${id}`),
+    ...registered.filter((id) => !ids.includes(id)).map((id) => `no profile file: ${id}`),
+  ];
 }
 
 /**
@@ -33,14 +47,15 @@ function toolIds(files: readonly string[]): string[] {
  */
 const STORED_VOCABULARY = { path: "src/contexts/telemetry/contract/usage-record.ts", named: 1 };
 
-/** A telemetry source reads one tool's files, so its folder is named for that tool, as a profile's is. */
+/** A folder named for one tool, a behaviour or a telemetry source, names that tool alone. */
+const OWN_FOLDERS = [BEHAVIOURS, "src/contexts/telemetry/infrastructure/sources/"];
+
 function isAllowed(file: string, ids: readonly string[], named: readonly string[] = []): boolean {
-  if (file === "src/composition/tool-profiles.composition.ts" || file === STORED_VOCABULARY.path)
-    return true;
+  if (file === REGISTRATION || file === STORED_VOCABULARY.path) return true;
   return ids.some(
     (id) =>
-      file.startsWith(`src/contexts/tools/domain/profiles/${id}/`) ||
-      (file.startsWith(`src/contexts/telemetry/infrastructure/sources/${id}/`) &&
+      file === `${PROFILES}${id}.ts` ||
+      (OWN_FOLDERS.some((folder) => file.startsWith(`${folder}${id}/`)) &&
         named.every((name) => name === id))
   );
 }
@@ -116,6 +131,15 @@ function toolIdentifiersIn(source: string, ids: readonly string[]): string[] {
 }
 
 describe("a tool identifier stays inside its own profile", () => {
+  it("registers every profile file once, and no tool without one", () => {
+    const registered = REGISTERED_PROFILES.map((profile) => profile.toolId);
+
+    expect(
+      registrationGaps(toolIds(sourceFiles()), registered),
+      "a profile file and the registration list disagree - add the line, or the file"
+    ).toEqual([]);
+  });
+
   it("no file outside a profile names a tool in a form a new tool would have to join", () => {
     const files = sourceFiles();
     const ids = toolIds(files);
@@ -146,14 +170,38 @@ describe("a tool identifier stays inside its own profile", () => {
 });
 
 describe("the guard itself", () => {
-  it("derives the tools from the profiles, so a new one is subject to the rule at once", () => {
-    const ids = toolIds(["src/contexts/tools/domain/profiles/frobnicator/profile.ts"]);
+  it("derives the tools from the profile files, so a new one is subject to the rule at once", () => {
+    const ids = toolIds([`${PROFILES}frobnicator.ts`, REGISTRATION]);
 
-    expect(ids, "a directory under profiles/ is a tool").toEqual(["frobnicator"]);
+    expect(ids, "a profile file is a tool, the registration list is none").toEqual(["frobnicator"]);
     expect(
       toolsNamedIn('const target = "frobnicator";', ids),
       "and the rule matches it without anyone editing a list"
     ).toEqual(["frobnicator"]);
+  });
+
+  it("reports a profile file the list does not register, and a line with no file", () => {
+    expect(registrationGaps(["claude", "frobnicator"], ["claude"])).toEqual([
+      "unregistered: frobnicator",
+    ]);
+    expect(registrationGaps(["claude"], ["claude", "frobnicator"])).toEqual([
+      "no profile file: frobnicator",
+    ]);
+  });
+
+  it("admits a tool's own profile and behaviour folder, never a shared format or a neighbour", () => {
+    const ids = ["claude", "codex"];
+
+    expect(isAllowed(`${PROFILES}codex.ts`, ids, ["codex", "claude"]), "its profile").toBe(true);
+    expect(isAllowed(`${BEHAVIOURS}codex/codex-build.model.ts`, ids, ["codex"])).toBe(true);
+    expect(
+      isAllowed(`${BEHAVIOURS}codex/codex-build.model.ts`, ids, ["claude"]),
+      "a neighbour named in a behaviour folder"
+    ).toBe(false);
+    expect(
+      isAllowed("src/contexts/tools/domain/formats/command.ts", ids, ["codex"]),
+      "a shared format"
+    ).toBe(false);
   });
 
   it("sees the four forms a quoted-literal match missed, and ignores prose", () => {
@@ -164,7 +212,7 @@ describe("the guard itself", () => {
     ]);
     expect(
       toolsNamedIn(
-        'import "../../src/contexts/tools/domain/profiles/codex/codex-build.model.js";',
+        'import "../../src/contexts/tools/domain/behaviours/codex/codex-build.model.js";',
         ids
       ),
       "an import path"
@@ -252,7 +300,7 @@ describe("a tool never names an identifier outside its profile, in the code ever
   });
 });
 
-const PROFILE = "src/contexts/tools/domain/profiles/claude/claude.profile.ts";
+const PROFILE = `${PROFILES}claude.ts`;
 
 /** A planted profile source, then ` → ` and the facts it declares, which none must be. */
 const PLANTED = [

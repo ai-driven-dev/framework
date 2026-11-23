@@ -14,9 +14,9 @@ A profile registered in one line, its goldens and fixtures current.
 
 1. **Load.** Read [architecture.md](../references/architecture.md) and [tools.md](../references/contexts/tools.md). Section conventions, plugin delivery, content rewrite and the build contract are in `references/tool/`: [section-conventions.md](../references/tool/section-conventions.md), [plugin-sections.md](../references/tool/plugin-sections.md), [content-rewrite.md](../references/tool/content-rewrite.md), [build-contract.md](../references/tool/build-contract.md).
 2. **Measure.** Read the host's current format from its own documentation or binary, never from memory. A measured quirk is comment material (`architecture.md`, Type honesty and comments).
-3. **Declare.** For a new tool, create `src/contexts/tools/domain/profiles/<tool>/<tool>.profile.ts` with `defineAiTool` or `defineIdeTool` (`domain/profile/define-tool.ts`), and its format code beside it in `<tool>-*.model.ts`.
+3. **Declare.** For a new tool, create `src/composition/tool-profiles/<tool>.ts` with `defineAiTool` or `defineIdeTool` (`domain/profile/define-tool.ts`). Format code no other tool shares goes in `src/contexts/tools/domain/behaviours/<tool>/<tool>-*.model.ts`.
 4. **Register.** Add one line to `REGISTERED_PROFILES` in `src/composition/tool-profiles.composition.ts`.
-5. **Change a format.** Edit the profile or its `*.model.ts` only. A caller that needs a new answer gets a method on `contract/tool-profile.ts`, never a branch on the tool id.
+5. **Change a format.** Edit the profile or its behaviour folder only. A caller that needs a new answer gets a method on `contract/tool-profile.ts`, never a branch on the tool id.
 6. **Hooks.** Declare them with `declareHooks`, or `declareBridgeHooks` for a bridge tool (`domain/bridges/event-bridge.ts`).
    - A host-hook tool adds `assets/hooks-runtime/host-<tool>.cjs` and one payload fixture per relayed event under `tests/fixtures/hooks-routes/<tool>/`.
 7. **Conform.** Declared data gets no test of its own: `profile-conformance.unit.test.ts` walks `REGISTERED_PROFILES`.

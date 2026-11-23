@@ -11,7 +11,7 @@ import { read, sourceFiles } from "./source-graph.js";
 const STATIC_IMPORT = /^(?:\} from|import(?: [^;]*? from)?) ["'](?:node:)?child_process["']/m;
 const DYNAMIC_IMPORT = /(?<![\w"'`])import\(\s*["'](?:node:)?child_process["']\s*\)/;
 const OWNER = "src/contexts/host-registration/infrastructure/";
-const PROFILES = "src/contexts/tools/domain/profiles/";
+const PROFILES = "src/composition/tool-profiles/";
 
 function importsChildProcess(text: string): boolean {
   return STATIC_IMPORT.test(text) || DYNAMIC_IMPORT.test(text);

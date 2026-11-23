@@ -21,7 +21,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const CLI_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const PROFILES = join(CLI_ROOT, "src/contexts/tools/domain/profiles");
+const PROFILES = join(CLI_ROOT, "src/contexts/tools/domain/behaviours");
 const JSCPD = join(CLI_ROOT, "node_modules/jscpd/run-jscpd.js");
 
 // jscpd splits --ignore-pattern on commas, so the pattern holds none, and matches without

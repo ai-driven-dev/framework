@@ -6,7 +6,8 @@ Where CLI code lives. `cli/tests/architecture/docs-do-not-lie.arch.test.ts` hold
 src/
 ├── composition/    # container.ts and the shared wiring
 │   ├── contexts/    # one wiring module per context, called by container.ts
-│   └── orchestration/    # the wiring of each scenario
+│   ├── orchestration/    # the wiring of each scenario
+│   └── tool-profiles/    # one profile per tool; the registration list sits beside it
 ├── contexts/    # bounded contexts; another context reads contract/ only, presentation and orchestration also application/
 │   ├── auth/    # the one GitHub token
 │   │   ├── application/
@@ -125,6 +126,14 @@ src/
 │   │   ├── application/
 │   │   ├── contract/
 │   │   ├── domain/
+│   │   │   ├── behaviours/    # the format code one tool alone needs, a folder per tool
+│   │   │   │   ├── antigravity/
+│   │   │   │   ├── claude/
+│   │   │   │   ├── codex/
+│   │   │   │   ├── copilot/
+│   │   │   │   ├── cursor/
+│   │   │   │   ├── kilo/
+│   │   │   │   └── opencode/
 │   │   │   ├── bridges/
 │   │   │   ├── formats/
 │   │   │   │   ├── agents/
@@ -134,15 +143,6 @@ src/
 │   │   │   ├── models/
 │   │   │   ├── native-registration/
 │   │   │   ├── profile/
-│   │   │   ├── profiles/
-│   │   │   │   ├── antigravity/
-│   │   │   │   ├── claude/
-│   │   │   │   ├── codex/
-│   │   │   │   ├── copilot/
-│   │   │   │   ├── cursor/
-│   │   │   │   ├── kilo/
-│   │   │   │   ├── opencode/
-│   │   │   │   └── vscode/
 │   │   │   └── sections/
 │   │   └── infrastructure/
 │   ├── translate/    # canonical source to target-native content
@@ -221,6 +221,6 @@ src/
 | What | Where |
 | --- | --- |
 | a command | `presentation/controllers/`; its logic in the context owning the concept |
-| a tool | one folder under `contexts/tools/domain/profiles/`; procedure in the `working-on-cli` skill's `actions/01-tool.md` |
+| a tool | one profile in `composition/tool-profiles/` plus its line in `tool-profiles.composition.ts`; procedure in the `working-on-cli` skill's `actions/01-tool.md` |
 | a port used by one context | its `ports/`, adapter in its `infrastructure/` |
 | a port used by two | `shared/ports/`, adapter in `shared/infrastructure/` |
