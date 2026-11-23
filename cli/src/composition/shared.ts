@@ -27,7 +27,7 @@ import {
   wireMachineClaims,
   withRecordsBeside,
 } from "./machine-claims.js";
-import { userConfigDir } from "./user-config-dir.js";
+import { homeDirResolver, userConfigDir } from "./user-config-dir.js";
 
 const plainText = (message: string | HintedMessage): string =>
   typeof message === "string" ? message : message.text;
@@ -57,14 +57,19 @@ function terminalPrompter() {
 
 /** What each host registers a plugin through, read once and reused wherever a use case needs the
  * scope a plugin is actually registered at: removal, clean, and doctor's own registration check. */
-function wireHost(parts: { tools: ToolCatalog; fs: JsonFileMergerAdapter; logger: Output }) {
-  const { tools, fs, logger } = parts;
+function wireHost(parts: {
+  tools: ToolCatalog;
+  fs: JsonFileMergerAdapter;
+  logger: Output;
+  home: string;
+}) {
+  const { tools, fs, logger, home } = parts;
   const {
     hostActions: nativePluginActivators,
     marketplaceRegistries: hostMarketplaceRegistries,
     marketplaceSources: nativeSources,
     pluginRegistries: hostPluginRegistries,
-  } = wireHostRegistration(tools);
+  } = wireHostRegistration(tools, home);
   const withdrawFromHost = new WithdrawFromHost(fs, logger, {
     activators: nativePluginActivators,
     pluginRegistries: hostPluginRegistries,
@@ -130,7 +135,8 @@ export function wireBase(options: BaseOptions) {
   const logger = output ?? createOutput(verbose);
   const storage = wireStorage(options, logger);
   const remote = wireRemote(options, { logger, fs: storage.fs });
-  const host = wireHost({ tools, fs: storage.fs, logger });
+  const homedir = homeDirResolver();
+  const host = wireHost({ tools, fs: storage.fs, logger, home: homedir() });
   // Built ahead of every use case that reads a shared-source claim: it depends only on `fs`
   // and `userConfigDir`, neither of which distribution's own wiring produces.
   const { userSourceReferences } = wireMachineClaims(storage.fs);
@@ -138,6 +144,7 @@ export function wireBase(options: BaseOptions) {
     ...host,
     ...remote,
     ...storage,
+    homedir,
     tools,
     projectRoot,
     logger,

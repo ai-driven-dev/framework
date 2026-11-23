@@ -1,14 +1,14 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { RemoveProjectPlugin } from "../../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import { removalClaims } from "../../../../src/contexts/machine-claims/application/removal/removal-claims.js";
 import { FileHash } from "../../../../src/shared/domain/file-hash.js";
 import { aManifest } from "../../../contexts/installation/testing/manifest.builder.js";
+import { removalClaimsOf } from "../../../contexts/machine-claims/testing/claims-release.builder.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../../shared/testing/in-memory-marketplace-registry.fake.js";
+import { removeProjectPluginOf } from "../../../shared/testing/remove-project-plugin.builder.js";
 import { KeepPrompter } from "../../../shared/testing/scripted-prompter.fake.js";
 import {
   SYNTHETIC_MCP_FILE,
@@ -69,7 +69,7 @@ describe("which plugins a removal orphans: what it protects", () => {
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
     const useCase = projectMarketplaceRemover(
       syntheticNativeFamilyCatalog(),
-      new RemoveProjectPlugin(fs, () => "/home/dev", removalClaims(machineRepo, fs)),
+      removeProjectPluginOf(fs, removalClaimsOf(machineRepo, fs)),
       projectRepo,
       registry,
       new KeepPrompter()
@@ -126,7 +126,7 @@ describe("which plugins a removal orphans: what it protects", () => {
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
     const useCase = projectMarketplaceRemover(
       syntheticNativeFamilyCatalog(),
-      new RemoveProjectPlugin(fs, () => "/home/dev"),
+      removeProjectPluginOf(fs),
       manifestRepo,
       registry,
       new KeepPrompter()
@@ -184,7 +184,7 @@ describe("which plugins a removal orphans: what it protects", () => {
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
     const useCase = projectMarketplaceRemover(
       syntheticNativeFamilyCatalog(),
-      new RemoveProjectPlugin(fs, () => "/home/dev"),
+      removeProjectPluginOf(fs),
       manifestRepo,
       registry,
       new KeepPrompter()

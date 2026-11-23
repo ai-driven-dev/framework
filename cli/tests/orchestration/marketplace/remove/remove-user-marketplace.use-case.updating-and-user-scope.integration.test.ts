@@ -215,7 +215,9 @@ describe("user-scope tool targeted user marketplace removal", () => {
     const f = await fixture();
     const path = join(f.pluginDir, "skills/demo/SKILL.md");
     f.fs.setFile(path, "user-edited bytes");
-    await expect(f.useCase.execute(options())).rejects.toThrow(/edited.*SKILL.md|SKILL.md.*edited/);
+    await expect(f.useCase.execute(options())).rejects.toMatchObject({
+      code: "edited-after-install",
+    });
     expect(f.fs.getFile(path)).toBe("user-edited bytes");
     expect(f.repo.getCurrent()?.getPlugins(SYNTHETIC_USER_TOOL)).toHaveLength(1);
     expect((await f.registry.list("/A")).find((entry) => entry.name === ALIAS)).toBeDefined();

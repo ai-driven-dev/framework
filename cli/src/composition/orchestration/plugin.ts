@@ -27,14 +27,8 @@ import { UserScopePluginFiles } from "../../contexts/installation/application/re
 import type {
   BoundPluginMaterializer,
   UserPluginMaterialization,
-  UserScopeFileGuard,
 } from "../../contexts/installation/ports/plugin/user-plugin-materialization.js";
 import { userScopeOwnership } from "../../contexts/machine-claims/application/ownership/user-scope-ownership.js";
-import {
-  assertUserScopeWriteBoundary,
-  userScopeFilesSafeToDelete,
-  withoutMissingFiles,
-} from "../../contexts/machine-claims/application/ownership/user-scope-plugin-files.js";
 import { pluginRemovalClaims } from "../../contexts/machine-claims/application/removal/plugin-removal-claims.js";
 import { ResolvePurgeCandidate } from "../../contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
 import { isStrictlyWithinUserScope } from "../../contexts/machine-claims/domain/user-scope-containment.js";
@@ -45,8 +39,13 @@ import { PickPlugins } from "../../orchestration/plugin/pick-plugins.use-case.js
 import { RemoveMachinePlugin } from "../../orchestration/plugin/remove-machine-plugin.use-case.js";
 import { RemovePlugin } from "../../orchestration/plugin/remove-plugin.use-case.js";
 import { UpdateUserPlugin } from "../../orchestration/plugin/update-user-plugin.use-case.js";
-import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
 import type { Installation } from "../installation.js";
+import {
+  machineOwnership,
+  sharedSourceReads,
+  userScopeFileGuard,
+  userScopeFilesSafeToDelete,
+} from "../machine-claims.js";
 import type { Base } from "../shared.js";
 import { userConfigDir } from "../user-config-dir.js";
 
@@ -76,13 +75,6 @@ export function purgeCandidateResolverOf(purge: Pick<ResolvePurgeCandidate, "exe
   return (...args: Parameters<ResolvePurgeCandidate["execute"]>) => purge.execute(...args);
 }
 
-// One writer for a machine-scope plugin's files, whether setup installs it or update rebuilds it.
-export const userScopeFileGuard: UserScopeFileGuard = {
-  safeToDelete: userScopeFilesSafeToDelete,
-  withoutMissing: withoutMissingFiles,
-  assertWriteBoundary: assertUserScopeWriteBoundary,
-};
-
 /** The host's two steps a user-scope removal takes: prove a claimed ref removable, then withdraw it. */
 export function claimedRefWithdrawal(
   withdrawFromHost: WithdrawFromHost
@@ -95,10 +87,10 @@ export function claimedRefWithdrawal(
 }
 
 /** A user-scope removal under the machine's home directory, which the command line does not know. */
-export function underMachineHome(removal: Pick<RemoveMachinePlugin, "execute">) {
+export function underMachineHome(removal: Pick<RemoveMachinePlugin, "execute">, home: string) {
   return {
     execute: (options: Omit<RemoveUserPluginRequest, "home" | "records">) =>
-      removal.execute({ ...options, home: resolveHomeDir() }),
+      removal.execute({ ...options, home }),
   };
 }
 
@@ -115,7 +107,10 @@ function wireUserPluginRemoval(base: Base, inst: Installation) {
     },
     tools
   );
-  return underMachineHome(new RemoveMachinePlugin(removal, inst.registrationRecordRules));
+  return underMachineHome(
+    new RemoveMachinePlugin(removal, inst.registrationRecordRules),
+    base.homedir()
+  );
 }
 
 /** Removing a plugin from a project or from the machine, and the claims it leaves behind. */
@@ -123,13 +118,15 @@ function wirePluginRemoval(base: Base, inst: Installation) {
   const { tools, fs, logger, manifestRepo, userManifestRepo, withdrawFromHost } = base;
   const { registrationRecordRules } = inst;
   const removalClaims = pluginRemovalClaims({
-    repo: userManifestRepo,
-    fs,
+    ...machineOwnership(userManifestRepo, fs),
+    ...sharedSourceReads({
+      fs,
+      platform: process.platform,
+      references: base.userSourceReferences,
+    }),
     logger,
-    home: resolveHomeDir(),
-    platform: process.platform,
+    home: base.homedir(),
     frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-    userSourceReferences: base.userSourceReferences,
     marketplaceRegistry: base.marketplaceRegistry,
     resolveCacheCandidate: purgeCandidateResolverOf(new ResolvePurgeCandidate(fs, logger)),
   });
@@ -139,6 +136,10 @@ function wirePluginRemoval(base: Base, inst: Installation) {
         fs,
         projectRepo: manifestRepo,
         homedir: inst.builtMaterializationDeps.homedir,
+        integration: {
+          assert: inst.projectIntegration.assertIntegration,
+          remove: inst.projectIntegration.removeIntegration,
+        },
       },
       tools
     ),
@@ -206,7 +207,7 @@ function pluginAddOf(base: Base, inst: Installation) {
       manifests: { project: manifestRepo, user: userManifestRepo },
       addToProject: new AddPluginToProject(
         {
-          fs,
+          assertIntegration: inst.projectIntegration.assertIntegration,
           source: new ResolveAddedPluginSource(
             { loadDistribution: base.loadDistribution, fs, built: builtMaterializationDeps },
             tools

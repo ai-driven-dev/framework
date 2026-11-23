@@ -1,22 +1,11 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { underMachineHome } from "../../src/composition/orchestration/plugin.js";
 
-// The operating system reports a home other than the one HOME names, as a Windows session does.
-vi.mock("node:os", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("node:os")>()),
-  homedir: () => "/os/home",
-}));
-
-afterEach(() => {
-  vi.unstubAllEnvs();
-});
-
 describe("the user-scope plugin removal the composition binds", () => {
-  it("runs under the machine home the environment names, not the one the operating system reports", async () => {
-    vi.stubEnv("HOME", "/sandbox/home");
+  it("runs under the machine home it is given", async () => {
     const execute = vi.fn(async () => undefined);
 
-    await underMachineHome({ execute }).execute({
+    await underMachineHome({ execute }, "/sandbox/home").execute({
       pluginName: "aidd-dev",
       toolIds: "all",
       projectRoot: "/test-project",

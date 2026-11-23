@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import { LoadSyncContext } from "../../../../src/contexts/installation/application/sync/load-sync-context.use-case.js";
-import type { RecordActivationRequest } from "../../../../src/contexts/installation/application/sync/record-activation.use-case.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import {
   RecordSyncActivation,
@@ -43,7 +42,7 @@ async function requestOf(
   };
 }
 
-function depsOver(wrote?: RecordActivationRequest["kind"]) {
+function depsOver(wrote?: "settings-written-by-host" | "native-registrations") {
   const calls: string[] = [];
   const deps: RecordSyncActivationDeps = {
     recordActivation: {
@@ -63,7 +62,12 @@ function depsOver(wrote?: RecordActivationRequest["kind"]) {
         calls.push(`shared:${request.kind}`);
       },
     },
-    records: { afterActivation: () => undefined },
+    recordRegistrations: {
+      execute: () => {
+        calls.push("activation:native-registrations");
+        return wrote === "native-registrations";
+      },
+    },
   };
   return { deps, calls };
 }

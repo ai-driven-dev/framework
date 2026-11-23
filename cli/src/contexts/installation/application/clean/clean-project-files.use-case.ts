@@ -1,6 +1,6 @@
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ProjectPluginIntegration } from "../../ports/tool-sections.js";
-import type { RemoveProjectFiles } from "../removal/project/remove-project-files.js";
+import type { RemoveProjectFiles } from "../removal/project/remove-project-files.use-case.js";
 import type { AssertProjectRemovable } from "./assert-project-removable.use-case.js";
 import type { PlanProjectClean } from "./plan-project-clean.use-case.js";
 import type { ProjectCleanPlan, ProjectCleanRecords } from "./project-clean-plan.js";
@@ -68,7 +68,7 @@ export class CleanProjectFiles {
       case "assert-removable":
         return this.deps.assertProjectRemovable.execute(command);
       case "remove":
-        return this.deps.removeProjectFiles.remove(command.projectRoot, command.force);
+        return this.deps.removeProjectFiles.execute(command.projectRoot, command.force);
     }
   }
 }

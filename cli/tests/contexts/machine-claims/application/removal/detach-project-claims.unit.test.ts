@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { detachProjectClaims } from "../../../../../src/contexts/machine-claims/application/removal/detach-project-claims.js";
 import type { MachineRecords } from "../../../../../src/contexts/machine-claims/ports/machine-manifest.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { detachProjectClaimsOf } from "../../testing/claims-release.builder.js";
 import {
   InMemoryMachineManifest,
   InMemoryMachineManifestRepository,
@@ -32,7 +32,7 @@ function fixture() {
   }
   const repo = new InMemoryMachineManifestRepository(manifest, records);
   const fs = new InMemoryFileAdapter({}, ["/A", "/B"]);
-  return { repo, detach: detachProjectClaims(repo, fs) };
+  return { repo, detach: detachProjectClaimsOf(repo, fs) };
 }
 
 describe("releasing a project's claims on the machine manifest", () => {
@@ -72,7 +72,7 @@ describe("releasing a project's claims on the machine manifest", () => {
   });
 
   it("releases nothing when no machine manifest is bound", async () => {
-    const detach = detachProjectClaims(undefined, new InMemoryFileAdapter());
+    const detach = detachProjectClaimsOf(undefined, new InMemoryFileAdapter());
 
     await detach("/A", [{ toolId: TOOL.cursor, name: "first" }], new Map([[TOOL.codex, [REF]]]));
   });

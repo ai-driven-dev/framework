@@ -1,3 +1,4 @@
+import type { PlanRefsToEnable } from "../../../contexts/host-registration/application/register/plan-refs-to-enable.use-case.js";
 import type {
   RegisterPluginWithHost,
   RegisterPluginWithHostResult,
@@ -11,7 +12,7 @@ import type { Scope } from "../../../shared/domain/scope.js";
 import type { ToolId } from "../../../shared/domain/tool.js";
 import type { Logger } from "../../../shared/ports/logger.js";
 import type { BuildMarketplaceForTool } from "./build-marketplace-for-tool.use-case.js";
-import type { PluginRefsRun, RefRules, SyncedMarketplaces } from "./plugin-refs-run.js";
+import type { SyncedMarketplaces } from "./plugin-refs-run.js";
 
 export interface ActivationRun {
   outcomes: ReadonlyMap<ToolId, HostRegistrationOutcome>;
@@ -39,7 +40,6 @@ export interface ActivateNativeToolsRequest {
 
 /** The marketplace the requested plugins are enabled from. */
 export interface ActivationMarketplace {
-  readonly name: string;
   /** Root of a user-scope marketplace's built tree, mirroring `CacheBuiltMarketplace`'s
    * own `userCacheRoot`: the version a drift is decided against comes from `builtDir` itself,
    * already built before this runs, never from a path recomputed without one. */
@@ -51,7 +51,7 @@ export interface ActivateNativeToolsDeps {
   readonly buildMarketplace: Pick<BuildMarketplaceForTool, "execute">;
   readonly logger: Logger;
   readonly marketplace: ActivationMarketplace;
-  readonly records: RefRules;
+  readonly planRefs: Pick<PlanRefsToEnable, "execute">;
 }
 
 export class ActivateNativeTools {
@@ -92,13 +92,14 @@ export class ActivateNativeTools {
       claims: claims(toolId),
       build: this.builtFor(toolId, projectRoot),
       refsToEnable: (hostNameByAlias) =>
-        this.refsToEnableOn({
-          toolId,
-          manifest,
-          records,
-          marketplaces,
-          hostNameByAlias,
+        this.deps.planRefs.execute({
           scope,
+          recordedPlugins: manifest
+            .getRecordedPlugins(toolId)
+            .map(({ plugin, marketplace }) => ({ pluginName: plugin.name, marketplace })),
+          marketplaceAliases: marketplaces.map((m) => m.name),
+          hostNameByAlias,
+          nativeRecord: records.get(toolId),
           enablePlugins,
         }),
       userCacheRoot: this.deps.marketplace.userCacheRoot,
@@ -127,46 +128,5 @@ export class ActivateNativeTools {
   /** Each catalogue's tree, built for one tool the moment its registration asks for it. */
   private builtFor(toolId: ToolId, projectRoot: string): BuiltCatalogs<SyncedMarketplaces[number]> {
     return (marketplace) => this.deps.buildMarketplace.execute(toolId, marketplace, projectRoot);
-  }
-
-  /** The refs this run enables: the manifest's own, plus the framework plugins a caller asked
-   * for, which only the framework marketplace can resolve. */
-  private refsToEnableOn(run: PluginRefsRun & { enablePlugins: readonly string[] }): string[] {
-    const { hostNameByAlias, enablePlugins } = run;
-    const frameworkHost = hostNameByAlias.get(this.deps.marketplace.name);
-    const requested =
-      frameworkHost === undefined
-        ? []
-        : enablePlugins.map((name) => this.deps.records.refOnHostName(name, frameworkHost));
-    return [...new Set([...this.pluginRefsToEnable(run), ...requested])];
-  }
-
-  /** Keyed by `hostName`, not `plugin.marketplace` (aidd's own alias): the host resolves the
-   * marketplace half of a ref against its own registry, which knows this catalog only by the
-   * name it declares itself. */
-  private pluginRefsToEnable(run: PluginRefsRun): string[] {
-    return [...this.declaredRefs(run), ...this.nativeRefs(run)];
-  }
-
-  private declaredRefs(run: PluginRefsRun): string[] {
-    const { toolId, manifest, marketplaces, hostNameByAlias } = run;
-    const known = new Set(marketplaces.map((m) => m.name));
-    return manifest.getRecordedPlugins(toolId).flatMap(({ plugin, marketplace }) => {
-      const alias = marketplace == null ? undefined : marketplace;
-      const hostName =
-        alias !== undefined && known.has(alias) ? hostNameByAlias.get(alias) : undefined;
-      return hostName === undefined ? [] : [this.deps.records.refOnHostName(plugin.name, hostName)];
-    });
-  }
-
-  // Native-only global installs record successful activations, not copied plugin files.
-  // Claims also recover a selection an older sync dropped from its projection.
-  private nativeRefs(run: PluginRefsRun): string[] {
-    if (run.scope !== "user") return [];
-    const native = run.records.get(run.toolId);
-    if (native === undefined) return [];
-    return this.deps.records.refsOnHosts(native, this.deps.records.claimedRefs(native), [
-      ...run.hostNameByAlias.values(),
-    ]);
   }
 }

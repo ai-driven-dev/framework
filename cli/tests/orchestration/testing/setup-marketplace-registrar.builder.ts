@@ -4,6 +4,7 @@ import type { RegisterFrameworkMarketplace } from "../../../src/contexts/distrib
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import type { RepositoryVisibility } from "../../../src/contexts/distribution/ports/repository-visibility.js";
 import { RecordSourceReference } from "../../../src/contexts/machine-claims/application/shared-source/record-source-reference.use-case.js";
+import { ResolveReferenceRoot } from "../../../src/contexts/machine-claims/application/shared-source/resolve-reference-root.use-case.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
 import type { RefreshMarketplaces } from "../../../src/orchestration/marketplace/refresh-marketplaces.use-case.js";
 import { RegisterMarketplace } from "../../../src/orchestration/marketplace/register-marketplace.use-case.js";
@@ -30,7 +31,7 @@ export function setupMarketplaceRegistrar(
   const registration = new RegisterMarketplace({
     ensure: new EnsureFrameworkMarketplace(register, tokenProvider, releaseResolver),
     recordReference: new RecordSourceReference({
-      fs,
+      resolveReferenceRoot: new ResolveReferenceRoot(fs),
       currentVersion,
       logger,
       frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,

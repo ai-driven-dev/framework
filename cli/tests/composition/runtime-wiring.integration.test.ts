@@ -8,6 +8,7 @@ import {
   debugOnly,
   wireInstallation,
 } from "../../src/composition/installation.js";
+import { userScopeFileGuard } from "../../src/composition/machine-claims.js";
 import { hostBinaryAvailableIn } from "../../src/composition/orchestration/doctor.js";
 import { userScopeSyncOf } from "../../src/composition/orchestration/global.js";
 import {
@@ -20,7 +21,6 @@ import {
 import {
   pluginCacheDir,
   purgeCandidateResolverOf,
-  userScopeFileGuard,
   withinUserScope,
 } from "../../src/composition/orchestration/plugin.js";
 import { wireBase } from "../../src/composition/shared.js";

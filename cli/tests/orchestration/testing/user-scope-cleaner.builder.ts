@@ -1,4 +1,5 @@
 import { registrationRecordRules } from "../../../src/composition/installation.js";
+import { userScopeFilesSafeToDelete } from "../../../src/composition/machine-claims.js";
 import { wireCleanClaims } from "../../../src/composition/orchestration/clean-claims.js";
 import { RemoveMarketplace } from "../../../src/contexts/distribution/application/remove/remove-marketplace.use-case.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
@@ -6,12 +7,12 @@ import type { MarketplaceRegistry } from "../../../src/contexts/distribution/por
 import { WithdrawFromHost } from "../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import type { HostPorts } from "../../../src/contexts/host-registration/ports/host-ports.js";
 import { InspectUserScopeFiles } from "../../../src/contexts/installation/application/clean/inspect-user-scope-files.use-case.js";
-import { ProveUserScopeWithdrawals } from "../../../src/contexts/installation/application/clean/prove-user-scope-withdrawals.js";
+import { ProveUserScopeWithdrawals } from "../../../src/contexts/installation/application/clean/prove-user-scope-withdrawals.use-case.js";
 import {
   PurgeUserScopeFiles,
   type PurgeUserScopeFilesDeps,
 } from "../../../src/contexts/installation/application/clean/purge-user-scope-files.js";
-import { PurgeUserScopeMachine } from "../../../src/contexts/installation/application/clean/purge-user-scope-machine.js";
+import { PurgeUserScopeMachine } from "../../../src/contexts/installation/application/clean/purge-user-scope-machine.use-case.js";
 import type { MachineStateGuards } from "../../../src/contexts/installation/application/removal/purge-machine-state.js";
 import {
   PurgeMachineState,
@@ -19,7 +20,6 @@ import {
 } from "../../../src/contexts/installation/application/removal/purge-machine-state.js";
 import { UserScopePluginFiles } from "../../../src/contexts/installation/application/removal/user-scope-plugin-files.js";
 import type { RecordsBesideManifest } from "../../../src/contexts/installation/ports/record/registration-records.js";
-import { userScopeFilesSafeToDelete } from "../../../src/contexts/machine-claims/application/ownership/user-scope-plugin-files.js";
 import { ResolvePurgeCandidate } from "../../../src/contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";

@@ -100,5 +100,13 @@ export function wireDoctor(base: Base, inst: Installation) {
     execute: (projectRoot: string, pluginName?: string) =>
       doctorAll(doctorUseCase, projectRoot, pluginName),
   };
-  return { doctorUseCase, runUserScopeDoctor, doctorAllUseCase };
+  const userSettingsFileOf = (toolId: string): string | undefined => {
+    const profile = tools.profile(toolId);
+    return profile.kind === "ai"
+      ? profile
+          .nativeActivation()
+          ?.userSettingsFile(base.homedir(), (name) => base.environment.get(name))
+      : undefined;
+  };
+  return { doctorUseCase, runUserScopeDoctor, doctorAllUseCase, userSettingsFileOf };
 }

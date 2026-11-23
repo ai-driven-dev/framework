@@ -3,16 +3,13 @@ import type { AiToolId } from "../../../shared/domain/tool.js";
 import { RegistrationRefusedError } from "../domain/host-registration.error.js";
 import { isRefOnHost } from "../domain/record/host-ref.js";
 import { readRegistrationRecord } from "../domain/record/registration-record.js";
+import { judgeCatalogueWithdrawal } from "../domain/source-proof.js";
 import type { HostActions } from "../ports/host-actions.js";
 import type { HostPluginRegistry } from "../ports/host-plugin-registry.js";
 import type { HostPorts } from "../ports/host-ports.js";
 import type { HostedTool } from "../ports/host-tool.js";
-import {
-  assertNoForeignNativeRefs,
-  inspectHostSource,
-  judgeCatalogueWithdrawal,
-} from "./native-marketplace-source-proof.js";
 import { reachableActivator } from "./reachable-activator.js";
+import { assertNoForeignNativeRefs, inspectHostSource } from "./read-host.js";
 import type {
   ProveMarketplaceRemovalRequest,
   ProvenMarketplaceRemoval,

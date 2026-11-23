@@ -21,7 +21,6 @@ export interface DoctorHarness {
   readonly statusScoped: Mock;
   readonly doctorRegistration: Mock;
   readonly loadUserManifest: Mock;
-  readonly homedir: Mock;
   readonly createDeps: Mock;
   readonly written: string[];
   readonly errors: string[];
@@ -37,7 +36,6 @@ export function doctorHarness(catalog: ToolCatalog = syntheticMixedCatalog()): D
   const statusScoped: Mock = vi.fn();
   const doctorRegistration: Mock = vi.fn();
   const loadUserManifest: Mock = vi.fn();
-  const homedir: Mock = vi.fn(() => "/home/dev");
   const createDeps: Mock = vi.fn(async () => ({
     doctorAllUseCase: { execute: doctorAll },
     statusAllUseCase: { execute: statusAll },
@@ -47,7 +45,12 @@ export function doctorHarness(catalog: ToolCatalog = syntheticMixedCatalog()): D
       new ReadMachineInstallation(manifestRepositoryLoading(loadUserManifest)),
       { execute: doctorRegistration }
     ),
-    homedir,
+    userSettingsFileOf: (toolId: string) => {
+      const profile = catalog.profile(toolId);
+      return profile.kind === "ai"
+        ? profile.nativeActivation()?.userSettingsFile("/home/dev", () => undefined)
+        : undefined;
+    },
     environment: { get: () => undefined, set: () => undefined },
   }));
   const written: string[] = [];
@@ -65,7 +68,6 @@ export function doctorHarness(catalog: ToolCatalog = syntheticMixedCatalog()): D
       errors.push(String(chunk));
       return true;
     });
-    homedir.mockReturnValue("/home/dev");
     doctorAll.mockResolvedValue({
       errors: [],
       ai: HEALTHY_SCOPE,
@@ -109,7 +111,6 @@ export function doctorHarness(catalog: ToolCatalog = syntheticMixedCatalog()): D
     statusScoped,
     doctorRegistration,
     loadUserManifest,
-    homedir,
     createDeps,
     written,
     errors,

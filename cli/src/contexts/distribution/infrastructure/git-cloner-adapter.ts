@@ -1,7 +1,7 @@
 import { simpleGit } from "simple-git";
 import { errorMessage } from "../../../shared/domain/describe-error.js";
 import { PluginFetchError } from "../domain/distribution.error.js";
-import { withoutCredentials } from "./inject-token.js";
+import { withoutCredentials } from "../domain/inject-token.model.js";
 
 const AUTH_ERROR_PATTERN =
   /Authentication failed|403|could not read Username|Permission denied \(publickey\)|Repository not found/i;

@@ -4,7 +4,7 @@ import {
   userBuiltCacheRoot,
   userBuiltMarketplaceDir,
 } from "../../../../src/shared/domain/layout/aidd-layout.js";
-import { pathContainsOrEquals } from "../../../../src/shared/domain/paths.js";
+import { pathContainsOrEquals } from "../../../../src/shared/domain/paths.model.js";
 
 // The shared source is one per CLI version, so a purge of one version is a single `rm -rf`:
 // two versions resolving to the same directory would take the other's registrations too.

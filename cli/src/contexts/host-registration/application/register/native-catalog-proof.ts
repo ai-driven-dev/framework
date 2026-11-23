@@ -4,7 +4,7 @@ import type {
   NativeMarketplaceSource,
 } from "../../domain/record/native-marketplace-source.js";
 import { pluginRefsOf, recordedMarketplaces } from "../../domain/record/registration-record.js";
-import { inspectHostSource } from "../native-marketplace-source-proof.js";
+import { inspectHostSource } from "../read-host.js";
 import { type RegistrationRun, warnRegistration } from "./registration-run.js";
 
 export interface NativeCatalogProof {

@@ -185,7 +185,7 @@ describe("the guard itself", () => {
 
   it("reports a file no scope and no exclusion names, and clears one a scope covers", () => {
     const declared = { scopes, excluded: { "src/cli.ts": "the entry point" } };
-    expect(isCovered("src/shared/domain/paths.ts", declared)).toBe(true);
+    expect(isCovered("src/shared/domain/paths.model.ts", declared)).toBe(true);
     expect(isCovered("src/cli.ts", declared)).toBe(true);
     expect(isCovered("src/contexts/installation/domain/manifest.ts", declared)).toBe(false);
   });

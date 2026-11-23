@@ -63,7 +63,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
         projectRoot: PROJECT_ROOT,
         scope: "user",
       })
-    ).rejects.toThrow(/edited.*SKILL.md|SKILL.md.*edited/);
+    ).rejects.toMatchObject({ code: "edited-after-install" });
     expect(deps.fs.getFile(path)).toBe("# User edited skill\n");
     expect(deps.userManifestRepo.saveCount).toBe(savesBefore);
     expect(deps.userManifestRepo.getCurrent()?.getRecordedPlugins(cursor)[0].plugin.files).toEqual(

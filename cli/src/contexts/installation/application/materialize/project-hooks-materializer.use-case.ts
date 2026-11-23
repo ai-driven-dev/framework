@@ -8,16 +8,14 @@ import { whenAbsent } from "../../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.js";
+import { recordedProjectHookEntries } from "../../domain/project-hooks.model.js";
 import type { PluginTranslationResult } from "../../ports/plugin/plugin-translation.js";
 import type { ProjectHooksSection } from "../../ports/tool-sections.js";
-import {
-  assertProjectHooksUnchanged,
-  type ProjectHooksGuard,
-} from "../shared/assert-project-hooks-unchanged.js";
-import {
-  recordedProjectHookEntries,
-  removeRecordedProjectHooks,
-} from "../shared/remove-project-hooks.use-case.js";
+import type {
+  AssertProjectHooksUnchanged,
+  ProjectHooksGuard,
+} from "../shared/assert-project-hooks-unchanged.use-case.js";
+import type { RemoveRecordedProjectHooks } from "../shared/remove-recorded-project-hooks.use-case.js";
 
 import {
   assertScriptsNotUserOwned,
@@ -48,7 +46,11 @@ export interface ProjectHooksMaterializerResult {
  * decided by its own declaration, never by which translator happened to run.
  */
 export class ProjectHooksMaterializer {
-  constructor(private readonly fs: FileWriter & FileReader) {}
+  constructor(
+    private readonly fs: FileWriter & FileReader,
+    private readonly unchanged: Pick<AssertProjectHooksUnchanged, "execute">,
+    private readonly removeRecorded: Pick<RemoveRecordedProjectHooks, "execute">
+  ) {}
 
   async execute({
     dist,
@@ -64,8 +66,7 @@ export class ProjectHooksMaterializer {
       await this.detachPrevious({ dist, tool, projectRoot, previous, guard });
       return { skipped: [] };
     }
-    await assertProjectHooksUnchanged({
-      fs: this.fs,
+    await this.unchanged.execute({
       pluginName: dist.manifest.name,
       provenance: previous,
       tool,
@@ -97,8 +98,7 @@ export class ProjectHooksMaterializer {
   ): Promise<void> {
     const { dist, tool, projectRoot, previous, guard } = request;
     if (previous === undefined) return;
-    await removeRecordedProjectHooks({
-      fs: this.fs,
+    await this.removeRecorded.execute({
       pluginName: dist.manifest.name,
       provenance: previous,
       tool,

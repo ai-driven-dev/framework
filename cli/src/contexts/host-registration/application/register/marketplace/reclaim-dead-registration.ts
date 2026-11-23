@@ -1,4 +1,4 @@
-import { samePathSegment } from "../../../../../shared/domain/paths.js";
+import { samePathSegment } from "../../../../../shared/domain/paths.model.js";
 import { bestEffortNativeCall, skippedWarning } from "../../../domain/confirmation.js";
 import type { NativeRefusal } from "../../../domain/native-refusal.js";
 import { judgeRegistration } from "../../../domain/policy/registration-policy.js";

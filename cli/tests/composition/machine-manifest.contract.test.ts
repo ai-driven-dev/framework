@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import { detachUserPlugin } from "../../src/contexts/machine-claims/application/ownership/user-plugin-ownership.js";
+import { DetachUserPlugin } from "../../src/contexts/machine-claims/application/ownership/detach-user-plugin.use-case.js";
 import type {
   MachineManifest,
   MachineUserPlugin,
@@ -95,9 +95,7 @@ describe.each([fake, real])("the machine-wide record, as $name answers it", (kin
       saveRecords: async () => undefined,
     });
 
-    await detachUserPlugin({
-      repo,
-      fs: new InMemoryFileAdapter({}, ["/A", "/B", "/C"]),
+    await new DetachUserPlugin(repo, new InMemoryFileAdapter({}, ["/A", "/B", "/C"])).execute({
       toolId: cursor,
       name: "sample-plugin",
       projectRoot: "/A",

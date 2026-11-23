@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { RemoveProjectPlugin } from "../../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { InMemoryManifestRepository } from "../../../shared/testing/in-memory-manifest-repository.fake.js";
+import { removeProjectPluginOf } from "../../../shared/testing/remove-project-plugin.builder.js";
 import { ScriptedPrompter } from "../../../shared/testing/scripted-prompter.fake.js";
 import {
   SYNTHETIC_TOOL,
@@ -81,7 +81,7 @@ describe("which plugins a removal orphans: the cleanup it offers", () => {
     const prompter = new ConfirmRecordingPrompter([ScriptedPrompter.answer.confirm(false)]);
     const useCase = projectMarketplaceRemover(
       syntheticCatalog(),
-      new RemoveProjectPlugin(fs, () => "/home/dev"),
+      removeProjectPluginOf(fs),
       manifestRepo,
       registry,
       prompter
@@ -112,7 +112,7 @@ describe("which plugins a removal orphans: the cleanup it offers", () => {
     const prompter = new ConfirmRecordingPrompter([ScriptedPrompter.answer.confirm(true)]);
     const useCase = projectMarketplaceRemover(
       syntheticCatalog(),
-      new RemoveProjectPlugin(fs, () => "/home/dev"),
+      removeProjectPluginOf(fs),
       manifestRepo,
       registry,
       prompter
@@ -142,7 +142,7 @@ describe("which plugins a removal orphans: the cleanup it offers", () => {
     const prompter = new ConfirmRecordingPrompter([ScriptedPrompter.answer.confirm(true)]);
     const useCase = projectMarketplaceRemover(
       syntheticCatalog(),
-      new RemoveProjectPlugin(fs, () => "/home/dev"),
+      removeProjectPluginOf(fs),
       manifestRepo,
       registry,
       prompter
@@ -164,7 +164,7 @@ describe("which plugins a removal orphans: the cleanup it offers", () => {
     const prompter = new ConfirmRecordingPrompter([ScriptedPrompter.answer.confirm(false)]);
     const useCase = projectMarketplaceRemover(
       syntheticCatalog(),
-      new RemoveProjectPlugin(fs, () => "/home/dev"),
+      removeProjectPluginOf(fs),
       manifestRepo,
       registry,
       prompter

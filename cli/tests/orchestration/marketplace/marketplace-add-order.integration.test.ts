@@ -8,9 +8,7 @@ import { ResolveMarketplace } from "../../../src/contexts/distribution/applicati
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
-import { RemoveProjectPlugin } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { removalClaims } from "../../../src/contexts/machine-claims/application/removal/removal-claims.js";
 import { AddMarketplace } from "../../../src/orchestration/marketplace/add-marketplace.use-case.js";
 import { RemoveRegisteredMarketplace } from "../../../src/orchestration/marketplace/remove/remove-registered-marketplace.use-case.js";
 import { TrustDeniedError } from "../../../src/orchestration/orchestration.error.js";
@@ -20,12 +18,14 @@ import {
   InvalidMarketplaceNameError,
   InvalidPluginManifestError,
 } from "../../../src/shared/domain/shared.error.js";
+import { removalClaimsOf } from "../../contexts/machine-claims/testing/claims-release.builder.js";
 import { FixturePluginFetcher } from "../../shared/testing/fixture-plugin-fetcher.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { InMemoryMarketplaceTrustStore } from "../../shared/testing/in-memory-marketplace-trust-store.fake.js";
 import { unusedRawCatalog } from "../../shared/testing/raw-catalog.fake.js";
+import { removeProjectPluginOf } from "../../shared/testing/remove-project-plugin.builder.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
 import { seedFromDirectory } from "../../shared/testing/seed-from-directory.builder.js";
 import { syntheticCatalog } from "../../shared/testing/synthetic-tool-id.builder.js";
@@ -86,7 +86,7 @@ async function marketplaceAdd(makePrompter: (events: string[]) => Prompter) {
   const manifestRepo = new InMemoryManifestRepository(Manifest.create());
   const remove = projectMarketplaceRemover(
     syntheticCatalog(),
-    new RemoveProjectPlugin(fs, () => "/home/dev", removalClaims(manifestRepo, fs)),
+    removeProjectPluginOf(fs, removalClaimsOf(manifestRepo, fs)),
     manifestRepo,
     registry,
     prompter

@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { projectIntegrationOf } from "../../../../../src/composition/installation.js";
 import { AssertProjectRemovable } from "../../../../../src/contexts/installation/application/clean/assert-project-removable.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
@@ -17,7 +18,7 @@ const ROOT = "/test-project";
 function cleanOver(manifest: Manifest | null, fs: InMemoryFileAdapter): AssertProjectRemovable {
   return new AssertProjectRemovable(
     {
-      fs,
+      assertHooksRemovable: projectIntegrationOf(fs).assertHooksRemovable,
       manifestRepo: new InMemoryManifestRepository(manifest, ROOT),
       assertMcpRemovable: async () => undefined,
     },

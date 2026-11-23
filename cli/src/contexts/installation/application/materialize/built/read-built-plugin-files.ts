@@ -1,7 +1,7 @@
 import { join, posix } from "node:path";
 import { FileHash } from "../../../../../shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../shared/domain/installation-file.js";
-import { posixRelative } from "../../../../../shared/domain/paths.js";
+import { posixRelative } from "../../../../../shared/domain/paths.model.js";
 import type { FileReader } from "../../../../../shared/ports/file-reader.js";
 // biome-ignore lint/plugin: hands the profile to the built-tree ownership check; it narrows when installation declares its own profile input
 import type { AiToolProfile } from "../../../../tools/contract/tool-profile.js";

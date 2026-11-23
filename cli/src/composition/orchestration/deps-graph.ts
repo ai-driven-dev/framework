@@ -1,4 +1,3 @@
-import { homedir } from "node:os";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { Deps, FactoryOptions } from "../../orchestration/deps.js";
 import type { Output } from "../../orchestration/domain/output.js";
@@ -26,7 +25,7 @@ type OwnerOf<Member> = {
 }[ContextName];
 
 /** The members of the graph read straight off the context that wires them. */
-type Passthrough = Exclude<keyof Graph, "homedir" | "telemetry" | "frameworkBuild">;
+type Passthrough = Exclude<keyof Graph, "telemetry" | "frameworkBuild">;
 
 /** The context that wires each member. A member its context does not carry fails to compile. */
 const OWNER: { [Member in Passthrough]: OwnerOf<Member> } = {
@@ -38,6 +37,7 @@ const OWNER: { [Member in Passthrough]: OwnerOf<Member> } = {
   doctorAllUseCase: "doctor",
   doctorUseCase: "doctor",
   runUserScopeDoctor: "doctor",
+  userSettingsFileOf: "doctor",
   installAiToolUseCase: "global",
   installIdeToolUseCase: "global",
   runSync: "global",
@@ -94,7 +94,6 @@ function graphOf(container: Container, tools: ToolCatalog): Graph {
   ]);
   return Object.defineProperties(Object.create(Object.prototype), {
     ...Object.fromEntries(passthrough),
-    homedir: lazy(() => homedir),
     telemetry: lazy(() => container.telemetry),
     frameworkBuild: lazy(() => frameworkBuildOf(container, tools)),
   });

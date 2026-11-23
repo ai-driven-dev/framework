@@ -2,6 +2,7 @@ import type * as auth from "../../contexts/auth/domain/auth.error.js";
 import type * as distribution from "../../contexts/distribution/domain/distribution.error.js";
 import type * as hostRegistration from "../../contexts/host-registration/domain/host-registration.error.js";
 import type * as installation from "../../contexts/installation/domain/installation.error.js";
+import type * as machineClaims from "../../contexts/machine-claims/domain/machine-claims.error.js";
 import type * as telemetry from "../../contexts/telemetry/domain/telemetry.error.js";
 import type * as tools from "../../contexts/tools/domain/tools.error.js";
 import type * as translate from "../../contexts/translate/domain/translate.error.js";
@@ -9,6 +10,7 @@ import type * as update from "../../contexts/update/domain/update.error.js";
 import type * as orchestration from "../../orchestration/orchestration.error.js";
 import type * as shared from "../../shared/domain/shared.error.js";
 import type { AiddError } from "../../shared/domain/shared.error.js";
+import type * as presentation from "../presentation.error.js";
 
 /** The words of a nested cause, so a message can name what failed beneath it. */
 export type CauseWords = (cause: unknown) => string;
@@ -34,9 +36,12 @@ export type SharedOwners =
 export type InstallationOwners =
   | InstanceType<Classes<typeof installation>>
   | InstanceType<Classes<typeof hostRegistration>>
+  | InstanceType<Classes<typeof machineClaims>>
   | InstanceType<Classes<typeof orchestration>>;
 
 export type CatalogOwners =
   | InstanceType<Classes<typeof distribution>>
   | InstanceType<Classes<typeof translate>>
   | InstanceType<Classes<typeof tools>>;
+
+export type PresentationOwners = InstanceType<Classes<typeof presentation>>;
