@@ -1,17 +1,14 @@
-import { join } from "node:path";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
-import { PLUGIN_CACHE_SUBDIR } from "../../domain/project-layout.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type {
   PlannedUserPluginFileUpdate,
   UserPluginMaterialization,
 } from "../../ports/plugin/user-plugin-materialization.js";
-import { requireManifest } from "../shared/require-manifest.js";
 import { resolvePluginToolIds, userPluginTargets } from "./plugin-target-resolution.js";
 import { assertSelectionResolves, nativeTargets, refreshNativeRefs } from "./update-native-refs.js";
 import type {
@@ -21,15 +18,10 @@ import type {
 } from "./update-plugin-command.js";
 import type { UpdateProjectPlugins } from "./update-project-plugins.use-case.js";
 
-/** The project's manifest, and the machine's, which guards the lock. */
-export interface UpdatePluginManifests {
-  readonly project: ManifestRepository;
-  readonly user: ManifestRepository & Lock;
-}
-
 /** What UpdatePlugin is built from. The tool catalog is the constructor's own second argument. */
 export interface UpdatePluginDeps {
-  readonly manifests: UpdatePluginManifests;
+  /** The machine's manifest, which guards the lock. */
+  readonly userManifest: ManifestRepository & Lock;
   readonly updateProject: Pick<UpdateProjectPlugins, "execute">;
   readonly materializer: Pick<UserPluginMaterialization, "planUpdate" | "applyUpdate">;
   readonly logger: Logger;
@@ -47,33 +39,15 @@ export class UpdatePlugin {
   async execute({ machine, ...command }: UpdatePluginCommand): Promise<string[]> {
     if (machine !== undefined) {
       const run = () => this.updateMachine({ ...command, ...machine });
-      return this.deps.manifests.user.withExclusiveAccess(run);
+      return this.deps.userManifest.withExclusiveAccess(run);
     }
     if (command.scope === "user")
       throw new Error("A user-scope plugin update needs the machine's update context.");
-    return this.updateProject(command);
-  }
-
-  private async updateProject(options: UpdatePluginRequest): Promise<string[]> {
-    const { pluginNames, toolIds, projectRoot } = options;
-    const manifest = await requireManifest(this.deps.manifests.project);
-    const update = {
-      projectRoot,
-      cacheDir: join(projectRoot, PLUGIN_CACHE_SUBDIR),
-      manifest,
-      rebuild: options.rebuild === true,
-    };
-    const updated: string[] = [];
-    for (const toolId of resolvePluginToolIds(toolIds, manifest, this.tools)) {
-      const tool = this.tools.aiProfile(toolId);
-      updated.push(...(await this.deps.updateProject.execute(tool, pluginNames, update)));
-    }
-    await this.deps.manifests.project.save(manifest);
-    return updated;
+    return this.deps.updateProject.execute(command);
   }
 
   private async updateMachine(options: MachineCommand): Promise<string[]> {
-    const repo = this.deps.manifests.user;
+    const repo = this.deps.userManifest;
     const loaded = await repo.load();
     if (loaded === null)
       throw new Error(

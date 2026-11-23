@@ -1,11 +1,18 @@
+import { join } from "node:path";
 import { compareSemver } from "../../../../shared/domain/plugin/semver.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { InvalidPluginScopeError } from "../../domain/installation.error.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
+import { PLUGIN_CACHE_SUBDIR } from "../../domain/project-layout.js";
+import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { LoadDistribution } from "../../ports/plugin/load-plugin-distribution.js";
 import type { RuntimeConfigSection } from "../../ports/tool-sections.js";
 import type { EnsurePluginRuntimeFiles } from "../install/config/ensure-plugin-runtime-files.use-case.js";
 import type { ReplacePluginFiles } from "../materialize/replace-plugin-files.use-case.js";
+import { requireManifest } from "../shared/require-manifest.js";
+import { resolvePluginToolIds } from "./plugin-target-resolution.js";
+import type { UpdatePluginRequest } from "./update-plugin-command.js";
 
 /** Where one tool's project plugins are updated, and the manifest recording them. */
 export interface ProjectPluginUpdate {
@@ -17,16 +24,39 @@ export interface ProjectPluginUpdate {
 
 /** What UpdateProjectPlugins is built from. */
 export interface UpdateProjectPluginsDeps {
+  readonly manifestRepo: ManifestRepository;
   readonly loadDistribution: LoadDistribution;
   readonly replacePluginFiles: Pick<ReplacePluginFiles, "execute">;
   readonly pluginRuntime?: Pick<EnsurePluginRuntimeFiles, "execute">;
 }
 
-/** Brings one tool's project-scope plugins to their latest version and names the ones it changed. */
+/** Brings the project-scope plugins of each tool asked for to their latest version, records
+ * them in the project's manifest, and names the ones it changed. */
 export class UpdateProjectPlugins {
-  constructor(private readonly deps: UpdateProjectPluginsDeps) {}
+  constructor(
+    private readonly deps: UpdateProjectPluginsDeps,
+    private readonly tools: ToolCatalog
+  ) {}
 
-  async execute(
+  async execute(request: UpdatePluginRequest): Promise<string[]> {
+    const { pluginNames, toolIds, projectRoot } = request;
+    const manifest = await requireManifest(this.deps.manifestRepo);
+    const update = {
+      projectRoot,
+      cacheDir: join(projectRoot, PLUGIN_CACHE_SUBDIR),
+      manifest,
+      rebuild: request.rebuild === true,
+    };
+    const updated: string[] = [];
+    for (const toolId of resolvePluginToolIds(toolIds, manifest, this.tools)) {
+      const tool = this.tools.aiProfile(toolId);
+      updated.push(...(await this.updateTool(tool, pluginNames, update)));
+    }
+    await this.deps.manifestRepo.save(manifest);
+    return updated;
+  }
+
+  private async updateTool(
     tool: RuntimeConfigSection,
     pluginNames: readonly string[] | undefined,
     update: ProjectPluginUpdate

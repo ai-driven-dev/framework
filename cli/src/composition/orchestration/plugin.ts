@@ -159,22 +159,31 @@ function machinePluginMaterializer(base: Base, inst: Installation) {
   });
 }
 
+/** Updating the plugins of a project, recorded in its manifest. */
+function projectPluginUpdateOf(base: Base, inst: Installation) {
+  const { tools, fs } = base;
+  return new UpdateProjectPlugins(
+    {
+      manifestRepo: base.manifestRepo,
+      loadDistribution: base.loadDistribution,
+      replacePluginFiles: new ReplacePluginFiles(
+        { fs, ...builtPlacementOf(fs, inst.builtMaterializationDeps) },
+        tools
+      ),
+      pluginRuntime: new EnsurePluginRuntimeFiles({ fs, assets: inst.assetProvider }),
+    },
+    tools
+  );
+}
+
 /** Updating a plugin in a project or on the machine. */
 function wirePluginUpdate(base: Base, inst: Installation) {
-  const { tools, fs, logger, manifestRepo, userManifestRepo } = base;
-  const { builtMaterializationDeps } = inst;
+  const { tools, logger, userManifestRepo } = base;
   const pluginMaterializer = machinePluginMaterializer(base, inst);
   const pluginUpdateUseCase = new UpdatePlugin(
     {
-      manifests: { project: manifestRepo, user: userManifestRepo },
-      updateProject: new UpdateProjectPlugins({
-        loadDistribution: base.loadDistribution,
-        replacePluginFiles: new ReplacePluginFiles(
-          { fs, ...builtPlacementOf(fs, builtMaterializationDeps) },
-          tools
-        ),
-        pluginRuntime: new EnsurePluginRuntimeFiles({ fs, assets: inst.assetProvider }),
-      }),
+      userManifest: userManifestRepo,
+      updateProject: projectPluginUpdateOf(base, inst),
       materializer: pluginMaterializer,
       logger,
     },
