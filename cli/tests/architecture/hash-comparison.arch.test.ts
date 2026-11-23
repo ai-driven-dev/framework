@@ -5,7 +5,9 @@
  * named for a hash (`file.hash.value`, `onDiskHash.value`, `readFileHash(path).value`).
  *
  * Written limit: a hash held in a variable is seen only when its name says so, and a comparison
- * through `FileHash.equals` is a method call, not read here.
+ * through `FileHash.equals` is a method call, not read here. The second accepted exception is
+ * `typed-mcp-merge.ts`'s `stripPreviousEntries`: it compares the digest of one entry of a merged
+ * file with `FileHash.equals`, and `driftOf` lives in `installation`, which `tools` does not import.
  */
 import {
   isBinaryExpression,

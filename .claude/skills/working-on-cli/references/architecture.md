@@ -24,7 +24,7 @@ Dependency graph, edges and decisions: [architecture.md](../../../../aidd_docs/m
 | `application/` | use cases, and an implementation of a contract port that is not a command | `infrastructure/` |
 | `infrastructure/` | adapters of `ports/`, every piece of I/O | `shared/infrastructure/` |
 
-- A folder's file count is capped by `folder-size.arch.test.ts`: split by concept, never add to its exception list.
+- A folder of `src/` holds at most 10 files, by `folder-size.arch.test.ts`: split by concept. `tests/` is outside the cap.
 - The domain (`model` and `profile` kinds) holds no clock, no logging and no module-level memo; `tests/architecture/kind-text-rules.arch.test.ts` enforces it. Take time from the clock port, return a fact instead of logging, keep a cache in application or infrastructure.
 - A port is declared by the side that needs it and named by capability. It declares no optional method and none nobody calls: `ports` rule of `kinds.rules.arch.test.ts`.
 - An adapter implements one port, is named `*Adapter`, lives in its owner's `infrastructure/`, and does I/O and format translation only.
