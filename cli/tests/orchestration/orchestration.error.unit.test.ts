@@ -2,17 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   AmbiguousPluginMatchError,
   InteractiveOnlyError,
-  InvalidPluginModeConfigError,
-  InvalidSetupToolIdError,
   NoMarketplacesRegisteredError,
   SyncFailedError,
   TrustDeniedError,
   UserScopeFilterUnsupportedError,
-  UserScopeIdeToolsError,
-  UserScopeNoToolsError,
-  UserScopePluginModeError,
   UserScopeUnavailableError,
-  UserScopeUnsupportedAiToolsError,
 } from "../../src/orchestration/orchestration.error.js";
 
 describe("when several marketplaces match a plugin", () => {
@@ -53,44 +47,6 @@ describe("when a command needs a terminal", () => {
   });
 });
 
-describe("when the plugin mode config is invalid", () => {
-  it("carries its data and says nothing itself", () => {
-    const error = new InvalidPluginModeConfigError("bad mode");
-    expect({ name: error.name, detail: error.detail, message: error.message }).toStrictEqual({
-      name: "InvalidPluginModeConfigError",
-      detail: "bad mode",
-      message: "",
-    });
-  });
-
-  it("carries its stable code", () => {
-    expect(new InvalidPluginModeConfigError("bad mode").code).toBe("invalid-plugin-mode-config");
-  });
-});
-
-describe("when a setup tool id is invalid", () => {
-  it("carries its data and says nothing itself", () => {
-    const error = new InvalidSetupToolIdError("zed", ["claude", "cursor"]);
-    expect({
-      name: error.name,
-      id: error.id,
-      validIds: error.validIds,
-      message: error.message,
-    }).toStrictEqual({
-      name: "InvalidSetupToolIdError",
-      id: "zed",
-      validIds: ["claude", "cursor"],
-      message: "",
-    });
-  });
-
-  it("carries its stable code", () => {
-    expect(new InvalidSetupToolIdError("zed", ["claude", "cursor"]).code).toBe(
-      "invalid-setup-tool-id"
-    );
-  });
-});
-
 describe("when no marketplace is registered", () => {
   it("says nothing itself", () => {
     const error = new NoMarketplacesRegisteredError();
@@ -124,49 +80,6 @@ describe("when trust is denied", () => {
   });
 });
 
-describe("when an IDE tool is asked at user scope", () => {
-  it("carries its data and says nothing itself", () => {
-    const error = new UserScopeIdeToolsError(["vscode", "zed"]);
-    expect({ name: error.name, ideTools: error.ideTools, message: error.message }).toStrictEqual({
-      name: "UserScopeIdeToolsError",
-      ideTools: ["vscode", "zed"],
-      message: "",
-    });
-  });
-
-  it("carries its stable code", () => {
-    expect(new UserScopeIdeToolsError(["vscode", "zed"]).code).toBe("user-scope-ide-tools");
-  });
-});
-
-describe("when a user-scope run names no tool", () => {
-  it("says nothing itself", () => {
-    const error = new UserScopeNoToolsError();
-    expect({ name: error.name, message: error.message }).toStrictEqual({
-      name: "UserScopeNoToolsError",
-      message: "",
-    });
-  });
-
-  it("carries its stable code", () => {
-    expect(new UserScopeNoToolsError().code).toBe("user-scope-no-tools");
-  });
-});
-
-describe("when a user-scope run has a bad plugin mode", () => {
-  it("says nothing itself", () => {
-    const error = new UserScopePluginModeError();
-    expect({ name: error.name, message: error.message }).toStrictEqual({
-      name: "UserScopePluginModeError",
-      message: "",
-    });
-  });
-
-  it("carries its stable code", () => {
-    expect(new UserScopePluginModeError().code).toBe("user-scope-plugin-mode");
-  });
-});
-
 describe("when user scope is unavailable", () => {
   it("says nothing itself", () => {
     const error = new UserScopeUnavailableError();
@@ -178,23 +91,6 @@ describe("when user scope is unavailable", () => {
 
   it("carries its stable code", () => {
     expect(new UserScopeUnavailableError().code).toBe("user-scope-unavailable");
-  });
-});
-
-describe("when an AI tool has no user scope", () => {
-  it("carries its data and says nothing itself", () => {
-    const error = new UserScopeUnsupportedAiToolsError(["cursor", "opencode"]);
-    expect({ name: error.name, aiTools: error.aiTools, message: error.message }).toStrictEqual({
-      name: "UserScopeUnsupportedAiToolsError",
-      aiTools: ["cursor", "opencode"],
-      message: "",
-    });
-  });
-
-  it("carries its stable code", () => {
-    expect(new UserScopeUnsupportedAiToolsError(["cursor", "opencode"]).code).toBe(
-      "user-scope-unsupported-ai-tools"
-    );
   });
 });
 

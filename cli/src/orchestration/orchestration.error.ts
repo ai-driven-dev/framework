@@ -17,23 +17,6 @@ export class InteractiveOnlyError extends AiddError {
   }
 }
 
-export class InvalidPluginModeConfigError extends AiddError {
-  readonly code = "invalid-plugin-mode-config";
-  constructor(readonly detail: string) {
-    super();
-  }
-}
-
-export class InvalidSetupToolIdError extends AiddError {
-  readonly code = "invalid-setup-tool-id";
-  constructor(
-    readonly id: string,
-    readonly validIds: readonly string[]
-  ) {
-    super();
-  }
-}
-
 export class NoMarketplacesRegisteredError extends AiddError {
   readonly code = "no-marketplaces-registered";
 }
@@ -72,30 +55,8 @@ export class UserScopeFilterUnsupportedError extends AiddError {
   }
 }
 
-export class UserScopeIdeToolsError extends AiddError {
-  readonly code = "user-scope-ide-tools";
-  constructor(readonly ideTools: readonly string[]) {
-    super();
-  }
-}
-
-export class UserScopeNoToolsError extends AiddError {
-  readonly code = "user-scope-no-tools";
-}
-
-export class UserScopePluginModeError extends AiddError {
-  readonly code = "user-scope-plugin-mode";
-}
-
 export class UserScopeUnavailableError extends AiddError {
   readonly code = "user-scope-unavailable";
-}
-
-export class UserScopeUnsupportedAiToolsError extends AiddError {
-  readonly code = "user-scope-unsupported-ai-tools";
-  constructor(readonly aiTools: readonly string[]) {
-    super();
-  }
 }
 
 /** A tool's user plugin files failed after preflight: a native ref may already be refreshed. */

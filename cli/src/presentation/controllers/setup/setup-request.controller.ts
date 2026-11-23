@@ -1,9 +1,7 @@
 import type { FrameworkSource } from "../../../contexts/distribution/contract/framework-source.js";
+import type { PluginInstallMode } from "../../../contexts/installation/contract/setup/setup-request-rules.model.js";
 import type { ToolCatalog } from "../../../contexts/tools/contract/tool-catalog.js";
-import {
-  type PluginInstallMode,
-  SetupFlow,
-} from "../../../orchestration/setup/setup-flow.model.js";
+import { SetupFlow } from "../../../orchestration/setup/setup-flow.model.js";
 import type { Output } from "../../terminal/output.model.js";
 import { parseScopeFlag } from "../menu/global-options.controller.js";
 import {

@@ -11,7 +11,9 @@ import {
   DuplicatePluginError,
   InvalidManifestDataError,
   InvalidManifestToolIdError,
+  InvalidPluginModeConfigError,
   InvalidPluginScopeError,
+  InvalidSetupToolIdError,
   MalformedPluginScopeError,
   ManifestMigrationError,
   ManifestUnavailableError,
@@ -23,6 +25,10 @@ import {
   ToolNotInstalledError,
   UnresolvableUserScopeError,
   UnsupportedManifestVersionError,
+  UserScopeIdeToolsError,
+  UserScopeNoToolsError,
+  UserScopePluginModeError,
+  UserScopeUnsupportedAiToolsError,
 } from "../../../src/contexts/installation/contract/installation.error.js";
 import {
   EditedAfterInstallError,
@@ -37,18 +43,12 @@ import {
 import {
   AmbiguousPluginMatchError,
   InteractiveOnlyError,
-  InvalidPluginModeConfigError,
-  InvalidSetupToolIdError,
   NoMarketplacesRegisteredError,
   SyncFailedError,
   TrustDeniedError,
   UserPluginUpdatePartialError,
   UserScopeFilterUnsupportedError,
-  UserScopeIdeToolsError,
-  UserScopeNoToolsError,
-  UserScopePluginModeError,
   UserScopeUnavailableError,
-  UserScopeUnsupportedAiToolsError,
 } from "../../../src/orchestration/orchestration.error.js";
 import { render } from "../../../src/presentation/errors/error-translator.presenter.js";
 

@@ -67,7 +67,8 @@ src/
 │   │   │   ├── sync/
 │   │   │   └── update/
 │   │   ├── contract/
-│   │   │   └── records/
+│   │   │   ├── records/
+│   │   │   └── setup/
 │   │   ├── domain/
 │   │   │   ├── manifest/
 │   │   │   └── plugins/
