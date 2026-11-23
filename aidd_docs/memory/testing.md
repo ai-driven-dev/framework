@@ -25,7 +25,6 @@ CLI projects and gates: [`internal/cli/testing.md`](internal/cli/testing.md); mu
 | --- | --- |
 | `pnpm test:changed` | only the specs a change can break; run it while working |
 | `node scripts/check-tests-leave-git-alone.js -- node --test 'scripts/__tests__/**/*.test.js'` | repository scripts and hooks |
-| `cd cli && pnpm test` | every CLI project, no build |
 | `cd kanban && pnpm test` | the board |
 
 - `validate.yml` reruns the whole pre-commit over the whole tree; `cli-ci.yml` adds jobs no hook has (`internal/deployment.md`).

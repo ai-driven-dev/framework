@@ -17,7 +17,7 @@ Done means every gate below is green. CLI gates: [`internal/cli/testing.md`](int
 
 | Command | Checks |
 | --- | --- |
-| `pnpm exec lefthook run pre-commit --all-files` | every job in `lefthook.yml`; the `cli` jobs only when `cli/` changed |
+| `pnpm exec lefthook run pre-commit --all-files` | every job in `lefthook.yml`; the `cli` jobs ([`internal/cli/testing.md`](internal/cli/testing.md), Gates) only when `cli/` changed |
 | `pnpm exec commitlint --edit` | the message against `commitlint.config.cjs` |
 
 - The hook regenerates each plugin's `CATALOG.md` and the README counts, and stages them.
@@ -28,7 +28,7 @@ Done means every gate below is green. CLI gates: [`internal/cli/testing.md`](int
 
 | Command | Checks |
 | --- | --- |
-| `pnpm exec lefthook run pre-push` | `cli` knip, copies between tool profiles, the full `cli` suite, when `cli/` changed |
+| `pnpm exec lefthook run pre-push` | the `cli` jobs of [`internal/cli/testing.md`](internal/cli/testing.md), Gates, when `cli/` changed |
 
 - `scripts/gate-witness.js` skips a gate this exact tree already passed: same index, unstaged edits and untracked files.
 - `--no-verify` skips the local gates only: every pull request still runs `ci.yml` and `cli-ci.yml`.

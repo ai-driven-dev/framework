@@ -8,6 +8,8 @@ Where a plugin's content comes from: which marketplaces are registered, trusted 
 - `RepositoryVisibility`, `PluginDistributionReader`, `PluginCatalogRepository`: no contract kit yet.
 - `updateVersion` has a caller (`RefreshMarketplace`) and no contract case. The registry case "keeps one user entry for every project" has no one-line plant: `userPath()` takes no project argument.
 
+- A plugin's latest available version is `PluginCatalogEntry.version` (`contract/catalog.ts`), loaded by `PluginCatalogRepository`.
+
 ## Suppliers
 
 - `auth/contract/token-provider.ts` for a private source (edge `distribution->auth`); `simple-git` in the plugin fetcher adapter.
