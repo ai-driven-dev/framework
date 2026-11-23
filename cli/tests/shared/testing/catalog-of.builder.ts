@@ -7,9 +7,13 @@ import {
 import { withNativeRegistration } from "../../../src/contexts/host-registration/domain/native-registration/native-host-profile.js";
 import { RegisteredToolCatalog } from "../../../src/contexts/tools/application/registered-tool-catalog.js";
 import type { ToolProfile } from "../../../src/contexts/tools/contract/tool-profile.js";
-import type { BuiltToolConfig } from "../../../src/contexts/tools/domain/profile/define-tool.js";
+import type { ProfileBrand } from "../../../src/contexts/tools/domain/profile/define-tool.js";
+import type { AiTool, IdeToolConfig } from "../../../src/contexts/tools/domain/profile.js";
 import { UnregisteredToolError } from "../../../src/shared/domain/shared.error.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
+
+/** A profile only the factory could have produced, before the composition registers it. */
+export type BuiltToolConfig = (AiTool | IdeToolConfig) & ProfileBrand;
 
 /** A profile as the composition registers it: an AI content profile built by a test carries no
  * native section, so it is assembled with an empty one. */

@@ -31,9 +31,6 @@ export declare class ProfileBrand {
   private readonly profileBrand: true;
 }
 
-/** A profile only the factory could have produced. */
-export type BuiltToolConfig = (AiTool | IdeToolConfig) & ProfileBrand;
-
 /** Each declared contract, built on first ask by the builder its kind names. */
 function contractsOf(
   declared: AiToolSpec<DeclaredSections>["buildContracts"],

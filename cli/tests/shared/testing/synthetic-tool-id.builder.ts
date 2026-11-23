@@ -6,7 +6,6 @@ import type {
 import { withNativeRegistration } from "../../../src/contexts/host-registration/domain/native-registration/native-host-profile.js";
 import { sharedMarketplaceKey } from "../../../src/contexts/tools/domain/marketplace-entry.js";
 import {
-  type BuiltToolConfig,
   defineAiTool,
   defineIdeTool,
 } from "../../../src/contexts/tools/domain/profile/define-tool.js";
@@ -17,6 +16,7 @@ import {
 } from "../../../src/contexts/tools/domain/sections/layout-section.js";
 import { manifestSection } from "../../../src/contexts/tools/domain/sections/manifest-section.js";
 import { ModelsSection } from "../../../src/contexts/tools/domain/sections/models-section.js";
+import type { BuiltToolConfig } from "./catalog-of.builder.js";
 import { catalogOf } from "./catalog-of.builder.js";
 import { anEmptyContract } from "./empty-build-contract.builder.js";
 
