@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { assertNothingDepends } from "../../../../../src/contexts/installation/application/clean/assert-nothing-depends.js";
-import { ActiveMachineDependentsError } from "../../../../../src/contexts/installation/domain/installation.error.js";
+import { ActiveMachineDependentsError } from "../../../../../src/contexts/installation/contract/installation.error.js";
 import type { UserScopeInspection } from "../../../../../src/contexts/installation/ports/user-scope/user-scope-purge.js";
 
 describe("before a purge removes what others may depend on", () => {

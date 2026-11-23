@@ -115,7 +115,6 @@ describe("cli/biome.json holds exactly the edges the table admits", () => {
       forbids: [
         "**/shared/infrastructure/**",
         "composition",
-        "!**/domain/*.error.js",
         ...HELD_BY_BIOME.flatMap((held) => interiorGroupsOf(held, `${SRC}/contexts`)),
       ],
     },

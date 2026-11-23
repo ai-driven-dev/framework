@@ -19,8 +19,8 @@ import type {
   FrameworkBuildRequest,
   FrameworkBuildResult,
 } from "../contract/build-targets.js";
+import { InvalidBuildPathsError } from "../contract/translate.error.js";
 import { OUT_OF_SCOPE_PLUGIN_SECTIONS } from "../domain/canon-format.js";
-import { InvalidBuildPathsError } from "../domain/translate.error.js";
 import type {
   BuiltPlugin,
   DiskLayout,

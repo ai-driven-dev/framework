@@ -1,8 +1,8 @@
 import type { FlatArtifactLayout } from "../../../../shared/domain/materialization/flat-paths.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
+import { CapabilityConfigError } from "../../contract/errors/tools.error.js";
 import { type HomeTemplate, resolveHomeTemplate } from "../../contract/home-path.js";
 import type { GlobalFiles } from "../../contract/tool-vocabulary.js";
-import { CapabilityConfigError } from "../tools.error.js";
 
 /**
  * The global-file mapping of a flat tool whose user configuration directory takes the same

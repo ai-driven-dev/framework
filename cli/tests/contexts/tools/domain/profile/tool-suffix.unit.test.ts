@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { CapabilityConfigError } from "../../../../../src/contexts/tools/contract/errors/tools.error.js";
 import { ToolSuffix } from "../../../../../src/contexts/tools/domain/profile/tool-suffix.js";
-import { CapabilityConfigError } from "../../../../../src/contexts/tools/domain/tools.error.js";
 
 describe("a tool's file suffix", () => {
   it.each([".claude.md", ".agent.md", ".instructions.md"])("accepts %s", (value) => {

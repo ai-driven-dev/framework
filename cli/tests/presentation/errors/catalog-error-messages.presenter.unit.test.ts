@@ -8,7 +8,7 @@ import {
   PluginNotInMarketplaceError,
   SharedMarketplaceRemovalError,
   UnreadableMarketplaceRegistryError,
-} from "../../../src/contexts/distribution/domain/distribution.error.js";
+} from "../../../src/contexts/distribution/contract/distribution.error.js";
 import {
   CapabilityConfigError,
   DualConfigError,
@@ -17,7 +17,7 @@ import {
   InvalidHooksDescriptorError,
   InvalidMcpServerConfigError,
   InvalidToolProfileError,
-} from "../../../src/contexts/tools/domain/tools.error.js";
+} from "../../../src/contexts/tools/contract/errors/tools.error.js";
 import {
   FlatMergeTargetNotJsonError,
   FlatTargetExistsError,
@@ -26,7 +26,7 @@ import {
   JsonSchemaValidationError,
   MarketplaceOutDirNotEmptyError,
   OutDirNotDirectoryError,
-} from "../../../src/contexts/translate/domain/translate.error.js";
+} from "../../../src/contexts/translate/contract/translate.error.js";
 import { render } from "../../../src/presentation/errors/error-translator.presenter.js";
 
 /** Every error of marketplaces, builds and tool profiles, built with fixed arguments, and the exact words it shows. */

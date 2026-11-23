@@ -1,7 +1,7 @@
 import type { PluginDistribution } from "../../../../../shared/domain/plugin/plugin-distribution.js";
 import { VersionMismatchError } from "../../../../../shared/domain/shared.error.js";
 import type { AiToolId } from "../../../../../shared/domain/tool.js";
-import { DuplicatePluginError } from "../../../domain/installation.error.js";
+import { DuplicatePluginError } from "../../../contract/installation.error.js";
 import type { Manifest } from "../../../domain/manifest.js";
 import type { ProjectHooksProvenance } from "../../../domain/plugins/plugin-entry.js";
 

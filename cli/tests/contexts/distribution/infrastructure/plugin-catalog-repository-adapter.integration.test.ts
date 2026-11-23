@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { MalformedMarketplaceCatalogError } from "../../../../src/contexts/distribution/domain/distribution.error.js";
+import { MalformedMarketplaceCatalogError } from "../../../../src/contexts/distribution/contract/distribution.error.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
 

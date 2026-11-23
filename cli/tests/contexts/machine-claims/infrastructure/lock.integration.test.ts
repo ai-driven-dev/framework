@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as pause } from "node:timers/promises";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { UserManifestBusyError } from "../../../../src/contexts/machine-claims/domain/machine-claims.error.js";
+import { UserManifestBusyError } from "../../../../src/contexts/machine-claims/contract/machine-claims.error.js";
 import { UserScopeLockAdapter } from "../../../../src/contexts/machine-claims/infrastructure/lock.js";
 
 describe("holding the machine lock on disk", () => {

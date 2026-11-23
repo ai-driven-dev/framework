@@ -84,7 +84,7 @@ describe("every file is exactly one kind", () => {
     ["src/presentation/terminal/prompter.ts", "adapter"],
     ["src/composition/tool-profiles/claude.ts", "profile"],
     ["src/composition/tool-profiles.composition.ts", "composition"],
-    ["src/contexts/auth/domain/auth.error.ts", "error"],
+    ["src/contexts/auth/contract/auth.error.ts", "error"],
     ["src/presentation/presentation.error.ts", "error"],
     ["src/presentation/presenters/auth.presenter.ts", "presenter"],
     ["src/presentation/controllers/auth.controller.ts", "controller"],

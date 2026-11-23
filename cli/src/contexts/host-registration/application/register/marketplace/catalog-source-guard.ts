@@ -1,5 +1,5 @@
+import { MarketplaceSourceConflictError } from "../../../contract/host-registration.error.js";
 import type { MarketplaceSourceDriftFound } from "../../../contract/marketplace-source-drift.js";
-import { MarketplaceSourceConflictError } from "../../../domain/host-registration.error.js";
 import {
   describePluginDiff,
   judgeConflict,

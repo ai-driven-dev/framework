@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { InvalidAgentFrontmatterError } from "../../../../../../src/contexts/tools/contract/errors/tools.error.js";
 import { portableAgentFrontmatter } from "../../../../../../src/contexts/tools/domain/formats/agents/portable-agent.js";
-import { InvalidAgentFrontmatterError } from "../../../../../../src/contexts/tools/domain/tools.error.js";
 import {
   parseFrontmatter,
   serializeFrontmatter,

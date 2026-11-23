@@ -99,6 +99,7 @@ src/
 │   │   │   ├── report/
 │   │   │   └── switch/
 │   │   ├── contract/
+│   │   │   └── errors/
 │   │   ├── domain/
 │   │   │   ├── consent/
 │   │   │   ├── declaration/
@@ -126,6 +127,7 @@ src/
 │   ├── tools/    # what a project targets, and what each target declares
 │   │   ├── application/
 │   │   ├── contract/
+│   │   │   └── errors/
 │   │   ├── domain/
 │   │   │   ├── behaviours/    # the format code one tool alone needs, a folder per tool
 │   │   │   │   ├── antigravity/
@@ -156,6 +158,7 @@ src/
 │   │   └── ports/
 │   └── update/    # replacing the installed CLI, and the notice that one exists
 │       ├── application/
+│       ├── contract/
 │       ├── domain/
 │       ├── infrastructure/
 │       └── ports/

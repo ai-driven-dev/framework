@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { RegistrationRefusedError } from "../../../../src/contexts/host-registration/domain/host-registration.error.js";
+import { RegistrationRefusedError } from "../../../../src/contexts/host-registration/contract/host-registration.error.js";
 import type { NativeMarketplaceSourceReading } from "../../../../src/contexts/host-registration/domain/record/native-marketplace-source-reading.js";
 import {
   assertSourceOwned,

@@ -1,8 +1,8 @@
 import { FileHash } from "../../../../shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../shared/domain/installation-file.js";
+import { CapabilityConfigError } from "../../contract/errors/tools.error.js";
 import type { ConfigFilePlace } from "../../contract/tool-profile.js";
 import type { HookScript, ProjectHooksFormat } from "../../contract/tool-vocabulary.js";
-import { CapabilityConfigError } from "../tools.error.js";
 
 export type HooksConfigParams = {
   outputPath: string;

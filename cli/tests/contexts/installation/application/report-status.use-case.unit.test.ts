@@ -5,7 +5,7 @@ import { DetectPluginDrift } from "../../../../src/contexts/installation/applica
 import {
   ManifestUnavailableError,
   ToolNotInstalledError,
-} from "../../../../src/contexts/installation/domain/installation.error.js";
+} from "../../../../src/contexts/installation/contract/installation.error.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { FileHash } from "../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../src/shared/domain/installation-file.js";

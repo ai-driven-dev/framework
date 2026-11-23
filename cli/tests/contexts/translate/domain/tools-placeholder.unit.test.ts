@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { FrameworkPlaceholderInPluginError } from "../../../../src/contexts/translate/contract/translate.error.js";
 import { assertNoToolsPlaceholder } from "../../../../src/contexts/translate/domain/tools-placeholder.js";
-import { FrameworkPlaceholderInPluginError } from "../../../../src/contexts/translate/domain/translate.error.js";
 
 describe("refusing the tools placeholder", () => {
   it("accepts content that holds no tools placeholder", () => {

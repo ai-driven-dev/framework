@@ -7,7 +7,7 @@ import {
   PluginFetchError,
   PluginNotInMarketplaceError,
   UnreadableMarketplaceRegistryError,
-} from "../../../../src/contexts/distribution/domain/distribution.error.js";
+} from "../../../../src/contexts/distribution/contract/distribution.error.js";
 
 describe("when InvalidMarketplaceScopeError is raised", () => {
   it("carries its data and says nothing itself", () => {

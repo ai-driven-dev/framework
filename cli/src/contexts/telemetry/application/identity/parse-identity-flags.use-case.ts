@@ -1,4 +1,4 @@
-import { IdentityOffWithIdentifierError } from "../../domain/telemetry.error.js";
+import { IdentityOffWithIdentifierError } from "../../contract/errors/telemetry.error.js";
 import type { ManageIdentityRequest } from "./manage-identity.use-case.js";
 
 export interface ParseIdentityFlagsRequest {

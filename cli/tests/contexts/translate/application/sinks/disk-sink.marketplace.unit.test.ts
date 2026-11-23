@@ -3,7 +3,7 @@ import type { ToolBuildContract } from "../../../../../src/contexts/tools/contra
 import {
   JsonSchemaValidationError,
   MarketplaceOutDirNotEmptyError,
-} from "../../../../../src/contexts/translate/domain/translate.error.js";
+} from "../../../../../src/contexts/translate/contract/translate.error.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
 import type { SchemaName } from "../../../../../src/shared/domain/reading/config-asset.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";

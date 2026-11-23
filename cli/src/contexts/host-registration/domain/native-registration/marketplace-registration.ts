@@ -1,10 +1,10 @@
 import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 import type { MarketplaceSettingsInput } from "../../../tools/contract/tool-vocabulary.js";
+import { NativeRegistrationConfigError } from "../../contract/host-registration.error.js";
 import type {
   MarketplaceRegistrationAnswers,
   MarketplaceSettings,
 } from "../../contract/native-registration-spec.js";
-import { NativeRegistrationConfigError } from "../host-registration.error.js";
 import type { NativeActivation } from "./native-activation.js";
 
 /** Where and how a tool records the marketplaces it knows about, held only by a tool whose own

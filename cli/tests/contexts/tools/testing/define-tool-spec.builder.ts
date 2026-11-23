@@ -1,5 +1,5 @@
+import { InvalidToolProfileError } from "../../../../src/contexts/tools/contract/errors/tools.error.js";
 import { ConfigSection } from "../../../../src/contexts/tools/domain/sections/config-section.js";
-import { InvalidToolProfileError } from "../../../../src/contexts/tools/domain/tools.error.js";
 import { anEmptyContract } from "../../../shared/testing/empty-build-contract.builder.js";
 
 export const settings = new ConfigSection({

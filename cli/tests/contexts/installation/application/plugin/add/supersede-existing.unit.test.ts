@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { projectIntegrationOf } from "../../../../../../src/composition/contexts/installation.js";
 import { supersedeExisting } from "../../../../../../src/contexts/installation/application/plugin/add/supersede-existing.js";
-import { DuplicatePluginError } from "../../../../../../src/contexts/installation/domain/installation.error.js";
+import { DuplicatePluginError } from "../../../../../../src/contexts/installation/contract/installation.error.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";

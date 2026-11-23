@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { NativeRegistrationConfigError } from "../../../../../src/contexts/host-registration/domain/host-registration.error.js";
+import { NativeRegistrationConfigError } from "../../../../../src/contexts/host-registration/contract/host-registration.error.js";
 import { MarketplaceRegistration } from "../../../../../src/contexts/host-registration/domain/native-registration/marketplace-registration.js";
 import { NativeActivation } from "../../../../../src/contexts/host-registration/domain/native-registration/native-activation.js";
 

@@ -3,7 +3,7 @@ import type {
   ArtifactContract,
   ToolBuildContract,
 } from "../../../../../src/contexts/tools/contract/build-contract.js";
-import { FlatTargetExistsError } from "../../../../../src/contexts/translate/domain/translate.error.js";
+import { FlatTargetExistsError } from "../../../../../src/contexts/translate/contract/translate.error.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import {

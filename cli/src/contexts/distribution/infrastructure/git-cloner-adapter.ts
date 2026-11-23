@@ -1,6 +1,6 @@
 import { simpleGit } from "simple-git";
 import { errorMessage } from "../../../shared/domain/describe-error.js";
-import { PluginFetchError } from "../domain/distribution.error.js";
+import { PluginFetchError } from "../contract/distribution.error.js";
 import { withoutCredentials } from "../domain/inject-token.model.js";
 
 const AUTH_ERROR_PATTERN =

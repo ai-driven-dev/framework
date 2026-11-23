@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { RemovePlugin } from "../../../../../src/contexts/installation/application/removal/remove-plugin.use-case.js";
-import { PluginNotFoundError } from "../../../../../src/contexts/installation/domain/installation.error.js";
+import { PluginNotFoundError } from "../../../../../src/contexts/installation/contract/installation.error.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";

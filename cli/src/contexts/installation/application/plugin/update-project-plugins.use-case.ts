@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { compareSemver } from "../../../../shared/domain/plugin/semver.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import { InvalidPluginScopeError } from "../../domain/installation.error.js";
+import { InvalidPluginScopeError } from "../../contract/installation.error.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../domain/project-layout.js";

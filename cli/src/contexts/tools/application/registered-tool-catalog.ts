@@ -1,11 +1,11 @@
 import { UnregisteredToolError } from "../../../shared/domain/shared.error.js";
 import type { AiToolId, IdeToolId, ToolCategory, ToolId } from "../../../shared/domain/tool.js";
+import { DuplicateToolIdError } from "../contract/errors/tools.error.js";
 import type { RecommendationContext, ToolCatalog } from "../contract/tool-catalog.js";
 import type { IdeToolProfile } from "../contract/tool-profile.js";
 import { agentProviders } from "../domain/models/agent-models.js";
 import type { ProfileBrand } from "../domain/profile/define-tool.js";
 import type { AiTool, IdeToolConfig } from "../domain/profile.js";
-import { DuplicateToolIdError } from "../domain/tools.error.js";
 
 /** A registered profile: an assembled AI profile, or an editor's. */
 type Registered<A> = (A | IdeToolConfig) & ProfileBrand;

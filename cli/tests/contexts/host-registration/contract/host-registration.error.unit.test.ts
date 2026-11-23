@@ -4,7 +4,7 @@ import {
   NativePluginCliError,
   NativeRegistrationConfigError,
   UnreadableBuiltCatalogError,
-} from "../../../../src/contexts/host-registration/domain/host-registration.error.js";
+} from "../../../../src/contexts/host-registration/contract/host-registration.error.js";
 
 describe("when a marketplace source conflicts", () => {
   it("carries its data and says nothing itself", () => {

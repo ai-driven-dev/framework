@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { assertFlatDestinationFree } from "../../../../../src/contexts/translate/application/sinks/flat-collision.js";
-import { FlatTargetExistsError } from "../../../../../src/contexts/translate/domain/translate.error.js";
+import { FlatTargetExistsError } from "../../../../../src/contexts/translate/contract/translate.error.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { aDiskTarget, aStubBuildContract } from "../../testing/stub-build-contract.builder.js";
 

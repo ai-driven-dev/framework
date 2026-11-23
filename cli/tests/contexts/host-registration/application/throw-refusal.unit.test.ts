@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { throwRefusal } from "../../../../src/contexts/host-registration/application/throw-refusal.js";
-import { NativePluginCliError } from "../../../../src/contexts/host-registration/domain/host-registration.error.js";
+import { NativePluginCliError } from "../../../../src/contexts/host-registration/contract/host-registration.error.js";
 
 describe("throwing a host's refusal", () => {
   it("lets a call the host accepted pass", () => {

@@ -3,13 +3,13 @@ import {
   resolveHomePath,
   resolveHomeTemplate,
 } from "../../../tools/contract/home-path.js";
+import { NativeRegistrationConfigError } from "../../contract/host-registration.error.js";
 import type {
   MarketplaceRegistryLayout,
   NativeActivationAnswers,
   NativeActivationSpec,
   PluginRegistryLayout,
 } from "../../contract/native-registration-spec.js";
-import { NativeRegistrationConfigError } from "../host-registration.error.js";
 
 /** Where a host's registry sits for one home, and the layout its file is read as. */
 export interface HostRegistryPlacement<Layout extends string> {

@@ -4,12 +4,12 @@ import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin
 import type { PluginName } from "../../../../shared/domain/plugin/plugin-name.js";
 import type { SourceMarketplaceRef } from "../../../../shared/domain/plugin/source-refs.js";
 import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
-import { translate } from "../../domain/engine.js";
-import type { OutputFile } from "../../domain/output-file.js";
 import {
   MarketplaceOutDirNotEmptyError,
   OutDirNotDirectoryError,
-} from "../../domain/translate.error.js";
+} from "../../contract/translate.error.js";
+import { translate } from "../../domain/engine.js";
+import type { OutputFile } from "../../domain/output-file.js";
 import type { DiskSinkDeps } from "../../ports/disk-sink-deps.js";
 import type {
   BuiltPlugin,
