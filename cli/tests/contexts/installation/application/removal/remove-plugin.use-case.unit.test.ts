@@ -133,11 +133,33 @@ describe("removing a plugin from a project", () => {
   });
 
   it("keeps the ref in the registration record when the host does not let it go", async () => {
-    const { repo, run } = fixture({ answers: { canDetachRef: false } });
+    const { repo, run } = fixture({ answers: { confirmed: false, machineOwned: true } });
 
     await run();
 
     expect(repo.records.get(TOOL.claude)?.pluginRefs).toEqual([REF]);
+  });
+
+  it("drops an unconfirmed ref of a machine-wide tool when a machine claim owns it", async () => {
+    const { repo, run } = fixture({
+      toolId: TOOL.cursor,
+      answers: { confirmed: false, machineOwned: true },
+    });
+
+    await run();
+
+    expect(repo.records.get(TOOL.cursor)?.pluginRefs).toEqual([]);
+  });
+
+  it("keeps an unconfirmed ref of a machine-wide tool no machine claim owns", async () => {
+    const { repo, run } = fixture({
+      toolId: TOOL.cursor,
+      answers: { confirmed: false, machineOwned: false },
+    });
+
+    await run();
+
+    expect(repo.records.get(TOOL.cursor)?.pluginRefs).toEqual([REF]);
   });
 
   it("detaches a user-scope plugin from the machine without deleting its files", async () => {

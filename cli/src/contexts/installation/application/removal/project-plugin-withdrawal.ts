@@ -43,16 +43,29 @@ export interface ProjectPluginWithdrawalSteps extends RecordedPluginRef {
   assertSource(source: PluginHostReach & { readonly toolId: AiToolId }): Promise<void>;
   /** `undefined` when the plugin carries no marketplace, else whether the host confirmed. */
   withdraw(reach: PluginHostReach): Promise<boolean | undefined>;
-  /** Whether the ref may leave the record once the host answered `confirmed`. */
-  canDetachRef(ref: {
-    readonly toolId: AiToolId;
-    readonly tool: NativeHostTool;
-    readonly confirmed: boolean | undefined;
-    readonly ref: string;
-  }): Promise<boolean>;
+  /** Whether a machine-wide claim of the machine still owns this ref of the tool. */
+  isMachineOwned(toolId: AiToolId, ref: string): Promise<boolean>;
   detachNativeRefs(
     projectRoot: string,
     refsByTool: ReadonlyMap<ToolId, readonly string[]>
   ): Promise<void>;
   detachUserPlugin(toolId: AiToolId, name: string, projectRoot: string): Promise<void>;
+}
+
+/** A ref leaves the record once the host confirmed, or, for a tool that enables plugins
+ * machine-wide, once a machine claim owns it: only that claim could have let it go. */
+export async function mayLetRefGo(
+  asked: {
+    readonly toolId: AiToolId;
+    readonly tool: Pick<NativeHostTool, "pluginEnablementIsMachineGlobal">;
+    readonly confirmed: boolean | undefined;
+    readonly ref: string;
+  },
+  withdrawal: Pick<ProjectPluginWithdrawalSteps, "isMachineOwned">
+): Promise<boolean> {
+  return (
+    asked.confirmed === true ||
+    (asked.tool.pluginEnablementIsMachineGlobal() &&
+      (await withdrawal.isMachineOwned(asked.toolId, asked.ref)))
+  );
 }

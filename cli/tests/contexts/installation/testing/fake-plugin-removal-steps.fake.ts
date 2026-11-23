@@ -13,7 +13,9 @@ import type { AiToolId, ToolId } from "../../../../src/shared/domain/tool.js";
 
 interface Answers {
   readonly refuseSource?: Error;
-  readonly canDetachRef?: boolean;
+  /** What the host answered a withdrawal with; confirmed unless told otherwise. */
+  readonly confirmed?: boolean | undefined;
+  readonly machineOwned?: boolean;
 }
 
 /** A host that lets a plugin go as told, recording what a removal asked of it and in what order. */
@@ -42,11 +44,11 @@ export class FakePluginRemovalSteps implements ProjectPluginWithdrawalSteps {
 
   async withdraw(reach: PluginHostReach): Promise<boolean | undefined> {
     this.calls.push(`withdraw:${reach.plugin.plugin.name}`);
-    return true;
+    return "confirmed" in this.answers ? this.answers.confirmed : true;
   }
 
-  async canDetachRef(): Promise<boolean> {
-    return this.answers.canDetachRef ?? true;
+  async isMachineOwned(): Promise<boolean> {
+    return this.answers.machineOwned ?? false;
   }
 
   recordedRef(registrations: ToolRecord | undefined, recorded: RecordedPlugin): string | undefined {
