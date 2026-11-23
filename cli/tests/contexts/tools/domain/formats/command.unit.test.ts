@@ -3,6 +3,8 @@ import {
   buildAiddCommandFilePath,
   convertCommandFrontmatter,
   convertCommandFrontmatterNoHint,
+  phasedCommandPath,
+  phasedCommandsDir,
 } from "../../../../../src/contexts/tools/domain/formats/command.js";
 
 describe("converting a command's frontmatter", () => {
@@ -81,5 +83,21 @@ describe("buildAiddCommandFilePath without a directory", () => {
     expect(buildAiddCommandFilePath(".claude/", "12-plan.md")).toBe(
       ".claude/commands/aidd/12-plan.md"
     );
+  });
+});
+
+describe("placing a command under the phase its directory is numbered with", () => {
+  it.each<[string, string | undefined]>([
+    ["04_code/implement.md", ".claude/commands/aidd/04/implement.md"],
+    ["02_context/create_user_stories.md", ".claude/commands/aidd/02/create_user_stories.md"],
+    ["4/implement.md", ".claude/commands/aidd/4/implement.md"],
+    ["01-notes.md", undefined],
+    ["v04/notes.md", undefined],
+  ])("places %s at %s", (fileName, path) => {
+    expect(phasedCommandPath(".claude/", fileName)).toBe(path);
+  });
+
+  it("names the directory of one phase's commands", () => {
+    expect(phasedCommandsDir(".claude/", "04")).toBe(".claude/commands/aidd/04/");
   });
 });

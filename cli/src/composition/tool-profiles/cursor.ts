@@ -16,7 +16,7 @@ import {
   projectHooksSupport,
 } from "../../contexts/tools/domain/formats/hooks/routes.js";
 import { pluginTreeContract } from "../../contexts/tools/domain/formats/plugin-tree-contract.js";
-import { rulePatterns } from "../../contexts/tools/domain/formats/rule-frontmatter.js";
+import { globsScopedRule, toMdc } from "../../contexts/tools/domain/formats/rule-frontmatter.js";
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
 import { nativeLayout } from "../../contexts/tools/domain/sections/layout-section.js";
 import { manifestSection } from "../../contexts/tools/domain/sections/manifest-section.js";
@@ -54,29 +54,6 @@ const CURSOR_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(".cursor/", {
 
 const DIRECTORY = ".cursor/";
 const TOOL_SUFFIX = ".cursor.md";
-const MDC_EXT = ".mdc";
-
-function toMdc(fileName: string): string {
-  return fileName.endsWith(".md") ? `${fileName.slice(0, -3)}${MDC_EXT}` : fileName;
-}
-
-/** A scoped rule keeps its globs and never applies on its own; an unscoped one survives only as
- * an on-request rule that has a description. */
-function cursorRuleFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-  const patterns = rulePatterns(fm);
-  const described = fm.description === undefined ? {} : { description: fm.description };
-  if (patterns.length > 0) {
-    return {
-      ...described,
-      globs: JSON.stringify(patterns).replace(/,/g, ", "),
-      alwaysApply: false,
-    };
-  }
-  return fm.alwaysApply === false && fm.description !== undefined
-    ? { ...described, alwaysApply: false }
-    : {};
-}
-
 // Split literal to avoid biome's noTemplateCurlyInString warning.
 const CURSOR_PLUGIN_ROOT_TOKEN = "$" + "{CURSOR_PLUGIN_ROOT}";
 
@@ -156,7 +133,7 @@ export const cursor = defineAiTool({
     }),
     rules: bound.rules({
       buildInstallPath: (fileName) => toMdc(bound.installUnder("rules/")(fileName)),
-      convertFrontmatter: cursorRuleFrontmatter,
+      convertFrontmatter: globsScopedRule,
     }),
     mcp: {
       config: new McpConfigPart({

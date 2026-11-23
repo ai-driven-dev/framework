@@ -1,5 +1,4 @@
 {
-  "src/composition/tool-profiles/copilot.ts": 2,
   "src/contexts/distribution/infrastructure/marketplace-registry-adapter.ts": 1,
   "src/contexts/distribution/infrastructure/marketplace-trust-store-adapter.ts": 1,
   "src/contexts/host-registration/infrastructure/host-cli-adapter.ts": 1,

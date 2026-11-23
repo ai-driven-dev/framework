@@ -4,9 +4,7 @@ import { CONFIG_MCP } from "../../../src/contexts/tools/contract/config-refs.js"
 import {
   expectClaudeStyleCatalog,
   pluginTreeShapeOf,
-  rulesRows,
   SHIPPED_AS_IS,
-  WRITES_NOTHING,
 } from "../../contexts/tools/testing/profile-tables.builder.js";
 import { type InstallKind, installPathOf } from "../../contexts/tools/testing/profiles.builder.js";
 
@@ -49,18 +47,6 @@ describe("cursor build and conversion tables", () => {
 
   it("writes its catalog and entries in Claude's marketplace format", async () => {
     await expectClaudeStyleCatalog(cursor, ".cursor-plugin");
-  });
-
-  it.each(
-    rulesRows({
-      ...WRITES_NOTHING,
-      "a paths list": { globs: '["a", "b"]', alwaysApply: false },
-      "globs that apply on request": { description: "d", globs: '["a"]', alwaysApply: false },
-      "paths beside a description": { description: "d", globs: '["a"]', alwaysApply: false },
-      "a description that opts out of always-apply": { description: "d", alwaysApply: false },
-    })
-  )("converts %s", (_case, frontmatter, expected) => {
-    expect(cursor.section("rules").convertFrontmatter(frontmatter)).toStrictEqual(expected);
   });
 });
 

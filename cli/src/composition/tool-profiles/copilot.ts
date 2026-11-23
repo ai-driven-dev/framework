@@ -23,6 +23,7 @@ import { buildCopilotFlatContract } from "../../contexts/tools/domain/behaviours
 import { convertCommandFrontmatter } from "../../contexts/tools/domain/formats/command.js";
 import { declareHooks } from "../../contexts/tools/domain/formats/hooks/declaration.js";
 import { nativeHooksSupport } from "../../contexts/tools/domain/formats/hooks/routes.js";
+import { serversKeyed } from "../../contexts/tools/domain/formats/mcp/servers-keyed.js";
 import { sharedMarketplaceKey } from "../../contexts/tools/domain/marketplace-entry.js";
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
 import { AgentsSection } from "../../contexts/tools/domain/sections/agents-section.js";
@@ -131,16 +132,6 @@ const COPILOT_MARKETPLACE_SETTINGS: NativeLayoutParams["marketplaceSettings"] = 
   declarativePluginActivationRequiresNativeProof: true,
   toEntryKey: sharedMarketplaceKey,
 };
-
-/** Copilot reads `servers` where the framework config writes `mcpServers`. */
-function serversKeyed(content: string): string {
-  const parsed = JSON.parse(content) as Record<string, unknown>;
-  if ("mcpServers" in parsed && !("servers" in parsed)) {
-    const { mcpServers, ...rest } = parsed as { mcpServers: unknown } & Record<string, unknown>;
-    return JSON.stringify({ ...rest, servers: mcpServers }, null, 2);
-  }
-  return content;
-}
 
 function copilotLayout() {
   return nativeLayout({

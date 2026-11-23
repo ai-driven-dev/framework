@@ -5,13 +5,18 @@ import adapter from "../../../assets/hooks-runtime/host-claude.cjs";
 import { MCP_CONFIG_REF } from "../../contexts/tools/contract/config-refs.js";
 import { claudeAgentFrontmatter } from "../../contexts/tools/domain/behaviours/claude/claude-agent.model.js";
 import { buildClaudeFlatContract } from "../../contexts/tools/domain/behaviours/claude/claude-flat-build.model.js";
-import { convertCommandFrontmatter } from "../../contexts/tools/domain/formats/command.js";
+import {
+  convertCommandFrontmatter,
+  phasedCommandPath,
+  phasedCommandsDir,
+} from "../../contexts/tools/domain/formats/command.js";
 import {
   declareHooks,
   ownNameEvents,
 } from "../../contexts/tools/domain/formats/hooks/declaration.js";
 import { nativeHooksSupport } from "../../contexts/tools/domain/formats/hooks/routes.js";
 import { pluginTreeContract } from "../../contexts/tools/domain/formats/plugin-tree-contract.js";
+import { pathsScopedRule } from "../../contexts/tools/domain/formats/rule-frontmatter.js";
 import { sharedMarketplaceKey } from "../../contexts/tools/domain/marketplace-entry.js";
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
 import {
@@ -48,10 +53,6 @@ const CLAUDE_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(".claude/", {
 
 const DIRECTORY = ".claude/";
 const TOOL_SUFFIX = ".claude.md";
-
-function commandsDir(phase: string): string {
-  return `${DIRECTORY}commands/aidd/${phase}/`;
-}
 
 const hooks = declareHooks(
   { toolId: "claude", directory: DIRECTORY, adapter },
@@ -124,24 +125,6 @@ const CLAUDE_MARKETPLACE_SETTINGS: NativeLayoutParams["marketplaceSettings"] = {
 };
 
 /** A command filed under a numbered phase folder lands in that phase's commands folder. */
-function phasedCommandPath(fileName: string): string | undefined {
-  const phased = fileName.match(/^(\d+)[^/]*\/(.*)/);
-  return phased ? `${commandsDir(phased[1])}${phased[2]}` : undefined;
-}
-
-function convertRuleFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-  if ("paths" in fm) {
-    const paths = fm.paths;
-    if (Array.isArray(paths) && paths.length === 0) return {};
-    return { paths };
-  }
-  if ("globs" in fm) return { paths: fm.globs };
-  if (fm.alwaysApply === false && fm.description !== undefined) {
-    return { description: fm.description };
-  }
-  return {};
-}
-
 export const claude = defineAiTool({
   toolId: "claude",
   distributionProbes: {
@@ -175,12 +158,12 @@ export const claude = defineAiTool({
     skills: bound.skills({}),
     commands: bound.commands({
       buildInstallPath: (fileName) =>
-        phasedCommandPath(fileName) ?? bound.installUnder("commands/")(fileName),
+        phasedCommandPath(DIRECTORY, fileName) ?? bound.installUnder("commands/")(fileName),
       convertFrontmatter: (fm, relativeFileName) => convertCommandFrontmatter(fm, relativeFileName),
     }),
     rules: bound.rules({
       buildInstallPath: bound.installUnder("rules/"),
-      convertFrontmatter: convertRuleFrontmatter,
+      convertFrontmatter: pathsScopedRule,
     }),
     mcp: {
       config: new McpConfigPart({
@@ -210,7 +193,7 @@ export const claude = defineAiTool({
   linkSyntax: [
     {
       from: /(@?)\.claude\/commands\/(\d+)[_][^/]+\//g,
-      to: (_match, at, phase) => `${at}${commandsDir(phase)}`,
+      to: (_match, at, phase) => `${at}${phasedCommandsDir(DIRECTORY, phase)}`,
     },
   ],
 });

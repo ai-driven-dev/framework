@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { descriptionOnlyRule } from "../../../../../src/contexts/tools/domain/formats/rule-frontmatter.js";
+import {
+  descriptionOnlyRule,
+  globsScopedRule,
+  pathsScopedRule,
+  toMdc,
+} from "../../../../../src/contexts/tools/domain/formats/rule-frontmatter.js";
+import { rulesRows, WRITES_NOTHING } from "../../testing/profile-tables.builder.js";
 
 describe("keeping only a rule's description", () => {
   it("keeps the description of an on-request rule and nothing else", () => {
@@ -13,5 +19,40 @@ describe("keeping only a rule's description", () => {
       descriptionOnlyRule({ alwaysApply: true, description: "x" }),
       descriptionOnlyRule({ alwaysApply: false }),
     ]).toStrictEqual([{}, {}]);
+  });
+});
+
+describe("a rule scoped by paths", () => {
+  it.each(
+    rulesRows({
+      ...WRITES_NOTHING,
+      "a paths list": { paths: ["a", "b"] },
+      "globs that apply on request": { paths: ["a"] },
+      "paths beside a description": { paths: ["a"] },
+      "a description that opts out of always-apply": { description: "d" },
+    })
+  )("converts %s", (_case, frontmatter, expected) => {
+    expect(pathsScopedRule(frontmatter)).toStrictEqual(expected);
+  });
+});
+
+describe("a rule scoped by a globs string", () => {
+  it.each(
+    rulesRows({
+      ...WRITES_NOTHING,
+      "a paths list": { globs: '["a", "b"]', alwaysApply: false },
+      "globs that apply on request": { description: "d", globs: '["a"]', alwaysApply: false },
+      "paths beside a description": { description: "d", globs: '["a"]', alwaysApply: false },
+      "a description that opts out of always-apply": { description: "d", alwaysApply: false },
+    })
+  )("converts %s", (_case, frontmatter, expected) => {
+    expect(globsScopedRule(frontmatter)).toStrictEqual(expected);
+  });
+
+  it("names a markdown rule file .mdc and leaves any other name as it is", () => {
+    expect([toMdc("rules/a/naming.md"), toMdc("rules/a/naming.txt")]).toStrictEqual([
+      "rules/a/naming.mdc",
+      "rules/a/naming.txt",
+    ]);
   });
 });

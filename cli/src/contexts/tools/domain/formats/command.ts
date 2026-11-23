@@ -33,3 +33,14 @@ export function buildAiddCommandFilePath(dir: string, fileName: string): string 
   const baseName = fileName.slice(fileName.lastIndexOf("/") + 1);
   return `${dir}commands/aidd/${baseName}`;
 }
+
+/** The directory of one phase's commands. */
+export function phasedCommandsDir(dir: string, phase: string): string {
+  return `${dir}commands/aidd/${phase}/`;
+}
+
+/** Where a command lands under the phase its directory is numbered with; none when unnumbered. */
+export function phasedCommandPath(dir: string, fileName: string): string | undefined {
+  const phased = fileName.match(/^(\d+)[^/]*\/(.*)/);
+  return phased ? `${phasedCommandsDir(dir, phased[1])}${phased[2]}` : undefined;
+}
