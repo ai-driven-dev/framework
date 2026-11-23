@@ -1,8 +1,8 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { SmolTomlCodec } from "../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { parseFrontmatter } from "../../src/shared/domain/markdown.js";
+import { SmolTomlCodec } from "../../src/shared/infrastructure/smol-toml-codec.adapter.js";
 import { createTestEnv } from "../shared/testing/cli-sandbox.builder.js";
 import { runInProcess } from "../shared/testing/in-process-cli.builder.js";
 import { REPOSITORY_ROOT } from "../shared/testing/repository-root.builder.js";

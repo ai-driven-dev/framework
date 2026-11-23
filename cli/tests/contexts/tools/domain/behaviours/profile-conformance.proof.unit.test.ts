@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { REGISTERED_PROFILES } from "../../../../../src/composition/tool-profiles.composition.js";
+import { REGISTERED_PROFILES } from "../../../../../src/composition/tool-profiles/index.js";
 import type {
   ArtifactContract,
   ToolBuildContract,

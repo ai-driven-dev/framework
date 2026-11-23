@@ -3,9 +3,9 @@ import { codexSpec } from "../../../../../../src/composition/tool-profiles/codex
 import { artifactPath } from "../../../../../../src/contexts/tools/contract/artifact-path.js";
 import type { ConfigArtifact } from "../../../../../../src/contexts/tools/contract/build-contract.js";
 import { defineAiTool } from "../../../../../../src/contexts/tools/domain/profile/define-tool.js";
-import { SmolTomlCodec } from "../../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { reshapeFrontmatter } from "../../../../../../src/shared/domain/markdown.js";
 import { parsePluginName } from "../../../../../../src/shared/domain/plugin/plugin-name.js";
+import { SmolTomlCodec } from "../../../../../../src/shared/infrastructure/smol-toml-codec.adapter.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { present } from "../../../../../shared/testing/present.builder.js";
 import { supported } from "../../../testing/build-artifacts.builder.js";

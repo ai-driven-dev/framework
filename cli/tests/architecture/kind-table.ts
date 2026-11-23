@@ -119,11 +119,13 @@ export const KINDS: readonly Kind[] = [
     suffix: /\.profile\.ts$/,
     folders: ["src/composition/tool-profiles/*"],
     fallback: ["src/composition/tool-profiles/*"],
-    except: [],
-    imports: ["model", "error"],
+    except: ["src/composition/tool-profiles/index.ts"],
+    imports: ["model", "error", "adapter"],
     externals: PURE_BUILTINS,
     within: [
       "src/contexts/tools/domain/**/*",
+      // Codex names the TOML format, so its profile holds the codec instance as data.
+      "src/shared/infrastructure/smol-toml-codec.adapter.ts",
       "src/contexts/tools/contract/**/*",
       // The native-registration section a profile file exports is typed by its reader.
       "src/contexts/host-registration/contract/**/*",
@@ -178,8 +180,13 @@ export const KINDS: readonly Kind[] = [
     id: "composition",
     suffix: /\.composition\.ts$/,
     folders: ["src/composition/**/*"],
-    fallback: ["src/composition/**/*"],
-    except: ["src/composition/tool-profiles/*"],
+    fallback: [
+      "src/composition/*",
+      "src/composition/contexts/**/*",
+      "src/composition/orchestration/**/*",
+      "src/composition/tool-profiles/index.ts",
+    ],
+    except: [],
     imports: ["use-case", "adapter", "port", "model", "error", "profile", "composition"],
     externals: "any",
     tests: [],

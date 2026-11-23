@@ -7,7 +7,6 @@ import { copilot } from "../../../src/composition/tool-profiles/copilot.js";
 import { cursor } from "../../../src/composition/tool-profiles/cursor.js";
 import type { ToolBuildContract } from "../../../src/contexts/tools/contract/build-contract.js";
 import { defineAiTool } from "../../../src/contexts/tools/domain/profile/define-tool.js";
-import { SmolTomlCodec } from "../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { DiskSink } from "../../../src/contexts/translate/application/sinks/disk-sink.js";
 import { FlatWriter } from "../../../src/contexts/translate/application/sinks/flat-writer.js";
 import {
@@ -15,6 +14,7 @@ import {
   PluginDistribution,
 } from "../../../src/shared/domain/plugin/plugin-distribution.js";
 import { parsePluginName } from "../../../src/shared/domain/plugin/plugin-name.js";
+import { SmolTomlCodec } from "../../../src/shared/infrastructure/smol-toml-codec.adapter.js";
 import type { AssetProvider } from "../../../src/shared/ports/asset-provider.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { registeredAiProfile } from "../../shared/testing/catalog-of.builder.js";

@@ -126,25 +126,24 @@ src/
 │   ├── tools/    # what a project targets, and what each target declares
 │   │   ├── application/
 │   │   ├── contract/
-│   │   ├── domain/
-│   │   │   ├── behaviours/    # the format code one tool alone needs, a folder per tool
-│   │   │   │   ├── antigravity/
-│   │   │   │   ├── claude/
-│   │   │   │   ├── codex/
-│   │   │   │   ├── copilot/
-│   │   │   │   ├── cursor/
-│   │   │   │   ├── kilo/
-│   │   │   │   └── opencode/
-│   │   │   ├── bridges/
-│   │   │   ├── formats/
-│   │   │   │   ├── agents/
-│   │   │   │   ├── hooks/
-│   │   │   │   └── mcp/
-│   │   │   ├── hooks/
-│   │   │   ├── models/
-│   │   │   ├── profile/
-│   │   │   └── sections/
-│   │   └── infrastructure/
+│   │   └── domain/
+│   │       ├── behaviours/    # the format code one tool alone needs, a folder per tool
+│   │       │   ├── antigravity/
+│   │       │   ├── claude/
+│   │       │   ├── codex/
+│   │       │   ├── copilot/
+│   │       │   ├── cursor/
+│   │       │   ├── kilo/
+│   │       │   └── opencode/
+│   │       ├── bridges/
+│   │       ├── formats/
+│   │       │   ├── agents/
+│   │       │   ├── hooks/
+│   │       │   └── mcp/
+│   │       ├── hooks/
+│   │       ├── models/
+│   │       ├── profile/
+│   │       └── sections/
 │   ├── translate/    # canonical source to target-native content
 │   │   ├── application/
 │   │   │   └── sinks/
@@ -221,6 +220,6 @@ src/
 | What | Where |
 | --- | --- |
 | a command | `presentation/controllers/`; its logic in the context owning the concept |
-| a tool | one profile in `composition/tool-profiles/` plus its line in `tool-profiles.composition.ts`; procedure in the `working-on-cli` skill's `actions/01-tool.md` |
+| a tool | one profile in `composition/tool-profiles/` plus its line in `tool-profiles/index.ts`; procedure in the `working-on-cli` skill's `actions/01-tool.md` |
 | a port used by one context | its `ports/`, adapter in its `infrastructure/` |
 | a port used by two | `shared/ports/`, adapter in `shared/infrastructure/` |

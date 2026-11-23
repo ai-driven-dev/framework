@@ -3,7 +3,7 @@ import { codexSpec } from "../../../../../../src/composition/tool-profiles/codex
 import { artifactPath } from "../../../../../../src/contexts/tools/contract/artifact-path.js";
 import type { ConfigArtifact } from "../../../../../../src/contexts/tools/contract/build-contract.js";
 import { defineAiTool } from "../../../../../../src/contexts/tools/domain/profile/define-tool.js";
-import { SmolTomlCodec } from "../../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
+import { SmolTomlCodec } from "../../../../../../src/shared/infrastructure/smol-toml-codec.adapter.js";
 import { present } from "../../../../../shared/testing/present.builder.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 import { sourceOf, supported } from "../../../testing/build-artifacts.builder.js";

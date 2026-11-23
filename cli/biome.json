@@ -542,7 +542,6 @@
                   {
                     "group": [
                       "**/tools/domain/**",
-                      "**/tools/infrastructure/**",
                       "**/tools/application/**",
                       "!**/domain/*.error.js"
                     ],
@@ -2231,11 +2230,7 @@
                     "message": "host-registration imports only shared, see kinds.arch.test.ts"
                   },
                   {
-                    "group": [
-                      "**/tools/domain/**",
-                      "**/tools/infrastructure/**",
-                      "**/tools/application/**"
-                    ],
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
                     "message": "host-registration reads shared, plus the contract of tools: its domain and application belong to tools, see kinds.arch.test.ts"
                   },
                   {
@@ -2425,11 +2420,7 @@
                     "message": "host-registration imports only shared, see kinds.arch.test.ts"
                   },
                   {
-                    "group": [
-                      "**/tools/domain/**",
-                      "**/tools/infrastructure/**",
-                      "**/tools/application/**"
-                    ],
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
                     "message": "host-registration reads shared, plus the contract of tools: its domain and application belong to tools, see kinds.arch.test.ts"
                   },
                   {
@@ -2471,11 +2462,7 @@
                     "message": "host-registration imports only shared, see kinds.arch.test.ts"
                   },
                   {
-                    "group": [
-                      "**/tools/domain/**",
-                      "**/tools/infrastructure/**",
-                      "**/tools/application/**"
-                    ],
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
                     "message": "host-registration reads shared, plus the contract of tools: its domain and application belong to tools, see kinds.arch.test.ts"
                   },
                   {
@@ -2513,11 +2500,7 @@
                     "message": "host-registration imports only shared, see kinds.arch.test.ts"
                   },
                   {
-                    "group": [
-                      "**/tools/domain/**",
-                      "**/tools/infrastructure/**",
-                      "**/tools/application/**"
-                    ],
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
                     "message": "host-registration reads shared, plus the contract of tools: its domain and application belong to tools, see kinds.arch.test.ts"
                   },
                   {
@@ -2569,11 +2552,7 @@
                     "message": "host-registration imports only shared, see kinds.arch.test.ts"
                   },
                   {
-                    "group": [
-                      "**/tools/domain/**",
-                      "**/tools/infrastructure/**",
-                      "**/tools/application/**"
-                    ],
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
                     "message": "host-registration reads shared, plus the contract of tools: its domain and application belong to tools, see kinds.arch.test.ts"
                   },
                   {
@@ -2961,11 +2940,7 @@
                     "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   },
                   {
-                    "group": [
-                      "**/tools/domain/**",
-                      "**/tools/infrastructure/**",
-                      "**/tools/application/**"
-                    ],
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
                     "message": "tools publishes its contract only: its domain and application belong to the composition root, see kinds.arch.test.ts"
                   }
                 ],
@@ -3156,11 +3131,7 @@
                     "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   },
                   {
-                    "group": [
-                      "**/tools/domain/**",
-                      "**/tools/infrastructure/**",
-                      "**/tools/application/**"
-                    ],
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
                     "message": "tools publishes its contract only: its domain and application belong to the composition root, see kinds.arch.test.ts"
                   }
                 ]
@@ -3202,11 +3173,7 @@
                     "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   },
                   {
-                    "group": [
-                      "**/tools/domain/**",
-                      "**/tools/infrastructure/**",
-                      "**/tools/application/**"
-                    ],
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
                     "message": "tools publishes its contract only: its domain and application belong to the composition root, see kinds.arch.test.ts"
                   }
                 ]
@@ -3247,11 +3214,7 @@
                     "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   },
                   {
-                    "group": [
-                      "**/tools/domain/**",
-                      "**/tools/infrastructure/**",
-                      "**/tools/application/**"
-                    ],
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
                     "message": "tools publishes its contract only: its domain and application belong to the composition root, see kinds.arch.test.ts"
                   }
                 ]
@@ -3299,11 +3262,7 @@
                     "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   },
                   {
-                    "group": [
-                      "**/tools/domain/**",
-                      "**/tools/infrastructure/**",
-                      "**/tools/application/**"
-                    ],
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
                     "message": "tools publishes its contract only: its domain and application belong to the composition root, see kinds.arch.test.ts"
                   }
                 ],
@@ -3844,11 +3803,7 @@
                     "message": "translate may import only shared and contexts/tools — see kinds.arch.test.ts"
                   },
                   {
-                    "group": [
-                      "**/tools/domain/**",
-                      "**/tools/infrastructure/**",
-                      "**/tools/application/**"
-                    ],
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
                     "message": "tools publishes its contract only: its domain and application belong to the composition root, see kinds.arch.test.ts"
                   },
                   {
@@ -4038,11 +3993,7 @@
                     "message": "translate may import only shared and contexts/tools — see kinds.arch.test.ts"
                   },
                   {
-                    "group": [
-                      "**/tools/domain/**",
-                      "**/tools/infrastructure/**",
-                      "**/tools/application/**"
-                    ],
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
                     "message": "tools publishes its contract only: its domain and application belong to the composition root, see kinds.arch.test.ts"
                   },
                   {
@@ -4087,11 +4038,7 @@
                     "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   },
                   {
-                    "group": [
-                      "**/tools/domain/**",
-                      "**/tools/infrastructure/**",
-                      "**/tools/application/**"
-                    ],
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
                     "message": "tools publishes its contract only: its domain and application belong to the composition root, see kinds.arch.test.ts"
                   }
                 ],
@@ -4282,11 +4229,7 @@
                     "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   },
                   {
-                    "group": [
-                      "**/tools/domain/**",
-                      "**/tools/infrastructure/**",
-                      "**/tools/application/**"
-                    ],
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
                     "message": "tools publishes its contract only: its domain and application belong to the composition root, see kinds.arch.test.ts"
                   }
                 ]
@@ -4328,11 +4271,7 @@
                     "message": "only the composition root imports the composition, see kinds.arch.test.ts"
                   },
                   {
-                    "group": [
-                      "**/tools/domain/**",
-                      "**/tools/infrastructure/**",
-                      "**/tools/application/**"
-                    ],
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
                     "message": "tools publishes its contract only: its domain and application belong to the composition root, see kinds.arch.test.ts"
                   }
                 ]

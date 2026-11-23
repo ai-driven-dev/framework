@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { codexSpec } from "../../../src/composition/tool-profiles/codex.js";
 import { artifactPath } from "../../../src/contexts/tools/contract/artifact-path.js";
 import { defineAiTool } from "../../../src/contexts/tools/domain/profile/define-tool.js";
-import { SmolTomlCodec } from "../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
+import { SmolTomlCodec } from "../../../src/shared/infrastructure/smol-toml-codec.adapter.js";
 import {
   PLUGIN_TREE_SOURCES,
   supported,

@@ -1,5 +1,5 @@
 import { nativeRegistrationsOf } from "../../../../src/composition/contexts/host-registration.js";
-import { REGISTERED_PROFILES } from "../../../../src/composition/tool-profiles.composition.js";
+import { REGISTERED_PROFILES } from "../../../../src/composition/tool-profiles/index.js";
 import { marketplaceListContract } from "../../../../src/contexts/host-registration/infrastructure/marketplace/marketplace-list-parsers.js";
 import type { NativeMarketplaceSourceListContract } from "../../../../src/contexts/host-registration/infrastructure/marketplace/native-marketplace-source-list-contract.js";
 import type { AiToolId } from "../../../../src/shared/domain/tool.js";

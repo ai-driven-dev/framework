@@ -29,6 +29,7 @@ import type {
   DeclaredSections,
   McpTomlDeclaration,
 } from "../../contexts/tools/domain/profile/declared-sections.js";
+import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
 import { singlePythonRepo } from "../../contexts/tools/domain/profile/recommendation.js";
 import type { AiToolSpec } from "../../contexts/tools/domain/profile/tool-spec.js";
 import { installUnder } from "../../contexts/tools/domain/profile/tool-suffix.js";
@@ -40,6 +41,7 @@ import {
   type FlatArtifactLayout,
   flatArtifactLayout,
 } from "../../shared/domain/materialization/flat-paths.js";
+import { SmolTomlCodec } from "../../shared/infrastructure/smol-toml-codec.adapter.js";
 
 const PLUGIN_MCP = acceptedPluginMcp();
 
@@ -166,8 +168,7 @@ const CODEX_CAPABILITIES = {
   models: new ModelsSection({ providers: ["openai"] }),
 } satisfies DeclaredSections;
 
-/** The Codex declaration. Its agents and MCP file name the TOML format, whose codec the
- * composition wires. */
+/** The Codex declaration. Its agents and MCP file name the TOML format. */
 export const codexSpec = {
   toolId: "codex",
   distributionProbes: {
@@ -190,6 +191,9 @@ export const codexSpec = {
 
   linkSyntax: LINK_SYNTAX,
 } satisfies AiToolSpec<typeof CODEX_CAPABILITIES>;
+
+/** Codex names the TOML format; its codec is the one adapter wired here. */
+export const codex = defineAiTool(codexSpec, { toml: new SmolTomlCodec() });
 
 /** The section host-registration reads: how Codex's own plugin CLI activates plugins. */
 export const codexNativeRegistration: NativeRegistrationSection = { activation: CODEX_ACTIVATION };

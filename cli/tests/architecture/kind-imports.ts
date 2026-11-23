@@ -17,7 +17,7 @@ import { INTERNAL_IMPORT, matchesGlob, resolveImportTarget } from "./source-grap
 const EXTERNAL_IMPORT =
   /^\s*(?:import|export)\b[^"';]*?\bfrom\s*["']([^"']+)["']|^\s*import\s*["']([^"']+)["']|\bimport\(\s*["']([^"']+)["']\s*\)/gm;
 const TOOL_FILE =
-  /^src\/(?:composition\/tool-profiles\/([^/]+)\.ts$|contexts\/tools\/domain\/behaviours\/([^/]+)\/)/;
+  /^src\/(?:composition\/tool-profiles\/(?!index\.ts$)([^/]+)\.ts$|contexts\/tools\/domain\/behaviours\/([^/]+)\/)/;
 const SHARED_KIT = "tests/shared/testing/";
 
 /** The folder that owns a kit file: everything before its `/testing/`. */
