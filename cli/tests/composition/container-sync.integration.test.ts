@@ -16,7 +16,11 @@ import { catalogOf } from "../shared/testing/catalog-of.builder.js";
 import { FakeHostActions } from "../shared/testing/fake-host-actions.fake.js";
 import { hostRecord } from "../shared/testing/host-record-reading.builder.js";
 import { TOOL } from "../shared/testing/registered-tools.builder.js";
-import { graphOf, SAMPLE_MARKETPLACE, stubMachineEnv } from "./testing/container-graph.builder.js";
+import {
+  containerOf,
+  SAMPLE_MARKETPLACE,
+  stubMachineEnv,
+} from "./testing/container-graph.builder.js";
 
 // A host records the real location of a source it was given, never a symlinked temp path:
 // the native resolution, which also expands a Windows short name the way `fs.realpath` does.
@@ -47,8 +51,8 @@ function hostedFramework(tools: ReturnType<typeof catalogOf>, root: string) {
       ],
     ]),
   };
-  const { syncSettingsUseCase } = wireMarketplace(withHost, wireInstallation(withHost));
-  return { activator, base, syncSettingsUseCase };
+  const { syncSettings } = wireMarketplace(withHost, wireInstallation(withHost));
+  return { activator, base, syncSettings };
 }
 
 describe("the settings sync a container wires", () => {
@@ -66,12 +70,9 @@ describe("the settings sync a container wires", () => {
   });
 
   it("purges this project's pre-migration copy once sync finds the framework at user scope", async () => {
-    const { registerFrameworkMarketplace, manifestRepo, syncSettingsUseCase } = await graphOf(
-      root,
-      { verbose: false },
-      undefined,
-      tools
-    );
+    const container = await containerOf(root, { verbose: false }, undefined, tools);
+    const { registerFrameworkMarketplace, manifestRepo } = container.shared;
+    const { syncSettings } = container.marketplace;
     await registerFrameworkMarketplace.execute({
       projectRoot: root,
       pluginSource: { kind: "local", path: SAMPLE_MARKETPLACE },
@@ -80,7 +81,7 @@ describe("the settings sync a container wires", () => {
     const preMigration = join(root, BUILT_CACHE_SUBDIR, FRAMEWORK_MARKETPLACE_NAME);
     await mkdir(preMigration, { recursive: true });
 
-    await syncSettingsUseCase.execute({
+    await syncSettings.execute({
       projectRoot: root,
       recreateFrameworkIfMissing: true,
     });
@@ -89,12 +90,9 @@ describe("the settings sync a container wires", () => {
   });
 
   it("moves a project-scope framework entry to the machine when sync recreates the framework", async () => {
-    const { registerFrameworkMarketplace, manifestRepo, syncSettingsUseCase } = await graphOf(
-      root,
-      { verbose: false },
-      undefined,
-      tools
-    );
+    const container = await containerOf(root, { verbose: false }, undefined, tools);
+    const { registerFrameworkMarketplace, manifestRepo } = container.shared;
+    const { syncSettings } = container.marketplace;
     await registerFrameworkMarketplace.execute({
       projectRoot: root,
       pluginSource: { kind: "local", path: SAMPLE_MARKETPLACE },
@@ -106,7 +104,7 @@ describe("the settings sync a container wires", () => {
     await rm(userEntries);
     await manifestRepo.save(Manifest.create());
 
-    await syncSettingsUseCase.execute({
+    await syncSettings.execute({
       projectRoot: root,
       recreateFrameworkIfMissing: true,
     });
@@ -116,7 +114,7 @@ describe("the settings sync a container wires", () => {
   });
 
   it("registers the framework marketplace with the host and enables its plugins through the host's own registries", async () => {
-    const { activator, base, syncSettingsUseCase } = hostedFramework(tools, root);
+    const { activator, base, syncSettings } = hostedFramework(tools, root);
     await base.registerFrameworkMarketplace.execute({
       projectRoot: root,
       pluginSource: {
@@ -128,7 +126,7 @@ describe("the settings sync a container wires", () => {
     manifest.addTool(TOOL.claude, "1.0.0", []);
     await base.manifestRepo.save(manifest);
 
-    await syncSettingsUseCase.execute({
+    await syncSettings.execute({
       projectRoot: root,
       enablePlugins: ["aidd-test"],
     });
@@ -138,7 +136,7 @@ describe("the settings sync a container wires", () => {
   });
 
   it("leaves the recorded manifests untouched when a second sync finds the host as recorded", async () => {
-    const { base, syncSettingsUseCase } = hostedFramework(tools, root);
+    const { base, syncSettings } = hostedFramework(tools, root);
     await base.registerFrameworkMarketplace.execute({
       projectRoot: root,
       pluginSource: {
@@ -149,13 +147,13 @@ describe("the settings sync a container wires", () => {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "1.0.0", []);
     await base.manifestRepo.save(manifest);
-    await syncSettingsUseCase.execute({ projectRoot: root, enablePlugins: ["aidd-test"] });
+    await syncSettings.execute({ projectRoot: root, enablePlugins: ["aidd-test"] });
     const projectSaves = vi.spyOn(base.manifestRepo, "save");
     const projectRecordSaves = vi.spyOn(base.manifestRepo, "saveRecords");
     const machineSaves = vi.spyOn(base.userManifestRepo, "save");
     const machineRecordSaves = vi.spyOn(base.userManifestRepo, "saveRecords");
 
-    await syncSettingsUseCase.execute({ projectRoot: root, enablePlugins: ["aidd-test"] });
+    await syncSettings.execute({ projectRoot: root, enablePlugins: ["aidd-test"] });
 
     expect(projectSaves).not.toHaveBeenCalled();
     expect(projectRecordSaves).not.toHaveBeenCalled();
@@ -164,7 +162,7 @@ describe("the settings sync a container wires", () => {
   });
 
   it("replaces a recorded source that no longer matches what the host holds", async () => {
-    const { base, syncSettingsUseCase } = hostedFramework(tools, root);
+    const { base, syncSettings } = hostedFramework(tools, root);
     await base.registerFrameworkMarketplace.execute({
       projectRoot: root,
       pluginSource: {
@@ -175,7 +173,7 @@ describe("the settings sync a container wires", () => {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "1.0.0", []);
     await base.manifestRepo.save(manifest);
-    await syncSettingsUseCase.execute({ projectRoot: root, enablePlugins: ["aidd-test"] });
+    await syncSettings.execute({ projectRoot: root, enablePlugins: ["aidd-test"] });
     const records = await base.manifestRepo.loadRecords();
     const recorded = hostRecord(records.get(TOOL.claude));
     if (recorded === undefined) throw new Error("the first sync recorded nothing");
@@ -188,7 +186,7 @@ describe("the settings sync a container wires", () => {
     });
     await base.manifestRepo.saveRecords(records);
 
-    await syncSettingsUseCase.execute({ projectRoot: root, enablePlugins: ["aidd-test"] });
+    await syncSettings.execute({ projectRoot: root, enablePlugins: ["aidd-test"] });
 
     expect((await base.manifestRepo.loadRecords()).get(TOOL.claude)?.marketplaces).toEqual(
       recorded.marketplaces

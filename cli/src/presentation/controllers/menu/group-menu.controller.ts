@@ -1,5 +1,5 @@
 import type { Command } from "commander";
-import type { CommandRunner, DepsSliceFactory } from "../../../orchestration/deps.js";
+import type { ContainerFactory } from "./global-options.controller.js";
 
 /** One thing a person can pick in a command group's menu. */
 export interface MenuChoice {
@@ -8,12 +8,20 @@ export interface MenuChoice {
   readonly description?: string;
 }
 
+/** Runs another `aidd` command and resolves with its exit code. */
+export type RunCommand = (argv: string[]) => Promise<number>;
+
+/** What a group menu reads of the container. */
+export interface GroupMenuContainer {
+  shared: { prompter: { select(message: string, choices: MenuChoice[]): Promise<string> } };
+}
+
 /** What a group offers when run with no subcommand, and how a pick runs. */
 interface GroupMenu {
   readonly question: string;
   readonly choices: readonly MenuChoice[];
-  readonly createDeps: DepsSliceFactory<"prompter">;
-  readonly runCommand: CommandRunner;
+  readonly containerOf: ContainerFactory<GroupMenuContainer>;
+  readonly runCommand: RunCommand;
 }
 
 /** On a terminal, asks which subcommand to run and re-runs the program with the pick; off a
@@ -24,8 +32,8 @@ export function offerGroupMenu(group: Command, menu: GroupMenu): void {
       group.help();
       return;
     }
-    const { prompter } = await menu.createDeps(process.cwd(), { verbose: false }, undefined);
-    const choice = await prompter.select(menu.question, [...menu.choices]);
+    const { shared } = await menu.containerOf(process.cwd(), { verbose: false }, undefined);
+    const choice = await shared.prompter.select(menu.question, [...menu.choices]);
     await menu.runCommand([group.name(), choice]);
   });
 }

@@ -12,13 +12,13 @@ import {
 import { concludeDoctor, type DoctorRun } from "./doctor-run.controller.js";
 
 export async function runFullDoctor({
-  deps,
+  container,
   output,
   projectRoot,
   pluginName,
 }: DoctorRun & { pluginName: string | undefined }): Promise<void> {
-  const doctorResult = await deps.doctorAllUseCase.execute(projectRoot, pluginName);
-  const statusResult = await deps.statusAllUseCase.execute(projectRoot);
+  const doctorResult = await container.doctor.doctorAll.execute(projectRoot, pluginName);
+  const statusResult = await container.global.reportAllStatus.execute(projectRoot);
   printReportErrors(output, doctorResult.errors);
   printInventory(output, {
     label: "AI",
@@ -42,7 +42,7 @@ export async function runFullDoctor({
 }
 
 export async function runScopedDoctor({
-  deps,
+  container,
   output,
   projectRoot,
   toolId,
@@ -56,8 +56,12 @@ export async function runScopedDoctor({
   const category: ToolCategory = tools.isAiTool(toolId) ? "ai" : "ide";
   // DoctorUseCase scopes by category, never by tool: the inventory below narrows to the exact
   // tool, the issue list stays category-wide.
-  const doctorReport = await deps.doctorUseCase.execute({ projectRoot, category, pluginName });
-  const statusReport = await deps.statusUseCase.execute({
+  const doctorReport = await container.doctor.runDoctor.execute({
+    projectRoot,
+    category,
+    pluginName,
+  });
+  const statusReport = await container.global.reportStatus.execute({
     projectRoot,
     filterToolId: toolId,
     pluginName,

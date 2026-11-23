@@ -2,9 +2,8 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createContainer } from "../../src/composition/container.js";
+import { containerFactory, createContainer } from "../../src/composition/container.js";
 import { wireInstallation } from "../../src/composition/contexts/installation.js";
-import { bindContainer } from "../../src/composition/orchestration/deps-graph.js";
 import { createOutput, wireBase } from "../../src/composition/shared.js";
 import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
 import { ManifestRepositoryAdapter } from "../../src/contexts/installation/infrastructure/manifest-repository-adapter.js";
@@ -14,14 +13,14 @@ import { manifestFileDeps } from "../contexts/installation/testing/manifest-file
 import { catalogOf } from "../shared/testing/catalog-of.builder.js";
 import { registeredTools, TOOL } from "../shared/testing/registered-tools.builder.js";
 
-const graphOf = (
+const containerOf = (
   projectRoot: string,
-  options: Parameters<ReturnType<typeof bindContainer>>[1],
+  options: Parameters<ReturnType<typeof containerFactory>>[1],
   output: Output | undefined,
   tools: ReturnType<typeof catalogOf>
-) => bindContainer(tools)(projectRoot, options, output);
+) => containerFactory(tools)(projectRoot, options, output);
 
-describe("the graph a container hands the commands", () => {
+describe("the container a command is handed", () => {
   const tools = catalogOf();
   let root: string;
 
@@ -37,7 +36,9 @@ describe("the graph a container hands the commands", () => {
     const output = createOutput(false);
     const withOutput = await mkdtemp(join(tmpdir(), "aidd-create-deps-output-"));
     try {
-      expect((await graphOf(withOutput, { verbose: false }, output, tools)).logger).toBe(output);
+      expect((await containerOf(withOutput, { verbose: false }, output, tools)).shared.logger).toBe(
+        output
+      );
     } finally {
       await rm(withOutput, { recursive: true, force: true });
     }
@@ -47,8 +48,8 @@ describe("the graph a container hands the commands", () => {
     const handed = catalogOf();
     const walked = vi.spyOn(handed, "inHelpOrder");
 
-    const graph = await graphOf(root, { verbose: false }, undefined, handed);
-    graph.runUserScopeDoctor;
+    const container = await containerOf(root, { verbose: false }, undefined, handed);
+    container.doctor.runUserScopeDoctor;
 
     expect(walked).toHaveBeenCalled();
   });
@@ -65,7 +66,8 @@ describe("the graph a container hands the commands", () => {
 
     async function registerThenOverwrite(scope: Scope) {
       vi.stubEnv("AIDD_USER_CONFIG_DIR", join(root, "user-config"));
-      const { addMarketplace } = await graphOf(root, { verbose: false }, undefined, tools);
+      const container = await containerOf(root, { verbose: false }, undefined, tools);
+      const { addMarketplace } = container.marketplace;
       const command = { source, name: "awesome", scope, projectRoot: root, autoTrust: true };
       await addMarketplace.execute(command);
       return addMarketplace.execute({ ...command, overwrite: true });
@@ -84,9 +86,10 @@ describe("the graph a container hands the commands", () => {
     });
   });
 
-  it("builds a flat distribution through the graph's own files and assets", async () => {
+  it("builds a flat distribution through the container's own files and assets", async () => {
     const fixture = join(process.cwd(), "tests/fixtures/framework");
-    const { frameworkBuild } = await graphOf(root, { verbose: false }, undefined, tools);
+    const container = await containerOf(root, { verbose: false }, undefined, tools);
+    const { frameworkBuild } = container.translate;
 
     await frameworkBuild({ target: "copilot", mode: "flat", outDir: root, force: false })?.execute({
       sourceDir: fixture,

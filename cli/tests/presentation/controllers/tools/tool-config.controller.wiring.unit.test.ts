@@ -13,7 +13,7 @@ import { toolConfigHarness } from "../../../shared/testing/tool-config-command.b
 
 const PROJECT_ROOT = process.cwd();
 const CATALOG = syntheticMixedCatalog();
-const { listInstalledRules, createDeps, errors, run } = toolConfigHarness({
+const { listInstalledRules, containerOf, errors, run } = toolConfigHarness({
   tools: CATALOG,
   ideTool: SYNTHETIC_IDE_TOOL,
   aiTool: SYNTHETIC_TOOL,
@@ -71,7 +71,7 @@ describe("aidd framework - how every subcommand builds its graph and reports a f
   ])("hands %j this run's verbosity, never an empty option set", async (...args) => {
     await run(...args);
 
-    expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
+    expect(vi.mocked(containerOf)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: false },
       expect.anything()
@@ -95,7 +95,7 @@ describe("aidd framework - the help surface", () => {
   function frameworkCommand(): Command {
     const program = new Command();
     bindOutput(program, processOutputFactory());
-    registerToolConfigCommand(program, CATALOG, createDeps);
+    registerToolConfigCommand(program, CATALOG, containerOf);
     const framework = program.commands.find((command) => command.name() === "framework");
     if (framework === undefined) throw new Error("framework command was not registered");
     return framework;

@@ -103,16 +103,56 @@ export function parsePluginSource(raw: unknown): PluginSource {
 }
 
 function parseStringPluginSource(raw: string): PluginSource {
-  // `isAbsolute` also catches a Windows-rooted path (`C:\...`, `\\server\share`), which
-  // starts with neither `/` nor `./`.
-  if (raw.startsWith("./") || isAbsolute(raw)) return { kind: "local", path: raw };
+  const local = localSourceOf(raw);
+  if (local !== null) return local;
   if (GITHUB_REPO_REGEX.test(raw)) return { kind: "github", repo: raw };
   throw new InvalidPluginSourceError(`string source "${raw}" is not a recognized path or repo.`);
 }
 
+function localSourceOf(raw: string): PluginSourceLocal | null {
+  // `isAbsolute` also catches a Windows-rooted path (`C:\...`, `\\server\share`), which
+  // starts with neither `/` nor `./`.
+  return raw.startsWith("./") || isAbsolute(raw) ? { kind: "local", path: raw } : null;
+}
+
+/** A source as typed: URL, path, `owner/repo[@ref]`, `gitlab:owner/repo[@ref]` or source JSON. */
+export function parsePluginSourceShorthand(raw: string): PluginSource {
+  if (/^(?:https?:\/\/|git@)/.test(raw)) return { kind: "url", url: raw };
+  if (raw.startsWith("gitlab:")) return gitLabSourceOf(raw.slice("gitlab:".length));
+  const repo = repoAndRefOf(raw);
+  return localSourceOf(raw) ?? (repo && { kind: "github", ...repo }) ?? parseJsonSource(raw);
+}
+
+/** `owner/repo[@ref]` split on the last `@`, so a ref holding one leaves an invalid repo. */
+function repoAndRefOf(raw: string): { repo: string; ref?: string } | null {
+  const at = raw.lastIndexOf("@");
+  const repo = at > 0 ? raw.slice(0, at) : raw;
+  if (!GITHUB_REPO_REGEX.test(repo)) return null;
+  return at > 0 ? { repo, ref: raw.slice(at + 1) } : { repo };
+}
+
+function gitLabSourceOf(raw: string): PluginSourceUrl {
+  const parts = repoAndRefOf(raw);
+  if (parts === null) {
+    throw new InvalidPluginSourceError(
+      `"gitlab:${raw}" must match gitlab:owner/repo or gitlab:owner/repo@ref`
+    );
+  }
+  const { repo, ...ref } = parts;
+  return { kind: "url", url: `https://gitlab.com/${repo}.git`, ...ref };
+}
+
+function parseJsonSource(raw: string): PluginSource {
+  try {
+    return parsePluginSource(JSON.parse(raw));
+  } catch (err) {
+    if (err instanceof InvalidPluginSourceError) throw err;
+    throw new InvalidPluginSourceError(`unrecognized source format: "${raw}"`);
+  }
+}
+
 function parseObjectPluginSource(obj: Record<string, unknown>): PluginSource {
-  const kind = obj.kind;
-  switch (kind) {
+  switch (obj.kind) {
     case "github":
       return parseGitHub(obj);
     case "url":
@@ -125,7 +165,7 @@ function parseObjectPluginSource(obj: Record<string, unknown>): PluginSource {
       return parseLocal(obj);
     default:
       throw new InvalidPluginSourceError(
-        `unknown kind "${String(kind)}". Expected: github, url, git-subdir, npm, local.`
+        `unknown kind "${String(obj.kind)}". Expected: github, url, git-subdir, npm, local.`
       );
   }
 }

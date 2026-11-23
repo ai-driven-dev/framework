@@ -13,7 +13,6 @@ import {
 import { delimiter, dirname, join } from "node:path";
 import { expect, vi } from "vitest";
 import { wireTelemetry } from "../../../../src/composition/contexts/telemetry.js";
-import type { TelemetryDeps } from "../../../../src/orchestration/deps.js";
 import { git, initRepository } from "../../../shared/testing/git-sandbox.builder.js";
 import { prompterAnswering } from "../../../shared/testing/partial-ports.builder.js";
 import { REPOSITORY_ROOT } from "../../../shared/testing/repository-root.builder.js";
@@ -55,14 +54,14 @@ export function writeAiddStandIn(bin: string): void {
 }
 
 let box: TelemetrySandbox;
-let deps: TelemetryDeps;
+let deps: ReturnType<typeof wireTelemetry>;
 let base: number;
 let calls = 0;
 
 export class World {
   constructor(readonly sandbox: TelemetrySandbox) {}
 
-  get deps(): TelemetryDeps {
+  get deps(): ReturnType<typeof wireTelemetry> {
     return deps;
   }
 

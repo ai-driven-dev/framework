@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { parsePluginSourceShorthand } from "../../../../src/orchestration/domain/source-shorthand.model.js";
 import { bindOutput } from "../../../../src/presentation/controllers/menu/global-options.controller.js";
+import { parsePluginSourceShorthand } from "../../../../src/shared/domain/plugin/source-parsing.js";
 import { ExitRequested } from "../../../shared/testing/capturing-output.fake.js";
 import { processOutputFactory } from "../../../shared/testing/output-factory.builder.js";
 import { parseToExit } from "../../../shared/testing/parse-to-exit.builder.js";
@@ -19,16 +19,20 @@ const promptInput = vi.fn();
 const menuSelect = vi.fn();
 const spawn = vi.fn();
 
-const createDeps = vi.fn(async () => ({
-  addMarketplace: { execute: marketplaceAdd },
-  listMarketplaces: { execute: marketplaceList },
-  listMarketplaceCatalogs: { execute: marketplaceCatalogs },
-  marketplaceRemoveUseCase: { execute: marketplaceRemove },
-  userMarketplaceRemoveUseCase: { execute: userMarketplaceRemove },
-  refreshMarketplace: { execute: marketplaceRefresh },
-  marketplaceCheckUseCase: { execute: marketplaceCheck },
-  syncNativeActivation: { execute: activation },
-  prompter: prompterAnswering({ input: promptInput, select: menuSelect }),
+const containerOf = vi.fn(async () => ({
+  marketplace: {
+    addMarketplace: { execute: marketplaceAdd },
+    listMarketplaceCatalogs: { execute: marketplaceCatalogs },
+    removeProjectMarketplace: { execute: marketplaceRemove },
+    removeUserMarketplace: { execute: userMarketplaceRemove },
+    refreshMarketplace: { execute: marketplaceRefresh },
+    checkMarketplaceUpstream: { execute: marketplaceCheck },
+    syncNativeActivation: { execute: activation },
+  },
+  shared: {
+    listMarketplaces: { execute: marketplaceList },
+    prompter: prompterAnswering({ input: promptInput, select: menuSelect }),
+  },
 }));
 
 const { registerMarketplaceCommand } = await import(
@@ -88,7 +92,7 @@ async function run(...args: string[]): Promise<string[]> {
   bindOutput(program, processOutputFactory());
   program.exitOverride();
   program.option("--verbose");
-  registerMarketplaceCommand(program, createDeps, spawn);
+  registerMarketplaceCommand(program, containerOf, spawn);
   await parseToExit(program, ["node", "aidd", "marketplace", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -153,7 +157,7 @@ describe("aidd marketplace add", () => {
   it("hands the given token to the composition root, where every fetcher reads it", async () => {
     await run("add", "market-b", "/some/source", "--token", "ghp_x");
 
-    expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
+    expect(vi.mocked(containerOf)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: false, token: "ghp_x" },
       expect.anything()
@@ -182,7 +186,7 @@ describe("aidd marketplace add", () => {
 
     expect(errors[0]).toBe("Error: name and source are required in non-interactive mode.\n");
     expect(exit).toHaveBeenCalledWith(1);
-    expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
+    expect(vi.mocked(containerOf)).not.toHaveBeenCalled();
   });
 
   it("refuses a scope that is neither project nor user", async () => {
@@ -195,14 +199,14 @@ describe("aidd marketplace add", () => {
     );
 
     expect(errors[0]).toBe("Error: Invalid --scope 'machine'. Expected 'project' or 'user'.\n");
-    expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
+    expect(vi.mocked(containerOf)).not.toHaveBeenCalled();
   });
 });
 
 it("hands no token when none was given", async () => {
   await run("add", "market-b", "/some/source");
 
-  expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
+  expect(vi.mocked(containerOf)).toHaveBeenCalledWith(
     PROJECT_ROOT,
     { verbose: false, token: undefined },
     expect.anything()
@@ -287,7 +291,7 @@ describe("aidd marketplace remove", () => {
     });
     await expect(run("remove", "market-b", "--scope", "machine")).rejects.toThrow(ExitRequested);
     expect(errors.join("")).toBe("Error: Invalid scope 'machine'. Expected 'project' or 'user'.\n");
-    expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
+    expect(vi.mocked(containerOf)).not.toHaveBeenCalled();
     expect(marketplaceRemove).not.toHaveBeenCalled();
     expect(userMarketplaceRemove).not.toHaveBeenCalled();
   });
@@ -368,7 +372,7 @@ describe("aidd marketplace - how every subcommand builds its graph and reports a
   ])("hands %j this run's verbosity, never an empty option set", async (...args) => {
     await run(...args);
 
-    expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
+    expect(vi.mocked(containerOf)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: false },
       expect.anything()
@@ -392,7 +396,7 @@ describe("aidd marketplace - the help surface", () => {
   function marketplaceCommand(): Command {
     const program = new Command();
     bindOutput(program, processOutputFactory());
-    registerMarketplaceCommand(program, createDeps, spawn);
+    registerMarketplaceCommand(program, containerOf, spawn);
     const marketplace = program.commands.find((command) => command.name() === "marketplace");
     if (marketplace === undefined) throw new Error("marketplace command was not registered");
     return marketplace;

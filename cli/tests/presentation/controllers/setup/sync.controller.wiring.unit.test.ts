@@ -26,16 +26,18 @@ const userPluginUpdate = vi.fn();
 
 const CATALOG = syntheticMixedCatalog();
 
-const createDeps = vi.fn(async () => ({
-  runSync: new RunSync({ execute: restoreAll }, { execute: restoreOne }, { execute: activation }),
-  runUserScopeSync: new RunUserScopeSync(
-    {
-      machine: new ReadMachineInstallation(userManifestRepo),
-      userPlugins: { execute: userPluginUpdate },
-      syncSettings: { execute: activation },
-    },
-    CATALOG
-  ),
+const containerOf = vi.fn(async () => ({
+  global: {
+    runSync: new RunSync({ execute: restoreAll }, { execute: restoreOne }, { execute: activation }),
+    runUserScopeSync: new RunUserScopeSync(
+      {
+        machine: new ReadMachineInstallation(userManifestRepo),
+        userPlugins: { execute: userPluginUpdate },
+        syncSettings: { execute: activation },
+      },
+      CATALOG
+    ),
+  },
 }));
 
 const { registerSyncCommand } = await import(
@@ -97,7 +99,7 @@ async function run(...args: string[]): Promise<string[]> {
   bindOutput(program, processOutputFactory());
   program.exitOverride();
   program.option("--verbose");
-  registerSyncCommand(program, createDeps);
+  registerSyncCommand(program, containerOf);
   await parseToExit(program, ["node", "aidd", "sync", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -394,7 +396,7 @@ describe("aidd sync - how it builds its graph", () => {
   it("builds the graph for this project at this run's verbosity", async () => {
     await run("--verbose");
 
-    expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
+    expect(vi.mocked(containerOf)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: true },
       expect.anything()

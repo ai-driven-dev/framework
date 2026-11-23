@@ -12,7 +12,7 @@ const ROOT = "/aidd-scope-wiring-unopened";
 
 function installPlugin() {
   const base = wireBase({ projectRoot: ROOT, verbose: false, tools: registeredTools() });
-  return wirePlugin(base, wireInstallation(base)).pluginInstallUseCase;
+  return wirePlugin(base, wireInstallation(base)).installPlugin;
 }
 
 const install = (toolId: typeof TOOL.claude, scope: Scope) =>

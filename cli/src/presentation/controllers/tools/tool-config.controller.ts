@@ -1,25 +1,26 @@
 import type { Command } from "commander";
 import type { ToolCatalog } from "../../../contexts/tools/contract/tool-catalog.js";
-import type { DepsSliceFactory } from "../../../orchestration/deps.js";
 import {
   printInstalledRules,
   printInstalledRulesJson,
 } from "../../presenters/plugin/installed-rules.presenter.js";
-import { parseGlobalOptions } from "../menu/global-options.controller.js";
-import { type RecipesKeys, registerRecipesCommand } from "../recipes.controller.js";
-import type { ToolConfigKeys } from "./tool-config-run.controller.js";
+import { type ContainerFactory, parseGlobalOptions } from "../menu/global-options.controller.js";
+import { type RecipesContainer, registerRecipesCommand } from "../recipes.controller.js";
+import type { ToolConfigContainer } from "./tool-config-run.controller.js";
 import { installTool } from "./tool-install.controller.js";
 import { removeTool, updateTools } from "./tool-maintain.controller.js";
 
+type Factory = ContainerFactory<ToolConfigContainer & RecipesContainer>;
+
 interface ToolConfigWiring {
   readonly catalog: ToolCatalog;
-  readonly createDeps: DepsSliceFactory<ToolConfigKeys | RecipesKeys>;
+  readonly containerOf: Factory;
 }
 
 function registerInstall(
   program: Command,
   toolConfig: Command,
-  { catalog, createDeps }: ToolConfigWiring
+  { catalog, containerOf }: ToolConfigWiring
 ): void {
   toolConfig
     .command("install")
@@ -31,9 +32,9 @@ function registerInstall(
     .option("--no-plugins", "Skip propagation of already-installed plugins onto the new tool")
     .action(async (cmdOptions: { tool: string; force: boolean; plugins: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const deps = await createDeps(projectRoot, { verbose }, output);
+      const container = await containerOf(projectRoot, { verbose }, output);
       await installTool({
-        deps,
+        container,
         output,
         projectRoot,
         raw: cmdOptions.tool,
@@ -46,7 +47,7 @@ function registerInstall(
 function registerRemove(
   program: Command,
   toolConfig: Command,
-  { catalog, createDeps }: ToolConfigWiring
+  { catalog, containerOf }: ToolConfigWiring
 ): void {
   toolConfig
     .command("remove")
@@ -56,15 +57,15 @@ function registerRemove(
     .requiredOption("--tool <tool>", "AI or IDE tool ID")
     .action(async (cmdOptions: { tool: string }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const deps = await createDeps(projectRoot, { verbose }, output);
-      await removeTool({ deps, output, projectRoot, raw: cmdOptions.tool, catalog });
+      const container = await containerOf(projectRoot, { verbose }, output);
+      await removeTool({ container, output, projectRoot, raw: cmdOptions.tool, catalog });
     });
 }
 
 function registerUpdate(
   program: Command,
   toolConfig: Command,
-  { catalog, createDeps }: ToolConfigWiring
+  { catalog, containerOf }: ToolConfigWiring
 ): void {
   toolConfig
     .command("update")
@@ -75,9 +76,9 @@ function registerUpdate(
     .option("-f, --force", "Overwrite modified files without prompting", false)
     .action(async (cmdOptions: { tool?: string; force: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const deps = await createDeps(projectRoot, { verbose }, output);
+      const container = await containerOf(projectRoot, { verbose }, output);
       await updateTools({
-        deps,
+        container,
         output,
         projectRoot,
         raw: cmdOptions.tool,
@@ -87,19 +88,15 @@ function registerUpdate(
     });
 }
 
-function registerRules(
-  program: Command,
-  toolConfig: Command,
-  createDeps: DepsSliceFactory<ToolConfigKeys | RecipesKeys>
-): void {
+function registerRules(program: Command, toolConfig: Command, containerOf: Factory): void {
   toolConfig
     .command("rules")
     .description("List the rules installed in this project, across every AI tool")
     .option("--json", "Print the inventory as JSON")
     .action(async (cmdOptions: { json?: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const deps = await createDeps(projectRoot, { verbose }, output);
-      const { rules } = await deps.listInstalledRulesUseCase.execute({
+      const container = await containerOf(projectRoot, { verbose }, output);
+      const { rules } = await container.installation.listInstalledRules.execute({
         projectRoot,
       });
       if (cmdOptions.json) printInstalledRulesJson(output, rules);
@@ -110,16 +107,16 @@ function registerRules(
 export function registerToolConfigCommand(
   program: Command,
   catalog: ToolCatalog,
-  createDeps: DepsSliceFactory<ToolConfigKeys | RecipesKeys>
+  containerOf: Factory
 ): void {
   const toolConfig = program
     .command("framework")
     .description("Manage the framework's lifecycle on installed tools");
 
-  const wiring = { catalog, createDeps };
+  const wiring = { catalog, containerOf };
   registerInstall(program, toolConfig, wiring);
   registerRemove(program, toolConfig, wiring);
   registerUpdate(program, toolConfig, wiring);
-  registerRules(program, toolConfig, createDeps);
-  registerRecipesCommand(toolConfig, program, createDeps);
+  registerRules(program, toolConfig, containerOf);
+  registerRecipesCommand(toolConfig, program, containerOf);
 }

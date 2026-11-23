@@ -72,7 +72,7 @@ function registrationCheckOver(base: Base, manifests: ManifestRepository & Scope
 export function wireDoctor(base: Base, inst: Installation) {
   const { fs, tools } = base;
   const loadManifest = new LoadManifest(base.manifestRepo);
-  const doctorUseCase = new RunDoctor(
+  const runDoctor = new RunDoctor(
     {
       inspect: new InspectInstallation({
         load: loadManifest,
@@ -92,10 +92,6 @@ export function wireDoctor(base: Base, inst: Installation) {
     inst.readMachineInstallation,
     registrationCheckOver(base, base.userManifestRepo)
   );
-  const doctorAllUseCase = {
-    execute: (projectRoot: string, pluginName?: string) =>
-      doctorAll(doctorUseCase, projectRoot, pluginName),
-  };
   const userSettingsFileOf = (toolId: string): string | undefined => {
     const profile = tools.profile(toolId);
     return profile.kind === "ai"
@@ -104,5 +100,9 @@ export function wireDoctor(base: Base, inst: Installation) {
           ?.userSettingsFile(base.homedir(), (name) => base.environment.get(name))
       : undefined;
   };
-  return { doctorUseCase, runUserScopeDoctor, doctorAllUseCase, userSettingsFileOf };
+  const doctorEveryPlugin = {
+    execute: (projectRoot: string, pluginName?: string) =>
+      doctorAll(runDoctor, projectRoot, pluginName),
+  };
+  return { runDoctor, runUserScopeDoctor, doctorAll: doctorEveryPlugin, userSettingsFileOf };
 }

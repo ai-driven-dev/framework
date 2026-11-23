@@ -1,53 +1,66 @@
 import type { Command } from "commander";
+import type { UpdatePlugin } from "../../../contexts/installation/application/plugin/update-plugin.use-case.js";
+import type { RemoveUserPluginRequest } from "../../../contexts/installation/application/removal/remove-user-plugin.use-case.js";
 import type { ToolCatalog } from "../../../contexts/tools/contract/tool-catalog.js";
-import type { DepsSliceFactory } from "../../../orchestration/deps.js";
 import { aiToolSelectionOf } from "../../../orchestration/domain/ai-tool-selection.model.js";
+import type { RemovePlugin } from "../../../orchestration/plugin/remove-plugin.use-case.js";
+import type { UpdateUserPlugin } from "../../../orchestration/plugin/update-user-plugin.use-case.js";
+import type { SyncNativeActivation } from "../../../orchestration/sync/settings/sync-native-activation.use-case.js";
 import { parseScope } from "../../../shared/domain/scope.js";
 import {
   printPluginRemoved,
   printPluginsUpdated,
 } from "../../presenters/plugin/plugin.presenter.js";
 import { reportNativeActivation } from "../../presenters/setup/sync.presenter.js";
-import { parseGlobalOptions } from "../menu/global-options.controller.js";
+import { type ContainerFactory, parseGlobalOptions } from "../menu/global-options.controller.js";
 
-/** What removing or updating a plugin reads of the graph. */
-export type ChangeKeys =
-  | "pluginRemoveUseCase"
-  | "userPluginRemove"
-  | "pluginUpdateUseCase"
-  | "userPluginUpdateUseCase"
-  | "syncNativeActivation";
+/** What removing or updating a plugin reads of the container. */
+export interface ChangeContainer {
+  plugin: {
+    removePlugin: Pick<RemovePlugin, "execute">;
+    /** The user-scope removal, its home directory already bound. */
+    userPluginRemove: {
+      execute: (options: Omit<RemoveUserPluginRequest, "home" | "records">) => Promise<void>;
+    };
+    updatePlugin: Pick<UpdatePlugin, "execute">;
+    updateUserPlugin: Pick<UpdateUserPlugin, "execute">;
+  };
+  marketplace: { syncNativeActivation: Pick<SyncNativeActivation, "execute"> };
+}
 
 export interface ChangeOptions {
   readonly tool?: string;
   readonly scope?: string;
 }
 
-/** The command a change belongs to, the tools it can target, and how it builds its graph. */
+/** The command a change belongs to, the tools it can target, and how it builds its container. */
 interface ChangeEnvironment {
   readonly program: Command;
   readonly catalog: ToolCatalog;
-  readonly createDeps: DepsSliceFactory<ChangeKeys>;
+  readonly containerOf: ContainerFactory<ChangeContainer>;
 }
 
 /** What every change shares: where it runs, what it reaches, and at which scope. */
 async function changeOf(
-  { program, catalog, createDeps }: ChangeEnvironment,
+  { program, catalog, containerOf }: ChangeEnvironment,
   options: ChangeOptions
 ) {
   const { verbose, output, projectRoot } = parseGlobalOptions(program);
   const scope = parseScope(options.scope) ?? "project";
-  const deps = await createDeps(projectRoot, { verbose }, output);
+  const container = await containerOf(projectRoot, { verbose }, output);
   return {
     output,
     projectRoot,
     scope,
-    deps,
+    container,
     toolIds: aiToolSelectionOf(options.tool, catalog),
     /** A project-scope change re-drives native activation; a user-scope one has none. */
     async reactivate() {
       if (scope === "project") {
-        reportNativeActivation(output, await deps.syncNativeActivation.execute({ projectRoot }));
+        reportNativeActivation(
+          output,
+          await container.marketplace.syncNativeActivation.execute({ projectRoot })
+        );
       }
     },
   };
@@ -58,12 +71,15 @@ export async function removePluginFrom(
   name: string,
   options: ChangeOptions
 ): Promise<void> {
-  const { output, projectRoot, toolIds, scope, deps, reactivate } = await changeOf(
+  const { output, projectRoot, toolIds, scope, container, reactivate } = await changeOf(
     environment,
     options
   );
   const removal = { pluginName: name, toolIds, projectRoot };
-  await (scope === "user" ? deps.userPluginRemove : deps.pluginRemoveUseCase).execute(removal);
+  await (scope === "user"
+    ? container.plugin.userPluginRemove
+    : container.plugin.removePlugin
+  ).execute(removal);
   await reactivate();
   printPluginRemoved(output, name);
 }
@@ -73,11 +89,12 @@ export async function updatePluginsFrom(
   name: string | undefined,
   options: ChangeOptions
 ): Promise<void> {
-  const { output, projectRoot, toolIds, scope, deps, reactivate } = await changeOf(
+  const { output, projectRoot, toolIds, scope, container, reactivate } = await changeOf(
     environment,
     options
   );
-  const update = scope === "user" ? deps.userPluginUpdateUseCase : deps.pluginUpdateUseCase;
+  const update =
+    scope === "user" ? container.plugin.updateUserPlugin : container.plugin.updatePlugin;
   const pluginNames = name !== undefined ? [name] : undefined;
   const updated = await update.execute({ pluginNames, toolIds, projectRoot, scope });
   await reactivate();

@@ -159,7 +159,7 @@ export function wireClean(base: Base, inst: Installation) {
     userSourceReferences: base.userSourceReferences,
     purgeCache,
   });
-  const cleanUseCase = wireCleanProject(base, inst, claims);
-  const cleanUserScopeUseCase = wireCleanUserScope(base, { purgeCache, claims });
-  return { uninstallTools, cleanUseCase, cleanUserScopeUseCase };
+  const cleanProject = wireCleanProject(base, inst, claims);
+  const cleanUserScope = wireCleanUserScope(base, { purgeCache, claims });
+  return { uninstallTools, cleanProject, cleanUserScope };
 }

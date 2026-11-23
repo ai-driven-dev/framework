@@ -10,7 +10,7 @@ import { catalogOf } from "../shared/testing/catalog-of.builder.js";
 import { TOOL } from "../shared/testing/registered-tools.builder.js";
 import {
   aPlugin,
-  graphOf,
+  containerOf,
   SAMPLE_MARKETPLACE,
   stubMachineEnv,
 } from "./testing/container-graph.builder.js";
@@ -31,17 +31,14 @@ describe("the doctor and clean commands a container wires", () => {
   });
 
   it("checks every category of an installed project and reports no category it could not check", async () => {
-    const { manifestRepo, doctorAllUseCase } = await graphOf(
-      root,
-      { verbose: false },
-      undefined,
-      tools
-    );
+    const container = await containerOf(root, { verbose: false }, undefined, tools);
+    const { manifestRepo } = container.shared;
+    const { doctorAll } = container.doctor;
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "1.0.0", []);
     await manifestRepo.save(manifest);
 
-    const result = await doctorAllUseCase.execute(root);
+    const result = await doctorAll.execute(root);
 
     expect(result.errors).toEqual([]);
     expect(result.ai?.toolHealth).toEqual([
@@ -50,17 +47,19 @@ describe("the doctor and clean commands a container wires", () => {
   });
 
   it("counts the token given on the command line as authenticated", async () => {
-    const { manifestRepo, doctorUseCase } = await graphOf(
+    const container = await containerOf(
       root,
       { verbose: false, token: "ghp_given" },
       undefined,
       tools
     );
+    const { manifestRepo } = container.shared;
+    const { runDoctor } = container.doctor;
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "1.0.0", []);
     await manifestRepo.save(manifest);
 
-    const report = await doctorUseCase.execute({ projectRoot: root });
+    const report = await runDoctor.execute({ projectRoot: root });
 
     expect(report.issues.map((issue) => issue.message)).not.toContain("Not authenticated");
   });
@@ -69,29 +68,23 @@ describe("the doctor and clean commands a container wires", () => {
     const builtCache = join(root, "user-config", "cache", "built");
     await mkdir(join(builtCache, "1.0.0"), { recursive: true });
     await writeFile(join(builtCache, "1.0.0", "marker"), "");
-    const { userManifestRepo, cleanUserScopeUseCase } = await graphOf(
-      root,
-      { verbose: false },
-      undefined,
-      tools
-    );
+    const container = await containerOf(root, { verbose: false }, undefined, tools);
+    const { userManifestRepo } = container.shared;
+    const { cleanUserScope } = container.clean;
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "1.0.0", []);
     manifest.addPlugin(TOOL.cursor, aPlugin("user"));
     await userManifestRepo.save(manifest);
 
-    await cleanUserScopeUseCase.execute({ projectRoot: root, force: true });
+    await cleanUserScope.execute({ projectRoot: root, force: true });
 
     expect(existsSync(builtCache)).toBe(false);
   });
 
   it("refuses a user clean whose host binary cannot be found, naming why", async () => {
-    const { userManifestRepo, cleanUserScopeUseCase } = await graphOf(
-      root,
-      { verbose: false },
-      undefined,
-      tools
-    );
+    const container = await containerOf(root, { verbose: false }, undefined, tools);
+    const { userManifestRepo } = container.shared;
+    const { cleanUserScope } = container.clean;
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "1.0.0", []);
     await userManifestRepo.saveRecords(
@@ -99,7 +92,7 @@ describe("the doctor and clean commands a container wires", () => {
     );
     await userManifestRepo.save(manifest);
 
-    await expect(cleanUserScopeUseCase.execute({ projectRoot: root, force: true })).rejects.toThrow(
+    await expect(cleanUserScope.execute({ projectRoot: root, force: true })).rejects.toThrow(
       "User clean refused; canonical claims retained."
     );
   });
@@ -109,9 +102,10 @@ describe("the doctor and clean commands a container wires", () => {
     await mkdir(join(sources, FRAMEWORK_MARKETPLACE_NAME), { recursive: true });
     await mkdir(join(sources, "awesome"), { recursive: true });
     await writeFile(join(sources, "awesome", "source"), "another marketplace's clone");
-    const { cleanUserScopeUseCase } = await graphOf(root, { verbose: false }, undefined, tools);
+    const container = await containerOf(root, { verbose: false }, undefined, tools);
+    const { cleanUserScope } = container.clean;
 
-    await cleanUserScopeUseCase.execute({ projectRoot: root, force: true });
+    await cleanUserScope.execute({ projectRoot: root, force: true });
 
     expect(existsSync(join(sources, FRAMEWORK_MARKETPLACE_NAME))).toBe(false);
     expect(existsSync(join(sources, "awesome"))).toBe(true);
@@ -119,9 +113,10 @@ describe("the doctor and clean commands a container wires", () => {
 
   it("names the framework's shared source when a user clean asks before removing it", async () => {
     const asked = vi.spyOn(SilentPrompterAdapter.prototype, "confirm").mockResolvedValue(false);
-    const { cleanUserScopeUseCase } = await graphOf(root, { verbose: false }, undefined, tools);
+    const container = await containerOf(root, { verbose: false }, undefined, tools);
+    const { cleanUserScope } = container.clean;
 
-    await cleanUserScopeUseCase.execute({
+    await cleanUserScope.execute({
       projectRoot: root,
       force: false,
       interactive: true,
@@ -133,8 +128,9 @@ describe("the doctor and clean commands a container wires", () => {
   });
 
   it("tells a project clean which other projects still reference the framework's shared source, and drops only its own claim", async () => {
-    const { registerFrameworkMarketplace, manifestRepo, userSourceReferences, cleanUseCase } =
-      await graphOf(root, { verbose: false }, undefined, tools);
+    const container = await containerOf(root, { verbose: false }, undefined, tools);
+    const { registerFrameworkMarketplace, manifestRepo, userSourceReferences } = container.shared;
+    const { cleanProject } = container.clean;
     await registerFrameworkMarketplace.execute({
       projectRoot: root,
       pluginSource: { kind: "local", path: SAMPLE_MARKETPLACE },
@@ -147,7 +143,7 @@ describe("the doctor and clean commands a container wires", () => {
     await userSourceReferences.addReference("1.0.0", await realpath(root));
     await userSourceReferences.addReference("1.0.0", await realpath(other));
 
-    const result = await cleanUseCase.execute({ projectRoot: root, force: true });
+    const result = await cleanProject.execute({ projectRoot: root, force: true });
 
     expect(result.preview.sharedSourceOtherProjects).toEqual([await realpath(other)]);
     expect(await userSourceReferences.listAllReferencingProjects()).toEqual([
@@ -156,19 +152,16 @@ describe("the doctor and clean commands a container wires", () => {
   });
 
   it("refuses a project clean whose plugin's MCP entries cannot be read back", async () => {
-    const { manifestRepo, cleanUseCase } = await graphOf(
-      root,
-      { verbose: false },
-      undefined,
-      tools
-    );
+    const container = await containerOf(root, { verbose: false }, undefined, tools);
+    const { manifestRepo } = container.shared;
+    const { cleanProject } = container.clean;
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "1.0.0", []);
     manifest.addPlugin(TOOL.opencode, aPlugin("project", { mcpEntries: { server: "digest" } }));
     await manifestRepo.save(manifest);
     await mkdir(join(root, "opencode.json"));
 
-    await expect(cleanUseCase.execute({ projectRoot: root, force: true })).rejects.toMatchObject({
+    await expect(cleanProject.execute({ projectRoot: root, force: true })).rejects.toMatchObject({
       code: "EISDIR",
     });
     expect(existsSync(join(root, ".aidd", "manifest.json"))).toBe(true);

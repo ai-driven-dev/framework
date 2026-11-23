@@ -11,10 +11,13 @@ import {
 } from "../../../contexts/telemetry/contract/report-filter.js";
 import { USAGE_AGENTS, USAGE_TOOLS } from "../../../contexts/telemetry/contract/usage-record.js";
 import { REPORT_AXES, type ReportAxis } from "../../../contexts/telemetry/contract/usage-report.js";
-import type { TelemetryRequests } from "../../../orchestration/deps.js";
 import type { Output } from "../../../orchestration/domain/output.js";
 import { printUsageReport } from "../../presenters/telemetry/telemetry-report.presenter.js";
-import { commandOf, type TelemetrySurface } from "./telemetry-surface.controller.js";
+import {
+  commandOf,
+  type TelemetryRequests,
+  type TelemetrySurface,
+} from "./telemetry-surface.controller.js";
 
 type ReportCommandOptions = {
   from?: string;
@@ -115,10 +118,10 @@ function printReportOutcome(output: Output, result: RequestReportResult, json: b
 
 export function configureReport(
   command: Command,
-  { program, createDeps, requests }: TelemetrySurface
+  { program, containerOf, requests }: TelemetrySurface
 ): void {
   declareReportOptions(command, requests).action(async (cmdOptions: ReportCommandOptions) => {
-    const { output, projectRoot, runChecked } = commandOf(program, createDeps);
+    const { output, projectRoot, runChecked } = commandOf(program, containerOf);
     await runChecked(
       () =>
         requests.parseReportFlags.execute({
@@ -129,10 +132,10 @@ export function configureReport(
           filters: cmdOptions,
           cwd: projectRoot,
         }),
-      async (deps, { request }) =>
+      async (container, { request }) =>
         printReportOutcome(
           output,
-          await deps.telemetry.requestReport.execute(request),
+          await container.telemetry.requestReport.execute(request),
           cmdOptions.json
         )
     );

@@ -21,7 +21,7 @@ export interface DoctorHarness {
   readonly statusScoped: Mock;
   readonly doctorRegistration: Mock;
   readonly loadUserManifest: Mock;
-  readonly createDeps: Mock;
+  readonly containerOf: Mock;
   readonly written: string[];
   readonly errors: string[];
   readonly catalog: RegisteredCatalog;
@@ -36,22 +36,25 @@ export function doctorHarness(catalog: RegisteredCatalog = syntheticMixedCatalog
   const statusScoped: Mock = vi.fn();
   const doctorRegistration: Mock = vi.fn();
   const loadUserManifest: Mock = vi.fn();
-  const createDeps: Mock = vi.fn(async () => ({
-    doctorAllUseCase: { execute: doctorAll },
-    statusAllUseCase: { execute: statusAll },
-    doctorUseCase: { execute: doctorScoped },
-    statusUseCase: { execute: statusScoped },
-    runUserScopeDoctor: new RunUserScopeDoctor(
-      new ReadMachineInstallation(manifestRepositoryLoading(loadUserManifest)),
-      { execute: doctorRegistration }
-    ),
-    userSettingsFileOf: (toolId: string) => {
-      const profile = catalog.profile(toolId);
-      return profile.kind === "ai"
-        ? profile.nativeActivation()?.userSettingsFile("/home/dev", () => undefined)
-        : undefined;
+  const containerOf: Mock = vi.fn(async () => ({
+    doctor: {
+      doctorAll: { execute: doctorAll },
+      runDoctor: { execute: doctorScoped },
+      runUserScopeDoctor: new RunUserScopeDoctor(
+        new ReadMachineInstallation(manifestRepositoryLoading(loadUserManifest)),
+        { execute: doctorRegistration }
+      ),
+      userSettingsFileOf: (toolId: string) => {
+        const profile = catalog.profile(toolId);
+        return profile.kind === "ai"
+          ? profile.nativeActivation()?.userSettingsFile("/home/dev", () => undefined)
+          : undefined;
+      },
     },
-    environment: { get: () => undefined, set: () => undefined },
+    global: {
+      reportAllStatus: { execute: statusAll },
+      reportStatus: { execute: statusScoped },
+    },
   }));
   const written: string[] = [];
   const errors: string[] = [];
@@ -99,7 +102,7 @@ export function doctorHarness(catalog: RegisteredCatalog = syntheticMixedCatalog
     bindOutput(program, processOutputFactory());
     program.exitOverride();
     program.option("--verbose");
-    registerDoctorCommand(program, catalog, createDeps);
+    registerDoctorCommand(program, catalog, containerOf);
     await parseToExit(program, ["node", "aidd", "doctor", ...args]);
     return written.join("").split("\n").slice(0, -1);
   }
@@ -111,7 +114,7 @@ export function doctorHarness(catalog: RegisteredCatalog = syntheticMixedCatalog
     statusScoped,
     doctorRegistration,
     loadUserManifest,
-    createDeps,
+    containerOf,
     written,
     errors,
     catalog,

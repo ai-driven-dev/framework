@@ -99,7 +99,7 @@ async function buildUseCaseWithConflict() {
     entries: new Map([["probe-mkt", "/other/src"]]),
   });
   const activator = new FakeHostActions({ available: true });
-  const syncSettingsUseCase = marketplaceSync({
+  const syncSettings = marketplaceSync({
     tools: syntheticNativeFamilyCatalog(),
     fs: deps.fs,
     manifestRepo: deps.manifestRepo,
@@ -126,7 +126,7 @@ async function buildUseCaseWithConflict() {
     manifestRepo: deps.manifestRepo,
     ...setupMarketplaceRegistration,
     installTools: setupToolsUseCase,
-    syncSettings: syncSettingsUseCase,
+    syncSettings: syncSettings,
     version: CURRENT_VERSION,
     choosePlugins,
   });

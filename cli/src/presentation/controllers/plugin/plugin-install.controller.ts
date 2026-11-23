@@ -1,14 +1,18 @@
 import type { Command } from "commander";
 import type { ToolCatalog } from "../../../contexts/tools/contract/tool-catalog.js";
-import type { DepsSliceFactory } from "../../../orchestration/deps.js";
 import { aiToolSelectionOf } from "../../../orchestration/domain/ai-tool-selection.model.js";
+import type { InstallPlugin } from "../../../orchestration/plugin/install-plugin.use-case.js";
+import type { SyncNativeActivation } from "../../../orchestration/sync/settings/sync-native-activation.use-case.js";
 import { parseScope } from "../../../shared/domain/scope.js";
 import { printPluginInstallOutcome } from "../../presenters/plugin/plugin.presenter.js";
 import { reportNativeActivation } from "../../presenters/setup/sync.presenter.js";
-import { parseGlobalOptions } from "../menu/global-options.controller.js";
+import { type ContainerFactory, parseGlobalOptions } from "../menu/global-options.controller.js";
 
-/** What installing a plugin reads of the graph. */
-export type InstallKeys = "pluginInstallUseCase" | "syncNativeActivation";
+/** What installing a plugin reads of the container. */
+export interface InstallContainer {
+  plugin: { installPlugin: Pick<InstallPlugin, "execute"> };
+  marketplace: { syncNativeActivation: Pick<SyncNativeActivation, "execute"> };
+}
 
 export interface InstallOptions {
   readonly from?: string;
@@ -18,21 +22,21 @@ export interface InstallOptions {
   readonly yes?: boolean;
 }
 
-/** The command `install` belongs to, the tools it can target, and how it builds its graph. */
+/** The command `install` belongs to, the tools it can target, and how it builds its container. */
 interface InstallEnvironment {
   readonly program: Command;
   readonly catalog: ToolCatalog;
-  readonly createDeps: DepsSliceFactory<InstallKeys>;
+  readonly containerOf: ContainerFactory<InstallContainer>;
 }
 
 export async function installPluginFrom(
-  { program, catalog, createDeps }: InstallEnvironment,
+  { program, catalog, containerOf }: InstallEnvironment,
   pluginArg: string | undefined,
   options: InstallOptions
 ): Promise<void> {
   const { verbose, output, projectRoot } = parseGlobalOptions(program);
-  const deps = await createDeps(projectRoot, { verbose, token: options.token }, output);
-  const result = await deps.pluginInstallUseCase.execute({
+  const container = await containerOf(projectRoot, { verbose, token: options.token }, output);
+  const result = await container.plugin.installPlugin.execute({
     pluginArg,
     toolIds: aiToolSelectionOf(options.tool, catalog),
     projectRoot,
@@ -43,7 +47,7 @@ export async function installPluginFrom(
   });
   reportNativeActivation(
     output,
-    await deps.syncNativeActivation.execute({
+    await container.marketplace.syncNativeActivation.execute({
       projectRoot,
       marketplaceNames: options.from !== undefined ? [options.from] : undefined,
     })

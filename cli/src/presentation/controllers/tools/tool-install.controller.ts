@@ -28,7 +28,7 @@ export async function installTool({
 }
 
 async function installAiTool({
-  deps,
+  container,
   output,
   projectRoot,
   toolId,
@@ -37,8 +37,8 @@ async function installAiTool({
   toolId: AiToolId;
   cmdOptions: { force: boolean; plugins: boolean };
 }): Promise<void> {
-  const version = deps.currentVersion;
-  const result = await deps.installAiToolUseCase.execute({
+  const version = container.shared.currentVersion;
+  const result = await container.global.installAiToolWithPlugins.execute({
     toolId,
     projectRoot,
     force: cmdOptions.force,
@@ -63,14 +63,14 @@ async function installAiTool({
 }
 
 async function installIdeTool({
-  deps,
+  container,
   output,
   projectRoot,
   toolId,
   cmdOptions,
 }: ToolRun & { toolId: IdeToolId; cmdOptions: { force: boolean } }): Promise<void> {
-  const version = deps.currentVersion;
-  const result = await deps.installIdeToolUseCase.execute({
+  const version = container.shared.currentVersion;
+  const result = await container.global.installIdeTool.execute({
     toolId,
     projectRoot,
     force: cmdOptions.force,

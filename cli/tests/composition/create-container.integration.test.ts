@@ -3,9 +3,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import pkg from "../../package.json" with { type: "json" };
-import { createContainer } from "../../src/composition/container.js";
+import { containerFactory, createContainer } from "../../src/composition/container.js";
 import { wireInstallation } from "../../src/composition/contexts/installation.js";
-import { bindContainer } from "../../src/composition/orchestration/deps-graph.js";
 import { createOutput } from "../../src/composition/shared.js";
 import { catalogOf } from "../shared/testing/catalog-of.builder.js";
 
@@ -68,65 +67,65 @@ describe("creating a container", () => {
   });
 
   it("hands a command only the contexts it reads, wired on first read", async () => {
-    const slice = await bindContainer(tools)(root, { verbose: false }, createOutput(false));
+    const container = await containerFactory(tools)(root, { verbose: false }, createOutput(false));
 
-    slice.selfUpdate;
-    slice.logIn;
+    container.update.selfUpdate;
+    container.shared.logIn;
     expect(wireInstallation).not.toHaveBeenCalled();
 
-    slice.frameworkBuild;
+    container.translate.frameworkBuild;
     expect(wireInstallation).toHaveBeenCalledTimes(1);
   });
 
   it("hands setup, plugin, marketplace and sync their use cases", async () => {
-    const slice = await bindContainer(tools)(root, { verbose: false }, createOutput(false));
+    const container = await containerFactory(tools)(root, { verbose: false }, createOutput(false));
 
     for (const member of [
-      slice.runSetup,
-      slice.setAgentModels,
-      slice.pluginInstallUseCase,
-      slice.pluginRemoveUseCase,
-      slice.addMarketplace,
-      slice.marketplaceCheckUseCase,
-      slice.syncSettingsUseCase,
-      slice.runSync,
+      container.setup.runSetup,
+      container.agentModels.setAgentModels,
+      container.plugin.installPlugin,
+      container.plugin.removePlugin,
+      container.marketplace.addMarketplace,
+      container.marketplace.checkMarketplaceUpstream,
+      container.marketplace.syncSettings,
+      container.global.runSync,
     ])
       expect(member.execute).toBeTypeOf("function");
-    expect(slice.userManifestRepo.load).toBeTypeOf("function");
+    expect(container.shared.userManifestRepo.load).toBeTypeOf("function");
   });
 
   it("hands doctor, clean, tool configuration, recipes and telemetry their use cases", async () => {
-    const slice = await bindContainer(tools)(root, { verbose: false }, createOutput(false));
+    const container = await containerFactory(tools)(root, { verbose: false }, createOutput(false));
 
     for (const member of [
-      slice.doctorAllUseCase,
-      slice.statusAllUseCase,
-      slice.runUserScopeDoctor,
-      slice.cleanUseCase,
-      slice.cleanUserScopeUseCase,
-      slice.installAiToolUseCase,
-      slice.uninstallTools,
-      slice.listInstalledRulesUseCase,
-      slice.validateRecipes,
-      slice.telemetry.declareTask,
+      container.doctor.doctorAll,
+      container.global.reportAllStatus,
+      container.doctor.runUserScopeDoctor,
+      container.clean.cleanProject,
+      container.clean.cleanUserScope,
+      container.global.installAiToolWithPlugins,
+      container.clean.uninstallTools,
+      container.installation.listInstalledRules,
+      container.recipes.validateRecipes,
+      container.telemetry.declareTask,
     ])
       expect(member.execute).toBeTypeOf("function");
-    expect(slice.userSettingsFileOf).toBeTypeOf("function");
+    expect(container.doctor.userSettingsFileOf).toBeTypeOf("function");
   });
 
   it("wires telemetry and recipes without wiring installation", async () => {
-    const slice = await bindContainer(tools)(root, { verbose: false }, createOutput(false));
+    const container = await containerFactory(tools)(root, { verbose: false }, createOutput(false));
 
-    slice.telemetry;
-    slice.validateRecipes;
+    container.telemetry;
+    container.recipes.validateRecipes;
     expect(wireInstallation).not.toHaveBeenCalled();
   });
 
   it("builds one container per call", async () => {
-    const forContainer = bindContainer(tools);
+    const forContainer = containerFactory(tools);
     const first = await forContainer(root, { verbose: false }, createOutput(false));
     const second = await forContainer(root, { verbose: false }, createOutput(false));
 
-    expect(second.selfUpdate).not.toBe(first.selfUpdate);
+    expect(second).not.toBe(first);
   });
 });

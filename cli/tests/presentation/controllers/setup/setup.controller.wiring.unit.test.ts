@@ -41,29 +41,31 @@ const setAgentModel = vi.fn();
 
 const CATALOG = syntheticMixedCatalog([ACTIVATED_SYNTHETIC_CONFIG]);
 
-const createDeps = vi.fn(async () => {
+const containerOf = vi.fn(async () => {
   const fs = new InMemoryFileAdapter();
   return {
-    runSetup: new RunSetup(
-      new PrepareSetupProject(
-        { execute: detectContext },
-        { execute: resolveSourceIfNeeded },
-        new InitProject(
-          {
-            fs,
-            manifestRepo: manifestRepositoryLoading(loadManifest),
-            updateGitignore: new UpdateGitignore(fs),
-          },
-          CATALOG
+    setup: {
+      runSetup: new RunSetup(
+        new PrepareSetupProject(
+          { execute: detectContext },
+          { execute: resolveSourceIfNeeded },
+          new InitProject(
+            {
+              fs,
+              manifestRepo: manifestRepositoryLoading(loadManifest),
+              updateGitignore: new UpdateGitignore(fs),
+            },
+            CATALOG
+          ),
+          registerIfPresent
         ),
-        registerIfPresent
+        new InstallSetupTools({ execute: setupTools }, { execute: setupToolsPrompt }, "5.2.2"),
+        { execute: setupPluginsPrompt },
+        { execute: activation },
+        { execute: setupMachineScope }
       ),
-      new InstallSetupTools({ execute: setupTools }, { execute: setupToolsPrompt }, "5.2.2"),
-      { execute: setupPluginsPrompt },
-      { execute: activation },
-      { execute: setupMachineScope }
-    ),
-    setAgentModels: { execute: setAgentModel },
+    },
+    agentModels: { setAgentModels: { execute: setAgentModel } },
   };
 });
 
@@ -123,7 +125,7 @@ async function run(...args: string[]): Promise<string[]> {
   bindOutput(program, processOutputFactory());
   program.exitOverride();
   program.option("--verbose");
-  registerSetupCommand(program, CATALOG, createDeps);
+  registerSetupCommand(program, CATALOG, containerOf);
   await parseToExit(program, ["node", "aidd", "setup", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -254,7 +256,7 @@ describe("aidd setup - the agents' provider", () => {
     await expect(run(...args)).rejects.toThrow(ExitRequested);
 
     expect(errors.join("")).toContain(message);
-    expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
+    expect(vi.mocked(containerOf)).not.toHaveBeenCalled();
     expect(setAgentModel).not.toHaveBeenCalled();
   });
 });
@@ -369,7 +371,7 @@ describe("aidd setup - what it refuses and what it reports", () => {
     expect(errors.join("")).toContain(test.remedy);
     expect(errors.join("")).not.toMatch(/UserScope\w+Error|\n\s+at /);
     expect(exit).toHaveBeenCalledWith(1);
-    expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
+    expect(vi.mocked(containerOf)).not.toHaveBeenCalled();
     expect(written).toEqual([]);
   });
 
@@ -381,7 +383,7 @@ describe("aidd setup - what it refuses and what it reports", () => {
     await expect(run("--source", "local")).rejects.toThrow(ExitRequested);
 
     expect(errors[0]).toBe("Error: --source local requires --path <dir>\n");
-    expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
+    expect(vi.mocked(containerOf)).not.toHaveBeenCalled();
   });
 
   it("refuses a scope it does not know", async () => {
@@ -392,7 +394,7 @@ describe("aidd setup - what it refuses and what it reports", () => {
     await expect(run("--scope", "machine")).rejects.toThrow(ExitRequested);
 
     expect(errors[0]).toBe('Error: Invalid --scope "machine" — expected "project" or "user".\n');
-    expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
+    expect(vi.mocked(containerOf)).not.toHaveBeenCalled();
   });
 
   it("refuses an IDE id offered as an AI tool, before building anything", async () => {
@@ -403,7 +405,7 @@ describe("aidd setup - what it refuses and what it reports", () => {
     await expect(run("--ai", SYNTHETIC_IDE_TOOL)).rejects.toThrow(ExitRequested);
 
     expect(exit).toHaveBeenCalledWith(1);
-    expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
+    expect(vi.mocked(containerOf)).not.toHaveBeenCalled();
   });
 
   it("names a refused activation and fails the process", async () => {
@@ -439,7 +441,7 @@ describe("aidd setup - what it refuses and what it reports", () => {
   it("builds the graph for this project at this run's verbosity", async () => {
     await run("--verbose", "--ai", SYNTHETIC_TOOL);
 
-    expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
+    expect(vi.mocked(containerOf)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: true },
       expect.anything()

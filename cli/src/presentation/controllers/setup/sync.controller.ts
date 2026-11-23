@@ -1,5 +1,6 @@
 import type { Command } from "commander";
-import type { DepsSliceFactory } from "../../../orchestration/deps.js";
+import type { RunSync } from "../../../orchestration/sync/run-sync.use-case.js";
+import type { RunUserScopeSync } from "../../../orchestration/sync/run-user-scope-sync.use-case.js";
 import {
   printActivationOutcome,
   printRestoreOutcome,
@@ -7,13 +8,19 @@ import {
   printUserScopeSyncOutcome,
 } from "../../presenters/setup/sync.presenter.js";
 import {
+  type ContainerFactory,
   GLOBAL_FLAG_HELP,
   parseGlobalOptions,
   resolveScopeFlags,
 } from "../menu/global-options.controller.js";
 
-/** What this command reads of the graph. */
-type SyncKeys = "runSync" | "runUserScopeSync";
+/** What this command reads of the container. */
+export interface SyncContainer {
+  global: {
+    runSync: Pick<RunSync, "execute">;
+    runUserScopeSync: Pick<RunUserScopeSync, "execute">;
+  };
+}
 
 interface SyncCmdOptions {
   force: boolean;
@@ -25,22 +32,22 @@ interface SyncCmdOptions {
 
 async function runSyncAction({
   program,
-  createDeps,
+  containerOf,
   fileArgs,
   cmdOptions,
 }: {
   program: Command;
-  createDeps: DepsSliceFactory<SyncKeys>;
+  containerOf: ContainerFactory<SyncContainer>;
   fileArgs: string[];
   cmdOptions: SyncCmdOptions;
 }): Promise<void> {
   const { verbose, output, projectRoot } = parseGlobalOptions(program);
-  const deps = await createDeps(projectRoot, { verbose }, output);
+  const container = await containerOf(projectRoot, { verbose }, output);
   const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
   const { tool, plugin, force } = cmdOptions;
 
   if (scope === "user") {
-    await deps.runUserScopeSync.execute(
+    await container.global.runUserScopeSync.execute(
       { projectRoot, tool, plugin, files: fileArgs },
       {
         activated: (activation) => printActivationOutcome(output, activation),
@@ -51,7 +58,7 @@ async function runSyncAction({
     return;
   }
 
-  await deps.runSync.execute(
+  await container.global.runSync.execute(
     { projectRoot, force, interactive: process.stdout.isTTY, tool, plugin, files: fileArgs },
     {
       restored: (result) => printRestoreOutcome(output, result),
@@ -63,7 +70,7 @@ async function runSyncAction({
 
 export function registerSyncCommand(
   program: Command,
-  createDeps: DepsSliceFactory<SyncKeys>
+  containerOf: ContainerFactory<SyncContainer>
 ): void {
   program
     .command("sync")
@@ -81,6 +88,6 @@ export function registerSyncCommand(
     )
     .option("--global", `${GLOBAL_FLAG_HELP}, rebuilding its files from the framework source`)
     .action(async (fileArgs: string[], cmdOptions: SyncCmdOptions) => {
-      await runSyncAction({ program, createDeps, fileArgs, cmdOptions });
+      await runSyncAction({ program, containerOf, fileArgs, cmdOptions });
     });
 }

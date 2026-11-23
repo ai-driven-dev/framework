@@ -151,13 +151,13 @@ export function wireMarketplaceSync(base: Base, inst: Installation) {
     frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
     userSourceReferences: lenientSourceReferences(base.userSourceReferences, logger),
   });
-  const syncSettingsUseCase = syncSettingsOf(base, inst, {
+  const syncSettings = syncSettingsOf(base, inst, {
     buildMarketplaceForTool,
     recordSourceReference,
   });
   return {
     recordSourceReference,
-    syncSettingsUseCase,
-    syncNativeActivation: new SyncNativeActivation(syncSettingsUseCase),
+    syncSettings,
+    syncNativeActivation: new SyncNativeActivation(syncSettings),
   };
 }

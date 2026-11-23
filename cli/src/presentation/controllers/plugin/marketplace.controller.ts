@@ -1,5 +1,4 @@
 import type { Command } from "commander";
-import type { CommandRunner, DepsSliceFactory } from "../../../orchestration/deps.js";
 import { parseScope } from "../../../shared/domain/scope.js";
 import {
   printMarketplaceCheck,
@@ -8,13 +7,20 @@ import {
   printRegisteredMarketplaces,
 } from "../../presenters/plugin/marketplace.presenter.js";
 import { reportNativeActivation } from "../../presenters/setup/sync.presenter.js";
-import { parseGlobalOptions, TOKEN_FLAG_HELP } from "../menu/global-options.controller.js";
-import { type MenuChoice, offerGroupMenu } from "../menu/group-menu.controller.js";
+import {
+  type ContainerFactory,
+  parseGlobalOptions,
+  TOKEN_FLAG_HELP,
+} from "../menu/global-options.controller.js";
+import { type MenuChoice, offerGroupMenu, type RunCommand } from "../menu/group-menu.controller.js";
 import {
   type AddOptions,
   addMarketplaceFrom,
-  type MarketplaceKeys,
+  type MarketplaceContainer,
 } from "./marketplace-add.controller.js";
+
+/** The factory of the container these commands read. */
+type Factory = ContainerFactory<MarketplaceContainer>;
 
 const MENU: readonly MenuChoice[] = [
   { name: "List marketplaces", value: "list" },
@@ -24,11 +30,7 @@ const MENU: readonly MenuChoice[] = [
   { name: "Check marketplaces", value: "check" },
 ];
 
-function registerAdd(
-  program: Command,
-  marketplace: Command,
-  createDeps: DepsSliceFactory<MarketplaceKeys>
-): void {
+function registerAdd(program: Command, marketplace: Command, containerOf: Factory): void {
   marketplace
     .command("add [name] [source]")
     .description("Register a plugin marketplace")
@@ -37,39 +39,32 @@ function registerAdd(
     .option("--overwrite", "Replace an existing marketplace with the same name")
     .option("--token <value>", TOKEN_FLAG_HELP)
     .action(async (name: string | undefined, source: string | undefined, options: AddOptions) =>
-      addMarketplaceFrom({ program, createDeps }, { name, source }, options)
+      addMarketplaceFrom({ program, containerOf }, { name, source }, options)
     );
 }
 
-function registerList(
-  program: Command,
-  marketplace: Command,
-  createDeps: DepsSliceFactory<MarketplaceKeys>
-): void {
+function registerList(program: Command, marketplace: Command, containerOf: Factory): void {
   marketplace
     .command("list")
     .description("List registered plugin marketplaces")
     .option("--plugins", "Also fetch and print all plugins from each marketplace catalog")
     .action(async (cmdOptions: { plugins?: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const deps = await createDeps(projectRoot, { verbose }, output);
+      const container = await containerOf(projectRoot, { verbose }, output);
       if (cmdOptions.plugins) {
-        const { marketplaces, catalogs } = await deps.listMarketplaceCatalogs.execute({
-          projectRoot,
-        });
+        const { marketplaces, catalogs } =
+          await container.marketplace.listMarketplaceCatalogs.execute({
+            projectRoot,
+          });
         printRegisteredMarketplaces(output, marketplaces, catalogs);
         return;
       }
-      const { marketplaces } = await deps.listMarketplaces.execute({ projectRoot });
+      const { marketplaces } = await container.shared.listMarketplaces.execute({ projectRoot });
       printRegisteredMarketplaces(output, marketplaces, undefined);
     });
 }
 
-function registerRemove(
-  program: Command,
-  marketplace: Command,
-  createDeps: DepsSliceFactory<MarketplaceKeys>
-): void {
+function registerRemove(program: Command, marketplace: Command, containerOf: Factory): void {
   marketplace
     .command("remove <name>")
     .description("Remove a registered plugin marketplace")
@@ -78,10 +73,10 @@ function registerRemove(
     .action(async (name: string, cmdOptions: { yes?: boolean; scope: string }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const scope = parseScope(cmdOptions.scope) ?? "project";
-      const deps = await createDeps(projectRoot, { verbose }, output);
+      const container = await containerOf(projectRoot, { verbose }, output);
       const result = await (scope === "user"
-        ? deps.userMarketplaceRemoveUseCase
-        : deps.marketplaceRemoveUseCase
+        ? container.marketplace.removeUserMarketplace
+        : container.marketplace.removeProjectMarketplace
       ).execute({
         name,
         projectRoot,
@@ -89,17 +84,16 @@ function registerRemove(
         scope,
       });
       if (scope !== "user") {
-        reportNativeActivation(output, await deps.syncNativeActivation.execute({ projectRoot }));
+        reportNativeActivation(
+          output,
+          await container.marketplace.syncNativeActivation.execute({ projectRoot })
+        );
       }
       printMarketplaceRemoved(output, result.marketplace.name, result.removedPluginCount);
     });
 }
 
-function registerRefresh(
-  program: Command,
-  marketplace: Command,
-  createDeps: DepsSliceFactory<MarketplaceKeys>
-): void {
+function registerRefresh(program: Command, marketplace: Command, containerOf: Factory): void {
   marketplace
     .command("refresh [name]")
     .description(
@@ -108,49 +102,48 @@ function registerRefresh(
     .option("--force", "Clear cache before re-fetching")
     .action(async (name: string | undefined, cmdOptions: { force?: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const deps = await createDeps(projectRoot, { verbose }, output);
-      const { results, failedCount } = await deps.refreshMarketplace.execute({
+      const container = await containerOf(projectRoot, { verbose }, output);
+      const { results, failedCount } = await container.marketplace.refreshMarketplace.execute({
         projectRoot,
         name,
         force: cmdOptions.force,
       });
-      reportNativeActivation(output, await deps.syncNativeActivation.execute({ projectRoot }));
+      reportNativeActivation(
+        output,
+        await container.marketplace.syncNativeActivation.execute({ projectRoot })
+      );
       printRefreshResults(output, results);
       if (failedCount > 0) output.exit(1);
     });
 }
 
-function registerCheck(
-  program: Command,
-  marketplace: Command,
-  createDeps: DepsSliceFactory<MarketplaceKeys>
-): void {
+function registerCheck(program: Command, marketplace: Command, containerOf: Factory): void {
   marketplace
     .command("check")
     .description("Report stale marketplaces and upstream-removed plugins")
     .action(async () => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const deps = await createDeps(projectRoot, { verbose }, output);
-      const result = await deps.marketplaceCheckUseCase.execute({ projectRoot });
+      const container = await containerOf(projectRoot, { verbose }, output);
+      const result = await container.marketplace.checkMarketplaceUpstream.execute({ projectRoot });
       printMarketplaceCheck(output, result);
     });
 }
 
 export function registerMarketplaceCommand(
   program: Command,
-  createDeps: DepsSliceFactory<MarketplaceKeys>,
-  runCommand: CommandRunner
+  containerOf: Factory,
+  runCommand: RunCommand
 ): void {
   const marketplace = program.command("marketplace").description("Manage plugin marketplaces");
   offerGroupMenu(marketplace, {
     question: "marketplace: what do you want to do?",
     choices: MENU,
-    createDeps,
+    containerOf,
     runCommand,
   });
-  registerAdd(program, marketplace, createDeps);
-  registerList(program, marketplace, createDeps);
-  registerRemove(program, marketplace, createDeps);
-  registerRefresh(program, marketplace, createDeps);
-  registerCheck(program, marketplace, createDeps);
+  registerAdd(program, marketplace, containerOf);
+  registerList(program, marketplace, containerOf);
+  registerRemove(program, marketplace, containerOf);
+  registerRefresh(program, marketplace, containerOf);
+  registerCheck(program, marketplace, containerOf);
 }

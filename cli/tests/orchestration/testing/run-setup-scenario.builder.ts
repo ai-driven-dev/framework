@@ -122,7 +122,7 @@ export function makeRecordingUserSourceReferences(): UserSourceReferences & {
 
 interface UseCaseOptions {
   userManifestRepo?: ManifestRepository & Lock;
-  syncSettingsUseCase?: Pick<SyncSettings, "execute"> & {
+  syncSettings?: Pick<SyncSettings, "execute"> & {
     execute: ReturnType<typeof vi.fn>;
   };
   detectContext?: boolean;
@@ -155,7 +155,7 @@ async function buildUseCaseOver(tools: RegisteredCatalog, args: UseCaseArgs) {
   });
   const marketplaceRegisterFramework = makeNoOpMarketplaceRegisterFramework();
   const marketplaceRefresh = makeNoOpMarketplaceRefresh();
-  const syncSettingsUseCase = options?.syncSettingsUseCase ?? makeNoOpMarketplaceSyncSettings();
+  const syncSettings = options?.syncSettings ?? makeNoOpMarketplaceSyncSettings();
   const setupMarketplaceRegistration = setupMarketplaceRegistrar(
     deps.fs,
     askSource,
@@ -178,7 +178,7 @@ async function buildUseCaseOver(tools: RegisteredCatalog, args: UseCaseArgs) {
           ),
           resolveSource: setupMarketplaceRegistration.resolveSource,
           register: setupMarketplaceRegistration.register,
-          syncMachineScope: (syncOptions) => syncSettingsUseCase.execute(syncOptions),
+          syncMachineScope: (syncOptions) => syncSettings.execute(syncOptions),
           installPlugins: options.installGlobalPlugins ?? {
             execute: async () => ({ plugins: [] }),
           },
@@ -189,7 +189,7 @@ async function buildUseCaseOver(tools: RegisteredCatalog, args: UseCaseArgs) {
     manifestRepo: deps.manifestRepo,
     ...setupMarketplaceRegistration,
     installTools: setupToolsUseCase,
-    syncSettings: syncSettingsUseCase,
+    syncSettings: syncSettings,
     version: CURRENT_VERSION,
     detectContext: options?.detectContext === true ? new DetectProjectContext(deps.fs) : undefined,
     machineScope,
@@ -201,7 +201,7 @@ async function buildUseCaseOver(tools: RegisteredCatalog, args: UseCaseArgs) {
     deps,
     marketplaceRegisterFramework,
     marketplaceRefresh,
-    syncSettingsUseCase,
+    syncSettings,
     pluginInstallFromMarketplace,
   };
 }

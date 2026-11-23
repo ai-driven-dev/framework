@@ -10,11 +10,18 @@ const CHOICES = [
 
 function groupWith(pick: string) {
   const select: Mock = vi.fn(async () => pick);
-  const createDeps: Mock = vi.fn(async () => ({ prompter: prompterAnswering({ select }) }));
+  const containerOf: Mock = vi.fn(async () => ({
+    shared: { prompter: prompterAnswering({ select }) },
+  }));
   const runCommand = vi.fn(async () => 0);
   const group = new Command("tools").exitOverride();
-  offerGroupMenu(group, { question: "tools: what now?", choices: CHOICES, createDeps, runCommand });
-  return { group, select, createDeps, runCommand };
+  offerGroupMenu(group, {
+    question: "tools: what now?",
+    choices: CHOICES,
+    containerOf,
+    runCommand,
+  });
+  return { group, select, containerOf, runCommand };
 }
 
 function pretendTerminal(isTTY: boolean): void {
@@ -39,11 +46,11 @@ describe("offering a group's subcommands", () => {
   it("prints its own help off a terminal and asks nothing", async () => {
     pretendTerminal(false);
     vi.spyOn(process.stdout, "write").mockReturnValue(true);
-    const { group, createDeps, runCommand } = groupWith("add");
+    const { group, containerOf, runCommand } = groupWith("add");
 
     await expect(group.parseAsync([], { from: "user" })).rejects.toThrow();
 
-    expect(createDeps).not.toHaveBeenCalled();
+    expect(containerOf).not.toHaveBeenCalled();
     expect(runCommand).not.toHaveBeenCalled();
   });
 });

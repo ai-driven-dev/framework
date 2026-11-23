@@ -2,20 +2,27 @@ import { resolve } from "node:path";
 import type { Command } from "commander";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { FrameworkBuildMode } from "../../contexts/tools/contract/tool-profile.js";
+import type {
+  BuildNativeTree,
+  FrameworkBuildContext,
+} from "../../contexts/translate/application/build-native-tree.use-case.js";
 import {
   type FrameworkBuildTarget,
   supportedBuildTargets,
 } from "../../contexts/translate/contract/build-targets.js";
-import type { DepsSliceFactory } from "../../orchestration/deps.js";
 import type { Output } from "../../orchestration/domain/output.js";
 import { printTranslateResult } from "../presenters/translate.presenter.js";
-import { parseGlobalOptions } from "./menu/global-options.controller.js";
+import { type ContainerFactory, parseGlobalOptions } from "./menu/global-options.controller.js";
 
-/** What this command reads of the graph. */
-type TranslateKeys = "frameworkBuild";
+/** What this command reads of the container. */
+export interface TranslateContainer {
+  translate: {
+    frameworkBuild: (ctx: FrameworkBuildContext) => Pick<BuildNativeTree, "execute"> | undefined;
+  };
+}
 
 interface TranslateExecutionParams {
-  createDeps: DepsSliceFactory<TranslateKeys>;
+  containerOf: ContainerFactory<TranslateContainer>;
   projectRoot: string;
   verbose: boolean;
   output: Output;
@@ -34,7 +41,7 @@ function refuseCombination(output: Output, target: string, mode: string): never 
 
 /** The build+report core, once `--to`/`--as`/`--out` flags are validated and resolved. */
 async function runTranslateCore({
-  createDeps,
+  containerOf,
   projectRoot,
   verbose,
   output,
@@ -44,9 +51,10 @@ async function runTranslateCore({
   mode,
   force,
 }: TranslateExecutionParams): Promise<void> {
-  const deps = await createDeps(projectRoot, { verbose }, output);
+  const container = await containerOf(projectRoot, { verbose }, output);
   const useCase =
-    deps.frameworkBuild({ target, mode, outDir, force }) ?? refuseCombination(output, target, mode);
+    container.translate.frameworkBuild({ target, mode, outDir, force }) ??
+    refuseCombination(output, target, mode);
   const result = await useCase.execute({ sourceDir, outDir, target, mode });
   printTranslateResult(output, mode, {
     pluginCount: result.plugins.length,
@@ -85,7 +93,7 @@ interface TranslateCmdOptions {
 export function registerTranslateCommand(
   program: Command,
   tools: ToolCatalog,
-  createDeps: DepsSliceFactory<TranslateKeys>
+  containerOf: ContainerFactory<TranslateContainer>
 ): void {
   program
     .command("translate")
@@ -101,7 +109,7 @@ export function registerTranslateCommand(
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
 
       await runTranslateCore({
-        createDeps,
+        containerOf,
         projectRoot,
         verbose,
         output,

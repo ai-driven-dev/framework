@@ -105,7 +105,7 @@ function wireMarketplaceRemoval(base: Base, inst: Installation) {
     removeIntegration: inst.projectIntegration.removeIntegration,
     claims: removalClaims(ownership.detachNativePluginRefs, ownership.detachUserPlugin),
   });
-  const marketplaceRemoveUseCase = new RemoveProjectMarketplace({
+  const removeProjectMarketplace = new RemoveProjectMarketplace({
     find: new FindMarketplaceToRemove(marketplaceRegistry),
     removePlugins: new RemoveMarketplacePlugins(
       new RemovePluginsFromMarketplace({ manifestRepo, cleanup: projectCleanup }, tools),
@@ -115,8 +115,8 @@ function wireMarketplaceRemoval(base: Base, inst: Installation) {
     remove: new RemoveMarketplace(marketplaceRegistry),
     detachClaims: detachClaimsOf(projectCleanup),
   });
-  const userMarketplaceRemoveUseCase = wireUserMarketplaceRemoval(base);
-  return { marketplaceRemoveUseCase, userMarketplaceRemoveUseCase };
+  const removeUserMarketplace = wireUserMarketplaceRemoval(base);
+  return { removeProjectMarketplace, removeUserMarketplace };
 }
 
 /** Choosing the framework source of a setup, and registering it for the scope the flow runs in. */
@@ -149,7 +149,7 @@ function wireSetupSource(base: Base, recordSourceReference: RecordSourceReferenc
 function wireMarketplaceReads(base: Base) {
   const { tools, manifestRepo, marketplaceRegistry } = base;
   const { resolveMarketplaceUseCase, listMarketplaces } = base;
-  const marketplaceCheckUseCase = new CheckMarketplaceUpstream(
+  const checkMarketplaceUpstream = new CheckMarketplaceUpstream(
     new CheckMarketplaces(marketplaceRegistry),
     resolveMarketplaceUseCase,
     new ListPluginSources(manifestRepo, tools)
@@ -163,7 +163,7 @@ function wireMarketplaceReads(base: Base) {
     base.marketplacesToRefresh,
     base.refreshMarketplaceUseCase
   );
-  return { marketplaceCheckUseCase, listMarketplaceCatalogs, refreshMarketplace };
+  return { checkMarketplaceUpstream, listMarketplaceCatalogs, refreshMarketplace };
 }
 
 /** Marketplace removal, check and sync, and the setup steps that register a marketplace. */
@@ -175,8 +175,8 @@ export function wireMarketplace(base: Base, inst: Installation) {
   const addMarketplace = new AddMarketplace({
     removeRegistered: new RemoveRegisteredMarketplace(
       listMarketplaces,
-      removal.marketplaceRemoveUseCase,
-      removal.userMarketplaceRemoveUseCase
+      removal.removeProjectMarketplace,
+      removal.removeUserMarketplace
     ),
     prepare: new PrepareMarketplace(
       marketplaceRegistry,

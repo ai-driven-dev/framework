@@ -8,21 +8,21 @@ import { syntheticCatalog } from "../../../shared/testing/synthetic-tool-id.buil
 function installation() {
   const install = vi.fn(async () => ({ kind: "marketplace", installed: ["aidd-dev"] }));
   const activation = vi.fn(async () => ({ binaryMissing: [], errors: [], failed: false }));
-  const createDeps: Mock = vi.fn(async () => ({
-    pluginInstallUseCase: { execute: install },
-    syncNativeActivation: { execute: activation },
+  const containerOf: Mock = vi.fn(async () => ({
+    plugin: { installPlugin: { execute: install } },
+    marketplace: { syncNativeActivation: { execute: activation } },
   }));
   const output = new CapturingOutput();
   const program = new Command();
   bindOutput(program, () => output);
-  return { install, activation, createDeps, output, program };
+  return { install, activation, containerOf, output, program };
 }
 
 describe("installing a plugin from the command line", () => {
   it("installs what it was given, activates every marketplace, and names what landed", async () => {
-    const { install, activation, createDeps, output, program } = installation();
+    const { install, activation, containerOf, output, program } = installation();
 
-    await installPluginFrom({ program, catalog: syntheticCatalog(), createDeps }, "aidd-dev", {});
+    await installPluginFrom({ program, catalog: syntheticCatalog(), containerOf }, "aidd-dev", {});
 
     expect(install).toHaveBeenCalledWith(
       expect.objectContaining({ pluginArg: "aidd-dev", toolIds: "all", scope: undefined })
@@ -35,9 +35,9 @@ describe("installing a plugin from the command line", () => {
   });
 
   it("narrows activation to the marketplace it was told to install from", async () => {
-    const { activation, createDeps, program } = installation();
+    const { activation, containerOf, program } = installation();
 
-    await installPluginFrom({ program, catalog: syntheticCatalog(), createDeps }, "aidd-dev", {
+    await installPluginFrom({ program, catalog: syntheticCatalog(), containerOf }, "aidd-dev", {
       from: "market-b",
     });
 

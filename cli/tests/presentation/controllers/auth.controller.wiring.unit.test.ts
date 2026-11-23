@@ -14,14 +14,20 @@ const promptSelect = vi.fn();
 const promptConfirm = vi.fn();
 const promptInput = vi.fn();
 
-const createDeps = vi.fn(async () => ({
-  logIn: {
-    execute: (command: { credential: unknown; level: unknown }) =>
-      login(command.credential, command.level),
+const containerOf = vi.fn(async () => ({
+  shared: {
+    logIn: {
+      execute: (command: { credential: unknown; level: unknown }) =>
+        login(command.credential, command.level),
+    },
+    logOut: { execute: () => logout() },
+    checkStatus: { execute: () => status() },
+    prompter: prompterAnswering({
+      select: promptSelect,
+      confirm: promptConfirm,
+      input: promptInput,
+    }),
   },
-  logOut: { execute: () => logout() },
-  checkStatus: { execute: () => status() },
-  prompter: prompterAnswering({ select: promptSelect, confirm: promptConfirm, input: promptInput }),
 }));
 
 const { registerAuthCommand } = await import(
@@ -68,7 +74,7 @@ async function run(...args: string[]): Promise<string[]> {
   bindOutput(program, processOutputFactory());
   program.exitOverride();
   program.option("--verbose");
-  registerAuthCommand(program, createDeps);
+  registerAuthCommand(program, containerOf);
   await parseToExit(program, ["node", "aidd", "auth", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -150,7 +156,7 @@ describe("aidd auth login, what it refuses before building anything", () => {
 
     expect(errors[0]).toBe("Error: --gh and --token are mutually exclusive.\n");
     expect(exit).toHaveBeenCalledWith(1);
-    expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
+    expect(vi.mocked(containerOf)).not.toHaveBeenCalled();
   });
 
   it("refuses to prompt for a credential off a terminal", async () => {
@@ -159,7 +165,7 @@ describe("aidd auth login, what it refuses before building anything", () => {
     await expect(run("login", "--level", "user")).rejects.toThrow(ExitRequested);
 
     expect(errors[0]).toBe("Error: Use --gh or --token <value> in non-interactive mode.\n");
-    expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
+    expect(vi.mocked(containerOf)).not.toHaveBeenCalled();
   });
 
   it("refuses to prompt for a storage level off a terminal", async () => {
@@ -168,7 +174,7 @@ describe("aidd auth login, what it refuses before building anything", () => {
     await expect(run("login", "--token", "ghp_x")).rejects.toThrow(ExitRequested);
 
     expect(errors[0]).toBe("Error: Use --level <user|project> in non-interactive mode.\n");
-    expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
+    expect(vi.mocked(containerOf)).not.toHaveBeenCalled();
   });
 
   it("refuses a level that is neither user nor project", async () => {
@@ -180,7 +186,7 @@ describe("aidd auth login, what it refuses before building anything", () => {
     );
 
     expect(errors[0]).toBe("Error: --level must be 'user' or 'project'.\n");
-    expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
+    expect(vi.mocked(containerOf)).not.toHaveBeenCalled();
   });
 });
 
@@ -235,7 +241,7 @@ describe("aidd auth, how every subcommand builds its graph and reports a failure
     async (...args) => {
       await run(...args);
 
-      expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
+      expect(vi.mocked(containerOf)).toHaveBeenCalledWith(
         PROJECT_ROOT,
         { verbose: false },
         expect.anything()
@@ -258,7 +264,7 @@ describe("aidd auth, the help surface", () => {
   function authCommand(): Command {
     const program = new Command();
     bindOutput(program, processOutputFactory());
-    registerAuthCommand(program, createDeps);
+    registerAuthCommand(program, containerOf);
     const auth = program.commands.find((command) => command.name() === "auth");
     if (auth === undefined) throw new Error("auth command was not registered");
     return auth;

@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { EXIT_CODES } from "../../../../src/presentation/errors/error-exit-codes.presenter.js";
 import { createTestEnv } from "../../../shared/testing/cli-sandbox.builder.js";
 import { runInProcess } from "../../../shared/testing/in-process-cli.builder.js";
 import { seedEmptyManifest } from "../../testing/project-state.builder.js";
@@ -76,5 +77,29 @@ describe("framework update of an installed editor tool whose tracked file was ed
     const { exitCode } = await aidd(["framework", "update", "--tool", "vscode", "--force"]);
 
     expect(exitCode).toBe(0);
+  });
+});
+
+describe("framework update of a project whose manifest cannot be read", () => {
+  it("exits with the manifest error when the manifest is not JSON", async () => {
+    await writeFile(join(project, ".aidd", "manifest.json"), "{ not json");
+
+    const { exitCode, stderr } = await aidd(["framework", "update"]);
+
+    expect(exitCode).toBe(EXIT_CODES["invalid-manifest-data"]);
+    expect(stderr).toMatch(/^Error: Invalid manifest data: .*is not valid JSON/m);
+    expect(stderr).not.toContain("Warning: [ai]");
+  });
+
+  it("exits with the newer CLI error when a newer CLI wrote the manifest", async () => {
+    await writeFile(join(project, ".aidd", "manifest.json"), '{"version":999,"tools":{}}');
+
+    const { exitCode, stderr } = await aidd(["framework", "update"]);
+
+    expect(exitCode).toBe(EXIT_CODES["unsupported-manifest-version"]);
+    expect(stderr).toMatch(
+      /^Error: Invalid manifest data: .*Run `aidd update` to update this CLI/m
+    );
+    expect(stderr).not.toContain("Warning: [ai]");
   });
 });

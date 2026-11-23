@@ -8,7 +8,7 @@ import { parseToExit } from "../../shared/testing/parse-to-exit.builder.js";
 
 const selfUpdate = vi.fn<() => Promise<SelfUpdateResult>>();
 
-const createDeps = vi.fn(async () => ({ selfUpdate: { execute: selfUpdate } }));
+const containerOf = vi.fn(async () => ({ update: { selfUpdate: { execute: selfUpdate } } }));
 
 const { registerUpdateCommand } = await import(
   "../../../src/presentation/controllers/update.controller.js"
@@ -44,7 +44,7 @@ async function run(...args: string[]): Promise<string[]> {
   bindOutput(program, processOutputFactory());
   program.exitOverride();
   program.option("--verbose");
-  registerUpdateCommand(program, createDeps);
+  registerUpdateCommand(program, containerOf);
   await parseToExit(program, ["node", "aidd", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -97,7 +97,7 @@ describe("aidd update - what it asks the self-updater", () => {
   it("builds the graph for this project at this run's verbosity", async () => {
     await run("update");
 
-    expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
+    expect(vi.mocked(containerOf)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: false },
       expect.anything()
@@ -107,7 +107,7 @@ describe("aidd update - what it asks the self-updater", () => {
   it("carries --verbose into the graph it builds", async () => {
     await run("--verbose", "update");
 
-    expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
+    expect(vi.mocked(containerOf)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: true },
       expect.anything()
@@ -131,7 +131,7 @@ describe("aidd update - the help surface", () => {
   function updateCommand(): Command {
     const program = new Command();
     bindOutput(program, processOutputFactory());
-    registerUpdateCommand(program, createDeps);
+    registerUpdateCommand(program, containerOf);
     const update = program.commands.find((command) => command.name() === "update");
     if (update === undefined) throw new Error("update command was not registered");
     return update;

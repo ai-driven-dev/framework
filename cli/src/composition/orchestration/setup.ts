@@ -46,9 +46,9 @@ export function wireAgentModels({
   });
   const refresh = new RefreshAgentPlugins({
     pluginHosts: new LocateAgentPlugins(manifestRepo, userManifestRepo),
-    updatePlugin: p.pluginUpdateUseCase,
-    updateUserPlugin: p.userPluginUpdateUseCase,
-    syncSettings: m.syncSettingsUseCase,
+    updatePlugin: p.updatePlugin,
+    updateUserPlugin: p.updateUserPlugin,
+    syncSettings: m.syncSettings,
   });
   const restoreProviders = new RestoreAgentProviders(agentModelStore);
   return {
@@ -98,7 +98,7 @@ export function wireSetup({
     ),
     new InstallSetupTools(g.setupToolsUseCase, chooseTools, base.currentVersion),
     choosePlugins,
-    m.syncSettingsUseCase,
+    m.syncSettings,
     g.setupMachineScope
   );
   return { choosePlugins, chooseTools, runSetup };

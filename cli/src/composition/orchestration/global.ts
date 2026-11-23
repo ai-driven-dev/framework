@@ -78,18 +78,18 @@ function wireUpdateTools(base: Base, installation: Installation) {
 function wireToolLifecycle({ base, installation, marketplace, plugin }: GlobalParts) {
   const { logger, manifestRepo } = base;
   const { installRuntimeConfigUseCase, installIdeConfig, propagateAiSettingsToIde } = installation;
-  const installIdeToolUseCase = new InstallIdeTool(
+  const installIdeTool = new InstallIdeTool(
     manifestRepo,
     installIdeConfig,
     propagateAiSettingsToIde
   );
-  const installAiToolUseCase = new InstallAiToolWithPlugins({
+  const installAiToolWithPlugins = new InstallAiToolWithPlugins({
     installAiTool: new InstallAiTool({
       installRuntimeConfig: installRuntimeConfigUseCase,
       manifestRepo,
     }),
     pluginInstallFromMarketplace: plugin.pluginInstallFromMarketplaceUseCase,
-    activatePropagated: marketplace.syncSettingsUseCase,
+    activatePropagated: marketplace.syncSettings,
     logger,
   });
   const setupToolsUseCase = new InstallTools(
@@ -97,12 +97,12 @@ function wireToolLifecycle({ base, installation, marketplace, plugin }: GlobalPa
     installRuntimeConfigUseCase,
     installIdeConfig
   );
-  const updateToolsUseCase = wireUpdateTools(base, installation);
-  return { installAiToolUseCase, installIdeToolUseCase, setupToolsUseCase, updateToolsUseCase };
+  const updateTools = wireUpdateTools(base, installation);
+  return { installAiToolWithPlugins, installIdeTool, setupToolsUseCase, updateTools };
 }
 
 /** Restoring a project from its manifest, one tool or all of them. */
-function wireRestore(base: Base, installation: Installation, statusUseCase: ReportStatus) {
+function wireRestore(base: Base, installation: Installation, reportStatus: ReportStatus) {
   const { fs, prompter, logger, manifestRepo, currentVersion, platform, tools } = base;
   const drift = new RestoreDriftEntries(prompter);
   const restoreToolFiles = new RestoreToolFiles(
@@ -132,7 +132,7 @@ function wireRestore(base: Base, installation: Installation, statusUseCase: Repo
   );
   const restoreAllUseCase = new RestoreAll(
     prompter,
-    statusUseCase,
+    reportStatus,
     new RestoreGlobal(manifestRepo, restoreUseCase)
   );
   const restoreToolUseCase = new RestoreTool(manifestRepo, restoreUseCase, currentVersion);
@@ -153,7 +153,7 @@ function wireMachineScope({ base, marketplace, plugin }: GlobalParts) {
     configureMachineScope: new ConfigureMachineScope(userManifestRepo, currentVersion),
     resolveSource: marketplace.resolveSetupSource,
     register: marketplace.registerSetupSource,
-    syncMachineScope: userScopeSyncOf(marketplace.syncSettingsUseCase),
+    syncMachineScope: userScopeSyncOf(marketplace.syncSettings),
     installPlugins: installGlobalPlugins,
   });
 }
@@ -162,33 +162,29 @@ function wireMachineScope({ base, marketplace, plugin }: GlobalParts) {
 export function wireGlobal(parts: GlobalParts) {
   const { base, installation, marketplace, plugin } = parts;
   const { fs, manifestRepo, tools } = base;
-  const { syncSettingsUseCase } = marketplace;
-  const statusUseCase = new ReportStatus(
+  const { syncSettings } = marketplace;
+  const reportStatus = new ReportStatus(
     { fs, manifestRepo, detectPluginDrift: installation.detectPluginDriftUseCase },
     tools
   );
-  const restore = wireRestore(base, installation, statusUseCase);
+  const restore = wireRestore(base, installation, reportStatus);
   return {
     ...wireToolLifecycle(parts),
     ...restore,
-    runSync: new RunSync(
-      restore.restoreAllUseCase,
-      restore.restoreToolUseCase,
-      syncSettingsUseCase
-    ),
+    runSync: new RunSync(restore.restoreAllUseCase, restore.restoreToolUseCase, syncSettings),
     runUserScopeSync: new RunUserScopeSync(
       {
         machine: installation.readMachineInstallation,
-        userPlugins: plugin.userPluginUpdateUseCase,
-        syncSettings: syncSettingsUseCase,
+        userPlugins: plugin.updateUserPlugin,
+        syncSettings: syncSettings,
       },
       tools
     ),
     projectContextDetector: new DetectProjectContext(fs),
     setupMachineScope: wireMachineScope(parts),
-    statusUseCase,
-    statusAllUseCase: {
-      execute: (projectRoot: string) => reportAllStatus(statusUseCase, projectRoot),
+    reportStatus,
+    reportAllStatus: {
+      execute: (projectRoot: string) => reportAllStatus(reportStatus, projectRoot),
     },
   };
 }

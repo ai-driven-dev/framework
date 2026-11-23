@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
+import { SyncFailedError } from "../../../../src/orchestration/orchestration.error.js";
 import {
   printActivationOutcome,
   printRestoreOutcome,
   printScopedFailures,
   printToolRestoreOutcome,
   printUserScopeSyncOutcome,
+  reportNativeActivation,
 } from "../../../../src/presentation/presenters/setup/sync.presenter.js";
 import { CapturingOutput } from "../../../shared/testing/capturing-output.fake.js";
 import {
@@ -230,5 +232,26 @@ describe("printing scoped failures", () => {
       `[${SYNTHETIC_TOOL}] add refused`,
       `[${SECOND_SYNTHETIC_TOOL}] not on PATH`,
     ]);
+  });
+});
+
+describe("reporting a native activation", () => {
+  it("lets an activation that did not fail through, warnings or not", () => {
+    expect(() =>
+      reportNativeActivation(new CapturingOutput(), {
+        errors: [{ scope: "claude", error: "x" }],
+        failed: false,
+      })
+    ).not.toThrow();
+  });
+
+  it("throws naming the scopes of a failed activation", () => {
+    const errors = [
+      { scope: "claude", error: "x" },
+      { scope: "codex", error: "y" },
+    ];
+    expect(() => reportNativeActivation(new CapturingOutput(), { errors, failed: true })).toThrow(
+      new SyncFailedError(errors)
+    );
   });
 });

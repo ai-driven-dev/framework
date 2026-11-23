@@ -128,7 +128,7 @@ function wirePluginRemoval(base: Base, inst: Installation) {
     marketplaceRegistry: base.marketplaceRegistry,
     resolveCacheCandidate: purgeCandidateResolverOf(new ResolvePurgeCandidate(fs, logger)),
   });
-  const pluginRemoveUseCase = new RemovePlugin({
+  const removePlugin = new RemovePlugin({
     remove: new RemoveProjectPluginFiles(
       {
         fs,
@@ -145,7 +145,7 @@ function wirePluginRemoval(base: Base, inst: Installation) {
     records: recordsOf(manifestRepo),
   });
   const userPluginRemove = wireUserPluginRemoval(base);
-  return { pluginRemoveUseCase, userPluginRemove };
+  return { removePlugin, userPluginRemove };
 }
 
 /** Writing a plugin's files under the machine's user scope, from the build it was fetched into. */
@@ -180,7 +180,7 @@ function projectPluginUpdateOf(base: Base, inst: Installation) {
 function wirePluginUpdate(base: Base, inst: Installation) {
   const { tools, logger, userManifestRepo } = base;
   const pluginMaterializer = machinePluginMaterializer(base, inst);
-  const pluginUpdateUseCase = new UpdatePlugin(
+  const updatePlugin = new UpdatePlugin(
     {
       userManifest: userManifestRepo,
       updateProject: projectPluginUpdateOf(base, inst),
@@ -189,8 +189,8 @@ function wirePluginUpdate(base: Base, inst: Installation) {
     },
     tools
   );
-  const userPluginUpdateUseCase = new UpdateUserPlugin(
-    pluginUpdateUseCase,
+  const updateUserPlugin = new UpdateUserPlugin(
+    updatePlugin,
     new RefreshHostPlugin(
       base.nativePluginActivators,
       base.hostPluginRegistries,
@@ -200,8 +200,8 @@ function wirePluginUpdate(base: Base, inst: Installation) {
     recordsOf(userManifestRepo)
   );
   return {
-    pluginUpdateUseCase,
-    userPluginUpdateUseCase,
+    updatePlugin,
+    updateUserPlugin,
     userPluginFileUpdater: withinUserScope(pluginMaterializer),
   };
 }
@@ -252,7 +252,7 @@ export function wirePlugin(base: Base, inst: Installation) {
     pluginAddUseCase,
     prompter,
   });
-  const pluginInstallUseCase = new InstallPlugin({
+  const installPlugin = new InstallPlugin({
     planPluginInstall: new PlanPluginInstall(manifestRepo, tools, supportedScopeOf(tools)),
     pickPlugin: pickPlugins,
     addPlugin: pluginAddUseCase,
@@ -265,7 +265,7 @@ export function wirePlugin(base: Base, inst: Installation) {
   return {
     ...wirePluginRemoval(base, inst),
     ...wirePluginUpdate(base, inst),
-    pluginInstallUseCase,
+    installPlugin,
     searchPlugins: new SearchPlugins(marketplaceRegistry, resolveMarketplaceUseCase),
     pluginInstallFromMarketplaceUseCase,
     pickPlugins,

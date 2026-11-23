@@ -7,13 +7,13 @@ import { doctorHarness } from "../../../shared/testing/doctor-command.builder.js
 import { processOutputFactory } from "../../../shared/testing/output-factory.builder.js";
 
 const PROJECT_ROOT = process.cwd();
-const { doctorAll, createDeps, errors, run, catalog: CATALOG } = doctorHarness();
+const { doctorAll, containerOf, errors, run, catalog: CATALOG } = doctorHarness();
 
 describe("aidd doctor - how it builds its graph and reports a failure", () => {
-  it("builds the graph for this project at this run's verbosity", async () => {
+  it("builds the container for this project at this run's verbosity", async () => {
     await run("--verbose");
 
-    expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
+    expect(vi.mocked(containerOf)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: true },
       expect.anything()
@@ -37,7 +37,7 @@ describe("aidd doctor - the help surface", () => {
   function doctorCommand(): Command {
     const program = new Command();
     bindOutput(program, processOutputFactory());
-    registerDoctorCommand(program, CATALOG, createDeps);
+    registerDoctorCommand(program, CATALOG, containerOf);
     const doctor = program.commands.find((command) => command.name() === "doctor");
     if (doctor === undefined) throw new Error("doctor command was not registered");
     return doctor;

@@ -28,8 +28,8 @@ export const propose: Mock = vi.fn();
 export const prompter = prompterAnswering({ confirm, select, input });
 export const proposeIdentity: { execute: Mock } = { execute: propose };
 
-export const createDeps: Mock = vi.fn(async () => ({
-  prompter,
+export const containerOf: Mock = vi.fn(async () => ({
+  shared: { prompter },
   telemetry: {
     readTranscriptRetention: { execute: retention },
     enableTelemetry: { execute: turnOn },
@@ -85,7 +85,7 @@ export async function run(...args: string[]): Promise<number | null> {
   bindOutput(program, processOutputFactory());
   program.exitOverride();
   program.option("--verbose");
-  registerTelemetryCommand(program, createDeps, wireTelemetryRequests());
+  registerTelemetryCommand(program, containerOf, wireTelemetryRequests());
   try {
     await parseToExit(program, ["node", "aidd", "telemetry", ...args]);
     return null;

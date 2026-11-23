@@ -6,13 +6,13 @@ import { concludeDoctor, type DoctorCmdOptions, type DoctorRun } from "./doctor-
  * against the user manifest, and this prints what it finds as it finds it. */
 export async function runUserScopeDoctor({
   tools,
-  deps,
+  container,
   output,
   projectRoot,
   cmdOptions,
 }: DoctorRun & { tools: ToolCatalog; cmdOptions: DoctorCmdOptions }): Promise<void> {
   const { tool } = cmdOptions;
-  const issues = await deps.runUserScopeDoctor.execute(
+  const issues = await container.doctor.runUserScopeDoctor.execute(
     { projectRoot, tool, plugin: cmdOptions.plugin },
     {
       registered: (manifest) => {
@@ -21,7 +21,7 @@ export async function runUserScopeDoctor({
           output,
           toolIds.map((id) => {
             const profile = tools.profile(id);
-            const settingsFile = deps.userSettingsFileOf(id);
+            const settingsFile = container.doctor.userSettingsFileOf(id);
             return {
               toolId: profile.toolId,
               version: manifest.versionOf(id) ?? "unknown",
