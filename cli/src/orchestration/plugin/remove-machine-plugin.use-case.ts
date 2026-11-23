@@ -11,7 +11,7 @@ export class RemoveMachinePlugin {
   constructor(
     private readonly removeUserPlugin: Pick<RemoveUserPlugin<unknown>, "execute">,
     private readonly records: Pick<RegistrationRecordRules, "isQualifiedRef" | "refSelectedBy"> &
-      Pick<RecordClaimRules, "withoutClaimedRef" | "claimsOf" | "holdersOf"> &
+      Pick<RecordClaimRules, "withoutClaimedRef" | "claimsOf" | "holdersOf" | "pluginClaimsOf"> &
       ScopeRecords
   ) {}
 

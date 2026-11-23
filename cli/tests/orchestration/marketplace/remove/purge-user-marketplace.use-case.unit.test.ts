@@ -67,6 +67,7 @@ function purgerWith(purge: (command: PurgeCommand) => Promise<number>) {
     saveRecords: async () => undefined,
     marketplaceOf: vi.fn(() => REGISTRATION),
     holdersOf: vi.fn(() => []),
+    pluginClaimsOf: vi.fn(() => []),
     claimedRefs: vi.fn(() => ["scoped@aidd-market", "unscoped@aidd-market"]),
     claimsOnMarketplace: vi.fn(() => []),
     withoutMarketplace: vi.fn((record) => ({ ...record, pluginClaims: [] })),

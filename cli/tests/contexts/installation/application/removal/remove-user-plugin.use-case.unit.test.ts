@@ -13,12 +13,13 @@ import { registeredTools, TOOL } from "../../../../shared/testing/registered-too
 import { FakeHostWithdrawal } from "../../testing/fake-host-withdrawal.fake.js";
 import { FakeUserScopePluginFiles } from "../../testing/fake-user-scope-plugin-files.fake.js";
 import { aManifest } from "../../testing/manifest.builder.js";
+import { holdPlugin } from "../../testing/plugin-selection-scenario.builder.js";
 
 const HOME = "/fake-home";
 const ROOT = "/project";
 const NAME = "aidd-dev";
 
-function userPlugin(dependents: string[] = []) {
+function userPlugin() {
   return RecordedPlugin.fromJSON({
     name: NAME,
     source: { kind: "local", path: "/fixture" },
@@ -26,7 +27,6 @@ function userPlugin(dependents: string[] = []) {
     strict: false,
     files: { "a.md": "h1", "b.md": "h2" },
     scope: "user",
-    dependents,
   });
 }
 
@@ -40,11 +40,10 @@ function fixture(
 ) {
   const manifest =
     options.manifest ??
-    aManifest()
-      .withTool(TOOL.claude, [])
-      .withPlugin(TOOL.claude, userPlugin(options.dependents))
-      .build();
-  const repo = new InMemoryManifestRepository(manifest, undefined, options.records);
+    aManifest().withTool(TOOL.claude, []).withPlugin(TOOL.claude, userPlugin()).build();
+  const records: ToolRecords = new Map(options.records);
+  if (options.dependents !== undefined) holdPlugin(records, TOOL.claude, NAME, options.dependents);
+  const repo = new InMemoryManifestRepository(manifest, undefined, records);
   const files = new FakeUserScopePluginFiles(
     new Map([[NAME, new Map((options.provenFiles ?? ["a.md", "b.md"]).map((f) => [f, "h"]))]])
   );

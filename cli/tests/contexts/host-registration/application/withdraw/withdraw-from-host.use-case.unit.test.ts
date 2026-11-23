@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { hostPortsOver } from "../../../../../src/contexts/host-registration/application/host-ports-over.js";
 import { WithdrawFromHost } from "../../../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
+import type { WithdrawalStepRequest } from "../../../../../src/contexts/host-registration/application/withdraw/withdrawal.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
@@ -42,6 +43,50 @@ describe("withdrawing a user-scope registration", () => {
 
     expect(activator.removedMarketplaces).toStrictEqual([HOST_NAME]);
   });
+});
+
+describe("withdrawing a tool whose record holds only the claims on user plugins", () => {
+  const claimsOnly = {
+    tool: registeredTools().aiProfile(TOOL.claude),
+    registrations: { pluginClaims: [{ plugin: "sample-plugin", dependents: ["/A"] }] },
+    cacheRoot: undefined,
+    claimedRefs: [],
+  };
+
+  const requests: [string, WithdrawalStepRequest][] = [
+    ["check-user-hosts", { kind: "check-user-hosts", withdrawals: [claimsOnly] }],
+    [
+      "prove-user-registrations",
+      { kind: "prove-user-registrations", withdrawals: [claimsOnly], projectRoot: "/A" },
+    ],
+    [
+      "withdraw-user-registrations",
+      {
+        kind: "withdraw-user-registrations",
+        withdrawals: [claimsOnly],
+        resolveCacheCandidate: async () => null,
+      },
+    ],
+  ];
+
+  it.each(requests)(
+    "asks nothing of a host it never registered with, on %s",
+    async (_kind, request) => {
+      const activator = new FakeHostActions({ available: false });
+      const withdraw = new WithdrawFromHost(
+        new InMemoryFileAdapter({}),
+        new CapturingLogger(),
+        hostPortsOver({
+          activators: new Map([["claude", activator]]),
+          pluginRegistries: new Map(),
+          marketplaceRegistries: new Map(),
+          sources: new Map(),
+        })
+      );
+
+      await expect(withdraw.execute(request)).resolves.toBeUndefined();
+    }
+  );
 });
 
 describe("removing a plugin from its host", () => {

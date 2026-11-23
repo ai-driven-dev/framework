@@ -9,6 +9,8 @@ import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.fake.js";
+import { holdPlugin } from "../../contexts/installation/testing/plugin-selection-scenario.builder.js";
+import { dependentsRecorded } from "../../shared/testing/host-record-reading.builder.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { saying } from "../../shared/testing/saying.builder.js";
@@ -199,9 +201,7 @@ describe("clean --scope user: native preflight", () => {
       source: { kind: "local", path: "/source" },
       strict: false,
       scope: "user",
-    })
-      .withFiles(new Map([["shared/skills/x.md", FileHash.of("shared bytes").value]]))
-      .withMachineClaim(["/B"]);
+    }).withFiles(new Map([["shared/skills/x.md", FileHash.of("shared bytes").value]]));
     machine.addPlugin(HOST.cursor, shared);
     machine.addPlugin(
       HOST.cursor,
@@ -211,11 +211,11 @@ describe("clean --scope user: native preflight", () => {
         source: { kind: "local", path: "/source" },
         strict: false,
         scope: "project",
-      })
-        .withFiles(new Map([["skills/local.md", "hash"]]))
-        .withMachineClaim(["/project-foreign"])
+      }).withFiles(new Map([["skills/local.md", "hash"]]))
     );
     const repo = new InMemoryManifestRepository(machine);
+    holdPlugin(repo.records, HOST.cursor, "shared", ["/B"]);
+    holdPlugin(repo.records, HOST.cursor, "local", ["/project-foreign"]);
     const useCase = userScopeCleaner({ tools: hostCatalog(), fs, repo, homeDir: homedir });
 
     expect(
@@ -226,14 +226,9 @@ describe("clean --scope user: native preflight", () => {
     );
     expect(fs.has(userFile)).toBe(true);
     expect(fs.has(projectFile)).toBe(true);
-    expect(
-      repo
-        .getCurrent()
-        ?.getRecordedPlugins(HOST.cursor)
-        .find((plugin) => plugin.plugin.name === "shared")?.machineClaim
-    ).toEqual(["/B"]);
+    expect(dependentsRecorded(repo.records.get(HOST.cursor), "shared")).toEqual(["/B"]);
 
-    machine.updatePlugin(HOST.cursor, shared.withMachineClaim(undefined));
+    holdPlugin(repo.records, HOST.cursor, "shared", []);
     await useCase.execute({ projectRoot: "/A", force: true });
     expect(repo.getCurrent()).toBeNull();
     expect(fs.has(userFile)).toBe(false);

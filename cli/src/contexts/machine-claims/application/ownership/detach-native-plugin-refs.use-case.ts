@@ -44,7 +44,8 @@ function detachFromTool(
   const targeted = new Set(refs);
   let changed = false;
   const claims = readHeldClaims(registration.pluginClaims).map((claim) => {
-    if (!targeted.has(claim.ref) || !claim.dependents.includes(root)) return claim;
+    if (!("ref" in claim) || !targeted.has(claim.ref) || !claim.dependents.includes(root))
+      return claim;
     changed = true;
     return {
       ref: claim.ref,

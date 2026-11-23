@@ -123,12 +123,62 @@ describe("record claim rules, following the host data", () => {
     });
   });
 
+  describe("the claim a plugin holds, beside the claims on refs", () => {
+    const held = { plugin: "sample", dependents: ["/p"] };
+    const withPlugin = () => ({
+      ...recordWith(),
+      pluginClaims: [held, ...recordWith().pluginClaims],
+    });
+
+    it("survives merging catalogue claims, which change only the claims on refs", () => {
+      const merged = rules.mergeCatalogueClaims(
+        withPlugin(),
+        { marketplaces: [], refs: ["c@catalog"], dependent: "/a" },
+        "fallback"
+      );
+      expect(merged.record.pluginClaims).toEqual([
+        held,
+        claim("a@catalog"),
+        claim("b@second"),
+        { ref: "c@catalog", dependents: ["/a"] },
+      ]);
+    });
+
+    it("survives dropping a claimed ref", () => {
+      expect(rules.withoutClaimedRef(withPlugin(), "a@catalog").pluginClaims).toEqual([
+        held,
+        claim("b@second"),
+      ]);
+    });
+
+    it("survives dropping a marketplace", () => {
+      expect(rules.withoutMarketplace(withPlugin(), "local").pluginClaims).toEqual([
+        held,
+        claim("b@second"),
+      ]);
+    });
+
+    it("is no claim on a ref", () => {
+      expect(rules.claimsOf(withPlugin())).toEqual([claim("a@catalog"), claim("b@second")]);
+      expect(rules.claimedRefs(withPlugin())).toEqual(["a@catalog", "b@second"]);
+      expect(rules.claimsOnMarketplace(withPlugin(), "local")).toEqual([claim("a@catalog")]);
+    });
+
+    it("is read by the plugin's name, the projects holding it listed by holdersOf", () => {
+      const claims = rules.pluginClaimsOf(withPlugin(), ["sample", "other"]);
+
+      expect(claims).toEqual([held]);
+      expect(rules.holdersOf(claims)).toEqual(["/p"]);
+      expect(rules.pluginClaimsOf(undefined, ["sample"])).toEqual([]);
+    });
+  });
+
   describe("a claim that keeps no dependents", () => {
     const unchecked: Record<string, unknown> = {
       ...recordWith(),
       pluginClaims: [{ ref: "a@catalog" }],
     };
-    const refusal = "expected a ref and its dependents";
+    const refusal = "expected a ref or a plugin, and its dependents";
 
     it.each([
       ["claimsOnMarketplace", () => rules.claimsOnMarketplace(unchecked, "local")],

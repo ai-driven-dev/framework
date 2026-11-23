@@ -1,7 +1,10 @@
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import { recordedRegistrations } from "../../domain/record/registration-record.js";
+import {
+  readRegistrationRecord,
+  recordedRegistrations,
+} from "../../domain/record/registration-record.js";
 import type { HostPorts } from "../../ports/host-ports.js";
 import { proveMarketplaceRemoval } from "../prove-marketplace-removal.js";
 import { throwRefusal } from "../throw-refusal.js";
@@ -21,6 +24,7 @@ import type {
   ProveMarketplaceRemovalRequest,
   ProvenHostRef,
   ProvenMarketplaceRemoval,
+  UserRegistrationWithdrawal,
   WithdrawalDeps,
   WithdrawalRequest,
   WithdrawalStepRequest,
@@ -94,7 +98,7 @@ export class WithdrawFromHost {
   private checkUserHosts(
     command: Extract<WithdrawalRequest, { kind: "check-user-hosts" }>
   ): undefined {
-    for (const withdrawal of command.withdrawals) {
+    for (const withdrawal of registeredOnAHost(command.withdrawals)) {
       reachableUserActivator(
         this.deps,
         withdrawal,
@@ -108,7 +112,10 @@ export class WithdrawFromHost {
   private async withdrawUser(
     command: Extract<WithdrawalRequest, { kind: "withdraw-user-registrations" }>
   ): Promise<void> {
-    const removed = await withdrawUserRegistrations(this.deps, command.withdrawals);
+    const removed = await withdrawUserRegistrations(
+      this.deps,
+      registeredOnAHost(command.withdrawals)
+    );
     return purgeMarketplaceCaches(this.deps, removed, command.resolveCacheCandidate);
   }
 
@@ -136,4 +143,14 @@ export class WithdrawFromHost {
     if (confirmed !== undefined) await purgeCachedPlugin(this.deps, command, confirmed);
     return confirmed;
   }
+}
+
+/** A tool's record also holds the claims on the user plugins a project handed the machine, which
+ * name no host: only a record that names its binary registered anything on one. */
+function registeredOnAHost(
+  withdrawals: readonly UserRegistrationWithdrawal[]
+): readonly UserRegistrationWithdrawal[] {
+  return withdrawals.filter(
+    ({ registrations }) => readRegistrationRecord(registrations) !== undefined
+  );
 }

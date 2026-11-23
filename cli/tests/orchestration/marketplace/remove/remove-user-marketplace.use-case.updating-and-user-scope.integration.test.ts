@@ -105,7 +105,11 @@ describe("user-scope tool targeted user marketplace removal", () => {
     const machine = Manifest.create();
     machine.addTool(SYNTHETIC_USER_TOOL, "1.0.0", []);
     const path = "sample-plugin/skills/demo/SKILL.md";
+    const records: ToolRecords = new Map();
     if (options.claim !== false) {
+      records.set(SYNTHETIC_USER_TOOL, {
+        pluginClaims: [{ plugin: "sample-plugin", dependents: [...(options.dependents ?? [])] }],
+      });
       machine.addPlugin(
         SYNTHETIC_USER_TOOL,
         RecordedPlugin.fromJSON({
@@ -116,11 +120,10 @@ describe("user-scope tool targeted user marketplace removal", () => {
           files: { [path]: FileHash.of("bytes").value },
           scope: "user",
           marketplace: ALIAS,
-          dependents: [...(options.dependents ?? [])],
         })
       );
     }
-    const repo = new InMemoryManifestRepository(machine);
+    const repo = new InMemoryManifestRepository(machine, undefined, records);
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(
       "/A",
@@ -179,7 +182,6 @@ describe("user-scope tool targeted user marketplace removal", () => {
         files: {},
         scope: "user",
         marketplace: "other-alias",
-        dependents: [],
       })
     );
     f.repo.getCurrent()?.addPlugin(
@@ -192,7 +194,6 @@ describe("user-scope tool targeted user marketplace removal", () => {
         files: {},
         scope: "project",
         marketplace: ALIAS,
-        dependents: [],
       })
     );
     expect(await f.useCase.execute(options())).toMatchObject({ removedPluginCount: 1 });

@@ -82,6 +82,6 @@ describe("the claims a host registration is checked against", () => {
       persistedProject: none,
     });
 
-    await expect(view.machine()).rejects.toThrow("expected a ref and its dependents");
+    await expect(view.machine()).rejects.toThrow("expected a ref or a plugin, and its dependents");
   });
 });

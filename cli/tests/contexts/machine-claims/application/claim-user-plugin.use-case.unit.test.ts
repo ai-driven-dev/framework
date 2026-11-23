@@ -5,7 +5,10 @@ import { ToolNotInManifestError } from "../../../../src/shared/domain/shared.err
 import type { AiToolId } from "../../../../src/shared/domain/tool.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
-import { InMemoryMachineManifest } from "../testing/in-memory-machine-manifest.fake.js";
+import {
+  InMemoryMachineManifest,
+  InMemoryMachineManifestRepository,
+} from "../testing/in-memory-machine-manifest.fake.js";
 import { MachinePlugin } from "../testing/machine-plugin.fake.js";
 
 const ROOT = "/test-project";
@@ -34,10 +37,15 @@ class Machine extends InMemoryMachineManifest implements OwnershipMachineManifes
 }
 
 const userPlugin = () => new MachinePlugin({ name: "sample", files: { "a.md": "abc" } });
-const ownership = new ClaimUserPlugin(new InMemoryFileAdapter({}, [ROOT]));
+const ownership = (records: InMemoryMachineManifestRepository) =>
+  new ClaimUserPlugin(new InMemoryFileAdapter({}, [ROOT]), records);
 
-function claim(machine: Machine, toolVersion: string | undefined) {
-  return ownership.execute({
+function claim(
+  machine: Machine,
+  toolVersion: string | undefined,
+  records = new InMemoryMachineManifestRepository(machine)
+) {
+  return ownership(records).execute({
     machine,
     toolId: tool,
     plugin: userPlugin(),
@@ -47,21 +55,55 @@ function claim(machine: Machine, toolVersion: string | undefined) {
 }
 
 describe("recording a project's claim on a user-scope plugin", () => {
-  it("records the plugin on the machine with the project as its holder", async () => {
+  it("records the plugin on the machine, the project holding it in the tool's claims", async () => {
     const machine = new Machine(tool);
+    const records = new InMemoryMachineManifestRepository(machine);
 
-    await claim(machine, "1.0.0");
+    await claim(machine, "1.0.0", records);
 
-    expect(machine.getRecordedPlugins(tool)[0]?.machineClaim).toStrictEqual([ROOT]);
+    expect(machine.getRecordedPlugins(tool)).toHaveLength(1);
+    expect(records.records.get(tool)?.pluginClaims).toStrictEqual([
+      { plugin: "sample", dependents: [ROOT] },
+    ]);
   });
 
-  it("adds the project as a holder of a plugin the machine already owns", async () => {
+  it("adds the project as a holder of a plugin the machine already owns, beside the claims held", async () => {
     const machine = new Machine(tool);
-    machine.addPlugin(tool, userPlugin().withMachineClaim(["/other"]));
+    machine.addPlugin(tool, userPlugin());
+    const ref = { ref: "a@catalog", dependents: ["/ref"] };
+    const records = new InMemoryMachineManifestRepository(
+      machine,
+      new Map([
+        [
+          tool,
+          { binary: "claude", pluginClaims: [{ plugin: "sample", dependents: ["/other"] }, ref] },
+        ],
+      ])
+    );
 
-    await claim(machine, "1.0.0");
+    await claim(machine, "1.0.0", records);
 
-    expect(machine.getRecordedPlugins(tool)[0]?.machineClaim).toStrictEqual(["/other", ROOT]);
+    expect(records.records.get(tool)).toStrictEqual({
+      binary: "claude",
+      pluginClaims: [{ plugin: "sample", dependents: ["/other", ROOT] }, ref],
+    });
+    expect(records.recordSaveCount).toBe(1);
+  });
+
+  it("keeps the host data and the claims on refs of a record it opens a plugin claim in", async () => {
+    const machine = new Machine(tool);
+    const ref = { ref: "a@catalog", dependents: ["/ref"] };
+    const records = new InMemoryMachineManifestRepository(
+      machine,
+      new Map([[tool, { binary: "claude", pluginClaims: [ref] }]])
+    );
+
+    await claim(machine, "1.0.0", records);
+
+    expect(records.records.get(tool)).toStrictEqual({
+      binary: "claude",
+      pluginClaims: [ref, { plugin: "sample", dependents: [ROOT] }],
+    });
   });
 
   it("tracks the tool at the project's version when the machine did not", async () => {
@@ -72,7 +114,11 @@ describe("recording a project's claim on a user-scope plugin", () => {
     expect(machine.added).toStrictEqual([`${tool}@2.3.4`]);
   });
 
-  it("refuses a tool the project record does not track either", async () => {
-    await expect(claim(new Machine(tool), undefined)).rejects.toThrow(ToolNotInManifestError);
+  it("refuses a tool the project record does not track either, writing no claim", async () => {
+    const machine = new Machine(tool);
+    const records = new InMemoryMachineManifestRepository(machine);
+
+    await expect(claim(machine, undefined, records)).rejects.toThrow(ToolNotInManifestError);
+    expect(records.recordSaveCount).toBe(0);
   });
 });

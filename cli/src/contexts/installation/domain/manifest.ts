@@ -91,7 +91,7 @@ export class Manifest {
     return this.getRecordedPlugins(toolId).map((recorded) => recorded.plugin);
   }
 
-  /** Each plugin the tool records, with its provenance, host reference and machine claim. */
+  /** Each plugin the tool records, with its provenance and host reference. */
   getRecordedPlugins(toolId: string): readonly RecordedPlugin[] {
     return this._tools.get(toolId)?.plugins ?? [];
   }

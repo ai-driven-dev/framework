@@ -117,7 +117,6 @@ describe("a tool's manifest entry", () => {
         mcpEntries: { srv: "d" },
         projectHooks: { entries: [{ event: "e", command: "c", digest: "d" }], scripts: { s: "h" } },
         marketplace: "aidd-framework",
-        dependents: ["/project"],
       });
 
       expect(rewritten(full)).toBe(JSON.stringify([full]));

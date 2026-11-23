@@ -8,7 +8,9 @@ import {
   claimsKeeping,
   holdersOf,
   mergeRefClaims,
+  pluginClaimsNamed,
   readHeldClaims,
+  readHeldRefClaims,
 } from "../../domain/plugin-claim.model.js";
 import type { HostRecordRules } from "../../ports/host-record.js";
 
@@ -49,12 +51,14 @@ function mergeCatalogue(
  * claims list always goes last, after the host data. */
 export function recordClaimRules(host: HostRecordRules): RecordClaimRules {
   return {
-    claimsOf: (record) => readHeldClaims(record?.pluginClaims),
-    claimedRefs: (record) => readHeldClaims(record?.pluginClaims).map((claim) => claim.ref),
+    claimsOf: (record) => readHeldRefClaims(record?.pluginClaims),
+    claimedRefs: (record) => readHeldRefClaims(record?.pluginClaims).map((claim) => claim.ref),
+    pluginClaimsOf: (record, names) =>
+      pluginClaimsNamed(readHeldClaims(record?.pluginClaims), names),
     holdersOf,
     claimsOnMarketplace: (record, alias) => {
       const off = offMarketplace(host, record, alias);
-      return claimsKeeping(readHeldClaims(record.pluginClaims), (ref) => !off(ref));
+      return readHeldRefClaims(record.pluginClaims).filter((claim) => !off(claim.ref));
     },
     withoutMarketplace: (record, alias) => ({
       ...host.withoutMarketplace(record, alias),

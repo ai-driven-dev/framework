@@ -38,7 +38,6 @@ describe("purging the user-scope machine state", () => {
       strict: false,
       files: { "k.md": "h" },
       scope: "project",
-      dependents: [],
     });
     const manifest = aManifest()
       .withTool(TOOL.claude, [])

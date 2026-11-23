@@ -1,7 +1,10 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { RemovePlugin } from "../../../../../src/contexts/installation/application/removal/remove-plugin.use-case.js";
-import { PluginNotFoundError } from "../../../../../src/contexts/installation/contract/installation.error.js";
+import {
+  PluginNotFoundError,
+  UnresolvableUserScopeError,
+} from "../../../../../src/contexts/installation/contract/installation.error.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
@@ -67,7 +70,13 @@ function fixture(
     registeredTools()
   );
   const run = (pluginName = NAME) =>
-    remove.execute({ pluginName, toolIds: [toolId], projectRoot: ROOT, withdrawal });
+    remove.execute({
+      pluginName,
+      toolIds: [toolId],
+      projectRoot: ROOT,
+      home: homedir(),
+      withdrawal,
+    });
   return { repo, fs, withdrawal, run };
 }
 
@@ -144,6 +153,14 @@ describe("removing a plugin from a project", () => {
 
     expect(fs.has(userFile)).toBe(true);
     expect(withdrawal.detachedUserPlugins).toEqual([[TOOL.cursor, NAME]]);
+  });
+
+  it("refuses a user-scope plugin of a tool with no user directory, changing nothing", async () => {
+    const { repo, fs, withdrawal, run } = fixture({ scope: "user", toolId: TOOL.claude });
+
+    await expect(run()).rejects.toBeInstanceOf(UnresolvableUserScopeError);
+    expect([repo.saveCount, withdrawal.detachedUserPlugins]).toEqual([0, []]);
+    expect(fs.has(join(ROOT, "skills/a.md"))).toBe(true);
   });
 
   it("detaches no user plugin for a project-scope one", async () => {

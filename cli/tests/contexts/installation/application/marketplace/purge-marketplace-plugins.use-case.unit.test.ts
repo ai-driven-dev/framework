@@ -9,7 +9,10 @@ import type { ToolRecords } from "../../../../../src/contexts/installation/contr
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
-import { holdersRecorded } from "../../../../shared/testing/host-record-reading.builder.js";
+import {
+  holdersRecorded,
+  pluginClaimsRecorded,
+} from "../../../../shared/testing/host-record-reading.builder.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../../../shared/testing/saying.builder.js";
@@ -47,7 +50,7 @@ class LockedRepository extends InMemoryManifestRepository {
 
 function plugin(
   name: string,
-  options: { marketplace?: string; scope?: Scope; dependents?: string[] } = {}
+  options: { marketplace?: string; scope?: Scope } = {}
 ): RecordedPlugin {
   return RecordedPlugin.fromJSON({
     name,
@@ -57,7 +60,6 @@ function plugin(
     files: { [`${name}/a.md`]: "0".repeat(32) },
     scope: options.scope ?? "user",
     marketplace: options.marketplace ?? MARKET,
-    dependents: options.dependents ?? [],
   });
 }
 
@@ -71,10 +73,18 @@ const record = (...claims: { ref: string; dependents: string[] }[]) => ({
 interface Seed {
   plugins?: RecordedPlugin[];
   native?: ReturnType<typeof record>;
+  /** The projects holding the plugin named `one`, as a plugin claim of the tool's record. */
+  heldPlugin?: string[];
   /** A plugin whose proven files fall short of what it tracks. */
   partial?: string;
   /** A second tool whose host records the same catalogue and refuses its removal plan. */
   refusingCodex?: boolean;
+}
+
+function claudeRecord(seed: Seed) {
+  const native = seed.native ?? record();
+  const held = seed.heldPlugin ? [{ plugin: "one", dependents: seed.heldPlugin }] : [];
+  return { ...native, pluginClaims: [...native.pluginClaims, ...held] };
 }
 
 function setup(seed: Seed = {}) {
@@ -82,7 +92,9 @@ function setup(seed: Seed = {}) {
   manifest.addTool(TOOL.claude, "1.0.0", []);
   for (const p of seed.plugins ?? [plugin("one")]) manifest.addPlugin(TOOL.claude, p);
   const records: ToolRecords = new Map();
-  if (seed.native !== undefined) records.set(TOOL.claude, seed.native);
+  if (seed.native !== undefined || seed.heldPlugin !== undefined) {
+    records.set(TOOL.claude, claudeRecord(seed));
+  }
   if (seed.refusingCodex) {
     manifest.addTool(TOOL.codex, "1.0.0", []);
     records.set(TOOL.codex, record());
@@ -124,6 +136,7 @@ function setup(seed: Seed = {}) {
       saveRecords: (saved) => repo.saveRecords(saved),
       registrationOf: rules.marketplaceOf,
       holdersOf: holdersRecorded,
+      pluginClaimsOf: pluginClaimsRecorded,
       claimsOn: rules.claimsOnMarketplace,
       withoutMarketplace: rules.withoutMarketplace,
     },
@@ -162,7 +175,7 @@ describe("purging a marketplace's plugins from the machine", () => {
   });
 
   it("refuses while a project still depends on one of its plugins, removing nothing", async () => {
-    const s = setup({ plugins: [plugin("one", { dependents: ["/other"] })] });
+    const s = setup({ heldPlugin: ["/other"] });
 
     await expect(s.purge.execute(s.command)).rejects.toThrow(ActiveMachineDependentsError);
     expect(s.files.removed).toHaveLength(0);

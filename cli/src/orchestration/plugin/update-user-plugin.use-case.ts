@@ -22,7 +22,7 @@ export class UpdateUserPlugin {
       RegistrationRecordRules,
       "isQualifiedRef" | "refSelectedBy"
     > &
-      Pick<RecordClaimRules, "claimsOf" | "holdersOf"> &
+      Pick<RecordClaimRules, "claimsOf" | "holdersOf" | "pluginClaimsOf"> &
       Pick<ScopeRecords, "loadRecords">
   ) {}
 

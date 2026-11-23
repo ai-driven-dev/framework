@@ -16,6 +16,7 @@ describe("updating a user plugin", () => {
       refSelectedBy: () => true,
       claimsOf: () => [],
       holdersOf: () => [],
+      pluginClaimsOf: () => [],
       loadRecords: async () => new Map(),
     };
     let seen: unknown;
@@ -64,6 +65,7 @@ describe("updating a user plugin", () => {
         refSelectedBy: () => false,
         claimsOf: () => [],
         holdersOf: () => [],
+        pluginClaimsOf: () => [],
         loadRecords: async () => new Map(),
       }
     );
@@ -91,6 +93,7 @@ describe("updating a user plugin", () => {
           refSelectedBy: () => false,
           claimsOf: () => [],
           holdersOf: () => [],
+          pluginClaimsOf: () => [],
           loadRecords: async () => new Map(),
         }
       ).execute({ toolIds: [], projectRoot: "/A", scope: "user" });
@@ -117,7 +120,6 @@ describe("updating a user plugin", () => {
         strict: false,
         files: {},
         scope: "user",
-        dependents: [],
       });
 
       await expect((await afterPreflight())(SYNTHETIC_TOOL, async () => applied)).resolves.toBe(

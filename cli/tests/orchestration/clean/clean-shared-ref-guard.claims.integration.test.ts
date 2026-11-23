@@ -9,6 +9,7 @@ import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claim
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
+import { dependentsRecorded } from "../../shared/testing/host-record-reading.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import {
@@ -47,13 +48,9 @@ describe("clean releases a project's claims only once its local cleanup succeeds
           strict: false,
           scope,
           files: {},
-          dependents: [PROJECT_ROOT, OTHER_PROJECT],
         });
-      project.addPlugin(SECOND_SYNTHETIC_TOOL, record("shared").withMachineClaim([]));
-      project.addPlugin(
-        SECOND_SYNTHETIC_TOOL,
-        record("local-only", "project").withMachineClaim([])
-      );
+      project.addPlugin(SECOND_SYNTHETIC_TOOL, record("shared"));
+      project.addPlugin(SECOND_SYNTHETIC_TOOL, record("local-only", "project"));
       const machine = Manifest.create();
       machine.addTool(SYNTHETIC_TOOL, "1.0.0", []);
       const machineRecords = new Map([
@@ -68,6 +65,15 @@ describe("clean releases a project's claims only once its local cleanup succeeds
             pluginRefs: [ref, otherRef],
             pluginClaims: [ref, otherRef].map((ref) => ({
               ref,
+              dependents: [PROJECT_ROOT, OTHER_PROJECT],
+            })),
+          },
+        ],
+        [
+          SECOND_SYNTHETIC_TOOL,
+          {
+            pluginClaims: ["shared", "local-only", "unrelated"].map((plugin) => ({
+              plugin,
               dependents: [PROJECT_ROOT, OTHER_PROJECT],
             })),
           },
@@ -119,13 +125,10 @@ describe("clean releases a project's claims only once its local cleanup succeeds
       ]);
       expect(machineRepo.records.get(SYNTHETIC_TOOL)?.pluginRefs).toEqual([ref, otherRef]);
       expect(
-        machineRepo
-          .getCurrent()
-          ?.getRecordedPlugins(SECOND_SYNTHETIC_TOOL)
-          .map((plugin) => ({
-            name: plugin.plugin.name,
-            dependents: plugin.machineClaim,
-          }))
+        ["shared", "local-only", "unrelated"].map((name) => ({
+          name,
+          dependents: dependentsRecorded(machineRepo.records.get(SECOND_SYNTHETIC_TOOL), name),
+        }))
       ).toEqual([
         { name: "shared", dependents },
         { name: "local-only", dependents: [PROJECT_ROOT, OTHER_PROJECT] },

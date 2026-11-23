@@ -212,7 +212,7 @@ function pluginAddOf(base: Base, inst: Installation) {
   const { builtMaterializationDeps } = inst;
   return new AddPlugin(
     {
-      ownership: new ClaimUserPlugin(fs),
+      ownership: new ClaimUserPlugin(fs, userManifestRepo),
       manifests: { project: manifestRepo, user: userManifestRepo },
       addToProject: new AddPluginToProject(
         {

@@ -6,6 +6,7 @@ import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/
 import { ClaimUserPlugin } from "../../../../../src/contexts/machine-claims/application/claim-user-plugin.use-case.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
+import { dependentsRecorded } from "../../../../shared/testing/host-record-reading.builder.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
@@ -44,7 +45,7 @@ function addTo(manifest: Manifest, options: { scope?: Scope } = {}) {
     },
   };
   const add = new AddPlugin(
-    { ownership: new ClaimUserPlugin(fs), manifests: { project, user }, addToProject },
+    { ownership: new ClaimUserPlugin(fs, user), manifests: { project, user }, addToProject },
     registeredTools()
   );
   return { add, project, user, placed };
@@ -85,10 +86,9 @@ describe("adding a plugin to a project", () => {
 
     await expect(add.execute(ADD)).rejects.toThrow("disk full");
 
-    const claimed = user.getCurrent()?.getRecordedPlugins(TOOL.claude);
-    expect([user.saveCount, claimed?.map((p) => [p.plugin.name, p.machineClaim])]).toStrictEqual([
-      1,
-      [["sample-plugin", [PROJECT_ROOT]]],
-    ]);
+    expect([
+      user.recordSaveCount,
+      dependentsRecorded(user.records.get(TOOL.claude), "sample-plugin"),
+    ]).toStrictEqual([1, [PROJECT_ROOT]]);
   });
 });

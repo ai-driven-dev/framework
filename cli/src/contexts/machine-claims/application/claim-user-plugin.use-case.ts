@@ -1,8 +1,12 @@
 import { ToolNotInManifestError } from "../../../shared/domain/shared.error.js";
 import type { AiToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
-import { dependentsClaim, readDependents } from "../domain/plugin-claim.model.js";
-import type { OwnershipMachineManifest, UserPluginToClaim } from "../ports/machine-manifest.js";
+import { readHeldClaims, withPluginDependent } from "../domain/plugin-claim.model.js";
+import type {
+  OwnershipMachineManifest,
+  ScopeRecordsRepository,
+  UserPluginToClaim,
+} from "../ports/machine-manifest.js";
 
 /** A user-scope plugin a project hands to the machine, with the project that holds it. */
 export interface UserScopeClaim {
@@ -14,9 +18,14 @@ export interface UserScopeClaim {
   readonly projectRoot: string;
 }
 
-/** Records the project as a holder of a user-scope plugin on the machine manifest. */
+/** Records the plugin on the machine manifest, and the project as a holder of it in the claims of
+ * the tool's record. The records are written before the manifest is saved: a crash between the two
+ * leaves a claim on a plugin the manifest lacks, which nothing reads. */
 export class ClaimUserPlugin {
-  constructor(private readonly fs: Pick<FileReader, "realpath">) {}
+  constructor(
+    private readonly fs: Pick<FileReader, "realpath">,
+    private readonly records: ScopeRecordsRepository
+  ) {}
 
   async execute(claim: UserScopeClaim): Promise<void> {
     const { machine, toolId, plugin, toolVersion } = claim;
@@ -28,9 +37,14 @@ export class ClaimUserPlugin {
       if (toolVersion === undefined) throw new ToolNotInManifestError(toolId);
       machine.addTool(toolId, toolVersion, []);
     }
-    const canonical = (owned ?? plugin.withMcpEntries(new Map())).withMachineClaim(
-      dependentsClaim([...readDependents(owned?.machineClaim), root])
+    const records = await this.records.loadRecords();
+    const held = records.get(toolId);
+    const pluginClaims = withPluginDependent(
+      readHeldClaims(held?.pluginClaims),
+      plugin.plugin.name,
+      root
     );
-    machine.withPlugin(toolId, canonical);
+    await this.records.saveRecords(new Map(records).set(toolId, { ...held, pluginClaims }));
+    machine.withPlugin(toolId, owned ?? plugin.withMcpEntries(new Map()));
   }
 }

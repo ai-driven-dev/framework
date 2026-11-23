@@ -34,7 +34,7 @@ export interface PurgeUserMarketplaceDeps {
   readonly records: Pick<RegistrationRecordRules, "marketplaceOf"> &
     Pick<
       RecordClaimRules,
-      "claimsOnMarketplace" | "withoutMarketplace" | "claimedRefs" | "holdersOf"
+      "claimsOnMarketplace" | "withoutMarketplace" | "claimedRefs" | "holdersOf" | "pluginClaimsOf"
     > &
     ScopeRecords;
 }
@@ -43,6 +43,7 @@ export interface PurgeUserMarketplaceDeps {
 function marketplaceRecordsOf(records: PurgeUserMarketplaceDeps["records"]): MarketplaceRecords {
   return {
     holdersOf: records.holdersOf,
+    pluginClaimsOf: records.pluginClaimsOf,
     loadRecords: () => records.loadRecords(),
     saveRecords: (saved) => records.saveRecords(saved),
     registrationOf: (registrations, alias) => records.marketplaceOf(registrations, alias),

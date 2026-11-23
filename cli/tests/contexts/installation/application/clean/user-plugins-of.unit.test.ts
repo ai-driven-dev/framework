@@ -14,7 +14,6 @@ describe("listing the user-scope plugins of a manifest", () => {
       strict: false,
       files: { "k.md": "h" },
       scope: "project",
-      dependents: [],
     });
     const manifest = aManifest()
       .withTool(TOOL.claude, [])

@@ -10,7 +10,7 @@ import { aManifest } from "./manifest.builder.js";
 export const USER_SCOPE_HOME = "/fake-home";
 export const USER_PLUGIN_NAME = "aidd-dev";
 
-export function aUserPlugin(dependents: string[] = []) {
+export function aUserPlugin() {
   return RecordedPlugin.fromJSON({
     name: USER_PLUGIN_NAME,
     source: { kind: "local", path: "/fixture" },
@@ -18,9 +18,14 @@ export function aUserPlugin(dependents: string[] = []) {
     strict: false,
     files: { "a.md": "h1", "b.md": "h2" },
     scope: "user",
-    dependents,
   });
 }
+
+/** The claim a record keeps for the projects holding the user plugin. */
+export const heldBy = (dependents: readonly string[]) => ({
+  plugin: USER_PLUGIN_NAME,
+  dependents: [...dependents],
+});
 
 /** The doubles every part of a user-scope purge is built from, over one user manifest. */
 export function userScopeParts(

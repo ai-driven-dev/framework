@@ -41,11 +41,11 @@ describe("two projects on one home that installed the same cursor plugins", () =
         "update_memory"
       );
     }
-    const machine = JSON.parse(
-      await readFile(join(home, ".config", "aidd", "manifest.json"), "utf-8")
+    const claims = JSON.parse(
+      await readFile(join(home, ".config", "aidd", "plugin-claims.json"), "utf-8")
     );
-    const owned = machine.tools[TOOL.cursor]?.plugins.find(
-      (plugin: { name: string }) => plugin.name === "aidd-context"
+    const owned = claims[TOOL.cursor]?.find(
+      (claim: { plugin?: string }) => claim.plugin === "aidd-context"
     );
     expect(owned?.dependents).toEqual([await realpath(first), await realpath(second)]);
     const contextDir = join(userPlugins(), "aidd-context");

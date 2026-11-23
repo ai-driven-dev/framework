@@ -6,12 +6,19 @@ export interface NativeRefClaim {
   readonly dependents: readonly string[];
 }
 
-/** What the manifest carries and machine claims read: the claims a tool's record keeps on its
- * native refs, and the project roots holding plugins or refs. */
+/** A claim on a machine plugin, with the project roots still holding it. */
+export interface PluginClaim {
+  readonly plugin: string;
+  readonly dependents: readonly string[];
+}
+
+/** What machine claims read from a tool's record: its claims on native refs and on machine
+ * plugins, and the project roots holding either. */
 export interface MachineClaimsReading {
   claimsOf(registrations: ToolRecord | undefined): readonly NativeRefClaim[];
-  holdersOf(
-    plugins: readonly { readonly machineClaim?: unknown }[],
-    refClaims: readonly { readonly dependents: readonly string[] }[]
-  ): readonly string[];
+  pluginClaimsOf(
+    registrations: ToolRecord | undefined,
+    names: readonly string[]
+  ): readonly PluginClaim[];
+  holdersOf(claims: readonly { readonly dependents: readonly string[] }[]): readonly string[];
 }

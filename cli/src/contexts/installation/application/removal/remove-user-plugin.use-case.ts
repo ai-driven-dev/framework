@@ -59,7 +59,7 @@ export class RemoveUserPlugin<Proof> {
     const targets = this.fileTargets(manifest, toolIds, options);
     const registered = await options.records.loadRecords();
     const nativeTargets = this.nativeTargets(registered, toolIds, options);
-    this.assertRemovable(options, targets, nativeTargets);
+    this.assertRemovable(options, { targets, nativeTargets }, registered);
     const safeFiles = await this.proveFiles(targets, options);
     const nativeRemoval = await this.proveNativeRefs(nativeTargets, options);
     for (const target of nativeRemoval) {
@@ -110,8 +110,8 @@ export class RemoveUserPlugin<Proof> {
 
   private assertRemovable(
     options: RemoveUserPluginRequest,
-    targets: FileTargets,
-    nativeTargets: NativeTargets
+    { targets, nativeTargets }: { targets: FileTargets; nativeTargets: NativeTargets },
+    registered: ToolRecords
   ): void {
     if (targets.length === 0 && nativeTargets.length === 0)
       throw new PluginNotFoundError(options.pluginName);
@@ -120,10 +120,12 @@ export class RemoveUserPlugin<Proof> {
         `Native plugin '${options.pluginName}' has multiple catalogues; use the exact <plugin>@<catalogue> ref.`
       );
     }
-    const holders = options.records.holdersOf(
-      targets.map((target) => target.recorded),
-      nativeTargets.map(({ claim }) => claim)
-    );
+    const holders = options.records.holdersOf([
+      ...targets.flatMap(({ toolId, plugin }) =>
+        options.records.pluginClaimsOf(registered.get(toolId), [plugin.name])
+      ),
+      ...nativeTargets.map(({ claim }) => claim),
+    ]);
     if (holders.length > 0) {
       throw new ActiveMachineDependentsError(`user-scope plugin '${options.pluginName}'`, holders);
     }

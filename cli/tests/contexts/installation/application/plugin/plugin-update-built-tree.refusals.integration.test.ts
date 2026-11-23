@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { pluginMaterializerOf } from "../../../../../src/composition/orchestration/built-placement.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
+import { dependentsRecorded } from "../../../../shared/testing/host-record-reading.builder.js";
 import {
   buildInstallationDeps,
   initAndInstall,
@@ -9,6 +10,7 @@ import {
 import { loadDistributionOf } from "../../../../shared/testing/load-distribution.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
+import { holdPlugin } from "../../testing/plugin-selection-scenario.builder.js";
 import {
   attachFutureSupportedNativeClaim,
   HOME,
@@ -247,12 +249,11 @@ describe("UpdatePlugin - built-tree materialization", () => {
     deps.fs.setFile(oldAbsolute, "old owned bytes");
     machine.updatePlugin(
       cursor,
-      stale
-        .withFiles(
-          new Map([...stale.plugin.files, [oldPath, FileHash.of("old owned bytes").value]])
-        )
-        .withMachineClaim([PROJECT_ROOT, "/B"])
+      stale.withFiles(
+        new Map([...stale.plugin.files, [oldPath, FileHash.of("old owned bytes").value]])
+      )
     );
+    holdPlugin(deps.userManifestRepo.records, cursor, "sample-plugin", [PROJECT_ROOT, "/B"]);
     expect(
       await makeUpdateUseCase(deps, registry).execute({
         toolIds: [cursor],
@@ -262,7 +263,10 @@ describe("UpdatePlugin - built-tree materialization", () => {
     ).toEqual(["sample-plugin"]);
     expect(deps.fs.getFile(oldAbsolute)).toBeUndefined();
     const owned = deps.userManifestRepo.getCurrent()?.getRecordedPlugins(cursor)[0];
-    expect(owned?.machineClaim).toEqual([PROJECT_ROOT, "/B"]);
+    expect(dependentsRecorded(deps.userManifestRepo.records.get(cursor), "sample-plugin")).toEqual([
+      PROJECT_ROOT,
+      "/B",
+    ]);
     expect(owned?.plugin.files.has(oldPath)).toBe(false);
   });
 });

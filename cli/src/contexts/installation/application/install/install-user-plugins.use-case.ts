@@ -95,8 +95,6 @@ export class InstallUserPlugins {
       scope: "user",
       marketplace: marketplaceName,
     });
-    return owned === undefined
-      ? resolved
-      : resolved.withFiles(owned.plugin.files).withMachineClaim(owned.machineClaim);
+    return owned === undefined ? resolved : resolved.withFiles(owned.plugin.files);
   }
 }

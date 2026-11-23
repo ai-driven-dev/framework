@@ -1,12 +1,24 @@
-/** A record with the claims kept on its refs. */
-export type ClaimedRecordView<Claim extends { readonly ref: string } = { readonly ref: string }> =
-  Readonly<Record<string, unknown>> & { readonly pluginClaims?: readonly Claim[] };
+/** A record with the claims it keeps, on its refs and on machine plugins. */
+export type ClaimedRecordView<Claim extends object = HeldClaimView> = Readonly<
+  Record<string, unknown>
+> & {
+  readonly pluginClaims?: readonly Claim[];
+};
+
+/** A claim on a machine plugin, with the projects holding it. */
+export interface PluginClaimView {
+  readonly plugin: string;
+  readonly dependents: readonly string[];
+}
 
 /** A claim on a ref, with the projects holding it. */
 interface DependentClaimView {
   readonly ref: string;
   readonly dependents: readonly string[];
 }
+
+/** A claim a record keeps, on a ref or on a machine plugin. */
+type HeldClaimView = DependentClaimView | PluginClaimView;
 
 /** What a run claims on a machine's record, and for which project, none when it is unknown. */
 export interface CatalogueClaimsView {
@@ -20,8 +32,8 @@ export interface CatalogueClaimsView {
 
 /** A machine's record with the claims of one run merged in, and whether that changed it. */
 export interface MergedCatalogueClaimsView {
-  readonly record: ClaimedRecordView<DependentClaimView> & {
-    readonly pluginClaims: readonly DependentClaimView[];
+  readonly record: ClaimedRecordView<HeldClaimView> & {
+    readonly pluginClaims: readonly HeldClaimView[];
   };
   readonly changed: boolean;
 }
@@ -38,11 +50,15 @@ export interface RecordClaimRules {
   readonly claimedRefs: (
     record: Readonly<Record<string, unknown>> | undefined
   ) => readonly string[];
-  /** The project roots holding these plugins or these refs, once each, none when nothing is
-   * held. Refuses a plugin claim it did not write. */
+  /** The claims a record keeps on the named machine plugins, none for a record that is absent or
+   * keeps none. Refuses a claims block it did not write. */
+  readonly pluginClaimsOf: (
+    record: Readonly<Record<string, unknown>> | undefined,
+    names: readonly string[]
+  ) => readonly PluginClaimView[];
+  /** The project roots holding these claims, once each, none when nothing is held. */
   readonly holdersOf: (
-    plugins: readonly { readonly machineClaim?: unknown }[],
-    refClaims: readonly { readonly dependents: readonly string[] }[]
+    claims: readonly { readonly dependents: readonly string[] }[]
   ) => readonly string[];
   /** The claims on the refs sitting on the host name the alias was registered under. */
   readonly claimsOnMarketplace: (
@@ -54,7 +70,7 @@ export interface RecordClaimRules {
   readonly withoutMarketplace: <R extends ClaimedRecordView>(
     record: R,
     alias: string
-  ) => R & { readonly pluginClaims: readonly { readonly ref: string }[] };
+  ) => R & { readonly pluginClaims: readonly HeldClaimView[] };
   /** A machine's record with the claims of one run merged in, and whether that changed it. */
   readonly mergeCatalogueClaims: (
     existing: ClaimedRecordView | undefined,
@@ -65,5 +81,5 @@ export interface RecordClaimRules {
   readonly withoutClaimedRef: <R extends ClaimedRecordView>(
     record: R,
     ref: string
-  ) => R & { readonly pluginClaims: readonly { readonly ref: string }[] };
+  ) => R & { readonly pluginClaims: readonly HeldClaimView[] };
 }
