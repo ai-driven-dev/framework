@@ -80,6 +80,23 @@ describe("skill scaffold", () => {
     assert.match(text, /^---\nname: brainstorm\ndescription: Clarifies a vague intent, when the user wants to brainstorm\.\n---\n\n# Brainstorm\n/u);
   });
 
+  it("reads a plan from stdin without creating an intermediate plan file", () => {
+    const result = spawnSync(process.execPath, [ENGINE, "-", target], { input: JSON.stringify(PLAN), encoding: "utf8" });
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(fs.readdirSync(root), ["brainstorm"]);
+    assert.deepEqual(fs.readdirSync(path.join(target, "actions")), ["01-capture.md", "02-explore.md", "03-conclude.md"]);
+    fillContent(target);
+    const check = spawnSync(process.execPath, [CHECK, target], { encoding: "utf8" });
+    assert.deepEqual({ code: check.status, out: check.stdout }, { code: 0, out: "" });
+  });
+
+  it("rejects malformed JSON from stdin before writing anything", () => {
+    const result = spawnSync(process.execPath, [ENGINE, "-", target], { input: "{", encoding: "utf8" });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /scaffold-skill:/u);
+    assert.deepEqual(fs.readdirSync(root), []);
+  });
+
   it("draws an entry per case to actions that run on their own, and they pass the check", () => {
     const plan = {
       name: "changelog",
@@ -219,6 +236,6 @@ describe("skill scaffold", () => {
   it("refuses a call without a plan and a folder with exit 2", () => {
     const result = spawnSync(process.execPath, [ENGINE], { encoding: "utf8" });
     assert.equal(result.status, 2);
-    assert.match(result.stderr, /usage: scaffold-skill\.cjs <plan\.json> <skill-folder>/u);
+    assert.match(result.stderr, /usage: scaffold-skill\.cjs <plan\.json\|-> <skill-folder>/u);
   });
 });

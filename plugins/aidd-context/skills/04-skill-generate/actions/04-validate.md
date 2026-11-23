@@ -4,12 +4,14 @@ Check the written skill and report.
 
 ## Input
 
-The files written.
+The files written and the write commands used.
 
 ## Process
 
 1. Run [validate-skill.cjs](../scripts/validate-skill.cjs) on each written skill folder, fix each finding and validate again, and after 3 passes stop and show what is left.
 2. List each written file's breaches of [skill-authoring.md](../references/skill-authoring.md), compared with the rules and with the skill's other files and scripts.
+   - For each transversal rule, cite the actions whose behavior would change without it.
+   - Intermediate plan file created: list a breach of [write](03-write.md).
    - A breach in a file the plan does not list: add it to the plan and confirm it with the user.
 3. Find each kept item and each change in the written files with its `file:line`.
    - Unconfirmed addition: list it as a breach.
