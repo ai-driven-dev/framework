@@ -1,6 +1,5 @@
 import type { HintedMessage } from "../../../../shared/domain/describe-error.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
-import type { Logger } from "../../../../shared/ports/logger.js";
 import type {
   PluginRefGuardQuery,
   PluginRemovalClaims,
@@ -16,14 +15,12 @@ import type { DetachUserPlugin } from "../ownership/detach-user-plugin.use-case.
 import type { IsMachineOwnedNativeRef } from "../ownership/is-machine-owned-native-ref.use-case.js";
 import type { OtherProjectsReferencing } from "../shared-source/other-projects-referencing.use-case.js";
 import type { ResolveReferenceRoot } from "../shared-source/resolve-reference-root.use-case.js";
-import { toleratingUnreadableRefs } from "../shared-source-reference-support.js";
 import { removalClaims } from "./removal-claims.js";
 
 export interface PluginRemovalClaimsDeps {
   readonly isMachineOwnedNativeRef: IsMachineOwnedNativeRef;
   readonly detachNativePluginRefs: DetachNativePluginRefs;
   readonly detachUserPlugin: DetachUserPlugin;
-  readonly logger: Logger;
   readonly home: string;
   /** The framework marketplace's reserved name, owned by the distribution. */
   readonly frameworkMarketplaceName: string;
@@ -51,15 +48,13 @@ async function marketplaceIsSharedSource(
   );
 }
 
-function otherProjectsOf(
+async function otherProjectsOf(
   deps: PluginRemovalClaimsDeps,
   otherProjectsReferencing: OtherProjectsReferencing,
   projectRoot: string
 ): Promise<readonly string[]> {
-  return toleratingUnreadableRefs<readonly string[]>(deps.logger, [], async () => {
-    const ownRoot = await deps.resolveReferenceRoot.execute(projectRoot);
-    return otherProjectsReferencing.execute(ownRoot);
-  });
+  const ownRoot = await deps.resolveReferenceRoot.execute(projectRoot);
+  return otherProjectsReferencing.execute(ownRoot);
 }
 
 function pluginRefGuardMessage(deps: PluginRemovalClaimsDeps) {

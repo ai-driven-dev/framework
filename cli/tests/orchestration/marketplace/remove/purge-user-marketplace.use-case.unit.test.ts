@@ -62,6 +62,8 @@ class ProvingHost implements MarketplaceRemovalHost {
 
 function purgerWith(purge: (command: PurgeCommand) => Promise<number>) {
   const records: PurgeUserMarketplaceDeps["records"] = {
+    loadRecords: async () => new Map(),
+    saveRecords: async () => undefined,
     marketplaceOf: vi.fn(() => REGISTRATION),
     holdersOf: vi.fn(() => []),
     claimedRefs: vi.fn(() => ["scoped@aidd-market", "unscoped@aidd-market"]),

@@ -5,7 +5,11 @@ import { SYNTHETIC_TOOL } from "../../shared/testing/synthetic-tool-id.builder.j
 
 describe("uninstalling a project's tools", () => {
   it("hands the command and the host registration's ref reading to the tool removal", async () => {
-    const records = { pluginRefsOf: () => [] };
+    const records = {
+      pluginRefsOf: () => [],
+      loadRecords: async () => new Map(),
+      saveRecords: async () => undefined,
+    };
     const asked: UninstallToolsRequest[] = [];
     const removed = [{ toolId: SYNTHETIC_TOOL, fileCount: 0, deletedFiles: [] }];
     const uninstall = new UninstallProjectTools(

@@ -1,14 +1,10 @@
 import type { Scope } from "../../../../shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import type { ToolRecord, ToolRecords } from "../../contract/records/scope-records.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type {
-  RecordsBesideManifest,
-  RegistrationRecordData,
-  RegistrationRecords,
-} from "../../ports/record/registration-records.js";
 import type {
   CleanNativeRegistrationPreview,
   ProjectCleanPlan,
@@ -18,14 +14,14 @@ import type {
 
 /** What PlanProjectClean is built from. */
 export interface PlanProjectCleanDeps {
-  readonly manifestRepo: ManifestRepository & RecordsBesideManifest;
+  readonly manifestRepo: ManifestRepository;
   readonly asks: { readonly homeDir: () => string };
 }
 
 /** The scope of each plugin the host registered, keyed by its ref. */
 function refScopesOf(
   plugins: readonly RecordedPlugin[],
-  registrations: RegistrationRecordData,
+  registrations: ToolRecord,
   records: ProjectCleanRecords
 ): Map<string, Scope> {
   const refScopes = new Map<string, Scope>();
@@ -39,7 +35,7 @@ function refScopesOf(
 /** What this project installed, the records beside it, and the home its caches live under. */
 interface Installed {
   readonly manifest: Manifest;
-  readonly registered: RegistrationRecords;
+  readonly registered: ToolRecords;
   readonly home: string;
 }
 
@@ -56,7 +52,7 @@ export class PlanProjectClean {
     if (manifest === null) return null;
     const installed: Installed = {
       manifest,
-      registered: await this.deps.manifestRepo.loadRecords(),
+      registered: await records.loadRecords(),
       home: this.deps.asks.homeDir(),
     };
     const toolFiles = manifest.getInstalledToolIds().map((toolId) => ({

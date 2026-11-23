@@ -1,7 +1,4 @@
-import {
-  projectIntegrationOf,
-  registrationRecordRules,
-} from "../../../src/composition/installation.js";
+import { projectIntegrationOf, recordsOf } from "../../../src/composition/installation.js";
 import { wireCleanClaims } from "../../../src/composition/orchestration/clean-claims.js";
 import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.use-case.js";
 import { WithdrawFromHost } from "../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
@@ -17,7 +14,7 @@ import {
 } from "../../../src/contexts/installation/application/removal/project/remove-aidd-traces.use-case.js";
 import { RemoveMachineLocalFiles } from "../../../src/contexts/installation/application/removal/project/remove-machine-local-files.use-case.js";
 import { RemoveProjectFiles } from "../../../src/contexts/installation/application/removal/project/remove-project-files.use-case.js";
-import type { RecordsBesideManifest } from "../../../src/contexts/installation/ports/record/registration-records.js";
+import type { ScopeRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { ResolvePurgeCandidate } from "../../../src/contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
@@ -39,7 +36,7 @@ type Files = AiddTracesDeps;
 export interface ProjectCleanerParts extends Partial<HostPorts> {
   tools: ToolCatalog;
   fs: Files["fs"];
-  manifestRepo: Files["manifestRepo"] & RecordsBesideManifest;
+  manifestRepo: Files["manifestRepo"] & ScopeRecords;
   logger: Files["logger"];
   gitignore: Files["updateGitignore"];
   marketplaceRegistry?: ConstructorParameters<typeof ListMarketplaces>[0];
@@ -104,7 +101,7 @@ export function projectCleanerDeps(parts: ProjectCleanerParts): CleanProjectDeps
       cleanProject,
       claims,
       marketplaces,
-      records: registrationRecordRules,
+      records: recordsOf(parts.manifestRepo),
     }),
     confirm: new ConfirmRemoval(parts.prompter),
     remove: new RemoveProjectInOrder({

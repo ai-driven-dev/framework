@@ -34,7 +34,7 @@ function fixture(
   options: {
     scope?: Scope;
     toolId?: AiToolId;
-    answers?: ConstructorParameters<typeof FakePluginRemovalSteps>[0];
+    answers?: ConstructorParameters<typeof FakePluginRemovalSteps>[1];
   } = {}
 ) {
   const toolId = options.toolId ?? TOOL.claude;
@@ -57,7 +57,7 @@ function fixture(
     [join(ROOT, "skills/a.md")]: "a",
     [join(ROOT, "keep.md")]: "k",
   });
-  const withdrawal = new FakePluginRemovalSteps(options.answers);
+  const withdrawal = new FakePluginRemovalSteps(repo, options.answers);
   const remove = new RemovePlugin(
     {
       fs,

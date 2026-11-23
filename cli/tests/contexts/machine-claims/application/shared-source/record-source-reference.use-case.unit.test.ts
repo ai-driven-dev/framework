@@ -3,22 +3,15 @@ import { RecordSourceReference } from "../../../../../src/contexts/machine-claim
 import { ResolveReferenceRoot } from "../../../../../src/contexts/machine-claims/application/shared-source/resolve-reference-root.use-case.js";
 import type { UserSourceReferences } from "../../../../../src/contexts/machine-claims/ports/user-source-references.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
-import { UnreadableUserSourceReferencesError } from "../../../../../src/shared/domain/shared.error.js";
-import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { RecordingSourceReferences } from "../../testing/recording-source-references.fake.js";
 
 const NAME = "aidd-framework";
 
-function recorder(
-  fs: InMemoryFileAdapter,
-  references: UserSourceReferences | undefined,
-  logger = new CapturingLogger()
-) {
+function recorder(fs: InMemoryFileAdapter, references: UserSourceReferences | undefined) {
   return new RecordSourceReference({
     resolveReferenceRoot: new ResolveReferenceRoot(fs),
     currentVersion: "1.2.3",
-    logger,
     frameworkMarketplaceName: NAME,
     userSourceReferences: references,
   });
@@ -61,35 +54,5 @@ describe("recording that a project references the shared source", () => {
 
   it("records nothing when no references file is wired", async () => {
     await register(recorder(new InMemoryFileAdapter({}, ["/link"]), undefined));
-  });
-
-  it("warns and carries on when the references file cannot be read", async () => {
-    const logger = new CapturingLogger();
-    const unreadable: UserSourceReferences = {
-      addReference: async () => {
-        throw new UnreadableUserSourceReferencesError("/refs.json", "corrupt");
-      },
-      removeReference: async () => undefined,
-      listAllReferencingProjects: async () => [],
-    };
-
-    await register(recorder(new InMemoryFileAdapter({}, ["/link"]), unreadable, logger));
-
-    expect(logger.warnMessages).toHaveLength(1);
-    expect(logger.warnMessages[0]).toContain("/refs.json");
-  });
-
-  it("surfaces any other failure", async () => {
-    const broken: UserSourceReferences = {
-      addReference: async () => {
-        throw new Error("disk on fire");
-      },
-      removeReference: async () => undefined,
-      listAllReferencingProjects: async () => [],
-    };
-
-    await expect(
-      register(recorder(new InMemoryFileAdapter({}, ["/link"]), broken))
-    ).rejects.toThrow("disk on fire");
   });
 });

@@ -1,7 +1,7 @@
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { RemovedPlugin } from "../../contract/plugin-claims.js";
+import type { RemovedPlugin } from "../../contract/records/plugin-claims.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ProjectIntegrationCleanup } from "../../ports/project-integration-cleanup.js";

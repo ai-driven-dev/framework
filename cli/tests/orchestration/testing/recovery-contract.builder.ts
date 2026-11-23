@@ -4,9 +4,9 @@ import type { HostRefusal } from "../../../src/contexts/host-registration/domain
 import type { HostPluginRegistryReading } from "../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { HostMarketplaceRegistry } from "../../../src/contexts/host-registration/ports/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
+import type { ToolRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../src/shared/domain/installation-file.js";
@@ -116,7 +116,7 @@ function ownedProject(options: RecoveryOptions) {
   return manifest;
 }
 
-function ownedRecords(options: RecoveryOptions): RegistrationRecords {
+function ownedRecords(options: RecoveryOptions): ToolRecords {
   const source = options.source ?? OLD;
   return new Map([
     [

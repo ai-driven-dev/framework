@@ -2,8 +2,8 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { HostActions } from "../../../src/contexts/host-registration/ports/host-actions.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
+import type { ToolRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
@@ -26,7 +26,7 @@ import { userScopeCleaner } from "../testing/user-scope-cleaner.builder.js";
 
 type HostFault = "missing catalogue" | "duplicate claim" | "disabled ref" | "missing ref";
 
-function applyHostFault(records: RegistrationRecords, fault: HostFault): void {
+function applyHostFault(records: ToolRecords, fault: HostFault): void {
   const registration = records.get(HOST.claude);
   if (registration === undefined) throw new Error("fixture missing registration");
   if (fault === "missing catalogue")
@@ -80,7 +80,7 @@ describe("clean --scope user: host cli", () => {
     it("cleans an empty native registration without inventing any plugin uninstall", async () => {
       const manifest = Manifest.create();
       manifest.addTool(HOST.claude, "1.0.0", []);
-      const records: RegistrationRecords = new Map([
+      const records: ToolRecords = new Map([
         [HOST.claude, { binary: HOST.claude, marketplaces: [], pluginRefs: [] }],
       ]);
       const repo = new InMemoryManifestRepository(manifest, undefined, records);
@@ -313,7 +313,7 @@ describe("clean --scope user: host cli", () => {
     it("never treats a refused removal as one the host confirmed, so codex's cache stays", async () => {
       const manifest = Manifest.create();
       manifest.addTool(HOST.codex, "1.0.0", []);
-      const records: RegistrationRecords = new Map();
+      const records: ToolRecords = new Map();
       records.set(HOST.codex, {
         binary: HOST.codex,
         marketplaces: [

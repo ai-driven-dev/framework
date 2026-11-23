@@ -1,7 +1,7 @@
 import { join } from "node:path";
+import { isStrictlyWithin } from "../../../shared/domain/paths.model.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../shared/ports/logger.js";
-import { isStrictlyWithinUserScope } from "../domain/user-scope-containment.js";
 
 /**
  * Proves a path a manifest names sits inside the cache that owns it, before anything deletes it.
@@ -35,7 +35,7 @@ export class ResolvePurgeCandidate {
       }
       return null;
     }
-    if (!isStrictlyWithinUserScope(resolvedCandidate, resolvedBoundary)) {
+    if (!isStrictlyWithin(resolvedCandidate, resolvedBoundary)) {
       this.logger.warn(
         `${label} does not resolve inside ${cacheRoot}; left in place: ${candidate}`
       );

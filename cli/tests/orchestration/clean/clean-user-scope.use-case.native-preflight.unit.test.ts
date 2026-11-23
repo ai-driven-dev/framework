@@ -1,9 +1,9 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
+import type { ToolRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
@@ -92,7 +92,7 @@ describe("clean --scope user: native preflight", () => {
   it("refuses all native host mutations when a stale canonical source points at a foreign Codex catalogue", async () => {
     const machine = Manifest.create();
     machine.addTool(HOST.codex, "1.0.0", []);
-    const records: RegistrationRecords = new Map();
+    const records: ToolRecords = new Map();
     records.set(HOST.codex, {
       binary: HOST.codex,
       marketplaces: [

@@ -1,8 +1,8 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import type { ToolRecords } from "../../../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import type { RegistrationRecords } from "../../../../../src/contexts/installation/ports/record/registration-records.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
@@ -46,7 +46,7 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
       claude,
       anInstalledPlugin({ name: "other-plugin", scope: "project", marketplace: "other-alias" })
     );
-    const records: RegistrationRecords = new Map();
+    const records: ToolRecords = new Map();
     if (options.registrations !== false)
       records.set(claude, {
         binary: "claude",

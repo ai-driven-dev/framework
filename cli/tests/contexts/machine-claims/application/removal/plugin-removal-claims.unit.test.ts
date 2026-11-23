@@ -7,7 +7,6 @@ import { pluginRemovalClaims } from "../../../../../src/contexts/machine-claims/
 import type { ListedMarketplace } from "../../../../../src/contexts/machine-claims/ports/marketplace-listing.js";
 import type { UserSourceReferences } from "../../../../../src/contexts/machine-claims/ports/user-source-references.js";
 import { describeMessage } from "../../../../../src/presentation/errors/describe-message.presenter.js";
-import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { RecordingSourceReferences } from "../../testing/recording-source-references.fake.js";
@@ -23,8 +22,11 @@ async function guard(options: {
   const fs = new InMemoryFileAdapter();
   const claims = pluginRemovalClaims({
     ...machineOwnership(undefined, fs),
-    ...sharedSourceReads({ fs, platform: process.platform, references }),
-    logger: new CapturingLogger(),
+    ...sharedSourceReads({
+      fs,
+      platform: process.platform,
+      references,
+    }),
     home: "/home/u",
     marketplaceRegistry: listed === undefined ? undefined : { list: async () => listed },
     resolveCacheCandidate: async () => null,

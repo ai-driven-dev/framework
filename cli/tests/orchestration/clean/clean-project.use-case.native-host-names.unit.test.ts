@@ -2,9 +2,9 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
+import type { ToolRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
@@ -33,7 +33,7 @@ describe("clean: native registration host names", () => {
       const HOST_NAME = "user-mkt";
       const manifest = Manifest.create();
       manifest.addTool(HOST.codex, "1.0.0", []);
-      const records: RegistrationRecords = new Map();
+      const records: ToolRecords = new Map();
       records.set(HOST.codex, {
         binary: BINARY,
         marketplaces: [
@@ -90,7 +90,7 @@ describe("clean: native registration host names", () => {
       function seedClaudeScopeManifest(
         marketplaces: ReadonlyArray<{ alias: string; hostName: string }>,
         plugins: ReadonlyArray<{ name: string; scope: Scope; marketplace: string }>
-      ): { manifest: Manifest; records: RegistrationRecords } {
+      ): { manifest: Manifest; records: ToolRecords } {
         const manifest = Manifest.create();
         manifest.addTool(HOST.claude, "1.0.0", []);
         for (const plugin of plugins) {
@@ -106,7 +106,7 @@ describe("clean: native registration host names", () => {
             })
           );
         }
-        const records: RegistrationRecords = new Map();
+        const records: ToolRecords = new Map();
         records.set(HOST.claude, {
           binary: HOST.claude,
           marketplaces: marketplaces.map(({ alias, hostName }) => ({
@@ -121,7 +121,7 @@ describe("clean: native registration host names", () => {
 
       async function uninstallScopesFor(seed: {
         manifest: Manifest;
-        records: RegistrationRecords;
+        records: ToolRecords;
       }): Promise<readonly string[]> {
         const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
         const activator = new FakeHostActions({

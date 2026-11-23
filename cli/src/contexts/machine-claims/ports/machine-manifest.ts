@@ -22,11 +22,17 @@ export interface MachineManifest {
   updatePlugin(toolId: AiToolId, plugin: MachineUserPlugin): void;
 }
 
-export interface MachineManifestRepository<M extends MachineManifest = MachineManifest> {
-  load(): Promise<M | null>;
-  save(manifest: M): Promise<void>;
+/** One scope's records: each tool's host registration with the claims kept on its refs, read
+ * and written beside the manifest of the same scope. */
+export interface ScopeRecordsRepository {
   loadRecords(): Promise<MachineRecords>;
   saveRecords(records: MachineRecords): Promise<void>;
+}
+
+export interface MachineManifestRepository<M extends MachineManifest = MachineManifest>
+  extends ScopeRecordsRepository {
+  load(): Promise<M | null>;
+  save(manifest: M): Promise<void>;
 }
 
 /** The machine-wide record as a run's claims grow it: a tool the project tracks joins it. */

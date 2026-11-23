@@ -2,7 +2,7 @@ import { join } from "node:path";
 import type { FileHash } from "../../../../shared/domain/file-hash.js";
 import { extractMergeEntries, type MergeFileEntry } from "../../../../shared/domain/merge.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import { driftOf } from "../../domain/manifest/drift.js";
+import { driftOf } from "../../domain/drift.js";
 
 export type FileStatusKind = "modified" | "deleted" | "added";
 

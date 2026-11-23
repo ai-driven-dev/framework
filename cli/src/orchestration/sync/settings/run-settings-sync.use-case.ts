@@ -1,9 +1,8 @@
 import type { LoadSyncContext } from "../../../contexts/installation/application/sync/load-sync-context.use-case.js";
-import type { RecordClaimRules } from "../../../contexts/machine-claims/contract/record-claim-rules.js";
 import type { Scope } from "../../../shared/domain/scope.js";
 import type { SyncSettingsRequest, SyncSettingsResult } from "../../domain/sync-settings.model.js";
 import type { ActivateNativeTools } from "./activate-native-tools.use-case.js";
-import { claimsViewOf } from "./claims-view-of.js";
+import { type ClaimsSource, claimsViewOf } from "./claims-view-of.js";
 import type {
   LoadedSyncContext,
   RecordSyncActivation,
@@ -24,7 +23,7 @@ export interface RunSettingsSyncDeps {
   readonly settingsFiles: SyncToolSettingsFiles;
   readonly activateNativeTools: ActivateNativeTools;
   readonly recordActivation: RecordSyncActivation;
-  readonly records: Pick<RecordClaimRules, "claimedRefs">;
+  readonly claims: ClaimsSource;
 }
 
 function resultOf(activation: RecordSyncActivationRequest["activation"]): SyncSettingsResult {
@@ -82,7 +81,7 @@ export class RunSettingsSync {
     return this.deps.activateNativeTools.execute({
       projectRoot: options.projectRoot,
       context,
-      claims: (toolId) => claimsViewOf(context, toolId, this.deps.records),
+      claims: (toolId) => claimsViewOf(context.records, toolId, this.deps.claims),
       scope,
       enablePlugins: options.enablePlugins ?? [],
     });

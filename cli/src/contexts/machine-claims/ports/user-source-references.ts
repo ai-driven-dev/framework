@@ -4,8 +4,9 @@
  *
  * A help, not an authority, in two ways: an entry whose `projectRoot` no longer exists is ignored
  * rather than counted as still live, and a file this CLI cannot make sense of must never block
- * `setup`, `sync` or `clean`, none of which it gates: every caller reaches it through
- * `shared-source-reference-support.ts`'s guard, never a bare call.
+ * `setup`, `sync` or `clean`, none of which it gates: a caller it must not block reaches it through
+ * `LenientUserSourceReferences`, so none handles that failure; one that must refuse on it reads the
+ * port bare.
  */
 export interface UserSourceReferences {
   /** Replaces any reference `projectRoot` held under a *different* version first, since a project

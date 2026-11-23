@@ -1,28 +1,30 @@
 import { join } from "node:path";
 import type { ManifestRepository } from "../contexts/installation/ports/manifest-repository.js";
 import type { UserScopeFileGuard } from "../contexts/installation/ports/plugin/user-plugin-materialization.js";
-import type {
-  RecordsBesideManifest,
-  RegistrationRecordStore,
-  RegistrationRecords,
-} from "../contexts/installation/ports/record/registration-records.js";
 import { AssertUserScopeWriteBoundary } from "../contexts/machine-claims/application/ownership/assert-user-scope-write-boundary.use-case.js";
 import { DetachNativePluginRefs } from "../contexts/machine-claims/application/ownership/detach-native-plugin-refs.use-case.js";
 import { DetachUserPlugin } from "../contexts/machine-claims/application/ownership/detach-user-plugin.use-case.js";
-import { DropMissingUserScopeFiles } from "../contexts/machine-claims/application/ownership/drop-missing-user-scope-files.use-case.js";
 import { IsMachineOwnedNativeRef } from "../contexts/machine-claims/application/ownership/is-machine-owned-native-ref.use-case.js";
 import { ResolveSafeUserScopeFiles } from "../contexts/machine-claims/application/ownership/resolve-safe-user-scope-files.use-case.js";
 import { OtherProjectsReferencing } from "../contexts/machine-claims/application/shared-source/other-projects-referencing.use-case.js";
+import { readSharedSourceClaim } from "../contexts/machine-claims/application/shared-source/read-shared-source-claim.js";
 import { ResolveReferenceRoot } from "../contexts/machine-claims/application/shared-source/resolve-reference-root.use-case.js";
 import {
   joinPluginClaims,
   splitPluginClaims,
 } from "../contexts/machine-claims/domain/plugin-claim.model.js";
+import { LenientUserSourceReferences } from "../contexts/machine-claims/infrastructure/lenient-user-source-references.js";
 import { UserScopeLockAdapter } from "../contexts/machine-claims/infrastructure/lock.js";
 import { UserSourceReferencesAdapter } from "../contexts/machine-claims/infrastructure/user-source-references-adapter.js";
-import type { MachineManifestRepository } from "../contexts/machine-claims/ports/machine-manifest.js";
+import type {
+  MachineManifestRepository,
+  MachineRecords,
+  ScopeRecordsRepository,
+} from "../contexts/machine-claims/ports/machine-manifest.js";
 import type { PluginClaimsRepository } from "../contexts/machine-claims/ports/plugin-claims-repository.js";
 import type { UserSourceReferences } from "../contexts/machine-claims/ports/user-source-references.js";
+import { UnreadableUserSourceReferencesError } from "../shared/domain/shared.error.js";
+import type { ToolId } from "../shared/domain/tool.js";
 import {
   ToolKeyedJsonFile,
   type ToolKeyedJsonFileDeps,
@@ -30,6 +32,7 @@ import {
 import type { FileReader } from "../shared/ports/file-reader.js";
 import type { FileWriter } from "../shared/ports/file-writer.js";
 import type { Lock } from "../shared/ports/lock.js";
+import type { Logger } from "../shared/ports/logger.js";
 import { registrationRecordFile } from "./host-registration.js";
 import { userConfigDir } from "./user-config-dir.js";
 
@@ -54,8 +57,6 @@ export function userScopeFilesSafeToDelete(
 // One writer for a machine-scope plugin's files, whether setup installs it or update rebuilds it.
 export const userScopeFileGuard: UserScopeFileGuard = {
   safeToDelete: userScopeFilesSafeToDelete,
-  withoutMissing: (reach, plugin, tool) =>
-    new DropMissingUserScopeFiles(reach).execute(plugin, tool),
   assertWriteBoundary: (reach, tool, write) =>
     new AssertUserScopeWriteBoundary(reach).execute(tool, write),
 };
@@ -69,6 +70,35 @@ export function machineOwnership(
     isMachineOwnedNativeRef: new IsMachineOwnedNativeRef(repo),
     detachNativePluginRefs: new DetachNativePluginRefs(repo, fs),
     detachUserPlugin: new DetachUserPlugin(repo, fs),
+  };
+}
+
+/** The references a command they do not gate may use: an unreadable file warns and reads as absent. */
+export function lenientSourceReferences(
+  references: UserSourceReferences | undefined,
+  logger: Logger
+): UserSourceReferences | undefined {
+  return references && new LenientUserSourceReferences(references, logger);
+}
+
+/**
+ * This project's claim on the shared source, `undefined` when `references.json` cannot be read: a
+ * help, not an authority, so it must never block the clean it does not gate, and the claim stays
+ * unknown rather than read as held by no other project.
+ */
+export function readSharedSourceClaimLeniently(
+  parts: Parameters<typeof readSharedSourceClaim>[0],
+  logger: Logger
+): ReturnType<typeof readSharedSourceClaim> {
+  const read = readSharedSourceClaim(parts);
+  return async (request) => {
+    try {
+      return await read(request);
+    } catch (error) {
+      if (!(error instanceof UnreadableUserSourceReferencesError)) throw error;
+      logger.warn("", error);
+      return undefined;
+    }
   };
 }
 
@@ -101,18 +131,24 @@ export function heldByMachineLock<R extends { readonly path: string }>(repositor
  * Takes no lock: a caller holding the machine lock reads them, and the lock is not re-entrant. */
 export function withRecordsBeside<R extends ManifestRepository>(
   repository: R,
-  records: RegistrationRecordStore
-): R & RecordsBesideManifest {
+  records: RecordStore
+): R & ScopeRecordsRepository {
   return Object.assign(repository, {
     loadRecords: async () => {
       await repository.loadIfReadable();
       return records.load();
     },
-    saveRecords: async (saved: RegistrationRecords) => {
+    saveRecords: async (saved: MachineRecords) => {
       await repository.loadIfReadable();
       await records.save(saved);
     },
   });
+}
+
+/** Where one scope's records are kept. Saving none removes what was kept. */
+interface RecordStore {
+  load(): Promise<MachineRecords>;
+  save(records: ReadonlyMap<ToolId, Readonly<Record<string, unknown>>>): Promise<void>;
 }
 
 /** One scope's records, kept in `dir` as two files: the host data host registration reads, and
@@ -120,7 +156,7 @@ export function withRecordsBeside<R extends ManifestRepository>(
 export function registrationRecordStore(
   dir: () => string,
   deps: ToolKeyedJsonFileDeps
-): RegistrationRecordStore {
+): RecordStore {
   const host = registrationRecordFile(dir, deps);
   const claims = pluginClaimsFile(dir, deps);
   return {

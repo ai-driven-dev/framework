@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { registrationRecordRules } from "../../../src/composition/installation.js";
+import { recordsOf } from "../../../src/composition/installation.js";
 import { homeDirResolver } from "../../../src/composition/user-config-dir.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-distribution-reader-adapter.js";
@@ -9,8 +9,8 @@ import type { HostPluginRegistry } from "../../../src/contexts/host-registration
 import { PluginMaterializer } from "../../../src/contexts/installation/application/plugin/files/plugin-materializer.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import { isStrictlyWithinUserScope } from "../../../src/contexts/machine-claims/domain/user-scope-containment.js";
 import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.use-case.js";
+import { isStrictlyWithin } from "../../../src/shared/domain/paths.model.js";
 import { buildMachinePluginUpdate } from "../../contexts/installation/testing/build-update-plugin.builder.js";
 import { fakeBuiltDeps } from "../../contexts/installation/testing/fake-build-sources.fake.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
@@ -171,8 +171,8 @@ for (const [toolId, catalogPath] of [
           new Map([[toolId, hostReader]]),
           sources
         ),
-        isStrictlyWithinUserScope,
-        registrationRecordRules
+        isStrictlyWithin,
+        recordsOf(user)
       );
       if (toolId === SYNTHETIC_PROVEN_TOOL) {
         expect(
@@ -210,8 +210,8 @@ for (const [toolId, catalogPath] of [
             new Map([[toolId, hostReader]]),
             sources
           ),
-          isStrictlyWithinUserScope,
-          registrationRecordRules
+          isStrictlyWithin,
+          recordsOf(user)
         );
         await expect(
           failingUpdate.execute({

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { DriftVerdict } from "../../../../../src/contexts/installation/domain/manifest/drift.js";
+import type { DriftVerdict } from "../../../../../src/contexts/installation/domain/drift.js";
 import { planRestore } from "../../../../../src/contexts/installation/domain/manifest/restore-plan.js";
 
 const recorded = (relativePath: string, verdict: DriftVerdict) => ({ relativePath, verdict });

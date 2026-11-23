@@ -14,6 +14,7 @@ import { ResolveReferenceRoot } from "../../contexts/machine-claims/application/
 import { SharedFrameworkSource } from "../../contexts/machine-claims/application/shared-source/shared-framework-source.use-case.js";
 import { ActivateNativeTools } from "../../orchestration/sync/settings/activate-native-tools.use-case.js";
 import { BuildMarketplaceForTool } from "../../orchestration/sync/settings/build-marketplace-for-tool.use-case.js";
+import type { ClaimsSource } from "../../orchestration/sync/settings/claims-view-of.js";
 import { RecordSyncActivation } from "../../orchestration/sync/settings/record-sync-activation.use-case.js";
 import { RunSettingsSync } from "../../orchestration/sync/settings/run-settings-sync.use-case.js";
 import { SyncNativeActivation } from "../../orchestration/sync/settings/sync-native-activation.use-case.js";
@@ -21,6 +22,7 @@ import { SyncSettings } from "../../orchestration/sync/settings/sync-settings.us
 import { SyncToolSettingsFiles } from "../../orchestration/sync/settings/sync-tool-settings-files.use-case.js";
 import { catalogReaders, settingsDeclaration } from "../host-registration.js";
 import type { Installation } from "../installation.js";
+import { lenientSourceReferences } from "../machine-claims.js";
 import type { Base } from "../shared.js";
 import { userConfigDir } from "../user-config-dir.js";
 
@@ -76,6 +78,16 @@ function syncSettingsOf(base: Base, inst: Installation, sources: SyncSources): S
 }
 
 /** One settings sync: its context, its files, its native activation and its claims. */
+/** The claims a sync checks host registrations against, read where machine claims keep them. */
+function claimsSourceOf(base: Base, inst: Installation): ClaimsSource {
+  const { manifestRepo, userManifestRepo } = base;
+  return {
+    claimedRefs: inst.registrationRecordRules.claimedRefs,
+    machine: () => userManifestRepo.loadRecords(),
+    persistedProject: () => manifestRepo.loadRecords(),
+  };
+}
+
 function runSettingsSyncOf(base: Base, inst: Installation, sources: SyncSources): RunSettingsSync {
   const { tools, fs, logger, manifestRepo, userManifestRepo } = base;
   const { buildMarketplaceForTool, recordSourceReference } = sources;
@@ -111,7 +123,7 @@ function runSettingsSyncOf(base: Base, inst: Installation, sources: SyncSources)
       }),
       recordRegistrations: new RecordNativeRegistrations(tools),
     }),
-    records: registrationRecordRules,
+    claims: claimsSourceOf(base, inst),
   });
 }
 
@@ -127,9 +139,8 @@ export function wireMarketplaceSync(base: Base, inst: Installation) {
   const recordSourceReference = new RecordSourceReference({
     resolveReferenceRoot: new ResolveReferenceRoot(fs),
     currentVersion,
-    logger,
     frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-    userSourceReferences: base.userSourceReferences,
+    userSourceReferences: lenientSourceReferences(base.userSourceReferences, logger),
   });
   const syncSettingsUseCase = syncSettingsOf(base, inst, {
     buildMarketplaceForTool,

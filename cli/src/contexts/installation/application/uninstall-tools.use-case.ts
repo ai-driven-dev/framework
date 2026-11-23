@@ -1,19 +1,17 @@
 import { InputRequiredError } from "../../../shared/domain/shared.error.js";
 import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
+import type { ScopeRecords, ToolRecord } from "../contract/records/scope-records.js";
 import { ToolNotInstalledError } from "../domain/installation.error.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
-import type {
-  RecordsBesideManifest,
-  RegistrationRecordData,
-} from "../ports/record/registration-records.js";
 import type { RemoveToolFiles, ToolRemoval } from "./removal/project/remove-tool-files.use-case.js";
 import { requireManifest } from "./shared/require-manifest.js";
 
-/** How a removal reads the refs a tool's host registration recorded: the host registration's to answer. */
-export interface RecordedRefs {
-  pluginRefsOf(record: RegistrationRecordData | undefined): readonly string[];
+/** How a removal reads the refs a tool's host registration recorded, the host registration's to
+ * answer, and the scope's records, kept by whoever owns them. */
+export interface RecordedRefs extends ScopeRecords {
+  pluginRefsOf(record: ToolRecord | undefined): readonly string[];
 }
 
 export interface UninstallToolsRequest {
@@ -43,7 +41,7 @@ export type DetachProjectClaims = (
 
 /** What UninstallTools is built from. */
 export interface UninstallToolsDeps {
-  readonly manifestRepo: ManifestRepository & RecordsBesideManifest;
+  readonly manifestRepo: ManifestRepository;
   readonly detachClaims: DetachProjectClaims;
   readonly removeToolFiles: RemoveToolFiles;
 }
@@ -71,7 +69,7 @@ export class UninstallTools {
             .map((plugin) => ({ toolId, name: plugin.name }))
         : []
     );
-    const registered = await this.deps.manifestRepo.loadRecords();
+    const registered = await command.records.loadRecords();
     const nativeRefs = new Map<ToolId, readonly string[]>();
     for (const toolId of toolIds) {
       const refs = command.records.pluginRefsOf(registered.get(toolId));
@@ -86,7 +84,7 @@ export class UninstallTools {
       );
     }
 
-    await this.deps.manifestRepo.saveRecords(registered);
+    await command.records.saveRecords(registered);
     await this.deps.manifestRepo.save(manifest);
     await this.deps.detachClaims(projectRoot, userPlugins, nativeRefs);
     return results;

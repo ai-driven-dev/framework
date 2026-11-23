@@ -2,9 +2,9 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
+import type { ToolRecords } from "../../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { RegistrationRecords } from "../../../../src/contexts/installation/ports/record/registration-records.js";
 import type { RemoveProjectMarketplace } from "../../../../src/orchestration/marketplace/remove/remove-project-marketplace.use-case.js";
 import { FileHash } from "../../../../src/shared/domain/file-hash.js";
 import { aManifest } from "../../../contexts/installation/testing/manifest.builder.js";
@@ -73,7 +73,7 @@ async function fixture(options: { nativeMapping?: "absent" | "unrelated" } = {})
       })
     )
     .build();
-  const projectRecords: RegistrationRecords = new Map();
+  const projectRecords: ToolRecords = new Map();
   if (options.nativeMapping !== "absent")
     projectRecords.set(SYNTHETIC_NATIVE_TOOL, {
       binary: SYNTHETIC_NATIVE_TOOL,
@@ -87,7 +87,7 @@ async function fixture(options: { nativeMapping?: "absent" | "unrelated" } = {})
     });
   const machine = Manifest.create();
   machine.addTool(SYNTHETIC_NATIVE_TOOL, "1.0.0", []);
-  const machineRecords: RegistrationRecords = new Map([
+  const machineRecords: ToolRecords = new Map([
     [
       SYNTHETIC_NATIVE_TOOL,
       {

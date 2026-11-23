@@ -8,6 +8,8 @@ function recordsOf() {
   const rules: Rules = {
     refOf: vi.fn((_record, plugin, alias) => `${plugin}@${alias}`),
     withoutRef: vi.fn((record) => ({ ...record, pluginRefs: [] })),
+    loadRecords: async () => new Map(),
+    saveRecords: async () => undefined,
   };
   return { rules, records: pluginRefRecords(rules) };
 }

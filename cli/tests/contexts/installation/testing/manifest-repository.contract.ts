@@ -1,16 +1,16 @@
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import type {
+  ScopeRecords,
+  ToolRecords,
+} from "../../../../src/contexts/installation/contract/records/scope-records.js";
 import {
   InvalidManifestDataError,
   ManifestMigrationError,
   ManifestUnavailableError,
 } from "../../../../src/contexts/installation/domain/installation.error.js";
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
-import type {
-  RecordsBesideManifest,
-  RegistrationRecords,
-} from "../../../../src/contexts/installation/ports/record/registration-records.js";
 import { FileHash } from "../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../src/shared/domain/installation-file.js";
 import { atomicWriteFile } from "../../../../src/shared/infrastructure/atomic-write.js";
@@ -21,7 +21,7 @@ import { aManifest } from "./manifest.builder.js";
 
 /** What a contract run needs from one implementation of the repository. */
 export interface ManifestRepositorySubject {
-  readonly repository: ManifestRepository & RecordsBesideManifest;
+  readonly repository: ManifestRepository & ScopeRecords;
   /** The manifest file this implementation names. */
   readonly manifestPath: string;
   dispose(): Promise<void>;
@@ -32,7 +32,7 @@ export interface ManifestFileSubject extends ManifestRepositorySubject {
   /** How a version refusal names where the file is, and the command reinstalling it. */
   readonly refusal: { readonly location: string; readonly reinstall: string };
   /** The same file, its manifest and its records, written through `atomicWriter`. */
-  reopen(atomicWriter: AtomicWrite): ManifestRepository & RecordsBesideManifest;
+  reopen(atomicWriter: AtomicWrite): ManifestRepository & ScopeRecords;
 }
 
 const installedFile = new InstallationFile({
@@ -43,7 +43,7 @@ const installedFile = new InstallationFile({
 
 const slashed = (path: string): string => path.replaceAll("\\", "/");
 
-const records: RegistrationRecords = new Map([
+const records: ToolRecords = new Map([
   [TOOL.claude, { binary: "claude", pluginClaims: [{ ref: "a@b", dependents: ["/project"] }] }],
   [TOOL.codex, { pluginClaims: [{ ref: "c@d", dependents: [] }] }],
 ]);

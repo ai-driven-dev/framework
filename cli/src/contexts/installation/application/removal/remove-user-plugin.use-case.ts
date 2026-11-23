@@ -1,17 +1,17 @@
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import type {
+  ScopeRecords,
+  ToolRecord,
+  ToolRecords,
+} from "../../contract/records/scope-records.js";
 import {
   ActiveMachineDependentsError,
   PluginNotFoundError,
 } from "../../domain/installation.error.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type {
-  RecordsBesideManifest,
-  RegistrationRecordData,
-  RegistrationRecords,
-} from "../../ports/record/registration-records.js";
 import type { UserScopePluginFileRemoval } from "../../ports/user-scope/user-scope-plugin-files.js";
 import { resolvePluginToolIds } from "../plugin/plugin-target-resolution.js";
 import type { RefSelection } from "../plugin/update-native-refs.js";
@@ -19,8 +19,8 @@ import { requireManifest } from "../shared/require-manifest.js";
 import type { ClaimedRefWithdrawal } from "./project-plugin-withdrawal.js";
 
 /** How a machine-scope removal selects and drops a claimed native ref: the host registration's to answer. */
-export interface ClaimedRefRecords extends RefSelection {
-  withoutClaimedRef(record: RegistrationRecordData, ref: string): RegistrationRecordData;
+export interface ClaimedRefRecords extends RefSelection, ScopeRecords {
+  withoutClaimedRef(record: ToolRecord, ref: string): ToolRecord;
 }
 
 export interface RemoveUserPluginRequest {
@@ -37,7 +37,7 @@ type NativeTargets = ReturnType<RemoveUserPlugin<unknown>["nativeTargets"]>;
 
 /** What RemoveUserPlugin is built from. */
 export interface RemoveUserPluginDeps<Proof> {
-  readonly userRepo: ManifestRepository & RecordsBesideManifest & Lock;
+  readonly userRepo: ManifestRepository & Lock;
   readonly withdrawFromHost: ClaimedRefWithdrawal<Proof>;
   readonly userScopePluginFiles: UserScopePluginFileRemoval;
 }
@@ -57,7 +57,7 @@ export class RemoveUserPlugin<Proof> {
     const manifest = await requireManifest(this.deps.userRepo);
     const toolIds = resolvePluginToolIds(options.toolIds, manifest, this.tools);
     const targets = this.fileTargets(manifest, toolIds, options);
-    const registered = await this.deps.userRepo.loadRecords();
+    const registered = await options.records.loadRecords();
     const nativeTargets = this.nativeTargets(registered, toolIds, options);
     this.assertRemovable(options, targets, nativeTargets);
     const safeFiles = await this.proveFiles(targets, options);
@@ -76,7 +76,7 @@ export class RemoveUserPlugin<Proof> {
       });
       manifest.removePlugin(toolId, plugin.name);
     }
-    await this.deps.userRepo.saveRecords(registered);
+    await options.records.saveRecords(registered);
     await this.deps.userRepo.save(manifest);
   }
 
@@ -94,7 +94,7 @@ export class RemoveUserPlugin<Proof> {
   }
 
   private nativeTargets(
-    registered: RegistrationRecords,
+    registered: ToolRecords,
     toolIds: readonly AiToolId[],
     options: RemoveUserPluginRequest
   ) {

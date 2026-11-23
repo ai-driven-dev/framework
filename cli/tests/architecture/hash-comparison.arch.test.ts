@@ -19,7 +19,7 @@ import { readEach } from "./kind-rule-support.js";
 import { read, sourceFiles } from "./source-graph.js";
 import { walk } from "./ts-project.js";
 
-const THE_ONE_COMPARISON = "src/contexts/installation/domain/manifest/drift.ts";
+const THE_ONE_COMPARISON = "src/contexts/installation/domain/drift.ts";
 const NAMED_FOR_A_HASH = /hash/i;
 
 function isHashValue(node: Node, root: SourceFile): boolean {

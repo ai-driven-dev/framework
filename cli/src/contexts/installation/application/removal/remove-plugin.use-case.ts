@@ -3,14 +3,11 @@ import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import type { ToolRecords } from "../../contract/records/scope-records.js";
 import { PluginNotFoundError } from "../../domain/installation.error.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type {
-  RecordsBesideManifest,
-  RegistrationRecords,
-} from "../../ports/record/registration-records.js";
 import { resolvePluginToolIds, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import { requireManifest } from "../shared/require-manifest.js";
 import type { AssertProjectIntegrationRemovable } from "./assert-project-integration-removable.use-case.js";
@@ -27,7 +24,7 @@ export interface RemovePluginRequest {
 /** What RemovePlugin is built from. */
 export interface RemovePluginDeps {
   readonly fs: FileWriter & FileReader;
-  readonly projectRepo: ManifestRepository & RecordsBesideManifest;
+  readonly projectRepo: ManifestRepository;
   readonly homedir: () => string;
   readonly integration: {
     readonly assert: Pick<AssertProjectIntegrationRemovable, "execute">;
@@ -44,7 +41,7 @@ export class RemovePlugin {
   async execute(options: RemovePluginRequest): Promise<void> {
     const { pluginName, toolIds, projectRoot, withdrawal } = options;
     const manifest = await requireManifest(this.deps.projectRepo);
-    const registered = await this.deps.projectRepo.loadRecords();
+    const registered = await withdrawal.loadRecords();
     const resolvedToolIds = resolvePluginToolIds(toolIds, manifest, this.tools);
     const named = resolvedToolIds.flatMap((toolId) => {
       const plugin = manifest.getRecordedPlugins(toolId).find((p) => p.plugin.name === pluginName);
@@ -69,7 +66,7 @@ export class RemovePlugin {
       }
     );
     if (!removed) throw new PluginNotFoundError(pluginName);
-    await this.deps.projectRepo.saveRecords(registered);
+    await withdrawal.saveRecords(registered);
     await this.deps.projectRepo.save(manifest);
     await withdrawal.detachNativeRefs(projectRoot, nativeRefs);
     for (const toolId of userTools) {
@@ -78,7 +75,7 @@ export class RemovePlugin {
   }
 
   private async assertRemovable(
-    registered: RegistrationRecords,
+    registered: ToolRecords,
     named: readonly { toolId: AiToolId; plugin: RecordedPlugin }[],
     { projectRoot, withdrawal }: Pick<RemovePluginRequest, "projectRoot" | "withdrawal">
   ): Promise<void> {
@@ -96,7 +93,7 @@ export class RemovePlugin {
   }
 
   private async removeFromTools(
-    { manifest, registered }: { manifest: Manifest; registered: RegistrationRecords },
+    { manifest, registered }: { manifest: Manifest; registered: ToolRecords },
     removal: Omit<RemovePluginRequest, "toolIds"> & { toolIds: AiToolId[] }
   ): Promise<boolean> {
     const { pluginName, toolIds, projectRoot, withdrawal } = removal;

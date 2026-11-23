@@ -1,12 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
+import { recordsOf } from "../../../../../src/composition/installation.js";
 import {
   RemovePluginsFromMarketplace,
   type RemovePluginsFromMarketplaceRequest,
 } from "../../../../../src/contexts/installation/application/marketplace/remove-plugins-from-marketplace.use-case.js";
+import type { ToolRecords } from "../../../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { ProjectIntegrationCleanup } from "../../../../../src/contexts/installation/ports/project-integration-cleanup.js";
-import type { RegistrationRecords } from "../../../../../src/contexts/installation/ports/record/registration-records.js";
 import { pluginRefRecords } from "../../../../../src/orchestration/plugin/plugin-ref-records.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
@@ -49,7 +50,8 @@ function setup(options: { manifest?: Manifest | null; refuse?: Error } = {}) {
     registeredTools()
   );
   const useCase = {
-    execute: (asked: Command) => removal.execute({ ...asked, records: pluginRefRecords(rules) }),
+    execute: (asked: Command) =>
+      removal.execute({ ...asked, records: pluginRefRecords({ ...recordsOf(repo), ...rules }) }),
   };
   return { useCase, repo, calls, withoutRef };
 }
@@ -64,7 +66,7 @@ function seeded(): Manifest {
   return manifest;
 }
 
-const seededRecords = (): RegistrationRecords =>
+const seededRecords = (): ToolRecords =>
   new Map([
     [
       TOOL.claude,

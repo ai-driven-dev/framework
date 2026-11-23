@@ -6,8 +6,8 @@ import { HostRegistryMarketplaceSourceReaderAdapter } from "../../../src/context
 import type { HostMarketplaceRegistry } from "../../../src/contexts/host-registration/ports/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
+import type { ToolRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import type { CleanProject } from "../../../src/orchestration/clean/clean-project.use-case.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
@@ -144,10 +144,10 @@ export function seedManifest(
   toolId: AiToolId,
   hostName: string,
   alias: string
-): { manifest: Manifest; records: RegistrationRecords } {
+): { manifest: Manifest; records: ToolRecords } {
   const manifest = Manifest.create();
   manifest.addTool(toolId, "1.0.0", []);
-  const records: RegistrationRecords = new Map();
+  const records: ToolRecords = new Map();
   records.set(toolId, {
     binary: toolId,
     marketplaces: [
@@ -188,7 +188,7 @@ export function buildUseCase(deps: {
   tools: ToolCatalog;
   fs: InMemoryFileAdapter;
   manifest: Manifest;
-  records?: RegistrationRecords;
+  records?: ToolRecords;
   activator: FakeHostActions;
   binary: AiToolId;
   logger: CapturingLogger;

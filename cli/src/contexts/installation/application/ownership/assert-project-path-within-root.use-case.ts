@@ -1,4 +1,5 @@
-import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
+import { dirname, resolve } from "node:path";
+import { isStrictlyWithin, isWithin } from "../../../../shared/domain/paths.model.js";
 import { whenAbsent } from "../../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 
@@ -9,7 +10,7 @@ export class AssertProjectPathWithinRoot {
   async execute(projectRoot: string, path: string): Promise<void> {
     const lexicalRoot = resolve(projectRoot);
     const lexicalPath = resolve(path);
-    if (!strictlyWithin(lexicalRoot, lexicalPath)) {
+    if (!isStrictlyWithin(lexicalPath, lexicalRoot)) {
       throw new Error(`'${path}' escapes project root '${projectRoot}'; local mutation refused.`);
     }
     const canonicalRoot = await this.fs.realpath(lexicalRoot);
@@ -17,7 +18,7 @@ export class AssertProjectPathWithinRoot {
     if (canonical === null) {
       throw new Error(`Project root '${projectRoot}' disappeared; local mutation refused.`);
     }
-    if (!within(canonicalRoot, canonical)) {
+    if (!isWithin(canonical, canonicalRoot)) {
       throw new Error(
         `'${path}' resolves outside project root '${projectRoot}'; local mutation refused.`
       );
@@ -35,13 +36,4 @@ async function realpathOfNearest(
   if (resolved !== null) return resolved;
   if (candidate === root) return null;
   return realpathOfNearest(fs, dirname(candidate), root);
-}
-
-function within(root: string, path: string): boolean {
-  const rel = relative(root, path);
-  return rel === "" || (rel !== ".." && !rel.startsWith(`..${sep}`) && !isAbsolute(rel));
-}
-
-function strictlyWithin(root: string, path: string): boolean {
-  return root !== path && within(root, path);
 }

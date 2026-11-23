@@ -28,10 +28,9 @@ import type {
   BoundPluginMaterializer,
   UserPluginMaterialization,
 } from "../../contexts/installation/ports/plugin/user-plugin-materialization.js";
-import { userScopeOwnership } from "../../contexts/machine-claims/application/ownership/user-scope-ownership.js";
+import { ClaimUserPlugin } from "../../contexts/machine-claims/application/claim-user-plugin.use-case.js";
 import { pluginRemovalClaims } from "../../contexts/machine-claims/application/removal/plugin-removal-claims.js";
 import { ResolvePurgeCandidate } from "../../contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
-import { isStrictlyWithinUserScope } from "../../contexts/machine-claims/domain/user-scope-containment.js";
 import { ConfirmPluginSourceTrust } from "../../orchestration/plugin/confirm-plugin-source-trust.use-case.js";
 import { InstallFromMarketplace } from "../../orchestration/plugin/install-from-marketplace.use-case.js";
 import { InstallPlugin } from "../../orchestration/plugin/install-plugin.use-case.js";
@@ -39,8 +38,10 @@ import { PickPlugins } from "../../orchestration/plugin/pick-plugins.use-case.js
 import { RemoveMachinePlugin } from "../../orchestration/plugin/remove-machine-plugin.use-case.js";
 import { RemovePlugin } from "../../orchestration/plugin/remove-plugin.use-case.js";
 import { UpdateUserPlugin } from "../../orchestration/plugin/update-user-plugin.use-case.js";
-import type { Installation } from "../installation.js";
+import { isStrictlyWithin } from "../../shared/domain/paths.model.js";
+import { type Installation, recordsOf } from "../installation.js";
 import {
+  lenientSourceReferences,
   machineOwnership,
   sharedSourceReads,
   userScopeFileGuard,
@@ -63,10 +64,10 @@ export function withinUserScope(
       materializer.planUpdate({
         ...request,
         rebuild,
-        isWithinUserScope: isStrictlyWithinUserScope,
+        isWithinUserScope: isStrictlyWithin,
       }),
     applyUpdate: (plan, logger) =>
-      materializer.applyUpdate(plan, { logger, isWithinUserScope: isStrictlyWithinUserScope }),
+      materializer.applyUpdate(plan, { logger, isWithinUserScope: isStrictlyWithin }),
   };
 }
 
@@ -95,7 +96,7 @@ export function underMachineHome(removal: Pick<RemoveMachinePlugin, "execute">, 
 }
 
 /** Removing a plugin from the machine, under its home directory. */
-function wireUserPluginRemoval(base: Base, inst: Installation) {
+function wireUserPluginRemoval(base: Base) {
   const { tools, fs, logger, userManifestRepo, withdrawFromHost } = base;
   const removal = new RemoveUserPlugin(
     {
@@ -108,7 +109,7 @@ function wireUserPluginRemoval(base: Base, inst: Installation) {
     tools
   );
   return underMachineHome(
-    new RemoveMachinePlugin(removal, inst.registrationRecordRules),
+    new RemoveMachinePlugin(removal, recordsOf(userManifestRepo)),
     base.homedir()
   );
 }
@@ -116,15 +117,13 @@ function wireUserPluginRemoval(base: Base, inst: Installation) {
 /** Removing a plugin from a project or from the machine, and the claims it leaves behind. */
 function wirePluginRemoval(base: Base, inst: Installation) {
   const { tools, fs, logger, manifestRepo, userManifestRepo, withdrawFromHost } = base;
-  const { registrationRecordRules } = inst;
   const removalClaims = pluginRemovalClaims({
     ...machineOwnership(userManifestRepo, fs),
     ...sharedSourceReads({
       fs,
       platform: process.platform,
-      references: base.userSourceReferences,
+      references: lenientSourceReferences(base.userSourceReferences, logger),
     }),
-    logger,
     home: base.homedir(),
     frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
     marketplaceRegistry: base.marketplaceRegistry,
@@ -145,9 +144,9 @@ function wirePluginRemoval(base: Base, inst: Installation) {
     ),
     withdrawFromHost,
     claims: removalClaims,
-    records: registrationRecordRules,
+    records: recordsOf(manifestRepo),
   });
-  const userPluginRemove = wireUserPluginRemoval(base, inst);
+  const userPluginRemove = wireUserPluginRemoval(base);
   return { pluginRemoveUseCase, userPluginRemove };
 }
 
@@ -165,7 +164,7 @@ function pluginMaterializerOf(base: Base, inst: Installation) {
 /** Updating a plugin in a project or on the machine. */
 function wirePluginUpdate(base: Base, inst: Installation) {
   const { tools, fs, logger, manifestRepo, userManifestRepo } = base;
-  const { builtMaterializationDeps, registrationRecordRules } = inst;
+  const { builtMaterializationDeps } = inst;
   const pluginMaterializer = pluginMaterializerOf(base, inst);
   const pluginUpdateUseCase = new UpdatePlugin(
     {
@@ -187,8 +186,8 @@ function wirePluginUpdate(base: Base, inst: Installation) {
       base.hostPluginRegistries,
       base.nativeSources
     ),
-    isStrictlyWithinUserScope,
-    registrationRecordRules
+    isStrictlyWithin,
+    recordsOf(userManifestRepo)
   );
   return {
     pluginUpdateUseCase,
@@ -203,7 +202,7 @@ function pluginAddOf(base: Base, inst: Installation) {
   const { builtMaterializationDeps } = inst;
   return new AddPlugin(
     {
-      ownership: userScopeOwnership(fs),
+      ownership: new ClaimUserPlugin(fs),
       manifests: { project: manifestRepo, user: userManifestRepo },
       addToProject: new AddPluginToProject(
         {

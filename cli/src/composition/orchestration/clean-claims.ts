@@ -3,7 +3,6 @@ import { detachProjectClaims } from "../../contexts/machine-claims/application/r
 import { readMachineClaims } from "../../contexts/machine-claims/application/removal/read-machine-claims.js";
 import type { ResolvePurgeCandidate } from "../../contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
 import { dropSourceClaim } from "../../contexts/machine-claims/application/shared-source/drop-source-claim.js";
-import { readSharedSourceClaim } from "../../contexts/machine-claims/application/shared-source/read-shared-source-claim.js";
 import type { MachineManifestRepository } from "../../contexts/machine-claims/ports/machine-manifest.js";
 import type { UserSourceReferences } from "../../contexts/machine-claims/ports/user-source-references.js";
 import type { CleanClaims } from "../../orchestration/clean/clean-claims.js";
@@ -11,7 +10,12 @@ import type { FileReader } from "../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../shared/ports/file-writer.js";
 import type { Lock } from "../../shared/ports/lock.js";
 import type { Logger } from "../../shared/ports/logger.js";
-import { machineOwnership, sharedSourceReads } from "../machine-claims.js";
+import {
+  lenientSourceReferences,
+  machineOwnership,
+  readSharedSourceClaimLeniently,
+  sharedSourceReads,
+} from "../machine-claims.js";
 
 /** What a clean asks of the machine record, over the user manifest and the shared source's references. */
 export function wireCleanClaims(parts: {
@@ -25,12 +29,14 @@ export function wireCleanClaims(parts: {
   const ownership = machineOwnership(userManifestRepo, fs);
   return {
     referencingProjects: userSourceReferences,
-    sharedClaim: readSharedSourceClaim({
-      logger,
-      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-      ...sharedSourceReads({ fs, platform: process.platform, references: userSourceReferences }),
-    }),
-    dropClaim: dropSourceClaim(logger, userSourceReferences),
+    sharedClaim: readSharedSourceClaimLeniently(
+      {
+        frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+        ...sharedSourceReads({ fs, platform: process.platform, references: userSourceReferences }),
+      },
+      logger
+    ),
+    dropClaim: dropSourceClaim(lenientSourceReferences(userSourceReferences, logger)),
     detach: detachProjectClaims(ownership.detachNativePluginRefs, ownership.detachUserPlugin),
     machineClaims: readMachineClaims(userManifestRepo),
     exclusive: userManifestRepo,

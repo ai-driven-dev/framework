@@ -16,6 +16,7 @@ describe("updating a user plugin", () => {
       refSelectedBy: () => true,
       claimsOf: () => [],
       holdersOf: () => [],
+      loadRecords: async () => new Map(),
     };
     let seen: unknown;
     const update = new UpdateUserPlugin(
@@ -63,6 +64,7 @@ describe("updating a user plugin", () => {
         refSelectedBy: () => false,
         claimsOf: () => [],
         holdersOf: () => [],
+        loadRecords: async () => new Map(),
       }
     );
 
@@ -89,6 +91,7 @@ describe("updating a user plugin", () => {
           refSelectedBy: () => false,
           claimsOf: () => [],
           holdersOf: () => [],
+          loadRecords: async () => new Map(),
         }
       ).execute({ toolIds: [], projectRoot: "/A", scope: "user" });
       if (seen === undefined) throw new Error("the file update was never run");

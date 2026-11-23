@@ -5,7 +5,7 @@ import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 /** Records the project as a holder of a user-scope plugin on the machine manifest. The machine
  * claims write it; an add decides which plugins move and calls it inside its lock. */
 export interface UserScopeOwnership {
-  record(claim: {
+  execute(claim: {
     machine: Manifest;
     toolId: AiToolId;
     plugin: RecordedPlugin;
@@ -55,7 +55,7 @@ export async function claimUserScopePlugins(
     for (const plugin of project.getRecordedPlugins(toolId)) {
       if (!isClaimable(plugin, toolId, add)) continue;
       const toolVersion = project.getToolVersion(toolId);
-      await ownership.record({ machine, toolId, plugin, toolVersion, projectRoot });
+      await ownership.execute({ machine, toolId, plugin, toolVersion, projectRoot });
       project.updatePlugin(toolId, plugin.withFiles(new Map()));
       moved = true;
     }

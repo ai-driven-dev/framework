@@ -1,15 +1,13 @@
 import type { ToolId } from "../../../../shared/domain/tool.js";
+import type { ScopeRecords, ToolRecord } from "../../contract/records/scope-records.js";
 import type { RegisteredPlugin, RegisteredPlugins } from "../../contract/registered-plugins.js";
-import type {
-  RecordsBesideManifest,
-  RegistrationRecordData,
-} from "../../ports/record/registration-records.js";
 import type { InstallationScope } from "./installation-scope.js";
 import type { LoadManifest } from "./load-manifest.use-case.js";
 
-/** How the expected plugins read a host registration: the host registration's to answer. */
-export interface RegisteredRefRecords {
-  pluginRefsOf(record: RegistrationRecordData | undefined): readonly string[];
+/** How the expected plugins read a host registration, the host registration's to answer, and
+ * the scope's records, read through whoever keeps them. */
+export interface RegisteredRefRecords extends Pick<ScopeRecords, "loadRecords"> {
+  pluginRefsOf(record: ToolRecord | undefined): readonly string[];
   refOnHostName(plugin: string, hostName: string): string;
 }
 
@@ -24,14 +22,11 @@ export interface ListRegisteredPluginsRequest extends Pick<InstallationScope, "a
  * assembles the same shape.
  */
 export class ListRegisteredPlugins {
-  constructor(
-    private readonly loadManifest: Pick<LoadManifest, "execute">,
-    private readonly recordsRepo: Pick<RecordsBesideManifest, "loadRecords">
-  ) {}
+  constructor(private readonly loadManifest: Pick<LoadManifest, "execute">) {}
 
   async execute(command: ListRegisteredPluginsRequest): Promise<RegisteredPlugins> {
     const manifest = await this.loadManifest.execute();
-    const registered = await this.recordsRepo.loadRecords();
+    const registered = await command.records.loadRecords();
     const tools: { toolId: ToolId; expectedPlugins: readonly RegisteredPlugin[] }[] = [];
     for (const toolId of manifest.getInstalledToolIds()) {
       if (command.allowedIds && !command.allowedIds.has(toolId)) continue;

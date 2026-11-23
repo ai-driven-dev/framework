@@ -1,5 +1,5 @@
-import type { Scope } from "../../../shared/domain/scope.js";
-import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
+import type { Scope } from "../../../../shared/domain/scope.js";
+import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 
 /** A plugin the installation removed, as far as a claim over it needs to know. */
 export interface RemovedPlugin {

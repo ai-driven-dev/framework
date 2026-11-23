@@ -3,8 +3,8 @@ import { RefreshHostPlugin } from "../../../src/contexts/host-registration/appli
 import type { HostPluginRegistryReading } from "../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { RegistrationRecord } from "../../../src/contexts/host-registration/domain/record/registration-record.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
+import type { ToolRecord } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import type { RegistrationRecordData } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
 import { hostInspector } from "../../shared/testing/host-inspector.builder.js";
@@ -26,7 +26,7 @@ const HOST = "real-catalog";
 const REF = `test-plugin@${HOST}`;
 const LOCATION = "/host/registry";
 const provenance = { kind: "registry" as const, source: "/owned/source" };
-const registrations: RegistrationRecordData & RegistrationRecord = {
+const registrations: ToolRecord & RegistrationRecord = {
   binary: SYNTHETIC_UPDATING_NATIVE_TOOL,
   marketplaces: [{ alias: "alias", hostName: HOST, provenance }],
   pluginRefs: [REF],

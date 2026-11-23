@@ -11,7 +11,6 @@ import type {
   PlannedUserPluginFileUpdate,
   UserPluginMaterialization,
 } from "../../ports/plugin/user-plugin-materialization.js";
-import type { RecordsBesideManifest } from "../../ports/record/registration-records.js";
 import { requireManifest } from "../shared/require-manifest.js";
 import { resolvePluginToolIds, userPluginTargets } from "./plugin-target-resolution.js";
 import { assertSelectionResolves, nativeTargets, refreshNativeRefs } from "./update-native-refs.js";
@@ -25,7 +24,7 @@ import type { UpdateProjectPlugins } from "./update-project-plugins.use-case.js"
 /** The project's manifest, and the machine's, which guards the lock. */
 export interface UpdatePluginManifests {
   readonly project: ManifestRepository;
-  readonly user: ManifestRepository & RecordsBesideManifest & Lock;
+  readonly user: ManifestRepository & Lock;
 }
 
 /** What UpdatePlugin is built from. The tool catalog is the constructor's own second argument. */
@@ -84,7 +83,10 @@ export class UpdatePlugin {
     const toolIds = resolvePluginToolIds(options.toolIds, manifest, this.tools);
     const targets = userPluginTargets(manifest, toolIds, options.pluginNames);
     const { refSelection } = options;
-    const natives = nativeTargets(refSelection, await repo.loadRecords(), { toolIds, options });
+    const natives = nativeTargets(refSelection, await refSelection.loadRecords(), {
+      toolIds,
+      options,
+    });
     assertSelectionResolves(refSelection, options, { files: targets.length, native: natives });
     const filePlans = await this.planFiles(targets, options);
     const updated = await refreshNativeRefs(this.deps.logger, this.tools, {

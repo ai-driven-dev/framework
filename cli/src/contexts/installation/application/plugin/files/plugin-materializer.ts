@@ -60,14 +60,18 @@ export class PluginMaterializer implements UserPluginMaterialization {
       projectRoot,
     });
     const home = this.deps.builtDeps.homedir();
-    const { present, oldSafe } = await this.recordedSafeFiles(plugin, tool, { logger, home });
+    const baseDir = scopeBaseOf(tool, { scope: "user", projectRoot, homedir: () => home });
+    const { present, oldSafe } = await this.recordedSafeFiles(plugin, tool, {
+      logger,
+      home,
+      baseDir,
+    });
     if (oldSafe.size !== present.files.size) {
       throw new Error(
         `${tool.toolId}: '${plugin.name}' has unsafe recorded files; update refused without dropping its machine claim.`
       );
     }
     await assertUserPluginWritable(this.deps, { plugin, tool, files, home, isWithinUserScope });
-    const baseDir = scopeBaseOf(tool, { scope: "user", projectRoot, homedir: () => home });
     const next = RecordedPlugin.fromDistribution({
       dist,
       source: plugin.source,
@@ -88,6 +92,7 @@ export class PluginMaterializer implements UserPluginMaterialization {
     const { present, oldSafe } = await this.recordedSafeFiles(plugin, tool, {
       logger: request.logger,
       home,
+      baseDir,
     });
     if (oldSafe.size !== present.files.size || oldSafe.size !== plan.oldSafe.size) {
       throw new Error(
@@ -115,15 +120,29 @@ export class PluginMaterializer implements UserPluginMaterialization {
   private async recordedSafeFiles(
     plugin: InstalledPlugin,
     tool: AiToolProfile,
-    context: { readonly logger: Logger; readonly home: string }
+    context: { readonly logger: Logger; readonly home: string; readonly baseDir: string }
   ) {
-    const { logger, home } = context;
-    const present = await this.deps.guard.withoutMissing({ fs: this.deps.fs, home }, plugin, tool);
+    const { logger, home, baseDir } = context;
+    const present = await this.withoutMissingFiles(plugin, baseDir);
     const oldSafe = await this.deps.guard.safeToDelete(
       { fs: this.deps.fs, logger, home },
       present,
       tool
     );
     return { present, oldSafe };
+  }
+
+  /** The plugin without the recorded files nothing stands at any more, which an update writes back.
+   * A dangling symlink counts as gone: the atomic write replaces the link, and never follows it. */
+  private async withoutMissingFiles(
+    plugin: InstalledPlugin,
+    baseDir: string
+  ): Promise<InstalledPlugin> {
+    const present = new Map<string, string>();
+    for (const [relativePath, hash] of plugin.files) {
+      if (await this.deps.fs.fileExists(join(baseDir, relativePath)))
+        present.set(relativePath, hash);
+    }
+    return plugin.withFiles(present);
   }
 }

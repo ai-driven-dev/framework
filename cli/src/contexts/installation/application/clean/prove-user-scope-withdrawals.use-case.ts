@@ -1,10 +1,7 @@
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import type { ScopeRecords, ToolRecords } from "../../contract/records/scope-records.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type {
-  RecordsBesideManifest,
-  RegistrationRecords,
-} from "../../ports/record/registration-records.js";
 import type { MachineClaimsReading } from "../../ports/user-scope/machine-claims-reading.js";
 import type { UserScopePluginFileRemoval } from "../../ports/user-scope/user-scope-plugin-files.js";
 import type { UserRegistrationWithdrawal } from "../../ports/user-scope/user-scope-purge.js";
@@ -12,8 +9,9 @@ import { userPluginsOf } from "./user-plugins-of.js";
 
 /** What ProveUserScopeWithdrawals is built from. */
 export interface ProveUserScopeWithdrawalsDeps {
-  readonly userManifestRepo: ManifestRepository & RecordsBesideManifest;
-  readonly claims: MachineClaimsReading;
+  readonly userManifestRepo: ManifestRepository;
+  /** What the machine claims say, with the records they are read from. */
+  readonly claims: MachineClaimsReading & Pick<ScopeRecords, "loadRecords">;
   /** The one resolver for the OS home directory a user-scope plugin's files sit under. */
   readonly homeDir: () => string;
   readonly userScopePluginFiles: UserScopePluginFileRemoval;
@@ -31,7 +29,7 @@ export class ProveUserScopeWithdrawals {
     const manifest = await this.deps.userManifestRepo.load();
     if (manifest === null) return [];
     await this.assertTrackedUserPluginFilesSafe(manifest);
-    return this.withdrawalsOf(manifest, await this.deps.userManifestRepo.loadRecords());
+    return this.withdrawalsOf(manifest, await this.deps.claims.loadRecords());
   }
 
   private async assertTrackedUserPluginFilesSafe(manifest: Manifest): Promise<void> {
@@ -53,10 +51,7 @@ export class ProveUserScopeWithdrawals {
   /** The host registrations this machine recorded, one per tool, each with the refs a canonical
    * machine claim owns. A tool that is not an AI tool never records one, so a manifest naming one
    * is corrupt, not something to guess a host for. */
-  private withdrawalsOf(
-    manifest: Manifest,
-    records: RegistrationRecords
-  ): UserRegistrationWithdrawal[] {
+  private withdrawalsOf(manifest: Manifest, records: ToolRecords): UserRegistrationWithdrawal[] {
     const home = this.deps.homeDir();
     return manifest.getInstalledToolIds().flatMap((toolId) => {
       const registrations = records.get(toolId);

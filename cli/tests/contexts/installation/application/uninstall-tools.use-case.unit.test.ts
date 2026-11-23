@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { registrationRecordRules } from "../../../../src/composition/installation.js";
+import { recordsOf } from "../../../../src/composition/installation.js";
 import { machineOwnership } from "../../../../src/composition/machine-claims.js";
 import { RemoveToolFiles } from "../../../../src/contexts/installation/application/removal/project/remove-tool-files.use-case.js";
 import {
@@ -55,7 +55,7 @@ function uninstaller(
   );
   return {
     execute: (command: Omit<UninstallToolsRequest, "records">) =>
-      uninstall.execute({ ...command, records: registrationRecordRules }),
+      uninstall.execute({ ...command, records: recordsOf(manifestRepo) }),
   };
 }
 

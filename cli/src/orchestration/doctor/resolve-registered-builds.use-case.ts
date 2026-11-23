@@ -2,6 +2,7 @@ import type { ResolveBuiltMarketplaces } from "../../contexts/distribution/appli
 import type { MarketplaceBuilds } from "../../contexts/distribution/contract/built-marketplaces.js";
 import type { RegistrationRecordRules } from "../../contexts/host-registration/contract/registration-record-rules.js";
 import type { ListRegisteredPlugins } from "../../contexts/installation/application/doctor/list-registered-plugins.use-case.js";
+import type { ScopeRecords } from "../../contexts/installation/contract/records/scope-records.js";
 import type { RegisteredPluginsOfTool } from "../../contexts/installation/contract/registered-plugins.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
@@ -19,7 +20,8 @@ export interface RegisteredBuilds extends MarketplaceBuilds {
 export class ResolveRegisteredBuilds {
   constructor(
     private readonly listPlugins: ListRegisteredPlugins,
-    private readonly records: Pick<RegistrationRecordRules, "pluginRefsOf" | "refOnHostName">,
+    private readonly records: Pick<RegistrationRecordRules, "pluginRefsOf" | "refOnHostName"> &
+      Pick<ScopeRecords, "loadRecords">,
     private readonly builds: Pick<ResolveBuiltMarketplaces, "execute">,
     private readonly tools: ToolCatalog
   ) {}

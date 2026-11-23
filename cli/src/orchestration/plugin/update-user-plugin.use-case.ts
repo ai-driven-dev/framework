@@ -2,6 +2,7 @@ import type { RefreshHostPlugin } from "../../contexts/host-registration/applica
 import type { RegistrationRecordRules } from "../../contexts/host-registration/contract/registration-record-rules.js";
 import type { UpdatePlugin } from "../../contexts/installation/application/plugin/update-plugin.use-case.js";
 import type { UpdatePluginRequest } from "../../contexts/installation/application/plugin/update-plugin-command.js";
+import type { ScopeRecords } from "../../contexts/installation/contract/records/scope-records.js";
 import type { RecordClaimRules } from "../../contexts/machine-claims/contract/record-claim-rules.js";
 import type { IsWithinUserScope } from "../../contexts/machine-claims/contract/user-scope-containment.js";
 import { UserPluginUpdatePartialError } from "../orchestration.error.js";
@@ -21,7 +22,8 @@ export class UpdateUserPlugin {
       RegistrationRecordRules,
       "isQualifiedRef" | "refSelectedBy"
     > &
-      Pick<RecordClaimRules, "claimsOf" | "holdersOf">
+      Pick<RecordClaimRules, "claimsOf" | "holdersOf"> &
+      Pick<ScopeRecords, "loadRecords">
   ) {}
 
   async execute(command: UpdateUserPluginRequest): Promise<string[]> {

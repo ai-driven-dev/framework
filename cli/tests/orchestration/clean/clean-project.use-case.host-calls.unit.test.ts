@@ -4,8 +4,8 @@ import { Marketplace } from "../../../src/contexts/distribution/domain/marketpla
 import type { HostActions } from "../../../src/contexts/host-registration/ports/host-actions.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
+import type { ToolRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
@@ -40,7 +40,7 @@ describe("clean: host calls", () => {
 
       function buildUseCase(deps: {
         manifest: Manifest;
-        records?: RegistrationRecords;
+        records?: ToolRecords;
         fs: InMemoryFileAdapter;
         logger: CapturingLogger;
         activators: ReadonlyMap<string, HostActions>;
@@ -176,10 +176,10 @@ describe("clean: host calls", () => {
       function seedRegistrations(
         toolId: ToolId,
         binary: string
-      ): { manifest: Manifest; records: RegistrationRecords } {
+      ): { manifest: Manifest; records: ToolRecords } {
         const manifest = Manifest.create();
         manifest.addTool(toolId, "1.0.0", []);
-        const records: RegistrationRecords = new Map();
+        const records: ToolRecords = new Map();
         records.set(toolId, {
           binary,
           marketplaces: [

@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
+import type { ToolRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
@@ -32,7 +32,7 @@ describe("clean: native registration refusals", () => {
     it("refuses a repointed native catalogue before shared reference or local deletion", async () => {
       const manifest = Manifest.create();
       manifest.addTool(HOST.codex, "1.0.0", []);
-      const records: RegistrationRecords = new Map();
+      const records: ToolRecords = new Map();
       records.set(HOST.codex, {
         binary: BINARY,
         marketplaces: [
@@ -100,7 +100,7 @@ describe("clean: native registration refusals", () => {
     it("refuses a foreign enabled ref inside an otherwise AIDD-owned catalogue", async () => {
       const manifest = Manifest.create();
       manifest.addTool(HOST.codex, "1.0.0", []);
-      const records: RegistrationRecords = new Map();
+      const records: ToolRecords = new Map();
       records.set(HOST.codex, {
         binary: BINARY,
         marketplaces: [

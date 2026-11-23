@@ -3,8 +3,12 @@ import type {
   PluginHostReach,
   ProjectPluginWithdrawalSteps,
 } from "../../../../src/contexts/installation/application/removal/project-plugin-withdrawal.js";
+import type {
+  ScopeRecords,
+  ToolRecord,
+  ToolRecords,
+} from "../../../../src/contexts/installation/contract/records/scope-records.js";
 import type { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { RegistrationRecordData } from "../../../../src/contexts/installation/ports/record/registration-records.js";
 import type { AiToolId, ToolId } from "../../../../src/shared/domain/tool.js";
 
 interface Answers {
@@ -18,7 +22,18 @@ export class FakePluginRemovalSteps implements ProjectPluginWithdrawalSteps {
   readonly detachedRefs: ReadonlyMap<ToolId, readonly string[]>[] = [];
   readonly detachedUserPlugins: [AiToolId, string][] = [];
 
-  constructor(private readonly answers: Answers = {}) {}
+  constructor(
+    private readonly store: ScopeRecords,
+    private readonly answers: Answers = {}
+  ) {}
+
+  loadRecords(): Promise<ToolRecords> {
+    return this.store.loadRecords();
+  }
+
+  saveRecords(records: ToolRecords): Promise<void> {
+    return this.store.saveRecords(records);
+  }
 
   async assertSource(source: PluginHostReach & { readonly toolId: AiToolId }): Promise<void> {
     this.calls.push(`assertSource:${source.toolId}`);
@@ -34,14 +49,11 @@ export class FakePluginRemovalSteps implements ProjectPluginWithdrawalSteps {
     return this.answers.canDetachRef ?? true;
   }
 
-  recordedRef(
-    registrations: RegistrationRecordData | undefined,
-    recorded: RecordedPlugin
-  ): string | undefined {
+  recordedRef(registrations: ToolRecord | undefined, recorded: RecordedPlugin): string | undefined {
     return registrationRecordRules.refOf(registrations, recorded.plugin.name, recorded.marketplace);
   }
 
-  withoutRef(registrations: RegistrationRecordData, ref: string): RegistrationRecordData {
+  withoutRef(registrations: ToolRecord, ref: string): ToolRecord {
     return registrationRecordRules.withoutRef(registrations, ref);
   }
 

@@ -1,5 +1,9 @@
-import { registrationRecordRules } from "../../../../src/composition/installation.js";
 import {
+  recordsOf,
+  type registrationRecordRules,
+} from "../../../../src/composition/installation.js";
+import {
+  lenientSourceReferences,
   machineOwnership,
   sharedSourceReads,
   userScopeFilesSafeToDelete,
@@ -14,9 +18,9 @@ import { WithdrawFromHost } from "../../../../src/contexts/host-registration/app
 import { RemovePlugin as RemoveProjectPluginFiles } from "../../../../src/contexts/installation/application/removal/remove-plugin.use-case.js";
 import { RemoveUserPlugin } from "../../../../src/contexts/installation/application/removal/remove-user-plugin.use-case.js";
 import { UserScopePluginFiles } from "../../../../src/contexts/installation/application/removal/user-scope-plugin-files.js";
+import type { ScopeRecords } from "../../../../src/contexts/installation/contract/records/scope-records.js";
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
 import type { InstallationMarketplaceRegistry } from "../../../../src/contexts/installation/ports/marketplace-sources.js";
-import type { RecordsBesideManifest } from "../../../../src/contexts/installation/ports/record/registration-records.js";
 import { pluginRemovalClaims } from "../../../../src/contexts/machine-claims/application/removal/plugin-removal-claims.js";
 import { ResolvePurgeCandidate } from "../../../../src/contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
 import type { ToolCatalog } from "../../../../src/contexts/tools/contract/tool-catalog.js";
@@ -37,14 +41,14 @@ type Withdrawing = ConstructorParameters<typeof WithdrawFromHost>;
 
 /** What a test names; everything else is the empty or in-memory default. */
 export interface PluginRemoverParts {
-  manifestRepo: ManifestRepository & RecordsBesideManifest;
+  manifestRepo: ManifestRepository & ScopeRecords;
   fs?: FileReader & FileWriter;
   logger?: Logger;
   activators?: Withdrawing[2]["activators"];
   hostPluginRegistries?: Withdrawing[2]["pluginRegistries"];
   userSourceReferences?: Parameters<typeof sharedSourceReads>[0]["references"];
   marketplaceRegistry?: InstallationMarketplaceRegistry;
-  userManifestRepo?: ManifestRepository & RecordsBesideManifest & Lock;
+  userManifestRepo?: ManifestRepository & ScopeRecords & Lock;
   nativeMarketplaceSources?: Withdrawing[2]["sources"];
   records?: RecordRules;
   tools?: ToolCatalog;
@@ -67,9 +71,8 @@ export function pluginRemover(parts: PluginRemoverParts) {
     ...sharedSourceReads({
       fs,
       platform: process.platform,
-      references: parts.userSourceReferences,
+      references: lenientSourceReferences(parts.userSourceReferences, logger),
     }),
-    logger,
     home: homeDirResolver()(),
     frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
     marketplaceRegistry: parts.marketplaceRegistry,
@@ -88,14 +91,14 @@ export function pluginRemover(parts: PluginRemoverParts) {
     ),
     withdrawFromHost: withdrawing({ ...parts, logger }, fs),
     claims: removalClaims,
-    records: parts.records ?? registrationRecordRules,
+    records: { ...recordsOf(parts.manifestRepo), ...parts.records },
   });
 }
 
 /** The user-scope removal, under the machine home exactly as the composition binds it. */
 export function userPluginRemover(
   parts: Omit<PluginRemoverParts, "manifestRepo"> & {
-    userManifestRepo: Lock & ManifestRepository & RecordsBesideManifest;
+    userManifestRepo: Lock & ManifestRepository & ScopeRecords;
   }
 ) {
   const fs = parts.fs ?? new InMemoryFileAdapter();
@@ -111,7 +114,7 @@ export function userPluginRemover(
     registeredTools()
   );
   return underMachineHome(
-    new RemoveMachinePlugin(removal, parts.records ?? registrationRecordRules),
+    new RemoveMachinePlugin(removal, { ...recordsOf(parts.userManifestRepo), ...parts.records }),
     homeDirResolver()()
   );
 }

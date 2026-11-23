@@ -1,4 +1,3 @@
-import type { RegistrationRecordRules } from "../../../contexts/host-registration/contract/registration-record-rules.js";
 import type {
   RemovePluginsFromMarketplace,
   RemovePluginsFromMarketplaceResult,
@@ -17,7 +16,7 @@ export class RemoveMarketplacePlugins {
   constructor(
     private readonly plugins: Pick<RemovePluginsFromMarketplace, "execute">,
     private readonly prompter: Pick<Prompter, "confirm">,
-    private readonly records: Pick<RegistrationRecordRules, "refOf" | "withoutRef">
+    private readonly records: Parameters<typeof pluginRefRecords>[0]
   ) {}
 
   execute(command: RemoveMarketplacePluginsRequest): Promise<RemovePluginsFromMarketplaceResult> {

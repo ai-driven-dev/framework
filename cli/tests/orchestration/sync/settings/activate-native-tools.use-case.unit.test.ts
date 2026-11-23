@@ -59,9 +59,6 @@ function contextOf(
     marketplaces: [MARKETPLACE],
     toolIds,
     save: async () => {},
-    machineRecords: async () => new Map(),
-    machineKept: false,
-    persistedProject: async () => new Map(),
   };
 }
 

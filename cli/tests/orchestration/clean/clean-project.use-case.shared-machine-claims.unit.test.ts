@@ -2,8 +2,8 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
+import type { ToolRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
@@ -28,7 +28,7 @@ import { HOST, hostCacheRoot, hostCatalog } from "../testing/synthetic-hosts.bui
 const AT_PROJECT = atProject(hostCatalog());
 const CleanWithKnownHostSource = knownHostSourceCleaner(hostCatalog(), HOST);
 
-function addUnclaimedCatalogueToCodex(records: RegistrationRecords): void {
+function addUnclaimedCatalogueToCodex(records: ToolRecords): void {
   records.set(HOST.codex, {
     binary: BINARY,
     marketplaces: [
@@ -147,7 +147,7 @@ describe("clean: shared source machine claims", () => {
         const extraRef = "another@aidd-framework";
         const machine = Manifest.create();
         machine.addTool(HOST.codex, "1.0.0", []);
-        const machineRecords: RegistrationRecords = new Map();
+        const machineRecords: ToolRecords = new Map();
         machineRecords.set(HOST.codex, {
           binary: BINARY,
           marketplaces: records.get(HOST.codex)?.marketplaces ?? [],
@@ -207,7 +207,7 @@ describe("clean: shared source machine claims", () => {
         async (machineRegistrations) => {
           const machine = Manifest.create();
           machine.addTool(HOST.codex, "1.0.0", []);
-          const machineRecords: RegistrationRecords = new Map();
+          const machineRecords: ToolRecords = new Map();
           if (machineRegistrations !== undefined)
             machineRecords.set(HOST.codex, machineRegistrations);
           const { manifest, records } = seedManifestWithNativeRegistrations(HOST);
@@ -289,7 +289,7 @@ describe("clean: shared source machine claims", () => {
           fs.setFile(join(PROJECT_ROOT, "marker"), "project");
           const machine = Manifest.create();
           machine.addTool(HOST.claude, "1.0.0", []);
-          const machineRecords: RegistrationRecords = new Map();
+          const machineRecords: ToolRecords = new Map();
           machineRecords.set(HOST.claude, {
             binary: HOST.claude,
             marketplaces: [],

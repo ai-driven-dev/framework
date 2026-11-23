@@ -3,9 +3,9 @@
 
 import { describe, expect, it } from "vitest";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribution/contract/marketplace.js";
+import type { ToolRecords } from "../../../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { RegistrationRecords } from "../../../../../src/contexts/installation/ports/record/registration-records.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
@@ -46,7 +46,7 @@ function sourceReader() {
 
 interface Project {
   manifest: Manifest;
-  records: RegistrationRecords;
+  records: ToolRecords;
 }
 
 function seedProject(
@@ -68,7 +68,7 @@ function seedProject(
       })
     )
     .build();
-  const records: RegistrationRecords = new Map();
+  const records: ToolRecords = new Map();
   if (recordNativeRegistration)
     records.set(TOOL.codex, {
       binary: "codex",

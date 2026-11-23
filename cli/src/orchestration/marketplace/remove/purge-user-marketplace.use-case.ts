@@ -8,6 +8,7 @@ import type {
   MarketplaceRecords,
   PurgeMarketplacePlugins,
 } from "../../../contexts/installation/application/marketplace/purge-marketplace-plugins.use-case.js";
+import type { ScopeRecords } from "../../../contexts/installation/contract/records/scope-records.js";
 import type { RecordClaimRules } from "../../../contexts/machine-claims/contract/record-claim-rules.js";
 
 /** The two steps of a catalogue removal on a host: prove it, then act on the proof. */
@@ -34,13 +35,16 @@ export interface PurgeUserMarketplaceDeps {
     Pick<
       RecordClaimRules,
       "claimsOnMarketplace" | "withoutMarketplace" | "claimedRefs" | "holdersOf"
-    >;
+    > &
+    ScopeRecords;
 }
 
 /** A catalogue's place in a tool's record, as the host registration reads and drops it. */
 function marketplaceRecordsOf(records: PurgeUserMarketplaceDeps["records"]): MarketplaceRecords {
   return {
     holdersOf: records.holdersOf,
+    loadRecords: () => records.loadRecords(),
+    saveRecords: (saved) => records.saveRecords(saved),
     registrationOf: (registrations, alias) => records.marketplaceOf(registrations, alias),
     claimsOn: (registrations, alias) => records.claimsOnMarketplace(registrations, alias),
     withoutMarketplace: (registrations, alias) => records.withoutMarketplace(registrations, alias),

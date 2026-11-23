@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   dedupePathSegments,
+  isStrictlyWithin,
+  isWithin,
   pathContainsOrEquals,
   pathsOverlap,
   posixRelative,
@@ -111,5 +113,57 @@ describe("spelling a relative path with forward slashes", () => {
 
   it("answers an empty string for the base itself", () => {
     expect(posixRelative("C:\\proj", "C:\\proj", "win32")).toBe("");
+  });
+});
+
+const BOUNDARY = "/home/dev/.cursor/plugins/local";
+
+describe("checking a path stays strictly inside a boundary", () => {
+  it("accepts a plugin's own subdirectory inside the boundary", () => {
+    expect(isStrictlyWithin(`${BOUNDARY}/aidd-context/skills/hello.md`, BOUNDARY)).toBe(true);
+  });
+
+  it("rejects a manifest entry whose `..` segments resolve outside the boundary", () => {
+    // What a real `realpath` returns for `${BOUNDARY}/aidd-context/../../../.ssh/id_rsa` -
+    // this function trusts its caller already resolved the path, it only compares.
+    const escapedViaDotDot = "/home/dev/.ssh/id_rsa";
+    expect(isStrictlyWithin(escapedViaDotDot, BOUNDARY)).toBe(false);
+  });
+
+  it("rejects a symlinked plugin directory whose real location is outside the boundary", () => {
+    // What `realpath` returns when `${BOUNDARY}/aidd-context` is itself a symlink to
+    // somewhere else on disk - no `..` anywhere in the manifest's own path this time.
+    const escapedViaSymlink = "/tmp/evil/payload";
+    expect(isStrictlyWithin(escapedViaSymlink, BOUNDARY)).toBe(false);
+  });
+
+  it("rejects the boundary directory itself, never treating it as its own plugin", () => {
+    expect(isStrictlyWithin(BOUNDARY, BOUNDARY)).toBe(false);
+  });
+
+  it("rejects the boundary directory spelled with a trailing separator", () => {
+    expect(isStrictlyWithin(`${BOUNDARY}/`, BOUNDARY)).toBe(false);
+  });
+
+  it("rejects a path that merely starts with the boundary's characters without a separator", () => {
+    // Textually starts with BOUNDARY but is a sibling directory, not something inside it -
+    // a naive `startsWith` would wrongly accept this.
+    expect(isStrictlyWithin(`${BOUNDARY}-evil/payload`, BOUNDARY)).toBe(false);
+  });
+});
+
+describe("checking a path stays inside a boundary", () => {
+  it("accepts the boundary itself", () => {
+    expect(isWithin(BOUNDARY, BOUNDARY)).toBe(true);
+  });
+
+  it("accepts an entry whose name merely starts with two dots", () => {
+    expect(isWithin(`${BOUNDARY}/..hidden/payload`, BOUNDARY)).toBe(true);
+    expect(isStrictlyWithin(`${BOUNDARY}/..hidden`, BOUNDARY)).toBe(true);
+  });
+
+  it("rejects the parent directory and a sibling", () => {
+    expect(isWithin("/home/dev/.cursor/plugins", BOUNDARY)).toBe(false);
+    expect(isWithin(`${BOUNDARY}-evil`, BOUNDARY)).toBe(false);
   });
 });
