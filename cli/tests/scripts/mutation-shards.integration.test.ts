@@ -32,7 +32,7 @@ interface Scope {
 const sharded = Object.entries(scopes).filter(([, scope]) => (scope.shards ?? 1) > 1);
 
 describe("splitting a scope into shards", () => {
-  it("declares shards only where a scope is worth splitting, never on the canary", () => {
+  it("declares shards only where a scope is worth splitting", () => {
     expect(sharded.map(([name]) => name).sort()).toEqual([
       "installation",
       "shared",
@@ -40,7 +40,6 @@ describe("splitting a scope into shards", () => {
       "tools",
       "translate",
     ]);
-    expect(scopes.canary?.shards).toBeUndefined();
   });
 
   it("balances the shards by weight, the same way on every run", () => {

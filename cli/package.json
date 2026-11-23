@@ -83,7 +83,6 @@
     "test:mutation:auth": "node scripts/run-mutation.mjs auth",
     "test:mutation:update": "node scripts/run-mutation.mjs update",
     "test:mutation:shared-infrastructure": "node scripts/run-mutation.mjs shared-infrastructure",
-    "test:mutation:canary": "node scripts/run-mutation.mjs canary",
     "knip": "knip",
     "knip:production": "knip --production --include exports,types --config knip.production.json"
   },
