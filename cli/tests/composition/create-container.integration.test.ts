@@ -46,10 +46,10 @@ describe("creating a container", () => {
   it("wires installation only when a context that needs it is read", () => {
     const container = createContainer({ projectRoot: root, verbose: false, tools });
 
-    container.update.selfUpdate;
+    expect(container.update.selfUpdate).toBeDefined();
     expect(wireInstallation).not.toHaveBeenCalled();
 
-    container.installation;
+    expect(container.installation).toBeDefined();
     expect(wireInstallation).toHaveBeenCalledTimes(1);
   });
 
@@ -69,11 +69,11 @@ describe("creating a container", () => {
   it("hands a command only the contexts it reads, wired on first read", async () => {
     const container = await containerFactory(tools)(root, { verbose: false }, createOutput(false));
 
-    container.update.selfUpdate;
-    container.shared.logIn;
+    expect(container.update.selfUpdate).toBeDefined();
+    expect(container.shared.logIn).toBeDefined();
     expect(wireInstallation).not.toHaveBeenCalled();
 
-    container.translate.frameworkBuild;
+    expect(container.translate.frameworkBuild).toBeDefined();
     expect(wireInstallation).toHaveBeenCalledTimes(1);
   });
 
@@ -116,8 +116,8 @@ describe("creating a container", () => {
   it("wires telemetry and recipes without wiring installation", async () => {
     const container = await containerFactory(tools)(root, { verbose: false }, createOutput(false));
 
-    container.telemetry;
-    container.recipes.validateRecipes;
+    expect(container.telemetry).toBeDefined();
+    expect(container.recipes.validateRecipes).toBeDefined();
     expect(wireInstallation).not.toHaveBeenCalled();
   });
 

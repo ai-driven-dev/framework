@@ -50,7 +50,7 @@ describe("the container a command is handed", () => {
     const walked = vi.spyOn(handed, "inHelpOrder");
 
     const container = await containerOf(root, { verbose: false }, undefined, handed);
-    container.doctor.runUserScopeDoctor;
+    expect(container.doctor.runUserScopeDoctor).toBeDefined();
 
     expect(walked).toHaveBeenCalled();
   });
