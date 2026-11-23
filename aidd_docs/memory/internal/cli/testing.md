@@ -21,6 +21,7 @@ Run from `cli/`.
 | `pnpm test:<project>` (`test:arch` for architecture) | one project |
 | `pnpm golden:update [name]` | rewrites stored goldens, or those under `cli/tests/golden/<name>*`; refused in CI |
 | `pnpm smoke` | the built binary over `cli/scripts/smoke-tools.sh`, hermetic |
+| `pnpm smoke:full`, `smoke:collision` | the same with the remote fetch; a seeded own install |
 | `pnpm test:host-contract` | recorded host behaviour replayed on installed hosts; weekly CI job |
 | `pnpm smoke:real` | real host registries: [`smoke-real.md`](smoke-real.md) |
 
@@ -36,12 +37,7 @@ Run from `cli/`.
 
 ## Mutation
 
-- Scopes and floors: `cli/mutation-scopes.json`; selection: `cli/scripts/mutation-scopes-to-run.mjs`.
-- Only `telemetry` and `shared` have floors; each runs on a pull request touching its source or tests.
-- Other scopes run weekly or on demand, and never fail.
-- A change to the Stryker or mutation config runs every scope.
-- Run `pnpm test:mutation:<scope>`, or `node scripts/run-mutation.mjs --changed [<base>]` before a push.
-- Raise a floor to the measured score; lower it only with a reason in the scopes file.
+Scopes, floors and when each runs: [`mutation.md`](mutation.md).
 
 ## Fixtures and sandbox
 

@@ -1,6 +1,6 @@
 # CLI architecture
 
-Dependency graph, edges and decisions: [architecture.md](../../../../aidd_docs/memory/internal/cli/architecture.md). Tree and where to add a thing: [codebase-map.md](../../../../aidd_docs/memory/internal/cli/codebase-map.md). Gates to run: [coding-assertions.md](../../../../aidd_docs/memory/internal/cli/testing.md). A rule here names its gate.
+Dependency graph, edges and decisions: [architecture.md](../../../../aidd_docs/memory/internal/cli/architecture.md). Tree and where to add a thing: [codebase-map.md](../../../../aidd_docs/memory/internal/cli/codebase-map.md). Gates to run: [testing.md](../../../../aidd_docs/memory/internal/cli/testing.md). A rule here names its gate.
 
 ## Imports
 

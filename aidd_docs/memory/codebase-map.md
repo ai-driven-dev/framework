@@ -22,7 +22,7 @@ CLI tree and where to add code: [`internal/cli/codebase-map.md`](internal/cli/co
 | --- | --- |
 | Binary | `cli/src/cli.ts`, built to `dist/cli.js`, bin `aidd` |
 | Workflow | `plugins/<plugin>/skills/<NN>-<name>/SKILL.md` |
-| Memory hook | `plugins/aidd-context/hooks/memory.cjs`: `load` on `SessionStart`, `guard` on `Stop` |
+| Memory hook | `plugins/aidd-context/hooks/memory.cjs`: `load` on `SessionStart`, `sync` on `Stop` |
 
 ## Packages
 

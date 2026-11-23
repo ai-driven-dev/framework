@@ -1,6 +1,6 @@
 # Testing
 
-CLI projects, guards and mutation: [`internal/cli/testing.md`](internal/cli/testing.md).
+CLI projects and gates: [`internal/cli/testing.md`](internal/cli/testing.md); mutation: [`internal/cli/mutation.md`](internal/cli/mutation.md).
 
 ## Strategy
 
@@ -8,7 +8,6 @@ CLI projects, guards and mutation: [`internal/cli/testing.md`](internal/cli/test
 | --- | --- |
 | Skills | the generator's validate step; pre-commit `skill-frontmatter`, `check-skill-argument-hints`, `architecture-rules` |
 | Agents | `architecture-rules` over `plugins/*/agents/`, then a run against a real project |
-| Rules | a run against a real project; no pre-commit guard reads them |
 | `scripts/` and bundled hooks | `node --test`, wrapped |
 | `cli/`, `kanban/` | their own vitest suites; they share no code |
 | Per-tool distributions | goldens in `cli/tests/golden/`, the `build-per-tool` CI matrix, Claude Code's `plugin validate` in `cli-ci.yml` |
@@ -18,8 +17,6 @@ CLI projects, guards and mutation: [`internal/cli/testing.md`](internal/cli/test
 
 - A plugin holds no tests: `hooks/` ships into user projects. A bundled script's tests go in `scripts/__tests__/`.
 - Run the scripts suite wrapped: bare, it can overwrite this repository's `.git/hooks`.
-- A new or rewritten skill runs end to end on two small models from different providers, in a throwaway repository.
-- That run must stop at each wait and write only once approved.
 - Delete each chat a CLI test of an AI tool creates, once the test is done.
 
 ## Run

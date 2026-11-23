@@ -25,6 +25,7 @@
 - aidd_docs/memory/internal/cli/deployment.md
 - aidd_docs/memory/internal/cli/distribution.md
 - aidd_docs/memory/internal/cli/host-registration.md
+- aidd_docs/memory/internal/cli/mutation.md
 - aidd_docs/memory/internal/cli/smoke-real.md
 - aidd_docs/memory/internal/cli/telemetry.md
 - aidd_docs/memory/internal/cli/testing.md

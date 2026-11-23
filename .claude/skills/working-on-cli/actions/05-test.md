@@ -12,7 +12,7 @@ A test that failed first for the reason its name gives, at one level.
 
 ## Process
 
-1. **Load.** Read [architecture.md](../references/architecture.md) and the `references/contexts/<ctx>.md`. Commands, projects, mutation floors, fixtures and sandbox are in [testing.md](../../../../aidd_docs/memory/internal/cli/testing.md); golden machine independence, bug reproduction and the challenge pass are in [golden-machine-independence.md](../references/test/golden-machine-independence.md), [bug-empirical-reproduction.md](../references/test/bug-empirical-reproduction.md) and [test-challenge-pass.md](../references/test/test-challenge-pass.md).
+1. **Load.** Read [architecture.md](../references/architecture.md) and the `references/contexts/<ctx>.md`. Commands, projects, fixtures and sandbox are in [testing.md](../../../../aidd_docs/memory/internal/cli/testing.md), mutation floors in [mutation.md](../../../../aidd_docs/memory/internal/cli/mutation.md); golden machine independence, bug reproduction and the challenge pass are in [golden-machine-independence.md](../references/test/golden-machine-independence.md), [bug-empirical-reproduction.md](../references/test/bug-empirical-reproduction.md) and [test-challenge-pass.md](../references/test/test-challenge-pass.md).
 2. **Level.** Pick the lowest level that proves the behaviour; the suffix selects the vitest project. A behaviour is proven at one level, never repeated above it.
 
    | Level | Where | For |

@@ -1,13 +1,13 @@
 # `clean` drives the host's own CLI
 
-`clean` never writes a host registry by hand and never deletes what aidd did not write. Read before touching `clean` or a cache purge.
+`clean` never writes a host registry by hand and never deletes what aidd did not write.
 
 ## Project scope, in order
 
 1. Through the host's CLI: `uninstallPlugin` per recorded ref, then `removeMarketplace` at its scope.
 2. Remove tracked, merge and plugin files.
 3. Remove `.aidd/` last: step 1 needs `.aidd/cache/`.
-4. Remove untracked machine-local files through `cli/src/contexts/installation/application/removal/remove-project-hooks.use-case.ts`.
+4. Remove untracked machine-local files: Claude's `settings.local.json`, a project-merged `.cursor/hooks.json` and its `.cursor/hooks/<plugin>/` (`cli/src/contexts/installation/application/removal/remove-project-hooks.use-case.ts`).
 5. Leave user-scope plugin folders: the user manifest owns them.
 6. Purge each driven tool's declared `pluginCacheDir`, under the same containment.
 

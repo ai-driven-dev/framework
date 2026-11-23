@@ -1,6 +1,6 @@
 # telemetry
 
-What a tool's own transcripts say a model call consumed, and how it is stored, attributed and reported. Language: `src/contexts/telemetry/glossary.md`. Code map: [telemetry.md](../../../../../aidd_docs/memory/internal/cli/telemetry.md). Mutation floor applies: [testing.md](../../../../../aidd_docs/memory/internal/cli/testing.md).
+What a tool's own transcripts say a model call consumed, and how it is stored, attributed and reported. Language: `src/contexts/telemetry/glossary.md`. Code map: [telemetry.md](../../../../../aidd_docs/memory/internal/cli/telemetry.md). Mutation floor applies: [mutation.md](../../../../../aidd_docs/memory/internal/cli/mutation.md).
 
 ## Ports
 
@@ -22,5 +22,5 @@ What a tool's own transcripts say a model call consumed, and how it is stored, a
 
 ## Exceptions
 
-- `domain/legacy/legacy-locations.ts`, `domain/legacy/repository-aliases.ts`, `ports/repository-alias-store.ts` and `infrastructure/legacy/repository-alias-store-adapter.ts` stay: `forget` erases what an earlier version stored, and attribution under an earlier repository id resolves only through `ledger/repository-ids.json`, never written. Removal is a maintainers' schedule (next major).
+- `domain/switch/legacy-locations.ts`, `domain/ledger/repository-aliases.ts`, `ports/repository-alias-store.ts` and `infrastructure/storage/ledger/repository-alias-store-adapter.ts` stay: `forget` erases what an earlier version stored, and attribution under an earlier repository id resolves only through `ledger/repository-ids.json`, never written. Removal is a maintainers' schedule (next major).
 - `USAGE_TOOLS` in `contract/usage-record.ts` is the vocabulary of tools stored in a user's ledger, kept apart from `tools` (`STORED_VOCABULARY` in `tool-addition-cost.arch.test.ts`).
