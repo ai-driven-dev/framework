@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
+import { generateKiloHooksBridge } from "../../../../../src/contexts/tools/domain/behaviours/kilo/kilo-hooks-bridge.model.js";
+import { generateOpencodeHooksBridge } from "../../../../../src/contexts/tools/domain/behaviours/opencode/opencode-hooks-bridge.model.js";
 import {
   parseHooksJsonForBridge,
   pascalCasePluginName,
   replaysNothing,
 } from "../../../../../src/contexts/tools/domain/bridges/event-bridge.js";
-import { generateKiloHooksBridge } from "../../../../../src/contexts/tools/domain/profiles/kilo/kilo-hooks-bridge.model.js";
-import { generateOpencodeHooksBridge } from "../../../../../src/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.model.js";
 
 const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
 const hooksOf = (event: string, ...commands: (string | undefined)[]) =>

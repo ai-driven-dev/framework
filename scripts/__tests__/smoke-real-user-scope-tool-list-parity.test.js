@@ -15,19 +15,19 @@ const ROOT = path.resolve(__dirname, "../..");
  * every `--scope user` phase into an unexpected exit 1.
  */
 
-// A script test cannot read the registration without building the CLI, so it takes the folder
-// name of each profile as the registered id: folder name = registered id.
+// A script test cannot read the registration without building the CLI, so it takes the file
+// name of each profile as the registered id: file name = registered id.
+const PROFILES = path.join(ROOT, "cli/src/composition/tool-profiles");
+
 function profileFile(toolId) {
-  const dir = path.join(ROOT, "cli/src/contexts/tools/domain/profiles", toolId);
-  return path.join(dir, `${toolId}.profile.ts`);
+  return path.join(PROFILES, `${toolId}.ts`);
 }
 
 function aiToolIds() {
-  const profiles = path.join(ROOT, "cli/src/contexts/tools/domain/profiles");
   const ids = fs
-    .readdirSync(profiles, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name)
+    .readdirSync(PROFILES)
+    .filter((name) => name.endsWith(".ts"))
+    .map((name) => name.slice(0, -".ts".length))
     .filter((id) =>
       /defineAiTool\(/u.test(fs.readFileSync(profileFile(id), "utf8"))
     );

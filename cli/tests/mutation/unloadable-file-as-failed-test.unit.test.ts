@@ -16,7 +16,7 @@ function testFile(state: "pass" | "fail", tasks: RunnerTestFile["tasks"] = []): 
     mode: "run",
     meta: {},
     type: "suite",
-    filepath: "/repo/cli/tests/contexts/tools/domain/profiles/cursor/agents.unit.test.ts",
+    filepath: "/repo/cli/tests/contexts/tools/domain/behaviours/cursor/agents.unit.test.ts",
     projectName: "unit",
     concurrencyId: 0,
     workerId: 0,

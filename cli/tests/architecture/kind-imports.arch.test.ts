@@ -63,9 +63,7 @@ describe("a file imports only the kinds its kind allows", () => {
       [file]: `import { E } from "${up}shared/domain/shared.error.js";`,
     });
     expect(importsOf(importing("src/contexts/tools/domain/x.model.ts", "../../../"))).toEqual([]);
-    expect(
-      importsOf(importing("src/contexts/tools/domain/profiles/x/x.profile.ts", "../../../../../"))
-    ).toEqual([]);
+    expect(importsOf(importing("src/composition/tool-profiles/x.ts", "../../"))).toEqual([]);
     expect(importsOf(importing("src/presentation/presenters/x.presenter.ts", "../../"))).toEqual(
       []
     );
@@ -192,25 +190,28 @@ describe("a file imports only the kinds its kind allows", () => {
   it("flags a profile that imports outside tools and shared", () => {
     expect(
       importsOf({
-        "src/contexts/tools/domain/profiles/x/x.profile.ts":
-          'import { M } from "../../../../installation/domain/m.model.js";',
+        "src/composition/tool-profiles/x.ts":
+          'import { M } from "../../contexts/installation/domain/m.model.js";',
         "src/contexts/installation/domain/m.model.ts": "export const M = 1;",
       })
     ).toEqual([
-      "src/contexts/tools/domain/profiles/x/x.profile.ts -> src/contexts/installation/domain/m.model.ts",
+      "src/composition/tool-profiles/x.ts -> src/contexts/installation/domain/m.model.ts",
     ]);
   });
 
   it("flags a profile that imports a file of another profile, and passes its own folder", () => {
-    const base = "src/contexts/tools/domain/profiles";
+    const base = "src/composition/tool-profiles";
+    const own = "src/contexts/tools/domain/behaviours";
     expect(
       importsOf({
-        [`${base}/x/x.profile.ts`]:
-          'import { Y } from "../y/y.profile.js";\nimport { Z } from "./z.js";',
-        [`${base}/y/y.profile.ts`]: "export const Y = 1;",
-        [`${base}/x/z.ts`]: "export const Z = 1;",
+        [`${base}/x.ts`]:
+          'import { Y } from "./y.js";\nimport { Z } from "../../contexts/tools/domain/behaviours/x/z.js";',
+        [`${base}/y.ts`]: "export const Y = 1;",
+        [`${own}/x/z.ts`]: "export const Z = 1;",
+        [`${own}/x/w.ts`]: 'import { V } from "../y/v.js";',
+        [`${own}/y/v.ts`]: "export const V = 1;",
       })
-    ).toEqual([`${base}/x/x.profile.ts -> ${base}/y/y.profile.ts`]);
+    ).toEqual([`${base}/x.ts -> ${base}/y.ts`, `${own}/x/w.ts -> ${own}/y/v.ts`]);
   });
 
   it("flags composition imported by anything but composition", () => {

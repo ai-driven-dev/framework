@@ -65,7 +65,7 @@ export function repositoryViolations(files: Readonly<Record<string, string>>): V
 // A host's plugin manifest path has one spelling outside the host's own profile: the canon's.
 
 const SOURCE_SPELLING = "src/shared/domain/plugin/canon-paths.ts";
-const HOST_PROFILES = "src/contexts/tools/domain/profiles/";
+const HOST_PROFILES = ["src/composition/tool-profiles/", "src/contexts/tools/domain/behaviours/"];
 const HOST_PLUGIN_DIR = /\.(claude|cursor|codex)-plugin\b/;
 const MANIFEST_PATH = /^\S*plugin\.json$/;
 
@@ -77,7 +77,7 @@ export function manifestSpellingViolations(files: Readonly<Record<string, string
       ([path, text]) =>
         path.startsWith("src/") &&
         path !== SOURCE_SPELLING &&
-        !path.startsWith(HOST_PROFILES) &&
+        !HOST_PROFILES.some((owner) => path.startsWith(owner)) &&
         (text.includes("plugin.json") || HOST_PLUGIN_DIR.test(text))
     )
   );

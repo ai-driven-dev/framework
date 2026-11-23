@@ -9,10 +9,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { kilo } from "../../../src/contexts/tools/domain/profiles/kilo/kilo.profile.js";
-import { generateKiloHooksBridge } from "../../../src/contexts/tools/domain/profiles/kilo/kilo-hooks-bridge.model.js";
-import { opencode } from "../../../src/contexts/tools/domain/profiles/opencode/opencode.profile.js";
-import { generateOpencodeHooksBridge } from "../../../src/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.model.js";
+import { kilo } from "../../../src/composition/tool-profiles/kilo.js";
+import { opencode } from "../../../src/composition/tool-profiles/opencode.js";
+import { generateKiloHooksBridge } from "../../../src/contexts/tools/domain/behaviours/kilo/kilo-hooks-bridge.model.js";
+import { generateOpencodeHooksBridge } from "../../../src/contexts/tools/domain/behaviours/opencode/opencode-hooks-bridge.model.js";
 import { present } from "../../shared/testing/present.builder.js";
 import { REPOSITORY_ROOT } from "../../shared/testing/repository-root.builder.js";
 

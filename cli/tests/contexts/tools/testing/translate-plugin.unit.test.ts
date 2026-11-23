@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { codexProfile } from "../../../../src/contexts/tools/domain/profiles/codex/codex.profile.js";
+import { codexProfile } from "../../../../src/composition/tool-profiles/codex.js";
 import { SmolTomlCodec } from "../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { parsePluginName } from "../../../../src/shared/domain/plugin/plugin-name.js";

@@ -6703,7 +6703,7 @@
         "src/**",
         "!**/*.error.ts",
         "!src/composition/**",
-        "!src/contexts/tools/domain/profiles/**",
+        "!src/contexts/tools/domain/behaviours/**",
         "!src/contexts/*/contract/**"
       ],
       "linter": {
@@ -6723,7 +6723,7 @@
     {
       "includes": [
         "src/composition/**",
-        "src/contexts/tools/domain/profiles/**",
+        "src/contexts/tools/domain/behaviours/**",
         "src/contexts/*/contract/**"
       ],
       "linter": {

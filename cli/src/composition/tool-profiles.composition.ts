@@ -1,12 +1,12 @@
-import { antigravity } from "../contexts/tools/domain/profiles/antigravity/antigravity.profile.js";
-import { claude } from "../contexts/tools/domain/profiles/claude/claude.profile.js";
-import { codexProfile } from "../contexts/tools/domain/profiles/codex/codex.profile.js";
-import { copilot } from "../contexts/tools/domain/profiles/copilot/copilot.profile.js";
-import { cursor } from "../contexts/tools/domain/profiles/cursor/cursor.profile.js";
-import { kilo } from "../contexts/tools/domain/profiles/kilo/kilo.profile.js";
-import { opencode } from "../contexts/tools/domain/profiles/opencode/opencode.profile.js";
-import { vscode } from "../contexts/tools/domain/profiles/vscode/vscode.profile.js";
 import { SmolTomlCodec } from "../contexts/tools/infrastructure/smol-toml-codec.adapter.js";
+import { antigravity } from "./tool-profiles/antigravity.js";
+import { claude } from "./tool-profiles/claude.js";
+import { codexProfile } from "./tool-profiles/codex.js";
+import { copilot } from "./tool-profiles/copilot.js";
+import { cursor } from "./tool-profiles/cursor.js";
+import { kilo } from "./tool-profiles/kilo.js";
+import { opencode } from "./tool-profiles/opencode.js";
+import { vscode } from "./tool-profiles/vscode.js";
 
 const codex = codexProfile(new SmolTomlCodec());
 

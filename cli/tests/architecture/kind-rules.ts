@@ -168,7 +168,7 @@ export function instructionViolations(
 
 const FIXED_MODULES = ["container", "shared", "tool-profiles.composition", "user-config-dir"];
 const CONTEXT_FOLDER = "contexts";
-const ALLOWED_SUBFOLDERS = [CONTEXT_FOLDER, "orchestration"];
+const ALLOWED_SUBFOLDERS = [CONTEXT_FOLDER, "orchestration", "tool-profiles"];
 
 /** The root, the shared module, one module per context in `contexts/`, and only `contexts/` and
  * `orchestration/` as folders. */
@@ -192,7 +192,7 @@ export function compositionViolations(
       "composition",
       entry,
       what,
-      "composition holds container, shared, the tool registration list, the user configuration directory, one module per context in contexts/, and an orchestration folder",
+      "composition holds container, shared, the tool registration list, the user configuration directory, one module per context in contexts/, an orchestration folder and the tool profiles",
       "add the module of the context in contexts/, or remove the one no context owns"
     );
   const mismatches = (modules: string[], expected: readonly string[], where: string) => [

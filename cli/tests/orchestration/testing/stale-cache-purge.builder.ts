@@ -15,7 +15,7 @@ import {
   CLAUDE_BUILT_DIR,
   catalogFixture,
   PROJECT_ROOT,
-} from "../testing/marketplace-sync-settings-migration.builder.js";
+} from "./marketplace-sync-settings-migration.builder.js";
 
 export const OLD_CACHE_DIR = join(PROJECT_ROOT, BUILT_CACHE_SUBDIR, FRAMEWORK_MARKETPLACE_NAME);
 export const OLD_CACHE_FILE = join(OLD_CACHE_DIR, "claude", "agents", "some-agent.md");
