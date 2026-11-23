@@ -1,7 +1,8 @@
 /**
  * The shape a use case holds, read from the syntax tree: one class named after its file with a
  * public `execute`, at most five constructor dependencies, and the tool catalog arriving at
- * construction, never as a method parameter or a property of an options type.
+ * construction, never as a method parameter or a property of an options type, and no repository
+ * typed with `ScopeRecords`.
  *
  * Written limits: a class a method instantiates inline is not counted as a dependency; a file that
  * declares no class holds a port or a function and owes no shape.
@@ -11,6 +12,7 @@ import {
   isClassDeclaration,
   isConstructorDeclaration,
   isInterfaceDeclaration,
+  isIntersectionTypeNode,
   isMethodDeclaration,
   isObjectBindingPattern,
   isPropertyDeclaration,
@@ -178,6 +180,18 @@ function catalogBreaks(root: SourceFile): string[] {
   return breaks;
 }
 
+/** A manifest repository typed `& ScopeRecords`: the records come from the rules object, not the repository. */
+function recordsBreaks(root: SourceFile): string[] {
+  const breaks: string[] = [];
+  walk(root, (node) => {
+    const named = (node: Node): string[] =>
+      isIntersectionTypeNode(node) ? node.types.map((t) => t.getText().replace(/<.*$/s, "")) : [];
+    if (named(node).includes("ScopeRecords") && named(node).includes("ManifestRepository"))
+      breaks.push("types a repository with ScopeRecords");
+  });
+  return breaks;
+}
+
 function breaksOf(file: string, source: string, root: SourceFile): string[] {
   const classes = root.statements.filter(isClassDeclaration);
   const inClasses =
@@ -188,7 +202,7 @@ function breaksOf(file: string, source: string, root: SourceFile): string[] {
     file.endsWith(".use-case.ts") && !exportsExecutingClass(root)
       ? ["no exported class with a public execute"]
       : [];
-  return [...inClasses, ...ownerless, ...catalogBreaks(root)];
+  return [...inClasses, ...ownerless, ...catalogBreaks(root), ...recordsBreaks(root)];
 }
 
 /** The use-case files that break the shape, one entry per file. */

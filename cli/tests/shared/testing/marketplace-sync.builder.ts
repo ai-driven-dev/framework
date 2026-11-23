@@ -18,6 +18,7 @@ import { RecordActivation } from "../../../src/contexts/installation/application
 import { trackedSharedSettings } from "../../../src/contexts/installation/application/sync/tracked-shared-settings.js";
 import type { ScopeRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
 import { RecordMachineClaims } from "../../../src/contexts/machine-claims/application/record/record-machine-claims.use-case.js";
 import { ResolvePurgeCandidate } from "../../../src/contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
 import {
@@ -39,6 +40,7 @@ import { RecordSyncActivation } from "../../../src/orchestration/sync/settings/r
 import { RunSettingsSync } from "../../../src/orchestration/sync/settings/run-settings-sync.use-case.js";
 import { SyncSettings } from "../../../src/orchestration/sync/settings/sync-settings.use-case.js";
 import { SyncToolSettingsFiles } from "../../../src/orchestration/sync/settings/sync-tool-settings-files.use-case.js";
+import type { Lock } from "../../../src/shared/ports/lock.js";
 import { catalogReadersOver } from "./catalog-readers.builder.js";
 
 type Deps = RegisterPluginWithHostDeps;
@@ -48,7 +50,7 @@ type Loader = LoadSyncContextDeps;
 export interface MarketplaceSyncParts {
   tools: ToolCatalog;
   fs: SharedFrameworkSourceDeps["fs"];
-  manifestRepo: Loader["manifestRepo"];
+  manifestRepo: ManifestRepository & ScopeRecords;
   marketplaceRegistry: Loader["marketplaceRegistry"];
   logger: SharedFrameworkSourceDeps["logger"];
   ensureBuilt: ConstructorParameters<typeof BuildMarketplaceForTool>[0];
@@ -56,7 +58,7 @@ export interface MarketplaceSyncParts {
   marketplaceRegisterFrameworkUseCase?: Loader["marketplaceRegisterFrameworkUseCase"];
   userSourceReferences?: RecordSourceReferenceDeps["userSourceReferences"];
   currentVersion?: RecordSourceReferenceDeps["currentVersion"];
-  userManifestRepo?: Loader["userManifestRepo"];
+  userManifestRepo?: ManifestRepository & Lock & ScopeRecords;
   activators?: ReadonlyMap<string, HostActions>;
   hostMarketplaceRegistries?: Deps["hosts"]["marketplaceRegistries"];
   hostPluginRegistries?: Deps["hosts"]["pluginRegistries"];
@@ -77,11 +79,14 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
   return new SyncSettings(
     new RunSettingsSync({
       loadContext: new LoadSyncContext({
-        manifestRepo: parts.manifestRepo,
+        project: { manifestRepo: parts.manifestRepo, records: parts.manifestRepo },
+        user: parts.userManifestRepo && {
+          manifestRepo: parts.userManifestRepo,
+          records: parts.userManifestRepo,
+        },
         marketplaceRegistry: parts.marketplaceRegistry,
         frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
         marketplaceRegisterFrameworkUseCase: parts.marketplaceRegisterFrameworkUseCase,
-        userManifestRepo: parts.userManifestRepo,
       }),
       settingsFiles: new SyncToolSettingsFiles(
         {

@@ -21,7 +21,7 @@ import { SyncNativeActivation } from "../../orchestration/sync/settings/sync-nat
 import { SyncSettings } from "../../orchestration/sync/settings/sync-settings.use-case.js";
 import { SyncToolSettingsFiles } from "../../orchestration/sync/settings/sync-tool-settings-files.use-case.js";
 import { catalogReaders, settingsDeclaration } from "../contexts/host-registration.js";
-import type { Installation } from "../contexts/installation.js";
+import { type Installation, recordsOf } from "../contexts/installation.js";
 import { lenientSourceReferences } from "../contexts/machine-claims.js";
 import type { Base } from "../shared.js";
 import { userConfigDir } from "../user-config-dir.js";
@@ -95,11 +95,11 @@ function runSettingsSyncOf(base: Base, inst: Installation, sources: SyncSources)
   const { registrationRecordRules } = inst;
   return new RunSettingsSync({
     loadContext: new LoadSyncContext({
-      manifestRepo,
+      project: { manifestRepo, records: recordsOf(manifestRepo) },
+      user: { manifestRepo: userManifestRepo, records: recordsOf(userManifestRepo) },
       marketplaceRegistry,
       frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
       marketplaceRegisterFrameworkUseCase: registerFrameworkMarketplace,
-      userManifestRepo,
     }),
     settingsFiles: settingsFilesOf(base, inst, buildMarketplaceForTool),
     activateNativeTools: nativeActivationOf(base, inst, buildMarketplaceForTool),

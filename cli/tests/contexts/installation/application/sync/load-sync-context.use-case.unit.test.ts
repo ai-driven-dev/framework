@@ -54,11 +54,11 @@ function setup(
     return pluginSource;
   });
   const load = new LoadSyncContext({
-    manifestRepo: project,
+    project: { manifestRepo: project, records: project },
+    user: user && { manifestRepo: user, records: user },
     marketplaceRegistry: registry,
     frameworkMarketplaceName: FRAMEWORK,
     marketplaceRegisterFrameworkUseCase: options.register ? { execute: register } : undefined,
-    userManifestRepo: user,
   });
   return { load, project, user, register, registry };
 }

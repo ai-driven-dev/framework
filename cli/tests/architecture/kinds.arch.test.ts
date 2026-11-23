@@ -302,6 +302,21 @@ describe("a use case holds one shape", () => {
     ).toEqual([]);
   });
 
+  it("flags a repository typed with the records it keeps beside it", () => {
+    expect(
+      breaksOf(
+        `${home}x.ts`,
+        "export class X { constructor(private readonly repo: ManifestRepository & ScopeRecords) {} execute() {} }"
+      )
+    ).toEqual(["types a repository with ScopeRecords"]);
+    expect(
+      breaksOf(
+        `${home}x.ts`,
+        "export class X { constructor(private readonly records: Rules & ScopeRecords) {} execute() {} }"
+      )
+    ).toEqual([]);
+  });
+
   it("flags a use-case file that exports no class with a public execute", () => {
     expect(breaksOf(`${home}x.use-case.ts`, "export class X { run() {} }")).toEqual([
       "no exported class with a public execute",

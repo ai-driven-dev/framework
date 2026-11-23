@@ -1,6 +1,5 @@
 import type { Scope } from "../../../../shared/domain/scope.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
-import type { Lock } from "../../../../shared/ports/lock.js";
 import type { ScopeRecords, ToolRecords } from "../../contract/records/scope-records.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
@@ -31,30 +30,35 @@ export interface SyncContext {
 }
 
 /** What LoadSyncContext is built from. */
+/** One scope's manifest repository and the records kept beside it. */
+export interface SyncScope {
+  readonly manifestRepo: ManifestRepository;
+  readonly records: ScopeRecords;
+}
+
 export interface LoadSyncContextDeps {
-  readonly manifestRepo: ManifestRepository & ScopeRecords;
+  readonly project: SyncScope;
+  /** Absent, the machine scope works on the project's. */
+  readonly user?: SyncScope;
   readonly marketplaceRegistry: InstallationMarketplaceRegistry;
   /** The name the framework marketplace is registered under. */
   readonly frameworkMarketplaceName: string;
   /** Re-registers the shared machine-scope source when this run finds no marketplace at all.
    * Absent keeps the silent no-op instead of guessing what to register. */
   readonly marketplaceRegisterFrameworkUseCase?: FrameworkMarketplaceRegistrar;
-  readonly userManifestRepo?: ManifestRepository & ScopeRecords & Lock;
 }
 
 export class LoadSyncContext {
   constructor(private readonly deps: LoadSyncContextDeps) {}
 
-  private repositoryOf(scope: Scope): ManifestRepository & ScopeRecords {
-    return scope === "user"
-      ? (this.deps.userManifestRepo ?? this.deps.manifestRepo)
-      : this.deps.manifestRepo;
+  private scopeOf(scope: Scope): SyncScope {
+    return scope === "user" ? (this.deps.user ?? this.deps.project) : this.deps.project;
   }
 
   /** `null` when there is no manifest or no marketplace to sync, so the run has nothing to do. */
   async execute(request: LoadSyncContextRequest): Promise<SyncContext | null> {
     const { projectRoot } = request;
-    const manifestRepo = this.repositoryOf(request.scope);
+    const { manifestRepo, records: scopeRecords } = this.scopeOf(request.scope);
     const [manifest, initialMarketplaces] = await Promise.all([
       manifestRepo.loadIfReadable(),
       this.deps.marketplaceRegistry.list(projectRoot),
@@ -68,14 +72,14 @@ export class LoadSyncContext {
         ? recreatedMarketplaces
         : recreatedMarketplaces.filter((m) => request.marketplaceNames?.includes(m.name));
     if (marketplaces.length === 0) return null;
-    const records = await manifestRepo.loadRecords();
+    const records = await scopeRecords.loadRecords();
     return {
       manifest,
       records,
       marketplaces,
       toolIds: this.selectToolIds(manifest, request.toolIds),
       save: async () => {
-        await manifestRepo.saveRecords(records);
+        await scopeRecords.saveRecords(records);
         await manifestRepo.save(manifest);
       },
     };

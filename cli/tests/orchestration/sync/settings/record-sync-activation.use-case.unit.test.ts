@@ -27,8 +27,9 @@ async function requestOf(
       addedAt: "2001-01-01T00:00:00Z",
     })
   );
+  const project = new InMemoryManifestRepository(Manifest.create(), PROJECT_ROOT);
   const loader = new LoadSyncContext({
-    manifestRepo: new InMemoryManifestRepository(Manifest.create(), PROJECT_ROOT),
+    project: { manifestRepo: project, records: project },
     marketplaceRegistry: registry,
     frameworkMarketplaceName: "framework",
   });
