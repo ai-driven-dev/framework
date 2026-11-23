@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { MarketplaceNotFoundError } from "../../../src/contexts/distribution/contract/distribution.error.js";
 import { describeMessage } from "../../../src/presentation/errors/describe-message.presenter.js";
-import { describeCause } from "../../../src/presentation/errors/error-translator.presenter.js";
+import { render } from "../../../src/presentation/errors/error-translator.presenter.js";
 import { OutputAdapter } from "../../../src/presentation/terminal/output.adapter.js";
+import {
+  InvalidSourceMarketplaceError,
+  UnreadableUserSourceReferencesError,
+} from "../../../src/shared/domain/shared.error.js";
 
 const ended = (code: number): never => {
   throw new Error(`ended ${String(code)}`);
@@ -123,7 +127,7 @@ describe("writing output", () => {
       }
     });
 
-    it("words a caught error after the message, as String() reads a plain one", () => {
+    it("words a caught error after the message by its words alone, never its class name", () => {
       const written: string[] = [];
       const original = process.stderr.write.bind(process.stderr);
       process.stderr.write = (msg: unknown) => {
@@ -132,12 +136,17 @@ describe("writing output", () => {
       };
 
       try {
-        const output = new OutputAdapter(false, ended, describeCause, describeMessage);
+        const output = new OutputAdapter(false, ended, render, describeMessage);
         output.warn("skip: ", new Error("offline"));
         output.warn("skip: ", new MarketplaceNotFoundError("aidd"));
+        output.warn("skip: ", new InvalidSourceMarketplaceError("no name"));
+        output.warn("", new UnreadableUserSourceReferencesError("/refs.json", "bad JSON"));
         expect(written).toEqual([
-          "Warning: skip: Error: offline\n",
-          "Warning: skip: MarketplaceNotFoundError: Marketplace 'aidd' is not registered.\n",
+          "Warning: skip: offline\n",
+          "Warning: skip: Marketplace 'aidd' is not registered.\n",
+          "Warning: skip: Invalid source marketplace: no name.\n",
+          "Warning: Cannot read the shared-source reference registry at /refs.json: bad JSON. Repair " +
+            "the file, or delete it to start from an empty registry.\n",
         ]);
       } finally {
         process.stderr.write = original;

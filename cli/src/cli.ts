@@ -9,7 +9,7 @@ import { inProcessCommand } from "./presentation/controllers/menu/in-process-com
 import { runMenuLoop } from "./presentation/controllers/menu/menu.controller.js";
 import { registerCommands } from "./presentation/controllers/menu/register-commands.controller.js";
 import { describeMessage } from "./presentation/errors/describe-message.presenter.js";
-import { describeCause, failCommand } from "./presentation/errors/error-translator.presenter.js";
+import { failCommand, render } from "./presentation/errors/error-translator.presenter.js";
 import { registerUpdateNoticeHooks } from "./presentation/hooks/update-notice-hooks.js";
 import { resolveProjectRoot } from "./presentation/terminal/project-root.js";
 import { waitForEnter } from "./presentation/terminal/wait-for-enter.js";
@@ -21,7 +21,7 @@ function formatVersion(version: string): string {
 const tools = wireTools();
 /** The output a run writes to, worded by the catalogue; `end` is how the run stops. */
 const outputOfRun = (end: (code: number) => never) =>
-  outputEndingWith(end, describeCause, describeMessage);
+  outputEndingWith(end, render, describeMessage);
 const createOutput = outputOfRun((code) => process.exit(code));
 
 // The composition edge: commands receive these factories and never import the wiring.

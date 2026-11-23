@@ -125,7 +125,7 @@ describe("installing an AI tool with its plugins", () => {
     const text = `Plugin 'bad' could not be propagated to ${SYNTHETIC_TOOL}: `;
     expect(result.propagationWarnings).toEqual([{ text, cause: failure }]);
     expect(result.propagatedPlugins).toEqual(["ok"]);
-    expect(logger.warnMessages).toEqual([`${text}${failure}`]);
+    expect(logger.warnMessages).toEqual([`${text}catalog unavailable`]);
     expect(order).toEqual(["runtime", "install bad", "install ok", "activate"]);
   });
 

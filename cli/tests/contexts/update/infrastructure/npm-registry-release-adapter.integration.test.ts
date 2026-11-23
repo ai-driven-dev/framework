@@ -99,6 +99,6 @@ describe("reading releases from the npm registry", () => {
     ).fetchLatestRelease();
 
     expect(release.changelog).toBeNull();
-    expect(logger.debugMessages).toStrictEqual(["Changelog unavailable: Error: offline"]);
+    expect(logger.debugMessages).toStrictEqual(["Changelog unavailable: offline"]);
   });
 });

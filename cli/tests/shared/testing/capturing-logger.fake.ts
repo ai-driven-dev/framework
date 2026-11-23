@@ -1,5 +1,5 @@
 import { describeMessage } from "../../../src/presentation/errors/describe-message.presenter.js";
-import { describeCause } from "../../../src/presentation/errors/error-translator.presenter.js";
+import { render } from "../../../src/presentation/errors/error-translator.presenter.js";
 import type { HintedMessage } from "../../../src/shared/domain/describe-error.js";
 import type { Logger } from "../../../src/shared/ports/logger.js";
 
@@ -9,7 +9,7 @@ export class CapturingLogger implements Logger {
   readonly warnMessages: string[] = [];
 
   debug(message: string, cause?: unknown): void {
-    this.debugMessages.push(cause === undefined ? message : message + describeCause(cause));
+    this.debugMessages.push(cause === undefined ? message : message + render(cause));
   }
 
   info(message: string | HintedMessage): void {
@@ -18,7 +18,7 @@ export class CapturingLogger implements Logger {
 
   warn(message: string | HintedMessage, cause?: unknown): void {
     const words = describeMessage(message);
-    this.warnMessages.push(cause === undefined ? words : words + describeCause(cause));
+    this.warnMessages.push(cause === undefined ? words : words + render(cause));
   }
 
   get allMessages(): string[] {
