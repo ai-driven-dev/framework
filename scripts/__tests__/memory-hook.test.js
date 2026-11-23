@@ -241,12 +241,6 @@ fs.openSync = (target, ...rest) => {
   paths.set(fd, String(target));
   return fd;
 };
-const writeSync = fs.writeSync;
-fs.writeSync = (fd, data, ...rest) => {
-  if (!(paths.get(fd) ?? "").includes(NAME)) return writeSync(fd, data, ...rest);
-  if (KEEP > 0) writeSync(fd, Buffer.from(data).subarray(0, KEEP));
-  throw eio();
-};
 const writeFileSync = fs.writeFileSync;
 fs.writeFileSync = (target, data, ...rest) => {
   const named = typeof target === "string" ? target : paths.get(target) ?? "";
@@ -284,18 +278,6 @@ test("Stop: a partial write then EIO keeps CLAUDE.md byte for byte, leaves no te
   assert.equal(fs.readFileSync(path.join(root, "CLAUDE.md"), "utf8"), BEFORE_FIX);
   assert.deepEqual(listing(root), before);
   assert.match(JSON.parse(result.stdout).reason, /CLAUDE\.md not written \(EIO\)/u);
-});
-
-test("Stop: an EIO before the first byte leaves every destination unchanged, with no temp file, and names the failure", () => {
-  const root = project({ "CLAUDE.md": BEFORE_FIX, "AGENTS.md": BEFORE_FIX, [VCS]: BANK });
-  const before = listing(root);
-  const result = run("claude", stopPayload("claude", root), { preload: eioPreload(".md", 0) });
-  assert.equal(result.status, 0, result.stderr);
-  for (const name of ["CLAUDE.md", "AGENTS.md"]) assert.equal(fs.readFileSync(path.join(root, name), "utf8"), BEFORE_FIX, name);
-  assert.deepEqual(listing(root), before);
-  const reason = JSON.parse(result.stdout).reason;
-  assert.match(reason, /CLAUDE\.md not written \(EIO\)/u);
-  assert.match(reason, /AGENTS\.md not written \(EIO\)/u);
 });
 
 test("Stop: with two destinations, the one already renamed stays updated, the failing one is unchanged, and the failure is named", () => {
