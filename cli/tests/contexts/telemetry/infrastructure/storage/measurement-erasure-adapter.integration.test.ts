@@ -30,8 +30,7 @@ afterEach(() => {
   rmSync(root, { recursive: true, force: true });
 });
 
-const erasure = (dir = telemetry) =>
-  new MeasurementErasureAdapter(dir, { sinkDirs: [sink], identityFiles: [identity] });
+const erasure = (dir = telemetry) => new MeasurementErasureAdapter(dir);
 const write = (path: string) => {
   mkdirSync(join(path, ".."), { recursive: true });
   writeFileSync(path, "x\n");
@@ -61,7 +60,7 @@ describe("what measurement keeps", () => {
     expect(await erasure(join(telemetry, "inside")).inventory()).toEqual([]);
   });
 
-  it("lists the files of both versions, the ledger last, day files in date order", async () => {
+  it("lists this version's files, the ledger last, and no file an earlier version wrote", async () => {
     write(join(telemetry, "ledger", "2026-10.jsonl"));
     write(join(telemetry, "bindings", "sessions.jsonl"));
     write(join(telemetry, "identity.json"));
@@ -72,26 +71,22 @@ describe("what measurement keeps", () => {
     expect(found.map((e) => [e.kind, e.path.replace(root, "")])).toEqual([
       ["bindings", join("/", "telemetry", "bindings")],
       ["identity", join("/", "telemetry", "identity.json")],
-      ["previous-day-file", join("/", "previous-sink", "2026-10-05.jsonl")],
-      ["previous-day-file", join("/", "previous-sink", "2026-10-06.jsonl")],
-      ["previous-identity", join("/", "previous-identity.json")],
       ["ledger", join("/", "telemetry", "ledger")],
     ]);
   });
 
-  it("removes the ledger's day files as the ledger, never as an earlier day file", async () => {
+  it("removes the ledger's day files as the ledger, and no day file beside it", async () => {
     write(join(telemetry, "ledger", "2026-10-07.jsonl"));
     write(join(telemetry, "ledger", "2026-09-30.jsonl"));
     write(join(telemetry, "ledger", "offsets.json"));
     write(join(sink, "2026-10-05.jsonl"));
     const found = await erasure().inventory();
     expect(found.map((e) => [e.kind, e.path.replace(root, ""), e.files])).toEqual([
-      ["previous-day-file", join("/", "previous-sink", "2026-10-05.jsonl"), 1],
       ["ledger", join("/", "telemetry", "ledger"), 3],
     ]);
     await erasure().erase();
     expect(existsSync(join(telemetry, "ledger"))).toBe(false);
-    expect(existsSync(join(sink, "2026-10-05.jsonl"))).toBe(false);
+    expect(existsSync(join(sink, "2026-10-05.jsonl"))).toBe(true);
   });
 
   it("counts the files a directory holds, nested ones too, and not its lock", async () => {
@@ -110,29 +105,12 @@ describe("what measurement keeps", () => {
     ]);
   });
 
-  it("names only day files, and only files", async () => {
-    write(join(sink, "2026-10-05.jsonl"));
-    write(join(sink, "2026-10.jsonl"));
-    write(join(sink, "2026-10-05.jsonl.bak"));
-    write(join(sink, "x2026-10-05.jsonl"));
-    mkdirSync(join(sink, "2026-10-04.jsonl"));
+  it("names only its own files, and only files", async () => {
     mkdirSync(join(telemetry, "identity.json"), { recursive: true });
-    mkdirSync(identity);
-    expect((await erasure().inventory()).map((e) => e.kind)).toEqual(["previous-day-file"]);
+    write(join(sink, "2026-10-05.jsonl"));
+    write(identity);
+    expect(await erasure().inventory()).toEqual([]);
   });
-
-  it.skipIf(process.getuid?.() === 0 || process.platform === "win32")(
-    "does not take a directory it cannot read for an empty one",
-    async () => {
-      mkdirSync(sink);
-      chmodSync(sink, 0o000);
-      try {
-        await expect(erasure().inventory()).rejects.toThrow(/EACCES/);
-      } finally {
-        chmodSync(sink, 0o700);
-      }
-    }
-  );
 });
 
 describe("erasing it", () => {
@@ -143,14 +121,13 @@ describe("erasing it", () => {
     write(join(telemetry, "identity.json"));
     write(join(telemetry, "notes.txt"));
     write(join(sink, "2026-10-05.jsonl"));
-    write(join(sink, "keep.jsonl"));
     write(identity);
 
     await erasure().erase();
 
     expect(readdirSync(telemetry)).toEqual(["notes.txt"]);
-    expect(readdirSync(sink)).toEqual(["keep.jsonl"]);
-    expect(existsSync(identity)).toBe(false);
+    expect(readdirSync(sink)).toEqual(["2026-10-05.jsonl"]);
+    expect(existsSync(identity)).toBe(true);
   });
 
   it("is quiet where nothing is kept", async () => {

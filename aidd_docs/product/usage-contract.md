@@ -174,14 +174,13 @@ Directory: `AIDD_TELEMETRY_DIR`, else `AIDD_USER_CONFIG_DIR/telemetry`, else `XD
 | --- | --- | --- | --- |
 | `ledger/<YYYY-MM-DD>.jsonl` | `ingest`, `report` | `report`, `forget` | `StoredUsage` by UTC day of `at`, in time then key order, one call per line. Ingest reads its calls' days and the day on each side, and rewrites only a changed day, whole, by rename; no new bytes, no write. `report` rewrites, folded, the partitions it read that share a call, or hold a line that is not a record; a report with no period reads every partition, so after it each call is on disk once. A line that is not a record (a newer version's, an older one's call with no `requestId`, a hand edit, a torn one) is never removed: a rewrite keeps it in its day, after the records, in text order and once, and counts it in `skipped_ledger_lines` on every read. A day holding only such lines stays |
 | `ledger/left-out.txt` | `ingest` | `report`, `forget` | what ingests measured and could not store, by hash, see [Left out](#left-out). cli-v5.5.0 never reads it |
-| `ledger/repository-ids.json` | an earlier version only | every reader of the ledger, `roots.json` and `branches.jsonl` | `{version: 1, complete, aliases, pending}`: the id an earlier version gave a repository, to its id now, both hashes or root commits. This version reads it and never writes it. Every read re-ids by this table; a ledger partition holding a re-ided call is rewritten by the next save, and `branches.jsonl` is never rewritten, so it relies on this table. A stored call of an id the table does not name keeps that id while its new calls get the id of now: two ids for one repository. A table that is missing, of another format or damaged names nothing |
 | `ledger/offsets.json` | `ingest`, `report` | same | per transcript: bytes consumed (for a `.jsonl.zst`, its compressed size), size, file identity. Shrunk or changed identity: read whole |
 | `ledger/roots.json` | `ingest`, `on` | `ingest`, `forget` | `{version: 2, directories}`: per directory and per clone seen alive there, `repository_id`, `root`, `clone`, `seen_at`, for every directory a read call or line named, in any clone. Other format holds nothing: a live directory is remembered again, a gone one counts `never-seen-alive`. `on` records its own root for `forget` |
 | `ledger/consents.jsonl` | `on`, `off`, `ingest`, hooks (close only) | same, plus `forget` | consent intervals, see [Consent](#consent). Outlives the clone; removed with the ledger. Hooks parse it strictly, pinned by the shared fixture |
 | `ledger/.lock` | CLI | CLI | `{pid, created_at}`; dead process or older than ten minutes: cleared |
 | `bindings/.lock` | CLI | CLI | same format. Declarations and snapshots run under it; `task` never takes the ledger lock, which an ingest holds while reading transcripts |
 | `bindings/sessions.jsonl` | `task` | hooks, `report`, `task` | `{session_id, task, ticket, none, declared_at, by}`, `by` = `command` \| `hook-intercept` |
-| `bindings/branches.jsonl` | `task`, `ingest`, `report` | `report`, `forget` | branch declaration at a moment, with when the branch took its name, from its reflog. Read with `repository-ids.json` applied, never rewritten |
+| `bindings/branches.jsonl` | `task`, `ingest`, `report` | `report`, `forget` | branch declaration at a moment, with when the branch took its name, from its reflog. Read as written, never rewritten |
 | `bindings/carries.jsonl` | `SessionStart` hook | hooks, `report` | `{session_id, from, at}` |
 | `bindings/processes.jsonl` | `SessionStart` hook | `SessionStart` hook | `{pid, session_id, source, at}` |
 | `identity.json` | `identity`, `on` | `report`, `status`, `on` | `{"person_id": "<id>"}`, owner-only |
@@ -189,7 +188,7 @@ Directory: `AIDD_TELEMETRY_DIR`, else `AIDD_USER_CONFIG_DIR/telemetry`, else `XD
 | git config `--local` `aidd.telemetry` | `on`, `off`, `forget` | hooks, CLI | `2:<token>` or `off`. Half of consent: alone it grants nothing |
 
 - A line not exactly its store's format is skipped, never guessed. Every JSON Lines store is append-only except the ledger, which keeps such a line through every rewrite.
-- `forget` removes `ledger/`, `bindings/`, `identity.json`, declaration keys and consent key in each recorded clone, and leftovers of an earlier measurement. Never the directory itself.
+- `forget` removes `ledger/`, `bindings/`, `identity.json`, declaration keys and consent key in each recorded clone. Never the directory itself. Data written by an earlier version is neither re-ided nor erased by `forget`.
 
 ## Attribution
 

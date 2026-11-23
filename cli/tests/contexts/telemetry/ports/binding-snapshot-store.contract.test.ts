@@ -8,7 +8,6 @@ import {
   type SnapshotStoreSubject,
 } from "../testing/binding-snapshot-store.contract.js";
 import { InMemorySnapshots } from "../testing/in-memory-snapshots.fake.js";
-import { NO_ALIASES } from "../testing/no-aliases.fake.js";
 
 describeBindingSnapshotStoreContract(
   "the in-memory store",
@@ -23,11 +22,7 @@ describeBindingSnapshotStoreContract(
   async (): Promise<SnapshotStoreSubject> => {
     const root = await mkdtemp(join(tmpdir(), "aidd-snapshots-contract-"));
     return {
-      store: new BindingSnapshotStoreAdapter(
-        join(root, "bindings"),
-        new PrivateStorageAdapter(),
-        NO_ALIASES
-      ),
+      store: new BindingSnapshotStoreAdapter(join(root, "bindings"), new PrivateStorageAdapter()),
       dispose: () => rm(root, { recursive: true, force: true }),
     };
   }

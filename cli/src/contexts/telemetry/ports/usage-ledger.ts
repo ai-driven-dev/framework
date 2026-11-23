@@ -11,8 +11,7 @@ export interface LoadedLedger {
   /** The partitions read that held one: saving them puts them in canonical order. */
   readonly damaged: ReadonlySet<string>;
   /** The partitions read that are not in canonical form: every one holding a call twice, a
-   * call another partition read also holds, or a call an earlier version keyed or named
-   * otherwise. Saving them settles them. */
+   * call another partition read also holds. Saving them settles them. */
   readonly unsettled: ReadonlySet<string>;
 }
 

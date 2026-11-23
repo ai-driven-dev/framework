@@ -15,17 +15,9 @@ const line = (record: StoredUsage): string => JSON.stringify(record);
 describe("a day's file is read under the repository ids of now", () => {
   it("counts the lines that are no record and keeps the others", () => {
     const record = stored();
-    const read = readDay(`${line(record)}\nnot a record\n\n`, new Map());
+    const read = readDay(`${line(record)}\nnot a record\n\n`);
     expect(read.records).toEqual([record]);
     expect(read.skippedLines).toBe(1);
-    expect(read.renamed).toBe(false);
-  });
-
-  it("renames a record whose repository has another id now", () => {
-    const record = stored({ repository_id: "old" });
-    const read = readDay(line(record), new Map([["old", "new"]]));
-    expect(read.records).toEqual([{ ...record, repository_id: "new" }]);
-    expect(read.renamed).toBe(true);
   });
 });
 
@@ -46,21 +38,20 @@ describe("a day's file is rewritten from its records and the lines it keeps", ()
 });
 
 describe("the days read are folded into one record per call", () => {
-  const read = (partition: string, records: StoredUsage[], skippedLines = 0, renamed = false) => ({
+  const read = (partition: string, records: StoredUsage[], skippedLines = 0) => ({
     partition,
     records,
     skippedLines,
-    renamed,
   });
 
-  it("marks a day with a damaged line and a day that was renamed", () => {
+  it("marks a day with a damaged line", () => {
     const merged = mergeDays([
       read("2026-10-07", [stored()], 2),
-      read("2026-10-08", [stored({ key: "other" })], 0, true),
+      read("2026-10-08", [stored({ key: "other" })]),
     ]);
     expect(merged.skippedLines).toBe(2);
     expect([...merged.damaged]).toEqual(["2026-10-07"]);
-    expect([...merged.unsettled]).toEqual(["2026-10-08"]);
+    expect(merged.unsettled.size).toBe(0);
     expect(merged.records).toHaveLength(2);
   });
 

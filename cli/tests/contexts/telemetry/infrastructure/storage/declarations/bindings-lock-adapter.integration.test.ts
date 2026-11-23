@@ -8,7 +8,6 @@ import { PrivateStorageAdapter } from "../../../../../../src/shared/infrastructu
 import { FakeBindings } from "../../../testing/fake-bindings.fake.js";
 import { ledgerOver } from "../../../testing/ledger-adapters.builder.js";
 import { bindingsLockOver } from "../../../testing/lock-adapters.builder.js";
-import { NO_ALIASES } from "../../../testing/no-aliases.fake.js";
 
 let root: string;
 const storage = new PrivateStorageAdapter();
@@ -84,7 +83,7 @@ describe("the bindings lock", () => {
     const snapshotter = () =>
       new SnapshotBindings({
         source,
-        store: new BindingSnapshotStoreAdapter(dir, storage, NO_ALIASES),
+        store: new BindingSnapshotStoreAdapter(dir, storage),
         lock: bindingsLockOver(dir, storage),
         now: () => new Date("2026-10-09T09:00:00.000Z"),
       });

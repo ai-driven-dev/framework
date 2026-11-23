@@ -96,8 +96,6 @@ const WHAT: Readonly<Record<ErasureKind, string>> = {
   ledger: "the ledger of billed calls",
   bindings: "the declarations kept beside it",
   identity: "your identity",
-  "previous-day-file": "day files of the previous version",
-  "previous-identity": "the previous version's identity",
 };
 
 function listKept(output: Output, plan: ForgetPlan): void {
