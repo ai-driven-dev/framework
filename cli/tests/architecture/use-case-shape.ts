@@ -29,8 +29,6 @@ import { walk, withVirtualProject } from "./ts-project.js";
 
 const MAX_CONSTRUCTOR_DEPENDENCIES = 5;
 const CATALOG = "ToolCatalog";
-/** Folders whose use cases answer one question through `execute` alone. */
-const ONLY_EXECUTE_HOMES = ["src/contexts/host-registration/application/withdraw/"];
 
 const pascalCase = (kebab: string): string =>
   kebab
@@ -111,7 +109,7 @@ function executeBreaks(
   file: string,
   classes: readonly ClassDeclaration[],
   execute: readonly Node[],
-  publicMethods: readonly Node[]
+  others: readonly string[]
 ): string[] {
   const breaks: string[] = [];
   const expected = pascalCase(file.replace(/^.*\//, "").replace(/(?:\.use-case)?\.ts$/, ""));
@@ -119,9 +117,7 @@ function executeBreaks(
   if (!classes.some((declaration) => nameOf(declaration) === expected))
     breaks.push(`no class named ${expected}`);
   if (execute.some(isHidden)) breaks.push("an execute that is not public");
-  const others = publicMethods.map(nameOf).filter((name) => name !== "execute");
-  if (ONLY_EXECUTE_HOMES.some((home) => file.startsWith(home)) && others.length > 0)
-    breaks.push(`public methods besides execute: ${others.join(", ")}`);
+  if (others.length > 0) breaks.push(`public methods besides execute: ${others.join(", ")}`);
   return breaks;
 }
 
@@ -136,9 +132,12 @@ function methodBreaks(
   const publicMethods = methods.filter(
     (method) => !isHidden(method) && !hasModifier(method, SyntaxKind.StaticKeyword)
   );
-  if (execute.length > 0) return executeBreaks(file, classes, execute, publicMethods);
   const ports = portNames(source);
   const unported = !classes.some((declaration) => implementsPort(declaration, ports));
+  const others = unported
+    ? publicMethods.map(nameOf).filter((name): name is string => name !== "execute")
+    : [];
+  if (execute.length > 0) return executeBreaks(file, classes, execute, others);
   return publicMethods.length > 1 && unported
     ? [`${publicMethods.length} public methods and no execute`]
     : [];
@@ -185,7 +184,11 @@ function breaksOf(file: string, source: string, root: SourceFile): string[] {
     classes.length > 0
       ? [...methodBreaks(file, source, classes), ...constructorBreaks(root, classes)]
       : [];
-  return [...inClasses, ...catalogBreaks(root)];
+  const ownerless =
+    file.endsWith(".use-case.ts") && !exportsExecutingClass(root)
+      ? ["no exported class with a public execute"]
+      : [];
+  return [...inClasses, ...ownerless, ...catalogBreaks(root)];
 }
 
 /** The use-case files that break the shape, one entry per file. */
