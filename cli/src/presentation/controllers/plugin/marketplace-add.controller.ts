@@ -13,10 +13,10 @@ export type MarketplaceKeys =
   | "addMarketplace"
   | "listMarketplaces"
   | "listMarketplaceCatalogs"
-  | "userMarketplaceRemoveUseCase"
-  | "marketplaceRemoveUseCase"
+  | "removeUserMarketplace"
+  | "removeProjectMarketplace"
   | "refreshMarketplace"
-  | "marketplaceCheckUseCase"
+  | "checkMarketplaceUpstream"
   | "syncNativeActivation";
 
 export interface AddOptions {

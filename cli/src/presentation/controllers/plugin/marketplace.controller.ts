@@ -80,8 +80,8 @@ function registerRemove(
       const scope = parseScope(cmdOptions.scope) ?? "project";
       const deps = await createDeps(projectRoot, { verbose }, output);
       const result = await (scope === "user"
-        ? deps.userMarketplaceRemoveUseCase
-        : deps.marketplaceRemoveUseCase
+        ? deps.removeUserMarketplace
+        : deps.removeProjectMarketplace
       ).execute({
         name,
         projectRoot,
@@ -131,7 +131,7 @@ function registerCheck(
     .action(async () => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const deps = await createDeps(projectRoot, { verbose }, output);
-      const result = await deps.marketplaceCheckUseCase.execute({ projectRoot });
+      const result = await deps.checkMarketplaceUpstream.execute({ projectRoot });
       printMarketplaceCheck(output, result);
     });
 }

@@ -68,7 +68,7 @@ function makeRestoreAll(
   pluginReader: PluginDistributionReaderAdapter,
   prompter: OverwritePrompter | ScriptedPrompter = new OverwritePrompter()
 ): RestoreAll {
-  const statusUseCase = new ReportStatus(
+  const reportStatus = new ReportStatus(
     {
       fs: deps.fs,
       manifestRepo: deps.manifestRepo,
@@ -87,7 +87,7 @@ function makeRestoreAll(
   });
   return new RestoreAll(
     prompter,
-    statusUseCase,
+    reportStatus,
     new RestoreGlobal(deps.manifestRepo, restoreUseCase)
   );
 }

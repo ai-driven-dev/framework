@@ -99,7 +99,7 @@ function registerRules(
     .action(async (cmdOptions: { json?: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const deps = await createDeps(projectRoot, { verbose }, output);
-      const { rules } = await deps.listInstalledRulesUseCase.execute({
+      const { rules } = await deps.listInstalledRules.execute({
         projectRoot,
       });
       if (cmdOptions.json) printInstalledRulesJson(output, rules);

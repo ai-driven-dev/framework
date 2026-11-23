@@ -12,10 +12,10 @@ import { parseGlobalOptions } from "../menu/global-options.controller.js";
 
 /** What removing or updating a plugin reads of the graph. */
 export type ChangeKeys =
-  | "pluginRemoveUseCase"
+  | "removePlugin"
   | "userPluginRemove"
-  | "pluginUpdateUseCase"
-  | "userPluginUpdateUseCase"
+  | "updatePlugin"
+  | "updateUserPlugin"
   | "syncNativeActivation";
 
 export interface ChangeOptions {
@@ -63,7 +63,7 @@ export async function removePluginFrom(
     options
   );
   const removal = { pluginName: name, toolIds, projectRoot };
-  await (scope === "user" ? deps.userPluginRemove : deps.pluginRemoveUseCase).execute(removal);
+  await (scope === "user" ? deps.userPluginRemove : deps.removePlugin).execute(removal);
   await reactivate();
   printPluginRemoved(output, name);
 }
@@ -77,7 +77,7 @@ export async function updatePluginsFrom(
     environment,
     options
   );
-  const update = scope === "user" ? deps.userPluginUpdateUseCase : deps.pluginUpdateUseCase;
+  const update = scope === "user" ? deps.updateUserPlugin : deps.updatePlugin;
   const pluginNames = name !== undefined ? [name] : undefined;
   const updated = await update.execute({ pluginNames, toolIds, projectRoot, scope });
   await reactivate();

@@ -48,11 +48,11 @@ export function toolConfigHarness({
   const listInstalledRules: Mock = vi.fn();
   const validateRecipes: Mock = vi.fn();
   const createDeps: Mock = vi.fn(async () => ({
-    installAiToolUseCase: { execute: installAiTool },
-    installIdeToolUseCase: { execute: installIdeTool },
+    installAiToolWithPlugins: { execute: installAiTool },
+    installIdeTool: { execute: installIdeTool },
     uninstallTools: { execute: uninstallTools },
-    updateToolsUseCase: { execute: updateTools },
-    listInstalledRulesUseCase: { execute: listInstalledRules },
+    updateTools: { execute: updateTools },
+    listInstalledRules: { execute: listInstalledRules },
     validateRecipes: { execute: validateRecipes },
     currentVersion: "5.2.2",
   }));

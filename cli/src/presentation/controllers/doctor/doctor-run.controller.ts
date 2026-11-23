@@ -3,10 +3,10 @@ import type { Output } from "../../../orchestration/domain/output.js";
 
 /** What this command reads of the graph. */
 export type DoctorKeys =
-  | "doctorAllUseCase"
-  | "statusAllUseCase"
-  | "doctorUseCase"
-  | "statusUseCase"
+  | "doctorAll"
+  | "reportAllStatus"
+  | "runDoctor"
+  | "reportStatus"
   | "runUserScopeDoctor"
   | "userSettingsFileOf"
   | "environment";

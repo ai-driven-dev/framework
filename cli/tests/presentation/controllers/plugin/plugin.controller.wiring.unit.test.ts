@@ -23,13 +23,13 @@ const menuSelect = vi.fn();
 const spawn = vi.fn();
 
 const createDeps = vi.fn(async () => ({
-  pluginRemoveUseCase: { execute: pluginRemove },
+  removePlugin: { execute: pluginRemove },
   userPluginRemove: { execute: userPluginRemove },
-  pluginListUseCase: { execute: pluginList },
-  pluginInstallUseCase: { execute: pluginInstall },
+  listPlugins: { execute: pluginList },
+  installPlugin: { execute: pluginInstall },
   searchPlugins: { execute: pluginSearch },
-  pluginUpdateUseCase: { execute: pluginUpdate },
-  userPluginUpdateUseCase: { execute: userPluginUpdate },
+  updatePlugin: { execute: pluginUpdate },
+  updateUserPlugin: { execute: userPluginUpdate },
   syncNativeActivation: { execute: activation },
   prompter: prompterAnswering({ select: menuSelect }),
 }));

@@ -4,11 +4,11 @@ import type { Output } from "../../../orchestration/domain/output.js";
 /** What this command reads of the graph. */
 export type ToolConfigKeys =
   | "currentVersion"
-  | "installAiToolUseCase"
-  | "installIdeToolUseCase"
+  | "installAiToolWithPlugins"
+  | "installIdeTool"
   | "uninstallTools"
-  | "updateToolsUseCase"
-  | "listInstalledRulesUseCase";
+  | "updateTools"
+  | "listInstalledRules";
 
 /** What every tool command is given: the graph it reads, where it writes, and the project. */
 export interface ToolRun {

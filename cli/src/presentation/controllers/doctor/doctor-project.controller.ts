@@ -17,8 +17,8 @@ export async function runFullDoctor({
   projectRoot,
   pluginName,
 }: DoctorRun & { pluginName: string | undefined }): Promise<void> {
-  const doctorResult = await deps.doctorAllUseCase.execute(projectRoot, pluginName);
-  const statusResult = await deps.statusAllUseCase.execute(projectRoot);
+  const doctorResult = await deps.doctorAll.execute(projectRoot, pluginName);
+  const statusResult = await deps.reportAllStatus.execute(projectRoot);
   printReportErrors(output, doctorResult.errors);
   printInventory(output, {
     label: "AI",
@@ -56,8 +56,8 @@ export async function runScopedDoctor({
   const category: ToolCategory = tools.isAiTool(toolId) ? "ai" : "ide";
   // DoctorUseCase scopes by category, never by tool: the inventory below narrows to the exact
   // tool, the issue list stays category-wide.
-  const doctorReport = await deps.doctorUseCase.execute({ projectRoot, category, pluginName });
-  const statusReport = await deps.statusUseCase.execute({
+  const doctorReport = await deps.runDoctor.execute({ projectRoot, category, pluginName });
+  const statusReport = await deps.reportStatus.execute({
     projectRoot,
     filterToolId: toolId,
     pluginName,

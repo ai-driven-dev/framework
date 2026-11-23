@@ -55,7 +55,7 @@ describe("RestoreAll - consent to overwrite", () => {
     const deps = await buildInstallationDeps({ tools: syntheticMixedCatalog() });
     await initAndInstall(deps, PROJECT_ROOT, SYNTHETIC_TOOL);
     const prompter = new OverwritePrompter();
-    const statusUseCase = new ReportStatus(
+    const reportStatus = new ReportStatus(
       {
         fs: deps.fs,
         manifestRepo: deps.manifestRepo,
@@ -79,7 +79,7 @@ describe("RestoreAll - consent to overwrite", () => {
     const seen = recordAsks(restoreUseCase);
     await new RestoreAll(
       prompter,
-      statusUseCase,
+      reportStatus,
       new RestoreGlobal(deps.manifestRepo, restoreUseCase)
     ).execute(PROJECT_ROOT, force, interactive);
     const asked = seen[0];
@@ -105,7 +105,7 @@ describe("RestoreAll - native-only tools", () => {
     const deps = await buildInstallationDeps({ tools: syntheticMixedCatalog() });
     await initAndInstall(deps, PROJECT_ROOT, SYNTHETIC_TOOL);
     const prompter = new OverwritePrompter();
-    const statusUseCase = new ReportStatus(
+    const reportStatus = new ReportStatus(
       {
         fs: deps.fs,
         manifestRepo: deps.manifestRepo,
@@ -138,7 +138,7 @@ describe("RestoreAll - native-only tools", () => {
 
     const result = await new RestoreAll(
       prompter,
-      statusUseCase,
+      reportStatus,
       new RestoreGlobal(deps.manifestRepo, restoreUseCase)
     ).execute(PROJECT_ROOT, true, false);
 
@@ -164,7 +164,7 @@ function restoreAllDelegatingTo(
   prompter: Prompter,
   delegate: (options: RestoreRequest) => Promise<RestoreOutcome>
 ): RestoreAll {
-  const statusUseCase = new ReportStatus(
+  const reportStatus = new ReportStatus(
     {
       fs: deps.fs,
       manifestRepo: deps.manifestRepo,
@@ -184,7 +184,7 @@ function restoreAllDelegatingTo(
   restoreUseCase.execute = delegate;
   return new RestoreAll(
     prompter,
-    statusUseCase,
+    reportStatus,
     new RestoreGlobal(deps.manifestRepo, restoreUseCase)
   );
 }

@@ -38,7 +38,7 @@ export async function updateTools({
   const toolId = raw === undefined ? undefined : assertKnownToolId(raw, catalog);
   const interactive = process.stdout.isTTY ?? false;
 
-  const result = await deps.updateToolsUseCase.execute({
+  const result = await deps.updateTools.execute({
     toolArg: toolId,
     projectRoot,
     userForce: cmdOptions.force,

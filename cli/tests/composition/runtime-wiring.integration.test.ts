@@ -154,7 +154,7 @@ describe("the user marketplace removal the composition binds", () => {
       })
     );
 
-    const removal = wireMarketplace(base, wireInstallation(base)).userMarketplaceRemoveUseCase;
+    const removal = wireMarketplace(base, wireInstallation(base)).removeUserMarketplace;
     await expect(
       removal.execute({ name: "team", projectRoot: "/project", autoConfirm: true, scope: "user" })
     ).rejects.toThrow("has a tracked file outside its boundary");

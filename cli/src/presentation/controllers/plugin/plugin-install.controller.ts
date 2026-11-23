@@ -8,7 +8,7 @@ import { reportNativeActivation } from "../../presenters/setup/sync.presenter.js
 import { parseGlobalOptions } from "../menu/global-options.controller.js";
 
 /** What installing a plugin reads of the graph. */
-export type InstallKeys = "pluginInstallUseCase" | "syncNativeActivation";
+export type InstallKeys = "installPlugin" | "syncNativeActivation";
 
 export interface InstallOptions {
   readonly from?: string;
@@ -32,7 +32,7 @@ export async function installPluginFrom(
 ): Promise<void> {
   const { verbose, output, projectRoot } = parseGlobalOptions(program);
   const deps = await createDeps(projectRoot, { verbose, token: options.token }, output);
-  const result = await deps.pluginInstallUseCase.execute({
+  const result = await deps.installPlugin.execute({
     pluginArg,
     toolIds: aiToolSelectionOf(options.tool, catalog),
     projectRoot,

@@ -175,26 +175,26 @@ describe("setup --scope user", () => {
 
   it("hands the machine-wide sync the tools it registered and the plugins it enabled", async () => {
     const userManifestRepo = new InMemoryManifestRepository();
-    const syncSettingsUseCase = { execute: vi.fn().mockResolvedValue({ updatedTools: [] }) };
+    const syncSettings = { execute: vi.fn().mockResolvedValue({ updatedTools: [] }) };
     const { useCase } = await buildUseCase(undefined, undefined, undefined, {
       userManifestRepo,
-      syncSettingsUseCase,
+      syncSettings,
     });
 
     await useCase.execute(remoteFlow({ aiTools: [SYNTHETIC_TOOL], scope: "user" }));
 
-    expect(syncSettingsUseCase.execute).toHaveBeenCalledWith(
+    expect(syncSettings.execute).toHaveBeenCalledWith(
       expect.objectContaining({ toolIds: [SYNTHETIC_TOOL], enablePlugins: [] })
     );
   });
 
   it("installs the named plugins machine-wide and enables exactly those it installed", async () => {
     const userManifestRepo = new InMemoryManifestRepository();
-    const syncSettingsUseCase = { execute: vi.fn().mockResolvedValue({ updatedTools: [] }) };
+    const syncSettings = { execute: vi.fn().mockResolvedValue({ updatedTools: [] }) };
     const execute = vi.fn(async () => ({ plugins: ["aidd-dev"] }));
     const { useCase } = await buildUseCase(undefined, undefined, undefined, {
       userManifestRepo,
-      syncSettingsUseCase,
+      syncSettings,
       installGlobalPlugins: { execute },
     });
 
@@ -213,7 +213,7 @@ describe("setup --scope user", () => {
       mode: "named",
       pluginNames: ["aidd-dev"],
     });
-    expect(syncSettingsUseCase.execute).toHaveBeenCalledWith(
+    expect(syncSettings.execute).toHaveBeenCalledWith(
       expect.objectContaining({ toolIds: [SYNTHETIC_TOOL], enablePlugins: ["aidd-dev"] })
     );
   });

@@ -84,11 +84,11 @@ describe("creating a container", () => {
     for (const member of [
       slice.runSetup,
       slice.setAgentModels,
-      slice.pluginInstallUseCase,
-      slice.pluginRemoveUseCase,
+      slice.installPlugin,
+      slice.removePlugin,
       slice.addMarketplace,
-      slice.marketplaceCheckUseCase,
-      slice.syncSettingsUseCase,
+      slice.checkMarketplaceUpstream,
+      slice.syncSettings,
       slice.runSync,
     ])
       expect(member.execute).toBeTypeOf("function");
@@ -99,14 +99,14 @@ describe("creating a container", () => {
     const slice = await bindContainer(tools)(root, { verbose: false }, createOutput(false));
 
     for (const member of [
-      slice.doctorAllUseCase,
-      slice.statusAllUseCase,
+      slice.doctorAll,
+      slice.reportAllStatus,
       slice.runUserScopeDoctor,
-      slice.cleanUseCase,
-      slice.cleanUserScopeUseCase,
-      slice.installAiToolUseCase,
+      slice.cleanProject,
+      slice.cleanUserScope,
+      slice.installAiToolWithPlugins,
       slice.uninstallTools,
-      slice.listInstalledRulesUseCase,
+      slice.listInstalledRules,
       slice.validateRecipes,
       slice.telemetry.declareTask,
     ])

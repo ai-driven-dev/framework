@@ -23,7 +23,7 @@ import {
 const TOOL_FLAG_HELP = "Target AI tool (default: all installed)";
 
 /** What this command reads of the graph. */
-type PluginKeys = InstallKeys | ChangeKeys | "prompter" | "pluginListUseCase" | "searchPlugins";
+type PluginKeys = InstallKeys | ChangeKeys | "prompter" | "listPlugins" | "searchPlugins";
 
 interface PluginWiring {
   readonly catalog: ToolCatalog;
@@ -100,7 +100,7 @@ function registerList(
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const toolIds = aiToolSelectionOf(cmdOptions.tool, catalog);
       const deps = await createDeps(projectRoot, { verbose }, output);
-      const result = await deps.pluginListUseCase.execute({
+      const result = await deps.listPlugins.execute({
         toolIds,
       });
       printInstalledPlugins(output, result);

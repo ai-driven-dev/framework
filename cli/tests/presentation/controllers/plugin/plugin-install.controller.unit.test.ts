@@ -9,7 +9,7 @@ function installation() {
   const install = vi.fn(async () => ({ kind: "marketplace", installed: ["aidd-dev"] }));
   const activation = vi.fn(async () => ({ binaryMissing: [], errors: [], failed: false }));
   const createDeps: Mock = vi.fn(async () => ({
-    pluginInstallUseCase: { execute: install },
+    installPlugin: { execute: install },
     syncNativeActivation: { execute: activation },
   }));
   const output = new CapturingOutput();

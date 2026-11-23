@@ -23,10 +23,10 @@ const createDeps = vi.fn(async () => ({
   addMarketplace: { execute: marketplaceAdd },
   listMarketplaces: { execute: marketplaceList },
   listMarketplaceCatalogs: { execute: marketplaceCatalogs },
-  marketplaceRemoveUseCase: { execute: marketplaceRemove },
-  userMarketplaceRemoveUseCase: { execute: userMarketplaceRemove },
+  removeProjectMarketplace: { execute: marketplaceRemove },
+  removeUserMarketplace: { execute: userMarketplaceRemove },
   refreshMarketplace: { execute: marketplaceRefresh },
-  marketplaceCheckUseCase: { execute: marketplaceCheck },
+  checkMarketplaceUpstream: { execute: marketplaceCheck },
   syncNativeActivation: { execute: activation },
   prompter: prompterAnswering({ input: promptInput, select: menuSelect }),
 }));

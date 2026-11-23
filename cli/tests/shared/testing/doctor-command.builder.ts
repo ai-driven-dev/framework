@@ -37,10 +37,10 @@ export function doctorHarness(catalog: RegisteredCatalog = syntheticMixedCatalog
   const doctorRegistration: Mock = vi.fn();
   const loadUserManifest: Mock = vi.fn();
   const createDeps: Mock = vi.fn(async () => ({
-    doctorAllUseCase: { execute: doctorAll },
-    statusAllUseCase: { execute: statusAll },
-    doctorUseCase: { execute: doctorScoped },
-    statusUseCase: { execute: statusScoped },
+    doctorAll: { execute: doctorAll },
+    reportAllStatus: { execute: statusAll },
+    runDoctor: { execute: doctorScoped },
+    reportStatus: { execute: statusScoped },
     runUserScopeDoctor: new RunUserScopeDoctor(
       new ReadMachineInstallation(manifestRepositoryLoading(loadUserManifest)),
       { execute: doctorRegistration }

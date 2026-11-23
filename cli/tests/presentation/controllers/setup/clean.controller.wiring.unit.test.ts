@@ -11,8 +11,8 @@ const cleanUserScope = vi.fn();
 const resetModels = vi.fn();
 
 const createDeps = vi.fn(async () => ({
-  cleanUseCase: { execute: cleanProject },
-  cleanUserScopeUseCase: { execute: cleanUserScope },
+  cleanProject: { execute: cleanProject },
+  cleanUserScope: { execute: cleanUserScope },
   resetAgentModels: { execute: resetModels },
 }));
 

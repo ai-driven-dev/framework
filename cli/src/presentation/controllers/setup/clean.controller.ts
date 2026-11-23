@@ -12,7 +12,7 @@ import {
 } from "../menu/global-options.controller.js";
 
 /** What this command reads of the graph. */
-type CleanKeys = "cleanUseCase" | "cleanUserScopeUseCase" | "resetAgentModels";
+type CleanKeys = "cleanProject" | "cleanUserScope" | "resetAgentModels";
 
 interface CleanCmdOptions {
   force: boolean;
@@ -34,7 +34,7 @@ async function runProjectScopeClean({
   cmdOptions,
 }: CleanRun): Promise<void> {
   const interactive = process.stdout.isTTY === true;
-  const result = await deps.cleanUseCase.execute({
+  const result = await deps.cleanProject.execute({
     projectRoot,
     force: cmdOptions.force,
     interactive,
@@ -50,7 +50,7 @@ async function runUserScopeClean({
   cmdOptions,
 }: CleanRun): Promise<void> {
   const interactive = process.stdout.isTTY === true;
-  const result = await deps.cleanUserScopeUseCase.execute({
+  const result = await deps.cleanUserScope.execute({
     projectRoot,
     force: cmdOptions.force,
     interactive,

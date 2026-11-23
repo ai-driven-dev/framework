@@ -15,10 +15,10 @@ function change() {
   const userUpdate = vi.fn(async () => ["aidd-vcs@aidd-framework"]);
   const activation = vi.fn(async () => ({ binaryMissing: [], errors: [], failed: false }));
   const createDeps: Mock = vi.fn(async () => ({
-    pluginRemoveUseCase: { execute: remove },
+    removePlugin: { execute: remove },
     userPluginRemove: { execute: userRemove },
-    pluginUpdateUseCase: { execute: update },
-    userPluginUpdateUseCase: { execute: userUpdate },
+    updatePlugin: { execute: update },
+    updateUserPlugin: { execute: userUpdate },
     syncNativeActivation: { execute: activation },
   }));
   const output = new CapturingOutput();

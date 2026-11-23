@@ -128,7 +128,7 @@ async function installTool(project: string, toolId: AiToolId): Promise<void> {
     projectRoot: project,
   });
   const install = { tools: catalogOf(), toolId, force: false, version: "1.0.0" };
-  await wired.installAiToolUseCase.execute({
+  await wired.installAiToolWithPlugins.execute({
     ...install,
     projectRoot: project,
     propagatePlugins: false,
@@ -139,7 +139,7 @@ async function installPlugin(project: string, toolId: AiToolId, plugin: string):
   const wired = await deps(project);
   const pluginArg = join(REPOSITORY_ROOT, "plugins", plugin);
   const install = { pluginArg, toolIds: [toolId], tools: catalogOf(), interactive: false };
-  await wired.pluginInstallUseCase.execute({ ...install, projectRoot: project, yes: true });
+  await wired.installPlugin.execute({ ...install, projectRoot: project, yes: true });
 }
 
 async function build(
@@ -426,11 +426,11 @@ async function runOnInstalled(ws: Workspace, route: Route, toolId: AiToolId): Pr
   const wired = await deps(ws.project);
   if (route === "plugin-remove") {
     const removal = { pluginName: "aidd-context", toolIds: [toolId] };
-    await wired.pluginRemoveUseCase.execute({ ...removal, projectRoot: ws.project });
+    await wired.removePlugin.execute({ ...removal, projectRoot: ws.project });
     return recordedReport(ws, bases);
   }
   const clean = { force: true, interactive: false, tools: catalogOf() };
-  await wired.cleanUseCase.execute({ ...clean, projectRoot: ws.project });
+  await wired.cleanProject.execute({ ...clean, projectRoot: ws.project });
   return recordedReport(ws, bases);
 }
 
