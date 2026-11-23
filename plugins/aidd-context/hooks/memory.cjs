@@ -256,20 +256,40 @@ function pointedText(original, oldBlock, root) {
   return { text: [...lines.slice(0, found.openLine), COPILOT_POINTER, ...lines.slice(found.closeLine + 1)].join("\n") };
 }
 
-/** Temp file beside `file`, then rename over it: a failed write leaves `file` whole; a read-only file stays unwritten. */
+const HELD = new Set(["EPERM", "EBUSY", "EACCES"]);
+
+/** Temp file beside `file`, then rename over it: a failed write leaves `file` whole; a read-only file stays unwritten. Sweeps `.<name>.*.tmp` older than 60 s and retries a held rename for ~100 ms. */
 function replaceFile(file, text) {
   fs.accessSync(file, fs.constants.W_OK);
   const mode = fs.statSync(file).mode & 0o7777;
-  const temp = path.join(path.dirname(file), `.${path.basename(file)}.${process.pid}.tmp`);
+  const dir = path.dirname(file);
+  const stem = `.${path.basename(file)}.`;
+  for (const entry of entriesOf(dir)) {
+    if (!entry.name.startsWith(stem) || !entry.name.endsWith(".tmp")) continue;
+    try {
+      if (Date.now() - fs.statSync(path.join(dir, entry.name)).mtimeMs > 60000) fs.rmSync(path.join(dir, entry.name), { force: true });
+    } catch {
+      // a leftover that cannot be swept is not this write's failure
+    }
+  }
+  const temp = path.join(dir, `${stem}${process.pid}.tmp`);
   try {
     const fd = fs.openSync(temp, "wx", mode);
     try {
-      fs.writeSync(fd, text);
+      fs.writeFileSync(fd, text);
       fs.fchmodSync(fd, mode);
     } finally {
       fs.closeSync(fd);
     }
-    fs.renameSync(temp, file);
+    for (let retry = 0; ; retry++) {
+      try {
+        fs.renameSync(temp, file);
+        break;
+      } catch (error) {
+        if (!HELD.has(error.code) || retry === 4) throw error;
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 25);
+      }
+    }
   } catch (error) {
     fs.rmSync(temp, { force: true });
     throw error;

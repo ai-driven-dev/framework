@@ -249,9 +249,25 @@ fs.writeSync = (fd, data, ...rest) => {
 };
 const writeFileSync = fs.writeFileSync;
 fs.writeFileSync = (target, data, ...rest) => {
-  if (typeof target !== "string" || !target.includes(NAME)) return writeFileSync(target, data, ...rest);
+  const named = typeof target === "string" ? target : paths.get(target) ?? "";
+  if (!named.includes(NAME)) return writeFileSync(target, data, ...rest);
   if (KEEP > 0) writeFileSync(target, Buffer.from(data).subarray(0, KEEP));
   throw eio();
+};
+`);
+  return file;
+}
+
+/** A preload making the first `times` renames fail with EPERM, as an antivirus or an editor holding the file does. */
+function renamePreload(times) {
+  const file = path.join(tempDir("memory-fault-"), "rename.cjs");
+  fs.writeFileSync(file, `
+const fs = require("node:fs");
+let left = ${times};
+const rename = fs.renameSync;
+fs.renameSync = (from, to) => {
+  if (left-- > 0) throw Object.assign(new Error("EPERM: operation not permitted, rename"), { code: "EPERM", errno: -1, syscall: "rename" });
+  return rename(from, to);
 };
 `);
   return file;
@@ -291,6 +307,45 @@ test("Stop: with two destinations, the one already renamed stays updated, the fa
   assert.equal(fs.readFileSync(path.join(root, "AGENTS.md"), "utf8"), BEFORE_FIX);
   assert.deepEqual(listing(root), before);
   assert.match(JSON.parse(result.stdout).reason, /AGENTS\.md not written \(EIO\)/u);
+});
+
+const staleTemp = (root, name, age) => {
+  const file = path.join(root, name);
+  fs.writeFileSync(file, "left by a killed hook");
+  const when = new Date(Date.now() - age * 1000);
+  fs.utimesSync(file, when, when);
+  return file;
+};
+
+test("Stop sweeps a context file's temp leftover older than 60 s, and keeps a fresh one", () => {
+  const root = project({ "CLAUDE.md": BEFORE_FIX, [VCS]: BANK });
+  const old = staleTemp(root, ".CLAUDE.md.12345.tmp", 120);
+  const fresh = staleTemp(root, ".CLAUDE.md.67890.tmp", 5);
+  const other = staleTemp(root, ".AGENTS.md.12345.tmp", 120);
+  assert.equal(stopped(root), null);
+  assert.equal(fs.existsSync(old), false, "stale temp kept");
+  assert.equal(fs.existsSync(fresh), true, "fresh temp swept");
+  assert.equal(fs.existsSync(other), true, "another file's temp swept");
+});
+
+test("Stop: a rename held twice by EPERM is retried and CLAUDE.md is updated, with no temp file left", () => {
+  const root = project({ "CLAUDE.md": BEFORE_FIX, [VCS]: BANK });
+  const before = listing(root);
+  const result = run("claude", stopPayload("claude", root), { preload: renamePreload(2) });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, "");
+  assert.match(fs.readFileSync(path.join(root, "CLAUDE.md"), "utf8"), /^@aidd_docs\/memory\/vcs\.md$/mu);
+  assert.deepEqual(listing(root), before);
+});
+
+test("Stop: a rename always held by EPERM keeps CLAUDE.md byte for byte, leaves no temp file, and names the failure", () => {
+  const root = project({ "CLAUDE.md": BEFORE_FIX, [VCS]: BANK });
+  const before = listing(root);
+  const result = run("claude", stopPayload("claude", root), { preload: renamePreload(1e9) });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(fs.readFileSync(path.join(root, "CLAUDE.md"), "utf8"), BEFORE_FIX);
+  assert.deepEqual(listing(root), before);
+  assert.match(JSON.parse(result.stdout).reason, /CLAUDE\.md not written \(EPERM\)/u);
 });
 
 test("a write keeps the file's mode and leaves a symlinked context file a link to the written target", (t) => {
