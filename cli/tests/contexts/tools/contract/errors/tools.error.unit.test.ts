@@ -7,7 +7,9 @@ import {
   InvalidHooksDescriptorError,
   InvalidMcpServerConfigError,
   InvalidToolProfileError,
+  McpServerEditedError,
   UnknownAiToolIdError,
+  UnprovenMcpServerDigestError,
 } from "../../../../../src/contexts/tools/contract/errors/tools.error.js";
 
 describe("when CapabilityConfigError is raised", () => {
@@ -183,5 +185,35 @@ describe("when an AI tool id is unknown", () => {
 
   it("carries its stable code", () => {
     expect(new UnknownAiToolIdError("zed", ["claude", "cursor"]).code).toBe("unknown-ai-tool-id");
+  });
+});
+
+describe.each([
+  [
+    "McpServerEditedError",
+    (): McpServerEditedError => new McpServerEditedError("db"),
+    "mcp-server-edited",
+  ],
+  [
+    "UnprovenMcpServerDigestError",
+    (): UnprovenMcpServerDigestError => new UnprovenMcpServerDigestError("db"),
+    "unproven-mcp-server-digest",
+  ],
+])("when %s is raised", (name, build, code) => {
+  it("carries its data and says nothing itself", () => {
+    const error = build();
+    expect({
+      name: error.name,
+      serverName: error.serverName,
+      message: error.message,
+    }).toStrictEqual({
+      name,
+      serverName: "db",
+      message: "",
+    });
+  });
+
+  it("carries its stable code", () => {
+    expect(build().code).toBe(code);
   });
 });

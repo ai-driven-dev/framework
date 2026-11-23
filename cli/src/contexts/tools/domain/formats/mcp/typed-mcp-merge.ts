@@ -1,5 +1,9 @@
 import { FileHash } from "../../../../../shared/domain/file-hash.js";
 import { stripJsonComments } from "../../../../../shared/domain/reading/jsonc.js";
+import {
+  McpServerEditedError,
+  UnprovenMcpServerDigestError,
+} from "../../../contract/errors/tools.error.js";
 
 interface TypedMcpFile {
   mcp?: Record<string, unknown>;
@@ -155,13 +159,8 @@ function applyIncoming(
 }
 
 function assertContributedServerUnchanged(name: string, server: unknown, digest: string): void {
-  if (!FileHash.isDigest(digest)) {
-    throw new Error(
-      `OpenCode MCP server '${name}' has an unproven install digest; removal refused.`
-    );
-  }
-  const current = FileHash.of(JSON.stringify(server)).value;
-  if (current !== digest) {
-    throw new Error(`OpenCode MCP server '${name}' was edited after install; removal refused.`);
+  if (!FileHash.isDigest(digest)) throw new UnprovenMcpServerDigestError(name);
+  if (!FileHash.of(JSON.stringify(server)).equals(new FileHash(digest))) {
+    throw new McpServerEditedError(name);
   }
 }

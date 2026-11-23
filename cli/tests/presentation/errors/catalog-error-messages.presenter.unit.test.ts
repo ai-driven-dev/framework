@@ -17,7 +17,9 @@ import {
   InvalidHooksDescriptorError,
   InvalidMcpServerConfigError,
   InvalidToolProfileError,
+  McpServerEditedError,
   UnknownAiToolIdError,
+  UnprovenMcpServerDigestError,
 } from "../../../src/contexts/tools/contract/errors/tools.error.js";
 import {
   FlatMergeTargetNotJsonError,
@@ -106,6 +108,14 @@ const cases: [() => Error, string][] = [
   [
     () => new InvalidMcpServerConfigError("srv"),
     'MCP server "srv" must have either a "command" or "url" field',
+  ],
+  [
+    () => new McpServerEditedError("srv"),
+    "OpenCode MCP server 'srv' was edited after install; removal refused.",
+  ],
+  [
+    () => new UnprovenMcpServerDigestError("srv"),
+    "OpenCode MCP server 'srv' has an unproven install digest; removal refused.",
   ],
   [
     () => new InvalidToolProfileError("claude", "no-build-contract", "detail"),

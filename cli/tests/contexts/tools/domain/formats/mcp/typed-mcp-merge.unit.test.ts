@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  McpServerEditedError,
+  UnprovenMcpServerDigestError,
+} from "../../../../../../src/contexts/tools/contract/errors/tools.error.js";
+import {
   buildTypedMcpFlatConfig,
   mergeTypedMcp,
   unmergeTypedMcp,
@@ -323,14 +327,14 @@ describe("removing merged typed mcp servers", () => {
   it("refuses to unmerge a tracked server changed by the user", () => {
     const entries = new Map([["plugin", FileHash.of(JSON.stringify(LOCAL_SERVER)).value]]);
     expect(() => unmergeTypedMcp(makeExisting({ plugin: REMOTE_SERVER }), entries)).toThrow(
-      /edited.*plugin|plugin.*edited/
+      McpServerEditedError
     );
   });
 
   it("refuses an unproven legacy digest before removing a present server", () => {
     expect(() =>
       unmergeTypedMcp(makeExisting({ plugin: LOCAL_SERVER }), new Map([["plugin", ""]]))
-    ).toThrow(/unproven.*plugin|plugin.*unproven/);
+    ).toThrow(UnprovenMcpServerDigestError);
   });
 
   it("does not call a tracked server edited when the user already removed it", () => {
@@ -349,7 +353,7 @@ describe("removing merged typed mcp servers", () => {
   ])("refuses %s as an unproven digest", (_case, digest) => {
     expect(() =>
       unmergeTypedMcp(makeExisting({ plugin: LOCAL_SERVER }), new Map([["plugin", digest]]))
-    ).toThrow("OpenCode MCP server 'plugin' has an unproven install digest; removal refused.");
+    ).toThrow(UnprovenMcpServerDigestError);
   });
 
   it("names the server a user edited after install", () => {
@@ -357,6 +361,6 @@ describe("removing merged typed mcp servers", () => {
 
     expect(() =>
       unmergeTypedMcp(makeExisting({ plugin: REMOTE_SERVER }), new Map([["plugin", digest]]))
-    ).toThrow("OpenCode MCP server 'plugin' was edited after install; removal refused.");
+    ).toThrow(McpServerEditedError);
   });
 });

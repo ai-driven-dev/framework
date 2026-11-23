@@ -91,3 +91,17 @@ export class UnknownAiToolIdError extends AiddError {
     super();
   }
 }
+
+export class McpServerEditedError extends AiddError {
+  readonly code = "mcp-server-edited";
+  constructor(readonly serverName: string) {
+    super();
+  }
+}
+
+export class UnprovenMcpServerDigestError extends AiddError {
+  readonly code = "unproven-mcp-server-digest";
+  constructor(readonly serverName: string) {
+    super();
+  }
+}

@@ -58,6 +58,10 @@ export const CATALOG: MessagesOf<CatalogOwners> = {
     `The hooks descriptor of '${error.toolId}' breaks '${error.invariant}': ${error.detail}`,
   "invalid-mcp-server-config": (error) =>
     `MCP server "${error.serverName}" must have either a "command" or "url" field`,
+  "mcp-server-edited": (error) =>
+    `OpenCode MCP server '${error.serverName}' was edited after install; removal refused.`,
+  "unproven-mcp-server-digest": (error) =>
+    `OpenCode MCP server '${error.serverName}' has an unproven install digest; removal refused.`,
   "invalid-tool-profile": (error) =>
     `The profile of '${error.toolId}' breaks '${error.invariant}': ${error.detail}`,
   "dual-config": (error) => `Both ${error.detail}. Remove one.`,
