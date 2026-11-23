@@ -33,15 +33,20 @@ import { homeDirResolver, userConfigDir } from "./user-config-dir.js";
 const plainText = (message: string | HintedMessage): string =>
   typeof message === "string" ? message : message.text;
 
-/** The output of a run: it writes to the terminal and ends the process. `words` says a caught
- * value a log line carries and `describeMessage` a message with its hint; the entry point hands in
- * the catalogue's, the defaults read only a plain one. */
-export function createOutput(
-  verbose: boolean,
+/** The output factory of a run that stops through `end`. `words` says a caught value a log line
+ * carries and `describeMessage` a message with its hint; the entry point hands in the catalogue's,
+ * the defaults read only a plain one. */
+export function outputEndingWith(
+  end: (code: number) => never,
   words: (cause: unknown) => string = String,
   describeMessage: (message: string | HintedMessage) => string = plainText
-): Output {
-  return new OutputAdapter(verbose, (code) => process.exit(code), words, describeMessage);
+): (verbose: boolean) => Output {
+  return (verbose) => new OutputAdapter(verbose, end, words, describeMessage);
+}
+
+/** The output of a run: it writes to the terminal and ends the process. */
+export function createOutput(verbose: boolean): Output {
+  return outputEndingWith((code) => process.exit(code))(verbose);
 }
 
 /** What a container is built from: where it runs, how it logs and the catalog its wiring reads. */
