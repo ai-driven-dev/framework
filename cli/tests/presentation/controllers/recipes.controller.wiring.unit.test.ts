@@ -2,6 +2,7 @@ import { join, resolve } from "node:path";
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { bindOutput } from "../../../src/presentation/controllers/menu/global-options.controller.js";
+import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";
 import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
 import { parseToExit } from "../../shared/testing/parse-to-exit.builder.js";
 
@@ -29,12 +30,14 @@ beforeEach(() => {
     errors.push(String(chunk));
     return true;
   });
+  vi.spyOn(process, "exit").mockImplementation((code) => {
+    throw new ExitRequested(Number(code));
+  });
   validate.mockReturnValue({ fileCount: 2, findings: [] });
 });
 
 afterEach(() => {
   vi.restoreAllMocks();
-  process.exitCode = undefined;
 });
 
 async function run(...args: string[]): Promise<void> {
@@ -82,10 +85,10 @@ describe("aidd framework validate-recipes: what it hands the validation", () => 
       findings: [{ file: join(PROJECT_ROOT, "a.md"), line: 3, rule: "r1", fix: "do it" }],
     });
 
-    await run("a.md");
+    await expect(run("a.md")).rejects.toMatchObject({ code: 1 });
 
     expect(errors.join("")).toContain("| a.md | 3 | r1 | do it |");
     expect(errors.join("")).toContain("FAIL: 1 finding(s) in 1 recipe(s).");
-    expect(process.exitCode).toBe(1);
+    expect(process.exitCode).toBeUndefined();
   });
 });

@@ -11,7 +11,7 @@ import {
   PluginDirectoryOutsideBoundaryError,
   UpdateParentEscapesBoundaryError,
   UpdatePathEscapesPluginError,
-} from "../../../../../src/contexts/machine-claims/domain/machine-claims.error.js";
+} from "../../../../../src/contexts/machine-claims/contract/machine-claims.error.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
 import {

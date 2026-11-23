@@ -14,7 +14,7 @@ import {
   ProjectScopeUnsupportedError,
   ToolNotInstalledError,
   UnresolvableUserScopeError,
-} from "../../../../src/contexts/installation/domain/installation.error.js";
+} from "../../../../src/contexts/installation/contract/installation.error.js";
 
 describe("an installation error carries its data and says nothing itself", () => {
   it.each([

@@ -1,8 +1,7 @@
 import { parse, stringify } from "smol-toml";
-import type { TomlCodec } from "../domain/formats/toml.js";
 
-/** TOML through smol-toml. */
-export class SmolTomlCodec implements TomlCodec {
+/** TOML through smol-toml. Satisfies the tools context's `TomlCodec` by shape. */
+export class SmolTomlCodec {
   parse(content: string): Record<string, unknown> {
     return parse(content);
   }

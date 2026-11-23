@@ -4,7 +4,7 @@ import { RemovePlugin } from "../../../../../src/contexts/installation/applicati
 import {
   PluginNotFoundError,
   UnresolvableUserScopeError,
-} from "../../../../../src/contexts/installation/domain/installation.error.js";
+} from "../../../../../src/contexts/installation/contract/installation.error.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";

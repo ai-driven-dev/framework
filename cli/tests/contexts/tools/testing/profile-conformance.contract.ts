@@ -1,20 +1,20 @@
 import { isAbsolute } from "node:path";
 import { describe, expect, it } from "vitest";
-import {
-  artifactPath,
-  hooksFilePath,
-} from "../../../../src/contexts/tools/contract/artifact-path.js";
-import type {
-  ArtifactContract,
-  ToolBuildContract,
-} from "../../../../src/contexts/tools/contract/build-contract.js";
 import { CONFIG_MCP } from "../../../../src/contexts/tools/contract/config-refs.js";
-import { applyLinkSyntax } from "../../../../src/contexts/tools/contract/link-syntax.js";
 import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domain/profile.js";
 import { isProfileSectionKey } from "../../../../src/contexts/tools/domain/profile.js";
 import { AgentsSection } from "../../../../src/contexts/tools/domain/sections/agents-section.js";
 import { CommandsSection } from "../../../../src/contexts/tools/domain/sections/commands-section.js";
 import { RulesSection } from "../../../../src/contexts/tools/domain/sections/rules-section.js";
+import {
+  artifactPath,
+  hooksFilePath,
+} from "../../../../src/shared/domain/materialization/artifact-path.js";
+import type {
+  ArtifactContract,
+  ToolBuildContract,
+} from "../../../../src/shared/domain/materialization/build-contract.js";
+import { applyLinkSyntax } from "../../../../src/shared/domain/materialization/link-syntax.js";
 import type { translatePlugin } from "./translate-plugin.builder.js";
 
 /** What a conformance check is told about one profile and the registration it sits in. */

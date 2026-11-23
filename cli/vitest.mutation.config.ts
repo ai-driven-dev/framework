@@ -74,7 +74,7 @@ export default defineConfig({
           exclude: [...configDefaults.exclude, ...IN_PROCESS_CLI_TESTS],
           globals: false,
           environment: "node",
-          globalSetup: ["./tests/setup/throwaway-profile.ts"],
+          globalSetup: ["./tests/shared/testing/throwaway-profile.ts"],
         },
       },
       {
@@ -85,7 +85,7 @@ export default defineConfig({
           include: ["tests/**/*.contract.test.ts"],
           globals: false,
           environment: "node",
-          globalSetup: ["./tests/setup/throwaway-profile.ts"],
+          globalSetup: ["./tests/shared/testing/throwaway-profile.ts"],
         },
       },
       {
@@ -97,7 +97,7 @@ export default defineConfig({
           exclude: [...configDefaults.exclude, ...IN_PROCESS_CLI_TESTS],
           globals: false,
           environment: "node",
-          globalSetup: ["./tests/setup/throwaway-profile.ts"],
+          globalSetup: ["./tests/shared/testing/throwaway-profile.ts"],
           testTimeout: 60000,
           hookTimeout: 60000,
         },

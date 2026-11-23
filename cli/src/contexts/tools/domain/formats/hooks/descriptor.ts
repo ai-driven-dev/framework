@@ -4,8 +4,8 @@
  * plugins capability read the descriptor through the builders below, never restating it.
  */
 
+import type { ArtifactContract } from "../../../../../shared/domain/materialization/build-contract.js";
 import type { FlatHooksLoaderEntry } from "../../../../../shared/domain/materialization/flat-paths.js";
-import type { ArtifactContract } from "../../../contract/build-contract.js";
 import type { HooksFileFormat } from "../../hooks/hooks-entry-shape.js";
 import type { HooksConfigParams } from "../../sections/hooks-section.js";
 

@@ -1,6 +1,7 @@
 /** What the builders read of a descriptor to deliver a tool's hooks: where each route writes them. */
 
-import type { ArtifactContract } from "../../../contract/build-contract.js";
+import type { ArtifactContract } from "../../../../../shared/domain/materialization/build-contract.js";
+import { CapabilityConfigError } from "../../../contract/errors/tools.error.js";
 import type { HookScript } from "../../../contract/tool-vocabulary.js";
 import type { HooksFileFormat } from "../../hooks/hooks-entry-shape.js";
 import {
@@ -18,7 +19,6 @@ import {
   type PluginFileDelivery,
   type ProjectMergeDelivery,
 } from "../../sections/hooks-section.js";
-import { CapabilityConfigError } from "../../tools.error.js";
 import { type HooksRouting, PLUGIN_HOOKS_SOURCE, type ProjectHooksRoute } from "./descriptor.js";
 
 /** Where a plugin keeps the adapter between its hooks and the host: Claude Code's, as shipped,

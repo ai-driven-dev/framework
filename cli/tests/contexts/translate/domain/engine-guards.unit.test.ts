@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { agentsIn } from "../../../../src/contexts/tools/contract/artifact-path.js";
+import { agentsIn } from "../../../../src/shared/domain/materialization/artifact-path.js";
 import type {
   ArtifactPlacement,
   ToolBuildContract,
-} from "../../../../src/contexts/tools/contract/build-contract.js";
+} from "../../../../src/shared/domain/materialization/build-contract.js";
 import { flatArtifactLayout } from "../../../../src/shared/domain/materialization/flat-paths.js";
 import { anEmptyContract } from "../../../shared/testing/empty-build-contract.builder.js";
 import { contractToolProfile } from "../testing/contract-tool-profile.builder.js";

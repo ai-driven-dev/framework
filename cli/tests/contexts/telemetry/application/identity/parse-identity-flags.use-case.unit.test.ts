@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ParseIdentityFlags } from "../../../../../src/contexts/telemetry/application/identity/parse-identity-flags.use-case.js";
-import { IdentityOffWithIdentifierError } from "../../../../../src/contexts/telemetry/domain/telemetry.error.js";
+import { IdentityOffWithIdentifierError } from "../../../../../src/contexts/telemetry/contract/errors/telemetry.error.js";
 
 const resolve = new ParseIdentityFlags();
 

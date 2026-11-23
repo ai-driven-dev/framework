@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { ArtifactContract } from "../../../../../src/contexts/tools/contract/build-contract.js";
 import {
   agentContent,
   agentLinks,
 } from "../../../../../src/contexts/translate/domain/rules/agent-markdown.js";
+import type { ArtifactContract } from "../../../../../src/shared/domain/materialization/build-contract.js";
 
 type Supported = Extract<ArtifactContract, { supported: true }>;
 

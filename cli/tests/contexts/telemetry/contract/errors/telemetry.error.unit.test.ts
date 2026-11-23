@@ -6,7 +6,7 @@ import {
   InvalidReportPeriodError,
   TaskDeclaredNoneWithNameError,
   TaskNameMissingError,
-} from "../../../../src/contexts/telemetry/domain/telemetry.error.js";
+} from "../../../../../src/contexts/telemetry/contract/errors/telemetry.error.js";
 
 describe("when ConflictingIdentityFlagsError is raised", () => {
   it("says nothing itself", () => {

@@ -1,4 +1,4 @@
-import { CapabilityConfigError } from "../tools.error.js";
+import { CapabilityConfigError } from "../../contract/errors/tools.error.js";
 
 type SkillsSectionParams = {
   directory?: string;

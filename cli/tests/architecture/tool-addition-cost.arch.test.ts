@@ -6,7 +6,7 @@
  * tests is not coupling. Comments are stripped first - prose about a tool's layout is documentation.
  */
 import { describe, expect, it } from "vitest";
-import { REGISTERED_PROFILES } from "../../src/composition/tool-profiles.composition.js";
+import { REGISTERED_PROFILES } from "../../src/composition/tool-profiles/index.js";
 import { present } from "../shared/testing/present.builder.js";
 import {
   DESCRIPTOR_TYPES,

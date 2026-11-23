@@ -5,7 +5,7 @@ import type {
   ProjectSourceRequest,
   WithdrawalDeps,
 } from "../../../../../../src/contexts/host-registration/application/withdraw/withdrawal.js";
-import { RegistrationRefusedError } from "../../../../../../src/contexts/host-registration/domain/host-registration.error.js";
+import { RegistrationRefusedError } from "../../../../../../src/contexts/host-registration/contract/host-registration.error.js";
 import type { NativeMarketplaceSource } from "../../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
 import type { HostPluginRegistry } from "../../../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import type { Scope } from "../../../../../../src/shared/domain/scope.js";

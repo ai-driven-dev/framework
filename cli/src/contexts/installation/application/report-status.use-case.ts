@@ -1,7 +1,7 @@
 import type { AiToolId, ToolCategory, ToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
-import { ToolNotInstalledError } from "../domain/installation.error.js";
+import { ToolNotInstalledError } from "../contract/installation.error.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
 import type { ToolFootprint } from "../ports/tool-sections.js";

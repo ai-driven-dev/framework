@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { FlatTargetExistsError } from "../../../../../src/contexts/translate/contract/translate.error.js";
 import type {
   ArtifactContract,
   ToolBuildContract,
-} from "../../../../../src/contexts/tools/contract/build-contract.js";
-import { FlatTargetExistsError } from "../../../../../src/contexts/translate/domain/translate.error.js";
+} from "../../../../../src/shared/domain/materialization/build-contract.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import {

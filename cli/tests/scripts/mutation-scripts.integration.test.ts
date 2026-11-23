@@ -1,6 +1,6 @@
 /**
  * The mutation scripts, exercised through the same functions the pipeline calls: score, scope
- * selection, shard arguments, incremental carry and the canary verdict. The declaration
+ * selection, shard arguments and incremental carry. The declaration
  * `mutation-scopes.json` is held against the source by `tests/architecture/mutation-covers-source`.
  */
 import { spawnSync } from "node:child_process";
@@ -10,7 +10,6 @@ import { describe, expect, it } from "vitest";
 import { HARNESS, scopesToRun } from "../../scripts/mutation-scopes-to-run.mjs";
 import {
   breakVerdict,
-  canarySelectionVerdict,
   changedArgs,
   changedRanges,
   type MutationScope,
@@ -50,26 +49,7 @@ describe("the mutation scripts", () => {
   const scopes = {
     shared: { mutate: "src/shared/**/*.ts", break: 70 },
     tools: { mutate: "src/contexts/tools/**/*.ts", break: 60 },
-    canary: { mutate: "tests/fixtures/stryker-canary/**/*.ts", break: 100, harnessOnly: true },
   };
-
-  it("rejects a canary run that skipped its covering test or ran a neighbour", () => {
-    const mutant = {
-      id: "1",
-      status: "Killed",
-      coveredBy: ["test-1"],
-      killedBy: ["test-1"],
-      testsCompleted: 1,
-    };
-    const report = (override = {}) => ({
-      files: { canary: { mutants: [{ ...mutant, ...override }] } },
-    });
-    expect(canarySelectionVerdict(report())).toBeNull();
-    expect(canarySelectionVerdict(report({ testsCompleted: 0 }))).toMatch(/covering test/);
-    expect(canarySelectionVerdict(report({ testsCompleted: 2 }))).toMatch(/covering test/);
-    expect(canarySelectionVerdict(report({ killedBy: ["test-2"] }))).toMatch(/covering test/);
-    expect(canarySelectionVerdict(report({ static: true, coveredBy: [] }))).toBeNull();
-  });
 
   it("gives each scope its own glob and incremental file, and refuses a scope nobody declared", () => {
     expect(strykerArgs("shared", scopes)).toEqual([
@@ -82,7 +62,6 @@ describe("the mutation scripts", () => {
       "--ignoreStatic",
     ]);
     expect(strykerArgs("tools", scopes, { force: true })).toContain("--force");
-    expect(strykerArgs("canary", scopes)).not.toContain("--ignoreStatic");
     expect(() => strykerArgs("nowhere", scopes)).toThrow('Unknown scope "nowhere"');
   });
 
@@ -157,31 +136,6 @@ describe("the mutation scripts", () => {
         ).toBe(true);
       }
     }
-  });
-
-  it("runs the canary alone for a lockfile change, so a Stryker or Vitest bump cannot skip it", () => {
-    const withCanary = {
-      shared: { mutate: "src/shared/**/*.ts", break: 70 },
-      canary: { mutate: "tests/fixtures/stryker-canary/**/*.ts", break: 100, harnessOnly: true },
-    };
-    expect(scopesToRun(["cli/pnpm-lock.yaml"], withCanary)).toEqual(["canary"]);
-    expect(
-      scopesToRun(["cli/pnpm-lock.yaml", "cli/src/shared/domain/paths.model.ts"], withCanary)
-    ).toEqual(["shared", "canary"]);
-  });
-
-  it("runs the canary only for a harness file, a lockfile or a full run, never for a change to its fixture", () => {
-    const withCanary = {
-      shared: { mutate: "src/shared/**/*.ts", break: 70 },
-      canary: { mutate: "tests/fixtures/stryker-canary/**/*.ts", break: 100, harnessOnly: true },
-    };
-    expect(scopesToRun(["cli/tests/fixtures/stryker-canary/settings.ts"], withCanary)).toEqual([]);
-    expect(scopesToRun(["cli/vitest.mutation.config.ts"], withCanary)).toEqual([
-      "shared",
-      "canary",
-    ]);
-    expect(scopesToRun([], withCanary, { all: true })).toEqual(["shared", "canary"]);
-    expect(declaration().scopes.canary?.harnessOnly).toBe(true);
   });
 
   it("keeps a test that drives the CLI in process out of the worker-thread projects", () => {

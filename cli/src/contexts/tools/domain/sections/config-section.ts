@@ -3,8 +3,8 @@ import { InstallationFile } from "../../../../shared/domain/installation-file.js
 import type { MergeStrategy } from "../../../../shared/domain/merge.js";
 import type { ConfigAsset } from "../../../../shared/domain/reading/config-asset.js";
 import type { ConfigRef } from "../../contract/config-refs.js";
+import { CapabilityConfigError } from "../../contract/errors/tools.error.js";
 import type { ConfigFilePlace } from "../../contract/tool-profile.js";
-import { CapabilityConfigError } from "../tools.error.js";
 
 type ConfigSectionParams = {
   outputPath: string;

@@ -1,8 +1,8 @@
 import type { HttpGet } from "../../../shared/ports/http-get.js";
 import type { Logger } from "../../../shared/ports/logger.js";
 import type { ReleaseLister } from "../../../shared/ports/release-lister.js";
+import { FrameworkResolutionError } from "../contract/update.error.js";
 import { CLI_PACKAGE } from "../domain/package-manager.js";
-import { FrameworkResolutionError } from "../domain/update.error.js";
 import type { CliRelease, CliReleaseSource } from "../ports/cli-release-source.js";
 
 // release-please tags this package per component: `cli-v<semver>`, never a bare `v<semver>`,

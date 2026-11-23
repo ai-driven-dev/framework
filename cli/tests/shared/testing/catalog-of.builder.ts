@@ -3,7 +3,7 @@ import {
   REGISTERED_PROFILES,
   type RegisteredAiProfile,
   type RegisteredProfile,
-} from "../../../src/composition/tool-profiles.composition.js";
+} from "../../../src/composition/tool-profiles/index.js";
 import { withNativeRegistration } from "../../../src/contexts/host-registration/domain/native-registration/native-host-profile.js";
 import { RegisteredToolCatalog } from "../../../src/contexts/tools/application/registered-tool-catalog.js";
 import type { ToolProfile } from "../../../src/contexts/tools/contract/tool-profile.js";

@@ -1,6 +1,6 @@
-import type { ToolBuildContract } from "../../contract/build-contract.js";
+import type { ToolBuildContract } from "../../../../shared/domain/materialization/build-contract.js";
+import { CapabilityConfigError } from "../../contract/errors/tools.error.js";
 import type { TomlCodec } from "../formats/toml.js";
-import { CapabilityConfigError } from "../tools.error.js";
 
 /** The file codecs a profile's declarations name by format, wired by the composition. */
 export interface ToolFormats {

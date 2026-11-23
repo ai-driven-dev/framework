@@ -1,6 +1,9 @@
 import { reshapeFrontmatter } from "../../../../shared/domain/markdown.js";
+import type {
+  AgentMarkdown,
+  SupportedArtifact,
+} from "../../../../shared/domain/materialization/build-contract.js";
 import { pluginAgentName } from "../../../../shared/domain/materialization/flat-paths.js";
-import type { AgentMarkdown, SupportedArtifact } from "../../../tools/contract/build-contract.js";
 import type { LinkForm } from "./links.js";
 
 /** Where an agent is written and how its links are read from there. */

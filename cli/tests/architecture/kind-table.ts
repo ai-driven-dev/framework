@@ -45,6 +45,8 @@ const PURE_BUILTINS = ["node:path", "node:crypto"];
 const ANY_TEST_FOLDER = ["tests/**/*"];
 export const KIT_FOLDER = ["tests/**/testing/**/*"];
 export const SETUP_FOLDER = ["tests/setup/**/*", "tests/mutation/**/*"];
+/** The global setup that redirects HOME: a vitest config loads it, kept beside the kits. */
+const SETUP_FILE = ["tests/shared/testing/throwaway-profile.ts"];
 
 export const KINDS: readonly Kind[] = [
   {
@@ -119,11 +121,13 @@ export const KINDS: readonly Kind[] = [
     suffix: /\.profile\.ts$/,
     folders: ["src/composition/tool-profiles/*"],
     fallback: ["src/composition/tool-profiles/*"],
-    except: [],
-    imports: ["model", "error"],
+    except: ["src/composition/tool-profiles/index.ts"],
+    imports: ["model", "error", "adapter"],
     externals: PURE_BUILTINS,
     within: [
       "src/contexts/tools/domain/**/*",
+      // Codex names the TOML format, so its profile holds the codec instance as data.
+      "src/shared/infrastructure/smol-toml-codec.adapter.ts",
       "src/contexts/tools/contract/**/*",
       // The native-registration section a profile file exports is typed by its reader.
       "src/contexts/host-registration/contract/**/*",
@@ -135,7 +139,7 @@ export const KINDS: readonly Kind[] = [
     id: "error",
     suffix: /\.error\.ts$/,
     folders: [
-      "src/contexts/*/domain/**/*",
+      "src/contexts/*/contract/**/*",
       "src/shared/domain/**/*",
       "src/orchestration/**/*",
       "src/presentation/**/*",
@@ -178,8 +182,13 @@ export const KINDS: readonly Kind[] = [
     id: "composition",
     suffix: /\.composition\.ts$/,
     folders: ["src/composition/**/*"],
-    fallback: ["src/composition/**/*"],
-    except: ["src/composition/tool-profiles/*"],
+    fallback: [
+      "src/composition/*",
+      "src/composition/contexts/**/*",
+      "src/composition/orchestration/**/*",
+      "src/composition/tool-profiles/index.ts",
+    ],
+    except: [],
     imports: ["use-case", "adapter", "port", "model", "error", "profile", "composition"],
     externals: "any",
     tests: [],
@@ -228,12 +237,12 @@ export const KINDS: readonly Kind[] = [
     tests: [],
   },
   {
-    // A setup file is claimed by its folder alone: a vitest config loads it, nothing imports it. The
+    // A setup file is claimed by its folder or its named file alone: a vitest config loads it, nothing imports it. The
     // mutation run's sequencer and reporter filter sit beside their tests in `tests/mutation/`.
     id: "setup",
     suffix: /(?!)/,
-    folders: SETUP_FOLDER,
-    fallback: SETUP_FOLDER,
+    folders: [...SETUP_FOLDER, ...SETUP_FILE],
+    fallback: [...SETUP_FOLDER, ...SETUP_FILE],
     except: [],
     imports: "any",
     externals: "any",

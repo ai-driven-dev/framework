@@ -4,7 +4,7 @@ import { serializePluginSource } from "../../../../shared/domain/plugin/source.j
 import { parsePluginSource } from "../../../../shared/domain/plugin/source-parsing.js";
 import { isScope } from "../../../../shared/domain/scope.js";
 import { InvalidPluginVersionError } from "../../../../shared/domain/shared.error.js";
-import { MalformedPluginScopeError } from "../installation.error.js";
+import { MalformedPluginScopeError } from "../../contract/installation.error.js";
 import type { FileProvenance } from "./file-provenance.js";
 import { InstalledPlugin } from "./installed-plugin.js";
 import {

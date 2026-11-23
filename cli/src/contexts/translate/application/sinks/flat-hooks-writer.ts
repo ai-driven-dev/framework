@@ -1,12 +1,12 @@
 import { join, relative } from "node:path";
 import { describeError } from "../../../../shared/domain/describe-error.js";
+import { hooksFilePath } from "../../../../shared/domain/materialization/artifact-path.js";
 import { tryParseJson } from "../../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import { hooksFilePath } from "../../../tools/contract/artifact-path.js";
+import { FlatMergeTargetNotJsonError } from "../../contract/translate.error.js";
 import { mergeFlatHooks } from "../../domain/flat-layout.js";
-import { FlatMergeTargetNotJsonError } from "../../domain/translate.error.js";
 import type { FlatHooksStep } from "../../ports/flat-plugin-writer.js";
 
 type FlatFiles = FileReader & FileWriter;

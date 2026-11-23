@@ -11,7 +11,7 @@ import {
 import {
   ManifestUnavailableError,
   ToolNotInstalledError,
-} from "../../../../src/contexts/installation/domain/installation.error.js";
+} from "../../../../src/contexts/installation/contract/installation.error.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { detachProjectClaims } from "../../../../src/contexts/machine-claims/application/removal/detach-project-claims.js";

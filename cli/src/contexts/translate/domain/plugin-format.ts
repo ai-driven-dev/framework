@@ -1,6 +1,6 @@
 import { SOURCE_PLUGIN_MANIFEST_RELATIVE } from "../../../shared/domain/plugin/canon-paths.js";
 import type { AiToolId } from "../../../shared/domain/tool.js";
-import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
+import type { TranslateToolCatalog } from "./translate-profile.js";
 
 export interface DistributionProbe {
   /** The tool whose layout a plugin distribution follows. */
@@ -15,7 +15,7 @@ export interface DistributionProbe {
  * satisfy. Takes the catalog explicitly so the rule can be probed with synthetic tools.
  */
 export function distributionProbesOf(
-  tools: ToolCatalog,
+  tools: TranslateToolCatalog,
   kind: "manifest" | "marketplace"
 ): readonly DistributionProbe[] {
   const probes: DistributionProbe[] = [];
@@ -32,13 +32,13 @@ export function distributionProbesOf(
 }
 
 /** Where a plugin manifest can sit, across every registered tool's layout. */
-export function pluginManifestProbes(tools: ToolCatalog): readonly DistributionProbe[] {
+export function pluginManifestProbes(tools: TranslateToolCatalog): readonly DistributionProbe[] {
   return distributionProbesOf(tools, "manifest");
 }
 
 /** The tool the framework's source plugins are written for: the one whose manifest sits where the
  * source plugin's does. `null` when no registered tool reads that place. */
-export function canonFormatOf(tools: ToolCatalog): AiToolId | null {
+export function canonFormatOf(tools: TranslateToolCatalog): AiToolId | null {
   const probe = pluginManifestProbes(tools).find(
     (candidate) => candidate.relativePath === SOURCE_PLUGIN_MANIFEST_RELATIVE
   );

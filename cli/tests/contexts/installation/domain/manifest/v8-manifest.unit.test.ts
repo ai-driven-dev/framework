@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { InvalidManifestDataError } from "../../../../../src/contexts/installation/domain/installation.error.js";
+import { InvalidManifestDataError } from "../../../../../src/contexts/installation/contract/installation.error.js";
 import {
   isV8Manifest,
   splitV8Manifest,

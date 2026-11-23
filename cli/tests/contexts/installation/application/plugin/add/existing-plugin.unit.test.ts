@@ -5,7 +5,7 @@ import {
   dropExistingPlugin,
   previousInstall,
 } from "../../../../../../src/contexts/installation/application/plugin/add/existing-plugin.js";
-import { DuplicatePluginError } from "../../../../../../src/contexts/installation/domain/installation.error.js";
+import { DuplicatePluginError } from "../../../../../../src/contexts/installation/contract/installation.error.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { PluginDistribution } from "../../../../../../src/shared/domain/plugin/plugin-distribution.js";

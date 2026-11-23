@@ -1,15 +1,15 @@
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import type {
-  ScopeRecords,
-  ToolRecords,
-} from "../../../../src/contexts/installation/contract/records/scope-records.js";
 import {
   InvalidManifestDataError,
   ManifestMigrationError,
   ManifestUnavailableError,
-} from "../../../../src/contexts/installation/domain/installation.error.js";
+} from "../../../../src/contexts/installation/contract/installation.error.js";
+import type {
+  ScopeRecords,
+  ToolRecords,
+} from "../../../../src/contexts/installation/contract/records/scope-records.js";
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
 import { FileHash } from "../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../src/shared/domain/installation-file.js";

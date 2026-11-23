@@ -5,11 +5,11 @@ import {
   hooksBridgeFilePath,
   hooksFilePath,
   skillsIn,
-} from "../../../../src/contexts/tools/contract/artifact-path.js";
+} from "../../../../src/shared/domain/materialization/artifact-path.js";
 import type {
   ArtifactPlacement,
   SupportedArtifact,
-} from "../../../../src/contexts/tools/contract/build-contract.js";
+} from "../../../../src/shared/domain/materialization/build-contract.js";
 import { flatArtifactLayout } from "../../../../src/shared/domain/materialization/flat-paths.js";
 
 const layout = flatArtifactLayout(".t/", { skills: "nested", agent: { ext: ".md" } });

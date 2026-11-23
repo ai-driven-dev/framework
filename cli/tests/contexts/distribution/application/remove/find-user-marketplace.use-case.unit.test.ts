@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { FindUserMarketplace } from "../../../../../src/contexts/distribution/application/remove/find-user-marketplace.use-case.js";
-import { MarketplaceNotFoundError } from "../../../../../src/contexts/distribution/domain/distribution.error.js";
+import { MarketplaceNotFoundError } from "../../../../../src/contexts/distribution/contract/distribution.error.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { InMemoryMarketplaceRegistry } from "../../../../shared/testing/in-memory-marketplace-registry.fake.js";

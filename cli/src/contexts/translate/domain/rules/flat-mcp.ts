@@ -1,10 +1,10 @@
 import { errorMessage } from "../../../../shared/domain/describe-error.js";
+import type { ToolBuildContract } from "../../../../shared/domain/materialization/build-contract.js";
 import { flatMcpKeyPrefix } from "../../../../shared/domain/materialization/flat-paths.js";
 import { rewritePluginRootInJson } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 import { McpConfigError } from "../../../../shared/domain/shared.error.js";
-import type { ToolBuildContract } from "../../../tools/contract/build-contract.js";
 import { flatPluginRootAbsolute } from "../flat-layout.js";
 
 /** A plugin's MCP declaration as a flat tool holds it, every plugin-root reference already

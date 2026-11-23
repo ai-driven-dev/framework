@@ -1,8 +1,8 @@
 import { InputRequiredError } from "../../../shared/domain/shared.error.js";
 import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
+import { ToolNotInstalledError } from "../contract/installation.error.js";
 import type { ScopeRecords, ToolRecord } from "../contract/records/scope-records.js";
-import { ToolNotInstalledError } from "../domain/installation.error.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
 import type { RemoveToolFiles, ToolRemoval } from "./removal/project/remove-tool-files.use-case.js";

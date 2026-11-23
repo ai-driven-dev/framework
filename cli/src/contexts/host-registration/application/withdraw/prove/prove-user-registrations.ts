@@ -1,5 +1,5 @@
 import type { AiToolId } from "../../../../../shared/domain/tool.js";
-import { RegistrationRefusedError } from "../../../domain/host-registration.error.js";
+import { RegistrationRefusedError } from "../../../contract/host-registration.error.js";
 import type { SourceProof } from "../../../domain/policy/registration-policy.js";
 import { isRefOnHost } from "../../../domain/record/host-ref.js";
 import {

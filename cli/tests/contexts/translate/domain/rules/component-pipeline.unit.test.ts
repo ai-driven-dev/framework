@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { FrameworkPlaceholderInPluginError } from "../../../../../src/contexts/translate/contract/translate.error.js";
 import { applyPlan } from "../../../../../src/contexts/translate/domain/rules/component-pipeline.js";
-import { FrameworkPlaceholderInPluginError } from "../../../../../src/contexts/translate/domain/translate.error.js";
 
 const PLAN = { source: "skills/a/SKILL.md", path: "out/a/SKILL.md", content: "body" };
 

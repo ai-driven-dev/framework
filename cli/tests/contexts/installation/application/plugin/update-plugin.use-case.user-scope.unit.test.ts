@@ -5,8 +5,8 @@ import type {
   MachinePluginUpdate,
   UpdatePluginRequest,
 } from "../../../../../src/contexts/installation/application/plugin/update-plugin-command.js";
+import { PluginNotFoundError } from "../../../../../src/contexts/installation/contract/installation.error.js";
 import type { ToolRecords } from "../../../../../src/contexts/installation/contract/records/scope-records.js";
-import { PluginNotFoundError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";

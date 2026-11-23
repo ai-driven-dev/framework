@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MarketplaceNotFoundError } from "../../../src/contexts/distribution/domain/distribution.error.js";
+import { MarketplaceNotFoundError } from "../../../src/contexts/distribution/contract/distribution.error.js";
 import { describeMessage } from "../../../src/presentation/errors/describe-message.presenter.js";
 import { describeCause } from "../../../src/presentation/errors/error-translator.presenter.js";
 import { OutputAdapter } from "../../../src/presentation/terminal/output.adapter.js";

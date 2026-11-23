@@ -1,6 +1,7 @@
 import { FileHash } from "../../../../shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { ConfigRef } from "../../contract/config-refs.js";
+import { DualConfigError } from "../../contract/errors/tools.error.js";
 import type { ConfigFilePlace } from "../../contract/tool-profile.js";
 import {
   mcpJsonToToml,
@@ -13,7 +14,6 @@ import {
   unmergeTypedMcp,
 } from "../formats/mcp/typed-mcp-merge.js";
 import type { TomlCodec } from "../formats/toml.js";
-import { DualConfigError } from "../tools.error.js";
 
 /** The config files a tool's MCP output may already live in. Tiers are tried in order; within the
  * first tier that has any file present, one present file is the answer and several are refused

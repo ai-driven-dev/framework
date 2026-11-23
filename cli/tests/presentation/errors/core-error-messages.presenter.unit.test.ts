@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AuthStorageError, GhCliError } from "../../../src/contexts/auth/domain/auth.error.js";
+import { AuthStorageError, GhCliError } from "../../../src/contexts/auth/contract/auth.error.js";
 import {
   ConflictingIdentityFlagsError,
   IdentityOffWithIdentifierError,
@@ -7,13 +7,13 @@ import {
   InvalidReportPeriodError,
   TaskDeclaredNoneWithNameError,
   TaskNameMissingError,
-} from "../../../src/contexts/telemetry/domain/telemetry.error.js";
+} from "../../../src/contexts/telemetry/contract/errors/telemetry.error.js";
 import {
   ElevatedPermissionUpdateError,
   FrameworkResolutionError,
   PackageManagerDetectionError,
   UpdateError,
-} from "../../../src/contexts/update/domain/update.error.js";
+} from "../../../src/contexts/update/contract/update.error.js";
 import { render } from "../../../src/presentation/errors/error-translator.presenter.js";
 import {
   AssetNotFoundError,

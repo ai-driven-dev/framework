@@ -26,7 +26,7 @@ import type { HostMarketplaceRegistry } from "../../contexts/host-registration/p
 import type { HostMarketplaceSources } from "../../contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../contexts/host-registration/ports/host-plugin-registry.js";
 import type { RegistrationRecordRepository } from "../../contexts/host-registration/ports/registration-record-repository.js";
-import { DuplicateToolIdError } from "../../contexts/tools/domain/tools.error.js";
+import { DuplicateToolIdError } from "../../contexts/tools/contract/errors/tools.error.js";
 import type { SettingsDeclarationRules } from "../../orchestration/sync/settings/sync-tool-settings-files.use-case.js";
 import { asPlainObject } from "../../shared/domain/reading/plain-object.js";
 import { UnregisteredToolError } from "../../shared/domain/shared.error.js";
@@ -36,7 +36,7 @@ import {
   type ToolKeyedJsonFileDeps,
 } from "../../shared/infrastructure/tool-keyed-json-file.js";
 import type { FileReader } from "../../shared/ports/file-reader.js";
-import { REGISTERED_PROFILES, type RegisteredProfile } from "../tool-profiles.composition.js";
+import { REGISTERED_PROFILES, type RegisteredProfile } from "../tool-profiles/index.js";
 import type { RegisteredCatalog } from "./tools.js";
 
 /** The new content of a tool's shared settings file, answered by the host registration that owns it. */

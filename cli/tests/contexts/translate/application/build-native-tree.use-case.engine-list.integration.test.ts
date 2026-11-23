@@ -1,12 +1,12 @@
 import { readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
-import type { ToolBuildContract } from "../../../../src/contexts/tools/contract/build-contract.js";
 import type { FrameworkBuildMode } from "../../../../src/contexts/tools/contract/tool-profile.js";
 import { translate } from "../../../../src/contexts/translate/domain/engine.js";
 import type { OutputFile } from "../../../../src/contexts/translate/domain/output-file.js";
 import { BundledSchemaProviderAdapter } from "../../../../src/contexts/translate/infrastructure/schema-provider.js";
 import { AjvSchemaValidatorAdapter } from "../../../../src/contexts/translate/infrastructure/schema-validator.js";
+import type { ToolBuildContract } from "../../../../src/shared/domain/materialization/build-contract.js";
 import { BundledAssetProviderAdapter } from "../../../../src/shared/infrastructure/asset-loader.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";

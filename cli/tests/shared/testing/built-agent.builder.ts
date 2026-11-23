@@ -1,5 +1,5 @@
-import type { ToolBuildContract } from "../../../src/contexts/tools/contract/build-contract.js";
 import type { FrameworkBuildMode } from "../../../src/contexts/tools/contract/tool-profile.js";
+import type { ToolBuildContract } from "../../../src/shared/domain/materialization/build-contract.js";
 import { PluginDistribution } from "../../../src/shared/domain/plugin/plugin-distribution.js";
 import { parsePluginName } from "../../../src/shared/domain/plugin/plugin-name.js";
 import { translateBuildLayout } from "./build-files.builder.js";

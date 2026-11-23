@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { INSTALL_COMMANDS } from "../../../../src/contexts/update/domain/package-manager.js";
 import {
   ElevatedPermissionUpdateError,
   PackageManagerDetectionError,
   UpdateError,
-} from "../../../../src/contexts/update/domain/update.error.js";
+} from "../../../../src/contexts/update/contract/update.error.js";
+import { INSTALL_COMMANDS } from "../../../../src/contexts/update/domain/package-manager.js";
 import type { CliInstaller } from "../../../../src/contexts/update/ports/cli-installer.js";
 import type { InstallScenario } from "./fake-cli-installer.fake.js";
 

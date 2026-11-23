@@ -1,8 +1,8 @@
+import { ManifestUnavailableError } from "../../../src/contexts/installation/contract/installation.error.js";
 import type {
   ScopeRecords,
   ToolRecords,
 } from "../../../src/contexts/installation/contract/records/scope-records.js";
-import { ManifestUnavailableError } from "../../../src/contexts/installation/domain/installation.error.js";
 import type { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
 import { InMemoryRepository } from "./in-memory-repository.fake.js";

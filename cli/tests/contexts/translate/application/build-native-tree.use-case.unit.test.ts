@@ -1,7 +1,7 @@
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { BuildNativeTree } from "../../../../src/contexts/translate/application/build-native-tree.use-case.js";
-import { InvalidBuildPathsError } from "../../../../src/contexts/translate/domain/translate.error.js";
+import { InvalidBuildPathsError } from "../../../../src/contexts/translate/contract/translate.error.js";
 import { InvalidSourceMarketplaceError } from "../../../../src/shared/domain/shared.error.js";
 import { buildContractOf } from "../../../shared/testing/build-contract-of.builder.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";

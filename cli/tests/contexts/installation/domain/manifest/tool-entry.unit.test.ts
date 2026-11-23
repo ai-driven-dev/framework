@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   DuplicatePluginError,
   PluginNotFoundError,
-} from "../../../../../src/contexts/installation/domain/installation.error.js";
+} from "../../../../../src/contexts/installation/contract/installation.error.js";
 import {
   createToolEntry,
   parseToolEntry,

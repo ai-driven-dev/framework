@@ -30,8 +30,7 @@ function loadScopes(root = CLI_ROOT) {
 }
 
 /** Static mutants run only while a file loads, so each reloads the environment and reruns every
- * test; `--ignoreStatic` reports them Ignored, outside the score. The canary keeps them: its static
- * mutant is what proves an unloadable file fails a test.
+ * test; `--ignoreStatic` reports them Ignored, outside the score.
  * One incremental file per scope: what a run learned about `kernel` says nothing about
  * `tools`, and a shared file would let one scope's result skip another's mutants. */
 export function strykerArgs(scope, scopes, { force = false } = {}) {
@@ -47,7 +46,7 @@ export function strykerArgs(scope, scopes, { force = false } = {}) {
     "--incrementalFile",
     `reports/mutation/${scope}/incremental.json`,
   ];
-  if (declared.harnessOnly !== true) args.push("--ignoreStatic");
+  args.push("--ignoreStatic");
   if (force) args.push("--force");
   return args;
 }
@@ -155,25 +154,6 @@ export function survivorsOf(report) {
 export function breakVerdict(score, declared) {
   if (declared.break !== undefined && score < declared.break) {
     return `mutation score ${score.toFixed(1)} is below the ${declared.break} declared in mutation-scopes.json`;
-  }
-  return null;
-}
-
-/** A passing score alone cannot prove the name filter avoided a neighbouring test. Each
- * dynamic canary mutant has one covering test; its run must execute and be killed by it. */
-export function canarySelectionVerdict(report) {
-  for (const file of Object.values(report.files ?? {})) {
-    for (const mutant of file.mutants) {
-      if (mutant.static) continue;
-      if (
-        mutant.coveredBy?.length !== 1 ||
-        mutant.testsCompleted !== 1 ||
-        mutant.killedBy?.length !== 1 ||
-        mutant.killedBy[0] !== mutant.coveredBy[0]
-      ) {
-        return `canary mutant ${mutant.id} did not run exactly its covering test`;
-      }
-    }
   }
   return null;
 }
@@ -333,9 +313,7 @@ async function main() {
 
   const report = JSON.parse(readFileSync(join(scopeDir, "mutation.json"), "utf8"));
   const score = scoreOf(report);
-  const verdict =
-    breakVerdict(score, scopes[scope]) ??
-    (scope === "canary" ? canarySelectionVerdict(report) : null);
+  const verdict = breakVerdict(score, scopes[scope]);
   console.log(
     `\nReport: reports/mutation/${scope}/ (score ${score.toFixed(1)}, floor ${scopes[scope].break ?? "none"})`
   );

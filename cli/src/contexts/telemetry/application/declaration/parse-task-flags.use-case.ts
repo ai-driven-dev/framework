@@ -1,9 +1,9 @@
-import type { DeclarationRequest } from "../../contract/task-declaration.js";
-import { requestOf } from "../../domain/declaration/task-declaration.js";
 import {
   TaskDeclaredNoneWithNameError,
   TaskNameMissingError,
-} from "../../domain/telemetry.error.js";
+} from "../../contract/errors/telemetry.error.js";
+import type { DeclarationRequest } from "../../contract/task-declaration.js";
+import { requestOf } from "../../domain/declaration/task-declaration.js";
 
 export interface ParseTaskFlagsRequest {
   readonly name: string | undefined;

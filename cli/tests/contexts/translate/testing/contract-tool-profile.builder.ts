@@ -1,11 +1,11 @@
-import type { ToolBuildContract } from "../../../../src/contexts/tools/contract/build-contract.js";
-import type { LinkSyntax } from "../../../../src/contexts/tools/contract/link-syntax.js";
 import type {
   AiToolProfile,
   FlatInstallSection,
   MarkdownSectionAnswers,
   PluginAnswers,
 } from "../../../../src/contexts/tools/contract/tool-profile.js";
+import type { ToolBuildContract } from "../../../../src/shared/domain/materialization/build-contract.js";
+import type { LinkSyntax } from "../../../../src/shared/domain/materialization/link-syntax.js";
 
 /** The sections a stand-in declares in place of its base's: `null` drops one, absent keeps it. */
 export interface SectionAnswers {

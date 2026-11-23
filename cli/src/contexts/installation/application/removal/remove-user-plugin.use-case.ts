@@ -1,15 +1,15 @@
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import {
+  ActiveMachineDependentsError,
+  PluginNotFoundError,
+} from "../../contract/installation.error.js";
 import type {
   ScopeRecords,
   ToolRecord,
   ToolRecords,
 } from "../../contract/records/scope-records.js";
-import {
-  ActiveMachineDependentsError,
-  PluginNotFoundError,
-} from "../../domain/installation.error.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { UserScopePluginFileRemoval } from "../../ports/user-scope/user-scope-plugin-files.js";

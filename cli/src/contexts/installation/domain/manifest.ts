@@ -3,7 +3,7 @@ import type { InstallationFile } from "../../../shared/domain/installation-file.
 import type { MergeFileEntry } from "../../../shared/domain/merge.js";
 import { ToolNotInManifestError } from "../../../shared/domain/shared.error.js";
 import type { ToolId, ToolIdResolver } from "../../../shared/domain/tool.js";
-import { InvalidManifestDataError } from "./installation.error.js";
+import { InvalidManifestDataError } from "../contract/installation.error.js";
 import {
   assertSupportedManifestVersion,
   DEFAULT_MANIFEST_CONTEXT,

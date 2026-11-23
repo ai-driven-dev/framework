@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { REGISTERED_PROFILES } from "../../../../../src/composition/tool-profiles.composition.js";
+import { REGISTERED_PROFILES } from "../../../../../src/composition/tool-profiles/index.js";
 import { describeProfileConformance } from "../../testing/profile-conformance.contract.js";
 import { describeProfileTranslationConformance } from "../../testing/profile-translation-conformance.contract.js";
 import { vendoredSchemas } from "../../testing/vendored-schemas.builder.js";

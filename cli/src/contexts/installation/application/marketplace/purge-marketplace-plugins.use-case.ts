@@ -1,11 +1,11 @@
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
+import { ActiveMachineDependentsError } from "../../contract/installation.error.js";
 import type {
   ScopeRecords,
   ToolRecord,
   ToolRecords,
 } from "../../contract/records/scope-records.js";
-import { ActiveMachineDependentsError } from "../../domain/installation.error.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";

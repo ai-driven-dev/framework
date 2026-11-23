@@ -1,7 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { PluginNotFoundError } from "../../../../../src/contexts/installation/domain/installation.error.js";
+import { PluginNotFoundError } from "../../../../../src/contexts/installation/contract/installation.error.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { dependentsRecorded } from "../../../../shared/testing/host-record-reading.builder.js";

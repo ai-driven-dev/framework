@@ -4,12 +4,12 @@
  * caller reads and writes.
  */
 
+import type { ShippedHooks } from "../../../../shared/domain/materialization/build-contract.js";
 import { genericFlatHooksScriptPath } from "../../../../shared/domain/materialization/flat-paths.js";
 import {
   escapeRegExp,
   rewritePluginRootInJson,
 } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
-import type { ShippedHooks } from "../../contract/build-contract.js";
 import { type Entry, type HooksFileFormat, shapeEntries } from "./hooks-entry-shape.js";
 import type { PluginHooksShape } from "./plugin-hooks-shape.js";
 

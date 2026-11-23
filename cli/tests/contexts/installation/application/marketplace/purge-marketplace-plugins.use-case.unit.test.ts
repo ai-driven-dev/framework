@@ -4,8 +4,8 @@ import {
   PurgeMarketplacePlugins,
   type PurgeMarketplacePluginsRequest,
 } from "../../../../../src/contexts/installation/application/marketplace/purge-marketplace-plugins.use-case.js";
+import { ActiveMachineDependentsError } from "../../../../../src/contexts/installation/contract/installation.error.js";
 import type { ToolRecords } from "../../../../../src/contexts/installation/contract/records/scope-records.js";
-import { ActiveMachineDependentsError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";

@@ -3,7 +3,7 @@ import { ParseTaskFlags } from "../../../../../src/contexts/telemetry/applicatio
 import {
   TaskDeclaredNoneWithNameError,
   TaskNameMissingError,
-} from "../../../../../src/contexts/telemetry/domain/telemetry.error.js";
+} from "../../../../../src/contexts/telemetry/contract/errors/telemetry.error.js";
 
 const resolve = new ParseTaskFlags();
 
