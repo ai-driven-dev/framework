@@ -30,13 +30,5 @@ flowchart LR
 
 ## Transversal rules
 
-- Speak only to ask or to give the final reply.
-- After asking, wait for the answer.
-- Otherwise call tools.
-- Run the engine from the project root.
-- Never read the engine's source.
-- Write only the `logo-` files under `aidd_docs/ui/assets/` and `aidd_docs/ui/drafts/logo/`.
-- Never write in the code, nor by hand what the engine writes.
-- After each write, fix what the hook or the validation reports.
-- Never bypass a hook.
-- Commit and push only when asked.
+- Write only the `logo-` files under `aidd_docs/ui/assets/` and the set under `aidd_docs/ui/drafts/logo/`.
+- Never write in the code.

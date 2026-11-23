@@ -9,6 +9,8 @@
 
 `node <engine> help <command>` says what each does.
 
+Run it from the project root. Never read its source, nor write by hand what it writes.
+
 | Step | Command |
 | --- | --- |
 | prepare 5, what a change reaches | `node <engine> impact <id>…` |
