@@ -1,10 +1,9 @@
 /** Kilo's project distribution is flat. Its config and MCP format follow the OpenCode runtime,
  * but Kilo has its own .kilo/ discovery paths and bundled base configuration. */
 
-import type { FlatHooksLoaderEntry } from "../../../../../shared/domain/materialization/flat-paths.js";
-import {
-  type FlatArtifactLayout,
-  flatArtifactLayout,
+import type {
+  FlatArtifactLayout,
+  FlatHooksLoaderEntry,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
 import { agentsIn, skillsIn } from "../../../contract/artifact-path.js";
 import type {
@@ -20,23 +19,13 @@ import { collectTypedMcp } from "../../formats/mcp/typed-mcp-section.js";
 import { chooseOutputPath } from "../../sections/mcp-section.js";
 import { kiloAgentFrontmatter } from "./kilo-agent.model.js";
 import { generateKiloHooksBridge } from "./kilo-hooks-bridge.model.js";
-import {
-  KILO_CONFIG_CANDIDATES,
-  KILO_DIRECTORY,
-  KILO_OUTPUT_PATH_CANDIDATES,
-} from "./kilo-paths.model.js";
+import { KILO_CONFIG_CANDIDATES, KILO_OUTPUT_PATH_CANDIDATES } from "./kilo-paths.model.js";
 
 /** Kilo's hooks as the profile declares them: a loader with no hooks file. */
 type KiloHooks = HooksRouting & {
   readonly file?: never;
   readonly flat: FlatHooksRoute & { readonly loaderEntry: FlatHooksLoaderEntry };
 };
-
-/** Where a flat build, and a flat install, put kilo's skills and agents. */
-export const KILO_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(KILO_DIRECTORY, {
-  skills: "nested",
-  agent: { ext: ".md" },
-});
 
 const kiloAgentMarkdown: AgentMarkdown = {
   frontmatter: (frontmatter) => kiloAgentFrontmatter(frontmatter),
@@ -62,7 +51,10 @@ function emitKiloConfig({
   return [{ path: configPath, content: config }];
 }
 
-export function buildKiloFlatContract(hooks: KiloHooks): ToolBuildContract {
+export function buildKiloFlatContract(
+  hooks: KiloHooks,
+  layout: FlatArtifactLayout
+): ToolBuildContract {
   return {
     manifestFileRelative: null,
     synthesizeManifest: null,
@@ -71,13 +63,13 @@ export function buildKiloFlatContract(hooks: KiloHooks): ToolBuildContract {
       skills: {
         supported: true,
         source: { kind: "fullTree", srcDir: "skills" },
-        placement: skillsIn(KILO_FLAT_LAYOUT),
+        placement: skillsIn(layout),
         rewriteSkillName: true,
       },
       agents: {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        placement: agentsIn(KILO_FLAT_LAYOUT),
+        placement: agentsIn(layout),
         agentMarkdown: kiloAgentMarkdown,
       },
       mcp: { supported: false, reason: "carried by the config artifact, not a file of its own" },

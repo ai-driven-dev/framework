@@ -3,6 +3,10 @@ import opencodeJson from "../../../../../../assets/configs/opencode/opencode.jso
   type: "json",
 };
 import opencodeEvents from "../../../../../../assets/configs/opencode/opencode-events.js.txt";
+import {
+  type FlatArtifactLayout,
+  flatArtifactLayout,
+} from "../../../../../shared/domain/materialization/flat-paths.js";
 import { CONFIG_PREFIX, type ConfigRef, MCP_CONFIG_REF } from "../../../contract/config-refs.js";
 import { declareBridgeHooks } from "../../bridges/event-bridge.js";
 import {
@@ -17,10 +21,16 @@ import { flatGlobalFilePath, flatPlacement } from "../../sections/layout-section
 import { McpConfigPart } from "../../sections/mcp-section.js";
 import { ModelsSection } from "../../sections/models-section.js";
 import { opencodeAgentFrontmatter } from "./opencode-agent.model.js";
-import { buildOpencodeFlatContract, OPENCODE_FLAT_LAYOUT } from "./opencode-build.model.js";
+import { buildOpencodeFlatContract } from "./opencode-build.model.js";
 
 const DIRECTORY = ".opencode/";
 const TOOL_SUFFIX = ".opencode.md";
+
+/** Where a flat build, and a flat install, put opencode's skills and agents. */
+const OPENCODE_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(".opencode/", {
+  skills: "nested",
+  agent: { ext: ".md" },
+});
 
 const OUTPUT_PATH_CANDIDATES = {
   tiers: [["opencode.json", "opencode.jsonc"]],
@@ -92,7 +102,7 @@ export const opencode = defineAiTool({
     },
   ],
   hooks,
-  buildContracts: { flat: () => buildOpencodeFlatContract(hooks) },
+  buildContracts: { flat: () => buildOpencodeFlatContract(hooks, OPENCODE_FLAT_LAYOUT) },
 
   capabilities: (bound) => ({
     agents: bound.agents({

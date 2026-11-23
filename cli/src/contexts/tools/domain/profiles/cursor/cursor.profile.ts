@@ -4,10 +4,16 @@ import cursorSettings from "../../../../../../assets/configs/cursor/settings.jso
 };
 // biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
 import adapter from "../../../../../../assets/hooks-runtime/host-cursor.cjs";
+import {
+  type FlatArtifactLayout,
+  flatArtifactLayout,
+} from "../../../../../shared/domain/materialization/flat-paths.js";
+import type { AgentMarkdown } from "../../../contract/build-contract.js";
 import { MCP_CONFIG_REF } from "../../../contract/config-refs.js";
 import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../formats/command.js";
 import { declareHooks } from "../../formats/hooks/declaration.js";
 import { nativeHooksSupport, projectHooksSupport } from "../../formats/hooks/routes.js";
+import { pluginTreeContract } from "../../formats/plugin-tree-contract.js";
 import { rulePatterns } from "../../formats/rule-frontmatter.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { nativeLayout } from "../../sections/layout-section.js";
@@ -15,9 +21,29 @@ import { manifestSection } from "../../sections/manifest-section.js";
 import { acceptedPluginMcp, McpConfigPart } from "../../sections/mcp-section.js";
 import { ModelsSection } from "../../sections/models-section.js";
 import { cursorAgentFrontmatter } from "./cursor-agent.model.js";
-import { buildCursorContract, buildCursorFlatContract } from "./cursor-build.model.js";
+import { buildCursorFlatContract } from "./cursor-flat-build.model.js";
 
 const PLUGIN_MCP = acceptedPluginMcp("mcp.json");
+
+const CURSOR_AGENT_MARKDOWN: AgentMarkdown = {
+  frontmatter: (frontmatter) => cursorAgentFrontmatter(frontmatter),
+  pluginPrefixedName: true,
+  quote: "double",
+};
+
+// Distinct from their source-side equivalents even where the literals coincide: a change to
+// either side must not collapse them.
+const OUTPUT_PLUGIN_TREE = {
+  manifestRelative: ".cursor-plugin/plugin.json",
+  marketplaceRelative: ".cursor-plugin/marketplace.json",
+  agentMarkdown: CURSOR_AGENT_MARKDOWN,
+};
+
+/** Where a flat build puts cursor's skills and agents. */
+const CURSOR_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(".cursor/", {
+  skills: "single-level",
+  agent: { ext: ".md" },
+});
 
 const DIRECTORY = ".cursor/";
 const TOOL_SUFFIX = ".cursor.md";
@@ -105,8 +131,8 @@ export const cursor = defineAiTool({
   ],
   hooks,
   buildContracts: {
-    marketplace: () => buildCursorContract(hooks),
-    flat: () => buildCursorFlatContract(hooks),
+    marketplace: () => pluginTreeContract(hooks, OUTPUT_PLUGIN_TREE),
+    flat: () => buildCursorFlatContract(hooks, CURSOR_FLAT_LAYOUT, CURSOR_AGENT_MARKDOWN),
   },
 
   capabilities: (bound) => ({

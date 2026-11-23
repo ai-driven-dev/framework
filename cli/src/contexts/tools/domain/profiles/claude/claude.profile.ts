@@ -4,11 +4,16 @@ import claudeSettings from "../../../../../../assets/configs/claude/settings.jso
 };
 // biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
 import adapter from "../../../../../../assets/hooks-runtime/host-claude.cjs";
+import {
+  type FlatArtifactLayout,
+  flatArtifactLayout,
+} from "../../../../../shared/domain/materialization/flat-paths.js";
 import { SOURCE_PLUGIN_ROOT_TOKEN } from "../../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import { MCP_CONFIG_REF } from "../../../contract/config-refs.js";
 import { convertCommandFrontmatter } from "../../formats/command.js";
 import { declareHooks, ownNameEvents } from "../../formats/hooks/declaration.js";
 import { nativeHooksSupport } from "../../formats/hooks/routes.js";
+import { pluginTreeContract } from "../../formats/plugin-tree-contract.js";
 import { sharedMarketplaceKey } from "../../marketplace-entry.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { type NativeLayoutParams, nativeLayout } from "../../sections/layout-section.js";
@@ -16,9 +21,23 @@ import { manifestSection } from "../../sections/manifest-section.js";
 import { acceptedPluginMcp, McpConfigPart } from "../../sections/mcp-section.js";
 import { ModelsSection } from "../../sections/models-section.js";
 import { claudeAgentFrontmatter } from "./claude-agent.model.js";
-import { buildClaudeContract, buildClaudeFlatContract } from "./claude-build.model.js";
+import { buildClaudeFlatContract } from "./claude-flat-build.model.js";
 
 const PLUGIN_MCP = acceptedPluginMcp();
+
+/** Build output paths, deliberately distinct from the source-side constants even where the
+ * literal values coincide: a change to either side must not collapse them. */
+const OUTPUT_PLUGIN_TREE: Parameters<typeof pluginTreeContract>[1] = {
+  manifestRelative: ".claude-plugin/plugin.json",
+  marketplaceRelative: ".claude-plugin/marketplace.json",
+  agentMarkdown: { frontmatter: (frontmatter) => claudeAgentFrontmatter(frontmatter) },
+};
+
+/** Where a flat build puts claude's skills and agents. */
+const CLAUDE_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(".claude/", {
+  skills: "single-level",
+  agent: { ext: ".md" },
+});
 
 const DIRECTORY = ".claude/";
 const TOOL_SUFFIX = ".claude.md";
@@ -137,8 +156,8 @@ export const claude = defineAiTool({
   ],
   hooks,
   buildContracts: {
-    marketplace: () => buildClaudeContract(hooks),
-    flat: () => buildClaudeFlatContract(hooks),
+    marketplace: () => pluginTreeContract(hooks, OUTPUT_PLUGIN_TREE),
+    flat: () => buildClaudeFlatContract(hooks, CLAUDE_FLAT_LAYOUT),
   },
 
   capabilities: (bound) => ({
