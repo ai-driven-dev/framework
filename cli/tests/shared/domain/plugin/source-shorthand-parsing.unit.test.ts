@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { parsePluginSourceShorthand } from "../../../src/orchestration/domain/source-shorthand.model.js";
-import { InvalidPluginSourceError } from "../../../src/shared/domain/shared.error.js";
-import { saying } from "../../shared/testing/saying.builder.js";
+import { parsePluginSourceShorthand } from "../../../../src/shared/domain/plugin/source-parsing.js";
+import { InvalidPluginSourceError } from "../../../../src/shared/domain/shared.error.js";
+import { saying } from "../../testing/saying.builder.js";
 
 /**
  * Grouped by what a user types, not by the parsing function: the wrong kind sends the plugin

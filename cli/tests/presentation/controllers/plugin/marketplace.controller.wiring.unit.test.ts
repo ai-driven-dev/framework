@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { parsePluginSourceShorthand } from "../../../../src/orchestration/domain/source-shorthand.model.js";
 import { bindOutput } from "../../../../src/presentation/controllers/menu/global-options.controller.js";
+import { parsePluginSourceShorthand } from "../../../../src/shared/domain/plugin/source-parsing.js";
 import { ExitRequested } from "../../../shared/testing/capturing-output.fake.js";
 import { processOutputFactory } from "../../../shared/testing/output-factory.builder.js";
 import { parseToExit } from "../../../shared/testing/parse-to-exit.builder.js";
