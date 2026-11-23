@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { ListFrameworkReleases } from "../../../../src/contexts/distribution/application/list-framework-releases.use-case.js";
+import { ListMarketplaceReleases } from "../../../../src/contexts/distribution/application/list-marketplace-releases.use-case.js";
 
 describe("listing the framework's releases", () => {
   it("lists the root releases of a repository, newest first, without component tags", async () => {
@@ -10,7 +10,7 @@ describe("listing the framework's releases", () => {
       readReleaseBody: vi.fn().mockResolvedValue(null),
     };
 
-    expect(await new ListFrameworkReleases(lister).execute("acme/fw")).toEqual([
+    expect(await new ListMarketplaceReleases(lister).execute("acme/fw")).toEqual([
       "v2.3.4",
       "v2.3.3",
     ]);

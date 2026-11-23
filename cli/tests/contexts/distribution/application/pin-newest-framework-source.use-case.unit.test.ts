@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { ListFrameworkReleases } from "../../../../src/contexts/distribution/application/list-framework-releases.use-case.js";
+import { ListMarketplaceReleases } from "../../../../src/contexts/distribution/application/list-marketplace-releases.use-case.js";
 import { PinNewestFrameworkSource } from "../../../../src/contexts/distribution/application/pin-newest-framework-source.use-case.js";
 import {
   DEFAULT_FRAMEWORK_REPO,
@@ -16,7 +16,7 @@ function releasesOf(tags: string[]): ReleaseLister {
 }
 
 const pinNewestFrom = (lister: ReleaseLister) =>
-  new PinNewestFrameworkSource(new ListFrameworkReleases(lister));
+  new PinNewestFrameworkSource(new ListMarketplaceReleases(lister));
 
 describe("pinning a source to the newest framework release", () => {
   it("returns a source that already names its release unchanged", async () => {

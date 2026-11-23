@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { TokenProvider } from "../../../../src/contexts/auth/contract/token-provider.js";
+import { AssertMarketplaceReadable } from "../../../../src/contexts/distribution/application/assert-marketplace-readable.use-case.js";
 import { EnsureFrameworkMarketplace } from "../../../../src/contexts/distribution/application/ensure-framework-marketplace.use-case.js";
 import { RegisterFrameworkMarketplace } from "../../../../src/contexts/distribution/application/register-framework-marketplace.use-case.js";
 import {
@@ -24,8 +25,7 @@ function ensureOver(
 ): EnsureFrameworkMarketplace {
   return new EnsureFrameworkMarketplace(
     new RegisterFrameworkMarketplace(registry),
-    tokenProvider,
-    releaseResolver
+    new AssertMarketplaceReadable(tokenProvider, releaseResolver)
   );
 }
 

@@ -1,4 +1,4 @@
-import { ListFrameworkReleases } from "../../../src/contexts/distribution/application/list-framework-releases.use-case.js";
+import { ListMarketplaceReleases } from "../../../src/contexts/distribution/application/list-marketplace-releases.use-case.js";
 import { PinNewestFrameworkSource } from "../../../src/contexts/distribution/application/pin-newest-framework-source.use-case.js";
 import type { Prompter } from "../../../src/orchestration/ports/prompter.js";
 import { AskMarketplaceSource } from "../../../src/orchestration/setup/ask-marketplace-source.use-case.js";
@@ -9,7 +9,7 @@ export function askMarketplaceSource(
   prompter: Prompter,
   releases: ReleaseLister
 ): AskMarketplaceSource {
-  const listReleases = new ListFrameworkReleases(releases);
+  const listReleases = new ListMarketplaceReleases(releases);
   return new AskMarketplaceSource(
     prompter,
     listReleases,

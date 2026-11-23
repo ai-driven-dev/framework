@@ -1,8 +1,9 @@
 import { PrepareMarketplace } from "../../contexts/distribution/application/add/prepare-marketplace.use-case.js";
 import { RecordMarketplace } from "../../contexts/distribution/application/add/record-marketplace.use-case.js";
+import { AssertMarketplaceReadable } from "../../contexts/distribution/application/assert-marketplace-readable.use-case.js";
 import { CheckMarketplaces } from "../../contexts/distribution/application/check-marketplaces.use-case.js";
 import { EnsureFrameworkMarketplace } from "../../contexts/distribution/application/ensure-framework-marketplace.use-case.js";
-import { ListFrameworkReleases } from "../../contexts/distribution/application/list-framework-releases.use-case.js";
+import { ListMarketplaceReleases } from "../../contexts/distribution/application/list-marketplace-releases.use-case.js";
 import { PinNewestFrameworkSource } from "../../contexts/distribution/application/pin-newest-framework-source.use-case.js";
 import { FindMarketplaceToRemove } from "../../contexts/distribution/application/remove/find-marketplace-to-remove.use-case.js";
 import { FindUserMarketplace } from "../../contexts/distribution/application/remove/find-user-marketplace.use-case.js";
@@ -122,17 +123,16 @@ function wireMarketplaceRemoval(base: Base, inst: Installation) {
 /** Choosing the framework source of a setup, and registering it for the scope the flow runs in. */
 function wireSetupSource(base: Base, recordSourceReference: RecordSourceReference) {
   const { prompter, tokenProvider, environment, releaseResolver } = base;
-  const listFrameworkReleases = new ListFrameworkReleases(releaseResolver);
+  const listMarketplaceReleases = new ListMarketplaceReleases(releaseResolver);
   const askMarketplaceSource = new AskMarketplaceSource(
     prompter,
-    listFrameworkReleases,
-    new PinNewestFrameworkSource(listFrameworkReleases)
+    listMarketplaceReleases,
+    new PinNewestFrameworkSource(listMarketplaceReleases)
   );
   const registerMarketplace = new RegisterMarketplace({
     ensure: new EnsureFrameworkMarketplace(
       base.registerFrameworkMarketplace,
-      tokenProvider,
-      releaseResolver
+      new AssertMarketplaceReadable(tokenProvider, releaseResolver)
     ),
     recordReference: recordSourceReference,
     refresh: new RefreshMarketplaces(base.marketplacesToRefresh, base.refreshMarketplaceUseCase),

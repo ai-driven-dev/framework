@@ -1,5 +1,6 @@
 import { lenientSourceReferences } from "../../../src/composition/contexts/machine-claims.js";
 import type { TokenProvider } from "../../../src/contexts/auth/contract/token-provider.js";
+import { AssertMarketplaceReadable } from "../../../src/contexts/distribution/application/assert-marketplace-readable.use-case.js";
 import { EnsureFrameworkMarketplace } from "../../../src/contexts/distribution/application/ensure-framework-marketplace.use-case.js";
 import type { RegisterFrameworkMarketplace } from "../../../src/contexts/distribution/application/register-framework-marketplace.use-case.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
@@ -30,7 +31,10 @@ export function setupMarketplaceRegistrar(
   userSourceReferences?: UserSourceReferences
 ): { resolveSource: ResolveSetupSource; register: RegisterFrameworkSource } {
   const registration = new RegisterMarketplace({
-    ensure: new EnsureFrameworkMarketplace(register, tokenProvider, releaseResolver),
+    ensure: new EnsureFrameworkMarketplace(
+      register,
+      new AssertMarketplaceReadable(tokenProvider, releaseResolver)
+    ),
     recordReference: new RecordSourceReference({
       resolveReferenceRoot: new ResolveReferenceRoot(fs),
       currentVersion,

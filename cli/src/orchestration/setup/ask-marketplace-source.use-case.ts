@@ -1,5 +1,5 @@
 import { resolve } from "node:path";
-import type { ListFrameworkReleases } from "../../contexts/distribution/application/list-framework-releases.use-case.js";
+import type { ListMarketplaceReleases } from "../../contexts/distribution/application/list-marketplace-releases.use-case.js";
 import type { PinNewestFrameworkSource } from "../../contexts/distribution/application/pin-newest-framework-source.use-case.js";
 import {
   type FrameworkSource,
@@ -23,7 +23,7 @@ export interface AskMarketplaceSourceRequest {
 export class AskMarketplaceSource {
   constructor(
     private readonly prompter: Prompter,
-    private readonly listReleases: Pick<ListFrameworkReleases, "execute">,
+    private readonly listReleases: Pick<ListMarketplaceReleases, "execute">,
     private readonly pinNewest: Pick<PinNewestFrameworkSource, "execute">
   ) {}
 
