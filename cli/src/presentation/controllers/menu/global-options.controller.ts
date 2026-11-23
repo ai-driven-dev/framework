@@ -8,6 +8,20 @@ export interface GlobalOptions {
   projectRoot: string;
 }
 
+/** What the container of a run is built with, read from the flags. */
+export interface RunOptions {
+  verbose: boolean;
+  token?: string;
+}
+
+/** Builds the container of one run. A command names the contexts it reads in `C`, and the real
+ * container, which carries every context, fits any of them. */
+export type ContainerFactory<C> = (
+  projectRoot: string,
+  options: RunOptions,
+  output: Output | undefined
+) => Promise<C>;
+
 /** Builds the output a command writes to, `verbose` already read from the arguments. */
 export type OutputFactory = (verbose: boolean) => Output;
 

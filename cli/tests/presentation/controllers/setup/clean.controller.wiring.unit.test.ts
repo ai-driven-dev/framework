@@ -10,10 +10,9 @@ const cleanProject = vi.fn();
 const cleanUserScope = vi.fn();
 const resetModels = vi.fn();
 
-const createDeps = vi.fn(async () => ({
-  cleanProject: { execute: cleanProject },
-  cleanUserScope: { execute: cleanUserScope },
-  resetAgentModels: { execute: resetModels },
+const containerOf = vi.fn(async () => ({
+  clean: { cleanProject: { execute: cleanProject }, cleanUserScope: { execute: cleanUserScope } },
+  agentModels: { resetAgentModels: { execute: resetModels } },
 }));
 
 const { registerCleanCommand } = await import(
@@ -72,7 +71,7 @@ async function run(...args: string[]): Promise<string[]> {
   bindOutput(program, processOutputFactory());
   program.exitOverride();
   program.option("--verbose");
-  registerCleanCommand(program, createDeps);
+  registerCleanCommand(program, containerOf);
   await parseToExit(program, ["node", "aidd", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -223,7 +222,7 @@ describe("aidd clean --scope", () => {
       'Error: Invalid --scope "machine" — expected "project" or "user".\n'
     );
     expect(exit).toHaveBeenCalledWith(1);
-    expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
+    expect(vi.mocked(containerOf)).not.toHaveBeenCalled();
   });
 });
 
@@ -231,7 +230,7 @@ describe("aidd clean - how it builds its graph and reports a failure", () => {
   it("builds the graph for this project at this run's verbosity", async () => {
     await run("clean");
 
-    expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
+    expect(vi.mocked(containerOf)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: false },
       expect.anything()
@@ -255,7 +254,7 @@ describe("aidd clean - the help surface", () => {
   function cleanCommand(): Command {
     const program = new Command();
     bindOutput(program, processOutputFactory());
-    registerCleanCommand(program, createDeps);
+    registerCleanCommand(program, containerOf);
     const clean = program.commands.find((command) => command.name() === "clean");
     if (clean === undefined) throw new Error("clean command was not registered");
     return clean;

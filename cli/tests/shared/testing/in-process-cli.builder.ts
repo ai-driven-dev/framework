@@ -109,6 +109,7 @@ async function buildProgram(): Promise<Command> {
   program.name("aidd").option("--verbose", "Show detailed diagnostic output", false);
   const { bindContainer } = await import("../../../src/composition/orchestration/deps-graph.js");
   const depsFactory: DepsFactory = bindContainer(tools);
+  const { containerFactory } = await import("../../../src/composition/container.js");
   const { registerCommands } = await import(
     "../../../src/presentation/controllers/menu/register-commands.controller.js"
   );
@@ -116,6 +117,7 @@ async function buildProgram(): Promise<Command> {
   registerCommands(program, {
     tools,
     createSlice: depsFactory,
+    containerOf: containerFactory(tools),
     telemetryRequests: wireTelemetryRequests(),
     runCommand: async () => 0,
     createOutput: (verbose) =>

@@ -1,9 +1,11 @@
+import type { FrameworkBuildContext } from "../contexts/translate/application/build-native-tree.use-case.js";
 import { BuildMenu } from "../orchestration/menu/build-menu.use-case.js";
 import { MenuLoop } from "../orchestration/menu/menu-loop.use-case.js";
 import type { CommandRunner, Pause } from "../orchestration/menu/menu-ports.js";
 import { projectSetupOf, wireInstallation } from "./contexts/installation.js";
 import { wireRecipes } from "./contexts/recipes.js";
 import { wireTelemetry } from "./contexts/telemetry.js";
+import { createFrameworkBuildUseCase } from "./contexts/translate.js";
 import { wireUpdate } from "./contexts/update.js";
 import { wireClean } from "./orchestration/clean.js";
 import { wireDoctor } from "./orchestration/doctor.js";
@@ -123,6 +125,15 @@ export class Container {
   get recipes() {
     return this.scenarios.recipes();
   }
+  /** The build of a marketplace or a flat tree for a target, or undefined when the target
+   * declares no build for the mode. */
+  get translate() {
+    const { fs, logger } = this.shared;
+    const deps = { fs, logger, assetProvider: this.installation.assetProvider };
+    const frameworkBuild = (ctx: FrameworkBuildContext) =>
+      createFrameworkBuildUseCase(this.options.tools, deps, ctx);
+    return { frameworkBuild };
+  }
 
   /** The menu loop of this project, given the terminal the loop runs commands on. */
   menu(terminal: { runner: CommandRunner; pause: Pause }): MenuLoop {
@@ -134,4 +145,13 @@ export class Container {
 
 export function createContainer(options: BaseOptions): Container {
   return new Container(options);
+}
+
+/** The factory commands receive: each call builds the container of one run. */
+export function containerFactory(tools: BaseOptions["tools"]) {
+  return async (
+    projectRoot: string,
+    options: Pick<BaseOptions, "verbose" | "token">,
+    output: BaseOptions["output"]
+  ): Promise<Container> => createContainer({ projectRoot, ...options, output, tools });
 }

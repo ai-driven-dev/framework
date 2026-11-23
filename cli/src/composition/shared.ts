@@ -7,7 +7,6 @@ import { ManifestRepositoryAdapter } from "../contexts/installation/infrastructu
 import { PlatformAdapter } from "../contexts/installation/infrastructure/platform-adapter.js";
 import { UserManifestRepositoryAdapter } from "../contexts/installation/infrastructure/user-manifest-repository-adapter.js";
 import { pluginManifestProbes } from "../contexts/translate/domain/plugin-format.js";
-import type { FactoryOptions } from "../orchestration/deps.js";
 import type { Output } from "../orchestration/domain/output.js";
 import { InquirerPrompterAdapter } from "../presentation/terminal/inquirer-prompter.adapter.js";
 import { OutputAdapter } from "../presentation/terminal/output.adapter.js";
@@ -50,8 +49,10 @@ export function createOutput(verbose: boolean): Output {
 }
 
 /** What a container is built from: where it runs, how it logs and the catalog its wiring reads. */
-export interface BaseOptions extends FactoryOptions {
+export interface BaseOptions {
   projectRoot: string;
+  verbose: boolean;
+  token?: string;
   output?: Output;
   tools: RegisteredCatalog;
 }

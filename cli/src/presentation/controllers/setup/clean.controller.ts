@@ -1,18 +1,27 @@
 import type { Command } from "commander";
-import type { Deps, DepsSliceFactory } from "../../../orchestration/deps.js";
+import type { ResetAgentModels } from "../../../orchestration/agent-models/reset-agent-models.use-case.js";
+import type { CleanProject } from "../../../orchestration/clean/clean-project.use-case.js";
+import type { CleanUserScope } from "../../../orchestration/clean/clean-user-scope.use-case.js";
 import type { Output } from "../../../orchestration/domain/output.js";
 import {
   printProjectCleanOutcome,
   printUserScopeCleanOutcome,
 } from "../../presenters/setup/clean.presenter.js";
 import {
+  type ContainerFactory,
   GLOBAL_FLAG_HELP,
   parseGlobalOptions,
   resolveScopeFlags,
 } from "../menu/global-options.controller.js";
 
-/** What this command reads of the graph. */
-type CleanKeys = "cleanProject" | "cleanUserScope" | "resetAgentModels";
+/** What this command reads of the container. */
+export interface CleanContainer {
+  clean: {
+    cleanProject: Pick<CleanProject, "execute">;
+    cleanUserScope: Pick<CleanUserScope, "execute">;
+  };
+  agentModels: { resetAgentModels: Pick<ResetAgentModels, "execute"> };
+}
 
 interface CleanCmdOptions {
   force: boolean;
@@ -21,20 +30,20 @@ interface CleanCmdOptions {
 }
 
 interface CleanRun {
-  deps: Pick<Deps, CleanKeys>;
+  container: CleanContainer;
   output: Output;
   projectRoot: string;
   cmdOptions: CleanCmdOptions;
 }
 
 async function runProjectScopeClean({
-  deps,
+  container,
   output,
   projectRoot,
   cmdOptions,
 }: CleanRun): Promise<void> {
   const interactive = process.stdout.isTTY === true;
-  const result = await deps.cleanProject.execute({
+  const result = await container.clean.cleanProject.execute({
     projectRoot,
     force: cmdOptions.force,
     interactive,
@@ -44,13 +53,13 @@ async function runProjectScopeClean({
 }
 
 async function runUserScopeClean({
-  deps,
+  container,
   output,
   projectRoot,
   cmdOptions,
 }: CleanRun): Promise<void> {
   const interactive = process.stdout.isTTY === true;
-  const result = await deps.cleanUserScope.execute({
+  const result = await container.clean.cleanUserScope.execute({
     projectRoot,
     force: cmdOptions.force,
     interactive,
@@ -60,7 +69,7 @@ async function runUserScopeClean({
 
   // The agents' provider and the main sessions' models are machine-wide choices too, undone
   // exactly when the clean itself ran: --force, or a confirmed prompt.
-  const models = await deps.resetAgentModels.execute({ dryRun: result.dryRun });
+  const models = await container.agentModels.resetAgentModels.execute({ dryRun: result.dryRun });
   const verb = result.dryRun ? "would be restored" : "restored";
   for (const { host, path } of models.changed)
     output.info(`${host} main session: ${verb} in ${path}`);
@@ -75,7 +84,7 @@ async function runUserScopeClean({
 
 export function registerCleanCommand(
   program: Command,
-  createDeps: DepsSliceFactory<CleanKeys>
+  containerOf: ContainerFactory<CleanContainer>
 ): void {
   program
     .command("clean")
@@ -93,11 +102,11 @@ export function registerCleanCommand(
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
 
-      const deps = await createDeps(projectRoot, { verbose }, output);
+      const container = await containerOf(projectRoot, { verbose }, output);
       if (scope === "user") {
-        await runUserScopeClean({ deps, output, projectRoot, cmdOptions });
+        await runUserScopeClean({ container, output, projectRoot, cmdOptions });
       } else {
-        await runProjectScopeClean({ deps, output, projectRoot, cmdOptions });
+        await runProjectScopeClean({ container, output, projectRoot, cmdOptions });
       }
     });
 }

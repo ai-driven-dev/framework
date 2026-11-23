@@ -1,6 +1,6 @@
 import { platform } from "node:os";
 import { Command } from "commander";
-import { createContainer } from "./composition/container.js";
+import { containerFactory, createContainer } from "./composition/container.js";
 import { wireTelemetryRequests } from "./composition/contexts/telemetry.js";
 import { wireTools } from "./composition/contexts/tools.js";
 import { bindContainer } from "./composition/orchestration/deps-graph.js";
@@ -29,6 +29,7 @@ const createOutput = outputOfRun((code) => process.exit(code));
 const version = createContainer({ projectRoot: process.cwd(), verbose: false, tools }).shared
   .currentVersion;
 const createSlice = bindContainer(tools);
+const containerOf = containerFactory(tools);
 const telemetryRequests = wireTelemetryRequests();
 
 /** The binary's program: its options, its commands and its hooks, each run ending through `end`. */
@@ -41,6 +42,7 @@ function registerProgram(program: Command, end: (code: number) => never): Comman
   registerCommands(program, {
     tools,
     createSlice,
+    containerOf,
     telemetryRequests,
     runCommand: runInMenu,
     createOutput: outputOfRun(end),

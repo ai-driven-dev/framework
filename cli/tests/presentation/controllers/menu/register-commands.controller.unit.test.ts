@@ -1,5 +1,6 @@
 import { Command } from "commander";
 import { expect, it } from "vitest";
+import { containerFactory } from "../../../../src/composition/container.js";
 import { wireTelemetryRequests } from "../../../../src/composition/contexts/telemetry.js";
 import { wireTools } from "../../../../src/composition/contexts/tools.js";
 import { bindContainer } from "../../../../src/composition/orchestration/deps-graph.js";
@@ -12,6 +13,7 @@ it("registers every command of the binary", () => {
   registerCommands(program, {
     tools,
     createSlice: bindContainer(tools),
+    containerOf: containerFactory(tools),
     telemetryRequests: wireTelemetryRequests(),
     runCommand: async () => 0,
     createOutput: processOutputFactory(),
