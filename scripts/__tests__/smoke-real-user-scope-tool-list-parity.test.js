@@ -29,16 +29,16 @@ function aiToolIds() {
     .filter((name) => name.endsWith(".ts"))
     .map((name) => name.slice(0, -".ts".length))
     .filter((id) =>
-      /defineAiTool\(/u.test(fs.readFileSync(profileFile(id), "utf8"))
+      /defineAiTool\(|satisfies AiToolSpec\b/u.test(fs.readFileSync(profileFile(id), "utf8"))
     );
-  assert.ok(ids.length > 0, "no profile is defined with defineAiTool; the guard reads nothing");
+  assert.ok(ids.length > 0, "no profile declares an AI tool; the guard reads nothing");
   return ids;
 }
 
 function declaresUserScopeActivation(toolId) {
   const text = fs.readFileSync(profileFile(toolId), "utf8");
   return (
-    /nativeActivation:\s*[\w{]/u.test(text) ||
+    /NativeRegistrationSection\s*=\s*\{\s*activation:/u.test(text) ||
     /installScope:\s*"user"/u.test(text) ||
     /globalFiles:\s*\{/u.test(text)
   );
