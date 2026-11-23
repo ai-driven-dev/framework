@@ -39,15 +39,12 @@ function makeMarketplace(): DeclaredMarketplace {
   };
 }
 
-function fakeResolve(
-  localPath: string,
-  version: string | undefined
-): Pick<ResolveMarketplace, "execute"> {
+function fakeResolve(localPath: string, version: string): Pick<ResolveMarketplace, "execute"> {
   return {
     execute: async ({ marketplace }: ResolveMarketplaceRequest) => ({
       marketplace,
       localPath,
-      catalog: version === undefined ? null : { version, plugins: [] },
+      catalog: { version, plugins: [] },
     }),
   } satisfies Pick<ResolveMarketplace, "execute">;
 }

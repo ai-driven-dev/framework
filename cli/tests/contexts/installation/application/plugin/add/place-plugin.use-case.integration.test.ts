@@ -26,13 +26,13 @@ const GIT_SUBDIR_SOURCE = {
 const CURSOR_SKILL = "sample-plugin/skills/demo/SKILL.md";
 const FOUND_DIR = join(homedir(), ".cursor/plugins/local", "sample-plugin");
 
-async function placeForCursor(foundFile: string | undefined) {
+async function placeForCursor(foundFile: string) {
   const deps = await buildInstallationDeps({ tools: registeredTools() });
   await initAndInstall(deps, PROJECT_ROOT, cursor);
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
   deps.fs.setFile(`/built/cursor/plugins/${CURSOR_SKILL}`, "# Demo skill");
-  if (foundFile !== undefined) deps.fs.setFile(join(FOUND_DIR, "skills/demo/SKILL.md"), foundFile);
+  deps.fs.setFile(join(FOUND_DIR, "skills/demo/SKILL.md"), foundFile);
   const registry = new FakeMarketplaceRegistry();
   registry.seed(PROJECT_ROOT, {
     name: "aidd-framework",
