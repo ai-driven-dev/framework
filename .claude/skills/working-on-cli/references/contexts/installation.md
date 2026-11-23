@@ -14,6 +14,8 @@ What the project records as installed, and how a tool's files are written, resto
 
 ## Rules
 
+- A plugin's installed version is `InstalledPlugin.version` (`domain/plugins/installed-plugin.ts`), saved in the manifest through `ManifestRepository`.
+
 - The manifest root delegates to `domain/manifest/`: a new tracked concept is a module there, never a field of the root. `isFileTracked` reads `files`, `mergeFiles` and each plugin's files; uninstall and clean delete merge files too.
 - The manifest reads exactly `MANIFEST_VERSION` and refuses any other, naming the fix.
 - An untracked config file that exists is the user's: `TrackedConfigFiles.isUserOwned` skips the write and warns.

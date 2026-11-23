@@ -22,6 +22,7 @@ CLI tree and where to add code: [`internal/cli/codebase-map.md`](internal/cli/co
 | --- | --- |
 | Binary | `cli/src/cli.ts`, built to `dist/cli.js`, bin `aidd` |
 | Workflow | `plugins/<plugin>/skills/<NN>-<name>/SKILL.md` |
+| Skill authoring | `plugins/aidd-context/skills/04-skill-generate/`: rules in `references/skill-authoring.md`, router in `assets/skill-template.md`; structure in [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md) |
 | Memory hook | `plugins/aidd-context/hooks/memory.cjs`: `load` on `SessionStart`, `sync` on `Stop` |
 
 ## Packages

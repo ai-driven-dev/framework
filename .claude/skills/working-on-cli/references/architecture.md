@@ -1,6 +1,6 @@
 # CLI architecture
 
-Dependency graph, edges and decisions: [architecture.md](../../../../aidd_docs/memory/internal/cli/architecture.md). Tree and where to add a thing: [codebase-map.md](../../../../aidd_docs/memory/internal/cli/codebase-map.md). Gates to run: [testing.md](../../../../aidd_docs/memory/internal/cli/testing.md). A rule here names its gate.
+Dependency graph, edges and decisions: [architecture.md](../../../../aidd_docs/memory/internal/cli/architecture.md). Tree and where to add a thing: [codebase-map.md](../../../../aidd_docs/memory/internal/cli/codebase-map.md). Gates to run: [testing.md](../../../../aidd_docs/memory/internal/cli/testing.md). Kinds, suffixes and folders: `cli/tests/architecture/kind-table.ts`, the guard's source of truth. A rule here names its gate.
 
 ## Imports
 
@@ -28,7 +28,7 @@ Dependency graph, edges and decisions: [architecture.md](../../../../aidd_docs/m
 - The domain (`model` and `profile` kinds) holds no clock, no logging and no module-level memo; `tests/architecture/kind-text-rules.arch.test.ts` enforces it. Take time from the clock port, return a fact instead of logging, keep a cache in application or infrastructure.
 - A port is declared by the side that needs it and named by capability. It declares no optional method and none nobody calls: `ports` rule of `kinds.rules.arch.test.ts`.
 - An adapter implements one port, is named `*Adapter`, lives in its owner's `infrastructure/`, and does I/O and format translation only.
-- A class takes its ports in the constructor, typed as the port. `composition/` holds one module per context plus the root and shared adapters (`composition` rule); `createContainer` builds a context's wiring on first read and keeps it per container.
+- A class takes its ports in the constructor, typed as the port. `composition/` holds one module per context in `composition/contexts/`, plus the root and shared adapters (`composition` rule); `createContainer` builds a context's wiring on first read and keeps it per container.
 - A use case: one file, one class named as the file, a public `execute`, a capped number of constructor dependencies (`shape` rule of `kinds.ts`; extract a collaborator when it grows), no `process` (`noRestrictedGlobals`; read the environment through `shared/ports/environment.ts`).
 - A tool id appears only in its profile and the registration list: `tool-addition-cost.arch.test.ts`. The GitHub API base only in `shared/infrastructure/github-adapter.ts`: `one-github-api-url.grit`.
 
