@@ -1,7 +1,6 @@
-import type { Environment } from "../../../shared/ports/environment.js";
+import type { BranchConfigBinding } from "../domain/branch-binding.js";
 import { type Binding, resolveBinding } from "../domain/declaration/binding-resolution.js";
 import type { BranchRole } from "../domain/declaration/branch-role.js";
-import { MEASUREMENT_SWITCH, measurementRefused } from "../domain/telemetry-consent.js";
 import type { SessionBindingStore } from "../ports/bindings/session-binding-store.js";
 import type { PersonIdentityStore } from "../ports/identity/person-identity-store.js";
 import type { ReadCurrentBranch } from "./declaration/read-current-branch.use-case.js";
@@ -28,17 +27,30 @@ export type ReadTelemetryStatusResult =
       readonly personId: string | null;
     };
 
-export interface ReadTelemetryStatusOptions {
-  readonly environment: Environment;
+/** What the running session's work is bound to, given the task its branch declares. */
+export type CurrentBinding = (branch: BranchConfigBinding | null) => Promise<Binding>;
+
+/** Resolves a binding at the moment it is asked, over the session's declarations and carries. */
+export function currentBindingOf(deps: {
+  readonly sessions: SessionBindingStore;
   readonly sessionId: string | null;
   readonly now: () => Date;
+}): CurrentBinding {
+  return async (branch) =>
+    resolveBinding({
+      sessionId: deps.sessionId,
+      at: deps.now(),
+      declarations: await deps.sessions.declarations(),
+      carries: await deps.sessions.carries(),
+      branch,
+    });
 }
 
 interface ReadTelemetryStatusDeps {
   readonly repositories: FindConsentedRepository;
-  readonly sessions: SessionBindingStore;
+  readonly bindingOf: CurrentBinding;
   readonly branches: ReadCurrentBranch;
-  readonly options: ReadTelemetryStatusOptions;
+  readonly sessionId: string | null;
   readonly identities: PersonIdentityStore;
 }
 
@@ -47,22 +59,14 @@ export class ReadTelemetryStatus {
   constructor(private readonly deps: ReadTelemetryStatusDeps) {}
 
   async execute({ cwd }: ReadTelemetryStatusRequest): Promise<ReadTelemetryStatusResult> {
-    if (measurementRefused(this.deps.options.environment.get(MEASUREMENT_SWITCH)))
-      return { status: "refused", reason: "environment" };
     const repository = await this.deps.repositories.execute(cwd);
     if (repository.status === "refused") return repository;
     const current = await this.deps.branches.execute(repository.root);
-    const binding = resolveBinding({
-      sessionId: this.deps.options.sessionId,
-      at: this.deps.options.now(),
-      declarations: await this.deps.sessions.declarations(),
-      carries: await this.deps.sessions.carries(),
-      branch: current.declared,
-    });
+    const binding = await this.deps.bindingOf(current.declared);
     return {
       status: "shown",
       since: repository.since,
-      sessionId: this.deps.options.sessionId,
+      sessionId: this.deps.sessionId,
       branch: current.name,
       role: current.role,
       binding,

@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 import { LoadConsentLog } from "../../../../src/contexts/telemetry/application/consent/load-consent-log.use-case.js";
 import { ReadCurrentBranch } from "../../../../src/contexts/telemetry/application/declaration/read-current-branch.use-case.js";
 import { FindConsentedRepository } from "../../../../src/contexts/telemetry/application/find-consented-repository.use-case.js";
-import { ReadTelemetryStatus } from "../../../../src/contexts/telemetry/application/read-telemetry-status.use-case.js";
+import {
+  currentBindingOf,
+  ReadTelemetryStatus,
+} from "../../../../src/contexts/telemetry/application/read-telemetry-status.use-case.js";
 import type { LocatedDirectory } from "../../../../src/contexts/telemetry/domain/resolution/located-directory.js";
 import { cloneOf, grantedBy } from "../testing/clone.builder.js";
 import { FakeBindings } from "../testing/fake-bindings.fake.js";
@@ -37,11 +40,17 @@ function setup(
   const branches = new FakeBranchStore();
   const source = new FakeBindings();
   const identities = new InMemoryIdentity();
+  const now = () => new Date("2026-10-09T12:00:00.000Z");
   const useCase = new ReadTelemetryStatus({
-    repositories: new FindConsentedRepository(locator, consents, new LoadConsentLog(history)),
-    sessions,
+    repositories: new FindConsentedRepository(
+      locator,
+      consents,
+      new LoadConsentLog(history),
+      environment
+    ),
+    bindingOf: currentBindingOf({ sessions, sessionId, now }),
     branches: new ReadCurrentBranch(branches, source),
-    options: { environment, sessionId, now: () => new Date("2026-10-09T12:00:00.000Z") },
+    sessionId,
     identities,
   });
   return { useCase, locator, consents, history, sessions, branches, source, identities };

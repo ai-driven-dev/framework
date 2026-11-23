@@ -16,13 +16,15 @@ import { repository } from "../testing/ingest-usage-setup.builder.js";
 const ROOT = "/work/a";
 const OPENED = "2026-10-01T00:00:00.000Z";
 
-function setup(located: LocatedDirectory = repository(ROOT)) {
+function setup(located: LocatedDirectory = repository(ROOT), switchValue?: string) {
   const locator = new FakeLocator();
   locator.directories.set(ROOT, located);
   const consents = new FakeConsents();
   const history = new InMemoryConsentHistory();
   const open = () =>
-    new FindConsentedRepository(locator, consents, new LoadConsentLog(history)).execute(ROOT);
+    new FindConsentedRepository(locator, consents, new LoadConsentLog(history), {
+      get: () => switchValue,
+    }).execute(ROOT);
   return { consents, history, open, located };
 }
 
@@ -40,6 +42,14 @@ describe("opening the repositories that consented", () => {
       root: ROOT,
       since: OPENED,
     });
+  });
+
+  it("refuses before reading anything when the environment turns measurement off", async () => {
+    const { consents, history, open, located } = setup(repository(ROOT), "0");
+    if (located.status !== "repository" || located.clone === null) throw new Error("setup");
+    history.consented(located.clone, OPENED);
+    consents.values.set(ROOT, grantedBy(located.clone));
+    expect(await open()).toEqual(refused("environment"));
   });
 
   it("refuses a directory outside any repository", async () => {

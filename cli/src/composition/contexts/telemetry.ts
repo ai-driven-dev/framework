@@ -4,7 +4,10 @@ import { join } from "node:path";
 import { LoadConsentLog } from "../../contexts/telemetry/application/consent/load-consent-log.use-case.js";
 import { RecordConsentEvent } from "../../contexts/telemetry/application/consent/record-consent-event.use-case.js";
 import { DeclareOnBranch } from "../../contexts/telemetry/application/declaration/declare-on-branch.use-case.js";
-import { DeclareTask } from "../../contexts/telemetry/application/declaration/declare-task.use-case.js";
+import {
+  DeclareTask,
+  sessionBindingOf,
+} from "../../contexts/telemetry/application/declaration/declare-task.use-case.js";
 import { ParseTaskFlags } from "../../contexts/telemetry/application/declaration/parse-task-flags.use-case.js";
 import { ReadCurrentBranch } from "../../contexts/telemetry/application/declaration/read-current-branch.use-case.js";
 import { DirectoryResolver } from "../../contexts/telemetry/application/directory-resolver.use-case.js";
@@ -17,7 +20,10 @@ import { ManageIdentity } from "../../contexts/telemetry/application/identity/ma
 import { ParseIdentityFlags } from "../../contexts/telemetry/application/identity/parse-identity-flags.use-case.js";
 import { ProposeIdentity } from "../../contexts/telemetry/application/identity/propose-identity.use-case.js";
 import { IngestUsage } from "../../contexts/telemetry/application/ingest-usage.use-case.js";
-import { ReadTelemetryStatus } from "../../contexts/telemetry/application/read-telemetry-status.use-case.js";
+import {
+  currentBindingOf,
+  ReadTelemetryStatus,
+} from "../../contexts/telemetry/application/read-telemetry-status.use-case.js";
 import { ReadUsage } from "../../contexts/telemetry/application/read-usage.use-case.js";
 import { CheckFilterValue } from "../../contexts/telemetry/application/report/check-filter-value.use-case.js";
 import { ParseReportFlags } from "../../contexts/telemetry/application/report/parse-report-flags.use-case.js";
@@ -152,6 +158,8 @@ function wireStores(root: string) {
 
 type Stores = ReturnType<typeof wireStores>;
 
+const processEnvironment = new EnvironmentAdapter();
+
 /** What git answers: the repositories, their consents and the branch a task is declared on. */
 function wireGit(stores: Stores) {
   const gitEnv = environmentWithoutGitVariables(process.env);
@@ -167,7 +175,8 @@ function wireGit(stores: Stores) {
     repositories: new FindConsentedRepository(
       locator,
       consents,
-      new LoadConsentLog(stores.consentHistory)
+      new LoadConsentLog(stores.consentHistory),
+      processEnvironment
     ),
     snapshotBindings: new SnapshotBindings({
       source: branchSource,
@@ -180,8 +189,6 @@ function wireGit(stores: Stores) {
 
 type Git = ReturnType<typeof wireGit>;
 
-const processEnvironment = new EnvironmentAdapter();
-
 const environment = {
   caseInsensitiveFileSystem: caseInsensitiveFileSystem(process.platform),
   now: () => new Date(),
@@ -189,26 +196,19 @@ const environment = {
 
 /** Declaring the task a person works on, and reading which one is declared. */
 function wireDeclaration(stores: Stores, git: Git) {
-  const declareOnBranch = new DeclareOnBranch(git.branchStore, git.snapshotBindings);
-  const readCurrentBranch = new ReadCurrentBranch(git.branchStore, git.branchSource);
-  const declaration = {
-    environment: processEnvironment,
-    sessionId: declaringSessionOf(process.env),
-    now: () => new Date(),
-  };
+  const session = { sessionId: declaringSessionOf(process.env), now: () => new Date() };
   return {
     declareTask: new DeclareTask({
       repositories: git.repositories,
-      sessions: stores.sessions,
-      branches: declareOnBranch,
-      lock: stores.bindingsLock,
-      options: declaration,
+      bindSession: sessionBindingOf(stores.sessions, stores.bindingsLock),
+      branches: new DeclareOnBranch(git.branchStore, git.snapshotBindings),
+      ...session,
     }),
     readTelemetryStatus: new ReadTelemetryStatus({
       repositories: git.repositories,
-      sessions: stores.sessions,
-      branches: readCurrentBranch,
-      options: declaration,
+      bindingOf: currentBindingOf({ sessions: stores.sessions, ...session }),
+      branches: new ReadCurrentBranch(git.branchStore, git.branchSource),
+      sessionId: session.sessionId,
       identities: stores.identity,
     }),
   };

@@ -1,8 +1,11 @@
+import type { Environment } from "../../../shared/ports/environment.js";
 import { repositoryIdOf } from "../domain/repository-identity.js";
 import type { LocatedDirectory } from "../domain/resolution/located-directory.js";
 import {
   type ConsentReading,
   consentOf,
+  MEASUREMENT_SWITCH,
+  measurementRefused,
   tokenOfKey,
   turnedOff,
 } from "../domain/telemetry-consent.js";
@@ -43,17 +46,20 @@ function keyRefusal(reading: ConsentReading): RefusalReason | null {
   return consent === "absent" && !turnedOff(reading) ? "no-consent" : null;
 }
 
-/** The repository a directory is in, when its clone is measured: its key names an interval
+/** The repository a directory is in, when its clone is measured: the environment does not turn
+ * measurement off, and its key names an interval
  * that is open for it, the same test the hooks make. A declaration is stored only for a clone
  * that asked to be measured, never for one whose key was set by hand or came with a copy. */
 export class FindConsentedRepository {
   constructor(
     private readonly locator: RepositoryLocator,
     private readonly consents: ConsentSource,
-    private readonly loadLog: LoadConsentLog
+    private readonly loadLog: LoadConsentLog,
+    private readonly environment: Environment
   ) {}
 
   async execute(cwd: string): Promise<ConsentedRepository> {
+    if (measurementRefused(this.environment.get(MEASUREMENT_SWITCH))) return refused("environment");
     const located = await this.locator.locate(cwd);
     if (located.status !== "repository") return refused(outsideReason(located));
     const repositoryId = repositoryIdOf(located);

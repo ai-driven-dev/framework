@@ -1,8 +1,6 @@
-import type { Environment } from "../../../../shared/ports/environment.js";
 import type { DeclarationRequest, DeclaredBy } from "../../contract/task-declaration.js";
 import type { TaskDeclaration } from "../../domain/declaration/task-declaration.js";
 import { declarationOf, lockWaitFor } from "../../domain/declaration/task-declaration.js";
-import { MEASUREMENT_SWITCH, measurementRefused } from "../../domain/telemetry-consent.js";
 import type { BindingsLock } from "../../ports/bindings/bindings-lock.js";
 import type { SessionBindingStore } from "../../ports/bindings/session-binding-store.js";
 import type {
@@ -27,20 +25,23 @@ export type DeclareTaskResult =
       readonly branch: DeclareOnBranchResult;
     };
 
-export interface DeclareOptions {
-  readonly environment: Environment;
-  /** `AIDD_TELEMETRY_SESSION_ID`, else `CLAUDE_CODE_SESSION_ID`, read by the composition root;
-   * `null` outside a session. */
-  readonly sessionId: string | null;
-  readonly now: () => Date;
+/** Appends a declaration to the running session's bindings. */
+export type BindSession = (sessionId: string, declaration: TaskDeclaration) => Promise<void>;
+
+/** The session line appended under the bindings lock, waiting as long as its declarer may. */
+export function sessionBindingOf(sessions: SessionBindingStore, lock: BindingsLock): BindSession {
+  return (sessionId, declaration) =>
+    lock.exclusively(() => sessions.append(sessionId, declaration), lockWaitFor(declaration.by));
 }
 
 interface DeclareTaskDeps {
   readonly repositories: FindConsentedRepository;
-  readonly sessions: SessionBindingStore;
+  readonly bindSession: BindSession;
   readonly branches: DeclareOnBranch;
-  readonly lock: BindingsLock;
-  readonly options: DeclareOptions;
+  /** `AIDD_TELEMETRY_SESSION_ID`, else `CLAUDE_CODE_SESSION_ID`, read by the composition root;
+   * `null` outside a session. */
+  readonly sessionId: string | null;
+  readonly now: () => Date;
 }
 
 /** Binds what a person works on to a task: the running session from now on, and the working
@@ -51,18 +52,11 @@ export class DeclareTask {
   constructor(private readonly deps: DeclareTaskDeps) {}
 
   async execute(input: DeclareTaskRequest): Promise<DeclareTaskResult> {
-    if (measurementRefused(this.deps.options.environment.get(MEASUREMENT_SWITCH)))
-      return { status: "refused", reason: "environment" };
     const repository = await this.deps.repositories.execute(input.cwd);
     if (repository.status === "refused") return repository;
-    const declaration = declarationOf(input.request, this.deps.options.now(), input.by);
-    const { sessionId } = this.deps.options;
-    if (sessionId !== null) {
-      await this.deps.lock.exclusively(
-        () => this.deps.sessions.append(sessionId, declaration),
-        lockWaitFor(declaration.by)
-      );
-    }
+    const declaration = declarationOf(input.request, this.deps.now(), input.by);
+    const { sessionId } = this.deps;
+    if (sessionId !== null) await this.deps.bindSession(sessionId, declaration);
     const branch = await this.deps.branches.execute({
       repositoryId: repository.repositoryId,
       root: repository.root,

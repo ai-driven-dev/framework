@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { LoadConsentLog } from "../../../../../src/contexts/telemetry/application/consent/load-consent-log.use-case.js";
 import { DeclareOnBranch } from "../../../../../src/contexts/telemetry/application/declaration/declare-on-branch.use-case.js";
-import { DeclareTask } from "../../../../../src/contexts/telemetry/application/declaration/declare-task.use-case.js";
+import {
+  DeclareTask,
+  sessionBindingOf,
+} from "../../../../../src/contexts/telemetry/application/declaration/declare-task.use-case.js";
 import { FindConsentedRepository } from "../../../../../src/contexts/telemetry/application/find-consented-repository.use-case.js";
 import { SnapshotBindings } from "../../../../../src/contexts/telemetry/application/snapshot-bindings.use-case.js";
 import type { DeclarationRequest } from "../../../../../src/contexts/telemetry/contract/task-declaration.js";
@@ -48,15 +51,13 @@ function setup(options: { refusedByEnvironment?: boolean; sessionId?: string | n
     now: () => new Date("2026-10-09T10:00:01.000Z"),
   });
   const useCase = new DeclareTask({
-    repositories: new FindConsentedRepository(locator, consents, new LoadConsentLog(history)),
-    sessions,
+    repositories: new FindConsentedRepository(locator, consents, new LoadConsentLog(history), {
+      get: () => (options.refusedByEnvironment ? "0" : undefined),
+    }),
+    bindSession: sessionBindingOf(sessions, lock),
     branches: new DeclareOnBranch(branches, snapshots),
-    lock,
-    options: {
-      environment: { get: () => (options.refusedByEnvironment ? "0" : undefined) },
-      sessionId: options.sessionId === undefined ? "sess-1234567890" : options.sessionId,
-      now: () => new Date("2026-10-09T10:00:00.000Z"),
-    },
+    sessionId: options.sessionId === undefined ? "sess-1234567890" : options.sessionId,
+    now: () => new Date("2026-10-09T10:00:00.000Z"),
   });
   return {
     useCase,
