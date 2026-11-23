@@ -5718,6 +5718,10 @@
       "plugins": ["./biome-plugins/one-github-api-url.grit"]
     },
     {
+      "includes": ["src/**"],
+      "plugins": ["./biome-plugins/no-process-exit-code.grit"]
+    },
+    {
       "includes": ["src/**", "!src/contexts/auth/**"],
       "plugins": ["./biome-plugins/token-owner.grit"]
     },

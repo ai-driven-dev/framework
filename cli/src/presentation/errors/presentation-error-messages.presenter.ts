@@ -4,4 +4,5 @@ import type { MessagesOf, PresentationOwners } from "./error-messages.types.js";
 export const PRESENTATION: MessagesOf<PresentationOwners> = {
   "unknown-tool": (error) =>
     `Unknown tool: ${error.raw}. Valid tools: ${error.validIds.join(", ")}`,
+  "recipe-validation-failed": (error) => `\n${error.report}`,
 };

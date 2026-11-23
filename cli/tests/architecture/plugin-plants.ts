@@ -55,4 +55,20 @@ export const PLUGIN_PLANTS: readonly Plant[] = [
     "plugin",
     0,
   ],
+  // The exit status is the exit's alone: no source file assigns process.exitCode, a string naming it stays.
+  ["src/presentation/controllers/sets-status.ts", "process.exitCode = 1;\n", "plugin", 1],
+  ["src/orchestration/sets-status.ts", "process.exitCode = 1;\n", "plugin", 1],
+  ["src/composition/sets-status.ts", "process.exitCode = 1;\n", "plugin", 1],
+  [
+    "src/presentation/controllers/reads-status.ts",
+    "export const c = process.exitCode;\n",
+    "plugin",
+    0,
+  ],
+  [
+    "src/presentation/controllers/names-status.ts",
+    'export const s = "process.exitCode=1";\n',
+    "plugin",
+    0,
+  ],
 ];
