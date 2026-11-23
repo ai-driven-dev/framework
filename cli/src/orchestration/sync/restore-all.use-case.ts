@@ -3,6 +3,7 @@ import type {
   OpenRestore,
   RestoreGlobal,
 } from "../../contexts/installation/application/restore/project/restore-global.use-case.js";
+import { restorableDrift } from "../../contexts/installation/application/status/tool-file-drift.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
 import type { GlobalExecutionError } from "../global-execution.js";
 import type { Prompter } from "../ports/prompter.js";
@@ -70,11 +71,7 @@ export class RestoreAll {
     manifest: OpenRestore["manifest"]
   ): Promise<string[] | undefined> {
     const report = await this.reportStatus.execute({ projectRoot, manifest });
-    const driftedFiles = report.tools.flatMap((t) =>
-      t.drifted
-        .filter((d) => d.status === "modified" || d.status === "deleted")
-        .map((d) => d.relativePath)
-    );
+    const driftedFiles = report.tools.flatMap((t) => restorableDrift(t.drifted));
     if (driftedFiles.length === 0) return undefined;
     return this.prompter.checkbox(
       "Select files to restore:",

@@ -1,8 +1,10 @@
 import type { ResolvePluginSource } from "../../contexts/distribution/application/plugin-source/resolve-plugin-source.use-case.js";
 import type { PluginCatalogEntry } from "../../contexts/distribution/contract/catalog.js";
-import type { RequestedVersionPolicy } from "../../contexts/distribution/contract/requested-version-policy.js";
+import {
+  catalogVersionRequirement,
+  type RequestedVersionPolicy,
+} from "../../contexts/distribution/contract/requested-version-policy.js";
 import type { PluginAdd } from "../../contexts/installation/application/plugin/add/plugin-add.js";
-import { VersionMismatchError } from "../../shared/domain/shared.error.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
 import type { Logger } from "../../shared/ports/logger.js";
 import type { Prompter } from "../ports/prompter.js";
@@ -42,7 +44,6 @@ export class InstallFromMarketplace implements PluginInstallFromMarketplace {
   constructor(private readonly deps: InstallFromMarketplaceDeps) {}
 
   async execute(options: InstallFromMarketplaceRequest): Promise<InstallFromMarketplaceResult> {
-    const policy = options.requestedVersionPolicy ?? "strict";
     const matches = await this.deps.resolvePluginSource.execute({
       pluginName: options.pluginName,
       projectRoot: options.projectRoot,
@@ -54,11 +55,7 @@ export class InstallFromMarketplace implements PluginInstallFromMarketplace {
       interactive: options.interactive,
       autoSelect: options.autoSelect ?? false,
     });
-    const requiredVersion = this.assertOrCoerceCatalogVersion(
-      chosen.entry,
-      options.version,
-      policy
-    );
+    const requiredVersion = this.requiredVersion(chosen.entry, options);
     await this.deps.addPlugin.execute({
       source: chosen.source,
       toolIds: options.toolIds,
@@ -77,24 +74,20 @@ export class InstallFromMarketplace implements PluginInstallFromMarketplace {
     return { marketplaceName: chosen.marketplaceName, entry: chosen.entry };
   }
 
-  // Catalog-level version check. Policy controls whether mismatch is fatal or silent.
-  // Plugin-level (plugin.json) check happens in AddPlugin.
-  private assertOrCoerceCatalogVersion(
+  private requiredVersion(
     entry: PluginCatalogEntry,
-    requested: string | undefined,
-    policy: RequestedVersionPolicy
+    options: InstallFromMarketplaceRequest
   ): string | undefined {
-    if (policy === "prefer-catalog") {
-      if (requested && entry.version && entry.version !== requested) {
-        this.deps.logger?.info(
-          `Plugin '${entry.name}': catalog version ${entry.version} differs from requested ${requested}; using catalog version.`
-        );
-      }
-      // prefer-catalog always bypasses both the catalog-entry check (this site)
-      // and the downstream plugin.json on-disk check in AddPlugin.
-      return undefined;
+    const { requiredVersion, overridden } = catalogVersionRequirement(
+      entry,
+      options.version,
+      options.requestedVersionPolicy ?? "strict"
+    );
+    if (overridden) {
+      this.deps.logger?.info(
+        `Plugin '${entry.name}': catalog version ${entry.version} differs from requested ${options.version}; using catalog version.`
+      );
     }
-    if (!requested || !entry.version || entry.version === requested) return requested;
-    throw new VersionMismatchError(entry.name, requested, entry.version);
+    return requiredVersion;
   }
 }

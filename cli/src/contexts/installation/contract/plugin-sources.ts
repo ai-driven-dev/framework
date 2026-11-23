@@ -6,3 +6,12 @@ export interface PluginSource {
   readonly plugin: string;
   readonly marketplace: string;
 }
+
+/** The installed plugins of a marketplace whose catalog no longer names them. */
+export function upstreamRemoved(
+  installed: readonly PluginSource[],
+  marketplace: string,
+  listed: ReadonlySet<string>
+): PluginSource[] {
+  return installed.filter((s) => s.marketplace === marketplace && !listed.has(s.plugin));
+}

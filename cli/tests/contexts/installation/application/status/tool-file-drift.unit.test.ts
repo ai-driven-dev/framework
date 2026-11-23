@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   addedFileDrift,
   mergeFileDrift,
+  restorableDrift,
   trackedFileDrift,
 } from "../../../../../src/contexts/installation/application/status/tool-file-drift.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
@@ -90,5 +91,16 @@ describe("looking for files the install did not write", () => {
     const fs = new InMemoryFileAdapter({}, [ROOT]);
 
     expect(await addedFileDrift(fs, scan)).toEqual([]);
+  });
+});
+
+describe("choosing which drifted files a restore can bring back", () => {
+  it("keeps the files the install wrote and lost, never one the person added", () => {
+    const drift = [
+      { relativePath: "a", status: "modified" as const },
+      { relativePath: "b", status: "deleted" as const },
+      { relativePath: "c", status: "added" as const },
+    ];
+    expect(restorableDrift(drift)).toEqual(["a", "b"]);
   });
 });

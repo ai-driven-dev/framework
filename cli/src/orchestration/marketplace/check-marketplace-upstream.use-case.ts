@@ -3,7 +3,10 @@ import type { ResolveMarketplace } from "../../contexts/distribution/application
 import type { StaleMarketplace } from "../../contexts/distribution/contract/marketplace-catalogs.js";
 import type { MarketplaceView } from "../../contexts/distribution/contract/marketplace-view.js";
 import type { ListPluginSources } from "../../contexts/installation/application/marketplace/list-plugin-sources.use-case.js";
-import type { PluginSource } from "../../contexts/installation/contract/plugin-sources.js";
+import {
+  type PluginSource,
+  upstreamRemoved,
+} from "../../contexts/installation/contract/plugin-sources.js";
 
 export interface CheckMarketplaceUpstreamRequest {
   projectRoot: string;
@@ -49,14 +52,10 @@ export class CheckMarketplaceUpstream {
     const skipped: SkippedMarketplace[] = readings.flatMap(({ marketplace, plugins, error }) =>
       plugins === null && error !== undefined ? [{ marketplace, error }] : []
     );
-    const upstreamRemoved: UpstreamRemoved[] = readings.flatMap(({ marketplace, plugins }) =>
-      plugins === null
-        ? []
-        : installed
-            .filter((source) => source.marketplace === marketplace && !plugins.has(source.plugin))
-            .map((source) => ({ marketplace, plugin: source.plugin, toolId: source.toolId }))
+    const removed: UpstreamRemoved[] = readings.flatMap(({ marketplace, plugins }) =>
+      plugins === null ? [] : upstreamRemoved(installed, marketplace, plugins)
     );
-    return { stale, upstreamRemoved, skipped };
+    return { stale, upstreamRemoved: removed, skipped };
   }
 
   private async readEach(
