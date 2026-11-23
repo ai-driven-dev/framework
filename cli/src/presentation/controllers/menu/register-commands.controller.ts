@@ -2,6 +2,7 @@ import type { Command } from "commander";
 import type { CommandRunner, DepsFactory, TelemetryRequests } from "../../../orchestration/deps.js";
 import { registerAuthCommand } from "../auth.controller.js";
 import { registerDoctorCommand } from "../doctor/doctor.controller.js";
+import type { DoctorContainer } from "../doctor/doctor-run.controller.js";
 import { registerMarketplaceCommand } from "../plugin/marketplace.controller.js";
 import { registerPluginCommand } from "../plugin/plugin.controller.js";
 import { type CleanContainer, registerCleanCommand } from "../setup/clean.controller.js";
@@ -19,7 +20,7 @@ import {
 } from "./global-options.controller.js";
 
 /** Every context the commands read: the real container carries them all. */
-type CommandsContainer = CleanContainer;
+type CommandsContainer = CleanContainer & DoctorContainer;
 
 /** The commands of the binary, in the order `aidd --help` lists them. The binary and the in-process
  * test runner both call it, so a command added here is in both. */
@@ -45,7 +46,7 @@ export function registerCommands(
   registerAuthCommand(program, createSlice);
   registerSyncCommand(program, createSlice);
   registerUpdateCommand(program, createSlice);
-  registerDoctorCommand(program, tools, createSlice);
+  registerDoctorCommand(program, tools, containerOf);
   registerCleanCommand(program, containerOf);
   registerTelemetryCommand(program, createSlice, telemetryRequests);
 }

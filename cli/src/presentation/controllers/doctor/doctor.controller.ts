@@ -1,19 +1,19 @@
 import type { Command } from "commander";
 import type { ToolCatalog } from "../../../contexts/tools/contract/tool-catalog.js";
-import type { DepsSliceFactory } from "../../../orchestration/deps.js";
 import {
+  type ContainerFactory,
   GLOBAL_FLAG_HELP,
   parseGlobalOptions,
   resolveScopeFlags,
 } from "../menu/global-options.controller.js";
 import { runFullDoctor, runScopedDoctor } from "./doctor-project.controller.js";
-import type { DoctorCmdOptions, DoctorKeys } from "./doctor-run.controller.js";
+import type { DoctorCmdOptions, DoctorContainer } from "./doctor-run.controller.js";
 import { runUserScopeDoctor } from "./doctor-user-scope.controller.js";
 
 export function registerDoctorCommand(
   program: Command,
   tools: ToolCatalog,
-  createDeps: DepsSliceFactory<DoctorKeys>
+  containerOf: ContainerFactory<DoctorContainer>
 ): void {
   program
     .command("doctor")
@@ -30,13 +30,13 @@ export function registerDoctorCommand(
     .option("--global", GLOBAL_FLAG_HELP)
     .action(async (cmdOptions: DoctorCmdOptions) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const deps = await createDeps(projectRoot, { verbose }, output);
+      const container = await containerOf(projectRoot, { verbose }, output);
       const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
       if (scope === "user") {
-        await runUserScopeDoctor({ tools, deps, output, projectRoot, cmdOptions });
+        await runUserScopeDoctor({ tools, container, output, projectRoot, cmdOptions });
       } else if (cmdOptions.tool !== undefined) {
         await runScopedDoctor({
-          deps,
+          container,
           output,
           projectRoot,
           toolId: cmdOptions.tool,
@@ -44,7 +44,7 @@ export function registerDoctorCommand(
           pluginName: cmdOptions.plugin,
         });
       } else {
-        await runFullDoctor({ deps, output, projectRoot, pluginName: cmdOptions.plugin });
+        await runFullDoctor({ container, output, projectRoot, pluginName: cmdOptions.plugin });
       }
     });
 }

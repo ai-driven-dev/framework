@@ -1,19 +1,28 @@
-import type { Deps } from "../../../orchestration/deps.js";
+import type { ReportStatus } from "../../../contexts/installation/application/report-status.use-case.js";
+import type { DoctorAll } from "../../../orchestration/doctor/doctor-all.js";
+import type { ReportAllStatus } from "../../../orchestration/doctor/report-all-status.js";
+import type { RunDoctor } from "../../../orchestration/doctor/run-doctor.use-case.js";
+import type { RunUserScopeDoctor } from "../../../orchestration/doctor/run-user-scope-doctor.use-case.js";
 import type { Output } from "../../../orchestration/domain/output.js";
 
-/** What this command reads of the graph. */
-export type DoctorKeys =
-  | "doctorAll"
-  | "reportAllStatus"
-  | "runDoctor"
-  | "reportStatus"
-  | "runUserScopeDoctor"
-  | "userSettingsFileOf"
-  | "environment";
+/** What this command reads of the container. */
+export interface DoctorContainer {
+  doctor: {
+    doctorAll: { execute: DoctorAll };
+    runDoctor: Pick<RunDoctor, "execute">;
+    runUserScopeDoctor: Pick<RunUserScopeDoctor, "execute">;
+    /** The settings file a tool's host keeps at user scope, or undefined when it has none. */
+    userSettingsFileOf: (toolId: string) => string | undefined;
+  };
+  global: {
+    reportAllStatus: { execute: ReportAllStatus };
+    reportStatus: Pick<ReportStatus, "execute">;
+  };
+}
 
-/** What every doctor run is given: the graph it reads, where it writes, and the project it checks. */
+/** What every doctor run is given: the container it reads, where it writes, and the project it checks. */
 export interface DoctorRun {
-  deps: Pick<Deps, DoctorKeys>;
+  container: DoctorContainer;
   output: Output;
   projectRoot: string;
 }
