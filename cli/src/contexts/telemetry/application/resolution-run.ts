@@ -12,6 +12,8 @@ import {
   verdictOn,
 } from "../domain/resolution/resolution-judgement.js";
 import { type CloneConsentReading, tokenOfKey } from "../domain/telemetry-consent.js";
+import type { ConsentSource } from "../ports/consent-source.js";
+import type { RepositoryLocator } from "../ports/repository-locator.js";
 
 /** What the machine decides for a run: how it spells a directory, and what time it is. */
 export interface ResolutionEnvironment {
@@ -111,4 +113,24 @@ export function startResolutionRun(deps: ResolutionRunDeps): ResolutionRun {
       return verdictOn(await directoryOf(cwd), { cwd, at, closed }, state());
     },
   };
+}
+
+/** What a run starts from: what the store remembered, and the consent log as it was observed. */
+export type ResolutionStart = Pick<ResolutionRunDeps, "remembered" | "consents" | "unreadable">;
+
+export type StartResolutionRun = (start: ResolutionStart) => ResolutionRun;
+
+/** Runs bound to the machine: the directories it locates, its clones' keys, its clock. */
+export function resolutionRunOf(
+  locator: RepositoryLocator,
+  consentSource: ConsentSource,
+  environment: ResolutionEnvironment
+): StartResolutionRun {
+  return (start) =>
+    startResolutionRun({
+      ...start,
+      locate: (cwd) => locator.locate(cwd),
+      readClone: (clone) => consentSource.readClone(clone),
+      environment,
+    });
 }

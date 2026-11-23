@@ -1,5 +1,3 @@
-import { LoadConsentLog } from "../../../../src/contexts/telemetry/application/consent/load-consent-log.use-case.js";
-import { RecordConsentEvent } from "../../../../src/contexts/telemetry/application/consent/record-consent-event.use-case.js";
 import { DisableTelemetry } from "../../../../src/contexts/telemetry/application/switch/disable-telemetry.use-case.js";
 
 import { EnableTelemetry } from "../../../../src/contexts/telemetry/application/switch/enable-telemetry.use-case.js";
@@ -67,7 +65,7 @@ export function setup() {
   const grant = new GrantConsent({
     consents,
     writer,
-    consent: { load: new LoadConsentLog(history), record: new RecordConsentEvent(history) },
+    history: history,
     ledger,
     newInterval: () => ({
       token: `tok-${++minted}`,
@@ -76,7 +74,7 @@ export function setup() {
   });
   const withdraw = new WithdrawConsent({
     writer,
-    consent: { load: new LoadConsentLog(history), record: new RecordConsentEvent(history) },
+    history: history,
     ledger,
     now: () => clock.now,
   });

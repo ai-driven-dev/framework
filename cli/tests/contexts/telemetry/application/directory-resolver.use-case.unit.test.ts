@@ -1,9 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { LoadConsentLog } from "../../../../src/contexts/telemetry/application/consent/load-consent-log.use-case.js";
-import { RecordConsentEvent } from "../../../../src/contexts/telemetry/application/consent/record-consent-event.use-case.js";
-import { DirectoryResolver } from "../../../../src/contexts/telemetry/application/directory-resolver.use-case.js";
 import { cloneKey } from "../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import { cloneOf, grantedBy, tokenOf } from "../testing/clone.builder.js";
+import { directoryResolverOf } from "../testing/directory-resolver.builder.js";
 import { FakeConsents } from "../testing/fake-consents.fake.js";
 import { FakeLocator } from "../testing/fake-locator.fake.js";
 import { InMemoryConsentHistory } from "../testing/in-memory-consent-history.fake.js";
@@ -15,11 +13,11 @@ function world() {
   const consents = new FakeConsents();
   const resolutions = new InMemoryResolutions();
   const history = new InMemoryConsentHistory();
-  const resolver = new DirectoryResolver({
+  const resolver = directoryResolverOf({
     locator,
     consentSource: consents,
     store: resolutions,
-    consent: { load: new LoadConsentLog(history), record: new RecordConsentEvent(history) },
+    history: history,
     environment: {
       caseInsensitiveFileSystem: false,
       now: () => NOW,

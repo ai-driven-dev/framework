@@ -1,13 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { LoadConsentLog } from "../../../../../src/contexts/telemetry/application/consent/load-consent-log.use-case.js";
-import { RecordConsentEvent } from "../../../../../src/contexts/telemetry/application/consent/record-consent-event.use-case.js";
-import { DirectoryResolver } from "../../../../../src/contexts/telemetry/application/directory-resolver.use-case.js";
 import { RememberOwnRoot } from "../../../../../src/contexts/telemetry/application/switch/remember-own-root.use-case.js";
 import {
   type RepositoryResolution,
   resolutionKey,
 } from "../../../../../src/contexts/telemetry/domain/repository-resolution.js";
 import { cloneOf } from "../../testing/clone.builder.js";
+import { directoryResolverOf } from "../../testing/directory-resolver.builder.js";
 import {
   deleted,
   ID,
@@ -161,11 +159,11 @@ describe("aidd telemetry on", () => {
     ) {
       s.resolutions.resolutions.set(resolutionKey(entry.dir, entry.clone), entry);
       await s.on.execute({ cwd: "/w/repo", choice: "keep" });
-      return new DirectoryResolver({
+      return directoryResolverOf({
         locator: s.locator,
         consentSource: s.consents,
         store: s.resolutions,
-        consent: { load: new LoadConsentLog(s.history), record: new RecordConsentEvent(s.history) },
+        history: s.history,
         environment: {
           caseInsensitiveFileSystem: false,
           now: () => s.clock.now,

@@ -2,7 +2,6 @@ import { randomUUID } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { LoadConsentLog } from "../../contexts/telemetry/application/consent/load-consent-log.use-case.js";
-import { RecordConsentEvent } from "../../contexts/telemetry/application/consent/record-consent-event.use-case.js";
 import { DeclareOnBranch } from "../../contexts/telemetry/application/declaration/declare-on-branch.use-case.js";
 import {
   DeclareTask,
@@ -30,6 +29,7 @@ import { ParseReportFlags } from "../../contexts/telemetry/application/report/pa
 import { ReadDeclaredBindings } from "../../contexts/telemetry/application/report/read-declared-bindings.use-case.js";
 import { ReportUsage } from "../../contexts/telemetry/application/report/report-usage.use-case.js";
 import { RequestReport } from "../../contexts/telemetry/application/report/request-report.use-case.js";
+import { resolutionRunOf } from "../../contexts/telemetry/application/resolution-run.js";
 import { SnapshotBindings } from "../../contexts/telemetry/application/snapshot-bindings.use-case.js";
 import { CheckTelemetryOn } from "../../contexts/telemetry/application/switch/check-telemetry-on.use-case.js";
 import { DisableTelemetry } from "../../contexts/telemetry/application/switch/disable-telemetry.use-case.js";
@@ -70,7 +70,6 @@ import { ResolutionStoreAdapter } from "../../contexts/telemetry/infrastructure/
 import { UsageLedgerAdapter } from "../../contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { MeasurementErasureAdapter } from "../../contexts/telemetry/infrastructure/storage/measurement-erasure-adapter.js";
 import { PersonIdentityAdapter } from "../../contexts/telemetry/infrastructure/storage/person-identity-adapter.js";
-import type { ConsentHistory } from "../../contexts/telemetry/ports/consent-history.js";
 import type { UsageSource } from "../../contexts/telemetry/ports/usage-source.js";
 import type { TelemetryDeps, TelemetryRequests } from "../../orchestration/deps.js";
 import type { Prompter } from "../../orchestration/ports/prompter.js";
@@ -81,11 +80,6 @@ import type { PrivateStorage } from "../../shared/ports/private-storage.js";
 import { userConfigDirOf } from "../user-config-dir.js";
 
 /** The requests a command checks before anything is wired: no file, no process, only the clock. */
-const consentLogOver = (history: ConsentHistory) => ({
-  load: new LoadConsentLog(history),
-  record: new RecordConsentEvent(history),
-});
-
 export function wireTelemetryRequests(): TelemetryRequests {
   return {
     parseTaskFlags: new ParseTaskFlags(),
@@ -227,11 +221,11 @@ function wireMeasurement(stores: Stores, git: Git, homedir: () => string) {
     readers: usageSources.map((source) => new ReadUsage(source)),
     ledger: stores.ledger,
     directories: new DirectoryResolver({
-      locator: git.locator,
       consentSource: git.consents,
       store: stores.resolutionStore,
-      consent: consentLogOver(stores.consentHistory),
-      environment,
+      history: stores.consentHistory,
+      startRun: resolutionRunOf(git.locator, git.consents, environment),
+      now: environment.now,
     }),
     snapshots: git.snapshotBindings,
     options: { environment: processEnvironment },
@@ -299,7 +293,7 @@ function wireConsent(stores: Stores, git: Git, homedir: () => string) {
       grant: new GrantConsent({
         consents,
         writer: consents,
-        consent: consentLogOver(consentHistory),
+        history: consentHistory,
         ledger,
         newInterval: () => ({
           token: randomUUID(),
@@ -313,7 +307,7 @@ function wireConsent(stores: Stores, git: Git, homedir: () => string) {
       cloneConsent,
       new WithdrawConsent({
         writer: consents,
-        consent: consentLogOver(consentHistory),
+        history: consentHistory,
         ledger,
         now: environment.now,
       })

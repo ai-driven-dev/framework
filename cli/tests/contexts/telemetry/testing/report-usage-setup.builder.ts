@@ -1,6 +1,3 @@
-import { LoadConsentLog } from "../../../../src/contexts/telemetry/application/consent/load-consent-log.use-case.js";
-import { RecordConsentEvent } from "../../../../src/contexts/telemetry/application/consent/record-consent-event.use-case.js";
-import { DirectoryResolver } from "../../../../src/contexts/telemetry/application/directory-resolver.use-case.js";
 import { IngestUsage } from "../../../../src/contexts/telemetry/application/ingest-usage.use-case.js";
 import { ReadUsage } from "../../../../src/contexts/telemetry/application/read-usage.use-case.js";
 import { ReadDeclaredBindings } from "../../../../src/contexts/telemetry/application/report/read-declared-bindings.use-case.js";
@@ -9,6 +6,7 @@ import { SnapshotBindings } from "../../../../src/contexts/telemetry/application
 import type { Period } from "../../../../src/contexts/telemetry/contract/period.js";
 import type { ReportAxis } from "../../../../src/contexts/telemetry/contract/usage-report.js";
 import { cloneOf, grantedBy } from "./clone.builder.js";
+import { directoryResolverOf } from "./directory-resolver.builder.js";
 import { FakeBindings } from "./fake-bindings.fake.js";
 import { FakeConsents } from "./fake-consents.fake.js";
 import { FakeLocator } from "./fake-locator.fake.js";
@@ -65,11 +63,11 @@ export function setup(options: { refused?: boolean } = {}) {
   const ingest = new IngestUsage({
     readers: [new ReadUsage(transcripts)],
     ledger,
-    directories: new DirectoryResolver({
+    directories: directoryResolverOf({
       locator,
       consentSource: consents,
       store: new InMemoryResolutions(),
-      consent: { load: new LoadConsentLog(history), record: new RecordConsentEvent(history) },
+      history: history,
       environment: {
         caseInsensitiveFileSystem: false,
         now: () => new Date("2026-10-09T00:00:00.000Z"),

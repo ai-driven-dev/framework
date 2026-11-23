@@ -4,9 +4,6 @@ import { join } from "node:path";
 import * as zlib from "node:zlib";
 import * as fc from "fast-check";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { LoadConsentLog } from "../../../../src/contexts/telemetry/application/consent/load-consent-log.use-case.js";
-import { RecordConsentEvent } from "../../../../src/contexts/telemetry/application/consent/record-consent-event.use-case.js";
-import { DirectoryResolver } from "../../../../src/contexts/telemetry/application/directory-resolver.use-case.js";
 import {
   IngestUsage,
   type IngestUsageResult,
@@ -17,6 +14,7 @@ import { ClaudeUsageSourceAdapter } from "../../../../src/contexts/telemetry/inf
 import { CodexUsageSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/codex/codex-usage-source-adapter.js";
 import { PrivateStorageAdapter } from "../../../../src/shared/infrastructure/private-storage-adapter.js";
 import { cloneOf, grantedBy } from "../testing/clone.builder.js";
+import { directoryResolverOf } from "../testing/directory-resolver.builder.js";
 import { FakeBindings } from "../testing/fake-bindings.fake.js";
 import { FakeConsents } from "../testing/fake-consents.fake.js";
 import { FakeLocator } from "../testing/fake-locator.fake.js";
@@ -71,11 +69,11 @@ function machine(sessions: string, projects?: string) {
       ...(projects === undefined ? [] : [new ReadUsage(new ClaudeUsageSourceAdapter(projects))]),
     ],
     ledger,
-    directories: new DirectoryResolver({
+    directories: directoryResolverOf({
       locator,
       consentSource: consents,
       store: new InMemoryResolutions(),
-      consent: { load: new LoadConsentLog(history), record: new RecordConsentEvent(history) },
+      history: history,
       environment: {
         caseInsensitiveFileSystem: false,
         now: () => NOW,

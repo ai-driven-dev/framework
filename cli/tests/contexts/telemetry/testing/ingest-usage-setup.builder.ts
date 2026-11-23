@@ -1,13 +1,11 @@
 import { createHash } from "node:crypto";
-import { LoadConsentLog } from "../../../../src/contexts/telemetry/application/consent/load-consent-log.use-case.js";
-import { RecordConsentEvent } from "../../../../src/contexts/telemetry/application/consent/record-consent-event.use-case.js";
-import { DirectoryResolver } from "../../../../src/contexts/telemetry/application/directory-resolver.use-case.js";
 import { IngestUsage } from "../../../../src/contexts/telemetry/application/ingest-usage.use-case.js";
 import { ReadUsage } from "../../../../src/contexts/telemetry/application/read-usage.use-case.js";
 import { SnapshotBindings } from "../../../../src/contexts/telemetry/application/snapshot-bindings.use-case.js";
 import type { LocatedDirectory } from "../../../../src/contexts/telemetry/domain/resolution/located-directory.js";
 import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
 import { cloneOf, grantedBy } from "./clone.builder.js";
+import { directoryResolverOf } from "./directory-resolver.builder.js";
 import { FakeBindings } from "./fake-bindings.fake.js";
 import { FakeConsents } from "./fake-consents.fake.js";
 import { FakeLocator } from "./fake-locator.fake.js";
@@ -104,11 +102,11 @@ export function setup(options: { refused?: boolean; caseInsensitive?: boolean } 
       new ReadUsage(other),
     ],
     ledger,
-    directories: new DirectoryResolver({
+    directories: directoryResolverOf({
       locator,
       consentSource: consents,
       store: resolutions,
-      consent: { load: new LoadConsentLog(history), record: new RecordConsentEvent(history) },
+      history: history,
       environment: {
         caseInsensitiveFileSystem: options.caseInsensitive ?? false,
         now: () => NOW,
@@ -129,11 +127,11 @@ export function setup(options: { refused?: boolean; caseInsensitive?: boolean } 
     new IngestUsage({
       readers: [transcripts, other].map((source) => new ReadUsage(source)),
       ledger,
-      directories: new DirectoryResolver({
+      directories: directoryResolverOf({
         locator,
         consentSource: consents,
         store: resolutions,
-        consent: { load: new LoadConsentLog(history), record: new RecordConsentEvent(history) },
+        history: history,
         environment: {
           caseInsensitiveFileSystem: options.caseInsensitive ?? false,
           now: () => NOW,

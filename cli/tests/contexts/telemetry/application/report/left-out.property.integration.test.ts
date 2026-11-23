@@ -3,9 +3,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import * as fc from "fast-check";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { LoadConsentLog } from "../../../../../src/contexts/telemetry/application/consent/load-consent-log.use-case.js";
-import { RecordConsentEvent } from "../../../../../src/contexts/telemetry/application/consent/record-consent-event.use-case.js";
-import { DirectoryResolver } from "../../../../../src/contexts/telemetry/application/directory-resolver.use-case.js";
 import { IngestUsage } from "../../../../../src/contexts/telemetry/application/ingest-usage.use-case.js";
 import { ReadUsage } from "../../../../../src/contexts/telemetry/application/read-usage.use-case.js";
 import { ReadDeclaredBindings } from "../../../../../src/contexts/telemetry/application/report/read-declared-bindings.use-case.js";
@@ -16,6 +13,7 @@ import { reportEnvelopeOf } from "../../../../../src/contexts/telemetry/contract
 import { cloneKey } from "../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import { PrivateStorageAdapter } from "../../../../../src/shared/infrastructure/private-storage-adapter.js";
 import { cloneOf, grantedBy } from "../../testing/clone.builder.js";
+import { directoryResolverOf } from "../../testing/directory-resolver.builder.js";
 import { FakeBindings } from "../../testing/fake-bindings.fake.js";
 import { FakeConsents } from "../../testing/fake-consents.fake.js";
 import { FakeLocator } from "../../testing/fake-locator.fake.js";
@@ -208,11 +206,11 @@ function machine() {
   const ingest = new IngestUsage({
     readers: [new ReadUsage(transcripts)],
     ledger,
-    directories: new DirectoryResolver({
+    directories: directoryResolverOf({
       locator,
       consentSource: consents,
       store: new InMemoryResolutions(),
-      consent: { load: new LoadConsentLog(history), record: new RecordConsentEvent(history) },
+      history: history,
       environment: {
         caseInsensitiveFileSystem: false,
         now: () => NOW,

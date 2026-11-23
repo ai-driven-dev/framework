@@ -3,9 +3,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import * as fc from "fast-check";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { LoadConsentLog } from "../../../../../src/contexts/telemetry/application/consent/load-consent-log.use-case.js";
-import { RecordConsentEvent } from "../../../../../src/contexts/telemetry/application/consent/record-consent-event.use-case.js";
-import { DirectoryResolver } from "../../../../../src/contexts/telemetry/application/directory-resolver.use-case.js";
 import {
   IngestUsage,
   type IngestUsageResult,
@@ -34,6 +31,7 @@ import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/s
 import type { UsageLedgerAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import type { UsageLedger } from "../../../../../src/contexts/telemetry/ports/usage-ledger.js";
 import { PrivateStorageAdapter } from "../../../../../src/shared/infrastructure/private-storage-adapter.js";
+import { directoryResolverOf } from "../../testing/directory-resolver.builder.js";
 import { FakeBindings } from "../../testing/fake-bindings.fake.js";
 import { FakeConsents } from "../../testing/fake-consents.fake.js";
 import { FakeLocator } from "../../testing/fake-locator.fake.js";
@@ -218,14 +216,11 @@ function ingestOf(ledger: UsageLedger): IngestUsage {
   return new IngestUsage({
     readers: [],
     ledger,
-    directories: new DirectoryResolver({
+    directories: directoryResolverOf({
       locator: new FakeLocator(),
       consentSource: new FakeConsents(),
       store: new InMemoryResolutions(),
-      consent: {
-        load: new LoadConsentLog(consentHistory),
-        record: new RecordConsentEvent(consentHistory),
-      },
+      history: consentHistory,
       environment: { caseInsensitiveFileSystem: false, now },
     }),
     snapshots: new SnapshotBindings({

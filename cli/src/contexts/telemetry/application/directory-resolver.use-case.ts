@@ -1,25 +1,19 @@
 import { cloneKey } from "../domain/consent/clone-identity.js";
 import { closeEvent } from "../domain/consent/consent-history.js";
-import type { ConsentLog } from "../domain/consent/consent-log.js";
+import { ConsentLog } from "../domain/consent/consent-log.js";
 import { RememberedResolutions } from "../domain/remembered-resolutions.js";
 import { tokenOfKey } from "../domain/telemetry-consent.js";
+import type { ConsentHistory } from "../ports/consent-history.js";
 import type { ConsentSource } from "../ports/consent-source.js";
-import type { RepositoryLocator } from "../ports/repository-locator.js";
 import type { ResolutionStore } from "../ports/resolution-store.js";
-import type { LoadConsentLog } from "./consent/load-consent-log.use-case.js";
-import type { RecordConsentEvent } from "./consent/record-consent-event.use-case.js";
-import {
-  type ResolutionEnvironment,
-  type ResolutionRun,
-  startResolutionRun,
-} from "./resolution-run.js";
+import type { ResolutionRun, StartResolutionRun } from "./resolution-run.js";
 
 interface DirectoryResolverDeps {
-  readonly locator: RepositoryLocator;
   readonly consentSource: ConsentSource;
   readonly store: ResolutionStore;
-  readonly consent: { readonly load: LoadConsentLog; readonly record: RecordConsentEvent };
-  readonly environment: ResolutionEnvironment;
+  readonly history: ConsentHistory;
+  readonly startRun: StartResolutionRun;
+  readonly now: () => Date;
 }
 
 /** Decides, for a billed call, whether it is stored: the rule is in the usage contract. The
@@ -37,14 +31,7 @@ export class DirectoryResolver {
   async execute<T>(work: (run: ResolutionRun) => Promise<T>): Promise<T> {
     const remembered = new RememberedResolutions(await this.deps.store.load());
     const { consents, unreadable } = await this.observeOpenConsents();
-    const run = startResolutionRun({
-      locate: (cwd) => this.deps.locator.locate(cwd),
-      readClone: (clone) => this.deps.consentSource.readClone(clone),
-      environment: this.deps.environment,
-      remembered,
-      consents,
-      unreadable,
-    });
+    const run = this.deps.startRun({ remembered, consents, unreadable });
     const done = await work(run);
     if (run.learned.changed) await this.deps.store.save(run.learned.sightings);
     return done;
@@ -59,7 +46,7 @@ export class DirectoryResolver {
     consents: ConsentLog;
     unreadable: ReadonlySet<string>;
   }> {
-    let consents = await this.deps.consent.load.execute();
+    let consents = await this.consentLog();
     const unreadable = new Set<string>();
     for (const interval of consents.openIntervals()) {
       const reading = await this.deps.consentSource.readClone(interval.clone);
@@ -70,12 +57,14 @@ export class DirectoryResolver {
       if (reading.kind === "absent") continue;
       const named = reading.kind === "value" && tokenOfKey(reading.value) === interval.token;
       if (!named) {
-        await this.deps.consent.record.execute(
-          closeEvent(interval.token, this.deps.environment.now())
-        );
-        consents = await this.deps.consent.load.execute();
+        await this.deps.history.append(closeEvent(interval.token, this.deps.now()));
+        consents = await this.consentLog();
       }
     }
     return { consents, unreadable };
+  }
+
+  private async consentLog(): Promise<ConsentLog> {
+    return new ConsentLog(await this.deps.history.read());
   }
 }

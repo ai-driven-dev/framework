@@ -1,12 +1,11 @@
 import type { CloneIdentity } from "../../domain/consent/clone-identity.js";
 import { closeEvent, openEvent } from "../../domain/consent/consent-history.js";
-import type { ConsentLog } from "../../domain/consent/consent-log.js";
+import { ConsentLog } from "../../domain/consent/consent-log.js";
 import { consentValue, tokenOfKey } from "../../domain/telemetry-consent.js";
+import type { ConsentHistory } from "../../ports/consent-history.js";
 import type { ConsentSource } from "../../ports/consent-source.js";
 import type { ConsentWriter } from "../../ports/switch/consent-writer.js";
 import type { UsageLedger } from "../../ports/usage-ledger.js";
-import type { LoadConsentLog } from "../consent/load-consent-log.use-case.js";
-import type { RecordConsentEvent } from "../consent/record-consent-event.use-case.js";
 
 /** A fresh token for an interval about to open, and the moment it opens. */
 export type NewInterval = () => { readonly token: string; readonly at: Date };
@@ -19,7 +18,7 @@ export interface GrantConsentRequest {
 interface GrantConsentDeps {
   readonly consents: ConsentSource;
   readonly writer: ConsentWriter;
-  readonly consent: { readonly load: LoadConsentLog; readonly record: RecordConsentEvent };
+  readonly history: ConsentHistory;
   readonly ledger: UsageLedger;
   readonly newInterval: NewInterval;
 }
@@ -38,16 +37,16 @@ export class GrantConsent {
   }
 
   private async grant(root: string, identity: CloneIdentity): Promise<boolean | "damaged"> {
-    const log = await this.deps.consent.load.execute();
+    const log = new ConsentLog(await this.deps.history.read());
     // A log that cannot be trusted is not added to: an interval opened over it could span a
     // window the lost lines closed.
     if (log.damaged) return "damaged";
     const open = log.openFor(identity);
     if (await this.keyNamesOneOf(root, open)) return false;
     const { token, at } = this.deps.newInterval();
-    for (const stale of open) await this.deps.consent.record.execute(closeEvent(stale.token, at));
+    for (const stale of open) await this.deps.history.append(closeEvent(stale.token, at));
     await this.deps.writer.set(root, consentValue(token));
-    await this.deps.consent.record.execute(openEvent(identity, token, at));
+    await this.deps.history.append(openEvent(identity, token, at));
     return true;
   }
 
