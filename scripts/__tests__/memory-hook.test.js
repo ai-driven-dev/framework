@@ -224,6 +224,86 @@ for (const host of PAYLOAD_HOSTS) {
   });
 }
 
+// ---- a failed write leaves the destination as it was ------------------------------------------
+
+/** A preload failing every write to a file named `name` with EIO: after `keep` bytes landed, or before any. */
+function eioPreload(name, keep) {
+  const file = path.join(tempDir("memory-fault-"), "eio.cjs");
+  fs.writeFileSync(file, `
+const fs = require("node:fs");
+const NAME = ${JSON.stringify(name)};
+const KEEP = ${keep};
+const paths = new Map();
+const eio = () => Object.assign(new Error("EIO: i/o error, write"), { code: "EIO", errno: -5, syscall: "write" });
+const open = fs.openSync;
+fs.openSync = (target, ...rest) => {
+  const fd = open(target, ...rest);
+  paths.set(fd, String(target));
+  return fd;
+};
+const writeSync = fs.writeSync;
+fs.writeSync = (fd, data, ...rest) => {
+  if (!(paths.get(fd) ?? "").includes(NAME)) return writeSync(fd, data, ...rest);
+  if (KEEP > 0) writeSync(fd, Buffer.from(data).subarray(0, KEEP));
+  throw eio();
+};
+const writeFileSync = fs.writeFileSync;
+fs.writeFileSync = (target, data, ...rest) => {
+  if (typeof target !== "string" || !target.includes(NAME)) return writeFileSync(target, data, ...rest);
+  if (KEEP > 0) writeFileSync(target, Buffer.from(data).subarray(0, KEEP));
+  throw eio();
+};
+`);
+  return file;
+}
+
+const BEFORE_FIX = "# P\n\nUSER PREFIX\n\n<!-- aidd_project_memory:start -->\n<!-- aidd_project_memory:end -->\n";
+const listing = (root) => fs.readdirSync(root).sort();
+
+test("Stop: a partial write then EIO keeps CLAUDE.md byte for byte, leaves no temp file, and names the file", () => {
+  const root = project({ "CLAUDE.md": BEFORE_FIX, [VCS]: BANK });
+  const before = listing(root);
+  const result = run("claude", stopPayload("claude", root), { preload: eioPreload("CLAUDE.md", 28) });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(fs.readFileSync(path.join(root, "CLAUDE.md"), "utf8"), BEFORE_FIX);
+  assert.deepEqual(listing(root), before);
+  assert.match(JSON.parse(result.stdout).reason, /CLAUDE\.md not written \(EIO\)/u);
+});
+
+test("Stop: an EIO before the first byte leaves every destination unchanged, with no temp file, and names the failure", () => {
+  const root = project({ "CLAUDE.md": BEFORE_FIX, "AGENTS.md": BEFORE_FIX, [VCS]: BANK });
+  const before = listing(root);
+  const result = run("claude", stopPayload("claude", root), { preload: eioPreload(".md", 0) });
+  assert.equal(result.status, 0, result.stderr);
+  for (const name of ["CLAUDE.md", "AGENTS.md"]) assert.equal(fs.readFileSync(path.join(root, name), "utf8"), BEFORE_FIX, name);
+  assert.deepEqual(listing(root), before);
+  const reason = JSON.parse(result.stdout).reason;
+  assert.match(reason, /CLAUDE\.md not written \(EIO\)/u);
+  assert.match(reason, /AGENTS\.md not written \(EIO\)/u);
+});
+
+test("Stop: with two destinations, the one already renamed stays updated, the failing one is unchanged, and the failure is named", () => {
+  const root = project({ "CLAUDE.md": BEFORE_FIX, "AGENTS.md": BEFORE_FIX, [VCS]: BANK });
+  const before = listing(root);
+  const result = run("claude", stopPayload("claude", root), { preload: eioPreload("AGENTS.md", 28) });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(fs.readFileSync(path.join(root, "CLAUDE.md"), "utf8"), /^@aidd_docs\/memory\/vcs\.md$/mu);
+  assert.equal(fs.readFileSync(path.join(root, "AGENTS.md"), "utf8"), BEFORE_FIX);
+  assert.deepEqual(listing(root), before);
+  assert.match(JSON.parse(result.stdout).reason, /AGENTS\.md not written \(EIO\)/u);
+});
+
+test("a write keeps the file's mode and leaves a symlinked context file a link to the written target", (t) => {
+  if (process.platform === "win32") return t.skip("POSIX modes and links");
+  const root = project({ "AGENTS.md": BEFORE_FIX, [VCS]: BANK });
+  fs.chmodSync(path.join(root, "AGENTS.md"), 0o640);
+  fs.symlinkSync("AGENTS.md", path.join(root, "CLAUDE.md"));
+  assert.equal(stopped(root), null);
+  assert.equal(fs.statSync(path.join(root, "AGENTS.md")).mode & 0o777, 0o640);
+  assert.ok(fs.lstatSync(path.join(root, "CLAUDE.md")).isSymbolicLink());
+  assert.match(fs.readFileSync(path.join(root, "AGENTS.md"), "utf8"), /^@aidd_docs\/memory\/vcs\.md$/mu);
+});
+
 // ---- robustness and contract ----------------------------------------------------------------
 
 for (const host of HOSTS) {

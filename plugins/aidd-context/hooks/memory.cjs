@@ -256,9 +256,30 @@ function pointedText(original, oldBlock, root) {
   return { text: [...lines.slice(0, found.openLine), COPILOT_POINTER, ...lines.slice(found.closeLine + 1)].join("\n") };
 }
 
+/** Temp file beside `file`, then rename over it: a failed write leaves `file` whole; a read-only file stays unwritten. */
+function replaceFile(file, text) {
+  fs.accessSync(file, fs.constants.W_OK);
+  const mode = fs.statSync(file).mode & 0o7777;
+  const temp = path.join(path.dirname(file), `.${path.basename(file)}.${process.pid}.tmp`);
+  try {
+    const fd = fs.openSync(temp, "wx", mode);
+    try {
+      fs.writeSync(fd, text);
+      fs.fchmodSync(fd, mode);
+    } finally {
+      fs.closeSync(fd);
+    }
+    fs.renameSync(temp, file);
+  } catch (error) {
+    fs.rmSync(temp, { force: true });
+    throw error;
+  }
+}
+
+// Atomic per file only: with several destinations, files already renamed stay updated and the failing one is unchanged.
 function tryWrite(file, text, shown, notSynced) {
   try {
-    fs.writeFileSync(file, text, "utf8");
+    replaceFile(file, text);
   } catch (error) {
     notSynced.push(`${shown} not written (${error.code ?? error.message}), skipped`);
   }
