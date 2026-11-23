@@ -2,7 +2,7 @@ import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { REGISTERED_PROFILES } from "../../../../../src/composition/tool-profiles.composition.js";
-import type { BuiltToolConfig } from "../../../../../src/contexts/tools/domain/profile/define-tool.js";
+import type { BuiltToolConfig } from "../../../../shared/testing/catalog-of.builder.js";
 import { REPOSITORY_ROOT } from "../../../../shared/testing/repository-root.builder.js";
 import { describeProfileFileConformance } from "../../testing/profile-file-conformance.contract.js";
 

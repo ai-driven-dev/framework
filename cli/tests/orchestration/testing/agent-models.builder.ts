@@ -10,6 +10,7 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { AgentModelStoreAdapter } from "../../../src/contexts/installation/infrastructure/agent-model-store-adapter.js";
 import { jsoncMainSessionSettings } from "../../../src/contexts/installation/infrastructure/jsonc-main-session-settings.js";
+import { resolveHomeTemplate } from "../../../src/contexts/tools/contract/home-path.js";
 import { RefreshAgentPlugins } from "../../../src/orchestration/agent-models/refresh-agent-plugins.use-case.js";
 import { ResetAgentModels } from "../../../src/orchestration/agent-models/reset-agent-models.use-case.js";
 import { SetAgentModels } from "../../../src/orchestration/agent-models/set-agent-models.use-case.js";
@@ -23,7 +24,7 @@ export const PROJECT = "/p";
 export const HOME = "/home/me";
 export const CONFIG = "/home/me/.config/aidd";
 export const CLAUDE_SETTINGS = join(HOME, ".hostclaude", "settings.json");
-export const OPENCODE_SETTINGS = join(hostMcpGlobalDir(HOME), "hostmcp.jsonc");
+export const OPENCODE_SETTINGS = join(resolveHomeTemplate(hostMcpGlobalDir, HOME), "hostmcp.jsonc");
 export const OPENCODE_SCHEMA = `"$schema": "${HOST_MCP_SCHEMA}"`;
 
 export function plugin(scope: Scope): RecordedPlugin {

@@ -1,7 +1,10 @@
-import { join } from "node:path";
 import codexConfigToml from "../../../assets/configs/codex/config.toml";
 // biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
 import adapter from "../../../assets/hooks-runtime/host-codex.cjs";
+import type {
+  NativeActivationSpec,
+  NativeRegistrationSection,
+} from "../../contexts/host-registration/contract/native-registration-spec.js";
 import { MCP_CONFIG_REF } from "../../contexts/tools/contract/config-refs.js";
 import type { LinkSyntax } from "../../contexts/tools/contract/link-syntax.js";
 import { PLUGIN_ROOT_TOKEN } from "../../contexts/tools/contract/plugin-root-token.js";
@@ -10,10 +13,7 @@ import { buildCodexContract } from "../../contexts/tools/domain/behaviours/codex
 import { mergeCodexConfigToml } from "../../contexts/tools/domain/behaviours/codex/codex-config.model.js";
 import { buildCodexFlatContract } from "../../contexts/tools/domain/behaviours/codex/codex-flat-build.model.js";
 import { codexGlobalFilePath } from "../../contexts/tools/domain/behaviours/codex/codex-paths.model.js";
-import {
-  tomlAgentFrontmatter,
-  tomlAgentToml,
-} from "../../contexts/tools/domain/formats/agents/toml-agent.js";
+import { tomlAgentFrontmatter } from "../../contexts/tools/domain/formats/agents/toml-agent.js";
 import {
   aiddCommandsUnder,
   convertCommandFrontmatter,
@@ -24,16 +24,17 @@ import {
   nativeHooksSupport,
 } from "../../contexts/tools/domain/formats/hooks/routes.js";
 import { unchangedFrontmatter } from "../../contexts/tools/domain/formats/rule-frontmatter.js";
-import type { TomlCodec } from "../../contexts/tools/domain/formats/toml.js";
-import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
+import { tomlContract } from "../../contexts/tools/domain/profile/contract-builders.js";
+import type {
+  DeclaredSections,
+  McpTomlDeclaration,
+} from "../../contexts/tools/domain/profile/declared-sections.js";
 import { singlePythonRepo } from "../../contexts/tools/domain/profile/recommendation.js";
-import type { BoundTool } from "../../contexts/tools/domain/profile/tool-spec.js";
+import type { AiToolSpec } from "../../contexts/tools/domain/profile/tool-spec.js";
+import { installUnder } from "../../contexts/tools/domain/profile/tool-suffix.js";
 import { nativeLayout } from "../../contexts/tools/domain/sections/layout-section.js";
 import { manifestSection } from "../../contexts/tools/domain/sections/manifest-section.js";
-import {
-  acceptedPluginMcp,
-  McpConfigPart,
-} from "../../contexts/tools/domain/sections/mcp-section.js";
+import { acceptedPluginMcp } from "../../contexts/tools/domain/sections/mcp-section.js";
 import { ModelsSection } from "../../contexts/tools/domain/sections/models-section.js";
 import {
   type FlatArtifactLayout,
@@ -99,102 +100,96 @@ const CODEX_CONFIG_ASSETS: readonly ShippedConfig[] = [
   },
 ];
 
+// Codex only enables plugins from its user-global config plus its own plugin cache; a
+// project-local settings file is inert, so the `codex` CLI is driven directly instead.
+const CODEX_ACTIVATION: NativeActivationSpec = {
+  binary: "codex",
+  upgradeVerb: "upgrade",
+  enableVerb: "add",
+  disableVerb: "remove",
+  // Codex's own `plugin remove` deletes a marketplace's cached content but leaves the
+  // now-empty `cache/<hostName>/` shell behind. No `marketplaceRegistry` is declared -
+  // codex refuses a re-add from a different source itself, so there is no registry to
+  // reread: which is why `clean` proves this leftover safe to remove by its own
+  // emptiness instead.
+  pluginCacheDir: "{home}/.codex/plugins/cache",
+  // The registry is read from `~/.codex/config.toml` whatever `CODEX_HOME` says, unlike
+  // `userSettingsPath` below: a measured behaviour kept as it is, not an oversight.
+  pluginRegistry: {
+    location: "{home}/.codex/config.toml",
+    layout: "toml-plugin-tables",
+  },
+  marketplaceSources: {
+    from: "list-command",
+    args: ["plugin", "marketplace", "list", "--json"],
+    layout: "marketplaces-with-source",
+    hostLabel: "Codex",
+    unavailableMessage: "Codex marketplace list --json unavailable; inspect the host CLI and retry",
+    unverifiedMessage: "Codex marketplace list --json output shape is not verified",
+  },
+  // `$CODEX_HOME/config.toml` when set: a real codex binary reads there whatever `HOME`
+  // says: else `~/.codex/config.toml`. Never written by aidd; named for a diagnostic alone.
+  userSettingsPath: { env: "CODEX_HOME", fallback: "{home}/.codex", fileName: "config.toml" },
+};
+
 const CODEX_LAYOUT = nativeLayout({
   pluginsDir: ".codex/plugins/",
-  globalFiles: { dir: (homedir) => join(homedir, ".codex"), map: codexGlobalFilePath },
-  // Codex only enables plugins from its user-global config plus its own plugin cache; a
-  // project-local settings file is inert, so the `codex` CLI is driven directly instead.
-  nativeActivation: {
-    binary: "codex",
-    upgradeVerb: "upgrade",
-    enableVerb: "add",
-    disableVerb: "remove",
-    // Codex's own `plugin remove` deletes a marketplace's cached content but leaves the
-    // now-empty `cache/<hostName>/` shell behind. No `marketplaceRegistry` is declared -
-    // codex refuses a re-add from a different source itself, so there is no registry to
-    // reread: which is why `clean` proves this leftover safe to remove by its own
-    // emptiness instead.
-    pluginCacheDir: (h) => join(h, ".codex", "plugins", "cache"),
-    // The registry is read from `~/.codex/config.toml` whatever `CODEX_HOME` says, unlike
-    // `userSettingsPath` below: a measured behaviour kept as it is, not an oversight.
-    pluginRegistry: {
-      location: (h) => join(h, ".codex", "config.toml"),
-      layout: "toml-plugin-tables",
-    },
-    marketplaceSources: {
-      from: "list-command",
-      args: ["plugin", "marketplace", "list", "--json"],
-      layout: "marketplaces-with-source",
-      hostLabel: "Codex",
-      unavailableMessage:
-        "Codex marketplace list --json unavailable; inspect the host CLI and retry",
-      unverifiedMessage: "Codex marketplace list --json output shape is not verified",
-    },
-    // `$CODEX_HOME/config.toml` when set: a real codex binary reads there whatever `HOME`
-    // says: else `~/.codex/config.toml`. Never written by aidd; named for a diagnostic alone.
-    userSettingsPath: (h, env) => join(env("CODEX_HOME") || join(h, ".codex"), "config.toml"),
-  },
+  globalFiles: { dir: "{home}/.codex", map: codexGlobalFilePath },
 });
 
-function codexCapabilities(toml: TomlCodec) {
-  return (bound: BoundTool) => ({
-    agents: bound.agents({
-      format: "toml",
-      frontmatter: tomlAgentFrontmatter,
-      serialize: tomlAgentToml(toml),
-    }),
-    skills: bound.skills({
-      agentsSkillsDirectory: true,
-    }),
-    commands: bound.commands({
-      buildInstallPath: aiddCommandsUnder(DIRECTORY),
-      convertFrontmatter: convertCommandFrontmatter,
-    }),
-    rules: bound.rules({
-      buildInstallPath: bound.installUnder("rules/"),
-      convertFrontmatter: unchangedFrontmatter,
-    }),
-    mcp: {
-      config: new McpConfigPart({
-        outputPath: ".codex/config.toml",
-        format: "toml",
-        toml,
-        mergeFn: mergeCodexConfigToml(toml),
-        consumes: [MCP_CONFIG_REF],
-      }),
-      plugin: PLUGIN_MCP,
-    },
-    hooks: { config: hooksConfigPart(hooks), delivery: hooksSupport.delivery },
-    layout: CODEX_LAYOUT,
-    manifest: manifestSection({
-      manifestRelativePath: "plugin.json",
-      pluginRootToken: hooksSupport.rootToken,
-    }),
-    models: new ModelsSection({ providers: ["openai"] }),
-  });
-}
+/** The MCP servers file, merged as TOML with the codec the composition wires. */
+const MCP_CONFIG: McpTomlDeclaration = {
+  outputPath: ".codex/config.toml",
+  format: "toml",
+  mergeWith: mergeCodexConfigToml,
+  consumes: [MCP_CONFIG_REF],
+};
 
-/** The Codex profile, writing its TOML files through `toml`. */
-export const codexProfile = (toml: TomlCodec) =>
-  defineAiTool({
-    toolId: "codex",
-    distributionProbes: {
-      manifest: [".codex-plugin/plugin.json"],
-      marketplace: [".agents/plugins/marketplace.json"],
-    },
-    directory: DIRECTORY,
-    toolSuffix: TOOL_SUFFIX,
-    displayName: "Codex",
-    recommendedFor: singlePythonRepo,
-    signalDir: `${DIRECTORY}commands`,
-    configAssets: CODEX_CONFIG_ASSETS,
-    hooks,
-    buildContracts: {
-      marketplace: () => buildCodexContract(toml, hooks),
-      flat: () => buildCodexFlatContract(toml, hooks, CODEX_FLAT),
-    },
+const CODEX_CAPABILITIES = {
+  agents: { format: "toml", frontmatter: tomlAgentFrontmatter },
+  skills: { agentsSkillsDirectory: true },
+  commands: {
+    buildInstallPath: aiddCommandsUnder(DIRECTORY),
+    convertFrontmatter: convertCommandFrontmatter,
+  },
+  rules: {
+    buildInstallPath: installUnder(DIRECTORY, TOOL_SUFFIX, "rules/"),
+    convertFrontmatter: unchangedFrontmatter,
+  },
+  mcp: { config: MCP_CONFIG, plugin: PLUGIN_MCP },
+  hooks: { config: hooksConfigPart(hooks), delivery: hooksSupport.delivery },
+  layout: CODEX_LAYOUT,
+  manifest: manifestSection({
+    manifestRelativePath: "plugin.json",
+    pluginRootToken: hooksSupport.rootToken,
+  }),
+  models: new ModelsSection({ providers: ["openai"] }),
+} satisfies DeclaredSections;
 
-    capabilities: codexCapabilities(toml),
+/** The Codex declaration. Its agents and MCP file name the TOML format, whose codec the
+ * composition wires. */
+export const codexSpec = {
+  toolId: "codex",
+  distributionProbes: {
+    manifest: [".codex-plugin/plugin.json"],
+    marketplace: [".agents/plugins/marketplace.json"],
+  },
+  directory: DIRECTORY,
+  toolSuffix: TOOL_SUFFIX,
+  displayName: "Codex",
+  recommendedFor: singlePythonRepo,
+  signalDir: `${DIRECTORY}commands`,
+  configAssets: CODEX_CONFIG_ASSETS,
+  hooks,
+  buildContracts: {
+    marketplace: tomlContract(buildCodexContract, hooks),
+    flat: tomlContract(buildCodexFlatContract, hooks, CODEX_FLAT),
+  },
 
-    linkSyntax: LINK_SYNTAX,
-  });
+  capabilities: CODEX_CAPABILITIES,
+
+  linkSyntax: LINK_SYNTAX,
+} satisfies AiToolSpec<typeof CODEX_CAPABILITIES>;
+
+/** The section host-registration reads: how Codex's own plugin CLI activates plugins. */
+export const codexNativeRegistration: NativeRegistrationSection = { activation: CODEX_ACTIVATION };

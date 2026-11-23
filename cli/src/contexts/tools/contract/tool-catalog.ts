@@ -1,5 +1,5 @@
 import type { AiToolId, IdeToolId, ToolCategory, ToolId } from "../../../shared/domain/tool.js";
-import type { AiToolProfile, IdeToolProfile, ToolProfile } from "./tool-profile.js";
+import type { AiToolProfile, IdeToolProfile } from "./tool-profile.js";
 
 /** What a recommendation reads of a project: its stack and whether the framework is already there. */
 export interface RecommendationContext {
@@ -8,16 +8,17 @@ export interface RecommendationContext {
   readonly hasFramework: boolean;
 }
 
-/** The registered tools, asked by id or walked in one of three orders that must never be mixed. */
-export interface ToolCatalog {
+/** The registered tools, asked by id or walked in one of three orders that must never be mixed.
+ * `A` is the AI profile the composition assembled, which may answer more than the content profile. */
+export interface ToolCatalog<A extends AiToolProfile = AiToolProfile> {
   /** The profile of a registered id; an unregistered one is refused. */
-  profile(id: string): ToolProfile;
+  profile(id: string): A | IdeToolProfile;
   /** The AI profile of a registered id; an unregistered id or an editor is refused. */
-  aiProfile(id: AiToolId): AiToolProfile;
+  aiProfile(id: AiToolId): A;
   /** The IDE profile of a registered id; an unregistered id or an AI tool is refused. */
   ideProfile(id: IdeToolId): IdeToolProfile;
   /** The AI profile of a registered id, or null for an editor; an unregistered id is refused. */
-  aiProfileIfAny(id: ToolId): AiToolProfile | null;
+  aiProfileIfAny(id: ToolId): A | null;
   /** The registered id a text names, or null when no registered tool answers to it. */
   toolId(raw: string): ToolId | null;
   /** The registered AI id a text names, or null for an editor or an unregistered name. */
@@ -46,3 +47,7 @@ export interface ToolCatalog {
   recommended(category: "ai", project?: RecommendationContext): readonly AiToolId[];
   recommended(category: "ide", project?: RecommendationContext): readonly IdeToolId[];
 }
+
+/** A catalog whose AI profiles answer `X` beyond the content profile: what a context reading
+ * the assembled answers names, without naming the whole profile. */
+export type CatalogAnswering<X> = ToolCatalog<AiToolProfile & X>;

@@ -4,6 +4,8 @@ The language of the `host-registration` context. A name in the code means what t
 
 | Term | Meaning | In the code |
 | --- | --- | --- |
+| Native-registration section | What a profile file declares about a tool's own plugin CLI, beside its content profile: the activation and the marketplace settings. The composition assembles the two | `NativeRegistrationSection`, `withNativeRegistration` |
+| Native activation | What a tool's own plugin CLI declares about itself: its binary, where it keeps its registries and cache, its settings file | `NativeActivation`, `NativeActivationAnswers` |
 | Host | An AI tool with its own plugin registry and CLI: Claude Code, Codex, Copilot | `AiToolId` |
 | Plugin registry | The file a host records its installed plugins in, keyed by `<plugin>@<marketplace>` | `HostPluginRegistry` |
 | Marketplace registry | The file or listing a host records its known marketplaces in, by name and source | `HostMarketplaceRegistry` |

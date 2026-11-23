@@ -14,9 +14,9 @@ import { userPluginRebuildOf } from "../../contexts/installation/application/plu
 import type { BuiltMaterializationDeps } from "../../contexts/installation/application/shared/built-materialization-deps.js";
 import type { LoadDistribution } from "../../contexts/installation/ports/plugin/load-plugin-distribution.js";
 import type { UserScopeFileGuard } from "../../contexts/installation/ports/plugin/user-plugin-materialization.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { FileReader } from "../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../shared/ports/file-writer.js";
+import type { RegisteredCatalog } from "../contexts/tools.js";
 
 type Files = FileReader & FileWriter;
 
@@ -35,7 +35,7 @@ export function placePluginOf(
     readonly fs: Files;
     readonly built: BuiltMaterializationDeps;
   },
-  tools: ToolCatalog
+  tools: RegisteredCatalog
 ): PlacePlugin {
   const { fs, built, ...rest } = deps;
   return new PlacePlugin(

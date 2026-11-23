@@ -1,3 +1,4 @@
+import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { NativeMarketplaceRegistration } from "../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
@@ -6,7 +7,6 @@ import { UpdateGitignore } from "../../../src/contexts/installation/application/
 import type { ToolRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
-import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import type { CleanProject } from "../../../src/orchestration/clean/clean-project.use-case.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import type { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
@@ -125,7 +125,7 @@ export function seedReferences(fs: InMemoryFileAdapter, roots: readonly string[]
 }
 
 export function buildUseCase(deps: {
-  tools: ToolCatalog;
+  tools: RegisteredCatalog;
   fs: InMemoryFileAdapter;
   manifest: Manifest;
   records?: ToolRecords;

@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { codexProfile } from "../../../../src/composition/tool-profiles/codex.js";
+import { codexSpec } from "../../../../src/composition/tool-profiles/codex.js";
+import { defineAiTool } from "../../../../src/contexts/tools/domain/profile/define-tool.js";
 import { SmolTomlCodec } from "../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { parsePluginName } from "../../../../src/shared/domain/plugin/plugin-name.js";
 import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { translatePlugin } from "./translate-plugin.builder.js";
 
-const codex = codexProfile(new SmolTomlCodec());
+const codex = defineAiTool(codexSpec, { toml: new SmolTomlCodec() });
 
 const BARE_MANIFEST = "plugin.json";
 const SHALLOW_MANIFEST = ".claude-plugin/plugin.json";

@@ -64,6 +64,7 @@ export const INSTALLATION: MessagesOf<InstallationOwners> = {
   "marketplace-source-conflict": (error) =>
     `${error.detail} Reconcile the host source manually before retrying \`aidd sync\`.`,
   "native-plugin-cli": (error) => error.detail,
+  "native-registration-config": (error) => error.detail,
   "registration-refused": (error) => error.detail,
   "unreadable-built-catalog": (error) =>
     `Cannot read the marketplace catalog this project just built, at ${error.path} — nothing was ` +

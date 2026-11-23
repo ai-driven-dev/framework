@@ -4,7 +4,6 @@ import type { LinkSyntax } from "../contract/link-syntax.js";
 import type { RecommendationContext } from "../contract/tool-catalog.js";
 import type { AiToolProfile, IdeToolProfile, PluginAnswers } from "../contract/tool-profile.js";
 import type { HooksBrand, HooksDescriptor } from "./formats/hooks/descriptor.js";
-import type { NativeActivation } from "./native-registration/native-activation.js";
 import type { AgentsSection } from "./sections/agents-section.js";
 import type { CommandsSection } from "./sections/commands-section.js";
 import type { ConfigSection } from "./sections/config-section.js";
@@ -91,8 +90,6 @@ export interface AiTool<C extends ProfileSections = ProfileSections> extends AiT
   /** How the tool takes plugins, composed from its layout, manifest, hooks and mcp sections, or
    * null when it declares no layout. */
   plugins(): PluginAnswers | null;
-  /** The native plugin CLI declaration of a native layout, or undefined. */
-  nativeActivation(): NativeActivation | undefined;
 }
 
 export interface IdeToolConfig<C extends ProfileSections = ProfileSections> extends IdeToolProfile {

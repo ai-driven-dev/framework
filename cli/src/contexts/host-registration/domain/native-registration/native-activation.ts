@@ -1,10 +1,15 @@
+import {
+  type EnvironmentReader,
+  resolveHomePath,
+  resolveHomeTemplate,
+} from "../../../tools/contract/home-path.js";
 import type {
   MarketplaceRegistryLayout,
+  NativeActivationAnswers,
   NativeActivationSpec,
   PluginRegistryLayout,
 } from "../../contract/native-registration-spec.js";
-import type { EnvironmentReader, NativeActivationAnswers } from "../../contract/tool-profile.js";
-import { CapabilityConfigError } from "../tools.error.js";
+import { NativeRegistrationConfigError } from "../host-registration.error.js";
 
 /** Where a host's registry sits for one home, and the layout its file is read as. */
 export interface HostRegistryPlacement<Layout extends string> {
@@ -32,9 +37,9 @@ export class NativeActivation implements NativeActivationAnswers {
 
   constructor(spec: NativeActivationSpec) {
     if (spec.binary === "")
-      throw new CapabilityConfigError("A native activation declares an empty binary");
+      throw new NativeRegistrationConfigError("A native activation declares an empty binary");
     if (spec.marketplaceSources?.from === "marketplace-registry" && !spec.marketplaceRegistry)
-      throw new CapabilityConfigError(
+      throw new NativeRegistrationConfigError(
         "A native activation reads its marketplace sources from a registry it does not declare"
       );
     this.#spec = spec;
@@ -64,7 +69,9 @@ export class NativeActivation implements NativeActivationAnswers {
   /** Where the host's plugin registry sits for this home and how it is read, when it was measured. */
   pluginRegistryAt(home: string): HostRegistryPlacement<PluginRegistryLayout> | undefined {
     const declared = this.#spec.pluginRegistry;
-    return declared && { path: declared.location(home), layout: declared.layout };
+    return (
+      declared && { path: resolveHomeTemplate(declared.location, home), layout: declared.layout }
+    );
   }
 
   /** Where the host's marketplace registry sits for this home and how it is read, when it keeps one. */
@@ -72,7 +79,9 @@ export class NativeActivation implements NativeActivationAnswers {
     home: string
   ): HostRegistryPlacement<MarketplaceRegistryLayout> | undefined {
     const declared = this.#spec.marketplaceRegistry;
-    return declared && { path: declared.location(home), layout: declared.layout };
+    return (
+      declared && { path: resolveHomeTemplate(declared.location, home), layout: declared.layout }
+    );
   }
 
   /** Whether the host's own CLI takes a scope for enabling a plugin. */
@@ -97,12 +106,14 @@ export class NativeActivation implements NativeActivationAnswers {
 
   /** Where the host leaves its plugin cache after an uninstall, or undefined when it declares none. */
   pluginCacheRoot(home: string): string | undefined {
-    return this.#spec.pluginCacheDir?.(home);
+    const root = this.#spec.pluginCacheDir;
+    return root === undefined ? undefined : resolveHomeTemplate(root, home);
   }
 
   /** The host's own user-scope settings file, or undefined when none is declared. */
   userSettingsFile(home: string, env: EnvironmentReader): string | undefined {
-    return this.#spec.userSettingsPath?.(home, env);
+    const path = this.#spec.userSettingsPath;
+    return path === undefined ? undefined : resolveHomePath(path, home, env);
   }
 
   /** Whether a plugin ref stays in use. A host that keeps an uninstalled ref, disabled, makes a

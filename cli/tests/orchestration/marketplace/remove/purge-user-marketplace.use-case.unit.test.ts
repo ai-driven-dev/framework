@@ -5,6 +5,7 @@ import type {
   ProvenMarketplaceRemoval,
   WithdrawalRequest,
 } from "../../../../src/contexts/host-registration/application/withdraw/withdrawal.js";
+import { withNativeRegistration } from "../../../../src/contexts/host-registration/domain/native-registration/native-host-profile.js";
 import type { PurgeMarketplacePlugins } from "../../../../src/contexts/installation/application/marketplace/purge-marketplace-plugins.use-case.js";
 import {
   type MarketplaceRemovalHost,
@@ -19,7 +20,7 @@ type PurgeCommand = Parameters<PurgeMarketplacePlugins["execute"]>[0];
 
 const REGISTRATION = { alias: "market", hostName: "aidd-market" };
 const TARGET: Parameters<PurgeCommand["hostRemoval"]["plan"]>[0] = {
-  tool: syntheticToolProfile(),
+  tool: withNativeRegistration(syntheticToolProfile(), {}),
   registrations: {
     marketplaces: [REGISTRATION],
     pluginClaims: [

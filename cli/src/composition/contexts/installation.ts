@@ -52,7 +52,6 @@ import type {
   MachineRecords,
   ScopeRecordsRepository,
 } from "../../contexts/machine-claims/ports/machine-manifest.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { EnsureBuiltMarketplace } from "../../orchestration/marketplace/ensure-built-marketplace.use-case.js";
 import { BundledAssetProviderAdapter } from "../../shared/infrastructure/asset-loader.js";
 import type { FileReader } from "../../shared/ports/file-reader.js";
@@ -60,6 +59,7 @@ import type { FileWriter } from "../../shared/ports/file-writer.js";
 import type { Logger } from "../../shared/ports/logger.js";
 import type { Base } from "../shared.js";
 import { userConfigDir } from "../user-config-dir.js";
+import type { RegisteredCatalog } from "./tools.js";
 import {
   createFrameworkBuildUseCase,
   createPluginTranslation,
@@ -107,7 +107,7 @@ export const registrationRecordRules: RegistrationRecordRules & RecordClaimRules
 
 /** Builds a distribution into the aidd-owned cache, overwriting what a previous build left there. */
 export function cacheBuildFor(
-  tools: ToolCatalog,
+  tools: RegisteredCatalog,
   deps: FrameworkBuildDeps
 ): FrameworkBuilds["buildFor"] {
   return ({ target, mode, outDir, variant }) =>
@@ -123,7 +123,7 @@ export function cacheBuildFor(
 /** The cache builds, each tool's tree carrying the provider its agents run on, the variant a
  * changed provider makes stale. */
 export function frameworkBuildsOf(
-  tools: ToolCatalog,
+  tools: RegisteredCatalog,
   buildFor: FrameworkBuilds["buildFor"],
   store: AgentModelStore
 ): FrameworkBuilds {

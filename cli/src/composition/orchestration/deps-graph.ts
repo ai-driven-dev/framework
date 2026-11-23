@@ -1,7 +1,7 @@
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { Deps, FactoryOptions } from "../../orchestration/deps.js";
 import type { Output } from "../../orchestration/domain/output.js";
 import { type Container, createContainer } from "../container.js";
+import type { RegisteredCatalog } from "../contexts/tools.js";
 import { createFrameworkBuildUseCase } from "../contexts/translate.js";
 
 /** What the composition hands out: the members a command reads, plus the ones only wiring and
@@ -87,7 +87,7 @@ const OWNER: { [Member in Passthrough]: OwnerOf<Member> } = {
 const lazy = (read: () => unknown): PropertyDescriptor => ({ get: read });
 
 /** The members a command reads, each one wired by its context the first time it is read. */
-function graphOf(container: Container, tools: ToolCatalog): Graph {
+function graphOf(container: Container, tools: RegisteredCatalog): Graph {
   const passthrough = Object.entries(OWNER).map(([member, context]) => [
     member,
     lazy(() => Reflect.get(container[context], member)),
@@ -99,7 +99,7 @@ function graphOf(container: Container, tools: ToolCatalog): Graph {
   });
 }
 
-function frameworkBuildOf(container: Container, tools: ToolCatalog): Deps["frameworkBuild"] {
+function frameworkBuildOf(container: Container, tools: RegisteredCatalog): Deps["frameworkBuild"] {
   const { fs, logger } = container.shared;
   const { assetProvider } = container.installation;
   return (ctx) => createFrameworkBuildUseCase(tools, { fs, assetProvider, logger }, ctx);
@@ -107,7 +107,7 @@ function frameworkBuildOf(container: Container, tools: ToolCatalog): Deps["frame
 
 /** The factory those commands receive: each call builds one container, and a member wires its
  * context when the command first reads it. */
-export function bindContainer(tools: ToolCatalog) {
+export function bindContainer(tools: RegisteredCatalog) {
   return async (
     projectRoot: string,
     options: FactoryOptions,

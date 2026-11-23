@@ -1,4 +1,5 @@
 import { projectIntegrationOf, recordsOf } from "../../../src/composition/contexts/installation.js";
+import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { wireCleanClaims } from "../../../src/composition/orchestration/clean-claims.js";
 import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.use-case.js";
 import { hostPortsOver } from "../../../src/contexts/host-registration/application/host-ports-over.js";
@@ -18,7 +19,6 @@ import { RemoveProjectFiles } from "../../../src/contexts/installation/applicati
 import type { ScopeRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { ResolvePurgeCandidate } from "../../../src/contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
-import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import {
   claimReleaseOf,
   projectCleanFactsOf,
@@ -39,7 +39,7 @@ type Files = AiddTracesDeps;
 
 /** What a test names; everything else is the empty default. */
 export interface ProjectCleanerParts extends Partial<HostPortMaps> {
-  tools: ToolCatalog;
+  tools: RegisteredCatalog;
   fs: Files["fs"];
   manifestRepo: Files["manifestRepo"] & ScopeRecords;
   logger: Files["logger"];

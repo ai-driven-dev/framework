@@ -1,13 +1,13 @@
 /** Builds an InstallPlugin over recorded delegates, a silent prompter and an in-memory manifest. */
 import { join } from "node:path";
 import { type Mock, vi } from "vitest";
+import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { TrustPluginSource } from "../../../src/contexts/distribution/application/plugin-source/trust-plugin-source.use-case.js";
 import type { MarketplaceTrustStore } from "../../../src/contexts/distribution/ports/marketplace-trust-store.js";
 import type { PluginAdd } from "../../../src/contexts/installation/application/plugin/add/plugin-add.js";
 import { PlanPluginInstall } from "../../../src/contexts/installation/application/plugin/plan-plugin-install.use-case.js";
 import { supportedScopeOf } from "../../../src/contexts/installation/application/plugin/plugin-target-resolution.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { ConfirmPluginSourceTrust } from "../../../src/orchestration/plugin/confirm-plugin-source-trust.use-case.js";
 import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.use-case.js";
 import { InstallPlugin } from "../../../src/orchestration/plugin/install-plugin.use-case.js";
@@ -79,7 +79,7 @@ export function makeUseCases(overrides?: {
 }
 
 export function makeUseCase(
-  overrides: NonNullable<Parameters<typeof makeUseCases>[0]> & { readonly tools: ToolCatalog }
+  overrides: NonNullable<Parameters<typeof makeUseCases>[0]> & { readonly tools: RegisteredCatalog }
 ): InstallPlugin {
   const {
     pickPlugins,

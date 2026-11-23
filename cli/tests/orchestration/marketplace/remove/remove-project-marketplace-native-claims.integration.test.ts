@@ -5,6 +5,7 @@ import { Marketplace } from "../../../../src/contexts/distribution/domain/market
 import type { ToolRecords } from "../../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import { resolveHomeTemplate } from "../../../../src/contexts/tools/contract/home-path.js";
 import type { RemoveProjectMarketplace } from "../../../../src/orchestration/marketplace/remove/remove-project-marketplace.use-case.js";
 import { FileHash } from "../../../../src/shared/domain/file-hash.js";
 import { aManifest } from "../../../contexts/installation/testing/manifest.builder.js";
@@ -27,7 +28,7 @@ import {
 import { projectMarketplaceRemover } from "../../testing/project-marketplace-remover.builder.js";
 
 const HOOKS_FILE = `.${SYNTHETIC_USER_TOOL}/hooks.json`;
-const PLUGIN_HOME = join(SYNTHETIC_USER_PLUGINS(homedir()), "sample-plugin");
+const PLUGIN_HOME = join(resolveHomeTemplate(SYNTHETIC_USER_PLUGINS, homedir()), "sample-plugin");
 const PRE_SCRIPT = `.${SYNTHETIC_USER_TOOL}/hooks/sample-plugin/pre.js`;
 const PRE_COMMAND = `node ./${PRE_SCRIPT}`;
 const PROJECT_HOOKS = {

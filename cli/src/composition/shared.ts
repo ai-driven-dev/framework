@@ -6,7 +6,6 @@ import { JsonFileMergerAdapter } from "../contexts/installation/infrastructure/j
 import { ManifestRepositoryAdapter } from "../contexts/installation/infrastructure/manifest-repository-adapter.js";
 import { PlatformAdapter } from "../contexts/installation/infrastructure/platform-adapter.js";
 import { UserManifestRepositoryAdapter } from "../contexts/installation/infrastructure/user-manifest-repository-adapter.js";
-import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import { pluginManifestProbes } from "../contexts/translate/domain/plugin-format.js";
 import type { FactoryOptions } from "../orchestration/deps.js";
 import type { Output } from "../orchestration/domain/output.js";
@@ -28,6 +27,7 @@ import {
   wireMachineClaims,
   withRecordsBeside,
 } from "./contexts/machine-claims.js";
+import type { RegisteredCatalog } from "./contexts/tools.js";
 import { homeDirResolver, userConfigDir } from "./user-config-dir.js";
 
 const plainText = (message: string | HintedMessage): string =>
@@ -48,7 +48,7 @@ export function createOutput(
 export interface BaseOptions extends FactoryOptions {
   projectRoot: string;
   output?: Output;
-  tools: ToolCatalog;
+  tools: RegisteredCatalog;
 }
 
 /** Asks a person when a terminal is attached, and answers its defaults when none is. */
@@ -59,7 +59,7 @@ function terminalPrompter() {
 /** What each host registers a plugin through, read once and reused wherever a use case needs the
  * scope a plugin is actually registered at: removal, clean, and doctor's own registration check. */
 function wireHost(parts: {
-  tools: ToolCatalog;
+  tools: RegisteredCatalog;
   fs: JsonFileMergerAdapter;
   logger: Output;
   home: string;

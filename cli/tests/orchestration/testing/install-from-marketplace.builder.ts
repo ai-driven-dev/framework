@@ -1,11 +1,11 @@
 /** Seeds an InstallFromMarketplace over in-memory deps and local marketplace catalogues. */
 import { join } from "node:path";
+import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { FetchMarketplaceSource } from "../../../src/contexts/distribution/application/fetch-marketplace-source.use-case.js";
 import { ResolvePluginSource } from "../../../src/contexts/distribution/application/plugin-source/resolve-plugin-source.use-case.js";
 import { ResolveMarketplace } from "../../../src/contexts/distribution/application/resolve-marketplace.use-case.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
-import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { InstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.use-case.js";
 import type { Prompter } from "../../../src/orchestration/ports/prompter.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
@@ -50,7 +50,12 @@ export type AddPluginFor = (
 
 export async function buildUseCase(
   addPluginFor: AddPluginFor,
-  options: { tools: ToolCatalog; claude: AiToolId; logger?: Logger | null; prompter?: Prompter }
+  options: {
+    tools: RegisteredCatalog;
+    claude: AiToolId;
+    logger?: Logger | null;
+    prompter?: Prompter;
+  }
 ) {
   const deps = await buildInstallationDeps({ tools: options.tools });
   await initAndInstall(deps, PROJECT_ROOT, options.claude);

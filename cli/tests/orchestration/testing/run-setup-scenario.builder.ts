@@ -1,6 +1,7 @@
 /** Builds RunSetup over in-memory deps and no-op marketplace and plugin doubles, plus the non-interactive flow it runs. */
 
 import { vi } from "vitest";
+import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.use-case.js";
 import type { RegisterFrameworkMarketplace } from "../../../src/contexts/distribution/application/register-framework-marketplace.use-case.js";
 import type { ResolveMarketplace } from "../../../src/contexts/distribution/application/resolve-marketplace.use-case.js";
@@ -14,7 +15,6 @@ import { ConfigureMachineScope } from "../../../src/contexts/installation/applic
 import { InstallTools } from "../../../src/contexts/installation/application/install/install-tools.use-case.js";
 import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
-import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { SetupFlow } from "../../../src/orchestration/domain/setup-flow.model.js";
 import type { RefreshMarketplaces } from "../../../src/orchestration/marketplace/refresh-marketplaces.use-case.js";
 import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.use-case.js";
@@ -136,7 +136,7 @@ interface UseCaseArgs {
   options?: UseCaseOptions;
 }
 
-async function buildUseCaseOver(tools: ToolCatalog, args: UseCaseArgs) {
+async function buildUseCaseOver(tools: RegisteredCatalog, args: UseCaseArgs) {
   const { chooseTools, userSourceReferences, logger, options } = args;
   const deps = await buildInstallationDeps({ tools });
   const prompter = new OverwritePrompter();
@@ -207,7 +207,7 @@ async function buildUseCaseOver(tools: ToolCatalog, args: UseCaseArgs) {
 }
 
 function remoteFlowOver(
-  tools: ToolCatalog,
+  tools: RegisteredCatalog,
   opts: Partial<{
     aiTools: ToolId[];
     ideTools: ToolId[];
@@ -233,7 +233,7 @@ function remoteFlowOver(
 }
 
 /** The scenario's use case and flow, over the catalog its test names. */
-export function runSetupScenarioOf(tools: ToolCatalog) {
+export function runSetupScenarioOf(tools: RegisteredCatalog) {
   return {
     buildUseCase: (
       chooseTools?: Pick<ChooseTools, "execute">,

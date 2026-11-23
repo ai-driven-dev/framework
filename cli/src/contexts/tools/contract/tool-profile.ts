@@ -5,15 +5,7 @@ import type { AiToolId, IdeToolId } from "../../../shared/domain/tool.js";
 import type { ToolBuildContract } from "./build-contract.js";
 import type { ConfigRef } from "./config-refs.js";
 import type { LinkSyntax } from "./link-syntax.js";
-import type {
-  GlobalFiles,
-  MarketplaceSettingsInput,
-  ProjectHooksLocation,
-  SignalDirectory,
-} from "./tool-vocabulary.js";
-
-/** One variable, as the caller reads it: a profile is a declaration and reaches no global. */
-export type EnvironmentReader = (name: string) => string | undefined;
+import type { GlobalFiles, ProjectHooksLocation, SignalDirectory } from "./tool-vocabulary.js";
 
 /** How a tool takes plugins, asked and never read: each answer is a method. */
 export interface PluginDelivery {
@@ -22,8 +14,6 @@ export interface PluginDelivery {
   /** Whether an install copies the per-target built tree verbatim: a flat tool, or a native one
    * that installs at user scope. */
   materializesFromBuiltTree(): boolean;
-  /** Whether `--scope user` has anywhere to point this tool. */
-  supportsUserScopeActivation(): boolean;
   /** Whether a machine-scope install writes the plugin's files itself. */
   copiesFilesGlobally(): boolean;
   /** Where a machine-scope install puts a plugin's files under `homedir`, or null for none. */
@@ -33,20 +23,6 @@ export interface PluginDelivery {
   hooksAcceptance(): HooksAcceptance;
   /** Whether its hooks are merged into the project's own hooks file rather than the plugin's directory. */
   deliversHooksToProject(): boolean;
-}
-
-/** What a tool's own plugin CLI declares about itself. */
-export interface NativeActivationAnswers {
-  /** The executable the host's own plugin CLI is run by: the key its driver and registry answer to. */
-  hostBinary(): string;
-  /** Whether the host's own CLI can update one installed plugin ref. */
-  refreshesOnePlugin(): boolean;
-  /** Whether the host keeps a registry of marketplaces that this CLI can read. */
-  keepsMarketplaceRegistry(): boolean;
-  /** Where the host leaves its plugin cache under `home`, or undefined when it declares none. */
-  pluginCacheRoot(home: string): string | undefined;
-  /** The host's own user-scope settings file under `home`, or undefined when none is declared. */
-  userSettingsFile(home: string, env: EnvironmentReader): string | undefined;
 }
 
 /** Output layout: a marketplace dist versus a flat workspace inject. */
@@ -204,27 +180,6 @@ export type ConfigWrite =
   | { readonly kind: "hooks"; readonly capability: HooksFileAnswers }
   | { readonly kind: "settings"; readonly capability: SettingsFileAnswers };
 
-/** How a tool whose own CLI drives the registration records marketplaces in its shared settings
- * file, as a sync asks it. */
-export interface MarketplaceRegistrationAnswers {
-  /** The project file shared with teammates, where marketplaces are declared. */
-  sharedSettingsFile(): string;
-  /** The key under which a shared file declares its marketplaces. */
-  marketplacesKey(): string;
-  /** The key under which a shared file enables plugins, or null for a tool that enables none
-   * there. */
-  enabledPluginsKey(): string | null;
-  /** The name a marketplace is keyed by in the enabled-plugins map, or null when the tool cannot
-   * express its source. */
-  entryKeyFor(input: MarketplaceSettingsInput): string | null;
-  /** Whether a declarative plugin entry may only be projected once the host proved the ref. */
-  requiresNativeProof(): boolean;
-  /** The marketplace names a parsed settings file declares, whether as a list or as a map. */
-  declaredMarketplaceNames(parsed: unknown): ReadonlySet<string>;
-  /** The files its registrations keep on this machine, none when it keeps none. */
-  machineLocalFiles(): readonly string[];
-}
-
 /** A model and the effort it runs at, in the tool's own ids. */
 export interface ModelChoice {
   readonly model: string;
@@ -287,13 +242,8 @@ export interface AiToolProfile {
   markdownSection(kind: "commands" | "agents" | "rules"): MarkdownSectionAnswers | null;
   /** Whether the tool declares a skills section. */
   declaresSkills(): boolean;
-  /** The tool's native plugin CLI declaration, or undefined when it has none. */
-  nativeActivation(): NativeActivationAnswers | undefined;
   /** The providers its main session and agents can run on, or null when it runs none. */
   agentModels(): AgentModelAnswers | null;
-  /** Whether a ref the host's registry lists is a plugin in use: an enabled one always, a disabled
-   * one unless the host's uninstall leaves refs disabled. Every ref counts for a tool with no native CLI. */
-  hostRefInUse(enabled: boolean): boolean;
   /** The config files an install writes, by asset name: the tool's own, then the runtime
    * modules its plugins need. */
   configFiles(): Readonly<Record<string, string>>;
@@ -310,8 +260,6 @@ export interface AiToolProfile {
   settingsFiles(): readonly SettingsFileAnswers[];
   /** The config files an install writes: mcp, then hooks, then each settings file. */
   configWrites(): readonly ConfigWrite[];
-  /** Its marketplace registration in the shared settings file, or null for a tool driving none. */
-  marketplaceRegistration(): MarketplaceRegistrationAnswers | null;
   /** The files this tool keeps machine-local that an install must ignore and `status` must skip;
    * none when it keeps none. */
   machineLocalFiles(): readonly string[];
@@ -319,8 +267,6 @@ export interface AiToolProfile {
   projectHooksDelivery(): ProjectHooksLocation | null;
   /** Where its installed rules live and what they end in, or null when it installs none. */
   installedRulesLocation(): { readonly directory: string; readonly extension: string } | null;
-  /** Whether enabling a plugin acts on the whole machine: its own CLI takes no scope, or it has none. */
-  pluginEnablementIsMachineGlobal(): boolean;
   /** Where its own commands sit in the project at `projectRoot`, or null when it declares none. */
   signalDirectoryIn(projectRoot: string): SignalDirectory | null;
 }

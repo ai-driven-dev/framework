@@ -1,4 +1,3 @@
-import { join } from "node:path";
 import cursorSettings from "../../../assets/configs/cursor/settings.json" with { type: "json" };
 // biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
 import adapter from "../../../assets/hooks-runtime/host-cursor.cjs";
@@ -17,7 +16,9 @@ import {
 } from "../../contexts/tools/domain/formats/hooks/routes.js";
 import { pluginTreeContract } from "../../contexts/tools/domain/formats/plugin-tree-contract.js";
 import { asMdc, globsScopedRule } from "../../contexts/tools/domain/formats/rule-frontmatter.js";
+import { contract } from "../../contexts/tools/domain/profile/contract-builders.js";
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
+import { installUnder } from "../../contexts/tools/domain/profile/tool-suffix.js";
 import { nativeLayout } from "../../contexts/tools/domain/sections/layout-section.js";
 import { manifestSection } from "../../contexts/tools/domain/sections/manifest-section.js";
 import {
@@ -121,26 +122,26 @@ export const cursor = defineAiTool({
   ],
   hooks,
   buildContracts: {
-    marketplace: () => pluginTreeContract(hooks, OUTPUT_PLUGIN_TREE),
-    flat: () => buildCursorFlatContract(hooks, CURSOR_FLAT_LAYOUT, CURSOR_AGENT_MARKDOWN),
+    marketplace: contract(pluginTreeContract, hooks, OUTPUT_PLUGIN_TREE),
+    flat: contract(buildCursorFlatContract, hooks, CURSOR_FLAT_LAYOUT, CURSOR_AGENT_MARKDOWN),
   },
 
-  capabilities: (bound) => ({
-    agents: bound.agents({
+  capabilities: {
+    agents: {
       format: "markdown",
       frontmatter: AGENT_FRONTMATTER,
       // Cursor keeps single quotes as part of the value, so `'name'` would be the agent's name.
       quote: "double",
-    }),
-    skills: bound.skills({}),
-    commands: bound.commands({
+    },
+    skills: {},
+    commands: {
       buildInstallPath: aiddCommandsUnder(DIRECTORY),
       convertFrontmatter: convertCommandFrontmatter,
-    }),
-    rules: bound.rules({
-      buildInstallPath: asMdc(bound.installUnder("rules/")),
+    },
+    rules: {
+      buildInstallPath: asMdc(installUnder(DIRECTORY, TOOL_SUFFIX, "rules/")),
       convertFrontmatter: globsScopedRule,
-    }),
+    },
     mcp: {
       config: new McpConfigPart({
         outputPath: `${DIRECTORY}mcp.json`,
@@ -155,14 +156,14 @@ export const cursor = defineAiTool({
       // keys such as "aidd-context/commands/foo.md".
       pluginsDir: "",
       installScope: "user",
-      userPluginsDir: (h) => join(h, ".cursor", "plugins", "local"),
+      userPluginsDir: "{home}/.cursor/plugins/local",
     }),
     manifest: manifestSection({
       manifestRelativePath: null,
       pluginRootToken: CURSOR_ROOT_TOKEN,
     }),
     models: new ModelsSection({ providers: ["anthropic"] }),
-  }),
+  },
 
   linkSyntax: [
     { from: /(@?)\.cursor\/commands\/(\d+)[_-][^/]+\/(?=\S)/g, to: "$1.cursor/commands/aidd/$2/" },

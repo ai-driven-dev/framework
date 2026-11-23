@@ -1,13 +1,13 @@
 /** Seeds a user-scope marketplace removal over a native host, so each removal case states only what it varies. */
 
 import type { registrationRecordRules } from "../../../src/composition/contexts/installation.js";
+import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { NativeMarketplaceSource } from "../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import type { ToolRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
@@ -50,7 +50,7 @@ export function sourceReader(): HostMarketplaceSources {
 }
 
 export type NativeFixtureOptions = {
-  tools: ToolCatalog;
+  tools: RegisteredCatalog;
   dependents?: readonly string[];
   available?: boolean;
   failOnUninstall?: boolean;

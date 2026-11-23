@@ -4,20 +4,20 @@ import {
   defineIdeTool,
   type ProfileBrand,
 } from "../../../../../src/contexts/tools/domain/profile/define-tool.js";
+import { installUnder } from "../../../../../src/contexts/tools/domain/profile/tool-suffix.js";
 import type { AiTool } from "../../../../../src/contexts/tools/domain/profile.js";
 import { aiSpec, ideSpec, refusalOf, settings } from "../../testing/define-tool-spec.builder.js";
-import { flatPlugins, nativePlugins, sectionsOf } from "../../testing/plugin-mode.builder.js";
 
 describe("defining an AI tool", () => {
   it("builds a section with the directory and the suffix the profile stated once", () => {
     const tool = defineAiTool({
       ...aiSpec,
-      capabilities: (bound) => ({
-        commands: bound.commands({
-          buildInstallPath: bound.installUnder("commands/"),
-          convertFrontmatter: (frontmatter) => frontmatter,
-        }),
-      }),
+      capabilities: {
+        commands: {
+          buildInstallPath: installUnder(aiSpec.directory, aiSpec.toolSuffix, "commands/"),
+          convertFrontmatter: (frontmatter: Record<string, unknown>) => frontmatter,
+        },
+      },
     });
 
     expect(tool.section("commands").buildInstallPath("run.claude.md")).toBe(".x/commands/run.md");
@@ -26,12 +26,12 @@ describe("defining an AI tool", () => {
   it("answers a markdown section by kind, and null for a kind it does not declare", () => {
     const tool = defineAiTool({
       ...aiSpec,
-      capabilities: (bound) => ({
-        commands: bound.commands({
-          buildInstallPath: bound.installUnder("commands/"),
-          convertFrontmatter: (frontmatter) => frontmatter,
-        }),
-      }),
+      capabilities: {
+        commands: {
+          buildInstallPath: installUnder(aiSpec.directory, aiSpec.toolSuffix, "commands/"),
+          convertFrontmatter: (frontmatter: Record<string, unknown>) => frontmatter,
+        },
+      },
     });
 
     expect(tool.markdownSection("commands")?.buildInstallPath("run.claude.md")).toBe(
@@ -43,7 +43,7 @@ describe("defining an AI tool", () => {
   it("answers whether it declares skills", () => {
     const tool = defineAiTool({
       ...aiSpec,
-      capabilities: (bound) => ({ skills: bound.skills({}) }),
+      capabilities: { skills: {} },
     });
 
     expect(tool.declaresSkills()).toBe(true);
@@ -51,31 +51,10 @@ describe("defining an AI tool", () => {
   });
 
   it("answers a declared section, and null for one it does not declare", () => {
-    const tool = defineAiTool({ ...aiSpec, capabilities: () => ({ config: [settings] }) });
+    const tool = defineAiTool({ ...aiSpec, capabilities: { config: [settings] } });
 
     expect(tool.section("config")).toStrictEqual([settings]);
     expect(tool.section("mcp")).toBeNull();
-  });
-
-  it("answers the native activation of a native plugins capability, and undefined for any other", () => {
-    const native = nativePlugins({
-      nativeActivation: { binary: "x", enableVerb: "add", disableVerb: "remove" },
-    });
-
-    const activated = defineAiTool({ ...aiSpec, capabilities: () => sectionsOf(native) });
-    const unactivated = defineAiTool({
-      ...aiSpec,
-      capabilities: () => sectionsOf(nativePlugins()),
-    });
-    const flat = defineAiTool({
-      ...aiSpec,
-      capabilities: () => sectionsOf(flatPlugins("refuses")),
-    });
-
-    expect(activated.nativeActivation()).toBeDefined();
-    expect(unactivated.nativeActivation()).toBeUndefined();
-    expect(flat.nativeActivation()).toBeUndefined();
-    expect(defineAiTool(aiSpec).nativeActivation()).toBeUndefined();
   });
 
   it("refuses an absolute directory", () => {
@@ -99,9 +78,9 @@ describe("defining an AI tool", () => {
   it("refuses a section key no tool can declare", () => {
     const sections = { config: [settings], bogus: 1 };
 
-    expect(
-      refusalOf(() => defineAiTool({ ...aiSpec, capabilities: () => sections })).invariant
-    ).toBe("unknown-section");
+    expect(refusalOf(() => defineAiTool({ ...aiSpec, capabilities: sections })).invariant).toBe(
+      "unknown-section"
+    );
   });
 
   it("refuses shipped config repeating a name", () => {
@@ -128,7 +107,7 @@ describe("defining an AI tool", () => {
       defineAiTool({
         ...aiSpec,
         configAssets: shipped(destination),
-        capabilities: () => ({ config: [settings] }),
+        capabilities: { config: [settings] },
       });
 
     expect(refusalOf(() => build(".x/elsewhere.json")).invariant).toBe("shipped-config-disagrees");
@@ -161,9 +140,9 @@ describe("defining an IDE tool", () => {
   it("refuses a section key no tool can declare", () => {
     const sections = { config: [settings], bogus: 1 };
 
-    expect(
-      refusalOf(() => defineIdeTool({ ...ideSpec, capabilities: () => sections })).invariant
-    ).toBe("unknown-section");
+    expect(refusalOf(() => defineIdeTool({ ...ideSpec, capabilities: sections })).invariant).toBe(
+      "unknown-section"
+    );
   });
 
   it("refuses shipped config repeating a name", () => {
@@ -190,7 +169,7 @@ describe("defining an IDE tool", () => {
       defineIdeTool({
         ...ideSpec,
         configAssets: shipped(destination),
-        capabilities: () => ({ config: [settings] }),
+        capabilities: { config: [settings] },
       });
 
     expect(refusalOf(() => build(".x/elsewhere.json")).invariant).toBe("shipped-config-disagrees");

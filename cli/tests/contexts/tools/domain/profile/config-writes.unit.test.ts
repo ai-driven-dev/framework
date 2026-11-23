@@ -24,7 +24,7 @@ function ideTool(declared: ConfigSection[]): IdeToolConfig {
     toolId: TOOL.vscode,
     directory: ".vscode/",
     signalDir: null,
-    capabilities: () => ({ config: declared }),
+    capabilities: { config: declared },
   });
 }
 

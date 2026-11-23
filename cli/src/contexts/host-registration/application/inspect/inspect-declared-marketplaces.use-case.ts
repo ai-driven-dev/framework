@@ -1,12 +1,14 @@
 import { join } from "node:path";
 import { tryParseJson } from "../../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
 import type {
   InspectDeclaredMarketplacesResult,
   UndeclaredMarketplace,
 } from "../../contract/inspect-declared-marketplaces-result.js";
+import type {
+  MarketplaceRegistrationAnswers,
+  NativeHostCatalog,
+} from "../../contract/native-registration-spec.js";
 import type { SettingsDeclaringTool } from "../../ports/host-tool.js";
 
 export interface InspectDeclaredMarketplacesRequest {
@@ -25,7 +27,7 @@ export class InspectDeclaredMarketplaces {
     private readonly fs: FileReader,
     /** Whether the host CLI behind a `NativeActivation.hostBinary()` is on the PATH. */
     private readonly hostAvailable: (binary: string) => boolean,
-    private readonly tools: ToolCatalog
+    private readonly tools: NativeHostCatalog
   ) {}
 
   async execute(

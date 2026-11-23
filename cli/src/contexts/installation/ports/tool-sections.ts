@@ -1,9 +1,10 @@
 import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
+import type { EnvironmentReader } from "../../tools/contract/home-path.js";
+import type { CatalogAnswering } from "../../tools/contract/tool-catalog.js";
 import type {
   AgentModelAnswers,
   ConfigWrite,
   McpConfigAnswers,
-  NativeActivationAnswers,
   PluginAnswers,
 } from "../../tools/contract/tool-profile.js";
 import type {
@@ -13,6 +14,28 @@ import type {
 
 // Each shape is the part of a tool one reader asks for. The tools context owns the profile, and
 // the caller hands over the real one, which satisfies every shape here.
+/** A host's own plugin CLI, as the installation reads it and hands it on to a host withdrawal.
+ * The host-registration context owns the declaration; the composition hands over the assembled
+ * profile, which satisfies this shape. */
+export interface NativeActivationAnswers {
+  hostBinary(): string;
+  refreshesOnePlugin(): boolean;
+  keepsMarketplaceRegistry(): boolean;
+  pluginCacheRoot(home: string): string | undefined;
+  userSettingsFile(home: string, env: EnvironmentReader): string | undefined;
+}
+
+/** What an AI profile answers about its native registration, once the composition assembled it. */
+export interface NativeRegistrationReach {
+  nativeActivation(): NativeActivationAnswers | undefined;
+  marketplaceRegistration(): { sharedSettingsFile(): string } | null;
+  hostRefInUse(enabled: boolean): boolean;
+  pluginEnablementIsMachineGlobal(): boolean;
+}
+
+/** The catalog the installation is handed: its AI profiles answer their native registration. */
+export type InstallationCatalog = CatalogAnswering<NativeRegistrationReach>;
+
 export interface ToolFootprint {
   readonly toolId: ToolId;
   readonly directory: string;

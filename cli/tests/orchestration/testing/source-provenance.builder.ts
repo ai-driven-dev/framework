@@ -1,3 +1,4 @@
+import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { HostMarketplaceRegistryReading } from "../../../src/contexts/host-registration/domain/reading/marketplace-registry-reading.js";
 import type { HostPluginRegistryReading } from "../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
@@ -5,7 +6,6 @@ import type { NativeMarketplaceSource } from "../../../src/contexts/host-registr
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
@@ -79,7 +79,7 @@ function catalogueFileOf(toolId: AiToolId, codex: AiToolId) {
 }
 
 export interface HostPluginProofOptions {
-  tools: ToolCatalog;
+  tools: RegisteredCatalog;
   ids: ProvenanceTools;
   toolId?: AiToolId;
   catalogue?: HostMarketplaceRegistryReading;
@@ -185,7 +185,7 @@ export function codexSourceAfterAdd(
 
 /** A sync of one project for one tool, whose host answers with the source and plugin listings given. */
 export function syncOfDeclaredPlugin(options: {
-  tools: ToolCatalog;
+  tools: RegisteredCatalog;
   toolId: AiToolId;
   fs: InMemoryFileAdapter;
   projectRepo: InMemoryManifestRepository;

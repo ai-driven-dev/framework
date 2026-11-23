@@ -136,7 +136,7 @@ export class ProfileBuilder {
       directory,
       toolSuffix,
       signalDir,
-      capabilities: () => capabilities,
+      capabilities: capabilities,
       buildContracts: this.contracts,
       ...(this.probes === undefined ? {} : { distributionProbes: this.probes }),
       linkSyntax: [],
@@ -146,14 +146,4 @@ export class ProfileBuilder {
 
 export function aProfile(toolId: AiToolId = TOOL.claude): ProfileBuilder {
   return new ProfileBuilder(toolId);
-}
-
-export type InstallKind = "agents" | "commands" | "rules";
-type Installs = { buildInstallPath(fileName: string): string | null };
-
-/** Where a profile installs one built file of a kind, or null when it installs none. */
-export function installPathOf(profile: AiTool, kind: InstallKind, fileName: string): string | null {
-  const capability: Installs | null = profile.section(kind);
-  if (capability === null) throw new Error(`profile has no ${kind}`);
-  return capability.buildInstallPath(fileName);
 }

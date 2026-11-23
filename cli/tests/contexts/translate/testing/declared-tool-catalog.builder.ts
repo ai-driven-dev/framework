@@ -1,11 +1,12 @@
-import { RegisteredToolCatalog } from "../../../../src/contexts/tools/application/registered-tool-catalog.js";
-import type { ToolCatalog } from "../../../../src/contexts/tools/contract/tool-catalog.js";
+import type { RegisteredCatalog } from "../../../../src/composition/contexts/tools.js";
+import type { RegisteredProfile } from "../../../../src/composition/tool-profiles.composition.js";
 import type {
   AiToolProfile,
   FrameworkBuildMode,
 } from "../../../../src/contexts/tools/contract/tool-profile.js";
 import type { AiToolId } from "../../../../src/shared/domain/tool.js";
 import { buildContractOf } from "../../../shared/testing/build-contract-of.builder.js";
+import { catalogOf } from "../../../shared/testing/catalog-of.builder.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { ownMembers } from "./contract-tool-profile.builder.js";
 
@@ -20,9 +21,7 @@ export interface DeclaredTool {
 /** A contract that stands for any declared mode: the code under test asks whether one exists. */
 const standInContract = () => buildContractOf(registeredTools(), TOOL.opencode, "flat");
 
-type Built = ConstructorParameters<typeof RegisteredToolCatalog>[0][number];
-
-function declaring(declared: DeclaredTool): Built {
+function declaring(declared: DeclaredTool): RegisteredProfile {
   const overrides = {
     distributionPaths: (kind) =>
       (kind === "manifest" ? declared.manifestPaths : declared.marketplacePaths) ?? [],
@@ -34,10 +33,10 @@ function declaring(declared: DeclaredTool): Built {
 
 /** The real catalog over only the given tools, in the registered order. A tool declares only its probes and build modes; every other answer is the
  * registered tool's own. An id it was not given is refused. */
-export function catalogDeclaring(tools: readonly DeclaredTool[]): ToolCatalog {
+export function catalogDeclaring(tools: readonly DeclaredTool[]): RegisteredCatalog {
   const byId = new Map(tools.map((tool) => [tool.id, declaring(tool)]));
   const registered = registeredTools()
     .idsInCanonicalOrder("ai")
     .flatMap((id) => byId.get(id) ?? []);
-  return new RegisteredToolCatalog(registered);
+  return catalogOf(registered);
 }

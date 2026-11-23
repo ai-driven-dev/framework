@@ -4,6 +4,7 @@ import { UpdateGitignore } from "../../../src/contexts/installation/application/
 import type { ToolRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import { resolveHomeTemplate } from "../../../src/contexts/tools/contract/home-path.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
@@ -58,7 +59,9 @@ describe("clean: confirmation and preview", () => {
       await useCase.execute({ ...AT_PROJECT, force: true });
 
       expect(
-        fs.deletedPaths.some((p) => p.endsWith(join(hostUserPluginsDir(""), PLUGIN_KEY)))
+        fs.deletedPaths.some((p) =>
+          p.endsWith(join(resolveHomeTemplate(hostUserPluginsDir, ""), PLUGIN_KEY))
+        )
       ).toBe(false);
       expect(fs.deletedPaths.some((p) => p.includes(join(".ssh", "id_rsa")))).toBe(false);
       expect(logger.warnMessages.some((m) => m.includes("id_rsa"))).toBe(false);
@@ -79,7 +82,7 @@ describe("clean: confirmation and preview", () => {
         })
       );
       const fs = new RecordingFileAdapter({}, [PROJECT_ROOT]);
-      const boundary = hostUserPluginsDir(homedir());
+      const boundary = resolveHomeTemplate(hostUserPluginsDir, homedir());
       fs.setSymlink(join(boundary, "aidd-context"), "/tmp/evil-aidd-context");
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
       const logger = new CapturingLogger();
@@ -94,7 +97,9 @@ describe("clean: confirmation and preview", () => {
 
       expect(fs.deletedPaths.some((p) => p.includes("evil"))).toBe(false);
       expect(
-        fs.deletedPaths.some((p) => p.endsWith(join(hostUserPluginsDir(""), PLUGIN_KEY)))
+        fs.deletedPaths.some((p) =>
+          p.endsWith(join(resolveHomeTemplate(hostUserPluginsDir, ""), PLUGIN_KEY))
+        )
       ).toBe(false);
       expect(logger.warnMessages.some((m) => m.includes(PLUGIN_KEY))).toBe(false);
     });

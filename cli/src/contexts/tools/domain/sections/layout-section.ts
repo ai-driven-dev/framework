@@ -1,12 +1,7 @@
 import type { FlatArtifactLayout } from "../../../../shared/domain/materialization/flat-paths.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
-import type {
-  MarketplaceSettings,
-  NativeActivationSpec,
-} from "../../contract/native-registration-spec.js";
+import { type HomeTemplate, resolveHomeTemplate } from "../../contract/home-path.js";
 import type { GlobalFiles } from "../../contract/tool-vocabulary.js";
-import { MarketplaceRegistration } from "../native-registration/marketplace-registration.js";
-import { NativeActivation } from "../native-registration/native-activation.js";
 import { CapabilityConfigError } from "../tools.error.js";
 
 /**
@@ -36,12 +31,8 @@ export interface NativeLayout {
   readonly mode: "native";
   readonly pluginsDir: string;
   readonly installScope: Scope;
-  readonly userPluginsDir?: (homedir: string) => string;
+  readonly userPluginsDir?: HomeTemplate;
   readonly globalFiles?: GlobalFiles;
-  /** The tool's own plugin CLI, when it drives the activation. */
-  readonly activation?: NativeActivation;
-  /** Where the tool records the marketplaces it knows, which needs an activation. */
-  readonly marketplace?: MarketplaceRegistration;
 }
 
 /** A tool that loads a plugin's files from its own workspace directory. */
@@ -61,55 +52,44 @@ export interface UnsupportedLayout {
 /** Where and how a tool takes a plugin, by mode. */
 export type LayoutSection = NativeLayout | FlatPlacement | UnsupportedLayout;
 
+/** The global files a profile declares: its user configuration directory as a home template. */
+export interface GlobalFilesParams {
+  readonly dir: HomeTemplate;
+  readonly map: GlobalFiles["map"];
+}
+
+function globalFilesOf(params: GlobalFilesParams | undefined): { globalFiles?: GlobalFiles } {
+  if (params === undefined) return {};
+  const { dir, map } = params;
+  return { globalFiles: { dir: (homedir) => resolveHomeTemplate(dir, homedir), map } };
+}
+
 export interface NativeLayoutParams {
   pluginsDir: string;
   /** `"user"` installs plugins relative to the home directory and requires `userPluginsDir`. */
   installScope?: Scope;
-  userPluginsDir?: (homedir: string) => string;
-  globalFiles?: GlobalFiles;
-  nativeActivation?: NativeActivationSpec;
-  marketplaceSettings?: MarketplaceSettings;
-}
-
-function activationOf(params: NativeLayoutParams): NativeActivation | undefined {
-  return params.nativeActivation === undefined
-    ? undefined
-    : new NativeActivation(params.nativeActivation);
-}
-
-function marketplaceOf(
-  params: NativeLayoutParams,
-  activation: NativeActivation | undefined
-): MarketplaceRegistration | undefined {
-  return params.marketplaceSettings === undefined
-    ? undefined
-    : new MarketplaceRegistration(params.marketplaceSettings, activation ?? null);
+  userPluginsDir?: HomeTemplate;
+  globalFiles?: GlobalFilesParams;
 }
 
 export function nativeLayout(params: NativeLayoutParams): NativeLayout {
   const installScope = params.installScope ?? "project";
   if (installScope === "user" && params.userPluginsDir === undefined) {
-    throw new CapabilityConfigError(
-      "installScope 'user' requires a userPluginsDir resolver function."
-    );
+    throw new CapabilityConfigError("installScope 'user' requires a userPluginsDir home template.");
   }
-  const activation = activationOf(params);
-  const marketplace = marketplaceOf(params, activation);
   return {
     mode: "native",
     pluginsDir: params.pluginsDir,
     installScope,
     ...(params.userPluginsDir === undefined ? {} : { userPluginsDir: params.userPluginsDir }),
-    ...(params.globalFiles === undefined ? {} : { globalFiles: params.globalFiles }),
-    ...(activation === undefined ? {} : { activation }),
-    ...(marketplace === undefined ? {} : { marketplace }),
+    ...globalFilesOf(params.globalFiles),
   };
 }
 
 export interface FlatPlacementParams {
   namespacePrefix: string;
   artifacts: FlatArtifactLayout;
-  globalFiles?: GlobalFiles;
+  globalFiles?: GlobalFilesParams;
 }
 
 export function flatPlacement(params: FlatPlacementParams): FlatPlacement {
@@ -117,6 +97,6 @@ export function flatPlacement(params: FlatPlacementParams): FlatPlacement {
     mode: "flat",
     artifacts: params.artifacts,
     namespacePrefix: params.namespacePrefix,
-    ...(params.globalFiles === undefined ? {} : { globalFiles: params.globalFiles }),
+    ...globalFilesOf(params.globalFiles),
   };
 }

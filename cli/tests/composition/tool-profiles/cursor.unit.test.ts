@@ -6,19 +6,8 @@ import {
   pluginTreeShapeOf,
   SHIPPED_AS_IS,
 } from "../../contexts/tools/testing/profile-tables.builder.js";
-import { type InstallKind, installPathOf } from "../../contexts/tools/testing/profiles.builder.js";
 
 describe("cursor declarations the rest of the CLI reads", () => {
-  it("has .cursor/ directory", () => {
-    expect(cursor.directory).toBe(".cursor/");
-  });
-
-  it("probes a marketplace catalog at .cursor-plugin/marketplace.json", () => {
-    expect(cursor.distributionPaths("marketplace")).toStrictEqual([
-      ".cursor-plugin/marketplace.json",
-    ]);
-  });
-
   it("writes agents as markdown", () => {
     expect(cursor.section("agents").serialize({ name: "a" }, "body")).toMatch(/^---\n/);
   });
@@ -30,13 +19,6 @@ describe("cursor declarations the rest of the CLI reads", () => {
       JSON.parse(mcp?.transform(JSON.stringify({ mcpServers: { a: { command: "node" } } })))
     ).toHaveProperty("mcpServers");
     expect(cursor.section("mcp").config?.consumes(CONFIG_MCP)).toBe(true);
-  });
-
-  it.each<[InstallKind, string, string | null]>([
-    ["commands", "04_code/implement.md", ".cursor/commands/aidd/04/implement.md"],
-    ["rules", "01-standards/naming.md", ".cursor/rules/01-standards/naming.mdc"],
-  ])("installs %s file %s at %s", (kind, built, path) => {
-    expect(installPathOf(cursor, kind, built)).toBe(path);
   });
 });
 
@@ -51,10 +33,6 @@ describe("cursor build and conversion tables", () => {
 });
 
 describe("cursor's hooks", () => {
-  it("name the plugin root by Cursor's own variable", () => {
-    expect(cursor.hooks?.rootToken).toBe("$" + "{CURSOR_PLUGIN_ROOT}");
-  });
-
   it("rewrite a plugin's root token for the project hooks file, leaving a plugin-relative path outside hooks/ where it was", () => {
     const shipped = JSON.stringify({
       hooks: {

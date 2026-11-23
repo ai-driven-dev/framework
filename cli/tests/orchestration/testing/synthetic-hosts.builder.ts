@@ -1,8 +1,6 @@
-import { join } from "node:path";
 import { nativeRegistrationsOf } from "../../../src/composition/contexts/host-registration.js";
-import { RegisteredToolCatalog } from "../../../src/contexts/tools/application/registered-tool-catalog.js";
+import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { MCP_CONFIG_REF } from "../../../src/contexts/tools/contract/config-refs.js";
-import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { declareHooks } from "../../../src/contexts/tools/domain/formats/hooks/declaration.js";
 import { projectHooksSupport } from "../../../src/contexts/tools/domain/formats/hooks/routes.js";
 import { toTypedMcpSection } from "../../../src/contexts/tools/domain/formats/mcp/typed-mcp-section.js";
@@ -16,6 +14,7 @@ import { manifestSection } from "../../../src/contexts/tools/domain/sections/man
 import { McpConfigPart } from "../../../src/contexts/tools/domain/sections/mcp-section.js";
 import { ModelsSection } from "../../../src/contexts/tools/domain/sections/models-section.js";
 import { flatArtifactLayout } from "../../../src/shared/domain/materialization/flat-paths.js";
+import { catalogOf, registeredFrom } from "../../shared/testing/catalog-of.builder.js";
 import { anEmptyContract } from "../../shared/testing/empty-build-contract.builder.js";
 import {
   homeDir,
@@ -36,18 +35,19 @@ const claude = syntheticNativeTool(
     ...registryHost("hostclaude"),
     userRemoveArgs: [],
     pluginArgs: ["--yes"],
-    userSettingsPath: (home, env) =>
-      join(env(HOST_CONFIG_DIR_ENV) || join(home, ".hostclaude"), "settings.json"),
+    userSettingsPath: {
+      env: HOST_CONFIG_DIR_ENV,
+      fallback: "{home}/.hostclaude",
+      fileName: "settings.json",
+    },
   },
   {
-    layout: {
-      marketplaceSettings: {
-        settingsPath: ".hostclaude/settings.json",
-        settingsKey: "extraKnownMarketplaces",
-        marketplacesSettingsPath: HOST_LOCAL_SETTINGS,
-        enabledPluginsKey: "enabledPlugins",
-        toEntryKey: ({ name }) => name,
-      },
+    marketplace: {
+      settingsPath: ".hostclaude/settings.json",
+      settingsKey: "extraKnownMarketplaces",
+      marketplacesSettingsPath: HOST_LOCAL_SETTINGS,
+      enabledPluginsKey: "enabledPlugins",
+      toEntryKey: ({ name }) => name,
     },
     models: new ModelsSection({
       providers: ["anthropic"],
@@ -125,7 +125,7 @@ const cursor = defineAiTool({
   displayName: "hostcursor",
   hooks: cursorHooks,
   buildContracts: { flat: () => anEmptyContract() },
-  capabilities: () => ({
+  capabilities: {
     layout: nativeLayout({
       pluginsDir: "",
       installScope: "user",
@@ -134,12 +134,12 @@ const cursor = defineAiTool({
     manifest: manifestSection({ manifestRelativePath: null, pluginRootToken: "." }),
     hooks: { delivery: projectHooksSupport(cursorHooks) },
     models: new ModelsSection({ providers: ["anthropic"] }),
-  }),
+  },
   linkSyntax: [],
 });
 
 /** The directory the mcp host reads its machine-wide settings from. */
-export const hostMcpGlobalDir = (home: string) => join(home, ".config", "hostmcp");
+export const hostMcpGlobalDir = "{home}/.config/hostmcp";
 
 /** The JSON schema URL heading a settings file aidd creates for the mcp host. */
 export const HOST_MCP_SCHEMA = "https://hostmcp.invalid/config.json";
@@ -156,7 +156,7 @@ const mcp = defineAiTool({
   signalDir: null,
   displayName: "hostmcp",
   buildContracts: { flat: () => anEmptyContract() },
-  capabilities: () => ({
+  capabilities: {
     layout: flatPlacement({
       artifacts: flatArtifactLayout(".hostmcp/", { skills: "nested", agent: { ext: ".md" } }),
       namespacePrefix: "aidd-",
@@ -177,7 +177,7 @@ const mcp = defineAiTool({
         consumes: [MCP_CONFIG_REF],
       }),
     },
-  }),
+  },
   linkSyntax: [],
 });
 
@@ -193,8 +193,8 @@ export const HOST: HostIds & { readonly mcp: HostIds["claude"] } = {
   mcp: mcp.toolId,
 };
 
-export function hostCatalog(): ToolCatalog {
-  return new RegisteredToolCatalog(Object.values(HOST_TOOLS));
+export function hostCatalog(): RegisteredCatalog {
+  return catalogOf(Object.values(HOST_TOOLS));
 }
 
 /** The plugin cache root a host's own profile declares, for a given home. */
@@ -206,5 +206,5 @@ export function hostCacheRoot(key: keyof HostIds, home: string): string {
 
 /** The native activations the four hosts declare, as host-registration wiring reads them. */
 export function hostRegistrations() {
-  return nativeRegistrationsOf(Object.values(HOST_TOOLS));
+  return nativeRegistrationsOf(Object.values(HOST_TOOLS).map(registeredFrom));
 }

@@ -4,7 +4,7 @@ The language of the `tools` context. A name in the code means what this page say
 
 | Term | Meaning | In the code |
 | --- | --- | --- |
-| Profile | The declaration of one tool the CLI targets, an AI assistant or an editor. Only the factory builds one; a caller asks it questions | `defineAiTool`, `defineIdeTool`, `BuiltToolConfig`, `composition/tool-profiles/<tool>.ts` |
+| Profile | The declaration of one tool the CLI targets, an AI assistant or an editor. Only the factory builds one; a caller asks it questions | `defineAiTool`, `defineIdeTool`, `ProfileBrand`, `composition/tool-profiles/<tool>.ts` |
 | Profile as asked | What an outside caller sees of a profile: answers, never structure; readers outside `tools` name the sections they read, not the whole profile | `AiToolProfile`, `IdeToolProfile`, `contract/tool-profile.ts` |
 | Catalog | The registered profiles, asked by id or walked in one of three orders, never mixed: registration order for help (`inHelpOrder`), the shared tool vocabulary's order for install, uninstall and listing (`idsInCanonicalOrder`), sorted by id for setup and doctor (`sortedIds`). Built once, handed to every use case | `ToolCatalog`, `RegisteredToolCatalog`, `wireTools` |
 | Registration list | The one list of profiles the catalog is built from, held by the composition; a new tool adds its line | `REGISTERED_PROFILES` in `composition/tool-profiles.composition.ts` |
@@ -16,5 +16,4 @@ The language of the `tools` context. A name in the code means what this page say
 | Unsupported delivery | The tool takes no plugin | `LayoutSection` (mode unsupported), `UnsupportedPluginAnswers` |
 | Build contract | What `aidd translate` needs of a tool to build its distribution: one artifact-symmetric declaration per build mode, read by translate's disk sink | `ToolBuildContract`, `contract/build-contract.ts` |
 | Flat layout | Where a flat plugin's files land and how its hooks are loaded | `FlatLayout`, `FlatSkillLayout` |
-| Native activation | What a tool's own plugin CLI declares about itself: its binary, where it keeps its registries and cache, its settings file | `NativeActivation`, `NativeActivationAnswers` |
 | Conformance | The checks every registered profile must pass, run over the registration list, so a new tool is checked without a test of its own | `PROFILE_CHECKS`, `PROFILE_FILE_CHECKS`, `tests/contexts/tools/testing/` |

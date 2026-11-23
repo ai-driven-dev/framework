@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { copilot } from "../../../../../../src/composition/tool-profiles/copilot.js";
+import { registeredAiConfig } from "../../../../../shared/testing/catalog-of.builder.js";
 import { nativeOf } from "../../../../../shared/testing/native-plugin-answers.builder.js";
+import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 
 describe("copilot plugins", () => {
   describe("with Copilot's plugins capability", () => {
@@ -24,7 +26,7 @@ describe("copilot plugins", () => {
   });
 
   describe("with Copilot's marketplace settings", () => {
-    const ms = copilot.marketplaceRegistration();
+    const ms = registeredAiConfig(TOOL.copilot).marketplaceRegistration();
 
     it("has marketplaceSettings configured", () => {
       expect(ms).not.toBeNull();

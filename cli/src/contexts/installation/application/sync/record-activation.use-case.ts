@@ -2,10 +2,9 @@ import { resolve } from "node:path";
 import { FileHash } from "../../../../shared/domain/file-hash.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
 import { driftOf } from "../../domain/drift.js";
 import type { Manifest } from "../../domain/manifest.js";
+import type { InstallationCatalog } from "../../ports/tool-sections.js";
 
 /** A marketplace the host registered: the manifest reads the two names and keeps the rest. */
 export type RegisteredMarketplace = Readonly<Record<string, unknown>> & {
@@ -30,7 +29,7 @@ export interface RecordActivationDeps {
 export class RecordActivation {
   constructor(
     private readonly deps: RecordActivationDeps,
-    private readonly tools: ToolCatalog
+    private readonly tools: InstallationCatalog
   ) {}
 
   async execute(request: RecordActivationRequest): Promise<boolean> {
@@ -69,7 +68,7 @@ export class RecordActivation {
     return true;
   }
 
-  private marketplaceSettingsOf(toolId: ToolId): MarketplaceRegistrationAnswers | undefined {
+  private marketplaceSettingsOf(toolId: ToolId): { sharedSettingsFile(): string } | undefined {
     return this.tools.aiProfileIfAny(toolId)?.marketplaceRegistration() ?? undefined;
   }
 }

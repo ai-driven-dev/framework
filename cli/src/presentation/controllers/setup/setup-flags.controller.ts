@@ -7,7 +7,10 @@ import {
 } from "../../../contexts/distribution/contract/framework-source.js";
 import type { ToolCatalog } from "../../../contexts/tools/contract/tool-catalog.js";
 // biome-ignore lint/plugin: filters the catalog's whole profiles to the AI tools active at user scope with a type guard, then reads five members; presentation has no ports/ to name a section in
-import type { AiToolProfile, ToolProfile } from "../../../contexts/tools/contract/tool-profile.js";
+import type {
+  AiToolProfile,
+  IdeToolProfile,
+} from "../../../contexts/tools/contract/tool-profile.js";
 import type { Output } from "../../../orchestration/domain/output.js";
 import type { PluginInstallMode } from "../../../orchestration/domain/setup-flow.model.js";
 import { selectTools } from "../../../orchestration/setup/setup-request.js";
@@ -89,12 +92,17 @@ export function parseToolIds(
   return selectTools(aiIds, ids, tools);
 }
 
-export function activatesAtUserScope(profile: ToolProfile): profile is AiToolProfile {
+/** A catalog whose AI profiles say whether their own CLI activates plugins. */
+export type SetupCatalog = ToolCatalog<AiToolProfile & { nativeActivation(): object | undefined }>;
+
+export function activatesAtUserScope<A extends AiToolProfile>(
+  profile: A | IdeToolProfile
+): profile is A {
   return profile.kind === "ai" && profile.supportsUserScopeActivation();
 }
 
 /** What `--global` does for each registered tool, read from its profile. */
-export function globalSetupHelp(catalog: ToolCatalog): string {
+export function globalSetupHelp(catalog: SetupCatalog): string {
   const global = catalog
     .sortedIds()
     .map((id) => catalog.profile(id))

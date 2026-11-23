@@ -1,10 +1,11 @@
-import { join } from "node:path";
-import { RegisteredToolCatalog } from "../../../src/contexts/tools/application/registered-tool-catalog.js";
-import type { NativeActivationSpec } from "../../../src/contexts/tools/contract/native-registration-spec.js";
-import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
+import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
+import type {
+  MarketplaceSettings,
+  NativeActivationSpec,
+} from "../../../src/contexts/host-registration/contract/native-registration-spec.js";
+import { withNativeRegistration } from "../../../src/contexts/host-registration/domain/native-registration/native-host-profile.js";
 import { sharedMarketplaceKey } from "../../../src/contexts/tools/domain/marketplace-entry.js";
 import {
-  type BuiltToolConfig,
   defineAiTool,
   defineIdeTool,
 } from "../../../src/contexts/tools/domain/profile/define-tool.js";
@@ -15,6 +16,8 @@ import {
 } from "../../../src/contexts/tools/domain/sections/layout-section.js";
 import { manifestSection } from "../../../src/contexts/tools/domain/sections/manifest-section.js";
 import { ModelsSection } from "../../../src/contexts/tools/domain/sections/models-section.js";
+import type { BuiltToolConfig } from "./catalog-of.builder.js";
+import { catalogOf } from "./catalog-of.builder.js";
 import { anEmptyContract } from "./empty-build-contract.builder.js";
 
 /** The one file an install of a synthetic tool writes, so that a tool has something to update or lose. */
@@ -36,8 +39,7 @@ export function syntheticConfig(name: string, providers: readonly string[] = [])
     signalDir: null,
     displayName: name,
     buildContracts: { flat: () => anEmptyContract() },
-    capabilities: () =>
-      providers.length === 0 ? {} : { models: new ModelsSection({ providers }) },
+    capabilities: providers.length === 0 ? {} : { models: new ModelsSection({ providers }) },
     linkSyntax: [],
     configAssets: [shippedSettings(name, "install")],
   });
@@ -75,12 +77,12 @@ export const SYNTHETIC_IDE_CONFIG = defineIdeTool({
   toolId: "syntheticide",
   directory: IDE_DIRECTORY,
   signalDir: null,
-  capabilities: () => ({
+  capabilities: {
     config: IDE_FILES.map(
       (file) =>
         new ConfigSection({ outputPath: `${IDE_DIRECTORY}${file.name}`, mergeStrategy: file.merge })
     ),
-  }),
+  },
   configAssets: IDE_FILES.map((file) => ({
     name: file.name,
     content: file.content,
@@ -95,8 +97,8 @@ export const SYNTHETIC_IDE_TOOL = SYNTHETIC_IDE_CONFIG.toolId;
 /** The synthetic IDE tool and both AI tools, the first running the agents on anthropic and the
  * second on openai: for a test that reads both categories or the providers the tools run. Any
  * `extra` profile is listed after them. */
-export function syntheticMixedCatalog(extra: readonly BuiltToolConfig[] = []): ToolCatalog {
-  return new RegisteredToolCatalog([...syntheticMixedConfigs(), ...extra]);
+export function syntheticMixedCatalog(extra: readonly BuiltToolConfig[] = []): RegisteredCatalog {
+  return catalogOf([...syntheticMixedConfigs(), ...extra]);
 }
 
 /** The profiles of the mixed catalog, for a catalog that lists more tools beside them. */
@@ -109,13 +111,13 @@ export function syntheticMixedConfigs() {
 }
 
 /** A catalog listing only the synthetic tools: what a generic test hands code that asks its tools. */
-export function syntheticCatalog(): ToolCatalog {
-  return new RegisteredToolCatalog(CONFIGS);
+export function syntheticCatalog(): RegisteredCatalog {
+  return catalogOf(CONFIGS);
 }
 
 /** The tool ids a setup flow is built over, read from the given synthetic catalog, the mixed one by
  * default: a flow test names no registered tool. */
-export function syntheticFlowTools(tools: ToolCatalog = syntheticMixedCatalog()) {
+export function syntheticFlowTools(tools: RegisteredCatalog = syntheticMixedCatalog()) {
   return {
     registeredToolIds: tools.idsInCanonicalOrder(),
     aiToolIds: tools.idsInCanonicalOrder("ai"),
@@ -124,10 +126,8 @@ export function syntheticFlowTools(tools: ToolCatalog = syntheticMixedCatalog())
 }
 
 /** What a host keeps under its own home directory, the root every host path derives from. */
-export const homeDir =
-  (id: string, ...parts: string[]) =>
-  (home: string) =>
-    join(home, `.${id}`, ...parts);
+export const homeDir = (id: string, ...parts: string[]): string =>
+  ["{home}", `.${id}`, ...parts].join("/");
 
 /** A host whose plugins carry the install verbs and a registry file of their own. */
 function installingHost(id: string): Partial<NativeActivationSpec> {
@@ -176,9 +176,11 @@ export function registryHost(id: string): Partial<NativeActivationSpec> {
   };
 }
 
-/** What a synthetic native tool takes beyond its host verbs: layout fields, models and its catalogue file. */
+/** What a synthetic native tool takes beyond its host verbs: layout fields, the settings it
+ * declares marketplaces in, models and its catalogue file. */
 interface NativeToolParts {
   readonly layout?: Partial<NativeLayoutParams>;
+  readonly marketplace?: MarketplaceSettings;
   readonly models?: ModelsSection;
   readonly catalogue?: string;
   readonly rootToken?: string;
@@ -192,7 +194,15 @@ export function syntheticNativeTool(
   native: Partial<NativeActivationSpec> = {},
   parts: NativeToolParts = {}
 ) {
-  return defineAiTool({
+  const activation: NativeActivationSpec = {
+    binary: id,
+    upgradeVerb: "upgrade",
+    enableVerb: "add",
+    disableVerb: "remove",
+    pluginCacheDir: homeDir(id, "plugins", "cache"),
+    ...native,
+  };
+  const profile = defineAiTool({
     toolId: id,
     distributionProbes: {
       manifest: [parts.manifestFile ?? ".plugin/plugin.json"],
@@ -206,17 +216,9 @@ export function syntheticNativeTool(
       flat: () => anEmptyContract(),
       ...(parts.buildsMarketplace ? { marketplace: () => anEmptyContract() } : {}),
     },
-    capabilities: () => ({
+    capabilities: {
       layout: nativeLayout({
         pluginsDir: `.${id}/plugins/`,
-        nativeActivation: {
-          binary: id,
-          upgradeVerb: "upgrade",
-          enableVerb: "add",
-          disableVerb: "remove",
-          pluginCacheDir: homeDir(id, "plugins", "cache"),
-          ...native,
-        },
         ...parts.layout,
       }),
       manifest: manifestSection({
@@ -225,9 +227,10 @@ export function syntheticNativeTool(
       }),
       hooks: { delivery: { kind: "plugin-file" } },
       ...(parts.models === undefined ? {} : { models: parts.models }),
-    }),
+    },
     linkSyntax: [],
   });
+  return withNativeRegistration(profile, { activation, marketplace: parts.marketplace });
 }
 
 /** How the synthetic host answers which marketplaces it knows: from a registry file it keeps
@@ -245,18 +248,19 @@ function sourcedActivation(id: string, sources: SyntheticNativeSources) {
   return { ...listed, updateVerb: "update", sourceCheckVerb: "update" };
 }
 
-function sourcedSettings(id: string, sources: SyntheticNativeSources): Partial<NativeLayoutParams> {
-  if (sources === "list-command") return {};
+function sourcedSettings(
+  id: string,
+  sources: SyntheticNativeSources
+): MarketplaceSettings | undefined {
+  if (sources === "list-command") return undefined;
   const registry = sources === "registry";
   return {
-    marketplaceSettings: {
-      settingsPath: settingsFile(id),
-      settingsKey: "extraKnownMarketplaces",
-      marketplacesSettingsPath: registry ? `.${id}/settings.local.json` : null,
-      enabledPluginsKey: "enabledPlugins",
-      declarativePluginActivationRequiresNativeProof: !registry,
-      toEntryKey: sharedMarketplaceKey,
-    },
+    settingsPath: settingsFile(id),
+    settingsKey: "extraKnownMarketplaces",
+    marketplacesSettingsPath: registry ? `.${id}/settings.local.json` : null,
+    enabledPluginsKey: "enabledPlugins",
+    declarativePluginActivationRequiresNativeProof: !registry,
+    toEntryKey: sharedMarketplaceKey,
   };
 }
 
@@ -274,15 +278,15 @@ export function syntheticSourcedTool(
   return syntheticNativeTool(
     id,
     { ...sourcedActivation(id, sources), ...parts.native },
-    { ...parts, layout: { ...sourcedSettings(id, sources), ...parts.layout } }
+    { marketplace: sourcedSettings(id, sources), ...parts }
   );
 }
 
 /** A catalog listing several synthetic native tools, each with the way its host answers. */
 export function syntheticNativeCatalogOf(
   ...tools: ReadonlyArray<readonly [id: string, sources: SyntheticNativeSources]>
-): ToolCatalog {
-  return new RegisteredToolCatalog(tools.map(([id, sources]) => syntheticSourcedTool(id, sources)));
+): RegisteredCatalog {
+  return catalogOf(tools.map(([id, sources]) => syntheticSourcedTool(id, sources)));
 }
 
 /** A catalog listing one synthetic AI tool under the given id, driven through its own host CLI
@@ -290,6 +294,6 @@ export function syntheticNativeCatalogOf(
 export function syntheticNativeCatalog(
   id: string,
   sources: SyntheticNativeSources = "registry"
-): ToolCatalog {
+): RegisteredCatalog {
   return syntheticNativeCatalogOf([id, sources]);
 }

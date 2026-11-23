@@ -1,7 +1,5 @@
-import { join } from "node:path";
-import { RegisteredToolCatalog } from "../../../src/contexts/tools/application/registered-tool-catalog.js";
+import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { MCP_CONFIG_REF } from "../../../src/contexts/tools/contract/config-refs.js";
-import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { declareHooks } from "../../../src/contexts/tools/domain/formats/hooks/declaration.js";
 import { projectHooksSupport } from "../../../src/contexts/tools/domain/formats/hooks/routes.js";
 import { toTypedMcpSection } from "../../../src/contexts/tools/domain/formats/mcp/typed-mcp-section.js";
@@ -14,6 +12,7 @@ import { manifestSection } from "../../../src/contexts/tools/domain/sections/man
 import { McpConfigPart } from "../../../src/contexts/tools/domain/sections/mcp-section.js";
 import { ModelsSection } from "../../../src/contexts/tools/domain/sections/models-section.js";
 import { flatArtifactLayout } from "../../../src/shared/domain/materialization/flat-paths.js";
+import { catalogOf } from "./catalog-of.builder.js";
 import { anEmptyContract } from "./empty-build-contract.builder.js";
 import {
   homeDir,
@@ -123,19 +122,14 @@ export const ACTIVATED_SYNTHETIC_CONFIG = syntheticNativeTool(ACTIVATED_NAME, {
 export const ACTIVATED_SYNTHETIC_TOOL = ACTIVATED_SYNTHETIC_CONFIG.toolId;
 
 /** The synthetic native tools and the synthetic IDE tool: what a generic sync test hands code that drives hosts. */
-export function syntheticSyncCatalog(): ToolCatalog {
-  return new RegisteredToolCatalog([
-    NATIVE_CONFIG,
-    LISTED_CONFIG,
-    PROVEN_CONFIG,
-    SYNTHETIC_IDE_CONFIG,
-  ]);
+export function syntheticSyncCatalog(): RegisteredCatalog {
+  return catalogOf([NATIVE_CONFIG, LISTED_CONFIG, PROVEN_CONFIG, SYNTHETIC_IDE_CONFIG]);
 }
 
 const USER_NAME = "syntheticuser";
 
 /** The directory the user-scope tool installs its plugins in, under a home directory. */
-export const SYNTHETIC_USER_PLUGINS = (home: string) => join(home, `.${USER_NAME}`, "plugins");
+export const SYNTHETIC_USER_PLUGINS = homeDir(USER_NAME, "plugins");
 
 const USER_HOOKS = declareHooks(
   { toolId: USER_NAME, directory: `.${USER_NAME}/`, adapter: `const HOST = "unstamped";` },
@@ -163,7 +157,7 @@ const USER_CONFIG = defineAiTool({
   signalDir: `.${USER_NAME}/commands`,
   hooks: USER_HOOKS,
   buildContracts: { flat: () => anEmptyContract() },
-  capabilities: () => ({
+  capabilities: {
     hooks: { delivery: projectHooksSupport(USER_HOOKS) },
     layout: nativeLayout({
       pluginsDir: "",
@@ -172,7 +166,7 @@ const USER_CONFIG = defineAiTool({
     }),
     manifest: manifestSection({ manifestRelativePath: null, pluginRootToken: ROOT_TOKEN }),
     models: new ModelsSection({ providers: ["anthropic"] }),
-  }),
+  },
   linkSyntax: [],
 });
 
@@ -182,8 +176,8 @@ const USER_CONFIG = defineAiTool({
 export const SYNTHETIC_USER_TOOL = USER_CONFIG.toolId;
 
 /** The native and user-scope synthetic tools, the plain synthetic tools and the synthetic IDE tool. */
-export function syntheticNativeFamilyCatalog(): ToolCatalog {
-  return new RegisteredToolCatalog([
+export function syntheticNativeFamilyCatalog(): RegisteredCatalog {
+  return catalogOf([
     NATIVE_CONFIG,
     UPDATING_CONFIG,
     USER_CONFIG,
@@ -204,7 +198,7 @@ const MCP_CONFIG = defineAiTool({
   displayName: MCP_NAME,
   signalDir: null,
   buildContracts: { flat: () => anEmptyContract() },
-  capabilities: () => ({
+  capabilities: {
     mcp: {
       config: new McpConfigPart({
         outputPath: SYNTHETIC_MCP_FILE,
@@ -219,7 +213,7 @@ const MCP_CONFIG = defineAiTool({
       artifacts: flatArtifactLayout(`.${MCP_NAME}/`, { skills: "nested", agent: { ext: ".md" } }),
       namespacePrefix: "aidd-",
     }),
-  }),
+  },
   linkSyntax: [],
 });
 

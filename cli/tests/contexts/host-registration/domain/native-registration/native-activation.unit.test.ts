@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { NativeActivationSpec } from "../../../../../src/contexts/tools/contract/native-registration-spec.js";
-import { NativeActivation } from "../../../../../src/contexts/tools/domain/native-registration/native-activation.js";
+import type { NativeActivationSpec } from "../../../../../src/contexts/host-registration/contract/native-registration-spec.js";
+import { NativeActivation } from "../../../../../src/contexts/host-registration/domain/native-registration/native-activation.js";
 
 const driven = { binary: "claude", enableVerb: "install", disableVerb: "uninstall" } as const;
 
@@ -72,7 +72,7 @@ describe("a tool's native activation", () => {
     const activation = new NativeActivation({
       ...driven,
       marketplaceRegistry: {
-        location: (home) => `${home}/registry.json`,
+        location: "{home}/registry.json",
         layout: "install-locations-by-name",
       },
       marketplaceSources: { from: "marketplace-registry" },

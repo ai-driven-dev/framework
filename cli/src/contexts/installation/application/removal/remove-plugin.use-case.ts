@@ -2,12 +2,12 @@ import { dirname, join } from "node:path";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { ToolRecords } from "../../contract/records/scope-records.js";
 import { PluginNotFoundError } from "../../domain/installation.error.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import type { InstallationCatalog } from "../../ports/tool-sections.js";
 import { resolvePluginToolIds } from "../plugin/plugin-target-resolution.js";
 import { requireManifest } from "../shared/require-manifest.js";
 import type { AssertProjectIntegrationRemovable } from "./assert-project-integration-removable.use-case.js";
@@ -34,7 +34,7 @@ export interface RemovePluginDeps {
 export class RemovePlugin {
   constructor(
     private readonly deps: RemovePluginDeps,
-    private readonly tools: ToolCatalog
+    private readonly tools: InstallationCatalog
   ) {}
 
   async execute(options: RemovePluginRequest): Promise<void> {

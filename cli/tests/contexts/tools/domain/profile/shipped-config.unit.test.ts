@@ -10,7 +10,7 @@ const aiSpec = {
   signalDir: null,
   displayName: "X",
   buildContracts: { flat: () => anEmptyContract() },
-  capabilities: () => ({}),
+  capabilities: {},
   linkSyntax: [],
 };
 
@@ -21,9 +21,9 @@ describe("a profile's shipped config", () => {
   it("is declared once per file, with its content and its destination", () => {
     const tool = defineAiTool({
       ...aiSpec,
-      capabilities: () => ({
+      capabilities: {
         config: [new ConfigSection({ outputPath: ".x/section.json", mergeStrategy: "none" })],
-      }),
+      },
       configAssets: [
         { ...settings, delivery: "install" },
         { ...runtime, delivery: "runtime" },

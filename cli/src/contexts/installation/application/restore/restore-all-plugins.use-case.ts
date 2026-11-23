@@ -1,11 +1,11 @@
 import { join } from "node:path";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 // biome-ignore lint/plugin: hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../domain/project-layout.js";
+import type { InstallationCatalog, NativeRegistrationReach } from "../../ports/tool-sections.js";
 import type { ApplyPluginFiles } from "./apply-plugin-files.use-case.js";
 
 interface RestoreAllPluginsRequest {
@@ -40,7 +40,7 @@ export interface RestoreAllPluginsResult {
 export class RestoreAllPlugins {
   constructor(
     private readonly applyPluginFiles: ApplyPluginFiles,
-    private readonly tools: ToolCatalog
+    private readonly tools: InstallationCatalog
   ) {}
 
   async execute(options: RestoreAllPluginsRequest): Promise<RestoreAllPluginsResult> {
@@ -79,7 +79,10 @@ export class RestoreAllPlugins {
     return pluginName !== undefined ? plugins.filter((p) => p.plugin.name === pluginName) : plugins;
   }
 
-  private isNativeOnly(targets: readonly RecordedPlugin[], toolConfig: AiToolProfile): boolean {
+  private isNativeOnly(
+    targets: readonly RecordedPlugin[],
+    toolConfig: NativeRegistrationReach
+  ): boolean {
     return (
       targets.length > 0 &&
       targets.every(({ plugin }) => plugin.files.size === 0) &&

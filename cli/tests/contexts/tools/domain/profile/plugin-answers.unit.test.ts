@@ -69,7 +69,7 @@ describe("what a native tool answers", () => {
   });
 
   it("answers a declared user directory even when the scope is project", () => {
-    const answers = answersOf(nativePlugins({ userPluginsDir: (home) => `${home}/.x/plugins` }));
+    const answers = answersOf(nativePlugins({ userPluginsDir: "{home}/.x/plugins" }));
 
     expect(nativeOf(answers).requiresUserScope()).toBe(false);
     expect(answers.userPluginsBaseDir("/home/me")).toBe("/home/me/.x/plugins");
@@ -80,7 +80,7 @@ describe("what a native tool answers", () => {
   });
 
   it("materializes from the built tree only at user scope", () => {
-    const user = nativePlugins({ installScope: "user", userPluginsDir: (home) => `${home}/.x` });
+    const user = nativePlugins({ installScope: "user", userPluginsDir: "{home}/.x" });
 
     expect(answersOf(user).materializesFromBuiltTree()).toBe(true);
     expect(answersOf(nativePlugins()).materializesFromBuiltTree()).toBe(false);
@@ -150,7 +150,7 @@ describe("what any tool answers about hooks it does not run", () => {
 
 describe("a layout composed by hand", () => {
   it("answers the user directory its global files map to when no user resolver exists", () => {
-    const globalFiles = { dir: (home: string) => `${home}/.g`, map: () => null };
+    const globalFiles = { dir: "{home}/.g", map: () => null };
     const answers = pluginAnswers(nativeLayout({ pluginsDir: ".x/", globalFiles }), {
       manifest: nativePlugins().manifest,
       hooks: nativePlugins().hooks,

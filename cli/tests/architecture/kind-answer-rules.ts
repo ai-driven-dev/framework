@@ -115,10 +115,12 @@ const STORED_OBJECT_COPY =
 
 /** The files whose classes answer about plugins. */
 export const isPluginAnswerFile = (path: string): boolean =>
-  /^src\/contexts\/tools\/domain\/(?:sections|native-registration)\/[^/]+\.ts$/.test(path) ||
-  path === "src/contexts/tools/domain/profile/plugin-answers.ts";
+  /^src\/contexts\/(?:tools\/domain\/sections|host-registration\/domain\/native-registration)\/[^/]+\.ts$/.test(
+    path
+  ) || path === "src/contexts/tools/domain/profile/plugin-answers.ts";
 
 const ANSWER_FILE = "src/contexts/tools/domain";
+const NATIVE_FILE = "src/contexts/host-registration/domain/native-registration";
 
 /** The stored values a caller needs as they are, because the raw value crosses a file boundary
  * unchanged: a path read, written and hashed, a binary looked up by name, a declaration handed to
@@ -137,41 +139,41 @@ export const STORED_ANSWERS: readonly {
     reason: "the path is checked against the manifest and its basename names the asset to load",
   },
   {
-    file: `${ANSWER_FILE}/native-registration/marketplace-registration.ts`,
+    file: `${NATIVE_FILE}/marketplace-registration.ts`,
     member: "MarketplaceRegistration.sharedSettingsFile",
     caller:
       "orchestration/sync/settings/sync-tool-settings-files.use-case.ts, installation/application/sync/record-activation.use-case.ts",
     reason: "the path is read, written, hashed and matched against the manifest",
   },
   {
-    file: `${ANSWER_FILE}/native-registration/marketplace-registration.ts`,
+    file: `${NATIVE_FILE}/marketplace-registration.ts`,
     member: "MarketplaceRegistration.marketplacesKey",
     caller: "orchestration/sync/settings/sync-tool-settings-files.use-case.ts",
     reason:
       "the key names a member of a parsed settings file that host-registration's pure settings-declaration edits",
   },
   {
-    file: `${ANSWER_FILE}/native-registration/marketplace-registration.ts`,
+    file: `${NATIVE_FILE}/marketplace-registration.ts`,
     member: "MarketplaceRegistration.enabledPluginsKey",
     caller: "orchestration/sync/settings/sync-tool-settings-files.use-case.ts",
     reason:
       "the key names a member of a parsed settings file that host-registration's pure settings-declaration edits",
   },
   {
-    file: `${ANSWER_FILE}/native-registration/native-activation.ts`,
+    file: `${NATIVE_FILE}/native-activation.ts`,
     member: "NativeActivation.hostBinary",
     caller:
       "host-registration/application, installation/application/sync/record-activation.use-case.ts, composition/contexts/host-registration.ts",
     reason: "the binary is looked up on the PATH and keys the host's activator",
   },
   {
-    file: `${ANSWER_FILE}/native-registration/native-activation.ts`,
+    file: `${NATIVE_FILE}/native-activation.ts`,
     member: "NativeActivation.cliShape",
     caller: "composition/contexts/host-registration.ts",
     reason: "the host CLI adapter is built from the verbs themselves",
   },
   {
-    file: `${ANSWER_FILE}/native-registration/native-activation.ts`,
+    file: `${NATIVE_FILE}/native-activation.ts`,
     member: "NativeActivation.marketplaceSourcesDeclaration",
     caller: "composition/contexts/host-registration.ts",
     reason: "the source readers are built from the declaration itself",

@@ -1,3 +1,4 @@
+import { resolveHomeTemplate } from "../../contract/home-path.js";
 import type {
   FlatLayout,
   FlatPluginAnswers,
@@ -58,16 +59,15 @@ function deliveryOf(
   const files: GlobalFiles | null =
     layout.mode === "unsupported" ? null : (layout.globalFiles ?? null);
   const userScope = layout.mode === "native" && layout.installScope === "user";
-  const activation = layout.mode === "native" && layout.activation !== undefined;
+  const userDir = layout.mode === "native" ? layout.userPluginsDir : undefined;
   const base = files?.dir;
   return {
     requiresUserScope: () => userScope,
     materializesFromBuiltTree: () => layout.mode === "flat" || userScope,
     deliversHooksToProject: () => projectPlacement(hooks.delivery) !== null,
-    supportsUserScopeActivation: () => activation || userScope || files !== null,
     copiesFilesGlobally: () => userScope || files !== null,
     userPluginsBaseDir: (home) =>
-      (layout.mode === "native" ? layout.userPluginsDir?.(home) : undefined) ??
+      (userDir === undefined ? undefined : resolveHomeTemplate(userDir, home)) ??
       base?.(home) ??
       null,
     globalFiles: () => files,

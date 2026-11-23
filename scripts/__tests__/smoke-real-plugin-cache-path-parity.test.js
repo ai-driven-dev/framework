@@ -14,15 +14,12 @@ const ROOT = path.resolve(__dirname, "../..");
 
 function pluginCacheDirSegments(profileFile) {
   const text = fs.readFileSync(path.join(ROOT, "cli/src/composition/tool-profiles", profileFile), "utf8");
-  const match = text.match(/pluginCacheDir:\s*\(h\)\s*=>\s*join\(h,\s*([^)]+)\)/u);
+  const match = text.match(/pluginCacheDir:\s*"\{home\}\/([^"]+)"/u);
   assert.ok(
     match,
     `${profileFile} no longer declares pluginCacheDir the way this guard expects`
   );
-  return match[1]
-    .split(",")
-    .map((segment) => segment.trim().replace(/^"|"$/gu, ""))
-    .join("/");
+  return match[1];
 }
 
 function smokeRealScript() {

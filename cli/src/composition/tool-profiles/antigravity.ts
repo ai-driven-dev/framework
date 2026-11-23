@@ -7,6 +7,7 @@ import {
   flatHooksSupport,
   flatProjectHooksDelivery,
 } from "../../contexts/tools/domain/formats/hooks/flat-routes.js";
+import { contract } from "../../contexts/tools/domain/profile/contract-builders.js";
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
 import { flatPlacement } from "../../contexts/tools/domain/sections/layout-section.js";
 import {
@@ -50,18 +51,18 @@ export const antigravity = defineAiTool({
   displayName: "Antigravity CLI",
   signalDir: null,
   hooks,
-  buildContracts: { flat: () => buildAntigravityFlatContract(hooks, ANTIGRAVITY_FLAT_LAYOUT) },
+  buildContracts: { flat: contract(buildAntigravityFlatContract, hooks, ANTIGRAVITY_FLAT_LAYOUT) },
 
-  capabilities: (bound) => ({
-    skills: bound.skills({
+  capabilities: {
+    skills: {
       agentsSkillsDirectory: true,
-    }),
+    },
     hooks: { delivery: hooksDelivery },
     layout: flatPlacement({
       namespacePrefix: "aidd-",
       artifacts: ANTIGRAVITY_FLAT_LAYOUT,
     }),
-  }),
+  },
 
   linkSyntax: [],
 });

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { resolveHomeTemplate } from "../../../../src/contexts/tools/contract/home-path.js";
 import { ExitRequested } from "../../../shared/testing/capturing-output.fake.js";
 import { doctorHarness } from "../../../shared/testing/doctor-command.builder.js";
 import {
@@ -25,7 +26,7 @@ describe("aidd doctor --scope user", () => {
     });
     expect(await run("--scope", "user")).toEqual([
       "User-scope tools:",
-      `  ${ACTIVATED_SYNTHETIC_TOOL} (v5.2.2): expects activation in ${syntheticActivatedSettingsFile("/home/dev")}`,
+      `  ${ACTIVATED_SYNTHETIC_TOOL} (v5.2.2): expects activation in ${resolveHomeTemplate(syntheticActivatedSettingsFile, "/home/dev")}`,
       "",
       "User-scope installation is healthy",
     ]);

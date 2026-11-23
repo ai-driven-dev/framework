@@ -1,5 +1,6 @@
 import { homedir as nodeHomedir, platform as nodePlatform } from "node:os";
 import { projectIntegrationOf } from "../../../../src/composition/contexts/installation.js";
+import type { RegisteredCatalog } from "../../../../src/composition/contexts/tools.js";
 import { placePluginOf } from "../../../../src/composition/orchestration/built-placement.js";
 import type { EnsurePluginRuntimeFiles } from "../../../../src/contexts/installation/application/install/config/ensure-plugin-runtime-files.use-case.js";
 import { ResolveAddedPluginSource } from "../../../../src/contexts/installation/application/plugin/add/resolve-added-plugin-source.use-case.js";
@@ -13,7 +14,6 @@ import type { InstallationMarketplaceRegistry } from "../../../../src/contexts/i
 import type { LoadDistribution } from "../../../../src/contexts/installation/ports/plugin/load-plugin-distribution.js";
 import type { PluginTranslation } from "../../../../src/contexts/installation/ports/plugin/plugin-translation.js";
 import { ClaimUserPlugin } from "../../../../src/contexts/machine-claims/application/claim-user-plugin.use-case.js";
-import type { ToolCatalog } from "../../../../src/contexts/tools/contract/tool-catalog.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
 import type { Logger } from "../../../../src/shared/ports/logger.js";
@@ -38,7 +38,7 @@ export function buildAddPlugin(
   host: AddPluginHost,
   manifests: AddPluginManifests,
   sources: AddPluginSources,
-  tools: ToolCatalog,
+  tools: RegisteredCatalog,
   pluginRuntime?: Pick<EnsurePluginRuntimeFiles, "execute">
 ): AddPlugin {
   const built = fakeBuiltDeps(host.fs, {

@@ -8,6 +8,7 @@ import {
   sharedSourceReads,
   userScopeFilesSafeToDelete,
 } from "../../../../src/composition/contexts/machine-claims.js";
+import type { RegisteredCatalog } from "../../../../src/composition/contexts/tools.js";
 import {
   claimedRefWithdrawal,
   underMachineHome,
@@ -24,7 +25,6 @@ import type { ManifestRepository } from "../../../../src/contexts/installation/p
 import type { InstallationMarketplaceRegistry } from "../../../../src/contexts/installation/ports/marketplace-sources.js";
 import { pluginRemovalClaims } from "../../../../src/contexts/machine-claims/application/removal/plugin-removal-claims.js";
 import { ResolvePurgeCandidate } from "../../../../src/contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
-import type { ToolCatalog } from "../../../../src/contexts/tools/contract/tool-catalog.js";
 import { RemoveMachinePlugin } from "../../../../src/orchestration/plugin/remove-machine-plugin.use-case.js";
 import { RemovePlugin } from "../../../../src/orchestration/plugin/remove-plugin.use-case.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
@@ -52,7 +52,7 @@ export interface PluginRemoverParts {
   userManifestRepo?: ManifestRepository & ScopeRecords & Lock;
   nativeMarketplaceSources?: HostPortMaps["sources"];
   records?: RecordRules;
-  tools?: ToolCatalog;
+  tools?: RegisteredCatalog;
 }
 
 function withdrawing(parts: Omit<PluginRemoverParts, "manifestRepo">, fs: FileReader & FileWriter) {

@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import { resolveHomeTemplate } from "../../../src/contexts/tools/contract/home-path.js";
 import {
   builtMarketplaceDir,
   userBuiltMarketplaceDir,
@@ -22,7 +23,7 @@ import { buildCheckRegistration } from "../testing/build-check-registration.buil
 const PROJECT_ROOT = resolve("/project");
 const NAME = "probe-mkt";
 const CATALOG_RELATIVE = ".claude-plugin/marketplace.json";
-const REGISTRY_LOCATION = SYNTHETIC_NATIVE_MARKETPLACE_REGISTRY("/home");
+const REGISTRY_LOCATION = resolveHomeTemplate(SYNTHETIC_NATIVE_MARKETPLACE_REGISTRY, "/home");
 
 describe("CheckRegistration - user-scope marketplace source drift", () => {
   // resolve(): compared against an already-resolved requested/registered source, so a

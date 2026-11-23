@@ -29,9 +29,7 @@ describe("what a refused profile carries", () => {
 
   it("names the section no tool can declare", () => {
     expect(
-      sayOf(() =>
-        defineAiTool({ ...aiSpec, capabilities: () => ({ config: [settings], bogus: 1 }) })
-      )
+      sayOf(() => defineAiTool({ ...aiSpec, capabilities: { config: [settings], bogus: 1 } }))
     ).toEqual({ toolId: "claude", invariant: "unknown-section", detail: "'bogus' is no section." });
   });
 

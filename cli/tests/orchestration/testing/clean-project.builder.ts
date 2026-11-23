@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { HostRefusal } from "../../../src/contexts/host-registration/domain/native-refusal.js";
 import type { HostActions } from "../../../src/contexts/host-registration/ports/host-actions.js";
@@ -6,7 +7,6 @@ import type { HostMarketplaceSources } from "../../../src/contexts/host-registra
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import type { ToolRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { CleanProject as ProductionCleanUseCase } from "../../../src/orchestration/clean/clean-project.use-case.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../src/shared/domain/installation-file.js";
@@ -20,7 +20,7 @@ import { type ProjectCleanerParts, projectCleanerDeps } from "./project-cleaner.
 import { HOST } from "./synthetic-hosts.builder.js";
 
 export const PROJECT_ROOT = "/test-project";
-export function atProject(tools: ToolCatalog) {
+export function atProject(tools: RegisteredCatalog) {
   return { tools, projectRoot: PROJECT_ROOT } as const;
 }
 export const md5 = (content: string): string => FileHash.of(content).value;
@@ -95,7 +95,7 @@ export type TestCleanArgs = [
 
 /** The production clean use case over the given tools, with each host's catalogue and registry known. */
 export function knownHostSourceCleaner(
-  tools: ToolCatalog,
+  tools: RegisteredCatalog,
   ids: HostIds
 ): new (
   ...args: TestCleanArgs

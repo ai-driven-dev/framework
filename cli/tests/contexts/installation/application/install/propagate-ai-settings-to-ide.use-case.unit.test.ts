@@ -1,8 +1,8 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
+import type { RegisteredCatalog } from "../../../../../src/composition/contexts/tools.js";
 import { PropagateAiSettingsToIde } from "../../../../../src/contexts/installation/application/install/propagate-ai-settings-to-ide.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import type { ToolCatalog } from "../../../../../src/contexts/tools/contract/tool-catalog.js";
 import type { SettingsFileAnswers } from "../../../../../src/contexts/tools/contract/tool-profile.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
@@ -22,7 +22,7 @@ type Deps = Awaited<ReturnType<typeof buildInstallationDeps>>;
 function propagate(
   deps: Deps,
   assetProvider: AssetProvider | null = deps.assetProvider,
-  tools: ToolCatalog = registeredTools()
+  tools: RegisteredCatalog = registeredTools()
 ) {
   return new PropagateAiSettingsToIde(
     {

@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, type Mock, vi } from "vitest";
+import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { ReadMachineInstallation } from "../../../src/contexts/installation/application/doctor/read-machine-installation.use-case.js";
-import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { RunUserScopeDoctor } from "../../../src/orchestration/doctor/run-user-scope-doctor.use-case.js";
 import { registerDoctorCommand } from "../../../src/presentation/controllers/doctor/doctor.controller.js";
 import { bindOutput } from "../../../src/presentation/controllers/menu/global-options.controller.js";
@@ -24,12 +24,12 @@ export interface DoctorHarness {
   readonly createDeps: Mock;
   readonly written: string[];
   readonly errors: string[];
-  readonly catalog: ToolCatalog;
+  readonly catalog: RegisteredCatalog;
   readonly run: (...args: string[]) => Promise<string[]>;
 }
 
 /** Wires the doctor command to healthy doubles before each case and restores the process after. */
-export function doctorHarness(catalog: ToolCatalog = syntheticMixedCatalog()): DoctorHarness {
+export function doctorHarness(catalog: RegisteredCatalog = syntheticMixedCatalog()): DoctorHarness {
   const doctorAll: Mock = vi.fn();
   const statusAll: Mock = vi.fn();
   const doctorScoped: Mock = vi.fn();
