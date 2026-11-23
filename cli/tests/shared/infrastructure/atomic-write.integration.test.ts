@@ -1,9 +1,14 @@
-import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PlatformAdapter } from "../../../src/contexts/installation/infrastructure/platform-adapter.js";
 import { atomicWriteFile } from "../../../src/shared/infrastructure/atomic-write.js";
+
+vi.mock("node:crypto", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("node:crypto")>()),
+  randomBytes: () => Buffer.from("fixed!"),
+}));
 
 describe("writing a file atomically", () => {
   let tempDir: string;
@@ -23,6 +28,16 @@ describe("writing a file atomically", () => {
 
     expect(await readdir(tempDir)).toStrictEqual(["out.txt"]);
     expect(await readFile(path, "utf-8")).toBe("héllo");
+  });
+
+  it("refuses to write through a temporary file that already exists", async () => {
+    const path = join(tempDir, "out.txt");
+    const taken = `${path}.666978656421.tmp`;
+    await writeFile(taken, "someone else's");
+
+    await expect(atomicWriteFile(path, "mine")).rejects.toMatchObject({ code: "EEXIST" });
+
+    expect(await readFile(taken, "utf-8")).toBe("someone else's");
   });
 });
 
