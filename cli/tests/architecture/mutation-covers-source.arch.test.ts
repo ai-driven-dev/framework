@@ -14,7 +14,6 @@ interface Scope {
   readonly mutate: string | readonly string[];
   readonly break?: number;
   readonly tests?: readonly string[];
-  readonly harnessOnly?: boolean;
 }
 
 interface ScopeDeclaration {
@@ -101,11 +100,11 @@ describe("mutation covers every source file", () => {
     expect(twice, "narrow one scope with a ! glob").toEqual([]);
   });
 
-  it("only telemetry, shared and the canary hold a blocking floor", () => {
+  it("only telemetry and shared hold a blocking floor", () => {
     const floored = Object.entries(declaration().scopes)
       .filter(([, scope]) => scope.break !== undefined)
       .map(([name]) => name);
-    expect(floored.sort()).toEqual(["canary", "shared", "telemetry"]);
+    expect(floored.sort()).toEqual(["shared", "telemetry"]);
     for (const name of floored) {
       const floor = declaration().scopes[name]?.break;
       expect(

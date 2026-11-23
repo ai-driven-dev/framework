@@ -1,5 +1,5 @@
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import { FlatTargetExistsError } from "../../domain/translate.error.js";
+import { FlatTargetExistsError } from "../../contract/translate.error.js";
 import type { FlatTarget } from "../../ports/flat-plugin-writer.js";
 
 /** A file a flat build is about to write, for one plugin of one target. */

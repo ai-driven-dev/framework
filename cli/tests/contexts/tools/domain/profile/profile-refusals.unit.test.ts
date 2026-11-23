@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { InvalidToolProfileError } from "../../../../../src/contexts/tools/contract/errors/tools.error.js";
 import {
   refuseDirectory,
   refuseDisagreeingPlugin,
@@ -7,7 +8,6 @@ import {
   refuseWithoutBuildContract,
 } from "../../../../../src/contexts/tools/domain/profile/profile-refusals.js";
 import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
-import { InvalidToolProfileError } from "../../../../../src/contexts/tools/domain/tools.error.js";
 import { anEmptyContract } from "../../../../shared/testing/empty-build-contract.builder.js";
 import { flatPlugins, nativePlugins, sectionsOf } from "../../testing/plugin-mode.builder.js";
 

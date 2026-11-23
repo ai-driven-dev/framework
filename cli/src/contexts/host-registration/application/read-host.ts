@@ -1,4 +1,4 @@
-import { RegistrationRefusedError } from "../domain/host-registration.error.js";
+import { RegistrationRefusedError } from "../contract/host-registration.error.js";
 import type { HostPluginRegistryEntry } from "../domain/reading/plugin-registry-reading.js";
 import type { NativeMarketplaceRegistration } from "../domain/record/native-marketplace-source.js";
 import {

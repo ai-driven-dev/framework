@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { RefreshHostPlugin } from "../../../../src/contexts/host-registration/application/refresh-host-plugin.use-case.js";
-import { RegistrationRefusedError } from "../../../../src/contexts/host-registration/domain/host-registration.error.js";
+import { RegistrationRefusedError } from "../../../../src/contexts/host-registration/contract/host-registration.error.js";
 import type { RegistrationRecord } from "../../../../src/contexts/host-registration/domain/record/registration-record.js";
 import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { FakeHostActions } from "../../../shared/testing/fake-host-actions.fake.js";

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { loadAddManifests } from "../../../../../../src/contexts/installation/application/plugin/add/load-add-manifests.js";
-import { ManifestUnavailableError } from "../../../../../../src/contexts/installation/domain/installation.error.js";
+import { ManifestUnavailableError } from "../../../../../../src/contexts/installation/contract/installation.error.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { InMemoryManifestRepository } from "../../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";

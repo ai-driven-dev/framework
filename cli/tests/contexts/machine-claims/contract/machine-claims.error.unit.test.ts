@@ -8,7 +8,7 @@ import {
   UpdateParentEscapesBoundaryError,
   UpdatePathEscapesPluginError,
   UserManifestBusyError,
-} from "../../../../src/contexts/machine-claims/domain/machine-claims.error.js";
+} from "../../../../src/contexts/machine-claims/contract/machine-claims.error.js";
 
 describe("machine-claims errors", () => {
   it.each([

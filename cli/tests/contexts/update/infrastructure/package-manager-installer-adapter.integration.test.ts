@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { UpdateError } from "../../../../src/contexts/update/domain/update.error.js";
+import { UpdateError } from "../../../../src/contexts/update/contract/update.error.js";
 import { PackageManagerInstallerAdapter } from "../../../../src/contexts/update/infrastructure/package-manager-installer-adapter.js";
 import { aStubMachine, type StubMachine } from "../testing/stub-package-managers.fake.js";
 

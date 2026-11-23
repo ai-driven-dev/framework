@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import type { PluginSource } from "../../../shared/domain/plugin/source.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
-import { PluginFetchError } from "../domain/distribution.error.js";
+import { PluginFetchError } from "../contract/distribution.error.js";
 import type { PluginFetcher, PluginFetchOptions } from "../ports/plugin-fetcher.js";
 import type { GitSourceFetcher } from "./git-source-fetcher.js";
 import type { NpmSourceFetcher } from "./npm-source-fetcher.js";

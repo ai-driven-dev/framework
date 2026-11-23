@@ -1,6 +1,6 @@
 import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 import type { ToolId, ToolIdResolver } from "../../../../shared/domain/tool.js";
-import { InvalidManifestDataError } from "../installation.error.js";
+import { InvalidManifestDataError } from "../../contract/installation.error.js";
 
 /** The one version read only to be split: its tools carried their host registration inline. */
 export const V8_MANIFEST_VERSION = 8;

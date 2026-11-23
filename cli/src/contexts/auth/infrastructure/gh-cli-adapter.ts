@@ -1,6 +1,6 @@
 import { type SpawnSyncReturns, spawnSync } from "node:child_process";
 import { AuthenticationError } from "../../../shared/domain/shared.error.js";
-import { GhCliError } from "../domain/auth.error.js";
+import { GhCliError } from "../contract/auth.error.js";
 import type { CliAuthProvider } from "../ports/cli-auth-provider.js";
 
 function failTokenRead(result: SpawnSyncReturns<string>): never {

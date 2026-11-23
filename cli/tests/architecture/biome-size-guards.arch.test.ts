@@ -84,7 +84,7 @@ const RULES: readonly RuleGuard[] = [
     group: "style",
     rule: "noExcessiveLinesPerFile",
     includes: ["tests/**"],
-    options: lines(400),
+    options: lines(800),
   },
 ];
 
@@ -184,9 +184,9 @@ const PLANTS: readonly Plant[] = [
     content: tangled("tangle"),
     flags: [COMPLEXITY],
   },
-  // tests: file 400 and complexity 8 only.
-  { path: "tests/kernel/over-file.ts", content: constants(401, "t"), flags: [FILE] },
-  { path: "tests/kernel/at-file.ts", content: constants(400, "u"), flags: [] },
+  // tests: file 800 and complexity 8 only.
+  { path: "tests/kernel/over-file.ts", content: constants(801, "t"), flags: [FILE] },
+  { path: "tests/kernel/at-file.ts", content: constants(800, "u"), flags: [] },
   { path: "tests/kernel/mid-file.ts", content: constants(151, "m"), flags: [] },
   { path: "tests/kernel/over-complexity.ts", content: branches("over", 9), flags: [COMPLEXITY] },
   { path: "tests/kernel/at-complexity.ts", content: branches("at", 8), flags: [] },

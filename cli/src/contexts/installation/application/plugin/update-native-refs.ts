@@ -1,7 +1,7 @@
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
+import { PluginNotFoundError } from "../../contract/installation.error.js";
 import type { ToolRecord, ToolRecords } from "../../contract/records/scope-records.js";
-import { PluginNotFoundError } from "../../domain/installation.error.js";
 import type { ActivatedTool, InstallationCatalog } from "../../ports/tool-sections.js";
 import type { MachineClaimsReading } from "../../ports/user-scope/machine-claims-reading.js";
 import type { UpdatePluginRequest } from "./update-plugin-command.js";

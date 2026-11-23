@@ -4,7 +4,7 @@ import type { FileReader } from "../../../../../shared/ports/file-reader.js";
 // biome-ignore lint/plugin: hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input
 import type { AiToolProfile } from "../../../../tools/contract/tool-profile.js";
 import type { MarketplaceToBuild } from "../../../contract/built-marketplace.js";
-import { SharedSourceUnregisteredError } from "../../../domain/installation.error.js";
+import { SharedSourceUnregisteredError } from "../../../contract/installation.error.js";
 import type { InstalledPlugin } from "../../../domain/plugins/installed-plugin.js";
 import {
   readBuiltUserPluginFiles,

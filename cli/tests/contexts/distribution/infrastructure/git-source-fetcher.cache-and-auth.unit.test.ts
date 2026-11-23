@@ -24,7 +24,7 @@ vi.mock("simple-git", () => ({
 }));
 
 import type { TokenProvider } from "../../../../src/contexts/auth/contract/token-provider.js";
-import { PluginFetchError } from "../../../../src/contexts/distribution/domain/distribution.error.js";
+import { PluginFetchError } from "../../../../src/contexts/distribution/contract/distribution.error.js";
 import { GitCloner } from "../../../../src/contexts/distribution/infrastructure/git-cloner-adapter.js";
 import { GitSourceFetcher } from "../../../../src/contexts/distribution/infrastructure/git-source-fetcher.js";
 import type { PluginSource } from "../../../../src/shared/domain/plugin/source.js";

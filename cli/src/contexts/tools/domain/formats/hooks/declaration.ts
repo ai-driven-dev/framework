@@ -1,5 +1,8 @@
 import { isAbsolute } from "node:path";
-import { type HooksInvariant, InvalidHooksDescriptorError } from "../../tools.error.js";
+import {
+  type HooksInvariant,
+  InvalidHooksDescriptorError,
+} from "../../../contract/errors/tools.error.js";
 import {
   CANONICAL_HOOK_EVENTS,
   type CanonicalHookEvent,

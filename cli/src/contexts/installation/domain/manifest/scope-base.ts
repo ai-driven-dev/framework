@@ -1,6 +1,6 @@
 import type { Scope } from "../../../../shared/domain/scope.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
-import { UnresolvableUserScopeError } from "../installation.error.js";
+import { UnresolvableUserScopeError } from "../../contract/installation.error.js";
 
 export interface ScopeBaseQuery {
   readonly scope: Scope;

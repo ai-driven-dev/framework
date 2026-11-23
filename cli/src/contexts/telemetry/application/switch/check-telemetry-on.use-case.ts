@@ -2,7 +2,7 @@ import { InputRequiredError } from "../../../../shared/domain/shared.error.js";
 import {
   ConflictingIdentityFlagsError,
   InvalidIdentityError,
-} from "../../domain/telemetry.error.js";
+} from "../../contract/errors/telemetry.error.js";
 import type { CheckIdentity } from "../identity/check-identity.use-case.js";
 
 export interface CheckTelemetryOnRequest {

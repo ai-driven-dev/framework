@@ -1,4 +1,4 @@
-import { RegistrationRefusedError } from "../../../domain/host-registration.error.js";
+import { RegistrationRefusedError } from "../../../contract/host-registration.error.js";
 import { judgeRegistration } from "../../../domain/policy/registration-policy.js";
 import { isRefOnHost } from "../../../domain/record/host-ref.js";
 import {

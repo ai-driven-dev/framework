@@ -14,9 +14,6 @@ export const HARNESS = [
   "cli/vitest.mutation.config.ts",
 ];
 
-/** A lockfile change can move Stryker or Vitest, so it runs the `harnessOnly` canary alone. */
-const LOCKFILE = "cli/pnpm-lock.yaml";
-
 /** Only a scope that declares a floor can fail a run, so only it is run per change. */
 const blocks = (scope) => scope.break !== undefined;
 
@@ -29,14 +26,12 @@ function covers(glob, file) {
 
 /** Per change, the gated scopes whose source or tests changed: a deleted or weakened test
  * lowers the kill rate, and only mutation sees it. Every scope runs for a harness file or with
- * no usable diff (the schedule, a manual run); a scope with no floor never fails, and a
- * `harnessOnly` scope (the canary) is never selected by its own files, only by a lockfile change. */
+ * no usable diff (the schedule, a manual run); a scope with no floor never fails. */
 export function scopesToRun(changed, scopes, { all = false } = {}) {
   const everything = all || changed.some((file) => HARNESS.includes(file));
   return Object.entries(scopes)
     .filter(([, scope]) => {
       if (everything) return [scope.mutate].flat().some((glob) => !glob.startsWith("!"));
-      if (scope.harnessOnly) return changed.includes(LOCKFILE);
       if (!blocks(scope)) return false;
       const globs = [
         ...[scope.mutate].flat().filter((glob) => !glob.startsWith("!")),

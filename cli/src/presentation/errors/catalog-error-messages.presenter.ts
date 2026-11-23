@@ -1,4 +1,4 @@
-import type { CredentialAdvice } from "../../contexts/distribution/domain/distribution.error.js";
+import type { CredentialAdvice } from "../../contexts/distribution/contract/distribution.error.js";
 import type { CatalogOwners, MessagesOf } from "./error-messages.types.js";
 
 const CREDENTIAL_ADVICE: Record<CredentialAdvice, string> = {

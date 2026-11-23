@@ -5,7 +5,7 @@ import type { ReportingUserScopeReach } from "../../../../../src/contexts/machin
 import {
   EditedAfterInstallError,
   UnprovenInstallDigestError,
-} from "../../../../../src/contexts/machine-claims/domain/machine-claims.error.js";
+} from "../../../../../src/contexts/machine-claims/contract/machine-claims.error.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import {

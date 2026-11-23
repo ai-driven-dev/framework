@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   DuplicatePluginError,
   PluginNotFoundError,
-} from "../../../../src/contexts/installation/domain/installation.error.js";
+} from "../../../../src/contexts/installation/contract/installation.error.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../src/shared/domain/file-hash.js";

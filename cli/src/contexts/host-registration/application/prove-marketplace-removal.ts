@@ -1,6 +1,6 @@
 import type { Scope } from "../../../shared/domain/scope.js";
 import type { AiToolId } from "../../../shared/domain/tool.js";
-import { RegistrationRefusedError } from "../domain/host-registration.error.js";
+import { RegistrationRefusedError } from "../contract/host-registration.error.js";
 import { isRefOnHost } from "../domain/record/host-ref.js";
 import { readRegistrationRecord } from "../domain/record/registration-record.js";
 import { judgeCatalogueWithdrawal } from "../domain/source-proof.js";

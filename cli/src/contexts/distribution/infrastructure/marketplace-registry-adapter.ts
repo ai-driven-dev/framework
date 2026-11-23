@@ -4,7 +4,7 @@ import { AIDD_DIR, AIDD_MARKETPLACES_FILENAME } from "../../../shared/domain/lay
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import type { Scope } from "../../../shared/domain/scope.js";
 import type { AtomicWrite } from "../../../shared/ports/file-writer.js";
-import { UnreadableMarketplaceRegistryError } from "../domain/distribution.error.js";
+import { UnreadableMarketplaceRegistryError } from "../contract/distribution.error.js";
 import { Marketplace, type MarketplaceData } from "../domain/marketplace.js";
 import type { MarketplaceKey, MarketplaceRegistry } from "../ports/marketplace-registry.js";
 

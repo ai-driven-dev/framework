@@ -6,7 +6,7 @@ import { AddPluginToProject } from "../../../../../src/contexts/installation/app
 import {
   DuplicatePluginError,
   MissingPluginMetadataError,
-} from "../../../../../src/contexts/installation/domain/installation.error.js";
+} from "../../../../../src/contexts/installation/contract/installation.error.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";

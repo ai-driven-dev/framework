@@ -1,4 +1,4 @@
-import { RegistrationRefusedError } from "./host-registration.error.js";
+import { RegistrationRefusedError } from "../contract/host-registration.error.js";
 import { judgeRegistration, type SourceProof } from "./policy/registration-policy.js";
 import type { HostPluginRegistryEntry } from "./reading/plugin-registry-reading.js";
 import { isRefOnHost } from "./record/host-ref.js";

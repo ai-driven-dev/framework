@@ -1,4 +1,4 @@
-import { InvalidAgentFrontmatterError } from "../../tools.error.js";
+import { InvalidAgentFrontmatterError } from "../../../contract/errors/tools.error.js";
 
 /** Rebuilt, never copied: a host silently drops an agent with an unknown `model` or list-less `tools`. */
 export function portableAgentFrontmatter(

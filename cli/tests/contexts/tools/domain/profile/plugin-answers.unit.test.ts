@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { ProjectHooksFormat } from "../../../../../src/contexts/tools/contract/tool-vocabulary.js";
 import {
@@ -72,7 +73,7 @@ describe("what a native tool answers", () => {
     const answers = answersOf(nativePlugins({ userPluginsDir: "{home}/.x/plugins" }));
 
     expect(nativeOf(answers).requiresUserScope()).toBe(false);
-    expect(answers.userPluginsBaseDir("/home/me")).toBe("/home/me/.x/plugins");
+    expect(answers.userPluginsBaseDir("/home/me")).toBe(join("/home/me", ".x", "plugins"));
   });
 
   it("answers no user directory for a layout declaring none", () => {
@@ -158,7 +159,7 @@ describe("a layout composed by hand", () => {
     });
 
     expect([answers.userPluginsBaseDir("/h"), answers.copiesFilesGlobally()]).toEqual([
-      "/h/.g",
+      join("/h", ".g"),
       true,
     ]);
   });

@@ -3,7 +3,7 @@ import { dirname } from "node:path";
 import { setTimeout as pause } from "node:timers/promises";
 import { isErrnoException } from "../../../shared/domain/reading/json-file.js";
 import type { Lock } from "../../../shared/ports/lock.js";
-import { UserManifestBusyError } from "../domain/machine-claims.error.js";
+import { UserManifestBusyError } from "../contract/machine-claims.error.js";
 
 /**
  * The machine-wide lock: a directory only one process can create, waited on up to a deadline and

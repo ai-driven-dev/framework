@@ -2,7 +2,7 @@ import { join } from "node:path";
 import type { PluginSourceNpm } from "../../../shared/domain/plugin/source.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
-import { PluginFetchError } from "../domain/distribution.error.js";
+import { PluginFetchError } from "../contract/distribution.error.js";
 import type { NpmInstaller } from "../ports/npm-installer.js";
 import type { PluginFetchOptions } from "../ports/plugin-fetcher.js";
 

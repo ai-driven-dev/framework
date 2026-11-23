@@ -1,10 +1,10 @@
 import type { Scope } from "../../../../shared/domain/scope.js";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../contract/marketplace.js";
-import type { RemovableMarketplace } from "../../contract/marketplace-removal.js";
 import {
   MarketplaceNotFoundError,
   SharedMarketplaceRemovalError,
-} from "../../domain/distribution.error.js";
+} from "../../contract/distribution.error.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../contract/marketplace.js";
+import type { RemovableMarketplace } from "../../contract/marketplace-removal.js";
 import type { MarketplaceRegistry } from "../../ports/marketplace-registry.js";
 
 export interface FindMarketplaceToRemoveRequest {

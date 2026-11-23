@@ -1,7 +1,7 @@
 import type { Scope } from "../../../../shared/domain/scope.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import { InvalidPluginScopeError } from "../../domain/installation.error.js";
+import { InvalidPluginScopeError } from "../../contract/installation.error.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 
 export interface PlanPluginInstallRequest {

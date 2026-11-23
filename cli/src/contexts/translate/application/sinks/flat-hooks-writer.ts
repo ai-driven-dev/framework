@@ -5,8 +5,8 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import { hooksFilePath } from "../../../tools/contract/artifact-path.js";
+import { FlatMergeTargetNotJsonError } from "../../contract/translate.error.js";
 import { mergeFlatHooks } from "../../domain/flat-layout.js";
-import { FlatMergeTargetNotJsonError } from "../../domain/translate.error.js";
 import type { FlatHooksStep } from "../../ports/flat-plugin-writer.js";
 
 type FlatFiles = FileReader & FileWriter;

@@ -1,12 +1,12 @@
 import {
-  INSTALL_COMMANDS,
-  packageManagerOf,
-} from "../../../../src/contexts/update/domain/package-manager.js";
-import {
   ElevatedPermissionUpdateError,
   PackageManagerDetectionError,
   UpdateError,
-} from "../../../../src/contexts/update/domain/update.error.js";
+} from "../../../../src/contexts/update/contract/update.error.js";
+import {
+  INSTALL_COMMANDS,
+  packageManagerOf,
+} from "../../../../src/contexts/update/domain/package-manager.js";
 import type { CliInstaller } from "../../../../src/contexts/update/ports/cli-installer.js";
 
 /** What one scenario asks of an installer: the machine it runs on. */

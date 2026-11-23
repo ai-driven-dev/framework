@@ -1,6 +1,6 @@
 import { homedir, tmpdir } from "node:os";
 import { describe, expect, it } from "vitest";
-import { homeDirResolver, userConfigDir } from "../../src/composition/user-config-dir.js";
+import { homeDirResolver, userConfigDir } from "../../../src/composition/user-config-dir.js";
 
 describe("the profile a test run sees", () => {
   it("is a home under the temp directory, whichever route resolves it", () => {

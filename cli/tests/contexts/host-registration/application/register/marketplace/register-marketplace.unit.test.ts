@@ -3,7 +3,7 @@ import {
   registerMarketplace,
   registrationOf,
 } from "../../../../../../src/contexts/host-registration/application/register/marketplace/register-marketplace.js";
-import { UnreadableBuiltCatalogError } from "../../../../../../src/contexts/host-registration/domain/host-registration.error.js";
+import { UnreadableBuiltCatalogError } from "../../../../../../src/contexts/host-registration/contract/host-registration.error.js";
 import { catalogAt, DIR, OWN, setup } from "../../../testing/registration-run.builder.js";
 
 const target = {

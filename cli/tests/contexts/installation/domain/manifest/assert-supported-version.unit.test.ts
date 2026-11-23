@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { UnsupportedManifestVersionError } from "../../../../../src/contexts/installation/domain/installation.error.js";
+import { UnsupportedManifestVersionError } from "../../../../../src/contexts/installation/contract/installation.error.js";
 import {
   assertSupportedManifestVersion,
   DEFAULT_MANIFEST_CONTEXT,
