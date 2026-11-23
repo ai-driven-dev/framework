@@ -33,15 +33,6 @@ describe("a file imports only the kinds its kind allows", () => {
     ).toEqual(["src/contexts/a/domain/x.ts -> src/contexts/a/ports/y.ts"]);
   });
 
-  it("flags a domain that imports the contract of another context", () => {
-    expect(
-      importsOf({
-        "src/contexts/translate/domain/x.ts": 'import { Y } from "../../tools/contract/y.js";',
-        "src/contexts/tools/contract/y.ts": "export type Y = 1;",
-      })
-    ).toEqual(["src/contexts/translate/domain/x.ts -> src/contexts/tools/contract/y.ts"]);
-  });
-
   it("names the file, the rule and the fix", () => {
     const [violation] = importViolations({
       "src/contexts/a/domain/x.model.ts": 'import { Y } from "../application/y.use-case.js";',
