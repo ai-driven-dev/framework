@@ -9,7 +9,6 @@ import {
   constructionViolations,
   contractReaderViolations,
   controllerBuildsErrorViolations,
-  drivingPortViolations,
   errorTextViolations,
   errorViolations,
   instructionViolations,
@@ -221,46 +220,16 @@ describe("a port declares nothing nobody calls", () => {
   });
 });
 
-describe("the driving port names context types only", () => {
-  const port = "src/orchestration/deps.ts";
-  const found = (text: string) => entries(drivingPortViolations({ [port]: text }));
-
-  it("reports a value import and an import type of an interior file", () => {
-    expect(
-      found(
-        'import { A } from "../contexts/a/application/a.use-case.js";\nimport type { B } from "../contexts/b/domain/b.model.js";'
-      )
-    ).toEqual([
-      `${port} -> ../contexts/a/application/a.use-case.js`,
-      `${port} -> ../contexts/b/domain/b.model.js`,
-    ]);
-  });
-
-  it("clears an import type of an application or a contract file", () => {
-    expect(
-      found(
-        'import type { A } from "../contexts/a/application/a.use-case.js";\nimport type { C } from "../contexts/c/contract/c.model.js";\nimport { s } from "../shared/s.js";'
-      )
-    ).toEqual([]);
-  });
-
-  it("holds the tree", () => {
-    expect(src()[port], "the driving port moved").toBeDefined();
-    expectNone(drivingPortViolations(src()));
-  });
-});
-
 describe("a contract file is read from outside its context", () => {
   const contract = "src/contexts/a/contract/c.model.ts";
   const found = (files: Record<string, string>) => entries(contractReaderViolations(files));
 
-  it("reports one only its context, the composition root or the driving port imports", () => {
+  it("reports one only its context, or the composition root imports", () => {
     expect(
       found({
         [contract]: "export const C = 1;",
         "src/contexts/a/application/x.use-case.ts": 'import { C } from "../contract/c.model.js";',
         "src/composition/a.ts": 'import { C } from "../contexts/a/contract/c.model.js";',
-        "src/orchestration/deps.ts": 'import type { C } from "../contexts/a/contract/c.model.js";',
       })
     ).toEqual([contract]);
   });

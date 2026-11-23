@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
+import { containerFactory } from "../../src/composition/container.js";
 import { wireInstallation } from "../../src/composition/contexts/installation.js";
-import { bindContainer } from "../../src/composition/orchestration/deps-graph.js";
 import { wireGlobal } from "../../src/composition/orchestration/global.js";
 import { wireMarketplace } from "../../src/composition/orchestration/marketplace.js";
 import { wirePlugin } from "../../src/composition/orchestration/plugin.js";
@@ -9,21 +9,26 @@ import { wireBase } from "../../src/composition/shared.js";
 import { registeredTools, TOOL } from "../shared/testing/registered-tools.builder.js";
 import { ScriptedPrompter } from "../shared/testing/scripted-prompter.fake.js";
 
-/** Building the graph reads nothing: the root names a project that is never opened. */
+/** Building the container reads nothing: the root names a project that is never opened. */
 const ROOT = "/aidd-catalog-wiring-unopened";
 
-describe("the catalog the deps wire", () => {
+describe("the catalog the container wires", () => {
   it("is the one the container was handed, for the use case that builds a framework", async () => {
     const catalogA = registeredTools();
     const catalogB = registeredTools();
     const askedA = vi.spyOn(catalogA, "aiToolId");
     const askedB = vi.spyOn(catalogB, "aiToolId");
-    const depsA = await bindContainer(catalogA)(ROOT, { verbose: false }, undefined);
-    await bindContainer(catalogB)(ROOT, { verbose: false }, undefined);
+    const containerA = await containerFactory(catalogA)(ROOT, { verbose: false }, undefined);
+    await containerFactory(catalogB)(ROOT, { verbose: false }, undefined);
     askedA.mockClear();
     askedB.mockClear();
 
-    depsA.frameworkBuild({ target: TOOL.claude, mode: "marketplace", outDir: ROOT, force: false });
+    containerA.translate.frameworkBuild({
+      target: TOOL.claude,
+      mode: "marketplace",
+      outDir: ROOT,
+      force: false,
+    });
 
     expect(askedA).toHaveBeenCalledWith(TOOL.claude);
     expect(askedB).not.toHaveBeenCalled();

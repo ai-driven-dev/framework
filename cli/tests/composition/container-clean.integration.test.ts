@@ -10,7 +10,7 @@ import { catalogOf } from "../shared/testing/catalog-of.builder.js";
 import { TOOL } from "../shared/testing/registered-tools.builder.js";
 import {
   aPlugin,
-  graphOf,
+  containerOf,
   SAMPLE_MARKETPLACE,
   stubMachineEnv,
 } from "./testing/container-graph.builder.js";
@@ -31,7 +31,9 @@ describe("the doctor and clean commands a container wires", () => {
   });
 
   it("checks every category of an installed project and reports no category it could not check", async () => {
-    const { manifestRepo, doctorAll } = await graphOf(root, { verbose: false }, undefined, tools);
+    const container = await containerOf(root, { verbose: false }, undefined, tools);
+    const { manifestRepo } = container.shared;
+    const { doctorAll } = container.doctor;
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "1.0.0", []);
     await manifestRepo.save(manifest);
@@ -45,12 +47,14 @@ describe("the doctor and clean commands a container wires", () => {
   });
 
   it("counts the token given on the command line as authenticated", async () => {
-    const { manifestRepo, runDoctor } = await graphOf(
+    const container = await containerOf(
       root,
       { verbose: false, token: "ghp_given" },
       undefined,
       tools
     );
+    const { manifestRepo } = container.shared;
+    const { runDoctor } = container.doctor;
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "1.0.0", []);
     await manifestRepo.save(manifest);
@@ -64,12 +68,9 @@ describe("the doctor and clean commands a container wires", () => {
     const builtCache = join(root, "user-config", "cache", "built");
     await mkdir(join(builtCache, "1.0.0"), { recursive: true });
     await writeFile(join(builtCache, "1.0.0", "marker"), "");
-    const { userManifestRepo, cleanUserScope } = await graphOf(
-      root,
-      { verbose: false },
-      undefined,
-      tools
-    );
+    const container = await containerOf(root, { verbose: false }, undefined, tools);
+    const { userManifestRepo } = container.shared;
+    const { cleanUserScope } = container.clean;
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "1.0.0", []);
     manifest.addPlugin(TOOL.cursor, aPlugin("user"));
@@ -81,12 +82,9 @@ describe("the doctor and clean commands a container wires", () => {
   });
 
   it("refuses a user clean whose host binary cannot be found, naming why", async () => {
-    const { userManifestRepo, cleanUserScope } = await graphOf(
-      root,
-      { verbose: false },
-      undefined,
-      tools
-    );
+    const container = await containerOf(root, { verbose: false }, undefined, tools);
+    const { userManifestRepo } = container.shared;
+    const { cleanUserScope } = container.clean;
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "1.0.0", []);
     await userManifestRepo.saveRecords(
@@ -104,7 +102,8 @@ describe("the doctor and clean commands a container wires", () => {
     await mkdir(join(sources, FRAMEWORK_MARKETPLACE_NAME), { recursive: true });
     await mkdir(join(sources, "awesome"), { recursive: true });
     await writeFile(join(sources, "awesome", "source"), "another marketplace's clone");
-    const { cleanUserScope } = await graphOf(root, { verbose: false }, undefined, tools);
+    const container = await containerOf(root, { verbose: false }, undefined, tools);
+    const { cleanUserScope } = container.clean;
 
     await cleanUserScope.execute({ projectRoot: root, force: true });
 
@@ -114,7 +113,8 @@ describe("the doctor and clean commands a container wires", () => {
 
   it("names the framework's shared source when a user clean asks before removing it", async () => {
     const asked = vi.spyOn(SilentPrompterAdapter.prototype, "confirm").mockResolvedValue(false);
-    const { cleanUserScope } = await graphOf(root, { verbose: false }, undefined, tools);
+    const container = await containerOf(root, { verbose: false }, undefined, tools);
+    const { cleanUserScope } = container.clean;
 
     await cleanUserScope.execute({
       projectRoot: root,
@@ -128,8 +128,9 @@ describe("the doctor and clean commands a container wires", () => {
   });
 
   it("tells a project clean which other projects still reference the framework's shared source, and drops only its own claim", async () => {
-    const { registerFrameworkMarketplace, manifestRepo, userSourceReferences, cleanProject } =
-      await graphOf(root, { verbose: false }, undefined, tools);
+    const container = await containerOf(root, { verbose: false }, undefined, tools);
+    const { registerFrameworkMarketplace, manifestRepo, userSourceReferences } = container.shared;
+    const { cleanProject } = container.clean;
     await registerFrameworkMarketplace.execute({
       projectRoot: root,
       pluginSource: { kind: "local", path: SAMPLE_MARKETPLACE },
@@ -151,12 +152,9 @@ describe("the doctor and clean commands a container wires", () => {
   });
 
   it("refuses a project clean whose plugin's MCP entries cannot be read back", async () => {
-    const { manifestRepo, cleanProject } = await graphOf(
-      root,
-      { verbose: false },
-      undefined,
-      tools
-    );
+    const container = await containerOf(root, { verbose: false }, undefined, tools);
+    const { manifestRepo } = container.shared;
+    const { cleanProject } = container.clean;
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "1.0.0", []);
     manifest.addPlugin(TOOL.opencode, aPlugin("project", { mcpEntries: { server: "digest" } }));

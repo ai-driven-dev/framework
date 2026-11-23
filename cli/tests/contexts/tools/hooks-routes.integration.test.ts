@@ -108,8 +108,8 @@ async function writeSource(source: string): Promise<void> {
 type Deps = Awaited<ReturnType<typeof deps>>;
 
 async function deps(project: string) {
-  const { bindContainer } = await import("../../../src/composition/orchestration/deps-graph.js");
-  return bindContainer(catalogOf())(project, { verbose: false }, createOutput(false));
+  const { containerFactory } = await import("../../../src/composition/container.js");
+  return containerFactory(catalogOf())(project, { verbose: false }, createOutput(false));
 }
 
 async function installTool(project: string, toolId: AiToolId): Promise<void> {
@@ -119,16 +119,16 @@ async function installTool(project: string, toolId: AiToolId): Promise<void> {
   );
   await new InitProject(
     {
-      fs: wired.fs,
-      manifestRepo: wired.manifestRepo,
-      updateGitignore: new UpdateGitignore(wired.fs),
+      fs: wired.shared.fs,
+      manifestRepo: wired.shared.manifestRepo,
+      updateGitignore: new UpdateGitignore(wired.shared.fs),
     },
     catalogOf()
   ).execute({
     projectRoot: project,
   });
   const install = { tools: catalogOf(), toolId, force: false, version: "1.0.0" };
-  await wired.installAiToolWithPlugins.execute({
+  await wired.global.installAiToolWithPlugins.execute({
     ...install,
     projectRoot: project,
     propagatePlugins: false,
@@ -139,7 +139,7 @@ async function installPlugin(project: string, toolId: AiToolId, plugin: string):
   const wired = await deps(project);
   const pluginArg = join(REPOSITORY_ROOT, "plugins", plugin);
   const install = { pluginArg, toolIds: [toolId], tools: catalogOf(), interactive: false };
-  await wired.installPlugin.execute({ ...install, projectRoot: project, yes: true });
+  await wired.plugin.installPlugin.execute({ ...install, projectRoot: project, yes: true });
 }
 
 async function build(
@@ -153,12 +153,20 @@ async function build(
   const wired = await deps(ws.project);
   const out = join(ws.root, `out-${mode}`);
   await mkdir(out, { recursive: true });
-  const useCase = createFrameworkBuildUseCase(catalogOf(), wired, {
-    target: toolId,
-    mode,
-    outDir: out,
-    force: false,
-  });
+  const useCase = createFrameworkBuildUseCase(
+    catalogOf(),
+    {
+      fs: wired.shared.fs,
+      assetProvider: wired.installation.assetProvider,
+      logger: wired.shared.logger,
+    },
+    {
+      target: toolId,
+      mode,
+      outDir: out,
+      force: false,
+    }
+  );
   if (useCase === undefined) return null;
   await writeSource(ws.source);
   await useCase.execute({ sourceDir: ws.source, outDir: out, target: toolId, mode });
@@ -302,9 +310,9 @@ async function describeHookFiles(ws: Workspace, bases: readonly string[]): Promi
   return sections.length === 0 ? "no hook file\n" : sections.join("\n");
 }
 
-type RecordedManifest = NonNullable<Awaited<ReturnType<Deps["manifestRepo"]["load"]>>>;
+type RecordedManifest = NonNullable<Awaited<ReturnType<Deps["shared"]["manifestRepo"]["load"]>>>;
 
-type RegistrationRecords = Awaited<ReturnType<Deps["manifestRepo"]["loadRecords"]>>;
+type RegistrationRecords = Awaited<ReturnType<Deps["shared"]["manifestRepo"]["loadRecords"]>>;
 type RecordedPlugin = ReturnType<RecordedManifest["getRecordedPlugins"]>[number];
 
 function recordedPluginLines(
@@ -353,14 +361,14 @@ async function pluginsRecorded(ws: Workspace): Promise<string> {
   const lines = [
     ...(await recordedPlugins(
       ws,
-      await wired.manifestRepo.load(),
-      await wired.manifestRepo.loadRecords(),
+      await wired.shared.manifestRepo.load(),
+      await wired.shared.manifestRepo.loadRecords(),
       "project"
     )),
     ...(await recordedPlugins(
       ws,
-      await wired.userManifestRepo.load(),
-      await wired.userManifestRepo.loadRecords(),
+      await wired.shared.userManifestRepo.load(),
+      await wired.shared.userManifestRepo.loadRecords(),
       "machine"
     )),
   ];
@@ -375,7 +383,7 @@ async function pluginsRecorded(ws: Workspace): Promise<string> {
 async function reinstallThroughSetup(ws: Workspace): Promise<string> {
   await writeSource(ws.source);
   const wired = await deps(ws.project);
-  await wired.addMarketplace.execute({
+  await wired.marketplace.addMarketplace.execute({
     source: { kind: "local", path: ws.source },
     name: "hooks-routes",
     scope: "project",
@@ -389,11 +397,11 @@ async function reinstallThroughSetup(ws: Workspace): Promise<string> {
     interactive: false,
     tools: catalogOf(),
   } as const;
-  await wired.choosePlugins.execute(options);
+  await wired.setup.choosePlugins.execute(options);
   const before = await describeHookFiles(ws, [ws.project, ws.home]);
   let outcome = "setup over installed plugins resolved";
   try {
-    await wired.choosePlugins.execute(options);
+    await wired.setup.choosePlugins.execute(options);
   } catch (error) {
     outcome = `setup over installed plugins threw ${(error as Error).constructor.name}: ${normalize(render(error), ws)}`;
   }
@@ -426,11 +434,11 @@ async function runOnInstalled(ws: Workspace, route: Route, toolId: AiToolId): Pr
   const wired = await deps(ws.project);
   if (route === "plugin-remove") {
     const removal = { pluginName: "aidd-context", toolIds: [toolId] };
-    await wired.removePlugin.execute({ ...removal, projectRoot: ws.project });
+    await wired.plugin.removePlugin.execute({ ...removal, projectRoot: ws.project });
     return recordedReport(ws, bases);
   }
   const clean = { force: true, interactive: false, tools: catalogOf() };
-  await wired.cleanProject.execute({ ...clean, projectRoot: ws.project });
+  await wired.clean.cleanProject.execute({ ...clean, projectRoot: ws.project });
   return recordedReport(ws, bases);
 }
 

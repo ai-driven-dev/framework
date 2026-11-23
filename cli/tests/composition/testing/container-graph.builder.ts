@@ -1,17 +1,17 @@
 import { join } from "node:path";
 import { vi } from "vitest";
-import { bindContainer } from "../../../src/composition/orchestration/deps-graph.js";
+import { containerFactory } from "../../../src/composition/container.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { Output } from "../../../src/orchestration/domain/output.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 
-export const graphOf = (
+export const containerOf = (
   projectRoot: string,
-  options: Parameters<ReturnType<typeof bindContainer>>[1],
+  options: Parameters<ReturnType<typeof containerFactory>>[1],
   output: Output | undefined,
   tools: ReturnType<typeof catalogOf>
-) => bindContainer(tools)(projectRoot, options, output);
+) => containerFactory(tools)(projectRoot, options, output);
 
 export const SAMPLE_MARKETPLACE = join(
   process.cwd(),

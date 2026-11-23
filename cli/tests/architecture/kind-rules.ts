@@ -278,48 +278,15 @@ export function portViolations(bodies: ReadonlyMap<string, string>): Violation[]
   );
 }
 
-const DRIVING_PORT = "src/orchestration/deps.ts";
-
-const drivingImportProblem = (typeOnly: boolean, specifier: string): string | undefined => {
-  if (!typeOnly) return "is a value import";
-  return /\/(?:application|contract)\//.test(specifier)
-    ? undefined
-    : "is neither application nor contract";
-};
-
-/** The context imports of the driving port that are not an `import type` of an application or a
- * contract file. */
-export function drivingPortViolations(files: Readonly<Record<string, string>>): Violation[] {
-  const text = files[DRIVING_PORT];
-  if (text === undefined) return [];
-  return [...text.matchAll(/^import\s+(type\s+)?[^;]*?from\s+"([^"]+)"/gms)].flatMap((match) => {
-    const specifier = present(match[2]);
-    const problem = specifier.startsWith("../contexts/")
-      ? drivingImportProblem(match[1] !== undefined, specifier)
-      : undefined;
-    return problem
-      ? [
-          violation(
-            "imports",
-            `${DRIVING_PORT} -> ${specifier}`,
-            `${specifier} ${problem}`,
-            "the driving port names context types only, by import type, from application or contract",
-            "import type the application or contract type it needs"
-          ),
-        ]
-      : [];
-  });
-}
-
 const contextOfFile = (path: string): string | undefined =>
   /^src\/contexts\/([^/]+)\//.exec(path)?.[1];
 
-/** The files another context reads: the composition root and the driving port wire everything, so
- * they read nothing in particular. */
+/** The files another context reads: the composition root wires everything, so it reads nothing in
+ * particular. */
 const readFromOutside = (files: Readonly<Record<string, string>>): Set<string> =>
   new Set(
     Object.entries(files)
-      .filter(([importer]) => !importer.startsWith("src/composition/") && importer !== DRIVING_PORT)
+      .filter(([importer]) => !importer.startsWith("src/composition/"))
       .flatMap(([importer, text]) =>
         [...text.matchAll(INTERNAL_IMPORT)]
           .map((match) => resolveImportTarget(importer, present(match[1])))
@@ -327,8 +294,8 @@ const readFromOutside = (files: Readonly<Record<string, string>>): Set<string> =
       )
   );
 
-/** A `contract/` file nobody outside its context reads. The composition root and the driving port
- * do not count: they wire everything. Such a file is an interior file in the wrong folder, or a
+/** A `contract/` file nobody outside its context reads. The composition root does not count: it wires
+ * everything. Such a file is an interior file in the wrong folder, or a
  * surface nobody asked for. */
 export function contractReaderViolations(files: Readonly<Record<string, string>>): Violation[] {
   const read = readFromOutside(files);

@@ -16,7 +16,11 @@ import { catalogOf } from "../shared/testing/catalog-of.builder.js";
 import { FakeHostActions } from "../shared/testing/fake-host-actions.fake.js";
 import { hostRecord } from "../shared/testing/host-record-reading.builder.js";
 import { TOOL } from "../shared/testing/registered-tools.builder.js";
-import { graphOf, SAMPLE_MARKETPLACE, stubMachineEnv } from "./testing/container-graph.builder.js";
+import {
+  containerOf,
+  SAMPLE_MARKETPLACE,
+  stubMachineEnv,
+} from "./testing/container-graph.builder.js";
 
 // A host records the real location of a source it was given, never a symlinked temp path:
 // the native resolution, which also expands a Windows short name the way `fs.realpath` does.
@@ -66,12 +70,9 @@ describe("the settings sync a container wires", () => {
   });
 
   it("purges this project's pre-migration copy once sync finds the framework at user scope", async () => {
-    const { registerFrameworkMarketplace, manifestRepo, syncSettings } = await graphOf(
-      root,
-      { verbose: false },
-      undefined,
-      tools
-    );
+    const container = await containerOf(root, { verbose: false }, undefined, tools);
+    const { registerFrameworkMarketplace, manifestRepo } = container.shared;
+    const { syncSettings } = container.marketplace;
     await registerFrameworkMarketplace.execute({
       projectRoot: root,
       pluginSource: { kind: "local", path: SAMPLE_MARKETPLACE },
@@ -89,12 +90,9 @@ describe("the settings sync a container wires", () => {
   });
 
   it("moves a project-scope framework entry to the machine when sync recreates the framework", async () => {
-    const { registerFrameworkMarketplace, manifestRepo, syncSettings } = await graphOf(
-      root,
-      { verbose: false },
-      undefined,
-      tools
-    );
+    const container = await containerOf(root, { verbose: false }, undefined, tools);
+    const { registerFrameworkMarketplace, manifestRepo } = container.shared;
+    const { syncSettings } = container.marketplace;
     await registerFrameworkMarketplace.execute({
       projectRoot: root,
       pluginSource: { kind: "local", path: SAMPLE_MARKETPLACE },

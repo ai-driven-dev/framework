@@ -5,7 +5,7 @@ Dependency graph, edges and decisions: [architecture.md](../../../../aidd_docs/m
 ## Imports
 
 - Need more than the contract allows: declare the narrow input in your own `ports/` and receive the real object by shape. Do not add an edge.
-- A `contract/` file has an importer in another context, `presentation/` or `orchestration/`; `composition/` and `orchestration/deps.ts` do not count: `contractReaderViolations` (`kinds.rules.arch.test.ts`).
+- A `contract/` file has an importer in another context, `presentation/` or `orchestration/`; `composition/` does not count: `contractReaderViolations` (`kinds.rules.arch.test.ts`).
 - Pure folders (`domain/`, `ports/`, `contract/`, `shared/domain/`, `shared/ports/`) import no package and no Node builtin but `node:path` and `node:crypto`, and read no `process`: Biome for `PURE_FOLDERS` (`biome-guards-bite.arch.test.ts`), the kind gate (`kinds.ts`) elsewhere.
 - Orchestration imports the `application/` and `contract/` of contexts only, reads no file, starts no process: `biome.json`. Presentation may also import `application/`, except of `tools`.
 - Only `composition/` and `cli.ts` import `shared/infrastructure/`; only `cli.ts` imports `composition/` from outside it: `biome.json`.

@@ -155,15 +155,13 @@ describe("running a command in process", () => {
     vi.doMock("../../src/presentation/controllers/setup/clean.controller.js", () => ({
       registerCleanCommand: (program: import("commander").Command) => {
         program.command("clean").action(async () => {
-          const { bindContainer } = await import(
-            "../../src/composition/orchestration/deps-graph.js"
-          );
+          const { containerFactory } = await import("../../src/composition/container.js");
           const { createOutput } = await import("../../src/composition/shared.js");
           const { syntheticCatalog } = await import(
             "../shared/testing/synthetic-tool-id.builder.js"
           );
           built.push(
-            await bindContainer(syntheticCatalog())(
+            await containerFactory(syntheticCatalog())(
               process.cwd(),
               { verbose: false },
               createOutput(false)
