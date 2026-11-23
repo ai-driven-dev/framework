@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { copilotAgentFrontmatter } from "../../../../../../src/contexts/tools/domain/behaviours/copilot/copilot-agent.model.js";
+import { copilot } from "../../../../../../src/composition/tool-profiles/copilot.js";
+
+const copilotAgentFrontmatter = (fm: Record<string, unknown>) =>
+  copilot.section("agents").convertFrontmatter(fm);
 
 describe("writing a Copilot agent's frontmatter", () => {
   it("reads the effort as reasoningEffort and drops the keys Copilot does not read", () => {

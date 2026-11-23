@@ -18,6 +18,7 @@ import type {
 } from "../../../../../src/contexts/tools/domain/profile.js";
 import { CommandsSection } from "../../../../../src/contexts/tools/domain/sections/commands-section.js";
 import { McpConfigPart } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
+import { SOURCE_PLUGIN_ROOT_TOKEN } from "../../../../../src/shared/domain/materialization/plugin-root-path-rewrite.js";
 import {
   type ConformanceCheck,
   PROFILE_CHECKS,
@@ -301,6 +302,8 @@ const BROKEN: Readonly<Record<string, () => ProofSubject>> = {
     ),
   "asks, in each settings file, for a registered tool": () =>
     subjectOf({ ...NATIVE, settingsFiles: () => [REFUSES_EVERY_TOOL] }),
+  "declares its directory relative, ending in /": () =>
+    subjectOf({ ...NATIVE, directory: ".claude" }),
   "routes a numbered command and its references to the same folder": () =>
     subjectOf({ ...NATIVE, linkSyntax: [] }),
   "names a numbered command after its phase and keeps only what it reads": () =>
@@ -327,6 +330,17 @@ const BROKEN: Readonly<Record<string, () => ProofSubject>> = {
   },
   "writes no path that two distinct plugins share": () =>
     subjectOf(flatPathIgnoring(FLAT, () => "shared")),
+  "leaves no source plugin root behind when it declares a token of its own": () =>
+    subjectOf(HOOKED, {
+      translate: (distribution, tool) => {
+        const written = translatePlugin(distribution, tool);
+        const files = written.files.map((file) => ({
+          ...file,
+          content: `${String(file.content)}${SOURCE_PLUGIN_ROOT_TOKEN}`,
+        }));
+        return { ...written, files };
+      },
+    }),
   "builds only manifests that name the plugin and its version": () =>
     subjectOf(withManifest(SCHEMED, { name: "alpha" })),
   "builds manifests that satisfy the schema it names": () =>

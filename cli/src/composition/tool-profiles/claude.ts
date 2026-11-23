@@ -3,17 +3,23 @@ import claudeSettings from "../../../assets/configs/claude/settings.json" with {
 // biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
 import adapter from "../../../assets/hooks-runtime/host-claude.cjs";
 import { MCP_CONFIG_REF } from "../../contexts/tools/contract/config-refs.js";
-import { claudeAgentFrontmatter } from "../../contexts/tools/domain/behaviours/claude/claude-agent.model.js";
 import { buildClaudeFlatContract } from "../../contexts/tools/domain/behaviours/claude/claude-flat-build.model.js";
-import { convertCommandFrontmatter } from "../../contexts/tools/domain/formats/command.js";
+import { agentFrontmatterOf } from "../../contexts/tools/domain/formats/agents/agent-format.js";
+import {
+  convertCommandFrontmatter,
+  phasedCommandsLink,
+  phasedCommandsUnder,
+} from "../../contexts/tools/domain/formats/command.js";
 import {
   declareHooks,
   ownNameEvents,
 } from "../../contexts/tools/domain/formats/hooks/declaration.js";
 import { nativeHooksSupport } from "../../contexts/tools/domain/formats/hooks/routes.js";
 import { pluginTreeContract } from "../../contexts/tools/domain/formats/plugin-tree-contract.js";
+import { pathsScopedRule } from "../../contexts/tools/domain/formats/rule-frontmatter.js";
 import { sharedMarketplaceKey } from "../../contexts/tools/domain/marketplace-entry.js";
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
+import { everyProject } from "../../contexts/tools/domain/profile/recommendation.js";
 import {
   type NativeLayoutParams,
   nativeLayout,
@@ -30,6 +36,9 @@ import {
 } from "../../shared/domain/materialization/flat-paths.js";
 import { SOURCE_PLUGIN_ROOT_TOKEN } from "../../shared/domain/materialization/plugin-root-path-rewrite.js";
 
+/** Claude Code reads its own keys; an agent without `tools` inherits every tool. */
+const AGENT_FRONTMATTER = agentFrontmatterOf({ keep: ["name", "description", "model", "effort"] });
+
 const PLUGIN_MCP = acceptedPluginMcp();
 
 /** Build output paths, deliberately distinct from the source-side constants even where the
@@ -37,7 +46,7 @@ const PLUGIN_MCP = acceptedPluginMcp();
 const OUTPUT_PLUGIN_TREE: Parameters<typeof pluginTreeContract>[1] = {
   manifestRelative: ".claude-plugin/plugin.json",
   marketplaceRelative: ".claude-plugin/marketplace.json",
-  agentMarkdown: { frontmatter: (frontmatter) => claudeAgentFrontmatter(frontmatter) },
+  agentMarkdown: { frontmatter: AGENT_FRONTMATTER },
 };
 
 /** Where a flat build puts claude's skills and agents. */
@@ -48,10 +57,6 @@ const CLAUDE_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(".claude/", {
 
 const DIRECTORY = ".claude/";
 const TOOL_SUFFIX = ".claude.md";
-
-function commandsDir(phase: string): string {
-  return `${DIRECTORY}commands/aidd/${phase}/`;
-}
 
 const hooks = declareHooks(
   { toolId: "claude", directory: DIRECTORY, adapter },
@@ -124,24 +129,6 @@ const CLAUDE_MARKETPLACE_SETTINGS: NativeLayoutParams["marketplaceSettings"] = {
 };
 
 /** A command filed under a numbered phase folder lands in that phase's commands folder. */
-function phasedCommandPath(fileName: string): string | undefined {
-  const phased = fileName.match(/^(\d+)[^/]*\/(.*)/);
-  return phased ? `${commandsDir(phased[1])}${phased[2]}` : undefined;
-}
-
-function convertRuleFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-  if ("paths" in fm) {
-    const paths = fm.paths;
-    if (Array.isArray(paths) && paths.length === 0) return {};
-    return { paths };
-  }
-  if ("globs" in fm) return { paths: fm.globs };
-  if (fm.alwaysApply === false && fm.description !== undefined) {
-    return { description: fm.description };
-  }
-  return {};
-}
-
 export const claude = defineAiTool({
   toolId: "claude",
   distributionProbes: {
@@ -151,7 +138,7 @@ export const claude = defineAiTool({
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
   displayName: "Claude Code",
-  recommendedFor: () => true,
+  recommendedFor: everyProject,
   signalDir: ".claude/commands",
   configAssets: [
     {
@@ -164,23 +151,22 @@ export const claude = defineAiTool({
   hooks,
   buildContracts: {
     marketplace: () => pluginTreeContract(hooks, OUTPUT_PLUGIN_TREE),
-    flat: () => buildClaudeFlatContract(hooks, CLAUDE_FLAT_LAYOUT),
+    flat: () => buildClaudeFlatContract(hooks, CLAUDE_FLAT_LAYOUT, AGENT_FRONTMATTER),
   },
 
   capabilities: (bound) => ({
     agents: bound.agents({
       format: "markdown",
-      frontmatter: claudeAgentFrontmatter,
+      frontmatter: AGENT_FRONTMATTER,
     }),
     skills: bound.skills({}),
     commands: bound.commands({
-      buildInstallPath: (fileName) =>
-        phasedCommandPath(fileName) ?? bound.installUnder("commands/")(fileName),
-      convertFrontmatter: (fm, relativeFileName) => convertCommandFrontmatter(fm, relativeFileName),
+      buildInstallPath: phasedCommandsUnder(DIRECTORY, bound.installUnder("commands/")),
+      convertFrontmatter: convertCommandFrontmatter,
     }),
     rules: bound.rules({
       buildInstallPath: bound.installUnder("rules/"),
-      convertFrontmatter: convertRuleFrontmatter,
+      convertFrontmatter: pathsScopedRule,
     }),
     mcp: {
       config: new McpConfigPart({
@@ -210,7 +196,7 @@ export const claude = defineAiTool({
   linkSyntax: [
     {
       from: /(@?)\.claude\/commands\/(\d+)[_][^/]+\//g,
-      to: (_match, at, phase) => `${at}${commandsDir(phase)}`,
+      to: phasedCommandsLink(DIRECTORY),
     },
   ],
 });

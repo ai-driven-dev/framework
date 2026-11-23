@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { opencodeAgentFrontmatter } from "../../../../../../src/contexts/tools/domain/behaviours/opencode/opencode-agent.model.js";
+import { opencode } from "../../../../../../src/composition/tool-profiles/opencode.js";
+
+const opencodeAgentFrontmatter = (fm: Record<string, unknown>) =>
+  opencode.section("agents").convertFrontmatter(fm);
 
 describe("writing an OpenCode agent's frontmatter", () => {
   it("writes the effort as the model's variant and marks the agent a subagent", () => {

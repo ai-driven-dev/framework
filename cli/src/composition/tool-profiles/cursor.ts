@@ -4,10 +4,10 @@ import cursorSettings from "../../../assets/configs/cursor/settings.json" with {
 import adapter from "../../../assets/hooks-runtime/host-cursor.cjs";
 import type { AgentMarkdown } from "../../contexts/tools/contract/build-contract.js";
 import { MCP_CONFIG_REF } from "../../contexts/tools/contract/config-refs.js";
-import { cursorAgentFrontmatter } from "../../contexts/tools/domain/behaviours/cursor/cursor-agent.model.js";
 import { buildCursorFlatContract } from "../../contexts/tools/domain/behaviours/cursor/cursor-flat-build.model.js";
+import { agentFrontmatterOf } from "../../contexts/tools/domain/formats/agents/agent-format.js";
 import {
-  buildAiddCommandFilePath,
+  aiddCommandsUnder,
   convertCommandFrontmatter,
 } from "../../contexts/tools/domain/formats/command.js";
 import { declareHooks } from "../../contexts/tools/domain/formats/hooks/declaration.js";
@@ -16,7 +16,7 @@ import {
   projectHooksSupport,
 } from "../../contexts/tools/domain/formats/hooks/routes.js";
 import { pluginTreeContract } from "../../contexts/tools/domain/formats/plugin-tree-contract.js";
-import { rulePatterns } from "../../contexts/tools/domain/formats/rule-frontmatter.js";
+import { asMdc, globsScopedRule } from "../../contexts/tools/domain/formats/rule-frontmatter.js";
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
 import { nativeLayout } from "../../contexts/tools/domain/sections/layout-section.js";
 import { manifestSection } from "../../contexts/tools/domain/sections/manifest-section.js";
@@ -30,10 +30,16 @@ import {
   flatArtifactLayout,
 } from "../../shared/domain/materialization/flat-paths.js";
 
+/** Cursor has no effort key: it reads `model[effort=<level>]`. */
+const AGENT_FRONTMATTER = agentFrontmatterOf({
+  keep: ["name", "description", "model"],
+  effortInModel: { open: "[effort=", close: "]" },
+});
+
 const PLUGIN_MCP = acceptedPluginMcp("mcp.json");
 
 const CURSOR_AGENT_MARKDOWN: AgentMarkdown = {
-  frontmatter: (frontmatter) => cursorAgentFrontmatter(frontmatter),
+  frontmatter: AGENT_FRONTMATTER,
   pluginPrefixedName: true,
   quote: "double",
 };
@@ -54,29 +60,6 @@ const CURSOR_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(".cursor/", {
 
 const DIRECTORY = ".cursor/";
 const TOOL_SUFFIX = ".cursor.md";
-const MDC_EXT = ".mdc";
-
-function toMdc(fileName: string): string {
-  return fileName.endsWith(".md") ? `${fileName.slice(0, -3)}${MDC_EXT}` : fileName;
-}
-
-/** A scoped rule keeps its globs and never applies on its own; an unscoped one survives only as
- * an on-request rule that has a description. */
-function cursorRuleFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-  const patterns = rulePatterns(fm);
-  const described = fm.description === undefined ? {} : { description: fm.description };
-  if (patterns.length > 0) {
-    return {
-      ...described,
-      globs: JSON.stringify(patterns).replace(/,/g, ", "),
-      alwaysApply: false,
-    };
-  }
-  return fm.alwaysApply === false && fm.description !== undefined
-    ? { ...described, alwaysApply: false }
-    : {};
-}
-
 // Split literal to avoid biome's noTemplateCurlyInString warning.
 const CURSOR_PLUGIN_ROOT_TOKEN = "$" + "{CURSOR_PLUGIN_ROOT}";
 
@@ -145,18 +128,18 @@ export const cursor = defineAiTool({
   capabilities: (bound) => ({
     agents: bound.agents({
       format: "markdown",
-      frontmatter: cursorAgentFrontmatter,
+      frontmatter: AGENT_FRONTMATTER,
       // Cursor keeps single quotes as part of the value, so `'name'` would be the agent's name.
       quote: "double",
     }),
     skills: bound.skills({}),
     commands: bound.commands({
-      buildInstallPath: (fileName) => buildAiddCommandFilePath(DIRECTORY, fileName),
-      convertFrontmatter: (fm, relativeFileName) => convertCommandFrontmatter(fm, relativeFileName),
+      buildInstallPath: aiddCommandsUnder(DIRECTORY),
+      convertFrontmatter: convertCommandFrontmatter,
     }),
     rules: bound.rules({
-      buildInstallPath: (fileName) => toMdc(bound.installUnder("rules/")(fileName)),
-      convertFrontmatter: cursorRuleFrontmatter,
+      buildInstallPath: asMdc(bound.installUnder("rules/")),
+      convertFrontmatter: globsScopedRule,
     }),
     mcp: {
       config: new McpConfigPart({

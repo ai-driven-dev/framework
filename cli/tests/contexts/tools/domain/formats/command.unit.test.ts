@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  aiddCommandsUnder,
   buildAiddCommandFilePath,
   convertCommandFrontmatter,
   convertCommandFrontmatterNoHint,
+  phasedCommandPath,
+  phasedCommandsDir,
+  phasedCommandsLink,
+  phasedCommandsUnder,
 } from "../../../../../src/contexts/tools/domain/formats/command.js";
 
 describe("converting a command's frontmatter", () => {
@@ -81,5 +86,43 @@ describe("buildAiddCommandFilePath without a directory", () => {
     expect(buildAiddCommandFilePath(".claude/", "12-plan.md")).toBe(
       ".claude/commands/aidd/12-plan.md"
     );
+  });
+});
+
+describe("placing a command under the phase its directory is numbered with", () => {
+  it.each<[string, string | undefined]>([
+    ["04_code/implement.md", ".claude/commands/aidd/04/implement.md"],
+    ["02_context/create_user_stories.md", ".claude/commands/aidd/02/create_user_stories.md"],
+    ["4/implement.md", ".claude/commands/aidd/4/implement.md"],
+    ["01-notes.md", undefined],
+    ["v04/notes.md", undefined],
+  ])("places %s at %s", (fileName, path) => {
+    expect(phasedCommandPath(".claude/", fileName)).toBe(path);
+  });
+
+  it("names the directory of one phase's commands", () => {
+    expect(phasedCommandsDir(".claude/", "04")).toBe(".claude/commands/aidd/04/");
+  });
+});
+
+describe("a command path declared by its directory", () => {
+  it("lands a numbered command in its phase folder and any other flat", () => {
+    const under = aiddCommandsUnder(".cursor/");
+    expect([under("01-plan/plan.md"), under("plan.md")]).toStrictEqual([
+      ".cursor/commands/aidd/01/plan.md",
+      ".cursor/commands/aidd/plan.md",
+    ]);
+  });
+
+  it("puts an unnumbered command where the fallback puts it", () => {
+    const under = phasedCommandsUnder(".claude/", (fileName) => `.claude/commands/${fileName}`);
+    expect([under("01-plan/plan.md"), under("notes.md")]).toStrictEqual([
+      ".claude/commands/aidd/01/plan.md",
+      ".claude/commands/notes.md",
+    ]);
+  });
+
+  it("rewrites a link to a numbered folder into its phase folder", () => {
+    expect(phasedCommandsLink(".claude/")("x", "@", "04")).toBe("@.claude/commands/aidd/04/");
   });
 });

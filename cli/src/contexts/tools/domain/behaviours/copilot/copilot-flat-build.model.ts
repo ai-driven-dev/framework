@@ -3,16 +3,16 @@
 import type { FlatArtifactLayout } from "../../../../../shared/domain/materialization/flat-paths.js";
 import { agentsIn, skillsIn } from "../../../contract/artifact-path.js";
 import type { ToolBuildContract } from "../../../contract/build-contract.js";
+import type { AgentFrontmatter } from "../../formats/agents/agent-format.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
-import { copilotAgentFrontmatter } from "./copilot-agent.model.js";
 
 type FlatHooks = HooksRouting & { readonly flat: FlatHooksRoute };
 
 export function buildCopilotFlatContract(
   hooks: FlatHooks,
   layout: FlatArtifactLayout,
-  mcpPath: string
+  { mcpPath, frontmatter }: { readonly mcpPath: string; readonly frontmatter: AgentFrontmatter }
 ): ToolBuildContract {
   return {
     manifestFileRelative: null,
@@ -31,7 +31,7 @@ export function buildCopilotFlatContract(
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
         placement: agentsIn(layout),
         agentMarkdown: {
-          frontmatter: (frontmatter) => copilotAgentFrontmatter(frontmatter),
+          frontmatter,
           pluginPrefixedName: true,
         },
       },

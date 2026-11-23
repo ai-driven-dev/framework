@@ -1,20 +1,20 @@
 /** Copilot's marketplace build contract: the OpenPlugin format. */
 
-import type { ToolBuildContract } from "../../../contract/build-contract.js";
+import type { AgentMarkdown, ToolBuildContract } from "../../../contract/build-contract.js";
 import type { HooksRouting } from "../../formats/hooks/descriptor.js";
 import { pluginTreeContract } from "../../formats/plugin-tree-contract.js";
 import { resolveDescription, resolveVersion } from "../../marketplace-catalog.js";
-import { copilotAgentFrontmatter } from "./copilot-agent.model.js";
 
 export function buildCopilotMarketplaceContract(
   hooks: HooksRouting,
-  output: { readonly manifestRelative: string; readonly marketplaceRelative: string }
+  output: {
+    readonly manifestRelative: string;
+    readonly marketplaceRelative: string;
+    readonly agentMarkdown: AgentMarkdown;
+  }
 ): ToolBuildContract {
   return {
-    ...pluginTreeContract(hooks, {
-      ...output,
-      agentMarkdown: { frontmatter: (frontmatter) => copilotAgentFrontmatter(frontmatter) },
-    }),
+    ...pluginTreeContract(hooks, output),
     manifestSchemaName: null, // Copilot does not use AJV for the plugin manifest
     buildMarketplaceCatalog: async (source, entries, _fs) => ({
       catalog: {

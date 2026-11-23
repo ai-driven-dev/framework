@@ -16,10 +16,8 @@ import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descripto
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
 import { buildTypedMcpFlatConfig } from "../../formats/mcp/typed-mcp-merge.js";
 import { collectTypedMcp } from "../../formats/mcp/typed-mcp-section.js";
-import { chooseOutputPath } from "../../sections/mcp-section.js";
-import { kiloAgentFrontmatter } from "./kilo-agent.model.js";
+import { chooseOutputPath, type McpOutputPathCandidates } from "../../sections/mcp-section.js";
 import { generateKiloHooksBridge } from "./kilo-hooks-bridge.model.js";
-import { KILO_CONFIG_CANDIDATES, KILO_OUTPUT_PATH_CANDIDATES } from "./kilo-paths.model.js";
 
 /** Kilo's hooks as the profile declares them: a loader with no hooks file. */
 type KiloHooks = HooksRouting & {
@@ -27,19 +25,17 @@ type KiloHooks = HooksRouting & {
   readonly flat: FlatHooksRoute & { readonly loaderEntry: FlatHooksLoaderEntry };
 };
 
-const kiloAgentMarkdown: AgentMarkdown = {
-  frontmatter: (frontmatter) => kiloAgentFrontmatter(frontmatter),
-};
+/** What the profile declares for a flat build: its agent markdown and its config candidates. */
+interface KiloFlatData {
+  readonly agentMarkdown: AgentMarkdown;
+  readonly config: McpOutputPathCandidates;
+}
 
-function emitKiloConfig({
-  builtPlugins,
-  pluginMcp,
-  existing,
-  assets,
-}: ConfigArtifactInput): readonly ConfigArtifactFile[] {
-  const configPath = chooseOutputPath(KILO_OUTPUT_PATH_CANDIDATES, (relPath) =>
-    existing.has(relPath)
-  );
+function emitKiloConfig(
+  candidates: McpOutputPathCandidates,
+  { builtPlugins, pluginMcp, existing, assets }: ConfigArtifactInput
+): readonly ConfigArtifactFile[] {
+  const configPath = chooseOutputPath(candidates, (relPath) => existing.has(relPath));
   const incoming = collectTypedMcp(builtPlugins, pluginMcp);
   const asset = assets.get("kilo.json");
   const base = typeof asset === "string" ? asset : JSON.stringify(asset);
@@ -53,7 +49,8 @@ function emitKiloConfig({
 
 export function buildKiloFlatContract(
   hooks: KiloHooks,
-  layout: FlatArtifactLayout
+  layout: FlatArtifactLayout,
+  { agentMarkdown, config }: KiloFlatData
 ): ToolBuildContract {
   return {
     manifestFileRelative: null,
@@ -70,7 +67,7 @@ export function buildKiloFlatContract(
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
         placement: agentsIn(layout),
-        agentMarkdown: kiloAgentMarkdown,
+        agentMarkdown,
       },
       mcp: { supported: false, reason: "carried by the config artifact, not a file of its own" },
       hooks: flatHooksArtifact(hooks, { bridge: generateKiloHooksBridge }),
@@ -78,10 +75,10 @@ export function buildKiloFlatContract(
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,
     configArtifact: {
-      reads: () => KILO_CONFIG_CANDIDATES,
+      reads: () => config.tiers.flat(),
       probes: () => [],
       assets: { tool: "kilo", names: ["kilo.json"] },
-      emit: emitKiloConfig,
+      emit: (input) => emitKiloConfig(config, input),
     },
   };
 }

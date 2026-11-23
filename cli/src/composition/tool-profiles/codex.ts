@@ -15,7 +15,7 @@ import {
   tomlAgentToml,
 } from "../../contexts/tools/domain/formats/agents/toml-agent.js";
 import {
-  buildAiddCommandFilePath,
+  aiddCommandsUnder,
   convertCommandFrontmatter,
 } from "../../contexts/tools/domain/formats/command.js";
 import { declareHooks } from "../../contexts/tools/domain/formats/hooks/declaration.js";
@@ -23,8 +23,10 @@ import {
   hooksConfigPart,
   nativeHooksSupport,
 } from "../../contexts/tools/domain/formats/hooks/routes.js";
+import { unchangedFrontmatter } from "../../contexts/tools/domain/formats/rule-frontmatter.js";
 import type { TomlCodec } from "../../contexts/tools/domain/formats/toml.js";
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
+import { singlePythonRepo } from "../../contexts/tools/domain/profile/recommendation.js";
 import type { BoundTool } from "../../contexts/tools/domain/profile/tool-spec.js";
 import { nativeLayout } from "../../contexts/tools/domain/sections/layout-section.js";
 import { manifestSection } from "../../contexts/tools/domain/sections/manifest-section.js";
@@ -145,12 +147,12 @@ function codexCapabilities(toml: TomlCodec) {
       agentsSkillsDirectory: true,
     }),
     commands: bound.commands({
-      buildInstallPath: (fileName) => buildAiddCommandFilePath(DIRECTORY, fileName),
-      convertFrontmatter: (fm, relativeFileName) => convertCommandFrontmatter(fm, relativeFileName),
+      buildInstallPath: aiddCommandsUnder(DIRECTORY),
+      convertFrontmatter: convertCommandFrontmatter,
     }),
     rules: bound.rules({
       buildInstallPath: bound.installUnder("rules/"),
-      convertFrontmatter: (fm) => fm,
+      convertFrontmatter: unchangedFrontmatter,
     }),
     mcp: {
       config: new McpConfigPart({
@@ -183,7 +185,7 @@ export const codexProfile = (toml: TomlCodec) =>
     directory: DIRECTORY,
     toolSuffix: TOOL_SUFFIX,
     displayName: "Codex",
-    recommendedFor: (project) => project?.stack === "python" && !project.isMonorepo,
+    recommendedFor: singlePythonRepo,
     signalDir: `${DIRECTORY}commands`,
     configAssets: CODEX_CONFIG_ASSETS,
     hooks,
