@@ -87,8 +87,7 @@ export class InstallConfig {
 
   private applyTransforms(write: ConfigWrite, rawContent: string, platformName: string): string {
     if (write.kind !== "mcp") return rawContent;
-    const toolContent = write.capability.transform(rawContent);
     const launch = write.capability.launchTransformFor(platformName);
-    return launch ? launch(toolContent) : toolContent;
+    return write.capability.transform(launch ? launch(rawContent) : rawContent);
   }
 }
