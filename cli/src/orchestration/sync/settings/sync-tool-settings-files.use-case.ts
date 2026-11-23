@@ -41,6 +41,13 @@ export interface SettingsDeclarationRules {
     enabledPluginsKey: string | null,
     refs: readonly string[]
   ) => Record<string, unknown> | null;
+  readonly registersBySettingsFile: (settings: MarketplaceRegistrationAnswers) => boolean;
+  readonly registersByProvenRefs: (settings: MarketplaceRegistrationAnswers) => boolean;
+  readonly declaredRefs: (
+    recorded: readonly { plugin: string; marketplace?: string | null }[],
+    marketplaces: SyncedMarketplaces,
+    entryKeyOf: (marketplace: SyncedMarketplaces[number]) => string | null
+  ) => string[];
 }
 
 /** What SyncToolSettingsFiles is built from. */
@@ -69,11 +76,9 @@ export class SyncToolSettingsFiles {
   ): Promise<boolean> {
     let anyToolUpdated = false;
     for (const toolId of run.toolIds) {
-      const profile = this.tools.aiProfileIfAny(toolId);
-      const settings = profile?.marketplaceRegistration();
-      if (profile == null || settings == null || settings.requiresNativeProof()) continue;
-      if (await this.syncToolSettings({ ...run, toolId: profile.toolId, settings }))
-        anyToolUpdated = true;
+      const target = this.targetOf(toolId, this.deps.declaration.registersBySettingsFile);
+      const updated = target !== null && (await this.syncToolSettings({ ...run, ...target }));
+      anyToolUpdated = updated || anyToolUpdated;
     }
     return anyToolUpdated;
   }
@@ -83,21 +88,27 @@ export class SyncToolSettingsFiles {
   ): Promise<boolean> {
     let declarativeChanged = false;
     for (const [toolId, outcome] of run.outcomes) {
-      const profile = this.tools.aiProfileIfAny(toolId);
-      const settings = profile?.marketplaceRegistration();
-      if (profile == null || settings?.requiresNativeProof() !== true) continue;
+      const target = this.targetOf(toolId, this.deps.declaration.registersByProvenRefs);
+      if (target === null) continue;
       const provenRefs = this.deps.refs.refsOnHosts(
         { pluginRefs: outcome.pluginRefs },
         [],
         outcome.marketplaces.map((entry) => entry.hostName)
       );
-      if (
-        provenRefs.length > 0 &&
-        (await this.enablePlugins({ ...run, toolId: profile.toolId, settings }, provenRefs))
-      )
+      if (provenRefs.length > 0 && (await this.enablePlugins({ ...run, ...target }, provenRefs)))
         declarativeChanged = true;
     }
     return declarativeChanged;
+  }
+
+  private targetOf(
+    toolId: ToolId,
+    wanted: (settings: MarketplaceRegistrationAnswers) => boolean
+  ): { toolId: AiToolId; settings: MarketplaceRegistrationAnswers } | null {
+    const profile = this.tools.aiProfileIfAny(toolId);
+    const settings = profile?.marketplaceRegistration();
+    if (profile == null || settings == null) return null;
+    return wanted(settings) ? { toolId: profile.toolId, settings } : null;
   }
 
   private async syncToolSettings(target: ToolSettings): Promise<boolean> {
@@ -143,22 +154,14 @@ export class SyncToolSettingsFiles {
     return true;
   }
 
-  private refsToEnable({
-    settings,
-    toolId,
-    manifest,
-    marketplaces,
-  }: ToolSettings): readonly string[] {
-    const refs: string[] = [];
-    const marketplaceByName = new Map(marketplaces.map((m) => [m.name, m]));
-    for (const recorded of manifest.getRecordedPlugins(toolId)) {
-      if (recorded.marketplace == null) continue;
-      const marketplace = marketplaceByName.get(recorded.marketplace);
-      if (marketplace == null) continue;
-      const entryKey = settings.entryKeyFor({ name: marketplace.name, source: marketplace.source });
-      if (entryKey != null) refs.push(this.deps.refs.refOnHostName(recorded.plugin.name, entryKey));
-    }
-    return refs;
+  private refsToEnable(target: ToolSettings): readonly string[] {
+    const { settings, toolId, manifest, marketplaces } = target;
+    const recorded = manifest
+      .getRecordedPlugins(toolId)
+      .map((r) => ({ plugin: r.plugin.name, marketplace: r.marketplace }));
+    return this.deps.declaration.declaredRefs(recorded, marketplaces, (m) =>
+      settings.entryKeyFor(m)
+    );
   }
 
   private read({ projectRoot, settings }: ToolSettings): Promise<Record<string, unknown>> {

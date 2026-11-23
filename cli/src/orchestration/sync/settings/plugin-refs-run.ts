@@ -7,7 +7,6 @@ export type SyncedMarketplaces = SyncContext["marketplaces"];
 /** What the record rules answer about refs: the host name a ref sits under, and which recorded
  * refs sit on which host. */
 export interface RefRules {
-  readonly refOnHostName: (plugin: string, hostName: string) => string;
   readonly claimedRefs: (record: SyncedRecord) => readonly string[];
   readonly refsOnHosts: (
     record: SyncedRecord,
