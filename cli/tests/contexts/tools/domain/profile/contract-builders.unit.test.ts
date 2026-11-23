@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
+import { CapabilityConfigError } from "../../../../../src/contexts/tools/contract/errors/tools.error.js";
 import {
   contract,
   contractOf,
   tomlContract,
 } from "../../../../../src/contexts/tools/domain/profile/contract-builders.js";
-import { CapabilityConfigError } from "../../../../../src/contexts/tools/domain/tools.error.js";
 import { SmolTomlCodec } from "../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { anEmptyContract } from "../../../../shared/testing/empty-build-contract.builder.js";
 

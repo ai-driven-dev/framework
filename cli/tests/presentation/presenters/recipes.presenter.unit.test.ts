@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { renderRecipeValidation } from "../../../src/presentation/presenters/recipes.presenter.js";
+import { RecipeValidationFailedError } from "../../../src/presentation/presentation.error.js";
+import {
+  recipeValidationReport,
+  renderRecipeValidation,
+} from "../../../src/presentation/presenters/recipes.presenter.js";
 
 const root = "/project";
 
@@ -36,5 +40,26 @@ describe("rendering a recipe validation", () => {
     expect(renderRecipeValidation({ findings: [finding], fileCount: 1 }, root)).toContain(
       "| /elsewhere/b.md | 1 | r | a \\| b c |"
     );
+  });
+});
+
+describe("the report of a recipe validation", () => {
+  it("is the pass text when nothing was found", () => {
+    expect(recipeValidationReport({ findings: [], fileCount: 3 }, root)).toBe(
+      "PASS: 3 recipe(s) validated."
+    );
+  });
+
+  it("raises the failure table as an error when something was found", () => {
+    const finding = { file: "/project/a.md", line: 4, rule: "title", fix: "Fix." };
+    const result = { findings: [finding], fileCount: 1 };
+
+    expect(() => recipeValidationReport(result, root)).toThrow(
+      expect.objectContaining({
+        code: "recipe-validation-failed",
+        report: renderRecipeValidation(result, root),
+      })
+    );
+    expect(() => recipeValidationReport(result, root)).toThrow(RecipeValidationFailedError);
   });
 });

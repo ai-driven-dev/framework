@@ -4,12 +4,12 @@ import { errorMessage } from "../../../shared/domain/describe-error.js";
 import { tryParseJson, whenAbsent } from "../../../shared/domain/reading/json-file.js";
 import type { ToolIdResolver } from "../../../shared/domain/tool.js";
 import type { AtomicWrite } from "../../../shared/ports/file-writer.js";
-import type { ToolRecords } from "../contract/records/scope-records.js";
 import {
   InvalidManifestDataError,
   ManifestMigrationError,
   ManifestUnavailableError,
-} from "../domain/installation.error.js";
+} from "../contract/installation.error.js";
+import type { ToolRecords } from "../contract/records/scope-records.js";
 import type { ManifestFileContext } from "../domain/manifest/assert-supported-version.js";
 import { isV8Manifest, splitV8Manifest } from "../domain/manifest/v8-manifest.js";
 import { Manifest } from "../domain/manifest.js";

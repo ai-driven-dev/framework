@@ -5,7 +5,7 @@ import {
   FlatTargetExistsError,
   JsonSchemaValidationError,
   OutDirNotDirectoryError,
-} from "../../../../../src/contexts/translate/domain/translate.error.js";
+} from "../../../../../src/contexts/translate/contract/translate.error.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
 import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import { buildContractOf } from "../../../../shared/testing/build-contract-of.builder.js";

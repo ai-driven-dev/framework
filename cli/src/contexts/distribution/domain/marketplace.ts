@@ -2,8 +2,8 @@ import { type PluginSource, serializePluginSource } from "../../../shared/domain
 import { parsePluginSource } from "../../../shared/domain/plugin/source-parsing.js";
 import { isScope, type Scope } from "../../../shared/domain/scope.js";
 import { InvalidMarketplaceNameError } from "../../../shared/domain/shared.error.js";
+import { InvalidMarketplaceScopeError } from "../contract/distribution.error.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../contract/marketplace.js";
-import { InvalidMarketplaceScopeError } from "./distribution.error.js";
 
 export const MARKETPLACE_NAME_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;

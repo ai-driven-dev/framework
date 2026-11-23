@@ -1,8 +1,8 @@
 import { isAbsolute } from "node:path";
+import { InvalidToolProfileError } from "../../contract/errors/tools.error.js";
 import type { ShippedConfig } from "../../contract/tool-profile.js";
 import type { ProfileSections } from "../profile.js";
 import { isProfileSectionKey } from "../profile.js";
-import { InvalidToolProfileError } from "../tools.error.js";
 import { deliverySuits } from "./plugin-answers.js";
 import { settingsOf } from "./profile-answers.js";
 

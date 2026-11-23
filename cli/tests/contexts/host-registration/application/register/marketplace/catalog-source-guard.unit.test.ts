@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { guardAgainstConflict } from "../../../../../../src/contexts/host-registration/application/register/marketplace/catalog-source-guard.js";
-import { MarketplaceSourceConflictError } from "../../../../../../src/contexts/host-registration/domain/host-registration.error.js";
+import { MarketplaceSourceConflictError } from "../../../../../../src/contexts/host-registration/contract/host-registration.error.js";
 import { userBuiltMarketplaceDir } from "../../../../../../src/shared/domain/layout/aidd-layout.js";
 import { catalogAt, DIR, setup } from "../../../testing/registration-run.builder.js";
 

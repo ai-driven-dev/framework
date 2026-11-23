@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ParseReportFlags } from "../../../../../src/contexts/telemetry/application/report/parse-report-flags.use-case.js";
-import { InvalidReportPeriodError } from "../../../../../src/contexts/telemetry/domain/telemetry.error.js";
+import { InvalidReportPeriodError } from "../../../../../src/contexts/telemetry/contract/errors/telemetry.error.js";
 
 const resolve = new ParseReportFlags(() => new Date("2026-10-09T12:00:00.000Z"));
 const BASE = { axis: "day", filters: {}, cwd: "/work/a" } as const;

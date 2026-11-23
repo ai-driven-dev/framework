@@ -41,7 +41,7 @@
       "mutate": "src/contexts/auth/**/*.ts"
     },
     "update": {
-      "mutate": "src/contexts/update/domain/**/*.ts"
+      "mutate": ["src/contexts/update/domain/**/*.ts", "src/contexts/update/contract/**/*.ts"]
     },
     "shared-infrastructure": {
       "mutate": [

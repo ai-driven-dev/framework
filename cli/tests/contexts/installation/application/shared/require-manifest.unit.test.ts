@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { requireManifest } from "../../../../../src/contexts/installation/application/shared/require-manifest.js";
-import { ManifestUnavailableError } from "../../../../../src/contexts/installation/domain/installation.error.js";
+import { ManifestUnavailableError } from "../../../../../src/contexts/installation/contract/installation.error.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 

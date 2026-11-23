@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PlanPluginInstall } from "../../../../../src/contexts/installation/application/plugin/plan-plugin-install.use-case.js";
-import { InvalidPluginScopeError } from "../../../../../src/contexts/installation/domain/installation.error.js";
+import { InvalidPluginScopeError } from "../../../../../src/contexts/installation/contract/installation.error.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { present } from "../../../../shared/testing/present.builder.js";

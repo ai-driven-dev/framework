@@ -7,7 +7,7 @@ import {
   JsonSchemaValidationError,
   MarketplaceOutDirNotEmptyError,
   OutDirNotDirectoryError,
-} from "../../../../src/contexts/translate/domain/translate.error.js";
+} from "../../../../src/contexts/translate/contract/translate.error.js";
 
 describe("when FlatMergeTargetNotJsonError is raised", () => {
   it("carries its data and says nothing itself", () => {

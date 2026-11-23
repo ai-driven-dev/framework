@@ -1,4 +1,4 @@
-import { UnreadableBuiltCatalogError } from "../../../domain/host-registration.error.js";
+import { UnreadableBuiltCatalogError } from "../../../contract/host-registration.error.js";
 import type {
   NativeMarketplaceRegistration,
   NativeMarketplaceSource,

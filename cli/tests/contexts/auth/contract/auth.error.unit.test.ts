@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AuthStorageError, GhCliError } from "../../../../src/contexts/auth/domain/auth.error.js";
+import { AuthStorageError, GhCliError } from "../../../../src/contexts/auth/contract/auth.error.js";
 
 describe("when AuthStorageError is raised", () => {
   it("carries its detail and says nothing itself", () => {

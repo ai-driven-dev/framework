@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ReadMachineInstallation } from "../../../../src/contexts/installation/application/doctor/read-machine-installation.use-case.js";
-import { ManifestUnavailableError } from "../../../../src/contexts/installation/domain/installation.error.js";
+import { ManifestUnavailableError } from "../../../../src/contexts/installation/contract/installation.error.js";
 import { RunSync } from "../../../../src/orchestration/sync/run-sync.use-case.js";
 import { RunUserScopeSync } from "../../../../src/orchestration/sync/run-user-scope-sync.use-case.js";
 import { bindOutput } from "../../../../src/presentation/controllers/menu/global-options.controller.js";

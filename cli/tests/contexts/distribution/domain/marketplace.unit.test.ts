@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { InvalidMarketplaceScopeError } from "../../../../src/contexts/distribution/contract/distribution.error.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../src/contexts/distribution/contract/marketplace.js";
-import { InvalidMarketplaceScopeError } from "../../../../src/contexts/distribution/domain/distribution.error.js";
 import {
   MARKETPLACE_NAME_REGEX,
   Marketplace,

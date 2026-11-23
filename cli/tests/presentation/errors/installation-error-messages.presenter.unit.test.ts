@@ -3,7 +3,7 @@ import {
   MarketplaceSourceConflictError,
   NativePluginCliError,
   UnreadableBuiltCatalogError,
-} from "../../../src/contexts/host-registration/domain/host-registration.error.js";
+} from "../../../src/contexts/host-registration/contract/host-registration.error.js";
 import {
   ActiveMachineDependentsError,
   AiddFilesDetectedError,
@@ -23,7 +23,7 @@ import {
   ToolNotInstalledError,
   UnresolvableUserScopeError,
   UnsupportedManifestVersionError,
-} from "../../../src/contexts/installation/domain/installation.error.js";
+} from "../../../src/contexts/installation/contract/installation.error.js";
 import {
   EditedAfterInstallError,
   NoUserPluginsDirectoryError,
@@ -33,7 +33,7 @@ import {
   UpdateParentEscapesBoundaryError,
   UpdatePathEscapesPluginError,
   UserManifestBusyError,
-} from "../../../src/contexts/machine-claims/domain/machine-claims.error.js";
+} from "../../../src/contexts/machine-claims/contract/machine-claims.error.js";
 import {
   AmbiguousPluginMatchError,
   CategoryMismatchError,

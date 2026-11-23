@@ -5,7 +5,7 @@ import type {
   ArtifactPlacement,
   ToolBuildContract,
 } from "../../../../src/contexts/tools/contract/build-contract.js";
-import { JsonSchemaValidationError } from "../../../../src/contexts/translate/domain/translate.error.js";
+import { JsonSchemaValidationError } from "../../../../src/contexts/translate/contract/translate.error.js";
 import type { JsonSchemaValidator } from "../../../../src/contexts/translate/ports/json-schema-validator.js";
 import { flatArtifactLayout } from "../../../../src/shared/domain/materialization/flat-paths.js";
 import { parsePluginName } from "../../../../src/shared/domain/plugin/plugin-name.js";

@@ -7,7 +7,7 @@ import {
   PluginDirectoryOutsideBoundaryError,
   UpdateParentEscapesBoundaryError,
   UpdatePathEscapesPluginError,
-} from "../../domain/machine-claims.error.js";
+} from "../../contract/machine-claims.error.js";
 import type { UserScopeTool } from "../../ports/user-scope-tool.js";
 import {
   tryRealpath,

@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { DuplicatePluginError } from "../../../../../src/contexts/installation/domain/installation.error.js";
+import { DuplicatePluginError } from "../../../../../src/contexts/installation/contract/installation.error.js";
 import type { LoadDistribution } from "../../../../../src/contexts/installation/ports/plugin/load-plugin-distribution.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";

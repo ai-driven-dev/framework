@@ -4,7 +4,7 @@ import {
   FrameworkResolutionError,
   PackageManagerDetectionError,
   UpdateError,
-} from "../../../../src/contexts/update/domain/update.error.js";
+} from "../../../../src/contexts/update/contract/update.error.js";
 
 describe("when ElevatedPermissionUpdateError is raised", () => {
   it("carries the command that updates directly and says nothing itself", () => {

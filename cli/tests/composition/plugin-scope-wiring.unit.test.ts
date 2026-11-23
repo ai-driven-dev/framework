@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { wireInstallation } from "../../src/composition/contexts/installation.js";
 import { wirePlugin } from "../../src/composition/orchestration/plugin.js";
 import { wireBase } from "../../src/composition/shared.js";
-import { InvalidPluginScopeError } from "../../src/contexts/installation/domain/installation.error.js";
+import { InvalidPluginScopeError } from "../../src/contexts/installation/contract/installation.error.js";
 import { InteractiveOnlyError } from "../../src/orchestration/orchestration.error.js";
 import type { Scope } from "../../src/shared/domain/scope.js";
 import { registeredTools, TOOL } from "../shared/testing/registered-tools.builder.js";

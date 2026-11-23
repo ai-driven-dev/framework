@@ -7,7 +7,7 @@ const git = { env: vi.fn().mockReturnThis(), clone, raw, checkout };
 
 vi.mock("simple-git", () => ({ simpleGit: vi.fn(() => git) }));
 
-import { PluginFetchError } from "../../../../src/contexts/distribution/domain/distribution.error.js";
+import { PluginFetchError } from "../../../../src/contexts/distribution/contract/distribution.error.js";
 import { GitCloner } from "../../../../src/contexts/distribution/infrastructure/git-cloner-adapter.js";
 
 const REQUEST = {

@@ -5,7 +5,7 @@ import type {
   ConfigArtifact,
   ConfigArtifactFile,
 } from "../../../../../../src/contexts/tools/contract/build-contract.js";
-import { DualConfigError } from "../../../../../../src/contexts/tools/domain/tools.error.js";
+import { DualConfigError } from "../../../../../../src/contexts/tools/contract/errors/tools.error.js";
 import { builtAgent } from "../../../../../shared/testing/built-agent.builder.js";
 import { present } from "../../../../../shared/testing/present.builder.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";

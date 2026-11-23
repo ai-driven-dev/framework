@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { RestoreGlobal } from "../../../../../../src/contexts/installation/application/restore/project/restore-global.use-case.js";
 import type { Restore } from "../../../../../../src/contexts/installation/application/restore/restore.use-case.js";
-import { ManifestUnavailableError } from "../../../../../../src/contexts/installation/domain/installation.error.js";
+import { ManifestUnavailableError } from "../../../../../../src/contexts/installation/contract/installation.error.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { InMemoryManifestRepository } from "../../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";

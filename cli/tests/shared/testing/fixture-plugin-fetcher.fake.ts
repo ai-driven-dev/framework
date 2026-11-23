@@ -1,4 +1,4 @@
-import { PluginFetchError } from "../../../src/contexts/distribution/domain/distribution.error.js";
+import { PluginFetchError } from "../../../src/contexts/distribution/contract/distribution.error.js";
 import type {
   PluginFetcher,
   PluginFetchOptions,

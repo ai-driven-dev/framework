@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
-import { JsonSchemaValidationError } from "../../../../src/contexts/translate/domain/translate.error.js";
+import { JsonSchemaValidationError } from "../../../../src/contexts/translate/contract/translate.error.js";
 import { InvalidSourceMarketplaceError } from "../../../../src/shared/domain/shared.error.js";
 import { buildContractOf } from "../../../shared/testing/build-contract-of.builder.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";

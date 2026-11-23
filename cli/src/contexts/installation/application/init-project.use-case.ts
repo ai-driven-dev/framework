@@ -7,7 +7,7 @@ import {
   AiddFilesDetectedError,
   AlreadyInitializedError,
   ManifestUnavailableError,
-} from "../domain/installation.error.js";
+} from "../contract/installation.error.js";
 import { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
 import type { ToolFootprint } from "../ports/tool-sections.js";

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { InvalidManifestDataError } from "../../../../src/contexts/installation/domain/installation.error.js";
+import { InvalidManifestDataError } from "../../../../src/contexts/installation/contract/installation.error.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { render } from "../../../../src/presentation/errors/error-translator.presenter.js";
 import { FileHash } from "../../../../src/shared/domain/file-hash.js";

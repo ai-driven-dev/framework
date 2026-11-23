@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { PrepareMarketplace } from "../../../../../src/contexts/distribution/application/add/prepare-marketplace.use-case.js";
 import { FetchMarketplaceSource } from "../../../../../src/contexts/distribution/application/fetch-marketplace-source.use-case.js";
 import { ResolveMarketplace } from "../../../../../src/contexts/distribution/application/resolve-marketplace.use-case.js";
-import { MarketplaceAlreadyRegisteredError } from "../../../../../src/contexts/distribution/domain/distribution.error.js";
+import { MarketplaceAlreadyRegisteredError } from "../../../../../src/contexts/distribution/contract/distribution.error.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import {
   InvalidMarketplaceNameError,

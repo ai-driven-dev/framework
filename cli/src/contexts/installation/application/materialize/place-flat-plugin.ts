@@ -6,7 +6,7 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 // biome-ignore lint/plugin: hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
-import { ProjectScopeUnsupportedError } from "../../domain/installation.error.js";
+import { ProjectScopeUnsupportedError } from "../../contract/installation.error.js";
 import { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type {
   PluginTranslation,

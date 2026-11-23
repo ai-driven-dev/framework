@@ -1,5 +1,5 @@
 import type { AiToolId } from "../../../../../shared/domain/tool.js";
-import { RegistrationRefusedError } from "../../../domain/host-registration.error.js";
+import { RegistrationRefusedError } from "../../../contract/host-registration.error.js";
 import { judgeRegistration, type SourceProof } from "../../../domain/policy/registration-policy.js";
 import type { NativeMarketplaceRegistration } from "../../../domain/record/native-marketplace-source.js";
 import { readRegistrationRecord } from "../../../domain/record/registration-record.js";

@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
+import { CapabilityConfigError } from "../../../../../src/contexts/tools/contract/errors/tools.error.js";
 import { buildSections } from "../../../../../src/contexts/tools/domain/profile/declared-sections.js";
 import { McpConfigPart } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
 import { SkillsSection } from "../../../../../src/contexts/tools/domain/sections/skills-section.js";
-import { CapabilityConfigError } from "../../../../../src/contexts/tools/domain/tools.error.js";
 import { SmolTomlCodec } from "../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 
 const toml = new SmolTomlCodec();

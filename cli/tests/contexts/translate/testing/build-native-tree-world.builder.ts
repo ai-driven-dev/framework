@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import type { BuildNativeTree } from "../../../../src/contexts/translate/application/build-native-tree.use-case.js";
-import { JsonSchemaValidationError } from "../../../../src/contexts/translate/domain/translate.error.js";
+import { JsonSchemaValidationError } from "../../../../src/contexts/translate/contract/translate.error.js";
 import type { JsonSchemaValidator } from "../../../../src/contexts/translate/ports/json-schema-validator.js";
 import type { AssetProvider } from "../../../../src/shared/ports/asset-provider.js";
 import { buildContractOf } from "../../../shared/testing/build-contract-of.builder.js";

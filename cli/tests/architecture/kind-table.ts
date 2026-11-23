@@ -137,7 +137,7 @@ export const KINDS: readonly Kind[] = [
     id: "error",
     suffix: /\.error\.ts$/,
     folders: [
-      "src/contexts/*/domain/**/*",
+      "src/contexts/*/contract/**/*",
       "src/shared/domain/**/*",
       "src/orchestration/**/*",
       "src/presentation/**/*",

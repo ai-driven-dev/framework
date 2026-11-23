@@ -1,5 +1,6 @@
 import path from "node:path";
 import type { ValidateRecipesResult } from "../../contexts/recipes/application/validate-recipes.use-case.js";
+import { RecipeValidationFailedError } from "../presentation.error.js";
 
 function escapeCell(value: string | number): string {
   return String(value).replaceAll("|", "\\|").replaceAll("\n", " ");
@@ -20,4 +21,11 @@ export function renderRecipeValidation(result: ValidateRecipesResult, projectRoo
     "",
     `FAIL: ${result.findings.length} finding(s) in ${result.fileCount} recipe(s).`,
   ].join("\n");
+}
+
+/** The pass text, or the failure table raised as the error the translator ends the run with. */
+export function recipeValidationReport(result: ValidateRecipesResult, projectRoot: string): string {
+  const report = renderRecipeValidation(result, projectRoot);
+  if (result.findings.length > 0) throw new RecipeValidationFailedError(report);
+  return report;
 }

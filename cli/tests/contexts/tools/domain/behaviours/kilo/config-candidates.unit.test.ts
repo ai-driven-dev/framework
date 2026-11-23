@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { KILO_OUTPUT_PATH_CANDIDATES } from "../../../../../../src/composition/tool-profiles/kilo.js";
+import { DualConfigError } from "../../../../../../src/contexts/tools/contract/errors/tools.error.js";
 import { chooseOutputPath } from "../../../../../../src/contexts/tools/domain/sections/mcp-section.js";
-import { DualConfigError } from "../../../../../../src/contexts/tools/domain/tools.error.js";
 
 const existing =
   (...paths: string[]) =>
