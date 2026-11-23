@@ -14,7 +14,7 @@ const info = vi.fn();
 const { registerUpdateNoticeHooks } = await import(
   "../../../src/presentation/hooks/update-notice-hooks.js"
 );
-const createDeps = vi.fn<Parameters<typeof registerUpdateNoticeHooks>[1]>();
+const containerOf = vi.fn<Parameters<typeof registerUpdateNoticeHooks>[1]>();
 
 /** Runs `path` as nested commands (`marketplace list` is a `list` under `marketplace`). */
 async function run(
@@ -26,7 +26,7 @@ async function run(
   bindOutput(program, processOutputFactory());
   program.option("--verbose");
   program.exitOverride();
-  registerUpdateNoticeHooks(program, createDeps);
+  registerUpdateNoticeHooks(program, containerOf);
   let parent = program;
   const names = path.split(" ");
   for (const name of names.slice(0, -1)) parent = parent.command(name);
@@ -37,10 +37,12 @@ async function run(
 beforeEach(() => {
   vi.clearAllMocks();
   vi.stubEnv("AIDD_SKIP_UPDATE_CHECK", "");
-  createDeps.mockImplementation(async () => ({
-    printUpdateNotice: { execute: printNotice },
-    refreshUpdateCheck: { execute: refresh },
-    logger: { warn, debug, info },
+  containerOf.mockImplementation(async () => ({
+    update: {
+      printUpdateNotice: { execute: printNotice },
+      refreshUpdateCheck: { execute: refresh },
+    },
+    shared: { logger: { warn, debug, info } },
   }));
 });
 
@@ -61,7 +63,7 @@ describe("the update notice hook", () => {
   it("stays silent when the update check is switched off", async () => {
     vi.stubEnv("AIDD_SKIP_UPDATE_CHECK", "1");
     await run("sync");
-    expect(createDeps).not.toHaveBeenCalled();
+    expect(containerOf).not.toHaveBeenCalled();
     expect(printNotice).not.toHaveBeenCalled();
   });
 
@@ -77,7 +79,7 @@ describe("the update notice hook", () => {
 
   it("builds its dependencies in the working directory with the verbose flag", async () => {
     await run("sync", ["--verbose"]);
-    expect(createDeps).toHaveBeenCalledWith(
+    expect(containerOf).toHaveBeenCalledWith(
       process.cwd(),
       { verbose: true },
       expect.objectContaining({ verbose: true })
@@ -86,7 +88,7 @@ describe("the update notice hook", () => {
 
   it("builds quiet dependencies without the verbose flag", async () => {
     await run("sync");
-    expect(createDeps).toHaveBeenCalledWith(
+    expect(containerOf).toHaveBeenCalledWith(
       process.cwd(),
       { verbose: false },
       expect.objectContaining({ verbose: false })
@@ -94,7 +96,7 @@ describe("the update notice hook", () => {
   });
 
   it("does nothing when the dependencies cannot be built", async () => {
-    createDeps.mockRejectedValue(new Error("no project"));
+    containerOf.mockRejectedValue(new Error("no project"));
     await run("sync");
     expect(printNotice).not.toHaveBeenCalled();
     expect(refresh).not.toHaveBeenCalled();
@@ -142,7 +144,7 @@ describe("the update refresh hook", () => {
 
   it("builds its dependencies in the working directory with the verbose flag", async () => {
     await run("sync", ["--verbose"]);
-    expect(createDeps).toHaveBeenLastCalledWith(
+    expect(containerOf).toHaveBeenLastCalledWith(
       process.cwd(),
       { verbose: true },
       expect.objectContaining({ verbose: true })

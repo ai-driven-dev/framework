@@ -3,7 +3,6 @@ import { Command } from "commander";
 import { containerFactory, createContainer } from "./composition/container.js";
 import { wireTelemetryRequests } from "./composition/contexts/telemetry.js";
 import { wireTools } from "./composition/contexts/tools.js";
-import { bindContainer } from "./composition/orchestration/deps-graph.js";
 import { outputEndingWith } from "./composition/shared.js";
 import { outputOf } from "./presentation/controllers/menu/global-options.controller.js";
 import { inProcessCommand } from "./presentation/controllers/menu/in-process-command.controller.js";
@@ -28,7 +27,6 @@ const createOutput = outputOfRun((code) => process.exit(code));
 // The composition edge: commands receive these factories and never import the wiring.
 const version = createContainer({ projectRoot: process.cwd(), verbose: false, tools }).shared
   .currentVersion;
-const createSlice = bindContainer(tools);
 const containerOf = containerFactory(tools);
 const telemetryRequests = wireTelemetryRequests();
 
@@ -41,13 +39,12 @@ function registerProgram(program: Command, end: (code: number) => never): Comman
     .option("--verbose", "Show detailed diagnostic output", false);
   registerCommands(program, {
     tools,
-    createSlice,
     containerOf,
     telemetryRequests,
     runCommand: runInMenu,
     createOutput: outputOfRun(end),
   });
-  registerUpdateNoticeHooks(program, createSlice);
+  registerUpdateNoticeHooks(program, containerOf);
   return program;
 }
 

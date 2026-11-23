@@ -1,6 +1,8 @@
 import type { Command } from "commander";
+import type { CheckStatus } from "../../contexts/auth/application/check-status.use-case.js";
+import type { LogIn } from "../../contexts/auth/application/log-in.use-case.js";
+import type { LogOut } from "../../contexts/auth/application/log-out.use-case.js";
 import type { AuthLevel, Credential } from "../../contexts/auth/contract/credential.js";
-import type { Deps, DepsSliceFactory } from "../../orchestration/deps.js";
 import type { Output } from "../../orchestration/domain/output.js";
 import { AIDD_DIR } from "../../shared/domain/layout/aidd-layout.js";
 import {
@@ -8,12 +10,26 @@ import {
   printAuthStatus,
   printLogoutResult,
 } from "../presenters/auth.presenter.js";
-import { parseGlobalOptions } from "./menu/global-options.controller.js";
+import { type ContainerFactory, parseGlobalOptions } from "./menu/global-options.controller.js";
 
-/** What this command reads of the graph. */
-type Prompting = Deps["prompter"];
+/** What the login questions read of the prompter. */
+interface Prompting {
+  select<T>(message: string, choices: { name: string; value: T }[]): Promise<T>;
+  confirm(message: string, defaultValue?: boolean): Promise<boolean>;
+  input(message: string, defaultValue?: string): Promise<string>;
+}
 
-type AuthKeys = "prompter" | "logIn" | "logOut" | "checkStatus";
+/** What this command reads of the container. */
+export interface AuthContainer {
+  shared: {
+    prompter: Prompting;
+    logIn: Pick<LogIn, "execute">;
+    logOut: Pick<LogOut, "execute">;
+    checkStatus: Pick<CheckStatus, "execute">;
+  };
+}
+
+type Factory = ContainerFactory<AuthContainer>;
 
 interface LoginOptions {
   gh: boolean;
@@ -59,22 +75,16 @@ async function askCredential(prompter: Prompting, options: LoginOptions): Promis
 /** An action that builds the dependencies, runs, and hands any failure to the error handler. */
 function reportingErrors(
   program: Command,
-  createDeps: DepsSliceFactory<AuthKeys>,
-  run: (deps: Pick<Deps, AuthKeys>, output: Output) => Promise<void>
+  containerOf: Factory,
+  run: (container: AuthContainer, output: Output) => Promise<void>
 ): () => Promise<void> {
   return async () => {
     const { verbose, output, projectRoot } = parseGlobalOptions(program);
-    await run(await createDeps(projectRoot, { verbose }, output), output);
+    await run(await containerOf(projectRoot, { verbose }, output), output);
   };
 }
 
-export function registerAuthCommand(
-  program: Command,
-  createDeps: DepsSliceFactory<AuthKeys>
-): void {
-  const authCmd = program.command("auth").description("Manage authentication");
-  authCmd.action(() => authCmd.help());
-
+function registerLogin(program: Command, authCmd: Command, containerOf: Factory): void {
   authCmd
     .command("login")
     .description("Authenticate with GitHub")
@@ -86,19 +96,27 @@ export function registerAuthCommand(
 
       refuseInvalidOptions(cmdOptions, output);
 
-      const deps = await createDeps(projectRoot, { verbose }, output);
-      const level = await askLevel(deps.prompter, cmdOptions.level);
-      const credential = await askCredential(deps.prompter, cmdOptions);
-      const result = await deps.logIn.execute({ credential, level });
+      const container = await containerOf(projectRoot, { verbose }, output);
+      const { prompter, logIn } = container.shared;
+      const level = await askLevel(prompter, cmdOptions.level);
+      const credential = await askCredential(prompter, cmdOptions);
+      const result = await logIn.execute({ credential, level });
       printAuthenticated(output, result.login, result.level);
     });
+}
+
+export function registerAuthCommand(program: Command, containerOf: Factory): void {
+  const authCmd = program.command("auth").description("Manage authentication");
+  authCmd.action(() => authCmd.help());
+
+  registerLogin(program, authCmd, containerOf);
 
   authCmd
     .command("logout")
     .description("Remove stored authentication")
     .action(
-      reportingErrors(program, createDeps, async (deps, output) => {
-        printLogoutResult(output, await deps.logOut.execute());
+      reportingErrors(program, containerOf, async (container, output) => {
+        printLogoutResult(output, await container.shared.logOut.execute());
       })
     );
 
@@ -106,8 +124,8 @@ export function registerAuthCommand(
     .command("status")
     .description("Show authentication status")
     .action(
-      reportingErrors(program, createDeps, async (deps, output) => {
-        printAuthStatus(output, await deps.checkStatus.execute());
+      reportingErrors(program, containerOf, async (container, output) => {
+        printAuthStatus(output, await container.shared.checkStatus.execute());
       })
     );
 }

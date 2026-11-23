@@ -1,6 +1,5 @@
 import type { Command } from "commander";
-import type { CommandRunner, DepsFactory } from "../../../orchestration/deps.js";
-import { registerAuthCommand } from "../auth.controller.js";
+import { type AuthContainer, registerAuthCommand } from "../auth.controller.js";
 import { registerDoctorCommand } from "../doctor/doctor.controller.js";
 import type { DoctorContainer } from "../doctor/doctor-run.controller.js";
 import { registerMarketplaceCommand } from "../plugin/marketplace.controller.js";
@@ -18,13 +17,14 @@ import type {
 } from "../telemetry/telemetry-surface.controller.js";
 import { registerToolConfigCommand } from "../tools/tool-config.controller.js";
 import type { ToolConfigContainer } from "../tools/tool-config-run.controller.js";
-import { registerTranslateCommand } from "../translate.controller.js";
-import { registerUpdateCommand } from "../update.controller.js";
+import { registerTranslateCommand, type TranslateContainer } from "../translate.controller.js";
+import { registerUpdateCommand, type UpdateContainer } from "../update.controller.js";
 import {
   bindOutput,
   type ContainerFactory,
   type OutputFactory,
 } from "./global-options.controller.js";
+import type { RunCommand } from "./group-menu.controller.js";
 
 /** Every context the commands read: the real container carries them all. */
 type CommandsContainer = CleanContainer &
@@ -35,32 +35,34 @@ type CommandsContainer = CleanContainer &
   MarketplaceContainer &
   ToolConfigContainer &
   RecipesContainer &
-  TelemetryContainer;
+  TelemetryContainer &
+  AuthContainer &
+  UpdateContainer &
+  TranslateContainer;
 
 /** The commands of the binary, in the order `aidd --help` lists them. The binary and the in-process
  * test runner both call it, so a command added here is in both. */
 export interface CommandWiring {
   readonly tools: SetupCatalog;
-  readonly createSlice: DepsFactory;
   readonly containerOf: ContainerFactory<CommandsContainer>;
   readonly telemetryRequests: TelemetryRequests;
-  readonly runCommand: CommandRunner;
+  readonly runCommand: RunCommand;
   readonly createOutput: OutputFactory;
 }
 
 export function registerCommands(
   program: Command,
-  { tools, createSlice, containerOf, telemetryRequests, runCommand, createOutput }: CommandWiring
+  { tools, containerOf, telemetryRequests, runCommand, createOutput }: CommandWiring
 ): void {
   bindOutput(program, createOutput);
   registerSetupCommand(program, tools, containerOf);
   registerToolConfigCommand(program, tools, containerOf);
-  registerTranslateCommand(program, tools, createSlice);
+  registerTranslateCommand(program, tools, containerOf);
   registerPluginCommand(program, { catalog: tools, containerOf, runCommand });
   registerMarketplaceCommand(program, containerOf, runCommand);
-  registerAuthCommand(program, createSlice);
+  registerAuthCommand(program, containerOf);
   registerSyncCommand(program, containerOf);
-  registerUpdateCommand(program, createSlice);
+  registerUpdateCommand(program, containerOf);
   registerDoctorCommand(program, tools, containerOf);
   registerCleanCommand(program, containerOf);
   registerTelemetryCommand(program, containerOf, telemetryRequests);

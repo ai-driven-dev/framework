@@ -12,7 +12,7 @@ const build = vi.fn();
 let buildUseCase: { execute: typeof build } | undefined;
 
 const frameworkBuild = vi.fn(() => buildUseCase);
-const createDeps = vi.fn(async () => ({ frameworkBuild }));
+const containerOf = vi.fn(async () => ({ translate: { frameworkBuild } }));
 
 const { registerTranslateCommand } = await import(
   "../../../src/presentation/controllers/translate.controller.js"
@@ -52,7 +52,7 @@ async function run(...args: string[]): Promise<string[]> {
   bindOutput(program, processOutputFactory());
   program.exitOverride();
   program.option("--verbose");
-  registerTranslateCommand(program, CATALOG, createDeps);
+  registerTranslateCommand(program, CATALOG, containerOf);
   await parseToExit(program, ["node", "aidd", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -93,7 +93,7 @@ describe("aidd translate - what it hands the build", () => {
   it("builds the graph for this project at this run's verbosity", async () => {
     await run("--verbose", "translate", "framework", "--to", "claude", "--out", "dist-plugins");
 
-    expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
+    expect(vi.mocked(containerOf)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: true },
       expect.anything()
@@ -115,7 +115,7 @@ describe("aidd translate - what it refuses", () => {
       `Error: Unsupported target 'emacs'. Supported targets: ${supportedBuildTargets(wireTools()).join(", ")}.\n`
     );
     expect(exit).toHaveBeenCalledWith(1);
-    expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
+    expect(vi.mocked(containerOf)).not.toHaveBeenCalled();
   });
 
   it("refuses a layout that is neither marketplace nor flat", async () => {
@@ -129,7 +129,7 @@ describe("aidd translate - what it refuses", () => {
 
     expect(errors.join("")).toBe("Error: Invalid --as 'zip'. Expected 'marketplace' or 'flat'.\n");
     expect(exit).toHaveBeenCalledWith(1);
-    expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
+    expect(vi.mocked(containerOf)).not.toHaveBeenCalled();
   });
 
   it("names the target and layout together when no strategy pairs them", async () => {
@@ -166,7 +166,7 @@ describe("aidd translate - the help surface", () => {
   function translateCommand(): Command {
     const program = new Command();
     bindOutput(program, processOutputFactory());
-    registerTranslateCommand(program, CATALOG, createDeps);
+    registerTranslateCommand(program, CATALOG, containerOf);
     const translate = program.commands.find((command) => command.name() === "translate");
     if (translate === undefined) throw new Error("translate command was not registered");
     return translate;

@@ -1,10 +1,14 @@
 import type { Command } from "commander";
-import type { DepsSliceFactory } from "../../orchestration/deps.js";
+import type { SelfUpdate } from "../../contexts/update/application/self-update.use-case.js";
 import { printSelfUpdateResult } from "../presenters/update.presenter.js";
-import { parseGlobalOptions } from "./menu/global-options.controller.js";
+import { type ContainerFactory, parseGlobalOptions } from "./menu/global-options.controller.js";
 
-/** What this command reads of the graph. */
-type UpdateKeys = "selfUpdate";
+/** What this command reads of the container. */
+export interface UpdateContainer {
+  update: { selfUpdate: Pick<SelfUpdate, "execute"> };
+}
+
+type Factory = ContainerFactory<UpdateContainer>;
 
 interface UpdateCmdOptions {
   check: boolean;
@@ -17,14 +21,14 @@ interface UpdateCmdOptions {
  * `marketplace refresh`. */
 async function runUpdateAction(
   program: Command,
-  createDeps: DepsSliceFactory<UpdateKeys>,
+  containerOf: Factory,
   cmdOptions: UpdateCmdOptions
 ): Promise<void> {
   const { verbose, output, projectRoot } = parseGlobalOptions(program);
 
-  const deps = await createDeps(projectRoot, { verbose }, output);
+  const container = await containerOf(projectRoot, { verbose }, output);
 
-  const result = await deps.selfUpdate.execute({
+  const result = await container.update.selfUpdate.execute({
     check: cmdOptions.check,
     dryRun: cmdOptions.dryRun,
     force: cmdOptions.force,
@@ -33,10 +37,7 @@ async function runUpdateAction(
   printSelfUpdateResult(output, result);
 }
 
-export function registerUpdateCommand(
-  program: Command,
-  createDeps: DepsSliceFactory<UpdateKeys>
-): void {
+export function registerUpdateCommand(program: Command, containerOf: Factory): void {
   program
     .command("update")
     .alias("upgrade")
@@ -45,6 +46,6 @@ export function registerUpdateCommand(
     .option("--dry-run", "Preview the update without installing", false)
     .option("-f, --force", "Reinstall even if already up to date", false)
     .action(async (cmdOptions: UpdateCmdOptions) => {
-      await runUpdateAction(program, createDeps, cmdOptions);
+      await runUpdateAction(program, containerOf, cmdOptions);
     });
 }

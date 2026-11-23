@@ -4,7 +4,6 @@ import { relative, sep } from "node:path";
 import { isMainThread } from "node:worker_threads";
 import { Command } from "commander";
 import { type MockInstance, vi } from "vitest";
-import type { DepsFactory } from "../../../src/orchestration/deps.js";
 import { describeMessage } from "../../../src/presentation/errors/describe-message.presenter.js";
 import { OutputAdapter } from "../../../src/presentation/terminal/output.adapter.js";
 import { sandboxedEnv } from "./cli-sandbox.builder.js";
@@ -107,8 +106,6 @@ async function buildProgram(): Promise<Command> {
   const tools = wireTools();
   const program = new Command();
   program.name("aidd").option("--verbose", "Show detailed diagnostic output", false);
-  const { bindContainer } = await import("../../../src/composition/orchestration/deps-graph.js");
-  const depsFactory: DepsFactory = bindContainer(tools);
   const { containerFactory } = await import("../../../src/composition/container.js");
   const { registerCommands } = await import(
     "../../../src/presentation/controllers/menu/register-commands.controller.js"
@@ -116,7 +113,6 @@ async function buildProgram(): Promise<Command> {
   const { wireTelemetryRequests } = await import("../../../src/composition/contexts/telemetry.js");
   registerCommands(program, {
     tools,
-    createSlice: depsFactory,
     containerOf: containerFactory(tools),
     telemetryRequests: wireTelemetryRequests(),
     runCommand: async () => 0,
