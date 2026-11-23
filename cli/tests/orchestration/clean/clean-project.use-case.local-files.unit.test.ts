@@ -336,7 +336,7 @@ describe("clean: local files", () => {
       references
     );
 
-    await expect(useCase.execute({ ...AT_PROJECT, force: true })).rejects.toThrow("edited");
+    await expect(useCase.execute({ ...AT_PROJECT, force: true })).rejects.toThrow(saying("edited"));
 
     expect(await references.listAllReferencingProjects()).toContain(PROJECT_ROOT);
     expect(await references.listAllReferencingProjects()).toContain("/other-project");

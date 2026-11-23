@@ -10,6 +10,7 @@ import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adap
 import { InMemoryManifestRepository } from "../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { removeProjectPluginOf } from "../../../shared/testing/remove-project-plugin.builder.js";
+import { saying } from "../../../shared/testing/saying.builder.js";
 import { KeepPrompter } from "../../../shared/testing/scripted-prompter.fake.js";
 import {
   SYNTHETIC_MCP_FILE,
@@ -255,7 +256,7 @@ describe("which plugins a removal orphans: what it protects", () => {
         projectRoot: PROJECT_ROOT,
         autoConfirm: true,
       })
-    ).rejects.toThrow(/edited/);
+    ).rejects.toThrow(saying("edited after install"));
     expect((await manifestRepo.load())?.getRecordedPlugins(SYNTHETIC_MCP_TOOL)).toHaveLength(1);
     expect((await registry.list(PROJECT_ROOT)).some((entry) => entry.name === "awesome")).toBe(
       true
@@ -311,7 +312,7 @@ describe("which plugins a removal orphans: what it protects", () => {
         projectRoot: PROJECT_ROOT,
         autoConfirm: true,
       })
-    ).rejects.toThrow(/edited.*beta|beta.*edited/);
+    ).rejects.toThrow(saying(/edited.*beta|beta.*edited/));
     expect(fs.getFile(path)).toBe(edited);
     expect(
       (await manifestRepo.load())?.getRecordedPlugins(SYNTHETIC_MCP_TOOL).map((p) => p.plugin.name)

@@ -10,6 +10,7 @@ import {
 } from "../../../../shared/testing/installation-deps.builder.js";
 import { loadDistributionOf } from "../../../../shared/testing/load-distribution.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../../shared/testing/saying.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
 import { fakeBuildSources } from "../../testing/fake-build-sources.fake.js";
@@ -276,7 +277,7 @@ describe("AddPlugin and opencode MCP servers", () => {
               }
             : {}),
         })
-      ).rejects.toThrow(/edited/);
+      ).rejects.toThrow(saying(/edited/));
 
       expect(deps.fs.getFile(OPENCODE_JSON)).toBe(userConfig);
       expect(deps.manifestRepo.saveCount).toBe(savesBefore);
