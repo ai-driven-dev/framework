@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { ResolveAddedPluginSource } from "../../../../../../src/contexts/installation/application/plugin/add/resolve-added-plugin-source.use-case.js";
 import { PluginDistribution } from "../../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../../src/shared/domain/plugin/plugin-name.js";
 import { buildInstallationDeps } from "../../../../../shared/testing/installation-deps.builder.js";
 import { loadDistributionOf } from "../../../../../shared/testing/load-distribution.builder.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
@@ -18,7 +19,7 @@ async function resolver() {
   const reader = {
     read: async () =>
       new PluginDistribution({
-        manifest: { name: "sample-plugin", version: "1.0.0" },
+        manifest: { name: parsePluginName("sample-plugin"), version: "1.0.0" },
         format: TOOL.claude,
         files: [],
         components: { commands: [], agents: [], rules: [], skills: [], hooks: [], mcp: [] },

@@ -9,6 +9,7 @@ import { DuplicatePluginError } from "../../../../../../src/contexts/installatio
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { PluginDistribution } from "../../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../../src/shared/domain/plugin/plugin-name.js";
 import { VersionMismatchError } from "../../../../../../src/shared/domain/shared.error.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 
@@ -73,7 +74,7 @@ describe("when an existing plugin is dropped", () => {
 
 describe("when a version is pinned", () => {
   const dist = new PluginDistribution({
-    manifest: { name: "sample", version: "1.0.0" },
+    manifest: { name: parsePluginName("sample"), version: "1.0.0" },
     format: TOOL.claude,
     files: [],
     components: { commands: [], agents: [], rules: [], skills: [], hooks: [], mcp: [] },

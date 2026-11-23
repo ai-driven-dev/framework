@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { placeBuiltTreePlugin } from "../../../../../../src/contexts/installation/application/materialize/built/place-built-tree-plugin.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../../src/shared/domain/plugin/plugin-name.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 import { fakeBuiltDeps, translateDistribution } from "../../../testing/fake-build-sources.fake.js";
@@ -13,7 +14,7 @@ const BUILT = "/built/cursor";
 
 function dist(): PluginDistribution {
   return new PluginDistribution({
-    manifest: { name: "sample-plugin", version: "1.0.0" },
+    manifest: { name: parsePluginName("sample-plugin"), version: "1.0.0" },
     format: TOOL.claude,
     files: [],
     components: { commands: [], agents: [], rules: [], skills: [], hooks: [], mcp: [] },
@@ -195,7 +196,7 @@ describe("placeBuiltTreePlugin - when no built tree applies", () => {
 
   function distWithCommand(): PluginDistribution {
     return new PluginDistribution({
-      manifest: { name: "sample-plugin", version: "1.0.0" },
+      manifest: { name: parsePluginName("sample-plugin"), version: "1.0.0" },
       format: TOOL.claude,
       files: [{ relativePath: "commands/hello.md", content: COMMAND }],
       components: {

@@ -1,10 +1,11 @@
+import type { PluginName } from "../../../../shared/domain/plugin/plugin-name.js";
 import type { PluginSource } from "../../../../shared/domain/plugin/source.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
 import { asPathHashMap, type PathHashMap } from "./plugin-entry.js";
 
 /** What installation owns of a plugin, so a changed copy spreads one plugin into another. */
 export interface InstalledPluginFields {
-  readonly name: string;
+  readonly name: PluginName;
   readonly source: PluginSource;
   readonly version: string;
   readonly strict: boolean;
@@ -14,7 +15,7 @@ export interface InstalledPluginFields {
 
 /** A plugin as installation knows it: what it is, where it came from, and the files it wrote. */
 export class InstalledPlugin implements InstalledPluginFields {
-  readonly name: string;
+  readonly name: PluginName;
   readonly source: PluginSource;
   readonly version: string;
   readonly strict: boolean;

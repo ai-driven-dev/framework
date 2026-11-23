@@ -9,6 +9,7 @@ import {
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { PluginDistribution } from "../../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../../src/shared/domain/plugin/plugin-name.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 
@@ -19,7 +20,7 @@ const ROOT = "/test-project";
 function command(machine: Manifest): PlacePluginRequest {
   return {
     dist: new PluginDistribution({
-      manifest: { name: "sample", version: "1.0.0" },
+      manifest: { name: parsePluginName("sample"), version: "1.0.0" },
       format: TOOL.claude,
       files: [],
       components: { skills: [], commands: [], agents: [], rules: [], hooks: [], mcp: [] },

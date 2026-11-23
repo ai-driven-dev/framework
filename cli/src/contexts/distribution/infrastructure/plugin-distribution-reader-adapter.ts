@@ -5,12 +5,11 @@ import {
   PluginDistribution,
   type PluginManifestFields,
 } from "../../../shared/domain/plugin/plugin-distribution.js";
-import { PLUGIN_NAME_REGEX } from "../../../shared/domain/plugin/plugin-name.js";
+import { parsePluginName } from "../../../shared/domain/plugin/plugin-name.js";
 import { isSemver } from "../../../shared/domain/plugin/semver.js";
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import {
   InvalidPluginManifestError,
-  InvalidPluginNameError,
   InvalidPluginVersionError,
 } from "../../../shared/domain/shared.error.js";
 import type { AiToolId } from "../../../shared/domain/tool.js";
@@ -121,8 +120,7 @@ function validateManifest(raw: unknown): PluginManifestFields {
   if (obj === null) {
     throw new InvalidPluginManifestError("plugin.json must be a JSON object");
   }
-  const name = requiredString(obj.name, "name");
-  if (!PLUGIN_NAME_REGEX.test(name)) throw new InvalidPluginNameError(name);
+  const name = parsePluginName(requiredString(obj.name, "name"));
   const version = requiredString(obj.version, "version");
   if (!isSemver(version)) throw new InvalidPluginVersionError(version);
 

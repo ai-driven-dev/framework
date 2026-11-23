@@ -10,6 +10,7 @@ import {
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import { VersionMismatchError } from "../../../../../src/shared/domain/shared.error.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
@@ -18,7 +19,7 @@ const PROJECT_ROOT = "/test-project";
 const SOURCE = { kind: "local" as const, path: "/plugin" };
 
 const DISTRIBUTION = new PluginDistribution({
-  manifest: { name: "sample-plugin", version: "1.0.0" },
+  manifest: { name: parsePluginName("sample-plugin"), version: "1.0.0" },
   format: TOOL.claude,
   files: [],
   components: { commands: [], agents: [], rules: [], skills: [], hooks: [], mcp: [] },

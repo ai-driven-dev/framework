@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import "../../../../../src/composition/contexts/translate.js";
+import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import {
@@ -15,7 +16,7 @@ import { aDiskSink } from "../../testing/disk-sink.builder.js";
 // resolve(), not the bare literal: on Windows a leading "/" is drive-relative.
 const OUT = resolve("/tmp/aidd-flat-agent-path");
 const PLUGIN_SRC = resolve("/src/plugins/plug");
-const PLUGIN = "plug";
+const PLUGIN = parsePluginName("plug");
 // Avoid biome noTemplateCurlyInString
 const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
 

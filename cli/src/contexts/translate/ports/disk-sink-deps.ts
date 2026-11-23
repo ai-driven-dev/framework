@@ -1,3 +1,4 @@
+import type { PluginName } from "../../../shared/domain/plugin/plugin-name.js";
 import type { AiToolId } from "../../../shared/domain/tool.js";
 import type { AssetProvider } from "../../../shared/ports/asset-provider.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
@@ -21,6 +22,6 @@ export interface DiskSinkDeps {
 
 /** One plugin of a build: its name and the folder of its source. */
 export interface PluginSource {
-  readonly name: string;
+  readonly name: PluginName;
   readonly src: string;
 }

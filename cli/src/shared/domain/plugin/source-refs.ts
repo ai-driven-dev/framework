@@ -1,3 +1,5 @@
+import type { PluginName } from "./plugin-name.js";
+
 /** Minimal reference to the source marketplace catalog, shared by tools' build contract and
  * translate. */
 export interface SourceMarketplaceRef {
@@ -10,7 +12,7 @@ export interface SourceMarketplaceRef {
 }
 
 export interface SourcePluginEntryRef {
-  readonly name: string;
+  readonly name: PluginName;
   readonly version?: string;
   readonly description?: string;
   readonly strict?: boolean;

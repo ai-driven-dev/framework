@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { render } from "../../../../../src/presentation/errors/error-translator.presenter.js";
 import "../../../../../src/composition/contexts/translate.js";
+import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import { McpConfigError } from "../../../../../src/shared/domain/shared.error.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
@@ -18,7 +19,7 @@ import { aDiskSink } from "../../testing/disk-sink.builder.js";
 const OUT = resolve("/tmp/aidd-flat-plugin-root");
 const SOURCE = resolve("/src");
 const PLUGIN_SRC = `${SOURCE}/plugins/plug`;
-const PLUGIN = "plug";
+const PLUGIN = parsePluginName("plug");
 // Avoid biome noTemplateCurlyInString
 const ROOT_TOKEN = "CLAUDE_PLUGIN_ROOT";
 const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";

@@ -6,6 +6,7 @@ import {
   type PluginComponentFile,
   PluginDistribution,
 } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import {
   errnoError,
   FaultingFileAdapter,
@@ -40,7 +41,7 @@ function hooksManifest(event: string): PluginComponentFile {
 
 function distWithHooks(hooks: readonly PluginComponentFile[]): PluginDistribution {
   return new PluginDistribution({
-    manifest: { name: PLUGIN_NAME, version: "1.0.0" },
+    manifest: { name: parsePluginName(PLUGIN_NAME), version: "1.0.0" },
     format: TOOL.claude,
     files: [...hooks, { relativePath: "commands/hello.md", content: "# Hello" }],
     components: {

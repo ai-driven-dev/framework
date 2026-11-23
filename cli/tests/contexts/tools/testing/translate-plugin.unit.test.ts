@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { codexProfile } from "../../../../src/contexts/tools/domain/profiles/codex/codex.profile.js";
 import { SmolTomlCodec } from "../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../src/shared/domain/plugin/plugin-name.js";
 import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { translatePlugin } from "./translate-plugin.builder.js";
 
@@ -14,7 +15,7 @@ const DEEPEST_MANIFEST = ".github/plugin/plugin.json";
 function distributionCarrying(manifests: readonly string[]): PluginDistribution {
   const files = manifests.map((relativePath) => ({ relativePath, content: relativePath }));
   return new PluginDistribution({
-    manifest: { name: "sample-plugin", version: "1.0.0" },
+    manifest: { name: parsePluginName("sample-plugin"), version: "1.0.0" },
     format: TOOL.claude,
     files,
     components: { commands: [], agents: [], rules: [], skills: [], hooks: [], mcp: [] },

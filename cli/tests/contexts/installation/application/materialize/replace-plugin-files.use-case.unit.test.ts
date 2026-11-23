@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import {
   buildInstallationDeps,
   initAndInstall,
@@ -21,7 +22,7 @@ const GREET_COMMAND = { relativePath: "commands/greet.md", content: "# greet\n" 
 /** A plugin version 1.0.0 carrying one command, as a distribution reader would hand it over. */
 function greetDistribution(): PluginDistribution {
   return new PluginDistribution({
-    manifest: { name: "sample-plugin", version: "1.0.0" },
+    manifest: { name: parsePluginName("sample-plugin"), version: "1.0.0" },
     format: TOOL.claude,
     files: [GREET_COMMAND],
     components: {

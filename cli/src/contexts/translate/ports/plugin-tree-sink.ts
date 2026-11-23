@@ -1,3 +1,4 @@
+import type { PluginName } from "../../../shared/domain/plugin/plugin-name.js";
 import type { SourceMarketplaceRef } from "../../../shared/domain/plugin/source-refs.js";
 import type { ToolBuildContract } from "../../tools/contract/build-contract.js";
 import type { FrameworkBuildMode } from "../../tools/contract/tool-profile.js";
@@ -32,7 +33,11 @@ export interface BuiltPlugin {
 /** Where a build puts its output: prepare the directory, write each plugin, then close the tree. */
 export interface PluginTreeSink {
   prepare(target: DiskTarget): Promise<void>;
-  writePlugin(target: DiskTarget, pluginName: string, pluginSrc: string): Promise<PluginWritten>;
+  writePlugin(
+    target: DiskTarget,
+    pluginName: PluginName,
+    pluginSrc: string
+  ): Promise<PluginWritten>;
   /** Once every plugin is built; returns the extra files written. */
   finish(
     target: DiskTarget,

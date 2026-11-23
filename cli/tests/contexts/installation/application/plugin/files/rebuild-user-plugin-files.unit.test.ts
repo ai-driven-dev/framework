@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { rebuildUserPluginFiles } from "../../../../../../src/contexts/installation/application/plugin/files/rebuild-user-plugin-files.js";
 import { RecordedPlugin } from "../../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { PluginDistribution } from "../../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../../src/shared/domain/plugin/plugin-name.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../../../../shared/testing/saying.builder.js";
@@ -9,7 +10,7 @@ import { fakeBuiltDeps } from "../../../testing/fake-build-sources.fake.js";
 
 const skill = { relativePath: "skills/demo/SKILL.md", content: "# Skill" };
 const dist = new PluginDistribution({
-  manifest: { name: "sample-plugin", version: "1.0.0" },
+  manifest: { name: parsePluginName("sample-plugin"), version: "1.0.0" },
   format: TOOL.claude,
   files: [skill],
   components: { commands: [], agents: [], rules: [], skills: [skill], hooks: [], mcp: [] },

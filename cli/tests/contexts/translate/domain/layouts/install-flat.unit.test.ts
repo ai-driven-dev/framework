@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { translator } from "../../testing/engine-kit.builder.js";
 import { antigravity, cursor, kilo, opencode } from "../../testing/registered-profiles.builder.js";
@@ -10,7 +11,7 @@ const HOOKS_CONTENT = JSON.stringify({
 
 function buildDistWithNoHooksMcp(name = "test-plugin"): PluginDistribution {
   return new PluginDistribution({
-    manifest: { name, version: "1.0.0" },
+    manifest: { name: parsePluginName(name), version: "1.0.0" },
     format: TOOL.claude,
     files: [
       { relativePath: "commands/greet.md", content: "---\nname: aidd:01:greet\n---\n# Greet" },
@@ -30,7 +31,7 @@ function buildDistWithNoHooksMcp(name = "test-plugin"): PluginDistribution {
 
 function buildDistWithHooks(name = "test-plugin"): PluginDistribution {
   return new PluginDistribution({
-    manifest: { name, version: "1.0.0" },
+    manifest: { name: parsePluginName(name), version: "1.0.0" },
     format: TOOL.claude,
     files: [
       { relativePath: "hooks/hooks.json", content: HOOKS_CONTENT },
@@ -104,7 +105,7 @@ Read @./notes.md, @../skills/review/SKILL.md and @${PLUGIN_ROOT}/skills/review/S
 function distWithAgent(): PluginDistribution {
   const agent = { relativePath: "agents/reviewer.md", content: LINKING_AGENT };
   return new PluginDistribution({
-    manifest: { name: "aidd-pm", version: "1.0.0" },
+    manifest: { name: parsePluginName("aidd-pm"), version: "1.0.0" },
     format: TOOL.claude,
     files: [agent],
     components: { commands: [], agents: [agent], rules: [], skills: [], hooks: [], mcp: [] },

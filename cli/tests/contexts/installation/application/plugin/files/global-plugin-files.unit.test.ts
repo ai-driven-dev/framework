@@ -9,6 +9,7 @@ import type { IsWithinUserScope } from "../../../../../../src/contexts/machine-c
 import { FileHash } from "../../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../../src/shared/domain/installation-file.js";
 import { PluginDistribution } from "../../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../../src/shared/domain/plugin/plugin-name.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 
@@ -22,7 +23,7 @@ const BUILT = "/cache/built/opencode";
 function distribution(name: string, agents: string[]): PluginDistribution {
   const files = agents.map((relativePath) => ({ relativePath, content: "agent" }));
   return new PluginDistribution({
-    manifest: { name, version: "1.0.0", strict: true },
+    manifest: { name: parsePluginName(name), version: "1.0.0", strict: true },
     format: TOOL.claude,
     files,
     components: { skills: [], commands: [], agents: files, rules: [], hooks: [], mcp: [] },

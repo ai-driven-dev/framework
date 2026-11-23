@@ -6,6 +6,7 @@ import { PLUGIN_CACHE_SUBDIR } from "../../../../../../src/contexts/installation
 import type { IsWithinUserScope } from "../../../../../../src/contexts/machine-claims/contract/user-scope-containment.js";
 import { FileHash } from "../../../../../../src/shared/domain/file-hash.js";
 import { PluginDistribution } from "../../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../../src/shared/domain/plugin/plugin-name.js";
 import { CapturingLogger } from "../../../../../shared/testing/capturing-logger.fake.js";
 import { FixturePluginFetcher } from "../../../../../shared/testing/fixture-plugin-fetcher.fake.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
@@ -30,7 +31,7 @@ function fixture(installedVersion = "0.0.1", options: { globalCacheDir?: () => s
   const content = "# Updated skill";
   const skill = { relativePath: "skills/demo/SKILL.md", content };
   const dist = new PluginDistribution({
-    manifest: { name: "sample-plugin", version: "1.0.0" },
+    manifest: { name: parsePluginName("sample-plugin"), version: "1.0.0" },
     format: TOOL.claude,
     files: [skill],
     components: { commands: [], agents: [], rules: [], skills: [skill], hooks: [], mcp: [] },

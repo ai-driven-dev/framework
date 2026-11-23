@@ -10,6 +10,7 @@ import { placeFlatPlugin } from "../../../../../src/contexts/installation/applic
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { ProjectHooksProvenance } from "../../../../../src/contexts/installation/domain/plugins/plugin-entry.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
@@ -47,7 +48,7 @@ const MCP_CONTENT = JSON.stringify({
 
 function buildDist(name: string): PluginDistribution {
   return new PluginDistribution({
-    manifest: { name, version: "1.0.0" },
+    manifest: { name: parsePluginName(name), version: "1.0.0" },
     format: TOOL.claude,
     files: [
       { relativePath: "hooks/hooks.json", content: HOOKS_CONTENT },
@@ -70,7 +71,7 @@ function buildDist(name: string): PluginDistribution {
 
 function buildWithoutHooks(name: string): PluginDistribution {
   return new PluginDistribution({
-    manifest: { name, version: "1.1.0" },
+    manifest: { name: parsePluginName(name), version: "1.1.0" },
     format: TOOL.claude,
     files: [{ relativePath: ".mcp.json", content: MCP_CONTENT }],
     components: {

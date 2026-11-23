@@ -13,6 +13,7 @@ import {
   type PluginComponentFile,
   PluginDistribution,
 } from "../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../src/shared/domain/plugin/plugin-name.js";
 import type { AssetProvider } from "../../../src/shared/ports/asset-provider.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { registeredAiProfile } from "../../shared/testing/catalog-of.builder.js";
@@ -29,7 +30,7 @@ const TOML = new SmolTomlCodec();
  * plugin again must leave it once, and leave everything else as it was.
  */
 
-const PLUGIN = "aidd-test";
+const PLUGIN = parsePluginName("aidd-test");
 const SRC = "/source/plugins/aidd-test";
 const OUT = "/out";
 // biome-ignore lint/suspicious/noTemplateCurlyInString: the placeholder a plugin's hooks name
@@ -225,7 +226,7 @@ describe("plugin install merging a plugin into the project's hooks file again", 
       ...Object.entries(SCRIPTS).map(([relativePath, content]) => ({ relativePath, content })),
     ];
     return new PluginDistribution({
-      manifest: { name: PLUGIN, version: "1.0.0" },
+      manifest: { name: parsePluginName(PLUGIN), version: "1.0.0" },
       format: TOOL.claude,
       files: hooks,
       components: { commands: [], agents: [], rules: [], skills: [], hooks, mcp: [] },

@@ -1,6 +1,7 @@
 import type { ToolBuildContract } from "../../../src/contexts/tools/contract/build-contract.js";
 import type { FrameworkBuildMode } from "../../../src/contexts/tools/contract/tool-profile.js";
 import { PluginDistribution } from "../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../src/shared/domain/plugin/plugin-name.js";
 import { translateBuildLayout } from "./build-files.builder.js";
 import { SYNTHETIC_TOOL } from "./synthetic-tool-id.builder.js";
 
@@ -34,7 +35,7 @@ export function builtAgent(
 function canonOfAgent(plugin: string, outName: string, content: string): PluginDistribution {
   const agent = { relativePath: `agents/${outName}`, content };
   return new PluginDistribution({
-    manifest: { name: plugin, version: "" },
+    manifest: { name: parsePluginName(plugin), version: "" },
     format: SYNTHETIC_TOOL,
     files: [agent],
     components: { commands: [], agents: [agent], skills: [], rules: [], hooks: [], mcp: [] },

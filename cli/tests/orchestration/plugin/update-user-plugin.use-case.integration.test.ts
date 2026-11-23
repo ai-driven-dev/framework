@@ -12,6 +12,7 @@ import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugin
 import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.use-case.js";
 import { isStrictlyWithin } from "../../../src/shared/domain/paths.model.js";
 import { PluginDistribution } from "../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../src/shared/domain/plugin/plugin-name.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { buildMachinePluginUpdate } from "../../contexts/installation/testing/build-update-plugin.builder.js";
@@ -142,7 +143,7 @@ function fixture(
 function currentDistribution(version: string) {
   const skill = { relativePath: "skills/demo/SKILL.md", content: "# Skill" };
   return new PluginDistribution({
-    manifest: { name: "sample-plugin", version },
+    manifest: { name: parsePluginName("sample-plugin"), version },
     format: SYNTHETIC_NATIVE_TOOL,
     files: [skill],
     components: { commands: [], agents: [], rules: [], skills: [skill], hooks: [], mcp: [] },

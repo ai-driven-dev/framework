@@ -6,6 +6,7 @@ import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { PluginDistribution } from "../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../src/shared/domain/plugin/plugin-name.js";
 import type { PluginSource } from "../../../src/shared/domain/plugin/source.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
@@ -29,7 +30,7 @@ export const SHARED_SETTINGS = resolve(PROJECT_ROOT, SYNTHETIC_NATIVE_SETTINGS);
 export function distribution(claude: AiToolId, name: string): PluginDistribution {
   const files = [{ relativePath: "commands/hello.md", content: "# Hello" }];
   return new PluginDistribution({
-    manifest: { name, version: "1.0.0" },
+    manifest: { name: parsePluginName(name), version: "1.0.0" },
     format: claude,
     files,
     components: { commands: files, agents: [], rules: [], skills: [], hooks: [], mcp: [] },

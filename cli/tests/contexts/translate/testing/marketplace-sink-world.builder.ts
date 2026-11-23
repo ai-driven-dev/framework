@@ -6,6 +6,7 @@ import type {
 } from "../../../../src/contexts/tools/contract/build-contract.js";
 import type { JsonSchemaValidator } from "../../../../src/contexts/translate/ports/json-schema-validator.js";
 import type { SchemaProvider } from "../../../../src/contexts/translate/ports/schema-provider.js";
+import { parsePluginName } from "../../../../src/shared/domain/plugin/plugin-name.js";
 import type { SourceMarketplaceRef } from "../../../../src/shared/domain/plugin/source-refs.js";
 import type { AssetProvider } from "../../../../src/shared/ports/asset-provider.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
@@ -18,7 +19,7 @@ const NO_ASSETS: AssetProvider = {
   },
 };
 
-export const PLUGIN = "aidd-test";
+export const PLUGIN = parsePluginName("aidd-test");
 // resolve(): on Windows a leading "/" is drive-relative. Posix after: the adapter keys writes so.
 export const OUT_DIR = resolve("/tmp/aidd-marketplace-stub-out").replaceAll("\\", "/");
 export const PLUGIN_SRC = "/src/plugins/aidd-test";

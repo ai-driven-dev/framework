@@ -1,12 +1,9 @@
-import { PLUGIN_NAME_REGEX } from "../../../../shared/domain/plugin/plugin-name.js";
+import { parsePluginName } from "../../../../shared/domain/plugin/plugin-name.js";
 import { isSemver } from "../../../../shared/domain/plugin/semver.js";
 import { serializePluginSource } from "../../../../shared/domain/plugin/source.js";
 import { parsePluginSource } from "../../../../shared/domain/plugin/source-parsing.js";
 import { isScope } from "../../../../shared/domain/scope.js";
-import {
-  InvalidPluginNameError,
-  InvalidPluginVersionError,
-} from "../../../../shared/domain/shared.error.js";
+import { InvalidPluginVersionError } from "../../../../shared/domain/shared.error.js";
 import { MalformedPluginScopeError } from "../installation.error.js";
 import type { FileProvenance } from "./file-provenance.js";
 import { InstalledPlugin } from "./installed-plugin.js";
@@ -20,11 +17,11 @@ import type { RecordedPluginParts } from "./recorded-plugin.js";
 
 /** Validates a stored entry and reads it into the parts a manifest records for a plugin. */
 export function recordedPluginFromEntry(data: PluginEntryData): RecordedPluginParts {
-  if (!PLUGIN_NAME_REGEX.test(data.name)) throw new InvalidPluginNameError(data.name);
+  const name = parsePluginName(data.name);
   if (!isSemver(data.version)) throw new InvalidPluginVersionError(data.version);
   if (!isScope(data.scope)) throw new MalformedPluginScopeError(data.name, data.scope);
   const plugin = new InstalledPlugin({
-    name: data.name,
+    name,
     source: parsePluginSource(data.source),
     version: data.version,
     strict: data.strict,

@@ -1,5 +1,6 @@
 import { join, resolve } from "node:path";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../src/shared/domain/plugin/plugin-name.js";
 import type { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
@@ -42,7 +43,7 @@ export function distributionOf(
     mcp: files.filter((f) => f.relativePath === ".mcp.json"),
   };
   return new PluginDistribution({
-    manifest: { name, version: "1.0.0" },
+    manifest: { name: parsePluginName(name), version: "1.0.0" },
     format: source.format,
     files,
     components,

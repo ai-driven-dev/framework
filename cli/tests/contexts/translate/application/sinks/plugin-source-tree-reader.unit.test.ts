@@ -3,12 +3,13 @@ import {
   presenceOf,
   readPluginCanon,
 } from "../../../../../src/contexts/translate/application/sinks/plugin-source-tree-reader.js";
+import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { WindowsListingFileAdapter } from "../../../../shared/testing/windows-listing-file-adapter.fake.js";
 
 const PLUGIN_SRC = "/src/plugins/aidd-test";
-const PLUGIN = { name: "aidd-test", src: PLUGIN_SRC };
+const PLUGIN = { name: parsePluginName("aidd-test"), src: PLUGIN_SRC };
 
 function canonOf(files: Record<string, string>, fs = new InMemoryFileAdapter(files)) {
   return readPluginCanon(fs, PLUGIN, TOOL.claude);
