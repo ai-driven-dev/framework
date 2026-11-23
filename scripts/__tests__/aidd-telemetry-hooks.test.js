@@ -20,7 +20,6 @@ const expected = JSON.parse(fs.readFileSync(path.join(FIXTURE, "expected.json"),
 const { telemetryDir } = require(path.join(HOOKS, "lib/telemetry-dir.cjs"));
 const { decideConsent, identityFromStat, parseConsentLog, tokenOfKey } = require(path.join(HOOKS, "lib/consent.cjs"));
 const { branchRoleOf, parseBranchConfig } = require(path.join(HOOKS, "lib/git.cjs"));
-const { readCarries, readDeclarations } = require(path.join(HOOKS, "lib/binding.cjs"));
 const { lookup } = require(path.join(HOOKS, "lib/lookup.cjs"));
 const { parseDeclaration } = require(path.join(HOOKS, "lib/declaration.cjs"));
 const { cmdLine } = require(path.join(HOOKS, "lib/aidd.cjs"));
