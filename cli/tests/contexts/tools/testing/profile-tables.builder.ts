@@ -79,7 +79,7 @@ export async function expectClaudeStyleCatalog(profile: Buildable, folder: strin
   });
 }
 
-const RULE_INPUTS = {
+export const RULE_INPUTS = {
   "a paths list": { paths: ["a", "b"] },
   "globs that apply on request": { globs: ["a"], alwaysApply: false, description: "d" },
   "paths beside a description": { paths: ["a"], description: "d", alwaysApply: false },
