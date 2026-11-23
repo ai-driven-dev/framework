@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { codexProfile } from "../../../src/composition/tool-profiles/codex.js";
+import { codexSpec } from "../../../src/composition/tool-profiles/codex.js";
 import { artifactPath } from "../../../src/contexts/tools/contract/artifact-path.js";
+import { defineAiTool } from "../../../src/contexts/tools/domain/profile/define-tool.js";
 import { SmolTomlCodec } from "../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import {
   PLUGIN_TREE_SOURCES,
@@ -12,7 +13,7 @@ import {
 } from "../../contexts/tools/testing/profile-tables.builder.js";
 import { type InstallKind, installPathOf } from "../../contexts/tools/testing/profiles.builder.js";
 
-const codex = codexProfile(new SmolTomlCodec());
+const codex = defineAiTool(codexSpec, { toml: new SmolTomlCodec() });
 
 describe("codex profile", () => {
   it("declares its directory, tool suffix, signal directory and the one config file it reads", () => {

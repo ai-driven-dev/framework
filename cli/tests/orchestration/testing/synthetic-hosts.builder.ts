@@ -1,4 +1,3 @@
-import { join } from "node:path";
 import { nativeRegistrationsOf } from "../../../src/composition/contexts/host-registration.js";
 import { RegisteredToolCatalog } from "../../../src/contexts/tools/application/registered-tool-catalog.js";
 import { MCP_CONFIG_REF } from "../../../src/contexts/tools/contract/config-refs.js";
@@ -36,8 +35,11 @@ const claude = syntheticNativeTool(
     ...registryHost("hostclaude"),
     userRemoveArgs: [],
     pluginArgs: ["--yes"],
-    userSettingsPath: (home, env) =>
-      join(env(HOST_CONFIG_DIR_ENV) || join(home, ".hostclaude"), "settings.json"),
+    userSettingsPath: {
+      env: HOST_CONFIG_DIR_ENV,
+      fallback: "{home}/.hostclaude",
+      fileName: "settings.json",
+    },
   },
   {
     layout: {
@@ -125,7 +127,7 @@ const cursor = defineAiTool({
   displayName: "hostcursor",
   hooks: cursorHooks,
   buildContracts: { flat: () => anEmptyContract() },
-  capabilities: () => ({
+  capabilities: {
     layout: nativeLayout({
       pluginsDir: "",
       installScope: "user",
@@ -134,12 +136,12 @@ const cursor = defineAiTool({
     manifest: manifestSection({ manifestRelativePath: null, pluginRootToken: "." }),
     hooks: { delivery: projectHooksSupport(cursorHooks) },
     models: new ModelsSection({ providers: ["anthropic"] }),
-  }),
+  },
   linkSyntax: [],
 });
 
 /** The directory the mcp host reads its machine-wide settings from. */
-export const hostMcpGlobalDir = (home: string) => join(home, ".config", "hostmcp");
+export const hostMcpGlobalDir = "{home}/.config/hostmcp";
 
 /** The JSON schema URL heading a settings file aidd creates for the mcp host. */
 export const HOST_MCP_SCHEMA = "https://hostmcp.invalid/config.json";
@@ -156,7 +158,7 @@ const mcp = defineAiTool({
   signalDir: null,
   displayName: "hostmcp",
   buildContracts: { flat: () => anEmptyContract() },
-  capabilities: () => ({
+  capabilities: {
     layout: flatPlacement({
       artifacts: flatArtifactLayout(".hostmcp/", { skills: "nested", agent: { ext: ".md" } }),
       namespacePrefix: "aidd-",
@@ -177,7 +179,7 @@ const mcp = defineAiTool({
         consumes: [MCP_CONFIG_REF],
       }),
     },
-  }),
+  },
   linkSyntax: [],
 });
 

@@ -72,7 +72,7 @@ describe("a tool's native activation", () => {
     const activation = new NativeActivation({
       ...driven,
       marketplaceRegistry: {
-        location: (home) => `${home}/registry.json`,
+        location: "{home}/registry.json",
         layout: "install-locations-by-name",
       },
       marketplaceSources: { from: "marketplace-registry" },

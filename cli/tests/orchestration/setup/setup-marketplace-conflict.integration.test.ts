@@ -5,6 +5,7 @@ import { remoteFrameworkSource } from "../../../src/contexts/distribution/contra
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { RepositoryVisibility } from "../../../src/contexts/distribution/ports/repository-visibility.js";
 import { InstallTools } from "../../../src/contexts/installation/application/install/install-tools.use-case.js";
+import { resolveHomeTemplate } from "../../../src/contexts/tools/domain/profile/home-path.js";
 import { SetupFlow } from "../../../src/orchestration/domain/setup-flow.model.js";
 import type { RefreshMarketplaces } from "../../../src/orchestration/marketplace/refresh-marketplaces.use-case.js";
 import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.use-case.js";
@@ -34,7 +35,7 @@ import { setupMarketplaceRegistrar } from "../testing/setup-marketplace-registra
 const CURRENT_VERSION = "0.0.0-test";
 
 const PROJECT_ROOT = "/test-project";
-const REGISTRY_LOCATION = SYNTHETIC_NATIVE_MARKETPLACE_REGISTRY("/home");
+const REGISTRY_LOCATION = resolveHomeTemplate(SYNTHETIC_NATIVE_MARKETPLACE_REGISTRY, "/home");
 
 function makeNoOpLatestResolver(): ReleaseLister & RepositoryVisibility {
   return {

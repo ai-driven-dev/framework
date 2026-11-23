@@ -51,7 +51,7 @@ export const vscode = defineIdeTool({
       delivery: "section",
     },
   ],
-  capabilities: () => ({
+  capabilities: {
     config: [
       new ConfigSection({
         outputPath: EXTENSIONS_PATH,
@@ -69,5 +69,5 @@ export const vscode = defineIdeTool({
         consumes: [VSCODE_SETTINGS_REF],
       }),
     ],
-  }),
+  },
 });

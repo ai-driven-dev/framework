@@ -89,18 +89,17 @@ function activatingTool(toolId: string, scoped: boolean) {
     signalDir: null,
     displayName: "Fake",
     buildContracts: { flat: () => anEmptyContract() },
-    capabilities: () =>
-      sectionsOf(
-        nativePlugins({
-          nativeActivation: {
-            binary: "fake",
-            enableVerb: "add",
-            disableVerb: "remove",
-            pluginCacheDir: (home) => `${home}/.fake/cache`,
-            ...(scoped ? { scopeArgs: { project: ["--local"], user: ["--user"] } } : {}),
-          },
-        })
-      ),
+    capabilities: sectionsOf(
+      nativePlugins({
+        nativeActivation: {
+          binary: "fake",
+          enableVerb: "add",
+          disableVerb: "remove",
+          pluginCacheDir: "{home}/.fake/cache",
+          ...(scoped ? { scopeArgs: { project: ["--local"], user: ["--user"] } } : {}),
+        },
+      })
+    ),
     linkSyntax: [],
   });
 }

@@ -1,10 +1,8 @@
 import type { AiToolId, IdeToolId } from "../../../../shared/domain/tool.js";
 import type { FrameworkBuildMode } from "../../contract/tool-profile.js";
 import type { AiTool, IdeToolConfig, ProfileSections } from "../profile.js";
-import { AgentsSection } from "../sections/agents-section.js";
-import { CommandsSection } from "../sections/commands-section.js";
-import { RulesSection } from "../sections/rules-section.js";
-import { SkillsSection } from "../sections/skills-section.js";
+import { contractOf, type ToolFormats } from "./contract-builders.js";
+import { type BuiltSections, buildSections, type DeclaredSections } from "./declared-sections.js";
 import {
   aiConfigWrites,
   configAnswers,
@@ -26,7 +24,7 @@ import {
   refuseUnknownSections,
   refuseWithoutBuildContract,
 } from "./profile-refusals.js";
-import type { AiToolSpec, BoundTool, IdeToolSpec } from "./tool-spec.js";
+import type { AiToolSpec, IdeToolSpec } from "./tool-spec.js";
 import { ToolSuffix } from "./tool-suffix.js";
 
 /** Only `defineAiTool` and `defineIdeTool` can produce one: an object literal lacks the private
@@ -38,21 +36,21 @@ export declare class ProfileBrand {
 /** A profile only the factory could have produced. */
 export type BuiltToolConfig = (AiTool | IdeToolConfig) & ProfileBrand;
 
-function bind(directory: string, suffix: ToolSuffix): BoundTool {
-  const toolSuffix = suffix.value;
+/** Each declared contract, built on first ask by the builder its kind names. */
+function contractsOf(
+  declared: AiToolSpec<DeclaredSections>["buildContracts"],
+  formats: ToolFormats
+): AiTool["buildContracts"] {
+  const { marketplace, flat } = declared;
   return {
-    installUnder: (subdirectory) => (fileName) =>
-      `${directory}${subdirectory}${suffix.strip(fileName)}`,
-    agents: (params) => new AgentsSection({ directory, toolSuffix, ...params }),
-    skills: (params) => new SkillsSection({ directory, ...params }),
-    commands: (params) => new CommandsSection({ toolSuffix, ...params }),
-    rules: (params) => new RulesSection({ toolSuffix, ...params }),
+    ...(marketplace && { marketplace: contractOf(marketplace, formats) }),
+    ...(flat && { flat: contractOf(flat, formats) }),
   };
 }
 
 function contractFor(
   toolId: string,
-  contracts: AiToolSpec<ProfileSections>["buildContracts"],
+  contracts: AiTool["buildContracts"],
   capabilities: ProfileSections
 ) {
   return (mode: FrameworkBuildMode, provider?: string) => {
@@ -66,7 +64,7 @@ function contractFor(
 }
 
 /** What the tool answers from its declared sections. */
-function capabilityAnswers(spec: AiToolSpec<ProfileSections>, capabilities: ProfileSections) {
+function capabilityAnswers(spec: AiToolSpec<DeclaredSections>, capabilities: ProfileSections) {
   const plugins = pluginsOf(capabilities);
   const models = capabilities.models?.answersFor(spec.toolId) ?? null;
   return {
@@ -88,20 +86,23 @@ function capabilityAnswers(spec: AiToolSpec<ProfileSections>, capabilities: Prof
   };
 }
 
-export function defineAiTool<C extends ProfileSections>(
-  spec: AiToolSpec<C>
-): AiTool<C> & ProfileBrand {
-  const { toolId, capabilities: declare, ...fields } = spec;
+/** A tool from its declaration; `formats` holds the codecs its declarations name by format. */
+export function defineAiTool<S extends DeclaredSections>(
+  spec: AiToolSpec<S>,
+  formats: ToolFormats = {}
+): AiTool<BuiltSections<S>> & ProfileBrand {
+  const { toolId, capabilities: declared, buildContracts: _, ...fields } = spec;
   refuseDirectory(toolId, spec.directory);
-  const suffix = new ToolSuffix(spec.toolSuffix);
-  const contracts = spec.buildContracts;
-  refuseWithoutBuildContract(toolId, contracts);
-  const capabilities = declare(bind(spec.directory, suffix));
+  const { value: toolSuffix } = new ToolSuffix(spec.toolSuffix);
+  refuseWithoutBuildContract(toolId, spec.buildContracts);
+  const contracts = contractsOf(spec.buildContracts, formats);
+  const capabilities = buildSections(declared, { directory: spec.directory, toolSuffix, formats });
   refuseUnknownSections(toolId, capabilities);
   refuseDisagreeingPlugin(toolId, capabilities);
   refuseDisagreeingShippedConfig(toolId, spec.configAssets, capabilities);
   const profile = {
     ...fields,
+    buildContracts: contracts,
     kind: "ai",
     toolId: toolId as AiToolId,
     section: sectionReader(capabilities),
@@ -110,15 +111,14 @@ export function defineAiTool<C extends ProfileSections>(
     buildContract: contractFor(toolId, contracts, capabilities),
     ...capabilityAnswers(spec, capabilities),
   };
-  return profile as AiTool<C> & ProfileBrand;
+  return profile as AiTool<BuiltSections<S>> & ProfileBrand;
 }
 
 export function defineIdeTool<C extends ProfileSections>(
   spec: IdeToolSpec<C>
 ): IdeToolConfig<C> & ProfileBrand {
-  const { toolId, capabilities: declare, ...fields } = spec;
+  const { toolId, capabilities, ...fields } = spec;
   refuseDirectory(toolId, spec.directory);
-  const capabilities = declare();
   refuseUnknownSections(toolId, capabilities);
   refuseDisagreeingShippedConfig(toolId, spec.configAssets, capabilities);
   const profile = {

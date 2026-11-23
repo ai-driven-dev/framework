@@ -14,7 +14,7 @@ export const aiSpec = {
   signalDir: null,
   displayName: "X",
   buildContracts: { flat: () => anEmptyContract() },
-  capabilities: () => ({}),
+  capabilities: {},
   linkSyntax: [],
 };
 
@@ -22,7 +22,7 @@ export const ideSpec = {
   toolId: "vscode" as const,
   directory: ".x/",
   signalDir: null,
-  capabilities: () => ({}),
+  capabilities: {},
 };
 
 export function refusalOf(build: () => unknown): InvalidToolProfileError {

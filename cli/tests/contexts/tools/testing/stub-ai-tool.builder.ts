@@ -14,7 +14,7 @@ export function stubAiTool(toolId: AiToolId, capabilities: ProfileSections): AiT
     signalDir: null,
     displayName: toolId,
     buildContracts: { flat: () => anEmptyContract() },
-    capabilities: () => capabilities,
+    capabilities: capabilities,
     linkSyntax: [],
   });
 }

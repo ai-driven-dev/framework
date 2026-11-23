@@ -5,15 +5,13 @@ import type { AiToolId, IdeToolId } from "../../../shared/domain/tool.js";
 import type { ToolBuildContract } from "./build-contract.js";
 import type { ConfigRef } from "./config-refs.js";
 import type { LinkSyntax } from "./link-syntax.js";
+import type { EnvironmentReader } from "./native-registration-spec.js";
 import type {
   GlobalFiles,
   MarketplaceSettingsInput,
   ProjectHooksLocation,
   SignalDirectory,
 } from "./tool-vocabulary.js";
-
-/** One variable, as the caller reads it: a profile is a declaration and reaches no global. */
-export type EnvironmentReader = (name: string) => string | undefined;
 
 /** How a tool takes plugins, asked and never read: each answer is a method. */
 export interface PluginDelivery {

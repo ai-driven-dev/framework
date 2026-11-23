@@ -1,4 +1,3 @@
-import { join } from "node:path";
 import kiloJson from "../../../assets/configs/kilo/kilo.json" with { type: "json" };
 import { MCP_CONFIG_REF } from "../../contexts/tools/contract/config-refs.js";
 import { buildKiloFlatContract } from "../../contexts/tools/domain/behaviours/kilo/kilo-build.model.js";
@@ -11,7 +10,9 @@ import {
 import { flatHooksSupport } from "../../contexts/tools/domain/formats/hooks/flat-routes.js";
 import { toTypedMcpSection } from "../../contexts/tools/domain/formats/mcp/typed-mcp-section.js";
 import { descriptionOnlyRule } from "../../contexts/tools/domain/formats/rule-frontmatter.js";
+import { contract } from "../../contexts/tools/domain/profile/contract-builders.js";
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
+import { installUnder } from "../../contexts/tools/domain/profile/tool-suffix.js";
 import {
   flatGlobalFilePath,
   flatPlacement,
@@ -81,27 +82,26 @@ export const kilo = defineAiTool({
   ],
   hooks,
   buildContracts: {
-    flat: () =>
-      buildKiloFlatContract(hooks, KILO_FLAT_LAYOUT, {
-        agentMarkdown: { frontmatter: AGENT_FRONTMATTER },
-        config: KILO_OUTPUT_PATH_CANDIDATES,
-      }),
+    flat: contract(buildKiloFlatContract, hooks, KILO_FLAT_LAYOUT, {
+      agentMarkdown: { frontmatter: AGENT_FRONTMATTER },
+      config: KILO_OUTPUT_PATH_CANDIDATES,
+    }),
   },
 
-  capabilities: (bound) => ({
-    agents: bound.agents({
+  capabilities: {
+    agents: {
       format: "markdown",
       frontmatter: AGENT_FRONTMATTER,
-    }),
-    skills: bound.skills({}),
-    commands: bound.commands({
+    },
+    skills: {},
+    commands: {
       buildInstallPath: aiddCommandsUnder(KILO_DIRECTORY),
       convertFrontmatter: convertCommandFrontmatterNoHint,
-    }),
-    rules: bound.rules({
-      buildInstallPath: bound.installUnder("rules/"),
+    },
+    rules: {
+      buildInstallPath: installUnder(KILO_DIRECTORY, TOOL_SUFFIX, "rules/"),
       convertFrontmatter: descriptionOnlyRule,
-    }),
+    },
     mcp: {
       config: new McpConfigPart({
         outputPath: "kilo.json",
@@ -117,7 +117,7 @@ export const kilo = defineAiTool({
       artifacts: KILO_FLAT_LAYOUT,
       namespacePrefix: "aidd-",
       globalFiles: {
-        dir: (homedir) => join(homedir, ".config", "kilo"),
+        dir: "{home}/.config/kilo",
         map: flatGlobalFilePath(KILO_DIRECTORY),
       },
     }),
@@ -125,7 +125,7 @@ export const kilo = defineAiTool({
       providers: ["openai", "anthropic", "mistral"],
       providerPrefix: true,
     }),
-  }),
+  },
 
   linkSyntax: [
     { from: /(@?)\.kilo\/commands\/(\d+)[_-][^/]+\/([^\s]+)/g, to: "$1.kilo/commands/aidd/$2/$3" },

@@ -19,7 +19,7 @@ describe("a native layout", () => {
     expect(() => nativeLayout({ pluginsDir: "", installScope: "user" })).toThrow(
       expect.objectContaining({
         detail: expect.stringContaining(
-          "installScope 'user' requires a userPluginsDir resolver function."
+          "installScope 'user' requires a userPluginsDir home template."
         ),
       })
     );

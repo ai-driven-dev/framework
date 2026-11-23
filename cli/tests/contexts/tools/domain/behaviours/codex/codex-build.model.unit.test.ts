@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { codexProfile } from "../../../../../../src/composition/tool-profiles/codex.js";
+import { codexSpec } from "../../../../../../src/composition/tool-profiles/codex.js";
 import { artifactPath } from "../../../../../../src/contexts/tools/contract/artifact-path.js";
 import type { ConfigArtifact } from "../../../../../../src/contexts/tools/contract/build-contract.js";
+import { defineAiTool } from "../../../../../../src/contexts/tools/domain/profile/define-tool.js";
 import { SmolTomlCodec } from "../../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { reshapeFrontmatter } from "../../../../../../src/shared/domain/markdown.js";
 import { parsePluginName } from "../../../../../../src/shared/domain/plugin/plugin-name.js";
@@ -10,7 +11,7 @@ import { present } from "../../../../../shared/testing/present.builder.js";
 import { supported } from "../../../testing/build-artifacts.builder.js";
 
 const TOML = new SmolTomlCodec();
-const codex = codexProfile(TOML);
+const codex = defineAiTool(codexSpec, { toml: TOML });
 
 const _HOOKS_JSON = JSON.stringify({
   hooks: { Stop: [{ hooks: [{ type: "command", command: "node journal.cjs" }] }] },

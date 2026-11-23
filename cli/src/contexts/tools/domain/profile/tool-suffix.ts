@@ -29,3 +29,13 @@ export class ToolSuffix {
     return basenameOf(fileName).endsWith(this.value);
   }
 }
+
+/** Where a built file lands: `<directory><subdirectory><name without the tool suffix>`. */
+export function installUnder(
+  directory: string,
+  toolSuffix: string,
+  subdirectory: string
+): (fileName: string) => string {
+  const suffix = new ToolSuffix(toolSuffix);
+  return (fileName) => `${directory}${subdirectory}${suffix.strip(fileName)}`;
+}

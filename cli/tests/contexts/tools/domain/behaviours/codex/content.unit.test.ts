@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { codexProfile } from "../../../../../../src/composition/tool-profiles/codex.js";
+import { codexSpec } from "../../../../../../src/composition/tool-profiles/codex.js";
 import { applyLinkSyntax } from "../../../../../../src/contexts/tools/contract/link-syntax.js";
+import { defineAiTool } from "../../../../../../src/contexts/tools/domain/profile/define-tool.js";
 import { SmolTomlCodec } from "../../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 
 const rewriteCodexContent = (text: string) =>
-  applyLinkSyntax(text, codexProfile(new SmolTomlCodec()).linkSyntax);
+  applyLinkSyntax(text, defineAiTool(codexSpec, { toml: new SmolTomlCodec() }).linkSyntax);
 
 describe("codex link syntax", () => {
   it("sends a skill reference to the agents directory Codex scans, under its aidd- prefix", () => {

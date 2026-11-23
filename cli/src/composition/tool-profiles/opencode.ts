@@ -1,4 +1,3 @@
-import { join } from "node:path";
 import opencodeJson from "../../../assets/configs/opencode/opencode.json" with { type: "json" };
 import opencodeEvents from "../../../assets/configs/opencode/opencode-events.js.txt";
 import {
@@ -16,7 +15,9 @@ import {
 import { flatHooksSupport } from "../../contexts/tools/domain/formats/hooks/flat-routes.js";
 import { toTypedMcpSection } from "../../contexts/tools/domain/formats/mcp/typed-mcp-section.js";
 import { descriptionOnlyRule } from "../../contexts/tools/domain/formats/rule-frontmatter.js";
+import { contract } from "../../contexts/tools/domain/profile/contract-builders.js";
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
+import { installUnder } from "../../contexts/tools/domain/profile/tool-suffix.js";
 import {
   flatGlobalFilePath,
   flatPlacement,
@@ -71,7 +72,7 @@ const FLAT_PLACEMENT = flatPlacement({
   artifacts: OPENCODE_FLAT_LAYOUT,
   namespacePrefix: "aidd-",
   globalFiles: {
-    dir: (homedir) => join(homedir, ".config", "opencode"),
+    dir: "{home}/.config/opencode",
     map: flatGlobalFilePath(DIRECTORY),
   },
 });
@@ -123,27 +124,26 @@ export const opencode = defineAiTool({
   ],
   hooks,
   buildContracts: {
-    flat: () =>
-      buildOpencodeFlatContract(hooks, OPENCODE_FLAT_LAYOUT, {
-        agentMarkdown: { frontmatter: AGENT_FRONTMATTER },
-        config: FLAT_CONFIG_CANDIDATES,
-      }),
+    flat: contract(buildOpencodeFlatContract, hooks, OPENCODE_FLAT_LAYOUT, {
+      agentMarkdown: { frontmatter: AGENT_FRONTMATTER },
+      config: FLAT_CONFIG_CANDIDATES,
+    }),
   },
 
-  capabilities: (bound) => ({
-    agents: bound.agents({
+  capabilities: {
+    agents: {
       format: "markdown",
       frontmatter: AGENT_FRONTMATTER,
-    }),
-    skills: bound.skills({}),
-    commands: bound.commands({
+    },
+    skills: {},
+    commands: {
       buildInstallPath: aiddCommandsUnder(DIRECTORY),
       convertFrontmatter: convertCommandFrontmatterNoHint,
-    }),
-    rules: bound.rules({
-      buildInstallPath: bound.installUnder("rules/"),
+    },
+    rules: {
+      buildInstallPath: installUnder(DIRECTORY, TOOL_SUFFIX, "rules/"),
       convertFrontmatter: descriptionOnlyRule,
-    }),
+    },
     mcp: {
       config: new McpConfigPart({
         outputPath: "opencode.json",
@@ -164,7 +164,7 @@ export const opencode = defineAiTool({
       providerPrefix: true,
       main: { settingsFile: "opencode.jsonc", schema: "https://opencode.ai/config.json" },
     }),
-  }),
+  },
 
   linkSyntax: [
     {

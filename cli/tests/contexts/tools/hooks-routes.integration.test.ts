@@ -4,13 +4,14 @@ import { basename, join, relative, sep } from "node:path";
 import { afterAll, afterEach, beforeAll, describe, it, vi } from "vitest";
 import { createOutput } from "../../../src/composition/shared.js";
 import { claude } from "../../../src/composition/tool-profiles/claude.js";
-import { codexProfile } from "../../../src/composition/tool-profiles/codex.js";
+import { codexSpec } from "../../../src/composition/tool-profiles/codex.js";
 import { copilot } from "../../../src/composition/tool-profiles/copilot.js";
 import { cursor } from "../../../src/composition/tool-profiles/cursor.js";
 import { kilo } from "../../../src/composition/tool-profiles/kilo.js";
 import { opencode } from "../../../src/composition/tool-profiles/opencode.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import type { HooksDescriptor } from "../../../src/contexts/tools/domain/formats/hooks/descriptor.js";
+import { defineAiTool } from "../../../src/contexts/tools/domain/profile/define-tool.js";
 import { SmolTomlCodec } from "../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { render } from "../../../src/presentation/errors/error-translator.presenter.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
@@ -202,7 +203,7 @@ const ADAPTERS = join(import.meta.dirname, "..", "..", "..", "assets", "hooks-ru
 
 const DESCRIPTORS: Readonly<Record<string, HooksDescriptor>> = {
   claude: present(claude.hooks),
-  codex: present(codexProfile(new SmolTomlCodec()).hooks),
+  codex: present(defineAiTool(codexSpec, { toml: new SmolTomlCodec() }).hooks),
   copilot: present(copilot.hooks),
   cursor: present(cursor.hooks),
   opencode: present(opencode.hooks),

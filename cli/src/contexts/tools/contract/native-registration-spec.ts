@@ -1,6 +1,17 @@
 import type { Scope } from "../../../shared/domain/scope.js";
-import type { EnvironmentReader } from "./tool-profile.js";
 import type { MarketplaceSettingsInput } from "./tool-vocabulary.js";
+
+/** A path under the home directory, declared as data: a template, or a directory an environment
+ * variable names, with a template to fall back on, and the file name under it. */
+export type HomePath =
+  | HomeTemplate
+  | { readonly env: string; readonly fallback: HomeTemplate; readonly fileName: string };
+
+/** A `/`-separated path whose `{home}` segment stands for the home directory. */
+export type HomeTemplate = string;
+
+/** Reads one environment variable, undefined when it is unset. */
+export type EnvironmentReader = (name: string) => string | undefined;
 
 /** How a host's own plugin registry is laid out. The names describe the file's shape, never
  * the tool that keeps it, so a second host with the same shape declares the same layout. */
@@ -15,9 +26,9 @@ export type MarketplaceRegistryLayout = "install-locations-by-name";
 /** How a host's marketplace list answers when asked for JSON. */
 export type MarketplaceListLayout = "marketplaces-with-source" | "name-source-rows";
 
-/** Where a host's registry lives, given a homedir, and the layout its file is read as. */
+/** Where a host's registry lives under the home directory, and the layout its file is read as. */
 export interface HostRegistryDeclaration<Layout extends string> {
-  readonly location: (homedir: string) => string;
+  readonly location: HomeTemplate;
   readonly layout: Layout;
 }
 
@@ -82,7 +93,7 @@ export interface NativeActivationSpec {
    * `doctor` to compare what the host loads with what a manifest claims. Omit for a tool whose
    * registry was never measured; it is then reported unanswerable rather than assumed to agree. */
   pluginRegistry?: HostRegistryDeclaration<PluginRegistryLayout>;
-  /** This tool's own marketplace registry: where it lives given a homedir, and the layout
+  /** This tool's own marketplace registry: where it lives under the home directory, and the layout
    * it is read as. Declared for Claude alone, which derives a registration's name
    * from the source's own catalog and silently repoints a same-named entry from a different
    * source; its absence is what keeps the guard reading it claude-only. */
@@ -91,15 +102,15 @@ export interface NativeActivationSpec {
    * source witness exists for this tool. `from: "marketplace-registry"` requires
    * `marketplaceRegistry`. */
   marketplaceSources?: MarketplaceSourcesDeclaration;
-  /** Root of this tool's own plugin cache, given a homedir. Declared only where the host's
+  /** Root of this tool's own plugin cache, under the home directory. Declared only where the host's
    * own CLI leaves something behind after `clean` drove its uninstall and remove: claude
    * keeps the whole built tree, marked `.orphaned_at`; codex the empty `cache/<hostName>/`
    * shell. `clean` reads this declaration alone and invents no path for a tool that omits
    * it, and never removes without `realpath` containment against this root. */
-  pluginCacheDir?: (homedir: string) => string;
+  pluginCacheDir?: HomeTemplate;
   /** This tool's own user-scope settings file, never written by aidd and read by a
    * diagnostic alone. Declared only for a tool that also declares `NativeActivation`. */
-  userSettingsPath?: (homedir: string, env: EnvironmentReader) => string;
+  userSettingsPath?: HomePath;
 }
 
 /** Where and how a tool records the marketplaces it knows about, for the tools whose settings

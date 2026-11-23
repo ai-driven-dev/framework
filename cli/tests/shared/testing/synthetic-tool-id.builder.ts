@@ -1,4 +1,3 @@
-import { join } from "node:path";
 import { RegisteredToolCatalog } from "../../../src/contexts/tools/application/registered-tool-catalog.js";
 import type { NativeActivationSpec } from "../../../src/contexts/tools/contract/native-registration-spec.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
@@ -36,8 +35,7 @@ export function syntheticConfig(name: string, providers: readonly string[] = [])
     signalDir: null,
     displayName: name,
     buildContracts: { flat: () => anEmptyContract() },
-    capabilities: () =>
-      providers.length === 0 ? {} : { models: new ModelsSection({ providers }) },
+    capabilities: providers.length === 0 ? {} : { models: new ModelsSection({ providers }) },
     linkSyntax: [],
     configAssets: [shippedSettings(name, "install")],
   });
@@ -75,12 +73,12 @@ export const SYNTHETIC_IDE_CONFIG = defineIdeTool({
   toolId: "syntheticide",
   directory: IDE_DIRECTORY,
   signalDir: null,
-  capabilities: () => ({
+  capabilities: {
     config: IDE_FILES.map(
       (file) =>
         new ConfigSection({ outputPath: `${IDE_DIRECTORY}${file.name}`, mergeStrategy: file.merge })
     ),
-  }),
+  },
   configAssets: IDE_FILES.map((file) => ({
     name: file.name,
     content: file.content,
@@ -124,10 +122,8 @@ export function syntheticFlowTools(tools: ToolCatalog = syntheticMixedCatalog())
 }
 
 /** What a host keeps under its own home directory, the root every host path derives from. */
-export const homeDir =
-  (id: string, ...parts: string[]) =>
-  (home: string) =>
-    join(home, `.${id}`, ...parts);
+export const homeDir = (id: string, ...parts: string[]): string =>
+  ["{home}", `.${id}`, ...parts].join("/");
 
 /** A host whose plugins carry the install verbs and a registry file of their own. */
 function installingHost(id: string): Partial<NativeActivationSpec> {
@@ -206,7 +202,7 @@ export function syntheticNativeTool(
       flat: () => anEmptyContract(),
       ...(parts.buildsMarketplace ? { marketplace: () => anEmptyContract() } : {}),
     },
-    capabilities: () => ({
+    capabilities: {
       layout: nativeLayout({
         pluginsDir: `.${id}/plugins/`,
         nativeActivation: {
@@ -225,7 +221,7 @@ export function syntheticNativeTool(
       }),
       hooks: { delivery: { kind: "plugin-file" } },
       ...(parts.models === undefined ? {} : { models: parts.models }),
-    }),
+    },
     linkSyntax: [],
   });
 }

@@ -5,6 +5,7 @@ import { Marketplace } from "../../../../src/contexts/distribution/domain/market
 import type { ToolRecords } from "../../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import { resolveHomeTemplate } from "../../../../src/contexts/tools/domain/profile/home-path.js";
 import { FileHash } from "../../../../src/shared/domain/file-hash.js";
 import { FakeHostActions } from "../../../shared/testing/fake-host-actions.fake.js";
 import { hostWithdrawal } from "../../../shared/testing/host-withdrawal.builder.js";
@@ -131,7 +132,7 @@ describe("user-scope tool targeted user marketplace removal", () => {
       })
     );
     const fs = new InMemoryFileAdapter();
-    const pluginDir = join(SYNTHETIC_USER_PLUGINS(homedir()), "sample-plugin");
+    const pluginDir = join(resolveHomeTemplate(SYNTHETIC_USER_PLUGINS, homedir()), "sample-plugin");
     const foreign = "/foreign/sample-plugin";
     fs.setFile(join(options.escape ? foreign : pluginDir, "skills/demo/SKILL.md"), "bytes");
     if (options.escape) fs.setSymlink(pluginDir, foreign);

@@ -18,6 +18,7 @@ import type { FlatPlacement, LayoutSection, NativeLayout } from "../sections/lay
 import type { ManifestSection } from "../sections/manifest-section.js";
 import { DEFAULT_PLUGIN_MCP_PATH, type McpSection } from "../sections/mcp-section.js";
 import { CapabilityConfigError } from "../tools.error.js";
+import { resolveHomeTemplate } from "./home-path.js";
 
 const DEFAULT_HOOKS_PATH = "hooks/hooks.json";
 
@@ -59,6 +60,7 @@ function deliveryOf(
     layout.mode === "unsupported" ? null : (layout.globalFiles ?? null);
   const userScope = layout.mode === "native" && layout.installScope === "user";
   const activation = layout.mode === "native" && layout.activation !== undefined;
+  const userDir = layout.mode === "native" ? layout.userPluginsDir : undefined;
   const base = files?.dir;
   return {
     requiresUserScope: () => userScope,
@@ -67,7 +69,7 @@ function deliveryOf(
     supportsUserScopeActivation: () => activation || userScope || files !== null,
     copiesFilesGlobally: () => userScope || files !== null,
     userPluginsBaseDir: (home) =>
-      (layout.mode === "native" ? layout.userPluginsDir?.(home) : undefined) ??
+      (userDir === undefined ? undefined : resolveHomeTemplate(userDir, home)) ??
       base?.(home) ??
       null,
     globalFiles: () => files,

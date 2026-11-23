@@ -12,6 +12,7 @@ import type { ScopeRecords } from "../../../src/contexts/installation/contract/r
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
+import { resolveHomeTemplate } from "../../../src/contexts/tools/domain/profile/home-path.js";
 import { RunDoctor } from "../../../src/orchestration/doctor/run-doctor.use-case.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
@@ -253,7 +254,7 @@ describe("DoctorUseCase - plugin integrity", () => {
     it("checks files under the resolved user-scope base dir, not projectRoot", async () => {
       const manifest = Manifest.create();
       manifest.addTool(SYNTHETIC_USER_TOOL, "1.0.0", []);
-      const userBaseDir = SYNTHETIC_USER_PLUGINS(homedir());
+      const userBaseDir = resolveHomeTemplate(SYNTHETIC_USER_PLUGINS, homedir());
       const userScopeRelPath = "aidd-context/skills/06-discovery/SKILL.md";
       manifest.addPlugin(
         SYNTHETIC_USER_TOOL,

@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { codexProfile } from "../../../../../../src/composition/tool-profiles/codex.js";
+import { codexSpec } from "../../../../../../src/composition/tool-profiles/codex.js";
+import { defineAiTool } from "../../../../../../src/contexts/tools/domain/profile/define-tool.js";
 import { SmolTomlCodec } from "../../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 
 const TOML = new SmolTomlCodec();
-const codex = codexProfile(TOML);
+const codex = defineAiTool(codexSpec, { toml: TOML });
 
 describe("codex mcp", () => {
   describe("with Codex's mcp capability", () => {

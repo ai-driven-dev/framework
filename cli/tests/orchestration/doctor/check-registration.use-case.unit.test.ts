@@ -6,6 +6,7 @@ import type { HostPluginRegistry } from "../../../src/contexts/host-registration
 import type { ToolRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import { resolveHomeTemplate } from "../../../src/contexts/tools/domain/profile/home-path.js";
 import { CheckRegistration } from "../../../src/orchestration/doctor/check-registration.use-case.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
@@ -162,7 +163,7 @@ describe("checking registrations", () => {
 });
 
 const REF = "aidd-context@aidd-framework";
-const REGISTRY_LOCATION = SYNTHETIC_NATIVE_PLUGIN_REGISTRY("/home/dev");
+const REGISTRY_LOCATION = resolveHomeTemplate(SYNTHETIC_NATIVE_PLUGIN_REGISTRY, "/home/dev");
 
 function manifestWithNativeRegistrations(
   pluginRefs: string[],

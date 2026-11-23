@@ -4,6 +4,7 @@ import type { HostMarketplaceSources } from "../../../src/contexts/host-registra
 import type { ToolRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import { resolveHomeTemplate } from "../../../src/contexts/tools/domain/profile/home-path.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
@@ -180,7 +181,12 @@ describe("clean --scope user: native preflight", () => {
   });
 
   it("refuses an active B Cursor user plugin but never treats project files as machine-owned", async () => {
-    const userFile = join(hostUserPluginsDir(homedir()), "shared", "skills", "x.md");
+    const userFile = join(
+      resolveHomeTemplate(hostUserPluginsDir, homedir()),
+      "shared",
+      "skills",
+      "x.md"
+    );
     const projectFile = "/A/skills/local.md";
     const fs = new RecordingFileAdapter();
     fs.setFile(userFile, "shared bytes");

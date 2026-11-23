@@ -136,7 +136,7 @@ export class ProfileBuilder {
       directory,
       toolSuffix,
       signalDir,
-      capabilities: () => capabilities,
+      capabilities: capabilities,
       buildContracts: this.contracts,
       ...(this.probes === undefined ? {} : { distributionProbes: this.probes }),
       linkSyntax: [],

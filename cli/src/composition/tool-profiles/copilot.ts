@@ -1,4 +1,3 @@
-import { join } from "node:path";
 import copilotVscodeSettings from "../../../assets/configs/copilot/vscode-settings.json" with {
   type: "json",
 };
@@ -25,6 +24,7 @@ import { declareHooks } from "../../contexts/tools/domain/formats/hooks/declarat
 import { nativeHooksSupport } from "../../contexts/tools/domain/formats/hooks/routes.js";
 import { serversKeyed } from "../../contexts/tools/domain/formats/mcp/servers-keyed.js";
 import { sharedMarketplaceKey } from "../../contexts/tools/domain/marketplace-entry.js";
+import { contract } from "../../contexts/tools/domain/profile/contract-builders.js";
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
 import { typescriptOrMonorepo } from "../../contexts/tools/domain/profile/recommendation.js";
 import { AgentsSection } from "../../contexts/tools/domain/sections/agents-section.js";
@@ -112,11 +112,11 @@ const COPILOT_ACTIVATION: NativeLayoutParams["nativeActivation"] = {
   uninstallLeavesRefDisabled: true,
   // Where `copilot plugin marketplace add`/`install` land, measured against the real
   // binary. Never written by aidd; named here for a diagnostic alone.
-  userSettingsPath: (h) => join(h, ".copilot", "settings.json"),
+  userSettingsPath: "{home}/.copilot/settings.json",
   // Copilot's registry is `settings.json`, never `config.json`, whose `installedPlugins`
   // reads empty on a machine that has run installs.
   pluginRegistry: {
-    location: (h) => join(h, ".copilot", "settings.json"),
+    location: "{home}/.copilot/settings.json",
     layout: "enabled-plugins-map",
   },
   // 1.0.98 answers `--json`; the installed 1.0.83 rejects it and stays unreadable.
@@ -198,15 +198,14 @@ export const copilot = defineAiTool({
   ],
   hooks,
   buildContracts: {
-    marketplace: () => buildCopilotMarketplaceContract(hooks, OUTPUT_PLUGIN_TREE),
-    flat: () =>
-      buildCopilotFlatContract(hooks, COPILOT_FLAT_LAYOUT, {
-        mcpPath: FLAT_VSCODE_MCP_PATH,
-        frontmatter: AGENT_FRONTMATTER,
-      }),
+    marketplace: contract(buildCopilotMarketplaceContract, hooks, OUTPUT_PLUGIN_TREE),
+    flat: contract(buildCopilotFlatContract, hooks, COPILOT_FLAT_LAYOUT, {
+      mcpPath: FLAT_VSCODE_MCP_PATH,
+      frontmatter: AGENT_FRONTMATTER,
+    }),
   },
 
-  capabilities: () => ({
+  capabilities: {
     agents: new AgentsSection({
       directory: DIRECTORY,
       toolSuffix: EXT_AGENT,
@@ -237,7 +236,7 @@ export const copilot = defineAiTool({
       pluginRootToken: hooksSupport.rootToken,
     }),
     models: COPILOT_MODELS,
-  }),
+  },
 
   linkSyntax: COPILOT_LINK_SYNTAX,
 });

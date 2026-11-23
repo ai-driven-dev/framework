@@ -5,6 +5,7 @@ import { Marketplace } from "../../../src/contexts/distribution/domain/marketpla
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
+import { resolveHomeTemplate } from "../../../src/contexts/tools/domain/profile/home-path.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
@@ -223,8 +224,8 @@ describe("clean --scope user: whitelist purge", () => {
     });
 
     it("leaves a cursor plugin file in place when it resolves outside the user plugins boundary through a symlink", async () => {
-      const fs = new RecordingFileAdapter([], [hostUserPluginsDir(HOME)]);
-      const boundary = hostUserPluginsDir(HOME);
+      const fs = new RecordingFileAdapter([], [resolveHomeTemplate(hostUserPluginsDir, HOME)]);
+      const boundary = resolveHomeTemplate(hostUserPluginsDir, HOME);
       // A sibling sharing `boundary`'s name as a string prefix, not a path under it: a raw
       // `startsWith` would call it contained, where `relative()` sees the leading `..`.
       const escapeTarget = `${boundary}-evil`;

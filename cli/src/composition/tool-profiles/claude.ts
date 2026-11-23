@@ -1,4 +1,3 @@
-import { join } from "node:path";
 import claudeSettings from "../../../assets/configs/claude/settings.json" with { type: "json" };
 // biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
 import adapter from "../../../assets/hooks-runtime/host-claude.cjs";
@@ -18,8 +17,10 @@ import { nativeHooksSupport } from "../../contexts/tools/domain/formats/hooks/ro
 import { pluginTreeContract } from "../../contexts/tools/domain/formats/plugin-tree-contract.js";
 import { pathsScopedRule } from "../../contexts/tools/domain/formats/rule-frontmatter.js";
 import { sharedMarketplaceKey } from "../../contexts/tools/domain/marketplace-entry.js";
+import { contract } from "../../contexts/tools/domain/profile/contract-builders.js";
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
 import { everyProject } from "../../contexts/tools/domain/profile/recommendation.js";
+import { installUnder } from "../../contexts/tools/domain/profile/tool-suffix.js";
 import {
   type NativeLayoutParams,
   nativeLayout,
@@ -96,25 +97,28 @@ const CLAUDE_ACTIVATION: NativeLayoutParams["nativeActivation"] = {
   // name-stealing re-add before driving `marketplace add` at all. Declared here alone,
   // which is what keeps that guard claude-only by declaration.
   marketplaceRegistry: {
-    location: (h) => join(h, ".claude", "plugins", "known_marketplaces.json"),
+    location: "{home}/.claude/plugins/known_marketplaces.json",
     layout: "install-locations-by-name",
   },
   marketplaceSources: { from: "marketplace-registry" },
   // Claude's own plugin registry, read by `doctor`: one entry per scope a ref was
   // installed at, an entry installed at a project scope also naming its project.
   pluginRegistry: {
-    location: (h) => join(h, ".claude", "plugins", "installed_plugins.json"),
+    location: "{home}/.claude/plugins/installed_plugins.json",
     layout: "plugin-entries-by-scope",
   },
   // Root of claude's own plugin cache. `clean` composes `<root>/<hostName>` and purges
   // only once a fresh read of `marketplaceRegistry` above no longer names it: claude
   // marks an orphaned tree `.orphaned_at` but never deletes it itself.
-  pluginCacheDir: (h) => join(h, ".claude", "plugins", "cache"),
+  pluginCacheDir: "{home}/.claude/plugins/cache",
   // Where a `--scope user` install or marketplace add lands, measured against the real
   // binary, under `CLAUDE_CONFIG_DIR` when set. aidd writes the main session's model
   // there, nothing else.
-  userSettingsPath: (h, env) =>
-    join(env("CLAUDE_CONFIG_DIR") || join(h, ".claude"), "settings.json"),
+  userSettingsPath: {
+    env: "CLAUDE_CONFIG_DIR",
+    fallback: "{home}/.claude",
+    fileName: "settings.json",
+  },
 };
 
 const CLAUDE_MARKETPLACE_SETTINGS: NativeLayoutParams["marketplaceSettings"] = {
@@ -150,24 +154,27 @@ export const claude = defineAiTool({
   ],
   hooks,
   buildContracts: {
-    marketplace: () => pluginTreeContract(hooks, OUTPUT_PLUGIN_TREE),
-    flat: () => buildClaudeFlatContract(hooks, CLAUDE_FLAT_LAYOUT, AGENT_FRONTMATTER),
+    marketplace: contract(pluginTreeContract, hooks, OUTPUT_PLUGIN_TREE),
+    flat: contract(buildClaudeFlatContract, hooks, CLAUDE_FLAT_LAYOUT, AGENT_FRONTMATTER),
   },
 
-  capabilities: (bound) => ({
-    agents: bound.agents({
+  capabilities: {
+    agents: {
       format: "markdown",
       frontmatter: AGENT_FRONTMATTER,
-    }),
-    skills: bound.skills({}),
-    commands: bound.commands({
-      buildInstallPath: phasedCommandsUnder(DIRECTORY, bound.installUnder("commands/")),
+    },
+    skills: {},
+    commands: {
+      buildInstallPath: phasedCommandsUnder(
+        DIRECTORY,
+        installUnder(DIRECTORY, TOOL_SUFFIX, "commands/")
+      ),
       convertFrontmatter: convertCommandFrontmatter,
-    }),
-    rules: bound.rules({
-      buildInstallPath: bound.installUnder("rules/"),
+    },
+    rules: {
+      buildInstallPath: installUnder(DIRECTORY, TOOL_SUFFIX, "rules/"),
       convertFrontmatter: pathsScopedRule,
-    }),
+    },
     mcp: {
       config: new McpConfigPart({
         outputPath: ".mcp.json",
@@ -191,7 +198,7 @@ export const claude = defineAiTool({
       providers: ["anthropic"],
       main: { settingsFile: "settings.json", effortKey: "effortLevel" },
     }),
-  }),
+  },
 
   linkSyntax: [
     {

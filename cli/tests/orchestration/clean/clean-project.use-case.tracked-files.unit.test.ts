@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import { resolveHomeTemplate } from "../../../src/contexts/tools/domain/profile/home-path.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import {
@@ -207,9 +208,11 @@ describe("clean: tracked project files", () => {
     );
     await useCase.execute({ ...AT_PROJECT, force: true });
 
-    expect(fs.deletedPaths.some((p) => p.endsWith(join(hostUserPluginsDir(""), PLUGIN_KEY)))).toBe(
-      false
-    );
+    expect(
+      fs.deletedPaths.some((p) =>
+        p.endsWith(join(resolveHomeTemplate(hostUserPluginsDir, ""), PLUGIN_KEY))
+      )
+    ).toBe(false);
     expect(fs.deletedPaths).not.toContain(join(PROJECT_ROOT, PLUGIN_KEY));
   });
 
@@ -240,6 +243,8 @@ describe("clean: tracked project files", () => {
     await useCase.execute({ ...AT_PROJECT, force: true });
 
     expect(fs.deletedPaths).toContain(join(PROJECT_ROOT, PLUGIN_KEY));
-    expect(fs.deletedPaths.some((p) => p.includes(hostUserPluginsDir("")))).toBe(false);
+    expect(
+      fs.deletedPaths.some((p) => p.includes(resolveHomeTemplate(hostUserPluginsDir, "")))
+    ).toBe(false);
   });
 });

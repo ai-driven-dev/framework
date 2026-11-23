@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type {
   MarketplaceSettings,
@@ -45,9 +46,9 @@ describe("what a profile's plugins capability says about activation", () => {
 
     expect(supports(nativePlugins())).toBe(false);
     expect(supports(nativePlugins({ nativeActivation: activation() }))).toBe(true);
-    expect(
-      supports(nativePlugins({ installScope: "user", userPluginsDir: (home) => `${home}/.x` }))
-    ).toBe(true);
+    expect(supports(nativePlugins({ installScope: "user", userPluginsDir: "{home}/.x" }))).toBe(
+      true
+    );
   });
 
   it("names the project hooks file only for a profile merging hooks into the project", () => {
@@ -72,8 +73,8 @@ describe("what a profile's plugins capability says about activation", () => {
 
     expect(userFile({})).toBeUndefined();
     expect(
-      userFile({ userSettingsPath: (home, env) => `${home}/${env("X") ?? "settings.json"}` })
-    ).toBe("/home/me/settings.json");
+      userFile({ userSettingsPath: { env: "X", fallback: "{home}", fileName: "settings.json" } })
+    ).toBe(join("/home/me", "settings.json"));
   });
 
   it("keeps a machine-local file only where the settings name one", () => {
@@ -137,7 +138,7 @@ describe("what a profile's plugins capability says about activation", () => {
   });
 
   it("copies plugin files globally only for a user-scope install", () => {
-    const user = nativePlugins({ installScope: "user", userPluginsDir: (home) => `${home}/.x` });
+    const user = nativePlugins({ installScope: "user", userPluginsDir: "{home}/.x" });
 
     expect(aProfile(TOOL.cursor).withPlugins(user).build().plugins()?.copiesFilesGlobally()).toBe(
       true
@@ -168,7 +169,7 @@ describe("a profile that declares no plugin layout, no mcp and no activation", (
   });
 
   it("places and owns a native tool's skills as nested ones", () => {
-    const native = defineAiTool({ ...aiSpec, capabilities: () => sectionsOf(nativePlugins()) });
+    const native = defineAiTool({ ...aiSpec, capabilities: sectionsOf(nativePlugins()) });
 
     expect(native.ownsFlatPath(".x/skills/p/plan/SKILL.md", "p")).toBe(true);
     expect(native.ownsFlatPath(".x/skills/p-plan/SKILL.md", "p")).toBe(false);

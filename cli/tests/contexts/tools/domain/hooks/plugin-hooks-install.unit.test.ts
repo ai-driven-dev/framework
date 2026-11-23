@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { claude } from "../../../../../src/composition/tool-profiles/claude.js";
-import { codexProfile } from "../../../../../src/composition/tool-profiles/codex.js";
+import { codexSpec } from "../../../../../src/composition/tool-profiles/codex.js";
 import { copilot } from "../../../../../src/composition/tool-profiles/copilot.js";
 import { cursor } from "../../../../../src/composition/tool-profiles/cursor.js";
 import { opencode } from "../../../../../src/composition/tool-profiles/opencode.js";
+import { defineAiTool } from "../../../../../src/contexts/tools/domain/profile/define-tool.js";
 import type { AiTool } from "../../../../../src/contexts/tools/domain/profile.js";
 import { SmolTomlCodec } from "../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
@@ -14,7 +15,7 @@ import { hooksAcceptanceOf } from "../../testing/plugin-mode.builder.js";
 import { translatePluginIntoProject } from "../../testing/translate-plugin.builder.js";
 import type { WithSections } from "../../testing/with-sections.builder.js";
 
-const codex = codexProfile(new SmolTomlCodec());
+const codex = defineAiTool(codexSpec, { toml: new SmolTomlCodec() });
 
 /** A hook that arrives is not a hook that runs: every failure this covers installed cleanly
  * and did nothing. */

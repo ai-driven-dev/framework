@@ -2,10 +2,11 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { projectIntegrationOf } from "../../../src/composition/contexts/installation.js";
 import { claude } from "../../../src/composition/tool-profiles/claude.js";
-import { codexProfile } from "../../../src/composition/tool-profiles/codex.js";
+import { codexSpec } from "../../../src/composition/tool-profiles/codex.js";
 import { copilot } from "../../../src/composition/tool-profiles/copilot.js";
 import { cursor } from "../../../src/composition/tool-profiles/cursor.js";
 import type { ToolBuildContract } from "../../../src/contexts/tools/contract/build-contract.js";
+import { defineAiTool } from "../../../src/contexts/tools/domain/profile/define-tool.js";
 import { SmolTomlCodec } from "../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { DiskSink } from "../../../src/contexts/translate/application/sinks/disk-sink.js";
 import { FlatWriter } from "../../../src/contexts/translate/application/sinks/flat-writer.js";
@@ -148,9 +149,12 @@ describe("a flat build merging a plugin into a shared file it already wrote to",
 
   it("codex: .codex/hooks.json strips the plugin's own entries, keeping the rest", async () => {
     const dir = ".codex/hooks/";
-    const fs = await flatMerge(present(codexProfile(TOML).buildContracts.flat)(), {
-      [`${OUT}/.codex/hooks.json`]: nestedSeed(dir),
-    });
+    const fs = await flatMerge(
+      present(defineAiTool(codexSpec, { toml: TOML }).buildContracts.flat)(),
+      {
+        [`${OUT}/.codex/hooks.json`]: nestedSeed(dir),
+      }
+    );
     const file = fs.getFile(`${OUT}/.codex/hooks.json`);
 
     expect(commands(file, "SessionStart")).toStrictEqual([
