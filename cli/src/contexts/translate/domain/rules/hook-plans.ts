@@ -1,5 +1,5 @@
+import type { FlatHooksBridge } from "../../../../shared/domain/materialization/build-contract.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
-import type { FlatHooksBridge } from "../../../tools/contract/build-contract.js";
 import { PLUGIN_HOOKS_RELATIVE } from "../canon-format.js";
 import { flatHooksBridgeFile, sourceShipsHooksBridge } from "../flat-layout.js";
 import type { ComponentPlan } from "./component-pipeline.js";

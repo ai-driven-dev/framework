@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import type { PluginPresence } from "../../../../src/contexts/tools/contract/build-contract.js";
 import {
   buildSharedCatalogEntry,
   buildSharedEntry,
@@ -9,6 +8,7 @@ import {
   resolveVersion,
   synthesizeSharedManifest,
 } from "../../../../src/contexts/tools/domain/marketplace-catalog.js";
+import type { PluginPresence } from "../../../../src/shared/domain/materialization/build-contract.js";
 import { InvalidSourceMarketplaceError } from "../../../../src/shared/domain/shared.error.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 

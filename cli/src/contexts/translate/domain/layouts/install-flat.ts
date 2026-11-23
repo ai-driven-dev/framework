@@ -1,4 +1,6 @@
 import { reshapeFrontmatter } from "../../../../shared/domain/markdown.js";
+import { artifactPath } from "../../../../shared/domain/materialization/artifact-path.js";
+import type { SupportedArtifact } from "../../../../shared/domain/materialization/build-contract.js";
 import type {
   PluginComponentFile,
   PluginDistribution,
@@ -7,14 +9,11 @@ import type {
   PluginTranslationSkip,
   ReadonlySkipList,
 } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
-import { artifactPath } from "../../../tools/contract/artifact-path.js";
-import type { SupportedArtifact } from "../../../tools/contract/build-contract.js";
-import type { FlatPluginAnswers } from "../../../tools/contract/tool-profile.js";
 import { basename, isProse } from "../plugin-paths.js";
 import type { ComponentPlan } from "../rules/component-pipeline.js";
 import { flatHookPlans } from "../rules/hook-plans.js";
 import { chainLinks, toolLinks } from "../rules/links.js";
-import type { TranslatedAiTool } from "../translate-profile.js";
+import type { TranslatedAiTool, TranslatedFlatPlugin } from "../translate-profile.js";
 import { flatAgentPlan } from "./build-flat.js";
 
 type FlatSection = "agents" | "rules" | "skills";
@@ -23,7 +22,7 @@ const FLAT_SECTIONS: readonly FlatSection[] = ["agents", "rules", "skills"];
 
 interface FlatTarget {
   readonly tool: TranslatedAiTool;
-  readonly plugins: FlatPluginAnswers;
+  readonly plugins: TranslatedFlatPlugin;
 }
 
 interface FlatAt {

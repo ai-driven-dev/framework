@@ -159,6 +159,8 @@ function unearnedShared(
   growEarned(
     [
       { files: inside("src/shared/domain/"), qualifies: readByEarnedPort },
+      // A type an earned shared file is declared with travels with it.
+      { files: inside("src/shared/domain/"), qualifies: reachedByEarned },
       { files: inside("src/shared/ports/"), qualifies: readByEarnedAdapter },
       { files: inside("src/shared/infrastructure/"), qualifies: earnedInfrastructure },
     ],

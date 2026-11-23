@@ -1,21 +1,20 @@
 import type {
+  PluginInstallNotice,
+  ReadonlyNoticeList,
+} from "../../../../shared/domain/materialization/plugin-install-notice.js";
+import type {
   PluginComponentFile,
   PluginDistribution,
 } from "../../../../shared/domain/plugin/plugin-distribution.js";
-import type {
-  PluginInstallNotice,
-  ReadonlyNoticeList,
-} from "../../../tools/contract/plugin-install-notice.js";
-import type { NativePluginAnswers } from "../../../tools/contract/tool-profile.js";
 import { PLUGIN_HOOKS_RELATIVE } from "../canon-format.js";
 import { isProse, PLUGIN_HOOKS_DIR, parentDirOf, pathBelowHooks } from "../plugin-paths.js";
 import type { ComponentPlan } from "../rules/component-pipeline.js";
 import { toolLinks } from "../rules/links.js";
-import type { TranslatedAiTool } from "../translate-profile.js";
+import type { TranslatedAiTool, TranslatedNativePlugin } from "../translate-profile.js";
 
 interface HooksTarget {
   readonly tool: TranslatedAiTool;
-  readonly plugins: NativePluginAnswers;
+  readonly plugins: TranslatedNativePlugin;
 }
 
 /** A file below `hooks/` as a native install keeps it: the manifest at the tool's own path, every
@@ -48,7 +47,7 @@ export function nativeHooksPlan(
 export function manifestPlan(
   dist: PluginDistribution,
   at: {
-    readonly plugins: NativePluginAnswers;
+    readonly plugins: TranslatedNativePlugin;
     readonly pluginRoot: string;
     readonly manifestPaths: readonly string[];
   }

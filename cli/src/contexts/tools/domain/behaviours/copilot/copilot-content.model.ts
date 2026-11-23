@@ -1,6 +1,9 @@
+import {
+  type LinkSyntax,
+  REFERENCE_CHARS,
+} from "../../../../../shared/domain/materialization/link-syntax.js";
 import { escapeRegExp } from "../../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import { GITKEEP_FILE } from "../../../../../shared/domain/redundant-gitkeeps.js";
-import { type LinkSyntax, REFERENCE_CHARS } from "../../../contract/link-syntax.js";
 import { rulePatterns } from "../../formats/rule-frontmatter.js";
 
 export const DIRECTORY = ".github/";

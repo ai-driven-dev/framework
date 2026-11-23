@@ -13,7 +13,6 @@ import { InvalidSourceMarketplaceError } from "../../../shared/domain/shared.err
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../shared/ports/logger.js";
-import type { FrameworkBuildMode } from "../../tools/contract/tool-profile.js";
 import type {
   BuildPluginResult,
   FrameworkBuildRequest,
@@ -21,6 +20,7 @@ import type {
 } from "../contract/build-targets.js";
 import { OUT_OF_SCOPE_PLUGIN_SECTIONS } from "../domain/canon-format.js";
 import { InvalidBuildPathsError } from "../domain/translate.error.js";
+import type { FrameworkBuildMode } from "../domain/translate-profile.js";
 import type {
   BuiltPlugin,
   DiskLayout,

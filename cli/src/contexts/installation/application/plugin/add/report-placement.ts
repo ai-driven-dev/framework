@@ -1,6 +1,6 @@
+import type { ReadonlyNoticeList } from "../../../../../shared/domain/materialization/plugin-install-notice.js";
 import type { ReadonlySkipList } from "../../../../../shared/domain/plugin/plugin-translation-skip.js";
 import type { Logger } from "../../../../../shared/ports/logger.js";
-import type { ReadonlyNoticeList } from "../../../../tools/contract/plugin-install-notice.js";
 
 /** One warning per component a tool could not take. */
 export function reportSkipWarnings(logger: Logger, skipped: ReadonlySkipList): void {

@@ -1,4 +1,4 @@
-import type { SupportedArtifact } from "../../../tools/contract/build-contract.js";
+import type { SupportedArtifact } from "../../../../shared/domain/materialization/build-contract.js";
 import type { OutputFile } from "../output-file.js";
 import { assertNoToolsPlaceholder } from "../tools-placeholder.js";
 import { type AgentPlace, agentContent } from "./agent-markdown.js";

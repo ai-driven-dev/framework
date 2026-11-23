@@ -5,10 +5,10 @@ import { claude } from "../../../src/composition/tool-profiles/claude.js";
 import { codexSpec } from "../../../src/composition/tool-profiles/codex.js";
 import { copilot } from "../../../src/composition/tool-profiles/copilot.js";
 import { cursor } from "../../../src/composition/tool-profiles/cursor.js";
-import type { ToolBuildContract } from "../../../src/contexts/tools/contract/build-contract.js";
 import { defineAiTool } from "../../../src/contexts/tools/domain/profile/define-tool.js";
 import { DiskSink } from "../../../src/contexts/translate/application/sinks/disk-sink.js";
 import { FlatWriter } from "../../../src/contexts/translate/application/sinks/flat-writer.js";
+import type { ToolBuildContract } from "../../../src/shared/domain/materialization/build-contract.js";
 import {
   type PluginComponentFile,
   PluginDistribution,

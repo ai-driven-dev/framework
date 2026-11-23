@@ -1,10 +1,10 @@
+import type { ArtifactPlacement, FlatHooksBridge, SupportedArtifact } from "./build-contract.js";
 import {
   flatAgentFilePath,
   flatHooksRoutePath,
   flatSkillPath,
   genericFlatHooksFile,
-} from "../../../shared/domain/materialization/flat-paths.js";
-import type { ArtifactPlacement, FlatHooksBridge, SupportedArtifact } from "./build-contract.js";
+} from "./flat-paths.js";
 
 /** A flat skills artifact's placement. */
 export const skillsIn = (layout: Extract<ArtifactPlacement, { kind: "layout" }>["layout"]) =>

@@ -26,4 +26,4 @@ What a tool declares: where its files land, how it takes plugins, what its plugi
 - The host adapters' `EVENTS` tables (`assets/hooks-runtime/host-*.cjs`) copy the event fact: the adapters are plain Node and import nothing from the CLI; `profile-file-conformance.contract.ts` holds them equal to the descriptor.
 - `kilo-hooks-bridge.model.ts` and `opencode-hooks-bridge.model.ts` each keep their own `runHook`, `stopReasonOf` and `answerOf` text, and opencode exports `stopCallsFor` and `postToolUseCallsFor` unread: they differ in behaviour (kilo reports a failed hook, opencode ignores it) and the golden freezes them.
 - Per-tool `*.model.ts` files sit beside their profile: merging them into profile data is not done.
-- `rewritePluginRootToken` lives in `contract/plugin-root-token.ts`, not `domain/formats/`, because `translate` calls it and reaches `tools` through `contract/` only.
+- `rewritePluginRootToken` lives in `shared/domain/materialization/plugin-root-path-rewrite.ts`: `translate` and `tools` both call it, and a domain imports no other context. The translate-side view of a profile is `translate/domain/translate-profile.ts`.

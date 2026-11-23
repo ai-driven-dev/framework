@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { cursor } from "../../../../../src/composition/tool-profiles/cursor.js";
-import { artifactPath } from "../../../../../src/contexts/tools/contract/artifact-path.js";
 import { pluginTreeContract } from "../../../../../src/contexts/tools/domain/formats/plugin-tree-contract.js";
+import { artifactPath } from "../../../../../src/shared/domain/materialization/artifact-path.js";
 import { present } from "../../../../shared/testing/present.builder.js";
 import { supported } from "../../testing/build-artifacts.builder.js";
 

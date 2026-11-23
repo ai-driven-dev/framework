@@ -1,4 +1,4 @@
-import type { ToolBuildContract } from "../../contract/build-contract.js";
+import type { ToolBuildContract } from "../../../../shared/domain/materialization/build-contract.js";
 import type { TomlCodec } from "../formats/toml.js";
 import { CapabilityConfigError } from "../tools.error.js";
 

@@ -1,12 +1,12 @@
 import { resolve } from "node:path";
-import { agentsIn, skillsIn } from "../../../../src/contexts/tools/contract/artifact-path.js";
+import { JsonSchemaValidationError } from "../../../../src/contexts/translate/domain/translate.error.js";
+import type { JsonSchemaValidator } from "../../../../src/contexts/translate/ports/json-schema-validator.js";
+import { agentsIn, skillsIn } from "../../../../src/shared/domain/materialization/artifact-path.js";
 import type {
   ArtifactContract,
   ArtifactPlacement,
   ToolBuildContract,
-} from "../../../../src/contexts/tools/contract/build-contract.js";
-import { JsonSchemaValidationError } from "../../../../src/contexts/translate/domain/translate.error.js";
-import type { JsonSchemaValidator } from "../../../../src/contexts/translate/ports/json-schema-validator.js";
+} from "../../../../src/shared/domain/materialization/build-contract.js";
 import { flatArtifactLayout } from "../../../../src/shared/domain/materialization/flat-paths.js";
 import { parsePluginName } from "../../../../src/shared/domain/plugin/plugin-name.js";
 import type { AssetProvider } from "../../../../src/shared/ports/asset-provider.js";

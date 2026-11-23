@@ -1,9 +1,9 @@
 import { relative } from "node:path";
+import type { PluginPresence } from "../../../../shared/domain/materialization/build-contract.js";
 import type { PluginComponentFile } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { PluginPresence } from "../../../tools/contract/build-contract.js";
 import {
   PLUGIN_AGENT_INPUT_EXT,
   PLUGIN_HOOKS_RELATIVE,

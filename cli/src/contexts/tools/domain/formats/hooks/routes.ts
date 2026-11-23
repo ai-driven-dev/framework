@@ -1,6 +1,6 @@
 /** What the builders read of a descriptor to deliver a tool's hooks: where each route writes them. */
 
-import type { ArtifactContract } from "../../../contract/build-contract.js";
+import type { ArtifactContract } from "../../../../../shared/domain/materialization/build-contract.js";
 import type { HookScript } from "../../../contract/tool-vocabulary.js";
 import type { HooksFileFormat } from "../../hooks/hooks-entry-shape.js";
 import {

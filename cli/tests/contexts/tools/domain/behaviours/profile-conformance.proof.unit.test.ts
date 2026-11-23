@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { REGISTERED_PROFILES } from "../../../../../src/composition/tool-profiles/index.js";
-import type {
-  ArtifactContract,
-  ToolBuildContract,
-} from "../../../../../src/contexts/tools/contract/build-contract.js";
 import { MCP_CONFIG_REF } from "../../../../../src/contexts/tools/contract/config-refs.js";
 import type {
   McpConfigAnswers,
@@ -18,6 +14,10 @@ import type {
 } from "../../../../../src/contexts/tools/domain/profile.js";
 import { CommandsSection } from "../../../../../src/contexts/tools/domain/sections/commands-section.js";
 import { McpConfigPart } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
+import type {
+  ArtifactContract,
+  ToolBuildContract,
+} from "../../../../../src/shared/domain/materialization/build-contract.js";
 import { SOURCE_PLUGIN_ROOT_TOKEN } from "../../../../../src/shared/domain/materialization/plugin-root-path-rewrite.js";
 import {
   type ConformanceCheck,

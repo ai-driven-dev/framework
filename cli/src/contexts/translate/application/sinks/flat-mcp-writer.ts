@@ -1,6 +1,6 @@
+import { artifactPath } from "../../../../shared/domain/materialization/artifact-path.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import { artifactPath } from "../../../tools/contract/artifact-path.js";
 import { mergeAdditiveMcp } from "../../domain/additive-mcp-merge.js";
 import { PLUGIN_MCP_RELATIVE } from "../../domain/canon-format.js";
 import { FlatTargetExistsError } from "../../domain/translate.error.js";

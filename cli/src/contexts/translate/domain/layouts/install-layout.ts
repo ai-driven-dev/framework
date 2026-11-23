@@ -1,6 +1,6 @@
+import type { ReadonlyNoticeList } from "../../../../shared/domain/materialization/plugin-install-notice.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
-import type { ReadonlyNoticeList } from "../../../tools/contract/plugin-install-notice.js";
 import type { ComponentPlan } from "../rules/component-pipeline.js";
 import type { TranslatedAiTool } from "../translate-profile.js";
 import { flatInstallPlan } from "./install-flat.js";

@@ -1,7 +1,6 @@
 import cursorSettings from "../../../assets/configs/cursor/settings.json" with { type: "json" };
 // biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
 import adapter from "../../../assets/hooks-runtime/host-cursor.cjs";
-import type { AgentMarkdown } from "../../contexts/tools/contract/build-contract.js";
 import { MCP_CONFIG_REF } from "../../contexts/tools/contract/config-refs.js";
 import { buildCursorFlatContract } from "../../contexts/tools/domain/behaviours/cursor/cursor-flat-build.model.js";
 import { agentFrontmatterOf } from "../../contexts/tools/domain/formats/agents/agent-format.js";
@@ -26,6 +25,7 @@ import {
   McpConfigPart,
 } from "../../contexts/tools/domain/sections/mcp-section.js";
 import { ModelsSection } from "../../contexts/tools/domain/sections/models-section.js";
+import type { AgentMarkdown } from "../../shared/domain/materialization/build-contract.js";
 import {
   type FlatArtifactLayout,
   flatArtifactLayout,

@@ -1,11 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { skillsIn } from "../../../../src/contexts/tools/contract/artifact-path.js";
-import type {
-  ArtifactContract,
-  ArtifactPlacement,
-  FlatHooksBridge,
-  ToolBuildContract,
-} from "../../../../src/contexts/tools/contract/build-contract.js";
 import {
   flatAgentPath,
   flatHooksBridgeFile,
@@ -13,6 +6,13 @@ import {
   flatPathOfPluginSuffix,
   sourceShipsHooksBridge,
 } from "../../../../src/contexts/translate/domain/flat-layout.js";
+import { skillsIn } from "../../../../src/shared/domain/materialization/artifact-path.js";
+import type {
+  ArtifactContract,
+  ArtifactPlacement,
+  FlatHooksBridge,
+  ToolBuildContract,
+} from "../../../../src/shared/domain/materialization/build-contract.js";
 import { flatArtifactLayout } from "../../../../src/shared/domain/materialization/flat-paths.js";
 
 const unsupported: ArtifactContract = { supported: false, reason: "off in this test" };

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { applyLinkSyntax } from "../../../../../../src/contexts/tools/contract/link-syntax.js";
 import { COPILOT_LINK_SYNTAX } from "../../../../../../src/contexts/tools/domain/behaviours/copilot/copilot-content.model.js";
+import { applyLinkSyntax } from "../../../../../../src/shared/domain/materialization/link-syntax.js";
 
 /** What a reference to another framework file becomes once installed for Copilot. No other gate
  * sees it: the engine reads it only through a tool whose layout installs, and the byte-frozen golden cell is claude,

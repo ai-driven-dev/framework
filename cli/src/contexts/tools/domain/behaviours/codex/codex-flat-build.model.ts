@@ -3,9 +3,9 @@
  * sibling models.
  */
 
+import { agentsIn, skillsIn } from "../../../../../shared/domain/materialization/artifact-path.js";
+import type { ToolBuildContract } from "../../../../../shared/domain/materialization/build-contract.js";
 import type { FlatArtifactLayout } from "../../../../../shared/domain/materialization/flat-paths.js";
-import { agentsIn, skillsIn } from "../../../contract/artifact-path.js";
-import type { ToolBuildContract } from "../../../contract/build-contract.js";
 import { tomlAgentMarkdownToToml } from "../../formats/agents/toml-agent.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";

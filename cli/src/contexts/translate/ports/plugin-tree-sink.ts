@@ -1,7 +1,7 @@
+import type { ToolBuildContract } from "../../../shared/domain/materialization/build-contract.js";
 import type { PluginName } from "../../../shared/domain/plugin/plugin-name.js";
 import type { SourceMarketplaceRef } from "../../../shared/domain/plugin/source-refs.js";
-import type { ToolBuildContract } from "../../tools/contract/build-contract.js";
-import type { FrameworkBuildMode } from "../../tools/contract/tool-profile.js";
+import type { FrameworkBuildMode } from "../domain/translate-profile.js";
 
 /** What a build writes and how: the tool's contract, the layout, and whether it may overwrite. */
 export interface DiskLayout {

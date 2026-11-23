@@ -1,16 +1,16 @@
 import { resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { skillsIn } from "../../../../../src/contexts/tools/contract/artifact-path.js";
-import type {
-  ArtifactContract,
-  ToolBuildContract,
-} from "../../../../../src/contexts/tools/contract/build-contract.js";
 import {
   FlatMergeTargetNotJsonError,
   FrameworkPlaceholderInPluginError,
 } from "../../../../../src/contexts/translate/domain/translate.error.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
 import type { DiskTarget } from "../../../../../src/contexts/translate/ports/plugin-tree-sink.js";
+import { skillsIn } from "../../../../../src/shared/domain/materialization/artifact-path.js";
+import type {
+  ArtifactContract,
+  ToolBuildContract,
+} from "../../../../../src/shared/domain/materialization/build-contract.js";
 import { flatArtifactLayout } from "../../../../../src/shared/domain/materialization/flat-paths.js";
 import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";

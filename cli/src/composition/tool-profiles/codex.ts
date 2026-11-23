@@ -6,8 +6,6 @@ import type {
   NativeRegistrationSection,
 } from "../../contexts/host-registration/contract/native-registration-spec.js";
 import { MCP_CONFIG_REF } from "../../contexts/tools/contract/config-refs.js";
-import type { LinkSyntax } from "../../contexts/tools/contract/link-syntax.js";
-import { PLUGIN_ROOT_TOKEN } from "../../contexts/tools/contract/plugin-root-token.js";
 import type { ShippedConfig } from "../../contexts/tools/contract/tool-profile.js";
 import { buildCodexContract } from "../../contexts/tools/domain/behaviours/codex/codex-build.model.js";
 import { mergeCodexConfigToml } from "../../contexts/tools/domain/behaviours/codex/codex-config.model.js";
@@ -23,6 +21,7 @@ import {
   hooksConfigPart,
   nativeHooksSupport,
 } from "../../contexts/tools/domain/formats/hooks/routes.js";
+import { PLUGIN_ROOT_TOKEN } from "../../contexts/tools/domain/formats/plugin-root-token.js";
 import { unchangedFrontmatter } from "../../contexts/tools/domain/formats/rule-frontmatter.js";
 import { tomlContract } from "../../contexts/tools/domain/profile/contract-builders.js";
 import type {
@@ -41,6 +40,7 @@ import {
   type FlatArtifactLayout,
   flatArtifactLayout,
 } from "../../shared/domain/materialization/flat-paths.js";
+import type { LinkSyntax } from "../../shared/domain/materialization/link-syntax.js";
 import { SmolTomlCodec } from "../../shared/infrastructure/smol-toml-codec.adapter.js";
 
 const PLUGIN_MCP = acceptedPluginMcp();

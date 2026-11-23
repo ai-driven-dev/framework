@@ -2,10 +2,10 @@ import {
   type PluginComponentFile,
   PluginDistribution,
 } from "../../../../shared/domain/plugin/plugin-distribution.js";
-import type { ProjectHooksLocation } from "../../../tools/contract/tool-vocabulary.js";
 import { PLUGIN_HOOKS_RELATIVE } from "../canon-format.js";
 import type { OutputFile } from "../output-file.js";
 import { PLUGIN_HOOKS_DIR } from "../plugin-paths.js";
+import type { TranslatedProjectHooks } from "../translate-profile.js";
 
 /** The scripts a plugin ships below hooks/, each placed by the layout, `null` where it takes
  * none. The plugin's own manifest is no script: a merge reads it, nothing loads it. Only that
@@ -28,7 +28,7 @@ export interface ProjectHooks {
 
 export function projectHooks(
   dist: PluginDistribution,
-  location: ProjectHooksLocation
+  location: TranslatedProjectHooks
 ): ProjectHooks {
   const { hooks } = dist.components;
   return {

@@ -1,11 +1,11 @@
 import { resolve } from "node:path";
+import type { JsonSchemaValidator } from "../../../../src/contexts/translate/ports/json-schema-validator.js";
+import type { SchemaProvider } from "../../../../src/contexts/translate/ports/schema-provider.js";
 import type {
   ArtifactContract,
   ArtifactPlacement,
   ToolBuildContract,
-} from "../../../../src/contexts/tools/contract/build-contract.js";
-import type { JsonSchemaValidator } from "../../../../src/contexts/translate/ports/json-schema-validator.js";
-import type { SchemaProvider } from "../../../../src/contexts/translate/ports/schema-provider.js";
+} from "../../../../src/shared/domain/materialization/build-contract.js";
 import { parsePluginName } from "../../../../src/shared/domain/plugin/plugin-name.js";
 import type { SourceMarketplaceRef } from "../../../../src/shared/domain/plugin/source-refs.js";
 import type { AssetProvider } from "../../../../src/shared/ports/asset-provider.js";

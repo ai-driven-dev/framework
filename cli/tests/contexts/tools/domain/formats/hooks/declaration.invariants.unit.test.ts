@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { PLUGIN_ROOT_TOKEN } from "../../../../../../src/contexts/tools/contract/plugin-root-token.js";
 import {
   declareHooks,
   type HooksDeclaration,
@@ -9,6 +8,7 @@ import {
   CANONICAL_HOOK_EVENTS,
   type HookEventRoute,
 } from "../../../../../../src/contexts/tools/domain/formats/hooks/descriptor.js";
+import { PLUGIN_ROOT_TOKEN } from "../../../../../../src/contexts/tools/domain/formats/plugin-root-token.js";
 import type { HooksInvariant } from "../../../../../../src/contexts/tools/domain/tools.error.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 
