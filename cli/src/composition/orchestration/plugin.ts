@@ -133,7 +133,6 @@ function wirePluginRemoval(base: Base, inst: Installation) {
       {
         fs,
         projectRepo: manifestRepo,
-        homedir: inst.builtMaterializationDeps.homedir,
         integration: {
           assert: inst.projectIntegration.assertIntegration,
           remove: inst.projectIntegration.removeIntegration,

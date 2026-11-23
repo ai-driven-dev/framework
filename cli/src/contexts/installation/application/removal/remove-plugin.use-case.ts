@@ -8,7 +8,7 @@ import { PluginNotFoundError } from "../../domain/installation.error.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import { resolvePluginToolIds, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
+import { resolvePluginToolIds } from "../plugin/plugin-target-resolution.js";
 import { requireManifest } from "../shared/require-manifest.js";
 import type { AssertProjectIntegrationRemovable } from "./assert-project-integration-removable.use-case.js";
 import type { ProjectPluginWithdrawalSteps } from "./project-plugin-withdrawal.js";
@@ -25,7 +25,6 @@ export interface RemovePluginRequest {
 export interface RemovePluginDeps {
   readonly fs: FileWriter & FileReader;
   readonly projectRepo: ManifestRepository;
-  readonly homedir: () => string;
   readonly integration: {
     readonly assert: Pick<AssertProjectIntegrationRemovable, "execute">;
     readonly remove: Pick<RemoveProjectIntegration, "execute">;
@@ -104,18 +103,14 @@ export class RemovePlugin {
       if (entry === undefined) continue;
       const { plugin } = entry;
       const registrations = registered.get(toolId);
-      const baseDir = scopeBaseOf(tool, {
-        scope: plugin.scope,
-        projectRoot: projectRoot,
-        homedir: this.deps.homedir,
-      });
       const confirmed = await withdrawal.withdraw({
         tool,
         plugin: entry,
         projectRoot,
         registrations,
       });
-      if (plugin.scope !== "user") await this.deletePluginFiles(plugin.files, baseDir);
+      // A user-scope plugin's files are the machine's, released by its claim, never deleted here.
+      if (plugin.scope !== "user") await this.deletePluginFiles(plugin.files, projectRoot);
       await this.deps.integration.remove.execute({ plugin: entry, tool, projectRoot });
       const ref = withdrawal.recordedRef(registrations, entry);
       if (
@@ -133,10 +128,10 @@ export class RemovePlugin {
 
   private async deletePluginFiles(
     files: ReadonlyMap<string, string>,
-    baseDir: string
+    projectRoot: string
   ): Promise<void> {
     for (const relativePath of files.keys()) {
-      const fullPath = join(baseDir, relativePath);
+      const fullPath = join(projectRoot, relativePath);
       await this.deps.fs.deleteFile(fullPath);
       await this.deps.fs.deleteEmptyDirectories(dirname(fullPath));
     }

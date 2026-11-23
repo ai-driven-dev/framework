@@ -62,7 +62,6 @@ function fixture(
     {
       fs,
       projectRepo: repo,
-      homedir: () => "/home/dev",
       integration: pickIntegration(fs),
     },
     registeredTools()

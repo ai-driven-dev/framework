@@ -84,7 +84,6 @@ export function pluginRemover(parts: PluginRemoverParts) {
       {
         fs,
         projectRepo: parts.manifestRepo,
-        homedir: () => "/home/dev",
         integration: pickIntegration(fs),
       },
       parts.tools ?? registeredTools()
