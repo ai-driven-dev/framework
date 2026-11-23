@@ -133,7 +133,7 @@ flowchart TD
 <a href="plugins/aidd-context/README.md">
 <img align="right" alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" />
 <h3>🧭 aidd-context</h3>
-14 skills · 2 hooks<br />
+14 skills · 3 hooks<br />
 Project memory, context generation, learning
 </a>
 </td>
@@ -141,7 +141,7 @@ Project memory, context generation, learning
 <a href="plugins/aidd-dev/README.md">
 <img align="right" alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" />
 <h3>⚙️ aidd-dev</h3>
-10 skills<br />
+10 skills · 3 hooks<br />
 Plan, build, review, test, debug
 </a>
 </td>
@@ -159,7 +159,7 @@ Commits, pull requests, release tags, issues
 <a href="plugins/aidd-pm/README.md">
 <img align="right" alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" />
 <h3>📋 aidd-pm</h3>
-10 skills<br />
+10 skills · 3 hooks<br />
 Briefs, Epics, Stories, specs, Spikes, Defects
 </a>
 </td>
@@ -167,7 +167,7 @@ Briefs, Epics, Stories, specs, Spikes, Defects
 <a href="plugins/aidd-refine/README.md">
 <img align="right" alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" />
 <h3>🪞 aidd-refine</h3>
-5 skills<br />
+5 skills · 3 hooks<br />
 Brainstorm, challenge, fact-check
 </a>
 </td>

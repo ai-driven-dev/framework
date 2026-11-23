@@ -207,7 +207,7 @@ function normalise(piece) {
     .replace(/[.!?]+$/u, "");
 }
 
-/** Copied from `scripts/check-doc-duplication.js`: a line break ends a sentence too. */
+/** Copied from `scripts/check/contracts/custom/doc-duplication.cjs`: a line break ends a sentence too. */
 function sentencesOf(text) {
   const found = new Map();
   for (const { number, text: line } of proseLines(text)) {

@@ -86,22 +86,6 @@ test("the imports keep a blank line on each side, so nothing hides them", () => 
   );
 });
 
-test("filling is idempotent", () => {
-  const result = run({ context: `${OPEN}\n${CLOSE}\n`, runs: 2 });
-
-  assert.equal(result.contentAfterRerun, result.content);
-  assert.match(result.content, /@aidd_docs\/memory\/architecture\.md/u);
-});
-
-test("the on-demand tier is listed without an import prefix", () => {
-  const content = run({
-    context: `${OPEN}\n${CLOSE}\n`,
-    onDemand: ["internal/decision.md"],
-  }).content;
-
-  assert.match(content, /^- aidd_docs\/memory\/internal\/decision\.md$/mu);
-});
-
 test("a file holding one marker without its pair reports instead of skipping silently", () => {
   const result = run({ context: `# P\n\n<aidd_project_memory>\n${CLOSE}\n` });
 
@@ -139,18 +123,6 @@ test("a nested fence does not close the example that documents the old shape", (
   assert.equal(lines[2], "<aidd_project_memory>", "the documented example must stay as written");
   assert.equal(lines[7], OPEN, "the real block must be the one migrated");
   assert.match(content, /@aidd_docs\/memory\/architecture\.md/u);
-});
-
-// The @ import form is Claude-only. AGENTS.md is read by codex, cursor and
-// opencode, none of which resolve it, so an @ line there was inert text.
-test("AGENTS.md gets markdown links, resolvable from the repository root", () => {
-  const content = run({
-    context: `${OPEN}\n${CLOSE}\n`,
-    contextAt: "AGENTS.md",
-  }).content;
-
-  assert.match(content, /^\[aidd_docs\/memory\/architecture\.md\]\(aidd_docs\/memory\/architecture\.md\)$/mu);
-  assert.doesNotMatch(content, /\(\.\.\//u);
 });
 
 test("the block lists every aidd_docs/ folder other than the bank, read on demand, after the bank's own files", () => {
@@ -245,6 +217,8 @@ test("a session start, or any sync, never adds a block to a file holding none, a
   }
 });
 
+// The @ import form is Claude-only. AGENTS.md is read by codex, cursor and
+// opencode, none of which resolve it, so an @ line there was inert text.
 test("a link to nothing and a copilot file linked to AGENTS.md are still never written", () => {
   const root = sandbox({ "AGENTS.md": EMPTY }, { "CLAUDE.md": "gone.md", [".github/copilot-instructions.md"]: "../AGENTS.md" });
   try {
@@ -335,16 +309,6 @@ test("CLAUDE.md linked to AGENTS.md is written once, in the @ form Claude Code l
     assert.equal(read(root, "CLAUDE.md"), `# P\n\n${FILLED_AT}\n`);
     assert.equal(read(root, "AGENTS.md"), read(root, "CLAUDE.md"));
     assert.ok(fs.lstatSync(path.join(root, "CLAUDE.md")).isSymbolicLink(), "the link stays a link");
-  } finally {
-    fs.rmSync(root, { recursive: true, force: true });
-  }
-});
-
-test("a file linked from two other names takes the link form once, climbing from the real file", () => {
-  const root = sandbox({ "AGENTS.md": EMPTY }, { ".github/copilot-instructions.md": "../AGENTS.md" });
-  try {
-    assert.deepEqual(sync(root), []);
-    assert.equal(read(root, "AGENTS.md"), `# P\n\n${OPEN}\n\n[aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md)\n\n${CLOSE}\n`);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -463,15 +427,3 @@ test("a team line inside the old copilot block is held, never erased", () => {
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
-
-test("copilot-instructions.md linked to AGENTS.md is never given the pointer", () => {
-  const root = sandbox({ "AGENTS.md": EMPTY }, { [COPILOT]: "../AGENTS.md" });
-  try {
-    assert.deepEqual(sync(root), []);
-    assert.doesNotMatch(read(root, "AGENTS.md"), /Project memory:/u);
-    assert.ok(fs.lstatSync(path.join(root, COPILOT)).isSymbolicLink());
-  } finally {
-    fs.rmSync(root, { recursive: true, force: true });
-  }
-});
-

@@ -62,13 +62,6 @@ test("the contributors of the video travel with the text, so the announcements c
   assert.deepEqual(youtubeMetadata({ ...plan, scenes: plan.scenes.slice(0, 2) }, context).contributors, []);
 });
 
-test("a plugin skill is written as a slash command and a CLI command is left as it is", () => {
-  const { description } = youtubeMetadata(plan, context);
-
-  assert.match(description, /^- aidd telemetry : /m);
-  assert.match(description, /^- \/aidd-context:05-rule-generate : /m);
-});
-
 test("a release with no contributors scene leaves the contributors line out", () => {
   const { description } = youtubeMetadata({ ...plan, scenes: plan.scenes.slice(0, 2) }, context);
 

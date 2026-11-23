@@ -17,12 +17,12 @@ Done means every gate below is green. CLI gates: [`internal/cli/testing.md`](int
 
 | Command | Checks |
 | --- | --- |
-| `pnpm exec lefthook run pre-commit --all-files` | every job in `lefthook.yml`; the `cli` jobs ([`internal/cli/testing.md`](internal/cli/testing.md), Gates) only when `cli/` changed |
+| `pnpm exec lefthook run pre-commit --all-files` | every job in `lefthook.yml`, the framework content contracts among them (`framework-content`: `node scripts/check/run.cjs --fix` on the staged files); the `cli` jobs ([`internal/cli/testing.md`](internal/cli/testing.md), Gates) only when `cli/` changed |
 | `pnpm exec commitlint --edit` | the message against `commitlint.config.cjs` |
 
-- The hook regenerates each plugin's `CATALOG.md` and the README counts, and stages them.
+- `framework-content` regenerates each plugin's `CATALOG.md` and the README counts, and stages them.
+- `make validate` runs the content check over the whole tree, without `--fix`.
 - `kanban/` alone fires no local job: run `cd kanban && pnpm test`; CI runs `kanban-checks`.
-- `context-reference-form` reads only the files `TARGET_FILES` in `memory.cjs` names: root `CLAUDE.md` and `AGENTS.md`.
 
 ## Before push
 

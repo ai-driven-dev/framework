@@ -278,7 +278,7 @@ flowchart TD
 | --- | --- |
 | Investigate a technical unknown | `/aidd-pm:05-spike`, then `/aidd-pm:10-task` or `/aidd-pm:04-spec` |
 | Sharpen a vague idea | `/aidd-refine:01-brainstorm` |
-| Challenge finished work against its plan | `/aidd-refine:02-challenge` |
+| Challenge finished work and what it was asked to do | `/aidd-refine:02-challenge` |
 | Find gaps in an idea, stories, a PRD or a spec | `/aidd-refine:03-shadow-areas` |
 | Check the facts in a text | `/aidd-refine:04-fact-check` |
 | Audit a codebase, read-only | `/aidd-dev:04-audit` |

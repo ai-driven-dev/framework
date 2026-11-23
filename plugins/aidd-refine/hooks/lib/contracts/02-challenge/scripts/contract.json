@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "kind": "challenge",
+  "unit": "file",
+  "scope": ["aidd_docs/**/challenge.md"],
+  "rules": {
+    "CHALLENGE-01": { "op": "template", "in": "challenge.md", "template": "../assets/report-template.md", "why": "whoever acts on the report reads every round the same way", "fix": "follow report-template.md" },
+    "CHALLENGE-02": { "op": "custom", "in": "challenge.md", "check": "items", "why": "a section holds only findings, or None alone, so silence never reads as a pass" },
+    "CHALLENGE-03": { "op": "custom", "in": "challenge.md", "check": "evidence", "why": "a deal breaker blocks only on evidence someone can re-run or re-read" },
+    "CHALLENGE-04": { "op": "custom", "in": "challenge.md", "check": "change", "why": "a finding without its change cannot be acted on" },
+    "CHALLENGE-05": { "op": "custom", "in": "challenge.md", "check": "question", "why": "a To decide goes to whoever owns the request, as a question" }
+  }
+}

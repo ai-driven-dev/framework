@@ -7,7 +7,7 @@ const { describe, it, beforeEach, afterEach } = require("node:test");
 
 const SKILL = path.resolve(__dirname, "../../plugins/aidd-context/skills/04-skill-generate");
 const ENGINE = path.join(SKILL, "scripts/scaffold-skill.cjs");
-const CHECK = path.join(SKILL, "scripts/check-skill.cjs");
+const CHECK = path.join(SKILL, "scripts/validate-skill.cjs");
 
 /**
  * The generator's scaffold: it fills the structural slots of the skill's own templates from a
@@ -48,7 +48,7 @@ function fillContent(dir) {
   for (const file of ["SKILL.md", ...fs.readdirSync(path.join(dir, "actions")).map((name) => `actions/${name}`)]) {
     const full = path.join(dir, file);
     const text = fs.readFileSync(full, "utf8");
-    fs.writeFileSync(full, text.replace(/^> Fill every.*\n/mu, "").replace(/<[^>\n]+>/gu, "Filled."));
+    fs.writeFileSync(full, text.replace(/^> Fill every.*\n/mu, "").replace(/\{\{[^}\n]+\}\}/gu, "Filled."));
   }
 }
 
@@ -78,6 +78,23 @@ describe("skill scaffold", () => {
     run(PLAN);
     const text = read("SKILL.md");
     assert.match(text, /^---\nname: brainstorm\ndescription: Clarifies a vague intent, when the user wants to brainstorm\.\n---\n\n# Brainstorm\n/u);
+  });
+
+  it("reads a plan from stdin without creating an intermediate plan file", () => {
+    const result = spawnSync(process.execPath, [ENGINE, "-", target], { input: JSON.stringify(PLAN), encoding: "utf8" });
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(fs.readdirSync(root), ["brainstorm"]);
+    assert.deepEqual(fs.readdirSync(path.join(target, "actions")), ["01-capture.md", "02-explore.md", "03-conclude.md"]);
+    fillContent(target);
+    const check = spawnSync(process.execPath, [CHECK, target], { encoding: "utf8" });
+    assert.deepEqual({ code: check.status, out: check.stdout }, { code: 0, out: "" });
+  });
+
+  it("rejects malformed JSON from stdin before writing anything", () => {
+    const result = spawnSync(process.execPath, [ENGINE, "-", target], { input: "{", encoding: "utf8" });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /scaffold-skill:/u);
+    assert.deepEqual(fs.readdirSync(root), []);
   });
 
   it("draws an entry per case to actions that run on their own, and they pass the check", () => {
@@ -119,14 +136,14 @@ describe("skill scaffold", () => {
     const explore = read("actions/02-explore.md");
     assert.match(explore, /^# 02 - Explore\n/u);
     assert.match(explore, /\[conclude\]\(03-conclude\.md\)/u);
-    assert.match(explore, /<result sentence>/u);
-    assert.match(explore, /<step>/u);
-    assert.doesNotMatch(explore, /<NN>|<title>|<read-next step>/u);
+    assert.match(explore, /\{\{result sentence\}\}/u);
+    assert.match(explore, /\{\{step\}\}/u);
+    assert.doesNotMatch(explore, /\{\{NN\}\}|\{\{title\}\}|\{\{read-next step\}\}/u);
   });
 
   it("writes no read-next step in an action that only ends", () => {
     run(withPlan((plan) => (plan.actions[2].next = [{ end: "done" }])));
-    assert.doesNotMatch(read("actions/03-conclude.md"), /\]\(\d\d-|<read-next step>/u);
+    assert.doesNotMatch(read("actions/03-conclude.md"), /\]\(\d\d-|\{\{read-next step\}\}/u);
   });
 
   it("refuses a next action the plan does not hold", () => {
@@ -162,12 +179,12 @@ describe("skill scaffold", () => {
     const copy = path.join(root, "copy");
     fs.cpSync(SKILL, copy, { recursive: true });
     const template = path.join(copy, "assets/action-template.md");
-    fs.writeFileSync(template, fs.readFileSync(template, "utf8").replace("<read-next step>", "<next>"));
+    fs.writeFileSync(template, fs.readFileSync(template, "utf8").replace("{{read-next step}}", "{{next}}"));
     const file = path.join(root, "plan.json");
     fs.writeFileSync(file, JSON.stringify(PLAN));
     const result = spawnSync(process.execPath, [path.join(copy, "scripts/scaffold-skill.cjs"), file, target], { encoding: "utf8" });
     assert.equal(result.status, 1);
-    assert.match(result.stderr, /<read-next step>/u);
+    assert.match(result.stderr, /\{\{read-next step\}\}/u);
   });
 
   it("links every next action in one sentence, so an action with several branches passes the check", () => {
@@ -212,13 +229,13 @@ describe("skill scaffold", () => {
     const result = spawnSync(process.execPath, [path.join(copy, "scripts/scaffold-skill.cjs"), file, target], { encoding: "utf8" });
     assert.equal(result.status, 0, result.stderr);
     const explore = read("actions/02-explore.md");
-    assert.doesNotMatch(explore, /<read-next step>|\r/u);
+    assert.doesNotMatch(explore, /\{\{read-next step\}\}|\r/u);
     assert.match(explore, /\[conclude\]\(03-conclude\.md\)/u);
   });
 
   it("refuses a call without a plan and a folder with exit 2", () => {
     const result = spawnSync(process.execPath, [ENGINE], { encoding: "utf8" });
     assert.equal(result.status, 2);
-    assert.match(result.stderr, /usage: scaffold-skill\.cjs <plan\.json> <skill-folder>/u);
+    assert.match(result.stderr, /usage: scaffold-skill\.cjs <plan\.json\|-> <skill-folder>/u);
   });
 });

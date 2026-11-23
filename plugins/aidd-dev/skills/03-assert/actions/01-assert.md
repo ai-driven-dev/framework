@@ -25,6 +25,7 @@ The work, and its task folder if any.
      - yes, naming a task folder: append it there;
      - yes, naming none: append it to the work's feature folder, `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<feature-slug>/`, reused when one exists;
      - no: the reply holds it.
+   - File written: run `scripts/validate-assert.cjs`, next to the loaded `SKILL.md`, on it, fix each finding and validate again, and after 3 passes stop and show what is left.
 
 ## Output
 

@@ -3,6 +3,9 @@
   "hooks": "./hooks/hooks.json"
 }
 
+## out-marketplace/plugins/aidd-context/hooks/artifacts.cjs
+script, identical to the plugin source
+
 ## out-marketplace/plugins/aidd-context/hooks/hooks.json
 {
   "hooks": {
@@ -14,6 +17,25 @@
             "command": "node ${PLUGIN_ROOT}/hooks/memory.cjs load",
             "timeout": 5,
             "statusMessage": "AIDD Context: refresh project memory"
+          },
+          {
+            "type": "command",
+            "command": "node ${PLUGIN_ROOT}/hooks/artifacts.cjs start",
+            "timeout": 5,
+            "statusMessage": "AIDD Context: note turn start"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|Bash|Shell|bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${PLUGIN_ROOT}/hooks/artifacts.cjs mark",
+            "timeout": 5,
+            "statusMessage": "AIDD Context: check written artifacts"
           }
         ]
       }
@@ -33,6 +55,231 @@
   }
 }
 
+
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/contract.json
+{
+  "version": 1,
+  "kind": "skill",
+  "unit": "folder",
+  "targets": "plugins/*/skills/*",
+  "scope": [".claude/skills/*", ".cursor/skills/*", ".opencode/skills/*", ".kilo/skills/*", ".github/skills/*", ".agents/skills/*"],
+  "shell": false,
+  "marker": "SKILL.md",
+  "rules": {
+    "SKILL-01": { "op": "max", "measure": "chars", "in": "SKILL.md", "field": "description", "max": 150,
+      "why": "every description loads in every session", "fix": "cut the description to 150 characters, it has {actual}" },
+    "SKILL-02": { "op": "forbidden", "in": "SKILL.md", "field": "description", "regex": ":",
+      "why": "a colon breaks unquoted YAML on some hosts", "fix": "remove the colon from the description" },
+    "SKILL-03": { "op": "forbidden", "in": "SKILL.md", "field": "description", "regex": "\\s[-–—]\\s",
+      "why": "a dash splits the trigger into two claims", "fix": "remove the dash separator from the description" },
+    "SKILL-04": { "op": "forbidden", "in": "SKILL.md", "field": "description", "regex": "[.!?]\\s+\\S",
+      "why": "the model matches one trigger sentence", "fix": "make the description one sentence" },
+    "SKILL-05": { "op": "sections", "in": "SKILL.md", "allowed": ["Transversal rules"],
+      "why": "the router loads on every call; detail belongs in actions", "fix": "keep only the diagram and the transversal rules after the title" },
+    "SKILL-06": { "op": "custom", "in": "SKILL.md", "check": "router-diagram",
+      "why": "the diagram is the only route to an action" },
+    "SKILL-07": { "op": "custom", "in": "SKILL.md", "check": "router-edges",
+      "why": "an edge the model cannot follow is a dead route", "fix": "link the target action from the source step" },
+    "SKILL-08": { "op": "pattern", "in": "actions/*.md", "line": 1, "regex": "^# \\d\\d - \\S",
+      "why": "the number orders actions across hosts", "fix": "start with `# <NN> - <Title>`" },
+    "SKILL-09": { "op": "sections", "in": "actions/*.md", "allowed": ["Input", "Process", "Output", "Rules"], "order": true,
+      "why": "one shape lets the model find the steps", "fix": "use only and in order Input, Process, Output, Rules" },
+    "SKILL-10": { "op": "custom", "in": "actions/*.md", "check": "read-next",
+      "why": "a chained action that does not link the next stops the flow", "fix": "end with a step that reads the next action, as a link" },
+    "SKILL-11": { "op": "oneSentence", "in": ["SKILL.md", "actions/*.md"], "sections": ["Process", "Rules", "Transversal rules"], "skipIndentedIn": ["Rules", "Transversal rules"],
+      "why": "one instruction per item is followed, two are merged", "fix": "keep one sentence per item, or put exact text in backticks; in a step, cases go as dash sub-items" },
+    "SKILL-12": { "op": "flatList", "in": ["SKILL.md", "actions/*.md"], "sections": ["Rules", "Transversal rules"],
+      "why": "a nested rule hides its condition", "fix": "write the rule on one line, its case inside the sentence" },
+    "SKILL-13": { "op": "max", "measure": "lines", "in": "{actions,references}/**/*.md", "max": 100,
+      "why": "a long action dilutes the step being run", "fix": "split the file, it has {actual} lines" },
+    "SKILL-14": { "op": "forbidden", "in": "**/*.md", "notIn": "assets/**", "scope": "nofence", "regex": "<!--[\\s\\S]*?--!?>",
+      "why": "hosts strip or show comments inconsistently", "fix": "state it in the prose, or move it to an asset" },
+    "SKILL-15": { "op": "forbidden", "in": "**/*.md", "notIn": "assets/**", "regex": "\\{\\{[^{}\\n]*\\}\\}",
+      "why": "an unfilled slot is read as an instruction", "fix": "fill the template slot, or move it to an asset" },
+    "SKILL-16": { "op": "forbidden", "in": "**/*.md", "regex": "\\*\\*",
+      "why": "bold competes with the instruction order", "fix": "write the sentence without bold" },
+    "SKILL-17": { "op": "links", "in": "**/*.md", "notIn": "assets/**",
+      "why": "a dead link is a step the model cannot take", "fix": "fix the link, {target} does not exist" },
+    "SKILL-18": { "op": "equals", "in": "SKILL.md", "field": "name", "to": "folder",
+      "why": "hosts that validate skills require the name to be the folder's", "fix": "name the skill {expected}, as its folder" },
+    "SKILL-20": { "op": "pattern", "in": "SKILL.md", "field": "description", "regex": "\\S",
+      "why": "the description is the only way the model finds the skill", "fix": "give the skill a description in its front matter" },
+    "SKILL-21": { "op": "links", "in": "**/*.md", "inside": true,
+      "why": "a link leaving the skill is dead in every installed copy", "fix": "name the file in prose, {target} is outside the skill" },
+    "SKILL-22": { "op": "custom", "in": ["SKILL.md", "actions/**/*.md", "references/**/*.md"], "check": "sibling-plugin",
+      "why": "a plugin works without its siblings installed" }
+  }
+}
+
+
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/mermaid.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/read-next.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/router-diagram.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/router-edges.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/sibling-plugin.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/05-rule-generate/assets/rule-template.md
+---
+description: "{{when the rule applies, one line}}"
+paths:
+targets: [{{host tools}}]
+---
+
+# {{title}}
+
+- {{requirement}}
+
+## {{group}}
+
+- {{requirement}}
+
+> Fill every `{{...}}`, add one `  - "glob"` line under `paths:` per file pattern or delete `paths:` for a rule on every file, delete the group section when unused, and delete this line.
+
+
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/05-rule-generate/scripts/contract.json
+{
+  "version": 1,
+  "kind": "rule",
+  "unit": "file",
+  "scope": ["aidd_docs/rules/*/*.md"],
+  "rules": {
+    "RULE-01": {
+      "op": "template",
+      "in": "*.md",
+      "template": "../assets/rule-template.md",
+      "optional": ["paths", "{{group}}"],
+      "why": "every host copy is rendered from the source, so its shape must hold",
+      "fix": "follow rule-template.md"
+    }
+  }
+}
+
+
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/06-agent-generate/scripts/contract.json
+{
+  "version": 1,
+  "kind": "agent",
+  "unit": "file",
+  "targets": "plugins/*/agents/*.md",
+  "scope": [
+    ".claude/agents/*.md",
+    ".cursor/agents/*.md"
+  ],
+  "shell": false,
+  "rules": {
+    "AGENT-02": {
+      "op": "equals",
+      "in": "*.md",
+      "field": "name",
+      "to": "basename",
+      "why": "hosts resolve the agent by file name",
+      "fix": "set name to {expected}"
+    },
+    "AGENT-03": {
+      "op": "pattern",
+      "in": "*.md",
+      "field": "description",
+      "regex": "\\. Use to ",
+      "why": "A4: what it does, then when to call it",
+      "fix": "end the description with `Use to <when>`"
+    },
+    "AGENT-04": {
+      "op": "sections",
+      "in": "*.md",
+      "level": 1,
+      "allowed": [
+        "Role",
+        "Behavior",
+        "Output"
+      ],
+      "order": true,
+      "required": [
+        "Role",
+        "Behavior",
+        "Output"
+      ],
+      "why": "A5-A7: the caller reads role, boundary, then return format",
+      "fix": "use exactly # Role, # Behavior, # Output in that order"
+    },
+    "AGENT-05": {
+      "op": "forbidden",
+      "in": "*.md",
+      "regex": "\\{\\{[^{}\\n]*\\}\\}",
+      "why": "an unfilled slot is read as an instruction",
+      "fix": "fill the template slot"
+    }
+  }
+}
+
+
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/07-command-generate/assets/command-template.md
+---
+description: "{{what the command does, one line}}"
+argument-hint:
+model:
+agent:
+allowed-tools:
+disable-model-invocation:
+---
+
+# {{Command title}}
+
+{{The single objective, in one line.}}
+
+1. {{Imperative step.}}
+2. {{Next step.}}
+
+> Fill every `{{...}}`, delete each front matter key the command does not keep, and delete this line.
+
+
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/07-command-generate/scripts/contract.json
+{
+  "version": 1,
+  "kind": "command",
+  "unit": "file",
+  "scope": [
+    ".claude/commands/*.md",
+    ".github/prompts/*.prompt.md",
+    ".opencode/commands/*.md",
+    ".kilo/commands/*.md"
+  ],
+  "shell": false,
+  "rules": {
+    "COMMAND-01": {
+      "op": "template",
+      "in": "*.md",
+      "template": "../assets/command-template.md",
+      "why": "one shape per command",
+      "fix": "follow command-template.md",
+      "optional": [
+        "argument-hint",
+        "model",
+        "agent",
+        "allowed-tools",
+        "disable-model-invocation"
+      ]
+    }
+  }
+}
+
+
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/lib/engine.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/lib/markdown.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/lib/ops.cjs
+script, identical to the plugin source
 
 ## out-marketplace/plugins/aidd-context/hooks/lib/host.cjs
 script, identical to the host adapter host-codex.cjs

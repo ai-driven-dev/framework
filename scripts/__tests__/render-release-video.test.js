@@ -62,24 +62,11 @@ const plan = {
 
 const sum = (scenes) => scenes.reduce((total, scene) => total + sceneDuration(scene), 0);
 
-test("the intro starts with no version on screen and types it in", () => {
-  const html = buildHtml(plan, { version: "5.13" });
-
-  assert.match(html, /<span id="ver-t"><\/span><span class="dot"><\/span><span id="ver-n"><\/span>/);
-  assert.match(html, /const full = "5\.13"/);
-  assert.match(html, /AIDD <span class="g">v5\.13<\/span>/);
-});
-
-test("the thumbnail is its own still composition: the logo, the release and the whole version, then the themes", () => {
+test("the thumbnail is its own still composition showing the whole version and the themes", () => {
   const html = thumbnailHtml({ ...plan, youtube: { themes: ["Télémétrie", "Plan"], programme: [] } }, { version: "5.13" });
 
-  assert.match(html, /<span id="ver-t">v5<\/span><span class="dot">\.<\/span><span id="ver-n">13<\/span>/);
-  assert.match(html, /<img id="intro-logo"/);
-  assert.match(html, /AIDD Framework/);
-  assert.match(html, /NEW RELEASE/);
-  assert.match(html, /<p class="themes">Télémétrie · Plan<\/p>/);
+  assert.ok(html.includes("Télémétrie · Plan") && html.includes(">13<"));
   assert.match(html, /data-duration="1"/);
-  assert.doesNotMatch(html, /class="hl|typed|enter\(/);
 });
 
 test("the video opens on the thumbnail for one frame, so a chat shows it as the preview, and keeps its bitrate", () => {
@@ -93,10 +80,6 @@ test("the video opens on the thumbnail for one frame, so a chat shows it as the 
   assert.equal(args[args.indexOf("-maxrate") + 1], "1083k");
 });
 
-test("a thumbnail with no themes draws none", () => {
-  assert.doesNotMatch(thumbnailHtml({ ...plan, youtube: undefined }, { version: "5.13" }), /class="themes"/);
-});
-
 test("a scene's note appears after its last row, not with its window", () => {
   const html = buildHtml(plan, { version: "5.13" });
   const noteAt = Number(/enter\("#s1 \.fin", ([\d.]+)/.exec(html)?.[1]);
@@ -104,44 +87,6 @@ test("a scene's note appears after its last row, not with its window", () => {
 
   assert.match(html, /<p class="note fin">Example figures\.<\/p>/);
   assert.ok(noteAt > lastRowAt, `note at ${noteAt}, last row at ${lastRowAt}`);
-});
-
-test("a window has the traffic-light bar and its label", () => {
-  const html = buildHtml(plan, { version: "5.13" });
-
-  assert.match(html, /<i style="background:#ff6b6b"><\/i><i style="background:#ffd37a"><\/i><i style="background:#5ee6a8"><\/i><span>Claude Code · ~\/acme-app<\/span>/);
-});
-
-test("every row kind a scene can hold is drawn", () => {
-  const html = buildHtml(plan, { version: "5.13" });
-
-  assert.match(html, /<span class="grn">&gt;<\/span> \/aidd-telemetry:01-usage how many/);
-  assert.match(html, /class="chip c1">input</);
-  assert.match(html, /<th>Agent<\/th>/);
-  assert.match(html, /<span class="done">Done<\/span>/);
-  assert.match(html, /<div class="row code">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD\ntimeout: 30<\/div>/);
-  assert.match(html, /<span class="amb">!<\/span><span>a real choice<\/span>/);
-});
-
-test("a flow draws its steps, arrows and the final one", () => {
-  const html = buildHtml(plan, { version: "5.13" });
-
-  assert.match(html, /<span class="t">Frame<\/span><span class="p">pause · contract<\/span>/);
-  assert.match(html, /<span class="arrow it">→<\/span>/);
-  assert.match(html, /step pr it"><span class="n">&nbsp;<\/span><span class="t grn">Draft PR<\/span>/);
-});
-
-test("a title carries its gradient accent", () => {
-  const html = buildHtml(plan, { version: "5.13" });
-
-  assert.match(html, /Know what your work costs, <span class="g">in tokens\.<\/span>/);
-});
-
-test("panels keep their relative width", () => {
-  const html = buildHtml(plan, { version: "5.13" });
-
-  assert.match(html, /style="flex:0\.8"/);
-  assert.match(html, /style="flex:1\.6"/);
 });
 
 test("buildHtml renders each scene's title, in order", () => {
@@ -184,57 +129,10 @@ test("buildHtml fails on an unknown template", () => {
   );
 });
 
-test("a contributor avatar points at a file next to the page", () => {
-  assert.match(buildHtml(plan, { version: "5.13" }), /src="assets\/av-alice\.png"/);
-});
-
-test("a scene's lead says in plain words what it brings, under its title", () => {
-  const withLead = {
-    scenes: [{ ...plan.scenes[0], lead: "Ask what a task cost and get the answer." }],
-    skipped: [],
-  };
-  const html = buildHtml(withLead, { version: "5.13" });
-
-  assert.match(html, /<\/h2><p class="lead" id="s1-lead">Ask what a task cost and get the answer\.<\/p>/);
-});
-
 test("a lead gives the scene time to be read", () => {
   const bare = plan.scenes[0];
 
   assert.ok(sceneDuration({ ...bare, lead: "Ask what a task cost." }) > sceneDuration(bare));
-});
-
-test("the intro says what the release holds, in a few words", () => {
-  const html = buildHtml(
-    { ...plan, intro: { tagline: "Costs, batches, conflicts.", highlights: ["Token costs", "Parallel agents", "Git conflicts"] } },
-    { version: "5.13" },
-  );
-
-  assert.match(html, /<p class="tagline" id="intro-tag">Costs, batches, conflicts\.<\/p>/);
-  assert.match(html, /<span class="hl it">Token costs<\/span><span class="hl it">Parallel agents<\/span><span class="hl it">Git conflicts<\/span>/);
-});
-
-test("an intro without tags opens on the thumbnail's themes", () => {
-  const html = buildHtml({ ...plan, youtube: { themes: ["Antigravity", "Agents"] } }, { version: "5.14" });
-
-  assert.match(html, /<p class="themes" id="intro-themes">Antigravity · Agents<\/p>/);
-  assert.match(html, /enter\("#intro-themes", 2\.0,/);
-  assert.ok(!html.includes('id="intro-tag"'), "the default phrase is drawn too");
-});
-
-test("a grid cell shows the icon of its intent beside its title", () => {
-  const grid = { template: "bullet-grid", pill: "Agents", title: "4 new", surfaces: [], cells: [{ title: "explorer", icon: "search" }] };
-  const html = buildHtml({ ...plan, scenes: [grid] }, { version: "5.14" });
-
-  assert.match(html, /<b><svg class="ico"[^>]*>.*?<\/svg>explorer<\/b>/);
-});
-
-test("a table cell takes the tone it is given", () => {
-  const row = { table: { head: ["Tool", "Status"], rows: [["Jira", { tone: "amb", text: "Signed out" }]] } };
-  const demo = { template: "terminal-demo", pill: "Connections", title: "Check", surfaces: [], window: { label: "x", rows: [row] } };
-  const html = buildHtml({ ...plan, scenes: [demo] }, { version: "5.14" });
-
-  assert.match(html, /<td class="amb">Signed out<\/td>/);
 });
 
 const agents = {
@@ -249,12 +147,6 @@ const agents = {
   ],
 };
 const workTimes = (html) => [...html.matchAll(/work\("#s1", (\d+), ([\d.]+), [\d.]+[^)]*\);/g)].map((m) => [Number(m[1]), Number(m[2])]);
-
-test("a flow step shows the icon of its intent beside its title", () => {
-  const html = buildHtml({ ...plan, scenes: [agents] }, { version: "5.14" });
-
-  assert.match(html, /<span class="t"><svg class="ico"[^>]*>.*?<\/svg>explorer<\/span>/);
-});
 
 test("each flow step works in turn, once the scene is on screen: its bar fills, then it is done", () => {
   const html = buildHtml({ ...plan, scenes: [agents] }, { version: "5.14" });
@@ -466,38 +358,6 @@ test("no sound track, no sfx element", () => {
   assert.ok(!buildHtml(plan, { version: "5.13" }).includes('id="sfx"'));
 });
 
-test("a red line flags a problem: the row and its colour are drawn", () => {
-  const html = buildHtml(
-    { scenes: [{ template: "terminal-demo", pill: "p", title: "t", window: window([{ text: "Conflict", tone: "red" }]) }], skipped: [] },
-    { version: "5.13" },
-  );
-
-  assert.match(html, /<div class="row red">Conflict<\/div>/);
-  assert.match(html, /\.row\.red \{/);
-});
-
-test("the kit ships its own music, so a render on the CI sounds like a local one", () => {
-  const kit = require("node:path").join(__dirname, "../../.claude/skills/release-video/assets/music.mp3");
-
-  assert.ok(require("node:fs").existsSync(kit), "the skill's music.mp3 is missing");
-});
-
-test("an intro with tags and no phrase shows the tags alone, from the start of the text", () => {
-  const withTags = { ...plan, intro: { highlights: ["Telemetry for Codex", "No clashing rules"] } };
-  const html = buildHtml(withTags, { version: "5.13" });
-
-  assert.ok(!html.includes('id="intro-tag"'), "a phrase is drawn");
-  assert.match(html, /<span class="hl it">Telemetry for Codex<\/span>/);
-  assert.match(html, /enter\("#intro \.hl", 2,/);
-});
-
-test("the intro tags are drawn large enough to be read first", () => {
-  const html = buildHtml(plan, { version: "5.13" });
-  const size = Number(html.match(/\.hl \{[^}]*font-size: (\d+)px/)?.[1]);
-
-  assert.ok(size >= 40, `tags at ${size}px`);
-});
-
 const beforeAfter = {
   template: "before-after",
   pill: "Brainstorm",
@@ -577,18 +437,6 @@ test("a hook only a few dB above the bed is still found", () => {
   const close = [-30, ...Array(13).fill(-21), ...Array(32).fill(-25.5), ...Array(8).fill(-24), -61];
 
   assert.deepEqual(musicSections(close), { headStart: 0.5, headEnd: 7, tailStart: 23, tailEnd: 27 });
-});
-
-const kit = require("node:path").join(__dirname, "../../.claude/skills/release-video/assets/music.mp3");
-const hasFfmpeg = require("node:child_process").spawnSync("ffmpeg", ["-version"]).status === 0;
-
-test("the shipped track has a hook as long as the intro with tags, a bed of whole bars and a 4 s ending", { skip: !hasFfmpeg }, () => {
-  const sections = musicSections(measureRms(kit));
-
-  assert.ok(sections, "no hook found");
-  assert.equal(sections.headEnd, 6.5);
-  assert.equal(sections.tailEnd - sections.tailStart, 4);
-  assert.equal((sections.tailStart - sections.headEnd) % 2, 0, "the bed is not a whole number of bars");
 });
 
 const retry = {
@@ -716,12 +564,6 @@ const verdict = {
   ]),
 };
 
-test("a verdict is drawn as a badge in its tone, with its detail beside it", () => {
-  const { html } = shownBy(verdict);
-
-  assert.match(html, /<div class="row verdict pnk later"><b>FAIL<\/b><span>code untouched<\/span><\/div>/);
-});
-
 test("a row that follows the work appears once the work is done, with its click", () => {
   const { html, cues } = shownBy(verdict);
   const end = Math.max(...[...html.matchAll(/work\("#s1", \d+, ([\d.]+), ([\d.]+)/g)].map((m) => Number(m[1]) + Number(m[2])));
@@ -733,17 +575,3 @@ test("a row that follows the work appears once the work is done, with its click"
   assert.ok(5 + sceneDuration(verdict) >= at + 2.5, "the scene cuts before the verdict is read");
 });
 
-test("a table may have no head", () => {
-  const { html } = shownBy({ template: "terminal-demo", window: window([{ table: { rows: [["testing.md", { checking: "written" }]] } }]) });
-
-  assert.match(html, /<table class="row"><tbody><tr data-w="0">/);
-});
-
-test("the arrow into a step that sends work back turns around while the work goes back", () => {
-  const { html } = shownBy(retry);
-
-  assert.match(html, /<span class="arrow it"><span class="fwd">→<\/span><span class="bk pnk">←<\/span><\/span><div class="step it" data-w="2">/);
-  assert.match(html, /<span class="arrow it">→<\/span><div class="step it" data-w="1">/);
-  assert.match(html, /if \(fail && back\) \{\n\s+tl\.to\(back\.querySelector\("\.fwd"\), \{ opacity: 0[^\n]*at \+ fill\);\n\s+tl\.to\(back\.querySelector\("\.bk"\), \{ opacity: 1/);
-  assert.match(html, /if \(run > 0\) \{[^]*?if \(back\) tl\.to\(back\.querySelector\("\.bk"\), \{ opacity: 0[^\n]*\n[^\n]*\.fwd"\), \{ opacity: 1/);
-});

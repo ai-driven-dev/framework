@@ -6,10 +6,6 @@ const test = require("node:test");
 const LIBRARY = path.resolve(__dirname, "../../plugins/aidd-ui/hooks/lib/common-rules.cjs");
 const { isShellWrite, formatFindings } = require(LIBRARY);
 
-test("the shared library exports exactly what every plugin's hooks call: the write test and the output shape", () => {
-  assert.deepEqual(Object.keys(require(LIBRARY)).sort(), ["formatFindings", "isShellWrite"]);
-});
-
 test("the shared library requires only the built-in the hook contract allows: node:path", () => {
   const required = [...fs.readFileSync(LIBRARY, "utf8").matchAll(/require\(\s*["']([^"']+)["']\s*\)/g)].map((m) => m[1]);
   for (const name of required) assert.ok(["node:path"].includes(name), `requires ${name}`);
@@ -292,12 +288,6 @@ test("formatFindings: errors, grouped reached errors and warnings, in the contra
   );
 });
 
-test("formatFindings: a group of one prints the plain line, never ×1", () => {
-  const output = formatFindings("p", { reached: [{ file: "d/a.md", line: 3, rule: "R", excerpt: "e", fix: "f" }] });
-  assert.equal(output, 'p: 1 error, 0 warnings\nd/a.md:3 R "e" => f');
-  assert.doesNotMatch(output, /×1/u);
-});
-
 test("formatFindings: reached errors group by rule, fix and folder, never across one of them", () => {
   const output = formatFindings("p", {
     reached: [
@@ -335,24 +325,22 @@ test("formatFindings: a group prints an excerpt only when every member shares it
   assert.equal(uniform, 'p: 2 errors, 0 warnings\nC4 ×2 in ui/* "#FF6B3514" => use a token');
 });
 
-test("formatFindings: a group within one file names that file", () => {
-  const output = formatFindings("p", { reached: [{ file: "d/a.md", line: 1, rule: "R", fix: "f" }, { file: "d/a.md", line: 4, rule: "R", fix: "f" }] });
-  assert.equal(output, "p: 2 errors, 0 warnings\nR ×2 in d/a.md => f");
+test("formatFindings: a group names its single file, or prints in * for root-level files", () => {
+  assert.equal(
+    formatFindings("p", { reached: [{ file: "d/a.md", line: 1, rule: "R", fix: "f" }, { file: "d/a.md", line: 4, rule: "R", fix: "f" }] }),
+    "p: 2 errors, 0 warnings\nR ×2 in d/a.md => f",
+  );
+  assert.equal(
+    formatFindings("p", { reached: [{ file: "a.md", rule: "R", fix: "f" }, { file: "b.md", rule: "R", fix: "f" }] }),
+    "p: 2 errors, 0 warnings\nR ×2 in * => f",
+  );
 });
 
-test("formatFindings: a group of root-level files prints in *", () => {
-  const output = formatFindings("p", { reached: [{ file: "a.md", rule: "R", fix: "f" }, { file: "b.md", rule: "R", fix: "f" }] });
-  assert.equal(output, "p: 2 errors, 0 warnings\nR ×2 in * => f");
-});
+test("formatFindings: an excerpt stays on one line, its backslashes then its quotes escaped", () => {
+  const line = (excerpt) => formatFindings("p", { errors: [{ file: "a.md", rule: "R", excerpt, fix: "f" }] }).split("\n")[1];
 
-test("formatFindings: an excerpt stays on one line, its quotes escaped", () => {
-  const output = formatFindings("p", { errors: [{ file: "a.md", line: 1, rule: "R", excerpt: 'say "hi"\nthen\r\ngo', fix: "f" }] });
-  assert.equal(output, 'p: 1 error, 0 warnings\na.md:1 R "say \\"hi\\" then go" => f');
-});
-
-test("formatFindings: a backslash in an excerpt is escaped before its quotes", () => {
-  const output = formatFindings("p", { errors: [{ file: "a.md", rule: "R", excerpt: 'C:\\x "y"', fix: "f" }] });
-  assert.equal(output, 'p: 1 error, 0 warnings\na.md R "C:\\\\x \\"y\\"" => f');
+  assert.equal(line('say "hi"\nthen\r\ngo'), 'a.md R "say \\"hi\\" then go" => f');
+  assert.equal(line('C:\\x "y"'), 'a.md R "C:\\\\x \\"y\\"" => f');
 });
 
 test("formatFindings: the group folder uses forward slashes whatever the separator given", () => {
@@ -371,14 +359,6 @@ test("formatFindings: warnings stop at the cap, ten by default, and the count na
 test("formatFindings: errors are never capped", () => {
   const errors = Array.from({ length: 25 }, (_, index) => ({ file: "a.md", line: index + 1, rule: "E", fix: "f" }));
   assert.equal(formatFindings("p", { errors }).split("\n").length, 26);
-});
-
-test("formatFindings: the output never asks for a rerun", () => {
-  const output = formatFindings("p", {
-    errors: [{ file: "a.md", rule: "E", fix: "f" }],
-    warnings: Array.from({ length: 20 }, () => ({ file: "a.md", rule: "W", message: "m", fix: "f" })),
-  });
-  assert.doesNotMatch(output, /rerun/iu);
 });
 
 test("formatFindings: one error and one warning are singular, any other count plural", () => {

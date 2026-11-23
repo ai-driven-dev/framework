@@ -1,45 +1,45 @@
-# INSTALL.md - `<project-name>`
+# INSTALL.md - `{{project-name}}`
 
 Technical vision and installation guide.
 
 ## Vision
 
-`<one-liner from checklist>`
+`{{one-liner from checklist}}`
 
-`<2-3 sentences expanding on the value proposition, target users, and core differentiator>`
+`{{2-3 sentences expanding on the value proposition, target users, and core differentiator}}`
 
 ## Decisions
 
 | Decision           | Choice            | Why                                                |
 | ------------------ | ----------------- | -------------------------------------------------- |
-| Architecture       | `<pattern>`       | `<rationale tied to checklist constraints>`        |
-| Front-end          | `<framework>`     | `<rationale>`                                      |
-| Back-end           | `<framework>`     | `<rationale>`                                      |
-| Database           | `<engine>`        | `<rationale>`                                      |
-| Auth               | `<provider>`      | `<rationale>`                                      |
-| Hosting            | `<concrete>`      | `<rationale>`                                      |
+| Architecture       | `{{pattern}}`       | `{{rationale tied to checklist constraints}}`        |
+| Front-end          | `{{framework}}`     | `{{rationale}}`                                      |
+| Back-end           | `{{framework}}`     | `{{rationale}}`                                      |
+| Database           | `{{engine}}`        | `{{rationale}}`                                      |
+| Auth               | `{{provider}}`      | `{{rationale}}`                                      |
+| Hosting            | `{{concrete}}`      | `{{rationale}}`                                      |
 
 ## Stack summary
 
-- **Front-end:** `<concrete versions if relevant>`
-- **Back-end:** `<concrete>`
-- **Database:** `<concrete>`
-- **Auth:** `<concrete>`
-- **Hosting:** `<concrete>`
-- **Key integrations:** `<list>`
+- **Front-end:** `{{concrete versions if relevant}}`
+- **Back-end:** `{{concrete}}`
+- **Database:** `{{concrete}}`
+- **Auth:** `{{concrete}}`
+- **Hosting:** `{{concrete}}`
+- **Key integrations:** `{{list}}`
 
 ## Architecture
 
 ```mermaid
-<rendered mermaid diagram from action 04>
+{{rendered mermaid diagram from action 04}}
 ```
 
-`<2-3 sentences explaining the diagram: which modules talk to which, where the boundary is>`
+`{{2-3 sentences explaining the diagram: which modules talk to which, where the boundary is}}`
 
 ## Folder structure
 
 ```
-<project-root>/
+{{project-root}}/
 ├── ...
 └── ...
 ```
@@ -48,9 +48,9 @@ Technical vision and installation guide.
 
 Manual install - the framework does not yet scaffold these automatically.
 
-1. `<step 1>`
-2. `<step 2>`
-3. `<step 3>`
+1. `{{step 1}}`
+2. `{{step 2}}`
+3. `{{step 3}}`
 
 ## Audit summary
 
@@ -58,6 +58,6 @@ Results of the multi-agent audit run during action 03:
 
 | Candidate            | Verdict | Notes                          |
 | -------------------- | ------- | ------------------------------ |
-| `<candidate-1>`      | ✅ / ⚠️ / ❌ | `<one-line summary>`           |
-| `<candidate-2>`      | ✅ / ⚠️ / ❌ | `<one-line summary>`           |
-| `<candidate-3>`      | ✅ / ⚠️ / ❌ | `<one-line summary>`           |
+| `{{candidate-1}}`      | ✅ / ⚠️ / ❌ | `{{one-line summary}}`           |
+| `{{candidate-2}}`      | ✅ / ⚠️ / ❌ | `{{one-line summary}}`           |
+| `{{candidate-3}}`      | ✅ / ⚠️ / ❌ | `{{one-line summary}}`           |

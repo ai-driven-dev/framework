@@ -4,9 +4,11 @@ Run `scripts/write-command.cjs` to render one command as every confirmed host's 
 
 ```sh
 node "$writer" --project "$project_root" --tools "$host_ids" --input "$command_json"
+node "$validator" "$project_root/.claude/commands/$name.md"
 ```
 
 - `$writer`: the absolute path of `scripts/write-command.cjs`, next to the loaded `SKILL.md`.
+- `$validator`: the absolute path of `scripts/validate-command.cjs`, next to the loaded `SKILL.md`; it prints one `path:line COMMAND-nn message` per finding and nothing when clean.
 - `$project_root`: the absolute path of the working directory, copied as the session reports it.
 - `$host_ids`: the confirmed IDs from `hosts.md`, comma-separated.
 - `$command_json`: a temporary file outside the project holding `name`, `description` and `body`, plus each optional field the command keeps: `argument-hint`, `model`, `agent`, `allowed-tools`, or `disable-model-invocation` as a boolean.
