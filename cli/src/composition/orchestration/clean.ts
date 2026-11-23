@@ -22,7 +22,11 @@ import { UserScopePluginFiles } from "../../contexts/installation/application/re
 import { UninstallTools } from "../../contexts/installation/application/uninstall-tools.use-case.js";
 import { detachProjectClaims } from "../../contexts/machine-claims/application/removal/detach-project-claims.js";
 import { ResolvePurgeCandidate } from "../../contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
-import type { CleanClaims } from "../../orchestration/clean/clean-claims.js";
+import {
+  type CleanClaims,
+  claimReleaseOf,
+  projectCleanFactsOf,
+} from "../../orchestration/clean/clean-claims.js";
 import { CleanProject } from "../../orchestration/clean/clean-project.use-case.js";
 import { CleanUserScope } from "../../orchestration/clean/clean-user-scope.use-case.js";
 import { ConfirmRemoval } from "../../orchestration/clean/confirm-removal.use-case.js";
@@ -122,8 +126,9 @@ function wireCleanProject(base: Base, inst: Installation, claims: CleanClaims) {
     remove: new RemoveProjectInOrder({
       cleanProject,
       withdrawFromHost: base.withdrawFromHost,
-      claims,
-      marketplaces,
+      cleanFacts: projectCleanFactsOf(claims, marketplaces),
+      sharedClaim: claims.sharedClaim,
+      release: claimReleaseOf(claims),
     }),
   });
 }

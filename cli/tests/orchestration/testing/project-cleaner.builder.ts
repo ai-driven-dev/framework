@@ -19,6 +19,10 @@ import { ResolvePurgeCandidate } from "../../../src/contexts/machine-claims/appl
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import {
+  claimReleaseOf,
+  projectCleanFactsOf,
+} from "../../../src/orchestration/clean/clean-claims.js";
+import {
   CleanProject,
   type CleanProjectDeps,
 } from "../../../src/orchestration/clean/clean-project.use-case.js";
@@ -112,8 +116,9 @@ export function projectCleanerDeps(parts: ProjectCleanerParts): CleanProjectDeps
         marketplaceRegistries: parts.marketplaceRegistries ?? new Map(),
         sources: parts.sources ?? new Map(),
       }),
-      claims,
-      marketplaces,
+      cleanFacts: projectCleanFactsOf(claims, marketplaces),
+      sharedClaim: claims.sharedClaim,
+      release: claimReleaseOf(claims),
     }),
   };
 }
