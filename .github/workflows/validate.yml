@@ -22,7 +22,7 @@ jobs:
       CI: "true"
       # cli-ci.yml owns these three unconditionally, so running them again buys no coverage.
       # cli-type-honesty is deliberately NOT excluded: no cli-ci.yml job runs it, making this
-      # its only CI coverage. Recipe validation builds the CLI and needs its separate install.
+      # its only CI coverage.
       LEFTHOOK_EXCLUDE: "cli-biome,cli-architecture,cli-typecheck"
     steps:
       - name: Checkout

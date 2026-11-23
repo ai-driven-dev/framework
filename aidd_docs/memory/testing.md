@@ -6,7 +6,7 @@ CLI projects and gates: [`internal/cli/testing.md`](internal/cli/testing.md); mu
 
 | Surface | Validated by |
 | --- | --- |
-| Skills | the generator's validate step; pre-commit `skill-frontmatter`, `check-skill-argument-hints`, `architecture-rules` |
+| Skills | the generator's validate step; the `scripts-tests` frontmatter test, pre-commit `check-skill-argument-hints`, `architecture-rules` |
 | Agents | `architecture-rules` over `plugins/*/agents/`, then a run against a real project |
 | `scripts/` and bundled hooks | `node --test`, wrapped |
 | `cli/`, `kanban/` | their own vitest suites; they share no code |
