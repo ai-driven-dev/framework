@@ -1,4 +1,6 @@
+import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
 import type { RegistrationRecordRules } from "../../contexts/host-registration/contract/registration-record-rules.js";
 import { mergeCatalogueMarketplaces } from "../../contexts/host-registration/domain/record/catalogue-marketplaces.js";
 import {
@@ -215,7 +217,7 @@ function wireBuiltMarketplace(base: Base, assetProvider: BundledAssetProviderAda
     builds: frameworkBuildsOf(tools, frameworkBuildFor, agentModelStore),
     version: currentVersion,
     userCacheRoot: userConfigDir,
-    tmpdir,
+    createStagingDirectory: () => mkdtemp(join(tmpdir(), "aidd-built-")),
   });
   const ensureBuiltMarketplaceUseCase = new EnsureBuiltMarketplace(
     resolveMarketplaceUseCase,

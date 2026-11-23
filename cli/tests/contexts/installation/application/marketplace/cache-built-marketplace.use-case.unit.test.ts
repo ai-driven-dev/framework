@@ -59,6 +59,12 @@ function buildsOf(buildFor: BuildFor, variant?: string): FrameworkBuilds {
 const USER_CACHE_ROOT = "/user-cache";
 const TMP = "/tmp/given";
 
+/** A fresh private directory per call, as the production wiring makes one. */
+function freshStagingDirectory(): () => Promise<string> {
+  let count = 0;
+  return async () => join(TMP, `aidd-built-${++count}`);
+}
+
 /** The cache as production wires it, with the source already resolved: the user cache and the
  * version fixed. */
 function buildEnsurer(
@@ -74,7 +80,7 @@ function buildEnsurer(
     builds,
     version,
     userCacheRoot: () => USER_CACHE_ROOT,
-    tmpdir: () => TMP,
+    createStagingDirectory: freshStagingDirectory(),
   });
   return { execute: (command) => cache.execute(command, resolved) };
 }
@@ -225,6 +231,24 @@ describe("caching a built marketplace", () => {
     expect(r.builtDir).toBe(resolve(builtMarketplaceDir(PROJECT, "aidd-framework", "codex")));
     expect(fs.getFile(join(r.builtDir, "plugins/aidd-vcs/SKILL.md"))).toBe("built content");
     expect(fs.listUnder(TMP)).toEqual([]);
+  });
+
+  it("stages each dogfood build in its own fresh directory, never a fixed name", async () => {
+    const staged: string[] = [];
+    const capturing: BuildFor = ({ outDir }) => {
+      staged.push(outDir);
+      return buildFor({ target: TOOL.codex, mode: "marketplace", outDir });
+    };
+    const uc = buildEnsurer(fs, fakeResolve(PROJECT, "1.0.0"), buildsOf(capturing));
+    for (const target of [TOOL.codex, TOOL.cursor]) {
+      await uc.execute({
+        projectRoot: PROJECT,
+        marketplace: makeMarketplace(),
+        target,
+        mode: "marketplace",
+      });
+    }
+    expect(staged).toEqual([join(TMP, "aidd-built-1"), join(TMP, "aidd-built-2")]);
   });
 
   it("memoizes within a run: a second call for the same target/version does not rebuild", async () => {

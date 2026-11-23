@@ -67,8 +67,9 @@ export interface CacheBuiltMarketplaceDeps {
    * of them: delete that project and the global registration points at nothing.
    */
   readonly userCacheRoot: () => string;
-  /** Where a build is staged before it replaces the cache. */
-  readonly tmpdir: () => string;
+  /** A new empty directory only this process can use, where a build is staged before it replaces
+   * the cache. A predictable shared path would let another local user pre-create or link it. */
+  readonly createStagingDirectory: () => Promise<string>;
 }
 
 /**
@@ -166,18 +167,17 @@ export class CacheBuiltMarketplace {
   }
 
   private async buildViaTemp(job: BuildJob): Promise<void> {
-    const { target, mode, builtDir } = job;
-    const temp = join(this.deps.tmpdir(), `aidd-built-${target}-${mode}`);
-    await this.deps.fs.deleteDirectory(temp);
+    const { builtDir } = job;
+    const temp = await this.deps.createStagingDirectory();
     await this.runBuild({ ...job, outDir: temp });
     await this.deps.fs.deleteDirectory(builtDir);
     await this.copyDir(temp, builtDir);
     await this.deps.fs.deleteDirectory(temp);
   }
 
-  // Every outDir reaching this method is either `builtMarketplaceDir()` or a temp dir this class
-  // just deleted: an aidd-owned cache, never a user directory, so a collision here is stale-cache
-  // reuse, not data loss.
+  // Every outDir reaching this method is either `builtMarketplaceDir()` or a fresh staging dir:
+  // an aidd-owned cache, never a user directory, so a collision here is stale-cache reuse, not
+  // data loss.
   private async runBuild(job: BuildJob & { outDir: string }): Promise<void> {
     const { target, mode, sourceDir, outDir, variant } = job;
     await this.deps.fs.createDirectory(outDir);

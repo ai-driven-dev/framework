@@ -1,4 +1,4 @@
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createFrameworkBuildUseCase } from "../../../../../src/composition/contexts/translate.js";
 import type {
@@ -59,6 +59,12 @@ function buildsOf(buildFor: BuildFor, variant?: string): FrameworkBuilds {
 const USER_CACHE_ROOT = "/user-cache";
 const TMP = "/tmp/given";
 
+/** A fresh private directory per call, as the production wiring makes one. */
+function freshStagingDirectory(): () => Promise<string> {
+  let count = 0;
+  return async () => join(TMP, `aidd-built-${++count}`);
+}
+
 /** The use case as production wires it: a resolver in front of the cache, the user cache and the
  * version fixed. */
 function buildEnsurer(
@@ -72,7 +78,7 @@ function buildEnsurer(
     builds,
     version,
     userCacheRoot: () => USER_CACHE_ROOT,
-    tmpdir: () => TMP,
+    createStagingDirectory: freshStagingDirectory(),
   });
   return new EnsureBuiltMarketplace(resolveMarketplace, cache);
 }
