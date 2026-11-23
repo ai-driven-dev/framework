@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { CloneIdentity } from "../../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import { ConsentHistoryAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/consent/consent-history-adapter.js";
-import { PrivateStorageAdapter } from "../../../../../../src/shared/infrastructure/private-storage-adapter.js";
+import { machinePrivateStorage } from "../../../../../shared/testing/machine-private-storage.builder.js";
 import { FailingPrivateStorage } from "../../../testing/failing-private-storage.fake.js";
 
 let root: string;
@@ -23,8 +23,7 @@ const CLONE: CloneIdentity = {
 };
 
 describe("the consent history", () => {
-  const history = () =>
-    new ConsentHistoryAdapter(join(root, "ledger"), new PrivateStorageAdapter());
+  const history = () => new ConsentHistoryAdapter(join(root, "ledger"), machinePrivateStorage());
 
   it("tells the caller when the storage refuses the event, and keeps nothing of it", async () => {
     const refusing = new ConsentHistoryAdapter(

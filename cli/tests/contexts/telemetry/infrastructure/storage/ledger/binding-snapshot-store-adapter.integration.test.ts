@@ -7,7 +7,7 @@ import {
   snapshotKey,
 } from "../../../../../../src/contexts/telemetry/domain/branch-binding.js";
 import { BindingSnapshotStoreAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/binding-snapshot-store-adapter.js";
-import { PrivateStorageAdapter } from "../../../../../../src/shared/infrastructure/private-storage-adapter.js";
+import { machinePrivateStorage } from "../../../../../shared/testing/machine-private-storage.builder.js";
 
 let root: string;
 let dir: string;
@@ -16,7 +16,7 @@ let store: BindingSnapshotStoreAdapter;
 beforeEach(async () => {
   root = await mkdtemp(join(tmpdir(), "aidd-snapshots-"));
   dir = join(root, "bindings");
-  store = new BindingSnapshotStoreAdapter(dir, new PrivateStorageAdapter());
+  store = new BindingSnapshotStoreAdapter(dir, machinePrivateStorage());
 });
 afterEach(async () => {
   await rm(root, { recursive: true, force: true });

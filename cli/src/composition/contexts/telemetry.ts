@@ -70,7 +70,7 @@ import { ChooseIdentity } from "../../orchestration/telemetry/choose-identity.us
 import { EnvironmentAdapter } from "../../shared/infrastructure/environment-adapter.js";
 import { PrivateStorageAdapter } from "../../shared/infrastructure/private-storage-adapter.js";
 import type { PrivateStorage } from "../../shared/ports/private-storage.js";
-import { userConfigDirOf } from "../user-config-dir.js";
+import { MACHINE_PRIVATE_STORAGE_HOST, userConfigDirOf } from "../user-config-dir.js";
 
 /** The requests a command checks before anything is wired: no file, no process, only the clock. */
 const consentLogOver = (history: ConsentHistory) => ({
@@ -130,7 +130,7 @@ function directoryLock(dir: string, storage: PrivateStorage, name?: string): Dir
 function wireStores(root: string) {
   const ledgerDir = join(root, "ledger");
   const bindingsDir = join(root, "bindings");
-  const storage = new PrivateStorageAdapter();
+  const storage = new PrivateStorageAdapter(MACHINE_PRIVATE_STORAGE_HOST);
   return {
     root,
     ledger: new UsageLedgerAdapter(ledgerDir, storage, {
@@ -176,7 +176,7 @@ function wireGit(stores: Stores) {
 
 type Git = ReturnType<typeof wireGit>;
 
-const processEnvironment = new EnvironmentAdapter();
+const processEnvironment = new EnvironmentAdapter(process.env);
 
 const environment = {
   caseInsensitiveFileSystem: caseInsensitiveFileSystem(process.platform),

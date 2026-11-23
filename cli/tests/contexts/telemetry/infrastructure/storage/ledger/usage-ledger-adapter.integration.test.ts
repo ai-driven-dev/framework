@@ -4,7 +4,8 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { StoredUsage } from "../../../../../../src/contexts/telemetry/domain/stored-usage.js";
 import type { UsageLedgerAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
-import { PrivateStorageAdapter } from "../../../../../../src/shared/infrastructure/private-storage-adapter.js";
+import type { PrivateStorageAdapter } from "../../../../../../src/shared/infrastructure/private-storage-adapter.js";
+import { machinePrivateStorage } from "../../../../../shared/testing/machine-private-storage.builder.js";
 import { ledgerOver } from "../../../testing/ledger-adapters.builder.js";
 import { aUsageRecord } from "../../../testing/usage-record.builder.js";
 
@@ -16,7 +17,7 @@ let storage: PrivateStorageAdapter;
 beforeEach(async () => {
   root = await mkdtemp(join(tmpdir(), "aidd-usage-ledger-"));
   dir = join(root, "ledger");
-  storage = new PrivateStorageAdapter();
+  storage = machinePrivateStorage();
   ledger = ledgerOver(dir, storage);
 });
 afterEach(async () => {
@@ -42,7 +43,7 @@ const lines = (records: readonly StoredUsage[]): string =>
   `${records.map((record) => JSON.stringify(record)).join("\n")}\n`;
 
 async function writePartition(name: string, content: string): Promise<void> {
-  await new PrivateStorageAdapter().ensureDirectory(dir);
+  await machinePrivateStorage().ensureDirectory(dir);
   await writeFile(join(dir, name), content);
 }
 
@@ -132,7 +133,7 @@ describe("the ledger on disk", () => {
   it("fails to load from a ledger directory it cannot list, instead of reading it as empty", async () => {
     const file = join(root, "not-a-directory");
     await writeFile(file, "x");
-    await expect(ledgerOver(file, new PrivateStorageAdapter()).load()).rejects.toThrow();
+    await expect(ledgerOver(file, machinePrivateStorage()).load()).rejects.toThrow();
   });
 
   it("folds a call found in two days down to its best snapshot, and says both are unsettled", async () => {
@@ -322,7 +323,7 @@ describe("what was measured and left out, beside the ledger", () => {
   });
 
   it("keeps a line it does not know, and counts only its own", async () => {
-    await new PrivateStorageAdapter().ensureDirectory(dir);
+    await machinePrivateStorage().ensureDirectory(dir);
     await writeFile(FILE(), "zz-later 0123\nconstructor 1\n");
     await ledger.leftOut.add([{ reason: "undated", of: "k" }]);
     const text = await readFile(FILE(), "utf8");

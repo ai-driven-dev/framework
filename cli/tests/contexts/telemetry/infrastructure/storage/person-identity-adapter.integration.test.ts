@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { PersonIdentityAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/person-identity-adapter.js";
-import { PrivateStorageAdapter } from "../../../../../src/shared/infrastructure/private-storage-adapter.js";
+import { machinePrivateStorage } from "../../../../shared/testing/machine-private-storage.builder.js";
 
 let root: string;
 let dir: string;
@@ -12,7 +12,7 @@ let store: PersonIdentityAdapter;
 beforeEach(async () => {
   root = await mkdtemp(join(tmpdir(), "aidd-identity-"));
   dir = join(root, "telemetry");
-  store = new PersonIdentityAdapter(dir, new PrivateStorageAdapter());
+  store = new PersonIdentityAdapter(dir, machinePrivateStorage());
 });
 afterEach(async () => {
   await rm(root, { recursive: true, force: true });

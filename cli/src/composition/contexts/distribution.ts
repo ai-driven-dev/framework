@@ -35,7 +35,7 @@ import type { FileReader } from "../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../shared/ports/file-writer.js";
 import type { Logger } from "../../shared/ports/logger.js";
 import type { ReleaseLister } from "../../shared/ports/release-lister.js";
-import { userConfigDir } from "../user-config-dir.js";
+import { MACHINE_PRIVATE_STORAGE_HOST, userConfigDir } from "../user-config-dir.js";
 
 export interface DistributionWiringShared {
   fs: FileReader & FileWriter;
@@ -123,7 +123,9 @@ export function wireDistribution(shared: DistributionWiringShared): Distribution
   const pluginCatalogRepository = new PluginCatalogRepositoryAdapter(shared.fs);
   const marketplaceCache = new MarketplaceCacheAdapter(shared.projectRoot);
   const marketplaceRegistry = new MarketplaceRegistryAdapter(userConfigDir, atomicWriteFile);
-  const marketplaceTrustStore = new MarketplaceTrustStoreAdapter(new PrivateStorageAdapter());
+  const marketplaceTrustStore = new MarketplaceTrustStoreAdapter(
+    new PrivateStorageAdapter(MACHINE_PRIVATE_STORAGE_HOST)
+  );
   const pluginFetcher = pluginFetcherOf(shared);
   const loadPluginDistribution = new LoadPluginDistribution(
     pluginFetcher,

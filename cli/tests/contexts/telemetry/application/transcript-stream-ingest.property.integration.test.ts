@@ -12,7 +12,7 @@ import { SnapshotBindings } from "../../../../src/contexts/telemetry/application
 import { cloneKey } from "../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import { ClaudeUsageSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-usage-source-adapter.js";
 import type { UsageSource } from "../../../../src/contexts/telemetry/ports/usage-source.js";
-import { PrivateStorageAdapter } from "../../../../src/shared/infrastructure/private-storage-adapter.js";
+import { machinePrivateStorage } from "../../../shared/testing/machine-private-storage.builder.js";
 import { cloneOf, grantedBy } from "../testing/clone.builder.js";
 import { FakeBindings } from "../testing/fake-bindings.fake.js";
 import { FakeConsents } from "../testing/fake-consents.fake.js";
@@ -109,7 +109,7 @@ const transcript = fc
 function machine(source: UsageSource) {
   runs += 1;
   const dir = join(root, `ledger-${runs}`);
-  const ledger = ledgerOver(dir, new PrivateStorageAdapter());
+  const ledger = ledgerOver(dir, machinePrivateStorage());
   const locator = new FakeLocator();
   const consents = new FakeConsents();
   const history = new InMemoryConsentHistory();

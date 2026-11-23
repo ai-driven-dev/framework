@@ -1,25 +1,16 @@
-import { execFileSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { chmod, mkdir, open, readFile, rename, rm, writeFile } from "node:fs/promises";
 import type { PrivateStorage } from "../ports/private-storage.js";
 
 const NEWLINE = 0x0a;
 
-/** What the adapter asks of the machine, apart from the files: substituted in tests so the
- * Windows path runs on every runner. */
+/** What the adapter asks of the machine, apart from the files: the composition root supplies the
+ * machine's, tests substitute theirs so the Windows path runs on every runner. */
 export interface PrivateStorageHost {
   readonly platform: NodeJS.Platform;
   readonly env: NodeJS.ProcessEnv;
   readonly run: (command: string, args: readonly string[]) => void;
 }
-
-const MACHINE: PrivateStorageHost = {
-  platform: process.platform,
-  env: process.env,
-  run: (command, args) => {
-    execFileSync(command, args, { stdio: ["ignore", "ignore", "pipe"] });
-  },
-};
 
 /** The account icacls grants to. With no shell to expand `%USERNAME%`, it is read here, and
  * absent it would grant nobody, leaving a directory with its inheritance stripped. */
@@ -35,7 +26,7 @@ function windowsAccount(env: NodeJS.ProcessEnv): string {
  * cut off from inherited access and granted to the account alone, and the files created in it
  * inherit that. */
 export class PrivateStorageAdapter implements PrivateStorage {
-  constructor(private readonly host: PrivateStorageHost = MACHINE) {}
+  constructor(private readonly host: PrivateStorageHost) {}
 
   async ensureDirectory(path: string): Promise<void> {
     const created = await mkdir(path, { recursive: true, mode: 0o700 });
@@ -63,7 +54,7 @@ export class PrivateStorageAdapter implements PrivateStorage {
   /** A temporary sibling then `rename`: a reader never sees half a file, and a crash orphans
    * the temporary rather than truncating the real one. */
   async replace(path: string, content: string): Promise<void> {
-    const temporary = `${path}.${process.pid}-${randomBytes(6).toString("hex")}.tmp`;
+    const temporary = `${path}.${randomBytes(6).toString("hex")}.tmp`;
     try {
       await writeFile(temporary, content, { mode: 0o600 });
       await rename(temporary, path);

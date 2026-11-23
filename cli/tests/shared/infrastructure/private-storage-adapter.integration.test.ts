@@ -7,10 +7,11 @@ import {
   PrivateStorageAdapter,
   type PrivateStorageHost,
 } from "../../../src/shared/infrastructure/private-storage-adapter.js";
+import { machinePrivateStorage } from "../testing/machine-private-storage.builder.js";
 
 const posix = process.platform === "win32" ? it.skip : it;
 let dir: string;
-const storage = new PrivateStorageAdapter();
+const storage = machinePrivateStorage();
 
 beforeEach(async () => {
   dir = await mkdtemp(join(tmpdir(), "aidd-private-storage-"));
@@ -139,11 +140,13 @@ describe("a private directory on the machine itself, as Windows", () => {
     vi.doMock("node:child_process", () => ({ execFileSync }));
     vi.stubEnv("USERNAME", "someone");
     Object.defineProperty(process, "platform", { value: "win32" });
-    const { PrivateStorageAdapter: Fresh } = await import(
-      "../../../src/shared/infrastructure/private-storage-adapter.js"
+    const { MACHINE_PRIVATE_STORAGE_HOST } = await import(
+      "../../../src/composition/user-config-dir.js"
     );
 
-    await new Fresh().ensureDirectory(join(dir, "ledger"));
+    await new PrivateStorageAdapter(MACHINE_PRIVATE_STORAGE_HOST).ensureDirectory(
+      join(dir, "ledger")
+    );
 
     expect(execFileSync).toHaveBeenCalledWith(
       "icacls",

@@ -1,5 +1,7 @@
+import { execFileSync } from "node:child_process";
 import { homedir as osHomedir } from "node:os";
 import { join } from "node:path";
+import type { PrivateStorageHost } from "../shared/infrastructure/private-storage-adapter.js";
 
 /** `HOME` first, because `os.homedir()` never reads it on Windows: a `HOME` set under Git
  * Bash or by a test sandbox is ignored by a bare call there. */
@@ -31,3 +33,13 @@ export function userConfigDirOf(
 export function userConfigDir(): string {
   return userConfigDirOf(process.env, homeDirResolver()());
 }
+
+/** What private storage asks of this machine: its platform, its environment and the one command
+ * that restricts a Windows directory. */
+export const MACHINE_PRIVATE_STORAGE_HOST: PrivateStorageHost = {
+  platform: process.platform,
+  env: process.env,
+  run: (command, args) => {
+    execFileSync(command, args, { stdio: ["ignore", "ignore", "pipe"] });
+  },
+};

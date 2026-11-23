@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MarketplaceTrustStoreAdapter } from "../../../../src/contexts/distribution/infrastructure/marketplace-trust-store-adapter.js";
 import type { PluginSource } from "../../../../src/shared/domain/plugin/source.js";
-import { PrivateStorageAdapter } from "../../../../src/shared/infrastructure/private-storage-adapter.js";
+import { machinePrivateStorage } from "../../../shared/testing/machine-private-storage.builder.js";
 
 const githubSource: PluginSource = { kind: "github", repo: "owner/repo" };
 const posix = process.platform === "win32" ? it.skip : it;
@@ -22,7 +22,7 @@ describe("storing trusted marketplace sources", () => {
 
   beforeEach(async () => {
     projectRoot = await mkdtemp(join(tmpdir(), "trust-store-test-"));
-    store = new MarketplaceTrustStoreAdapter(new PrivateStorageAdapter());
+    store = new MarketplaceTrustStoreAdapter(machinePrivateStorage());
   });
 
   afterEach(async () => {
@@ -47,7 +47,7 @@ describe("storing trusted marketplace sources", () => {
   const trustFile = (): string => join(projectRoot, ".aidd", "cache", "trusted-marketplaces.json");
 
   it("writes and reads the trust file through the private storage", async () => {
-    const storage = new PrivateStorageAdapter();
+    const storage = machinePrivateStorage();
     const replace = vi.spyOn(storage, "replace");
     const read = vi.spyOn(storage, "read");
     const watchedStore = new MarketplaceTrustStoreAdapter(storage);

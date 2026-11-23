@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { declarationOf } from "../../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
 import { SessionBindingStoreAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/declarations/session-binding-store-adapter.js";
-import { PrivateStorageAdapter } from "../../../../../../src/shared/infrastructure/private-storage-adapter.js";
+import { machinePrivateStorage } from "../../../../../shared/testing/machine-private-storage.builder.js";
 
 let root: string;
 let dir: string;
@@ -13,7 +13,7 @@ let store: SessionBindingStoreAdapter;
 beforeEach(async () => {
   root = await mkdtemp(join(tmpdir(), "aidd-sessions-"));
   dir = join(root, "bindings");
-  store = new SessionBindingStoreAdapter(dir, new PrivateStorageAdapter());
+  store = new SessionBindingStoreAdapter(dir, machinePrivateStorage());
 });
 afterEach(async () => {
   await rm(root, { recursive: true, force: true });

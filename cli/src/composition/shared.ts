@@ -113,7 +113,7 @@ function wireRemote(
   { logger, fs }: { logger: Logging; fs: MergingFileSystem }
 ) {
   const http = new HttpClient();
-  const environment = new EnvironmentAdapter();
+  const environment = new EnvironmentAdapter(process.env);
   const auth = wireAuth({ projectRoot, logger, http, environment, explicitToken: token });
   const distribution = wireDistribution({
     fs,

@@ -1,7 +1,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { PrivateStorageAdapter } from "../../../../src/shared/infrastructure/private-storage-adapter.js";
+import { machinePrivateStorage } from "../../../shared/testing/machine-private-storage.builder.js";
 import { InMemoryResolutions } from "../testing/in-memory-resolutions.fake.js";
 import { resolutionStoreOver } from "../testing/ledger-adapters.builder.js";
 import {
@@ -22,7 +22,7 @@ describeResolutionStoreContract(
   async (): Promise<ResolutionStoreSubject> => {
     const root = await mkdtemp(join(tmpdir(), "aidd-resolutions-contract-"));
     return {
-      store: resolutionStoreOver(join(root, "ledger"), new PrivateStorageAdapter()),
+      store: resolutionStoreOver(join(root, "ledger"), machinePrivateStorage()),
       dispose: () => rm(root, { recursive: true, force: true }),
     };
   }

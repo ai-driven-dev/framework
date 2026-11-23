@@ -2,11 +2,11 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { PrivateStorageAdapter } from "../../../../../../src/shared/infrastructure/private-storage-adapter.js";
+import { machinePrivateStorage } from "../../../../../shared/testing/machine-private-storage.builder.js";
 import { ledgerOver } from "../../../testing/ledger-adapters.builder.js";
 
 let dir: string;
-const storage = new PrivateStorageAdapter();
+const storage = machinePrivateStorage();
 
 beforeEach(async () => {
   const root = await mkdtemp(join(tmpdir(), "aidd-ids-"));
