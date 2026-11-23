@@ -200,24 +200,24 @@ export const PLANTS: readonly Plant[] = [
   ["src/cli.ts", reaches("./shared/infrastructure/http-client.js"), IMPORT, 1],
   [
     "src/contexts/tools/domain/reaches-composition.ts",
-    reaches("../../../composition/auth.js"),
+    reaches("../../../composition/shared.js"),
     IMPORT,
     1,
   ],
-  ["src/shared/domain/reaches-composition.ts", reaches("../../composition/auth.js"), IMPORT, 1],
+  ["src/shared/domain/reaches-composition.ts", reaches("../../composition/shared.js"), IMPORT, 1],
   [
     "src/shared/infrastructure/reaches-composition.ts",
-    reaches("../../composition/auth.js"),
+    reaches("../../composition/shared.js"),
     IMPORT,
     1,
   ],
   [
     "src/presentation/presenters/reaches-composition.presenter.ts",
-    reaches("../../composition/auth.js"),
+    reaches("../../composition/shared.js"),
     IMPORT,
     1,
   ],
-  ["src/composition/reaches-composition.ts", reaches("../composition/auth.js"), IMPORT, 0],
+  ["src/composition/reaches-composition.ts", reaches("../composition/shared.js"), IMPORT, 0],
   // A context nothing admits does not reach auth, auth reaches no context, distribution may reach auth.
   [
     "src/contexts/tools/domain/reaches-auth.ts",
@@ -347,7 +347,7 @@ export const PLANTS: readonly Plant[] = [
       ["application", "../../contexts/auth/application/log-in.js", 0],
       ["tools-application", "../../contexts/tools/application/x.js", 1],
       ["shared-infrastructure", "../../shared/infrastructure/http-client.js", 1],
-      ["composition", "../../composition/auth.js", 1],
+      ["composition", "../../composition/shared.js", 1],
       ["presentation", "../../presentation/terminal/output.adapter.js", 1],
     ] as const
   ).map(

@@ -7,6 +7,7 @@ import {
   OutDirNotDirectoryError,
 } from "../../../../../src/contexts/translate/domain/translate.error.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
+import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import { buildContractOf } from "../../../../shared/testing/build-contract-of.builder.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
@@ -19,7 +20,7 @@ import { makeAssetProvider, makeValidator } from "../../testing/flat-writer-worl
 const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
 // resolve(): on Windows a leading "/" gets the current drive, as production's resolve(outDir) does.
 const ABS_OUT = resolve("/tmp/aidd-flat-test");
-const PLUGIN = "aidd-test";
+const PLUGIN = parsePluginName("aidd-test");
 
 async function makeSeededFs(): Promise<InMemoryFileAdapter> {
   const memFs = new InMemoryFileAdapter();

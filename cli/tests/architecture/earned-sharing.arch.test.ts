@@ -215,7 +215,7 @@ describe("the guard itself", () => {
 
   it("flags a shared file one context imports and clears one an earned adapter or two compositions reach", () => {
     const [A, B] = ["src/contexts/framework/domain/x.ts", "src/contexts/tools/domain/x.ts"];
-    const [C1, C2] = ["src/composition/container.ts", "src/composition/tools.ts"];
+    const [C1, C2] = ["src/composition/container.ts", "src/composition/contexts/tools.ts"];
     const port = "src/shared/ports/port.ts";
     const adapter = "src/shared/infrastructure/adapter.ts";
     const leaf = "src/shared/infrastructure/leaf.ts";
@@ -245,7 +245,7 @@ describe("the guard itself", () => {
 
   it("clears a port one context imports when an earned adapter in shared infrastructure reads it", () => {
     const A = "src/contexts/framework/domain/x.ts";
-    const [C1, C2] = ["src/composition/container.ts", "src/composition/tools.ts"];
+    const [C1, C2] = ["src/composition/container.ts", "src/composition/contexts/tools.ts"];
     const read = "src/shared/ports/read.ts";
     const lonely = "src/shared/ports/lonely.ts";
     const adapter = "src/shared/infrastructure/adapter.ts";
@@ -294,8 +294,9 @@ describe("the guard itself", () => {
     expect(areaOf("src/presentation/controllers/doctor/doctor.controller.ts")).toBe("controllers");
     expect(areaOf("src/presentation/presenters/a.presenter.ts")).toBe("presentation");
     expect(areaOf("src/shared/domain/tool.ts")).toBe("shared");
-    expect(areaOf("src/composition/auth.ts"), "the composition of a migrated context").toBe(
-      "composition-root"
-    );
+    expect(
+      areaOf("src/composition/contexts/auth.ts"),
+      "the composition of a migrated context"
+    ).toBe("composition-root");
   });
 });

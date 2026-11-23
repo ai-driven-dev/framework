@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { projectIntegrationOf } from "../../../../../src/composition/installation.js";
+import { projectIntegrationOf } from "../../../../../src/composition/contexts/installation.js";
 import { AssertProjectRemovable } from "../../../../../src/contexts/installation/application/clean/assert-project-removable.use-case.js";
 import { CleanProjectFiles } from "../../../../../src/contexts/installation/application/clean/clean-project-files.use-case.js";
 import { PlanProjectClean } from "../../../../../src/contexts/installation/application/clean/plan-project-clean.use-case.js";

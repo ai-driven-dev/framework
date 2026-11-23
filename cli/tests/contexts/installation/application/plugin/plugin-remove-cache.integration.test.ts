@@ -8,6 +8,7 @@ import { describe, expect, it } from "vitest";
 import { registerMarketplacePlugin } from "../../../../../src/contexts/installation/application/materialize/register-marketplace-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
@@ -27,7 +28,7 @@ const CLAUDE_CACHE_ROOT = join(homedir(), ".claude", "plugins", "cache");
 
 function buildDist(): PluginDistribution {
   return new PluginDistribution({
-    manifest: { name: PLUGIN_NAME, version: "1.0.0" },
+    manifest: { name: parsePluginName(PLUGIN_NAME), version: "1.0.0" },
     format: TOOL.claude,
     files: [{ relativePath: "commands/hello.md", content: "# Hello" }],
     components: {

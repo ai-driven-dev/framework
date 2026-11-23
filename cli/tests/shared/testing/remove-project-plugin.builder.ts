@@ -1,4 +1,4 @@
-import { projectIntegrationOf } from "../../../src/composition/installation.js";
+import { projectIntegrationOf } from "../../../src/composition/contexts/installation.js";
 import {
   type RemovalClaims,
   RemoveProjectPlugin,

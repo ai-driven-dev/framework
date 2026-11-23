@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { wireInstallation } from "../../src/composition/installation.js";
+import { wireInstallation } from "../../src/composition/contexts/installation.js";
 import { wirePlugin } from "../../src/composition/orchestration/plugin.js";
 import { wireBase } from "../../src/composition/shared.js";
 import { InvalidPluginScopeError } from "../../src/contexts/installation/domain/installation.error.js";

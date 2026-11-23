@@ -9,7 +9,7 @@ How a canon plugin is rewritten for one tool in memory, and how the result is wr
 
 ## Suppliers
 
-- `tools/contract/`: the profile and its `ToolBuildContract`, picked from the catalog in `src/composition/translate.ts`. `shared/`: errors, `Logger`, file ports, plugin types.
+- `tools/contract/`: the profile and its `ToolBuildContract`, picked from the catalog in `src/composition/contexts/translate.ts`. `shared/`: errors, `Logger`, file ports, plugin types.
 
 ## Rules
 

@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, readdir, readFile, realpath, rm, writeFile } from "node
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { createFrameworkBuildUseCase } from "../../../../../src/composition/translate.js";
+import { createFrameworkBuildUseCase } from "../../../../../src/composition/contexts/translate.js";
 import type { FrameworkBuildTarget } from "../../../../../src/contexts/translate/contract/build-targets.js";
 import {
   FlatMergeTargetNotJsonError,

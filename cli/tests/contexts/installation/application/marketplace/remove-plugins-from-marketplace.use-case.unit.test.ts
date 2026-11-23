@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { recordsOf } from "../../../../../src/composition/installation.js";
+import { recordsOf } from "../../../../../src/composition/contexts/installation.js";
 import {
   RemovePluginsFromMarketplace,
   type RemovePluginsFromMarketplaceRequest,

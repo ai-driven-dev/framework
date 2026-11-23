@@ -4,11 +4,12 @@ import { describe, expect, it } from "vitest";
 import { registerMarketplacePlugin } from "../../../../../src/contexts/installation/application/materialize/register-marketplace-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 function buildDist(name = "test-plugin"): PluginDistribution {
   return new PluginDistribution({
-    manifest: { name, version: "1.0.0" },
+    manifest: { name: parsePluginName(name), version: "1.0.0" },
     format: TOOL.claude,
     files: [{ relativePath: "commands/hello.md", content: "# Hello" }],
     components: { commands: [], agents: [], rules: [], skills: [], hooks: [], mcp: [] },

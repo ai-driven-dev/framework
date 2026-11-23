@@ -7,6 +7,7 @@ import type {
 } from "../../../../../src/contexts/installation/domain/plugins/plugin-entry.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import {
   InvalidPluginNameError,
   InvalidPluginVersionError,
@@ -36,7 +37,11 @@ it("round-trips exact Cursor project hook provenance through the plugin manifest
 
 const makeDistribution = (strict?: boolean): PluginDistribution =>
   new PluginDistribution({
-    manifest: { name: "my-plugin", version: "1.0.0", ...(strict === undefined ? {} : { strict }) },
+    manifest: {
+      name: parsePluginName("my-plugin"),
+      version: "1.0.0",
+      ...(strict === undefined ? {} : { strict }),
+    },
     format: TOOL.claude,
     files: [],
     components: { skills: [], commands: [], agents: [], rules: [], hooks: [], mcp: [] },

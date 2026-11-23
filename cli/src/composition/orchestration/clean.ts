@@ -31,8 +31,8 @@ import { PreviewProjectClean } from "../../orchestration/clean/preview-project-c
 import { RemoveProjectInOrder } from "../../orchestration/clean/remove-project-in-order.use-case.js";
 import { RemoveUserScope } from "../../orchestration/clean/remove-user-scope.use-case.js";
 import { UninstallProjectTools } from "../../orchestration/clean/uninstall-project-tools.use-case.js";
-import { type Installation, recordsOf } from "../installation.js";
-import { machineOwnership, userScopeFilesSafeToDelete } from "../machine-claims.js";
+import { type Installation, recordsOf } from "../contexts/installation.js";
+import { machineOwnership, userScopeFilesSafeToDelete } from "../contexts/machine-claims.js";
 import type { Base } from "../shared.js";
 import { userConfigDir } from "../user-config-dir.js";
 import { wireCleanClaims } from "./clean-claims.js";

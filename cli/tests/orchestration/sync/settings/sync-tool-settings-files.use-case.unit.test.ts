@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { settingsDeclaration } from "../../../../src/composition/host-registration.js";
-import { registrationRecordRules } from "../../../../src/composition/installation.js";
+import { settingsDeclaration } from "../../../../src/composition/contexts/host-registration.js";
+import { registrationRecordRules } from "../../../../src/composition/contexts/installation.js";
 import type { HostRegistrationOutcome } from "../../../../src/contexts/host-registration/application/register/registration-outcome.js";
 import { trackedSharedSettings } from "../../../../src/contexts/installation/application/sync/tracked-shared-settings.js";
 import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";

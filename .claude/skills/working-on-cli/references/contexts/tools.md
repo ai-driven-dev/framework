@@ -4,7 +4,7 @@ What a tool declares: where its files land, how it takes plugins, what its plugi
 
 ## Ports
 
-- `ToolCatalog` (`contract/tool-catalog.ts`): the registered tools, asked by id or walked in a named order; `wireTools()` in `src/composition/tools.ts` builds it from `REGISTERED_PROFILES` in `src/composition/tool-profiles.composition.ts`.
+- `ToolCatalog` (`contract/tool-catalog.ts`): the registered tools, asked by id or walked in a named order; `wireTools()` in `src/composition/contexts/tools.ts` builds it from `REGISTERED_PROFILES` in `src/composition/tool-profiles.composition.ts`.
 - `AiToolProfile`, `IdeToolProfile` (`contract/tool-profile.ts`) and `ToolBuildContract` (`contract/build-contract.ts`): the answers a caller asks.
 
 ## Rules
@@ -13,7 +13,7 @@ What a tool declares: where its files land, how it takes plugins, what its plugi
 - Callers ask a profile a question and never read its structure (`answers` rule of `kinds.rules.arch.test.ts`); a new question is a method of `contract/tool-profile.ts`. A reader outside `tools` names the sections it reads in its own `ports/` (`whole-profile-import.grit`, `profile` rule).
 - A class takes the catalog in its constructor (`shape` rule) and asks a profile a question.
 - `ToolId` is opaque and carries no list: only profiles and `ToolCatalog` lookups mint one (`tool-addition-cost.arch.test.ts`, `no-profile-list.grit`).
-- Outside callers import `contract/` only; Biome shuts `domain/` and `application/`. `src/composition/tool-profiles.composition.ts` and `src/composition/host-registration.ts` are the only readers of `domain/`.
+- Outside callers import `contract/` only; Biome shuts `domain/` and `application/`. `src/composition/tool-profiles.composition.ts` and `src/composition/contexts/host-registration.ts` are the only readers of `domain/`.
 - A string transform used by one profile stays in its folder; one used by two goes to `domain/formats/`.
 
 ## Tests

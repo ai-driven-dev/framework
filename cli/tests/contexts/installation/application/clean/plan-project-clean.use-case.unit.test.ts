@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { recordsOf } from "../../../../../src/composition/installation.js";
+import { recordsOf } from "../../../../../src/composition/contexts/installation.js";
 import { PlanProjectClean } from "../../../../../src/contexts/installation/application/clean/plan-project-clean.use-case.js";
 import type { ToolRecords } from "../../../../../src/contexts/installation/contract/records/scope-records.js";
 import type { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";

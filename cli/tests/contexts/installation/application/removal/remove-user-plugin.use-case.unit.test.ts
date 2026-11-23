@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { recordsOf } from "../../../../../src/composition/installation.js";
+import { recordsOf } from "../../../../../src/composition/contexts/installation.js";
 import { RemoveUserPlugin } from "../../../../../src/contexts/installation/application/removal/remove-user-plugin.use-case.js";
 import type { ToolRecords } from "../../../../../src/contexts/installation/contract/records/scope-records.js";
 import {

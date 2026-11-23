@@ -15,7 +15,7 @@ import {
   machineOwnership,
   readSharedSourceClaimLeniently,
   sharedSourceReads,
-} from "../machine-claims.js";
+} from "../contexts/machine-claims.js";
 
 /** What a clean asks of the machine record, over the user manifest and the shared source's references. */
 export function wireCleanClaims(parts: {

@@ -1,13 +1,13 @@
 import {
   recordsOf,
   type registrationRecordRules,
-} from "../../../../src/composition/installation.js";
+} from "../../../../src/composition/contexts/installation.js";
 import {
   lenientSourceReferences,
   machineOwnership,
   sharedSourceReads,
   userScopeFilesSafeToDelete,
-} from "../../../../src/composition/machine-claims.js";
+} from "../../../../src/composition/contexts/machine-claims.js";
 import {
   claimedRefWithdrawal,
   underMachineHome,

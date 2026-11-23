@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { applyLinkSyntax } from "../../../../src/contexts/tools/contract/link-syntax.js";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../src/shared/domain/plugin/plugin-name.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { REPOSITORY_ROOT } from "../../../shared/testing/repository-root.builder.js";
 import { translator } from "../testing/engine-kit.builder.js";
@@ -64,7 +65,7 @@ describe("installing the plugin carries a skill's own script, on every tool", ()
       { relativePath: "hooks/memory.cjs", content: pluginFile("hooks/memory.cjs") },
     ];
     return new PluginDistribution({
-      manifest: { name: "aidd-context", version: "0.1.0" },
+      manifest: { name: parsePluginName("aidd-context"), version: "0.1.0" },
       format: TOOL.claude,
       files: [...skills, ...hooks],
       components: { skills, commands: [], agents: [], rules: [], hooks, mcp: [] },
@@ -108,7 +109,7 @@ describe("installing the plugin carries a skill's own script, on every tool", ()
       { relativePath: SCRIPT, content },
     ];
     return new PluginDistribution({
-      manifest: { name: "aidd-context", version: "0.1.0" },
+      manifest: { name: parsePluginName("aidd-context"), version: "0.1.0" },
       format: TOOL.claude,
       files: skills,
       components: { skills, commands: [], agents: [], rules: [], hooks: [], mcp: [] },

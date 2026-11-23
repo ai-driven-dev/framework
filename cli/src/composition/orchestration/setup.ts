@@ -14,7 +14,7 @@ import { ChoosePlugins } from "../../orchestration/setup/steps/choose-plugins.us
 import { ChooseTools } from "../../orchestration/setup/steps/choose-tools.use-case.js";
 import { InstallSetupTools } from "../../orchestration/setup/steps/install-setup-tools.use-case.js";
 import { PrepareSetupProject } from "../../orchestration/setup/steps/prepare-setup-project.use-case.js";
-import type { Installation } from "../installation.js";
+import type { Installation } from "../contexts/installation.js";
 import type { Base } from "../shared.js";
 import type { Global } from "./global.js";
 import type { Marketplace } from "./marketplace.js";

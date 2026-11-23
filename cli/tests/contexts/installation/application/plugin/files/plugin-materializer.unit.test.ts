@@ -3,9 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 import { PluginMaterializer } from "../../../../../../src/contexts/installation/application/plugin/files/plugin-materializer.js";
 import { RecordedPlugin } from "../../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../../../../../src/contexts/installation/domain/project-layout.js";
-import type { IsWithinUserScope } from "../../../../../../src/contexts/machine-claims/contract/user-scope-containment.js";
 import { FileHash } from "../../../../../../src/shared/domain/file-hash.js";
+import type { PathContainment } from "../../../../../../src/shared/domain/paths.model.js";
 import { PluginDistribution } from "../../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../../src/shared/domain/plugin/plugin-name.js";
 import { CapturingLogger } from "../../../../../shared/testing/capturing-logger.fake.js";
 import { FixturePluginFetcher } from "../../../../../shared/testing/fixture-plugin-fetcher.fake.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
@@ -18,9 +19,9 @@ import { userScopeFileGuard } from "../../../testing/user-scope-file-guard.fake.
 const homedir = (): string => "/home/dev";
 
 /** The machine-claims answer for a path it judges inside the user directory. */
-const insideUserScope: IsWithinUserScope = () => true;
+const insideUserScope: PathContainment = () => true;
 /** The machine-claims answer for a path it judges outside the user directory. */
-const outsideUserScope: IsWithinUserScope = () => false;
+const outsideUserScope: PathContainment = () => false;
 
 const { cursor } = TOOL;
 
@@ -30,7 +31,7 @@ function fixture(installedVersion = "0.0.1", options: { globalCacheDir?: () => s
   const content = "# Updated skill";
   const skill = { relativePath: "skills/demo/SKILL.md", content };
   const dist = new PluginDistribution({
-    manifest: { name: "sample-plugin", version: "1.0.0" },
+    manifest: { name: parsePluginName("sample-plugin"), version: "1.0.0" },
     format: TOOL.claude,
     files: [skill],
     components: { commands: [], agents: [], rules: [], skills: [skill], hooks: [], mcp: [] },

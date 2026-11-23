@@ -1,4 +1,5 @@
 # Machine claims glossary
+import type { PathContainment } from "../../shared/domain/paths.model.js";
 
 The language of the `machine-claims` context. A name in the code means what this page says.
 
@@ -10,6 +11,6 @@ The language of the `machine-claims` context. A name in the code means what this
 | Ref claim | The claim on one native plugin ref, merged when a project claims it again and dropped when none holds it | `mergeRefClaims`, `claimsKeeping` |
 | Machine record | What the machine manifest holds for a tool: its native registrations, split from and joined back to the plugin claims | `MachineManifest`, `splitPluginClaims`, `joinPluginClaims` |
 | Shared source reference | The project that points at the machine's single shared framework source, counted before the source is dropped | `UserSourceReferences` |
-| User-scope containment | The proof that a path a record names sits strictly inside the directory that owns it, before anything deletes it | `isStrictlyWithin` (shared `paths.model.ts`), `IsWithinUserScope` |
+| User-scope containment | The proof that a path a record names sits strictly inside the directory that owns it, before anything deletes it | `isStrictlyWithin` (shared `paths.model.ts`), `PathContainment` |
 | Ownership | Whether a user-scope plugin, its files or its enablement belong to aidd, so aidd may remove them | `application/ownership/` |
 | Removal claims | The claims a plugin removal lets go of, and the dependents it leaves behind | `PluginRemovalClaims`, `application/removal/` |

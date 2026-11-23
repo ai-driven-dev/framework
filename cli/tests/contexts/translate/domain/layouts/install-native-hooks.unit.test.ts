@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import { nativeOf } from "../../../../shared/testing/native-plugin-answers.builder.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { translator } from "../../testing/engine-kit.builder.js";
@@ -12,7 +13,7 @@ const HOOKS_CONTENT = JSON.stringify({
 function buildDist(hasHooks: boolean, name = "test-plugin"): PluginDistribution {
   const hooksFile = { relativePath: "hooks/hooks.json", content: HOOKS_CONTENT };
   return new PluginDistribution({
-    manifest: { name, version: "1.0.0" },
+    manifest: { name: parsePluginName(name), version: "1.0.0" },
     format: TOOL.claude,
     files: hasHooks ? [hooksFile] : [],
     components: {

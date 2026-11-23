@@ -7,6 +7,7 @@ import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor
 import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/opencode.profile.js";
 import { SmolTomlCodec } from "../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import { nativeOf } from "../../../../shared/testing/native-plugin-answers.builder.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { hooksAcceptanceOf } from "../../testing/plugin-mode.builder.js";
@@ -38,7 +39,7 @@ function pluginWithHookAndScript(): PluginDistribution {
   ];
   const mcp = [{ relativePath: ".mcp.json", content: MCP_JSON }];
   return new PluginDistribution({
-    manifest: { name: "aidd-telemetry", version: "1.0.0" },
+    manifest: { name: parsePluginName("aidd-telemetry"), version: "1.0.0" },
     format: TOOL.claude,
     files: [...hooks, ...mcp],
     components: { commands: [], agents: [], rules: [], skills: [], hooks, mcp },

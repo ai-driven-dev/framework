@@ -8,6 +8,7 @@ import type {
 import { JsonSchemaValidationError } from "../../../../src/contexts/translate/domain/translate.error.js";
 import type { JsonSchemaValidator } from "../../../../src/contexts/translate/ports/json-schema-validator.js";
 import { flatArtifactLayout } from "../../../../src/shared/domain/materialization/flat-paths.js";
+import { parsePluginName } from "../../../../src/shared/domain/plugin/plugin-name.js";
 import type { AssetProvider } from "../../../../src/shared/ports/asset-provider.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import type { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
@@ -98,7 +99,7 @@ export async function stubWrite(
   }
   const { files } = await stubSink(memFs, logger).writePlugin(
     stubTarget(contract, force),
-    "aidd-test",
+    parsePluginName("aidd-test"),
     STUB_PLUGIN_SRC
   );
   return files;

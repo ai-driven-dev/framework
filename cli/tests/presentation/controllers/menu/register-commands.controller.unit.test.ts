@@ -1,8 +1,8 @@
 import { Command } from "commander";
 import { expect, it } from "vitest";
+import { wireTelemetryRequests } from "../../../../src/composition/contexts/telemetry.js";
+import { wireTools } from "../../../../src/composition/contexts/tools.js";
 import { bindContainer } from "../../../../src/composition/orchestration/deps-graph.js";
-import { wireTelemetryRequests } from "../../../../src/composition/telemetry.js";
-import { wireTools } from "../../../../src/composition/tools.js";
 import { registerCommands } from "../../../../src/presentation/controllers/menu/register-commands.controller.js";
 import { processOutputFactory } from "../../../shared/testing/output-factory.builder.js";
 

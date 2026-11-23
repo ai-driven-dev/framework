@@ -19,8 +19,8 @@ import { doctorAll } from "../../orchestration/doctor/doctor-all.js";
 import { ResolveRegisteredBuilds } from "../../orchestration/doctor/resolve-registered-builds.use-case.js";
 import { RunDoctor } from "../../orchestration/doctor/run-doctor.use-case.js";
 import { RunUserScopeDoctor } from "../../orchestration/doctor/run-user-scope-doctor.use-case.js";
-import { catalogReaders } from "../host-registration.js";
-import { type Installation, recordsOf } from "../installation.js";
+import { catalogReaders } from "../contexts/host-registration.js";
+import { type Installation, recordsOf } from "../contexts/installation.js";
 import type { Base } from "../shared.js";
 import { userConfigDir } from "../user-config-dir.js";
 

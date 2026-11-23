@@ -2,11 +2,11 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { wireTools } from "../../src/composition/tools.js";
+import { wireTools } from "../../src/composition/contexts/tools.js";
 import {
   createFrameworkBuildUseCase,
   type FrameworkBuildDeps,
-} from "../../src/composition/translate.js";
+} from "../../src/composition/contexts/translate.js";
 import { FlatTargetExistsError } from "../../src/contexts/translate/domain/translate.error.js";
 import { BundledAssetProviderAdapter } from "../../src/shared/infrastructure/asset-loader.js";
 import { CapturingLogger } from "../shared/testing/capturing-logger.fake.js";

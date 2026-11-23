@@ -1,7 +1,8 @@
 import type { AiToolId } from "../tool.js";
+import type { PluginName } from "./plugin-name.js";
 
 export interface PluginManifestFields {
-  name: string;
+  name: PluginName;
   version: string;
   description?: string;
   author?: { name: string; email?: string };

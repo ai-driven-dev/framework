@@ -1,11 +1,11 @@
 import { tmpdir } from "node:os";
-import type { RegistrationRecordRules } from "../contexts/host-registration/contract/registration-record-rules.js";
-import { mergeCatalogueMarketplaces } from "../contexts/host-registration/domain/record/catalogue-marketplaces.js";
+import type { RegistrationRecordRules } from "../../contexts/host-registration/contract/registration-record-rules.js";
+import { mergeCatalogueMarketplaces } from "../../contexts/host-registration/domain/record/catalogue-marketplaces.js";
 import {
   isRefOnHost,
   refOnHostName,
-} from "../contexts/host-registration/domain/record/host-ref.js";
-import { afterActivation } from "../contexts/host-registration/domain/record/registration-projection.js";
+} from "../../contexts/host-registration/domain/record/host-ref.js";
+import { afterActivation } from "../../contexts/host-registration/domain/record/registration-projection.js";
 import {
   isQualifiedRef,
   marketplaceOf,
@@ -16,55 +16,55 @@ import {
   registrationPreview,
   withoutMarketplace,
   withoutRef,
-} from "../contexts/host-registration/domain/record/registration-record.js";
-import { AssertProjectMcpEntriesRemovable } from "../contexts/installation/application/assert-project-mcp-entries-removable.use-case.js";
-import { ReadMachineInstallation } from "../contexts/installation/application/doctor/read-machine-installation.use-case.js";
-import { InstallIdeConfig } from "../contexts/installation/application/install/config/install-ide-config.use-case.js";
-import { InstallRuntimeConfig } from "../contexts/installation/application/install/config/install-runtime-config.use-case.js";
-import { TrackedConfigFiles } from "../contexts/installation/application/install/config/tracked-config-files.use-case.js";
-import { PropagateAiSettingsToIde } from "../contexts/installation/application/install/propagate-ai-settings-to-ide.use-case.js";
-import { RunPostInstallPipeline } from "../contexts/installation/application/install/run-post-install-pipeline.use-case.js";
-import { ListInstalledRules } from "../contexts/installation/application/list-installed-rules.use-case.js";
+} from "../../contexts/host-registration/domain/record/registration-record.js";
+import { AssertProjectMcpEntriesRemovable } from "../../contexts/installation/application/assert-project-mcp-entries-removable.use-case.js";
+import { ReadMachineInstallation } from "../../contexts/installation/application/doctor/read-machine-installation.use-case.js";
+import { InstallIdeConfig } from "../../contexts/installation/application/install/config/install-ide-config.use-case.js";
+import { InstallRuntimeConfig } from "../../contexts/installation/application/install/config/install-runtime-config.use-case.js";
+import { TrackedConfigFiles } from "../../contexts/installation/application/install/config/tracked-config-files.use-case.js";
+import { PropagateAiSettingsToIde } from "../../contexts/installation/application/install/propagate-ai-settings-to-ide.use-case.js";
+import { RunPostInstallPipeline } from "../../contexts/installation/application/install/run-post-install-pipeline.use-case.js";
+import { ListInstalledRules } from "../../contexts/installation/application/list-installed-rules.use-case.js";
 import {
   CacheBuiltMarketplace,
   type FrameworkBuilds,
-} from "../contexts/installation/application/marketplace/cache-built-marketplace.use-case.js";
-import { ProjectHooksMaterializer } from "../contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
-import { AssertProjectPathWithinRoot } from "../contexts/installation/application/ownership/assert-project-path-within-root.use-case.js";
-import { ListPlugins } from "../contexts/installation/application/plugin/list-plugins.use-case.js";
-import { AssertProjectIntegrationRemovable } from "../contexts/installation/application/removal/assert-project-integration-removable.use-case.js";
-import { PlanProjectMcpRemoval } from "../contexts/installation/application/removal/plan-project-mcp-removal.use-case.js";
-import { RemoveProjectHooks } from "../contexts/installation/application/removal/remove-project-hooks.use-case.js";
-import { RemoveProjectIntegration } from "../contexts/installation/application/removal/remove-project-integration.use-case.js";
-import { AssertProjectHooksRemovable } from "../contexts/installation/application/shared/assert-project-hooks-removable.use-case.js";
-import { AssertProjectHooksUnchanged } from "../contexts/installation/application/shared/assert-project-hooks-unchanged.use-case.js";
-import type { BuiltMaterializationDeps } from "../contexts/installation/application/shared/built-materialization-deps.js";
-import { DetectPluginDrift } from "../contexts/installation/application/shared/detect-plugin-drift.use-case.js";
-import { RemoveRecordedProjectHooks } from "../contexts/installation/application/shared/remove-recorded-project-hooks.use-case.js";
-import { UpdateGitignore } from "../contexts/installation/application/update-gitignore.use-case.js";
-import type { ProjectSetupState } from "../contexts/installation/contract/project-setup-state.js";
-import { AgentModelStoreAdapter } from "../contexts/installation/infrastructure/agent-model-store-adapter.js";
-import type { AgentModelStore } from "../contexts/installation/ports/agent-model-store.js";
-import type { ManifestRepository } from "../contexts/installation/ports/manifest-repository.js";
-import { recordClaimRules } from "../contexts/machine-claims/application/record/record-claim-rules.js";
-import type { RecordClaimRules } from "../contexts/machine-claims/contract/record-claim-rules.js";
+} from "../../contexts/installation/application/marketplace/cache-built-marketplace.use-case.js";
+import { ProjectHooksMaterializer } from "../../contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
+import { AssertProjectPathWithinRoot } from "../../contexts/installation/application/ownership/assert-project-path-within-root.use-case.js";
+import { ListPlugins } from "../../contexts/installation/application/plugin/list-plugins.use-case.js";
+import { AssertProjectIntegrationRemovable } from "../../contexts/installation/application/removal/assert-project-integration-removable.use-case.js";
+import { PlanProjectMcpRemoval } from "../../contexts/installation/application/removal/plan-project-mcp-removal.use-case.js";
+import { RemoveProjectHooks } from "../../contexts/installation/application/removal/remove-project-hooks.use-case.js";
+import { RemoveProjectIntegration } from "../../contexts/installation/application/removal/remove-project-integration.use-case.js";
+import { AssertProjectHooksRemovable } from "../../contexts/installation/application/shared/assert-project-hooks-removable.use-case.js";
+import { AssertProjectHooksUnchanged } from "../../contexts/installation/application/shared/assert-project-hooks-unchanged.use-case.js";
+import type { BuiltMaterializationDeps } from "../../contexts/installation/application/shared/built-materialization-deps.js";
+import { DetectPluginDrift } from "../../contexts/installation/application/shared/detect-plugin-drift.use-case.js";
+import { RemoveRecordedProjectHooks } from "../../contexts/installation/application/shared/remove-recorded-project-hooks.use-case.js";
+import { UpdateGitignore } from "../../contexts/installation/application/update-gitignore.use-case.js";
+import type { ProjectSetupState } from "../../contexts/installation/contract/project-setup-state.js";
+import { AgentModelStoreAdapter } from "../../contexts/installation/infrastructure/agent-model-store-adapter.js";
+import type { AgentModelStore } from "../../contexts/installation/ports/agent-model-store.js";
+import type { ManifestRepository } from "../../contexts/installation/ports/manifest-repository.js";
+import { recordClaimRules } from "../../contexts/machine-claims/application/record/record-claim-rules.js";
+import type { RecordClaimRules } from "../../contexts/machine-claims/contract/record-claim-rules.js";
 import type {
   MachineRecords,
   ScopeRecordsRepository,
-} from "../contexts/machine-claims/ports/machine-manifest.js";
-import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
-import { EnsureBuiltMarketplace } from "../orchestration/marketplace/ensure-built-marketplace.use-case.js";
-import { BundledAssetProviderAdapter } from "../shared/infrastructure/asset-loader.js";
-import type { FileReader } from "../shared/ports/file-reader.js";
-import type { FileWriter } from "../shared/ports/file-writer.js";
-import type { Logger } from "../shared/ports/logger.js";
-import type { Base } from "./shared.js";
+} from "../../contexts/machine-claims/ports/machine-manifest.js";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
+import { EnsureBuiltMarketplace } from "../../orchestration/marketplace/ensure-built-marketplace.use-case.js";
+import { BundledAssetProviderAdapter } from "../../shared/infrastructure/asset-loader.js";
+import type { FileReader } from "../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../shared/ports/file-writer.js";
+import type { Logger } from "../../shared/ports/logger.js";
+import type { Base } from "../shared.js";
+import { userConfigDir } from "../user-config-dir.js";
 import {
   createFrameworkBuildUseCase,
   createPluginTranslation,
   type FrameworkBuildDeps,
 } from "./translate.js";
-import { userConfigDir } from "./user-config-dir.js";
 
 /** The rules over one scope's records, with the records themselves, read and written through
  * that scope's repository. */

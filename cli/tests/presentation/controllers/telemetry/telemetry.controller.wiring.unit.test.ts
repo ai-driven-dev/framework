@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { describe, expect, it } from "vitest";
-import { wireTelemetryRequests } from "../../../../src/composition/telemetry.js";
+import { wireTelemetryRequests } from "../../../../src/composition/contexts/telemetry.js";
 import { bindOutput } from "../../../../src/presentation/controllers/menu/global-options.controller.js";
 import { registerTelemetryCommand } from "../../../../src/presentation/controllers/telemetry/telemetry.controller.js";
 import surface from "../../../golden/snapshots/help/surface.json" with { type: "json" };

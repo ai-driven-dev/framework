@@ -6,6 +6,7 @@ import {
   withoutHooks,
 } from "../../../../../src/contexts/translate/domain/rules/hook-scripts.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { cursor } from "../../testing/registered-profiles.builder.js";
 
@@ -47,7 +48,7 @@ const COMMAND = { relativePath: "commands/hello.md", content: "# Hello" };
 
 function distWith(hooks: readonly { relativePath: string; content: string }[]) {
   return new PluginDistribution({
-    manifest: { name: "aidd-context", version: "1.0.0" },
+    manifest: { name: parsePluginName("aidd-context"), version: "1.0.0" },
     format: TOOL.claude,
     files: [...hooks, COMMAND],
     components: {

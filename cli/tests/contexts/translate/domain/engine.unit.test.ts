@@ -1,6 +1,7 @@
 import { parse as parseToml } from "smol-toml";
 import { describe, expect, it } from "vitest";
 import { parseFrontmatter, serializeFrontmatter } from "../../../../src/shared/domain/markdown.js";
+import { parsePluginName } from "../../../../src/shared/domain/plugin/plugin-name.js";
 import {
   agentContent,
   claudeManifestContent,
@@ -53,7 +54,7 @@ describe("the engine translate()", () => {
   ] as const)(
     "carries %s's model and Claude's effort, under the host's own key, through ordinary installation",
     (label, host, path, expected) => {
-      const base = makeDist({ manifest: { name: "aidd-dev", version: "1.0.0" } });
+      const base = makeDist({ manifest: { name: parsePluginName("aidd-dev"), version: "1.0.0" } });
       const agent = makeFile(
         "agents/reviewer.md",
         serializeFrontmatter(

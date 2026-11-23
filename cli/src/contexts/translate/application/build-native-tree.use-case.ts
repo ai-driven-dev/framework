@@ -2,6 +2,7 @@ import { join, resolve } from "node:path";
 import { describeError } from "../../../shared/domain/describe-error.js";
 import { pathsOverlap } from "../../../shared/domain/paths.model.js";
 import { SOURCE_MARKETPLACE_RELATIVE } from "../../../shared/domain/plugin/canon-paths.js";
+import { parsePluginName } from "../../../shared/domain/plugin/plugin-name.js";
 import type {
   SourceMarketplaceRef,
   SourcePluginEntryRef,
@@ -95,9 +96,11 @@ export class BuildNativeTree {
       throw new InvalidSourceMarketplaceError("missing 'plugins' array");
     }
     for (const entry of obj.plugins) {
-      if (typeof asPlainObject(entry)?.name !== "string") {
+      const name = asPlainObject(entry)?.name;
+      if (typeof name !== "string") {
         throw new InvalidSourceMarketplaceError("each plugin entry must have a 'name' string");
       }
+      parsePluginName(name);
     }
     return obj as unknown as SourceMarketplaceRef;
   }

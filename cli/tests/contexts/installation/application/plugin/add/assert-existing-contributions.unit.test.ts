@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { projectIntegrationOf } from "../../../../../../src/composition/installation.js";
+import { projectIntegrationOf } from "../../../../../../src/composition/contexts/installation.js";
 import { assertExistingContributionsUnchanged } from "../../../../../../src/contexts/installation/application/plugin/add/assert-existing-contributions.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";

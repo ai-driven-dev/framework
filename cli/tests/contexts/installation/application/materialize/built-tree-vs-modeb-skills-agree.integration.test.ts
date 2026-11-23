@@ -1,12 +1,13 @@
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { createPluginTranslation } from "../../../../../src/composition/translate.js";
+import { createPluginTranslation } from "../../../../../src/composition/contexts/translate.js";
 import { artifactPath } from "../../../../../src/contexts/tools/contract/artifact-path.js";
 import {
   type PluginComponentFile,
   PluginDistribution,
 } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { REPOSITORY_ROOT } from "../../../../shared/testing/repository-root.builder.js";
 
@@ -31,7 +32,7 @@ function makeTelemetryLikeDist(): PluginDistribution {
     skillFile("01-cost/scripts/telemetry-report.cjs", `require("../../shared/attribution.cjs");`),
   ];
   return new PluginDistribution({
-    manifest: { name: PLUGIN_NAME, version: "1.0.0" },
+    manifest: { name: parsePluginName(PLUGIN_NAME), version: "1.0.0" },
     format: TOOL.claude,
     files: skills,
     components: { commands: [], agents: [], rules: [], skills, hooks: [], mcp: [] },

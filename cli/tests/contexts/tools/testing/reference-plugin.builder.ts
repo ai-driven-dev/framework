@@ -2,6 +2,7 @@ import {
   type PluginComponentFile,
   PluginDistribution,
 } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../src/shared/domain/plugin/plugin-name.js";
 import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
 const SKILL = "---\nname: hello\ndescription: Hello skill\n---\n\nHello.\n";
@@ -35,7 +36,7 @@ export function referencePlugin(name: string): PluginDistribution {
   const mcp = [file(".mcp.json", MCP)];
   const manifest = file(".claude-plugin/plugin.json", JSON.stringify({ name, version: "1.0.0" }));
   return new PluginDistribution({
-    manifest: { name, version: "1.0.0" },
+    manifest: { name: parsePluginName(name), version: "1.0.0" },
     format: TOOL.claude,
     files: [...skills, ...agents, ...commands, ...rules, ...hooks, ...mcp, manifest],
     components: { skills, agents, commands, rules, hooks, mcp },

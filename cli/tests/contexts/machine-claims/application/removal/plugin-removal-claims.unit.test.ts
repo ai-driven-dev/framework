@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   machineOwnership,
   sharedSourceReads,
-} from "../../../../../src/composition/machine-claims.js";
+} from "../../../../../src/composition/contexts/machine-claims.js";
 import { pluginRemovalClaims } from "../../../../../src/contexts/machine-claims/application/removal/plugin-removal-claims.js";
 import type { ListedMarketplace } from "../../../../../src/contexts/machine-claims/ports/marketplace-listing.js";
 import type { UserSourceReferences } from "../../../../../src/contexts/machine-claims/ports/user-source-references.js";

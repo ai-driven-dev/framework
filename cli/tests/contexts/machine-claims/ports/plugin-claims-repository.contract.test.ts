@@ -1,7 +1,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { pluginClaimsFile } from "../../../../src/composition/machine-claims.js";
+import { pluginClaimsFile } from "../../../../src/composition/contexts/machine-claims.js";
 import { atomicWriteFile } from "../../../../src/shared/infrastructure/atomic-write.js";
 import { resolveRegisteredToolId } from "../../../shared/testing/registered-tools.builder.js";
 import { InMemoryPluginClaims } from "../testing/in-memory-plugin-claims.fake.js";

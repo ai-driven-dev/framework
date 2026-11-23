@@ -4,6 +4,7 @@ import type { ConfigArtifact } from "../../../../../../src/contexts/tools/contra
 import { codexProfile } from "../../../../../../src/contexts/tools/domain/profiles/codex/codex.profile.js";
 import { SmolTomlCodec } from "../../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { reshapeFrontmatter } from "../../../../../../src/shared/domain/markdown.js";
+import { parsePluginName } from "../../../../../../src/shared/domain/plugin/plugin-name.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { present } from "../../../../../shared/testing/present.builder.js";
 import { supported } from "../../../testing/build-artifacts.builder.js";
@@ -161,7 +162,7 @@ describe("building Codex's marketplace contract", () => {
       name: "aidd-dev",
       pluginSrc: "/src/plugins/aidd-dev",
       outDir: "/out",
-      srcEntry: { name: "aidd-dev" },
+      srcEntry: { name: parsePluginName("aidd-dev") },
       fs: new InMemoryFileAdapter(),
     });
 

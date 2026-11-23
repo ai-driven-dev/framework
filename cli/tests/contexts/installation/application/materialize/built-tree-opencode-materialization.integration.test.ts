@@ -4,6 +4,7 @@ import { Manifest } from "../../../../../src/contexts/installation/domain/manife
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
@@ -15,7 +16,7 @@ const KILO_BUILT = "/built/kilo";
 
 function dist(): PluginDistribution {
   return new PluginDistribution({
-    manifest: { name: "aidd-vcs", version: "1.0.0" },
+    manifest: { name: parsePluginName("aidd-vcs"), version: "1.0.0" },
     format: TOOL.claude,
     files: [],
     components: { commands: [], agents: [], rules: [], skills: [], hooks: [], mcp: [] },
@@ -24,7 +25,7 @@ function dist(): PluginDistribution {
 
 function distWithHooks(): PluginDistribution {
   return new PluginDistribution({
-    manifest: { name: "aidd-vcs", version: "1.0.0" },
+    manifest: { name: parsePluginName("aidd-vcs"), version: "1.0.0" },
     format: TOOL.claude,
     files: [],
     components: {
@@ -229,7 +230,7 @@ describe("placeBuiltTreePlugin - kilo (integration)", () => {
       }),
     };
     const distribution = new PluginDistribution({
-      manifest: { name: "aidd-vcs", version: "1.0.0" },
+      manifest: { name: parsePluginName("aidd-vcs"), version: "1.0.0" },
       format: TOOL.claude,
       files: [],
       components: {

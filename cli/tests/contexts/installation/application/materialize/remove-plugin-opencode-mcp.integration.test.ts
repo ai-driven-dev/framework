@@ -4,6 +4,7 @@ import { createOutput } from "../../../../../src/composition/shared.js";
 import { placeFlatPlugin } from "../../../../../src/contexts/installation/application/materialize/place-flat-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
@@ -26,7 +27,7 @@ const MCP_CONTENT = JSON.stringify({
 
 function buildDist(): PluginDistribution {
   return new PluginDistribution({
-    manifest: { name: PLUGIN_NAME, version: "1.0.0" },
+    manifest: { name: parsePluginName(PLUGIN_NAME), version: "1.0.0" },
     format: TOOL.claude,
     files: [{ relativePath: ".mcp.json", content: MCP_CONTENT }],
     components: {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { recordsOf } from "../../../../../src/composition/installation.js";
+import { recordsOf } from "../../../../../src/composition/contexts/installation.js";
 import type { ProvenNativeRefresh } from "../../../../../src/contexts/installation/application/plugin/update-native-refs.js";
 import type {
   MachinePluginUpdate,

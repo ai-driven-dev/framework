@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { DuplicatePluginError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import type { LoadDistribution } from "../../../../../src/contexts/installation/ports/plugin/load-plugin-distribution.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import {
   buildInstallationDeps,
@@ -111,7 +112,7 @@ describe("adding a plugin to a project on disk", () => {
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const loadZeroFiles: LoadDistribution = async () =>
         new PluginDistribution({
-          manifest: { name: "zero-plugin", version: "1.0.0" },
+          manifest: { name: parsePluginName("zero-plugin"), version: "1.0.0" },
           format: TOOL.claude,
           files: [],
           components: { commands: [], agents: [], rules: [], skills: [], hooks: [], mcp: [] },

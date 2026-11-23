@@ -3,6 +3,7 @@ import { rematerializePlugin } from "../../../../../src/contexts/installation/ap
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
@@ -24,7 +25,7 @@ function rematerialize() {
   manifest.addTool(TOOL.claude, "1.0.0", []);
   manifest.addPlugin(TOOL.claude, plugin);
   const dist = new PluginDistribution({
-    manifest: { name: "aidd-dev", version: "1.0.0" },
+    manifest: { name: parsePluginName("aidd-dev"), version: "1.0.0" },
     format: TOOL.claude,
     files: [],
     components: NO_COMPONENTS,
@@ -59,7 +60,7 @@ async function rematerializeOnCursor(): Promise<number> {
   const fs = new InMemoryFileAdapter();
   fs.setFile("/built/cursor/plugins/aidd-dev/skills/demo/SKILL.md", "built skill");
   const dist = new PluginDistribution({
-    manifest: { name: "aidd-dev", version: "1.0.0" },
+    manifest: { name: parsePluginName("aidd-dev"), version: "1.0.0" },
     format: TOOL.claude,
     files: [],
     components: NO_COMPONENTS,

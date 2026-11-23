@@ -6,6 +6,7 @@ import { registerMarketplacePlugin } from "../../../../../src/contexts/installat
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { SyncSettings } from "../../../../../src/orchestration/sync/settings/sync-settings.use-case.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import type { PluginSource } from "../../../../../src/shared/domain/plugin/source.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../shared/testing/fake-ensure-built-marketplace.fake.js";
@@ -65,7 +66,7 @@ async function seedBuiltCatalog(fs: InMemoryFileAdapter, name = MARKETPLACE_NAME
 
 function buildDist(name = "aidd-context"): PluginDistribution {
   return new PluginDistribution({
-    manifest: { name, version: "1.0.0" },
+    manifest: { name: parsePluginName(name), version: "1.0.0" },
     format: TOOL.claude,
     files: [{ relativePath: "commands/hello.md", content: "# Hello" }],
     components: {

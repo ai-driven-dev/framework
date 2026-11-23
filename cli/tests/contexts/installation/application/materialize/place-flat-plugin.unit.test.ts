@@ -4,6 +4,7 @@ import { placeFlatPlugin } from "../../../../../src/contexts/installation/applic
 import { ProjectScopeUnsupportedError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import {
   errnoError,
   FaultingFileAdapter,
@@ -17,7 +18,7 @@ const PROJECT_ROOT = "/test-project";
 
 function buildDist(name = "test-plugin"): PluginDistribution {
   return new PluginDistribution({
-    manifest: { name, version: "1.0.0" },
+    manifest: { name: parsePluginName(name), version: "1.0.0" },
     format: TOOL.claude,
     files: [
       { relativePath: "commands/hello.md", content: "---\nname: aidd:01:hello\n---\n# Hello" },
@@ -94,7 +95,7 @@ describe("placing a plugin in flat mode", () => {
       const manifest = Manifest.create();
       manifest.addTool(TOOL.opencode, "test", []);
       const emptyDist = new PluginDistribution({
-        manifest: { name: "empty-plugin", version: "1.0.0" },
+        manifest: { name: parsePluginName("empty-plugin"), version: "1.0.0" },
         format: TOOL.claude,
         files: [],
         components: { commands: [], agents: [], rules: [], skills: [], hooks: [], mcp: [] },
@@ -166,7 +167,7 @@ describe("placing a plugin in flat mode", () => {
       manifest.addTool(TOOL.opencode, "test", []);
       // A distribution with mcp-only content which flat mode doesn't translate
       const mcpOnlyDist = new PluginDistribution({
-        manifest: { name: "mcp-plugin", version: "1.0.0" },
+        manifest: { name: parsePluginName("mcp-plugin"), version: "1.0.0" },
         format: TOOL.claude,
         files: [{ relativePath: ".mcp.json", content: "{}" }],
         components: {
@@ -215,7 +216,7 @@ describe("placing a plugin in flat mode", () => {
         { relativePath: "hooks/pre.js", content: SCRIPT_CONTENT },
       ];
       return new PluginDistribution({
-        manifest: { name: "hooks-plugin", version: "1.0.0" },
+        manifest: { name: parsePluginName("hooks-plugin"), version: "1.0.0" },
         format: TOOL.claude,
         files: hooks,
         components: { commands: [], agents: [], rules: [], skills: [], hooks, mcp: [] },
@@ -276,7 +277,7 @@ describe("placing a plugin in flat mode", () => {
     function mcpDist(mcpServers: Record<string, unknown>): PluginDistribution {
       const content = JSON.stringify({ mcpServers });
       return new PluginDistribution({
-        manifest: { name: "mcp-plugin", version: "1.0.0" },
+        manifest: { name: parsePluginName("mcp-plugin"), version: "1.0.0" },
         format: TOOL.claude,
         files: [{ relativePath: ".mcp.json", content }],
         components: {

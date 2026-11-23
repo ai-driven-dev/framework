@@ -1,4 +1,4 @@
-import { createPluginTranslation } from "../../../../src/composition/translate.js";
+import { createPluginTranslation } from "../../../../src/composition/contexts/translate.js";
 import type { ToolProfile } from "../../../../src/contexts/tools/contract/tool-profile.js";
 import type { TranslateDistributionResult } from "../../../../src/contexts/translate/application/translate-distribution.use-case.js";
 import type { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";

@@ -39,14 +39,14 @@ import { RemoveMachinePlugin } from "../../orchestration/plugin/remove-machine-p
 import { RemovePlugin } from "../../orchestration/plugin/remove-plugin.use-case.js";
 import { UpdateUserPlugin } from "../../orchestration/plugin/update-user-plugin.use-case.js";
 import { isStrictlyWithin } from "../../shared/domain/paths.model.js";
-import { type Installation, recordsOf } from "../installation.js";
+import { type Installation, recordsOf } from "../contexts/installation.js";
 import {
   lenientSourceReferences,
   machineOwnership,
   sharedSourceReads,
   userScopeFileGuard,
   userScopeFilesSafeToDelete,
-} from "../machine-claims.js";
+} from "../contexts/machine-claims.js";
 import type { Base } from "../shared.js";
 import { userConfigDir } from "../user-config-dir.js";
 

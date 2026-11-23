@@ -1,6 +1,6 @@
 import { parse as parseToml } from "smol-toml";
 import { describe, expect, it } from "vitest";
-import { wireTools } from "../../../src/composition/tools.js";
+import { wireTools } from "../../../src/composition/contexts/tools.js";
 import { BundledAssetProviderAdapter } from "../../../src/shared/infrastructure/asset-loader.js";
 import { TOOL } from "../../shared/testing/registered-tools.builder.js";
 

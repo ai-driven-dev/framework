@@ -1,5 +1,5 @@
-import { recordsOf } from "../../../src/composition/installation.js";
-import { userScopeFilesSafeToDelete } from "../../../src/composition/machine-claims.js";
+import { recordsOf } from "../../../src/composition/contexts/installation.js";
+import { userScopeFilesSafeToDelete } from "../../../src/composition/contexts/machine-claims.js";
 import { wireCleanClaims } from "../../../src/composition/orchestration/clean-claims.js";
 import { RemoveMarketplace } from "../../../src/contexts/distribution/application/remove/remove-marketplace.use-case.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";

@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { describe, expect, it } from "vitest";
-import { wireTools } from "../../../../src/composition/tools.js";
+import { wireTools } from "../../../../src/composition/contexts/tools.js";
 import { bindOutput } from "../../../../src/presentation/controllers/menu/global-options.controller.js";
 import { registerSetupCommand } from "../../../../src/presentation/controllers/setup/setup.controller.js";
 import { globalSetupHelp } from "../../../../src/presentation/controllers/setup/setup-flags.controller.js";

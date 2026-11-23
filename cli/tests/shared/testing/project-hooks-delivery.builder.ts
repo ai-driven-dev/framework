@@ -1,4 +1,4 @@
-import { createPluginTranslation } from "../../../src/composition/translate.js";
+import { createPluginTranslation } from "../../../src/composition/contexts/translate.js";
 import type {
   ProjectHooksMaterializer,
   ProjectHooksMaterializerRequest,

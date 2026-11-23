@@ -4,7 +4,8 @@ Where things live. `tests/architecture/docs-do-not-lie.arch.test.ts` holds the t
 
 ```txt
 src/
-├── composition/    # one wiring module per context, called by container.ts
+├── composition/    # container.ts and the shared wiring
+│   ├── contexts/    # one wiring module per context, called by container.ts
 │   └── orchestration/    # the wiring of each scenario
 ├── contexts/    # bounded contexts; another context reads contract/ only, presentation and orchestration also application/
 │   ├── auth/    # the one GitHub token

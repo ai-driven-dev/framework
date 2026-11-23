@@ -6,6 +6,7 @@ import type {
 } from "../../../../../src/contexts/tools/contract/build-contract.js";
 import { JsonSchemaValidationError } from "../../../../../src/contexts/translate/domain/translate.error.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
+import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import type { SourcePluginEntryRef } from "../../../../../src/shared/domain/plugin/source-refs.js";
 import type { SchemaName } from "../../../../../src/shared/domain/reading/config-asset.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
@@ -23,8 +24,8 @@ describe("the catalog a marketplace layout writes once every plugin is built", (
   const sourceMarketplace = {
     name: "aidd-framework",
     plugins: [
-      { name: PLUGIN, version: "9.9.9" },
-      { name: "unbuilt-plugin", version: "1.0.0" },
+      { name: parsePluginName(PLUGIN), version: "9.9.9" },
+      { name: parsePluginName("unbuilt-plugin"), version: "1.0.0" },
     ] satisfies SourcePluginEntryRef[],
   };
 

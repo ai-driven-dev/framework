@@ -12,6 +12,7 @@ import {
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
 import type { DiskTarget } from "../../../../../src/contexts/translate/ports/plugin-tree-sink.js";
 import { flatArtifactLayout } from "../../../../../src/shared/domain/materialization/flat-paths.js";
+import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import { buildContractOf } from "../../../../shared/testing/build-contract-of.builder.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
@@ -23,7 +24,7 @@ import { aDiskSink } from "../../testing/disk-sink.builder.js";
 // resolve(), not the bare literal: on Windows a leading "/" is drive-relative.
 const OUT = resolve("/tmp/aidd-edges-out");
 const SOURCE = resolve("/edges-src");
-const PLUGIN = "plug";
+const PLUGIN = parsePluginName("plug");
 const PLUGIN_SRC = `${SOURCE}/plugins/${PLUGIN}`;
 // Avoid biome noTemplateCurlyInString
 const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";

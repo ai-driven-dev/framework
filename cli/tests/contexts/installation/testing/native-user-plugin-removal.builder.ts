@@ -1,4 +1,4 @@
-import type { registrationRecordRules } from "../../../../src/composition/installation.js";
+import type { registrationRecordRules } from "../../../../src/composition/contexts/installation.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import type { Scope } from "../../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../../src/shared/domain/tool.js";

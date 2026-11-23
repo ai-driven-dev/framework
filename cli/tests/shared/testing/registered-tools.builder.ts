@@ -1,4 +1,4 @@
-import { wireTools } from "../../../src/composition/tools.js";
+import { wireTools } from "../../../src/composition/contexts/tools.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { UnregisteredToolError } from "../../../src/shared/domain/shared.error.js";
 import type { ToolId, ToolIdResolver } from "../../../src/shared/domain/tool.js";

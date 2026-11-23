@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { projectSetupOf } from "../../src/composition/installation.js";
+import { projectSetupOf } from "../../src/composition/contexts/installation.js";
 import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
 import { InMemoryManifestRepository } from "../shared/testing/in-memory-manifest-repository.fake.js";
 

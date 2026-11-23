@@ -4,7 +4,7 @@ What a tool's own transcripts say a model call consumed, and how it is stored, a
 
 ## Ports
 
-- A tool is one `UsageSource` (`list`, `read`, `decode(line, context?)`, `ports/usage-source.ts`), registered once in `src/composition/telemetry.ts`.
+- A tool is one `UsageSource` (`list`, `read`, `decode(line, context?)`, `ports/usage-source.ts`), registered once in `src/composition/contexts/telemetry.ts`.
 - `decode` is a pure function of its line and the context earlier lines returned; `ReadUsage` passes it on and never reads it. A file's age is `read`'s (`modifiedAt`), not the source's.
 - The usage ledger, bindings lock, binding snapshot store and consent history have a contract suite on fake and adapter; the other stores have none.
 - An adapter's own test keeps what its medium adds and no fake can show: file names, bytes, modes, torn lines, a lock file's content.

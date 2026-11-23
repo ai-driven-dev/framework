@@ -2,6 +2,7 @@ import { registerMarketplacePlugin } from "../../../../src/contexts/installation
 import type { ToolRecords } from "../../../../src/contexts/installation/contract/records/scope-records.js";
 import type { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../src/shared/domain/plugin/plugin-name.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
 const { claude } = TOOL;
@@ -13,7 +14,7 @@ export const REF = `${PLUGIN_NAME}@${MARKETPLACE_NAME}`;
 
 export function buildDist(): PluginDistribution {
   return new PluginDistribution({
-    manifest: { name: PLUGIN_NAME, version: "1.0.0" },
+    manifest: { name: parsePluginName(PLUGIN_NAME), version: "1.0.0" },
     format: claude,
     files: [{ relativePath: "commands/hello.md", content: "# Hello" }],
     components: {

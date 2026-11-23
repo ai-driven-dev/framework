@@ -1,6 +1,6 @@
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { createPluginTranslation } from "../../../../../src/composition/translate.js";
+import { createPluginTranslation } from "../../../../../src/composition/contexts/translate.js";
 import {
   materializeFlatMcp,
   refreshTrackedMcpConfigHash,
@@ -9,6 +9,7 @@ import { Manifest } from "../../../../../src/contexts/installation/domain/manife
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
@@ -17,7 +18,7 @@ const OPENCODE_JSON = join(PROJECT_ROOT, "opencode.json");
 
 function dist(mcp: readonly string[]): PluginDistribution {
   return new PluginDistribution({
-    manifest: { name: "ctx", version: "1.0.0" },
+    manifest: { name: parsePluginName("ctx"), version: "1.0.0" },
     format: TOOL.claude,
     files: [],
     components: {

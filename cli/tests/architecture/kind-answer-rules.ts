@@ -161,19 +161,19 @@ export const STORED_ANSWERS: readonly {
     file: `${ANSWER_FILE}/native-registration/native-activation.ts`,
     member: "NativeActivation.hostBinary",
     caller:
-      "host-registration/application, installation/application/sync/record-activation.use-case.ts, composition/host-registration.ts",
+      "host-registration/application, installation/application/sync/record-activation.use-case.ts, composition/contexts/host-registration.ts",
     reason: "the binary is looked up on the PATH and keys the host's activator",
   },
   {
     file: `${ANSWER_FILE}/native-registration/native-activation.ts`,
     member: "NativeActivation.cliShape",
-    caller: "composition/host-registration.ts",
+    caller: "composition/contexts/host-registration.ts",
     reason: "the host CLI adapter is built from the verbs themselves",
   },
   {
     file: `${ANSWER_FILE}/native-registration/native-activation.ts`,
     member: "NativeActivation.marketplaceSourcesDeclaration",
-    caller: "composition/host-registration.ts",
+    caller: "composition/contexts/host-registration.ts",
     reason: "the source readers are built from the declaration itself",
   },
 ];

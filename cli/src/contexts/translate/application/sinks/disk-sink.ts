@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { SOURCE_PLUGIN_MANIFEST_RELATIVE } from "../../../../shared/domain/plugin/canon-paths.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
+import type { PluginName } from "../../../../shared/domain/plugin/plugin-name.js";
 import type { SourceMarketplaceRef } from "../../../../shared/domain/plugin/source-refs.js";
 import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 import { translate } from "../../domain/engine.js";
@@ -51,7 +52,11 @@ export class DiskSink implements PluginTreeSink {
   }
 
   /** Writes one plugin's manifest, agents, skills, hooks and MCP; returns the files written. */
-  async writePlugin(t: DiskTarget, pluginName: string, pluginSrc: string): Promise<PluginWritten> {
+  async writePlugin(
+    t: DiskTarget,
+    pluginName: PluginName,
+    pluginSrc: string
+  ): Promise<PluginWritten> {
     await this.validateSourceManifest(pluginSrc);
     const plugin = { name: pluginName, src: pluginSrc };
     const canon = await readPluginCanon(this.deps.fs, plugin, this.deps.canonFormat);

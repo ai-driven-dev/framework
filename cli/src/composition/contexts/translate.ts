@@ -1,18 +1,21 @@
-import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import {
   BuildNativeTree,
   type FrameworkBuildContext,
-} from "../contexts/translate/application/build-native-tree.use-case.js";
-import { DiskSink } from "../contexts/translate/application/sinks/disk-sink.js";
-import { FlatWriter } from "../contexts/translate/application/sinks/flat-writer.js";
-import { TranslateDistribution } from "../contexts/translate/application/translate-distribution.use-case.js";
-import { canonFormatOf, pluginManifestProbes } from "../contexts/translate/domain/plugin-format.js";
-import { BundledSchemaProviderAdapter } from "../contexts/translate/infrastructure/schema-provider.js";
-import { AjvSchemaValidatorAdapter } from "../contexts/translate/infrastructure/schema-validator.js";
-import type { AssetProvider } from "../shared/ports/asset-provider.js";
-import type { FileReader } from "../shared/ports/file-reader.js";
-import type { FileWriter } from "../shared/ports/file-writer.js";
-import type { Logger } from "../shared/ports/logger.js";
+} from "../../contexts/translate/application/build-native-tree.use-case.js";
+import { DiskSink } from "../../contexts/translate/application/sinks/disk-sink.js";
+import { FlatWriter } from "../../contexts/translate/application/sinks/flat-writer.js";
+import { TranslateDistribution } from "../../contexts/translate/application/translate-distribution.use-case.js";
+import {
+  canonFormatOf,
+  pluginManifestProbes,
+} from "../../contexts/translate/domain/plugin-format.js";
+import { BundledSchemaProviderAdapter } from "../../contexts/translate/infrastructure/schema-provider.js";
+import { AjvSchemaValidatorAdapter } from "../../contexts/translate/infrastructure/schema-validator.js";
+import type { AssetProvider } from "../../shared/ports/asset-provider.js";
+import type { FileReader } from "../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../shared/ports/file-writer.js";
+import type { Logger } from "../../shared/ports/logger.js";
 
 export interface FrameworkBuildDeps {
   fs: FileReader & FileWriter;

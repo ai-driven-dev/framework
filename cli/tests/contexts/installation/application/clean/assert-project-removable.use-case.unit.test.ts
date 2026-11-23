@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { projectIntegrationOf } from "../../../../../src/composition/installation.js";
+import { projectIntegrationOf } from "../../../../../src/composition/contexts/installation.js";
 import { AssertProjectRemovable } from "../../../../../src/contexts/installation/application/clean/assert-project-removable.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";

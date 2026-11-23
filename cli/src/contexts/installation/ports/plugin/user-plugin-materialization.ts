@@ -7,9 +7,6 @@ import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 
-/** The containment rule composition supplies from machine-claims, so installation never reaches into that context. */
-export type ContainmentCheck = PathContainment;
-
 export interface PlannedUserPluginFileUpdate {
   readonly plugin: RecordedPlugin;
   readonly tool: AiToolProfile;
@@ -40,7 +37,7 @@ export interface UserPluginUpdateRequest {
   readonly tool: AiToolProfile;
   readonly projectRoot: string;
   readonly logger: Logger;
-  readonly isWithinUserScope: ContainmentCheck;
+  readonly isWithinUserScope: PathContainment;
 }
 
 /** The file half of a machine-scope plugin update: planned and proven first, applied after. The

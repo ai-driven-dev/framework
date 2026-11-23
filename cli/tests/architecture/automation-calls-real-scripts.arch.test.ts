@@ -12,7 +12,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { wireTools } from "../../src/composition/tools.js";
+import { wireTools } from "../../src/composition/contexts/tools.js";
 import { buildTargetModesOf } from "../../src/contexts/translate/contract/build-targets.js";
 import { present } from "../shared/testing/present.builder.js";
 import { CLI_ROOT } from "./source-graph.js";

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { placeFlatPlugin } from "../../../../../src/contexts/installation/application/materialize/place-flat-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { fakeFlatDeps } from "../../testing/fake-build-sources.fake.js";
@@ -12,7 +13,7 @@ const PROJECT_ROOT = "/test-project";
 
 function buildDist(name = "aidd-context"): PluginDistribution {
   return new PluginDistribution({
-    manifest: { name, version: "1.0.0" },
+    manifest: { name: parsePluginName(name), version: "1.0.0" },
     format: TOOL.claude,
     files: [
       { relativePath: "commands/hello.md", content: "---\nname: aidd:01:hello\n---\n# Hello" },

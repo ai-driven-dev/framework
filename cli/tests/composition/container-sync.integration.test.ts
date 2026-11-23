@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { wireInstallation } from "../../src/composition/installation.js";
+import { wireInstallation } from "../../src/composition/contexts/installation.js";
 import { wireMarketplace } from "../../src/composition/orchestration/marketplace.js";
 import { wireBase } from "../../src/composition/shared.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../src/contexts/distribution/contract/marketplace.js";

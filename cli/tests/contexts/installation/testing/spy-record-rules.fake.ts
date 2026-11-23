@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import { registrationRecordRules } from "../../../../src/composition/installation.js";
+import { registrationRecordRules } from "../../../../src/composition/contexts/installation.js";
 
 type RecordRules = typeof registrationRecordRules;
 

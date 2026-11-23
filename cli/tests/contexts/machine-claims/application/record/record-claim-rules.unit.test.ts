@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { registrationRecordRules as rules } from "../../../../../src/composition/installation.js";
+import { registrationRecordRules as rules } from "../../../../../src/composition/contexts/installation.js";
 
 const registry = (source: string) => ({ kind: "registry" as const, source });
 

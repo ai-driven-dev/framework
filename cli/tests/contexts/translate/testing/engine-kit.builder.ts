@@ -5,6 +5,7 @@ import {
   type PluginComponents,
   PluginDistribution,
 } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../src/shared/domain/plugin/plugin-name.js";
 import { manifestPathsOf } from "../../../shared/testing/manifest-probes-of.builder.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
@@ -80,7 +81,7 @@ export function makeDist(
   const mcp = [makeFile(".mcp.json", mcpJsonContent)];
   const manifest = makeFile(".claude-plugin/plugin.json", claudeManifestContent);
   return new PluginDistribution({
-    manifest: { name: "sample-plugin", version: "1.0.0" },
+    manifest: { name: parsePluginName("sample-plugin"), version: "1.0.0" },
     format: TOOL.claude,
     files: [...skills, ...commands, ...agents, ...rules, ...hooks, ...mcp, manifest],
     components: { skills, commands, agents, rules, hooks, mcp },
@@ -126,7 +127,7 @@ export function hooksManifestFor(token: string): string {
 
 export function distOf(files: PluginComponentFile[], components: Partial<PluginComponents>) {
   return new PluginDistribution({
-    manifest: { name: "sample-plugin", version: "1.0.0" },
+    manifest: { name: parsePluginName("sample-plugin"), version: "1.0.0" },
     format: TOOL.claude,
     files: [...files, makeFile(".claude-plugin/plugin.json", claudeManifestContent)],
     components: {

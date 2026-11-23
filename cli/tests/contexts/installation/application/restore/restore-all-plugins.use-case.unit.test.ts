@@ -5,6 +5,7 @@ import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/
 import type { LoadDistribution } from "../../../../../src/contexts/installation/ports/plugin/load-plugin-distribution.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import type { FileReader } from "../../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../../src/shared/ports/file-writer.js";
@@ -32,7 +33,7 @@ const noopFs: FileReader & FileWriter = {
 };
 
 const emptyDistribution = new PluginDistribution({
-  manifest: { name: "aidd-test", version: "1.0.0" },
+  manifest: { name: parsePluginName("aidd-test"), version: "1.0.0" },
   format: TOOL.claude,
   files: [],
   components: { skills: [], commands: [], agents: [], rules: [], hooks: [], mcp: [] },

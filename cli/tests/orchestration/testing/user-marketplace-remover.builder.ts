@@ -1,4 +1,7 @@
-import { recordsOf, type registrationRecordRules } from "../../../src/composition/installation.js";
+import {
+  recordsOf,
+  type registrationRecordRules,
+} from "../../../src/composition/contexts/installation.js";
 import { quietUserScopeFilesSafeToDelete } from "../../../src/composition/orchestration/marketplace.js";
 import { homeDirResolver } from "../../../src/composition/user-config-dir.js";
 import { FindUserMarketplace } from "../../../src/contexts/distribution/application/remove/find-user-marketplace.use-case.js";
