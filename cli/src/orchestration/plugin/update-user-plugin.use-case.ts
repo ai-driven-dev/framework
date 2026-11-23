@@ -4,7 +4,7 @@ import type { UpdatePlugin } from "../../contexts/installation/application/plugi
 import type { UpdatePluginRequest } from "../../contexts/installation/application/plugin/update-plugin-command.js";
 import type { ScopeRecords } from "../../contexts/installation/contract/records/scope-records.js";
 import type { RecordClaimRules } from "../../contexts/machine-claims/contract/record-claim-rules.js";
-import type { IsWithinUserScope } from "../../contexts/machine-claims/contract/user-scope-containment.js";
+import type { PathContainment } from "../../shared/domain/paths.model.js";
 import { UserPluginUpdatePartialError } from "../orchestration.error.js";
 
 export type UpdateUserPluginRequest = UpdatePluginRequest;
@@ -17,7 +17,7 @@ export class UpdateUserPlugin {
   constructor(
     private readonly updatePlugin: Pick<UpdatePlugin, "execute">,
     private readonly refreshHostPlugin: Pick<RefreshHostPlugin, "execute">,
-    private readonly isWithinUserScope: IsWithinUserScope,
+    private readonly isWithinUserScope: PathContainment,
     private readonly refSelection: Pick<
       RegistrationRecordRules,
       "isQualifiedRef" | "refSelectedBy"

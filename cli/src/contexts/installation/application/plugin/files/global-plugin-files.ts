@@ -1,12 +1,12 @@
 import { dirname, join, posix } from "node:path";
 import { FileHash } from "../../../../../shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../shared/domain/installation-file.js";
+import type { PathContainment } from "../../../../../shared/domain/paths.model.js";
 import type { PluginDistribution } from "../../../../../shared/domain/plugin/plugin-distribution.js";
 import { whenAbsent } from "../../../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../../shared/ports/file-writer.js";
 import type { InstalledPlugin } from "../../../domain/plugins/installed-plugin.js";
-import type { ContainmentCheck } from "../../../ports/plugin/user-plugin-materialization.js";
 import type { PluginPlacement } from "../../../ports/tool-sections.js";
 
 /**
@@ -53,7 +53,7 @@ export async function assertGlobalFilesWritable(write: {
   readonly pluginName: string;
   readonly files: readonly InstallationFile[];
   readonly homedir: string;
-  readonly isWithinUserScope: ContainmentCheck;
+  readonly isWithinUserScope: PathContainment;
 }): Promise<string> {
   const { fs, tool, plugin, pluginName, files, homedir, isWithinUserScope } = write;
   const { toolId } = tool;
@@ -86,7 +86,7 @@ async function assertParentWithin(
     boundary: string;
     resolvedBoundary: string;
   },
-  isWithinUserScope: ContainmentCheck
+  isWithinUserScope: PathContainment
 ): Promise<void> {
   const { fs, tool, pluginName, file, boundary, resolvedBoundary } = write;
   let parent = dirname(join(boundary, file.relativePath));
@@ -110,7 +110,7 @@ async function assertFileWritable(
     readonly boundary: string;
     readonly resolvedBoundary: string;
   },
-  isWithinUserScope: ContainmentCheck
+  isWithinUserScope: PathContainment
 ): Promise<void> {
   const { fs, tool, plugin, pluginName, file, boundary } = write;
   const { toolId } = tool;

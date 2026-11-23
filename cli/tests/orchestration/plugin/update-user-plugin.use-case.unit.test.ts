@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { AfterPreflight } from "../../../src/contexts/installation/application/plugin/update-plugin-command.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { IsWithinUserScope } from "../../../src/contexts/machine-claims/contract/user-scope-containment.js";
 import { UserPluginUpdatePartialError } from "../../../src/orchestration/orchestration.error.js";
 import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.use-case.js";
+import type { PathContainment } from "../../../src/shared/domain/paths.model.js";
 import {
   SYNTHETIC_TOOL,
   syntheticCatalog,
@@ -37,8 +37,8 @@ describe("updating a user plugin", () => {
   });
 
   it("hands the injected containment rule and the host refresh to the file update", async () => {
-    const seen: { within?: IsWithinUserScope; refreshed: number } = { refreshed: 0 };
-    const contained: IsWithinUserScope = () => false;
+    const seen: { within?: PathContainment; refreshed: number } = { refreshed: 0 };
+    const contained: PathContainment = () => false;
     const update = new UpdateUserPlugin(
       {
         execute: async (options) => {

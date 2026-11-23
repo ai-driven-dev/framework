@@ -5,18 +5,18 @@ import {
   readGlobalPluginFiles,
 } from "../../../../../../src/contexts/installation/application/plugin/files/global-plugin-files.js";
 import { RecordedPlugin } from "../../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { IsWithinUserScope } from "../../../../../../src/contexts/machine-claims/contract/user-scope-containment.js";
 import { FileHash } from "../../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../../src/shared/domain/installation-file.js";
+import type { PathContainment } from "../../../../../../src/shared/domain/paths.model.js";
 import { PluginDistribution } from "../../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { parsePluginName } from "../../../../../../src/shared/domain/plugin/plugin-name.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 
 /** The machine-claims answer for a path it judges inside the user directory. */
-const insideUserScope: IsWithinUserScope = () => true;
+const insideUserScope: PathContainment = () => true;
 /** The machine-claims answer for a path it judges outside the user directory. */
-const outsideUserScope: IsWithinUserScope = () => false;
+const outsideUserScope: PathContainment = () => false;
 
 const BUILT = "/cache/built/opencode";
 

@@ -3,8 +3,8 @@ import { recordsOf } from "../../../../src/composition/contexts/installation.js"
 import { RefreshHostPlugin } from "../../../../src/contexts/host-registration/application/refresh-host-plugin.use-case.js";
 import { PluginMaterializer } from "../../../../src/contexts/installation/application/plugin/files/plugin-materializer.js";
 import type { BuiltMarketplaceEnsurer } from "../../../../src/contexts/installation/contract/built-marketplace.js";
-import type { IsWithinUserScope } from "../../../../src/contexts/machine-claims/contract/user-scope-containment.js";
 import { UpdateUserPlugin } from "../../../../src/orchestration/plugin/update-user-plugin.use-case.js";
+import type { PathContainment } from "../../../../src/shared/domain/paths.model.js";
 import { fakeEnsureBuiltMarketplace } from "../../../shared/testing/fake-ensure-built-marketplace.fake.js";
 import { FakeHostActions } from "../../../shared/testing/fake-host-actions.fake.js";
 import type { buildInstallationDeps } from "../../../shared/testing/installation-deps.builder.js";
@@ -18,9 +18,9 @@ import { FakeMarketplaceRegistry } from "./fake-marketplace-registry.fake.js";
 import { userScopeFileGuard } from "./user-scope-file-guard.fake.js";
 
 /** The machine-claims answer for a path it judges inside the user directory. */
-export const insideUserScope: IsWithinUserScope = () => true;
+export const insideUserScope: PathContainment = () => true;
 /** The machine-claims answer for a path it judges outside the user directory. */
-export const outsideUserScope: IsWithinUserScope = () => false;
+export const outsideUserScope: PathContainment = () => false;
 
 export const PLUGIN_FIXTURE = join(
   process.cwd(),

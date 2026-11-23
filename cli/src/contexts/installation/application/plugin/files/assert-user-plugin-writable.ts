@@ -1,15 +1,13 @@
 import { join } from "node:path";
 import type { InstallationFile } from "../../../../../shared/domain/installation-file.js";
+import type { PathContainment } from "../../../../../shared/domain/paths.model.js";
 import { isPluginName } from "../../../../../shared/domain/plugin/plugin-name.js";
 import type { FileReader } from "../../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../../shared/ports/file-writer.js";
 // biome-ignore lint/plugin: hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input
 import type { AiToolProfile } from "../../../../tools/contract/tool-profile.js";
 import type { InstalledPlugin } from "../../../domain/plugins/installed-plugin.js";
-import type {
-  ContainmentCheck,
-  UserScopeFileGuard,
-} from "../../../ports/plugin/user-plugin-materialization.js";
+import type { UserScopeFileGuard } from "../../../ports/plugin/user-plugin-materialization.js";
 import { scopeBaseOf } from "../plugin-target-resolution.js";
 import { assertGlobalFilesWritable } from "./global-plugin-files.js";
 
@@ -25,7 +23,7 @@ export interface UserPluginWrite {
   readonly tool: AiToolProfile;
   readonly files: readonly InstallationFile[];
   readonly home: string;
-  readonly isWithinUserScope: ContainmentCheck;
+  readonly isWithinUserScope: PathContainment;
 }
 
 /** A tool's global files spread across its user directory; a user-scope plugin directory

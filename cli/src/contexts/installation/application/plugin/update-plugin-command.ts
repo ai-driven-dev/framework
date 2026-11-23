@@ -1,8 +1,8 @@
+import type { PathContainment } from "../../../../shared/domain/paths.model.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { ScopeRecords } from "../../contract/records/scope-records.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
-import type { ContainmentCheck } from "../../ports/plugin/user-plugin-materialization.js";
 import type { RefreshNativeRef, RefSelection } from "./update-native-refs.js";
 
 export interface UpdatePluginRequest {
@@ -23,7 +23,7 @@ export type AfterPreflight = (
 
 /** What a machine-scope update needs from the scenario running it. */
 export interface MachinePluginUpdate {
-  readonly isWithinUserScope: ContainmentCheck;
+  readonly isWithinUserScope: PathContainment;
   readonly refreshNative: RefreshNativeRef;
   /** The refs a selection names, read from the machine records. */
   readonly refSelection: RefSelection & Pick<ScopeRecords, "loadRecords">;
