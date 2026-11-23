@@ -1,6 +1,6 @@
-import type { DoctorReport } from "../domain/doctor-report.model.js";
-import type { GlobalExecutionError } from "../domain/global-execution.model.js";
+import type { GlobalExecutionError } from "../global-execution.js";
 import { forEachCategory } from "../sync/for-each-category.js";
+import type { DoctorReport } from "./doctor-report.js";
 import type { RunDoctor } from "./run-doctor.use-case.js";
 
 export interface DoctorAllResult {

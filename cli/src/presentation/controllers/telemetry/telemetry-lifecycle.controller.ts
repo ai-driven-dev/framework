@@ -1,5 +1,4 @@
 import type { Command } from "commander";
-import type { Output } from "../../../orchestration/domain/output.js";
 import { printIdentityResult } from "../../presenters/telemetry/telemetry-identity.presenter.js";
 import {
   printForgetResult,
@@ -7,6 +6,7 @@ import {
   printOffResult,
   printOnResult,
 } from "../../presenters/telemetry/telemetry-lifecycle.presenter.js";
+import type { Output } from "../../terminal/output.model.js";
 import {
   commandOf,
   type TelemetryContainer,

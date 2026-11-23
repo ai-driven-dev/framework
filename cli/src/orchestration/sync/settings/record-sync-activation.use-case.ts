@@ -4,8 +4,8 @@ import type { RecordActivation } from "../../../contexts/installation/applicatio
 import type { SharedFrameworkSource } from "../../../contexts/machine-claims/application/shared-source/shared-framework-source.use-case.js";
 import type { MachineClaimsRecording } from "../../../contexts/machine-claims/contract/machine-claims-recording.js";
 import type { Scope } from "../../../shared/domain/scope.js";
-import type { SyncSettingsRequest } from "../../domain/sync-settings.model.js";
 import type { ActivateNativeTools } from "./activate-native-tools.use-case.js";
+import type { SyncSettingsRequest } from "./sync-settings.js";
 
 export type LoadedSyncContext = NonNullable<Awaited<ReturnType<LoadSyncContext["execute"]>>>;
 

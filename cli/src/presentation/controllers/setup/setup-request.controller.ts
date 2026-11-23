@@ -1,11 +1,11 @@
 import type { FrameworkSource } from "../../../contexts/distribution/contract/framework-source.js";
 import type { ToolCatalog } from "../../../contexts/tools/contract/tool-catalog.js";
-import type { Output } from "../../../orchestration/domain/output.js";
 import {
   type PluginInstallMode,
   SetupFlow,
-} from "../../../orchestration/domain/setup-flow.model.js";
+} from "../../../orchestration/setup/setup-flow.model.js";
 import { isInteractiveRun } from "../../../orchestration/setup/setup-request.js";
+import type { Output } from "../../terminal/output.model.js";
 import { parseScopeFlag } from "../menu/global-options.controller.js";
 import {
   activatesAtUserScope,

@@ -1,7 +1,7 @@
-import type { SetupFlow } from "../domain/setup-flow.model.js";
 import { UserScopeUnavailableError } from "../orchestration.error.js";
 import type { SyncSettings } from "../sync/settings/sync-settings.use-case.js";
 import type { SetupResult } from "./setup-flow.js";
+import type { SetupFlow } from "./setup-flow.model.js";
 import type { SetupMachineScope } from "./setup-machine-scope.use-case.js";
 import type { ChoosePlugins } from "./steps/choose-plugins.use-case.js";
 import type { InstallSetupTools } from "./steps/install-setup-tools.use-case.js";

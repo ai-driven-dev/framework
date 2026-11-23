@@ -54,7 +54,7 @@ export const KINDS: readonly Kind[] = [
     suffix: /\.use-case\.ts$/,
     folders: ["src/contexts/*/application/**/*", "src/orchestration/**/*"],
     fallback: ["src/contexts/*/application/**/*", "src/orchestration/**/*"],
-    except: ["src/orchestration/ports/**/*", "src/orchestration/domain/**/*"],
+    except: ["src/orchestration/ports/**/*"],
     imports: ["use-case", "model", "port", "error"],
     externals: "any",
     tests: ["unit"],
@@ -66,13 +66,15 @@ export const KINDS: readonly Kind[] = [
       "src/contexts/*/domain/**/*",
       "src/contexts/*/contract/**/*",
       "src/shared/domain/**/*",
-      "src/orchestration/domain/**/*",
+      // `output.model.ts`: what the terminal adapter implements and presenters and controllers read.
+      "src/presentation/terminal/**/*",
+      // A value a scenario carries between its steps, named `.model.ts` beside that scenario.
+      "src/orchestration/**/*",
     ],
     fallback: [
       "src/contexts/*/domain/**/*",
       "src/contexts/*/contract/**/*",
       "src/shared/domain/**/*",
-      "src/orchestration/domain/**/*",
     ],
     except: [],
     imports: ["model", "error"],

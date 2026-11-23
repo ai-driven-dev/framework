@@ -3,7 +3,7 @@ import type { DoctorAll } from "../../../orchestration/doctor/doctor-all.js";
 import type { ReportAllStatus } from "../../../orchestration/doctor/report-all-status.js";
 import type { RunDoctor } from "../../../orchestration/doctor/run-doctor.use-case.js";
 import type { RunUserScopeDoctor } from "../../../orchestration/doctor/run-user-scope-doctor.use-case.js";
-import type { Output } from "../../../orchestration/domain/output.js";
+import type { Output } from "../../terminal/output.model.js";
 
 /** What this command reads of the container. */
 export interface DoctorContainer {

@@ -7,7 +7,7 @@ import { wireInstallation } from "../../src/composition/contexts/installation.js
 import { createOutput, wireBase } from "../../src/composition/shared.js";
 import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
 import { ManifestRepositoryAdapter } from "../../src/contexts/installation/infrastructure/manifest-repository-adapter.js";
-import type { Output } from "../../src/orchestration/domain/output.js";
+import type { Output } from "../../src/presentation/terminal/output.model.js";
 import type { Scope } from "../../src/shared/domain/scope.js";
 import { manifestFileDeps } from "../contexts/installation/testing/manifest-file-deps.builder.js";
 import { catalogOf } from "../shared/testing/catalog-of.builder.js";

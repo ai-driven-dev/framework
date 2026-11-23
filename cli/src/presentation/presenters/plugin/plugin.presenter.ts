@@ -1,5 +1,5 @@
 import type { PluginCatalogEntry } from "../../../contexts/distribution/contract/catalog.js";
-import type { Output } from "../../../orchestration/domain/output.js";
+import type { Output } from "../../terminal/output.model.js";
 
 interface NamedPlugin {
   readonly name: string;

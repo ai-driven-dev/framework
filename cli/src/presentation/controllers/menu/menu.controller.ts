@@ -1,7 +1,7 @@
-import type { Output } from "../../../orchestration/domain/output.js";
 import type { MenuLoop } from "../../../orchestration/menu/menu-loop.use-case.js";
 import { failCommand } from "../../errors/error-translator.presenter.js";
 import { printBanner } from "../../presenters/menu.presenter.js";
+import type { Output } from "../../terminal/output.model.js";
 
 /** The name inquirer gives the error it throws when the user hits Ctrl-C at a prompt. */
 const USER_ABORT_ERROR_NAME = "ExitPromptError";

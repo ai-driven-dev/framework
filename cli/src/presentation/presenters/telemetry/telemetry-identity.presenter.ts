@@ -1,6 +1,6 @@
 import type { ManageIdentityResult } from "../../../contexts/telemetry/application/identity/manage-identity.use-case.js";
 import { MAX_IDENTITY_LENGTH } from "../../../contexts/telemetry/contract/identity-limit.js";
-import type { Output } from "../../../orchestration/domain/output.js";
+import type { Output } from "../../terminal/output.model.js";
 
 /** What an identifier must be to name a person. */
 export const IDENTITY_RULE = `An identity is one non-empty line of at most ${MAX_IDENTITY_LENGTH} characters.`;

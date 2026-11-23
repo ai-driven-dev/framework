@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { SyncSettingsResult } from "../../../../src/orchestration/domain/sync-settings.model.js";
+import type { SyncSettingsResult } from "../../../../src/orchestration/sync/settings/sync-settings.js";
 import { SyncSettings } from "../../../../src/orchestration/sync/settings/sync-settings.use-case.js";
 import type { Lock } from "../../../../src/shared/ports/lock.js";
 

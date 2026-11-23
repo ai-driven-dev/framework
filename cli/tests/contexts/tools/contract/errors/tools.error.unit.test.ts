@@ -7,6 +7,7 @@ import {
   InvalidHooksDescriptorError,
   InvalidMcpServerConfigError,
   InvalidToolProfileError,
+  UnknownAiToolIdError,
 } from "../../../../../src/contexts/tools/contract/errors/tools.error.js";
 
 describe("when CapabilityConfigError is raised", () => {
@@ -161,5 +162,26 @@ describe("when DualConfigError is raised", () => {
       toolId: "kilo",
       code: "dual-config",
     });
+  });
+});
+
+describe("when an AI tool id is unknown", () => {
+  it("carries its data and says nothing itself", () => {
+    const error = new UnknownAiToolIdError("zed", ["claude", "cursor"]);
+    expect({
+      name: error.name,
+      tool: error.tool,
+      validIds: error.validIds,
+      message: error.message,
+    }).toStrictEqual({
+      name: "UnknownAiToolIdError",
+      tool: "zed",
+      validIds: ["claude", "cursor"],
+      message: "",
+    });
+  });
+
+  it("carries its stable code", () => {
+    expect(new UnknownAiToolIdError("zed", ["claude", "cursor"]).code).toBe("unknown-ai-tool-id");
   });
 });

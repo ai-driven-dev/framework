@@ -1,5 +1,5 @@
-import type { Output } from "../../../orchestration/domain/output.js";
 import type { ToolId } from "../../../shared/domain/tool.js";
+import type { Output } from "../../terminal/output.model.js";
 
 export function printUnrestorable(output: Output, unrestorable: readonly string[]): void {
   if (unrestorable.length === 0) return;

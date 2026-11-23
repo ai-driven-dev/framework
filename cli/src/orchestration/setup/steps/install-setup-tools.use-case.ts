@@ -3,7 +3,7 @@ import type {
   InstallToolsResult,
 } from "../../../contexts/installation/application/install/install-tools.use-case.js";
 import type { ProjectContext } from "../../../contexts/installation/contract/project-context.js";
-import type { SetupFlow } from "../../domain/setup-flow.model.js";
+import type { SetupFlow } from "../setup-flow.model.js";
 import type { ChooseTools } from "./choose-tools.use-case.js";
 
 export interface InstallSetupToolsRequest {

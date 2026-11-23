@@ -89,8 +89,6 @@ export const INSTALLATION: MessagesOf<InstallationOwners> = {
   "trust-denied": (error) => `Trust denied for marketplace '${error.marketplace}'. Aborting.`,
   "user-plugin-update-partial": (error) =>
     `${error.toolId}: user plugin file update failed after preflight; a native ref may already have been updated and file bytes may be partial. Canonical claim not saved; reconcile manually before retrying.`,
-  "unknown-ai-tool-id": (error) =>
-    `Unknown AI tool: ${error.tool}. Valid AI tools: ${error.validIds.join(", ")}`,
   "user-scope-filter-unsupported": (error) =>
     `--scope user tracks nothing ${error.flag} can narrow — it names every requested tool, ` +
     `not one plugin or one file. Drop ${error.flag}, or run \`aidd ${error.command}\` at project scope.`,

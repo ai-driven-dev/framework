@@ -1,6 +1,5 @@
 import type { Command } from "commander";
 import type { ListMarketplaces } from "../../../contexts/distribution/application/list-marketplaces.use-case.js";
-import type { Output } from "../../../orchestration/domain/output.js";
 import type { AddMarketplace } from "../../../orchestration/marketplace/add-marketplace.use-case.js";
 import type { CheckMarketplaceUpstream } from "../../../orchestration/marketplace/check-marketplace-upstream.use-case.js";
 import type { ListMarketplaceCatalogs } from "../../../orchestration/marketplace/list-marketplace-catalogs.use-case.js";
@@ -12,6 +11,7 @@ import { parsePluginSourceShorthand } from "../../../shared/domain/plugin/source
 import type { Scope } from "../../../shared/domain/scope.js";
 import { printMarketplaceRegistered } from "../../presenters/plugin/marketplace.presenter.js";
 import { reportNativeActivation } from "../../presenters/setup/sync.presenter.js";
+import type { Output } from "../../terminal/output.model.js";
 import { type ContainerFactory, parseGlobalOptions } from "../menu/global-options.controller.js";
 import type { MenuChoice } from "../menu/group-menu.controller.js";
 

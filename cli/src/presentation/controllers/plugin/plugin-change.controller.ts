@@ -1,8 +1,8 @@
 import type { Command } from "commander";
 import type { UpdatePlugin } from "../../../contexts/installation/application/plugin/update-plugin.use-case.js";
 import type { RemoveUserPluginRequest } from "../../../contexts/installation/application/removal/remove-user-plugin.use-case.js";
+import { aiToolSelectionOf } from "../../../contexts/tools/contract/ai-tool-selection.model.js";
 import type { ToolCatalog } from "../../../contexts/tools/contract/tool-catalog.js";
-import { aiToolSelectionOf } from "../../../orchestration/domain/ai-tool-selection.model.js";
 import type { RemovePlugin } from "../../../orchestration/plugin/remove-plugin.use-case.js";
 import type { UpdateUserPlugin } from "../../../orchestration/plugin/update-user-plugin.use-case.js";
 import type { SyncNativeActivation } from "../../../orchestration/sync/settings/sync-native-activation.use-case.js";

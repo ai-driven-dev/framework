@@ -81,3 +81,13 @@ export class DualConfigError extends AiddError {
     super();
   }
 }
+
+export class UnknownAiToolIdError extends AiddError {
+  readonly code = "unknown-ai-tool-id";
+  constructor(
+    readonly tool: string,
+    readonly validIds: readonly string[]
+  ) {
+    super();
+  }
+}

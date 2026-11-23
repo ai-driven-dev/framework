@@ -1,6 +1,5 @@
 import type { LoadSyncContext } from "../../../contexts/installation/application/sync/load-sync-context.use-case.js";
 import type { Scope } from "../../../shared/domain/scope.js";
-import type { SyncSettingsRequest, SyncSettingsResult } from "../../domain/sync-settings.model.js";
 import type { ActivateNativeTools } from "./activate-native-tools.use-case.js";
 import { type ClaimsSource, claimsViewOf } from "./claims-view-of.js";
 import type {
@@ -8,6 +7,7 @@ import type {
   RecordSyncActivation,
   RecordSyncActivationRequest,
 } from "./record-sync-activation.use-case.js";
+import type { SyncSettingsRequest, SyncSettingsResult } from "./sync-settings.js";
 import type { SyncToolSettingsFiles } from "./sync-tool-settings-files.use-case.js";
 
 const EMPTY_RESULT: SyncSettingsResult = {

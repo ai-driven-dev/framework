@@ -17,6 +17,7 @@ import {
   InvalidHooksDescriptorError,
   InvalidMcpServerConfigError,
   InvalidToolProfileError,
+  UnknownAiToolIdError,
 } from "../../../src/contexts/tools/contract/errors/tools.error.js";
 import {
   FlatMergeTargetNotJsonError,
@@ -114,6 +115,7 @@ const cases: [() => Error, string][] = [
     () => new DualConfigError("opencode", "opencode.json and opencode.jsonc exist"),
     "Both opencode.json and opencode.jsonc exist. Remove one.",
   ],
+  [() => new UnknownAiToolIdError("x", ["a"]), "Unknown AI tool: x. Valid AI tools: a"],
 ];
 
 describe("the words of the errors of marketplaces, builds and tool profiles", () => {

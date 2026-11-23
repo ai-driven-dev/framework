@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { BulkConflictState } from "../../../src/orchestration/domain/bulk-conflict-state.js";
 import type { Prompter } from "../../../src/orchestration/ports/prompter.js";
+import { BulkConflictState } from "../../../src/orchestration/sync/bulk-conflict-state.model.js";
 import { ResolveUpdateDecision } from "../../../src/orchestration/sync/resolve-update-decision.use-case.js";
 import { InputRequiredError } from "../../../src/shared/domain/shared.error.js";
 import { saying } from "../../shared/testing/saying.builder.js";

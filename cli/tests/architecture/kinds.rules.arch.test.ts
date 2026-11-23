@@ -256,7 +256,7 @@ describe("a contract file is read from outside its context", () => {
 describe("only composition builds a command, a use case or an adapter", () => {
   const files = (presentation: string) => ({
     "src/orchestration/menu.ts": "export class MenuLoop {}",
-    "src/orchestration/domain/flow.model.ts": "export class Flow {}",
+    "src/shared/domain/flow.model.ts": "export class Flow {}",
     "src/orchestration/orchestration.error.ts": "export class MenuError extends Error {}",
     "src/contexts/a/infrastructure/b.adapter.ts": "export abstract class Gateway {}",
     "src/contexts/a/infrastructure/lock.ts": "export class Lock {}",

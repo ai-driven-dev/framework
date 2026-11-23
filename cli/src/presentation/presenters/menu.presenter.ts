@@ -1,4 +1,4 @@
-import type { Output } from "../../orchestration/domain/output.js";
+import type { Output } from "../terminal/output.model.js";
 
 const BANNER = `
    _    ___ ___  ___

@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { vi } from "vitest";
 import { containerFactory } from "../../../src/composition/container.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { Output } from "../../../src/orchestration/domain/output.js";
+import type { Output } from "../../../src/presentation/terminal/output.model.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { catalogOf } from "../../shared/testing/catalog-of.builder.js";
 

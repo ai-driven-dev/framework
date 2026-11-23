@@ -3,8 +3,8 @@ import {
   localFrameworkSource,
   remoteFrameworkSource,
 } from "../../../src/contexts/distribution/contract/framework-source.js";
-import { SetupFlow } from "../../../src/orchestration/domain/setup-flow.model.js";
 import { ResolveSetupSource } from "../../../src/orchestration/setup/resolve-setup-source.use-case.js";
+import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.model.js";
 import { syntheticFlowTools } from "../../shared/testing/synthetic-tool-id.builder.js";
 
 function flowOf(params: Partial<ConstructorParameters<typeof SetupFlow>[0]> = {}): SetupFlow {

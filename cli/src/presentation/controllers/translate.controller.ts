@@ -10,8 +10,8 @@ import {
   type FrameworkBuildTarget,
   supportedBuildTargets,
 } from "../../contexts/translate/contract/build-targets.js";
-import type { Output } from "../../orchestration/domain/output.js";
 import { printTranslateResult } from "../presenters/translate.presenter.js";
+import type { Output } from "../terminal/output.model.js";
 import { type ContainerFactory, parseGlobalOptions } from "./menu/global-options.controller.js";
 
 /** What this command reads of the container. */

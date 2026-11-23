@@ -8,8 +8,8 @@ import {
 import type { RepositoryVisibility } from "../../../src/contexts/distribution/ports/repository-visibility.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
-import { SetupFlow } from "../../../src/orchestration/domain/setup-flow.model.js";
 import type { RefreshMarketplaces } from "../../../src/orchestration/marketplace/refresh-marketplaces.use-case.js";
+import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.model.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import { CatalogFetchAuthError } from "../../../src/shared/domain/shared.error.js";
 import type { ReleaseLister } from "../../../src/shared/ports/release-lister.js";

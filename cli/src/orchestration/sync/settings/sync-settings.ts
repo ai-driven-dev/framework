@@ -1,6 +1,6 @@
-import type { HintedMessage } from "../../shared/domain/describe-error.js";
-import type { Scope } from "../../shared/domain/scope.js";
-import type { ToolId } from "../../shared/domain/tool.js";
+import type { HintedMessage } from "../../../shared/domain/describe-error.js";
+import type { Scope } from "../../../shared/domain/scope.js";
+import type { ToolId } from "../../../shared/domain/tool.js";
 
 export interface SyncSettingsRequest {
   projectRoot: string;

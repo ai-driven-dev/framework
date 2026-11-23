@@ -1,5 +1,5 @@
-import type { Output } from "../../orchestration/domain/output.js";
 import { AiddError } from "../../shared/domain/shared.error.js";
+import type { Output } from "../terminal/output.model.js";
 import { EXIT_CODES, UNCATALOGUED_EXIT } from "./error-exit-codes.presenter.js";
 import { MESSAGES } from "./error-messages.presenter.js";
 

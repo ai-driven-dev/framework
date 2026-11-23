@@ -61,4 +61,6 @@ export const CATALOG: MessagesOf<CatalogOwners> = {
   "invalid-tool-profile": (error) =>
     `The profile of '${error.toolId}' breaks '${error.invariant}': ${error.detail}`,
   "dual-config": (error) => `Both ${error.detail}. Remove one.`,
+  "unknown-ai-tool-id": (error) =>
+    `Unknown AI tool: ${error.tool}. Valid AI tools: ${error.validIds.join(", ")}`,
 };

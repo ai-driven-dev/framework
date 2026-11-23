@@ -5,7 +5,7 @@ import {
 } from "../../../../src/contexts/distribution/contract/framework-source.js";
 import { ProjectContext } from "../../../../src/contexts/installation/contract/project-context.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
-import { SetupFlow } from "../../../../src/orchestration/domain/setup-flow.model.js";
+import { SetupFlow } from "../../../../src/orchestration/setup/setup-flow.model.js";
 import { PrepareSetupProject } from "../../../../src/orchestration/setup/steps/prepare-setup-project.use-case.js";
 import { syntheticFlowTools } from "../../../shared/testing/synthetic-tool-id.builder.js";
 

@@ -13,7 +13,7 @@ import {
   RETENTION_WANTED_DAYS,
 } from "../../../contexts/telemetry/contract/claude-retention.js";
 import type { ErasureKind } from "../../../contexts/telemetry/contract/measurement-erasure.js";
-import type { Output } from "../../../orchestration/domain/output.js";
+import type { Output } from "../../terminal/output.model.js";
 import { IDENTITY_RULE } from "./telemetry-identity.presenter.js";
 import { DAMAGED_CONSENT_LOG, FORGET_THEN_ON } from "./telemetry-read.presenter.js";
 

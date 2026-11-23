@@ -1,6 +1,6 @@
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import type { AiToolId } from "../../shared/domain/tool.js";
-import { UnknownAiToolIdError } from "../orchestration.error.js";
+import type { AiToolId } from "../../../shared/domain/tool.js";
+import { UnknownAiToolIdError } from "./errors/tools.error.js";
+import type { ToolCatalog } from "./tool-catalog.js";
 
 /** `--tool` names one AI tool or, left out or set to `all`, every one; a name no AI tool answers
  * to is refused. */

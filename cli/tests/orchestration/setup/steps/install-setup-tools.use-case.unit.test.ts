@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { ProjectContext } from "../../../../src/contexts/installation/contract/project-context.js";
-import { SetupFlow } from "../../../../src/orchestration/domain/setup-flow.model.js";
+import { SetupFlow } from "../../../../src/orchestration/setup/setup-flow.model.js";
 import { InstallSetupTools } from "../../../../src/orchestration/setup/steps/install-setup-tools.use-case.js";
 import {
   SECOND_SYNTHETIC_TOOL,
