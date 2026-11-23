@@ -198,6 +198,25 @@ describe("marketplace add, the order it takes its steps in", () => {
     expect(await registry.list(PROJECT_ROOT)).toHaveLength(1);
   });
 
+  it("with overwrite, a denied trust prompt leaves the previous entry recorded and removes nothing", async () => {
+    const { add, command, events, removals, registry } = await marketplaceAdd(
+      (recorded) => new AnsweringPrompter(recorded, false)
+    );
+    await registry.save(
+      PROJECT_ROOT,
+      Marketplace.create({ ...command, addedAt: "2026-01-01T00:00:00.000Z" })
+    );
+    events.length = 0;
+
+    await expect(add.execute({ ...command, autoTrust: false, overwrite: true })).rejects.toThrow(
+      TrustDeniedError
+    );
+
+    expect(events).toEqual(["resolve", TRUST_QUESTION]);
+    expect(removals).toEqual([]);
+    expect(await registry.list(PROJECT_ROOT)).toHaveLength(1);
+  });
+
   it.each([false, true])(
     "refuses the reserved name before it reads the registry, with overwrite %s",
     async (overwrite) => {
