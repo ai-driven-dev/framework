@@ -64,6 +64,7 @@ async function placeForClaude() {
     marketplace: undefined,
     previousMcpEntries: new Map(),
     previousProjectHooks: new Map(),
+    previousFiles: new Map(),
   });
   return { deps, manifest, refreshed };
 }

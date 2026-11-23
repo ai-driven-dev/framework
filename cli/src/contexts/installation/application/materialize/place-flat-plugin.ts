@@ -12,6 +12,7 @@ import type {
   PluginTranslation,
   PluginTranslationResult,
 } from "../../ports/plugin/plugin-translation.js";
+import { removeObsoletePluginFiles } from "../plugin/files/remove-obsolete-plugin-files.js";
 import { writeChangedPluginFiles } from "../plugin/files/write-changed-plugin-files.js";
 import { resolveScopeForInstall, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import { hashOutputFiles } from "../shared/hash-output-files.js";
@@ -59,6 +60,10 @@ export async function placeFlatPlugin(
     return { skipped };
   const files = request.userScopeDirTaken === true ? [] : ctx.files;
   const written = await writeChangedPluginFiles(deps.fs, files, ctx.baseDir);
+  await removeObsoletePluginFiles(deps.fs, request.previousFiles ?? new Map(), {
+    current: new Set(files.map((f) => f.relativePath)),
+    baseDir: ctx.baseDir,
+  });
   const plugin = RecordedPlugin.fromDistributionWithMcp({
     dist,
     source,

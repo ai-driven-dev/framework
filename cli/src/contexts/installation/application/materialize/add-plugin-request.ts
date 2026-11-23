@@ -19,6 +19,8 @@ export interface AddPluginRequest {
   previousMcpEntries?: ReadonlyMap<string, string>;
   userScopeDirTaken?: boolean;
   previousProjectHooks?: ProjectHooksProvenance;
+  /** What an earlier install of the plugin recorded: what the new one no longer ships goes. */
+  previousFiles?: ReadonlyMap<string, string>;
   hooksGuard?: ProjectHooksGuard;
 }
 

@@ -33,6 +33,7 @@ function command(machine: Manifest): PlacePluginRequest {
     marketplace: undefined,
     previousMcpEntries: new Map(),
     previousProjectHooks: new Map(),
+    previousFiles: new Map(),
   };
 }
 

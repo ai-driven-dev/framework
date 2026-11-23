@@ -9,6 +9,7 @@ import type { ProjectHooksProvenance } from "../../../domain/plugins/plugin-entr
 export interface PreviousInstall {
   readonly mcpEntries: Map<AiToolId, ReadonlyMap<string, string>>;
   readonly projectHooks: Map<AiToolId, ProjectHooksProvenance>;
+  readonly files: Map<AiToolId, ReadonlyMap<string, string>>;
 }
 
 export function previousInstall(
@@ -18,15 +19,17 @@ export function previousInstall(
 ): PreviousInstall {
   const mcpEntries = new Map<AiToolId, ReadonlyMap<string, string>>();
   const projectHooks = new Map<AiToolId, ProjectHooksProvenance>();
+  const files = new Map<AiToolId, ReadonlyMap<string, string>>();
   for (const toolId of toolIds) {
     const existing = manifest.getRecordedPlugins(toolId).find((p) => p.plugin.name === pluginName);
     if (existing === undefined) continue;
+    files.set(toolId, existing.plugin.files);
     if (existing.provenance.mcpEntries.size > 0)
       mcpEntries.set(toolId, existing.provenance.mcpEntries);
     if (existing.provenance.projectHooks !== undefined)
       projectHooks.set(toolId, existing.provenance.projectHooks);
   }
-  return { mcpEntries, projectHooks };
+  return { mcpEntries, projectHooks, files };
 }
 
 export function assertNoDuplicates(

@@ -35,6 +35,7 @@ export interface PlacePluginRequest {
   readonly marketplace: string | undefined;
   readonly previousMcpEntries: ReadonlyMap<AiToolId, ReadonlyMap<string, string>>;
   readonly previousProjectHooks: ReadonlyMap<AiToolId, ProjectHooksProvenance>;
+  readonly previousFiles: ReadonlyMap<AiToolId, ReadonlyMap<string, string>>;
 }
 
 /** What placing one tool's files reports. */
@@ -121,6 +122,7 @@ async function placeForTool(placement: ToolPlacement, deps: ToolPlacementDeps): 
       previousMcpEntries: command.previousMcpEntries.get(tool.toolId) ?? new Map(),
       userScopeDirTaken,
       previousProjectHooks: command.previousProjectHooks.get(tool.toolId),
+      previousFiles: command.previousFiles.get(tool.toolId),
     };
     const result = await deps.placeBuiltTree(request);
     return { ...result, notices: [] };
