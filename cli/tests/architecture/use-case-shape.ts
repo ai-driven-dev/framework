@@ -5,29 +5,27 @@
  * typed with `ScopeRecords`.
  *
  * Written limits: a class a method instantiates inline is not counted as a dependency; a file that
- * declares no class holds a port or a function and owes no shape.
+ * declares no class holds a port or a function and owes no shape. How a bag counts is in
+ * `use-case-shape-dependencies.ts`.
  */
 import {
   type ClassDeclaration,
   isClassDeclaration,
   isConstructorDeclaration,
-  isInterfaceDeclaration,
   isIntersectionTypeNode,
   isMethodDeclaration,
-  isObjectBindingPattern,
   isPropertyDeclaration,
   isPropertySignatureDeclaration,
-  isTypeAliasDeclaration,
-  isTypeLiteralNode,
   isTypeReferenceNode,
   type Node,
-  type ParameterDeclaration,
   type SourceFile,
   SyntaxKind,
   type TypeReferenceNode,
 } from "typescript/unstable/ast";
-import { present } from "../shared/testing/present.builder.js";
-import { walk, withVirtualProject } from "./ts-project.js";
+import type { Project } from "typescript/unstable/sync";
+import { isUseCase } from "./kinds.js";
+import { walk, withRealProject, withVirtualProject } from "./ts-project.js";
+import { type DependencyReader, dependencyCount } from "./use-case-shape-dependencies.js";
 
 const MAX_CONSTRUCTOR_DEPENDENCIES = 5;
 const CATALOG = "ToolCatalog";
@@ -56,34 +54,6 @@ const hasModifier = (node: Node, kind: SyntaxKind): boolean => {
 
 const isHidden = (node: Node): boolean =>
   hasModifier(node, SyntaxKind.PrivateKeyword) || hasModifier(node, SyntaxKind.ProtectedKeyword);
-
-/** The fields of the interface or object type `name`, when the file declares it. */
-function fieldsOf(root: SourceFile, name: string): number | undefined {
-  for (const statement of root.statements) {
-    if (isInterfaceDeclaration(statement) && nameOf(statement) === name)
-      return statement.members.length;
-    if (
-      isTypeAliasDeclaration(statement) &&
-      nameOf(statement) === name &&
-      isTypeLiteralNode(statement.type)
-    )
-      return statement.type.members.length;
-  }
-  return undefined;
-}
-
-/** One dependency per parameter, one per name a destructured parameter binds, one per field of a
- * bag the file declares. */
-function dependencies(root: SourceFile, parameters: readonly ParameterDeclaration[]): number {
-  return parameters.reduce((total, { name, type }) => {
-    if (isObjectBindingPattern(name)) return total + name.elements.length;
-    const bag =
-      type !== undefined && isTypeReferenceNode(type)
-        ? fieldsOf(root, type.typeName.getText())
-        : undefined;
-    return total + (bag ?? 1);
-  }, 0);
-}
 
 const NAMED_IMPORT = /import\s+(?:type\s+)?\{([^}]*)\}\s+from\s+["']([^"']+)["']/g;
 
@@ -145,10 +115,16 @@ function methodBreaks(
     : [];
 }
 
-function constructorBreaks(root: SourceFile, classes: readonly ClassDeclaration[]): string[] {
-  return classes.flatMap((declaration) => {
+/** A class that implements a port is an adapter shaped by that port, so it owes no limit. */
+function constructorBreaks(
+  reader: DependencyReader,
+  classes: readonly ClassDeclaration[],
+  ports: ReadonlySet<string>
+): string[] {
+  const unported = classes.filter((declaration) => !implementsPort(declaration, ports));
+  return unported.flatMap((declaration) => {
     const constructors = declaration.members.filter(isConstructorDeclaration);
-    const widest = Math.max(0, ...constructors.map((c) => dependencies(root, c.parameters)));
+    const widest = Math.max(0, ...constructors.map((c) => dependencyCount(reader, c.parameters)));
     return widest > MAX_CONSTRUCTOR_DEPENDENCIES
       ? [`${widest} constructor dependencies, at most ${MAX_CONSTRUCTOR_DEPENDENCIES}`]
       : [];
@@ -192,11 +168,14 @@ function recordsBreaks(root: SourceFile): string[] {
   return breaks;
 }
 
-function breaksOf(file: string, source: string, root: SourceFile): string[] {
+function breaksOf(reader: DependencyReader, file: string, root: SourceFile): string[] {
   const classes = root.statements.filter(isClassDeclaration);
   const inClasses =
     classes.length > 0
-      ? [...methodBreaks(file, source, classes), ...constructorBreaks(root, classes)]
+      ? [
+          ...methodBreaks(file, root.text, classes),
+          ...constructorBreaks(reader, classes, portNames(root.text)),
+        ]
       : [];
   const ownerless =
     file.endsWith(".use-case.ts") && !exportsExecutingClass(root)
@@ -205,29 +184,49 @@ function breaksOf(file: string, source: string, root: SourceFile): string[] {
   return [...inClasses, ...ownerless, ...catalogBreaks(root), ...recordsBreaks(root)];
 }
 
-/** The use-case files that break the shape, one entry per file. */
+/** The use cases among `files` that break the shape, one entry per file, `root` being the
+ * absolute path the project resolves `files` against. */
+function shapeBreaksIn(
+  project: Project,
+  root: string,
+  files: readonly string[]
+): Map<string, string[]> {
+  const reader: DependencyReader = {
+    checker: project.checker,
+    declaredByUseCase: (path) => isUseCase(path.slice(root.length + 1)),
+  };
+  const found = new Map<string, string[]>();
+  for (const file of files.filter(isUseCase)) {
+    const source = project.program.getSourceFile(`${root}/${file}`);
+    if (!source) throw new Error(`the compiler returned no source for ${file}`);
+    const breaks = breaksOf(reader, file, source);
+    if (breaks.length > 0) found.set(file, [...new Set(breaks)]);
+  }
+  return found;
+}
+
+/** The use cases among `files`, a map from a path to its text, that break the shape. The other
+ * files are there for the use cases to import. */
 export function useCaseShapeBreaks(files: Readonly<Record<string, string>>): Map<string, string[]> {
   if (Object.keys(files).length === 0) return new Map();
   return withVirtualProject(
     "use-case-shapes",
     files,
-    { module: "esnext", target: "esnext" },
-    (project, at) => {
-      const found = new Map<string, string[]>();
-      for (const [file, text] of Object.entries(files)) {
-        const source = project.program.getSourceFile(at(file));
-        if (!source) throw new Error(`the compiler returned no source for ${file}`);
-        const breaks = breaksOf(file, present(text), source);
-        if (breaks.length > 0) found.set(file, [...new Set(breaks)]);
-      }
-      return found;
-    }
+    { module: "esnext", target: "esnext", strict: true },
+    (project, at) => shapeBreaksIn(project, at("").slice(0, -1), Object.keys(files))
   );
 }
 
-/** Where a class with a public `execute` is a use case, and so is named by its file. */
-export const holdsUseCases = (path: string): boolean =>
-  path.startsWith("src/orchestration/") || path.includes("/application/");
+/** The use cases of the CLI's own tree that break the shape, read through its `tsconfig.json`. */
+export function treeUseCaseShapeBreaks(cliRoot: string): Map<string, string[]> {
+  return withRealProject(cliRoot, (project) => {
+    const files = project.program
+      .getSourceFileNames()
+      .filter((path) => path.startsWith(`${cliRoot}/src/`))
+      .map((path) => path.slice(cliRoot.length + 1));
+    return shapeBreaksIn(project, cliRoot, files);
+  });
+}
 
 const exportsExecutingClass = (root: SourceFile): boolean =>
   root.statements
@@ -247,7 +246,7 @@ const exportsExecutingClass = (root: SourceFile): boolean =>
 /** The files that export a class with a public `execute` and do not end in the use-case suffix. */
 export function useCaseFilesWithoutSuffix(files: Readonly<Record<string, string>>): string[] {
   const candidates = Object.fromEntries(
-    Object.entries(files).filter(([file]) => holdsUseCases(file) && !file.endsWith(".use-case.ts"))
+    Object.entries(files).filter(([file]) => isUseCase(file) && !file.endsWith(".use-case.ts"))
   );
   if (Object.keys(candidates).length === 0) return [];
   return withVirtualProject(

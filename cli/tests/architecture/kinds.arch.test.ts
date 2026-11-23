@@ -22,17 +22,14 @@ import { codeFilesUnder } from "./kind-tree.js";
 import {
   classificationViolations,
   isInCatalog,
-  isUseCase,
   kindsOf,
   mirrorViolations,
   type Shape,
-  shapeViolations,
   strayViolations,
   type Violation,
 } from "./kinds.js";
 import { CLI_ROOT, canonicalPath, matchesGlob } from "./source-graph.js";
 import { walk, withVirtualProject } from "./ts-project.js";
-import { holdsUseCases, useCaseFilesWithoutSuffix, useCaseShapeBreaks } from "./use-case-shape.js";
 
 function shapesOf(files: Readonly<Record<string, string>>): Map<string, Shape> {
   if (Object.keys(files).length === 0) return new Map();
@@ -253,178 +250,5 @@ describe("a source owes a test at its mirror path", () => {
       )
     );
     expect(found.map((violation) => violation.message)).toEqual([]);
-  });
-});
-
-describe("a use case holds one shape", () => {
-  const breaksOf = (path: string, text: string): string[] =>
-    useCaseShapeBreaks({ [path]: text }).get(path) ?? [];
-  const home = "src/contexts/a/application/";
-
-  it("passes one class named after its file with a public execute", () => {
-    expect(breaksOf(`${home}log-in.ts`, "export class LogIn { async execute(r: R) {} }")).toEqual(
-      []
-    );
-  });
-
-  it("flags a class that is not named after its file, and a second class", () => {
-    expect(
-      breaksOf(`${home}log-in.ts`, "export class Other { execute() {} }\nclass Two {}")
-    ).toEqual(["2 classes, expected one", "no class named LogIn"]);
-  });
-
-  it("flags an execute that is not public", () => {
-    expect(breaksOf(`${home}log-in.ts`, "export class LogIn { private execute() {} }")).toEqual([
-      "an execute that is not public",
-    ]);
-  });
-
-  it("flags a class that answers several questions through no execute, unless it implements a port", () => {
-    const many = "export class X { a() {} b() {} }";
-    expect(breaksOf(`${home}x.ts`, many)).toEqual(["2 public methods and no execute"]);
-    expect(
-      breaksOf(
-        `${home}x.ts`,
-        `import type { P } from "../ports/p.js";\nexport class X implements P { a() {} b() {} }`
-      )
-    ).toEqual([]);
-  });
-
-  it("flags public methods besides execute in any use case, unless it implements a port", () => {
-    expect(breaksOf(`${home}x.ts`, "export class X { execute() {} step() {} }")).toEqual([
-      "public methods besides execute: step",
-    ]);
-    expect(
-      breaksOf(
-        `${home}x.ts`,
-        `import type { P } from "../ports/p.js";\nexport class X implements P { execute() {} step() {} }`
-      )
-    ).toEqual([]);
-  });
-
-  it("flags a repository typed with the records it keeps beside it", () => {
-    expect(
-      breaksOf(
-        `${home}x.ts`,
-        "export class X { constructor(private readonly repo: ManifestRepository & ScopeRecords) {} execute() {} }"
-      )
-    ).toEqual(["types a repository with ScopeRecords"]);
-    expect(
-      breaksOf(
-        `${home}x.ts`,
-        "export class X { constructor(private readonly records: Rules & ScopeRecords) {} execute() {} }"
-      )
-    ).toEqual([]);
-  });
-
-  it("flags a use-case file that exports no class with a public execute", () => {
-    expect(breaksOf(`${home}x.use-case.ts`, "export class X { run() {} }")).toEqual([
-      "no exported class with a public execute",
-    ]);
-    expect(breaksOf(`${home}x.use-case.ts`, "export class X { execute() {} }")).toEqual([]);
-  });
-
-  it("counts a destructured and an optional constructor parameter, and passes the limit", () => {
-    const params = (n: number) =>
-      Array.from({ length: n }, (_, i) => `private readonly p${i}?: P`).join(", ");
-    expect(
-      breaksOf(`${home}x.ts`, `export class X { constructor(${params(5)}) {} execute() {} }`)
-    ).toEqual([]);
-    expect(
-      breaksOf(`${home}x.ts`, `export class X { constructor(${params(6)}) {} execute() {} }`)
-    ).toEqual(["6 constructor dependencies, at most 5"]);
-    expect(
-      breaksOf(
-        `${home}x.ts`,
-        `export class X { constructor({ a, b, c, d, e, f }: O) {} execute() {} }`
-      )
-    ).toEqual(["6 constructor dependencies, at most 5"]);
-  });
-
-  it("counts each field of a dependencies bag declared in the file", () => {
-    const bag = (n: number, form: "interface" | "type") => {
-      const fields = Array.from({ length: n }, (_, i) => `readonly p${i}: P;`).join(" ");
-      const declared =
-        form === "interface" ? `interface D { ${fields} }` : `type D = { ${fields} };`;
-      return `${declared}\nexport class X { constructor(private readonly deps: D) {} execute() {} }`;
-    };
-    expect(breaksOf(`${home}x.ts`, bag(5, "interface"))).toEqual([]);
-    expect(breaksOf(`${home}x.ts`, bag(6, "interface"))).toEqual([
-      "6 constructor dependencies, at most 5",
-    ]);
-    expect(breaksOf(`${home}x.ts`, bag(6, "type"))).toEqual([
-      "6 constructor dependencies, at most 5",
-    ]);
-  });
-
-  it("flags the tool catalog taken by a method or an options type, and passes the constructor and a free function", () => {
-    expect(breaksOf(`${home}x.ts`, "export class X { execute(t: ToolCatalog) {} }")).toEqual([
-      "takes the tool catalog as a method parameter",
-    ]);
-    expect(
-      breaksOf(
-        `${home}x.ts`,
-        "export class X { execute() {} }\ninterface O { tools: Pick<ToolCatalog, 'a'> }"
-      )
-    ).toEqual(["carries the tool catalog as a property"]);
-    expect(
-      breaksOf(
-        `${home}x.ts`,
-        "export class X { constructor(private readonly t: ToolCatalog) {} execute() {} }\nexport function f(t: ToolCatalog) {}"
-      )
-    ).toEqual([]);
-  });
-
-  it("selects the use cases of the tree", () => {
-    expect(isUseCase("src/contexts/a/application/x.ts")).toBe(true);
-    expect(isUseCase("src/contexts/a/domain/x.ts")).toBe(false);
-    expect(isUseCase("tests/contexts/a/application/x.unit.test.ts")).toBe(false);
-  });
-
-  it("holds every use case of the tree, with no violation", () => {
-    const files: Record<string, string> = {};
-    for (const path of codeFilesUnder("src").filter(isUseCase)) {
-      files[path] = readFileSync(join(CLI_ROOT, path), "utf8");
-    }
-    expect(Object.keys(files).length, "the scope is stale").toBeGreaterThan(100);
-    expect(
-      shapeViolations(useCaseShapeBreaks(files)).map((violation) => violation.message)
-    ).toEqual([]);
-  });
-});
-
-describe("a class with a public execute is named as a use case", () => {
-  const home = "src/contexts/a/application/";
-  const executing = "export class LogIn { async execute(r: R) {} }";
-
-  it("flags a file without the suffix, and none that carries it", () => {
-    expect(
-      useCaseFilesWithoutSuffix({
-        [`${home}log-in.ts`]: executing,
-        [`${home}sign-in.use-case.ts`]: executing,
-        "src/orchestration/clean/wipe.ts": executing,
-      })
-    ).toEqual([`${home}log-in.ts`, "src/orchestration/clean/wipe.ts"]);
-  });
-
-  it("ignores private or static execute, other names, and files outside the use case folders", () => {
-    expect(
-      useCaseFilesWithoutSuffix({
-        [`${home}a.ts`]: "export class A { private execute() {} }",
-        [`${home}b.ts`]: "export class B { static execute() {} }",
-        [`${home}c.ts`]: "export class C { run() {} }",
-        [`${home}d.ts`]: "class D { execute() {} }",
-        "src/contexts/a/domain/e.ts": executing,
-      })
-    ).toEqual([]);
-  });
-
-  it("holds every file of the tree", () => {
-    const files: Record<string, string> = {};
-    for (const path of codeFilesUnder("src").filter(holdsUseCases)) {
-      files[path] = readFileSync(join(CLI_ROOT, path), "utf8");
-    }
-    expect(Object.keys(files).length, "the scope is stale").toBeGreaterThan(100);
-    expect(useCaseFilesWithoutSuffix(files)).toEqual([]);
   });
 });
