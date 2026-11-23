@@ -16,17 +16,21 @@ const AT = "2026-03-01T00:00:00.000Z";
 function runWith(directory: ReturnType<typeof repository> | undefined) {
   const locator = new FakeLocator();
   if (directory) locator.directories.set(DIR, directory);
-  return startResolutionRun({
-    locate: (cwd) => locator.locate(cwd),
-    readClone: (clone) => new FakeConsents().readClone(clone),
-    environment: { caseInsensitiveFileSystem: false, now: () => new Date(AT) },
-    remembered: new RememberedResolutions(new Map()),
-    consents: new ConsentLog({
-      events: [{ kind: "open", token: tokenOf(A), clone: A, at: "2026-01-01T00:00:00.000Z" }],
-      damaged: false,
-    }),
-    unreadable: new Set(),
-  });
+  return startResolutionRun(
+    {
+      remembered: new RememberedResolutions(new Map()),
+      consents: new ConsentLog({
+        events: [{ kind: "open", token: tokenOf(A), clone: A, at: "2026-01-01T00:00:00.000Z" }],
+        damaged: false,
+      }),
+      unreadable: new Set(),
+    },
+    {
+      locate: (cwd) => locator.locate(cwd),
+      readClone: (clone) => new FakeConsents().readClone(clone),
+      environment: { caseInsensitiveFileSystem: false, now: () => new Date(AT) },
+    }
+  );
 }
 
 function reading(

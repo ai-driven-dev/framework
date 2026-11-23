@@ -17,18 +17,12 @@ import type { OtherProjectsReferencing } from "../shared-source/other-projects-r
 import type { ResolveReferenceRoot } from "../shared-source/resolve-reference-root.use-case.js";
 import { removalClaims } from "./removal-claims.js";
 
+/** What a removal asks the machine about the refs and plugins it lets go of. */
 export interface PluginRemovalClaimsDeps {
   readonly isMachineOwnedNativeRef: IsMachineOwnedNativeRef;
   readonly detachNativePluginRefs: DetachNativePluginRefs;
   readonly detachUserPlugin: DetachUserPlugin;
   readonly home: string;
-  /** The framework marketplace's reserved name, owned by the distribution. */
-  readonly frameworkMarketplaceName: string;
-  /** Absent skips the another-project guard entirely. */
-  readonly otherProjectsReferencing?: OtherProjectsReferencing;
-  readonly resolveReferenceRoot: ResolveReferenceRoot;
-  /** Absent treats every marketplace as not shared. */
-  readonly marketplaceRegistry?: MarketplaceListing;
   readonly resolveCacheCandidate: (
     cacheRoot: string,
     relativeSegments: string,
@@ -36,8 +30,19 @@ export interface PluginRemovalClaimsDeps {
   ) => Promise<string | null>;
 }
 
+/** What the another-project guard reads about the shared source. */
+export interface PluginRefGuardDeps {
+  /** The framework marketplace's reserved name, owned by the distribution. */
+  readonly frameworkMarketplaceName: string;
+  /** Absent skips the another-project guard entirely. */
+  readonly otherProjectsReferencing?: OtherProjectsReferencing;
+  readonly resolveReferenceRoot: ResolveReferenceRoot;
+  /** Absent treats every marketplace as not shared. */
+  readonly marketplaceRegistry?: MarketplaceListing;
+}
+
 async function marketplaceIsSharedSource(
-  deps: PluginRemovalClaimsDeps,
+  deps: PluginRefGuardDeps,
   { marketplaceAlias, projectRoot }: PluginRefGuardQuery
 ): Promise<boolean> {
   const marketplaces = (await deps.marketplaceRegistry?.list(projectRoot)) ?? [];
@@ -49,7 +54,7 @@ async function marketplaceIsSharedSource(
 }
 
 async function otherProjectsOf(
-  deps: PluginRemovalClaimsDeps,
+  deps: PluginRefGuardDeps,
   otherProjectsReferencing: OtherProjectsReferencing,
   projectRoot: string
 ): Promise<readonly string[]> {
@@ -57,7 +62,7 @@ async function otherProjectsOf(
   return otherProjectsReferencing.execute(ownRoot);
 }
 
-function pluginRefGuardMessage(deps: PluginRemovalClaimsDeps) {
+function pluginRefGuardMessage(deps: PluginRefGuardDeps) {
   return async (query: PluginRefGuardQuery): Promise<string | HintedMessage | undefined> => {
     const { otherProjectsReferencing } = deps;
     if (otherProjectsReferencing === undefined) return undefined;
@@ -83,12 +88,15 @@ function pluginRefGuardMessage(deps: PluginRemovalClaimsDeps) {
  * read itself back as "another project". `ref` carries the host's own name for the marketplace,
  * `marketplaceAlias` stays the key this project's registry is read by; both must move together.
  */
-export function pluginRemovalClaims(deps: PluginRemovalClaimsDeps): PluginRemovalClaims {
+export function pluginRemovalClaims(
+  deps: PluginRemovalClaimsDeps,
+  guard: PluginRefGuardDeps
+): PluginRemovalClaims {
   return {
     home: deps.home,
     isMachineOwned: (toolId: ToolId, ref: string) =>
       deps.isMachineOwnedNativeRef.execute(toolId, ref),
-    guardMessage: pluginRefGuardMessage(deps),
+    guardMessage: pluginRefGuardMessage(guard),
     resolveCacheCandidate: deps.resolveCacheCandidate,
     ...removalClaims(deps.detachNativePluginRefs, deps.detachUserPlugin),
   };

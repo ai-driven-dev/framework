@@ -22,10 +22,15 @@ export interface ResolutionEnvironment {
   readonly now: () => Date;
 }
 
-interface ResolutionRunDeps {
+/** What a run starts from: what the store remembered, and the consent log as it was observed. */
+export interface ResolutionStart {
   readonly remembered: RememberedResolutions;
   readonly consents: ConsentLog;
   readonly unreadable: ReadonlySet<string>;
+}
+
+/** What the machine answers a run: what a directory is, whether a clone is measured, the clock. */
+interface ResolutionMachine {
   /** What a working directory is, as it stands now. */
   readonly locate: (cwd: string) => Promise<LocatedDirectory>;
   /** A clone's own word on whether it is measured. */
@@ -50,7 +55,7 @@ export interface ResolutionRun {
 }
 
 const closedIntervalOf =
-  (consents: ConsentLog, readClone: ResolutionRunDeps["readClone"]) =>
+  (consents: ConsentLog, readClone: ResolutionMachine["readClone"]) =>
   async (clone: CloneIdentity): Promise<boolean> => {
     const reading = await readClone(clone);
     const token = reading.kind === "value" ? tokenOfKey(reading.value) : null;
@@ -63,13 +68,13 @@ interface Memory {
 }
 
 /** Looks at each directory once: what it saw is kept, and what it learned goes to `memory`. */
-function lookingAtDirectories(deps: ResolutionRunDeps, memory: Memory) {
+function lookingAtDirectories(machine: ResolutionMachine, memory: Memory) {
   const directories = new Map<string, Directory>();
-  const { environment } = deps;
+  const { environment } = machine;
   const look = async (cwd: string): Promise<Directory> => {
     const dir = cwdKey(cwd, environment.caseInsensitiveFileSystem);
     const at = () => environment.now().toISOString();
-    const looked = directoryFrom(await deps.locate(cwd), { dir, at }, memory.remembered);
+    const looked = directoryFrom(await machine.locate(cwd), { dir, at }, memory.remembered);
     memory.remembered = looked.remembered;
     return looked.directory;
   };
@@ -83,15 +88,19 @@ function lookingAtDirectories(deps: ResolutionRunDeps, memory: Memory) {
 }
 
 /** Starts a run: it looks at each directory once, and keeps what it learns. */
-export function startResolutionRun(deps: ResolutionRunDeps): ResolutionRun {
-  const { consents, environment } = deps;
-  const memory: Memory = { remembered: deps.remembered };
-  const directoryOf = lookingAtDirectories(deps, memory);
-  const closed = closedIntervalOf(consents, deps.readClone);
+export function startResolutionRun(
+  start: ResolutionStart,
+  machine: ResolutionMachine
+): ResolutionRun {
+  const { consents } = start;
+  const { environment } = machine;
+  const memory: Memory = { remembered: start.remembered };
+  const directoryOf = lookingAtDirectories(machine, memory);
+  const closed = closedIntervalOf(consents, machine.readClone);
   const state = (): ResolutionState => ({
     remembered: memory.remembered,
     consents,
-    unreadable: deps.unreadable,
+    unreadable: start.unreadable,
     caseInsensitiveFileSystem: environment.caseInsensitiveFileSystem,
   });
   return {
@@ -115,9 +124,6 @@ export function startResolutionRun(deps: ResolutionRunDeps): ResolutionRun {
   };
 }
 
-/** What a run starts from: what the store remembered, and the consent log as it was observed. */
-export type ResolutionStart = Pick<ResolutionRunDeps, "remembered" | "consents" | "unreadable">;
-
 export type StartResolutionRun = (start: ResolutionStart) => ResolutionRun;
 
 /** Runs bound to the machine: the directories it locates, its clones' keys, its clock. */
@@ -127,8 +133,7 @@ export function resolutionRunOf(
   environment: ResolutionEnvironment
 ): StartResolutionRun {
   return (start) =>
-    startResolutionRun({
-      ...start,
+    startResolutionRun(start, {
       locate: (cwd) => locator.locate(cwd),
       readClone: (clone) => consentSource.readClone(clone),
       environment,
