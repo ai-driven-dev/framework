@@ -30,7 +30,7 @@ Run from `cli/`.
 | Gate | Commands | CI job |
 | --- | --- | --- |
 | pre-commit | `pnpm lint` (biome and `cli/biome-plugins/`), `pnpm typecheck`, `pnpm test:arch`, `node scripts/check-cli-type-honesty.mjs` from the root | `cli-lint`, `cli-typecheck`, `cli-architecture` |
-| pre-push | `pnpm knip`, `pnpm knip:production`, `pnpm jscpd`, `pnpm jscpd:profiles`, debt shrink, recipe validity, every project but `tooling` and `architecture` | `cli-knip`, `cli-jscpd`, `cli-build`, `cli-coverage` |
+| pre-push | `pnpm knip`, `pnpm knip:production`, `pnpm jscpd`, `pnpm jscpd:profiles`, recipe validity, every project but `tooling` and `architecture` | `cli-knip`, `cli-jscpd`, `cli-build`, `cli-coverage` |
 | CI only | coverage thresholds, bundle budget, smoke, mutation | `cli-coverage`, `cli-build`, `cli-smoke`, `cli-mutation` |
 
 - Every job fans into the required check `cli / gate` in `.github/workflows/cli-ci.yml`.

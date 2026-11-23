@@ -1,8 +1,6 @@
 /**
  * A use case never catches its own errors: only a scenario collects a partial failure, and it
- * keeps the typed error. The context `application/` files that still catch are the entries of
- * the `application-catches` debt in `kinds-debt.json`, with how many each holds. The count
- * matches exactly: lowering is forced, a raise is caught in review. A `catch` in a comment or a
+ * keeps the typed error. No context `application/` file catches. A `catch` in a comment or a
  * string is no catch: the syntax tree is read.
  */
 import {
@@ -12,11 +10,9 @@ import {
   type SourceFile,
 } from "typescript/unstable/ast";
 import { describe, expect, it } from "vitest";
-import { debtEntries, readEach } from "./kind-rule-support.js";
+import { readEach } from "./kind-rule-support.js";
 import { read, sourceFiles } from "./source-graph.js";
 import { walk } from "./ts-project.js";
-
-const RULE = "application-catches";
 
 function catchCount(root: SourceFile): number {
   let count = 0;
@@ -45,13 +41,13 @@ describe("application catches", () => {
     expect(counted).toEqual({ "a.ts": 2 });
   });
 
-  it("holds every context application file to the catches written down in kinds-debt.json", () => {
+  it("holds every context application file free of catches", () => {
     const files = Object.fromEntries(
       sourceFiles()
         .filter((file) => /^src\/contexts\/[^/]+\/application\//.test(file))
         .map((file) => [file, read(file)])
     );
 
-    expect(catchesByFile(files)).toEqual(debtEntries(RULE));
+    expect(catchesByFile(files)).toEqual({});
   });
 });

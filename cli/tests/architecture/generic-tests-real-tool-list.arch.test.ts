@@ -10,7 +10,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { debtFamilyEntries } from "./kind-rule-support.js";
 import { codeFilesUnder } from "./kind-tree.js";
 import { CLI_ROOT } from "./source-graph.js";
 
@@ -32,20 +31,40 @@ const REAL_LIST = [
 /** The builder that hands the registered catalog out is the source, not a reacher. */
 const SOURCE = "tests/shared/testing/catalog-of.builder.ts";
 
-function reachers(): string[] {
-  return GENERIC_FOLDERS.flatMap((dir) => codeFilesUnder(dir))
-    .filter((file) => file !== SOURCE)
-    .filter((file) => {
-      const text = readFileSync(join(CLI_ROOT, file), "utf8");
-      return REAL_LIST.some((pattern) => pattern.test(text));
-    });
+/** The files whose text reaches the real tool list. */
+function reaching(texts: Readonly<Record<string, string>>): string[] {
+  return Object.entries(texts)
+    .filter(([file, text]) => file !== SOURCE && REAL_LIST.some((pattern) => pattern.test(text)))
+    .map(([file]) => file);
+}
+
+function genericTests(): Record<string, string> {
+  return Object.fromEntries(
+    GENERIC_FOLDERS.flatMap((dir) => codeFilesUnder(dir)).map((file) => [
+      file,
+      readFileSync(join(CLI_ROOT, file), "utf8"),
+    ])
+  );
 }
 
 describe("generic tests do not wire the real tool list", () => {
-  it("reaches it from exactly the files the real-tool-list debts hold", () => {
+  it("sees each way to reach the list, and not the builder that hands it out", () => {
+    const found = reaching({
+      "a.ts": 'import { x } from "./registered-tools.builder.js";',
+      "b.ts": "const p = registeredProfile();",
+      "c.ts": "const c = catalogOf();",
+      "d.ts": "const r = REGISTERED_PROFILES;",
+      "e.ts": "const c = catalogOf([SYNTHETIC_TOOL]);",
+      [SOURCE]: "export const registeredCatalog = 1;",
+    });
+
+    expect(found).toEqual(["a.ts", "b.ts", "c.ts", "d.ts"]);
+  });
+
+  it("reaches it from no file", () => {
     expect(
-      reachers().sort(),
-      "a generic test reaches the real tool list, or a held file stopped: use SYNTHETIC_TOOL or update the real-tool-list debts"
-    ).toEqual(debtFamilyEntries("real-tool-list").sort());
+      reaching(genericTests()),
+      "a generic test reaches the real tool list: use SYNTHETIC_TOOL, or move the test beside the profile"
+    ).toEqual([]);
   });
 });
