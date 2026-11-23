@@ -1,23 +1,23 @@
-# <title>
+# {{title}}
 
-- Date: <date>
+- Date: {{date}}
 - Status: Accepted
-- Supersedes: <supersedes>
+- Supersedes: {{supersedes}}
 
 ## Context
 
-<context>
+{{context}}
 
 ## Decision
 
-<decision>
+{{decision}}
 
 ## Alternatives
 
-<alternatives>
+{{alternatives}}
 
 ## Consequences
 
-<consequences>
+{{consequences}}
 
-> Fill every `<...>` and delete this line. Omit the Supersedes line when nothing is replaced.
+> Fill every `{{...}}` and delete this line. Omit the Supersedes line when nothing is replaced.

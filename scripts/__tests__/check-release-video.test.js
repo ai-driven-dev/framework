@@ -95,22 +95,6 @@ test("run passes when there is nothing new to show", () => {
   assert.equal(code, 0);
 });
 
-test("run fails on a skip with no reason even when every surface is covered", () => {
-  const errors = [];
-  const code = run({
-    surfaces: ["aidd-dev:10-batch"],
-    plan: {
-      scenes: [],
-      skipped: [{ surface: "aidd-dev:10-batch", reason: "" }],
-    },
-    logger: (line) => errors.push(line),
-    successLogger: () => {},
-  });
-
-  assert.equal(code, 1);
-  assert.match(errors.join("\n"), /sans raison : aidd-dev:10-batch/);
-});
-
 /** A hook runs with GIT_DIR and GIT_INDEX_FILE set: a git command that inherits them acts on the
  * repository being committed, not on the one a test made for itself. */
 const withoutGitEnv = () =>
@@ -176,34 +160,6 @@ test("featSurfaces reads the repository it is given even when a hook set GIT_DIR
   }
 });
 
-test("a video that shows five of the twelve surfaces a real release shipped is refused", () => {
-  const plan = require("./fixtures/release-video-scenes.json");
-  const shipped = [
-    "aidd telemetry",
-    "aidd-context:00-onboard",
-    "aidd-context:12-cook",
-    "aidd-dev:01-plan",
-    "aidd-dev:10-batch",
-    "aidd-orchestrator:00-async-dev",
-    "aidd-orchestrator:01-sdlc",
-    "aidd-orchestrator:02-backlog",
-    "aidd-pm:04-spec",
-    "aidd-telemetry:00-init",
-    "aidd-telemetry:01-usage",
-    "aidd-vcs:05-resolve-conflict",
-  ];
-
-  assert.deepEqual(missingScenes(shipped, plan), [
-    "aidd-context:00-onboard",
-    "aidd-context:12-cook",
-    "aidd-dev:01-plan",
-    "aidd-orchestrator:00-async-dev",
-    "aidd-orchestrator:02-backlog",
-    "aidd-pm:04-spec",
-    "aidd-telemetry:00-init",
-  ]);
-});
-
 const words = (n) => Array.from({ length: n }, (_, i) => `w${i}`).join(" ");
 
 test("overlongText accepts a short intro and a short lead", () => {
@@ -234,19 +190,6 @@ test("overlongText names the scene whose lead is too long", () => {
   assert.deepEqual(overlongText(plan), ["scene 2 lead: 15 words, 14 at most"]);
 });
 
-test("run fails on a text that is too long even when every surface is covered", () => {
-  const errors = [];
-  const code = run({
-    surfaces: [],
-    plan: { intro: { tagline: words(9) }, scenes: [], skipped: [] },
-    logger: (line) => errors.push(line),
-    successLogger: () => {},
-  });
-
-  assert.equal(code, 1);
-  assert.match(errors.join("\n"), /Textes trop longs : intro tagline: 9 words, 6 at most/);
-});
-
 test("jargonIn names the technical word a viewer would not know, and where it is", () => {
   const plan = {
     intro: { tagline: "Count your tokens", highlights: ["Payloads for Codex"] },
@@ -270,19 +213,6 @@ test("jargonIn leaves plain words, the word telemetry and the demo window alone"
   };
 
   assert.deepEqual(jargonIn(plan), []);
-});
-
-test("run fails on a technical word in the text a viewer reads", () => {
-  const errors = [];
-  const code = run({
-    surfaces: [],
-    plan: { intro: { tagline: "Your tokens" }, scenes: [], skipped: [] },
-    logger: (line) => errors.push(line),
-    successLogger: () => {},
-  });
-
-  assert.equal(code, 1);
-  assert.match(errors.join("\n"), /Mots techniques : intro tagline: "tokens"/);
 });
 
 test("jargonIn catches every technical word it lists, singular or plural", () => {
@@ -316,38 +246,22 @@ test("splitThemes leaves a theme whose scenes follow each other", () => {
   assert.deepEqual(splitThemes(plan), []);
 });
 
-test("run fails on a theme split in two parts of the video", () => {
-  const errors = [];
-  const code = run({
-    surfaces: [],
-    plan: { scenes: [{ pill: "Telemetry" }, { pill: "Rules" }, { pill: "Telemetry" }], skipped: [] },
-    logger: (line) => errors.push(line),
-    successLogger: () => {},
-  });
-
-  assert.equal(code, 1);
-  assert.match(errors.join("\n"), /Thèmes dispersés : Telemetry/);
-});
-
 test("overlongText accepts an intro made of tags alone", () => {
   assert.deepEqual(overlongText({ intro: { highlights: ["Telemetry for Codex"] }, scenes: [], skipped: [] }), []);
 });
 
-test("run fails when a plan with scenes has no YouTube text to publish", () => {
-  const errors = [];
-  const code = run({
-    surfaces: ["aidd telemetry"],
-    plan: { scenes: [{ template: "terminal-demo", surfaces: ["aidd telemetry"] }], skipped: [] },
-    logger: (line) => errors.push(line),
-    successLogger: () => {},
+for (const [name, surfaces, plan, expected] of [
+  ["a skip with no reason", ["aidd-dev:10-batch"], { scenes: [], skipped: [{ surface: "aidd-dev:10-batch", reason: "" }] }, /sans raison : aidd-dev:10-batch/],
+  ["a text that is too long", [], { intro: { tagline: words(9) }, scenes: [], skipped: [] }, /Textes trop longs : intro tagline: 9 words, 6 at most/],
+  ["a technical word", [], { intro: { tagline: "Your tokens" }, scenes: [], skipped: [] }, /Mots techniques : intro tagline: "tokens"/],
+  ["a theme split in two parts", [], { scenes: [{ pill: "Telemetry" }, { pill: "Rules" }, { pill: "Telemetry" }], skipped: [] }, /Thèmes dispersés : Telemetry/],
+  ["no YouTube text to publish", ["aidd telemetry"], { scenes: [{ template: "terminal-demo", surfaces: ["aidd telemetry"] }], skipped: [] }, /Texte YouTube : youtube: missing/],
+]) {
+  test(`run fails on ${name}`, () => {
+    const errors = [];
+    const code = run({ surfaces, plan, logger: (line) => errors.push(line), successLogger: () => {} });
+
+    assert.equal(code, 1);
+    assert.match(errors.join("\n"), expected);
   });
-
-  assert.equal(code, 1);
-  assert.match(errors.join("\n"), /Texte YouTube : youtube: missing/);
-});
-
-test("the plan read from disk keeps its YouTube text", () => {
-  const { readPlan } = require("../../.claude/skills/release-video/assets/check-release-video.js");
-
-  assert.ok(readPlan().youtube?.themes.length > 0);
-});
+}

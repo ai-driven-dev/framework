@@ -35,19 +35,13 @@ test("T1: main.json's pull_request rule allows only the merge method", () => {
   assert.deepEqual(rule.parameters.allowed_merge_methods, ["merge"]);
 });
 
-test("T2: ci.yml merges the release PR into main with --merge", () => {
-  const step = mergesIntoMain().find((s) => s.label.startsWith("ci.yml"));
-
-  assert.match(step.run, /gh pr merge .*--merge\b/);
-});
-
-test("T3: no step that merges a pull request into main uses --squash or --rebase", () => {
+test("every merge into main uses --merge and an empty --body, never --squash or --rebase", () => {
   for (const step of mergesIntoMain()) {
-    assert.doesNotMatch(step.run, /--squash\b/, `${step.label} must not squash into main`);
-    assert.doesNotMatch(step.run, /--rebase\b/, `${step.label} must not rebase into main`);
-  }
-});
+    const merge = step.run.replace(/\\\r?\n\s*/gu, " ").split(/\r?\n/u).find((line) => line.trim().startsWith("gh pr merge"));
 
-test(".github/rulesets/main.json stays valid JSON", () => {
-  assert.doesNotThrow(() => ruleset());
+    assert.ok(merge, `${step.label} has no gh pr merge command`);
+    assert.match(merge, /--merge\b/, `${step.label} must merge with --merge`);
+    assert.doesNotMatch(merge, /--squash\b|--rebase\b/, `${step.label} must not squash or rebase into main`);
+    assert.match(merge, /--body\s+""/u, `${step.label} must pass --body ""`);
+  }
 });

@@ -13,6 +13,7 @@ The constraints every generated command satisfies. A command is a one-shot promp
 | C5 | Set `argument-hint` when the command reads `$ARGUMENTS`. | It tells the user what to type. |
 | C6 | Write in English, short imperative sentences, one idea each. | The prompt is read by a model. |
 | C7 | Set `model`, `agent` or `allowed-tools` only when the user names one. | A default pins every run to one choice. |
+| C8 | Write the body as plain prose and lists, with no `##` section. | The command contract flags one (COMMAND-01). |
 
 ## Naming
 

@@ -146,7 +146,7 @@ function absentByDesign(base, top, segments) {
 /**
  * Each backticked file path whose top-level folder exists under `root` but whose file does not.
  * Anchored on a real top-level entry rather than on "looks like a path", as
- * `scripts/check-referenced-paths.js` is: anything wider reports MIME types and shell fragments.
+ * `scripts/check/contracts/custom/referenced-paths.cjs` is: anything wider reports MIME types and shell fragments.
  * Each segment is compared by its exact name. A file also exists when it does under the nearest
  * ancestor holding `.git`, or beside the citing file when its `folder` is given. A path never
  * leaves the root it is read from: a `..` segment is not checked, and neither is a link out. A
