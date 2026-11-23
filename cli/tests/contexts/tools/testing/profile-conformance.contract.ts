@@ -120,6 +120,13 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
       expect(registration.filter((other) => other.toolId === profile.toolId)).toHaveLength(1);
     },
   },
+  {
+    title: "declares its directory relative, ending in /",
+    holds: ({ profile }) => {
+      expectRelative(profile.directory, "directory");
+      expect(profile.directory.endsWith("/"), profile.directory).toBe(true);
+    },
+  },
   aiCheck("has a well-formed shape", (profile) => {
     expect(profile.toolSuffix.startsWith(".")).toBe(true);
     expect(Array.isArray(profile.linkSyntax)).toBe(true);
