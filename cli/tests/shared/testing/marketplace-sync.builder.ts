@@ -13,6 +13,7 @@ import type { HostActions } from "../../../src/contexts/host-registration/ports/
 import {
   LoadSyncContext,
   type LoadSyncContextDeps,
+  syncScopesOf,
 } from "../../../src/contexts/installation/application/sync/load-sync-context.use-case.js";
 import { RecordActivation } from "../../../src/contexts/installation/application/sync/record-activation.use-case.js";
 import { trackedSharedSettings } from "../../../src/contexts/installation/application/sync/tracked-shared-settings.js";
@@ -79,11 +80,13 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
   return new SyncSettings(
     new RunSettingsSync({
       loadContext: new LoadSyncContext({
-        project: { manifestRepo: parts.manifestRepo, records: parts.manifestRepo },
-        user: parts.userManifestRepo && {
-          manifestRepo: parts.userManifestRepo,
-          records: parts.userManifestRepo,
-        },
+        scopes: syncScopesOf(
+          { manifestRepo: parts.manifestRepo, records: parts.manifestRepo },
+          parts.userManifestRepo && {
+            manifestRepo: parts.userManifestRepo,
+            records: parts.userManifestRepo,
+          }
+        ),
         marketplaceRegistry: parts.marketplaceRegistry,
         frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
         marketplaceRegisterFrameworkUseCase: parts.marketplaceRegisterFrameworkUseCase,

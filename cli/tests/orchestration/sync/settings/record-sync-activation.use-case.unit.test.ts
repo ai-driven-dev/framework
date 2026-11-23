@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
-import { LoadSyncContext } from "../../../../src/contexts/installation/application/sync/load-sync-context.use-case.js";
+import {
+  LoadSyncContext,
+  syncScopesOf,
+} from "../../../../src/contexts/installation/application/sync/load-sync-context.use-case.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import {
   RecordSyncActivation,
@@ -29,7 +32,7 @@ async function requestOf(
   );
   const project = new InMemoryManifestRepository(Manifest.create(), PROJECT_ROOT);
   const loader = new LoadSyncContext({
-    project: { manifestRepo: project, records: project },
+    scopes: syncScopesOf({ manifestRepo: project, records: project }),
     marketplaceRegistry: registry,
     frameworkMarketplaceName: "framework",
   });

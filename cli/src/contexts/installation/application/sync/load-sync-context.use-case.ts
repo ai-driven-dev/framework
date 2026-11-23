@@ -29,17 +29,23 @@ export interface SyncContext {
   save(): Promise<void>;
 }
 
-/** What LoadSyncContext is built from. */
 /** One scope's manifest repository and the records kept beside it. */
 export interface SyncScope {
   readonly manifestRepo: ManifestRepository;
   readonly records: ScopeRecords;
 }
 
+/** The manifest repository and records a sync run on a scope works on. */
+export type SyncScopes = (scope: Scope) => SyncScope;
+
+/** `"user"` works on the machine's scope, anything else on the project's; without a machine
+ * scope, the user scope works on the project's. */
+export function syncScopesOf(project: SyncScope, user?: SyncScope): SyncScopes {
+  return (scope) => (scope === "user" ? (user ?? project) : project);
+}
+
 export interface LoadSyncContextDeps {
-  readonly project: SyncScope;
-  /** Absent, the machine scope works on the project's. */
-  readonly user?: SyncScope;
+  readonly scopes: SyncScopes;
   readonly marketplaceRegistry: InstallationMarketplaceRegistry;
   /** The name the framework marketplace is registered under. */
   readonly frameworkMarketplaceName: string;
@@ -51,14 +57,10 @@ export interface LoadSyncContextDeps {
 export class LoadSyncContext {
   constructor(private readonly deps: LoadSyncContextDeps) {}
 
-  private scopeOf(scope: Scope): SyncScope {
-    return scope === "user" ? (this.deps.user ?? this.deps.project) : this.deps.project;
-  }
-
   /** `null` when there is no manifest or no marketplace to sync, so the run has nothing to do. */
   async execute(request: LoadSyncContextRequest): Promise<SyncContext | null> {
     const { projectRoot } = request;
-    const { manifestRepo, records: scopeRecords } = this.scopeOf(request.scope);
+    const { manifestRepo, records: scopeRecords } = this.deps.scopes(request.scope);
     const [manifest, initialMarketplaces] = await Promise.all([
       manifestRepo.loadIfReadable(),
       this.deps.marketplaceRegistry.list(projectRoot),

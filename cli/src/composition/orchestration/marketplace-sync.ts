@@ -3,7 +3,10 @@ import { PlanRefsToEnable } from "../../contexts/host-registration/application/r
 import { RecordNativeRegistrations } from "../../contexts/host-registration/application/register/record-native-registrations.use-case.js";
 import { RegisterPluginWithHost } from "../../contexts/host-registration/application/register/register-plugin-with-host.use-case.js";
 import { ResolveNativeHost } from "../../contexts/host-registration/application/register/resolve-native-host.use-case.js";
-import { LoadSyncContext } from "../../contexts/installation/application/sync/load-sync-context.use-case.js";
+import {
+  LoadSyncContext,
+  syncScopesOf,
+} from "../../contexts/installation/application/sync/load-sync-context.use-case.js";
 import { RecordActivation } from "../../contexts/installation/application/sync/record-activation.use-case.js";
 import { trackedSharedSettings } from "../../contexts/installation/application/sync/tracked-shared-settings.js";
 import { Manifest } from "../../contexts/installation/domain/manifest.js";
@@ -95,8 +98,10 @@ function runSettingsSyncOf(base: Base, inst: Installation, sources: SyncSources)
   const { registrationRecordRules } = inst;
   return new RunSettingsSync({
     loadContext: new LoadSyncContext({
-      project: { manifestRepo, records: recordsOf(manifestRepo) },
-      user: { manifestRepo: userManifestRepo, records: recordsOf(userManifestRepo) },
+      scopes: syncScopesOf(
+        { manifestRepo, records: recordsOf(manifestRepo) },
+        { manifestRepo: userManifestRepo, records: recordsOf(userManifestRepo) }
+      ),
       marketplaceRegistry,
       frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
       marketplaceRegisterFrameworkUseCase: registerFrameworkMarketplace,

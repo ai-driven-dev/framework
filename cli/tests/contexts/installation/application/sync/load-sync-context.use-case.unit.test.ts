@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   LoadSyncContext,
   type LoadSyncContextRequest,
+  syncScopesOf,
 } from "../../../../../src/contexts/installation/application/sync/load-sync-context.use-case.js";
 import type { ToolRecords } from "../../../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
@@ -54,8 +55,10 @@ function setup(
     return pluginSource;
   });
   const load = new LoadSyncContext({
-    project: { manifestRepo: project, records: project },
-    user: user && { manifestRepo: user, records: user },
+    scopes: syncScopesOf(
+      { manifestRepo: project, records: project },
+      user && { manifestRepo: user, records: user }
+    ),
     marketplaceRegistry: registry,
     frameworkMarketplaceName: FRAMEWORK,
     marketplaceRegisterFrameworkUseCase: options.register ? { execute: register } : undefined,
