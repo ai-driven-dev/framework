@@ -8,7 +8,7 @@ The draft, name and targets.
 
 ## Process
 
-1. Fill [agent-template.md](../assets/agent-template.md) with the draft.
+1. Shape the draft on [agent-template.md](../assets/agent-template.md): the front matter keys are writer input fields, and the body is the template after its front matter.
 2. Check it against [agent-authoring.md](../references/agent-authoring.md), and fix each breach.
 3. Plugin source: plan the canonical agent's path in [hosts.md](../references/hosts.md).
 4. Hosts: write the draft's fields and body to the input file per [writer.md](../references/writer.md).

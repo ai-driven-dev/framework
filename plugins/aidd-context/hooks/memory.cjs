@@ -73,10 +73,18 @@ function realish(file) {
   }
 }
 
+/** The turn's one Stop answer: the written artifacts' findings, then what memory could not sync. This plugin has a single Stop entry, so both ride it. */
 function atTurnEnd(host, event) {
+  let artifacts = "";
+  try {
+    artifacts = require("./artifacts.cjs").atStop(event);
+  } catch {
+    // a broken artifact check never costs memory its own answer
+  }
   if (event.stopActive) return;
   const root = realish(path.resolve(event.cwd));
-  const text = sync(root, { onlyMissing: true }).map((message) => `${PLUGIN}: ${message}`).join("\n");
+  const memory = sync(root, { onlyMissing: true }).map((message) => `${PLUGIN}: ${message}`).join("\n");
+  const text = [artifacts, memory].filter((part) => part !== "").join("\n");
   if (text !== "") host.answer({ level: 1, text, person: text });
 }
 
@@ -248,9 +256,50 @@ function pointedText(original, oldBlock, root) {
   return { text: [...lines.slice(0, found.openLine), COPILOT_POINTER, ...lines.slice(found.closeLine + 1)].join("\n") };
 }
 
+const HELD = new Set(["EPERM", "EBUSY", "EACCES"]);
+
+/** Temp file beside `file`, then rename over it: a failed write leaves `file` whole; a read-only file stays unwritten. Sweeps `.<name>.*.tmp` older than 60 s and retries a held rename for ~100 ms. */
+function replaceFile(file, text) {
+  fs.accessSync(file, fs.constants.W_OK);
+  const mode = fs.statSync(file).mode & 0o7777;
+  const dir = path.dirname(file);
+  const stem = `.${path.basename(file)}.`;
+  for (const entry of entriesOf(dir)) {
+    if (!entry.name.startsWith(stem) || !entry.name.endsWith(".tmp")) continue;
+    try {
+      if (Date.now() - fs.statSync(path.join(dir, entry.name)).mtimeMs > 60000) fs.rmSync(path.join(dir, entry.name), { force: true });
+    } catch {
+      // a leftover that cannot be swept is not this write's failure
+    }
+  }
+  const temp = path.join(dir, `${stem}${process.pid}.tmp`);
+  try {
+    const fd = fs.openSync(temp, "wx", mode);
+    try {
+      fs.writeFileSync(fd, text);
+      fs.fchmodSync(fd, mode);
+    } finally {
+      fs.closeSync(fd);
+    }
+    for (let retry = 0; ; retry++) {
+      try {
+        fs.renameSync(temp, file);
+        break;
+      } catch (error) {
+        if (!HELD.has(error.code) || retry === 4) throw error;
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 25);
+      }
+    }
+  } catch (error) {
+    fs.rmSync(temp, { force: true });
+    throw error;
+  }
+}
+
+// Atomic per file only: with several destinations, files already renamed stay updated and the failing one is unchanged.
 function tryWrite(file, text, shown, notSynced) {
   try {
-    fs.writeFileSync(file, text, "utf8");
+    replaceFile(file, text);
   } catch (error) {
     notSynced.push(`${shown} not written (${error.code ?? error.message}), skipped`);
   }

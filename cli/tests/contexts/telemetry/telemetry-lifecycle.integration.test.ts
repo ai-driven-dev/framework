@@ -420,9 +420,6 @@ describe("when measured data is forgotten", () => {
       "bindings",
       "identity",
       "ledger",
-      "previous-day-file",
-      "previous-day-file",
-      "previous-identity",
     ]);
     expect(result.plan.repositories).toEqual([
       { clone: join(repo, ".git"), taskKeys: 2, consent: true },
@@ -431,16 +428,16 @@ describe("when measured data is forgotten", () => {
     expect(git(repo, box.gitEnv, "config", "--local", "--list")).toBe(config);
   });
 
-  it("leaves nothing of either version, and the declarations out of git config", async () => {
+  it("leaves nothing of this version, what an earlier version wrote untouched, and the declarations out of git config", async () => {
     await measured();
     const aidd = join(box.home, ".config", "aidd");
 
     const result = await deps.forgetTelemetry.execute({ confirmed: true });
 
     expect(result.status).toBe("forgotten");
-    expect(readdirSync(box.telemetry)).toEqual([]);
-    expect(readdirSync(join(aidd, "telemetry"))).toEqual([]);
-    expect(existsSync(join(aidd, "identity.json"))).toBe(false);
+    expect(readdirSync(box.telemetry)).toEqual(["2026-10-05.jsonl"]);
+    expect(readdirSync(join(aidd, "telemetry"))).toEqual(["2026-10-06.jsonl"]);
+    expect(existsSync(join(aidd, "identity.json"))).toBe(true);
     expect(git(repo, box.gitEnv, "config", "--local", "--list")).not.toMatch(/aidd/i);
   });
 
@@ -467,7 +464,7 @@ describe("when measured data is forgotten", () => {
     writeFileSync(join(box.home, ".config", "aidd", "auth.json"), "{}");
     writeFileSync(join(box.home, ".config", "aidd", "telemetry", "keep.jsonl"), "{}");
     await deps.forgetTelemetry.execute({ confirmed: true });
-    expect(readdirSync(box.telemetry)).toEqual(["notes.txt"]);
+    expect(readdirSync(box.telemetry).sort()).toEqual(["2026-10-05.jsonl", "notes.txt"]);
     expect(existsSync(join(box.home, ".config", "aidd", "auth.json"))).toBe(true);
     expect(existsSync(join(box.home, ".config", "aidd", "telemetry", "keep.jsonl"))).toBe(true);
   });

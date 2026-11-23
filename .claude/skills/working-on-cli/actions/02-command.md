@@ -23,7 +23,7 @@ A registered controller, its wiring, and its controller and e2e tests.
 6. **Online.** A command that touches the network joins `ONLINE_COMMAND_PATHS` in `src/presentation/hooks/update-notice-hooks.ts`; any other command works offline.
 7. **Output.** Follow `architecture.md`, Process, for channels and exit codes.
 8. **Failure.** Follow [04-failure.md](04-failure.md).
-9. **Gate.** Run `pnpm lint`: a new command passes the Biome gate and adds no `kinds-debt.json` entry (router rule).
+9. **Gate.** Run `pnpm lint`: a new command passes the Biome gate.
 10. **Help surface.** A new or renamed subcommand changes `tests/golden/snapshots/help/surface.json`: run `pnpm golden:update help-surface` and read the diff.
 11. **Tests.** Write a unit test per controller under `tests/presentation/controllers/` (the kind table owes `unit`), and an e2e under `tests/e2e/` only for a journey no lower level proves, at the levels of [05-test.md](05-test.md).
 
@@ -31,6 +31,6 @@ A registered controller, its wiring, and its controller and e2e tests.
 
 | Case | Pass |
 | --- | --- |
-| `pnpm lint` | exits 0 with no new `kinds-debt.json` entry |
+| `pnpm lint` | exits 0 |
 | `pnpm test:golden` | the help surface matches the regenerated snapshot |
 | `pnpm test:e2e` for a new journey | exit code, output and files as specified |

@@ -40,7 +40,6 @@ import { ReadTranscriptRetention } from "../../contexts/telemetry/application/sw
 import { RememberOwnRoot } from "../../contexts/telemetry/application/switch/remember-own-root.use-case.js";
 import { WithdrawConsent } from "../../contexts/telemetry/application/switch/withdraw-consent.use-case.js";
 import { environmentWithoutGitVariables } from "../../contexts/telemetry/domain/resolution/git-environment.js";
-import { legacyLocations } from "../../contexts/telemetry/domain/switch/legacy-locations.js";
 import { GitBranchBindingSourceAdapter } from "../../contexts/telemetry/infrastructure/git/git-branch-binding-source-adapter.js";
 import { GitBranchBindingStoreAdapter } from "../../contexts/telemetry/infrastructure/git/git-branch-binding-store-adapter.js";
 import { GitConsentAdapter } from "../../contexts/telemetry/infrastructure/git/git-consent-adapter.js";
@@ -65,7 +64,6 @@ import { BindingSnapshotStoreAdapter } from "../../contexts/telemetry/infrastruc
 import { DirectoryLock } from "../../contexts/telemetry/infrastructure/storage/ledger/directory-lock.js";
 import { LedgerLock } from "../../contexts/telemetry/infrastructure/storage/ledger/ledger-lock.js";
 import { LeftOutAdapter } from "../../contexts/telemetry/infrastructure/storage/ledger/left-out-adapter.js";
-import { RepositoryAliasStoreAdapter } from "../../contexts/telemetry/infrastructure/storage/ledger/repository-alias-store-adapter.js";
 import { ResolutionStoreAdapter } from "../../contexts/telemetry/infrastructure/storage/ledger/resolution-store-adapter.js";
 import { UsageLedgerAdapter } from "../../contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { MeasurementErasureAdapter } from "../../contexts/telemetry/infrastructure/storage/measurement-erasure-adapter.js";
@@ -77,7 +75,7 @@ import { ChooseIdentity } from "../../orchestration/telemetry/choose-identity.us
 import { EnvironmentAdapter } from "../../shared/infrastructure/environment-adapter.js";
 import { PrivateStorageAdapter } from "../../shared/infrastructure/private-storage-adapter.js";
 import type { PrivateStorage } from "../../shared/ports/private-storage.js";
-import { userConfigDirOf } from "../user-config-dir.js";
+import { MACHINE_PRIVATE_STORAGE_HOST, userConfigDirOf } from "../user-config-dir.js";
 
 /** The requests a command checks before anything is wired: no file, no process, only the clock. */
 export function wireTelemetryRequests(): TelemetryRequests {
@@ -132,18 +130,16 @@ function directoryLock(dir: string, storage: PrivateStorage, name?: string): Dir
 function wireStores(root: string) {
   const ledgerDir = join(root, "ledger");
   const bindingsDir = join(root, "bindings");
-  const storage = new PrivateStorageAdapter();
-  const aliases = new RepositoryAliasStoreAdapter(ledgerDir);
+  const storage = new PrivateStorageAdapter(MACHINE_PRIVATE_STORAGE_HOST);
   return {
     root,
     ledger: new UsageLedgerAdapter(ledgerDir, storage, {
       leftOut: new LeftOutAdapter(ledgerDir, storage),
-      aliases,
       lock: directoryLock(ledgerDir, storage),
     }),
-    resolutionStore: new ResolutionStoreAdapter(ledgerDir, storage, aliases),
+    resolutionStore: new ResolutionStoreAdapter(ledgerDir, storage),
     consentHistory: new ConsentHistoryAdapter(ledgerDir, storage),
-    snapshotStore: new BindingSnapshotStoreAdapter(bindingsDir, storage, aliases),
+    snapshotStore: new BindingSnapshotStoreAdapter(bindingsDir, storage),
     bindingsLock: new BindingsLockAdapter(directoryLock(bindingsDir, storage, BINDINGS_LOCK_NAME)),
     sessions: new SessionBindingStoreAdapter(bindingsDir, storage),
     identity: new PersonIdentityAdapter(root, storage),
@@ -152,7 +148,7 @@ function wireStores(root: string) {
 
 type Stores = ReturnType<typeof wireStores>;
 
-const processEnvironment = new EnvironmentAdapter();
+const processEnvironment = new EnvironmentAdapter(process.env);
 
 /** What git answers: the repositories, their consents and the branch a task is declared on. */
 function wireGit(stores: Stores) {
@@ -260,19 +256,11 @@ function wireIdentity(stores: Stores, git: Git, prompter: Prompter) {
   };
 }
 
-/** Forgetting what was measured: the stores, the legacy locations and every remembered clone. */
-function forgetTelemetryOf(stores: Stores, git: Git, homedir: () => string) {
+/** Forgetting what was measured: the stores and every remembered clone. */
+function forgetTelemetryOf(stores: Stores, git: Git) {
   const { resolutionStore, consentHistory, ledger } = stores;
   return new ForgetTelemetry({
-    erasure: new MeasurementErasureAdapter(
-      stores.root,
-      legacyLocations({
-        env: process.env,
-        home: homedir(),
-        platform: process.platform,
-        telemetryDir: stores.root,
-      })
-    ),
+    erasure: new MeasurementErasureAdapter(stores.root),
     declarations: new RepositoryDeclarationsAdapter(git.gitEnv),
     remembered: new ReadRememberedClones(resolutionStore, consentHistory, stores.snapshotStore),
     ledger,
@@ -312,7 +300,7 @@ function wireConsent(stores: Stores, git: Git, homedir: () => string) {
         now: environment.now,
       })
     ),
-    forgetTelemetry: forgetTelemetryOf(stores, git, homedir),
+    forgetTelemetry: forgetTelemetryOf(stores, git),
   };
 }
 

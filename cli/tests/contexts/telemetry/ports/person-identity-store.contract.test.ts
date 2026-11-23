@@ -2,7 +2,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { PersonIdentityAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/person-identity-adapter.js";
-import { PrivateStorageAdapter } from "../../../../src/shared/infrastructure/private-storage-adapter.js";
+import { machinePrivateStorage } from "../../../shared/testing/machine-private-storage.builder.js";
 import { InMemoryIdentity } from "../testing/in-memory-identity.fake.js";
 import {
   describePersonIdentityStoreContract,
@@ -22,7 +22,7 @@ describePersonIdentityStoreContract(
   async (): Promise<PersonIdentitySubject> => {
     const root = await mkdtemp(join(tmpdir(), "aidd-identity-contract-"));
     return {
-      store: new PersonIdentityAdapter(join(root, "telemetry"), new PrivateStorageAdapter()),
+      store: new PersonIdentityAdapter(join(root, "telemetry"), machinePrivateStorage()),
       dispose: () => rm(root, { recursive: true, force: true }),
     };
   }

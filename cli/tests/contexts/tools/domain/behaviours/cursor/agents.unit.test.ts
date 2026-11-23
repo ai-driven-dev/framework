@@ -1,0 +1,32 @@
+import { describe, expect, it } from "vitest";
+import { cursor } from "../../../../../../src/composition/tool-profiles/cursor.js";
+import { inMarketplace, installed, NAMED_AGENT } from "../../../testing/agent-fixture.builder.js";
+
+const PREFIXED = `---
+name: "aidd-dev-planner"
+description: "Plans the work"
+model: "m[effort=high]"
+---
+Plan before building.
+`;
+
+describe("cursor agents", () => {
+  describe("name resolution", () => {
+    it("installs a plugin agent under its declared name, double-quoted, effort inside the model", () => {
+      expect(installed(cursor, NAMED_AGENT)).toBe(`---
+name: "planner"
+description: "Plans the work"
+model: "m[effort=high]"
+---
+Plan before building.
+`);
+    });
+
+    it("prefixes the name with the plugin in a marketplace build", () => {
+      expect(inMarketplace(cursor, NAMED_AGENT)).toStrictEqual({
+        path: "agents/planner.md",
+        content: PREFIXED,
+      });
+    });
+  });
+});

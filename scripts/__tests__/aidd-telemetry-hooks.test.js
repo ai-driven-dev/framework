@@ -347,17 +347,6 @@ test("binding follows the fixture, through real git and the shared files", () =>
   }
 });
 
-test("the shared files are read in full by the hook's own readers", () => {
-  withBox({ aidd: false }, (box) => {
-    fs.mkdirSync(path.join(box.tel, "bindings"), { recursive: true });
-    for (const file of ["sessions.jsonl", "carries.jsonl"]) {
-      fs.copyFileSync(path.join(FIXTURE, file), path.join(box.tel, "bindings", file));
-    }
-    assert.ok(readDeclarations(box.tel).length >= 5);
-    assert.ok(readCarries(box.tel).length >= 5);
-  });
-});
-
 test("parseBranchConfig cuts the known suffix off a dotted branch name", () => {
   const out = "branch.release/1.2.aidd.aiddtask\nx\0branch.release/1.2.aidd.aidddeclaredat\nt\0";
   assert.deepEqual(parseBranchConfig(out, "release/1.2.aidd"), {
@@ -397,17 +386,13 @@ test("hook tool: every fixture case is Claude Code's, Codex's or neither, as exp
   }
 });
 
-test("hook tool: a Claude Code fixture case asks, any other passes, through the gate", () => {
-  for (const [name, c] of Object.entries(cases.hookTool)) {
+test("hook tool: through the gate, a Claude Code case asks and a Codex one inheriting Claude's session id passes", () => {
+  for (const name of ["claude-posix-transcript", "codex-rollout-path-with-the-inherited-claude-id"]) {
+    const c = cases.hookTool[name];
     withBox({}, (box) => {
       const env = box.env();
-      if (c.env_session_id === null) delete env.CLAUDE_CODE_SESSION_ID;
-      else env.CLAUDE_CODE_SESSION_ID = c.env_session_id;
-      const payload = box.payload({ session_id: c.payload_session_id, transcript_path: c.transcript_path });
-      if (c.payload_session_id === null) delete payload.session_id;
-      if (c.transcript_path === null) delete payload.transcript_path;
-      const result = gate(box, { payload, env });
-      // The fixture's Codex paths name no file here, so nobody is there to answer.
+      env.CLAUDE_CODE_SESSION_ID = c.env_session_id;
+      const result = gate(box, { payload: box.payload({ session_id: c.payload_session_id, transcript_path: c.transcript_path }), env });
       assert.equal(asks(result), expected.hookTool[name] === "claude", name);
       if (expected.hookTool[name] !== "claude") assertPasses(result);
     });
@@ -799,13 +784,6 @@ test("consent: a committed .aidd/config.json is not consent, so nothing is asked
   });
 });
 
-test("consent: AIDD_TELEMETRY=0 refuses before git is asked", () => {
-  withBox({}, (box) => {
-    // no git on PATH at all: a refusal by the environment must not need it
-    assertPasses(gate(box, { env: { ...box.env({ AIDD_TELEMETRY: "0" }), PATH: "" } }));
-  });
-});
-
 test("consent: found from a subdirectory of the repository", () => {
   withBox({}, (box) => {
     const sub = path.join(box.repo, "a", "b");
@@ -814,28 +792,14 @@ test("consent: found from a subdirectory of the repository", () => {
   });
 });
 
-test("consent: AIDD_TELEMETRY refuses on exactly 0", () => {
-  for (const [name, env] of Object.entries(cases.environmentRefusal)) {
-    withBox({}, (box) => {
-      const result = gate(box, { env: box.env(env) });
-      assert.equal(asks(result), !expected.environmentRefusal[name], name);
-    });
-  }
-});
-
-test("branch role: every fixture case asks only on a working branch", () => {
-  for (const [name, c] of Object.entries(cases.branchRole)) {
-    withBox({}, (box) => {
-      git(box.repo, "symbolic-ref", "HEAD", c.head ?? "refs/heads/feat/x");
-      if (c.head === null) {
-        git(box.repo, "commit", "--allow-empty", "-q", "-m", "x");
-        git(box.repo, "checkout", "-q", "--detach");
-      }
-      if (c.originHead) git(box.repo, "symbolic-ref", "refs/remotes/origin/HEAD", c.originHead);
-      const result = gate(box);
-      assert.equal(asks(result), expected.branchRole[name] === "working", name);
-    });
-  }
+test("consent: AIDD_TELEMETRY=0 refuses before git is asked, and only exactly 0 refuses", () => {
+  withBox({}, (box) => {
+    // no git on PATH at all: a refusal by the environment must not need it
+    assertPasses(gate(box, { env: { ...box.env(cases.environmentRefusal["zero-refuses"]), PATH: "" } }));
+  });
+  withBox({}, (box) => {
+    assert.equal(asks(gate(box, { env: box.env(cases.environmentRefusal["one-does-not"]) })), true);
+  });
 });
 
 test("the default branch and a detached head are never asked, and git is not needed to say so for a bound session", () => {
@@ -847,7 +811,7 @@ test("the default branch and a detached head are never asked, and git is not nee
   });
 });
 
-test("a bound branch, session or carried session passes", () => {
+test("a branch bound by the command passes, one the command did not declare is asked", () => {
   withBox({}, (box) => {
     git(box.repo, "config", "--local", "branch.feat/x.aiddTask", "t");
     git(box.repo, "config", "--local", "branch.feat/x.aiddDeclaredFor", "feat/x");
@@ -855,56 +819,8 @@ test("a bound branch, session or carried session passes", () => {
     assertPasses(gate(box));
   });
   withBox({}, (box) => {
-    git(box.repo, "config", "--local", "branch.feat/x.aiddDeclaredAt", "2026-10-09T09:00:00.000Z");
-    assertPasses(gate(box));
-  });
-  withBox({}, (box) => {
-    box.write("sessions.jsonl", [
-      { session_id: SESSION, task: "t", ticket: null, none: false, declared_at: "2026-01-01T00:00:00.000Z", by: "command" },
-    ]);
-    assertPasses(gate(box));
-  });
-  withBox({}, (box) => {
-    box.write("sessions.jsonl", [
-      { session_id: OTHER, task: "t", ticket: null, none: false, declared_at: "2026-01-01T00:00:00.000Z", by: "command" },
-    ]);
-    box.write("carries.jsonl", [{ session_id: SESSION, from: OTHER, at: "2026-01-02T00:00:00.000Z" }]);
-    assertPasses(gate(box));
-  });
-});
-
-test("a branch the command did not declare is asked: a task set by hand, a declaration copied from another branch", () => {
-  withBox({}, (box) => {
     git(box.repo, "config", "--local", "branch.feat/x.aiddTask", "by-hand");
     assert.equal(gate(box).json.decision, "block");
-  });
-  withBox({}, (box) => {
-    git(box.repo, "config", "--local", "branch.feat/x.aiddTask", "theirs");
-    git(box.repo, "config", "--local", "branch.feat/x.aiddDeclaredFor", "feat/original");
-    git(box.repo, "config", "--local", "branch.feat/x.aiddDeclaredAt", "2026-10-09T09:00:00.000Z");
-    assert.equal(gate(box).json.decision, "block");
-  });
-});
-
-test("the gate asks on a branch copied onto with -C, whose keys are listed twice", () => {
-  withBox({}, (box) => {
-    git(box.repo, "config", "--local", "branch.feat/x.aiddTask", "theirs");
-    git(box.repo, "config", "--local", "branch.feat/x.aiddDeclaredFor", "feat/original");
-    git(box.repo, "config", "--local", "branch.feat/x.aiddDeclaredAt", "2026-10-09T09:00:00.000Z");
-    git(box.repo, "config", "--local", "--add", "branch.feat/x.aiddDeclaredFor", "feat/x");
-    git(box.repo, "config", "--local", "--add", "branch.feat/x.aiddDeclaredAt", "2026-10-09T10:00:00.000Z");
-    assert.equal(gate(box).json.decision, "block");
-  });
-});
-
-test("the gate asks on every prompt until the branch is declared, then never again", () => {
-  withBox({}, (box) => {
-    assert.equal(gate(box).json.decision, "block");
-    assert.equal(gate(box).json.decision, "block");
-    git(box.repo, "config", "--local", "branch.feat/x.aiddDeclaredFor", "feat/x");
-    git(box.repo, "config", "--local", "branch.feat/x.aiddDeclaredAt", "2026-10-09T09:00:00.000Z");
-    assertPasses(gate(box));
-    assertPasses(gate(box));
   });
 });
 

@@ -2,7 +2,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { ConsentHistoryAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/consent/consent-history-adapter.js";
-import { PrivateStorageAdapter } from "../../../../src/shared/infrastructure/private-storage-adapter.js";
+import { machinePrivateStorage } from "../../../shared/testing/machine-private-storage.builder.js";
 import {
   type ConsentHistorySubject,
   describeConsentHistoryContract,
@@ -22,7 +22,7 @@ describeConsentHistoryContract(
   async (): Promise<ConsentHistorySubject> => {
     const root = await mkdtemp(join(tmpdir(), "aidd-consent-contract-"));
     return {
-      history: new ConsentHistoryAdapter(join(root, "ledger"), new PrivateStorageAdapter()),
+      history: new ConsentHistoryAdapter(join(root, "ledger"), machinePrivateStorage()),
       dispose: () => rm(root, { recursive: true, force: true }),
     };
   }

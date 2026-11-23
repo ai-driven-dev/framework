@@ -1,7 +1,8 @@
 // A tool's hooks facts live in the `declareHooks(` call of its profile alone. Read lexically, with strings and
 // comments blanked, because `typescript` 7 ships no in-process parser.
 
-export const PROFILE_FILE = /^src\/contexts\/tools\/domain\/profiles\/[^/]+\/[^/]+\.ts$/;
+export const PROFILE_FILE =
+  /^src\/(?:composition\/tool-profiles\/[^/]+|contexts\/tools\/domain\/behaviours\/[^/]+\/[^/]+)\.ts$/;
 export const DESCRIPTOR_TYPES = "src/contexts/tools/domain/formats/hooks/descriptor.ts";
 
 const BLANKED = /\/\/[^\n]*|\/\*[\s\S]*?\*\/|(["'`])(?:\\[\s\S]|(?!\1)[^\\])*\1/g;

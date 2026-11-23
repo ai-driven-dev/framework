@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { claude } from "../../../../../src/composition/tool-profiles/claude.js";
+import { codexProfile } from "../../../../../src/composition/tool-profiles/codex.js";
+import { copilot } from "../../../../../src/composition/tool-profiles/copilot.js";
+import { cursor } from "../../../../../src/composition/tool-profiles/cursor.js";
+import { opencode } from "../../../../../src/composition/tool-profiles/opencode.js";
 import type { AiTool } from "../../../../../src/contexts/tools/domain/profile.js";
-import { claude } from "../../../../../src/contexts/tools/domain/profiles/claude/claude.profile.js";
-import { codexProfile } from "../../../../../src/contexts/tools/domain/profiles/codex/codex.profile.js";
-import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copilot/copilot.profile.js";
-import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
-import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/opencode.profile.js";
 import { SmolTomlCodec } from "../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";

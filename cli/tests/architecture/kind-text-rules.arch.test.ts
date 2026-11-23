@@ -34,7 +34,7 @@ describe("a host's plugin manifest path is spelled once, by the canon or by its 
   it("leaves the canonical spelling, a profile, a comment and a test alone", () => {
     const text = 'const P = ".claude-plugin/plugin.json";';
     expect(found("src/shared/domain/plugin/canon-paths.ts", text)).toEqual([]);
-    expect(found("src/contexts/tools/domain/profiles/claude/claude.profile.ts", text)).toEqual([]);
+    expect(found("src/composition/tool-profiles/claude.ts", text)).toEqual([]);
     expect(
       found("src/contexts/translate/x.ts", "// the plugin.json of a host\nconst a = 1;")
     ).toEqual([]);

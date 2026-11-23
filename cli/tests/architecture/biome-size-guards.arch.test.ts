@@ -22,7 +22,7 @@ const ERROR_FILES = "!**/*.error.ts";
 /** Files that declare shape, not behaviour: the composition, the profiles and the contracts. */
 const DECLARATIONS = [
   "src/composition/**",
-  "src/contexts/tools/domain/profiles/**",
+  "src/contexts/tools/domain/behaviours/**",
   "src/contexts/*/contract/**",
 ];
 
@@ -164,12 +164,12 @@ const PLANTS: readonly Plant[] = [
   { path: "src/composition/at-file.ts", content: constants(300, "b"), flags: [] },
   { path: "src/composition/over-function.ts", content: longFunction("over", 29), flags: [FN] },
   {
-    path: "src/contexts/tools/domain/profiles/over-file.ts",
+    path: "src/contexts/tools/domain/behaviours/over-file.ts",
     content: constants(301, "c"),
     flags: [FILE],
   },
   {
-    path: "src/contexts/tools/domain/profiles/at-file.ts",
+    path: "src/contexts/tools/domain/behaviours/at-file.ts",
     content: constants(300, "d"),
     flags: [],
   },

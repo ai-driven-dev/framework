@@ -1,6 +1,6 @@
 /**
- * The filesystem layer the two rules need: `architecture-rules.js` stays pure, and everything
- * that reads a directory or a file lives here, so the rules can be decided without the engine
+ * The filesystem layer router coherence needs: `architecture-rules.js` stays pure, and everything
+ * that reads a directory or a file lives here, so the rule can be decided without the engine
  * ever learning what a directory is.
  */
 
@@ -15,7 +15,7 @@ const CITATION_SHAPES =
   "a cell under a table header that reads Action, a fenced `actions/<name>.md` path, or a " +
   "backticked `<name>.md` file name. A word in prose does not count";
 
-/** Rule two needs the skill's action files; the engine never reads them itself. */
+/** Router coherence needs the skill's action files; the engine never reads them itself. */
 function actionFileNames(relativePath, absolutePath) {
   if (path.basename(relativePath) !== "SKILL.md") return undefined;
   try {
@@ -36,10 +36,8 @@ function violationsForFile(relativePath, content, absolutePath) {
   }
 }
 
-function describeFix({ rule, plugin }) {
-  return rule === "orthogonality"
-    ? `name the concept ${plugin} owns instead of addressing it directly`
-    : `cite every action file the skill provides in its "## Actions" section. A citation is ${CITATION_SHAPES}`;
+function describeFix() {
+  return `cite every action file the skill provides in its "## Actions" section. A citation is ${CITATION_SHAPES}`;
 }
 
 function markdownUnder(directory, root, found) {

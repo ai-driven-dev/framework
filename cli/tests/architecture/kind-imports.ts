@@ -16,7 +16,8 @@ import { INTERNAL_IMPORT, matchesGlob, resolveImportTarget } from "./source-grap
  * from import and export statements only, so `Array.from(", ")` and a quoted sentence do not count. */
 const EXTERNAL_IMPORT =
   /^\s*(?:import|export)\b[^"';]*?\bfrom\s*["']([^"']+)["']|^\s*import\s*["']([^"']+)["']|\bimport\(\s*["']([^"']+)["']\s*\)/gm;
-const PROFILE_FOLDER = "src/contexts/tools/domain/profiles/";
+const TOOL_FILE =
+  /^src\/(?:composition\/tool-profiles\/([^/]+)\.ts$|contexts\/tools\/domain\/behaviours\/([^/]+)\/)/;
 const SHARED_KIT = "tests/shared/testing/";
 
 /** The folder that owns a kit file: everything before its `/testing/`. */
@@ -36,9 +37,11 @@ const CONTEXT_KIT = /^tests\/contexts\/[^/]+\/testing\//;
 const kitHolder = (path: string): string | undefined =>
   /^tests\/contexts\/[^/]+/.exec(path)?.[0] ?? kitOwner(path);
 
-/** The tool a profile file belongs to: a tool evolves inside its own folder. */
-const profileOf = (path: string): string | undefined =>
-  path.startsWith(PROFILE_FOLDER) ? path.slice(PROFILE_FOLDER.length).split("/")[0] : undefined;
+/** The tool a profile or behaviour file belongs to: a tool evolves inside its own files. */
+const profileOf = (path: string): string | undefined => {
+  const match = TOOL_FILE.exec(path);
+  return match ? (match[1] ?? match[2]) : undefined;
+};
 
 /** The layer a source file belongs to: a context by name, `shared`, or one of the three layers a
  * context never reaches back into. */

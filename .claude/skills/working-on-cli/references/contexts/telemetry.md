@@ -22,5 +22,4 @@ What a tool's own transcripts say a model call consumed, and how it is stored, a
 
 ## Exceptions
 
-- `domain/switch/legacy-locations.ts`, `domain/ledger/repository-aliases.ts`, `ports/repository-alias-store.ts` and `infrastructure/storage/ledger/repository-alias-store-adapter.ts` stay: `forget` erases what an earlier version stored, and attribution under an earlier repository id resolves only through `ledger/repository-ids.json`, never written. Removal is a maintainers' schedule (next major).
 - `USAGE_TOOLS` in `contract/usage-record.ts` is the vocabulary of tools stored in a user's ledger, kept apart from `tools` (`STORED_VOCABULARY` in `tool-addition-cost.arch.test.ts`).

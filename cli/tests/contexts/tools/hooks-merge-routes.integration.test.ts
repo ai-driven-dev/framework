@@ -1,11 +1,11 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { projectIntegrationOf } from "../../../src/composition/contexts/installation.js";
+import { claude } from "../../../src/composition/tool-profiles/claude.js";
+import { codexProfile } from "../../../src/composition/tool-profiles/codex.js";
+import { copilot } from "../../../src/composition/tool-profiles/copilot.js";
+import { cursor } from "../../../src/composition/tool-profiles/cursor.js";
 import type { ToolBuildContract } from "../../../src/contexts/tools/contract/build-contract.js";
-import { claude } from "../../../src/contexts/tools/domain/profiles/claude/claude.profile.js";
-import { codexProfile } from "../../../src/contexts/tools/domain/profiles/codex/codex.profile.js";
-import { copilot } from "../../../src/contexts/tools/domain/profiles/copilot/copilot.profile.js";
-import { cursor } from "../../../src/contexts/tools/domain/profiles/cursor/cursor.profile.js";
 import { SmolTomlCodec } from "../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { DiskSink } from "../../../src/contexts/translate/application/sinks/disk-sink.js";
 import { FlatWriter } from "../../../src/contexts/translate/application/sinks/flat-writer.js";

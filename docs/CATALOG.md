@@ -41,7 +41,8 @@ Bootstrap, project init, context-artifact generation, diagrams, learning, and ex
 
 | Event | Runs |
 | --- | --- |
-| `SessionStart` | `hooks/memory.cjs` |
+| `SessionStart` | `hooks/memory.cjs` · `hooks/artifacts.cjs` |
+| `PostToolUse` | `hooks/artifacts.cjs` |
 | `Stop` | `hooks/memory.cjs` |
 
 <!--extras-aidd-context:end-->
@@ -63,6 +64,18 @@ Code transformation: plan, implement, assert, audit, review, test, refactor, deb
 | `09-for-sure`   | Iterative loop that retries until a success condition is met               | `01-init-tracking`, `02-auto-accept`, `03-autonomous-loop`                       |
 | `10-batch`       | Execute independent tasks in parallel and summarize each agent's status and result | `01-batch`                                                            |
 
+<!--extras-aidd-dev:start-->
+
+**Hooks**
+
+| Event | Runs |
+| --- | --- |
+| `SessionStart` | `hooks/artifacts.cjs` |
+| `PostToolUse` | `hooks/artifacts.cjs` |
+| `Stop` | `hooks/artifacts.cjs` |
+
+<!--extras-aidd-dev:end-->
+
 ## 📋 aidd-pm
 
 Product backlog artifacts, refinement, Product Briefs, Epics, User Stories, Tasks, Spikes, Defects, requirements, and specs.
@@ -80,6 +93,18 @@ Product backlog artifacts, refinement, Product Briefs, Epics, User Stories, Task
 | `09-defect`               | Record and manage an observed product mismatch             | `01-capture`, `02-assess`, `03-finalize` |
 | `10-task`                 | Record and manage bounded delivery work                    | `01-frame`, `02-review`, `03-finalize` |
 
+<!--extras-aidd-pm:start-->
+
+**Hooks**
+
+| Event | Runs |
+| --- | --- |
+| `SessionStart` | `hooks/artifacts.cjs` |
+| `PostToolUse` | `hooks/artifacts.cjs` |
+| `Stop` | `hooks/artifacts.cjs` |
+
+<!--extras-aidd-pm:end-->
+
 ## 🪞 aidd-refine
 
 Meta-cognition: brainstorm, challenge, blind-spot scan, fact-check, conversation review.
@@ -91,6 +116,18 @@ Meta-cognition: brainstorm, challenge, blind-spot scan, fact-check, conversation
 | `03-shadow-areas`  | Scan a markdown artifact for blind spots                   | `01-detect`, `02-render-report`, `03-diff`                                                    |
 | `04-fact-check`    | Verify factual claims against sources and cite them        | `01-identify-claims`, `02-verify`, `03-report`                                                |
 | `05-review-conversation` | Review a finished conversation and attribute each cost to its owner | `01-read-conversation`, `02-recommend`, `03-target-edits` |
+
+<!--extras-aidd-refine:start-->
+
+**Hooks**
+
+| Event | Runs |
+| --- | --- |
+| `SessionStart` | `hooks/artifacts.cjs` |
+| `PostToolUse` | `hooks/artifacts.cjs` |
+| `Stop` | `hooks/artifacts.cjs` |
+
+<!--extras-aidd-refine:end-->
 
 ## 🌿 aidd-vcs
 

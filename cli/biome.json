@@ -5490,7 +5490,8 @@
         "src/contexts/*/ports/**/*.ts",
         "src/contexts/*/contract/**/*.ts",
         "src/shared/domain/**/*.ts",
-        "src/shared/ports/**/*.ts"
+        "src/shared/ports/**/*.ts",
+        "src/shared/infrastructure/**/*.ts"
       ],
       "linter": {
         "rules": {
@@ -6703,7 +6704,7 @@
         "src/**",
         "!**/*.error.ts",
         "!src/composition/**",
-        "!src/contexts/tools/domain/profiles/**",
+        "!src/contexts/tools/domain/behaviours/**",
         "!src/contexts/*/contract/**"
       ],
       "linter": {
@@ -6723,7 +6724,7 @@
     {
       "includes": [
         "src/composition/**",
-        "src/contexts/tools/domain/profiles/**",
+        "src/contexts/tools/domain/behaviours/**",
         "src/contexts/*/contract/**"
       ],
       "linter": {

@@ -10,3 +10,44 @@ export function descriptionOnlyRule(fm: Record<string, unknown>): Record<string,
     ? { description: fm.description }
     : {};
 }
+
+/** A rule scoped by `paths`, globs renamed to it, an empty list unscoped. */
+export function pathsScopedRule(fm: Record<string, unknown>): Record<string, unknown> {
+  if ("paths" in fm) {
+    const paths = fm.paths;
+    if (Array.isArray(paths) && paths.length === 0) return {};
+    return { paths };
+  }
+  if ("globs" in fm) return { paths: fm.globs };
+  return descriptionOnlyRule(fm);
+}
+
+/** A scoped rule keeps its globs and never applies on its own; an unscoped one survives only as
+ * an on-request rule that has a description. */
+export function globsScopedRule(fm: Record<string, unknown>): Record<string, unknown> {
+  const patterns = rulePatterns(fm);
+  const described = fm.description === undefined ? {} : { description: fm.description };
+  if (patterns.length > 0) {
+    return {
+      ...described,
+      globs: JSON.stringify(patterns).replace(/,/g, ", "),
+      alwaysApply: false,
+    };
+  }
+  return fm.alwaysApply === false && fm.description !== undefined
+    ? { ...described, alwaysApply: false }
+    : {};
+}
+
+/** A markdown rule file installed where `install` puts it, renamed to the `.mdc` extension. */
+export function asMdc(install: (fileName: string) => string): (fileName: string) => string {
+  return (fileName) => {
+    const path = install(fileName);
+    return path.endsWith(".md") ? `${path.slice(0, -3)}.mdc` : path;
+  };
+}
+
+/** A rule whose frontmatter the tool reads as written. */
+export function unchangedFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
+  return fm;
+}

@@ -2,7 +2,6 @@
  * What every rule of the kind gate shares: the violation it reports, the syntax tree of each file it
  * reads, and the two readings of a node (a name, a literal) several rules make.
  */
-import { readFileSync } from "node:fs";
 import {
   isIdentifier,
   isNoSubstitutionTemplateLiteral,
@@ -59,31 +58,4 @@ export function literalsOf(root: SourceFile): string[] {
     }
   });
   return found;
-}
-
-/** The entries of one debt in `kinds-debt.json`, each with the count it holds. */
-export function debtEntries(rule: string): Record<string, number> {
-  const debts: unknown = JSON.parse(
-    readFileSync(new URL("kinds-debt.json", import.meta.url), "utf8")
-  );
-  if (!Array.isArray(debts)) throw new Error("kinds-debt.json is not a list");
-  const debt = debts.find((item) => item?.rule === rule);
-  if (typeof debt?.closesWhen !== "string") throw new Error(`no closesWhen for ${rule}`);
-  const { entries } = debt;
-  if (!entries || typeof entries !== "object") throw new Error(`no entries for ${rule}`);
-  for (const [file, count] of Object.entries(entries)) {
-    if (typeof count !== "number") throw new Error(`${file}: the count is not a number`);
-  }
-  return entries;
-}
-
-/** The files held by every debt of a family in `kinds-debt.json`: the rules named `<family>:<class>`. */
-export function debtFamilyEntries(family: string): string[] {
-  const debts: unknown = JSON.parse(
-    readFileSync(new URL("kinds-debt.json", import.meta.url), "utf8")
-  );
-  if (!Array.isArray(debts)) throw new Error("kinds-debt.json is not a list");
-  return debts
-    .filter((item) => typeof item?.rule === "string" && item.rule.startsWith(`${family}:`))
-    .flatMap((item) => Object.keys(debtEntries(item.rule)));
 }

@@ -6,8 +6,6 @@ import { foldUsage } from "../usage-fold.js";
 export interface DayRead {
   readonly records: readonly StoredUsage[];
   readonly skippedLines: number;
-  /** A record's repository id was replaced by the one of now. */
-  readonly renamed: boolean;
 }
 
 /** A day's read, with the partition it came from. */
@@ -15,16 +13,10 @@ export interface DayPart extends DayRead {
   readonly partition: string;
 }
 
-function underIdOfNow(read: StoredUsage, ids: ReadonlyMap<string, string>): StoredUsage {
-  const now = ids.get(read.repository_id);
-  return now === undefined ? read : { ...read, repository_id: now };
-}
-
-/** One day's file, its records under the repository ids of now. */
-export function readDay(text: string, ids: ReadonlyMap<string, string>): DayRead {
+/** One day's file: its records, and how many lines were none. */
+export function readDay(text: string): DayRead {
   const records: StoredUsage[] = [];
   let skippedLines = 0;
-  let renamed = false;
   for (const line of text.split("\n")) {
     if (line === "") continue;
     const read = parseStoredUsage(line);
@@ -32,11 +24,9 @@ export function readDay(text: string, ids: ReadonlyMap<string, string>): DayRead
       skippedLines += 1;
       continue;
     }
-    const record = underIdOfNow(read, ids);
-    if (record !== read) renamed = true;
-    records.push(record);
+    records.push(read);
   }
-  return { records, skippedLines, renamed };
+  return { records, skippedLines };
 }
 
 /** The lines of a day's file that are no record, each once: kept as they are. */
@@ -83,7 +73,6 @@ export function mergeDays(parts: readonly DayPart[]): {
   for (const part of parts) {
     skippedLines += part.skippedLines;
     if (part.skippedLines > 0) damaged.add(part.partition);
-    if (part.renamed) unsettled.add(part.partition);
     for (const record of part.records) {
       found.push(record);
       noteRepeat({ heldIn, unsettled }, record, part.partition);

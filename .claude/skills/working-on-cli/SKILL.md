@@ -37,5 +37,5 @@ Run the flow above. Read only the action for the change, then what it loads.
 ## Transversal rules
 
 - Paths are rooted at `cli/`.
-- A red gate is fixed at its cause, never by an exemption, a wider allow-list or a `tests/architecture/kinds-debt.json` entry added or raised. An entry is lowered when its code is fixed.
+- A red gate is fixed at its cause, never by an exemption or a wider allow-list.
 - A golden, an e2e output or a fixture is a frozen surface: change it only for a deliberate product change, and say so in the commit.

@@ -7,8 +7,8 @@ import type { ConformanceCheck, ConformanceSubject } from "./profile-conformance
 
 /** What a conformance check is told of the files a profile ships beside its code. */
 export interface FileConformanceSubject extends ConformanceSubject {
-  /** The directory names under `profiles/`. */
-  readonly profileFolders: readonly string[];
+  /** The tool ids the files under `composition/tool-profiles/` are named for. */
+  readonly profileFiles: readonly string[];
   /** The tool's hooks descriptor, or `undefined` when it declares none. */
   readonly hooks: object | undefined;
   /** The file names under the repository's hook-payload fixtures. */
@@ -114,11 +114,11 @@ function acceptsHooks(subject: FileConformanceSubject): boolean {
 
 export const PROFILE_FILE_CHECKS: readonly ConformanceCheck<FileConformanceSubject>[] = [
   {
-    title: "sits in a profile folder the registration lists, and every folder is registered",
-    holds: ({ profile, profileFolders, registration }) => {
-      expect(profileFolders).toContain(profile.toolId);
+    title: "sits in a profile file the registration lists, and every file is registered",
+    holds: ({ profile, profileFiles, registration }) => {
+      expect(profileFiles).toContain(profile.toolId);
       const registered = registration.map((other) => other.toolId);
-      for (const folder of profileFolders) expect(registered).toContain(folder);
+      for (const file of profileFiles) expect(registered).toContain(file);
     },
   },
   {

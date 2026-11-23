@@ -134,7 +134,7 @@ describe("printing the result of turning measurement off", () => {
 const PLAN = {
   entries: [
     { kind: "ledger", path: "/t/ledger", files: 3 },
-    { kind: "previous-day-file", path: "/t/2026-10-05.jsonl", files: 1 },
+    { kind: "bindings", path: "/t/bindings", files: 1 },
   ],
   repositories: [
     { clone: "/w/a/.git", taskKeys: 2, consent: true },
@@ -154,9 +154,7 @@ describe("printing the result of forgetting measured data", () => {
   it("lists everything that would go, and says nothing was removed", () => {
     const output = forgotten({ status: "preview", plan: PLAN });
     expect(output.lines).toContain("  - the ledger of billed calls: /t/ledger (3 files)");
-    expect(output.lines).toContain(
-      "  - day files of the previous version: /t/2026-10-05.jsonl (1 file)"
-    );
+    expect(output.lines).toContain("  - the declarations kept beside it: /t/bindings (1 file)");
     expect(output.lines).toContain("  - 2 branch task keys in the git config of /w/a/.git");
     expect(output.lines).toContain(
       "  - the consent (aidd.telemetry) in the git config of /w/a/.git"
@@ -199,25 +197,17 @@ describe("printing the result of forgetting measured data", () => {
   });
 
   it("labels every kind of thing it lists", () => {
-    const kinds = [
-      "ledger",
-      "bindings",
-      "identity",
-      "previous-day-file",
-      "previous-identity",
-    ] as const;
+    const kinds = ["ledger", "bindings", "identity"] as const;
     const plan = {
       entries: kinds.map((kind) => ({ kind, path: `/p/${kind}`, files: 1 })),
       repositories: [],
       missing: [],
       unlocated: 0,
     };
-    expect(forgotten({ status: "preview", plan }).lines.slice(1, 6)).toEqual([
+    expect(forgotten({ status: "preview", plan }).lines.slice(1, 4)).toEqual([
       "  - the ledger of billed calls: /p/ledger (1 file)",
       "  - the declarations kept beside it: /p/bindings (1 file)",
       "  - your identity: /p/identity (1 file)",
-      "  - day files of the previous version: /p/previous-day-file (1 file)",
-      "  - the previous version's identity: /p/previous-identity (1 file)",
     ]);
   });
 

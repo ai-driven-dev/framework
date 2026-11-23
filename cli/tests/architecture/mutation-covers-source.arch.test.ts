@@ -43,7 +43,11 @@ function scopeMatches(mutate: Scope["mutate"], path: string): boolean {
 function aimsAtOneProfile(mutate: Scope["mutate"]): boolean {
   return [mutate]
     .flat()
-    .some((glob) => /^!?src\/contexts\/tools\/domain\/profiles\/[^*/]+\//.test(glob));
+    .some((glob) =>
+      /^!?src\/(?:composition\/tool-profiles|contexts\/tools\/domain\/behaviours)\/[^*/]+/.test(
+        glob
+      )
+    );
 }
 
 function isCovered(path: string, { scopes, excluded }: ScopeDeclaration): boolean {
@@ -128,7 +132,7 @@ describe("mutation covers every source file", () => {
   });
 
   it("recognises a scope that mutates or carves out one profile folder", () => {
-    const folder = "src/contexts/tools/domain/profiles/claude/**/*.ts";
+    const folder = "src/contexts/tools/domain/behaviours/claude/**/*.ts";
     expect(aimsAtOneProfile(folder)).toBe(true);
     expect(aimsAtOneProfile(["src/contexts/tools/**/*.ts", `!${folder}`])).toBe(true);
     expect(aimsAtOneProfile("src/contexts/tools/**/*.ts")).toBe(false);
@@ -157,29 +161,32 @@ describe("the guard itself", () => {
   it("lets a ! glob carve a file out of a scope, and joins a list for stryker", () => {
     const split = {
       tools: {
-        mutate: ["src/contexts/tools/**/*.ts", "!src/contexts/tools/domain/profiles/**/*.ts"],
+        mutate: ["src/contexts/tools/**/*.ts", "!src/contexts/tools/domain/behaviours/**/*.ts"],
         break: 1,
       },
-      profiles: { mutate: "src/contexts/tools/domain/profiles/**/*.ts", break: 1 },
+      profiles: { mutate: "src/contexts/tools/domain/behaviours/**/*.ts", break: 1 },
     };
     expect(scopeMatches(split.tools.mutate, "src/contexts/tools/domain/registry.ts")).toBe(true);
     expect(
       scopeMatches(
         split.tools.mutate,
-        "src/contexts/tools/domain/profiles/claude/claude.profile.ts"
+        "src/contexts/tools/domain/behaviours/claude/claude-flat-build.model.ts"
       )
     ).toBe(false);
     expect(
       scopeMatches(
         split.profiles.mutate,
-        "src/contexts/tools/domain/profiles/claude/claude.profile.ts"
+        "src/contexts/tools/domain/behaviours/claude/claude-flat-build.model.ts"
       )
     ).toBe(true);
     expect(strykerArgs("tools", split)).toContain(
-      "src/contexts/tools/**/*.ts,!src/contexts/tools/domain/profiles/**/*.ts"
+      "src/contexts/tools/**/*.ts,!src/contexts/tools/domain/behaviours/**/*.ts"
     );
     expect(
-      scopesToRun(["cli/src/contexts/tools/domain/profiles/claude/claude.profile.ts"], split).sort()
+      scopesToRun(
+        ["cli/src/contexts/tools/domain/behaviours/claude/claude-flat-build.model.ts"],
+        split
+      ).sort()
     ).toEqual(["profiles", "tools"]);
   });
 

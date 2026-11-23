@@ -2,8 +2,8 @@ import { mkdtemp, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { MarketplaceTrustStoreAdapter } from "../../../../src/contexts/distribution/infrastructure/marketplace-trust-store-adapter.js";
-import { PrivateStorageAdapter } from "../../../../src/shared/infrastructure/private-storage-adapter.js";
 import { InMemoryMarketplaceTrustStore } from "../../../shared/testing/in-memory-marketplace-trust-store.fake.js";
+import { machinePrivateStorage } from "../../../shared/testing/machine-private-storage.builder.js";
 import { describeMarketplaceTrustStoreContract } from "../testing/marketplace-trust-store.contract.js";
 
 describeMarketplaceTrustStoreContract("in memory", async () => ({
@@ -18,7 +18,7 @@ describeMarketplaceTrustStoreContract(
   async () => {
     const root = await realpath(await mkdtemp(join(tmpdir(), "aidd-marketplace-trust-")));
     return {
-      store: new MarketplaceTrustStoreAdapter(new PrivateStorageAdapter()),
+      store: new MarketplaceTrustStoreAdapter(machinePrivateStorage()),
       projectRoot: join(root, "project"),
       otherProjectRoot: join(root, "other"),
       dispose: () => rm(root, { recursive: true, force: true }),

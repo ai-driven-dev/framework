@@ -66,7 +66,7 @@ describe("every rule Biome holds is planted and fires, once per breach", () => {
 });
 
 describe("biome carries the exit and default-export rules", () => {
-  it("bans the process global across every context's domain and application", () => {
+  it("bans the process global across every context's domain and application and shared's infrastructure", () => {
     const config = biomeConfig();
     const carrier = (config.overrides ?? []).find(
       (o) => o.linter?.rules?.style?.noRestrictedGlobals !== undefined
@@ -82,6 +82,7 @@ describe("biome carries the exit and default-export rules", () => {
       "src/contexts/*/contract/**/*.ts",
       "src/shared/domain/**/*.ts",
       "src/shared/ports/**/*.ts",
+      "src/shared/infrastructure/**/*.ts",
     ]);
   });
 

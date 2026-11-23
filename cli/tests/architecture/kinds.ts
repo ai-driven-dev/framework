@@ -44,7 +44,7 @@ export interface Shape {
 }
 
 const CODE_FILE = /\.(?:ts|mts|cts|js|mjs|cjs)$/;
-const PROFILE_FOLDER = "src/contexts/tools/domain/profiles/";
+const PROFILE_FOLDERS = ["src/composition/tool-profiles/", "src/contexts/tools/domain/behaviours/"];
 const FIX_CLASSIFY =
   "name it <name>.<kind>.ts in the folder of its kind, move it there, or list it in OUTSIDE if it is no kind";
 
@@ -175,7 +175,8 @@ function owedTest(
 }
 
 const excusedByShape = (source: string, shape: Shape): boolean =>
-  shape.typeOnly || (source.startsWith(PROFILE_FOLDER) && !shape.behaviour);
+  shape.typeOnly ||
+  (PROFILE_FOLDERS.some((folder) => source.startsWith(folder)) && !shape.behaviour);
 
 export function mirrorViolations(
   sources: readonly string[],

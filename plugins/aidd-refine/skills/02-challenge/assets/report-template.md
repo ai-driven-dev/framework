@@ -1,12 +1,21 @@
-<!-- Challenge findings report skeleton. Fill each section verbatim, keep the header order. -->
+# Challenge: {{the work challenged, one line}}
 
-My confidence level of correctness now: XX%
+## Round {{round count}}
 
-# Correctness (100%)
--
+Aim: {{what the work serves, one line}}
 
-# Deal breakers
--
+### Deal breakers
 
-# Suggestions (enhancements only)
--
+- {{it breaks when ...}}, evidence {{command and output, or where}} → {{smallest change}}
+
+### To decide
+
+- {{what was asked misses the aim when ...}}, evidence {{where}} → {{question for whoever owns the request}}?
+
+### Suggestions
+
+- {{what would be better}} → {{change}}
+
+### Holds
+
+- {{attack tried that the work survived}}

@@ -33,9 +33,9 @@ import { InMemoryEnvironment } from "../../shared/testing/in-memory-environment.
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 import { buildInstallationDeps } from "../../shared/testing/installation-deps.builder.js";
 import { OverwritePrompter } from "../../shared/testing/scripted-prompter.fake.js";
-import { askMarketplaceSource } from "../testing/ask-marketplace-source.builder.js";
-import { runSetupOf } from "../testing/run-setup-of.builder.js";
-import { setupMarketplaceRegistrar } from "../testing/setup-marketplace-registrar.builder.js";
+import { askMarketplaceSource } from "./ask-marketplace-source.builder.js";
+import { runSetupOf } from "./run-setup-of.builder.js";
+import { setupMarketplaceRegistrar } from "./setup-marketplace-registrar.builder.js";
 
 export const CURRENT_VERSION = "0.0.0-test";
 

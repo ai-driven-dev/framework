@@ -11,7 +11,7 @@ import { SnapshotBindings } from "../../../../../src/contexts/telemetry/applicat
 import type { Period } from "../../../../../src/contexts/telemetry/contract/period.js";
 import { reportEnvelopeOf } from "../../../../../src/contexts/telemetry/contract/report-envelope.js";
 import { cloneKey } from "../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
-import { PrivateStorageAdapter } from "../../../../../src/shared/infrastructure/private-storage-adapter.js";
+import { machinePrivateStorage } from "../../../../shared/testing/machine-private-storage.builder.js";
 import { cloneOf, grantedBy } from "../../testing/clone.builder.js";
 import { directoryResolverOf } from "../../testing/directory-resolver.builder.js";
 import { FakeBindings } from "../../testing/fake-bindings.fake.js";
@@ -176,7 +176,7 @@ const scenario = fc.record({
 function machine() {
   runs += 1;
   const dir = join(root, `ledger-${runs}`);
-  const ledger = ledgerOver(dir, new PrivateStorageAdapter());
+  const ledger = ledgerOver(dir, machinePrivateStorage());
   const transcripts = new InMemoryTranscripts();
   const locator = new FakeLocator();
   const consents = new FakeConsents();

@@ -18,7 +18,6 @@ import {
 import type { LeftOutStore, LoadedLedger, UsageLedger } from "../../../ports/usage-ledger.js";
 import { readTextIfPresent } from "../../reading/text-file.js";
 import type { DirectoryLock } from "./directory-lock.js";
-import type { RepositoryAliasStoreAdapter } from "./repository-alias-store-adapter.js";
 
 const DAILY = /^\d{4}-\d{2}-\d{2}\.jsonl$/;
 const EXTENSION = ".jsonl";
@@ -53,22 +52,18 @@ interface Held {
  * and could not store (see `LeftOutAdapter`); `.lock` serialises the writers of all of them. */
 export class UsageLedgerAdapter implements UsageLedger {
   readonly leftOut: LeftOutStore;
-  private readonly aliases: RepositoryAliasStoreAdapter;
   private readonly lock: DirectoryLock;
 
-  /** `parts` are this directory's left-out store and alias table, read at every load, and the
-   * lock on its `.lock` file. */
+  /** `parts` are this directory's left-out store and the lock on its `.lock` file. */
   constructor(
     private readonly dir: string,
     private readonly storage: PrivateStorage,
     parts: {
       readonly leftOut: LeftOutStore;
-      readonly aliases: RepositoryAliasStoreAdapter;
       readonly lock: DirectoryLock;
     }
   ) {
     this.leftOut = parts.leftOut;
-    this.aliases = parts.aliases;
     this.lock = parts.lock;
   }
 
@@ -78,15 +73,12 @@ export class UsageLedgerAdapter implements UsageLedger {
 
   async load(holds?: (day: string) => boolean): Promise<LoadedLedger> {
     const names = await this.partitions();
-    // Every read applies the rules of now, so a call an earlier version named otherwise is
-    // still a call of one repository, and its partition is rewritten.
-    const ids = (await this.aliases.load()) ?? new Map<string, string>();
     const parts: DayPart[] = [];
     for (const name of names) {
       const partition = partitionOf(name);
       if (holds !== undefined && !holds(partition)) continue;
       const text = (await readTextIfPresent(join(this.dir, name))) ?? "";
-      parts.push({ partition, ...readDay(text, ids) });
+      parts.push({ partition, ...readDay(text) });
     }
     return mergeDays(parts);
   }

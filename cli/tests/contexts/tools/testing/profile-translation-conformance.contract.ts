@@ -1,6 +1,7 @@
 import { Ajv } from "ajv";
 import { describe, expect, it } from "vitest";
 import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domain/profile.js";
+import { SOURCE_PLUGIN_ROOT_TOKEN } from "../../../../src/shared/domain/materialization/plugin-root-path-rewrite.js";
 import type { SchemaName } from "../../../../src/shared/domain/reading/config-asset.js";
 import {
   aiCheck,
@@ -60,6 +61,14 @@ export const PROFILE_TRANSLATION_CHECKS: readonly ConformanceCheck<TranslationSu
     const alpha = filesOf(p, s, "alpha").map((file) => file.relativePath);
     const beta = filesOf(p, s, "beta").map((file) => file.relativePath);
     expect(alpha.filter((path) => beta.includes(path))).toEqual([]);
+  }),
+  aiCheck("leaves no source plugin root behind when it declares a token of its own", (p, s) => {
+    const plugins = p.plugins();
+    if (plugins?.kind !== "native" || plugins.rootToken() === SOURCE_PLUGIN_ROOT_TOKEN) return;
+    const residual = filesOf(p, s, "alpha").filter((file) =>
+      String(file.content).includes(SOURCE_PLUGIN_ROOT_TOKEN)
+    );
+    expect(residual.map((file) => file.relativePath)).toEqual([]);
   }),
   aiCheck("builds only manifests that name the plugin and its version", (p) => {
     for (const { synthesizeManifest } of contractsOf(p)) {
