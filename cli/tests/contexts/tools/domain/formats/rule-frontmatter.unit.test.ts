@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  asMdc,
   descriptionOnlyRule,
   globsScopedRule,
-  toMdc,
+  unchangedFrontmatter,
 } from "../../../../../src/contexts/tools/domain/formats/rule-frontmatter.js";
 import { rulesRows, WRITES_NOTHING } from "../../testing/profile-tables.builder.js";
 
@@ -34,10 +35,18 @@ describe("a rule scoped by a globs string", () => {
     expect(globsScopedRule(frontmatter)).toStrictEqual(expected);
   });
 
-  it("names a markdown rule file .mdc and leaves any other name as it is", () => {
-    expect([toMdc("rules/a/naming.md"), toMdc("rules/a/naming.txt")]).toStrictEqual([
+  it("names a markdown rule file .mdc where it is installed, and leaves any other name as it is", () => {
+    const mdc = asMdc((fileName) => `rules/${fileName}`);
+    expect([mdc("a/naming.md"), mdc("a/naming.txt")]).toStrictEqual([
       "rules/a/naming.mdc",
       "rules/a/naming.txt",
     ]);
+  });
+});
+
+describe("a rule read as written", () => {
+  it("keeps the frontmatter it is given", () => {
+    const fm = { description: "d", globs: ["a"] };
+    expect(unchangedFrontmatter(fm)).toBe(fm);
   });
 });

@@ -5,7 +5,7 @@ import { buildKiloFlatContract } from "../../contexts/tools/domain/behaviours/ki
 import { declareBridgeHooks } from "../../contexts/tools/domain/bridges/event-bridge.js";
 import { agentFrontmatterOf } from "../../contexts/tools/domain/formats/agents/agent-format.js";
 import {
-  buildAiddCommandFilePath,
+  aiddCommandsUnder,
   convertCommandFrontmatterNoHint,
 } from "../../contexts/tools/domain/formats/command.js";
 import { flatHooksSupport } from "../../contexts/tools/domain/formats/hooks/flat-routes.js";
@@ -95,7 +95,7 @@ export const kilo = defineAiTool({
     }),
     skills: bound.skills({}),
     commands: bound.commands({
-      buildInstallPath: (fileName) => buildAiddCommandFilePath(KILO_DIRECTORY, fileName),
+      buildInstallPath: aiddCommandsUnder(KILO_DIRECTORY),
       convertFrontmatter: convertCommandFrontmatterNoHint,
     }),
     rules: bound.rules({

@@ -39,7 +39,15 @@ export function globsScopedRule(fm: Record<string, unknown>): Record<string, unk
     : {};
 }
 
-/** A markdown rule file renamed to the `.mdc` extension. */
-export function toMdc(fileName: string): string {
-  return fileName.endsWith(".md") ? `${fileName.slice(0, -3)}.mdc` : fileName;
+/** A markdown rule file installed where `install` puts it, renamed to the `.mdc` extension. */
+export function asMdc(install: (fileName: string) => string): (fileName: string) => string {
+  return (fileName) => {
+    const path = install(fileName);
+    return path.endsWith(".md") ? `${path.slice(0, -3)}.mdc` : path;
+  };
+}
+
+/** A rule whose frontmatter the tool reads as written. */
+export function unchangedFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
+  return fm;
 }

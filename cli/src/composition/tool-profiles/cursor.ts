@@ -7,7 +7,7 @@ import { MCP_CONFIG_REF } from "../../contexts/tools/contract/config-refs.js";
 import { buildCursorFlatContract } from "../../contexts/tools/domain/behaviours/cursor/cursor-flat-build.model.js";
 import { agentFrontmatterOf } from "../../contexts/tools/domain/formats/agents/agent-format.js";
 import {
-  buildAiddCommandFilePath,
+  aiddCommandsUnder,
   convertCommandFrontmatter,
 } from "../../contexts/tools/domain/formats/command.js";
 import { declareHooks } from "../../contexts/tools/domain/formats/hooks/declaration.js";
@@ -16,7 +16,7 @@ import {
   projectHooksSupport,
 } from "../../contexts/tools/domain/formats/hooks/routes.js";
 import { pluginTreeContract } from "../../contexts/tools/domain/formats/plugin-tree-contract.js";
-import { globsScopedRule, toMdc } from "../../contexts/tools/domain/formats/rule-frontmatter.js";
+import { asMdc, globsScopedRule } from "../../contexts/tools/domain/formats/rule-frontmatter.js";
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
 import { nativeLayout } from "../../contexts/tools/domain/sections/layout-section.js";
 import { manifestSection } from "../../contexts/tools/domain/sections/manifest-section.js";
@@ -134,11 +134,11 @@ export const cursor = defineAiTool({
     }),
     skills: bound.skills({}),
     commands: bound.commands({
-      buildInstallPath: (fileName) => buildAiddCommandFilePath(DIRECTORY, fileName),
-      convertFrontmatter: (fm, relativeFileName) => convertCommandFrontmatter(fm, relativeFileName),
+      buildInstallPath: aiddCommandsUnder(DIRECTORY),
+      convertFrontmatter: convertCommandFrontmatter,
     }),
     rules: bound.rules({
-      buildInstallPath: (fileName) => toMdc(bound.installUnder("rules/")(fileName)),
+      buildInstallPath: asMdc(bound.installUnder("rules/")),
       convertFrontmatter: globsScopedRule,
     }),
     mcp: {

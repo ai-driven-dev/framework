@@ -7,8 +7,8 @@ import { buildClaudeFlatContract } from "../../contexts/tools/domain/behaviours/
 import { agentFrontmatterOf } from "../../contexts/tools/domain/formats/agents/agent-format.js";
 import {
   convertCommandFrontmatter,
-  phasedCommandPath,
-  phasedCommandsDir,
+  phasedCommandsLink,
+  phasedCommandsUnder,
 } from "../../contexts/tools/domain/formats/command.js";
 import {
   declareHooks,
@@ -19,6 +19,7 @@ import { pluginTreeContract } from "../../contexts/tools/domain/formats/plugin-t
 import { pathsScopedRule } from "../../contexts/tools/domain/formats/rule-frontmatter.js";
 import { sharedMarketplaceKey } from "../../contexts/tools/domain/marketplace-entry.js";
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
+import { everyProject } from "../../contexts/tools/domain/profile/recommendation.js";
 import {
   type NativeLayoutParams,
   nativeLayout,
@@ -137,7 +138,7 @@ export const claude = defineAiTool({
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
   displayName: "Claude Code",
-  recommendedFor: () => true,
+  recommendedFor: everyProject,
   signalDir: ".claude/commands",
   configAssets: [
     {
@@ -160,9 +161,8 @@ export const claude = defineAiTool({
     }),
     skills: bound.skills({}),
     commands: bound.commands({
-      buildInstallPath: (fileName) =>
-        phasedCommandPath(DIRECTORY, fileName) ?? bound.installUnder("commands/")(fileName),
-      convertFrontmatter: (fm, relativeFileName) => convertCommandFrontmatter(fm, relativeFileName),
+      buildInstallPath: phasedCommandsUnder(DIRECTORY, bound.installUnder("commands/")),
+      convertFrontmatter: convertCommandFrontmatter,
     }),
     rules: bound.rules({
       buildInstallPath: bound.installUnder("rules/"),
@@ -196,7 +196,7 @@ export const claude = defineAiTool({
   linkSyntax: [
     {
       from: /(@?)\.claude\/commands\/(\d+)[_][^/]+\//g,
-      to: (_match, at, phase) => `${at}${phasedCommandsDir(DIRECTORY, phase)}`,
+      to: phasedCommandsLink(DIRECTORY),
     },
   ],
 });

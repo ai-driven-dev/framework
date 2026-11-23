@@ -5,6 +5,7 @@ import vscodeKeybindings from "../../../assets/configs/vscode/keybindings.json" 
 import vscodeSettings from "../../../assets/configs/vscode/settings.json" with { type: "json" };
 import { CONFIG_PREFIX, type ConfigRef } from "../../contexts/tools/contract/config-refs.js";
 import { defineIdeTool } from "../../contexts/tools/domain/profile/define-tool.js";
+import { typescriptOrMonorepo } from "../../contexts/tools/domain/profile/recommendation.js";
 import { ConfigSection } from "../../contexts/tools/domain/sections/config-section.js";
 
 const DIRECTORY = ".vscode/";
@@ -29,8 +30,7 @@ export const vscode = defineIdeTool({
   toolId: "vscode",
   directory: DIRECTORY,
   signalDir: null,
-  recommendedFor: (project) =>
-    project !== undefined && (project.isMonorepo || project.stack === "typescript"),
+  recommendedFor: typescriptOrMonorepo,
   configAssets: [
     {
       name: "settings.json",

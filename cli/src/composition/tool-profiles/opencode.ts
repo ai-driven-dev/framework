@@ -10,7 +10,7 @@ import { buildOpencodeFlatContract } from "../../contexts/tools/domain/behaviour
 import { declareBridgeHooks } from "../../contexts/tools/domain/bridges/event-bridge.js";
 import { agentFrontmatterOf } from "../../contexts/tools/domain/formats/agents/agent-format.js";
 import {
-  buildAiddCommandFilePath,
+  aiddCommandsUnder,
   convertCommandFrontmatterNoHint,
 } from "../../contexts/tools/domain/formats/command.js";
 import { flatHooksSupport } from "../../contexts/tools/domain/formats/hooks/flat-routes.js";
@@ -137,7 +137,7 @@ export const opencode = defineAiTool({
     }),
     skills: bound.skills({}),
     commands: bound.commands({
-      buildInstallPath: (fileName) => buildAiddCommandFilePath(DIRECTORY, fileName),
+      buildInstallPath: aiddCommandsUnder(DIRECTORY),
       convertFrontmatter: convertCommandFrontmatterNoHint,
     }),
     rules: bound.rules({

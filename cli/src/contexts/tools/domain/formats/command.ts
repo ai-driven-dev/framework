@@ -44,3 +44,21 @@ export function phasedCommandPath(dir: string, fileName: string): string | undef
   const phased = fileName.match(/^(\d+)[^/]*\/(.*)/);
   return phased ? `${phasedCommandsDir(dir, phased[1])}${phased[2]}` : undefined;
 }
+
+/** Where a command lands under `dir`: in its phase's folder when numbered, flat otherwise. */
+export function aiddCommandsUnder(dir: string): (fileName: string) => string {
+  return (fileName) => buildAiddCommandFilePath(dir, fileName);
+}
+
+/** A numbered command in its phase's folder under `dir`; an unnumbered one where `unnumbered` puts it. */
+export function phasedCommandsUnder(
+  dir: string,
+  unnumbered: (fileName: string) => string
+): (fileName: string) => string {
+  return (fileName) => phasedCommandPath(dir, fileName) ?? unnumbered(fileName);
+}
+
+/** A link to a numbered command folder, rewritten to that phase's folder under `dir`. */
+export function phasedCommandsLink(dir: string): (match: string, ...groups: string[]) => string {
+  return (_match, at = "", phase = "") => `${at}${phasedCommandsDir(dir, phase)}`;
+}

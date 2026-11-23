@@ -26,6 +26,7 @@ import { nativeHooksSupport } from "../../contexts/tools/domain/formats/hooks/ro
 import { serversKeyed } from "../../contexts/tools/domain/formats/mcp/servers-keyed.js";
 import { sharedMarketplaceKey } from "../../contexts/tools/domain/marketplace-entry.js";
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
+import { typescriptOrMonorepo } from "../../contexts/tools/domain/profile/recommendation.js";
 import { AgentsSection } from "../../contexts/tools/domain/sections/agents-section.js";
 import { CommandsSection } from "../../contexts/tools/domain/sections/commands-section.js";
 import { ConfigSection } from "../../contexts/tools/domain/sections/config-section.js";
@@ -142,45 +143,37 @@ const COPILOT_MARKETPLACE_SETTINGS: NativeLayoutParams["marketplaceSettings"] = 
   toEntryKey: sharedMarketplaceKey,
 };
 
-function copilotLayout() {
-  return nativeLayout({
-    pluginsDir: ".github/plugins/",
-    nativeActivation: COPILOT_ACTIVATION,
-    marketplaceSettings: COPILOT_MARKETPLACE_SETTINGS,
-  });
-}
+const COPILOT_LAYOUT = nativeLayout({
+  pluginsDir: ".github/plugins/",
+  nativeActivation: COPILOT_ACTIVATION,
+  marketplaceSettings: COPILOT_MARKETPLACE_SETTINGS,
+});
 
-function copilotMcp() {
-  return {
-    config: new McpConfigPart({
-      outputPath: ".vscode/mcp.json",
-      format: "json",
-      consumes: [MCP_CONFIG_REF],
-      transformContent: serversKeyed,
-    }),
-    plugin: PLUGIN_MCP,
-  };
-}
+const COPILOT_MCP = {
+  config: new McpConfigPart({
+    outputPath: ".vscode/mcp.json",
+    format: "json",
+    consumes: [MCP_CONFIG_REF],
+    transformContent: serversKeyed,
+  }),
+  plugin: PLUGIN_MCP,
+};
 
-function copilotVscodeConfig(): ConfigSection {
-  return new ConfigSection({
-    outputPath: VSCODE_SETTINGS_PATH,
-    mergeStrategy: "framework-prime",
-    staticContentAssetFile: VSCODE_SETTINGS_ASSET,
-    requiresTool: "vscode",
-  });
-}
+const COPILOT_VSCODE_CONFIG = new ConfigSection({
+  outputPath: VSCODE_SETTINGS_PATH,
+  mergeStrategy: "framework-prime",
+  staticContentAssetFile: VSCODE_SETTINGS_ASSET,
+  requiresTool: "vscode",
+});
 
-function copilotModels(): ModelsSection {
-  return new ModelsSection({
-    providers: ["openai", "anthropic"],
-    nativeModels: {
-      "claude-opus-5-5": "claude-opus-5.5",
-      "claude-sonnet-5-5": "claude-sonnet-5.5",
-      "claude-haiku-5-5": "claude-haiku-5.5",
-    },
-  });
-}
+const COPILOT_MODELS = new ModelsSection({
+  providers: ["openai", "anthropic"],
+  nativeModels: {
+    "claude-opus-5-5": "claude-opus-5.5",
+    "claude-sonnet-5-5": "claude-sonnet-5.5",
+    "claude-haiku-5-5": "claude-haiku-5.5",
+  },
+});
 
 export const copilot = defineAiTool({
   toolId: "copilot",
@@ -193,8 +186,7 @@ export const copilot = defineAiTool({
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
   displayName: "GitHub Copilot",
-  recommendedFor: (project) =>
-    project !== undefined && (project.isMonorepo || project.stack === "typescript"),
+  recommendedFor: typescriptOrMonorepo,
   signalDir: ".github/prompts",
   configAssets: [
     {
@@ -219,7 +211,7 @@ export const copilot = defineAiTool({
       directory: DIRECTORY,
       toolSuffix: EXT_AGENT,
       format: "markdown",
-      buildInstallPath: (fileName) => agentsHandler.buildFilePath(fileName),
+      buildInstallPath: agentsHandler.buildFilePath,
       frontmatter: AGENT_FRONTMATTER,
     }),
     skills: new SkillsSection({
@@ -227,24 +219,24 @@ export const copilot = defineAiTool({
     }),
     commands: new CommandsSection({
       toolSuffix: EXT_PROMPT,
-      buildInstallPath: (fileName) => commandsHandler.buildFilePath(fileName),
+      buildInstallPath: commandsHandler.buildFilePath,
       convertFrontmatter: convertCommandFrontmatter,
     }),
     rules: new RulesSection({
       toolSuffix: EXT_INSTRUCTIONS,
       inputSuffix: TOOL_SUFFIX,
-      buildInstallPath: (fileName) => rulesHandler.buildFilePath(fileName),
-      convertFrontmatter: (fm) => rulesHandler.convertFrontmatter(fm),
+      buildInstallPath: rulesHandler.buildFilePath,
+      convertFrontmatter: rulesHandler.convertFrontmatter,
     }),
-    mcp: copilotMcp(),
-    config: [copilotVscodeConfig()],
+    mcp: COPILOT_MCP,
+    config: [COPILOT_VSCODE_CONFIG],
     hooks: { delivery: hooksSupport.delivery },
-    layout: copilotLayout(),
+    layout: COPILOT_LAYOUT,
     manifest: manifestSection({
       manifestRelativePath: "plugin.json",
       pluginRootToken: hooksSupport.rootToken,
     }),
-    models: copilotModels(),
+    models: COPILOT_MODELS,
   }),
 
   linkSyntax: COPILOT_LINK_SYNTAX,
