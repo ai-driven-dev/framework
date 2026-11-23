@@ -29,7 +29,6 @@ function mutationScope(name: string, scope: unknown): MutationScope {
     ...(typeof scope.break === "number" ? { break: scope.break } : {}),
     ...(typeof scope.shards === "number" ? { shards: scope.shards } : {}),
     ...(tests === undefined ? {} : { tests: stringList(tests, `${name}.tests`) }),
-    ...(scope.harnessOnly === true ? { harnessOnly: true } : {}),
   };
 }
 

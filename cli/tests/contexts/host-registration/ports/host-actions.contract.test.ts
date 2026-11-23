@@ -7,7 +7,7 @@ import {
   hostVersion,
   writeMarketplace,
 } from "../../../../scripts/host-recording.mjs";
-import { NativePluginCliError } from "../../../../src/contexts/host-registration/domain/host-registration.error.js";
+import { NativePluginCliError } from "../../../../src/contexts/host-registration/contract/host-registration.error.js";
 import { HostCliAdapter } from "../../../../src/contexts/host-registration/infrastructure/host-cli-adapter.js";
 import type { HostCliShape } from "../../../../src/contexts/host-registration/ports/host-cli-shape.js";
 import { FakeHostActions } from "../../../shared/testing/fake-host-actions.fake.js";

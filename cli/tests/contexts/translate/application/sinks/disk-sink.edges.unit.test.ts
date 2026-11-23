@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   FlatMergeTargetNotJsonError,
   FrameworkPlaceholderInPluginError,
-} from "../../../../../src/contexts/translate/domain/translate.error.js";
+} from "../../../../../src/contexts/translate/contract/translate.error.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
 import type { DiskTarget } from "../../../../../src/contexts/translate/ports/plugin-tree-sink.js";
 import { skillsIn } from "../../../../../src/shared/domain/materialization/artifact-path.js";

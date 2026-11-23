@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { HooksInvariant } from "../../../../../../src/contexts/tools/contract/errors/tools.error.js";
 import {
   declareHooks,
   type HooksDeclaration,
@@ -9,7 +10,6 @@ import {
   type HookEventRoute,
 } from "../../../../../../src/contexts/tools/domain/formats/hooks/descriptor.js";
 import { PLUGIN_ROOT_TOKEN } from "../../../../../../src/contexts/tools/domain/formats/plugin-root-token.js";
-import type { HooksInvariant } from "../../../../../../src/contexts/tools/domain/tools.error.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 
 const UNSTAMPED = 'const HOST = "unstamped";';

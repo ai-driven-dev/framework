@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { CapabilityConfigError } from "../../../../../../src/contexts/tools/contract/errors/tools.error.js";
 import {
   flatHooksArtifact,
   flatHooksSupport,
@@ -9,7 +10,6 @@ import {
   pluginTreeHooksArtifact,
   projectHooksSupport,
 } from "../../../../../../src/contexts/tools/domain/formats/hooks/routes.js";
-import { CapabilityConfigError } from "../../../../../../src/contexts/tools/domain/tools.error.js";
 import { artifactPath } from "../../../../../../src/shared/domain/materialization/artifact-path.js";
 import type { ArtifactContract } from "../../../../../../src/shared/domain/materialization/build-contract.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";

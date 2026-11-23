@@ -4,7 +4,7 @@ import {
   FrameworkPlaceholderInPluginError,
   InvalidBuildPathsError,
   JsonSchemaValidationError,
-} from "../../../../src/contexts/translate/domain/translate.error.js";
+} from "../../../../src/contexts/translate/contract/translate.error.js";
 import type { PluginTreeSink } from "../../../../src/contexts/translate/ports/plugin-tree-sink.js";
 import { buildContractOf } from "../../../shared/testing/build-contract-of.builder.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";

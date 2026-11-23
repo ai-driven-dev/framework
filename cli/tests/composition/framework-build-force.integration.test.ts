@@ -7,7 +7,7 @@ import {
   createFrameworkBuildUseCase,
   type FrameworkBuildDeps,
 } from "../../src/composition/contexts/translate.js";
-import { FlatTargetExistsError } from "../../src/contexts/translate/domain/translate.error.js";
+import { FlatTargetExistsError } from "../../src/contexts/translate/contract/translate.error.js";
 import { BundledAssetProviderAdapter } from "../../src/shared/infrastructure/asset-loader.js";
 import { CapturingLogger } from "../shared/testing/capturing-logger.fake.js";
 import { catalogOf } from "../shared/testing/catalog-of.builder.js";

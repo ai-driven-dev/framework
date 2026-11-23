@@ -1,6 +1,6 @@
 import { AIDD_DIR } from "../../../../shared/domain/layout/aidd-layout.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
-import { UnsupportedManifestVersionError } from "../installation.error.js";
+import { UnsupportedManifestVersionError } from "../../contract/installation.error.js";
 import { MANIFEST_VERSION } from "../manifest-serialization.js";
 import { MANIFEST_FILENAME } from "../project-layout.js";
 import { V8_MANIFEST_VERSION } from "./v8-manifest.js";

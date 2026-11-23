@@ -3,8 +3,8 @@ import { chmod, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { errorMessage } from "../../../shared/domain/describe-error.js";
 import { AIDD_DIR } from "../../../shared/domain/layout/aidd-layout.js";
+import { AuthStorageError } from "../contract/auth.error.js";
 import type { AuthLevel, Credential } from "../contract/credential.js";
-import { AuthStorageError } from "../domain/auth.error.js";
 import {
   type CredentialRecord,
   parseCredentialRecord,

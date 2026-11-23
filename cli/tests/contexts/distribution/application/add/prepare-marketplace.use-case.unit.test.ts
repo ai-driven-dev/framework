@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { PrepareMarketplace } from "../../../../../src/contexts/distribution/application/add/prepare-marketplace.use-case.js";
+import { MarketplaceAlreadyRegisteredError } from "../../../../../src/contexts/distribution/contract/distribution.error.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribution/contract/marketplace.js";
-import { MarketplaceAlreadyRegisteredError } from "../../../../../src/contexts/distribution/domain/distribution.error.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import {
   InvalidMarketplaceNameError,

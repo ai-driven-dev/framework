@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { JsonSchemaValidationError } from "../../../../src/contexts/translate/domain/translate.error.js";
+import { JsonSchemaValidationError } from "../../../../src/contexts/translate/contract/translate.error.js";
 import { AjvSchemaValidatorAdapter } from "../../../../src/contexts/translate/infrastructure/schema-validator.js";
 
 const schemaPath = new URL(

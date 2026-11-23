@@ -1,4 +1,4 @@
-import { ActiveMachineDependentsError } from "../../domain/installation.error.js";
+import { ActiveMachineDependentsError } from "../../contract/installation.error.js";
 import type { UserScopeInspection } from "../../ports/user-scope/user-scope-purge.js";
 
 /** Refuses when anything still depends on what a purge would remove. */

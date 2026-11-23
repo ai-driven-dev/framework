@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MalformedPluginScopeError } from "../../../../../src/contexts/installation/domain/installation.error.js";
+import { MalformedPluginScopeError } from "../../../../../src/contexts/installation/contract/installation.error.js";
 import type {
   ComponentPathMap,
   McpDigestMap,

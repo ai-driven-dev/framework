@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { MarketplaceTrustStore } from "../../../src/contexts/distribution/ports/marketplace-trust-store.js";
-import { InvalidPluginScopeError } from "../../../src/contexts/installation/domain/installation.error.js";
+import { InvalidPluginScopeError } from "../../../src/contexts/installation/contract/installation.error.js";
 import {
   InteractiveOnlyError,
   TrustDeniedError,

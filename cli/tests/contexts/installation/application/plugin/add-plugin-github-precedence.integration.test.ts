@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { DuplicatePluginError } from "../../../../../src/contexts/installation/domain/installation.error.js";
+import { DuplicatePluginError } from "../../../../../src/contexts/installation/contract/installation.error.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import {
   buildInstallationDeps,

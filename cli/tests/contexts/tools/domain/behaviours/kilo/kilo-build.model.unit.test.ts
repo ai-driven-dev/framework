@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { kilo } from "../../../../../../src/composition/tool-profiles/kilo.js";
-import { DualConfigError } from "../../../../../../src/contexts/tools/domain/tools.error.js";
+import { DualConfigError } from "../../../../../../src/contexts/tools/contract/errors/tools.error.js";
 import { artifactPath } from "../../../../../../src/shared/domain/materialization/artifact-path.js";
 import type {
   ConfigArtifact,

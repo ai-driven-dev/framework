@@ -1,4 +1,4 @@
-import { AiddError } from "../../../shared/domain/shared.error.js";
+import { AiddError } from "../../../../shared/domain/shared.error.js";
 
 /** `aidd telemetry on` told to name the person and to name nobody. */
 export class ConflictingIdentityFlagsError extends AiddError {

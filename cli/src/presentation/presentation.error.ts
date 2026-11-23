@@ -9,3 +9,10 @@ export class UnknownToolError extends AiddError {
     super();
   }
 }
+
+export class RecipeValidationFailedError extends AiddError {
+  readonly code = "recipe-validation-failed";
+  constructor(readonly report: string) {
+    super();
+  }
+}

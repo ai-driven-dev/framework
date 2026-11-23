@@ -4,7 +4,7 @@ import { ReportStatus } from "../../../src/contexts/installation/application/rep
 import { RestoreGlobal } from "../../../src/contexts/installation/application/restore/project/restore-global.use-case.js";
 import type { Restore } from "../../../src/contexts/installation/application/restore/restore.use-case.js";
 import { DetectPluginDrift } from "../../../src/contexts/installation/application/shared/detect-plugin-drift.use-case.js";
-import { ManifestUnavailableError } from "../../../src/contexts/installation/domain/installation.error.js";
+import { ManifestUnavailableError } from "../../../src/contexts/installation/contract/installation.error.js";
 import type { Prompter } from "../../../src/orchestration/ports/prompter.js";
 import { RestoreAll } from "../../../src/orchestration/sync/restore-all.use-case.js";
 import {

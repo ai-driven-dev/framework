@@ -6,8 +6,6 @@ export interface MutationScope {
   readonly shards?: number;
   /** Test paths whose change runs the scope per change, like its source. */
   readonly tests?: readonly string[];
-  /** Run only for a harness file or a full run, never for a change to its own files. */
-  readonly harnessOnly?: boolean;
 }
 
 export interface MutationReport {
@@ -39,7 +37,6 @@ export function strykerArgs(
 ): string[];
 export function scoreOf(report: MutationReport): number;
 export function breakVerdict(score: number, declared: MutationScope): string | null;
-export function canarySelectionVerdict(report: MutationReport): string | null;
 export function changedRanges(diff: string): string[];
 export function changedArgs(ranges: readonly string[]): string[];
 export function survivorsOf(report: MutationReport): string[];

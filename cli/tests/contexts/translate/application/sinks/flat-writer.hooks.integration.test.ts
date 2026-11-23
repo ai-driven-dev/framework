@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FlatTargetExistsError } from "../../../../../src/contexts/translate/domain/translate.error.js";
+import { FlatTargetExistsError } from "../../../../../src/contexts/translate/contract/translate.error.js";
 import type {
   ArtifactContract,
   ToolBuildContract,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { UnresolvableUserScopeError } from "../../../../../src/contexts/installation/domain/installation.error.js";
+import { UnresolvableUserScopeError } from "../../../../../src/contexts/installation/contract/installation.error.js";
 import { resolveScopeBase } from "../../../../../src/contexts/installation/domain/manifest/scope-base.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";

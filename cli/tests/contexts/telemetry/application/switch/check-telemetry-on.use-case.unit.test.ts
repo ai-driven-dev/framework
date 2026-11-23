@@ -4,7 +4,7 @@ import { CheckTelemetryOn } from "../../../../../src/contexts/telemetry/applicat
 import {
   ConflictingIdentityFlagsError,
   InvalidIdentityError,
-} from "../../../../../src/contexts/telemetry/domain/telemetry.error.js";
+} from "../../../../../src/contexts/telemetry/contract/errors/telemetry.error.js";
 import { InputRequiredError } from "../../../../../src/shared/domain/shared.error.js";
 
 const check = new CheckTelemetryOn(new CheckIdentity());

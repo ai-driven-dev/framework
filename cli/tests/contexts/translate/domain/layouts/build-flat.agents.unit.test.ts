@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FrameworkPlaceholderInPluginError } from "../../../../../src/contexts/translate/domain/translate.error.js";
+import { FrameworkPlaceholderInPluginError } from "../../../../../src/contexts/translate/contract/translate.error.js";
 import { skillsIn } from "../../../../../src/shared/domain/materialization/artifact-path.js";
 import { flatArtifactLayout } from "../../../../../src/shared/domain/materialization/flat-paths.js";
 import { translateBuildLayout } from "../../../../shared/testing/build-files.builder.js";

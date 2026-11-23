@@ -1,7 +1,7 @@
 import { join, resolve } from "node:path";
 import type { Command } from "commander";
 import type { DepsSliceFactory } from "../../orchestration/deps.js";
-import { renderRecipeValidation } from "../presenters/recipes.presenter.js";
+import { recipeValidationReport } from "../presenters/recipes.presenter.js";
 import { parseGlobalOptions } from "./menu/global-options.controller.js";
 
 /** What this command reads of the graph. */
@@ -29,11 +29,6 @@ export function registerRecipesCommand(
         files: paths.map((file) => resolve(projectRoot, file)),
         directories,
       });
-      const report = renderRecipeValidation(result, projectRoot);
-      if (result.findings.length === 0) output.success(report);
-      else {
-        output.error(`\n${report}`);
-        process.exitCode = 1;
-      }
+      output.success(recipeValidationReport(result, projectRoot));
     });
 }

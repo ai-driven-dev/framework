@@ -1,4 +1,4 @@
-import { NativePluginCliError } from "../domain/host-registration.error.js";
+import { NativePluginCliError } from "../contract/host-registration.error.js";
 import type { HostRefusal } from "../domain/native-refusal.js";
 
 /** Lets the refusal a host call returned travel as a thrown error: for a caller that has no

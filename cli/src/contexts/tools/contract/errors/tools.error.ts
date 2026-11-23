@@ -1,4 +1,4 @@
-import { AiddError } from "../../../shared/domain/shared.error.js";
+import { AiddError } from "../../../../shared/domain/shared.error.js";
 
 export class CapabilityConfigError extends AiddError {
   readonly code = "capability-config";

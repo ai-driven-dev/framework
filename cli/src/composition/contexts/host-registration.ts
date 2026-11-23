@@ -26,7 +26,7 @@ import type { HostMarketplaceRegistry } from "../../contexts/host-registration/p
 import type { HostMarketplaceSources } from "../../contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../contexts/host-registration/ports/host-plugin-registry.js";
 import type { RegistrationRecordRepository } from "../../contexts/host-registration/ports/registration-record-repository.js";
-import { DuplicateToolIdError } from "../../contexts/tools/domain/tools.error.js";
+import { DuplicateToolIdError } from "../../contexts/tools/contract/errors/tools.error.js";
 import type { SettingsDeclarationRules } from "../../orchestration/sync/settings/sync-tool-settings-files.use-case.js";
 import { asPlainObject } from "../../shared/domain/reading/plain-object.js";
 import { UnregisteredToolError } from "../../shared/domain/shared.error.js";

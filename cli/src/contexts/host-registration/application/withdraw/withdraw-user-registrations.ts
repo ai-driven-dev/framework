@@ -1,4 +1,4 @@
-import { RegistrationRefusedError } from "../../domain/host-registration.error.js";
+import { RegistrationRefusedError } from "../../contract/host-registration.error.js";
 import type { HostRefusal } from "../../domain/native-refusal.js";
 import {
   type RegistrationRecord,

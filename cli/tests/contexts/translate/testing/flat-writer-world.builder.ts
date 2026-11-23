@@ -1,5 +1,5 @@
 import { resolve } from "node:path";
-import { JsonSchemaValidationError } from "../../../../src/contexts/translate/domain/translate.error.js";
+import { JsonSchemaValidationError } from "../../../../src/contexts/translate/contract/translate.error.js";
 import type { JsonSchemaValidator } from "../../../../src/contexts/translate/ports/json-schema-validator.js";
 import { agentsIn, skillsIn } from "../../../../src/shared/domain/materialization/artifact-path.js";
 import type {

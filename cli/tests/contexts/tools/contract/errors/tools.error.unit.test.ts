@@ -7,7 +7,7 @@ import {
   InvalidHooksDescriptorError,
   InvalidMcpServerConfigError,
   InvalidToolProfileError,
-} from "../../../../src/contexts/tools/domain/tools.error.js";
+} from "../../../../../src/contexts/tools/contract/errors/tools.error.js";
 
 describe("when CapabilityConfigError is raised", () => {
   it("carries its data and says nothing itself", () => {

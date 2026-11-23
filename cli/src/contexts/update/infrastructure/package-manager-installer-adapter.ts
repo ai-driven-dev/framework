@@ -1,10 +1,10 @@
 import { execSync } from "node:child_process";
-import { INSTALL_COMMANDS, packageManagerOf } from "../domain/package-manager.js";
 import {
   ElevatedPermissionUpdateError,
   PackageManagerDetectionError,
   UpdateError,
-} from "../domain/update.error.js";
+} from "../contract/update.error.js";
+import { INSTALL_COMMANDS, packageManagerOf } from "../domain/package-manager.js";
 import type { CliInstaller } from "../ports/cli-installer.js";
 
 /** Runs the package manager that owns the `aidd` found on the path. Everything it spawns

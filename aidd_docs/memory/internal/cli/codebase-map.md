@@ -99,6 +99,7 @@ src/
 │   │   │   ├── report/
 │   │   │   └── switch/
 │   │   ├── contract/
+│   │   │   └── errors/
 │   │   ├── domain/
 │   │   │   ├── consent/
 │   │   │   ├── declaration/
@@ -126,24 +127,25 @@ src/
 │   ├── tools/    # what a project targets, and what each target declares
 │   │   ├── application/
 │   │   ├── contract/
-│   │   └── domain/
-│   │       ├── behaviours/    # the format code one tool alone needs, a folder per tool
-│   │       │   ├── antigravity/
-│   │       │   ├── claude/
-│   │       │   ├── codex/
-│   │       │   ├── copilot/
-│   │       │   ├── cursor/
-│   │       │   ├── kilo/
-│   │       │   └── opencode/
-│   │       ├── bridges/
-│   │       ├── formats/
-│   │       │   ├── agents/
-│   │       │   ├── hooks/
-│   │       │   └── mcp/
-│   │       ├── hooks/
-│   │       ├── models/
-│   │       ├── profile/
-│   │       └── sections/
+│   │   │   └── errors/
+│   │   ├── domain/
+│   │   │   ├── behaviours/    # the format code one tool alone needs, a folder per tool
+│   │   │   │   ├── antigravity/
+│   │   │   │   ├── claude/
+│   │   │   │   ├── codex/
+│   │   │   │   ├── copilot/
+│   │   │   │   ├── cursor/
+│   │   │   │   ├── kilo/
+│   │   │   │   └── opencode/
+│   │   │   ├── bridges/
+│   │   │   ├── formats/
+│   │   │   │   ├── agents/
+│   │   │   │   ├── hooks/
+│   │   │   │   └── mcp/
+│   │   │   ├── hooks/
+│   │   │   ├── models/
+│   │   │   ├── profile/
+│   │   │   └── sections/
 │   ├── translate/    # canonical source to target-native content
 │   │   ├── application/
 │   │   │   └── sinks/
@@ -155,6 +157,7 @@ src/
 │   │   └── ports/
 │   └── update/    # replacing the installed CLI, and the notice that one exists
 │       ├── application/
+│       ├── contract/
 │       ├── domain/
 │       ├── infrastructure/
 │       └── ports/

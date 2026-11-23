@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { PluginNotFoundError } from "../../../../../src/contexts/installation/domain/installation.error.js";
+import { PluginNotFoundError } from "../../../../../src/contexts/installation/contract/installation.error.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { PluginEntryData } from "../../../../../src/contexts/installation/domain/plugins/plugin-entry.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";

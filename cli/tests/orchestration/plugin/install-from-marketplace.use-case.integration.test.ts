@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { PluginNotInMarketplaceError } from "../../../src/contexts/distribution/domain/distribution.error.js";
+import { PluginNotInMarketplaceError } from "../../../src/contexts/distribution/contract/distribution.error.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-distribution-reader-adapter.js";
 import { AmbiguousPluginMatchError } from "../../../src/orchestration/orchestration.error.js";

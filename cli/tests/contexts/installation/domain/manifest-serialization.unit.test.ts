@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   InvalidManifestDataError,
   InvalidManifestToolIdError,
-} from "../../../../src/contexts/installation/domain/installation.error.js";
+} from "../../../../src/contexts/installation/contract/installation.error.js";
 import { parseManifestTools } from "../../../../src/contexts/installation/domain/manifest-serialization.js";
 import { resolveRegisteredToolId, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../../shared/testing/saying.builder.js";

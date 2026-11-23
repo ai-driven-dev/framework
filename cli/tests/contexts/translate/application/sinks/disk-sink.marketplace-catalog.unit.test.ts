@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { JsonSchemaValidationError } from "../../../../../src/contexts/translate/domain/translate.error.js";
+import { JsonSchemaValidationError } from "../../../../../src/contexts/translate/contract/translate.error.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
 import type {
   PluginPresence,

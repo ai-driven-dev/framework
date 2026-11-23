@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { writeFlatMcp } from "../../../../../src/contexts/translate/application/sinks/flat-mcp-writer.js";
-import { FlatTargetExistsError } from "../../../../../src/contexts/translate/domain/translate.error.js";
+import { FlatTargetExistsError } from "../../../../../src/contexts/translate/contract/translate.error.js";
 import type { FlatMcpStep } from "../../../../../src/contexts/translate/ports/flat-plugin-writer.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import {

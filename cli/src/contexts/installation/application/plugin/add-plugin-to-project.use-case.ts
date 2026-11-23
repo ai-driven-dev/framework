@@ -1,7 +1,7 @@
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import { MissingPluginMetadataError } from "../../domain/installation.error.js";
+import { MissingPluginMetadataError } from "../../contract/installation.error.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { AssertProjectIntegrationRemovable } from "../removal/assert-project-integration-removable.use-case.js";
 import { assertRequestedVersion } from "./add/existing-plugin.js";
