@@ -27,7 +27,7 @@ flowchart TD
 | `scripts/` | repository checks and generators, run by lefthook and CI. Tests in `scripts/__tests__/` |
 | `docs/` | durable docs — architecture, plugin authoring, glossary, maintainer runbook. `prompts-documentation.md` is generated |
 | `aidd_docs/` | this memory bank, plus `tasks/`, `runs/`, `product/`, `specs/`, `recipes/`, `brainstorm/` |
-| `.claude-plugin/` | `marketplace.json`, the plugin manifest. Versions live in `.release-please-manifest.json` — see `deployment.md` |
+| `.claude-plugin/` | `marketplace.json`, the plugin manifest. Versions live in `.release-please-manifest.json` — see `internal/deployment.md` |
 | `.claude/` | registers this checkout as a local marketplace, so a contributor runs the plugins they edit |
 | `.github/` | workflows, issue templates, rulesets |
 

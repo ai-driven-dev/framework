@@ -2,7 +2,7 @@
 
 Where the project runs and how it ships: CI/CD, environments, and release.
 
-> CLI build, publish and self-update detail: [`cli/aidd_docs/memory/deployment.md`](../../cli/aidd_docs/memory/deployment.md).
+> CLI build, publish and self-update detail: [`cli/aidd_docs/memory/internal/deployment.md`](../../../cli/aidd_docs/memory/internal/deployment.md).
 
 ## Pipeline
 
@@ -34,7 +34,7 @@ No server, container or IaC. What ships are release assets and packages.
 
 ## Release
 
-Branch model in `vcs.md`, cadence and safety rules in [`RELEASE.md`](../../RELEASE.md).
+Branch model in `vcs.md`, cadence and safety rules in [`RELEASE.md`](../../../RELEASE.md).
 
 ```mermaid
 flowchart TD

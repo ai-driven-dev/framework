@@ -39,7 +39,7 @@ Never state in a commit message or a report anything not just observed in output
 
 Same hook regenerates each plugin's `CATALOG.md`, and the README counts, and stages them.
 
-Every `cli` job is globbed on `cli/**`. A change under `kanban/` alone fires no local job; run `cd kanban && pnpm test` by hand. CI does cover it — `cli-ci.yml`'s `kanban-checks`, see `deployment.md`.
+Every `cli` job is globbed on `cli/**`. A change under `kanban/` alone fires no local job; run `cd kanban && pnpm test` by hand. CI does cover it — `cli-ci.yml`'s `kanban-checks`, see `internal/deployment.md`.
 
 - `context-reference-form` reads only the two files `memory.cjs`'s `TARGET_FILES` names: root `CLAUDE.md` and root `AGENTS.md`. It never walks the tree, so `cli/CLAUDE.md`'s memory block is outside it.
 - `context-imports` walks the whole tree (`scripts/check-context-imports.js`'s `collectContextFiles`).

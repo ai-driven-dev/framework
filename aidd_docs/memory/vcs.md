@@ -10,7 +10,7 @@ The version-control conventions this project follows: branches, commits, and the
 - GitHub's default branch is `main`, so `gh pr create` without `--base next` targets production.
 - Platform: GitHub, repository `ai-driven-dev/framework`, driven through `gh`. Tickets are GitHub Issues.
 - Pull request template: `.github/PULL_REQUEST_TEMPLATE.md`.
-- The release model — weekly promotion, hotfix path — is in [`RELEASE.md`](../../RELEASE.md); the tooling behind it is in `deployment.md`.
+- The release model — weekly promotion, hotfix path — is in [`RELEASE.md`](../../RELEASE.md); the tooling behind it is in `internal/deployment.md`.
 
 ## Branches
 
@@ -29,7 +29,7 @@ The version-control conventions this project follows: branches, commits, and the
 
 - Everything batches on `next` and ships in the weekly release. **Only `hotfix/*` targets `main`.**
 - The issue type categorizes, it never routes, and the form stamps it — never set it by hand. Labels exist only where a bot or a human reads one (`.github/labels.yml`).
-- The board does not advance on its own; it is moved by hand, by a human or an agent through `gh`. Board conventions are in `backlog.md`.
+- The board does not advance on its own; it is moved by hand, by a human or an agent through `gh`. Board conventions are in `internal/backlog.md`.
 - Automation owns `promote/*` and `back-merge/*`, which follow neither the format nor the table.
 
 ## Pull requests
