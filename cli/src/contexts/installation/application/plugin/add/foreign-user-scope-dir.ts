@@ -5,6 +5,20 @@ import type { AiToolProfile } from "../../../../tools/contract/tool-profile.js";
 import { resolveScopeForInstall, scopeBaseOf } from "../plugin-target-resolution.js";
 import type { PlacePluginRequest } from "./place-plugin.use-case.js";
 
+/** Finds the user-scope directory of a plugin that holds files this project did not install. */
+export type FindForeignUserScopeDir = (
+  command: PlacePluginRequest,
+  tool: AiToolProfile
+) => Promise<string | undefined>;
+
+/** The foreign-directory lookup, bound to the file system and home it reads. */
+export function foreignUserScopeDirOf(deps: {
+  readonly fs: FileReader;
+  readonly homedir: () => string;
+}): FindForeignUserScopeDir {
+  return (command, tool) => foreignUserScopeDir({ ...deps, command, tool });
+}
+
 /** The user-scope directory of the plugin when it holds files this project did not install. */
 export async function foreignUserScopeDir(lookup: {
   readonly fs: FileReader;

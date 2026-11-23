@@ -3,9 +3,19 @@ import type { Scope } from "../../../../../shared/domain/scope.js";
 import { RecordedPlugin } from "../../../domain/plugins/recorded-plugin.js";
 import { writeChangedPluginFiles } from "../../plugin/files/write-changed-plugin-files.js";
 import { resolveScopeForInstall, scopeBaseOf } from "../../plugin/plugin-target-resolution.js";
-import type { AddPluginRequest, AddPluginResult, PlacementDeps } from "../add-plugin-request.js";
+import type {
+  AddPluginRequest,
+  AddPluginResult,
+  PlaceBuiltTree,
+  PlacementDeps,
+} from "../add-plugin-request.js";
 import { placeFlatPlugin } from "../place-flat-plugin.js";
 import { type BuiltTreeRead, readTranslatedBuiltTree } from "./read-translated-built-tree.js";
+
+/** The built-tree placement, bound to the build and file system it reads. */
+export function builtTreePlacement(deps: PlacementDeps): PlaceBuiltTree {
+  return (request) => placeBuiltTreePlugin(request, deps);
+}
 
 /**
  * Materializes plugin content by copying the per-target BUILT tree verbatim into the tool's plugin

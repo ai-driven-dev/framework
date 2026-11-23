@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { builtPlacementOf } from "../../../../../src/composition/orchestration/built-placement.js";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
 import type { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.use-case.js";
 import type { BuiltMaterializationDeps } from "../../../../../src/contexts/installation/application/shared/built-materialization-deps.js";
@@ -61,8 +62,7 @@ async function setup(
       manifestRepo: deps.manifestRepo,
       loadDistribution: loadDistributionOf(options.fetcher ?? deps.pluginFetcher, reader),
       replacePluginFiles: new ReplacePluginFiles(
-        deps.fs,
-        options.builtDeps ?? fakeBuiltDeps(deps.fs),
+        { fs: deps.fs, ...builtPlacementOf(deps.fs, options.builtDeps ?? fakeBuiltDeps(deps.fs)) },
         registeredTools()
       ),
     },

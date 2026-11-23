@@ -1,5 +1,7 @@
 import { join } from "node:path";
+import type { PluginDistribution } from "../../../../../shared/domain/plugin/plugin-distribution.js";
 import { compareSemver } from "../../../../../shared/domain/plugin/semver.js";
+import type { PluginSource } from "../../../../../shared/domain/plugin/source.js";
 import type { FileReader } from "../../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../../shared/ports/logger.js";
@@ -15,21 +17,37 @@ import type {
   UserPluginUpdateRequest,
   UserScopeFileGuard,
 } from "../../../ports/plugin/user-plugin-materialization.js";
-import type { BuiltMaterializationDeps } from "../../shared/built-materialization-deps.js";
 import { scopeBaseOf } from "../plugin-target-resolution.js";
 import { assertUserPluginWritable } from "./assert-user-plugin-writable.js";
 import { deleteOldFiles } from "./delete-plugin-files.js";
-import { rebuildUserPluginFiles } from "./rebuild-user-plugin-files.js";
+import type { RebuildUserPluginFiles } from "./rebuild-user-plugin-files.js";
 import { writePluginFiles } from "./write-plugin-files.js";
+
+/** Fetches the newest distribution of a plugin source, bypassing any cached copy. */
+export type FetchLatestDistribution = (
+  source: PluginSource,
+  projectRoot: string
+) => Promise<PluginDistribution>;
+
+/** The latest-distribution fetch; a global install passes its own cache, so it writes nothing
+ * in the project. */
+export function latestDistributionOf(
+  load: LoadDistribution,
+  globalCacheDir?: () => string
+): FetchLatestDistribution {
+  return (source, projectRoot) =>
+    load(source, globalCacheDir?.() ?? join(projectRoot, PLUGIN_CACHE_SUBDIR), {
+      forceRefresh: true,
+    });
+}
 
 /** What PluginMaterializer is built from. */
 export interface PluginMaterializerDeps {
   readonly fs: FileReader & FileWriter;
-  readonly loadDistribution: LoadDistribution;
   readonly guard: UserScopeFileGuard;
-  readonly builtDeps: BuiltMaterializationDeps;
-  /** A global install's fetches: it writes nothing in the project. */
-  readonly globalCacheDir?: () => string;
+  readonly homedir: () => string;
+  readonly fetchLatest: FetchLatestDistribution;
+  readonly rebuild: RebuildUserPluginFiles;
 }
 
 /**
@@ -49,17 +67,16 @@ export class PluginMaterializer implements UserPluginMaterialization {
   ): Promise<PlannedUserPluginFileUpdate | null> {
     const { plugin: recorded, tool, projectRoot, logger, rebuild, isWithinUserScope } = request;
     const { plugin, marketplace } = recorded;
-    const cacheDir = this.deps.globalCacheDir?.() ?? join(projectRoot, PLUGIN_CACHE_SUBDIR);
-    const dist = await this.deps.loadDistribution(plugin.source, cacheDir, { forceRefresh: true });
+    const dist = await this.deps.fetchLatest(plugin.source, projectRoot);
     if (!rebuild && compareSemver(dist.manifest.version, plugin.version) <= 0) return null;
-    const { files, componentPaths } = await rebuildUserPluginFiles(this.deps, {
+    const { files, componentPaths } = await this.deps.rebuild({
       dist,
       tool,
       plugin,
       marketplace,
       projectRoot,
     });
-    const home = this.deps.builtDeps.homedir();
+    const home = this.deps.homedir();
     const baseDir = scopeBaseOf(tool, { scope: "user", projectRoot, homedir: () => home });
     const { present, oldSafe } = await this.recordedSafeFiles(plugin, tool, {
       logger,

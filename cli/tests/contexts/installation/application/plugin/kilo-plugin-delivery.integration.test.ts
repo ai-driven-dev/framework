@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { builtPlacementOf } from "../../../../../src/composition/orchestration/built-placement.js";
 import { InstallTools } from "../../../../../src/contexts/installation/application/install/install-tools.use-case.js";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
 import {
@@ -69,8 +70,7 @@ async function existingProject(configPath: string) {
       manifestRepo: deps.manifestRepo,
       loadDistribution: distribution,
       replacePluginFiles: new ReplacePluginFiles(
-        deps.fs,
-        fakeBuiltDeps(deps.fs),
+        { fs: deps.fs, ...builtPlacementOf(deps.fs, fakeBuiltDeps(deps.fs)) },
         registeredTools()
       ),
       pluginRuntime: deps.ensurePluginRuntimeFiles,

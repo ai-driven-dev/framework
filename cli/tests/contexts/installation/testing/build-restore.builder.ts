@@ -1,3 +1,4 @@
+import { builtPlacementOf } from "../../../../src/composition/orchestration/built-placement.js";
 import { InstallConfig } from "../../../../src/contexts/installation/application/install/install-config.use-case.js";
 import { ApplyPluginFiles } from "../../../../src/contexts/installation/application/restore/apply-plugin-files.use-case.js";
 import { GenerateToolDistribution } from "../../../../src/contexts/installation/application/restore/generate-tool-distribution.use-case.js";
@@ -62,7 +63,7 @@ export function restoreAllPluginsOf(parts: RestoreAllPluginsParts): RestoreAllPl
     new ApplyPluginFiles({
       fs,
       loadDistribution,
-      builtDeps,
+      ...builtPlacementOf(fs, builtDeps),
     }),
     registeredTools()
   );

@@ -35,6 +35,14 @@ export interface RebuiltUserPluginFiles {
   readonly componentPaths: ReadonlyMap<string, string>;
 }
 
+/** Rebuilds the files a machine-scope plugin holds after an update. */
+export type RebuildUserPluginFiles = (source: UserPluginSource) => Promise<RebuiltUserPluginFiles>;
+
+/** The machine-scope rebuild, bound to the build and file system it reads. */
+export function userPluginRebuildOf(deps: UserPluginRebuild): RebuildUserPluginFiles {
+  return (source) => rebuildUserPluginFiles(deps, source);
+}
+
 /** The files a machine-scope plugin holds after an update, from its built tree when its
  * marketplace is registered, from a fresh translation otherwise. */
 export async function rebuildUserPluginFiles(

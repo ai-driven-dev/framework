@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { PluginMaterializer } from "../../../../../src/contexts/installation/application/plugin/files/plugin-materializer.js";
+import { pluginMaterializerOf } from "../../../../../src/composition/orchestration/built-placement.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import {
   buildInstallationDeps,
@@ -168,7 +168,7 @@ describe("UpdatePlugin - built-tree materialization", () => {
         new Map([...stale.plugin.files, [oldRelativePath, FileHash.of("old owned bytes").value]])
       )
     );
-    const updater = new PluginMaterializer({
+    const updater = pluginMaterializerOf({
       fs: deps.fs,
       loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
       guard: userScopeFileGuard,

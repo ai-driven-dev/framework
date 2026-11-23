@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { builtTreePlacement } from "../../../../../src/contexts/installation/application/materialize/built/place-built-tree-plugin.js";
 import { rematerializePlugin } from "../../../../../src/contexts/installation/application/materialize/rematerialize-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
@@ -33,7 +34,7 @@ function rematerialize() {
   const fs = new InMemoryFileAdapter();
   const count = rematerializePlugin(
     { dist, tool, mode: "marketplace", plugin, projectRoot: "/root", manifest },
-    { fs, built: fakeBuiltDeps(fs) }
+    builtTreePlacement({ fs, built: fakeBuiltDeps(fs) })
   );
   return { count, manifest };
 }
@@ -67,7 +68,7 @@ async function rematerializeOnCursor(): Promise<number> {
   });
   return rematerializePlugin(
     { dist, tool, mode: "built-tree", plugin, projectRoot: "/root", manifest },
-    { fs, built: { ...fakeBuiltDeps(fs), marketplaceRegistry: registry } }
+    builtTreePlacement({ fs, built: { ...fakeBuiltDeps(fs), marketplaceRegistry: registry } })
   );
 }
 

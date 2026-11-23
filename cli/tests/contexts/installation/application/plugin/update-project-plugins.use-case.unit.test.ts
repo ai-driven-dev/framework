@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { builtPlacementOf } from "../../../../../src/composition/orchestration/built-placement.js";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
 import type { UpdateProjectPluginsDeps } from "../../../../../src/contexts/installation/application/plugin/update-project-plugins.use-case.js";
 import type { RuntimeConfigSection } from "../../../../../src/contexts/installation/ports/tool-sections.js";
@@ -44,8 +45,7 @@ async function installedSample(pluginRuntime?: UpdatePluginRuntime) {
       manifestRepo: deps.manifestRepo,
       loadDistribution: loader,
       replacePluginFiles: new ReplacePluginFiles(
-        deps.fs,
-        fakeBuiltDeps(deps.fs),
+        { fs: deps.fs, ...builtPlacementOf(deps.fs, fakeBuiltDeps(deps.fs)) },
         registeredTools()
       ),
       pluginRuntime,

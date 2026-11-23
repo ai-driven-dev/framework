@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { builtPlacementOf } from "../../../../../src/composition/orchestration/built-placement.js";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
 import type { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.use-case.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
@@ -49,8 +50,13 @@ function makeUpdateUseCase(deps: Deps, registry: FakeMarketplaceRegistry): Updat
       manifestRepo: deps.manifestRepo,
       loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
       replacePluginFiles: new ReplacePluginFiles(
-        deps.fs,
-        fakeBuiltDeps(deps.fs, { marketplaceRegistry: registry, homedir: () => HOME }),
+        {
+          fs: deps.fs,
+          ...builtPlacementOf(
+            deps.fs,
+            fakeBuiltDeps(deps.fs, { marketplaceRegistry: registry, homedir: () => HOME })
+          ),
+        },
         registeredTools()
       ),
     },

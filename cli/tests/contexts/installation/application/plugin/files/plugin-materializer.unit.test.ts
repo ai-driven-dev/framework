@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { PluginMaterializer } from "../../../../../../src/contexts/installation/application/plugin/files/plugin-materializer.js";
+import { pluginMaterializerOf } from "../../../../../../src/composition/orchestration/built-placement.js";
 import { RecordedPlugin } from "../../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../../../../../src/contexts/installation/domain/project-layout.js";
 import { FileHash } from "../../../../../../src/shared/domain/file-hash.js";
@@ -39,7 +39,7 @@ function fixture(installedVersion = "0.0.1", options: { globalCacheDir?: () => s
   const fetcher = {
     fetch: vi.fn(new FixturePluginFetcher().fetch.bind(new FixturePluginFetcher())),
   };
-  const updater = new PluginMaterializer({
+  const updater = pluginMaterializerOf({
     fs,
     loadDistribution: loadDistributionOf(fetcher, { read: async () => dist }),
     guard: userScopeFileGuard,

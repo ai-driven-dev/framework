@@ -8,11 +8,9 @@ import type { WithdrawFromHost } from "../../contexts/host-registration/applicat
 import type { ProvenHostRef } from "../../contexts/host-registration/application/withdraw/withdrawal.js";
 import { EnsurePluginRuntimeFiles } from "../../contexts/installation/application/install/config/ensure-plugin-runtime-files.use-case.js";
 import { ReplacePluginFiles } from "../../contexts/installation/application/materialize/replace-plugin-files.use-case.js";
-import { PlacePlugin } from "../../contexts/installation/application/plugin/add/place-plugin.use-case.js";
 import { ResolveAddedPluginSource } from "../../contexts/installation/application/plugin/add/resolve-added-plugin-source.use-case.js";
 import { AddPlugin } from "../../contexts/installation/application/plugin/add-plugin.use-case.js";
 import { AddPluginToProject } from "../../contexts/installation/application/plugin/add-plugin-to-project.use-case.js";
-import { PluginMaterializer } from "../../contexts/installation/application/plugin/files/plugin-materializer.js";
 import { PlanPluginInstall } from "../../contexts/installation/application/plugin/plan-plugin-install.use-case.js";
 import { supportedScopeOf } from "../../contexts/installation/application/plugin/plugin-target-resolution.js";
 import { UpdatePlugin } from "../../contexts/installation/application/plugin/update-plugin.use-case.js";
@@ -49,6 +47,7 @@ import {
 } from "../contexts/machine-claims.js";
 import type { Base } from "../shared.js";
 import { userConfigDir } from "../user-config-dir.js";
+import { builtPlacementOf, placePluginOf, pluginMaterializerOf } from "./built-placement.js";
 
 /** Where a fetched plugin distribution is kept between runs. */
 export function pluginCacheDir(): string {
@@ -151,8 +150,8 @@ function wirePluginRemoval(base: Base, inst: Installation) {
 }
 
 /** Writing a plugin's files under the machine's user scope, from the build it was fetched into. */
-function pluginMaterializerOf(base: Base, inst: Installation) {
-  return new PluginMaterializer({
+function machinePluginMaterializer(base: Base, inst: Installation) {
+  return pluginMaterializerOf({
     fs: base.fs,
     loadDistribution: base.loadDistribution,
     guard: userScopeFileGuard,
@@ -165,13 +164,16 @@ function pluginMaterializerOf(base: Base, inst: Installation) {
 function wirePluginUpdate(base: Base, inst: Installation) {
   const { tools, fs, logger, manifestRepo, userManifestRepo } = base;
   const { builtMaterializationDeps } = inst;
-  const pluginMaterializer = pluginMaterializerOf(base, inst);
+  const pluginMaterializer = machinePluginMaterializer(base, inst);
   const pluginUpdateUseCase = new UpdatePlugin(
     {
       manifests: { project: manifestRepo, user: userManifestRepo },
       updateProject: new UpdateProjectPlugins({
         loadDistribution: base.loadDistribution,
-        replacePluginFiles: new ReplacePluginFiles(fs, builtMaterializationDeps, tools),
+        replacePluginFiles: new ReplacePluginFiles(
+          { fs, ...builtPlacementOf(fs, builtMaterializationDeps) },
+          tools
+        ),
         pluginRuntime: new EnsurePluginRuntimeFiles({ fs, assets: inst.assetProvider }),
       }),
       materializer: pluginMaterializer,
@@ -207,11 +209,8 @@ function pluginAddOf(base: Base, inst: Installation) {
       addToProject: new AddPluginToProject(
         {
           assertIntegration: inst.projectIntegration.assertIntegration,
-          source: new ResolveAddedPluginSource(
-            { loadDistribution: base.loadDistribution, fs, built: builtMaterializationDeps },
-            tools
-          ),
-          place: new PlacePlugin(
+          source: new ResolveAddedPluginSource({ loadDistribution: base.loadDistribution }, tools),
+          place: placePluginOf(
             {
               fs,
               logger,

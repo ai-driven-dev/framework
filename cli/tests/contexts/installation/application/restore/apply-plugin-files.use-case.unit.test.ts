@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { builtPlacementOf } from "../../../../../src/composition/orchestration/built-placement.js";
 import { ApplyPluginFiles } from "../../../../../src/contexts/installation/application/restore/apply-plugin-files.use-case.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import {
@@ -43,7 +44,7 @@ async function installedSample() {
   const apply = new ApplyPluginFiles({
     fs: deps.fs,
     loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
-    builtDeps: fakeBuiltDeps(deps.fs),
+    ...builtPlacementOf(deps.fs, fakeBuiltDeps(deps.fs)),
   });
   const command = {
     toolId: TOOL.claude,

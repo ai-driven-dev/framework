@@ -5,8 +5,7 @@ import type { PluginTranslationMode } from "../../../tools/contract/tool-vocabul
 import type { Manifest } from "../../domain/manifest.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ProjectHooksGuard } from "../shared/assert-project-hooks-unchanged.use-case.js";
-import type { PlacementDeps } from "./add-plugin-request.js";
-import { placeBuiltTreePlugin } from "./built/place-built-tree-plugin.js";
+import type { PlaceBuiltTree } from "./add-plugin-request.js";
 import { registerMarketplacePlugin } from "./register-marketplace-plugin.js";
 
 export interface PluginRematerialization {
@@ -30,7 +29,7 @@ export interface PluginRematerialization {
  */
 export async function rematerializePlugin(
   rematerialization: PluginRematerialization,
-  deps: PlacementDeps
+  placeBuiltTree: PlaceBuiltTree
 ): Promise<number> {
   const { dist, tool, mode, projectRoot, manifest, hooksGuard = {} } = rematerialization;
   const { plugin, provenance, marketplace } = rematerialization.plugin;
@@ -51,5 +50,5 @@ export async function rematerializePlugin(
     registerMarketplacePlugin(request);
     return 0;
   }
-  return (await placeBuiltTreePlugin(request, deps)).written ?? 0;
+  return (await placeBuiltTree(request)).written ?? 0;
 }

@@ -1,7 +1,7 @@
 import { homedir as nodeHomedir, platform as nodePlatform } from "node:os";
 import { projectIntegrationOf } from "../../../../src/composition/contexts/installation.js";
+import { placePluginOf } from "../../../../src/composition/orchestration/built-placement.js";
 import type { EnsurePluginRuntimeFiles } from "../../../../src/contexts/installation/application/install/config/ensure-plugin-runtime-files.use-case.js";
-import { PlacePlugin } from "../../../../src/contexts/installation/application/plugin/add/place-plugin.use-case.js";
 import { ResolveAddedPluginSource } from "../../../../src/contexts/installation/application/plugin/add/resolve-added-plugin-source.use-case.js";
 import {
   AddPlugin,
@@ -56,10 +56,10 @@ export function buildAddPlugin(
         {
           assertIntegration: projectIntegrationOf(host.fs).assertIntegration,
           source: new ResolveAddedPluginSource(
-            { loadDistribution: sources.loadDistribution, fs: host.fs, built },
+            { loadDistribution: sources.loadDistribution },
             tools
           ),
-          place: new PlacePlugin({ fs: host.fs, logger: host.logger, built, pluginRuntime }, tools),
+          place: placePluginOf({ fs: host.fs, logger: host.logger, built, pluginRuntime }, tools),
         },
         tools
       ),

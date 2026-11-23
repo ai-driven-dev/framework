@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { PlacePlugin } from "../../../../../../src/contexts/installation/application/plugin/add/place-plugin.use-case.js";
+import { placePluginOf } from "../../../../../../src/composition/orchestration/built-placement.js";
 import { ResolveAddedPluginSource } from "../../../../../../src/contexts/installation/application/plugin/add/resolve-added-plugin-source.use-case.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { CapturingLogger } from "../../../../../shared/testing/capturing-logger.fake.js";
@@ -29,8 +29,6 @@ async function placeForClaude() {
   const added = await new ResolveAddedPluginSource(
     {
       loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
-      fs: deps.fs,
-      built: built,
     },
     registeredTools()
   ).execute({
@@ -44,7 +42,7 @@ async function placeForClaude() {
   if (manifest === null) throw new Error("the project manifest was not initialised");
   const logger = new CapturingLogger();
   const refreshed: string[] = [];
-  await new PlacePlugin(
+  await placePluginOf(
     {
       fs: deps.fs,
       logger,

@@ -1,7 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { PlacePlugin } from "../../../../../../src/contexts/installation/application/plugin/add/place-plugin.use-case.js";
+import { placePluginOf } from "../../../../../../src/composition/orchestration/built-placement.js";
 import { ResolveAddedPluginSource } from "../../../../../../src/contexts/installation/application/plugin/add/resolve-added-plugin-source.use-case.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { CapturingLogger } from "../../../../../shared/testing/capturing-logger.fake.js";
@@ -43,8 +43,6 @@ async function placeForCursor(foundFile: string | undefined) {
   const added = await new ResolveAddedPluginSource(
     {
       loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
-      fs: deps.fs,
-      built,
     },
     registeredTools()
   ).execute({
@@ -57,7 +55,7 @@ async function placeForCursor(foundFile: string | undefined) {
   const logger = new CapturingLogger();
   const manifest = await deps.manifestRepo.load();
   if (manifest === null) throw new Error("the project manifest was not initialised");
-  await new PlacePlugin({ fs: deps.fs, logger, built }, registeredTools()).execute({
+  await placePluginOf({ fs: deps.fs, logger, built }, registeredTools()).execute({
     dist: added.distribution,
     toolIds: [cursor],
     source: GIT_SUBDIR_SOURCE,

@@ -5,7 +5,6 @@ import { parsePluginName } from "../../../../../../src/shared/domain/plugin/plug
 import { buildInstallationDeps } from "../../../../../shared/testing/installation-deps.builder.js";
 import { loadDistributionOf } from "../../../../../shared/testing/load-distribution.builder.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
-import { fakeBuiltDeps } from "../../../testing/fake-build-sources.fake.js";
 
 const PROJECT_ROOT = "/test-project";
 const SOURCE = { kind: "local" as const, path: "/plugin" };
@@ -14,7 +13,7 @@ const INPUT = { source: SOURCE, projectRoot: PROJECT_ROOT, toolIds: [TOOL.claude
 const fetch = vi.fn(async () => "/fetched");
 
 async function resolver() {
-  const deps = await buildInstallationDeps({ tools: registeredTools() });
+  const _deps = await buildInstallationDeps({ tools: registeredTools() });
   fetch.mockClear();
   const reader = {
     read: async () =>
@@ -28,8 +27,6 @@ async function resolver() {
   return new ResolveAddedPluginSource(
     {
       loadDistribution: loadDistributionOf({ fetch }, reader),
-      fs: deps.fs,
-      built: fakeBuiltDeps(deps.fs),
     },
     registeredTools()
   );

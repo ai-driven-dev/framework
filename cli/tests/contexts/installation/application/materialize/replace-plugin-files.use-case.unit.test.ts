@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { builtPlacementOf } from "../../../../../src/composition/orchestration/built-placement.js";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
@@ -51,7 +52,10 @@ async function replaceOnClaude(marketplace: string | undefined) {
     marketplace,
   }).withFiles(new Map([[STALE_FILE, "old-hash"]]));
   manifest.addPlugin(TOOL.claude, installed);
-  await new ReplacePluginFiles(deps.fs, fakeBuiltDeps(deps.fs), registeredTools()).execute({
+  await new ReplacePluginFiles(
+    { fs: deps.fs, ...builtPlacementOf(deps.fs, fakeBuiltDeps(deps.fs)) },
+    registeredTools()
+  ).execute({
     plugin: installed,
     dist: greetDistribution(),
     toolId: TOOL.claude,

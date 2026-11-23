@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { recordsOf } from "../../../../src/composition/contexts/installation.js";
+import { pluginMaterializerOf } from "../../../../src/composition/orchestration/built-placement.js";
 import { RefreshHostPlugin } from "../../../../src/contexts/host-registration/application/refresh-host-plugin.use-case.js";
-import { PluginMaterializer } from "../../../../src/contexts/installation/application/plugin/files/plugin-materializer.js";
 import type { BuiltMarketplaceEnsurer } from "../../../../src/contexts/installation/contract/built-marketplace.js";
 import { UpdateUserPlugin } from "../../../../src/orchestration/plugin/update-user-plugin.use-case.js";
 import type { PathContainment } from "../../../../src/shared/domain/paths.model.js";
@@ -62,7 +62,7 @@ export function makeUpdateUseCase(
     buildMachinePluginUpdate(
       {
         repo: deps.userManifestRepo,
-        materializer: new PluginMaterializer({
+        materializer: pluginMaterializerOf({
           fs: deps.fs,
           loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
           guard: userScopeFileGuard,

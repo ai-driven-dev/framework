@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { builtPlacementOf } from "../../../../../src/composition/orchestration/built-placement.js";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
@@ -47,8 +48,7 @@ async function legacyProject() {
       manifestRepo: deps.manifestRepo,
       loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
       replacePluginFiles: new ReplacePluginFiles(
-        deps.fs,
-        fakeBuiltDeps(deps.fs),
+        { fs: deps.fs, ...builtPlacementOf(deps.fs, fakeBuiltDeps(deps.fs)) },
         registeredTools()
       ),
       pluginRuntime: deps.ensurePluginRuntimeFiles,

@@ -9,12 +9,12 @@ import type { PluginTranslationMode } from "../../../tools/contract/tool-vocabul
 import type { Manifest } from "../../domain/manifest.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { LoadDistribution } from "../../ports/plugin/load-plugin-distribution.js";
+import type { BuiltPlacement } from "../materialize/add-plugin-request.js";
 import { placementModeOf } from "../materialize/plugin-placement.js";
 import { rematerializePlugin } from "../materialize/rematerialize-plugin.js";
 import { isPluginFileAtDesiredState } from "../plugin/files/check-plugin-file-state.js";
 import { deleteOldFiles } from "../plugin/files/delete-plugin-files.js";
 import { scopeBaseOf } from "../plugin/plugin-target-resolution.js";
-import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
 import { hashOutputFiles } from "../shared/hash-output-files.js";
 
 interface ApplyPluginFilesRequest {
@@ -34,10 +34,9 @@ function deliversHooksToProject(tool: AiToolProfile): boolean {
 }
 
 /** What ApplyPluginFiles is built from. */
-export interface ApplyPluginFilesDeps {
+export interface ApplyPluginFilesDeps extends BuiltPlacement {
   readonly fs: FileReader & FileWriter;
   readonly loadDistribution: LoadDistribution;
-  readonly builtDeps: BuiltMaterializationDeps;
 }
 
 export class ApplyPluginFiles {
@@ -74,13 +73,13 @@ export class ApplyPluginFiles {
       const baseDir = scopeBaseOf(tool, {
         scope: plugin.plugin.scope,
         projectRoot: projectRoot,
-        homedir: () => this.deps.builtDeps.homedir(),
+        homedir: () => this.deps.homedir(),
       });
       await deleteOldFiles(plugin.plugin.files, baseDir, this.deps.fs);
     }
     return rematerializePlugin(
       { dist, tool, mode, plugin, projectRoot, manifest, hooksGuard: { overwriteEdited: force } },
-      { fs: this.deps.fs, built: this.deps.builtDeps }
+      this.deps.placeBuiltTree
     );
   }
 
@@ -89,9 +88,7 @@ export class ApplyPluginFiles {
     options: ApplyPluginFilesRequest
   ): Promise<number> {
     const { toolId, plugin, tool, projectRoot, manifest, fileFilter } = options;
-    const files = hashOutputFiles(
-      this.deps.builtDeps.translate.execute({ distribution: dist, tool }).files
-    );
+    const files = hashOutputFiles(this.deps.translate.execute({ distribution: dist, tool }).files);
     let restored = 0;
     for (const f of files) {
       if (fileFilter !== null && fileFilter !== undefined && !fileFilter(f.relativePath)) continue;

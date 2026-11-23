@@ -8,8 +8,8 @@ import { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import { deleteOldFiles } from "../plugin/files/delete-plugin-files.js";
 import { writePluginFiles } from "../plugin/files/write-plugin-files.js";
 import { scopeBaseOf } from "../plugin/plugin-target-resolution.js";
-import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
 import { hashOutputFiles } from "../shared/hash-output-files.js";
+import type { BuiltPlacement } from "./add-plugin-request.js";
 import { placementModeOf } from "./plugin-placement.js";
 import { rematerializePlugin } from "./rematerialize-plugin.js";
 
@@ -21,12 +21,16 @@ export interface ReplacePluginFilesRequest {
   readonly manifest: Manifest;
 }
 
+/** What ReplacePluginFiles is built from. */
+export interface ReplacePluginFilesDeps extends BuiltPlacement {
+  readonly fs: FileReader & FileWriter;
+}
+
 /** Replaces an installed plugin's files with the ones a newer distribution brings: the old files
  * go first, then the plugin is written the way install would have written it for that tool. */
 export class ReplacePluginFiles {
   constructor(
-    private readonly fs: FileReader & FileWriter,
-    private readonly builtDeps: BuiltMaterializationDeps,
+    private readonly deps: ReplacePluginFilesDeps,
     private readonly tools: ToolCatalog
   ) {}
 
@@ -37,20 +41,20 @@ export class ReplacePluginFiles {
     const baseDir = scopeBaseOf(tool, {
       scope: plugin.scope,
       projectRoot: projectRoot,
-      homedir: this.builtDeps.homedir,
+      homedir: this.deps.homedir,
     });
-    await deleteOldFiles(plugin.files, baseDir, this.fs);
+    await deleteOldFiles(plugin.files, baseDir, this.deps.fs);
     const mode = placementModeOf(tool);
     if (mode !== null && command.plugin.marketplace !== undefined) {
       await rematerializePlugin(
         { dist, tool, mode, plugin: command.plugin, projectRoot, manifest },
-        { fs: this.fs, built: this.builtDeps }
+        this.deps.placeBuiltTree
       );
       return;
     }
-    const translated = this.builtDeps.translate.execute({ distribution: dist, tool });
+    const translated = this.deps.translate.execute({ distribution: dist, tool });
     const newFiles = hashOutputFiles(translated.files);
-    await writePluginFiles(newFiles, baseDir, this.fs);
+    await writePluginFiles(newFiles, baseDir, this.deps.fs);
     manifest.updatePlugin(
       tool.toolId,
       RecordedPlugin.fromDistribution({

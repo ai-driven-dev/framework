@@ -2,13 +2,10 @@ import { join } from "node:path";
 import type { PluginDistribution } from "../../../../../shared/domain/plugin/plugin-distribution.js";
 import type { PluginSource } from "../../../../../shared/domain/plugin/source.js";
 import type { AiToolId } from "../../../../../shared/domain/tool.js";
-import type { FileReader } from "../../../../../shared/ports/file-reader.js";
-import type { FileWriter } from "../../../../../shared/ports/file-writer.js";
 import type { ToolCatalog } from "../../../../tools/contract/tool-catalog.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../../domain/project-layout.js";
 import type { LoadDistribution } from "../../../ports/plugin/load-plugin-distribution.js";
 import { placementModeOf } from "../../materialize/plugin-placement.js";
-import type { BuiltMaterializationDeps } from "../../shared/built-materialization-deps.js";
 
 export interface ResolveAddedPluginSourceRequest {
   readonly source: PluginSource;
@@ -48,8 +45,6 @@ export type ResolveAddedPluginSourceResult = LocalAddedPluginSource | GithubAdde
 /** What ResolveAddedPluginSource is built from. */
 export interface ResolveAddedPluginSourceDeps {
   readonly loadDistribution: LoadDistribution;
-  readonly fs: FileWriter & FileReader;
-  readonly built: BuiltMaterializationDeps;
 }
 
 /** Answers where an added plugin comes from: its marketplace, which tools take its files flat,

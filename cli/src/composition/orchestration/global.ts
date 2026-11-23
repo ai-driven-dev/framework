@@ -36,6 +36,7 @@ import type { SyncSettings } from "../../orchestration/sync/settings/sync-settin
 import { UpdateTools } from "../../orchestration/sync/update-tools.use-case.js";
 import type { Installation } from "../contexts/installation.js";
 import type { Base } from "../shared.js";
+import { builtPlacementOf } from "./built-placement.js";
 import type { Marketplace } from "./marketplace.js";
 import type { Plugin } from "./plugin.js";
 
@@ -121,7 +122,7 @@ function wireRestore(base: Base, installation: Installation, statusUseCase: Repo
     new ApplyPluginFiles({
       fs,
       loadDistribution: base.loadDistribution,
-      builtDeps: installation.builtMaterializationDeps,
+      ...builtPlacementOf(fs, installation.builtMaterializationDeps),
     }),
     tools
   );
