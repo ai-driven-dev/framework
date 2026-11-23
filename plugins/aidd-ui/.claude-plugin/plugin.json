@@ -11,7 +11,8 @@
     "./skills/01-journeys",
     "./skills/02-brand",
     "./skills/03-foundations",
-    "./skills/04-components"
+    "./skills/04-components",
+    "./skills/05-logo"
   ],
   "keywords": [
     "ui",

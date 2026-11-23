@@ -14,6 +14,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
   - [`skills/02-brand`](#skills02-brand)
   - [`skills/03-foundations`](#skills03-foundations)
   - [`skills/04-components`](#skills04-components)
+  - [`skills/05-logo`](#skills05-logo)
 
 ---
 
@@ -120,4 +121,19 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [variants.md](skills/04-components/references/variants.md) | - |
 | `references` | [versions.md](skills/04-components/references/versions.md) | - |
 | `-` | [SKILL.md](skills/04-components/SKILL.md) | `Write a project's components and assets, from nothing or from its code, or carry a component change to its new versions. Use when the user wants to add, extract, or change a component or an asset. Not for the brand, tokens, screens, or journeys.` |
+
+#### `skills/05-logo`
+
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-prepare.md](skills/05-logo/actions/01-prepare.md) | - |
+| `actions` | [02-propose.md](skills/05-logo/actions/02-propose.md) | - |
+| `actions` | [03-choose.md](skills/05-logo/actions/03-choose.md) | - |
+| `actions` | [04-conclude.md](skills/05-logo/actions/04-conclude.md) | - |
+| `assets` | [logo-template.md](skills/05-logo/assets/logo-template.md) | - |
+| `references` | [cases.md](skills/05-logo/references/cases.md) | - |
+| `references` | [engine.md](skills/05-logo/references/engine.md) | - |
+| `references` | [kit.md](skills/05-logo/references/kit.md) | - |
+| `references` | [variants.md](skills/05-logo/references/variants.md) | - |
+| `-` | [SKILL.md](skills/05-logo/SKILL.md) | `Creates or changes a project's logo by comparing directions, when the user wants to design, redesign or adjust it, not for other assets.` |
 
