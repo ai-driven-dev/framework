@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { applyLinkSyntax } from "../../../../src/contexts/tools/contract/link-syntax.js";
+import { applyLinkSyntax } from "../../../../src/shared/domain/materialization/link-syntax.js";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { parsePluginName } from "../../../../src/shared/domain/plugin/plugin-name.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";

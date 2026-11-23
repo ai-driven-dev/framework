@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { cursor } from "../../../../../../src/composition/tool-profiles/cursor.js";
-import { applyLinkSyntax } from "../../../../../../src/contexts/tools/contract/link-syntax.js";
+import { applyLinkSyntax } from "../../../../../../src/shared/domain/materialization/link-syntax.js";
 
 const rewrite = (text: string) => applyLinkSyntax(text, cursor.linkSyntax);
 

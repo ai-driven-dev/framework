@@ -1,9 +1,9 @@
-import { artifactPath } from "../../../../src/contexts/tools/contract/artifact-path.js";
+import { artifactPath } from "../../../../src/shared/domain/materialization/artifact-path.js";
 import type {
   ArtifactContract,
   ArtifactSource,
   ToolBuildContract,
-} from "../../../../src/contexts/tools/contract/build-contract.js";
+} from "../../../../src/shared/domain/materialization/build-contract.js";
 
 type Artifacts = ToolBuildContract["artifacts"];
 

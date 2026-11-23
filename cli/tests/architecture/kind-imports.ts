@@ -17,7 +17,7 @@ import { INTERNAL_IMPORT, matchesGlob, resolveImportTarget } from "./source-grap
 const EXTERNAL_IMPORT =
   /^\s*(?:import|export)\b[^"';]*?\bfrom\s*["']([^"']+)["']|^\s*import\s*["']([^"']+)["']|\bimport\(\s*["']([^"']+)["']\s*\)/gm;
 const TOOL_FILE =
-  /^src\/(?:composition\/tool-profiles\/([^/]+)\.ts$|contexts\/tools\/domain\/behaviours\/([^/]+)\/)/;
+  /^src\/(?:composition\/tool-profiles\/(?!index\.ts$)([^/]+)\.ts$|contexts\/tools\/domain\/behaviours\/([^/]+)\/)/;
 const SHARED_KIT = "tests/shared/testing/";
 
 /** The folder that owns a kit file: everything before its `/testing/`. */
@@ -108,6 +108,26 @@ const leavesContextMap = ({ file, target }: Edge): Break | undefined => {
     : undefined;
 };
 
+/** Domains still reading the tools contract: each is the lot of its own context to untie, and a
+ * file leaves this list when it does. A new entry is a violation, not a tolerance. */
+const PENDING_CONTRACT_READERS: ReadonlySet<string> = new Set([
+  "src/contexts/host-registration/domain/native-registration/marketplace-registration.ts",
+  "src/contexts/host-registration/domain/native-registration/native-activation.ts",
+  "src/contexts/installation/domain/project-hooks.model.ts",
+]);
+
+const reachesAnotherContext = ({ file, target }: Edge): Break | undefined => {
+  if (PENDING_CONTRACT_READERS.has(file)) return undefined;
+  const fromContext = /^src\/contexts\/([^/]+)\/domain\//.exec(file)?.[1];
+  const toContext = contextOfSource(target);
+  return fromContext && toContext && fromContext !== toContext
+    ? {
+        what: `the domain of ${fromContext} imports from context ${toContext}`,
+        fix: `declare what the domain reads as a port of ${fromContext} and let composition adapt ${toContext} to it`,
+      }
+    : undefined;
+};
+
 const reachesPastContract = ({ file, target }: Edge): Break | undefined => {
   const fromContext = contextOfSource(file);
   const toContext = contextOfSource(target);
@@ -158,6 +178,7 @@ const EDGE_RULES: readonly ((edge: Edge) => Break | undefined)[] = [
   crossesProfile,
   leavesWithin,
   leavesContextMap,
+  reachesAnotherContext,
   reachesPastContract,
   importsSetup,
   importsOtherKit,

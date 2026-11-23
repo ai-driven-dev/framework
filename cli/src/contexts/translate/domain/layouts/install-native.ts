@@ -1,19 +1,18 @@
 import { reshapeFrontmatter, serializeFrontmatter } from "../../../../shared/domain/markdown.js";
+import type { ReadonlyNoticeList } from "../../../../shared/domain/materialization/plugin-install-notice.js";
 import type {
   PluginComponentFile,
   PluginDistribution,
 } from "../../../../shared/domain/plugin/plugin-distribution.js";
-import type { ReadonlyNoticeList } from "../../../tools/contract/plugin-install-notice.js";
-import type { NativePluginAnswers } from "../../../tools/contract/tool-profile.js";
 import { isComponentFile, isProse, PLUGIN_HOOKS_DIR } from "../plugin-paths.js";
 import type { ComponentPlan } from "../rules/component-pipeline.js";
 import { toolLinks } from "../rules/links.js";
-import type { TranslatedAiTool } from "../translate-profile.js";
+import type { TranslatedAiTool, TranslatedNativePlugin } from "../translate-profile.js";
 import { hooksTrustNotices, manifestPlan, nativeHooksPlan } from "./install-native-hooks.js";
 
 interface NativeTarget {
   readonly tool: TranslatedAiTool;
-  readonly plugins: NativePluginAnswers;
+  readonly plugins: TranslatedNativePlugin;
 }
 
 /** A plugin installed as a directory of its own: every file under the tool's plugin root. */

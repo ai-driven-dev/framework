@@ -1,8 +1,7 @@
+import type { ToolBuildContract } from "../../../shared/domain/materialization/build-contract.js";
+import type { ReadonlyNoticeList } from "../../../shared/domain/materialization/plugin-install-notice.js";
 import type { PluginDistribution } from "../../../shared/domain/plugin/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../shared/domain/plugin/plugin-translation-skip.js";
-import type { ToolBuildContract } from "../../tools/contract/build-contract.js";
-import type { ReadonlyNoticeList } from "../../tools/contract/plugin-install-notice.js";
-import type { FrameworkBuildMode } from "../../tools/contract/tool-profile.js";
 import { PLUGIN_HOOKS_RELATIVE } from "./canon-format.js";
 import { flatOwnHooksFile } from "./layouts/build-flat.js";
 import { buildPlans } from "./layouts/build-layout.js";
@@ -16,7 +15,11 @@ import {
   projectHooks,
   withoutHooks,
 } from "./rules/hook-scripts.js";
-import type { TranslatedAiTool, TranslateProfile } from "./translate-profile.js";
+import type {
+  FrameworkBuildMode,
+  TranslatedAiTool,
+  TranslateProfile,
+} from "./translate-profile.js";
 
 /** Where a translation lands: one tool's install, or one tool's build. The rules are the same;
  * the layout chooses where each file goes. `manifestPaths` is every place a host keeps a plugin

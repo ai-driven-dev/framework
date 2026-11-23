@@ -9,7 +9,6 @@ import type {
   NativeRegistrationSection,
 } from "../../contexts/host-registration/contract/native-registration-spec.js";
 import { MCP_CONFIG_REF } from "../../contexts/tools/contract/config-refs.js";
-import { PLUGIN_ROOT_TOKEN } from "../../contexts/tools/contract/plugin-root-token.js";
 import { buildCopilotMarketplaceContract } from "../../contexts/tools/domain/behaviours/copilot/copilot-build.model.js";
 import {
   agentsHandler,
@@ -28,6 +27,7 @@ import { convertCommandFrontmatter } from "../../contexts/tools/domain/formats/c
 import { declareHooks } from "../../contexts/tools/domain/formats/hooks/declaration.js";
 import { nativeHooksSupport } from "../../contexts/tools/domain/formats/hooks/routes.js";
 import { serversKeyed } from "../../contexts/tools/domain/formats/mcp/servers-keyed.js";
+import { PLUGIN_ROOT_TOKEN } from "../../contexts/tools/domain/formats/plugin-root-token.js";
 import { sharedMarketplaceKey } from "../../contexts/tools/domain/marketplace-entry.js";
 import { contract } from "../../contexts/tools/domain/profile/contract-builders.js";
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";

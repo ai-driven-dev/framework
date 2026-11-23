@@ -148,7 +148,6 @@ describe("composition holds one module per context", () => {
     const files = [
       "container",
       "shared",
-      "tool-profiles.composition",
       "user-config-dir",
       "tools",
       "contexts/tools",
@@ -162,14 +161,9 @@ describe("composition holds one module per context", () => {
   });
 
   it("names a subfolder that is not contexts or orchestration, and ignores files inside one", () => {
-    const files = [
-      "container",
-      "shared",
-      "tool-profiles.composition",
-      "user-config-dir",
-      "orchestration/setup",
-      "extras/a",
-    ].map((m) => `src/composition/${m}.ts`);
+    const files = ["container", "shared", "user-config-dir", "orchestration/setup", "extras/a"].map(
+      (m) => `src/composition/${m}.ts`
+    );
     expect(found(files, [])).toEqual(["unexpected subfolder: extras"]);
   });
 

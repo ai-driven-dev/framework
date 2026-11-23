@@ -1,5 +1,5 @@
 import { reshapeFrontmatter } from "../../../../shared/domain/markdown.js";
-import type { ToolBuildContract } from "../../contract/build-contract.js";
+import type { ToolBuildContract } from "../../../../shared/domain/materialization/build-contract.js";
 import type { AgentModelAnswers, ModelChoice, RoleModels } from "../../contract/tool-profile.js";
 import { AGENT_MODELS, type ModelTier, roleTier } from "../models/agent-models.js";
 

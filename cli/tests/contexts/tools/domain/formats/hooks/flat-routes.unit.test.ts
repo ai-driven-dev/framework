@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { artifactPath } from "../../../../../../src/contexts/tools/contract/artifact-path.js";
-import type {
-  ArtifactContract,
-  ShippedHooks,
-} from "../../../../../../src/contexts/tools/contract/build-contract.js";
 import {
   flatHooksArtifact,
   flatHooksSupport,
   flatProjectHooksDelivery,
   hooksBridgePath,
 } from "../../../../../../src/contexts/tools/domain/formats/hooks/flat-routes.js";
+import { artifactPath } from "../../../../../../src/shared/domain/materialization/artifact-path.js";
+import type {
+  ArtifactContract,
+  ShippedHooks,
+} from "../../../../../../src/shared/domain/materialization/build-contract.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 import { routed } from "../../../../../shared/testing/routed-hooks.builder.js";
 

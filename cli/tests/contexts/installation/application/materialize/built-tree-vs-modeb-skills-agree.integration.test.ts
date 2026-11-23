@@ -2,7 +2,7 @@ import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createPluginTranslation } from "../../../../../src/composition/contexts/translate.js";
-import { artifactPath } from "../../../../../src/contexts/tools/contract/artifact-path.js";
+import { artifactPath } from "../../../../../src/shared/domain/materialization/artifact-path.js";
 import {
   type PluginComponentFile,
   PluginDistribution,

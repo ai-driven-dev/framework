@@ -1,5 +1,5 @@
 import type { RegisteredCatalog } from "../../../../src/composition/contexts/tools.js";
-import type { RegisteredProfile } from "../../../../src/composition/tool-profiles.composition.js";
+import type { RegisteredProfile } from "../../../../src/composition/tool-profiles/index.js";
 import type {
   AiToolProfile,
   FrameworkBuildMode,

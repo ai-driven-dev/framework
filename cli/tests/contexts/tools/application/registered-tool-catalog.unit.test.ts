@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { REGISTERED_PROFILES } from "../../../../src/composition/tool-profiles.composition.js";
+import { REGISTERED_PROFILES } from "../../../../src/composition/tool-profiles/index.js";
 import { DuplicateToolIdError } from "../../../../src/contexts/tools/contract/errors/tools.error.js";
 import { UnregisteredToolError } from "../../../../src/shared/domain/shared.error.js";
 import { catalogOf } from "../../../shared/testing/catalog-of.builder.js";

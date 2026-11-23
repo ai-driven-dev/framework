@@ -1,6 +1,6 @@
+import type { ReadonlyNoticeList } from "../../../../shared/domain/materialization/plugin-install-notice.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
-import type { ReadonlyNoticeList } from "../../../tools/contract/plugin-install-notice.js";
 // biome-ignore lint/plugin: hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input
 import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
 

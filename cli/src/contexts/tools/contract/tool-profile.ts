@@ -1,10 +1,10 @@
 import type { InstallationFile } from "../../../shared/domain/installation-file.js";
+import type { ToolBuildContract } from "../../../shared/domain/materialization/build-contract.js";
 import type { FlatArtifactLayout } from "../../../shared/domain/materialization/flat-paths.js";
+import type { LinkSyntax } from "../../../shared/domain/materialization/link-syntax.js";
 import type { ConfigAsset } from "../../../shared/domain/reading/config-asset.js";
 import type { AiToolId, IdeToolId } from "../../../shared/domain/tool.js";
-import type { ToolBuildContract } from "./build-contract.js";
 import type { ConfigRef } from "./config-refs.js";
-import type { LinkSyntax } from "./link-syntax.js";
 import type { GlobalFiles, ProjectHooksLocation, SignalDirectory } from "./tool-vocabulary.js";
 
 /** How a tool takes plugins, asked and never read: each answer is a method. */

@@ -1,4 +1,3 @@
-import type { ToolBuildContract } from "../../../../src/contexts/tools/contract/build-contract.js";
 import type { ProjectHooksFormat } from "../../../../src/contexts/tools/contract/tool-vocabulary.js";
 import {
   defineAiTool,
@@ -14,6 +13,7 @@ import type {
 import type { LayoutSection } from "../../../../src/contexts/tools/domain/sections/layout-section.js";
 import type { ManifestSection } from "../../../../src/contexts/tools/domain/sections/manifest-section.js";
 import type { McpSection } from "../../../../src/contexts/tools/domain/sections/mcp-section.js";
+import type { ToolBuildContract } from "../../../../src/shared/domain/materialization/build-contract.js";
 import type { AiToolId } from "../../../../src/shared/domain/tool.js";
 import { anEmptyContract } from "../../../shared/testing/empty-build-contract.builder.js";
 import { TOOL } from "../../../shared/testing/registered-tools.builder.js";

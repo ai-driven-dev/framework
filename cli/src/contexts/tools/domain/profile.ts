@@ -1,6 +1,6 @@
+import type { ToolBuildContract } from "../../../shared/domain/materialization/build-contract.js";
+import type { LinkSyntax } from "../../../shared/domain/materialization/link-syntax.js";
 import type { AiToolId, IdeToolId } from "../../../shared/domain/tool.js";
-import type { ToolBuildContract } from "../contract/build-contract.js";
-import type { LinkSyntax } from "../contract/link-syntax.js";
 import type { RecommendationContext } from "../contract/tool-catalog.js";
 import type { AiToolProfile, IdeToolProfile, PluginAnswers } from "../contract/tool-profile.js";
 import type { HooksBrand, HooksDescriptor } from "./formats/hooks/descriptor.js";

@@ -1,12 +1,15 @@
+import {
+  artifactPath,
+  hooksFilePath,
+} from "../../../../shared/domain/materialization/artifact-path.js";
+import type {
+  SupportedArtifact,
+  ToolBuildContract,
+} from "../../../../shared/domain/materialization/build-contract.js";
 import type {
   PluginComponentFile,
   PluginDistribution,
 } from "../../../../shared/domain/plugin/plugin-distribution.js";
-import { artifactPath, hooksFilePath } from "../../../tools/contract/artifact-path.js";
-import type {
-  SupportedArtifact,
-  ToolBuildContract,
-} from "../../../tools/contract/build-contract.js";
 import { PLUGIN_HOOKS_RELATIVE } from "../canon-format.js";
 import { flatAgentPath, flatLinkTarget, mergeFlatHooks } from "../flat-layout.js";
 import { agentLinks } from "../rules/agent-markdown.js";

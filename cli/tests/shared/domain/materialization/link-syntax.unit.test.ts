@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   applyLinkSyntax,
   REFERENCE_CHARS,
-} from "../../../../src/contexts/tools/contract/link-syntax.js";
+} from "../../../../src/shared/domain/materialization/link-syntax.js";
 
 describe("applying link syntax rules", () => {
   it("applies each rule in turn, so a later rule reads what an earlier one wrote", () => {

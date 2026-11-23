@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { mergeCodexConfigToml } from "../../../../../../src/contexts/tools/domain/behaviours/codex/codex-config.model.js";
-import { SmolTomlCodec } from "../../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
+import { SmolTomlCodec } from "../../../../../../src/shared/infrastructure/smol-toml-codec.adapter.js";
 
 const TOML = new SmolTomlCodec();
 

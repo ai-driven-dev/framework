@@ -183,7 +183,7 @@ export const PLANTS: readonly Plant[] = [
     1,
   ],
   [
-    "src/contexts/tools/infrastructure/reaches-shared.ts",
+    "src/contexts/auth/infrastructure/reaches-shared.ts",
     reaches("../../../shared/infrastructure/http-client.js"),
     IMPORT,
     1,

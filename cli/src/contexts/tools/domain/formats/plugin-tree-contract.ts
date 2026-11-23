@@ -1,4 +1,7 @@
-import type { AgentMarkdown, ToolBuildContract } from "../../contract/build-contract.js";
+import type {
+  AgentMarkdown,
+  ToolBuildContract,
+} from "../../../../shared/domain/materialization/build-contract.js";
 import {
   buildSharedEntry,
   buildSharedMarketplace,

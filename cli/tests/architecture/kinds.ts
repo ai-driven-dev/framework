@@ -29,7 +29,9 @@ export type Rule =
   | "profile"
   | "controllerBuildsError"
   | "size"
-  | "purity";
+  | "purity"
+  | "toolsAdapter"
+  | "domainAsset";
 
 export interface Violation {
   readonly rule: Rule;

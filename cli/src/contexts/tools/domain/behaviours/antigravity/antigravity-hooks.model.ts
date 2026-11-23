@@ -1,4 +1,4 @@
-import type { ShippedHooks } from "../../../contract/build-contract.js";
+import type { ShippedHooks } from "../../../../../shared/domain/materialization/build-contract.js";
 import type { ProjectHooksFormat } from "../../../contract/tool-vocabulary.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import {

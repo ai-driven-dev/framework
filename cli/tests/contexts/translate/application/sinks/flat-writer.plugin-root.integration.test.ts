@@ -3,7 +3,7 @@ import type {
   ArtifactContract,
   ConfigArtifactInput,
   ToolBuildContract,
-} from "../../../../../src/contexts/tools/contract/build-contract.js";
+} from "../../../../../src/shared/domain/materialization/build-contract.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import {

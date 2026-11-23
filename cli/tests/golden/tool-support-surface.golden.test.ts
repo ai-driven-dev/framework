@@ -2,7 +2,7 @@
 
 import { join } from "node:path";
 import { describe, it } from "vitest";
-import type { ArtifactContract } from "../../src/contexts/tools/contract/build-contract.js";
+import type { ArtifactContract } from "../../src/shared/domain/materialization/build-contract.js";
 import { pluginModeOf } from "../contexts/tools/testing/plugin-mode.builder.js";
 import { catalogOf, registeredAiConfig } from "../shared/testing/catalog-of.builder.js";
 import { REPOSITORY_ROOT } from "../shared/testing/repository-root.builder.js";

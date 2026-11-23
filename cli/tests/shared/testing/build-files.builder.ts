@@ -1,7 +1,7 @@
-import type { ToolBuildContract } from "../../../src/contexts/tools/contract/build-contract.js";
 import type { FrameworkBuildMode } from "../../../src/contexts/tools/contract/tool-profile.js";
 import { translate } from "../../../src/contexts/translate/domain/engine.js";
 import type { OutputFile } from "../../../src/contexts/translate/domain/output-file.js";
+import type { ToolBuildContract } from "../../../src/shared/domain/materialization/build-contract.js";
 import type { PluginDistribution } from "../../../src/shared/domain/plugin/plugin-distribution.js";
 
 /** The files the engine builds for one plugin in the given layout, named from the output

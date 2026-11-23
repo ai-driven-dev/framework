@@ -1,4 +1,6 @@
 import kiloJson from "../../../assets/configs/kilo/kilo.json" with { type: "json" };
+// biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
+import adapter from "../../../assets/hooks-runtime/host-bridge.cjs";
 import { MCP_CONFIG_REF } from "../../contexts/tools/contract/config-refs.js";
 import { buildKiloFlatContract } from "../../contexts/tools/domain/behaviours/kilo/kilo-build.model.js";
 import { declareBridgeHooks } from "../../contexts/tools/domain/bridges/event-bridge.js";
@@ -64,7 +66,7 @@ const KILO_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(KILO_DIRECTORY, 
 });
 
 const hooks = declareBridgeHooks(
-  { toolId: "kilo", directory: KILO_DIRECTORY },
+  { toolId: "kilo", directory: KILO_DIRECTORY, adapter },
   ["session.created", "tool.execute.after", "session.idle"],
   { loaderEntry: { dir: `${KILO_DIRECTORY}plugin/`, baseName: "kilo-plugin.js" } }
 );

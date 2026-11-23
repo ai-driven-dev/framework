@@ -22,10 +22,10 @@ import { fileURLToPath } from "node:url";
 
 const CLI_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-/** Every context has these three. */
-const LAYERS = ["domain", "application", "infrastructure"];
+/** Every context has these two. */
+const LAYERS = ["domain", "application"];
 /** A context also has these wherever the folder exists. */
-const OPTIONAL_LAYERS = ["ports", "contract"];
+const OPTIONAL_LAYERS = ["infrastructure", "ports", "contract"];
 const INTERIOR_FOLDERS = ["domain", "ports", "infrastructure"];
 /** `tools` keeps its `application/` to the composition root too: what an outside caller asks of
  * a tool is in `contract/`, and the one application file builds the catalog the root hands out. */

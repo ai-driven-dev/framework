@@ -1,10 +1,13 @@
 import { basename } from "node:path";
-import { artifactPath, hooksBridgeFilePath } from "../../tools/contract/artifact-path.js";
+import {
+  artifactPath,
+  hooksBridgeFilePath,
+} from "../../../shared/domain/materialization/artifact-path.js";
 import type {
   FlatHooksBridge,
   SupportedArtifact,
   ToolBuildContract,
-} from "../../tools/contract/build-contract.js";
+} from "../../../shared/domain/materialization/build-contract.js";
 import type { OutputFile } from "./output-file.js";
 
 /**

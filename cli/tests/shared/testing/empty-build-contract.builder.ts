@@ -1,4 +1,4 @@
-import type { ToolBuildContract } from "../../../src/contexts/tools/contract/build-contract.js";
+import type { ToolBuildContract } from "../../../src/shared/domain/materialization/build-contract.js";
 
 /** A contract that builds nothing: the emptiest valid one. */
 export function anEmptyContract(overrides: Partial<ToolBuildContract> = {}): ToolBuildContract {

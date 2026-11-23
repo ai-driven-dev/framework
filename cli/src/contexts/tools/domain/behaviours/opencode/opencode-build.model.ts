@@ -2,17 +2,17 @@
  * Opencode's build contract: flat only: opencode has no marketplace mode.
  */
 
-import type {
-  FlatArtifactLayout,
-  FlatHooksLoaderEntry,
-} from "../../../../../shared/domain/materialization/flat-paths.js";
-import { agentsIn, skillsIn } from "../../../contract/artifact-path.js";
+import { agentsIn, skillsIn } from "../../../../../shared/domain/materialization/artifact-path.js";
 import type {
   AgentMarkdown,
   ConfigArtifactFile,
   ConfigArtifactInput,
   ToolBuildContract,
-} from "../../../contract/build-contract.js";
+} from "../../../../../shared/domain/materialization/build-contract.js";
+import type {
+  FlatArtifactLayout,
+  FlatHooksLoaderEntry,
+} from "../../../../../shared/domain/materialization/flat-paths.js";
 import type {
   FlatHooksRoute,
   HooksDescriptor,

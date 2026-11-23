@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { opencode } from "../../../../../../src/composition/tool-profiles/opencode.js";
-import { applyLinkSyntax } from "../../../../../../src/contexts/tools/contract/link-syntax.js";
+import { applyLinkSyntax } from "../../../../../../src/shared/domain/materialization/link-syntax.js";
 
 const rewrite = (text: string) => applyLinkSyntax(text, opencode.linkSyntax);
 
