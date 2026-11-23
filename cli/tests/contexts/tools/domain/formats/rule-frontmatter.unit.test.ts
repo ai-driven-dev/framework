@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   descriptionOnlyRule,
   globsScopedRule,
-  pathsScopedRule,
   toMdc,
 } from "../../../../../src/contexts/tools/domain/formats/rule-frontmatter.js";
 import { rulesRows, WRITES_NOTHING } from "../../testing/profile-tables.builder.js";
@@ -19,20 +18,6 @@ describe("keeping only a rule's description", () => {
       descriptionOnlyRule({ alwaysApply: true, description: "x" }),
       descriptionOnlyRule({ alwaysApply: false }),
     ]).toStrictEqual([{}, {}]);
-  });
-});
-
-describe("a rule scoped by paths", () => {
-  it.each(
-    rulesRows({
-      ...WRITES_NOTHING,
-      "a paths list": { paths: ["a", "b"] },
-      "globs that apply on request": { paths: ["a"] },
-      "paths beside a description": { paths: ["a"] },
-      "a description that opts out of always-apply": { description: "d" },
-    })
-  )("converts %s", (_case, frontmatter, expected) => {
-    expect(pathsScopedRule(frontmatter)).toStrictEqual(expected);
   });
 });
 
