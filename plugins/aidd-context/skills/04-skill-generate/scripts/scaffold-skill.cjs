@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 "use strict";
-// Usage: node scaffold-skill.cjs <plan.json> <skill-folder>
+// Usage: node scaffold-skill.cjs <plan.json|-> <skill-folder> (- reads JSON from stdin)
 // Fills the structural slots of ../assets/skill-template.md and ../assets/action-template.md
 // from a plan, and leaves every content slot to the model. Creates only missing files.
 // Plan: {"name", "description", "entries"?: [{"to": <slug>, "label"?}], "actions": [{"slug", "title",
@@ -10,7 +10,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const ASSETS = path.join(__dirname, "../assets");
-const USAGE = "usage: scaffold-skill.cjs <plan.json> <skill-folder>\n";
+const USAGE = "usage: scaffold-skill.cjs <plan.json|-> <skill-folder> (- reads JSON from stdin)\n";
 const SKILL_SLOTS = ["{{skill-name}}", "{{description}}", "{{Skill Name}}", "{{diagram from the plan}}"];
 const ACTION_SLOTS = ["{{NN}}", "{{title}}", "{{read-next step}}"];
 const KEBAB = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
@@ -104,7 +104,7 @@ function main(args) {
   let skillText;
   let actionText;
   try {
-    plan = JSON.parse(fs.readFileSync(planFile, "utf8"));
+    plan = JSON.parse(fs.readFileSync(planFile === "-" ? 0 : planFile, "utf8"));
     skillText = template("skill-template.md", SKILL_SLOTS);
     actionText = template("action-template.md", ACTION_SLOTS);
   } catch (error) {

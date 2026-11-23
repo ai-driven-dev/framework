@@ -11,7 +11,7 @@ The constraints every generated skill satisfies, this generator included. `scaff
 | R3 | Write in English unless the user asks for another language. | The tree is maintained in one language. |
 | R4 | Emit a frontmatter field beyond those `tool-write.md` lists only when the plan needs it and the target's official source supports it. | Each host reads a different set. |
 | R5 | Draw every path: an entry per case, a back-edge per loop, a terminal per outcome, a stop or confirm branch no transversal rule states. An action may run alone, from its own entry. | A path missing from the diagram is invisible. |
-| R6 | `## Transversal rules` holds the skill's own rules that more than one action follows. This generator's rules and these authoring rules stay out. | The router loads on every call. |
+| R6 | Use `## Transversal rules` only for shared constraints not already enforced elsewhere; exclude generator and authoring rules. | The router loads on every call. |
 | R7 | Keep action detail in its action, and a judgment or looked-up fact (path, format, per-host value) in a reference. | The router loads on every call. |
 | R8 | A step is one imperative sentence doing one action on a named object. A case is a dash sub-item that opens with its condition. Three or more things to present go in sub-items or a template. A loop names the step it returns to. A check ends in validate, fix, repeat until it passes. | A step holding two actions is read as one. |
 | R9 | `## Output` is one line: what exists when the action is done. `## Input` names what it uses. Add a check step only when the action changes files or state. | Carried items repeat the action before. |
