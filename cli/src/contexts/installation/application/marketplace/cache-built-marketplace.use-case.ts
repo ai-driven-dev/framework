@@ -159,6 +159,7 @@ export class CacheBuiltMarketplace {
       await this.buildViaTemp(job);
       return;
     }
+    await this.deps.fs.deleteDirectory(job.builtDir);
     await this.runBuild({ ...job, outDir: job.builtDir });
   }
 
