@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { resolveHomePath } from "../../../../../src/contexts/tools/domain/profile/home-path.js";
+import { resolveHomePath } from "../../../../src/contexts/tools/contract/home-path.js";
 
 const HOME = join("/users", "ada");
 const noEnvironment = (): undefined => undefined;

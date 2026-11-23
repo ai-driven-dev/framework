@@ -1,7 +1,9 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { claude } from "../../../../../../src/composition/tool-profiles/claude.js";
+import { registeredAiConfig } from "../../../../../shared/testing/catalog-of.builder.js";
 import { nativeOf } from "../../../../../shared/testing/native-plugin-answers.builder.js";
+import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 
 describe("claude plugins", () => {
   describe("with Claude's plugins capability", () => {
@@ -24,7 +26,7 @@ describe("claude plugins", () => {
     });
 
     it("declares its own marketplace registry and plugin cache root, for clean's own purge", () => {
-      const activation = claude.nativeActivation();
+      const activation = registeredAiConfig(TOOL.claude).nativeActivation();
       expect(activation?.marketplaceRegistryAt("/home/tester")?.path).toBe(
         join("/home/tester", ".claude", "plugins", "known_marketplaces.json")
       );
@@ -34,14 +36,14 @@ describe("claude plugins", () => {
     });
 
     it("declares where claude's own user-scope settings file lives, for --scope user", () => {
-      const activation = claude.nativeActivation();
+      const activation = registeredAiConfig(TOOL.claude).nativeActivation();
       expect(activation?.userSettingsFile("/home/tester", () => undefined)).toBe(
         join("/home/tester", ".claude", "settings.json")
       );
     });
 
     it("drives the claude binary at local scope, with the verbs claude uses and nothing else", () => {
-      const activation = claude.nativeActivation();
+      const activation = registeredAiConfig(TOOL.claude).nativeActivation();
       // Exhaustive, not `toMatchObject`: a verb added by mistake must fail here.
       expect(activation?.hostBinary()).toBe("claude");
       expect(activation?.cliShape()).toEqual({
@@ -62,7 +64,7 @@ describe("claude plugins", () => {
     });
 
     it("registers a marketplace in the file claude writes itself, and enables plugins in the tracked one", () => {
-      const settings = claude.marketplaceRegistration();
+      const settings = registeredAiConfig(TOOL.claude).marketplaceRegistration();
 
       expect({
         settingsPath: settings?.sharedSettingsFile(),

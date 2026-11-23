@@ -1,6 +1,10 @@
 import codexConfigToml from "../../../assets/configs/codex/config.toml";
 // biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
 import adapter from "../../../assets/hooks-runtime/host-codex.cjs";
+import type {
+  NativeActivationSpec,
+  NativeRegistrationSection,
+} from "../../contexts/host-registration/contract/native-registration-spec.js";
 import { MCP_CONFIG_REF } from "../../contexts/tools/contract/config-refs.js";
 import type { LinkSyntax } from "../../contexts/tools/contract/link-syntax.js";
 import { PLUGIN_ROOT_TOKEN } from "../../contexts/tools/contract/plugin-root-token.js";
@@ -96,41 +100,41 @@ const CODEX_CONFIG_ASSETS: readonly ShippedConfig[] = [
   },
 ];
 
+// Codex only enables plugins from its user-global config plus its own plugin cache; a
+// project-local settings file is inert, so the `codex` CLI is driven directly instead.
+const CODEX_ACTIVATION: NativeActivationSpec = {
+  binary: "codex",
+  upgradeVerb: "upgrade",
+  enableVerb: "add",
+  disableVerb: "remove",
+  // Codex's own `plugin remove` deletes a marketplace's cached content but leaves the
+  // now-empty `cache/<hostName>/` shell behind. No `marketplaceRegistry` is declared -
+  // codex refuses a re-add from a different source itself, so there is no registry to
+  // reread: which is why `clean` proves this leftover safe to remove by its own
+  // emptiness instead.
+  pluginCacheDir: "{home}/.codex/plugins/cache",
+  // The registry is read from `~/.codex/config.toml` whatever `CODEX_HOME` says, unlike
+  // `userSettingsPath` below: a measured behaviour kept as it is, not an oversight.
+  pluginRegistry: {
+    location: "{home}/.codex/config.toml",
+    layout: "toml-plugin-tables",
+  },
+  marketplaceSources: {
+    from: "list-command",
+    args: ["plugin", "marketplace", "list", "--json"],
+    layout: "marketplaces-with-source",
+    hostLabel: "Codex",
+    unavailableMessage: "Codex marketplace list --json unavailable; inspect the host CLI and retry",
+    unverifiedMessage: "Codex marketplace list --json output shape is not verified",
+  },
+  // `$CODEX_HOME/config.toml` when set: a real codex binary reads there whatever `HOME`
+  // says: else `~/.codex/config.toml`. Never written by aidd; named for a diagnostic alone.
+  userSettingsPath: { env: "CODEX_HOME", fallback: "{home}/.codex", fileName: "config.toml" },
+};
+
 const CODEX_LAYOUT = nativeLayout({
   pluginsDir: ".codex/plugins/",
   globalFiles: { dir: "{home}/.codex", map: codexGlobalFilePath },
-  // Codex only enables plugins from its user-global config plus its own plugin cache; a
-  // project-local settings file is inert, so the `codex` CLI is driven directly instead.
-  nativeActivation: {
-    binary: "codex",
-    upgradeVerb: "upgrade",
-    enableVerb: "add",
-    disableVerb: "remove",
-    // Codex's own `plugin remove` deletes a marketplace's cached content but leaves the
-    // now-empty `cache/<hostName>/` shell behind. No `marketplaceRegistry` is declared -
-    // codex refuses a re-add from a different source itself, so there is no registry to
-    // reread: which is why `clean` proves this leftover safe to remove by its own
-    // emptiness instead.
-    pluginCacheDir: "{home}/.codex/plugins/cache",
-    // The registry is read from `~/.codex/config.toml` whatever `CODEX_HOME` says, unlike
-    // `userSettingsPath` below: a measured behaviour kept as it is, not an oversight.
-    pluginRegistry: {
-      location: "{home}/.codex/config.toml",
-      layout: "toml-plugin-tables",
-    },
-    marketplaceSources: {
-      from: "list-command",
-      args: ["plugin", "marketplace", "list", "--json"],
-      layout: "marketplaces-with-source",
-      hostLabel: "Codex",
-      unavailableMessage:
-        "Codex marketplace list --json unavailable; inspect the host CLI and retry",
-      unverifiedMessage: "Codex marketplace list --json output shape is not verified",
-    },
-    // `$CODEX_HOME/config.toml` when set: a real codex binary reads there whatever `HOME`
-    // says: else `~/.codex/config.toml`. Never written by aidd; named for a diagnostic alone.
-    userSettingsPath: { env: "CODEX_HOME", fallback: "{home}/.codex", fileName: "config.toml" },
-  },
 });
 
 /** The MCP servers file, merged as TOML with the codec the composition wires. */
@@ -186,3 +190,6 @@ export const codexSpec = {
 
   linkSyntax: LINK_SYNTAX,
 } satisfies AiToolSpec<typeof CODEX_CAPABILITIES>;
+
+/** The section host-registration reads: how Codex's own plugin CLI activates plugins. */
+export const codexNativeRegistration: NativeRegistrationSection = { activation: CODEX_ACTIVATION };

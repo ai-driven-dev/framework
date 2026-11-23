@@ -8,7 +8,6 @@ export function pluginDeliveryAccepting(hooks: HooksAcceptance): PluginDelivery 
   return {
     requiresUserScope: () => false,
     materializesFromBuiltTree: () => false,
-    supportsUserScopeActivation: () => false,
     copiesFilesGlobally: () => false,
     userPluginsBaseDir: () => null,
     globalFiles: () => null,

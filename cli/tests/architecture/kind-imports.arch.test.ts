@@ -199,6 +199,16 @@ describe("a file imports only the kinds its kind allows", () => {
     ]);
   });
 
+  it("passes a profile that imports the native-registration section type host-registration defines", () => {
+    expect(
+      importsOf({
+        "src/composition/tool-profiles/x.ts":
+          'import type { S } from "../../contexts/host-registration/contract/s.js";',
+        "src/contexts/host-registration/contract/s.ts": "export type S = 1;",
+      })
+    ).toEqual([]);
+  });
+
   it("flags a profile that imports a file of another profile, and passes its own folder", () => {
     const base = "src/composition/tool-profiles";
     const own = "src/contexts/tools/domain/behaviours";

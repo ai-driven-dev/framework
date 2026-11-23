@@ -6,7 +6,8 @@
  * import-based reading cannot see that file, so this one asks the compiler. A profile expression
  * (an identifier or a call whose type is a whole-profile type) is a hit when it is an argument of
  * a call or a `new`, directly or inside an object or array literal argument, and the type the
- * parameter asks for is a whole-profile type too.
+ * parameter asks for is a whole-profile type too. A profile assembled with more answers (an
+ * intersection naming a whole-profile type) is a profile expression as well.
  *
  * A hit is skipped when the callee is declared in a file the caller lists as exempt: the debt of
  * handing a whole profile on belongs to that listed file, and callers of it are not new coupling.
@@ -77,6 +78,8 @@ function declaringFile(project: Project, call: Node, root: string): string | und
 interface Reading {
   project: Project;
   isWhole: (type: Type | undefined) => boolean;
+  /** Whole, or the whole profile assembled with more answers: an intersection naming it. */
+  carriesWhole: (type: Type | undefined) => boolean;
   exemptCallees: readonly string[];
   root: string;
 }
@@ -104,7 +107,7 @@ function handsWholeProfileOn(
   expression: CallExpression | Identifier,
   type: Type | undefined
 ): boolean {
-  if (!reading.isWhole(type)) return false;
+  if (!reading.carriesWhole(type)) return false;
   const call = enclosingCall(expression);
   if (call === null) return false;
   const { checker } = reading.project;
@@ -137,9 +140,12 @@ function flowsIn(
   const declaration = program.getSourceFile(at(profileModule));
   if (!declaration) throw new Error(`the compiler returned no source for ${profileModule}`);
   const whole = wholeProfileTypeIds(project, declaration, profileModule);
+  const isWhole = (type: Type | undefined) => type !== undefined && whole.has(type.id);
   const reading: Reading = {
     project,
-    isWhole: (type) => type !== undefined && whole.has(type.id),
+    isWhole,
+    carriesWhole: (type) =>
+      isWhole(type) || (type?.isIntersectionType() === true && type.getTypes().some(isWhole)),
     exemptCallees,
     root: at(""),
   };

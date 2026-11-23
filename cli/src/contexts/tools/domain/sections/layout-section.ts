@@ -1,14 +1,7 @@
 import type { FlatArtifactLayout } from "../../../../shared/domain/materialization/flat-paths.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
-import type {
-  HomeTemplate,
-  MarketplaceSettings,
-  NativeActivationSpec,
-} from "../../contract/native-registration-spec.js";
+import { type HomeTemplate, resolveHomeTemplate } from "../../contract/home-path.js";
 import type { GlobalFiles } from "../../contract/tool-vocabulary.js";
-import { MarketplaceRegistration } from "../native-registration/marketplace-registration.js";
-import { NativeActivation } from "../native-registration/native-activation.js";
-import { resolveHomeTemplate } from "../profile/home-path.js";
 import { CapabilityConfigError } from "../tools.error.js";
 
 /**
@@ -40,10 +33,6 @@ export interface NativeLayout {
   readonly installScope: Scope;
   readonly userPluginsDir?: HomeTemplate;
   readonly globalFiles?: GlobalFiles;
-  /** The tool's own plugin CLI, when it drives the activation. */
-  readonly activation?: NativeActivation;
-  /** Where the tool records the marketplaces it knows, which needs an activation. */
-  readonly marketplace?: MarketplaceRegistration;
 }
 
 /** A tool that loads a plugin's files from its own workspace directory. */
@@ -81,23 +70,6 @@ export interface NativeLayoutParams {
   installScope?: Scope;
   userPluginsDir?: HomeTemplate;
   globalFiles?: GlobalFilesParams;
-  nativeActivation?: NativeActivationSpec;
-  marketplaceSettings?: MarketplaceSettings;
-}
-
-function activationOf(params: NativeLayoutParams): NativeActivation | undefined {
-  return params.nativeActivation === undefined
-    ? undefined
-    : new NativeActivation(params.nativeActivation);
-}
-
-function marketplaceOf(
-  params: NativeLayoutParams,
-  activation: NativeActivation | undefined
-): MarketplaceRegistration | undefined {
-  return params.marketplaceSettings === undefined
-    ? undefined
-    : new MarketplaceRegistration(params.marketplaceSettings, activation ?? null);
 }
 
 export function nativeLayout(params: NativeLayoutParams): NativeLayout {
@@ -105,16 +77,12 @@ export function nativeLayout(params: NativeLayoutParams): NativeLayout {
   if (installScope === "user" && params.userPluginsDir === undefined) {
     throw new CapabilityConfigError("installScope 'user' requires a userPluginsDir home template.");
   }
-  const activation = activationOf(params);
-  const marketplace = marketplaceOf(params, activation);
   return {
     mode: "native",
     pluginsDir: params.pluginsDir,
     installScope,
     ...(params.userPluginsDir === undefined ? {} : { userPluginsDir: params.userPluginsDir }),
     ...globalFilesOf(params.globalFiles),
-    ...(activation === undefined ? {} : { activation }),
-    ...(marketplace === undefined ? {} : { marketplace }),
   };
 }
 

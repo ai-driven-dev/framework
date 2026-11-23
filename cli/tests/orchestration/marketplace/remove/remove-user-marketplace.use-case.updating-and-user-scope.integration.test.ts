@@ -5,7 +5,7 @@ import { Marketplace } from "../../../../src/contexts/distribution/domain/market
 import type { ToolRecords } from "../../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import { resolveHomeTemplate } from "../../../../src/contexts/tools/domain/profile/home-path.js";
+import { resolveHomeTemplate } from "../../../../src/contexts/tools/contract/home-path.js";
 import { FileHash } from "../../../../src/shared/domain/file-hash.js";
 import { FakeHostActions } from "../../../shared/testing/fake-host-actions.fake.js";
 import { hostWithdrawal } from "../../../shared/testing/host-withdrawal.builder.js";

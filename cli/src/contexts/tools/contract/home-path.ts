@@ -1,9 +1,16 @@
 import { join } from "node:path";
-import type {
-  EnvironmentReader,
-  HomePath,
-  HomeTemplate,
-} from "../../contract/native-registration-spec.js";
+
+/** A path under the home directory, declared as data: a template, or a directory an environment
+ * variable names, with a template to fall back on, and the file name under it. */
+export type HomePath =
+  | HomeTemplate
+  | { readonly env: string; readonly fallback: HomeTemplate; readonly fileName: string };
+
+/** A `/`-separated path whose `{home}` segment stands for the home directory. */
+export type HomeTemplate = string;
+
+/** Reads one environment variable, undefined when it is unset. */
+export type EnvironmentReader = (name: string) => string | undefined;
 
 const HOME_SEGMENT = "{home}";
 

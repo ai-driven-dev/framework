@@ -73,7 +73,7 @@ describe("copilot build and conversion tables", () => {
 
 describe("copilot capabilities.plugins", () => {
   it("declares where copilot's own user-scope settings file lives, for --scope user", () => {
-    const activation = copilot.nativeActivation();
+    const activation = registeredAiConfig(TOOL.copilot).nativeActivation();
     expect(activation?.userSettingsFile("/home/tester", () => undefined)).toBe(
       join("/home/tester", ".copilot", "settings.json")
     );

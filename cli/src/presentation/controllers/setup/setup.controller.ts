@@ -28,6 +28,7 @@ import {
   parseSourceFlag,
   parseToolIds,
   requireAgentHosts,
+  type SetupCatalog,
   type SetupCmdOptions,
 } from "./setup-flags.controller.js";
 
@@ -144,7 +145,7 @@ async function runSetupAction(run: SetupRun): Promise<void> {
 
 export function registerSetupCommand(
   program: Command,
-  catalog: ToolCatalog,
+  catalog: SetupCatalog,
   createDeps: DepsSliceFactory<SetupKeys>
 ): void {
   declareSetupOptions(program.command("setup"), catalog)

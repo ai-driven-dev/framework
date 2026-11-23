@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   MarketplaceSourceConflictError,
   NativePluginCliError,
+  NativeRegistrationConfigError,
   UnreadableBuiltCatalogError,
 } from "../../../../src/contexts/host-registration/domain/host-registration.error.js";
 
@@ -49,5 +50,22 @@ describe("when a built catalog cannot be read", () => {
 
   it("carries its stable code", () => {
     expect(new UnreadableBuiltCatalogError("/built/c.json").code).toBe("unreadable-built-catalog");
+  });
+});
+
+describe("when a native-registration section contradicts itself", () => {
+  it("carries its data and says nothing itself", () => {
+    const error = new NativeRegistrationConfigError("empty binary");
+    expect({ name: error.name, detail: error.detail, message: error.message }).toStrictEqual({
+      name: "NativeRegistrationConfigError",
+      detail: "empty binary",
+      message: "",
+    });
+  });
+
+  it("carries its stable code", () => {
+    expect(new NativeRegistrationConfigError("empty binary").code).toBe(
+      "native-registration-config"
+    );
   });
 });

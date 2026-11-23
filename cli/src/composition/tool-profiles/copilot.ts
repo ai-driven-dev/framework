@@ -3,6 +3,11 @@ import copilotVscodeSettings from "../../../assets/configs/copilot/vscode-settin
 };
 // biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
 import adapter from "../../../assets/hooks-runtime/host-copilot.cjs";
+import type {
+  MarketplaceSettings,
+  NativeActivationSpec,
+  NativeRegistrationSection,
+} from "../../contexts/host-registration/contract/native-registration-spec.js";
 import { MCP_CONFIG_REF } from "../../contexts/tools/contract/config-refs.js";
 import { PLUGIN_ROOT_TOKEN } from "../../contexts/tools/contract/plugin-root-token.js";
 import { buildCopilotMarketplaceContract } from "../../contexts/tools/domain/behaviours/copilot/copilot-build.model.js";
@@ -30,10 +35,7 @@ import { typescriptOrMonorepo } from "../../contexts/tools/domain/profile/recomm
 import { AgentsSection } from "../../contexts/tools/domain/sections/agents-section.js";
 import { CommandsSection } from "../../contexts/tools/domain/sections/commands-section.js";
 import { ConfigSection } from "../../contexts/tools/domain/sections/config-section.js";
-import {
-  type NativeLayoutParams,
-  nativeLayout,
-} from "../../contexts/tools/domain/sections/layout-section.js";
+import { nativeLayout } from "../../contexts/tools/domain/sections/layout-section.js";
 import { manifestSection } from "../../contexts/tools/domain/sections/manifest-section.js";
 import {
   acceptedPluginMcp,
@@ -99,7 +101,7 @@ const hooksSupport = nativeHooksSupport(hooks);
 // no longer exists breaks every other project's installs: measured; `update` exits 1 on a
 // local path that is gone and 0 otherwise, which is what lets a dead name be reclaimed with
 // `--force` without ever taking one that still resolves.
-const COPILOT_ACTIVATION: NativeLayoutParams["nativeActivation"] = {
+const COPILOT_ACTIVATION: NativeActivationSpec = {
   binary: "copilot",
   upgradeVerb: "update",
   updateVerb: "update",
@@ -134,7 +136,7 @@ const COPILOT_ACTIVATION: NativeLayoutParams["nativeActivation"] = {
 
 // Copilot CLI and cloud agent read this repository file; enabledPlugins auto-installs.
 // Keep machine-local marketplace paths out and project only proven native refs.
-const COPILOT_MARKETPLACE_SETTINGS: NativeLayoutParams["marketplaceSettings"] = {
+const COPILOT_MARKETPLACE_SETTINGS: MarketplaceSettings = {
   settingsPath: ".github/copilot/settings.json",
   settingsKey: "extraKnownMarketplaces",
   marketplacesSettingsPath: null,
@@ -145,8 +147,6 @@ const COPILOT_MARKETPLACE_SETTINGS: NativeLayoutParams["marketplaceSettings"] = 
 
 const COPILOT_LAYOUT = nativeLayout({
   pluginsDir: ".github/plugins/",
-  nativeActivation: COPILOT_ACTIVATION,
-  marketplaceSettings: COPILOT_MARKETPLACE_SETTINGS,
 });
 
 const COPILOT_MCP = {
@@ -240,3 +240,10 @@ export const copilot = defineAiTool({
 
   linkSyntax: COPILOT_LINK_SYNTAX,
 });
+
+/** The section host-registration reads: how Copilot's own plugin CLI activates plugins and
+ * where it records marketplaces. */
+export const copilotNativeRegistration: NativeRegistrationSection = {
+  activation: COPILOT_ACTIVATION,
+  marketplace: COPILOT_MARKETPLACE_SETTINGS,
+};

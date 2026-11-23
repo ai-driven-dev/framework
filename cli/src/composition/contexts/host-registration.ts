@@ -1,6 +1,11 @@
 import { join } from "node:path";
 import { CheckMarketplaceSource } from "../../contexts/host-registration/application/check-marketplace-source.use-case.js";
 import type { CatalogReaders } from "../../contexts/host-registration/application/register/registration-run.js";
+import type {
+  MarketplaceRegistryLayout,
+  PluginRegistryLayout,
+} from "../../contexts/host-registration/contract/native-registration-spec.js";
+import type { NativeActivation } from "../../contexts/host-registration/domain/native-registration/native-activation.js";
 import {
   withEnabledPlugins,
   withoutMarketplaces,
@@ -21,13 +26,6 @@ import type { HostMarketplaceRegistry } from "../../contexts/host-registration/p
 import type { HostMarketplaceSources } from "../../contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../contexts/host-registration/ports/host-plugin-registry.js";
 import type { RegistrationRecordRepository } from "../../contexts/host-registration/ports/registration-record-repository.js";
-import type {
-  MarketplaceRegistryLayout,
-  PluginRegistryLayout,
-} from "../../contexts/tools/contract/native-registration-spec.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import type { NativeActivation } from "../../contexts/tools/domain/native-registration/native-activation.js";
-import type { BuiltToolConfig } from "../../contexts/tools/domain/profile/define-tool.js";
 import { DuplicateToolIdError } from "../../contexts/tools/domain/tools.error.js";
 import type { SettingsDeclarationRules } from "../../orchestration/sync/settings/sync-tool-settings-files.use-case.js";
 import { asPlainObject } from "../../shared/domain/reading/plain-object.js";
@@ -38,7 +36,8 @@ import {
   type ToolKeyedJsonFileDeps,
 } from "../../shared/infrastructure/tool-keyed-json-file.js";
 import type { FileReader } from "../../shared/ports/file-reader.js";
-import { REGISTERED_PROFILES } from "../tool-profiles.composition.js";
+import { REGISTERED_PROFILES, type RegisteredProfile } from "../tool-profiles.composition.js";
+import type { RegisteredCatalog } from "./tools.js";
 
 /** The new content of a tool's shared settings file, answered by the host registration that owns it. */
 export const settingsDeclaration: SettingsDeclarationRules = {
@@ -66,7 +65,7 @@ const MARKETPLACE_READERS = {
 /** The native activation each given profile declares, by tool id. A profile that declares none
  * has no entry, and a tool registered twice is refused rather than resolved to its first copy. */
 export function nativeRegistrationsOf(
-  profiles: readonly BuiltToolConfig[]
+  profiles: readonly RegisteredProfile[]
 ): ReadonlyMap<ToolId, NativeActivation> {
   const seen = new Set<ToolId>();
   const registrations = new Map<ToolId, NativeActivation>();
@@ -97,7 +96,7 @@ export interface HostRegistrationDeps {
 /** Everything a host's own CLI and registries need, read off each tool's declared activation:
  * a new tool costs its profile and no edit here, a new layout one reader and one table line. */
 export function wireHostRegistration(
-  tools: ToolCatalog,
+  tools: RegisteredCatalog,
   home: string,
   registrations: ReadonlyMap<ToolId, NativeActivation> = nativeRegistrationsOf(REGISTERED_PROFILES)
 ): HostRegistrationDeps {

@@ -4,7 +4,7 @@ import type { HostMarketplaceSources } from "../../../src/contexts/host-registra
 import type { ToolRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import { resolveHomeTemplate } from "../../../src/contexts/tools/domain/profile/home-path.js";
+import { resolveHomeTemplate } from "../../../src/contexts/tools/contract/home-path.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";

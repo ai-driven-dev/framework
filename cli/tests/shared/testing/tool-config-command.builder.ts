@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, type Mock, vi } from "vitest";
-import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
+import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { bindOutput } from "../../../src/presentation/controllers/menu/global-options.controller.js";
 import { registerToolConfigCommand } from "../../../src/presentation/controllers/tools/tool-config.controller.js";
 import type { AiToolId, IdeToolId } from "../../../src/shared/domain/tool.js";
@@ -28,7 +28,7 @@ export interface ToolConfigHarness {
 }
 
 export interface ToolConfigHarnessOptions {
-  readonly tools: ToolCatalog;
+  readonly tools: RegisteredCatalog;
   /** The editor the install double reports installed. */
   readonly ideTool: IdeToolId;
   /** The runtime the uninstall double reports removed. */

@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import {
   configAnswers,
   configAssetNamed,
-  nativeActivationOf,
   sectionReader,
   settingsOf,
   settingsWrites,
@@ -31,10 +30,6 @@ describe("the answers a profile reads from its sections", () => {
     expect(settingsWrites({ config: [settings] })).toEqual([
       { kind: "settings", capability: settings },
     ]);
-  });
-
-  it("names no native activation without a native layout", () => {
-    expect(nativeActivationOf({})).toBeUndefined();
   });
 
   it("locates the signal directory under a project root, or none", () => {

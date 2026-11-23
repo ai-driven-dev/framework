@@ -1,6 +1,7 @@
 import { settingsDeclaration } from "../../../src/composition/contexts/host-registration.js";
 import { registrationRecordRules } from "../../../src/composition/contexts/installation.js";
 import { lenientSourceReferences } from "../../../src/composition/contexts/machine-claims.js";
+import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import { hostPortsOver } from "../../../src/contexts/host-registration/application/host-ports-over.js";
 import { PlanRefsToEnable } from "../../../src/contexts/host-registration/application/register/plan-refs-to-enable.use-case.js";
@@ -30,7 +31,6 @@ import {
   SharedFrameworkSource,
   type SharedFrameworkSourceDeps,
 } from "../../../src/contexts/machine-claims/application/shared-source/shared-framework-source.use-case.js";
-import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import {
   ActivateNativeTools,
   type ActivationMarketplace,
@@ -47,7 +47,7 @@ type Loader = LoadSyncContextDeps;
 
 /** What a test names; the host maps and every optional collaborator default to empty or absent. */
 export interface MarketplaceSyncParts {
-  tools: ToolCatalog;
+  tools: RegisteredCatalog;
   fs: SharedFrameworkSourceDeps["fs"];
   manifestRepo: ManifestRepository & ScopeRecords;
   marketplaceRegistry: Loader["marketplaceRegistry"];

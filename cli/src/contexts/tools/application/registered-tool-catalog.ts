@@ -1,17 +1,21 @@
 import { UnregisteredToolError } from "../../../shared/domain/shared.error.js";
 import type { AiToolId, IdeToolId, ToolCategory, ToolId } from "../../../shared/domain/tool.js";
 import type { RecommendationContext, ToolCatalog } from "../contract/tool-catalog.js";
-import type { AiToolProfile, IdeToolProfile, ToolProfile } from "../contract/tool-profile.js";
+import type { IdeToolProfile } from "../contract/tool-profile.js";
 import { agentProviders } from "../domain/models/agent-models.js";
-import type { BuiltToolConfig } from "../domain/profile/define-tool.js";
+import type { ProfileBrand } from "../domain/profile/define-tool.js";
+import type { AiTool, IdeToolConfig } from "../domain/profile.js";
 import { DuplicateToolIdError } from "../domain/tools.error.js";
+
+/** A registered profile: an assembled AI profile, or an editor's. */
+type Registered<A> = (A | IdeToolConfig) & ProfileBrand;
 
 /** The catalog of the profiles it is built from, which are held in the order they were given: the
  * canonical order. The help order is the same list with the tools delivering a native plugin first. */
-export class RegisteredToolCatalog implements ToolCatalog {
-  readonly #byId = new Map<string, BuiltToolConfig>();
+export class RegisteredToolCatalog<A extends AiTool = AiTool> implements ToolCatalog<A> {
+  readonly #byId = new Map<string, Registered<A>>();
 
-  constructor(profiles: readonly BuiltToolConfig[]) {
+  constructor(profiles: readonly Registered<A>[]) {
     for (const profile of profiles) {
       if (this.#byId.has(profile.toolId)) throw new DuplicateToolIdError(profile.toolId);
       this.#byId.set(profile.toolId, profile);
@@ -39,13 +43,13 @@ export class RegisteredToolCatalog implements ToolCatalog {
     return this.#byId.get(raw)?.kind === "ide";
   }
 
-  profile(id: string): ToolProfile {
+  profile(id: string): A | IdeToolConfig {
     const profile = this.#byId.get(id);
     if (profile === undefined) throw new UnregisteredToolError(id);
     return profile;
   }
 
-  aiProfile(id: AiToolId): AiToolProfile {
+  aiProfile(id: AiToolId): A {
     const profile = this.profile(id);
     if (profile.kind !== "ai") throw new UnregisteredToolError(id);
     return profile;
@@ -57,7 +61,7 @@ export class RegisteredToolCatalog implements ToolCatalog {
     return profile;
   }
 
-  aiProfileIfAny(id: ToolId): AiToolProfile | null {
+  aiProfileIfAny(id: ToolId): A | null {
     const profile = this.profile(id);
     return profile.kind === "ai" ? profile : null;
   }
@@ -103,7 +107,7 @@ export class RegisteredToolCatalog implements ToolCatalog {
   }
 }
 
-function idsOf(profiles: readonly BuiltToolConfig[], category?: ToolCategory): ToolId[] {
+function idsOf(profiles: readonly (AiTool | IdeToolConfig)[], category?: ToolCategory): ToolId[] {
   return profiles
     .filter((profile) => category === undefined || profile.kind === category)
     .map((profile) => profile.toolId);

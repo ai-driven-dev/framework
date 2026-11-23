@@ -11,6 +11,14 @@ export class MarketplaceSourceConflictError extends AiddError {
   }
 }
 
+/** A profile's native-registration section contradicts itself; refused when the profile loads. */
+export class NativeRegistrationConfigError extends AiddError {
+  readonly code = "native-registration-config";
+  constructor(readonly detail: string) {
+    super();
+  }
+}
+
 export class NativePluginCliError extends AiddError {
   readonly code = "native-plugin-cli";
   constructor(readonly detail: string) {

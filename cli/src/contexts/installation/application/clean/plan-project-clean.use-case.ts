@@ -1,10 +1,10 @@
 import type { Scope } from "../../../../shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { ToolRecord, ToolRecords } from "../../contract/records/scope-records.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import type { InstallationCatalog } from "../../ports/tool-sections.js";
 import type {
   CleanNativeRegistrationPreview,
   ProjectCleanPlan,
@@ -43,7 +43,7 @@ interface Installed {
 export class PlanProjectClean {
   constructor(
     private readonly deps: PlanProjectCleanDeps,
-    private readonly tools: ToolCatalog
+    private readonly tools: InstallationCatalog
   ) {}
 
   /** Null when this project installed nothing. */

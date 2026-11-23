@@ -1,3 +1,4 @@
+import type { RegisteredCatalog } from "../../../../src/composition/contexts/tools.js";
 import {
   UpdatePlugin,
   type UpdatePluginDeps,
@@ -6,7 +7,6 @@ import {
   UpdateProjectPlugins,
   type UpdateProjectPluginsDeps,
 } from "../../../../src/contexts/installation/application/plugin/update-project-plugins.use-case.js";
-import type { ToolCatalog } from "../../../../src/contexts/tools/contract/tool-catalog.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryManifestRepository } from "../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { FakeUserPluginMaterialization } from "./fake-user-plugin-materialization.fake.js";
@@ -14,7 +14,7 @@ import { FakeUserPluginMaterialization } from "./fake-user-plugin-materializatio
 /** An update of a project's plugins; the machine half is never reached. */
 export function buildProjectPluginUpdate(
   deps: UpdateProjectPluginsDeps,
-  tools: ToolCatalog
+  tools: RegisteredCatalog
 ): UpdatePlugin {
   return new UpdatePlugin(
     {
@@ -32,7 +32,7 @@ export function buildMachinePluginUpdate(
   deps: Pick<UpdatePluginDeps, "materializer" | "logger"> & {
     readonly repo: UpdatePluginDeps["userManifest"];
   },
-  tools: ToolCatalog
+  tools: RegisteredCatalog
 ): UpdatePlugin {
   const { repo, ...machine } = deps;
   return new UpdatePlugin(

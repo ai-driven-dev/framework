@@ -125,6 +125,8 @@ export const KINDS: readonly Kind[] = [
     within: [
       "src/contexts/tools/domain/**/*",
       "src/contexts/tools/contract/**/*",
+      // The native-registration section a profile file exports is typed by its reader.
+      "src/contexts/host-registration/contract/**/*",
       "src/shared/domain/**/*",
     ],
     tests: ["unit"],

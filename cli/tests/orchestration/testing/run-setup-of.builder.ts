@@ -1,9 +1,9 @@
+import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import type { DetectProjectContext } from "../../../src/contexts/installation/application/detect-project-context.use-case.js";
 import { InitProject } from "../../../src/contexts/installation/application/init-project.use-case.js";
 import type { InstallTools } from "../../../src/contexts/installation/application/install/install-tools.use-case.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
-import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import type { ResolveSetupSource } from "../../../src/orchestration/setup/resolve-setup-source.use-case.js";
 import { RunSetup } from "../../../src/orchestration/setup/run-setup.use-case.js";
 import type { RegisterFrameworkSource } from "../../../src/orchestration/setup/setup-flow.js";
@@ -19,7 +19,7 @@ import type { FileWriter } from "../../../src/shared/ports/file-writer.js";
 /** The setup scenario as composition wires it: prepare the project, install the tools, ask about
  * plugins, sync settings. */
 export function runSetupOf(parts: {
-  tools: ToolCatalog;
+  tools: RegisteredCatalog;
   fs: FileReader & FileWriter;
   manifestRepo: ManifestRepository;
   resolveSource: Pick<ResolveSetupSource, "execute">;

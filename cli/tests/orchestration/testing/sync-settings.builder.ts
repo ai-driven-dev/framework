@@ -1,10 +1,10 @@
 import { resolve } from "node:path";
+import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { HostRefusal } from "../../../src/contexts/host-registration/domain/native-refusal.js";
 import { registerMarketplacePlugin } from "../../../src/contexts/installation/application/materialize/register-marketplace-plugin.js";
 import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/contract/built-marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { PluginDistribution } from "../../../src/shared/domain/plugin/plugin-distribution.js";
 import { parsePluginName } from "../../../src/shared/domain/plugin/plugin-name.js";
 import type { PluginSource } from "../../../src/shared/domain/plugin/source.js";
@@ -38,7 +38,7 @@ export function distribution(claude: AiToolId, name: string): PluginDistribution
 }
 
 export interface SyncSetup {
-  readonly tools: ToolCatalog;
+  readonly tools: RegisteredCatalog;
   readonly claude: AiToolId;
   /** Content written to the shared settings file before the sync, when given. */
   readonly settings?: string;
@@ -267,6 +267,6 @@ async function syncWith(setup: SyncSetup) {
 }
 
 /** The scenario's sync, over the catalog and the claude id its test names. */
-export function syncOf(tools: ToolCatalog, claude: AiToolId) {
+export function syncOf(tools: RegisteredCatalog, claude: AiToolId) {
   return (setup: Omit<SyncSetup, "tools" | "claude"> = {}) => syncWith({ ...setup, tools, claude });
 }

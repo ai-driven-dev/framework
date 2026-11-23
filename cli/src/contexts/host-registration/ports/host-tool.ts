@@ -2,7 +2,7 @@ import type { AiToolId } from "../../../shared/domain/tool.js";
 import type {
   MarketplaceRegistrationAnswers,
   NativeActivationAnswers,
-} from "../../tools/contract/tool-profile.js";
+} from "../contract/native-registration-spec.js";
 
 // Each shape is the part of a tool one reader asks for. The tools context owns the profile, and
 // the caller hands over the real one, which satisfies every shape here.

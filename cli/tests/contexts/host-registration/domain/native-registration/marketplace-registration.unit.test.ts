@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { MarketplaceRegistration } from "../../../../../src/contexts/tools/domain/native-registration/marketplace-registration.js";
-import { NativeActivation } from "../../../../../src/contexts/tools/domain/native-registration/native-activation.js";
-import { CapabilityConfigError } from "../../../../../src/contexts/tools/domain/tools.error.js";
+import { NativeRegistrationConfigError } from "../../../../../src/contexts/host-registration/domain/host-registration.error.js";
+import { MarketplaceRegistration } from "../../../../../src/contexts/host-registration/domain/native-registration/marketplace-registration.js";
+import { NativeActivation } from "../../../../../src/contexts/host-registration/domain/native-registration/native-activation.js";
 
 const settings = {
   settingsPath: ".claude/settings.json",
@@ -48,7 +48,9 @@ describe("a tool's marketplace registration", () => {
   });
 
   it("refuses a registration the tool has no native activation to drive", () => {
-    expect(() => new MarketplaceRegistration(settings, null)).toThrow(CapabilityConfigError);
+    expect(() => new MarketplaceRegistration(settings, null)).toThrow(
+      NativeRegistrationConfigError
+    );
   });
 
   describe("reading the marketplaces a file declares", () => {

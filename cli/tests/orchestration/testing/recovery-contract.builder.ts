@@ -1,4 +1,5 @@
 import { resolve } from "node:path";
+import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { HostRefusal } from "../../../src/contexts/host-registration/domain/native-refusal.js";
 import type { HostPluginRegistryReading } from "../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
@@ -7,7 +8,6 @@ import type { HostMarketplaceSources } from "../../../src/contexts/host-registra
 import type { ToolRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../src/shared/domain/installation-file.js";
 import { builtMarketplaceDir } from "../../../src/shared/domain/layout/aidd-layout.js";
@@ -63,7 +63,7 @@ export class RecoveringActivator extends FakeHostActions {
 }
 
 export interface RecoveryOptions {
-  tools: ToolCatalog;
+  tools: RegisteredCatalog;
   toolId: AiToolId;
   source?: string;
   userRoot?: string;

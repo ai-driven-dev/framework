@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { resolveHomeTemplate } from "../../../../src/contexts/tools/domain/profile/home-path.js";
+import { resolveHomeTemplate } from "../../../../src/contexts/tools/contract/home-path.js";
 import { ExitRequested } from "../../../shared/testing/capturing-output.fake.js";
 import { doctorHarness } from "../../../shared/testing/doctor-command.builder.js";
 import {

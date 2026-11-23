@@ -1,11 +1,11 @@
+import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { wireTools } from "../../../src/composition/contexts/tools.js";
-import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { UnregisteredToolError } from "../../../src/shared/domain/shared.error.js";
 import type { ToolId, ToolIdResolver } from "../../../src/shared/domain/tool.js";
 
 /** The catalog of every registered tool, as the composition root wires it: wired on each call, so
  * no test shares one. */
-export function registeredTools(): ToolCatalog {
+export function registeredTools(): RegisteredCatalog {
   return wireTools();
 }
 

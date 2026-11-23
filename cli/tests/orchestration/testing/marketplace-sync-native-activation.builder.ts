@@ -1,11 +1,11 @@
 import { resolve } from "node:path";
+import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { HostRefusal } from "../../../src/contexts/host-registration/domain/native-refusal.js";
 import type { HostPluginRegistryReading } from "../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
@@ -20,7 +20,7 @@ import { FakeHostPluginRegistry } from "./fake-host-plugin-registry.fake.js";
 
 /** The catalog and the tool id a scenario runs against, handed in by the test. */
 export interface NativeActivationHost {
-  readonly tools: ToolCatalog;
+  readonly tools: RegisteredCatalog;
   readonly tool: AiToolId;
 }
 

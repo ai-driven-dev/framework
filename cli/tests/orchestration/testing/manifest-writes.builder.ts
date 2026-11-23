@@ -1,11 +1,11 @@
 import { resolve } from "node:path";
+import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { RegistrationRecord } from "../../../src/contexts/host-registration/domain/record/registration-record.js";
 import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/contract/built-marketplace.js";
 import type { ToolRecord } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../src/shared/domain/installation-file.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
@@ -42,7 +42,7 @@ export class SaveCountingManifestRepository extends InMemoryManifestRepository {
 }
 
 export interface Setup {
-  readonly tools: ToolCatalog;
+  readonly tools: RegisteredCatalog;
   readonly claude: AiToolId;
   readonly toolIds?: readonly ToolId[];
   readonly marketplaceNames?: readonly string[];
@@ -238,7 +238,7 @@ async function buildWith(setup: Setup) {
 }
 
 /** The scenario's three readers of one sync: build it, read the recorded registrations, read the tracked settings hash. */
-export function manifestWrites(tools: ToolCatalog, claude: AiToolId) {
+export function manifestWrites(tools: RegisteredCatalog, claude: AiToolId) {
   return {
     build: (setup: Omit<Setup, "tools" | "claude"> = {}) => buildWith({ ...setup, tools, claude }),
     recorded: (repo: InMemoryManifestRepository): ToolRecord | undefined =>

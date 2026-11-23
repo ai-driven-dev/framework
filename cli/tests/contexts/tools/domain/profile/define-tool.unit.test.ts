@@ -7,7 +7,6 @@ import {
 import { installUnder } from "../../../../../src/contexts/tools/domain/profile/tool-suffix.js";
 import type { AiTool } from "../../../../../src/contexts/tools/domain/profile.js";
 import { aiSpec, ideSpec, refusalOf, settings } from "../../testing/define-tool-spec.builder.js";
-import { flatPlugins, nativePlugins, sectionsOf } from "../../testing/plugin-mode.builder.js";
 
 describe("defining an AI tool", () => {
   it("builds a section with the directory and the suffix the profile stated once", () => {
@@ -56,27 +55,6 @@ describe("defining an AI tool", () => {
 
     expect(tool.section("config")).toStrictEqual([settings]);
     expect(tool.section("mcp")).toBeNull();
-  });
-
-  it("answers the native activation of a native plugins capability, and undefined for any other", () => {
-    const native = nativePlugins({
-      nativeActivation: { binary: "x", enableVerb: "add", disableVerb: "remove" },
-    });
-
-    const activated = defineAiTool({ ...aiSpec, capabilities: sectionsOf(native) });
-    const unactivated = defineAiTool({
-      ...aiSpec,
-      capabilities: sectionsOf(nativePlugins()),
-    });
-    const flat = defineAiTool({
-      ...aiSpec,
-      capabilities: sectionsOf(flatPlugins("refuses")),
-    });
-
-    expect(activated.nativeActivation()).toBeDefined();
-    expect(unactivated.nativeActivation()).toBeUndefined();
-    expect(flat.nativeActivation()).toBeUndefined();
-    expect(defineAiTool(aiSpec).nativeActivation()).toBeUndefined();
   });
 
   it("refuses an absolute directory", () => {

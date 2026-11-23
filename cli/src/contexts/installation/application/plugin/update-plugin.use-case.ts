@@ -1,7 +1,6 @@
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
@@ -9,6 +8,7 @@ import type {
   PlannedUserPluginFileUpdate,
   UserPluginMaterialization,
 } from "../../ports/plugin/user-plugin-materialization.js";
+import type { InstallationCatalog } from "../../ports/tool-sections.js";
 import { resolvePluginToolIds, userPluginTargets } from "./plugin-target-resolution.js";
 import { assertSelectionResolves, nativeTargets, refreshNativeRefs } from "./update-native-refs.js";
 import type {
@@ -33,7 +33,7 @@ type MachineCommand = UpdatePluginRequest & MachinePluginUpdate;
 export class UpdatePlugin {
   constructor(
     private readonly deps: UpdatePluginDeps,
-    private readonly tools: ToolCatalog
+    private readonly tools: InstallationCatalog
   ) {}
 
   async execute({ machine, ...command }: UpdatePluginCommand): Promise<string[]> {

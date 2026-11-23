@@ -1,3 +1,4 @@
+import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { HostPluginRegistryEntry } from "../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { NativeMarketplaceSource } from "../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
@@ -6,7 +7,6 @@ import type { HostPluginRegistry } from "../../../src/contexts/host-registration
 import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/contract/built-marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
@@ -138,7 +138,7 @@ export async function registryOf(projectRoot: string, ...marketplaces: Registere
 }
 
 export interface SyncWiring {
-  readonly tools: ToolCatalog;
+  readonly tools: RegisteredCatalog;
   readonly toolId: AiToolId;
   readonly fs: InMemoryFileAdapter;
   readonly projectRepo: InMemoryManifestRepository;
@@ -169,7 +169,7 @@ export function wireSync(w: SyncWiring) {
 
 /** One project-scope catalogue on a list-command host, `local-catalog` locally and `real-catalog` on the host. */
 export async function singleListedCatalog(o: {
-  readonly tools: ToolCatalog;
+  readonly tools: RegisteredCatalog;
   readonly tool: AiToolId;
   readonly projectRoot: string;
   readonly machine: Manifest;

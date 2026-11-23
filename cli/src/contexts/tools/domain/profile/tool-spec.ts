@@ -13,9 +13,7 @@ type AiToolFields = Omit<
   | "configWrites"
   | "plugins"
   | "supportsUserScopeActivation"
-  | "nativeActivation"
   | "agentModels"
-  | "hostRefInUse"
   | "markdownSection"
   | "declaresSkills"
   | "configFiles"
@@ -29,10 +27,8 @@ type AiToolFields = Omit<
   | "distributionPaths"
   | "flatInstallPath"
   | "ownsFlatPath"
-  | "marketplaceRegistration"
   | "machineLocalFiles"
   | "installedRulesLocation"
-  | "pluginEnablementIsMachineGlobal"
   | "signalDirectoryIn"
 >;
 

@@ -32,7 +32,7 @@ describe("a reader names the sections of a tool it reads", () => {
   it("lists every catalog method that answers a whole profile", () => {
     const answering = [
       ...(src()["src/contexts/tools/contract/tool-catalog.ts"]?.matchAll(
-        /^\s+(\w+)\([^)]*\):[^;]*\b(?:Ai|Ide)?ToolProfile\b/gm
+        /^\s+(\w+)\([^)]*\):[^;]*\b(?:(?:Ai|Ide)?ToolProfile|A)\b/gm
       ) ?? []),
     ].map((match) => match[1]);
     expect([...new Set(answering)].sort()).toEqual([...CATALOG_PROFILE_METHODS].sort());
@@ -99,6 +99,14 @@ describe("a reader names the sections of a tool it reads: the flow reading", () 
 
   it("flags a catalog profile passed directly into a whole-profile parameter", () => {
     expect(flows("whole(tools.aiProfile('x'));")).toHaveLength(1);
+  });
+
+  it("flags a profile assembled with more answers than the whole profile", () => {
+    expect(
+      flows(
+        "const p = tools.aiProfile('x');\ndeclare const native: typeof p & { extra(): void };\nwhole(native);"
+      )
+    ).toHaveLength(1);
   });
 
   it("flags a profile passed through a name into a whole-profile parameter", () => {

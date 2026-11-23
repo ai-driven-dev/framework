@@ -1,4 +1,5 @@
 import { homedir } from "node:os";
+import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { HostRefusal } from "../../../src/contexts/host-registration/domain/native-refusal.js";
 import type { HostMarketplaceRegistryReading } from "../../../src/contexts/host-registration/domain/reading/marketplace-registry-reading.js";
@@ -8,7 +9,6 @@ import type { HostMarketplaceSources } from "../../../src/contexts/host-registra
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import type { ToolRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import type { CleanProject } from "../../../src/orchestration/clean/clean-project.use-case.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
@@ -185,7 +185,7 @@ export function seedAiddMarketplaceRegistry(alias: string, scope: Scope = "proje
 }
 
 export function buildUseCase(deps: {
-  tools: ToolCatalog;
+  tools: RegisteredCatalog;
   fs: InMemoryFileAdapter;
   manifest: Manifest;
   records?: ToolRecords;

@@ -35,6 +35,7 @@ src/
 │   │   │       └── prove/
 │   │   ├── contract/
 │   │   ├── domain/
+│   │   │   ├── native-registration/    # the section a profile file exports beside its content profile
 │   │   │   ├── policy/
 │   │   │   ├── reading/
 │   │   │   ├── record/
@@ -141,7 +142,6 @@ src/
 │   │   │   │   └── mcp/
 │   │   │   ├── hooks/
 │   │   │   ├── models/
-│   │   │   ├── native-registration/
 │   │   │   ├── profile/
 │   │   │   └── sections/
 │   │   └── infrastructure/

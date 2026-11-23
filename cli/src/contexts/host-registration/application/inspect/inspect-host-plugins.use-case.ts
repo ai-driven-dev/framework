@@ -1,10 +1,10 @@
 import type { AiToolId } from "../../../../shared/domain/tool.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type {
   InspectedHost,
   InspectHostRegistrationRequest,
 } from "../../contract/inspect-host-registration-request.js";
 import type { HostRegistrationFinding } from "../../contract/inspect-host-registration-result.js";
+import type { NativeHostCatalog } from "../../contract/native-registration-spec.js";
 import { answeredRegistry } from "../../domain/reading/host-registration-answers.js";
 import type { HostPluginRegistry } from "../../ports/host-plugin-registry.js";
 import { pluginFinding } from "./host-registration-findings.js";
@@ -14,7 +14,7 @@ import { pluginFinding } from "./host-registration-findings.js";
 export class InspectHostPlugins {
   constructor(
     private readonly pluginRegistries: ReadonlyMap<AiToolId, HostPluginRegistry>,
-    private readonly tools: ToolCatalog
+    private readonly tools: NativeHostCatalog
   ) {}
 
   async execute(command: InspectHostRegistrationRequest): Promise<HostRegistrationFinding[]> {

@@ -1,12 +1,15 @@
+import {
+  type EnvironmentReader,
+  resolveHomePath,
+  resolveHomeTemplate,
+} from "../../../tools/contract/home-path.js";
 import type {
-  EnvironmentReader,
   MarketplaceRegistryLayout,
+  NativeActivationAnswers,
   NativeActivationSpec,
   PluginRegistryLayout,
 } from "../../contract/native-registration-spec.js";
-import type { NativeActivationAnswers } from "../../contract/tool-profile.js";
-import { resolveHomePath, resolveHomeTemplate } from "../profile/home-path.js";
-import { CapabilityConfigError } from "../tools.error.js";
+import { NativeRegistrationConfigError } from "../host-registration.error.js";
 
 /** Where a host's registry sits for one home, and the layout its file is read as. */
 export interface HostRegistryPlacement<Layout extends string> {
@@ -34,9 +37,9 @@ export class NativeActivation implements NativeActivationAnswers {
 
   constructor(spec: NativeActivationSpec) {
     if (spec.binary === "")
-      throw new CapabilityConfigError("A native activation declares an empty binary");
+      throw new NativeRegistrationConfigError("A native activation declares an empty binary");
     if (spec.marketplaceSources?.from === "marketplace-registry" && !spec.marketplaceRegistry)
-      throw new CapabilityConfigError(
+      throw new NativeRegistrationConfigError(
         "A native activation reads its marketplace sources from a registry it does not declare"
       );
     this.#spec = spec;

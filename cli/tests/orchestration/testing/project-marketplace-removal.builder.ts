@@ -1,5 +1,5 @@
+import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
@@ -29,7 +29,7 @@ class RecordingFileAdapter extends InMemoryFileAdapter {
   }
 }
 
-export function buildUseCase(tools: ToolCatalog) {
+export function buildUseCase(tools: RegisteredCatalog) {
   const fs = new RecordingFileAdapter({}, [PROJECT_ROOT]);
   const manifestRepo = new InMemoryManifestRepository();
   const registry = new InMemoryMarketplaceRegistry();

@@ -1,6 +1,5 @@
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type {
   ScopeRecords,
   ToolRecord,
@@ -11,7 +10,7 @@ import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { HostRefCountingTool } from "../../ports/tool-sections.js";
+import type { HostRefCountingTool, InstallationCatalog } from "../../ports/tool-sections.js";
 import type {
   MachineClaimsReading,
   NativeRefClaim,
@@ -73,7 +72,7 @@ export interface PurgeMarketplacePluginsDeps {
 export class PurgeMarketplacePlugins {
   constructor(
     private readonly deps: PurgeMarketplacePluginsDeps,
-    private readonly tools: ToolCatalog
+    private readonly tools: InstallationCatalog
   ) {}
 
   /** The count of plugins and host plugin references removed. */

@@ -1,4 +1,5 @@
 import { registrationRecordRules } from "../../../src/composition/contexts/installation.js";
+import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { ResolveBuiltMarketplaces } from "../../../src/contexts/distribution/application/resolve-built-marketplaces.use-case.js";
 import type { MarketplaceRegistry } from "../../../src/contexts/distribution/ports/marketplace-registry.js";
 import { InspectDeclaredMarketplaces } from "../../../src/contexts/host-registration/application/inspect/inspect-declared-marketplaces.use-case.js";
@@ -8,7 +9,6 @@ import { LoadManifest } from "../../../src/contexts/installation/application/doc
 import type { ScopeRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import type { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
-import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import type { CheckRegistrationRequest } from "../../../src/orchestration/doctor/check-registration.use-case.js";
 import { CheckRegistration } from "../../../src/orchestration/doctor/check-registration.use-case.js";
 import { ResolveRegisteredBuilds } from "../../../src/orchestration/doctor/resolve-registered-builds.use-case.js";
@@ -19,7 +19,7 @@ import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manif
 export function resolveRegisteredBuildsOver(
   manifests: ManifestRepository & ScopeRecords,
   builds: Pick<ResolveBuiltMarketplaces, "execute">,
-  tools: ToolCatalog
+  tools: RegisteredCatalog
 ): ResolveRegisteredBuilds {
   return new ResolveRegisteredBuilds(
     new ListRegisteredPlugins(new LoadManifest(manifests)),
@@ -38,7 +38,7 @@ export function checkRegistrationOver(
   inspectHost: InspectHostRegistration,
   userCacheRoot: () => string,
   currentVersion: string,
-  tools: ToolCatalog
+  tools: RegisteredCatalog
 ): CheckRegistration {
   return new CheckRegistration(
     {

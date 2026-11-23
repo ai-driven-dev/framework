@@ -1,9 +1,8 @@
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { ToolRecord, ToolRecords } from "../../contract/records/scope-records.js";
 import { PluginNotFoundError } from "../../domain/installation.error.js";
-import type { ActivatedTool } from "../../ports/tool-sections.js";
+import type { ActivatedTool, InstallationCatalog } from "../../ports/tool-sections.js";
 import type { MachineClaimsReading } from "../../ports/user-scope/machine-claims-reading.js";
 import type { UpdatePluginRequest } from "./update-plugin-command.js";
 
@@ -83,7 +82,7 @@ function matchesSeveralCatalogues(
 /** Proves every refresh first, then applies them all, so none runs on a partial proof. */
 export async function refreshNativeRefs(
   logger: Logger,
-  tools: ToolCatalog,
+  tools: InstallationCatalog,
   refreshing: {
     readonly targets: NativeTargets;
     readonly options: { readonly projectRoot: string; readonly refreshNative: RefreshNativeRef };

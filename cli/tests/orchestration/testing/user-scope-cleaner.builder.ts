@@ -1,5 +1,6 @@
 import { recordsOf } from "../../../src/composition/contexts/installation.js";
 import { userScopeFilesSafeToDelete } from "../../../src/composition/contexts/machine-claims.js";
+import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { wireCleanClaims } from "../../../src/composition/orchestration/clean-claims.js";
 import { RemoveMarketplace } from "../../../src/contexts/distribution/application/remove/remove-marketplace.use-case.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
@@ -26,7 +27,6 @@ import { UserScopePluginFiles } from "../../../src/contexts/installation/applica
 import type { ScopeRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { ResolvePurgeCandidate } from "../../../src/contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
-import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import {
   CleanUserScope,
   type CleanUserScopeDeps,
@@ -40,7 +40,7 @@ import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-mark
 
 /** What a test names; everything else is the empty or in-memory default. */
 export interface UserScopeCleanerParts extends Partial<HostPortMaps> {
-  tools: ToolCatalog;
+  tools: RegisteredCatalog;
   repo: PurgeUserScopeFilesDeps["userManifestRepo"] & ScopeRecords;
   fs?: PurgeMachineStateDeps["fs"];
   logger?: PurgeMachineStateDeps["logger"];

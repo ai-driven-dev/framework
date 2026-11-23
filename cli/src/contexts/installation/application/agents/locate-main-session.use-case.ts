@@ -1,9 +1,8 @@
 import { join } from "node:path";
 import type { Environment } from "../../../../shared/ports/environment.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AgentModelAnswers } from "../../../tools/contract/tool-profile.js";
-import type { AgentModelSection } from "../../ports/tool-sections.js";
+import type { AgentModelSection, InstallationCatalog } from "../../ports/tool-sections.js";
 
 /** What a host answers about its main session: the models it can run, and the settings file
  * that holds the choice. */
@@ -23,7 +22,7 @@ export interface LocateMainSessionDeps {
 export class LocateMainSession {
   constructor(
     private readonly deps: LocateMainSessionDeps,
-    private readonly tools: ToolCatalog
+    private readonly tools: InstallationCatalog
   ) {}
 
   /** The host's models and the file its main session reads. Both absent for a host aidd does not

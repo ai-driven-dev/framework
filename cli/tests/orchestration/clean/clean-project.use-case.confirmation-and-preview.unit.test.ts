@@ -4,7 +4,7 @@ import { UpdateGitignore } from "../../../src/contexts/installation/application/
 import type { ToolRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import { resolveHomeTemplate } from "../../../src/contexts/tools/domain/profile/home-path.js";
+import { resolveHomeTemplate } from "../../../src/contexts/tools/contract/home-path.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";

@@ -1,5 +1,5 @@
 import type { ToolId } from "../../../../shared/domain/tool.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import type { NativeHostCatalog } from "../../contract/native-registration-spec.js";
 import type { HostActions } from "../../ports/host-actions.js";
 import type { HostPorts } from "../../ports/host-ports.js";
 import type { CatalogProbeTool, NativeHostTool } from "../../ports/host-tool.js";
@@ -18,7 +18,7 @@ export interface NativeHost {
 export class ResolveNativeHost {
   constructor(
     private readonly ports: HostPorts,
-    private readonly tools: ToolCatalog
+    private readonly tools: NativeHostCatalog
   ) {}
 
   execute(toolId: ToolId): NativeHost | undefined {

@@ -9,6 +9,7 @@ import type {
   WithdrawalStepRequest,
   WithdrawPluginRequest,
 } from "../../../src/contexts/host-registration/application/withdraw/withdrawal.js";
+import { withNativeRegistration } from "../../../src/contexts/host-registration/domain/native-registration/native-host-profile.js";
 import type { ProjectPluginWithdrawalSteps } from "../../../src/contexts/installation/application/removal/project-plugin-withdrawal.js";
 import type { RemovePluginRequest } from "../../../src/contexts/installation/application/removal/remove-plugin.use-case.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
@@ -82,25 +83,24 @@ async function stepsOf(owned: (toolId: string, ref: string) => boolean = () => f
 
 /** A tool that enables plugins through its own CLI, per project or machine-wide. */
 function activatingTool(toolId: string, scoped: boolean) {
-  return defineAiTool({
+  const profile = defineAiTool({
     toolId,
     directory: ".fake/",
     toolSuffix: ".fake.md",
     signalDir: null,
     displayName: "Fake",
     buildContracts: { flat: () => anEmptyContract() },
-    capabilities: sectionsOf(
-      nativePlugins({
-        nativeActivation: {
-          binary: "fake",
-          enableVerb: "add",
-          disableVerb: "remove",
-          pluginCacheDir: "{home}/.fake/cache",
-          ...(scoped ? { scopeArgs: { project: ["--local"], user: ["--user"] } } : {}),
-        },
-      })
-    ),
+    capabilities: sectionsOf(nativePlugins()),
     linkSyntax: [],
+  });
+  return withNativeRegistration(profile, {
+    activation: {
+      binary: "fake",
+      enableVerb: "add",
+      disableVerb: "remove",
+      pluginCacheDir: "{home}/.fake/cache",
+      ...(scoped ? { scopeArgs: { project: ["--local"], user: ["--user"] } } : {}),
+    },
   });
 }
 

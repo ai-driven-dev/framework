@@ -1,9 +1,9 @@
 import { resolve } from "node:path";
+import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { NativeMarketplaceSource } from "../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../src/shared/domain/installation-file.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
@@ -17,7 +17,7 @@ import { FakeHostMarketplaceSources } from "./fake-host-marketplace-sources.fake
 import { ROOT } from "./recovery-contract.builder.js";
 
 export interface OwnedNativeSettingsOptions {
-  tools: ToolCatalog;
+  tools: RegisteredCatalog;
   toolId: AiToolId;
   withSettings?: boolean;
   names?: readonly string[];

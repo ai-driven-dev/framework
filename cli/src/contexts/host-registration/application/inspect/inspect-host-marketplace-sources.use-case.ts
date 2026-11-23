@@ -1,11 +1,11 @@
 import type { AiToolId } from "../../../../shared/domain/tool.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type {
   InspectedHost,
   InspectedMarketplace,
   InspectHostRegistrationRequest,
 } from "../../contract/inspect-host-registration-request.js";
 import type { HostRegistrationFinding } from "../../contract/inspect-host-registration-result.js";
+import type { NativeHostCatalog } from "../../contract/native-registration-spec.js";
 import type { HostMarketplaceSourceCheck } from "../../domain/source/marketplace-source-drift.js";
 import type { CatalogIdentityReader } from "../../ports/catalog-identity-reader.js";
 import type { HostMarketplaceRegistry } from "../../ports/host-marketplace-registry.js";
@@ -28,7 +28,7 @@ export class InspectHostMarketplaceSources {
     private readonly source: Pick<CheckMarketplaceSource, "execute">,
     private readonly marketplaceRegistries: ReadonlyMap<AiToolId, HostMarketplaceRegistry>,
     private readonly platform: string,
-    private readonly tools: ToolCatalog
+    private readonly tools: NativeHostCatalog
   ) {}
 
   async execute(command: InspectHostRegistrationRequest): Promise<HostRegistrationFinding[]> {

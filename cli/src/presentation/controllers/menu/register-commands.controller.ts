@@ -1,5 +1,4 @@
 import type { Command } from "commander";
-import type { ToolCatalog } from "../../../contexts/tools/contract/tool-catalog.js";
 import type { CommandRunner, DepsFactory, TelemetryRequests } from "../../../orchestration/deps.js";
 import { registerAuthCommand } from "../auth.controller.js";
 import { registerDoctorCommand } from "../doctor/doctor.controller.js";
@@ -7,6 +6,7 @@ import { registerMarketplaceCommand } from "../plugin/marketplace.controller.js"
 import { registerPluginCommand } from "../plugin/plugin.controller.js";
 import { registerCleanCommand } from "../setup/clean.controller.js";
 import { registerSetupCommand } from "../setup/setup.controller.js";
+import type { SetupCatalog } from "../setup/setup-flags.controller.js";
 import { registerSyncCommand } from "../setup/sync.controller.js";
 import { registerTelemetryCommand } from "../telemetry/telemetry.controller.js";
 import { registerToolConfigCommand } from "../tools/tool-config.controller.js";
@@ -17,7 +17,7 @@ import { bindOutput, type OutputFactory } from "./global-options.controller.js";
 /** The commands of the binary, in the order `aidd --help` lists them. The binary and the in-process
  * test runner both call it, so a command added here is in both. */
 export interface CommandWiring {
-  readonly tools: ToolCatalog;
+  readonly tools: SetupCatalog;
   readonly createSlice: DepsFactory;
   readonly telemetryRequests: TelemetryRequests;
   readonly runCommand: CommandRunner;

@@ -1,7 +1,7 @@
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { ScopeRecords, ToolRecords } from "../../contract/records/scope-records.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import type { InstallationCatalog } from "../../ports/tool-sections.js";
 import type { MachineClaimsReading } from "../../ports/user-scope/machine-claims-reading.js";
 import type { UserScopePluginFileRemoval } from "../../ports/user-scope/user-scope-plugin-files.js";
 import type { UserRegistrationWithdrawal } from "../../ports/user-scope/user-scope-purge.js";
@@ -22,7 +22,7 @@ export interface ProveUserScopeWithdrawalsDeps {
 export class ProveUserScopeWithdrawals {
   constructor(
     private readonly deps: ProveUserScopeWithdrawalsDeps,
-    private readonly tools: ToolCatalog
+    private readonly tools: InstallationCatalog
   ) {}
 
   async execute(): Promise<UserRegistrationWithdrawal[]> {

@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 import { registrationRecordRules } from "../../../src/composition/contexts/installation.js";
+import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { createOutput } from "../../../src/composition/shared.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-distribution-reader-adapter.js";
 import { InitProject } from "../../../src/contexts/installation/application/init-project.use-case.js";
@@ -17,7 +18,6 @@ import {
 } from "../../../src/contexts/installation/application/update/update-tool.use-case.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import type { AiToolId, IdeToolId, ToolId } from "../../../src/shared/domain/tool.js";
 import { BundledAssetProviderAdapter } from "../../../src/shared/infrastructure/asset-loader.js";
 import type { FakeHostActions } from "./fake-host-actions.fake.js";
@@ -32,7 +32,7 @@ const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
 
 export interface InstallationDepsOptions {
   /** The tools every command is wired over. */
-  readonly tools: ToolCatalog;
+  readonly tools: RegisteredCatalog;
   /** The host activators a native-plugin removal reaches, none by default. */
   readonly nativePluginActivators?: ReadonlyMap<ToolId, FakeHostActions>;
 }

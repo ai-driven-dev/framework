@@ -1,6 +1,11 @@
 import claudeSettings from "../../../assets/configs/claude/settings.json" with { type: "json" };
 // biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
 import adapter from "../../../assets/hooks-runtime/host-claude.cjs";
+import type {
+  MarketplaceSettings,
+  NativeActivationSpec,
+  NativeRegistrationSection,
+} from "../../contexts/host-registration/contract/native-registration-spec.js";
 import { MCP_CONFIG_REF } from "../../contexts/tools/contract/config-refs.js";
 import { buildClaudeFlatContract } from "../../contexts/tools/domain/behaviours/claude/claude-flat-build.model.js";
 import { agentFrontmatterOf } from "../../contexts/tools/domain/formats/agents/agent-format.js";
@@ -21,10 +26,7 @@ import { contract } from "../../contexts/tools/domain/profile/contract-builders.
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
 import { everyProject } from "../../contexts/tools/domain/profile/recommendation.js";
 import { installUnder } from "../../contexts/tools/domain/profile/tool-suffix.js";
-import {
-  type NativeLayoutParams,
-  nativeLayout,
-} from "../../contexts/tools/domain/sections/layout-section.js";
+import { nativeLayout } from "../../contexts/tools/domain/sections/layout-section.js";
 import { manifestSection } from "../../contexts/tools/domain/sections/manifest-section.js";
 import {
   acceptedPluginMcp,
@@ -83,7 +85,7 @@ const hooksSupport = nativeHooksSupport(hooks);
 // it: two writers, one recorder, and `status` reporting drift forever. `--scope local`
 // writes `.claude/settings.local.json` instead, a file this CLI neither writes nor
 // tracks, which is what makes the verbs below safe to declare.
-const CLAUDE_ACTIVATION: NativeLayoutParams["nativeActivation"] = {
+const CLAUDE_ACTIVATION: NativeActivationSpec = {
   binary: "claude",
   scopeArgs: { project: ["--scope", "local"], user: ["--scope", "user"] },
   userRemoveArgs: [],
@@ -121,7 +123,7 @@ const CLAUDE_ACTIVATION: NativeLayoutParams["nativeActivation"] = {
   },
 };
 
-const CLAUDE_MARKETPLACE_SETTINGS: NativeLayoutParams["marketplaceSettings"] = {
+const CLAUDE_MARKETPLACE_SETTINGS: MarketplaceSettings = {
   settingsPath: ".claude/settings.json",
   settingsKey: "extraKnownMarketplaces",
   // The registered marketplace is the tree this CLI builds under `.aidd/cache/`, named
@@ -186,8 +188,6 @@ export const claude = defineAiTool({
     hooks: { delivery: hooksSupport.delivery },
     layout: nativeLayout({
       pluginsDir: ".claude/plugins/",
-      nativeActivation: CLAUDE_ACTIVATION,
-      marketplaceSettings: CLAUDE_MARKETPLACE_SETTINGS,
     }),
     manifest: manifestSection({
       manifestRelativePath: "plugin.json",
@@ -207,3 +207,10 @@ export const claude = defineAiTool({
     },
   ],
 });
+
+/** The section host-registration reads: how Claude's own plugin CLI activates plugins and
+ * where it records marketplaces. */
+export const claudeNativeRegistration: NativeRegistrationSection = {
+  activation: CLAUDE_ACTIVATION,
+  marketplace: CLAUDE_MARKETPLACE_SETTINGS,
+};

@@ -13,8 +13,6 @@ import type {
   ShippedConfig,
 } from "../../contract/tool-profile.js";
 import type { SignalDirectory } from "../../contract/tool-vocabulary.js";
-import type { MarketplaceRegistration } from "../native-registration/marketplace-registration.js";
-import type { NativeActivation } from "../native-registration/native-activation.js";
 import type { ProfileSection, ProfileSectionKey, ProfileSections } from "../profile.js";
 import { pluginAnswers, projectPlacement } from "./plugin-answers.js";
 
@@ -40,10 +38,6 @@ export function aiConfigWrites(sections: ProfileSections): readonly ConfigWrite[
 
 export function settingsWrites(sections: ProfileSections): readonly ConfigWrite[] {
   return settingsOf(sections).map((capability) => ({ kind: "settings" as const, capability }));
-}
-
-export function nativeActivationOf(sections: ProfileSections): NativeActivation | undefined {
-  return sections.layout?.mode === "native" ? sections.layout.activation : undefined;
 }
 
 export function settingsOf(sections: ProfileSections): readonly SettingsFileAnswers[] {
@@ -75,10 +69,6 @@ export function pluginsOf(sections: ProfileSections): PluginAnswers | null {
     hooks,
     mcp: sections.mcp ?? null,
   });
-}
-
-export function marketplaceOf(sections: ProfileSections): MarketplaceRegistration | undefined {
-  return sections.layout?.mode === "native" ? sections.layout.marketplace : undefined;
 }
 
 export function configAssetNamed(
@@ -134,12 +124,8 @@ export function configAnswers(
 /** What the tool answers about where an install puts its files and how it keeps them. */
 export function deliveryAnswers(displayName: string, capabilities: ProfileSections) {
   return {
-    machineLocalFiles: () => marketplaceOf(capabilities)?.machineLocalFiles() ?? [],
+    machineLocalFiles: (): readonly string[] => [],
     installedRulesLocation: () => capabilities.rules?.installedLocation() ?? null,
-    pluginEnablementIsMachineGlobal: () =>
-      capabilities.layout?.mode === "native"
-        ? capabilities.layout.activation?.scopesEnablement() !== true
-        : true,
     projectHooksDelivery: () => {
       const placement =
         capabilities.hooks === undefined ? null : projectPlacement(capabilities.hooks.delivery);

@@ -2,7 +2,7 @@ import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js
 import type {
   MarketplaceListLayout,
   MarketplaceSourcesDeclaration,
-} from "../../../tools/contract/native-registration-spec.js";
+} from "../../contract/native-registration-spec.js";
 import type { NativeMarketplaceSource } from "../../domain/record/native-marketplace-source.js";
 import type { NativeMarketplaceSourceListContract } from "./native-marketplace-source-list-contract.js";
 

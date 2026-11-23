@@ -12,7 +12,7 @@ import type { ScopeRecords } from "../../../src/contexts/installation/contract/r
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
-import { resolveHomeTemplate } from "../../../src/contexts/tools/domain/profile/home-path.js";
+import { resolveHomeTemplate } from "../../../src/contexts/tools/contract/home-path.js";
 import { RunDoctor } from "../../../src/orchestration/doctor/run-doctor.use-case.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";

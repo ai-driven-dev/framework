@@ -1,17 +1,7 @@
 import type { Scope } from "../../../shared/domain/scope.js";
-import type { MarketplaceSettingsInput } from "./tool-vocabulary.js";
-
-/** A path under the home directory, declared as data: a template, or a directory an environment
- * variable names, with a template to fall back on, and the file name under it. */
-export type HomePath =
-  | HomeTemplate
-  | { readonly env: string; readonly fallback: HomeTemplate; readonly fileName: string };
-
-/** A `/`-separated path whose `{home}` segment stands for the home directory. */
-export type HomeTemplate = string;
-
-/** Reads one environment variable, undefined when it is unset. */
-export type EnvironmentReader = (name: string) => string | undefined;
+import type { EnvironmentReader, HomePath, HomeTemplate } from "../../tools/contract/home-path.js";
+import type { CatalogAnswering } from "../../tools/contract/tool-catalog.js";
+import type { MarketplaceSettingsInput } from "../../tools/contract/tool-vocabulary.js";
 
 /** How a host's own plugin registry is laid out. The names describe the file's shape, never
  * the tool that keeps it, so a second host with the same shape declares the same layout. */
@@ -135,3 +125,62 @@ export interface MarketplaceSettings {
    * cannot express its source and no key should be written. */
   toEntryKey(input: MarketplaceSettingsInput): string | null;
 }
+
+/** What a tool's own plugin CLI declares about itself. */
+export interface NativeActivationAnswers {
+  /** The executable the host's own plugin CLI is run by: the key its driver and registry answer to. */
+  hostBinary(): string;
+  /** Whether the host's own CLI can update one installed plugin ref. */
+  refreshesOnePlugin(): boolean;
+  /** Whether the host keeps a registry of marketplaces that this CLI can read. */
+  keepsMarketplaceRegistry(): boolean;
+  /** Where the host leaves its plugin cache under `home`, or undefined when it declares none. */
+  pluginCacheRoot(home: string): string | undefined;
+  /** The host's own user-scope settings file under `home`, or undefined when none is declared. */
+  userSettingsFile(home: string, env: EnvironmentReader): string | undefined;
+}
+
+/** How a tool whose own CLI drives the registration records marketplaces in its shared settings
+ * file, as a sync asks it. */
+export interface MarketplaceRegistrationAnswers {
+  /** The project file shared with teammates, where marketplaces are declared. */
+  sharedSettingsFile(): string;
+  /** The key under which a shared file declares its marketplaces. */
+  marketplacesKey(): string;
+  /** The key under which a shared file enables plugins, or null for a tool that enables none
+   * there. */
+  enabledPluginsKey(): string | null;
+  /** The name a marketplace is keyed by in the enabled-plugins map, or null when the tool cannot
+   * express its source. */
+  entryKeyFor(input: MarketplaceSettingsInput): string | null;
+  /** Whether a declarative plugin entry may only be projected once the host proved the ref. */
+  requiresNativeProof(): boolean;
+  /** The marketplace names a parsed settings file declares, whether as a list or as a map. */
+  declaredMarketplaceNames(parsed: unknown): ReadonlySet<string>;
+  /** The files its registrations keep on this machine, none when it keeps none. */
+  machineLocalFiles(): readonly string[];
+}
+
+/** The native-registration section a profile file exports beside its content profile: the
+ * tool's own plugin CLI, and where that CLI records marketplaces in the shared settings file. */
+export interface NativeRegistrationSection {
+  readonly activation?: NativeActivationSpec;
+  readonly marketplace?: MarketplaceSettings;
+}
+
+/** What a tool answers about its native registration once the composition assembled its
+ * section with the content profile. */
+export interface NativeRegistrationAnswers {
+  /** The tool's native plugin CLI declaration, or undefined when it has none. */
+  nativeActivation(): NativeActivationAnswers | undefined;
+  /** Its marketplace registration in the shared settings file, or null for a tool driving none. */
+  marketplaceRegistration(): MarketplaceRegistrationAnswers | null;
+  /** Whether a ref the host's registry lists is a plugin in use: an enabled one always, a disabled
+   * one unless the host's uninstall leaves refs disabled. Every ref counts for a tool with no native CLI. */
+  hostRefInUse(enabled: boolean): boolean;
+  /** Whether enabling a plugin acts on the whole machine: its own CLI takes no scope, or it has none. */
+  pluginEnablementIsMachineGlobal(): boolean;
+}
+
+/** The catalog the composition hands a reader of native registrations. */
+export type NativeHostCatalog = CatalogAnswering<NativeRegistrationAnswers>;
