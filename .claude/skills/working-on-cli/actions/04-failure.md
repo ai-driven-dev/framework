@@ -15,7 +15,7 @@ A typed error with a code and data, its message in the presenter, and a test on 
 1. **Load.** Read [architecture.md](../references/architecture.md) and the `references/contexts/<ctx>.md`.
 2. **Type it.** A failure is a class in the `<owner>.error.ts` of its context, of `orchestration/`, of `presentation/`, or of `shared/domain/` when two contexts need it. It carries a code and its data, never text. Gates: the `thrown` and `errorText` rules of `kinds.rules.arch.test.ts`.
 3. **Word it.** The words live in `src/presentation/errors/error-messages.presenter.ts`. Say what to do, not only what broke; a message that names a command names a real one (`instructs` rule).
-4. **Let it travel.** A use case in a context's `application/` never catches: `application-catches.arch.test.ts` counts catches against `kinds-debt.json`.
+4. **Let it travel.** A use case in a context's `application/` never catches: `application-catches.arch.test.ts` fails on any catch.
 5. **Report and continue.** A flow that must report one failure and continue catches in an orchestration scenario, on a line tagged `// @policy report-and-continue`, and collects `{ scope, error }` items so one scope never aborts the run.
    - No gate reads the tag: it is a convention (model: `src/orchestration/marketplace/refresh-marketplaces.use-case.ts`).
 6. **Best effort.** A caller that treats an unreadable or missing file as absent calls `FileReader.readFileIfReadable` or `realpathIfResolvable` (`src/shared/ports/file-reader.ts`). The swallow sits in `shared/infrastructure/file-adapter.ts`, never in the use case.
@@ -29,4 +29,4 @@ A typed error with a code and data, its message in the presenter, and a test on 
 | --- | --- |
 | a use case throws the new error | the test reads its code and data |
 | the presenter receives it | the message names a real command and a next step |
-| `pnpm test:arch` | green with no `kinds-debt.json` change |
+| `pnpm test:arch` | green |

@@ -1,7 +1,7 @@
 /** A folder holds at most FOLDER_CAP source files of its own. */
-import { dirname, relative } from "node:path";
+import { dirname, relative, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { SRC, sourceFiles } from "./source-graph.js";
+import { CLI_ROOT, SRC, sourceFiles } from "./source-graph.js";
 
 const FOLDER_CAP = 10;
 
@@ -25,7 +25,10 @@ describe("folder size", () => {
   it("holds every folder under src to the cap", () => {
     const actual = overTheCap(folderSizes(sourceFiles()), FOLDER_CAP);
     const found = Object.fromEntries(
-      [...actual].map(([dir, size]) => [relative(SRC, dir).split("\\").join("/"), size])
+      [...actual].map(([dir, size]) => [
+        relative(SRC, resolve(CLI_ROOT, dir)).split("\\").join("/"),
+        size,
+      ])
     );
 
     expect(found).toEqual({});

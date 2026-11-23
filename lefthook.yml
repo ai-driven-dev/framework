@@ -200,13 +200,8 @@ pre-push:
     cli-jscpd-profiles:
       glob: "cli/**"
       run: node scripts/gate-witness.js cli-jscpd-profiles -- pnpm --dir cli jscpd:profiles
-    cli-debt-ratchet:
-      glob: "cli/**"
-      run: >-
-        node scripts/gate-witness.js cli-debt-ratchet --
-        pnpm --dir cli exec vitest run --project=architecture tests/architecture/debt-only-shrinks.arch.test.ts
-    # The architecture project runs in pre-commit and in `cli-ci.yml`'s cli-architecture, and the
-    # debt ratchet above runs it here: the full suite is not replayed.
+    # The architecture project runs in pre-commit and in `cli-ci.yml`'s cli-architecture: the
+    # full suite is not replayed here.
     cli-test:
       glob: "cli/**"
       run: >-

@@ -8,6 +8,8 @@
  * - Architecture paths select the same files on every platform.
  * - No source comment holds an em dash: one printed to a user is a string and stays, one in a
  *   comment is prose that drifted from the writing rule.
+ * - The architecture folder holds no debt, baseline, tolerated or allow-list file: a rule that
+ *   cannot pass is fixed, never excused by data.
  * - No test resolves a path into the shared `dist/`: the build cleans it, so a second concurrent
  *   run rewrites the binary a first run is reading. `tests/setup/global-setup.ts` builds a private
  *   binary per run.
@@ -186,5 +188,23 @@ describe("the shared binary guard itself", () => {
     expect(CWD_INTO_DIST.test(violation)).toBe(true);
     expect(CWD_INTO_DIST.test('join(tempDir, "dist")')).toBe(false);
     expect(CWD_INTO_DIST.test('expect(content).toContain("dist/")')).toBe(false);
+  });
+});
+
+const EXCUSE_FILE = /(debt|baseline|tolerat|allowlist)[^/]*\.json$/i;
+
+const excuseFiles = (names: readonly string[]): string[] =>
+  names.filter((name) => EXCUSE_FILE.test(name));
+
+describe("the architecture folder holds no file that excuses a violation", () => {
+  it("flags a debt, baseline, tolerated or allow-list file, not a plain data file", () => {
+    expect(
+      excuseFiles(["kinds-debt.json", "kind-baseline.json", "tolerated.json", "allowlist.json"])
+    ).toHaveLength(4);
+    expect(excuseFiles(["allowed-edges.ts", "plants.json"])).toEqual([]);
+  });
+
+  it("holds none", () => {
+    expect(excuseFiles(readdirSync(import.meta.dirname))).toEqual([]);
   });
 });
