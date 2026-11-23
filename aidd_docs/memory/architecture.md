@@ -10,7 +10,7 @@ The macro technical shape: the stack, how the pieces fit, and the decisions behi
 | --- | --- |
 | Product | markdown — skills, agents, rules, templates. No framework runtime; an LLM interprets them. |
 | Delivery | Node `>=22.12`, pnpm. `cli/` is the `aidd` binary; `kanban/` is a private package. |
-| Manifest | `.claude-plugin/marketplace.json`, the plugin manifest: 9 plugins, no version among them. Versions are release-please's, in `deployment.md`. |
+| Manifest | `.claude-plugin/marketplace.json`, the plugin manifest: 9 plugins, no version among them. Versions are release-please's, in `internal/deployment.md`. |
 
 ## How it fits together
 
