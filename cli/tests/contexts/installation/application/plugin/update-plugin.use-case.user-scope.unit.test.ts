@@ -22,7 +22,7 @@ import { aManifest } from "../../testing/manifest.builder.js";
 
 const ROOT = "/project";
 
-function plugin(name: string, options: { scope?: Scope; dependents?: string[] } = {}) {
+function plugin(name: string, options: { scope?: Scope } = {}) {
   return RecordedPlugin.fromJSON({
     name,
     source: { kind: "local", path: "/fixture" },
@@ -30,7 +30,6 @@ function plugin(name: string, options: { scope?: Scope; dependents?: string[] } 
     strict: false,
     files: { "a.md": "h1" },
     scope: options.scope ?? "user",
-    dependents: options.dependents ?? [],
   });
 }
 
@@ -43,6 +42,8 @@ function fixture(
   options: {
     plugins?: RecordedPlugin[];
     claims?: Claim[];
+    /** The projects holding each plugin, by name. */
+    held?: Record<string, string[]>;
     materializer?: ConstructorParameters<typeof FakeUserPluginMaterialization>[0];
     manifest?: null;
   } = {}
@@ -51,15 +52,19 @@ function fixture(
   for (const p of options.plugins ?? [plugin("aidd-dev")]) builder.withPlugin(TOOL.codex, p);
   const manifest = builder.build();
   const records: ToolRecords = new Map();
-  if (options.claims !== undefined) {
+  if (options.claims !== undefined || options.held !== undefined) {
+    const claims = options.claims ?? [];
     records.set(TOOL.codex, {
       binary: "codex",
       marketplaces: [],
-      pluginRefs: options.claims.map((claim) => claim.ref),
-      pluginClaims: options.claims.map((claim) => ({
-        ref: claim.ref,
-        dependents: claim.dependents ?? [],
-      })),
+      pluginRefs: claims.map((claim) => claim.ref),
+      pluginClaims: [
+        ...claims.map((claim) => ({ ref: claim.ref, dependents: claim.dependents ?? [] })),
+        ...Object.entries(options.held ?? {}).map(([name, dependents]) => ({
+          plugin: name,
+          dependents,
+        })),
+      ],
     });
   }
   const repo = new InMemoryManifestRepository(
@@ -163,7 +168,7 @@ describe("updating the user-scope plugins", () => {
   });
 
   it("warns that the dependents of an updated plugin must refresh", async () => {
-    const { logger, run } = fixture({ plugins: [plugin("aidd-dev", { dependents: ["/other"] })] });
+    const { logger, run } = fixture({ held: { "aidd-dev": ["/other"] } });
 
     await run();
 

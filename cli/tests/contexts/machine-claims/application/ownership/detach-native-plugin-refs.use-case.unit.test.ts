@@ -55,6 +55,25 @@ describe("one project's exact native host ref claim", () => {
     expect(f.repo.recordSaveCount).toBe(1);
   });
 
+  it("leaves the claim a plugin holds as it was, even for a ref spelled like the plugin", async () => {
+    const f = fixture();
+    const plugin = { plugin: TARGET, dependents: ["/A"] };
+    f.repo.records.set(codex, {
+      ...f.repo.records.get(codex),
+      pluginClaims: [plugin, { ref: TARGET, dependents: ["/A", "/B"] }],
+    });
+
+    await new DetachNativePluginRefs(f.repo, f.fs).execute({
+      projectRoot: "/A",
+      refsByTool: new Map([[codex, [TARGET]]]),
+    });
+
+    expect(f.repo.records.get(codex)?.pluginClaims).toEqual([
+      plugin,
+      { ref: TARGET, dependents: ["/B"] },
+    ]);
+  });
+
   it("does not invent a claim or save for an unrelated project or foreign ref", async () => {
     for (const [root, ref] of [
       ["/C", TARGET],

@@ -51,6 +51,4 @@ export interface PluginEntryData {
   mcpEntries?: Record<string, string>;
   projectHooks?: ProjectHooksEntryData;
   marketplace?: string;
-  /** The machine claim on the plugin's user-scope files, kept as it came. Machine claims read it. */
-  dependents?: unknown;
 }

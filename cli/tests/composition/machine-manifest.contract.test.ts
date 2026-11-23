@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import { DetachUserPlugin } from "../../src/contexts/machine-claims/application/ownership/detach-user-plugin.use-case.js";
 import type {
   MachineManifest,
   MachineUserPlugin,
@@ -10,8 +9,6 @@ import { ToolNotInManifestError } from "../../src/shared/domain/shared.error.js"
 import type { AiToolId } from "../../src/shared/domain/tool.js";
 import { InMemoryMachineManifest } from "../contexts/machine-claims/testing/in-memory-machine-manifest.fake.js";
 import { MachinePlugin } from "../contexts/machine-claims/testing/machine-plugin.fake.js";
-import { InMemoryFileAdapter } from "../shared/testing/in-memory-file-adapter.fake.js";
-import { InMemoryRepository } from "../shared/testing/in-memory-repository.fake.js";
 import { TOOL } from "../shared/testing/registered-tools.builder.js";
 
 /** The machine-wide record as machine-claims reads it, seeded with plugins. */
@@ -22,7 +19,7 @@ interface SeedableMachineManifest extends MachineManifest {
 interface MachineManifestKind {
   readonly name: string;
   recordHolding(...tools: readonly AiToolId[]): SeedableMachineManifest;
-  aUserPlugin(name: string, dependents: readonly string[]): MachineUserPlugin;
+  aUserPlugin(name: string): MachineUserPlugin;
 }
 
 const PLUGIN_VERSION = "1.0.0";
@@ -32,7 +29,7 @@ const MANIFEST_TOOL_VERSION = "1.0.0";
 const fake: MachineManifestKind = {
   name: "the in-memory fake",
   recordHolding: (...tools) => new InMemoryMachineManifest(...tools),
-  aUserPlugin: (name, dependents) => new MachinePlugin({ name, dependents }),
+  aUserPlugin: (name) => new MachinePlugin({ name }),
 };
 
 const real: MachineManifestKind = {
@@ -42,14 +39,14 @@ const real: MachineManifestKind = {
     for (const tool of tools) manifest.addTool(tool, MANIFEST_TOOL_VERSION, []);
     return manifest;
   },
-  aUserPlugin: (name, dependents) =>
+  aUserPlugin: (name) =>
     RecordedPlugin.fromMetadata({
       name,
       version: PLUGIN_VERSION,
       source: PLUGIN_SOURCE,
       strict: false,
       scope: "user",
-    }).withMachineClaim(dependents),
+    }),
 };
 
 describe.each([fake, real])("the machine-wide record, as $name answers it", (kind) => {
@@ -64,7 +61,7 @@ describe.each([fake, real])("the machine-wide record, as $name answers it", (kin
   it("refuses a plugin added for a tool it does not hold", () => {
     const record = kind.recordHolding();
 
-    expect(() => record.addPlugin(cursor, kind.aUserPlugin("sample-plugin", []))).toThrow(
+    expect(() => record.addPlugin(cursor, kind.aUserPlugin("sample-plugin"))).toThrow(
       ToolNotInManifestError
     );
   });
@@ -72,36 +69,18 @@ describe.each([fake, real])("the machine-wide record, as $name answers it", (kin
   it("refuses a plugin rewritten for a tool it does not hold", () => {
     const record = kind.recordHolding();
 
-    expect(() => record.updatePlugin(cursor, kind.aUserPlugin("sample-plugin", []))).toThrow(
+    expect(() => record.updatePlugin(cursor, kind.aUserPlugin("sample-plugin"))).toThrow(
       ToolNotInManifestError
     );
   });
 
-  it("keeps the plugin written for a tool it holds", () => {
+  it("keeps the plugin written for a tool it holds, once however often it is written", () => {
     const record = kind.recordHolding(cursor);
-    record.addPlugin(cursor, kind.aUserPlugin("sample-plugin", ["/A"]));
-    record.updatePlugin(cursor, kind.aUserPlugin("sample-plugin", ["/B"]));
+    record.addPlugin(cursor, kind.aUserPlugin("sample-plugin"));
+    record.updatePlugin(cursor, kind.aUserPlugin("sample-plugin"));
 
-    expect(record.getRecordedPlugins(cursor).map((plugin) => plugin.machineClaim)).toEqual([
-      ["/B"],
+    expect(record.getRecordedPlugins(cursor).map(({ plugin }) => plugin.name)).toEqual([
+      "sample-plugin",
     ]);
-  });
-
-  it("releases only the detaching project from a user plugin", async () => {
-    const record = kind.recordHolding(cursor);
-    record.addPlugin(cursor, kind.aUserPlugin("sample-plugin", ["/A", "/B"]));
-    const repo = Object.assign(new InMemoryRepository<MachineManifest>(record), {
-      loadRecords: async () => new Map(),
-      saveRecords: async () => undefined,
-    });
-
-    await new DetachUserPlugin(repo, new InMemoryFileAdapter({}, ["/A", "/B", "/C"])).execute({
-      toolId: cursor,
-      name: "sample-plugin",
-      projectRoot: "/A",
-    });
-
-    expect(repo.getCurrent()?.getRecordedPlugins(cursor)[0]?.machineClaim).toEqual(["/B"]);
-    expect(repo.saveCount).toBe(1);
   });
 });

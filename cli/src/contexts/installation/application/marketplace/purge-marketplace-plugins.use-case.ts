@@ -40,7 +40,9 @@ export interface MarketplaceHostRemoval<Plan> {
 }
 
 /** What a catalogue removal asks of a tool's record, the caller's to answer. */
-export interface MarketplaceRecords extends Pick<MachineClaimsReading, "holdersOf">, ScopeRecords {
+export interface MarketplaceRecords
+  extends Pick<MachineClaimsReading, "holdersOf" | "pluginClaimsOf">,
+    ScopeRecords {
   /** The registration the alias stands for, `undefined` when it was never registered. */
   registrationOf(registrations: ToolRecord, alias: string): RegisteredMarketplace | undefined;
   /** The claims on the refs sitting on the host name the alias was registered under. */
@@ -90,10 +92,12 @@ export class PurgeMarketplacePlugins {
       );
     const held = { manifest, registered: await records.loadRecords() };
     const { plugins, native, nativeRefs } = this.claimsOn(held, marketplace, records);
-    const holders = records.holdersOf(
-      plugins.map(({ recorded }) => recorded),
-      nativeRefs
-    );
+    const holders = records.holdersOf([
+      ...plugins.flatMap(({ toolId, plugin }) =>
+        records.pluginClaimsOf(held.registered.get(toolId), [plugin.name])
+      ),
+      ...nativeRefs,
+    ]);
     if (holders.length > 0)
       throw new ActiveMachineDependentsError(`user-scope marketplace '${marketplace}'`, holders);
     const safeFiles = await this.proveFiles(plugins, home);

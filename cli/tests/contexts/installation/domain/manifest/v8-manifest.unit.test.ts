@@ -78,6 +78,50 @@ describe("a v8 manifest, split into its tools and the records they carried", () 
     expect(split.records.get(TOOL.claude)?.binary).toBe("claude");
   });
 
+  describe("a plugin's dependents", () => {
+    const plugin = (name: string, extra: object = {}) => ({ name, scope: "user", ...extra });
+
+    it("move into the record's claims after the ones it held, the plugin entry losing them", () => {
+      const split = splitV8Manifest(
+        v8({
+          claude: {
+            plugins: [plugin("a", { dependents: ["/p1"] }), plugin("b")],
+            nativeRegistrations: record,
+          },
+        }),
+        resolveRegisteredToolId
+      );
+
+      expect(split.tools).toStrictEqual({ claude: { plugins: [plugin("a"), plugin("b")] } });
+      expect(split.records.get(TOOL.claude)).toStrictEqual({
+        ...record,
+        pluginClaims: [...record.pluginClaims, { plugin: "a", dependents: ["/p1"] }],
+      });
+    });
+
+    it("make a record of their own for a tool that carried none", () => {
+      const split = splitV8Manifest(
+        v8({ codex: { plugins: [plugin("a", { dependents: ["/p1"] })] } }),
+        resolveRegisteredToolId
+      );
+
+      expect(split.records).toStrictEqual(
+        new Map([[TOOL.codex, { pluginClaims: [{ plugin: "a", dependents: ["/p1"] }] }]])
+      );
+    });
+
+    it("are carried as they came, so a claim that is not a list is refused when read", () => {
+      const split = splitV8Manifest(
+        v8({ claude: { plugins: [plugin("a", { dependents: "/p1" })] } }),
+        resolveRegisteredToolId
+      );
+
+      expect(split.records.get(TOOL.claude)).toStrictEqual({
+        pluginClaims: [{ plugin: "a", dependents: "/p1" }],
+      });
+    });
+  });
+
   it.each([
     [8, true],
     [9, false],

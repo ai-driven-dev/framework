@@ -3,6 +3,8 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PluginNotFoundError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
+import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
+import { dependentsRecorded } from "../../../../shared/testing/host-record-reading.builder.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
@@ -11,6 +13,7 @@ import { pluginRemover, userPluginRemover } from "../../testing/plugin-remover.b
 import {
   aMachineWithClaudeAndCursor,
   anInstalledPlugin,
+  pluginsHeldBy,
   SELECTED_PLUGIN,
   SELECTION_OTHER_ROOT,
   SELECTION_ROOT,
@@ -28,17 +31,22 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
           toolId,
           anInstalledPlugin({ name, files: { [`${name}/keep.md`]: "digest" } })
         );
-        machine.addPlugin(
-          toolId,
-          anInstalledPlugin({ name, dependents: [SELECTION_ROOT, SELECTION_OTHER_ROOT] })
-        );
+        machine.addPlugin(toolId, anInstalledPlugin({ name }));
       }
     }
     const fs = new InMemoryFileAdapter({}, [SELECTION_ROOT, SELECTION_OTHER_ROOT]);
     const witness = join(homedir(), ".cursor", "plugins", "local", SELECTED_PLUGIN, "keep.md");
     fs.setFile(witness, "machine bytes");
     const projectRepo = new InMemoryManifestRepository(project, SELECTION_ROOT);
-    const userRepo = new InMemoryManifestRepository(machine);
+    const userRepo = new InMemoryManifestRepository(
+      machine,
+      SELECTION_ROOT,
+      pluginsHeldBy(
+        [cursor, claude],
+        ["other-plugin", SELECTED_PLUGIN],
+        [SELECTION_ROOT, SELECTION_OTHER_ROOT]
+      )
+    );
     const remove = pluginRemover({ fs, manifestRepo: projectRepo, userManifestRepo: userRepo });
 
     await remove.execute({
@@ -54,19 +62,22 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
       "other-plugin",
       SELECTED_PLUGIN,
     ]);
-    expect(
-      machine.getRecordedPlugins(cursor).map((entry) => [entry.plugin.name, entry.machineClaim])
-    ).toEqual([
-      ["other-plugin", [SELECTION_ROOT, SELECTION_OTHER_ROOT]],
-      [SELECTED_PLUGIN, [SELECTION_OTHER_ROOT]],
-    ]);
-    expect(machine.getRecordedPlugins(claude).map((entry) => entry.machineClaim)).toEqual([
+    const heldOn = (toolId: AiToolId, name: string) =>
+      dependentsRecorded(userRepo.records.get(toolId), name);
+    expect([
+      heldOn(cursor, "other-plugin"),
+      heldOn(cursor, SELECTED_PLUGIN),
+      heldOn(claude, "other-plugin"),
+      heldOn(claude, SELECTED_PLUGIN),
+    ]).toEqual([
+      [SELECTION_ROOT, SELECTION_OTHER_ROOT],
+      [SELECTION_OTHER_ROOT],
       [SELECTION_ROOT, SELECTION_OTHER_ROOT],
       [SELECTION_ROOT, SELECTION_OTHER_ROOT],
     ]);
     expect(fs.getFile(witness)).toBe("machine bytes");
     expect(projectRepo.saveCount).toBe(1);
-    expect(userRepo.saveCount).toBe(1);
+    expect(userRepo.recordSaveCount).toBe(1);
   });
 
   it("removing a project entry does not detach the same name's machine claim", async () => {
@@ -77,18 +88,14 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
       anInstalledPlugin({ scope: "project", files: { "owned.md": "digest" } })
     );
     project.addPlugin(cursor, anInstalledPlugin({ name: "other-plugin", scope: "user" }));
-    machine.addPlugin(
-      cursor,
-      anInstalledPlugin({ dependents: [SELECTION_ROOT, SELECTION_OTHER_ROOT] })
-    );
-    machine.addPlugin(
-      cursor,
-      anInstalledPlugin({
-        name: "other-plugin",
-        dependents: [SELECTION_ROOT, SELECTION_OTHER_ROOT],
-      })
-    );
+    machine.addPlugin(cursor, anInstalledPlugin());
+    machine.addPlugin(cursor, anInstalledPlugin({ name: "other-plugin" }));
     const before = machine.toJSON();
+    const records = pluginsHeldBy(
+      [cursor],
+      [SELECTED_PLUGIN, "other-plugin"],
+      [SELECTION_ROOT, SELECTION_OTHER_ROOT]
+    );
     const fs = new InMemoryFileAdapter(
       {
         [join(SELECTION_ROOT, "owned.md")]: "owned",
@@ -96,7 +103,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
       },
       [SELECTION_ROOT, SELECTION_OTHER_ROOT]
     );
-    const userRepo = new InMemoryManifestRepository(machine);
+    const userRepo = new InMemoryManifestRepository(machine, SELECTION_ROOT, records);
     const remove = pluginRemover({
       fs,
       manifestRepo: new InMemoryManifestRepository(project, SELECTION_ROOT),
@@ -112,23 +119,18 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     expect(await fs.fileExists(join(SELECTION_ROOT, "owned.md"))).toBe(false);
     expect(fs.getFile(join(SELECTION_ROOT, "foreign.md"))).toBe("foreign");
     expect(machine.toJSON()).toEqual(before);
-    expect(userRepo.saveCount).toBe(0);
+    expect(userRepo.records).toEqual(records);
+    expect([userRepo.saveCount, userRepo.recordSaveCount]).toEqual([0, 0]);
     expect(project.getRecordedPlugins(cursor).map((entry) => entry.plugin.name)).toEqual([
       "other-plugin",
     ]);
   });
 
-  it("user removal skips a project-scoped copy and other names with active dependents", async () => {
+  it("user removal skips a project-scoped copy and other names", async () => {
     const machine = aMachineWithClaudeAndCursor();
-    machine.addPlugin(
-      cursor,
-      anInstalledPlugin({ name: "other-plugin", dependents: [SELECTION_OTHER_ROOT] })
-    );
+    machine.addPlugin(cursor, anInstalledPlugin({ name: "other-plugin" }));
     machine.addPlugin(cursor, anInstalledPlugin());
-    machine.addPlugin(
-      claude,
-      anInstalledPlugin({ scope: "project", dependents: [SELECTION_OTHER_ROOT] })
-    );
+    machine.addPlugin(claude, anInstalledPlugin({ scope: "project" }));
     const otherBefore = machine.getRecordedPlugins(cursor)[0].toJSON();
     const claudeBefore = machine.getRecordedPlugins(claude)[0].toJSON();
     const userRepo = new InMemoryManifestRepository(machine);

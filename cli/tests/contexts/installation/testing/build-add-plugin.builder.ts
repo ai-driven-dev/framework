@@ -10,6 +10,7 @@ import {
 } from "../../../../src/contexts/installation/application/plugin/add-plugin.use-case.js";
 import { AddPluginToProject } from "../../../../src/contexts/installation/application/plugin/add-plugin-to-project.use-case.js";
 import type { BuiltMarketplaceEnsurer } from "../../../../src/contexts/installation/contract/built-marketplace.js";
+import type { ScopeRecords } from "../../../../src/contexts/installation/contract/records/scope-records.js";
 import type { InstallationMarketplaceRegistry } from "../../../../src/contexts/installation/ports/marketplace-sources.js";
 import type { LoadDistribution } from "../../../../src/contexts/installation/ports/plugin/load-plugin-distribution.js";
 import type { PluginTranslation } from "../../../../src/contexts/installation/ports/plugin/plugin-translation.js";
@@ -36,7 +37,7 @@ export interface AddPluginSources {
 /** An AddPlugin wired the way the composition wires it, over the sources a test supplies. */
 export function buildAddPlugin(
   host: AddPluginHost,
-  manifests: AddPluginManifests,
+  manifests: AddPluginManifests & { user: ScopeRecords },
   sources: AddPluginSources,
   tools: RegisteredCatalog,
   pluginRuntime?: Pick<EnsurePluginRuntimeFiles, "execute">
@@ -50,7 +51,7 @@ export function buildAddPlugin(
   });
   return new AddPlugin(
     {
-      ownership: new ClaimUserPlugin(host.fs),
+      ownership: new ClaimUserPlugin(host.fs, manifests.user),
       manifests,
       addToProject: new AddPluginToProject(
         {

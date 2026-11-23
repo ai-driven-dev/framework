@@ -25,6 +25,7 @@ import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
 import type { Logger } from "../../../../src/shared/ports/logger.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
+import { dependentsRecorded } from "../../../shared/testing/host-record-reading.builder.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../shared/testing/in-memory-manifest-repository.fake.js";
 import {
@@ -33,6 +34,7 @@ import {
   installTool,
 } from "../../../shared/testing/installation-deps.builder.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { holdPlugin } from "../testing/plugin-selection-scenario.builder.js";
 
 const PROJECT_ROOT = "/test-project";
 const SETTINGS_FILE = join(PROJECT_ROOT, ".vscode/settings.json");
@@ -251,8 +253,10 @@ async function seedSharedClaims(deps: Awaited<ReturnType<typeof buildInstallatio
   deps.manifestRepo.records.set(TOOL.codex, registration);
   const machine = Manifest.create();
   machine.addTool(TOOL.cursor, "1.0.0", []);
-  for (const name of ["shared", "local-only"])
-    machine.addPlugin(TOOL.cursor, record(name, "user").withMachineClaim([PROJECT_ROOT, "/B"]));
+  for (const name of ["shared", "local-only"]) {
+    machine.addPlugin(TOOL.cursor, record(name, "user"));
+    holdPlugin(deps.userManifestRepo.records, TOOL.cursor, name, [PROJECT_ROOT, "/B"]);
+  }
   machine.addTool(TOOL.codex, "1.0.0", []);
   deps.userManifestRepo.records.set(TOOL.codex, {
     ...registration,
@@ -263,7 +267,13 @@ async function seedSharedClaims(deps: Awaited<ReturnType<typeof buildInstallatio
 
 function userPluginDependents(deps: Awaited<ReturnType<typeof buildInstallationDeps>>) {
   const plugins = deps.userManifestRepo.getCurrent()?.getRecordedPlugins(TOOL.cursor) ?? [];
-  return plugins.map((plugin) => ({ name: plugin.plugin.name, dependents: plugin.machineClaim }));
+  return plugins.map((plugin) => ({
+    name: plugin.plugin.name,
+    dependents: dependentsRecorded(
+      deps.userManifestRepo.records.get(TOOL.cursor),
+      plugin.plugin.name
+    ),
+  }));
 }
 
 function codexClaims(deps: Awaited<ReturnType<typeof buildInstallationDeps>>) {

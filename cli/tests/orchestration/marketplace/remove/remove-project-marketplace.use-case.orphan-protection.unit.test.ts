@@ -5,6 +5,7 @@ import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plu
 import { FileHash } from "../../../../src/shared/domain/file-hash.js";
 import { aManifest } from "../../../contexts/installation/testing/manifest.builder.js";
 import { removalClaimsOf } from "../../../contexts/machine-claims/testing/claims-release.builder.js";
+import { dependentsRecorded } from "../../../shared/testing/host-record-reading.builder.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../../shared/testing/in-memory-marketplace-registry.fake.js";
@@ -62,9 +63,18 @@ describe("which plugins a removal orphans: what it protects", () => {
     const projectRepo = new InMemoryManifestRepository(project);
     const machine = aManifest()
       .withTool(SYNTHETIC_USER_TOOL, [])
-      .withPlugin(SYNTHETIC_USER_TOOL, plugin.withMachineClaim([PROJECT_ROOT, "/B"]))
+      .withPlugin(SYNTHETIC_USER_TOOL, plugin)
       .build();
-    const machineRepo = new InMemoryManifestRepository(machine);
+    const machineRepo = new InMemoryManifestRepository(
+      machine,
+      undefined,
+      new Map([
+        [
+          SYNTHETIC_USER_TOOL,
+          { pluginClaims: [{ plugin: "sample", dependents: [PROJECT_ROOT, "/B"] }] },
+        ],
+      ])
+    );
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
     const useCase = projectMarketplaceRemover(
@@ -84,9 +94,10 @@ describe("which plugins a removal orphans: what it protects", () => {
     ).rejects.toThrow(/outside.*project/);
 
     expect(projectRepo.getCurrent()?.getRecordedPlugins(SYNTHETIC_USER_TOOL)).toHaveLength(1);
-    expect(
-      machineRepo.getCurrent()?.getRecordedPlugins(SYNTHETIC_USER_TOOL)[0]?.machineClaim
-    ).toEqual([PROJECT_ROOT, "/B"]);
+    expect(dependentsRecorded(machineRepo.records.get(SYNTHETIC_USER_TOOL), "sample")).toEqual([
+      PROJECT_ROOT,
+      "/B",
+    ]);
     expect(fs.getFile(foreignPath)).toBe(content);
     expect((await registry.list(PROJECT_ROOT)).some((entry) => entry.name === "awesome")).toBe(
       true

@@ -1,7 +1,7 @@
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
-import { dependentsClaim, readDependents } from "../../domain/plugin-claim.model.js";
+import { readHeldClaims, withoutPluginDependent } from "../../domain/plugin-claim.model.js";
 import type { MachineManifestRepository } from "../../ports/machine-manifest.js";
 
 interface UserPluginDetachment {
@@ -32,12 +32,12 @@ export class DetachUserPlugin {
     const plugin = manifest.getRecordedPlugins(toolId).find((p) => p.plugin.name === name);
     if (plugin === undefined || plugin.plugin.scope !== "user") return;
     const root = await this.fs.realpath(projectRoot);
-    const dependents = readDependents(plugin.machineClaim);
-    if (!dependents.includes(root)) return;
-    manifest.updatePlugin(
-      toolId,
-      plugin.withMachineClaim(dependentsClaim(dependents.filter((dependent) => dependent !== root)))
+    const records = await repo.loadRecords();
+    const held = records.get(toolId);
+    const released = withoutPluginDependent(readHeldClaims(held?.pluginClaims), name, root);
+    if (!released.changed) return;
+    await repo.saveRecords(
+      new Map(records).set(toolId, { ...held, pluginClaims: released.claims })
     );
-    await repo.save(manifest);
   }
 }

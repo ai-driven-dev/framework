@@ -28,7 +28,6 @@ describe("Cursor user plugin boundary", () => {
             "sample-plugin/plugin.json": FileHash.of("owned bytes").value,
           },
           scope: "user",
-          dependents: [],
         })
       )
       .build();
@@ -74,7 +73,6 @@ describe("Cursor user plugin boundary", () => {
           strict: false,
           files: { [relativePath]: "abc" },
           scope: "user",
-          dependents: [],
         })
       )
       .build();

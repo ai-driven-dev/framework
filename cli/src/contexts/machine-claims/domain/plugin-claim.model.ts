@@ -1,33 +1,11 @@
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import type { ToolId } from "../../../shared/domain/tool.js";
 
-/** The project roots a machine plugin's claim lists, none when it keeps none. Refuses a claim
- * that is not a list of paths. */
-export function readDependents(claim: unknown): readonly string[] {
-  if (claim === undefined) return [];
-  if (!Array.isArray(claim) || !claim.every((root) => typeof root === "string")) {
-    throw new Error("plugin dependents: expected a list of project roots.");
-  }
-  return [...claim];
-}
-
-/** The project roots holding these plugins or these refs, once each. Refuses a plugin claim it
- * did not write. */
+/** The project roots holding what these claims are on, once each. */
 export function holdersOf(
-  plugins: readonly { readonly machineClaim?: unknown }[],
-  refClaims: readonly { readonly dependents: readonly string[] }[]
+  claims: readonly { readonly dependents: readonly string[] }[]
 ): readonly string[] {
-  return [
-    ...new Set([
-      ...plugins.flatMap((plugin) => readDependents(plugin.machineClaim)),
-      ...refClaims.flatMap((claim) => claim.dependents),
-    ]),
-  ];
-}
-
-/** The claim listing these project roots once each, none when there are none. */
-export function dependentsClaim(dependents: readonly string[]): readonly string[] | undefined {
-  return dependents.length === 0 ? undefined : [...new Set(dependents)];
+  return [...new Set(claims.flatMap((claim) => claim.dependents))];
 }
 
 /** A claim kept on a host ref: the ref, and the project roots holding it. */
@@ -36,31 +14,94 @@ export interface HeldRefClaim {
   readonly dependents: readonly string[];
 }
 
-/** The claims a record keeps on its refs, each copied; none when it keeps none. Refuses a list,
- * or a claim, that is not a ref with the paths of the projects holding it. */
-export function readHeldClaims(value: unknown): HeldRefClaim[] {
+/** A claim kept on a machine plugin: its name, and the project roots holding it. */
+export interface HeldPluginClaim {
+  readonly plugin: string;
+  readonly dependents: readonly string[];
+}
+
+/** A claim a record keeps, on a ref or on a plugin, keyed beside the tool by that ref or name. */
+export type HeldClaim = HeldRefClaim | HeldPluginClaim;
+
+const isPluginClaim = (claim: HeldClaim): claim is HeldPluginClaim => "plugin" in claim;
+
+const isRefClaim = (claim: HeldClaim): claim is HeldRefClaim => "ref" in claim;
+
+/** The claims a record keeps, each copied; none when it keeps none. Refuses a list, or a claim,
+ * that is not exactly a ref or a plugin with the paths of the projects holding it. */
+export function readHeldClaims(value: unknown): HeldClaim[] {
   if (value === undefined) return [];
   if (!Array.isArray(value)) {
     throw new Error("nativeRegistrations.pluginClaims: expected an array.");
   }
-  return value.map((item) => {
-    const claim = asPlainObject(item);
-    if (
-      claim === null ||
-      typeof claim.ref !== "string" ||
-      !Array.isArray(claim.dependents) ||
-      !claim.dependents.every((dependent) => typeof dependent === "string")
-    ) {
-      throw new Error("nativeRegistrations.pluginClaims: expected a ref and its dependents.");
-    }
-    return { ref: claim.ref, dependents: [...claim.dependents] };
-  });
+  return value.map(readHeldClaim);
 }
 
-interface OpenClaim {
-  readonly ref: string;
-  readonly dependents: string[];
+function readHeldClaim(item: unknown): HeldClaim {
+  const { ref, plugin, dependents } = asPlainObject(item) ?? {};
+  if (isRoots(dependents)) {
+    if (typeof ref === "string" && plugin === undefined)
+      return { ref, dependents: [...dependents] };
+    if (typeof plugin === "string" && ref === undefined)
+      return { plugin, dependents: [...dependents] };
+  }
+  throw new Error(
+    "nativeRegistrations.pluginClaims: expected a ref or a plugin, and its dependents."
+  );
 }
+
+function isRoots(value: unknown): value is readonly string[] {
+  return Array.isArray(value) && value.every((root) => typeof root === "string");
+}
+
+/** The claims a record keeps on its refs, each copied; none when it keeps none. */
+export function readHeldRefClaims(value: unknown): HeldRefClaim[] {
+  return readHeldClaims(value).filter(isRefClaim);
+}
+
+/** The claims on the named plugins. */
+export function pluginClaimsNamed(
+  claims: readonly HeldClaim[],
+  names: readonly string[]
+): HeldPluginClaim[] {
+  return claims.filter(isPluginClaim).filter((claim) => names.includes(claim.plugin));
+}
+
+/** The claims with the dependent holding the plugin's claim, opened after the others when the
+ * plugin had none. Every claim is copied, never the ones it was given. */
+export function withPluginDependent(
+  claims: readonly HeldClaim[],
+  plugin: string,
+  dependent: string
+): HeldClaim[] {
+  const held = claims.some((claim) => isPluginClaim(claim) && claim.plugin === plugin);
+  const copied = claims.map((claim) =>
+    isPluginClaim(claim) && claim.plugin === plugin
+      ? { plugin, dependents: [...new Set([...claim.dependents, dependent])] }
+      : { ...claim, dependents: [...claim.dependents] }
+  );
+  return held ? copied : [...copied, { plugin, dependents: [dependent] }];
+}
+
+/** The claims once the dependent no longer holds the plugin, its claim closed when none does,
+ * and whether that changed anything. */
+export function withoutPluginDependent(
+  claims: readonly HeldClaim[],
+  plugin: string,
+  dependent: string
+): { readonly claims: HeldClaim[]; readonly changed: boolean } {
+  const holds = (claim: HeldClaim): claim is HeldPluginClaim =>
+    isPluginClaim(claim) && claim.plugin === plugin && claim.dependents.includes(dependent);
+  if (!claims.some(holds)) return { claims: [...claims], changed: false };
+  const released = claims.flatMap((claim): HeldClaim[] => {
+    if (!holds(claim)) return [claim];
+    const dependents = claim.dependents.filter((root) => root !== dependent);
+    return dependents.length === 0 ? [] : [{ plugin, dependents }];
+  });
+  return { claims: released, changed: true };
+}
+
+type OpenClaim = { ref: string; dependents: string[] } | { plugin: string; dependents: string[] };
 
 /** The claims once one run's refs are merged in, and whether the merge changed anything. */
 interface MergedRefClaims {
@@ -69,13 +110,17 @@ interface MergedRefClaims {
 }
 
 /** The claims with the dependent holding each ref's claim, a claim opened for a ref nobody
- * claimed yet. Every claim is copied, never the ones it was given. */
+ * claimed yet. The claims on plugins stay as they are. Every claim is copied, never the ones it
+ * was given. */
 export function mergeRefClaims(
-  recorded: readonly HeldRefClaim[],
+  recorded: readonly HeldClaim[],
   refs: readonly string[],
   dependent: string | undefined
 ): MergedRefClaims {
-  const entries = recorded.map((claim) => ({ ref: claim.ref, dependents: [...claim.dependents] }));
+  const entries: OpenClaim[] = recorded.map((claim) => ({
+    ...claim,
+    dependents: [...claim.dependents],
+  }));
   let changed = false;
   for (const ref of refs) changed = holdRef(entries, ref, dependent) || changed;
   return { entries, changed };
@@ -84,7 +129,7 @@ export function mergeRefClaims(
 /** Records the dependent as a holder of the ref's claim, adding the claim when it is new. Says
  * whether anything changed. */
 function holdRef(entries: OpenClaim[], ref: string, dependent: string | undefined): boolean {
-  const claim = entries.find((candidate) => candidate.ref === ref);
+  const claim = entries.find((candidate) => "ref" in candidate && candidate.ref === ref);
   if (claim === undefined) {
     entries.push({ ref, dependents: dependent === undefined ? [] : [dependent] });
     return true;
@@ -94,12 +139,12 @@ function holdRef(entries: OpenClaim[], ref: string, dependent: string | undefine
   return true;
 }
 
-/** The claims whose ref is kept. */
+/** The claims whose ref is kept, and every claim on a plugin. */
 export function claimsKeeping(
-  claims: readonly HeldRefClaim[],
+  claims: readonly HeldClaim[],
   keep: (ref: string) => boolean
-): HeldRefClaim[] {
-  return claims.filter((claim) => keep(claim.ref));
+): HeldClaim[] {
+  return claims.filter((claim) => isPluginClaim(claim) || keep(claim.ref));
 }
 
 type RecordData = Readonly<Record<string, unknown>>;

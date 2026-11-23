@@ -240,6 +240,30 @@ export function describeManifestFileContract(
         );
       });
 
+      it("moves a user plugin's dependents into the claims, the saved manifest no longer carrying them", async () => {
+        const v8 = JSON.parse(await v8Capture());
+        const entry = v8.tools.claude;
+        entry.plugins.push({
+          ...entry.plugins[0],
+          name: "aidd-vcs",
+          scope: "user",
+          dependents: ["/project-a", "/project-b"],
+        });
+        await write(JSON.stringify(v8));
+
+        const loaded = await subject.repository.load();
+
+        const pluginClaim = { plugin: "aidd-vcs", dependents: ["/project-a", "/project-b"] };
+        const record = (await subject.repository.loadRecords()).get(TOOL.claude);
+        expect(record?.pluginClaims).toStrictEqual([
+          ...v8.tools.claude.nativeRegistrations.pluginClaims,
+          pluginClaim,
+        ]);
+        const saved = (await onDisk()).tools.claude.plugins;
+        expect(saved.map((plugin: object) => "dependents" in plugin)).toStrictEqual([false, false]);
+        expect(JSON.stringify(loaded?.toJSON())).not.toContain("dependents");
+      });
+
       it("is split by a first read of the records alone", async () => {
         expect((await subject.repository.loadRecords()).get(TOOL.claude)).toStrictEqual(
           await v8Record()

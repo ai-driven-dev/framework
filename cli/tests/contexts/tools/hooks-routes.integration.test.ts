@@ -310,14 +310,15 @@ type RecordedPlugin = ReturnType<RecordedManifest["getRecordedPlugins"]>[number]
 function recordedPluginLines(
   ws: Workspace,
   header: { scope: string; toolId: string },
-  recorded: RecordedPlugin
+  recorded: RecordedPlugin,
+  registrations: RegistrationRecords extends Map<unknown, infer Record> ? Record | undefined : never
 ): string[] {
   const { plugin } = recorded;
   const hookFiles = [...plugin.files.keys()]
     .filter((f) => /hook/i.test(f) && !f.includes("/skills/"))
     .sort();
   const projectHooks = JSON.stringify(recorded.provenance.projectHooks ?? null, null, 2);
-  const dependents = dependentsRecorded(recorded).map(
+  const dependents = dependentsRecorded(registrations, plugin.name).map(
     (dependent) => `<root>/${relative(ws.root, dependent).split(sep).join("/")}`
   );
   return [
@@ -337,10 +338,10 @@ async function recordedPlugins(
   if (manifest === null) return [`${scope}: no manifest`];
   const lines: string[] = [];
   for (const toolId of manifest.getInstalledToolIds()) {
-    for (const plugin of manifest.getRecordedPlugins(toolId)) {
-      lines.push(...recordedPluginLines(ws, { scope, toolId }, plugin));
-    }
     const registrations = records.get(toolId);
+    for (const plugin of manifest.getRecordedPlugins(toolId)) {
+      lines.push(...recordedPluginLines(ws, { scope, toolId }, plugin, registrations));
+    }
     lines.push(
       `${scope} ${toolId} nativeRegistrations pluginRefs ${JSON.stringify(registrations?.pluginRefs ?? null)}`
     );

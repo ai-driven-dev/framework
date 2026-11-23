@@ -26,7 +26,6 @@ describe("reading a recorded plugin from an entry", () => {
     expect(fields.plugin.files.get("a.md")).toBe("h1");
     expect(fields.provenance.componentPaths.size).toBe(0);
     expect(fields.provenance.mcpEntries.size).toBe(0);
-    expect(fields.machineClaim).toBeUndefined();
   });
 
   it("rejects an invalid name, version and scope", () => {
@@ -56,7 +55,6 @@ describe("writing an entry from a recorded plugin", () => {
       mcpEntries: { srv: "d" },
       projectHooks: { entries: [{ event: "e", command: "c", digest: "d" }], scripts: { s: "h" } },
       marketplace: "mk",
-      dependents: ["/root"],
     });
     expect(entryFromRecordedPlugin(recordedPluginFromEntry(full))).toEqual(full);
   });

@@ -10,6 +10,7 @@ describe("removing a machine plugin", () => {
       refSelectedBy: () => true,
       claimsOf: () => [],
       holdersOf: () => [],
+      pluginClaimsOf: () => [],
       withoutClaimedRef: <R>(record: R) => ({ ...record, pluginClaims: [] }),
       loadRecords: async () => new Map(),
       saveRecords: async () => undefined,

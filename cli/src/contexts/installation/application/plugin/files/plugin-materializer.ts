@@ -96,7 +96,7 @@ export class PluginMaterializer implements UserPluginMaterialization {
       scope: "user",
       componentPaths,
       marketplace,
-    }).withMachineClaim(recorded.machineClaim);
+    });
     return { plugin: recorded, tool, home, baseDir, files, oldSafe, next };
   }
 

@@ -1,5 +1,5 @@
 import type { AiToolId } from "../../../../shared/domain/tool.js";
-import { readHeldClaims } from "../../domain/plugin-claim.model.js";
+import { readHeldRefClaims } from "../../domain/plugin-claim.model.js";
 import type { MachineManifestRepository } from "../../ports/machine-manifest.js";
 
 /** What the machine-wide record says about the claims on a tool's refs. */
@@ -8,7 +8,7 @@ export function readMachineClaims(userManifestRepo: MachineManifestRepository) {
     const machine = await userManifestRepo.load();
     if (machine === null) return undefined;
     const records = await userManifestRepo.loadRecords();
-    return readHeldClaims(records.get(toolId)?.pluginClaims);
+    return readHeldRefClaims(records.get(toolId)?.pluginClaims);
   };
   return {
     /** The refs claimed on the machine; `undefined` when no machine record exists. */

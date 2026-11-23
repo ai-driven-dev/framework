@@ -1,6 +1,7 @@
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
+import type { ToolRecords } from "../../contract/records/scope-records.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
@@ -57,7 +58,8 @@ export class UpdatePlugin {
     const toolIds = resolvePluginToolIds(options.toolIds, manifest, this.tools);
     const targets = userPluginTargets(manifest, toolIds, options.pluginNames);
     const { refSelection } = options;
-    const natives = nativeTargets(refSelection, await refSelection.loadRecords(), {
+    const records = await refSelection.loadRecords();
+    const natives = nativeTargets(refSelection, records, {
       toolIds,
       options,
     });
@@ -69,7 +71,10 @@ export class UpdatePlugin {
     });
     for (const { toolId, plugin, plan } of filePlans) {
       if (plan === null) continue;
-      manifest.updatePlugin(toolId, await this.applyFilePlan({ toolId, plugin, plan }, options));
+      manifest.updatePlugin(
+        toolId,
+        await this.applyFilePlan({ toolId, plugin, plan }, { options, records })
+      );
       updated.push(plugin.plugin.name);
     }
     if (updated.length > 0) await repo.save(manifest);
@@ -95,10 +100,13 @@ export class UpdatePlugin {
 
   private async applyFilePlan(
     planned: { toolId: AiToolId; plugin: RecordedPlugin; plan: PlannedUserPluginFileUpdate },
-    options: MachineCommand
+    { options, records }: { options: MachineCommand; records: ToolRecords }
   ): Promise<RecordedPlugin> {
     const { toolId, plugin, plan } = planned;
-    const dependents = options.refSelection.holdersOf([plugin], []);
+    const { refSelection } = options;
+    const dependents = refSelection.holdersOf(
+      refSelection.pluginClaimsOf(records.get(toolId), [plugin.plugin.name])
+    );
     if (dependents.length > 0)
       this.deps.logger.warn(
         `${toolId}: updating user-scope '${plugin.plugin.name}' affects ${dependents.join(", ")}; each project must refresh its own integration afterward.`

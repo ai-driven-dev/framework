@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { MachineRecords } from "../../../../../src/contexts/machine-claims/ports/machine-manifest.js";
+import { dependentsRecorded } from "../../../../shared/testing/host-record-reading.builder.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { removalClaimsOf } from "../../testing/claims-release.builder.js";
@@ -23,11 +24,9 @@ function fixture() {
         pluginClaims: [{ ref: REF, dependents: ["/A", "/B"] }],
       },
     ],
+    [TOOL.cursor, { pluginClaims: [{ plugin: "sample-plugin", dependents: ["/A", "/B"] }] }],
   ]);
-  manifest.addPlugin(
-    TOOL.cursor,
-    new MachinePlugin({ name: "sample-plugin", scope: "user", dependents: ["/A", "/B"] })
-  );
+  manifest.addPlugin(TOOL.cursor, new MachinePlugin({ name: "sample-plugin", scope: "user" }));
   const repo = new InMemoryMachineManifestRepository(manifest, records);
   const fs = new InMemoryFileAdapter({}, ["/A", "/B"]);
   return { repo, claims: removalClaimsOf(repo, fs) };
@@ -49,7 +48,7 @@ describe("the claims a plugin removal releases", () => {
 
     await f.claims.detachUserPlugin(TOOL.cursor, "sample-plugin", "/A");
 
-    expect(f.repo.getCurrent()?.getRecordedPlugins(TOOL.cursor)[0]?.machineClaim).toEqual(["/B"]);
+    expect(dependentsRecorded(f.repo.records.get(TOOL.cursor), "sample-plugin")).toEqual(["/B"]);
   });
 
   it("releases nothing when no machine manifest is bound", async () => {

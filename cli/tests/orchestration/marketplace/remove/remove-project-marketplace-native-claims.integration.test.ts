@@ -14,6 +14,7 @@ import {
   errnoError,
   FaultingFileAdapter,
 } from "../../../shared/testing/faulting-file-adapter.fake.js";
+import { dependentsRecorded } from "../../../shared/testing/host-record-reading.builder.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../../shared/testing/in-memory-marketplace-registry.fake.js";
@@ -27,6 +28,9 @@ import {
 } from "../../../shared/testing/synthetic-native-tool.builder.js";
 import { projectMarketplaceRemover } from "../../testing/project-marketplace-remover.builder.js";
 
+const heldByAAndB: ToolRecords = new Map([
+  [SYNTHETIC_USER_TOOL, { pluginClaims: [{ plugin: "sample-plugin", dependents: ["/A", "/B"] }] }],
+]);
 const HOOKS_FILE = `.${SYNTHETIC_USER_TOOL}/hooks.json`;
 const PLUGIN_HOME = join(resolveHomeTemplate(SYNTHETIC_USER_PLUGINS, homedir()), "sample-plugin");
 const PRE_SCRIPT = `.${SYNTHETIC_USER_TOOL}/hooks/sample-plugin/pre.js`;
@@ -196,12 +200,11 @@ describe("project marketplace removal against machine native claims", () => {
           strict: false,
           files: {},
           scope: "user",
-          dependents: ["/A", "/B"],
         })
       )
       .build();
     const projectRepo = new InMemoryManifestRepository(project);
-    const machineRepo = new InMemoryManifestRepository(machine);
+    const machineRepo = new InMemoryManifestRepository(machine, undefined, heldByAAndB);
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(
       "/A",
@@ -226,7 +229,7 @@ describe("project marketplace removal against machine native claims", () => {
     expect(projectRepo.recordSaveCount).toBe(0);
     expect(projectRepo.getCurrent()?.getRecordedPlugins(SYNTHETIC_USER_TOOL)).toHaveLength(1);
     expect(
-      machineRepo.getCurrent()?.getRecordedPlugins(SYNTHETIC_USER_TOOL)[0]?.machineClaim
+      dependentsRecorded(machineRepo.records.get(SYNTHETIC_USER_TOOL), "sample-plugin")
     ).toEqual(["/A", "/B"]);
     expect(fs.getFile(hooksPath)).toBe(hooks);
     expect(fs.getFile(globalMcp)).toBe("B's MCP");
@@ -352,11 +355,10 @@ describe("project marketplace removal against machine native claims", () => {
           files: { "sample-plugin/skills/demo.md": "abc" },
           scope: "user",
           marketplace: NAME,
-          dependents: ["/A", "/B"],
         })
       )
       .build();
-    const machineRepo = new InMemoryManifestRepository(machine);
+    const machineRepo = new InMemoryManifestRepository(machine, undefined, heldByAAndB);
     const projectRepo = new InMemoryManifestRepository(project);
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(
@@ -407,7 +409,7 @@ describe("project marketplace removal against machine native claims", () => {
     expect(fs.getFile(bHooks)).toBe(hooks);
     expect(fs.getFile(bScript)).toBe("B's hook");
     expect(
-      machineRepo.getCurrent()?.getRecordedPlugins(SYNTHETIC_USER_TOOL)[0]?.machineClaim
+      dependentsRecorded(machineRepo.records.get(SYNTHETIC_USER_TOOL), "sample-plugin")
     ).toEqual(["/B"]);
     expect(projectRepo.getCurrent()?.getRecordedPlugins(SYNTHETIC_USER_TOOL)).toEqual([]);
   });

@@ -39,11 +39,18 @@ export class InspectUserScopeFiles {
   private activeDependents(manifest: Manifest | null, records: ToolRecords): readonly string[] {
     if (manifest === null) return [];
     const toolIds = manifest.getInstalledToolIds().filter((toolId) => this.tools.isAiTool(toolId));
-    return this.deps.claims.holdersOf(
-      toolIds.flatMap((toolId) =>
-        manifest.getRecordedPlugins(toolId).filter(({ plugin }) => plugin.scope === "user")
-      ),
-      toolIds.flatMap((toolId) => this.deps.claims.claimsOf(records.get(toolId)))
+    const { claims } = this.deps;
+    return claims.holdersOf(
+      toolIds.flatMap((toolId) => [
+        ...claims.pluginClaimsOf(
+          records.get(toolId),
+          manifest
+            .getRecordedPlugins(toolId)
+            .filter(({ plugin }) => plugin.scope === "user")
+            .map(({ plugin }) => plugin.name)
+        ),
+        ...claims.claimsOf(records.get(toolId)),
+      ])
     );
   }
 }

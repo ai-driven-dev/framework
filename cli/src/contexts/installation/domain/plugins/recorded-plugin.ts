@@ -20,24 +20,19 @@ export interface RecordedPluginParts {
   readonly provenance: FileProvenance;
   /** The marketplace alias the plugin was installed from: a reference host registration resolves. */
   readonly marketplace?: string;
-  /** The machine claim on the plugin's user-scope files, kept as it came: machine claims read and
-   * write it, installation only carries it. */
-  readonly machineClaim?: unknown;
 }
 
 /** One plugin as a manifest records it. What installation owns of it stays apart from the
- * provenance of what translation wrote, the host reference and the machine claim. */
+ * provenance of what translation wrote and the host reference. */
 export class RecordedPlugin implements RecordedPluginParts {
   readonly plugin: InstalledPlugin;
   readonly provenance: FileProvenance;
   readonly marketplace?: string;
-  readonly machineClaim?: unknown;
 
   private constructor(parts: RecordedPluginParts) {
     this.plugin = parts.plugin;
     this.provenance = parts.provenance;
     this.marketplace = parts.marketplace;
-    this.machineClaim = parts.machineClaim;
   }
 
   static fromMetadata(metadata: {
@@ -115,9 +110,5 @@ export class RecordedPlugin implements RecordedPluginParts {
 
   withProjectHooks(projectHooks: ProjectHooksProvenance | undefined): RecordedPlugin {
     return new RecordedPlugin({ ...this, provenance: { ...this.provenance, projectHooks } });
-  }
-
-  withMachineClaim(machineClaim: unknown): RecordedPlugin {
-    return new RecordedPlugin({ ...this, machineClaim });
   }
 }

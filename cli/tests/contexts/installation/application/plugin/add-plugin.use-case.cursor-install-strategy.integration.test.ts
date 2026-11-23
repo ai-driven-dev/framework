@@ -5,6 +5,7 @@ import { Manifest } from "../../../../../src/contexts/installation/domain/manife
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { Logger } from "../../../../../src/shared/ports/logger.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
+import { dependentsRecorded } from "../../../../shared/testing/host-record-reading.builder.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import {
   buildInstallationDeps,
@@ -71,7 +72,12 @@ describe("adding a plugin for Cursor", () => {
           ?.getRecordedPlugins(cursor)
           .find((p) => p.plugin.name === "sample-plugin");
         expect(machine?.plugin.files.size).toBeGreaterThan(0);
-        expect(machine?.machineClaim).toEqual([PROJECT_ROOT]);
+        expect(
+          dependentsRecorded(
+            (await deps.userManifestRepo.loadRecords()).get(cursor),
+            "sample-plugin"
+          )
+        ).toEqual([PROJECT_ROOT]);
       });
 
       const CURSOR_SKILL = "sample-plugin/skills/demo/SKILL.md";
@@ -171,7 +177,10 @@ describe("adding a plugin for Cursor", () => {
         expect(deps.userManifestRepo.saveCount).toBe(machineSavesBefore);
         expect(pluginNames(deps, cursor)).toEqual(["sample-plugin"]);
         expect(
-          deps.userManifestRepo.getCurrent()?.getRecordedPlugins(cursor)[0]?.machineClaim
+          dependentsRecorded(
+            (await deps.userManifestRepo.loadRecords()).get(cursor),
+            "sample-plugin"
+          )
         ).toEqual([PROJECT_ROOT]);
       });
 
@@ -207,7 +216,10 @@ describe("adding a plugin for Cursor", () => {
         expect(deps.fs.getFile(ownedPath)).toBe("A's own bytes");
         expect(projectBRepo.getCurrent()?.getRecordedPlugins(cursor)[0]?.plugin.files.size).toBe(0);
         expect(
-          deps.userManifestRepo.getCurrent()?.getRecordedPlugins(cursor)[0]?.machineClaim
+          dependentsRecorded(
+            (await deps.userManifestRepo.loadRecords()).get(cursor),
+            "sample-plugin"
+          )
         ).toEqual([PROJECT_ROOT, "/B"]);
         expect(logger.warnMessages.slice(warningsBeforeB).join("\n")).not.toContain(
           "was already there and this project did not install it"

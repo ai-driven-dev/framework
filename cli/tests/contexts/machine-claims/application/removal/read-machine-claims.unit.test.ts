@@ -12,7 +12,7 @@ describe("reading the machine-wide claims on a tool's refs", () => {
     { ref: "q@aidd", dependents: ["/b", "/c"] },
     { ref: "r@aidd", dependents: ["/d"] },
   ];
-  const readerOf = (pluginClaims?: typeof held) => {
+  const readerOf = (pluginClaims?: readonly object[]) => {
     const manifest = new InMemoryMachineManifest(TOOL.claude);
     const records = pluginClaims ? new Map([[TOOL.claude, { pluginClaims }]]) : undefined;
     return readMachineClaims(new InMemoryMachineManifestRepository(manifest, records));
@@ -20,6 +20,16 @@ describe("reading the machine-wide claims on a tool's refs", () => {
 
   it("names the refs the record claims for the tool", async () => {
     expect(await readerOf(held).claimedRefs(TOOL.claude)).toEqual(["p@aidd", "q@aidd", "r@aidd"]);
+  });
+
+  it("counts the claim a plugin holds as no ref", async () => {
+    const withPlugin = [...held, { plugin: "sample-plugin", dependents: ["/e"] }];
+
+    expect(await readerOf(withPlugin).claimedRefs(TOOL.claude)).toEqual([
+      "p@aidd",
+      "q@aidd",
+      "r@aidd",
+    ]);
   });
 
   it("claims no ref for a tool the record keeps no registration of", async () => {
