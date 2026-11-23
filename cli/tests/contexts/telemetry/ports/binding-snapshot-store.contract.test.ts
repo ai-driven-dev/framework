@@ -2,7 +2,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { BindingSnapshotStoreAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/ledger/binding-snapshot-store-adapter.js";
-import { PrivateStorageAdapter } from "../../../../src/shared/infrastructure/private-storage-adapter.js";
+import { machinePrivateStorage } from "../../../shared/testing/machine-private-storage.builder.js";
 import {
   describeBindingSnapshotStoreContract,
   type SnapshotStoreSubject,
@@ -22,7 +22,7 @@ describeBindingSnapshotStoreContract(
   async (): Promise<SnapshotStoreSubject> => {
     const root = await mkdtemp(join(tmpdir(), "aidd-snapshots-contract-"));
     return {
-      store: new BindingSnapshotStoreAdapter(join(root, "bindings"), new PrivateStorageAdapter()),
+      store: new BindingSnapshotStoreAdapter(join(root, "bindings"), machinePrivateStorage()),
       dispose: () => rm(root, { recursive: true, force: true }),
     };
   }

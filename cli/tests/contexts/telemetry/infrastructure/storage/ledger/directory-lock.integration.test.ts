@@ -2,7 +2,7 @@ import { mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { PrivateStorageAdapter } from "../../../../../../src/shared/infrastructure/private-storage-adapter.js";
+import { machinePrivateStorage } from "../../../../../shared/testing/machine-private-storage.builder.js";
 import { directoryLockOver } from "../../../testing/lock-adapters.builder.js";
 
 let root: string;
@@ -18,7 +18,7 @@ afterEach(async () => {
   await rm(root, { recursive: true, force: true });
 });
 
-const lockOf = () => directoryLockOver(dir, new PrivateStorageAdapter(), quick);
+const lockOf = () => directoryLockOver(dir, machinePrivateStorage(), quick);
 
 describe("a lock on a file in a private directory", () => {
   it("creates the directory, holds the lock during the work and frees it after", async () => {
@@ -47,7 +47,7 @@ describe("a lock on a file in a private directory", () => {
   });
 
   it("waits no longer than the wait it is given for", async () => {
-    const patient = directoryLockOver(dir, new PrivateStorageAdapter(), {
+    const patient = directoryLockOver(dir, machinePrivateStorage(), {
       waitMs: 60_000,
       pollMs: 1,
     });

@@ -5490,7 +5490,8 @@
         "src/contexts/*/ports/**/*.ts",
         "src/contexts/*/contract/**/*.ts",
         "src/shared/domain/**/*.ts",
-        "src/shared/ports/**/*.ts"
+        "src/shared/ports/**/*.ts",
+        "src/shared/infrastructure/**/*.ts"
       ],
       "linter": {
         "rules": {

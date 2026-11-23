@@ -152,7 +152,7 @@ export const PLANTS: readonly Plant[] = [
     IMPORT_TYPE,
     1,
   ],
-  // The process global, in the layers that hold no I/O.
+  // The process global, in the layers that hold no I/O and in shared infrastructure.
   ["src/contexts/installation/domain/env.ts", readsEnv, GLOBAL, 1],
   ["src/contexts/installation/application/env.ts", readsEnv, GLOBAL, 1],
   ["src/contexts/installation/infrastructure/env.ts", readsEnv, GLOBAL, 0],
@@ -160,6 +160,7 @@ export const PLANTS: readonly Plant[] = [
   ["src/contexts/auth/contract/env.ts", readsEnv, GLOBAL, 1],
   ["src/shared/ports/env.ts", readsEnv, GLOBAL, 1],
   ["src/shared/domain/env.ts", readsEnv, GLOBAL, 1],
+  ["src/shared/infrastructure/env.ts", readsEnv, GLOBAL, 1],
   // shared reaches no context, and the composition root only wires.
   [
     "src/shared/ports/reaches-context.ts",

@@ -15,7 +15,7 @@ import { ReadUsage } from "../../../../src/contexts/telemetry/application/read-u
 import { SnapshotBindings } from "../../../../src/contexts/telemetry/application/snapshot-bindings.use-case.js";
 import { ClaudeUsageSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-usage-source-adapter.js";
 import { CodexUsageSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/codex/codex-usage-source-adapter.js";
-import { PrivateStorageAdapter } from "../../../../src/shared/infrastructure/private-storage-adapter.js";
+import { machinePrivateStorage } from "../../../shared/testing/machine-private-storage.builder.js";
 import { cloneOf, grantedBy } from "../testing/clone.builder.js";
 import { FakeBindings } from "../testing/fake-bindings.fake.js";
 import { FakeConsents } from "../testing/fake-consents.fake.js";
@@ -45,7 +45,7 @@ const PLACES = ["/work/in", "/work/out", "/work/none", undefined] as const;
 function machine(sessions: string, projects?: string) {
   runs += 1;
   const dir = join(root, `ledger-${runs}`);
-  const ledger = ledgerOver(dir, new PrivateStorageAdapter());
+  const ledger = ledgerOver(dir, machinePrivateStorage());
   const locator = new FakeLocator();
   const consents = new FakeConsents();
   const history = new InMemoryConsentHistory();

@@ -9,7 +9,7 @@ describe("reading the process environment", () => {
   });
 
   it("reads a variable the process set after the adapter was constructed", () => {
-    const environment = new EnvironmentAdapter();
+    const environment = new EnvironmentAdapter(process.env);
     process.env[VARIABLE] = "later";
 
     expect(environment.get(VARIABLE)).toBe("later");

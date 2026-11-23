@@ -2,7 +2,7 @@ import { appendFile, mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { SessionBindingStoreAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/declarations/session-binding-store-adapter.js";
-import { PrivateStorageAdapter } from "../../../../src/shared/infrastructure/private-storage-adapter.js";
+import { machinePrivateStorage } from "../../../shared/testing/machine-private-storage.builder.js";
 import { InMemorySessions } from "../testing/in-memory-sessions.fake.js";
 import {
   describeSessionBindingStoreContract,
@@ -29,7 +29,7 @@ describeSessionBindingStoreContract(
     const root = await mkdtemp(join(tmpdir(), "aidd-sessions-contract-"));
     const dir = join(root, "bindings");
     return {
-      store: new SessionBindingStoreAdapter(dir, new PrivateStorageAdapter()),
+      store: new SessionBindingStoreAdapter(dir, machinePrivateStorage()),
       seedCarry: async (carry) => {
         await mkdir(dir, { recursive: true });
         await appendFile(join(dir, "carries.jsonl"), `${JSON.stringify(carry)}\n`);

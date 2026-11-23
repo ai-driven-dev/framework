@@ -26,7 +26,7 @@ import { declarationOf } from "../../../../../src/contexts/telemetry/domain/decl
 import { conflictsOf } from "../../../../../src/contexts/telemetry/domain/report/report-filter.js";
 import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/stored-usage.js";
 import type { UsageLedgerAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
-import { PrivateStorageAdapter } from "../../../../../src/shared/infrastructure/private-storage-adapter.js";
+import { machinePrivateStorage } from "../../../../shared/testing/machine-private-storage.builder.js";
 import { FakeLocator } from "../../testing/fake-locator.fake.js";
 import { InMemoryIdentity } from "../../testing/in-memory-identity.fake.js";
 import { InMemorySessions } from "../../testing/in-memory-sessions.fake.js";
@@ -206,7 +206,7 @@ async function ledgerWith(
   for (const record of earlier) put(record.at.slice(0, 10), JSON.stringify(record));
   for (const { day, text } of damaged) put(day, text);
   for (const [name, text] of files) await writeFile(join(dir, `${name}.jsonl`), text);
-  return ledgerOver(dir, new PrivateStorageAdapter());
+  return ledgerOver(dir, machinePrivateStorage());
 }
 
 function ingestResultOf(facts: Run): IngestUsageResult {

@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { LeftOutAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/left-out-adapter.js";
-import { PrivateStorageAdapter } from "../../../../../../src/shared/infrastructure/private-storage-adapter.js";
+import { machinePrivateStorage } from "../../../../../shared/testing/machine-private-storage.builder.js";
 
 let dir: string;
 beforeEach(async () => {
@@ -13,7 +13,7 @@ afterEach(async () => {
   await rm(dir, { recursive: true, force: true });
 });
 
-const adapter = () => new LeftOutAdapter(dir, new PrivateStorageAdapter());
+const adapter = () => new LeftOutAdapter(dir, machinePrivateStorage());
 
 describe("what was left out", () => {
   it("counts nothing before anything is added, and creates no file", async () => {

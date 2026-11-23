@@ -4,13 +4,13 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SnapshotBindings } from "../../../../../../src/contexts/telemetry/application/snapshot-bindings.use-case.js";
 import { BindingSnapshotStoreAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/binding-snapshot-store-adapter.js";
-import { PrivateStorageAdapter } from "../../../../../../src/shared/infrastructure/private-storage-adapter.js";
+import { machinePrivateStorage } from "../../../../../shared/testing/machine-private-storage.builder.js";
 import { FakeBindings } from "../../../testing/fake-bindings.fake.js";
 import { ledgerOver } from "../../../testing/ledger-adapters.builder.js";
 import { bindingsLockOver } from "../../../testing/lock-adapters.builder.js";
 
 let root: string;
-const storage = new PrivateStorageAdapter();
+const storage = machinePrivateStorage();
 
 beforeEach(async () => {
   root = await mkdtemp(join(tmpdir(), "aidd-bindings-lock-"));

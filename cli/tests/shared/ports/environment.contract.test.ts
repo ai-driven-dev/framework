@@ -10,7 +10,7 @@ describeEnvironmentContract("the in-memory double", (values) => ({
 describeEnvironmentContract("the process environment", (values) => {
   Object.assign(process.env, values);
   return {
-    environment: new EnvironmentAdapter(),
+    environment: new EnvironmentAdapter(process.env),
     dispose: () => {
       for (const name of Object.keys(values)) delete process.env[name];
     },

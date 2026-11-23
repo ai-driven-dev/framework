@@ -1,7 +1,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { PrivateStorageAdapter } from "../../../../src/shared/infrastructure/private-storage-adapter.js";
+import { machinePrivateStorage } from "../../../shared/testing/machine-private-storage.builder.js";
 import {
   type BindingsLockSubject,
   describeBindingsLockContract,
@@ -20,7 +20,7 @@ describeBindingsLockContract(
 describeBindingsLockContract("the lock on a temp dir", async (): Promise<BindingsLockSubject> => {
   const root = await mkdtemp(join(tmpdir(), "aidd-bindings-lock-contract-"));
   return {
-    lock: bindingsLockOver(join(root, "bindings"), new PrivateStorageAdapter()),
+    lock: bindingsLockOver(join(root, "bindings"), machinePrivateStorage()),
     dispose: () => rm(root, { recursive: true, force: true }),
   };
 });
