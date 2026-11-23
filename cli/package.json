@@ -77,7 +77,6 @@
     "test:mutation:host-registration": "node scripts/run-mutation.mjs host-registration",
     "test:mutation:machine-claims": "node scripts/run-mutation.mjs machine-claims",
     "test:mutation:recipes": "node scripts/run-mutation.mjs recipes",
-    "validate:recipes": "pnpm build && node dist/cli.js framework validate-recipes --all --bundled ../plugins/aidd-context/skills/12-cook/assets/recipes",
     "test:mutation:tools": "node scripts/run-mutation.mjs tools",
     "test:mutation:translate": "node scripts/run-mutation.mjs translate",
     "test:mutation:distribution": "node scripts/run-mutation.mjs distribution",

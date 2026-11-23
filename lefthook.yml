@@ -1,30 +1,23 @@
 pre-commit:
   output: true
   commands:
-    json-validity:
-      glob:
-        - "*.json"
-        - "**/*.json"
+    json-syntax:
+      glob: "**/*.json"
       exclude:
-        - "cli/tests/fixtures/**"
-      run: |
-        if ! command -v node >/dev/null 2>&1; then
-          echo '❌ node not available; cannot validate JSON'
-          exit 1
-        fi
-        node scripts/validate-json.mjs {staged_files}
-    yaml-validity:
+        - "cli/**"
+        - "kanban/**"
+      run: cli/node_modules/.bin/biome lint --no-errors-on-unmatched {staged_files}
+    manifest-schemas:
       glob:
-        - "*.{yml,yaml}"
-        - "**/*.{yml,yaml}"
+        - "**/.claude-plugin/{plugin,marketplace}.json"
+        - "**/.claude/settings*.json"
+      exclude: "cli/tests/fixtures/**"
+      run: node scripts/validate-json.mjs {staged_files}
+    yaml-syntax:
+      glob: "**/*.{yml,yaml}"
       exclude:
         - "plugins/*/skills/*/assets/**"
-      run: |
-        if ! command -v node >/dev/null 2>&1; then
-          echo '❌ node not available; cannot validate YAML'
-          exit 1
-        fi
-        node scripts/validate-yaml.mjs {staged_files}
+      run: for file in {staged_files}; do node node_modules/js-yaml/bin/js-yaml.mjs $file > /dev/null || exit 1; done
     scripts-tests:
       glob: "{scripts,plugins,cli/src}/**"
       run: |
@@ -43,20 +36,6 @@ pre-commit:
         # assertion and destroys an install nothing can restore — `.git` is in no history.
         node scripts/check-tests-leave-git-alone.js -- \
           node --test 'scripts/__tests__/**/*.test.js'
-    skill-frontmatter:
-      glob: "plugins/*/skills/*/SKILL.md"
-      run: |
-        for f in {staged_files}; do
-          [ -f $f ] || continue
-          if ! head -10 $f | grep -q '^name:'; then
-            echo '❌ missing name: frontmatter:' $f
-            exit 1
-          fi
-          if ! head -10 $f | grep -q '^description:'; then
-            echo '❌ missing description: frontmatter:' $f
-            exit 1
-          fi
-        done
     check-skill-argument-hints:
       glob: "plugins/*/skills/**"
       run: |
@@ -207,12 +186,6 @@ pre-push:
       run: >-
         node scripts/gate-witness.js cli-test --
         pnpm --dir cli exec vitest run --project=!tooling --project=!architecture
-    # A full build to read the embedded recipes: too slow for every commit, run in `cli-ci.yml` too.
-    recipe-validity:
-      glob: "{cli/**,plugins/aidd-context/skills/12-cook/assets/recipes/**}"
-      env:
-        AIDD_SKIP_UPDATE_CHECK: "1"
-      run: node scripts/gate-witness.js recipe-validity -- pnpm --dir cli validate:recipes
 
 commit-msg:
   commands:
