@@ -2,7 +2,7 @@ import { join } from "node:path";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { DoctorIssue } from "../../contract/doctor-issue.js";
-import { driftOf } from "../../domain/manifest/drift.js";
+import { driftOf } from "../../domain/drift.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstallationScope } from "./installation-scope.js";
 import type { LoadManifest } from "./load-manifest.use-case.js";

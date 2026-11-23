@@ -21,6 +21,7 @@ import { SyncSettings } from "../../orchestration/sync/settings/sync-settings.us
 import { SyncToolSettingsFiles } from "../../orchestration/sync/settings/sync-tool-settings-files.use-case.js";
 import { catalogReaders, settingsDeclaration } from "../host-registration.js";
 import type { Installation } from "../installation.js";
+import { lenientSourceReferences } from "../machine-claims.js";
 import type { Base } from "../shared.js";
 import { userConfigDir } from "../user-config-dir.js";
 
@@ -127,9 +128,8 @@ export function wireMarketplaceSync(base: Base, inst: Installation) {
   const recordSourceReference = new RecordSourceReference({
     resolveReferenceRoot: new ResolveReferenceRoot(fs),
     currentVersion,
-    logger,
     frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-    userSourceReferences: base.userSourceReferences,
+    userSourceReferences: lenientSourceReferences(base.userSourceReferences, logger),
   });
   const syncSettingsUseCase = syncSettingsOf(base, inst, {
     buildMarketplaceForTool,

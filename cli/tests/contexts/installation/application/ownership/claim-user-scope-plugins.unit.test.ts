@@ -31,7 +31,7 @@ function claimIn(project: Manifest, options: { machine?: Manifest; heldBefore?: 
   const machine = options.machine ?? manifestHolding();
   const recorded: string[] = [];
   const ownership = {
-    record: async (claim: { plugin: RecordedPlugin }) => {
+    execute: async (claim: { plugin: RecordedPlugin }) => {
       recorded.push(claim.plugin.plugin.name);
     },
   };

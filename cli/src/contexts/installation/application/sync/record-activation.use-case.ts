@@ -4,7 +4,7 @@ import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
-import { driftOf } from "../../domain/manifest/drift.js";
+import { driftOf } from "../../domain/drift.js";
 import type { Manifest } from "../../domain/manifest.js";
 
 /** A marketplace the host registered: the manifest reads the two names and keeps the rest. */

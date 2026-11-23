@@ -2,9 +2,7 @@
   {
     "rule": "application-catches",
     "closesWhen": "a scenario collects the partial failure and the use case lets its typed error travel",
-    "entries": {
-      "src/contexts/machine-claims/application/shared-source-reference-support.ts": 1
-    }
+    "entries": {}
   },
   {
     "rule": "real-tool-list:behaviour",

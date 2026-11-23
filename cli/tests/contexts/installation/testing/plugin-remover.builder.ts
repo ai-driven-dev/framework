@@ -1,5 +1,6 @@
 import { registrationRecordRules } from "../../../../src/composition/installation.js";
 import {
+  lenientSourceReferences,
   machineOwnership,
   sharedSourceReads,
   userScopeFilesSafeToDelete,
@@ -67,9 +68,8 @@ export function pluginRemover(parts: PluginRemoverParts) {
     ...sharedSourceReads({
       fs,
       platform: process.platform,
-      references: parts.userSourceReferences,
+      references: lenientSourceReferences(parts.userSourceReferences, logger),
     }),
-    logger,
     home: homeDirResolver()(),
     frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
     marketplaceRegistry: parts.marketplaceRegistry,

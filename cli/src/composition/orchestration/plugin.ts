@@ -28,7 +28,7 @@ import type {
   BoundPluginMaterializer,
   UserPluginMaterialization,
 } from "../../contexts/installation/ports/plugin/user-plugin-materialization.js";
-import { userScopeOwnership } from "../../contexts/machine-claims/application/ownership/user-scope-ownership.js";
+import { ClaimUserPlugin } from "../../contexts/machine-claims/application/claim-user-plugin.use-case.js";
 import { pluginRemovalClaims } from "../../contexts/machine-claims/application/removal/plugin-removal-claims.js";
 import { ResolvePurgeCandidate } from "../../contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
 import { isStrictlyWithinUserScope } from "../../contexts/machine-claims/domain/user-scope-containment.js";
@@ -41,6 +41,7 @@ import { RemovePlugin } from "../../orchestration/plugin/remove-plugin.use-case.
 import { UpdateUserPlugin } from "../../orchestration/plugin/update-user-plugin.use-case.js";
 import type { Installation } from "../installation.js";
 import {
+  lenientSourceReferences,
   machineOwnership,
   sharedSourceReads,
   userScopeFileGuard,
@@ -122,9 +123,8 @@ function wirePluginRemoval(base: Base, inst: Installation) {
     ...sharedSourceReads({
       fs,
       platform: process.platform,
-      references: base.userSourceReferences,
+      references: lenientSourceReferences(base.userSourceReferences, logger),
     }),
-    logger,
     home: base.homedir(),
     frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
     marketplaceRegistry: base.marketplaceRegistry,
@@ -203,7 +203,7 @@ function pluginAddOf(base: Base, inst: Installation) {
   const { builtMaterializationDeps } = inst;
   return new AddPlugin(
     {
-      ownership: userScopeOwnership(fs),
+      ownership: new ClaimUserPlugin(fs),
       manifests: { project: manifestRepo, user: userManifestRepo },
       addToProject: new AddPluginToProject(
         {

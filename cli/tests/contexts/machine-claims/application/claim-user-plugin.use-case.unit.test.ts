@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { userScopeOwnership } from "../../../../../src/contexts/machine-claims/application/ownership/user-scope-ownership.js";
-import type { OwnershipMachineManifest } from "../../../../../src/contexts/machine-claims/ports/machine-manifest.js";
-import { ToolNotInManifestError } from "../../../../../src/shared/domain/shared.error.js";
-import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
-import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
-import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { InMemoryMachineManifest } from "../../testing/in-memory-machine-manifest.fake.js";
-import { MachinePlugin } from "../../testing/machine-plugin.fake.js";
+import { ClaimUserPlugin } from "../../../../src/contexts/machine-claims/application/claim-user-plugin.use-case.js";
+import type { OwnershipMachineManifest } from "../../../../src/contexts/machine-claims/ports/machine-manifest.js";
+import { ToolNotInManifestError } from "../../../../src/shared/domain/shared.error.js";
+import type { AiToolId } from "../../../../src/shared/domain/tool.js";
+import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
+import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { InMemoryMachineManifest } from "../testing/in-memory-machine-manifest.fake.js";
+import { MachinePlugin } from "../testing/machine-plugin.fake.js";
 
 const ROOT = "/test-project";
 const tool = TOOL.claude;
@@ -34,10 +34,10 @@ class Machine extends InMemoryMachineManifest implements OwnershipMachineManifes
 }
 
 const userPlugin = () => new MachinePlugin({ name: "sample", files: { "a.md": "abc" } });
-const ownership = userScopeOwnership(new InMemoryFileAdapter({}, [ROOT]));
+const ownership = new ClaimUserPlugin(new InMemoryFileAdapter({}, [ROOT]));
 
 function claim(machine: Machine, toolVersion: string | undefined) {
-  return ownership.record({
+  return ownership.execute({
     machine,
     toolId: tool,
     plugin: userPlugin(),

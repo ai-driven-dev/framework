@@ -6,7 +6,7 @@ import {
   type MergeStrategy,
 } from "../../../../shared/domain/merge.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import { type DriftVerdict, driftOfKeys } from "../../domain/manifest/drift.js";
+import { type DriftVerdict, driftOfKeys } from "../../domain/drift.js";
 import { planRestore, type RecordedVerdict } from "../../domain/manifest/restore-plan.js";
 import type { FileMerger } from "../../ports/file-merger.js";
 import type {
