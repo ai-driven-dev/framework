@@ -4,7 +4,6 @@ import type { UserScopeFileGuard } from "../contexts/installation/ports/plugin/u
 import { AssertUserScopeWriteBoundary } from "../contexts/machine-claims/application/ownership/assert-user-scope-write-boundary.use-case.js";
 import { DetachNativePluginRefs } from "../contexts/machine-claims/application/ownership/detach-native-plugin-refs.use-case.js";
 import { DetachUserPlugin } from "../contexts/machine-claims/application/ownership/detach-user-plugin.use-case.js";
-import { DropMissingUserScopeFiles } from "../contexts/machine-claims/application/ownership/drop-missing-user-scope-files.use-case.js";
 import { IsMachineOwnedNativeRef } from "../contexts/machine-claims/application/ownership/is-machine-owned-native-ref.use-case.js";
 import { ResolveSafeUserScopeFiles } from "../contexts/machine-claims/application/ownership/resolve-safe-user-scope-files.use-case.js";
 import { OtherProjectsReferencing } from "../contexts/machine-claims/application/shared-source/other-projects-referencing.use-case.js";
@@ -54,8 +53,6 @@ export function userScopeFilesSafeToDelete(
 // One writer for a machine-scope plugin's files, whether setup installs it or update rebuilds it.
 export const userScopeFileGuard: UserScopeFileGuard = {
   safeToDelete: userScopeFilesSafeToDelete,
-  withoutMissing: (reach, plugin, tool) =>
-    new DropMissingUserScopeFiles(reach).execute(plugin, tool),
   assertWriteBoundary: (reach, tool, write) =>
     new AssertUserScopeWriteBoundary(reach).execute(tool, write),
 };

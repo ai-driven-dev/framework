@@ -8,8 +8,9 @@ import { PluginMaterializer } from "../../../src/contexts/installation/applicati
 import type { ToolRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import { isStrictlyWithinUserScope } from "../../../src/contexts/machine-claims/domain/user-scope-containment.js";
+
 import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.use-case.js";
+import { isStrictlyWithin } from "../../../src/shared/domain/paths.model.js";
 import { PluginDistribution } from "../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
@@ -118,7 +119,7 @@ function fixture(
       new Map([[toolId, reader]]),
       options.ownsSource ? new Map([[toolId, sources]]) : undefined
     ),
-    isStrictlyWithinUserScope,
+    isStrictlyWithin,
     recordsOf(repo)
   );
   const execute = (pluginName: string | readonly string[], rebuild?: boolean) =>

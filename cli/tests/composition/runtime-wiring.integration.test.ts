@@ -29,7 +29,7 @@ import { Marketplace } from "../../src/contexts/distribution/domain/marketplace.
 import { ProjectHooksMaterializer } from "../../src/contexts/installation/application/materialize/project-hooks-materializer.use-case.js";
 import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import { isStrictlyWithinUserScope } from "../../src/contexts/machine-claims/domain/user-scope-containment.js";
+import { isStrictlyWithin } from "../../src/shared/domain/paths.model.js";
 import { BundledAssetProviderAdapter } from "../../src/shared/infrastructure/asset-loader.js";
 import { fakeBuildSources } from "../contexts/installation/testing/fake-build-sources.fake.js";
 import { CapturingLogger } from "../shared/testing/capturing-logger.fake.js";
@@ -192,12 +192,12 @@ describe("updating within the user scope", () => {
     expect(planUpdate).toHaveBeenNthCalledWith(1, {
       ...request,
       rebuild: false,
-      isWithinUserScope: isStrictlyWithinUserScope,
+      isWithinUserScope: isStrictlyWithin,
     });
     expect(planUpdate).toHaveBeenNthCalledWith(2, {
       ...request,
       rebuild: true,
-      isWithinUserScope: isStrictlyWithinUserScope,
+      isWithinUserScope: isStrictlyWithin,
     });
   });
 
@@ -209,7 +209,7 @@ describe("updating within the user scope", () => {
 
     expect(applyUpdate).toHaveBeenCalledWith(plan, {
       logger,
-      isWithinUserScope: isStrictlyWithinUserScope,
+      isWithinUserScope: isStrictlyWithin,
     });
   });
 });
@@ -291,11 +291,10 @@ describe("resolving a purge candidate", () => {
 });
 
 describe("guarding user-scope files", () => {
-  it("names the three rules a machine-scope write is held to", () => {
+  it("names the two rules a machine-scope write is held to", () => {
     expect(Object.keys(userScopeFileGuard).sort()).toStrictEqual([
       "assertWriteBoundary",
       "safeToDelete",
-      "withoutMissing",
     ]);
     for (const rule of Object.values(userScopeFileGuard)) expect(rule).toBeTypeOf("function");
   });
