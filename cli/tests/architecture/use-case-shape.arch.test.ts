@@ -223,7 +223,7 @@ describe("a dependencies bag counts by its fields wherever its type is declared"
   it("counts a nested bag a use-case file declares by its own fields", () => {
     expect(
       breaksOf({
-        [`${home}shared/inner.ts`]: `${importP.replace("../", "../../")}export interface Inner { ${fields(5)} }`,
+        [`${home}shared/inner.ts`]: `${importP.replaceAll("../", "../../")}export interface Inner { ${fields(5)} }`,
         [use]: `${importP}import type { Inner } from "./shared/inner.js";\ninterface D { readonly p: P; readonly built: Inner }\n${taking("D")}`,
       })
     ).toEqual(["6 constructor dependencies, at most 5"]);
