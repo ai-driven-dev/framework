@@ -303,3 +303,44 @@ export function purityViolations(files: Readonly<Record<string, string>>): Viola
     )
   );
 }
+
+/** The tools context holds no adapter: what touches the world for a tool lives in shared
+ * infrastructure, and a profile holds the instance as data. */
+export function toolsAdapterViolations(files: Readonly<Record<string, string>>): Violation[] {
+  return Object.keys(files)
+    .filter(
+      (path) =>
+        path.startsWith("src/contexts/tools/") &&
+        (path.includes("/infrastructure/") || path.endsWith(".adapter.ts"))
+    )
+    .map((path) =>
+      violation(
+        "toolsAdapter",
+        path,
+        "is an adapter held by the tools context",
+        "the tools context holds no adapter",
+        "move it to src/shared/infrastructure and hand the instance to the profile as data"
+      )
+    );
+}
+
+const ASSET_IMPORT =
+  /^\s*(?:import|export)\b[^"';]*?\bfrom\s*["']([^"']+\.(?:cjs|txt|json|md))["']/gm;
+
+/** A file of a domain folder that imports a raw asset (a script, a text, a json): the domain
+ * receives that text from composition, through a port or as data. */
+export function domainAssetViolations(files: Readonly<Record<string, string>>): Violation[] {
+  return Object.entries(files)
+    .filter(([path]) => /^src\/(?:contexts\/[^/]+|shared)\/domain\//.test(path))
+    .flatMap(([path, text]) =>
+      [...text.matchAll(ASSET_IMPORT)].map((match) =>
+        violation(
+          "domainAsset",
+          `${path} :: ${match[1]}`,
+          "imports a raw asset",
+          "a domain imports no raw asset",
+          "import it in composition and hand the text in as a parameter or through a port"
+        )
+      )
+    );
+}

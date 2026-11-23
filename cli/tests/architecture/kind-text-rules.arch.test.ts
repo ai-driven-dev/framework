@@ -7,11 +7,13 @@ import { describe, expect, it } from "vitest";
 import { entries, expectNone, src, textsOf } from "./kind-rule-fixtures.js";
 import {
   binaryViolations,
+  domainAssetViolations,
   manifestSpellingViolations,
   purityViolations,
   repositoryViolations,
   scopeViolations,
   sizeViolations,
+  toolsAdapterViolations,
 } from "./kind-text-rules.js";
 import { declaredCommands, tsFilesUnder } from "./source-graph.js";
 
@@ -202,5 +204,37 @@ describe("the domain holds no clock, no logging and no memo", () => {
 
   it("holds the domain of the tree", () => {
     expectNone(purityViolations(src()));
+  });
+});
+
+describe("the tools context holds no adapter", () => {
+  it("sees an infrastructure folder and an adapter file under tools", () => {
+    expect(
+      toolsAdapterViolations({
+        "src/contexts/tools/infrastructure/x.ts": "",
+        "src/contexts/tools/domain/y.adapter.ts": "",
+        "src/contexts/translate/infrastructure/z.ts": "",
+      }).map((v) => v.entry)
+    ).toEqual(["src/contexts/tools/infrastructure/x.ts", "src/contexts/tools/domain/y.adapter.ts"]);
+  });
+
+  it("holds the tree", () => {
+    expectNone(toolsAdapterViolations(src()));
+  });
+});
+
+describe("a domain imports no raw asset", () => {
+  it("sees a script imported by a domain and leaves composition alone", () => {
+    const text = 'import adapter from "../../../assets/hooks-runtime/host-bridge.cjs";';
+    expect(
+      domainAssetViolations({
+        "src/contexts/tools/domain/x.ts": text,
+        "src/composition/tool-profiles/kilo.ts": text,
+      }).map((v) => v.entry)
+    ).toEqual(["src/contexts/tools/domain/x.ts :: ../../../assets/hooks-runtime/host-bridge.cjs"]);
+  });
+
+  it("holds the tree", () => {
+    expectNone(domainAssetViolations(src()));
   });
 });
