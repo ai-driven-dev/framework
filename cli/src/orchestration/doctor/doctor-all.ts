@@ -1,3 +1,7 @@
+import {
+  areScopesHealthy,
+  isDoctorHealthy,
+} from "../../contexts/installation/contract/doctor-verdict.model.js";
 import type { GlobalExecutionError } from "../global-execution.js";
 import { forEachCategory } from "../sync/for-each-category.js";
 import type { DoctorReport } from "./doctor-report.js";
@@ -16,16 +20,6 @@ export interface DoctorAllResult {
 /** The doctor over every category, as a command asks for it. */
 export type DoctorAll = (projectRoot: string, pluginName?: string) => Promise<DoctorAllResult>;
 
-/** Drift is informational and never gates the exit code; only structural health issues do.
- * A named plugin narrows that gate to its own issues, so a warning the narrowed view never
- * prints cannot flip the exit code. */
-export function isDoctorHealthy(
-  report: { readonly pluginIssues: readonly unknown[]; readonly healthy: boolean },
-  pluginName: string | undefined
-): boolean {
-  return pluginName !== undefined ? report.pluginIssues.length === 0 : report.healthy;
-}
-
 /** Runs the doctor once per category and reports both, so one category that cannot be checked
  * never hides the other. */
 export async function doctorAll(
@@ -38,11 +32,6 @@ export async function doctorAll(
   );
   const { ai, ide } = results;
   const pluginIssues = ai?.pluginIssues ?? [];
-  // A scope that errored is reported by `errors` and has a null report: "could not be checked",
-  // never "checked and fine", so it cannot count as healthy.
-  const healthy = isDoctorHealthy(
-    { pluginIssues, healthy: ai?.healthy === true && ide?.healthy === true },
-    pluginName
-  );
+  const healthy = isDoctorHealthy({ pluginIssues, healthy: areScopesHealthy(ai, ide) }, pluginName);
   return { ai, ide, pluginIssues, healthy, errors };
 }

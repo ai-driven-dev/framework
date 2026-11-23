@@ -1,6 +1,7 @@
 import type { MarketplaceBuilds } from "../../contexts/distribution/contract/built-marketplaces.js";
 import type { InspectDeclaredMarketplaces } from "../../contexts/host-registration/application/inspect/inspect-declared-marketplaces.use-case.js";
 import type { InspectHostRegistration } from "../../contexts/host-registration/application/inspect/inspect-host-registration.use-case.js";
+import { UNDECLARED_MARKETPLACE_SEVERITY } from "../../contexts/host-registration/contract/finding-severity.model.js";
 import type { InspectDeclaredMarketplacesResult } from "../../contexts/host-registration/contract/inspect-declared-marketplaces-result.js";
 import type { InspectedHost } from "../../contexts/host-registration/contract/inspect-host-registration-request.js";
 import type { DoctorIssue } from "../../contexts/installation/contract/doctor-issue.js";
@@ -71,7 +72,7 @@ export class CheckRegistration {
       marketplaceNames,
     });
     return declared.findings.map((finding) => ({
-      severity: "warning",
+      severity: UNDECLARED_MARKETPLACE_SEVERITY,
       message: `${finding.tool} no longer declares marketplace '${finding.name}'`,
       fix: { code: "refresh-marketplace", file: finding.file },
     }));
