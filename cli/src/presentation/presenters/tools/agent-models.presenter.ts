@@ -1,7 +1,7 @@
 import type { ToolCatalog } from "../../../contexts/tools/contract/tool-catalog.js";
 import type { SetAgentModels } from "../../../orchestration/agent-models/set-agent-models.use-case.js";
-import type { Output } from "../../../orchestration/domain/output.js";
 import type { AiToolId } from "../../../shared/domain/tool.js";
+import type { Output } from "../../terminal/output.model.js";
 
 export interface AgentModelsReport {
   output: Output;

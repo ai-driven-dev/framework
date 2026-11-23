@@ -1,9 +1,9 @@
 import type { InstallIdeTool } from "../../../contexts/installation/application/install/install-ide-tool.use-case.js";
 import type { ListInstalledRules } from "../../../contexts/installation/application/list-installed-rules.use-case.js";
 import type { UninstallProjectTools } from "../../../orchestration/clean/uninstall-project-tools.use-case.js";
-import type { Output } from "../../../orchestration/domain/output.js";
 import type { InstallAiToolWithPlugins } from "../../../orchestration/setup/install-ai-tool-with-plugins.use-case.js";
 import type { UpdateTools } from "../../../orchestration/sync/update-tools.use-case.js";
+import type { Output } from "../../terminal/output.model.js";
 
 /** What the tool commands read of the container. */
 export interface ToolConfigContainer {

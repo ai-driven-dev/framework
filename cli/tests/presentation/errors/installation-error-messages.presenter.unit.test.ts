@@ -43,7 +43,6 @@ import {
   NoMarketplacesRegisteredError,
   SyncFailedError,
   TrustDeniedError,
-  UnknownAiToolIdError,
   UserPluginUpdatePartialError,
   UserScopeFilterUnsupportedError,
   UserScopeIdeToolsError,
@@ -181,7 +180,6 @@ const cases: [() => Error, string][] = [
     "Sync failed for: a. See the warnings above.",
   ],
   [() => new TrustDeniedError("m"), "Trust denied for marketplace 'm'. Aborting."],
-  [() => new UnknownAiToolIdError("x", ["a"]), "Unknown AI tool: x. Valid AI tools: a"],
   [
     () => new UserScopeFilterUnsupportedError("--plugin", "sync"),
     "--scope user tracks nothing --plugin can narrow — it names every requested tool, not one plugin or one file. Drop --plugin, or run `aidd sync` at project scope.",

@@ -7,9 +7,9 @@ import { ManifestRepositoryAdapter } from "../contexts/installation/infrastructu
 import { PlatformAdapter } from "../contexts/installation/infrastructure/platform-adapter.js";
 import { UserManifestRepositoryAdapter } from "../contexts/installation/infrastructure/user-manifest-repository-adapter.js";
 import { pluginManifestProbes } from "../contexts/translate/domain/plugin-format.js";
-import type { Output } from "../orchestration/domain/output.js";
 import { InquirerPrompterAdapter } from "../presentation/terminal/inquirer-prompter.adapter.js";
 import { OutputAdapter } from "../presentation/terminal/output.adapter.js";
+import type { Output } from "../presentation/terminal/output.model.js";
 import { SilentPrompterAdapter } from "../presentation/terminal/silent-prompter.adapter.js";
 import type { HintedMessage } from "../shared/domain/describe-error.js";
 import { AIDD_DIR } from "../shared/domain/layout/aidd-layout.js";

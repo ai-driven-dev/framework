@@ -7,8 +7,8 @@ import {
 } from "../../../../src/contexts/distribution/contract/framework-source.js";
 import { InitProject } from "../../../../src/contexts/installation/application/init-project.use-case.js";
 import { UpdateGitignore } from "../../../../src/contexts/installation/application/update-gitignore.use-case.js";
-import type { SetupFlow } from "../../../../src/orchestration/domain/setup-flow.model.js";
 import { RunSetup } from "../../../../src/orchestration/setup/run-setup.use-case.js";
+import type { SetupFlow } from "../../../../src/orchestration/setup/setup-flow.model.js";
 import { InstallSetupTools } from "../../../../src/orchestration/setup/steps/install-setup-tools.use-case.js";
 import { PrepareSetupProject } from "../../../../src/orchestration/setup/steps/prepare-setup-project.use-case.js";
 import { bindOutput } from "../../../../src/presentation/controllers/menu/global-options.controller.js";

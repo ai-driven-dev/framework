@@ -2,7 +2,7 @@ import type {
   ReportStatusResult,
   StatusQuery,
 } from "../../contexts/installation/application/report-status.use-case.js";
-import type { GlobalExecutionError } from "../domain/global-execution.model.js";
+import type { GlobalExecutionError } from "../global-execution.js";
 import { forEachCategory } from "../sync/for-each-category.js";
 
 export interface ReportAllStatusResult {

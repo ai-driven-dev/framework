@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import type { ToolRecords } from "../../../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { describeCause } from "../../../../../src/presentation/errors/error-translator.presenter.js";
+import { render } from "../../../../../src/presentation/errors/error-translator.presenter.js";
 import { UnreadableUserSourceReferencesError } from "../../../../../src/shared/domain/shared.error.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
@@ -132,7 +132,7 @@ describe("RemovePlugin undoes native activation", () => {
       });
 
       expect(list).toHaveBeenCalledTimes(readsLedger ? 1 : 0);
-      expect(logger.warnMessages).toEqual(readsLedger ? [describeCause(ledgerError)] : []);
+      expect(logger.warnMessages).toEqual(readsLedger ? [render(ledgerError)] : []);
       expect(activator.uninstalledPlugins).toEqual([REF]);
       expect(activator.uninstalledPluginScopes).toEqual(["project"]);
       expect(repo.records.get(claude)?.pluginRefs).toEqual([]);

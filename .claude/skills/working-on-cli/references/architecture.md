@@ -52,7 +52,7 @@ The CLI exits when the action resolves.
 - Never fire and forget: `unref()` and floating promises die with the process (`noFloatingPromises`). Deferred work rides an online command (`ONLINE_COMMAND_PATHS`, `src/presentation/hooks/update-notice-hooks.ts`), awaits behind a timeout, or runs detached. The hot path is offline: read cache, print, return.
 - Assert a side effect against the built binary (e2e or `pnpm smoke`).
 - `stdout` carries info, success and results; `stderr` carries debug, warnings and errors. A conflict or skip is `warn`, never `error`. End with a one-line summary.
-- The `Output` port (`src/orchestration/domain/output.ts`, adapter `src/presentation/terminal/output.adapter.ts`) routes by level, nothing else. Rendering lives in `presentation/presenters/`; deciding lives in the use case.
+- The `Output` port (`src/presentation/terminal/output.model.ts`, adapter `src/presentation/terminal/output.adapter.ts`) routes by level, nothing else. Rendering lives in `presentation/presenters/`; deciding lives in the use case.
 - `process.exit` stays out of `shared/`, `contexts/` and `presentation/`: presentation ends a run with `output.exit`, wired in the composition root (`no-process-exit.grit`).
 - Exit `0` when it did what was asked. Exit `1` on a thrown error (through `failCommand`), an invalid `--scope` or `translate` flag, an unhealthy `doctor`, a guard needing a TTY, no argument without a TTY, or a result that reports a failure (refused telemetry step, failed marketplace refresh, recipe findings): that command sets `1` itself. A command may exit before its use case on a refusal.
 

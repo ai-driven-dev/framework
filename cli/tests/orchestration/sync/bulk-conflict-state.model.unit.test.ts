@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BulkConflictState } from "../../../src/orchestration/domain/bulk-conflict-state.js";
+import { BulkConflictState } from "../../../src/orchestration/sync/bulk-conflict-state.model.js";
 
 describe("remembering a bulk conflict decision", () => {
   it("holds no decision until one is recorded", () => {

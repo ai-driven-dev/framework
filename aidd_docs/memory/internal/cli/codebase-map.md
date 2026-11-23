@@ -165,7 +165,6 @@ src/
 │   ├── agent-models/
 │   ├── clean/
 │   ├── doctor/
-│   ├── domain/
 │   ├── marketplace/
 │   │   └── remove/
 │   ├── menu/

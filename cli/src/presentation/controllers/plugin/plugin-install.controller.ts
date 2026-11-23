@@ -1,6 +1,6 @@
 import type { Command } from "commander";
+import { aiToolSelectionOf } from "../../../contexts/tools/contract/ai-tool-selection.model.js";
 import type { ToolCatalog } from "../../../contexts/tools/contract/tool-catalog.js";
-import { aiToolSelectionOf } from "../../../orchestration/domain/ai-tool-selection.model.js";
 import type { InstallPlugin } from "../../../orchestration/plugin/install-plugin.use-case.js";
 import type { SyncNativeActivation } from "../../../orchestration/sync/settings/sync-native-activation.use-case.js";
 import { parseScope } from "../../../shared/domain/scope.js";

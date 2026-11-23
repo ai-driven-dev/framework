@@ -7,7 +7,7 @@ import type { RequestReportResult } from "../../../contexts/telemetry/applicatio
 import type { Period } from "../../../contexts/telemetry/contract/period.js";
 import type { Selector } from "../../../contexts/telemetry/contract/report-filter.js";
 import type { ReportAxis } from "../../../contexts/telemetry/contract/usage-report.js";
-import type { Output } from "../../../orchestration/domain/output.js";
+import type { Output } from "../../terminal/output.model.js";
 import { count, leftOutLines } from "./telemetry-read.presenter.js";
 import { labelOf, table } from "./telemetry-report-table.presenter.js";
 

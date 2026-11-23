@@ -7,8 +7,8 @@ import type {
 } from "../../contexts/installation/application/update/update-tool.use-case.js";
 import { InputRequiredError } from "../../shared/domain/shared.error.js";
 import type { ToolCategory, ToolId } from "../../shared/domain/tool.js";
-import { BulkConflictState } from "../domain/bulk-conflict-state.js";
-import type { GlobalExecutionError } from "../domain/global-execution.model.js";
+import type { GlobalExecutionError } from "../global-execution.js";
+import { BulkConflictState } from "./bulk-conflict-state.model.js";
 import type { ResolveUpdateDecision } from "./resolve-update-decision.use-case.js";
 
 export interface UpdateToolsRequest {

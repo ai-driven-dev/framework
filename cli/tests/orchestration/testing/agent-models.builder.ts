@@ -14,7 +14,7 @@ import { resolveHomeTemplate } from "../../../src/contexts/tools/contract/home-p
 import { RefreshAgentPlugins } from "../../../src/orchestration/agent-models/refresh-agent-plugins.use-case.js";
 import { ResetAgentModels } from "../../../src/orchestration/agent-models/reset-agent-models.use-case.js";
 import { SetAgentModels } from "../../../src/orchestration/agent-models/set-agent-models.use-case.js";
-import type { SyncSettingsRequest } from "../../../src/orchestration/domain/sync-settings.model.js";
+import type { SyncSettingsRequest } from "../../../src/orchestration/sync/settings/sync-settings.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";

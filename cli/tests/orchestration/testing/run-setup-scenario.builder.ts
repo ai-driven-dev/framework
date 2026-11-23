@@ -15,11 +15,11 @@ import { ConfigureMachineScope } from "../../../src/contexts/installation/applic
 import { InstallTools } from "../../../src/contexts/installation/application/install/install-tools.use-case.js";
 import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
-import { SetupFlow } from "../../../src/orchestration/domain/setup-flow.model.js";
 import type { RefreshMarketplaces } from "../../../src/orchestration/marketplace/refresh-marketplaces.use-case.js";
 import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.use-case.js";
 import type { PluginPick } from "../../../src/orchestration/plugin/pick-plugins.use-case.js";
 import type { InstallGlobalPlugins } from "../../../src/orchestration/setup/install-global-plugins.use-case.js";
+import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.model.js";
 import { SetupMachineScope } from "../../../src/orchestration/setup/setup-machine-scope.use-case.js";
 import { ChoosePlugins } from "../../../src/orchestration/setup/steps/choose-plugins.use-case.js";
 import type { ChooseTools } from "../../../src/orchestration/setup/steps/choose-tools.use-case.js";

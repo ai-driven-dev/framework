@@ -2,7 +2,7 @@ import type { FrameworkSource } from "../../contexts/distribution/contract/frame
 import type { NativeActivationReport } from "../../contexts/installation/application/install/install-ai-tool.use-case.js";
 import type { InstallToolsResult } from "../../contexts/installation/application/install/install-tools.use-case.js";
 import type { ProjectContext } from "../../contexts/installation/contract/project-context.js";
-import type { SetupFlow } from "../domain/setup-flow.model.js";
+import type { SetupFlow } from "./setup-flow.model.js";
 
 /** Registers the chosen framework source for a setup. The registration sequence is not the setup's own:
  * composition hands it in. */

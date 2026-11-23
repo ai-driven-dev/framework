@@ -1,6 +1,6 @@
 import { InputRequiredError } from "../../shared/domain/shared.error.js";
-import type { BulkConflictState } from "../domain/bulk-conflict-state.js";
 import type { Prompter } from "../ports/prompter.js";
+import type { BulkConflictState } from "./bulk-conflict-state.model.js";
 
 export interface ResolveUpdateDecisionRequest {
   relativePath: string;

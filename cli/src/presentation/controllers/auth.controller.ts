@@ -3,13 +3,13 @@ import type { CheckStatus } from "../../contexts/auth/application/check-status.u
 import type { LogIn } from "../../contexts/auth/application/log-in.use-case.js";
 import type { LogOut } from "../../contexts/auth/application/log-out.use-case.js";
 import type { AuthLevel, Credential } from "../../contexts/auth/contract/credential.js";
-import type { Output } from "../../orchestration/domain/output.js";
 import { AIDD_DIR } from "../../shared/domain/layout/aidd-layout.js";
 import {
   printAuthenticated,
   printAuthStatus,
   printLogoutResult,
 } from "../presenters/auth.presenter.js";
+import type { Output } from "../terminal/output.model.js";
 import { type ContainerFactory, parseGlobalOptions } from "./menu/global-options.controller.js";
 
 /** What the login questions read of the prompter. */

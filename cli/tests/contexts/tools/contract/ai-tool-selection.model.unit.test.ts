@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { aiToolSelectionOf } from "../../../src/orchestration/domain/ai-tool-selection.model.js";
-import { UnknownAiToolIdError } from "../../../src/orchestration/orchestration.error.js";
+import { aiToolSelectionOf } from "../../../../src/contexts/tools/contract/ai-tool-selection.model.js";
+import { UnknownAiToolIdError } from "../../../../src/contexts/tools/contract/errors/tools.error.js";
 import {
   SYNTHETIC_TOOL,
   syntheticCatalog,
-} from "../../shared/testing/synthetic-tool-id.builder.js";
+} from "../../../shared/testing/synthetic-tool-id.builder.js";
 
 describe("selecting an AI tool", () => {
   it.each([undefined, "all"])("selects every AI tool for %s", (tool) => {

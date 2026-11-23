@@ -1,5 +1,5 @@
 import type { FrameworkSource } from "../../contexts/distribution/contract/framework-source.js";
-import type { SetupFlow } from "../domain/setup-flow.model.js";
+import type { SetupFlow } from "./setup-flow.model.js";
 
 /** Settles which framework source a setup registers, asking when someone can answer. The question
  * is not the setup's own: composition hands it in. */

@@ -1,7 +1,7 @@
-import type { Output } from "../../../orchestration/domain/output.js";
 import { SyncFailedError } from "../../../orchestration/orchestration.error.js";
 import type { ToolId } from "../../../shared/domain/tool.js";
 import { render } from "../../errors/error-translator.presenter.js";
+import type { Output } from "../../terminal/output.model.js";
 import { printNativeActivation, printUnrestorable } from "./restore.presenter.js";
 
 interface ScopedError {

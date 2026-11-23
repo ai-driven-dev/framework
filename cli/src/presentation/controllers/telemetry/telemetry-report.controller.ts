@@ -11,8 +11,8 @@ import {
 } from "../../../contexts/telemetry/contract/report-filter.js";
 import { USAGE_AGENTS, USAGE_TOOLS } from "../../../contexts/telemetry/contract/usage-record.js";
 import { REPORT_AXES, type ReportAxis } from "../../../contexts/telemetry/contract/usage-report.js";
-import type { Output } from "../../../orchestration/domain/output.js";
 import { printUsageReport } from "../../presenters/telemetry/telemetry-report.presenter.js";
+import type { Output } from "../../terminal/output.model.js";
 import {
   commandOf,
   type TelemetryRequests,

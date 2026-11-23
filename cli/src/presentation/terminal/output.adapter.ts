@@ -1,5 +1,5 @@
-import type { Output } from "../../orchestration/domain/output.js";
 import type { HintedMessage } from "../../shared/domain/describe-error.js";
+import type { Output } from "./output.model.js";
 export class OutputAdapter implements Output {
   private readonly verbose: boolean;
 

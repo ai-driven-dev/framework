@@ -1,6 +1,6 @@
 import type { Lock } from "../../../shared/ports/lock.js";
-import type { SyncSettingsRequest, SyncSettingsResult } from "../../domain/sync-settings.model.js";
 import type { RunSettingsSync } from "./run-settings-sync.use-case.js";
+import type { SyncSettingsRequest, SyncSettingsResult } from "./sync-settings.js";
 
 /** Brings a project's (or the machine's) tool settings and native registrations in line with its
  * manifest. A project-scope run holds the machine manifest's lock; a user-scope one already works

@@ -3,8 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 import { remoteFrameworkSource } from "../../../src/contexts/distribution/contract/framework-source.js";
 import { ProjectContext } from "../../../src/contexts/installation/contract/project-context.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { SetupFlow } from "../../../src/orchestration/domain/setup-flow.model.js";
 import { UserScopeUnavailableError } from "../../../src/orchestration/orchestration.error.js";
+import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.model.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import {

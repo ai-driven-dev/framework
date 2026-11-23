@@ -1,8 +1,8 @@
 import type { Command } from "commander";
 import type { SearchPlugins } from "../../../contexts/distribution/application/plugin-source/search-plugins.use-case.js";
 import type { ListPlugins } from "../../../contexts/installation/application/plugin/list-plugins.use-case.js";
+import { aiToolSelectionOf } from "../../../contexts/tools/contract/ai-tool-selection.model.js";
 import type { ToolCatalog } from "../../../contexts/tools/contract/tool-catalog.js";
-import { aiToolSelectionOf } from "../../../orchestration/domain/ai-tool-selection.model.js";
 import {
   printInstalledPlugins,
   printSearchHits,

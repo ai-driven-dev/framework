@@ -1,9 +1,9 @@
 import type { PluginCatalog } from "../../../contexts/distribution/contract/catalog.js";
 import type { MarketplaceView } from "../../../contexts/distribution/contract/marketplace-view.js";
-import type { Output } from "../../../orchestration/domain/output.js";
 import type { RefreshEntryResult } from "../../../orchestration/marketplace/refresh-marketplaces.use-case.js";
 import { describePluginSource } from "../../../shared/domain/plugin/source.js";
 import { render } from "../../errors/error-translator.presenter.js";
+import type { Output } from "../../terminal/output.model.js";
 
 interface MarketplaceCheckOutcome {
   readonly stale: readonly { readonly name: string }[];

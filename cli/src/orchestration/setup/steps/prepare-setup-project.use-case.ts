@@ -1,9 +1,9 @@
 import type { DetectProjectContext } from "../../../contexts/installation/application/detect-project-context.use-case.js";
 import type { InitProject } from "../../../contexts/installation/application/init-project.use-case.js";
 import type { ProjectContext } from "../../../contexts/installation/contract/project-context.js";
-import type { SetupFlow } from "../../domain/setup-flow.model.js";
 import type { ResolveSetupSource } from "../resolve-setup-source.use-case.js";
 import type { RegisterFrameworkSource } from "../setup-flow.js";
+import type { SetupFlow } from "../setup-flow.model.js";
 
 export interface PreparedSetupProject {
   readonly context: ProjectContext | undefined;

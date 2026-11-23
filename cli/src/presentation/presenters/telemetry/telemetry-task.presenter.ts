@@ -1,7 +1,7 @@
 import type { DeclareTaskResult } from "../../../contexts/telemetry/application/declaration/declare-task.use-case.js";
 import type { RefusalReason } from "../../../contexts/telemetry/application/find-consented-repository.use-case.js";
 import type { ReadTelemetryStatusResult } from "../../../contexts/telemetry/application/read-telemetry-status.use-case.js";
-import type { Output } from "../../../orchestration/domain/output.js";
+import type { Output } from "../../terminal/output.model.js";
 
 const REFUSALS: Readonly<Record<RefusalReason, string>> = {
   environment: "AIDD_TELEMETRY=0: nothing was declared.",

@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { SetupFlow } from "../../../src/orchestration/domain/setup-flow.model.js";
 import {
   InvalidPluginModeConfigError,
   InvalidSetupToolIdError,
@@ -8,6 +7,7 @@ import {
   UserScopePluginModeError,
   UserScopeUnsupportedAiToolsError,
 } from "../../../src/orchestration/orchestration.error.js";
+import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.model.js";
 import {
   SECOND_SYNTHETIC_TOOL,
   SYNTHETIC_IDE_TOOL,

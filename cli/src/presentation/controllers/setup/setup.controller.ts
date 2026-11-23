@@ -1,7 +1,6 @@
 import type { Command } from "commander";
 import type { ToolCatalog } from "../../../contexts/tools/contract/tool-catalog.js";
 import type { SetAgentModels } from "../../../orchestration/agent-models/set-agent-models.use-case.js";
-import type { Output } from "../../../orchestration/domain/output.js";
 import type { RunSetup } from "../../../orchestration/setup/run-setup.use-case.js";
 import { agentModelsRequest } from "../../../orchestration/setup/setup-request.js";
 import {
@@ -12,6 +11,7 @@ import {
 } from "../../presenters/setup/setup.presenter.js";
 import { reportNativeActivation } from "../../presenters/setup/sync.presenter.js";
 import { reportAgentModels } from "../../presenters/tools/agent-models.presenter.js";
+import type { Output } from "../../terminal/output.model.js";
 import { type ContainerFactory, parseGlobalOptions } from "../menu/global-options.controller.js";
 import {
   declareSetupOptions,

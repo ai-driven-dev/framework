@@ -74,16 +74,6 @@ export class TrustDeniedError extends AiddError {
   }
 }
 
-export class UnknownAiToolIdError extends AiddError {
-  readonly code = "unknown-ai-tool-id";
-  constructor(
-    readonly tool: string,
-    readonly validIds: readonly string[]
-  ) {
-    super();
-  }
-}
-
 export class UserScopeFilterUnsupportedError extends AiddError {
   readonly code = "user-scope-filter-unsupported";
   constructor(

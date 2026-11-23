@@ -1,6 +1,6 @@
 import { InputRequiredError } from "../../shared/domain/shared.error.js";
 import type { ToolCategory } from "../../shared/domain/tool.js";
-import type { GlobalExecutionError } from "../domain/global-execution.model.js";
+import type { GlobalExecutionError } from "../global-execution.js";
 
 const CATEGORIES: readonly ToolCategory[] = ["ai", "ide"];
 

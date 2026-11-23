@@ -2,11 +2,11 @@ import type { Command } from "commander";
 import type { ResetAgentModels } from "../../../orchestration/agent-models/reset-agent-models.use-case.js";
 import type { CleanProject } from "../../../orchestration/clean/clean-project.use-case.js";
 import type { CleanUserScope } from "../../../orchestration/clean/clean-user-scope.use-case.js";
-import type { Output } from "../../../orchestration/domain/output.js";
 import {
   printProjectCleanOutcome,
   printUserScopeCleanOutcome,
 } from "../../presenters/setup/clean.presenter.js";
+import type { Output } from "../../terminal/output.model.js";
 import {
   type ContainerFactory,
   GLOBAL_FLAG_HELP,
