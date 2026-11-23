@@ -14,13 +14,19 @@ export interface ResolveRegisteredBuildsRequest {
 
 export interface RegisteredBuilds extends MarketplaceBuilds {
   readonly registered: readonly RegisteredPluginsOfTool[];
+  /** What each AI tool's settings file names the project's own marketplaces by: the host name
+   * recorded for the alias, the alias itself when nothing was recorded. */
+  readonly declaredNames: ReadonlyMap<AiToolId, readonly string[]>;
 }
 
 /** What the manifest registers per tool, and the marketplaces built for the AI tools among them. */
 export class ResolveRegisteredBuilds {
   constructor(
     private readonly listPlugins: ListRegisteredPlugins,
-    private readonly records: Pick<RegistrationRecordRules, "pluginRefsOf" | "refOnHostName"> &
+    private readonly records: Pick<
+      RegistrationRecordRules,
+      "pluginRefsOf" | "refOnHostName" | "marketplaceOf"
+    > &
       Pick<ScopeRecords, "loadRecords">,
     private readonly builds: Pick<ResolveBuiltMarketplaces, "execute">,
     private readonly tools: ToolCatalog
@@ -39,6 +45,17 @@ export class ResolveRegisteredBuilds {
       if (this.tools.isAiTool(toolId)) toolIds.push(toolId);
     }
     const built = await this.builds.execute({ projectRoot, toolIds });
-    return { ...built, registered };
+    const recorded = await this.records.loadRecords();
+    const declaredNames = new Map<AiToolId, readonly string[]>();
+    for (const toolId of toolIds) {
+      const record = recorded.get(toolId);
+      declaredNames.set(
+        toolId,
+        built.projectScopedNames.map(
+          (alias) => (record && this.records.marketplaceOf(record, alias)?.hostName) ?? alias
+        )
+      );
+    }
+    return { ...built, registered, declaredNames };
   }
 }

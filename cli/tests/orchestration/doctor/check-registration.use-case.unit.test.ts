@@ -50,6 +50,7 @@ async function issuesFor(
     toolInstalled?: boolean;
     allowedIds?: Set<string> | null;
     machine?: boolean;
+    records?: ToolRecords;
   } = {}
 ) {
   const {
@@ -57,6 +58,7 @@ async function issuesFor(
     toolInstalled = true,
     allowedIds = null,
     machine,
+    records,
   } = options;
   const fs = new InMemoryFileAdapter();
   if (settings !== null) await fs.writeFile(LOCAL_SETTINGS, settings);
@@ -94,6 +96,7 @@ async function issuesFor(
     syntheticNativeFamilyCatalog()
   ).execute({
     manifest,
+    records,
     projectRoot: PROJECT_ROOT,
     allowedIds,
     globalInstall: machine,
@@ -105,6 +108,21 @@ describe("checking registrations", () => {
   // host's own registry, so a project's settings never declare them.
   it("says nothing once the project declares its own marketplace, whatever the machine holds", async () => {
     expect(await issuesFor(settingsDeclaring(["mine"]))).toStrictEqual([]);
+  });
+
+  // The file names a marketplace by the host's own name, which the alias aidd knows it by may not be.
+  it("compares the declaration with the host name the alias was registered under", async () => {
+    const records: ToolRecords = new Map([
+      [
+        SYNTHETIC_NATIVE_TOOL,
+        {
+          binary: SYNTHETIC_NATIVE_TOOL,
+          marketplaces: [{ alias: "mine", hostName: "named-by-host" }],
+          pluginRefs: [],
+        },
+      ],
+    ]);
+    expect(await issuesFor(settingsDeclaring(["named-by-host"]), { records })).toStrictEqual([]);
   });
 
   it("accepts the array form of the declaration", async () => {
