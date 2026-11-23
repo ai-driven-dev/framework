@@ -4,6 +4,7 @@ import { errorMessage } from "../../../shared/domain/describe-error.js";
 import { tryParseJson, whenAbsent } from "../../../shared/domain/reading/json-file.js";
 import type { ToolIdResolver } from "../../../shared/domain/tool.js";
 import type { AtomicWrite } from "../../../shared/ports/file-writer.js";
+import type { ToolRecords } from "../contract/records/scope-records.js";
 import {
   InvalidManifestDataError,
   ManifestMigrationError,
@@ -13,17 +14,13 @@ import type { ManifestFileContext } from "../domain/manifest/assert-supported-ve
 import { isV8Manifest, splitV8Manifest } from "../domain/manifest/v8-manifest.js";
 import { Manifest } from "../domain/manifest.js";
 import { MANIFEST_VERSION } from "../domain/manifest-serialization.js";
-import type {
-  RegistrationRecordStore,
-  RegistrationRecords,
-} from "../ports/record/registration-records.js";
 
 /** What a manifest file is read and written with, whichever scope holds it. */
 export interface ManifestFileDeps {
   readonly atomicWriter: AtomicWrite;
   readonly resolveToolId: ToolIdResolver;
   /** Where a v8 document's records go when it is split, and what `delete` clears. */
-  readonly records: Pick<RegistrationRecordStore, "save">;
+  readonly records: { save(records: ToolRecords): Promise<void> };
 }
 
 /**
@@ -92,7 +89,7 @@ export abstract class ManifestFile {
     await this.loadIfReadable();
   }
 
-  private async writeSplit(manifest: Manifest, records: RegistrationRecords): Promise<void> {
+  private async writeSplit(manifest: Manifest, records: ToolRecords): Promise<void> {
     try {
       await this.deps.records.save(records);
       await this.write(manifest);

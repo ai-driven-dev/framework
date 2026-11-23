@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { registrationRecordRules } from "../../../src/composition/installation.js";
+import { recordsOf } from "../../../src/composition/installation.js";
 import { homeDirResolver } from "../../../src/composition/user-config-dir.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-distribution-reader-adapter.js";
@@ -172,7 +172,7 @@ for (const [toolId, catalogPath] of [
           sources
         ),
         isStrictlyWithinUserScope,
-        registrationRecordRules
+        recordsOf(user)
       );
       if (toolId === SYNTHETIC_PROVEN_TOOL) {
         expect(
@@ -211,7 +211,7 @@ for (const [toolId, catalogPath] of [
             sources
           ),
           isStrictlyWithinUserScope,
-          registrationRecordRules
+          recordsOf(user)
         );
         await expect(
           failingUpdate.execute({

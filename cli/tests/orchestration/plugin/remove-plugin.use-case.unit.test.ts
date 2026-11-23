@@ -62,6 +62,8 @@ async function stepsOf(owned: (toolId: string, ref: string) => boolean = () => f
   const records: RemovePluginDeps["records"] = {
     refOf: () => undefined,
     withoutRef: (record) => record,
+    loadRecords: async () => new Map(),
+    saveRecords: async () => undefined,
   };
   let steps: ProjectPluginWithdrawalSteps | undefined;
   const remove = {

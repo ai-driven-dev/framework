@@ -1,11 +1,6 @@
 import { join } from "node:path";
 import type { ManifestRepository } from "../contexts/installation/ports/manifest-repository.js";
 import type { UserScopeFileGuard } from "../contexts/installation/ports/plugin/user-plugin-materialization.js";
-import type {
-  RecordsBesideManifest,
-  RegistrationRecordStore,
-  RegistrationRecords,
-} from "../contexts/installation/ports/record/registration-records.js";
 import { AssertUserScopeWriteBoundary } from "../contexts/machine-claims/application/ownership/assert-user-scope-write-boundary.use-case.js";
 import { DetachNativePluginRefs } from "../contexts/machine-claims/application/ownership/detach-native-plugin-refs.use-case.js";
 import { DetachUserPlugin } from "../contexts/machine-claims/application/ownership/detach-user-plugin.use-case.js";
@@ -20,9 +15,14 @@ import {
 } from "../contexts/machine-claims/domain/plugin-claim.model.js";
 import { UserScopeLockAdapter } from "../contexts/machine-claims/infrastructure/lock.js";
 import { UserSourceReferencesAdapter } from "../contexts/machine-claims/infrastructure/user-source-references-adapter.js";
-import type { MachineManifestRepository } from "../contexts/machine-claims/ports/machine-manifest.js";
+import type {
+  MachineManifestRepository,
+  MachineRecords,
+  ScopeRecordsRepository,
+} from "../contexts/machine-claims/ports/machine-manifest.js";
 import type { PluginClaimsRepository } from "../contexts/machine-claims/ports/plugin-claims-repository.js";
 import type { UserSourceReferences } from "../contexts/machine-claims/ports/user-source-references.js";
+import type { ToolId } from "../shared/domain/tool.js";
 import {
   ToolKeyedJsonFile,
   type ToolKeyedJsonFileDeps,
@@ -101,18 +101,24 @@ export function heldByMachineLock<R extends { readonly path: string }>(repositor
  * Takes no lock: a caller holding the machine lock reads them, and the lock is not re-entrant. */
 export function withRecordsBeside<R extends ManifestRepository>(
   repository: R,
-  records: RegistrationRecordStore
-): R & RecordsBesideManifest {
+  records: RecordStore
+): R & ScopeRecordsRepository {
   return Object.assign(repository, {
     loadRecords: async () => {
       await repository.loadIfReadable();
       return records.load();
     },
-    saveRecords: async (saved: RegistrationRecords) => {
+    saveRecords: async (saved: MachineRecords) => {
       await repository.loadIfReadable();
       await records.save(saved);
     },
   });
+}
+
+/** Where one scope's records are kept. Saving none removes what was kept. */
+interface RecordStore {
+  load(): Promise<MachineRecords>;
+  save(records: ReadonlyMap<ToolId, Readonly<Record<string, unknown>>>): Promise<void>;
 }
 
 /** One scope's records, kept in `dir` as two files: the host data host registration reads, and
@@ -120,7 +126,7 @@ export function withRecordsBeside<R extends ManifestRepository>(
 export function registrationRecordStore(
   dir: () => string,
   deps: ToolKeyedJsonFileDeps
-): RegistrationRecordStore {
+): RecordStore {
   const host = registrationRecordFile(dir, deps);
   const claims = pluginClaimsFile(dir, deps);
   return {

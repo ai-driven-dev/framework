@@ -5,12 +5,12 @@ import {
   nativeTargets,
   refreshNativeRefs,
 } from "../../../../../src/contexts/installation/application/plugin/update-native-refs.js";
+import type { ToolRecords } from "../../../../../src/contexts/installation/contract/records/scope-records.js";
 import { PluginNotFoundError } from "../../../../../src/contexts/installation/domain/installation.error.js";
-import type { RegistrationRecords } from "../../../../../src/contexts/installation/ports/record/registration-records.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
-function recordsWithRefs(...refs: string[]): RegistrationRecords {
+function recordsWithRefs(...refs: string[]): ToolRecords {
   return new Map([
     [
       TOOL.codex,

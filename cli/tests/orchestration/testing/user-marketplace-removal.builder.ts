@@ -5,8 +5,8 @@ import { Marketplace } from "../../../src/contexts/distribution/domain/marketpla
 import type { NativeMarketplaceSource } from "../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
+import type { ToolRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
@@ -65,7 +65,7 @@ export async function nativeFixture(
 ) {
   const machine = Manifest.create();
   machine.addTool(toolId, "1.0.0", []);
-  const records: RegistrationRecords = new Map([
+  const records: ToolRecords = new Map([
     [
       toolId,
       {

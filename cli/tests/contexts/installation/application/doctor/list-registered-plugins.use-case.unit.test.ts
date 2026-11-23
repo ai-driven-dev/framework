@@ -5,8 +5,8 @@ import {
   type ListRegisteredPluginsRequest,
 } from "../../../../../src/contexts/installation/application/doctor/list-registered-plugins.use-case.js";
 import { LoadManifest } from "../../../../../src/contexts/installation/application/doctor/load-manifest.use-case.js";
+import type { ToolRecords } from "../../../../../src/contexts/installation/contract/records/scope-records.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { RegistrationRecords } from "../../../../../src/contexts/installation/ports/record/registration-records.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { aManifest } from "../../testing/manifest.builder.js";
@@ -15,20 +15,23 @@ const source = { kind: "local", path: "/p" } as const;
 
 function listerOver(
   manifest: ReturnType<ReturnType<typeof aManifest>["build"]>,
-  records: RegistrationRecords = new Map()
+  records: ToolRecords = new Map()
 ) {
   const repo = new InMemoryManifestRepository(manifest, undefined, records);
-  const lister = new ListRegisteredPlugins(new LoadManifest(repo), repo);
+  const lister = new ListRegisteredPlugins(new LoadManifest(repo));
   return {
     execute: (command: Pick<ListRegisteredPluginsRequest, "allowedIds">) =>
-      lister.execute({ ...command, records: registrationRecordRules }),
+      lister.execute({
+        ...command,
+        records: { ...registrationRecordRules, loadRecords: () => repo.loadRecords() },
+      }),
   };
 }
 
 describe("listing the plugins registered with the hosts", () => {
   it("expects the refs a tool's host registration recorded", async () => {
     const manifest = aManifest().withTool(TOOL.claude, []).build();
-    const records: RegistrationRecords = new Map([
+    const records: ToolRecords = new Map([
       [
         TOOL.claude,
         {

@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
+import type { ToolRecords } from "../../../../src/contexts/installation/contract/records/scope-records.js";
 import type { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
-import type { RegistrationRecords } from "../../../../src/contexts/installation/ports/record/registration-records.js";
 import {
   REWRITTEN_BINARY,
   spiedRecordRules,
@@ -168,7 +168,7 @@ for (const toolId of [SYNTHETIC_TOOL]) {
         save: (manifest: Manifest) => f.repo.save(manifest),
         delete: () => f.repo.delete(),
         loadRecords: () => f.repo.loadRecords(),
-        saveRecords: (records: RegistrationRecords) => f.repo.saveRecords(records),
+        saveRecords: (records: ToolRecords) => f.repo.saveRecords(records),
         withExclusiveAccess: async <T>(action: () => Promise<T>): Promise<T> => {
           await f.registry.save(
             "/A",

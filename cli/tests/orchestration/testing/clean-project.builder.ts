@@ -4,8 +4,8 @@ import type { HostRefusal } from "../../../src/contexts/host-registration/domain
 import type { HostActions } from "../../../src/contexts/host-registration/ports/host-actions.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
+import type { ToolRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { CleanProject as ProductionCleanUseCase } from "../../../src/orchestration/clean/clean-project.use-case.js";
 import { FileHash } from "../../../src/shared/domain/file-hash.js";
@@ -143,11 +143,11 @@ export const REF = "aidd-context@aidd-framework";
 
 export function seedManifestWithNativeRegistrations(ids: NamedTools<"codex">): {
   manifest: Manifest;
-  records: RegistrationRecords;
+  records: ToolRecords;
 } {
   const manifest = Manifest.create();
   manifest.addTool(ids.codex, "1.0.0", []);
-  const records: RegistrationRecords = new Map();
+  const records: ToolRecords = new Map();
   records.set(ids.codex, {
     binary: BINARY,
     marketplaces: [
@@ -169,11 +169,11 @@ export function seedManifestWithNativeRegistrations(ids: NamedTools<"codex">): {
 
 export function seedClaudeNativeRegistrations(ids: NamedTools<"claude">): {
   manifest: Manifest;
-  records: RegistrationRecords;
+  records: ToolRecords;
 } {
   const manifest = Manifest.create();
   manifest.addTool(ids.claude, "1.0.0", []);
-  const records: RegistrationRecords = new Map();
+  const records: ToolRecords = new Map();
   records.set(ids.claude, {
     binary: HOST.claude,
     marketplaces: [

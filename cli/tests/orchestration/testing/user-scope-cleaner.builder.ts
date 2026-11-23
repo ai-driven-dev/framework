@@ -1,4 +1,4 @@
-import { registrationRecordRules } from "../../../src/composition/installation.js";
+import { recordsOf } from "../../../src/composition/installation.js";
 import { userScopeFilesSafeToDelete } from "../../../src/composition/machine-claims.js";
 import { wireCleanClaims } from "../../../src/composition/orchestration/clean-claims.js";
 import { RemoveMarketplace } from "../../../src/contexts/distribution/application/remove/remove-marketplace.use-case.js";
@@ -19,7 +19,7 @@ import {
   type PurgeMachineStateDeps,
 } from "../../../src/contexts/installation/application/removal/purge-machine-state.js";
 import { UserScopePluginFiles } from "../../../src/contexts/installation/application/removal/user-scope-plugin-files.js";
-import type { RecordsBesideManifest } from "../../../src/contexts/installation/ports/record/registration-records.js";
+import type { ScopeRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { ResolvePurgeCandidate } from "../../../src/contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
@@ -37,7 +37,7 @@ import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-mark
 /** What a test names; everything else is the empty or in-memory default. */
 export interface UserScopeCleanerParts extends Partial<HostPorts> {
   tools: ToolCatalog;
-  repo: PurgeUserScopeFilesDeps["userManifestRepo"] & RecordsBesideManifest;
+  repo: PurgeUserScopeFilesDeps["userManifestRepo"] & ScopeRecords;
   fs?: PurgeMachineStateDeps["fs"];
   logger?: PurgeMachineStateDeps["logger"];
   marketplaceRegistry?: MarketplaceRegistry;
@@ -69,7 +69,7 @@ export function userScopeCleanerDeps(parts: UserScopeCleanerParts): CleanUserSco
   };
   const userScopeParts = {
     userManifestRepo: parts.repo,
-    claims: registrationRecordRules,
+    claims: recordsOf(parts.repo),
     purgeMachineState: new PurgeMachineState({ fs, logger, guards }),
     homeDir,
     userScopePluginFiles: new UserScopePluginFiles(fs, (plugin, tool, home) =>

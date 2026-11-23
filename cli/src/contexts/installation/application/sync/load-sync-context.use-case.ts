@@ -1,6 +1,7 @@
 import type { Scope } from "../../../../shared/domain/scope.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
+import type { ScopeRecords, ToolRecords } from "../../contract/records/scope-records.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type {
@@ -8,10 +9,6 @@ import type {
   FrameworkMarketplaceRegistrar,
   InstallationMarketplaceRegistry,
 } from "../../ports/marketplace-sources.js";
-import type {
-  RecordsBesideManifest,
-  RegistrationRecords,
-} from "../../ports/record/registration-records.js";
 
 export interface LoadSyncContextRequest {
   projectRoot: string;
@@ -27,34 +24,28 @@ export interface LoadSyncContextRequest {
  * they were read from. */
 export interface SyncContext {
   manifest: Manifest;
-  records: RegistrationRecords;
+  records: ToolRecords;
   marketplaces: readonly DeclaredMarketplace[];
   toolIds: readonly ToolId[];
   save(): Promise<void>;
-  /** The machine-wide records, none when no machine-wide manifest is kept. */
-  machineRecords(): Promise<RegistrationRecords>;
-  /** Whether a machine-wide manifest is kept at all. */
-  readonly machineKept: boolean;
-  /** The project's records as last saved, not the ones this run is changing. */
-  persistedProject(): Promise<RegistrationRecords>;
 }
 
 /** What LoadSyncContext is built from. */
 export interface LoadSyncContextDeps {
-  readonly manifestRepo: ManifestRepository & RecordsBesideManifest;
+  readonly manifestRepo: ManifestRepository & ScopeRecords;
   readonly marketplaceRegistry: InstallationMarketplaceRegistry;
   /** The name the framework marketplace is registered under. */
   readonly frameworkMarketplaceName: string;
   /** Re-registers the shared machine-scope source when this run finds no marketplace at all.
    * Absent keeps the silent no-op instead of guessing what to register. */
   readonly marketplaceRegisterFrameworkUseCase?: FrameworkMarketplaceRegistrar;
-  readonly userManifestRepo?: ManifestRepository & RecordsBesideManifest & Lock;
+  readonly userManifestRepo?: ManifestRepository & ScopeRecords & Lock;
 }
 
 export class LoadSyncContext {
   constructor(private readonly deps: LoadSyncContextDeps) {}
 
-  private repositoryOf(scope: Scope): ManifestRepository & RecordsBesideManifest {
+  private repositoryOf(scope: Scope): ManifestRepository & ScopeRecords {
     return scope === "user"
       ? (this.deps.userManifestRepo ?? this.deps.manifestRepo)
       : this.deps.manifestRepo;
@@ -87,9 +78,6 @@ export class LoadSyncContext {
         await manifestRepo.saveRecords(records);
         await manifestRepo.save(manifest);
       },
-      machineRecords: async () => (await this.deps.userManifestRepo?.loadRecords()) ?? new Map(),
-      machineKept: this.deps.userManifestRepo !== undefined,
-      persistedProject: () => this.deps.manifestRepo.loadRecords(),
     };
   }
 

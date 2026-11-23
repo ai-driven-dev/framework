@@ -3,8 +3,8 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
+import type { ToolRecords } from "../../../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import type { RegistrationRecords } from "../../../../../src/contexts/installation/ports/record/registration-records.js";
 import { describeCause } from "../../../../../src/presentation/errors/error-translator.presenter.js";
 import { UnreadableUserSourceReferencesError } from "../../../../../src/shared/domain/shared.error.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
@@ -39,7 +39,7 @@ describe("RemovePlugin undoes native activation", () => {
     async (missing) => {
       const manifest = Manifest.create();
       manifest.addTool(claude, "test", []);
-      const records: RegistrationRecords = new Map();
+      const records: ToolRecords = new Map();
       await installViaModeA(manifest, records);
       if (missing === "unrecorded activation") {
         const registrations = records.get(claude);
@@ -85,7 +85,7 @@ describe("RemovePlugin undoes native activation", () => {
     async ({ name, scope, readsLedger }) => {
       const manifest = Manifest.create();
       manifest.addTool(claude, "test", []);
-      const records: RegistrationRecords = new Map();
+      const records: ToolRecords = new Map();
       await installViaModeA(manifest, records);
       const repo = new InMemoryManifestRepository(manifest, undefined, records);
       const activator = new FakeHostActions({ available: true });
@@ -192,7 +192,7 @@ describe("RemovePlugin undoes native activation", () => {
         const fs = new InMemoryFileAdapter();
         const manifest = Manifest.create();
         manifest.addTool(claude, "test", []);
-        const records: RegistrationRecords = new Map();
+        const records: ToolRecords = new Map();
         await installViaModeA(manifest, records);
         const manifestRepo = new InMemoryManifestRepository(manifest, undefined, records);
         const before = manifest.toJSON();

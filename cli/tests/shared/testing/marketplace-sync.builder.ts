@@ -15,6 +15,7 @@ import {
 } from "../../../src/contexts/installation/application/sync/load-sync-context.use-case.js";
 import { RecordActivation } from "../../../src/contexts/installation/application/sync/record-activation.use-case.js";
 import { trackedSharedSettings } from "../../../src/contexts/installation/application/sync/tracked-shared-settings.js";
+import type { ScopeRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordMachineClaims } from "../../../src/contexts/machine-claims/application/record/record-machine-claims.use-case.js";
 import { ResolvePurgeCandidate } from "../../../src/contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
@@ -59,6 +60,15 @@ export interface MarketplaceSyncParts {
   hostMarketplaceRegistries?: Deps["hosts"]["marketplaceRegistries"];
   hostPluginRegistries?: Deps["hosts"]["pluginRegistries"];
   nativeSources?: Deps["hosts"]["sources"];
+}
+
+/** The claims a sync checks host registrations against, read from the repositories it runs on. */
+function claimsSourceOver(project: ScopeRecords, machine: ScopeRecords | undefined) {
+  return {
+    claimedRefs: registrationRecordRules.claimedRefs,
+    machine: machine === undefined ? undefined : () => machine.loadRecords(),
+    persistedProject: () => project.loadRecords(),
+  };
 }
 
 export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
@@ -127,7 +137,7 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
         }),
         recordRegistrations: new RecordNativeRegistrations(parts.tools),
       }),
-      records: registrationRecordRules,
+      claims: claimsSourceOver(parts.manifestRepo, parts.userManifestRepo),
     }),
     parts.userManifestRepo
   );

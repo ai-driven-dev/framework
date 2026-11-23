@@ -64,6 +64,7 @@ src/
 │   │   │   ├── sync/
 │   │   │   └── update/
 │   │   ├── contract/
+│   │   │   └── records/
 │   │   ├── domain/
 │   │   │   ├── manifest/
 │   │   │   └── plugins/
@@ -71,7 +72,6 @@ src/
 │   │   │   └── assets/
 │   │   └── ports/
 │   │       ├── plugin/
-│   │       ├── record/
 │   │       └── user-scope/
 │   ├── machine-claims/    # which projects claim a machine-wide plugin or source
 │   │   ├── application/

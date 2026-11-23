@@ -1,6 +1,6 @@
 import { registerMarketplacePlugin } from "../../../../src/contexts/installation/application/materialize/register-marketplace-plugin.js";
+import type { ToolRecords } from "../../../../src/contexts/installation/contract/records/scope-records.js";
 import type { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
-import type { RegistrationRecords } from "../../../../src/contexts/installation/ports/record/registration-records.js";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 
@@ -28,10 +28,7 @@ export function buildDist(): PluginDistribution {
 }
 
 /** Installs the plugin into `manifest` as mode A does, recording its registration in `records`. */
-export async function installViaModeA(
-  manifest: Manifest,
-  records: RegistrationRecords
-): Promise<void> {
+export async function installViaModeA(manifest: Manifest, records: ToolRecords): Promise<void> {
   await registerMarketplacePlugin({
     dist: buildDist(),
     tool: registeredTools().aiProfile(claude),

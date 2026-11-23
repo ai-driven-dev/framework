@@ -2,9 +2,9 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
+import type { ToolRecords } from "../../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { RegistrationRecords } from "../../../../src/contexts/installation/ports/record/registration-records.js";
 import { FileHash } from "../../../../src/shared/domain/file-hash.js";
 import { FakeHostActions } from "../../../shared/testing/fake-host-actions.fake.js";
 import { hostWithdrawal } from "../../../shared/testing/host-withdrawal.builder.js";
@@ -25,7 +25,7 @@ describe("updating native tool targeted user marketplace removal", () => {
   it("refuses an otherwise claimed and enabled catalogue without a verified current source, preserving settings and claims", async () => {
     const machine = Manifest.create();
     machine.addTool(SYNTHETIC_UPDATING_NATIVE_TOOL, "1.0.0", []);
-    const records: RegistrationRecords = new Map([
+    const records: ToolRecords = new Map([
       [
         SYNTHETIC_UPDATING_NATIVE_TOOL,
         {

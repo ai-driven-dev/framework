@@ -1,6 +1,5 @@
 import { registrationRecordStore } from "../../../../src/composition/machine-claims.js";
 import type { ManifestFileDeps } from "../../../../src/contexts/installation/infrastructure/manifest-file-io.js";
-import type { RegistrationRecordStore } from "../../../../src/contexts/installation/ports/record/registration-records.js";
 import { atomicWriteFile } from "../../../../src/shared/infrastructure/atomic-write.js";
 import type { AtomicWrite } from "../../../../src/shared/ports/file-writer.js";
 import { resolveRegisteredToolId } from "../../../shared/testing/registered-tools.builder.js";
@@ -10,7 +9,7 @@ import { resolveRegisteredToolId } from "../../../shared/testing/registered-tool
 export function manifestFileDeps(
   recordDir: () => string,
   atomicWriter: AtomicWrite = atomicWriteFile
-): ManifestFileDeps & { readonly records: RegistrationRecordStore } {
+): ManifestFileDeps & { readonly records: ReturnType<typeof registrationRecordStore> } {
   const files = { atomicWriter, resolveToolId: resolveRegisteredToolId };
   return { ...files, records: registrationRecordStore(recordDir, files) };
 }

@@ -2,9 +2,9 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
+import type { ToolRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
@@ -41,7 +41,7 @@ describe("clean: native registration undo order", () => {
 
       function seedClaudeManifest(pluginScope: Scope): {
         manifest: Manifest;
-        records: RegistrationRecords;
+        records: ToolRecords;
       } {
         const manifest = Manifest.create();
         manifest.addTool(HOST.claude, "1.0.0", []);
@@ -56,7 +56,7 @@ describe("clean: native registration undo order", () => {
             marketplace: CLAUDE_MARKETPLACE,
           })
         );
-        const records: RegistrationRecords = new Map();
+        const records: ToolRecords = new Map();
         records.set(HOST.claude, {
           binary: CLAUDE_BINARY,
           marketplaces: [

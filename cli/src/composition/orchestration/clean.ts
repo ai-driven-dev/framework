@@ -31,7 +31,7 @@ import { PreviewProjectClean } from "../../orchestration/clean/preview-project-c
 import { RemoveProjectInOrder } from "../../orchestration/clean/remove-project-in-order.use-case.js";
 import { RemoveUserScope } from "../../orchestration/clean/remove-user-scope.use-case.js";
 import { UninstallProjectTools } from "../../orchestration/clean/uninstall-project-tools.use-case.js";
-import type { Installation } from "../installation.js";
+import { type Installation, recordsOf } from "../installation.js";
 import { machineOwnership, userScopeFilesSafeToDelete } from "../machine-claims.js";
 import type { Base } from "../shared.js";
 import { userConfigDir } from "../user-config-dir.js";
@@ -40,7 +40,6 @@ import { wireCleanClaims } from "./clean-claims.js";
 /** The machine-scope half of a clean: the user-scope files, the machine state and the host. */
 function wireCleanUserScope(
   base: Base,
-  inst: Installation,
   wired: { purgeCache: ResolvePurgeCandidate; claims: CleanClaims }
 ) {
   const { purgeCache, claims } = wired;
@@ -54,7 +53,7 @@ function wireCleanUserScope(
   };
   const userScopeParts = {
     userManifestRepo,
-    claims: inst.registrationRecordRules,
+    claims: recordsOf(userManifestRepo),
     purgeMachineState: new PurgeMachineState({ fs, logger, guards }),
     homeDir: base.homedir,
     userScopePluginFiles: new UserScopePluginFiles(fs, (plugin, tool, home) =>
@@ -117,7 +116,7 @@ function wireCleanProject(base: Base, inst: Installation, claims: CleanClaims) {
       cleanProject,
       claims,
       marketplaces,
-      records: inst.registrationRecordRules,
+      records: recordsOf(base.manifestRepo),
     }),
     confirm: new ConfirmRemoval(base.prompter),
     remove: new RemoveProjectInOrder({
@@ -145,7 +144,7 @@ export function wireClean(base: Base, inst: Installation) {
       },
       tools
     ),
-    inst.registrationRecordRules
+    recordsOf(manifestRepo)
   );
   const purgeCache = new ResolvePurgeCandidate(fs, logger);
   const claims = wireCleanClaims({
@@ -156,6 +155,6 @@ export function wireClean(base: Base, inst: Installation) {
     purgeCache,
   });
   const cleanUseCase = wireCleanProject(base, inst, claims);
-  const cleanUserScopeUseCase = wireCleanUserScope(base, inst, { purgeCache, claims });
+  const cleanUserScopeUseCase = wireCleanUserScope(base, { purgeCache, claims });
   return { uninstallTools, cleanUseCase, cleanUserScopeUseCase };
 }

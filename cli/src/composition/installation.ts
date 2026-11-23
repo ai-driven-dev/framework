@@ -48,6 +48,10 @@ import type { AgentModelStore } from "../contexts/installation/ports/agent-model
 import type { ManifestRepository } from "../contexts/installation/ports/manifest-repository.js";
 import { recordClaimRules } from "../contexts/machine-claims/application/record/record-claim-rules.js";
 import type { RecordClaimRules } from "../contexts/machine-claims/contract/record-claim-rules.js";
+import type {
+  MachineRecords,
+  ScopeRecordsRepository,
+} from "../contexts/machine-claims/ports/machine-manifest.js";
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import { EnsureBuiltMarketplace } from "../orchestration/marketplace/ensure-built-marketplace.use-case.js";
 import { BundledAssetProviderAdapter } from "../shared/infrastructure/asset-loader.js";
@@ -61,6 +65,18 @@ import {
   type FrameworkBuildDeps,
 } from "./translate.js";
 import { userConfigDir } from "./user-config-dir.js";
+
+/** The rules over one scope's records, with the records themselves, read and written through
+ * that scope's repository. */
+export function recordsOf(
+  repository: ScopeRecordsRepository
+): RegistrationRecordRules & RecordClaimRules & ScopeRecordsRepository {
+  return {
+    ...registrationRecordRules,
+    loadRecords: () => repository.loadRecords(),
+    saveRecords: (records: MachineRecords) => repository.saveRecords(records),
+  };
+}
 
 /** A project is set up once the installation has recorded a manifest for it. */
 export function projectSetupOf(manifestRepo: ManifestRepository): ProjectSetupState {

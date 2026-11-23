@@ -1,15 +1,12 @@
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { PluginClaims } from "../../contract/plugin-claims.js";
+import type { PluginClaims } from "../../contract/records/plugin-claims.js";
+import type { ToolRecords } from "../../contract/records/scope-records.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { ProjectIntegrationCleanup } from "../../ports/project-integration-cleanup.js";
-import type {
-  RecordsBesideManifest,
-  RegistrationRecords,
-} from "../../ports/record/registration-records.js";
 import type { RecordedPluginRef } from "../removal/project-plugin-withdrawal.js";
 
 export interface RemovePluginsFromMarketplaceRequest {
@@ -35,7 +32,7 @@ interface OrphanRef {
 
 /** What RemovePluginsFromMarketplace is built from. */
 export interface RemovePluginsFromMarketplaceDeps {
-  readonly manifestRepo: ManifestRepository & RecordsBesideManifest;
+  readonly manifestRepo: ManifestRepository;
   readonly cleanup: ProjectIntegrationCleanup;
 }
 
@@ -51,7 +48,7 @@ export class RemovePluginsFromMarketplace {
   ): Promise<RemovePluginsFromMarketplaceResult> {
     const manifest = await this.deps.manifestRepo.load();
     if (manifest === null) return { orphanCount: 0, removedCount: 0 };
-    const registered = await this.deps.manifestRepo.loadRecords();
+    const registered = await command.records.loadRecords();
     const orphans = this.collectOrphans(manifest, command.marketplace);
     const nativeRefs = new Map<ToolId, readonly string[]>();
     for (const { toolId, recorded } of orphans) {
@@ -78,7 +75,7 @@ export class RemovePluginsFromMarketplace {
   }
 
   private async removeOrphans(
-    { manifest, registered }: { manifest: Manifest; registered: RegistrationRecords },
+    { manifest, registered }: { manifest: Manifest; registered: ToolRecords },
     orphans: readonly OrphanRef[],
     command: Pick<RemovePluginsFromMarketplaceRequest, "projectRoot" | "records">
   ): Promise<number> {
@@ -100,7 +97,7 @@ export class RemovePluginsFromMarketplace {
         registered.set(toolId, records.withoutRef(registrations, ref));
       manifest.removePlugin(toolId, plugin.name);
     }
-    await this.deps.manifestRepo.saveRecords(registered);
+    await records.saveRecords(registered);
     await this.deps.manifestRepo.save(manifest);
     return orphans.length;
   }

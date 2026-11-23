@@ -1,30 +1,39 @@
-import type { ClaimsView } from "../../../contexts/host-registration/contract/claims-view.js";
-import type { SyncContext } from "../../../contexts/installation/application/sync/load-sync-context.use-case.js";
+import type {
+  ClaimsView,
+  RegistrationRecordView,
+} from "../../../contexts/host-registration/contract/claims-view.js";
 import type { RecordClaimRules } from "../../../contexts/machine-claims/contract/record-claim-rules.js";
 import type { ToolId } from "../../../shared/domain/tool.js";
 
-/** What a sync run knows about the records, before any host registration asks for them. */
-export type RecordFacts = Pick<
-  SyncContext,
-  "records" | "machineRecords" | "machineKept" | "persistedProject"
->;
+/** One scope's records, read when a host registration asks for them. */
+type RecordsRead = () => Promise<ReadonlyMap<ToolId, RegistrationRecordView>>;
 
-/** What a host registration is checked against for one tool: the manifest's own record, the
+/** Where the claims a host registration is checked against are read from. Composition fills it
+ * from machine claims, so a sync run never carries them. */
+export interface ClaimsSource extends Pick<RecordClaimRules, "claimedRefs"> {
+  /** The machine-wide records, absent when none are kept. */
+  readonly machine: RecordsRead | undefined;
+  /** The project's records as last saved, not the ones this run is changing. */
+  readonly persistedProject: RecordsRead;
+}
+
+/** What a host registration is checked against for one tool: this run's own record, the
  * machine's, and the one persisted for this project. */
 export function claimsViewOf(
-  facts: RecordFacts,
+  recorded: ReadonlyMap<ToolId, RegistrationRecordView>,
   toolId: ToolId,
-  rules: Pick<RecordClaimRules, "claimedRefs">
+  source: ClaimsSource
 ): ClaimsView {
+  const { machine } = source;
   return {
-    recorded: facts.records.get(toolId),
+    recorded: recorded.get(toolId),
     machine: async () => {
-      const registrations = (await facts.machineRecords()).get(toolId);
+      const registrations = machine === undefined ? undefined : (await machine()).get(toolId);
       return registrations === undefined
         ? undefined
-        : { ...registrations, claimedRefs: rules.claimedRefs(registrations) };
+        : { ...registrations, claimedRefs: source.claimedRefs(registrations) };
     },
-    machineKept: facts.machineKept,
-    persistedProject: async () => (await facts.persistedProject()).get(toolId),
+    machineKept: machine !== undefined,
+    persistedProject: async () => (await source.persistedProject()).get(toolId),
   };
 }

@@ -1,4 +1,3 @@
-import type { RegistrationRecordRules } from "../../contexts/host-registration/contract/registration-record-rules.js";
 import type {
   UninstallTools,
   UninstallToolsRequest,
@@ -9,7 +8,7 @@ import type {
 export class UninstallProjectTools {
   constructor(
     private readonly uninstallTools: Pick<UninstallTools, "execute">,
-    private readonly records: Pick<RegistrationRecordRules, "pluginRefsOf">
+    private readonly records: UninstallToolsRequest["records"]
   ) {}
 
   execute(command: Omit<UninstallToolsRequest, "records">): Promise<UninstallToolsResult[]> {

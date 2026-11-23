@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { registrationRecordRules } from "../../../../../src/composition/installation.js";
+import { recordsOf } from "../../../../../src/composition/installation.js";
 import type { ProvenNativeRefresh } from "../../../../../src/contexts/installation/application/plugin/update-native-refs.js";
 import type {
   MachinePluginUpdate,
   UpdatePluginRequest,
 } from "../../../../../src/contexts/installation/application/plugin/update-plugin-command.js";
+import type { ToolRecords } from "../../../../../src/contexts/installation/contract/records/scope-records.js";
 import { PluginNotFoundError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { RegistrationRecords } from "../../../../../src/contexts/installation/ports/record/registration-records.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
@@ -50,7 +50,7 @@ function fixture(
   const builder = aManifest().withTool(TOOL.codex, []);
   for (const p of options.plugins ?? [plugin("aidd-dev")]) builder.withPlugin(TOOL.codex, p);
   const manifest = builder.build();
-  const records: RegistrationRecords = new Map();
+  const records: ToolRecords = new Map();
   if (options.claims !== undefined) {
     records.set(TOOL.codex, {
       binary: "codex",
@@ -88,7 +88,7 @@ function fixture(
       machine: {
         isWithinUserScope: () => true,
         refreshNative,
-        refSelection: registrationRecordRules,
+        refSelection: recordsOf(repo),
         afterPreflight: (_toolId, apply) => apply(),
         ...machine,
       },

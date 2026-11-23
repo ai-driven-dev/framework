@@ -3,9 +3,9 @@ import { Marketplace } from "../../../src/contexts/distribution/domain/marketpla
 import { InspectDeclaredMarketplaces } from "../../../src/contexts/host-registration/application/inspect/inspect-declared-marketplaces.use-case.js";
 import type { HostPluginRegistryReading } from "../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
+import type { ToolRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { CheckRegistration } from "../../../src/orchestration/doctor/check-registration.use-case.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
@@ -169,10 +169,10 @@ function manifestWithNativeRegistrations(
   marketplaces: { alias: string; hostName: string }[] = [
     { alias: "aidd-framework", hostName: "aidd-framework" },
   ]
-): { manifest: Manifest; records: RegistrationRecords } {
+): { manifest: Manifest; records: ToolRecords } {
   const manifest = Manifest.create();
   manifest.addTool(SYNTHETIC_NATIVE_TOOL, "test", []);
-  const records: RegistrationRecords = new Map([
+  const records: ToolRecords = new Map([
     [SYNTHETIC_NATIVE_TOOL, { binary: SYNTHETIC_NATIVE_TOOL, marketplaces, pluginRefs }],
   ]);
   return { manifest, records };
@@ -181,7 +181,7 @@ function manifestWithNativeRegistrations(
 function manifestWithPlugin(
   marketplace?: string,
   toolId: AiToolId = SYNTHETIC_NATIVE_TOOL
-): { manifest: Manifest; records: RegistrationRecords } {
+): { manifest: Manifest; records: ToolRecords } {
   const manifest = aManifest()
     .withTool(toolId, [], { version: "test" })
     .withPlugin(
@@ -200,7 +200,7 @@ function manifestWithPlugin(
 }
 
 async function nativeIssuesFor(
-  { manifest, records }: { manifest: Manifest; records: RegistrationRecords },
+  { manifest, records }: { manifest: Manifest; records: ToolRecords },
   reading: HostPluginRegistryReading | "unreachable",
   registered?: Marketplace
 ) {

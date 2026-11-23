@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { ReportStatus } from "../../../../src/contexts/installation/application/report-status.use-case.js";
 import { DetectPluginDrift } from "../../../../src/contexts/installation/application/shared/detect-plugin-drift.use-case.js";
+import type { ScopeRecords } from "../../../../src/contexts/installation/contract/records/scope-records.js";
 import type { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
-import type { RecordsBesideManifest } from "../../../../src/contexts/installation/ports/record/registration-records.js";
 import { FileHash } from "../../../../src/shared/domain/file-hash.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
@@ -47,7 +47,7 @@ function makeFs(fileExists: boolean, diskHash: string): FileReader {
   };
 }
 
-function makeManifestRepo(manifest: Manifest): ManifestRepository & RecordsBesideManifest {
+function makeManifestRepo(manifest: Manifest): ManifestRepository & ScopeRecords {
   return {
     path: "/proj/.aidd/manifest.json",
     load: async () => manifest,

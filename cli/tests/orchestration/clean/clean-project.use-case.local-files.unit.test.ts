@@ -2,9 +2,9 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
+import type { ToolRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import { pluginScriptDir } from "../../../src/contexts/tools/domain/hooks/hooks-merge.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
@@ -187,7 +187,7 @@ describe("clean: local files", () => {
         })
       );
       manifest.addTool(HOST.codex, "1.0.0", []);
-      const records: RegistrationRecords = new Map();
+      const records: ToolRecords = new Map();
       records.set(HOST.codex, {
         binary: HOST.codex,
         marketplaces: [
@@ -297,7 +297,7 @@ describe("clean: local files", () => {
       })
     );
     manifest.addTool(HOST.codex, "1.0.0", []);
-    const records: RegistrationRecords = new Map();
+    const records: ToolRecords = new Map();
     records.set(HOST.codex, {
       binary: HOST.codex,
       marketplaces: [

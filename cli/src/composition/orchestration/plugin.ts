@@ -39,7 +39,7 @@ import { PickPlugins } from "../../orchestration/plugin/pick-plugins.use-case.js
 import { RemoveMachinePlugin } from "../../orchestration/plugin/remove-machine-plugin.use-case.js";
 import { RemovePlugin } from "../../orchestration/plugin/remove-plugin.use-case.js";
 import { UpdateUserPlugin } from "../../orchestration/plugin/update-user-plugin.use-case.js";
-import type { Installation } from "../installation.js";
+import { type Installation, recordsOf } from "../installation.js";
 import {
   machineOwnership,
   sharedSourceReads,
@@ -95,7 +95,7 @@ export function underMachineHome(removal: Pick<RemoveMachinePlugin, "execute">, 
 }
 
 /** Removing a plugin from the machine, under its home directory. */
-function wireUserPluginRemoval(base: Base, inst: Installation) {
+function wireUserPluginRemoval(base: Base) {
   const { tools, fs, logger, userManifestRepo, withdrawFromHost } = base;
   const removal = new RemoveUserPlugin(
     {
@@ -108,7 +108,7 @@ function wireUserPluginRemoval(base: Base, inst: Installation) {
     tools
   );
   return underMachineHome(
-    new RemoveMachinePlugin(removal, inst.registrationRecordRules),
+    new RemoveMachinePlugin(removal, recordsOf(userManifestRepo)),
     base.homedir()
   );
 }
@@ -116,7 +116,6 @@ function wireUserPluginRemoval(base: Base, inst: Installation) {
 /** Removing a plugin from a project or from the machine, and the claims it leaves behind. */
 function wirePluginRemoval(base: Base, inst: Installation) {
   const { tools, fs, logger, manifestRepo, userManifestRepo, withdrawFromHost } = base;
-  const { registrationRecordRules } = inst;
   const removalClaims = pluginRemovalClaims({
     ...machineOwnership(userManifestRepo, fs),
     ...sharedSourceReads({
@@ -145,9 +144,9 @@ function wirePluginRemoval(base: Base, inst: Installation) {
     ),
     withdrawFromHost,
     claims: removalClaims,
-    records: registrationRecordRules,
+    records: recordsOf(manifestRepo),
   });
-  const userPluginRemove = wireUserPluginRemoval(base, inst);
+  const userPluginRemove = wireUserPluginRemoval(base);
   return { pluginRemoveUseCase, userPluginRemove };
 }
 
@@ -165,7 +164,7 @@ function pluginMaterializerOf(base: Base, inst: Installation) {
 /** Updating a plugin in a project or on the machine. */
 function wirePluginUpdate(base: Base, inst: Installation) {
   const { tools, fs, logger, manifestRepo, userManifestRepo } = base;
-  const { builtMaterializationDeps, registrationRecordRules } = inst;
+  const { builtMaterializationDeps } = inst;
   const pluginMaterializer = pluginMaterializerOf(base, inst);
   const pluginUpdateUseCase = new UpdatePlugin(
     {
@@ -188,7 +187,7 @@ function wirePluginUpdate(base: Base, inst: Installation) {
       base.nativeSources
     ),
     isStrictlyWithinUserScope,
-    registrationRecordRules
+    recordsOf(userManifestRepo)
   );
   return {
     pluginUpdateUseCase,

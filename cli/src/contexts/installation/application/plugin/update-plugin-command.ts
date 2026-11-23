@@ -1,5 +1,6 @@
 import type { Scope } from "../../../../shared/domain/scope.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
+import type { ScopeRecords } from "../../contract/records/scope-records.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ContainmentCheck } from "../../ports/plugin/user-plugin-materialization.js";
 import type { RefreshNativeRef, RefSelection } from "./update-native-refs.js";
@@ -24,7 +25,8 @@ export type AfterPreflight = (
 export interface MachinePluginUpdate {
   readonly isWithinUserScope: ContainmentCheck;
   readonly refreshNative: RefreshNativeRef;
-  readonly refSelection: RefSelection;
+  /** The refs a selection names, read from the machine records. */
+  readonly refSelection: RefSelection & Pick<ScopeRecords, "loadRecords">;
   readonly afterPreflight: AfterPreflight;
 }
 

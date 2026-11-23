@@ -11,7 +11,12 @@ function removerWith(answer: boolean) {
       return RESULT;
     }),
   };
-  const records = { refOf: vi.fn(), withoutRef: vi.fn() };
+  const records = {
+    refOf: vi.fn(),
+    withoutRef: vi.fn(),
+    loadRecords: vi.fn(),
+    saveRecords: vi.fn(),
+  };
   const useCase = new RemoveMarketplacePlugins(plugins, { confirm }, records);
   return { useCase, confirm, plugins };
 }

@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ProveUserScopeWithdrawals } from "../../../../../src/contexts/installation/application/clean/prove-user-scope-withdrawals.use-case.js";
-import type { RegistrationRecords } from "../../../../../src/contexts/installation/ports/record/registration-records.js";
+import type { ToolRecords } from "../../../../../src/contexts/installation/contract/records/scope-records.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { aManifest } from "../../testing/manifest.builder.js";
 import { USER_SCOPE_HOME, userScopeParts } from "../../testing/user-scope-purge.builder.js";
@@ -30,7 +30,7 @@ describe("proving a user-scope withdrawal is safe", () => {
 
   it("answers the host registration each tool recorded, with its claimed refs", async () => {
     const manifest = aManifest().withTool(TOOL.codex, []).build();
-    const records: RegistrationRecords = new Map([
+    const records: ToolRecords = new Map([
       [
         TOOL.codex,
         {
@@ -50,7 +50,7 @@ describe("proving a user-scope withdrawal is safe", () => {
 
   it("names the host plugin cache under the home it was given", async () => {
     const manifest = aManifest().withTool(TOOL.codex, []).build();
-    const records: RegistrationRecords = new Map([
+    const records: ToolRecords = new Map([
       [TOOL.codex, { binary: "codex", marketplaces: [], pluginRefs: [] }],
     ]);
     const { prove } = fixture({ manifest, records });

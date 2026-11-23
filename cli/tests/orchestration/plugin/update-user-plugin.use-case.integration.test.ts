@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { registrationRecordRules } from "../../../src/composition/installation.js";
+import { recordsOf } from "../../../src/composition/installation.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-distribution-reader-adapter.js";
 import { RefreshHostPlugin } from "../../../src/contexts/host-registration/application/refresh-host-plugin.use-case.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { PluginMaterializer } from "../../../src/contexts/installation/application/plugin/files/plugin-materializer.js";
+import type { ToolRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { isStrictlyWithinUserScope } from "../../../src/contexts/machine-claims/domain/user-scope-containment.js";
 import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.use-case.js";
 import { PluginDistribution } from "../../../src/shared/domain/plugin/plugin-distribution.js";
@@ -53,7 +53,7 @@ function fixture(
   const refs = options.refs ?? [REF];
   const machine = Manifest.create();
   machine.addTool(toolId, "1.0.0", []);
-  const records: RegistrationRecords = new Map([
+  const records: ToolRecords = new Map([
     [
       toolId,
       {
@@ -119,7 +119,7 @@ function fixture(
       options.ownsSource ? new Map([[toolId, sources]]) : undefined
     ),
     isStrictlyWithinUserScope,
-    registrationRecordRules
+    recordsOf(repo)
   );
   const execute = (pluginName: string | readonly string[], rebuild?: boolean) =>
     update.execute({

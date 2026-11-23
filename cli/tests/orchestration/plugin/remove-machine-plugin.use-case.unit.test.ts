@@ -11,6 +11,8 @@ describe("removing a machine plugin", () => {
       claimsOf: () => [],
       holdersOf: () => [],
       withoutClaimedRef: <R>(record: R) => ({ ...record, pluginClaims: [] }),
+      loadRecords: async () => new Map(),
+      saveRecords: async () => undefined,
     };
     const asked: RemoveUserPluginRequest[] = [];
     const remove = new RemoveMachinePlugin(

@@ -2,9 +2,9 @@ import { Marketplace } from "../../../src/contexts/distribution/domain/marketpla
 import type { HostRefusal } from "../../../src/contexts/host-registration/domain/native-refusal.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
+import type { ToolRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
 import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
@@ -79,7 +79,7 @@ function projectManifestOf(toolId: AiToolId) {
 function projectRecordsOf(
   toolId: AiToolId,
   nativePluginRefs: readonly string[] | undefined
-): RegistrationRecords {
+): ToolRecords {
   if (nativePluginRefs === undefined) return new Map();
   return new Map([[toolId, { binary: toolId, marketplaces: [], pluginRefs: nativePluginRefs }]]);
 }

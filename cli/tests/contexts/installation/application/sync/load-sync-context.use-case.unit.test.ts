@@ -3,9 +3,9 @@ import {
   LoadSyncContext,
   type LoadSyncContextRequest,
 } from "../../../../../src/contexts/installation/application/sync/load-sync-context.use-case.js";
+import type { ToolRecords } from "../../../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { DeclaredMarketplace } from "../../../../../src/contexts/installation/ports/marketplace-sources.js";
-import type { RegistrationRecords } from "../../../../../src/contexts/installation/ports/record/registration-records.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
@@ -34,7 +34,7 @@ function setup(
   options: {
     project?: Manifest | null;
     user?: Manifest | null;
-    userRecords?: RegistrationRecords;
+    userRecords?: ToolRecords;
     marketplaces?: readonly DeclaredMarketplace[];
     register?: boolean;
   } = {}
@@ -133,28 +133,6 @@ describe("loading the context of a sync", () => {
     await context?.save();
 
     expect((await project.load())?.getInstalledToolIds()).toContain(TOOL.codex);
-  });
-
-  it("answers the machine records when kept and the project ones as last saved", async () => {
-    const machineRecord = { binary: "codex", pluginRefs: ["p@c"] };
-    const { load, project } = setup({
-      user: manifestWith(TOOL.codex),
-      userRecords: new Map([[TOOL.codex, machineRecord]]),
-    });
-
-    const context = await load.execute(request());
-    context?.manifest.addTool(TOOL.codex, "1.0.0", []);
-
-    expect(context?.machineKept).toBe(true);
-    expect(await context?.machineRecords()).toStrictEqual(new Map([[TOOL.codex, machineRecord]]));
-    expect(await context?.persistedProject()).toStrictEqual(await project.loadRecords());
-  });
-
-  it("answers no machine records when none is kept", async () => {
-    const context = await setup().load.execute(request());
-
-    expect(context?.machineKept).toBe(false);
-    expect(await context?.machineRecords()).toStrictEqual(new Map());
   });
 
   it("treats an unreadable manifest as none", async () => {

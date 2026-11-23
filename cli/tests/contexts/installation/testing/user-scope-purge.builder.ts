@@ -1,6 +1,6 @@
-import { registrationRecordRules } from "../../../../src/composition/installation.js";
+import { recordsOf } from "../../../../src/composition/installation.js";
+import type { ToolRecords } from "../../../../src/contexts/installation/contract/records/scope-records.js";
 import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { RegistrationRecords } from "../../../../src/contexts/installation/ports/record/registration-records.js";
 import { InMemoryManifestRepository } from "../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
 import { FakeMachineState } from "./fake-machine-state.fake.js";
@@ -26,7 +26,7 @@ export function aUserPlugin(dependents: string[] = []) {
 export function userScopeParts(
   options: {
     manifest?: ReturnType<ReturnType<typeof aManifest>["build"]> | null;
-    records?: RegistrationRecords;
+    records?: ToolRecords;
     proven?: string[];
   } = {}
 ) {
@@ -48,7 +48,7 @@ export function userScopeParts(
     tools: registeredTools(),
     deps: {
       userManifestRepo: repo,
-      claims: registrationRecordRules,
+      claims: recordsOf(repo),
       purgeMachineState: machine,
       homeDir: () => USER_SCOPE_HOME,
       userScopePluginFiles: files,

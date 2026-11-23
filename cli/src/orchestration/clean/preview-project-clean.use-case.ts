@@ -1,9 +1,9 @@
 import type { ListMarketplaces } from "../../contexts/distribution/application/list-marketplaces.use-case.js";
-import type { RegistrationRecordRules } from "../../contexts/host-registration/contract/registration-record-rules.js";
 import type { CleanProjectFiles } from "../../contexts/installation/application/clean/clean-project-files.use-case.js";
 import type {
   CleanNativeRegistrationPreview,
   ProjectCleanPlan,
+  ProjectCleanRecords,
 } from "../../contexts/installation/application/clean/project-clean-plan.js";
 import type { ToolId } from "../../shared/domain/tool.js";
 import type { CleanClaims } from "./clean-claims.js";
@@ -31,7 +31,7 @@ export interface PreviewProjectCleanDeps {
   readonly cleanProject: Pick<CleanProjectFiles, "execute">;
   readonly claims: Pick<CleanClaims, "sharedClaim">;
   readonly marketplaces: Pick<ListMarketplaces, "execute">;
-  readonly records: Pick<RegistrationRecordRules, "pluginRefsOf" | "refOf" | "registrationPreview">;
+  readonly records: ProjectCleanRecords;
 }
 
 /** What `aidd clean` would remove from a project: its plan and what the person is shown of it.

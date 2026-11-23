@@ -1,5 +1,4 @@
 import type { WithdrawFromHost } from "../../contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
-import type { RegistrationRecordRules } from "../../contexts/host-registration/contract/registration-record-rules.js";
 import type {
   PluginHostReach,
   ProjectPluginWithdrawalSteps,
@@ -16,7 +15,7 @@ export interface RemovePluginDeps {
   readonly remove: Pick<RemoveProjectPluginFiles, "execute">;
   readonly withdrawFromHost: Pick<WithdrawFromHost, "execute">;
   readonly claims: PluginRemovalClaims;
-  readonly records: Pick<RegistrationRecordRules, "refOf" | "withoutRef">;
+  readonly records: Parameters<typeof pluginRefRecords>[0];
 }
 
 /** The marketplace a withdrawn plugin came from, `undefined` when it carries none. */

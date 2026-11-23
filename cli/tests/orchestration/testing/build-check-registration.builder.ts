@@ -5,9 +5,9 @@ import { InspectDeclaredMarketplaces } from "../../../src/contexts/host-registra
 import type { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect/inspect-host-registration.use-case.js";
 import { ListRegisteredPlugins } from "../../../src/contexts/installation/application/doctor/list-registered-plugins.use-case.js";
 import { LoadManifest } from "../../../src/contexts/installation/application/doctor/load-manifest.use-case.js";
+import type { ScopeRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import type { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
-import type { RecordsBesideManifest } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import type { CheckRegistrationRequest } from "../../../src/orchestration/doctor/check-registration.use-case.js";
 import { CheckRegistration } from "../../../src/orchestration/doctor/check-registration.use-case.js";
@@ -17,13 +17,13 @@ import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manif
 
 /** The registered tools and their built marketplaces, over the manifest and builds given. */
 export function resolveRegisteredBuildsOver(
-  manifests: ManifestRepository & RecordsBesideManifest,
+  manifests: ManifestRepository & ScopeRecords,
   builds: Pick<ResolveBuiltMarketplaces, "execute">,
   tools: ToolCatalog
 ): ResolveRegisteredBuilds {
   return new ResolveRegisteredBuilds(
-    new ListRegisteredPlugins(new LoadManifest(manifests), manifests),
-    registrationRecordRules,
+    new ListRegisteredPlugins(new LoadManifest(manifests)),
+    { ...registrationRecordRules, loadRecords: () => manifests.loadRecords() },
     builds,
     tools
   );
@@ -31,7 +31,7 @@ export function resolveRegisteredBuildsOver(
 
 /** The registration check wired as the composition root wires it. */
 export function checkRegistrationOver(
-  manifests: ManifestRepository & RecordsBesideManifest,
+  manifests: ManifestRepository & ScopeRecords,
   fs: FileReader,
   registry: MarketplaceRegistry,
   hostAvailable: (binary: string) => boolean,

@@ -1,7 +1,7 @@
 import type { FindMarketplaceToRemove } from "../../../contexts/distribution/application/remove/find-marketplace-to-remove.use-case.js";
 import type { RemoveMarketplace } from "../../../contexts/distribution/application/remove/remove-marketplace.use-case.js";
 import type { MarketplaceRemovalResult } from "../../../contexts/distribution/contract/marketplace-removal.js";
-import type { DetachPluginClaims } from "../../../contexts/installation/contract/plugin-claims.js";
+import type { DetachPluginClaims } from "../../../contexts/installation/contract/records/plugin-claims.js";
 import type { Scope } from "../../../shared/domain/scope.js";
 import type { RemoveMarketplacePlugins } from "./remove-marketplace-plugins.use-case.js";
 

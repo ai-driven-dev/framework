@@ -40,6 +40,7 @@ function cleanOverEmptyProject(): CleanProjectFiles {
 describe("CleanProjectFiles over a project that installed nothing", () => {
   it("plans nothing", async () => {
     const records = {
+      loadRecords: async () => new Map(),
       pluginRefsOf: () => [],
       refOf: () => undefined,
       registrationPreview: () => ({

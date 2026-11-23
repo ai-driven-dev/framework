@@ -1,6 +1,6 @@
 import type { Scope } from "../../../../shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
-import type { RegistrationRecordData } from "../../ports/record/registration-records.js";
+import type { ScopeRecords, ToolRecord } from "../../contract/records/scope-records.js";
 import type { NativeHostTool } from "../../ports/tool-sections.js";
 
 /** What a clean announces of one tool's recorded registration. */
@@ -14,25 +14,21 @@ export interface RegistrationPreview {
 /** A tool's recorded registration the project clean withdraws from its host. */
 export interface ProjectRegistrationWithdrawal {
   readonly tool: NativeHostTool;
-  readonly registrations: RegistrationRecordData;
+  readonly registrations: ToolRecord;
   readonly cacheRoot: string | undefined;
   /** The scope the manifest recorded for each plugin ref, by ref. */
   readonly refScopes: ReadonlyMap<string, Scope>;
 }
 
 /** What a clean plan asks of the host registration about each record the project kept. */
-export interface ProjectCleanRecords {
+export interface ProjectCleanRecords extends Pick<ScopeRecords, "loadRecords"> {
   /** The refs recorded on the host, none when nothing was recorded. */
-  pluginRefsOf(registrations: RegistrationRecordData | undefined): readonly string[];
+  pluginRefsOf(registrations: ToolRecord | undefined): readonly string[];
   /** The ref a plugin has on the host, `undefined` when nothing was recorded for the alias. */
-  refOf(
-    registrations: RegistrationRecordData,
-    plugin: string,
-    alias: string | undefined
-  ): string | undefined;
+  refOf(registrations: ToolRecord, plugin: string, alias: string | undefined): string | undefined;
   /** What a clean announces of the record, with the cache paths it would purge under the root. */
   registrationPreview(
-    registrations: RegistrationRecordData,
+    registrations: ToolRecord,
     cacheRoot: string | undefined
   ): RegistrationPreview;
 }

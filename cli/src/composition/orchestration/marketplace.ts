@@ -27,7 +27,7 @@ import { RemoveUserMarketplace } from "../../orchestration/marketplace/remove/re
 import { AskMarketplaceSource } from "../../orchestration/setup/ask-marketplace-source.use-case.js";
 import { ResolveSetupSource } from "../../orchestration/setup/resolve-setup-source.use-case.js";
 import type { RegisterFrameworkSource } from "../../orchestration/setup/setup-flow.js";
-import type { Installation } from "../installation.js";
+import { type Installation, recordsOf } from "../installation.js";
 import { machineOwnership, userScopeFilesSafeToDelete } from "../machine-claims.js";
 import type { Base } from "../shared.js";
 import { wireMarketplaceSync } from "./marketplace-sync.js";
@@ -74,7 +74,7 @@ export function registerForFlow(
 }
 
 /** Removing a marketplace from the machine: its user-scope plugins, files and host registrations. */
-function wireUserMarketplaceRemoval(base: Base, inst: Installation) {
+function wireUserMarketplaceRemoval(base: Base) {
   const { tools, fs, userManifestRepo, marketplaceRegistry } = base;
   return new RemoveUserMarketplace({
     find: new FindUserMarketplace(marketplaceRegistry),
@@ -88,7 +88,7 @@ function wireUserMarketplaceRemoval(base: Base, inst: Installation) {
       ),
       host: base.withdrawFromHost,
       home: base.homedir(),
-      records: inst.registrationRecordRules,
+      records: recordsOf(userManifestRepo),
     }),
     remove: new RemoveMarketplace(marketplaceRegistry),
   });
@@ -97,7 +97,6 @@ function wireUserMarketplaceRemoval(base: Base, inst: Installation) {
 /** Removing a marketplace and its plugins, from a project or from the machine. */
 function wireMarketplaceRemoval(base: Base, inst: Installation) {
   const { tools, fs, prompter, manifestRepo, userManifestRepo, marketplaceRegistry } = base;
-  const { registrationRecordRules } = inst;
   const ownership = machineOwnership(userManifestRepo, fs);
   const projectCleanup = new RemoveProjectPlugin({
     fs,
@@ -111,12 +110,12 @@ function wireMarketplaceRemoval(base: Base, inst: Installation) {
     removePlugins: new RemoveMarketplacePlugins(
       new RemovePluginsFromMarketplace({ manifestRepo, cleanup: projectCleanup }, tools),
       prompter,
-      registrationRecordRules
+      recordsOf(manifestRepo)
     ),
     remove: new RemoveMarketplace(marketplaceRegistry),
     detachClaims: detachClaimsOf(projectCleanup),
   });
-  const userMarketplaceRemoveUseCase = wireUserMarketplaceRemoval(base, inst);
+  const userMarketplaceRemoveUseCase = wireUserMarketplaceRemoval(base);
   return { marketplaceRemoveUseCase, userMarketplaceRemoveUseCase };
 }
 

@@ -2,9 +2,9 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import type { ToolRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { RegistrationRecords } from "../../../src/contexts/installation/ports/record/registration-records.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.fake.js";
@@ -174,10 +174,10 @@ describe("clean --scope user: report", () => {
       toolId: ToolId,
       marketplaces: ReadonlyArray<{ alias: string; hostName: string }>,
       pluginRefs: readonly string[]
-    ): { manifest: Manifest; records: RegistrationRecords } {
+    ): { manifest: Manifest; records: ToolRecords } {
       const manifest = Manifest.create();
       manifest.addTool(toolId, "1.0.0", []);
-      const records: RegistrationRecords = new Map([
+      const records: ToolRecords = new Map([
         [
           toolId,
           {
@@ -193,7 +193,7 @@ describe("clean --scope user: report", () => {
 
     async function errorsFor(seed: {
       manifest: Manifest;
-      records: RegistrationRecords;
+      records: ToolRecords;
     }): Promise<readonly string[]> {
       const logger = new CapturingLogger();
       const useCase = userScopeCleaner({

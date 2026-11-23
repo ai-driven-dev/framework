@@ -4,10 +4,10 @@ import {
   PurgeMarketplacePlugins,
   type PurgeMarketplacePluginsRequest,
 } from "../../../../../src/contexts/installation/application/marketplace/purge-marketplace-plugins.use-case.js";
+import type { ToolRecords } from "../../../../../src/contexts/installation/contract/records/scope-records.js";
 import { ActiveMachineDependentsError } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { RegistrationRecords } from "../../../../../src/contexts/installation/ports/record/registration-records.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { holdersRecorded } from "../../../../shared/testing/host-record-reading.builder.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
@@ -27,7 +27,7 @@ class LockedRepository extends InMemoryManifestRepository {
   constructor(
     seed: Manifest,
     private readonly events: string[],
-    records: RegistrationRecords
+    records: ToolRecords
   ) {
     super(seed, PROJECT, records);
   }
@@ -81,7 +81,7 @@ function setup(seed: Seed = {}) {
   const manifest = Manifest.create();
   manifest.addTool(TOOL.claude, "1.0.0", []);
   for (const p of seed.plugins ?? [plugin("one")]) manifest.addPlugin(TOOL.claude, p);
-  const records: RegistrationRecords = new Map();
+  const records: ToolRecords = new Map();
   if (seed.native !== undefined) records.set(TOOL.claude, seed.native);
   if (seed.refusingCodex) {
     manifest.addTool(TOOL.codex, "1.0.0", []);
@@ -120,6 +120,8 @@ function setup(seed: Seed = {}) {
       apply: (target) => withdraw(target.registration.hostName),
     },
     records: {
+      loadRecords: () => repo.loadRecords(),
+      saveRecords: (saved) => repo.saveRecords(saved),
       registrationOf: rules.marketplaceOf,
       holdersOf: holdersRecorded,
       claimsOn: rules.claimsOnMarketplace,

@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { registrationRecordRules } from "../../../../../src/composition/installation.js";
+import { recordsOf } from "../../../../../src/composition/installation.js";
 import { RemoveUserPlugin } from "../../../../../src/contexts/installation/application/removal/remove-user-plugin.use-case.js";
+import type { ToolRecords } from "../../../../../src/contexts/installation/contract/records/scope-records.js";
 import {
   ActiveMachineDependentsError,
   PluginNotFoundError,
 } from "../../../../../src/contexts/installation/domain/installation.error.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import type { RegistrationRecords } from "../../../../../src/contexts/installation/ports/record/registration-records.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
@@ -35,7 +35,7 @@ function fixture(
     dependents?: string[];
     provenFiles?: string[];
     manifest?: ReturnType<ReturnType<typeof aManifest>["build"]>;
-    records?: RegistrationRecords;
+    records?: ToolRecords;
   } = {}
 ) {
   const manifest =
@@ -63,7 +63,7 @@ function fixture(
       toolIds: [toolId],
       projectRoot: ROOT,
       home: HOME,
-      records: registrationRecordRules,
+      records: recordsOf(repo),
     });
   return { repo, files, host, run };
 }
@@ -131,7 +131,7 @@ describe("removing a user-scope plugin", () => {
   describe("native refs", () => {
     function nativeFixture(refs: string[]) {
       const manifest = aManifest().withTool(TOOL.codex, []).build();
-      const records: RegistrationRecords = new Map([
+      const records: ToolRecords = new Map([
         [
           TOOL.codex,
           {
