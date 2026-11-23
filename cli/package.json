@@ -53,7 +53,7 @@
     "record:host": "node scripts/record-host-fixtures.mjs",
     "test:foreign-clock": "node scripts/test-foreign-clock.mjs",
     "smoke:kilo": "pnpm build && bash scripts/smoke-kilo.sh",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "vitest run --coverage --project=!architecture",
     "test:kanban": "pnpm --dir ../kanban test",
     "test:watch": "vitest",
     "smoke": "pnpm build && bash scripts/smoke-tools.sh",
