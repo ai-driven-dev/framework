@@ -90,7 +90,7 @@ export async function purgeMarketplaceCaches(
     if (cacheRoot === undefined) continue;
     for (const { hostName } of registrations.marketplaces) {
       await purgeMarketplaceCache(
-        { ...deps, reader: deps.ports.marketplaceRegistries.get(tool.toolId) },
+        { ...deps, reader: deps.ports.marketplaceRegistry(tool.toolId) },
         {
           cacheRoot,
           binary: registrations.binary,

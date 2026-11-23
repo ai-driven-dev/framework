@@ -45,29 +45,18 @@ export function setup(
   const logger = new CapturingLogger();
   const warnings: string[] = [];
   const hosts = {
-    marketplaceRegistries: new Map([
-      [
-        TOOL.claude,
-        new FakeHostMarketplaceRegistry(options.registry ?? { location: "r", entries: new Map() }),
-      ],
-    ]),
-    pluginRegistries: new Map([
-      [
-        TOOL.claude,
-        new FakeHostPluginRegistry(options.plugins ?? { location: "p", refs: new Map() }),
-      ],
-    ]),
-    sources: new Map([
-      [
-        TOOL.claude,
-        new FakeHostMarketplaceSources(
-          activator,
-          "registry",
-          () => "aidd",
-          options.sources ?? new Map()
-        ),
-      ],
-    ]),
+    marketplaceRegistry: new FakeHostMarketplaceRegistry(
+      options.registry ?? { location: "r", entries: new Map() }
+    ),
+    pluginRegistry: new FakeHostPluginRegistry(
+      options.plugins ?? { location: "p", refs: new Map() }
+    ),
+    sources: new FakeHostMarketplaceSources(
+      activator,
+      "registry",
+      () => "aidd",
+      options.sources ?? new Map()
+    ),
   };
   const profile = registeredTools().aiProfileIfAny(TOOL.claude);
   if (profile === null) throw new Error("claude is an AI tool");

@@ -33,7 +33,7 @@ export async function uninstallProjectRef(run: ProjectToolRun, ref: string): Pro
   if (await leftEnabledForMachine(run, ref)) return;
   const sourceRegistration = await provenCatalogue(run, ref);
   if (sourceRegistration === undefined) return;
-  const reader = deps.ports.pluginRegistries.get(withdrawal.tool.toolId);
+  const reader = deps.ports.pluginRegistry(withdrawal.tool.toolId);
   const held = await inspectForeignRefs(deps, run, sourceRegistration.hostName);
   if ("refusal" in held) {
     deps.logger.warn(
@@ -95,7 +95,7 @@ async function provenCatalogue(
     return undefined;
   }
   const proof = await inspectHostSource(
-    deps.ports.sources.get(withdrawal.tool.toolId),
+    deps.ports.sources(withdrawal.tool.toolId),
     facts.projectRoot,
     sourceRegistration
   );

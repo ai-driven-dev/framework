@@ -1,4 +1,5 @@
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
+import { hostPortsOver } from "../../contexts/host-registration/application/host-ports-over.js";
 import { PlanRefsToEnable } from "../../contexts/host-registration/application/register/plan-refs-to-enable.use-case.js";
 import { RecordNativeRegistrations } from "../../contexts/host-registration/application/register/record-native-registrations.use-case.js";
 import { RegisterPluginWithHost } from "../../contexts/host-registration/application/register/register-plugin-with-host.use-case.js";
@@ -41,12 +42,15 @@ function nativeActivationOf(
     registerPluginWithHost: new RegisterPluginWithHost({
       fs,
       catalogs: catalogReaders(fs),
-      nativeHosts: new ResolveNativeHost(base.nativePluginActivators, tools),
-      hosts: {
-        marketplaceRegistries: base.hostMarketplaceRegistries,
-        pluginRegistries: base.hostPluginRegistries,
-        sources: base.nativeSources,
-      },
+      nativeHosts: new ResolveNativeHost(
+        hostPortsOver({
+          activators: base.nativePluginActivators,
+          marketplaceRegistries: base.hostMarketplaceRegistries,
+          pluginRegistries: base.hostPluginRegistries,
+          sources: base.nativeSources,
+        }),
+        tools
+      ),
       platform: process.platform,
     }),
     buildMarketplace: build,

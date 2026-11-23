@@ -5,7 +5,6 @@ import {
   recordedRegistrations,
 } from "../../domain/record/registration-record.js";
 import type { HostActions } from "../../ports/host-actions.js";
-import { reachableActivator } from "../reachable-activator.js";
 import { callHost, survivingCachePaths } from "./host-call.js";
 import type { RemovedFromHost, UserRegistrationWithdrawal, WithdrawalDeps } from "./withdrawal.js";
 
@@ -16,7 +15,7 @@ export function reachableUserActivator(
   withdrawal: UserRegistrationWithdrawal,
   registrations: RegistrationRecord
 ): HostActions {
-  const activator = reachableActivator(deps.ports.activators, registrations.binary);
+  const activator = deps.ports.reachableActivator(registrations.binary);
   if (activator === undefined)
     throw new RegistrationRefusedError(
       `${describeBinaryAbsent(withdrawal, registrations)} User clean refused; canonical claims retained.`

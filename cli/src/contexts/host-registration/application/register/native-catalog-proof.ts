@@ -26,18 +26,14 @@ export async function nativeCatalogProof(
   const machine = await claims.machine();
   const persisted = await claims.persistedProject();
   const registration = registrationOf(run, hostName, { machine, persisted, fresh });
-  const sourceProof = await inspectHostSource(
-    run.hosts.sources.get(profile.toolId),
-    projectRoot,
-    registration.entry
-  );
+  const sourceProof = await inspectHostSource(run.hosts.sources, projectRoot, registration.entry);
   const base = {
     canonical: registration.canonical,
     sourceStatus: sourceProof.status,
     ...(sourceProof.current === undefined ? {} : { source: sourceProof.current }),
     ...(sourceProof.reason === undefined ? {} : { sourceReason: sourceProof.reason }),
   };
-  const reader = run.hosts.pluginRegistries.get(profile.toolId);
+  const reader = run.hosts.pluginRegistry;
   if (reader === undefined) return { ...base, hostReadable: false };
   const reading = await reader.read(projectRoot);
   if (reading.absent === true) return { ...base, hostReadable: true };
@@ -88,7 +84,7 @@ export async function proveAddedSource(
   builtDir: string
 ): Promise<NativeMarketplaceSource | undefined> {
   const { toolId } = run;
-  const reading = await run.hosts.sources.get(run.profile.toolId)?.read(run.projectRoot);
+  const reading = await run.hosts.sources?.read(run.projectRoot);
   const current = reading?.entries?.get(hostName);
   const expected = (await run.fs.realpathIfResolvable(builtDir)) ?? builtDir;
   const sourceMatches =

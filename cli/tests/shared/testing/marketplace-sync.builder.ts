@@ -2,14 +2,13 @@ import { settingsDeclaration } from "../../../src/composition/contexts/host-regi
 import { registrationRecordRules } from "../../../src/composition/contexts/installation.js";
 import { lenientSourceReferences } from "../../../src/composition/contexts/machine-claims.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
+import { hostPortsOver } from "../../../src/contexts/host-registration/application/host-ports-over.js";
 import { PlanRefsToEnable } from "../../../src/contexts/host-registration/application/register/plan-refs-to-enable.use-case.js";
 import { RecordNativeRegistrations } from "../../../src/contexts/host-registration/application/register/record-native-registrations.use-case.js";
-import {
-  RegisterPluginWithHost,
-  type RegisterPluginWithHostDeps,
-} from "../../../src/contexts/host-registration/application/register/register-plugin-with-host.use-case.js";
+import { RegisterPluginWithHost } from "../../../src/contexts/host-registration/application/register/register-plugin-with-host.use-case.js";
 import { ResolveNativeHost } from "../../../src/contexts/host-registration/application/register/resolve-native-host.use-case.js";
 import type { HostActions } from "../../../src/contexts/host-registration/ports/host-actions.js";
+import type { HostPortMaps } from "../../../src/contexts/host-registration/ports/host-ports.js";
 import {
   LoadSyncContext,
   type LoadSyncContextDeps,
@@ -44,7 +43,6 @@ import { SyncToolSettingsFiles } from "../../../src/orchestration/sync/settings/
 import type { Lock } from "../../../src/shared/ports/lock.js";
 import { catalogReadersOver } from "./catalog-readers.builder.js";
 
-type Deps = RegisterPluginWithHostDeps;
 type Loader = LoadSyncContextDeps;
 
 /** What a test names; the host maps and every optional collaborator default to empty or absent. */
@@ -61,9 +59,9 @@ export interface MarketplaceSyncParts {
   currentVersion?: RecordSourceReferenceDeps["currentVersion"];
   userManifestRepo?: ManifestRepository & Lock & ScopeRecords;
   activators?: ReadonlyMap<string, HostActions>;
-  hostMarketplaceRegistries?: Deps["hosts"]["marketplaceRegistries"];
-  hostPluginRegistries?: Deps["hosts"]["pluginRegistries"];
-  nativeSources?: Deps["hosts"]["sources"];
+  hostMarketplaceRegistries?: HostPortMaps["marketplaceRegistries"];
+  hostPluginRegistries?: HostPortMaps["pluginRegistries"];
+  nativeSources?: HostPortMaps["sources"];
 }
 
 /** The claims a sync checks host registrations against, read from the repositories it runs on. */
@@ -104,12 +102,15 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
         registerPluginWithHost: new RegisterPluginWithHost({
           fs: parts.fs,
           catalogs: catalogReadersOver(parts.fs),
-          nativeHosts: new ResolveNativeHost(parts.activators ?? new Map(), parts.tools),
-          hosts: {
-            marketplaceRegistries: parts.hostMarketplaceRegistries ?? new Map(),
-            pluginRegistries: parts.hostPluginRegistries ?? new Map(),
-            sources: parts.nativeSources ?? new Map(),
-          },
+          nativeHosts: new ResolveNativeHost(
+            hostPortsOver({
+              activators: parts.activators ?? new Map(),
+              marketplaceRegistries: parts.hostMarketplaceRegistries ?? new Map(),
+              pluginRegistries: parts.hostPluginRegistries ?? new Map(),
+              sources: parts.nativeSources ?? new Map(),
+            }),
+            parts.tools
+          ),
           platform: process.platform,
         }),
         buildMarketplace: build,

@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import pkg from "../../package.json" with { type: "json" };
+import { hostPortsOver } from "../contexts/host-registration/application/host-ports-over.js";
 import { WithdrawFromHost } from "../contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import { JsonFileMergerAdapter } from "../contexts/installation/infrastructure/json-file-merger-adapter.js";
 import { ManifestRepositoryAdapter } from "../contexts/installation/infrastructure/manifest-repository-adapter.js";
@@ -70,12 +71,16 @@ function wireHost(parts: {
     marketplaceSources: nativeSources,
     pluginRegistries: hostPluginRegistries,
   } = wireHostRegistration(tools, home);
-  const withdrawFromHost = new WithdrawFromHost(fs, logger, {
-    activators: nativePluginActivators,
-    pluginRegistries: hostPluginRegistries,
-    marketplaceRegistries: hostMarketplaceRegistries,
-    sources: nativeSources,
-  });
+  const withdrawFromHost = new WithdrawFromHost(
+    fs,
+    logger,
+    hostPortsOver({
+      activators: nativePluginActivators,
+      pluginRegistries: hostPluginRegistries,
+      marketplaceRegistries: hostMarketplaceRegistries,
+      sources: nativeSources,
+    })
+  );
   return {
     nativePluginActivators,
     hostMarketplaceRegistries,

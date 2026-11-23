@@ -87,9 +87,7 @@ async function builtByThisCli(
   hostName: string
 ): Promise<boolean> {
   const { fs, platform, projectRoot } = run;
-  const registeredSource = (
-    await run.hosts.marketplaceRegistries.get(run.profile.toolId)?.read()
-  )?.entries?.get(hostName);
+  const registeredSource = (await run.hosts.marketplaceRegistry?.read())?.entries?.get(hostName);
   if (registeredSource === undefined) return false;
   const source = (await fs.realpathIfResolvable(registeredSource)) ?? registeredSource;
   const userRoot = run.userCacheRoot();

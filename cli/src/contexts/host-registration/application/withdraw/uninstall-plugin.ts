@@ -14,7 +14,7 @@ export async function uninstallPlugin(
   const { tool, plugin, projectRoot } = command;
   const registrations = readRegistrationRecord(command.registrations);
   const binary = tool.nativeActivation()?.hostBinary();
-  const activator = binary === undefined ? undefined : deps.ports.activators.get(binary);
+  const activator = binary === undefined ? undefined : deps.ports.activator(binary);
   if (binary === undefined || activator === undefined) return undefined;
   if (!activator.isAvailable()) {
     const hostName = hostNameFor(registrations, plugin.marketplace) ?? plugin.marketplace;
@@ -98,7 +98,7 @@ async function uninstallViaActivator(
     );
     return false;
   }
-  const reader = deps.ports.pluginRegistries.get(toolId);
+  const reader = deps.ports.pluginRegistry(toolId);
   const order = await resolveUninstallScopeOrder({ reader, ref, projectRoot, manifestScope });
   const refusal = uninstallAtFirstAcceptedScope(activator, ref, order);
   if (refusal === undefined) return true;

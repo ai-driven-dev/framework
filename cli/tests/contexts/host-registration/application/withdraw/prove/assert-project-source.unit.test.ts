@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { hostPortsOver } from "../../../../../../src/contexts/host-registration/application/host-ports-over.js";
 import { assertProjectSource } from "../../../../../../src/contexts/host-registration/application/withdraw/prove/assert-project-source.js";
 import type {
   ProjectSourceRequest,
@@ -30,7 +31,7 @@ function depsOf(
   return {
     fs: new InMemoryFileAdapter({}),
     logger: new CapturingLogger(),
-    ports: {
+    ports: hostPortsOver({
       activators: new Map([
         ["claude", new FakeHostActions({ available: options.available ?? true })],
       ]),
@@ -39,7 +40,7 @@ function depsOf(
       sources: new Map([
         [TOOL.claude, { read: async () => ({ location: "host", entries: options.sourceEntries }) }],
       ]),
-    },
+    }),
   };
 }
 

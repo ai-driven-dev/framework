@@ -1,8 +1,9 @@
 import { projectIntegrationOf, recordsOf } from "../../../src/composition/contexts/installation.js";
 import { wireCleanClaims } from "../../../src/composition/orchestration/clean-claims.js";
 import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.use-case.js";
+import { hostPortsOver } from "../../../src/contexts/host-registration/application/host-ports-over.js";
 import { WithdrawFromHost } from "../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
-import type { HostPorts } from "../../../src/contexts/host-registration/ports/host-ports.js";
+import type { HostPortMaps } from "../../../src/contexts/host-registration/ports/host-ports.js";
 import { AssertProjectRemovable } from "../../../src/contexts/installation/application/clean/assert-project-removable.use-case.js";
 import type { ProjectCleanAsks } from "../../../src/contexts/installation/application/clean/clean-project-files.use-case.js";
 import { CleanProjectFiles } from "../../../src/contexts/installation/application/clean/clean-project-files.use-case.js";
@@ -37,7 +38,7 @@ const homedir = (): string => "/home/dev";
 type Files = AiddTracesDeps;
 
 /** What a test names; everything else is the empty default. */
-export interface ProjectCleanerParts extends Partial<HostPorts> {
+export interface ProjectCleanerParts extends Partial<HostPortMaps> {
   tools: ToolCatalog;
   fs: Files["fs"];
   manifestRepo: Files["manifestRepo"] & ScopeRecords;
@@ -110,12 +111,16 @@ export function projectCleanerDeps(parts: ProjectCleanerParts): CleanProjectDeps
     confirm: new ConfirmRemoval(parts.prompter),
     remove: new RemoveProjectInOrder({
       cleanProject,
-      withdrawFromHost: new WithdrawFromHost(parts.fs, parts.logger, {
-        activators: parts.activators ?? new Map(),
-        pluginRegistries: parts.pluginRegistries ?? new Map(),
-        marketplaceRegistries: parts.marketplaceRegistries ?? new Map(),
-        sources: parts.sources ?? new Map(),
-      }),
+      withdrawFromHost: new WithdrawFromHost(
+        parts.fs,
+        parts.logger,
+        hostPortsOver({
+          activators: parts.activators ?? new Map(),
+          pluginRegistries: parts.pluginRegistries ?? new Map(),
+          marketplaceRegistries: parts.marketplaceRegistries ?? new Map(),
+          sources: parts.sources ?? new Map(),
+        })
+      ),
       cleanFacts: projectCleanFactsOf(claims, marketplaces),
       sharedClaim: claims.sharedClaim,
       release: claimReleaseOf(claims),

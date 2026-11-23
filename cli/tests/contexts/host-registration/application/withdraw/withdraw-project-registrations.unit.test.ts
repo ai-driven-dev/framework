@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { hostPortsOver } from "../../../../../src/contexts/host-registration/application/host-ports-over.js";
 import { withdrawProjectRegistrations } from "../../../../../src/contexts/host-registration/application/withdraw/withdraw-project-registrations.js";
 import type {
   ProjectCleanFacts,
@@ -7,6 +8,7 @@ import type {
   WithdrawalDeps,
 } from "../../../../../src/contexts/host-registration/application/withdraw/withdrawal.js";
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
+import type { HostPortMaps } from "../../../../../src/contexts/host-registration/ports/host-ports.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
@@ -49,18 +51,18 @@ function factsAt(
 function depsOf(
   activator: FakeHostActions,
   logger: CapturingLogger,
-  ports: Partial<WithdrawalDeps["ports"]> = {}
+  ports: Partial<HostPortMaps> = {}
 ): WithdrawalDeps {
   return {
     fs: new InMemoryFileAdapter({}),
     logger,
-    ports: {
+    ports: hostPortsOver({
       activators: new Map([["claude", activator]]),
       pluginRegistries: new Map(),
       marketplaceRegistries: new Map(),
       sources: new Map(),
       ...ports,
-    },
+    }),
   };
 }
 

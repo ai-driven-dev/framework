@@ -1,7 +1,6 @@
 import type { NativeMarketplaceRegistration } from "../../../domain/record/native-marketplace-source.js";
 import { recordedRegistrations } from "../../../domain/record/registration-record.js";
 import { assertSourceOwned } from "../../../domain/source-proof.js";
-import { reachableActivator } from "../../reachable-activator.js";
 import { inspectHostSource } from "../../read-host.js";
 import { assertNoForeignRefs } from "../host-call.js";
 import type {
@@ -26,7 +25,7 @@ async function assertToolOwned(
   facts: ProjectCleanFacts
 ): Promise<void> {
   const registrations = recordedRegistrations(withdrawal.registrations);
-  if (reachableActivator(deps.ports.activators, registrations.binary) === undefined) return;
+  if (deps.ports.reachableActivator(registrations.binary) === undefined) return;
   for (const registration of registrations.marketplaces) {
     if (facts.marketplaceScopes.get(registration.alias) !== "project") continue;
     await assertOwned(deps, { withdrawal, registrations, facts }, registration);
@@ -46,7 +45,7 @@ async function assertOwned(
   const { tool } = withdrawal;
   const toolId = tool.toolId;
   const proof = await inspectHostSource(
-    deps.ports.sources.get(toolId),
+    deps.ports.sources(toolId),
     facts.projectRoot,
     registration
   );

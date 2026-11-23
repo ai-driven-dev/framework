@@ -4,7 +4,6 @@ import { judgeRegistration, type SourceProof } from "../../../domain/policy/regi
 import type { NativeMarketplaceRegistration } from "../../../domain/record/native-marketplace-source.js";
 import { readRegistrationRecord } from "../../../domain/record/registration-record.js";
 import { assertSourceOwned } from "../../../domain/source-proof.js";
-import { reachableActivator } from "../../reachable-activator.js";
 import { inspectHostSource } from "../../read-host.js";
 import type { ProjectSourceRequest, WithdrawalDeps } from "../withdrawal.js";
 
@@ -18,13 +17,13 @@ export async function assertProjectSource(
   const toolId = tool.toolId;
   const activation = tool.nativeActivation();
   if (activation == null) return;
-  const activator = reachableActivator(deps.ports.activators, activation.hostBinary());
+  const activator = deps.ports.reachableActivator(activation.hostBinary());
   if (activator === undefined) return;
   const registration = recordedCatalogue(command, registrations);
   const ref = `${plugin.name}@${registration.hostName}`;
   const enabledByProject = registrations?.pluginRefs.includes(ref) === true;
   await assertRefOwned(command, { ref, enabledByProject });
-  const proof = await inspectHostSource(deps.ports.sources.get(toolId), projectRoot, registration);
+  const proof = await inspectHostSource(deps.ports.sources(toolId), projectRoot, registration);
   assertSourceOwned(
     proof,
     `${toolId}: catalogue '${registration.hostName}' has unproven host source; reconcile manually.`
@@ -78,7 +77,7 @@ interface RefEnabledRequest {
 /** Refuses a ref the host's own plugin registry does not show enabled at an exact scope. */
 async function assertRefEnabled(deps: WithdrawalDeps, request: RefEnabledRequest): Promise<void> {
   const { toolId, ref, projectRoot, proof } = request;
-  const reader = deps.ports.pluginRegistries.get(toolId);
+  const reader = deps.ports.pluginRegistry(toolId);
   if (reader === undefined)
     throw new RegistrationRefusedError(
       `${toolId}: '${ref}' has no readable host plugin registry; uninstall refused before project changes.`

@@ -106,7 +106,7 @@ export async function inspectForeignRefs(
   const { tool } = withdrawal;
   const claimed = (await facts.machine.claimedRefs(tool.toolId)) ?? [];
   return inspectNativeRefs(
-    { reader: deps.ports.pluginRegistries.get(tool.toolId), tool },
+    { reader: deps.ports.pluginRegistry(tool.toolId), tool },
     {
       hostName,
       ownedRefs: new Set([...registrations.pluginRefs, ...claimed]),

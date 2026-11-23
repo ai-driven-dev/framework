@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { hostPortsOver } from "../../../../../src/contexts/host-registration/application/host-ports-over.js";
 import {
   callHost,
   describeSharedSourceSurvival,
@@ -20,12 +21,12 @@ function depsOf(logger: CapturingLogger): WithdrawalDeps {
   return {
     fs: new InMemoryFileAdapter({}),
     logger,
-    ports: {
+    ports: hostPortsOver({
       activators: new Map(),
       pluginRegistries: new Map(),
       marketplaceRegistries: new Map(),
       sources: new Map(),
-    },
+    }),
   };
 }
 

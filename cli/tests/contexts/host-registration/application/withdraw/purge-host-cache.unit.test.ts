@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { hostPortsOver } from "../../../../../src/contexts/host-registration/application/host-ports-over.js";
 import { WithdrawFromHost } from "../../../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import type { HostMarketplaceRegistry } from "../../../../../src/contexts/host-registration/ports/host-marketplace-registry.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
@@ -19,12 +20,16 @@ async function purgeRemovedMarketplace(
   reader: HostMarketplaceRegistry | undefined,
   cacheRoot: string | null = CACHE_ROOT
 ): Promise<void> {
-  const withdraw = new WithdrawFromHost(fs, logger, {
-    activators: new Map([[TOOL.claude, new FakeHostActions({ available: true })]]),
-    pluginRegistries: new Map(),
-    marketplaceRegistries: reader === undefined ? new Map() : new Map([[TOOL.claude, reader]]),
-    sources: new Map(),
-  });
+  const withdraw = new WithdrawFromHost(
+    fs,
+    logger,
+    hostPortsOver({
+      activators: new Map([[TOOL.claude, new FakeHostActions({ available: true })]]),
+      pluginRegistries: new Map(),
+      marketplaceRegistries: reader === undefined ? new Map() : new Map([[TOOL.claude, reader]]),
+      sources: new Map(),
+    })
+  );
   await withdraw.execute({
     kind: "withdraw-user-registrations",
     withdrawals: [

@@ -8,7 +8,6 @@ import type { HostActions } from "../ports/host-actions.js";
 import type { HostPluginRegistry } from "../ports/host-plugin-registry.js";
 import type { HostPorts } from "../ports/host-ports.js";
 import type { HostedTool } from "../ports/host-tool.js";
-import { reachableActivator } from "./reachable-activator.js";
 import { assertNoForeignNativeRefs, inspectHostSource } from "./read-host.js";
 import type {
   ProveMarketplaceRemovalRequest,
@@ -24,7 +23,7 @@ export async function proveMarketplaceRemoval(
   const { tool, registration, projectRoot, claimedRefs } = request;
   const { toolId } = tool;
   const { activator, reader } = hostOf(ports, tool, request);
-  const proof = await inspectHostSource(ports.sources.get(toolId), projectRoot, registration);
+  const proof = await inspectHostSource(ports.sources(toolId), projectRoot, registration);
   const hostRefs = await assertNoForeignNativeRefs(
     { reader, tool },
     { hostName: registration.hostName, ownedRefs: new Set(claimedRefs), projectRoot }
@@ -52,8 +51,8 @@ function hostOf(
   { registrations, registration }: ProveMarketplaceRemovalRequest
 ): { activator: HostActions; reader: HostPluginRegistry } {
   const binary = readRegistrationRecord(registrations)?.binary;
-  const activator = reachableActivator(ports.activators, binary);
-  const reader = ports.pluginRegistries.get(tool.toolId);
+  const activator = ports.reachableActivator(binary);
+  const reader = ports.pluginRegistry(tool.toolId);
   if (activator === undefined || reader === undefined) {
     throw new RegistrationRefusedError(
       `Cannot prove/remove AIDD-owned catalogue '${registration.hostName}': ${binary} CLI or host registry unavailable.`

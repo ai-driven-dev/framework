@@ -5,7 +5,6 @@ import {
   type RegistrationRecordData,
   recordedRegistrations,
 } from "../../../domain/record/registration-record.js";
-import { reachableActivator } from "../../reachable-activator.js";
 import { inspectHostSource } from "../../read-host.js";
 import type { ClaimedHostRef, ProvenHostRef, WithdrawalDeps } from "../withdrawal.js";
 
@@ -23,8 +22,8 @@ export async function proveClaimedRef(
 ): Promise<ProvenHostRef> {
   const { registrationData, claim, projectRoot } = request;
   const registrations = recordedRegistrations(registrationData);
-  const activator = reachableActivator(deps.ports.activators, registrations.binary);
-  const reader = deps.ports.pluginRegistries.get(claim.tool);
+  const activator = deps.ports.reachableActivator(registrations.binary);
+  const reader = deps.ports.pluginRegistry(claim.tool);
   if (activator === undefined || reader === undefined) {
     throw new RegistrationRefusedError(
       `Cannot prove or remove AIDD-owned native ref '${claim.ref}': ${registrations.binary} CLI or host registry is unavailable.`
@@ -40,7 +39,7 @@ export async function proveClaimedRef(
     refEnabled: onHost?.enabled === true,
     source:
       catalogues.length === 1
-        ? await inspectHostSource(deps.ports.sources.get(claim.tool), projectRoot, only)
+        ? await inspectHostSource(deps.ports.sources(claim.tool), projectRoot, only)
         : undefined,
   });
   if (verdict.outcome === "refuse")

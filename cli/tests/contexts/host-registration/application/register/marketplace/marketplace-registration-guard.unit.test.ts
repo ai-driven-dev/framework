@@ -34,9 +34,7 @@ function runWith(registry: HostMarketplaceRegistryReading): RegistrationRun {
     fs,
     catalogs: catalogReadersOver(fs),
     hosts: {
-      marketplaceRegistries: new Map([[TOOL.claude, new FakeHostMarketplaceRegistry(registry)]]),
-      pluginRegistries: new Map(),
-      sources: new Map(),
+      marketplaceRegistry: new FakeHostMarketplaceRegistry(registry),
     },
     projectRoot: "/p",
     claims: {

@@ -15,7 +15,6 @@ import type {
 } from "./registration-outcome.js";
 import {
   type CatalogReaders,
-  type HostRegistries,
   type RegistrationRun,
   type RegistrationSubject,
   warnRegistration,
@@ -47,13 +46,12 @@ export type RegisterPluginWithHostResult =
 
 /** What the use case holds: the file reader, the answer to which native plugin CLI drives a
  * tool, and the platform whose path rules compare what a host stored with what this run
- * resolved. Only a tool whose profile declares a registry is ever looked up in `hosts`, so a
- * tool absent from a map still registers. */
+ * resolved. Only a tool whose profile declares a registry is ever looked up in its host's
+ * registries, so a tool with none wired still registers. */
 export interface RegisterPluginWithHostDeps {
   readonly fs: FileReader;
   readonly catalogs: CatalogReaders;
   readonly nativeHosts: ResolveNativeHost;
-  readonly hosts: HostRegistries;
   readonly platform: string;
 }
 
@@ -81,10 +79,10 @@ export class RegisterPluginWithHost {
 
   private runOf<M extends RegistrationSubject>(
     command: RegisterPluginWithHostRequest<M>,
-    { profile, activator }: NativeHost
+    { profile, activator, hosts }: NativeHost
   ): RegistrationRun {
     const { toolId, projectRoot, claims, userCacheRoot, sink } = command;
-    const { fs, catalogs, hosts, platform } = this.deps;
+    const { fs, catalogs, platform } = this.deps;
     return {
       toolId,
       profile,

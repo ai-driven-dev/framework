@@ -14,6 +14,7 @@ import {
 } from "../../../../src/composition/orchestration/plugin.js";
 import { homeDirResolver } from "../../../../src/composition/user-config-dir.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../src/contexts/distribution/contract/marketplace.js";
+import { hostPortsOver } from "../../../../src/contexts/host-registration/application/host-ports-over.js";
 import { WithdrawFromHost } from "../../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import { RemovePlugin as RemoveProjectPluginFiles } from "../../../../src/contexts/installation/application/removal/remove-plugin.use-case.js";
 import { RemoveUserPlugin } from "../../../../src/contexts/installation/application/removal/remove-user-plugin.use-case.js";
@@ -37,30 +38,34 @@ import { pickIntegration } from "../../../shared/testing/remove-project-plugin.b
 
 type RecordRules = typeof registrationRecordRules;
 
-type Withdrawing = ConstructorParameters<typeof WithdrawFromHost>;
+type HostPortMaps = Parameters<typeof hostPortsOver>[0];
 
 /** What a test names; everything else is the empty or in-memory default. */
 export interface PluginRemoverParts {
   manifestRepo: ManifestRepository & ScopeRecords;
   fs?: FileReader & FileWriter;
   logger?: Logger;
-  activators?: Withdrawing[2]["activators"];
-  hostPluginRegistries?: Withdrawing[2]["pluginRegistries"];
+  activators?: HostPortMaps["activators"];
+  hostPluginRegistries?: HostPortMaps["pluginRegistries"];
   userSourceReferences?: Parameters<typeof sharedSourceReads>[0]["references"];
   marketplaceRegistry?: InstallationMarketplaceRegistry;
   userManifestRepo?: ManifestRepository & ScopeRecords & Lock;
-  nativeMarketplaceSources?: Withdrawing[2]["sources"];
+  nativeMarketplaceSources?: HostPortMaps["sources"];
   records?: RecordRules;
   tools?: ToolCatalog;
 }
 
 function withdrawing(parts: Omit<PluginRemoverParts, "manifestRepo">, fs: FileReader & FileWriter) {
-  return new WithdrawFromHost(fs, parts.logger ?? new CapturingLogger(), {
-    activators: parts.activators ?? new Map(),
-    pluginRegistries: parts.hostPluginRegistries ?? new Map(),
-    marketplaceRegistries: new Map(),
-    sources: parts.nativeMarketplaceSources ?? new Map(),
-  });
+  return new WithdrawFromHost(
+    fs,
+    parts.logger ?? new CapturingLogger(),
+    hostPortsOver({
+      activators: parts.activators ?? new Map(),
+      pluginRegistries: parts.hostPluginRegistries ?? new Map(),
+      marketplaceRegistries: new Map(),
+      sources: parts.nativeMarketplaceSources ?? new Map(),
+    })
+  );
 }
 
 export function pluginRemover(parts: PluginRemoverParts) {

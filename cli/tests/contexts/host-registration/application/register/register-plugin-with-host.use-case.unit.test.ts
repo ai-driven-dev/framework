@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { hostPortsOver } from "../../../../../src/contexts/host-registration/application/host-ports-over.js";
 import { RegisterPluginWithHost } from "../../../../../src/contexts/host-registration/application/register/register-plugin-with-host.use-case.js";
 import { ResolveNativeHost } from "../../../../../src/contexts/host-registration/application/register/resolve-native-host.use-case.js";
 import type { ClaimsView } from "../../../../../src/contexts/host-registration/contract/claims-view.js";
@@ -45,37 +46,40 @@ function setup(
   const command = new RegisterPluginWithHost({
     fs,
     catalogs: catalogReadersOver(fs),
-    nativeHosts: new ResolveNativeHost(new Map([["claude", activator]]), registeredTools()),
-    hosts: {
-      marketplaceRegistries: new Map([
-        [
-          TOOL.claude,
-          new FakeHostMarketplaceRegistry(
-            options.registry ?? { location: "r", entries: new Map() }
-          ),
-        ],
-      ]),
-      pluginRegistries: new Map([
-        [
-          TOOL.claude,
-          new FakeHostPluginRegistry(options.plugins ?? { location: "p", refs: new Map() }),
-        ],
-      ]),
-      sources:
-        options.sources === "absent"
-          ? new Map()
-          : new Map([
-              [
-                TOOL.claude,
-                new FakeHostMarketplaceSources(
-                  activator,
-                  "registry",
-                  () => "aidd",
-                  options.sources ?? new Map()
-                ),
-              ],
-            ]),
-    },
+    nativeHosts: new ResolveNativeHost(
+      hostPortsOver({
+        activators: new Map([["claude", activator]]),
+        marketplaceRegistries: new Map([
+          [
+            TOOL.claude,
+            new FakeHostMarketplaceRegistry(
+              options.registry ?? { location: "r", entries: new Map() }
+            ),
+          ],
+        ]),
+        pluginRegistries: new Map([
+          [
+            TOOL.claude,
+            new FakeHostPluginRegistry(options.plugins ?? { location: "p", refs: new Map() }),
+          ],
+        ]),
+        sources:
+          options.sources === "absent"
+            ? new Map()
+            : new Map([
+                [
+                  TOOL.claude,
+                  new FakeHostMarketplaceSources(
+                    activator,
+                    "registry",
+                    () => "aidd",
+                    options.sources ?? new Map()
+                  ),
+                ],
+              ]),
+      }),
+      registeredTools()
+    ),
     platform: PLATFORM,
   });
   const run = (toolId: ToolId = TOOL.claude) =>
@@ -115,12 +119,15 @@ describe("register plugin with host", () => {
     const command = new RegisterPluginWithHost({
       fs,
       catalogs: catalogReadersOver(fs),
-      nativeHosts: new ResolveNativeHost(new Map(), registeredTools()),
-      hosts: {
-        marketplaceRegistries: new Map(),
-        pluginRegistries: new Map(),
-        sources: new Map(),
-      },
+      nativeHosts: new ResolveNativeHost(
+        hostPortsOver({
+          activators: new Map(),
+          marketplaceRegistries: new Map(),
+          pluginRegistries: new Map(),
+          sources: new Map(),
+        }),
+        registeredTools()
+      ),
       platform: PLATFORM,
     });
     const result = await command.execute({

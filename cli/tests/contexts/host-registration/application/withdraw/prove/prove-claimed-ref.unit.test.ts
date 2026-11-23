@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { hostPortsOver } from "../../../../../../src/contexts/host-registration/application/host-ports-over.js";
 import { proveClaimedRef } from "../../../../../../src/contexts/host-registration/application/withdraw/prove/prove-claimed-ref.js";
 import type { WithdrawalDeps } from "../../../../../../src/contexts/host-registration/application/withdraw/withdrawal.js";
 import type { NativeMarketplaceSource } from "../../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
@@ -32,7 +33,7 @@ function depsOf({
   return {
     fs: new InMemoryFileAdapter({}),
     logger: new CapturingLogger(),
-    ports: {
+    ports: hostPortsOver({
       activators: new Map([["claude", new FakeHostActions({ available })]]),
       pluginRegistries: new Map([
         [TOOL.claude, { read: async () => ({ location: "host plugins", refs }) }],
@@ -41,7 +42,7 @@ function depsOf({
       sources: new Map([
         [TOOL.claude, { read: async () => ({ location: "host", entries: catalogue }) }],
       ]),
-    },
+    }),
   };
 }
 

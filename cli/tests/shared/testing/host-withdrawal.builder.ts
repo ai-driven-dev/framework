@@ -1,3 +1,4 @@
+import { hostPortsOver } from "../../../src/contexts/host-registration/application/host-ports-over.js";
 import { WithdrawFromHost } from "../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import type {
   ProveMarketplaceRemovalRequest,
@@ -16,12 +17,16 @@ export function hostWithdrawal(
   pluginRegistries: ReadonlyMap<AiToolId, HostPluginRegistry> = new Map(),
   sources: ReadonlyMap<AiToolId, HostMarketplaceSources> = new Map()
 ): WithdrawFromHost {
-  return new WithdrawFromHost(new InMemoryFileAdapter(), new CapturingLogger(), {
-    activators,
-    pluginRegistries,
-    marketplaceRegistries: new Map(),
-    sources,
-  });
+  return new WithdrawFromHost(
+    new InMemoryFileAdapter(),
+    new CapturingLogger(),
+    hostPortsOver({
+      activators,
+      pluginRegistries,
+      marketplaceRegistries: new Map(),
+      sources,
+    })
+  );
 }
 
 /** Proves a catalogue removable through `host`, as a removal does before it acts. */

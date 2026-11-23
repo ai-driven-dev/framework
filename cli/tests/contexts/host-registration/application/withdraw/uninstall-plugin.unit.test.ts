@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { hostPortsOver } from "../../../../../src/contexts/host-registration/application/host-ports-over.js";
 import { uninstallPlugin } from "../../../../../src/contexts/host-registration/application/withdraw/uninstall-plugin.js";
 import type {
   WithdrawalDeps,
@@ -26,7 +27,7 @@ function depsOf(
   return {
     fs: new InMemoryFileAdapter({}),
     logger,
-    ports: {
+    ports: hostPortsOver({
       activators: new Map([["claude", activator]]),
       pluginRegistries: new Map([
         [
@@ -51,7 +52,7 @@ function depsOf(
           },
         ],
       ]),
-    },
+    }),
   };
 }
 

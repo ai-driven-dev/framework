@@ -1,6 +1,6 @@
 import type { HintedMessage } from "../../../../shared/domain/describe-error.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
-import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
+import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ClaimsView } from "../../contract/claims-view.js";
@@ -26,7 +26,7 @@ export interface RegistrationRun {
   readonly activator: HostActions;
   readonly fs: FileReader;
   readonly catalogs: CatalogReaders;
-  readonly hosts: HostRegistries;
+  readonly hosts: ToolHosts;
   readonly projectRoot: string;
   readonly claims: ClaimsView;
   readonly userCacheRoot: () => string;
@@ -42,11 +42,12 @@ export interface CatalogReaders {
   readonly checkSource: Pick<CheckMarketplaceSource, "execute">;
 }
 
-/** The per-tool registries a host's native state is read and written through. */
-export interface HostRegistries {
-  readonly marketplaceRegistries: ReadonlyMap<AiToolId, HostMarketplaceRegistry>;
-  readonly pluginRegistries: ReadonlyMap<AiToolId, HostPluginRegistry>;
-  readonly sources: ReadonlyMap<AiToolId, HostMarketplaceSources>;
+/** The registries one tool's native state is read and written through; each absent when
+ * nothing is wired for that tool. */
+export interface ToolHosts {
+  readonly marketplaceRegistry?: HostMarketplaceRegistry;
+  readonly pluginRegistry?: HostPluginRegistry;
+  readonly sources?: HostMarketplaceSources;
 }
 
 /** Every warning goes to the logger and is kept, in order, for the caller's result. */
@@ -62,6 +63,6 @@ export function marketplaceRegistryOf(
 ): HostMarketplaceRegistry | undefined {
   const { profile } = run;
   return profile.nativeActivation()?.keepsMarketplaceRegistry() === true
-    ? run.hosts.marketplaceRegistries.get(profile.toolId)
+    ? run.hosts.marketplaceRegistry
     : undefined;
 }

@@ -34,15 +34,11 @@ async function proveUserTool(
   const refsByHost = canonicalRefsByHost(toolId, registrations, claimedRefs);
   const claimRefs = new Set(claimedRefs);
   for (const registration of registrations.marketplaces) {
-    const proof = await inspectHostSource(
-      deps.ports.sources.get(toolId),
-      projectRoot,
-      registration
-    );
+    const proof = await inspectHostSource(deps.ports.sources(toolId), projectRoot, registration);
     assertSourceOwned(proof, `${toolId}: catalogue source unproven.`);
     const owned = new Set([...claimRefs].filter((ref) => isRefOnHost(ref, registration.hostName)));
     const hostRefs = await assertNoForeignNativeRefs(
-      { reader: deps.ports.pluginRegistries.get(toolId), tool },
+      { reader: deps.ports.pluginRegistry(toolId), tool },
       { hostName: registration.hostName, ownedRefs: owned, projectRoot }
     );
     const unenabled = [...(refsByHost.get(registration.hostName) ?? [])].find(

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { hostPortsOver } from "../../../../../../src/contexts/host-registration/application/host-ports-over.js";
 import { assertProjectRegistrationsOwned } from "../../../../../../src/contexts/host-registration/application/withdraw/prove/assert-project-registrations-owned.js";
 import type {
   ProjectCleanFacts,
@@ -48,7 +49,7 @@ function depsOf({
   return {
     fs: new InMemoryFileAdapter({}),
     logger: new CapturingLogger(),
-    ports: {
+    ports: hostPortsOver({
       activators: new Map([["claude", new FakeHostActions({ available })]]),
       pluginRegistries: new Map([
         [TOOL.claude, { read: async () => ({ location: "host plugins", refs }) }],
@@ -57,7 +58,7 @@ function depsOf({
       sources: new Map([
         [TOOL.claude, { read: async () => ({ location: "host", entries: catalogue }) }],
       ]),
-    },
+    }),
   };
 }
 

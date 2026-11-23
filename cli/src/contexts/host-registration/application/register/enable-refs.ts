@@ -63,7 +63,7 @@ async function sortRefs(
 /** What the host and the records hold, or nothing when the tool keeps no plugin registry. */
 async function heldRefs(run: RegistrationRun): Promise<HeldRefs | undefined> {
   const { profile, claims } = run;
-  const hostRegistry = run.hosts.pluginRegistries.get(profile.toolId);
+  const hostRegistry = run.hosts.pluginRegistry;
   if (hostRegistry === undefined) return undefined;
   return {
     onHost: (await hostRegistry.read(run.projectRoot)).refs,

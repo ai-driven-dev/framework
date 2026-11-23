@@ -1,6 +1,5 @@
 import { isRefOnHost } from "../../domain/record/host-ref.js";
 import { recordedRegistrations } from "../../domain/record/registration-record.js";
-import { reachableActivator } from "../reachable-activator.js";
 import {
   callHost,
   describeSharedSourceSurvival,
@@ -44,7 +43,7 @@ async function withdrawProjectTool(
   facts: ProjectCleanFacts
 ): Promise<ReadonlySet<string> | undefined> {
   const { binary } = registrations;
-  const activator = reachableActivator(deps.ports.activators, binary);
+  const activator = deps.ports.reachableActivator(binary);
   if (activator === undefined) {
     deps.logger.warn(
       `${binary}: registration left in place, the ${binary} CLI is not on the PATH.` +

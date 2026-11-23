@@ -4,8 +4,12 @@ import { wireCleanClaims } from "../../../src/composition/orchestration/clean-cl
 import { RemoveMarketplace } from "../../../src/contexts/distribution/application/remove/remove-marketplace.use-case.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import type { MarketplaceRegistry } from "../../../src/contexts/distribution/ports/marketplace-registry.js";
+import { hostPortsOver } from "../../../src/contexts/host-registration/application/host-ports-over.js";
 import { WithdrawFromHost } from "../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
-import type { HostPorts } from "../../../src/contexts/host-registration/ports/host-ports.js";
+import type {
+  HostPortMaps,
+  HostPorts,
+} from "../../../src/contexts/host-registration/ports/host-ports.js";
 import { InspectUserScopeFiles } from "../../../src/contexts/installation/application/clean/inspect-user-scope-files.use-case.js";
 import { ProveUserScopeWithdrawals } from "../../../src/contexts/installation/application/clean/prove-user-scope-withdrawals.use-case.js";
 import {
@@ -35,7 +39,7 @@ import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
 
 /** What a test names; everything else is the empty or in-memory default. */
-export interface UserScopeCleanerParts extends Partial<HostPorts> {
+export interface UserScopeCleanerParts extends Partial<HostPortMaps> {
   tools: ToolCatalog;
   repo: PurgeUserScopeFilesDeps["userManifestRepo"] & ScopeRecords;
   fs?: PurgeMachineStateDeps["fs"];
@@ -47,13 +51,13 @@ export interface UserScopeCleanerParts extends Partial<HostPorts> {
   prompter?: ConstructorParameters<typeof ConfirmRemoval>[0];
 }
 
-function hostPortsOf(parts: Partial<HostPorts>): HostPorts {
-  return {
+function hostPortsOf(parts: Partial<HostPortMaps>): HostPorts {
+  return hostPortsOver({
     activators: parts.activators ?? new Map(),
     pluginRegistries: parts.pluginRegistries ?? new Map(),
     marketplaceRegistries: parts.marketplaceRegistries ?? new Map(),
     sources: parts.sources ?? new Map(),
-  };
+  });
 }
 
 export function userScopeCleanerDeps(parts: UserScopeCleanerParts): CleanUserScopeDeps {
