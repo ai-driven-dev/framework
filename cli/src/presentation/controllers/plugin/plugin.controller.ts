@@ -1,34 +1,49 @@
 import type { Command } from "commander";
+import type { SearchPlugins } from "../../../contexts/distribution/application/plugin-source/search-plugins.use-case.js";
+import type { ListPlugins } from "../../../contexts/installation/application/plugin/list-plugins.use-case.js";
 import type { ToolCatalog } from "../../../contexts/tools/contract/tool-catalog.js";
-import type { CommandRunner, DepsSliceFactory } from "../../../orchestration/deps.js";
 import { aiToolSelectionOf } from "../../../orchestration/domain/ai-tool-selection.model.js";
 import {
   printInstalledPlugins,
   printSearchHits,
 } from "../../presenters/plugin/plugin.presenter.js";
-import { parseGlobalOptions, TOKEN_FLAG_HELP } from "../menu/global-options.controller.js";
-import { type MenuChoice, offerGroupMenu } from "../menu/group-menu.controller.js";
 import {
-  type ChangeKeys,
+  type ContainerFactory,
+  parseGlobalOptions,
+  TOKEN_FLAG_HELP,
+} from "../menu/global-options.controller.js";
+import {
+  type GroupMenuContainer,
+  type MenuChoice,
+  offerGroupMenu,
+  type RunCommand,
+} from "../menu/group-menu.controller.js";
+import {
+  type ChangeContainer,
   type ChangeOptions,
   removePluginFrom,
   updatePluginsFrom,
 } from "./plugin-change.controller.js";
 import {
-  type InstallKeys,
+  type InstallContainer,
   type InstallOptions,
   installPluginFrom,
 } from "./plugin-install.controller.js";
 
 const TOOL_FLAG_HELP = "Target AI tool (default: all installed)";
 
-/** What this command reads of the graph. */
-type PluginKeys = InstallKeys | ChangeKeys | "prompter" | "listPlugins" | "searchPlugins";
+/** What this command reads of the container. */
+export type PluginContainer = InstallContainer &
+  ChangeContainer &
+  GroupMenuContainer & {
+    installation: { listPlugins: Pick<ListPlugins, "execute"> };
+    plugin: { searchPlugins: Pick<SearchPlugins, "execute"> };
+  };
 
 interface PluginWiring {
   readonly catalog: ToolCatalog;
-  readonly createDeps: DepsSliceFactory<PluginKeys>;
-  readonly runCommand: CommandRunner;
+  readonly containerOf: ContainerFactory<PluginContainer>;
+  readonly runCommand: RunCommand;
 }
 
 const MENU: readonly MenuChoice[] = [
@@ -42,7 +57,7 @@ const MENU: readonly MenuChoice[] = [
 function registerRemove(
   program: Command,
   plugin: Command,
-  { catalog, createDeps }: PluginWiring
+  { catalog, containerOf }: PluginWiring
 ): void {
   plugin
     .command("remove <name>")
@@ -50,14 +65,14 @@ function registerRemove(
     .option("--tool <toolId>", TOOL_FLAG_HELP)
     .option("--scope <user|project>", "Removal scope (default: project)")
     .action(async (name: string, options: ChangeOptions) =>
-      removePluginFrom({ program, catalog, createDeps }, name, options)
+      removePluginFrom({ program, catalog, containerOf }, name, options)
     );
 }
 
 function registerInstall(
   program: Command,
   plugin: Command,
-  { catalog, createDeps }: PluginWiring
+  { catalog, containerOf }: PluginWiring
 ): void {
   plugin
     .command("install [plugin]")
@@ -68,14 +83,14 @@ function registerInstall(
     .option("--scope <user|project>", "Install scope; must match the tool's supported scope")
     .option("--yes", "Auto-resolve interactive prompts (CI mode)")
     .action(async (pluginArg: string | undefined, options: InstallOptions) =>
-      installPluginFrom({ program, catalog, createDeps }, pluginArg, options)
+      installPluginFrom({ program, catalog, containerOf }, pluginArg, options)
     );
 }
 
 function registerUpdate(
   program: Command,
   plugin: Command,
-  { catalog, createDeps }: PluginWiring
+  { catalog, containerOf }: PluginWiring
 ): void {
   plugin
     .command("update [name]")
@@ -83,14 +98,14 @@ function registerUpdate(
     .option("--tool <toolId>", TOOL_FLAG_HELP)
     .option("--scope <user|project>", "Update scope (default: project)")
     .action(async (name: string | undefined, options: ChangeOptions) =>
-      updatePluginsFrom({ program, catalog, createDeps }, name, options)
+      updatePluginsFrom({ program, catalog, containerOf }, name, options)
     );
 }
 
 function registerList(
   program: Command,
   plugin: Command,
-  { catalog, createDeps }: PluginWiring
+  { catalog, containerOf }: PluginWiring
 ): void {
   plugin
     .command("list")
@@ -99,10 +114,8 @@ function registerList(
     .action(async (cmdOptions: { tool?: string }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const toolIds = aiToolSelectionOf(cmdOptions.tool, catalog);
-      const deps = await createDeps(projectRoot, { verbose }, output);
-      const result = await deps.listPlugins.execute({
-        toolIds,
-      });
+      const container = await containerOf(projectRoot, { verbose }, output);
+      const result = await container.installation.listPlugins.execute({ toolIds });
       printInstalledPlugins(output, result);
     });
 }
@@ -110,7 +123,7 @@ function registerList(
 function registerSearch(
   program: Command,
   plugin: Command,
-  createDeps: DepsSliceFactory<PluginKeys>
+  containerOf: ContainerFactory<PluginContainer>
 ): void {
   plugin
     .command("search <query>")
@@ -119,8 +132,8 @@ function registerSearch(
     .option("--marketplace <name>", "Limit to a single marketplace")
     .action(async (query: string, cmdOptions: { recommended?: boolean; marketplace?: string }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const deps = await createDeps(projectRoot, { verbose }, output);
-      const { hits } = await deps.searchPlugins.execute({
+      const container = await containerOf(projectRoot, { verbose }, output);
+      const { hits } = await container.plugin.searchPlugins.execute({
         query,
         recommendedOnly: cmdOptions.recommended ?? false,
         marketplace: cmdOptions.marketplace,
@@ -131,17 +144,17 @@ function registerSearch(
 }
 
 export function registerPluginCommand(program: Command, wiring: PluginWiring): void {
-  const { createDeps, runCommand } = wiring;
+  const { containerOf, runCommand } = wiring;
   const plugin = program.command("plugin").description("Manage plugins for AI tools");
   offerGroupMenu(plugin, {
     question: "plugin: what do you want to do?",
     choices: MENU,
-    createDeps,
+    containerOf,
     runCommand,
   });
   registerRemove(program, plugin, wiring);
   registerList(program, plugin, wiring);
   registerInstall(program, plugin, wiring);
-  registerSearch(program, plugin, createDeps);
+  registerSearch(program, plugin, containerOf);
   registerUpdate(program, plugin, wiring);
 }

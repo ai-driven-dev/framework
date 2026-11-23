@@ -14,17 +14,19 @@ function change() {
   const update = vi.fn(async () => ["aidd-dev"]);
   const userUpdate = vi.fn(async () => ["aidd-vcs@aidd-framework"]);
   const activation = vi.fn(async () => ({ binaryMissing: [], errors: [], failed: false }));
-  const createDeps: Mock = vi.fn(async () => ({
-    removePlugin: { execute: remove },
-    userPluginRemove: { execute: userRemove },
-    updatePlugin: { execute: update },
-    updateUserPlugin: { execute: userUpdate },
-    syncNativeActivation: { execute: activation },
+  const containerOf: Mock = vi.fn(async () => ({
+    plugin: {
+      removePlugin: { execute: remove },
+      userPluginRemove: { execute: userRemove },
+      updatePlugin: { execute: update },
+      updateUserPlugin: { execute: userUpdate },
+    },
+    marketplace: { syncNativeActivation: { execute: activation } },
   }));
   const output = new CapturingOutput();
   const program = new Command();
   bindOutput(program, () => output);
-  const environment = { program, catalog: syntheticCatalog(), createDeps };
+  const environment = { program, catalog: syntheticCatalog(), containerOf };
   return { remove, userRemove, update, userUpdate, activation, output, environment };
 }
 

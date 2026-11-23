@@ -22,16 +22,18 @@ const activation = vi.fn();
 const menuSelect = vi.fn();
 const spawn = vi.fn();
 
-const createDeps = vi.fn(async () => ({
-  removePlugin: { execute: pluginRemove },
-  userPluginRemove: { execute: userPluginRemove },
-  listPlugins: { execute: pluginList },
-  installPlugin: { execute: pluginInstall },
-  searchPlugins: { execute: pluginSearch },
-  updatePlugin: { execute: pluginUpdate },
-  updateUserPlugin: { execute: userPluginUpdate },
-  syncNativeActivation: { execute: activation },
-  prompter: prompterAnswering({ select: menuSelect }),
+const containerOf = vi.fn(async () => ({
+  plugin: {
+    removePlugin: { execute: pluginRemove },
+    userPluginRemove: { execute: userPluginRemove },
+    installPlugin: { execute: pluginInstall },
+    searchPlugins: { execute: pluginSearch },
+    updatePlugin: { execute: pluginUpdate },
+    updateUserPlugin: { execute: userPluginUpdate },
+  },
+  installation: { listPlugins: { execute: pluginList } },
+  marketplace: { syncNativeActivation: { execute: activation } },
+  shared: { prompter: prompterAnswering({ select: menuSelect }) },
 }));
 
 const { registerPluginCommand } = await import(
@@ -85,7 +87,7 @@ async function run(...args: string[]): Promise<string[]> {
   bindOutput(program, processOutputFactory());
   program.exitOverride();
   program.option("--verbose");
-  registerPluginCommand(program, { catalog: CATALOG, createDeps, runCommand: spawn });
+  registerPluginCommand(program, { catalog: CATALOG, containerOf, runCommand: spawn });
   await parseToExit(program, ["node", "aidd", "plugin", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -219,7 +221,7 @@ describe("aidd plugin install", () => {
   it("hands --token to the composition root, where every fetcher reads it, and to nothing else", async () => {
     await run("install", "aidd-dev", "--token", "ghp_x");
 
-    expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
+    expect(vi.mocked(containerOf)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: false, token: "ghp_x" },
       expect.anything()
@@ -366,7 +368,7 @@ describe("aidd plugin - how every subcommand builds its graph", () => {
   ])("hands %j this run's verbosity, never an empty option set", async (...args) => {
     await run(...args);
 
-    expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
+    expect(vi.mocked(containerOf)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: false },
       expect.anything()
@@ -378,7 +380,7 @@ describe("aidd plugin - the help surface", () => {
   function pluginCommand(): Command {
     const program = new Command();
     bindOutput(program, processOutputFactory());
-    registerPluginCommand(program, { catalog: CATALOG, createDeps, runCommand: spawn });
+    registerPluginCommand(program, { catalog: CATALOG, containerOf, runCommand: spawn });
     const plugin = program.commands.find((command) => command.name() === "plugin");
     if (plugin === undefined) throw new Error("plugin command was not registered");
     return plugin;
