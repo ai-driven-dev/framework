@@ -8,14 +8,18 @@ import { resolveRegisteredToolId, TOOL } from "../../../shared/testing/registere
 import { saying } from "../../../shared/testing/saying.builder.js";
 
 describe("parseManifestTools - the tools section of a manifest document", () => {
-  it("reads no tool from a document without a tools section", () => {
-    expect([...parseManifestTools({ version: 8 }, resolveRegisteredToolId)]).toStrictEqual([]);
-  });
-
-  it("reads no tool from a document whose tools section is null", () => {
-    expect([
-      ...parseManifestTools({ version: 8, tools: null }, resolveRegisteredToolId),
-    ]).toStrictEqual([]);
+  it.each([
+    ["missing", undefined],
+    ["null", null],
+    ["a string", "x"],
+    ["an array", []],
+  ])("refuses a document whose tools section is %s", (_, tools) => {
+    expect(() => parseManifestTools({ version: 9, tools }, resolveRegisteredToolId)).toThrow(
+      saying("Invalid manifest data: tools: expected an object.")
+    );
+    expect(() => parseManifestTools({ version: 9, tools }, resolveRegisteredToolId)).toThrow(
+      InvalidManifestDataError
+    );
   });
 
   it("refuses a tool id this CLI does not know, naming it", () => {
