@@ -36,17 +36,18 @@ export class CheckRegistration {
   constructor(private readonly deps: CheckRegistrationDeps) {}
 
   async execute(command: CheckRegistrationRequest): Promise<DoctorIssue[]> {
-    const { registered, registeredNames, userCacheRoot, built } = await this.deps.resolve.execute({
-      projectRoot: command.projectRoot,
-      allowedIds: command.allowedIds,
-    });
+    const { registered, projectScopedNames, userCacheRoot, built } =
+      await this.deps.resolve.execute({
+        projectRoot: command.projectRoot,
+        allowedIds: command.allowedIds,
+      });
     return [
       ...(command.globalInstall === true
         ? []
         : await this.undeclaredMarketplaces(
             command,
             registered.map((t) => t.toolId),
-            registeredNames
+            projectScopedNames
           )),
       ...(await this.hostRegistrations({
         command,

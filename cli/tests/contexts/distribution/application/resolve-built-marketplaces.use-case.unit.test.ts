@@ -93,7 +93,7 @@ describe("finding the builds of registered marketplaces", () => {
     const result = await resolver.execute({ projectRoot: PROJECT, toolIds: [TOOL_ID] });
 
     expect(result.built.get(TOOL_ID)).toEqual([]);
-    expect(result.registeredNames).toEqual(["mine"]);
+    expect(result.projectScopedNames).toEqual(["mine"]);
     expect(result.userCacheRoot).toBe(USER_ROOT);
   });
 });

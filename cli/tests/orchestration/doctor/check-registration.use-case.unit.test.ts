@@ -34,7 +34,7 @@ const PROJECT_ROOT = "/project";
 const LOCAL_SETTINGS = `${PROJECT_ROOT}/.${SYNTHETIC_NATIVE_TOOL}/settings.local.json`;
 const UNDECLARED = {
   severity: "warning",
-  message: `${SYNTHETIC_NATIVE_TOOL} no longer declares marketplace 'aidd-framework'`,
+  message: `${SYNTHETIC_NATIVE_TOOL} no longer declares marketplace 'mine'`,
   fix: { code: "refresh-marketplace", file: `.${SYNTHETIC_NATIVE_TOOL}/settings.local.json` },
 };
 
@@ -61,15 +61,20 @@ async function issuesFor(
   const fs = new InMemoryFileAdapter();
   if (settings !== null) await fs.writeFile(LOCAL_SETTINGS, settings);
   const registry = new InMemoryMarketplaceRegistry();
-  await registry.save(
-    PROJECT_ROOT,
-    Marketplace.create({
-      name: "aidd-framework",
-      source: { kind: "local", path: "/src" },
-      scope: "project",
-      addedAt: "2026-01-01T00:00:00Z",
-    })
-  );
+  for (const [name, scope] of [
+    ["mine", "project"],
+    ["aidd-framework", "project"],
+    ["shared", "user"],
+  ] as const)
+    await registry.save(
+      PROJECT_ROOT,
+      Marketplace.create({
+        name,
+        source: { kind: "local", path: "/src" },
+        scope,
+        addedAt: "2026-01-01T00:00:00Z",
+      })
+    );
   const manifest = Manifest.create();
   manifest.addTool(toolId, "test", []);
   const activators = new Map<string, FakeHostActions>([
@@ -96,12 +101,14 @@ async function issuesFor(
 }
 
 describe("checking registrations", () => {
-  it("says nothing when the tool still declares the marketplace", async () => {
-    expect(await issuesFor(settingsDeclaring(["aidd-framework"]))).toStrictEqual([]);
+  // The framework marketplace and a user-scope one are registered once for the machine, in the
+  // host's own registry, so a project's settings never declare them.
+  it("says nothing once the project declares its own marketplace, whatever the machine holds", async () => {
+    expect(await issuesFor(settingsDeclaring(["mine"]))).toStrictEqual([]);
   });
 
   it("accepts the array form of the declaration", async () => {
-    const settings = JSON.stringify({ extraKnownMarketplaces: ["aidd-framework"] });
+    const settings = JSON.stringify({ extraKnownMarketplaces: ["mine"] });
     expect(await issuesFor(settings)).toStrictEqual([]);
   });
 
@@ -351,7 +358,7 @@ describe("CheckRegistration - native registrations against the host's own regist
 describe("CheckRegistration - order", () => {
   it("lists the undeclared marketplace before what the host's registry lacks", async () => {
     const marketplace = Marketplace.create({
-      name: "aidd-framework",
+      name: "mine",
       source: { kind: "local", path: "/src" },
       scope: "project",
       addedAt: "2026-01-01T00:00:00Z",
@@ -376,7 +383,7 @@ describe("the hosts handed to the registry inspection", () => {
         new InMemoryManifestRepository(manifest),
         {
           execute: async () => ({
-            registeredNames: [],
+            projectScopedNames: [],
             userCacheRoot: "/user-cache",
             built: new Map(),
           }),

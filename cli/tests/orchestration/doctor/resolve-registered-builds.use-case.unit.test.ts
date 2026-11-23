@@ -13,7 +13,7 @@ function resolverRecording(resolved: (readonly string[])[]) {
   const builds: Pick<ResolveBuiltMarketplaces, "execute"> = {
     execute: async ({ toolIds }) => {
       resolved.push(toolIds);
-      return { registeredNames: ["m"], userCacheRoot: "/user-cache", built: new Map() };
+      return { projectScopedNames: ["m"], userCacheRoot: "/user-cache", built: new Map() };
     },
   };
   const manifest = aManifest()
@@ -45,7 +45,7 @@ describe("resolving the marketplaces built for what the manifest registers", () 
     expect(result.registered.map((r) => r.toolId).sort()).toStrictEqual(
       [SYNTHETIC_IDE_TOOL, SYNTHETIC_NATIVE_TOOL].sort()
     );
-    expect(result.registeredNames).toStrictEqual(["m"]);
+    expect(result.projectScopedNames).toStrictEqual(["m"]);
     expect(result.userCacheRoot).toBe("/user-cache");
   });
 });
