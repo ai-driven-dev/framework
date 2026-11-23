@@ -144,7 +144,6 @@ export default defineConfig({
       // this file, so a glob cannot outlive the directory it points at again.
       exclude: [
         "src/cli.ts",
-        "src/contexts/*/domain/ports/**",
         "src/contexts/*/ports/**",
         "src/contexts/*/contract/**",
         "src/shared/ports/**",
