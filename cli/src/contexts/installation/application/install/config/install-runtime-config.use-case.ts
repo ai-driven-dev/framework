@@ -1,5 +1,3 @@
-import { join } from "node:path";
-import { FileHash } from "../../../../../shared/domain/file-hash.js";
 import type { InstallationFile } from "../../../../../shared/domain/installation-file.js";
 import type { AiToolId } from "../../../../../shared/domain/tool.js";
 import type { AssetProvider } from "../../../../../shared/ports/asset-provider.js";
@@ -8,7 +6,6 @@ import type { FileWriter } from "../../../../../shared/ports/file-writer.js";
 import type { ToolCatalog } from "../../../../tools/contract/tool-catalog.js";
 import type { SettingsFileAnswers } from "../../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../../domain/manifest.js";
-import type { RuntimeConfigSection } from "../../../ports/tool-sections.js";
 import type { RunPostInstallPipeline } from "../run-post-install-pipeline.use-case.js";
 import { buildConfigFiles } from "./build-config-files.js";
 import type { BeforeWriteGate, TrackedConfigFiles } from "./tracked-config-files.use-case.js";
@@ -55,22 +52,6 @@ export class InstallRuntimeConfig {
     await this.applyAndTrack(regularFiles, mergeFiles, options);
     const allFiles = [...regularFiles, ...mergeFiles];
     return { toolId, fileCount: allFiles.length, files: allFiles, skipped: false, warnings: [] };
-  }
-
-  async ensurePluginRuntimeFiles(
-    profile: RuntimeConfigSection,
-    projectRoot: string,
-    manifest: Manifest
-  ): Promise<void> {
-    const toolId = profile.toolId;
-    for (const [fileName, relativePath] of Object.entries(profile.runtimeFiles())) {
-      const path = join(projectRoot, relativePath);
-      if (await this.deps.fs.fileExists(path)) continue;
-      const asset = this.deps.assets.loadConfigAsset(toolId, fileName);
-      const content = typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
-      await this.deps.fs.writeFile(path, content);
-      manifest.recordFileHash(toolId, relativePath, FileHash.of(content));
-    }
   }
 
   private async applyAndTrack(

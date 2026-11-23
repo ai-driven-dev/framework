@@ -70,6 +70,7 @@ function makeManifestRepo(manifest: Manifest): ManifestRepository & RecordsBesid
     path: "/proj/.aidd/manifest.json",
     load: async () => manifest,
     loadIfReadable: async () => null,
+    loadForDiagnosis: async () => manifest,
     save: async () => {},
     delete: async () => {},
     loadRecords: async () => new Map(),
@@ -85,7 +86,8 @@ function pluginCheck(fs: FileReader, manifest: Manifest): CheckPluginDrift {
 }
 
 function makeDoctorUseCase(fs: FileReader, manifest: Manifest): RunDoctor {
-  const loadManifest = new LoadManifest(makeManifestRepo(manifest));
+  const manifests = makeManifestRepo(manifest);
+  const loadManifest = new LoadManifest(manifests);
   return new RunDoctor(
     {
       load: new LoadManifestForDoctor(loadManifest),
@@ -100,7 +102,7 @@ function makeDoctorUseCase(fs: FileReader, manifest: Manifest): RunDoctor {
         ),
       },
       registration: checkRegistrationOver(
-        loadManifest,
+        manifests,
         fs,
         new InMemoryMarketplaceRegistry(),
         () => false,

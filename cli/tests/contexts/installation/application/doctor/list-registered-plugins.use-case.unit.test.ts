@@ -17,9 +17,8 @@ function listerOver(
   manifest: ReturnType<ReturnType<typeof aManifest>["build"]>,
   records: RegistrationRecords = new Map()
 ) {
-  const lister = new ListRegisteredPlugins(
-    new LoadManifest(new InMemoryManifestRepository(manifest, undefined, records))
-  );
+  const repo = new InMemoryManifestRepository(manifest, undefined, records);
+  const lister = new ListRegisteredPlugins(new LoadManifest(repo), repo);
   return {
     execute: (command: Pick<ListRegisteredPluginsRequest, "allowedIds">) =>
       lister.execute({ ...command, records: registrationRecordRules }),

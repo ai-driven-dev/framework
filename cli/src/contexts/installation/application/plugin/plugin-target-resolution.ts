@@ -21,6 +21,11 @@ export function resolveScopeForInstall(tool: PluginPlacement): Scope {
   return getToolSupportedScope(tool.plugins()?.requiresUserScope() === true);
 }
 
+/** The scope a fresh install writes, for each tool of the catalog. */
+export function supportedScopeOf(tools: ToolCatalog): (toolId: AiToolId) => Scope {
+  return (toolId) => resolveScopeForInstall(tools.aiProfile(toolId));
+}
+
 /** The directory a plugin is installed under for the scope the manifest recorded. The home
  * directory is read only when that scope is "user". */
 export function scopeBaseOf(
@@ -33,4 +38,22 @@ export function scopeBaseOf(
     userBaseDir: () => tool.plugins()?.userPluginsBaseDir(query.homedir()),
     toolId: tool.toolId,
   });
+}
+
+/** The machine-scope plugins a user-scope update covers: every one, or only the ones named. */
+export function userPluginTargets(
+  manifest: Manifest,
+  toolIds: readonly AiToolId[],
+  pluginNames: readonly string[] | undefined
+) {
+  return toolIds.flatMap((toolId) =>
+    manifest
+      .getRecordedPlugins(toolId)
+      .filter(
+        ({ plugin }) =>
+          plugin.scope === "user" &&
+          (pluginNames === undefined || pluginNames.includes(plugin.name))
+      )
+      .map((plugin) => ({ toolId, plugin }))
+  );
 }

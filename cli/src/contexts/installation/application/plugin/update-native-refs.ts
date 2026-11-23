@@ -8,7 +8,7 @@ import type {
 } from "../../ports/record/registration-records.js";
 import type { ActivatedTool } from "../../ports/tool-sections.js";
 import type { MachineClaimsReading } from "../../ports/user-scope/machine-claims-reading.js";
-import type { UpdatePluginRequest } from "./update-plugin.use-case.js";
+import type { UpdatePluginRequest } from "./update-plugin-command.js";
 
 /** How a plugin selection reads a native ref: the host registration's to answer, and the claims
  * on it the machine claims'. */

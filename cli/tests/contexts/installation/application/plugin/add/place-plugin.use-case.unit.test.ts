@@ -50,7 +50,7 @@ async function placeForClaude() {
       logger,
       built: built,
       pluginRuntime: {
-        ensurePluginRuntimeFiles: async (tool) => {
+        execute: async (tool) => {
           refreshed.push(tool.toolId);
         },
       },

@@ -6,7 +6,7 @@ import { UpdateTools } from "../../../src/orchestration/sync/update-tools.use-ca
 import { InputRequiredError } from "../../../src/shared/domain/shared.error.js";
 import {
   buildInstallationDeps,
-  buildUpdateTool,
+  buildToolUpdate,
   initProject,
   installTool,
 } from "../../shared/testing/installation-deps.builder.js";
@@ -39,9 +39,10 @@ function promptingWith(answer: "overwrite-all"): { prompter: Prompter; asked: ()
 }
 
 function build(deps: Deps, prompter: Prompter = promptingWith("overwrite-all").prompter) {
-  const updateTool = buildUpdateTool(deps);
+  const { prepare, update: updateTool } = buildToolUpdate(deps);
   const useCase = new UpdateTools({
     listInstalledTools: new ListInstalledTools(deps.manifestRepo, syntheticMixedCatalog()),
+    prepareToolUpdate: prepare,
     updateTool,
     resolveUpdateDecision: new ResolveUpdateDecision(prompter),
     version: CURRENT_VERSION,
@@ -159,7 +160,8 @@ describe("updating tools", () => {
     });
     const useCase = new UpdateTools({
       listInstalledTools,
-      updateTool: buildUpdateTool(deps),
+      prepareToolUpdate: buildToolUpdate(deps).prepare,
+      updateTool: buildToolUpdate(deps).update,
       resolveUpdateDecision: new ResolveUpdateDecision(promptingWith("overwrite-all").prompter),
       version: CURRENT_VERSION,
     });

@@ -14,7 +14,7 @@ import type { PluginTranslationMode } from "../../../../tools/contract/tool-voca
 import type { Manifest } from "../../../domain/manifest.js";
 import type { ProjectHooksProvenance } from "../../../domain/plugins/plugin-entry.js";
 import { RecordedPlugin } from "../../../domain/plugins/recorded-plugin.js";
-import type { InstallRuntimeConfig } from "../../install/config/install-runtime-config.use-case.js";
+import type { EnsurePluginRuntimeFiles } from "../../install/config/ensure-plugin-runtime-files.use-case.js";
 import { placeBuiltTreePlugin } from "../../materialize/built/place-built-tree-plugin.js";
 import { placementModeOf } from "../../materialize/plugin-placement.js";
 import { registerMarketplacePlugin } from "../../materialize/register-marketplace-plugin.js";
@@ -56,7 +56,7 @@ export interface PlacePluginDeps {
   readonly fs: FileWriter & FileReader;
   readonly logger: Logger;
   readonly built: BuiltMaterializationDeps;
-  readonly pluginRuntime?: Pick<InstallRuntimeConfig, "ensurePluginRuntimeFiles">;
+  readonly pluginRuntime?: Pick<EnsurePluginRuntimeFiles, "execute">;
 }
 
 /** Puts a plugin's files in place for each tool and records the plugin in the project manifest. */
@@ -72,7 +72,7 @@ export class PlacePlugin {
     const allNotices: ReadonlyNoticeList[] = [];
     for (const toolId of toolIds) {
       const tool = this.tools.aiProfile(toolId);
-      await this.deps.pluginRuntime?.ensurePluginRuntimeFiles(tool, projectRoot, manifest);
+      await this.deps.pluginRuntime?.execute(tool, projectRoot, manifest);
       const foreignDir = await foreignUserScopeDir({
         fs: this.deps.fs,
         command,

@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
+import type { AfterPreflight } from "../../../src/contexts/installation/application/plugin/update-plugin-command.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import type { IsWithinUserScope } from "../../../src/contexts/machine-claims/contract/user-scope-containment.js";
+import { UserPluginUpdatePartialError } from "../../../src/orchestration/orchestration.error.js";
 import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.use-case.js";
 import {
   SYNTHETIC_TOOL,
@@ -18,7 +21,7 @@ describe("updating a user plugin", () => {
     const update = new UpdateUserPlugin(
       {
         execute: async (options) => {
-          seen = options.refSelection;
+          seen = options.machine?.refSelection;
           return [];
         },
       },
@@ -38,8 +41,8 @@ describe("updating a user plugin", () => {
     const update = new UpdateUserPlugin(
       {
         execute: async (options) => {
-          seen.within = options.isWithinUserScope;
-          await options.refreshNative({
+          seen.within = options.machine?.isWithinUserScope;
+          await options.machine?.refreshNative({
             tool: syntheticCatalog().aiProfile(SYNTHETIC_TOOL),
             ref: "a@b",
             projectRoot: "/A",
@@ -67,5 +70,56 @@ describe("updating a user plugin", () => {
 
     expect(seen.within).toBe(contained);
     expect(seen.refreshed).toBe(1);
+  });
+
+  describe("once a tool's preflight passed", () => {
+    const afterPreflight = async () => {
+      let seen: AfterPreflight | undefined;
+      await new UpdateUserPlugin(
+        {
+          execute: async (options) => {
+            seen = options.machine?.afterPreflight;
+            return [];
+          },
+        },
+        { execute: async () => ({ apply() {} }) },
+        () => true,
+        {
+          isQualifiedRef: () => false,
+          refSelectedBy: () => false,
+          claimsOf: () => [],
+          holdersOf: () => [],
+        }
+      ).execute({ toolIds: [], projectRoot: "/A", scope: "user" });
+      if (seen === undefined) throw new Error("the file update was never run");
+      return seen;
+    };
+
+    it("names a failed file application as a partial update of that tool", async () => {
+      const cause = new Error("disk full");
+
+      const failure = await (await afterPreflight())(SYNTHETIC_TOOL, () =>
+        Promise.reject(cause)
+      ).catch((error: unknown) => error);
+
+      expect(failure).toBeInstanceOf(UserPluginUpdatePartialError);
+      expect(failure).toMatchObject({ toolId: SYNTHETIC_TOOL, cause });
+    });
+
+    it("answers the applied plugin when the files land", async () => {
+      const applied = RecordedPlugin.fromJSON({
+        name: "aidd-dev",
+        source: { kind: "local", path: "/fixture" },
+        version: "1.0.0",
+        strict: false,
+        files: {},
+        scope: "user",
+        dependents: [],
+      });
+
+      await expect((await afterPreflight())(SYNTHETIC_TOOL, async () => applied)).resolves.toBe(
+        applied
+      );
+    });
   });
 });

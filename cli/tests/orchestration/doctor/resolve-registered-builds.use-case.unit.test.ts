@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import type { ResolveBuiltMarketplaces } from "../../../src/contexts/distribution/application/resolve-built-marketplaces.use-case.js";
-import { LoadManifest } from "../../../src/contexts/installation/application/doctor/load-manifest.use-case.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import {
@@ -22,7 +21,7 @@ function resolverRecording(resolved: (readonly string[])[]) {
     .withTool(SYNTHETIC_IDE_TOOL, [], { version: "test" })
     .build();
   return resolveRegisteredBuildsOver(
-    new LoadManifest(new InMemoryManifestRepository(manifest)),
+    new InMemoryManifestRepository(manifest),
     builds,
     syntheticNativeFamilyCatalog()
   );

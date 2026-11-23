@@ -1,3 +1,4 @@
+import { ManifestUnavailableError } from "../../../src/contexts/installation/domain/installation.error.js";
 import type { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
 import type {
@@ -30,6 +31,12 @@ export class InMemoryManifestRepository
 
   async loadIfReadable(): Promise<Manifest | null> {
     return this.load().catch(() => null);
+  }
+
+  async loadForDiagnosis(): Promise<Manifest | null> {
+    return this.load().catch((cause: unknown) => {
+      throw new ManifestUnavailableError("manifest-corrupted", { cause });
+    });
   }
 
   async loadRecords(): Promise<RegistrationRecords> {

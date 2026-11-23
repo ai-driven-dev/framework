@@ -52,6 +52,7 @@ function makeManifestRepo(manifest: Manifest): ManifestRepository & RecordsBesid
     path: "/proj/.aidd/manifest.json",
     load: async () => manifest,
     loadIfReadable: async () => null,
+    loadForDiagnosis: async () => manifest,
     save: async () => {},
     loadRecords: async () => new Map(),
     saveRecords: async () => {},

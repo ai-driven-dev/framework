@@ -1,7 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
-import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
@@ -11,6 +10,7 @@ import { registeredTools, TOOL } from "../../../../shared/testing/registered-too
 import { REPOSITORY_ROOT } from "../../../../shared/testing/repository-root.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
+import { buildProjectPluginUpdate } from "../../testing/build-update-plugin.builder.js";
 import { fakeBuildSources, fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
 
 const ROOT = "/test-project";
@@ -40,9 +40,9 @@ async function legacyProject() {
       ...fakeBuildSources(),
     },
     registeredTools(),
-    deps.installRuntimeConfigUseCase
+    deps.ensurePluginRuntimeFiles
   );
-  const update = new UpdatePlugin(
+  const update = buildProjectPluginUpdate(
     {
       manifestRepo: deps.manifestRepo,
       loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
@@ -51,7 +51,7 @@ async function legacyProject() {
         fakeBuiltDeps(deps.fs),
         registeredTools()
       ),
-      pluginRuntime: deps.installRuntimeConfigUseCase,
+      pluginRuntime: deps.ensurePluginRuntimeFiles,
     },
     registeredTools()
   );

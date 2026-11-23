@@ -119,3 +119,14 @@ export class UserScopeUnsupportedAiToolsError extends AiddError {
     super();
   }
 }
+
+/** A tool's user plugin files failed after preflight: a native ref may already be refreshed. */
+export class UserPluginUpdatePartialError extends AiddError {
+  readonly code = "user-plugin-update-partial";
+  constructor(
+    readonly toolId: string,
+    options: ErrorOptions
+  ) {
+    super(options);
+  }
+}

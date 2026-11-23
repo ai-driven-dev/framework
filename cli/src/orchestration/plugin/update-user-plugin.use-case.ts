@@ -1,9 +1,10 @@
 import type { RefreshHostPlugin } from "../../contexts/host-registration/application/refresh-host-plugin.use-case.js";
 import type { RegistrationRecordRules } from "../../contexts/host-registration/contract/registration-record-rules.js";
-import type { UpdatePluginRequest } from "../../contexts/installation/application/plugin/update-plugin.use-case.js";
-import type { UpdateUserPluginFiles } from "../../contexts/installation/application/plugin/update-user-plugin-files.use-case.js";
+import type { UpdatePlugin } from "../../contexts/installation/application/plugin/update-plugin.use-case.js";
+import type { UpdatePluginRequest } from "../../contexts/installation/application/plugin/update-plugin-command.js";
 import type { RecordClaimRules } from "../../contexts/machine-claims/contract/record-claim-rules.js";
 import type { IsWithinUserScope } from "../../contexts/machine-claims/contract/user-scope-containment.js";
+import { UserPluginUpdatePartialError } from "../orchestration.error.js";
 
 export type UpdateUserPluginRequest = UpdatePluginRequest;
 
@@ -13,7 +14,7 @@ export type UpdateUserPluginRequest = UpdatePluginRequest;
  */
 export class UpdateUserPlugin {
   constructor(
-    private readonly updateUserPluginFiles: Pick<UpdateUserPluginFiles, "execute">,
+    private readonly updatePlugin: Pick<UpdatePlugin, "execute">,
     private readonly refreshHostPlugin: Pick<RefreshHostPlugin, "execute">,
     private readonly isWithinUserScope: IsWithinUserScope,
     private readonly refSelection: Pick<
@@ -24,11 +25,17 @@ export class UpdateUserPlugin {
   ) {}
 
   async execute(command: UpdateUserPluginRequest): Promise<string[]> {
-    return this.updateUserPluginFiles.execute({
+    return this.updatePlugin.execute({
       ...command,
-      isWithinUserScope: this.isWithinUserScope,
-      refreshNative: (request) => this.refreshHostPlugin.execute(request),
-      refSelection: this.refSelection,
+      machine: {
+        isWithinUserScope: this.isWithinUserScope,
+        refreshNative: (request) => this.refreshHostPlugin.execute(request),
+        refSelection: this.refSelection,
+        afterPreflight: (toolId, apply) =>
+          apply().catch((cause: unknown) => {
+            throw new UserPluginUpdatePartialError(toolId, { cause });
+          }),
+      },
     });
   }
 }

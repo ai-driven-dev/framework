@@ -2,7 +2,6 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { InstallTools } from "../../../../../src/contexts/installation/application/install/install-tools.use-case.js";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
-import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.use-case.js";
 import {
   buildInstallationDeps,
   initProject,
@@ -12,6 +11,7 @@ import { registeredTools, TOOL } from "../../../../shared/testing/registered-too
 import { REPOSITORY_ROOT } from "../../../../shared/testing/repository-root.builder.js";
 import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
+import { buildProjectPluginUpdate } from "../../testing/build-update-plugin.builder.js";
 import { fakeBuildSources, fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
 
 const ROOT = "/test-project";
@@ -54,7 +54,7 @@ async function existingProject(configPath: string) {
       ...fakeBuildSources(),
     },
     registeredTools(),
-    deps.installRuntimeConfigUseCase
+    deps.ensurePluginRuntimeFiles
   );
   const install = () =>
     add.execute({
@@ -64,7 +64,7 @@ async function existingProject(configPath: string) {
       projectRoot: ROOT,
       interactive: false,
     });
-  const update = new UpdatePlugin(
+  const update = buildProjectPluginUpdate(
     {
       manifestRepo: deps.manifestRepo,
       loadDistribution: distribution,
@@ -73,7 +73,7 @@ async function existingProject(configPath: string) {
         fakeBuiltDeps(deps.fs),
         registeredTools()
       ),
-      pluginRuntime: deps.installRuntimeConfigUseCase,
+      pluginRuntime: deps.ensurePluginRuntimeFiles,
     },
     registeredTools()
   );

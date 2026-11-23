@@ -1,13 +1,9 @@
-import { join } from "node:path";
-import type { FileHash } from "../../../../shared/domain/file-hash.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import { Manifest } from "../../domain/manifest.js";
-import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import type { Manifest } from "../../domain/manifest.js";
 import type { InstallIdeConfig } from "../install/config/install-ide-config.use-case.js";
 import type { InstallRuntimeConfig } from "../install/config/install-runtime-config.use-case.js";
 import type { BeforeWriteGate } from "../install/config/tracked-config-files.use-case.js";
-import type { ResolveSyncConflict } from "../resolve-sync-conflict.use-case.js";
 
 export interface UpdateToolRequest {
   toolId: ToolId;
@@ -33,8 +29,6 @@ export interface PreparedUpdate {
 export interface UpdateToolDeps {
   readonly installRuntimeConfig: Pick<InstallRuntimeConfig, "execute">;
   readonly installIdeConfig: Pick<InstallIdeConfig, "execute">;
-  readonly resolveSyncConflict: Pick<ResolveSyncConflict, "execute">;
-  readonly manifestRepo: ManifestRepository;
 }
 
 export class UpdateTool {
@@ -43,28 +37,8 @@ export class UpdateTool {
     private readonly tools: ToolCatalog
   ) {}
 
-  /** Reads what the update runs against. A fault here belongs to no tool: it is the caller's to
-   * stop on, not to report beside the tools that did update. */
-  async prepare(command: UpdateToolRequest): Promise<PreparedUpdate> {
-    const manifest = (await this.deps.manifestRepo.load()) ?? Manifest.create();
-    return { command, manifest, guard: this.buildFileGuard(manifest, command) };
-  }
-
   async execute({ command, manifest, guard }: PreparedUpdate): Promise<UpdateToolResult> {
     return this.runInstall(command, manifest, guard);
-  }
-
-  private buildFileGuard(manifest: Manifest, command: UpdateToolRequest): BeforeWriteGate {
-    const hashes = new Map<string, FileHash>();
-    for (const f of manifest.getToolFiles(command.toolId)) hashes.set(f.relativePath, f.hash);
-    return async (relativePath: string) => {
-      const isModified = await this.deps.resolveSyncConflict.execute({
-        diskPath: join(command.projectRoot, relativePath),
-        recorded: hashes.get(relativePath),
-      });
-      if (!isModified) return "write";
-      return (await command.overwriteModified(relativePath)) ? "write" : "skip";
-    };
   }
 
   private async runInstall(

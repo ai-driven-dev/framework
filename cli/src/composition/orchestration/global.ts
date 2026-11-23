@@ -19,6 +19,7 @@ import { RestoreDriftEntries } from "../../contexts/installation/application/res
 import { RestoreMergeFiles } from "../../contexts/installation/application/restore/restore-merge-files.use-case.js";
 import { RestoreRegularFiles } from "../../contexts/installation/application/restore/restore-regular-files.use-case.js";
 import { RestoreToolFiles } from "../../contexts/installation/application/restore/restore-tool-files.use-case.js";
+import { PrepareToolUpdate } from "../../contexts/installation/application/update/prepare-tool-update.use-case.js";
 import { UpdateTool } from "../../contexts/installation/application/update/update-tool.use-case.js";
 import { reportAllStatus } from "../../orchestration/doctor/report-all-status.js";
 import { InstallAiToolWithPlugins } from "../../orchestration/setup/install-ai-tool-with-plugins.use-case.js";
@@ -56,12 +57,14 @@ function wireUpdateTools(base: Base, installation: Installation) {
   const { fs, prompter, manifestRepo, currentVersion, tools } = base;
   return new UpdateTools({
     listInstalledTools: new ListInstalledTools(manifestRepo, tools),
+    prepareToolUpdate: new PrepareToolUpdate({
+      resolveSyncConflict: new ResolveSyncConflict(fs),
+      manifestRepo,
+    }),
     updateTool: new UpdateTool(
       {
         installRuntimeConfig: installation.installRuntimeConfigUseCase,
         installIdeConfig: installation.installIdeConfig,
-        resolveSyncConflict: new ResolveSyncConflict(fs),
-        manifestRepo,
       },
       tools
     ),

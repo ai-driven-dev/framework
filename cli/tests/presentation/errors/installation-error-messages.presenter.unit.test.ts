@@ -44,6 +44,7 @@ import {
   SyncFailedError,
   TrustDeniedError,
   UnknownAiToolIdError,
+  UserPluginUpdatePartialError,
   UserScopeFilterUnsupportedError,
   UserScopeIdeToolsError,
   UserScopeNoToolsError,
@@ -151,6 +152,10 @@ const cases: [() => Error, string][] = [
   [
     () => new UnresolvableUserScopeError("cursor"),
     'Manifest records a user-scope plugin for "cursor", but this tool\'s profile declares no user-scope plugins directory. Refusing to guess a base directory rather than silently resolving under the project root.',
+  ],
+  [
+    () => new UserPluginUpdatePartialError("cursor", { cause: new Error("disk full") }),
+    "cursor: user plugin file update failed after preflight; a native ref may already have been updated and file bytes may be partial. Canonical claim not saved; reconcile manually before retrying.",
   ],
   [
     () => new AmbiguousPluginMatchError("p", ["a", "b"]),

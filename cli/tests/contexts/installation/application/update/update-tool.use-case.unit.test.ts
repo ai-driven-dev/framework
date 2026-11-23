@@ -1,77 +1,49 @@
-import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import type { InstallIdeConfig } from "../../../../../src/contexts/installation/application/install/config/install-ide-config.use-case.js";
 import type { InstallRuntimeConfig } from "../../../../../src/contexts/installation/application/install/config/install-runtime-config.use-case.js";
 import {
+  type PreparedUpdate,
   UpdateTool,
   type UpdateToolRequest,
 } from "../../../../../src/contexts/installation/application/update/update-tool.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
-import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
-import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
-import { updateOf } from "../../../../shared/testing/installation-deps.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 const PROJECT = "/proj";
-const TRACKED = "docs/a.md";
 
 type Install = InstallRuntimeConfig["execute"];
 type InstallIde = InstallIdeConfig["execute"];
 
-function manifestTracking(toolId = TOOL.claude): Manifest {
-  const manifest = Manifest.create();
-  manifest.addTool(toolId, "1.0.0", [
-    new InstallationFile({
-      relativePath: TRACKED,
-      content: "original",
-      hash: FileHash.of("original"),
-    }),
-  ]);
-  return manifest;
-}
-
-function setup(
-  options: {
-    manifest?: Manifest | null;
-    modified?: boolean;
-    runtime?: Install;
-    ide?: InstallIde;
-  } = {}
-) {
+function setup(options: { runtime?: Install; ide?: InstallIde } = {}) {
   const done = { toolId: TOOL.claude, fileCount: 3, files: [], skipped: false, warnings: [] };
   const doneIde = { ...done, toolId: TOOL.vscode };
   const runtime = vi.fn<Install>(options.runtime ?? (async () => done));
   const ide = vi.fn(options.ide ?? (async () => doneIde));
-  const conflict = vi.fn(async () => options.modified ?? false);
-  const repo = new InMemoryManifestRepository(
-    options.manifest === undefined ? manifestTracking() : options.manifest,
-    PROJECT
-  );
   const tool = new UpdateTool(
-    {
-      installRuntimeConfig: { execute: runtime },
-      installIdeConfig: { execute: ide },
-      resolveSyncConflict: { execute: conflict },
-      manifestRepo: repo,
-    },
+    { installRuntimeConfig: { execute: runtime }, installIdeConfig: { execute: ide } },
     registeredTools()
   );
-  return { tool, runtime, ide, conflict };
+  return { tool, runtime, ide };
 }
 
-function commandOf(
-  overwriteModified: UpdateToolRequest["overwriteModified"] = async () => true,
-  toolId: UpdateToolRequest["toolId"] = TOOL.claude
-): UpdateToolRequest {
-  return { toolId, projectRoot: PROJECT, version: "9.9.9", overwriteModified };
+const guard = async () => "write" as const;
+const manifest = Manifest.create();
+
+function preparedFor(toolId: UpdateToolRequest["toolId"] = TOOL.claude): PreparedUpdate {
+  const command = {
+    toolId,
+    projectRoot: PROJECT,
+    version: "9.9.9",
+    overwriteModified: async () => true,
+  };
+  return { command, manifest, guard };
 }
 
 describe("updating an installed tool", () => {
   it("installs an AI tool through the runtime installer, forced, at the command's version", async () => {
     const { tool, runtime, ide } = setup();
 
-    const result = await updateOf(tool, commandOf());
+    const result = await tool.execute(preparedFor());
 
     expect(result).toStrictEqual({ kind: "updated", toolId: TOOL.claude, fileCount: 3 });
     expect(ide).not.toHaveBeenCalled();
@@ -81,6 +53,8 @@ describe("updating an installed tool", () => {
         projectRoot: PROJECT,
         version: "9.9.9",
         force: true,
+        manifest,
+        onBeforeWriteRegularFile: guard,
       })
     );
   });
@@ -88,18 +62,10 @@ describe("updating an installed tool", () => {
   it("installs an IDE tool through the IDE installer", async () => {
     const { tool, runtime, ide } = setup();
 
-    await updateOf(tool, commandOf(undefined, TOOL.vscode));
+    await tool.execute(preparedFor(TOOL.vscode));
 
     expect(runtime).not.toHaveBeenCalled();
     expect(ide).toHaveBeenCalledWith(expect.objectContaining({ toolId: TOOL.vscode }));
-  });
-
-  it("installs over an empty manifest when none is saved", async () => {
-    const { tool, runtime } = setup({ manifest: null });
-
-    await updateOf(tool, commandOf());
-
-    expect(runtime.mock.calls[0]?.[0]).toMatchObject({ manifest: expect.any(Manifest) });
   });
 
   it("answers skipped when the installer skipped the tool", async () => {
@@ -113,7 +79,7 @@ describe("updating an installed tool", () => {
       }),
     });
 
-    expect(await updateOf(tool, commandOf())).toStrictEqual({ kind: "skipped" });
+    expect(await tool.execute(preparedFor())).toStrictEqual({ kind: "skipped" });
   });
 
   it.each([
@@ -126,53 +92,6 @@ describe("updating an installed tool", () => {
       },
     });
 
-    await expect(updateOf(tool, commandOf())).rejects.toBe(rejection);
-  });
-
-  describe("the guard it hands the installer", () => {
-    async function guardOf(
-      setupOptions: Parameters<typeof setup>[0],
-      overwriteModified: UpdateToolRequest["overwriteModified"]
-    ) {
-      const s = setup(setupOptions);
-      await updateOf(s.tool, commandOf(overwriteModified));
-      const gate = s.runtime.mock.calls[0]?.[0].onBeforeWriteRegularFile;
-      if (gate === undefined) throw new Error("the installer was handed no gate");
-      return { ...s, gate };
-    }
-
-    it("writes an unmodified file without asking", async () => {
-      const ask = vi.fn(async () => false);
-      const { gate, conflict } = await guardOf({ modified: false }, ask);
-
-      expect(await gate(TRACKED)).toBe("write");
-      expect(ask).not.toHaveBeenCalled();
-      expect(conflict).toHaveBeenCalledWith({
-        diskPath: join(PROJECT, TRACKED),
-        recorded: FileHash.of("original"),
-      });
-    });
-
-    it("compares an untracked file against no recorded hash", async () => {
-      const { gate, conflict } = await guardOf({ modified: false }, async () => true);
-
-      await gate("other.md");
-
-      expect(conflict).toHaveBeenCalledWith(expect.objectContaining({ recorded: undefined }));
-    });
-
-    it("writes a modified file the answer says to overwrite", async () => {
-      const ask = vi.fn(async () => true);
-      const { gate } = await guardOf({ modified: true }, ask);
-
-      expect(await gate(TRACKED)).toBe("write");
-      expect(ask).toHaveBeenCalledWith(TRACKED);
-    });
-
-    it("skips a modified file the answer says to keep", async () => {
-      const { gate } = await guardOf({ modified: true }, async () => false);
-
-      expect(await gate(TRACKED)).toBe("skip");
-    });
+    await expect(tool.execute(preparedFor())).rejects.toBe(rejection);
   });
 });

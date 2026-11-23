@@ -27,9 +27,10 @@ export class RemoveAiddTraces {
     const { fs, manifestRepo, logger, updateGitignore } = this.deps;
     await removeAiddState({ fs, manifestRepo, logger }, projectRoot);
     // Exactly what the pipeline added on install, never a subset of it.
-    await updateGitignore.remove(
+    await updateGitignore.execute(
       projectRoot,
-      aiddGitignoreEntries(manifest, (toolId) => this.tools.profile(toolId).machineLocalFiles())
+      aiddGitignoreEntries(manifest, (toolId) => this.tools.profile(toolId).machineLocalFiles()),
+      "remove"
     );
   }
 }

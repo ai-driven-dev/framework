@@ -6,7 +6,6 @@ import {
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { DeclaredMarketplace } from "../../../../../src/contexts/installation/ports/marketplace-sources.js";
 import type { RegistrationRecords } from "../../../../../src/contexts/installation/ports/record/registration-records.js";
-import type { Lock } from "../../../../../src/shared/ports/lock.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
@@ -31,14 +30,6 @@ function manifestWith(...toolIds: (typeof TOOL)[keyof typeof TOOL][]): Manifest 
   return manifest;
 }
 
-class LockedRepository extends InMemoryManifestRepository implements Lock {
-  locked = 0;
-  async withExclusiveAccess<T>(action: () => Promise<T>): Promise<T> {
-    this.locked++;
-    return action();
-  }
-}
-
 function setup(
   options: {
     project?: Manifest | null;
@@ -57,7 +48,7 @@ function setup(
   const user =
     options.user === undefined
       ? undefined
-      : new LockedRepository(options.user, PROJECT, options.userRecords);
+      : new InMemoryManifestRepository(options.user, PROJECT, options.userRecords);
   const register = vi.fn(async ({ pluginSource }: { pluginSource?: unknown }) => {
     registry.seed(PROJECT, { ...userMarketplace(FRAMEWORK), source: { kind: "local", path: "." } });
     return pluginSource;
@@ -218,26 +209,5 @@ describe("loading the context of a sync", () => {
 
       expect(await load.execute(request({ recreateFrameworkIfMissing: true }))).toBeNull();
     });
-  });
-});
-
-describe("running a sync under the manifest lock", () => {
-  it("holds the machine manifest's lock for a project-scope run", async () => {
-    const { load, user } = setup({ user: manifestWith() });
-
-    expect(await load.runLocked("project", async () => "done")).toBe("done");
-    expect(user?.locked).toBe(1);
-  });
-
-  it("does not lock again for a user-scope run, which already works on that manifest", async () => {
-    const { load, user } = setup({ user: manifestWith() });
-
-    await load.runLocked("user", async () => "done");
-
-    expect(user?.locked).toBe(0);
-  });
-
-  it("runs unlocked when no machine manifest is kept", async () => {
-    expect(await setup().load.runLocked("project", async () => "done")).toBe("done");
   });
 });

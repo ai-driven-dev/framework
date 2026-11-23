@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { AgentPluginPlacement } from "../../../src/contexts/installation/application/agents/agent-plugin-hosts.js";
+import type { AgentPluginPlacement } from "../../../src/contexts/installation/application/agents/locate-agent-plugins.use-case.js";
 import { RefreshAgentPlugins } from "../../../src/orchestration/agent-models/refresh-agent-plugins.use-case.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
@@ -14,7 +14,7 @@ function refreshOver(placed: Placed, activationErrors: string[] = []) {
   const activations: { toolIds: readonly ToolId[]; scope?: Scope }[] = [];
   const useCase = new RefreshAgentPlugins({
     pluginHosts: {
-      locate: async <Host extends string>(hosts: readonly Host[]) => ({
+      execute: async <Host extends string>(hosts: readonly Host[]) => ({
         userPlugins: placed.userPlugins ? hosts : [],
         projectPlugins: placed.projectPlugins ? hosts : [],
         installed: placed.installed ? hosts : [],

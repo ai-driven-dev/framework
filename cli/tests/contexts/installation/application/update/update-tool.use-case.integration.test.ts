@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { UpdateToolRequest } from "../../../../../src/contexts/installation/application/update/update-tool.use-case.js";
 import {
   buildInstallationDeps,
-  buildUpdateTool,
+  buildToolUpdate,
   initAndInstall,
   updateOf,
 } from "../../../../shared/testing/installation-deps.builder.js";
@@ -37,7 +37,7 @@ describe("UpdateTool integration", () => {
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const ask = vi.fn();
 
-    const result = await updateOf(buildUpdateTool(deps), commandOf(ask));
+    const result = await updateOf(buildToolUpdate(deps), commandOf(ask));
 
     expect(result.kind).toBe("updated");
     expect(ask).not.toHaveBeenCalled();
@@ -51,7 +51,7 @@ describe("UpdateTool integration", () => {
     await deps.fs.deleteFile(join(PROJECT_ROOT, first.relativePath));
     const ask = vi.fn();
 
-    const result = await updateOf(buildUpdateTool(deps), commandOf(ask));
+    const result = await updateOf(buildToolUpdate(deps), commandOf(ask));
 
     expect(result.kind).toBe("updated");
     expect(ask).not.toHaveBeenCalled();
@@ -62,7 +62,7 @@ describe("UpdateTool integration", () => {
     const { deps, relativePath } = await installWithModifiedFile();
     const ask = vi.fn().mockResolvedValue(true);
 
-    const result = await updateOf(buildUpdateTool(deps), commandOf(ask));
+    const result = await updateOf(buildToolUpdate(deps), commandOf(ask));
 
     expect(result.kind).toBe("updated");
     expect(ask).toHaveBeenCalledWith(relativePath);
@@ -74,7 +74,7 @@ describe("UpdateTool integration", () => {
   it("keeps a modified file the answer says to keep", async () => {
     const { deps, relativePath } = await installWithModifiedFile();
 
-    await updateOf(buildUpdateTool(deps), commandOf(vi.fn().mockResolvedValue(false)));
+    await updateOf(buildToolUpdate(deps), commandOf(vi.fn().mockResolvedValue(false)));
 
     expect(await deps.fs.readFile(join(PROJECT_ROOT, relativePath))).toBe("user-modified content");
   });
@@ -90,7 +90,7 @@ describe("UpdateTool integration", () => {
       warnings: [],
     });
 
-    expect(await updateOf(buildUpdateTool(deps), commandOf(vi.fn()))).toStrictEqual({
+    expect(await updateOf(buildToolUpdate(deps), commandOf(vi.fn()))).toStrictEqual({
       kind: "skipped",
     });
   });
@@ -103,6 +103,6 @@ describe("UpdateTool integration", () => {
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     vi.spyOn(deps.installRuntimeConfigUseCase, "execute").mockRejectedValue(rejection);
 
-    await expect(updateOf(buildUpdateTool(deps), commandOf(vi.fn()))).rejects.toBe(rejection);
+    await expect(updateOf(buildToolUpdate(deps), commandOf(vi.fn()))).rejects.toBe(rejection);
   });
 });
