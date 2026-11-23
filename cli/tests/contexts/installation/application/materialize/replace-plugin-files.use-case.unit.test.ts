@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { builtPlacementOf } from "../../../../../src/composition/orchestration/built-placement.js";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
+import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
@@ -89,5 +90,49 @@ describe("replacing a plugin's files", () => {
       entry?.marketplace,
       entry?.plugin.files.size,
     ]).toStrictEqual([false, false, "aidd-framework", 0]);
+  });
+});
+
+describe("replacing a plugin that came from no marketplace", () => {
+  async function placedBy(tool: typeof TOOL.claude) {
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
+    const placed: string[] = [];
+    const installed = RecordedPlugin.fromMetadata({
+      name: "sample-plugin",
+      version: "0.0.1",
+      source: SOURCE,
+      strict: false,
+      scope: "project",
+    });
+    const manifest = Manifest.create();
+    manifest.addTool(tool, "test", []);
+    manifest.addPlugin(tool, installed);
+    const built = builtPlacementOf(deps.fs, fakeBuiltDeps());
+    await new ReplacePluginFiles(
+      {
+        fs: deps.fs,
+        ...built,
+        placeBuiltTree: async (request) => {
+          placed.push(request.tool.toolId);
+          return built.placeBuiltTree(request);
+        },
+      },
+      registeredTools()
+    ).execute({
+      plugin: installed,
+      dist: greetDistribution(),
+      toolId: tool,
+      projectRoot: PROJECT_ROOT,
+      manifest,
+    });
+    return placed;
+  }
+
+  it("places it from the built tree on a tool that delivers hooks to the project, as a restore does", async () => {
+    expect(await placedBy(TOOL.antigravity)).toEqual([TOOL.antigravity]);
+  });
+
+  it("translates it on a tool that does not", async () => {
+    expect(await placedBy(TOOL.claude)).toEqual([]);
   });
 });

@@ -1,6 +1,11 @@
 import type { PluginTranslationMode } from "../../../tools/contract/tool-vocabulary.js";
 import type { PluginPlacement } from "../../ports/tool-sections.js";
 
+/** Whether a tool takes a plugin's hooks into the project's own hooks file. */
+export function deliversHooksToProject(tool: PluginPlacement): boolean {
+  return tool.plugins()?.deliversHooksToProject() ?? false;
+}
+
 /**
  * How a tool takes a plugin: a materializing tool copies the per-target BUILT tree, so installed
  * bytes match the build's own output; any other plugin-capable tool registers a marketplace
