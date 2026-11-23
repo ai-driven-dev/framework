@@ -58,6 +58,14 @@ function contextsImporting(file: string, importers: Map<string, Set<string>>): S
   return contexts;
 }
 
+/**
+ * A declaration file with no top-level import or export is ambient: it types what the build
+ * inlines, nothing imports it, so it has no callers to count. Told by its content, not its name.
+ */
+function isAmbientDeclaration(file: string, textOf: (file: string) => string): boolean {
+  return file.endsWith(".d.ts") && !/^(?:import|export)\b/m.test(textOf(file));
+}
+
 /** The interface names a shared port file declares. */
 function declaredBy(portText: string): string[] {
   return [...portText.matchAll(/export (?:interface|type) (\w+)/g)].map((m) => present(m[1]));
@@ -129,7 +137,9 @@ function unearnedShared(
   importers: Map<string, Set<string>>,
   textOf: (file: string) => string
 ): string[] {
-  const shared = files.filter((file) => file.startsWith("src/shared/"));
+  const shared = files.filter(
+    (file) => file.startsWith("src/shared/") && !isAmbientDeclaration(file, textOf)
+  );
   const inside = (prefix: string): string[] => shared.filter((file) => file.startsWith(prefix));
   const earned = new Set(
     shared.filter(
@@ -260,6 +270,17 @@ describe("the guard itself", () => {
     ]);
 
     expect(unearnedShared([port, read, lonely], importers, () => "")).toEqual([lonely]);
+  });
+
+  it("clears an ambient declaration file nothing imports and flags a declaration module nobody imports", () => {
+    const ambient = "src/shared/infrastructure/text-assets.d.ts";
+    const module = "src/shared/infrastructure/types.d.ts";
+    const text: Record<string, string> = {
+      [ambient]: 'declare module "*.md" {\n  const content: string;\n  export default content;\n}',
+      [module]: "export interface Lonely {}",
+    };
+
+    expect(unearnedShared([ambient, module], new Map(), (f) => text[f] ?? "")).toEqual([module]);
   });
 
   it("names an area for every place a caller lives, so two callers are not both 'other'", () => {

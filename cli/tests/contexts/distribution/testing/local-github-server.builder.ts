@@ -7,8 +7,10 @@ import {
   STABLE_CATALOG,
   STABLE_REF,
 } from "./raw-catalog.contract.js";
+import { RATE_LIMITED_REPO, VISIBLE_REPO } from "./repository-visibility.contract.js";
 
 const CONTENTS = /^\/repos\/(.+?)\/contents\/(.+)$/;
+const REPOSITORY = /^\/repos\/(.+)$/;
 
 function answer(res: ServerResponse, status: number, body = ""): void {
   res.writeHead(status, { "content-type": "text/plain" });
@@ -22,16 +24,24 @@ function catalogOf(repo: string, path: string, ref: string | null): [number, str
   return ref === STABLE_REF ? [200, STABLE_CATALOG] : [404, ""];
 }
 
+function visibilityOf(repo: string): number {
+  if (repo === VISIBLE_REPO) return 200;
+  return repo === RATE_LIMITED_REPO ? 403 : 404;
+}
+
 function serveContents(req: IncomingMessage, res: ServerResponse): void {
   const url = new URL(req.url ?? "/", "http://127.0.0.1");
   const found = CONTENTS.exec(url.pathname);
-  const [status, body] = found
-    ? catalogOf(found[1] ?? "", found[2] ?? "", url.searchParams.get("ref"))
-    : [404, ""];
-  answer(res, status, body);
+  if (found) {
+    const [status, body] = catalogOf(found[1] ?? "", found[2] ?? "", url.searchParams.get("ref"));
+    answer(res, status, body);
+    return;
+  }
+  const repository = REPOSITORY.exec(url.pathname);
+  answer(res, repository ? visibilityOf(repository[1] ?? "") : 404, repository ? "{}" : "");
 }
 
-/** A GitHub contents API on a free local port, serving the contract's world. */
+/** A GitHub contents API on a free local port, serving the contracts' worlds. */
 export function startLocalGitHub(): Promise<{ apiBase: string; close: () => Promise<void> }> {
   const server = createServer(serveContents);
   return new Promise((resolve, reject) => {
