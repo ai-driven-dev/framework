@@ -164,7 +164,6 @@ for (const toolId of [SYNTHETIC_TOOL]) {
         path: f.repo.path,
         load: () => f.repo.load(),
         loadIfReadable: () => f.repo.loadIfReadable(),
-        loadForDiagnosis: () => f.repo.loadForDiagnosis(),
         save: (manifest: Manifest) => f.repo.save(manifest),
         delete: () => f.repo.delete(),
         loadRecords: () => f.repo.loadRecords(),

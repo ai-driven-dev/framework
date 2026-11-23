@@ -49,7 +49,9 @@ export const INSTALLATION: MessagesOf<InstallationOwners> = {
     "The manifest is unchanged; run the command again once the file can be written.",
   "manifest-missing": () => "No AIDD manifest found. Run `aidd setup` to initialize your project.",
   "manifest-corrupted": () =>
-    "Manifest is corrupted (invalid JSON). Run `aidd clean --force` and re-initialize.",
+    "Manifest is corrupted (invalid JSON or invalid data). Run `aidd clean --force` and re-initialize.",
+  "manifest-unreadable": (error) =>
+    `Cannot read the manifest ${error.path} (${error.reason}). Check that the file is readable, then run the command again.`,
   "missing-plugin-metadata": () =>
     "Cannot register github marketplace plugin: catalog entry is missing plugin metadata.",
   "plugin-not-found": (error) => `Plugin '${error.pluginName}' is not installed.`,

@@ -120,6 +120,18 @@ export class ManifestUnavailableError extends AiddError {
   }
 }
 
+/** A project's manifest file exists and cannot be read; `reason` is the system's code for why. */
+export class ManifestUnreadableError extends AiddError {
+  readonly code = "manifest-unreadable";
+  constructor(
+    readonly path: string,
+    readonly reason: string,
+    options?: ErrorOptions
+  ) {
+    super(options);
+  }
+}
+
 export class MissingPluginMetadataError extends AiddError {
   readonly code = "missing-plugin-metadata";
 }

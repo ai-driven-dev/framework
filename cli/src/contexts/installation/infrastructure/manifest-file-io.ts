@@ -1,13 +1,19 @@
 import { mkdir, readFile, rm } from "node:fs/promises";
 import { dirname } from "node:path";
 import { errorMessage } from "../../../shared/domain/describe-error.js";
-import { tryParseJson, whenAbsent } from "../../../shared/domain/reading/json-file.js";
+import {
+  isErrnoException,
+  tryParseJson,
+  whenAbsent,
+} from "../../../shared/domain/reading/json-file.js";
 import type { ToolIdResolver } from "../../../shared/domain/tool.js";
 import type { AtomicWrite } from "../../../shared/ports/file-writer.js";
 import {
   InvalidManifestDataError,
+  InvalidManifestToolIdError,
   ManifestMigrationError,
   ManifestUnavailableError,
+  ManifestUnreadableError,
 } from "../contract/installation.error.js";
 import type { ToolRecords } from "../contract/records/scope-records.js";
 import type { ManifestFileContext } from "../domain/manifest/assert-supported-version.js";
@@ -52,7 +58,12 @@ export abstract class ManifestFile {
     await rm(this.path, { force: true });
   }
 
+  /** Null when there is no file. Any other failure to have the manifest is named, never raw. */
   async load(): Promise<Manifest | null> {
+    return this.read().catch((error: unknown) => failNamed(error, this.path));
+  }
+
+  private async read(): Promise<Manifest | null> {
     const context = this.context();
     const file = await readDocument(context.path);
     if (file === null) return null;
@@ -73,10 +84,6 @@ export abstract class ManifestFile {
    * unreadable: answered as none, a caller would write a fresh manifest over the v8 one. */
   async loadIfReadable(): Promise<Manifest | null> {
     return this.load().catch(noneUnlessMigrationFailed);
-  }
-
-  async loadForDiagnosis(): Promise<Manifest | null> {
-    return this.load().catch(refusedAsCorrupted);
   }
 
   async save(manifest: Manifest): Promise<void> {
@@ -104,8 +111,16 @@ export abstract class ManifestFile {
   }
 }
 
-function refusedAsCorrupted(cause: unknown): never {
-  throw new ManifestUnavailableError("manifest-corrupted", { cause });
+/** What a failed read means to the person: the file is corrupted, the system refused to read it, or
+ * something else this CLI refuses by its own name (a version, a failed split) or has no name for. */
+function failNamed(error: unknown, path: string): never {
+  if (error instanceof InvalidManifestDataError || error instanceof InvalidManifestToolIdError) {
+    throw new ManifestUnavailableError("manifest-corrupted", { cause: error });
+  }
+  if (isErrnoException(error) && error.syscall !== undefined && error.code !== undefined) {
+    throw new ManifestUnreadableError(path, error.code, { cause: error });
+  }
+  throw error;
 }
 
 function noneUnlessMigrationFailed(error: unknown): null {

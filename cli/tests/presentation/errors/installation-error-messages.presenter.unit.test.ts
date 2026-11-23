@@ -17,6 +17,7 @@ import {
   MalformedPluginScopeError,
   ManifestMigrationError,
   ManifestUnavailableError,
+  ManifestUnreadableError,
   MissingPluginMetadataError,
   PluginNotFoundError,
   ProjectHooksEditedError,
@@ -134,7 +135,11 @@ const cases: [() => Error, string][] = [
   ],
   [
     () => new ManifestUnavailableError("manifest-corrupted"),
-    "Manifest is corrupted (invalid JSON). Run `aidd clean --force` and re-initialize.",
+    "Manifest is corrupted (invalid JSON or invalid data). Run `aidd clean --force` and re-initialize.",
+  ],
+  [
+    () => new ManifestUnreadableError("m", "EACCES"),
+    "Cannot read the manifest m (EACCES). Check that the file is readable, then run the command again.",
   ],
   [
     () => new MissingPluginMetadataError(),

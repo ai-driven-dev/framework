@@ -5,6 +5,7 @@ import {
   InvalidManifestDataError,
   ManifestMigrationError,
   ManifestUnavailableError,
+  UnsupportedManifestVersionError,
 } from "../../../../src/contexts/installation/contract/installation.error.js";
 import type {
   ScopeRecords,
@@ -70,18 +71,6 @@ export function describeManifestRepositoryContract(
 
     it("loads null when no manifest was saved", async () => {
       expect(await subject.repository.load()).toBeNull();
-    });
-
-    it("loads null for a diagnosis when no manifest was saved", async () => {
-      expect(await subject.repository.loadForDiagnosis()).toBeNull();
-    });
-
-    it("loads back for a diagnosis what was saved", async () => {
-      const saved = aManifest().withTool(TOOL.claude, [installedFile]).build();
-
-      await subject.repository.save(saved);
-
-      expect((await subject.repository.loadForDiagnosis())?.toJSON()).toStrictEqual(saved.toJSON());
     });
 
     it("loads back what was saved", async () => {
@@ -194,33 +183,46 @@ export function describeManifestFileContract(
       await expect(subject.repository.load()).rejects.toThrow(saying(/5\.2\.2.*clean --force/));
     });
 
-    it("refuses a corrupted document naming the file, and reads it as none when asked to", async () => {
+    it("names a corrupted document as a corrupted manifest, and reads it as none when asked to", async () => {
       await write('{"version": 9, "tools": {');
 
-      const load = subject.repository.load();
-      await expect(load).rejects.toThrow(InvalidManifestDataError);
-      await expect(load).rejects.toThrow(saying(`${subject.manifestPath} is not valid JSON`));
-      expect(await subject.repository.loadIfReadable()).toBeNull();
-    });
-
-    it("refuses a corrupted document for a diagnosis as a corrupted manifest", async () => {
-      await write('{"version": 9, "tools": {');
-
-      const failure = await subject.repository.loadForDiagnosis().catch((e: unknown) => e);
+      const failure = await subject.repository.load().catch((e: unknown) => e);
 
       expect(failure).toBeInstanceOf(ManifestUnavailableError);
       expect(failure).toMatchObject({
+        code: "manifest-corrupted",
+        cause: expect.objectContaining({
+          detail: expect.stringContaining(`${subject.manifestPath} is not valid JSON`),
+        }),
+      });
+      expect(await subject.repository.loadIfReadable()).toBeNull();
+    });
+
+    it("names a document of the wrong shape as a corrupted manifest", async () => {
+      await write('{"version": 9, "tools": "x"}');
+
+      await expect(subject.repository.load()).rejects.toMatchObject({
         code: "manifest-corrupted",
         cause: expect.any(InvalidManifestDataError),
       });
     });
 
-    it("refuses a file it cannot read for a diagnosis as a corrupted manifest", async () => {
+    it("names a file it cannot read as unreadable, with its path and the reason", async () => {
       await mkdir(subject.manifestPath, { recursive: true });
 
-      await expect(subject.repository.loadForDiagnosis()).rejects.toMatchObject({
-        code: "manifest-corrupted",
+      await expect(subject.repository.load()).rejects.toMatchObject({
+        code: "manifest-unreadable",
+        path: subject.manifestPath,
+        reason: "EISDIR",
       });
+    });
+
+    it("keeps a version from a newer CLI apart from a corrupted manifest", async () => {
+      await write('{"version": 999, "tools": {}}');
+
+      await expect(subject.repository.load()).rejects.toBeInstanceOf(
+        UnsupportedManifestVersionError
+      );
     });
 
     describe("a version 8 document", () => {
