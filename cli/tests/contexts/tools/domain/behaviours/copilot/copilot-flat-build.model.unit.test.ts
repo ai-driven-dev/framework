@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { copilot } from "../../../../../../src/composition/tool-profiles/copilot.js";
-import { artifactPath } from "../../../../../../src/contexts/tools/contract/artifact-path.js";
 import { parseFrontmatter } from "../../../../../../src/shared/domain/markdown.js";
+import { artifactPath } from "../../../../../../src/shared/domain/materialization/artifact-path.js";
 import { builtAgent } from "../../../../../shared/testing/built-agent.builder.js";
 import { present } from "../../../../../shared/testing/present.builder.js";
 import { supported } from "../../../testing/build-artifacts.builder.js";

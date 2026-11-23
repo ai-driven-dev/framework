@@ -1,4 +1,4 @@
-import type { PluginPresence } from "../../../contract/build-contract.js";
+import type { PluginPresence } from "../../../../../shared/domain/materialization/build-contract.js";
 
 const CODEX_MANIFEST_STRING_KEYS = [
   "name",

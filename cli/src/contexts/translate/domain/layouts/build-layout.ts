@@ -1,14 +1,14 @@
 import { reshapeFrontmatter } from "../../../../shared/domain/markdown.js";
-import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
-import { artifactPath } from "../../../tools/contract/artifact-path.js";
+import { artifactPath } from "../../../../shared/domain/materialization/artifact-path.js";
 import type {
   SupportedArtifact,
   ToolBuildContract,
-} from "../../../tools/contract/build-contract.js";
-import type { FrameworkBuildMode } from "../../../tools/contract/tool-profile.js";
+} from "../../../../shared/domain/materialization/build-contract.js";
+import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import { PLUGIN_MCP_RELATIVE } from "../canon-format.js";
 import { agentLinks } from "../rules/agent-markdown.js";
 import { agentShape, type ComponentPlan } from "../rules/component-pipeline.js";
+import type { FrameworkBuildMode } from "../translate-profile.js";
 import { buildFlatPlans } from "./build-flat.js";
 import { agentFiles, baseOf, isEntry } from "./build-shared.js";
 

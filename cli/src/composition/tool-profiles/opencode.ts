@@ -1,5 +1,7 @@
 import opencodeJson from "../../../assets/configs/opencode/opencode.json" with { type: "json" };
 import opencodeEvents from "../../../assets/configs/opencode/opencode-events.js.txt";
+// biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
+import adapter from "../../../assets/hooks-runtime/host-bridge.cjs";
 import {
   CONFIG_PREFIX,
   type ConfigRef,
@@ -80,7 +82,7 @@ const FLAT_PLACEMENT = flatPlacement({
 // No family OpenCode's loader scans is named "hooks", so a plugin's scripts land under
 // `hooks/`, namespaced per plugin, and nothing there is ever imported.
 const hooks = declareBridgeHooks(
-  { toolId: "opencode", directory: DIRECTORY },
+  { toolId: "opencode", directory: DIRECTORY, adapter },
   ["server-init", "tool.execute.after", "session.idle"],
   {
     // The loader scans `{plugin,plugins}/*.{ts,js}`, one level: only a plugin's own module, or

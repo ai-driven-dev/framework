@@ -1,8 +1,11 @@
 /** Flat only. A skill sits one level under `.agents/skills/`: `agy` expands none nested deeper. */
 
+import { agentsIn, skillsIn } from "../../../../../shared/domain/materialization/artifact-path.js";
+import type {
+  AgentMarkdown,
+  ToolBuildContract,
+} from "../../../../../shared/domain/materialization/build-contract.js";
 import type { FlatArtifactLayout } from "../../../../../shared/domain/materialization/flat-paths.js";
-import { agentsIn, skillsIn } from "../../../contract/artifact-path.js";
-import type { AgentMarkdown, ToolBuildContract } from "../../../contract/build-contract.js";
 import { portableAgentFrontmatter } from "../../formats/agents/portable-agent.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
 import { type AntigravityHooks, mergeAntigravityHooks } from "./antigravity-hooks.model.js";

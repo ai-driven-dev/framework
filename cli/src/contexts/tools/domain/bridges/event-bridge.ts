@@ -3,8 +3,6 @@
  * the three hook events a bridge replays and how a plugin's name becomes its module's identifier.
  */
 
-// biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
-import adapter from "../../../../../assets/hooks-runtime/host-bridge.cjs";
 import type { FlatHooksLoaderEntry } from "../../../../shared/domain/materialization/flat-paths.js";
 import { declareHooks } from "../formats/hooks/declaration.js";
 import type { HookEventRoute, HooksDescriptor } from "../formats/hooks/descriptor.js";
@@ -169,7 +167,7 @@ export function pascalCasePluginName(plugin: string): string {
 export type BridgeNativeEvents = readonly [sessionStart: string, postToolUse: string, stop: string];
 
 /** A loader that reads no hooks file: the three events it fires reach the hook through a bridge
- * generated per plugin, and one adapter, stamped for the tool, serves them all. */
+ * generated per plugin, and one adapter, handed in and stamped for the tool, serves them all. */
 export function declareBridgeHooks<
   const L extends {
     /** The loader's module for a plugin, beside which its generated bridge is written. */
@@ -177,7 +175,7 @@ export function declareBridgeHooks<
     readonly bridgeRuntime?: HooksDescriptor["bridgeRuntime"];
   },
 >(
-  { toolId, directory }: { toolId: string; directory: string },
+  { toolId, directory, adapter }: { toolId: string; directory: string; adapter: string },
   [sessionStart, postToolUse, stop]: BridgeNativeEvents,
   { loaderEntry, ...rest }: L
 ) {

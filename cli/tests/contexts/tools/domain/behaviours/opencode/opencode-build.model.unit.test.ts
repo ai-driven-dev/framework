@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { opencode } from "../../../../../../src/composition/tool-profiles/opencode.js";
-import { artifactPath } from "../../../../../../src/contexts/tools/contract/artifact-path.js";
+import { artifactPath } from "../../../../../../src/shared/domain/materialization/artifact-path.js";
 import type {
   ConfigArtifact,
   ConfigArtifactFile,
-} from "../../../../../../src/contexts/tools/contract/build-contract.js";
+} from "../../../../../../src/shared/domain/materialization/build-contract.js";
 import { builtAgent } from "../../../../../shared/testing/built-agent.builder.js";
 import { present } from "../../../../../shared/testing/present.builder.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";

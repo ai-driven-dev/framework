@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { agentsIn, skillsIn } from "../../../../../src/contexts/tools/contract/artifact-path.js";
 import { FrameworkPlaceholderInPluginError } from "../../../../../src/contexts/translate/contract/translate.error.js";
+import {
+  agentsIn,
+  skillsIn,
+} from "../../../../../src/shared/domain/materialization/artifact-path.js";
 import { flatArtifactLayout } from "../../../../../src/shared/domain/materialization/flat-paths.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import {

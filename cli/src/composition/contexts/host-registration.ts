@@ -36,7 +36,7 @@ import {
   type ToolKeyedJsonFileDeps,
 } from "../../shared/infrastructure/tool-keyed-json-file.js";
 import type { FileReader } from "../../shared/ports/file-reader.js";
-import { REGISTERED_PROFILES, type RegisteredProfile } from "../tool-profiles.composition.js";
+import { REGISTERED_PROFILES, type RegisteredProfile } from "../tool-profiles/index.js";
 import type { RegisteredCatalog } from "./tools.js";
 
 /** The new content of a tool's shared settings file, answered by the host registration that owns it. */

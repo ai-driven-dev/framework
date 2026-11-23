@@ -1,6 +1,6 @@
 import { RegisteredToolCatalog } from "../../contexts/tools/application/registered-tool-catalog.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import { REGISTERED_PROFILES, type RegisteredAiProfile } from "../tool-profiles.composition.js";
+import { REGISTERED_PROFILES, type RegisteredAiProfile } from "../tool-profiles/index.js";
 
 /** The catalog the composition hands every edge: its AI profiles answer their native registration. */
 export type RegisteredCatalog = ToolCatalog<RegisteredAiProfile>;

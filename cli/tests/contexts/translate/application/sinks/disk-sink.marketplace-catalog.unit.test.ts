@@ -1,11 +1,11 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { JsonSchemaValidationError } from "../../../../../src/contexts/translate/contract/translate.error.js";
+import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
 import type {
   PluginPresence,
   ToolBuildContract,
-} from "../../../../../src/contexts/tools/contract/build-contract.js";
-import { JsonSchemaValidationError } from "../../../../../src/contexts/translate/contract/translate.error.js";
-import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
+} from "../../../../../src/shared/domain/materialization/build-contract.js";
 import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import type { SourcePluginEntryRef } from "../../../../../src/shared/domain/plugin/source-refs.js";
 import type { SchemaName } from "../../../../../src/shared/domain/reading/config-asset.js";

@@ -1,17 +1,17 @@
 /** Kilo's project distribution is flat. Its config and MCP format follow the OpenCode runtime,
  * but Kilo has its own .kilo/ discovery paths and bundled base configuration. */
 
-import type {
-  FlatArtifactLayout,
-  FlatHooksLoaderEntry,
-} from "../../../../../shared/domain/materialization/flat-paths.js";
-import { agentsIn, skillsIn } from "../../../contract/artifact-path.js";
+import { agentsIn, skillsIn } from "../../../../../shared/domain/materialization/artifact-path.js";
 import type {
   AgentMarkdown,
   ConfigArtifactFile,
   ConfigArtifactInput,
   ToolBuildContract,
-} from "../../../contract/build-contract.js";
+} from "../../../../../shared/domain/materialization/build-contract.js";
+import type {
+  FlatArtifactLayout,
+  FlatHooksLoaderEntry,
+} from "../../../../../shared/domain/materialization/flat-paths.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
 import { buildTypedMcpFlatConfig } from "../../formats/mcp/typed-mcp-merge.js";

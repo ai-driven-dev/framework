@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { ToolBuildContract } from "../../../../../src/contexts/tools/contract/build-contract.js";
 import { ModelsSection } from "../../../../../src/contexts/tools/domain/sections/models-section.js";
+import type { ToolBuildContract } from "../../../../../src/shared/domain/materialization/build-contract.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { builtAgent } from "../../../../shared/testing/built-agent.builder.js";
 import { registeredAiProfile } from "../../../../shared/testing/catalog-of.builder.js";

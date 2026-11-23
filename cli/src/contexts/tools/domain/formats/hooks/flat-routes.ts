@@ -1,11 +1,11 @@
 /** The flat routes of a descriptor: where a flat build and a flat install write a tool's hooks. */
 
-import type { FlatHooksLoaderEntry } from "../../../../../shared/domain/materialization/flat-paths.js";
 import type {
   ArtifactContract,
   FlatHooksBridge,
   SupportedArtifact,
-} from "../../../contract/build-contract.js";
+} from "../../../../../shared/domain/materialization/build-contract.js";
+import type { FlatHooksLoaderEntry } from "../../../../../shared/domain/materialization/flat-paths.js";
 import type { ProjectHooksFormat } from "../../../contract/tool-vocabulary.js";
 import { mergeHooks } from "../../hooks/hooks-merge.js";
 import type { BridgeDelivery, ProjectMergeDelivery } from "../../sections/hooks-section.js";

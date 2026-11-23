@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { FlatHooksBridge } from "../../../../../src/contexts/tools/contract/build-contract.js";
+import type { FlatHooksBridge } from "../../../../../src/shared/domain/materialization/build-contract.js";
 import { translateBuildLayout } from "../../../../shared/testing/build-files.builder.js";
 import { aCanon } from "../../testing/canon-distribution.builder.js";
 import {

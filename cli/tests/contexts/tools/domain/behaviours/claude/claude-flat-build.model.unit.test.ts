@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { claude } from "../../../../../../src/composition/tool-profiles/claude.js";
-import { artifactPath } from "../../../../../../src/contexts/tools/contract/artifact-path.js";
-import type { ArtifactContract } from "../../../../../../src/contexts/tools/contract/build-contract.js";
+import { artifactPath } from "../../../../../../src/shared/domain/materialization/artifact-path.js";
+import type { ArtifactContract } from "../../../../../../src/shared/domain/materialization/build-contract.js";
 import { builtAgent } from "../../../../../shared/testing/built-agent.builder.js";
 import { present } from "../../../../../shared/testing/present.builder.js";
 import { supported } from "../../../testing/build-artifacts.builder.js";

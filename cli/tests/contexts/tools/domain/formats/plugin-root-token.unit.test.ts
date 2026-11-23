@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { rewritePluginRootToken } from "../../../../src/contexts/tools/contract/plugin-root-token.js";
-import { SOURCE_PLUGIN_ROOT_TOKEN } from "../../../../src/shared/domain/materialization/plugin-root-path-rewrite.js";
-import { buildContractOf } from "../../../shared/testing/build-contract-of.builder.js";
-import { registeredAiConfig } from "../../../shared/testing/catalog-of.builder.js";
-import { nativeOf } from "../../../shared/testing/native-plugin-answers.builder.js";
-import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import {
+  rewritePluginRootToken,
+  SOURCE_PLUGIN_ROOT_TOKEN,
+} from "../../../../../src/shared/domain/materialization/plugin-root-path-rewrite.js";
+import { buildContractOf } from "../../../../shared/testing/build-contract-of.builder.js";
+import { registeredAiConfig } from "../../../../shared/testing/catalog-of.builder.js";
+import { nativeOf } from "../../../../shared/testing/native-plugin-answers.builder.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 // Avoid biome noTemplateCurlyInString: split literals
 const CLAUDE_TOKEN = "$" + "{CLAUDE_PLUGIN_ROOT}";

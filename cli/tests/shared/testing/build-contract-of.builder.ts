@@ -1,6 +1,6 @@
 import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
-import type { ToolBuildContract } from "../../../src/contexts/tools/contract/build-contract.js";
 import type { FrameworkBuildMode } from "../../../src/contexts/tools/contract/tool-profile.js";
+import type { ToolBuildContract } from "../../../src/shared/domain/materialization/build-contract.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
 
 /** The build contract the catalog's tool declares for a mode, or null for an editor or a tool

@@ -1,12 +1,12 @@
 import {
-  escapeRegExp,
-  SOURCE_PLUGIN_ROOT_TOKEN,
-} from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
-import {
   applyLinkSyntax,
   type LinkSyntax,
   REFERENCE_CHARS,
-} from "../../../tools/contract/link-syntax.js";
+} from "../../../../shared/domain/materialization/link-syntax.js";
+import {
+  escapeRegExp,
+  SOURCE_PLUGIN_ROOT_TOKEN,
+} from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 
 const RELATIVE_CURRENT_RE = new RegExp(`@\\.\\/(${REFERENCE_CHARS})`, "g");
 const RELATIVE_PARENT_RE = new RegExp(`@\\.\\.\\/(${REFERENCE_CHARS})`, "g");

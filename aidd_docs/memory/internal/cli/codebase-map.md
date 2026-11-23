@@ -146,7 +146,6 @@ src/
 │   │   │   ├── models/
 │   │   │   ├── profile/
 │   │   │   └── sections/
-│   │   └── infrastructure/
 │   ├── translate/    # canonical source to target-native content
 │   │   ├── application/
 │   │   │   └── sinks/
@@ -224,6 +223,6 @@ src/
 | What | Where |
 | --- | --- |
 | a command | `presentation/controllers/`; its logic in the context owning the concept |
-| a tool | one profile in `composition/tool-profiles/` plus its line in `tool-profiles.composition.ts`; procedure in the `working-on-cli` skill's `actions/01-tool.md` |
+| a tool | one profile in `composition/tool-profiles/` plus its line in `tool-profiles/index.ts`; procedure in the `working-on-cli` skill's `actions/01-tool.md` |
 | a port used by one context | its `ports/`, adapter in its `infrastructure/` |
 | a port used by two | `shared/ports/`, adapter in `shared/infrastructure/` |

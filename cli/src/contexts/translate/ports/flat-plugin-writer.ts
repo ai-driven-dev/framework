@@ -1,4 +1,7 @@
-import type { SupportedArtifact, ToolBuildContract } from "../../tools/contract/build-contract.js";
+import type {
+  SupportedArtifact,
+  ToolBuildContract,
+} from "../../../shared/domain/materialization/build-contract.js";
 import type { BuiltPlugin } from "./plugin-tree-sink.js";
 
 /** What a flat MCP merge needs of its artifact: the server map's property, and its path. */

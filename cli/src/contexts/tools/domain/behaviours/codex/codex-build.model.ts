@@ -1,6 +1,6 @@
 /** Codex's marketplace build contract: a native plugin tree. */
 
-import type { ToolBuildContract } from "../../../contract/build-contract.js";
+import type { ToolBuildContract } from "../../../../../shared/domain/materialization/build-contract.js";
 import { tomlAgentMarkdownToToml } from "../../formats/agents/toml-agent.js";
 import type { HooksRouting } from "../../formats/hooks/descriptor.js";
 import { pluginTreeHooksArtifact } from "../../formats/hooks/routes.js";

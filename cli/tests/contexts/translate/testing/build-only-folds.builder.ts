@@ -1,5 +1,5 @@
-import type { ToolBuildContract } from "../../../../src/contexts/tools/contract/build-contract.js";
 import type { FrameworkBuildMode } from "../../../../src/contexts/tools/contract/tool-profile.js";
+import type { ToolBuildContract } from "../../../../src/shared/domain/materialization/build-contract.js";
 
 /**
  * What a build writes that no single plugin's translation holds. Each step folds across plugins

@@ -1,11 +1,11 @@
 /**
- * What one reference to a file is made of is spelled once, in the tools contract, and every reader
+ * What one reference to a file is made of is spelled once, in shared materialization, and every reader
  * of a reference imports it: a second spelling is a second place to drift from the first.
  */
 import { describe, expect, it } from "vitest";
 import { read, sourceFiles } from "./source-graph.js";
 
-const OWNER = "src/contexts/tools/contract/link-syntax.ts";
+const OWNER = "src/shared/domain/materialization/link-syntax.ts";
 const SPELLING = "[^\\\\s`'\\\">,]";
 
 function codeLines(text: string): string[] {

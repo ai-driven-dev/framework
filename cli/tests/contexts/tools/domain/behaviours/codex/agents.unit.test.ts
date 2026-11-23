@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { codexSpec } from "../../../../../../src/composition/tool-profiles/codex.js";
 import { defineAiTool } from "../../../../../../src/contexts/tools/domain/profile/define-tool.js";
-import { SmolTomlCodec } from "../../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
+import { SmolTomlCodec } from "../../../../../../src/shared/infrastructure/smol-toml-codec.adapter.js";
 import { inMarketplace, installed, NAMED_AGENT } from "../../../testing/agent-fixture.builder.js";
 
 const codex = defineAiTool(codexSpec, { toml: new SmolTomlCodec() });

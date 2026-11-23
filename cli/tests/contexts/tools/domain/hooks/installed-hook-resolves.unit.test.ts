@@ -4,12 +4,12 @@ import { codexSpec } from "../../../../../src/composition/tool-profiles/codex.js
 import { copilot } from "../../../../../src/composition/tool-profiles/copilot.js";
 import { cursor } from "../../../../../src/composition/tool-profiles/cursor.js";
 import { opencode } from "../../../../../src/composition/tool-profiles/opencode.js";
-import { rewritePluginRootToken } from "../../../../../src/contexts/tools/contract/plugin-root-token.js";
 import { defineAiTool } from "../../../../../src/contexts/tools/domain/profile/define-tool.js";
 import type { AiTool } from "../../../../../src/contexts/tools/domain/profile.js";
-import { SmolTomlCodec } from "../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
+import { rewritePluginRootToken } from "../../../../../src/shared/domain/materialization/plugin-root-path-rewrite.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
+import { SmolTomlCodec } from "../../../../../src/shared/infrastructure/smol-toml-codec.adapter.js";
 import { nativeOf } from "../../../../shared/testing/native-plugin-answers.builder.js";
 import { present } from "../../../../shared/testing/present.builder.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";

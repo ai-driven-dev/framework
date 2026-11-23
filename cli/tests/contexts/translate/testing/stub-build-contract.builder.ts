@@ -1,8 +1,8 @@
+import type { DiskTarget } from "../../../../src/contexts/translate/ports/plugin-tree-sink.js";
 import type {
   ArtifactContract,
   ToolBuildContract,
-} from "../../../../src/contexts/tools/contract/build-contract.js";
-import type { DiskTarget } from "../../../../src/contexts/translate/ports/plugin-tree-sink.js";
+} from "../../../../src/shared/domain/materialization/build-contract.js";
 
 type Supported = Extract<ArtifactContract, { supported: true }>;
 
