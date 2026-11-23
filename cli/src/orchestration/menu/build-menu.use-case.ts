@@ -1,8 +1,6 @@
 import type { ProjectSetupState } from "../../contexts/installation/contract/project-setup-state.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { Prompter } from "../ports/prompter.js";
 import { isBranch, type MenuLeaf, type MenuNode, toChoice } from "./menu-node.js";
-import { installedNodes } from "./menu-tree.js";
 
 const BACK = { name: "← Back", value: "back" } as const;
 const EXIT = { name: "Exit", value: "exit" } as const;
@@ -17,16 +15,12 @@ export class BuildMenu {
   constructor(
     private readonly projectSetup: ProjectSetupState,
     private readonly prompter: Prompter,
-    private readonly tools: ToolCatalog
+    private readonly nodes: readonly MenuNode[]
   ) {}
 
   async execute(): Promise<BuildMenuResult> {
     if (!(await this.projectSetup.isSetUp())) return this.handleFreshInstall();
-    const result = await this.showMenu(
-      installedNodes(this.tools),
-      "What would you like to do?",
-      []
-    );
+    const result = await this.showMenu([...this.nodes], "What would you like to do?", []);
     if (result.type !== "command") return { command: ["exit"] };
     return { command: result.command };
   }

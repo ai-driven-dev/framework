@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { isBranch } from "../../../src/orchestration/menu/menu-node.js";
 import {
   maintainGroup,
   marketplacesGroup,
   systemGroup,
-} from "../../../src/orchestration/menu/menu-machine-groups.js";
-import { isBranch } from "../../../src/orchestration/menu/menu-node.js";
+} from "../../../src/presentation/menu/menu-machine-groups.presenter.js";
 
 describe("menu machine groups", () => {
   it("runs every marketplace entry through the marketplace command", () => {

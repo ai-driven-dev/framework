@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BuildMenu } from "../../../src/orchestration/menu/build-menu.use-case.js";
+import { installedNodes } from "../../../src/presentation/menu/menu-tree.presenter.js";
 import { syntheticCatalog } from "../../shared/testing/synthetic-tool-id.builder.js";
 import {
   makeQueuedPrompter,
@@ -15,7 +16,7 @@ const BACK_AND_EXIT = [
 async function choicesAt(path: string[]): Promise<SelectCall> {
   const { prompter, selectCalls } = makeQueuedPrompter([...path, "exit"]);
 
-  await new BuildMenu(setUp(true), prompter, syntheticCatalog()).execute();
+  await new BuildMenu(setUp(true), prompter, installedNodes(syntheticCatalog())).execute();
 
   const call = selectCalls[path.length];
   return [call[0], call[1]];

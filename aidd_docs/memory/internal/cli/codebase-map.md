@@ -185,6 +185,7 @@ src/
 │   │   └── tools/
 │   ├── errors/
 │   ├── hooks/
+│   ├── menu/
 │   ├── presenters/
 │   │   ├── plugin/
 │   │   ├── setup/
