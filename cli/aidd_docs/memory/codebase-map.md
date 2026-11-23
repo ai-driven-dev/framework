@@ -68,7 +68,6 @@ src/
 │   │   │   ├── manifest/
 │   │   │   └── plugins/
 │   │   ├── infrastructure/
-│   │   │   └── assets/
 │   │   └── ports/
 │   │       ├── plugin/
 │   │       ├── record/
