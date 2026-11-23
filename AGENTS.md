@@ -32,17 +32,14 @@
 - **Don't assume your knowledge is current**: the doc could also be wrong.
 - **Verify APIs, signatures, flags, and behavior against source or docs.**
 - **Batch independent operations when it saves time or context.**
+- **Commit or push only when the user asks.**
 - **Name by intention, scope by responsibility** ; not mechanism.
-- **Placement discipline:** for every plugin change, place the responsibility in the plugin whose concern owns it, per `docs/ARCHITECTURE.md`.
-- **No dates or ticket/run IDs** in code, comments, tests, CI or docs.
-- Before editing anything under `cli/`, load the `working-on-cli` skill and follow the action for your change.
 
 ## Agents
 
 - Fan out genuinely independent subtasks to agents by responsibility when coordination costs less than serial work.
 - You stay the caller: you own scope, delegation, and final acceptance.
 - Archive each chat session you spawn after its work is complete and its result is collected. Verify the archive succeeded.
-- Delete the chat each CLI test of an AI host (Claude, Codex, and others) creates, once the test is done.
 
 | Responsibility | Agent |
 | --- | --- |
@@ -60,6 +57,7 @@
 <!-- aidd_project_memory:start -->
 
 [aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md)
+[aidd_docs/memory/cli.md](aidd_docs/memory/cli.md)
 [aidd_docs/memory/codebase-map.md](aidd_docs/memory/codebase-map.md)
 [aidd_docs/memory/coding-assertions.md](aidd_docs/memory/coding-assertions.md)
 [aidd_docs/memory/project-brief.md](aidd_docs/memory/project-brief.md)
@@ -68,7 +66,23 @@
 
 <!-- read on demand, not auto-loaded -->
 - aidd_docs/memory/internal/backlog.md
-- aidd_docs/memory/internal/cli.md
+- aidd_docs/memory/internal/cli/architecture.md
+- aidd_docs/memory/internal/cli/auth.md
+- aidd_docs/memory/internal/cli/codebase-map.md
+- aidd_docs/memory/internal/cli/commands.md
+- aidd_docs/memory/internal/cli/decisions/clean-drives-the-host-cli.md
+- aidd_docs/memory/internal/cli/decisions/framework-source-is-machine-scope.md
+- aidd_docs/memory/internal/cli/decisions/manifest-reads-v9-and-splits-v8.md
+- aidd_docs/memory/internal/cli/decisions/marketplace-identity-is-name-plus-plugins.md
+- aidd_docs/memory/internal/cli/decisions/plugin-enablement-carries-its-scope.md
+- aidd_docs/memory/internal/cli/decisions/self-update-version-source-npm.md
+- aidd_docs/memory/internal/cli/deployment.md
+- aidd_docs/memory/internal/cli/distribution.md
+- aidd_docs/memory/internal/cli/host-registration.md
+- aidd_docs/memory/internal/cli/mutation.md
+- aidd_docs/memory/internal/cli/smoke-real.md
+- aidd_docs/memory/internal/cli/telemetry.md
+- aidd_docs/memory/internal/cli/testing.md
 - aidd_docs/memory/internal/decisions/a-price-table-is-the-destination-s.md
 - aidd_docs/memory/internal/decisions/measurement-may-reach-a-hosted-destination.md
 - aidd_docs/memory/internal/deployment.md

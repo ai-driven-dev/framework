@@ -19,8 +19,7 @@ Ignored / excluded forms:
   - HTML angle-bracket links and HTML attributes
   - .git and node_modules directories, plus .stryker-tmp and .e2e-build, which copy the tree
   - Runtime variables, glob patterns, and bare words
-  - cli/tests/fixtures/** (synthetic mock trees) and cli/aidd_docs/tasks/**
-    (historical task records), always, on top of any --ignore given
+  - cli/tests/fixtures/** (synthetic mock trees), always, on top of any --ignore given
 
 How to fix broken links:
   | Need | Use |
@@ -39,7 +38,7 @@ const SKIPPED_DIRS = new Set([".git", "node_modules", "worktrees", ".specstory",
 const SKIPPED_DIR_PREFIXES = [".tmp-check-markdown-links-"];
 // Always ignored, never a --ignore convenience: both trees hold targets meant not to
 // resolve — synthetic mock references, and a historical record left as it was written.
-const DEFAULT_IGNORES = ["cli/tests/fixtures", "cli/aidd_docs/tasks"];
+const DEFAULT_IGNORES = ["cli/tests/fixtures"];
 const MARKDOWN_EXTENSIONS = new Set([".md", ".mdx"]);
 function normalizePathForDisplay(filePath) {
   const relative = path.relative(ROOT, filePath).replaceAll(path.sep, "/");

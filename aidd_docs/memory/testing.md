@@ -1,52 +1,37 @@
 # Testing
 
-How the project is tested: the layers, the tools, and the conventions. Where tests live and how to run them.
-
-> CLI internals (tiers, fixtures, naming, mocking) live in [`cli/aidd_docs/memory/testing.md`](../../cli/aidd_docs/memory/testing.md). This page is the repository-wide view.
+CLI projects and gates: [`internal/cli/testing.md`](internal/cli/testing.md); mutation: [`internal/cli/mutation.md`](internal/cli/mutation.md).
 
 ## Strategy
 
 | Surface | Validated by |
 | --- | --- |
-| Skills (markdown) | the skill generator's validate step, and the pre-commit guards `skill-frontmatter`, `check-skill-argument-hints` and `architecture-rules` |
-| Agents (markdown) | `architecture-rules` over `plugins/*/agents/`, then run end to end against a real project |
-| Rules (markdown) | run end to end against a real project; no pre-commit guard reads them |
-| `scripts/` and bundled hooks | `node --test` under the wrapper below |
-| `cli/` | vitest projects, listed in the CLI bank |
-| `kanban/` | its own vitest suite. It shares no code with `cli/` |
-| Per-tool distributions | golden snapshots in `cli/tests/golden/`, mirrored by the `build-per-tool` CI matrix; Claude Code's own `plugin validate` over a fresh claude build, in `cli-ci.yml` |
-| Browser journeys | `aidd-qa:01-acceptance-qa`, see below |
-
-## Tools
-
-| Tool | Use |
-| --- | --- |
-| vitest | `cli/`, `kanban/` |
-| stryker | mutation, per CLI scope; per pull request only `telemetry` and `shared` gate, the rest runs weekly and reports |
-| knip | dead code, before push and in `cli-ci.yml` |
-| `@playwright/cli` | browser QA evidence, pinned, never an app dependency |
+| Skills | the generator's validate step; pre-commit `skill-frontmatter`, `check-skill-argument-hints`, `architecture-rules` |
+| Agents | `architecture-rules` over `plugins/*/agents/`, then a run against a real project |
+| `scripts/` and bundled hooks | `node --test`, wrapped |
+| `cli/`, `kanban/` | their own vitest suites; they share no code |
+| Per-tool distributions | goldens in `cli/tests/golden/`, the `build-per-tool` CI matrix, Claude Code's `plugin validate` in `cli-ci.yml` |
+| Browser journeys | `aidd-qa:01-acceptance-qa` |
 
 ## Conventions
 
-- A plugin never holds its own tests: `hooks/` ships recursively into user projects. Tests for a bundled script go in `scripts/__tests__/`.
-- The scripts suite writes into a git repository. Run it wrapped, never bare: unwrapped it can overwrite this repository's own `.git/hooks`, and `.git` is in no history.
-- A new or rewritten skill runs end to end on at least two small models from different providers before it ships, in a throwaway repository whose sessions are deleted after. It must stop at each wait and write only once approved.
+- A plugin holds no tests: `hooks/` ships into user projects. A bundled script's tests go in `scripts/__tests__/`.
+- Run the scripts suite wrapped: bare, it can overwrite this repository's `.git/hooks`.
+- Delete each chat a CLI test of an AI tool creates, once the test is done.
 
 ## Run
 
 | Command | Scope |
 | --- | --- |
-| `pnpm test:changed` | only the specs a change can break — vitest resolves the CLI's import graph, and the plugin specs are selected by the paths their own text names. What to run while working |
+| `pnpm test:changed` | only the specs a change can break; run it while working |
 | `node scripts/check-tests-leave-git-alone.js -- node --test 'scripts/__tests__/**/*.test.js'` | repository scripts and hooks |
-| `cd cli && pnpm test` | every CLI project. It does not build |
-| `cd cli && pnpm smoke` | built binary against `cli/scripts/smoke-tools.sh` |
+| `cd cli && pnpm test` | every CLI project, no build |
 | `cd kanban && pnpm test` | the board |
-| `pnpm exec lefthook run pre-push` | the local gate before pushing |
 
-CI runs more. `validate.yml` re-runs the whole pre-commit over the whole tree on every push and pull request. `cli-ci.yml` adds jobs no local hook has. Both are in `internal/deployment.md`.
+- `validate.yml` reruns the whole pre-commit over the whole tree; `cli-ci.yml` adds jobs no hook has (`internal/deployment.md`).
 
 ## Browser QA
 
-- Runner: `npx --yes @playwright/cli@0.1.17`, the framework pin. Never `latest` during QA.
-- Also required: `ffmpeg` and `ffprobe`. Output is WebM evidence per scenario.
-- Owned by `aidd-qa:01-acceptance-qa`; this repository ships the capability, it has no browser journey of its own.
+- Runner: `npx --yes @playwright/cli@0.1.17`, pinned; never `latest`.
+- Needs `ffmpeg` and `ffprobe`; each scenario yields WebM evidence.
+- This repository ships the capability; it has no browser journey of its own.

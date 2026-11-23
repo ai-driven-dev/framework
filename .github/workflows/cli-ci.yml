@@ -73,6 +73,10 @@ jobs:
               cli/*|kanban/*|scripts/__tests__/*|README.md)
                 relevant=true
                 ;;
+              # The memory `docs-do-not-lie.arch.test.ts` holds to the CLI's tree and commands.
+              aidd_docs/memory/internal/cli/*|aidd_docs/memory/project-brief.md)
+                relevant=true
+                ;;
               # The identifier-join probe and the token check, which judge the real tool by the hooks.
               scripts/probe-identifier-join.cjs|scripts/check-claude-tokens-end-to-end.cjs)
                 relevant=true

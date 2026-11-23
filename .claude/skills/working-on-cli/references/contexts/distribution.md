@@ -1,6 +1,6 @@
 # distribution
 
-Where a plugin's content comes from: which marketplaces are registered, trusted and cached, how a catalog or release is fetched, how a fetched distribution is read. Language: `src/contexts/distribution/glossary.md`. Internals: [distribution.md](../../../../../cli/aidd_docs/memory/internal/distribution.md).
+Where a plugin's content comes from: which marketplaces are registered, trusted and cached, how a catalog or release is fetched, how a fetched distribution is read. Language: `src/contexts/distribution/glossary.md`. Internals: [distribution.md](../../../../../aidd_docs/memory/internal/cli/distribution.md).
 
 ## Ports
 

@@ -1,6 +1,6 @@
 # auth
 
-One GitHub credential: kept, found, checked, removed, never used for a business call. Language: `src/contexts/auth/glossary.md`. Where a 401 surfaces and the source order (`sourcesInOrder`): [auth.md](../../../../../cli/aidd_docs/memory/internal/auth.md).
+One GitHub credential: kept, found, checked, removed, never used for a business call. Language: `src/contexts/auth/glossary.md`. Where a 401 surfaces and the source order (`sourcesInOrder`): [auth.md](../../../../../aidd_docs/memory/internal/cli/auth.md).
 
 ## Ports
 

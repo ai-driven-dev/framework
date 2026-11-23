@@ -1,46 +1,51 @@
 # Project Brief
 
-What this project is, the problem it solves, and its domain language. The non-derivable "why", not the "how".
-
-> What the `aidd` binary is, on its own terms: [`cli/aidd_docs/memory/project-brief.md`](../../cli/aidd_docs/memory/project-brief.md).
-
 ## What it is
 
-- A plugin marketplace that installs structured SDLC workflows into AI coding tools — Claude Code, Cursor, GitHub Copilot, Codex, opencode — plus the `aidd` binary that installs them.
-- For developers already working with an AI assistant daily, who want its output repeatable rather than improvised.
+- A plugin marketplace of SDLC workflows for AI coding tools: Claude Code, Cursor, GitHub Copilot, Codex, opencode.
+- `aidd`, published as `@ai-driven-dev/cli`, installs them once per tool and records every file it writes.
+- For developers who work with an AI assistant daily and want repeatable output.
 
 ## Why it exists
 
-- An assistant rediscovers the project every session and improvises its process. Durable memory plus fixed workflows make the same request produce comparable work twice.
-- Workflows are tool-agnostic markdown: written once, translated per tool, instead of one prompt library per assistant.
+- An assistant rediscovers the project every session; memory plus fixed workflows make one request produce comparable work twice.
+- Workflows are tool-agnostic markdown, written once and translated per tool.
+
+## Main journey
+
+1. `aidd setup --ide <ids>` installs the framework for those tools; `--global` for the whole machine.
+2. `aidd marketplace add` registers a marketplace; `aidd plugin install` adds its plugins.
+3. `aidd doctor` reports drift; `aidd sync` repairs it.
+4. `aidd clean` removes what was installed.
 
 ## Domain language
 
 | Term | Meaning |
-| ---- | ------- |
-| Plugin | installable package grouping skills around one concern, listed in `marketplace.json` |
-| Skill | a router: `SKILL.md` dispatching a request to its actions |
-| Action | one atomic step, with its own input, process, output and rules |
-| Agent | isolated executor; own context, returns only a result |
-| Rule | coding standard injected into the tool's context automatically |
-| Memory | the bank under `aidd_docs/memory/`, loaded every session |
-| Marketplace | `.claude-plugin/marketplace.json`, the plugin registry |
+| --- | --- |
+| Plugin | installable package of skills around one concern, listed in `.claude-plugin/marketplace.json` |
+| Marketplace | where plugins come from; registered per project or per machine |
 | Concern | what a plugin owns; decides where a capability lives |
-| Usage record | one billed model call, counted once, attributed to the task a person declared |
+| Skill | a router: `SKILL.md` dispatching a request to its actions |
+| Action | one atomic step of a skill |
+| Agent | isolated executor; returns only a result |
+| Rule | coding standard the tool injects into its context |
+| Memory | the bank under `aidd_docs/memory/`, loaded every session |
+| Manifest | `.aidd/manifest.json`: every installed file with its hash and scope |
+| Context | a bounded area of the CLI code, the unit that owns a concern |
+| Capability | configuration a tool profile hosts: mcp, hooks or settings |
+| Usage record | one billed model call, attributed to the declared task |
 | Promote | sending `next` to `main`, which opens the release |
 
 ## Key features
 
 | Capability | Entry |
 | --- | --- |
-| Install and refresh a tool's configuration | `aidd setup --ide <ids>`; `--global` for every project on the machine |
-| Install plugins from a marketplace | `aidd plugin install`, `aidd marketplace add` |
-| Build a target-native distribution | `aidd translate <source> --to <tool> --out <dir>` |
-| Bootstrap and refresh project memory | `aidd-context:02-project-memory` |
-| Generate context artifacts | `aidd-context:03-context-generate` and its per-kind generators |
-| Development loop | `aidd-dev` — plan, implement, assert, audit, review, test, refactor, debug |
-| Typed product backlog | `aidd-pm` — brief, epic, story, spec, spike, defect |
+| Build a target-native plugin tree | `aidd translate <source> --to <tool> --out <dir>` |
+| Count token consumption locally | `aidd telemetry`, `aidd-telemetry:00-init`, `aidd-telemetry:01-usage` |
+| Project memory | `aidd-context:02-project-memory` |
+| Context artifacts | `aidd-context:03-context-generate` |
+| Development loop | `aidd-dev` |
+| Product backlog | `aidd-pm` |
 | Acceptance QA evidence | `aidd-qa:01-acceptance-qa` |
-| Refine input and output | `aidd-refine` — brainstorm, challenge, blind spots |
-| End-to-end orchestration | `aidd-orchestrator:01-sdlc` |
-| Count what the work cost in tokens | `aidd telemetry`, `aidd-telemetry:00-init`, `aidd-telemetry:01-usage` |
+| Refine input and output | `aidd-refine` |
+| End-to-end delivery | `aidd-orchestrator:01-sdlc` |

@@ -1,6 +1,6 @@
 # host-registration
 
-What a host (Claude Code, Codex, Copilot) says it has registered, and the CLI calls that change it. Language: `src/contexts/host-registration/glossary.md`. Readers: [host-registration.md](../../../../../cli/aidd_docs/memory/internal/host-registration.md).
+What a host (Claude Code, Codex, Copilot) says it has registered, and the CLI calls that change it. Language: `src/contexts/host-registration/glossary.md`. Readers: [host-registration.md](../../../../../aidd_docs/memory/internal/cli/host-registration.md).
 
 ## Ports
 

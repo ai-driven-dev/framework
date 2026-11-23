@@ -116,6 +116,6 @@ Placing a gap: judgment needed, no hook; one write, after the write, several, at
 
 ### What the CLI carries
 
-One descriptor and one host adapter per tool, placed at build time, and one merge engine: [CLI architecture bank](../cli/aidd_docs/memory/architecture.md).
+One descriptor and one host adapter per tool, placed at build time, and one merge engine: [CLI architecture memory](../aidd_docs/memory/internal/cli/architecture.md).
 
 More: [Maintainers guide](MAINTAINERS.md), [CLI architecture](../cli/ARCHITECTURE.md).
