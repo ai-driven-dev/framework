@@ -53,6 +53,13 @@ const OUTPUT_PATH_CANDIDATES = {
   },
 };
 
+/** A flat build writes into the .jsonc when the project has one, the .json otherwise. */
+const FLAT_CONFIG_CANDIDATES = {
+  tiers: [["opencode.jsonc"], ["opencode.json"]],
+  fallback: "opencode.json",
+  onMultipleCandidates: OUTPUT_PATH_CANDIDATES.onMultipleCandidates,
+};
+
 const OPENCODE_CONFIG_REF: ConfigRef = {
   name: "opencode",
   path: `${CONFIG_PREFIX}.opencode/opencode.json`,
@@ -118,7 +125,8 @@ export const opencode = defineAiTool({
   buildContracts: {
     flat: () =>
       buildOpencodeFlatContract(hooks, OPENCODE_FLAT_LAYOUT, {
-        frontmatter: AGENT_FRONTMATTER,
+        agentMarkdown: { frontmatter: AGENT_FRONTMATTER },
+        config: FLAT_CONFIG_CANDIDATES,
       }),
   },
 

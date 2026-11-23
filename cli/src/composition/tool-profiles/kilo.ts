@@ -2,10 +2,6 @@ import { join } from "node:path";
 import kiloJson from "../../../assets/configs/kilo/kilo.json" with { type: "json" };
 import { MCP_CONFIG_REF } from "../../contexts/tools/contract/config-refs.js";
 import { buildKiloFlatContract } from "../../contexts/tools/domain/behaviours/kilo/kilo-build.model.js";
-import {
-  KILO_DIRECTORY,
-  KILO_OUTPUT_PATH_CANDIDATES,
-} from "../../contexts/tools/domain/behaviours/kilo/kilo-paths.model.js";
 import { declareBridgeHooks } from "../../contexts/tools/domain/bridges/event-bridge.js";
 import { agentFrontmatterOf } from "../../contexts/tools/domain/formats/agents/agent-format.js";
 import {
@@ -20,7 +16,10 @@ import {
   flatGlobalFilePath,
   flatPlacement,
 } from "../../contexts/tools/domain/sections/layout-section.js";
-import { McpConfigPart } from "../../contexts/tools/domain/sections/mcp-section.js";
+import {
+  McpConfigPart,
+  type McpOutputPathCandidates,
+} from "../../contexts/tools/domain/sections/mcp-section.js";
 import { ModelsSection } from "../../contexts/tools/domain/sections/models-section.js";
 import {
   type FlatArtifactLayout,
@@ -29,6 +28,26 @@ import {
 
 /** Kilo names an agent after its file, reads the effort as the model's `variant`, and passes
  * any unknown key to the model provider, so only its own keys are carried. */
+const KILO_DIRECTORY = ".kilo/";
+const KILO_PROJECT_CONFIG_JSON = `${KILO_DIRECTORY}kilo.json`;
+const KILO_PROJECT_CONFIG_JSONC = `${KILO_DIRECTORY}kilo.jsonc`;
+
+/** Prefer the config beside Kilo's project artifacts. Existing root-level configuration stays
+ * user-owned and is reused rather than creating a second configuration variant. */
+export const KILO_OUTPUT_PATH_CANDIDATES: McpOutputPathCandidates = {
+  tiers: [
+    [KILO_PROJECT_CONFIG_JSON, KILO_PROJECT_CONFIG_JSONC],
+    ["kilo.json", "kilo.jsonc"],
+  ],
+  fallback: KILO_PROJECT_CONFIG_JSONC,
+  onMultipleCandidates: {
+    error: {
+      toolId: "kilo",
+      detail: "Kilo JSON and JSONC config variants exist at the same location",
+    },
+  },
+};
+
 const AGENT_FRONTMATTER = agentFrontmatterOf({
   keep: ["description", "model", "variant"],
   rename: { variant: "effort" },
@@ -62,7 +81,11 @@ export const kilo = defineAiTool({
   ],
   hooks,
   buildContracts: {
-    flat: () => buildKiloFlatContract(hooks, KILO_FLAT_LAYOUT, { frontmatter: AGENT_FRONTMATTER }),
+    flat: () =>
+      buildKiloFlatContract(hooks, KILO_FLAT_LAYOUT, {
+        agentMarkdown: { frontmatter: AGENT_FRONTMATTER },
+        config: KILO_OUTPUT_PATH_CANDIDATES,
+      }),
   },
 
   capabilities: (bound) => ({
