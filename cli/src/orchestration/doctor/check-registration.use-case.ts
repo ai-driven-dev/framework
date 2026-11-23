@@ -1,11 +1,11 @@
 import type { MarketplaceBuilds } from "../../contexts/distribution/contract/built-marketplaces.js";
 import type { InspectDeclaredMarketplaces } from "../../contexts/host-registration/application/inspect/inspect-declared-marketplaces.use-case.js";
 import type { InspectHostRegistration } from "../../contexts/host-registration/application/inspect/inspect-host-registration.use-case.js";
+import { UNDECLARED_MARKETPLACE_SEVERITY } from "../../contexts/host-registration/contract/finding-severity.model.js";
 import type { InspectDeclaredMarketplacesResult } from "../../contexts/host-registration/contract/inspect-declared-marketplaces-result.js";
-import type { InspectedHost } from "../../contexts/host-registration/contract/inspect-host-registration-request.js";
+import type { HostCandidate } from "../../contexts/host-registration/contract/inspect-host-registration-request.js";
 import type { DoctorIssue } from "../../contexts/installation/contract/doctor-issue.js";
 import type { RegisteredPluginsOfTool } from "../../contexts/installation/contract/registered-plugins.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { registrationIssueOf } from "./registration-issues.js";
 import type { ResolveRegisteredBuilds } from "./resolve-registered-builds.use-case.js";
 
@@ -33,10 +33,7 @@ export interface CheckRegistrationDeps {
  * are errors: `unanswerable` is the normal state on a machine that has never run that binary.
  */
 export class CheckRegistration {
-  constructor(
-    private readonly deps: CheckRegistrationDeps,
-    private readonly tools: ToolCatalog
-  ) {}
+  constructor(private readonly deps: CheckRegistrationDeps) {}
 
   async execute(command: CheckRegistrationRequest): Promise<DoctorIssue[]> {
     const { registered, registeredNames, userCacheRoot, built } = await this.deps.resolve.execute({
@@ -71,7 +68,7 @@ export class CheckRegistration {
       marketplaceNames,
     });
     return declared.findings.map((finding) => ({
-      severity: "warning",
+      severity: UNDECLARED_MARKETPLACE_SEVERITY,
       message: `${finding.tool} no longer declares marketplace '${finding.name}'`,
       fix: { code: "refresh-marketplace", file: finding.file },
     }));
@@ -94,15 +91,11 @@ export class CheckRegistration {
     built: MarketplaceBuilds["built"];
     userCacheRoot: string;
   }): Promise<DoctorIssue[]> {
-    const hosts: InspectedHost[] = [];
-    for (const { toolId, expectedPlugins } of registered) {
-      if (!this.tools.isAiTool(toolId)) continue;
-      hosts.push({
-        tool: toolId,
-        expectedPlugins,
-        marketplaces: built.get(toolId) ?? [],
-      });
-    }
+    const hosts: HostCandidate[] = registered.map(({ toolId, expectedPlugins }) => ({
+      tool: toolId,
+      expectedPlugins,
+      marketplaces: built.get(toolId) ?? [],
+    }));
     const { findings } = await this.deps.inspectHost.execute({
       projectRoot: command.projectRoot,
       userCacheRoot,

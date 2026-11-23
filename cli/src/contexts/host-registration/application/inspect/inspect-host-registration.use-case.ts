@@ -1,4 +1,5 @@
-import type { InspectHostRegistrationRequest } from "../../contract/inspect-host-registration-request.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import type { InspectCandidateHostsRequest } from "../../contract/inspect-host-registration-request.js";
 import type { InspectHostRegistrationResult } from "../../contract/inspect-host-registration-result.js";
 import type { InspectHostMarketplaceSources } from "./inspect-host-marketplace-sources.use-case.js";
 import type { InspectHostPlugins } from "./inspect-host-plugins.use-case.js";
@@ -9,16 +10,19 @@ import type { InspectHostPlugins } from "./inspect-host-plugins.use-case.js";
  */
 export class InspectHostRegistration {
   constructor(
-    private readonly plugins: InspectHostPlugins,
-    private readonly sources: InspectHostMarketplaceSources
+    private readonly plugins: Pick<InspectHostPlugins, "execute">,
+    private readonly sources: Pick<InspectHostMarketplaceSources, "execute">,
+    private readonly tools: Pick<ToolCatalog, "isAiTool">
   ) {}
 
-  async execute(command: InspectHostRegistrationRequest): Promise<InspectHostRegistrationResult> {
+  /** An editor is no host: it keeps no registry of its own, so only AI tools are asked. */
+  async execute(command: InspectCandidateHostsRequest): Promise<InspectHostRegistrationResult> {
+    const hosts = command.hosts.flatMap((host) =>
+      this.tools.isAiTool(host.tool) ? [{ ...host, tool: host.tool }] : []
+    );
+    const asked = { ...command, hosts };
     return {
-      findings: [
-        ...(await this.plugins.execute(command)),
-        ...(await this.sources.execute(command)),
-      ],
+      findings: [...(await this.plugins.execute(asked)), ...(await this.sources.execute(asked))],
     };
   }
 }

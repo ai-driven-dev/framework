@@ -35,37 +35,35 @@ export function hostBinaryAvailableIn(
 /** The registration check, over whichever manifest the scope reads. */
 function registrationCheckOver(base: Base, manifests: ManifestRepository & ScopeRecordsRepository) {
   const { fs, tools } = base;
-  return new CheckRegistration(
-    {
-      resolve: new ResolveRegisteredBuilds(
-        new ListRegisteredPlugins(new LoadManifest(manifests)),
-        recordsOf(manifests),
-        new ResolveBuiltMarketplaces({
-          fs,
-          registry: base.marketplaceRegistry,
-          userCacheRoot: userConfigDir,
-          currentVersion: base.currentVersion,
-        }),
-        tools
-      ),
-      declared: new InspectDeclaredMarketplaces(
+  return new CheckRegistration({
+    resolve: new ResolveRegisteredBuilds(
+      new ListRegisteredPlugins(new LoadManifest(manifests)),
+      recordsOf(manifests),
+      new ResolveBuiltMarketplaces({
         fs,
-        hostBinaryAvailableIn(base.nativePluginActivators),
+        registry: base.marketplaceRegistry,
+        userCacheRoot: userConfigDir,
+        currentVersion: base.currentVersion,
+      }),
+      tools
+    ),
+    declared: new InspectDeclaredMarketplaces(
+      fs,
+      hostBinaryAvailableIn(base.nativePluginActivators),
+      tools
+    ),
+    inspectHost: new InspectHostRegistration(
+      new InspectHostPlugins(base.hostPluginRegistries, tools),
+      new InspectHostMarketplaceSources(
+        catalogReaders(fs).identities,
+        catalogReaders(fs).checkSource,
+        base.hostMarketplaceRegistries,
+        process.platform,
         tools
       ),
-      inspectHost: new InspectHostRegistration(
-        new InspectHostPlugins(base.hostPluginRegistries, tools),
-        new InspectHostMarketplaceSources(
-          catalogReaders(fs).identities,
-          catalogReaders(fs).checkSource,
-          base.hostMarketplaceRegistries,
-          process.platform,
-          tools
-        )
-      ),
-    },
-    tools
-  );
+      tools
+    ),
+  });
 }
 
 /** The doctor checks and the commands that run them. */

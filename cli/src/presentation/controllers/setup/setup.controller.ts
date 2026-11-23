@@ -1,8 +1,8 @@
 import type { Command } from "commander";
+import { agentModelsRequest } from "../../../contexts/tools/contract/agent-models-request.model.js";
 import type { ToolCatalog } from "../../../contexts/tools/contract/tool-catalog.js";
 import type { SetAgentModels } from "../../../orchestration/agent-models/set-agent-models.use-case.js";
 import type { RunSetup } from "../../../orchestration/setup/run-setup.use-case.js";
-import { agentModelsRequest } from "../../../orchestration/setup/setup-request.js";
 import {
   printDetectedContext,
   printNextSteps,

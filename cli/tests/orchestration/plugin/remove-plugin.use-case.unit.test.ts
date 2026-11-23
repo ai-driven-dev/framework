@@ -159,30 +159,11 @@ describe("removing a plugin", () => {
     });
   });
 
-  it("lets a ref leave the record once the host confirmed", async () => {
-    const { steps } = await stepsOf();
-
-    expect(
-      await steps.canDetachRef({ toolId: CLAUDE, tool: claude, confirmed: true, ref: "r" })
-    ).toBe(true);
-  });
-
-  it("lets an unconfirmed ref of a machine-wide tool go only when a machine claim owns it", async () => {
-    // Cursor enables a plugin machine-wide, so only a machine claim could let its ref go.
-    const unowned = await stepsOf();
+  it("asks the machine claims whether they own a ref of a tool", async () => {
     const owned = await stepsOf((toolId, ref) => toolId === CURSOR && ref === "r");
-    const ask = { toolId: CURSOR, tool: cursor, confirmed: false, ref: "r" };
 
-    expect(await unowned.steps.canDetachRef(ask)).toBe(false);
-    expect(await owned.steps.canDetachRef(ask)).toBe(true);
-  });
-
-  it("keeps an unconfirmed ref of a project-wide tool, whoever owns it", async () => {
-    const { steps } = await stepsOf(() => true);
-
-    expect(
-      await steps.canDetachRef({ toolId: CLAUDE, tool: claude, confirmed: false, ref: "r" })
-    ).toBe(false);
+    expect(await owned.steps.isMachineOwned(CURSOR, "r")).toBe(true);
+    expect(await owned.steps.isMachineOwned(CLAUDE, "r")).toBe(false);
   });
 
   it("lets go of the machine claims the removal held", async () => {

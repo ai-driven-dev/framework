@@ -1,4 +1,4 @@
-import type { AiToolId } from "../../../shared/domain/tool.js";
+import type { ToolId } from "../../../shared/domain/tool.js";
 
 /** A registered marketplace, with where this run's build of it lives for one tool. */
 export interface BuiltMarketplace {
@@ -12,5 +12,5 @@ export interface MarketplaceBuilds {
   readonly registeredNames: readonly string[];
   /** Root of the machine-scope built tree these builds were looked for under. */
   readonly userCacheRoot: string;
-  readonly built: ReadonlyMap<AiToolId, readonly BuiltMarketplace[]>;
+  readonly built: ReadonlyMap<ToolId, readonly BuiltMarketplace[]>;
 }

@@ -8,7 +8,7 @@ import {
   inspectGroup,
   pluginsGroup,
   toolsGroup,
-} from "../../../src/orchestration/menu/menu-project-groups.js";
+} from "../../../src/presentation/menu/menu-project-groups.presenter.js";
 
 const leaves = (children: MenuNode[]): MenuLeaf[] =>
   children.flatMap((node) => (isBranch(node) ? [] : [node]));

@@ -7,6 +7,9 @@ import type {
 } from "../../contexts/host-registration/contract/native-registration-spec.js";
 import type { NativeActivation } from "../../contexts/host-registration/domain/native-registration/native-activation.js";
 import {
+  declaredSettingsRefs,
+  registersByProvenRefs,
+  registersBySettingsFile,
   withEnabledPlugins,
   withoutMarketplaces,
 } from "../../contexts/host-registration/domain/settings-declaration.js";
@@ -43,6 +46,9 @@ import type { RegisteredCatalog } from "./tools.js";
 export const settingsDeclaration: SettingsDeclarationRules = {
   withoutMarketplaces,
   withEnabledPlugins,
+  registersBySettingsFile,
+  registersByProvenRefs,
+  declaredRefs: declaredSettingsRefs,
 };
 
 /** What reads a catalogue: its declared identity, and whether a host holds a different one. */

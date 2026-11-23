@@ -1,4 +1,8 @@
-import { type MenuBranch, type MenuLeaf, UPDATE_ALL_TOOLS_HELP } from "./menu-node.js";
+import {
+  type MenuBranch,
+  type MenuLeaf,
+  UPDATE_ALL_TOOLS_HELP,
+} from "../../orchestration/menu/menu-node.js";
 
 const MARKETPLACE_LEAVES: MenuLeaf[] = [
   {

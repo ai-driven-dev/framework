@@ -67,7 +67,8 @@ src/
 │   │   │   ├── sync/
 │   │   │   └── update/
 │   │   ├── contract/
-│   │   │   └── records/
+│   │   │   ├── records/
+│   │   │   └── setup/
 │   │   ├── domain/
 │   │   │   ├── manifest/
 │   │   │   └── plugins/
@@ -185,6 +186,7 @@ src/
 │   │   └── tools/
 │   ├── errors/
 │   ├── hooks/
+│   ├── menu/
 │   ├── presenters/
 │   │   ├── plugin/
 │   │   ├── setup/

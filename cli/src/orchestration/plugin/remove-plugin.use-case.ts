@@ -55,9 +55,7 @@ export class RemovePlugin {
         });
       },
       withdraw: (reach) => this.withdraw(reach),
-      canDetachRef: async ({ toolId, tool, confirmed, ref }) =>
-        confirmed === true ||
-        (tool.pluginEnablementIsMachineGlobal() && (await claims.isMachineOwned(toolId, ref))),
+      isMachineOwned: (toolId, ref) => claims.isMachineOwned(toolId, ref),
       ...pluginRefRecords(records),
       detachNativeRefs: (projectRoot, refsByTool) =>
         claims.detachNativeRefs(projectRoot, refsByTool),

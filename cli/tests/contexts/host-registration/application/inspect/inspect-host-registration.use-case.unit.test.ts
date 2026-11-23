@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { CheckMarketplaceSource } from "../../../../../src/contexts/host-registration/application/check-marketplace-source.use-case.js";
 import { InspectHostMarketplaceSources } from "../../../../../src/contexts/host-registration/application/inspect/inspect-host-marketplace-sources.use-case.js";
 import { InspectHostPlugins } from "../../../../../src/contexts/host-registration/application/inspect/inspect-host-plugins.use-case.js";
@@ -46,7 +46,8 @@ describe("inspecting a host's registries together", () => {
         ]),
         "linux",
         tools
-      )
+      ),
+      tools
     );
 
     const { findings } = await subject.execute({
@@ -62,5 +63,28 @@ describe("inspecting a host's registries together", () => {
     });
 
     expect(findings.map((finding) => finding.kind)).toEqual(["plugin-missing", "source-conflict"]);
+  });
+
+  it("leaves an editor out: it has no registry of its own to ask", async () => {
+    const plugins = { execute: vi.fn(async () => []) };
+    const subject = new InspectHostRegistration(
+      plugins,
+      { execute: async () => [] },
+      registeredTools()
+    );
+    const request = { projectRoot: "/project", userCacheRoot: "/home/.config/aidd" };
+
+    await subject.execute({
+      ...request,
+      hosts: [
+        { tool: TOOL.vscode, expectedPlugins: [], marketplaces: [] },
+        { tool: TOOL.claude, expectedPlugins: [], marketplaces: [] },
+      ],
+    });
+
+    expect(plugins.execute).toHaveBeenCalledWith({
+      ...request,
+      hosts: [{ tool: TOOL.claude, expectedPlugins: [], marketplaces: [] }],
+    });
   });
 });

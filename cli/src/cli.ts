@@ -11,6 +11,7 @@ import { registerCommands } from "./presentation/controllers/menu/register-comma
 import { describeMessage } from "./presentation/errors/describe-message.presenter.js";
 import { failCommand, render } from "./presentation/errors/error-translator.presenter.js";
 import { registerUpdateNoticeHooks } from "./presentation/hooks/update-notice-hooks.js";
+import { installedNodes } from "./presentation/menu/menu-tree.presenter.js";
 import { resolveProjectRoot } from "./presentation/terminal/project-root.js";
 import { waitForEnter } from "./presentation/terminal/wait-for-enter.js";
 
@@ -53,7 +54,8 @@ const runInMenu = inProcessCommand(registerProgram);
 const terminal = { runner: { run: runInMenu }, pause: { untilEnter: waitForEnter } };
 const menuOfProject = (projectRoot: string) =>
   createContainer({ projectRoot, verbose: false, tools, output: createOutput(false) }).menu(
-    terminal
+    terminal,
+    installedNodes(tools)
   );
 
 const program = registerProgram(new Command(), (code) => process.exit(code));

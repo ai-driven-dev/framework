@@ -1,5 +1,6 @@
 import type { CheckProjectLayout } from "../../contexts/installation/application/doctor/check-project-layout.use-case.js";
 import type { InspectInstallation } from "../../contexts/installation/application/doctor/inspect-installation.use-case.js";
+import { isReportHealthy } from "../../contexts/installation/contract/doctor-verdict.model.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { ToolCategory } from "../../shared/domain/tool.js";
 import type { CheckAuthentication } from "./check-authentication.use-case.js";
@@ -45,8 +46,7 @@ export class RunDoctor {
     }
     const { toolHealth, pluginIssues } = inspection;
     return {
-      healthy:
-        issues.filter((i) => i.severity !== "info").length === 0 && pluginIssues.length === 0,
+      healthy: isReportHealthy(issues, pluginIssues),
       toolHealth,
       issues,
       pluginIssues,

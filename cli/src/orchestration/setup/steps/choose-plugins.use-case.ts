@@ -1,9 +1,9 @@
 import type { ListMarketplaces } from "../../../contexts/distribution/application/list-marketplaces.use-case.js";
 import type { ResolveMarketplace } from "../../../contexts/distribution/application/resolve-marketplace.use-case.js";
 import type { PluginCatalogEntry } from "../../../contexts/distribution/contract/catalog.js";
+import type { PluginInstallMode } from "../../../contexts/installation/contract/setup/setup-request-rules.model.js";
 import type { PluginInstallFromMarketplace } from "../../plugin/install-from-marketplace.use-case.js";
 import type { PluginPick } from "../../plugin/pick-plugins.use-case.js";
-import type { PluginInstallMode } from "../setup-flow.model.js";
 export interface ChoosePluginsRequest {
   projectRoot: string;
   mode: PluginInstallMode;

@@ -40,18 +40,15 @@ export function checkRegistrationOver(
   currentVersion: string,
   tools: RegisteredCatalog
 ): CheckRegistration {
-  return new CheckRegistration(
-    {
-      resolve: resolveRegisteredBuildsOver(
-        manifests,
-        new ResolveBuiltMarketplaces({ fs, registry, userCacheRoot, currentVersion }),
-        tools
-      ),
-      declared: new InspectDeclaredMarketplaces(fs, hostAvailable, tools),
-      inspectHost,
-    },
-    tools
-  );
+  return new CheckRegistration({
+    resolve: resolveRegisteredBuildsOver(
+      manifests,
+      new ResolveBuiltMarketplaces({ fs, registry, userCacheRoot, currentVersion }),
+      tools
+    ),
+    declared: new InspectDeclaredMarketplaces(fs, hostAvailable, tools),
+    inspectHost,
+  });
 }
 
 export function buildCheckRegistration(

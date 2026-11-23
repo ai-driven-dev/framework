@@ -1,4 +1,4 @@
-import type { AiToolId } from "../../../shared/domain/tool.js";
+import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 
 /** A plugin the host is expected to carry, and the ref to look it up by: `ref` is absent exactly
  * when nothing can build one. */
@@ -24,4 +24,14 @@ export interface InspectHostRegistrationRequest {
   readonly projectRoot: string;
   readonly userCacheRoot: string;
   readonly hosts: readonly InspectedHost[];
+}
+
+/** A tool the caller would have inspected: an editor among them, which no registry answers for. */
+export interface HostCandidate extends Omit<InspectedHost, "tool"> {
+  readonly tool: ToolId;
+}
+
+export interface InspectCandidateHostsRequest
+  extends Omit<InspectHostRegistrationRequest, "hosts"> {
+  readonly hosts: readonly HostCandidate[];
 }

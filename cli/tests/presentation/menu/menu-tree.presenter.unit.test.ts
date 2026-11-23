@@ -4,7 +4,7 @@ import {
   type MenuLeaf,
   type MenuNode,
 } from "../../../src/orchestration/menu/menu-node.js";
-import { installedNodes } from "../../../src/orchestration/menu/menu-tree.js";
+import { installedNodes } from "../../../src/presentation/menu/menu-tree.presenter.js";
 import { syntheticCatalog } from "../../shared/testing/synthetic-tool-id.builder.js";
 
 function leavesOf(nodes: MenuNode[]): MenuLeaf[] {

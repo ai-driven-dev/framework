@@ -7,6 +7,7 @@ import { wireInstallation } from "../../src/composition/contexts/installation.js
 import { createOutput, wireBase } from "../../src/composition/shared.js";
 import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
 import { ManifestRepositoryAdapter } from "../../src/contexts/installation/infrastructure/manifest-repository-adapter.js";
+import { installedNodes } from "../../src/presentation/menu/menu-tree.presenter.js";
 import type { Output } from "../../src/presentation/terminal/output.model.js";
 import type { Scope } from "../../src/shared/domain/scope.js";
 import { manifestFileDeps } from "../contexts/installation/testing/manifest-file-deps.builder.js";
@@ -131,7 +132,7 @@ describe("the container a command is handed", () => {
       projectRoot: root,
       verbose: false,
       tools: catalogOf(),
-    }).menu({ runner, pause: { untilEnter: async () => {} } });
+    }).menu({ runner, pause: { untilEnter: async () => {} } }, installedNodes(catalogOf()));
 
     expect(await menuLoop.execute()).toBe(1);
     expect(ran).toEqual([["setup"]]);
@@ -156,7 +157,7 @@ describe("the container a command is handed", () => {
       projectRoot: root,
       verbose: false,
       tools: catalogOf(),
-    }).menu({ runner, pause: { untilEnter: async () => {} } });
+    }).menu({ runner, pause: { untilEnter: async () => {} } }, installedNodes(catalogOf()));
 
     await expect(menuLoop.execute()).rejects.toThrow("stop");
     expect(ran[0]).not.toEqual(["setup"]);

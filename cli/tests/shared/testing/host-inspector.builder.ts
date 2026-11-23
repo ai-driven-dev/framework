@@ -26,6 +26,7 @@ export function hostInspector(
       deps.marketplaceRegistries,
       process.platform,
       tools
-    )
+    ),
+    tools
   );
 }

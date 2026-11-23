@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  declaredSettingsRefs,
+  registersByProvenRefs,
+  registersBySettingsFile,
   withEnabledPlugins,
   withoutMarketplaces,
 } from "../../../../src/contexts/host-registration/domain/settings-declaration.js";
@@ -46,5 +49,44 @@ describe("the plugins a parsed shared file enables", () => {
     expect(withEnabledPlugins({ [ENABLED]: value }, ENABLED, ["p"])).toStrictEqual({
       [ENABLED]: { p: true },
     });
+  });
+});
+
+const input = (name: string) => ({ name });
+const keyOf = (m: { name: string }) => (m.name === "none" ? null : `${m.name}-key`);
+
+describe("the refs a tool's shared file enables for the plugins the manifest records", () => {
+  it("keys each ref by the entry key of the marketplace its plugin came from", () => {
+    expect(
+      declaredSettingsRefs([{ plugin: "p", marketplace: "m" }], [input("m")], keyOf)
+    ).toStrictEqual(["p@m-key"]);
+  });
+
+  it("skips a plugin with no marketplace, one this sync does not handle and one with no key", () => {
+    expect(
+      declaredSettingsRefs(
+        [
+          { plugin: "a", marketplace: null },
+          { plugin: "b", marketplace: "unknown" },
+          { plugin: "c", marketplace: "none" },
+        ],
+        [input("none")],
+        keyOf
+      )
+    ).toStrictEqual([]);
+  });
+});
+
+describe("how a tool's settings file registers its plugins", () => {
+  const answering = (proof: boolean) => ({ requiresNativeProof: () => proof });
+
+  it("projects the declared refs for a tool that needs no host proof", () => {
+    expect(registersBySettingsFile(answering(false))).toBe(true);
+    expect(registersBySettingsFile(answering(true))).toBe(false);
+  });
+
+  it("projects only the proven refs for a tool that needs the host's proof", () => {
+    expect(registersByProvenRefs(answering(true))).toBe(true);
+    expect(registersByProvenRefs(answering(false))).toBe(false);
   });
 });

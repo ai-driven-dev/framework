@@ -1,4 +1,33 @@
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
+import { refOnHostName } from "./record/host-ref.js";
+
+/** What a tool's settings answer about how its plugins register. */
+interface ProofAnswering {
+  requiresNativeProof(): boolean;
+}
+
+/** Whether a tool registers its plugins by its shared settings file alone, never needing the
+ * host's proof. */
+export const registersBySettingsFile = (settings: ProofAnswering): boolean =>
+  !settings.requiresNativeProof();
+
+/** Whether a tool's settings file enables only the refs the host itself proved. */
+export const registersByProvenRefs = (settings: ProofAnswering): boolean =>
+  settings.requiresNativeProof();
+
+/** The refs a shared file enables: each recorded plugin of a marketplace this sync handles, keyed
+ * by the entry key the tool names that marketplace by, none for a marketplace the tool cannot key. */
+export function declaredSettingsRefs<M extends { readonly name: string }>(
+  recorded: readonly { readonly plugin: string; readonly marketplace?: string | null }[],
+  marketplaces: readonly M[],
+  entryKeyOf: (marketplace: M) => string | null
+): string[] {
+  return recorded.flatMap(({ plugin, marketplace }) => {
+    const handled = marketplaces.find((m) => m.name === marketplace);
+    const key = handled === undefined ? null : entryKeyOf(handled);
+    return key === null ? [] : [refOnHostName(plugin, key)];
+  });
+}
 
 /** A parsed shared settings file without its marketplaces declaration, or null when it declared
  * none. The file the caller holds is left as it was. */

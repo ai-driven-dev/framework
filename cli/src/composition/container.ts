@@ -1,6 +1,7 @@
 import type { FrameworkBuildContext } from "../contexts/translate/application/build-native-tree.use-case.js";
 import { BuildMenu } from "../orchestration/menu/build-menu.use-case.js";
 import { MenuLoop } from "../orchestration/menu/menu-loop.use-case.js";
+import type { MenuNode } from "../orchestration/menu/menu-node.js";
 import type { CommandRunner, Pause } from "../orchestration/menu/menu-ports.js";
 import { projectSetupOf, wireInstallation } from "./contexts/installation.js";
 import { wireRecipes } from "./contexts/recipes.js";
@@ -135,10 +136,10 @@ export class Container {
     return { frameworkBuild };
   }
 
-  /** The menu loop of this project, given the terminal the loop runs commands on. */
-  menu(terminal: { runner: CommandRunner; pause: Pause }): MenuLoop {
+  /** The menu loop of this project, given the terminal the loop runs commands on and the menu it offers. */
+  menu(terminal: { runner: CommandRunner; pause: Pause }, nodes: readonly MenuNode[]): MenuLoop {
     const { prompter, manifestRepo } = this.shared;
-    const menu = new BuildMenu(projectSetupOf(manifestRepo), prompter, this.options.tools);
+    const menu = new BuildMenu(projectSetupOf(manifestRepo), prompter, nodes);
     return new MenuLoop(menu, terminal.runner, terminal.pause);
   }
 }

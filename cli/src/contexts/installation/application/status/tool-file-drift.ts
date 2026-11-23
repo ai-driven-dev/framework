@@ -86,3 +86,8 @@ export async function addedFileDrift(fs: FileReader, scan: AddedFileScan): Promi
     .filter((fullRelPath) => !machineLocal.includes(fullRelPath) && !isTracked(fullRelPath))
     .map((relativePath) => ({ relativePath, status: "added" as const }));
 }
+
+/** The paths of drifted files a restore can bring back: the install wrote them, then they changed or vanished. */
+export function restorableDrift(drift: readonly FileDrift[]): string[] {
+  return drift.filter((d) => d.status !== "added").map((d) => d.relativePath);
+}

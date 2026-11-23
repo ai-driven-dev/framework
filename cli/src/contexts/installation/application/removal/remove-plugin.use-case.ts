@@ -11,7 +11,7 @@ import type { InstallationCatalog } from "../../ports/tool-sections.js";
 import { resolvePluginToolIds, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import { requireManifest } from "../shared/require-manifest.js";
 import type { AssertProjectIntegrationRemovable } from "./assert-project-integration-removable.use-case.js";
-import type { ProjectPluginWithdrawalSteps } from "./project-plugin-withdrawal.js";
+import { mayLetRefGo, type ProjectPluginWithdrawalSteps } from "./project-plugin-withdrawal.js";
 import type { RemoveProjectIntegration } from "./remove-project-integration.use-case.js";
 
 export interface RemovePluginRequest {
@@ -124,7 +124,7 @@ export class RemovePlugin {
       if (
         ref !== undefined &&
         registrations !== undefined &&
-        (await withdrawal.canDetachRef({ toolId, tool, confirmed, ref }))
+        (await mayLetRefGo({ toolId, tool, confirmed, ref }, withdrawal))
       ) {
         registered.set(toolId, withdrawal.withoutRef(registrations, ref));
       }

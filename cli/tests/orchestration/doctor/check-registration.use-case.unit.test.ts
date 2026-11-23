@@ -371,33 +371,30 @@ describe("the hosts handed to the registry inspection", () => {
     const manifest = Manifest.create();
     manifest.addTool(SYNTHETIC_NATIVE_TOOL, "test", []);
     const inspected: unknown[] = [];
-    const check = new CheckRegistration(
-      {
-        resolve: resolveRegisteredBuildsOver(
-          new InMemoryManifestRepository(manifest),
-          {
-            execute: async () => ({
-              registeredNames: [],
-              userCacheRoot: "/user-cache",
-              built: new Map(),
-            }),
-          },
-          syntheticNativeFamilyCatalog()
-        ),
-        declared: new InspectDeclaredMarketplaces(
-          new InMemoryFileAdapter(),
-          () => false,
-          syntheticNativeFamilyCatalog()
-        ),
-        inspectHost: {
-          execute: async ({ hosts }) => {
-            inspected.push(...hosts);
-            return { findings: [] };
-          },
+    const check = new CheckRegistration({
+      resolve: resolveRegisteredBuildsOver(
+        new InMemoryManifestRepository(manifest),
+        {
+          execute: async () => ({
+            registeredNames: [],
+            userCacheRoot: "/user-cache",
+            built: new Map(),
+          }),
+        },
+        syntheticNativeFamilyCatalog()
+      ),
+      declared: new InspectDeclaredMarketplaces(
+        new InMemoryFileAdapter(),
+        () => false,
+        syntheticNativeFamilyCatalog()
+      ),
+      inspectHost: {
+        execute: async ({ hosts }) => {
+          inspected.push(...hosts);
+          return { findings: [] };
         },
       },
-      syntheticNativeFamilyCatalog()
-    );
+    });
 
     await check.execute({ projectRoot: PROJECT_ROOT, allowedIds: null, globalInstall: true });
 

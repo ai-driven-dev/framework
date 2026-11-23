@@ -3,6 +3,7 @@ import { wireTools } from "../../../../src/composition/contexts/tools.js";
 import { BuildMenu } from "../../../../src/orchestration/menu/build-menu.use-case.js";
 import { MenuLoop } from "../../../../src/orchestration/menu/menu-loop.use-case.js";
 import { describeMessage } from "../../../../src/presentation/errors/describe-message.presenter.js";
+import { installedNodes } from "../../../../src/presentation/menu/menu-tree.presenter.js";
 import { OutputAdapter } from "../../../../src/presentation/terminal/output.adapter.js";
 import { prompterAnswering } from "../../../shared/testing/partial-ports.builder.js";
 
@@ -33,7 +34,7 @@ const menuOf = vi.fn(() => {
     input: promptInput,
   });
   const projectSetup = { isSetUp: async () => (await loadManifest()) !== null };
-  const menu = new BuildMenu(projectSetup, prompter, wireTools());
+  const menu = new BuildMenu(projectSetup, prompter, installedNodes(wireTools()));
   return new MenuLoop(menu, { run: spawn }, { untilEnter: waitForEnter });
 });
 

@@ -11,7 +11,9 @@ import {
   DuplicatePluginError,
   InvalidManifestDataError,
   InvalidManifestToolIdError,
+  InvalidPluginModeConfigError,
   InvalidPluginScopeError,
+  InvalidSetupToolIdError,
   MalformedPluginScopeError,
   ManifestMigrationError,
   ManifestUnavailableError,
@@ -23,6 +25,10 @@ import {
   ToolNotInstalledError,
   UnresolvableUserScopeError,
   UnsupportedManifestVersionError,
+  UserScopeIdeToolsError,
+  UserScopeNoToolsError,
+  UserScopePluginModeError,
+  UserScopeUnsupportedAiToolsError,
 } from "../../../src/contexts/installation/contract/installation.error.js";
 import {
   EditedAfterInstallError,
@@ -36,20 +42,13 @@ import {
 } from "../../../src/contexts/machine-claims/contract/machine-claims.error.js";
 import {
   AmbiguousPluginMatchError,
-  CategoryMismatchError,
   InteractiveOnlyError,
-  InvalidPluginModeConfigError,
-  InvalidSetupToolIdError,
   NoMarketplacesRegisteredError,
   SyncFailedError,
   TrustDeniedError,
   UserPluginUpdatePartialError,
   UserScopeFilterUnsupportedError,
-  UserScopeIdeToolsError,
-  UserScopeNoToolsError,
-  UserScopePluginModeError,
   UserScopeUnavailableError,
-  UserScopeUnsupportedAiToolsError,
 } from "../../../src/orchestration/orchestration.error.js";
 import { render } from "../../../src/presentation/errors/error-translator.presenter.js";
 
@@ -159,14 +158,6 @@ const cases: [() => Error, string][] = [
   [
     () => new AmbiguousPluginMatchError("p", ["a", "b"]),
     "Plugin 'p' matches multiple marketplaces: a, b. Use --from <marketplace>.",
-  ],
-  [
-    () => new CategoryMismatchError(["x"], "ai", ["claude"]),
-    "x is not an AI tool. Valid AI tools: claude",
-  ],
-  [
-    () => new CategoryMismatchError(["x", "y"], "ide", ["vscode"]),
-    "x, y are not IDE tools. Valid IDE tools: vscode",
   ],
   [() => new InteractiveOnlyError("a"), "'a' requires an interactive terminal."],
   [() => new InvalidPluginModeConfigError("mode invalid"), "mode invalid"],

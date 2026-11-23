@@ -71,11 +71,6 @@ export const INSTALLATION: MessagesOf<InstallationOwners> = {
     "registered for it. Run `aidd sync` again once the source is fixed.",
   "ambiguous-plugin-match": (error) =>
     `Plugin '${error.plugin}' matches multiple marketplaces: ${error.marketplaces.join(", ")}. Use --from <marketplace>.`,
-  "category-mismatch": (error) => {
-    const label = error.category === "ai" ? "AI" : "IDE";
-    const verb = error.wrong.length === 1 ? `is not an ${label} tool` : `are not ${label} tools`;
-    return `${error.wrong.join(", ")} ${verb}. Valid ${label} tools: ${error.validToolIds.join(", ")}`;
-  },
   "interactive-only": (error) => `'${error.action}' requires an interactive terminal.`,
   "invalid-plugin-mode-config": (error) => error.detail,
   "invalid-setup-tool-id": (error) =>
