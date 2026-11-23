@@ -42,7 +42,7 @@ const READER_CREATED = new Set([".aidd/config.json", ".agents/hooks.json"]);
  * and holding it true would forbid ever moving a file. */
 const CLI_SCANNED = [
   "../.claude/skills/working-on-cli",
-  "aidd_docs/memory",
+  "../aidd_docs/memory/internal/cli",
   "ARCHITECTURE.md",
   "README.md",
   "vitest.config.ts",

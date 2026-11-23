@@ -1,6 +1,6 @@
 # telemetry
 
-What a tool's own transcripts say a model call consumed, and how it is stored, attributed and reported. Language: `src/contexts/telemetry/glossary.md`. Code map: [telemetry.md](../../../../../cli/aidd_docs/memory/internal/telemetry.md). Mutation floor applies: [testing.md](../../../../../cli/aidd_docs/memory/testing.md).
+What a tool's own transcripts say a model call consumed, and how it is stored, attributed and reported. Language: `src/contexts/telemetry/glossary.md`. Code map: [telemetry.md](../../../../../aidd_docs/memory/internal/cli/telemetry.md). Mutation floor applies: [testing.md](../../../../../aidd_docs/memory/internal/cli/testing.md).
 
 ## Ports
 

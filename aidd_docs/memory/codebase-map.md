@@ -1,41 +1,26 @@
 # Codebase Map
 
-The macro layout: the top-level areas and what each holds. A map to navigate, not the full tree.
-
-> Where things live inside the CLI is in [`cli/aidd_docs/memory/codebase-map.md`](../../cli/aidd_docs/memory/codebase-map.md).
-
-```mermaid
-flowchart TD
-    Root["framework/"] --> Plugins["plugins/"]
-    Root --> Cli["cli/"]
-    Root --> Kanban["kanban/"]
-    Root --> Scripts["scripts/"]
-    Root --> Docs["docs/"]
-    Root --> AiddDocs["aidd_docs/"]
-    Root --> Manifest[".claude-plugin/"]
-    Root --> Claude[".claude/"]
-    Root --> GH[".github/"]
-```
+CLI tree and where to add code: [`internal/cli/codebase-map.md`](internal/cli/codebase-map.md).
 
 ## Areas
 
 | Path | Holds |
 | --- | --- |
-| `plugins/` | the product — one dir per plugin, each with `plugins/<plugin>/.claude-plugin/plugin.json` and `skills/`, optionally `agents/`, `commands/`, `hooks/`, `rules/` |
-| `cli/` | the `aidd` binary. Has its own memory bank and `CLAUDE.md` |
-| `kanban/` | the task board. A private package with its own lockfile, unwired from the CLI |
-| `scripts/` | repository checks and generators, run by lefthook and CI. Tests in `scripts/__tests__/` |
-| `docs/` | durable docs — architecture, plugin authoring, glossary, maintainer runbook. `prompts-documentation.md` is generated |
-| `aidd_docs/` | this memory bank, plus `tasks/`, `runs/`, `product/`, `specs/`, `recipes/`, `brainstorm/` |
-| `.claude-plugin/` | `marketplace.json`, the plugin manifest. Versions live in `.release-please-manifest.json` — see `internal/deployment.md` |
-| `.claude/` | registers this checkout as a local marketplace, so a contributor runs the plugins they edit |
+| `plugins/` | the product: one folder per plugin, with `plugins/<plugin>/.claude-plugin/plugin.json`, `skills/`, and optionally `agents/`, `commands/`, `hooks/`, `rules/` |
+| `cli/` | the `aidd` binary |
+| `kanban/` | the task board, a private package unwired from the CLI |
+| `scripts/` | repository checks and generators run by lefthook and CI; tests in `scripts/__tests__/` |
+| `docs/` | human docs: architecture, plugin authoring, glossary, maintainer guide |
+| `aidd_docs/` | this memory bank, plus `tasks/`, `product/`, `specs/`, `recipes/`, `brainstorm/`, `release-video/` |
+| `.claude-plugin/` | `marketplace.json`, the plugin manifest |
+| `.claude/` | registers this checkout as a local marketplace; holds the `working-on-cli` skill |
 | `.github/` | workflows, issue templates, rulesets |
 
 ## Entry points
 
 | Entry | Path |
 | --- | --- |
-| Binary | `cli/src/cli.ts` → `dist/cli.js`, bin name `aidd` |
+| Binary | `cli/src/cli.ts`, built to `dist/cli.js`, bin `aidd` |
 | Workflow | `plugins/<plugin>/skills/<NN>-<name>/SKILL.md` |
 | Memory hook | `plugins/aidd-context/hooks/memory.cjs`: `load` on `SessionStart`, `guard` on `Stop` |
 
@@ -44,4 +29,4 @@ flowchart TD
 | Package | Released |
 | --- | --- |
 | `cli` (`@ai-driven-dev/cli`) | npm, the only published package |
-| `kanban` (`@ai-driven-dev/kanban-source`) | private. Depends on npm packages only, never on `cli/` |
+| `kanban` (`@ai-driven-dev/kanban-source`) | private; depends on npm packages only, never on `cli/` |

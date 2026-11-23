@@ -12,7 +12,7 @@ A test that failed first for the reason its name gives, at one level.
 
 ## Process
 
-1. **Load.** Read [architecture.md](../references/architecture.md) and the `references/contexts/<ctx>.md`. Commands, projects, mutation floors, fixtures and sandbox are in [testing.md](../../../../cli/aidd_docs/memory/testing.md); golden machine independence, bug reproduction and the challenge pass are in [golden-machine-independence.md](../references/test/golden-machine-independence.md), [bug-empirical-reproduction.md](../references/test/bug-empirical-reproduction.md) and [test-challenge-pass.md](../references/test/test-challenge-pass.md).
+1. **Load.** Read [architecture.md](../references/architecture.md) and the `references/contexts/<ctx>.md`. Commands, projects, mutation floors, fixtures and sandbox are in [testing.md](../../../../aidd_docs/memory/internal/cli/testing.md); golden machine independence, bug reproduction and the challenge pass are in [golden-machine-independence.md](../references/test/golden-machine-independence.md), [bug-empirical-reproduction.md](../references/test/bug-empirical-reproduction.md) and [test-challenge-pass.md](../references/test/test-challenge-pass.md).
 2. **Level.** Pick the lowest level that proves the behaviour; the suffix selects the vitest project. A behaviour is proven at one level, never repeated above it.
 
    | Level | Where | For |
@@ -32,7 +32,7 @@ A test that failed first for the reason its name gives, at one level.
 8. **Contract suite.** It is `describe<Port>Contract(subjectName, makeSubject)` in the kit, called by one `*.contract.test.ts`. Red on the real adapter means a wrong case; red on the fake, fix the fake. Cases are only what the port can drive.
 9. **Tools.** Tool profiles and ids reach a test only through `registeredTools()` and `TOOL` (`tests/shared/testing/registered-tools.builder.ts`); a synthetic profile is `ProfileBuilder` wrapped by `catalogOf`.
 10. **Sandbox.** Run no real AI host binary in a test: e2e runs in the sandbox of `cli-sandbox.builder.ts` (`testing.md`, Fixtures and sandbox).
-11. **Real host.** For a real-host check run `pnpm smoke:real`, opt-in and local ([smoke-real.md](../../../../cli/aidd_docs/memory/internal/smoke-real.md)).
+11. **Real host.** For a real-host check run `pnpm smoke:real`, opt-in and local ([smoke-real.md](../../../../aidd_docs/memory/internal/cli/smoke-real.md)).
 12. **Clean up.** Delete the chat the real-host check creates.
 
 ## Test

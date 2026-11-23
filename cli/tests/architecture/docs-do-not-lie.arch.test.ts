@@ -26,8 +26,8 @@ import {
 const DOCS = [
   "ARCHITECTURE.md",
   "README.md",
-  "aidd_docs/memory/codebase-map.md",
-  "aidd_docs/memory/project-brief.md",
+  "../aidd_docs/memory/internal/cli/codebase-map.md",
+  "../aidd_docs/memory/project-brief.md",
 ];
 
 /** The line itself says the command is gone. */
@@ -94,7 +94,7 @@ describe("the command guard itself", () => {
   });
 });
 
-const MAP = "aidd_docs/memory/codebase-map.md";
+const MAP = "../aidd_docs/memory/internal/cli/codebase-map.md";
 
 /** The fenced block whose first line is `src/`. */
 function sourceTreeBlock(text: string): string {

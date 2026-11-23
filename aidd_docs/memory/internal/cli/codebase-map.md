@@ -1,6 +1,6 @@
-# Codebase Map
+# CLI Codebase Map
 
-Where things live. `tests/architecture/docs-do-not-lie.arch.test.ts` holds the tree to the directories in both directions.
+Where CLI code lives. `cli/tests/architecture/docs-do-not-lie.arch.test.ts` holds this tree to `cli/src/` in both directions.
 
 ```txt
 src/
@@ -204,24 +204,23 @@ src/
 
 | Path | Holds |
 | --- | --- |
-| `src/composition/` | the wiring; imported by the composition root and `cli.ts` only |
-| `src/shared/` | what two or more contexts need; `earned-sharing.arch.test.ts` |
-| `tests/` | mirrors `src/`, one tier per file extension; `architecture/` holds the guards, `golden/` the snapshots, `helpers/ports/` the doubles |
-| `assets/` | configs inlined at build time, schemas copied beside the binary, hook runtimes |
-| `scripts/` | bundle budget, mutation runner, smoke harness, profile-copy check |
+| `cli/src/composition/` | the wiring; imported only by the composition root and `cli/src/cli.ts` |
+| `cli/src/shared/` | what two or more contexts need; `cli/tests/architecture/earned-sharing.arch.test.ts` |
+| `cli/tests/` | mirrors `cli/src/`, one tier per file suffix; `architecture/` guards, `golden/` snapshots, `cli/tests/shared/testing/` builders |
+| `cli/assets/` | configs inlined at build time, schemas copied beside the binary, hook runtimes |
+| `cli/scripts/` | bundle budget, mutation runner, smoke harnesses, profile-copy check |
 
 ## Entry points
 
 | Entry | Path |
 | --- | --- |
-| Binary | `src/cli.ts` to `dist/cli.js`, bin `aidd` |
-| Wiring | `src/composition/container.ts` |
+| Wiring | `cli/src/composition/container.ts` |
 
 ## Where to add
 
 | What | Where |
 | --- | --- |
-| a command | `presentation/controllers/`, its logic in the context that owns the concept |
-| a tool | one directory under `contexts/tools/domain/profiles/`, procedure in the `tools` skill |
+| a command | `presentation/controllers/`; its logic in the context owning the concept |
+| a tool | one folder under `contexts/tools/domain/profiles/`; procedure in the `working-on-cli` skill's `actions/01-tool.md` |
 | a port used by one context | its `ports/`, adapter in its `infrastructure/` |
 | a port used by two | `shared/ports/`, adapter in `shared/infrastructure/` |

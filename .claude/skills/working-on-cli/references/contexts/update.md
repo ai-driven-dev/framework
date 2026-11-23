@@ -10,7 +10,7 @@ The installed CLI against its latest release: decided, announced, replaced. Lang
 ## Suppliers
 
 - `auth/contract/token-provider.ts`: the token the changelog read sends (edge `update->auth`); the version read sends none.
-- `shared/ports/http-get.ts`: the release reads, handed in by `src/composition/contexts/update.ts`, which also passes the bases of the reads ([self-update-version-source-npm.md](../../../../../cli/aidd_docs/memory/internal/decisions/self-update-version-source-npm.md)).
+- `shared/ports/http-get.ts`: the release reads, handed in by `src/composition/contexts/update.ts`, which also passes the bases of the reads ([self-update-version-source-npm.md](../../../../../aidd_docs/memory/internal/cli/decisions/self-update-version-source-npm.md)).
 - `shared/`: errors, `Logger`, `VersionReader`, `FileReader`, `FileWriter`, semver.
 
 ## Never
