@@ -4,6 +4,10 @@ import copilotVscodeSettings from "../../../../../../assets/configs/copilot/vsco
 };
 // biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
 import adapter from "../../../../../../assets/hooks-runtime/host-copilot.cjs";
+import {
+  type FlatArtifactLayout,
+  flatArtifactLayout,
+} from "../../../../../shared/domain/materialization/flat-paths.js";
 import { MCP_CONFIG_REF } from "../../../contract/config-refs.js";
 import { PLUGIN_ROOT_TOKEN } from "../../../contract/plugin-root-token.js";
 import { convertCommandFrontmatter } from "../../formats/command.js";
@@ -21,10 +25,7 @@ import { ModelsSection } from "../../sections/models-section.js";
 import { RulesSection } from "../../sections/rules-section.js";
 import { SkillsSection } from "../../sections/skills-section.js";
 import { copilotAgentFrontmatter } from "./copilot-agent.model.js";
-import {
-  buildCopilotFlatContract,
-  buildCopilotMarketplaceContract,
-} from "./copilot-build.model.js";
+import { buildCopilotMarketplaceContract } from "./copilot-build.model.js";
 import {
   agentsHandler,
   COPILOT_LINK_SYNTAX,
@@ -36,8 +37,22 @@ import {
   rulesHandler,
   TOOL_SUFFIX,
 } from "./copilot-content.model.js";
+import { buildCopilotFlatContract } from "./copilot-flat-build.model.js";
 
 const PLUGIN_MCP = acceptedPluginMcp();
+
+const OUTPUT_PLUGIN_TREE = {
+  manifestRelative: ".plugin/plugin.json",
+  marketplaceRelative: ".plugin/marketplace.json",
+};
+
+/** Where a flat build puts copilot's skills and agents: `.github/agents/<plugin>-<name>.agent.md`. */
+const COPILOT_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(".github/", {
+  skills: "single-level",
+  agent: { ext: ".agent.md" },
+});
+
+const FLAT_VSCODE_MCP_PATH = ".vscode/mcp.json";
 
 const VSCODE_SETTINGS_ASSET = "vscode-settings.json";
 const VSCODE_SETTINGS_PATH = ".vscode/settings.json";
@@ -185,8 +200,8 @@ export const copilot = defineAiTool({
   ],
   hooks,
   buildContracts: {
-    marketplace: () => buildCopilotMarketplaceContract(hooks),
-    flat: () => buildCopilotFlatContract(hooks),
+    marketplace: () => buildCopilotMarketplaceContract(hooks, OUTPUT_PLUGIN_TREE),
+    flat: () => buildCopilotFlatContract(hooks, COPILOT_FLAT_LAYOUT, FLAT_VSCODE_MCP_PATH),
   },
 
   capabilities: () => ({

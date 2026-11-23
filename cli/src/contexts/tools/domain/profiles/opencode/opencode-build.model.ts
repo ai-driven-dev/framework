@@ -2,10 +2,9 @@
  * Opencode's build contract: flat only: opencode has no marketplace mode.
  */
 
-import type { FlatHooksLoaderEntry } from "../../../../../shared/domain/materialization/flat-paths.js";
-import {
-  type FlatArtifactLayout,
-  flatArtifactLayout,
+import type {
+  FlatArtifactLayout,
+  FlatHooksLoaderEntry,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
 import { agentsIn, skillsIn } from "../../../contract/artifact-path.js";
 import type {
@@ -32,12 +31,6 @@ type OpencodeHooks = HooksRouting & {
   readonly flat: FlatHooksRoute & { readonly loaderEntry: FlatHooksLoaderEntry };
   readonly bridgeRuntime: NonNullable<HooksDescriptor["bridgeRuntime"]>;
 };
-
-/** Where a flat build, and a flat install, put opencode's skills and agents. */
-export const OPENCODE_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(".opencode/", {
-  skills: "nested",
-  agent: { ext: ".md" },
-});
 
 const opencodeAgentMarkdown: AgentMarkdown = {
   frontmatter: (frontmatter) => opencodeAgentFrontmatter(frontmatter),
@@ -78,7 +71,10 @@ function emitOpencodeConfig(
   return [config, { path: runtime.path, content: events }];
 }
 
-export function buildOpencodeFlatContract(hooks: OpencodeHooks): ToolBuildContract {
+export function buildOpencodeFlatContract(
+  hooks: OpencodeHooks,
+  layout: FlatArtifactLayout
+): ToolBuildContract {
   return {
     manifestFileRelative: null,
     synthesizeManifest: null,
@@ -87,13 +83,13 @@ export function buildOpencodeFlatContract(hooks: OpencodeHooks): ToolBuildContra
       skills: {
         supported: true,
         source: { kind: "fullTree", srcDir: "skills" },
-        placement: skillsIn(OPENCODE_FLAT_LAYOUT),
+        placement: skillsIn(layout),
         rewriteSkillName: true,
       },
       agents: {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        placement: agentsIn(OPENCODE_FLAT_LAYOUT),
+        placement: agentsIn(layout),
         agentMarkdown: opencodeAgentMarkdown,
       },
       mcp: { supported: false, reason: "carried by the config artifact (opencode.json mcp)" },

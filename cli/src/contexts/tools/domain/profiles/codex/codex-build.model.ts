@@ -1,20 +1,10 @@
-/**
- * Codex's build contracts: marketplace (a native plugin tree) and flat (direct workspace
- * materialization); what they merge, strip and list lives in the sibling models.
- */
+/** Codex's marketplace build contract: a native plugin tree. */
 
-import {
-  type FlatArtifactLayout,
-  flatArtifactLayout,
-} from "../../../../../shared/domain/materialization/flat-paths.js";
-import { agentsIn, skillsIn } from "../../../contract/artifact-path.js";
 import type { ToolBuildContract } from "../../../contract/build-contract.js";
 import { tomlAgentMarkdownToToml } from "../../formats/agents/toml-agent.js";
-import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
-import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
+import type { HooksRouting } from "../../formats/hooks/descriptor.js";
 import { pluginTreeHooksArtifact } from "../../formats/hooks/routes.js";
 import type { TomlCodec } from "../../formats/toml.js";
-import { mergeCodexConfigToml } from "./codex-config.model.js";
 import {
   buildCodexManifest,
   buildCodexMarketplace,
@@ -26,8 +16,6 @@ import {
   OUTPUT_CODEX_MARKETPLACE_RELATIVE,
 } from "./codex-paths.model.js";
 import { stripCodexSkillFrontmatter } from "./codex-skill.model.js";
-
-type FlatHooks = HooksRouting & { readonly flat: FlatHooksRoute };
 
 function codexPluginArtifacts(
   toml: TomlCodec,
@@ -74,81 +62,5 @@ export function buildCodexContract(toml: TomlCodec, hooks: HooksRouting): ToolBu
     }),
     buildMarketplaceEntry: async ({ name, srcEntry }) =>
       buildCodexMarketplaceEntry(name, srcEntry as Record<string, unknown> | undefined),
-  };
-}
-
-// Codex scans `.agents/skills/` (cwd to repo root) for workspace skills, the documented project
-// skill root; verified live, a SKILL.md there appears in Codex's "Available skills" context.
-// `.codex/skills/` also resolves but is undocumented, so the documented root is what is used.
-const CODEX_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(".codex/", {
-  skillsDir: ".agents/skills/",
-  skills: "single-level",
-  agent: { ext: ".toml" },
-});
-
-function collectMcpServers(
-  builtPlugins: readonly string[],
-  pluginMcp: ReadonlyMap<string, string>
-): Record<string, unknown> {
-  const mcpServers: Record<string, unknown> = {};
-  for (const plugin of builtPlugins) {
-    const raw = pluginMcp.get(plugin);
-    if (raw === undefined) continue;
-    const parsed = JSON.parse(raw) as { mcpServers?: Record<string, unknown> };
-    for (const [k, v] of Object.entries(parsed.mcpServers ?? {})) {
-      mcpServers[k] = v;
-    }
-  }
-  return mcpServers;
-}
-
-const CODEX_FLAT_CONFIG = ".codex/config.toml";
-
-function buildCodexConfigPayload(toml: TomlCodec, mcpServers: Record<string, unknown>): string {
-  if (Object.keys(mcpServers).length === 0) return "";
-  return toml.stringify({ mcp_servers: mcpServers });
-}
-
-function codexFlatArtifacts(toml: TomlCodec, hooks: FlatHooks): ToolBuildContract["artifacts"] {
-  return {
-    skills: {
-      supported: true,
-      source: { kind: "fullTree", srcDir: "skills" },
-      placement: skillsIn(CODEX_FLAT_LAYOUT),
-      rewriteSkillName: true,
-    },
-    agents: {
-      supported: true,
-      source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-      placement: agentsIn(CODEX_FLAT_LAYOUT),
-      transform: tomlAgentMarkdownToToml(toml),
-    },
-    mcp: { supported: false, reason: "carried by the config artifact (config.toml mcp_servers)" },
-    hooks: flatHooksArtifact(hooks, { tool: "codex" }),
-  };
-}
-
-export function buildCodexFlatContract(toml: TomlCodec, hooks: FlatHooks): ToolBuildContract {
-  return {
-    manifestFileRelative: null,
-    synthesizeManifest: null,
-    manifestSchemaName: null,
-    artifacts: codexFlatArtifacts(toml, hooks),
-    buildMarketplaceCatalog: null,
-    buildMarketplaceEntry: null,
-    configArtifact: {
-      reads: () => [CODEX_FLAT_CONFIG],
-      probes: () => [],
-      assets: { tool: "codex", names: [] },
-      emit: ({ builtPlugins, pluginMcp, existing }) => {
-        const mcpServers = collectMcpServers(builtPlugins, pluginMcp);
-        const aiddPayload = buildCodexConfigPayload(toml, mcpServers);
-        const merged = mergeCodexConfigToml(toml)(
-          existing.get(CODEX_FLAT_CONFIG) ?? "",
-          aiddPayload
-        );
-        return [{ path: CODEX_FLAT_CONFIG, content: merged }];
-      },
-    },
   };
 }

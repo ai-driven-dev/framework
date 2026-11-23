@@ -1,16 +1,23 @@
 // biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
 import adapter from "../../../../../../assets/hooks-runtime/host-antigravity.cjs";
+import {
+  type FlatArtifactLayout,
+  flatArtifactLayout,
+} from "../../../../../shared/domain/materialization/flat-paths.js";
 import { declareHooks } from "../../formats/hooks/declaration.js";
 import { flatHooksSupport, flatProjectHooksDelivery } from "../../formats/hooks/flat-routes.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { flatPlacement } from "../../sections/layout-section.js";
-import {
-  ANTIGRAVITY_FLAT_LAYOUT,
-  buildAntigravityFlatContract,
-} from "./antigravity-build.model.js";
+import { buildAntigravityFlatContract } from "./antigravity-build.model.js";
 import { antigravityHooksFormat } from "./antigravity-hooks.model.js";
 
 const DIRECTORY = ".agents/";
+
+/** Where a flat build, and a flat install, put antigravity's skills and agents. */
+const ANTIGRAVITY_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(".agents/", {
+  skills: "single-level",
+  agent: { folderFile: "agent.md" },
+});
 const TOOL_SUFFIX = ".antigravity.md";
 
 const hooks = declareHooks(
@@ -40,7 +47,7 @@ export const antigravity = defineAiTool({
   displayName: "Antigravity CLI",
   signalDir: null,
   hooks,
-  buildContracts: { flat: () => buildAntigravityFlatContract(hooks) },
+  buildContracts: { flat: () => buildAntigravityFlatContract(hooks, ANTIGRAVITY_FLAT_LAYOUT) },
 
   capabilities: (bound) => ({
     skills: bound.skills({

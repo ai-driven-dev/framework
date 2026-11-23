@@ -1,5 +1,9 @@
 import { join } from "node:path";
 import kiloJson from "../../../../../../assets/configs/kilo/kilo.json" with { type: "json" };
+import {
+  type FlatArtifactLayout,
+  flatArtifactLayout,
+} from "../../../../../shared/domain/materialization/flat-paths.js";
 import { MCP_CONFIG_REF } from "../../../contract/config-refs.js";
 import { declareBridgeHooks } from "../../bridges/event-bridge.js";
 import {
@@ -14,10 +18,16 @@ import { flatGlobalFilePath, flatPlacement } from "../../sections/layout-section
 import { McpConfigPart } from "../../sections/mcp-section.js";
 import { ModelsSection } from "../../sections/models-section.js";
 import { kiloAgentFrontmatter } from "./kilo-agent.model.js";
-import { buildKiloFlatContract, KILO_FLAT_LAYOUT } from "./kilo-build.model.js";
+import { buildKiloFlatContract } from "./kilo-build.model.js";
 import { KILO_DIRECTORY, KILO_OUTPUT_PATH_CANDIDATES } from "./kilo-paths.model.js";
 
 const TOOL_SUFFIX = ".kilo.md";
+
+/** Where a flat build, and a flat install, put kilo's skills and agents. */
+const KILO_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(KILO_DIRECTORY, {
+  skills: "nested",
+  agent: { ext: ".md" },
+});
 
 const hooks = declareBridgeHooks(
   { toolId: "kilo", directory: KILO_DIRECTORY },
@@ -37,7 +47,7 @@ export const kilo = defineAiTool({
     { name: "kilo.json", content: kiloJson, destination: ".kilo/kilo.jsonc", delivery: "install" },
   ],
   hooks,
-  buildContracts: { flat: () => buildKiloFlatContract(hooks) },
+  buildContracts: { flat: () => buildKiloFlatContract(hooks, KILO_FLAT_LAYOUT) },
 
   capabilities: (bound) => ({
     agents: bound.agents({

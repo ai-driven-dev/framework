@@ -2,6 +2,10 @@ import { join } from "node:path";
 import codexConfigToml from "../../../../../../assets/configs/codex/config.toml";
 // biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
 import adapter from "../../../../../../assets/hooks-runtime/host-codex.cjs";
+import {
+  type FlatArtifactLayout,
+  flatArtifactLayout,
+} from "../../../../../shared/domain/materialization/flat-paths.js";
 import { MCP_CONFIG_REF } from "../../../contract/config-refs.js";
 import type { LinkSyntax } from "../../../contract/link-syntax.js";
 import { PLUGIN_ROOT_TOKEN } from "../../../contract/plugin-root-token.js";
@@ -17,14 +21,27 @@ import { nativeLayout } from "../../sections/layout-section.js";
 import { manifestSection } from "../../sections/manifest-section.js";
 import { acceptedPluginMcp, McpConfigPart } from "../../sections/mcp-section.js";
 import { ModelsSection } from "../../sections/models-section.js";
-import { buildCodexContract, buildCodexFlatContract } from "./codex-build.model.js";
+import { buildCodexContract } from "./codex-build.model.js";
 import { mergeCodexConfigToml } from "./codex-config.model.js";
+import { buildCodexFlatContract } from "./codex-flat-build.model.js";
 import { codexGlobalFilePath } from "./codex-paths.model.js";
 
 const PLUGIN_MCP = acceptedPluginMcp();
 
 const DIRECTORY = ".codex/";
 const TOOL_SUFFIX = ".codex.md";
+
+// Codex scans `.agents/skills/` (cwd to repo root) for workspace skills, the documented project
+// skill root; verified live, a SKILL.md there appears in Codex's "Available skills" context.
+// `.codex/skills/` also resolves but is undocumented, so the documented root is what is used.
+const CODEX_FLAT: { readonly layout: FlatArtifactLayout; readonly configPath: string } = {
+  layout: flatArtifactLayout(".codex/", {
+    skillsDir: ".agents/skills/",
+    skills: "single-level",
+    agent: { ext: ".toml" },
+  }),
+  configPath: ".codex/config.toml",
+};
 
 const LINK_SYNTAX: LinkSyntax = [
   { from: /\.codex\/skills\//g, to: ".agents/skills/aidd-" },
@@ -160,7 +177,7 @@ export const codexProfile = (toml: TomlCodec) =>
     hooks,
     buildContracts: {
       marketplace: () => buildCodexContract(toml, hooks),
-      flat: () => buildCodexFlatContract(toml, hooks),
+      flat: () => buildCodexFlatContract(toml, hooks, CODEX_FLAT),
     },
 
     capabilities: codexCapabilities(toml),

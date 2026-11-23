@@ -18,7 +18,7 @@
   "src/contexts/tools/domain/hooks/wrapped-command-hooks-merge.ts": 6,
   "src/contexts/tools/domain/marketplace-catalog.ts": 2,
   "src/contexts/tools/domain/profile/define-tool.ts": 4,
-  "src/contexts/tools/domain/profiles/codex/codex-build.model.ts": 3,
+  "src/contexts/tools/domain/profiles/codex/codex-build.model.ts": 2,
   "src/contexts/tools/domain/profiles/codex/codex-config.model.ts": 3,
   "src/contexts/tools/domain/profiles/copilot/copilot.profile.ts": 2,
   "src/contexts/tools/domain/sections/models-section.ts": 1,

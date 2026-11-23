@@ -1,27 +1,21 @@
 /** Flat only. A skill sits one level under `.agents/skills/`: `agy` expands none nested deeper. */
 
-import {
-  type FlatArtifactLayout,
-  flatArtifactLayout,
-} from "../../../../../shared/domain/materialization/flat-paths.js";
+import type { FlatArtifactLayout } from "../../../../../shared/domain/materialization/flat-paths.js";
 import { agentsIn, skillsIn } from "../../../contract/artifact-path.js";
 import type { AgentMarkdown, ToolBuildContract } from "../../../contract/build-contract.js";
 import { portableAgentFrontmatter } from "../../formats/agents/portable-agent.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
 import { type AntigravityHooks, mergeAntigravityHooks } from "./antigravity-hooks.model.js";
 
-/** Where a flat build, and a flat install, put antigravity's skills and agents. */
-export const ANTIGRAVITY_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(".agents/", {
-  skills: "single-level",
-  agent: { folderFile: "agent.md" },
-});
-
 const antigravityAgentMarkdown: AgentMarkdown = {
   frontmatter: (frontmatter) => portableAgentFrontmatter(frontmatter, String(frontmatter.name)),
   pluginPrefixedName: true,
 };
 
-export function buildAntigravityFlatContract(hooks: AntigravityHooks): ToolBuildContract {
+export function buildAntigravityFlatContract(
+  hooks: AntigravityHooks,
+  layout: FlatArtifactLayout
+): ToolBuildContract {
   return {
     manifestFileRelative: null,
     synthesizeManifest: null,
@@ -30,13 +24,13 @@ export function buildAntigravityFlatContract(hooks: AntigravityHooks): ToolBuild
       skills: {
         supported: true,
         source: { kind: "fullTree", srcDir: "skills" },
-        placement: skillsIn(ANTIGRAVITY_FLAT_LAYOUT),
+        placement: skillsIn(layout),
         rewriteSkillName: true,
       },
       agents: {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        placement: agentsIn(ANTIGRAVITY_FLAT_LAYOUT),
+        placement: agentsIn(layout),
         agentMarkdown: antigravityAgentMarkdown,
       },
       mcp: { supported: false, reason: "the flat build ships no MCP file" },
