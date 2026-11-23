@@ -3,8 +3,8 @@ import claudeSettings from "../../../assets/configs/claude/settings.json" with {
 // biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
 import adapter from "../../../assets/hooks-runtime/host-claude.cjs";
 import { MCP_CONFIG_REF } from "../../contexts/tools/contract/config-refs.js";
-import { claudeAgentFrontmatter } from "../../contexts/tools/domain/behaviours/claude/claude-agent.model.js";
 import { buildClaudeFlatContract } from "../../contexts/tools/domain/behaviours/claude/claude-flat-build.model.js";
+import { agentFrontmatterOf } from "../../contexts/tools/domain/formats/agents/agent-format.js";
 import {
   convertCommandFrontmatter,
   phasedCommandPath,
@@ -35,6 +35,9 @@ import {
 } from "../../shared/domain/materialization/flat-paths.js";
 import { SOURCE_PLUGIN_ROOT_TOKEN } from "../../shared/domain/materialization/plugin-root-path-rewrite.js";
 
+/** Claude Code reads its own keys; an agent without `tools` inherits every tool. */
+const AGENT_FRONTMATTER = agentFrontmatterOf({ keep: ["name", "description", "model", "effort"] });
+
 const PLUGIN_MCP = acceptedPluginMcp();
 
 /** Build output paths, deliberately distinct from the source-side constants even where the
@@ -42,7 +45,7 @@ const PLUGIN_MCP = acceptedPluginMcp();
 const OUTPUT_PLUGIN_TREE: Parameters<typeof pluginTreeContract>[1] = {
   manifestRelative: ".claude-plugin/plugin.json",
   marketplaceRelative: ".claude-plugin/marketplace.json",
-  agentMarkdown: { frontmatter: (frontmatter) => claudeAgentFrontmatter(frontmatter) },
+  agentMarkdown: { frontmatter: AGENT_FRONTMATTER },
 };
 
 /** Where a flat build puts claude's skills and agents. */
@@ -147,13 +150,13 @@ export const claude = defineAiTool({
   hooks,
   buildContracts: {
     marketplace: () => pluginTreeContract(hooks, OUTPUT_PLUGIN_TREE),
-    flat: () => buildClaudeFlatContract(hooks, CLAUDE_FLAT_LAYOUT),
+    flat: () => buildClaudeFlatContract(hooks, CLAUDE_FLAT_LAYOUT, AGENT_FRONTMATTER),
   },
 
   capabilities: (bound) => ({
     agents: bound.agents({
       format: "markdown",
-      frontmatter: claudeAgentFrontmatter,
+      frontmatter: AGENT_FRONTMATTER,
     }),
     skills: bound.skills({}),
     commands: bound.commands({

@@ -6,7 +6,6 @@ import copilotVscodeSettings from "../../../assets/configs/copilot/vscode-settin
 import adapter from "../../../assets/hooks-runtime/host-copilot.cjs";
 import { MCP_CONFIG_REF } from "../../contexts/tools/contract/config-refs.js";
 import { PLUGIN_ROOT_TOKEN } from "../../contexts/tools/contract/plugin-root-token.js";
-import { copilotAgentFrontmatter } from "../../contexts/tools/domain/behaviours/copilot/copilot-agent.model.js";
 import { buildCopilotMarketplaceContract } from "../../contexts/tools/domain/behaviours/copilot/copilot-build.model.js";
 import {
   agentsHandler,
@@ -20,6 +19,7 @@ import {
   TOOL_SUFFIX,
 } from "../../contexts/tools/domain/behaviours/copilot/copilot-content.model.js";
 import { buildCopilotFlatContract } from "../../contexts/tools/domain/behaviours/copilot/copilot-flat-build.model.js";
+import { agentFrontmatterOf } from "../../contexts/tools/domain/formats/agents/agent-format.js";
 import { convertCommandFrontmatter } from "../../contexts/tools/domain/formats/command.js";
 import { declareHooks } from "../../contexts/tools/domain/formats/hooks/declaration.js";
 import { nativeHooksSupport } from "../../contexts/tools/domain/formats/hooks/routes.js";
@@ -46,11 +46,20 @@ import {
   flatArtifactLayout,
 } from "../../shared/domain/materialization/flat-paths.js";
 
+/** Copilot reads `effort` as `reasoningEffort`, and gives a subagent the repository
+ * instructions only when `include-custom-instructions` is set; it defaults to false. */
+const AGENT_FRONTMATTER = agentFrontmatterOf({
+  keep: ["name", "description", "model", "reasoningEffort", "include-custom-instructions"],
+  rename: { reasoningEffort: "effort" },
+  defaults: { "include-custom-instructions": true },
+});
+
 const PLUGIN_MCP = acceptedPluginMcp();
 
 const OUTPUT_PLUGIN_TREE = {
   manifestRelative: ".plugin/plugin.json",
   marketplaceRelative: ".plugin/marketplace.json",
+  agentMarkdown: { frontmatter: AGENT_FRONTMATTER },
 };
 
 /** Where a flat build puts copilot's skills and agents: `.github/agents/<plugin>-<name>.agent.md`. */
@@ -198,7 +207,11 @@ export const copilot = defineAiTool({
   hooks,
   buildContracts: {
     marketplace: () => buildCopilotMarketplaceContract(hooks, OUTPUT_PLUGIN_TREE),
-    flat: () => buildCopilotFlatContract(hooks, COPILOT_FLAT_LAYOUT, FLAT_VSCODE_MCP_PATH),
+    flat: () =>
+      buildCopilotFlatContract(hooks, COPILOT_FLAT_LAYOUT, {
+        mcpPath: FLAT_VSCODE_MCP_PATH,
+        frontmatter: AGENT_FRONTMATTER,
+      }),
   },
 
   capabilities: () => ({
@@ -207,7 +220,7 @@ export const copilot = defineAiTool({
       toolSuffix: EXT_AGENT,
       format: "markdown",
       buildInstallPath: (fileName) => agentsHandler.buildFilePath(fileName),
-      frontmatter: copilotAgentFrontmatter,
+      frontmatter: AGENT_FRONTMATTER,
     }),
     skills: new SkillsSection({
       directory: DIRECTORY,

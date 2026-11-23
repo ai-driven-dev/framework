@@ -1,13 +1,13 @@
 import { join } from "node:path";
 import kiloJson from "../../../assets/configs/kilo/kilo.json" with { type: "json" };
 import { MCP_CONFIG_REF } from "../../contexts/tools/contract/config-refs.js";
-import { kiloAgentFrontmatter } from "../../contexts/tools/domain/behaviours/kilo/kilo-agent.model.js";
 import { buildKiloFlatContract } from "../../contexts/tools/domain/behaviours/kilo/kilo-build.model.js";
 import {
   KILO_DIRECTORY,
   KILO_OUTPUT_PATH_CANDIDATES,
 } from "../../contexts/tools/domain/behaviours/kilo/kilo-paths.model.js";
 import { declareBridgeHooks } from "../../contexts/tools/domain/bridges/event-bridge.js";
+import { agentFrontmatterOf } from "../../contexts/tools/domain/formats/agents/agent-format.js";
 import {
   buildAiddCommandFilePath,
   convertCommandFrontmatterNoHint,
@@ -26,6 +26,14 @@ import {
   type FlatArtifactLayout,
   flatArtifactLayout,
 } from "../../shared/domain/materialization/flat-paths.js";
+
+/** Kilo names an agent after its file, reads the effort as the model's `variant`, and passes
+ * any unknown key to the model provider, so only its own keys are carried. */
+const AGENT_FRONTMATTER = agentFrontmatterOf({
+  keep: ["description", "model", "variant"],
+  rename: { variant: "effort" },
+  set: { mode: "subagent" },
+});
 
 const TOOL_SUFFIX = ".kilo.md";
 
@@ -53,12 +61,14 @@ export const kilo = defineAiTool({
     { name: "kilo.json", content: kiloJson, destination: ".kilo/kilo.jsonc", delivery: "install" },
   ],
   hooks,
-  buildContracts: { flat: () => buildKiloFlatContract(hooks, KILO_FLAT_LAYOUT) },
+  buildContracts: {
+    flat: () => buildKiloFlatContract(hooks, KILO_FLAT_LAYOUT, { frontmatter: AGENT_FRONTMATTER }),
+  },
 
   capabilities: (bound) => ({
     agents: bound.agents({
       format: "markdown",
-      frontmatter: kiloAgentFrontmatter,
+      frontmatter: AGENT_FRONTMATTER,
     }),
     skills: bound.skills({}),
     commands: bound.commands({

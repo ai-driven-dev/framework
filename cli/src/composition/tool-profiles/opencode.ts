@@ -6,9 +6,9 @@ import {
   type ConfigRef,
   MCP_CONFIG_REF,
 } from "../../contexts/tools/contract/config-refs.js";
-import { opencodeAgentFrontmatter } from "../../contexts/tools/domain/behaviours/opencode/opencode-agent.model.js";
 import { buildOpencodeFlatContract } from "../../contexts/tools/domain/behaviours/opencode/opencode-build.model.js";
 import { declareBridgeHooks } from "../../contexts/tools/domain/bridges/event-bridge.js";
+import { agentFrontmatterOf } from "../../contexts/tools/domain/formats/agents/agent-format.js";
 import {
   buildAiddCommandFilePath,
   convertCommandFrontmatterNoHint,
@@ -27,6 +27,14 @@ import {
   type FlatArtifactLayout,
   flatArtifactLayout,
 } from "../../shared/domain/materialization/flat-paths.js";
+
+/** OpenCode names an agent after its file, so no `name`; `mode: subagent` keeps it out of
+ * the primary agents. V2 reads the effort as the model's `#variant`. */
+const AGENT_FRONTMATTER = agentFrontmatterOf({
+  keep: ["description", "model"],
+  effortInModel: { open: "#" },
+  set: { mode: "subagent" },
+});
 
 const DIRECTORY = ".opencode/";
 const TOOL_SUFFIX = ".opencode.md";
@@ -107,12 +115,17 @@ export const opencode = defineAiTool({
     },
   ],
   hooks,
-  buildContracts: { flat: () => buildOpencodeFlatContract(hooks, OPENCODE_FLAT_LAYOUT) },
+  buildContracts: {
+    flat: () =>
+      buildOpencodeFlatContract(hooks, OPENCODE_FLAT_LAYOUT, {
+        frontmatter: AGENT_FRONTMATTER,
+      }),
+  },
 
   capabilities: (bound) => ({
     agents: bound.agents({
       format: "markdown",
-      frontmatter: opencodeAgentFrontmatter,
+      frontmatter: AGENT_FRONTMATTER,
     }),
     skills: bound.skills({}),
     commands: bound.commands({

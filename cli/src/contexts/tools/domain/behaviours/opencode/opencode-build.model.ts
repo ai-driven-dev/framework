@@ -21,7 +21,6 @@ import type {
 import { flatHooksArtifact, hooksBridgePath } from "../../formats/hooks/flat-routes.js";
 import { buildTypedMcpFlatConfig } from "../../formats/mcp/typed-mcp-merge.js";
 import { collectTypedMcp } from "../../formats/mcp/typed-mcp-section.js";
-import { opencodeAgentFrontmatter } from "./opencode-agent.model.js";
 import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.model.js";
 
 /** OpenCode's hooks as the profile declares them: a loader with no hooks file, and the runtime
@@ -30,10 +29,6 @@ type OpencodeHooks = HooksRouting & {
   readonly file?: never;
   readonly flat: FlatHooksRoute & { readonly loaderEntry: FlatHooksLoaderEntry };
   readonly bridgeRuntime: NonNullable<HooksDescriptor["bridgeRuntime"]>;
-};
-
-const opencodeAgentMarkdown: AgentMarkdown = {
-  frontmatter: (frontmatter) => opencodeAgentFrontmatter(frontmatter),
 };
 
 const OPENCODE_JSONC = "opencode.jsonc";
@@ -73,7 +68,8 @@ function emitOpencodeConfig(
 
 export function buildOpencodeFlatContract(
   hooks: OpencodeHooks,
-  layout: FlatArtifactLayout
+  layout: FlatArtifactLayout,
+  agentMarkdown: AgentMarkdown
 ): ToolBuildContract {
   return {
     manifestFileRelative: null,
@@ -90,7 +86,7 @@ export function buildOpencodeFlatContract(
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
         placement: agentsIn(layout),
-        agentMarkdown: opencodeAgentMarkdown,
+        agentMarkdown,
       },
       mcp: { supported: false, reason: "carried by the config artifact (opencode.json mcp)" },
       hooks: flatHooksArtifact(hooks, { bridge: generateOpencodeHooksBridge }),

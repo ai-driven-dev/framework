@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { claudeAgentFrontmatter } from "../../../../../../src/contexts/tools/domain/behaviours/claude/claude-agent.model.js";
+import { claude } from "../../../../../../src/composition/tool-profiles/claude.js";
+
+const claudeAgentFrontmatter = (fm: Record<string, unknown>) =>
+  claude.section("agents").convertFrontmatter(fm);
 
 describe("writing a Claude agent's frontmatter", () => {
   it("keeps Claude's own keys, in its order, and drops any other", () => {

@@ -3,15 +3,16 @@
 import type { FlatArtifactLayout } from "../../../../../shared/domain/materialization/flat-paths.js";
 import { agentsIn, skillsIn } from "../../../contract/artifact-path.js";
 import type { ToolBuildContract } from "../../../contract/build-contract.js";
+import type { AgentFrontmatter } from "../../formats/agents/agent-format.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
-import { claudeAgentFrontmatter } from "./claude-agent.model.js";
 
 type FlatHooks = HooksRouting & { readonly flat: FlatHooksRoute };
 
 export function buildClaudeFlatContract(
   hooks: FlatHooks,
-  layout: FlatArtifactLayout
+  layout: FlatArtifactLayout,
+  frontmatter: AgentFrontmatter
 ): ToolBuildContract {
   return {
     manifestFileRelative: null,
@@ -29,7 +30,7 @@ export function buildClaudeFlatContract(
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
         placement: agentsIn(layout),
         agentMarkdown: {
-          frontmatter: (frontmatter) => claudeAgentFrontmatter(frontmatter),
+          frontmatter,
           pluginPrefixedName: true,
         },
       },

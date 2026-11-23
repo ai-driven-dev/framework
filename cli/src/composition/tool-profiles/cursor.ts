@@ -4,8 +4,8 @@ import cursorSettings from "../../../assets/configs/cursor/settings.json" with {
 import adapter from "../../../assets/hooks-runtime/host-cursor.cjs";
 import type { AgentMarkdown } from "../../contexts/tools/contract/build-contract.js";
 import { MCP_CONFIG_REF } from "../../contexts/tools/contract/config-refs.js";
-import { cursorAgentFrontmatter } from "../../contexts/tools/domain/behaviours/cursor/cursor-agent.model.js";
 import { buildCursorFlatContract } from "../../contexts/tools/domain/behaviours/cursor/cursor-flat-build.model.js";
+import { agentFrontmatterOf } from "../../contexts/tools/domain/formats/agents/agent-format.js";
 import {
   buildAiddCommandFilePath,
   convertCommandFrontmatter,
@@ -30,10 +30,16 @@ import {
   flatArtifactLayout,
 } from "../../shared/domain/materialization/flat-paths.js";
 
+/** Cursor has no effort key: it reads `model[effort=<level>]`. */
+const AGENT_FRONTMATTER = agentFrontmatterOf({
+  keep: ["name", "description", "model"],
+  effortInModel: { open: "[effort=", close: "]" },
+});
+
 const PLUGIN_MCP = acceptedPluginMcp("mcp.json");
 
 const CURSOR_AGENT_MARKDOWN: AgentMarkdown = {
-  frontmatter: (frontmatter) => cursorAgentFrontmatter(frontmatter),
+  frontmatter: AGENT_FRONTMATTER,
   pluginPrefixedName: true,
   quote: "double",
 };
@@ -122,7 +128,7 @@ export const cursor = defineAiTool({
   capabilities: (bound) => ({
     agents: bound.agents({
       format: "markdown",
-      frontmatter: cursorAgentFrontmatter,
+      frontmatter: AGENT_FRONTMATTER,
       // Cursor keeps single quotes as part of the value, so `'name'` would be the agent's name.
       quote: "double",
     }),

@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { cursorAgentFrontmatter } from "../../../../../../src/contexts/tools/domain/behaviours/cursor/cursor-agent.model.js";
+import { cursor } from "../../../../../../src/composition/tool-profiles/cursor.js";
+
+const cursorAgentFrontmatter = (fm: Record<string, unknown>) =>
+  cursor.section("agents").convertFrontmatter(fm);
 
 describe("writing a Cursor agent's frontmatter", () => {
   it("writes the effort into the model id, since Cursor has no effort key", () => {
