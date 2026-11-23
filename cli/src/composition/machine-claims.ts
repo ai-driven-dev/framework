@@ -7,11 +7,13 @@ import { DetachUserPlugin } from "../contexts/machine-claims/application/ownersh
 import { IsMachineOwnedNativeRef } from "../contexts/machine-claims/application/ownership/is-machine-owned-native-ref.use-case.js";
 import { ResolveSafeUserScopeFiles } from "../contexts/machine-claims/application/ownership/resolve-safe-user-scope-files.use-case.js";
 import { OtherProjectsReferencing } from "../contexts/machine-claims/application/shared-source/other-projects-referencing.use-case.js";
+import { readSharedSourceClaim } from "../contexts/machine-claims/application/shared-source/read-shared-source-claim.js";
 import { ResolveReferenceRoot } from "../contexts/machine-claims/application/shared-source/resolve-reference-root.use-case.js";
 import {
   joinPluginClaims,
   splitPluginClaims,
 } from "../contexts/machine-claims/domain/plugin-claim.model.js";
+import { LenientUserSourceReferences } from "../contexts/machine-claims/infrastructure/lenient-user-source-references.js";
 import { UserScopeLockAdapter } from "../contexts/machine-claims/infrastructure/lock.js";
 import { UserSourceReferencesAdapter } from "../contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import type {
@@ -21,6 +23,7 @@ import type {
 } from "../contexts/machine-claims/ports/machine-manifest.js";
 import type { PluginClaimsRepository } from "../contexts/machine-claims/ports/plugin-claims-repository.js";
 import type { UserSourceReferences } from "../contexts/machine-claims/ports/user-source-references.js";
+import { UnreadableUserSourceReferencesError } from "../shared/domain/shared.error.js";
 import type { ToolId } from "../shared/domain/tool.js";
 import {
   ToolKeyedJsonFile,
@@ -29,6 +32,7 @@ import {
 import type { FileReader } from "../shared/ports/file-reader.js";
 import type { FileWriter } from "../shared/ports/file-writer.js";
 import type { Lock } from "../shared/ports/lock.js";
+import type { Logger } from "../shared/ports/logger.js";
 import { registrationRecordFile } from "./host-registration.js";
 import { userConfigDir } from "./user-config-dir.js";
 
@@ -66,6 +70,35 @@ export function machineOwnership(
     isMachineOwnedNativeRef: new IsMachineOwnedNativeRef(repo),
     detachNativePluginRefs: new DetachNativePluginRefs(repo, fs),
     detachUserPlugin: new DetachUserPlugin(repo, fs),
+  };
+}
+
+/** The references a command they do not gate may use: an unreadable file warns and reads as absent. */
+export function lenientSourceReferences(
+  references: UserSourceReferences | undefined,
+  logger: Logger
+): UserSourceReferences | undefined {
+  return references && new LenientUserSourceReferences(references, logger);
+}
+
+/**
+ * This project's claim on the shared source, `undefined` when `references.json` cannot be read: a
+ * help, not an authority, so it must never block the clean it does not gate, and the claim stays
+ * unknown rather than read as held by no other project.
+ */
+export function readSharedSourceClaimLeniently(
+  parts: Parameters<typeof readSharedSourceClaim>[0],
+  logger: Logger
+): ReturnType<typeof readSharedSourceClaim> {
+  const read = readSharedSourceClaim(parts);
+  return async (request) => {
+    try {
+      return await read(request);
+    } catch (error) {
+      if (!(error instanceof UnreadableUserSourceReferencesError)) throw error;
+      logger.warn("", error);
+      return undefined;
+    }
   };
 }
 

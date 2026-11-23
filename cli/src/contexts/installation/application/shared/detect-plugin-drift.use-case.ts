@@ -2,7 +2,7 @@ import { join } from "node:path";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import { driftOf } from "../../domain/manifest/drift.js";
+import { driftOf } from "../../domain/drift.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import { scopeBaseOf } from "../plugin/plugin-target-resolution.js";

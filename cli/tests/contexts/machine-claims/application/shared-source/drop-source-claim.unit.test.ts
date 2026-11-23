@@ -1,10 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { dropSourceClaim } from "../../../../../src/contexts/machine-claims/application/shared-source/drop-source-claim.js";
-import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { RecordingSourceReferences } from "../../testing/recording-source-references.fake.js";
 
 function claims(references?: RecordingSourceReferences) {
-  return dropSourceClaim(new CapturingLogger(), references);
+  return dropSourceClaim(references);
 }
 
 describe("dropping this project's claim on the shared source", () => {

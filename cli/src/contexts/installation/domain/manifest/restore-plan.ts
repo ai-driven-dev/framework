@@ -1,4 +1,4 @@
-import type { DriftVerdict } from "./drift.js";
+import type { DriftVerdict } from "../drift.js";
 
 type RestoreReason = "deleted" | "modified";
 

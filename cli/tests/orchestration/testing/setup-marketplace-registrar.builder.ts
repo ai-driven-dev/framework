@@ -1,3 +1,4 @@
+import { lenientSourceReferences } from "../../../src/composition/machine-claims.js";
 import type { TokenProvider } from "../../../src/contexts/auth/contract/token-provider.js";
 import { EnsureFrameworkMarketplace } from "../../../src/contexts/distribution/application/ensure-framework-marketplace.use-case.js";
 import type { RegisterFrameworkMarketplace } from "../../../src/contexts/distribution/application/register-framework-marketplace.use-case.js";
@@ -33,9 +34,8 @@ export function setupMarketplaceRegistrar(
     recordReference: new RecordSourceReference({
       resolveReferenceRoot: new ResolveReferenceRoot(fs),
       currentVersion,
-      logger,
       frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-      userSourceReferences,
+      userSourceReferences: lenientSourceReferences(userSourceReferences, logger),
     }),
     refresh,
     environment,

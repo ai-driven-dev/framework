@@ -3,7 +3,7 @@ import type { AddPluginRequest } from "../../../../../src/contexts/installation/
 import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import { userScopeOwnership } from "../../../../../src/contexts/machine-claims/application/ownership/user-scope-ownership.js";
+import { ClaimUserPlugin } from "../../../../../src/contexts/machine-claims/application/claim-user-plugin.use-case.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
@@ -44,7 +44,7 @@ function addTo(manifest: Manifest, options: { scope?: Scope } = {}) {
     },
   };
   const add = new AddPlugin(
-    { ownership: userScopeOwnership(fs), manifests: { project, user }, addToProject },
+    { ownership: new ClaimUserPlugin(fs), manifests: { project, user }, addToProject },
     registeredTools()
   );
   return { add, project, user, placed };
