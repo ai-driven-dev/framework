@@ -7,7 +7,7 @@ import { assertKnownToolId } from "../../presenters/tools/tool-id.presenter.js";
 import type { ToolRun } from "./tool-config-run.controller.js";
 
 export async function removeTool({
-  deps,
+  container,
   output,
   projectRoot,
   raw,
@@ -15,7 +15,7 @@ export async function removeTool({
 }: ToolRun & { raw: string; catalog: ToolCatalog }): Promise<void> {
   const toolId = assertKnownToolId(raw, catalog);
 
-  const results = await deps.uninstallTools.execute({
+  const results = await container.clean.uninstallTools.execute({
     toolIds: [toolId],
     projectRoot,
   });
@@ -24,7 +24,7 @@ export async function removeTool({
 }
 
 export async function updateTools({
-  deps,
+  container,
   output,
   projectRoot,
   raw,
@@ -38,7 +38,7 @@ export async function updateTools({
   const toolId = raw === undefined ? undefined : assertKnownToolId(raw, catalog);
   const interactive = process.stdout.isTTY ?? false;
 
-  const result = await deps.updateTools.execute({
+  const result = await container.global.updateTools.execute({
     toolArg: toolId,
     projectRoot,
     userForce: cmdOptions.force,

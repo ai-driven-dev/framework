@@ -6,12 +6,14 @@ import type { DoctorContainer } from "../doctor/doctor-run.controller.js";
 import { registerMarketplaceCommand } from "../plugin/marketplace.controller.js";
 import type { MarketplaceContainer } from "../plugin/marketplace-add.controller.js";
 import { type PluginContainer, registerPluginCommand } from "../plugin/plugin.controller.js";
+import type { RecipesContainer } from "../recipes.controller.js";
 import { type CleanContainer, registerCleanCommand } from "../setup/clean.controller.js";
 import { registerSetupCommand, type SetupContainer } from "../setup/setup.controller.js";
 import type { SetupCatalog } from "../setup/setup-flags.controller.js";
 import { registerSyncCommand, type SyncContainer } from "../setup/sync.controller.js";
 import { registerTelemetryCommand } from "../telemetry/telemetry.controller.js";
 import { registerToolConfigCommand } from "../tools/tool-config.controller.js";
+import type { ToolConfigContainer } from "../tools/tool-config-run.controller.js";
 import { registerTranslateCommand } from "../translate.controller.js";
 import { registerUpdateCommand } from "../update.controller.js";
 import {
@@ -26,7 +28,9 @@ type CommandsContainer = CleanContainer &
   SetupContainer &
   SyncContainer &
   PluginContainer &
-  MarketplaceContainer;
+  MarketplaceContainer &
+  ToolConfigContainer &
+  RecipesContainer;
 
 /** The commands of the binary, in the order `aidd --help` lists them. The binary and the in-process
  * test runner both call it, so a command added here is in both. */
@@ -45,7 +49,7 @@ export function registerCommands(
 ): void {
   bindOutput(program, createOutput);
   registerSetupCommand(program, tools, containerOf);
-  registerToolConfigCommand(program, tools, createSlice);
+  registerToolConfigCommand(program, tools, containerOf);
   registerTranslateCommand(program, tools, createSlice);
   registerPluginCommand(program, { catalog: tools, containerOf, runCommand });
   registerMarketplaceCommand(program, containerOf, runCommand);

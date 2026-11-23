@@ -20,7 +20,7 @@ export interface ToolConfigHarness {
   readonly updateTools: Mock;
   readonly listInstalledRules: Mock;
   readonly validateRecipes: Mock;
-  readonly createDeps: Mock;
+  readonly containerOf: Mock;
   readonly written: string[];
   readonly errors: string[];
   readonly pretendTerminal: (isTTY: boolean) => void;
@@ -47,14 +47,16 @@ export function toolConfigHarness({
   const updateTools: Mock = vi.fn();
   const listInstalledRules: Mock = vi.fn();
   const validateRecipes: Mock = vi.fn();
-  const createDeps: Mock = vi.fn(async () => ({
-    installAiToolWithPlugins: { execute: installAiTool },
-    installIdeTool: { execute: installIdeTool },
-    uninstallTools: { execute: uninstallTools },
-    updateTools: { execute: updateTools },
-    listInstalledRules: { execute: listInstalledRules },
-    validateRecipes: { execute: validateRecipes },
-    currentVersion: "5.2.2",
+  const containerOf: Mock = vi.fn(async () => ({
+    global: {
+      installAiToolWithPlugins: { execute: installAiTool },
+      installIdeTool: { execute: installIdeTool },
+      updateTools: { execute: updateTools },
+    },
+    clean: { uninstallTools: { execute: uninstallTools } },
+    installation: { listInstalledRules: { execute: listInstalledRules } },
+    recipes: { validateRecipes: { execute: validateRecipes } },
+    shared: { currentVersion: "5.2.2" },
   }));
   const written: string[] = [];
   const errors: string[] = [];
@@ -99,7 +101,7 @@ export function toolConfigHarness({
     bindOutput(program, processOutputFactory());
     program.exitOverride();
     program.option("--verbose");
-    registerToolConfigCommand(program, tools, createDeps);
+    registerToolConfigCommand(program, tools, containerOf);
     await parseToExit(program, ["node", "aidd", "framework", ...args]);
     return written.join("").split("\n").slice(0, -1);
   }
@@ -111,7 +113,7 @@ export function toolConfigHarness({
     updateTools,
     listInstalledRules,
     validateRecipes,
-    createDeps,
+    containerOf,
     written,
     errors,
     pretendTerminal,

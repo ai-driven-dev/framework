@@ -7,7 +7,7 @@ import { processOutputFactory } from "../../shared/testing/output-factory.builde
 import { parseToExit } from "../../shared/testing/parse-to-exit.builder.js";
 
 const validate = vi.fn();
-const createDeps = vi.fn(async () => ({ validateRecipes: { execute: validate } }));
+const containerOf = vi.fn(async () => ({ recipes: { validateRecipes: { execute: validate } } }));
 
 const { registerRecipesCommand } = await import(
   "../../../src/presentation/controllers/recipes.controller.js"
@@ -46,7 +46,7 @@ async function run(...args: string[]): Promise<void> {
   program.exitOverride();
   program.option("--verbose");
   const toolConfig = program.command("framework");
-  registerRecipesCommand(toolConfig, program, createDeps);
+  registerRecipesCommand(toolConfig, program, containerOf);
   await parseToExit(program, ["node", "aidd", "framework", "validate-recipes", ...args]);
 }
 
