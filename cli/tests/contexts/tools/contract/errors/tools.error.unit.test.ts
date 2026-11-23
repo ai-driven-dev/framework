@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   CapabilityConfigError,
+  CategoryMismatchError,
   DualConfigError,
   DuplicateToolIdError,
   InvalidAgentFrontmatterError,
@@ -183,5 +184,47 @@ describe("when an AI tool id is unknown", () => {
 
   it("carries its stable code", () => {
     expect(new UnknownAiToolIdError("zed", ["claude", "cursor"]).code).toBe("unknown-ai-tool-id");
+  });
+});
+
+describe("when a plugin's category does not match", () => {
+  it("carries its data and says nothing itself", () => {
+    const error = new CategoryMismatchError(["vscode"], "ai", ["claude", "cursor"]);
+    expect({
+      name: error.name,
+      wrong: error.wrong,
+      category: error.category,
+      validToolIds: error.validToolIds,
+      message: error.message,
+    }).toStrictEqual({
+      name: "CategoryMismatchError",
+      wrong: ["vscode"],
+      category: "ai",
+      validToolIds: ["claude", "cursor"],
+      message: "",
+    });
+  });
+
+  it("carries its data and says nothing itself", () => {
+    const error = new CategoryMismatchError(["claude", "cursor"], "ide", ["vscode"]);
+    expect({
+      name: error.name,
+      wrong: error.wrong,
+      category: error.category,
+      validToolIds: error.validToolIds,
+      message: error.message,
+    }).toStrictEqual({
+      name: "CategoryMismatchError",
+      wrong: ["claude", "cursor"],
+      category: "ide",
+      validToolIds: ["vscode"],
+      message: "",
+    });
+  });
+
+  it("carries its stable code", () => {
+    expect(new CategoryMismatchError(["vscode"], "ai", ["claude", "cursor"]).code).toBe(
+      "category-mismatch"
+    );
   });
 });

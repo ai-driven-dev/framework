@@ -1,4 +1,5 @@
 import { AiddError } from "../../../../shared/domain/shared.error.js";
+import type { ToolCategory } from "../../../../shared/domain/tool.js";
 
 export class CapabilityConfigError extends AiddError {
   readonly code = "capability-config";
@@ -67,6 +68,17 @@ export class InvalidToolProfileError extends AiddError {
     readonly toolId: string,
     readonly invariant: ProfileInvariant,
     readonly detail: string
+  ) {
+    super();
+  }
+}
+
+export class CategoryMismatchError extends AiddError {
+  readonly code = "category-mismatch";
+  constructor(
+    readonly wrong: readonly string[],
+    readonly category: ToolCategory,
+    readonly validToolIds: readonly string[]
   ) {
     super();
   }

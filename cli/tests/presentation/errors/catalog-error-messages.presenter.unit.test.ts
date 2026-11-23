@@ -11,6 +11,7 @@ import {
 } from "../../../src/contexts/distribution/contract/distribution.error.js";
 import {
   CapabilityConfigError,
+  CategoryMismatchError,
   DualConfigError,
   DuplicateToolIdError,
   InvalidAgentFrontmatterError,
@@ -114,6 +115,14 @@ const cases: [() => Error, string][] = [
   [
     () => new DualConfigError("opencode", "opencode.json and opencode.jsonc exist"),
     "Both opencode.json and opencode.jsonc exist. Remove one.",
+  ],
+  [
+    () => new CategoryMismatchError(["x"], "ai", ["claude"]),
+    "x is not an AI tool. Valid AI tools: claude",
+  ],
+  [
+    () => new CategoryMismatchError(["x", "y"], "ide", ["vscode"]),
+    "x, y are not IDE tools. Valid IDE tools: vscode",
   ],
   [() => new UnknownAiToolIdError("x", ["a"]), "Unknown AI tool: x. Valid AI tools: a"],
 ];

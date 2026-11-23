@@ -60,6 +60,11 @@ export const CATALOG: MessagesOf<CatalogOwners> = {
     `MCP server "${error.serverName}" must have either a "command" or "url" field`,
   "invalid-tool-profile": (error) =>
     `The profile of '${error.toolId}' breaks '${error.invariant}': ${error.detail}`,
+  "category-mismatch": (error) => {
+    const label = error.category === "ai" ? "AI" : "IDE";
+    const verb = error.wrong.length === 1 ? `is not an ${label} tool` : `are not ${label} tools`;
+    return `${error.wrong.join(", ")} ${verb}. Valid ${label} tools: ${error.validToolIds.join(", ")}`;
+  },
   "dual-config": (error) => `Both ${error.detail}. Remove one.`,
   "unknown-ai-tool-id": (error) =>
     `Unknown AI tool: ${error.tool}. Valid AI tools: ${error.validIds.join(", ")}`,

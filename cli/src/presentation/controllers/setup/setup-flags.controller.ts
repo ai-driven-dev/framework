@@ -11,8 +11,8 @@ import type {
   AiToolProfile,
   IdeToolProfile,
 } from "../../../contexts/tools/contract/tool-profile.js";
+import { selectTools } from "../../../contexts/tools/contract/tool-selection.model.js";
 import type { PluginInstallMode } from "../../../orchestration/setup/setup-flow.model.js";
-import { selectTools } from "../../../orchestration/setup/setup-request.js";
 import type { Output } from "../../terminal/output.model.js";
 
 export interface SetupCmdOptions {

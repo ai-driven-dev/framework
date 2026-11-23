@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildSetupFlow,
+  isInteractiveRun,
   parseSetupRequest,
 } from "../../../../src/presentation/controllers/setup/setup-request.controller.js";
 import { CapturingOutput } from "../../../shared/testing/capturing-output.fake.js";
@@ -51,5 +52,19 @@ describe("setup request", () => {
       registerDefaultMarketplace: false,
       force: false,
     });
+  });
+});
+
+describe("telling an interactive run", () => {
+  it("asks on a terminal when no scripting flag was given", () => {
+    expect(isInteractiveRun(true, [undefined, "", false])).toBe(true);
+  });
+
+  it("stays silent as soon as one scripting flag was given", () => {
+    expect(isInteractiveRun(true, [undefined, "claude"])).toBe(false);
+  });
+
+  it("stays silent off a terminal", () => {
+    expect(isInteractiveRun(false, [])).toBe(false);
   });
 });

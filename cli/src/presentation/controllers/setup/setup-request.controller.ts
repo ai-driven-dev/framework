@@ -4,7 +4,6 @@ import {
   type PluginInstallMode,
   SetupFlow,
 } from "../../../orchestration/setup/setup-flow.model.js";
-import { isInteractiveRun } from "../../../orchestration/setup/setup-request.js";
 import type { Output } from "../../terminal/output.model.js";
 import { parseScopeFlag } from "../menu/global-options.controller.js";
 import {
@@ -21,6 +20,11 @@ export interface SetupRequest {
   toolIds: { aiTools: string[]; ideTools: string[] };
   interactive: boolean;
   plugins: { mode: PluginInstallMode; names: string[] };
+}
+
+/** Whether the run may ask questions: on a terminal, and with no flag that scripts it. */
+export function isInteractiveRun(isTty: boolean, scriptingFlags: readonly unknown[]): boolean {
+  return isTty && !scriptingFlags.some(Boolean);
 }
 
 export function parseSetupRequest(

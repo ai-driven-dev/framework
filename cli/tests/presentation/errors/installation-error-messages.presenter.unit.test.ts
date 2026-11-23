@@ -36,7 +36,6 @@ import {
 } from "../../../src/contexts/machine-claims/contract/machine-claims.error.js";
 import {
   AmbiguousPluginMatchError,
-  CategoryMismatchError,
   InteractiveOnlyError,
   InvalidPluginModeConfigError,
   InvalidSetupToolIdError,
@@ -159,14 +158,6 @@ const cases: [() => Error, string][] = [
   [
     () => new AmbiguousPluginMatchError("p", ["a", "b"]),
     "Plugin 'p' matches multiple marketplaces: a, b. Use --from <marketplace>.",
-  ],
-  [
-    () => new CategoryMismatchError(["x"], "ai", ["claude"]),
-    "x is not an AI tool. Valid AI tools: claude",
-  ],
-  [
-    () => new CategoryMismatchError(["x", "y"], "ide", ["vscode"]),
-    "x, y are not IDE tools. Valid IDE tools: vscode",
   ],
   [() => new InteractiveOnlyError("a"), "'a' requires an interactive terminal."],
   [() => new InvalidPluginModeConfigError("mode invalid"), "mode invalid"],

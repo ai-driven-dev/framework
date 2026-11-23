@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   AmbiguousPluginMatchError,
-  CategoryMismatchError,
   InteractiveOnlyError,
   InvalidPluginModeConfigError,
   InvalidSetupToolIdError,
@@ -35,48 +34,6 @@ describe("when several marketplaces match a plugin", () => {
   it("carries its stable code", () => {
     expect(new AmbiguousPluginMatchError("aidd-dev", ["a", "b"]).code).toBe(
       "ambiguous-plugin-match"
-    );
-  });
-});
-
-describe("when a plugin's category does not match", () => {
-  it("carries its data and says nothing itself", () => {
-    const error = new CategoryMismatchError(["vscode"], "ai", ["claude", "cursor"]);
-    expect({
-      name: error.name,
-      wrong: error.wrong,
-      category: error.category,
-      validToolIds: error.validToolIds,
-      message: error.message,
-    }).toStrictEqual({
-      name: "CategoryMismatchError",
-      wrong: ["vscode"],
-      category: "ai",
-      validToolIds: ["claude", "cursor"],
-      message: "",
-    });
-  });
-
-  it("carries its data and says nothing itself", () => {
-    const error = new CategoryMismatchError(["claude", "cursor"], "ide", ["vscode"]);
-    expect({
-      name: error.name,
-      wrong: error.wrong,
-      category: error.category,
-      validToolIds: error.validToolIds,
-      message: error.message,
-    }).toStrictEqual({
-      name: "CategoryMismatchError",
-      wrong: ["claude", "cursor"],
-      category: "ide",
-      validToolIds: ["vscode"],
-      message: "",
-    });
-  });
-
-  it("carries its stable code", () => {
-    expect(new CategoryMismatchError(["vscode"], "ai", ["claude", "cursor"]).code).toBe(
-      "category-mismatch"
     );
   });
 });
