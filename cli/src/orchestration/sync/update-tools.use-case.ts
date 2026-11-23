@@ -6,10 +6,9 @@ import type {
   UpdateToolResult,
 } from "../../contexts/installation/application/update/update-tool.use-case.js";
 import { InputRequiredError } from "../../shared/domain/shared.error.js";
-import type { ToolId } from "../../shared/domain/tool.js";
+import type { ToolCategory, ToolId } from "../../shared/domain/tool.js";
 import { BulkConflictState } from "../domain/bulk-conflict-state.js";
 import type { GlobalExecutionError } from "../domain/global-execution.model.js";
-import { forEachCategory } from "./for-each-category.js";
 import type { ResolveUpdateDecision } from "./resolve-update-decision.use-case.js";
 
 export interface UpdateToolsRequest {
@@ -34,7 +33,7 @@ export interface UpdateToolsDeps {
 
 /**
  * Updates the installed tools of the project, or the one named, category by category. A tool that
- * fails is reported and the rest go on.
+ * fails is reported and the rest go on; a manifest that cannot be read stops the run.
  */
 export class UpdateTools {
   constructor(private readonly deps: UpdateToolsDeps) {}
@@ -42,13 +41,20 @@ export class UpdateTools {
   async execute(command: UpdateToolsRequest): Promise<UpdateToolsResult> {
     const { toolArg } = command;
     if (toolArg !== undefined) return this.updateTools(command, [toolArg]);
-    const { results, errors } = await forEachCategory(async (category) =>
-      this.updateTools(command, await this.deps.listInstalledTools.execute({ category }))
-    );
+    const ai = await this.updateCategory(command, "ai");
+    const ide = await this.updateCategory(command, "ide");
     return {
-      updatedTools: [results.ai, results.ide].flatMap((r) => r?.updatedTools ?? []),
-      errors: [...errors, ...[results.ai, results.ide].flatMap((r) => r?.errors ?? [])],
+      updatedTools: [...ai.updatedTools, ...ide.updatedTools],
+      errors: [...ai.errors, ...ide.errors],
     };
+  }
+
+  /** A manifest that cannot be read fails the run: only a tool's own failure lets the rest go on. */
+  private async updateCategory(
+    command: UpdateToolsRequest,
+    category: ToolCategory
+  ): Promise<UpdateToolsResult> {
+    return this.updateTools(command, await this.deps.listInstalledTools.execute({ category }));
   }
 
   private async updateTools(

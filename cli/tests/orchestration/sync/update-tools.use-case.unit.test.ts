@@ -150,7 +150,7 @@ describe("updating tools", () => {
     ).rejects.toThrow("manifest corrupted");
   });
 
-  it("reports the category whose installed tools cannot be listed and updates the other", async () => {
+  it("stops the run, updating no tool, when the installed tools cannot be listed", async () => {
     const deps = await installed(SYNTHETIC_TOOL, SYNTHETIC_IDE_TOOL);
     const listInstalledTools = new ListInstalledTools(deps.manifestRepo, syntheticMixedCatalog());
     const list = listInstalledTools.execute.bind(listInstalledTools);
@@ -158,18 +158,20 @@ describe("updating tools", () => {
       if (query.category === "ai") throw new Error("ai list failed");
       return list(query);
     });
+    const { prepare, update: updateTool } = buildToolUpdate(deps);
+    const update = vi.spyOn(updateTool, "execute");
     const useCase = new UpdateTools({
       listInstalledTools,
-      prepareToolUpdate: buildToolUpdate(deps).prepare,
-      updateTool: buildToolUpdate(deps).update,
+      prepareToolUpdate: prepare,
+      updateTool,
       resolveUpdateDecision: new ResolveUpdateDecision(promptingWith("overwrite-all").prompter),
       version: CURRENT_VERSION,
     });
 
-    const result = await useCase.execute({ projectRoot: PROJECT_ROOT, ...NO_FORCE_NO_TTY });
-
-    expect(result.updatedTools.map((t) => t.toolId)).toStrictEqual([SYNTHETIC_IDE_TOOL]);
-    expect(result.errors).toStrictEqual([{ scope: "ai", error: new Error("ai list failed") }]);
+    await expect(
+      useCase.execute({ projectRoot: PROJECT_ROOT, ...NO_FORCE_NO_TTY })
+    ).rejects.toThrow("ai list failed");
+    expect(update).not.toHaveBeenCalled();
   });
 
   it("reports neither an update nor an error for a tool the update skipped", async () => {
