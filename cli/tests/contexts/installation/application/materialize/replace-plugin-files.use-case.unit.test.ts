@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { builtPlacementOf } from "../../../../../src/composition/orchestration/built-placement.js";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
-import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
+import type { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
@@ -10,7 +10,9 @@ import {
   buildInstallationDeps,
   initAndInstall,
 } from "../../../../shared/testing/installation-deps.builder.js";
+import { loadDistributionOf } from "../../../../shared/testing/load-distribution.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
 
 const PLUGIN_SOURCE_PATH = "/plugin-source/sample-plugin";
@@ -94,45 +96,62 @@ describe("replacing a plugin's files", () => {
 });
 
 describe("replacing a plugin that came from no marketplace", () => {
-  async function placedBy(tool: typeof TOOL.claude) {
+  const FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
+  const HOOKS_FILE = join(PROJECT_ROOT, ".agents/hooks.json");
+
+  /** The project hooks file `place` leaves for the sample plugin on a tool that delivers hooks to the project. */
+  async function hooksFileAfter(
+    place: (ctx: {
+      built: ReturnType<typeof builtPlacementOf>;
+      dist: PluginDistribution;
+      manifest: Manifest;
+      fs: Awaited<ReturnType<typeof buildInstallationDeps>>["fs"];
+    }) => Promise<void>
+  ): Promise<string | undefined> {
     const deps = await buildInstallationDeps({ tools: registeredTools() });
-    const placed: string[] = [];
-    const installed = RecordedPlugin.fromMetadata({
-      name: "sample-plugin",
-      version: "0.0.1",
-      source: SOURCE,
-      strict: false,
-      scope: "project",
-    });
-    const manifest = Manifest.create();
-    manifest.addTool(tool, "test", []);
-    manifest.addPlugin(tool, installed);
-    const built = builtPlacementOf(deps.fs, fakeBuiltDeps());
-    await new ReplacePluginFiles(
-      {
-        fs: deps.fs,
-        ...built,
-        placeBuiltTree: async (request) => {
-          placed.push(request.tool.toolId);
-          return built.placeBuiltTree(request);
-        },
-      },
-      registeredTools()
-    ).execute({
-      plugin: installed,
-      dist: greetDistribution(),
-      toolId: tool,
-      projectRoot: PROJECT_ROOT,
-      manifest,
-    });
-    return placed;
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.antigravity);
+    await seedFromDirectory(deps.fs, FIXTURE, { useAbsolutePaths: true });
+    const dist = await loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader)(
+      { kind: "local", path: FIXTURE },
+      "/cache"
+    );
+    const manifest = await deps.manifestRepo.load();
+    if (manifest === null) throw new Error("manifest not found");
+    await place({ built: builtPlacementOf(deps.fs, fakeBuiltDeps()), dist, manifest, fs: deps.fs });
+    return deps.fs.has(HOOKS_FILE) ? await deps.fs.readFile(HOOKS_FILE) : undefined;
   }
 
-  it("places it from the built tree on a tool that delivers hooks to the project, as a restore does", async () => {
-    expect(await placedBy(TOOL.antigravity)).toEqual([TOOL.antigravity]);
-  });
+  it("leaves the project hooks file a fresh install leaves", async () => {
+    const tool = registeredTools().aiProfile(TOOL.antigravity);
+    const installed = await hooksFileAfter(async ({ built, dist, manifest }) => {
+      await built.placeBuiltTree({
+        dist,
+        tool,
+        source: { kind: "local", path: FIXTURE },
+        projectRoot: PROJECT_ROOT,
+        manifest,
+        marketplace: undefined,
+      });
+    });
+    const updated = await hooksFileAfter(async ({ built, dist, manifest, fs }) => {
+      const old = RecordedPlugin.fromMetadata({
+        name: "sample-plugin",
+        version: "0.0.1",
+        source: { kind: "local", path: FIXTURE },
+        strict: false,
+        scope: "project",
+      });
+      manifest.addPlugin(TOOL.antigravity, old);
+      await new ReplacePluginFiles({ fs, ...built }, registeredTools()).execute({
+        plugin: old,
+        dist,
+        toolId: TOOL.antigravity,
+        projectRoot: PROJECT_ROOT,
+        manifest,
+      });
+    });
 
-  it("translates it on a tool that does not", async () => {
-    expect(await placedBy(TOOL.claude)).toEqual([]);
+    expect(installed).toContain("sample-plugin");
+    expect(updated).toBe(installed);
   });
 });
