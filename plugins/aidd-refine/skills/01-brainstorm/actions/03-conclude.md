@@ -14,7 +14,7 @@ The conversation so far.
    - Explore more: go back to explore.
 3. On approval, offer where to keep it, per [persistence](../references/persistence.md).
 4. Keep the brief where the user chose.
-   - File: write it, run `scripts/validate-brainstorm.cjs`, next to the loaded `SKILL.md`, on it, fix each finding and validate again, and after 3 passes stop and show what is left.
+   - File: write it, run [validate-brainstorm.cjs](../scripts/validate-brainstorm.cjs) on it, fix, repeat until it passes.
 
 ## Output
 
