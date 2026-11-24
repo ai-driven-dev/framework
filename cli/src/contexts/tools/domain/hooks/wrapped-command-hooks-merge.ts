@@ -12,9 +12,6 @@ const JSON_RESPONSE =
   "let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});" +
   "p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});";
 
-// The host takes a tool event as `{ matcher, hooks: [handler] }` and the others as handlers.
-const GROUPED_EVENTS = new Set(["PreToolUse", "PostToolUse"]);
-
 type HandlerGroup = { matcher: string; hooks: ProjectHookEntry[] };
 const isGroup = (entry: ProjectHookEntry | HandlerGroup): entry is HandlerGroup => "hooks" in entry;
 type NamedHook = {
@@ -72,7 +69,8 @@ function convert(
       continue;
     }
     const converted = groups.flatMap((group) => (group.hooks ?? []).map(toHandler));
-    handlers[event] = GROUPED_EVENTS.has(event) ? [{ matcher: "*", hooks: converted }] : converted;
+    // PostToolUse goes in `{ matcher, hooks: [handler] }`; the other events take bare handlers.
+    handlers[event] = event === "PostToolUse" ? [{ matcher: "*", hooks: converted }] : converted;
   }
   return { handlers, warnings };
 }

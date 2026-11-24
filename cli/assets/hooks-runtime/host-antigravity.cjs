@@ -55,12 +55,8 @@ function readEvent() {
     ...(SHELLS.has(tool) && typeof args?.CommandLine === "string"
       ? { command: args.CommandLine }
       : {}),
-    // `continuationActive` stays false on a continued Stop in practice; `executionNum` is 0 on a
-    // turn's first Stop and counts up after each continuation.
-    stopActive:
-      event === "Stop" &&
-      (raw.continuationActive === true ||
-        (typeof raw.executionNum === "number" && raw.executionNum > 0)),
+    // `executionNum` is 0 on a turn's first Stop and counts up after each continuation.
+    stopActive: event === "Stop" && typeof raw.executionNum === "number" && raw.executionNum > 0,
     sessionId: raw.conversationId,
     cwd,
     raw,

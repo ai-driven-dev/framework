@@ -122,13 +122,6 @@ describe("Antigravity CLI", () => {
       expect([event?.stopActive, printed]).toStrictEqual([true, []]);
     });
 
-    it("continues nothing at a Stop flagged by continuationActive alone", () => {
-      const { adapter, event } = read("antigravity", { ...firstStop, continuationActive: true });
-      adapter.continueTurn("fix it");
-
-      expect([event?.stopActive, printed]).toStrictEqual([true, []]);
-    });
-
     it("never continues a Stop that names no conversation", () => {
       const { adapter, event } = read("antigravity", { ...firstStop, conversationId: undefined });
       adapter.continueTurn("fix it");
