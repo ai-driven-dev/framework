@@ -43,6 +43,7 @@ const SCRIPTS: Record<string, string> = {
   "any.cjs": "",
   "stop.cjs": `if (!payload.stop_hook_active) process.stdout.write(JSON.stringify({ decision: "block", reason: "fix it" }));`,
   "fix.cjs": `process.stderr.write("fix it\\n"); process.exitCode = 2;`,
+  "slow-stop.cjs": `setTimeout(() => process.stdout.write(JSON.stringify({ decision: "block", reason: "fix it" })), 300);`,
   "exit7.cjs": "process.exitCode = 7;",
   "note.cjs": `process.stdout.write(JSON.stringify({ hookSpecificOutput: { additionalContext: "noted" } }));`,
 };
@@ -409,6 +410,17 @@ describe("the bridge generated with OpenCode's parameters", () => {
 
     await emit({ type: "session.idle", properties: { sessionID: "s1" } });
     expect(delivered).toStrictEqual([]);
+    await server.dispose();
+
+    expect(delivered).toHaveLength(1);
+  });
+
+  it("waits for a Stop script still running when the host shuts the plugin down", async () => {
+    const hooksJson = JSON.stringify({ hooks: { Stop: [command("slow-stop.cjs")] } });
+    const { server, delivered } = await open(hostNamed("OpenCode"), hooksJson);
+
+    // The host does not await its event handlers: it disposes while the script runs.
+    void server.event({ event: { type: "session.idle", properties: { sessionID: "s1" } } });
     await server.dispose();
 
     expect(delivered).toHaveLength(1);
