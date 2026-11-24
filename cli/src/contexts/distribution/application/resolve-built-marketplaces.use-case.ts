@@ -6,7 +6,6 @@ import {
 import type { AiToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { BuiltMarketplace, MarketplaceBuilds } from "../contract/built-marketplaces.js";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../contract/marketplace.js";
 import type { Marketplace } from "../domain/marketplace.js";
 import type { MarketplaceRegistry } from "../ports/marketplace-registry.js";
 
@@ -31,7 +30,7 @@ export interface ResolveBuiltMarketplacesDeps {
 
 /** The framework marketplace is machine-scope even where the registry still records `project`. */
 const isMachineScope = (marketplace: Marketplace): boolean =>
-  marketplace.scope === "user" || marketplace.name === FRAMEWORK_MARKETPLACE_NAME;
+  marketplace.scope === "user" || marketplace.isFramework();
 
 /**
  * Recomputes, never reads back, where each registered marketplace was built for each tool:
