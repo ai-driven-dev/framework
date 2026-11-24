@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ListInstalledRules } from "../../../../src/contexts/installation/application/list-installed-rules.use-case.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
-import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { registeredTools } from "../../../shared/testing/registered-tools.builder.js";
 
 const ROOT = "/project";
 
@@ -36,7 +36,6 @@ describe("ListInstalledRules - every tool's installed rules, in one answer", () 
         [at(".claude/rules/01-standards/1-naming.md")]: "---\ndescription: Names\n---\n",
         [at(".cursor/rules/1-naming.mdc")]: "---\n---\n",
         [at(".github/instructions/01-naming.instructions.md")]: "---\n---\n",
-        [at(".codex/rules/1-naming.md")]: "---\n---\n",
         [at(".kilo/rules/1-naming.md")]: "---\n---\n",
         [at(".opencode/rules/1-naming.md")]: "---\n---\n",
       }),
@@ -48,7 +47,6 @@ describe("ListInstalledRules - every tool's installed rules, in one answer", () 
 
     expect(rules.map((rule) => rule.tool).sort()).toEqual([
       "claude",
-      "codex",
       "copilot",
       "cursor",
       "kilo",
@@ -56,9 +54,9 @@ describe("ListInstalledRules - every tool's installed rules, in one answer", () 
     ]);
   });
 
-  // `engine.ts` installs a plugin's `rules/` into every tool whose capability
-  // accepts them, Codex included, so a Codex project holding rules must never be told none.
-  it("answers for Codex, which the script it replaces skipped outright", async () => {
+  // Codex reads `.codex/rules/` as Starlark command policy, never as markdown guidance:
+  // a markdown file there is not a rule, whoever put it there.
+  it("does not report a markdown file under Codex's rules directory", async () => {
     const useCase = new ListInstalledRules(
       readerOf({ [at(".codex/rules/1-naming.md")]: "---\ndescription: Names\n---\n" }),
       process.platform,
@@ -67,14 +65,7 @@ describe("ListInstalledRules - every tool's installed rules, in one answer", () 
 
     const { rules } = await useCase.execute({ projectRoot: ROOT });
 
-    expect(rules).toEqual([
-      {
-        tool: TOOL.codex,
-        path: ".codex/rules/1-naming.md",
-        name: "1-naming",
-        description: "Names",
-      },
-    ]);
+    expect(rules).toEqual([]);
   });
 
   it("reports a path relative to the project, never the machine it ran on", async () => {
