@@ -43,11 +43,6 @@ const DIVERGENCES: readonly Divergence[] = [
     applies: (t, _p, source) => t === "copilot" && source.includes("{{TOOLS}}"),
     fold: (d) => ({ ...d, body: d.body.replaceAll(".github/", "{{TOOLS}}/") }),
   },
-  {
-    id: "B writes copilot's agents as .agent.md, A as .md (the product decision is open)",
-    applies: (t, p) => t === "copilot" && p.endsWith(".agent.md"),
-    absentFromA: true,
-  },
 ];
 
 const SOURCES = FRAMEWORK_SOURCES;

@@ -114,11 +114,11 @@ describe("building a native tree on disk", () => {
   });
 
   describe("agent emission + frontmatter strip", () => {
-    it("emits agents with their original .md extension (no rename)", async () => {
+    it("emits agents as .agent.md, the extension Copilot reads", async () => {
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: TOOL.copilot });
-      expect(fs.has(`${OUT_DIR}/plugins/aidd-test/agents/code-reviewer.md`)).toBe(true);
-      expect(fs.has(`${OUT_DIR}/plugins/aidd-test/agents/code-reviewer.agent.md`)).toBe(false);
+      expect(fs.has(`${OUT_DIR}/plugins/aidd-test/agents/code-reviewer.agent.md`)).toBe(true);
+      expect(fs.has(`${OUT_DIR}/plugins/aidd-test/agents/code-reviewer.md`)).toBe(false);
     });
 
     it("keeps only the agent fields Copilot reads", async () => {
@@ -129,7 +129,7 @@ describe("building a native tree on disk", () => {
       );
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: TOOL.copilot });
-      const out = fs.getFile(`${OUT_DIR}/plugins/aidd-test/agents/extra.md`) ?? "";
+      const out = fs.getFile(`${OUT_DIR}/plugins/aidd-test/agents/extra.agent.md`) ?? "";
       expect(out).toContain("name: 'extra'");
       expect(out).toContain("description: 'desc'");
       expect(out).not.toContain("version");

@@ -66,8 +66,11 @@ describe("copilot declarations the rest of the CLI reads", () => {
 });
 
 describe("copilot build and conversion tables", () => {
-  it("ships the plugin tree as it is", () => {
-    expect(pluginTreeShapeOf(copilot)).toStrictEqual(SHIPPED_AS_IS);
+  it("ships the plugin tree as it is, its agents read by .agent.md", () => {
+    expect(pluginTreeShapeOf(copilot)).toStrictEqual({
+      ...SHIPPED_AS_IS,
+      paths: { ...SHIPPED_AS_IS.paths, agent: "agents/planner.agent.md" },
+    });
   });
 });
 

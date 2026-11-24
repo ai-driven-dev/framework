@@ -63,6 +63,7 @@ const OUTPUT_PLUGIN_TREE = {
   manifestRelative: ".plugin/plugin.json",
   marketplaceRelative: ".plugin/marketplace.json",
   agentMarkdown: { frontmatter: AGENT_FRONTMATTER },
+  agentExt: EXT_AGENT,
 };
 
 /** Where a flat build puts copilot's skills and agents: `.github/agents/<plugin>-<name>.agent.md`. */

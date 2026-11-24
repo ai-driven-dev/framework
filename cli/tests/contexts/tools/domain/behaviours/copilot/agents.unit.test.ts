@@ -20,7 +20,7 @@ describe("copilot agents", () => {
 
     it("keeps the declared name inside the plugin of a marketplace build", () => {
       expect(inMarketplace(copilot, NAMED_AGENT)).toStrictEqual({
-        path: "agents/planner.md",
+        path: "agents/planner.agent.md",
         content: NATIVE,
       });
     });
