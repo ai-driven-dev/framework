@@ -3,8 +3,10 @@ import type {
   PluginComponentFile,
   PluginDistribution,
 } from "../../../../shared/domain/plugin/plugin-distribution.js";
+import { isProse } from "../plugin-paths.js";
 import type { ComponentPlan } from "../rules/component-pipeline.js";
-import type { TranslatedFlatPlugin } from "../translate-profile.js";
+import type { TranslatedAiTool, TranslatedFlatPlugin } from "../translate-profile.js";
+import { flatSkillLinks } from "./build-flat.js";
 
 /** The rules of a tool that applies every rule to every file and reads no frontmatter, each with
  * its paths: none for a rule that applies everywhere. */
@@ -37,4 +39,15 @@ export function scopeStated(plan: ComponentPlan, paths: readonly unknown[]): Com
         serialize: (_, body) => line + body,
       }),
   };
+}
+
+/** A skill's prose is read as its flat build reads it: links relative to where it lands. */
+export function skillLinksOf(
+  file: PluginComponentFile,
+  placed: { section: string; path: string },
+  at: { tool: TranslatedAiTool; pluginName: string }
+): ComponentPlan["links"] {
+  const flat = at.tool.buildContract("flat");
+  if (placed.section !== "skills" || !isProse(file.relativePath) || flat === null) return undefined;
+  return flatSkillLinks(flat, at.pluginName, placed.path);
 }

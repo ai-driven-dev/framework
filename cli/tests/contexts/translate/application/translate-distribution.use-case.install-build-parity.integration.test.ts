@@ -33,11 +33,9 @@ interface Difference {
 const markdown = (source: string): boolean => source.endsWith(".md");
 
 const withoutName = (content: string): string => content.replace(/^name\s*[:=].*$/m, "");
-const atLinksAsWritten = (content: string): string =>
-  content.replace(/\[[^\]\n]*\]\(([^)\n]+)\)/g, "@$1");
 
 /** The content as the file means it: its frontmatter read as data, without the keys a layout
- * owns, so a quoting or a folding of a value is no difference, and its @ links in one form. */
+ * owns, so a quoting or a folding of a value is no difference. */
 const meaning =
   (keep: (key: string) => boolean = () => true) =>
   (content: string): string => {
@@ -45,14 +43,14 @@ const meaning =
     const kept = Object.entries(frontmatter)
       .filter(([key]) => key !== "name" && key !== "argument-hint" && keep(key))
       .sort(([a], [b]) => a.localeCompare(b));
-    return JSON.stringify(kept) + atLinksAsWritten(withoutName(body));
+    return JSON.stringify(kept) + withoutName(body);
   };
 
 const pluginsPath = (content: string): string =>
   content.replace(/(?:\{\{TOOLS\}\}|\.github)\/plugins\//g, "PLUGINS/");
 
 const SKILLS_REASON =
-  "an install shapes the frontmatter of every prose file and leaves an @ link as written; a build shapes the entry only and writes an @ link as a markdown link";
+  "an install shapes the frontmatter of every prose file; a build shapes the entry only";
 
 const DIFFERENCES: readonly Difference[] = [
   ...["claude", "cursor"].map((tool) => ({
@@ -69,21 +67,6 @@ const DIFFERENCES: readonly Difference[] = [
     applies: markdown,
     normalize: (content: string) => pluginsPath(meaning()(content)),
   },
-  {
-    cell: "codex:marketplace",
-    component: "skills",
-    reason: `${SKILLS_REASON}; codex keeps only a description in an installed file`,
-    applies: markdown,
-    normalize: meaning((key) => key === "description"),
-  },
-  ...["opencode", "kilo", "antigravity"].map((tool) => ({
-    cell: `${tool}:flat`,
-    component: "skills",
-    reason:
-      "a flat build names a skill entry after its folder and writes an @ link as a markdown link; an install keeps the canon name and the link as written",
-    applies: markdown,
-    normalize: meaning(),
-  })),
   {
     cell: "codex:marketplace",
     component: "agents",

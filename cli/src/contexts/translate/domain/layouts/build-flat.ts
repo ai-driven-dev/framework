@@ -20,6 +20,7 @@ import {
 import { agentLinks } from "../rules/agent-markdown.js";
 import { agentShape, type ComponentPlan } from "../rules/component-pipeline.js";
 import { flatHookPlans } from "../rules/hook-plans.js";
+import { relativeLinks } from "../rules/links.js";
 import { agentFiles, baseOf, namedByFolder } from "./build-shared.js";
 
 /** A flat build's plugin files, in the tool's own folders. Its MCP servers and hooks file are
@@ -115,6 +116,15 @@ function flatHooks(canon: PluginDistribution, artifact: SupportedArtifact): Comp
   });
 }
 
+/** How a flat layout reads a skill's links: relative to where the skill lands. */
+export function flatSkillLinks(
+  contract: ToolBuildContract,
+  plugin: string,
+  path: string
+): ComponentPlan["links"] {
+  return relativeLinks(path, (rel) => flatLinkTarget(contract, plugin, rel));
+}
+
 function flatSkills(
   canon: PluginDistribution,
   contract: ToolBuildContract,
@@ -129,11 +139,7 @@ function flatSkills(
       path,
       content,
       guard: { plugin, name: relativePath.slice("skills/".length) },
-      links: {
-        kind: "relative",
-        currentFilePluginRelative: path,
-        resolveTargetPath: (rel) => flatLinkTarget(contract, plugin, rel),
-      },
+      links: flatSkillLinks(contract, plugin, path),
       namedAfterFolder: namedByFolder(artifact, relativePath),
     };
   });

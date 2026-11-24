@@ -36,6 +36,14 @@ export function toolLinks(tool: { readonly linkSyntax: LinkSyntax }): LinkForm {
   return { kind: "tool", syntax: tool.linkSyntax };
 }
 
+/** Markdown links relative to where the file is written: how every layout reads a skill. */
+export function relativeLinks(
+  currentFilePluginRelative: string,
+  resolveTargetPath?: (pluginRelPath: string) => string
+): LinkForm {
+  return { kind: "relative", currentFilePluginRelative, resolveTargetPath };
+}
+
 /** The forms a document is read through, in order; none when it has none. */
 export function chainLinks(...forms: readonly (LinkForm | undefined)[]): LinkForm | undefined {
   const present = forms.filter((form): form is LinkForm => form !== undefined);

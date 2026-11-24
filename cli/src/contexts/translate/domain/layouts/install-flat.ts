@@ -16,7 +16,7 @@ import { chainLinks, toolLinks } from "../rules/links.js";
 import type { TranslatedAiTool, TranslatedFlatPlugin } from "../translate-profile.js";
 import { flatAgentPlan } from "./build-flat.js";
 import { namedByFolder } from "./build-shared.js";
-import { ruleScopesOf, scopeStated } from "./install-flat-rules.js";
+import { ruleScopesOf, scopeStated, skillLinksOf } from "./install-flat-rules.js";
 
 type FlatSection = "agents" | "rules" | "skills";
 
@@ -103,7 +103,13 @@ function sectionPlan(
   if (agent !== null) return { ...agent, links: chainLinks(links, agent.links) };
   if (!declared) return null;
   const path = tool.flatInstallPath(section, pluginName, source.slice(`${section}/`.length));
-  return { source, path, content, links, namedAfterFolder: folderNamed(tool, section, source) };
+  return {
+    source,
+    path,
+    content,
+    links: chainLinks(links, skillLinksOf(file, { section, path }, at)),
+    namedAfterFolder: folderNamed(tool, section, source),
+  };
 }
 
 /** A skill entry the tool finds by its folder name carries that name, as its flat build writes it. */

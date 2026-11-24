@@ -7,7 +7,7 @@ import type {
 import { isComponentFile, isProse, PLUGIN_HOOKS_DIR } from "../plugin-paths.js";
 import { namedByPlugin } from "../rules/agent-markdown.js";
 import type { ComponentPlan } from "../rules/component-pipeline.js";
-import { toolLinks } from "../rules/links.js";
+import { chainLinks, relativeLinks, toolLinks } from "../rules/links.js";
 import type { TranslatedAiTool, TranslatedNativePlugin } from "../translate-profile.js";
 import { isEntry } from "./build-shared.js";
 import { hooksTrustNotices, manifestPlan, nativeHooksPlan } from "./install-native-hooks.js";
@@ -120,7 +120,7 @@ function skillPlan(file: PluginComponentFile, at: NativeAt): ComponentPlan | nul
     source,
     path,
     content,
-    links: linksOf(source, tool),
+    links: chainLinks(linksOf(source, tool), relativeLinks(source)),
     shape: isEntry(source)
       ? (text) => reshapeFrontmatter(text, { frontmatter: skillFrontmatterOf(tool) })
       : undefined,

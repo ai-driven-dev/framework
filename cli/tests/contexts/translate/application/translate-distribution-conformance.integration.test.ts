@@ -39,11 +39,6 @@ type Divergence = {
  * entry nothing needs fails the test, and a difference no entry names fails it too. */
 const DIVERGENCES: readonly Divergence[] = [
   {
-    id: "A rewrites an @relative reference into a markdown link",
-    applies: () => true,
-    fold: (d) => ({ ...d, body: d.body.replace(/\[[^\]]+\]\((\.\.?\/[^)]+)\)/g, "@$1") }),
-  },
-  {
     id: "A leaves the {{TOOLS}} placeholder, B resolves it to .github/",
     applies: (t, _p, source) => t === "copilot" && source.includes("{{TOOLS}}"),
     fold: (d) => ({ ...d, body: d.body.replaceAll(".github/", "{{TOOLS}}/") }),

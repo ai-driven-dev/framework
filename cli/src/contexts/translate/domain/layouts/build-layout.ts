@@ -8,6 +8,7 @@ import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin
 import { PLUGIN_MCP_RELATIVE } from "../canon-format.js";
 import { agentLinks } from "../rules/agent-markdown.js";
 import { agentShape, type ComponentPlan } from "../rules/component-pipeline.js";
+import { relativeLinks } from "../rules/links.js";
 import type { FrameworkBuildMode } from "../translate-profile.js";
 import { buildFlatPlans } from "./build-flat.js";
 import { agentFiles, baseOf, isEntry } from "./build-shared.js";
@@ -103,7 +104,7 @@ function marketplaceSkills(
       path,
       content,
       guard: { plugin, name: relativePath.slice("skills/".length) },
-      links: { kind: "relative", currentFilePluginRelative: relativePath },
+      links: relativeLinks(relativePath),
       shape:
         isEntry(relativePath) && skillFrontmatter
           ? (text) => reshapeFrontmatter(text, { frontmatter: skillFrontmatter })
