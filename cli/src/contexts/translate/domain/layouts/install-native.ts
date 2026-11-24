@@ -9,6 +9,7 @@ import { isComponentFile, isProse, PLUGIN_HOOKS_DIR } from "../plugin-paths.js";
 import type { ComponentPlan } from "../rules/component-pipeline.js";
 import { toolLinks } from "../rules/links.js";
 import type { TranslatedAiTool, TranslatedNativePlugin } from "../translate-profile.js";
+import { isEntry } from "./build-shared.js";
 import { hooksTrustNotices, manifestPlan, nativeHooksPlan } from "./install-native-hooks.js";
 
 interface NativeTarget {
@@ -115,8 +116,8 @@ function pluginNamed(
     : frontmatter;
 }
 
-// A skill is prose with frontmatter; anything else under `skills/` is an asset the skill carries,
-// and a frontmatter round-trip is meaningless for it.
+// Only a skill's entry carries the frontmatter its tool reads. Anything else under `skills/` is an
+// action or an asset the skill carries, and its own frontmatter belongs to what it is.
 function skillPlan(file: PluginComponentFile, at: NativeAt): ComponentPlan | null {
   const { relativePath: source, content } = file;
   const { tool, plugins, pluginRoot } = at;
@@ -128,7 +129,9 @@ function skillPlan(file: PluginComponentFile, at: NativeAt): ComponentPlan | nul
     path,
     content,
     links: linksOf(source, tool),
-    shape: (text) => reshapeFrontmatter(text, { frontmatter: skillFrontmatterOf(tool) }),
+    shape: isEntry(source)
+      ? (text) => reshapeFrontmatter(text, { frontmatter: skillFrontmatterOf(tool) })
+      : undefined,
     rootToken: plugins.rootToken(),
   };
 }

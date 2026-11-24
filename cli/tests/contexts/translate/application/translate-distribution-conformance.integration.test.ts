@@ -44,14 +44,6 @@ const DIVERGENCES: readonly Divergence[] = [
     fold: (d) => ({ ...d, body: d.body.replace(/\[[^\]]+\]\((\.\.?\/[^)]+)\)/g, "@$1") }),
   },
   {
-    id: "B keeps only a codex skill's name and description",
-    applies: (t, p) => t === "codex" && p.includes("/skills/"),
-    fold: ({ frontmatter: { name, description }, body }) => ({
-      frontmatter: { name, description },
-      body,
-    }),
-  },
-  {
     id: "A leaves the {{TOOLS}} placeholder, B resolves it to .github/",
     applies: (t, _p, source) => t === "copilot" && source.includes("{{TOOLS}}"),
     fold: (d) => ({ ...d, body: d.body.replaceAll(".github/", "{{TOOLS}}/") }),
