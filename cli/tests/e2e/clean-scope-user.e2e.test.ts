@@ -89,6 +89,8 @@ describe("E2E: clean --scope user purges the shared source", () => {
       expect(setupResult.exitCode).toBe(0);
 
       const userConfigDir = join(fakeHome, ".config", "aidd");
+      const installationIdPath = join(userConfigDir, "installation", "id.json");
+      const installationIdBefore = await readFile(installationIdPath, "utf-8");
       const marketplacesPath = join(userConfigDir, "marketplaces.json");
       const beforeMarketplaces = await readJson(marketplacesPath);
       const beforeNames = (beforeMarketplaces.marketplaces as Array<{ name: string }>).map(
@@ -150,8 +152,14 @@ describe("E2E: clean --scope user purges the shared source", () => {
       // whitelist has no business under fails here rather than going unnoticed.
       expect(before).not.toEqual(after);
       expect(after).toEqual(
-        ["auth.json", "marketplaces.json", join("telemetry", "2026-01-01.jsonl")].sort()
+        [
+          "auth.json",
+          "marketplaces.json",
+          join("installation", "id.json"),
+          join("telemetry", "2026-01-01.jsonl"),
+        ].sort()
       );
+      expect(await readFile(installationIdPath, "utf-8")).toBe(installationIdBefore);
       const afterMarketplaces = await readJson(marketplacesPath);
       const afterNames = (afterMarketplaces.marketplaces as Array<{ name: string }>).map(
         (m) => m.name
