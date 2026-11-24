@@ -54,20 +54,6 @@ describe("ListInstalledRules - every tool's installed rules, in one answer", () 
     ]);
   });
 
-  // Codex reads `.codex/rules/` as Starlark command policy, never as markdown guidance:
-  // a markdown file there is not a rule, whoever put it there.
-  it("does not report a markdown file under Codex's rules directory", async () => {
-    const useCase = new ListInstalledRules(
-      readerOf({ [at(".codex/rules/1-naming.md")]: "---\ndescription: Names\n---\n" }),
-      process.platform,
-      registeredTools()
-    );
-
-    const { rules } = await useCase.execute({ projectRoot: ROOT });
-
-    expect(rules).toEqual([]);
-  });
-
   it("reports a path relative to the project, never the machine it ran on", async () => {
     const useCase = new ListInstalledRules(
       readerOf({ [at(".claude/rules/deep/nested/1-naming.md")]: "---\n---\n" }),

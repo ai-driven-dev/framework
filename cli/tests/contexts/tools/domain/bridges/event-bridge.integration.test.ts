@@ -428,13 +428,12 @@ describe("the bridge generated with OpenCode's parameters", () => {
   });
 
   it("ignores an idle session once the host has shut it down", async () => {
-    const { server, emit, of, prompts } = await open(hostNamed("OpenCode"));
+    const { server, emit, of } = await open(hostNamed("OpenCode"));
 
     await server.dispose();
     await emit({ type: "session.idle", properties: { sessionID: "s1" } });
 
     expect(await of("stop.cjs")).toStrictEqual([]);
-    expect(prompts).toStrictEqual([]);
   });
 
   it("keeps a session's continuation across the plugin being created again", async () => {

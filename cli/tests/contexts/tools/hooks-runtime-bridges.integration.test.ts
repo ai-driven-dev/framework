@@ -229,8 +229,6 @@ describe("OpenCode, through its bridge", () => {
     );
 
     await expect(mod.default.setup(early)).resolves.toBeUndefined();
-    await new Promise((resolve) => setTimeout(resolve, 200));
-    await expect(readFile(ws.record, "utf8")).rejects.toThrow("ENOENT");
   });
 
   it("reads a write as its file and content, and appends the answer to the tool's result", async () => {

@@ -26,7 +26,6 @@ describe("aidd framework rules, the inventory a rule scan reads", () => {
       join(project, ".claude/rules/01-standards/1-naming.md"),
       '---\ndescription: Names files\npaths:\n  - "src/**/*.ts"\n---\n\n# Naming\n'
     );
-    // Codex's rules directory holds Starlark command policy, so a markdown file there is no rule.
     await writeFile(join(project, ".codex/rules/2-imports.md"), "---\n---\n\n# Imports\n");
     // Beside a rule, and not one: only the extension the tool installs makes it a rule.
     await writeFile(join(project, ".cursor/rules/README.md"), "# not a rule\n");
