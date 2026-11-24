@@ -60,6 +60,33 @@ describe("a plugin of one skill, its action and its asset", () => {
   });
 });
 
+describe("a skill's @ links", () => {
+  const skills = [
+    makeFile("skills/hello/SKILL.md", "See @./reference.json and @../commit/SKILL.md\n"),
+    makeFile("skills/hello/reference.json", "{}\n"),
+    makeFile("skills/commit/SKILL.md", "# Commit\n"),
+  ];
+  const bodyOf = (tree: Record<string, string>, path: string) => parseFrontmatter(tree[path]).body;
+
+  it("writes them as markdown links to the file beside the skill, in a native tree", () => {
+    expect(
+      bodyOf(
+        treeOf(claude, distOf([...skills], { skills })),
+        ".claude/plugins/sample-plugin/skills/hello/SKILL.md"
+      )
+    ).toBe("See [reference.json](./reference.json) and [commit/SKILL.md](../commit/SKILL.md)\n");
+  });
+
+  it("writes them as markdown links to the file in the plugin's own namespace, in a flat tree", () => {
+    expect(
+      bodyOf(
+        treeOf(opencode, distOf([...skills], { skills })),
+        ".opencode/skills/sample-plugin/hello/SKILL.md"
+      )
+    ).toBe("See [reference.json](./reference.json) and [commit/SKILL.md](../commit/SKILL.md)\n");
+  });
+});
+
 describe("a plugin's hooks", () => {
   it("puts the manifest where codex reads it, rewrites its plugin root, and keeps each script's own bytes", () => {
     expect(treeOf(codex, hooksDist())).toEqual({
