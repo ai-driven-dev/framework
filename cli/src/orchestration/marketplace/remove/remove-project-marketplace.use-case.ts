@@ -22,7 +22,11 @@ export interface RemoveProjectMarketplaceDeps {
 }
 
 /** Removes a project marketplace: finds it, removes the plugins installed from it once the person
- * agrees, forgets it and its built trees, then lets go of what those plugins claimed. */
+ * agrees, forgets it and its built trees, then lets go of what those plugins claimed.
+ *
+ * It never calls the host. A host's own declaration of the marketplace, such as the one `claude`
+ * writes to `.claude/settings.local.json`, is the host's file and stays until `clean` withdraws
+ * the project's registrations through the host's CLI. */
 export class RemoveProjectMarketplace {
   constructor(private readonly deps: RemoveProjectMarketplaceDeps) {}
 
