@@ -55,7 +55,7 @@ const HANG = `require("node:fs").writeFileSync(require("node:path").resolve(__di
 interface Server {
   event: (input: { event: unknown }) => Promise<void>;
   "tool.execute.after": (call: unknown, output: { output: string }) => Promise<void>;
-  "chat.message"?: (input: { sessionID: string }) => Promise<void>;
+  "chat.message"?: (input: { sessionID: string }, output: { parts: unknown[] }) => Promise<void>;
   dispose: () => Promise<void>;
 }
 interface Descriptor {
@@ -111,6 +111,11 @@ afterEach(async () => {
   );
 });
 
+interface Prompt {
+  readonly path: { readonly id: string };
+  readonly body: { readonly parts: readonly unknown[] };
+}
+
 interface Call {
   readonly script: string;
   readonly args: readonly string[];
@@ -138,13 +143,13 @@ async function open(
   const modulePath = join(directory, "plugin", "bridge.mjs");
   await writeFile(modulePath, host.generate(hooksJson, "probe") ?? "");
   const descriptor: Descriptor = (await import(pathToFileURL(modulePath).href)).default;
-  const prompts: unknown[] = [];
-  const delivered: unknown[] = [];
+  const prompts: Prompt[] = [];
+  const delivered: Prompt[] = [];
   // `prompt` is delivered after a delay, as a real turn is: only what it awaits has landed.
   const client = {
     session: {
-      promptAsync: async (r: unknown) => void prompts.push(r),
-      prompt: async (r: unknown) => {
+      promptAsync: async (r: Prompt) => void prompts.push(r),
+      prompt: async (r: Prompt) => {
         prompts.push(r);
         await delay(100);
         delivered.push(r);
@@ -279,7 +284,7 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
 
     await emit(idle, ...host.nextTurn("s1"), idle);
 
-    expect(prompts).toStrictEqual([
+    expect(prompts).toMatchObject([
       { path: { id: "s1" }, body: { parts: [{ type: "text", text: "fix it" }] } },
     ]);
     expect((await of("stop.cjs")).map((c) => c.payload)).toEqual([
@@ -320,10 +325,10 @@ describe("the bridge generated with Kilo's parameters, held to the session each 
     const { directory, emit, of, server } = await open(kilo);
     await emit(kilo.sessionStarted("s1", directory));
     const idle = { type: "session.idle", properties: { sessionID: "s1" } };
+    const typed = { parts: [{ type: "text", text: "hello" }] };
 
     await emit(idle);
-    await server["chat.message"]?.({ sessionID: "s1" });
-    await server["chat.message"]?.({ sessionID: "s1" });
+    await server["chat.message"]?.({ sessionID: "s1" }, typed);
     await emit(...kilo.nextTurn("s1"), idle);
 
     expect((await of("stop.cjs")).map((c) => c.payload.stop_hook_active)).toStrictEqual([
@@ -332,16 +337,22 @@ describe("the bridge generated with Kilo's parameters, held to the session each 
     ]);
   });
 
-  it("keeps the continuation when the only message is the follow-up it sent itself", async () => {
-    const { directory, emit, of, server } = await open(kilo);
-    await emit(kilo.sessionStarted("s1", directory));
+  it("keeps the continuation when a follow-up, its own or another plugin's, is the only message", async () => {
+    const first = await open(kilo);
+    const second = await open(kilo);
     const idle = { type: "session.idle", properties: { sessionID: "s1" } };
+    await first.emit(kilo.sessionStarted("s1", first.directory), idle);
+    await second.emit(kilo.sessionStarted("s1", second.directory), idle);
 
-    await emit(idle);
-    await server["chat.message"]?.({ sessionID: "s1" });
-    await emit(...kilo.nextTurn("s1"), idle);
+    // Kilo hands every plugin each message, whichever plugin sent it.
+    for (const { body } of [...first.prompts, ...second.prompts]) {
+      for (const { server } of [first, second]) {
+        await server["chat.message"]?.({ sessionID: "s1" }, { parts: [...body.parts] });
+      }
+    }
+    await first.emit(...kilo.nextTurn("s1"), idle);
 
-    expect((await of("stop.cjs")).map((c) => c.payload.stop_hook_active)).toStrictEqual([
+    expect((await first.of("stop.cjs")).map((c) => c.payload.stop_hook_active)).toStrictEqual([
       false,
       true,
     ]);
