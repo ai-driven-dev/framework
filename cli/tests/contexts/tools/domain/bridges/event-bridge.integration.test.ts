@@ -414,6 +414,19 @@ describe("the bridge generated with OpenCode's parameters", () => {
     expect(delivered).toHaveLength(1);
   });
 
+  it("stops waiting for a follow-up once it is delivered", async () => {
+    const { descriptor, directory } = await open(hostNamed("OpenCode"));
+    const client = { session: { prompt: async () => undefined } };
+    const server = await descriptor.server({ directory, client });
+    const awaited = vi.spyOn(Promise, "all");
+
+    await server.event({ event: { type: "session.idle", properties: { sessionID: "s3" } } });
+    await delay(20);
+    await server.dispose();
+
+    expect(awaited.mock.calls.map(([promises]) => [...promises])).toStrictEqual([[]]);
+  });
+
   it("keeps a session's continuation across the plugin being created again", async () => {
     const { descriptor, directory, emit, of } = await open(hostNamed("OpenCode"));
     const client = { session: { prompt: async () => undefined } };

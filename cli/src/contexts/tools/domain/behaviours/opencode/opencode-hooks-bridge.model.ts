@@ -132,7 +132,7 @@ const continued = new Set();
 
 export const ${parts.identifier} = async (input) => {
   // Follow-ups being delivered: \`opencode run\` exits once the session is idle, so dispose waits.
-  const pending = [];
+  const pending = new Set();
   // SessionStart's own approximation (module doc comment above): fired once here, never
   // per session. Silent on purpose: a memory refresh
   // that breaks OpenCode's own startup is worse than one that never ran.
@@ -165,11 +165,11 @@ export const ${parts.identifier} = async (input) => {
           }
           continued.add(sessionId);
           // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
-          pending.push(
-            input.client.session
-              .prompt({ path: { id: sessionId }, body: { parts: [{ type: "text", text: reason }] } })
-              .catch((error) => console.warn("[aidd] OpenCode follow-up failed: " + String(error)))
-          );
+          const delivery = input.client.session
+            .prompt({ path: { id: sessionId }, body: { parts: [{ type: "text", text: reason }] } })
+            .catch((error) => console.warn("[aidd] OpenCode follow-up failed: " + String(error)))
+            .finally(() => pending.delete(delivery));
+          pending.add(delivery);
         }
       } catch {
         // Silent on purpose - see above.
