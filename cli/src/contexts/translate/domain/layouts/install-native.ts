@@ -1,11 +1,11 @@
 import { reshapeFrontmatter, serializeFrontmatter } from "../../../../shared/domain/markdown.js";
-import { pluginAgentName } from "../../../../shared/domain/materialization/flat-paths.js";
 import type { ReadonlyNoticeList } from "../../../../shared/domain/materialization/plugin-install-notice.js";
 import type {
   PluginComponentFile,
   PluginDistribution,
 } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import { isComponentFile, isProse, PLUGIN_HOOKS_DIR } from "../plugin-paths.js";
+import { namedByPlugin } from "../rules/agent-markdown.js";
 import type { ComponentPlan } from "../rules/component-pipeline.js";
 import { toolLinks } from "../rules/links.js";
 import type { TranslatedAiTool, TranslatedNativePlugin } from "../translate-profile.js";
@@ -109,11 +109,11 @@ function pluginNamed(
   at: NativeAt
 ): Record<string, unknown> {
   const agents = at.tool.buildContract("marketplace")?.artifacts.agents;
-  const prefixed =
-    agent.kind === "agents" && agents?.supported && agents.agentMarkdown?.pluginPrefixedName;
-  return prefixed
-    ? { ...frontmatter, name: pluginAgentName(at.pluginName, agent.fileName) }
-    : frontmatter;
+  if (agent.kind !== "agents" || !agents?.supported) return frontmatter;
+  return namedByPlugin(frontmatter, agents.agentMarkdown, {
+    plugin: at.pluginName,
+    outName: agent.fileName,
+  });
 }
 
 // Only a skill's entry carries the frontmatter its tool reads. Anything else under `skills/` is an
