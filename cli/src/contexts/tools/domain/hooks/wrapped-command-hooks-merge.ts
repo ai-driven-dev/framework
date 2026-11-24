@@ -25,7 +25,7 @@ export interface WrappedCommandHooksTarget {
   readonly label: string;
   readonly descriptor: {
     readonly flat: { readonly scriptsDir: string };
-    readonly eventMap: Readonly<Record<string, readonly string[]>>;
+    readonly eventMap: Readonly<Record<string, string>>;
   };
 }
 

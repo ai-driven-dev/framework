@@ -1,7 +1,7 @@
 import { mkdir, mkdtemp, readdir, readFile, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join, relative, sep } from "node:path";
-import { afterAll, afterEach, beforeAll, describe, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { createOutput } from "../../../src/composition/shared.js";
 import { claude } from "../../../src/composition/tool-profiles/claude.js";
 import { codexSpec } from "../../../src/composition/tool-profiles/codex.js";
@@ -471,4 +471,10 @@ describe("the hook files every route writes and removes, per tool", () => {
       }
     });
   }
+});
+
+describe("the cursor profile's Stop event", () => {
+  it("is hooked onto `stop` only, never onto the fire-and-forget `sessionEnd`", () => {
+    expect(present(cursor.hooks).eventMap.Stop).toBe("stop");
+  });
 });

@@ -14,7 +14,7 @@ import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js"
 
 const UNSTAMPED = 'const HOST = "unstamped";';
 const OWNER = { toolId: TOOL.claude, directory: ".claude/", adapter: UNSTAMPED };
-const ROUTE: HookEventRoute = { native: ["SessionStart"], relay: "native" };
+const ROUTE: HookEventRoute = { native: "SessionStart", relay: "native" };
 const FILE = { wrapper: {}, entries: { shape: "matchers", itemsKept: "all" } } as const;
 
 function declaration(overrides: Partial<HooksDeclaration> = {}): HooksDeclaration {
@@ -37,19 +37,6 @@ const BROKEN: readonly {
     detail: "Bogus is not a canonical event",
     case: "an event no plugin may name",
     broken: () => declaration({ events: { Bogus: ROUTE } }),
-  },
-  {
-    invariant: "empty-native-list",
-    detail: "SessionStart is fired on no native event",
-    case: "an event fired on no native event",
-    broken: () => declaration({ events: { SessionStart: { native: [], relay: "native" } } }),
-  },
-  {
-    invariant: "duplicate-native-event",
-    detail: "SessionStart names a native event twice",
-    case: "an event fired twice on the same native event",
-    broken: () =>
-      declaration({ events: { SessionStart: { native: ["start", "start"], relay: "native" } } }),
   },
   {
     invariant: "project-without-file",
@@ -124,16 +111,13 @@ describe("declaring a tool's hooks", () => {
     it("fires every canonical event under its own name, and relays the rest", () => {
       const declared = declareHooks(OWNER, {});
       expect([...declared.events.keys()]).toEqual([...CANONICAL_HOOK_EVENTS]);
-      expect(declared.eventMap.Stop).toEqual(["Stop"]);
+      expect(declared.eventMap.Stop).toBe("Stop");
       expect(declared.undeclaredEvents).toBe("relayed");
     });
 
-    it("reads a name or a list of names as native events of the hooks file", () => {
-      const declared = declareHooks(OWNER, {
-        events: { SessionStart: "begin", Stop: ["a", "b"] },
-      });
-      expect(declared.events.get("SessionStart")).toEqual({ native: ["begin"], relay: "native" });
-      expect(declared.events.get("Stop")).toEqual({ native: ["a", "b"], relay: "native" });
+    it("reads a name as the native event of the hooks file", () => {
+      const declared = declareHooks(OWNER, { events: { SessionStart: "begin" } });
+      expect(declared.events.get("SessionStart")).toEqual({ native: "begin", relay: "native" });
     });
 
     it("holds the plugin-root variable a hooks file states, and none without a file", () => {

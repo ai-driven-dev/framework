@@ -11,7 +11,7 @@ import {
 
 const target: WrappedCommandHooksTarget = {
   label: "Host",
-  descriptor: { flat: { scriptsDir: ".h/hooks/" }, eventMap: { SessionStart: ["SessionStart"] } },
+  descriptor: { flat: { scriptsDir: ".h/hooks/" }, eventMap: { SessionStart: "SessionStart" } },
 };
 
 // The token a plugin writes for its own directory.

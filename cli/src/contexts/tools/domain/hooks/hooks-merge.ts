@@ -16,7 +16,7 @@ import type { PluginHooksShape } from "./plugin-hooks-shape.js";
 /** What the engine reads of a descriptor: the file's form and the events the tool fires. */
 export interface HooksMergeTarget {
   readonly file: HooksFileFormat;
-  readonly eventMap?: Readonly<Record<string, readonly string[]>> | undefined;
+  readonly eventMap?: Readonly<Record<string, string>> | undefined;
   /** Each plugin's scripts land in a folder of its own under this one. */
   readonly scriptsDir: string;
   /** The variable the tool expands to a plugin's directory: a command may name the plugin's
@@ -53,22 +53,14 @@ export function mergeHooks(
   const warnings: string[] = [];
   const rewritten = rewriteRoot(shipped, target.scriptsDir).hooks ?? {};
   for (const [event, groups] of Object.entries(rewritten)) {
-    const toolEvents = target.eventMap === undefined ? [event] : target.eventMap[event];
-    if (toolEvents === undefined) {
+    const toolEvent = target.eventMap === undefined ? event : target.eventMap[event];
+    if (toolEvent === undefined) {
       warnings.push(`unmapped event '${event}' skipped`);
       continue;
     }
-    appendEntries(hooks, toolEvents, shapeEntries(groups, target.file));
+    hooks[toolEvent] = [...(hooks[toolEvent] ?? []), ...shapeEntries(groups, target.file)];
   }
   return { content: serialize(file, hooks, target.file), warnings };
-}
-
-function appendEntries(
-  hooks: Record<string, Entry[]>,
-  toolEvents: readonly string[],
-  entries: readonly Entry[]
-): void {
-  for (const toolEvent of toolEvents) hooks[toolEvent] = [...(hooks[toolEvent] ?? []), ...entries];
 }
 
 /** Takes one plugin's entries out of the tool's file, leaving every other entry as it was. */

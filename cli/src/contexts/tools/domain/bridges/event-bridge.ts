@@ -179,7 +179,7 @@ export function declareBridgeHooks<
   [sessionStart, postToolUse, stop]: BridgeNativeEvents,
   { loaderEntry, ...rest }: L
 ) {
-  const bridged = (native: string): HookEventRoute => ({ native: [native], relay: "bridge" });
+  const bridged = (native: string): HookEventRoute => ({ native, relay: "bridge" });
   return declareHooks(
     { toolId, directory, adapter },
     {

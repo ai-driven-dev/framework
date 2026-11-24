@@ -97,12 +97,6 @@ describe("reading Cursor hook payloads", () => {
     ]);
   });
 
-  it("reads a sessionEnd as no turn end: nothing is left to continue (derived from the captured stop)", () => {
-    expect(
-      read("cursor", { ...cursorStop(CURSOR_COMPLETED), hook_event_name: "sessionEnd" }).event
-    ).toBe(undefined);
-  });
-
   it("informs after a write through its additional context", () => {
     const { adapter } = read("cursor", sample("cursor-postToolUse.json", 0).payload);
     adapter.answer({ level: 1, text: "fix it" });
