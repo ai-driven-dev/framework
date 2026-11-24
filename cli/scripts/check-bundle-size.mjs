@@ -84,6 +84,7 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 830 KB: 828.7 KB, manifest v9 moving the host registrations and the plugin claims into their own files, with the atomic v8 split at load; 0.2% measured headroom.
 // 834 KB: 832.8 KB, the kind rollout splitting every use case over five dependencies by question, and the folders over ten files by responsibility; 0.1% measured headroom.
 // 850 KB: 834.1 KB, the kind rollout building every use case in composition and injecting it, so no free function reads a port; one raise for the remaining waves, expected to shrink in the final size pass; 1.9% measured headroom.
+// 880 KB: 862.8 KB, the fix waves on the rebuilt target (host withdrawal, stale declarations, tool codecs, bounded pruning); the final size pass is closed, since tree-shaking saved only about 4 KB; 2.0% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 
