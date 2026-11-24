@@ -1,6 +1,6 @@
 # Hermes Agent
 
-In the target profile, resolve skill names with `hermes skills list`. Repeat `--skill` in load order. For the approved trial, use a near-future ISO timestamp with its UTC offset in place of the recurring expression below. Follow the trial ID with `hermes cron runs <id>` and inspect its output.
+In the target profile, resolve skill names with `hermes skills list`. Repeat `--skill` in load order. For the approved trial, use a future ISO timestamp with its UTC offset in place of the recurring expression below and add `--paused`. Verify the new job is one-shot, then start it once with `hermes cron resume <trial-id> --run-now`. Follow `hermes cron runs <trial-id>` to completion and check the saved output against the criteria.
 
 After approval to activate, register the recurring expression with the same tested prompt, skills, workspace and delivery settings.
 
