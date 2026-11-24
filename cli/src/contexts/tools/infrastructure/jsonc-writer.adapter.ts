@@ -4,6 +4,7 @@ type Path = (string | number)[];
 
 const FORMAT = { formattingOptions: { tabSize: 2, insertSpaces: true } };
 
+// Twin of the installation context's settings editor, kept apart: sharing it would force a port into `shared` that neither context needs.
 /** JSONC through jsonc-parser. Satisfies the tools context's `JsonWriter` by shape: it edits only
  * what differs, so the comments and layout a person wrote around it stay. */
 export class JsoncWriter {
