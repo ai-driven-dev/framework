@@ -78,7 +78,8 @@ const hooks = declareHooks(
     },
     rootToken: CURSOR_PLUGIN_ROOT_TOKEN,
     manifestNamesHooks: true,
-    // Headless `cursor-agent -p` fires no `stop`: Stop hooks run only in interactive sessions.
+    // Limit: headless `cursor-agent -p` delivers no `stop`, so a headless run gets no turn-end
+    // script (no memory sync).
     // `timeout` is in seconds on both sides: Claude's hooks.json and Cursor's per-script option.
     file: {
       wrapper: { version: 1 },

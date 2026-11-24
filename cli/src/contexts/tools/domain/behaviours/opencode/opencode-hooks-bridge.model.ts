@@ -131,7 +131,7 @@ function postToolUseCallsFor(call, directory) {
 const continued = new Set();
 
 export const ${parts.identifier} = async (input) => {
-  // Follow-ups being delivered: \`opencode run\` exits once the session is idle, so dispose waits.
+  // Stop handlings in flight: \`opencode run\` exits once the session is idle, so dispose waits.
   const pending = new Set();
   // SessionStart's own approximation (module doc comment above): fired once here, never
   // per session. Silent on purpose: a memory refresh
@@ -159,7 +159,7 @@ export const ${parts.identifier} = async (input) => {
           const sessionId = call.payload.session_id;
           const payload = { ...call.payload, stop_hook_active: continued.has(sessionId) };
           const asking = stopReasonOf(call.script, call.args, payload, directory);
-          // Pending before the script ends: the host disposes while it still runs.
+          // Pending before the script ends: dispose waits for a handling whose script still runs.
           // The prompt is the session's next turn, and this handler must not hold it.
           const handling = asking
             .then((reason) => {
