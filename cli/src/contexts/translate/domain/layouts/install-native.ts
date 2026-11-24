@@ -5,9 +5,11 @@ import type {
   PluginDistribution,
 } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import { isComponentFile, isProse, PLUGIN_HOOKS_DIR } from "../plugin-paths.js";
+import { namedByPlugin } from "../rules/agent-markdown.js";
 import type { ComponentPlan } from "../rules/component-pipeline.js";
 import { toolLinks } from "../rules/links.js";
 import type { TranslatedAiTool, TranslatedNativePlugin } from "../translate-profile.js";
+import { isEntry } from "./build-shared.js";
 import { hooksTrustNotices, manifestPlan, nativeHooksPlan } from "./install-native-hooks.js";
 
 interface NativeTarget {
@@ -26,7 +28,7 @@ export function nativeInstallPlan(
 } {
   const { tool, plugins, manifestPaths } = target;
   const pluginRoot = plugins.pluginOutputDir(dist.manifest.name);
-  const at = { tool, plugins, pluginRoot };
+  const at = { tool, plugins, pluginRoot, pluginName: dist.manifest.name };
   const plans = dist.files.flatMap((file) => nativeFilePlan(file, at) ?? []);
   const manifest = manifestPlan(dist, { plugins, pluginRoot, manifestPaths });
   if (manifest !== null) plans.push(manifest);
@@ -38,6 +40,7 @@ export function nativeInstallPlan(
 
 interface NativeAt extends NativeTarget {
   readonly pluginRoot: string;
+  readonly pluginName: string;
 }
 
 function nativeFilePlan(file: PluginComponentFile, at: NativeAt): ComponentPlan | null {
@@ -90,7 +93,8 @@ function markdownPlan(
     links: linksOf(source, tool),
     shape: (text) =>
       reshapeFrontmatter(text, {
-        frontmatter: (fm) => section.convertFrontmatter(fm, fileName),
+        frontmatter: (fm) =>
+          section.convertFrontmatter(pluginNamed(fm, { kind, fileName }, at), fileName),
         serialize: (fm, body) =>
           section.serialize ? section.serialize(fm, body) : serializeFrontmatter(fm, body),
       }),
@@ -98,8 +102,22 @@ function markdownPlan(
   };
 }
 
-// A skill is prose with frontmatter; anything else under `skills/` is an asset the skill carries,
-// and a frontmatter round-trip is meaningless for it.
+/** An agent its tool's marketplace build names after its plugin carries that name here too. */
+function pluginNamed(
+  frontmatter: Record<string, unknown>,
+  agent: { kind: string; fileName: string },
+  at: NativeAt
+): Record<string, unknown> {
+  const agents = at.tool.buildContract("marketplace")?.artifacts.agents;
+  if (agent.kind !== "agents" || !agents?.supported) return frontmatter;
+  return namedByPlugin(frontmatter, agents.agentMarkdown, {
+    plugin: at.pluginName,
+    outName: agent.fileName,
+  });
+}
+
+// Only a skill's entry carries the frontmatter its tool reads. Anything else under `skills/` is an
+// action or an asset the skill carries, and its own frontmatter belongs to what it is.
 function skillPlan(file: PluginComponentFile, at: NativeAt): ComponentPlan | null {
   const { relativePath: source, content } = file;
   const { tool, plugins, pluginRoot } = at;
@@ -111,7 +129,9 @@ function skillPlan(file: PluginComponentFile, at: NativeAt): ComponentPlan | nul
     path,
     content,
     links: linksOf(source, tool),
-    shape: (text) => reshapeFrontmatter(text, { frontmatter: skillFrontmatterOf(tool) }),
+    shape: isEntry(source)
+      ? (text) => reshapeFrontmatter(text, { frontmatter: skillFrontmatterOf(tool) })
+      : undefined,
     rootToken: plugins.rootToken(),
   };
 }

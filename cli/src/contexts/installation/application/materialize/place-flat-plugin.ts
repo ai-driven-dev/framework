@@ -52,7 +52,10 @@ export async function placeFlatPlugin(
   const { dist, tool, source, projectRoot, manifest, marketplace } = request;
   const ctx = flatContextOf(tool, dist, { projectRoot, deps });
   if (ctx === null) return { skipped: [] };
-  const mcp = await materializeRequestedMcp(deps.fs, request, ctx.installedMcp);
+  const mcp = await materializeRequestedMcp(deps.fs, request, {
+    declaration: ctx.installedMcp,
+    rulesGlob: placedRulesGlob(tool, { pluginName: dist.manifest.name, files: ctx.files }),
+  });
   const hooks = await placeProjectHooks(request, { ctx, deps });
   const skipped: ReadonlySkipList = [...ctx.skipped, ...mcp.mcpSkips, ...hooks.skipped];
   if (ctx.files.length === 0 && mcp.mcpEntries.size === 0 && hooks.projectHooks === undefined)
@@ -70,6 +73,17 @@ export async function placeFlatPlugin(
   });
   manifest.addPlugin(tool.toolId, plugin.withProjectHooks(hooks.projectHooks));
   return { skipped, written };
+}
+
+/** The glob listing the plugin's rules in the tool's config, when the install placed any under it. */
+function placedRulesGlob(
+  tool: AiToolProfile,
+  placed: { pluginName: string; files: readonly InstallationFile[] }
+): string | null {
+  const glob = tool.flatRulesGlob(placed.pluginName);
+  if (glob === null) return null;
+  const folder = glob.slice(0, glob.indexOf("*"));
+  return placed.files.some((file) => file.relativePath.startsWith(folder)) ? glob : null;
 }
 
 function placeProjectHooks(

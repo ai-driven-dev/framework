@@ -11,7 +11,13 @@ import type {
   PluginDistribution,
 } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import { PLUGIN_HOOKS_RELATIVE } from "../canon-format.js";
-import { flatAgentPath, flatLinkTarget, mergeFlatHooks } from "../flat-layout.js";
+import {
+  flatAgentPath,
+  flatCommandFolders,
+  flatFoldsMcp,
+  flatLinkTarget,
+  mergeFlatHooks,
+} from "../flat-layout.js";
 import { agentLinks } from "../rules/agent-markdown.js";
 import { agentShape, type ComponentPlan } from "../rules/component-pipeline.js";
 import { flatHookPlans } from "../rules/hook-plans.js";
@@ -25,11 +31,38 @@ export function buildFlatPlans(
 ): ComponentPlan[] {
   const { agents, hooks, skills } = contract.artifacts;
   return [
+    ...flatCommandFiles(canon, contract),
     ...(agents.supported ? flatAgents(canon, contract, agents) : []),
     ...(hooks.supported ? flatHooks(canon, hooks) : []),
     ...(skills.supported ? flatSkills(canon, contract, skills) : []),
   ];
 }
+
+/** The folders a plugin's MCP and hook commands name that the tool has no place for, copied whole
+ * under the plugin's name: only those, never every extra folder. */
+function flatCommandFiles(canon: PluginDistribution, contract: ToolBuildContract): ComponentPlan[] {
+  const { hooks } = contract.artifacts;
+  const plugin = canon.manifest.name;
+  const commands = [
+    ...(flatFoldsMcp(contract) ? canon.components.mcp : []),
+    ...(hooks.supported ? canon.components.hooks.filter(isHooksManifest) : []),
+  ];
+  const folders = new Set(
+    commands.flatMap((file) => flatCommandFolders(contract, file.content, plugin))
+  );
+  return canon.files
+    .filter(
+      ({ relativePath }) => folders.has(relativePath.split("/")[0]) && relativePath.includes("/")
+    )
+    .map(({ relativePath, content }) => ({
+      source: relativePath,
+      path: `${plugin}/${relativePath}`,
+      content,
+    }));
+}
+
+const isHooksManifest = (file: PluginComponentFile): boolean =>
+  file.relativePath === PLUGIN_HOOKS_RELATIVE;
 
 function flatAgents(
   canon: PluginDistribution,

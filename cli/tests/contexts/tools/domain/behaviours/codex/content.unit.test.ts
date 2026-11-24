@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { codexSpec } from "../../../../../../src/composition/tool-profiles/codex.js";
 import { defineAiTool } from "../../../../../../src/contexts/tools/domain/profile/define-tool.js";
+import { SmolTomlCodec } from "../../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { applyLinkSyntax } from "../../../../../../src/shared/domain/materialization/link-syntax.js";
-import { SmolTomlCodec } from "../../../../../../src/shared/infrastructure/smol-toml-codec.adapter.js";
 
 const rewriteCodexContent = (text: string) =>
   applyLinkSyntax(text, defineAiTool(codexSpec, { toml: new SmolTomlCodec() }).linkSyntax);
@@ -12,13 +12,5 @@ describe("codex link syntax", () => {
     expect(rewriteCodexContent("Read .codex/skills/01-plan/SKILL.md\n")).toBe(
       "Read .agents/skills/aidd-01-plan/SKILL.md\n"
     );
-  });
-
-  it("routes a numbered command folder under commands/aidd/<phase>/, with or without the @ prefix", () => {
-    expect(
-      rewriteCodexContent(
-        "Run .codex/commands/04_code/implement.md, then @.codex/commands/02-plan/plan.md.\n"
-      )
-    ).toBe("Run .codex/commands/aidd/04/implement.md, then @.codex/commands/aidd/02/plan.md.\n");
   });
 });

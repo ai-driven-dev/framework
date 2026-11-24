@@ -12,10 +12,6 @@ import { mergeCodexConfigToml } from "../../contexts/tools/domain/behaviours/cod
 import { buildCodexFlatContract } from "../../contexts/tools/domain/behaviours/codex/codex-flat-build.model.js";
 import { codexGlobalFilePath } from "../../contexts/tools/domain/behaviours/codex/codex-paths.model.js";
 import { tomlAgentFrontmatter } from "../../contexts/tools/domain/formats/agents/toml-agent.js";
-import {
-  aiddCommandsUnder,
-  convertCommandFrontmatter,
-} from "../../contexts/tools/domain/formats/command.js";
 import { declareHooks } from "../../contexts/tools/domain/formats/hooks/declaration.js";
 import {
   hooksConfigPart,
@@ -36,12 +32,12 @@ import { nativeLayout } from "../../contexts/tools/domain/sections/layout-sectio
 import { manifestSection } from "../../contexts/tools/domain/sections/manifest-section.js";
 import { acceptedPluginMcp } from "../../contexts/tools/domain/sections/mcp-section.js";
 import { ModelsSection } from "../../contexts/tools/domain/sections/models-section.js";
+import { SmolTomlCodec } from "../../contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import {
   type FlatArtifactLayout,
   flatArtifactLayout,
 } from "../../shared/domain/materialization/flat-paths.js";
 import type { LinkSyntax } from "../../shared/domain/materialization/link-syntax.js";
-import { SmolTomlCodec } from "../../shared/infrastructure/smol-toml-codec.adapter.js";
 
 const PLUGIN_MCP = acceptedPluginMcp();
 
@@ -60,10 +56,7 @@ const CODEX_FLAT: { readonly layout: FlatArtifactLayout; readonly configPath: st
   configPath: ".codex/config.toml",
 };
 
-const LINK_SYNTAX: LinkSyntax = [
-  { from: /\.codex\/skills\//g, to: ".agents/skills/aidd-" },
-  { from: /(@?)\.codex\/commands\/(\d+)[_-][^/]+\/([^\s]+)/g, to: "$1.codex/commands/aidd/$2/$3" },
-];
+const LINK_SYNTAX: LinkSyntax = [{ from: /\.codex\/skills\//g, to: ".agents/skills/aidd-" }];
 
 const hooks = declareHooks(
   { toolId: "codex", directory: DIRECTORY, adapter },
@@ -150,10 +143,6 @@ const MCP_CONFIG: McpTomlDeclaration = {
 const CODEX_CAPABILITIES = {
   agents: { format: "toml", frontmatter: tomlAgentFrontmatter },
   skills: { agentsSkillsDirectory: true },
-  commands: {
-    buildInstallPath: aiddCommandsUnder(DIRECTORY),
-    convertFrontmatter: convertCommandFrontmatter,
-  },
   rules: {
     buildInstallPath: installUnder(DIRECTORY, TOOL_SUFFIX, "rules/"),
     convertFrontmatter: unchangedFrontmatter,
@@ -179,7 +168,7 @@ export const codexSpec = {
   toolSuffix: TOOL_SUFFIX,
   displayName: "Codex",
   recommendedFor: singlePythonRepo,
-  signalDir: `${DIRECTORY}commands`,
+  signalDir: null,
   configAssets: CODEX_CONFIG_ASSETS,
   hooks,
   buildContracts: {

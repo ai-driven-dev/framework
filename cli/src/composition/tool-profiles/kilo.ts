@@ -13,17 +13,16 @@ import { flatHooksSupport } from "../../contexts/tools/domain/formats/hooks/flat
 import { toTypedMcpSection } from "../../contexts/tools/domain/formats/mcp/typed-mcp-section.js";
 import { descriptionOnlyRule } from "../../contexts/tools/domain/formats/rule-frontmatter.js";
 import { contract } from "../../contexts/tools/domain/profile/contract-builders.js";
+import type { McpJsonDeclaration } from "../../contexts/tools/domain/profile/declared-sections.js";
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
 import { installUnder } from "../../contexts/tools/domain/profile/tool-suffix.js";
 import {
   flatGlobalFilePath,
   flatPlacement,
 } from "../../contexts/tools/domain/sections/layout-section.js";
-import {
-  McpConfigPart,
-  type McpOutputPathCandidates,
-} from "../../contexts/tools/domain/sections/mcp-section.js";
+import type { McpOutputPathCandidates } from "../../contexts/tools/domain/sections/mcp-section.js";
 import { ModelsSection } from "../../contexts/tools/domain/sections/models-section.js";
+import { JsoncWriter } from "../../contexts/tools/infrastructure/jsonc-writer.adapter.js";
 import {
   type FlatArtifactLayout,
   flatArtifactLayout,
@@ -62,6 +61,7 @@ const TOOL_SUFFIX = ".kilo.md";
 /** Where a flat build, and a flat install, put kilo's skills and agents. */
 const KILO_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(KILO_DIRECTORY, {
   skills: "nested",
+  rules: "top-level-unscoped",
   agent: { ext: ".md" },
 });
 
@@ -72,64 +72,77 @@ const hooks = declareBridgeHooks(
 );
 const hooksDelivery = flatHooksSupport(hooks);
 
-export const kilo = defineAiTool({
-  toolId: "kilo",
-  distributionProbes: { marketplace: ["kilo.json"] },
-  directory: KILO_DIRECTORY,
-  toolSuffix: TOOL_SUFFIX,
-  displayName: "Kilo Code",
-  signalDir: ".kilo/commands",
-  configAssets: [
-    { name: "kilo.json", content: kiloJson, destination: ".kilo/kilo.jsonc", delivery: "install" },
-  ],
-  hooks,
-  buildContracts: {
-    flat: contract(buildKiloFlatContract, hooks, KILO_FLAT_LAYOUT, {
-      agentMarkdown: { frontmatter: AGENT_FRONTMATTER },
-      config: KILO_OUTPUT_PATH_CANDIDATES,
-    }),
-  },
+/** The MCP servers file, rewritten in place so the comments a person wrote in it stay. */
+const MCP_CONFIG: McpJsonDeclaration = {
+  outputPath: "kilo.json",
+  format: "json",
+  mergeStrategy: "framework-prime",
+  transformContent: toTypedMcpSection,
+  consumes: [MCP_CONFIG_REF],
+  keepsComments: true,
+  outputPathCandidates: KILO_OUTPUT_PATH_CANDIDATES,
+};
 
-  capabilities: {
-    agents: {
-      format: "markdown",
-      frontmatter: AGENT_FRONTMATTER,
-    },
-    skills: {},
-    commands: {
-      buildInstallPath: aiddCommandsUnder(KILO_DIRECTORY),
-      convertFrontmatter: convertCommandFrontmatterNoHint,
-    },
-    rules: {
-      buildInstallPath: installUnder(KILO_DIRECTORY, TOOL_SUFFIX, "rules/"),
-      convertFrontmatter: descriptionOnlyRule,
-    },
-    mcp: {
-      config: new McpConfigPart({
-        outputPath: "kilo.json",
-        format: "json",
-        mergeStrategy: "framework-prime",
-        transformContent: toTypedMcpSection,
-        consumes: [MCP_CONFIG_REF],
-        outputPathCandidates: KILO_OUTPUT_PATH_CANDIDATES,
+export const kilo = defineAiTool(
+  {
+    toolId: "kilo",
+    distributionProbes: { marketplace: ["kilo.json"] },
+    directory: KILO_DIRECTORY,
+    toolSuffix: TOOL_SUFFIX,
+    displayName: "Kilo Code",
+    signalDir: ".kilo/commands",
+    configAssets: [
+      {
+        name: "kilo.json",
+        content: kiloJson,
+        destination: ".kilo/kilo.jsonc",
+        delivery: "install",
+      },
+    ],
+    hooks,
+    buildContracts: {
+      flat: contract(buildKiloFlatContract, hooks, KILO_FLAT_LAYOUT, {
+        agentMarkdown: { frontmatter: AGENT_FRONTMATTER },
+        config: KILO_OUTPUT_PATH_CANDIDATES,
       }),
     },
-    hooks: { delivery: hooksDelivery },
-    layout: flatPlacement({
-      artifacts: KILO_FLAT_LAYOUT,
-      namespacePrefix: "aidd-",
-      globalFiles: {
-        dir: "{home}/.config/kilo",
-        map: flatGlobalFilePath(KILO_DIRECTORY),
-      },
-    }),
-    models: new ModelsSection({
-      providers: ["openai", "anthropic", "mistral"],
-      providerPrefix: true,
-    }),
-  },
 
-  linkSyntax: [
-    { from: /(@?)\.kilo\/commands\/(\d+)[_-][^/]+\/([^\s]+)/g, to: "$1.kilo/commands/aidd/$2/$3" },
-  ],
-});
+    capabilities: {
+      agents: {
+        format: "markdown",
+        frontmatter: AGENT_FRONTMATTER,
+      },
+      skills: {},
+      commands: {
+        buildInstallPath: aiddCommandsUnder(KILO_DIRECTORY),
+        convertFrontmatter: convertCommandFrontmatterNoHint,
+      },
+      rules: {
+        buildInstallPath: installUnder(KILO_DIRECTORY, TOOL_SUFFIX, "rules/"),
+        convertFrontmatter: descriptionOnlyRule,
+      },
+      mcp: { config: MCP_CONFIG },
+      hooks: { delivery: hooksDelivery },
+      layout: flatPlacement({
+        artifacts: KILO_FLAT_LAYOUT,
+        namespacePrefix: "aidd-",
+        globalFiles: {
+          dir: "{home}/.config/kilo",
+          map: flatGlobalFilePath(KILO_DIRECTORY),
+        },
+      }),
+      models: new ModelsSection({
+        providers: ["openai", "anthropic", "mistral"],
+        providerPrefix: true,
+      }),
+    },
+
+    linkSyntax: [
+      {
+        from: /(@?)\.kilo\/commands\/(\d+)[_-][^/]+\/([^\s]+)/g,
+        to: "$1.kilo/commands/aidd/$2/$3",
+      },
+    ],
+  },
+  { json: new JsoncWriter() }
+);

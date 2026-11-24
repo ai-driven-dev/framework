@@ -8,6 +8,7 @@ import type {
   SupportedArtifact,
   ToolBuildContract,
 } from "../../../shared/domain/materialization/build-contract.js";
+import { pluginRootFolders } from "../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import type { OutputFile } from "./output-file.js";
 
 /**
@@ -51,13 +52,13 @@ export function flatAgentPath(
   return artifactPath(artifact, pluginName, `agents/${basename(agentFile)}`);
 }
 
-/** Where a path inside a plugin lands in the flat layout: agents, skills and hooks move, anything
- * else stays where it is. */
-export function flatPathOfPluginSuffix(
+/** Where the tool places a path inside a plugin: agents, skills and hooks move. Nothing for any
+ * other folder, which the tool has no place for. */
+function placedPluginSuffix(
   contract: ToolBuildContract,
   suffix: string,
   pluginName: string
-): string {
+): string | null {
   const art = contract.artifacts;
   if (suffix.startsWith("agents/") && art.agents.supported) {
     return flatAgentPath(art.agents, pluginName, suffix);
@@ -68,7 +69,47 @@ export function flatPathOfPluginSuffix(
   if (suffix.startsWith("hooks/") && art.hooks.supported) {
     return artifactPath(art.hooks, pluginName, suffix);
   }
-  return suffix;
+  return null;
+}
+
+/** Where a path inside a plugin lands in the flat layout: agents, skills and hooks move, anything
+ * else stays where it is. */
+export function flatPathOfPluginSuffix(
+  contract: ToolBuildContract,
+  suffix: string,
+  pluginName: string
+): string {
+  return placedPluginSuffix(contract, suffix, pluginName) ?? suffix;
+}
+
+/** Whether a flat build folds a plugin's MCP servers into the tool's config, so the commands in
+ * its MCP declaration are the ones the build must ship. A tool with an event bridge also ships
+ * folders its bridge never replays: accepted, as the folders are small and shipping fewer would
+ * need the bridge to say which it runs. */
+export function flatFoldsMcp(contract: ToolBuildContract): boolean {
+  const { mcp } = contract.artifacts;
+  return (
+    (mcp.supported && mcp.mcpServersKey !== undefined) || contract.configArtifact !== undefined
+  );
+}
+
+/** Where a path a shipped command names lands: where the tool places it, else in a folder of the
+ * plugin's own name, so two plugins never share one. */
+function flatCommandPath(contract: ToolBuildContract, suffix: string, pluginName: string): string {
+  const placed = placedPluginSuffix(contract, suffix, pluginName);
+  return placed ?? (suffix.includes("/") ? `${pluginName}/${suffix}` : suffix);
+}
+
+/** The folders the commands in `content` name that the tool has no place for: the ones a build
+ * copies to `<plugin>/<folder>/`. */
+export function flatCommandFolders(
+  contract: ToolBuildContract,
+  content: string,
+  pluginName: string
+): string[] {
+  return pluginRootFolders(content).filter(
+    (folder) => placedPluginSuffix(contract, `${folder}/`, pluginName) === null
+  );
 }
 
 type FlatHooksFile = NonNullable<
@@ -87,7 +128,7 @@ export function mergeFlatHooks(
   return file.merge(existing, {
     json,
     plugin,
-    locate: (pluginPath) => `./${flatPathOfPluginSuffix(contract, pluginPath, plugin)}`,
+    locate: (pluginPath) => `./${flatCommandPath(contract, pluginPath, plugin)}`,
   });
 }
 
@@ -112,5 +153,5 @@ export function flatPluginRootAbsolute(
   pluginName: string
 ): string {
   const normalizedOut = target.outDir.replace(/\\/g, "/");
-  return `${normalizedOut}/${flatPathOfPluginSuffix(target.contract, suffix, pluginName)}`;
+  return `${normalizedOut}/${flatCommandPath(target.contract, suffix, pluginName)}`;
 }

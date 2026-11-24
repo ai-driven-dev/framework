@@ -97,11 +97,6 @@ const reachedByEarned = (file: string, sharing: Sharing): boolean =>
 const wiredTwice = (file: string, sharing: Sharing): boolean =>
   importersOf(file, sharing).filter((i) => i.startsWith("src/composition/")).length >= 2;
 
-/** A tool's profile holds the one adapter its format names: `tools` owns no adapter, so the profile
- * that composition wires is the tool's only caller. */
-const heldByProfile = (file: string, sharing: Sharing): boolean =>
-  importersOf(file, sharing).some((i) => i.startsWith("src/composition/tool-profiles/"));
-
 function implemented(file: string, sharing: Sharing): boolean {
   const clause = /implements ([^{]+)\{/.exec(sharing.textOf(file))?.[1] ?? "";
   return [...sharing.earned].some(
@@ -112,10 +107,7 @@ function implemented(file: string, sharing: Sharing): boolean {
 }
 
 const earnedInfrastructure = (file: string, sharing: Sharing): boolean =>
-  implemented(file, sharing) ||
-  wiredTwice(file, sharing) ||
-  heldByProfile(file, sharing) ||
-  reachedByEarned(file, sharing);
+  implemented(file, sharing) || wiredTwice(file, sharing) || reachedByEarned(file, sharing);
 
 interface Candidates {
   readonly files: readonly string[];
@@ -223,14 +215,13 @@ describe("the guard itself", () => {
     expect(unearned([leaf], importers)).toEqual([leaf]);
   });
 
-  it("flags a shared file one context imports and clears one an earned adapter, a profile or two compositions reach", () => {
+  it("flags a shared file one context imports and clears one an earned adapter or two compositions reach", () => {
     const [A, B] = ["src/contexts/framework/domain/x.ts", "src/contexts/tools/domain/x.ts"];
     const [C1, C2] = ["src/composition/container.ts", "src/composition/contexts/tools.ts"];
     const port = "src/shared/ports/port.ts";
     const adapter = "src/shared/infrastructure/adapter.ts";
     const leaf = "src/shared/infrastructure/leaf.ts";
     const wired = "src/shared/infrastructure/wired.ts";
-    const held = "src/shared/infrastructure/held.ts";
     const text: Record<string, string> = {
       [port]: "export interface Reader {}",
       [adapter]: "class A implements Reader {}",
@@ -244,7 +235,6 @@ describe("the guard itself", () => {
       [port, new Set([A, B])],
       [leaf, new Set([adapter])],
       [wired, new Set([C1, C2])],
-      [held, new Set(["src/composition/tool-profiles/codex.ts"])],
       ["src/shared/infrastructure/lonely.ts", new Set([C1])],
     ]);
     const files = [...new Set([...importers.keys(), adapter])];

@@ -92,6 +92,7 @@ export interface ProjectHooksSection {
 export interface FlatMcpSection {
   readonly toolId: AiToolId;
   flatPluginMcp(): McpConfigAnswers | null;
+  flatRulesGlob(pluginName: string): string | null;
 }
 
 export type ProjectPluginIntegration = PluginPlacement & ProjectHooksSection & FlatMcpSection;

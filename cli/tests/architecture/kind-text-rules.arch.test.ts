@@ -13,7 +13,6 @@ import {
   repositoryViolations,
   scopeViolations,
   sizeViolations,
-  toolsAdapterViolations,
 } from "./kind-text-rules.js";
 import { declaredCommands, tsFilesUnder } from "./source-graph.js";
 
@@ -204,22 +203,6 @@ describe("the domain holds no clock, no logging and no memo", () => {
 
   it("holds the domain of the tree", () => {
     expectNone(purityViolations(src()));
-  });
-});
-
-describe("the tools context holds no adapter", () => {
-  it("sees an infrastructure folder and an adapter file under tools", () => {
-    expect(
-      toolsAdapterViolations({
-        "src/contexts/tools/infrastructure/x.ts": "",
-        "src/contexts/tools/domain/y.adapter.ts": "",
-        "src/contexts/translate/infrastructure/z.ts": "",
-      }).map((v) => v.entry)
-    ).toEqual(["src/contexts/tools/infrastructure/x.ts", "src/contexts/tools/domain/y.adapter.ts"]);
-  });
-
-  it("holds the tree", () => {
-    expectNone(toolsAdapterViolations(src()));
   });
 });
 

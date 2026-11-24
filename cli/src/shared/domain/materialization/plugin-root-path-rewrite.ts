@@ -22,11 +22,18 @@ export function rewritePluginRootInJson(
 function rewriteStringValue(value: string, substitute?: (suffix: string) => string): string {
   if (!substitute) return value.replaceAll(SOURCE_ROOT_PREFIX, DEFAULT_RELATIVE_PREFIX);
   return value.split(SOURCE_ROOT_PREFIX).reduce((acc, segment) => {
-    const spaceIdx = segment.search(/[\s"'<>]/);
-    const suffix = spaceIdx === -1 ? segment : segment.slice(0, spaceIdx);
-    const rest = spaceIdx === -1 ? "" : segment.slice(spaceIdx);
+    const { suffix, rest } = splitSuffix(segment);
     return acc + substitute(suffix) + rest;
   });
+}
+
+/** What follows `${CLAUDE_PLUGIN_ROOT}/` in a text: the path up to the first space, quote or
+ * angle bracket, and the remainder. */
+function splitSuffix(segment: string): { suffix: string; rest: string } {
+  const end = segment.search(/[\s"'<>]/);
+  return end === -1
+    ? { suffix: segment, rest: "" }
+    : { suffix: segment.slice(0, end), rest: segment.slice(end) };
 }
 
 function rewriteObject(
@@ -38,6 +45,18 @@ function rewriteObject(
     result[key] = rewritePluginRootInJson(value, substitute);
   }
   return result;
+}
+
+/** The folders a text names below the plugin root, each once: `bin` for `${CLAUDE_PLUGIN_ROOT}/bin/run.js`.
+ * A file straight under the root names none: it is not shipped, and no plugin names one. */
+export function pluginRootFolders(content: string): string[] {
+  const folders = new Set<string>();
+  for (const segment of content.split(SOURCE_ROOT_PREFIX).slice(1)) {
+    const { suffix } = splitSuffix(segment);
+    const slash = suffix.indexOf("/");
+    if (slash > 0) folders.add(suffix.slice(0, slash));
+  }
+  return [...folders];
 }
 
 /** A literal, escaped to match itself inside a regular expression. */

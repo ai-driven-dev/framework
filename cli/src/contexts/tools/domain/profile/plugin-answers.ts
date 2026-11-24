@@ -110,6 +110,7 @@ function flatLayoutOf(layout: FlatPlacement): FlatLayout {
   return {
     skillLayout: layout.artifacts.skills,
     namespacePrefix: layout.namespacePrefix,
+    rules: layout.artifacts.rules,
   };
 }
 

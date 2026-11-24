@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { whenAbsent } from "../../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { McpConfigAnswers } from "../../../tools/contract/tool-profile.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { FlatMcpSection } from "../../ports/tool-sections.js";
 import type { AssertProjectPathWithinRoot } from "../ownership/assert-project-path-within-root.use-case.js";
@@ -28,7 +29,6 @@ export class PlanProjectMcpRemoval {
 
   async execute(removal: ProjectMcpRemoval): Promise<ProjectMcpRewrite | undefined> {
     const { plugin, tool, projectRoot } = removal;
-    if (plugin.provenance.mcpEntries.size === 0) return undefined;
     const mcp = tool.flatPluginMcp();
     if (mcp === null) return undefined;
     const output = join(
@@ -40,6 +40,20 @@ export class PlanProjectMcpRemoval {
     await this.withinRoot.execute(projectRoot, output);
     const existing = await whenAbsent(() => this.fs.readFile(output), undefined);
     if (existing === undefined) return undefined;
-    return { output, content: mcp.removePluginServers(existing, plugin.provenance.mcpEntries) };
+    const content = withoutPlugin(mcp, existing, {
+      entries: plugin.provenance.mcpEntries,
+      rulesGlob: tool.flatRulesGlob(plugin.plugin.name),
+    });
+    return content === existing ? undefined : { output, content };
   }
+}
+
+function withoutPlugin(
+  mcp: McpConfigAnswers,
+  existing: string,
+  removed: { entries: ReadonlyMap<string, string>; rulesGlob: string | null }
+): string {
+  const { entries, rulesGlob } = removed;
+  const withoutServers = entries.size === 0 ? existing : mcp.removePluginServers(existing, entries);
+  return rulesGlob === null ? withoutServers : mcp.withoutInstruction(withoutServers, rulesGlob);
 }

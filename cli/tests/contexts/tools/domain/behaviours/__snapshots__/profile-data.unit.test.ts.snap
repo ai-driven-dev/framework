@@ -25,6 +25,7 @@ exports[`the data each registered profile declares > antigravity 1`] = `
     "deliversHooksToProject": true,
     "flatLayout": {
       "namespacePrefix": "aidd-",
+      "rules": "nested",
       "skillLayout": "single-level",
     },
     "kind": "flat",
@@ -178,11 +179,7 @@ exports[`the data each registered profile declares > codex 1`] = `
       "model_reasoning_effort": "high",
       "name": "reviewer",
     },
-    "commands": {
-      "argument-hint": "<name>",
-      "description": "Greet someone",
-      "name": "aidd:01:greet",
-    },
+    "commands": null,
     "rules": {
       "a description alone": {
         "description": "d",
@@ -232,16 +229,6 @@ exports[`the data each registered profile declares > codex 1`] = `
       "reviewer.md": ".codex/agents/reviewer.toml",
       "team/sub/reviewer.md": ".codex/agents/reviewer.toml",
     },
-    "commands": {
-      "00_behavior/auto_accept.md": ".codex/commands/aidd/00/auto_accept.md",
-      "01-plan/greet.md": ".codex/commands/aidd/01/greet.md",
-      "01_plan/02_steps/review.md": ".codex/commands/aidd/01/02_steps/review.md",
-      "04_code/implement.md": ".codex/commands/aidd/04/implement.md",
-      "commit": ".codex/commands/aidd/commit",
-      "commit.md": ".codex/commands/aidd/commit.md",
-      "review.prompt.md": ".codex/commands/aidd/review.prompt.md",
-      "v2-tools/x.md": ".codex/commands/aidd/x.md",
-    },
     "rules": {
       "00-architecture/.gitkeep": ".codex/rules/00-architecture/.gitkeep",
       "01-standards/1-mermaid.md": ".codex/rules/01-standards/1-mermaid.md",
@@ -263,7 +250,6 @@ exports[`the data each registered profile declares > codex 1`] = `
   "sections": [
     "agents",
     "skills",
-    "commands",
     "rules",
     "mcp",
     "hooks",
@@ -271,7 +257,7 @@ exports[`the data each registered profile declares > codex 1`] = `
     "manifest",
     "models",
   ],
-  "signalDir": ".codex/commands",
+  "signalDir": null,
   "toolId": "codex",
   "toolSuffix": ".codex.md",
 }
@@ -571,6 +557,7 @@ exports[`the data each registered profile declares > kilo 1`] = `
     "deliversHooksToProject": false,
     "flatLayout": {
       "namespacePrefix": "aidd-",
+      "rules": "top-level-unscoped",
       "skillLayout": "nested",
     },
     "kind": "flat",
@@ -671,6 +658,7 @@ exports[`the data each registered profile declares > opencode 1`] = `
     "deliversHooksToProject": false,
     "flatLayout": {
       "namespacePrefix": "aidd-",
+      "rules": "nested",
       "skillLayout": "nested",
     },
     "kind": "flat",

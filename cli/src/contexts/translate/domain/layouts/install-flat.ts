@@ -15,6 +15,8 @@ import { flatHookPlans } from "../rules/hook-plans.js";
 import { chainLinks, toolLinks } from "../rules/links.js";
 import type { TranslatedAiTool, TranslatedFlatPlugin } from "../translate-profile.js";
 import { flatAgentPlan } from "./build-flat.js";
+import { isEntry } from "./build-shared.js";
+import { ruleScopesOf, scopeStated } from "./install-flat-rules.js";
 
 type FlatSection = "agents" | "rules" | "skills";
 
@@ -40,6 +42,7 @@ export function flatInstallPlan(
   const { namespacePrefix } = plugins.flatLayout();
   const commands = tool.markdownSection("commands") === null ? [] : dist.components.commands;
   const hooksArtifact = flatHooksArtifact(tool);
+  const scopes = ruleScopesOf(dist, plugins);
   const hooks = flatHookPlans(dist, {
     place: (relativePath) =>
       hooksArtifact === null ? null : artifactPath(hooksArtifact, pluginName, relativePath),
@@ -51,7 +54,11 @@ export function flatInstallPlan(
   const plans = [
     ...commands.map((file) => commandPlan(file, at, namespacePrefix)),
     ...FLAT_SECTIONS.flatMap((section) =>
-      dist.components[section].flatMap((file) => sectionPlan(file, section, at) ?? [])
+      dist.components[section].flatMap((file) => {
+        const plan = sectionPlan(file, section, at);
+        const paths = scopes.get(file);
+        return plan === null ? [] : [paths === undefined ? plan : scopeStated(plan, paths)];
+      })
     ),
     ...hooks,
   ];
@@ -96,7 +103,18 @@ function sectionPlan(
   if (agent !== null) return { ...agent, links: chainLinks(links, agent.links) };
   if (!declared) return null;
   const path = tool.flatInstallPath(section, pluginName, source.slice(`${section}/`.length));
-  return { source, path, content, links };
+  return { source, path, content, links, ...folderNamed(tool, section, source) };
+}
+
+/** A skill entry the tool finds by its folder name carries that name, as its flat build writes it. */
+function folderNamed(
+  tool: TranslatedAiTool,
+  section: FlatSection,
+  source: string
+): { namedAfterFolder?: true } {
+  const skills = tool.buildContract("flat")?.artifacts.skills;
+  const renamed = section === "skills" && skills?.supported && skills.rewriteSkillName;
+  return renamed && isEntry(source) ? { namedAfterFolder: true } : {};
 }
 
 /** An agent a target carries as a build artifact, null when it declares none. */

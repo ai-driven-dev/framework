@@ -99,16 +99,18 @@ describe("where a flat layout points a plugin-root reference", () => {
       `${STUB_OUT}/.stub/agents/aidd-test-rev.md`,
       `${STUB_OUT}/.stub/skills/aidd-test/hello/x.md`,
       `${STUB_OUT}/.stub/hooks/aidd-test/run.sh`,
-      `${STUB_OUT}/scripts/other.js`,
+      `${STUB_OUT}/aidd-test/scripts/other.js`,
     ]);
   });
 
-  it("leaves a reference under a folder the layout does not host where the plugin had it", async () => {
+  it("points a reference under a folder the layout does not host into the plugin's own folder", async () => {
     const off = { supported: false, reason: "off in this test" } as const;
     const contract = stubContract({
       artifacts: { ...stubContract().artifacts, mcp: mcp(), agents: off, skills: off, hooks: off },
     });
-    expect(await mcpArgs(contract)).toEqual(args.map((a) => a.replace(ROOT, STUB_OUT)));
+    expect(await mcpArgs(contract)).toEqual(
+      args.map((a) => a.replace(ROOT, `${STUB_OUT}/aidd-test`))
+    );
   });
 
   const refs = `See @${ROOT}/agents/rev.md and @${ROOT}/skills/other/y.md`;

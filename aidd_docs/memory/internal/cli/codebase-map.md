@@ -147,6 +147,7 @@ src/
 │   │   │   ├── models/
 │   │   │   ├── profile/
 │   │   │   └── sections/
+│   │   └── infrastructure/    # the codecs a profile hands its formats: TOML and JSONC
 │   ├── translate/    # canonical source to target-native content
 │   │   ├── application/
 │   │   │   └── sinks/

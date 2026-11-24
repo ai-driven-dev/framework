@@ -6,7 +6,7 @@ import { CommandsSection } from "../sections/commands-section.js";
 import { type McpConfigParams, McpConfigPart, type McpSection } from "../sections/mcp-section.js";
 import { RulesSection } from "../sections/rules-section.js";
 import { SkillsSection } from "../sections/skills-section.js";
-import { type ToolFormats, tomlOf } from "./contract-builders.js";
+import { jsonOf, type ToolFormats, tomlOf } from "./contract-builders.js";
 
 type ParamsOf<T extends new (params: never) => unknown> = ConstructorParameters<T>[0];
 type Bound = "directory" | "toolSuffix";
@@ -28,6 +28,11 @@ export type McpTomlDeclaration = Omit<
   readonly mergeWith?: (toml: TomlCodec) => (existing: string, incoming: string) => string;
 };
 
+/** An MCP file in JSON that keeps a person's comments: the writer is the one the composition wires. */
+export type McpJsonDeclaration = Omit<Extract<McpConfigParams, { format: "json" }>, "writer"> & {
+  readonly keepsComments: true;
+};
+
 /** What a profile declares: a section, or the parameters the factory builds it from. */
 export interface DeclaredSections
   extends Omit<ProfileSections, "agents" | "skills" | "commands" | "rules" | "mcp"> {
@@ -37,7 +42,10 @@ export interface DeclaredSections
   rules?: Declared<typeof RulesSection>;
   mcp?:
     | McpSection
-    | { readonly config?: McpTomlDeclaration; readonly plugin?: McpSection["plugin"] };
+    | {
+        readonly config?: McpTomlDeclaration | McpJsonDeclaration;
+        readonly plugin?: McpSection["plugin"];
+      };
 }
 
 /** The MCP parts a declaration states, each answering without `undefined`. */
@@ -74,8 +82,17 @@ function mcpOf(declared: DeclaredSections["mcp"], formats: ToolFormats): McpSect
   const part =
     config === undefined || config instanceof McpConfigPart
       ? config
-      : tomlConfigOf(config, formats);
+      : declaredConfigOf(config, formats);
   return { ...(part && { config: part }), ...(plugin && { plugin }) };
+}
+
+function declaredConfigOf(
+  config: McpTomlDeclaration | McpJsonDeclaration,
+  formats: ToolFormats
+): McpConfigPart {
+  if (config.format === "toml") return tomlConfigOf(config, formats);
+  const { keepsComments: _, ...params } = config;
+  return new McpConfigPart({ ...params, writer: jsonOf(formats) });
 }
 
 function tomlConfigOf(config: McpTomlDeclaration, formats: ToolFormats): McpConfigPart {

@@ -33,7 +33,6 @@ type Divergence = {
   fold?: (doc: Doc) => Doc;
   absentFromA?: true;
 };
-const noName = (d: Doc): Doc => ({ ...d, frontmatter: { ...d.frontmatter, name: undefined } });
 
 /** What path B (install) writes differently from path A (disk), named. Markdown is compared as
  * frontmatter data plus body, since B re-serializes the frontmatter. The list only shrinks: an
@@ -43,20 +42,6 @@ const DIVERGENCES: readonly Divergence[] = [
     id: "A rewrites an @relative reference into a markdown link",
     applies: () => true,
     fold: (d) => ({ ...d, body: d.body.replace(/\[[^\]]+\]\((\.\.?\/[^)]+)\)/g, "@$1") }),
-  },
-  { id: "A namespaces an agent's name", applies: (_t, p) => p.includes("agents/"), fold: noName },
-  {
-    id: "A renames a flat skill after its folder",
-    applies: (t, p) => ["opencode", "kilo"].includes(t) && p.endsWith("SKILL.md"),
-    fold: noName,
-  },
-  {
-    id: "B keeps only a codex skill's name and description",
-    applies: (t, p) => t === "codex" && p.includes("/skills/"),
-    fold: ({ frontmatter: { name, description }, body }) => ({
-      frontmatter: { name, description },
-      body,
-    }),
   },
   {
     id: "A leaves the {{TOOLS}} placeholder, B resolves it to .github/",
