@@ -24,7 +24,7 @@ type SrcEntry =
   | undefined;
 
 export interface SynthesizeSharedManifestOpts {
-  /** When true, include `agents` as a list of `./agents/*.md` file paths if agents are present. */
+  /** When true, include `agents` as a list of `./agents/*` file paths, in the extension the tool reads, if agents are present. */
   readonly agentsField: boolean;
   /**
    * When true, point `hooks` at `./hooks/hooks.json` if the plugin ships one. Declared per tool

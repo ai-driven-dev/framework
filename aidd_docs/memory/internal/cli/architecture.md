@@ -43,7 +43,7 @@ flowchart LR
 
 - A build synthesizes each plugin manifest: identity fields plus the skills, agents, hooks and MCP paths it ships, without `strict`. An install copies the source manifest byte for byte, so it can name no component, or `strict`, that the files it wrote do not match.
 - Options: the install synthesizes it like the build (one shared function, goldens move), or it keeps the copy and accepts the host's validation warnings on unknown fields (Claude strips them, Copilot reports and ignores them).
-- Undecided. `MANIFEST_DIVERGENCES` tolerates only the component list and `strict`, and checks that every path the built manifest lists exists.
+- Undecided. `MANIFEST_DIVERGENCES` tolerates only the component list and `strict`, and checks that every path the built manifest lists exists, for a plugin with agents and one without. Limit: no framework plugin ships an MCP file its source manifest lists, so an MCP path is checked by the build tests only.
 
 ## Machine claims lock
 

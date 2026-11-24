@@ -113,14 +113,17 @@ function compareWithPathA(
   return { explained: isExplainedBy(file, onA, named), needed };
 }
 
-function manifestPathOf(tool: AiToolProfile): { installed: string; onDisk: string } | null {
+function manifestPathOf(
+  tool: AiToolProfile,
+  plugin: string
+): { installed: string; onDisk: string } | null {
   const plugins = tool.plugins();
   if (plugins?.kind !== "native") return null;
   const path = nativeOf(plugins).manifestPath();
   if (path === null) return null;
   return {
-    installed: `${nativeOf(plugins).pluginOutputDir("aidd-vcs")}${path}`,
-    onDisk: `${OUT}/plugins/aidd-vcs/${path}`,
+    installed: `${nativeOf(plugins).pluginOutputDir(plugin)}${path}`,
+    onDisk: `${OUT}/plugins/${plugin}/${path}`,
   };
 }
 
@@ -183,39 +186,50 @@ describe("path B (install) writes what path A (disk) writes, but for what DIVERG
     expect(result.agreed).toBeGreaterThan(100);
   });
 
+  // aidd-dev ships agents and an MCP file, aidd-vcs neither. Limit: no framework plugin ships an
+  // MCP file the source manifest also lists, so an MCP path in a built manifest is checked by
+  // `build-native-tree.use-case.integration.test.ts`, not here.
   const manifestCases = registeredTools()
     .idsInCanonicalOrder("ai")
-    .flatMap((id) => SOURCES.map((source) => [id, source.name] as const));
-  it.each(manifestCases)("%s installs the manifest of a %s source", async (id, sourceName) => {
-    const source = SOURCES.find((s) => s.name === sourceName) ?? SOURCES[0];
-    const tool = registeredTools().aiProfile(id);
-    const dist = distributionOf(tree, "aidd-vcs", source);
-    const own = translator
-      .translate(dist, tool)
-      .filter((f) => f.relativePath.endsWith("/plugin.json"));
-    const path = manifestPathOf(tool);
-    if (path === null) return void expect(own).toEqual([]);
-    expect(own.map((f) => f.relativePath)).toEqual([path.installed]);
-    expect(own[0].content).toBe(
-      dist.files.find((f) => f.relativePath === source.manifest)?.content
+    .flatMap((id) =>
+      SOURCES.flatMap((source) =>
+        ["aidd-vcs", "aidd-dev"].map((plugin) => [id, source.name, plugin] as const)
+      )
     );
-    const writtenA = await writtenByA(tree, tool, true);
-    const [[onAPath, onA]] = [...writtenA].filter(
-      ([k]) => k.includes("/plugins/aidd-vcs/") && k.endsWith("/plugin.json")
-    );
-    expect(withoutDivergence(onA, COMPONENT_FIELDS)).toEqual(
-      withoutDivergence(own[0].content, ["strict"])
-    );
-    expect(onAPath).toBe(path.onDisk);
-    const root = onAPath.slice(
-      0,
-      onAPath.indexOf("/plugins/aidd-vcs/") + "/plugins/aidd-vcs/".length
-    );
-    for (const listed of listedPaths(onA)) {
-      expect([...writtenA.keys()].some((k) => k.startsWith(`${root}${listed}`))).toBe(true);
+  it.each(manifestCases)(
+    "%s installs the manifest of a %s source, plugin %s",
+    async (id, sourceName, plugin) => {
+      const source = SOURCES.find((s) => s.name === sourceName) ?? SOURCES[0];
+      const tool = registeredTools().aiProfile(id);
+      const dist = distributionOf(tree, plugin, source);
+      const own = translator
+        .translate(dist, tool)
+        .filter((f) => f.relativePath.endsWith("/plugin.json"));
+      const path = manifestPathOf(tool, plugin);
+      if (path === null) return void expect(own).toEqual([]);
+      expect(own.map((f) => f.relativePath)).toEqual([path.installed]);
+      expect(own[0].content).toBe(
+        dist.files.find((f) => f.relativePath === source.manifest)?.content
+      );
+      const writtenA = await writtenByA(tree, tool, true);
+      const [[onAPath, onA]] = [...writtenA].filter(
+        ([k]) => k.includes(`/plugins/${plugin}/`) && k.endsWith("/plugin.json")
+      );
+      expect(withoutDivergence(onA, COMPONENT_FIELDS)).toEqual(
+        withoutDivergence(own[0].content, ["strict"])
+      );
+      expect(onAPath).toBe(path.onDisk);
+      const root = `${onAPath.slice(0, onAPath.indexOf(`/plugins/${plugin}/`))}/plugins/${plugin}/`;
+      for (const listed of listedPaths(onA)) {
+        expect(
+          [...writtenA.keys()].some(
+            (k) => k === `${root}${listed}` || k.startsWith(`${root}${listed}/`)
+          )
+        ).toBe(true);
+      }
+      if (onA !== own[0].content) used.add(MANIFEST_DIVERGENCES[0]);
     }
-    if (onA !== own[0].content) used.add(MANIFEST_DIVERGENCES[0]);
-  });
+  );
 
   it("every divergence is still needed by some tool", () => {
     expect([...used].sort()).toEqual(
