@@ -69,7 +69,7 @@ describe("building Cursor's marketplace contract", () => {
       agents: ["./agents/planner.md"],
       skills: ["./skills/01-plan"],
       hooks: "./hooks/hooks.json",
-      mcpServers: "./.mcp.json",
+      mcpServers: "./mcp.json",
     });
   });
 

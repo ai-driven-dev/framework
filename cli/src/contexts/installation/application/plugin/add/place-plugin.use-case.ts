@@ -4,7 +4,6 @@ import type { PluginDistribution } from "../../../../../shared/domain/plugin/plu
 import type { ReadonlySkipList } from "../../../../../shared/domain/plugin/plugin-translation-skip.js";
 import type { PluginSource } from "../../../../../shared/domain/plugin/source.js";
 import type { AiToolId } from "../../../../../shared/domain/tool.js";
-import type { FileWriter } from "../../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../../../tools/contract/tool-catalog.js";
 // biome-ignore lint/plugin: hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input
@@ -18,7 +17,7 @@ import type { BuiltPlacement } from "../../materialize/add-plugin-request.js";
 import { placementModeOf } from "../../materialize/plugin-placement.js";
 import { registerMarketplacePlugin } from "../../materialize/register-marketplace-plugin.js";
 import { hashOutputFiles } from "../../shared/hash-output-files.js";
-import { writePluginFiles } from "../files/write-plugin-files.js";
+import { type PluginFilesystem, replacePluginFiles } from "../files/write-plugin-files.js";
 import { resolveScopeForInstall } from "../plugin-target-resolution.js";
 import type { FindForeignUserScopeDir } from "./foreign-user-scope-dir.js";
 import { reportInstallNotices, reportSkipWarnings } from "./report-placement.js";
@@ -56,7 +55,7 @@ export type PlaceForTool = (placement: ToolPlacement) => Promise<Placement>;
 
 /** What placing one tool's files reaches. */
 export type ToolPlacementDeps = Pick<BuiltPlacement, "translate" | "placeBuiltTree"> & {
-  readonly fs: FileWriter;
+  readonly fs: PluginFilesystem;
 };
 
 /** The per-tool placement, bound to what it reaches. */
@@ -147,7 +146,7 @@ async function materializeNativePlugin(
     skipped: ReadonlySkipList;
     notices: ReadonlyNoticeList;
   },
-  fs: FileWriter
+  fs: PluginFilesystem
 ): Promise<Placement> {
   const { command, tool } = placement;
   const { dist, source, projectRoot, manifest, marketplace } = command;
@@ -157,14 +156,16 @@ async function materializeNativePlugin(
     const request = { dist, tool, source, projectRoot, manifest, marketplace };
     return { ...registerMarketplacePlugin(request), notices };
   }
-  await writePluginFiles(files, projectRoot, fs);
+  const scope = resolveScopeForInstall(tool);
+  const previous = command.previousFiles.get(tool.toolId);
+  await replacePluginFiles({ files, base: { dir: projectRoot, scope }, previous }, fs);
   manifest.addPlugin(
     tool.toolId,
     RecordedPlugin.fromDistribution({
       dist,
       source,
       files,
-      scope: resolveScopeForInstall(tool),
+      scope,
       componentPaths,
       marketplace,
     })

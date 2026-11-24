@@ -24,7 +24,7 @@ type SrcEntry =
   | undefined;
 
 export interface SynthesizeSharedManifestOpts {
-  /** When true, include `agents` as a list of `./agents/*.md` file paths if agents are present. */
+  /** When true, include `agents` as a list of `./agents/*` file paths, in the extension the tool reads, if agents are present. */
   readonly agentsField: boolean;
   /**
    * When true, point `hooks` at `./hooks/hooks.json` if the plugin ships one. Declared per tool
@@ -33,6 +33,11 @@ export interface SynthesizeSharedManifestOpts {
    * the plugin read as failed while working. Codex and the others still need the pointer.
    */
   readonly hooksField: boolean;
+  /** The file the manifest's `mcpServers` points at, relative to the plugin: `.mcp.json` unless
+   * the tool reads its MCP servers from another file. */
+  readonly mcpRelative?: string;
+  /** The extension the tool reads an agent file by, when it is not the source's `.md`. */
+  readonly agentExt?: string;
 }
 
 const isText = (value: unknown): value is string => typeof value === "string";
@@ -56,6 +61,9 @@ function identityFields(source: Record<string, unknown>): Record<string, unknown
   return fields;
 }
 
+const withExt = (name: string, ext: string | undefined): string =>
+  ext === undefined ? name : name.replace(/\.md$/, ext);
+
 /** The skills, agents, hooks and MCP paths the built plugin ships. */
 function shippedPaths(
   presence: PluginPresence,
@@ -63,13 +71,13 @@ function shippedPaths(
 ): Record<string, unknown> {
   const paths: Record<string, unknown> = {};
   if (opts.agentsField && presence.agentsList.length > 0) {
-    paths.agents = presence.agentsList.map((n) => `./agents/${n}`);
+    paths.agents = presence.agentsList.map((n) => `./agents/${withExt(n, opts.agentExt)}`);
   }
   if (presence.skillsList.length > 0) {
     paths.skills = presence.skillsList.map((n) => `./skills/${n}`);
   }
   if (opts.hooksField && presence.hasHooksJson) paths.hooks = "./hooks/hooks.json";
-  if (presence.hasMcpJson) paths.mcpServers = "./.mcp.json";
+  if (presence.hasMcpJson) paths.mcpServers = `./${opts.mcpRelative ?? ".mcp.json"}`;
   return paths;
 }
 

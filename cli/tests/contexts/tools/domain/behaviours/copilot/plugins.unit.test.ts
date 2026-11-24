@@ -14,8 +14,8 @@ describe("copilot plugins", () => {
       expect(nativeOf(copilot.plugins()).pluginOutputDir("x")).toBe(".github/plugins/x/");
     });
 
-    it("uses plugin.json as plugin manifest path", () => {
-      expect(nativeOf(copilot.plugins()).manifestPath()).toBe("plugin.json");
+    it("uses .plugin/plugin.json as plugin manifest path", () => {
+      expect(nativeOf(copilot.plugins()).manifestPath()).toBe(".plugin/plugin.json");
     });
 
     it("pluginOutputDir returns correct path for a plugin name", () => {

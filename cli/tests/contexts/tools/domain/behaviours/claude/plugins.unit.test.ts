@@ -15,8 +15,8 @@ describe("claude plugins", () => {
       expect(nativeOf(claude.plugins()).pluginOutputDir("x")).toBe(".claude/plugins/x/");
     });
 
-    it("uses plugin.json as plugin manifest path", () => {
-      expect(nativeOf(claude.plugins()).manifestPath()).toBe("plugin.json");
+    it("uses .claude-plugin/plugin.json as plugin manifest path", () => {
+      expect(nativeOf(claude.plugins()).manifestPath()).toBe(".claude-plugin/plugin.json");
     });
 
     it("pluginOutputDir returns correct path for a plugin name", () => {

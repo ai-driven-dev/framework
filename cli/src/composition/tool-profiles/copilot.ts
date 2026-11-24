@@ -63,6 +63,7 @@ const OUTPUT_PLUGIN_TREE = {
   manifestRelative: ".plugin/plugin.json",
   marketplaceRelative: ".plugin/marketplace.json",
   agentMarkdown: { frontmatter: AGENT_FRONTMATTER },
+  agentExt: EXT_AGENT,
 };
 
 /** Where a flat build puts copilot's skills and agents: `.github/agents/<plugin>-<name>.agent.md`. */
@@ -232,7 +233,7 @@ export const copilot = defineAiTool({
     hooks: { delivery: hooksSupport.delivery },
     layout: COPILOT_LAYOUT,
     manifest: manifestSection({
-      manifestRelativePath: "plugin.json",
+      manifestRelativePath: OUTPUT_PLUGIN_TREE.manifestRelative,
       pluginRootToken: hooksSupport.rootToken,
     }),
     models: COPILOT_MODELS,

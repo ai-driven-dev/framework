@@ -8,6 +8,7 @@ import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin
 import { PLUGIN_MCP_RELATIVE } from "../canon-format.js";
 import { agentLinks } from "../rules/agent-markdown.js";
 import { agentShape, type ComponentPlan } from "../rules/component-pipeline.js";
+import { relativeLinks } from "../rules/links.js";
 import type { FrameworkBuildMode } from "../translate-profile.js";
 import { buildFlatPlans } from "./build-flat.js";
 import { agentFiles, baseOf, isEntry } from "./build-shared.js";
@@ -39,18 +40,28 @@ function marketplaceAgents(
   artifact: SupportedArtifact
 ): ComponentPlan[] {
   const plugin = canon.manifest.name;
-  return agentFiles(canon).map(({ relativePath, content }) => {
-    const base = baseOf(relativePath);
-    const place = { plugin, outName: base, from: `agents/${base}`, unshaped: "carry" } as const;
-    return {
-      source: relativePath,
-      path: `plugins/${plugin}/${artifactPath(artifact, plugin, `agents/${base}`)}`,
-      content,
-      guard: { plugin, name: relativePath.slice("agents/".length) },
-      links: agentLinks(artifact, place),
-      shape: agentShape(artifact, place),
-    };
-  });
+  return agentFiles(canon).map((file) =>
+    marketplaceAgentPlan({ plugin, root: `plugins/${plugin}/` }, artifact, file)
+  );
+}
+
+/** One agent as the marketplace build places and shapes it, under `root`, the plugin's directory.
+ * An install of a tool that stages its agents outside `agents/` reuses it. */
+export function marketplaceAgentPlan(
+  { plugin, root }: { plugin: string; root: string },
+  artifact: SupportedArtifact,
+  { relativePath, content }: { relativePath: string; content: string }
+): ComponentPlan {
+  const base = baseOf(relativePath);
+  const place = { plugin, outName: base, from: `agents/${base}`, unshaped: "carry" } as const;
+  return {
+    source: relativePath,
+    path: `${root}${artifactPath(artifact, plugin, `agents/${base}`)}`,
+    content,
+    guard: { plugin, name: relativePath.slice("agents/".length) },
+    links: agentLinks(artifact, place),
+    shape: agentShape(artifact, place),
+  };
 }
 
 function marketplaceHooks(
@@ -80,7 +91,7 @@ function marketplaceMcp(
   const plugin = canon.manifest.name;
   return canon.components.mcp.map(({ relativePath, content }) => ({
     source: relativePath,
-    path: `plugins/${plugin}/${PLUGIN_MCP_RELATIVE}`,
+    path: `plugins/${plugin}/${artifactPath(artifact, plugin, PLUGIN_MCP_RELATIVE)}`,
     content,
     shape: artifact.transform
       ? (text) => artifact.transform?.(text, plugin, PLUGIN_MCP_RELATIVE) ?? text
@@ -103,7 +114,7 @@ function marketplaceSkills(
       path,
       content,
       guard: { plugin, name: relativePath.slice("skills/".length) },
-      links: { kind: "relative", currentFilePluginRelative: relativePath },
+      links: relativeLinks(relativePath),
       shape:
         isEntry(relativePath) && skillFrontmatter
           ? (text) => reshapeFrontmatter(text, { frontmatter: skillFrontmatter })

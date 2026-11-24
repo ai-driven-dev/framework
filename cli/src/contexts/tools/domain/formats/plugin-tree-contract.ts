@@ -14,11 +14,16 @@ interface PluginTreeLayout {
   readonly manifestRelative: string;
   readonly marketplaceRelative: string;
   readonly agentMarkdown: AgentMarkdown;
+  /** The file the plugin's MCP servers go in, when the tool reads one other than `.mcp.json`. */
+  readonly mcpRelative?: string;
+  /** The extension the tool reads an agent file by, when it is not the source's `.md`. */
+  readonly agentExt?: string;
 }
 
 function pluginTreeArtifacts(
   hooks: HooksRouting,
-  agentMarkdown: AgentMarkdown
+  agentMarkdown: AgentMarkdown,
+  { mcpRelative, agentExt }: { mcpRelative: string; agentExt?: string }
 ): ToolBuildContract["artifacts"] {
   return {
     skills: {
@@ -29,13 +34,16 @@ function pluginTreeArtifacts(
     agents: {
       supported: true,
       source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-      placement: { kind: "relative" },
+      placement:
+        agentExt === undefined
+          ? { kind: "relative" }
+          : { kind: "agentFiles", dir: "agents", ext: agentExt },
       agentMarkdown,
     },
     mcp: {
       supported: true,
       source: { kind: "configFile", srcPath: ".mcp.json" },
-      placement: { kind: "file", at: ".mcp.json" },
+      placement: { kind: "file", at: mcpRelative },
     },
     hooks: pluginTreeHooksArtifact(hooks),
   };
@@ -45,7 +53,13 @@ function pluginTreeArtifacts(
  * MCP config and hooks keep their place, and a marketplace catalog lists them. */
 export function pluginTreeContract(
   hooks: HooksRouting,
-  { manifestRelative, marketplaceRelative, agentMarkdown }: PluginTreeLayout
+  {
+    manifestRelative,
+    marketplaceRelative,
+    agentMarkdown,
+    mcpRelative = ".mcp.json",
+    agentExt,
+  }: PluginTreeLayout
 ): ToolBuildContract {
   return {
     pluginRootToken: hooks.rootToken,
@@ -54,9 +68,11 @@ export function pluginTreeContract(
       synthesizeSharedManifest(source, presence, {
         agentsField: true,
         hooksField: hooks.manifestNamesHooks === true,
+        mcpRelative,
+        agentExt,
       }),
     manifestSchemaName: "plugin-manifest",
-    artifacts: pluginTreeArtifacts(hooks, agentMarkdown),
+    artifacts: pluginTreeArtifacts(hooks, agentMarkdown, { mcpRelative, agentExt }),
     buildMarketplaceCatalog: async (source, entries, _fs) => ({
       catalog: buildSharedMarketplace(
         source as Parameters<typeof buildSharedMarketplace>[0],

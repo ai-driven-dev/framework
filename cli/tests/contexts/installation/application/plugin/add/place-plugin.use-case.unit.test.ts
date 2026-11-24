@@ -4,6 +4,7 @@ import { placePluginOf } from "../../../../../../src/composition/orchestration/b
 import { toolPlacementOf } from "../../../../../../src/contexts/installation/application/plugin/add/place-plugin.use-case.js";
 import { ResolveAddedPluginSource } from "../../../../../../src/contexts/installation/application/plugin/add/resolve-added-plugin-source.use-case.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
+import { FileHash } from "../../../../../../src/shared/domain/file-hash.js";
 import { PluginDistribution } from "../../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { parsePluginName } from "../../../../../../src/shared/domain/plugin/plugin-name.js";
 import { CapturingLogger } from "../../../../../shared/testing/capturing-logger.fake.js";
@@ -21,11 +22,13 @@ const PROJECT_ROOT = "/test-project";
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const GREET_PATH = join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md");
 const SOURCE = { kind: "local" as const, path: PLUGIN_FIXTURE };
+const OLD_RELATIVE = ".claude/plugins/sample-plugin/old.md";
 
-async function placeForClaude() {
+async function placeForClaude(replacing = false) {
   const deps = await buildInstallationDeps({ tools: registeredTools() });
   await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
+  if (replacing) deps.fs.setFile(join(PROJECT_ROOT, OLD_RELATIVE), "old");
   const built = fakeBuiltDeps({
     marketplaceRegistry: deps.marketplaceRegistry,
     homedir: () => "/home/u",
@@ -68,7 +71,9 @@ async function placeForClaude() {
     marketplace: undefined,
     previousMcpEntries: new Map(),
     previousProjectHooks: new Map(),
-    previousFiles: new Map(),
+    previousFiles: new Map(
+      replacing ? [[TOOL.claude, new Map([[OLD_RELATIVE, FileHash.of("old").value]])]] : []
+    ),
   });
   return { deps, manifest, refreshed };
 }
@@ -79,6 +84,15 @@ describe("placing a plugin in a project", () => {
 
     const plugin = manifest.getPlugins(TOOL.claude).find((p) => p.name === "sample-plugin");
     expect([deps.fs.has(GREET_PATH), plugin?.scope]).toStrictEqual([true, "project"]);
+  });
+
+  it("removes a file the replaced version placed and this one no longer ships", async () => {
+    const { deps } = await placeForClaude(true);
+
+    expect([deps.fs.has(join(PROJECT_ROOT, OLD_RELATIVE)), deps.fs.has(GREET_PATH)]).toStrictEqual([
+      false,
+      true,
+    ]);
   });
 
   it("refreshes the runtime files of each tool it places for", async () => {

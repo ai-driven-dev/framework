@@ -7,8 +7,9 @@ import type {
 import { isComponentFile, isProse, PLUGIN_HOOKS_DIR } from "../plugin-paths.js";
 import { namedByPlugin } from "../rules/agent-markdown.js";
 import type { ComponentPlan } from "../rules/component-pipeline.js";
-import { toolLinks } from "../rules/links.js";
+import { chainLinks, relativeLinks, toolLinks } from "../rules/links.js";
 import type { TranslatedAiTool, TranslatedNativePlugin } from "../translate-profile.js";
+import { marketplaceAgentPlan } from "./build-layout.js";
 import { isEntry } from "./build-shared.js";
 import { hooksTrustNotices, manifestPlan, nativeHooksPlan } from "./install-native-hooks.js";
 
@@ -82,6 +83,8 @@ function markdownPlan(
 ): ComponentPlan | null {
   const { relativePath: source, content } = file;
   const { tool, plugins, pluginRoot } = at;
+  const staged = kind === "agents" ? stagedAgentPlan(file, at) : null;
+  if (staged !== null) return staged;
   const section = tool.markdownSection(kind);
   const fileName = source.slice(`${kind}/`.length);
   const fullPath = section?.buildInstallPath(fileName);
@@ -120,7 +123,7 @@ function skillPlan(file: PluginComponentFile, at: NativeAt): ComponentPlan | nul
     source,
     path,
     content,
-    links: linksOf(source, tool),
+    links: chainLinks(linksOf(source, tool), relativeLinks(source)),
     shape: isEntry(source)
       ? (text) => reshapeFrontmatter(text, { frontmatter: skillFrontmatterOf(tool) })
       : undefined,
@@ -134,6 +137,17 @@ function skillFrontmatterOf(
 ): (fm: Record<string, unknown>) => Record<string, unknown> {
   const skills = tool.buildContract("marketplace")?.artifacts.skills;
   return (skills?.supported ? skills.skillFrontmatter : undefined) ?? ((fm) => fm);
+}
+
+/** An agent the tool's marketplace build stages outside the plugin's `agents/` (Codex's TOML) is
+ * planned as that build plans it: the machine-scope install reads the built tree, so both write
+ * the same bytes there. */
+function stagedAgentPlan(file: PluginComponentFile, at: NativeAt): ComponentPlan | null {
+  const agents = at.tool.buildContract("marketplace")?.artifacts.agents;
+  if (!agents?.supported || agents.placement.kind !== "agentFiles" || !agents.placement.staged) {
+    return null;
+  }
+  return marketplaceAgentPlan({ plugin: at.pluginName, root: at.pluginRoot }, agents, file);
 }
 
 function toPluginRelativePath(fullPath: string, toolDirectory: string): string {

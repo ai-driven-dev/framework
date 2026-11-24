@@ -85,13 +85,13 @@ describe("building a native tree on disk", () => {
       expect(parsed.skills).toBeUndefined();
     });
 
-    it("synthesized plugin.json lists ./agents/*.md file paths when agents directory has .md files", async () => {
+    it("synthesized plugin.json lists ./agents/*.agent.md file paths when agents directory has .md files", async () => {
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: TOOL.copilot });
       const parsed = JSON.parse(
         fs.getFile(`${OUT_DIR}/plugins/aidd-test/.plugin/plugin.json`) ?? "{}"
       ) as { agents: string[] };
-      expect(parsed.agents).toEqual(["./agents/code-reviewer.md"]);
+      expect(parsed.agents).toEqual(["./agents/code-reviewer.agent.md"]);
     });
 
     it("synthesized plugin.json omits agents when no .md files exist in agents directory", async () => {
@@ -114,11 +114,11 @@ describe("building a native tree on disk", () => {
   });
 
   describe("agent emission + frontmatter strip", () => {
-    it("emits agents with their original .md extension (no rename)", async () => {
+    it("emits agents as .agent.md, the extension Copilot reads", async () => {
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: TOOL.copilot });
-      expect(fs.has(`${OUT_DIR}/plugins/aidd-test/agents/code-reviewer.md`)).toBe(true);
-      expect(fs.has(`${OUT_DIR}/plugins/aidd-test/agents/code-reviewer.agent.md`)).toBe(false);
+      expect(fs.has(`${OUT_DIR}/plugins/aidd-test/agents/code-reviewer.agent.md`)).toBe(true);
+      expect(fs.has(`${OUT_DIR}/plugins/aidd-test/agents/code-reviewer.md`)).toBe(false);
     });
 
     it("keeps only the agent fields Copilot reads", async () => {
@@ -129,7 +129,7 @@ describe("building a native tree on disk", () => {
       );
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: TOOL.copilot });
-      const out = fs.getFile(`${OUT_DIR}/plugins/aidd-test/agents/extra.md`) ?? "";
+      const out = fs.getFile(`${OUT_DIR}/plugins/aidd-test/agents/extra.agent.md`) ?? "";
       expect(out).toContain("name: 'extra'");
       expect(out).toContain("description: 'desc'");
       expect(out).not.toContain("version");

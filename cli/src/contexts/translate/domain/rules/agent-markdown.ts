@@ -4,7 +4,7 @@ import type {
   SupportedArtifact,
 } from "../../../../shared/domain/materialization/build-contract.js";
 import { pluginAgentName } from "../../../../shared/domain/materialization/flat-paths.js";
-import type { LinkForm } from "./links.js";
+import { type LinkForm, relativeLinks } from "./links.js";
 
 /** Where an agent is written and how its links are read from there. */
 export interface AgentPlace {
@@ -56,9 +56,5 @@ export function agentContent(content: string, artifact: SupportedArtifact, at: A
 export function agentLinks(artifact: SupportedArtifact, at: AgentPlace): LinkForm | undefined {
   const shaped = artifact.agentMarkdown !== undefined;
   if (!shaped && (artifact.transform !== undefined || at.unshaped === "carry")) return undefined;
-  return {
-    kind: "relative",
-    currentFilePluginRelative: at.from,
-    resolveTargetPath: at.resolveTarget,
-  };
+  return relativeLinks(at.from, at.resolveTarget);
 }

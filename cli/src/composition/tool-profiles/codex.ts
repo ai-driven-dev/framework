@@ -10,7 +10,10 @@ import type { ShippedConfig } from "../../contexts/tools/contract/tool-profile.j
 import { buildCodexContract } from "../../contexts/tools/domain/behaviours/codex/codex-build.model.js";
 import { mergeCodexConfigToml } from "../../contexts/tools/domain/behaviours/codex/codex-config.model.js";
 import { buildCodexFlatContract } from "../../contexts/tools/domain/behaviours/codex/codex-flat-build.model.js";
-import { codexGlobalFilePath } from "../../contexts/tools/domain/behaviours/codex/codex-paths.model.js";
+import {
+  codexGlobalFilePath,
+  OUTPUT_CODEX_MANIFEST_RELATIVE,
+} from "../../contexts/tools/domain/behaviours/codex/codex-paths.model.js";
 import { tomlAgentFrontmatter } from "../../contexts/tools/domain/formats/agents/toml-agent.js";
 import { declareHooks } from "../../contexts/tools/domain/formats/hooks/declaration.js";
 import {
@@ -147,7 +150,7 @@ const CODEX_CAPABILITIES = {
   hooks: { config: hooksConfigPart(hooks), delivery: hooksSupport.delivery },
   layout: CODEX_LAYOUT,
   manifest: manifestSection({
-    manifestRelativePath: "plugin.json",
+    manifestRelativePath: OUTPUT_CODEX_MANIFEST_RELATIVE,
     pluginRootToken: hooksSupport.rootToken,
   }),
   models: new ModelsSection({ providers: ["openai"] }),

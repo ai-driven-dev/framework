@@ -3,6 +3,7 @@ import type {
   PluginComponentFile,
   PluginDistribution,
 } from "../../../../shared/domain/plugin/plugin-distribution.js";
+import { basename } from "../plugin-paths.js";
 import type { ComponentPlan } from "../rules/component-pipeline.js";
 import type { TranslatedFlatPlugin } from "../translate-profile.js";
 
@@ -37,4 +38,24 @@ export function scopeStated(plan: ComponentPlan, paths: readonly unknown[]): Com
         serialize: (_, body) => line + body,
       }),
   };
+}
+
+/** A command named `<prefix><plugin>:<name>`, the name its source carries stripped of its own prefix. */
+export function prefixCommandName(
+  content: string,
+  at: { source: string; prefix: string; pluginName: string }
+): string {
+  return reshapeFrontmatter(content, {
+    frontmatter: (frontmatter) => {
+      const rawName = typeof frontmatter.name === "string" ? frontmatter.name : "";
+      const simpleName = stripCommandPrefix(rawName) || basename(at.source);
+      return { ...frontmatter, name: `${at.prefix}${at.pluginName}:${simpleName}` };
+    },
+  });
+}
+
+function stripCommandPrefix(name: string): string {
+  const match = /^aidd:\d+:(.+)$/.exec(name);
+  if (match) return match[1];
+  return name.slice(name.lastIndexOf(":") + 1);
 }

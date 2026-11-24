@@ -23,8 +23,11 @@ describe("cursor declarations the rest of the CLI reads", () => {
 });
 
 describe("cursor build and conversion tables", () => {
-  it("ships the plugin tree as it is", () => {
-    expect(pluginTreeShapeOf(cursor)).toStrictEqual(SHIPPED_AS_IS);
+  it("ships the plugin tree as it is, its MCP in the mcp.json Cursor reads", () => {
+    expect(pluginTreeShapeOf(cursor)).toStrictEqual({
+      ...SHIPPED_AS_IS,
+      paths: { ...SHIPPED_AS_IS.paths, mcp: "mcp.json" },
+    });
   });
 
   it("writes its catalog and entries in Claude's marketplace format", async () => {

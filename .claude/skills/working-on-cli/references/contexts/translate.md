@@ -25,5 +25,5 @@ How a canon plugin is rewritten for one tool in memory, and how the result is wr
 
 ## Exceptions
 
-- Install and `DiskSink` still differ in bytes on what `DIVERGENCES` and `MANIFEST_DIVERGENCES` list in `translate-distribution-conformance.integration.test.ts`; the list only shrinks.
+- Install and `DiskSink` still differ in bytes on what `DIVERGENCES` and `MANIFEST_DIVERGENCES` list in `translate-distribution-conformance.integration.test.ts`: one decision (the `{{TOOLS}}` placeholder, recorded in the CLI architecture decisions) and one open one (manifest content: translate lists the components and drops `strict`, install copies the source manifest). The list only shrinks.
 - `domain/engine.ts` still calls two planners (`buildPlans`, `installPlan`) because the frozen goldens hold different install and build bytes; closes when the owner picks which sink's bytes win and one golden is re-baselined.

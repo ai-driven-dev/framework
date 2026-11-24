@@ -51,6 +51,7 @@ const OUTPUT_PLUGIN_TREE = {
   manifestRelative: ".cursor-plugin/plugin.json",
   marketplaceRelative: ".cursor-plugin/marketplace.json",
   agentMarkdown: CURSOR_AGENT_MARKDOWN,
+  mcpRelative: PLUGIN_MCP.relativePath,
 };
 
 /** Where a flat build puts cursor's skills and agents. */

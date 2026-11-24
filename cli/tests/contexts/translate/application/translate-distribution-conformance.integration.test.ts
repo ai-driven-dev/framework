@@ -39,32 +39,26 @@ type Divergence = {
  * entry nothing needs fails the test, and a difference no entry names fails it too. */
 const DIVERGENCES: readonly Divergence[] = [
   {
-    id: "A rewrites an @relative reference into a markdown link",
-    applies: () => true,
-    fold: (d) => ({ ...d, body: d.body.replace(/\[[^\]]+\]\((\.\.?\/[^)]+)\)/g, "@$1") }),
-  },
-  {
-    id: "A leaves the {{TOOLS}} placeholder, B resolves it to .github/",
+    id: "A leaves the {{TOOLS}} placeholder, B resolves it to .github/ (a build is location-independent, an install knows its directory)",
     applies: (t, _p, source) => t === "copilot" && source.includes("{{TOOLS}}"),
     fold: (d) => ({ ...d, body: d.body.replaceAll(".github/", "{{TOOLS}}/") }),
-  },
-  {
-    id: "B copies the source mcp and hooks manifests, A synthesizes them elsewhere",
-    applies: (_t, p) => /(^|\/)(mcp|hooks)\.json$|\.agent\.md$|\.toml$/.test(p),
-    absentFromA: true,
   },
 ];
 
 const SOURCES = FRAMEWORK_SOURCES;
-/** The plugin manifest, which B copies from the source and A synthesizes, is checked apart. */
+/** The plugin manifest, which B copies from the source and A synthesizes, is checked apart. Only
+ * the component list and `strict` may differ; every other field must match. */
 const MANIFEST_DIVERGENCES = [
-  "B writes the manifest at the plugin root, A in the tool's own manifest directory",
-  "A lists the components and drops strict, B copies the source manifest byte for byte",
+  "A lists the components (skills, agents, hooks, mcpServers) and drops strict, B copies the source manifest byte for byte. Open question, see 'Open question: the plugin manifest an install writes' in the CLI architecture doc",
 ];
-const identity = (json: string) => {
-  const { name, version, description, author } = JSON.parse(json);
-  return { name, version, description, author };
-};
+const COMPONENT_FIELDS = ["skills", "agents", "hooks", "mcpServers"];
+const withoutDivergence = (json: string, dropped: readonly string[]) =>
+  Object.fromEntries(Object.entries(JSON.parse(json)).filter(([key]) => !dropped.includes(key)));
+/** Every path the manifest lists, as a plugin-relative path. */
+const listedPaths = (json: string): string[] =>
+  COMPONENT_FIELDS.flatMap((key) => [JSON.parse(json)[key] ?? []].flat()).map((p: string) =>
+    p.replace(/^\.\//, "")
+  );
 
 const folded = (content: string, list: readonly Divergence[]): string =>
   JSON.stringify(list.reduce((doc, d) => d.fold?.(doc) ?? doc, parseFrontmatter(content)));
@@ -119,27 +113,18 @@ function compareWithPathA(
   return { explained: isExplainedBy(file, onA, named), needed };
 }
 
-function manifestPathOf(tool: AiToolProfile): { installed: string; onDisk: string } | null {
+function manifestPathOf(
+  tool: AiToolProfile,
+  plugin: string
+): { installed: string; onDisk: string } | null {
   const plugins = tool.plugins();
   if (plugins?.kind !== "native") return null;
   const path = nativeOf(plugins).manifestPath();
   if (path === null) return null;
   return {
-    installed: `${nativeOf(plugins).pluginOutputDir("aidd-vcs")}${path}`,
-    onDisk: `${OUT}/plugins/aidd-vcs/${path}`,
+    installed: `${nativeOf(plugins).pluginOutputDir(plugin)}${path}`,
+    onDisk: `${OUT}/plugins/${plugin}/${path}`,
   };
-}
-
-function manifestDivergencesUsed(
-  onAPath: string,
-  onA: string,
-  expectedPath: string,
-  installed: string
-): string[] {
-  return [
-    ...(onAPath === expectedPath ? [] : [MANIFEST_DIVERGENCES[0]]),
-    ...(onA === installed ? [] : [MANIFEST_DIVERGENCES[1]]),
-  ];
 }
 
 type Comparison = { unexplained: string[]; agreed: number; needed: string[] };
@@ -201,29 +186,50 @@ describe("path B (install) writes what path A (disk) writes, but for what DIVERG
     expect(result.agreed).toBeGreaterThan(100);
   });
 
+  // aidd-dev ships agents and an MCP file, aidd-vcs neither. Limit: no framework plugin ships an
+  // MCP file the source manifest also lists, so an MCP path in a built manifest is checked by
+  // `build-native-tree.use-case.integration.test.ts`, not here.
   const manifestCases = registeredTools()
     .idsInCanonicalOrder("ai")
-    .flatMap((id) => SOURCES.map((source) => [id, source.name] as const));
-  it.each(manifestCases)("%s installs the manifest of a %s source", async (id, sourceName) => {
-    const source = SOURCES.find((s) => s.name === sourceName) ?? SOURCES[0];
-    const tool = registeredTools().aiProfile(id);
-    const dist = distributionOf(tree, "aidd-vcs", source);
-    const own = translator
-      .translate(dist, tool)
-      .filter((f) => f.relativePath.endsWith("/plugin.json"));
-    const path = manifestPathOf(tool);
-    if (path === null) return void expect(own).toEqual([]);
-    expect(own.map((f) => f.relativePath)).toEqual([path.installed]);
-    expect(own[0].content).toBe(
-      dist.files.find((f) => f.relativePath === source.manifest)?.content
+    .flatMap((id) =>
+      SOURCES.flatMap((source) =>
+        ["aidd-vcs", "aidd-dev"].map((plugin) => [id, source.name, plugin] as const)
+      )
     );
-    const [[onAPath, onA]] = [...(await writtenByA(tree, tool, true))].filter(
-      ([k]) => k.includes("/plugins/aidd-vcs/") && k.endsWith("/plugin.json")
-    );
-    expect(identity(onA)).toEqual(identity(own[0].content));
-    for (const id of manifestDivergencesUsed(onAPath, onA, path.onDisk, own[0].content))
-      used.add(id);
-  });
+  it.each(manifestCases)(
+    "%s installs the manifest of a %s source, plugin %s",
+    async (id, sourceName, plugin) => {
+      const source = SOURCES.find((s) => s.name === sourceName) ?? SOURCES[0];
+      const tool = registeredTools().aiProfile(id);
+      const dist = distributionOf(tree, plugin, source);
+      const own = translator
+        .translate(dist, tool)
+        .filter((f) => f.relativePath.endsWith("/plugin.json"));
+      const path = manifestPathOf(tool, plugin);
+      if (path === null) return void expect(own).toEqual([]);
+      expect(own.map((f) => f.relativePath)).toEqual([path.installed]);
+      expect(own[0].content).toBe(
+        dist.files.find((f) => f.relativePath === source.manifest)?.content
+      );
+      const writtenA = await writtenByA(tree, tool, true);
+      const [[onAPath, onA]] = [...writtenA].filter(
+        ([k]) => k.includes(`/plugins/${plugin}/`) && k.endsWith("/plugin.json")
+      );
+      expect(withoutDivergence(onA, COMPONENT_FIELDS)).toEqual(
+        withoutDivergence(own[0].content, ["strict"])
+      );
+      expect(onAPath).toBe(path.onDisk);
+      const root = `${onAPath.slice(0, onAPath.indexOf(`/plugins/${plugin}/`))}/plugins/${plugin}/`;
+      for (const listed of listedPaths(onA)) {
+        expect(
+          [...writtenA.keys()].some(
+            (k) => k === `${root}${listed}` || k.startsWith(`${root}${listed}/`)
+          )
+        ).toBe(true);
+      }
+      if (onA !== own[0].content) used.add(MANIFEST_DIVERGENCES[0]);
+    }
+  );
 
   it("every divergence is still needed by some tool", () => {
     expect([...used].sort()).toEqual(
