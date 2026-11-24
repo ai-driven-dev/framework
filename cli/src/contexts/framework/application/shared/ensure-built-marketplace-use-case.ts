@@ -14,12 +14,17 @@ import type { FrameworkBuildMode } from "../../../tools/domain/registry.js";
 import type { FrameworkBuild } from "../../../translate/application/translate-source.js";
 import type { FrameworkBuildTarget } from "../../../translate/domain/build-target.js";
 
-/** `undefined` when the target/mode pair has no build. */
+/** `undefined` when the target/mode pair has no build. With a provider, every agent gets its
+ * role's model there. */
 export type FrameworkBuildFor = (
   target: FrameworkBuildTarget,
   mode: FrameworkBuildMode,
-  outDir: string
+  outDir: string,
+  provider?: string
 ) => FrameworkBuild | undefined;
+
+/** The provider chosen for a target's agents, if any. */
+export type AgentProviderFor = (target: FrameworkBuildTarget) => Promise<string | undefined>;
 
 export interface EnsureBuiltMarketplaceOptions {
   readonly projectRoot: string;
@@ -60,7 +65,9 @@ export class EnsureBuiltMarketplaceUseCase implements EnsureBuiltMarketplace {
      * happened to register it would tie a declaration meant for every project to the life of one
      * of them: delete that project and the global registration points at nothing.
      */
-    private readonly userCacheRoot: () => string
+    private readonly userCacheRoot: () => string,
+    /** A changed provider changes the built agents, so it is part of what keeps a cache fresh. */
+    private readonly agentProviderFor: AgentProviderFor = async () => undefined
   ) {}
 
   async execute(options: EnsureBuiltMarketplaceOptions): Promise<EnsureBuiltMarketplaceResult> {
@@ -82,7 +89,8 @@ export class EnsureBuiltMarketplaceUseCase implements EnsureBuiltMarketplace {
       projectRoot: options.projectRoot,
       forceRefresh: options.forceRefresh,
     });
-    const sentinel = this.sentinelValue(resolved.catalog?.version);
+    const provider = await this.agentProviderFor(options.target);
+    const sentinel = this.sentinelValue(resolved.catalog?.version, provider);
     const memoKey = `${options.marketplace.name}:${options.target}:${sentinel}`;
     const memoized = this.memo.get(memoKey);
     if (memoized !== undefined) return memoized;
@@ -91,14 +99,16 @@ export class EnsureBuiltMarketplaceUseCase implements EnsureBuiltMarketplace {
       builtDir,
       resolve(resolved.localPath),
       sentinel,
-      this.versionIsTrustworthy(options)
+      this.versionIsTrustworthy(options),
+      provider
     );
     this.memo.set(memoKey, result);
     return result;
   }
 
-  private sentinelValue(catalogVersion: string | undefined): string {
-    return `${this.version.get()}:${catalogVersion ?? UNVERSIONED}`;
+  private sentinelValue(catalogVersion: string | undefined, provider: string | undefined): string {
+    const base = `${this.version.get()}:${catalogVersion ?? UNVERSIONED}`;
+    return provider === undefined ? base : `${base}:${provider}`;
   }
 
   /**
@@ -120,13 +130,14 @@ export class EnsureBuiltMarketplaceUseCase implements EnsureBuiltMarketplace {
     builtDir: string,
     sourceDir: string,
     sentinel: string,
-    versionIsTrustworthy: boolean
+    versionIsTrustworthy: boolean,
+    provider: string | undefined
   ): Promise<EnsureBuiltMarketplaceResult> {
     const version = sentinel.split(":")[1];
     if (versionIsTrustworthy && (await this.isFresh(builtDir, sentinel))) {
       return { builtDir, version, rebuilt: false };
     }
-    await this.build(options.target, options.mode, sourceDir, builtDir);
+    await this.build(options.target, options.mode, sourceDir, builtDir, provider);
     await this.fs.writeFile(join(builtDir, SENTINEL_FILE), sentinel);
     return { builtDir, version, rebuilt: true };
   }
@@ -143,13 +154,14 @@ export class EnsureBuiltMarketplaceUseCase implements EnsureBuiltMarketplace {
     target: FrameworkBuildTarget,
     mode: FrameworkBuildMode,
     sourceDir: string,
-    builtDir: string
+    builtDir: string,
+    provider: string | undefined
   ): Promise<void> {
     if (this.nested(sourceDir, builtDir)) {
-      await this.buildViaTemp(target, mode, sourceDir, builtDir);
+      await this.buildViaTemp(target, mode, sourceDir, builtDir, provider);
       return;
     }
-    await this.runBuild(target, mode, sourceDir, builtDir);
+    await this.runBuild(target, mode, sourceDir, builtDir, provider);
   }
 
   private nested(sourceDir: string, builtDir: string): boolean {
@@ -160,11 +172,12 @@ export class EnsureBuiltMarketplaceUseCase implements EnsureBuiltMarketplace {
     target: FrameworkBuildTarget,
     mode: FrameworkBuildMode,
     sourceDir: string,
-    builtDir: string
+    builtDir: string,
+    provider: string | undefined
   ): Promise<void> {
     const temp = join(tmpdir(), `aidd-built-${target}-${mode}`);
     await this.fs.deleteDirectory(temp);
-    await this.runBuild(target, mode, sourceDir, temp);
+    await this.runBuild(target, mode, sourceDir, temp, provider);
     await this.fs.deleteDirectory(builtDir);
     await this.copyDir(temp, builtDir);
     await this.fs.deleteDirectory(temp);
@@ -177,10 +190,11 @@ export class EnsureBuiltMarketplaceUseCase implements EnsureBuiltMarketplace {
     target: FrameworkBuildTarget,
     mode: FrameworkBuildMode,
     sourceDir: string,
-    outDir: string
+    outDir: string,
+    provider: string | undefined
   ): Promise<void> {
     await this.fs.createDirectory(outDir);
-    const build = this.buildFor(target, mode, outDir);
+    const build = this.buildFor(target, mode, outDir, provider);
     if (build === undefined) {
       throw new Error(`No framework build for target '${target}' mode '${mode}'.`);
     }

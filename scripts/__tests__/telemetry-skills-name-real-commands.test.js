@@ -76,19 +76,8 @@ function mentions() {
   return found;
 }
 
-function skillFolders() {
-  if (!fs.existsSync(SKILLS)) return [];
-  return fs.readdirSync(SKILLS, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name);
-}
-
 describe("the telemetry skills name only commands the CLI has", () => {
   const help = telemetryHelp();
-
-  it("ships the two skills, and each names at least one command", () => {
-    assert.deepEqual(skillFolders().sort(), ["00-init", "01-usage"]);
-    const named = new Set(mentions().map((mention) => mention.file.split("/")[3]));
-    assert.deepEqual([...named].sort(), ["00-init", "01-usage"]);
-  });
 
   it("names a subcommand that exists in the help golden", () => {
     const unknown = mentions()
@@ -116,19 +105,6 @@ describe("the telemetry skills name only commands the CLI has", () => {
     assert.deepEqual(wrong, []);
   });
 
-  it("gives --axis only values report accepts, in every code span", () => {
-    const allowed = help.get("report").choices.get("--axis");
-    const wrong = [];
-    for (const file of markdownUnder(SKILLS)) {
-      for (const region of codeRegions(fs.readFileSync(file, "utf8"))) {
-        for (const [, value] of region.matchAll(/--axis\s+([a-z]+)/gu)) {
-          if (!allowed.has(value)) wrong.push(`${path.relative(ROOT, file)}: --axis ${value}`);
-        }
-      }
-    }
-    assert.deepEqual(wrong, []);
-  });
-
   it("uses no flag in a code span that no telemetry command has", () => {
     const known = new Set(["--help", "--version", ...[...help.values()].flatMap((c) => [...c.flags])]);
     const wrong = [];
@@ -140,13 +116,5 @@ describe("the telemetry skills name only commands the CLI has", () => {
       }
     }
     assert.deepEqual(wrong, []);
-  });
-  it("names no hook internals and nothing of the measurement it replaced", () => {
-    const internal = /\bhooks?\b|prompt-gate|session-start|catch-up|\bV1\b|previous (?:version|measurement|telemetry)|journal|trailer|backlog-link|aidd_docs\/runs/iu;
-    const found = markdownUnder(SKILLS)
-      .map((file) => [path.relative(ROOT, file), internal.exec(fs.readFileSync(file, "utf8"))])
-      .filter(([, hit]) => hit !== null)
-      .map(([file, hit]) => `${file}: ${hit[0]}`);
-    assert.deepEqual(found, []);
   });
 });

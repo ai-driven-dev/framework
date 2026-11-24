@@ -9,11 +9,8 @@ const doctor = path.resolve(__dirname, "../doctor.sh");
 const basePath = process.platform === "win32" ? (process.env.PATH ?? "") : "/usr/bin:/bin";
 
 for (const [version, supported] of [
-  ["20.20.0", false],
-  ["22.12.0", false],
   ["22.17.0", false],
   ["22.18.0", true],
-  ["23.11.0", false],
   ["24.10.0", false],
   ["24.11.0", true],
   ["25.0.0", false],

@@ -1,27 +1,22 @@
 /**
- * The two architecture rules of issue #250, as pure functions: the caller supplies the path, the
- * prospective content and a SKILL.md's action file names, and nothing here reads the filesystem.
+ * The one architecture rule left from issue #250, router coherence, as a pure function: the caller
+ * supplies the path, the prospective content and a SKILL.md's action file names, and nothing here
+ * reads the filesystem.
  *
- * Why each rule is shaped the way it is — the one-directional router check, the exemptions, the
- * two table shapes read generously — is in the decisions table of
- * `aidd_docs/tasks/2026_09/2026_09_18_cross-plugin-orthogonality-guard/plan.md`.
+ * Orthogonality and the agent branch are gone: `scripts/check/run.cjs` enforces SKILL-22 (no
+ * sibling-plugin address in a skill) and SKILL-06 (a router diagram is a `flowchart LR` whose boxes
+ * are exactly the action files). This rule stays only for a SKILL.md with no such flowchart, which
+ * SKILL-06 reports as a no-flowchart finding. Delete it once `scripts/check/baseline.json` holds no
+ * such SKILL-06 entry (00-onboard and others still do).
  */
 
 "use strict";
 
-const ORCHESTRATOR_PLUGIN = "aidd-orchestrator";
-
-/** Expires with #883, which makes 00-onboard resolve its providers at runtime. */
-const ONBOARD_EXEMPT_PREFIX = "plugins/aidd-context/skills/00-onboard/";
-
-const ANY_HEADING = /^#{1,6}\s/;
-const PERMISSION_LIST_HEADING = /^#{1,6}\s+Skills you may invoke\s*$/i;
 const ACTIONS_HEADING = /^##\s+Actions\s*$/i;
 const SECOND_LEVEL_HEADING = /^##\s+/;
 const FENCE_MARKER = /^\s*(`{3,}|~{3,})/;
 const TABLE_ROW = /^\s*\|/;
 
-const PLUGIN_ADDRESS = /(?<![\w/@-])(?:[@/])?(aidd-[a-z0-9]+(?:-[a-z0-9]+)*):([A-Za-z0-9][\w.-]*)/g;
 const ACTION_PATH = /actions\/([A-Za-z0-9._-]+)\.md/g;
 const BACKTICKED_FILE_NAME = /`([A-Za-z0-9][A-Za-z0-9._-]*\.md)`/g;
 const ACTION_COLUMN_HEADER = /^actions?$/i;
@@ -57,63 +52,12 @@ function classifyFile(filePath) {
   if (parts.includes("assets")) return null;
   if (!rest.at(-1)?.endsWith(".md")) return null;
 
-  if (area === "agents") return rest.length === 1 ? { owner, kind: "agent" } : null;
   if (area !== "skills") return null;
 
   if (rest.at(-1) === "SKILL.md") return { owner, kind: "skill" };
   if (rest.includes("actions")) return { owner, kind: "action" };
   if (rest.includes("references")) return { owner, kind: "reference" };
   return null;
-}
-
-// --- Rule one: cross-plugin orthogonality --------------------------------------------------
-
-function addressesIn(content) {
-  const addresses = [];
-  toLines(content).forEach((line, index) => {
-    PLUGIN_ADDRESS.lastIndex = 0;
-    let match;
-    while ((match = PLUGIN_ADDRESS.exec(line)) !== null) {
-      addresses.push({ line: index + 1, plugin: match[1], text: match[0] });
-    }
-  });
-  return addresses;
-}
-
-/** An agent's `# Skills you may invoke` list names its providers on purpose. */
-function permissionListLines(lines) {
-  const listed = new Set();
-  let inList = false;
-  lines.forEach((line, index) => {
-    if (ANY_HEADING.test(line)) inList = PERMISSION_LIST_HEADING.test(line);
-    else if (inList) listed.add(index + 1);
-  });
-  return listed;
-}
-
-function isExemptFromOrthogonality(filePath, owner) {
-  return owner === ORCHESTRATOR_PLUGIN || filePath.startsWith(ONBOARD_EXEMPT_PREFIX);
-}
-
-function checkOrthogonality(filePath, content) {
-  const surface = classifyFile(filePath);
-  if (!surface || isExemptFromOrthogonality(filePath, surface.owner)) return [];
-
-  const lines = toLines(content);
-  const exemptLines = surface.kind === "agent" ? permissionListLines(lines) : new Set();
-
-  // Unlike router coherence, read through fences: a fenced command is still one the model runs.
-  return addressesIn(content)
-    .filter(({ plugin, line }) => plugin !== surface.owner && !exemptLines.has(line))
-    .map(({ plugin, line, text }) =>
-      violation(
-        "orthogonality",
-        filePath,
-        line,
-        plugin,
-        `${filePath}:${line} addresses sibling plugin "${plugin}" via "${text}"`
-      )
-    );
 }
 
 // --- Reading a router ---------------------------------------------------------------------
@@ -164,13 +108,13 @@ function actionsSection(lines) {
   };
 }
 
-/** The first closed Mermaid flowchart before any H2 is a router; later examples cannot add citations. */
-function preambleFlowSection(lines) {
+/** Whether a closed Mermaid flowchart precedes the first H2: SKILL-06 judges that skill, not this rule. */
+function hasPreambleFlowchart(lines) {
   let fence = null;
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index];
     if (fence === null) {
-      if (SECOND_LEVEL_HEADING.test(line)) return null;
+      if (SECOND_LEVEL_HEADING.test(line)) return false;
       const opening = line.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
       if (opening) fence = { marker: opening[1], language: opening[2].trim(), start: index };
       continue;
@@ -182,11 +126,11 @@ function preambleFlowSection(lines) {
     const body = lines.slice(fence.start + 1, index);
     const firstContent = body.find((value) => value.trim() && !/^\s*%%/.test(value));
     if (fence.language === "mermaid" && /^\s*(?:flowchart|graph)(?:\s+(?:TB|TD|BT|RL|LR))?\s*(?:;|$)/.test(firstContent ?? "")) {
-      return { label: "Mermaid router", headingLine: fence.start + 1, startIndex: fence.start + 1, endIndex: index };
+      return true;
     }
     fence = null;
   }
-  return null;
+  return false;
 }
 
 function tableCells(line) {
@@ -223,7 +167,7 @@ function declaredActionColumn(headerCells) {
   return headerCells.findIndex((cell) => ACTION_COLUMN_HEADER.test(stripBackticks(cell)));
 }
 
-// --- Rule two: router coherence -------------------------------------------------------------
+// --- Router coherence -------------------------------------------------------------
 
 /**
  * Names cited from the column a table calls `Action`, and the first line of each run of rows with
@@ -305,11 +249,13 @@ function checkRouterCoherence(filePath, content, actionFileNames) {
   if (names.length === 0) return [];
 
   const rawLines = toLines(content);
+  if (hasPreambleFlowchart(rawLines)) return [];
+
   const lines = withoutFences(rawLines);
-  const section = actionsSection(lines) ?? preambleFlowSection(rawLines);
+  const section = actionsSection(lines);
 
   if (!section) {
-    const message = `${filePath} has action files but no "## Actions" section or preamble Mermaid flowchart`;
+    const message = `${filePath} has action files but no "## Actions" section`;
     return [violation("router-coherence", filePath, 1, surface.owner, message)];
   }
 
@@ -341,15 +287,12 @@ function checkRouterCoherence(filePath, content, actionFileNames) {
 }
 
 function checkArchitecture(filePath, content, actionFileNames) {
-  return [
-    ...checkOrthogonality(filePath, content),
-    ...checkRouterCoherence(filePath, content, actionFileNames),
-  ];
+  return checkRouterCoherence(filePath, content, actionFileNames);
 }
 
 module.exports = {
   checkArchitecture,
-  checkOrthogonality,
   checkRouterCoherence,
   classifyFile,
+  hasPreambleFlowchart,
 };

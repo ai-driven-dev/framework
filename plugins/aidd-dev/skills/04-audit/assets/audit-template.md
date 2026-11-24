@@ -1,9 +1,3 @@
----
-name: audit
-description: Codebase audit report template
-argument-hint: N/A
----
-
 # Codebase Audit: {{scope}}
 
 {{one_line_summary}}

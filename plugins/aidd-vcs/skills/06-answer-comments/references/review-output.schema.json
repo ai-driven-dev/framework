@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Review plan output",
+  "description": "Printed on stdout. Exit 0 prints the plan; exit 1 (refused) and 2 (bad usage or unreadable input) print only the error.",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": ["threads", "pending", "summary", "unknown"],
+      "additionalProperties": false,
+      "properties": {
+        "threads": {
+          "type": "array",
+          "description": "The thread operations to apply, whatever the summary's status.",
+          "items": { "$ref": "#/$defs/operation" }
+        },
+        "pending": {
+          "type": "array",
+          "description": "Open questions for the user and changes not pushed yet, to report with their links.",
+          "items": { "$ref": "#/$defs/pending" }
+        },
+        "summary": {
+          "description": "What to do with the summary comment.",
+          "oneOf": [
+            { "$ref": "#/$defs/create" },
+            { "$ref": "#/$defs/edit" },
+            { "$ref": "#/$defs/needsChoice" },
+            { "$ref": "#/$defs/blocked" }
+          ]
+        },
+        "unknown": {
+          "type": "array",
+          "description": "Thread IDs with neither a classification nor a remembered kind.",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": ["error"],
+      "additionalProperties": false,
+      "properties": {
+        "error": { "type": "string", "description": "Why the input was refused, to quote." }
+      }
+    }
+  ],
+  "$defs": {
+    "operation": {
+      "type": "object",
+      "required": ["threadId"],
+      "additionalProperties": false,
+      "properties": {
+        "threadId": { "type": "string" },
+        "reply": { "type": "string", "description": "Post exactly as returned: its hidden marker lets the next run recognize it." },
+        "resolve": { "const": true, "description": "Resolve the thread after any reply." }
+      }
+    },
+    "pending": {
+      "type": "object",
+      "required": ["threadId", "kind", "text", "url"],
+      "properties": {
+        "threadId": { "type": "string" },
+        "kind": { "enum": ["user-call", "todo"] },
+        "text": { "type": "string" },
+        "url": { "type": "string" }
+      }
+    },
+    "create": {
+      "type": "object",
+      "required": ["status", "operation", "body"],
+      "additionalProperties": false,
+      "properties": {
+        "status": { "const": "ready" },
+        "operation": { "const": "create" },
+        "body": { "type": "string", "description": "Post exactly as returned: its hidden state is the next run's memory." }
+      }
+    },
+    "edit": {
+      "type": "object",
+      "required": ["status", "operation", "targetId", "body"],
+      "additionalProperties": false,
+      "properties": {
+        "status": { "const": "ready" },
+        "operation": { "enum": ["update", "unchanged"], "description": "unchanged: nothing to post." },
+        "targetId": { "type": "string", "description": "The summary comment to edit." },
+        "body": { "type": "string", "description": "Post exactly as returned: its hidden state is the next run's memory." }
+      }
+    },
+    "needsChoice": {
+      "type": "object",
+      "required": ["status", "candidates", "allowNew"],
+      "additionalProperties": false,
+      "properties": {
+        "status": { "const": "needs-choice" },
+        "candidates": { "type": "array", "items": { "type": "string" }, "description": "The comment IDs the user picks from." },
+        "allowNew": { "type": "boolean", "description": "The user may answer \"new\" instead." }
+      }
+    },
+    "blocked": {
+      "type": "object",
+      "required": ["status"],
+      "additionalProperties": false,
+      "properties": {
+        "status": { "const": "unknown", "description": "Some thread is unknown; publish no summary until it is classified." }
+      }
+    }
+  }
+}

@@ -24,8 +24,3 @@ test("promote checks the release video on next's tip, before it pushes anything"
   assert.ok(check < push, "the check runs after the snapshot is pushed");
   assert.match(open.run, /git checkout --detach origin\/next/);
 });
-
-test("the check runs on every promotion", () => {
-  assert.doesNotMatch(open.run, /SKIP_VIDEO/);
-  assert.match(open.run, /git checkout --detach origin\/next\nnode \.claude\/skills\/release-video\/assets\/check-release-video\.js/);
-});

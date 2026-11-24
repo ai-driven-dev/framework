@@ -6,7 +6,6 @@ export class HooksCapability {
       outputPath: string;
       mergeStrategy?: "user-prime" | "none";
       entrySection?: string;
-      mergeFn?: (existing: string, incoming: string) => string;
       consumes?: readonly string[];
     }
   ) {
@@ -15,13 +14,6 @@ export class HooksCapability {
 
   buildOutputPath(): string {
     return this.params.outputPath;
-  }
-
-  merge(existing: string, incoming: string): string {
-    if (this.params.mergeFn !== undefined) {
-      return this.params.mergeFn(existing, incoming);
-    }
-    return incoming;
   }
 
   getMergeStrategy(): "user-prime" | "none" {

@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "kind": "audit",
+  "unit": "file",
+  "scope": ["aidd_docs/**/*_audit/*.md"],
+  "rules": {
+    "AUDIT-01": {
+      "op": "template",
+      "in": "*.md",
+      "template": "../assets/audit-template.md",
+      "why": "every pillar of a run is ranked the same way",
+      "fix": "follow audit-template.md"
+    }
+  }
+}

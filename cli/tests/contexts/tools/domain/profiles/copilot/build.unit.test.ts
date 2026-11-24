@@ -224,10 +224,9 @@ describe("buildCopilotFlatContract()", () => {
   it("gives a flat agent the plugin prefix and the .agent.md extension Copilot discovers", () => {
     const agents = supported(buildCopilotFlatContract().artifacts.agents);
 
-    expect({ ext: agents.ext, path: agents.path("aidd-dev", "agents/planner.md") }).toStrictEqual({
-      ext: ".agent.md",
-      path: ".github/agents/aidd-dev-planner.agent.md",
-    });
+    expect(agents.path("aidd-dev", "agents/planner.md")).toBe(
+      ".github/agents/aidd-dev-planner.agent.md"
+    );
   });
 
   it("lands a plugin's hooks declaration beside the other hooks and its scripts under the plugin's own folder", () => {
@@ -245,7 +244,11 @@ describe("buildCopilotFlatContract()", () => {
   it("flattens a plugin's hooks declaration into the one-entry-per-event shape Copilot reads", () => {
     const hooks = supported(buildCopilotFlatContract().artifacts.hooks);
 
-    expect(hooks.hooksTransform?.(HOOKS_JSON)).toBe(
+    expect([hooks.hooksFile?.path("aidd-dev"), hooks.hooksFile?.shared]).toStrictEqual([
+      ".github/hooks/aidd-dev.hooks.json",
+      false,
+    ]);
+    expect(hooks.hooksFile?.merge(null, HOOKS_JSON, "aidd-dev", (path) => path).content).toBe(
       `${JSON.stringify(
         {
           version: 1,

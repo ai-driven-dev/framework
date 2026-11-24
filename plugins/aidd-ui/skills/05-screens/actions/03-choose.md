@@ -19,7 +19,7 @@ The set, in the showcase.
    - Leave record entries.
 4. Weigh the feedback.
    - Keep: a candidate as it is.
-   - Revise: a lead, its comment says what to change.
+   - Revise: a lead whose comment says what to change.
    - Discard: out.
    - No verdict: not looked at, so ask before deciding.
    - Several kept: ask the user which one.

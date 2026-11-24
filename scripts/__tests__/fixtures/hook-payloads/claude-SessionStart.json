@@ -1,0 +1,28 @@
+{
+  "host": "claude",
+  "event": "SessionStart",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "transcript_path": "/Users/user/.claude/projects/-Users-user-project/00000000-0000-4000-8000-000000000000.jsonl",
+        "cwd": "/Users/user/project",
+        "hook_event_name": "SessionStart",
+        "source": "startup"
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "level2",
+      "payload": {
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "transcript_path": "/Users/user/.claude/projects/-Users-user-project/00000000-0000-4000-8000-000000000000.jsonl",
+        "cwd": "/Users/user/project",
+        "hook_event_name": "SessionStart",
+        "source": "startup"
+      },
+      "hookAnswer": null
+    }
+  ]
+}

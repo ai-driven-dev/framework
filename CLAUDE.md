@@ -24,6 +24,7 @@
 - **Solve your own issues first:** genuinely try to resolve it yourself before escalating to the human.
 - **Don't assume your knowledge is current.**
 - **Placement discipline:** for every plugin change, think hard about where responsibility belongs; follow `docs/ARCHITECTURE.md`.
+- **A template and its contract move together:** change a skill's template => change the contract beside it, then run `node scripts/check/engine/sync.cjs` and `node scripts/check/run.cjs`.
 - **Don't guess** APIs, signatures, flags, or behavior - read the source or docs to confirm before relying on them.
 - **Ambiguous or expensive task:** ask one sharp question to pin down scope before building, rather than guess.
 - **Batch independent operations** in one pass, not one at a time.
@@ -65,6 +66,14 @@ Project docs, memory, specs, and plans live in `aidd_docs/`.
 <!-- read on demand, not auto-loaded -->
 - aidd_docs/memory/internal/decisions/a-price-table-is-the-destination-s.md
 - aidd_docs/memory/internal/decisions/measurement-may-reach-a-hosted-destination.md
+
+<!-- folders other plugins own, read on demand -->
+- aidd_docs/brainstorm/
+- aidd_docs/product/
+- aidd_docs/recipes/
+- aidd_docs/release-video/
+- aidd_docs/specs/
+- aidd_docs/tasks/
 
 <!-- aidd_project_memory:end -->
 

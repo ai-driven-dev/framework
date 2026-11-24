@@ -21,7 +21,7 @@ The output of [prepare](01-prepare.md).
      - Read a comment against the state it names.
      - Keep: a candidate as it is.
      - Discard: out.
-     - Revise: a lead, its comment says what to change.
+     - Revise: a lead whose comment says what to change.
      - Several kept: keep the one with fewer states.
      - Only revise: revise per the comments, then write the showcase again.
    - Keep the chosen variant per [engine](../references/engine.md).

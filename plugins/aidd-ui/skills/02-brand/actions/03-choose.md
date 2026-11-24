@@ -17,7 +17,7 @@ The set, in the showcase.
    - Leave record entries.
 3. Weigh the feedback.
    - Keep: a candidate as it is.
-   - Revise: a lead, its comment says what to change.
+   - Revise: a lead whose comment says what to change.
    - Discard: out.
    - No verdict and no pick: not looked at, so ask before deciding.
    - Picks: each picked axis comes from its variant, and together they make the mix.

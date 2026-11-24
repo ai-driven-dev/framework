@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "kind": "hooks",
+  "unit": "file",
+  "targets": "plugins/*/hooks/hooks.json",
+  "rules": {
+    "HOOKS-01": {
+      "op": "json",
+      "in": "hooks.json",
+      "schema": "schemas/hooks-schema.json",
+      "why": "the host silently ignores a wrong key, and the status line names the plugin whose hook runs",
+      "fix": "{problem}"
+    },
+    "HOOKS-02": {
+      "op": "custom",
+      "in": "hooks.json",
+      "check": "handlers",
+      "why": "a missing or broken handler fails at the event, not at install"
+    }
+  }
+}
