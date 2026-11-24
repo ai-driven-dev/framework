@@ -80,4 +80,27 @@ describe("a tool's marketplace registration", () => {
       })
     );
   });
+
+  it("answers the source path of each declared marketplace that names one", () => {
+    const registration = new MarketplaceRegistration(settings, activation);
+
+    expect(
+      registration.declaredMarketplaceSources({
+        extraKnownMarketplaces: {
+          local: { source: { source: "directory", path: "/p/.aidd/cache/built/local/claude" } },
+          remote: { source: { source: "github", repo: "a/b" } },
+          bare: {},
+        },
+      })
+    ).toStrictEqual(new Map([["local", "/p/.aidd/cache/built/local/claude"]]));
+  });
+
+  it("answers no source for a declaration kept as a list or under another key", () => {
+    const registration = new MarketplaceRegistration(settings, activation);
+
+    expect(
+      registration.declaredMarketplaceSources({ extraKnownMarketplaces: ["a"] })
+    ).toStrictEqual(new Map());
+    expect(registration.declaredMarketplaceSources({ other: { a: {} } })).toStrictEqual(new Map());
+  });
 });

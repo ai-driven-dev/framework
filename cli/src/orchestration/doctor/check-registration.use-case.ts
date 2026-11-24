@@ -67,11 +67,18 @@ export class CheckRegistration {
       toolIds,
       marketplaceNames,
     });
-    return declared.findings.map((finding) => ({
-      severity: UNDECLARED_MARKETPLACE_SEVERITY,
-      message: `${finding.tool} no longer declares marketplace '${finding.name}'`,
-      fix: { code: "refresh-marketplace", file: finding.file },
-    }));
+    return [
+      ...declared.findings.map((finding) => ({
+        severity: UNDECLARED_MARKETPLACE_SEVERITY,
+        message: `${finding.tool} no longer declares marketplace '${finding.name}'`,
+        fix: { code: "refresh-marketplace" as const, file: finding.file },
+      })),
+      ...declared.stale.map((entry) => ({
+        severity: UNDECLARED_MARKETPLACE_SEVERITY,
+        message: `${entry.tool} still declares marketplace '${entry.name}', which this project no longer registers`,
+        fix: { code: "remove-stale-declaration" as const, name: entry.name, file: entry.file },
+      })),
+    ];
   }
 
   /**

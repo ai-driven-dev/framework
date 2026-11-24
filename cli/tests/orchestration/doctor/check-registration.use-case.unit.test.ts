@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { InspectDeclaredMarketplaces } from "../../../src/contexts/host-registration/application/inspect/inspect-declared-marketplaces.use-case.js";
@@ -8,6 +9,7 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { resolveHomeTemplate } from "../../../src/contexts/tools/contract/home-path.js";
 import { CheckRegistration } from "../../../src/orchestration/doctor/check-registration.use-case.js";
+import { BUILT_CACHE_SUBDIR } from "../../../src/shared/domain/layout/aidd-layout.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
 import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
@@ -38,6 +40,16 @@ const UNDECLARED = {
   fix: { code: "refresh-marketplace", file: `.${SYNTHETIC_NATIVE_TOOL}/settings.local.json` },
 };
 
+const STALE = {
+  severity: "warning",
+  message: `${SYNTHETIC_NATIVE_TOOL} still declares marketplace 'aidd-framework', which this project no longer registers`,
+  fix: {
+    code: "remove-stale-declaration",
+    name: "aidd-framework",
+    file: `.${SYNTHETIC_NATIVE_TOOL}/settings.local.json`,
+  },
+};
+
 function settingsDeclaring(names: string[]): string {
   const entries = Object.fromEntries(names.map((name) => [name, { source: {} }]));
   return JSON.stringify({ extraKnownMarketplaces: entries });
@@ -50,6 +62,7 @@ async function issuesFor(
     toolInstalled?: boolean;
     allowedIds?: Set<string> | null;
     machine?: boolean;
+    registered?: boolean;
   } = {}
 ) {
   const {
@@ -57,19 +70,21 @@ async function issuesFor(
     toolInstalled = true,
     allowedIds = null,
     machine,
+    registered = true,
   } = options;
   const fs = new InMemoryFileAdapter();
   if (settings !== null) await fs.writeFile(LOCAL_SETTINGS, settings);
   const registry = new InMemoryMarketplaceRegistry();
-  await registry.save(
-    PROJECT_ROOT,
-    Marketplace.create({
-      name: "aidd-framework",
-      source: { kind: "local", path: "/src" },
-      scope: "project",
-      addedAt: "2026-01-01T00:00:00Z",
-    })
-  );
+  if (registered)
+    await registry.save(
+      PROJECT_ROOT,
+      Marketplace.create({
+        name: "aidd-framework",
+        source: { kind: "local", path: "/src" },
+        scope: "project",
+        addedAt: "2026-01-01T00:00:00Z",
+      })
+    );
   const manifest = Manifest.create();
   manifest.addTool(toolId, "test", []);
   const activators = new Map<string, FakeHostActions>([
@@ -103,6 +118,23 @@ describe("checking registrations", () => {
   it("accepts the array form of the declaration", async () => {
     const settings = JSON.stringify({ extraKnownMarketplaces: ["aidd-framework"] });
     expect(await issuesFor(settings)).toStrictEqual([]);
+  });
+
+  it("reports a declaration of this project's built cache that no registered marketplace owns", async () => {
+    const settings = JSON.stringify({
+      extraKnownMarketplaces: {
+        "aidd-framework": {
+          source: {
+            source: "directory",
+            path: join(PROJECT_ROOT, BUILT_CACHE_SUBDIR, "gone", "x"),
+          },
+        },
+        "aidd-framework-2": { source: { source: "directory", path: "/mine/elsewhere" } },
+      },
+    });
+    const stale = await issuesFor(settings, { registered: false });
+
+    expect(stale).toStrictEqual([STALE]);
   });
 
   it("reports the marketplace the file no longer declares", async () => {

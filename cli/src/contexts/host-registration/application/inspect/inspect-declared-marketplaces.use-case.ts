@@ -1,8 +1,10 @@
-import { join } from "node:path";
+import { isAbsolute, join, relative } from "node:path";
+import { BUILT_CACHE_SUBDIR } from "../../../../shared/domain/layout/aidd-layout.js";
 import { tryParseJson } from "../../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type {
   InspectDeclaredMarketplacesResult,
+  StaleDeclaration,
   UndeclaredMarketplace,
 } from "../../contract/inspect-declared-marketplaces-result.js";
 import type {
@@ -15,6 +17,38 @@ export interface InspectDeclaredMarketplacesRequest {
   readonly projectRoot: string;
   readonly toolIds: readonly string[];
   readonly marketplaceNames: readonly string[];
+}
+
+interface Declared {
+  readonly file: string;
+  readonly names: ReadonlySet<string>;
+  readonly sources: ReadonlyMap<string, string>;
+}
+
+function missingFrom(
+  declared: Declared,
+  registered: readonly string[],
+  tool: string
+): UndeclaredMarketplace[] {
+  return registered
+    .filter((name) => !declared.names.has(name))
+    .map((name) => ({ tool, name, file: declared.file }));
+}
+
+function staleIn(
+  declared: Declared,
+  command: InspectDeclaredMarketplacesRequest,
+  tool: string
+): StaleDeclaration[] {
+  const builtCache = join(command.projectRoot, BUILT_CACHE_SUBDIR);
+  return [...declared.sources]
+    .filter(([name, path]) => !command.marketplaceNames.includes(name) && isUnder(builtCache, path))
+    .map(([name]) => ({ tool, name, file: declared.file }));
+}
+
+function isUnder(directory: string, path: string): boolean {
+  const inside = relative(directory, path);
+  return !inside.startsWith("..") && !isAbsolute(inside);
 }
 
 /**
@@ -34,25 +68,32 @@ export class InspectDeclaredMarketplaces {
     command: InspectDeclaredMarketplacesRequest
   ): Promise<InspectDeclaredMarketplacesResult> {
     const findings: UndeclaredMarketplace[] = [];
-    for (const toolId of command.toolIds)
-      findings.push(...(await this.undeclaredBy(command, toolId)));
-    return { findings };
+    const stale: StaleDeclaration[] = [];
+    for (const toolId of command.toolIds) {
+      const declared = await this.declaredBy(command, toolId);
+      if (declared === undefined) continue;
+      findings.push(...missingFrom(declared, command.marketplaceNames, toolId));
+      stale.push(...staleIn(declared, command, toolId));
+    }
+    return { findings, stale };
   }
 
-  private async undeclaredBy(
+  private async declaredBy(
     command: InspectDeclaredMarketplacesRequest,
     toolId: string
-  ): Promise<UndeclaredMarketplace[]> {
+  ): Promise<Declared | undefined> {
     const profile = this.tools.profile(toolId);
     const settings = this.untrackedSettingsOf(profile);
-    if (settings === undefined) return [];
+    if (settings === undefined) return undefined;
     // A tool that writes its own registration cannot have written one while its binary was out
     // of reach: reporting the absence would report that an uninstalled tool is unconfigured.
-    if (!this.canRegisterItself(profile)) return [];
-    const registered = await this.registeredNames(command.projectRoot, settings);
-    return command.marketplaceNames
-      .filter((name) => !registered.has(name))
-      .map((name) => ({ tool: toolId, name, file: settings.file }));
+    if (!this.canRegisterItself(profile)) return undefined;
+    const parsed = await this.parsedSettings(command.projectRoot, settings.file);
+    return {
+      file: settings.file,
+      names: settings.registration.declaredMarketplaceNames(parsed),
+      sources: settings.registration.declaredMarketplaceSources(parsed),
+    };
   }
 
   private untrackedSettingsOf(
@@ -66,15 +107,10 @@ export class InspectDeclaredMarketplaces {
     return registration === null || file === undefined ? undefined : { file, registration };
   }
 
-  private async registeredNames(
-    projectRoot: string,
-    settings: { file: string; registration: MarketplaceRegistrationAnswers }
-  ): Promise<Set<string>> {
-    const path = join(projectRoot, settings.file);
-    const content = await this.fs.readFileIfReadable(path);
+  private async parsedSettings(projectRoot: string, file: string): Promise<unknown> {
+    const content = await this.fs.readFileIfReadable(join(projectRoot, file));
     const parsed = content === undefined ? undefined : tryParseJson(content);
-    if (parsed?.ok !== true) return new Set();
-    return new Set(settings.registration.declaredMarketplaceNames(parsed.value));
+    return parsed?.ok === true ? parsed.value : undefined;
   }
 
   private canRegisterItself(tool: SettingsDeclaringTool): boolean {

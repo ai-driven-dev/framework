@@ -157,6 +157,8 @@ export interface MarketplaceRegistrationAnswers {
   requiresNativeProof(): boolean;
   /** The marketplace names a parsed settings file declares, whether as a list or as a map. */
   declaredMarketplaceNames(parsed: unknown): ReadonlySet<string>;
+  /** The directory each declared marketplace names as its source, for those that name one. */
+  declaredMarketplaceSources(parsed: unknown): ReadonlyMap<string, string>;
   /** The files its registrations keep on this machine, none when it keeps none. */
   machineLocalFiles(): readonly string[];
 }

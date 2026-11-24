@@ -1,5 +1,7 @@
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { InspectDeclaredMarketplaces } from "../../../../../src/contexts/host-registration/application/inspect/inspect-declared-marketplaces.use-case.js";
+import { BUILT_CACHE_SUBDIR } from "../../../../../src/shared/domain/layout/aidd-layout.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
@@ -21,6 +23,14 @@ function declaring(...names: string[]): string {
     extraKnownMarketplaces: Object.fromEntries(names.map((name) => [name, { source: {} }])),
   });
 }
+
+function declaringSource(name: string, path: string): string {
+  return JSON.stringify({
+    extraKnownMarketplaces: { [name]: { source: { source: "directory", path } } },
+  });
+}
+
+const BUILT_TREE = join("/project", BUILT_CACHE_SUBDIR, "local", "claude");
 
 function inspect(
   subject: InspectDeclaredMarketplaces,
@@ -73,5 +83,33 @@ describe("inspecting the marketplaces a tool's machine-local settings declare", 
     const { findings } = await inspect(inspector(), [NAME], [TOOL.vscode]);
 
     expect(findings).toEqual([]);
+  });
+
+  describe("a declaration the project no longer registers", () => {
+    it("names a marketplace the settings file declares from this project's built cache and no registered marketplace owns", async () => {
+      const { stale } = await inspect(
+        inspector({ settings: declaringSource(NAME, BUILT_TREE) }),
+        []
+      );
+
+      expect(stale).toEqual([
+        { tool: TOOL.claude, name: NAME, file: ".claude/settings.local.json" },
+      ]);
+    });
+
+    it("keeps a declaration the project still registers", async () => {
+      const { stale } = await inspect(inspector({ settings: declaringSource(NAME, BUILT_TREE) }));
+
+      expect(stale).toEqual([]);
+    });
+
+    it("keeps a declaration that points anywhere but this project's built cache", async () => {
+      const { stale } = await inspect(
+        inspector({ settings: declaringSource("mine", join("/elsewhere", "marketplace")) }),
+        []
+      );
+
+      expect(stale).toEqual([]);
+    });
   });
 });
