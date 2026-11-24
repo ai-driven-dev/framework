@@ -37,9 +37,9 @@ describe("wrapped command hooks", () => {
   });
 
   it("skips an event the host does not map, and says so", () => {
-    const { content, warnings } = merged(null, pluginHooks("echo hi", "Stop"));
+    const { content, warnings } = merged(null, pluginHooks("echo hi", "SessionEnd"));
 
-    expect([JSON.parse(content), warnings]).toEqual([{}, ["unmapped event 'Stop' skipped"]]);
+    expect([JSON.parse(content), warnings]).toEqual([{}, ["unmapped event 'SessionEnd' skipped"]]);
   });
 
   it("replaces its own earlier entries, keeps the plugin's enabled flag and other plugins", () => {
@@ -53,7 +53,7 @@ describe("wrapped command hooks", () => {
   it("drops the plugin's entry when nothing it ships maps", () => {
     const existing = JSON.stringify({ p: { SessionStart: [] }, q: {} });
 
-    expect(JSON.parse(merged(existing, pluginHooks("x", "Stop")).content)).toEqual({ q: {} });
+    expect(JSON.parse(merged(existing, pluginHooks("x", "SessionEnd")).content)).toEqual({ q: {} });
   });
 
   it("places a path outside hooks/ with locate, and a hooks/ path under the scripts directory", () => {

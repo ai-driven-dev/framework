@@ -1,0 +1,48 @@
+{
+  "host": "antigravity",
+  "event": "Stop",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "artifactDirectoryPath": "/Users/user/.gemini/antigravity-cli/brain/00000000-0000-4000-8000-000000000000",
+        "continuationActive": false,
+        "conversationId": "00000000-0000-4000-8000-000000000000",
+        "cwd": "/Users/user/project",
+        "error": "",
+        "executionNum": 0,
+        "fullyIdle": true,
+        "hookEventName": "Stop",
+        "lastUserInput": "write notes.md, then run echo hi",
+        "modelName": "gemini-3.8-flash-low",
+        "terminationReason": "NO_TOOL_CALL",
+        "transcriptPath": "/Users/user/.gemini/antigravity-cli/brain/00000000-0000-4000-8000-000000000000/.system_generated/logs/transcript_full.jsonl",
+        "workspacePaths": [
+          "/Users/user/project"
+        ]
+      },
+      "hookAnswer": {}
+    },
+    {
+      "run": "log",
+      "payload": {
+        "artifactDirectoryPath": "/Users/user/.gemini/antigravity-cli/brain/00000000-0000-4000-8000-000000000000",
+        "continuationActive": false,
+        "conversationId": "00000000-0000-4000-8000-000000000000",
+        "cwd": "/Users/user/project",
+        "error": "",
+        "executionNum": 1,
+        "fullyIdle": true,
+        "hookEventName": "Stop",
+        "lastUserInput": "write notes.md, then run echo hi",
+        "modelName": "gemini-3.8-flash-low",
+        "terminationReason": "NO_TOOL_CALL",
+        "transcriptPath": "/Users/user/.gemini/antigravity-cli/brain/00000000-0000-4000-8000-000000000000/.system_generated/logs/transcript_full.jsonl",
+        "workspacePaths": [
+          "/Users/user/project"
+        ]
+      },
+      "hookAnswer": {}
+    }
+  ]
+}

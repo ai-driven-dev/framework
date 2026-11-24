@@ -27,8 +27,16 @@ const TOOL_SUFFIX = ".antigravity.md";
 const hooks = declareHooks(
   { toolId: "antigravity", directory: DIRECTORY, adapter },
   {
-    events: { SessionStart: "SessionStart" },
-    // Claude and `agy` name their tools differently, so only the tool-free event is carried over.
+    // `agy` fires none of UserPromptSubmit, SubagentStop and SessionEnd, and no plugin declares
+    // PreToolUse.
+    events: {
+      SessionStart: "SessionStart",
+      PostToolUse: "PostToolUse",
+      Stop: "Stop",
+    },
+    // Its tools are named `write_file` and `run_command`: the adapter reads those, and the handler
+    // is grouped under the matcher `*`, so every tool call runs a PostToolUse script. The plugin's
+    // matcher is not translated. A PostToolUse answer injects nothing: only PostInvocation can, and it is not relayed.
     // `agy` reads hooks only from the project's `.agents/hooks.json`, keyed by hook name, and runs
     // each handler from `<repo>/.agents`.
     flat: {

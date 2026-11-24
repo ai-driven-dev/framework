@@ -17,6 +17,8 @@ import {
   given,
   HOSTS,
   load,
+  NOTES,
+  output,
   printed,
   RUNTIME,
   read,
@@ -28,7 +30,7 @@ import {
 afterEach(restoreHostIo);
 
 describe("Antigravity CLI", () => {
-  it("reads SessionStart from its captured payload, which names no event", () => {
+  it("reads SessionStart from its captured payload", () => {
     const { payload } = sample("antigravity-SessionStart.json", 0);
 
     expect(read("antigravity", payload).event).toStrictEqual({
@@ -42,19 +44,96 @@ describe("Antigravity CLI", () => {
     });
   });
 
-  it("reads a payload naming a tool call as no event: no tool event is delivered to it (derived from the captured SessionStart)", () => {
-    const { payload } = sample("antigravity-SessionStart.json", 0);
-
-    expect(read("antigravity", { ...payload, toolCall: { name: "write_to_file" } }).event).toBe(
-      undefined
+  describe("on a tool or stop event, named by the payload's hookEventName", () => {
+    const [firstStop, continuedStop] = [0, 1].map(
+      (index) => sample("antigravity-Stop.json", index).payload
     );
+    const written = sample("antigravity-PostToolUse.json", 0).payload;
+    const ran = sample("antigravity-PostToolUse.json", 1).payload;
+
+    it("reads PostToolUse of write_file as the whole file it wrote", () => {
+      const { event } = read("antigravity", written);
+
+      expect([event?.event, event?.files, event?.command]).toStrictEqual([
+        "PostToolUse",
+        [{ path: NOTES, content: "hello", written: "hello" }],
+        undefined,
+      ]);
+    });
+
+    it("reads PostToolUse of run_command as its command", () => {
+      const { event } = read("antigravity", ran);
+
+      expect([event?.event, event?.files, event?.command]).toStrictEqual([
+        "PostToolUse",
+        [],
+        "echo hi",
+      ]);
+    });
+
+    it("reads PostToolUse of another tool as touching no file", () => {
+      const { event } = read("antigravity", {
+        ...ran,
+        toolCall: { name: "view_file", args: { Path: "notes.md" } },
+      });
+
+      expect([event?.files, event?.command]).toStrictEqual([[], undefined]);
+    });
+
+    it("reads no event from a payload that names none, even with a tool call", () => {
+      const { hookEventName: _named, ...unnamed } = ran;
+
+      expect(read("antigravity", unnamed).event).toBe(undefined);
+    });
+
+    it("reads PreToolUse as no event: no framework script acts before a tool", () => {
+      expect(read("antigravity", { ...ran, hookEventName: "PreToolUse" }).event).toBe(undefined);
+    });
+
+    it("prints nothing for a PostToolUse answer: agy takes no context from it", () => {
+      const { adapter } = read("antigravity", ran);
+      adapter.answer({ level: 2, text: "fix it" });
+
+      expect(printed).toStrictEqual([]);
+    });
+
+    it("continues the turn at the first Stop with the text as the reason", () => {
+      const { adapter, event } = read("antigravity", firstStop);
+      adapter.continueTurn("fix it");
+
+      expect([event?.event, event?.stopActive, output()]).toStrictEqual([
+        "Stop",
+        false,
+        { decision: "continue", reason: "fix it" },
+      ]);
+    });
+
+    it("answers a Stop by continuing the turn too", () => {
+      const { adapter } = read("antigravity", firstStop);
+      adapter.answer({ level: 1, text: "fix it" });
+
+      expect(output()).toStrictEqual({ decision: "continue", reason: "fix it" });
+    });
+
+    it("continues nothing at the Stop that ends a continuation, flagged by executionNum", () => {
+      const { adapter, event } = read("antigravity", continuedStop);
+      adapter.continueTurn("fix it");
+
+      expect([event?.stopActive, printed]).toStrictEqual([true, []]);
+    });
+
+    it("never continues a Stop that names no conversation", () => {
+      const { adapter, event } = read("antigravity", { ...firstStop, conversationId: undefined });
+      adapter.continueTurn("fix it");
+
+      expect([event, printed]).toStrictEqual([undefined, []]);
+    });
   });
 
-  it("prints nothing for any answer: what it hands the model was never seen", () => {
+  it("prints nothing for a SessionStart answer: what it hands the model was never seen", () => {
     const { payload } = sample("antigravity-SessionStart.json", 0);
     const { adapter } = read("antigravity", payload);
     adapter.answer({ level: 2, text: "x" });
-    adapter.continueTurn("x");
 
     expect(printed).toStrictEqual([]);
   });

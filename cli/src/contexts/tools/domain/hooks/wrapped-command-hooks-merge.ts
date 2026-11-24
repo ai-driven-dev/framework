@@ -12,9 +12,11 @@ const JSON_RESPONSE =
   "let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});" +
   "p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});";
 
+type HandlerGroup = { matcher: string; hooks: ProjectHookEntry[] };
+const isGroup = (entry: ProjectHookEntry | HandlerGroup): entry is HandlerGroup => "hooks" in entry;
 type NamedHook = {
   enabled?: boolean;
-  [key: string]: ProjectHookEntry[] | boolean | undefined;
+  [key: string]: (ProjectHookEntry | HandlerGroup)[] | boolean | undefined;
 };
 type NamedHooks = Record<string, NamedHook>;
 type SourceHooks = { hooks?: Record<string, { hooks?: ProjectHookEntry[] }[]> };
@@ -52,21 +54,23 @@ function toHandler(hook: ProjectHookEntry): ProjectHookEntry {
 function convert(
   target: WrappedCommandHooksTarget,
   { json, plugin: pluginName, locate = (pluginPath) => pluginPath }: ShippedHooks
-): { handlers: Record<string, ProjectHookEntry[]>; warnings: string[] } {
+): { handlers: Record<string, (ProjectHookEntry | HandlerGroup)[]>; warnings: string[] } {
   const parsed = JSON.parse(json) as unknown;
   const rewritten = rewritePluginRootInJson(parsed, (suffix) =>
     suffix.startsWith(`${PLUGIN_HOOKS_SOURCE.scriptDir}/`)
       ? `./${wrappedCommandHooksScriptPath(target, pluginName, suffix)}`
       : `./${locate(suffix)}`
   ) as SourceHooks;
-  const handlers: Record<string, ProjectHookEntry[]> = {};
+  const handlers: Record<string, (ProjectHookEntry | HandlerGroup)[]> = {};
   const warnings: string[] = [];
   for (const [event, groups] of Object.entries(rewritten.hooks ?? {})) {
     if (!Object.hasOwn(target.descriptor.eventMap, event)) {
       warnings.push(`unmapped event '${event}' skipped`);
       continue;
     }
-    handlers[event] = groups.flatMap((group) => (group.hooks ?? []).map(toHandler));
+    const converted = groups.flatMap((group) => (group.hooks ?? []).map(toHandler));
+    // PostToolUse goes in `{ matcher, hooks: [handler] }`; the other events take bare handlers.
+    handlers[event] = event === "PostToolUse" ? [{ matcher: "*", hooks: converted }] : converted;
   }
   return { handlers, warnings };
 }
@@ -117,7 +121,9 @@ export function wrappedCommandHookEntries(
     if (!Array.isArray(entries)) {
       throw new Error(`${target.label} hook '${pluginName}.${event}' must be an array.`);
     }
-    return entries.map((entry) => ({ event, entry }));
+    return entries.flatMap((entry) =>
+      (isGroup(entry) ? entry.hooks : [entry]).map((handler) => ({ event, entry: handler }))
+    );
   });
 }
 

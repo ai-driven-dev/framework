@@ -45,3 +45,5 @@ its `Delete`. OpenCode's and Kilo's `edit` and `apply_patch` arguments.
 - OpenCode and Kilo offer `apply_patch` only to a model whose id holds `gpt-`: a provider alias of
   that name was routed to another model by a local proxy. The arguments are the host's own tool
   schema; the model only filled them.
+
+Antigravity's `PostToolUse` (a `write_file` then a `run_command`) and `Stop` (`executionNum` 0, then 1 on the continued turn end), captured from a real `agy` run. Its payloads name their event in `hookEventName`.
