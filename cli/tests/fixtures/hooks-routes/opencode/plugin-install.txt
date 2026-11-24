@@ -519,18 +519,25 @@ export const AiddContextHooks = async (input) => {
         for (const call of stopCallsFor(event, directory)) {
           const sessionId = call.payload.session_id;
           const payload = { ...call.payload, stop_hook_active: continued.has(sessionId) };
-          const reason = await stopReasonOf(call.script, call.args, payload, directory);
-          if (!reason) {
-            continued.delete(sessionId);
-            continue;
-          }
-          continued.add(sessionId);
-          // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
-          const delivery = input.client.session
-            .prompt({ path: { id: sessionId }, body: { parts: [{ type: "text", text: reason }] } })
+          const asking = stopReasonOf(call.script, call.args, payload, directory);
+          // Pending before the script ends: the host disposes while it still runs.
+          // The prompt is the session's next turn, and this handler must not hold it.
+          const handling = asking
+            .then((reason) => {
+              if (!reason) {
+                continued.delete(sessionId);
+                return undefined;
+              }
+              continued.add(sessionId);
+              return input.client.session.prompt({
+                path: { id: sessionId },
+                body: { parts: [{ type: "text", text: reason }] },
+              });
+            })
             .catch((error) => console.warn("[aidd] OpenCode follow-up failed: " + String(error)))
-            .finally(() => pending.delete(delivery));
-          pending.add(delivery);
+            .finally(() => pending.delete(handling));
+          pending.add(handling);
+          await asking;
         }
       } catch {
         // Silent on purpose - see above.
@@ -713,18 +720,25 @@ export const AiddTelemetryHooks = async (input) => {
         for (const call of stopCallsFor(event, directory)) {
           const sessionId = call.payload.session_id;
           const payload = { ...call.payload, stop_hook_active: continued.has(sessionId) };
-          const reason = await stopReasonOf(call.script, call.args, payload, directory);
-          if (!reason) {
-            continued.delete(sessionId);
-            continue;
-          }
-          continued.add(sessionId);
-          // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
-          const delivery = input.client.session
-            .prompt({ path: { id: sessionId }, body: { parts: [{ type: "text", text: reason }] } })
+          const asking = stopReasonOf(call.script, call.args, payload, directory);
+          // Pending before the script ends: the host disposes while it still runs.
+          // The prompt is the session's next turn, and this handler must not hold it.
+          const handling = asking
+            .then((reason) => {
+              if (!reason) {
+                continued.delete(sessionId);
+                return undefined;
+              }
+              continued.add(sessionId);
+              return input.client.session.prompt({
+                path: { id: sessionId },
+                body: { parts: [{ type: "text", text: reason }] },
+              });
+            })
             .catch((error) => console.warn("[aidd] OpenCode follow-up failed: " + String(error)))
-            .finally(() => pending.delete(delivery));
-          pending.add(delivery);
+            .finally(() => pending.delete(handling));
+          pending.add(handling);
+          await asking;
         }
       } catch {
         // Silent on purpose - see above.
