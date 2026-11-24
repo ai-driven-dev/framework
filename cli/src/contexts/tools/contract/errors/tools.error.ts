@@ -27,8 +27,6 @@ export class InvalidAgentFrontmatterError extends AiddError {
 
 export type HooksInvariant =
   | "unknown-event"
-  | "empty-native-list"
-  | "duplicate-native-event"
   | "project-without-file"
   | "loader-with-file"
   | "path-outside-directory"

@@ -62,8 +62,8 @@ const SCHEMED = aiTool("codex");
 
 /** One captured payload per native event the tool declares: what the repository's fixtures hold. */
 function capturedPayloadsOf(profile: AiTool): string[] {
-  return [...(profile.hooks?.events.values() ?? [])].flatMap((route) =>
-    route.native.map((native) => `${profile.toolId}-${native}.json`)
+  return [...(profile.hooks?.events.values() ?? [])].map(
+    (route) => `${profile.toolId}-${route.native}.json`
   );
 }
 

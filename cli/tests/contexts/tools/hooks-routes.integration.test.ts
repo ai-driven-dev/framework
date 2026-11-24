@@ -475,6 +475,6 @@ describe("the hook files every route writes and removes, per tool", () => {
 
 describe("the cursor profile's Stop event", () => {
   it("is hooked onto `stop` only, never onto the fire-and-forget `sessionEnd`", () => {
-    expect(present(cursor.hooks).eventMap.Stop).toStrictEqual(["stop"]);
+    expect(present(cursor.hooks).eventMap.Stop).toBe("stop");
   });
 });
