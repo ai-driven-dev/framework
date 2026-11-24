@@ -46,14 +46,7 @@ const DIVERGENCES: readonly Divergence[] = [
 ];
 
 const SOURCES = FRAMEWORK_SOURCES;
-/** The plugin manifest, which B copies from the source and A synthesizes, is checked apart. Only
- * the component list and `strict` may differ; every other field must match. */
-const MANIFEST_DIVERGENCES = [
-  "A lists the components (skills, agents, hooks, mcpServers) and drops strict, B copies the source manifest byte for byte. Open question, see 'Open question: the plugin manifest an install writes' in the CLI architecture doc",
-];
 const COMPONENT_FIELDS = ["skills", "agents", "hooks", "mcpServers"];
-const withoutDivergence = (json: string, dropped: readonly string[]) =>
-  Object.fromEntries(Object.entries(JSON.parse(json)).filter(([key]) => !dropped.includes(key)));
 /** Every path the manifest lists, as a plugin-relative path. */
 const listedPaths = (json: string): string[] =>
   COMPONENT_FIELDS.flatMap((key) => [JSON.parse(json)[key] ?? []].flat()).map((p: string) =>
@@ -208,16 +201,11 @@ describe("path B (install) writes what path A (disk) writes, but for what DIVERG
       const path = manifestPathOf(tool, plugin);
       if (path === null) return void expect(own).toEqual([]);
       expect(own.map((f) => f.relativePath)).toEqual([path.installed]);
-      expect(own[0].content).toBe(
-        dist.files.find((f) => f.relativePath === source.manifest)?.content
-      );
       const writtenA = await writtenByA(tree, tool, true);
       const [[onAPath, onA]] = [...writtenA].filter(
         ([k]) => k.includes(`/plugins/${plugin}/`) && k.endsWith("/plugin.json")
       );
-      expect(withoutDivergence(onA, COMPONENT_FIELDS)).toEqual(
-        withoutDivergence(own[0].content, ["strict"])
-      );
+      expect(own[0].content).toBe(onA);
       expect(onAPath).toBe(path.onDisk);
       const root = `${onAPath.slice(0, onAPath.indexOf(`/plugins/${plugin}/`))}/plugins/${plugin}/`;
       for (const listed of listedPaths(onA)) {
@@ -227,13 +215,10 @@ describe("path B (install) writes what path A (disk) writes, but for what DIVERG
           )
         ).toBe(true);
       }
-      if (onA !== own[0].content) used.add(MANIFEST_DIVERGENCES[0]);
     }
   );
 
   it("every divergence is still needed by some tool", () => {
-    expect([...used].sort()).toEqual(
-      [...DIVERGENCES.map((d) => d.id), ...MANIFEST_DIVERGENCES].sort()
-    );
+    expect([...used].sort()).toEqual(DIVERGENCES.map((d) => d.id).sort());
   });
 });

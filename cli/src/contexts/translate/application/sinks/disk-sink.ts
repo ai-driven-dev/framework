@@ -10,6 +10,7 @@ import {
 } from "../../contract/translate.error.js";
 import { translate } from "../../domain/engine.js";
 import type { OutputFile } from "../../domain/output-file.js";
+import { presenceOf } from "../../domain/plugin-presence.js";
 import type { DiskSinkDeps } from "../../ports/disk-sink-deps.js";
 import type {
   BuiltPlugin,
@@ -20,7 +21,7 @@ import type {
 import { assertFlatDestinationFree } from "./flat-collision.js";
 import { writeMarketplaceCatalog } from "./marketplace-catalog-writer.js";
 import { writePluginHooks, writePluginMcp } from "./plugin-runtime-writer.js";
-import { presenceOf, readPluginCanon } from "./plugin-source-tree-reader.js";
+import { readPluginCanon } from "./plugin-source-tree-reader.js";
 
 /**
  * Writes a built plugin tree to disk, in the marketplace layout or the flat one. It holds no

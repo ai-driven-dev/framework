@@ -5,7 +5,6 @@ import { contractToolProfile } from "../../testing/contract-tool-profile.builder
 import {
   CLAUDE_ROOT_TOKEN,
   CODEX_ROOT_TOKEN,
-  claudeManifestContent,
   distOf,
   hookScriptContent,
   hooksDist,
@@ -92,7 +91,11 @@ describe("a plugin's hooks", () => {
     expect(treeOf(codex, hooksDist())).toEqual({
       ".codex/plugins/sample-plugin/hooks/hooks.json": hooksManifestFor(CODEX_ROOT_TOKEN),
       ".codex/plugins/sample-plugin/hooks/lib/check.sh": hookScriptContent,
-      ".codex/plugins/sample-plugin/.codex-plugin/plugin.json": claudeManifestContent,
+      ".codex/plugins/sample-plugin/.codex-plugin/plugin.json": `${JSON.stringify(
+        { name: "sample-plugin", version: "1.0.0", hooks: "./hooks/hooks.json" },
+        null,
+        2
+      )}\n`,
     });
   });
 

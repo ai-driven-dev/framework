@@ -1,7 +1,7 @@
 {
   "claude/aidd-async-dev": {
     "files": {
-      ".claude/plugins/aidd-async-dev/.claude-plugin/plugin.json": "2c32a409a8768819857b39c8dff6f1b4208c27e0d72acd9a59dc7bef2f5a1ff4",
+      ".claude/plugins/aidd-async-dev/.claude-plugin/plugin.json": "04cce92dc7c10e8041807220c255005c0510abbbb0322176f2a8a254808e4466",
       ".claude/plugins/aidd-async-dev/agents/async-orchestrator.md": "8b29ba73f27414e75c89c6453c0557212790d00d6becfadba363466999f2c9de",
       ".claude/plugins/aidd-async-dev/hooks/hooks.json": "78922a784ee78e9e50587e93628cd3b9d4dfbe49087adc4514e6781cea38cbb9",
       ".claude/plugins/aidd-async-dev/skills/01-setup/SKILL.md": "a0164200c439431091bd4a682440b8f3e2bf4bbb97081548a25f3e463a8405bc",
@@ -147,7 +147,7 @@
   },
   "claude/aidd-context": {
     "files": {
-      ".claude/plugins/aidd-context/.claude-plugin/plugin.json": "2fa05e79194b3e843dcdc6c392091ecc3cda0df0ee6c1fbf48e3910133f334dc",
+      ".claude/plugins/aidd-context/.claude-plugin/plugin.json": "76770135cfcc157f1058012f7f26f0799578f4644df751369e7e866c83d14704",
       ".claude/plugins/aidd-context/hooks/hooks.json": "4f8e1b575af40e9a2d19f4e30af39553cac47d53e34d738c56ef09e14f94f495",
       ".claude/plugins/aidd-context/hooks/update_memory.js": "140d7db788452f5f4c32316d522f595a36e06638b19a42d32e42a1a7324b7149",
       ".claude/plugins/aidd-context/skills/01-bootstrap/SKILL.md": "cff89e30857b72b6c4870da67ec4adf97b0d238acdeff857ecd422e8aec4b926",
@@ -499,7 +499,7 @@
   },
   "claude/aidd-dev": {
     "files": {
-      ".claude/plugins/aidd-dev/.claude-plugin/plugin.json": "cc080b18b71f824e454d2a9c4049b29ed2420e434d564e9eaad69dfbff7bac61",
+      ".claude/plugins/aidd-dev/.claude-plugin/plugin.json": "6e892c043c48fdc258cf7d13f1feba463483a91543686da3b30b260296235334",
       ".claude/plugins/aidd-dev/.mcp.json": "39d66899223270ca6dd92d874f819d8d357472566657dec87592b7ec8c7bd92c",
       ".claude/plugins/aidd-dev/agents/implementer.md": "61b4531baa060e9b77c41cf1938c6c6433482dfdfe5eb3a774453d45cfe8b092",
       ".claude/plugins/aidd-dev/agents/planner.md": "de6efeda286fe33a5245a9ed3cf9e60b78946575a5bd66b359b2428adac51ba5",
@@ -715,7 +715,7 @@
   },
   "claude/aidd-pm": {
     "files": {
-      ".claude/plugins/aidd-pm/.claude-plugin/plugin.json": "f99dac0e42b7c4b317b8a12da63a266a4f95f16e335d1bbf30ab0958643eb5cf",
+      ".claude/plugins/aidd-pm/.claude-plugin/plugin.json": "913e240be17e063f1fef9c89be0ad0a17a168b0683998e1c56342b274f7a7c82",
       ".claude/plugins/aidd-pm/.mcp.json": "3da12ff20b463bcabbb0493a72b8d214977c542c71d173913484937f7d7bd555",
       ".claude/plugins/aidd-pm/skills/01-ticket-info/SKILL.md": "63a627d468fc9bc81e897912d15cce667a4b5dba8f5a34efa57d5028696921ed",
       ".claude/plugins/aidd-pm/skills/01-ticket-info/actions/01-ticket-info.md": "f075ea6ff626534dbe0826d06b67fae93b6488ec4c5c7a3d857f1d05f73d0630",
@@ -791,7 +791,7 @@
   },
   "claude/aidd-refine": {
     "files": {
-      ".claude/plugins/aidd-refine/.claude-plugin/plugin.json": "086db264932fe04de3846e92cd79fa95bfbf7e4da73390f50d1cbb522c052e56",
+      ".claude/plugins/aidd-refine/.claude-plugin/plugin.json": "99b37395756bc98b631cee290b8fb313264249420a72b4de60beb62cae249ea8",
       ".claude/plugins/aidd-refine/skills/01-brainstorm/SKILL.md": "d2e5e7af93ded94141f961cd0b7df3c0abcffc61dce3e56dd0ed28a0f8d6a938",
       ".claude/plugins/aidd-refine/skills/01-brainstorm/actions/01-capture-request.md": "bc133963be4eeb68d6653a65f88f2e1820d711d6d7bf74b79a6225fff7b8e6c8",
       ".claude/plugins/aidd-refine/skills/01-brainstorm/actions/02-ask-probing-questions.md": "d8a25b7e2c0861bc4bce878e7d10dcda279855fa0db06d1997ad84f3e5682d54",
@@ -886,7 +886,7 @@
   },
   "claude/aidd-vcs": {
     "files": {
-      ".claude/plugins/aidd-vcs/.claude-plugin/plugin.json": "57ba22d6ddb2085b6a6d33ef5da8e3ee8799d5658b902073ace37443bcbf4faa",
+      ".claude/plugins/aidd-vcs/.claude-plugin/plugin.json": "a0984261f317a1724eb990e9bcdc32fc7b5269470e22c766546971a8f250f461",
       ".claude/plugins/aidd-vcs/skills/01-commit/SKILL.md": "613de1c46477fa90b18b12145cb032bb481b6d75afbc55020129643351a6ee47",
       ".claude/plugins/aidd-vcs/skills/01-commit/actions/01-commit.md": "06ded7f8c23e950b3b1a76b0bb89c219d1ca161cb8f9a02e04e8083ad7061dc0",
       ".claude/plugins/aidd-vcs/skills/01-commit/assets/commit-template.md": "b3c392c5c3faecc903bf80eb2bd287d2a02e42d4c3896490a5745d66fca60bf2",
@@ -1992,7 +1992,7 @@
   },
   "copilot/aidd-async-dev": {
     "files": {
-      ".github/plugins/aidd-async-dev/.plugin/plugin.json": "2c32a409a8768819857b39c8dff6f1b4208c27e0d72acd9a59dc7bef2f5a1ff4",
+      ".github/plugins/aidd-async-dev/.plugin/plugin.json": "4651c79ba380fb61eaeaf31a907ab72389eebf95b86042667799f489a3611543",
       ".github/plugins/aidd-async-dev/agents/async-orchestrator.agent.md": "34b107031183da5da66cb14923d215abfb899ab4d1a7feeb9b68ee1fe01a1a09",
       ".github/plugins/aidd-async-dev/hooks/hooks.json": "78922a784ee78e9e50587e93628cd3b9d4dfbe49087adc4514e6781cea38cbb9",
       ".github/plugins/aidd-async-dev/skills/01-setup/SKILL.md": "a0164200c439431091bd4a682440b8f3e2bf4bbb97081548a25f3e463a8405bc",
@@ -2138,7 +2138,7 @@
   },
   "copilot/aidd-context": {
     "files": {
-      ".github/plugins/aidd-context/.plugin/plugin.json": "2fa05e79194b3e843dcdc6c392091ecc3cda0df0ee6c1fbf48e3910133f334dc",
+      ".github/plugins/aidd-context/.plugin/plugin.json": "35b4622f6d197f089cf4f621695bdba5fa5faae3ea7c80a8a6102dea1b54bcdc",
       ".github/plugins/aidd-context/hooks/hooks.json": "fb9534241deca3ad28f23c1f364d444d6f0e83a1aa2328796a295aa2ebbe65f6",
       ".github/plugins/aidd-context/hooks/update_memory.js": "140d7db788452f5f4c32316d522f595a36e06638b19a42d32e42a1a7324b7149",
       ".github/plugins/aidd-context/skills/01-bootstrap/SKILL.md": "cff89e30857b72b6c4870da67ec4adf97b0d238acdeff857ecd422e8aec4b926",
@@ -2491,7 +2491,7 @@
   "copilot/aidd-dev": {
     "files": {
       ".github/plugins/aidd-dev/.mcp.json": "39d66899223270ca6dd92d874f819d8d357472566657dec87592b7ec8c7bd92c",
-      ".github/plugins/aidd-dev/.plugin/plugin.json": "cc080b18b71f824e454d2a9c4049b29ed2420e434d564e9eaad69dfbff7bac61",
+      ".github/plugins/aidd-dev/.plugin/plugin.json": "db6f0de594a2a9bffff3397fc8863f6d67a2833b50e344c1ae797c7665077b0a",
       ".github/plugins/aidd-dev/agents/implementer.agent.md": "8b44fe63e07439e62bc19a9dde3880d3b69326f10217704258e797ae97ad6ffa",
       ".github/plugins/aidd-dev/agents/planner.agent.md": "9b50b2ac01662012894e3074a008f2b2015ac8714bfc1e097a2eb10bbfda418b",
       ".github/plugins/aidd-dev/agents/reviewer.agent.md": "d0bf4b81cf2f16f57c722da201e38db1bbbcf96f64c4fe97ed3cf59bc38fa636",
@@ -2707,7 +2707,7 @@
   "copilot/aidd-pm": {
     "files": {
       ".github/plugins/aidd-pm/.mcp.json": "3da12ff20b463bcabbb0493a72b8d214977c542c71d173913484937f7d7bd555",
-      ".github/plugins/aidd-pm/.plugin/plugin.json": "f99dac0e42b7c4b317b8a12da63a266a4f95f16e335d1bbf30ab0958643eb5cf",
+      ".github/plugins/aidd-pm/.plugin/plugin.json": "913e240be17e063f1fef9c89be0ad0a17a168b0683998e1c56342b274f7a7c82",
       ".github/plugins/aidd-pm/skills/01-ticket-info/SKILL.md": "63a627d468fc9bc81e897912d15cce667a4b5dba8f5a34efa57d5028696921ed",
       ".github/plugins/aidd-pm/skills/01-ticket-info/actions/01-ticket-info.md": "f075ea6ff626534dbe0826d06b67fae93b6488ec4c5c7a3d857f1d05f73d0630",
       ".github/plugins/aidd-pm/skills/02-user-stories-create/SKILL.md": "405e21b32748ea8394fbd2dfaec39c8a6346dd6c5177cd4cd39ae1dbdeeace31",
@@ -2782,7 +2782,7 @@
   },
   "copilot/aidd-refine": {
     "files": {
-      ".github/plugins/aidd-refine/.plugin/plugin.json": "086db264932fe04de3846e92cd79fa95bfbf7e4da73390f50d1cbb522c052e56",
+      ".github/plugins/aidd-refine/.plugin/plugin.json": "99b37395756bc98b631cee290b8fb313264249420a72b4de60beb62cae249ea8",
       ".github/plugins/aidd-refine/skills/01-brainstorm/SKILL.md": "d2e5e7af93ded94141f961cd0b7df3c0abcffc61dce3e56dd0ed28a0f8d6a938",
       ".github/plugins/aidd-refine/skills/01-brainstorm/actions/01-capture-request.md": "bc133963be4eeb68d6653a65f88f2e1820d711d6d7bf74b79a6225fff7b8e6c8",
       ".github/plugins/aidd-refine/skills/01-brainstorm/actions/02-ask-probing-questions.md": "d8a25b7e2c0861bc4bce878e7d10dcda279855fa0db06d1997ad84f3e5682d54",
@@ -2877,7 +2877,7 @@
   },
   "copilot/aidd-vcs": {
     "files": {
-      ".github/plugins/aidd-vcs/.plugin/plugin.json": "57ba22d6ddb2085b6a6d33ef5da8e3ee8799d5658b902073ace37443bcbf4faa",
+      ".github/plugins/aidd-vcs/.plugin/plugin.json": "a0984261f317a1724eb990e9bcdc32fc7b5269470e22c766546971a8f250f461",
       ".github/plugins/aidd-vcs/skills/01-commit/SKILL.md": "613de1c46477fa90b18b12145cb032bb481b6d75afbc55020129643351a6ee47",
       ".github/plugins/aidd-vcs/skills/01-commit/actions/01-commit.md": "06ded7f8c23e950b3b1a76b0bb89c219d1ca161cb8f9a02e04e8083ad7061dc0",
       ".github/plugins/aidd-vcs/skills/01-commit/assets/commit-template.md": "b3c392c5c3faecc903bf80eb2bd287d2a02e42d4c3896490a5745d66fca60bf2",
@@ -3465,7 +3465,7 @@
   },
   "codex/aidd-async-dev": {
     "files": {
-      ".codex/plugins/aidd-async-dev/.codex-plugin/plugin.json": "2c32a409a8768819857b39c8dff6f1b4208c27e0d72acd9a59dc7bef2f5a1ff4",
+      ".codex/plugins/aidd-async-dev/.codex-plugin/plugin.json": "19dbd85f9970a03d6e9370d1decbb9feb56451165add642440a6569af15a6233",
       ".codex/plugins/aidd-async-dev/codex-agents/async-orchestrator.toml": "8212b724fdacd2a20f35a2c11782c7d50b717b742f59f1a9ae08c0d831e42b4a",
       ".codex/plugins/aidd-async-dev/hooks/hooks.json": "78922a784ee78e9e50587e93628cd3b9d4dfbe49087adc4514e6781cea38cbb9",
       ".codex/plugins/aidd-async-dev/skills/01-setup/SKILL.md": "a0164200c439431091bd4a682440b8f3e2bf4bbb97081548a25f3e463a8405bc",
@@ -3618,7 +3618,7 @@
   },
   "codex/aidd-context": {
     "files": {
-      ".codex/plugins/aidd-context/.codex-plugin/plugin.json": "2fa05e79194b3e843dcdc6c392091ecc3cda0df0ee6c1fbf48e3910133f334dc",
+      ".codex/plugins/aidd-context/.codex-plugin/plugin.json": "e0e25ec3ca27ca2bcf49fd4d2b32587efbf1237280d732c9477de2c178109c3b",
       ".codex/plugins/aidd-context/hooks/hooks.json": "fb9534241deca3ad28f23c1f364d444d6f0e83a1aa2328796a295aa2ebbe65f6",
       ".codex/plugins/aidd-context/hooks/update_memory.js": "140d7db788452f5f4c32316d522f595a36e06638b19a42d32e42a1a7324b7149",
       ".codex/plugins/aidd-context/skills/01-bootstrap/SKILL.md": "cff89e30857b72b6c4870da67ec4adf97b0d238acdeff857ecd422e8aec4b926",
@@ -3977,7 +3977,7 @@
   },
   "codex/aidd-dev": {
     "files": {
-      ".codex/plugins/aidd-dev/.codex-plugin/plugin.json": "cc080b18b71f824e454d2a9c4049b29ed2420e434d564e9eaad69dfbff7bac61",
+      ".codex/plugins/aidd-dev/.codex-plugin/plugin.json": "20aed94921aed1aaa0dfcd83528601273582558f72ed33f23077605197dba94d",
       ".codex/plugins/aidd-dev/.mcp.json": "39d66899223270ca6dd92d874f819d8d357472566657dec87592b7ec8c7bd92c",
       ".codex/plugins/aidd-dev/codex-agents/implementer.toml": "d1cb0353bb91cc5d0c5ffaada12b063c7d5491e94ea33eb08277783aa4c7f493",
       ".codex/plugins/aidd-dev/codex-agents/planner.toml": "2b37cea54f1da91c6fe2c781ada91580d36ff4656407cc4453d668bbb2c20f90",
@@ -4193,7 +4193,7 @@
   },
   "codex/aidd-pm": {
     "files": {
-      ".codex/plugins/aidd-pm/.codex-plugin/plugin.json": "f99dac0e42b7c4b317b8a12da63a266a4f95f16e335d1bbf30ab0958643eb5cf",
+      ".codex/plugins/aidd-pm/.codex-plugin/plugin.json": "807bc7690f264bcf9dafc0869ec18945a973c951688b213c93383571f72df0ca",
       ".codex/plugins/aidd-pm/.mcp.json": "3da12ff20b463bcabbb0493a72b8d214977c542c71d173913484937f7d7bd555",
       ".codex/plugins/aidd-pm/skills/01-ticket-info/SKILL.md": "63a627d468fc9bc81e897912d15cce667a4b5dba8f5a34efa57d5028696921ed",
       ".codex/plugins/aidd-pm/skills/01-ticket-info/actions/01-ticket-info.md": "f075ea6ff626534dbe0826d06b67fae93b6488ec4c5c7a3d857f1d05f73d0630",
@@ -4269,7 +4269,7 @@
   },
   "codex/aidd-refine": {
     "files": {
-      ".codex/plugins/aidd-refine/.codex-plugin/plugin.json": "086db264932fe04de3846e92cd79fa95bfbf7e4da73390f50d1cbb522c052e56",
+      ".codex/plugins/aidd-refine/.codex-plugin/plugin.json": "465c87f116263a0e985cab09f2b009edcd3ea0673e7d0e6410eee6fdccee4d1f",
       ".codex/plugins/aidd-refine/skills/01-brainstorm/SKILL.md": "d2e5e7af93ded94141f961cd0b7df3c0abcffc61dce3e56dd0ed28a0f8d6a938",
       ".codex/plugins/aidd-refine/skills/01-brainstorm/actions/01-capture-request.md": "bc133963be4eeb68d6653a65f88f2e1820d711d6d7bf74b79a6225fff7b8e6c8",
       ".codex/plugins/aidd-refine/skills/01-brainstorm/actions/02-ask-probing-questions.md": "d8a25b7e2c0861bc4bce878e7d10dcda279855fa0db06d1997ad84f3e5682d54",
@@ -4364,7 +4364,7 @@
   },
   "codex/aidd-vcs": {
     "files": {
-      ".codex/plugins/aidd-vcs/.codex-plugin/plugin.json": "57ba22d6ddb2085b6a6d33ef5da8e3ee8799d5658b902073ace37443bcbf4faa",
+      ".codex/plugins/aidd-vcs/.codex-plugin/plugin.json": "6dc4af8e3d409bddb934a6ff4a6a6505ac6a858add78518e38131547d1f12b89",
       ".codex/plugins/aidd-vcs/skills/01-commit/SKILL.md": "613de1c46477fa90b18b12145cb032bb481b6d75afbc55020129643351a6ee47",
       ".codex/plugins/aidd-vcs/skills/01-commit/actions/01-commit.md": "06ded7f8c23e950b3b1a76b0bb89c219d1ca161cb8f9a02e04e8083ad7061dc0",
       ".codex/plugins/aidd-vcs/skills/01-commit/assets/commit-template.md": "b3c392c5c3faecc903bf80eb2bd287d2a02e42d4c3896490a5745d66fca60bf2",

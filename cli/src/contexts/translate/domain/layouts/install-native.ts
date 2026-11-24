@@ -31,7 +31,7 @@ export function nativeInstallPlan(
   const pluginRoot = plugins.pluginOutputDir(dist.manifest.name);
   const at = { tool, plugins, pluginRoot, pluginName: dist.manifest.name };
   const plans = dist.files.flatMap((file) => nativeFilePlan(file, at) ?? []);
-  const manifest = manifestPlan(dist, { plugins, pluginRoot, manifestPaths });
+  const manifest = manifestPlan(dist, { tool, plugins, pluginRoot, manifestPaths });
   if (manifest !== null) plans.push(manifest);
   const componentPaths = new Map(
     plans.filter((plan) => isComponentFile(plan.source)).map((plan) => [plan.path, plan.source])

@@ -37,13 +37,8 @@ flowchart LR
 | Owned files are regenerated, co-owned files are merged | `MergeStrategy` in `cli/src/shared/domain/merge.ts` |
 | The manifest reads v9, and v8 only to split it once | no migration chain: [`decisions/manifest-reads-v9-and-splits-v8.md`](decisions/manifest-reads-v9-and-splits-v8.md) |
 | A build leaves `{{TOOLS}}` unresolved on copilot, an install resolves it to `.github/` | a build is location-independent; only an install knows the tool directory it writes into |
+| An install writes the plugin manifest the build synthesizes | one function, `synthesizeManifest`, so the manifest never names a component or a field the files do not match |
 | One hooks descriptor per tool, one merge engine, one host adapter per tool (OpenCode and Kilo share `host-bridge.cjs`) | adding a tool is a descriptor and a payload fixture; adapters in `cli/assets/hooks-runtime/` |
-
-## Open question: the plugin manifest an install writes
-
-- A build synthesizes each plugin manifest: identity fields plus the skills, agents, hooks and MCP paths it ships, without `strict`. An install copies the source manifest byte for byte, so it can name no component, or `strict`, that the files it wrote do not match.
-- Options: the install synthesizes it like the build (one shared function, goldens move), or it keeps the copy and accepts the host's validation warnings on unknown fields (Claude strips them, Copilot reports and ignores them).
-- Undecided. `MANIFEST_DIVERGENCES` tolerates only the component list and `strict`, and checks that every path the built manifest lists exists, for a plugin with agents and one without. Limit: no framework plugin ships an MCP file its source manifest lists, so an MCP path is checked by the build tests only.
 
 ## Machine claims lock
 
