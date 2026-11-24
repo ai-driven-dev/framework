@@ -4474,7 +4474,7 @@
   },
   "antigravity/aidd-async-dev": {
     "files": {
-      ".agents/agents/aidd-async-dev-async-orchestrator/agent.md": "2d1838d0bb76a5e0db435e0fde792ab8502f2454cc97e1fba2f998b2eb49319d",
+      ".agents/agents/aidd-async-dev-async-orchestrator/agent.md": "7c4e15efbb3dd6eed657b29402bc62752ce6f6035a226d637ec3e476b3fcb5a5",
       ".agents/skills/aidd-async-dev-01-setup/SKILL.md": "ce55273c1d1109267f8725edfeb654df9ad4c84e9055998b0e29f9817c6befa3",
       ".agents/skills/aidd-async-dev-01-setup/actions/skills/01-detect-context.md": "83f3ba3022dd75fa2597a872a55e8f75173762f932ed39ae73d8181c0b1b4536",
       ".agents/skills/aidd-async-dev-01-setup/actions/skills/02-ask-config.md": "986335d1e86a633d0083fe4488aae58266a82ec35d0cdb0b74f0bbcea70e6f4e",
@@ -4595,9 +4595,9 @@
   },
   "antigravity/aidd-dev": {
     "files": {
-      ".agents/agents/aidd-dev-implementer/agent.md": "bb397194473e1256883f08281deeabc0e2a1e3ed3a1184b8f48e6a47551ded9e",
-      ".agents/agents/aidd-dev-planner/agent.md": "dc5756134837010d3fc117bbd9b47f868a98ca185504877b6cb41f4797098ff9",
-      ".agents/agents/aidd-dev-reviewer/agent.md": "80f7f93f8fe14b7b8983466639155dca76e825c4b2a6a9b9203bd48a41135990",
+      ".agents/agents/aidd-dev-implementer/agent.md": "d6ab53973c661704e735798973141d9065612ce3d0552e0bbbe607c4d48f5e84",
+      ".agents/agents/aidd-dev-planner/agent.md": "23a4566f39c6bf3af966e679320bca136e61d63330c829ac1dd54a074ee474e9",
+      ".agents/agents/aidd-dev-reviewer/agent.md": "48059c50adbb072f4024ec2c46a441cdc42f1502a6f5df181ee989d3ce732ab1",
       ".agents/skills/aidd-dev-00-sdlc/SKILL.md": "34964c02e338adbf393c25abc4f5862e28452f874c7640f85c950e170130c17c",
       ".agents/skills/aidd-dev-01-plan/SKILL.md": "272aaa80349b438a1536c78e91d5c55c1ef26b65f942caa1c47edc062e0591c9",
       ".agents/skills/aidd-dev-01-plan/actions/01-plan.md": "b34a3c68d46406d6c171984bcf91c62e7fa9c6b9f1e65d733699e3d5f57d4e9c",

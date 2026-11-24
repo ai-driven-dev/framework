@@ -24,6 +24,20 @@ const ANTIGRAVITY_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(".agents/
 });
 const TOOL_SUFFIX = ".antigravity.md";
 
+/** Each Claude tool an agent may declare, by the name `agy` gives it in a subagent's `tools`. The
+ * names come from the `tools` field and its example on https://antigravity.google/docs/subagents
+ * (view_file, grep_search, replace_file_content, run_command), and from a real `agy` run for
+ * write_file: that page's hooks reference calls it write_to_file, which `agy` never called. A tool
+ * with no name cited there, such as Glob, WebFetch or Task, is left out: an unknown name may hang
+ * the subagent. */
+const AGENT_TOOLS: ReadonlyMap<string, string> = new Map([
+  ["Read", "view_file"],
+  ["Grep", "grep_search"],
+  ["Edit", "replace_file_content"],
+  ["Write", "write_file"],
+  ["Bash", "run_command"],
+]);
+
 const hooks = declareHooks(
   { toolId: "antigravity", directory: DIRECTORY, adapter },
   {
@@ -59,7 +73,9 @@ export const antigravity = defineAiTool({
   displayName: "Antigravity CLI",
   signalDir: null,
   hooks,
-  buildContracts: { flat: contract(buildAntigravityFlatContract, hooks, ANTIGRAVITY_FLAT_LAYOUT) },
+  buildContracts: {
+    flat: contract(buildAntigravityFlatContract, hooks, ANTIGRAVITY_FLAT_LAYOUT, AGENT_TOOLS),
+  },
 
   capabilities: {
     skills: {
