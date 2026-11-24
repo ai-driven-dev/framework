@@ -25,9 +25,9 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 682 KB: 675.5 KB, canonical per-plugin machine claims, scoped user operations and
 // inter-process ownership guards for Cursor, Codex and Copilot (+31.3 KB over next's 644.2).
 // 710 KB: 703.8 KB, current native host-source proof and exact hook/MCP/user-file provenance
-// guards for #829 (+22.0 KB over the first 829 candidate's 681.8); 0.9% measured headroom.
+// guards (+22.0 KB over the first candidate's 681.8); 0.9% measured headroom.
 // 722 KB: 714.2 KB, exact native-claim partition, multihost preflight, and symlink boundary
-// guards for #829 (+10.4 KB over the preceding 703.8 KB); 1.1% measured headroom.
+// guards (+10.4 KB over the preceding 703.8 KB); 1.1% measured headroom.
 // 734 KB: 725.8 KB, Kilo Code's profile, generated bridge, and runtime smoke support (+9.6 KB
 // over next's 716.2 KB); 1.1% measured headroom.
 // 653 KB: 639.8 KB, the deterministic token measurement replacing the previous telemetry
@@ -46,8 +46,8 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 695 KB: 680.6 KB, that esbuild merged into the deterministic token measurement (+5.3 KB over
 // the 675.3 KB above); 2.1% measured headroom.
 // 709 KB: 695.3 KB, telemetry keeping what an ingest measured and could not store, ledger lines
-// no reader knows, and a bounded re-read of a call whose consent cannot be read yet (#1046,
-// +1.3 KB over next's 694.0 KB, after 1.7 KB of savings in telemetry code); 2.0% measured headroom.
+// no reader knows, and a bounded re-read of a call whose consent cannot be read yet
+// (+1.3 KB over next's 694.0 KB, after 1.7 KB of savings in telemetry code); 2.0% measured headroom.
 // 712 KB: 710.8 KB, a Stop block continuing the turn on OpenCode V1 and Kilo, and V2's
 // tool answers reaching the model through its tool hook (+1.8 KB over the 709 KB ceiling);
 // 0.2% measured headroom.
