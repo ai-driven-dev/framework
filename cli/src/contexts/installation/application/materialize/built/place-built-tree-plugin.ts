@@ -55,7 +55,7 @@ export async function placeBuiltTreePlugin(
   const previous = taken ? undefined : request.previousFiles;
   await removeObsoletePluginFiles(deps.fs, previous ?? new Map(), {
     current: new Set(owned.map((f) => f.relativePath)),
-    baseDir,
+    base: { dir: baseDir, scope },
   });
   manifest.addPlugin(tool.toolId, builtTreeEntry(request, { owned, scope, mcp, hooks }));
   return { skipped: [...mcp.mcpSkips, ...hooks.skipped], written };

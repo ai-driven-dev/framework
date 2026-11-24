@@ -49,6 +49,7 @@ function registrationCheckOver(base: Base, manifests: ManifestRepository & Scope
     declared: new InspectDeclaredMarketplaces(
       fs,
       hostBinaryAvailableIn(base.nativePluginActivators),
+      process.platform,
       tools
     ),
     inspectHost: new InspectHostRegistration(

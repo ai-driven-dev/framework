@@ -1,5 +1,4 @@
-import { isAbsolute, join, relative } from "node:path";
-import { BUILT_CACHE_SUBDIR } from "../../../../shared/domain/layout/aidd-layout.js";
+import { join } from "node:path";
 import { tryParseJson } from "../../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type {
@@ -11,6 +10,7 @@ import type {
   MarketplaceRegistrationAnswers,
   NativeHostCatalog,
 } from "../../contract/native-registration-spec.js";
+import { parseBuiltMarketplaceDir } from "../../domain/source/built-marketplace-location.js";
 import type { SettingsDeclaringTool } from "../../ports/host-tool.js";
 
 export interface InspectDeclaredMarketplacesRequest {
@@ -38,17 +38,16 @@ function missingFrom(
 function staleIn(
   declared: Declared,
   command: InspectDeclaredMarketplacesRequest,
-  tool: string
+  where: { tool: string; platform: string }
 ): StaleDeclaration[] {
-  const builtCache = join(command.projectRoot, BUILT_CACHE_SUBDIR);
+  const { tool, platform } = where;
   return [...declared.sources]
-    .filter(([name, path]) => !command.marketplaceNames.includes(name) && isUnder(builtCache, path))
+    .filter(
+      ([name, path]) =>
+        !command.marketplaceNames.includes(name) &&
+        parseBuiltMarketplaceDir(command.projectRoot, path, platform) !== undefined
+    )
     .map(([name]) => ({ tool, name, file: declared.file }));
-}
-
-function isUnder(directory: string, path: string): boolean {
-  const inside = relative(directory, path);
-  return !inside.startsWith("..") && !isAbsolute(inside);
 }
 
 /**
@@ -61,6 +60,8 @@ export class InspectDeclaredMarketplaces {
     private readonly fs: FileReader,
     /** Whether the host CLI behind a `NativeActivation.hostBinary()` is on the PATH. */
     private readonly hostAvailable: (binary: string) => boolean,
+    /** Decides how a stored path is compared with the project's own. */
+    private readonly platform: string,
     private readonly tools: NativeHostCatalog
   ) {}
 
@@ -73,7 +74,7 @@ export class InspectDeclaredMarketplaces {
       const declared = await this.declaredBy(command, toolId);
       if (declared === undefined) continue;
       findings.push(...missingFrom(declared, command.marketplaceNames, toolId));
-      stale.push(...staleIn(declared, command, toolId));
+      stale.push(...staleIn(declared, command, { tool: toolId, platform: this.platform }));
     }
     return { findings, stale };
   }

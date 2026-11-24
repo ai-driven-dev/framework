@@ -46,9 +46,9 @@ export class FileAdapter implements FileReader, FileWriter {
     await mkdir(path, { recursive: true });
   }
 
-  async deleteEmptyDirectories(path: string): Promise<void> {
+  async deleteEmptyDirectories(path: string, floor?: string): Promise<void> {
     let current = path;
-    while (true) {
+    while (current !== floor) {
       try {
         await rmdir(current);
       } catch {

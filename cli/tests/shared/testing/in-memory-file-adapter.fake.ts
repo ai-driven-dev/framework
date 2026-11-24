@@ -50,9 +50,10 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
   }
 
   /** Climbs from `path` while the directory is known and holds nothing, as the real adapter. */
-  async deleteEmptyDirectories(path: string): Promise<void> {
+  async deleteEmptyDirectories(path: string, floor?: string): Promise<void> {
     let current = dirKey(path);
-    while (this.directories.has(current) && !this.holdsAnything(current)) {
+    const stop = floor === undefined ? undefined : dirKey(floor);
+    while (current !== stop && this.directories.has(current) && !this.holdsAnything(current)) {
       this.directories.delete(current);
       const parent = posix.dirname(current);
       if (parent === current) break;

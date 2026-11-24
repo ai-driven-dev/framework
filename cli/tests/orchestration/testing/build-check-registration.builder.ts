@@ -48,7 +48,7 @@ export function checkRegistrationOver(
       new ResolveBuiltMarketplaces({ fs, registry, userCacheRoot, currentVersion }),
       tools
     ),
-    declared: new InspectDeclaredMarketplaces(fs, hostAvailable, tools),
+    declared: new InspectDeclaredMarketplaces(fs, hostAvailable, "linux", tools),
     inspectHost,
   });
 }

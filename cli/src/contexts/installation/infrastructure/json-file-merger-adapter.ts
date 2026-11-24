@@ -51,8 +51,8 @@ export class JsonFileMergerAdapter implements FileReader, FileWriter, FileMerger
   createDirectory(path: string): Promise<void> {
     return this.files.createDirectory(path);
   }
-  deleteEmptyDirectories(path: string): Promise<void> {
-    return this.files.deleteEmptyDirectories(path);
+  deleteEmptyDirectories(path: string, floor?: string): Promise<void> {
+    return this.files.deleteEmptyDirectories(path, floor);
   }
   deleteDirectory(path: string): Promise<void> {
     return this.files.deleteDirectory(path);

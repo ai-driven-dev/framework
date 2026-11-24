@@ -443,6 +443,7 @@ describe("the hosts handed to the registry inspection", () => {
       declared: new InspectDeclaredMarketplaces(
         new InMemoryFileAdapter(),
         () => false,
+        "linux",
         syntheticNativeFamilyCatalog()
       ),
       inspectHost: {
