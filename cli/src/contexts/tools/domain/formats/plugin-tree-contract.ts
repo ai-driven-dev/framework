@@ -14,11 +14,14 @@ interface PluginTreeLayout {
   readonly manifestRelative: string;
   readonly marketplaceRelative: string;
   readonly agentMarkdown: AgentMarkdown;
+  /** The file the plugin's MCP servers go in, when the tool reads one other than `.mcp.json`. */
+  readonly mcpRelative?: string;
 }
 
 function pluginTreeArtifacts(
   hooks: HooksRouting,
-  agentMarkdown: AgentMarkdown
+  agentMarkdown: AgentMarkdown,
+  mcpRelative: string
 ): ToolBuildContract["artifacts"] {
   return {
     skills: {
@@ -35,7 +38,7 @@ function pluginTreeArtifacts(
     mcp: {
       supported: true,
       source: { kind: "configFile", srcPath: ".mcp.json" },
-      placement: { kind: "file", at: ".mcp.json" },
+      placement: { kind: "file", at: mcpRelative },
     },
     hooks: pluginTreeHooksArtifact(hooks),
   };
@@ -45,7 +48,12 @@ function pluginTreeArtifacts(
  * MCP config and hooks keep their place, and a marketplace catalog lists them. */
 export function pluginTreeContract(
   hooks: HooksRouting,
-  { manifestRelative, marketplaceRelative, agentMarkdown }: PluginTreeLayout
+  {
+    manifestRelative,
+    marketplaceRelative,
+    agentMarkdown,
+    mcpRelative = ".mcp.json",
+  }: PluginTreeLayout
 ): ToolBuildContract {
   return {
     pluginRootToken: hooks.rootToken,
@@ -54,9 +62,10 @@ export function pluginTreeContract(
       synthesizeSharedManifest(source, presence, {
         agentsField: true,
         hooksField: hooks.manifestNamesHooks === true,
+        mcpRelative,
       }),
     manifestSchemaName: "plugin-manifest",
-    artifacts: pluginTreeArtifacts(hooks, agentMarkdown),
+    artifacts: pluginTreeArtifacts(hooks, agentMarkdown, mcpRelative),
     buildMarketplaceCatalog: async (source, entries, _fs) => ({
       catalog: buildSharedMarketplace(
         source as Parameters<typeof buildSharedMarketplace>[0],

@@ -44,8 +44,13 @@ const DIVERGENCES: readonly Divergence[] = [
     fold: (d) => ({ ...d, body: d.body.replaceAll(".github/", "{{TOOLS}}/") }),
   },
   {
-    id: "B copies the source mcp and hooks manifests, A synthesizes them elsewhere",
-    applies: (_t, p) => /(^|\/)(mcp|hooks)\.json$|\.agent\.md$|\.toml$/.test(p),
+    id: "B writes copilot's agents as .agent.md, A as .md",
+    applies: (t, p) => t === "copilot" && p.endsWith(".agent.md"),
+    absentFromA: true,
+  },
+  {
+    id: "B writes codex's agents as agents/*.toml, A as codex-agents/*.toml",
+    applies: (t, p) => t === "codex" && p.endsWith(".toml"),
     absentFromA: true,
   },
 ];

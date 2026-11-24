@@ -11,6 +11,14 @@ const LAYOUT = {
   agentMarkdown: { frontmatter: (fm: Record<string, unknown>) => ({ ...fm, marker: "kept" }) },
 };
 
+const PRESENCE = {
+  hasAgents: false,
+  skillsList: [],
+  agentsList: [],
+  hasHooksJson: false,
+  hasMcpJson: false,
+};
+
 const contract = pluginTreeContract(present(cursor.hooks), LAYOUT);
 
 describe("building a plugin tree contract", () => {
@@ -37,6 +45,15 @@ describe("building a plugin tree contract", () => {
       agent: "agents/a.md",
       mcp: ".mcp.json",
     });
+  });
+
+  it("places MCP where the layout names its file, and the manifest points there", () => {
+    const named = pluginTreeContract(present(cursor.hooks), { ...LAYOUT, mcpRelative: "mcp.json" });
+    const manifest = named.synthesizeManifest?.({}, { ...PRESENCE, hasMcpJson: true });
+    expect({
+      mcp: artifactPath(supported(named.artifacts.mcp), "p", ".mcp.json"),
+      pointer: manifest?.mcpServers,
+    }).toStrictEqual({ mcp: "mcp.json", pointer: "./mcp.json" });
   });
 
   it("writes the marketplace catalog where the layout says", async () => {

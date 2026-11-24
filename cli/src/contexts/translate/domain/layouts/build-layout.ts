@@ -81,7 +81,7 @@ function marketplaceMcp(
   const plugin = canon.manifest.name;
   return canon.components.mcp.map(({ relativePath, content }) => ({
     source: relativePath,
-    path: `plugins/${plugin}/${PLUGIN_MCP_RELATIVE}`,
+    path: `plugins/${plugin}/${artifactPath(artifact, plugin, PLUGIN_MCP_RELATIVE)}`,
     content,
     shape: artifact.transform
       ? (text) => artifact.transform?.(text, plugin, PLUGIN_MCP_RELATIVE) ?? text

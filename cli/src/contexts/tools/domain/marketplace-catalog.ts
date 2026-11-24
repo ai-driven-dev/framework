@@ -33,6 +33,9 @@ export interface SynthesizeSharedManifestOpts {
    * the plugin read as failed while working. Codex and the others still need the pointer.
    */
   readonly hooksField: boolean;
+  /** The file the manifest's `mcpServers` points at, relative to the plugin: `.mcp.json` unless
+   * the tool reads its MCP servers from another file. */
+  readonly mcpRelative?: string;
 }
 
 const isText = (value: unknown): value is string => typeof value === "string";
@@ -69,7 +72,7 @@ function shippedPaths(
     paths.skills = presence.skillsList.map((n) => `./skills/${n}`);
   }
   if (opts.hooksField && presence.hasHooksJson) paths.hooks = "./hooks/hooks.json";
-  if (presence.hasMcpJson) paths.mcpServers = "./.mcp.json";
+  if (presence.hasMcpJson) paths.mcpServers = `./${opts.mcpRelative ?? ".mcp.json"}`;
   return paths;
 }
 
