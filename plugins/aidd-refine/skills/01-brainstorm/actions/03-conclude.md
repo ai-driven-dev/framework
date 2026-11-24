@@ -23,4 +23,3 @@ The approved brief, kept where the user chose.
 ## Rules
 
 - Write the brief's bullets as facts about the idea, not as a list of categories.
-- Write nothing unless the user chooses it.
