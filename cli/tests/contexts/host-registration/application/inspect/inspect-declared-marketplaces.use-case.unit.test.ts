@@ -8,12 +8,21 @@ import { registeredTools, TOOL } from "../../../../shared/testing/registered-too
 const SETTINGS = "/project/.claude/settings.local.json";
 const NAME = "aidd-framework";
 
-function inspector(options: { settings?: string; hostAvailable?: boolean } = {}) {
+function inspector(
+  options: {
+    settings?: string;
+    hostAvailable?: boolean;
+    settingsFile?: string;
+    platform?: string;
+  } = {}
+) {
   const fs = new InMemoryFileAdapter();
-  if (options.settings !== undefined) fs.setFile(SETTINGS, options.settings);
+  if (options.settings !== undefined)
+    fs.setFile(options.settingsFile ?? SETTINGS, options.settings);
   return new InspectDeclaredMarketplaces(
     fs,
     () => options.hostAvailable ?? true,
+    options.platform ?? "linux",
     registeredTools()
   );
 }
@@ -95,6 +104,24 @@ describe("inspecting the marketplaces a tool's machine-local settings declare", 
       expect(stale).toEqual([
         { tool: TOOL.claude, name: NAME, file: ".claude/settings.local.json" },
       ]);
+    });
+
+    it("names a declaration under a windows project root spelled in another case", async () => {
+      const root = "C:\\Proj";
+      const builtTree = "c:\\proj\\.aidd\\cache\\built\\local\\claude";
+      const subject = inspector({
+        settings: declaringSource(NAME, builtTree),
+        settingsFile: join(root, ".claude", "settings.local.json"),
+        platform: "win32",
+      });
+
+      const { stale } = await subject.execute({
+        projectRoot: root,
+        toolIds: [TOOL.claude],
+        marketplaceNames: [],
+      });
+
+      expect(stale).toHaveLength(1);
     });
 
     it("keeps a declaration the project still registers", async () => {
