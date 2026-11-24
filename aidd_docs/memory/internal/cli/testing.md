@@ -17,7 +17,7 @@ Run from `cli/`.
 
 | Command | Runs |
 | --- | --- |
-| `pnpm test` | every project; never builds `dist/` |
+| `pnpm test` | every project but `tooling`; never builds `dist/` |
 | `pnpm test:<project>` (`test:arch` for architecture) | one project |
 | `pnpm golden:update [name]` | rewrites stored goldens, or those under `cli/tests/golden/<name>*`; refused in CI |
 | `pnpm smoke` | the built binary over `cli/scripts/smoke-tools.sh`, hermetic |

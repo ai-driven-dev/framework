@@ -30,7 +30,7 @@ Read them live with `aidd --help`; `cli/tests/golden/help-surface.golden.test.ts
 
 - Cursor: rematerializes the machine-owned files.
 - Copilot: native `plugin update <plugin>@<catalogue>`, naming dependent projects, with no hand-written host cache.
-- Codex has no targeted update verb, so the command refuses; use `marketplace refresh` or `framework update`.
+- Claude and Codex declare no `updateVerb`, so the command refuses; use `marketplace refresh` or `framework update`.
 
 ## Distribution
 
