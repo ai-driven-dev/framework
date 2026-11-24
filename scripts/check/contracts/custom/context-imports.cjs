@@ -6,7 +6,7 @@ const path = require("node:path");
 
 // Anywhere in the tree, not just the root: a monorepo package carries its own.
 const CONTEXT_FILENAMES = ["CLAUDE.md", "AGENTS.md", "copilot-instructions.md"];
-const SKIPPED_DIRS = new Set([".git", "node_modules", "worktrees", ".specstory"]);
+const SKIPPED_DIRS = new Set([".git", "node_modules", "worktrees", ".specstory", ".aidd"]);
 // Snapshots of older framework versions, kept on the old shape as test input.
 const EXCLUDED_PATHS = ["cli/tests/fixtures"];
 
