@@ -10,7 +10,7 @@ The user's idea, however vague.
 
 1. With no idea, ask for one and stop.
 2. Say the idea back briefly, in the user's words, keeping what is still uncertain.
-3. Go to explore.
+3. Go to [explore](02-explore.md).
 
 ## Output
 

@@ -50,6 +50,8 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [discovery-map.md](skills/01-brainstorm/references/discovery-map.md) | - |
 | `references` | [persistence.md](skills/01-brainstorm/references/persistence.md) | - |
 | `references` | [probing.md](skills/01-brainstorm/references/probing.md) | - |
+| `scripts` | [contract.json](skills/01-brainstorm/scripts/contract.json) | - |
+| `scripts` | [validate-brainstorm.cjs](skills/01-brainstorm/scripts/validate-brainstorm.cjs) | - |
 | `-` | [SKILL.md](skills/01-brainstorm/SKILL.md) | `Clarify a vague idea through questions. Use when the user has a half-formed idea, ambiguous request, or asks to brainstorm, discover, refine, or clarify. Not for artifact gap scans, planning, or code.` |
 
 #### `skills/02-challenge`

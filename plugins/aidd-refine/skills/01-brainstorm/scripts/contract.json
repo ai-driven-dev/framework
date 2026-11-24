@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "kind": "brainstorm",
+  "unit": "file",
+  "scope": ["aidd_docs/**/brainstorm.md"],
+  "rules": {
+    "BRAINSTORM-01": { "op": "template", "in": "brainstorm.md", "template": "../assets/discovery-brief.md", "optional": ["Clear", "Assumed", "Open"], "why": "whoever plans from the brief finds what is settled, assumed and open, approved", "fix": "follow discovery-brief.md" }
+  }
+}

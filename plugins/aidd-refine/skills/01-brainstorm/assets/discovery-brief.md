@@ -1,3 +1,7 @@
+---
+status: approved
+---
+
 <!-- Fill, then strip this comment. Omit empty sections. -->
 
 # {{Idea title}}
