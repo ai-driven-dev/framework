@@ -18,13 +18,13 @@ import { flatHooksSupport } from "../../contexts/tools/domain/formats/hooks/flat
 import { toTypedMcpSection } from "../../contexts/tools/domain/formats/mcp/typed-mcp-section.js";
 import { descriptionOnlyRule } from "../../contexts/tools/domain/formats/rule-frontmatter.js";
 import { contract } from "../../contexts/tools/domain/profile/contract-builders.js";
+import type { McpJsonDeclaration } from "../../contexts/tools/domain/profile/declared-sections.js";
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
 import { installUnder } from "../../contexts/tools/domain/profile/tool-suffix.js";
 import {
   flatGlobalFilePath,
   flatPlacement,
 } from "../../contexts/tools/domain/sections/layout-section.js";
-import { McpConfigPart } from "../../contexts/tools/domain/sections/mcp-section.js";
 import { ModelsSection } from "../../contexts/tools/domain/sections/models-section.js";
 import { JsoncWriter } from "../../contexts/tools/infrastructure/jsonc-writer.adapter.js";
 import {
@@ -102,78 +102,82 @@ const hooks = declareBridgeHooks(
 
 const hooksDelivery = flatHooksSupport(hooks);
 
-export const opencode = defineAiTool({
-  toolId: "opencode",
-  distributionProbes: {
-    marketplace: ["opencode.json"],
-  },
-  directory: DIRECTORY,
-  toolSuffix: TOOL_SUFFIX,
-  displayName: "OpenCode",
-  signalDir: ".opencode/commands",
-  configAssets: [
-    {
-      name: "opencode.json",
-      content: opencodeJson,
-      destination: "opencode.json",
-      delivery: "install",
-    },
-    {
-      name: hooks.bridgeRuntime.asset,
-      content: opencodeEvents,
-      destination: hooks.bridgeRuntime.path,
-      delivery: "runtime",
-    },
-  ],
-  hooks,
-  buildContracts: {
-    flat: contract(buildOpencodeFlatContract, hooks, OPENCODE_FLAT_LAYOUT, {
-      agentMarkdown: { frontmatter: AGENT_FRONTMATTER },
-      config: FLAT_CONFIG_CANDIDATES,
-    }),
-  },
+/** The MCP servers file, rewritten in place so the comments a person wrote in it stay. */
+const MCP_CONFIG: McpJsonDeclaration = {
+  outputPath: "opencode.json",
+  format: "json",
+  mergeStrategy: "framework-prime",
+  transformContent: toTypedMcpSection,
+  consumes: [MCP_CONFIG_REF, OPENCODE_CONFIG_REF],
+  keepsComments: true,
+  outputPathCandidates: OUTPUT_PATH_CANDIDATES,
+};
 
-  capabilities: {
-    agents: {
-      format: "markdown",
-      frontmatter: AGENT_FRONTMATTER,
+export const opencode = defineAiTool(
+  {
+    toolId: "opencode",
+    distributionProbes: {
+      marketplace: ["opencode.json"],
     },
-    skills: {},
-    commands: {
-      buildInstallPath: aiddCommandsUnder(DIRECTORY),
-      convertFrontmatter: convertCommandFrontmatterNoHint,
-    },
-    rules: {
-      buildInstallPath: installUnder(DIRECTORY, TOOL_SUFFIX, "rules/"),
-      convertFrontmatter: descriptionOnlyRule,
-    },
-    mcp: {
-      config: new McpConfigPart({
-        outputPath: "opencode.json",
-        format: "json",
-        mergeStrategy: "framework-prime",
-        transformContent: toTypedMcpSection,
-        consumes: [MCP_CONFIG_REF, OPENCODE_CONFIG_REF],
-        writer: new JsoncWriter(),
-        outputPathCandidates: OUTPUT_PATH_CANDIDATES,
+    directory: DIRECTORY,
+    toolSuffix: TOOL_SUFFIX,
+    displayName: "OpenCode",
+    signalDir: ".opencode/commands",
+    configAssets: [
+      {
+        name: "opencode.json",
+        content: opencodeJson,
+        destination: "opencode.json",
+        delivery: "install",
+      },
+      {
+        name: hooks.bridgeRuntime.asset,
+        content: opencodeEvents,
+        destination: hooks.bridgeRuntime.path,
+        delivery: "runtime",
+      },
+    ],
+    hooks,
+    buildContracts: {
+      flat: contract(buildOpencodeFlatContract, hooks, OPENCODE_FLAT_LAYOUT, {
+        agentMarkdown: { frontmatter: AGENT_FRONTMATTER },
+        config: FLAT_CONFIG_CANDIDATES,
       }),
     },
-    // Flat mode has no `marketplaceSettings` field, and opencode's `plugin[]` array accepts
-    // only npm package names: no source or version a marketplace entry could express.
-    hooks: { delivery: hooksDelivery },
-    layout: FLAT_PLACEMENT,
-    // OpenCode loads opencode.json, then opencode.jsonc over it: the model goes in the .jsonc.
-    models: new ModelsSection({
-      providers: ["openai", "anthropic", "mistral"],
-      providerPrefix: true,
-      main: { settingsFile: "opencode.jsonc", schema: "https://opencode.ai/config.json" },
-    }),
-  },
 
-  linkSyntax: [
-    {
-      from: /(@?)\.opencode\/commands\/(\d+)[_-][^/]+\/([^\s]+)/g,
-      to: "$1.opencode/commands/aidd/$2/$3",
+    capabilities: {
+      agents: {
+        format: "markdown",
+        frontmatter: AGENT_FRONTMATTER,
+      },
+      skills: {},
+      commands: {
+        buildInstallPath: aiddCommandsUnder(DIRECTORY),
+        convertFrontmatter: convertCommandFrontmatterNoHint,
+      },
+      rules: {
+        buildInstallPath: installUnder(DIRECTORY, TOOL_SUFFIX, "rules/"),
+        convertFrontmatter: descriptionOnlyRule,
+      },
+      mcp: { config: MCP_CONFIG },
+      // Flat mode has no `marketplaceSettings` field, and opencode's `plugin[]` array accepts
+      // only npm package names: no source or version a marketplace entry could express.
+      hooks: { delivery: hooksDelivery },
+      layout: FLAT_PLACEMENT,
+      // OpenCode loads opencode.json, then opencode.jsonc over it: the model goes in the .jsonc.
+      models: new ModelsSection({
+        providers: ["openai", "anthropic", "mistral"],
+        providerPrefix: true,
+        main: { settingsFile: "opencode.jsonc", schema: "https://opencode.ai/config.json" },
+      }),
     },
-  ],
-});
+
+    linkSyntax: [
+      {
+        from: /(@?)\.opencode\/commands\/(\d+)[_-][^/]+\/([^\s]+)/g,
+        to: "$1.opencode/commands/aidd/$2/$3",
+      },
+    ],
+  },
+  { json: new JsoncWriter() }
+);

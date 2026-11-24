@@ -1,10 +1,12 @@
 import type { ToolBuildContract } from "../../../../shared/domain/materialization/build-contract.js";
 import { CapabilityConfigError } from "../../contract/errors/tools.error.js";
+import type { JsonWriter } from "../formats/json-writer.js";
 import type { TomlCodec } from "../formats/toml.js";
 
 /** The file codecs a profile's declarations name by format, wired by the composition. */
 export interface ToolFormats {
   readonly toml?: TomlCodec;
+  readonly json?: JsonWriter;
 }
 
 /** The TOML codec a declaration naming the TOML format needs; refused when none was wired. */
@@ -13,6 +15,14 @@ export function tomlOf(formats: ToolFormats): TomlCodec {
     throw new CapabilityConfigError("a declaration names the TOML format, and no codec was given");
   }
   return formats.toml;
+}
+
+/** The writer a declaration that keeps a person's comments needs; refused when none was wired. */
+export function jsonOf(formats: ToolFormats): JsonWriter {
+  if (formats.json === undefined) {
+    throw new CapabilityConfigError("a declaration keeps comments, and no JSON writer was given");
+  }
+  return formats.json;
 }
 
 /** A build contract a profile declares: the arguments it hands the builder it names, built on

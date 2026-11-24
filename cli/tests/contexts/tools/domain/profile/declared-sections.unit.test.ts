@@ -40,4 +40,23 @@ describe("the sections a profile declares as parameters", () => {
     expect(mcp?.config).toBeInstanceOf(McpConfigPart);
     expect(mergeWith).toHaveBeenCalledWith(toml);
   });
+
+  it("builds a JSON MCP file that keeps a person's comments with the wired writer", () => {
+    const rewrite = vi.fn(() => "rewritten");
+    const mcp = buildSections(
+      { mcp: { config: { outputPath: "x.json", format: "json", keepsComments: true } } },
+      { ...at, formats: { json: { rewrite } } }
+    ).mcp;
+
+    expect(mcp?.config?.withInstruction('{"a":1}', "rules/*.md")).toBe("rewritten");
+  });
+
+  it("refuses a JSON MCP file that keeps comments when no writer was wired", () => {
+    expect(() =>
+      buildSections(
+        { mcp: { config: { outputPath: "x.json", format: "json", keepsComments: true } } },
+        { ...at, formats: {} }
+      )
+    ).toThrow(CapabilityConfigError);
+  });
 });
