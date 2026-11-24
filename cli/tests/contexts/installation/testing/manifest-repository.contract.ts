@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   InvalidManifestDataError,
+  InvalidManifestToolIdError,
   ManifestMigrationError,
   ManifestUnavailableError,
   UnsupportedManifestVersionError,
@@ -192,9 +193,7 @@ export function describeManifestFileContract(
       expect(failure).toMatchObject({
         code: "manifest-corrupted",
         detail: expect.stringContaining(`${subject.manifestPath} is not valid JSON`),
-        cause: expect.objectContaining({
-          detail: expect.stringContaining(`${subject.manifestPath} is not valid JSON`),
-        }),
+        cause: expect.any(InvalidManifestDataError),
       });
       expect(await subject.repository.loadIfReadable()).toBeNull();
     });
@@ -206,6 +205,16 @@ export function describeManifestFileContract(
         code: "manifest-corrupted",
         detail: "tools: expected an object.",
         cause: expect.any(InvalidManifestDataError),
+      });
+    });
+
+    it("names an unknown tool key as a corrupted manifest", async () => {
+      await write('{"version": 9, "tools": {"zed": {}}}');
+
+      await expect(subject.repository.load()).rejects.toMatchObject({
+        code: "manifest-corrupted",
+        detail: "tools.zed: unknown tool id.",
+        cause: expect.any(InvalidManifestToolIdError),
       });
     });
 
