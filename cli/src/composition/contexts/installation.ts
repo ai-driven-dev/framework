@@ -172,6 +172,12 @@ export function projectHooksMaterializerOf(fs: FileReader & FileWriter): Project
   return projectHooksOf(fs).materializer;
 }
 
+/** Takes a plugin's enabling entry out of a shared settings file, with the host-registration rules
+ * the installation context does not reach itself. */
+export function removeEnabledPluginOf(settings: TrackedSharedSettings) {
+  return new RemoveEnabledPlugin(settings, withoutEnabledPlugin, enabledEntryRef);
+}
+
 /** The project hooks and MCP use cases, built once over one file system and the installation's
  * own shared settings writer. */
 export function projectIntegrationOf(fs: FileReader & FileWriter, settings: TrackedSharedSettings) {
@@ -179,7 +185,7 @@ export function projectIntegrationOf(fs: FileReader & FileWriter, settings: Trac
   const removeHooks = new RemoveProjectHooks(removeRecorded);
   const assertHooksRemovable = new AssertProjectHooksRemovable(unchanged);
   const plan = new PlanProjectMcpRemoval(fs, withinRoot);
-  const enablement = new RemoveEnabledPlugin(settings, withoutEnabledPlugin, enabledEntryRef);
+  const enablement = removeEnabledPluginOf(settings);
   const assertMcpRemovable = new AssertProjectMcpEntriesRemovable(plan);
   return {
     materializer,

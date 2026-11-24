@@ -61,7 +61,7 @@ export class CheckRegistration {
     for (const [toolId, marketplaceNames] of declaredNames) {
       const declared: InspectDeclaredMarketplacesResult = await this.deps.declared.execute({
         projectRoot: command.projectRoot,
-        toolIds: [toolId],
+        toolId,
         marketplaceNames,
       });
       for (const finding of declared.findings)

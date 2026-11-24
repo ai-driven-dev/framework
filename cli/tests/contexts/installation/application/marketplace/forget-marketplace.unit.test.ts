@@ -3,7 +3,6 @@ import { recordsOf } from "../../../../../src/composition/contexts/installation.
 import { forgetMarketplaceInRecords } from "../../../../../src/contexts/installation/application/marketplace/forget-marketplace.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { SYNTHETIC_IDE_TOOL } from "../../../../shared/testing/synthetic-tool-id.builder.js";
 
 const registeredBoth = {
   binary: "claude",
@@ -19,8 +18,6 @@ const registeredOther = {
   pluginRefs: [],
 };
 
-const AI_TOOLS = [TOOL.claude, TOOL.codex];
-
 describe("forgetting a marketplace from a scope's records", () => {
   it("takes it, and the refs on its host name, out of each tool that registered it", async () => {
     const repo = new InMemoryManifestRepository();
@@ -30,7 +27,7 @@ describe("forgetting a marketplace from a scope's records", () => {
     ]);
     const rules = recordsOf(repo);
 
-    await forgetMarketplaceInRecords(rules, { alias: "mine", toolIds: AI_TOOLS });
+    await forgetMarketplaceInRecords(rules, "mine");
 
     const claude = repo.records.get(TOOL.claude);
     expect(claude && rules.marketplaceOf(claude, "mine")).toBeUndefined();
@@ -42,17 +39,8 @@ describe("forgetting a marketplace from a scope's records", () => {
     const repo = new InMemoryManifestRepository();
     repo.records = new Map([[TOOL.codex, registeredOther]]);
 
-    await forgetMarketplaceInRecords(recordsOf(repo), { alias: "mine", toolIds: AI_TOOLS });
+    await forgetMarketplaceInRecords(recordsOf(repo), "mine");
 
     expect(repo.records.get(TOOL.codex)).toBe(registeredOther);
-  });
-
-  it("leaves a record kept for a tool outside the ones it walks", async () => {
-    const repo = new InMemoryManifestRepository();
-    repo.records = new Map([[SYNTHETIC_IDE_TOOL, registeredBoth]]);
-
-    await forgetMarketplaceInRecords(recordsOf(repo), { alias: "mine", toolIds: AI_TOOLS });
-
-    expect(repo.records.get(SYNTHETIC_IDE_TOOL)).toBe(registeredBoth);
   });
 });

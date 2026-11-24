@@ -3,7 +3,6 @@ import { tryParseJson } from "../../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type {
   InspectDeclaredMarketplacesResult,
-  StaleDeclaration,
   UndeclaredMarketplace,
 } from "../../contract/inspect-declared-marketplaces-result.js";
 import type {
@@ -15,7 +14,7 @@ import type { SettingsDeclaringTool } from "../../ports/host-tool.js";
 
 export interface InspectDeclaredMarketplacesRequest {
   readonly projectRoot: string;
-  readonly toolIds: readonly string[];
+  readonly toolId: string;
   readonly marketplaceNames: readonly string[];
 }
 
@@ -38,16 +37,15 @@ function missingFrom(
 function staleIn(
   declared: Declared,
   command: InspectDeclaredMarketplacesRequest,
-  where: { tool: string; platform: string }
-): StaleDeclaration[] {
-  const { tool, platform } = where;
+  platform: string
+): UndeclaredMarketplace[] {
   return [...declared.sources]
     .filter(
       ([name, path]) =>
         !command.marketplaceNames.includes(name) &&
         parseBuiltMarketplaceDir(command.projectRoot, path, platform) !== undefined
     )
-    .map(([name]) => ({ tool, name, file: declared.file }));
+    .map(([name]) => ({ tool: command.toolId, name, file: declared.file }));
 }
 
 /**
@@ -68,22 +66,18 @@ export class InspectDeclaredMarketplaces {
   async execute(
     command: InspectDeclaredMarketplacesRequest
   ): Promise<InspectDeclaredMarketplacesResult> {
-    const findings: UndeclaredMarketplace[] = [];
-    const stale: StaleDeclaration[] = [];
-    for (const toolId of command.toolIds) {
-      const declared = await this.declaredBy(command, toolId);
-      if (declared === undefined) continue;
-      findings.push(...missingFrom(declared, command.marketplaceNames, toolId));
-      stale.push(...staleIn(declared, command, { tool: toolId, platform: this.platform }));
-    }
-    return { findings, stale };
+    const declared = await this.declaredBy(command);
+    if (declared === undefined) return { findings: [], stale: [] };
+    return {
+      findings: missingFrom(declared, command.marketplaceNames, command.toolId),
+      stale: staleIn(declared, command, this.platform),
+    };
   }
 
   private async declaredBy(
-    command: InspectDeclaredMarketplacesRequest,
-    toolId: string
+    command: InspectDeclaredMarketplacesRequest
   ): Promise<Declared | undefined> {
-    const profile = this.tools.profile(toolId);
+    const profile = this.tools.profile(command.toolId);
     const settings = this.untrackedSettingsOf(profile);
     if (settings === undefined) return undefined;
     // A tool that writes its own registration cannot have written one while its binary was out

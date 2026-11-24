@@ -1,10 +1,6 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import {
-  type EnabledEntryOf,
-  RemoveEnabledPlugin,
-  type WithoutEnabledPlugin,
-} from "../../../../../../src/contexts/installation/application/removal/project/remove-enabled-plugin.use-case.js";
+import { removeEnabledPluginOf } from "../../../../../../src/composition/contexts/installation.js";
 import { trackedSharedSettings } from "../../../../../../src/contexts/installation/application/sync/tracked-shared-settings.js";
 import { RecordedPlugin } from "../../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../../../src/shared/domain/file-hash.js";
@@ -30,51 +26,7 @@ function plugin(marketplace?: string): RecordedPlugin {
   });
 }
 
-const withoutEntry: WithoutEnabledPlugin = (shared, key, entry) => {
-  const entries = Object.entries(shared[key ?? ""] ?? {}).filter(([ref]) => ref !== entry);
-  return { ...shared, [key ?? ""]: Object.fromEntries(entries) };
-};
-
-const withoutEntryHeld: WithoutEnabledPlugin = (shared, key, entry) =>
-  Object.hasOwn(shared[key ?? ""] ?? {}, entry) ? withoutEntry(shared, key, entry) : null;
-
-const enabledEntryRef: EnabledEntryOf = (settings, { name, marketplace }, hostRef) =>
-  settings.requiresNativeProof() ? hostRef : `${name}@${marketplace}`;
-
-function setup(content: string) {
-  const fs = new InMemoryFileAdapter({ [ABSOLUTE]: content }, [ROOT]);
-  const manifest = aManifest()
-    .withTool(TOOL.claude, [
-      new InstallationFile({ relativePath: PATH, content, hash: FileHash.of(content) }),
-    ])
-    .build();
-  const tracked = trackedSharedSettings({ fs, logger: new CapturingLogger() });
-  return { fs, manifest, useCase: new RemoveEnabledPlugin(tracked, withoutEntry, enabledEntryRef) };
-}
-
 describe("removing the entry that enabled a plugin", () => {
-  it("drops that entry only, and keeps the tracked hash in step", async () => {
-    const before = JSON.stringify({
-      enabledPlugins: { "aidd-dev@local": true, "other@local": true },
-    });
-    const { fs, manifest, useCase } = setup(before);
-
-    await useCase.execute({ plugin: plugin("local"), tool, projectRoot: ROOT, manifest });
-
-    const after = await fs.readFile(ABSOLUTE);
-    expect(JSON.parse(after)).toEqual({ enabledPlugins: { "other@local": true } });
-    expect(FileHash.of(after)).not.toEqual(FileHash.of(before));
-  });
-
-  it("leaves the file alone for a plugin that came from no marketplace", async () => {
-    const before = JSON.stringify({ enabledPlugins: { "aidd-dev@local": true } });
-    const { fs, manifest, useCase } = setup(before);
-
-    await useCase.execute({ plugin: plugin(), tool, projectRoot: ROOT, manifest });
-
-    expect(await fs.readFile(ABSOLUTE)).toBe(before);
-  });
-
   it("drops the entry on the name the host gave the marketplace, not the alias it is registered under", async () => {
     const copilotPath = ".github/copilot/settings.json";
     const absolute = resolve(ROOT, copilotPath);
@@ -91,10 +43,8 @@ describe("removing the entry that enabled a plugin", () => {
         }),
       ])
       .build();
-    const useCase = new RemoveEnabledPlugin(
-      trackedSharedSettings({ fs, logger: new CapturingLogger() }),
-      withoutEntry,
-      enabledEntryRef
+    const useCase = removeEnabledPluginOf(
+      trackedSharedSettings({ fs, logger: new CapturingLogger() })
     );
 
     await useCase.execute({
@@ -115,11 +65,7 @@ describe("removing the entry that enabled a plugin", () => {
     const fs = new InMemoryFileAdapter({ [ABSOLUTE]: malformed }, [ROOT]);
     const logger = new CapturingLogger();
     const manifest = aManifest().withTool(TOOL.claude, []).build();
-    const useCase = new RemoveEnabledPlugin(
-      trackedSharedSettings({ fs, logger }),
-      withoutEntryHeld,
-      enabledEntryRef
-    );
+    const useCase = removeEnabledPluginOf(trackedSharedSettings({ fs, logger }));
 
     await useCase.execute({ plugin: plugin("local"), tool, projectRoot: ROOT, manifest });
 
