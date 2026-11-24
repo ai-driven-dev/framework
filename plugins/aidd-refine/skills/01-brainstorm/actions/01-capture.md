@@ -8,9 +8,9 @@ The user's idea, however vague.
 
 ## Process
 
-1. With no idea, ask for one and stop.
-2. Say the idea back briefly, in the user's words, keeping what is still uncertain.
-3. Go to [explore](02-explore.md).
+1. Say the idea back briefly, in the user's words, keeping what is still uncertain.
+   - No idea given: ask for one and wait.
+2. Go to [explore](02-explore.md).
 
 ## Output
 

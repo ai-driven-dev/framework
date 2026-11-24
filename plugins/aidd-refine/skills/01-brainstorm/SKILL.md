@@ -1,24 +1,23 @@
 ---
 name: 01-brainstorm
-description: Clarify a vague idea through questions. Use when the user has a half-formed idea, ambiguous request, or asks to brainstorm, discover, refine, or clarify. Not for artifact gap scans, planning, or code.
+description: Clarifies a vague idea through questions, when the user has a half-formed idea or asks to brainstorm, refine or clarify one.
 argument-hint: idea
 ---
-# Brainstorm
 
-## Actions
+# Brainstorm
 
 ```mermaid
 flowchart LR
-  capture["capture<br>actions/01-capture.md"] --> explore["explore<br>actions/02-explore.md"]
-  explore -->|"ask questions"| user((user answers))
-  user --> explore
-  explore -->|"clear enough, or user stops"| conclude["conclude<br>actions/03-conclude.md"]
-  conclude -->|"correct: revise, show again"| conclude
-  conclude -->|"explore more"| explore
-  conclude -->|"approve: offer where to keep it"| persist["persistence<br>references/persistence.md"] --> done((done))
+  idea([idea]) --> capture["actions/01-capture.md"]
+  capture <-->|"no idea yet"| user((user answers))
+  capture --> explore["actions/02-explore.md"]
+  explore <-->|"questions"| user
+  explore -->|"clear enough"| conclude["actions/03-conclude.md"]
+  user -->|"stop or summary"| conclude
+  conclude <-->|"brief to approve, then where to keep it"| user
+  conclude -->|"correction"| conclude
+  conclude -->|"kept"| done((approved brief))
 ```
-
-Each box is a file: read it, then do what it says.
 
 ## Transversal rules
 
@@ -26,4 +25,4 @@ Each box is a file: read it, then do what it says.
 - Ask a question only if its answer changes the outcome.
 - Talk about the idea, never the skill's steps or files.
 - After questions, approval or persistence options, wait.
-- When the user wants to stop or asks for a summary, go to conclude and produce the brief in the chat.
+- When the user wants to stop or asks for a summary, read `actions/03-conclude.md` and produce the brief in the chat.

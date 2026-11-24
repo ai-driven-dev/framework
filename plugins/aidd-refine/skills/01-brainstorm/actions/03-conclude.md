@@ -10,14 +10,15 @@ The conversation so far.
 
 1. Fill the [discovery brief](../assets/discovery-brief.md).
 2. Show it and ask to approve, correct, or explore more.
-3. On a correction, revise it and show it again.
-4. To explore more, go to explore.
-5. On approval, offer where to keep it, per [persistence](../references/persistence.md).
-6. When the user chooses a file, write it, then run `scripts/validate-brainstorm.cjs`, next to the loaded `SKILL.md`, on it, fix each finding and validate again, and after 3 passes stop and show what is left.
+   - Correction: revise it and repeat from step 2.
+   - Explore more: go back to explore.
+3. On approval, offer where to keep it, per [persistence](../references/persistence.md).
+4. Keep the brief where the user chose.
+   - File: write it, run `scripts/validate-brainstorm.cjs`, next to the loaded `SKILL.md`, on it, fix each finding, and repeat until it passes.
 
 ## Output
 
-The approved brief.
+The approved brief, kept where the user chose.
 
 ## Rules
 
