@@ -14,12 +14,15 @@ The requested outcome, timing, working context and any skills the user wants to 
    - The workflow needs no skill: describe the operations directly.
 4. Read and fill the [task prompt](../assets/task-prompt.md) in the user's language.
    - Retain every section heading in that language for prompts returned in chat as well as in files.
-   - Put only instructions for the future run inside the prompt.
-   - Keep requests about drafting, installation and registration in the surrounding reply.
-5. Trace one qualifying input through the numbered steps to the destination.
-   - A link in the chain is missing: repair the draft and repeat step 5.
+   - Keep drafting, installation and registration instructions in the surrounding reply.
+   - Give each requested skill a numbered step naming its exact installed identifier, its input and its result.
+5. Compare the finished execution prompt with the request before returning it.
+   - Check each literal skill name, filename and destination character for character in its numbered step or section.
+   - Trace one qualifying input through every handoff to the requested destination.
+   - If delivery tracking was requested, record success only after confirmed delivery.
    - Trace a valid empty input to the skip outcome and an unavailable prerequisite to the failure outcome separately.
-   - Either case reaches success or the wrong outcome: correct its stop condition and repeat step 5.
+   - Read the prompt in isolation for authoring instructions or unrequested writes that could change the scheduled run.
+   - Any mismatch: fix the prompt and repeat step 5.
 6. Return the complete prompt, saving it to a file only when requested.
    - For a saved prompt, run `scripts/validate-prompt.cjs` with Node on its path and fix any findings before handing it back.
 7. Read [configure](02-configure.md) for each requested scheduler unless the user wants only the prompt.
