@@ -36,7 +36,7 @@ flowchart LR
 | Claude registers at `--scope local` | the hashed settings file keeps one writer: `cli/src/composition/tool-profiles/claude.ts` |
 | Owned files are regenerated, co-owned files are merged | `MergeStrategy` in `cli/src/shared/domain/merge.ts` |
 | The manifest reads v9, and v8 only to split it once | no migration chain: [`decisions/manifest-reads-v9-and-splits-v8.md`](decisions/manifest-reads-v9-and-splits-v8.md) |
-| One hooks descriptor per tool, one merge engine, one host adapter per tool | adding a tool is a descriptor and a payload fixture; adapters in `cli/assets/hooks-runtime/` |
+| One hooks descriptor per tool, one merge engine, one host adapter per tool (OpenCode and Kilo share `host-bridge.cjs`) | adding a tool is a descriptor and a payload fixture; adapters in `cli/assets/hooks-runtime/` |
 
 ## Machine claims lock
 

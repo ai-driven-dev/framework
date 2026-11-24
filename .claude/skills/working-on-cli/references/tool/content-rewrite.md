@@ -1,6 +1,6 @@
 # Content rewrite
 
-`linkSyntax: LinkSyntax` is declared by the profile (`domain/profile.ts`, `contract/tool-profile.ts`): an ordered list of `{ from, to }` rules, as data. Every markdown file that reaches a tool's tree is read through it by `toolLinks` and `applyLinkSyntax` (`translate/domain/rules/links.ts`, `tools/contract/link-syntax.ts`); any other file is carried byte for byte (`isProse` in `translate/domain/plugin-paths.ts`).
+`linkSyntax: LinkSyntax` is declared by the profile (`domain/profile.ts`, `contract/tool-profile.ts`): an ordered list of `{ from, to }` rules, as data. Every markdown file that reaches a tool's tree is read through it by `toolLinks` and `applyLinkSyntax` (`translate/domain/rules/links.ts`, `shared/domain/materialization/link-syntax.ts`); any other file is carried byte for byte (`isProse` in `translate/domain/plugin-paths.ts`).
 
 ## Callers
 

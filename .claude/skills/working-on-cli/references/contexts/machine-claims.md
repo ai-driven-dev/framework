@@ -11,7 +11,7 @@ Which projects still need what lives at machine scope (shared framework source, 
 
 ## Suppliers
 
-- `shared/` only: errors, the error describer, `Logger`, `Lock`, `FileReader`, `FileWriter`, `VersionReader`, scope, tool, `aidd-layout`, paths. No edge in `ALLOWED`.
+- `shared/` only: errors, the error describer, `Logger`, `Lock`, `FileReader`, `FileWriter`, scope, tool, `aidd-layout`, paths. No edge in `ALLOWED`.
 
 ## Never
 

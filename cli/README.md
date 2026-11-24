@@ -35,7 +35,7 @@ Check: `aidd --version`.
 `--global` installs for the machine instead, and writes nothing under the project.
 `--provider` runs the main session and the framework's agents on that provider's models, reports which model each runs on, and `--provider none` undoes it.
 
-The model ids are pinned in [`agent-models.ts`](src/contexts/tools/domain/models/agent-models.ts), checked against each provider's model page on 2026-11-04. When a provider ships or retires a model, update that file, the table in [the agent guide](../docs/SUBAGENTS.md#-models), and the tests that name the ids.
+The model ids are pinned in [`agent-models.ts`](src/contexts/tools/domain/models/agent-models.ts), checked against each provider's model page. When a provider ships or retires a model, update that file, the table in [the agent guide](../docs/SUBAGENTS.md#-models), and the tests that name the ids.
 
 | Command | Lands in |
 | --- | --- |
@@ -199,6 +199,7 @@ The token resolves from the first hit:
 | `AIDD_USER_CONFIG_DIR` | Relocates the user config directory, credentials included |
 | `XDG_CONFIG_HOME` | Names the config root when `AIDD_USER_CONFIG_DIR` is unset |
 | `AIDD_SKIP_UPDATE_CHECK` | `1` skips the self-update check before a command |
+| `AIDD_VERBOSE` | `true` turns on verbose output, as `--verbose` does |
 
 ## Where things live
 

@@ -5,7 +5,7 @@ What a tool declares: where its files land, how it takes plugins, what its plugi
 ## Ports
 
 - `ToolCatalog` (`contract/tool-catalog.ts`): the registered tools, asked by id or walked in a named order; `wireTools()` in `src/composition/contexts/tools.ts` builds it from `REGISTERED_PROFILES` in `src/composition/tool-profiles/index.ts`.
-- `AiToolProfile`, `IdeToolProfile` (`contract/tool-profile.ts`) and `ToolBuildContract` (`contract/build-contract.ts`): the answers a caller asks.
+- `AiToolProfile`, `IdeToolProfile` (`contract/tool-profile.ts`) and `ToolBuildContract` (`shared/domain/materialization/build-contract.ts`): the answers a caller asks.
 
 ## Rules
 
