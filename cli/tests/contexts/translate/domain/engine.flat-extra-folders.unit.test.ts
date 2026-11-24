@@ -34,14 +34,28 @@ function contract(): ToolBuildContract {
   };
 }
 
-function flatBuild(files: Record<string, string>) {
+function flatBuild(files: Record<string, string>, over: Partial<ToolBuildContract> = {}) {
   return translate(aCanon("plug", files), {
     kind: "build",
     mode: "flat",
     outDir: "/out",
-    contract: contract(),
+    contract: { ...contract(), ...over },
   });
 }
+
+/** A tool that carries MCP in its config artifact, with no MCP artifact of its own. */
+const CONFIG_ONLY: Partial<ToolBuildContract> = {
+  artifacts: {
+    ...contract().artifacts,
+    mcp: { supported: false, reason: "carried by the config artifact" },
+  },
+  configArtifact: {
+    reads: () => [],
+    probes: () => [],
+    assets: { tool: "kilo", names: [] },
+    emit: () => [],
+  },
+};
 
 const FILES = {
   ".mcp.json": MCP,
@@ -69,5 +83,11 @@ describe("the folders a flat build's commands name", () => {
       (file) => file.relativePath === ".stub/plug.hooks.json"
     );
     expect(own?.content).toContain("|./plug/scripts/check.sh");
+  });
+
+  it("copies the folder an MCP command names for a tool that carries MCP in its config", () => {
+    const built = flatBuild(FILES, CONFIG_ONLY);
+    expect(JSON.stringify(built.mcp?.servers)).toContain("/out/plug/bin/server.js");
+    expect(built.files.map((file) => file.relativePath)).toContain("plug/bin/server.js");
   });
 });

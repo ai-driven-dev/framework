@@ -3,6 +3,7 @@ import type { ReadonlyNoticeList } from "../../../shared/domain/materialization/
 import type { PluginDistribution } from "../../../shared/domain/plugin/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../shared/domain/plugin/plugin-translation-skip.js";
 import { PLUGIN_HOOKS_RELATIVE } from "./canon-format.js";
+import { flatFoldsMcp } from "./flat-layout.js";
 import { flatOwnHooksFile } from "./layouts/build-flat.js";
 import { buildPlans } from "./layouts/build-layout.js";
 import { installPlan } from "./layouts/install-layout.js";
@@ -136,9 +137,7 @@ function flatMcpOf(
   dist: PluginDistribution,
   { contract, outDir }: Extract<TranslateLayout, { kind: "build" }>
 ): PluginMcp | null {
-  const { mcp } = contract.artifacts;
-  const foldsMcp = mcp.supported && mcp.mcpServersKey !== undefined;
-  return foldsMcp || contract.configArtifact ? flatMcp(dist, { contract, outDir }) : null;
+  return flatFoldsMcp(contract) ? flatMcp(dist, { contract, outDir }) : null;
 }
 
 function hooksManifestOf(dist: PluginDistribution): string | null {

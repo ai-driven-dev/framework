@@ -14,6 +14,7 @@ import { PLUGIN_HOOKS_RELATIVE } from "../canon-format.js";
 import {
   flatAgentPath,
   flatCommandFolders,
+  flatFoldsMcp,
   flatLinkTarget,
   mergeFlatHooks,
 } from "../flat-layout.js";
@@ -40,10 +41,10 @@ export function buildFlatPlans(
 /** The folders a plugin's MCP and hook commands name that the tool has no place for, copied whole
  * under the plugin's name: only those, never every extra folder. */
 function flatCommandFiles(canon: PluginDistribution, contract: ToolBuildContract): ComponentPlan[] {
-  const { hooks, mcp } = contract.artifacts;
+  const { hooks } = contract.artifacts;
   const plugin = canon.manifest.name;
   const commands = [
-    ...(mcp.supported ? canon.components.mcp : []),
+    ...(flatFoldsMcp(contract) ? canon.components.mcp : []),
     ...(hooks.supported ? canon.components.hooks.filter(isHooksManifest) : []),
   ];
   const folders = new Set(
