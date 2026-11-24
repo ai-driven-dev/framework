@@ -146,7 +146,6 @@ for (const toolId of [SYNTHETIC_NATIVE_TOOL]) {
                   syntheticNativeFamilyCatalog().toolId(raw)
                 );
           },
-          loadIfReadable: async () => null,
           save: (manifest) => f.repo.save(manifest),
           delete: () => f.repo.delete(),
           loadRecords: () => f.repo.loadRecords(),

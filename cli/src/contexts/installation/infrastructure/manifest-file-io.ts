@@ -80,20 +80,16 @@ export abstract class ManifestFile {
     return manifest;
   }
 
-  /** `load`, an unreadable manifest answered as none. A split that could not be written is not
-   * unreadable: answered as none, a caller would write a fresh manifest over the v8 one. */
-  async loadIfReadable(): Promise<Manifest | null> {
-    return this.load().catch(noneUnlessMigrationFailed);
-  }
-
   async save(manifest: Manifest): Promise<void> {
     await this.splitIfV8();
     await this.write(manifest);
   }
 
-  /** Splits a v8 document before the manifest is written over it. */
+  /** Splits a v8 document before the manifest is written over it. A manifest that cannot be read
+   * is written over; a split that could not be written is not, or a fresh manifest would replace
+   * the v8 one. */
   private async splitIfV8(): Promise<void> {
-    await this.loadIfReadable();
+    await this.load().catch(noneUnlessMigrationFailed);
   }
 
   private async writeSplit(manifest: Manifest, records: ToolRecords): Promise<void> {
@@ -118,12 +114,14 @@ function failNamed(error: unknown, path: string): never {
     throw new ManifestUnavailableError("manifest-corrupted", {
       cause: error,
       detail: error.detail,
+      path,
     });
   }
   if (error instanceof InvalidManifestToolIdError) {
     throw new ManifestUnavailableError("manifest-corrupted", {
       cause: error,
       detail: `tools.${error.key}: unknown tool id.`,
+      path,
     });
   }
   if (isErrnoException(error) && error.syscall !== undefined && error.code !== undefined) {

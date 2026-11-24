@@ -22,14 +22,6 @@ describe("storing a project manifest on disk", () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  describe("loading a manifest that may be unreadable", () => {
-    it("answers the manifest when it is readable", async () => {
-      await adapter.save(Manifest.create());
-
-      expect(await adapter.loadIfReadable()).not.toBeNull();
-    });
-  });
-
   describe("deleting a manifest", () => {
     it("prunes empty .aidd/ directory after manifest deletion", async () => {
       const manifest = Manifest.create();

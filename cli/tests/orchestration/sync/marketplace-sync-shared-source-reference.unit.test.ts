@@ -323,7 +323,7 @@ class UnloadableManifestRepository extends InMemoryManifestRepository {
   }
 }
 
-describe("a project with no manifest to sync", () => {
+describe("a project with no readable manifest to sync", () => {
   it("returns the empty result and drives no tool when there is no manifest", async () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, frameworkMarketplace());
@@ -352,7 +352,7 @@ describe("a project with no manifest to sync", () => {
     expect(activator.addedMarketplaces).toStrictEqual([]);
   });
 
-  it("returns the empty result when the manifest cannot be loaded", async () => {
+  it("refuses a manifest that cannot be loaded", async () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, frameworkMarketplace());
     const useCase = marketplaceSync({
@@ -365,16 +365,8 @@ describe("a project with no manifest to sync", () => {
       ensureBuilt: fakeEnsureBuiltMarketplace(),
     });
 
-    const result = await useCase.execute({
-      projectRoot: PROJECT_ROOT,
-    });
-
-    expect(result).toStrictEqual({
-      activated: [],
-      binaryMissing: [],
-      warnings: [],
-      errors: [],
-      failed: false,
-    });
+    await expect(useCase.execute({ projectRoot: PROJECT_ROOT })).rejects.toThrow(
+      "manifest.json is not valid JSON"
+    );
   });
 });

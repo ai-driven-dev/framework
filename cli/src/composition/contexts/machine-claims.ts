@@ -135,11 +135,11 @@ export function withRecordsBeside<R extends ManifestRepository>(
 ): R & ScopeRecordsRepository {
   return Object.assign(repository, {
     loadRecords: async () => {
-      await repository.loadIfReadable();
+      await repository.load();
       return records.load();
     },
     saveRecords: async (saved: MachineRecords) => {
-      await repository.loadIfReadable();
+      await repository.load();
       await records.save(saved);
     },
   });

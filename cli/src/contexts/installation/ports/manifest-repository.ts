@@ -9,9 +9,6 @@ export interface ManifestRepository {
    * `ManifestUnreadableError` for a file the system refuses to read, and the version error for a
    * version this CLI does not read. */
   load(): Promise<Manifest | null>;
-  /** `load`, with any failure to read or parse answered as none, for a best-effort caller that
-   * treats an unreadable manifest as absent. */
-  loadIfReadable(): Promise<Manifest | null>;
   save(manifest: Manifest): Promise<void>;
   /** Removes the manifest and the records kept beside it. */
   delete(): Promise<void>;

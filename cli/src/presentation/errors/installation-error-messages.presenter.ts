@@ -49,7 +49,8 @@ export const INSTALLATION: MessagesOf<InstallationOwners> = {
     "The manifest is unchanged; run the command again once the file can be written.",
   "manifest-missing": () => "No AIDD manifest found. Run `aidd setup` to initialize your project.",
   "manifest-corrupted": (error) =>
-    `Manifest is corrupted (${error.detail ?? "invalid JSON or invalid data"}). Run \`aidd clean --force\` and re-initialize.`,
+    `Manifest${error.path === undefined ? "" : ` ${error.path}`} is corrupted (${error.detail ?? "invalid JSON or invalid data"}). ` +
+    "Delete the file, then run `aidd setup` to re-initialize.",
   "manifest-unreadable": (error) =>
     `Cannot read the manifest ${error.path} (${error.reason}). Check that the file is readable, then run the command again.`,
   "missing-plugin-metadata": () =>

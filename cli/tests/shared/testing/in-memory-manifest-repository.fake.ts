@@ -28,10 +28,6 @@ export class InMemoryManifestRepository
     this.records = new Map(records);
   }
 
-  async loadIfReadable(): Promise<Manifest | null> {
-    return this.load().catch(() => null);
-  }
-
   async loadRecords(): Promise<ToolRecords> {
     return new Map(this.records);
   }

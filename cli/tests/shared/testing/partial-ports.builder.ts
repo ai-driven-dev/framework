@@ -32,7 +32,6 @@ export function manifestRepositoryLoading(
   return {
     path: "manifest.json",
     load,
-    loadIfReadable: refuse("manifestRepo.loadIfReadable"),
     save: refuse("manifestRepo.save"),
     loadRecords: async () => new Map(),
     saveRecords: refuse("manifestRepo.saveRecords"),

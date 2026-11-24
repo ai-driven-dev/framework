@@ -24,14 +24,6 @@ describe("storing the user manifest on disk", () => {
     await rm(userConfigDir, { recursive: true, force: true });
   });
 
-  describe("loading a manifest that may be unreadable", () => {
-    it("answers the manifest when it is readable", async () => {
-      await adapter.save(Manifest.create());
-
-      expect(await adapter.loadIfReadable()).not.toBeNull();
-    });
-  });
-
   describe("a save the atomic writer fails", () => {
     it("keeps the old JSON", async () => {
       const baseline = Manifest.create();

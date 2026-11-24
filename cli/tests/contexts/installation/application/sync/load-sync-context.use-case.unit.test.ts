@@ -4,6 +4,7 @@ import {
   type LoadSyncContextRequest,
   syncScopesOf,
 } from "../../../../../src/contexts/installation/application/sync/load-sync-context.use-case.js";
+import { ManifestUnavailableError } from "../../../../../src/contexts/installation/contract/installation.error.js";
 import type { ToolRecords } from "../../../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { DeclaredMarketplace } from "../../../../../src/contexts/installation/ports/marketplace-sources.js";
@@ -138,11 +139,12 @@ describe("loading the context of a sync", () => {
     expect((await project.load())?.getInstalledToolIds()).toContain(TOOL.codex);
   });
 
-  it("treats an unreadable manifest as none", async () => {
-    const { load, project } = setup();
-    vi.spyOn(project, "load").mockRejectedValue(new Error("corrupt"));
+  it("refuses a corrupted manifest by name instead of answering nothing to restore", async () => {
+    const fixture = setup();
+    const corrupted = new ManifestUnavailableError("manifest-corrupted");
+    vi.spyOn(fixture.project, "load").mockRejectedValue(corrupted);
 
-    expect(await load.execute(request())).toBeNull();
+    await expect(fixture.load.execute(request())).rejects.toBe(corrupted);
   });
 
   describe("recreating the framework", () => {

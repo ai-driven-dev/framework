@@ -62,7 +62,7 @@ export class LoadSyncContext {
     const { projectRoot } = request;
     const { manifestRepo, records: scopeRecords } = this.deps.scopes(request.scope);
     const [manifest, initialMarketplaces] = await Promise.all([
-      manifestRepo.loadIfReadable(),
+      manifestRepo.load(),
       this.deps.marketplaceRegistry.list(projectRoot),
     ]);
     if (manifest === null) return null;

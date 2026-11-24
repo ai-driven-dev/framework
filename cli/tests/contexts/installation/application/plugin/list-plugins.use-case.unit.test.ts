@@ -26,7 +26,6 @@ function makeManifestRepository(manifest: Manifest): ManifestRepository & ScopeR
   return {
     path: "/test-project/.aidd/manifest.json",
     load: async () => manifest,
-    loadIfReadable: async () => null,
     save: async () => {},
     loadRecords: async () => new Map(),
     saveRecords: async () => {},

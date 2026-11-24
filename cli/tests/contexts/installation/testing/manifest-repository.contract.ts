@@ -184,7 +184,7 @@ export function describeManifestFileContract(
       await expect(subject.repository.load()).rejects.toThrow(saying(/5\.2\.2.*clean --force/));
     });
 
-    it("names a corrupted document as a corrupted manifest, and reads it as none when asked to", async () => {
+    it("names a corrupted document as a corrupted manifest", async () => {
       await write('{"version": 9, "tools": {');
 
       const failure = await subject.repository.load().catch((e: unknown) => e);
@@ -195,7 +195,6 @@ export function describeManifestFileContract(
         detail: expect.stringContaining(`${subject.manifestPath} is not valid JSON`),
         cause: expect.any(InvalidManifestDataError),
       });
-      expect(await subject.repository.loadIfReadable()).toBeNull();
     });
 
     it("names a document of the wrong shape as a corrupted manifest", async () => {
@@ -315,7 +314,7 @@ export function describeManifestFileContract(
         });
 
         await expect(failing.load()).rejects.toThrow(ManifestMigrationError);
-        await expect(failing.loadIfReadable()).rejects.toThrow(ManifestMigrationError);
+        await expect(failing.save(aManifest().build())).rejects.toThrow(ManifestMigrationError);
         expect(await readFile(subject.manifestPath, "utf-8")).toBe(before);
 
         await subject.repository.load();
