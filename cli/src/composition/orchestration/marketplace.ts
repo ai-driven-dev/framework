@@ -109,7 +109,6 @@ function wireProjectHostWithdrawal(base: Base, inst: Installation) {
       wireCleanMachine(base).claims,
       new ListMarketplaces(base.marketplaceRegistry)
     ),
-    aiToolIds: base.tools.idsInCanonicalOrder("ai"),
     records: recordsOf(base.manifestRepo),
   });
 }
