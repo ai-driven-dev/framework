@@ -9,6 +9,8 @@
  * `hooks-runtime-<host>.integration.test.ts`.
  */
 import { spawnSync } from "node:child_process";
+import { rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -17,6 +19,8 @@ import {
   given,
   HOSTS,
   load,
+  NOTES,
+  output,
   printed,
   RUNTIME,
   read,
@@ -42,19 +46,119 @@ describe("Antigravity CLI", () => {
     });
   });
 
-  it("reads a payload naming a tool call as no event: no tool event is delivered to it (derived from the captured SessionStart)", () => {
-    const { payload } = sample("antigravity-SessionStart.json", 0);
+  describe("on a tool or stop event, which the payload does not name and the wrapper does", () => {
+    // Payloads shaped like the measured ones: `toolCall.name` and `toolCall.args`, `Path` and
+    // `Content` for write_file, `CommandLine` for run_command. The fixtures say they are derived.
+    const { payload: stopPayload } = sample("antigravity-Stop.json", 0);
+    const conversationId = `agy-${process.pid}-${Date.now()}`;
+    const stopMarker = join(tmpdir(), `aidd-agy-stop-${conversationId}`);
+    const stop = { ...stopPayload, conversationId };
+    const written = sample("antigravity-PostToolUse.json", 0).payload;
+    const ran = sample("antigravity-PostToolUse.json", 1).payload;
 
-    expect(read("antigravity", { ...payload, toolCall: { name: "write_to_file" } }).event).toBe(
-      undefined
-    );
+    const as = (hookEvent: string, body: Record<string, unknown>) => {
+      process.env.AIDD_HOOK_EVENT = hookEvent;
+      return read("antigravity", body);
+    };
+
+    afterEach(() => {
+      delete process.env.AIDD_HOOK_EVENT;
+      rmSync(stopMarker, { force: true });
+    });
+
+    it("reads PostToolUse of write_file as the whole file it wrote", () => {
+      const { event } = as("PostToolUse", written);
+
+      expect([event?.event, event?.files, event?.command]).toStrictEqual([
+        "PostToolUse",
+        [{ path: NOTES, content: "hello\n", written: "hello\n" }],
+        undefined,
+      ]);
+    });
+
+    it("reads PostToolUse of run_command as its command", () => {
+      const { event } = as("PostToolUse", ran);
+
+      expect([event?.event, event?.files, event?.command]).toStrictEqual([
+        "PostToolUse",
+        [],
+        "echo hi",
+      ]);
+    });
+
+    it("reads PostToolUse of another tool as touching no file", () => {
+      const { event } = as("PostToolUse", {
+        ...ran,
+        toolCall: { name: "view_file", args: { Path: "notes.md" } },
+      });
+
+      expect([event?.files, event?.command]).toStrictEqual([[], undefined]);
+    });
+
+    it("reads PreToolUse as no event: no framework script acts before a tool", () => {
+      expect(as("PreToolUse", ran).event).toBe(undefined);
+    });
+
+    it("prints nothing for a PostToolUse answer: agy takes no context from it", () => {
+      const { adapter } = as("PostToolUse", ran);
+      adapter.answer({ level: 2, text: "fix it" });
+
+      expect(printed).toStrictEqual([]);
+    });
+
+    it("continues the turn at Stop with the text as the reason", () => {
+      const { adapter, event } = as("Stop", stop);
+      adapter.continueTurn("fix it");
+
+      expect([event?.event, event?.stopActive, output()]).toStrictEqual([
+        "Stop",
+        false,
+        { decision: "continue", reason: "fix it" },
+      ]);
+    });
+
+    it("answers a Stop by continuing the turn too", () => {
+      const { adapter } = as("Stop", stop);
+      adapter.answer({ level: 1, text: "fix it" });
+
+      expect(output()).toStrictEqual({ decision: "continue", reason: "fix it" });
+    });
+
+    it("continues once: the Stop that ends the continuation is active and continues nothing", () => {
+      as("Stop", stop).adapter.continueTurn("fix it");
+      restoreHostIo();
+      const { adapter, event } = as("Stop", stop);
+      adapter.continueTurn("fix it");
+
+      expect([event?.stopActive, printed]).toStrictEqual([true, []]);
+    });
+
+    it("continues again on the next turn", () => {
+      as("Stop", stop).adapter.continueTurn("fix it");
+      restoreHostIo();
+      as("Stop", stop).adapter.continueTurn("fix it");
+      restoreHostIo();
+      const { adapter, event } = as("Stop", stop);
+      adapter.continueTurn("fix it");
+
+      expect([event?.stopActive, output()]).toStrictEqual([
+        false,
+        { decision: "continue", reason: "fix it" },
+      ]);
+    });
+
+    it("never continues a Stop that names no conversation", () => {
+      const { adapter, event } = as("Stop", { ...stop, conversationId: undefined });
+      adapter.continueTurn("fix it");
+
+      expect([event, printed]).toStrictEqual([undefined, []]);
+    });
   });
 
-  it("prints nothing for any answer: what it hands the model was never seen", () => {
+  it("prints nothing for a SessionStart answer: what it hands the model was never seen", () => {
     const { payload } = sample("antigravity-SessionStart.json", 0);
     const { adapter } = read("antigravity", payload);
     adapter.answer({ level: 2, text: "x" });
-    adapter.continueTurn("x");
 
     expect(printed).toStrictEqual([]);
   });

@@ -6,11 +6,13 @@ import { toBase64 } from "../formats/base64.js";
 import { PLUGIN_HOOKS_SOURCE } from "../formats/hooks/descriptor.js";
 
 // The host runs a handler from its own directory under the project and requires JSON stdout even
-// for a silent hook.
+// for a silent hook. Its payload names no event, so the wrapper names it to the command in
+// `AIDD_HOOK_EVENT`. A silent PreToolUse is `allow`: an empty answer denies the tool call.
 const JSON_RESPONSE =
-  "const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});" +
+  "const e=process.argv[1];" +
+  "const p=require('node:child_process').spawn(Buffer.from(process.argv[2],'base64').toString(),{shell:true,cwd:'..',env:{...process.env,AIDD_HOOK_EVENT:e},stdio:['inherit','pipe','inherit']});" +
   "let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});" +
-  "p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});";
+  "p.on('close',c=>{if(empty)process.stdout.write(e==='PreToolUse'?JSON.stringify({decision:'allow'}):'{}');process.exitCode=c??1});";
 
 type NamedHook = {
   enabled?: boolean;
@@ -41,10 +43,10 @@ export function wrappedCommandHooksScriptPath(
   return genericFlatHooksScriptPath(target.descriptor.flat.scriptsDir, pluginName, rest);
 }
 
-function toHandler(hook: ProjectHookEntry): ProjectHookEntry {
+function toHandler(hook: ProjectHookEntry, event: string): ProjectHookEntry {
   return {
     type: "command",
-    command: `node -e "${JSON_RESPONSE}" ${toBase64(hook.command)}`,
+    command: `node -e "${JSON_RESPONSE}" ${event} ${toBase64(hook.command)}`,
     timeout: hook.timeout,
   };
 }
@@ -66,7 +68,9 @@ function convert(
       warnings.push(`unmapped event '${event}' skipped`);
       continue;
     }
-    handlers[event] = groups.flatMap((group) => (group.hooks ?? []).map(toHandler));
+    handlers[event] = groups.flatMap((group) =>
+      (group.hooks ?? []).map((hook) => toHandler(hook, event))
+    );
   }
   return { handlers, warnings };
 }

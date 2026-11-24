@@ -27,7 +27,7 @@ function parse(content: string): Record<string, Record<string, unknown[]>> {
 
 describe("antigravity's project hooks format", () => {
   describe("when plugin hooks are merged", () => {
-    it("writes one key named after the plugin, its handlers directly under SessionStart, run from the repo root", () => {
+    it("writes one key named after the plugin, its handlers directly under SessionStart", () => {
       const { content, warnings } = format.merge(null, MEMORY_HOOKS, "aidd-context");
 
       expect(parse(content)).toEqual({
@@ -103,26 +103,50 @@ describe("antigravity's project hooks format", () => {
       ]);
     });
 
-    it("skips an event other than SessionStart with a warning naming it", () => {
-      const telemetry = JSON.stringify({
-        hooks: {
-          SessionStart: [{ hooks: [{ type: "command", command: "node x.cjs start" }] }],
-          PostToolUse: [{ hooks: [{ type: "command", command: "node x.cjs tool" }] }],
-        },
+    it("relays the tool and stop events agy fires, under their own names", () => {
+      const all = JSON.stringify({
+        hooks: Object.fromEntries(
+          ["SessionStart", "PreToolUse", "PostToolUse", "Stop"].map((event) => [
+            event,
+            [{ hooks: [{ type: "command", command: "node x.cjs" }] }],
+          ])
+        ),
       });
 
-      const { content, warnings } = format.merge(null, telemetry, "aidd-telemetry");
+      const { content, warnings } = format.merge(null, all, "aidd-dev");
 
-      expect(Object.keys(parse(content)["aidd-telemetry"])).toEqual(["SessionStart"]);
-      expect(warnings).toEqual(["unmapped event 'PostToolUse' skipped"]);
+      expect(Object.keys(parse(content)["aidd-dev"])).toEqual([
+        "SessionStart",
+        "PreToolUse",
+        "PostToolUse",
+        "Stop",
+      ]);
+      expect(warnings).toEqual([]);
     });
 
+    it.each(["UserPromptSubmit", "SubagentStop", "SessionEnd"])(
+      "skips %s, which agy never fires, with a warning naming it",
+      (event) => {
+        const hooks = JSON.stringify({
+          hooks: {
+            SessionStart: [{ hooks: [{ type: "command", command: "node x.cjs start" }] }],
+            [event]: [{ hooks: [{ type: "command", command: "node x.cjs" }] }],
+          },
+        });
+
+        const { content, warnings } = format.merge(null, hooks, "aidd-telemetry");
+
+        expect(Object.keys(parse(content)["aidd-telemetry"])).toEqual(["SessionStart"]);
+        expect(warnings).toEqual([`unmapped event '${event}' skipped`]);
+      }
+    );
+
     it("adds no key for a plugin with no event it maps", () => {
-      const onlyStop = JSON.stringify({
-        hooks: { Stop: [{ hooks: [{ type: "command", command: "node x.cjs" }] }] },
+      const onlyEnd = JSON.stringify({
+        hooks: { SessionEnd: [{ hooks: [{ type: "command", command: "node x.cjs" }] }] },
       });
 
-      const { content } = format.merge(USER_HOOKS, onlyStop, "aidd-telemetry");
+      const { content } = format.merge(USER_HOOKS, onlyEnd, "aidd-telemetry");
 
       expect(Object.keys(parse(content))).toEqual(["lint"]);
     });

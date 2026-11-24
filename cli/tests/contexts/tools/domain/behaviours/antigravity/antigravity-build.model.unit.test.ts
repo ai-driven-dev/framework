@@ -135,13 +135,13 @@ describe("building Antigravity's flat contract", () => {
   it("prefixes a hooks warning with antigravity", () => {
     const { hooksFile } = supported(present(antigravity.buildContracts.flat)().artifacts.hooks);
     const incoming = JSON.stringify({
-      hooks: { Stop: [{ hooks: [{ type: "command", command: "node x.cjs" }] }] },
+      hooks: { SessionEnd: [{ hooks: [{ type: "command", command: "node x.cjs" }] }] },
     });
 
     expect(
       hooksFile?.merge(null, { json: incoming, plugin: "aidd-dev", locate: (path) => path })
         .warnings
-    ).toEqual(["antigravity: unmapped event 'Stop' skipped"]);
+    ).toEqual(["antigravity: unmapped event 'SessionEnd' skipped"]);
   });
 
   it.each(["mcp"] as const)("declares %s unsupported", (kind) => {
