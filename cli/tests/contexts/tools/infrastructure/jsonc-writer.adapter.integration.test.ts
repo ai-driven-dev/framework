@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { JsoncWriter } from "../../../../src/shared/infrastructure/json/jsonc-writer.adapter.js";
+import { JsoncWriter } from "../../../../src/contexts/tools/infrastructure/jsonc-writer.adapter.js";
 
 const writer = new JsoncWriter();
 

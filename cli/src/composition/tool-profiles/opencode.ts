@@ -26,11 +26,11 @@ import {
 } from "../../contexts/tools/domain/sections/layout-section.js";
 import { McpConfigPart } from "../../contexts/tools/domain/sections/mcp-section.js";
 import { ModelsSection } from "../../contexts/tools/domain/sections/models-section.js";
+import { JsoncWriter } from "../../contexts/tools/infrastructure/jsonc-writer.adapter.js";
 import {
   type FlatArtifactLayout,
   flatArtifactLayout,
 } from "../../shared/domain/materialization/flat-paths.js";
-import { JsoncWriter } from "../../shared/infrastructure/json/jsonc-writer.adapter.js";
 
 /** OpenCode names an agent after its file, so no `name`; `mode: subagent` keeps it out of
  * the primary agents. V2 reads the effort as the model's `#variant`. */

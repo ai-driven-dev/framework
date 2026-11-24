@@ -32,12 +32,12 @@ import { nativeLayout } from "../../contexts/tools/domain/sections/layout-sectio
 import { manifestSection } from "../../contexts/tools/domain/sections/manifest-section.js";
 import { acceptedPluginMcp } from "../../contexts/tools/domain/sections/mcp-section.js";
 import { ModelsSection } from "../../contexts/tools/domain/sections/models-section.js";
+import { SmolTomlCodec } from "../../contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import {
   type FlatArtifactLayout,
   flatArtifactLayout,
 } from "../../shared/domain/materialization/flat-paths.js";
 import type { LinkSyntax } from "../../shared/domain/materialization/link-syntax.js";
-import { SmolTomlCodec } from "../../shared/infrastructure/smol-toml-codec.adapter.js";
 
 const PLUGIN_MCP = acceptedPluginMcp();
 

@@ -3,7 +3,7 @@ import { CapabilityConfigError } from "../../../../../src/contexts/tools/contrac
 import { buildSections } from "../../../../../src/contexts/tools/domain/profile/declared-sections.js";
 import { McpConfigPart } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
 import { SkillsSection } from "../../../../../src/contexts/tools/domain/sections/skills-section.js";
-import { SmolTomlCodec } from "../../../../../src/shared/infrastructure/smol-toml-codec.adapter.js";
+import { SmolTomlCodec } from "../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 
 const toml = new SmolTomlCodec();
 const at = { directory: ".x/", toolSuffix: ".claude.md", formats: { toml } };

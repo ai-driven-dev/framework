@@ -304,26 +304,6 @@ export function purityViolations(files: Readonly<Record<string, string>>): Viola
   );
 }
 
-/** The tools context holds no adapter: what touches the world for a tool lives in shared
- * infrastructure, and a profile holds the instance as data. */
-export function toolsAdapterViolations(files: Readonly<Record<string, string>>): Violation[] {
-  return Object.keys(files)
-    .filter(
-      (path) =>
-        path.startsWith("src/contexts/tools/") &&
-        (path.includes("/infrastructure/") || path.endsWith(".adapter.ts"))
-    )
-    .map((path) =>
-      violation(
-        "toolsAdapter",
-        path,
-        "is an adapter held by the tools context",
-        "the tools context holds no adapter",
-        "move it to src/shared/infrastructure and hand the instance to the profile as data"
-      )
-    );
-}
-
 const ASSET_IMPORT =
   /^\s*(?:import|export)\b[^"';]*?\bfrom\s*["']([^"']+\.(?:cjs|txt|json|md))["']/gm;
 

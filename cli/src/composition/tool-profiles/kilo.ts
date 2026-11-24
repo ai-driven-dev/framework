@@ -24,11 +24,11 @@ import {
   type McpOutputPathCandidates,
 } from "../../contexts/tools/domain/sections/mcp-section.js";
 import { ModelsSection } from "../../contexts/tools/domain/sections/models-section.js";
+import { JsoncWriter } from "../../contexts/tools/infrastructure/jsonc-writer.adapter.js";
 import {
   type FlatArtifactLayout,
   flatArtifactLayout,
 } from "../../shared/domain/materialization/flat-paths.js";
-import { JsoncWriter } from "../../shared/infrastructure/json/jsonc-writer.adapter.js";
 
 /** Kilo names an agent after its file, reads the effort as the model's `variant`, and passes
  * any unknown key to the model provider, so only its own keys are carried. */

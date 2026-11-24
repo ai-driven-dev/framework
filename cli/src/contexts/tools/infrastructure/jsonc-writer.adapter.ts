@@ -4,7 +4,7 @@ type Path = (string | number)[];
 
 const FORMAT = { formattingOptions: { tabSize: 2, insertSpaces: true } };
 
-/** JSONC through jsonc-parser. Satisfies the tools context's `JsonWriter`  by shape: it edits only
+/** JSONC through jsonc-parser. Satisfies the tools context's `JsonWriter` by shape: it edits only
  * what differs, so the comments and layout a person wrote around it stay. */
 export class JsoncWriter {
   rewrite(current: string, next: Record<string, unknown>): string {

@@ -5,7 +5,7 @@ import {
   mergeJsonUserPrime,
   transformMcpForWin32,
 } from "../../../../../../src/contexts/tools/domain/formats/mcp/mcp-format.js";
-import { SmolTomlCodec } from "../../../../../../src/shared/infrastructure/smol-toml-codec.adapter.js";
+import { SmolTomlCodec } from "../../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 
 const TOML = new SmolTomlCodec();
 

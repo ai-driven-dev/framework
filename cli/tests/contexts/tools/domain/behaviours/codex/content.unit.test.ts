@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { codexSpec } from "../../../../../../src/composition/tool-profiles/codex.js";
 import { defineAiTool } from "../../../../../../src/contexts/tools/domain/profile/define-tool.js";
+import { SmolTomlCodec } from "../../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { applyLinkSyntax } from "../../../../../../src/shared/domain/materialization/link-syntax.js";
-import { SmolTomlCodec } from "../../../../../../src/shared/infrastructure/smol-toml-codec.adapter.js";
 
 const rewriteCodexContent = (text: string) =>
   applyLinkSyntax(text, defineAiTool(codexSpec, { toml: new SmolTomlCodec() }).linkSyntax);

@@ -147,6 +147,7 @@ src/
 │   │   │   ├── models/
 │   │   │   ├── profile/
 │   │   │   └── sections/
+│   │   └── infrastructure/    # the codecs a profile hands its formats: TOML and JSONC
 │   ├── translate/    # canonical source to target-native content
 │   │   ├── application/
 │   │   │   └── sinks/
@@ -200,7 +201,6 @@ src/
     │   ├── plugin/
     │   └── reading/
     ├── infrastructure/    # adapters of the shared ports, wired by composition only
-    │   └── json/
     └── ports/    # technology ports two or more contexts need
 ```
 

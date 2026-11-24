@@ -30,7 +30,6 @@ export type Rule =
   | "controllerBuildsError"
   | "size"
   | "purity"
-  | "toolsAdapter"
   | "domainAsset";
 
 export interface Violation {
