@@ -47,15 +47,14 @@ export class PropagateAiSettingsToIde {
       .aiProfile(aiId)
       .settingsFiles()
       .filter((cap) => cap.requires(ideId));
-    let tracked = [...manifest.getMergeFiles(aiId)];
+    const existingEntries = [...manifest.getMergeFiles(aiId)];
     for (const cap of toMerge) {
       const [entry] = await this.deps.trackedConfigFiles.execute({
         kind: "merge-and-track",
         files: [cap.fileOf(this.resolveCapabilityContent(cap, aiId))],
         projectRoot,
       });
-      tracked = this.replacing(tracked, entry);
-      manifest.updateToolMergeFiles(aiId, tracked);
+      manifest.updateToolMergeFiles(aiId, this.replacing(existingEntries, entry));
       await this.deps.runPostInstallPipeline.execute({ projectRoot, manifest });
     }
   }
