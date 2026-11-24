@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CheckPluginDriftRequest } from "../../../../../src/contexts/installation/application/doctor/check-plugin-drift.use-case.js";
 import { InspectInstallation } from "../../../../../src/contexts/installation/application/doctor/inspect-installation.use-case.js";
-import { LoadManifest } from "../../../../../src/contexts/installation/application/doctor/load-manifest.use-case.js";
 import type { DoctorIssue } from "../../../../../src/contexts/installation/contract/doctor-issue.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
@@ -23,7 +22,7 @@ const answering = (message: string) => ({ execute: async () => [issue(message)] 
 
 function inspectionOver(repo: InMemoryManifestRepository, asked: CheckPluginDriftRequest[] = []) {
   return new InspectInstallation({
-    load: new LoadManifest(repo),
+    manifestRepo: repo,
     tracked: answering("tracked"),
     merge: answering("merge"),
     references: answering("references"),

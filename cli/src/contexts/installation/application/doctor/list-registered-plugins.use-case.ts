@@ -1,8 +1,9 @@
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { ScopeRecords, ToolRecord } from "../../contract/records/scope-records.js";
 import type { RegisteredPlugin, RegisteredPlugins } from "../../contract/registered-plugins.js";
+import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import { requireManifest } from "../shared/require-manifest.js";
 import type { InstallationScope } from "./installation-scope.js";
-import type { LoadManifest } from "./load-manifest.use-case.js";
 
 /** How the expected plugins read a host registration, the host registration's to answer, and
  * the scope's records, read through whoever keeps them. */
@@ -22,10 +23,10 @@ export interface ListRegisteredPluginsRequest extends Pick<InstallationScope, "a
  * assembles the same shape.
  */
 export class ListRegisteredPlugins {
-  constructor(private readonly loadManifest: Pick<LoadManifest, "execute">) {}
+  constructor(private readonly manifestRepo: Pick<ManifestRepository, "load">) {}
 
   async execute(command: ListRegisteredPluginsRequest): Promise<RegisteredPlugins> {
-    const manifest = await this.loadManifest.execute();
+    const manifest = await requireManifest(this.manifestRepo);
     const registered = await command.records.loadRecords();
     const tools: { toolId: ToolId; expectedPlugins: readonly RegisteredPlugin[] }[] = [];
     for (const toolId of manifest.getInstalledToolIds()) {

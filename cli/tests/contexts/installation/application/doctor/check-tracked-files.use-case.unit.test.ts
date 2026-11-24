@@ -3,7 +3,6 @@ import {
   CheckTrackedFiles,
   collectTrackedFiles,
 } from "../../../../../src/contexts/installation/application/doctor/check-tracked-files.use-case.js";
-import { LoadManifest } from "../../../../../src/contexts/installation/application/doctor/load-manifest.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
@@ -43,7 +42,7 @@ async function issuesFor(
   const fs = new InMemoryFileAdapter(
     onDisk === null ? {} : { [`${PROJECT_ROOT}/${FILE}`]: onDisk }
   );
-  const load = new LoadManifest(new InMemoryManifestRepository(manifestTracking(toolId)));
+  const load = new InMemoryManifestRepository(manifestTracking(toolId));
   return new CheckTrackedFiles(load, fs).execute({
     projectRoot: PROJECT_ROOT,
     allowedIds,

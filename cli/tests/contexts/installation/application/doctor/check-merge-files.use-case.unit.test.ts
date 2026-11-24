@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { CheckMergeFiles } from "../../../../../src/contexts/installation/application/doctor/check-merge-files.use-case.js";
-import { LoadManifest } from "../../../../../src/contexts/installation/application/doctor/load-manifest.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
@@ -45,7 +44,7 @@ async function issuesFor(
   const fs = new InMemoryFileAdapter(
     onDisk === null ? {} : { [`${PROJECT_ROOT}/${MERGE_PATH}`]: onDisk }
   );
-  const load = new LoadManifest(new InMemoryManifestRepository(manifestMerging(toolId)));
+  const load = new InMemoryManifestRepository(manifestMerging(toolId));
   return new CheckMergeFiles(load, fs).execute({
     projectRoot: PROJECT_ROOT,
     allowedIds,

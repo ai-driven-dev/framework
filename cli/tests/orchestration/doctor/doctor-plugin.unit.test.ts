@@ -6,7 +6,6 @@ import { CheckPluginDrift } from "../../../src/contexts/installation/application
 import { CheckProjectLayout } from "../../../src/contexts/installation/application/doctor/check-project-layout.use-case.js";
 import { CheckTrackedFiles } from "../../../src/contexts/installation/application/doctor/check-tracked-files.use-case.js";
 import { InspectInstallation } from "../../../src/contexts/installation/application/doctor/inspect-installation.use-case.js";
-import { LoadManifest } from "../../../src/contexts/installation/application/doctor/load-manifest.use-case.js";
 import { DetectPluginDrift } from "../../../src/contexts/installation/application/shared/detect-plugin-drift.use-case.js";
 import type { ScopeRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
@@ -80,27 +79,26 @@ function makeManifestRepo(manifest: Manifest): ManifestRepository & ScopeRecords
 
 function pluginCheck(fs: FileReader, manifest: Manifest): CheckPluginDrift {
   return new CheckPluginDrift(
-    new LoadManifest(makeManifestRepo(manifest)),
+    makeManifestRepo(manifest),
     new DetectPluginDrift(fs, syntheticNativeFamilyCatalog(), homedir)
   );
 }
 
 function makeDoctorUseCase(fs: FileReader, manifest: Manifest): RunDoctor {
   const manifests = makeManifestRepo(manifest);
-  const loadManifest = new LoadManifest(manifests);
   return new RunDoctor(
     {
       inspect: new InspectInstallation({
-        load: loadManifest,
-        tracked: new CheckTrackedFiles(loadManifest, fs),
-        merge: new CheckMergeFiles(loadManifest, fs),
-        references: new CheckFileReferences(loadManifest, fs),
+        manifestRepo: manifests,
+        tracked: new CheckTrackedFiles(manifests, fs),
+        merge: new CheckMergeFiles(manifests, fs),
+        references: new CheckFileReferences(manifests, fs),
         plugin: new CheckPluginDrift(
-          loadManifest,
+          manifests,
           new DetectPluginDrift(fs, syntheticNativeFamilyCatalog(), homedir)
         ),
       }),
-      layout: new CheckProjectLayout(loadManifest, fs, syntheticNativeFamilyCatalog()),
+      layout: new CheckProjectLayout(manifests, fs, syntheticNativeFamilyCatalog()),
       registration: checkRegistrationOver(
         manifests,
         fs,

@@ -1,7 +1,8 @@
 import type { PluginIssueEntry } from "../../contract/doctor-issue.js";
+import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { DetectPluginDrift } from "../shared/detect-plugin-drift.use-case.js";
+import { requireManifest } from "../shared/require-manifest.js";
 import type { InstallationScope } from "./installation-scope.js";
-import type { LoadManifest } from "./load-manifest.use-case.js";
 
 export interface CheckPluginDriftRequest extends InstallationScope {
   pluginName?: string;
@@ -9,13 +10,13 @@ export interface CheckPluginDriftRequest extends InstallationScope {
 
 export class CheckPluginDrift {
   constructor(
-    private readonly loadManifest: LoadManifest,
+    private readonly manifestRepo: Pick<ManifestRepository, "load">,
     private readonly detectPluginDrift: DetectPluginDrift
   ) {}
 
   async execute(command: CheckPluginDriftRequest): Promise<PluginIssueEntry[]> {
     const { projectRoot, allowedIds, pluginName } = command;
-    const manifest = await this.loadManifest.execute();
+    const manifest = await requireManifest(this.manifestRepo);
     const toolIds = manifest
       .getInstalledToolIds()
       .filter((toolId) => allowedIds === null || allowedIds.has(toolId));

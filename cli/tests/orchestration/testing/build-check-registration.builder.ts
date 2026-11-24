@@ -5,7 +5,6 @@ import type { MarketplaceRegistry } from "../../../src/contexts/distribution/por
 import { InspectDeclaredMarketplaces } from "../../../src/contexts/host-registration/application/inspect/inspect-declared-marketplaces.use-case.js";
 import type { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect/inspect-host-registration.use-case.js";
 import { ListRegisteredPlugins } from "../../../src/contexts/installation/application/doctor/list-registered-plugins.use-case.js";
-import { LoadManifest } from "../../../src/contexts/installation/application/doctor/load-manifest.use-case.js";
 import type {
   ScopeRecords,
   ToolRecords,
@@ -25,7 +24,7 @@ export function resolveRegisteredBuildsOver(
   tools: RegisteredCatalog
 ): ResolveRegisteredBuilds {
   return new ResolveRegisteredBuilds(
-    new ListRegisteredPlugins(new LoadManifest(manifests)),
+    new ListRegisteredPlugins(manifests),
     { ...registrationRecordRules, loadRecords: () => manifests.loadRecords() },
     builds,
     tools

@@ -10,7 +10,6 @@ import { CheckProjectLayout } from "../../contexts/installation/application/doct
 import { CheckTrackedFiles } from "../../contexts/installation/application/doctor/check-tracked-files.use-case.js";
 import { InspectInstallation } from "../../contexts/installation/application/doctor/inspect-installation.use-case.js";
 import { ListRegisteredPlugins } from "../../contexts/installation/application/doctor/list-registered-plugins.use-case.js";
-import { LoadManifest } from "../../contexts/installation/application/doctor/load-manifest.use-case.js";
 import type { ManifestRepository } from "../../contexts/installation/ports/manifest-repository.js";
 import type { ScopeRecordsRepository } from "../../contexts/machine-claims/ports/machine-manifest.js";
 import { CheckAuthentication } from "../../orchestration/doctor/check-authentication.use-case.js";
@@ -37,7 +36,7 @@ function registrationCheckOver(base: Base, manifests: ManifestRepository & Scope
   const { fs, tools } = base;
   return new CheckRegistration({
     resolve: new ResolveRegisteredBuilds(
-      new ListRegisteredPlugins(new LoadManifest(manifests)),
+      new ListRegisteredPlugins(manifests),
       recordsOf(manifests),
       new ResolveBuiltMarketplaces({
         fs,
@@ -69,17 +68,16 @@ function registrationCheckOver(base: Base, manifests: ManifestRepository & Scope
 /** The doctor checks and the commands that run them. */
 export function wireDoctor(base: Base, inst: Installation) {
   const { fs, tools } = base;
-  const loadManifest = new LoadManifest(base.manifestRepo);
   const runDoctor = new RunDoctor(
     {
       inspect: new InspectInstallation({
-        load: loadManifest,
-        tracked: new CheckTrackedFiles(loadManifest, fs),
-        merge: new CheckMergeFiles(loadManifest, fs),
-        references: new CheckFileReferences(loadManifest, fs),
-        plugin: new CheckPluginDrift(loadManifest, inst.detectPluginDriftUseCase),
+        manifestRepo: base.manifestRepo,
+        tracked: new CheckTrackedFiles(base.manifestRepo, fs),
+        merge: new CheckMergeFiles(base.manifestRepo, fs),
+        references: new CheckFileReferences(base.manifestRepo, fs),
+        plugin: new CheckPluginDrift(base.manifestRepo, inst.detectPluginDriftUseCase),
       }),
-      layout: new CheckProjectLayout(loadManifest, fs, tools),
+      layout: new CheckProjectLayout(base.manifestRepo, fs, tools),
       registration: registrationCheckOver(base, base.manifestRepo),
       authentication: new CheckAuthentication(base.tokenProvider),
     },
