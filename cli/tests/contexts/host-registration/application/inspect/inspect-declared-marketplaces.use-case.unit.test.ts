@@ -44,9 +44,9 @@ const BUILT_TREE = join("/project", BUILT_CACHE_SUBDIR, "local", "claude");
 function inspect(
   subject: InspectDeclaredMarketplaces,
   marketplaceNames: readonly string[] = [NAME],
-  toolIds: readonly string[] = [TOOL.claude]
+  toolId: string = TOOL.claude
 ) {
-  return subject.execute({ projectRoot: "/project", toolIds, marketplaceNames });
+  return subject.execute({ projectRoot: "/project", toolId, marketplaceNames });
 }
 
 describe("inspecting the marketplaces a tool's machine-local settings declare", () => {
@@ -89,7 +89,7 @@ describe("inspecting the marketplaces a tool's machine-local settings declare", 
   });
 
   it("reports nothing for a tool that keeps no machine-local registration", async () => {
-    const { findings } = await inspect(inspector(), [NAME], [TOOL.vscode]);
+    const { findings } = await inspect(inspector(), [NAME], TOOL.vscode);
 
     expect(findings).toEqual([]);
   });
@@ -117,7 +117,7 @@ describe("inspecting the marketplaces a tool's machine-local settings declare", 
 
       const { stale } = await subject.execute({
         projectRoot: root,
-        toolIds: [TOOL.claude],
+        toolId: TOOL.claude,
         marketplaceNames: [],
       });
 
