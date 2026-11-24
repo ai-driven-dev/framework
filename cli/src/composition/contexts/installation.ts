@@ -38,13 +38,13 @@ import type { BuiltMaterializationDeps } from "../../contexts/installation/appli
 import { ListPlugins } from "../../contexts/installation/application/plugin/list-plugins.use-case.js";
 import { AssertProjectIntegrationRemovable } from "../../contexts/installation/application/removal/assert-project-integration-removable.use-case.js";
 import { PlanProjectMcpRemoval } from "../../contexts/installation/application/removal/plan-project-mcp-removal.use-case.js";
+import { RemoveEnabledPlugin } from "../../contexts/installation/application/removal/project/remove-enabled-plugin.use-case.js";
 import { RemoveProjectHooks } from "../../contexts/installation/application/removal/remove-project-hooks.use-case.js";
 import { RemoveProjectIntegration } from "../../contexts/installation/application/removal/remove-project-integration.use-case.js";
 import { AssertProjectHooksRemovable } from "../../contexts/installation/application/shared/assert-project-hooks-removable.use-case.js";
 import { AssertProjectHooksUnchanged } from "../../contexts/installation/application/shared/assert-project-hooks-unchanged.use-case.js";
 import { DetectPluginDrift } from "../../contexts/installation/application/shared/detect-plugin-drift.use-case.js";
 import { RemoveRecordedProjectHooks } from "../../contexts/installation/application/shared/remove-recorded-project-hooks.use-case.js";
-import { RemoveEnabledPlugin } from "../../contexts/installation/application/sync/remove-enabled-plugin.use-case.js";
 import { trackedSharedSettings } from "../../contexts/installation/application/sync/tracked-shared-settings.js";
 import { UpdateGitignore } from "../../contexts/installation/application/update-gitignore.use-case.js";
 import type { ProjectSetupState } from "../../contexts/installation/contract/project-setup-state.js";

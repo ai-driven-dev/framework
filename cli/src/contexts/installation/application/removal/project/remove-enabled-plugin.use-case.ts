@@ -1,7 +1,7 @@
-import type { Manifest } from "../../domain/manifest.js";
-import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
-import type { EnabledPluginsSection, PluginPlacement } from "../../ports/tool-sections.js";
-import type { TrackedSharedSettings } from "./tracked-shared-settings.js";
+import type { Manifest } from "../../../domain/manifest.js";
+import type { RecordedPlugin } from "../../../domain/plugins/recorded-plugin.js";
+import type { EnabledPluginsSection, PluginPlacement } from "../../../ports/tool-sections.js";
+import type { TrackedSharedSettings } from "../../sync/tracked-shared-settings.js";
 
 /** The new content of a parsed shared settings file without a plugin's entry, null when it held none. */
 export type WithoutEnabledPlugin = (

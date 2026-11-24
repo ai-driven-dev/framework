@@ -1,8 +1,8 @@
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { LocalIntegrationRemoval } from "../../ports/project-integration-cleanup.js";
 import type { AssertProjectPathWithinRoot } from "../ownership/assert-project-path-within-root.use-case.js";
-import type { RemoveEnabledPlugin } from "../sync/remove-enabled-plugin.use-case.js";
 import type { PlanProjectMcpRemoval } from "./plan-project-mcp-removal.use-case.js";
+import type { RemoveEnabledPlugin } from "./project/remove-enabled-plugin.use-case.js";
 import type { RemoveProjectHooks } from "./remove-project-hooks.use-case.js";
 
 /** What RemoveProjectIntegration is built from. */

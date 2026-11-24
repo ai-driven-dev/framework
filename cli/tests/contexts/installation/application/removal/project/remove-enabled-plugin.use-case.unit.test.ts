@@ -3,15 +3,15 @@ import { describe, expect, it } from "vitest";
 import {
   RemoveEnabledPlugin,
   type WithoutEnabledPlugin,
-} from "../../../../../src/contexts/installation/application/sync/remove-enabled-plugin.use-case.js";
-import { trackedSharedSettings } from "../../../../../src/contexts/installation/application/sync/tracked-shared-settings.js";
-import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
-import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
-import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
-import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
-import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
-import { aManifest } from "../../testing/manifest.builder.js";
+} from "../../../../../../src/contexts/installation/application/removal/project/remove-enabled-plugin.use-case.js";
+import { trackedSharedSettings } from "../../../../../../src/contexts/installation/application/sync/tracked-shared-settings.js";
+import { RecordedPlugin } from "../../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import { FileHash } from "../../../../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../../../src/shared/domain/installation-file.js";
+import { CapturingLogger } from "../../../../../shared/testing/capturing-logger.fake.js";
+import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
+import { aManifest } from "../../../testing/manifest.builder.js";
 
 const ROOT = "/project";
 const PATH = ".claude/settings.json";
