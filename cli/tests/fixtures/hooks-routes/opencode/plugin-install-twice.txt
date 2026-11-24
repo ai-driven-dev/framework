@@ -496,6 +496,8 @@ const continued = new Set();
 export const AiddContextHooks = async (input) => {
   // Stop handlings in flight: `opencode run` exits once the session is idle, so dispose waits.
   let pending = Promise.resolve();
+  // OpenCode keeps delivering events to an instance it disposed once it has created the next one.
+  let disposed = false;
   // SessionStart's own approximation (module doc comment above): fired once here, never
   // per session. Silent on purpose: a memory refresh
   // that breaks OpenCode's own startup is worse than one that never ran.
@@ -513,9 +515,11 @@ export const AiddContextHooks = async (input) => {
   }
   return {
     dispose: async () => {
+      disposed = true;
       await pending;
     },
     event: async ({ event }) => {
+      if (disposed) return;
       try {
         const directory = event?.properties?.directory ?? input.directory;
         // Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
@@ -698,6 +702,8 @@ const continued = new Set();
 export const AiddTelemetryHooks = async (input) => {
   // Stop handlings in flight: `opencode run` exits once the session is idle, so dispose waits.
   let pending = Promise.resolve();
+  // OpenCode keeps delivering events to an instance it disposed once it has created the next one.
+  let disposed = false;
   // SessionStart's own approximation (module doc comment above): fired once here, never
   // per session. Silent on purpose: a memory refresh
   // that breaks OpenCode's own startup is worse than one that never ran.
@@ -715,9 +721,11 @@ export const AiddTelemetryHooks = async (input) => {
   }
   return {
     dispose: async () => {
+      disposed = true;
       await pending;
     },
     event: async ({ event }) => {
+      if (disposed) return;
       try {
         const directory = event?.properties?.directory ?? input.directory;
         // Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
