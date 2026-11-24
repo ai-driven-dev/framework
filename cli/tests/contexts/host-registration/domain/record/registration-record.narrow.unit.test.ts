@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { narrowToMarketplace } from "../../../../../src/contexts/host-registration/application/withdraw/narrow-to-marketplace.js";
 import type { ProjectRegistrationWithdrawal } from "../../../../../src/contexts/host-registration/application/withdraw/withdrawal.js";
+import { narrowToMarketplace } from "../../../../../src/contexts/host-registration/domain/record/registration-record.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 function withdrawalOf(

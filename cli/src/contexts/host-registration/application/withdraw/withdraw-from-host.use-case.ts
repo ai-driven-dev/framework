@@ -2,13 +2,13 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import {
+  narrowToMarketplace,
   readRegistrationRecord,
   recordedRegistrations,
 } from "../../domain/record/registration-record.js";
 import type { HostPorts } from "../../ports/host-ports.js";
 import { proveMarketplaceRemoval } from "../prove-marketplace-removal.js";
 import { throwRefusal } from "../throw-refusal.js";
-import { narrowToMarketplace } from "./narrow-to-marketplace.js";
 import { assertProjectRegistrationsOwned } from "./prove/assert-project-registrations-owned.js";
 import { assertProjectSource } from "./prove/assert-project-source.js";
 import { proveClaimedRef } from "./prove/prove-claimed-ref.js";

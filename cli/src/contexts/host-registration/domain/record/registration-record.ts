@@ -86,6 +86,28 @@ export function recordedRegistrations(data: unknown): RegistrationRecord {
   return readRegistrationRecord(data) ?? NOTHING_RECORDED;
 }
 
+/** The withdrawals reduced to one marketplace by its alias: each tool's record keeps that
+ * marketplace and the refs on its host name, and a tool that never registered it drops out. With
+ * no alias, every withdrawal stays whole. */
+export function narrowToMarketplace<W extends { readonly registrations: RegistrationRecordData }>(
+  withdrawals: readonly W[],
+  alias: string | undefined
+): readonly W[] {
+  if (alias === undefined) return withdrawals;
+  return withdrawals.flatMap((withdrawal) => {
+    const { marketplaces, pluginRefs } = recordedRegistrations(withdrawal.registrations);
+    const kept = marketplaces.filter((registration) => registration.alias === alias);
+    if (kept.length === 0) return [];
+    const refs = pluginRefs.filter((ref) => kept.some((m) => isRefOnHost(ref, m.hostName)));
+    return [
+      {
+        ...withdrawal,
+        registrations: { ...withdrawal.registrations, marketplaces: kept, pluginRefs: refs },
+      },
+    ];
+  });
+}
+
 /** The refs recorded on the host, none when nothing was recorded. */
 export function pluginRefsOf(record: RegistrationRecordData | undefined): readonly string[] {
   return refsIn(record);
