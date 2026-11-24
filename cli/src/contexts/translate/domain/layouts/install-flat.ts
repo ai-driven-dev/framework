@@ -1,4 +1,3 @@
-import { reshapeFrontmatter } from "../../../../shared/domain/markdown.js";
 import { artifactPath } from "../../../../shared/domain/materialization/artifact-path.js";
 import type { SupportedArtifact } from "../../../../shared/domain/materialization/build-contract.js";
 import type {
@@ -14,9 +13,9 @@ import type { ComponentPlan } from "../rules/component-pipeline.js";
 import { flatHookPlans } from "../rules/hook-plans.js";
 import { chainLinks, toolLinks } from "../rules/links.js";
 import type { TranslatedAiTool, TranslatedFlatPlugin } from "../translate-profile.js";
-import { flatAgentPlan } from "./build-flat.js";
+import { flatAgentPlan, flatSkillLinks } from "./build-flat.js";
 import { namedByFolder } from "./build-shared.js";
-import { ruleScopesOf, scopeStated, skillLinksOf } from "./install-flat-rules.js";
+import { prefixCommandName, ruleScopesOf, scopeStated } from "./install-flat-rules.js";
 
 type FlatSection = "agents" | "rules" | "skills";
 
@@ -130,25 +129,6 @@ function agentPlan(file: PluginComponentFile, at: FlatAt): ComponentPlan | null 
   return flatAgentPlan(file, { plugin: at.pluginName, contract, artifact, unshaped: "carry" });
 }
 
-function prefixCommandName(
-  content: string,
-  at: { source: string; prefix: string; pluginName: string }
-): string {
-  return reshapeFrontmatter(content, {
-    frontmatter: (frontmatter) => {
-      const rawName = typeof frontmatter.name === "string" ? frontmatter.name : "";
-      const simpleName = stripCommandPrefix(rawName) || basename(at.source);
-      return { ...frontmatter, name: `${at.prefix}${at.pluginName}:${simpleName}` };
-    },
-  });
-}
-
-function stripCommandPrefix(name: string): string {
-  const match = /^aidd:\d+:(.+)$/.exec(name);
-  if (match) return match[1];
-  return name.slice(name.lastIndexOf(":") + 1);
-}
-
 function hooksSkips(dist: PluginDistribution, { tool, plugins }: FlatTarget): ReadonlySkipList {
   if (dist.components.hooks.length === 0) return [];
   const acceptance = plugins.hooksAcceptance();
@@ -160,4 +140,15 @@ function hooksSkips(dist: PluginDistribution, { tool, plugins }: FlatTarget): Re
     reason: acceptance.reason,
   };
   return [entry];
+}
+
+/** A skill's prose is read as its flat build reads it: links relative to where it lands. */
+export function skillLinksOf(
+  file: PluginComponentFile,
+  placed: { section: string; path: string },
+  at: { tool: TranslatedAiTool; pluginName: string }
+): ComponentPlan["links"] {
+  const flat = at.tool.buildContract("flat");
+  if (placed.section !== "skills" || !isProse(file.relativePath) || flat === null) return undefined;
+  return flatSkillLinks(flat, at.pluginName, placed.path);
 }
