@@ -2,6 +2,7 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import {
+  narrowToMarketplace,
   readRegistrationRecord,
   recordedRegistrations,
 } from "../../domain/record/registration-record.js";
@@ -70,7 +71,11 @@ export class WithdrawFromHost {
         );
         return undefined;
       case "prove-project-registrations":
-        return assertProjectRegistrationsOwned(this.deps, command.withdrawals, command.facts);
+        return assertProjectRegistrationsOwned(
+          this.deps,
+          narrowToMarketplace(command.withdrawals, command.marketplace),
+          command.facts
+        );
       case "withdraw-project-registrations":
         return this.withdrawProject(command);
       case "check-user-hosts":
@@ -88,7 +93,7 @@ export class WithdrawFromHost {
   ): Promise<void> {
     const removed = await withdrawProjectRegistrations(
       this.deps,
-      command.withdrawals,
+      narrowToMarketplace(command.withdrawals, command.marketplace),
       command.facts
     );
     return purgeMarketplaceCaches(this.deps, removed, command.facts.resolveCacheCandidate);

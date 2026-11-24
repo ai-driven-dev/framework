@@ -4,15 +4,18 @@ import type { FileWriter } from "../../../../../shared/ports/file-writer.js";
 import type { PluginPlacement } from "../../../ports/tool-sections.js";
 import { scopeBaseOf } from "../plugin-target-resolution.js";
 
-/** Deletes exactly the paths a plugin's own manifest entry lists, joined to its base dir.
- * Never enumerates the directory or deletes by pattern: only manifest-tracked keys. */
+/** Deletes exactly the paths a plugin's own manifest entry lists, joined to its base dir, and the
+ * directories they leave empty. Never enumerates the directory or deletes by pattern: only
+ * manifest-tracked keys. */
 export async function deleteOldFiles(
   files: ReadonlyMap<string, string>,
   baseDir: string,
   fs: FileWriter
 ): Promise<void> {
   for (const relativePath of files.keys()) {
-    await fs.deleteFile(join(baseDir, relativePath));
+    const path = join(baseDir, relativePath);
+    await fs.deleteFile(path);
+    await fs.deleteEmptyDirectories(dirname(path));
   }
 }
 
@@ -42,12 +45,6 @@ export async function deletePluginFilesForTool(
     projectRoot: projectRoot,
     homedir,
   });
-  const deleted: string[] = [];
-  for (const relativePath of files.keys()) {
-    const fullPath = join(baseDir, relativePath);
-    await fs.deleteFile(fullPath);
-    await fs.deleteEmptyDirectories(dirname(fullPath));
-    deleted.push(relativePath);
-  }
-  return deleted;
+  await deleteOldFiles(files, baseDir, fs);
+  return [...files.keys()];
 }

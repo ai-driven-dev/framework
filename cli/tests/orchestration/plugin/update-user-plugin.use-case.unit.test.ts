@@ -24,7 +24,7 @@ describe("updating a user plugin", () => {
       {
         execute: async (options) => {
           seen = options.machine?.refSelection;
-          return [];
+          return { updated: [], skippedUserScope: [] };
         },
       },
       { execute: async () => ({ apply() {} }) },
@@ -50,7 +50,7 @@ describe("updating a user plugin", () => {
             projectRoot: "/A",
             registrations: undefined,
           });
-          return [];
+          return { updated: [], skippedUserScope: [] };
         },
       },
       {
@@ -83,7 +83,7 @@ describe("updating a user plugin", () => {
         {
           execute: async (options) => {
             seen = options.machine?.afterPreflight;
-            return [];
+            return { updated: [], skippedUserScope: [] };
           },
         },
         { execute: async () => ({ apply() {} }) },

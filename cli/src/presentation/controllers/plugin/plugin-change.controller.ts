@@ -93,10 +93,12 @@ export async function updatePluginsFrom(
     environment,
     options
   );
-  const update =
-    scope === "user" ? container.plugin.updateUserPlugin : container.plugin.updatePlugin;
   const pluginNames = name !== undefined ? [name] : undefined;
-  const updated = await update.execute({ pluginNames, toolIds, projectRoot, scope });
+  const request = { pluginNames, toolIds, projectRoot, scope };
+  const outcome =
+    scope === "user"
+      ? { updated: await container.plugin.updateUserPlugin.execute(request), skippedUserScope: [] }
+      : await container.plugin.updatePlugin.execute(request);
   await reactivate();
-  printPluginsUpdated(output, updated);
+  printPluginsUpdated(output, outcome);
 }

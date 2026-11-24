@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { projectIntegrationOf } from "../../../../../../src/composition/contexts/installation.js";
 import { supersedeExisting } from "../../../../../../src/contexts/installation/application/plugin/add/supersede-existing.js";
 import { DuplicatePluginError } from "../../../../../../src/contexts/installation/contract/installation.error.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { projectIntegrationOver } from "../../../../../shared/testing/project-integration.builder.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 
 function installedManifest(): Manifest {
@@ -30,7 +30,7 @@ describe("when a plugin is already installed", () => {
     const manifest = installedManifest();
 
     const previous = await supersedeExisting(
-      projectIntegrationOf(new InMemoryFileAdapter()).assertIntegration,
+      projectIntegrationOver(new InMemoryFileAdapter()).assertIntegration,
       registeredTools(),
       {
         ...REQUEST,
@@ -48,7 +48,7 @@ describe("when a plugin is already installed", () => {
 
     await expect(
       supersedeExisting(
-        projectIntegrationOf(new InMemoryFileAdapter()).assertIntegration,
+        projectIntegrationOver(new InMemoryFileAdapter()).assertIntegration,
         registeredTools(),
         { ...REQUEST, manifest }
       )

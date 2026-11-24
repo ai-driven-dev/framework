@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { projectIntegrationOf } from "../../../../../src/composition/contexts/installation.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { projectIntegrationOver } from "../../../../shared/testing/project-integration.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import {
   aCursorHooksPlugin,
@@ -31,7 +31,7 @@ describe("removing the hooks a plugin recorded", () => {
       [SCRIPT_PATH]: "installed script",
     });
 
-    const removed = await projectIntegrationOf(fs).removeRecorded.execute(
+    const removed = await projectIntegrationOver(fs).removeRecorded.execute(
       request("installed script")
     );
 
@@ -43,7 +43,7 @@ describe("removing the hooks a plugin recorded", () => {
   it("deletes the hooks file once no entry is left in it", async () => {
     const fs = new InMemoryFileAdapter({ [HOOKS_PATH]: hooksFile(PLUGIN) });
 
-    await projectIntegrationOf(fs).removeRecorded.execute(request());
+    await projectIntegrationOver(fs).removeRecorded.execute(request());
 
     expect(await fs.fileExists(HOOKS_PATH)).toBe(false);
   });
@@ -52,7 +52,7 @@ describe("removing the hooks a plugin recorded", () => {
     const fs = new InMemoryFileAdapter({ [HOOKS_PATH]: hooksFile(OTHER) });
     const plugin = aCursorHooksPlugin();
 
-    const removed = await projectIntegrationOf(fs).removeRecorded.execute({
+    const removed = await projectIntegrationOver(fs).removeRecorded.execute({
       pluginName: PLUGIN,
       provenance: plugin.provenance.projectHooks,
       tool,

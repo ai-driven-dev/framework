@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { projectIntegrationOf } from "../../../../../src/composition/contexts/installation.js";
 import type { PlacePluginRequest } from "../../../../../src/contexts/installation/application/plugin/add/place-plugin.use-case.js";
 import type { AddPluginRequest } from "../../../../../src/contexts/installation/application/plugin/add/plugin-add.js";
 import { AddPluginToProject } from "../../../../../src/contexts/installation/application/plugin/add-plugin-to-project.use-case.js";
@@ -13,6 +12,7 @@ import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plug
 import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import { VersionMismatchError } from "../../../../../src/shared/domain/shared.error.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { projectIntegrationOver } from "../../../../shared/testing/project-integration.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 const PROJECT_ROOT = "/test-project";
@@ -35,7 +35,7 @@ function addToProject() {
   const placed: PlacePluginRequest[] = [];
   const addition = new AddPluginToProject(
     {
-      assertIntegration: projectIntegrationOf(new InMemoryFileAdapter()).assertIntegration,
+      assertIntegration: projectIntegrationOver(new InMemoryFileAdapter()).assertIntegration,
       source: {
         execute: async () => ({ isGithubMarketplace: false, distribution: DISTRIBUTION }),
       },

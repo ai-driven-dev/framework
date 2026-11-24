@@ -10,7 +10,7 @@ import type { Manifest } from "../../domain/manifest.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { LoadDistribution } from "../../ports/plugin/load-plugin-distribution.js";
 import type { BuiltPlacement } from "../materialize/add-plugin-request.js";
-import { placementModeOf } from "../materialize/plugin-placement.js";
+import { deliversHooksToProject, placementModeOf } from "../materialize/plugin-placement.js";
 import { rematerializePlugin } from "../materialize/rematerialize-plugin.js";
 import { isPluginFileAtDesiredState } from "../plugin/files/check-plugin-file-state.js";
 import { deleteOldFiles } from "../plugin/files/delete-plugin-files.js";
@@ -27,10 +27,6 @@ interface ApplyPluginFilesRequest {
   fileFilter?: ((relativePath: string) => boolean) | null;
   /** Overwrite a project hook the user edited after install instead of refusing. */
   force?: boolean;
-}
-
-function deliversHooksToProject(tool: AiToolProfile): boolean {
-  return tool.plugins()?.deliversHooksToProject() ?? false;
 }
 
 /** What ApplyPluginFiles is built from. */

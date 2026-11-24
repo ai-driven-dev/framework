@@ -24,7 +24,10 @@ import {
   marketplaceNamed,
   PROJECT_ROOT,
 } from "../../testing/project-marketplace-removal.builder.js";
-import { projectMarketplaceRemover } from "../../testing/project-marketplace-remover.builder.js";
+import {
+  hostsStub,
+  projectMarketplaceRemover,
+} from "../../testing/project-marketplace-remover.builder.js";
 
 describe("removing a project marketplace", () => {
   it("throws MarketplaceNotFoundError when entry does not exist", async () => {
@@ -292,5 +295,56 @@ describe("which marketplace a removal takes out", () => {
       removedPluginCount: 0,
       orphanCount: 0,
     });
+  });
+});
+
+describe("removing a project marketplace from its hosts", () => {
+  it("withdraws the marketplace from the hosts once it is proven, before its registry entry goes", async () => {
+    const { registry, manifestRepo, fs } = buildUseCase(syntheticCatalog());
+    const steps: string[] = [];
+    const useCase = projectMarketplaceRemover(
+      syntheticCatalog(),
+      removeProjectPluginOf(fs),
+      manifestRepo,
+      registry,
+      new KeepPrompter(),
+      undefined,
+      hostsStub({
+        prove: async (name) => void steps.push(`prove ${name}`),
+        withdraw: async (name) =>
+          void steps.push(
+            `withdraw ${name} while ${(await registry.list(PROJECT_ROOT)).length} registered`
+          ),
+      })
+    );
+    await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
+
+    await useCase.execute({ name: "awesome", projectRoot: PROJECT_ROOT, autoConfirm: true });
+
+    expect(steps).toStrictEqual(["prove awesome", "withdraw awesome while 1 registered"]);
+    expect(await registry.list(PROJECT_ROOT)).toEqual([]);
+  });
+
+  it("leaves everything in place when the hosts refuse the withdrawal", async () => {
+    const { registry, manifestRepo, fs } = buildUseCase(syntheticCatalog());
+    const useCase = projectMarketplaceRemover(
+      syntheticCatalog(),
+      removeProjectPluginOf(fs),
+      manifestRepo,
+      registry,
+      new KeepPrompter(),
+      undefined,
+      hostsStub({
+        prove: async () => {
+          throw new Error("host refuses");
+        },
+      })
+    );
+    await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
+
+    await expect(
+      useCase.execute({ name: "awesome", projectRoot: PROJECT_ROOT, autoConfirm: true })
+    ).rejects.toThrow("host refuses");
+    expect((await registry.list(PROJECT_ROOT)).map((m) => m.name)).toEqual(["awesome"]);
   });
 });

@@ -65,6 +65,7 @@ async function placeForCursor(foundFile: string) {
     marketplace: "aidd-framework",
     previousMcpEntries: new Map(),
     previousProjectHooks: new Map(),
+    previousFiles: new Map(),
   });
   return { deps, logger, manifest };
 }

@@ -1,9 +1,9 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { projectIntegrationOf } from "../../../../../src/composition/contexts/installation.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { projectIntegrationOver } from "../../../../shared/testing/project-integration.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 import {
@@ -34,7 +34,7 @@ describe("removeProjectHooks refuses what it cannot prove", () => {
       const legacy = RecordedPlugin.fromJSON({ ...plugin().toJSON(), projectHooks: undefined });
 
       await expect(
-        projectIntegrationOf(fs).removeHooks.execute({
+        projectIntegrationOver(fs).removeHooks.execute({
           plugin: legacy,
           tool: registeredTools().aiProfile(cursor),
           projectRoot: PROJECT_ROOT,
@@ -65,7 +65,7 @@ describe("removeProjectHooks refuses what it cannot prove", () => {
       });
 
       await expect(
-        projectIntegrationOf(fs).removeHooks.execute({
+        projectIntegrationOver(fs).removeHooks.execute({
           plugin: invalid,
           tool: registeredTools().aiProfile(cursor),
           projectRoot: PROJECT_ROOT,
@@ -102,7 +102,7 @@ describe("removeProjectHooks refuses what it cannot prove", () => {
     });
 
     await expect(
-      projectIntegrationOf(fs).removeHooks.execute({
+      projectIntegrationOver(fs).removeHooks.execute({
         plugin: invalid,
         tool: registeredTools().aiProfile(cursor),
         projectRoot: PROJECT_ROOT,
@@ -131,7 +131,7 @@ describe("removeProjectHooks refuses what it cannot prove", () => {
       });
 
       await expect(
-        projectIntegrationOf(fs).removeHooks.execute({
+        projectIntegrationOver(fs).removeHooks.execute({
           plugin: invalid,
           tool: registeredTools().aiProfile(cursor),
           projectRoot: PROJECT_ROOT,
@@ -157,7 +157,7 @@ describe("removeProjectHooks refuses what it cannot prove", () => {
     const fs = new InMemoryFileAdapter({ [HOOKS_PATH]: hooksFile(PLUGIN) });
 
     await expect(
-      projectIntegrationOf(fs).removeHooks.execute({
+      projectIntegrationOver(fs).removeHooks.execute({
         plugin: invalid,
         tool: registeredTools().aiProfile(cursor),
         projectRoot: PROJECT_ROOT,
@@ -177,7 +177,7 @@ describe("removeProjectHooks refuses what it cannot prove", () => {
     const remove = vi.spyOn(fs, "deleteFile");
 
     await expect(
-      projectIntegrationOf(fs).removeHooks.execute({
+      projectIntegrationOver(fs).removeHooks.execute({
         plugin: plugin({ entry: true }),
         tool: registeredTools().aiProfile(cursor),
         projectRoot: PROJECT_ROOT,
@@ -202,7 +202,7 @@ describe("removeProjectHooks refuses what it cannot prove", () => {
     const remove = vi.spyOn(fs, "deleteFile");
 
     await expect(
-      projectIntegrationOf(fs).removeHooks.execute({
+      projectIntegrationOver(fs).removeHooks.execute({
         plugin: plugin({ script }),
         tool: registeredTools().aiProfile(cursor),
         projectRoot: PROJECT_ROOT,
@@ -228,7 +228,7 @@ describe("removeProjectHooks refuses what it cannot prove", () => {
       scope: "user",
     });
     await expect(
-      projectIntegrationOf(fs).removeHooks.execute({
+      projectIntegrationOver(fs).removeHooks.execute({
         plugin: legacy,
         tool: registeredTools().aiProfile(cursor),
         projectRoot: PROJECT_ROOT,

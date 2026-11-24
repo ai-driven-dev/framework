@@ -134,7 +134,7 @@ function setup(seed: Seed = {}) {
     records: {
       loadRecords: () => repo.loadRecords(),
       saveRecords: (saved) => repo.saveRecords(saved),
-      registrationOf: rules.marketplaceOf,
+      marketplaceOf: rules.marketplaceOf,
       holdersOf: holdersRecorded,
       pluginClaimsOf: pluginClaimsRecorded,
       claimsOn: rules.claimsOnMarketplace,

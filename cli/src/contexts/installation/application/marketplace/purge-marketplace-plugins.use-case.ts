@@ -17,6 +17,7 @@ import type {
 } from "../../ports/user-scope/machine-claims-reading.js";
 import type { UserScopePluginFileRemoval } from "../../ports/user-scope/user-scope-plugin-files.js";
 import type { RegisteredMarketplace } from "../sync/record-activation.use-case.js";
+import { forgetMarketplaceIn, type MarketplaceForgetting } from "./forget-marketplace.js";
 
 type PluginOf = { toolId: AiToolId; plugin: InstalledPlugin; recorded: RecordedPlugin };
 type NativeOf = {
@@ -42,13 +43,10 @@ export interface MarketplaceHostRemoval<Plan> {
 /** What a catalogue removal asks of a tool's record, the caller's to answer. */
 export interface MarketplaceRecords
   extends Pick<MachineClaimsReading, "holdersOf" | "pluginClaimsOf">,
-    ScopeRecords {
-  /** The registration the alias stands for, `undefined` when it was never registered. */
-  registrationOf(registrations: ToolRecord, alias: string): RegisteredMarketplace | undefined;
+    ScopeRecords,
+    MarketplaceForgetting {
   /** The claims on the refs sitting on the host name the alias was registered under. */
   claimsOn(registrations: ToolRecord, alias: string): readonly NativeRefClaim[];
-  /** The record without the marketplace, nor any ref or claim on its host name. */
-  withoutMarketplace(registrations: ToolRecord, alias: string): ToolRecord;
 }
 
 export interface PurgeMarketplacePluginsRequest<Plan> {
@@ -107,9 +105,8 @@ export class PurgeMarketplacePlugins {
       await this.deps.userScopePluginFiles.remove(files, this.tools.aiProfile(toolId), where);
       manifest.removePlugin(toolId, plugin.name);
     }
-    for (const { toolId, registrations, registration } of native) {
-      held.registered.set(toolId, records.withoutMarketplace(registrations, registration.alias));
-    }
+    const forgotten = { alias: marketplace, toolIds: native.map((n) => n.toolId) };
+    forgetMarketplaceIn(held.registered, forgotten, records);
     await command.forget();
     await records.saveRecords(held.registered);
     await this.deps.repo.save(manifest);
@@ -142,7 +139,7 @@ export class PurgeMarketplacePlugins {
     const native = this.tools.idsInCanonicalOrder("ai").flatMap((toolId) => {
       const registrations = registered.get(toolId);
       if (registrations === undefined) return [];
-      const registration = records.registrationOf(registrations, marketplace);
+      const registration = records.marketplaceOf(registrations, marketplace);
       return registration === undefined ? [] : [{ toolId, registrations, registration }];
     });
     if (plugins.length === 0 && native.length === 0) {

@@ -24,7 +24,7 @@ function refreshOver(placed: Placed, activationErrors: string[] = []) {
     updatePlugin: {
       execute: async () => {
         calls.push("project");
-        return ["project-plugin"];
+        return { updated: ["project-plugin"], skippedUserScope: [] };
       },
     },
     updateUserPlugin: {

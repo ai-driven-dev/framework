@@ -174,7 +174,7 @@ describe("marketplace add, the order it takes its steps in", () => {
     expect(await registry.list(PROJECT_ROOT)).toHaveLength(1);
   });
 
-  it("with overwrite, a fetch failure leaves the previous entry recorded and removes nothing", async () => {
+  it("with overwrite, a source without marketplace.json leaves the previous entry recorded and removes nothing", async () => {
     const { add, command, events, removals, registry } = await marketplaceAdd(
       (recorded) => new AnsweringPrompter(recorded, true)
     );

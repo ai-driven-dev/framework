@@ -6,6 +6,11 @@ export interface UndeclaredMarketplace {
   readonly file: string;
 }
 
+/** A marketplace a tool's settings file declares from this project's built cache although the
+ * project no longer registers it. */
+export type StaleDeclaration = UndeclaredMarketplace;
+
 export interface InspectDeclaredMarketplacesResult {
   readonly findings: readonly UndeclaredMarketplace[];
+  readonly stale: readonly StaleDeclaration[];
 }

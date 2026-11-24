@@ -17,7 +17,8 @@ export type DoctorFix =
   | { readonly code: "authenticate" }
   | { readonly code: "install-framework"; readonly tool: string }
   | { readonly code: "replace-conflicting-source"; readonly name: string }
-  | { readonly code: "refresh-marketplace"; readonly file: string };
+  | { readonly code: "refresh-marketplace"; readonly file: string }
+  | { readonly code: "remove-stale-declaration"; readonly name: string; readonly file: string };
 
 export interface DoctorIssue {
   severity: IssueSeverity;

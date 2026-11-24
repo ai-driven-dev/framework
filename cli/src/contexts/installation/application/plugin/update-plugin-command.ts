@@ -15,6 +15,12 @@ export interface UpdatePluginRequest {
   rebuild?: boolean;
 }
 
+/** What an update changed, and the tools whose user-scope plugins an update naming no plugin left alone. */
+export interface PluginUpdateOutcome {
+  readonly updated: string[];
+  readonly skippedUserScope: AiToolId[];
+}
+
 /** Runs a tool's file update once its preflight passed, so the scenario names a partial failure. */
 export type AfterPreflight = (
   toolId: AiToolId,

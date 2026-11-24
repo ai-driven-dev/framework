@@ -1,4 +1,4 @@
-import { projectIntegrationOf, recordsOf } from "../../../src/composition/contexts/installation.js";
+import { recordsOf } from "../../../src/composition/contexts/installation.js";
 import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { wireCleanClaims } from "../../../src/composition/orchestration/clean-claims.js";
 import { ListMarketplaces } from "../../../src/contexts/distribution/application/list-marketplaces.use-case.js";
@@ -32,6 +32,7 @@ import { PreviewProjectClean } from "../../../src/orchestration/clean/preview-pr
 import { RemoveProjectInOrder } from "../../../src/orchestration/clean/remove-project-in-order.use-case.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
+import { projectIntegrationOver } from "../../shared/testing/project-integration.builder.js";
 
 const homedir = (): string => "/home/dev";
 
@@ -53,7 +54,7 @@ export interface ProjectCleanerParts extends Partial<HostPortMaps> {
 
 export function projectCleanerDeps(parts: ProjectCleanerParts): CleanProjectDeps {
   const purgeCache = new ResolvePurgeCandidate(parts.fs, parts.logger);
-  const integration = projectIntegrationOf(parts.fs);
+  const integration = projectIntegrationOver(parts.fs);
   const asks: ProjectCleanAsks = {
     homeDir: parts.homeDir ?? homedir,
     assertMcpRemovable: (plugin, tool, projectRoot) =>

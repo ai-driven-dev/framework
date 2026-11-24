@@ -91,7 +91,7 @@ export class LockAwareActivator extends FakeHostActions {
 
   override removeMarketplace(
     name: string,
-    scope?: unknown,
+    scope?: Scope,
     options?: { force?: boolean }
   ): HostRefusal {
     this.removalsUnderLock.push(this.machineRepo.locked);

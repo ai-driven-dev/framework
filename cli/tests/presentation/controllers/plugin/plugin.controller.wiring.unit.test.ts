@@ -70,7 +70,7 @@ beforeEach(() => {
   );
   pluginInstall.mockResolvedValue({ kind: "marketplace", installed: ["aidd-dev"] });
   pluginSearch.mockResolvedValue({ hits: [] });
-  pluginUpdate.mockResolvedValue(["aidd-dev"]);
+  pluginUpdate.mockResolvedValue({ updated: ["aidd-dev"], skippedUserScope: [] });
   userPluginUpdate.mockResolvedValue(["aidd-vcs@aidd-framework"]);
   activation.mockResolvedValue({ binaryMissing: [], errors: [], failed: false });
   menuSelect.mockResolvedValue("list");

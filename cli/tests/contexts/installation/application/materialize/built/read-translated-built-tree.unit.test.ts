@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { projectIntegrationOf } from "../../../../../../src/composition/contexts/installation.js";
 import { readTranslatedBuiltTree } from "../../../../../../src/contexts/installation/application/materialize/built/read-translated-built-tree.js";
 import type { BuiltMaterializationDeps } from "../../../../../../src/contexts/installation/application/plugin/files/built-materialization-deps.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { parsePluginName } from "../../../../../../src/shared/domain/plugin/plugin-name.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { projectIntegrationOver } from "../../../../../shared/testing/project-integration.builder.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 import { fakeBuiltDeps, translateDistribution } from "../../../testing/fake-build-sources.fake.js";
 import { FakeMarketplaceRegistry } from "../../../testing/fake-marketplace-registry.fake.js";
@@ -38,7 +38,7 @@ async function readBuilt(
           marketplaceRegistry: new FakeMarketplaceRegistry(),
           translate,
         }),
-        projectHooks: projectIntegrationOf(fs).materializer,
+        projectHooks: projectIntegrationOver(fs).materializer,
       },
       marketplace: {
         name: "aidd-framework",

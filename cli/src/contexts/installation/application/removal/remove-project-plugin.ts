@@ -4,7 +4,10 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { RemovedPlugin } from "../../contract/records/plugin-claims.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
-import type { ProjectIntegrationCleanup } from "../../ports/project-integration-cleanup.js";
+import type {
+  LocalIntegrationRemoval,
+  ProjectIntegrationCleanup,
+} from "../../ports/project-integration-cleanup.js";
 import type { RemovalClaims } from "../../ports/removal-claims.js";
 import type { ProjectPluginIntegration } from "../../ports/tool-sections.js";
 import { deletePluginFilesForTool } from "../plugin/files/delete-plugin-files.js";
@@ -31,12 +34,8 @@ export class RemoveProjectPlugin implements ProjectIntegrationCleanup {
     await this.deps.assertIntegration.execute({ plugin, tool, projectRoot });
   }
 
-  async removeLocalIntegration(
-    tool: ProjectPluginIntegration,
-    plugin: RecordedPlugin,
-    projectRoot: string
-  ): Promise<void> {
-    await this.deps.removeIntegration.execute({ plugin, tool, projectRoot });
+  async removeLocalIntegration(removal: LocalIntegrationRemoval): Promise<void> {
+    await this.deps.removeIntegration.execute(removal);
   }
 
   async deleteLocalFiles(

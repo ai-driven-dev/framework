@@ -12,6 +12,7 @@ import type {
   PluginTranslation,
   PluginTranslationResult,
 } from "../../ports/plugin/plugin-translation.js";
+import { removeObsoletePluginFiles } from "../plugin/files/remove-obsolete-plugin-files.js";
 import { writeChangedPluginFiles } from "../plugin/files/write-changed-plugin-files.js";
 import { resolveScopeForInstall, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import { hashOutputFiles } from "../shared/hash-output-files.js";
@@ -60,8 +61,14 @@ export async function placeFlatPlugin(
   const skipped: ReadonlySkipList = [...ctx.skipped, ...mcp.mcpSkips, ...hooks.skipped];
   if (ctx.files.length === 0 && mcp.mcpEntries.size === 0 && hooks.projectHooks === undefined)
     return { skipped };
-  const files = request.userScopeDirTaken === true ? [] : ctx.files;
+  const taken = request.userScopeDirTaken === true;
+  const files = taken ? [] : ctx.files;
   const written = await writeChangedPluginFiles(deps.fs, files, ctx.baseDir);
+  const previous = taken ? undefined : request.previousFiles;
+  await removeObsoletePluginFiles(deps.fs, previous ?? new Map(), {
+    current: new Set(files.map((f) => f.relativePath)),
+    baseDir: ctx.baseDir,
+  });
   const plugin = RecordedPlugin.fromDistributionWithMcp({
     dist,
     source,

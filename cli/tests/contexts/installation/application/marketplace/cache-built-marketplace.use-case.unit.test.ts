@@ -116,6 +116,28 @@ describe("caching a built marketplace", () => {
     expect(fs.getFile(join(r.builtDir, ".build-version"))).toBe("5.0.0:1.0.0");
   });
 
+  it("rebuilds into an empty tree, so a file the new release dropped does not survive", async () => {
+    const uc = buildEnsurer(
+      fs,
+      fakeResolve("/src/framework", "2.0.0"),
+      buildsOf(buildFor),
+      "5.0.0"
+    );
+    const builtDir = resolve(builtMarketplaceDir(PROJECT, "aidd-framework", TOOL.codex));
+    await fs.writeFile(join(builtDir, ".build-version"), "5.0.0:1.0.0");
+    await fs.writeFile(join(builtDir, "plugins/aidd-refine/05-improve/SKILL.md"), "dropped");
+
+    await uc.execute({
+      projectRoot: PROJECT,
+      marketplace: makeRemoteMarketplace(),
+      target: TOOL.codex,
+      mode: "marketplace",
+    });
+
+    expect(fs.has(join(builtDir, "plugins/aidd-refine/05-improve/SKILL.md"))).toBe(false);
+    expect(fs.has(join(builtDir, "plugins/aidd-vcs/SKILL.md"))).toBe(true);
+  });
+
   it("builds a target's agents with the provider chosen for it, and records it in the sentinel", async () => {
     const variants: (string | undefined)[] = [];
     const uc = buildEnsurer(fs, fakeResolve("/src/framework", "1.0.0"), {

@@ -2,7 +2,7 @@ import type { MarketplaceBuilds } from "../../contexts/distribution/contract/bui
 import type { InspectDeclaredMarketplaces } from "../../contexts/host-registration/application/inspect/inspect-declared-marketplaces.use-case.js";
 import type { InspectHostRegistration } from "../../contexts/host-registration/application/inspect/inspect-host-registration.use-case.js";
 import { UNDECLARED_MARKETPLACE_SEVERITY } from "../../contexts/host-registration/contract/finding-severity.model.js";
-import type { UndeclaredMarketplace } from "../../contexts/host-registration/contract/inspect-declared-marketplaces-result.js";
+import type { InspectDeclaredMarketplacesResult } from "../../contexts/host-registration/contract/inspect-declared-marketplaces-result.js";
 import type { HostCandidate } from "../../contexts/host-registration/contract/inspect-host-registration-request.js";
 import type { DoctorIssue } from "../../contexts/installation/contract/doctor-issue.js";
 import type { RegisteredPluginsOfTool } from "../../contexts/installation/contract/registered-plugins.js";
@@ -57,20 +57,27 @@ export class CheckRegistration {
     command: CheckRegistrationRequest,
     declaredNames: ReadonlyMap<string, readonly string[]>
   ): Promise<DoctorIssue[]> {
-    const findings: UndeclaredMarketplace[] = [];
+    const issues: DoctorIssue[] = [];
     for (const [toolId, marketplaceNames] of declaredNames) {
-      const declared = await this.deps.declared.execute({
+      const declared: InspectDeclaredMarketplacesResult = await this.deps.declared.execute({
         projectRoot: command.projectRoot,
         toolIds: [toolId],
         marketplaceNames,
       });
-      findings.push(...declared.findings);
+      for (const finding of declared.findings)
+        issues.push({
+          severity: UNDECLARED_MARKETPLACE_SEVERITY,
+          message: `${finding.tool} no longer declares marketplace '${finding.name}'`,
+          fix: { code: "refresh-marketplace", file: finding.file },
+        });
+      for (const entry of declared.stale)
+        issues.push({
+          severity: UNDECLARED_MARKETPLACE_SEVERITY,
+          message: `${entry.tool} still declares marketplace '${entry.name}', which this project no longer registers`,
+          fix: { code: "remove-stale-declaration", name: entry.name, file: entry.file },
+        });
     }
-    return findings.map((finding) => ({
-      severity: UNDECLARED_MARKETPLACE_SEVERITY,
-      message: `${finding.tool} no longer declares marketplace '${finding.name}'`,
-      fix: { code: "refresh-marketplace", file: finding.file },
-    }));
+    return issues;
   }
 
   /**

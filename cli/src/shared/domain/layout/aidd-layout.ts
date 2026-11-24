@@ -10,12 +10,17 @@ export const AIDD_MARKETPLACES_FILENAME = "marketplaces.json";
 export const USER_SOURCE_REFERENCES_FILENAME = "references.json";
 export const BUILT_CACHE_SUBDIR = join(AIDD_DIR, "cache", "built");
 
+/** Every target's built tree of one project-scope marketplace. */
+export function builtMarketplaceRoot(projectRoot: string, marketplaceName: string): string {
+  return join(projectRoot, BUILT_CACHE_SUBDIR, marketplaceName);
+}
+
 export function builtMarketplaceDir(
   projectRoot: string,
   marketplaceName: string,
   target: string
 ): string {
-  return join(projectRoot, BUILT_CACHE_SUBDIR, marketplaceName, target);
+  return join(builtMarketplaceRoot(projectRoot, marketplaceName), target);
 }
 
 /** The directory every version's own built tree sits under, `clean --scope user`'s

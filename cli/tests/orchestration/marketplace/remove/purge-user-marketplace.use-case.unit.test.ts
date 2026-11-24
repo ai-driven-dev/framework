@@ -149,7 +149,7 @@ describe("purging what the machine holds for a user marketplace", () => {
     await useCase.execute(REQUEST);
     const record = { marketplaces: [REGISTRATION] };
 
-    expect(records?.registrationOf(record, "market")).toStrictEqual(REGISTRATION);
+    expect(records?.marketplaceOf(record, "market")).toStrictEqual(REGISTRATION);
     expect(records?.claimsOn(record, "market")).toStrictEqual([]);
     expect(records?.withoutMarketplace(record, "market")).toStrictEqual({
       ...record,

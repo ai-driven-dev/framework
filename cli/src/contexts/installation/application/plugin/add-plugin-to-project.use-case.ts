@@ -98,6 +98,7 @@ export class AddPluginToProject {
       marketplace,
       previousMcpEntries: previous.mcpEntries,
       previousProjectHooks: previous.projectHooks,
+      previousFiles: previous.files,
     });
   }
 }

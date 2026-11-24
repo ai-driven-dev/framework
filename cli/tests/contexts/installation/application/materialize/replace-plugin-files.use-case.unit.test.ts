@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { builtPlacementOf } from "../../../../../src/composition/orchestration/built-placement.js";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
+import type { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
@@ -9,7 +10,9 @@ import {
   buildInstallationDeps,
   initAndInstall,
 } from "../../../../shared/testing/installation-deps.builder.js";
+import { loadDistributionOf } from "../../../../shared/testing/load-distribution.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
 import { fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
 
 const PLUGIN_SOURCE_PATH = "/plugin-source/sample-plugin";
@@ -89,5 +92,66 @@ describe("replacing a plugin's files", () => {
       entry?.marketplace,
       entry?.plugin.files.size,
     ]).toStrictEqual([false, false, "aidd-framework", 0]);
+  });
+});
+
+describe("replacing a plugin that came from no marketplace", () => {
+  const FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
+  const HOOKS_FILE = join(PROJECT_ROOT, ".agents/hooks.json");
+
+  /** The project hooks file `place` leaves for the sample plugin on a tool that delivers hooks to the project. */
+  async function hooksFileAfter(
+    place: (ctx: {
+      built: ReturnType<typeof builtPlacementOf>;
+      dist: PluginDistribution;
+      manifest: Manifest;
+      fs: Awaited<ReturnType<typeof buildInstallationDeps>>["fs"];
+    }) => Promise<void>
+  ): Promise<string | undefined> {
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.antigravity);
+    await seedFromDirectory(deps.fs, FIXTURE, { useAbsolutePaths: true });
+    const dist = await loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader)(
+      { kind: "local", path: FIXTURE },
+      "/cache"
+    );
+    const manifest = await deps.manifestRepo.load();
+    if (manifest === null) throw new Error("manifest not found");
+    await place({ built: builtPlacementOf(deps.fs, fakeBuiltDeps()), dist, manifest, fs: deps.fs });
+    return deps.fs.has(HOOKS_FILE) ? await deps.fs.readFile(HOOKS_FILE) : undefined;
+  }
+
+  it("leaves the project hooks file a fresh install leaves", async () => {
+    const tool = registeredTools().aiProfile(TOOL.antigravity);
+    const installed = await hooksFileAfter(async ({ built, dist, manifest }) => {
+      await built.placeBuiltTree({
+        dist,
+        tool,
+        source: { kind: "local", path: FIXTURE },
+        projectRoot: PROJECT_ROOT,
+        manifest,
+        marketplace: undefined,
+      });
+    });
+    const updated = await hooksFileAfter(async ({ built, dist, manifest, fs }) => {
+      const old = RecordedPlugin.fromMetadata({
+        name: "sample-plugin",
+        version: "0.0.1",
+        source: { kind: "local", path: FIXTURE },
+        strict: false,
+        scope: "project",
+      });
+      manifest.addPlugin(TOOL.antigravity, old);
+      await new ReplacePluginFiles({ fs, ...built }, registeredTools()).execute({
+        plugin: old,
+        dist,
+        toolId: TOOL.antigravity,
+        projectRoot: PROJECT_ROOT,
+        manifest,
+      });
+    });
+
+    expect(installed).toContain("sample-plugin");
+    expect(updated).toBe(installed);
   });
 });

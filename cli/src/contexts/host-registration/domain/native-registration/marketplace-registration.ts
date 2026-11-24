@@ -45,6 +45,18 @@ export class MarketplaceRegistration implements MarketplaceRegistrationAnswers {
     return new Set();
   }
 
+  /** The directory each declared marketplace names as its source; a list or an entry with no
+   * path names none. */
+  declaredMarketplaceSources(parsed: unknown): Map<string, string> {
+    const declared = asPlainObject(asPlainObject(parsed)?.[this.#settings.settingsKey]);
+    const sources = new Map<string, string>();
+    for (const [name, entry] of Object.entries(declared ?? {})) {
+      const path = asPlainObject(asPlainObject(entry)?.source)?.path;
+      if (typeof path === "string") sources.set(name, path);
+    }
+    return sources;
+  }
+
   /** The name a marketplace is keyed by in the enabled-plugins map, or null when the tool cannot
    * express its source. */
   entryKeyFor(input: MarketplaceSettingsInput): string | null {

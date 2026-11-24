@@ -20,6 +20,10 @@ import {
   withoutMarketplace,
   withoutRef,
 } from "../../contexts/host-registration/domain/record/registration-record.js";
+import {
+  enabledEntryRef,
+  withoutEnabledPlugin,
+} from "../../contexts/host-registration/domain/settings-declaration.js";
 import { AssertProjectMcpEntriesRemovable } from "../../contexts/installation/application/assert-project-mcp-entries-removable.use-case.js";
 import { ReadMachineInstallation } from "../../contexts/installation/application/doctor/read-machine-installation.use-case.js";
 import { InstallIdeConfig } from "../../contexts/installation/application/install/config/install-ide-config.use-case.js";
@@ -38,12 +42,17 @@ import type { BuiltMaterializationDeps } from "../../contexts/installation/appli
 import { ListPlugins } from "../../contexts/installation/application/plugin/list-plugins.use-case.js";
 import { AssertProjectIntegrationRemovable } from "../../contexts/installation/application/removal/assert-project-integration-removable.use-case.js";
 import { PlanProjectMcpRemoval } from "../../contexts/installation/application/removal/plan-project-mcp-removal.use-case.js";
+import { RemoveEnabledPlugin } from "../../contexts/installation/application/removal/project/remove-enabled-plugin.use-case.js";
 import { RemoveProjectHooks } from "../../contexts/installation/application/removal/remove-project-hooks.use-case.js";
 import { RemoveProjectIntegration } from "../../contexts/installation/application/removal/remove-project-integration.use-case.js";
 import { AssertProjectHooksRemovable } from "../../contexts/installation/application/shared/assert-project-hooks-removable.use-case.js";
 import { AssertProjectHooksUnchanged } from "../../contexts/installation/application/shared/assert-project-hooks-unchanged.use-case.js";
 import { DetectPluginDrift } from "../../contexts/installation/application/shared/detect-plugin-drift.use-case.js";
 import { RemoveRecordedProjectHooks } from "../../contexts/installation/application/shared/remove-recorded-project-hooks.use-case.js";
+import {
+  type TrackedSharedSettings,
+  trackedSharedSettings,
+} from "../../contexts/installation/application/sync/tracked-shared-settings.js";
 import { UpdateGitignore } from "../../contexts/installation/application/update-gitignore.use-case.js";
 import type { ProjectSetupState } from "../../contexts/installation/contract/project-setup-state.js";
 import { AgentModelStoreAdapter } from "../../contexts/installation/infrastructure/agent-model-store-adapter.js";
@@ -150,17 +159,30 @@ export function debugOnly(logger: Logger): Logger {
   };
 }
 
-/** The project hooks and MCP use cases, built once over one file system. */
-export function projectIntegrationOf(fs: FileReader & FileWriter) {
+function projectHooksOf(fs: FileReader & FileWriter) {
   const withinRoot = new AssertProjectPathWithinRoot(fs);
   const unchanged = new AssertProjectHooksUnchanged(fs, withinRoot);
   const removeRecorded = new RemoveRecordedProjectHooks({ fs, unchanged, withinRoot });
+  const materializer = new ProjectHooksMaterializer(fs, unchanged, removeRecorded);
+  return { withinRoot, unchanged, removeRecorded, materializer };
+}
+
+/** The project hooks materializer alone, for what places files and removes nothing. */
+export function projectHooksMaterializerOf(fs: FileReader & FileWriter): ProjectHooksMaterializer {
+  return projectHooksOf(fs).materializer;
+}
+
+/** The project hooks and MCP use cases, built once over one file system and the installation's
+ * own shared settings writer. */
+export function projectIntegrationOf(fs: FileReader & FileWriter, settings: TrackedSharedSettings) {
+  const { withinRoot, unchanged, removeRecorded, materializer } = projectHooksOf(fs);
   const removeHooks = new RemoveProjectHooks(removeRecorded);
   const assertHooksRemovable = new AssertProjectHooksRemovable(unchanged);
   const plan = new PlanProjectMcpRemoval(fs, withinRoot);
+  const enablement = new RemoveEnabledPlugin(settings, withoutEnabledPlugin, enabledEntryRef);
   const assertMcpRemovable = new AssertProjectMcpEntriesRemovable(plan);
   return {
-    materializer: new ProjectHooksMaterializer(fs, unchanged, removeRecorded),
+    materializer,
     unchanged,
     removeRecorded,
     removeHooks,
@@ -170,7 +192,13 @@ export function projectIntegrationOf(fs: FileReader & FileWriter) {
       assertMcpRemovable,
       assertHooksRemovable
     ),
-    removeIntegration: new RemoveProjectIntegration({ fs, plan, hooks: removeHooks, withinRoot }),
+    removeIntegration: new RemoveProjectIntegration({
+      fs,
+      plan,
+      hooks: removeHooks,
+      withinRoot,
+      enablement,
+    }),
   };
 }
 
@@ -245,16 +273,18 @@ export function wireInstallation(base: Base) {
     translate: createPluginTranslation(tools),
     platform: process.platform,
   };
+  const sharedSettings = trackedSharedSettings({ fs, logger: base.logger });
   return {
     assetProvider,
     agentModelStore,
+    sharedSettings,
     ensureBuiltMarketplaceUseCase,
     ...wireConfigInstallation(base, assetProvider),
     listInstalledRules: new ListInstalledRules(fs, process.platform, tools),
     readMachineInstallation: new ReadMachineInstallation(userManifestRepo),
     listPlugins: new ListPlugins(manifestRepo, tools),
     builtMaterializationDeps,
-    projectIntegration: projectIntegrationOf(fs),
+    projectIntegration: projectIntegrationOf(fs, sharedSettings),
     detectPluginDriftUseCase: new DetectPluginDrift(fs, tools, base.homedir),
     registrationRecordRules,
   };

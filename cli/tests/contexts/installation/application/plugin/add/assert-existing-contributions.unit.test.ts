@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { projectIntegrationOf } from "../../../../../../src/composition/contexts/installation.js";
 import { assertExistingContributionsUnchanged } from "../../../../../../src/contexts/installation/application/plugin/add/assert-existing-contributions.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { projectIntegrationOver } from "../../../../../shared/testing/project-integration.builder.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 
 function manifestWith(plugin: RecordedPlugin): Manifest {
@@ -27,7 +27,7 @@ describe("when a plugin is added over an earlier install", () => {
 
     await expect(
       assertExistingContributionsUnchanged(
-        projectIntegrationOf(new InMemoryFileAdapter({}, ["/test-project"])).assertIntegration,
+        projectIntegrationOver(new InMemoryFileAdapter({}, ["/test-project"])).assertIntegration,
         registeredTools(),
         {
           pluginName: "sample",
@@ -44,7 +44,7 @@ describe("when a plugin is added over an earlier install", () => {
 
     await expect(
       assertExistingContributionsUnchanged(
-        projectIntegrationOf(new InMemoryFileAdapter({}, ["/test-project"])).assertIntegration,
+        projectIntegrationOver(new InMemoryFileAdapter({}, ["/test-project"])).assertIntegration,
         registeredTools(),
         {
           pluginName: "absent",
@@ -70,7 +70,7 @@ describe("when a plugin is added over an earlier install", () => {
 
     await expect(
       assertExistingContributionsUnchanged(
-        projectIntegrationOf(fs).assertIntegration,
+        projectIntegrationOver(fs).assertIntegration,
         registeredTools(),
         {
           pluginName: "sample",

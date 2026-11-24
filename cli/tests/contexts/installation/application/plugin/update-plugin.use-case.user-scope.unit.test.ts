@@ -118,7 +118,7 @@ describe("updating the user-scope plugins", () => {
   it("updates each user-scope plugin, saves the new version and names it", async () => {
     const { repo, materializer, run } = fixture();
 
-    await expect(run()).resolves.toEqual(["aidd-dev"]);
+    await expect(run()).resolves.toEqual({ updated: ["aidd-dev"], skippedUserScope: [] });
 
     expect(materializer.applied).toHaveLength(1);
     expect(
@@ -133,7 +133,7 @@ describe("updating the user-scope plugins", () => {
   it("leaves a plugin that is already up to date unsaved and unnamed", async () => {
     const { repo, run } = fixture({ materializer: { upToDate: ["aidd-dev"] } });
 
-    await expect(run()).resolves.toEqual([]);
+    await expect(run()).resolves.toEqual({ updated: [], skippedUserScope: [] });
     expect(repo.saveCount).toBe(0);
   });
 
@@ -142,14 +142,17 @@ describe("updating the user-scope plugins", () => {
       plugins: [plugin("aidd-dev", { scope: "project" })],
     });
 
-    await expect(run()).resolves.toEqual([]);
+    await expect(run()).resolves.toEqual({ updated: [], skippedUserScope: [] });
     expect(materializer.planned).toEqual([]);
   });
 
   it("plans only the plugins named", async () => {
     const { materializer, run } = fixture({ plugins: [plugin("aidd-dev"), plugin("aidd-pm")] });
 
-    await expect(run({ pluginNames: ["aidd-pm"] })).resolves.toEqual(["aidd-pm"]);
+    await expect(run({ pluginNames: ["aidd-pm"] })).resolves.toEqual({
+      updated: ["aidd-pm"],
+      skippedUserScope: [],
+    });
     expect(materializer.planned.map((request) => request.plugin.plugin.name)).toEqual(["aidd-pm"]);
   });
 
@@ -207,7 +210,7 @@ describe("updating the user-scope native refs", () => {
   it("refreshes each claimed ref and names it", async () => {
     const { refreshed, applied, run } = fixture({ plugins: [], claims });
 
-    await expect(run()).resolves.toEqual(["aidd-dev@framework"]);
+    await expect(run()).resolves.toEqual({ updated: ["aidd-dev@framework"], skippedUserScope: [] });
     expect(refreshed).toEqual([{ ref: "aidd-dev@framework", tool: TOOL.codex }]);
     expect(applied).toEqual(["aidd-dev@framework"]);
   });

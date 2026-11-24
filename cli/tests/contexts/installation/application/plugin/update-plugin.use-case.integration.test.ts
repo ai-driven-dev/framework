@@ -115,7 +115,7 @@ describe("updating a plugin on disk", () => {
         toolIds: [TOOL.cursor],
         projectRoot: PROJECT_ROOT,
       })
-    ).toEqual([]);
+    ).toEqual({ updated: [], skippedUserScope: [TOOL.cursor] });
     expect(deps.userManifestRepo.getCurrent()?.toJSON()).toEqual(machineBefore);
   });
 
@@ -210,7 +210,7 @@ describe("updating a plugin on disk", () => {
       const { addUseCase, updateUseCase } = await setup(deps);
       await addLocal(addUseCase);
 
-      const updated = await updateUseCase.execute({
+      const { updated } = await updateUseCase.execute({
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
       });
@@ -225,7 +225,7 @@ describe("updating a plugin on disk", () => {
       await addLocal(addUseCase);
       await recordVersion(deps, "sample-plugin", "0.0.1");
 
-      const updated = await updateUseCase.execute({
+      const { updated } = await updateUseCase.execute({
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
       });
@@ -243,7 +243,7 @@ describe("updating a plugin on disk", () => {
       await recordVersion(deps, "sample-plugin", "0.0.1");
       await recordVersion(deps, "extra-plugin", "0.0.1");
 
-      const updated = await updateUseCase.execute({
+      const { updated } = await updateUseCase.execute({
         pluginNames: ["extra-plugin"],
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,

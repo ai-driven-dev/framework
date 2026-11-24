@@ -137,3 +137,58 @@ describe("removing a plugin from its host", () => {
     expect(activator.uninstalledPlugins).toStrictEqual([]);
   });
 });
+
+describe("withdrawing one marketplace of a project", () => {
+  const record = {
+    binary: "claude",
+    marketplaces: [
+      { alias: "mine", hostName: "mine-host" },
+      { alias: "other", hostName: "other-host" },
+    ],
+    pluginRefs: ["a@mine-host", "b@other-host"],
+  };
+  const facts = {
+    projectRoot: "/project",
+    marketplaceScopes: new Map([
+      ["mine", "project" as const],
+      ["other", "project" as const],
+    ]),
+    sharedSource: undefined,
+    frameworkAlias: "framework",
+    machine: { claimedRefs: async () => undefined, othersHolding: async () => [] },
+    exclusive: <T>(action: () => Promise<T>) => action(),
+    resolveCacheCandidate: async () => null,
+  };
+
+  it("unregisters that marketplace by its host name at project scope and leaves the others", async () => {
+    const activator = new FakeHostActions({ available: true });
+    const withdraw = new WithdrawFromHost(
+      new InMemoryFileAdapter({}),
+      new CapturingLogger(),
+      hostPortsOver({
+        activators: new Map([["claude", activator]]),
+        pluginRegistries: new Map(),
+        marketplaceRegistries: new Map(),
+        sources: new Map(),
+      })
+    );
+
+    await withdraw.execute({
+      kind: "withdraw-project-registrations",
+      marketplace: "mine",
+      withdrawals: [
+        {
+          tool: registeredTools().aiProfile(TOOL.claude),
+          registrations: record,
+          cacheRoot: undefined,
+          refScopes: new Map(),
+        },
+      ],
+      facts,
+    });
+
+    expect(activator.removedMarketplaces).toStrictEqual(["mine-host"]);
+    expect(activator.removedMarketplaceScopes).toStrictEqual(["project"]);
+    expect(activator.uninstalledPlugins).not.toContain("b@other-host");
+  });
+});

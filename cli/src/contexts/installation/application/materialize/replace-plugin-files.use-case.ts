@@ -10,7 +10,7 @@ import { writePluginFiles } from "../plugin/files/write-plugin-files.js";
 import { scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import { hashOutputFiles } from "../shared/hash-output-files.js";
 import type { BuiltPlacement } from "./add-plugin-request.js";
-import { placementModeOf } from "./plugin-placement.js";
+import { deliversHooksToProject, placementModeOf } from "./plugin-placement.js";
 import { rematerializePlugin } from "./rematerialize-plugin.js";
 
 export interface ReplacePluginFilesRequest {
@@ -45,7 +45,10 @@ export class ReplacePluginFiles {
     });
     await deleteOldFiles(plugin.files, baseDir, this.deps.fs);
     const mode = placementModeOf(tool);
-    if (mode !== null && command.plugin.marketplace !== undefined) {
+    if (
+      mode !== null &&
+      (command.plugin.marketplace !== undefined || deliversHooksToProject(tool))
+    ) {
       await rematerializePlugin(
         { dist, tool, mode, plugin: command.plugin, projectRoot, manifest },
         this.deps.placeBuiltTree

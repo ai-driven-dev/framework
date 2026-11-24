@@ -1,5 +1,4 @@
 import { homedir as nodeHomedir, platform as nodePlatform } from "node:os";
-import { projectIntegrationOf } from "../../../../src/composition/contexts/installation.js";
 import type { RegisteredCatalog } from "../../../../src/composition/contexts/tools.js";
 import { placePluginOf } from "../../../../src/composition/orchestration/built-placement.js";
 import type { EnsurePluginRuntimeFiles } from "../../../../src/contexts/installation/application/install/config/ensure-plugin-runtime-files.use-case.js";
@@ -18,6 +17,7 @@ import { ClaimUserPlugin } from "../../../../src/contexts/machine-claims/applica
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
 import type { Logger } from "../../../../src/shared/ports/logger.js";
+import { projectIntegrationOver } from "../../../shared/testing/project-integration.builder.js";
 import { fakeBuiltDeps } from "./fake-build-sources.fake.js";
 
 /** What an AddPlugin writes through and reports with. */
@@ -55,7 +55,7 @@ export function buildAddPlugin(
       manifests,
       addToProject: new AddPluginToProject(
         {
-          assertIntegration: projectIntegrationOf(host.fs).assertIntegration,
+          assertIntegration: projectIntegrationOver(host.fs).assertIntegration,
           source: new ResolveAddedPluginSource(
             { loadDistribution: sources.loadDistribution },
             tools
