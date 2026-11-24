@@ -40,18 +40,28 @@ function marketplaceAgents(
   artifact: SupportedArtifact
 ): ComponentPlan[] {
   const plugin = canon.manifest.name;
-  return agentFiles(canon).map(({ relativePath, content }) => {
-    const base = baseOf(relativePath);
-    const place = { plugin, outName: base, from: `agents/${base}`, unshaped: "carry" } as const;
-    return {
-      source: relativePath,
-      path: `plugins/${plugin}/${artifactPath(artifact, plugin, `agents/${base}`)}`,
-      content,
-      guard: { plugin, name: relativePath.slice("agents/".length) },
-      links: agentLinks(artifact, place),
-      shape: agentShape(artifact, place),
-    };
-  });
+  return agentFiles(canon).map((file) =>
+    marketplaceAgentPlan({ plugin, root: `plugins/${plugin}/` }, artifact, file)
+  );
+}
+
+/** One agent as the marketplace build places and shapes it, under `root`, the plugin's directory.
+ * An install of a tool that stages its agents outside `agents/` reuses it. */
+export function marketplaceAgentPlan(
+  { plugin, root }: { plugin: string; root: string },
+  artifact: SupportedArtifact,
+  { relativePath, content }: { relativePath: string; content: string }
+): ComponentPlan {
+  const base = baseOf(relativePath);
+  const place = { plugin, outName: base, from: `agents/${base}`, unshaped: "carry" } as const;
+  return {
+    source: relativePath,
+    path: `${root}${artifactPath(artifact, plugin, `agents/${base}`)}`,
+    content,
+    guard: { plugin, name: relativePath.slice("agents/".length) },
+    links: agentLinks(artifact, place),
+    shape: agentShape(artifact, place),
+  };
 }
 
 function marketplaceHooks(

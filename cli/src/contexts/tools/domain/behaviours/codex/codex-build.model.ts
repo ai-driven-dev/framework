@@ -31,7 +31,7 @@ function codexPluginArtifacts(
     agents: {
       supported: true,
       source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-      placement: { kind: "agentFiles", dir: OUTPUT_CODEX_AGENTS_DIR, ext: ".toml" },
+      placement: { kind: "agentFiles", dir: OUTPUT_CODEX_AGENTS_DIR, ext: ".toml", staged: true },
       transform: tomlAgentMarkdownToToml(toml),
     },
     mcp: {

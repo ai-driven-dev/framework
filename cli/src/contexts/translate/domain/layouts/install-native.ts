@@ -1,15 +1,15 @@
 import { reshapeFrontmatter, serializeFrontmatter } from "../../../../shared/domain/markdown.js";
-import { artifactPath } from "../../../../shared/domain/materialization/artifact-path.js";
 import type { ReadonlyNoticeList } from "../../../../shared/domain/materialization/plugin-install-notice.js";
 import type {
   PluginComponentFile,
   PluginDistribution,
 } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import { isComponentFile, isProse, PLUGIN_HOOKS_DIR } from "../plugin-paths.js";
-import { agentLinks, namedByPlugin } from "../rules/agent-markdown.js";
-import { agentShape, type ComponentPlan } from "../rules/component-pipeline.js";
+import { namedByPlugin } from "../rules/agent-markdown.js";
+import type { ComponentPlan } from "../rules/component-pipeline.js";
 import { chainLinks, relativeLinks, toolLinks } from "../rules/links.js";
 import type { TranslatedAiTool, TranslatedNativePlugin } from "../translate-profile.js";
+import { marketplaceAgentPlan } from "./build-layout.js";
 import { isEntry } from "./build-shared.js";
 import { hooksTrustNotices, manifestPlan, nativeHooksPlan } from "./install-native-hooks.js";
 
@@ -139,26 +139,15 @@ function skillFrontmatterOf(
   return (skills?.supported ? skills.skillFrontmatter : undefined) ?? ((fm) => fm);
 }
 
-/** An agent the host loads from outside the plugin's `agents/` (Codex's TOML) is staged and shaped as the
- * marketplace build does: the one place a machine-scope install reads it. */
+/** An agent the tool's marketplace build stages outside the plugin's `agents/` (Codex's TOML) is
+ * planned as that build plans it: the machine-scope install reads the built tree, so both write
+ * the same bytes there. */
 function stagedAgentPlan(file: PluginComponentFile, at: NativeAt): ComponentPlan | null {
   const agents = at.tool.buildContract("marketplace")?.artifacts.agents;
-  if (!agents?.supported || agents.placement.kind !== "agentFiles") return null;
-  if (agents.placement.dir === "agents") return null;
-  const outName = file.relativePath.slice("agents/".length);
-  const place = {
-    plugin: at.pluginName,
-    outName,
-    from: file.relativePath,
-    unshaped: "carry",
-  } as const;
-  return {
-    source: file.relativePath,
-    path: `${at.pluginRoot}${artifactPath(agents, at.pluginName, file.relativePath)}`,
-    content: file.content,
-    links: agentLinks(agents, place),
-    shape: agentShape(agents, place),
-  };
+  if (!agents?.supported || agents.placement.kind !== "agentFiles" || !agents.placement.staged) {
+    return null;
+  }
+  return marketplaceAgentPlan({ plugin: at.pluginName, root: at.pluginRoot }, agents, file);
 }
 
 function toPluginRelativePath(fullPath: string, toolDirectory: string): string {

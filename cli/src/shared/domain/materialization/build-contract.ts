@@ -57,7 +57,13 @@ export type ArtifactPlacement =
     }
   | { readonly kind: "relative" }
   | { readonly kind: "file"; readonly at: string }
-  | { readonly kind: "agentFiles"; readonly dir: string; readonly ext: string }
+  | {
+      readonly kind: "agentFiles";
+      readonly dir: string;
+      readonly ext: string;
+      /** The host loads these from `dir`, outside the plugin's `agents/`, so an install stages them as the build does. */
+      readonly staged?: true;
+    }
   | {
       readonly kind: "hooks";
       readonly scriptsDir: string;
