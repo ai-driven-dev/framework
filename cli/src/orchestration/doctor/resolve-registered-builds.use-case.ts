@@ -25,7 +25,7 @@ export class ResolveRegisteredBuilds {
     private readonly listPlugins: ListRegisteredPlugins,
     private readonly records: Pick<
       RegistrationRecordRules,
-      "pluginRefsOf" | "refOnHostName" | "marketplaceOf"
+      "pluginRefsOf" | "refOnHostName" | "hostNameOrAlias"
     > &
       Pick<ScopeRecords, "loadRecords">,
     private readonly builds: Pick<ResolveBuiltMarketplaces, "execute">,
@@ -51,9 +51,7 @@ export class ResolveRegisteredBuilds {
       const record = recorded.get(toolId);
       declaredNames.set(
         toolId,
-        built.projectScopedNames.map(
-          (alias) => (record && this.records.marketplaceOf(record, alias)?.hostName) ?? alias
-        )
+        built.projectScopedNames.map((alias) => this.records.hostNameOrAlias(record, alias))
       );
     }
     return { ...built, registered, declaredNames };

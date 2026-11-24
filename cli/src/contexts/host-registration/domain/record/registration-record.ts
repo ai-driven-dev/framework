@@ -105,6 +105,13 @@ const hostNameOf = (
   alias: string | undefined
 ): string | undefined => marketplaceOf(record, alias)?.hostName;
 
+/** The name the host knows an alias by: the recorded host name, the alias itself when nothing was
+ * recorded. */
+export const hostNameOrAlias = (
+  record: RegistrationRecordData | undefined,
+  alias: string
+): string => hostNameOf(record, alias) ?? alias;
+
 /**
  * The ref a plugin has on the host, `undefined` when nothing was recorded for the alias.
  * Limit: a plugin without a marketplace has no alias to look up and so no ref; only a
