@@ -9,7 +9,6 @@ import {
   syncScopesOf,
 } from "../../contexts/installation/application/sync/load-sync-context.use-case.js";
 import { RecordActivation } from "../../contexts/installation/application/sync/record-activation.use-case.js";
-import { trackedSharedSettings } from "../../contexts/installation/application/sync/tracked-shared-settings.js";
 import { Manifest } from "../../contexts/installation/domain/manifest.js";
 import { RecordMachineClaims } from "../../contexts/machine-claims/application/record/record-machine-claims.use-case.js";
 import { ResolvePurgeCandidate } from "../../contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
@@ -71,10 +70,9 @@ function settingsFilesOf(
   inst: Installation,
   buildMarketplace: BuildMarketplaceForTool
 ): SyncToolSettingsFiles {
-  const tracked = trackedSharedSettings({ fs: base.fs, logger: base.logger });
   const refs = inst.registrationRecordRules;
   return new SyncToolSettingsFiles(
-    { tracked, buildMarketplace, declaration: settingsDeclaration, refs },
+    { tracked: inst.sharedSettings, buildMarketplace, declaration: settingsDeclaration, refs },
     base.tools
   );
 }

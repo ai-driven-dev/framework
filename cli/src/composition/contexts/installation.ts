@@ -48,7 +48,10 @@ import { AssertProjectHooksRemovable } from "../../contexts/installation/applica
 import { AssertProjectHooksUnchanged } from "../../contexts/installation/application/shared/assert-project-hooks-unchanged.use-case.js";
 import { DetectPluginDrift } from "../../contexts/installation/application/shared/detect-plugin-drift.use-case.js";
 import { RemoveRecordedProjectHooks } from "../../contexts/installation/application/shared/remove-recorded-project-hooks.use-case.js";
-import { trackedSharedSettings } from "../../contexts/installation/application/sync/tracked-shared-settings.js";
+import {
+  type TrackedSharedSettings,
+  trackedSharedSettings,
+} from "../../contexts/installation/application/sync/tracked-shared-settings.js";
 import { UpdateGitignore } from "../../contexts/installation/application/update-gitignore.use-case.js";
 import type { ProjectSetupState } from "../../contexts/installation/contract/project-setup-state.js";
 import { AgentModelStoreAdapter } from "../../contexts/installation/infrastructure/agent-model-store-adapter.js";
@@ -154,21 +157,21 @@ export function debugOnly(logger: Logger): Logger {
   };
 }
 
-/** The project hooks and MCP use cases, built once over one file system. */
-export function projectIntegrationOf(fs: FileReader & FileWriter) {
+const QUIET: Logger = { debug() {}, info() {}, warn() {} };
+
+/** The project hooks and MCP use cases, built once over one file system. The shared settings
+ * writer is the installation's own when given. */
+export function projectIntegrationOf(
+  fs: FileReader & FileWriter,
+  settings: TrackedSharedSettings = trackedSharedSettings({ fs, logger: QUIET })
+) {
   const withinRoot = new AssertProjectPathWithinRoot(fs);
   const unchanged = new AssertProjectHooksUnchanged(fs, withinRoot);
   const removeRecorded = new RemoveRecordedProjectHooks({ fs, unchanged, withinRoot });
   const removeHooks = new RemoveProjectHooks(removeRecorded);
   const assertHooksRemovable = new AssertProjectHooksRemovable(unchanged);
   const plan = new PlanProjectMcpRemoval(fs, withinRoot);
-  // A settings file too malformed to read holds no entry to take out, so nothing is worth a warning.
-  const quiet: Logger = { debug() {}, info() {}, warn() {} };
-  const enablement = new RemoveEnabledPlugin(
-    trackedSharedSettings({ fs, logger: quiet }),
-    withoutEnabledPlugin,
-    enabledEntryRef
-  );
+  const enablement = new RemoveEnabledPlugin(settings, withoutEnabledPlugin, enabledEntryRef);
   const assertMcpRemovable = new AssertProjectMcpEntriesRemovable(plan);
   return {
     materializer: new ProjectHooksMaterializer(fs, unchanged, removeRecorded),
@@ -262,16 +265,18 @@ export function wireInstallation(base: Base) {
     translate: createPluginTranslation(tools),
     platform: process.platform,
   };
+  const sharedSettings = trackedSharedSettings({ fs, logger: base.logger });
   return {
     assetProvider,
     agentModelStore,
+    sharedSettings,
     ensureBuiltMarketplaceUseCase,
     ...wireConfigInstallation(base, assetProvider),
     listInstalledRules: new ListInstalledRules(fs, process.platform, tools),
     readMachineInstallation: new ReadMachineInstallation(userManifestRepo),
     listPlugins: new ListPlugins(manifestRepo, tools),
     builtMaterializationDeps,
-    projectIntegration: projectIntegrationOf(fs),
+    projectIntegration: projectIntegrationOf(fs, sharedSettings),
     detectPluginDriftUseCase: new DetectPluginDrift(fs, tools, base.homedir),
     registrationRecordRules,
   };
