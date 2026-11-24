@@ -11,6 +11,22 @@ Project knowledge: memory, context files and generators.
 | Start with | `/aidd-context:00-onboard` |
 | Skills, agents, hooks | [Catalog](../../docs/CATALOG.md#-aidd-context) |
 
+## Generate a scheduled task in Hermes
+
+From a framework checkout, copy the full skill into the profile that will run the task. For the default profile, run the following commands.
+
+```sh
+mkdir -p ~/.hermes/skills
+cp -R plugins/aidd-context/skills/14-schedule-generate ~/.hermes/skills/
+hermes -p default skills list
+```
+
+For a named profile, use its `skills/` directory (normally `~/.hermes/profiles/<name>/skills/`) and replace `default` with the profile name. Look for `14-schedule-generate` in the list, then open a new chat in that profile. [Hermes skills](https://hermes-agent.nousresearch.com/docs/user-guide/features/skills) · [Hermes profiles](https://hermes-agent.nousresearch.com/docs/user-guide/profiles)
+
+For a profile with `collect-notes` and `write-digest` installed, try this request.
+
+> Use 14-schedule-generate to draft a weekday task for 09:00 Europe/Paris. Run collect-notes on yesterday’s notes, then pass its result to write-digest. Save the digest in reports/ and skip days with no notes.
+
 ## Hooks
 
 | Event | When | Does |

@@ -10,7 +10,7 @@
     {
       "name": "aidd-context",
       "source": "./plugins/aidd-context",
-      "description": "Knowledge production: project bootstrap, project init, generation of context artifacts (skills, agents, rules, commands, hooks), mermaid diagrams, learn, discovery",
+      "description": "Knowledge production: project bootstrap, project init, generation of context artifacts (skills, agents, rules, commands, hooks, scheduled task prompts), mermaid diagrams, learn, discovery",
       "strict": true,
       "metadata": {
         "recommended": true

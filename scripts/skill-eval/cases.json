@@ -595,5 +595,46 @@
         "aidd_docs/memory/api.md"
       ]
     }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "14-schedule-generate",
+    "evalName": "xeval-schedule",
+    "name": "drafts a Hermes weekday skill chain without registering it",
+    "setup": {
+      "files": {
+        "collect-notes/SKILL.md": "---\nname: collect-notes\ndescription: Collects notes from a given workspace file.\n---\nReturn its nonempty entries in file order.\n",
+        "write-digest/SKILL.md": "---\nname: write-digest\ndescription: Writes a digest from collected entries.\n---\nReturn a Markdown digest with one bullet per entry.\n"
+      }
+    },
+    "prompt": "Use {{SKILL}} to draft a persistent Hermes task for weekdays at 09:00 Europe/Paris. The installed skills are represented by ./collect-notes/SKILL.md and ./write-digest/SKILL.md. In the current working directory, collect today's entries from notes.md, then give them to write-digest. Skip if empty. On a missing file or failed skill return an error and stop. Empty input should produce no delivery. Return Markdown via Hermes local delivery. Save only the execution prompt to task.md in English and show the native CLI setup separately. Draft only, do not create a job.",
+    "expect": {
+      "fileContains": {
+        "task.md": [
+          "Europe/Paris",
+          "notes.md",
+          "collect-notes",
+          "write-digest",
+          "## Process",
+          "## Output"
+        ]
+      },
+      "fileMatches": {
+        "task.md": "## Process[\\s\\S]*?\\n\\d+\\.[^\\n]*collect-notes[\\s\\S]*?\\n\\d+\\.[^\\n]*write-digest"
+      },
+      "fileNotContains": {
+        "task.md": [
+          "{{",
+          "hermes cron create"
+        ]
+      },
+      "stdoutContains": [
+        "hermes cron create",
+        "--skill",
+        "--timezone",
+        "--workdir",
+        "--deliver"
+      ]
+    }
   }
 ]

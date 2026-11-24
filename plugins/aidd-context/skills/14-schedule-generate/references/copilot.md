@@ -1,0 +1,7 @@
+# GitHub Copilot
+
+| Surface | Setup and limits | Verify |
+| --- | --- | --- |
+| Interactive CLI | In a session exposing the experimental commands, use `/every INTERVAL PROMPT` for a recurring interval or `/after DELAY PROMPT` for one run. The creating session must stay open. User-invocable skills can be named in the prompt. | Open the schedule manager with `/every` or `/after` alone. [CLI guide in Markdown](https://docs.github.com/api/article/body?pathname=/en/copilot/how-tos/copilot-cli/automate-copilot-cli/schedule-prompts) |
+| Copilot cloud agent | In an eligible private or internal repository with automations enabled, open Agents → Automations → Create automation. Choose ownership, a schedule trigger, the rendered prompt and the needed tools. | Reopen the entry in the Automations pane to inspect its trigger, prompt, tools and enabled state. [Cloud guide](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/cloud-agent/create-automations) |
+| VS Code Agents window | Use `/automate` or Automations → Create with the workspace, prompt, execution environment and schedule. Local schedules require an awake machine and an available agent. Custom cron requires a local Agent Host. Cloud schedules use the GitHub service. | Open the saved automation and check the workspace, schedule, timezone, prompt and enabled state. Past runs appear under History. [VS Code guide](https://code.visualstudio.com/docs/agents/run/automations) |
