@@ -1,3 +1,4 @@
+import { parse as parseToml } from "smol-toml";
 import { describe, expect, it } from "vitest";
 import { wireTools } from "../../../../../src/composition/contexts/tools.js";
 import { InstallConfig } from "../../../../../src/contexts/installation/application/install/install-config.use-case.js";
@@ -167,7 +168,7 @@ describe("InstallConfig - MCP config", () => {
 
   /** The mcp file a registered tool declares: cursor's takes the user's entries first, opencode's
    * writes the framework's over them. */
-  function mcpCapability(toolId: typeof TOOL.cursor | typeof TOOL.opencode) {
+  function mcpCapability(toolId: typeof TOOL.cursor | typeof TOOL.opencode | typeof TOOL.codex) {
     const capability = registeredTools().aiProfile(toolId).mcpConfig();
     if (capability === null) throw new Error(`${toolId} declares no mcp file`);
     return capability;
@@ -186,6 +187,38 @@ describe("InstallConfig - MCP config", () => {
 
     expect(results.map((f) => JSON.parse(f.content))).toStrictEqual([
       { mcpServers: { docs: { command: "cmd", args: ["/c", "npx", "-y", "docs-server"] } } },
+    ]);
+  });
+
+  it("rewrites npx servers for Windows before Codex's TOML conversion", async () => {
+    const { useCase } = buildUseCase();
+
+    const results = await useCase.execute({
+      writes: [{ kind: "mcp", capability: mcpCapability(TOOL.codex) }],
+      configRefs: [MCP_REF],
+      contentFiles: new Map([[MCP_REF.path, NPX_SERVER]]),
+      projectRoot: PROJECT_ROOT,
+      platform: win32Platform,
+    });
+
+    expect(results.map((f) => parseToml(f.content))).toEqual([
+      { mcp_servers: { docs: { command: "cmd", args: ["/c", "npx", "-y", "docs-server"] } } },
+    ]);
+  });
+
+  it("rewrites npx servers for Windows before OpenCode's command array", async () => {
+    const { useCase } = buildUseCase();
+
+    const results = await useCase.execute({
+      writes: [{ kind: "mcp", capability: mcpCapability(TOOL.opencode) }],
+      configRefs: [MCP_REF],
+      contentFiles: new Map([[MCP_REF.path, NPX_SERVER]]),
+      projectRoot: PROJECT_ROOT,
+      platform: win32Platform,
+    });
+
+    expect(results.map((f) => JSON.parse(f.content).mcp.docs.command)).toStrictEqual([
+      ["cmd", "/c", "npx", "-y", "docs-server"],
     ]);
   });
 
