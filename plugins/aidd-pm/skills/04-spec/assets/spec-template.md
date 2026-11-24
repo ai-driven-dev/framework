@@ -1,4 +1,4 @@
-<!-- Fill or omit these sections; never add, rename, or reorder one. -->
+<!-- Fill, then strip this comment. Never add, rename, or reorder a section. -->
 
 # {{Project / Feature Name}}
 
@@ -31,6 +31,7 @@
 {{One entry per gap, per `references/tbd-marker.md`. `None` when there is none. Resolve each before the spec is locked.}}
 
 ## Stakeholders
+
 {{Optional. Drop the section when it has nothing to say.}}
 
 - Decider: {{who settles a tradeoff}}
@@ -38,4 +39,5 @@
 - Consumer: {{who depends on it}}
 
 ## Context
+
 {{Optional. Background, prior decisions, upstream constraints. Link out, never restate.}}
