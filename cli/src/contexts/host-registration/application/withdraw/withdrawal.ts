@@ -147,11 +147,15 @@ export type WithdrawalRequest =
       readonly kind: "prove-project-registrations";
       readonly withdrawals: readonly ProjectRegistrationWithdrawal[];
       readonly facts: ProjectCleanFacts;
+      /** The alias of the one marketplace to act on; every registration when absent. */
+      readonly marketplace?: string;
     }
   | {
       readonly kind: "withdraw-project-registrations";
       readonly withdrawals: readonly ProjectRegistrationWithdrawal[];
       readonly facts: ProjectCleanFacts;
+      /** The alias of the one marketplace to act on; every registration when absent. */
+      readonly marketplace?: string;
     }
   | {
       readonly kind: "check-user-hosts";

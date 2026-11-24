@@ -294,3 +294,59 @@ describe("which marketplace a removal takes out", () => {
     });
   });
 });
+
+describe("removing a project marketplace from its hosts", () => {
+  it("withdraws the marketplace from the hosts once it is proven, before its registry entry goes", async () => {
+    const { registry, manifestRepo, fs } = buildUseCase(syntheticCatalog());
+    const steps: string[] = [];
+    const useCase = projectMarketplaceRemover(
+      syntheticCatalog(),
+      removeProjectPluginOf(fs),
+      manifestRepo,
+      registry,
+      new KeepPrompter(),
+      undefined,
+      {
+        execute: async ({ name }) => {
+          steps.push(`prove ${name}`);
+          return {
+            apply: async () => {
+              steps.push(
+                `withdraw ${name} while ${(await registry.list(PROJECT_ROOT)).length} registered`
+              );
+            },
+          };
+        },
+      }
+    );
+    await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
+
+    await useCase.execute({ name: "awesome", projectRoot: PROJECT_ROOT, autoConfirm: true });
+
+    expect(steps).toStrictEqual(["prove awesome", "withdraw awesome while 1 registered"]);
+    expect(await registry.list(PROJECT_ROOT)).toEqual([]);
+  });
+
+  it("leaves everything in place when the hosts refuse the withdrawal", async () => {
+    const { registry, manifestRepo, fs } = buildUseCase(syntheticCatalog());
+    const useCase = projectMarketplaceRemover(
+      syntheticCatalog(),
+      removeProjectPluginOf(fs),
+      manifestRepo,
+      registry,
+      new KeepPrompter(),
+      undefined,
+      {
+        execute: async () => {
+          throw new Error("host refuses");
+        },
+      }
+    );
+    await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
+
+    await expect(
+      useCase.execute({ name: "awesome", projectRoot: PROJECT_ROOT, autoConfirm: true })
+    ).rejects.toThrow("host refuses");
+    expect((await registry.list(PROJECT_ROOT)).map((m) => m.name)).toEqual(["awesome"]);
+  });
+});

@@ -8,6 +8,8 @@ export class FakeHostActions implements HostActions {
   available: boolean;
   readonly addedMarketplaces: string[] = [];
   readonly removedMarketplaces: string[] = [];
+  /** The scope each marketplace removal actually carried, in call order. */
+  readonly removedMarketplaceScopes: Array<Scope | undefined> = [];
   readonly forcedRemovals: boolean[] = [];
   readonly enabledPlugins: string[] = [];
   readonly uninstalledPlugins: string[] = [];
@@ -87,8 +89,9 @@ export class FakeHostActions implements HostActions {
     return undefined;
   }
 
-  removeMarketplace(name: string, _scope?: unknown, options?: { force?: boolean }): HostRefusal {
+  removeMarketplace(name: string, scope?: Scope, options?: { force?: boolean }): HostRefusal {
     this.forcedRemovals.push(options?.force === true);
+    this.removedMarketplaceScopes.push(scope);
     if (this.throwOnRemove) {
       return {
         detail: `marketplace remove ${name} failed: '${name}' is not configured or installed`,

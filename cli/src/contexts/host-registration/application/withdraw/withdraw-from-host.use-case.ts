@@ -8,6 +8,7 @@ import {
 import type { HostPorts } from "../../ports/host-ports.js";
 import { proveMarketplaceRemoval } from "../prove-marketplace-removal.js";
 import { throwRefusal } from "../throw-refusal.js";
+import { narrowToMarketplace } from "./narrow-to-marketplace.js";
 import { assertProjectRegistrationsOwned } from "./prove/assert-project-registrations-owned.js";
 import { assertProjectSource } from "./prove/assert-project-source.js";
 import { proveClaimedRef } from "./prove/prove-claimed-ref.js";
@@ -70,7 +71,11 @@ export class WithdrawFromHost {
         );
         return undefined;
       case "prove-project-registrations":
-        return assertProjectRegistrationsOwned(this.deps, command.withdrawals, command.facts);
+        return assertProjectRegistrationsOwned(
+          this.deps,
+          narrowToMarketplace(command.withdrawals, command.marketplace),
+          command.facts
+        );
       case "withdraw-project-registrations":
         return this.withdrawProject(command);
       case "check-user-hosts":
@@ -88,7 +93,7 @@ export class WithdrawFromHost {
   ): Promise<void> {
     const removed = await withdrawProjectRegistrations(
       this.deps,
-      command.withdrawals,
+      narrowToMarketplace(command.withdrawals, command.marketplace),
       command.facts
     );
     return purgeMarketplaceCaches(this.deps, removed, command.facts.resolveCacheCandidate);
