@@ -110,13 +110,16 @@ export class ManifestMigrationError extends AiddError {
 
 export type ManifestUnavailableCode = "manifest-missing" | "manifest-corrupted";
 
-/** A project's manifest cannot be had, for the reason the stable `code` names. */
+/** A project's manifest cannot be had, for the reason the stable `code` names; `detail` is where
+ * a corrupted one is wrong. */
 export class ManifestUnavailableError extends AiddError {
+  readonly detail: string | undefined;
   constructor(
     readonly code: ManifestUnavailableCode,
-    options?: ErrorOptions
+    options?: ErrorOptions & { readonly detail?: string }
   ) {
     super(options);
+    this.detail = options?.detail;
   }
 }
 

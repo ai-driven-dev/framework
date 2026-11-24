@@ -114,8 +114,17 @@ export abstract class ManifestFile {
 /** What a failed read means to the person: the file is corrupted, the system refused to read it, or
  * something else this CLI refuses by its own name (a version, a failed split) or has no name for. */
 function failNamed(error: unknown, path: string): never {
-  if (error instanceof InvalidManifestDataError || error instanceof InvalidManifestToolIdError) {
-    throw new ManifestUnavailableError("manifest-corrupted", { cause: error });
+  if (error instanceof InvalidManifestDataError) {
+    throw new ManifestUnavailableError("manifest-corrupted", {
+      cause: error,
+      detail: error.detail,
+    });
+  }
+  if (error instanceof InvalidManifestToolIdError) {
+    throw new ManifestUnavailableError("manifest-corrupted", {
+      cause: error,
+      detail: `tools.${error.key}: unknown tool id.`,
+    });
   }
   if (isErrnoException(error) && error.syscall !== undefined && error.code !== undefined) {
     throw new ManifestUnreadableError(path, error.code, { cause: error });

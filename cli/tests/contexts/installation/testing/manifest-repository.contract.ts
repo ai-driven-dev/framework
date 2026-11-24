@@ -191,6 +191,7 @@ export function describeManifestFileContract(
       expect(failure).toBeInstanceOf(ManifestUnavailableError);
       expect(failure).toMatchObject({
         code: "manifest-corrupted",
+        detail: expect.stringContaining(`${subject.manifestPath} is not valid JSON`),
         cause: expect.objectContaining({
           detail: expect.stringContaining(`${subject.manifestPath} is not valid JSON`),
         }),
@@ -203,6 +204,7 @@ export function describeManifestFileContract(
 
       await expect(subject.repository.load()).rejects.toMatchObject({
         code: "manifest-corrupted",
+        detail: "tools: expected an object.",
         cause: expect.any(InvalidManifestDataError),
       });
     });
