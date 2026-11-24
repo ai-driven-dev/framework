@@ -20,5 +20,8 @@ flowchart LR
 
 - Never invent: mark each gap instead of guessing.
 - Never explore the codebase.
+- Hold one outcome per spec: keep the one the user picks, else the first, and list each other as a Non-goal.
 - Hold intent, never implementation: no library, framework pattern or file layout.
+- Prove each hard constraint with at least one Done-when condition.
+- Give Done-when at least one condition for a refused or failed case.
 - Never rewrite a spec whose status is `locked`, a status only the person who approves it sets.

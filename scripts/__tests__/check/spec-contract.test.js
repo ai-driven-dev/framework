@@ -68,8 +68,13 @@ describe("spec contract", () => {
     refusedOnlyBy(GOOD.replace("## Target", "## Swap").replace("## Done-when", "## Target").replace("## Swap", "## Done-when"), "SPEC-01");
   });
 
-  it("accepts a locked spec", () => {
-    assert.deepEqual(check(GOOD.replace("status: draft", "status: locked")), { code: 0, out: "", err: "" });
+  it("accepts a locked spec with no open question", () => {
+    const locked = GOOD.replace("status: draft", "status: locked").replace("- TBD: should the export include deleted items?", "None");
+    assert.deepEqual(check(locked), { code: 0, out: "", err: "" });
+  });
+
+  it("SPEC-02 refuses a locked spec with an open question", () => {
+    refusedOnlyBy(GOOD.replace("status: draft", "status: locked"), "SPEC-02");
   });
 
   it("SPEC-01 refuses a status missing or other than draft or locked", () => {
