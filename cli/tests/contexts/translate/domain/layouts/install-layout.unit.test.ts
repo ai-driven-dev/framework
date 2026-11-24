@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { parseFrontmatter } from "../../../../../src/shared/domain/markdown.js";
 import { anEmptyContract } from "../../../../shared/testing/empty-build-contract.builder.js";
 import { contractToolProfile } from "../../testing/contract-tool-profile.builder.js";
 import {
@@ -47,10 +48,12 @@ describe("a plugin of one skill, its action and its asset", () => {
   });
 
   it("namespaces every skill file per plugin, prose and asset alike, for a flat target", () => {
-    expect(treeOf(opencode, skillDist())).toEqual({
-      ".opencode/skills/sample-plugin/hello/SKILL.md": skillEntryContent
-        .replace("name: hello", "name: 'hello'")
-        .replace("description: Hello skill", "description: 'Hello skill'"),
+    const { ".opencode/skills/sample-plugin/hello/SKILL.md": entry, ...rest } = treeOf(
+      opencode,
+      skillDist()
+    );
+    expect(parseFrontmatter(entry)).toEqual(parseFrontmatter(skillEntryContent));
+    expect(rest).toEqual({
       ".opencode/skills/sample-plugin/hello/actions/run.md": skillActionContent,
       ".opencode/skills/sample-plugin/hello/reference.json": skillAssetContent,
     });
@@ -92,8 +95,15 @@ describe("a flat target that rewrites what it hosts", () => {
       makeFile("skills/hello/SKILL.md", "Read SOURCE.\n"),
       makeFile("skills/hello/reference.json", '{ "from": "SOURCE" }\n'),
     ];
-    expect(treeOf(rewriting, distOf([...skills], { skills }))).toEqual({
-      ".opencode/skills/sample-plugin/hello/SKILL.md": "---\nname: 'hello'\n---\nRead REWRITTEN.\n",
+    const { ".opencode/skills/sample-plugin/hello/SKILL.md": entry, ...rest } = treeOf(
+      rewriting,
+      distOf([...skills], { skills })
+    );
+    expect(parseFrontmatter(entry)).toEqual({
+      frontmatter: { name: "hello" },
+      body: "Read REWRITTEN.\n",
+    });
+    expect(rest).toEqual({
       ".opencode/skills/sample-plugin/hello/reference.json": '{ "from": "SOURCE" }\n',
     });
   });

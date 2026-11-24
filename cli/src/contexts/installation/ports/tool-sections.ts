@@ -91,7 +91,7 @@ export interface ProjectHooksSection {
 export interface FlatMcpSection {
   readonly toolId: AiToolId;
   flatPluginMcp(): McpConfigAnswers | null;
-  flatRulesGlob(pluginName: string): string | null;
+  flatRulesPlacement(pluginName: string): { readonly prefix: string; readonly glob: string } | null;
 }
 
 /** The shared settings file a tool enables its plugins in. */

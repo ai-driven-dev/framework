@@ -21,9 +21,9 @@ export interface FlatArtifactLayout {
   readonly skillsDir: string;
   readonly agentsDir: string;
   readonly skills: "nested" | "single-level";
-  /** A rule under its plugin's folder, or at the top of the rules folder named by its plugin,
-   * where the tool applies it to every file whatever its `paths` say. */
-  readonly rules: "nested" | "top-level-unscoped";
+  /** A rule under its plugin's folder, or at the top of the rules folder named by its plugin, for
+   * a tool that reads no frontmatter and so applies every rule to every file. */
+  readonly rules: "nested" | "top-level-no-frontmatter";
   readonly agent: { readonly ext: string } | { readonly folderFile: string };
 }
 
@@ -76,16 +76,21 @@ export function flatSectionPath(
   const { plugin, name } = file;
   if (section === "skills") return flatSkillPath(layout, plugin, name);
   if (section === "agents") return flatAgentFilePath(layout, plugin, name);
-  if (section === "rules" && layout.rules === "top-level-unscoped") {
+  if (section === "rules" && layout.rules === "top-level-no-frontmatter") {
     return `${layout.directory}rules/${plugin}-${name.replaceAll("/", "-")}`;
   }
   return `${layout.directory}${section}/${plugin}/${name}`;
 }
 
-/** The glob naming every rule a plugin placed at the top of the rules folder, or null where
- * rules sit under the plugin's own folder and need no listing. */
-export function flatRulesGlob(layout: FlatArtifactLayout, plugin: string): string | null {
-  return layout.rules === "top-level-unscoped" ? `${layout.directory}rules/${plugin}-*.md` : null;
+/** Where a plugin's rules sit at the top of the rules folder: the path prefix of each and the glob
+ * naming them all. Null where rules sit under the plugin's own folder and need no listing. */
+export function flatRulesPlacement(
+  layout: FlatArtifactLayout,
+  plugin: string
+): { readonly prefix: string; readonly glob: string } | null {
+  if (layout.rules !== "top-level-no-frontmatter") return null;
+  const prefix = `${layout.directory}rules/${plugin}-`;
+  return { prefix, glob: `${prefix}*.md` };
 }
 
 /** Whether a project-relative path is one of the plugin's skills or agents: the inverse of the

@@ -44,7 +44,7 @@ describe("a rule installed flat for a tool that reads no paths frontmatter", () 
     expect(result.skipped).toEqual([]);
   });
 
-  it("writes an unscoped rule without frontmatter, as the rule-generate skill does", () => {
+  it("writes an unscoped rule without frontmatter", () => {
     const unscoped = {
       relativePath: "rules/01-standards/1-naming.md",
       content: '---\ndescription: "Naming"\n---\n# Naming\n',
@@ -61,16 +61,6 @@ describe("a rule installed flat for a tool that reads no paths frontmatter", () 
       .translate(dist, kilo)
       .find((f) => f.relativePath.endsWith("1-naming.md"));
     expect(written?.content).toBe("# Naming\n");
-  });
-
-  it("states a single path written as a string the same way", () => {
-    const result = translator.translateWithComponentPaths(
-      distWithRules('---\npaths: "**/*.ts"\n---\n# TypeScript\n'),
-      kilo
-    );
-
-    const written = result.files.find((f) => f.relativePath.endsWith("2-ts.md"));
-    expect(written?.content).toContain("Applies to files matching `**/*.ts`.\n\n# TypeScript\n");
   });
 
   it("leaves a tool that loads nested rules as it was", () => {

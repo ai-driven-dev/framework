@@ -87,10 +87,11 @@ function placedRulesGlob(
   tool: AiToolProfile,
   placed: { pluginName: string; files: readonly InstallationFile[] }
 ): string | null {
-  const glob = tool.flatRulesGlob(placed.pluginName);
-  if (glob === null) return null;
-  const folder = glob.slice(0, glob.indexOf("*"));
-  return placed.files.some((file) => file.relativePath.startsWith(folder)) ? glob : null;
+  const rules = tool.flatRulesPlacement(placed.pluginName);
+  if (rules === null) return null;
+  return placed.files.some((file) => file.relativePath.startsWith(rules.prefix))
+    ? rules.glob
+    : null;
 }
 
 function placeProjectHooks(

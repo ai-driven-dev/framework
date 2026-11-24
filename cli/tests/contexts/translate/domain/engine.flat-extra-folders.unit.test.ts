@@ -6,9 +6,6 @@ import { aCanon } from "../testing/canon-distribution.builder.js";
 import { aStubBuildContract, aSupportedArtifact } from "../testing/stub-build-contract.builder.js";
 
 const ROOT = SOURCE_PLUGIN_ROOT_TOKEN;
-const MCP = JSON.stringify({
-  mcpServers: { db: { command: "node", args: [`${ROOT}/bin/server.js`] } },
-});
 const HOOKS = JSON.stringify({
   hooks: { Stop: [{ hooks: [{ type: "command", command: `${ROOT}/scripts/check.sh` }] }] },
 });
@@ -19,7 +16,6 @@ function contract(): ToolBuildContract {
     ...stub,
     artifacts: {
       ...stub.artifacts,
-      mcp: aSupportedArtifact({ mcpServersKey: "mcpServers" }),
       hooks: aSupportedArtifact({
         placement: { kind: "hooks", scriptsDir: ".stub/" },
         hooksFile: {
@@ -34,33 +30,17 @@ function contract(): ToolBuildContract {
   };
 }
 
-function flatBuild(files: Record<string, string>, over: Partial<ToolBuildContract> = {}) {
+function flatBuild(files: Record<string, string>) {
   return translate(aCanon("plug", files), {
     kind: "build",
     mode: "flat",
     outDir: "/out",
-    contract: { ...contract(), ...over },
+    contract: contract(),
   });
 }
 
-/** A tool that carries MCP in its config artifact, with no MCP artifact of its own. */
-const CONFIG_ONLY: Partial<ToolBuildContract> = {
-  artifacts: {
-    ...contract().artifacts,
-    mcp: { supported: false, reason: "carried by the config artifact" },
-  },
-  configArtifact: {
-    reads: () => [],
-    probes: () => [],
-    assets: { tool: "kilo", names: [] },
-    emit: () => [],
-  },
-};
-
 const FILES = {
-  ".mcp.json": MCP,
   "hooks/hooks.json": HOOKS,
-  "bin/server.js": "server",
   "scripts/check.sh": "check",
   "docs/guide.md": "guide",
 };
@@ -68,14 +48,8 @@ const FILES = {
 describe("the folders a flat build's commands name", () => {
   it("copies each named folder under the plugin's name, and only those", () => {
     const paths = flatBuild(FILES).files.map((file) => file.relativePath);
-    expect(paths).toContain("plug/bin/server.js");
     expect(paths).toContain("plug/scripts/check.sh");
     expect(paths.some((path) => path.includes("docs"))).toBe(false);
-  });
-
-  it("points an MCP command at the copied folder", () => {
-    const servers = flatBuild(FILES).mcp?.servers;
-    expect(JSON.stringify(servers)).toContain("/out/plug/bin/server.js");
   });
 
   it("points a hook command at the copied folder", () => {
@@ -83,11 +57,5 @@ describe("the folders a flat build's commands name", () => {
       (file) => file.relativePath === ".stub/plug.hooks.json"
     );
     expect(own?.content).toContain("|./plug/scripts/check.sh");
-  });
-
-  it("copies the folder an MCP command names for a tool that carries MCP in its config", () => {
-    const built = flatBuild(FILES, CONFIG_ONLY);
-    expect(JSON.stringify(built.mcp?.servers)).toContain("/out/plug/bin/server.js");
-    expect(built.files.map((file) => file.relativePath)).toContain("plug/bin/server.js");
   });
 });

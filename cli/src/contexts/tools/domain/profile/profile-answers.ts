@@ -2,7 +2,7 @@ import { join } from "node:path";
 import {
   type FlatArtifactLayout,
   flatArtifactLayout,
-  flatRulesGlob,
+  flatRulesPlacement,
   flatSectionPath,
   ownsFlatArtifact,
 } from "../../../../shared/domain/materialization/flat-paths.js";
@@ -98,7 +98,7 @@ export function pathAnswers(directory: string, capabilities: ProfileSections) {
       flatSectionPath(layout, section, { plugin: pluginName, name: fileName }),
     ownsFlatPath: (relativePath: string, pluginName: string) =>
       ownsFlatArtifact(layout, relativePath, pluginName),
-    flatRulesGlob: (pluginName: string) => flatRulesGlob(layout, pluginName),
+    flatRulesPlacement: (pluginName: string) => flatRulesPlacement(layout, pluginName),
   };
 }
 

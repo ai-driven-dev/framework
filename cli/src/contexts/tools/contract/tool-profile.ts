@@ -237,9 +237,9 @@ export interface AiToolProfile {
    * Limit: a flat skill or agent is matched by the `<plugin>-` prefix, so a plugin whose name
    * prefixes a sibling's would claim its files; no framework plugin name does. */
   ownsFlatPath(relativePath: string, pluginName: string): boolean;
-  /** The glob naming every rule `pluginName` places at the top of the tool's rules folder, or
-   * null when its rules sit under the plugin's own folder. */
-  flatRulesGlob(pluginName: string): string | null;
+  /** Where `pluginName` places its rules at the top of the tool's rules folder: their path prefix
+   * and the glob naming them, or null when they sit under the plugin's own folder. */
+  flatRulesPlacement(pluginName: string): { readonly prefix: string; readonly glob: string } | null;
   /** How this tool writes the references of its documents. */
   readonly linkSyntax: LinkSyntax;
   /** The tool's plugin delivery, or null when it declares none. */

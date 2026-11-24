@@ -86,6 +86,9 @@ function markdownPlan(
   const fileName = source.slice(`${kind}/`.length);
   const fullPath = section?.buildInstallPath(fileName);
   if (!section || fullPath === null || fullPath === undefined) return null;
+  // An agent its tool's marketplace build names after its plugin carries that name here too.
+  const agents = tool.buildContract("marketplace")?.artifacts.agents;
+  const agentShape = kind === "agents" && agents?.supported ? agents.agentMarkdown : undefined;
   return {
     source,
     path: `${pluginRoot}${toPluginRelativePath(fullPath, tool.directory)}`,
@@ -94,26 +97,15 @@ function markdownPlan(
     shape: (text) =>
       reshapeFrontmatter(text, {
         frontmatter: (fm) =>
-          section.convertFrontmatter(pluginNamed(fm, { kind, fileName }, at), fileName),
+          section.convertFrontmatter(
+            namedByPlugin(fm, agentShape, { plugin: at.pluginName, outName: fileName }),
+            fileName
+          ),
         serialize: (fm, body) =>
           section.serialize ? section.serialize(fm, body) : serializeFrontmatter(fm, body),
       }),
     rootToken: plugins.rootToken(),
   };
-}
-
-/** An agent its tool's marketplace build names after its plugin carries that name here too. */
-function pluginNamed(
-  frontmatter: Record<string, unknown>,
-  agent: { kind: string; fileName: string },
-  at: NativeAt
-): Record<string, unknown> {
-  const agents = at.tool.buildContract("marketplace")?.artifacts.agents;
-  if (agent.kind !== "agents" || !agents?.supported) return frontmatter;
-  return namedByPlugin(frontmatter, agents.agentMarkdown, {
-    plugin: at.pluginName,
-    outName: agent.fileName,
-  });
 }
 
 // Only a skill's entry carries the frontmatter its tool reads. Anything else under `skills/` is an
