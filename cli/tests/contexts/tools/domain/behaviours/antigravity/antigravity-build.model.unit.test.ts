@@ -85,10 +85,22 @@ describe("building Antigravity's flat contract", () => {
         "name: 'aidd-dev-executor'",
         "description: 'Turns a task into code.'",
         "model: 'inherit'",
+        'tools: ["view_file","grep_search","replace_file_content","write_file","run_command"]',
         "---",
         "Follow [SKILL.md](../../skills/aidd-dev-01-plan/SKILL.md)",
       ].join("\n")
     );
+  });
+
+  it.each([
+    ["Read, Bash, Task, Read", '["view_file","run_command"]'],
+    ["Write, Edit, Grep", '["write_file","replace_file_content","grep_search"]'],
+    ["Task, Glob", "[]"],
+  ])("grants an agent declaring `%s` only the agy tools it maps to: %s", (declared, expected) => {
+    const transform = builtAgent(present(antigravity.buildContracts.flat)(), "flat");
+    const source = `---\nname: executor\ndescription: d\ntools: ${declared}\n---\nbody`;
+
+    expect(transform(source, "aidd-dev", "executor.md")).toContain(`\ntools: ${expected}\n`);
   });
 
   it("places a path outside skills/ and agents/ by the skills rule only for a skills/ prefix", () => {
