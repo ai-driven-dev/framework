@@ -103,25 +103,48 @@ describe("antigravity's project hooks format", () => {
       ]);
     });
 
-    it("relays the tool and stop events agy fires, under their own names", () => {
+    it("relays the events agy fires, PostToolUse grouped under a matcher for every tool and the others flat", () => {
       const all = JSON.stringify({
         hooks: Object.fromEntries(
-          ["SessionStart", "PreToolUse", "PostToolUse", "Stop"].map((event) => [
+          ["SessionStart", "PostToolUse", "Stop"].map((event) => [
             event,
-            [{ hooks: [{ type: "command", command: "node x.cjs" }] }],
+            [{ matcher: "Write", hooks: [{ type: "command", command: "node x.cjs", timeout: 7 }] }],
           ])
         ),
       });
 
       const { content, warnings } = format.merge(null, all, "aidd-dev");
 
-      expect(Object.keys(parse(content)["aidd-dev"])).toEqual([
-        "SessionStart",
-        "PreToolUse",
-        "PostToolUse",
-        "Stop",
-      ]);
+      expect(parse(content)["aidd-dev"]).toEqual({
+        SessionStart: [expect.objectContaining({ type: "command" })],
+        PostToolUse: [
+          { matcher: "*", hooks: [expect.objectContaining({ type: "command", timeout: 7 })] },
+        ],
+        Stop: [expect.objectContaining({ type: "command" })],
+      });
       expect(warnings).toEqual([]);
+    });
+
+    it("lists the handlers of a grouped event, not the group", () => {
+      const post = JSON.stringify({
+        hooks: { PostToolUse: [{ hooks: [{ type: "command", command: "node x.cjs" }] }] },
+      });
+      const { content } = format.merge(null, post, "aidd-dev");
+
+      expect(format.contributedEntries(content, "aidd-dev")).toEqual([
+        { event: "PostToolUse", entry: expect.objectContaining({ type: "command" }) },
+      ]);
+    });
+
+    it("skips PreToolUse, which no framework script declares, with a warning naming it", () => {
+      const pre = JSON.stringify({
+        hooks: { PreToolUse: [{ hooks: [{ type: "command", command: "node x.cjs" }] }] },
+      });
+
+      const { content, warnings } = format.merge(null, pre, "aidd-dev");
+
+      expect(parse(content)).toEqual({});
+      expect(warnings).toEqual(["unmapped event 'PreToolUse' skipped"]);
     });
 
     it.each(["UserPromptSubmit", "SubagentStop", "SessionEnd"])(

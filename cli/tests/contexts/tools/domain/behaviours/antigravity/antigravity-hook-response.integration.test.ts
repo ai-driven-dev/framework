@@ -18,11 +18,11 @@ describe("Antigravity hook response", () => {
 
   afterEach(() => rmSync(root, { recursive: true, force: true }));
 
-  function run(script: string, args = "", input = "", event = "SessionStart") {
+  function run(script: string, args = "", input = "") {
     writeFileSync(join(root, ".agents", "hooks", "fixture", "hook.cjs"), script);
     const hooks = JSON.stringify({
       hooks: {
-        [event]: [
+        SessionStart: [
           {
             hooks: [
               {
@@ -53,25 +53,6 @@ describe("Antigravity hook response", () => {
     expect(result.status).toBe(0);
     expect(result.stderr).toBe("");
     expect(result.stdout).toBe("{}");
-  });
-
-  it("allows a tool call when a PreToolUse script succeeds silently: an empty answer denies it", () => {
-    const result = run("", "", "", "PreToolUse");
-
-    expect([result.status, result.stdout]).toEqual([0, '{"decision":"allow"}']);
-  });
-
-  it("keeps a PreToolUse script's own answer", () => {
-    const answer = '{"decision":"deny"}';
-    const result = run(`process.stdout.write(${JSON.stringify(answer)});`, "", "", "PreToolUse");
-
-    expect(result.stdout).toBe(answer);
-  });
-
-  it("names the event to the script, which the payload does not", () => {
-    const result = run("process.stdout.write(process.env.AIDD_HOOK_EVENT);", "", "", "Stop");
-
-    expect(result.stdout).toBe("Stop");
   });
 
   it("preserves existing JSON stdout byte for byte", () => {

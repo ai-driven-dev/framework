@@ -6,17 +6,20 @@ import { toBase64 } from "../formats/base64.js";
 import { PLUGIN_HOOKS_SOURCE } from "../formats/hooks/descriptor.js";
 
 // The host runs a handler from its own directory under the project and requires JSON stdout even
-// for a silent hook. Its payload names no event, so the wrapper names it to the command in
-// `AIDD_HOOK_EVENT`. A silent PreToolUse is `allow`: an empty answer denies the tool call.
+// for a silent hook.
 const JSON_RESPONSE =
-  "const e=process.argv[1];" +
-  "const p=require('node:child_process').spawn(Buffer.from(process.argv[2],'base64').toString(),{shell:true,cwd:'..',env:{...process.env,AIDD_HOOK_EVENT:e},stdio:['inherit','pipe','inherit']});" +
+  "const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});" +
   "let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});" +
-  "p.on('close',c=>{if(empty)process.stdout.write(e==='PreToolUse'?JSON.stringify({decision:'allow'}):'{}');process.exitCode=c??1});";
+  "p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});";
 
+// The host takes a tool event as `{ matcher, hooks: [handler] }` and the others as handlers.
+const GROUPED_EVENTS = new Set(["PreToolUse", "PostToolUse"]);
+
+type HandlerGroup = { matcher: string; hooks: ProjectHookEntry[] };
+const isGroup = (entry: ProjectHookEntry | HandlerGroup): entry is HandlerGroup => "hooks" in entry;
 type NamedHook = {
   enabled?: boolean;
-  [key: string]: ProjectHookEntry[] | boolean | undefined;
+  [key: string]: (ProjectHookEntry | HandlerGroup)[] | boolean | undefined;
 };
 type NamedHooks = Record<string, NamedHook>;
 type SourceHooks = { hooks?: Record<string, { hooks?: ProjectHookEntry[] }[]> };
@@ -43,10 +46,10 @@ export function wrappedCommandHooksScriptPath(
   return genericFlatHooksScriptPath(target.descriptor.flat.scriptsDir, pluginName, rest);
 }
 
-function toHandler(hook: ProjectHookEntry, event: string): ProjectHookEntry {
+function toHandler(hook: ProjectHookEntry): ProjectHookEntry {
   return {
     type: "command",
-    command: `node -e "${JSON_RESPONSE}" ${event} ${toBase64(hook.command)}`,
+    command: `node -e "${JSON_RESPONSE}" ${toBase64(hook.command)}`,
     timeout: hook.timeout,
   };
 }
@@ -54,23 +57,22 @@ function toHandler(hook: ProjectHookEntry, event: string): ProjectHookEntry {
 function convert(
   target: WrappedCommandHooksTarget,
   { json, plugin: pluginName, locate = (pluginPath) => pluginPath }: ShippedHooks
-): { handlers: Record<string, ProjectHookEntry[]>; warnings: string[] } {
+): { handlers: Record<string, (ProjectHookEntry | HandlerGroup)[]>; warnings: string[] } {
   const parsed = JSON.parse(json) as unknown;
   const rewritten = rewritePluginRootInJson(parsed, (suffix) =>
     suffix.startsWith(`${PLUGIN_HOOKS_SOURCE.scriptDir}/`)
       ? `./${wrappedCommandHooksScriptPath(target, pluginName, suffix)}`
       : `./${locate(suffix)}`
   ) as SourceHooks;
-  const handlers: Record<string, ProjectHookEntry[]> = {};
+  const handlers: Record<string, (ProjectHookEntry | HandlerGroup)[]> = {};
   const warnings: string[] = [];
   for (const [event, groups] of Object.entries(rewritten.hooks ?? {})) {
     if (!Object.hasOwn(target.descriptor.eventMap, event)) {
       warnings.push(`unmapped event '${event}' skipped`);
       continue;
     }
-    handlers[event] = groups.flatMap((group) =>
-      (group.hooks ?? []).map((hook) => toHandler(hook, event))
-    );
+    const converted = groups.flatMap((group) => (group.hooks ?? []).map(toHandler));
+    handlers[event] = GROUPED_EVENTS.has(event) ? [{ matcher: "*", hooks: converted }] : converted;
   }
   return { handlers, warnings };
 }
@@ -121,7 +123,9 @@ export function wrappedCommandHookEntries(
     if (!Array.isArray(entries)) {
       throw new Error(`${target.label} hook '${pluginName}.${event}' must be an array.`);
     }
-    return entries.map((entry) => ({ event, entry }));
+    return entries.flatMap((entry) =>
+      (isGroup(entry) ? entry.hooks : [entry]).map((handler) => ({ event, entry: handler }))
+    );
   });
 }
 

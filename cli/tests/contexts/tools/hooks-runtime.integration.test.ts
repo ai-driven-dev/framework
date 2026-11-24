@@ -9,8 +9,6 @@
  * `hooks-runtime-<host>.integration.test.ts`.
  */
 import { spawnSync } from "node:child_process";
-import { rmSync } from "node:fs";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -32,7 +30,7 @@ import {
 afterEach(restoreHostIo);
 
 describe("Antigravity CLI", () => {
-  it("reads SessionStart from its captured payload, which names no event", () => {
+  it("reads SessionStart from its captured payload", () => {
     const { payload } = sample("antigravity-SessionStart.json", 0);
 
     expect(read("antigravity", payload).event).toStrictEqual({
@@ -46,38 +44,25 @@ describe("Antigravity CLI", () => {
     });
   });
 
-  describe("on a tool or stop event, which the payload does not name and the wrapper does", () => {
-    // Payloads shaped like the measured ones: `toolCall.name` and `toolCall.args`, `Path` and
-    // `Content` for write_file, `CommandLine` for run_command. The fixtures say they are derived.
-    const { payload: stopPayload } = sample("antigravity-Stop.json", 0);
-    const conversationId = `agy-${process.pid}-${Date.now()}`;
-    const stopMarker = join(tmpdir(), `aidd-agy-stop-${conversationId}`);
-    const stop = { ...stopPayload, conversationId };
+  describe("on a tool or stop event, named by the payload's hookEventName", () => {
+    const [firstStop, continuedStop] = [0, 1].map(
+      (index) => sample("antigravity-Stop.json", index).payload
+    );
     const written = sample("antigravity-PostToolUse.json", 0).payload;
     const ran = sample("antigravity-PostToolUse.json", 1).payload;
 
-    const as = (hookEvent: string, body: Record<string, unknown>) => {
-      process.env.AIDD_HOOK_EVENT = hookEvent;
-      return read("antigravity", body);
-    };
-
-    afterEach(() => {
-      delete process.env.AIDD_HOOK_EVENT;
-      rmSync(stopMarker, { force: true });
-    });
-
     it("reads PostToolUse of write_file as the whole file it wrote", () => {
-      const { event } = as("PostToolUse", written);
+      const { event } = read("antigravity", written);
 
       expect([event?.event, event?.files, event?.command]).toStrictEqual([
         "PostToolUse",
-        [{ path: NOTES, content: "hello\n", written: "hello\n" }],
+        [{ path: NOTES, content: "hello", written: "hello" }],
         undefined,
       ]);
     });
 
     it("reads PostToolUse of run_command as its command", () => {
-      const { event } = as("PostToolUse", ran);
+      const { event } = read("antigravity", ran);
 
       expect([event?.event, event?.files, event?.command]).toStrictEqual([
         "PostToolUse",
@@ -87,7 +72,7 @@ describe("Antigravity CLI", () => {
     });
 
     it("reads PostToolUse of another tool as touching no file", () => {
-      const { event } = as("PostToolUse", {
+      const { event } = read("antigravity", {
         ...ran,
         toolCall: { name: "view_file", args: { Path: "notes.md" } },
       });
@@ -95,19 +80,25 @@ describe("Antigravity CLI", () => {
       expect([event?.files, event?.command]).toStrictEqual([[], undefined]);
     });
 
+    it("reads no event from a payload that names none, even with a tool call", () => {
+      const { hookEventName: _named, ...unnamed } = ran;
+
+      expect(read("antigravity", unnamed).event).toBe(undefined);
+    });
+
     it("reads PreToolUse as no event: no framework script acts before a tool", () => {
-      expect(as("PreToolUse", ran).event).toBe(undefined);
+      expect(read("antigravity", { ...ran, hookEventName: "PreToolUse" }).event).toBe(undefined);
     });
 
     it("prints nothing for a PostToolUse answer: agy takes no context from it", () => {
-      const { adapter } = as("PostToolUse", ran);
+      const { adapter } = read("antigravity", ran);
       adapter.answer({ level: 2, text: "fix it" });
 
       expect(printed).toStrictEqual([]);
     });
 
-    it("continues the turn at Stop with the text as the reason", () => {
-      const { adapter, event } = as("Stop", stop);
+    it("continues the turn at the first Stop with the text as the reason", () => {
+      const { adapter, event } = read("antigravity", firstStop);
       adapter.continueTurn("fix it");
 
       expect([event?.event, event?.stopActive, output()]).toStrictEqual([
@@ -118,37 +109,28 @@ describe("Antigravity CLI", () => {
     });
 
     it("answers a Stop by continuing the turn too", () => {
-      const { adapter } = as("Stop", stop);
+      const { adapter } = read("antigravity", firstStop);
       adapter.answer({ level: 1, text: "fix it" });
 
       expect(output()).toStrictEqual({ decision: "continue", reason: "fix it" });
     });
 
-    it("continues once: the Stop that ends the continuation is active and continues nothing", () => {
-      as("Stop", stop).adapter.continueTurn("fix it");
-      restoreHostIo();
-      const { adapter, event } = as("Stop", stop);
+    it("continues nothing at the Stop that ends a continuation, flagged by executionNum", () => {
+      const { adapter, event } = read("antigravity", continuedStop);
       adapter.continueTurn("fix it");
 
       expect([event?.stopActive, printed]).toStrictEqual([true, []]);
     });
 
-    it("continues again on the next turn", () => {
-      as("Stop", stop).adapter.continueTurn("fix it");
-      restoreHostIo();
-      as("Stop", stop).adapter.continueTurn("fix it");
-      restoreHostIo();
-      const { adapter, event } = as("Stop", stop);
+    it("continues nothing at a Stop flagged by continuationActive alone", () => {
+      const { adapter, event } = read("antigravity", { ...firstStop, continuationActive: true });
       adapter.continueTurn("fix it");
 
-      expect([event?.stopActive, output()]).toStrictEqual([
-        false,
-        { decision: "continue", reason: "fix it" },
-      ]);
+      expect([event?.stopActive, printed]).toStrictEqual([true, []]);
     });
 
     it("never continues a Stop that names no conversation", () => {
-      const { adapter, event } = as("Stop", { ...stop, conversationId: undefined });
+      const { adapter, event } = read("antigravity", { ...firstStop, conversationId: undefined });
       adapter.continueTurn("fix it");
 
       expect([event, printed]).toStrictEqual([undefined, []]);

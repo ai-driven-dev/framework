@@ -4,17 +4,12 @@
  * the host's stdin into a neutral event, `answer()` and `continueTurn()` print the host's own
  * answer. The build puts one such adapter per tool at `hooks/lib/host.cjs`; the plugin tree
  * ships Claude Code's. Node built-ins only; anything unreadable is no event, and prints nothing.
- *
- * `agy` names no event in its payload: the wrapper the build puts around each command hands it
- * over in `AIDD_HOOK_EVENT`. A payload naming no tool call, from a command without it, is read
- * as SessionStart.
  */
 const fs = require("node:fs");
-const os = require("node:os");
 const path = require("node:path");
 
 const HOST = "antigravity";
-// PreToolUse stays unmapped: no framework script acts before a tool, and the wrapper allows it.
+// PreToolUse stays unmapped: no framework script acts before a tool.
 const EVENTS = new Set(["SessionStart", "PostToolUse", "Stop"]);
 // `agy` names its tools in snake case, and their arguments in Pascal case.
 const WRITES = new Set(["write_file"]);
@@ -44,32 +39,11 @@ function writtenFiles(tool, args, cwd) {
   return [file];
 }
 
-/** One empty file per conversation says its last turn end was continued. `agy` flags no
- * continuation in its payload, so the Stop that follows one finds it, and removes it. */
-function markerOf(sessionId) {
-  return path.join(os.tmpdir(), `aidd-agy-stop-${sessionId}`);
-}
-
-function consumeMarker(sessionId) {
-  try {
-    fs.unlinkSync(markerOf(sessionId));
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function eventOf(raw) {
-  const named = process.env.AIDD_HOOK_EVENT;
-  if (named !== undefined) return EVENTS.has(named) ? named : undefined;
-  return raw.toolCall === undefined ? "SessionStart" : undefined;
-}
-
 function readEvent() {
   current = undefined;
   const raw = readPayload();
   if (raw === undefined || typeof raw !== "object") return undefined;
-  const event = eventOf(raw);
+  const event = EVENTS.has(raw.hookEventName) ? raw.hookEventName : undefined;
   if (event === undefined || typeof raw.conversationId !== "string") return undefined;
   const cwd = folderOf(raw);
   const tool = event === "PostToolUse" ? raw.toolCall?.name : undefined;
@@ -81,7 +55,12 @@ function readEvent() {
     ...(SHELLS.has(tool) && typeof args?.CommandLine === "string"
       ? { command: args.CommandLine }
       : {}),
-    stopActive: event === "Stop" && consumeMarker(raw.conversationId),
+    // `continuationActive` stays false on a continued Stop in practice; `executionNum` is 0 on a
+    // turn's first Stop and counts up after each continuation.
+    stopActive:
+      event === "Stop" &&
+      (raw.continuationActive === true ||
+        (typeof raw.executionNum === "number" && raw.executionNum > 0)),
     sessionId: raw.conversationId,
     cwd,
     raw,
@@ -98,12 +77,6 @@ function print(output) {
 function continueTurn(text) {
   if (typeof text !== "string" || text === "" || current?.event !== "Stop") return;
   if (current.stopActive) return;
-  try {
-    fs.writeFileSync(markerOf(current.sessionId), "");
-  } catch {
-    // Without its marker the next Stop would continue again, forever: so it continues nothing.
-    return;
-  }
   print({ decision: "continue", reason: text });
 }
 

@@ -4,26 +4,31 @@
     "SessionStart": [
       {
         "type": "command",
-        "command": "node -e \"const e=process.argv[1];const p=require('node:child_process').spawn(Buffer.from(process.argv[2],'base64').toString(),{shell:true,cwd:'..',env:{...process.env,AIDD_HOOK_EVENT:e},stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write(e==='PreToolUse'?JSON.stringify({decision:'allow'}):'{}');process.exitCode=c??1});\" SessionStart bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC1jb250ZXh0L21lbW9yeS5janMgbG9hZA==",
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC1jb250ZXh0L21lbW9yeS5janMgbG9hZA==",
         "timeout": 5
       },
       {
         "type": "command",
-        "command": "node -e \"const e=process.argv[1];const p=require('node:child_process').spawn(Buffer.from(process.argv[2],'base64').toString(),{shell:true,cwd:'..',env:{...process.env,AIDD_HOOK_EVENT:e},stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write(e==='PreToolUse'?JSON.stringify({decision:'allow'}):'{}');process.exitCode=c??1});\" SessionStart bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC1jb250ZXh0L2FydGlmYWN0cy5janMgc3RhcnQ=",
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC1jb250ZXh0L2FydGlmYWN0cy5janMgc3RhcnQ=",
         "timeout": 5
       }
     ],
     "PostToolUse": [
       {
-        "type": "command",
-        "command": "node -e \"const e=process.argv[1];const p=require('node:child_process').spawn(Buffer.from(process.argv[2],'base64').toString(),{shell:true,cwd:'..',env:{...process.env,AIDD_HOOK_EVENT:e},stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write(e==='PreToolUse'?JSON.stringify({decision:'allow'}):'{}');process.exitCode=c??1});\" PostToolUse bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC1jb250ZXh0L2FydGlmYWN0cy5janMgbWFyaw==",
-        "timeout": 5
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC1jb250ZXh0L2FydGlmYWN0cy5janMgbWFyaw==",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "Stop": [
       {
         "type": "command",
-        "command": "node -e \"const e=process.argv[1];const p=require('node:child_process').spawn(Buffer.from(process.argv[2],'base64').toString(),{shell:true,cwd:'..',env:{...process.env,AIDD_HOOK_EVENT:e},stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write(e==='PreToolUse'?JSON.stringify({decision:'allow'}):'{}');process.exitCode=c??1});\" Stop bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC1jb250ZXh0L21lbW9yeS5janMgc3luYw==",
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC1jb250ZXh0L21lbW9yeS5janMgc3luYw==",
         "timeout": 5
       }
     ]
@@ -32,12 +37,12 @@
     "SessionStart": [
       {
         "type": "command",
-        "command": "node -e \"const e=process.argv[1];const p=require('node:child_process').spawn(Buffer.from(process.argv[2],'base64').toString(),{shell:true,cwd:'..',env:{...process.env,AIDD_HOOK_EVENT:e},stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write(e==='PreToolUse'?JSON.stringify({decision:'allow'}):'{}');process.exitCode=c??1});\" SessionStart bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvc2Vzc2lvbi1zdGFydC5janM=",
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvc2Vzc2lvbi1zdGFydC5janM=",
         "timeout": 10
       },
       {
         "type": "command",
-        "command": "node -e \"const e=process.argv[1];const p=require('node:child_process').spawn(Buffer.from(process.argv[2],'base64').toString(),{shell:true,cwd:'..',env:{...process.env,AIDD_HOOK_EVENT:e},stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write(e==='PreToolUse'?JSON.stringify({decision:'allow'}):'{}');process.exitCode=c??1});\" SessionStart bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvY2F0Y2gtdXAuY2pz",
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvY2F0Y2gtdXAuY2pz",
         "timeout": 120
       }
     ]

@@ -46,4 +46,4 @@ its `Delete`. OpenCode's and Kilo's `edit` and `apply_patch` arguments.
   that name was routed to another model by a local proxy. The arguments are the host's own tool
   schema; the model only filled them.
 
-Derived, not captured: Antigravity's `PostToolUse` and `Stop`, shaped from its SessionStart payload and the tool names and arguments measured with `agy -p`. Each file says so in its `note`.
+Antigravity's `PostToolUse` (a `write_file` then a `run_command`) and `Stop` (`executionNum` 0, then 1 on the continued turn end), captured from a real `agy` run. Its payloads name their event in `hookEventName`.
