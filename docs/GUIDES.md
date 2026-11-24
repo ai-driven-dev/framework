@@ -8,7 +8,7 @@
 | --- | --- |
 | [1. Start](#1-start) | Join a project, start one, or look around |
 | [2. Memory](#2-memory) | Give the AI a memory of the project |
-| [3. Harness engineering](#3-harness-engineering) | Create your skills, rules, agents, commands and hooks |
+| [3. Harness engineering](#3-harness-engineering) | Create skills, rules, agents, commands, hooks and scheduled tasks |
 | [4. Flows](#4-flows) | Build, fix, refactor, ship, plan, decide, verify |
 | [5. Learn](#5-learn) | Keep what the work teaches you |
 | [6. Update](#6-update) | Keep the memory and the plugins current |
@@ -52,6 +52,7 @@
 | An agent | `/aidd-context:06-agent-generate` |
 | A command | `/aidd-context:07-command-generate` |
 | A hook | `/aidd-context:08-hook-generate` |
+| A scheduled task | `/aidd-context:14-schedule-generate` |
 | Something, kind unknown | `/aidd-context:03-context-generate` |
 | Follow a how-to sheet | `/aidd-context:12-cook` |
 

@@ -595,5 +595,119 @@
         "aidd_docs/memory/api.md"
       ]
     }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "14-schedule-generate",
+    "evalName": "xeval-schedule",
+    "name": "drafts a Hermes weekday skill chain without registering it",
+    "setup": {
+      "files": {
+        "collect-notes/SKILL.md": "---\nname: collect-notes\ndescription: Collects notes from a given workspace file.\n---\nReturn its nonempty entries in file order.\n",
+        "write-digest/SKILL.md": "---\nname: write-digest\ndescription: Writes a digest from collected entries.\n---\nReturn a Markdown digest with one bullet per entry.\n"
+      }
+    },
+    "prompt": "Use {{SKILL}} to draft a persistent Hermes task for weekdays at 09:00 Europe/Paris. The installed skills are represented by ./collect-notes/SKILL.md and ./write-digest/SKILL.md. In the current working directory, collect today's entries from notes.md, excluding IDs read from seen-ids.txt, then give them to write-digest. Treat both inputs as read-only. Skip if empty. On a missing file or failed skill return an error and stop. Empty input should produce no delivery. Return Markdown via Hermes local delivery. Save only the execution prompt to task.md in English and show the native CLI setup separately. Draft only, do not create a job.",
+    "expect": {
+      "fileContains": {
+        "task.md": [
+          "Europe/Paris",
+          "notes.md",
+          "seen-ids.txt",
+          "collect-notes",
+          "write-digest",
+          "## Trigger conditions",
+          "## Rules",
+          "## Inputs",
+          "## Process",
+          "## Output"
+        ]
+      },
+      "fileMatches": {
+        "task.md": "## Process[\\s\\S]*?\\n\\d+\\.[^\\n]*collect-notes[\\s\\S]*?\\n\\d+\\.[^\\n]*write-digest"
+      },
+      "fileNotContains": {
+        "task.md": [
+          "{{",
+          "hermes cron create",
+          "draft only"
+        ]
+      },
+      "stdoutContains": [
+        "hermes cron create",
+        "--skill",
+        "--timezone",
+        "--workdir",
+        "--deliver"
+      ],
+      "judge": "The execution prompt treats notes.md and seen-ids.txt as read-only inputs. No step or outcome updates either file, including after delivery.",
+      "judgeFiles": ["task.md"]
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "14-schedule-generate",
+    "evalName": "xeval-schedule-test",
+    "name": "tests an existing draft without registering or executing it",
+    "prompt": "Use {{SKILL}} for a paper test of the complete draft quoted below. Use hypothetical inputs and report the outcomes. Do not change the draft or run a scheduler.\n\n<draft>\nEvery Monday at 09:00 UTC, read notes.md. Return a digest for valid entries, skip an empty file, and return an error if missing.\n</draft>",
+    "expect": {
+      "judge": "The answer traces valid, empty and missing input separately and identifies the test as a simulation. It does not claim it ran or registered a job."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "14-schedule-generate",
+    "evalName": "xeval-schedule-accounting",
+    "name": "runs and repairs an accounting trial before asking to activate it",
+    "setup": {
+      "files": {
+        "task.md": "# Book receipts\n\nEvery weekday at 09:00 UTC in this workspace, invoke read-receipt, then pass its ID and amount to book-receipt with account `office`. Skip a previously booked ID. Return the booked row.\n",
+        ".claude/skills/read-receipt/SKILL.md": "---\nname: read-receipt\ndescription: Reads the local receipt for the accounting trial.\n---\nRun `node accounting.cjs read` from the fixture workspace. Return its ID, account and amount in cents to the next step.\n",
+        ".claude/skills/book-receipt/SKILL.md": "---\nname: book-receipt\ndescription: Books a receipt to the local trial ledger.\n---\nRun `node accounting.cjs book ID ACCOUNT CENTS` in the fixture workspace with the received values. The command appends one row to ledger.txt. Return that row.\n",
+        "receipt.txt": "R-17 travel 1250\n",
+        "ledger.txt": "R-00 bank 100\n",
+        "accounting.cjs": "const fs = require('node:fs');\nconst [action, ...fields] = process.argv.slice(2);\nif (action === 'read') {\n  fs.appendFileSync('trial.log', 'read\\n');\n  process.stdout.write(fs.readFileSync('receipt.txt'));\n} else if (action === 'book' && fields.length === 3) {\n  const row = fields.join(' ') + '\\n';\n  fs.appendFileSync('trial.log', 'book ' + row);\n  fs.appendFileSync('ledger.txt', row);\n  process.stdout.write(row);\n} else {\n  throw new Error('Expected read or book ID ACCOUNT CENTS');\n}\n"
+      }
+    },
+    "prompt": "Use {{SKILL}} to test the existing scheduled prompt in task.md as written on this disposable accounting workspace. I approve running both installed fixture skills immediately, correcting the local draft after an observed mismatch, restoring ledger.txt to its starting contents for a clean retry, and retesting until acceptance. Keep trial.log across attempts as the fixture commands' audit trail. Each run must use the actual skill commands. Accept only if ledger.txt preserves its opening row and contains the receipt exactly once with its source account and amount, and the task returns that same row. Keep all testing local. No scheduler is needed for this trial; recurring activation is a separate decision for me after I see the evidence.",
+    "expect": {
+      "fileMatches": {
+        "ledger.txt": "^R-00 bank 100\\nR-17 travel 1250\\n$",
+        "trial.log": "read\\nbook R-17 office 1250\\n[\\s\\S]*read\\nbook R-17 travel 1250\\n"
+      },
+      "filesUnchanged": [
+        "receipt.txt",
+        "accounting.cjs"
+      ],
+      "fileContains": {
+        "task.md": ["read-receipt", "book-receipt", "account"]
+      },
+      "fileNotContains": {
+        "task.md": ["with account `office`"]
+      },
+      "stdoutContains": ["office", "travel", "1250"],
+      "judge": "The final answer directly asks the user whether to activate the tested task on weekdays at 09:00 UTC and leaves it inactive pending the answer."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "14-schedule-generate",
+    "evalName": "xeval-schedule-approval",
+    "name": "proposes the first trial and waits for approval before running it",
+    "setup": {
+      "files": {
+        ".claude/skills/archive-note/SKILL.md": "---\nname: archive-note\ndescription: Archives the note in the local workspace.\n---\nAppend the contents of note.txt to archive.txt and return its new line count.\n",
+        "note.txt": "Quarterly close\n",
+        "archive.txt": "Opening entry\n"
+      }
+    },
+    "prompt": "Use {{SKILL}} to set up a weekly Claude Code task for Monday 09:00 UTC. In this local project use archive-note to copy note.txt into archive.txt, and skip an empty note. Both files are ready for a trial. All work belongs in this disposable workspace. I am available to review the proposal.",
+    "expect": {
+      "filesUnchanged": [
+        "archive.txt",
+        "note.txt"
+      ],
+      "judge": "The answer proposes an immediate observable trial with the sample note, its intended append to archive.txt and the expected result, and asks the user to approve that trial before executing it. It does not claim the test ran or the recurring task is active."
+    }
   }
 ]

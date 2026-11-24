@@ -24,6 +24,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
   - [`skills/11-explore`](#skills11-explore)
   - [`skills/12-cook`](#skills12-cook)
   - [`skills/13-access-check`](#skills13-access-check)
+  - [`skills/14-schedule-generate`](#skills14-schedule-generate)
 
 ---
 
@@ -97,7 +98,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | File | Description |
 |------|---|
-| [SKILL.md](skills/03-context-generate/SKILL.md) | `Routes a request to generate a skill, rule, agent, command or hook to its generator when the kind is unnamed, not for listing existing artifacts.` |
+| [SKILL.md](skills/03-context-generate/SKILL.md) | `Routes requests to generate skills, rules, agents, commands, hooks or scheduled task prompts when the type of artifact is unclear.` |
 
 #### `skills/04-skill-generate`
 
@@ -246,4 +247,21 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [01-check.md](skills/13-access-check/actions/01-check.md) | - |
 | `assets` | [access-report.md](skills/13-access-check/assets/access-report.md) | - |
 | `-` | [SKILL.md](skills/13-access-check/SKILL.md) | `Check that the assistant can reach the services recorded in project memory, read-only. Use when the user wants to verify or diagnose service access. Not for installing or configuring services.` |
+
+#### `skills/14-schedule-generate`
+
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-configure.md](skills/14-schedule-generate/actions/01-configure.md) | - |
+| `actions` | [02-test.md](skills/14-schedule-generate/actions/02-test.md) | - |
+| `assets` | [task-prompt.md](skills/14-schedule-generate/assets/task-prompt.md) | - |
+| `references` | [antigravity.md](skills/14-schedule-generate/references/antigravity.md) | - |
+| `references` | [claude.md](skills/14-schedule-generate/references/claude.md) | - |
+| `references` | [codex.md](skills/14-schedule-generate/references/codex.md) | - |
+| `references` | [copilot.md](skills/14-schedule-generate/references/copilot.md) | - |
+| `references` | [cursor.md](skills/14-schedule-generate/references/cursor.md) | - |
+| `references` | [hermes.md](skills/14-schedule-generate/references/hermes.md) | - |
+| `references` | [kilo.md](skills/14-schedule-generate/references/kilo.md) | - |
+| `references` | [opencode.md](skills/14-schedule-generate/references/opencode.md) | - |
+| `-` | [SKILL.md](skills/14-schedule-generate/SKILL.md) | `Configures a scheduled workflow and tests its full skill chain on demand before asking the user to enable recurrence.` |
 

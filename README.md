@@ -11,7 +11,7 @@ Unify **engineering teams** around **standardized workflows** and **shared best 
 🧱 **IDE agnostic** · 🏗️ **Legacy systems** · 🌱 **Token-optimized** · 🇫🇷 **Made in France**
 
 <p>
-  <!--counts:start--><kbd>9 plugins</kbd> · <kbd>56 skills</kbd> · <kbd>4 agents</kbd><!--counts:end-->
+  <!--counts:start--><kbd>9 plugins</kbd> · <kbd>57 skills</kbd> · <kbd>4 agents</kbd><!--counts:end-->
 </p>
 
 [![Open Source](https://img.shields.io/badge/Open_Source-Yes-yellow?logo=open-source-initiative&logoColor=white)](https://opensource.org/)
@@ -133,7 +133,7 @@ flowchart TD
 <a href="plugins/aidd-context/README.md">
 <img align="right" alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" />
 <h3>🧭 aidd-context</h3>
-14 skills · 3 hooks<br />
+15 skills · 3 hooks<br />
 Project memory, context generation, learning
 </a>
 </td>
