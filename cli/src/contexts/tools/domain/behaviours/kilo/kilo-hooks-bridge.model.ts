@@ -95,6 +95,8 @@ function sessionStartCallsFor(event, directory) {
   }));
 }
 
+const FOLLOW_UP = { aidd: "stop-follow-up" };
+
 const ${parts.identifier} = async ({ directory, client }) => {
   const sessions = new Map();
   return {
@@ -122,7 +124,7 @@ const ${parts.identifier} = async ({ directory, client }) => {
           // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
           if (reason) {
             client.session
-              .promptAsync({ path: { id }, body: { parts: [{ type: "text", text: reason }] } })
+              .promptAsync({ path: { id }, body: { parts: [{ type: "text", text: reason, metadata: FOLLOW_UP }] } })
               .catch(() => {});
           }
         }
@@ -133,6 +135,13 @@ const ${parts.identifier} = async ({ directory, client }) => {
     } catch (error) {
       console.warn("[aidd] Kilo hook dispatch failed: " + String(error));
     }
+  },
+  // A user's message starts a new turn. Kilo hands every plugin every message, so a follow-up,
+  // this bridge's or another plugin's, is recognised by its mark and is not one.
+  "chat.message": async (input, output) => {
+    const session = sessions.get(input?.sessionID);
+    if (!session) return;
+    if (!output?.parts?.some((part) => part?.metadata?.aidd === FOLLOW_UP.aidd)) session.continued = false;
   },
   "tool.execute.after": async (call, output) => {
     try {

@@ -126,9 +126,13 @@ function postToolUseCallsFor(call, directory) {
   }));
 }
 
+// Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
+// Module-level: the host creates the plugin again, and a fresh set would forget a continuation.
+const continued = new Set();
+
 export const ${parts.identifier} = async (input) => {
-  // Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
-  const continued = new Set();
+  // Follow-ups being delivered: \`opencode run\` exits once the session is idle, so dispose waits.
+  const pending = new Set();
   // SessionStart's own approximation (module doc comment above): fired once here, never
   // per session. Silent on purpose: a memory refresh
   // that breaks OpenCode's own startup is worse than one that never ran.
@@ -145,6 +149,9 @@ export const ${parts.identifier} = async (input) => {
     // Silent on purpose - see above.
   }
   return {
+    dispose: async () => {
+      await Promise.all(pending);
+    },
     event: async ({ event }) => {
       try {
         const directory = event?.properties?.directory ?? input.directory;
@@ -158,9 +165,11 @@ export const ${parts.identifier} = async (input) => {
           }
           continued.add(sessionId);
           // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
-          input.client.session
-            .promptAsync({ path: { id: sessionId }, body: { parts: [{ type: "text", text: reason }] } })
-            .catch(() => {});
+          const delivery = input.client.session
+            .prompt({ path: { id: sessionId }, body: { parts: [{ type: "text", text: reason }] } })
+            .catch((error) => console.warn("[aidd] OpenCode follow-up failed: " + String(error)))
+            .finally(() => pending.delete(delivery));
+          pending.add(delivery);
         }
       } catch {
         // Silent on purpose - see above.

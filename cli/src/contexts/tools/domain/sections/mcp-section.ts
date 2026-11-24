@@ -117,8 +117,8 @@ export class McpConfigPart {
     return afterTransform;
   }
 
-  /** How a server launch is rewritten for `platform` once the tool's own transform has run,
-   * or undefined when the platform needs none. */
+  /** How a server launch is rewritten for `platform` in the canonical config, before the tool's
+   * own transform, or undefined when the platform needs none. */
   launchTransformFor(platform: string): ((content: string) => string) | undefined {
     return platform === "win32" ? transformMcpForWin32 : undefined;
   }
