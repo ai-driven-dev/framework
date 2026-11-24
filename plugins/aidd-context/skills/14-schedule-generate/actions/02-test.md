@@ -6,8 +6,8 @@ The supplied prompt, test input, expected results and schedule.
 
 ## Process
 
-1. Propose the input, criteria, destination and effects, then wait for the user's approval of the trial and safe retries.
-   - Already approved: proceed within that scope.
+1. Show the input, criteria, destination and effects, ask “Run this trial now?” and end the turn until the user approves.
+   - Explicit approval already covers this execution: proceed within the agreed scope, including safe retries.
    - Paper test only: use the supplied draft to trace valid, empty and invalid inputs, report the simulation and stop.
 2. Run the whole chain once in its target runtime and monitor that run to completion, leaving recurrence untouched.
 3. Compare each handoff, output and effect with the agreed criteria.
