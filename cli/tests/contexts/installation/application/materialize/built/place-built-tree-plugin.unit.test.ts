@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { placementDepsOf } from "../../../../../../src/composition/orchestration/built-placement.js";
+import type { AddPluginRequest } from "../../../../../../src/contexts/installation/application/materialize/add-plugin-request.js";
 import { placeBuiltTreePlugin } from "../../../../../../src/contexts/installation/application/materialize/built/place-built-tree-plugin.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../../src/shared/domain/plugin/plugin-distribution.js";
@@ -137,6 +138,54 @@ describe("placeBuiltTreePlugin - cursor", () => {
     expect(fs.getFile(`${base}/.mcp.json`)).toBe("{}");
     const installed = manifest.getPlugins(TOOL.cursor).find((p) => p.name === "sample-plugin");
     expect(installed?.files.size).toBe(4);
+  });
+
+  describe("replacing a plugin whose new built tree drops a file", () => {
+    async function replaceDroppingOldRule(userScopeDirTaken: boolean): Promise<string[]> {
+      const fs = new InMemoryFileAdapter();
+      const root = `${BUILT}/plugins/sample-plugin`;
+      fs.setFile(`${root}/skills/demo/SKILL.md`, "built skill");
+      fs.setFile(`${root}/rules/old.mdc`, "old rule");
+      const manifest = Manifest.create();
+      manifest.addTool(TOOL.cursor, "test", []);
+      const translator = placementDepsOf(
+        fs,
+        fakeBuiltDeps({ homedir: () => HOME, marketplaceRegistry: await makeRegistry() })
+      );
+      const place = (extra: Partial<AddPluginRequest>) =>
+        placeBuiltTreePlugin(
+          {
+            dist: dist(),
+            tool: registeredTools().aiProfile(TOOL.cursor),
+            source: { kind: "local", path: "/source" },
+            projectRoot: PROJECT_ROOT,
+            manifest,
+            marketplace: "aidd-framework",
+            ...extra,
+          },
+          translator
+        );
+      await place({});
+      const previousFiles = manifest.getPlugins(TOOL.cursor)[0]?.files;
+      manifest.removePlugin(TOOL.cursor, "sample-plugin");
+      await fs.deleteFile(`${root}/rules/old.mdc`);
+
+      await place({ previousFiles, userScopeDirTaken });
+
+      return fs.listUnder(`${HOME}/.cursor/plugins/local`);
+    }
+
+    it("deletes the file the previous version recorded", async () => {
+      expect(await replaceDroppingOldRule(false)).toStrictEqual([
+        `${HOME}/.cursor/plugins/local/sample-plugin/skills/demo/SKILL.md`,
+      ]);
+    });
+
+    it("keeps it when the plugin directory belongs to someone else", async () => {
+      expect(await replaceDroppingOldRule(true)).toContain(
+        `${HOME}/.cursor/plugins/local/sample-plugin/rules/old.mdc`
+      );
+    });
   });
 
   it("does not rewrite or claim an occupied Cursor user plugin directory", async () => {

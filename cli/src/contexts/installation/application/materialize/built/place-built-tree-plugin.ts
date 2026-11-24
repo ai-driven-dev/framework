@@ -4,6 +4,7 @@ import type { FileReader } from "../../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../../shared/ports/file-writer.js";
 import { RecordedPlugin } from "../../../domain/plugins/recorded-plugin.js";
 import type { InstallationMarketplaceRegistry } from "../../../ports/marketplace-sources.js";
+import { removeObsoletePluginFiles } from "../../plugin/files/remove-obsolete-plugin-files.js";
 import { writeChangedPluginFiles } from "../../plugin/files/write-changed-plugin-files.js";
 import { resolveScopeForInstall, scopeBaseOf } from "../../plugin/plugin-target-resolution.js";
 import type { AddPluginRequest, AddPluginResult, PlaceBuiltTree } from "../add-plugin-request.js";
@@ -44,12 +45,18 @@ export async function placeBuiltTreePlugin(
   const mode = tool.frameworkBuildMode();
   const { files, hooks, mcp } = await deps.readBuiltTree(request, { marketplace: resolved, mode });
   const scope = resolveScopeForInstall(tool);
-  const owned = request.userScopeDirTaken === true ? [] : files;
+  const taken = request.userScopeDirTaken === true;
+  const owned = taken ? [] : files;
   const baseDir =
     mode === "flat"
       ? projectRoot
       : scopeBaseOf(tool, { scope, projectRoot, homedir: () => deps.homedir() });
   const written = await writeChangedPluginFiles(deps.fs, owned, baseDir);
+  const previous = taken ? undefined : request.previousFiles;
+  await removeObsoletePluginFiles(deps.fs, previous ?? new Map(), {
+    current: new Set(owned.map((f) => f.relativePath)),
+    baseDir,
+  });
   manifest.addPlugin(tool.toolId, builtTreeEntry(request, { owned, scope, mcp, hooks }));
   return { skipped: [...mcp.mcpSkips, ...hooks.skipped], written };
 }
