@@ -158,9 +158,12 @@ export const PROFILE_FILE_CHECKS: readonly ConformanceCheck<FileConformanceSubje
   aiFileCheck("comes with one captured payload per event it relays", (subject) => {
     const declared = declaredHooks(subject);
     if (declared === undefined) return;
-    for (const event of relayedEvents(declared)) {
-      const native = declared.events.get(event)?.native;
-      const captured = subject.payloadFixtures.includes(`${subject.profile.toolId}-${native}.json`);
+    const relayed = new Set(relayedEvents(declared));
+    for (const [event, route] of declared.events) {
+      if (!relayed.has(event)) continue;
+      const captured = subject.payloadFixtures.includes(
+        `${subject.profile.toolId}-${route.native}.json`
+      );
       expect(captured, `${subject.profile.toolId}: no payload for ${event}`).toBe(true);
     }
   }),
