@@ -19,7 +19,8 @@ export function scopedRulesOf(
   const scoped = new Map<PluginComponentFile, readonly unknown[]>();
   for (const file of dist.components.rules) {
     const { paths } = parseFrontmatter(file.content).frontmatter;
-    if (Array.isArray(paths) && paths.length > 0) scoped.set(file, paths);
+    const globs = typeof paths === "string" && paths !== "" ? [paths] : paths;
+    if (Array.isArray(globs) && globs.length > 0) scoped.set(file, globs);
   }
   return scoped;
 }
