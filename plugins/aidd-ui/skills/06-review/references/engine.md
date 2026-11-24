@@ -3,7 +3,7 @@
 | Install | Path |
 | --- | --- |
 | plugin | `../../hooks/aidd-ui.cjs` from this skill's folder |
-| flat | `hooks/aidd-ui/aidd-ui.cjs` under the tool's folder at the project root: `.claude`, `.github`, `.kilo`, `.codex`, `.cursor`, `.opencode` |
+| flat | `hooks/aidd-ui/aidd-ui.cjs` under the tool's folder at the project root: `.claude`, `.github`, `.kilo`, `.codex`, `.cursor`, `.opencode`, `.agents` |
 
 Try the plugin row first, then the flat row.
 
