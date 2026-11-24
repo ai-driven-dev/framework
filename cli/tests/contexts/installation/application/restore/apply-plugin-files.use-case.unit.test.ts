@@ -18,9 +18,9 @@ const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format
 const PROJECT_ROOT = "/test-project";
 const GREET_PATH = join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md");
 
-async function installedSample() {
+async function installedSample(toolId = TOOL.claude) {
   const deps = await buildInstallationDeps({ tools: registeredTools() });
-  await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+  await initAndInstall(deps, PROJECT_ROOT, toolId);
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   await buildAddPlugin(
     { fs: deps.fs, logger: deps.logger },
@@ -34,22 +34,22 @@ async function installedSample() {
   ).execute({
     githubMarketplace: false,
     source: { kind: "local", path: PLUGIN_FIXTURE },
-    toolIds: [TOOL.claude],
+    toolIds: [toolId],
     projectRoot: PROJECT_ROOT,
     interactive: false,
   });
   const manifest = await deps.manifestRepo.load();
   if (manifest === null) throw new Error("the project manifest was not initialised");
-  const plugin = present(manifest.getRecordedPlugins(TOOL.claude)[0]);
+  const plugin = present(manifest.getRecordedPlugins(toolId)[0]);
   const apply = new ApplyPluginFiles({
     fs: deps.fs,
     loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
     ...builtPlacementOf(deps.fs, fakeBuiltDeps()),
   });
   const command = {
-    toolId: TOOL.claude,
+    toolId,
     plugin,
-    tool: registeredTools().aiProfile(TOOL.claude),
+    tool: registeredTools().aiProfile(toolId),
     projectRoot: PROJECT_ROOT,
     cacheDir: "/cache",
     manifest,
@@ -80,6 +80,17 @@ describe("applying a plugin's files", () => {
     const restored = await apply.execute({ ...command, fileFilter: () => false });
 
     expect([restored, deps.fs.has(GREET_PATH)]).toStrictEqual([0, false]);
+  });
+
+  it("leaves the files the filter refuses on a tool that takes its hooks into the project", async () => {
+    const { deps, apply, command } = await installedSample(TOOL.antigravity);
+    const [relativePath] = [...command.plugin.plugin.files.keys()];
+    const path = join(PROJECT_ROOT, relativePath);
+    await deps.fs.deleteFile(path);
+
+    const restored = await apply.execute({ ...command, fileFilter: () => false });
+
+    expect([restored, deps.fs.has(path)]).toStrictEqual([0, false]);
   });
 
   it("leaves a user-scope plugin to its own restore", async () => {
