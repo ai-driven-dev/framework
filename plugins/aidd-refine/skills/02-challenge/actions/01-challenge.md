@@ -22,7 +22,7 @@ Attack the work and report what breaks its aim, so the caller knows whether it h
    - the folder of the plan or spec the work follows;
    - a new `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<slug>/`, its slug naming the work.
 8. Run [validate-challenge.cjs](../scripts/validate-challenge.cjs) on `challenge.md`, fix, repeat until it passes.
-9. Read `challenge.md` back, then answer with the filled report and its path on the last line, adding nothing before or after.
+9. Answer with the report from `challenge.md` and its path.
 
 ## Output
 
