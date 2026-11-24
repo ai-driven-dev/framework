@@ -48,6 +48,13 @@ describe("TrackedSharedSettings read", () => {
     ]);
   });
 
+  it("starts from nothing without a warning when read for a removal", async () => {
+    const { settings, logger } = trackedBy('{"enabledPlugins": {},}');
+
+    await expect(settings.readQuietly(ROOT, PATH)).resolves.toEqual({});
+    expect(logger.warnMessages).toEqual([]);
+  });
+
   it("starts from nothing when the file holds no object", async () => {
     const { settings } = trackedBy('["x"]');
 

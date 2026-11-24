@@ -157,24 +157,30 @@ export function debugOnly(logger: Logger): Logger {
   };
 }
 
-const QUIET: Logger = { debug() {}, info() {}, warn() {} };
-
-/** The project hooks and MCP use cases, built once over one file system. The shared settings
- * writer is the installation's own when given. */
-export function projectIntegrationOf(
-  fs: FileReader & FileWriter,
-  settings: TrackedSharedSettings = trackedSharedSettings({ fs, logger: QUIET })
-) {
+function projectHooksOf(fs: FileReader & FileWriter) {
   const withinRoot = new AssertProjectPathWithinRoot(fs);
   const unchanged = new AssertProjectHooksUnchanged(fs, withinRoot);
   const removeRecorded = new RemoveRecordedProjectHooks({ fs, unchanged, withinRoot });
+  const materializer = new ProjectHooksMaterializer(fs, unchanged, removeRecorded);
+  return { withinRoot, unchanged, removeRecorded, materializer };
+}
+
+/** The project hooks materializer alone, for what places files and removes nothing. */
+export function projectHooksMaterializerOf(fs: FileReader & FileWriter): ProjectHooksMaterializer {
+  return projectHooksOf(fs).materializer;
+}
+
+/** The project hooks and MCP use cases, built once over one file system and the installation's
+ * own shared settings writer. */
+export function projectIntegrationOf(fs: FileReader & FileWriter, settings: TrackedSharedSettings) {
+  const { withinRoot, unchanged, removeRecorded, materializer } = projectHooksOf(fs);
   const removeHooks = new RemoveProjectHooks(removeRecorded);
   const assertHooksRemovable = new AssertProjectHooksRemovable(unchanged);
   const plan = new PlanProjectMcpRemoval(fs, withinRoot);
   const enablement = new RemoveEnabledPlugin(settings, withoutEnabledPlugin, enabledEntryRef);
   const assertMcpRemovable = new AssertProjectMcpEntriesRemovable(plan);
   return {
-    materializer: new ProjectHooksMaterializer(fs, unchanged, removeRecorded),
+    materializer,
     unchanged,
     removeRecorded,
     removeHooks,

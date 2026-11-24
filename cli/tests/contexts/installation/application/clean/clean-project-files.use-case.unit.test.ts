@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { projectIntegrationOf } from "../../../../../src/composition/contexts/installation.js";
 import { AssertProjectRemovable } from "../../../../../src/contexts/installation/application/clean/assert-project-removable.use-case.js";
 import { CleanProjectFiles } from "../../../../../src/contexts/installation/application/clean/clean-project-files.use-case.js";
 import { PlanProjectClean } from "../../../../../src/contexts/installation/application/clean/plan-project-clean.use-case.js";
@@ -7,6 +6,7 @@ import { UpdateGitignore } from "../../../../../src/contexts/installation/applic
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
+import { projectIntegrationOver } from "../../../../shared/testing/project-integration.builder.js";
 import { registeredTools } from "../../../../shared/testing/registered-tools.builder.js";
 import { removeProjectFilesOver } from "../../testing/remove-project-files.builder.js";
 
@@ -19,7 +19,7 @@ function cleanOverEmptyProject(): CleanProjectFiles {
   return new CleanProjectFiles({
     assertProjectRemovable: new AssertProjectRemovable(
       {
-        assertHooksRemovable: projectIntegrationOf(fs).assertHooksRemovable,
+        assertHooksRemovable: projectIntegrationOver(fs).assertHooksRemovable,
         manifestRepo,
         assertMcpRemovable: asks.assertMcpRemovable,
       },

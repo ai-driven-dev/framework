@@ -21,7 +21,7 @@ import type { LoadDistribution } from "../../contexts/installation/ports/plugin/
 import type { UserScopeFileGuard } from "../../contexts/installation/ports/plugin/user-plugin-materialization.js";
 import type { FileReader } from "../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../shared/ports/file-writer.js";
-import { projectIntegrationOf } from "../contexts/installation.js";
+import { projectHooksMaterializerOf } from "../contexts/installation.js";
 import type { RegisteredCatalog } from "../contexts/tools.js";
 
 type Files = FileReader & FileWriter;
@@ -38,7 +38,7 @@ export function builtPlacementOf(fs: Files, built: BuiltMaterializationDeps): Bu
 /** What placing from a built tree reaches, with the project hooks built over `fs`. */
 export function placementDepsOf(fs: Files, built: BuiltMaterializationDeps): PlacementDeps {
   const { homedir, translate, marketplaceRegistry, ensureBuilt, platform } = built;
-  const projectHooks = projectIntegrationOf(fs).materializer;
+  const projectHooks = projectHooksMaterializerOf(fs);
   return {
     fs,
     marketplaceRegistry,

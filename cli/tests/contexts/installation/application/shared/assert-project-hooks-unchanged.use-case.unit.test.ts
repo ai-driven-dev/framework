@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { projectIntegrationOf } from "../../../../../src/composition/contexts/installation.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { projectIntegrationOver } from "../../../../shared/testing/project-integration.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 const { cursor } = TOOL;
@@ -24,7 +24,7 @@ describe("before changing a project's hooks", () => {
     const fs = new InMemoryFileAdapter({ [HOOKS_PATH]: content });
 
     await expect(
-      projectIntegrationOf(fs).unchanged.execute({
+      projectIntegrationOver(fs).unchanged.execute({
         pluginName: PLUGIN,
         provenance: undefined,
         tool: registeredTools().aiProfile(cursor),
@@ -32,7 +32,7 @@ describe("before changing a project's hooks", () => {
       })
     ).resolves.toStrictEqual({ existing: content });
     await expect(
-      projectIntegrationOf(fs).unchanged.execute({
+      projectIntegrationOver(fs).unchanged.execute({
         pluginName: PLUGIN,
         provenance: undefined,
         tool: registeredTools().aiProfile(TOOL.opencode),
@@ -47,7 +47,7 @@ describe("before changing a project's hooks", () => {
     const fs = new InMemoryFileAdapter({ [HOOKS_PATH]: hooksFile(PLUGIN) });
 
     await expect(
-      projectIntegrationOf(fs).unchanged.execute({
+      projectIntegrationOver(fs).unchanged.execute({
         pluginName: PLUGIN,
         provenance: undefined,
         tool: registeredTools().aiProfile(cursor),

@@ -1,6 +1,5 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { projectIntegrationOf } from "../../../src/composition/contexts/installation.js";
 import { claude } from "../../../src/composition/tool-profiles/claude.js";
 import { codexSpec } from "../../../src/composition/tool-profiles/codex.js";
 import { copilot } from "../../../src/composition/tool-profiles/copilot.js";
@@ -21,6 +20,7 @@ import { registeredAiProfile } from "../../shared/testing/catalog-of.builder.js"
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { present } from "../../shared/testing/present.builder.js";
 import { deliverProjectHooks } from "../../shared/testing/project-hooks-delivery.builder.js";
+import { projectIntegrationOver } from "../../shared/testing/project-integration.builder.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.builder.js";
 
 const TOML = new SmolTomlCodec();
@@ -246,7 +246,7 @@ describe("plugin install merging a plugin into the project's hooks file again", 
         },
       }),
     });
-    const materializer = projectIntegrationOf(fs).materializer;
+    const materializer = projectIntegrationOver(fs).materializer;
     const first = await deliverProjectHooks(materializer, {
       dist: dist(),
       tools: registeredTools(),

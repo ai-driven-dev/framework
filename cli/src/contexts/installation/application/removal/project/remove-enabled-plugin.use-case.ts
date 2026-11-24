@@ -46,7 +46,7 @@ export class RemoveEnabledPlugin {
     if (entry === undefined) return;
     const path = settings.sharedSettingsFile();
     const rest = this.without(
-      await this.tracked.read(projectRoot, path),
+      await this.tracked.readQuietly(projectRoot, path),
       settings.enabledPluginsKey(),
       entry
     );

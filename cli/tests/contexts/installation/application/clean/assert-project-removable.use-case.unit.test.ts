@@ -1,6 +1,5 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { projectIntegrationOf } from "../../../../../src/composition/contexts/installation.js";
 import { AssertProjectRemovable } from "../../../../../src/contexts/installation/application/clean/assert-project-removable.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
@@ -8,6 +7,7 @@ import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import type { Scope } from "../../../../../src/shared/domain/scope.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
+import { projectIntegrationOver } from "../../../../shared/testing/project-integration.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../../../shared/testing/saying.builder.js";
 import { cursorHookScriptDir } from "../../testing/cursor-hook-scripts.builder.js";
@@ -18,7 +18,7 @@ const ROOT = "/test-project";
 function cleanOver(manifest: Manifest | null, fs: InMemoryFileAdapter): AssertProjectRemovable {
   return new AssertProjectRemovable(
     {
-      assertHooksRemovable: projectIntegrationOf(fs).assertHooksRemovable,
+      assertHooksRemovable: projectIntegrationOver(fs).assertHooksRemovable,
       manifestRepo: new InMemoryManifestRepository(manifest, ROOT),
       assertMcpRemovable: async () => undefined,
     },

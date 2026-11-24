@@ -1,9 +1,9 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { projectIntegrationOf } from "../../../../../src/composition/contexts/installation.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { projectIntegrationOver } from "../../../../shared/testing/project-integration.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 const ROOT = "/project";
@@ -37,7 +37,7 @@ describe("removing a plugin's MCP servers from a flat config", () => {
     const { content, entries } = contributed();
     const fs = new InMemoryFileAdapter({ [MCP_FILE]: content }, [ROOT]);
 
-    await projectIntegrationOf(fs).removeIntegration.execute({
+    await projectIntegrationOver(fs).removeIntegration.execute({
       plugin: plugin(entries),
       tool,
       projectRoot: ROOT,
@@ -50,7 +50,7 @@ describe("removing a plugin's MCP servers from a flat config", () => {
   it("leaves the config alone when the plugin recorded no server", async () => {
     const fs = new InMemoryFileAdapter({ [MCP_FILE]: "{}" }, [ROOT]);
 
-    await projectIntegrationOf(fs).removeIntegration.execute({
+    await projectIntegrationOver(fs).removeIntegration.execute({
       plugin: plugin(),
       tool,
       projectRoot: ROOT,
@@ -64,7 +64,7 @@ describe("removing a plugin's MCP servers from a flat config", () => {
     const { entries } = contributed();
     const fs = new InMemoryFileAdapter({}, [ROOT]);
 
-    await projectIntegrationOf(fs).removeIntegration.execute({
+    await projectIntegrationOver(fs).removeIntegration.execute({
       plugin: plugin(entries),
       tool,
       projectRoot: ROOT,

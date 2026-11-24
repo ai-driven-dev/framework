@@ -35,6 +35,9 @@ const withoutEntry: WithoutEnabledPlugin = (shared, key, entry) => {
   return { ...shared, [key ?? ""]: Object.fromEntries(entries) };
 };
 
+const withoutEntryHeld: WithoutEnabledPlugin = (shared, key, entry) =>
+  Object.hasOwn(shared[key ?? ""] ?? {}, entry) ? withoutEntry(shared, key, entry) : null;
+
 const enabledEntryRef: EnabledEntryOf = (settings, { name, marketplace }, hostRef) =>
   settings.requiresNativeProof() ? hostRef : `${name}@${marketplace}`;
 
@@ -105,5 +108,22 @@ describe("removing the entry that enabled a plugin", () => {
     expect(JSON.parse(await fs.readFile(absolute))).toEqual({
       enabledPlugins: { "aidd-dev@other": true },
     });
+  });
+
+  it("neither warns of a rewrite nor writes when the settings file is malformed, since it holds no entry to take out", async () => {
+    const malformed = '{"enabledPlugins": {"aidd-dev@local": true},}';
+    const fs = new InMemoryFileAdapter({ [ABSOLUTE]: malformed }, [ROOT]);
+    const logger = new CapturingLogger();
+    const manifest = aManifest().withTool(TOOL.claude, []).build();
+    const useCase = new RemoveEnabledPlugin(
+      trackedSharedSettings({ fs, logger }),
+      withoutEntryHeld,
+      enabledEntryRef
+    );
+
+    await useCase.execute({ plugin: plugin("local"), tool, projectRoot: ROOT, manifest });
+
+    expect(logger.warnMessages).toEqual([]);
+    expect(await fs.readFile(ABSOLUTE)).toBe(malformed);
   });
 });

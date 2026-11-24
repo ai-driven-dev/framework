@@ -1,4 +1,3 @@
-import { projectIntegrationOf } from "../../../../src/composition/contexts/installation.js";
 import type { RegisteredCatalog } from "../../../../src/composition/contexts/tools.js";
 import { DeleteTrackedProjectFiles } from "../../../../src/contexts/installation/application/removal/project/delete-tracked-project-files.use-case.js";
 import { RemoveAiddTraces } from "../../../../src/contexts/installation/application/removal/project/remove-aidd-traces.use-case.js";
@@ -9,6 +8,7 @@ import type { ManifestRepository } from "../../../../src/contexts/installation/p
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
 import type { Logger } from "../../../../src/shared/ports/logger.js";
+import { projectIntegrationOver } from "../../../shared/testing/project-integration.builder.js";
 
 export interface RemoveProjectFilesParts {
   fs: FileReader & FileWriter;
@@ -25,7 +25,11 @@ export function removeProjectFilesOver(parts: RemoveProjectFilesParts): RemovePr
   return new RemoveProjectFiles({
     manifestRepo,
     trackedFiles: new DeleteTrackedProjectFiles({ fs, logger, homedir }, tools),
-    machineLocalFiles: new RemoveMachineLocalFiles(fs, tools, projectIntegrationOf(fs).removeHooks),
+    machineLocalFiles: new RemoveMachineLocalFiles(
+      fs,
+      tools,
+      projectIntegrationOver(fs).removeHooks
+    ),
     aiddTraces: new RemoveAiddTraces({ fs, manifestRepo, logger, updateGitignore }, tools),
   });
 }

@@ -1,10 +1,10 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { projectIntegrationOf } from "../../../../../../src/composition/contexts/installation.js";
 import { RemoveMachineLocalFiles } from "../../../../../../src/contexts/installation/application/removal/project/remove-machine-local-files.use-case.js";
 import { RecordedPlugin } from "../../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../../../src/shared/domain/file-hash.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { projectIntegrationOver } from "../../../../../shared/testing/project-integration.builder.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 import { saying } from "../../../../../shared/testing/saying.builder.js";
 import { cursorHookScriptDir } from "../../../testing/cursor-hook-scripts.builder.js";
@@ -33,7 +33,7 @@ describe("removing the machine-local files of a project", () => {
     const count = await new RemoveMachineLocalFiles(
       fs,
       tools,
-      projectIntegrationOf(fs).removeHooks
+      projectIntegrationOver(fs).removeHooks
     ).execute(manifest, ROOT, {
       overwriteEdited: false,
     });
@@ -67,7 +67,7 @@ describe("removing the machine-local files of a project", () => {
       await new RemoveMachineLocalFiles(
         fs,
         registeredTools(),
-        projectIntegrationOf(fs).removeHooks
+        projectIntegrationOver(fs).removeHooks
       ).execute(manifest, ROOT, {
         overwriteEdited: true,
       });
@@ -82,7 +82,7 @@ describe("removing the machine-local files of a project", () => {
         new RemoveMachineLocalFiles(
           fs,
           registeredTools(),
-          projectIntegrationOf(fs).removeHooks
+          projectIntegrationOver(fs).removeHooks
         ).execute(manifest, ROOT, {
           overwriteEdited: false,
         })
@@ -101,7 +101,7 @@ describe("removing the machine-local files of a project", () => {
       new RemoveMachineLocalFiles(
         fs,
         registeredTools(),
-        projectIntegrationOf(fs).removeHooks
+        projectIntegrationOver(fs).removeHooks
       ).execute(manifest, ROOT, { overwriteEdited: false })
     ).resolves.toBe(0);
   });
