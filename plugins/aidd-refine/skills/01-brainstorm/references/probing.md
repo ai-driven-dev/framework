@@ -1,6 +1,6 @@
 # Probing
 
-Techniques to sharpen a question when the live point needs it. 
+Techniques to sharpen a question when the live point needs it.
 
 | Technique | Use when | Example question |
 | --------- | -------- | --- |
