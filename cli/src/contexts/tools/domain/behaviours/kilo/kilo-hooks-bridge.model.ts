@@ -122,7 +122,7 @@ const ${parts.identifier} = async ({ directory, client }) => {
           const reason = await stopReasonOf(hook.script, hook.args, payload, session.directory);
           session.continued = reason !== "";
           // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
-          // It runs only on a server that outlives the turn (the TUI, kilo serve); one-shot kilo run disposes it first.
+          // A follow-up lands only on a server that outlives the turn (the TUI, \`kilo serve\`); \`kilo run\` exits first.
           if (reason) {
             client.session
               .promptAsync({ path: { id }, body: { parts: [{ type: "text", text: reason, metadata: FOLLOW_UP }] } })
