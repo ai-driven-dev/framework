@@ -48,15 +48,15 @@ export class UpdateProjectPlugins {
       manifest,
       rebuild: request.rebuild === true,
     };
-    const outcome: PluginUpdateOutcome = { updated: [], skippedUserScope: [] };
+    const updated: string[] = [];
+    const skippedUserScope: AiToolId[] = [];
     for (const toolId of resolvePluginToolIds(toolIds, manifest, this.tools)) {
       const tool = this.tools.aiProfile(toolId);
-      outcome.updated.push(...(await this.updateTool(tool, pluginNames, update)));
-      if (!pluginNames && this.holdsUserScope(manifest, toolId))
-        outcome.skippedUserScope.push(toolId);
+      updated.push(...(await this.updateTool(tool, pluginNames, update)));
+      if (!pluginNames && this.holdsUserScope(manifest, toolId)) skippedUserScope.push(toolId);
     }
     await this.deps.manifestRepo.save(manifest);
-    return outcome;
+    return { updated, skippedUserScope };
   }
 
   private holdsUserScope(manifest: Manifest, toolId: AiToolId): boolean {

@@ -119,6 +119,26 @@ describe("updating a plugin on disk", () => {
     expect(deps.userManifestRepo.getCurrent()?.toJSON()).toEqual(machineBefore);
   });
 
+  it("names no skipped user scope when the sweep names a plugin", async () => {
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.cursor);
+    const { addUseCase, updateUseCase } = await setup(deps);
+    await addUseCase.execute({
+      githubMarketplace: false,
+      source: { kind: "local", path: PLUGIN_FIXTURE },
+      toolIds: [TOOL.cursor],
+      projectRoot: PROJECT_ROOT,
+      interactive: false,
+    });
+    expect(
+      await updateUseCase.execute({
+        pluginNames: ["another-plugin"],
+        toolIds: [TOOL.cursor],
+        projectRoot: PROJECT_ROOT,
+      })
+    ).toEqual({ updated: [], skippedUserScope: [] });
+  });
+
   it("refuses an explicitly named Cursor plugin at project scope", async () => {
     const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initAndInstall(deps, PROJECT_ROOT, TOOL.cursor);
