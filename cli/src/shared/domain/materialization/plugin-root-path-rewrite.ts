@@ -40,6 +40,19 @@ function rewriteObject(
   return result;
 }
 
+/** The folders a text names below the plugin root, each once: `bin` for `${CLAUDE_PLUGIN_ROOT}/bin/run.js`.
+ * A file straight under the root names none. */
+export function pluginRootFolders(content: string): string[] {
+  const folders = new Set<string>();
+  for (const segment of content.split(SOURCE_ROOT_PREFIX).slice(1)) {
+    const end = segment.search(/[\s"'<>]/);
+    const suffix = end === -1 ? segment : segment.slice(0, end);
+    const slash = suffix.indexOf("/");
+    if (slash > 0) folders.add(suffix.slice(0, slash));
+  }
+  return [...folders];
+}
+
 /** A literal, escaped to match itself inside a regular expression. */
 export function escapeRegExp(literal: string): string {
   return literal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

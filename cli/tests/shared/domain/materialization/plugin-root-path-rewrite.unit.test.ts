@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { rewritePluginRootInJson } from "../../../../src/shared/domain/materialization/plugin-root-path-rewrite.js";
+import {
+  pluginRootFolders,
+  rewritePluginRootInJson,
+} from "../../../../src/shared/domain/materialization/plugin-root-path-rewrite.js";
 
 // Written as split literals to avoid biome's noTemplateCurlyInString warning.
 const CLAUDE_ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
@@ -140,5 +143,16 @@ describe("rewriting the plugin root in JSON", () => {
     it("default behaviour (no substitute) is unchanged", () => {
       expect(rewritePluginRootInJson(SCRIPTS_PATH)).toBe(RELATIVE_SCRIPTS);
     });
+  });
+});
+
+describe("naming the folders below the plugin root", () => {
+  it("names each folder once, however many paths sit in it", () => {
+    const text = `{"a":"${SCRIPTS_PATH} x","b":"${BIN_PATH}","c":"${CLAUDE_ROOT}/bin/other.js"}`;
+    expect(pluginRootFolders(text)).toEqual(["scripts", "bin"]);
+  });
+
+  it("names none for a file straight under the root or a text with no root", () => {
+    expect(pluginRootFolders(`"${CLAUDE_ROOT}/run.js" and ./bin/x`)).toEqual([]);
   });
 });
