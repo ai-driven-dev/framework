@@ -13,7 +13,7 @@ Attack the work and report what breaks its aim, so the caller knows whether it h
 
 1. State the aim the work serves, in its strongest reading.
 2. Run the work when it can run, and keep each command with its output as evidence.
-3. Apply each selected technique of `techniques.md`, in its table order, to the work and to what it was asked to do.
+3. Apply each selected technique of [techniques.md](../references/techniques.md), in its table order, to the work and to what it was asked to do.
 4. Classify each finding with the first question of [decision.md](../references/decision.md) that answers yes.
 5. Keep at most three items in To decide and three in Suggestions, those that matter most to the aim.
 6. Fill [report-template.md](../assets/report-template.md).
@@ -21,7 +21,8 @@ Attack the work and report what breaks its aim, so the caller knows whether it h
    - the task folder named;
    - the folder of the plan or spec the work follows;
    - a new `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<slug>/`, its slug naming the work.
-8. Read `challenge.md` back, then answer with the filled report and its path on the last line, adding nothing before or after.
+8. Run `scripts/validate-challenge.cjs`, next to the loaded `SKILL.md`, on `challenge.md`, fix each finding and validate again, and after 3 passes stop and show what is left.
+9. Read `challenge.md` back, then answer with the filled report and its path on the last line, adding nothing before or after.
 
 ## Output
 
