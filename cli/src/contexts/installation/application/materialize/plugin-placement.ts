@@ -19,3 +19,18 @@ export function placementModeOf(
   if (plugins === null) return null;
   return plugins.materializesFromBuiltTree() ? "built-tree" : "marketplace";
 }
+
+/**
+ * The mode a plugin is rematerialized in from its built tree, `null` when it is translated
+ * instead: it was installed from a marketplace, or the tool takes its hooks into the project
+ * and `takesHooks` allows it.
+ */
+export function builtTreeModeOf(
+  tool: Parameters<typeof placementModeOf>[0] & PluginPlacement,
+  marketplace: string | undefined,
+  takesHooks = true
+): PluginTranslationMode | null {
+  const mode = placementModeOf(tool);
+  if (mode === null) return null;
+  return marketplace !== undefined || (takesHooks && deliversHooksToProject(tool)) ? mode : null;
+}
