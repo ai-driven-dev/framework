@@ -21,7 +21,7 @@
 | `script?`, `skipHooksJson?`, `hooksBridge?` | a tool's own hook script, delivery without `hooks.json`, and a generated event bridge, which names its `dir` |
 
 - Contract level: the manifest trio (`manifestFileRelative`, `synthesizeManifest`, `manifestSchemaName`), `pluginRootToken`, `configArtifact`, and the two marketplace builders.
-- The live field list is `contract/build-contract.ts`.
+- The live field list is `shared/domain/materialization/build-contract.ts`.
 
 ## Reuse
 

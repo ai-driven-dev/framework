@@ -13,7 +13,7 @@ Where a plugin's content comes from: which marketplaces are registered, trusted 
 ## Suppliers
 
 - `auth/contract/token-provider.ts` for a private source (edge `distribution->auth`); `simple-git` in the plugin fetcher adapter.
-- `shared/`: errors, `Logger`, `aidd-layout`, the source value, scope, tool, `FileReader`, `FileWriter`, `VersionReader`, `HttpGet`, `FileHash`.
+- `shared/`: errors, `Logger`, `aidd-layout`, the source value, scope, tool, `FileReader`, `FileWriter`, `ReleaseLister`, `PrivateStorage`, `FileHash`.
 
 ## Never
 

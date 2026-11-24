@@ -28,9 +28,10 @@ Read them live with `aidd --help`; `cli/tests/golden/help-surface.golden.test.ts
 
 ### Targeted user-scope `plugin update`
 
-- Cursor: rematerializes the machine-owned files.
-- Copilot: native `plugin update <plugin>@<catalogue>`, naming dependent projects, with no hand-written host cache.
-- Claude and Codex declare no `updateVerb`, so the command refuses; use `marketplace refresh` or `framework update`.
+- A plugin file-copied for the tool (Cursor, for one) is rematerialized from the built tree (`update-plugin.use-case.ts`, `planFiles`).
+- A native ref goes to the host's own CLI, and `RefreshHostPlugin` refuses a tool whose activation spec has no `updateVerb` (`refresh-host-plugin.use-case.ts:42`).
+- Only Copilot declares `updateVerb` (`tool-profiles/copilot.ts:107`): native `plugin update <plugin>@<catalogue>`, naming dependent projects, with no hand-written host cache.
+- Claude (`claude.ts:88-94`) and Codex (`codex.ts:98-100`) declare an activation without it, so they refuse; use `marketplace refresh` or `framework update`.
 
 ## Distribution
 

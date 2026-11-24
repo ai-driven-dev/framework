@@ -60,7 +60,7 @@ The CLI exits when the action resolves.
 
 Each stays until its own condition holds; a new deviation is a row here, in the PR that needs it.
 
-- `shared/domain/` imports `node:path` (`paths.ts`, `source-parsing.ts`, `layout/aidd-layout.ts`); closes when none does.
+- `shared/domain/` imports `node:path` (`paths.model.ts`, `source-parsing.ts`, `layout/aidd-layout.ts`); closes when none does.
 - `userConfigDirOf` sits in `composition/user-config-dir.ts`; closes when a second context reads it and it moves to `shared/domain`.
 - `Prompter` has no contract suite: it answers a person at a terminal, e2e journeys drive the real adapter.
 - `STORED_ANSWERS` (`kind-answer-rules.ts`) and `STORED_VOCABULARY` (`tool-addition-cost.arch.test.ts`) list stored values answered verbatim; a value a method can answer is asked, not listed.

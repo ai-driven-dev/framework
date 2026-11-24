@@ -1,5 +1,4 @@
 # Machine claims glossary
-import type { PathContainment } from "../../shared/domain/paths.model.js";
 
 The language of the `machine-claims` context. A name in the code means what this page says.
 
