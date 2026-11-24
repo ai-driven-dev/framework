@@ -1,4 +1,5 @@
 import type { ToolBuildContract } from "../../../shared/domain/materialization/build-contract.js";
+import type { FlatArtifactLayout } from "../../../shared/domain/materialization/flat-paths.js";
 import type { LinkSyntax } from "../../../shared/domain/materialization/link-syntax.js";
 import type { AiToolId } from "../../../shared/domain/tool.js";
 
@@ -30,7 +31,7 @@ export interface TranslatedFlatPlugin {
   hooksAcceptance(): HooksAcceptance;
   flatLayout(): {
     readonly namespacePrefix: string;
-    readonly rules: "nested" | "top-level-unscoped";
+    readonly rules: FlatArtifactLayout["rules"];
   };
   hookScript(pluginPath: string, content: string): string;
 }
