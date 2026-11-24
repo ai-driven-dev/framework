@@ -607,12 +607,13 @@
         "write-digest/SKILL.md": "---\nname: write-digest\ndescription: Writes a digest from collected entries.\n---\nReturn a Markdown digest with one bullet per entry.\n"
       }
     },
-    "prompt": "Use {{SKILL}} to draft a persistent Hermes task for weekdays at 09:00 Europe/Paris. The installed skills are represented by ./collect-notes/SKILL.md and ./write-digest/SKILL.md. In the current working directory, collect today's entries from notes.md, then give them to write-digest. Skip if empty. On a missing file or failed skill return an error and stop. Empty input should produce no delivery. Return Markdown via Hermes local delivery. Save only the execution prompt to task.md in English and show the native CLI setup separately. Draft only, do not create a job.",
+    "prompt": "Use {{SKILL}} to draft a persistent Hermes task for weekdays at 09:00 Europe/Paris. The installed skills are represented by ./collect-notes/SKILL.md and ./write-digest/SKILL.md. In the current working directory, collect today's entries from notes.md, excluding IDs read from seen-ids.txt, then give them to write-digest. Treat both inputs as read-only. Skip if empty. On a missing file or failed skill return an error and stop. Empty input should produce no delivery. Return Markdown via Hermes local delivery. Save only the execution prompt to task.md in English and show the native CLI setup separately. Draft only, do not create a job.",
     "expect": {
       "fileContains": {
         "task.md": [
           "Europe/Paris",
           "notes.md",
+          "seen-ids.txt",
           "collect-notes",
           "write-digest",
           "## Trigger conditions",
@@ -638,7 +639,9 @@
         "--timezone",
         "--workdir",
         "--deliver"
-      ]
+      ],
+      "judge": "The execution prompt treats notes.md and seen-ids.txt as read-only inputs. No step or outcome updates either file, including after delivery.",
+      "judgeFiles": ["task.md"]
     }
   }
 ]

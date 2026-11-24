@@ -19,7 +19,7 @@ The requested outcome, timing, working context and any skills the user wants to 
 5. Compare the finished execution prompt with the request before returning it.
    - Check each literal skill name, filename and destination character for character in its numbered step or section.
    - Trace one qualifying input through every handoff to the requested destination.
-   - If delivery tracking was requested, record success only after confirmed delivery.
+   - Use an exclusion list as read-only input unless the user also requested updating it after confirmed delivery.
    - Trace a valid empty input to the skip outcome and an unavailable prerequisite to the failure outcome separately.
    - Read the prompt in isolation for authoring instructions or unrequested writes that could change the scheduled run.
    - Any mismatch: fix the prompt and repeat step 5.

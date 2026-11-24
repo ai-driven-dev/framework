@@ -10,6 +10,7 @@
 
 ## Rules
 
+- Treat inputs as read-only unless the requested outputs explicitly include an update to them.
 - {{scope and constraints that apply throughout the run}}
 - {{on a repeat run, how to recognize work already delivered if duplicates matter}}
 
