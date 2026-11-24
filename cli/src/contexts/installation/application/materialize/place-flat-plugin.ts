@@ -64,7 +64,7 @@ export async function placeFlatPlugin(
   const previous = taken ? undefined : request.previousFiles;
   await removeObsoletePluginFiles(deps.fs, previous ?? new Map(), {
     current: new Set(files.map((f) => f.relativePath)),
-    baseDir: ctx.baseDir,
+    base: { dir: ctx.baseDir, scope: ctx.scope },
   });
   const plugin = RecordedPlugin.fromDistributionWithMcp({
     dist,

@@ -147,6 +147,6 @@ export class RemovePlugin {
       homedir: () => where.home,
     });
     if (plugin.scope === "user") return;
-    await deleteOldFiles(plugin.files, baseDir, this.deps.fs);
+    await deleteOldFiles(plugin.files, { dir: baseDir, scope: plugin.scope }, this.deps.fs);
   }
 }

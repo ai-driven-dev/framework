@@ -30,6 +30,7 @@ export type ContractCaseId =
   | "C13"
   | "C14"
   | "C15"
+  | "C16"
   | "C17"
   | "C18"
   | "C19"
@@ -188,6 +189,15 @@ export function describeFileContract(
         expect(await subject.files.fileExists(path("a", "keep.txt"))).toBe(true);
       }
     );
+
+    contractCase("C16", "keeps the floor directory and what is above it", async () => {
+      await subject.files.createDirectory(path("a", "b", "c"));
+
+      await subject.files.deleteEmptyDirectories(path("a", "b", "c"), path("a"));
+
+      expect(await subject.files.fileExists(path("a", "b"))).toBe(false);
+      expect(await subject.files.fileExists(path("a"))).toBe(true);
+    });
 
     contractCase(
       "C12",

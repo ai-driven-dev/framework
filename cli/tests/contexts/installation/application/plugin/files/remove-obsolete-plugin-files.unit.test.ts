@@ -16,7 +16,10 @@ describe("removing the files a new install no longer ships", () => {
       ["kept.js", FileHash.of("kept").value],
     ]);
 
-    await removeObsoletePluginFiles(fs, previous, { current: new Set(["kept.js"]), baseDir: BASE });
+    await removeObsoletePluginFiles(fs, previous, {
+      current: new Set(["kept.js"]),
+      base: { dir: BASE, scope: "project" },
+    });
 
     expect(await fs.fileExists(join(BASE, "old.js"))).toBe(false);
     expect(await fs.fileExists(join(BASE, "kept.js"))).toBe(true);
@@ -27,18 +30,24 @@ describe("removing the files a new install no longer ships", () => {
     fs.setFile(join(BASE, "old.js"), "edited by the user");
     const previous = new Map([["old.js", FileHash.of("old").value]]);
 
-    await removeObsoletePluginFiles(fs, previous, { current: new Set(), baseDir: BASE });
+    await removeObsoletePluginFiles(fs, previous, {
+      current: new Set(),
+      base: { dir: BASE, scope: "project" },
+    });
 
     expect(await fs.fileExists(join(BASE, "old.js"))).toBe(true);
   });
 
   it("removes the directory a deleted file leaves empty", async () => {
     const fs = new InMemoryFileAdapter();
-    fs.setFile(join(BASE, "sub/old.js"), "old");
-    const previous = new Map([["sub/old.js", FileHash.of("old").value]]);
+    fs.setFile(join(BASE, "tool/sub/old.js"), "old");
+    const previous = new Map([["tool/sub/old.js", FileHash.of("old").value]]);
 
-    await removeObsoletePluginFiles(fs, previous, { current: new Set(), baseDir: BASE });
+    await removeObsoletePluginFiles(fs, previous, {
+      current: new Set(),
+      base: { dir: BASE, scope: "project" },
+    });
 
-    expect(await fs.isDirectory(join(BASE, "sub"))).toBe(false);
+    expect(await fs.isDirectory(join(BASE, "tool/sub"))).toBe(false);
   });
 });

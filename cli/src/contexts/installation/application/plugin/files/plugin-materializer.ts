@@ -127,7 +127,7 @@ export class PluginMaterializer implements UserPluginMaterialization {
     const newPaths = new Set(files.map((file) => file.relativePath));
     await deleteOldFiles(
       new Map([...plan.oldSafe].filter(([path]) => !newPaths.has(path))),
-      baseDir,
+      { dir: baseDir, scope: plugin.scope },
       this.deps.fs
     );
     return plan.next;

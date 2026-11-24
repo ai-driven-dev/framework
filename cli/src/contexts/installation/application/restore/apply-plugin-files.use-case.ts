@@ -71,7 +71,11 @@ export class ApplyPluginFiles {
         projectRoot: projectRoot,
         homedir: () => this.deps.homedir(),
       });
-      await deleteOldFiles(plugin.plugin.files, baseDir, this.deps.fs);
+      await deleteOldFiles(
+        plugin.plugin.files,
+        { dir: baseDir, scope: plugin.plugin.scope },
+        this.deps.fs
+      );
     }
     return rematerializePlugin(
       { dist, tool, mode, plugin, projectRoot, manifest, hooksGuard: { overwriteEdited: force } },

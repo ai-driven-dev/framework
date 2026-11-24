@@ -43,7 +43,7 @@ export class ReplacePluginFiles {
       projectRoot: projectRoot,
       homedir: this.deps.homedir,
     });
-    await deleteOldFiles(plugin.files, baseDir, this.deps.fs);
+    await deleteOldFiles(plugin.files, { dir: baseDir, scope: plugin.scope }, this.deps.fs);
     const mode = placementModeOf(tool);
     if (
       mode !== null &&
