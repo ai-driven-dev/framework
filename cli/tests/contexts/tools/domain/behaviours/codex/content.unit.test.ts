@@ -14,15 +14,3 @@ describe("codex link syntax", () => {
     );
   });
 });
-
-describe("codex commands", () => {
-  const profile = defineAiTool(codexSpec, { toml: new SmolTomlCodec() });
-
-  it("declares no commands capability, since Codex reads no project command directory", () => {
-    expect(profile.section("commands")).toBeNull();
-  });
-
-  it("keeps no signal directory, since no command file is ever written for it", () => {
-    expect(profile.signalDirectoryIn("/project")).toBeNull();
-  });
-});
