@@ -1,9 +1,13 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { placePluginOf } from "../../../../../../src/composition/orchestration/built-placement.js";
+import { toolPlacementOf } from "../../../../../../src/contexts/installation/application/plugin/add/place-plugin.use-case.js";
 import { ResolveAddedPluginSource } from "../../../../../../src/contexts/installation/application/plugin/add/resolve-added-plugin-source.use-case.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
+import { PluginDistribution } from "../../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../../src/shared/domain/plugin/plugin-name.js";
 import { CapturingLogger } from "../../../../../shared/testing/capturing-logger.fake.js";
+import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
 import {
   buildInstallationDeps,
   initAndInstall,
@@ -81,5 +85,51 @@ describe("placing a plugin in a project", () => {
     const { refreshed } = await placeForClaude();
 
     expect(refreshed).toStrictEqual([TOOL.claude]);
+  });
+});
+
+describe("placing a plugin for one tool", () => {
+  const recorded = new Map([[TOOL.cursor, new Map([["rules/old.mdc", "hash"]])]]);
+
+  async function previousFilesHanded(userScopeDirTaken: boolean) {
+    const seen: (ReadonlyMap<string, string> | undefined)[] = [];
+    const placeForTool = toolPlacementOf({
+      fs: new InMemoryFileAdapter(),
+      translate: fakeBuiltDeps().translate,
+      placeBuiltTree: async (request) => {
+        seen.push(request.previousFiles);
+        return { skipped: [] };
+      },
+    });
+    await placeForTool({
+      command: {
+        dist: new PluginDistribution({
+          manifest: { name: parsePluginName("sample-plugin"), version: "1.0.0" },
+          format: TOOL.claude,
+          files: [],
+          components: { commands: [], agents: [], rules: [], skills: [], hooks: [], mcp: [] },
+        }),
+        toolIds: [TOOL.cursor],
+        source: SOURCE,
+        projectRoot: PROJECT_ROOT,
+        manifest: Manifest.create(),
+        machine: Manifest.create(),
+        marketplace: undefined,
+        previousMcpEntries: new Map(),
+        previousProjectHooks: new Map(),
+        previousFiles: recorded,
+      },
+      tool: registeredTools().aiProfile(TOOL.cursor),
+      userScopeDirTaken,
+    });
+    return seen[0];
+  }
+
+  it("hands the placer the files a previous install recorded", async () => {
+    expect(await previousFilesHanded(false)).toBe(recorded.get(TOOL.cursor));
+  });
+
+  it("hides them when the user-scope directory belongs to someone else", async () => {
+    expect(await previousFilesHanded(true)).toBeUndefined();
   });
 });

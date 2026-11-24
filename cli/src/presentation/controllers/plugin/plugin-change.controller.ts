@@ -97,7 +97,7 @@ export async function updatePluginsFrom(
   const request = { pluginNames, toolIds, projectRoot, scope };
   const outcome =
     scope === "user"
-      ? { updated: await container.plugin.updateUserPlugin.execute(request), skippedUserScope: [] }
+      ? { updated: await container.plugin.updateUserPlugin.execute(request) }
       : await container.plugin.updatePlugin.execute(request);
   await reactivate();
   printPluginsUpdated(output, outcome);

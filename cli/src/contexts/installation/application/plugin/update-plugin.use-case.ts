@@ -40,10 +40,7 @@ export class UpdatePlugin {
 
   async execute({ machine, ...command }: UpdatePluginCommand): Promise<PluginUpdateOutcome> {
     if (machine !== undefined) {
-      const run = async () => ({
-        updated: await this.updateMachine({ ...command, ...machine }),
-        skippedUserScope: [],
-      });
+      const run = async () => ({ updated: await this.updateMachine({ ...command, ...machine }) });
       return this.deps.userManifest.withExclusiveAccess(run);
     }
     if (command.scope === "user")

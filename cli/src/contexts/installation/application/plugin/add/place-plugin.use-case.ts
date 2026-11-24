@@ -122,7 +122,7 @@ async function placeForTool(placement: ToolPlacement, deps: ToolPlacementDeps): 
       previousMcpEntries: command.previousMcpEntries.get(tool.toolId) ?? new Map(),
       userScopeDirTaken,
       previousProjectHooks: command.previousProjectHooks.get(tool.toolId),
-      previousFiles: command.previousFiles.get(tool.toolId),
+      previousFiles: userScopeDirTaken ? undefined : command.previousFiles.get(tool.toolId),
     };
     const result = await deps.placeBuiltTree(request);
     return { ...result, notices: [] };

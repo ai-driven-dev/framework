@@ -141,7 +141,7 @@ describe("placeBuiltTreePlugin - cursor", () => {
   });
 
   describe("replacing a plugin whose new built tree drops a file", () => {
-    async function replaceDroppingOldRule(userScopeDirTaken: boolean): Promise<string[]> {
+    async function replaceDroppingOldRule(): Promise<string[]> {
       const fs = new InMemoryFileAdapter();
       const root = `${BUILT}/plugins/sample-plugin`;
       fs.setFile(`${root}/skills/demo/SKILL.md`, "built skill");
@@ -170,21 +170,15 @@ describe("placeBuiltTreePlugin - cursor", () => {
       manifest.removePlugin(TOOL.cursor, "sample-plugin");
       await fs.deleteFile(`${root}/rules/old.mdc`);
 
-      await place({ previousFiles, userScopeDirTaken });
+      await place({ previousFiles });
 
       return fs.listUnder(`${HOME}/.cursor/plugins/local`);
     }
 
     it("deletes the file the previous version recorded", async () => {
-      expect(await replaceDroppingOldRule(false)).toStrictEqual([
+      expect(await replaceDroppingOldRule()).toStrictEqual([
         `${HOME}/.cursor/plugins/local/sample-plugin/skills/demo/SKILL.md`,
       ]);
-    });
-
-    it("keeps it when the plugin directory belongs to someone else", async () => {
-      expect(await replaceDroppingOldRule(true)).toContain(
-        `${HOME}/.cursor/plugins/local/sample-plugin/rules/old.mdc`
-      );
     });
   });
 

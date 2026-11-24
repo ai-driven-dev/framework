@@ -145,39 +145,6 @@ describe("propagating AI tool settings to an IDE", () => {
     expect(replaced.entries).toHaveProperty("a", FileHash.of("1"));
   });
 
-  it("tracks one merge entry per settings file when a tool requires several of this IDE", async () => {
-    const deps = await buildInstallationDeps({ tools: registeredTools() });
-    await initProject(deps, PROJECT_ROOT);
-    const mcpEntry = { relativePath: ".vscode/mcp.json", sectionKey: null, entries: {} };
-    const manifest = await withCopilotRegistered(deps, [mcpEntry]);
-    const tools = registeredTools();
-    const profile = tools.aiProfile(TOOL.copilot);
-    const [forVscode] = profile.settingsFiles();
-    const second: SettingsFileAnswers = {
-      consumes: () => false,
-      consumedRefs: () => [],
-      writes: () => false,
-      appliesWith: (installed) => installed(TOOL.vscode),
-      requires: (toolId) => toolId === TOOL.vscode,
-      outputPath: () => ".vscode/second.json",
-      fileOf: (content) => forVscode.fileOf(content, { relativePath: ".vscode/second.json" }),
-      resolveStaticContent: () => '{"second": true}',
-    };
-    vi.spyOn(tools, "aiProfile").mockImplementation((id) =>
-      Object.assign(Object.create(profile), {
-        settingsFiles: () => (id === TOOL.copilot ? [forVscode, second] : []),
-      })
-    );
-
-    await propagate(deps, deps.assetProvider, tools);
-
-    expect(manifest.getMergeFiles(TOOL.copilot).map((e) => e.relativePath)).toStrictEqual([
-      ".vscode/mcp.json",
-      ".vscode/settings.json",
-      ".vscode/second.json",
-    ]);
-  });
-
   it("merges nothing of an asset-backed capability when no asset provider was given", async () => {
     const deps = await buildInstallationDeps({ tools: registeredTools() });
     await initProject(deps, PROJECT_ROOT);

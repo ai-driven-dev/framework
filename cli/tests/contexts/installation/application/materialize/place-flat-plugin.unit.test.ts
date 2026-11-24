@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import { placeFlatPlugin } from "../../../../../src/contexts/installation/application/materialize/place-flat-plugin.js";
 import { ProjectScopeUnsupportedError } from "../../../../../src/contexts/installation/contract/installation.error.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import {
@@ -87,34 +86,6 @@ describe("placing a plugin in flat mode", () => {
       const installed = plugins.find((p) => p.plugin.name === "test-plugin");
       expect(installed).toBeDefined();
       expect(installed?.plugin.files.size).toBeGreaterThan(0);
-    });
-  });
-
-  describe("when the plugin directory belongs to someone else", () => {
-    it("keeps the files a previous install recorded there", async () => {
-      const { adapter, fs } = buildAdapter();
-      const manifest = Manifest.create();
-      manifest.addTool(TOOL.opencode, "test", []);
-      const shared = join(PROJECT_ROOT, ".opencode/commands/test-plugin/old.md");
-      fs.setFile(shared, "old");
-
-      await placeFlatPlugin(
-        {
-          dist: buildDist("test-plugin"),
-          tool: registeredTools().aiProfile(TOOL.opencode),
-          source: { kind: "local", path: "/plugin-source" },
-          projectRoot: PROJECT_ROOT,
-          manifest,
-          marketplace: undefined,
-          userScopeDirTaken: true,
-          previousFiles: new Map([
-            [".opencode/commands/test-plugin/old.md", FileHash.of("old").value],
-          ]),
-        },
-        adapter
-      );
-
-      expect(fs.has(shared)).toBe(true);
     });
   });
 
