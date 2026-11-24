@@ -46,11 +46,6 @@ const DIVERGENCES: readonly Divergence[] = [
   },
   { id: "A namespaces an agent's name", applies: (_t, p) => p.includes("agents/"), fold: noName },
   {
-    id: "A renames a flat skill after its folder",
-    applies: (t, p) => ["opencode", "kilo"].includes(t) && p.endsWith("SKILL.md"),
-    fold: noName,
-  },
-  {
     id: "B keeps only a codex skill's name and description",
     applies: (t, p) => t === "codex" && p.includes("/skills/"),
     fold: ({ frontmatter: { name, description }, body }) => ({

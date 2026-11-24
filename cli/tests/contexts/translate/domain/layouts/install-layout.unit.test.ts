@@ -48,7 +48,9 @@ describe("a plugin of one skill, its action and its asset", () => {
 
   it("namespaces every skill file per plugin, prose and asset alike, for a flat target", () => {
     expect(treeOf(opencode, skillDist())).toEqual({
-      ".opencode/skills/sample-plugin/hello/SKILL.md": skillEntryContent,
+      ".opencode/skills/sample-plugin/hello/SKILL.md": skillEntryContent
+        .replace("name: hello", "name: 'hello'")
+        .replace("description: Hello skill", "description: 'Hello skill'"),
       ".opencode/skills/sample-plugin/hello/actions/run.md": skillActionContent,
       ".opencode/skills/sample-plugin/hello/reference.json": skillAssetContent,
     });
@@ -91,7 +93,7 @@ describe("a flat target that rewrites what it hosts", () => {
       makeFile("skills/hello/reference.json", '{ "from": "SOURCE" }\n'),
     ];
     expect(treeOf(rewriting, distOf([...skills], { skills }))).toEqual({
-      ".opencode/skills/sample-plugin/hello/SKILL.md": "Read REWRITTEN.\n",
+      ".opencode/skills/sample-plugin/hello/SKILL.md": "---\nname: 'hello'\n---\nRead REWRITTEN.\n",
       ".opencode/skills/sample-plugin/hello/reference.json": '{ "from": "SOURCE" }\n',
     });
   });
