@@ -39,7 +39,7 @@ type Divergence = {
  * entry nothing needs fails the test, and a difference no entry names fails it too. */
 const DIVERGENCES: readonly Divergence[] = [
   {
-    id: "A leaves the {{TOOLS}} placeholder, B resolves it to .github/",
+    id: "A leaves the {{TOOLS}} placeholder, B resolves it to .github/ (a build is location-independent, an install knows its directory)",
     applies: (t, _p, source) => t === "copilot" && source.includes("{{TOOLS}}"),
     fold: (d) => ({ ...d, body: d.body.replaceAll(".github/", "{{TOOLS}}/") }),
   },
@@ -53,8 +53,8 @@ const DIVERGENCES: readonly Divergence[] = [
 const SOURCES = FRAMEWORK_SOURCES;
 /** The plugin manifest, which B copies from the source and A synthesizes, is checked apart. */
 const MANIFEST_DIVERGENCES = [
-  "B writes the manifest at the plugin root, A in the tool's own manifest directory",
-  "A lists the components and drops strict, B copies the source manifest byte for byte",
+  "B writes the manifest at the plugin root, A in the tool's own manifest directory (open: needs a product decision)",
+  "A lists the components and drops strict, B copies the source manifest byte for byte (open: needs a product decision)",
 ];
 const identity = (json: string) => {
   const { name, version, description, author } = JSON.parse(json);
