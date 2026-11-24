@@ -14,11 +14,11 @@ The supplied prompt, test input, expected results and schedule.
    - Failure: fix the cause and repeat from step 2 on clean data or with duplicate writes prevented.
    - Unknown outcome: inspect that same run before retrying.
    - Blocked or outside approval: stop and report the unmet criterion.
-4. When all criteria pass on one complete run, show the evidence and ask “Enable this task at [cadence] [time zone]?” using its actual schedule.
+4. When every criterion passes on the same complete run, show its evidence and end the reply with the activation question below.
    - Already active: report its state.
    - User approves: enable the tested configuration once and verify the next occurrence where visible.
    - Otherwise: leave the schedule unchanged.
 
 ## Output
 
-Observed results against the criteria and the schedule state.
+Report the observed results and schedule state. When activation awaits approval, ask “Enable this task at [actual cadence and time zone]?” in the user’s language.

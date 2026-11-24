@@ -679,12 +679,14 @@
         "receipt.txt",
         "accounting.cjs"
       ],
-      "judge": "The report identifies the observed wrong account in the first run, a correction to task.md, and the actual passing retry with a single correctly booked receipt. The saved draft uses the source account. The answer asks whether the user wants to enable recurrence, and does not claim that it is active.",
-      "judgeFiles": [
-        "task.md",
-        "ledger.txt",
-        "trial.log"
-      ]
+      "fileContains": {
+        "task.md": ["read-receipt", "book-receipt", "account"]
+      },
+      "fileNotContains": {
+        "task.md": ["with account `office`"]
+      },
+      "stdoutContains": ["office", "travel", "1250"],
+      "judge": "The final answer directly asks the user whether to activate the tested task on weekdays at 09:00 UTC and leaves it inactive pending the answer."
     }
   },
   {
