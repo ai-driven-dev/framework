@@ -122,6 +122,10 @@ export interface McpConfigAnswers {
   ): McpPluginMerge;
   /** Removes the servers a plugin contributed, refusing one edited since. */
   removePluginServers(existing: string, entries: ReadonlyMap<string, string>): string;
+  /** The file with `glob` listed in its `instructions`, beside what a person keeps there. */
+  withInstruction(existing: string | null, glob: string): string;
+  /** The file without `glob` in its `instructions`; the file itself when it is not listed. */
+  withoutInstruction(existing: string, glob: string): string;
   /** Whether `relativePath` is the project file the tool's mcp servers live in by default. */
   accepts(relativePath: string): boolean;
   /** Whether the config asset named `fileName` is that file, merged over what a person keeps. */
@@ -233,6 +237,9 @@ export interface AiToolProfile {
    * Limit: a flat skill or agent is matched by the `<plugin>-` prefix, so a plugin whose name
    * prefixes a sibling's would claim its files; no framework plugin name does. */
   ownsFlatPath(relativePath: string, pluginName: string): boolean;
+  /** The glob naming every rule `pluginName` places at the top of the tool's rules folder, or
+   * null when its rules sit under the plugin's own folder. */
+  flatRulesGlob(pluginName: string): string | null;
   /** How this tool writes the references of its documents. */
   readonly linkSyntax: LinkSyntax;
   /** The tool's plugin delivery, or null when it declares none. */

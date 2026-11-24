@@ -59,7 +59,10 @@ export async function readTranslatedBuiltTree(request: AddPluginRequest, read: B
     tool: request.tool,
   });
   const { files, hooks } = await readBuiltContent(request, translated, read);
-  const mcp = await materializeRequestedMcp(deps.fs, request, translated.installedMcp);
+  const mcp = await materializeRequestedMcp(deps.fs, request, {
+    declaration: translated.installedMcp,
+    rulesGlob: null,
+  });
   return { files, hooks, mcp };
 }
 

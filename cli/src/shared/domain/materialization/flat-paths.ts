@@ -82,6 +82,12 @@ export function flatSectionPath(
   return `${layout.directory}${section}/${plugin}/${name}`;
 }
 
+/** The glob naming every rule a plugin placed at the top of the rules folder, or null where
+ * rules sit under the plugin's own folder and need no listing. */
+export function flatRulesGlob(layout: FlatArtifactLayout, plugin: string): string | null {
+  return layout.rules === "top-level-unscoped" ? `${layout.directory}rules/${plugin}-*.md` : null;
+}
+
 /** Whether a project-relative path is one of the plugin's skills or agents: the inverse of the
  * two placements above, read from the same declaration.
  *

@@ -27,6 +27,7 @@ type AiToolFields = Omit<
   | "distributionPaths"
   | "flatInstallPath"
   | "ownsFlatPath"
+  | "flatRulesGlob"
   | "machineLocalFiles"
   | "installedRulesLocation"
   | "signalDirectoryIn"

@@ -46,7 +46,7 @@ describe("materializing a plugin's MCP servers into a flat config", () => {
     const result = await materializeFlatMcp({
       fs,
       pluginName: "ctx",
-      declaration: declared([]),
+      contribution: { declaration: declared([]), rulesGlob: null },
       tool: opencode(),
       projectRoot: PROJECT_ROOT,
       previousMcpEntries: new Map(),
@@ -61,7 +61,7 @@ describe("materializing a plugin's MCP servers into a flat config", () => {
     const result = await materializeFlatMcp({
       fs,
       pluginName: "ctx",
-      declaration: declared([SERVER]),
+      contribution: { declaration: declared([SERVER]), rulesGlob: null },
       tool: opencode(),
       projectRoot: PROJECT_ROOT,
       previousMcpEntries: new Map(),
@@ -78,7 +78,7 @@ describe("materializing a plugin's MCP servers into a flat config", () => {
     await materializeFlatMcp({
       fs,
       pluginName: "ctx",
-      declaration: declared([SERVER]),
+      contribution: { declaration: declared([SERVER]), rulesGlob: null },
       tool: opencode(),
       projectRoot: PROJECT_ROOT,
       previousMcpEntries: new Map(),
@@ -93,7 +93,7 @@ describe("materializing a plugin's MCP servers into a flat config", () => {
     const first = await materializeFlatMcp({
       fs,
       pluginName: "ctx",
-      declaration: declared([SERVER]),
+      contribution: { declaration: declared([SERVER]), rulesGlob: null },
       tool: opencode(),
       projectRoot: PROJECT_ROOT,
       previousMcpEntries: new Map(),
@@ -105,7 +105,7 @@ describe("materializing a plugin's MCP servers into a flat config", () => {
       materializeFlatMcp({
         fs,
         pluginName: "ctx",
-        declaration: declared([SERVER]),
+        contribution: { declaration: declared([SERVER]), rulesGlob: null },
         tool: opencode(),
         projectRoot: PROJECT_ROOT,
         previousMcpEntries: first.mcpEntries,

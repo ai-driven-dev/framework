@@ -8,6 +8,8 @@ import {
   mergeJsonUserPrime,
   transformMcpForWin32,
 } from "../formats/mcp/mcp-format.js";
+import { presentUpToFirstTier } from "../formats/mcp/present-up-to-first-tier.js";
+import { addTypedInstruction, removeTypedInstruction } from "../formats/mcp/typed-instructions.js";
 import {
   buildTypedMcpFlatConfig,
   mergeTypedMcp,
@@ -41,19 +43,6 @@ export function chooseOutputPath(
     if (present[0] !== undefined) return present[0];
   }
   return candidates.fallback;
-}
-
-/** The candidate files the project has, asked tier by tier until a tier has one. */
-async function presentUpToFirstTier(
-  candidates: McpOutputPathCandidates,
-  exists: (relativePath: string) => Promise<boolean>
-): Promise<Set<string>> {
-  const present = new Set<string>();
-  for (const tier of candidates.tiers) {
-    for (const path of tier) if (await exists(path)) present.add(path);
-    if (present.size > 0) break;
-  }
-  return present;
 }
 
 /** A TOML file is written through the codec the profile was given. */
@@ -129,7 +118,7 @@ export class McpConfigPart {
   async resolveOutputPath(exists: (relativePath: string) => Promise<boolean>): Promise<string> {
     const candidates = this.#params.outputPathCandidates;
     if (candidates === undefined) return this.#params.outputPath;
-    const present = await presentUpToFirstTier(candidates, exists);
+    const present = await presentUpToFirstTier(candidates.tiers, exists);
     return chooseOutputPath(candidates, (path) => present.has(path));
   }
 
@@ -146,6 +135,14 @@ export class McpConfigPart {
   /** Removes the servers a plugin contributed, refusing one edited since. */
   removePluginServers(existing: string, entries: ReadonlyMap<string, string>): string {
     return unmergeTypedMcp(existing, entries);
+  }
+
+  withInstruction(existing: string | null, glob: string): string {
+    return addTypedInstruction(existing, glob);
+  }
+
+  withoutInstruction(existing: string, glob: string): string {
+    return removeTypedInstruction(existing, glob);
   }
 
   /** The tool's framework-owned config merged over what a person already keeps in the file. */
