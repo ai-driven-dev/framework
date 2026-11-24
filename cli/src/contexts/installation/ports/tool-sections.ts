@@ -98,6 +98,7 @@ export interface EnabledPluginsSection {
   marketplaceRegistration(): {
     sharedSettingsFile(): string;
     enabledPluginsKey(): string | null;
+    requiresNativeProof(): boolean;
   } | null;
 }
 

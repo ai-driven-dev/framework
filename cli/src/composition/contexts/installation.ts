@@ -19,7 +19,10 @@ import {
   withoutMarketplace,
   withoutRef,
 } from "../../contexts/host-registration/domain/record/registration-record.js";
-import { withoutEnabledPlugin } from "../../contexts/host-registration/domain/settings-declaration.js";
+import {
+  enabledEntryRef,
+  withoutEnabledPlugin,
+} from "../../contexts/host-registration/domain/settings-declaration.js";
 import { AssertProjectMcpEntriesRemovable } from "../../contexts/installation/application/assert-project-mcp-entries-removable.use-case.js";
 import { ReadMachineInstallation } from "../../contexts/installation/application/doctor/read-machine-installation.use-case.js";
 import { InstallIdeConfig } from "../../contexts/installation/application/install/config/install-ide-config.use-case.js";
@@ -163,7 +166,8 @@ export function projectIntegrationOf(fs: FileReader & FileWriter) {
   const quiet: Logger = { debug() {}, info() {}, warn() {} };
   const enablement = new RemoveEnabledPlugin(
     trackedSharedSettings({ fs, logger: quiet }),
-    withoutEnabledPlugin
+    withoutEnabledPlugin,
+    enabledEntryRef
   );
   const assertMcpRemovable = new AssertProjectMcpEntriesRemovable(plan);
   return {

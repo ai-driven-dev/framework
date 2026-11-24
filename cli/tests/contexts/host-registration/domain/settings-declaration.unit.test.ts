@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   declaredSettingsRefs,
+  enabledEntryRef,
   registersByProvenRefs,
   registersBySettingsFile,
   withEnabledPlugins,
@@ -93,12 +94,12 @@ describe("how a tool's settings file registers its plugins", () => {
 });
 
 describe("the entry a plugin has in a parsed shared file", () => {
-  const plugin = { name: "a", marketplace: "m" };
+  const entry = "a@m";
 
   it("is taken out of a copy, the file the caller holds left as it was", () => {
     const shared = { [ENABLED]: { "a@m": true, "b@m": true }, keep: 1 };
 
-    expect(withoutEnabledPlugin(shared, ENABLED, plugin)).toStrictEqual({
+    expect(withoutEnabledPlugin(shared, ENABLED, entry)).toStrictEqual({
       [ENABLED]: { "b@m": true },
       keep: 1,
     });
@@ -106,8 +107,22 @@ describe("the entry a plugin has in a parsed shared file", () => {
   });
 
   it("answers null when the file holds no entry for it", () => {
-    expect(withoutEnabledPlugin({ [ENABLED]: { "b@m": true } }, ENABLED, plugin)).toBeNull();
-    expect(withoutEnabledPlugin({ keep: 1 }, ENABLED, plugin)).toBeNull();
-    expect(withoutEnabledPlugin({ [ENABLED]: { "a@m": true } }, null, plugin)).toBeNull();
+    expect(withoutEnabledPlugin({ [ENABLED]: { "b@m": true } }, ENABLED, entry)).toBeNull();
+    expect(withoutEnabledPlugin({ keep: 1 }, ENABLED, entry)).toBeNull();
+    expect(withoutEnabledPlugin({ [ENABLED]: { "a@m": true } }, null, entry)).toBeNull();
+  });
+});
+
+describe("the entry that enables a plugin, as its tool wrote it", () => {
+  const plugin = { name: "a", marketplace: "alias" };
+  const answering = (proof: boolean) => ({ requiresNativeProof: () => proof });
+
+  it("is the ref the host proved for a tool that enables only proven refs", () => {
+    expect(enabledEntryRef(answering(true), plugin, "a@hosted")).toBe("a@hosted");
+    expect(enabledEntryRef(answering(true), plugin, undefined)).toBeUndefined();
+  });
+
+  it("is the plugin on the marketplace's own key for a tool that registers by its settings file", () => {
+    expect(enabledEntryRef(answering(false), plugin, "a@hosted")).toBe("a@alias");
   });
 });

@@ -89,15 +89,16 @@ export class RemovePluginsFromMarketplace {
     }
     for (const { toolId, plugin, recorded } of orphans) {
       const tool = this.tools.aiProfile(toolId);
+      const registrations = registered.get(toolId);
+      const ref = records.recordedRef(registrations, recorded);
       await this.deps.cleanup.removeLocalIntegration({
         plugin: recorded,
         tool,
         projectRoot,
         manifest,
+        hostRef: ref,
       });
       await this.deps.cleanup.deleteLocalFiles(tool, plugin, projectRoot);
-      const registrations = registered.get(toolId);
-      const ref = records.recordedRef(registrations, recorded);
       if (registrations !== undefined && ref !== undefined)
         registered.set(toolId, records.withoutRef(registrations, ref));
       manifest.removePlugin(toolId, plugin.name);

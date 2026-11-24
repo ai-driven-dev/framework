@@ -10,6 +10,8 @@ export interface LocalIntegrationRemoval {
   readonly tool: ProjectPluginIntegration & EnabledPluginsSection;
   readonly projectRoot: string;
   readonly manifest: Manifest;
+  /** The ref the host recorded for the plugin, when it recorded one. */
+  readonly hostRef?: string;
 }
 
 /** Takes a plugin's project-scope integration out of a project: hooks, MCP entries, its enabled

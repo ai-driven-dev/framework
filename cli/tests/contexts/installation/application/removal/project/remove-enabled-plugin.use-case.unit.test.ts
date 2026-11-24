@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  type EnabledEntryOf,
   RemoveEnabledPlugin,
   type WithoutEnabledPlugin,
 } from "../../../../../../src/contexts/installation/application/removal/project/remove-enabled-plugin.use-case.js";
@@ -29,12 +30,13 @@ function plugin(marketplace?: string): RecordedPlugin {
   });
 }
 
-const withoutEntry: WithoutEnabledPlugin = (shared, key, { name, marketplace }) => {
-  const entries = Object.entries(shared[key ?? ""] ?? {}).filter(
-    ([ref]) => ref !== `${name}@${marketplace}`
-  );
+const withoutEntry: WithoutEnabledPlugin = (shared, key, entry) => {
+  const entries = Object.entries(shared[key ?? ""] ?? {}).filter(([ref]) => ref !== entry);
   return { ...shared, [key ?? ""]: Object.fromEntries(entries) };
 };
+
+const enabledEntryRef: EnabledEntryOf = (settings, { name, marketplace }, hostRef) =>
+  settings.requiresNativeProof() ? hostRef : `${name}@${marketplace}`;
 
 function setup(content: string) {
   const fs = new InMemoryFileAdapter({ [ABSOLUTE]: content }, [ROOT]);
@@ -44,7 +46,7 @@ function setup(content: string) {
     ])
     .build();
   const tracked = trackedSharedSettings({ fs, logger: new CapturingLogger() });
-  return { fs, manifest, useCase: new RemoveEnabledPlugin(tracked, withoutEntry) };
+  return { fs, manifest, useCase: new RemoveEnabledPlugin(tracked, withoutEntry, enabledEntryRef) };
 }
 
 describe("removing the entry that enabled a plugin", () => {
@@ -68,5 +70,40 @@ describe("removing the entry that enabled a plugin", () => {
     await useCase.execute({ plugin: plugin(), tool, projectRoot: ROOT, manifest });
 
     expect(await fs.readFile(ABSOLUTE)).toBe(before);
+  });
+
+  it("drops the entry on the name the host gave the marketplace, not the alias it is registered under", async () => {
+    const copilotPath = ".github/copilot/settings.json";
+    const absolute = resolve(ROOT, copilotPath);
+    const before = JSON.stringify({
+      enabledPlugins: { "aidd-dev@hosted-name": true, "aidd-dev@other": true },
+    });
+    const fs = new InMemoryFileAdapter({ [absolute]: before }, [ROOT]);
+    const manifest = aManifest()
+      .withTool(TOOL.copilot, [
+        new InstallationFile({
+          relativePath: copilotPath,
+          content: before,
+          hash: FileHash.of(before),
+        }),
+      ])
+      .build();
+    const useCase = new RemoveEnabledPlugin(
+      trackedSharedSettings({ fs, logger: new CapturingLogger() }),
+      withoutEntry,
+      enabledEntryRef
+    );
+
+    await useCase.execute({
+      plugin: plugin("alias"),
+      tool: registeredTools().aiProfile(TOOL.copilot),
+      projectRoot: ROOT,
+      manifest,
+      hostRef: "aidd-dev@hosted-name",
+    });
+
+    expect(JSON.parse(await fs.readFile(absolute))).toEqual({
+      enabledPlugins: { "aidd-dev@other": true },
+    });
   });
 });

@@ -1,13 +1,14 @@
-import { dirname, join } from "node:path";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import { PluginNotFoundError } from "../../contract/installation.error.js";
 import type { ToolRecords } from "../../contract/records/scope-records.js";
 import type { Manifest } from "../../domain/manifest.js";
+import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { InstallationCatalog } from "../../ports/tool-sections.js";
+import type { InstallationCatalog, PluginPlacement } from "../../ports/tool-sections.js";
+import { deleteOldFiles } from "../plugin/files/delete-plugin-files.js";
 import { resolvePluginToolIds, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import { requireManifest } from "../shared/require-manifest.js";
 import type { AssertProjectIntegrationRemovable } from "./assert-project-integration-removable.use-case.js";
@@ -104,23 +105,22 @@ export class RemovePlugin {
       const tool = this.tools.aiProfile(toolId);
       const entry = manifest.getRecordedPlugins(toolId).find((p) => p.plugin.name === pluginName);
       if (entry === undefined) continue;
-      const { plugin } = entry;
       const registrations = registered.get(toolId);
-      const baseDir = scopeBaseOf(tool, {
-        scope: plugin.scope,
-        projectRoot,
-        homedir: () => home,
-      });
       const confirmed = await withdrawal.withdraw({
         tool,
         plugin: entry,
         projectRoot,
         registrations,
       });
-      // A user-scope plugin's files are the machine's, released by its claim, never deleted here.
-      if (plugin.scope !== "user") await this.deletePluginFiles(plugin.files, baseDir);
-      await this.deps.integration.remove.execute({ plugin: entry, tool, projectRoot, manifest });
+      await this.deletePluginFiles(entry.plugin, tool, { projectRoot, home });
       const ref = withdrawal.recordedRef(registrations, entry);
+      await this.deps.integration.remove.execute({
+        plugin: entry,
+        tool,
+        projectRoot,
+        manifest,
+        hostRef: ref,
+      });
       if (
         ref !== undefined &&
         registrations !== undefined &&
@@ -134,14 +134,19 @@ export class RemovePlugin {
     return removed;
   }
 
+  /** The base dir is resolved first, so a tool with no user directory refuses a user-scope plugin.
+   * A user-scope plugin's files are the machine's, released by its claim, never deleted here. */
   private async deletePluginFiles(
-    files: ReadonlyMap<string, string>,
-    baseDir: string
+    plugin: InstalledPlugin,
+    tool: PluginPlacement,
+    where: { projectRoot: string; home: string }
   ): Promise<void> {
-    for (const relativePath of files.keys()) {
-      const fullPath = join(baseDir, relativePath);
-      await this.deps.fs.deleteFile(fullPath);
-      await this.deps.fs.deleteEmptyDirectories(dirname(fullPath));
-    }
+    const baseDir = scopeBaseOf(tool, {
+      scope: plugin.scope,
+      projectRoot: where.projectRoot,
+      homedir: () => where.home,
+    });
+    if (plugin.scope === "user") return;
+    await deleteOldFiles(plugin.files, baseDir, this.deps.fs);
   }
 }

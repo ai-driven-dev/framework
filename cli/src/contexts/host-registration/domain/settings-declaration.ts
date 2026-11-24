@@ -57,16 +57,28 @@ export function withEnabledPlugins(
   return { ...shared, [enabledPluginsKey]: { ...existing, ...toAdd } };
 }
 
-/** A parsed shared file without the entry a plugin has on a marketplace, or null when it held none.
- * The file the caller holds is left as it was. */
+/** The entry that enables a plugin in a shared file, as its tool wrote it: the ref the host proved
+ * for a tool that enables only proven refs, else the plugin on the marketplace's own key. None when
+ * a proven-ref tool never proved one. */
+export function enabledEntryRef(
+  settings: ProofAnswering,
+  plugin: { readonly name: string; readonly marketplace: string },
+  provenRef: string | undefined
+): string | undefined {
+  return registersByProvenRefs(settings)
+    ? provenRef
+    : refOnHostName(plugin.name, plugin.marketplace);
+}
+
+/** A parsed shared file without one enabled entry, or null when it held none. The file the caller
+ * holds is left as it was. */
 export function withoutEnabledPlugin(
   shared: Record<string, unknown>,
   enabledPluginsKey: string | null,
-  plugin: { readonly name: string; readonly marketplace: string }
+  entry: string
 ): Record<string, unknown> | null {
   if (enabledPluginsKey === null) return null;
-  const { [refOnHostName(plugin.name, plugin.marketplace)]: removed, ...rest } =
-    asPlainObject(shared[enabledPluginsKey]) ?? {};
+  const { [entry]: removed, ...rest } = asPlainObject(shared[enabledPluginsKey]) ?? {};
   if (removed === undefined) return null;
   return { ...shared, [enabledPluginsKey]: rest };
 }
