@@ -615,6 +615,9 @@
           "notes.md",
           "collect-notes",
           "write-digest",
+          "## Trigger conditions",
+          "## Rules",
+          "## Inputs",
           "## Process",
           "## Output"
         ]
@@ -625,7 +628,8 @@
       "fileNotContains": {
         "task.md": [
           "{{",
-          "hermes cron create"
+          "hermes cron create",
+          "draft only"
         ]
       },
       "stdoutContains": [

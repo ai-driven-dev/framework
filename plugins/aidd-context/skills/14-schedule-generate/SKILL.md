@@ -16,3 +16,8 @@ flowchart LR
   configure -->|"readback matches"| registered((registration verified))
   configure -->|"failed or uncertain write"| unverified((registration unverified))
 ```
+
+## Transversal rules
+
+- Begin by reading [Draft the task](actions/01-draft.md) in this skill directory.
+- Read each action and the asset it calls for before returning its result.

@@ -12,7 +12,10 @@ The requested outcome, timing, working context and any skills the user wants to 
 3. Resolve requested skill names against the target inventory or the skill files the user supplies.
    - A skill is missing or its instructions require human input: flag the dependency and specify where the unattended run must stop.
    - The workflow needs no skill: describe the operations directly.
-4. Fill the [task prompt](../assets/task-prompt.md) in the user's language.
+4. Read and fill the [task prompt](../assets/task-prompt.md) in the user's language.
+   - Retain every section heading in that language for prompts returned in chat as well as in files.
+   - Put only instructions for the future run inside the prompt.
+   - Keep requests about drafting, installation and registration in the surrounding reply.
 5. Trace one qualifying input through the numbered steps to the destination.
    - A link in the chain is missing: repair the draft and repeat step 5.
    - Trace a valid empty input to the skip outcome and an unavailable prerequisite to the failure outcome separately.
