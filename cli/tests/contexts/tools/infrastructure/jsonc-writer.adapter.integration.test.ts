@@ -28,9 +28,4 @@ describe("when a config is rewritten over its current text", () => {
     expect(next).toContain("// kept");
     expect(next).not.toContain('"b"');
   });
-
-  it("writes plain formatted JSON when there is the current text is blank or unreadable", () => {
-    expect(writer.rewrite("  ", { a: 1 })).toBe('{\n  "a": 1\n}');
-    expect(writer.rewrite("{ not json", { a: 1 })).toBe('{\n  "a": 1\n}');
-  });
 });

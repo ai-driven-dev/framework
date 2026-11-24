@@ -1,4 +1,5 @@
-import { applyEdits, modify, type ParseError, parse } from "jsonc-parser";
+import { applyEdits, modify, parse } from "jsonc-parser";
+import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import type { JsonWriter } from "../domain/formats/json-writer.js";
 
 type Path = (string | number)[];
@@ -9,21 +10,15 @@ const FORMAT = { formattingOptions: { tabSize: 2, insertSpaces: true } };
 /** JSONC through jsonc-parser, the tools context's `JsonWriter`: it edits only
  * what differs, so the comments and layout a person wrote around it stay. */
 export class JsoncWriter implements JsonWriter {
+  // Limit: `current` is text the caller already parsed as a JSON object; blank or malformed text never arrives.
   rewrite(current: string, next: Record<string, unknown>): string {
-    if (current.trim() === "") return JSON.stringify(next, null, 2);
-    const errors: ParseError[] = [];
-    const before: unknown = parse(current, errors, { allowTrailingComma: true });
-    if (errors.length > 0 || !isRecord(before)) return JSON.stringify(next, null, 2);
+    const before = asPlainObject(parse(current, [], { allowTrailingComma: true })) ?? {};
     let text = current;
     for (const [path, value] of differences(before, next, [])) {
       text = applyEdits(text, modify(text, path, value, FORMAT));
     }
     return text;
   }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 /** Each path whose value differs, `undefined` where `next` dropped it; objects are compared key by
@@ -38,7 +33,8 @@ function differences(
     .map((key): [Path, unknown] => [[...at, key], undefined]);
   const changed = Object.entries(next).flatMap(([key, value]): [Path, unknown][] => {
     const old = before[key];
-    if (isRecord(old) && isRecord(value)) return differences(old, value, [...at, key]);
+    const [oldObject, newObject] = [asPlainObject(old), asPlainObject(value)];
+    if (oldObject && newObject) return differences(oldObject, newObject, [...at, key]);
     return JSON.stringify(old) === JSON.stringify(value) ? [] : [[[...at, key], value]];
   });
   return [...dropped, ...changed];
