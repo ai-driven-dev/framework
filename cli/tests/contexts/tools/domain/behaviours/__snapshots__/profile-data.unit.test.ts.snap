@@ -180,45 +180,7 @@ exports[`the data each registered profile declares > codex 1`] = `
       "name": "reviewer",
     },
     "commands": null,
-    "rules": {
-      "a description alone": {
-        "description": "d",
-      },
-      "a description that opts out of always-apply": {
-        "alwaysApply": false,
-        "description": "d",
-      },
-      "a paths list": {
-        "paths": [
-          "a",
-          "b",
-        ],
-      },
-      "an always-apply rule": {
-        "alwaysApply": true,
-        "description": "d",
-      },
-      "an empty paths list": {
-        "paths": [],
-      },
-      "an opt-out with no description": {
-        "alwaysApply": false,
-      },
-      "globs that apply on request": {
-        "alwaysApply": false,
-        "description": "d",
-        "globs": [
-          "a",
-        ],
-      },
-      "paths beside a description": {
-        "alwaysApply": false,
-        "description": "d",
-        "paths": [
-          "a",
-        ],
-      },
-    },
+    "rules": null,
   },
   "hooksRootToken": "\${PLUGIN_ROOT}",
   "installs": {
@@ -228,15 +190,6 @@ exports[`the data each registered profile declares > codex 1`] = `
       "reviewer.codex.md": ".codex/agents/reviewer.toml",
       "reviewer.md": ".codex/agents/reviewer.toml",
       "team/sub/reviewer.md": ".codex/agents/reviewer.toml",
-    },
-    "rules": {
-      "00-architecture/.gitkeep": ".codex/rules/00-architecture/.gitkeep",
-      "01-standards/1-mermaid.md": ".codex/rules/01-standards/1-mermaid.md",
-      "01-standards/10-mermaid.md": ".codex/rules/01-standards/10-mermaid.md",
-      "01-standards/naming-2-rules.md": ".codex/rules/01-standards/naming-2-rules.md",
-      "01-standards/naming.md": ".codex/rules/01-standards/naming.md",
-      "04-tooling/ide-mapping.codex.md": ".codex/rules/04-tooling/ide-mapping.md",
-      "standards.codex.md": ".codex/rules/standards.md",
     },
   },
   "kind": "ai",
@@ -250,7 +203,6 @@ exports[`the data each registered profile declares > codex 1`] = `
   "sections": [
     "agents",
     "skills",
-    "rules",
     "mcp",
     "hooks",
     "layout",

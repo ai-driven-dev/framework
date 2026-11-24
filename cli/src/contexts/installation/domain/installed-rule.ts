@@ -2,7 +2,7 @@ import { parseFrontmatter } from "../../../shared/domain/markdown.js";
 import type { AiToolId } from "../../../shared/domain/tool.js";
 import type { InstalledRule } from "../contract/installed-rule.js";
 
-/** Each tool names the scope field differently: `paths` for Claude Code and Codex, `globs`
+/** Each tool names the scope field differently: `paths` for Claude Code, `globs`
  * for Cursor, `applyTo` for Copilot. Read all three and merge, rather than branch on the
  * tool: a file converted from one tool to another carries whichever its source used, and a
  * reader asking one question should not have to know which tool answered. */

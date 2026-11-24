@@ -18,7 +18,6 @@ import {
   nativeHooksSupport,
 } from "../../contexts/tools/domain/formats/hooks/routes.js";
 import { PLUGIN_ROOT_TOKEN } from "../../contexts/tools/domain/formats/plugin-root-token.js";
-import { unchangedFrontmatter } from "../../contexts/tools/domain/formats/rule-frontmatter.js";
 import { tomlContract } from "../../contexts/tools/domain/profile/contract-builders.js";
 import type {
   DeclaredSections,
@@ -27,7 +26,6 @@ import type {
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
 import { singlePythonRepo } from "../../contexts/tools/domain/profile/recommendation.js";
 import type { AiToolSpec } from "../../contexts/tools/domain/profile/tool-spec.js";
-import { installUnder } from "../../contexts/tools/domain/profile/tool-suffix.js";
 import { nativeLayout } from "../../contexts/tools/domain/sections/layout-section.js";
 import { manifestSection } from "../../contexts/tools/domain/sections/manifest-section.js";
 import { acceptedPluginMcp } from "../../contexts/tools/domain/sections/mcp-section.js";
@@ -140,13 +138,11 @@ const MCP_CONFIG: McpTomlDeclaration = {
   consumes: [MCP_CONFIG_REF],
 };
 
+// Limit: no `rules` capability. Codex reads markdown guidance only from AGENTS.md, and
+// `.codex/rules/` takes Starlark command policy (https://developers.openai.com/codex/rules).
 const CODEX_CAPABILITIES = {
   agents: { format: "toml", frontmatter: tomlAgentFrontmatter },
   skills: { agentsSkillsDirectory: true },
-  rules: {
-    buildInstallPath: installUnder(DIRECTORY, TOOL_SUFFIX, "rules/"),
-    convertFrontmatter: unchangedFrontmatter,
-  },
   mcp: { config: MCP_CONFIG, plugin: PLUGIN_MCP },
   hooks: { config: hooksConfigPart(hooks), delivery: hooksSupport.delivery },
   layout: CODEX_LAYOUT,
