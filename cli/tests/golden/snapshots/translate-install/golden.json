@@ -996,7 +996,7 @@
   },
   "cursor/aidd-async-dev": {
     "files": {
-      "aidd-async-dev/agents/async-orchestrator.md": "7acbb573c0f62eef29fc81a5e1f3f5084353d4c86b9d8d3350fc59c16003c01c",
+      "aidd-async-dev/agents/async-orchestrator.md": "a429bcfadb7fcc036536fc693b8b5a844bdba3706617ce720166ab204957d5cd",
       "aidd-async-dev/skills/01-setup/SKILL.md": "a0164200c439431091bd4a682440b8f3e2bf4bbb97081548a25f3e463a8405bc",
       "aidd-async-dev/skills/01-setup/actions/skills/01-detect-context.md": "83f3ba3022dd75fa2597a872a55e8f75173762f932ed39ae73d8181c0b1b4536",
       "aidd-async-dev/skills/01-setup/actions/skills/02-ask-config.md": "986335d1e86a633d0083fe4488aae58266a82ec35d0cdb0b74f0bbcea70e6f4e",
@@ -1499,9 +1499,9 @@
   },
   "cursor/aidd-dev": {
     "files": {
-      "aidd-dev/agents/implementer.md": "db21a8bb3659b355320335049e76cacc015906a367d7e62d3e8892065be53d7e",
-      "aidd-dev/agents/planner.md": "84fd2023ffa523b3716ffcd64033d2c59561ee130bdacff5527ca996aa64ade8",
-      "aidd-dev/agents/reviewer.md": "07d98454a196811b86e0b19a16ae3270e63b0ed9b250ed75ed4ef2368cb68b0e",
+      "aidd-dev/agents/implementer.md": "9db35e43a843976a649c871307db136d0e47e60b8ec54f1f71dcfe1b6a93568a",
+      "aidd-dev/agents/planner.md": "9a78f099ceffb40cdba3de0774d3d6ba827865e549807172a41070903693d901",
+      "aidd-dev/agents/reviewer.md": "62ec6a3eea3116d90f55853bd8ee5c95b19db2ac813eb9cb083e33f1e326ca69",
       "aidd-dev/mcp.json": "39d66899223270ca6dd92d874f819d8d357472566657dec87592b7ec8c7bd92c",
       "aidd-dev/skills/00-sdlc/SKILL.md": "e961d919f13d1650d7c47dc0fa118f8cdce7d434c2ae31aa9c30a203463c86f4",
       "aidd-dev/skills/01-plan/SKILL.md": "97e0a7c794c420d6244b1eca50c37190297b370e6ea6f1e32344a486bb4982cb",

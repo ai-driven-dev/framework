@@ -1,4 +1,5 @@
 import { reshapeFrontmatter, serializeFrontmatter } from "../../../../shared/domain/markdown.js";
+import { pluginAgentName } from "../../../../shared/domain/materialization/flat-paths.js";
 import type { ReadonlyNoticeList } from "../../../../shared/domain/materialization/plugin-install-notice.js";
 import type {
   PluginComponentFile,
@@ -26,7 +27,7 @@ export function nativeInstallPlan(
 } {
   const { tool, plugins, manifestPaths } = target;
   const pluginRoot = plugins.pluginOutputDir(dist.manifest.name);
-  const at = { tool, plugins, pluginRoot };
+  const at = { tool, plugins, pluginRoot, pluginName: dist.manifest.name };
   const plans = dist.files.flatMap((file) => nativeFilePlan(file, at) ?? []);
   const manifest = manifestPlan(dist, { plugins, pluginRoot, manifestPaths });
   if (manifest !== null) plans.push(manifest);
@@ -38,6 +39,7 @@ export function nativeInstallPlan(
 
 interface NativeAt extends NativeTarget {
   readonly pluginRoot: string;
+  readonly pluginName: string;
 }
 
 function nativeFilePlan(file: PluginComponentFile, at: NativeAt): ComponentPlan | null {
@@ -90,12 +92,27 @@ function markdownPlan(
     links: linksOf(source, tool),
     shape: (text) =>
       reshapeFrontmatter(text, {
-        frontmatter: (fm) => section.convertFrontmatter(fm, fileName),
+        frontmatter: (fm) =>
+          section.convertFrontmatter(pluginNamed(fm, { kind, fileName }, at), fileName),
         serialize: (fm, body) =>
           section.serialize ? section.serialize(fm, body) : serializeFrontmatter(fm, body),
       }),
     rootToken: plugins.rootToken(),
   };
+}
+
+/** An agent its tool's marketplace build names after its plugin carries that name here too. */
+function pluginNamed(
+  frontmatter: Record<string, unknown>,
+  agent: { kind: string; fileName: string },
+  at: NativeAt
+): Record<string, unknown> {
+  const agents = at.tool.buildContract("marketplace")?.artifacts.agents;
+  const prefixed =
+    agent.kind === "agents" && agents?.supported && agents.agentMarkdown?.pluginPrefixedName;
+  return prefixed
+    ? { ...frontmatter, name: pluginAgentName(at.pluginName, agent.fileName) }
+    : frontmatter;
 }
 
 // A skill is prose with frontmatter; anything else under `skills/` is an asset the skill carries,

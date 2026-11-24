@@ -84,13 +84,13 @@ const DIFFERENCES: readonly Difference[] = [
     applies: markdown,
     normalize: meaning(),
   })),
-  ...["cursor", "codex"].map((tool) => ({
-    cell: `${tool}:marketplace`,
+  {
+    cell: "codex:marketplace",
     component: "agents",
     reason: "a build prefixes the agent's name with its plugin, so two plugins never share one",
     applies: markdown,
     normalize: meaning(),
-  })),
+  },
 ];
 
 /** A file only one side writes through the engine, and why: the other side writes it elsewhere or
