@@ -4,6 +4,6 @@
   "unit": "file",
   "scope": ["aidd_docs/tasks/**/spec.md"],
   "rules": {
-    "SPEC-01": { "op": "template", "in": "spec.md", "template": "../assets/spec-template.md", "optional": ["Stakeholders", "Context"], "why": "whoever plans from the spec finds its target, constraints, non-goals, done-when and open questions", "fix": "follow spec-template.md" }
+    "SPEC-01": { "op": "template", "in": "spec.md", "template": "../assets/spec-template.md", "optional": ["Stakeholders", "Context"], "values": { "status": ["draft", "locked"] }, "why": "whoever plans from the spec finds its status, target, constraints, non-goals, done-when and open questions", "fix": "follow spec-template.md" }
   }
 }

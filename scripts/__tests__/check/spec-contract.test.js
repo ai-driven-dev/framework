@@ -6,7 +6,11 @@ const { validate } = require("./helpers.js");
 const SKILL = path.resolve(__dirname, "../../../plugins/aidd-pm/skills/04-spec");
 const SCRIPT = path.join(SKILL, "scripts/validate-spec.cjs");
 
-const GOOD = `# Account data export
+const GOOD = `---
+status: draft
+---
+
+# Account data export
 
 ## Target
 
@@ -62,6 +66,15 @@ describe("spec contract", () => {
     refusedOnlyBy(GOOD.replace("## Non-goals\n\n- exporting another user's data\n\n", ""), "SPEC-01");
     refusedOnlyBy(GOOD.replace("## Hard constraints", "## Constraints"), "SPEC-01");
     refusedOnlyBy(GOOD.replace("## Target", "## Swap").replace("## Done-when", "## Target").replace("## Swap", "## Done-when"), "SPEC-01");
+  });
+
+  it("accepts a locked spec", () => {
+    assert.deepEqual(check(GOOD.replace("status: draft", "status: locked")), { code: 0, out: "", err: "" });
+  });
+
+  it("SPEC-01 refuses a status missing or other than draft or locked", () => {
+    refusedOnlyBy(GOOD.replace("---\nstatus: draft\n---\n\n", ""), "SPEC-01");
+    refusedOnlyBy(GOOD.replace("status: draft", "status: validated"), "SPEC-01");
   });
 
   it("SPEC-01 refuses a comment or a placeholder left", () => {

@@ -8,14 +8,15 @@ The spec's path, and the findings.
 
 ## Process
 
-1. Pair each finding with the section it touches.
-2. Apply each finding in its section, and leave every other section as it is.
-3. Update each gap per [tbd-marker.md](../references/tbd-marker.md):
+1. Read the spec, and when its status is `locked`, say so and write nothing.
+2. Pair each finding with the section it touches.
+3. Apply each finding in its section, and leave every other section as it is.
+4. Update each gap per [tbd-marker.md](../references/tbd-marker.md):
    - Resolved by a finding: drop it.
    - Half answered: narrow it.
    - Still open, or a finding that cannot be resolved: list it.
-4. Overwrite the spec, run [validate-spec.cjs](../scripts/validate-spec.cjs) on it, fix, repeat until it passes.
-5. Report its path and each change as `before -> after`.
+5. Overwrite the spec, run [validate-spec.cjs](../scripts/validate-spec.cjs) on it, fix, repeat until it passes.
+6. Report its path and each change as `before -> after`.
    - Nothing changed: say nothing was written.
 
 ## Output

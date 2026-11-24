@@ -1,3 +1,7 @@
+---
+status: draft
+---
+
 <!-- Fill, then strip this comment. Never add, rename, or reorder a section. -->
 
 # {{Project / Feature Name}}
