@@ -46,7 +46,7 @@ function marketplaceRecordsOf(records: PurgeUserMarketplaceDeps["records"]): Mar
     pluginClaimsOf: records.pluginClaimsOf,
     loadRecords: () => records.loadRecords(),
     saveRecords: (saved) => records.saveRecords(saved),
-    registrationOf: (registrations, alias) => records.marketplaceOf(registrations, alias),
+    marketplaceOf: (registrations, alias) => records.marketplaceOf(registrations, alias),
     claimsOn: (registrations, alias) => records.claimsOnMarketplace(registrations, alias),
     withoutMarketplace: (registrations, alias) => records.withoutMarketplace(registrations, alias),
   };

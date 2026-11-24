@@ -2,6 +2,7 @@ import type { WithdrawalStepRequest } from "../../../contexts/host-registration/
 import type { RegistrationRecordRules } from "../../../contexts/host-registration/contract/registration-record-rules.js";
 import type { PlanProjectClean } from "../../../contexts/installation/application/clean/plan-project-clean.use-case.js";
 import type { ProjectCleanRecords } from "../../../contexts/installation/application/clean/project-clean-plan.js";
+import { forgetMarketplaceInRecords } from "../../../contexts/installation/application/marketplace/forget-marketplace.js";
 import type { ScopeRecords } from "../../../contexts/installation/contract/records/scope-records.js";
 import type { RecordClaimRules } from "../../../contexts/machine-claims/contract/record-claim-rules.js";
 import type { ProjectCleanFactsOf } from "../../clean/clean-claims.js";
@@ -48,18 +49,8 @@ export class WithdrawProjectMarketplaceFromHost {
     return {
       apply: async () => {
         await withdrawFromHost.execute({ kind: "withdraw-project-registrations", ...withdrawal });
-        await this.forget(name);
+        await forgetMarketplaceInRecords(records, name);
       },
     };
-  }
-
-  private async forget(name: string): Promise<void> {
-    const { records } = this.deps;
-    const registered = await records.loadRecords();
-    for (const [toolId, record] of registered) {
-      if (records.marketplaceOf(record, name) !== undefined)
-        registered.set(toolId, records.withoutMarketplace(record, name));
-    }
-    await records.saveRecords(registered);
   }
 }
