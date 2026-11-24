@@ -3465,7 +3465,7 @@
   },
   "codex/aidd-async-dev": {
     "files": {
-      ".codex/plugins/aidd-async-dev/agents/async-orchestrator.toml": "7490eb79d3d7b8c1f506ff1b15d03066213b08ba7a3d638befae1289bf272240",
+      ".codex/plugins/aidd-async-dev/codex-agents/async-orchestrator.toml": "8212b724fdacd2a20f35a2c11782c7d50b717b742f59f1a9ae08c0d831e42b4a",
       ".codex/plugins/aidd-async-dev/hooks/hooks.json": "78922a784ee78e9e50587e93628cd3b9d4dfbe49087adc4514e6781cea38cbb9",
       ".codex/plugins/aidd-async-dev/plugin.json": "2c32a409a8768819857b39c8dff6f1b4208c27e0d72acd9a59dc7bef2f5a1ff4",
       ".codex/plugins/aidd-async-dev/skills/01-setup/SKILL.md": "a0164200c439431091bd4a682440b8f3e2bf4bbb97081548a25f3e463a8405bc",
@@ -3497,7 +3497,7 @@
     },
     "componentPaths": [
       [
-        ".codex/plugins/aidd-async-dev/agents/async-orchestrator.toml",
+        ".codex/plugins/aidd-async-dev/codex-agents/async-orchestrator.toml",
         "agents/async-orchestrator.md"
       ],
       [
@@ -3978,9 +3978,9 @@
   "codex/aidd-dev": {
     "files": {
       ".codex/plugins/aidd-dev/.mcp.json": "39d66899223270ca6dd92d874f819d8d357472566657dec87592b7ec8c7bd92c",
-      ".codex/plugins/aidd-dev/agents/implementer.toml": "75989a5835faad8833ff50cac0dc18789d2ee18076595f121a3b663e16704156",
-      ".codex/plugins/aidd-dev/agents/planner.toml": "b381250bb35e2db561d4a18725e6be7068198473232d094d2b76e840f381344b",
-      ".codex/plugins/aidd-dev/agents/reviewer.toml": "678bdd2c9186dad0f185c63bbd2e5ff729e50b4160d460cdd16111723e771554",
+      ".codex/plugins/aidd-dev/codex-agents/implementer.toml": "d1cb0353bb91cc5d0c5ffaada12b063c7d5491e94ea33eb08277783aa4c7f493",
+      ".codex/plugins/aidd-dev/codex-agents/planner.toml": "2b37cea54f1da91c6fe2c781ada91580d36ff4656407cc4453d668bbb2c20f90",
+      ".codex/plugins/aidd-dev/codex-agents/reviewer.toml": "7b86256d9b872d3358828a4aa74338b6d6056aced63e9b70cad88b548dc89dbd",
       ".codex/plugins/aidd-dev/plugin.json": "cc080b18b71f824e454d2a9c4049b29ed2420e434d564e9eaad69dfbff7bac61",
       ".codex/plugins/aidd-dev/skills/00-sdlc/SKILL.md": "e961d919f13d1650d7c47dc0fa118f8cdce7d434c2ae31aa9c30a203463c86f4",
       ".codex/plugins/aidd-dev/skills/01-plan/SKILL.md": "97e0a7c794c420d6244b1eca50c37190297b370e6ea6f1e32344a486bb4982cb",
@@ -4023,15 +4023,15 @@
     },
     "componentPaths": [
       [
-        ".codex/plugins/aidd-dev/agents/implementer.toml",
+        ".codex/plugins/aidd-dev/codex-agents/implementer.toml",
         "agents/implementer.md"
       ],
       [
-        ".codex/plugins/aidd-dev/agents/planner.toml",
+        ".codex/plugins/aidd-dev/codex-agents/planner.toml",
         "agents/planner.md"
       ],
       [
-        ".codex/plugins/aidd-dev/agents/reviewer.toml",
+        ".codex/plugins/aidd-dev/codex-agents/reviewer.toml",
         "agents/reviewer.md"
       ],
       [

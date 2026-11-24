@@ -36,7 +36,7 @@ describe("the engine translate()", () => {
     [
       "codex",
       codex,
-      ".codex/plugins/aidd-dev/agents/reviewer.toml",
+      ".codex/plugins/aidd-dev/codex-agents/reviewer.toml",
       { model: "gpt-6-luna", model_reasoning_effort: "medium" },
     ],
     [
@@ -190,7 +190,7 @@ describe("the engine translate()", () => {
 
   describe("codex target", () => {
     it("emits agents as TOML", () => {
-      expect(pathsFor(codex)).toContain(".codex/plugins/sample-plugin/agents/reviewer.toml");
+      expect(pathsFor(codex)).toContain(".codex/plugins/sample-plugin/codex-agents/reviewer.toml");
     });
 
     it("agent content is TOML format", () => {
