@@ -34,7 +34,7 @@ Dependency graph, edges and decisions: [architecture.md](../../../../aidd_docs/m
 
 ## Size and names
 
-- Biome caps file length, function length, cognitive complexity and parameter count, with no file excluded (`biome-size-guards.arch.test.ts`, `biome.json`, `max-function-params.grit`). Split instead of using `biome-ignore`.
+- Biome caps file length, function length, cognitive complexity and parameter count (3 for a function, 5 for a constructor), with no file excluded (`biome-size-guards.arch.test.ts`, `biome.json`, `max-function-params.grit`, `max-constructor-params.grit`). Split instead of using `biome-ignore`.
 - Split a file by concept, one class per file. Split a function by naming each branch or step as its own function. Group parameters into one named object.
 - Named exports only, nothing re-exports: `no-inline-re-export.grit`, `noDefaultExport`, `noBarrelFile`, `noReExportAll`. Import from the defining module.
 - Files kebab-case (Biome). Values camelCase, types PascalCase, constants CONSTANT_CASE, `import type` for a type-only import: review only.

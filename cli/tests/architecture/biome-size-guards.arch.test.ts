@@ -11,6 +11,7 @@ import { biomeConfig, type Override } from "./biome-config.js";
 import {
   branches,
   constants,
+  constructorWith,
   fourParams,
   longFunction,
   tangled,
@@ -89,6 +90,7 @@ const RULES: readonly RuleGuard[] = [
 ];
 
 const PARAMS_PLUGIN = "./biome-plugins/max-function-params.grit";
+const CONSTRUCTOR_PLUGIN = "./biome-plugins/max-constructor-params.grit";
 
 const overrides = (): readonly Override[] => biomeConfig().overrides ?? [];
 
@@ -111,10 +113,13 @@ describe("biome carries the size guards", () => {
     });
   }
 
-  it("function parameters: one plugin override on src, and no second mechanism beside it", () => {
+  it("parameter caps: one plugin override on src, and no second mechanism beside it", () => {
     const carriers = overrides().filter((o) => o.plugins?.includes(PARAMS_PLUGIN));
     expect(carriers).toHaveLength(1);
-    expect(carriers[0]).toEqual({ includes: ["src/**"], plugins: [PARAMS_PLUGIN] });
+    expect(carriers[0]).toEqual({
+      includes: ["src/**"],
+      plugins: [PARAMS_PLUGIN, CONSTRUCTOR_PLUGIN],
+    });
     expect(JSON.stringify(biomeConfig())).not.toContain("useMaxParams");
   });
 
@@ -155,6 +160,8 @@ const PLANTS: readonly Plant[] = [
   { path: "src/kernel/two-classes.ts", content: twoClasses(""), flags: [CLASSES] },
   { path: "src/kernel/four-params.ts", content: fourParams(""), flags: [PARAMS] },
   { path: "src/kernel/three-params.ts", content: threeParams, flags: [] },
+  { path: "src/kernel/six-ctor-params.ts", content: constructorWith(6, "Six"), flags: [PARAMS] },
+  { path: "src/kernel/five-ctor-params.ts", content: constructorWith(5, "Five"), flags: [] },
   // an error file holds many small classes: no class or line cap, every other guard applies.
   { path: "src/kernel/errors.error.ts", content: twoClasses("Errors"), flags: [] },
   { path: "src/kernel/long.error.ts", content: constants(420, "e"), flags: [] },
