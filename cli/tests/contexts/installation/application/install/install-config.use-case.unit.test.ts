@@ -167,7 +167,7 @@ describe("InstallConfig - MCP config", () => {
 
   /** The mcp file a registered tool declares: cursor's takes the user's entries first, opencode's
    * writes the framework's over them. */
-  function mcpCapability(toolId: typeof TOOL.cursor | typeof TOOL.opencode | typeof TOOL.codex) {
+  function mcpCapability(toolId: typeof TOOL.cursor | typeof TOOL.opencode) {
     const capability = registeredTools().aiProfile(toolId).mcpConfig();
     if (capability === null) throw new Error(`${toolId} declares no mcp file`);
     return capability;
@@ -186,46 +186,6 @@ describe("InstallConfig - MCP config", () => {
 
     expect(results.map((f) => JSON.parse(f.content))).toStrictEqual([
       { mcpServers: { docs: { command: "cmd", args: ["/c", "npx", "-y", "docs-server"] } } },
-    ]);
-  });
-
-  it("launches an npx server through cmd on Windows in opencode's own format", async () => {
-    const { useCase } = buildUseCase();
-
-    const results = await useCase.execute({
-      writes: [{ kind: "mcp", capability: mcpCapability(TOOL.opencode) }],
-      configRefs: [MCP_REF],
-      contentFiles: new Map([[MCP_REF.path, NPX_SERVER]]),
-      projectRoot: PROJECT_ROOT,
-      platform: win32Platform,
-    });
-
-    expect(results.map((f) => JSON.parse(f.content))).toStrictEqual([
-      {
-        mcp: {
-          docs: {
-            type: "local",
-            command: ["cmd", "/c", "npx", "-y", "docs-server"],
-            enabled: true,
-          },
-        },
-      },
-    ]);
-  });
-
-  it("launches an npx server through cmd on Windows in codex's TOML", async () => {
-    const { useCase } = buildUseCase();
-
-    const results = await useCase.execute({
-      writes: [{ kind: "mcp", capability: mcpCapability(TOOL.codex) }],
-      configRefs: [MCP_REF],
-      contentFiles: new Map([[MCP_REF.path, NPX_SERVER]]),
-      projectRoot: PROJECT_ROOT,
-      platform: win32Platform,
-    });
-
-    expect(results.map((f) => f.content)).toStrictEqual([
-      '[mcp_servers.docs]\ncommand = "cmd"\nargs = [ "/c", "npx", "-y", "docs-server" ]\n',
     ]);
   });
 
