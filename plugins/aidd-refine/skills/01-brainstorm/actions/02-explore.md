@@ -13,7 +13,6 @@ The conversation so far.
    - No point left: go to step 5.
 3. Ask about it with the [probing techniques](../references/probing.md) that fit.
 4. Wait for the answer, then repeat from step 1.
-   - Stop or summary asked: go to step 5.
 5. Go to [conclude](03-conclude.md).
 
 ## Output

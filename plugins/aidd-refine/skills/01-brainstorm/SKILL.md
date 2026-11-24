@@ -25,3 +25,4 @@ flowchart LR
 - Ask a question only if its answer changes the outcome.
 - Talk about the idea, never the skill's steps or files.
 - After questions, approval or persistence options, wait.
+- When the user says stop or asks for a summary, produce the brief in the chat.
