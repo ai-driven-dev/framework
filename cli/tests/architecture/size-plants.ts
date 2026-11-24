@@ -50,3 +50,8 @@ export interface Port${suffix} {
   sum(a: number, b: number, c: number, d: number): number;
 }
 `;
+
+export const constructorWith = (count: number, suffix: string): string => {
+  const params = Array.from({ length: count }, (_, i) => `private readonly p${i}: number`);
+  return `export class Wired${suffix} {\n  constructor(${params.join(", ")}) {}\n}\n`;
+};

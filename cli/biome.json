@@ -6961,7 +6961,10 @@
     },
     {
       "includes": ["src/**"],
-      "plugins": ["./biome-plugins/max-function-params.grit"]
+      "plugins": [
+        "./biome-plugins/max-function-params.grit",
+        "./biome-plugins/max-constructor-params.grit"
+      ]
     },
     {
       "includes": ["src/**", "tests/**", "!**/*.d.ts"],
