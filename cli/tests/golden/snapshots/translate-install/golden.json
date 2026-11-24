@@ -3262,7 +3262,7 @@
   "kilo/aidd-context": {
     "files": {
       ".kilo/hooks/aidd-context/update_memory.js": "140d7db788452f5f4c32316d522f595a36e06638b19a42d32e42a1a7324b7149",
-      ".kilo/plugin/aidd-context-hooks.js": "2b5cc1472916ef7977f37efb2cc92c84454c241247c7828f530c2e0d423e66fc",
+      ".kilo/plugin/aidd-context-hooks.js": "fed039ecbb4eb61000c54566b65beda3f0b940e1eda646bf0b8c38a0469299fd",
       ".kilo/skills/aidd-context/01-bootstrap/SKILL.md": "73685c32640bd6a7ebb77e36464ddbb1ab2c254bc4e02dfe923e53aac858a1cc",
       ".kilo/skills/aidd-context/01-bootstrap/actions/01-gather-needs.md": "b3251034285434b06775ab4a59ffe27259bb23cb97ac65927c946a4846ea946d",
       ".kilo/skills/aidd-context/01-bootstrap/actions/02-propose-candidates.md": "57376071d9d0b011c5f19ba218a3ef28c3bf1fba1220a87260806a2d79e341d6",

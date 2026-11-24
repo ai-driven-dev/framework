@@ -55,6 +55,7 @@ const HANG = `require("node:fs").writeFileSync(require("node:path").resolve(__di
 interface Server {
   event: (input: { event: unknown }) => Promise<void>;
   "tool.execute.after": (call: unknown, output: { output: string }) => Promise<void>;
+  "chat.message"?: (input: { sessionID: string }) => Promise<void>;
   dispose: () => Promise<void>;
 }
 interface Descriptor {
@@ -313,6 +314,37 @@ describe("the bridge generated with Kilo's parameters, held to the session each 
     await delay(100);
     expect(await of("record.cjs")).toHaveLength(2);
     expect(await of("stop.cjs")).toHaveLength(2);
+  });
+
+  it("treats a message the user sends as a new turn", async () => {
+    const { directory, emit, of, server } = await open(kilo);
+    await emit(kilo.sessionStarted("s1", directory));
+    const idle = { type: "session.idle", properties: { sessionID: "s1" } };
+
+    await emit(idle);
+    await server["chat.message"]?.({ sessionID: "s1" });
+    await server["chat.message"]?.({ sessionID: "s1" });
+    await emit(...kilo.nextTurn("s1"), idle);
+
+    expect((await of("stop.cjs")).map((c) => c.payload.stop_hook_active)).toStrictEqual([
+      false,
+      false,
+    ]);
+  });
+
+  it("keeps the continuation when the only message is the follow-up it sent itself", async () => {
+    const { directory, emit, of, server } = await open(kilo);
+    await emit(kilo.sessionStarted("s1", directory));
+    const idle = { type: "session.idle", properties: { sessionID: "s1" } };
+
+    await emit(idle);
+    await server["chat.message"]?.({ sessionID: "s1" });
+    await emit(...kilo.nextTurn("s1"), idle);
+
+    expect((await of("stop.cjs")).map((c) => c.payload.stop_hook_active)).toStrictEqual([
+      false,
+      true,
+    ]);
   });
 
   it.each([

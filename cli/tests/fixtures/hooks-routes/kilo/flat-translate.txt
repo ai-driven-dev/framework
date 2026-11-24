@@ -411,7 +411,7 @@ const AiddContextKiloHooks = async ({ directory, client }) => {
       const id = properties?.sessionID;
       if (typeof id !== "string") return;
       if (event?.type === "session.deleted") { sessions.delete(id); return; }
-      if (!sessions.has(id)) sessions.set(id, { started: false, idle: false, continued: false, directory });
+      if (!sessions.has(id)) sessions.set(id, { started: false, idle: false, continued: false, sent: 0, directory });
       const session = sessions.get(id);
       let calls = [];
       if (event?.type === "session.created" && !session.started) {
@@ -428,6 +428,7 @@ const AiddContextKiloHooks = async ({ directory, client }) => {
           session.continued = reason !== "";
           // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
           if (reason) {
+            session.sent += 1;
             client.session
               .promptAsync({ path: { id }, body: { parts: [{ type: "text", text: reason }] } })
               .catch(() => {});
@@ -440,6 +441,13 @@ const AiddContextKiloHooks = async ({ directory, client }) => {
     } catch (error) {
       console.warn("[aidd] Kilo hook dispatch failed: " + String(error));
     }
+  },
+  // A user's message starts a new turn; the follow-up this bridge sent arrives here too, and is not one.
+  "chat.message": async (input) => {
+    const session = sessions.get(input?.sessionID);
+    if (!session) return;
+    if (session.sent > 0) session.sent -= 1;
+    else session.continued = false;
   },
   "tool.execute.after": async (call, output) => {
     try {
@@ -584,7 +592,7 @@ const AiddTelemetryKiloHooks = async ({ directory, client }) => {
       const id = properties?.sessionID;
       if (typeof id !== "string") return;
       if (event?.type === "session.deleted") { sessions.delete(id); return; }
-      if (!sessions.has(id)) sessions.set(id, { started: false, idle: false, continued: false, directory });
+      if (!sessions.has(id)) sessions.set(id, { started: false, idle: false, continued: false, sent: 0, directory });
       const session = sessions.get(id);
       let calls = [];
       if (event?.type === "session.created" && !session.started) {
@@ -601,6 +609,7 @@ const AiddTelemetryKiloHooks = async ({ directory, client }) => {
           session.continued = reason !== "";
           // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
           if (reason) {
+            session.sent += 1;
             client.session
               .promptAsync({ path: { id }, body: { parts: [{ type: "text", text: reason }] } })
               .catch(() => {});
@@ -613,6 +622,13 @@ const AiddTelemetryKiloHooks = async ({ directory, client }) => {
     } catch (error) {
       console.warn("[aidd] Kilo hook dispatch failed: " + String(error));
     }
+  },
+  // A user's message starts a new turn; the follow-up this bridge sent arrives here too, and is not one.
+  "chat.message": async (input) => {
+    const session = sessions.get(input?.sessionID);
+    if (!session) return;
+    if (session.sent > 0) session.sent -= 1;
+    else session.continued = false;
   },
   "tool.execute.after": async (call, output) => {
     try {
