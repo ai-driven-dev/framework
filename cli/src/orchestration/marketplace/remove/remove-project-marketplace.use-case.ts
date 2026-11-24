@@ -33,13 +33,13 @@ export class RemoveProjectMarketplace {
   async execute(command: RemoveProjectMarketplaceRequest): Promise<MarketplaceRemovalResult> {
     const { name, projectRoot } = command;
     const marketplace = await this.deps.find.execute({ name, projectRoot, scope: command.scope });
-    const withdrawal = await this.deps.hosts.execute({ name, projectRoot });
+    const proven = await this.deps.hosts.execute({ kind: "prove", name, projectRoot });
     const removal = await this.deps.removePlugins.execute({
       name,
       projectRoot,
       autoConfirm: command.autoConfirm,
     });
-    await withdrawal.apply();
+    await this.deps.hosts.execute({ kind: "withdraw", proven });
     await this.deps.forget.execute({ projectRoot, marketplace });
     if (removal.claims !== undefined) await this.deps.detachClaims(projectRoot, removal.claims);
     return {

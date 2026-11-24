@@ -72,7 +72,7 @@ describe("withdrawing a project marketplace from its hosts", () => {
   it("proves the withdrawal for that marketplace alone, and changes nothing until applied", async () => {
     const { useCase, requests, manifestRepo } = wired(withdrawals);
 
-    await useCase.execute({ name: "mine", projectRoot: PROJECT });
+    await useCase.execute({ kind: "prove", name: "mine", projectRoot: PROJECT });
 
     expect(requests.map((r) => [r.kind, "marketplace" in r ? r.marketplace : undefined])).toEqual([
       ["prove-project-registrations", "mine"],
@@ -83,8 +83,8 @@ describe("withdrawing a project marketplace from its hosts", () => {
   it("withdraws it once applied, then forgets it from the record and keeps the others", async () => {
     const { useCase, requests, manifestRepo, rules } = wired(withdrawals);
 
-    const proven = await useCase.execute({ name: "mine", projectRoot: PROJECT });
-    await proven.apply();
+    const proven = await useCase.execute({ kind: "prove", name: "mine", projectRoot: PROJECT });
+    await useCase.execute({ kind: "withdraw", proven });
 
     expect(requests.map((r) => r.kind)).toEqual([
       "prove-project-registrations",
@@ -98,8 +98,8 @@ describe("withdrawing a project marketplace from its hosts", () => {
   it("does nothing when the project installed nothing", async () => {
     const { useCase, requests } = wired(null);
 
-    const proven = await useCase.execute({ name: "mine", projectRoot: PROJECT });
-    await proven.apply();
+    const proven = await useCase.execute({ kind: "prove", name: "mine", projectRoot: PROJECT });
+    await useCase.execute({ kind: "withdraw", proven });
 
     expect(requests).toEqual([]);
   });

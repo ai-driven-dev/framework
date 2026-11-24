@@ -83,15 +83,39 @@ function wireCleanUserScope(
   });
 }
 
+/** What a project's removals ask of the machine, answered once for a clean and for a marketplace
+ * removal alike. */
+export function wireCleanMachine(base: Base) {
+  const { fs, logger, userManifestRepo } = base;
+  const purgeCache = new ResolvePurgeCandidate(fs, logger);
+  const claims = wireCleanClaims({
+    fs,
+    logger,
+    userManifestRepo,
+    userSourceReferences: base.userSourceReferences,
+    purgeCache,
+  });
+  return { purgeCache, claims };
+}
+
+/** The plan of what a project's tools registered and installed, as every project removal reads it. */
+export function wireProjectCleanPlan(base: Base, inst: Installation) {
+  const asks: ProjectCleanAsks = {
+    homeDir: base.homedir,
+    assertMcpRemovable: (plugin, tool, projectRoot) =>
+      inst.projectIntegration.assertMcpRemovable.execute({ plugin, tool, projectRoot }),
+  };
+  return {
+    asks,
+    plan: new PlanProjectClean({ manifestRepo: base.manifestRepo, asks }, base.tools),
+  };
+}
+
 /** What a project clean removes: its files, with the records the registrations left. */
 function wireCleanProjectFiles(base: Base, inst: Installation) {
   const { fs, logger, manifestRepo, tools } = base;
   const { updateGitignore, projectIntegration } = inst;
-  const asks: ProjectCleanAsks = {
-    homeDir: base.homedir,
-    assertMcpRemovable: (plugin, tool, projectRoot) =>
-      projectIntegration.assertMcpRemovable.execute({ plugin, tool, projectRoot }),
-  };
+  const { asks, plan } = wireProjectCleanPlan(base, inst);
   return new CleanProjectFiles({
     assertProjectRemovable: new AssertProjectRemovable(
       {
@@ -101,7 +125,7 @@ function wireCleanProjectFiles(base: Base, inst: Installation) {
       },
       tools
     ),
-    planProjectClean: new PlanProjectClean({ manifestRepo, asks }, tools),
+    planProjectClean: plan,
     removeProjectFiles: new RemoveProjectFiles({
       manifestRepo,
       trackedFiles: new DeleteTrackedProjectFiles({ fs, logger, homedir: base.homedir }, tools),
@@ -151,14 +175,7 @@ export function wireClean(base: Base, inst: Installation) {
     ),
     recordsOf(manifestRepo)
   );
-  const purgeCache = new ResolvePurgeCandidate(fs, logger);
-  const claims = wireCleanClaims({
-    fs,
-    logger,
-    userManifestRepo,
-    userSourceReferences: base.userSourceReferences,
-    purgeCache,
-  });
+  const { purgeCache, claims } = wireCleanMachine(base);
   const cleanProject = wireCleanProject(base, inst, claims);
   const cleanUserScope = wireCleanUserScope(base, { purgeCache, claims });
   return { uninstallTools, cleanProject, cleanUserScope };

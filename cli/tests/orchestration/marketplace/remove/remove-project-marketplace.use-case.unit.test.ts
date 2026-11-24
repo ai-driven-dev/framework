@@ -24,7 +24,10 @@ import {
   marketplaceNamed,
   PROJECT_ROOT,
 } from "../../testing/project-marketplace-removal.builder.js";
-import { projectMarketplaceRemover } from "../../testing/project-marketplace-remover.builder.js";
+import {
+  hostsStub,
+  projectMarketplaceRemover,
+} from "../../testing/project-marketplace-remover.builder.js";
 
 describe("removing a project marketplace", () => {
   it("throws MarketplaceNotFoundError when entry does not exist", async () => {
@@ -306,18 +309,13 @@ describe("removing a project marketplace from its hosts", () => {
       registry,
       new KeepPrompter(),
       undefined,
-      {
-        execute: async ({ name }) => {
-          steps.push(`prove ${name}`);
-          return {
-            apply: async () => {
-              steps.push(
-                `withdraw ${name} while ${(await registry.list(PROJECT_ROOT)).length} registered`
-              );
-            },
-          };
-        },
-      }
+      hostsStub({
+        prove: async (name) => void steps.push(`prove ${name}`),
+        withdraw: async (name) =>
+          void steps.push(
+            `withdraw ${name} while ${(await registry.list(PROJECT_ROOT)).length} registered`
+          ),
+      })
     );
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
 
@@ -336,11 +334,11 @@ describe("removing a project marketplace from its hosts", () => {
       registry,
       new KeepPrompter(),
       undefined,
-      {
-        execute: async () => {
+      hostsStub({
+        prove: async () => {
           throw new Error("host refuses");
         },
-      }
+      })
     );
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
 

@@ -12,13 +12,36 @@ import type { ScopeRecords } from "../../../src/contexts/installation/contract/r
 import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
 import { RemoveMarketplacePlugins } from "../../../src/orchestration/marketplace/remove/remove-marketplace-plugins.use-case.js";
 import { RemoveProjectMarketplace } from "../../../src/orchestration/marketplace/remove/remove-project-marketplace.use-case.js";
-import type { WithdrawProjectMarketplaceFromHost } from "../../../src/orchestration/marketplace/remove/withdraw-project-marketplace-from-host.use-case.js";
+import type {
+  ProvenProjectMarketplaceWithdrawal,
+  ProveProjectMarketplaceWithdrawalRequest,
+  WithdrawProjectMarketplaceFromHost,
+  WithdrawProvenProjectMarketplaceRequest,
+} from "../../../src/orchestration/marketplace/remove/withdraw-project-marketplace-from-host.use-case.js";
 import type { Prompter } from "../../../src/orchestration/ports/prompter.js";
 
 type RecordRules = typeof registrationRecordRules;
 
-/** A project no host registered anything for: nothing to withdraw. */
-const NO_HOST = { execute: async () => ({ apply: async () => {} }) };
+/** The two host steps of a project marketplace removal, each a no-op unless given. */
+export function hostsStub(
+  steps: {
+    prove?: (name: string) => Promise<void>;
+    withdraw?: (name: string) => Promise<void>;
+  } = {}
+): Pick<WithdrawProjectMarketplaceFromHost, "execute"> {
+  async function execute(
+    request: ProveProjectMarketplaceWithdrawalRequest
+  ): Promise<ProvenProjectMarketplaceWithdrawal>;
+  async function execute(request: WithdrawProvenProjectMarketplaceRequest): Promise<void>;
+  async function execute(
+    request: ProveProjectMarketplaceWithdrawalRequest | WithdrawProvenProjectMarketplaceRequest
+  ): Promise<unknown> {
+    if (request.kind === "withdraw") return steps.withdraw?.(request.proven.name);
+    await steps.prove?.(request.name);
+    return { name: request.name, withdrawal: null };
+  }
+  return { execute };
+}
 
 /** The project marketplace removal as composition wires it, over a given cleanup. */
 export function projectMarketplaceRemover(
@@ -28,7 +51,7 @@ export function projectMarketplaceRemover(
   registry: MarketplaceRegistry,
   prompter: Prompter,
   records?: RecordRules,
-  hosts: Pick<WithdrawProjectMarketplaceFromHost, "execute"> = NO_HOST
+  hosts: Pick<WithdrawProjectMarketplaceFromHost, "execute"> = hostsStub()
 ): RemoveProjectMarketplace {
   return new RemoveProjectMarketplace({
     hosts,
