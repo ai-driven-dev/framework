@@ -28,7 +28,10 @@ export interface TranslatedNativePlugin {
 export interface TranslatedFlatPlugin {
   readonly kind: "flat";
   hooksAcceptance(): HooksAcceptance;
-  flatLayout(): { readonly namespacePrefix: string };
+  flatLayout(): {
+    readonly namespacePrefix: string;
+    readonly rules: "nested" | "top-level-unscoped";
+  };
   hookScript(pluginPath: string, content: string): string;
 }
 

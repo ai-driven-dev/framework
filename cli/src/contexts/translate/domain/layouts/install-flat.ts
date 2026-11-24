@@ -15,6 +15,7 @@ import { flatHookPlans } from "../rules/hook-plans.js";
 import { chainLinks, toolLinks } from "../rules/links.js";
 import type { TranslatedAiTool, TranslatedFlatPlugin } from "../translate-profile.js";
 import { flatAgentPlan } from "./build-flat.js";
+import { scopedRulesOf, scopeStated } from "./install-flat-rules.js";
 
 type FlatSection = "agents" | "rules" | "skills";
 
@@ -40,6 +41,7 @@ export function flatInstallPlan(
   const { namespacePrefix } = plugins.flatLayout();
   const commands = tool.markdownSection("commands") === null ? [] : dist.components.commands;
   const hooksArtifact = flatHooksArtifact(tool);
+  const scoped = scopedRulesOf(dist, plugins);
   const hooks = flatHookPlans(dist, {
     place: (relativePath) =>
       hooksArtifact === null ? null : artifactPath(hooksArtifact, pluginName, relativePath),
@@ -51,7 +53,11 @@ export function flatInstallPlan(
   const plans = [
     ...commands.map((file) => commandPlan(file, at, namespacePrefix)),
     ...FLAT_SECTIONS.flatMap((section) =>
-      dist.components[section].flatMap((file) => sectionPlan(file, section, at) ?? [])
+      dist.components[section].flatMap((file) => {
+        const plan = sectionPlan(file, section, at);
+        const paths = scoped.get(file);
+        return plan === null ? [] : [paths === undefined ? plan : scopeStated(plan, paths)];
+      })
     ),
     ...hooks,
   ];

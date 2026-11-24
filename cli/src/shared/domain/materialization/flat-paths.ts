@@ -21,19 +21,23 @@ export interface FlatArtifactLayout {
   readonly skillsDir: string;
   readonly agentsDir: string;
   readonly skills: "nested" | "single-level";
+  /** A rule under its plugin's folder, or at the top of the rules folder named by its plugin,
+   * where the tool applies it to every file whatever its `paths` say. */
+  readonly rules: "nested" | "top-level-unscoped";
   readonly agent: { readonly ext: string } | { readonly folderFile: string };
 }
 
 export function flatArtifactLayout(
   directory: string,
   parts: Pick<FlatArtifactLayout, "skills" | "agent"> &
-    Partial<Pick<FlatArtifactLayout, "skillsDir" | "agentsDir">>
+    Partial<Pick<FlatArtifactLayout, "skillsDir" | "agentsDir" | "rules">>
 ): FlatArtifactLayout {
   return {
     directory,
     skillsDir: parts.skillsDir ?? `${directory}skills/`,
     agentsDir: parts.agentsDir ?? `${directory}agents/`,
     skills: parts.skills,
+    rules: parts.rules ?? "nested",
     agent: parts.agent,
   };
 }
@@ -72,6 +76,9 @@ export function flatSectionPath(
   const { plugin, name } = file;
   if (section === "skills") return flatSkillPath(layout, plugin, name);
   if (section === "agents") return flatAgentFilePath(layout, plugin, name);
+  if (section === "rules" && layout.rules === "top-level-unscoped") {
+    return `${layout.directory}rules/${plugin}-${name.replaceAll("/", "-")}`;
+  }
   return `${layout.directory}${section}/${plugin}/${name}`;
 }
 

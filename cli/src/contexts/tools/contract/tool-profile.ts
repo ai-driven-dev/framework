@@ -43,6 +43,7 @@ export type FlatInstallSection = "commands" | "agents" | "rules" | "skills";
 export interface FlatLayout {
   skillLayout: FlatSkillLayout;
   namespacePrefix: string;
+  rules: FlatArtifactLayout["rules"];
 }
 
 /** A tool that installs a plugin through its own plugin CLI, as an outside caller asks it. */

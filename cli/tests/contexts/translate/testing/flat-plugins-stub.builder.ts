@@ -17,6 +17,7 @@ export function flatPluginsStub(stub: FlatPluginsStub = {}): FlatPluginAnswers {
   const { namespacePrefix = "fake-", hooks = { accepts: false, reason: "synthetic" } } = stub;
   const layout: FlatLayout = {
     skillLayout: "nested",
+    rules: "nested",
     namespacePrefix,
     ...stub.layout,
   };

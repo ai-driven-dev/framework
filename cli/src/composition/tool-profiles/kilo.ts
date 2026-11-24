@@ -62,6 +62,7 @@ const TOOL_SUFFIX = ".kilo.md";
 /** Where a flat build, and a flat install, put kilo's skills and agents. */
 const KILO_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(KILO_DIRECTORY, {
   skills: "nested",
+  rules: "top-level-unscoped",
   agent: { ext: ".md" },
 });
 

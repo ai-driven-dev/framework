@@ -25,6 +25,7 @@ exports[`the data each registered profile declares > antigravity 1`] = `
     "deliversHooksToProject": true,
     "flatLayout": {
       "namespacePrefix": "aidd-",
+      "rules": "nested",
       "skillLayout": "single-level",
     },
     "kind": "flat",
@@ -556,6 +557,7 @@ exports[`the data each registered profile declares > kilo 1`] = `
     "deliversHooksToProject": false,
     "flatLayout": {
       "namespacePrefix": "aidd-",
+      "rules": "top-level-unscoped",
       "skillLayout": "nested",
     },
     "kind": "flat",
@@ -656,6 +658,7 @@ exports[`the data each registered profile declares > opencode 1`] = `
     "deliversHooksToProject": false,
     "flatLayout": {
       "namespacePrefix": "aidd-",
+      "rules": "nested",
       "skillLayout": "nested",
     },
     "kind": "flat",
