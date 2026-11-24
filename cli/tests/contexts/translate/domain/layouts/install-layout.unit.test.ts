@@ -25,7 +25,7 @@ import { claude, codex, cursor, opencode } from "../../testing/registered-profil
 describe("a plugin of one skill, its action and its asset", () => {
   it("lays the whole skill tree under the plugin directory claude expands, beside the manifest", () => {
     expect(installedPathsOf(claude, skillDist())).toEqual([
-      ".claude/plugins/sample-plugin/plugin.json",
+      ".claude/plugins/sample-plugin/.claude-plugin/plugin.json",
       ".claude/plugins/sample-plugin/skills/hello/SKILL.md",
       ".claude/plugins/sample-plugin/skills/hello/actions/run.md",
       ".claude/plugins/sample-plugin/skills/hello/reference.json",
@@ -65,7 +65,7 @@ describe("a plugin's hooks", () => {
     expect(treeOf(codex, hooksDist())).toEqual({
       ".codex/plugins/sample-plugin/hooks/hooks.json": hooksManifestFor(CODEX_ROOT_TOKEN),
       ".codex/plugins/sample-plugin/hooks/lib/check.sh": hookScriptContent,
-      ".codex/plugins/sample-plugin/plugin.json": claudeManifestContent,
+      ".codex/plugins/sample-plugin/.codex-plugin/plugin.json": claudeManifestContent,
     });
   });
 

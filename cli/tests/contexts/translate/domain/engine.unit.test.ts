@@ -93,10 +93,10 @@ describe("the engine translate()", () => {
       expect(paths).toContain(".claude/plugins/sample-plugin/.mcp.json");
     });
 
-    it("emits native plugin manifest at plugin.json", () => {
+    it("emits native plugin manifest where the tool reads it", () => {
       const files = translator.translate(makeDist(), claude);
       const manifest = files.find(
-        (f) => f.relativePath === ".claude/plugins/sample-plugin/plugin.json"
+        (f) => f.relativePath === ".claude/plugins/sample-plugin/.claude-plugin/plugin.json"
       );
       expect(manifest).toBeDefined();
       expect(manifest?.content).toContain("sample-plugin");
@@ -201,10 +201,10 @@ describe("the engine translate()", () => {
       expect(agent?.content).toContain("developer_instructions =");
     });
 
-    it("emits native plugin manifest at plugin.json", () => {
+    it("emits native plugin manifest where the tool reads it", () => {
       const files = translator.translate(makeDist(), codex);
       const manifest = files.find(
-        (f) => f.relativePath === ".codex/plugins/sample-plugin/plugin.json"
+        (f) => f.relativePath === ".codex/plugins/sample-plugin/.codex-plugin/plugin.json"
       );
       expect(manifest).toBeDefined();
     });

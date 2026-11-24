@@ -233,7 +233,7 @@ export const copilot = defineAiTool({
     hooks: { delivery: hooksSupport.delivery },
     layout: COPILOT_LAYOUT,
     manifest: manifestSection({
-      manifestRelativePath: "plugin.json",
+      manifestRelativePath: ".plugin/plugin.json",
       pluginRootToken: hooksSupport.rootToken,
     }),
     models: COPILOT_MODELS,

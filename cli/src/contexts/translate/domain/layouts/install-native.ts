@@ -139,11 +139,12 @@ function skillFrontmatterOf(
   return (skills?.supported ? skills.skillFrontmatter : undefined) ?? ((fm) => fm);
 }
 
-/** An agent the host loads from outside the plugin (Codex's TOML) is staged and shaped as the
+/** An agent the host loads from outside the plugin's `agents/` (Codex's TOML) is staged and shaped as the
  * marketplace build does: the one place a machine-scope install reads it. */
 function stagedAgentPlan(file: PluginComponentFile, at: NativeAt): ComponentPlan | null {
   const agents = at.tool.buildContract("marketplace")?.artifacts.agents;
   if (!agents?.supported || agents.placement.kind !== "agentFiles") return null;
+  if (agents.placement.dir === "agents") return null;
   const outName = file.relativePath.slice("agents/".length);
   const place = {
     plugin: at.pluginName,

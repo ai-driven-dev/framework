@@ -147,7 +147,7 @@ const CODEX_CAPABILITIES = {
   hooks: { config: hooksConfigPart(hooks), delivery: hooksSupport.delivery },
   layout: CODEX_LAYOUT,
   manifest: manifestSection({
-    manifestRelativePath: "plugin.json",
+    manifestRelativePath: ".codex-plugin/plugin.json",
     pluginRootToken: hooksSupport.rootToken,
   }),
   models: new ModelsSection({ providers: ["openai"] }),

@@ -86,7 +86,7 @@ const ONE_SIDED: readonly OneSided[] = [
   ...["claude", "copilot", "codex"].map((tool) => ({
     cell: `${tool}:marketplace`,
     side: "install" as const,
-    file: /^generated:.*\/plugins\/[^/]+\/plugin\.json$/,
+    file: /^generated:.*\/plugins\/[^/]+\/\.[a-z-]+\/plugin\.json$/,
     reason: MANIFEST_REASON,
   })),
   {

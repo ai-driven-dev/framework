@@ -48,7 +48,6 @@ const DIVERGENCES: readonly Divergence[] = [
 const SOURCES = FRAMEWORK_SOURCES;
 /** The plugin manifest, which B copies from the source and A synthesizes, is checked apart. */
 const MANIFEST_DIVERGENCES = [
-  "B writes the manifest at the plugin root, A in the tool's own manifest directory (open: needs a product decision)",
   "A lists the components and drops strict, B copies the source manifest byte for byte (open: needs a product decision)",
 ];
 const identity = (json: string) => {
@@ -118,18 +117,6 @@ function manifestPathOf(tool: AiToolProfile): { installed: string; onDisk: strin
     installed: `${nativeOf(plugins).pluginOutputDir("aidd-vcs")}${path}`,
     onDisk: `${OUT}/plugins/aidd-vcs/${path}`,
   };
-}
-
-function manifestDivergencesUsed(
-  onAPath: string,
-  onA: string,
-  expectedPath: string,
-  installed: string
-): string[] {
-  return [
-    ...(onAPath === expectedPath ? [] : [MANIFEST_DIVERGENCES[0]]),
-    ...(onA === installed ? [] : [MANIFEST_DIVERGENCES[1]]),
-  ];
 }
 
 type Comparison = { unexplained: string[]; agreed: number; needed: string[] };
@@ -211,8 +198,8 @@ describe("path B (install) writes what path A (disk) writes, but for what DIVERG
       ([k]) => k.includes("/plugins/aidd-vcs/") && k.endsWith("/plugin.json")
     );
     expect(identity(onA)).toEqual(identity(own[0].content));
-    for (const id of manifestDivergencesUsed(onAPath, onA, path.onDisk, own[0].content))
-      used.add(id);
+    expect(onAPath).toBe(path.onDisk);
+    if (onA !== own[0].content) used.add(MANIFEST_DIVERGENCES[0]);
   });
 
   it("every divergence is still needed by some tool", () => {

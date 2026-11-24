@@ -41,14 +41,14 @@ describe("a plugin component a target declares no section for", () => {
   it("is dropped by a native target without agents", () => {
     const tool = contractToolProfile(claude, { sections: { agents: null } });
     expect(installedPathsOf(tool, agentDist)).toEqual([
-      ".claude/plugins/sample-plugin/plugin.json",
+      ".claude/plugins/sample-plugin/.claude-plugin/plugin.json",
     ]);
   });
 
   it("is dropped by a native target without skills", () => {
     const tool = contractToolProfile(claude, { sections: { skills: null } });
     expect(installedPathsOf(tool, skillDist())).toEqual([
-      ".claude/plugins/sample-plugin/plugin.json",
+      ".claude/plugins/sample-plugin/.claude-plugin/plugin.json",
     ]);
   });
 
@@ -152,7 +152,9 @@ describe("a command a native target installs where the tool says", () => {
     const tool = contractToolProfile(claude, {
       sections: { commands: markdownSectionInstalling(() => null) },
     });
-    expect(installedPathsOf(tool, dist)).toEqual([".claude/plugins/sample-plugin/plugin.json"]);
+    expect(installedPathsOf(tool, dist)).toEqual([
+      ".claude/plugins/sample-plugin/.claude-plugin/plugin.json",
+    ]);
   });
 
   it("is installed below the plugin without the tool's own namespace directory", () => {
