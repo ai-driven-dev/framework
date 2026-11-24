@@ -138,7 +138,7 @@ const MCP_CONFIG: McpTomlDeclaration = {
   consumes: [MCP_CONFIG_REF],
 };
 
-// Limit: no `rules` capability. Codex reads markdown guidance only from AGENTS.md, and
+// No `rules` capability: Codex reads markdown guidance only from AGENTS.md, and
 // `.codex/rules/` takes Starlark command policy (https://developers.openai.com/codex/rules).
 const CODEX_CAPABILITIES = {
   agents: { format: "toml", frontmatter: tomlAgentFrontmatter },
