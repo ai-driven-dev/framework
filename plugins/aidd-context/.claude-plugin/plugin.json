@@ -21,6 +21,7 @@
     "./skills/10-learn",
     "./skills/11-explore",
     "./skills/12-cook",
+    "./skills/13-access-check",
     "./skills/14-schedule-generate"
   ],
   "keywords": [

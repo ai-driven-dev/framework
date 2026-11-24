@@ -1,23 +1,19 @@
 ---
 name: 14-schedule-generate
-description: Generates a scheduled task prompt and maps it to the chosen agent scheduler when a user wants to automate a workflow on a timer.
+description: Configures scheduled agent tasks and tests their prompts when a user wants to automate a workflow or check an existing schedule.
 ---
 
-# Generate a scheduled task
+# Scheduled tasks
 
 ```mermaid
 flowchart LR
-  entry([request]) --> draft["actions/01-draft.md"]
-  draft <-->|"missing task detail"| user((user answers))
-  draft -->|"prompt only"| ready((prompt ready))
-  draft --> configure["actions/02-configure.md"]
-  configure -->|"setup returned"| setup((draft with setup))
-  configure -->|"host or capability unavailable"| gap((draft with limitation))
-  configure -->|"readback matches"| registered((registration verified))
-  configure -->|"failed or uncertain write"| unverified((registration unverified))
+  request([new task]) --> configure["actions/01-configure.md"]
+  configure --> test["actions/02-test.md"]
+  existing([test an existing task]) --> test
+  test --> report((test result))
 ```
 
 ## Transversal rules
 
-- Begin by reading [Draft the task](actions/01-draft.md) in this skill directory.
-- Read each action and the asset it calls for before returning its result.
+- For a new task, start by reading [configure](actions/01-configure.md).
+- For a test request on an existing task, start by reading [test](actions/02-test.md).

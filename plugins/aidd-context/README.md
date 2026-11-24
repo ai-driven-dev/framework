@@ -13,7 +13,7 @@ Project knowledge: memory, context files and generators.
 
 ## Generate a scheduled task in Hermes
 
-From a framework checkout, copy the full skill into the profile that will run the task. For the default profile, run the following commands.
+From the framework checkout, install in the default profile:
 
 ```sh
 mkdir -p ~/.hermes/skills
@@ -21,11 +21,11 @@ cp -R plugins/aidd-context/skills/14-schedule-generate ~/.hermes/skills/
 hermes -p default skills list
 ```
 
-For a named profile, use its `skills/` directory (normally `~/.hermes/profiles/<name>/skills/`) and replace `default` with the profile name. Look for `14-schedule-generate` in the list, then open a new chat in that profile. [Hermes skills](https://hermes-agent.nousresearch.com/docs/user-guide/features/skills) · [Hermes profiles](https://hermes-agent.nousresearch.com/docs/user-guide/profiles)
+For a named profile, use its `skills/` directory and replace `default` with the profile name. [Hermes skills](https://hermes-agent.nousresearch.com/docs/user-guide/features/skills) · [Hermes profiles](https://hermes-agent.nousresearch.com/docs/user-guide/profiles)
 
-For a profile with `collect-notes` and `write-digest` installed, try this request.
+With both example skills installed, open a new Hermes chat.
 
-> Use 14-schedule-generate to draft a weekday task for 09:00 Europe/Paris. Run collect-notes on yesterday’s notes, then pass its result to write-digest. Save the digest in reports/ and skip days with no notes.
+> /14-schedule-generate Draft and test a weekday task at 09:00 Europe/Paris. Pass yesterday’s notes from collect-notes to write-digest. Save the digest in reports/ and skip empty days.
 
 ## Hooks
 

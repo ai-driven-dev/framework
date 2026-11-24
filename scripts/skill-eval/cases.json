@@ -643,5 +643,15 @@
       "judge": "The execution prompt treats notes.md and seen-ids.txt as read-only inputs. No step or outcome updates either file, including after delivery.",
       "judgeFiles": ["task.md"]
     }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "14-schedule-generate",
+    "evalName": "xeval-schedule-test",
+    "name": "tests an existing draft without registering or executing it",
+    "prompt": "Use {{SKILL}} to test this existing draft on paper only. Every Monday at 09:00 UTC, read notes.md. Return a digest for valid entries, skip an empty file, and return an error if missing. Do not change the draft or run a scheduler.",
+    "expect": {
+      "judge": "The answer traces valid, empty and missing input separately and identifies the test as a simulation. It does not claim it ran or registered a job."
+    }
   }
 ]

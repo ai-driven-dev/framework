@@ -252,8 +252,8 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-draft.md](skills/14-schedule-generate/actions/01-draft.md) | - |
-| `actions` | [02-configure.md](skills/14-schedule-generate/actions/02-configure.md) | - |
+| `actions` | [01-configure.md](skills/14-schedule-generate/actions/01-configure.md) | - |
+| `actions` | [02-test.md](skills/14-schedule-generate/actions/02-test.md) | - |
 | `assets` | [task-prompt.md](skills/14-schedule-generate/assets/task-prompt.md) | - |
 | `references` | [antigravity.md](skills/14-schedule-generate/references/antigravity.md) | - |
 | `references` | [claude.md](skills/14-schedule-generate/references/claude.md) | - |
@@ -263,7 +263,5 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [hermes.md](skills/14-schedule-generate/references/hermes.md) | - |
 | `references` | [kilo.md](skills/14-schedule-generate/references/kilo.md) | - |
 | `references` | [opencode.md](skills/14-schedule-generate/references/opencode.md) | - |
-| `scripts` | [contract.json](skills/14-schedule-generate/scripts/contract.json) | - |
-| `scripts` | [validate-prompt.cjs](skills/14-schedule-generate/scripts/validate-prompt.cjs) | - |
-| `-` | [SKILL.md](skills/14-schedule-generate/SKILL.md) | `Generates a scheduled task prompt and maps it to the chosen agent scheduler when a user wants to automate a workflow on a timer.` |
+| `-` | [SKILL.md](skills/14-schedule-generate/SKILL.md) | `Configures scheduled agent tasks and tests their prompts when a user wants to automate a workflow or check an existing schedule.` |
 

@@ -34,7 +34,7 @@ Bootstrap, project init, context-artifact generation, diagrams, learning, and ex
 | `11-explore`           | Survey the project across tooling, context, and codebase, then drill into one axis | `01-survey`, `02-drill`                                                                                  |
 | `12-cook`              | Manage and validate technical project or bundled recipes                       | `01-list`, `02-upsert`, `03-research`, `04-apply`, `05-validate`                                         |
 | `13-access-check`      | Check, read-only, that the assistant reaches the services in project memory    | `01-check`                                                                                               |
-| `14-schedule-generate` | Generate a scheduled task prompt and configure it on a supported scheduler    | `01-draft`, `02-configure` |
+| `14-schedule-generate` | Configure and test a scheduled agent task | `01-configure`, `02-test` |
 
 <!--extras-aidd-context:start-->
 
