@@ -31,4 +31,14 @@ describe("removing the files a new install no longer ships", () => {
 
     expect(await fs.fileExists(join(BASE, "old.js"))).toBe(true);
   });
+
+  it("removes the directory a deleted file leaves empty", async () => {
+    const fs = new InMemoryFileAdapter();
+    fs.setFile(join(BASE, "sub/old.js"), "old");
+    const previous = new Map([["sub/old.js", FileHash.of("old").value]]);
+
+    await removeObsoletePluginFiles(fs, previous, { current: new Set(), baseDir: BASE });
+
+    expect(await fs.isDirectory(join(BASE, "sub"))).toBe(false);
+  });
 });
