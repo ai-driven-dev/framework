@@ -3,6 +3,7 @@ import { InstallationFile } from "../../../../shared/domain/installation-file.js
 import type { ConfigRef } from "../../contract/config-refs.js";
 import { DualConfigError } from "../../contract/errors/tools.error.js";
 import type { ConfigFilePlace } from "../../contract/tool-profile.js";
+import { type JsonWriter, keepingComments } from "../formats/json-writer.js";
 import {
   mcpJsonToToml,
   mergeJsonUserPrime,
@@ -53,6 +54,8 @@ export type McpConfigParams = ({ format: "json" } | { format: "toml"; toml: Toml
   transformContent?: (content: string) => string;
   outputPathCandidates?: McpOutputPathCandidates;
   consumes?: readonly ConfigRef[];
+  /** Rewrites the config in place, keeping what a person wrote around it; plain JSON when absent. */
+  writer?: JsonWriter;
 };
 
 /** The file a tool's own MCP servers are written to, and how it is merged and converted. */
@@ -129,20 +132,22 @@ export class McpConfigPart {
     incomingTransformed: string,
     previousEntries: ReadonlyMap<string, string>
   ): ReturnType<typeof mergeTypedMcp> {
-    return mergeTypedMcp(existing, incomingTransformed, previousEntries);
+    const merged = mergeTypedMcp(existing, incomingTransformed, previousEntries);
+    const mergedContent = keepingComments(this.#params.writer, existing, merged.mergedContent);
+    return { ...merged, mergedContent };
   }
 
   /** Removes the servers a plugin contributed, refusing one edited since. */
   removePluginServers(existing: string, entries: ReadonlyMap<string, string>): string {
-    return unmergeTypedMcp(existing, entries);
+    return keepingComments(this.#params.writer, existing, unmergeTypedMcp(existing, entries));
   }
 
   withInstruction(existing: string | null, glob: string): string {
-    return addTypedInstruction(existing, glob);
+    return keepingComments(this.#params.writer, existing, addTypedInstruction(existing, glob));
   }
 
   withoutInstruction(existing: string, glob: string): string {
-    return removeTypedInstruction(existing, glob);
+    return keepingComments(this.#params.writer, existing, removeTypedInstruction(existing, glob));
   }
 
   /** The tool's framework-owned config merged over what a person already keeps in the file. */

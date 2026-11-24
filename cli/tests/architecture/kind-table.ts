@@ -131,6 +131,7 @@ export const KINDS: readonly Kind[] = [
       "src/contexts/tools/domain/**/*",
       // Codex names the TOML format, so its profile holds the codec instance as data.
       "src/shared/infrastructure/smol-toml-codec.adapter.ts",
+      "src/shared/infrastructure/json/jsonc-writer.adapter.ts",
       "src/contexts/tools/contract/**/*",
       // The native-registration section a profile file exports is typed by its reader.
       "src/contexts/host-registration/contract/**/*",

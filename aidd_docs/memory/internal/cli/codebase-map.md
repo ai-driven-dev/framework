@@ -200,6 +200,7 @@ src/
     │   ├── plugin/
     │   └── reading/
     ├── infrastructure/    # adapters of the shared ports, wired by composition only
+    │   └── json/
     └── ports/    # technology ports two or more contexts need
 ```
 

@@ -28,6 +28,7 @@ import {
   type FlatArtifactLayout,
   flatArtifactLayout,
 } from "../../shared/domain/materialization/flat-paths.js";
+import { JsoncWriter } from "../../shared/infrastructure/json/jsonc-writer.adapter.js";
 
 /** Kilo names an agent after its file, reads the effort as the model's `variant`, and passes
  * any unknown key to the model provider, so only its own keys are carried. */
@@ -112,6 +113,7 @@ export const kilo = defineAiTool({
         mergeStrategy: "framework-prime",
         transformContent: toTypedMcpSection,
         consumes: [MCP_CONFIG_REF],
+        writer: new JsoncWriter(),
         outputPathCandidates: KILO_OUTPUT_PATH_CANDIDATES,
       }),
     },

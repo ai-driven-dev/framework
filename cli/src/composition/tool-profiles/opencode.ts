@@ -30,6 +30,7 @@ import {
   type FlatArtifactLayout,
   flatArtifactLayout,
 } from "../../shared/domain/materialization/flat-paths.js";
+import { JsoncWriter } from "../../shared/infrastructure/json/jsonc-writer.adapter.js";
 
 /** OpenCode names an agent after its file, so no `name`; `mode: subagent` keeps it out of
  * the primary agents. V2 reads the effort as the model's `#variant`. */
@@ -153,6 +154,7 @@ export const opencode = defineAiTool({
         mergeStrategy: "framework-prime",
         transformContent: toTypedMcpSection,
         consumes: [MCP_CONFIG_REF, OPENCODE_CONFIG_REF],
+        writer: new JsoncWriter(),
         outputPathCandidates: OUTPUT_PATH_CANDIDATES,
       }),
     },
