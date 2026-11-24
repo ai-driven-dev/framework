@@ -147,7 +147,6 @@ for (const toolId of [SYNTHETIC_NATIVE_TOOL]) {
                 );
           },
           loadIfReadable: async () => null,
-          loadForDiagnosis: async () => null,
           save: (manifest) => f.repo.save(manifest),
           delete: () => f.repo.delete(),
           loadRecords: () => f.repo.loadRecords(),

@@ -29,6 +29,10 @@ export interface ResolveBuiltMarketplacesDeps {
   readonly currentVersion: string;
 }
 
+/** The framework marketplace is machine-scope even where the registry still records `project`. */
+const isMachineScope = (marketplace: Marketplace): boolean =>
+  marketplace.scope === "user" || marketplace.name === FRAMEWORK_MARKETPLACE_NAME;
+
 /**
  * Recomputes, never reads back, where each registered marketplace was built for each tool:
  * `builtMarketplaceDir` and `userBuiltMarketplaceDir` are the same pure functions
@@ -49,7 +53,7 @@ export class ResolveBuiltMarketplaces {
       built.set(toolId, marketplaces);
     }
     return {
-      registeredNames: registered.map((m) => m.name),
+      projectScopedNames: registered.filter((m) => !isMachineScope(m)).map((m) => m.name),
       userCacheRoot: this.deps.userCacheRoot(),
       built,
     };
@@ -70,15 +74,14 @@ export class ResolveBuiltMarketplaces {
     marketplace: Marketplace,
     toolId: AiToolId
   ): Promise<string | undefined> {
-    const raw =
-      marketplace.scope === "user" || marketplace.name === FRAMEWORK_MARKETPLACE_NAME
-        ? userBuiltMarketplaceDir({
-            userConfigDir: this.deps.userCacheRoot(),
-            cliVersion: this.deps.currentVersion,
-            marketplaceName: marketplace.name,
-            target: toolId,
-          })
-        : builtMarketplaceDir(projectRoot, marketplace.name, toolId);
+    const raw = isMachineScope(marketplace)
+      ? userBuiltMarketplaceDir({
+          userConfigDir: this.deps.userCacheRoot(),
+          cliVersion: this.deps.currentVersion,
+          marketplaceName: marketplace.name,
+          target: toolId,
+        })
+      : builtMarketplaceDir(projectRoot, marketplace.name, toolId);
     return this.deps.fs.realpathIfResolvable(resolve(raw));
   }
 }

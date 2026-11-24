@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { CheckFileReferences } from "../../../../../src/contexts/installation/application/doctor/check-file-references.use-case.js";
-import { LoadManifest } from "../../../../../src/contexts/installation/application/doctor/load-manifest.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
@@ -61,7 +60,7 @@ async function issuesFor(
       new InstallationFile({ relativePath, content: "", hash: FileHash.of("") }),
     ]);
   }
-  const load = new LoadManifest(new InMemoryManifestRepository(manifest));
+  const load = new InMemoryManifestRepository(manifest);
   return new CheckFileReferences(load, new InMemoryFileAdapter(files)).execute({
     projectRoot: PROJECT_ROOT,
     allowedIds: options.allowedIds ?? null,

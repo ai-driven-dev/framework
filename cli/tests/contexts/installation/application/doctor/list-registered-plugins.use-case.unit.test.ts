@@ -4,7 +4,6 @@ import {
   ListRegisteredPlugins,
   type ListRegisteredPluginsRequest,
 } from "../../../../../src/contexts/installation/application/doctor/list-registered-plugins.use-case.js";
-import { LoadManifest } from "../../../../../src/contexts/installation/application/doctor/load-manifest.use-case.js";
 import type { ToolRecords } from "../../../../../src/contexts/installation/contract/records/scope-records.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
@@ -18,7 +17,7 @@ function listerOver(
   records: ToolRecords = new Map()
 ) {
   const repo = new InMemoryManifestRepository(manifest, undefined, records);
-  const lister = new ListRegisteredPlugins(new LoadManifest(repo));
+  const lister = new ListRegisteredPlugins(repo);
   return {
     execute: (command: Pick<ListRegisteredPluginsRequest, "allowedIds">) =>
       lister.execute({

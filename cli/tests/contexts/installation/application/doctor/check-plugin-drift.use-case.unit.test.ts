@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { CheckPluginDrift } from "../../../../../src/contexts/installation/application/doctor/check-plugin-drift.use-case.js";
-import { LoadManifest } from "../../../../../src/contexts/installation/application/doctor/load-manifest.use-case.js";
 import { DetectPluginDrift } from "../../../../../src/contexts/installation/application/shared/detect-plugin-drift.use-case.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
@@ -44,7 +43,7 @@ function checkerOver(disk: Record<string, string>) {
     )
     .build();
   return new CheckPluginDrift(
-    new LoadManifest(new InMemoryManifestRepository(manifest)),
+    new InMemoryManifestRepository(manifest),
     new DetectPluginDrift(readerOf(disk), registeredTools(), () => "/home/dev")
   );
 }

@@ -5,7 +5,6 @@ import { CheckPluginDrift } from "../../../src/contexts/installation/application
 import { CheckProjectLayout } from "../../../src/contexts/installation/application/doctor/check-project-layout.use-case.js";
 import { CheckTrackedFiles } from "../../../src/contexts/installation/application/doctor/check-tracked-files.use-case.js";
 import { InspectInstallation } from "../../../src/contexts/installation/application/doctor/inspect-installation.use-case.js";
-import { LoadManifest } from "../../../src/contexts/installation/application/doctor/load-manifest.use-case.js";
 import { DetectPluginDrift } from "../../../src/contexts/installation/application/shared/detect-plugin-drift.use-case.js";
 import { RunDoctor } from "../../../src/orchestration/doctor/run-doctor.use-case.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
@@ -17,20 +16,19 @@ export function buildRunDoctor(
   deps: Awaited<ReturnType<typeof buildInstallationDeps>>,
   hostRegistries: ReadonlyMap<AiToolId, HostPluginRegistry> = new Map()
 ): RunDoctor {
-  const loadManifest = new LoadManifest(deps.manifestRepo);
   return new RunDoctor(
     {
       inspect: new InspectInstallation({
-        load: loadManifest,
-        tracked: new CheckTrackedFiles(loadManifest, deps.fs),
-        merge: new CheckMergeFiles(loadManifest, deps.fs),
-        references: new CheckFileReferences(loadManifest, deps.fs),
+        manifestRepo: deps.manifestRepo,
+        tracked: new CheckTrackedFiles(deps.manifestRepo, deps.fs),
+        merge: new CheckMergeFiles(deps.manifestRepo, deps.fs),
+        references: new CheckFileReferences(deps.manifestRepo, deps.fs),
         plugin: new CheckPluginDrift(
-          loadManifest,
+          deps.manifestRepo,
           new DetectPluginDrift(deps.fs, deps.tools, () => "/home/dev")
         ),
       }),
-      layout: new CheckProjectLayout(loadManifest, deps.fs, deps.tools),
+      layout: new CheckProjectLayout(deps.manifestRepo, deps.fs, deps.tools),
       registration: checkRegistrationOver(
         deps.manifestRepo,
         deps.fs,

@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { CheckProjectLayout } from "../../../../../src/contexts/installation/application/doctor/check-project-layout.use-case.js";
-import { LoadManifest } from "../../../../../src/contexts/installation/application/doctor/load-manifest.use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { FileHash } from "../../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../src/shared/domain/installation-file.js";
@@ -31,7 +30,7 @@ async function issuesFor(onDisk: Record<string, string>) {
       content,
     ])
   );
-  const load = new LoadManifest(new InMemoryManifestRepository(manifestTrackingClaude()));
+  const load = new InMemoryManifestRepository(manifestTrackingClaude());
   return new CheckProjectLayout(load, new InMemoryFileAdapter(files), registeredTools()).execute({
     projectRoot: PROJECT_ROOT,
   });

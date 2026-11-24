@@ -57,7 +57,6 @@ describe("settings synchronization under the machine ownership lock", () => {
         path: machineRepo.path,
         load: () => machineRepo.load(),
         loadIfReadable: () => machineRepo.loadIfReadable(),
-        loadForDiagnosis: () => machineRepo.loadForDiagnosis(),
         save: (manifest) => machineRepo.save(manifest),
         loadRecords: () => machineRepo.loadRecords(),
         saveRecords: (records) => machineRepo.saveRecords(records),

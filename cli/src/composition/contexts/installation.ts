@@ -9,6 +9,7 @@ import {
 } from "../../contexts/host-registration/domain/record/host-ref.js";
 import { afterActivation } from "../../contexts/host-registration/domain/record/registration-projection.js";
 import {
+  hostNameOrAlias,
   isQualifiedRef,
   marketplaceOf,
   pluginRefsOf,
@@ -90,6 +91,7 @@ export function projectSetupOf(manifestRepo: ManifestRepository): ProjectSetupSt
 export const registrationRecordRules: RegistrationRecordRules & RecordClaimRules = {
   pluginRefsOf,
   marketplaceOf,
+  hostNameOrAlias,
   refOnHostName,
   isQualifiedRef,
   refSelectedBy,

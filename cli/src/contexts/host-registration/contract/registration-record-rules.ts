@@ -45,6 +45,9 @@ export interface RegistrationRecordRules {
     record: RegistrationRecordView,
     alias: string | undefined
   ) => RegisteredMarketplaceView | undefined;
+  /** The name the host knows an alias by: the recorded host name, the alias itself when nothing
+   * was recorded. */
+  readonly hostNameOrAlias: (record: RegistrationRecordView | undefined, alias: string) => string;
   /** The record an activation leaves, `undefined` when it equals the one recorded. */
   readonly afterActivation: (
     existing: ClaimedRecordView | undefined,

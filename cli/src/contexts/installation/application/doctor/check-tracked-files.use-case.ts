@@ -4,8 +4,9 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { DoctorIssue } from "../../contract/doctor-issue.js";
 import { driftOf } from "../../domain/drift.js";
 import type { Manifest } from "../../domain/manifest.js";
+import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import { requireManifest } from "../shared/require-manifest.js";
 import type { InstallationScope } from "./installation-scope.js";
-import type { LoadManifest } from "./load-manifest.use-case.js";
 
 export function collectTrackedFiles(
   manifest: Manifest,
@@ -24,13 +25,13 @@ export type CheckTrackedFilesRequest = InstallationScope;
 
 export class CheckTrackedFiles {
   constructor(
-    private readonly loadManifest: LoadManifest,
+    private readonly manifestRepo: Pick<ManifestRepository, "load">,
     private readonly fs: FileReader
   ) {}
 
   async execute(command: CheckTrackedFilesRequest): Promise<DoctorIssue[]> {
     const { projectRoot, allowedIds } = command;
-    const manifest = await this.loadManifest.execute();
+    const manifest = await requireManifest(this.manifestRepo);
     const trackedFiles = collectTrackedFiles(manifest, allowedIds);
     const missingIssues = await this.checkMissingFiles(trackedFiles, projectRoot);
     const modifiedIssues = await this.checkModifiedFiles(manifest, projectRoot, allowedIds);

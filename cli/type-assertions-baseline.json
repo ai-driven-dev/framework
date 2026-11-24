@@ -3,7 +3,7 @@
   "src/contexts/distribution/infrastructure/marketplace-trust-store-adapter.ts": 1,
   "src/contexts/host-registration/infrastructure/host-cli-adapter.ts": 1,
   "src/contexts/installation/application/detect-project-context.use-case.ts": 1,
-  "src/contexts/installation/domain/manifest-serialization.ts": 2,
+  "src/contexts/installation/domain/manifest-serialization.ts": 1,
   "src/contexts/installation/domain/manifest.ts": 1,
   "src/contexts/installation/domain/plugins/plugin-entry.ts": 3,
   "src/contexts/installation/infrastructure/agent-model-store-adapter.ts": 3,

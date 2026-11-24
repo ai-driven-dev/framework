@@ -86,8 +86,8 @@ describe("framework update of a project whose manifest cannot be read", () => {
 
     const { exitCode, stderr } = await aidd(["framework", "update"]);
 
-    expect(exitCode).toBe(EXIT_CODES["invalid-manifest-data"]);
-    expect(stderr).toMatch(/^Error: Invalid manifest data: .*is not valid JSON/m);
+    expect(exitCode).toBe(EXIT_CODES["manifest-corrupted"]);
+    expect(stderr).toMatch(/^Error: Manifest is corrupted .*aidd clean --force/m);
     expect(stderr).not.toContain("Warning: [ai]");
   });
 

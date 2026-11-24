@@ -1,4 +1,3 @@
-import { ManifestUnavailableError } from "../../../src/contexts/installation/contract/installation.error.js";
 import type {
   ScopeRecords,
   ToolRecords,
@@ -31,12 +30,6 @@ export class InMemoryManifestRepository
 
   async loadIfReadable(): Promise<Manifest | null> {
     return this.load().catch(() => null);
-  }
-
-  async loadForDiagnosis(): Promise<Manifest | null> {
-    return this.load().catch((cause: unknown) => {
-      throw new ManifestUnavailableError("manifest-corrupted", { cause });
-    });
   }
 
   async loadRecords(): Promise<ToolRecords> {

@@ -3,20 +3,21 @@ import { extractMergeEntries, type MergeFileEntry } from "../../../../shared/dom
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { DoctorIssue } from "../../contract/doctor-issue.js";
 import { driftOf } from "../../domain/drift.js";
+import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import { requireManifest } from "../shared/require-manifest.js";
 import type { InstallationScope } from "./installation-scope.js";
-import type { LoadManifest } from "./load-manifest.use-case.js";
 
 export type CheckMergeFilesRequest = InstallationScope;
 
 export class CheckMergeFiles {
   constructor(
-    private readonly loadManifest: LoadManifest,
+    private readonly manifestRepo: Pick<ManifestRepository, "load">,
     private readonly fs: FileReader
   ) {}
 
   async execute(command: CheckMergeFilesRequest): Promise<DoctorIssue[]> {
     const { projectRoot, allowedIds } = command;
-    const manifest = await this.loadManifest.execute();
+    const manifest = await requireManifest(this.manifestRepo);
     const issues: DoctorIssue[] = [];
     for (const toolId of manifest.getInstalledToolIds()) {
       if (allowedIds && !allowedIds.has(toolId)) continue;

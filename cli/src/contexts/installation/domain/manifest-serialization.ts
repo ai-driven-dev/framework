@@ -32,10 +32,11 @@ export function parseManifestTools(
   raw: Record<string, unknown>,
   resolveToolId: ToolIdResolver
 ): Map<ToolId, ToolEntry> {
-  const tools = new Map<ToolId, ToolEntry>();
-  if (raw.tools === null || typeof raw.tools !== "object") return tools;
+  const section = asPlainObject(raw.tools);
+  if (section === null) throw new InvalidManifestDataError("tools: expected an object.");
 
-  for (const [key, value] of Object.entries(raw.tools as Record<string, unknown>)) {
+  const tools = new Map<ToolId, ToolEntry>();
+  for (const [key, value] of Object.entries(section)) {
     const toolId = resolveToolId(key);
     if (toolId === null) {
       throw new InvalidManifestToolIdError(key);

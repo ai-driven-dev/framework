@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -8,7 +8,7 @@ import { aManifest } from "../testing/manifest.builder.js";
 import { manifestFileDeps } from "../testing/manifest-file-deps.builder.js";
 
 // What every scope's manifest file shares and the repository contract does not state: how a write
-// replaces the file, and that only a missing file reads as none.
+// replaces the file.
 describe("manifest file", () => {
   let root: string;
   let file: ManifestRepositoryAdapter;
@@ -31,11 +31,5 @@ describe("manifest file", () => {
     await file.save(aManifest().build());
 
     expect((await file.load())?.getInstalledToolIds()).toStrictEqual([]);
-  });
-
-  it("rethrows a read failure other than a missing file", async () => {
-    await mkdir(file.path, { recursive: true });
-
-    await expect(file.load()).rejects.toThrow("EISDIR");
   });
 });

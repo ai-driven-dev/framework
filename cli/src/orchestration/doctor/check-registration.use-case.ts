@@ -2,7 +2,7 @@ import type { MarketplaceBuilds } from "../../contexts/distribution/contract/bui
 import type { InspectDeclaredMarketplaces } from "../../contexts/host-registration/application/inspect/inspect-declared-marketplaces.use-case.js";
 import type { InspectHostRegistration } from "../../contexts/host-registration/application/inspect/inspect-host-registration.use-case.js";
 import { UNDECLARED_MARKETPLACE_SEVERITY } from "../../contexts/host-registration/contract/finding-severity.model.js";
-import type { InspectDeclaredMarketplacesResult } from "../../contexts/host-registration/contract/inspect-declared-marketplaces-result.js";
+import type { UndeclaredMarketplace } from "../../contexts/host-registration/contract/inspect-declared-marketplaces-result.js";
 import type { HostCandidate } from "../../contexts/host-registration/contract/inspect-host-registration-request.js";
 import type { DoctorIssue } from "../../contexts/installation/contract/doctor-issue.js";
 import type { RegisteredPluginsOfTool } from "../../contexts/installation/contract/registered-plugins.js";
@@ -36,18 +36,14 @@ export class CheckRegistration {
   constructor(private readonly deps: CheckRegistrationDeps) {}
 
   async execute(command: CheckRegistrationRequest): Promise<DoctorIssue[]> {
-    const { registered, registeredNames, userCacheRoot, built } = await this.deps.resolve.execute({
+    const { registered, declaredNames, userCacheRoot, built } = await this.deps.resolve.execute({
       projectRoot: command.projectRoot,
       allowedIds: command.allowedIds,
     });
     return [
       ...(command.globalInstall === true
         ? []
-        : await this.undeclaredMarketplaces(
-            command,
-            registered.map((t) => t.toolId),
-            registeredNames
-          )),
+        : await this.undeclaredMarketplaces(command, declaredNames)),
       ...(await this.hostRegistrations({
         command,
         registered,
@@ -59,15 +55,18 @@ export class CheckRegistration {
 
   private async undeclaredMarketplaces(
     command: CheckRegistrationRequest,
-    toolIds: readonly string[],
-    marketplaceNames: readonly string[]
+    declaredNames: ReadonlyMap<string, readonly string[]>
   ): Promise<DoctorIssue[]> {
-    const declared: InspectDeclaredMarketplacesResult = await this.deps.declared.execute({
-      projectRoot: command.projectRoot,
-      toolIds,
-      marketplaceNames,
-    });
-    return declared.findings.map((finding) => ({
+    const findings: UndeclaredMarketplace[] = [];
+    for (const [toolId, marketplaceNames] of declaredNames) {
+      const declared = await this.deps.declared.execute({
+        projectRoot: command.projectRoot,
+        toolIds: [toolId],
+        marketplaceNames,
+      });
+      findings.push(...declared.findings);
+    }
+    return findings.map((finding) => ({
       severity: UNDECLARED_MARKETPLACE_SEVERITY,
       message: `${finding.tool} no longer declares marketplace '${finding.name}'`,
       fix: { code: "refresh-marketplace", file: finding.file },

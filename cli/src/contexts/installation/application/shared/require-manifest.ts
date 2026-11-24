@@ -3,11 +3,10 @@ import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 
 /** The project's manifest, for a command that has nothing to do without one. A manifest that
- * cannot be read surfaces as the repository raised it.
- *
- * Limit: `manifest-corrupted` is produced by `LoadManifest` (doctor) alone, through the repository's `loadForDiagnosis`; here only
- * `manifest-missing` is named, and an unreadable file, EACCES included, is the raw error. */
-export async function requireManifest(manifestRepo: ManifestRepository): Promise<Manifest> {
+ * cannot be read surfaces as the repository named it. */
+export async function requireManifest(
+  manifestRepo: Pick<ManifestRepository, "load">
+): Promise<Manifest> {
   const manifest = await manifestRepo.load();
   if (manifest === null) throw new ManifestUnavailableError("manifest-missing");
   return manifest;

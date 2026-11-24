@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { NativeMarketplaceRegistration } from "../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
 import {
+  hostNameOrAlias,
   isQualifiedRef,
   marketplaceOf,
   pluginRefsOf,
@@ -258,6 +259,17 @@ describe("registration record queries and removals", () => {
 
     it("finds nothing for an alias that was never registered", () => {
       expect(marketplaceOf(recordWith(), "missing")).toBeUndefined();
+    });
+  });
+
+  describe("naming a marketplace as the host does", () => {
+    it("names it by the host name recorded for the alias", () => {
+      expect(hostNameOrAlias(registrations, "aidd-framework")).toBe("ai-driven-dev");
+    });
+
+    it("names it by the alias when nothing was recorded", () => {
+      expect(hostNameOrAlias(registrations, "missing")).toBe("missing");
+      expect(hostNameOrAlias(undefined, "missing")).toBe("missing");
     });
   });
 

@@ -5,8 +5,10 @@ import type { MarketplaceRegistry } from "../../../src/contexts/distribution/por
 import { InspectDeclaredMarketplaces } from "../../../src/contexts/host-registration/application/inspect/inspect-declared-marketplaces.use-case.js";
 import type { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect/inspect-host-registration.use-case.js";
 import { ListRegisteredPlugins } from "../../../src/contexts/installation/application/doctor/list-registered-plugins.use-case.js";
-import { LoadManifest } from "../../../src/contexts/installation/application/doctor/load-manifest.use-case.js";
-import type { ScopeRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
+import type {
+  ScopeRecords,
+  ToolRecords,
+} from "../../../src/contexts/installation/contract/records/scope-records.js";
 import type { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
 import type { CheckRegistrationRequest } from "../../../src/orchestration/doctor/check-registration.use-case.js";
@@ -22,7 +24,7 @@ export function resolveRegisteredBuildsOver(
   tools: RegisteredCatalog
 ): ResolveRegisteredBuilds {
   return new ResolveRegisteredBuilds(
-    new ListRegisteredPlugins(new LoadManifest(manifests)),
+    new ListRegisteredPlugins(manifests),
     { ...registrationRecordRules, loadRecords: () => manifests.loadRecords() },
     builds,
     tools
@@ -57,7 +59,14 @@ export function buildCheckRegistration(
     : never
 ) {
   return {
-    execute: ({ manifest, ...command }: CheckRegistrationRequest & { manifest: Manifest }) =>
-      checkRegistrationOver(new InMemoryManifestRepository(manifest), ...wiring).execute(command),
+    execute: ({
+      manifest,
+      records,
+      ...command
+    }: CheckRegistrationRequest & { manifest: Manifest; records?: ToolRecords }) =>
+      checkRegistrationOver(
+        new InMemoryManifestRepository(manifest, undefined, records),
+        ...wiring
+      ).execute(command),
   };
 }

@@ -1,10 +1,11 @@
 import type { DoctorIssue, PluginIssueEntry, ToolHealth } from "../../contract/doctor-issue.js";
 import type { Manifest } from "../../domain/manifest.js";
+import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import { requireManifest } from "../shared/require-manifest.js";
 import type { CheckFileReferences } from "./check-file-references.use-case.js";
 import type { CheckMergeFiles } from "./check-merge-files.use-case.js";
 import type { CheckPluginDrift, CheckPluginDriftRequest } from "./check-plugin-drift.use-case.js";
 import type { CheckTrackedFiles } from "./check-tracked-files.use-case.js";
-import type { LoadManifest } from "./load-manifest.use-case.js";
 
 /** What the installation's record says about itself: the health of each allowed tool, the issues
  * of the files it tracks, merges and references, in that order, and the drift of its plugins. */
@@ -15,7 +16,7 @@ export interface InstallationInspection {
 }
 
 export interface InspectInstallationDeps {
-  readonly load: Pick<LoadManifest, "execute">;
+  readonly manifestRepo: Pick<ManifestRepository, "load">;
   readonly tracked: Pick<CheckTrackedFiles, "execute">;
   readonly merge: Pick<CheckMergeFiles, "execute">;
   readonly references: Pick<CheckFileReferences, "execute">;
@@ -29,7 +30,7 @@ export class InspectInstallation {
 
   async execute(request: CheckPluginDriftRequest): Promise<InstallationInspection> {
     const { projectRoot, allowedIds } = request;
-    const toolHealth = toolHealthOf(await this.deps.load.execute(), allowedIds);
+    const toolHealth = toolHealthOf(await requireManifest(this.deps.manifestRepo), allowedIds);
     const check = { projectRoot, allowedIds };
     const fileIssues = [
       ...(await this.deps.tracked.execute(check)),
