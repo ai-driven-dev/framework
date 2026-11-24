@@ -6,11 +6,7 @@ const { validate } = require("./helpers.js");
 const SKILL = path.resolve(__dirname, "../../../plugins/aidd-refine/skills/01-brainstorm");
 const SCRIPT = path.join(SKILL, "scripts/validate-brainstorm.cjs");
 
-const GOOD = `---
-status: approved
----
-
-# Cart reservation
+const GOOD = `# Cart reservation
 
 Shoppers keep what they put in the cart, so checkout never fails on stock.
 
@@ -53,14 +49,9 @@ describe("brainstorm contract", () => {
     refusedOnlyBy(GOOD.replace("## Clear", "## Swap").replace("## Open", "## Clear").replace("## Swap", "## Open"), "BRAINSTORM-01");
   });
 
-  it("BRAINSTORM-01 refuses a status missing or other than approved", () => {
-    refusedOnlyBy(GOOD.replace("---\nstatus: approved\n---\n\n", ""), "BRAINSTORM-01");
-    refusedOnlyBy(GOOD.replace("status: approved", "status: pending"), "BRAINSTORM-01");
-  });
-
   it("BRAINSTORM-01 refuses a comment or a placeholder left, with Windows line endings too", () => {
     refusedOnlyBy(GOOD.replace("# Cart reservation", "<!-- Fill, then strip this comment. -->\n\n# Cart reservation"), "BRAINSTORM-01");
     refusedOnlyBy(GOOD.replace("should a reservation survive a logout?", "{{Question whose answer could change what gets made.}}"), "BRAINSTORM-01");
-    refusedOnlyBy(GOOD.replace("status: approved", "status: pending").replaceAll("\n", "\r\n"), "BRAINSTORM-01");
+    refusedOnlyBy(GOOD.replace("# Cart reservation", "<!-- Fill, then strip this comment. -->\n\n# Cart reservation").replaceAll("\n", "\r\n"), "BRAINSTORM-01");
   });
 });
