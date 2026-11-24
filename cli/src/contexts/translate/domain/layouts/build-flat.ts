@@ -14,14 +14,13 @@ import { PLUGIN_HOOKS_RELATIVE } from "../canon-format.js";
 import {
   flatAgentPath,
   flatCommandFolders,
-  flatFoldsMcp,
   flatLinkTarget,
   mergeFlatHooks,
 } from "../flat-layout.js";
 import { agentLinks } from "../rules/agent-markdown.js";
 import { agentShape, type ComponentPlan } from "../rules/component-pipeline.js";
 import { flatHookPlans } from "../rules/hook-plans.js";
-import { agentFiles, baseOf, isEntry } from "./build-shared.js";
+import { agentFiles, baseOf, namedByFolder } from "./build-shared.js";
 
 /** A flat build's plugin files, in the tool's own folders. Its MCP servers and hooks file are
  * merged across plugins by the sink. */
@@ -38,15 +37,14 @@ export function buildFlatPlans(
   ];
 }
 
-/** The folders a plugin's MCP and hook commands name that the tool has no place for, copied whole
- * under the plugin's name: only those, never every extra folder. */
+/** The folders a plugin's hook commands name that the tool has no place for, copied whole under the
+ * plugin's name: only those, never every extra folder.
+ *
+ * Limit: an MCP command's folders are not copied; no shipped plugin has a `.mcp.json`. */
 function flatCommandFiles(canon: PluginDistribution, contract: ToolBuildContract): ComponentPlan[] {
   const { hooks } = contract.artifacts;
   const plugin = canon.manifest.name;
-  const commands = [
-    ...(flatFoldsMcp(contract) ? canon.components.mcp : []),
-    ...(hooks.supported ? canon.components.hooks.filter(isHooksManifest) : []),
-  ];
+  const commands = hooks.supported ? canon.components.hooks.filter(isHooksManifest) : [];
   const folders = new Set(
     commands.flatMap((file) => flatCommandFolders(contract, file.content, plugin))
   );
@@ -136,7 +134,7 @@ function flatSkills(
         currentFilePluginRelative: path,
         resolveTargetPath: (rel) => flatLinkTarget(contract, plugin, rel),
       },
-      namedAfterFolder: artifact.rewriteSkillName && isEntry(relativePath) ? true : undefined,
+      namedAfterFolder: namedByFolder(artifact, relativePath),
     };
   });
 }

@@ -12,18 +12,18 @@ export function ruleScopesOf(
   dist: PluginDistribution,
   plugins: TranslatedFlatPlugin
 ): ReadonlyMap<PluginComponentFile, readonly unknown[]> {
-  if (plugins.flatLayout().rules !== "top-level-unscoped") return new Map();
+  if (plugins.flatLayout().rules !== "top-level-no-frontmatter") return new Map();
   return new Map(
     dist.components.rules.map((file) => {
+      // Limit: `paths` is a list in every shipped rule; a bare string is read as no scope.
       const { paths } = parseFrontmatter(file.content).frontmatter;
-      const globs = typeof paths === "string" && paths !== "" ? [paths] : paths;
-      return [file, Array.isArray(globs) ? globs : []];
+      return [file, Array.isArray(paths) ? paths : []];
     })
   );
 }
 
-/** The plan with no frontmatter and the rule's scope stated as the first line of its body, the
- * form the rule-generate skill writes for a tool that reads no frontmatter. */
+/** The plan with no frontmatter and the rule's scope stated as the first line of its body: the one
+ * place a tool that reads no frontmatter can take it from. */
 export function scopeStated(plan: ComponentPlan, paths: readonly unknown[]): ComponentPlan {
   const line =
     paths.length === 0

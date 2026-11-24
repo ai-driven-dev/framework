@@ -42,7 +42,7 @@ export class PlanProjectMcpRemoval {
     if (existing === undefined) return undefined;
     const content = withoutPlugin(mcp, existing, {
       entries: plugin.provenance.mcpEntries,
-      rulesGlob: tool.flatRulesGlob(plugin.plugin.name),
+      rulesGlob: tool.flatRulesPlacement(plugin.plugin.name)?.glob ?? null,
     });
     return content === existing ? undefined : { output, content };
   }

@@ -557,7 +557,7 @@ exports[`the data each registered profile declares > kilo 1`] = `
     "deliversHooksToProject": false,
     "flatLayout": {
       "namespacePrefix": "aidd-",
-      "rules": "top-level-unscoped",
+      "rules": "top-level-no-frontmatter",
       "skillLayout": "nested",
     },
     "kind": "flat",
