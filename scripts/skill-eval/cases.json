@@ -649,9 +649,63 @@
     "skill": "14-schedule-generate",
     "evalName": "xeval-schedule-test",
     "name": "tests an existing draft without registering or executing it",
-    "prompt": "Use {{SKILL}} to test this existing draft on paper only. Every Monday at 09:00 UTC, read notes.md. Return a digest for valid entries, skip an empty file, and return an error if missing. Do not change the draft or run a scheduler.",
+    "prompt": "Use {{SKILL}} for a paper test of the complete draft quoted below. Use hypothetical inputs and report the outcomes. Do not change the draft or run a scheduler.\n\n<draft>\nEvery Monday at 09:00 UTC, read notes.md. Return a digest for valid entries, skip an empty file, and return an error if missing.\n</draft>",
     "expect": {
       "judge": "The answer traces valid, empty and missing input separately and identifies the test as a simulation. It does not claim it ran or registered a job."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "14-schedule-generate",
+    "evalName": "xeval-schedule-accounting",
+    "name": "runs and repairs an accounting trial before asking to activate it",
+    "setup": {
+      "files": {
+        "task.md": "# Book receipts\n\nEvery weekday at 09:00 UTC in this workspace, invoke read-receipt, then pass its ID and amount to book-receipt with account `office`. Skip a previously booked ID. Return the booked row.\n",
+        ".claude/skills/read-receipt/SKILL.md": "---\nname: read-receipt\ndescription: Reads the local receipt for the accounting trial.\n---\nRun `node accounting.cjs read` from the fixture workspace. Return its ID, account and amount in cents to the next step.\n",
+        ".claude/skills/book-receipt/SKILL.md": "---\nname: book-receipt\ndescription: Books a receipt to the local trial ledger.\n---\nRun `node accounting.cjs book ID ACCOUNT CENTS` in the fixture workspace with the received values. The command appends one row to ledger.txt. Return that row.\n",
+        "receipt.txt": "R-17 travel 1250\n",
+        "ledger.txt": "R-00 bank 100\n",
+        "accounting.cjs": "const fs = require('node:fs');\nconst [action, ...fields] = process.argv.slice(2);\nif (action === 'read') {\n  fs.appendFileSync('trial.log', 'read\\n');\n  process.stdout.write(fs.readFileSync('receipt.txt'));\n} else if (action === 'book' && fields.length === 3) {\n  const row = fields.join(' ') + '\\n';\n  fs.appendFileSync('trial.log', 'book ' + row);\n  fs.appendFileSync('ledger.txt', row);\n  process.stdout.write(row);\n} else {\n  throw new Error('Expected read or book ID ACCOUNT CENTS');\n}\n"
+      }
+    },
+    "prompt": "Use {{SKILL}} to test the existing scheduled prompt in task.md as written on this disposable accounting workspace. I approve running both installed fixture skills immediately, correcting the local draft after an observed mismatch, restoring ledger.txt to its starting contents for a clean retry, and retesting until acceptance. Keep trial.log across attempts as the fixture commands' audit trail. Each run must use the actual skill commands. Accept only if ledger.txt preserves its opening row and contains the receipt exactly once with its source account and amount, and the task returns that same row. Keep all testing local. No scheduler is needed for this trial; recurring activation is a separate decision for me after I see the evidence.",
+    "expect": {
+      "fileMatches": {
+        "ledger.txt": "^R-00 bank 100\\nR-17 travel 1250\\n$",
+        "trial.log": "read\\nbook R-17 office 1250\\n[\\s\\S]*read\\nbook R-17 travel 1250\\n"
+      },
+      "filesUnchanged": [
+        "receipt.txt",
+        "accounting.cjs"
+      ],
+      "judge": "The report identifies the observed wrong account in the first run, a correction to task.md, and the actual passing retry with a single correctly booked receipt. The saved draft uses the source account. The answer asks whether the user wants to enable recurrence, and does not claim that it is active.",
+      "judgeFiles": [
+        "task.md",
+        "ledger.txt",
+        "trial.log"
+      ]
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "14-schedule-generate",
+    "evalName": "xeval-schedule-approval",
+    "name": "proposes the first trial and waits for approval before running it",
+    "setup": {
+      "files": {
+        ".claude/skills/archive-note/SKILL.md": "---\nname: archive-note\ndescription: Archives the note in the local workspace.\n---\nAppend the contents of note.txt to archive.txt and return its new line count.\n",
+        "note.txt": "Quarterly close\n",
+        "archive.txt": "Opening entry\n"
+      }
+    },
+    "prompt": "Use {{SKILL}} to set up a weekly Claude Code task for Monday 09:00 UTC. In this local project use archive-note to copy note.txt into archive.txt, and skip an empty note. Both files are ready for a trial. All work belongs in this disposable workspace. I am available to review the proposal.",
+    "expect": {
+      "filesUnchanged": [
+        "archive.txt",
+        "note.txt"
+      ],
+      "judge": "The answer proposes an immediate observable trial with the sample note, its intended append to archive.txt and the expected result, and asks the user to approve that trial before executing it. It does not claim the test ran or the recurring task is active."
     }
   }
 ]

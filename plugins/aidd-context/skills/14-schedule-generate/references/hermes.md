@@ -1,6 +1,8 @@
 # Hermes Agent
 
-In the target profile, resolve skill names with `hermes skills list`. Repeat `--skill` in load order. For a weekday task with its full prompt in `task.md`, replace the example skill names with installed ones.
+In the target profile, resolve skill names with `hermes skills list`. Repeat `--skill` in load order. For the approved trial, use a near-future ISO timestamp with its UTC offset in place of the recurring expression below. Follow the trial ID with `hermes cron runs <id>` and inspect its output.
+
+After approval to activate, register the recurring expression with the same tested prompt, skills, workspace and delivery settings.
 
 ```sh
 hermes cron create '0 9 * * 1-5' "$(cat task.md)" \

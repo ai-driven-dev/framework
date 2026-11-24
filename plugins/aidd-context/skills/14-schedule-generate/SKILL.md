@@ -1,6 +1,6 @@
 ---
 name: 14-schedule-generate
-description: Configures scheduled agent tasks and tests their prompts when a user wants to automate a workflow or check an existing schedule.
+description: Configures a scheduled workflow and tests its full skill chain on demand before asking the user to enable recurrence.
 ---
 
 # Scheduled tasks
@@ -8,9 +8,16 @@ description: Configures scheduled agent tasks and tests their prompts when a use
 ```mermaid
 flowchart LR
   request([new task]) --> configure["actions/01-configure.md"]
+  configure -->|"draft only"| draft((draft))
   configure --> test["actions/02-test.md"]
   existing([test an existing task]) --> test
-  test --> report((test result))
+  test <-->|"approve trial"| trial((user))
+  test -->|"fix and rerun"| test
+  test -->|"all criteria pass"| passed((verified run))
+  passed --> activate{enable schedule?}
+  activate -->|"user approves"| enabled((verify schedule))
+  activate -->|"declined"| inactive((keep inactive))
+  test -->|"blocked or declined"| stop((reported))
 ```
 
 ## Transversal rules

@@ -2,22 +2,20 @@
 
 ## Input
 
-The requested workflow, schedule, time zone and target host.
+The workflow, timing, workspace and intended destination.
 
 ## Process
 
-1. Resolve the timing, workspace, installed skill names and delivery destination with the user if any essential detail is missing.
-2. Fill the [task prompt](../assets/task-prompt.md) in the user's language, preserving literal names and giving each skill a numbered input-to-result step.
-3. Map the prompt and timing to the requested scheduler using its guide.
+1. Fill the [task prompt](../assets/task-prompt.md) in the user's language with the exact skill names and their numbered handoffs.
+   - Missing input, skill or destination: resolve the gap before trial.
+2. Prepare the schedule using the selected host's guide.
    - Choose [Hermes](../references/hermes.md), [Claude Code](../references/claude.md), [Cursor](../references/cursor.md), [Copilot](../references/copilot.md), [OpenCode](../references/opencode.md), [Kilo](../references/kilo.md), [Codex](../references/codex.md) or [Antigravity](../references/antigravity.md).
-   - Prompt only: omit setup.
-   - Unsupported or unverified capability: return the portable prompt with the specific limitation.
-4. Return the prompt and any setup separately, saving a file only if requested.
-5. Register only on explicit request for a supported setup.
-   - Inspect existing jobs first and reuse an exact match.
-   - On a conflict or uncertain write, report the observed state and stop registration.
-6. Read [test](02-test.md).
+   - Unsupported timing or delivery: give the portable prompt and identify the gap.
+3. Define a representative input and observable acceptance criteria for the handoffs, final output and permitted effects.
+4. Return the prompt and proposed setup separately, saving a file only if requested.
+   - Draft only: stop here.
+5. Read [test](02-test.md) before enabling the schedule.
 
 ## Output
 
-The prompt, applicable host settings and any registration identifier.
+The proposed configuration and the criteria against which its trial will be judged.

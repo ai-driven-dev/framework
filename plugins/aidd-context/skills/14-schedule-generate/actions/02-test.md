@@ -2,18 +2,23 @@
 
 ## Input
 
-A configured prompt or an existing task and its intended behavior.
+The supplied prompt, test input, expected results and schedule.
 
 ## Process
 
-1. Trace a representative input through the numbered steps, checking the exact skill names, handoffs, destination and permitted writes.
-2. Check that an empty input follows the skip rule and a failed prerequisite follows the error rule.
-3. For a registered task, compare its stored prompt, schedule, time zone, workspace, delivery and next run with the request wherever visible.
-4. Run the task once through the host only if the user requests a live test and authorizes its effects.
-5. Report what was simulated, read back or observed in a run, including any mismatch.
-   - A new draft fails: correct the returned prompt and any requested file, then repeat from step 1.
-   - An existing job differs: report the expected and observed values before changing it.
+1. Propose the input, criteria, destination and effects, then wait for the user's approval of the trial and safe retries.
+   - Already approved: proceed within that scope.
+   - Paper test only: use the supplied draft to trace valid, empty and invalid inputs, report the simulation and stop.
+2. Run the whole chain once in its target runtime and monitor that run to completion, leaving recurrence untouched.
+3. Compare each handoff, output and effect with the agreed criteria.
+   - Failure: fix the cause and repeat from step 2 on clean data or with duplicate writes prevented.
+   - Unknown outcome: inspect that same run before retrying.
+   - Blocked or outside approval: stop and report the unmet criterion.
+4. When all criteria pass on one complete run, show the evidence and ask “Enable this task at [cadence] [time zone]?” using its actual schedule.
+   - Already active: report its state.
+   - User approves: enable the tested configuration once and verify the next occurrence where visible.
+   - Otherwise: leave the schedule unchanged.
 
 ## Output
 
-A short test result with the evidence and any unverified behavior.
+Observed results against the criteria and the schedule state.

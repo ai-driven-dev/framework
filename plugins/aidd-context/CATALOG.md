@@ -263,5 +263,5 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [hermes.md](skills/14-schedule-generate/references/hermes.md) | - |
 | `references` | [kilo.md](skills/14-schedule-generate/references/kilo.md) | - |
 | `references` | [opencode.md](skills/14-schedule-generate/references/opencode.md) | - |
-| `-` | [SKILL.md](skills/14-schedule-generate/SKILL.md) | `Configures scheduled agent tasks and tests their prompts when a user wants to automate a workflow or check an existing schedule.` |
+| `-` | [SKILL.md](skills/14-schedule-generate/SKILL.md) | `Configures a scheduled workflow and tests its full skill chain on demand before asking the user to enable recurrence.` |
 
