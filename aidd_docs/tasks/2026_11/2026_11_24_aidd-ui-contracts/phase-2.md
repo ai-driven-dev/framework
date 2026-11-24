@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: Skills run their own copy
@@ -15,8 +15,14 @@ status: pending
 │               └── references/
 │                   └── engine.md ✏️
 └── scripts/
+    ├── __tests__/
+    │   └── check/
+    │       └── repo-content-contract.test.js ✏️
     └── check/
-        └── contracts/ ✏️
+        └── contracts/
+            ├── custom/
+            │   └── skill-paths-inside.cjs ✅
+            └── repo.json ✏️
 ```
 
 ## Test Scope
@@ -39,11 +45,11 @@ status: pending
 
 > A skill file that reaches outside its folder is a finding.
 
-1. Add the rule to the skill content check, unless an existing one covers it.
+1. SKILL-21 covers markdown links only: add REPO-11 for a backticked path that climbs out of its skill.
 
 ## Test acceptance criteria
 
 | Task | Acceptance criteria |
 | ---- | ------------------- |
-| 1    | a journey on the Kairos copy runs every engine call from the skill's copy |
+| 1    | on a Kairos copy, the engine of a flat Codex install runs from `.agents/skills/` and answers as the hook's own |
 | 2    | a skill file naming a path above its folder fails `node scripts/check/run.cjs` |

@@ -1,13 +1,6 @@
 # Engine
 
-| Install | Path |
-| --- | --- |
-| plugin | `../../hooks/aidd-ui.cjs` from this skill's folder |
-| flat | `hooks/aidd-ui/aidd-ui.cjs` under the tool's folder at the project root: `.claude`, `.github`, `.kilo`, `.codex`, `.cursor`, `.opencode`, `.agents` |
-
-Try the plugin row first, then the flat row.
-
-`<engine>` is the first path that exists, run with `node`.
+`<engine>` is `scripts/aidd-ui/aidd-ui.cjs` in this skill's folder, the one holding its `SKILL.md`, named by its full path and run with `node`.
 
 `node <engine> help <command>` says what each does.
 
