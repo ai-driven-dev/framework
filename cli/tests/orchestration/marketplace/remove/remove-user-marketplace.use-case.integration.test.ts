@@ -163,7 +163,6 @@ for (const toolId of [SYNTHETIC_TOOL]) {
       const lockedRepo = {
         path: f.repo.path,
         load: () => f.repo.load(),
-        loadIfReadable: () => f.repo.loadIfReadable(),
         save: (manifest: Manifest) => f.repo.save(manifest),
         delete: () => f.repo.delete(),
         loadRecords: () => f.repo.loadRecords(),

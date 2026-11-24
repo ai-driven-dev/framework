@@ -135,14 +135,14 @@ const cases: [() => Error, string][] = [
   ],
   [
     () => new ManifestUnavailableError("manifest-corrupted"),
-    "Manifest is corrupted (invalid JSON or invalid data). Run `aidd clean --force` and re-initialize.",
+    "Manifest is corrupted (invalid JSON or invalid data). Delete the file, then run `aidd setup` to re-initialize.",
   ],
   [
     () =>
       new ManifestUnavailableError("manifest-corrupted", {
         detail: "tools.claude.files: expected an array.",
       }),
-    "Manifest is corrupted (tools.claude.files: expected an array.). Run `aidd clean --force` and re-initialize.",
+    "Manifest is corrupted (tools.claude.files: expected an array.). Delete the file, then run `aidd setup` to re-initialize.",
   ],
   [
     () => new ManifestUnreadableError("m", "EACCES"),
