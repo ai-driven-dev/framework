@@ -116,6 +116,37 @@ describe("propagating AI tool settings to an IDE", () => {
     expect(parsed(deps, ".vscode/settings.json")).toHaveProperty(["github.copilot.enable"]);
   });
 
+  it("keeps a manifest entry for every settings file the AI tool requires of this IDE", async () => {
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.copilot);
+    const tools = registeredTools();
+    const profile = tools.aiProfile(TOOL.copilot);
+    const [first] = profile.settingsFiles();
+    const second: SettingsFileAnswers = {
+      consumes: () => false,
+      consumedRefs: () => [],
+      writes: () => false,
+      appliesWith: () => true,
+      requires: (toolId) => toolId === TOOL.vscode,
+      outputPath: () => ".vscode/extra.json",
+      fileOf: (content) => first.fileOf(content, { relativePath: ".vscode/extra.json" }),
+      resolveStaticContent: () => '{"extra": true}',
+    };
+    vi.spyOn(tools, "aiProfile").mockImplementation((id) =>
+      Object.assign(Object.create(profile), {
+        settingsFiles: () => (id === TOOL.copilot ? [first, second] : []),
+      })
+    );
+
+    await propagate(deps, deps.assetProvider, tools);
+
+    const paths = (await deps.manifestRepo.load())
+      ?.getMergeFiles(TOOL.copilot)
+      .map((entry) => entry.relativePath);
+    expect(paths).toContain(".vscode/settings.json");
+    expect(paths).toContain(".vscode/extra.json");
+  });
+
   it("does nothing when no manifest exists", async () => {
     const deps = await buildInstallationDeps({ tools: registeredTools() });
 
