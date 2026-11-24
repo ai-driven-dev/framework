@@ -117,6 +117,7 @@ const ${parts.identifier} = async ({ directory, client }) => {
         session.idle = false;
       } else if (event?.type === "session.idle" && !session.idle) {
         session.idle = true;
+        // Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
         for (const hook of STOP) {
           const payload = { hook_event_name: "Stop", session_id: id, cwd: session.directory, stop_hook_active: session.continued };
           const reason = await stopReasonOf(hook.script, hook.args, payload, session.directory);

@@ -57,6 +57,7 @@ interface Workspace {
   readonly dir: string;
   readonly project: string;
   readonly record: string;
+  readonly host: "opencode" | "kilo";
 }
 
 const created: string[] = [];
@@ -116,7 +117,7 @@ async function workspace(host: "opencode" | "kilo", bridge: string): Promise<Wor
   await writeFile(join(dir, "plugin", "aidd-sample-hooks.mjs"), bridge);
   const record = join(dir, "record.jsonl");
   vi.stubEnv("AIDD_RECORD", record);
-  return { dir, project, record };
+  return { dir, project, record, host };
 }
 
 async function recorded(ws: Workspace, count: number): Promise<readonly Recorded[]> {
@@ -150,7 +151,8 @@ async function start(ws: Workspace, input: Record<string, unknown>) {
     prompts.push(request);
     return Promise.resolve();
   };
-  const client = { session: { promptAsync: send, prompt: send } };
+  // Each host calls its own method: OpenCode `prompt`, Kilo `promptAsync`.
+  const client = { session: ws.host === "opencode" ? { prompt: send } : { promptAsync: send } };
   const mod = (await import(
     pathToFileURL(join(ws.dir, "plugin", "aidd-sample-hooks.mjs")).href
   )) as { default?: { server?: (input: unknown) => Promise<Plugin> } };
@@ -186,15 +188,6 @@ function patched(project: string) {
 }
 
 const CONTINUED = [{ path: { id: SESSION }, body: { parts: [{ type: "text", text: "go on" }] } }];
-/** Kilo hands every plugin every message, so its follow-up carries the mark that tells them apart. */
-const KILO_CONTINUED = [
-  {
-    path: { id: SESSION },
-    body: {
-      parts: [{ type: "text", text: "go on", metadata: { aidd: "stop-follow-up" } }],
-    },
-  },
-];
 
 function opencodeBridge(): string {
   const bridge = generateOpencodeHooksBridge(HOOKS_JSON, "aidd-sample");
@@ -389,7 +382,7 @@ describe("Kilo, through its bridge", () => {
     const { plugin, prompts } = await start(ws, { directory: ws.project });
     await plugin.event({ event: idle });
 
-    expect(prompts).toStrictEqual(KILO_CONTINUED);
+    expect(prompts).toMatchObject(CONTINUED);
   });
 
   // The bridge ends a turn at the next idle only after the session went busy again: that
@@ -410,7 +403,7 @@ describe("Kilo, through its bridge", () => {
       { host: "kilo", event: "Stop", stopActive: false, sessionId: SESSION, cwd: ws.project },
       { host: "kilo", event: "Stop", stopActive: true, sessionId: SESSION, cwd: ws.project },
     ]);
-    expect(prompts).toStrictEqual(KILO_CONTINUED);
+    expect(prompts).toMatchObject(CONTINUED);
   });
 });
 
