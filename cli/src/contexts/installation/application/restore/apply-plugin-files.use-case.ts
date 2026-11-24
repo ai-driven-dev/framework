@@ -10,7 +10,7 @@ import type { Manifest } from "../../domain/manifest.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import type { LoadDistribution } from "../../ports/plugin/load-plugin-distribution.js";
 import type { BuiltPlacement } from "../materialize/add-plugin-request.js";
-import { deliversHooksToProject, placementModeOf } from "../materialize/plugin-placement.js";
+import { builtTreeModeOf } from "../materialize/plugin-placement.js";
 import { rematerializePlugin } from "../materialize/rematerialize-plugin.js";
 import { isPluginFileAtDesiredState } from "../plugin/files/check-plugin-file-state.js";
 import { deleteOldFiles } from "../plugin/files/delete-plugin-files.js";
@@ -41,12 +41,8 @@ export class ApplyPluginFiles {
   async execute(options: ApplyPluginFilesRequest): Promise<number> {
     if (options.plugin.plugin.scope === "user") return 0;
     const dist = await this.deps.loadDistribution(options.plugin.plugin.source, options.cacheDir);
-    const mode = placementModeOf(options.tool);
-    if (
-      mode !== null &&
-      (options.plugin.marketplace !== undefined ||
-        (!options.fileFilter && deliversHooksToProject(options.tool)))
-    ) {
+    const mode = builtTreeModeOf(options.tool, options.plugin.marketplace, !options.fileFilter);
+    if (mode !== null) {
       return this.restoreViaPlacement(mode, dist, options);
     }
     return this.restoreViaTranslate(dist, options);

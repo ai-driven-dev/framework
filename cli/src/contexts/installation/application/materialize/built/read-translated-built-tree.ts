@@ -14,6 +14,7 @@ import type {
 } from "../../../ports/plugin/plugin-translation.js";
 import type { AddPluginRequest } from "../add-plugin-request.js";
 import { materializeRequestedMcp } from "../flat-mcp-materializer.js";
+import { deliversHooksToProject } from "../plugin-placement.js";
 import type { ProjectHooksMaterializer } from "../project-hooks-materializer.use-case.js";
 import {
   readBuiltFlatFiles,
@@ -85,16 +86,16 @@ async function readBuiltContent(
     target: tool.toolId,
     mode,
   });
-  const deliversHooksToProject = tool.plugins()?.deliversHooksToProject() === true;
+  const takesHooks = deliversHooksToProject(tool);
   const name = dist.manifest.name;
   const platform = deps.platform;
-  const extraPaths = deliversHooksToProject ? new Set<string>() : translated.flatHookPaths;
+  const extraPaths = takesHooks ? new Set<string>() : translated.flatHookPaths;
   const builtRead =
     mode === "flat"
       ? await readBuiltFlatFiles(deps.fs, { builtDir, platform }, { name, tool, extraPaths })
       : await readBuiltUserPluginFiles(deps.fs, { builtDir, name, platform });
   const files = withoutDroppedFiles(builtRead, name, translated.dropsBuiltFile);
-  if (!deliversHooksToProject) return { files, hooks: { skipped: [] } };
+  if (!takesHooks) return { files, hooks: { skipped: [] } };
   const hooks = await deps.projectHooks.execute({
     dist,
     hooks: translated.projectHooks,

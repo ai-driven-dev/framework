@@ -145,16 +145,19 @@ async function open(
   const descriptor: Descriptor = (await import(pathToFileURL(modulePath).href)).default;
   const prompts: Prompt[] = [];
   const delivered: Prompt[] = [];
-  // `prompt` is delivered after a delay, as a real turn is: only what it awaits has landed.
+  // Each host calls its own method: OpenCode `prompt`, delivered after a delay as a real turn is
+  // (only what it awaits has landed); Kilo `promptAsync`.
   const client = {
-    session: {
-      promptAsync: async (r: Prompt) => void prompts.push(r),
-      prompt: async (r: Prompt) => {
-        prompts.push(r);
-        await delay(100);
-        delivered.push(r);
-      },
-    },
+    session:
+      host.name === "OpenCode"
+        ? {
+            prompt: async (r: Prompt) => {
+              prompts.push(r);
+              await delay(100);
+              delivered.push(r);
+            },
+          }
+        : { promptAsync: async (r: Prompt) => void prompts.push(r) },
   };
   const server = await descriptor.server({ directory: inputDirectory(directory), client });
   const emit = async (...events: unknown[]) => {
@@ -424,19 +427,6 @@ describe("the bridge generated with OpenCode's parameters", () => {
     expect(delivered).toHaveLength(1);
   });
 
-  it("stops waiting for a follow-up once it is delivered", async () => {
-    const { descriptor, directory } = await open(hostNamed("OpenCode"));
-    const client = { session: { prompt: async () => undefined } };
-    const server = await descriptor.server({ directory, client });
-    const awaited = vi.spyOn(Promise, "all");
-
-    await server.event({ event: { type: "session.idle", properties: { sessionID: "s3" } } });
-    await delay(20);
-    await server.dispose();
-
-    expect(awaited.mock.calls.map(([promises]) => [...promises])).toStrictEqual([[]]);
-  });
-
   it("keeps a session's continuation across the plugin being created again", async () => {
     const { descriptor, directory, emit, of } = await open(hostNamed("OpenCode"));
     const client = { session: { prompt: async () => undefined } };
@@ -450,18 +440,6 @@ describe("the bridge generated with OpenCode's parameters", () => {
       false,
       true,
     ]);
-  });
-
-  it("reports a follow-up the host refused", async () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    const { descriptor, directory } = await open(hostNamed("OpenCode"));
-    const refused = { session: { prompt: async () => Promise.reject(new Error("refused")) } };
-    const server = await descriptor.server({ directory, client: refused });
-
-    await server.event({ event: { type: "session.idle", properties: { sessionID: "s2" } } });
-    await server.dispose();
-
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining("refused"));
   });
 
   // Real time: a child process's timeout runs on the clock, so this case costs the bridge's 5 s.

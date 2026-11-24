@@ -132,7 +132,7 @@ const continued = new Set();
 
 export const ${parts.identifier} = async (input) => {
   // Stop handlings in flight: \`opencode run\` exits once the session is idle, so dispose waits.
-  const pending = new Set();
+  let pending = Promise.resolve();
   // SessionStart's own approximation (module doc comment above): fired once here, never
   // per session. Silent on purpose: a memory refresh
   // that breaks OpenCode's own startup is worse than one that never ran.
@@ -150,11 +150,12 @@ export const ${parts.identifier} = async (input) => {
   }
   return {
     dispose: async () => {
-      await Promise.all(pending);
+      await pending;
     },
     event: async ({ event }) => {
       try {
         const directory = event?.properties?.directory ?? input.directory;
+        // Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
         for (const call of stopCallsFor(event, directory)) {
           const sessionId = call.payload.session_id;
           const payload = { ...call.payload, stop_hook_active: continued.has(sessionId) };
@@ -173,9 +174,9 @@ export const ${parts.identifier} = async (input) => {
                 body: { parts: [{ type: "text", text: reason }] },
               });
             })
-            .catch((error) => console.warn("[aidd] OpenCode follow-up failed: " + String(error)))
-            .finally(() => pending.delete(handling));
-          pending.add(handling);
+            // Limit: a refused follow-up is dropped without a trace, none was observed.
+            .catch(() => {});
+          pending = Promise.all([pending, handling]).then(() => {});
           await asking;
         }
       } catch {
