@@ -219,6 +219,20 @@ describe("OpenCode, through its bridge", () => {
     ]);
   });
 
+  it("leaves OpenCode 1.19's early V2 setup context alone, which has no location", async () => {
+    const ws = await workspace("opencode", opencodeBridge());
+    const mod = await import(pathToFileURL(join(ws.dir, "plugin", "aidd-sample-hooks.mjs")).href);
+    const early = Object.fromEntries(
+      "options agent aisdk catalog command integration plugin reference skill"
+        .split(" ")
+        .map((key) => [key, {}])
+    );
+
+    await expect(mod.default.setup(early)).resolves.toBeUndefined();
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    await expect(readFile(ws.record, "utf8")).rejects.toThrow("ENOENT");
+  });
+
   it("reads a write as its file and content, and appends the answer to the tool's result", async () => {
     const ws = await workspace("opencode", opencodeBridge());
     const [write] = (await captured("opencode-tool.execute.after.json", ws.project)) as {

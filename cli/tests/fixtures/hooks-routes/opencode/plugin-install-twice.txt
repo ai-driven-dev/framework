@@ -327,6 +327,9 @@ function withAnswer(content, answer) {
 }
 
 export async function setupOpencodeEvents(ctx, factory) {
+  // OpenCode 1.19 also calls setup with its early V2 context, which has no location, while
+  // server() already serves that host.
+  if (ctx.location === undefined) return;
   const controller = new AbortController();
   // A Stop script's block becomes the session's next prompt, sent through the V2 session API.
   const client = {
