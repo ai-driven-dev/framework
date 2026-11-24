@@ -35,6 +35,7 @@ function wired(withdrawn: ProjectCleanPlan["withdrawals"] | null) {
       },
     },
     facts: async () => FACTS,
+    aiToolIds: [SYNTHETIC_TOOL],
     records: rules,
   });
   return { useCase, requests, manifestRepo, rules };

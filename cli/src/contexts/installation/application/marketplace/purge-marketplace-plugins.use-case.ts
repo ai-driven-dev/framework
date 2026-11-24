@@ -105,7 +105,8 @@ export class PurgeMarketplacePlugins {
       await this.deps.userScopePluginFiles.remove(files, this.tools.aiProfile(toolId), where);
       manifest.removePlugin(toolId, plugin.name);
     }
-    forgetMarketplaceIn(held.registered, marketplace, records);
+    const forgotten = { alias: marketplace, toolIds: native.map((n) => n.toolId) };
+    forgetMarketplaceIn(held.registered, forgotten, records);
     await command.forget();
     await records.saveRecords(held.registered);
     await this.deps.repo.save(manifest);

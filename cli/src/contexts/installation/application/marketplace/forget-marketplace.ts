@@ -1,3 +1,4 @@
+import type { ToolId } from "../../../../shared/domain/tool.js";
 import type {
   ScopeRecords,
   ToolRecord,
@@ -13,25 +14,33 @@ export interface MarketplaceForgetting {
   withoutMarketplace(registrations: ToolRecord, alias: string): ToolRecord;
 }
 
-/** Takes the marketplace out of each tool's record that registered it, leaving the others as
- * they are. */
+/** Which marketplace to forget, and from the records of which tools: a record is only ever
+ * written for an AI tool, but a hand-edited manifest can hold one for another. */
+export interface MarketplaceForgotten {
+  readonly alias: string;
+  readonly toolIds: readonly ToolId[];
+}
+
+/** Takes the marketplace out of each listed tool's record that registered it, leaving the others
+ * as they are. */
 export function forgetMarketplaceIn(
   records: ToolRecords,
-  alias: string,
+  { alias, toolIds }: MarketplaceForgotten,
   rules: MarketplaceForgetting
 ): void {
-  for (const [toolId, record] of records) {
-    if (rules.marketplaceOf(record, alias) !== undefined)
+  for (const toolId of toolIds) {
+    const record = records.get(toolId);
+    if (record !== undefined && rules.marketplaceOf(record, alias) !== undefined)
       records.set(toolId, rules.withoutMarketplace(record, alias));
   }
 }
 
-/** Forgets the marketplace from every tool's record of one scope, as saved. */
+/** Forgets the marketplace from the listed tools' records of one scope, as saved. */
 export async function forgetMarketplaceInRecords(
   records: ScopeRecords & MarketplaceForgetting,
-  alias: string
+  forgotten: MarketplaceForgotten
 ): Promise<void> {
   const held = await records.loadRecords();
-  forgetMarketplaceIn(held, alias, records);
+  forgetMarketplaceIn(held, forgotten, records);
   await records.saveRecords(held);
 }

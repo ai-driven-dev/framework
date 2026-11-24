@@ -11,6 +11,7 @@ import type {
 import { forgetMarketplaceInRecords } from "../../../contexts/installation/application/marketplace/forget-marketplace.js";
 import type { ScopeRecords } from "../../../contexts/installation/contract/records/scope-records.js";
 import type { RecordClaimRules } from "../../../contexts/machine-claims/contract/record-claim-rules.js";
+import type { AiToolId } from "../../../shared/domain/tool.js";
 import type { ProjectCleanFactsOf } from "../../clean/clean-claims.js";
 
 export interface ProveProjectMarketplaceWithdrawalRequest {
@@ -40,6 +41,8 @@ export interface WithdrawProjectMarketplaceFromHostDeps {
     execute(request: WithdrawalStepRequest): Promise<void>;
   };
   readonly facts: ProjectCleanFactsOf;
+  /** The tools whose records can hold the marketplace. */
+  readonly aiToolIds: readonly AiToolId[];
   readonly records: ProjectCleanRecords &
     ScopeRecords &
     Pick<RegistrationRecordRules, "marketplaceOf"> &
@@ -86,6 +89,9 @@ export class WithdrawProjectMarketplaceFromHost {
       ...withdrawal,
       marketplace: name,
     });
-    await forgetMarketplaceInRecords(this.deps.records, name);
+    await forgetMarketplaceInRecords(this.deps.records, {
+      alias: name,
+      toolIds: this.deps.aiToolIds,
+    });
   }
 }
