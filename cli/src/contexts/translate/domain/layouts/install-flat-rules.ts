@@ -1,8 +1,4 @@
-import {
-  parseFrontmatter,
-  reshapeFrontmatter,
-  serializeFrontmatter,
-} from "../../../../shared/domain/markdown.js";
+import { parseFrontmatter, reshapeFrontmatter } from "../../../../shared/domain/markdown.js";
 import type {
   PluginComponentFile,
   PluginDistribution,
@@ -10,31 +6,35 @@ import type {
 import type { ComponentPlan } from "../rules/component-pipeline.js";
 import type { TranslatedFlatPlugin } from "../translate-profile.js";
 
-/** The rules a tool that applies every rule to every file would broaden, each with its paths. */
-export function scopedRulesOf(
+/** The rules of a tool that applies every rule to every file and reads no frontmatter, each with
+ * its paths: none for a rule that applies everywhere. */
+export function ruleScopesOf(
   dist: PluginDistribution,
   plugins: TranslatedFlatPlugin
 ): ReadonlyMap<PluginComponentFile, readonly unknown[]> {
   if (plugins.flatLayout().rules !== "top-level-unscoped") return new Map();
-  const scoped = new Map<PluginComponentFile, readonly unknown[]>();
-  for (const file of dist.components.rules) {
-    const { paths } = parseFrontmatter(file.content).frontmatter;
-    const globs = typeof paths === "string" && paths !== "" ? [paths] : paths;
-    if (Array.isArray(globs) && globs.length > 0) scoped.set(file, globs);
-  }
-  return scoped;
+  return new Map(
+    dist.components.rules.map((file) => {
+      const { paths } = parseFrontmatter(file.content).frontmatter;
+      const globs = typeof paths === "string" && paths !== "" ? [paths] : paths;
+      return [file, Array.isArray(globs) ? globs : []];
+    })
+  );
 }
 
-/** The plan with the rule's scope stated as the first line of its body, the line the rule-generate
- * skill writes, for a tool that reads no `paths` frontmatter. */
+/** The plan with no frontmatter and the rule's scope stated as the first line of its body, the
+ * form the rule-generate skill writes for a tool that reads no frontmatter. */
 export function scopeStated(plan: ComponentPlan, paths: readonly unknown[]): ComponentPlan {
-  const line = `Applies to files matching ${paths.map((glob) => `\`${glob}\``).join(", ")}.\n\n`;
+  const line =
+    paths.length === 0
+      ? ""
+      : `Applies to files matching ${paths.map((glob) => `\`${glob}\``).join(", ")}.\n\n`;
   return {
     ...plan,
     shape: (text) =>
       reshapeFrontmatter(text, {
-        frontmatter: (frontmatter) => frontmatter,
-        serialize: (frontmatter, body) => serializeFrontmatter(frontmatter, line + body),
+        frontmatter: () => ({}),
+        serialize: (_, body) => line + body,
       }),
   };
 }

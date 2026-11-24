@@ -5,7 +5,8 @@ import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { translator } from "../../testing/engine-kit.builder.js";
 import { kilo, opencode } from "../../testing/registered-profiles.builder.js";
 
-const SCOPED_AS_LIST = '---\npaths:\n  - "**/*.ts"\n  - "**/*.tsx"\n---\n# TypeScript\n';
+const SCOPED_AS_LIST =
+  '---\ndescription: "TypeScript"\npaths:\n  - "**/*.ts"\n  - "**/*.tsx"\n---\n# TypeScript\n';
 
 function distWithRules(scopedContent = SCOPED_AS_LIST): PluginDistribution {
   const unscoped = { relativePath: "rules/01-standards/1-naming.md", content: "# Naming\n" };
@@ -37,10 +38,29 @@ describe("a rule installed flat for a tool that reads no paths frontmatter", () 
 
     const written = result.files.find((f) => f.relativePath.endsWith("2-ts.md"));
     expect(written?.relativePath).toBe(".kilo/rules/aidd-craft-01-standards-2-ts.md");
-    expect(written?.content).toMatch(
-      /---\n(?:.*\n)*?---\nApplies to files matching `\*\*\/\*\.ts`, `\*\*\/\*\.tsx`\.\n\n# TypeScript\n$/
+    expect(written?.content).toBe(
+      "Applies to files matching `**/*.ts`, `**/*.tsx`.\n\n# TypeScript\n"
     );
     expect(result.skipped).toEqual([]);
+  });
+
+  it("writes an unscoped rule without frontmatter, as the rule-generate skill does", () => {
+    const unscoped = {
+      relativePath: "rules/01-standards/1-naming.md",
+      content: '---\ndescription: "Naming"\n---\n# Naming\n',
+    };
+    const base = distWithRules();
+    const dist = new PluginDistribution({
+      manifest: base.manifest,
+      format: TOOL.claude,
+      files: [unscoped],
+      components: { ...base.components, rules: [unscoped] },
+    });
+
+    const written = translator
+      .translate(dist, kilo)
+      .find((f) => f.relativePath.endsWith("1-naming.md"));
+    expect(written?.content).toBe("# Naming\n");
   });
 
   it("states a single path written as a string the same way", () => {
