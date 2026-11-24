@@ -8,7 +8,7 @@ import { ListMarketplaces } from "../../contexts/distribution/application/list-m
 import { PinNewestFrameworkSource } from "../../contexts/distribution/application/pin-newest-framework-source.use-case.js";
 import { FindMarketplaceToRemove } from "../../contexts/distribution/application/remove/find-marketplace-to-remove.use-case.js";
 import { FindUserMarketplace } from "../../contexts/distribution/application/remove/find-user-marketplace.use-case.js";
-import { RemoveBuiltMarketplace } from "../../contexts/distribution/application/remove/remove-built-marketplace.use-case.js";
+import { ForgetProjectMarketplace } from "../../contexts/distribution/application/remove/forget-project-marketplace.use-case.js";
 import { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.use-case.js";
 import { PlanProjectClean } from "../../contexts/installation/application/clean/plan-project-clean.use-case.js";
 import { ListPluginSources } from "../../contexts/installation/application/marketplace/list-plugin-sources.use-case.js";
@@ -25,7 +25,6 @@ import { CheckMarketplaceUpstream } from "../../orchestration/marketplace/check-
 import { ListMarketplaceCatalogs } from "../../orchestration/marketplace/list-marketplace-catalogs.use-case.js";
 import { RefreshMarketplaces } from "../../orchestration/marketplace/refresh-marketplaces.use-case.js";
 import { RegisterMarketplace } from "../../orchestration/marketplace/register-marketplace.use-case.js";
-import { DropProjectMarketplace } from "../../orchestration/marketplace/remove/drop-project-marketplace.use-case.js";
 import { PurgeUserMarketplace } from "../../orchestration/marketplace/remove/purge-user-marketplace.use-case.js";
 import { RemoveMarketplacePlugins } from "../../orchestration/marketplace/remove/remove-marketplace-plugins.use-case.js";
 import { RemoveProjectMarketplace } from "../../orchestration/marketplace/remove/remove-project-marketplace.use-case.js";
@@ -140,10 +139,7 @@ function wireMarketplaceRemoval(base: Base, inst: Installation) {
       prompter,
       recordsOf(manifestRepo)
     ),
-    drop: new DropProjectMarketplace(
-      new RemoveMarketplace(marketplaceRegistry),
-      new RemoveBuiltMarketplace(fs)
-    ),
+    forget: new ForgetProjectMarketplace(marketplaceRegistry, fs),
     detachClaims: detachClaimsOf(projectCleanup),
   });
   const removeUserMarketplace = wireUserMarketplaceRemoval(base);

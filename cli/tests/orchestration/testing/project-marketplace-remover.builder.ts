@@ -4,14 +4,12 @@ import {
 } from "../../../src/composition/contexts/installation.js";
 import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { FindMarketplaceToRemove } from "../../../src/contexts/distribution/application/remove/find-marketplace-to-remove.use-case.js";
-import { RemoveBuiltMarketplace } from "../../../src/contexts/distribution/application/remove/remove-built-marketplace.use-case.js";
-import { RemoveMarketplace } from "../../../src/contexts/distribution/application/remove/remove-marketplace.use-case.js";
+import { ForgetProjectMarketplace } from "../../../src/contexts/distribution/application/remove/forget-project-marketplace.use-case.js";
 import type { MarketplaceRegistry } from "../../../src/contexts/distribution/ports/marketplace-registry.js";
 import { RemovePluginsFromMarketplace } from "../../../src/contexts/installation/application/marketplace/remove-plugins-from-marketplace.use-case.js";
 import type { RemoveProjectPlugin } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import type { ScopeRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
-import { DropProjectMarketplace } from "../../../src/orchestration/marketplace/remove/drop-project-marketplace.use-case.js";
 import { RemoveMarketplacePlugins } from "../../../src/orchestration/marketplace/remove/remove-marketplace-plugins.use-case.js";
 import { RemoveProjectMarketplace } from "../../../src/orchestration/marketplace/remove/remove-project-marketplace.use-case.js";
 import type { WithdrawProjectMarketplaceFromHost } from "../../../src/orchestration/marketplace/remove/withdraw-project-marketplace-from-host.use-case.js";
@@ -40,10 +38,7 @@ export function projectMarketplaceRemover(
       prompter,
       { ...recordsOf(manifestRepo), ...records }
     ),
-    drop: new DropProjectMarketplace(
-      new RemoveMarketplace(registry),
-      new RemoveBuiltMarketplace({ deleteDirectory: async () => {} })
-    ),
+    forget: new ForgetProjectMarketplace(registry, { deleteDirectory: async () => {} }),
     detachClaims: (projectRoot, { nativeRefs, plugins }) =>
       cleanup.detachClaims(projectRoot, nativeRefs, plugins),
   });

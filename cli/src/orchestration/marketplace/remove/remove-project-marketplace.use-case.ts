@@ -1,8 +1,8 @@
 import type { FindMarketplaceToRemove } from "../../../contexts/distribution/application/remove/find-marketplace-to-remove.use-case.js";
+import type { ForgetProjectMarketplace } from "../../../contexts/distribution/application/remove/forget-project-marketplace.use-case.js";
 import type { MarketplaceRemovalResult } from "../../../contexts/distribution/contract/marketplace-removal.js";
 import type { DetachPluginClaims } from "../../../contexts/installation/contract/records/plugin-claims.js";
 import type { Scope } from "../../../shared/domain/scope.js";
-import type { DropProjectMarketplace } from "./drop-project-marketplace.use-case.js";
 import type { RemoveMarketplacePlugins } from "./remove-marketplace-plugins.use-case.js";
 import type { WithdrawProjectMarketplaceFromHost } from "./withdraw-project-marketplace-from-host.use-case.js";
 
@@ -17,7 +17,7 @@ export interface RemoveProjectMarketplaceDeps {
   readonly hosts: Pick<WithdrawProjectMarketplaceFromHost, "execute">;
   readonly find: FindMarketplaceToRemove;
   readonly removePlugins: Pick<RemoveMarketplacePlugins, "execute">;
-  readonly drop: Pick<DropProjectMarketplace, "execute">;
+  readonly forget: Pick<ForgetProjectMarketplace, "execute">;
   readonly detachClaims: DetachPluginClaims;
 }
 
@@ -40,7 +40,7 @@ export class RemoveProjectMarketplace {
       autoConfirm: command.autoConfirm,
     });
     await withdrawal.apply();
-    await this.deps.drop.execute({ projectRoot, marketplace });
+    await this.deps.forget.execute({ projectRoot, marketplace });
     if (removal.claims !== undefined) await this.deps.detachClaims(projectRoot, removal.claims);
     return {
       marketplace,
