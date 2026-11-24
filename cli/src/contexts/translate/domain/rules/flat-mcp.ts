@@ -17,6 +17,14 @@ export interface PluginMcp {
   readonly declared: string;
 }
 
+/** Whether a flat build folds a plugin's MCP declaration into the tool's files. */
+export function foldsFlatMcp(contract: ToolBuildContract): boolean {
+  const { mcp } = contract.artifacts;
+  return (
+    (mcp.supported && mcp.mcpServersKey !== undefined) || contract.configArtifact !== undefined
+  );
+}
+
 /** Absent where the plugin declares no MCP file. The sink only merges what this holds. */
 export function flatMcp(
   canon: PluginDistribution,

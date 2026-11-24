@@ -16,6 +16,7 @@ function contract(): ToolBuildContract {
     ...stub,
     artifacts: {
       ...stub.artifacts,
+      mcp: aSupportedArtifact({ mcpServersKey: "mcpServers" }),
       hooks: aSupportedArtifact({
         placement: { kind: "hooks", scriptsDir: ".stub/" },
         hooksFile: {
@@ -57,5 +58,18 @@ describe("the folders a flat build's commands name", () => {
       (file) => file.relativePath === ".stub/plug.hooks.json"
     );
     expect(own?.content).toContain("|./plug/scripts/check.sh");
+  });
+
+  it("copies the folder an MCP command names, and points the server at it", () => {
+    const mcp = JSON.stringify({ mcpServers: { serve: { command: `${ROOT}/bin/server.js` } } });
+    const built = flatBuild({
+      ".mcp.json": mcp,
+      "bin/server.js": "serve",
+      "docs/guide.md": "guide",
+    });
+    const paths = built.files.map((file) => file.relativePath);
+    expect(paths).toContain("plug/bin/server.js");
+    expect(paths.some((path) => path.includes("docs"))).toBe(false);
+    expect(built.mcp?.declared).toContain("/out/plug/bin/server.js");
   });
 });

@@ -8,7 +8,7 @@ import { buildPlans } from "./layouts/build-layout.js";
 import { installPlan } from "./layouts/install-layout.js";
 import type { OutputFile } from "./output-file.js";
 import { applyPlan, type ComponentPlan } from "./rules/component-pipeline.js";
-import { flatMcp, type PluginMcp } from "./rules/flat-mcp.js";
+import { flatMcp, foldsFlatMcp, type PluginMcp } from "./rules/flat-mcp.js";
 import {
   isHooksFile,
   type ProjectHooks,
@@ -136,9 +136,7 @@ function flatMcpOf(
   dist: PluginDistribution,
   { contract, outDir }: Extract<TranslateLayout, { kind: "build" }>
 ): PluginMcp | null {
-  const { mcp } = contract.artifacts;
-  const foldsMcp = mcp.supported && mcp.mcpServersKey !== undefined;
-  return foldsMcp || contract.configArtifact ? flatMcp(dist, { contract, outDir }) : null;
+  return foldsFlatMcp(contract) ? flatMcp(dist, { contract, outDir }) : null;
 }
 
 function hooksManifestOf(dist: PluginDistribution): string | null {

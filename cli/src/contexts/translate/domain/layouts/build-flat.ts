@@ -19,6 +19,7 @@ import {
 } from "../flat-layout.js";
 import { agentLinks } from "../rules/agent-markdown.js";
 import { agentShape, type ComponentPlan } from "../rules/component-pipeline.js";
+import { foldsFlatMcp } from "../rules/flat-mcp.js";
 import { flatHookPlans } from "../rules/hook-plans.js";
 import { agentFiles, baseOf, namedByFolder } from "./build-shared.js";
 
@@ -37,14 +38,15 @@ export function buildFlatPlans(
   ];
 }
 
-/** The folders a plugin's hook commands name that the tool has no place for, copied whole under the
- * plugin's name: only those, never every extra folder.
- *
- * Limit: an MCP command's folders are not copied; no shipped plugin has a `.mcp.json`. */
+/** The folders a plugin's hook and MCP commands name that the tool has no place for, copied whole
+ * under the plugin's name: only those, never every extra folder. */
 function flatCommandFiles(canon: PluginDistribution, contract: ToolBuildContract): ComponentPlan[] {
   const { hooks } = contract.artifacts;
   const plugin = canon.manifest.name;
-  const commands = hooks.supported ? canon.components.hooks.filter(isHooksManifest) : [];
+  const commands = [
+    ...(hooks.supported ? canon.components.hooks.filter(isHooksManifest) : []),
+    ...(foldsFlatMcp(contract) ? canon.components.mcp : []),
+  ];
   const folders = new Set(
     commands.flatMap((file) => flatCommandFolders(contract, file.content, plugin))
   );
