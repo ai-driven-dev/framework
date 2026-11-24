@@ -11,7 +11,7 @@ import { syntheticCatalog } from "../../../shared/testing/synthetic-tool-id.buil
 function change() {
   const remove = vi.fn(async () => undefined);
   const userRemove = vi.fn(async () => undefined);
-  const update = vi.fn(async () => ["aidd-dev"]);
+  const update = vi.fn(async () => ({ updated: ["aidd-dev"], skippedUserScope: [] }));
   const userUpdate = vi.fn(async () => ["aidd-vcs@aidd-framework"]);
   const activation = vi.fn(async () => ({ binaryMissing: [], errors: [], failed: false }));
   const containerOf: Mock = vi.fn(async () => ({

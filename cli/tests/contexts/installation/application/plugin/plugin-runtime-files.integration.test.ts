@@ -114,7 +114,7 @@ describe("plugin runtime files on an existing tool", () => {
         toolIds: [TOOL.opencode],
         projectRoot: ROOT,
       })
-    ).toEqual([]);
+    ).toEqual({ updated: [], skippedUserScope: [] });
     expect(await deps.fs.readFile(join(ROOT, EVENTS_FILE))).toContain("setupOpencodeEvents");
     expect(await deps.fs.readFile(join(ROOT, "opencode.json"))).toBe(USER_CONFIG);
     expect(deps.manifestRepo.getCurrent()?.getPlugins(TOOL.opencode)[0]).toEqual(plugin);

@@ -58,7 +58,7 @@ export class RefreshAgentPlugins {
       for (const name of names) rewritten.add(name);
     }
     if (placed.projectPlugins.length > 0) {
-      const names = await this.deps.updatePlugin.execute({
+      const { updated: names } = await this.deps.updatePlugin.execute({
         toolIds: [...placed.projectPlugins],
         projectRoot,
         rebuild: true,

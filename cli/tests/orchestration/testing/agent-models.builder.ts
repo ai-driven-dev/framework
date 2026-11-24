@@ -60,7 +60,7 @@ export function setup(
       execute: async (options) => {
         if (updateFails) throw new Error("build failed");
         updates.push(options);
-        return ["aidd-orchestrator"];
+        return { updated: ["aidd-orchestrator"], skippedUserScope: [] };
       },
     },
     updateUserPlugin: {

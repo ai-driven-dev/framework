@@ -16,6 +16,11 @@ interface PluginInstallOutcome {
   readonly installed: readonly string[];
 }
 
+interface PluginsUpdated {
+  readonly updated: readonly string[];
+  readonly skippedUserScope: readonly string[];
+}
+
 export function printInstalledPlugins(
   output: Output,
   byTool: ReadonlyMap<string, readonly NamedPlugin[]>
@@ -56,12 +61,14 @@ export function printSearchHits(output: Output, hits: readonly SearchedPlugin[])
   }
 }
 
-export function printPluginsUpdated(output: Output, updated: readonly string[]): void {
-  if (updated.length === 0) {
-    output.success("All plugins are up to date.");
-    return;
-  }
-  output.success(`Updated: ${updated.join(", ")}.`);
+export function printPluginsUpdated(output: Output, outcome: PluginsUpdated): void {
+  const { updated, skippedUserScope } = outcome;
+  if (updated.length === 0) output.success("All plugins are up to date.");
+  else output.success(`Updated: ${updated.join(", ")}.`);
+  if (skippedUserScope.length > 0)
+    output.warn(
+      `${skippedUserScope.join(", ")}: user-scope plugins not updated. Run \`aidd plugin update --scope user\`, then \`aidd setup\`.`
+    );
 }
 
 export function printPluginRemoved(output: Output, name: string): void {

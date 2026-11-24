@@ -27,7 +27,7 @@ export class UpdateUserPlugin {
   ) {}
 
   async execute(command: UpdateUserPluginRequest): Promise<string[]> {
-    return this.updatePlugin.execute({
+    const { updated } = await this.updatePlugin.execute({
       ...command,
       machine: {
         isWithinUserScope: this.isWithinUserScope,
@@ -39,5 +39,6 @@ export class UpdateUserPlugin {
           }),
       },
     });
+    return updated;
   }
 }

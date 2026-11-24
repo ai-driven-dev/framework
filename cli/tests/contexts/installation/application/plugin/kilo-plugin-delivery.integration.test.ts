@@ -119,7 +119,7 @@ describe.each(["kilo.jsonc", ".kilo/kilo.jsonc"])(
           toolIds: [TOOL.kilo],
           projectRoot: ROOT,
         })
-      ).toEqual(["sample-plugin"]);
+      ).toEqual({ updated: ["sample-plugin"], skippedUserScope: [] });
       expect(await deps.fs.readFile(join(ROOT, configPath))).toBe(USER_CONFIG);
       expect(await deps.fs.readFile(join(ROOT, HOOK))).toBe(upgradedHook);
       expect(await deps.fs.readFile(join(ROOT, BRIDGE))).toContain('id: "sample-plugin-hooks"');

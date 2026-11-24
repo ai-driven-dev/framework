@@ -115,7 +115,7 @@ describe("UpdatePlugin - Mode A marketplace tools (claude/codex/copilot)", () =>
     expect(before?.plugin.files.size).toBe(0);
     expect(deps.fs.listAll().some((p) => p.includes(".claude/plugins/"))).toBe(false);
 
-    const updated = await makeUpdateUseCase(deps, registry).execute({
+    const { updated } = await makeUpdateUseCase(deps, registry).execute({
       toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
     });
@@ -161,7 +161,7 @@ describe("UpdatePlugin - flat-mode tools are unaffected (regression guard)", () 
     await installStaleGithubPlugin(deps, registry, TOOL.opencode);
     deps.fs.setFile(BUILT_OPENCODE_SKILL, "# Demo skill v2");
 
-    const updated = await makeUpdateUseCase(deps, registry).execute({
+    const { updated } = await makeUpdateUseCase(deps, registry).execute({
       toolIds: [TOOL.opencode],
       projectRoot: PROJECT_ROOT,
     });

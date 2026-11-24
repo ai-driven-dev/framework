@@ -14,6 +14,7 @@ import { resolvePluginToolIds, userPluginTargets } from "./plugin-target-resolut
 import { assertSelectionResolves, nativeTargets, refreshNativeRefs } from "./update-native-refs.js";
 import type {
   MachinePluginUpdate,
+  PluginUpdateOutcome,
   UpdatePluginCommand,
   UpdatePluginRequest,
 } from "./update-plugin-command.js";
@@ -37,9 +38,12 @@ export class UpdatePlugin {
     private readonly tools: InstallationCatalog
   ) {}
 
-  async execute({ machine, ...command }: UpdatePluginCommand): Promise<string[]> {
+  async execute({ machine, ...command }: UpdatePluginCommand): Promise<PluginUpdateOutcome> {
     if (machine !== undefined) {
-      const run = () => this.updateMachine({ ...command, ...machine });
+      const run = async () => ({
+        updated: await this.updateMachine({ ...command, ...machine }),
+        skippedUserScope: [],
+      });
       return this.deps.userManifest.withExclusiveAccess(run);
     }
     if (command.scope === "user")

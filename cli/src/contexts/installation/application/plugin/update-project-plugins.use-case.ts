@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { compareSemver } from "../../../../shared/domain/plugin/semver.js";
+import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { InvalidPluginScopeError } from "../../contract/installation.error.js";
 import type { Manifest } from "../../domain/manifest.js";
@@ -12,7 +13,7 @@ import type { EnsurePluginRuntimeFiles } from "../install/config/ensure-plugin-r
 import type { ReplacePluginFiles } from "../materialize/replace-plugin-files.use-case.js";
 import { requireManifest } from "../shared/require-manifest.js";
 import { resolvePluginToolIds } from "./plugin-target-resolution.js";
-import type { UpdatePluginRequest } from "./update-plugin-command.js";
+import type { PluginUpdateOutcome, UpdatePluginRequest } from "./update-plugin-command.js";
 
 /** Where one tool's project plugins are updated, and the manifest recording them. */
 export interface ProjectPluginUpdate {
@@ -38,7 +39,7 @@ export class UpdateProjectPlugins {
     private readonly tools: ToolCatalog
   ) {}
 
-  async execute(request: UpdatePluginRequest): Promise<string[]> {
+  async execute(request: UpdatePluginRequest): Promise<PluginUpdateOutcome> {
     const { pluginNames, toolIds, projectRoot } = request;
     const manifest = await requireManifest(this.deps.manifestRepo);
     const update = {
@@ -47,13 +48,19 @@ export class UpdateProjectPlugins {
       manifest,
       rebuild: request.rebuild === true,
     };
-    const updated: string[] = [];
+    const outcome: PluginUpdateOutcome = { updated: [], skippedUserScope: [] };
     for (const toolId of resolvePluginToolIds(toolIds, manifest, this.tools)) {
       const tool = this.tools.aiProfile(toolId);
-      updated.push(...(await this.updateTool(tool, pluginNames, update)));
+      outcome.updated.push(...(await this.updateTool(tool, pluginNames, update)));
+      if (!pluginNames && this.holdsUserScope(manifest, toolId))
+        outcome.skippedUserScope.push(toolId);
     }
     await this.deps.manifestRepo.save(manifest);
-    return updated;
+    return outcome;
+  }
+
+  private holdsUserScope(manifest: Manifest, toolId: AiToolId): boolean {
+    return manifest.getRecordedPlugins(toolId).some((p) => p.plugin.scope === "user");
   }
 
   private async updateTool(

@@ -154,7 +154,7 @@ describe("printing updated plugins", () => {
   it("reports everything current when nothing moved", () => {
     const output = new CapturingOutput(false);
 
-    printPluginsUpdated(output, []);
+    printPluginsUpdated(output, { updated: [], skippedUserScope: [] });
 
     expect(output.at("success")).toEqual(["All plugins are up to date."]);
   });
@@ -162,9 +162,21 @@ describe("printing updated plugins", () => {
   it("names what moved, comma separated", () => {
     const output = new CapturingOutput(false);
 
-    printPluginsUpdated(output, ["one", "two"]);
+    printPluginsUpdated(output, { updated: ["one", "two"], skippedUserScope: [] });
 
     expect(output.at("success")).toEqual(["Updated: one, two."]);
+  });
+});
+
+describe("printing skipped user-scope plugins", () => {
+  it("names the tools and the commands that update them", () => {
+    const output = new CapturingOutput(false);
+
+    printPluginsUpdated(output, { updated: [], skippedUserScope: ["cursor"] });
+
+    expect(output.at("warn")).toEqual([
+      "cursor: user-scope plugins not updated. Run `aidd plugin update --scope user`, then `aidd setup`.",
+    ]);
   });
 });
 

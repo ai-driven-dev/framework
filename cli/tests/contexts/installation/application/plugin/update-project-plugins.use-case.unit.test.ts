@@ -62,7 +62,10 @@ describe("updating a plugin in a project", () => {
     const { deps, update } = await installedSample();
     await deps.fs.deleteFile(GREET_PATH);
 
-    const updated = await update.execute({ toolIds: [TOOL.claude], projectRoot: PROJECT_ROOT });
+    const { updated } = await update.execute({
+      toolIds: [TOOL.claude],
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect([updated, deps.fs.has(GREET_PATH)]).toStrictEqual([[], false]);
   });
@@ -80,7 +83,7 @@ describe("updating a plugin in a project", () => {
     const { deps, update } = await installedSample();
     await deps.fs.deleteFile(GREET_PATH);
 
-    const updated = await update.execute({
+    const { updated } = await update.execute({
       toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
       rebuild: true,
