@@ -83,7 +83,9 @@ export function flatPathOfPluginSuffix(
 }
 
 /** Whether a flat build folds a plugin's MCP servers into the tool's config, so the commands in
- * its MCP declaration are the ones the build must ship. */
+ * its MCP declaration are the ones the build must ship. A tool with an event bridge also ships
+ * folders its bridge never replays: accepted, as the folders are small and shipping fewer would
+ * need the bridge to say which it runs. */
 export function flatFoldsMcp(contract: ToolBuildContract): boolean {
   const { mcp } = contract.artifacts;
   return (
