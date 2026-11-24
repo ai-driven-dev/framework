@@ -59,13 +59,14 @@ export async function placeFlatPlugin(
   });
   const hooks = await placeProjectHooks(request, { ctx, deps });
   const skipped: ReadonlySkipList = [...ctx.skipped, ...mcp.mcpSkips, ...hooks.skipped];
+  // Limit: a version with no files, MCP or hooks returns here without removing what an older
+  // version placed; no plugin has been observed to drop all three.
   if (ctx.files.length === 0 && mcp.mcpEntries.size === 0 && hooks.projectHooks === undefined)
     return { skipped };
   const taken = request.userScopeDirTaken === true;
   const files = taken ? [] : ctx.files;
   const written = await writeChangedPluginFiles(deps.fs, files, ctx.baseDir);
-  const previous = taken ? undefined : request.previousFiles;
-  await removeObsoletePluginFiles(deps.fs, previous ?? new Map(), {
+  await removeObsoletePluginFiles(deps.fs, request.previousFiles ?? new Map(), {
     current: new Set(files.map((f) => f.relativePath)),
     base: { dir: ctx.baseDir, scope: ctx.scope },
   });

@@ -52,8 +52,7 @@ export async function placeBuiltTreePlugin(
       ? projectRoot
       : scopeBaseOf(tool, { scope, projectRoot, homedir: () => deps.homedir() });
   const written = await writeChangedPluginFiles(deps.fs, owned, baseDir);
-  const previous = taken ? undefined : request.previousFiles;
-  await removeObsoletePluginFiles(deps.fs, previous ?? new Map(), {
+  await removeObsoletePluginFiles(deps.fs, request.previousFiles ?? new Map(), {
     current: new Set(owned.map((f) => f.relativePath)),
     base: { dir: baseDir, scope },
   });
