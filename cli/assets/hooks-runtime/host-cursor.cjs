@@ -9,7 +9,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const HOST = "cursor";
-// `sessionEnd` is left out: the session is over, so nothing is left to continue.
+// `sessionEnd` stays unmapped: it is fire and forget, with no output to answer.
 const EVENTS = new Map([
   ["sessionStart", "SessionStart"],
   ["postToolUse", "PostToolUse"],
