@@ -3,7 +3,6 @@ import {
   asMdc,
   descriptionOnlyRule,
   globsScopedRule,
-  unchangedFrontmatter,
 } from "../../../../../src/contexts/tools/domain/formats/rule-frontmatter.js";
 import { rulesRows, WRITES_NOTHING } from "../../testing/profile-tables.builder.js";
 
@@ -41,12 +40,5 @@ describe("a rule scoped by a globs string", () => {
       "rules/a/naming.mdc",
       "rules/a/naming.txt",
     ]);
-  });
-});
-
-describe("a rule read as written", () => {
-  it("keeps the frontmatter it is given", () => {
-    const fm = { description: "d", globs: ["a"] };
-    expect(unchangedFrontmatter(fm)).toBe(fm);
   });
 });

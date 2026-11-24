@@ -46,8 +46,3 @@ export function asMdc(install: (fileName: string) => string): (fileName: string)
     return path.endsWith(".md") ? `${path.slice(0, -3)}.mdc` : path;
   };
 }
-
-/** A rule whose frontmatter the tool reads as written. */
-export function unchangedFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-  return fm;
-}
