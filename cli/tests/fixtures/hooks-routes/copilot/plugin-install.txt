@@ -1,3 +1,8 @@
+## project/.github/plugins/aidd-context/.plugin/plugin.json
+{
+  "hooks": "./hooks/hooks.json"
+}
+
 ## project/.github/plugins/aidd-context/hooks/artifacts.cjs
 script, identical to the plugin source
 
@@ -284,6 +289,11 @@ script, identical to the plugin source
 
 ## project/.github/plugins/aidd-context/hooks/memory.cjs
 script, identical to the plugin source
+
+## project/.github/plugins/aidd-telemetry/.plugin/plugin.json
+{
+  "hooks": "./hooks/hooks.json"
+}
 
 ## project/.github/plugins/aidd-telemetry/hooks/catch-up.cjs
 script, identical to the plugin source

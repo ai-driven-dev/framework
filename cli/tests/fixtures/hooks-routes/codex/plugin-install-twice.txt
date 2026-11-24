@@ -4,6 +4,11 @@ second install threw DuplicatePluginError: Plugin 'aidd-context' is already inst
 approval_policy = "on-request"
 
 
+## project/.codex/plugins/aidd-context/.codex-plugin/plugin.json
+{
+  "hooks": "./hooks/hooks.json"
+}
+
 ## project/.codex/plugins/aidd-context/hooks/artifacts.cjs
 script, identical to the plugin source
 
@@ -290,6 +295,11 @@ script, identical to the plugin source
 
 ## project/.codex/plugins/aidd-context/hooks/memory.cjs
 script, identical to the plugin source
+
+## project/.codex/plugins/aidd-telemetry/.codex-plugin/plugin.json
+{
+  "hooks": "./hooks/hooks.json"
+}
 
 ## project/.codex/plugins/aidd-telemetry/hooks/catch-up.cjs
 script, identical to the plugin source

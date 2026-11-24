@@ -6,8 +6,10 @@ import type {
   PluginComponentFile,
   PluginDistribution,
 } from "../../../../shared/domain/plugin/plugin-distribution.js";
+import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 import { PLUGIN_HOOKS_RELATIVE } from "../canon-format.js";
 import { isProse, PLUGIN_HOOKS_DIR, parentDirOf, pathBelowHooks } from "../plugin-paths.js";
+import { presenceOf } from "../plugin-presence.js";
 import type { ComponentPlan } from "../rules/component-pipeline.js";
 import { toolLinks } from "../rules/links.js";
 import type { TranslatedAiTool, TranslatedNativePlugin } from "../translate-profile.js";
@@ -43,22 +45,26 @@ export function nativeHooksPlan(
   };
 }
 
-/** The plugin's own manifest, at the place the tool reads one. */
+/** The plugin's own manifest, at the place the tool reads one, synthesized as the tool's
+ * marketplace build synthesizes it. */
 export function manifestPlan(
   dist: PluginDistribution,
   at: {
+    readonly tool: TranslatedAiTool;
     readonly plugins: TranslatedNativePlugin;
     readonly pluginRoot: string;
     readonly manifestPaths: readonly string[];
   }
 ): ComponentPlan | null {
   const manifestPath = at.plugins.manifestPath();
-  if (manifestPath === null) return null;
+  const synthesize = at.tool.buildContract("marketplace")?.synthesizeManifest;
+  if (manifestPath === null || !synthesize) return null;
   for (const path of at.manifestPaths) {
     const file = dist.files.find((f) => f.relativePath === path);
-    if (file !== undefined) {
-      return { source: "", path: `${at.pluginRoot}${manifestPath}`, content: file.content };
-    }
+    if (file === undefined) continue;
+    const source = asPlainObject(JSON.parse(file.content)) ?? {};
+    const content = `${JSON.stringify(synthesize(source, presenceOf(dist)), null, 2)}\n`;
+    return { source: "", path: `${at.pluginRoot}${manifestPath}`, content };
   }
   return null;
 }

@@ -23,12 +23,15 @@ const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format
 const GREET_PATH = join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md");
 const SOURCE = { kind: "local" as const, path: PLUGIN_FIXTURE };
 const OLD_RELATIVE = ".claude/plugins/sample-plugin/old.md";
+const MANIFEST_RELATIVE = ".claude/plugins/sample-plugin/.claude-plugin/plugin.json";
+const COPIED_MANIFEST = '{"name":"sample-plugin","strict":true}';
 
 async function placeForClaude(replacing = false) {
   const deps = await buildInstallationDeps({ tools: registeredTools() });
   await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   if (replacing) deps.fs.setFile(join(PROJECT_ROOT, OLD_RELATIVE), "old");
+  if (replacing) deps.fs.setFile(join(PROJECT_ROOT, MANIFEST_RELATIVE), COPIED_MANIFEST);
   const built = fakeBuiltDeps({
     marketplaceRegistry: deps.marketplaceRegistry,
     homedir: () => "/home/u",
@@ -72,7 +75,17 @@ async function placeForClaude(replacing = false) {
     previousMcpEntries: new Map(),
     previousProjectHooks: new Map(),
     previousFiles: new Map(
-      replacing ? [[TOOL.claude, new Map([[OLD_RELATIVE, FileHash.of("old").value]])]] : []
+      replacing
+        ? [
+            [
+              TOOL.claude,
+              new Map([
+                [OLD_RELATIVE, FileHash.of("old").value],
+                [MANIFEST_RELATIVE, FileHash.of(COPIED_MANIFEST).value],
+              ]),
+            ],
+          ]
+        : []
     ),
   });
   return { deps, manifest, refreshed };
@@ -93,6 +106,14 @@ describe("placing a plugin in a project", () => {
       false,
       true,
     ]);
+  });
+
+  it("overwrites the byte-copied manifest an earlier release placed with the synthesized one", async () => {
+    const { deps } = await placeForClaude(true);
+
+    const written = deps.fs.getFile(join(PROJECT_ROOT, MANIFEST_RELATIVE)) ?? "{}";
+    expect(JSON.parse(written)).not.toHaveProperty("strict");
+    expect(written).not.toBe(COPIED_MANIFEST);
   });
 
   it("refreshes the runtime files of each tool it places for", async () => {

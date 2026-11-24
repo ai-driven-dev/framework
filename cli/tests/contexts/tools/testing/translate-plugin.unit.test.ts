@@ -14,7 +14,10 @@ const SHALLOW_MANIFEST = ".claude-plugin/plugin.json";
 const DEEPEST_MANIFEST = ".github/plugin/plugin.json";
 
 function distributionCarrying(manifests: readonly string[]): PluginDistribution {
-  const files = manifests.map((relativePath) => ({ relativePath, content: relativePath }));
+  const files = manifests.map((relativePath) => ({
+    relativePath,
+    content: JSON.stringify({ name: relativePath }),
+  }));
   return new PluginDistribution({
     manifest: { name: parsePluginName("sample-plugin"), version: "1.0.0" },
     format: TOOL.claude,
@@ -31,8 +34,7 @@ describe("translating a plugin for a test", () => {
 
     const { files } = translatePlugin(distribution, codex);
 
-    expect(files.find((file) => file.relativePath.endsWith("plugin.json"))?.content).toBe(
-      DEEPEST_MANIFEST
-    );
+    const manifest = files.find((file) => file.relativePath.endsWith("plugin.json"))?.content;
+    expect(JSON.parse(manifest ?? "{}").name).toBe(DEEPEST_MANIFEST);
   });
 });
