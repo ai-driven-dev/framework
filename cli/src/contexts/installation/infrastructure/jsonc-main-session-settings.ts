@@ -113,6 +113,7 @@ function readSettings(content: string | null): Record<string, unknown> {
   return settings;
 }
 
+// Twin of the tools context's `JsoncWriter`, kept apart: sharing it would force a port into `shared` that neither context needs.
 /** Sets each key, or removes it when `undefined`, touching nothing else in the file. */
 function edit(content: string, changes: Record<string, string | undefined>): string {
   let text = content.trim() === "" ? "{}" : content;
