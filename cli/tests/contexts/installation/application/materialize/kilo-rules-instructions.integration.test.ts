@@ -88,14 +88,21 @@ describe("a kilo plugin's rules, installed from a local path", () => {
     expect(fs.has(CONFIG)).toBe(false);
   });
 
-  it("takes the rule files and the listing back out on removal, keeping the user's entries", async () => {
-    const { fs, remove } = await install(
+  it("tracks both placed rules, then takes their files and the listing back out", async () => {
+    const { fs, manifest, remove } = await install(
       [UNSCOPED, SCOPED],
       JSON.stringify({ instructions: ["docs/team.md"] })
     );
+    const tracked = () => manifest.getPlugins(TOOL.kilo).flatMap((p) => [...p.files.keys()]);
+
+    expect(tracked().sort()).toEqual([
+      ".kilo/rules/aidd-craft-01-standards-1-naming.md",
+      ".kilo/rules/aidd-craft-01-standards-2-ts.md",
+    ]);
 
     await remove();
 
+    expect(tracked()).toEqual([]);
     expect(fs.has(RULE)).toBe(false);
     expect(fs.has(SCOPED_RULE)).toBe(false);
     expect(instructionsIn(fs)).toEqual(["docs/team.md"]);
