@@ -57,7 +57,7 @@ describe("building Copilot's marketplace contract", () => {
       name: "aidd-dev",
       description: "Development loop",
       version: "1.2.3",
-      agents: ["./agents/planner.md"],
+      agents: ["./agents/planner.agent.md"],
       skills: ["./skills/01-plan"],
       hooks: "./hooks/hooks.json",
       mcpServers: "./.mcp.json",

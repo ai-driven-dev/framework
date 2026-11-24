@@ -1,20 +1,13 @@
 /** Copilot's marketplace build contract: the OpenPlugin format. */
 
-import type {
-  AgentMarkdown,
-  ToolBuildContract,
-} from "../../../../../shared/domain/materialization/build-contract.js";
+import type { ToolBuildContract } from "../../../../../shared/domain/materialization/build-contract.js";
 import type { HooksRouting } from "../../formats/hooks/descriptor.js";
 import { pluginTreeContract } from "../../formats/plugin-tree-contract.js";
 import { resolveDescription, resolveVersion } from "../../marketplace-catalog.js";
 
 export function buildCopilotMarketplaceContract(
   hooks: HooksRouting,
-  output: {
-    readonly manifestRelative: string;
-    readonly marketplaceRelative: string;
-    readonly agentMarkdown: AgentMarkdown;
-  }
+  output: Parameters<typeof pluginTreeContract>[1]
 ): ToolBuildContract {
   return {
     ...pluginTreeContract(hooks, output),

@@ -69,6 +69,7 @@ export function pluginTreeContract(
         agentsField: true,
         hooksField: hooks.manifestNamesHooks === true,
         mcpRelative,
+        agentExt,
       }),
     manifestSchemaName: "plugin-manifest",
     artifacts: pluginTreeArtifacts(hooks, agentMarkdown, { mcpRelative, agentExt }),

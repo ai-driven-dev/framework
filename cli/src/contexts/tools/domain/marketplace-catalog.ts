@@ -36,6 +36,8 @@ export interface SynthesizeSharedManifestOpts {
   /** The file the manifest's `mcpServers` points at, relative to the plugin: `.mcp.json` unless
    * the tool reads its MCP servers from another file. */
   readonly mcpRelative?: string;
+  /** The extension the tool reads an agent file by, when it is not the source's `.md`. */
+  readonly agentExt?: string;
 }
 
 const isText = (value: unknown): value is string => typeof value === "string";
@@ -59,6 +61,9 @@ function identityFields(source: Record<string, unknown>): Record<string, unknown
   return fields;
 }
 
+const withExt = (name: string, ext: string | undefined): string =>
+  ext === undefined ? name : name.replace(/\.md$/, ext);
+
 /** The skills, agents, hooks and MCP paths the built plugin ships. */
 function shippedPaths(
   presence: PluginPresence,
@@ -66,7 +71,7 @@ function shippedPaths(
 ): Record<string, unknown> {
   const paths: Record<string, unknown> = {};
   if (opts.agentsField && presence.agentsList.length > 0) {
-    paths.agents = presence.agentsList.map((n) => `./agents/${n}`);
+    paths.agents = presence.agentsList.map((n) => `./agents/${withExt(n, opts.agentExt)}`);
   }
   if (presence.skillsList.length > 0) {
     paths.skills = presence.skillsList.map((n) => `./skills/${n}`);
