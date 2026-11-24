@@ -190,7 +190,7 @@ export const claude = defineAiTool({
       pluginsDir: ".claude/plugins/",
     }),
     manifest: manifestSection({
-      manifestRelativePath: ".claude-plugin/plugin.json",
+      manifestRelativePath: OUTPUT_PLUGIN_TREE.manifestRelative,
       pluginRootToken: hooksSupport.rootToken,
     }),
     // Its main session reads the model from the user settings file `nativeActivation` names.
