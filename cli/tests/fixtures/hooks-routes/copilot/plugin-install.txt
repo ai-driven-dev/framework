@@ -362,7 +362,7 @@ script, identical to the plugin source
 script, identical to the plugin source
 
 # recorded
-project copilot aidd-context scope=project: 19 hook files
+project copilot aidd-context scope=project: 20 hook files
   .github/plugins/aidd-context/hooks/artifacts.cjs
   .github/plugins/aidd-context/hooks/hooks.json
   .github/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/contract.json
@@ -374,6 +374,7 @@ project copilot aidd-context scope=project: 19 hook files
   .github/plugins/aidd-context/hooks/lib/contracts/05-rule-generate/assets/rule-template.md
   .github/plugins/aidd-context/hooks/lib/contracts/05-rule-generate/scripts/contract.json
   .github/plugins/aidd-context/hooks/lib/contracts/06-agent-generate/scripts/contract.json
+  .github/plugins/aidd-context/hooks/lib/contracts/06-agent-generate/scripts/custom/name.cjs
   .github/plugins/aidd-context/hooks/lib/contracts/07-command-generate/assets/command-template.md
   .github/plugins/aidd-context/hooks/lib/contracts/07-command-generate/scripts/contract.json
   .github/plugins/aidd-context/hooks/lib/contracts/lib/engine.cjs

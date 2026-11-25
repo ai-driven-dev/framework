@@ -363,7 +363,7 @@ script, identical to the plugin source
 }
 
 # recorded
-project claude aidd-context scope=project: 19 hook files
+project claude aidd-context scope=project: 20 hook files
   .claude/plugins/aidd-context/hooks/artifacts.cjs
   .claude/plugins/aidd-context/hooks/hooks.json
   .claude/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/contract.json
@@ -375,6 +375,7 @@ project claude aidd-context scope=project: 19 hook files
   .claude/plugins/aidd-context/hooks/lib/contracts/05-rule-generate/assets/rule-template.md
   .claude/plugins/aidd-context/hooks/lib/contracts/05-rule-generate/scripts/contract.json
   .claude/plugins/aidd-context/hooks/lib/contracts/06-agent-generate/scripts/contract.json
+  .claude/plugins/aidd-context/hooks/lib/contracts/06-agent-generate/scripts/custom/name.cjs
   .claude/plugins/aidd-context/hooks/lib/contracts/07-command-generate/assets/command-template.md
   .claude/plugins/aidd-context/hooks/lib/contracts/07-command-generate/scripts/contract.json
   .claude/plugins/aidd-context/hooks/lib/contracts/lib/engine.cjs
