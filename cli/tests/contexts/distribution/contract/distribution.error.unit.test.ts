@@ -6,6 +6,7 @@ import {
   MarketplaceNotFoundError,
   PluginFetchError,
   PluginNotInMarketplaceError,
+  SharedMarketplaceRemovalError,
   UnreadableMarketplaceRegistryError,
 } from "../../../../src/contexts/distribution/contract/distribution.error.js";
 
@@ -155,6 +156,29 @@ describe("when UnreadableMarketplaceRegistryError is raised", () => {
   it("carries its stable code", () => {
     expect(new UnreadableMarketplaceRegistryError("/r.json", "EACCES").code).toBe(
       "unreadable-marketplace-registry"
+    );
+  });
+});
+
+describe("when SharedMarketplaceRemovalError is raised", () => {
+  it("carries its data and says nothing itself", () => {
+    const error = new SharedMarketplaceRemovalError("aidd-framework", "user");
+    expect({
+      name: error.name,
+      marketplace: error.marketplace,
+      scope: error.scope,
+      message: error.message,
+    }).toStrictEqual({
+      name: "SharedMarketplaceRemovalError",
+      marketplace: "aidd-framework",
+      scope: "user",
+      message: "",
+    });
+  });
+
+  it("carries its stable code", () => {
+    expect(new SharedMarketplaceRemovalError("aidd-framework", "user").code).toBe(
+      "shared-marketplace-removal"
     );
   });
 });
