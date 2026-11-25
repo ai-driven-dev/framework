@@ -338,6 +338,10 @@ describe("the words of what a person does about a doctor issue", () => {
       { code: "remove-stale-declaration", name: "m", file: "f.json" },
       "Remove the `m` entry from f.json, or run `aidd marketplace refresh` if the project registers it again.",
     ],
+    [
+      { code: "repair-settings-file", file: "f.json" },
+      "Repair the JSON in f.json by hand, or delete it and run `aidd marketplace refresh` to write it back.",
+    ],
     ["a sentence naming no command", "a sentence naming no command"],
   ];
 
