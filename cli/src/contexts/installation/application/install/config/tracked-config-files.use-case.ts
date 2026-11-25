@@ -123,8 +123,8 @@ export class TrackedConfigFiles {
   ): Promise<MergeFileEntry[]> {
     const entries: MergeFileEntry[] = [];
     for (const file of files) {
-      const diskContent = await this.fs.readFile(join(projectRoot, file.relativePath));
-      const hashes = extractMergeEntries(diskContent, null);
+      const diskPath = join(projectRoot, file.relativePath);
+      const hashes = extractMergeEntries(await this.fs.readFile(diskPath), null, diskPath);
       entries.push({ relativePath: file.relativePath, sectionKey: null, entries: hashes });
     }
     return entries;

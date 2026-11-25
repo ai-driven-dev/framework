@@ -127,7 +127,7 @@ describe("TrackedConfigFiles merge-and-track", () => {
       {
         relativePath: "s.json",
         sectionKey: null,
-        entries: extractMergeEntries(merged, null),
+        entries: extractMergeEntries(merged, null, "s.json"),
       },
     ]);
   });

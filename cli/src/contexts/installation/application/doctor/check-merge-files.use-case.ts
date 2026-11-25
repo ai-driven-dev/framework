@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { extractMergeEntries, type MergeFileEntry } from "../../../../shared/domain/merge.js";
+import { type MergeFileEntry, readMergeEntries } from "../../../../shared/domain/merge.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { DoctorIssue } from "../../contract/doctor-issue.js";
 import { driftOf } from "../../domain/drift.js";
@@ -47,7 +47,17 @@ export class CheckMergeFiles {
 
   private async compareKeys(mergeFile: MergeFileEntry, fullPath: string): Promise<DoctorIssue[]> {
     const content = await this.fs.readFile(fullPath);
-    const diskEntries = extractMergeEntries(content, mergeFile.sectionKey);
+    const read = readMergeEntries(content, mergeFile.sectionKey);
+    if (!read.ok) {
+      return [
+        {
+          severity: "error",
+          message: `Unparseable merge file: ${mergeFile.relativePath}`,
+          fix: "Repair the JSON in this file, then run sync again.",
+        },
+      ];
+    }
+    const diskEntries = read.entries;
     const issues: DoctorIssue[] = [];
     for (const [key, manifestHash] of Object.entries(mergeFile.entries)) {
       const verdict = driftOf(manifestHash.value, diskEntries[key] ?? null);
