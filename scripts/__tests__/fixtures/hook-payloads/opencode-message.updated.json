@@ -1,0 +1,29 @@
+{
+  "host": "opencode",
+  "event": "message.updated",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "id": "evt_212d0a2bb001wDFNn54RB0BLO9",
+        "type": "message.updated",
+        "properties": {
+          "sessionID": "00000000-0000-4000-8000-000000000000",
+          "info": {
+            "id": "msg_212d0a2b9001xucE0L2l1A7tzY",
+            "role": "user",
+            "sessionID": "00000000-0000-4000-8000-000000000000",
+            "time": {
+              "created": 1795611992761
+            },
+            "agent": "build",
+            "model": {
+              "providerID": "opencode",
+              "modelID": "big-pickle"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

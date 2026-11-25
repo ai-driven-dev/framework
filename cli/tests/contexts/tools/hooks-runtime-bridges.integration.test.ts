@@ -131,12 +131,6 @@ async function recorded(ws: Workspace, count: number): Promise<readonly Recorded
   throw new Error(`fewer than ${count} hook calls recorded`);
 }
 
-/** OpenCode runs SessionStart when the plugin loads, without waiting for it: its record can
- * land after the next one's. */
-function afterStart(calls: readonly Recorded[]): readonly Recorded[] {
-  return calls.filter((call) => call.event !== "SessionStart");
-}
-
 type Handler = (...args: unknown[]) => Promise<void>;
 
 interface Plugin {
@@ -203,10 +197,11 @@ function kiloBridge(): string {
 }
 
 describe("OpenCode, through its bridge", () => {
-  it("reads the server start as SessionStart, with no session yet", async () => {
+  it("reads a created session as SessionStart, in the session's own folder", async () => {
     const ws = await workspace("opencode", opencodeBridge());
-    const [init] = await captured("opencode-server-init.json", ws.project);
-    await start(ws, init as Record<string, unknown>);
+    const [created] = await captured("opencode-session.created.json", ws.project);
+    const { plugin } = await start(ws, { directory: ws.dir });
+    await plugin.event({ event: created });
 
     expect(await recorded(ws, 1)).toMatchObject([
       {
@@ -214,10 +209,24 @@ describe("OpenCode, through its bridge", () => {
         event: "SessionStart",
         files: [],
         stopActive: false,
-        sessionId: null,
+        sessionId: SESSION,
         cwd: ws.project,
       },
     ]);
+  });
+
+  it("reads the first event of a continued session, which was never created again, as SessionStart once", async () => {
+    const ws = await workspace("opencode", opencodeBridge());
+    const [first] = await captured("opencode-message.updated.json", ws.project);
+    const { plugin } = await start(ws, { directory: ws.project });
+    await plugin.event({ event: first });
+    await plugin.event({ event: first });
+
+    expect(await recorded(ws, 1)).toMatchObject([
+      { host: "opencode", event: "SessionStart", sessionId: SESSION, cwd: ws.project },
+    ]);
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    expect(await recorded(ws, 1)).toHaveLength(1);
   });
 
   it("leaves OpenCode 1.19's early V2 setup context alone, which has no location", async () => {
@@ -242,7 +251,7 @@ describe("OpenCode, through its bridge", () => {
     if (write === undefined) throw new Error("no captured write");
     await plugin["tool.execute.after"](write.call, write.output);
 
-    expect(afterStart(await recorded(ws, 2))[0]).toMatchObject({
+    expect((await recorded(ws, 1))[0]).toMatchObject({
       event: "PostToolUse",
       files: [{ path: join(ws.project, "notes.md"), content: "hello\n", written: "hello\n" }],
       sessionId: SESSION,
@@ -259,7 +268,7 @@ describe("OpenCode, through its bridge", () => {
     const { plugin } = await start(ws, { directory: ws.project });
     await plugin["tool.execute.after"](shell?.call, shell?.output);
 
-    expect(afterStart(await recorded(ws, 2))[0]).toMatchObject({ files: [], command: "echo hi" });
+    expect((await recorded(ws, 1))[0]).toMatchObject({ files: [], command: "echo hi" });
   });
 
   it("reads an edit as its file, with what it wrote and what it replaced", async () => {
@@ -268,7 +277,7 @@ describe("OpenCode, through its bridge", () => {
     const { plugin } = await start(ws, { directory: ws.project });
     await plugin["tool.execute.after"](edit.call, edit.output);
 
-    expect(afterStart(await recorded(ws, 2))[0]?.files).toStrictEqual([
+    expect((await recorded(ws, 1))[0]?.files).toStrictEqual([
       { path: join(ws.project, "notes.md"), written: "hello world", replaced: "hello" },
     ]);
   });
@@ -279,7 +288,7 @@ describe("OpenCode, through its bridge", () => {
     const { plugin } = await start(ws, { directory: ws.project });
     await plugin["tool.execute.after"](patch.call, patch.output);
 
-    expect(afterStart(await recorded(ws, 2))[0]).toMatchObject({
+    expect((await recorded(ws, 1))[0]).toMatchObject({
       event: "PostToolUse",
       files: patched(ws.project),
       sessionId: SESSION,
@@ -313,12 +322,14 @@ describe("OpenCode, through its bridge", () => {
 
   it("reads an idle session as Stop, continues it once, and reads the next one as a continuation", async () => {
     const ws = await workspace("opencode", opencodeBridge());
+    const [created] = await captured("opencode-session.created.json", ws.project);
     const [, first, second] = await captured("opencode-session.idle.json", ws.project);
     const { plugin, prompts } = await start(ws, { directory: ws.project });
+    await plugin.event({ event: created });
     await plugin.event({ event: first });
     await plugin.event({ event: second });
 
-    expect(afterStart(await recorded(ws, 3))).toMatchObject([
+    expect((await recorded(ws, 3)).filter((call) => call.event === "Stop")).toMatchObject([
       { event: "Stop", stopActive: false, sessionId: SESSION },
       { event: "Stop", stopActive: true, sessionId: SESSION },
     ]);
@@ -451,8 +462,9 @@ describe("Kilo, through its bridge", () => {
 describe("the adapter both bridged hosts share", () => {
   it("is one source, read as opencode behind the OpenCode bridge and as kilo behind the Kilo bridge", async () => {
     const opencode = await workspace("opencode", opencodeBridge());
-    const [init] = await captured("opencode-server-init.json", opencode.project);
-    await start(opencode, init as Record<string, unknown>);
+    const [created] = await captured("opencode-session.created.json", opencode.project);
+    const started = await start(opencode, { directory: opencode.dir });
+    await started.plugin.event({ event: created });
     const kilo = await workspace("kilo", kiloBridge());
     const [session] = await captured("kilo-session.created.json", kilo.project);
     const { plugin } = await start(kilo, { directory: kilo.dir });

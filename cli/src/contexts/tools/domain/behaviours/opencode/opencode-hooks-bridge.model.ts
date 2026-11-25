@@ -7,9 +7,16 @@
  *
  * Only three hook events are replayed:
  *
- * - `SessionStart` runs once per server/directory at factory initialization and requires
- *   idempotent commands. V1 did not deliver `session.created` to this event hook;
- *   the V2 adapter delivers it.
+ * - `SessionStart` runs once per session, on the first event that names it, so the script knows
+ *   its session. That event is `session.created` for a new session; a continued one is created
+ *   no more, and its first event is another. V1 delivers both; the V2 adapter's events are
+ *   unverified, OpenCode 1.19.3 exposing none.
+ *   Limit: the V2 adapter's created event names no session, so under V2 SessionStart runs at the
+ *   first turn's idle terminal, not before it.
+ *   Limit: a subagent's child session names itself too, so SessionStart may run once per child
+ *   session; not probed.
+ *   Limit: a synchronous throw while spawning SessionStart would skip that event's Stop; never
+ *   observed, spawn reporting its failures asynchronously.
  * - `Stop` maps to V1's `session.idle` or V2's execution terminal, once per turn.
  * - `PostToolUse` maps to V1's `tool.execute.after`, the one hook that waits for the script and
  *   can append its exit-2 stderr to the tool's output, which is how a problem reaches the model.
@@ -49,6 +56,15 @@ function runHook(script, args, payload, directory) {
 ${parts.spawnHook(2, '["pipe", "ignore", "ignore"]')}
   child.on("error", () => {});
 ${parts.feedStdin(2)}
+}
+
+/** Pure: a session's id and folder -> every SessionStart hook's own {script, args, payload}. */
+function sessionStartCallsFor(sessionId, directory) {
+  return SESSION_START.map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: { hook_event_name: "SessionStart", session_id: sessionId, cwd: directory },
+  }));
 }
 
 /** Pure: \`session.idle\` -> every Stop hook's own {script, args, payload} - or \`[]\` for
@@ -133,27 +149,14 @@ function postToolUseCallsFor(call, directory) {
 // Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
 // Module-level: the host creates the plugin again, and a fresh set would forget a continuation.
 const continued = new Set();
+// Sessions whose SessionStart ran: module-level for the same reason, or each recreated plugin would run it again.
+const started = new Set();
 
 export const ${parts.identifier} = async (input) => {
   // Stop handlings in flight: \`opencode run\` exits once the session is idle, so dispose waits.
   let pending = Promise.resolve();
   // OpenCode keeps delivering events to an instance it disposed once it has created the next one.
   let disposed = false;
-  // SessionStart's own approximation (module doc comment above): fired once here, never
-  // per session. Silent on purpose: a memory refresh
-  // that breaks OpenCode's own startup is worse than one that never ran.
-  try {
-    for (const hook of SESSION_START) {
-      runHook(
-        hook.script,
-        hook.args,
-        { hook_event_name: "SessionStart", session_id: null, cwd: input.directory },
-        input.directory
-      );
-    }
-  } catch {
-    // Silent on purpose - see above.
-  }
   return {
     dispose: async () => {
       disposed = true;
@@ -162,6 +165,15 @@ export const ${parts.identifier} = async (input) => {
     event: async ({ event }) => {
       if (disposed) return;
       try {
+        const named = event?.properties?.sessionID;
+        if (typeof named === "string" && !started.has(named)) {
+          started.add(named);
+          // A new session's first event names its folder under info; a continued one's names none.
+          const folder = event.properties.info?.directory ?? input.directory;
+          for (const call of sessionStartCallsFor(named, folder)) {
+            runHook(call.script, call.args, call.payload, folder);
+          }
+        }
         const directory = event?.properties?.directory ?? input.directory;
         // Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
         for (const call of stopCallsFor(event, directory)) {
@@ -187,7 +199,7 @@ export const ${parts.identifier} = async (input) => {
           await asking;
         }
       } catch {
-        // Silent on purpose - see above.
+        // Silent on purpose: a hook that breaks OpenCode's own event loop is worse than one that never ran.
       }
     },
     "tool.execute.after": async (call, output) => {

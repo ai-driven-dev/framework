@@ -417,8 +417,9 @@ const AiddContextKiloHooks = async ({ directory, client }) => {
           const reason = await stopReasonOf(hook.script, hook.args, payload, session.directory);
           session.continued = reason !== "";
           // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
-          // Kilo 7.8.27's `run` waits for the queue to drain, so the follow-up lands there too; awaiting
-          // it from `dispose` fails with an UnknownError. 7.7.5 lost it in `run`.
+          // Open limit in `kilo run`: 7.7.5 and 7.8.27 exit at idle before this follow-up's turn runs,
+          // keyed on `session.idle` or on `session.drained`. The host map records one contrary 7.8.27
+          // measurement (hooks-host-map.md, "Stop relaunch lost by opencode run").
           if (reason) {
             client.session
               .promptAsync({ path: { id }, body: { parts: [{ type: "text", text: reason, metadata: FOLLOW_UP }] } })
@@ -602,8 +603,9 @@ const AiddTelemetryKiloHooks = async ({ directory, client }) => {
           const reason = await stopReasonOf(hook.script, hook.args, payload, session.directory);
           session.continued = reason !== "";
           // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
-          // Kilo 7.8.27's `run` waits for the queue to drain, so the follow-up lands there too; awaiting
-          // it from `dispose` fails with an UnknownError. 7.7.5 lost it in `run`.
+          // Open limit in `kilo run`: 7.7.5 and 7.8.27 exit at idle before this follow-up's turn runs,
+          // keyed on `session.idle` or on `session.drained`. The host map records one contrary 7.8.27
+          // measurement (hooks-host-map.md, "Stop relaunch lost by opencode run").
           if (reason) {
             client.session
               .promptAsync({ path: { id }, body: { parts: [{ type: "text", text: reason, metadata: FOLLOW_UP }] } })

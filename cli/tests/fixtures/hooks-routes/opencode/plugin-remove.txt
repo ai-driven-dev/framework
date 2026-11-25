@@ -149,6 +149,15 @@ function runHook(script, args, payload, directory) {
   child.stdin.end(JSON.stringify(payload));
 }
 
+/** Pure: a session's id and folder -> every SessionStart hook's own {script, args, payload}. */
+function sessionStartCallsFor(sessionId, directory) {
+  return SESSION_START.map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: { hook_event_name: "SessionStart", session_id: sessionId, cwd: directory },
+  }));
+}
+
 /** Pure: `session.idle` -> every Stop hook's own {script, args, payload} - or `[]` for
  * any other event. Exported as a property (never a second named export - F6) so this
  * generated module's own mapping can be asserted without spawning anything. */
@@ -245,27 +254,14 @@ function postToolUseCallsFor(call, directory) {
 // Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
 // Module-level: the host creates the plugin again, and a fresh set would forget a continuation.
 const continued = new Set();
+// Sessions whose SessionStart ran: module-level for the same reason, or each recreated plugin would run it again.
+const started = new Set();
 
 export const AiddTelemetryHooks = async (input) => {
   // Stop handlings in flight: `opencode run` exits once the session is idle, so dispose waits.
   let pending = Promise.resolve();
   // OpenCode keeps delivering events to an instance it disposed once it has created the next one.
   let disposed = false;
-  // SessionStart's own approximation (module doc comment above): fired once here, never
-  // per session. Silent on purpose: a memory refresh
-  // that breaks OpenCode's own startup is worse than one that never ran.
-  try {
-    for (const hook of SESSION_START) {
-      runHook(
-        hook.script,
-        hook.args,
-        { hook_event_name: "SessionStart", session_id: null, cwd: input.directory },
-        input.directory
-      );
-    }
-  } catch {
-    // Silent on purpose - see above.
-  }
   return {
     dispose: async () => {
       disposed = true;
@@ -274,6 +270,15 @@ export const AiddTelemetryHooks = async (input) => {
     event: async ({ event }) => {
       if (disposed) return;
       try {
+        const named = event?.properties?.sessionID;
+        if (typeof named === "string" && !started.has(named)) {
+          started.add(named);
+          // A new session's first event names its folder under info; a continued one's names none.
+          const folder = event.properties.info?.directory ?? input.directory;
+          for (const call of sessionStartCallsFor(named, folder)) {
+            runHook(call.script, call.args, call.payload, folder);
+          }
+        }
         const directory = event?.properties?.directory ?? input.directory;
         // Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
         for (const call of stopCallsFor(event, directory)) {
@@ -299,7 +304,7 @@ export const AiddTelemetryHooks = async (input) => {
           await asking;
         }
       } catch {
-        // Silent on purpose - see above.
+        // Silent on purpose: a hook that breaks OpenCode's own event loop is worse than one that never ran.
       }
     },
     "tool.execute.after": async (call, output) => {

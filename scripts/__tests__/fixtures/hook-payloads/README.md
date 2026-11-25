@@ -21,8 +21,9 @@ the event spelled as the host spells it. Read by the CLI converter tests and the
 
 They send no stdin payload: a plugin receives arguments. The files hold those raw arguments, named
 after the plugin hook or event that carried them: `tool.execute.after` is `{ call, output }`,
-`session.idle` and `session.created` are the bus events, `server-init` is the plugin's init input
-(the moment the bridge runs SessionStart). `hookAnswer` does not apply there.
+`session.idle`, `session.created` and `message.updated` are the bus events: `session.created` is the
+moment the bridge runs SessionStart for a new session, `message.updated` the first event of a
+continued one. `hookAnswer` does not apply there.
 
 ## Scrubbing
 

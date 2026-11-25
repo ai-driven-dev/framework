@@ -70,7 +70,7 @@ interface Host {
   /** What the host loads of the descriptor, and what its SessionStart payload names. */
   readonly descriptorKeys: readonly string[];
   readonly sessionStartId: string | null;
-  /** The event that starts a session, if the host fires SessionStart on one and not on load. */
+  /** The event that starts a session, on which the host fires SessionStart. */
   readonly sessionStarted: (id: string, directory: string) => unknown;
   /** What a host needs between two idle events before the second is a new turn's. */
   readonly nextTurn: (id: string) => unknown[];
@@ -81,8 +81,11 @@ const HOSTS: readonly Host[] = [
     name: "OpenCode",
     generate: generateOpencodeHooksBridge,
     descriptorKeys: ["id", "server", "setup"],
-    sessionStartId: null,
-    sessionStarted: () => undefined,
+    sessionStartId: "ses_one",
+    sessionStarted: (id, directory) => ({
+      type: "session.created",
+      properties: { sessionID: id, info: { id, directory } },
+    }),
     nextTurn: () => [],
   },
   {
@@ -296,6 +299,25 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
     ]);
   });
 
+  // What only this holds: two live plugins on one session each reach the model. Shared module state
+  // can silence one plugin or make one read the other's continuation; other tests open a single plugin.
+  it("sends every plugin's answer at the same Stop, none reading another's as its own continuation", async () => {
+    const first = await open(host);
+    const second = await open(host);
+    const idle = { type: "session.idle", properties: { sessionID: "shared" } };
+    await first.emit(host.sessionStarted("shared", first.directory), idle);
+    await second.emit(host.sessionStarted("shared", second.directory), idle);
+
+    for (const plugin of [first, second]) {
+      expect(plugin.prompts).toMatchObject([
+        { path: { id: "shared" }, body: { parts: [{ type: "text", text: "fix it" }] } },
+      ]);
+      expect((await plugin.of("stop.cjs")).map((c) => c.payload.stop_hook_active)).toStrictEqual([
+        false,
+      ]);
+    }
+  });
+
   it("runs no Stop script for an event that is not an idle session", async () => {
     const { emit, of } = await open(host);
     await emit(
@@ -400,11 +422,27 @@ describe("the bridge generated with Kilo's parameters, held to the session each 
 });
 
 describe("the bridge generated with OpenCode's parameters", () => {
-  it("hands its server to the loader's own setup, and fires SessionStart once when it loads", async () => {
+  it("hands its server to the loader's own setup, and fires no SessionStart before a session names itself", async () => {
     const { descriptor, of } = await open(HOSTS[0] as Host);
 
     expect(descriptor.setup?.("ctx")).toEqual({ ctx: "ctx", server: descriptor.server });
+    await delay(200);
+    expect(await of("record.cjs")).toStrictEqual([]);
+  });
+
+  it("runs a session's SessionStart once across the plugin being created again", async () => {
+    const opencode = hostNamed("OpenCode");
+    const { descriptor, directory, emit, of } = await open(opencode);
+    const client = { session: { prompt: async () => undefined } };
+    const again = await descriptor.server({ directory, client });
+    const created = opencode.sessionStarted("s1", directory);
+
+    await emit(created);
+    await again.event({ event: created });
+
     await vi.waitFor(async () => expect(await of("record.cjs")).toHaveLength(1), { timeout: 5000 });
+    await delay(100);
+    expect(await of("record.cjs")).toHaveLength(1);
   });
 
   it("waits for the follow-up it sent when the host shuts the plugin down", async () => {
