@@ -44,8 +44,7 @@
  * - On 1.19.3 OpenCode calls both `server` and `setup`; `setup` sees no location in that early
  *   context and does nothing.
  * - Its client has no toast and no `promptAsync`: a script's message for the person is not
- *   shown, and a required finding is reported as the call's PostToolUse failure, the call's later
- *   PostToolUse hooks skipped.
+ *   shown, and a required finding is appended to the tool's result but never queued.
  * - It goes through the V1 entrypoint, whose `dispose` it never calls: the Stop handlings that
  *   entrypoint tracks are never drained, and nothing reads them.
  * - A call made through Code Mode (`codemode: true`) was not observed reaching a hook.

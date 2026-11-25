@@ -67,8 +67,8 @@ async function refuseToolUse(call, output, directory) {
 /** Each PostToolUse answer is appended to the output the model reads, its message for the person
  * handed to \`show\` where the host has one. An answer the script marks required is also queued as
  * the session's next prompt, which the model takes up after the current step; not awaited, so the
- * host's prompt call never holds the tool. A client with no \`promptAsync\` throws there: reported,
- * and the call's later hooks are skipped. */
+ * host's prompt call never holds the tool. A client with no \`promptAsync\` queues nothing: the
+ * answer is appended alone. */
 async function addToolAnswers(call, output, directory, client, show) {
   try {
     for (const hook of postToolUseCallsFor(call, directory)) {
@@ -76,7 +76,7 @@ async function addToolAnswers(call, output, directory, client, show) {
       show?.(person);
       if (!text) continue;
       output.output = (output.output ?? "") + "\\n\\n" + text;
-      if (required) sendPrompt(client, "promptAsync", call?.sessionID, text, FINDING, hook.script, "finding not queued: ");
+      if (required && typeof client.session.promptAsync === "function") sendPrompt(client, "promptAsync", call?.sessionID, text, FINDING, hook.script, "finding not queued: ");
     }
   } catch (error) {
     reportHookFailure("PostToolUse", error);
@@ -234,7 +234,7 @@ async function runStop(sessionId, directory, { client, method, show }) {
  * how the host stops the call.
  *
  * Limit: a hook throws into the host only on input no capture shows, such as a message with no
- * part. A PostToolUse failure is reported, such as a client with no `promptAsync`.
+ * part. A PostToolUse failure is reported.
  * Limit: every idle is a turn end. No capture shows a host idle twice in one turn; were it to,
  * the second Stop would run told the turn continues when the first blocked, and as a fresh one
  * when it did not. */

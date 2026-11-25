@@ -131,16 +131,17 @@ describe("OpenCode 2, through its bridge's setup", () => {
     expect(await recorded(ws, 1)).toMatchObject([{ event: "PostToolUse", command: "echo hi" }]);
   });
 
-  it("reports a required finding it cannot queue, and still adds it to the result", async () => {
-    const ws = await workspace("opencode", bridgeOf("opencode", hooksOf("PostToolUse", RECORD)));
+  it("adds a required finding to the result, queues none, and still runs the later hooks", async () => {
+    const ws = await workspace(
+      "opencode",
+      bridgeOf("opencode", hooksOf("PostToolUse", RECORD, RECORD))
+    );
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    const { call } = await setupV2(ws);
+    const { call, admitted } = await setupV2(ws);
     const write = await call("tool.execute.after", tool("execute.after", "write", ws.project));
 
-    expect(write.result.content.at(-1)).toStrictEqual({ type: "text", text: "finding" });
-    expect(warn).toHaveBeenCalledWith(
-      expect.stringMatching(/^\[aidd\] OpenCode hook PostToolUse failed: TypeError/)
-    );
+    expect(write.result.content.at(-1)).toStrictEqual({ type: "text", text: "finding\n\nfinding" });
+    expect([warn.mock.calls, admitted]).toStrictEqual([[], []]);
   });
 
   it("adds what a UserPromptSubmit script answers to the prompt to each request of its turn", async () => {

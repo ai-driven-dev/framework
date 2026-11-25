@@ -130,7 +130,8 @@ function continueTurn(text, person) {
 }
 
 /** Both levels inform: the bridge appends the text to the tool's result. Level 2 also marks it
- * required; a bridge reads that at PostToolUse only, and queues it as the session's next prompt.
+ * required; a bridge reads that at PostToolUse only, and queues it as the session's next prompt
+ * where the host's client can.
  * At Stop, any answer continues the turn. With no `text`, only `person` is handed to the bridge,
  * at any event. */
 function answer({ level, text, person } = {}) {
