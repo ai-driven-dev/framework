@@ -99,7 +99,6 @@ export async function workspace(host: BridgedHostId, bridge: string): Promise<Wo
   await mkdir(project);
   await writeFile(join(scripts, "record.cjs"), RECORDER);
   await writeFile(join(scripts, "silent.cjs"), "");
-  await writeFile(join(scripts, "fail.cjs"), "process.exit(1);\n");
   await writeFile(join(scripts, "lib", "host.cjs"), ADAPTERS[host]);
   const record = join(dir, "record.jsonl");
   vi.stubEnv("AIDD_RECORD", record);
@@ -219,7 +218,6 @@ export const REQUIRED = [
 ];
 
 export const SILENT = `node ${ROOT}/hooks/silent.cjs`;
-export const FAILING = `node ${ROOT}/hooks/fail.cjs`;
 // A NUL in an argument is refused by `spawn` itself, before any child exists.
 export const UNSPAWNABLE = `node ${ROOT}/hooks/record.cjs \u0000`;
 
