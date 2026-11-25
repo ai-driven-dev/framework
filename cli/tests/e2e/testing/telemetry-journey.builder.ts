@@ -14,8 +14,8 @@ import { REPOSITORY_ROOT } from "../../shared/testing/repository-root.builder.js
 
 /**
  * The whole telemetry journey on the built binary, driven by the plugin's real hooks: a person
- * opts in, is asked once, answers by typing the declaration, clears, and a headless run follows
- * on the same branch. No AI tool binary is reachable: the only `aidd` on `PATH` is a shim to the
+ * opts in, is reminded once at session start, declares the task with the command, clears, and a
+ * headless run follows on the same branch. No AI tool binary is reachable: the only `aidd` on `PATH` is a shim to the
  * binary under test, and the transcripts are synthetic.
  */
 
@@ -41,7 +41,6 @@ export const S_OTHER = "d4e5f6a7-0000-4000-8000-0000000000d4";
 export const S_CODEX = "00000000-0000-4000-8000-0000000000e5";
 export const S_CODEX_CHILD = "00000000-0000-4000-8000-0000000000f6";
 export const S_CODEX_EXEC = "00000000-0000-4000-8000-0000000000a7";
-const CLAUDE_PID = "424242";
 
 interface Call {
   id: string;
@@ -84,7 +83,7 @@ export const CALLS: Call[] = [
     id: "3",
     session: S_CLEARED,
     minute: 3,
-    branch: null,
+    branch: "feat/x",
     model: "m-big",
     input: 3,
     output: 30,
@@ -95,7 +94,7 @@ export const CALLS: Call[] = [
     id: "4",
     session: S_CLEARED,
     minute: 26 * 60,
-    branch: null,
+    branch: "feat/x",
     model: "m-small",
     input: 4,
     output: 40,
@@ -182,7 +181,6 @@ export interface Envelope {
 
 export interface Session {
   id: string;
-  attended?: boolean;
 }
 
 export const lines = async (file: string) =>
@@ -250,22 +248,29 @@ export class Journey {
     });
   }
 
-  /** One real hook, as Claude Code runs it: payload on stdin, Claude's variables in the
-   * environment, and the shim first on `PATH`. */
-  runHook(
-    hook: string,
+  /** `aidd telemetry task`, as the model runs it from a Claude Code session: the session's id is
+   * in its environment. */
+  declare(session: Session, ...args: string[]) {
+    return runCli(["telemetry", "task", ...args], this.repo, this.env.fakeHome, {
+      env: { ...this.sandboxVariables(), CLAUDE_CODE_SESSION_ID: session.id },
+    });
+  }
+
+  /** `task.cjs remind`, the plugin's real SessionStart hook, as Claude Code runs it: payload on
+   * stdin, Claude's variables in the environment. */
+  sessionStart(
     session: Session,
-    payload: Record<string, unknown>
+    source: string
   ): { stdout: string; json: Record<string, unknown> | null } {
     const path = this.pathWithShim();
-    const attended = session.attended ?? true;
-    const run = spawnSync(process.execPath, [join(HOOKS, hook)], {
+    const run = spawnSync(process.execPath, [join(HOOKS, "task.cjs"), "remind"], {
       cwd: this.repo,
       input: JSON.stringify({
         session_id: session.id,
         transcript_path: join(this.claude, "projects", "sandbox", `${session.id}.jsonl`),
         cwd: this.repo,
-        ...payload,
+        hook_event_name: "SessionStart",
+        source,
       }),
       encoding: "utf8",
       env: sandboxedEnv(this.env.fakeHome, {
@@ -273,26 +278,11 @@ export class Journey {
         PATH: path,
         Path: path,
         CLAUDE_CODE_SESSION_ID: session.id,
-        CLAUDE_CODE_SESSION_ATTENDED: attended ? "1" : "0",
-        CLAUDE_CODE_ENTRYPOINT: attended ? "cli" : "sdk-cli",
-        CLAUDE_PID,
       }),
     });
     expect(run.status, run.stderr).toBe(0);
     const text = run.stdout.trim();
-    const json = text === "" ? null : parseJsonRecord(text);
-    return { stdout: text, json };
-  }
-
-  prompt(session: Session, text: string) {
-    return this.runHook("prompt-gate.cjs", session, {
-      hook_event_name: "UserPromptSubmit",
-      prompt: text,
-    });
-  }
-
-  sessionStart(session: Session, source: string) {
-    return this.runHook("session-start.cjs", session, { hook_event_name: "SessionStart", source });
+    return { stdout: text, json: text === "" ? null : parseJsonRecord(text) };
   }
 
   async optIn(): Promise<void> {
