@@ -191,4 +191,17 @@ describe("aidd-ui showcase trust", () => {
       assert.doesNotMatch(hover, /--accent-soft|--sunken/);
     });
   });
+
+  describe("a record named like the home page", () => {
+    it("keeps the overview as index.html and gives a screen named index a page of its own, every link and the review pointing there", () => {
+      put(tmp, `${UI}/screens/index.md`, SCREEN("index"));
+      put(tmp, `${UI}/screens/index.html`, RENDER);
+      const pages = pagesOf();
+      assert.match(pages["index.html"], /<header class="head"><h1>Showcase<\/h1>/);
+      const own = Object.keys(pages).filter((name) => name !== "index.html" && pages[name].includes("<h1>index</h1>"));
+      assert.equal(own.length, 1);
+      assert.match(navOf(pages["index.html"]), new RegExp(`<li data-id="index"><a href="${own[0]}"`));
+      assert.match(drawerOf(pages["index.html"]), new RegExp(`data-record="index"[^>]*data-href="${own[0]}"`));
+    });
+  });
 });

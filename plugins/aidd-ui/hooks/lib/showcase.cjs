@@ -26,10 +26,12 @@ const FEW_ITEMS = 3; // a drawer holding this many records or fewer opens every 
 const SET_CURRENT = "set:"; // what a page of a set passes the navigation as its current page
 const AGREE_MARK = "\u25CF"; // the mark of a step that only awaits the agreement of the assistant
 const JOURNEY_PREFIX = "_journey-"; // so a journey named like another record never takes that record's page name
-/** The file of a record's page: ids are unique per kind, so a journey is told apart by its prefix. Every link to a page goes through it,
- * but two that can only name a record that is no journey and so write `<id>.html` by hand: the next record of the verdict bar (the page
- * script) and the anchors under the brand and the system (`charte-page.cjs`). */
-const pageName = (kind, id) => `${kind === "journey" ? JOURNEY_PREFIX : ""}${id}.html`;
+const HOME = "index"; // the overview's page name, which a record named like it would otherwise take
+const HOME_PREFIX = "_record-"; // what a record named like the overview's page takes instead
+/** The file of a record's page: ids are unique per kind, so a journey is told apart by its prefix, and a record named like the overview
+ * by its own. Every link to a page goes through it, the next record of the verdict bar by its drawer row's `data-href`, but the anchors
+ * under the brand and the system (`charte-page.cjs`), which can only name those two records. */
+const pageName = (kind, id) => `${kind === "journey" ? JOURNEY_PREFIX : id === HOME ? HOME_PREFIX : ""}${id}.html`;
 
 /** The words of the page chrome, one table per language: the same keys in each. */
 const LABELS = {
@@ -1133,8 +1135,8 @@ function paintBars() {
     if (nextRecord) {
       nextRecord.hidden = open.length > 0 || bare;
       const target = nextToReviewOf(order, known, choices, review.dataset.record);
-      // the order holds records with a render, never a journey: its ids name plain pages
-      nextRecord.href = target ? target.record + ".html#tab-" + target.state : "index.html";
+      const row = target && Array.from(document.querySelectorAll("details.item")).find((each) => each.dataset.record === target.record);
+      nextRecord.href = target ? (row ? row.dataset.href : target.record + ".html") + "#tab-" + target.state : "index.html";
       nextRecord.textContent = target ? nextRecord.dataset.next : nextRecord.dataset.overview;
     }
   }
