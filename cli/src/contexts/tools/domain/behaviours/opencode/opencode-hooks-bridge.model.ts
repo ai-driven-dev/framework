@@ -58,14 +58,7 @@ ${parts.spawnHook(2, '["pipe", "ignore", "ignore"]')}
 ${parts.feedStdin(2)}
 }
 
-/** Pure: a session's id and folder -> every SessionStart hook's own {script, args, payload}. */
-function sessionStartCallsFor(sessionId, directory) {
-  return SESSION_START.map((hook) => ({
-    script: hook.script,
-    args: hook.args,
-    payload: { hook_event_name: "SessionStart", session_id: sessionId, cwd: directory },
-  }));
-}
+${parts.sessionStartCalls}
 
 /** Pure: \`session.idle\` -> every Stop hook's own {script, args, payload} - or \`[]\` for
  * any other event. Exported as a property (never a second named export - F6) so this

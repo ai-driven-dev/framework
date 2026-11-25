@@ -149,7 +149,6 @@ function runHook(script, args, payload, directory) {
   child.stdin.end(JSON.stringify(payload));
 }
 
-/** Pure: a session's id and folder -> every SessionStart hook's own {script, args, payload}. */
 function sessionStartCallsFor(sessionId, directory) {
   return SESSION_START.map((hook) => ({
     script: hook.script,

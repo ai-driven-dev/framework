@@ -100,6 +100,15 @@ function feedStdinSource(indent: number): string {
   );
 }
 
+/** Pure: a session's id and folder -> every SessionStart hook's own {script, args, payload}. */
+const SESSION_START_CALLS_SOURCE = `function sessionStartCallsFor(sessionId, directory) {
+  return SESSION_START.map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: { hook_event_name: "SessionStart", session_id: sessionId, cwd: directory },
+  }));
+}`;
+
 /** The hosts name the written file `filePath`; the scripts read Claude Code's `file_path`. */
 const TOOL_INPUT_SOURCE =
   'const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;';
@@ -121,6 +130,8 @@ export interface BridgeParts {
   readonly nodeImports: string;
   readonly hooksDir: string;
   readonly callTables: string;
+  /** The generated `sessionStartCallsFor(sessionId, directory)`, over the `SESSION_START` table. */
+  readonly sessionStartCalls: string;
   /** The generated `answerFrom`: exit 2 puts the answer on stderr, exit 0 in `additionalContext`. */
   readonly answerFrom: string;
   readonly toolInput: string;
@@ -145,6 +156,7 @@ export function generateBridge<R>(
     nodeImports: NODE_IMPORTS_SOURCE,
     hooksDir: hooksDirDeclaration(plugin),
     callTables: callTableDeclarations(table),
+    sessionStartCalls: SESSION_START_CALLS_SOURCE,
     answerFrom: ANSWER_FROM_SOURCE,
     toolInput: TOOL_INPUT_SOURCE,
     stopReason: STOP_REASON_SOURCE,

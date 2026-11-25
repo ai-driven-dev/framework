@@ -5,6 +5,11 @@
  * session.idle through its event hook; PostToolUse runs from tool.execute.after, which waits
  * for the script and appends its exit-2 stderr to the tool's output for the model to read.
  * Matchers ignore case, since Kilo names its tools in lowercase.
+ *
+ * Provenance of the `kilo run` limit stated in the Stop handler: probed on 7.7.5 and 7.8.27, the
+ * process exits at idle and the follow-up turn never runs, keyed on `session.idle` (both) and on
+ * `session.drained` (7.8.27). One earlier measurement of 7.8.27 recorded the follow-up landing
+ * when keyed on `session.drained`; it was not reproduced.
  */
 
 import { type BridgeParts, generateBridge } from "../../bridges/event-bridge.js";
@@ -86,14 +91,7 @@ function reportHookFailure(script, error) {
   console.warn("[aidd] Kilo hook " + script + " failed: " + String(error));
 }
 
-function sessionStartCallsFor(event, directory) {
-  if (event?.type !== "session.created") return [];
-  return SESSION_START.map((hook) => ({
-    script: hook.script,
-    args: hook.args,
-    payload: { hook_event_name: "SessionStart", session_id: event.properties?.sessionID ?? null, cwd: event.properties?.info?.directory ?? directory },
-  }));
-}
+${parts.sessionStartCalls}
 
 const FOLLOW_UP = { aidd: "stop-follow-up" };
 
@@ -112,7 +110,7 @@ const ${parts.identifier} = async ({ directory, client }) => {
       if (event?.type === "session.created" && !session.started) {
         session.started = true;
         session.directory = properties?.info?.directory ?? directory;
-        calls = sessionStartCallsFor(event, session.directory);
+        calls = sessionStartCallsFor(id, session.directory);
       } else if (event?.type === "session.status" && properties?.status?.type === "busy") {
         session.idle = false;
       } else if (event?.type === "session.idle" && !session.idle) {
@@ -123,9 +121,8 @@ const ${parts.identifier} = async ({ directory, client }) => {
           const reason = await stopReasonOf(hook.script, hook.args, payload, session.directory);
           session.continued = reason !== "";
           // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
-          // Open limit in \`kilo run\`: 7.7.5 and 7.8.27 exit at idle before this follow-up's turn runs,
-          // keyed on \`session.idle\` or on \`session.drained\`. The host map records one contrary 7.8.27
-          // measurement (hooks-host-map.md, "Stop relaunch lost by opencode run").
+          // Open limit in \`kilo run\`: it exits at idle before this follow-up's turn runs, on 7.7.5 and 7.8.27
+          // keyed on \`session.idle\`, and on 7.8.27 keyed on \`session.drained\`.
           if (reason) {
             client.session
               .promptAsync({ path: { id }, body: { parts: [{ type: "text", text: reason, metadata: FOLLOW_UP }] } })
@@ -164,8 +161,6 @@ const ${parts.identifier} = async ({ directory, client }) => {
   },
   };
 };
-
-${parts.identifier}.sessionStartCallsFor = sessionStartCallsFor;
 
 export default { id: "${parts.plugin}-hooks", server: ${parts.identifier} };
 `,

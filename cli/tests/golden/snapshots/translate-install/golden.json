@@ -3023,7 +3023,7 @@
   "opencode/aidd-context": {
     "files": {
       ".opencode/hooks/aidd-context/update_memory.js": "140d7db788452f5f4c32316d522f595a36e06638b19a42d32e42a1a7324b7149",
-      ".opencode/plugin/aidd-context-hooks.js": "3cbd4752bb0e22260d3c797eaf07a76ef5ddd0c05d9b69467b8e5b352141316a",
+      ".opencode/plugin/aidd-context-hooks.js": "fa27d4a29d160353bfed3503b17bbc5987e9f3a36a4ee696e16b61eb871f801f",
       ".opencode/skills/aidd-context/01-bootstrap/SKILL.md": "3f4dd3a7b87d16ad35fdd3a671c5cd27f6fb55e8a0131b46f667e5a43ecb3308",
       ".opencode/skills/aidd-context/01-bootstrap/actions/01-gather-needs.md": "b3251034285434b06775ab4a59ffe27259bb23cb97ac65927c946a4846ea946d",
       ".opencode/skills/aidd-context/01-bootstrap/actions/02-propose-candidates.md": "57376071d9d0b011c5f19ba218a3ef28c3bf1fba1220a87260806a2d79e341d6",
@@ -3262,7 +3262,7 @@
   "kilo/aidd-context": {
     "files": {
       ".kilo/hooks/aidd-context/update_memory.js": "140d7db788452f5f4c32316d522f595a36e06638b19a42d32e42a1a7324b7149",
-      ".kilo/plugin/aidd-context-hooks.js": "7149425ede87577a291d0fa694efe9661b3e16917914d227d30ecae5070db942",
+      ".kilo/plugin/aidd-context-hooks.js": "4bf0d2c0f3db7769f9949c7dd866c45faab4d8827b10ab84fe842f395d9826d9",
       ".kilo/skills/aidd-context/01-bootstrap/SKILL.md": "3f4dd3a7b87d16ad35fdd3a671c5cd27f6fb55e8a0131b46f667e5a43ecb3308",
       ".kilo/skills/aidd-context/01-bootstrap/actions/01-gather-needs.md": "b3251034285434b06775ab4a59ffe27259bb23cb97ac65927c946a4846ea946d",
       ".kilo/skills/aidd-context/01-bootstrap/actions/02-propose-candidates.md": "57376071d9d0b011c5f19ba218a3ef28c3bf1fba1220a87260806a2d79e341d6",
