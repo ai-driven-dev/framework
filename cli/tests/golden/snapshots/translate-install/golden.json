@@ -4748,15 +4748,12 @@
     },
     "componentPaths": [],
     "flatHookPaths": [],
-    "skipped": [
-      {
-        "pluginName": "aidd-async-dev",
-        "component": "hooks",
-        "toolId": "kiro",
-        "reason": "no Kiro hook payload was captured, so no host adapter is written"
-      }
-    ],
-    "notices": []
+    "skipped": [],
+    "notices": [],
+    "projectHooks": {
+      "manifest": "78922a784ee78e9e50587e93628cd3b9d4dfbe49087adc4514e6781cea38cbb9",
+      "scripts": {}
+    }
   },
   "kiro/aidd-context": {
     "files": {
@@ -4831,15 +4828,14 @@
     },
     "componentPaths": [],
     "flatHookPaths": [],
-    "skipped": [
-      {
-        "pluginName": "aidd-context",
-        "component": "hooks",
-        "toolId": "kiro",
-        "reason": "no Kiro hook payload was captured, so no host adapter is written"
+    "skipped": [],
+    "notices": [],
+    "projectHooks": {
+      "manifest": "4f8e1b575af40e9a2d19f4e30af39553cac47d53e34d738c56ef09e14f94f495",
+      "scripts": {
+        ".kiro/hooks/aidd-context/update_memory.js": "140d7db788452f5f4c32316d522f595a36e06638b19a42d32e42a1a7324b7149"
       }
-    ],
-    "notices": []
+    }
   },
   "kiro/aidd-dev": {
     "files": {

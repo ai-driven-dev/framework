@@ -1,8 +1,13 @@
-import {
-  buildKiroFlatContract,
-  KIRO_UNDELIVERED,
-} from "../../contexts/tools/domain/behaviours/kiro/kiro-build.model.js";
+// biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
+import adapter from "../../../assets/hooks-runtime/host-kiro.cjs";
+import { buildKiroFlatContract } from "../../contexts/tools/domain/behaviours/kiro/kiro-build.model.js";
+import { kiroHooksFormat } from "../../contexts/tools/domain/behaviours/kiro/kiro-hooks.model.js";
 import { agentFrontmatterOf } from "../../contexts/tools/domain/formats/agents/agent-format.js";
+import { declareHooks } from "../../contexts/tools/domain/formats/hooks/declaration.js";
+import {
+  flatHooksSupport,
+  flatProjectHooksDelivery,
+} from "../../contexts/tools/domain/formats/hooks/flat-routes.js";
 import { contract } from "../../contexts/tools/domain/profile/contract-builders.js";
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
 import { flatPlacement } from "../../contexts/tools/domain/sections/layout-section.js";
@@ -15,10 +20,10 @@ import {
 const DIRECTORY = ".kiro/";
 const TOOL_SUFFIX = ".kiro.md";
 
-/** An agent file may be Markdown with YAML front matter, its name derived from the filename when absent
- * and `*` meaning every tool (https://kiro.dev/docs/custom-agents/configuration-reference/). A Claude agent without a tool
- * list holds every tool, which Kiro spells `*`. Its `model` is left out: Kiro's ids are not
- * Claude's. */
+/** An agent file may be Markdown with YAML front matter, its name derived from the filename when
+ * absent and `*` meaning every tool (https://kiro.dev/docs/custom-agents/configuration-reference/).
+ * `set: { tools: ["*"] }` also replaces a list a plugin agent declares, which widens it; no plugin
+ * agent declares tools today. Its `model` is left out: Kiro's ids are not Claude's. */
 const AGENT_FRONTMATTER = agentFrontmatterOf({
   keep: ["name", "description"],
   set: { tools: ["*"] },
@@ -36,20 +41,40 @@ const KIRO_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(DIRECTORY, {
   agent: { ext: ".md" },
 });
 
+const hooks = declareHooks(
+  { toolId: "kiro", directory: DIRECTORY, adapter },
+  {
+    // Only SessionStart has a captured payload (https://kiro.dev/docs/hooks/types/); every other
+    // event is dropped from the merge with a warning.
+    undeclaredEvents: "skipped",
+    events: { SessionStart: "SessionStart" },
+    // Kiro loads every `.kiro/hooks/*.json` of a project, and CLI V3 those of `~/.kiro/hooks/`
+    // too (https://kiro.dev/docs/hooks/): every plugin's entries share one file of AIDD's own.
+    flat: { scriptsDir: `${DIRECTORY}hooks/`, sharedFile: `${DIRECTORY}hooks/aidd.json` },
+  }
+);
+
+const hooksDelivery = flatProjectHooksDelivery(
+  flatHooksSupport(hooks),
+  hooks.flat,
+  kiroHooksFormat(hooks)
+);
+
 export const kiro = defineAiTool({
   toolId: "kiro",
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
   displayName: "Kiro",
   signalDir: null,
+  hooks,
   buildContracts: {
-    flat: contract(buildKiroFlatContract, KIRO_FLAT_LAYOUT, AGENT_MARKDOWN),
+    flat: contract(buildKiroFlatContract, hooks, KIRO_FLAT_LAYOUT, AGENT_MARKDOWN),
   },
 
   capabilities: {
     agents: { format: "markdown", frontmatter: AGENT_FRONTMATTER },
     skills: { directory: DIRECTORY },
-    hooks: { delivery: KIRO_UNDELIVERED },
+    hooks: { delivery: hooksDelivery },
     layout: flatPlacement({ namespacePrefix: "aidd-", artifacts: KIRO_FLAT_LAYOUT }),
   },
 

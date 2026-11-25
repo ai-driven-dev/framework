@@ -6,16 +6,11 @@ import type {
   ToolBuildContract,
 } from "../../../../../shared/domain/materialization/build-contract.js";
 import type { FlatArtifactLayout } from "../../../../../shared/domain/materialization/flat-paths.js";
-import type { NoDelivery } from "../../sections/hooks-section.js";
-
-/** Kiro documents a hook file and a SessionStart trigger (https://kiro.dev/docs/hooks/), but no
- * payload was captured here, so no host adapter is written and no plugin hook is delivered. */
-export const KIRO_UNDELIVERED: NoDelivery = {
-  kind: "none",
-  reason: "no Kiro hook payload was captured, so no host adapter is written",
-};
+import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
+import { type KiroHooks, mergeKiroHooks } from "./kiro-hooks.model.js";
 
 export function buildKiroFlatContract(
+  hooks: KiroHooks,
   layout: FlatArtifactLayout,
   agentMarkdown: AgentMarkdown
 ): ToolBuildContract {
@@ -37,7 +32,9 @@ export function buildKiroFlatContract(
         agentMarkdown,
       },
       mcp: { supported: false, reason: "no plugin ships MCP servers to merge" },
-      hooks: { supported: false, reason: "no host adapter: no Kiro payload was captured" },
+      hooks: flatHooksArtifact(hooks, { tool: "kiro" }, (existing, shipped) =>
+        mergeKiroHooks(hooks, existing, shipped)
+      ),
     },
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,

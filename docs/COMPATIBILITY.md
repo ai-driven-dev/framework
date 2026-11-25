@@ -13,7 +13,7 @@ What each AI tool receives from the framework.
 | Kilo Code | `.kilo/` | ❌ | ✅ | ✅ | ✅ | ❌ | Some events |
 | Codex | `.codex/` | ✅ | ✅ | ✅ | ✅ | Marketplace only | ✅ |
 | Antigravity CLI | `.agents/` | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ |
-| Kiro | `.kiro/` | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Kiro | `.kiro/` | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ |
 
 <!--support:end-->
 
@@ -26,4 +26,6 @@ What each AI tool receives from the framework.
 
 ## Limits
 
-- Kiro receives no plugin hooks: its [hooks](https://kiro.dev/docs/hooks/) are documented, but no hook payload has been captured, so no host adapter is written.
+- Kiro receives plugin hooks for `SessionStart` only, merged into `.kiro/hooks/aidd.json` ([hook types](https://kiro.dev/docs/hooks/types/), [hooks file](https://kiro.dev/docs/hooks/)). Every other event is dropped with a build warning, because no payload for it was captured.
+- Kiro documents no user-visible hook output field, only standard output added to the agent's context, so a hook's person-facing text is not delivered.
+- Kiro's Markdown agents are documented ([configuration reference](https://kiro.dev/docs/custom-agents/configuration-reference/)) but were never run against Kiro. The captured hook runs used CLI V3 JSON agents.

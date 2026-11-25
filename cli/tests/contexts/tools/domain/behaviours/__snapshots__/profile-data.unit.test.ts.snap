@@ -566,8 +566,8 @@ exports[`the data each registered profile declares > kiro 1`] = `
   },
   "kind": "ai",
   "plugins": {
-    "acceptsHooks": false,
-    "deliversHooksToProject": false,
+    "acceptsHooks": true,
+    "deliversHooksToProject": true,
     "flatLayout": {
       "namespacePrefix": "aidd-",
       "rules": "nested",
@@ -575,7 +575,7 @@ exports[`the data each registered profile declares > kiro 1`] = `
     },
     "kind": "flat",
   },
-  "projectHooks": null,
+  "projectHooks": ".kiro/hooks/aidd.json",
   "sections": [
     "agents",
     "skills",

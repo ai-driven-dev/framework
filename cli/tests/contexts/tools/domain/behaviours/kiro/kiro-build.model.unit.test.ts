@@ -21,7 +21,16 @@ describe("building Kiro's flat contract", () => {
     );
   });
 
-  it("delivers no hooks and no MCP", () => {
-    expect([artifacts.hooks.supported, artifacts.mcp.supported]).toEqual([false, false]);
+  it("places hook scripts under .kiro/hooks/<plugin>/ and merges them into .kiro/hooks/aidd.json", () => {
+    const hooks = supported(artifacts.hooks);
+
+    expect(artifactPath(hooks, "aidd-context", "hooks/memory.cjs")).toBe(
+      ".kiro/hooks/aidd-context/memory.cjs"
+    );
+    expect(hooks.hooksFile?.at).toEqual({ shared: ".kiro/hooks/aidd.json" });
+  });
+
+  it("delivers no MCP", () => {
+    expect(artifacts.mcp.supported).toBe(false);
   });
 });
