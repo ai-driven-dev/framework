@@ -7,7 +7,7 @@ How the repository ships: CI, targets and release. CLI build and publish: [CLI d
 | Workflow | Runs |
 | --- | --- |
 | `ci.yml` | commitlint, then release-please on `main` and the release jobs |
-| `cli-ci.yml` | the `cli` and `kanban` gates; a `changes` job decides what has work. Mutation skips only a verified `promote/next-to-main-*` snapshot |
+| `cli-ci.yml` | the `cli` and `kanban` gates |
 | `validate.yml` | manifests against their schemas, and the pre-commit over the whole tree |
 | `codeql.yml` | code scanning |
 | `promote.yml` | checks the release video, opens the `next` to `main` PR, auto-merges |
@@ -27,30 +27,13 @@ Only release assets and packages ship.
 | Target | Where |
 | --- | --- |
 | Repository | <https://github.com/ai-driven-dev/framework> |
-| npm | `@ai-driven-dev/cli`, OIDC trusted publishing, no token |
+| npm | `@ai-driven-dev/cli` |
 | Archives | GitHub Releases |
 | Mirror | GitHub Packages, npm package only, best-effort |
 
 ## Release
 
 Branch model: `vcs.md`. Cadence and safety rules: [`RELEASE.md`](../../../RELEASE.md).
-
-```mermaid
-flowchart TD
-    RP["release-please PR, auto-merged"] --> Tags["tags + umbrella release as draft"]
-    Tags --> Back["back-merge.yml: main into next"]
-    Tags --> Jobs["attach: bundle, per-tool distributions, plugin archives, video"]
-    Tags --> Cli["publish-cli: npm"]
-    Jobs --> Pub["publish-release: draft to latest"]
-    Cli --> Recap
-    Pub --> Recap["release-recap: job log"]
-    Pub --> N8N["n8n workflow"]
-    N8N --> YT["YouTube"]
-    YT --> DC["Discord"]
-    YT --> SK["Skool"]
-    DC --> Slack["Slack recap"]
-    SK --> Slack
-```
 
 - The release PR merges with `--merge --admin`, the only method `.github/rulesets/main.json` allows.
 - So `main` never holds merged but unversioned code.

@@ -31,7 +31,7 @@
 | Codex: `pluginCacheDir` alone | only once proven empty | `plugin remove` leaves an empty shell |
 | Copilot: neither | never | none |
 
-## `clean --scope user`
+## `clean --global`
 
 - Purges the shared source and AIDD-owned user-scope plugins once every dependent project detached.
 - Without a user manifest, which a project-scope `setup` never writes, steps 1 to 3 are skipped and said so.

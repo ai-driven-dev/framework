@@ -3,7 +3,7 @@
 The `aidd` binary, built from `cli/` and published to npm as `@ai-driven-dev/cli`.
 
 - Before editing anything under `cli/`, load the `working-on-cli` skill and follow the action for your change.
-- CLI detail is on demand under `internal/cli/`: commands, architecture, tree, testing, deployment, one file per context, decisions.
+- CLI detail is on demand under `internal/cli/`; per-context rules are in the `working-on-cli` skill's references.
 
 ## Commands
 

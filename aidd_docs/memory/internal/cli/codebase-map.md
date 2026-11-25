@@ -1,6 +1,6 @@
 # CLI Codebase Map
 
-Where CLI code lives. `cli/tests/architecture/docs-do-not-lie.arch.test.ts` holds this tree to `cli/src/` in both directions.
+Where CLI code lives. `cli/tests/architecture/docs-do-not-lie.arch.test.ts` holds this tree, two levels deep, to `cli/src/` in both directions. The layers inside a context are in the `working-on-cli` skill's [`references/architecture.md`](../../../../.claude/skills/working-on-cli/references/architecture.md).
 
 ```txt
 src/
@@ -10,198 +10,35 @@ src/
 │   └── tool-profiles/    # one profile per tool; the registration list sits beside it
 ├── contexts/    # bounded contexts; another context reads contract/ only, presentation and orchestration also application/
 │   ├── auth/    # the one GitHub token
-│   │   ├── application/
-│   │   ├── contract/
-│   │   ├── domain/
-│   │   ├── infrastructure/
-│   │   └── ports/
 │   ├── distribution/    # where content comes from and how it is fetched
-│   │   ├── application/
-│   │   │   ├── add/
-│   │   │   ├── plugin-source/
-│   │   │   ├── refresh/
-│   │   │   └── remove/
-│   │   ├── contract/
-│   │   ├── domain/
-│   │   │   └── catalog-parsers/
-│   │   ├── infrastructure/
-│   │   └── ports/
 │   ├── host-registration/    # what a host's registry says, and driving its CLI
-│   │   ├── application/
-│   │   │   ├── inspect/
-│   │   │   ├── register/
-│   │   │   │   └── marketplace/
-│   │   │   └── withdraw/
-│   │   │       └── prove/
-│   │   ├── contract/
-│   │   ├── domain/
-│   │   │   ├── native-registration/    # the section a profile file exports beside its content profile
-│   │   │   ├── policy/
-│   │   │   ├── reading/
-│   │   │   ├── record/
-│   │   │   └── source/
-│   │   ├── infrastructure/
-│   │   │   ├── marketplace/
-│   │   │   └── plugin-registry/
-│   │   └── ports/
 │   ├── installation/    # the installation record and what installs, restores and materializes it
-│   │   ├── application/
-│   │   │   ├── agents/
-│   │   │   ├── clean/
-│   │   │   ├── doctor/
-│   │   │   ├── install/
-│   │   │   │   └── config/
-│   │   │   ├── marketplace/
-│   │   │   ├── materialize/
-│   │   │   │   └── built/
-│   │   │   ├── ownership/
-│   │   │   ├── plugin/
-│   │   │   │   ├── add/
-│   │   │   │   └── files/
-│   │   │   ├── removal/
-│   │   │   │   └── project/
-│   │   │   ├── restore/
-│   │   │   │   └── project/
-│   │   │   ├── shared/
-│   │   │   ├── status/
-│   │   │   ├── sync/
-│   │   │   └── update/
-│   │   ├── contract/
-│   │   │   ├── records/
-│   │   │   └── setup/
-│   │   ├── domain/
-│   │   │   ├── manifest/
-│   │   │   └── plugins/
-│   │   ├── infrastructure/
-│   │   └── ports/
-│   │       ├── plugin/
-│   │       └── user-scope/
 │   ├── machine-claims/    # which projects claim a machine-wide plugin or source
-│   │   ├── application/
-│   │   │   ├── ownership/
-│   │   │   ├── record/
-│   │   │   ├── removal/
-│   │   │   └── shared-source/
-│   │   ├── contract/
-│   │   ├── domain/
-│   │   ├── infrastructure/
-│   │   └── ports/
 │   ├── recipes/    # checking a recipe
-│   │   ├── application/
-│   │   ├── domain/
-│   │   ├── infrastructure/
-│   │   └── ports/
 │   ├── telemetry/    # what each billed model call consumed
-│   │   ├── application/
-│   │   │   ├── consent/
-│   │   │   ├── declaration/
-│   │   │   ├── forget/
-│   │   │   ├── identity/
-│   │   │   ├── report/
-│   │   │   └── switch/
-│   │   ├── contract/
-│   │   │   └── errors/
-│   │   ├── domain/
-│   │   │   ├── consent/
-│   │   │   ├── declaration/
-│   │   │   ├── identity/
-│   │   │   ├── ledger/
-│   │   │   ├── report/
-│   │   │   ├── resolution/
-│   │   │   ├── switch/
-│   │   │   └── transcript/
-│   │   ├── infrastructure/
-│   │   │   ├── git/
-│   │   │   ├── reading/
-│   │   │   ├── sources/
-│   │   │   │   ├── claude/
-│   │   │   │   └── codex/
-│   │   │   └── storage/
-│   │   │       ├── consent/
-│   │   │       ├── declarations/
-│   │   │       └── ledger/
-│   │   └── ports/
-│   │       ├── bindings/
-│   │       ├── forget/
-│   │       ├── identity/
-│   │       └── switch/
 │   ├── tools/    # what a project targets, and what each target declares
-│   │   ├── application/
-│   │   ├── contract/
-│   │   │   └── errors/
-│   │   ├── domain/
-│   │   │   ├── behaviours/    # the format code one tool alone needs, a folder per tool
-│   │   │   │   ├── antigravity/
-│   │   │   │   ├── claude/
-│   │   │   │   ├── codex/
-│   │   │   │   ├── copilot/
-│   │   │   │   ├── cursor/
-│   │   │   │   ├── kilo/
-│   │   │   │   ├── kimi/
-│   │   │   │   ├── kiro/
-│   │   │   │   └── opencode/
-│   │   │   ├── bridges/
-│   │   │   ├── formats/
-│   │   │   │   ├── agents/
-│   │   │   │   ├── hooks/
-│   │   │   │   └── mcp/
-│   │   │   ├── hooks/
-│   │   │   ├── models/
-│   │   │   ├── profile/
-│   │   │   └── sections/
-│   │   └── infrastructure/    # the codecs a profile hands its formats: TOML and JSONC
 │   ├── translate/    # canonical source to target-native content
-│   │   ├── application/
-│   │   │   └── sinks/
-│   │   ├── contract/
-│   │   ├── domain/
-│   │   │   ├── layouts/    # where each sink puts a plugin, as data for the rules
-│   │   │   └── rules/    # the one rule set both sinks write content with
-│   │   ├── infrastructure/
-│   │   └── ports/
 │   └── update/    # replacing the installed CLI, and the notice that one exists
-│       ├── application/
-│       ├── contract/
-│       ├── domain/
-│       ├── infrastructure/
-│       └── ports/
 ├── orchestration/    # scenarios that chain contexts, no business rule
 │   ├── agent-models/
 │   ├── clean/
 │   ├── doctor/
 │   ├── marketplace/
-│   │   └── remove/
 │   ├── menu/
 │   ├── plugin/
 │   ├── ports/    # the Prompter port, implemented by presentation
 │   ├── setup/
-│   │   └── steps/
 │   ├── sync/
-│   │   └── settings/
 │   └── telemetry/
 ├── presentation/    # everything that talks to a human
 │   ├── controllers/
-│   │   ├── doctor/
-│   │   ├── menu/
-│   │   ├── plugin/
-│   │   ├── setup/
-│   │   ├── telemetry/
-│   │   └── tools/
 │   ├── errors/
 │   ├── hooks/
 │   ├── menu/
 │   ├── presenters/
-│   │   ├── plugin/
-│   │   ├── setup/
-│   │   ├── telemetry/
-│   │   └── tools/
 │   └── terminal/
 └── shared/    # what two or more contexts need
     ├── domain/    # the vocabulary
-    │   ├── layout/
-    │   ├── materialization/
-    │   ├── plugin/
-    │   └── reading/
     ├── infrastructure/    # adapters of the shared ports, wired by composition only
     └── ports/    # technology ports two or more contexts need
 ```

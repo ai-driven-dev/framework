@@ -37,5 +37,5 @@ Run the flow above. Read only the action for the change, then what it loads.
 ## Transversal rules
 
 - Paths are rooted at `cli/`.
-- A red gate is fixed at its cause, never by an exemption or a wider allow-list.
+- A red gate is fixed at its cause, never by an exemption or a wider allow-list; the one sanctioned growth exemption is the folder-size `GROWS_BY_DESIGN` list (`tests/architecture/folder-size.arch.test.ts`), one file per registered tool.
 - A golden, an e2e output or a fixture is a frozen surface: change it only for a deliberate product change, and say so in the commit.

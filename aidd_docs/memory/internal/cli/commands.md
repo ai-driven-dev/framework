@@ -18,20 +18,18 @@ Read them live with `aidd --help`; `cli/tests/golden/help-surface.golden.test.ts
 - No argument on a TTY opens the menu; without a TTY, help goes to stderr and the exit is 1.
 - Global flags: `--version`, `--verbose` (or `AIDD_VERBOSE=true`).
 - `--scope project|user` picks where a plugin or marketplace lives.
-- `--global` runs `setup`, `doctor`, `sync` and `clean` machine-wide.
+- `--global` runs `setup`, `doctor`, `sync` and `clean` machine-wide (`--scope user` is its former spelling).
 - Channels and exit codes: the skill's [`references/architecture.md`](../../../../.claude/skills/working-on-cli/references/architecture.md), Process.
 - `doctor` drift is informational; it never gates the exit code.
 - `sync` restores tracked files, rewrites settings, drives native activation, then mirrors proven plugins into settings.
 - A user-scope `sync` skips the restore and the settings steps.
-- `clean` leaves the shared `aidd-framework` registration; `clean --scope user` purges it: [`decisions/clean-drives-the-host-cli.md`](decisions/clean-drives-the-host-cli.md).
+- `clean` leaves the shared `aidd-framework` registration; `clean --global` purges it: [`decisions/clean-drives-the-host-cli.md`](decisions/clean-drives-the-host-cli.md).
 - `AIDD_USER_CONFIG_DIR` relocates machine-owned state, read by `cli/src/composition/user-config-dir.ts`.
 
 ### Targeted user-scope `plugin update`
 
-- A plugin file-copied for the tool (Cursor, for one) is rematerialized from the built tree (`update-plugin.use-case.ts`, `planFiles`).
-- A native ref goes to the host's own CLI, and `RefreshHostPlugin` refuses a tool whose activation spec has no `updateVerb` (`refresh-host-plugin.use-case.ts:42`).
-- Only Copilot declares `updateVerb` (`tool-profiles/copilot.ts:107`): native `plugin update <plugin>@<catalogue>`, naming dependent projects, with no hand-written host cache.
-- Claude (`claude.ts:88-94`) and Codex (`codex.ts:98-100`) declare an activation without it, so they refuse; use `marketplace refresh` or `framework update`.
+- A file-copied plugin (Cursor) is rematerialized from the built tree; a native ref goes to the host's CLI through `RefreshHostPlugin`, gated by `refreshesOnePlugin`.
+- Only Copilot declares `updateVerb` (`tool-profiles/copilot.ts`); Claude and Codex declare `upgradeVerb` alone, so they refuse and point to `marketplace refresh` or `framework update`.
 
 ## Distribution
 

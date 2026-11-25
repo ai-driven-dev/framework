@@ -9,12 +9,11 @@ One `aidd-framework` registration per machine, shared by every project, under th
 
 ## Where
 
-| What | Path |
-| --- | --- |
-| Registration | `marketplaces.json`, `scope: "user"` |
-| Build, once per CLI version | `cache/built/<version>/aidd-framework/<tool>`; `userBuiltMarketplaceDir` in `cli/src/shared/domain/layout/aidd-layout.ts` |
-| Project claims | `references.json`: `{ "<version>": ["<projectRoot>"] }`; `cli/src/contexts/machine-claims/ports/user-source-references.ts` |
-| User manifest | `manifest.json`, a project's schema |
+Files and paths: [`cli/README.md`](../../../../../cli/README.md#on-the-machine). Code and shape:
+
+- The registration is `scope: "user"`; the user manifest has a project's schema.
+- One build per CLI version: `userBuiltMarketplaceDir` in `cli/src/shared/domain/layout/aidd-layout.ts`.
+- Project claims are `{ "<version>": ["<projectRoot>"] }`: `cli/src/contexts/machine-claims/ports/user-source-references.ts`.
 
 ## Migration
 
@@ -28,7 +27,7 @@ One `aidd-framework` registration per machine, shared by every project, under th
 - `setup` and `sync` claim only after the native registration is proven.
 - `clean` drops only this project's claim; the shared registration stays.
 - Advisory: a deleted `projectRoot` is ignored.
-- At zero claims, `clean` and `marketplace remove aidd-framework` name `clean --scope user` as the purge.
+- At zero claims, `clean` and `marketplace remove aidd-framework` name `clean --global` as the purge.
 
 ## `doctor` and `sync`
 
@@ -37,14 +36,14 @@ One `aidd-framework` registration per machine, shared by every project, under th
 - `sync` refuses a host already ahead; same version is a no-op.
 - `sync` brings a host forward only after the same ownership proof.
 
-## `setup --scope user`
+## `setup --global`
 
 - Registers the shared source; writes nothing under `projectRoot`.
 - Copilot proves its source through `plugin marketplace list --json`, refused where unsupported.
-- `--plugins all|recommended|<names>` picks from the shared catalog; an interactive pick is refused (`UserScopePluginModeError`).
+- `--plugins all|recommended|none|<names>` picks from the shared catalog; an interactive pick is refused (`UserScopePluginModeError`).
 - A tool with native activation gets plugins through `enablePlugins`.
-- A tool with `globalFiles` or a user plugins folder gets `scope: "user"` copies, rebuilt by `sync --scope user`.
+- A tool with `globalFiles` or a user plugins folder gets `scope: "user"` copies, rebuilt by `sync --global`.
 - Each AI tool gets a manifest entry with an empty file list for native sync; no `references.json` claim.
-- Refuses an `--ide` tool (`UserScopeIdeToolsError`): IDE config is project-relative.
-- Refuses an AI tool without `supportsUserScopeActivation` (`UserScopeUnsupportedAiToolsError`), so `--ai all` fails here.
-- `doctor --scope user` checks registration only; `--scope` defaults to `project`.
+- Refuses an editor in `--ide` (`UserScopeIdeToolsError`): editor config is project-relative.
+- Refuses a tool without `supportsUserScopeActivation` (`UserScopeUnsupportedAiToolsError`), so `--ide all` fails here.
+- `doctor --global` checks registration only; the default is project scope.
