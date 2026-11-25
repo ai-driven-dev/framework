@@ -189,6 +189,19 @@ describe("the shared adapter, through Kilo's bridge", () => {
     expect(prompts).toStrictEqual(CONTINUED);
   });
 
+  it("reads the Stop after a continued one as a continuation, and continues the turn once", async () => {
+    const ws = await workspace(host, bridgeOf(host));
+    const [, first, second] = await capturedPayloads(host, "session.idle", ws.project);
+    const { plugin, prompts } = await start(ws, { directory: ws.project });
+    await plugin.event({ event: first });
+    await plugin.event({ event: second });
+
+    expect(
+      (await recorded(ws, 3)).filter((call) => call.event === "Stop").map((call) => call.stopActive)
+    ).toStrictEqual([false, true]);
+    expect(prompts).toStrictEqual(CONTINUED);
+  });
+
   it("reports a follow-up the host refused, without throwing into it", async () => {
     const ws = await workspace(host, bridgeOf(host));
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
