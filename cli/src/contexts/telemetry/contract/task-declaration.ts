@@ -1,3 +1,4 @@
+// `hook-intercept` is read from old data: no hook writes it anymore.
 export const DECLARED_BY = ["command", "hook-intercept"] as const;
 export type DeclaredBy = (typeof DECLARED_BY)[number];
 
