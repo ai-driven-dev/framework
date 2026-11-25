@@ -135,6 +135,8 @@ describe("the source of the event that adds to the user's message", () => {
         return { text: next, person: "" };
       },
       reportHookFailure: (...args: unknown[]) => reported.push(args),
+      isBridgePrompt: (parts: { metadata?: { aidd?: unknown } }[]) =>
+        parts.some((part) => typeof part.metadata?.aidd === "string"),
     });
 
   it("gives each answer a part whose id names the first part, the plugin and the hook", async () => {

@@ -36,6 +36,7 @@ describe("the source every generated bridge writes the same way", () => {
     expect(answerFrom(0, JSON.stringify({ systemMessage: " hi " }), "")).toEqual({
       text: "",
       person: "hi",
+      required: false,
     });
   });
 

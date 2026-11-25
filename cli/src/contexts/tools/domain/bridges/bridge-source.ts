@@ -20,11 +20,6 @@ export function reportHookFailureSource(host: string): string {
   console.warn("[aidd] ${host} hook " + script + " failed: " + String(error));
 }
 
-/** A prompt the host refused to queue: reported like a failed script, never thrown into the host. */
-function reportFollowUpFailure(script, error) {
-  reportHookFailure(script, "follow-up not delivered: " + String(error));
-}
-
 function exitDescription(code, signal) {
   return "exited with code " + String(code) + (signal === null ? "" : " (" + signal + ")");
 }`;
@@ -65,7 +60,8 @@ function runCapture(script, args, payload, directory) {
 }`;
 
 /** The generated modules' reading of a finished script: exit 2 puts the answer on stderr, exit 0
- * puts it in `additionalContext` on stdout, and the person's message in `systemMessage`. Any other
+ * puts it in `additionalContext` on stdout, the person's message in `systemMessage`, and whether
+ * the model must deal with it before going on in `required`. Any other
  * way a script ends is reported and answers nothing. Written once here, so both hosts' bridges
  * tell the model, and the person, the same thing. */
 export const ANSWER_OF_SOURCE = `/** The JSON a script printed on stdout, or an empty object when it printed none. */
@@ -82,15 +78,17 @@ function personOf(output) {
   return String(output?.systemMessage ?? "").trim();
 }
 
-const NO_ANSWER = { text: "", person: "" };
+const NO_ANSWER = { text: "", person: "", required: false };
 
+/** \`required\` is what the adapter prints for a finding the model must deal with before going on. */
 function answerFrom(code, stdout, stderr) {
-  if (code === 2) return { text: stderr.trim(), person: "" };
+  if (code === 2) return { text: stderr.trim(), person: "", required: false };
   if (code !== 0) return NO_ANSWER;
   const output = stdoutJson(stdout);
   return {
     text: String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim(),
     person: personOf(output),
+    required: output?.required === true,
   };
 }
 
@@ -140,3 +138,20 @@ export const MATCHES_TOOL_SOURCE = `function matchesTool(matcher, tool) {
 /** The hosts name the written file `filePath`; the scripts read Claude Code's `file_path`. */
 export const TOOL_INPUT_SOURCE =
   'const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;';
+
+/** How a bridge sends a prompt of its own as the session's next turn: a Stop follow-up or a queued
+ * finding, each marked, so a message hook never reads it as the person's. \`method\` is the host's
+ * call; a refusal, or a client without that call, is reported under \`failure\`, never thrown into
+ * the host. One owner, so every prompt a bridge sends goes the same way. */
+export const SEND_PROMPT_SOURCE = `const FOLLOW_UP = { aidd: "stop-follow-up" };
+const FINDING = { aidd: "finding" };
+
+function isBridgePrompt(parts) {
+  return parts.some((part) => typeof part?.metadata?.aidd === "string");
+}
+
+function sendPrompt(client, method, sessionId, text, mark, script, failure) {
+  return Promise.resolve()
+    .then(() => client.session[method]({ path: { id: sessionId }, body: { parts: [{ type: "text", text, metadata: mark }] } }))
+    .catch((error) => reportHookFailure(script, failure + String(error)));
+}`;

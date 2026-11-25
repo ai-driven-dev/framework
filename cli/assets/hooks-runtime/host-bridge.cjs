@@ -123,14 +123,18 @@ function continueTurn(text, person) {
   });
 }
 
-/** Both levels inform: the bridge appends the text to the tool's result, which is all a
- * block would do there. At Stop, any answer continues the turn. With no `text`, only `person`
- * is handed to the bridge, at any event. */
-function answer({ text, person } = {}) {
+/** Both levels inform: the bridge appends the text to the tool's result. Level 2 also marks it
+ * required; a bridge reads that at PostToolUse only, and queues it as the session's next prompt.
+ * At Stop, any answer continues the turn. With no `text`, only `person` is handed to the bridge,
+ * at any event. */
+function answer({ level, text, person } = {}) {
   if (current === undefined) return;
   if (typeof text !== "string" || text === "") return showPerson(person);
   if (current.event === "Stop") return continueTurn(text, person);
-  print({ additionalContext: text });
+  print({
+    additionalContext: text,
+    ...(level === 2 ? { required: true } : {}),
+  });
 }
 
 module.exports = { readEvent, answer, continueTurn };

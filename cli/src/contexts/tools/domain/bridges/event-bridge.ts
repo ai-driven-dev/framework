@@ -20,6 +20,7 @@ import {
   NODE_IMPORTS_SOURCE,
   RUN_CAPTURE_SOURCE,
   reportHookFailureSource,
+  SEND_PROMPT_SOURCE,
   STOP_REASON_OF_SOURCE,
 } from "./bridge-source.js";
 
@@ -46,6 +47,7 @@ function sharedRuntimeSource(label: string, plugin: string): string {
     RUN_CAPTURE_SOURCE,
     ANSWER_OF_SOURCE,
     STOP_REASON_OF_SOURCE,
+    SEND_PROMPT_SOURCE,
     TOOL_USE_SOURCE,
     userPromptSource(plugin),
     SESSION_START_SOURCE,
@@ -62,8 +64,8 @@ export interface BridgeParts {
   readonly nodeImports: string;
   readonly hooksDir: string;
   readonly callTables: string;
-  /** Every function the hosts share: `reportHookFailure`, `reportFollowUpFailure`, `answerOf`,
-   * `stopReasonOf`, `stopCallsFor`, `refuseToolUse`, `addToolAnswers`, `FOLLOW_UP`, `isFollowUp`,
+  /** Every function the hosts share: `reportHookFailure`, `answerOf`, `stopReasonOf`,
+   * `stopCallsFor`, `sendPrompt`, `FOLLOW_UP`, `FINDING`, `isBridgePrompt`, `refuseToolUse`, `addToolAnswers`,
    * `addPromptContext`, `runSessionStart(event, fallbackDirectory)` and `addSessionContext`. */
   readonly shared: string;
 }

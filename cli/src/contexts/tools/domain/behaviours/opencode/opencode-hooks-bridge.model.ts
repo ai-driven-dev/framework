@@ -20,7 +20,11 @@
  * - `Stop` maps to V1's `session.idle` or V2's execution terminal, once per turn.
  * - `PostToolUse` maps to V1's `tool.execute.after`, the one hook that waits for the script and
  *   can append its exit-2 stderr to the tool's output, which is how a problem reaches the model.
- *   V2's adapter calls the same hook from a successful tool call, without that answer.
+ *   V2's adapter calls the same hook from a successful tool call, without that answer. An answer
+ *   the script marks required is also queued as the session's next prompt through V1's
+ *   `promptAsync`. V2's adapter has no such method: there the queueing is reported as failed, and
+ *   only the appended answer reaches the model. On 1.19.3 the model took the queued prompt up and
+ *   dropped the original request's last step; whether it resumes that request was not probed.
  * - `PreToolUse` maps to V1's `tool.execute.before`: a script that exits 2 refuses the call, its
  *   stderr the reason the model reads, as a throw from that hook does on OpenCode 1.19.3. V2's
  *   adapter does not call it.
@@ -106,12 +110,8 @@ export const ${parts.identifier} = async (input) => {
                 return undefined;
               }
               continued.add(sessionId);
-              return input.client.session.prompt({
-                path: { id: sessionId },
-                body: { parts: [{ type: "text", text: reason, metadata: FOLLOW_UP }] },
-              });
-            })
-            .catch((error) => reportFollowUpFailure(call.script, error));
+              return sendPrompt(input.client, "prompt", sessionId, reason, FOLLOW_UP, call.script, "follow-up not delivered: ");
+            });
           pending = Promise.all([pending, handling]).then(() => {});
           await asking;
         }
@@ -122,7 +122,8 @@ export const ${parts.identifier} = async (input) => {
     "experimental.chat.system.transform": (call, output) => addSessionContext(call, output, show),
     "tool.execute.before": (call, output) => refuseToolUse(call, output, input.directory),
     "chat.message": (call, output) => addPromptContext(call, output, input.directory),
-    "tool.execute.after": (call, output) => addToolAnswers(call, output, input.directory, show),
+    "tool.execute.after": (call, output) =>
+      addToolAnswers(call, output, input.directory, input.client, show),
   };
 };
 

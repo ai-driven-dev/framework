@@ -4,7 +4,9 @@
  * replayable commands into that native module. Kilo 7.7.5 delivers session.created and
  * session.idle through its event hook; a SessionStart answer reaches the model through
  * experimental.chat.system.transform; PostToolUse runs from tool.execute.after, which waits
- * for the script and appends its exit-2 stderr to the tool's output for the model to read.
+ * for the script and appends its exit-2 stderr to the tool's output for the model to read; an
+ * answer the script marks required is also queued as the session's next prompt. Probed on 7.7.5:
+ * the model took the queued prompt up and the rest of the turn still ran, in one assistant run.
  * PreToolUse runs from tool.execute.before: a script that exits 2 refuses the call, its stderr the
  * reason the model reads, as a throw from that hook does on Kilo 7.7.5. UserPromptSubmit runs from
  * chat.message: a script's answer joins the user's message as a synthetic text part. A throw from
@@ -40,6 +42,10 @@ ${parts.callTables}
 
 ${parts.shared}
 
+function isFollowUp(parts) {
+  return parts.some((part) => part?.metadata?.aidd === FOLLOW_UP.aidd);
+}
+
 const ${parts.identifier} = async ({ directory, client }) => {
   const sessions = new Map();
   return {
@@ -65,11 +71,7 @@ const ${parts.identifier} = async ({ directory, client }) => {
           // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
           // Open limit in \`kilo run\`: it exits at idle before this follow-up's turn runs, on 7.7.5 and 7.8.27
           // keyed on \`session.idle\`, and on 7.8.27 keyed on \`session.drained\`.
-          if (reason) {
-            client.session
-              .promptAsync({ path: { id }, body: { parts: [{ type: "text", text: reason, metadata: FOLLOW_UP }] } })
-              .catch((error) => reportFollowUpFailure(call.script, error));
-          }
+          if (reason) sendPrompt(client, "promptAsync", id, reason, FOLLOW_UP, call.script, "follow-up not delivered: ");
         }
       }
     } catch (error) {
@@ -79,7 +81,8 @@ const ${parts.identifier} = async ({ directory, client }) => {
   // What SessionStart answered reaches the model through its session's system prompt, every turn.
   "experimental.chat.system.transform": (input, output) => addSessionContext(input, output),
   // A user's message starts a new turn. Kilo hands every plugin every message, so a follow-up,
-  // this bridge's or another plugin's, is recognised by its mark and is not one.
+  // this bridge's or another plugin's, is recognised by its mark and is not one; a queued finding
+  // is.
   "chat.message": async (input, output) => {
     const session = sessions.get(input?.sessionID);
     if (session && !isFollowUp(output?.parts ?? [])) session.continued = false;
@@ -88,7 +91,7 @@ const ${parts.identifier} = async ({ directory, client }) => {
   "tool.execute.before": (call, output) =>
     refuseToolUse(call, output, sessions.get(call?.sessionID)?.directory ?? directory),
   "tool.execute.after": (call, output) =>
-    addToolAnswers(call, output, sessions.get(call?.sessionID)?.directory ?? directory),
+    addToolAnswers(call, output, sessions.get(call?.sessionID)?.directory ?? directory, client),
   };
 };
 

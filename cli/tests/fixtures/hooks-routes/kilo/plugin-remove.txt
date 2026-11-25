@@ -55,11 +55,6 @@ function reportHookFailure(script, error) {
   console.warn("[aidd] Kilo hook " + script + " failed: " + String(error));
 }
 
-/** A prompt the host refused to queue: reported like a failed script, never thrown into the host. */
-function reportFollowUpFailure(script, error) {
-  reportHookFailure(script, "follow-up not delivered: " + String(error));
-}
-
 function exitDescription(code, signal) {
   return "exited with code " + String(code) + (signal === null ? "" : " (" + signal + ")");
 }
@@ -110,15 +105,17 @@ function personOf(output) {
   return String(output?.systemMessage ?? "").trim();
 }
 
-const NO_ANSWER = { text: "", person: "" };
+const NO_ANSWER = { text: "", person: "", required: false };
 
+/** `required` is what the adapter prints for a finding the model must deal with before going on. */
 function answerFrom(code, stdout, stderr) {
-  if (code === 2) return { text: stderr.trim(), person: "" };
+  if (code === 2) return { text: stderr.trim(), person: "", required: false };
   if (code !== 0) return NO_ANSWER;
   const output = stdoutJson(stdout);
   return {
     text: String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim(),
     person: personOf(output),
+    required: output?.required === true,
   };
 }
 
@@ -154,6 +151,19 @@ function stopCallsFor(sessionId, directory) {
     args: hook.args,
     payload: { hook_event_name: "Stop", session_id: sessionId, cwd: directory },
   }));
+}
+
+const FOLLOW_UP = { aidd: "stop-follow-up" };
+const FINDING = { aidd: "finding" };
+
+function isBridgePrompt(parts) {
+  return parts.some((part) => typeof part?.metadata?.aidd === "string");
+}
+
+function sendPrompt(client, method, sessionId, text, mark, script, failure) {
+  return Promise.resolve()
+    .then(() => client.session[method]({ path: { id: sessionId }, body: { parts: [{ type: "text", text, metadata: mark }] } }))
+    .catch((error) => reportHookFailure(script, failure + String(error)));
 }
 
 function matchesTool(matcher, tool) {
@@ -209,30 +219,28 @@ async function refuseToolUse(call, output, directory) {
 }
 
 /** Each PostToolUse answer is appended to the output the model reads, its message for the person
- * handed to `show` where the host has one, a failure reported. */
-async function addToolAnswers(call, output, directory, show) {
+ * handed to `show` where the host has one, a failure reported. An answer the script marks
+ * required is also queued as the session's next prompt, which the model takes up after the current
+ * step; not awaited, so the host's prompt call never holds the tool. */
+async function addToolAnswers(call, output, directory, client, show) {
   try {
     for (const hook of postToolUseCallsFor(call, directory)) {
-      const { text, person } = await answerOf(hook.script, hook.args, hook.payload, directory);
+      const { text, person, required } = await answerOf(hook.script, hook.args, hook.payload, directory);
       show?.(person);
-      if (text) output.output = (output.output ?? "") + "\n\n" + text;
+      if (!text) continue;
+      output.output = (output.output ?? "") + "\n\n" + text;
+      if (required) sendPrompt(client, "promptAsync", call?.sessionID, text, FINDING, hook.script, "finding not queued: ");
     }
   } catch (error) {
     reportHookFailure("PostToolUse", error);
   }
 }
 
-const FOLLOW_UP = { aidd: "stop-follow-up" };
-
-function isFollowUp(parts) {
-  return parts.some((part) => part?.metadata?.aidd === FOLLOW_UP.aidd);
-}
-
-/** Pure: the user's message -> every UserPromptSubmit hook's call, none for a follow-up. The text
- * is the user's own: a part another hook added is not. */
+/** Pure: the user's message -> every UserPromptSubmit hook's call, none for a prompt a bridge
+ * sent. The text is the user's own: a part another hook added is not. */
 function userPromptCallsFor(input, output, directory) {
   const parts = output?.parts ?? [];
-  if (isFollowUp(parts)) return [];
+  if (isBridgePrompt(parts)) return [];
   const prompt = parts
     .filter((part) => part?.type === "text" && !part.synthetic)
     .map((part) => part.text)
@@ -306,6 +314,10 @@ async function addSessionContext(input, output, show) {
   show?.(person);
 }
 
+function isFollowUp(parts) {
+  return parts.some((part) => part?.metadata?.aidd === FOLLOW_UP.aidd);
+}
+
 const AiddTelemetryKiloHooks = async ({ directory, client }) => {
   const sessions = new Map();
   return {
@@ -331,11 +343,7 @@ const AiddTelemetryKiloHooks = async ({ directory, client }) => {
           // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
           // Open limit in `kilo run`: it exits at idle before this follow-up's turn runs, on 7.7.5 and 7.8.27
           // keyed on `session.idle`, and on 7.8.27 keyed on `session.drained`.
-          if (reason) {
-            client.session
-              .promptAsync({ path: { id }, body: { parts: [{ type: "text", text: reason, metadata: FOLLOW_UP }] } })
-              .catch((error) => reportFollowUpFailure(call.script, error));
-          }
+          if (reason) sendPrompt(client, "promptAsync", id, reason, FOLLOW_UP, call.script, "follow-up not delivered: ");
         }
       }
     } catch (error) {
@@ -345,7 +353,8 @@ const AiddTelemetryKiloHooks = async ({ directory, client }) => {
   // What SessionStart answered reaches the model through its session's system prompt, every turn.
   "experimental.chat.system.transform": (input, output) => addSessionContext(input, output),
   // A user's message starts a new turn. Kilo hands every plugin every message, so a follow-up,
-  // this bridge's or another plugin's, is recognised by its mark and is not one.
+  // this bridge's or another plugin's, is recognised by its mark and is not one; a queued finding
+  // is.
   "chat.message": async (input, output) => {
     const session = sessions.get(input?.sessionID);
     if (session && !isFollowUp(output?.parts ?? [])) session.continued = false;
@@ -354,7 +363,7 @@ const AiddTelemetryKiloHooks = async ({ directory, client }) => {
   "tool.execute.before": (call, output) =>
     refuseToolUse(call, output, sessions.get(call?.sessionID)?.directory ?? directory),
   "tool.execute.after": (call, output) =>
-    addToolAnswers(call, output, sessions.get(call?.sessionID)?.directory ?? directory),
+    addToolAnswers(call, output, sessions.get(call?.sessionID)?.directory ?? directory, client),
   };
 };
 

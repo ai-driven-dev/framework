@@ -60,33 +60,31 @@ async function refuseToolUse(call, output, directory) {
 }
 
 /** Each PostToolUse answer is appended to the output the model reads, its message for the person
- * handed to \`show\` where the host has one, a failure reported. */
-async function addToolAnswers(call, output, directory, show) {
+ * handed to \`show\` where the host has one, a failure reported. An answer the script marks
+ * required is also queued as the session's next prompt, which the model takes up after the current
+ * step; not awaited, so the host's prompt call never holds the tool. */
+async function addToolAnswers(call, output, directory, client, show) {
   try {
     for (const hook of postToolUseCallsFor(call, directory)) {
-      const { text, person } = await answerOf(hook.script, hook.args, hook.payload, directory);
+      const { text, person, required } = await answerOf(hook.script, hook.args, hook.payload, directory);
       show?.(person);
-      if (text) output.output = (output.output ?? "") + "\\n\\n" + text;
+      if (!text) continue;
+      output.output = (output.output ?? "") + "\\n\\n" + text;
+      if (required) sendPrompt(client, "promptAsync", call?.sessionID, text, FINDING, hook.script, "finding not queued: ");
     }
   } catch (error) {
     reportHookFailure("PostToolUse", error);
   }
 }`;
 
-/** A UserPromptSubmit script's answer joins the user's message as a part of its own. A follow-up a
- * bridge sent at Stop is no prompt of the user's: it carries a mark, and is read by no script. */
+/** A UserPromptSubmit script's answer joins the user's message as a part of its own. A prompt a
+ * bridge sent itself is no prompt of the user's: it carries a mark, and is read by no script. */
 export function userPromptSource(plugin: string): string {
-  return `const FOLLOW_UP = { aidd: "stop-follow-up" };
-
-function isFollowUp(parts) {
-  return parts.some((part) => part?.metadata?.aidd === FOLLOW_UP.aidd);
-}
-
-/** Pure: the user's message -> every UserPromptSubmit hook's call, none for a follow-up. The text
- * is the user's own: a part another hook added is not. */
+  return `/** Pure: the user's message -> every UserPromptSubmit hook's call, none for a prompt a bridge
+ * sent. The text is the user's own: a part another hook added is not. */
 function userPromptCallsFor(input, output, directory) {
   const parts = output?.parts ?? [];
-  if (isFollowUp(parts)) return [];
+  if (isBridgePrompt(parts)) return [];
   const prompt = parts
     .filter((part) => part?.type === "text" && !part.synthetic)
     .map((part) => part.text)
