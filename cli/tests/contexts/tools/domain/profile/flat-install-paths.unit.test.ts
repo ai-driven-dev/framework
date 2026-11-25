@@ -22,7 +22,7 @@ describe("where a flat plugin's files are installed", () => {
       antigravity.flatInstallPath("commands", "aidd", "c.md"),
     ]).toStrictEqual([
       ".agents/agents/aidd-a/agent.md",
-      ".agents/rules/aidd/r.md",
+      ".agents/rules/aidd-r.md",
       ".agents/commands/aidd/c.md",
     ]);
   });

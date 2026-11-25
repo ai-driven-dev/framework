@@ -7,8 +7,10 @@ import {
   flatHooksSupport,
   flatProjectHooksDelivery,
 } from "../../contexts/tools/domain/formats/hooks/flat-routes.js";
+import { activationTriggersRule } from "../../contexts/tools/domain/formats/rule-frontmatter.js";
 import { contract } from "../../contexts/tools/domain/profile/contract-builders.js";
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
+import { installUnder } from "../../contexts/tools/domain/profile/tool-suffix.js";
 import { flatPlacement } from "../../contexts/tools/domain/sections/layout-section.js";
 import {
   type FlatArtifactLayout,
@@ -17,9 +19,11 @@ import {
 
 const DIRECTORY = ".agents/";
 
-/** Where a flat build, and a flat install, put antigravity's skills and agents. */
+/** Where a flat build, and a flat install, put antigravity's skills, agents and rules. A rule sits
+ * directly in `.agents/rules/` and opens with a `trigger` (https://antigravity.google/docs/rules). */
 const ANTIGRAVITY_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(".agents/", {
   skills: "single-level",
+  rules: "top-level",
   agent: { folderFile: "agent.md" },
 });
 const TOOL_SUFFIX = ".antigravity.md";
@@ -94,6 +98,10 @@ export const antigravity = defineAiTool({
   capabilities: {
     skills: {
       agentsSkillsDirectory: true,
+    },
+    rules: {
+      buildInstallPath: installUnder(DIRECTORY, TOOL_SUFFIX, "rules/"),
+      convertFrontmatter: activationTriggersRule,
     },
     hooks: { delivery: hooksDelivery },
     layout: flatPlacement({

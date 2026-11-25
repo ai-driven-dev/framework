@@ -16,6 +16,8 @@ export function flatRules(canon: PluginDistribution, artifact: SupportedArtifact
       content,
       guard: { plugin, name: belowSection("rules", relativePath) },
     };
-    return placement.kind === "layout" ? ruleFilePlan(plan, content, placement.layout) : plan;
+    return placement.kind === "layout"
+      ? ruleFilePlan(plan, content, { layout: placement.layout, markdown: artifact.ruleMarkdown })
+      : plan;
   });
 }

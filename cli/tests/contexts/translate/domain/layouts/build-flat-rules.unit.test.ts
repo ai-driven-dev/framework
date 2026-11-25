@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { antigravity as antigravityTool } from "../../../../../src/composition/tool-profiles/antigravity.js";
 import { kilo as kiloTool } from "../../../../../src/composition/tool-profiles/kilo.js";
+import { kiro as kiroTool } from "../../../../../src/composition/tool-profiles/kiro.js";
 import { flatRules } from "../../../../../src/contexts/translate/domain/layouts/build-flat-rules.js";
 import { rulesIn } from "../../../../../src/shared/domain/materialization/artifact-path.js";
 import { flatArtifactLayout } from "../../../../../src/shared/domain/materialization/flat-paths.js";
@@ -7,7 +9,7 @@ import { translateBuildLayout } from "../../../../shared/testing/build-files.bui
 import { present } from "../../../../shared/testing/present.builder.js";
 import { aCanon } from "../../testing/canon-distribution.builder.js";
 import { translator } from "../../testing/engine-kit.builder.js";
-import { kilo } from "../../testing/registered-profiles.builder.js";
+import { antigravity, kilo, kiro } from "../../testing/registered-profiles.builder.js";
 
 const UNSCOPED = '---\ndescription: "Naming"\n---\n# Naming\n';
 const SCOPED =
@@ -18,10 +20,13 @@ const RULES = {
   "rules/01-standards/2-ts.md": SCOPED,
 };
 
-function built(files: Record<string, string>): Record<string, string> {
+function built(
+  files: Record<string, string>,
+  tool: { buildContracts: typeof kiloTool.buildContracts } = kiloTool
+): Record<string, string> {
   const written = translateBuildLayout(
     aCanon("aidd-craft", files),
-    present(kiloTool.buildContracts.flat)(),
+    present(tool.buildContracts.flat)(),
     "flat"
   );
   return Object.fromEntries(written.map((file) => [file.relativePath, file.content]));
@@ -70,4 +75,43 @@ describe("the rules of a flat build for a tool that keeps each plugin's rules un
       undefined,
     ]);
   });
+});
+
+describe("the rules of a flat build for a tool that reads its own scope frontmatter", () => {
+  it.each([
+    {
+      name: "kiro",
+      tool: kiroTool,
+      profile: kiro,
+      scoped:
+        '---\ninclusion: "fileMatch"\nfileMatchPattern:\n  - "**/*.ts"\n  - "**/*.tsx"\n---\n# TypeScript\n',
+      unscoped: '---\ninclusion: "always"\n---\n# Naming\n',
+      dir: ".kiro/steering/",
+    },
+    {
+      name: "antigravity",
+      tool: antigravityTool,
+      profile: antigravity,
+      scoped:
+        '---\ndescription: "TypeScript"\ntrigger: "glob"\nglobs: "**/*.ts, **/*.tsx"\n---\n# TypeScript\n',
+      unscoped: '---\ndescription: "Naming"\ntrigger: "always_on"\n---\n# Naming\n',
+      dir: ".agents/rules/",
+    },
+  ])(
+    "$name lands each rule at the top of its folder with its own frontmatter, as an install does",
+    ({ tool, profile, scoped, unscoped, dir }) => {
+      const files = built(RULES, tool);
+
+      expect(files).toEqual({
+        [`${dir}aidd-craft-01-standards-1-naming.md`]: unscoped,
+        [`${dir}aidd-craft-01-standards-2-ts.md`]: scoped,
+      });
+      const installed = Object.fromEntries(
+        translator
+          .translate(aCanon("aidd-craft", RULES), profile)
+          .map((f) => [f.relativePath, f.content])
+      );
+      expect(files).toEqual(installed);
+    }
+  );
 });
