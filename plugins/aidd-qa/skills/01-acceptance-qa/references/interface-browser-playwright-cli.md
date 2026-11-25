@@ -4,10 +4,10 @@ Playwright Agent CLI produces WebM evidence without becoming an application depe
 
 ## Version and invocation
 
-Support `@playwright/cli >= 0.1.17`; execute the framework pin `@playwright/cli@0.1.17`. Upgrade it deliberately, never through `latest` during QA.
+Support `@playwright/cli >= 0.1.17`; execute the framework pin `@playwright/cli@0.1.17`. Upgrade it deliberately, never through `latest` during QA. `{runner}` is the package runner `actions/02-prerequisites.md` resolved; add its flag that skips the install confirmation when it prompts.
 
 ```bash
-npx --yes @playwright/cli@0.1.17 -s=qa-<run-id> <command>
+{runner} @playwright/cli@0.1.17 -s=qa-<run-id> <command>
 ```
 
 Run every command from a temporary directory outside the application repository.
@@ -25,10 +25,10 @@ Within each scenario, reuse the same browser tab or tab group for every step; af
 - Run `video-stop` only after `run-code` succeeds.
 
 ```bash
-npx --yes @playwright/cli@0.1.17 -s=qa-<run-id>-<scenario-slug> resize 1280 720
-npx --yes @playwright/cli@0.1.17 -s=qa-<run-id>-<scenario-slug> video-start raw-<evidence-name>.webm --size=1280x720
+{runner} @playwright/cli@0.1.17 -s=qa-<run-id>-<scenario-slug> resize 1280 720
+{runner} @playwright/cli@0.1.17 -s=qa-<run-id>-<scenario-slug> video-start raw-<evidence-name>.webm --size=1280x720
 # Replace the locators; omit the scroll block when irrelevant.
-npx --yes @playwright/cli@0.1.17 -s=qa-<run-id>-<scenario-slug> run-code 'async page => {
+{runner} @playwright/cli@0.1.17 -s=qa-<run-id>-<scenario-slug> run-code 'async page => {
   const pause = milliseconds => page.waitForTimeout(milliseconds);
   await pause(1000);
   await page.getByRole("button", { name: "first action" }).click();
@@ -41,9 +41,9 @@ npx --yes @playwright/cli@0.1.17 -s=qa-<run-id>-<scenario-slug> run-code 'async 
   await pause(1000);
   return [{ step: "final action", expected, actual: ok ? expected : "not visible", ok }];
 }'
-npx --yes @playwright/cli@0.1.17 -s=qa-<run-id>-<scenario-slug> video-stop
+{runner} @playwright/cli@0.1.17 -s=qa-<run-id>-<scenario-slug> video-stop
 # Run the teardown and verify the baseline before closing.
-npx --yes @playwright/cli@0.1.17 -s=qa-<run-id>-<scenario-slug> close
+{runner} @playwright/cli@0.1.17 -s=qa-<run-id>-<scenario-slug> close
 ```
 
 `video-stop` writes the raw file to the current directory. Name raw files `raw-happy-path.webm` or `raw-edge-case-<scenario-slug>.webm`.

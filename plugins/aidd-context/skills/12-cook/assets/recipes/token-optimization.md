@@ -69,7 +69,7 @@ See [Claude Code status lines](https://code.claude.com/docs/en/statusline).
 
 #### 3) 📊 Analyze local history
 
-Use local logs when one session counter is insufficient.
+Use local logs when one session counter is insufficient. `{runner}` is defined in `references/recipe-contract.md`.
 
 | Need | Tool | Command |
 | --- | --- | --- |

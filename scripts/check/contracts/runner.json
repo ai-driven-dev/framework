@@ -12,9 +12,7 @@
       "why": "a project may use any JavaScript package runner and its lockfile says which; references/recipe-contract.md defines the placeholder and the runners it stands for",
       "fix": "write {runner} for the project's package runner instead of a literal one",
       "notIn": [
-        "references/recipe-contract.md",
-        "references/interface-browser-playwright-cli.md",
-        "actions/02-prerequisites.md"
+        "references/recipe-contract.md"
       ]
     }
   }
