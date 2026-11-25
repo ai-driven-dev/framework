@@ -1,8 +1,8 @@
 "use strict";
 /**
  * OpenCode's and Kilo's side of the one interface every framework hook speaks: `readEvent()`
- * turns what the host's bridge sends on stdin into a neutral event, `answer()` and `continueTurn()`
- * print the host's own answer. Each host's descriptor stamps its name into `HOST` and the build
+ * turns what the host's bridge sends on stdin into a neutral event, `answer()`, `continueTurn()`
+ * and `refuse()` give the host's own answer. Each host's descriptor stamps its name into `HOST` and the build
  * puts the result at `hooks/lib/host.cjs`. Node built-ins only; anything unreadable is no event.
  */
 const fs = require("node:fs");
@@ -11,6 +11,7 @@ const path = require("node:path");
 const HOST = "unstamped";
 const EVENTS = new Map([
   ["SessionStart", "SessionStart"],
+  ["PreToolUse", "PreToolUse"],
   ["PostToolUse", "PostToolUse"],
   ["Stop", "Stop"],
 ]);
@@ -76,18 +77,23 @@ function writtenFiles(tool, input, cwd) {
   return [file];
 }
 
+/** Before a tool, the files it is about to write, by path alone: their text is not written yet. */
+function filesOf(event, files) {
+  return event === "PreToolUse" ? files.map(({ path }) => ({ path })) : files;
+}
+
 function readEvent() {
   current = undefined;
   const raw = readPayload();
   const event = raw === undefined ? undefined : EVENTS.get(raw.hook_event_name);
   if (event === undefined) return undefined;
   const cwd = typeof raw.cwd === "string" && raw.cwd !== "" ? raw.cwd : process.cwd();
-  const tool = event === "PostToolUse" ? raw.tool_name : undefined;
+  const tool = event === "PreToolUse" || event === "PostToolUse" ? raw.tool_name : undefined;
   const input = raw.tool_input;
   current = {
     host: HOST,
     event,
-    files: writtenFiles(tool, input, cwd),
+    files: filesOf(event, writtenFiles(tool, input, cwd)),
     ...(SHELLS.has(tool) && typeof input?.command === "string" ? { command: input.command } : {}),
     stopActive: raw.stop_hook_active === true,
     sessionId: typeof raw.session_id === "string" ? raw.session_id : null,
@@ -137,4 +143,14 @@ function answer({ level, text, person } = {}) {
   });
 }
 
-module.exports = { readEvent, answer, continueTurn };
+/** Refuses the tool call about to run, with `reason` as what the model is told: exit code 2 with
+ * the reason on standard error, which the bridge throws out of the host's hook before the tool.
+ * Does nothing at any other event: a hook that refuses is written once and is harmless where
+ * nothing can be refused. */
+function refuse(reason) {
+  if (current?.event !== "PreToolUse" || typeof reason !== "string" || reason === "") return;
+  process.stderr.write(reason);
+  process.exitCode = 2;
+}
+
+module.exports = { readEvent, answer, continueTurn, refuse };

@@ -33,13 +33,15 @@ export const HOOKS_JSON = JSON.stringify({
   },
 });
 
-/** A hook that speaks only the neutral interface: it records each event, informs after a
- * write, and at a turn end continues it, or answers there when `AIDD_STOP` says so. */
+/** A hook that speaks only the neutral interface: it records each event, refuses with the reason
+ * `AIDD_REFUSE` holds at whatever event, informs after a write, and at a turn end continues it, or
+ * answers there when `AIDD_STOP` says so. */
 export const RECORDER = `const fs = require("node:fs");
 const host = require("./lib/host.cjs");
 const event = host.readEvent();
 if (event !== undefined) {
   fs.appendFileSync(process.env.AIDD_RECORD, JSON.stringify(event) + "\\n");
+  if (process.env.AIDD_REFUSE !== undefined) host.refuse(process.env.AIDD_REFUSE);
   if (event.event === "SessionStart" && process.env.AIDD_START === "answer") host.answer({ level: 1, text: "start note" });
   if (event.event === "SessionStart" && process.env.AIDD_START === "person") host.answer({ level: 1, person: "person note" });
   if (event.event === "PostToolUse" && process.env.AIDD_POST === "person") host.answer({ level: 1, person: "person note" });
@@ -134,6 +136,7 @@ export type Handler = (...args: unknown[]) => Promise<void>;
 export interface Plugin {
   readonly dispose?: () => Promise<void>;
   readonly event: Handler;
+  readonly "tool.execute.before": Handler;
   readonly "tool.execute.after": Handler;
   readonly "experimental.chat.system.transform": Handler;
 }
