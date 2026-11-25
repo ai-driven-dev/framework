@@ -106,7 +106,7 @@ async function mergeVerdictOf(
   const diskPath = join(projectRoot, entry.relativePath);
   if (!(await fs.fileExists(diskPath))) return "missing";
   const diskContent = await fs.readFile(diskPath);
-  return driftOfKeys(entry.entries, extractMergeEntries(diskContent, entry.sectionKey));
+  return driftOfKeys(entry.entries, extractMergeEntries(diskContent, entry.sectionKey, diskPath));
 }
 
 async function applyOneMergeRestore(
@@ -118,7 +118,7 @@ async function applyOneMergeRestore(
   const fullPath = join(projectRoot, entry.relativePath);
   await fs.mergeJsonFile(fullPath, entry.content, entry.mergeStrategy);
   const mergedContent = await fs.readFile(fullPath);
-  const newEntries = extractMergeEntries(mergedContent, entry.sectionKey);
+  const newEntries = extractMergeEntries(mergedContent, entry.sectionKey, fullPath);
   mergeMap.set(entry.relativePath, {
     relativePath: entry.relativePath,
     sectionKey: entry.sectionKey,

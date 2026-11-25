@@ -43,6 +43,15 @@ describe("comparing a merge file with the disk", () => {
     entries: { srv: FileHash.of(JSON.stringify({ command: "node" })) },
   };
 
+  it("refuses a file that cannot be parsed, naming it", async () => {
+    const fs = new InMemoryFileAdapter({ "/project/.tool/mcp.json": "{ not json" }, [ROOT]);
+
+    await expect(mergeFileDrift(fs, [mergeFile], ROOT)).rejects.toMatchObject({
+      code: "json-parse",
+      path: "/project/.tool/mcp.json",
+    });
+  });
+
   it("reports every key of an absent file as deleted", async () => {
     const fs = new InMemoryFileAdapter({}, [ROOT]);
 

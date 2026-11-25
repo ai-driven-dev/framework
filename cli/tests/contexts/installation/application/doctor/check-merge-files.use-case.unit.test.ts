@@ -53,6 +53,16 @@ async function issuesFor(
 
 describe("checking the merge files", () => {
   describe("a merge file", () => {
+    it("reports one error naming the file when it cannot be parsed", async () => {
+      expect(await issuesFor("{ not json")).toStrictEqual([
+        {
+          severity: "error",
+          message: `Unparseable merge file: ${MERGE_PATH}`,
+          fix: "Repair the JSON in this file, then run sync again.",
+        },
+      ]);
+    });
+
     it("reports nothing when every managed key holds its recorded value", async () => {
       expect(await issuesFor(`{ "${KEY}": true }`)).toStrictEqual([]);
     });

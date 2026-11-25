@@ -52,7 +52,7 @@ async function oneMergeFileDrift(
 ): Promise<FileDrift[]> {
   const fullPath = join(projectRoot, mergeFile.relativePath);
   const diskEntries = (await fs.fileExists(fullPath))
-    ? extractMergeEntries(await fs.readFile(fullPath), mergeFile.sectionKey)
+    ? extractMergeEntries(await fs.readFile(fullPath), mergeFile.sectionKey, fullPath)
     : {};
   return Object.entries(mergeFile.entries).flatMap(([key, manifestHash]) =>
     driftFor(
