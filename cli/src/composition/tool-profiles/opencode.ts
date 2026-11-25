@@ -84,7 +84,7 @@ const FLAT_PLACEMENT = flatPlacement({
 // `hooks/`, namespaced per plugin, and nothing there is ever imported.
 const hooks = declareBridgeHooks(
   { toolId: "opencode", directory: DIRECTORY, adapter },
-  ["server-init", "tool.execute.after", "session.idle"],
+  ["server-init", "tool.execute.after", "session.idle", "tool.execute.before", "chat.message"],
   {
     // The loader scans `{plugin,plugins}/*.{ts,js}`, one level: only a plugin's own module, or
     // the bridge generated for it, belongs there, renamed so two plugins cannot collide.

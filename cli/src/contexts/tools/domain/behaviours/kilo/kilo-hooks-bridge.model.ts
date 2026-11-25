@@ -4,7 +4,11 @@
  * replayable commands into that native module. Kilo 7.7.5 delivers session.created and
  * session.idle through its event hook; PostToolUse runs from tool.execute.after, which waits
  * for the script and appends its exit-2 stderr to the tool's output for the model to read.
- * Matchers ignore case, since Kilo names its tools in lowercase.
+ * PreToolUse runs from tool.execute.before: a script that exits 2 refuses the call, its stderr the
+ * reason the model reads, as a throw from that hook does on Kilo 7.7.5. UserPromptSubmit runs from
+ * chat.message: a script's answer joins the user's message as a synthetic text part, and cannot
+ * refuse the prompt, a refusal being unobserved. Matchers ignore case, since Kilo names its tools
+ * in lowercase.
  */
 
 import { type BridgeParts, generateBridge } from "../../bridges/event-bridge.js";
@@ -86,6 +90,14 @@ function reportHookFailure(script, error) {
   console.warn("[aidd] Kilo hook " + script + " failed: " + String(error));
 }
 
+${parts.matchesTool}
+
+${parts.runCapture}
+
+${parts.preToolUse}
+
+${parts.userPrompt}
+
 function sessionStartCallsFor(event, directory) {
   if (event?.type !== "session.created") return [];
   return SESSION_START.map((hook) => ({
@@ -94,8 +106,6 @@ function sessionStartCallsFor(event, directory) {
     payload: { hook_event_name: "SessionStart", session_id: event.properties?.sessionID ?? null, cwd: event.properties?.info?.directory ?? directory },
   }));
 }
-
-const FOLLOW_UP = { aidd: "stop-follow-up" };
 
 const ${parts.identifier} = async ({ directory, client }) => {
   const sessions = new Map();
@@ -143,8 +153,22 @@ const ${parts.identifier} = async ({ directory, client }) => {
   // this bridge's or another plugin's, is recognised by its mark and is not one.
   "chat.message": async (input, output) => {
     const session = sessions.get(input?.sessionID);
-    if (!session) return;
-    if (!output?.parts?.some((part) => part?.metadata?.aidd === FOLLOW_UP.aidd)) session.continued = false;
+    if (session && !isFollowUp(output?.parts ?? [])) session.continued = false;
+    try {
+      await addPromptContext(input, output, session?.directory ?? directory);
+    } catch (error) {
+      console.warn("[aidd] Kilo hook dispatch failed: " + String(error));
+    }
+  },
+  // The refusal is thrown out of the hook, the one way the host stops the call.
+  "tool.execute.before": async (call, output) => {
+    let refusal = null;
+    try {
+      refusal = await refusalOf(preToolUseCallsFor(call, output, sessions.get(call?.sessionID)?.directory ?? directory));
+    } catch (error) {
+      console.warn("[aidd] Kilo hook dispatch failed: " + String(error));
+    }
+    if (refusal !== null) throw new Error(refusal);
   },
   "tool.execute.after": async (call, output) => {
     try {
@@ -153,7 +177,7 @@ const ${parts.identifier} = async ({ directory, client }) => {
       // Kilo names the written file filePath; the scripts read Claude Code's file_path.
       const args = call?.args;
       ${parts.toolInput}
-      for (const hook of POST_TOOL_USE.filter(hook => !hook.matcher || hook.matcher.split("|").some(name => name.toLowerCase() === tool.toLowerCase()))) {
+      for (const hook of POST_TOOL_USE.filter((hook) => matchesTool(hook.matcher, tool))) {
         const answer = await answerOf(hook.script, hook.args, { hook_event_name: "PostToolUse", session_id: call?.sessionID ?? null, cwd, tool_name: tool, tool_input: toolInput }, cwd);
         ${parts.appendAnswer}
       }

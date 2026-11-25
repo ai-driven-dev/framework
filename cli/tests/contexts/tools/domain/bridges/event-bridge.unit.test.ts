@@ -41,15 +41,27 @@ describe("reading a hooks file for the bridge", () => {
     expect(stopCalls(command)).toStrictEqual([]);
   });
 
-  it("reads each of the three mapped events and ignores any other", () => {
+  it("reads each of the five mapped events and ignores any other", () => {
     const group = [{ hooks: [{ command: `node ${ROOT}/hooks/a.cjs` }] }];
     const table = parseHooksJsonForBridge(
-      JSON.stringify({ hooks: { SessionStart: group, PostToolUse: group, PreToolUse: group } })
+      JSON.stringify({
+        hooks: {
+          SessionStart: group,
+          PostToolUse: group,
+          PreToolUse: group,
+          UserPromptSubmit: group,
+          SessionEnd: group,
+        },
+      })
     );
 
-    expect([table.sessionStart.length, table.stop.length, table.postToolUse.length]).toEqual([
-      1, 0, 1,
-    ]);
+    expect([
+      table.sessionStart.length,
+      table.stop.length,
+      table.postToolUse.length,
+      table.preToolUse.length,
+      table.userPromptSubmit.length,
+    ]).toEqual([1, 0, 1, 1, 1]);
   });
 });
 
@@ -59,7 +71,7 @@ describe("when no event has a replayable command", () => {
     ["no event", JSON.stringify({ hooks: {} })],
     ["an event with an empty group", JSON.stringify({ hooks: { SessionStart: [{}] } })],
     ["an event with no groups", JSON.stringify({ hooks: { Stop: [] } })],
-    ["only an unmapped event", hooksOf("PreToolUse", `node ${ROOT}/hooks/a.cjs`)],
+    ["only an unmapped event", hooksOf("SessionEnd", `node ${ROOT}/hooks/a.cjs`)],
     ["only a command no bridge replays", hooksOf("Stop", `${ROOT}/hooks/a.sh`)],
   ])("holds for %s", (_name, hooksJson) => {
     expect(replaysNothing(parseHooksJsonForBridge(hooksJson))).toBe(true);
@@ -97,10 +109,13 @@ describe.each([
 ])("the bridge generator of %s", (_host, generate) => {
   it("writes no module for a hooks.json no mapped event of which is replayable", () => {
     expect(generate(hooksOf("Stop", `${ROOT}/hooks/a.sh`), "aidd-test")).toBeNull();
-    expect(generate(hooksOf("PreToolUse", `node ${ROOT}/hooks/a.cjs`), "aidd-test")).toBeNull();
+    expect(generate(hooksOf("SessionEnd", `node ${ROOT}/hooks/a.cjs`), "aidd-test")).toBeNull();
   });
 
-  it.each(["SessionStart", "Stop", "PostToolUse"])("writes a module for %s alone", (event) => {
-    expect(generate(hooksOf(event, `node ${ROOT}/hooks/a.cjs`), "aidd-test")).not.toBeNull();
-  });
+  it.each(["SessionStart", "Stop", "PostToolUse", "PreToolUse", "UserPromptSubmit"])(
+    "writes a module for %s alone",
+    (event) => {
+      expect(generate(hooksOf(event, `node ${ROOT}/hooks/a.cjs`), "aidd-test")).not.toBeNull();
+    }
+  );
 });

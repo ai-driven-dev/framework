@@ -1,0 +1,37 @@
+{
+  "host": "opencode",
+  "event": "tool.execute.before",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "call": {
+          "tool": "write",
+          "sessionID": "00000000-0000-4000-8000-000000000000",
+          "callID": "chatcmpl-tool-94b0a9579befade0"
+        },
+        "output": {
+          "args": {
+            "content": "hello",
+            "filePath": "/Users/user/project/notes.md"
+          }
+        }
+      }
+    },
+    {
+      "run": "log",
+      "payload": {
+        "call": {
+          "tool": "bash",
+          "sessionID": "00000000-0000-4000-8000-000000000000",
+          "callID": "chatcmpl-tool-b4dbd44cdcb3f683"
+        },
+        "output": {
+          "args": {
+            "command": "echo hi"
+          }
+        }
+      }
+    }
+  ]
+}

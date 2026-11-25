@@ -69,7 +69,13 @@ describe("a hooks file and a bridge", () => {
   });
 
   it("names the bridge after its plugin, in its directory", () => {
-    const bridge = { dir: ".b/", skipIfSourceHas: "x.js", generate: () => null };
+    const bridge = {
+      dir: ".b/",
+      skipIfSourceHas: "x.js",
+      generate: () => null,
+      tool: "stub",
+      relays: [],
+    };
 
     expect(hooksBridgeFilePath(bridge, "p")).toBe(".b/p-hooks.js");
   });

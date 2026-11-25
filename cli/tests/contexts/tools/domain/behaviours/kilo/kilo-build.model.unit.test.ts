@@ -51,6 +51,15 @@ describe("building Kilo's flat contract", () => {
     expect(hooks.hooksBridge?.dir).toBe(".kilo/plugin/");
   });
 
+  it("names itself and the five events its bridge relays, for the build's warning about the rest", () => {
+    const hooks = supported(present(kilo.buildContracts.flat)().artifacts.hooks);
+
+    expect([hooks.hooksBridge?.tool, hooks.hooksBridge?.relays]).toStrictEqual([
+      "kilo",
+      ["SessionStart", "PostToolUse", "Stop", "PreToolUse", "UserPromptSubmit"],
+    ]);
+  });
+
   it("drops the name from a flat agent: Kilo names it after its file", () => {
     const transform = builtAgent(present(kilo.buildContracts.flat)(), "flat");
     expect(transform?.("---\nname: x\ndescription: Reads\n---\nBody.\n", "aidd-dev", "x.md")).toBe(

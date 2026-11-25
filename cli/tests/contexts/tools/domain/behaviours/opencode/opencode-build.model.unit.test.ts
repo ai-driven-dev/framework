@@ -168,6 +168,15 @@ describe("building OpenCode's flat contract", () => {
     });
   });
 
+  it("names itself and the five events its bridge relays, for the build's warning about the rest", () => {
+    const hooks = supported(present(opencode.buildContracts.flat)().artifacts.hooks);
+
+    expect([hooks.hooksBridge?.tool, hooks.hooksBridge?.relays]).toStrictEqual([
+      "opencode",
+      ["SessionStart", "PostToolUse", "Stop", "PreToolUse", "UserPromptSubmit"],
+    ]);
+  });
+
   it("generates no bridge for a plugin whose hooks name no event OpenCode delivers", () => {
     const hooks = supported(present(opencode.buildContracts.flat)().artifacts.hooks);
 

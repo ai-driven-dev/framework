@@ -11,6 +11,8 @@ import { pathToFileURL } from "node:url";
 import { afterEach, describe, expect, it, onTestFinished, vi } from "vitest";
 import { generateKiloHooksBridge } from "../../../../../src/contexts/tools/domain/behaviours/kilo/kilo-hooks-bridge.model.js";
 import { generateOpencodeHooksBridge } from "../../../../../src/contexts/tools/domain/behaviours/opencode/opencode-hooks-bridge.model.js";
+import { asPlainObject } from "../../../../../src/shared/domain/reading/plain-object.js";
+import { REPOSITORY_ROOT } from "../../../../shared/testing/repository-root.builder.js";
 
 const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
 const command = (script: string, prefix = "node ") => ({
@@ -55,7 +57,8 @@ const HANG = `require("node:fs").writeFileSync(require("node:path").resolve(__di
 interface Server {
   event: (input: { event: unknown }) => Promise<void>;
   "tool.execute.after": (call: unknown, output: { output: string }) => Promise<void>;
-  "chat.message"?: (input: { sessionID: string }, output: { parts: unknown[] }) => Promise<void>;
+  "tool.execute.before": (call: unknown, output: unknown) => Promise<void>;
+  "chat.message"?: (input: unknown, output: { parts: unknown[] }) => Promise<void>;
   dispose: () => Promise<void>;
 }
 interface Descriptor {
@@ -177,6 +180,44 @@ async function open(
   return { directory, descriptor, server, emit, calls, of, tool, prompts, delivered };
 }
 
+// A Stop script that exits 7 never answers: the module exists whatever event a case adds beside it.
+const ALONGSIDE = { Stop: [command("exit7.cjs")] };
+
+const PAYLOADS = join(REPOSITORY_ROOT, "scripts", "__tests__", "fixtures", "hook-payloads");
+const SESSION = "00000000-0000-4000-8000-000000000000";
+
+interface Captured {
+  readonly input: { readonly sessionID: string };
+  readonly output: {
+    readonly message: { readonly id: string };
+    readonly parts: { id: string; text: string }[];
+  };
+}
+
+/** The samples a host's capture file holds. */
+async function samplesOf(file: string) {
+  const parsed = asPlainObject(JSON.parse(await readFile(join(PAYLOADS, file), "utf8")));
+  return Array.isArray(parsed?.samples) ? parsed.samples : [];
+}
+
+/** A payload the host really sent, from its capture: the nth sample of its hook's file. */
+async function captured(host: Host, hook: string, run: string): Promise<Captured> {
+  const file = `${host.name.toLowerCase()}-${hook}.json`;
+  const samples = await samplesOf(file);
+  const found = samples.find((sample) => sample.run === run);
+  if (found === undefined) throw new Error(`${file} has no ${run} sample`);
+  return found.payload;
+}
+
+/** The captured write and shell calls of a host's `tool.execute.before`. */
+async function beforeTool(host: Host, tool: "write" | "bash") {
+  const file = `${host.name.toLowerCase()}-tool.execute.before.json`;
+  const samples = await samplesOf(file);
+  const found = samples.find((sample) => sample.payload.call.tool === tool);
+  if (found === undefined) throw new Error(`${file} has no ${tool} call`);
+  return structuredClone(found.payload);
+}
+
 function hostNamed(name: string): Host {
   const host = HOSTS.find((candidate) => candidate.name === name);
   if (host === undefined) throw new Error(`no host named ${name}`);
@@ -294,6 +335,206 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
       { hook_event_name: "Stop", session_id: "s1", cwd: directory, stop_hook_active: false },
       { hook_event_name: "Stop", session_id: "s1", cwd: directory, stop_hook_active: true },
     ]);
+  });
+
+  it("marks the follow-up it sends, so the host's message hook does not read it as the user's", async () => {
+    const { directory, emit, prompts } = await open(host);
+    await emit(host.sessionStarted("s1", directory), {
+      type: "session.idle",
+      properties: { sessionID: "s1" },
+    });
+
+    expect(prompts).toMatchObject([
+      { body: { parts: [{ metadata: { aidd: "stop-follow-up" } }] } },
+    ]);
+  });
+
+  it("refuses a tool call when a PreToolUse script exits 2, with its stderr as the reason", async () => {
+    const hooksJson = JSON.stringify({
+      hooks: { ...ALONGSIDE, PreToolUse: [{ matcher: "Write|Edit", ...command("fix.cjs") }] },
+    });
+    const { directory, server, of } = await open(host, hooksJson);
+    const { call, output } = await beforeTool(host, "write");
+
+    await expect(server["tool.execute.before"](call, output)).rejects.toThrow("fix it");
+    expect(await of("fix.cjs")).toMatchObject([
+      {
+        payload: {
+          hook_event_name: "PreToolUse",
+          session_id: SESSION,
+          cwd: directory,
+          tool_name: "write",
+          tool_input: {
+            content: "hello",
+            filePath: "/Users/user/project/notes.md",
+            file_path: "/Users/user/project/notes.md",
+          },
+        },
+      },
+    ]);
+  });
+
+  it("stops at the first PreToolUse script that refuses, running no other after it", async () => {
+    const hooksJson = JSON.stringify({
+      hooks: { ...ALONGSIDE, PreToolUse: [command("fix.cjs"), command("note.cjs")] },
+    });
+    const { server, of } = await open(host, hooksJson);
+    const { call, output } = await beforeTool(host, "bash");
+
+    await expect(server["tool.execute.before"](call, output)).rejects.toThrow("fix it");
+    expect((await of("note.cjs")).length).toBe(0);
+  });
+
+  it("lets a tool call through that no PreToolUse script refuses", async () => {
+    const hooksJson = JSON.stringify({
+      hooks: {
+        ...ALONGSIDE,
+        PreToolUse: [
+          { matcher: "Write", ...command("fix.cjs") },
+          { matcher: "bash", ...command("note.cjs") },
+          { matcher: "bash", ...command("exit7.cjs") },
+        ],
+      },
+    });
+    const { server, of } = await open(host, hooksJson);
+    const { call, output } = await beforeTool(host, "bash");
+
+    await expect(server["tool.execute.before"](call, output)).resolves.toBeUndefined();
+    expect(
+      [await of("fix.cjs"), await of("note.cjs"), await of("exit7.cjs")].map((c) => c.length)
+    ).toEqual([0, 1, 1]);
+  });
+
+  it("adds what a UserPromptSubmit script prints to the user's message, as a part of its own", async () => {
+    const hooksJson = JSON.stringify({
+      hooks: { ...ALONGSIDE, UserPromptSubmit: [command("note.cjs")] },
+    });
+    const { directory, server, of } = await open(host, hooksJson);
+    const { input, output } = await captured(host, "chat.message", "log");
+    const [prompt] = output.parts;
+
+    await server["chat.message"]?.(input, output);
+
+    expect(output.parts).toEqual([
+      prompt,
+      {
+        id: `${prompt.id}-probe-0`,
+        messageID: output.message.id,
+        sessionID: SESSION,
+        type: "text",
+        text: "noted",
+        synthetic: true,
+      },
+    ]);
+    expect(await of("note.cjs")).toMatchObject([
+      {
+        payload: {
+          hook_event_name: "UserPromptSubmit",
+          session_id: SESSION,
+          cwd: directory,
+          prompt: prompt.text,
+        },
+      },
+    ]);
+  });
+
+  it("gives each answer of a plugin's UserPromptSubmit scripts a part of its own", async () => {
+    const hooksJson = JSON.stringify({
+      hooks: {
+        ...ALONGSIDE,
+        UserPromptSubmit: [command("note.cjs"), command("fix.cjs")],
+      },
+    });
+    const { server } = await open(host, hooksJson);
+    const { input, output } = await captured(host, "chat.message", "log");
+
+    await server["chat.message"]?.(input, output);
+
+    const added = output.parts.slice(1);
+    expect([added.map((part) => part.text), new Set(added.map((part) => part.id)).size]).toEqual([
+      ["noted", "fix it"],
+      2,
+    ]);
+  });
+
+  it("reads as the prompt the user's own text only, never a part another hook added", async () => {
+    const hooksJson = JSON.stringify({
+      hooks: { ...ALONGSIDE, UserPromptSubmit: [command("note.cjs")] },
+    });
+    const { server, of } = await open(host, hooksJson);
+    const { input, output } = await captured(host, "chat.message", "log");
+    const [prompt] = output.parts;
+
+    await server["chat.message"]?.(input, output);
+    await server["chat.message"]?.(input, output);
+
+    expect((await of("note.cjs")).map((c) => c.payload.prompt)).toEqual([prompt.text, prompt.text]);
+  });
+
+  it.each([
+    ["a tool call", "tool.execute.before", { tool: "write" }],
+    ["a message", "chat.message", { sessionID: "s1" }],
+  ] as const)(
+    "reports %s it cannot read without refusing or blocking it",
+    async (_what, hook, call) => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+      const hooksJson = JSON.stringify({
+        hooks: {
+          ...ALONGSIDE,
+          PreToolUse: [command("fix.cjs")],
+          UserPromptSubmit: [command("note.cjs")],
+        },
+      });
+      const { server } = await open(host, hooksJson);
+      const unreadable = {
+        get args(): never {
+          throw new Error("broken call");
+        },
+        get parts(): never {
+          throw new Error("broken call");
+        },
+      };
+
+      await expect(server[hook]?.(call, unreadable)).resolves.toBeUndefined();
+
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("broken call"));
+    }
+  );
+
+  it("adds the stderr of a UserPromptSubmit script that exits 2 as that context", async () => {
+    const hooksJson = JSON.stringify({
+      hooks: { ...ALONGSIDE, UserPromptSubmit: [command("fix.cjs")] },
+    });
+    const { server } = await open(host, hooksJson);
+    const { input, output } = await captured(host, "chat.message", "log");
+
+    await server["chat.message"]?.(input, output);
+
+    expect(output.parts.map((part: { text: string }) => part.text).slice(1)).toEqual(["fix it"]);
+  });
+
+  it("adds nothing for a UserPromptSubmit script with no answer", async () => {
+    const hooksJson = JSON.stringify({
+      hooks: { ...ALONGSIDE, UserPromptSubmit: [command("record.cjs")] },
+    });
+    const { server, of } = await open(host, hooksJson);
+    const { input, output } = await captured(host, "chat.message", "log");
+
+    await server["chat.message"]?.(input, output);
+
+    expect([output.parts.length, (await of("record.cjs")).length]).toEqual([1, 1]);
+  });
+
+  it("reads a follow-up it or another plugin sent as no prompt of the user's", async () => {
+    const hooksJson = JSON.stringify({
+      hooks: { ...ALONGSIDE, UserPromptSubmit: [command("note.cjs")] },
+    });
+    const { server, of } = await open(host, hooksJson);
+    const { input, output } = await captured(host, "chat.message", "follow-up");
+
+    await server["chat.message"]?.(input, output);
+
+    expect([output.parts.length, (await of("note.cjs")).length]).toEqual([1, 0]);
   });
 
   it("runs no Stop script for an event that is not an idle session", async () => {

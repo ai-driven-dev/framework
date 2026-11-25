@@ -9,6 +9,7 @@ import type {
   ToolBuildContract,
 } from "../../../shared/domain/materialization/build-contract.js";
 import { pluginRootFolders } from "../../../shared/domain/materialization/plugin-root-path-rewrite.js";
+import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import type { OutputFile } from "./output-file.js";
 
 /**
@@ -31,6 +32,24 @@ export function flatHooksBridgeFile({
   const content = bridge.generate(rawHooksJson, pluginName);
   if (content === null) return null;
   return { relativePath: hooksBridgeFilePath(bridge, pluginName), content };
+}
+
+/** What a flat build tells of a plugin's hooks that a bridge leaves out: one warning for each event
+ * the manifest names and the bridge does not relay. Nothing when the plugin ships its own bridge. */
+export function flatHooksBridgeWarnings({
+  bridge,
+  rawHooksJson,
+  sourceShipsItsOwn,
+}: {
+  bridge: FlatHooksBridge;
+  rawHooksJson: string;
+  sourceShipsItsOwn: boolean;
+}): string[] {
+  if (sourceShipsItsOwn) return [];
+  const hooks = asPlainObject(asPlainObject(JSON.parse(rawHooksJson))?.hooks) ?? {};
+  return Object.keys(hooks)
+    .filter((event) => !bridge.relays.includes(event))
+    .map((event) => `${bridge.tool}: unmapped event '${event}' skipped`);
 }
 
 /** Whether a plugin's own hooks already carry the file a bridge would replace, in any folder. */

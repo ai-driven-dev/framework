@@ -22,6 +22,11 @@ export interface FlatHooksBridge {
   /** A hooks/ file whose presence in this plugin's own source means it ships its own bridge
    * already: generate nothing for it. */
   readonly skipIfSourceHas: string;
+  /** The tool the bridge is generated for: it names the events the bridge leaves out. */
+  readonly tool: string;
+  /** The events, as a plugin's hooks.json names them, that the bridge relays: any other one a
+   * plugin names reaches no hook. */
+  readonly relays: readonly string[];
 }
 
 /** How a plugin's artifact files are sourced: a sub-directory walked with an extension filter

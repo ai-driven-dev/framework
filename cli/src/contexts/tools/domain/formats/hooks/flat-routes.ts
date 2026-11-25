@@ -33,20 +33,19 @@ export function flatHooksArtifact(
     readonly file?: never;
     readonly flat: FlatHooksRoute & { readonly loaderEntry: FlatHooksLoaderEntry };
   },
-  reader: { readonly bridge: FlatHooksBridge["generate"] }
+  reader: { readonly tool: string; readonly bridge: FlatHooksBridge["generate"] }
 ): ArtifactContract;
 export function flatHooksArtifact(
   descriptor: HooksRouting & { readonly flat: FlatHooksRoute },
-  /** The tool a hooks file's warnings are reported under, or the bridge a loader imports. */
-  reader: { readonly tool: string } | { readonly bridge: FlatHooksBridge["generate"] },
+  /** The tool the warnings are reported under, and the bridge a loader imports. */
+  reader: { readonly tool: string; readonly bridge?: FlatHooksBridge["generate"] },
   /** The tool's own merge, for a hooks file no `HooksFileFormat` describes. */
   ownMerge?: HooksFileMerge
 ): ArtifactContract {
   const route = descriptor.flat;
   const { loaderEntry } = route;
-  const tool = "tool" in reader ? reader.tool : undefined;
-  const bridge = "bridge" in reader ? reader.bridge : undefined;
-  const hooksFile = tool === undefined ? undefined : hooksFileOf(descriptor, tool, ownMerge);
+  const { tool, bridge } = reader;
+  const hooksFile = bridge === undefined ? hooksFileOf(descriptor, tool, ownMerge) : undefined;
   return {
     supported: true,
     source: PLUGIN_HOOKS_SOURCE,
@@ -58,7 +57,7 @@ export function flatHooksArtifact(
     script: hookScript(descriptor),
     ...(hooksFile === undefined ? {} : { hooksFile }),
     ...(loaderEntry !== undefined && bridge !== undefined
-      ? { skipHooksJson: true, hooksBridge: hooksBridge(loaderEntry, bridge) }
+      ? { skipHooksJson: true, hooksBridge: hooksBridge(loaderEntry, bridge, { descriptor, tool }) }
       : {}),
   };
 }
@@ -93,12 +92,15 @@ export function hooksBridgePath(loaderEntry: FlatHooksLoaderEntry, plugin: strin
 
 function hooksBridge(
   loaderEntry: FlatHooksLoaderEntry,
-  generate: FlatHooksBridge["generate"]
+  generate: FlatHooksBridge["generate"],
+  { descriptor, tool }: { descriptor: HooksRouting; tool: string }
 ): FlatHooksBridge {
   return {
     generate,
     dir: loaderEntry.dir,
     skipIfSourceHas: loaderEntry.baseName,
+    tool,
+    relays: Object.keys(descriptor.eventMap ?? {}),
   };
 }
 

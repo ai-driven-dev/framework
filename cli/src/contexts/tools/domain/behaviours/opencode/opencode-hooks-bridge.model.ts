@@ -5,7 +5,7 @@
  * plugin with V1/server and V2/setup entrypoints, spawning the scripts every host's hooks.json
  * already names over the stdin-JSON contract those scripts already read.
  *
- * Only three hook events are replayed:
+ * Only five hook events are replayed:
  *
  * - `SessionStart` runs once per server/directory at factory initialization and requires
  *   idempotent commands. V1 did not deliver `session.created` to this event hook;
@@ -15,8 +15,15 @@
  *   can append its exit-2 stderr to the tool's output, which is how a problem reaches the model.
  *   V2's adapter calls the same hook from a successful tool call, without that answer.
  *
- * A `matcher` on a `PostToolUse` group filters by tool name, exact or pipe-separated
- * alternation, ignoring case: OpenCode names its tools in lowercase. Absent, every tool matches.
+ * - `PreToolUse` maps to V1's `tool.execute.before`: a script that exits 2 refuses the call, its
+ *   stderr the reason the model reads, as a throw from that hook does on OpenCode 1.19.3. V2's
+ *   adapter does not call it: V2's hook is unobserved here.
+ * - `UserPromptSubmit` maps to V1's `chat.message`: a script's answer joins the user's message as
+ *   a synthetic text part. It cannot refuse the prompt: a refusal is unobserved.
+ *
+ * A `matcher` on a `PreToolUse` or `PostToolUse` group filters by tool name, exact or
+ * pipe-separated alternation, ignoring case: OpenCode names its tools in lowercase. Absent, every
+ * tool matches.
  */
 
 import { type BridgeParts, generateBridge } from "../../bridges/event-bridge.js";
@@ -68,23 +75,7 @@ function stopCallsFor(event, directory) {
 // Exit 2 puts it on stderr; exit 0 puts it in additionalContext on stdout.
 ${parts.answerFrom}
 
-/** Runs one hook script with its payload on stdin and collects what it wrote. */
-function runCapture(script, args, payload, directory) {
-  return new Promise((resolve) => {
-    let stdout = "";
-    let stderr = "";
-${parts.spawnHook(4, '["pipe", "pipe", "pipe"]')}
-    child.stdout.on("data", (chunk) => {
-      stdout += chunk;
-    });
-    child.stderr.on("data", (chunk) => {
-      stderr += chunk;
-    });
-    child.on("error", () => resolve({ code: null, stdout: "", stderr: "" }));
-    child.on("close", (code) => resolve({ code, stdout, stderr }));
-${parts.feedStdin(4)}
-  });
-}
+${parts.runCapture}
 
 function answerOf(script, args, payload, directory) {
   return runCapture(script, args, payload, directory).then(({ code, stdout, stderr }) =>
@@ -105,6 +96,12 @@ function stopReasonOf(script, args, payload, directory) {
   });
 }
 
+${parts.matchesTool}
+
+${parts.preToolUse}
+
+${parts.userPrompt}
+
 function reportHookFailure(script, error) {
   console.warn("[aidd] OpenCode hook " + script + " failed: " + String(error));
 }
@@ -114,10 +111,8 @@ function reportHookFailure(script, error) {
 function postToolUseCallsFor(call, directory) {
   const tool = String(call?.tool ?? "");
   const args = call?.args;
-  const matches = (matcher) =>
-    !matcher || matcher.split("|").some((name) => name.toLowerCase() === tool.toLowerCase());
   ${parts.toolInput}
-  return POST_TOOL_USE.filter((hook) => matches(hook.matcher)).map((hook) => ({
+  return POST_TOOL_USE.filter((hook) => matchesTool(hook.matcher, tool)).map((hook) => ({
     script: hook.script,
     args: hook.args,
     payload: {
@@ -179,7 +174,7 @@ export const ${parts.identifier} = async (input) => {
               continued.add(sessionId);
               return input.client.session.prompt({
                 path: { id: sessionId },
-                body: { parts: [{ type: "text", text: reason }] },
+                body: { parts: [{ type: "text", text: reason, metadata: FOLLOW_UP }] },
               });
             })
             .catch((error) => reportHookFailure(call.script, "follow-up not delivered: " + String(error)));
@@ -188,6 +183,23 @@ export const ${parts.identifier} = async (input) => {
         }
       } catch {
         // Silent on purpose - see above.
+      }
+    },
+    // The refusal is thrown out of the hook, the one way the host stops the call.
+    "tool.execute.before": async (call, output) => {
+      let refusal = null;
+      try {
+        refusal = await refusalOf(preToolUseCallsFor(call, output, input.directory));
+      } catch (error) {
+        reportHookFailure("PreToolUse", error);
+      }
+      if (refusal !== null) throw new Error(refusal);
+    },
+    "chat.message": async (call, output) => {
+      try {
+        await addPromptContext(call, output, input.directory);
+      } catch (error) {
+        reportHookFailure("UserPromptSubmit", error);
       }
     },
     "tool.execute.after": async (call, output) => {
@@ -215,7 +227,7 @@ export default {
 };
 
 /** A plugin's raw hooks.json + its name -> the full text of its generated OpenCode bridge
- * module, or `null` when none of the three mapped events named anything replayable: a bridge
+ * module, or `null` when none of the five mapped events named anything replayable: a bridge
  * with nothing to spawn is not a file worth writing. */
 export function generateOpencodeHooksBridge(rawHooksJson: string, plugin: string): string | null {
   return generateBridge(OPENCODE_HOST, rawHooksJson, plugin);

@@ -372,6 +372,8 @@ const HOOKS_DIR = fileURLToPath(new URL("../hooks/aidd-context/", import.meta.ur
 const SESSION_START = [{"script":"memory.cjs","args":["load"]},{"script":"artifacts.cjs","args":["start"]}];
 const STOP = [{"script":"memory.cjs","args":["sync"]}];
 const POST_TOOL_USE = [{"script":"artifacts.cjs","args":["mark"],"matcher":"Write|Edit|Bash|Shell|bash|PowerShell|apply_patch"}];
+const PRE_TOOL_USE = [];
+const USER_PROMPT_SUBMIT = [];
 
 // Asynchronous on purpose: this can spawn one script per matching hook across every mapped
 // event, and blocking OpenCode's event loop once per hook would multiply the cost. A failed spawn (ENOENT, a killed timeout)
@@ -456,6 +458,83 @@ function stopReasonOf(script, args, payload, directory) {
   });
 }
 
+function matchesTool(matcher, tool) {
+  return !matcher || matcher.split("|").some((name) => name.toLowerCase() === tool.toLowerCase());
+}
+
+/** Pure: a call about to run -> every PreToolUse hook whose matcher allows its tool. The host
+ * hands the arguments in the output, and names the written file `filePath`. */
+function preToolUseCallsFor(call, output, directory) {
+  const tool = String(call?.tool ?? "");
+  const args = output?.args;
+  const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;
+  return PRE_TOOL_USE.filter((hook) => matchesTool(hook.matcher, tool)).map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: {
+      hook_event_name: "PreToolUse",
+      session_id: call?.sessionID ?? null,
+      cwd: directory,
+      tool_name: tool,
+      tool_input: toolInput,
+    },
+  }));
+}
+
+/** The reason the first script that refuses gave, or null when none does. */
+async function refusalOf(calls) {
+  for (const call of calls) {
+    const { code, stderr } = await runCapture(call.script, call.args, call.payload, call.payload.cwd);
+    if (code === 2) return stderr.trim();
+  }
+  return null;
+}
+
+const FOLLOW_UP = { aidd: "stop-follow-up" };
+
+function isFollowUp(parts) {
+  return parts.some((part) => part?.metadata?.aidd === FOLLOW_UP.aidd);
+}
+
+/** Pure: the user's message -> every UserPromptSubmit hook's call, none for a follow-up. The text
+ * is the user's own: a part another hook added is not. */
+function userPromptCallsFor(input, output, directory) {
+  const parts = output?.parts ?? [];
+  if (isFollowUp(parts)) return [];
+  const prompt = parts
+    .filter((part) => part?.type === "text" && !part.synthetic)
+    .map((part) => part.text)
+    .join("\n");
+  return USER_PROMPT_SUBMIT.map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: {
+      hook_event_name: "UserPromptSubmit",
+      session_id: input?.sessionID ?? null,
+      cwd: directory,
+      prompt,
+    },
+  }));
+}
+
+/** Each answer becomes a synthetic text part after the user's, its id derived from the first
+ * part's, this plugin's name and the hook's place in its list, so no two parts share one. */
+async function addPromptContext(input, output, directory) {
+  const calls = userPromptCallsFor(input, output, directory);
+  for (const [index, call] of calls.entries()) {
+    const answer = await answerOf(call.script, call.args, call.payload, directory);
+    if (!answer) continue;
+    output.parts.push({
+      id: output.parts[0].id + "-" + "aidd-context" + "-" + index,
+      messageID: output.message?.id,
+      sessionID: input?.sessionID,
+      type: "text",
+      text: answer,
+      synthetic: true,
+    });
+  }
+}
+
 function reportHookFailure(script, error) {
   console.warn("[aidd] OpenCode hook " + script + " failed: " + String(error));
 }
@@ -465,10 +544,8 @@ function reportHookFailure(script, error) {
 function postToolUseCallsFor(call, directory) {
   const tool = String(call?.tool ?? "");
   const args = call?.args;
-  const matches = (matcher) =>
-    !matcher || matcher.split("|").some((name) => name.toLowerCase() === tool.toLowerCase());
   const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;
-  return POST_TOOL_USE.filter((hook) => matches(hook.matcher)).map((hook) => ({
+  return POST_TOOL_USE.filter((hook) => matchesTool(hook.matcher, tool)).map((hook) => ({
     script: hook.script,
     args: hook.args,
     payload: {
@@ -530,7 +607,7 @@ export const AiddContextHooks = async (input) => {
               continued.add(sessionId);
               return input.client.session.prompt({
                 path: { id: sessionId },
-                body: { parts: [{ type: "text", text: reason }] },
+                body: { parts: [{ type: "text", text: reason, metadata: FOLLOW_UP }] },
               });
             })
             .catch((error) => reportHookFailure(call.script, "follow-up not delivered: " + String(error)));
@@ -539,6 +616,23 @@ export const AiddContextHooks = async (input) => {
         }
       } catch {
         // Silent on purpose - see above.
+      }
+    },
+    // The refusal is thrown out of the hook, the one way the host stops the call.
+    "tool.execute.before": async (call, output) => {
+      let refusal = null;
+      try {
+        refusal = await refusalOf(preToolUseCallsFor(call, output, input.directory));
+      } catch (error) {
+        reportHookFailure("PreToolUse", error);
+      }
+      if (refusal !== null) throw new Error(refusal);
+    },
+    "chat.message": async (call, output) => {
+      try {
+        await addPromptContext(call, output, input.directory);
+      } catch (error) {
+        reportHookFailure("UserPromptSubmit", error);
       }
     },
     "tool.execute.after": async (call, output) => {
@@ -581,6 +675,8 @@ const HOOKS_DIR = fileURLToPath(new URL("../hooks/aidd-telemetry/", import.meta.
 const SESSION_START = [{"script":"task.cjs","args":["remind"]},{"script":"ledger.cjs","args":["ingest"]}];
 const STOP = [];
 const POST_TOOL_USE = [];
+const PRE_TOOL_USE = [];
+const USER_PROMPT_SUBMIT = [];
 
 // Asynchronous on purpose: this can spawn one script per matching hook across every mapped
 // event, and blocking OpenCode's event loop once per hook would multiply the cost. A failed spawn (ENOENT, a killed timeout)
@@ -665,6 +761,83 @@ function stopReasonOf(script, args, payload, directory) {
   });
 }
 
+function matchesTool(matcher, tool) {
+  return !matcher || matcher.split("|").some((name) => name.toLowerCase() === tool.toLowerCase());
+}
+
+/** Pure: a call about to run -> every PreToolUse hook whose matcher allows its tool. The host
+ * hands the arguments in the output, and names the written file `filePath`. */
+function preToolUseCallsFor(call, output, directory) {
+  const tool = String(call?.tool ?? "");
+  const args = output?.args;
+  const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;
+  return PRE_TOOL_USE.filter((hook) => matchesTool(hook.matcher, tool)).map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: {
+      hook_event_name: "PreToolUse",
+      session_id: call?.sessionID ?? null,
+      cwd: directory,
+      tool_name: tool,
+      tool_input: toolInput,
+    },
+  }));
+}
+
+/** The reason the first script that refuses gave, or null when none does. */
+async function refusalOf(calls) {
+  for (const call of calls) {
+    const { code, stderr } = await runCapture(call.script, call.args, call.payload, call.payload.cwd);
+    if (code === 2) return stderr.trim();
+  }
+  return null;
+}
+
+const FOLLOW_UP = { aidd: "stop-follow-up" };
+
+function isFollowUp(parts) {
+  return parts.some((part) => part?.metadata?.aidd === FOLLOW_UP.aidd);
+}
+
+/** Pure: the user's message -> every UserPromptSubmit hook's call, none for a follow-up. The text
+ * is the user's own: a part another hook added is not. */
+function userPromptCallsFor(input, output, directory) {
+  const parts = output?.parts ?? [];
+  if (isFollowUp(parts)) return [];
+  const prompt = parts
+    .filter((part) => part?.type === "text" && !part.synthetic)
+    .map((part) => part.text)
+    .join("\n");
+  return USER_PROMPT_SUBMIT.map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: {
+      hook_event_name: "UserPromptSubmit",
+      session_id: input?.sessionID ?? null,
+      cwd: directory,
+      prompt,
+    },
+  }));
+}
+
+/** Each answer becomes a synthetic text part after the user's, its id derived from the first
+ * part's, this plugin's name and the hook's place in its list, so no two parts share one. */
+async function addPromptContext(input, output, directory) {
+  const calls = userPromptCallsFor(input, output, directory);
+  for (const [index, call] of calls.entries()) {
+    const answer = await answerOf(call.script, call.args, call.payload, directory);
+    if (!answer) continue;
+    output.parts.push({
+      id: output.parts[0].id + "-" + "aidd-telemetry" + "-" + index,
+      messageID: output.message?.id,
+      sessionID: input?.sessionID,
+      type: "text",
+      text: answer,
+      synthetic: true,
+    });
+  }
+}
+
 function reportHookFailure(script, error) {
   console.warn("[aidd] OpenCode hook " + script + " failed: " + String(error));
 }
@@ -674,10 +847,8 @@ function reportHookFailure(script, error) {
 function postToolUseCallsFor(call, directory) {
   const tool = String(call?.tool ?? "");
   const args = call?.args;
-  const matches = (matcher) =>
-    !matcher || matcher.split("|").some((name) => name.toLowerCase() === tool.toLowerCase());
   const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;
-  return POST_TOOL_USE.filter((hook) => matches(hook.matcher)).map((hook) => ({
+  return POST_TOOL_USE.filter((hook) => matchesTool(hook.matcher, tool)).map((hook) => ({
     script: hook.script,
     args: hook.args,
     payload: {
@@ -739,7 +910,7 @@ export const AiddTelemetryHooks = async (input) => {
               continued.add(sessionId);
               return input.client.session.prompt({
                 path: { id: sessionId },
-                body: { parts: [{ type: "text", text: reason }] },
+                body: { parts: [{ type: "text", text: reason, metadata: FOLLOW_UP }] },
               });
             })
             .catch((error) => reportHookFailure(call.script, "follow-up not delivered: " + String(error)));
@@ -748,6 +919,23 @@ export const AiddTelemetryHooks = async (input) => {
         }
       } catch {
         // Silent on purpose - see above.
+      }
+    },
+    // The refusal is thrown out of the hook, the one way the host stops the call.
+    "tool.execute.before": async (call, output) => {
+      let refusal = null;
+      try {
+        refusal = await refusalOf(preToolUseCallsFor(call, output, input.directory));
+      } catch (error) {
+        reportHookFailure("PreToolUse", error);
+      }
+      if (refusal !== null) throw new Error(refusal);
+    },
+    "chat.message": async (call, output) => {
+      try {
+        await addPromptContext(call, output, input.directory);
+      } catch (error) {
+        reportHookFailure("UserPromptSubmit", error);
       }
     },
     "tool.execute.after": async (call, output) => {

@@ -188,7 +188,12 @@ function patched(project: string) {
   ];
 }
 
-const CONTINUED = [{ path: { id: SESSION }, body: { parts: [{ type: "text", text: "go on" }] } }];
+const CONTINUED = [
+  {
+    path: { id: SESSION },
+    body: { parts: [{ type: "text", text: "go on", metadata: { aidd: "stop-follow-up" } }] },
+  },
+];
 
 function opencodeBridge(): string {
   const bridge = generateOpencodeHooksBridge(HOOKS_JSON, "aidd-sample");

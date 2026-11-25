@@ -1,7 +1,11 @@
 import type { FlatHooksBridge } from "../../../../shared/domain/materialization/build-contract.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import { PLUGIN_HOOKS_RELATIVE } from "../canon-format.js";
-import { flatHooksBridgeFile, sourceShipsHooksBridge } from "../flat-layout.js";
+import {
+  flatHooksBridgeFile,
+  flatHooksBridgeWarnings,
+  sourceShipsHooksBridge,
+} from "../flat-layout.js";
 import type { ComponentPlan } from "./component-pipeline.js";
 import { hookScripts } from "./hook-scripts.js";
 
@@ -52,4 +56,20 @@ export function flatHookPlans(dist: PluginDistribution, layout: FlatHooksLayout)
     content: generated.content,
   };
   return layout.bridgeFirst ? [bridge, ...plans] : [...plans, bridge];
+}
+
+/** What a flat build tells of a plugin's hooks the tool's bridge leaves out: nothing for a tool with
+ * no bridge, or a plugin whose hooks name no manifest. */
+export function flatHookWarnings(
+  dist: PluginDistribution,
+  bridge: FlatHooksBridge | null
+): readonly string[] {
+  const { hooks } = dist.components;
+  const manifest = hooks.find((file) => file.relativePath === PLUGIN_HOOKS_RELATIVE);
+  if (manifest === undefined || bridge === null) return [];
+  return flatHooksBridgeWarnings({
+    bridge,
+    rawHooksJson: manifest.content,
+    sourceShipsItsOwn: sourceShipsHooksBridge(hooks, bridge),
+  });
 }

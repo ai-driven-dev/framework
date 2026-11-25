@@ -9,6 +9,7 @@ import { installPlan } from "./layouts/install-layout.js";
 import type { OutputFile } from "./output-file.js";
 import { applyPlan, type ComponentPlan } from "./rules/component-pipeline.js";
 import { flatMcp, foldsFlatMcp, type PluginMcp } from "./rules/flat-mcp.js";
+import { flatHookWarnings } from "./rules/hook-plans.js";
 import {
   isHooksFile,
   type ProjectHooks,
@@ -128,8 +129,13 @@ function buildLayoutPlan(
     installedMcp: null,
     projectHooks: NO_PROJECT_HOOKS,
     mcp: flatMcpOf(dist, layout),
-    warnings: own?.warnings ?? [],
+    warnings: [...(own?.warnings ?? []), ...flatHookWarnings(dist, bridgeOf(contract))],
   };
+}
+
+/** The bridge a flat build replays a plugin's hooks through, for a tool that has one. */
+function bridgeOf({ artifacts: { hooks } }: ToolBuildContract) {
+  return hooks.supported && hooks.skipHooksJson ? (hooks.hooksBridge ?? null) : null;
 }
 
 function flatMcpOf(

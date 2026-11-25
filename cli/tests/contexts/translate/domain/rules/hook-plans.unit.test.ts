@@ -10,7 +10,7 @@ import {
 const MANIFEST = "hooks/hooks.json";
 
 function bridge(generate: FlatHooksBridge["generate"] = () => "bridge"): FlatHooksBridge {
-  return { dir: "flat/", skipIfSourceHas: "own.js", generate };
+  return { dir: "flat/", skipIfSourceHas: "own.js", generate, tool: "stub", relays: [] };
 }
 
 function flatHooks(
@@ -69,8 +69,8 @@ describe("the flat layout of a plugin's hooks", () => {
   it("replaces the manifest with a bridge, raw, when the tool skips the manifest", () => {
     const hooksBridge = bridge((raw, plugin) => `${plugin}:${raw}`);
     expect(
-      flatHooks({ [MANIFEST]: "{raw}", "hooks/run.sh": "a" }, { skipHooksJson: true, hooksBridge })
-    ).toEqual({ "flat/plug-hooks.js": "plug:{raw}", "flat/hooks/plug/run.sh": "a" });
+      flatHooks({ [MANIFEST]: "{}", "hooks/run.sh": "a" }, { skipHooksJson: true, hooksBridge })
+    ).toEqual({ "flat/plug-hooks.js": "plug:{}", "flat/hooks/plug/run.sh": "a" });
   });
 
   it("builds no bridge when the plugin ships the file the bridge replaces, wherever it sits", () => {

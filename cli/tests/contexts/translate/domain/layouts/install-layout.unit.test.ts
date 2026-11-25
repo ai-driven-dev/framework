@@ -158,6 +158,8 @@ describe("a flat target whose loader is triggered by a generated bridge", () => 
               raw.includes("PreToolUse") ? `bridge(${plugin}):${raw}` : null,
             dir: ".stub/plugin/",
             skipIfSourceHas: "own-plugin.js",
+            tool: "stub",
+            relays: [],
           },
         },
       },
