@@ -70,6 +70,26 @@ describe("FileAdapter, at the edges", () => {
     });
   });
 
+  describe("listing a tree with a directory it cannot read", () => {
+    // Only an absent directory lists as empty. A directory that is there but refused must fail the
+    // walk, or install, build and translate copy a partial tree and exit 0.
+    it.runIf(process.platform !== "win32" && process.getuid?.() !== 0)(
+      "fails instead of skipping a directory it is denied",
+      async () => {
+        const denied = join(tempDir, "denied");
+        await mkdir(denied);
+        await writeFile(join(denied, "hidden.txt"), "");
+        await writeFile(join(tempDir, "seen.txt"), "");
+        await chmod(denied, 0o000);
+        try {
+          await expect(fs.listFilesRecursive(tempDir)).rejects.toThrow(/EACCES/);
+        } finally {
+          await chmod(denied, 0o700);
+        }
+      }
+    );
+  });
+
   describe("listFilesRecursive(), with no logger", () => {
     it("still skips the symlink, silently", async () => {
       await writeFile(join(tempDir, "real.txt"), "");

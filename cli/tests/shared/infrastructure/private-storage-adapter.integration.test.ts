@@ -194,6 +194,12 @@ describe("reading a file", () => {
   it("returns nothing for a file that is not there", async () => {
     expect(await storage.read(join(dir, "missing.json"))).toBeUndefined();
   });
+
+  // Only absence reads as nothing: a caller reading, changing and replacing would otherwise
+  // overwrite what it could not read.
+  it("fails for a path it cannot read rather than reading nothing", async () => {
+    await expect(storage.read(dir)).rejects.toThrow(/EISDIR/);
+  });
 });
 
 describe("appending to a file", () => {
