@@ -74,6 +74,11 @@ function print(output) {
   process.stdout.write(`${JSON.stringify(output)}\n`);
 }
 
+/** Whether there is a message to show the person. */
+function hasPerson(person) {
+  return typeof person === "string" && person !== "";
+}
+
 /** Asks the model to go on before the turn ends, with `text` as what it must do, and shows the
  * person `person` where the host allows it. Asks once: a turn end that is already a continuation
  * is never continued again. */
@@ -82,13 +87,13 @@ function continueTurn(text, person) {
   print({
     decision: "block",
     reason: text,
-    ...(typeof person === "string" && person !== "" ? { systemMessage: person } : {}),
+    ...(hasPerson(person) ? { systemMessage: person } : {}),
   });
 }
 
 /** Shows the person `person` alone, as the host's warning, and tells the model nothing. */
 function showPerson(person) {
-  if (typeof person === "string" && person !== "") print({ systemMessage: person });
+  if (hasPerson(person)) print({ systemMessage: person });
 }
 
 /** Level 1 informs the model, level 2 requires a fix after a write. At Stop, any answer

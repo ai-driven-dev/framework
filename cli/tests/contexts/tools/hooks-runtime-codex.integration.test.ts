@@ -210,4 +210,13 @@ describe("reading Codex hook payloads", () => {
 
     expect(printed).toStrictEqual([]);
   });
+
+  it("tells only the model when it has a text, whatever the person text beside it", () => {
+    const { adapter } = read("codex", sample("codex-SessionStart.json", 0).payload);
+    adapter.answer({ level: 1, text: "memory", person: "measuring is on" });
+
+    expect(output()).toStrictEqual({
+      hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: "memory" },
+    });
+  });
 });

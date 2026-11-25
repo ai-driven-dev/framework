@@ -178,4 +178,13 @@ describe("Claude Code", () => {
 
     expect(printed).toStrictEqual([]);
   });
+
+  it("tells only the model when it has a text, whatever the person text beside it", () => {
+    const { adapter } = read("claude", sample("claude-SessionStart.json", 0).payload);
+    adapter.answer({ level: 1, text: "memory", person: "measuring is on" });
+
+    expect(output()).toStrictEqual({
+      hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: "memory" },
+    });
+  });
 });
