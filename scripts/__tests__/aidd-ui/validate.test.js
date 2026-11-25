@@ -483,6 +483,12 @@ describe("aidd-ui validator entries", () => {
         assert.deepEqual(hook(editTool(RENDER, kept, kept.replace("</body>", "<p>x</p>\n</body>"))), silent);
       });
 
+      it("hands back the error it put inside a line, its strings being fragments of that line", () => {
+        edit(tmp, RENDER, "</body>", "<p>partial</p>\n</body>");
+        const input = editTool(RENDER, "<p>partial", '<p style="color: #111111">partial');
+        assert.deepEqual(hook(input), claudeFeedback(errorsText([`${RENDER}:28 V4 "#111111" => replace it with a token`])));
+      });
+
       it("groups the file's errors under its name when it only removed lines, its effect being unknown", () => {
         littering(3, 0);
         const input = editTool(RENDER, '<p style="color: #000000">x</p>\n</body>', "</body>");
@@ -575,6 +581,13 @@ describe("aidd-ui validator entries", () => {
       littering(1, 0);
       hook(postToolUse(path.join(tmp, RENDER), before));
       assert.deepEqual(hook(stop()), finish(errorsText([literal(30)])));
+    });
+
+    it("holds an edit that put an error inside a line, its strings being fragments of that line", () => {
+      edit(tmp, RENDER, "</body>", "<p>partial</p>\n</body>");
+      begin();
+      hook(editTool(RENDER, "<p>partial", '<p style="color: #111111">partial'));
+      assert.deepEqual(hook(stop()), finish(errorsText([`${RENDER}:28 V4 "#111111" => replace it with a token`])));
     });
 
     it("holds a whole-file write that does not say what it replaced only past the errors the baseline counts", () => {
