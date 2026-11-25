@@ -26,11 +26,15 @@ afterEach(cleanWorkspaces);
 
 interface Before {
   readonly call: { readonly tool: string };
-  readonly output: unknown;
+  readonly output: { readonly args: { readonly command?: string } };
 }
 
-/** Calls a host's hook before the captured call of `tool`: its file write, or its shell call. */
-type BeforeTool = (ws: Workspace, tool: "write" | "shell") => Promise<void>;
+/** Calls a host's hook before the captured call of `tool`, its file write or its shell call, and
+ * hands back the arguments that call carried. */
+type BeforeTool = (
+  ws: Workspace,
+  tool: "write" | "shell"
+) => Promise<{ readonly command?: string }>;
 
 /** OpenCode 1 and Kilo call `tool.execute.before` with the call and its arguments. */
 const onPluginHook =
@@ -42,11 +46,12 @@ const onPluginHook =
     if (found === undefined) throw new Error(`no captured ${named} call`);
     const { plugin } = await start(ws, { directory: ws.project });
     await plugin["tool.execute.before"](found.call, found.output);
+    return found.output.args;
   };
 
 /** OpenCode 2 calls its own `execute.before`, which the bridge's setup maps. */
 const onSetupHook: BeforeTool = async (ws, tool) => {
-  const found = capturedSample<{ tool: string }>(
+  const found = capturedSample<{ tool: string; input: { command?: string } }>(
     captureFile(V2_HOST, "execute.before"),
     (sample) => sample.run === "log" && sample.payload.tool === tool,
     `${tool} call`,
@@ -54,6 +59,7 @@ const onSetupHook: BeforeTool = async (ws, tool) => {
   ).payload;
   const { call } = await setupV2(ws);
   await call("tool.execute.before", found);
+  return found.input;
 };
 
 const HOSTS = [
@@ -83,13 +89,13 @@ describe.each(HOSTS)(
       ]);
     });
 
-    it("reads a call that writes no file as no file", async () => {
+    it("reads a shell call as its command and no file", async () => {
       const ws = await bridged();
-      await callTool(ws, "shell");
+      const { command } = await callTool(ws, "shell");
 
-      expect((await recorded(ws, 1)).map((call) => [call.event, call.files])).toStrictEqual([
-        ["PreToolUse", []],
-      ]);
+      expect(
+        (await recorded(ws, 1)).map((call) => [call.event, call.files, call.command])
+      ).toStrictEqual([["PreToolUse", [], command]]);
     });
   }
 );
@@ -111,6 +117,6 @@ describe("the shared adapter, through Kilo's bridge, off the moment before a too
     const ws = await workspace("kilo", bridgeOf("kilo", hooksOf("PreToolUse", RECORD)));
     vi.stubEnv("AIDD_REFUSE", "");
 
-    await expect(onPluginHook("kilo")(ws, "write")).resolves.toBeUndefined();
+    await expect(onPluginHook("kilo")(ws, "write")).resolves.toBeDefined();
   });
 });
