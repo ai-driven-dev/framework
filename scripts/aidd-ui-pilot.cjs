@@ -39,6 +39,7 @@ const { catalog } = require(path.join(PLUGIN, "hooks", "lib", "tokens.cjs"));
 const { table } = require(path.join(PLUGIN, "hooks", "lib", "markdown.cjs"));
 const { STEPS_SECTION } = require(path.join(PLUGIN, "hooks", "lib", "model.cjs"));
 const { isReviewed } = require(path.join(PLUGIN, "hooks", "lib", "history.cjs"));
+const { cleanEnv } = require("./lib/hook-sandbox.cjs");
 
 const UI_DIR = "aidd_docs/ui";
 const GIT_DIR = ".git";
@@ -47,9 +48,6 @@ const RULE_ID = /^[A-Z]\d+$/;
 const STEP_TIMEOUT_MS = 40 * 60_000;
 const ALLOWED_TOOLS = "Read,Write,Edit,Glob,Grep,Skill,Bash(node:*),Bash(ls:*),Bash(git ls-files:*),Bash(rm aidd_docs/ui/*)";
 const GIT = ["-c", "user.name=aidd-ui-pilot", "-c", "user.email=pilot@localhost", "-c", "core.hooksPath=/dev/null"];
-
-/** The environment without a git variable: a hook sets GIT_DIR and GIT_INDEX_FILE, which would aim git at the caller's repository. */
-const cleanEnv = () => Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith("GIT_")));
 
 const sha256 = (file) => crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
 

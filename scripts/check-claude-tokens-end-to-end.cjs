@@ -23,6 +23,7 @@ const fs = require("node:fs");
 const http = require("node:http");
 const os = require("node:os");
 const path = require("node:path");
+const { throwawayHome } = require("./lib/hook-sandbox.cjs");
 
 const WRONG = 1;
 const BROKEN = 2;
@@ -317,10 +318,7 @@ async function checkIn({ root, cli, api, log, attended }) {
   const env = {
     ...inherited,
     PATH: `${bin}${path.delimiter}${inherited.PATH ?? ""}`,
-    HOME: home,
-    USERPROFILE: home,
-    XDG_CONFIG_HOME: path.join(home, ".config"),
-    AIDD_USER_CONFIG_DIR: path.join(home, ".config", "aidd"),
+    ...throwawayHome(home),
     AIDD_TELEMETRY_DIR: telemetryDir,
     CLAUDE_CONFIG_DIR: configDir,
     CLAUDE_CODE_ENABLE_PROMPT_SUGGESTION: "false",
