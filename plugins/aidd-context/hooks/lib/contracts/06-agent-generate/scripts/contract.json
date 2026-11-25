@@ -4,17 +4,19 @@
   "targets": "plugins/*/agents/*.md",
   "scope": [
     ".claude/agents/*.md",
-    ".cursor/agents/*.md"
+    ".cursor/agents/*.md",
+    ".github/agents/*.agent.md",
+    ".agents/agents/*/agent.md",
+    ".opencode/agents/*.md",
+    ".kilo/agents/*.md"
   ],
   "shell": false,
   "rules": {
     "AGENT-02": {
-      "op": "equals",
+      "op": "custom",
       "in": "*.md",
-      "field": "name",
-      "to": "basename",
-      "why": "hosts resolve the agent by file name",
-      "fix": "set name to {expected}"
+      "check": "name",
+      "why": "hosts resolve the agent by file name"
     },
     "AGENT-03": {
       "op": "pattern",
