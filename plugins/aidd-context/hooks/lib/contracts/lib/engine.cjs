@@ -69,7 +69,7 @@ function loadContract(file) {
     if (!id.startsWith(prefix) || !/-\d{2}$/u.test(id)) fail(`rule id ${id} must look like ${prefix}NN`);
     if (!(rule.op in ops)) fail(`${id}: unknown op ${rule.op}`);
     for (const key of Object.keys(rule)) if (![...RULE_KEYS, ...OPTIONS[rule.op]].includes(key)) fail(`${id}: unknown key ${key} for op ${rule.op}`);
-    for (const key of [...(contract.unit === "folder" ? ["in"] : []), ...(rule.op === "custom" ? [] : ["fix"])]) if (!rule[key]) fail(`${id}: ${key} is required`);
+    for (const key of [...(contract.unit === "folder" ? ["in"] : []), ...(rule.op === "custom" ? ["check"] : ["fix"]), ...(rule.op === "template" ? ["template"] : [])]) if (!rule[key]) fail(`${id}: ${key} is required`);
     if (rule.op === "max" && !["chars", "lines"].includes(rule.measure)) fail(`${id}: measure must be chars or lines`);
     if (rule.op === "json") {
       if (typeof rule.schema !== "string") fail(`${id}: schema is required`);

@@ -154,6 +154,14 @@ describe("engine", () => {
     assert.equal(validate("a.md").status, 2);
   });
 
+  it("exits 2 on a template op without template and a custom op without check", () => {
+    write("a.md", "x\n");
+    contract({ "DEMO-01": { op: "template", in: "*.md", optional: ["A"], fix: "f" } });
+    assert.match(validate("a.md").err, /DEMO-01: template is required/u);
+    contract({ "DEMO-01": { op: "custom", in: "*.md" } });
+    assert.match(validate("a.md").err, /DEMO-01: check is required/u);
+  });
+
   it("exits 2 on an optional name the template does not hold, and on a regex that does not compile", () => {
     write("a.md", "x\n");
     write("t.md", "---\nstatus: draft\n---\n\n# T\n\n## Kept\n\n### Deep\n");
