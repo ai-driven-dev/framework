@@ -8,6 +8,7 @@ import type {
 } from "../../../../../shared/domain/materialization/build-contract.js";
 import type { FlatArtifactLayout } from "../../../../../shared/domain/materialization/flat-paths.js";
 import { portableAgentFrontmatter } from "../../formats/agents/portable-agent.js";
+import { hostToolNames } from "../../formats/host-tool-names.js";
 
 /** The Kimi name of each Claude tool an agent may declare; a Claude tool absent from it has no
  * Kimi equivalent. */
@@ -20,10 +21,9 @@ const MCP_PREFIX = "mcp__";
  * declared Claude tool with no Kimi name is dropped, which narrows the grant and never widens it:
  * an unknown name matches nothing and only warns. Written inline so an empty list stays `[]`. */
 function kimiTools(declared: string[], byClaudeTool: KimiAgentTools): string {
-  const names = declared.flatMap((tool) =>
-    tool.startsWith(MCP_PREFIX) ? tool : (byClaudeTool.get(tool) ?? [])
+  return JSON.stringify(
+    hostToolNames(declared, byClaudeTool, (tool) => tool.startsWith(MCP_PREFIX))
   );
-  return JSON.stringify([...new Set(names)]);
 }
 
 function kimiAgentMarkdown(agentTools: KimiAgentTools): AgentMarkdown {

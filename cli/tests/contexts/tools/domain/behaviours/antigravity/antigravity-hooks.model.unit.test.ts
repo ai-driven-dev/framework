@@ -103,7 +103,7 @@ describe("antigravity's project hooks format", () => {
       ]);
     });
 
-    it("relays the events agy fires, PostToolUse grouped under a matcher for every tool and the others flat", () => {
+    it("relays the events agy fires, PostToolUse grouped under agy's tool names and the others flat", () => {
       const all = JSON.stringify({
         hooks: Object.fromEntries(
           ["SessionStart", "PostToolUse", "Stop"].map((event) => [
@@ -118,10 +118,33 @@ describe("antigravity's project hooks format", () => {
       expect(parse(content)["aidd-dev"]).toEqual({
         SessionStart: [expect.objectContaining({ type: "command" })],
         PostToolUse: [
-          { matcher: "*", hooks: [expect.objectContaining({ type: "command", timeout: 7 })] },
+          {
+            matcher: "write_file",
+            hooks: [expect.objectContaining({ type: "command", timeout: 7 })],
+          },
         ],
         Stop: [expect.objectContaining({ type: "command" })],
       });
+      expect(warnings).toEqual([]);
+    });
+
+    it("renames the tools of the matcher the plugins ship, and drops the other hosts' shells", () => {
+      const shipped = JSON.stringify({
+        hooks: {
+          PostToolUse: [
+            {
+              matcher: "Write|Edit|Bash|Shell|bash|PowerShell",
+              hooks: [{ type: "command", command: "node x.cjs" }],
+            },
+          ],
+        },
+      });
+
+      const { content, warnings } = format.merge(null, shipped, "aidd-dev");
+
+      expect(parse(content)["aidd-dev"].PostToolUse).toEqual([
+        expect.objectContaining({ matcher: "write_file|edit_file|run_command" }),
+      ]);
       expect(warnings).toEqual([]);
     });
 

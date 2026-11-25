@@ -22,6 +22,7 @@ import { agentShape, type ComponentPlan } from "../rules/component-pipeline.js";
 import { foldsFlatMcp } from "../rules/flat-mcp.js";
 import { flatHookPlans } from "../rules/hook-plans.js";
 import { relativeLinks } from "../rules/links.js";
+import { flatRules } from "./build-flat-rules.js";
 import { agentFiles, baseOf, namedByFolder } from "./build-shared.js";
 
 /** A flat build's plugin files, in the tool's own folders. Its MCP servers and hooks file are
@@ -30,12 +31,13 @@ export function buildFlatPlans(
   canon: PluginDistribution,
   contract: ToolBuildContract
 ): ComponentPlan[] {
-  const { agents, hooks, skills } = contract.artifacts;
+  const { agents, hooks, rules, skills } = contract.artifacts;
   return [
     ...flatCommandFiles(canon, contract),
     ...(agents.supported ? flatAgents(canon, contract, agents) : []),
     ...(hooks.supported ? flatHooks(canon, hooks) : []),
     ...(skills.supported ? flatSkills(canon, contract, skills) : []),
+    ...(rules?.supported ? flatRules(canon, rules) : []),
   ];
 }
 
