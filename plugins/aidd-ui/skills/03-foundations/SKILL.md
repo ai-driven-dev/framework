@@ -1,36 +1,41 @@
 ---
 name: 03-foundations
-description: Lay a project's design foundations, its system and tokens, from nothing or from its code, or carry a token change to its new versions. Use when the user wants to set up, extract, or change the design system or its tokens. Not for the brand, components, screens, or journeys.
+description: Lays a project's design system and tokens, or carries a token change, when the user wants to set up, extract or change them, not brand or screens.
 argument-hint: request
 ---
 # Foundations
 
-## Actions
-
 ```mermaid
 flowchart LR
-  prepare["prepare<br>actions/01-prepare.md"] --> write["write<br>actions/02-write.md"]
-  write --> conclude["conclude<br>actions/03-conclude.md"]
+  prepare["actions/01-prepare.md"] --> write["actions/02-write.md"]
+  write --> conclude["actions/03-conclude.md"]
   prepare -->|"a decision blocks"| user((user answers))
   write -->|"a decision blocks"| user
   user --> prepare
-  user --> write
+  user -->|"answer to write"| write
   conclude -->|"an error is left"| conclude
   conclude --> done((done))
   prepare -->|"no engine, no brand, or impact refused"| stop((stop))
 ```
 
-Each box is a file: read it, then do what it says.
-
 ## Transversal rules
 
-- Speak only to ask or to give the final reply.
+- Read each box's file, then do what it says.
+- The project is the working directory the session started in, never this skill's folder: look for its files and write them there.
+- Call tools, speaking only to ask or to give the final reply.
 - After asking, wait for the answer.
-- Otherwise call tools.
-- Run the engine from the project root; never read its source.
-- Every path written in a record starts there.
+- Write every reply, question, option and label in the language the person writes in, even when the project's own files use another.
+- Say what the person will see, by record title and state label.
+- Never show a path, file name, id, rule code, size, version or unit.
+- Never show a skill name, history, changelog or warning count.
+- Never use jargon like wireframe, design system, token or hex code.
+- Say « maquette » for a wireframe, never « plan ».
+- Call the showcase « la vitrine » in French, and show a page by pointing to it.
+- Say once per conversation: double-click `index.html` in `aidd_docs/ui/showcase/`.
+- On a web project, show a width by pointing to the Ordinateur or Téléphone switch.
+- Never hand over a capture or a temp file.
+- End with one next step or question, never on an offer or a yes/no.
+- Save by writing the design files, and never use git unless asked.
 - Write only `system.md`, `tokens.json`, `themes/`, `platforms/`, `breakpoints/` and `drafts/` under `aidd_docs/ui/`.
 - Never write in the code, nor by hand what the engine writes.
-- After each write, fix what the hook or the validation reports.
-- Never bypass a hook.
-- Commit and push only when asked.
+- Start every path written in a record at the project root.

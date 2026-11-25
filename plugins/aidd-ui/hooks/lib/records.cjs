@@ -1,32 +1,32 @@
-// R1 to R18: the shape of each record and how records point at one another.
+// R1 to R19: the shape of each record and how records point at one another.
 const fs = require("node:fs");
 const path = require("node:path");
 const { list, table } = require("./markdown.cjs");
 const { checkOf, ERROR, WARNING, HISTORY_FILE } = require("./project.cjs");
-const { breakpointsOf, STEPS_SECTION, STATUS_DEPRECATED, SYSTEM_ID, AXIS_SEPARATOR, variantOf, IMPLEMENTED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf } = require("./model.cjs");
+const { breakpointsOf, STEPS_SECTION, PERSONA_SECTION, REVIEW_KIND, VERDICTS_SECTION, STATUS_DEPRECATED, SYSTEM_ID, AXIS_SEPARATOR, variantOf, IMPLEMENTED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf, reviewStatesOf } = require("./model.cjs");
 
 const STATUSES = ["proposed", "validated", STATUS_DEPRECATED];
 const REVIEW_STATUSES = ["proposed", "validated"]; // R16: a review is never deprecated
 const FORMAT = "1"; // the record format this validator reads
 const ASSET_TYPES = ["icon", "image", "illustration"];
-const VERDICTS = ["ok", "ko", "pending"];
+const VERDICTS = ["ok", "revise", "pending"];
+const REVISE = "revise"; // a change asked for: it must say which
 const NO_REPLACEMENT = "none";
 const DEFAULT_STATE = "default";
 const FOCUS_STATE = "focus"; // a component taking focus is driven by the keyboard
 const KEYBOARD_SECTION = "Keyboard";
-const PERSONA_SECTION = "Persona";
 const SCREEN_KINDS = ["screen", "wireframe"]; // what a journey step names
 const USAGE_SECTION = "Usage";
 const DEPRECATION_SECTION = "Deprecation";
-const VERDICTS_SECTION = "Verdicts";
 const BRAND_HEADINGS = ["Project", "Users", "Domain", "Personality and tone", "References", "Anti-references"];
 
 const COMMON_KEYS = ["id", "kind"];
-const VERSIONED_KEYS = ["status", "version"]; // all but the system, whose versions are its publications, and the brand
+const VERSIONED_KEYS = ["status", "version"];
+const DEFAULT_LINES = { status: "add status: proposed", version: "add version: 1" }; // what a brand or a system lacking one is told to write
 const COMPONENT_KEYS = [...VERSIONED_KEYS, "uses", "tokens", "variants", "states", "role"];
 const KIND_KEYS = {
-  system: ["format", "platforms", "themes", "locales", "primitives", "code-roots", "ignore"],
-  brand: [],
+  system: [...VERSIONED_KEYS, "format", "platforms", "themes", "locales", "primitives", "code-roots", "ignore"],
+  brand: VERSIONED_KEYS,
   atom: COMPONENT_KEYS,
   molecule: COMPONENT_KEYS,
   organism: COMPONENT_KEYS,
@@ -77,7 +77,8 @@ function requiredKeyProblems(project) {
   const placedRecords = new Set(placed(project));
   return readable(project).flatMap((record) => {
     const keys = [...COMMON_KEYS, ...(placedRecords.has(record) ? KIND_KEYS[fm(record).kind] : [])];
-    const missing = keys.filter((key) => !(key in fm(record))).map((key) => problem(record, `missing key "${key}"`, `add the key "${key}" to the front matter`));
+    const fixes = ["brand", SYSTEM_ID].includes(fm(record).kind) ? DEFAULT_LINES : {};
+    const missing = keys.filter((key) => !(key in fm(record))).map((key) => problem(record, `missing key "${key}"`, fixes[key] ?? `add the key "${key}" to the front matter`));
     return [...missing, ...(placedRecords.has(record) ? valueProblems(record) : [])];
   });
 }
@@ -94,7 +95,7 @@ function identityProblems(project) {
 }
 
 function versionProblems(project) {
-  const published = project.history.filter((row) => row.Id === SYSTEM_ID && !SEMVER.test(row.Version));
+  const published = project.history.filter((row) => row.Id === SYSTEM_ID && !SEMVER.test(row.Version) && !INTEGER_VERSION.test(row.Version));
   return [
     ...placed(project).flatMap((record) => {
       const version = fm(record).version;
@@ -204,21 +205,24 @@ function journeyProblems(project) {
 function reviewProblems(project) {
   const index = byId(project);
   return placed(project)
-    .filter((record) => fm(record).kind === "review")
+    .filter((record) => fm(record).kind === REVIEW_KIND)
     .flatMap((record) => {
       const rows = table(record.sections[VERDICTS_SECTION]);
       // A verdict judges one version: a row for an older one leaves the current one unreviewed.
       const missing = list(fm(record).screens).flatMap((id) => {
         const screen = index.get(id);
         const version = screen && fm(screen).version;
-        return list(screen && fm(screen).states)
+        return (screen ? reviewStatesOf(screen) : [])
           .filter((state) => !rows.some((row) => row.Screen === id && row.State === state && row.Version === version))
           .map((state) => problem(record, `no verdict row for ${id} / ${state} at version ${version}`, `add a row for ${id} / ${state} at version ${version} to "## ${VERDICTS_SECTION}"`));
       });
       const verdicts = rows
         .filter((row) => !VERDICTS.includes(row.Verdict))
         .map((row) => problem(record, `verdict "${row.Verdict}" for ${row.Screen} / ${row.State} must be ${listWithOr(VERDICTS)}`, `set the verdict to ${listWithOr(VERDICTS)}`, row.Verdict));
-      return [...missing, ...verdicts];
+      const silent = rows
+        .filter((row) => row.Verdict === REVISE && !row.Comment)
+        .map((row) => problem(record, `verdict "${REVISE}" for ${row.Screen} / ${row.State} has no comment`, "write what to change in the Comment cell"));
+      return [...missing, ...verdicts, ...silent];
     });
 }
 
@@ -237,7 +241,7 @@ function assetProblems(project) {
 
 function reviewStatusProblems(project) {
   return placed(project)
-    .filter((record) => fm(record).kind === "review")
+    .filter((record) => fm(record).kind === REVIEW_KIND)
     .filter((record) => STATUSES.includes(fm(record).status) && !REVIEW_STATUSES.includes(fm(record).status))
     .map((record) => problem(record, `status "${fm(record).status}" is for elements: reviews are ${listWithOr(REVIEW_STATUSES)}`, `set status to ${listWithOr(REVIEW_STATUSES)}`, fm(record).status));
 }
@@ -269,6 +273,22 @@ function expectedProblems(project) {
     );
 }
 
+/** A screen dresses one wireframe: without it the screen answers no agreed layout, which warns;
+ * naming a record that is no wireframe errs. */
+function wireframeProblems(project) {
+  const index = byId(project);
+  return placed(project)
+    .filter((record) => fm(record).kind === "screen")
+    .flatMap((record) => {
+      const id = fm(record).wireframe;
+      if (id === undefined) return [{ ...problem(record, "has no wireframe", "add wireframe: <id> naming the wireframe this screen dresses"), severity: WARNING }];
+      const held = index.get(id);
+      if (!held) return [problem(record, `wireframe "${id}" is no record`, "name a wireframe that exists, or add it", id)];
+      const kind = fm(held).kind;
+      return kind === "wireframe" ? [] : [problem(record, `wireframe "${id}" is ${/^[aeiou]/.test(kind) ? "an" : "a"} ${kind}, not a wireframe`, "name a wireframe", id)];
+    });
+}
+
 /** The one problem a system.md written for another format earns, since every rule would misread
  * it; null when the format is this one or not stated, which R3 names. */
 function formatProblem(project) {
@@ -296,6 +316,7 @@ const RULES = {
   R16: reviewStatusProblems,
   R17: usageProblems,
   R18: expectedProblems,
+  R19: wireframeProblems,
 };
 
 /** Every broken record rule, in rule order. */

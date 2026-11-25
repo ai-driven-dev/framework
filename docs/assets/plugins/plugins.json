@@ -30,7 +30,7 @@
     "emoji": "🎼"
   },
   "aidd-ui": {
-    "status": "alpha",
+    "status": "beta",
     "description": "UI design system, checked on every write",
     "emoji": "🎨"
   },
