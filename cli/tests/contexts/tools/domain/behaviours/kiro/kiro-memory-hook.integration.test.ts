@@ -151,4 +151,37 @@ describe("the memory hook under Kiro", () => {
       existsSync(join(root, "ran-project")),
     ]).toStrictEqual([true, false]);
   });
+
+  it.each(["SessionStart", "PostToolUse", "Stop"])(
+    "ends with a neutral exit when the %s script crashes, because Kiro continues the turn on exit 1",
+    (event) => {
+      const format = kiro.projectHooksDelivery()?.format;
+      if (format === undefined) throw new Error("kiro declares no project hooks format");
+      const { content } = format.merge(
+        null,
+        JSON.stringify({
+          hooks: {
+            [event]: [
+              {
+                hooks: [
+                  { type: "command", command: `node ${"$"}{CLAUDE_PLUGIN_ROOT}/hooks/crash.cjs` },
+                ],
+              },
+            ],
+          },
+        }),
+        PLUGIN
+      );
+      const [entry] = format.contributedEntries(content, PLUGIN);
+      if (entry === undefined) throw new Error("no entry was merged");
+      const script = join(HOME(), format.scriptPath(PLUGIN, "hooks/crash.cjs"));
+      mkdirSync(dirname(script), { recursive: true });
+      writeFileSync(script, 'throw new Error("boom");');
+
+      const run = runHook(entry.entry.command);
+
+      expect([run.status, run.stdout]).toStrictEqual([0, ""]);
+      expect(run.stderr).toContain("boom");
+    }
+  );
 });

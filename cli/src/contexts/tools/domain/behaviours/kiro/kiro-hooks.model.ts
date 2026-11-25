@@ -39,7 +39,9 @@ interface KiroHook {
 const VERSION = "v1";
 
 /** Kiro names no variable for where a hooks file lives, so a command finds its script itself.
- * The home copy wins: a repository must not have its script run by a hook installed in the home. */
+ * The home copy wins: a repository must not have its script run by a hook installed in the home.
+ * Whatever the script exits with, the command exits 0: Kiro continues a Stop turn on exit 1, so
+ * a crash must end it. A deliberate continuation is the block decision printed on stdout. */
 function launcher(scriptsDir: string, plugin: string, call: BridgeHookCall): string {
   const relative = genericFlatHooksScriptPath(scriptsDir, plugin, call.script);
   const program = [
@@ -48,7 +50,7 @@ function launcher(scriptsDir: string, plugin: string, call: BridgeHookCall): str
     "const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));",
     "if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}",
     "const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});",
-    "process.exit(c.status===null?1:c.status)",
+    "if(c.status!==0)console.error('aidd: hook script failed: '+r);process.exit(0)",
   ].join("");
   return [`node -e "${program}" --`, ...call.args].join(" ");
 }
