@@ -143,43 +143,23 @@ describe("opencode's generated event bridge, against the real build", () => {
              { tool: "bash", sessionID: "s1", args: { command: "echo task" } }, output);
            assert.equal(output.output, "done\\n\\nfix the edit");
          } else {
-           const toolHooks = {};
-           const prompts = [];
-           const call = { sessionID: "s1", assistantMessageID: "msg1", id: "call1" };
-           const v2Events = [null, { type: "server.connected" },
-             { type: "session.created", data: { sessionID: "s1", location: { directory: process.argv[2] } } },
-             { type: "session.execution.succeeded", data: { sessionID: "s1" } }];
-           let signal;
-           let closed = false;
-           let done;
-           const processed = new Promise((resolve) => { done = resolve; });
+           const hooks = {};
+           const register = (domain) => async (name, callback) => { hooks[domain + "." + name] = callback; return { dispose: async () => {} }; };
            const cleanup = await plugin.setup({
              location: { directory: process.argv[2] },
-             tool: { hook: async (name, callback) => { toolHooks[name] = callback; return { dispose: async () => {} }; } },
-             session: { prompt: async (input) => { prompts.push(input); } },
-             event: {
-             subscribe(options) {
-               signal = options.signal;
-               return (async function* () {
-                 try {
-                   for (const event of v2Events) yield event;
-                   done();
-                   await new Promise((resolve) => signal.addEventListener("abort", resolve, { once: true }));
-                   throw new Error("subscription aborted");
-                 } finally { closed = true; }
-               })();
-             }
-           } });
-           assert.equal(typeof cleanup, "function");
-           await processed;
+             tool: { hook: register("tool") },
+             session: {
+               hook: register("session"),
+               get: async ({ sessionID }) => ({ id: sessionID }),
+               synthetic: async () => {},
+             },
+           });
+           assert.equal(cleanup, undefined);
+           await hooks["session.prompt"]({ sessionID: "s1", messageID: "msg1", prompt: { text: "task" } });
            const result = { status: "completed", tool: "Bash", sessionID: "s1", input: { command: "echo task" }, result: { content: "done" } };
-           await toolHooks["execute.after"](result);
+           await hooks["tool.execute.after"](result);
            assert.equal(result.result.content, "done\\n\\nfix the edit");
-           await new Promise((resolve) => setImmediate(resolve));
-           await cleanup();
-           await new Promise((resolve) => setImmediate(resolve));
-           assert.equal(signal.aborted, true);
-           assert.equal(closed, true);
+           await hooks["session.experimental.idle"]({ sessionID: "s1", background: [] });
          }
         `,
         "utf-8"

@@ -35,11 +35,19 @@ continued one. `hookAnswer` does not apply there.
 OpenCode's client to show (`request`, the probe's own input) and the bus event the server published
 for it (`event`), read from the server's event stream.
 
+## OpenCode 2
+
+`opencode-v2-*` files hold what OpenCode 2.4.1 handed a plugin's `setup` hooks, as the hook
+received it: `prompt`, `context`, `experimental.idle`, `execute.before` and `execute.after`, plus
+what its `session.get` and `session.synthetic` calls answered. A `context` sample keeps only
+`sessionID`, `agent` and `system`, what a bridge reads of the request.
+
 ## Scrubbing
 
 Home and project paths are `/Users/user` and `/Users/user/project`, every session id is the one
 fake id `00000000-0000-4000-8000-000000000000`, a child session's `00000000-0000-4000-8000-000000000001`, the account email is `user@example.com`, and
-timestamps, dates and dated session-file names are fixed to the epoch. Nothing else is altered.
+timestamps, dates and dated session-file names are fixed to the epoch, and the temporary folder
+is `/tmp`. Nothing else is altered.
 
 ## Established
 

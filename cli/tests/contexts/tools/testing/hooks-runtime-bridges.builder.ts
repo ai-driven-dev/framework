@@ -106,12 +106,22 @@ export function capturedRunOf<T = unknown>(
   };
 }
 
-export async function workspace(host: BridgedHostId, bridge: string): Promise<Workspace> {
+/** A workspace holding the bridge, the recorder and the adapter, and any `scripts` a case adds. */
+export async function workspace(
+  host: BridgedHostId,
+  bridge: string,
+  scripts: Readonly<Record<string, string>> = {}
+): Promise<Workspace> {
   const { dir, module } = await placeBridge({
     prefix: "aidd-hooks-runtime-bridge-",
     plugin: "aidd-sample",
     bridge,
-    scripts: { "record.cjs": RECORDER, "silent.cjs": "", "lib/host.cjs": ADAPTERS[host] },
+    scripts: {
+      "record.cjs": RECORDER,
+      "silent.cjs": "",
+      "lib/host.cjs": ADAPTERS[host],
+      ...scripts,
+    },
   });
   const project = join(dir, "project");
   await mkdir(project);
@@ -162,9 +172,7 @@ export async function start(
   ws: Workspace,
   input: Record<string, unknown>,
   refusal?: Error,
-  toastRefusal?: Error,
-  /** The client OpenCode's V2 adapter hands the bridge: a session `prompt`, nothing else. */
-  v2Client = false
+  toastRefusal?: Error
 ) {
   const recorder = promptRecorder(bridgedHost(ws.host), { refusal });
   const toasts: unknown[] = [];
@@ -174,9 +182,7 @@ export async function start(
       ? Promise.resolve({ data: true })
       : Promise.reject(toastRefusal);
   };
-  const client = v2Client
-    ? { session: { prompt: recorder.queue } }
-    : { session: recorder.session, tui: { showToast } };
+  const client = { session: recorder.session, tui: { showToast } };
   const { server } = await descriptorOf<{ server: (input: unknown) => Promise<Plugin> }>(ws.module);
   const plugin = await server({ ...input, client });
   return { plugin, prompts: recorder.prompts, toasts };

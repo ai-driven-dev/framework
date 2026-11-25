@@ -25,16 +25,29 @@
  * client (`tui.showToast`, captured in `opencode-tui.toast.show.json`); the variant is the
  * bridge's choice, which the host echoes. `opencode run` has no TUI and shows none.
  *
- * Limits of the V2 entrypoint (`setup`, through `opencode-events.js`):
+ * OpenCode 2.4.1 (`@opencode/cli`) runs `setup` alone, through `opencode-events.js`, which maps
+ * each of its hooks onto the ones above:
+ *
+ * - `SessionStart` at a session's first `prompt` hook: the `run` session's own `session.created`
+ *   reaches no plugin. A child session names its parent through `session.get`. The answer goes
+ *   through the `context` hook, which runs for the agent's requests only, not the title call.
+ * - `UserPromptSubmit` on the `prompt` hook; its answers join the system prompt of each request
+ *   until the next prompt, not the message itself.
+ * - `PreToolUse` on `execute.before`, whose throw refuses the call; `PostToolUse` on
+ *   `execute.after`. A V2 tool names its file `path`, read as `filePath`.
+ * - `Stop` on `experimental.idle`; the follow-up is a steering `synthetic` message, admitted before
+ *   the hook returns, which runs in the same execution. A synthetic message reaches no `prompt`
+ *   hook, so only the person's next prompt starts a fresh turn.
+ *
+ * Limits of the V2 entrypoint:
  * - On 1.19.3 OpenCode calls both `server` and `setup`; `setup` sees no location in that early
  *   context and does nothing.
- * - OpenCode 2.4.1 (`@opencode/cli`) runs `setup` alone. It relays only the event stream and
- *   `execute.after`: PreToolUse, UserPromptSubmit and the system-prompt hand-over never run; its
- *   client has no toast, and no `promptAsync`, so a required finding is reported as the call's
- *   PostToolUse failure and the call's later PostToolUse hooks are skipped; and the
- *   `run` session's own `session.created` reaches no plugin, so its SessionStart runs on a later
- *   event. Its tool input names the file `path`, which no `file_path` is derived from. Moving the
- *   bridge onto the V2 plugin API is an open design question.
+ * - Its client has no toast and no `promptAsync`: a script's message for the person is not
+ *   shown, and a required finding is reported as the call's PostToolUse failure, the call's later
+ *   PostToolUse hooks skipped.
+ * - Its shell tool is `shell`, which a `Bash` matcher and the adapter's shell reading do not name.
+ * - A call made through Code Mode (`codemode: true`) was not observed reaching a hook.
+ * - A child session's prompt, the one its parent wrote, reaches UserPromptSubmit too.
  */
 
 import { type BridgeParts, generateBridge } from "../../bridges/event-bridge.js";

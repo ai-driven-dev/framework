@@ -191,8 +191,6 @@ async function addSessionContext(input, output, show) {
  * their two turns, and a Stop that cleared it made the second turn read as fresh and every script
  * block again, forever (observed on Kilo 7.7.5 and 7.8.32).
  *
- * Limit: a host whose messages reach no message hook (the OpenCode V2 adapter) never clears it,
- * so after a session's first follow-up its Stop scripts are always told the turn continues.
  * Limit: one Stop hook per plugin: once one blocked, the hooks after it are told the turn
  * continues, and stay silent. */
 export const TURN_END_SOURCE = `const continuedTurns = new Set();

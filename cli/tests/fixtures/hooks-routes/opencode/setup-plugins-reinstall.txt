@@ -276,35 +276,12 @@ script, identical to the plugin source
 script, identical to the plugin source
 
 ## project/.opencode/hooks/opencode-events.js
-// V2 reports a turn through its execution events. The tool hook is where a finished call's
-// result can change, so a hook's answer lands in the result the model reads.
-function eventsForV2(event, directory) {
-  const data = event?.data;
-  if (typeof data?.sessionID !== "string") return [];
-  if (event.type === "session.created") {
-    return [
-      {
-        type: "session.created",
-        properties: {
-          info: { id: data.sessionID, directory: data.location?.directory ?? directory },
-        },
-      },
-    ];
-  }
-  if (
-    event.type === "session.execution.succeeded" ||
-    event.type === "session.execution.failed" ||
-    event.type === "session.execution.interrupted"
-  ) {
-    if (event.type === "session.execution.interrupted" && data.reason === "shutdown") return [];
-    return [
-      {
-        type: "session.idle",
-        properties: { sessionID: data.sessionID, directory: event.location?.directory },
-      },
-    ];
-  }
-  return [];
+// OpenCode 2 hands a plugin hooks of its own: each is mapped onto the hook the bridge hands
+// OpenCode 1, so what a script receives and what its answer does stays the bridge's.
+
+// A V2 tool names the file it writes `path`; the bridge reads OpenCode 1's `filePath`.
+function argsOf(input) {
+  return typeof input?.path === "string" ? { ...input, filePath: input.path } : input;
 }
 
 // A string result takes the answer after a blank line; a list of parts takes a text part.
@@ -317,43 +294,70 @@ export async function setupOpencodeEvents(ctx, factory) {
   // OpenCode 1.19 also calls setup with its early V2 context, which has no location, while
   // server() already serves that host.
   if (ctx.location === undefined) return;
-  const controller = new AbortController();
-  // A Stop script's block becomes the session's next prompt, sent through the V2 session API.
+  // The follow-ups a Stop sent, settled: the bridge reports a refused one.
+  const followUps = [];
   const client = {
     session: {
-      prompt: ({ path, body }) =>
-        ctx.session.prompt({
+      prompt: ({ path, body }) => {
+        const sent = ctx.session.synthetic({
           sessionID: path.id,
           text: body.parts.map((part) => part.text).join("\n"),
-        }),
+          delivery: "steer",
+        });
+        followUps.push(sent.then(() => undefined, () => undefined));
+        return sent;
+      },
     },
   };
   const hooks = await factory({ directory: ctx.location.directory, client });
-  const toolHook = await ctx.tool.hook("execute.after", async (call) => {
+  // What the UserPromptSubmit scripts answered to each session's latest prompt.
+  const promptAnswers = new Map();
+
+  // A session's first prompt starts it: the run's own session is created before the plugin
+  // listens. A subagent's child session names its parent.
+  await ctx.session.hook("prompt", async (prompt) => {
+    const { sessionID } = prompt;
+    const session = await ctx.session.get({ sessionID });
+    await hooks.event({
+      event: { type: "session.created", properties: { sessionID, info: { parentID: session?.parentID } } },
+    });
+    const output = {
+      message: { id: prompt.messageID },
+      parts: [{ id: prompt.messageID, type: "text", text: prompt.prompt.text }],
+    };
+    await hooks["chat.message"]({ sessionID }, output);
+    promptAnswers.set(sessionID, output.parts.slice(1).map((part) => part.text));
+  });
+
+  // Each request of a turn carries what SessionStart and the turn's prompt hooks answered.
+  await ctx.session.hook("context", async (request) => {
+    const added = { system: [] };
+    await hooks["experimental.chat.system.transform"]({ sessionID: request.sessionID }, added);
+    for (const text of [...added.system, ...(promptAnswers.get(request.sessionID) ?? [])]) {
+      request.system.push({ type: "text", text });
+    }
+  });
+
+  // A throw from this hook alone refuses the call.
+  await ctx.tool.hook("execute.before", (call) =>
+    hooks["tool.execute.before"]({ tool: call.tool, sessionID: call.sessionID }, { args: argsOf(call.input) })
+  );
+
+  // The tool hook is where a finished call's result can change, so a hook's answer lands in the
+  // result the model reads.
+  await ctx.tool.hook("execute.after", async (call) => {
     if (call.status !== "completed" || !call.result) return;
     const output = { output: "" };
-    await hooks["tool.execute.after"]({ tool: call.tool, sessionID: call.sessionID, args: call.input }, output);
+    await hooks["tool.execute.after"]({ tool: call.tool, sessionID: call.sessionID, args: argsOf(call.input) }, output);
     const answer = output.output.trim();
     if (answer) call.result.content = withAnswer(call.result.content, answer);
   });
-  // The subscription lives until cleanup. Awaiting it here would block plugin startup.
-  void (async () => {
-    try {
-      for await (const event of ctx.event.subscribe({ signal: controller.signal })) {
-        if (controller.signal.aborted) break;
-        for (const mapped of eventsForV2(event, ctx.location.directory)) {
-          await hooks.event({ event: mapped });
-        }
-      }
-    } catch {
-      // Stream failures and cancellation must not reject into the host.
-      controller.abort();
-    }
-  })();
-  return async () => {
-    controller.abort();
-    await toolHook.dispose();
-  };
+
+  // The session goes idle unless input waits once this hook returns, so the follow-ups land first.
+  await ctx.session.hook("experimental.idle", async ({ sessionID }) => {
+    await hooks.event({ event: { type: "session.idle", properties: { sessionID } } });
+    await Promise.all(followUps.splice(0));
+  });
 }
 
 
