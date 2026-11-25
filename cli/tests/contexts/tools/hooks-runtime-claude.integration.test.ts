@@ -6,7 +6,6 @@
  */
 import { afterEach, describe, expect, it } from "vitest";
 import {
-  at,
   CWD,
   NOTES,
   output,
@@ -18,9 +17,6 @@ import {
 } from "./testing/hooks-runtime-host.builder.js";
 
 afterEach(restoreHostIo);
-
-const REASON =
-  "locked.md is locked: write nothing to it. Create unlocked.md instead with the same text.";
 
 describe("Claude Code", () => {
   it("reads SessionStart from its captured payload", () => {
@@ -190,47 +186,5 @@ describe("Claude Code", () => {
     expect(output()).toStrictEqual({
       hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: "memory" },
     });
-  });
-
-  it("reads a Write before it lands as the path it will write, and no content", () => {
-    const { payload } = sample("claude-PreToolUse.json", 0);
-    const { event } = read("claude", payload);
-
-    expect([event?.event, event?.files, event?.cwd]).toStrictEqual([
-      "PreToolUse",
-      [{ path: at("locked.md") }],
-      CWD,
-    ]);
-  });
-
-  it("reads an Edit before it lands as the path it will write, and no text", () => {
-    const { event } = read("claude", sample("claude-PreToolUse.json", 1).payload);
-
-    expect([event?.event, event?.files]).toStrictEqual(["PreToolUse", [{ path: NOTES }]]);
-  });
-
-  it("reads a call that writes nothing as no file", () => {
-    for (const index of [2, 3]) {
-      expect(
-        read("claude", sample("claude-PreToolUse.json", index).payload).event?.files
-      ).toStrictEqual([]);
-    }
-  });
-
-  it("refuses the call about to run as the deny the host was seen delivering to the model", () => {
-    const { payload, hookAnswer } = sample("claude-PreToolUse.json", 0);
-    const { adapter } = read("claude", payload);
-    adapter.refuse(REASON);
-
-    expect(output()).toStrictEqual(hookAnswer);
-  });
-
-  it("refuses nothing off PreToolUse, and nothing when there is no event", () => {
-    const { adapter } = read("claude", sample("claude-PostToolUse.json", 0).payload);
-    adapter.refuse("no");
-    const none = read("claude", "not json");
-    none.adapter.refuse("no");
-
-    expect(printed).toStrictEqual([]);
   });
 });

@@ -58,11 +58,16 @@ const MATCHER_TOOLS: ReadonlyMap<string, string> = new Map([
 const hooks = declareHooks(
   { toolId: "kiro", directory: DIRECTORY, adapter },
   {
-    // Only SessionStart, PostToolUse and Stop have a payload captured from kiro-cli V3 (the kiro-*
-    // hook-payload fixtures); https://kiro.dev/docs/hooks/types/ names the triggers. Every other
-    // event is dropped from the merge with a warning.
+    // Only SessionStart, PreToolUse, PostToolUse and Stop have a payload captured from kiro-cli V3
+    // (the kiro-* hook-payload fixtures); https://kiro.dev/docs/hooks/types/ names the triggers.
+    // Every other event is dropped from the merge with a warning.
     undeclaredEvents: "skipped",
-    events: { SessionStart: "SessionStart", PostToolUse: "PostToolUse", Stop: "Stop" },
+    events: {
+      SessionStart: "SessionStart",
+      PreToolUse: "PreToolUse",
+      PostToolUse: "PostToolUse",
+      Stop: "Stop",
+    },
     toolNames: MATCHER_TOOLS,
     // Kiro loads every `.kiro/hooks/*.json` of a project, and CLI V3 those of `~/.kiro/hooks/`
     // too (https://kiro.dev/docs/hooks/): every plugin's entries share one file of AIDD's own.

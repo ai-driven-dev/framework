@@ -159,15 +159,19 @@ describe("antigravity's project hooks format", () => {
       ]);
     });
 
-    it("skips PreToolUse, which no framework script declares, with a warning naming it", () => {
+    it("relays PreToolUse grouped under every tool when the plugin names none", () => {
       const pre = JSON.stringify({
-        hooks: { PreToolUse: [{ hooks: [{ type: "command", command: "node x.cjs" }] }] },
+        hooks: {
+          PreToolUse: [{ hooks: [{ type: "command", command: "node x.cjs", timeout: 5 }] }],
+        },
       });
 
       const { content, warnings } = format.merge(null, pre, "aidd-dev");
 
-      expect(parse(content)).toEqual({});
-      expect(warnings).toEqual(["unmapped event 'PreToolUse' skipped"]);
+      expect(parse(content)["aidd-dev"].PreToolUse).toEqual([
+        { matcher: "*", hooks: [expect.objectContaining({ type: "command", timeout: 5 })] },
+      ]);
+      expect(warnings).toEqual([]);
     });
 
     it.each(["UserPromptSubmit", "SubagentStop", "SessionEnd"])(

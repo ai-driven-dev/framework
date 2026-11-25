@@ -8,7 +8,7 @@
         "session_id": "00000000-0000-4000-8000-000000000000",
         "transcript_path": "/Users/user/.claude/projects/-Users-user-project/00000000-0000-4000-8000-000000000000.jsonl",
         "cwd": "/Users/user/project",
-        "prompt_id": "3bae8dc0-82ed-4cc7-b784-b74dcb3a49f0",
+        "prompt_id": "9ce98de2-cbb4-4b4f-ac97-5676981a6b19",
         "permission_mode": "acceptEdits",
         "effort": {
           "level": "medium"
@@ -16,16 +16,16 @@
         "hook_event_name": "PreToolUse",
         "tool_name": "Write",
         "tool_input": {
-          "file_path": "/Users/user/project/locked.md",
-          "content": "changed"
+          "file_path": "/Users/user/project/aidd_docs/tasks/2026_01/2026_01_02_export/spec.md",
+          "content": "new"
         },
-        "tool_use_id": "toolu_01RkUQdwsK6RGfQpoSiTRqqK"
+        "tool_use_id": "toolu_01AMgKzBvMk6zMB4e6ytP2ep"
       },
       "hookAnswer": {
         "hookSpecificOutput": {
           "hookEventName": "PreToolUse",
           "permissionDecision": "deny",
-          "permissionDecisionReason": "locked.md is locked: write nothing to it. Create unlocked.md instead with the same text."
+          "permissionDecisionReason": "aidd_docs/tasks/2026_01/2026_01_02_export/spec.md is locked: only the person who approves it sets its status back to draft. Write nothing to it."
         }
       }
     },
@@ -35,7 +35,28 @@
         "session_id": "00000000-0000-4000-8000-000000000000",
         "transcript_path": "/Users/user/.claude/projects/-Users-user-project/00000000-0000-4000-8000-000000000000.jsonl",
         "cwd": "/Users/user/project",
-        "prompt_id": "381ed747-bfb4-4fca-862d-394655746069",
+        "prompt_id": "9ce98de2-cbb4-4b4f-ac97-5676981a6b19",
+        "permission_mode": "acceptEdits",
+        "effort": {
+          "level": "medium"
+        },
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Write",
+        "tool_input": {
+          "file_path": "/Users/user/project/notes.md",
+          "content": "hello"
+        },
+        "tool_use_id": "toolu_012s6kzb4xihJMM5geiZZ6DT"
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "log",
+      "payload": {
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "transcript_path": "/Users/user/.claude/projects/-Users-user-project/00000000-0000-4000-8000-000000000000.jsonl",
+        "cwd": "/Users/user/project",
+        "prompt_id": "9ce98de2-cbb4-4b4f-ac97-5676981a6b19",
         "permission_mode": "acceptEdits",
         "effort": {
           "level": "medium"
@@ -45,10 +66,10 @@
         "tool_input": {
           "file_path": "/Users/user/project/notes.md",
           "old_string": "hello",
-          "new_string": "hello world",
+          "new_string": "hi",
           "replace_all": false
         },
-        "tool_use_id": "toolu_01MjdksfniwN5iKg22eKB7rf"
+        "tool_use_id": "toolu_01DnLyvDdPEZJddVzSCni8Yw"
       },
       "hookAnswer": null
     },
@@ -58,7 +79,7 @@
         "session_id": "00000000-0000-4000-8000-000000000000",
         "transcript_path": "/Users/user/.claude/projects/-Users-user-project/00000000-0000-4000-8000-000000000000.jsonl",
         "cwd": "/Users/user/project",
-        "prompt_id": "381ed747-bfb4-4fca-862d-394655746069",
+        "prompt_id": "9ce98de2-cbb4-4b4f-ac97-5676981a6b19",
         "permission_mode": "acceptEdits",
         "effort": {
           "level": "medium"
@@ -66,30 +87,10 @@
         "hook_event_name": "PreToolUse",
         "tool_name": "Bash",
         "tool_input": {
-          "command": "echo hi",
-          "description": "Print hi"
+          "command": "echo done",
+          "description": "Print done"
         },
-        "tool_use_id": "toolu_01ELmaeYf4hAztHNgAunFpck"
-      },
-      "hookAnswer": null
-    },
-    {
-      "run": "log",
-      "payload": {
-        "session_id": "00000000-0000-4000-8000-000000000000",
-        "transcript_path": "/Users/user/.claude/projects/-Users-user-project/00000000-0000-4000-8000-000000000000.jsonl",
-        "cwd": "/Users/user/project",
-        "prompt_id": "381ed747-bfb4-4fca-862d-394655746069",
-        "permission_mode": "acceptEdits",
-        "effort": {
-          "level": "medium"
-        },
-        "hook_event_name": "PreToolUse",
-        "tool_name": "Read",
-        "tool_input": {
-          "file_path": "/Users/user/project/notes.md"
-        },
-        "tool_use_id": "toolu_014frhGWXuDYAP3VLrgcZRzW"
+        "tool_use_id": "toolu_01R4a6Vjao7zXiDtbs1b9fmr"
       },
       "hookAnswer": null
     }

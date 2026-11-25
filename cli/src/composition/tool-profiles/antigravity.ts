@@ -57,12 +57,13 @@ const hooks = declareHooks(
     // `agy` fires none of UserPromptSubmit, SubagentStop and SessionEnd.
     events: {
       SessionStart: "SessionStart",
+      PreToolUse: "PreToolUse",
       PostToolUse: "PostToolUse",
       Stop: "Stop",
     },
-    // PostToolUse handlers stay grouped under the plugin's matcher, its tools renamed to the ones
+    // Tool event handlers stay grouped under the plugin's matcher, its tools renamed to the ones
     // `agy` calls. A PostToolUse answer injects nothing: only PostInvocation can, and it is not
-    // relayed. `agy` fires PreToolUse too, which is not relayed here.
+    // relayed. A PreToolUse deny reaches the model, and a silent handler answers `allow`.
     toolNames: MATCHER_TOOLS,
     // `agy` reads hooks only from the project's `.agents/hooks.json`, keyed by hook name, and runs
     // each handler from `<repo>/.agents`.
