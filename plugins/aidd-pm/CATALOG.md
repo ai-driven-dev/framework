@@ -93,11 +93,12 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |-------|------|---|
 | `actions` | [01-build.md](skills/04-spec/actions/01-build.md) | - |
 | `actions` | [02-refine.md](skills/04-spec/actions/02-refine.md) | - |
+| `assets` | [refine-answer.md](skills/04-spec/assets/refine-answer.md) | - |
 | `assets` | [spec-template.md](skills/04-spec/assets/spec-template.md) | - |
 | `references` | [spec-content.md](skills/04-spec/references/spec-content.md) | - |
 | `scripts` | [contract.json](skills/04-spec/scripts/contract.json) | - |
 | `scripts` | [validate-spec.cjs](skills/04-spec/scripts/validate-spec.cjs) | - |
-| `-` | [SKILL.md](skills/04-spec/SKILL.md) | `Creates a feature's spec, the contract it is built to, or updates one, when the user brings a request, a PRD, review findings or answers.` |
+| `-` | [SKILL.md](skills/04-spec/SKILL.md) | `Creates a feature's spec, the contract it is built to, or updates one, when the user brings a request, a document, review findings or answers.` |
 
 #### `skills/05-spike`
 
