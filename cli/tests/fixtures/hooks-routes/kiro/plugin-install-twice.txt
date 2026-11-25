@@ -237,13 +237,10 @@ script, identical to the plugin source
 ## project/.kiro/hooks/aidd-context/memory.cjs
 script, identical to the plugin source
 
-## project/.kiro/hooks/aidd-telemetry/catch-up.cjs
+## project/.kiro/hooks/aidd-telemetry/ledger.cjs
 script, identical to the plugin source
 
 ## project/.kiro/hooks/aidd-telemetry/lib/aidd.cjs
-script, identical to the plugin source
-
-## project/.kiro/hooks/aidd-telemetry/lib/binding.cjs
 script, identical to the plugin source
 
 ## project/.kiro/hooks/aidd-telemetry/lib/claude-only.cjs
@@ -258,22 +255,13 @@ script, identical to the plugin source
 ## project/.kiro/hooks/aidd-telemetry/lib/context.cjs
 script, identical to the plugin source
 
-## project/.kiro/hooks/aidd-telemetry/lib/declaration.cjs
-script, identical to the plugin source
-
 ## project/.kiro/hooks/aidd-telemetry/lib/git.cjs
 script, identical to the plugin source
 
-## project/.kiro/hooks/aidd-telemetry/lib/hook-io.cjs
-script, identical to the plugin source
+## project/.kiro/hooks/aidd-telemetry/lib/host.cjs
+script, identical to the host adapter host-kiro.cjs
 
 ## project/.kiro/hooks/aidd-telemetry/lib/jsonl.cjs
-script, identical to the plugin source
-
-## project/.kiro/hooks/aidd-telemetry/lib/lookup.cjs
-script, identical to the plugin source
-
-## project/.kiro/hooks/aidd-telemetry/lib/presence.cjs
 script, identical to the plugin source
 
 ## project/.kiro/hooks/aidd-telemetry/lib/telemetry-dir.cjs
@@ -282,10 +270,7 @@ script, identical to the plugin source
 ## project/.kiro/hooks/aidd-telemetry/lib/tool.cjs
 script, identical to the plugin source
 
-## project/.kiro/hooks/aidd-telemetry/prompt-gate.cjs
-script, identical to the plugin source
-
-## project/.kiro/hooks/aidd-telemetry/session-start.cjs
+## project/.kiro/hooks/aidd-telemetry/task.cjs
 script, identical to the plugin source
 
 ## project/.kiro/hooks/aidd.json
@@ -311,20 +296,20 @@ script, identical to the plugin source
       "timeout": 5
     },
     {
-      "name": "aidd-telemetry-session-start.cjs",
+      "name": "aidd-telemetry-task.cjs",
       "trigger": "SessionStart",
       "action": {
         "type": "command",
-        "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-telemetry/session-start.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});process.exit(c.status===null?1:c.status)\" --"
+        "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-telemetry/task.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});process.exit(c.status===null?1:c.status)\" -- remind"
       },
-      "timeout": 10
+      "timeout": 5
     },
     {
-      "name": "aidd-telemetry-catch-up.cjs",
+      "name": "aidd-telemetry-ledger.cjs",
       "trigger": "SessionStart",
       "action": {
         "type": "command",
-        "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-telemetry/catch-up.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});process.exit(c.status===null?1:c.status)\" --"
+        "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-telemetry/ledger.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});process.exit(c.status===null?1:c.status)\" -- ingest"
       },
       "timeout": 120
     }
@@ -355,13 +340,13 @@ project kiro aidd-telemetry scope=project: 0 hook files
   "entries": [
     {
       "event": "SessionStart",
-      "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-telemetry/session-start.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});process.exit(c.status===null?1:c.status)\" --",
-      "digest": "6197b13cea437e1a9d4478134a3147bd"
+      "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-telemetry/task.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});process.exit(c.status===null?1:c.status)\" -- remind",
+      "digest": "d667f02f41238012da403bcec237b4db"
     },
     {
       "event": "SessionStart",
-      "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-telemetry/catch-up.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});process.exit(c.status===null?1:c.status)\" --",
-      "digest": "d35a69dbb3ab363509babe543f1267ba"
+      "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-telemetry/ledger.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});process.exit(c.status===null?1:c.status)\" -- ingest",
+      "digest": "c7eece3bd3db4e40451f75df1a4961f1"
     }
   ],
   "scripts": {}
