@@ -126,7 +126,7 @@ describe("reporting agent models", () => {
       });
 
       expect(output.lines).toEqual([
-        "Models kept on each tool's provider, for every project on this machine; main session unchanged:",
+        "Models on each tool's saved provider, else its first, for every project on this machine; main session unchanged:",
         `  ${OPENAI_TOOL} on openai`,
         `  ${OPENAI_TOOL} reviewer: gpt-6.1-sol (high)`,
         `  ${OPENAI_TOOL} explorer, executor, validator: gpt-6-luna (medium)`,

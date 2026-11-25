@@ -15,6 +15,8 @@ export interface AgentModelsReport {
   keepSaved?: boolean;
 }
 
+const EVERY_PROJECT = "for every project on this machine";
+
 function reportHostModels(
   { output, catalog, main, agentsOnly }: AgentModelsReport,
   host: AiToolId,
@@ -43,7 +45,7 @@ function reportHostModels(
 export function reportAgentModels(report: AgentModelsReport): void {
   const { output, provider, main } = report;
   const unchanged = report.agentsOnly === true ? "; main session unchanged" : "";
-  if (report.keepSaved === true) reportKeptModels(report);
+  if (report.keepSaved === true) reportKeptModels(report, unchanged);
   else if (provider === undefined) reportRestoredModels(report, unchanged);
   else reportConfiguredModels(report, provider, unchanged);
   for (const { host, path, reason } of main.skipped) {
@@ -76,15 +78,16 @@ function reportConfiguredModels(
   provider: string,
   unchanged: string
 ): void {
-  report.output.success(`Models on ${provider}, for every project on this machine${unchanged}:`);
+  report.output.success(`Models on ${provider}, ${EVERY_PROJECT}${unchanged}:`);
   for (const host of report.hosts) reportHostModels(report, host, provider);
 }
 
-function reportKeptModels(report: AgentModelsReport): void {
+function reportKeptModels(report: AgentModelsReport, unchanged: string): void {
   report.output.success(
-    "Models kept on each tool's provider, for every project on this machine; main session unchanged:"
+    `Models on each tool's saved provider, else its first, ${EVERY_PROJECT}${unchanged}:`
   );
   for (const host of report.hosts) {
+    // Map.get may answer nothing; the use case sets every host's provider or throws.
     const provider = report.main.chosen.get(host);
     if (provider === undefined) continue;
     report.output.info(`  ${host} on ${provider}`);

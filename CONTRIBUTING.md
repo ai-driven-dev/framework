@@ -73,12 +73,12 @@ Fork the repository, or branch from it if you have write access.
 ```text
 setup --global --source local --path <checkout> --ide <tool> --plugins all --yes
   add --agents-only
-→ Claude / Codex: refresh native plugin copies, repeat setup without --provider
+→ Claude / Codex: refresh native plugin copies, repeat setup without --agents-only
 → doctor --global --tool <tool>
 → sync the managed Agents instruction section
 ```
 
-The CLI owns installation and model generation; tiers and models are in [`docs/SUBAGENTS.md`](docs/SUBAGENTS.md#-models). `--agents-only` leaves main-session settings untouched, and with no `--provider` each tool keeps the provider saved for it, else the first its profile lists. A managed OpenCode installation uses its existing reload helper.
+The CLI owns installation and model generation; tiers, models and what `--agents-only` leaves alone are in [`docs/SUBAGENTS.md`](docs/SUBAGENTS.md#-models). A managed OpenCode installation uses its existing reload helper.
 
 Commands and model/plugin details appear as they run, followed by one result per tool: `OK`, `WARN` or `FAIL` (`DELEGATED` for managed OpenCode). Any warning (a `Warning:` line in the CLI output) or failure exits nonzero; fix the reported cause and rerun. `OK` covers the CLI installation and registration checks, not a live agent session; restart your tools to load the changes.
 
