@@ -18,7 +18,7 @@ Read them live with `aidd --help`; `cli/tests/golden/help-surface.golden.test.ts
 - No argument on a TTY opens the menu; without a TTY, help goes to stderr and the exit is 1.
 - Global flags: `--version`, `--verbose` (or `AIDD_VERBOSE=true`).
 - `--scope project|user` picks where a plugin or marketplace lives.
-- `--global` runs `setup`, `doctor`, `sync` and `clean` machine-wide.
+- `--global` runs `setup`, `doctor`, `sync` and `clean` machine-wide (`--scope user` is its former spelling).
 - Channels and exit codes: the skill's [`references/architecture.md`](../../../../.claude/skills/working-on-cli/references/architecture.md), Process.
 - `doctor` drift is informational; it never gates the exit code.
 - `sync` restores tracked files, rewrites settings, drives native activation, then mirrors proven plugins into settings.

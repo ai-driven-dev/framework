@@ -33,12 +33,11 @@ flowchart LR
 | Another context is read through its `contract/` only | its `domain/`, `ports/` and `infrastructure/` stay private; Biome holds the `HELD_BY_BIOME` contexts |
 | A module is shared only with callers in two contexts | one caller means the code belongs to it; `cli/tests/architecture/earned-sharing.arch.test.ts` |
 | The host record's shape lives in `host-registration/domain/`; the manifest stores it opaque | only host registration knows what the record means |
-| Claude registers at `--scope local` | the hashed settings file keeps one writer: `cli/src/composition/tool-profiles/claude.ts` |
 | Owned files are regenerated, co-owned files are merged | `MergeStrategy` in `cli/src/shared/domain/merge.ts` |
 | The manifest reads v9, and v8 only to split it once | no migration chain: [`decisions/manifest-reads-v9-and-splits-v8.md`](decisions/manifest-reads-v9-and-splits-v8.md) |
 | A build leaves `{{TOOLS}}` unresolved on copilot, an install resolves it to `.github/` | a build is location-independent; only an install knows the tool directory it writes into |
-| An install writes the plugin manifest the build synthesizes | one function, `synthesizeManifest`, so the manifest never names a component or a field the files do not match |
-| One hooks descriptor per tool, one merge engine, one host adapter per tool (OpenCode and Kilo share `host-bridge.cjs`) | adding a tool is a descriptor and a payload fixture; adapters in `cli/assets/hooks-runtime/` |
+| An install writes the plugin manifest the build synthesizes | `synthesizeManifest` is a per-tool member of the build contract, shared by most tools through `synthesizeSharedManifest`; Codex builds its own and the others declare none, so a manifest never names a component or a field the files do not match |
+| One hooks descriptor per tool, one merge engine, one host adapter per tool (OpenCode and Kilo share `host-bridge.cjs`) | adapters in `cli/assets/hooks-runtime/`; adding a tool: [`01-tool.md`](../../../../.claude/skills/working-on-cli/actions/01-tool.md) |
 
 ## Machine claims lock
 
