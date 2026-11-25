@@ -9,7 +9,7 @@ What each AI tool receives from the framework.
 | Claude Code | `.claude/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
 | Cursor | `.cursor/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
 | GitHub Copilot | `.github/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| OpenCode | `.opencode/` | ❌ | ✅ | ✅ | ✅ | ❌ | Some events | ❌ |
+| OpenCode | `.opencode/` | ❌ | ✅ | ✅ | ✅ | ❌ | Some events | ✅ |
 | Kilo Code | `.kilo/` | ❌ | ✅ | ✅ | ✅ | ❌ | Some events | ✅ |
 | Codex | `.codex/` | ✅ | ✅ | ✅ | ✅ | Marketplace only | ✅ | ❌ |
 | Antigravity CLI | `.agents/` | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
