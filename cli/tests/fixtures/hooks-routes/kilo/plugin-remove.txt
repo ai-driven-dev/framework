@@ -69,65 +69,89 @@ function addToSystem(output, context) {
   if (context) output.system.push(context);
 }
 
-/** A Stop script's {"decision":"block","reason"} on stdout: the reason to keep working on. */
-function stopReasonOf(script, args, payload, directory) {
-  return new Promise((resolve) => {
-    let stdout = "";
-    const child = spawn("node", [HOOKS_DIR + script, ...args], {
-      cwd: directory,
-      stdio: ["pipe", "pipe", "ignore"],
-      timeout: 5000,
-    });
-    child.stdout.on("data", (chunk) => { stdout += chunk; });
-    child.on("error", () => resolve(""));
-    child.on("close", (code) => {
-      if (code !== 0) return resolve("");
-      try {
-        const output = JSON.parse(stdout);
-        resolve(output?.decision === "block" ? String(output.reason ?? "").trim() : "");
-      } catch {
-        resolve("");
-      }
-    });
-    child.stdin.on("error", () => {});
-    child.stdin.end(JSON.stringify(payload));
-  });
-}
-
-function answerOf(script, args, payload, directory) {
+function captureHook(script, args, payload, directory) {
   return new Promise((resolve) => {
     let stdout = "";
     let stderr = "";
-    const child = spawn("node", [HOOKS_DIR + script, ...args], {
-      cwd: directory,
-      stdio: ["pipe", "pipe", "pipe"],
-      timeout: 5000,
-    });
-    // A spawn that never launches emits both an error and a close: one report per script.
-    let failed = false;
-    const fail = (error) => {
-      if (failed) return;
-      failed = true;
-      reportHookFailure(script, error);
-      resolve("");
-    };
-    child.stdout.on("data", (chunk) => { stdout += chunk; });
-    child.stderr.on("data", (chunk) => { stderr += chunk; });
-    child.on("error", fail);
-    child.on("close", (code, signal) => {
-      if ((code !== 0 && code !== 2) || signal !== null) {
-        fail("exited with code " + String(code) + (signal === null ? "" : " (" + signal + ")"));
-        return;
-      }
-      resolve(answerFrom(code, stdout, stderr));
-    });
-    child.stdin.on("error", () => {});
-    child.stdin.end(JSON.stringify(payload));
+    try {
+      const child = spawn("node", [HOOKS_DIR + script, ...args], {
+        cwd: directory,
+        stdio: ["pipe", "pipe", "pipe"],
+        timeout: 5000,
+      });
+      child.stdout.on("data", (chunk) => {
+        stdout += chunk;
+      });
+      child.stderr.on("data", (chunk) => {
+        stderr += chunk;
+      });
+      // A spawn that never launches emits both an error and a close: the first settles it.
+      child.on("error", (error) => resolve({ failure: String(error) }));
+      child.on("close", (code, signal) => {
+        if ((code !== 0 && code !== 2) || signal !== null) {
+          resolve({ code, failure: "exited with code " + String(code) + (signal === null ? "" : " (" + signal + ")") });
+          return;
+        }
+        resolve({ code, stdout, stderr });
+      });
+      // A script that never reads its stdin must not throw.
+      child.stdin.on("error", () => {});
+      child.stdin.end(JSON.stringify(payload));
+    } catch (error) {
+      resolve({ failure: String(error) });
+    }
   });
 }
 
 function reportHookFailure(script, error) {
   console.warn("[aidd] Kilo hook " + script + " failed: " + String(error));
+}
+
+/** A Stop follow-up the host refused: reported like a failed script, never thrown into the host. */
+function reportFollowUpFailure(script, error) {
+  reportHookFailure(script, "follow-up not delivered: " + String(error));
+}
+
+function answerOf(script, args, payload, directory) {
+  return captureHook(script, args, payload, directory).then((run) => {
+    if (run.failure !== undefined) {
+      reportHookFailure(script, run.failure);
+      return "";
+    }
+    return answerFrom(run.code, run.stdout, run.stderr);
+  });
+}
+
+/** A Stop script's {"decision":"block","reason"} on stdout: the reason to keep working on. */
+function stopReasonOf(script, args, payload, directory) {
+  return captureHook(script, args, payload, directory).then((run) => {
+    if (run.code !== 0) return "";
+    try {
+      const output = JSON.parse(run.stdout);
+      return output?.decision === "block" ? String(output.reason ?? "").trim() : "";
+    } catch {
+      return "";
+    }
+  });
+}
+
+function postToolUseCallsFor(call, directory) {
+  const tool = String(call?.tool ?? "");
+  const args = call?.args;
+  const matches = (matcher) =>
+    !matcher || matcher.split("|").some((name) => name.toLowerCase() === tool.toLowerCase());
+  const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;
+  return POST_TOOL_USE.filter((hook) => matches(hook.matcher)).map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: {
+      hook_event_name: "PostToolUse",
+      session_id: call?.sessionID ?? null,
+      cwd: directory,
+      tool_name: tool,
+      tool_input: toolInput,
+    },
+  }));
 }
 
 function sessionStartCallsFor(event, directory) {
@@ -172,7 +196,7 @@ const AiddTelemetryKiloHooks = async ({ directory, client }) => {
           if (reason) {
             client.session
               .promptAsync({ path: { id }, body: { parts: [{ type: "text", text: reason, metadata: FOLLOW_UP }] } })
-              .catch((error) => reportHookFailure(hook.script, "follow-up not delivered: " + String(error)));
+              .catch((error) => reportFollowUpFailure(hook.script, error));
           }
         }
       }
@@ -199,13 +223,9 @@ const AiddTelemetryKiloHooks = async ({ directory, client }) => {
   },
   "tool.execute.after": async (call, output) => {
     try {
-      const tool = String(call?.tool ?? "");
       const cwd = sessions.get(call?.sessionID)?.directory ?? directory;
-      // Kilo names the written file filePath; the scripts read Claude Code's file_path.
-      const args = call?.args;
-      const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;
-      for (const hook of POST_TOOL_USE.filter(hook => !hook.matcher || hook.matcher.split("|").some(name => name.toLowerCase() === tool.toLowerCase()))) {
-        const answer = await answerOf(hook.script, hook.args, { hook_event_name: "PostToolUse", session_id: call?.sessionID ?? null, cwd, tool_name: tool, tool_input: toolInput }, cwd);
+      for (const hook of postToolUseCallsFor(call, cwd)) {
+        const answer = await answerOf(hook.script, hook.args, hook.payload, cwd);
         if (answer) output.output = `${output.output ?? ""}\n\n${answer}`;
       }
     } catch (error) {

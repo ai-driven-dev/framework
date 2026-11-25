@@ -98,6 +98,8 @@ async function workspace(host: "opencode" | "kilo", bridge: string): Promise<Wor
   await mkdir(join(dir, "plugin"));
   await mkdir(project);
   await writeFile(join(scripts, "record.cjs"), RECORDER);
+  await writeFile(join(scripts, "silent.cjs"), "");
+  await writeFile(join(scripts, "fail.cjs"), "process.exit(1);\n");
   await writeFile(join(scripts, "lib", "host.cjs"), ADAPTERS[host]);
   await writeFile(
     join(dir, "hooks", "opencode-events.js"),
@@ -210,17 +212,102 @@ function patched(project: string) {
 
 const CONTINUED = [{ path: { id: SESSION }, body: { parts: [{ type: "text", text: "go on" }] } }];
 
-function opencodeBridge(): string {
-  const bridge = generateOpencodeHooksBridge(HOOKS_JSON, "aidd-sample");
+/** A hooks.json whose SessionStart runs these commands, in order. */
+function startingWith(...commands: string[]): string {
+  return JSON.stringify({
+    hooks: { SessionStart: [{ hooks: commands.map((command) => ({ type: "command", command })) }] },
+  });
+}
+
+const SILENT = `node ${ROOT}/hooks/silent.cjs`;
+const FAILING = `node ${ROOT}/hooks/fail.cjs`;
+// A NUL in an argument is refused by `spawn` itself, before any child exists.
+const UNSPAWNABLE = `node ${ROOT}/hooks/record.cjs \u0000`;
+
+function opencodeBridge(hooksJson = HOOKS_JSON): string {
+  const bridge = generateOpencodeHooksBridge(hooksJson, "aidd-sample");
   if (bridge === null) throw new Error("expected a bridge");
   return bridge;
 }
 
-function kiloBridge(): string {
-  const bridge = generateKiloHooksBridge(HOOKS_JSON, "aidd-sample");
+function kiloBridge(hooksJson = HOOKS_JSON): string {
+  const bridge = generateKiloHooksBridge(hooksJson, "aidd-sample");
   if (bridge === null) throw new Error("expected a bridge");
   return bridge;
 }
+
+/** What SessionStart hands the model on `host` once its hooks ran: the system prompt after the
+ * host's own entries, and what the plugin added to it. */
+async function startedWith(host: "opencode" | "kilo", hooksJson: string) {
+  const ws = await workspace(
+    host,
+    host === "kilo" ? kiloBridge(hooksJson) : opencodeBridge(hooksJson)
+  );
+  vi.stubEnv("AIDD_START", "answer");
+  const { input, output } = await systemTransform(host, ws.project);
+  const before = [...output.system];
+  if (host === "opencode") {
+    const [init] = await captured<Record<string, unknown>>("opencode-server-init.json", ws.project);
+    const { plugin } = await start(ws, init);
+    await plugin["experimental.chat.system.transform"](input, output);
+  } else {
+    const [created] = await captured("kilo-session.created.json", ws.project);
+    const { plugin } = await start(ws, { directory: ws.dir });
+    await plugin.event({ event: created });
+    await plugin["experimental.chat.system.transform"](input, output);
+  }
+  return { before, added: output.system.slice(before.length) };
+}
+
+describe.each(["opencode", "kilo"] as const)("SessionStart answers on %s", (host) => {
+  it("joins several answers into one entry, a blank line apart", async () => {
+    const { added } = await startedWith(host, startingWith(RECORD, RECORD));
+
+    expect(added).toStrictEqual(["start note\n\nstart note"]);
+  });
+
+  it("leaves a silent script out of the entry, with no separator left behind", async () => {
+    const { added } = await startedWith(host, startingWith(SILENT, RECORD));
+
+    expect(added).toStrictEqual(["start note"]);
+  });
+
+  it("adds nothing, and does not throw, when a script cannot be spawned", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const { added } = await startedWith(host, startingWith(UNSPAWNABLE, RECORD));
+
+    expect(added).toStrictEqual(["start note"]);
+    warn.mockRestore();
+  });
+
+  it("keeps the answer of the scripts that ran when another one fails", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const { added } = await startedWith(host, startingWith(FAILING, RECORD));
+
+    expect(added).toStrictEqual(["start note"]);
+    warn.mockRestore();
+  });
+});
+
+describe("a failed SessionStart script", () => {
+  it("is reported once on Kilo", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    await startedWith("kilo", startingWith(FAILING));
+
+    expect(warn.mock.calls.map(([line]) => String(line))).toStrictEqual([
+      expect.stringMatching(/^\[aidd\] Kilo hook .*fail\.cjs failed: exited with code 1$/),
+    ]);
+    warn.mockRestore();
+  });
+
+  it("stays silent on OpenCode", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    await startedWith("opencode", startingWith(FAILING));
+
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+});
 
 describe("OpenCode, through its bridge", () => {
   it("reads the server start as SessionStart, with no session yet", async () => {
