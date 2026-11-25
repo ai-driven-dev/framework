@@ -125,6 +125,7 @@ const HELP = {
       "Checks the set as `showcase` does.",
       "Copies the variant's folder into `aidd_docs/ui/`, replacing files.",
       "It leaves out the variant's `preview.html`.",
+      "It adds each variant set aside to `aidd_docs/ui/choices.md`.",
       "Then it deletes the set's folder.",
       "Refuses a set with problems, or an unknown variant.",
       "A replaced record keeps its `version`; raise it with `bump`.",
@@ -137,7 +138,8 @@ const HELP = {
     usage: [SHOWCASE_USAGE],
     effects: [
       "Writes `aidd_docs/ui/showcase/`, replacing it whole.",
-      "It writes `index.html`, one page per record, and a `.gitignore` of `*`.",
+      "It writes `index.html` and a `.gitignore` of `*`.",
+      "It writes one page per record but a review, one per set.",
       "A set lives in `aidd_docs/ui/drafts/<set>/`, which validation skips.",
       "Its `variants.md` holds a table: `Variant`, `Intent`, then one column per axis.",
       "`Round` and `Parent` are optional columns, never axes.",
