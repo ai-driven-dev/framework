@@ -13,6 +13,8 @@ const HOST = "antigravity";
 const EVENTS = new Set(["SessionStart", "PostToolUse", "Stop"]);
 // `agy` names its tools in snake case, and their arguments in Pascal case.
 const WRITES = new Set(["write_file"]);
+// An edit names the text it replaces and the text that replaces it, never the whole file.
+const EDITS = new Set(["edit_file"]);
 const SHELLS = new Set(["run_command"]);
 
 /** The event `readEvent` last returned: an answer is printed in its terms. */
@@ -33,8 +35,14 @@ function folderOf(raw) {
 }
 
 function writtenFiles(tool, args, cwd) {
-  if (!WRITES.has(tool) || typeof args?.Path !== "string") return [];
+  if (typeof args?.Path !== "string") return [];
   const file = { path: path.resolve(cwd, args.Path) };
+  if (EDITS.has(tool)) {
+    if (typeof args.Replacement === "string") file.written = args.Replacement;
+    if (typeof args.Target === "string") file.replaced = args.Target;
+    return [file];
+  }
+  if (!WRITES.has(tool)) return [];
   if (typeof args.Content === "string") file.content = file.written = args.Content;
   return [file];
 }
@@ -76,10 +84,13 @@ function continueTurn(text) {
   print({ decision: "continue", reason: text });
 }
 
-// `agy` takes no context from a SessionStart or a PostToolUse answer (an injection goes through
-// PostInvocation, which is not relayed), so only a Stop answers.
+/** A Stop answer continues the turn. A SessionStart answer is an injected system message, which
+ * `agy` hands the model before its first call. A PostToolUse answer is never carried: `agy` takes
+ * no context from it. */
 function answer({ text } = {}) {
-  if (current?.event === "Stop") continueTurn(text);
+  if (current?.event === "Stop") return continueTurn(text);
+  if (current?.event !== "SessionStart" || typeof text !== "string" || text === "") return;
+  print({ injectSteps: [{ systemMessage: { systemMessage: text } }] });
 }
 
 module.exports = { readEvent, answer, continueTurn };

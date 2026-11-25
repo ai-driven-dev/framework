@@ -103,6 +103,7 @@ describe("building Codex's flat contract", () => {
       pluginMcp: new Map([
         ["aidd-dev", JSON.stringify({ mcpServers: { "aidd-dev-context": { command: "node" } } })],
       ]),
+      rulesGlobs: [],
       existing: new Map(),
       present: new Set(),
       assets: new Map(),
@@ -121,6 +122,7 @@ describe("building Codex's flat contract", () => {
     const files = configArtifactOf().emit({
       builtPlugins: [],
       pluginMcp: new Map(),
+      rulesGlobs: [],
       existing: new Map([[".codex/config.toml", 'model = "o3"\n']]),
       present: new Set(),
       assets: new Map(),
@@ -133,6 +135,7 @@ describe("building Codex's flat contract", () => {
     const files = configArtifactOf().emit({
       builtPlugins: ["aidd-dev"],
       pluginMcp: new Map(),
+      rulesGlobs: [],
       existing: new Map(),
       present: new Set(),
       assets: new Map(),

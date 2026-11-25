@@ -103,7 +103,7 @@
         "agents": "yes",
         "mcp": "no",
         "hooks": "bridge",
-        "rules": "no",
+        "rules": "yes",
         "commands": "no"
       }
     }

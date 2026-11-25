@@ -41,13 +41,29 @@ const KIRO_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(DIRECTORY, {
   agent: { ext: ".md" },
 });
 
+/** The tag Kiro selects a tool by, for each Claude tool a plugin's hook matcher names: the `write`
+ * tag was seen matching `fs_write` and `str_replace`, the `shell` tag `execute_bash`. `Delete` and
+ * `PowerShell` rest on the vendor docs' tool families alone (https://kiro.dev/docs/hooks/types/),
+ * no capture. A name with no entry, such as `apply_patch`, selects nothing. A hook is never given
+ * a regular expression to select by: each tag gets its own hook. */
+const MATCHER_TOOLS: ReadonlyMap<string, string> = new Map([
+  ["Write", "write"],
+  ["Edit", "write"],
+  ["Delete", "write"],
+  ["Bash", "shell"],
+  ["Shell", "shell"],
+  ["PowerShell", "shell"],
+]);
+
 const hooks = declareHooks(
   { toolId: "kiro", directory: DIRECTORY, adapter },
   {
-    // Only SessionStart has a captured payload (https://kiro.dev/docs/hooks/types/); every other
+    // Only SessionStart, PostToolUse and Stop have a payload captured from kiro-cli V3 (the kiro-*
+    // hook-payload fixtures); https://kiro.dev/docs/hooks/types/ names the triggers. Every other
     // event is dropped from the merge with a warning.
     undeclaredEvents: "skipped",
-    events: { SessionStart: "SessionStart" },
+    events: { SessionStart: "SessionStart", PostToolUse: "PostToolUse", Stop: "Stop" },
+    toolNames: MATCHER_TOOLS,
     // Kiro loads every `.kiro/hooks/*.json` of a project, and CLI V3 those of `~/.kiro/hooks/`
     // too (https://kiro.dev/docs/hooks/): every plugin's entries share one file of AIDD's own.
     flat: { scriptsDir: `${DIRECTORY}hooks/`, sharedFile: `${DIRECTORY}hooks/aidd.json` },
