@@ -23,11 +23,11 @@ What each AI tool receives from the framework.
 | ✅ | Supported |
 | ❌ | Not supported |
 | Marketplace only | Supported when installed through the tool's marketplace, not as flat files |
-| Some events | Only some of the seven events: see Hook events |
+| Some events | Only `SessionStart`, `Stop` and `PostToolUse` |
 
 ## Hook events
 
-What the CLI carries to each host, per event. This is the one table: other pages point here. The Hooks column is coarser; this table is exact.
+What the CLI carries to each host, per event. This is the one table: other pages point here. The Hooks column is coarser, and a ✅ there can still be a subset of the seven events; this table is exact.
 
 | Host | SessionStart | UserPromptSubmit | PreToolUse | PostToolUse | Stop | SessionEnd | SubagentStop |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -37,8 +37,8 @@ What the CLI carries to each host, per event. This is the one table: other pages
 | Cursor | yes | yes | yes | yes | yes, not headless | no | yes |
 | OpenCode | yes, V1, † | no, † | no, † | yes, V1 | yes, V1 | no | no |
 | Kilo Code | yes | no, † | no, † | yes | yes | no | no |
-| Antigravity CLI | yes, † | no | no | yes, matcher `*` † | yes | no | no |
-| Kiro | yes | no | no | no, † | no, † | no | no |
+| Antigravity CLI | yes | no | no | yes, matcher renamed | yes | no | no |
+| Kiro | yes | no | no | yes, matcher mapped to tags | yes | no | no |
 | Kimi Code CLI | no | no | no | no | no | no | no |
 
 | Mark | Meaning |
@@ -52,8 +52,8 @@ Sources, per row:
 - Claude Code, Codex, Copilot: every event is declared under its own name: the default `events` in `cli/src/contexts/tools/domain/formats/hooks/declaration.ts`, which `codex.ts` and `copilot.ts` inherit, and `claude.ts`. Vendor event lists: [Claude Code](https://code.claude.com/docs/en/hooks), [Codex](https://learn.chatgpt.com/docs/hooks), [Copilot](https://docs.github.com/en/copilot/reference/hooks-configuration), where the vendor maps the PascalCase names the CLI writes to its own (`Stop` to `agentStop`, `UserPromptSubmit` to `userPromptSubmitted`). No host was run for this table; the host-side firing of `SessionEnd` and `SubagentStop` on Copilot is the vendor's word, unverified here.
 - Cursor: `cursor.ts` maps six events and skips the rest. Its project `.cursor/hooks.json` is the only file ever observed firing; a plugin-scope `hooks.json` fired none of seven events in three probes.
 - OpenCode and Kilo: a generated bridge per plugin, three events only (`opencode.ts`, `kilo.ts`, `bridges/event-bridge.ts`). `†` cells: a pending change relays `PreToolUse` and `UserPromptSubmit` through the bridge, one starts OpenCode's `SessionStart` from `session.created` and one carries a session-start answer to the model.
-- Antigravity: `antigravity.ts` maps three events and grants every PostToolUse script the matcher `*`. `†`: a pending change relays `PostToolUse` under agy's own tool names (`write_file`, `edit_file`, `run_command`) and honours a matcher, and another carries a session-start context to the model.
-- Kiro: `†`: a pending change adds `PostToolUse` and `Stop` to the `SessionStart` the CLI maps today (see Kiro limits).
+- Antigravity: `antigravity.ts` maps three events. A `PostToolUse` script keeps the plugin's matcher with its tools renamed to `write_file`, `edit_file` and `run_command` (`MATCHER_TOOLS`).
+- Kiro: `kiro.ts` maps three events. A `PostToolUse` matcher is mapped to Kiro's tool tags (`MATCHER_TOOLS`), one hook per tag (see Kiro limits).
 - Kimi: see Kimi Code CLI limits.
 
 What an event can do differs per host and is the generator's table, [hosts.md](../plugins/aidd-context/skills/08-hook-generate/references/hosts.md).
@@ -62,8 +62,8 @@ What an event can do differs per host and is the generator's table, [hosts.md](.
 
 - Measured on `agy` 1.5.17 with one probe per case, so each is a fact for that version only. Vendor reference: [hooks](https://antigravity.google/docs/hooks).
 - `agy` has no event for a submitted prompt: `PreInvocation` fires before every model call. It has `PreToolUse`, which the CLI does not relay.
-- On 1.5.17, no `PostToolUse` output shape reached the model across 10 shapes on one model, unconfirmed on another. `PostInvocation` and `PreInvocation` answers did, and the CLI relays neither; `PostInvocation` injection reached the model as a system step in 3 of 3 runs.
-- A hook reads its tool by `agy`'s own name. The edit tool is `edit_file`, not `write_file`, and a matcher is an anchored regular expression over the whole name (`write_.*` fired `write_file` only, `write_f` fired nothing).
+- On 1.5.17, no `PostToolUse` output shape reached the model across 10 shapes on one model, unconfirmed on another, and the vendor documents an empty JSON object as its answer. `PostInvocation` and `PreInvocation` answers did, and the CLI relays neither; `PostInvocation` injection reached the model as a system step in 3 of 3 runs.
+- A hook reads its tool by `agy`'s own name. The edit tool is `edit_file`, not `write_file`, and a matcher is an anchored regular expression over the whole name (`write_.*` fired `write_file` only, `write_f` fired nothing). The CLI reads a plugin matcher as a case-blind list of names split on `|` and renames each, so a regular expression selects nothing.
 - `PreToolUse`: `{}` denies, `{"decision":"deny","reason":...}` denies with the reason, `{"decision":"block"}` answered `unsupported hook decision: block` in 2 runs, and the reason reaches the model on its next tool call. A script exiting non-zero with an allow answer failed closed in single runs.
 - `SessionStart` and `PreInvocation` answers shaped `{"injectSteps":[{"systemMessage":{"systemMessage":"<text>"}}]}` reached the model.
 - Whether a model acts on a message injected mid-loop depends on the model: it did on `gpt-oss-120b-medium` 3 of 3, on `gemini-3.8-flash-low` 2 of 3, and on `claude-sonnet-4-6` 0 of 6, for a `PreInvocation` relay; the same model acted on a deny reason read on its next tool call, 3 of 3. It is unverified on `gemini-4-hydrogen`, the default model, which probes leave out.
@@ -97,14 +97,15 @@ What an event can do differs per host and is the generator's table, [hosts.md](.
 
 ## Kiro limits
 
-- Kiro receives plugin hooks for `SessionStart` only, merged into `.kiro/hooks/aidd.json` ([hook types](https://kiro.dev/docs/hooks/types/), [hooks file](https://kiro.dev/docs/hooks/)). Every other event is dropped with a build warning, because no payload for it was captured.
+- Kiro receives plugin hooks for `SessionStart`, `PostToolUse` and `Stop`, merged into `.kiro/hooks/aidd.json` ([hook types](https://kiro.dev/docs/hooks/types/), [hooks file](https://kiro.dev/docs/hooks/)). Every other event is dropped with a build warning, because no payload for it was captured.
 - With both a home and a project install, each Kiro `SessionStart` hook is expected to run twice, because the vendor says [global and workspace hooks run alongside each other](https://kiro.dev/docs/hooks/); this case is unprobed, and both runs would resolve to the home copy of the script.
-- A script paired across events (aidd-context's artifacts start, mark and check) runs only its `SessionStart` half under Kiro, which is harmless.
+- A script paired across events (aidd-context's artifacts start, mark and check) runs only the halves of the three events Kiro receives.
 - Kiro documents no user-visible hook output field, only standard output added to the agent's context, so a hook's person-facing text is not delivered.
 - Probed on `kiro-cli` 3.6.0 (V3), two conclusive Free models (a third was inconclusive), one run per case. Text a `PostToolUse` command prints was not seen reaching the model in any shape tried (bare stdout, `additionalContext`, `decision: block`, exit 1 or 2 with stderr). One model (`qwen3-coder-next`) acted on a hook of type `agent`, in one run, so a channel may exist. A `PreToolUse` exit 2 was not tried. Kiro IDE 1.x is unprobed and its docs say hook stdout reaches the agent.
 - `Stop`: exit 0 with `{"decision":"block","reason":...}` starts another turn ([hook types](https://kiro.dev/docs/hooks/types/), CLI tab), and so does exit 1, even with no output, in one run. The payload is only `session_id`, `hook_event_name` and `cwd`, so no field marking a continuation was seen on this version. `Stop` fired once per user prompt, never again on the continuation, in every run.
+- A `Stop` script that exits 1 with no output continues the turn with Kiro's default instruction, so a crashing script continues it (one run).
 - Payloads captured for `fs_write` (`path`, `text`), `str_replace` (`path`, `oldStr`, `newStr`, `replace_all`), `read_file` and `execute_bash` (`command`, `cwd`).
-- A `matcher` is matched by Kiro against its own tool tags: the plugin's `Write|Edit|...` string matched `execute_bash` only, and a bare `write` tag matched `str_replace` and `fs_write`. A Claude matcher therefore cannot be passed through.
+- A `matcher` is matched by Kiro against its own tool tags: the plugin's `Write|Edit|...` string matched `execute_bash` only, and a bare `write` tag matched `str_replace` and `fs_write`. A Claude matcher is therefore mapped to those tags, one hook per tag; `Delete` and `PowerShell` rest on the vendor docs alone, no capture.
 - Hooks are not deduplicated: four hooks with one name all ran, and two files with the same command ran it twice.
 - Kiro's Markdown agents are documented ([configuration reference](https://kiro.dev/docs/custom-agents/configuration-reference/)) but were never run against Kiro. The captured hook runs used CLI V3 JSON agents.
 

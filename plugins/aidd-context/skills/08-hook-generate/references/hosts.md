@@ -23,7 +23,7 @@ A `-` means the host has no event for that moment.
 | Moment | Claude, Codex | Cursor | Copilot | Antigravity | OpenCode, Kilo |
 | --- | --- | --- | --- | --- | --- |
 | session start | `SessionStart` | `sessionStart` | `sessionStart` | `SessionStart` | - |
-| prompt submitted | `UserPromptSubmit` | `beforeSubmitPrompt` | `userPromptSubmitted` | `PreInvocation` | - |
+| prompt submitted | `UserPromptSubmit` | `beforeSubmitPrompt` | `userPromptSubmitted` | - | - |
 | before a tool runs | `PreToolUse` | `preToolUse` | `preToolUse` | `PreToolUse` | `tool.execute.before` |
 | after a tool runs | `PostToolUse` | `postToolUse` | `postToolUse` | `PostToolUse` | - |
 | turn stop | `Stop` | `stop` | `agentStop` | `Stop` | - |
