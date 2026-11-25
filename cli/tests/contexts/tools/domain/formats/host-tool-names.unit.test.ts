@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { hostToolNames } from "../../../../../src/contexts/tools/domain/formats/host-tool-names.js";
+import {
+  hostToolNames,
+  hostToolNamesMatching,
+} from "../../../../../src/contexts/tools/domain/formats/host-tool-names.js";
 
 const renames = new Map([
   ["Read", "read_file"],
@@ -24,5 +27,26 @@ describe("a host's tool names", () => {
       "mcp__x",
       "read_file",
     ]);
+  });
+});
+
+describe("a host's tool names for a plugin's matcher", () => {
+  const tools = new Map([
+    ["Write", "write_file"],
+    ["Edit", "edit_file"],
+    ["Bash", "run_command"],
+  ]);
+
+  it("renames plain names split on a bar, in the matcher's order", () => {
+    expect(hostToolNamesMatching("Edit|Write", tools)).toEqual(["edit_file", "write_file"]);
+  });
+
+  it("selects each tool a regular expression matches, as Claude reads a matcher", () => {
+    expect(hostToolNamesMatching("Edit.*", tools)).toEqual(["edit_file"]);
+    expect(hostToolNamesMatching("^(Write|Bash)$", tools)).toEqual(["write_file", "run_command"]);
+  });
+
+  it("selects nothing for a regular expression no mapped tool matches", () => {
+    expect(hostToolNamesMatching("mcp__.*", tools)).toEqual([]);
   });
 });

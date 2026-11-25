@@ -181,6 +181,21 @@ describe("wrapped command hooks", () => {
       expect(matchersOf(grouped("PostToolUse", "Write|Write"), "PostToolUse")).toEqual(["put"]);
     });
 
+    it("reads a matcher that is a regular expression, as Claude does", () => {
+      expect(matchersOf(grouped("PostToolUse", "Edit.*", "^(Write|Bash)$"), "PostToolUse")).toEqual(
+        ["patch", "put|sh"]
+      );
+    });
+
+    it("skips a regular expression no host tool matches, with a warning naming it", () => {
+      const { content, warnings } = merged(null, grouped("PostToolUse", "mcp__.*"));
+
+      expect([JSON.parse(content), warnings]).toEqual([
+        {},
+        ["PostToolUse matcher 'mcp__.*' names no Host tool, group skipped"],
+      ]);
+    });
+
     it("skips a group naming no tool the host has, with a warning naming it", () => {
       const { content, warnings } = merged(null, grouped("PostToolUse", "Delete", "Bash"));
 

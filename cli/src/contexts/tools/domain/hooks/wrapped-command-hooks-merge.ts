@@ -4,7 +4,7 @@ import { rewritePluginRootInJson } from "../../../../shared/domain/materializati
 import type { ProjectHookEntry } from "../../contract/tool-vocabulary.js";
 import { toBase64 } from "../formats/base64.js";
 import { PLUGIN_HOOKS_SOURCE } from "../formats/hooks/descriptor.js";
-import { hostToolNames } from "../formats/host-tool-names.js";
+import { hostToolNamesMatching } from "../formats/host-tool-names.js";
 import type { PluginHookItem, PluginHooksShape } from "./plugin-hooks-shape.js";
 
 // The host runs a handler from its own directory under the project and requires JSON stdout even
@@ -57,13 +57,12 @@ function toHandler(hook: ProjectHookEntry): ProjectHookEntry {
   };
 }
 
-/** The matcher in the host's tool names, or undefined when it names no tool the host has. A plugin
- * with no matcher, an empty one or `*` asks for every tool. Names are taken literally, split on
- * `|`: a regex matcher such as `Edit.*` names no mapped tool, so its group is skipped with a
- * warning, where Claude would match. No shipped plugin writes one. */
+/** The matcher in the host's tool names, or undefined when it selects no tool the host has. A plugin
+ * with no matcher, an empty one or `*` asks for every tool. Any other is read as Claude reads it:
+ * plain names split on `|`, else a regular expression over the plugin's tool names. */
 function hostMatcher(target: WrappedCommandHooksTarget, matcher: string | undefined) {
   if (matcher === undefined || matcher === "" || matcher === "*") return "*";
-  const names = hostToolNames(matcher.split("|"), target.descriptor.toolNames);
+  const names = hostToolNamesMatching(matcher, target.descriptor.toolNames);
   return names.length > 0 ? names.join("|") : undefined;
 }
 

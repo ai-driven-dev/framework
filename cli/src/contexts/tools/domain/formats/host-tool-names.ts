@@ -11,3 +11,20 @@ export function hostToolNames(
   );
   return [...new Set(names)];
 }
+
+const PLAIN_NAMES = /^[\w|]+$/u;
+
+/** The host's names for the tools a plugin's matcher selects. Claude reads a matcher of plain names
+ * as a list split on `|`, and any other as a regular expression over a tool's name: the same
+ * reading here, over the tools the host has a name for. */
+export function hostToolNamesMatching(
+  matcher: string,
+  renames: ReadonlyMap<string, string>
+): string[] {
+  if (PLAIN_NAMES.test(matcher)) return hostToolNames(matcher.split("|"), renames);
+  const selects = new RegExp(matcher);
+  return hostToolNames(
+    [...renames.keys()].filter((tool) => selects.test(tool)),
+    renames
+  );
+}
