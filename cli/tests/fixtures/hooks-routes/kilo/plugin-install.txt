@@ -235,13 +235,10 @@ script, identical to the plugin source
 ## project/.kilo/hooks/aidd-context/memory.cjs
 script, identical to the plugin source
 
-## project/.kilo/hooks/aidd-telemetry/catch-up.cjs
+## project/.kilo/hooks/aidd-telemetry/ledger.cjs
 script, identical to the plugin source
 
 ## project/.kilo/hooks/aidd-telemetry/lib/aidd.cjs
-script, identical to the plugin source
-
-## project/.kilo/hooks/aidd-telemetry/lib/binding.cjs
 script, identical to the plugin source
 
 ## project/.kilo/hooks/aidd-telemetry/lib/claude-only.cjs
@@ -256,22 +253,13 @@ script, identical to the plugin source
 ## project/.kilo/hooks/aidd-telemetry/lib/context.cjs
 script, identical to the plugin source
 
-## project/.kilo/hooks/aidd-telemetry/lib/declaration.cjs
-script, identical to the plugin source
-
 ## project/.kilo/hooks/aidd-telemetry/lib/git.cjs
 script, identical to the plugin source
 
-## project/.kilo/hooks/aidd-telemetry/lib/hook-io.cjs
-script, identical to the plugin source
+## project/.kilo/hooks/aidd-telemetry/lib/host.cjs
+script, identical to the host adapter for kilo
 
 ## project/.kilo/hooks/aidd-telemetry/lib/jsonl.cjs
-script, identical to the plugin source
-
-## project/.kilo/hooks/aidd-telemetry/lib/lookup.cjs
-script, identical to the plugin source
-
-## project/.kilo/hooks/aidd-telemetry/lib/presence.cjs
 script, identical to the plugin source
 
 ## project/.kilo/hooks/aidd-telemetry/lib/telemetry-dir.cjs
@@ -280,10 +268,7 @@ script, identical to the plugin source
 ## project/.kilo/hooks/aidd-telemetry/lib/tool.cjs
 script, identical to the plugin source
 
-## project/.kilo/hooks/aidd-telemetry/prompt-gate.cjs
-script, identical to the plugin source
-
-## project/.kilo/hooks/aidd-telemetry/session-start.cjs
+## project/.kilo/hooks/aidd-telemetry/task.cjs
 script, identical to the plugin source
 
 ## project/.kilo/kilo.jsonc
@@ -482,7 +467,7 @@ import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const HOOKS_DIR = fileURLToPath(new URL("../hooks/aidd-telemetry/", import.meta.url));
-const SESSION_START = [{"script":"session-start.cjs","args":[]},{"script":"catch-up.cjs","args":[]}];
+const SESSION_START = [{"script":"task.cjs","args":["remind"]},{"script":"ledger.cjs","args":["ingest"]}];
 const STOP = [];
 const POST_TOOL_USE = [];
 
@@ -684,24 +669,19 @@ project kilo aidd-context scope=project: 19 hook files
   .kilo/plugin/aidd-context-hooks.js
   projectHooks null
   dependents []
-project kilo aidd-telemetry scope=project: 18 hook files
-  .kilo/hooks/aidd-telemetry/catch-up.cjs
+project kilo aidd-telemetry scope=project: 13 hook files
+  .kilo/hooks/aidd-telemetry/ledger.cjs
   .kilo/hooks/aidd-telemetry/lib/aidd.cjs
-  .kilo/hooks/aidd-telemetry/lib/binding.cjs
   .kilo/hooks/aidd-telemetry/lib/claude-only.cjs
   .kilo/hooks/aidd-telemetry/lib/codex-session-file.cjs
   .kilo/hooks/aidd-telemetry/lib/consent.cjs
   .kilo/hooks/aidd-telemetry/lib/context.cjs
-  .kilo/hooks/aidd-telemetry/lib/declaration.cjs
   .kilo/hooks/aidd-telemetry/lib/git.cjs
-  .kilo/hooks/aidd-telemetry/lib/hook-io.cjs
+  .kilo/hooks/aidd-telemetry/lib/host.cjs
   .kilo/hooks/aidd-telemetry/lib/jsonl.cjs
-  .kilo/hooks/aidd-telemetry/lib/lookup.cjs
-  .kilo/hooks/aidd-telemetry/lib/presence.cjs
   .kilo/hooks/aidd-telemetry/lib/telemetry-dir.cjs
   .kilo/hooks/aidd-telemetry/lib/tool.cjs
-  .kilo/hooks/aidd-telemetry/prompt-gate.cjs
-  .kilo/hooks/aidd-telemetry/session-start.cjs
+  .kilo/hooks/aidd-telemetry/task.cjs
   .kilo/plugin/aidd-telemetry-hooks.js
   projectHooks null
   dependents []

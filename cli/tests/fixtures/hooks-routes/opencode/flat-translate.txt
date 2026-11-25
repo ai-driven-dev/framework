@@ -235,13 +235,10 @@ script, identical to the plugin source
 ## out-flat/.opencode/hooks/aidd-context/memory.cjs
 script, identical to the plugin source
 
-## out-flat/.opencode/hooks/aidd-telemetry/catch-up.cjs
+## out-flat/.opencode/hooks/aidd-telemetry/ledger.cjs
 script, identical to the plugin source
 
 ## out-flat/.opencode/hooks/aidd-telemetry/lib/aidd.cjs
-script, identical to the plugin source
-
-## out-flat/.opencode/hooks/aidd-telemetry/lib/binding.cjs
 script, identical to the plugin source
 
 ## out-flat/.opencode/hooks/aidd-telemetry/lib/claude-only.cjs
@@ -256,22 +253,13 @@ script, identical to the plugin source
 ## out-flat/.opencode/hooks/aidd-telemetry/lib/context.cjs
 script, identical to the plugin source
 
-## out-flat/.opencode/hooks/aidd-telemetry/lib/declaration.cjs
-script, identical to the plugin source
-
 ## out-flat/.opencode/hooks/aidd-telemetry/lib/git.cjs
 script, identical to the plugin source
 
-## out-flat/.opencode/hooks/aidd-telemetry/lib/hook-io.cjs
-script, identical to the plugin source
+## out-flat/.opencode/hooks/aidd-telemetry/lib/host.cjs
+script, identical to the host adapter for opencode
 
 ## out-flat/.opencode/hooks/aidd-telemetry/lib/jsonl.cjs
-script, identical to the plugin source
-
-## out-flat/.opencode/hooks/aidd-telemetry/lib/lookup.cjs
-script, identical to the plugin source
-
-## out-flat/.opencode/hooks/aidd-telemetry/lib/presence.cjs
 script, identical to the plugin source
 
 ## out-flat/.opencode/hooks/aidd-telemetry/lib/telemetry-dir.cjs
@@ -280,10 +268,7 @@ script, identical to the plugin source
 ## out-flat/.opencode/hooks/aidd-telemetry/lib/tool.cjs
 script, identical to the plugin source
 
-## out-flat/.opencode/hooks/aidd-telemetry/prompt-gate.cjs
-script, identical to the plugin source
-
-## out-flat/.opencode/hooks/aidd-telemetry/session-start.cjs
+## out-flat/.opencode/hooks/aidd-telemetry/task.cjs
 script, identical to the plugin source
 
 ## out-flat/.opencode/hooks/opencode-events.js
@@ -591,7 +576,7 @@ import { fileURLToPath } from "node:url";
 // itself, not a Node runtime able to run this plugin's own hook scripts.
 const HOOKS_DIR = fileURLToPath(new URL("../hooks/aidd-telemetry/", import.meta.url));
 
-const SESSION_START = [{"script":"session-start.cjs","args":[]},{"script":"catch-up.cjs","args":[]}];
+const SESSION_START = [{"script":"task.cjs","args":["remind"]},{"script":"ledger.cjs","args":["ingest"]}];
 const STOP = [];
 const POST_TOOL_USE = [];
 
