@@ -7,6 +7,7 @@ const STEPS = [
   ["build-release-video", "Release video"],
   ["publish-cli", "CLI on npm"],
   ["publish-release", "Publication"],
+  ["publish-marketplace", "Hosted marketplaces"],
 ];
 
 const nameOf = (path) => (path === "." ? "framework" : path === "cli" ? "CLI" : path.replace(/^plugins\//, ""));

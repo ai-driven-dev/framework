@@ -122,6 +122,14 @@ jobs:
           mkdir -p "${STAGE}"
           cp -R .claude-plugin "${STAGE}/"
           cp -R plugins "${STAGE}/"
+          # The Git catalog follows the legacy branch. The ZIP keeps its plugin sources local.
+          node - "${STAGE}/.claude-plugin/marketplace.json" <<'NODE'
+            const fs = require("node:fs");
+            const file = process.argv[2];
+            const catalog = JSON.parse(fs.readFileSync(file, "utf8"));
+            for (const plugin of catalog.plugins) plugin.source = `./plugins/${plugin.name}`;
+            fs.writeFileSync(file, `${JSON.stringify(catalog, null, 2)}\n`);
+          NODE
           ( cd "${STAGE_PARENT}" && zip -q -r "/tmp/aidd-framework-marketplace-${VERSION}.zip" "aidd-framework-marketplace-${VERSION}" )
 
       - name: Attach marketplace bundle to release
@@ -382,11 +390,79 @@ jobs:
           TAG="${{ needs.release-please.outputs.tag_name }}"
           gh release edit "${TAG}" --draft=false --latest --repo "${{ github.repository }}"
 
+  publish-marketplace:
+    name: Publish ${{ matrix.tool }} marketplace
+    needs: [release-please, publish-release]
+    if: vars.AIDD_PUBLISH_MARKETPLACES == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        tool: [claude, codex, copilot, cursor]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      - name: Get distribution repository and client
+        id: destination
+        env:
+          TOOL: ${{ matrix.tool }}
+        run: |
+          node <<'NODE' >> "$GITHUB_OUTPUT"
+          const { repository, tools } = require('./scripts/marketplace-distribution.json');
+          const [, owner, repo] = new URL(repository).pathname.replace(/\.git$/, '').split('/');
+          console.log(`owner=${owner}\nrepo=${repo}\nclient=${tools[process.env.TOOL].clientPackage || ''}`);
+          NODE
+      - name: Get the release ZIP
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TOOL: ${{ matrix.tool }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+          VERSION: ${{ needs.release-please.outputs.version }}
+        run: |
+          NAME="aidd-framework-${TOOL}-marketplace-${VERSION}"
+          gh release download "$TAG" --pattern "$NAME.zip" --dir "$RUNNER_TEMP"
+          unzip -q "$RUNNER_TEMP/$NAME.zip" -d "$RUNNER_TEMP"
+          printf 'MARKETPLACE_SOURCE=%s\n' "$RUNNER_TEMP/$NAME" >> "$GITHUB_ENV"
+      - uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
+        id: app-token
+        with:
+          app-id: ${{ secrets.AIDD_BOT_APP_ID }}
+          private-key: ${{ secrets.AIDD_BOT_PRIVATE_KEY }}
+          owner: ${{ steps.destination.outputs.owner }}
+          repositories: ${{ steps.destination.outputs.repo }}
+          permission-contents: write
+      - name: Publish the catalog
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TOOL: ${{ matrix.tool }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+        run: |
+          gh auth setup-git --hostname github.com
+          node scripts/publish-marketplace.cjs "$TOOL" "$TAG" "$MARKETPLACE_SOURCE"
+      - name: Install the marketplace client
+        if: steps.destination.outputs.client != ''
+        env:
+          CLIENT: ${{ steps.destination.outputs.client }}
+        run: |
+          npm install --prefix "$RUNNER_TEMP/marketplace-client" "$CLIENT"
+          echo "$RUNNER_TEMP/marketplace-client/node_modules/.bin" >> "$GITHUB_PATH"
+      - name: Verify the public release ref
+        env:
+          TOOL: ${{ matrix.tool }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+        run: node scripts/verify-marketplace.cjs "$TOOL" "$TAG" "$MARKETPLACE_SOURCE"
+
   # A recap of what ran and what broke, whatever the outcome, printed in the log.
   # The Slack message is n8n's.
   release-recap:
     name: Recap the release
-    needs: [release-please, build-and-attach, build-per-tool, build-plugin, build-release-video, publish-cli, publish-release]
+    needs: [release-please, build-and-attach, build-per-tool, build-plugin, build-release-video, publish-cli, publish-release, publish-marketplace]
     if: always() && needs.release-please.outputs.release_created == 'true'
     runs-on: ubuntu-latest
     permissions:

@@ -1,0 +1,59 @@
+name: Marketplace distribution dry run
+
+on:
+  pull_request:
+    branches: [next, main]
+    paths:
+      - ".claude-plugin/marketplace.json"
+      - ".github/workflows/ci.yml"
+      - ".github/workflows/marketplace-dry-run.yml"
+      - "cli/**"
+      - "scripts/*marketplace*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  simulate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      - name: Build the release CLI
+        run: |
+          corepack enable
+          pnpm --dir cli install --frozen-lockfile
+          pnpm --dir cli build
+      - name: Publish and install from an isolated Git remote
+        run: |
+          REMOTE="$RUNNER_TEMP/marketplace.git"
+          git init --bare "$REMOTE"
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0="url.file://$REMOTE.insteadOf"
+          GIT_CONFIG_VALUE_0=$(node -p "require('./scripts/marketplace-distribution.json').repository")
+          export GIT_CONFIG_VALUE_0
+          for TOOL in $(node -p "Object.keys(require('./scripts/marketplace-distribution.json').tools).join(' ')"); do
+            OUT="$RUNNER_TEMP/marketplaces/$TOOL"
+            node cli/dist/cli.js translate . --to "$TOOL" --out "$OUT" --as marketplace
+            node scripts/publish-marketplace.cjs "$TOOL" v0.0.1 "$OUT" "$REMOTE"
+            CLIENT=$(TOOL="$TOOL" node -p "require('./scripts/marketplace-distribution.json').tools[process.env.TOOL].clientPackage || ''")
+            if [ -n "$CLIENT" ]; then
+              npm install --prefix "$RUNNER_TEMP/marketplace-client-$TOOL" "$CLIENT"
+            fi
+            PATH="$RUNNER_TEMP/marketplace-client-$TOOL/node_modules/.bin:$PATH" node scripts/verify-marketplace.cjs "$TOOL" v0.0.1 "$OUT"
+          done
+      - name: Check legacy overlap and release retries
+        run: |
+          REMOTE="$RUNNER_TEMP/marketplace.git"
+          SOURCE="$RUNNER_TEMP/marketplaces/claude"
+          for TAG in v0.0.1 v0.0.2 v0.0.3 v0.0.0; do
+            node scripts/publish-marketplace.cjs claude "$TAG" "$SOURCE" "$REMOTE"
+          done
+          test "$(git --git-dir="$REMOTE" rev-parse claude)" = "$(git --git-dir="$REMOTE" rev-parse claude-v0.0.3)"
+          test "$(git --git-dir="$REMOTE" log -1 --format=%s claude-legacy)" = 'Publish legacy Claude v0.0.2'
+          test "$(git --git-dir="$REMOTE" rev-parse 'claude-legacy^{tree}')" = "$(git --git-dir="$REMOTE" rev-parse 'claude-v0.0.2^{tree}')"

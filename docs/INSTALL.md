@@ -51,6 +51,8 @@ It lists what is installed and what needs fixing.
 
 ## Marketplace
 
+Use the [AIDD distribution repository](https://github.com/ai-driven-dev/marketplaces) with the ref for your tool. The tool branch follows releases. To stay on one release, use `<tool>-v<version>` as the ref where documented below. The [release ZIPs](https://github.com/ai-driven-dev/framework/releases) remain available for local installs.
+
 <details>
 <summary><b>Claude Code</b></summary>
 
@@ -59,14 +61,24 @@ It lists what is installed and what needs fixing.
 In a session, run:
 
 ```text
-/plugin marketplace add ai-driven-dev/framework
-/plugin install aidd-context@aidd-framework
-/plugin install aidd-refine@aidd-framework
-/plugin install aidd-dev@aidd-framework
-/plugin install aidd-vcs@aidd-framework
-/plugin install aidd-pm@aidd-framework
-/plugin install aidd-orchestrator@aidd-framework
+/plugin marketplace add https://github.com/ai-driven-dev/marketplaces.git#claude
+/plugin install aidd-context@aidd-marketplace
+/plugin install aidd-refine@aidd-marketplace
+/plugin install aidd-dev@aidd-marketplace
+/plugin install aidd-vcs@aidd-marketplace
+/plugin install aidd-pm@aidd-marketplace
+/plugin install aidd-orchestrator@aidd-marketplace
 ```
+
+For a pinned install, replace `claude` with `claude-v<version>`.
+
+If you already use `ai-driven-dev/framework`, that catalog receives the first two releases of the transition and then serves the second release indefinitely. Before switching, use `claude plugin list --json` to record plugin names and scopes. In your user, project, and project-local settings, check for old IDs in `enabledPlugins` and `pluginConfigs` and for an old marketplace declaration in `extraKnownMarketplaces`.
+
+1. Add the new catalog and install each plugin using `claude plugin install <plugin>@aidd-marketplace --scope <scope>` for each scope where it was installed.
+2. Restore enablement and settings under the new plugin IDs. Re-enter secrets in Claude Code. Update any project or user settings that declare the old marketplace. Avoid enabling both copies of a plugin during normal use.
+3. Verify the new plugins and their settings, then remove the old catalog with `claude plugin marketplace remove aidd-framework`. Removal uninstalls plugins tied to the old catalog and can delete their saved settings and data. [Claude Code marketplace management](https://code.claude.com/docs/en/plugins/host-marketplace) · [Settings scopes](https://code.claude.com/docs/en/settings)
+
+For a local install, extract `aidd-framework-claude-marketplace-<version>.zip` and add the extracted directory. Its plugin IDs use `@aidd-framework`.
 
 </details>
 
@@ -75,14 +87,14 @@ In a session, run:
 
 <br />
 
-1. Download `aidd-framework-copilot-marketplace-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest).
-2. Unzip it, and keep the folder where it is.
-3. Run, once per plugin:
+With GitHub Copilot CLI:
 
 ```sh
-copilot plugin marketplace add ./aidd-framework-copilot-marketplace-<version>
+copilot plugin marketplace add https://github.com/ai-driven-dev/marketplaces.git#copilot
 copilot plugin install aidd-context@aidd-framework
 ```
+
+To pin a version, use `#copilot-v<version>`. For a local catalog, extract `aidd-framework-copilot-marketplace-<version>.zip` and pass its directory to `copilot plugin marketplace add`.
 
 </details>
 
@@ -91,14 +103,14 @@ copilot plugin install aidd-context@aidd-framework
 
 <br />
 
-1. Download `aidd-framework-codex-marketplace-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest).
-2. Unzip it.
-3. Run, once per plugin:
+With Codex CLI:
 
 ```sh
-codex plugin marketplace add ./aidd-framework-codex-marketplace-<version>
+codex plugin marketplace add https://github.com/ai-driven-dev/marketplaces.git --ref codex
 codex plugin add aidd-context@aidd-framework
 ```
+
+To pin a version, use `--ref codex-v<version>`. For a local catalog, extract `aidd-framework-codex-marketplace-<version>.zip` and pass its directory to `codex plugin marketplace add`.
 
 </details>
 
@@ -106,6 +118,14 @@ codex plugin add aidd-context@aidd-framework
 <summary><b>Cursor</b></summary>
 
 <br />
+
+Cursor Teams and Enterprise offer Git-backed team marketplaces. The AIDD catalog is on the distribution repository’s default branch, `cursor`. The hosted installation in the team client still needs verification. [Cursor team marketplaces](https://cursor.com/docs/plugins)
+
+```sh
+cursor-agent plugin marketplace add https://github.com/ai-driven-dev/marketplaces.git --git-ref cursor
+```
+
+For a local installation where local plugins are enabled:
 
 1. Download `aidd-framework-cursor-marketplace-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest).
 2. Unzip it.
@@ -119,7 +139,7 @@ cp -r aidd-framework-cursor-marketplace-<version>/plugins/aidd-* ~/.cursor/plugi
 
 </details>
 
-*OpenCode and Kilo Code have no marketplace: use flat files. Antigravity CLI also uses flat files.*
+For OpenCode, Kilo Code, and Antigravity CLI, AIDD distributes flat files. See [Compatibility](COMPATIBILITY.md#hosted-marketplaces) for each tool’s distribution options.
 
 ## Flat files
 
@@ -155,7 +175,7 @@ cp -R aidd-framework-<tool>-flat-<version>/. .
 | --- | --- |
 | CLI | `npx @ai-driven-dev/cli@latest plugin update` |
 | CLI, every project | `npx @ai-driven-dev/cli@latest sync --global` |
-| Claude Code marketplace | `claude plugin update <plugin>@aidd-framework` |
+| Claude Code marketplace | `claude plugin marketplace update aidd-marketplace`, then `claude plugin update <plugin>@aidd-marketplace` |
 | Flat files | The same `translate` command, with `--force` |
 
 For another tool's marketplace, use that tool's plugin manager.
