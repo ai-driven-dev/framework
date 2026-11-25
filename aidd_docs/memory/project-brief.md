@@ -2,7 +2,7 @@
 
 ## What it is
 
-- A plugin marketplace of SDLC workflows for AI coding tools: Claude Code, Cursor, GitHub Copilot, Codex, opencode.
+- A plugin marketplace of SDLC workflows for AI coding tools; the supported tools are in [`docs/COMPATIBILITY.md`](../../docs/COMPATIBILITY.md).
 - `aidd`, published as `@ai-driven-dev/cli`, installs them once per tool and records every file it writes.
 - For developers who work with an AI assistant daily and want repeatable output.
 
@@ -43,9 +43,5 @@
 | Build a target-native plugin tree | `aidd translate <source> --to <tool> --out <dir>` |
 | Count token consumption locally | `aidd telemetry`, `aidd-telemetry:00-init`, `aidd-telemetry:01-usage` |
 | Project memory | `aidd-context:02-project-memory` |
-| Context artifacts | `aidd-context:03-context-generate` |
-| Development loop | `aidd-dev` |
-| Product backlog | `aidd-pm` |
-| Acceptance QA evidence | `aidd-qa:01-acceptance-qa` |
-| Refine input and output | `aidd-refine` |
-| End-to-end delivery | `aidd-orchestrator:01-sdlc` |
+
+The plugins and their skills are listed in `.claude-plugin/marketplace.json`.
