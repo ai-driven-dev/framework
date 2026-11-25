@@ -397,6 +397,14 @@ function answerFrom(code, stdout, stderr) {
   }
 }
 
+function joinAnswers(answers) {
+  return answers.filter(Boolean).join("\n\n");
+}
+
+function addToSystem(output, context) {
+  if (context) output.system.push(context);
+}
+
 /** Runs one hook script with its payload on stdin and collects what it wrote. */
 function runCapture(script, args, payload, directory) {
   return new Promise((resolve) => {
@@ -473,7 +481,7 @@ export const AiddContextHooks = async (input) => {
   let pending = Promise.resolve();
   // OpenCode keeps delivering events to an instance it disposed once it has created the next one.
   let disposed = false;
-  // SessionStart's own approximation (module doc comment above): fired once here, never
+  // SessionStart's own approximation: fired once here, never
   // per session. Its answer is what the model reads on every turn, through the system prompt.
   // Silent on purpose: a memory refresh that breaks OpenCode's own startup is worse than one
   // that never ran.
@@ -487,7 +495,7 @@ export const AiddContextHooks = async (input) => {
       )
     )
   )
-    .then((answers) => answers.filter(Boolean).join("\n\n"))
+    .then(joinAnswers)
     .catch(() => "");
   return {
     dispose: async () => {
@@ -495,8 +503,7 @@ export const AiddContextHooks = async (input) => {
       await pending;
     },
     "experimental.chat.system.transform": async (_input, output) => {
-      const context = await started;
-      if (context) output.system.push(context);
+      addToSystem(output, await started);
     },
     event: async ({ event }) => {
       if (disposed) return;
@@ -596,6 +603,14 @@ function answerFrom(code, stdout, stderr) {
   }
 }
 
+function joinAnswers(answers) {
+  return answers.filter(Boolean).join("\n\n");
+}
+
+function addToSystem(output, context) {
+  if (context) output.system.push(context);
+}
+
 /** Runs one hook script with its payload on stdin and collects what it wrote. */
 function runCapture(script, args, payload, directory) {
   return new Promise((resolve) => {
@@ -672,7 +687,7 @@ export const AiddTelemetryHooks = async (input) => {
   let pending = Promise.resolve();
   // OpenCode keeps delivering events to an instance it disposed once it has created the next one.
   let disposed = false;
-  // SessionStart's own approximation (module doc comment above): fired once here, never
+  // SessionStart's own approximation: fired once here, never
   // per session. Its answer is what the model reads on every turn, through the system prompt.
   // Silent on purpose: a memory refresh that breaks OpenCode's own startup is worse than one
   // that never ran.
@@ -686,7 +701,7 @@ export const AiddTelemetryHooks = async (input) => {
       )
     )
   )
-    .then((answers) => answers.filter(Boolean).join("\n\n"))
+    .then(joinAnswers)
     .catch(() => "");
   return {
     dispose: async () => {
@@ -694,8 +709,7 @@ export const AiddTelemetryHooks = async (input) => {
       await pending;
     },
     "experimental.chat.system.transform": async (_input, output) => {
-      const context = await started;
-      if (context) output.system.push(context);
+      addToSystem(output, await started);
     },
     event: async ({ event }) => {
       if (disposed) return;
