@@ -21,7 +21,6 @@ flowchart LR
     Resolver -->|upsert, one record per call| Ledger[("ledger/")]
     Resolver -->|measured, not storable, by hash| Left[("ledger/left-out.txt")]
     Left --> Report
-    Hooks["plugin hooks"] -->|write| Bindings[("bindings/ and git config")]
     Task["telemetry task"] -->|write| Bindings
     Ledger --> Report["report: attribute, filter, split by one axis"]
     Bindings --> Report
@@ -34,7 +33,7 @@ flowchart LR
 - Only reading is tool-specific; everything after the usage record is written once.
 - Hooks and CLI meet only in files, pinned for both by `scripts/__tests__/fixtures/telemetry-bindings/`.
 - `plugins/aidd-telemetry/hooks/ledger.cjs` runs `aidd telemetry ingest --quiet` at session start.
-- Another tool's calls are attributed by branch; hooks set `AIDD_TELEMETRY_SESSION_ID` where the tool names no session.
+- Another tool's calls are attributed by branch. `telemetry task` reads a session id from `CLAUDE_CODE_SESSION_ID`, else `AIDD_TELEMETRY_SESSION_ID`, which no hook sets.
 
 ## Where to look
 
