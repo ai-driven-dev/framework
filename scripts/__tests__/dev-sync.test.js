@@ -312,7 +312,7 @@ test("managed OpenCode reload leaves other hosts on the global install path", ()
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /codex  OK/);
     assert.match(result.stdout, /reload opencode\s+managed:ok/);
-    assert.match(readFileSync(join(home, "aidd-calls"), "utf8"), / --ide codex --plugins all --yes --provider openai --agents-only\n/);
+    assert.match(readFileSync(join(home, "aidd-calls"), "utf8"), / --ide codex --plugins all --yes --agents-only\n/);
     assert.match(readFileSync(join(home, ".codex/AGENTS.md"), "utf8"), /Use available agents when useful/);
     assert.match(readFileSync(join(home, ".config/opencode/AGENTS.md"), "utf8"), /Use available agents when useful/);
   } finally { rmSync(root, { recursive: true, force: true }); }
@@ -354,8 +354,7 @@ test("every host takes this checkout through aidd setup --global, afresh", () =>
       readFileSync(join(home, "aidd-calls"), "utf8"),
       ["claude", "codex", "copilot", "cursor", "kilo", "opencode"].flatMap((host) => {
         const setup = `setup --global --source local --path ${source} --ide ${host} --plugins all --yes`;
-        const provider = host === "claude" ? "anthropic" : ["codex", "opencode"].includes(host) ? "openai" : null;
-        return [setup + (provider ? ` --provider ${provider} --agents-only` : ""),
+        return [`${setup} --agents-only`,
           ...(["claude", "codex"].includes(host) ? [setup] : []), `doctor --global --tool ${host}`];
       }).join("\n") + "\n"
     );
@@ -472,7 +471,7 @@ test("a global install from the published CLI is used when the checkout has none
     executable(join(fakeBin, "npx"), 'printf \'%s\\n\' "$*" >> "$HOME/npx-call"');
     const result = runSync(fakeBin, home, []);
     assert.equal(result.status, 0, result.stderr);
-    assert.match(readFileSync(join(home, "npx-call"), "utf8"), /^--yes @ai-driven-dev\/cli@latest setup --global .* --ide codex --plugins all --yes --provider openai --agents-only$/m);
+    assert.match(readFileSync(join(home, "npx-call"), "utf8"), /^--yes @ai-driven-dev\/cli@latest setup --global .* --ide codex --plugins all --yes --agents-only$/m);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 

@@ -1,14 +1,7 @@
 #!/usr/bin/env bash
-# (Re)install every plugin into Claude, Codex, OpenCode, Kilo, Copilot and Cursor from THIS
-# checkout, the way a user does: `aidd setup --global` with this checkout as the framework
-# source, so the reload exercises the shipped machine-wide install.
-# A managed OpenCode host delegates to its fixed-purpose reload helper instead.
-#
-# NOT live: the install copies built files, so an edit needs a re-run. Idempotent; a tool
-# whose CLI is absent is skipped, and the first run needs network.
-# Each host's agent provider is chosen in the setup loop below; a host without one keeps its
-# saved provider. --agents-only preserves the main session's settings.
-# Without a built CLI the published one is used, which may predate --agents-only: build first.
+# Reloads this checkout into every detected host, the way `make reload` documents it:
+# see "Reload flow" in CONTRIBUTING.md, the one description of the steps, the flags and the
+# report. Needs a built CLI to take --agents-only.
 #
 # Global rules: sync only the Agents section in the managed block, preserving personal
 # rules. First OpenCode sync keeps its Claude personal-rule fallback unless disabled. Kilo
@@ -149,11 +142,7 @@ fi
 
 for host in ${hosts[@]+"${hosts[@]}"}; do
   setup=(setup --global --source local --path "$FW" --ide "$host" --plugins all --yes)
-  configured=("${setup[@]}")
-  case "$host" in
-    claude) configured+=(--provider anthropic --agents-only) ;;
-    codex|opencode) configured+=(--provider openai --agents-only) ;;
-  esac
+  configured=("${setup[@]}" --agents-only)
   status=0
   run_aidd "${configured[@]}" || status=$?
   # Prepare source, agents and ownership before releasing native copies. A failed first
