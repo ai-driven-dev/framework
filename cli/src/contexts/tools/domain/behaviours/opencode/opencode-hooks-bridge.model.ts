@@ -78,7 +78,8 @@ function showToast(client, person) {
 export const ${parts.identifier} = async (input) => {
   // Stop handlings in flight: \`opencode run\` exits once the session is idle, so dispose waits.
   let pending = Promise.resolve();
-  // OpenCode keeps delivering events to an instance it disposed once it has created the next one.
+  // Limit: an event reaching an instance after its dispose was never captured; a disposed
+  // instance relays none, so a Stop is never run by two instances at once.
   let disposed = false;
   const hooks = bridgeHooks({
     directory: input.directory,

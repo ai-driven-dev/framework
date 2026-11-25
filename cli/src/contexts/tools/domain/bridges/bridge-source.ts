@@ -138,7 +138,7 @@ export const SEND_PROMPT_SOURCE = `const FOLLOW_UP = { aidd: "stop-follow-up" };
 const FINDING = { aidd: "finding" };
 
 function isBridgePrompt(parts) {
-  return parts.some((part) => typeof part?.metadata?.aidd === "string");
+  return parts.some((part) => typeof part.metadata?.aidd === "string");
 }
 
 function sendPrompt(client, method, sessionId, text, mark, script, failure) {

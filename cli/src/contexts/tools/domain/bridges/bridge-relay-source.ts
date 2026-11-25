@@ -14,7 +14,7 @@ export const MATCHES_TOOL_SOURCE = `function matchesTool(tools, tool) {
 /** A tool call's arguments as a script reads them, written into `toolUseCallsFor`, whose comment
  * says why. */
 const TOOL_INPUT_SOURCE =
-  'const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;';
+  'const toolInput = typeof args.filePath === "string" ? { ...args, file_path: args.filePath } : args;';
 
 /** The calls of a tool use, before and after it runs. A PreToolUse script refuses the call it is
  * told of by exiting 2: its stderr is the reason the model reads. A script that fails to run, or
@@ -24,14 +24,14 @@ export const TOOL_USE_SOURCE = `${MATCHES_TOOL_SOURCE}
 /** Pure: a tool call -> every hook of one event whose matcher allows its tool. The host names the
  * written file \`filePath\`; the scripts read Claude Code's \`file_path\`. */
 function toolUseCallsFor(event, hooks, call, args, directory) {
-  const tool = String(call?.tool ?? "");
+  const tool = call.tool;
   ${TOOL_INPUT_SOURCE}
   return hooks.filter((hook) => matchesTool(hook.tools, tool)).map((hook) => ({
     script: hook.script,
     args: hook.args,
     payload: {
       hook_event_name: event,
-      session_id: call?.sessionID ?? null,
+      session_id: call.sessionID,
       cwd: directory,
       tool_name: tool,
       tool_input: toolInput,
@@ -41,12 +41,12 @@ function toolUseCallsFor(event, hooks, call, args, directory) {
 
 /** A call about to run: the host hands the arguments in the output, not in the call. */
 function preToolUseCallsFor(call, output, directory) {
-  return toolUseCallsFor("PreToolUse", PRE_TOOL_USE, call, output?.args, directory);
+  return toolUseCallsFor("PreToolUse", PRE_TOOL_USE, call, output.args, directory);
 }
 
 /** A call that ran. */
 function postToolUseCallsFor(call, directory) {
-  return toolUseCallsFor("PostToolUse", POST_TOOL_USE, call, call?.args, directory);
+  return toolUseCallsFor("PostToolUse", POST_TOOL_USE, call, call.args, directory);
 }
 
 /** The reason the first script that refuses gave, or null when none does. */
@@ -75,8 +75,8 @@ async function addToolAnswers(call, output, directory, client, show) {
       const { text, person, required } = await answerOf(hook.script, hook.args, hook.payload, directory);
       show?.(person);
       if (!text) continue;
-      output.output = (output.output ?? "") + "\\n\\n" + text;
-      if (required && typeof client.session.promptAsync === "function") sendPrompt(client, "promptAsync", call?.sessionID, text, FINDING, hook.script, "finding not queued: ");
+      output.output = output.output + "\\n\\n" + text;
+      if (required && typeof client.session.promptAsync === "function") sendPrompt(client, "promptAsync", call.sessionID, text, FINDING, hook.script, "finding not queued: ");
     }
   } catch (error) {
     reportHookFailure("PostToolUse", error);
@@ -89,10 +89,10 @@ export function userPromptSource(plugin: string): string {
   return `/** Pure: the user's message -> every UserPromptSubmit hook's call, none for a prompt a bridge
  * sent. The text is the user's own: a part another hook added is not. */
 function userPromptCallsFor(input, output, directory) {
-  const parts = output?.parts ?? [];
+  const parts = output.parts;
   if (isBridgePrompt(parts)) return [];
   const prompt = parts
-    .filter((part) => part?.type === "text" && !part.synthetic)
+    .filter((part) => part.type === "text" && !part.synthetic)
     .map((part) => part.text)
     .join("\\n");
   return USER_PROMPT_SUBMIT.map((hook) => ({
@@ -100,7 +100,7 @@ function userPromptCallsFor(input, output, directory) {
     args: hook.args,
     payload: {
       hook_event_name: "UserPromptSubmit",
-      session_id: input?.sessionID ?? null,
+      session_id: input.sessionID,
       cwd: directory,
       prompt,
     },
@@ -116,8 +116,8 @@ async function addPromptContext(input, output, directory) {
     if (!text) continue;
     output.parts.push({
       id: output.parts[0].id + "-" + ${JSON.stringify(plugin)} + "-" + index,
-      messageID: output.message?.id,
-      sessionID: input?.sessionID,
+      messageID: output.message.id,
+      sessionID: input.sessionID,
       type: "text",
       text,
       synthetic: true,
@@ -147,7 +147,7 @@ export const SESSION_START_SOURCE = `const sessions = new Map();
 const childSessions = new Set();
 
 function runSessionStart(event, fallbackDirectory) {
-  const named = event?.properties?.sessionID;
+  const named = event.properties.sessionID;
   if (typeof named !== "string" || sessions.has(named) || childSessions.has(named)) return;
   if (typeof event.properties.info?.parentID === "string") {
     childSessions.add(named);
@@ -175,7 +175,7 @@ function sessionDirectory(sessionId, fallbackDirectory) {
 /** What SessionStart answered, added to the system prompt of the session's turn; its message for
  * the person handed to \`show\` once, where the host has one. */
 async function addSessionContext(input, output, show) {
-  const started = await sessions.get(input?.sessionID)?.started;
+  const started = await sessions.get(input.sessionID)?.started;
   if (started === undefined) return;
   if (started.context) output.system.push(started.context);
   const person = started.person;
@@ -209,7 +209,7 @@ function noteTurn(sessionId, parts) {
 }
 
 function isFollowUp(parts) {
-  return parts.some((part) => part?.metadata?.aidd === FOLLOW_UP.aidd);
+  return parts.some((part) => part.metadata?.aidd === FOLLOW_UP.aidd);
 }
 
 /** Resolves once the scripts ran, with the follow-ups still in flight: the prompt is the session's
@@ -243,7 +243,7 @@ export const BRIDGE_HOOKS_SOURCE = `function bridgeHooks({ directory, client, fo
   return {
     event: async ({ event }) => {
       runSessionStart(event, directory);
-      const sessionId = event?.properties?.sessionID;
+      const sessionId = event.properties.sessionID;
       if (typeof sessionId !== "string" || event.type !== "session.idle" || childSessions.has(sessionId)) return;
       const stopping = runStop(sessionId, folderOf(sessionId), { client, method: followUp, show });
       track?.(stopping.then((sends) => Promise.all(sends)));
@@ -251,11 +251,11 @@ export const BRIDGE_HOOKS_SOURCE = `function bridgeHooks({ directory, client, fo
     },
     "experimental.chat.system.transform": (input, output) => addSessionContext(input, output, show),
     "chat.message": async (input, output) => {
-      noteTurn(input?.sessionID, output?.parts ?? []);
-      await addPromptContext(input, output, folderOf(input?.sessionID));
+      noteTurn(input.sessionID, output.parts);
+      await addPromptContext(input, output, folderOf(input.sessionID));
     },
-    "tool.execute.before": (call, output) => refuseToolUse(call, output, folderOf(call?.sessionID)),
+    "tool.execute.before": (call, output) => refuseToolUse(call, output, folderOf(call.sessionID)),
     "tool.execute.after": (call, output) =>
-      addToolAnswers(call, output, folderOf(call?.sessionID), client, show),
+      addToolAnswers(call, output, folderOf(call.sessionID), client, show),
   };
 }`;

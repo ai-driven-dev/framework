@@ -39,10 +39,11 @@ describe("the source of the events relayed around a tool", () => {
     const { postToolUseCallsFor } = toolUse();
 
     expect([
-      postToolUseCallsFor({ tool: "write", args: { filePath: "/p/a.md" } }, "/p").map(
-        (call) => call.payload
-      ),
-      postToolUseCallsFor({ tool: "write", args: { content: "x" } }, "/p").map(
+      postToolUseCallsFor(
+        { tool: "write", sessionID: "s", args: { filePath: "/p/a.md" } },
+        "/p"
+      ).map((call) => call.payload),
+      postToolUseCallsFor({ tool: "write", sessionID: "s", args: { content: "x" } }, "/p").map(
         (call) => call.payload
       ),
       postToolUseCallsFor({ tool: "bash", args: {} }, "/p"),
@@ -50,7 +51,7 @@ describe("the source of the events relayed around a tool", () => {
       [
         {
           hook_event_name: "PostToolUse",
-          session_id: null,
+          session_id: "s",
           cwd: "/p",
           tool_name: "write",
           tool_input: { filePath: "/p/a.md", file_path: "/p/a.md" },
@@ -59,7 +60,7 @@ describe("the source of the events relayed around a tool", () => {
       [
         {
           hook_event_name: "PostToolUse",
-          session_id: null,
+          session_id: "s",
           cwd: "/p",
           tool_name: "write",
           tool_input: { content: "x" },
@@ -84,7 +85,7 @@ describe("the source of the event that adds to the user's message", () => {
     });
 
   it("gives each answer a part whose id names the first part, the plugin and the hook", async () => {
-    const output = { parts: [{ id: "prt_1", type: "text", text: "hi" }] };
+    const output = { message: { id: "msg_1" }, parts: [{ id: "prt_1", type: "text", text: "hi" }] };
 
     await prompt(["one", "two"]).addPromptContext({ sessionID: "s" }, output, "/p");
 
