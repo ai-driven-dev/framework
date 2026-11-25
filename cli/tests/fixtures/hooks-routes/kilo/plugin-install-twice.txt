@@ -388,6 +388,22 @@ function sessionStartCallsFor(sessionId, directory) {
   }));
 }
 
+const started = new Set();
+
+/** The first event naming a session -> its SessionStart calls; any later one -> `[]`. A new
+ * session's first event names its folder under info; a continued one's names none. */
+function sessionStartOnce(event, fallbackDirectory) {
+  const named = event?.properties?.sessionID;
+  if (typeof named !== "string") return [];
+  if (event.type === "session.deleted") {
+    started.delete(named);
+    return [];
+  }
+  if (started.has(named)) return [];
+  started.add(named);
+  return sessionStartCallsFor(named, event.properties.info?.directory ?? fallbackDirectory);
+}
+
 const FOLLOW_UP = { aidd: "stop-follow-up" };
 
 const AiddContextKiloHooks = async ({ directory, client }) => {
@@ -398,15 +414,15 @@ const AiddContextKiloHooks = async ({ directory, client }) => {
       const properties = event?.properties;
       const id = properties?.sessionID;
       if (typeof id !== "string") return;
+      for (const call of sessionStartOnce(event, directory)) {
+        runHook(call.script, call.args, call.payload, call.payload.cwd);
+      }
       if (event?.type === "session.deleted") { sessions.delete(id); return; }
-      if (!sessions.has(id)) sessions.set(id, { started: false, idle: false, continued: false, directory });
+      if (!sessions.has(id)) {
+        sessions.set(id, { idle: false, continued: false, directory: properties?.info?.directory ?? directory });
+      }
       const session = sessions.get(id);
-      let calls = [];
-      if (event?.type === "session.created" && !session.started) {
-        session.started = true;
-        session.directory = properties?.info?.directory ?? directory;
-        calls = sessionStartCallsFor(id, session.directory);
-      } else if (event?.type === "session.status" && properties?.status?.type === "busy") {
+      if (event?.type === "session.status" && properties?.status?.type === "busy") {
         session.idle = false;
       } else if (event?.type === "session.idle" && !session.idle) {
         session.idle = true;
@@ -424,9 +440,6 @@ const AiddContextKiloHooks = async ({ directory, client }) => {
               .catch((error) => reportHookFailure(hook.script, "follow-up not delivered: " + String(error)));
           }
         }
-      }
-      for (const call of calls) {
-        runHook(call.script, call.args, call.payload, call.payload.cwd);
       }
     } catch (error) {
       console.warn("[aidd] Kilo hook dispatch failed: " + String(error));
@@ -570,6 +583,22 @@ function sessionStartCallsFor(sessionId, directory) {
   }));
 }
 
+const started = new Set();
+
+/** The first event naming a session -> its SessionStart calls; any later one -> `[]`. A new
+ * session's first event names its folder under info; a continued one's names none. */
+function sessionStartOnce(event, fallbackDirectory) {
+  const named = event?.properties?.sessionID;
+  if (typeof named !== "string") return [];
+  if (event.type === "session.deleted") {
+    started.delete(named);
+    return [];
+  }
+  if (started.has(named)) return [];
+  started.add(named);
+  return sessionStartCallsFor(named, event.properties.info?.directory ?? fallbackDirectory);
+}
+
 const FOLLOW_UP = { aidd: "stop-follow-up" };
 
 const AiddTelemetryKiloHooks = async ({ directory, client }) => {
@@ -580,15 +609,15 @@ const AiddTelemetryKiloHooks = async ({ directory, client }) => {
       const properties = event?.properties;
       const id = properties?.sessionID;
       if (typeof id !== "string") return;
+      for (const call of sessionStartOnce(event, directory)) {
+        runHook(call.script, call.args, call.payload, call.payload.cwd);
+      }
       if (event?.type === "session.deleted") { sessions.delete(id); return; }
-      if (!sessions.has(id)) sessions.set(id, { started: false, idle: false, continued: false, directory });
+      if (!sessions.has(id)) {
+        sessions.set(id, { idle: false, continued: false, directory: properties?.info?.directory ?? directory });
+      }
       const session = sessions.get(id);
-      let calls = [];
-      if (event?.type === "session.created" && !session.started) {
-        session.started = true;
-        session.directory = properties?.info?.directory ?? directory;
-        calls = sessionStartCallsFor(id, session.directory);
-      } else if (event?.type === "session.status" && properties?.status?.type === "busy") {
+      if (event?.type === "session.status" && properties?.status?.type === "busy") {
         session.idle = false;
       } else if (event?.type === "session.idle" && !session.idle) {
         session.idle = true;
@@ -606,9 +635,6 @@ const AiddTelemetryKiloHooks = async ({ directory, client }) => {
               .catch((error) => reportHookFailure(hook.script, "follow-up not delivered: " + String(error)));
           }
         }
-      }
-      for (const call of calls) {
-        runHook(call.script, call.args, call.payload, call.payload.cwd);
       }
     } catch (error) {
       console.warn("[aidd] Kilo hook dispatch failed: " + String(error));

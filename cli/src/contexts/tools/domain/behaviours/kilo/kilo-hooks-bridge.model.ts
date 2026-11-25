@@ -6,6 +6,10 @@
  * for the script and appends its exit-2 stderr to the tool's output for the model to read.
  * Matchers ignore case, since Kilo names its tools in lowercase.
  *
+ * SessionStart runs on the first event naming a session, as on OpenCode, whose event shapes Kilo
+ * shares. Limit: that a continued Kilo session's first event is not `session.created` was not
+ * probed; the trigger holds either way, since it fires on whichever event comes first.
+ *
  * Provenance of the `kilo run` limit stated in the Stop handler: probed on 7.7.5 and 7.8.27, the
  * process exits at idle and the follow-up turn never runs, keyed on `session.idle` (both) and on
  * `session.drained` (7.8.27). One earlier measurement of 7.8.27 recorded the follow-up landing
@@ -91,7 +95,7 @@ function reportHookFailure(script, error) {
   console.warn("[aidd] Kilo hook " + script + " failed: " + String(error));
 }
 
-${parts.sessionStartCalls}
+${parts.sessionStart}
 
 const FOLLOW_UP = { aidd: "stop-follow-up" };
 
@@ -103,15 +107,15 @@ const ${parts.identifier} = async ({ directory, client }) => {
       const properties = event?.properties;
       const id = properties?.sessionID;
       if (typeof id !== "string") return;
+      for (const call of sessionStartOnce(event, directory)) {
+        runHook(call.script, call.args, call.payload, call.payload.cwd);
+      }
       if (event?.type === "session.deleted") { sessions.delete(id); return; }
-      if (!sessions.has(id)) sessions.set(id, { started: false, idle: false, continued: false, directory });
+      if (!sessions.has(id)) {
+        sessions.set(id, { idle: false, continued: false, directory: properties?.info?.directory ?? directory });
+      }
       const session = sessions.get(id);
-      let calls = [];
-      if (event?.type === "session.created" && !session.started) {
-        session.started = true;
-        session.directory = properties?.info?.directory ?? directory;
-        calls = sessionStartCallsFor(id, session.directory);
-      } else if (event?.type === "session.status" && properties?.status?.type === "busy") {
+      if (event?.type === "session.status" && properties?.status?.type === "busy") {
         session.idle = false;
       } else if (event?.type === "session.idle" && !session.idle) {
         session.idle = true;
@@ -129,9 +133,6 @@ const ${parts.identifier} = async ({ directory, client }) => {
               .catch((error) => reportHookFailure(hook.script, "follow-up not delivered: " + String(error)));
           }
         }
-      }
-      for (const call of calls) {
-        runHook(call.script, call.args, call.payload, call.payload.cwd);
       }
     } catch (error) {
       console.warn("[aidd] Kilo hook dispatch failed: " + String(error));

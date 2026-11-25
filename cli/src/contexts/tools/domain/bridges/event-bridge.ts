@@ -100,13 +100,32 @@ function feedStdinSource(indent: number): string {
   );
 }
 
-/** Pure: a session's id and folder -> every SessionStart hook's own {script, args, payload}. */
-const SESSION_START_CALLS_SOURCE = `function sessionStartCallsFor(sessionId, directory) {
+/** SessionStart runs once per session, on the first event that names it, so the script knows its
+ * session. That event is `session.created` for a new session; a continued one is created no more,
+ * and its first event is another. Module-level: the host creates the plugin again, and a fresh set
+ * would run it again. */
+const SESSION_START_SOURCE = `function sessionStartCallsFor(sessionId, directory) {
   return SESSION_START.map((hook) => ({
     script: hook.script,
     args: hook.args,
     payload: { hook_event_name: "SessionStart", session_id: sessionId, cwd: directory },
   }));
+}
+
+const started = new Set();
+
+/** The first event naming a session -> its SessionStart calls; any later one -> \`[]\`. A new
+ * session's first event names its folder under info; a continued one's names none. */
+function sessionStartOnce(event, fallbackDirectory) {
+  const named = event?.properties?.sessionID;
+  if (typeof named !== "string") return [];
+  if (event.type === "session.deleted") {
+    started.delete(named);
+    return [];
+  }
+  if (started.has(named)) return [];
+  started.add(named);
+  return sessionStartCallsFor(named, event.properties.info?.directory ?? fallbackDirectory);
 }`;
 
 /** The hosts name the written file `filePath`; the scripts read Claude Code's `file_path`. */
@@ -130,8 +149,8 @@ export interface BridgeParts {
   readonly nodeImports: string;
   readonly hooksDir: string;
   readonly callTables: string;
-  /** The generated `sessionStartCallsFor(sessionId, directory)`, over the `SESSION_START` table. */
-  readonly sessionStartCalls: string;
+  /** The generated `sessionStartOnce(event, fallbackDirectory)`, over the `SESSION_START` table. */
+  readonly sessionStart: string;
   /** The generated `answerFrom`: exit 2 puts the answer on stderr, exit 0 in `additionalContext`. */
   readonly answerFrom: string;
   readonly toolInput: string;
@@ -156,7 +175,7 @@ export function generateBridge<R>(
     nodeImports: NODE_IMPORTS_SOURCE,
     hooksDir: hooksDirDeclaration(plugin),
     callTables: callTableDeclarations(table),
-    sessionStartCalls: SESSION_START_CALLS_SOURCE,
+    sessionStart: SESSION_START_SOURCE,
     answerFrom: ANSWER_FROM_SOURCE,
     toolInput: TOOL_INPUT_SOURCE,
     stopReason: STOP_REASON_SOURCE,

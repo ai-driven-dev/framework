@@ -356,6 +356,33 @@ describe("Kilo, through its bridge", () => {
     ]);
   });
 
+  it("runs SessionStart once for a session, though the host creates the plugin again", async () => {
+    const ws = await workspace("kilo", kiloBridge());
+    const [created] = await captured("kilo-session.created.json", ws.project);
+    const first = await start(ws, { directory: ws.dir });
+    await first.plugin.event({ event: created });
+    const again = await start(ws, { directory: ws.dir });
+    await again.plugin.event({ event: created });
+
+    expect(await recorded(ws, 1)).toMatchObject([
+      { host: "kilo", event: "SessionStart", sessionId: SESSION, cwd: ws.project },
+    ]);
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    expect(await recorded(ws, 1)).toHaveLength(1);
+  });
+
+  it("reads the first event naming a session as SessionStart, whichever event that is", async () => {
+    const ws = await workspace("kilo", kiloBridge());
+    const [, idle] = await captured("kilo-session.idle.json", ws.project);
+    const { plugin } = await start(ws, { directory: ws.project });
+    await plugin.event({ event: idle });
+
+    expect((await recorded(ws, 2)).map((call) => call.event).sort()).toStrictEqual([
+      "SessionStart",
+      "Stop",
+    ]);
+  });
+
   it("reads a write as its file and content, and appends the answer to the tool's result", async () => {
     const ws = await workspace("kilo", kiloBridge());
     const [write] = (await captured("kilo-tool.execute.after.json", ws.project)) as {
@@ -451,7 +478,7 @@ describe("Kilo, through its bridge", () => {
     await plugin.event({ event: busy });
     await plugin.event({ event: second });
 
-    expect(await recorded(ws, 2)).toMatchObject([
+    expect((await recorded(ws, 3)).filter((call) => call.event === "Stop")).toMatchObject([
       { host: "kilo", event: "Stop", stopActive: false, sessionId: SESSION, cwd: ws.project },
       { host: "kilo", event: "Stop", stopActive: true, sessionId: SESSION, cwd: ws.project },
     ]);

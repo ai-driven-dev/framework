@@ -397,6 +397,22 @@ function sessionStartCallsFor(sessionId, directory) {
   }));
 }
 
+const started = new Set();
+
+/** The first event naming a session -> its SessionStart calls; any later one -> `[]`. A new
+ * session's first event names its folder under info; a continued one's names none. */
+function sessionStartOnce(event, fallbackDirectory) {
+  const named = event?.properties?.sessionID;
+  if (typeof named !== "string") return [];
+  if (event.type === "session.deleted") {
+    started.delete(named);
+    return [];
+  }
+  if (started.has(named)) return [];
+  started.add(named);
+  return sessionStartCallsFor(named, event.properties.info?.directory ?? fallbackDirectory);
+}
+
 /** Pure: `session.idle` -> every Stop hook's own {script, args, payload} - or `[]` for
  * any other event. Exported as a property (never a second named export - F6) so this
  * generated module's own mapping can be asserted without spawning anything. */
@@ -493,8 +509,6 @@ function postToolUseCallsFor(call, directory) {
 // Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
 // Module-level: the host creates the plugin again, and a fresh set would forget a continuation.
 const continued = new Set();
-// Sessions whose SessionStart ran: module-level for the same reason, or each recreated plugin would run it again.
-const started = new Set();
 
 export const AiddContextHooks = async (input) => {
   // Stop handlings in flight: `opencode run` exits once the session is idle, so dispose waits.
@@ -509,14 +523,8 @@ export const AiddContextHooks = async (input) => {
     event: async ({ event }) => {
       if (disposed) return;
       try {
-        const named = event?.properties?.sessionID;
-        if (typeof named === "string" && !started.has(named)) {
-          started.add(named);
-          // A new session's first event names its folder under info; a continued one's names none.
-          const folder = event.properties.info?.directory ?? input.directory;
-          for (const call of sessionStartCallsFor(named, folder)) {
-            runHook(call.script, call.args, call.payload, folder);
-          }
+        for (const call of sessionStartOnce(event, input.directory)) {
+          runHook(call.script, call.args, call.payload, call.payload.cwd);
         }
         const directory = event?.properties?.directory ?? input.directory;
         // Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
@@ -610,6 +618,22 @@ function sessionStartCallsFor(sessionId, directory) {
   }));
 }
 
+const started = new Set();
+
+/** The first event naming a session -> its SessionStart calls; any later one -> `[]`. A new
+ * session's first event names its folder under info; a continued one's names none. */
+function sessionStartOnce(event, fallbackDirectory) {
+  const named = event?.properties?.sessionID;
+  if (typeof named !== "string") return [];
+  if (event.type === "session.deleted") {
+    started.delete(named);
+    return [];
+  }
+  if (started.has(named)) return [];
+  started.add(named);
+  return sessionStartCallsFor(named, event.properties.info?.directory ?? fallbackDirectory);
+}
+
 /** Pure: `session.idle` -> every Stop hook's own {script, args, payload} - or `[]` for
  * any other event. Exported as a property (never a second named export - F6) so this
  * generated module's own mapping can be asserted without spawning anything. */
@@ -706,8 +730,6 @@ function postToolUseCallsFor(call, directory) {
 // Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
 // Module-level: the host creates the plugin again, and a fresh set would forget a continuation.
 const continued = new Set();
-// Sessions whose SessionStart ran: module-level for the same reason, or each recreated plugin would run it again.
-const started = new Set();
 
 export const AiddTelemetryHooks = async (input) => {
   // Stop handlings in flight: `opencode run` exits once the session is idle, so dispose waits.
@@ -722,14 +744,8 @@ export const AiddTelemetryHooks = async (input) => {
     event: async ({ event }) => {
       if (disposed) return;
       try {
-        const named = event?.properties?.sessionID;
-        if (typeof named === "string" && !started.has(named)) {
-          started.add(named);
-          // A new session's first event names its folder under info; a continued one's names none.
-          const folder = event.properties.info?.directory ?? input.directory;
-          for (const call of sessionStartCallsFor(named, folder)) {
-            runHook(call.script, call.args, call.payload, folder);
-          }
+        for (const call of sessionStartOnce(event, input.directory)) {
+          runHook(call.script, call.args, call.payload, call.payload.cwd);
         }
         const directory = event?.properties?.directory ?? input.directory;
         // Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.

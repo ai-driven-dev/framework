@@ -58,7 +58,7 @@ ${parts.spawnHook(2, '["pipe", "ignore", "ignore"]')}
 ${parts.feedStdin(2)}
 }
 
-${parts.sessionStartCalls}
+${parts.sessionStart}
 
 /** Pure: \`session.idle\` -> every Stop hook's own {script, args, payload} - or \`[]\` for
  * any other event. Exported as a property (never a second named export - F6) so this
@@ -142,8 +142,6 @@ function postToolUseCallsFor(call, directory) {
 // Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
 // Module-level: the host creates the plugin again, and a fresh set would forget a continuation.
 const continued = new Set();
-// Sessions whose SessionStart ran: module-level for the same reason, or each recreated plugin would run it again.
-const started = new Set();
 
 export const ${parts.identifier} = async (input) => {
   // Stop handlings in flight: \`opencode run\` exits once the session is idle, so dispose waits.
@@ -158,14 +156,8 @@ export const ${parts.identifier} = async (input) => {
     event: async ({ event }) => {
       if (disposed) return;
       try {
-        const named = event?.properties?.sessionID;
-        if (typeof named === "string" && !started.has(named)) {
-          started.add(named);
-          // A new session's first event names its folder under info; a continued one's names none.
-          const folder = event.properties.info?.directory ?? input.directory;
-          for (const call of sessionStartCallsFor(named, folder)) {
-            runHook(call.script, call.args, call.payload, folder);
-          }
+        for (const call of sessionStartOnce(event, input.directory)) {
+          runHook(call.script, call.args, call.payload, call.payload.cwd);
         }
         const directory = event?.properties?.directory ?? input.directory;
         // Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
