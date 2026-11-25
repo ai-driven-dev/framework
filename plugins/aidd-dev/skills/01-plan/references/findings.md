@@ -10,3 +10,4 @@
 | Contributor checks | always | the commands the contributing guide, Makefile, or package scripts require before a pull request, each with its source, or none |
 | Docs consulted | an assumption the code cannot settle | official URL, what it settled |
 | Project rules | they govern the feature | one-line reason each |
+| Rule influence | a project rule selects a decision over a meaningful alternative, not merely applies | the decision, the concrete constraint, the rule's logical identifier |

@@ -44,8 +44,10 @@ Source: {{file, ticket, or text}}
 
 ## Decisions
 
-<!-- Architecture-magnitude only, one you'd regret reversing. Omit if none qualify. -->
+<!-- Architecture-magnitude, one you'd regret reversing, or one a project rule selected over a meaningful alternative. Rule reference: the rule's logical identifier (e.g. `architecture/ports`), optionally with its decisive instruction, or `none`. Affected files stay in the phase projection. Omit if none qualify. -->
 
-| Decision   | Why   |
-| ---------- | ----- |
-| {{decision}} | {{why}} |
+| Decision   | Why   | Rule reference |
+| ---------- | ----- | -------------- |
+| {{decision}} | {{why}} | {{rule identifier, or `none`}} |
+
+Rule references are model-reported when the plan is written, not proof of the model's reasoning.
