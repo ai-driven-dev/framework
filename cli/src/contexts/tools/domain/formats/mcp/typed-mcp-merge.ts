@@ -44,8 +44,8 @@ export function mergeTypedMcp(
  *
  * The framework-owned keys come from `baseConfig`, the same bundled asset the install path
  * writes, and win over a stale existing copy; any other top-level key is preserved. `mcp` is
- * omitted entirely when neither side contributes one, as is a `mergedKeys` list left empty, and
- * malformed `existing` content throws rather than being silently discarded.
+ * omitted entirely when neither side contributes one, and malformed `existing` content throws
+ * rather than being silently discarded.
  */
 export function buildTypedMcpFlatConfig({
   baseConfig,
@@ -72,8 +72,7 @@ export function buildTypedMcpFlatConfig({
     const existingValues = arrayEntries(full[key]);
     const baseValues = arrayEntries(base[key]);
     const generated = baseValues.filter((value) => !existingValues.includes(value));
-    const listed = [...existingValues, ...generated];
-    if (listed.length > 0) result[key] = listed;
+    result[key] = [...existingValues, ...generated];
   }
   delete result.mcp;
   if (Object.keys(mergedMcp).length > 0) result.mcp = mergedMcp;

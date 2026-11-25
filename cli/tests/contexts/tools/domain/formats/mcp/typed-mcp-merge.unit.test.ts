@@ -290,16 +290,6 @@ describe("buildTypedMcpFlatConfig merged list keys", () => {
 
     expect(merged(null)).toEqual(["rules/a.md", "rules/b.md"]);
     expect(merged("{}")).toEqual(["rules/a.md", "rules/b.md"]);
-    expect(
-      JSON.parse(
-        buildTypedMcpFlatConfig({
-          baseConfig: "{}",
-          existing: null,
-          incoming: {},
-          mergedKeys: ["instructions"],
-        })
-      )
-    ).toStrictEqual({});
     expect(merged(JSON.stringify({ instructions: "mine.md" }))).toEqual([
       "rules/a.md",
       "rules/b.md",
