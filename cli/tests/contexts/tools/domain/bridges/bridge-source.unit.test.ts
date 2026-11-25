@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
-  ANSWER_FROM_SOURCE,
+  ANSWER_OF_SOURCE,
   hooksDirDeclaration,
   MATCHES_TOOL_SOURCE,
+  reportHookFailureSource,
 } from "../../../../../src/contexts/tools/domain/bridges/bridge-source.js";
 
 /** Evaluates a piece of generated module source with the names it reads, and hands back what it declares. */
@@ -14,7 +15,7 @@ function evaluated<T>(source: string, declared: string, scope: Record<string, un
 
 describe("the source every generated bridge writes the same way", () => {
   const answerFrom = evaluated<(code: number | null, stdout: string, stderr: string) => string>(
-    ANSWER_FROM_SOURCE,
+    ANSWER_OF_SOURCE,
     "answerFrom"
   );
 
@@ -30,6 +31,51 @@ describe("the source every generated bridge writes the same way", () => {
       answerFrom(1, stdout, ""),
       answerFrom(0, "text", ""),
     ]).toEqual(["noted", "", ""]);
+  });
+
+  describe("a script's answer, awaited", () => {
+    const answered = async (done: Record<string, unknown>) => {
+      const reported: unknown[][] = [];
+      const answerOf = evaluated<(...args: unknown[]) => Promise<string>>(
+        ANSWER_OF_SOURCE,
+        "answerOf",
+        {
+          runCapture: async () => ({ stdout: "", stderr: "", failure: null, ...done }),
+          reportHookFailure: (...args: unknown[]) => reported.push(args),
+        }
+      );
+      return { answer: await answerOf("a.cjs", [], {}, "/p"), reported };
+    };
+
+    it("reports a script that exits other than 0 or 2 by its code, and answers nothing", async () => {
+      expect(await answered({ code: 1, stderr: "boom" })).toEqual({
+        answer: "",
+        reported: [["a.cjs", "exited with code 1"]],
+      });
+    });
+
+    it("reports a script that never exited by how it failed, not by its missing code", async () => {
+      expect((await answered({ code: null, failure: "SIGTERM" })).reported).toEqual([
+        ["a.cjs", "SIGTERM"],
+      ]);
+    });
+
+    it("reports nothing of a script that answers, on exit 2 or exit 0", async () => {
+      expect(await answered({ code: 2, stderr: "why" })).toEqual({ answer: "why", reported: [] });
+    });
+  });
+
+  it("names the host and the script a failure is reported on", () => {
+    const warned: string[] = [];
+    const report = evaluated<(script: string, error: unknown) => void>(
+      reportHookFailureSource("Probe"),
+      "reportHookFailure",
+      { console: { warn: (line: string) => warned.push(line) } }
+    );
+
+    report("a.cjs", "boom");
+
+    expect(warned).toEqual(["[aidd] Probe hook a.cjs failed: boom"]);
   });
 
   it("matches a tool name ignoring case, any tool when no matcher is given", () => {

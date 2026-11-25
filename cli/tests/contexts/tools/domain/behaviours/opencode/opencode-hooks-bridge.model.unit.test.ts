@@ -7,7 +7,7 @@ const STOP_HOOK = JSON.stringify({
 
 describe("generating OpenCode's hooks bridge", () => {
   it("exports a descriptor that hands the plugin's server to the shared events adapter", () => {
-    const bridge = generateOpencodeHooksBridge(STOP_HOOK, "aidd-test");
+    const bridge = generateOpencodeHooksBridge(STOP_HOOK, "aidd-test").content;
 
     expect(bridge).toContain('import { setupOpencodeEvents } from "../hooks/opencode-events.js";');
     expect(bridge).toContain("export const AiddTestHooks = async (input) => {");
@@ -16,6 +16,6 @@ describe("generating OpenCode's hooks bridge", () => {
   });
 
   it("writes no module for a plugin with no replayable hook", () => {
-    expect(generateOpencodeHooksBridge("{}", "aidd-test")).toBeNull();
+    expect(generateOpencodeHooksBridge("{}", "aidd-test").content).toBeNull();
   });
 });

@@ -1,5 +1,5 @@
-/** What a generated event bridge reads of a plugin's hooks.json: the five events it replays, and
- * the ones it leaves out. */
+/** What a generated event bridge reads of a plugin's hooks.json: the events it replays, and the
+ * ones it leaves out. */
 
 import {
   type BridgeHookCall,
@@ -7,54 +7,48 @@ import {
   type PluginHooksShape,
 } from "../hooks/plugin-hooks-shape.js";
 
-/** The events a bridge replays, as a plugin's hooks.json names them. */
-const RELAYED_EVENTS: readonly string[] = [
+/** The events a bridge replays, as a plugin's hooks.json names them: the one list the descriptor of
+ * a bridged tool, the table below and the events a plugin names that no bridge carries are read
+ * from. */
+export const BRIDGE_EVENTS = [
   "SessionStart",
-  "Stop",
   "PostToolUse",
+  "Stop",
   "PreToolUse",
   "UserPromptSubmit",
-];
+] as const;
+
+export type BridgeEvent = (typeof BRIDGE_EVENTS)[number];
 
 export interface BridgeHookTable {
-  readonly sessionStart: readonly BridgeHookCall[];
-  readonly stop: readonly BridgeHookCall[];
-  readonly postToolUse: readonly BridgeHookCall[];
-  readonly preToolUse: readonly BridgeHookCall[];
-  readonly userPromptSubmit: readonly BridgeHookCall[];
+  readonly calls: Readonly<Record<BridgeEvent, readonly BridgeHookCall[]>>;
   /** The events the manifest names that no bridge replays. */
   readonly unrelayed: readonly string[];
 }
 
 /** A plugin's raw hooks.json: still carrying `${CLAUDE_PLUGIN_ROOT}`, since a generated
  * bridge resolves its scripts from its own `import.meta.url` and the outDir-relative rewrite
- * every other flat target needs buys it nothing: reduced to the five mapped events. */
+ * every other flat target needs buys it nothing: reduced to the events a bridge replays. */
 export function parseHooksJsonForBridge(rawHooksJson: string): BridgeHookTable {
   const parsed = JSON.parse(rawHooksJson) as PluginHooksShape;
   const hooks = parsed.hooks ?? {};
   return {
-    sessionStart: bridgeHookCalls(hooks.SessionStart),
-    stop: bridgeHookCalls(hooks.Stop),
-    postToolUse: bridgeHookCalls(hooks.PostToolUse),
-    preToolUse: bridgeHookCalls(hooks.PreToolUse),
-    userPromptSubmit: bridgeHookCalls(hooks.UserPromptSubmit),
-    unrelayed: Object.keys(hooks).filter((event) => !RELAYED_EVENTS.includes(event)),
+    calls: {
+      SessionStart: bridgeHookCalls(hooks.SessionStart),
+      PostToolUse: bridgeHookCalls(hooks.PostToolUse),
+      Stop: bridgeHookCalls(hooks.Stop),
+      PreToolUse: bridgeHookCalls(hooks.PreToolUse),
+      UserPromptSubmit: bridgeHookCalls(hooks.UserPromptSubmit),
+    },
+    unrelayed: Object.keys(hooks).filter((event) => !isBridgeEvent(event)),
   };
 }
 
-/** The events a plugin's raw hooks.json names that its bridge leaves out. */
-export function unrelayedBridgeEvents(rawHooksJson: string): readonly string[] {
-  return parseHooksJsonForBridge(rawHooksJson).unrelayed;
+function isBridgeEvent(event: string): boolean {
+  return BRIDGE_EVENTS.some((replayed) => replayed === event);
 }
 
 /** A bridge with nothing to spawn is not a file worth writing. */
 export function replaysNothing(table: BridgeHookTable): boolean {
-  return (
-    table.sessionStart.length +
-      table.stop.length +
-      table.postToolUse.length +
-      table.preToolUse.length +
-      table.userPromptSubmit.length ===
-    0
-  );
+  return BRIDGE_EVENTS.every((event) => table.calls[event].length === 0);
 }

@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   flatAgentPath,
-  flatHooksBridgeFile,
-  flatHooksBridgeWarnings,
+  flatHooksBridge,
   flatLinkTarget,
   flatPathOfPluginSuffix,
   sourceShipsHooksBridge,
@@ -49,42 +48,51 @@ describe("naming the hooks bridge file", () => {
   const bridge: FlatHooksBridge = {
     skipIfSourceHas: "own.js",
     dir: "bridge/",
-    generate: (raw) => (raw === "{}" ? null : `bridge of ${raw}`),
-    tool: "host",
-    unrelayed: () => [],
+    generate: (raw) => ({
+      content: raw === "{}" ? null : `bridge of ${raw}`,
+      warnings: ["host: unmapped event 'SessionEnd' skipped"],
+    }),
   };
 
-  it("names the bridge by plugin and carries what it generates", () => {
+  it("names the bridge by plugin and carries what it generates, with what it leaves out", () => {
     expect(
-      flatHooksBridgeFile({
-        bridge,
-        rawHooksJson: "[1]",
-        pluginName: "p",
-        sourceShipsItsOwn: false,
-      })
-    ).toEqual({ relativePath: "bridge/p-hooks.js", content: "bridge of [1]" });
+      flatHooksBridge({ bridge, rawHooksJson: "[1]", pluginName: "p", sourceShipsItsOwn: false })
+    ).toEqual({
+      file: { relativePath: "bridge/p-hooks.js", content: "bridge of [1]" },
+      warnings: ["host: unmapped event 'SessionEnd' skipped"],
+    });
   });
 
-  it("yields nothing when the source ships its own", () => {
+  it("yields nothing, and tells nothing, when the source ships its own", () => {
     expect(
-      flatHooksBridgeFile({
-        bridge,
-        rawHooksJson: "[1]",
-        pluginName: "p",
-        sourceShipsItsOwn: true,
-      })
-    ).toBeNull();
+      flatHooksBridge({ bridge, rawHooksJson: "[1]", pluginName: "p", sourceShipsItsOwn: true })
+    ).toEqual({ file: null, warnings: [] });
   });
 
-  it("yields nothing when no event maps to the bridge", () => {
+  it("yields no file, yet tells what it leaves out, when no event maps to the bridge", () => {
     expect(
-      flatHooksBridgeFile({
-        bridge,
-        rawHooksJson: "{}",
-        pluginName: "p",
-        sourceShipsItsOwn: false,
-      })
-    ).toBeNull();
+      flatHooksBridge({ bridge, rawHooksJson: "{}", pluginName: "p", sourceShipsItsOwn: false })
+    ).toEqual({ file: null, warnings: ["host: unmapped event 'SessionEnd' skipped"] });
+  });
+
+  it("reads the hooks once for the file and what it leaves out", () => {
+    let reads = 0;
+    const counting: FlatHooksBridge = {
+      ...bridge,
+      generate: () => {
+        reads += 1;
+        return { content: "x", warnings: [] };
+      },
+    };
+
+    flatHooksBridge({
+      bridge: counting,
+      rawHooksJson: "[1]",
+      pluginName: "p",
+      sourceShipsItsOwn: false,
+    });
+
+    expect(reads).toBe(1);
   });
 });
 
@@ -126,9 +134,7 @@ describe("telling whether a source ships its hooks bridge", () => {
   const bridge: FlatHooksBridge = {
     skipIfSourceHas: "bridge.js",
     dir: "bridge/",
-    generate: () => "generated",
-    tool: "host",
-    unrelayed: () => [],
+    generate: () => ({ content: "generated", warnings: [] }),
   };
 
   it("finds the file by its name in any folder below hooks", () => {
@@ -139,40 +145,5 @@ describe("telling whether a source ships its hooks bridge", () => {
 
   it("does not take a file that only ends like the bridge's name", () => {
     expect(sourceShipsHooksBridge([{ relativePath: "hooks/not-bridge.js" }], bridge)).toBe(false);
-  });
-});
-
-describe("telling what a hooks bridge leaves out", () => {
-  const bridge: FlatHooksBridge = {
-    skipIfSourceHas: "own.js",
-    dir: "bridge/",
-    generate: () => "generated",
-    tool: "host",
-    unrelayed: (raw) => (raw === "{}" ? [] : ["SessionEnd", "SubagentStop"]),
-  };
-
-  it("warns once for each event the bridge reports it does not relay, under the tool", () => {
-    expect(
-      flatHooksBridgeWarnings({ bridge, rawHooksJson: "[1]", sourceShipsItsOwn: false })
-    ).toEqual([
-      "host: unmapped event 'SessionEnd' skipped",
-      "host: unmapped event 'SubagentStop' skipped",
-    ]);
-  });
-
-  it("says nothing when the bridge relays every event", () => {
-    expect(
-      flatHooksBridgeWarnings({ bridge, rawHooksJson: "{}", sourceShipsItsOwn: false })
-    ).toEqual([]);
-  });
-
-  it("says nothing when the source ships the bridge itself", () => {
-    expect(
-      flatHooksBridgeWarnings({
-        bridge,
-        rawHooksJson: "[1]",
-        sourceShipsItsOwn: true,
-      })
-    ).toEqual([]);
   });
 });

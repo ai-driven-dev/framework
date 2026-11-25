@@ -1,10 +1,10 @@
 import type { ShippedHooks } from "../../../../shared/domain/materialization/build-contract.js";
 import { genericFlatHooksScriptPath } from "../../../../shared/domain/materialization/flat-paths.js";
-import { unmappedEventWarning } from "../../../../shared/domain/materialization/hooks-warnings.js";
 import { rewritePluginRootInJson } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import type { ProjectHookEntry } from "../../contract/tool-vocabulary.js";
 import { toBase64 } from "../formats/base64.js";
 import { PLUGIN_HOOKS_SOURCE } from "../formats/hooks/descriptor.js";
+import { unmappedEventWarning } from "./hooks-warnings.js";
 
 // The host runs a handler from its own directory under the project and requires JSON stdout even
 // for a silent hook.

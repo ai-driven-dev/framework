@@ -3,3 +3,8 @@
 export function unmappedEventWarning(event: string): string {
   return `unmapped event '${event}' skipped`;
 }
+
+/** A warning of a hooks route, under the tool it is reported for: the one prefix every route writes. */
+export function toolWarning(tool: string, warning: string): string {
+  return `${tool}: ${warning}`;
+}

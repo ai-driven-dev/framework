@@ -20,12 +20,14 @@ function translated(files: Record<string, string>) {
           placement: { kind: "hooks", scriptsDir: ".stub/" },
           skipHooksJson: true,
           hooksBridge: {
-            generate: () => "bridge",
+            generate: (raw: string) => ({
+              content: "bridge",
+              warnings: Object.keys(JSON.parse(raw).hooks ?? {})
+                .filter((event) => event !== "Stop")
+                .map((event) => `stub: unmapped event '${event}' skipped`),
+            }),
             dir: ".stub/plugin/",
             skipIfSourceHas: "own.js",
-            tool: "stub",
-            unrelayed: (raw: string) =>
-              Object.keys(JSON.parse(raw).hooks ?? {}).filter((event) => event !== "Stop"),
           },
         }),
       },

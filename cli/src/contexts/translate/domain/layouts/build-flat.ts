@@ -20,23 +20,24 @@ import {
 import { agentLinks } from "../rules/agent-markdown.js";
 import { agentShape, type ComponentPlan } from "../rules/component-pipeline.js";
 import { foldsFlatMcp } from "../rules/flat-mcp.js";
-import { flatHookPlans } from "../rules/hook-plans.js";
+import { type FlatHookPlans, flatHookPlans } from "../rules/hook-plans.js";
 import { relativeLinks } from "../rules/links.js";
 import { agentFiles, baseOf, namedByFolder } from "./build-shared.js";
 
-/** A flat build's plugin files, in the tool's own folders. Its MCP servers and hooks file are
- * merged across plugins by the sink. */
-export function buildFlatPlans(
-  canon: PluginDistribution,
-  contract: ToolBuildContract
-): ComponentPlan[] {
+/** A flat build's plugin files, in the tool's own folders, and what its hooks bridge leaves out.
+ * Its MCP servers and hooks file are merged across plugins by the sink. */
+export function buildFlatPlans(canon: PluginDistribution, contract: ToolBuildContract) {
   const { agents, hooks, skills } = contract.artifacts;
-  return [
-    ...flatCommandFiles(canon, contract),
-    ...(agents.supported ? flatAgents(canon, contract, agents) : []),
-    ...(hooks.supported ? flatHooks(canon, hooks) : []),
-    ...(skills.supported ? flatSkills(canon, contract, skills) : []),
-  ];
+  const hookPlans = hooks.supported ? flatHooks(canon, hooks) : { plans: [], warnings: [] };
+  return {
+    plans: [
+      ...flatCommandFiles(canon, contract),
+      ...(agents.supported ? flatAgents(canon, contract, agents) : []),
+      ...hookPlans.plans,
+      ...(skills.supported ? flatSkills(canon, contract, skills) : []),
+    ],
+    warnings: hookPlans.warnings,
+  };
 }
 
 /** The folders a plugin's hook and MCP commands name that the tool has no place for, copied whole
@@ -107,7 +108,7 @@ export function flatAgentPlan(
   };
 }
 
-function flatHooks(canon: PluginDistribution, artifact: SupportedArtifact): ComponentPlan[] {
+function flatHooks(canon: PluginDistribution, artifact: SupportedArtifact): FlatHookPlans {
   const plugin = canon.manifest.name;
   return flatHookPlans(canon, {
     place: (relativePath) => artifactPath(artifact, plugin, relativePath),

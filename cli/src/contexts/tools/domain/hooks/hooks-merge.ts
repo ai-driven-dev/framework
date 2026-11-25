@@ -6,12 +6,12 @@
 
 import type { ShippedHooks } from "../../../../shared/domain/materialization/build-contract.js";
 import { genericFlatHooksScriptPath } from "../../../../shared/domain/materialization/flat-paths.js";
-import { unmappedEventWarning } from "../../../../shared/domain/materialization/hooks-warnings.js";
 import {
   escapeRegExp,
   rewritePluginRootInJson,
 } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import { type Entry, type HooksFileFormat, shapeEntries } from "./hooks-entry-shape.js";
+import { unmappedEventWarning } from "./hooks-warnings.js";
 import type { PluginHooksShape } from "./plugin-hooks-shape.js";
 
 /** What the engine reads of a descriptor: the file's form and the events the tool fires. */

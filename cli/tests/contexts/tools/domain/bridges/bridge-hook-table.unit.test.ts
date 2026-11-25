@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   parseHooksJsonForBridge,
   replaysNothing,
-  unrelayedBridgeEvents,
 } from "../../../../../src/contexts/tools/domain/bridges/bridge-hook-table.js";
 
 const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
@@ -11,7 +10,7 @@ const hooksOf = (event: string, ...commands: (string | undefined)[]) =>
     hooks: { [event]: [{ hooks: commands.map((command) => ({ type: "command", command })) }] },
   });
 const stopCalls = (...commands: (string | undefined)[]) =>
-  parseHooksJsonForBridge(hooksOf("Stop", ...commands)).stop;
+  parseHooksJsonForBridge(hooksOf("Stop", ...commands)).calls.Stop;
 
 describe("reading a hooks file for the bridge", () => {
   it.each([
@@ -54,11 +53,11 @@ describe("reading a hooks file for the bridge", () => {
     );
 
     expect([
-      table.sessionStart.length,
-      table.stop.length,
-      table.postToolUse.length,
-      table.preToolUse.length,
-      table.userPromptSubmit.length,
+      table.calls.SessionStart.length,
+      table.calls.Stop.length,
+      table.calls.PostToolUse.length,
+      table.calls.PreToolUse.length,
+      table.calls.UserPromptSubmit.length,
     ]).toEqual([1, 0, 1, 1, 1]);
   });
 });
@@ -98,10 +97,13 @@ describe("telling which events of a hooks file a bridge leaves out", () => {
       hooks: { Stop: [], SessionEnd: [], PreToolUse: [], SubagentStop: [], UserPromptSubmit: [] },
     });
 
-    expect(unrelayedBridgeEvents(hooksJson)).toStrictEqual(["SessionEnd", "SubagentStop"]);
+    expect(parseHooksJsonForBridge(hooksJson).unrelayed).toStrictEqual([
+      "SessionEnd",
+      "SubagentStop",
+    ]);
   });
 
   it("names none when the file has no hooks", () => {
-    expect(unrelayedBridgeEvents("{}")).toStrictEqual([]);
+    expect(parseHooksJsonForBridge("{}").unrelayed).toStrictEqual([]);
   });
 });

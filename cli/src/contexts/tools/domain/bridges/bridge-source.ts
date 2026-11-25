@@ -4,9 +4,9 @@
  */
 
 /** The generated modules' reading of a finished script: exit 2 puts the answer on stderr, exit 0
- * puts it in `additionalContext` on stdout, anything else says nothing. Written once here, so
- * both hosts' bridges tell the model the same thing. */
-export const ANSWER_FROM_SOURCE = `function answerFrom(code, stdout, stderr) {
+ * puts it in `additionalContext` on stdout. Any other way a script ends is reported and answers
+ * nothing. Written once here, so both hosts' bridges tell the model, and the person, the same thing. */
+export const ANSWER_OF_SOURCE = `function answerFrom(code, stdout, stderr) {
   if (code === 2) return stderr.trim();
   if (code !== 0) return "";
   try {
@@ -15,7 +15,27 @@ export const ANSWER_FROM_SOURCE = `function answerFrom(code, stdout, stderr) {
   } catch {
     return "";
   }
+}
+
+/** Awaited, unlike runHook: a script that fails to run, or exits other than 0 or 2, is reported
+ * and answers nothing. */
+function answerOf(script, args, payload, directory) {
+  return runCapture(script, args, payload, directory).then(({ code, stdout, stderr, failure }) => {
+    if (code !== 0 && code !== 2) {
+      reportHookFailure(script, failure ?? "exited with code " + String(code));
+      return "";
+    }
+    return answerFrom(code, stdout, stderr);
+  });
 }`;
+
+/** The one place a generated module tells a failed script: the host's name and the script, or
+ * the event, it failed on. */
+export function reportHookFailureSource(host: string): string {
+  return `function reportHookFailure(script, error) {
+  console.warn("[aidd] ${host} hook " + script + " failed: " + String(error));
+}`;
+}
 
 /** The node modules every generated module spawns its scripts with. One string literal, so no
  * line of this file opens with the keyword the import rule reads as this file's own. */
@@ -76,10 +96,6 @@ function stopReasonOf(script, args, payload, directory) {
   });
 }`;
 
-/** A PostToolUse answer joins the tool's own output. */
-// Written as a split literal to avoid biome's noTemplateCurlyInString warning.
-export const APPEND_ANSWER_SOURCE = `if (answer) output.output = \`$${"{"}output.output ?? ""}\\n\\n$${"{"}answer}\`;`;
-
 /** A matcher names tools exactly or pipe-separated, ignoring case: the hosts name theirs in
  * lowercase. Absent, every tool matches. */
 export const MATCHES_TOOL_SOURCE = `function matchesTool(matcher, tool) {
@@ -87,7 +103,7 @@ export const MATCHES_TOOL_SOURCE = `function matchesTool(matcher, tool) {
 }`;
 
 /** The `runCapture` every awaited script of a bridge goes through: its exit code, stdout and
- * stderr, never rejecting. */
+ * stderr, and how it failed when it did not exit on its own, never rejecting. */
 export const RUN_CAPTURE_SOURCE = `/** Runs one hook script with its payload on stdin and collects what it wrote. */
 function runCapture(script, args, payload, directory) {
   return new Promise((resolve) => {
@@ -100,8 +116,8 @@ ${spawnHookSource(4, '["pipe", "pipe", "pipe"]')}
     child.stderr.on("data", (chunk) => {
       stderr += chunk;
     });
-    child.on("error", () => resolve({ code: null, stdout: "", stderr: "" }));
-    child.on("close", (code) => resolve({ code, stdout, stderr }));
+    child.on("error", (error) => resolve({ code: null, stdout: "", stderr: "", failure: String(error) }));
+    child.on("close", (code, signal) => resolve({ code, stdout, stderr, failure: signal }));
 ${feedStdinSource(4)}
   });
 }`;

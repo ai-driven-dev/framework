@@ -9,11 +9,11 @@
 
 import type { ShippedHooks } from "../../../../../shared/domain/materialization/build-contract.js";
 import { genericFlatHooksScriptPath } from "../../../../../shared/domain/materialization/flat-paths.js";
-import { unmappedEventWarning } from "../../../../../shared/domain/materialization/hooks-warnings.js";
 import { asPlainObject } from "../../../../../shared/domain/reading/plain-object.js";
 import type { ProjectHooksFormat } from "../../../contract/tool-vocabulary.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { pluginScriptDir, pluginScriptPath } from "../../hooks/hooks-merge.js";
+import { unmappedEventWarning } from "../../hooks/hooks-warnings.js";
 import {
   type BridgeHookCall,
   bridgeHookCalls,

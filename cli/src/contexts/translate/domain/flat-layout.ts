@@ -8,16 +8,16 @@ import type {
   SupportedArtifact,
   ToolBuildContract,
 } from "../../../shared/domain/materialization/build-contract.js";
-import { unmappedEventWarning } from "../../../shared/domain/materialization/hooks-warnings.js";
 import { pluginRootFolders } from "../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import type { OutputFile } from "./output-file.js";
 
 /**
  * The generated hooks bridge of a flat install, whether it is built to disk or translated for an
- * install. `sourceShipsItsOwn` is whether the plugin's own hooks already carry the file the
- * bridge would replace. Nothing when it does, or when no event in the hooks maps to the bridge.
+ * install, and what it leaves out of the plugin's hooks, told by the one reading of them.
+ * `sourceShipsItsOwn` is whether the plugin's own hooks already carry the file the bridge would
+ * replace. Nothing of either when it does; no file when no event in the hooks maps to the bridge.
  */
-export function flatHooksBridgeFile({
+export function flatHooksBridge({
   bridge,
   rawHooksJson,
   pluginName,
@@ -27,28 +27,11 @@ export function flatHooksBridgeFile({
   rawHooksJson: string;
   pluginName: string;
   sourceShipsItsOwn: boolean;
-}): OutputFile | null {
-  if (sourceShipsItsOwn) return null;
-  const content = bridge.generate(rawHooksJson, pluginName);
-  if (content === null) return null;
-  return { relativePath: hooksBridgeFilePath(bridge, pluginName), content };
-}
-
-/** What a flat build tells of a plugin's hooks that a bridge leaves out: one warning for each event
- * the manifest names and the bridge does not relay. Nothing when the plugin ships its own bridge. */
-export function flatHooksBridgeWarnings({
-  bridge,
-  rawHooksJson,
-  sourceShipsItsOwn,
-}: {
-  bridge: FlatHooksBridge;
-  rawHooksJson: string;
-  sourceShipsItsOwn: boolean;
-}): string[] {
-  if (sourceShipsItsOwn) return [];
-  return bridge
-    .unrelayed(rawHooksJson)
-    .map((event) => `${bridge.tool}: ${unmappedEventWarning(event)}`);
+}): { file: OutputFile | null; warnings: readonly string[] } {
+  if (sourceShipsItsOwn) return { file: null, warnings: [] };
+  const { content, warnings } = bridge.generate(rawHooksJson, pluginName);
+  if (content === null) return { file: null, warnings };
+  return { file: { relativePath: hooksBridgeFilePath(bridge, pluginName), content }, warnings };
 }
 
 /** Whether a plugin's own hooks already carry the file a bridge would replace, in any folder. */

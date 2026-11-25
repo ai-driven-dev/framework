@@ -196,15 +196,15 @@ const CONTINUED = [
 ];
 
 function opencodeBridge(): string {
-  const bridge = generateOpencodeHooksBridge(HOOKS_JSON, "aidd-sample");
-  if (bridge === null) throw new Error("expected a bridge");
-  return bridge;
+  const { content } = generateOpencodeHooksBridge(HOOKS_JSON, "aidd-sample");
+  if (content === null) throw new Error("expected a bridge");
+  return content;
 }
 
 function kiloBridge(): string {
-  const bridge = generateKiloHooksBridge(HOOKS_JSON, "aidd-sample");
-  if (bridge === null) throw new Error("expected a bridge");
-  return bridge;
+  const { content } = generateKiloHooksBridge(HOOKS_JSON, "aidd-sample");
+  if (content === null) throw new Error("expected a bridge");
+  return content;
 }
 
 describe("OpenCode, through its bridge", () => {

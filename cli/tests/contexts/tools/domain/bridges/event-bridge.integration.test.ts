@@ -82,7 +82,7 @@ interface Host {
 const HOSTS: readonly Host[] = [
   {
     name: "OpenCode",
-    generate: generateOpencodeHooksBridge,
+    generate: (hooksJson, plugin) => generateOpencodeHooksBridge(hooksJson, plugin).content,
     descriptorKeys: ["id", "server", "setup"],
     sessionStartId: null,
     sessionStarted: () => undefined,
@@ -90,7 +90,7 @@ const HOSTS: readonly Host[] = [
   },
   {
     name: "Kilo",
-    generate: generateKiloHooksBridge,
+    generate: (hooksJson, plugin) => generateKiloHooksBridge(hooksJson, plugin).content,
     descriptorKeys: ["id", "server"],
     sessionStartId: "ses_one",
     sessionStarted: (id, directory) => ({
@@ -306,6 +306,24 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
 
     expect(raised).toEqual([]);
   });
+
+  it.each([
+    { kind: "nonzero exit", error: "exited with code 7", input: (dir: string) => dir },
+    { kind: "spawn failure", error: "ENOENT", input: (dir: string) => join(dir, "absent") },
+  ])(
+    "reports an awaited script's $kind, and adds nothing to the tool's output",
+    async ({ error, input }) => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+      const hooksJson = JSON.stringify({
+        hooks: { PostToolUse: [{ matcher: "Grind", ...command("exit7.cjs") }] },
+      });
+      const { tool } = await open(host, hooksJson, input);
+
+      expect(await tool("grind")).toBe("done");
+
+      expect(warn).toHaveBeenCalledWith(expect.stringMatching(new RegExp(`failed: .*${error}`)));
+    }
+  );
 
   it("keeps a tool's arguments as they came when it names no written file", async () => {
     const { tool, of } = await open(host);

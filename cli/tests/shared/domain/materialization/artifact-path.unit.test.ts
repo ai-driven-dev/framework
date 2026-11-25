@@ -72,9 +72,7 @@ describe("a hooks file and a bridge", () => {
     const bridge = {
       dir: ".b/",
       skipIfSourceHas: "x.js",
-      generate: () => null,
-      tool: "stub",
-      unrelayed: () => [],
+      generate: () => ({ content: null, warnings: [] }),
     };
 
     expect(hooksBridgeFilePath(bridge, "p")).toBe(".b/p-hooks.js");

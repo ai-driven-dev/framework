@@ -14,19 +14,18 @@ export interface BuildFileReader {
  */
 export interface FlatHooksBridge {
   /** Raw (unrewritten) hooks.json content + plugin name -> the generated bridge module's
-   * full text, or `null` when nothing in it named an event the bridge maps. */
-  readonly generate: (rawHooksJson: string, plugin: string) => string | null;
+   * full text, `null` when nothing in it named an event the bridge maps, and what the bridge
+   * leaves out of the hooks it was read from: read once, both told together. */
+  readonly generate: (
+    rawHooksJson: string,
+    plugin: string
+  ) => { readonly content: string | null; readonly warnings: readonly string[] };
   /** The directory, relative to the project root, the generated bridge module lands in, named
    * `<plugin>-hooks.js`. */
   readonly dir: string;
   /** A hooks/ file whose presence in this plugin's own source means it ships its own bridge
    * already: generate nothing for it. */
   readonly skipIfSourceHas: string;
-  /** The tool the bridge is generated for: it names the events the bridge leaves out. */
-  readonly tool: string;
-  /** Raw hooks.json content -> the events it names that the bridge does not relay: they reach no
-   * hook. */
-  readonly unrelayed: (rawHooksJson: string) => readonly string[];
 }
 
 /** How a plugin's artifact files are sourced: a sub-directory walked with an extension filter

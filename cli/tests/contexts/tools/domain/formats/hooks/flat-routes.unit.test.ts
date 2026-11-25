@@ -21,10 +21,10 @@ function supported(artifact: ArtifactContract): Extract<ArtifactContract, { supp
   return artifact;
 }
 
-const bridge = {
-  generate: (raw: string, plugin: string) => `${plugin}:${raw}`,
-  unrelayed: () => ["Other"],
-};
+const bridge = (raw: string, plugin: string) => ({
+  content: `${plugin}:${raw}`,
+  unrelayed: ["Other"],
+});
 
 const FLAT_FILE = {
   wrapper: { version: 1 },
@@ -184,9 +184,10 @@ describe("a flat build's hooks artifact", () => {
     );
 
     expect(artifact.skipHooksJson).toBe(true);
-    expect(artifact.hooksBridge?.tool).toBe(TOOL.cursor);
-    expect(artifact.hooksBridge?.unrelayed("{}")).toStrictEqual(["Other"]);
-    expect(artifact.hooksBridge?.generate("{}", "aidd-dev")).toBe("aidd-dev:{}");
+    expect(artifact.hooksBridge?.generate("{}", "aidd-dev")).toStrictEqual({
+      content: "aidd-dev:{}",
+      warnings: [`${TOOL.cursor}: unmapped event 'Other' skipped`],
+    });
     expect(artifact.hooksBridge?.dir).toBe(".tool/plugin/");
     expect(artifact.hooksBridge?.skipIfSourceHas).toBe("tool-plugin.js");
   });

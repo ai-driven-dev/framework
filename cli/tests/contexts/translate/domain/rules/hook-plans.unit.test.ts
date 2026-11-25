@@ -9,8 +9,14 @@ import {
 
 const MANIFEST = "hooks/hooks.json";
 
-function bridge(generate: FlatHooksBridge["generate"] = () => "bridge"): FlatHooksBridge {
-  return { dir: "flat/", skipIfSourceHas: "own.js", generate, tool: "stub", unrelayed: () => [] };
+function bridge(
+  generate: (raw: string, plugin: string) => string | null = () => "bridge"
+): FlatHooksBridge {
+  return {
+    dir: "flat/",
+    skipIfSourceHas: "own.js",
+    generate: (raw, plugin) => ({ content: generate(raw, plugin), warnings: [] }),
+  };
 }
 
 function flatHooks(

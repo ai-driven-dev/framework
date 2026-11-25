@@ -168,7 +168,7 @@ describe("building OpenCode's flat contract", () => {
     });
   });
 
-  it("names itself and the events its bridge leaves out, for the build's warning about them", () => {
+  it("warns, under the tool, of each event its bridge leaves out", () => {
     const hooks = supported(present(opencode.buildContracts.flat)().artifacts.hooks);
     const manifest = JSON.stringify({
       hooks: Object.fromEntries(
@@ -178,9 +178,8 @@ describe("building OpenCode's flat contract", () => {
       ),
     });
 
-    expect([hooks.hooksBridge?.tool, hooks.hooksBridge?.unrelayed(manifest)]).toStrictEqual([
-      "opencode",
-      ["SessionEnd"],
+    expect(hooks.hooksBridge?.generate(manifest, "aidd-dev").warnings).toStrictEqual([
+      "opencode: unmapped event 'SessionEnd' skipped",
     ]);
   });
 
@@ -191,7 +190,7 @@ describe("building OpenCode's flat contract", () => {
       hooks.hooksBridge?.generate(
         JSON.stringify({ hooks: { Notification: [{ hooks: [{ command: "x" }] }] } }),
         "aidd-dev"
-      )
+      ).content
     ).toBeNull();
   });
 
