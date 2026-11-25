@@ -87,7 +87,11 @@ function written(fs: InMemoryFileAdapter): Map<string, string> {
 
 describe("a flat build resolves every plugin-root reference to a file it writes", () => {
   it.each(flatTools())("leaves no plugin-root token in any file written for %s", async (tool) => {
-    const fs = seeded(["hooks/server.js", "agents/reviewer.md", "skills/plan/SKILL.md"]);
+    // A tool that runs no hook ships no hooks/ folder, so its MCP server names a script elsewhere.
+    const script = declaredBuildContract(registeredTools(), tool, "flat")?.artifacts.hooks.supported
+      ? "hooks/server.js"
+      : "scripts/x.js";
+    const fs = seeded([script, "agents/reviewer.md", "skills/plan/SKILL.md"]);
 
     await build(tool, fs);
 

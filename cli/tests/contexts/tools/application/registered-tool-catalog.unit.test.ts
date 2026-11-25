@@ -16,6 +16,7 @@ describe("the registered tool catalog", () => {
       "codex",
       "antigravity",
       "kiro",
+      "kimi",
       "vscode",
     ]);
   });
@@ -30,6 +31,7 @@ describe("the registered tool catalog", () => {
       "kilo",
       "antigravity",
       "kiro",
+      "kimi",
     ]);
     expect(catalogOf().inHelpOrder("ide")).toEqual(["vscode"]);
     expect(catalogOf([...REGISTERED_PROFILES].reverse()).inHelpOrder("ai")).toEqual([
@@ -37,6 +39,7 @@ describe("the registered tool catalog", () => {
       "copilot",
       "cursor",
       "claude",
+      "kimi",
       "kiro",
       "antigravity",
       "kilo",

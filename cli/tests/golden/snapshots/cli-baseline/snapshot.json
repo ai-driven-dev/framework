@@ -804,7 +804,7 @@
     "command": "[errors] framework install --tool not-a-tool",
     "exitCode": 1,
     "stdout": "",
-    "stderr": "Error: Unknown tool: not-a-tool. Valid tools: claude, cursor, copilot, opencode, kilo, codex, antigravity, kiro, vscode\n",
+    "stderr": "Error: Unknown tool: not-a-tool. Valid tools: claude, cursor, copilot, opencode, kilo, codex, antigravity, kiro, kimi, vscode\n",
     "filesWritten": [],
     "manifest": null
   },

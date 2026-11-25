@@ -531,6 +531,48 @@ exports[`the data each registered profile declares > kilo 1`] = `
 }
 `;
 
+exports[`the data each registered profile declares > kimi 1`] = `
+{
+  "builds": [
+    "flat",
+  ],
+  "configFiles": {},
+  "directory": ".kimi-code/",
+  "displayName": "Kimi Code CLI",
+  "distribution": {
+    "manifest": [],
+    "marketplace": [],
+  },
+  "frontmatter": {
+    "agents": null,
+    "commands": null,
+    "rules": null,
+  },
+  "hooksRootToken": null,
+  "installs": {},
+  "kind": "ai",
+  "plugins": {
+    "acceptsHooks": false,
+    "deliversHooksToProject": false,
+    "flatLayout": {
+      "namespacePrefix": "aidd-",
+      "rules": "nested",
+      "skillLayout": "single-level",
+    },
+    "kind": "flat",
+  },
+  "projectHooks": null,
+  "sections": [
+    "skills",
+    "hooks",
+    "layout",
+  ],
+  "signalDir": null,
+  "toolId": "kimi",
+  "toolSuffix": ".kimi.md",
+}
+`;
+
 exports[`the data each registered profile declares > kiro 1`] = `
 {
   "builds": [

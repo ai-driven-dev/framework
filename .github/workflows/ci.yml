@@ -178,7 +178,7 @@ jobs:
       contents: write
     strategy:
       fail-fast: false
-      # Four marketplace plus eight flat — opencode, kilo, antigravity and kiro are flat-only. Mirrors the CLI golden
+      # Four marketplace plus nine flat — opencode, kilo, antigravity, kiro and kimi are flat-only. Mirrors the CLI golden
       # snapshot matrix.
       matrix:
         include:
@@ -194,6 +194,7 @@ jobs:
           - { tool: kilo, mode: flat }
           - { tool: antigravity, mode: flat }
           - { tool: kiro, mode: flat }
+          - { tool: kimi, mode: flat }
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 

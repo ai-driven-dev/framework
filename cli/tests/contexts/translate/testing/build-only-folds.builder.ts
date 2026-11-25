@@ -43,6 +43,7 @@ const FLAT_FOLDS: Record<string, Record<string, string[]>> = {
   },
   antigravity: { "flat hooks file": [".agents/hooks.json"] },
   kiro: { "flat hooks file": [".kiro/hooks/aidd.json"] },
+  kimi: { "flat MCP file": [".kimi-code/mcp.json"] },
 };
 
 /** Every file a build of this cell writes through a fold, by fold. */

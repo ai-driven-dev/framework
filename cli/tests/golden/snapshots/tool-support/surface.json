@@ -166,5 +166,22 @@
         "commands": "no"
       }
     }
+  },
+  {
+    "id": "kimi",
+    "name": "Kimi Code CLI",
+    "directory": ".kimi-code/",
+    "pluginMode": "flat",
+    "nativeCli": null,
+    "builds": {
+      "flat": {
+        "skills": "yes",
+        "agents": "yes",
+        "mcp": "yes",
+        "hooks": "no",
+        "rules": "no",
+        "commands": "no"
+      }
+    }
   }
 ]
