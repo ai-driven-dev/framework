@@ -1,3 +1,4 @@
+import { CheckAuthentication } from "../../contexts/auth/application/check-authentication.use-case.js";
 import { ResolveBuiltMarketplaces } from "../../contexts/distribution/application/resolve-built-marketplaces.use-case.js";
 import { InspectDeclaredMarketplaces } from "../../contexts/host-registration/application/inspect/inspect-declared-marketplaces.use-case.js";
 import { InspectHostMarketplaceSources } from "../../contexts/host-registration/application/inspect/inspect-host-marketplace-sources.use-case.js";
@@ -12,7 +13,6 @@ import { InspectInstallation } from "../../contexts/installation/application/doc
 import { ListRegisteredPlugins } from "../../contexts/installation/application/doctor/list-registered-plugins.use-case.js";
 import type { ManifestRepository } from "../../contexts/installation/ports/manifest-repository.js";
 import type { ScopeRecordsRepository } from "../../contexts/machine-claims/ports/machine-manifest.js";
-import { CheckAuthentication } from "../../orchestration/doctor/check-authentication.use-case.js";
 import { CheckRegistration } from "../../orchestration/doctor/check-registration.use-case.js";
 import { doctorAll } from "../../orchestration/doctor/doctor-all.js";
 import { ResolveRegisteredBuilds } from "../../orchestration/doctor/resolve-registered-builds.use-case.js";

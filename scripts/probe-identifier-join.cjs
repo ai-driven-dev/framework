@@ -16,11 +16,17 @@
  *   1  the tool changed: it ran, and what the telemetry assumes is no longer true
  *   2  the probe is broken: it could not get far enough to have an opinion
  */
-const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
-const os = require("node:os");
 const path = require("node:path");
 const { isClaudePayload } = require("../plugins/aidd-telemetry/hooks/lib/claude-only.cjs");
+const {
+  cleanEnv,
+  createSandbox,
+  nodeCommand,
+  readJsonLines,
+  runHeadless,
+  versionOf,
+} = require("./lib/hook-sandbox.cjs");
 
 const TOOL_CHANGED = 1;
 const PROBE_BROKEN = 2;
@@ -28,17 +34,6 @@ const PROBE_BROKEN = 2;
 /** Every artefact this probe reads is written before the first API call; the tool then retries
  * against the dead address, so the timeout only bounds the run. */
 const RUN_TIMEOUT_MS = 90_000;
-
-/** Records the hook's stdin and the variable the telemetry reads. */
-const CAPTURE_HOOK = `const fs = require("node:fs");
-let raw = "";
-process.stdin.setEncoding("utf8");
-process.stdin.on("data", (chunk) => { raw += chunk; });
-process.stdin.on("end", () => {
-  const env = { CLAUDE_CODE_SESSION_ID: process.env.CLAUDE_CODE_SESSION_ID };
-  fs.writeFileSync(process.argv[2], JSON.stringify({ payload: JSON.parse(raw), env }));
-});
-`;
 
 const changed = (message) => ({ code: TOOL_CHANGED, message });
 
@@ -66,61 +61,34 @@ function judge({ configDir, captured, transcript }) {
   return { code: 0, message: `the join holds: ${payload.session_id}` };
 }
 
-function readJson(file) {
-  try {
-    return JSON.parse(fs.readFileSync(file, "utf8"));
-  } catch {
-    return null;
-  }
-}
-
-function readLines(file) {
-  try {
-    return fs
-      .readFileSync(file, "utf8")
-      .split("\n")
-      .filter((line) => line.trim() !== "")
-      .map((line) => JSON.parse(line));
-  } catch {
-    return null;
-  }
-}
-
 /** Runs `host` (an argv) headless in a fresh project and home, and judges what it left. */
 function probe({ host, log }) {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-join-probe-"));
+  const env = cleanEnv();
+  const sandbox = createSandbox("aidd-join-probe-", env);
   try {
-    return probeIn(root, host, log);
+    return probeIn(sandbox, env, host, log);
   } finally {
-    fs.rmSync(root, { recursive: true, force: true });
+    fs.rmSync(sandbox.root, { recursive: true, force: true });
   }
 }
 
-function probeIn(root, host, log) {
+function probeIn({ root, project, witness }, env, host, log) {
   const home = path.join(root, "home");
   const configDir = path.join(home, ".claude");
-  const project = path.join(root, "project");
-  const capture = path.join(root, "captured.json");
-  const witness = path.join(root, "capture.cjs");
+  const capture = path.join(root, "captured.jsonl");
   fs.mkdirSync(configDir, { recursive: true });
   fs.mkdirSync(path.join(project, ".claude"), { recursive: true });
-  fs.writeFileSync(witness, CAPTURE_HOOK);
   // Shaped like the shipped hook, `node <script>`, so Claude spawns it the same way.
-  const command = [process.execPath, witness, capture].map((word) => JSON.stringify(word)).join(" ");
+  const command = nodeCommand(witness, capture, "SessionStart");
   fs.writeFileSync(
     path.join(project, ".claude", "settings.local.json"),
     `${JSON.stringify({ hooks: { SessionStart: [{ hooks: [{ type: "command", command }] }] } })}\n`
   );
-  // A `GIT_DIR` inherited from a git hook would point `init` at the repository running it.
-  const env = Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith("GIT_")));
-  spawnSync("git", ["init", "-q", project], { env });
 
   const [bin, ...leading] = host;
-  const run = spawnSync(bin, [...leading, "-p", "say OK"], {
+  const run = runHeadless(bin, [...leading, "-p", "say OK"], {
     cwd: project,
-    encoding: "utf8",
     timeout: RUN_TIMEOUT_MS,
-    killSignal: "SIGKILL",
     env: {
       ...env,
       HOME: home,
@@ -130,13 +98,13 @@ function probeIn(root, host, log) {
       ANTHROPIC_API_KEY: "sk-ant-probe-not-a-real-key",
     },
   });
-  if (run.error !== undefined && run.error.code !== "ETIMEDOUT") {
-    log(`PROBE BROKEN: ${host.join(" ")} could not be run (${run.error.code ?? run.error.message})\n`);
+  if (run.error !== null) {
+    log(`PROBE BROKEN: ${host.join(" ")} could not be run (${run.error})\n`);
     return PROBE_BROKEN;
   }
-  const captured = readJson(capture);
+  const captured = readJsonLines(capture)?.[0] ?? null;
   const transcriptPath = captured?.payload?.transcript_path;
-  const transcript = typeof transcriptPath === "string" ? readLines(transcriptPath) : null;
+  const transcript = typeof transcriptPath === "string" ? readJsonLines(transcriptPath) : null;
   const verdict = judge({ configDir, captured, transcript });
   log(verdict.code === 0 ? `${verdict.message}\n` : `TOOL CHANGED: ${verdict.message}\n`);
   return verdict.code;
@@ -145,7 +113,6 @@ function probeIn(root, host, log) {
 module.exports = { judge, probe };
 
 if (require.main === module) {
-  const version = spawnSync("claude", ["--version"], { encoding: "utf8" });
-  process.stdout.write(`${(version.stdout ?? "").trim() || "claude: no version"}\n`);
+  process.stdout.write(`${versionOf("claude") ?? "claude: no version"}\n`);
   process.exit(probe({ host: ["claude"], log: (text) => process.stdout.write(text) }));
 }

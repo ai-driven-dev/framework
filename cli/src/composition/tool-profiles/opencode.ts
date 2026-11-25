@@ -46,6 +46,7 @@ const TOOL_SUFFIX = ".opencode.md";
 /** Where a flat build, and a flat install, put opencode's skills and agents. */
 const OPENCODE_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(".opencode/", {
   skills: "nested",
+  rules: "top-level-no-frontmatter",
   agent: { ext: ".md" },
 });
 

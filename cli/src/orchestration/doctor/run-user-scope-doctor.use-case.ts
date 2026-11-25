@@ -1,8 +1,8 @@
+import type { RegistrationIssue } from "../../contexts/host-registration/contract/registration-issue.js";
 import type {
   MachineInstallationView,
   ReadMachineInstallation,
 } from "../../contexts/installation/application/doctor/read-machine-installation.use-case.js";
-import type { DoctorIssue } from "../../contexts/installation/contract/doctor-issue.js";
 import { UserScopeFilterUnsupportedError } from "../orchestration.error.js";
 import type { CheckRegistration } from "./check-registration.use-case.js";
 
@@ -29,7 +29,7 @@ export class RunUserScopeDoctor {
   async execute(
     { projectRoot, tool, plugin }: RunUserScopeDoctorRequest,
     report: RunUserScopeDoctorReport
-  ): Promise<DoctorIssue[] | null> {
+  ): Promise<RegistrationIssue[] | null> {
     // At user scope doctor checks registrations, not plugin files: there is nothing `--plugin`
     // could narrow: so it is refused rather than silently read and discarded.
     if (plugin !== undefined) {
