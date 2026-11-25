@@ -1,6 +1,6 @@
 /**
  * What one host's generated bridge does its own way, under a fake host that emits that host's
- * events: Kilo's turn end and failures, OpenCode's loader and disposal.
+ * events: Kilo's turns and failures, OpenCode's loader and disposal.
  */
 
 import { readFile } from "node:fs/promises";
@@ -14,20 +14,6 @@ afterEach(cleanBridges);
 describe("the bridge generated with Kilo's parameters, held to the session each event names", () => {
   const kilo = hostNamed("Kilo");
 
-  it("runs a session's SessionStart and Stop once until it is busy again or deleted", async () => {
-    const { directory, emit, of } = await open(kilo);
-    const created = kilo.sessionStarted("ses_one", directory);
-    const idle = { type: "session.idle", properties: { sessionID: "ses_one" } };
-
-    await emit(created, created, idle, idle, ...kilo.nextTurn("ses_one"), idle);
-    await emit({ type: "session.deleted", properties: { sessionID: "ses_one" } }, created);
-
-    await vi.waitFor(async () => expect(await of("record.cjs")).toHaveLength(2), { timeout: 5000 });
-    await delay(100);
-    expect(await of("record.cjs")).toHaveLength(2);
-    expect(await of("stop.cjs")).toHaveLength(2);
-  });
-
   it("treats a message the user sends as a new turn", async () => {
     const { directory, emit, of, server } = await open(kilo);
     await emit(kilo.sessionStarted("s1", directory));
@@ -36,7 +22,7 @@ describe("the bridge generated with Kilo's parameters, held to the session each 
 
     await emit(idle);
     await server["chat.message"]?.({ sessionID: "s1" }, typed);
-    await emit(...kilo.nextTurn("s1"), idle);
+    await emit(idle);
 
     expect((await of("stop.cjs")).map((c) => c.payload.stop_hook_active)).toStrictEqual([
       false,
@@ -57,7 +43,7 @@ describe("the bridge generated with Kilo's parameters, held to the session each 
         await server["chat.message"]?.({ sessionID: "s1" }, { parts: [...body.parts] });
       }
     }
-    await first.emit(...kilo.nextTurn("s1"), idle);
+    await first.emit(idle);
 
     expect((await first.of("stop.cjs")).map((c) => c.payload.stop_hook_active)).toStrictEqual([
       false,

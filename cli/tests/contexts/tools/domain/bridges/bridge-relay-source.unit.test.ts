@@ -3,7 +3,11 @@ import {
   TOOL_USE_SOURCE,
   userPromptSource,
 } from "../../../../../src/contexts/tools/domain/bridges/bridge-relay-source.js";
-import { SEND_PROMPT_SOURCE } from "../../../../../src/contexts/tools/domain/bridges/bridge-source.js";
+import {
+  ANSWER_OF_SOURCE,
+  reportHookFailureSource,
+  SEND_PROMPT_SOURCE,
+} from "../../../../../src/contexts/tools/domain/bridges/bridge-source.js";
 
 /** Evaluates a piece of generated module source with the names it reads, and hands back what it declares. */
 function evaluated<T>(source: string, declared: string, scope: Record<string, unknown>): T {
@@ -38,11 +42,15 @@ describe("the source of the events relayed around a tool", () => {
       {
         PRE_TOOL_USE: [{ script: "a.cjs", args: [] }],
         POST_TOOL_USE: [{ script: "b.cjs", args: [], tools: ["write"] }],
-        runCapture: async () => {
-          const next = done.shift();
-          if (next === undefined) throw new Error("scripted failure");
-          return next;
-        },
+        settledRun: evaluated(ANSWER_OF_SOURCE, "settledRun", {
+          runCapture: async () => {
+            const next = done.shift();
+            if (next === undefined) throw new Error("scripted failure");
+            return { signal: null, ...next };
+          },
+          reportHookFailure: (...args: unknown[]) => reported.push(args),
+          exitDescription: evaluated(reportHookFailureSource("Probe"), "exitDescription", {}),
+        }),
         answerOf: async () => ({ text: answers.shift() ?? "", person: "" }),
         reportHookFailure: (...args: unknown[]) => reported.push(args),
       }

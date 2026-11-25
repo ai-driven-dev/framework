@@ -28,7 +28,8 @@ function exitDescription(code, signal) {
 /** The `runCapture` every awaited script of a bridge goes through: its exit code and signal, its
  * stdout and stderr, and the error it failed to run with, never rejecting. */
 export const RUN_CAPTURE_SOURCE = `/** Runs one hook script under node from the plugin's scripts folder, in the payload's directory,
- * with its payload on stdin, and collects what it wrote. */
+ * with its payload on stdin, and collects what it wrote. Never process.execPath: a host's own path
+ * need not be a Node runtime, and OpenCode's names its standalone binary. */
 function runCapture(script, args, payload, directory) {
   return new Promise((resolve) => {
     const failed = (error) => resolve({ error, code: null, signal: null, stdout: "", stderr: "" });
@@ -63,8 +64,26 @@ function runCapture(script, args, payload, directory) {
  * puts it in `additionalContext` on stdout, the person's message in `systemMessage`, and whether
  * the model must deal with it before going on in `required`. Any other
  * way a script ends is reported and answers nothing. Written once here, so both hosts' bridges
- * tell the model, and the person, the same thing. */
-export const ANSWER_OF_SOURCE = `/** The JSON a script printed on stdout, or an empty object when it printed none. */
+ * tell the model, and the person, the same thing; and `settledRun`, the one step every reader of a
+ * script (an answer, a Stop reason, a refusal) takes over `runCapture`, so each reports a failed
+ * script the same way. */
+export const ANSWER_OF_SOURCE = `/** A script's run, or null once a script that failed to run, or exited other than 0 or 2, is
+ * reported. */
+function settledRun(script, args, payload, directory) {
+  return runCapture(script, args, payload, directory).then((run) => {
+    if (run.error !== undefined) {
+      reportHookFailure(script, run.error);
+      return null;
+    }
+    if ((run.code !== 0 && run.code !== 2) || run.signal !== null) {
+      reportHookFailure(script, exitDescription(run.code, run.signal));
+      return null;
+    }
+    return run;
+  });
+}
+
+/** The JSON a script printed on stdout, or an empty object when it printed none. */
 function stdoutJson(stdout) {
   try {
     return JSON.parse(stdout) ?? {};
@@ -94,27 +113,19 @@ function answerFrom(code, stdout, stderr) {
 
 /** A script that fails to run, or exits other than 0 or 2, is reported and answers nothing. */
 function answerOf(script, args, payload, directory) {
-  return runCapture(script, args, payload, directory).then(({ error, code, signal, stdout, stderr }) => {
-    if (error !== undefined) {
-      reportHookFailure(script, error);
-      return NO_ANSWER;
-    }
-    if ((code !== 0 && code !== 2) || signal !== null) {
-      reportHookFailure(script, exitDescription(code, signal));
-      return NO_ANSWER;
-    }
-    return answerFrom(code, stdout, stderr);
-  });
+  return settledRun(script, args, payload, directory).then((run) =>
+    run === null ? NO_ANSWER : answerFrom(run.code, run.stdout, run.stderr)
+  );
 }`;
 
 /** The `stopReasonOf` of a bridge: the reason a Stop script gave to keep working and its message
- * for the person, read through `runCapture`; and `stopCallsFor`, an idle session's Stop calls.
+ * for the person, read through `settledRun`; and `stopCallsFor`, an idle session's Stop calls.
  * The host adds what it tracks itself, `stop_hook_active`, to each payload. */
 export const STOP_REASON_OF_SOURCE = `/** A Stop script's {"decision":"block","reason"} on stdout: the reason to keep working on. */
 function stopReasonOf(script, args, payload, directory) {
-  return runCapture(script, args, payload, directory).then(({ error, code, stdout }) => {
-    if (error !== undefined || code !== 0) return { reason: "", person: "" };
-    const output = stdoutJson(stdout);
+  return settledRun(script, args, payload, directory).then((run) => {
+    if (run === null || run.code !== 0) return { reason: "", person: "" };
+    const output = stdoutJson(run.stdout);
     const reason = output?.decision === "block" ? String(output.reason ?? "").trim() : "";
     return { reason, person: personOf(output) };
   });

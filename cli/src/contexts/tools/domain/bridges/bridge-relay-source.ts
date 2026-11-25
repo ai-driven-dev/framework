@@ -8,7 +8,7 @@ import { MATCHES_TOOL_SOURCE, TOOL_INPUT_SOURCE } from "./bridge-source.js";
 
 /** The calls of a tool use, before and after it runs. A PreToolUse script refuses the call it is
  * told of by exiting 2: its stderr is the reason the model reads. A script that fails to run, or
- * exits any other way, refuses nothing. A PostToolUse answer joins the tool's own output. */
+ * exits any other way, is reported and refuses nothing. A PostToolUse answer joins the tool's own output. */
 export const TOOL_USE_SOURCE = `${MATCHES_TOOL_SOURCE}
 
 /** Pure: a tool call -> every hook of one event whose matcher allows its tool. The host names the
@@ -42,8 +42,8 @@ function postToolUseCallsFor(call, directory) {
 /** The reason the first script that refuses gave, or null when none does. */
 async function refusalOf(calls) {
   for (const call of calls) {
-    const { code, stderr } = await runCapture(call.script, call.args, call.payload, call.payload.cwd);
-    if (code === 2) return stderr.trim();
+    const run = await settledRun(call.script, call.args, call.payload, call.payload.cwd);
+    if (run?.code === 2) return run.stderr.trim();
   }
   return null;
 }
@@ -136,20 +136,13 @@ async function addPromptContext(input, output, directory) {
  *
  * Limit: a SessionStart script that exits 2 has its stderr added to the system prompt, where
  * Claude Code shows it to the person only.
- * Limit: `session.deleted` clears a session's entry through `properties.sessionID`, a shape no
- * captured payload shows for either host; were it named otherwise, the entry would only stay in
- * memory, session ids being unique. */
+ * Limit: a session's entry is never cleared. No captured payload shows a session's deletion, so
+ * none is read; the entry stays in memory, session ids being unique. */
 export const SESSION_START_SOURCE = `const sessions = new Map();
 
 function runSessionStart(event, fallbackDirectory) {
   const named = event?.properties?.sessionID;
-  if (typeof named !== "string") return;
-  if (event.type === "session.deleted") {
-    sessions.delete(named);
-    continuedTurns.delete(named);
-    return;
-  }
-  if (sessions.has(named)) return;
+  if (typeof named !== "string" || sessions.has(named)) return;
   const directory = event.properties.info?.directory ?? fallbackDirectory;
   const answers = SESSION_START.map((hook) =>
     answerOf(hook.script, hook.args, { hook_event_name: "SessionStart", session_id: named, cwd: directory }, directory)
@@ -218,18 +211,23 @@ async function runStop(sessionId, directory, { client, method, show }) {
 }`;
 
 /** The hooks every bridge hands its host, over the host's own client: what differs per host is the
- * folder it starts in, the client call that sends a follow-up, which event ends a turn, where a
- * message for the person goes and whether a turn end's follow-ups are tracked. Every hook reports
- * a failure and never throws into the host, but a PreToolUse refusal, which is how the host stops
- * the call. */
-export const BRIDGE_HOOKS_SOURCE = `function bridgeHooks({ directory, client, followUp, endsTurn, show, track }) {
+ * folder it starts in, the client call that sends a follow-up, where a message for the person goes
+ * and whether a turn end's follow-ups are tracked. A turn ends at `session.idle`, on both hosts.
+ * Every hook that runs a script reports its failure and never throws into the host, but a
+ * PreToolUse refusal, which is how the host stops the call. The system-prompt hand-over runs none:
+ * it reads what SessionStart answered, which never rejects.
+ *
+ * Limit: every idle is a turn end. No capture shows a host idle twice in one turn; were it to,
+ * the second Stop would run told the turn continues when the first blocked, and as a fresh one
+ * when it did not. */
+export const BRIDGE_HOOKS_SOURCE = `function bridgeHooks({ directory, client, followUp, show, track }) {
   const folderOf = (sessionId) => sessionDirectory(sessionId, directory);
   return {
     event: async ({ event }) => {
       try {
         runSessionStart(event, directory);
         const sessionId = event?.properties?.sessionID;
-        if (typeof sessionId !== "string" || !endsTurn(event)) return;
+        if (typeof sessionId !== "string" || event.type !== "session.idle") return;
         const stopping = runStop(sessionId, folderOf(sessionId), { client, method: followUp, show });
         track?.(stopping.then((sends) => Promise.all(sends)));
         await stopping;

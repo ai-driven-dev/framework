@@ -163,18 +163,11 @@ describe("Kilo, through its bridge", () => {
     );
   });
 
-  // The bridge ends a turn at the next idle only after the session went busy again: that
-  // status is the bridge's own turn boundary, not a captured event.
   it("reads an idle session as Stop, continues it once, and reads the next one as a continuation", async () => {
     const ws = await workspace("kilo", kiloBridge());
     const [, first, second] = await captured("kilo-session.idle.json", ws.project);
     const { plugin, prompts } = await start(ws, { directory: ws.project });
-    const busy = {
-      type: "session.status",
-      properties: { sessionID: SESSION, status: { type: "busy" } },
-    };
     await plugin.event({ event: first });
-    await plugin.event({ event: busy });
     await plugin.event({ event: second });
 
     expect((await recorded(ws, 3)).filter((call) => call.event === "Stop")).toMatchObject([

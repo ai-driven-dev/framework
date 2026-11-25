@@ -301,7 +301,8 @@ function exitDescription(code, signal) {
 }
 
 /** Runs one hook script under node from the plugin's scripts folder, in the payload's directory,
- * with its payload on stdin, and collects what it wrote. */
+ * with its payload on stdin, and collects what it wrote. Never process.execPath: a host's own path
+ * need not be a Node runtime, and OpenCode's names its standalone binary. */
 function runCapture(script, args, payload, directory) {
   return new Promise((resolve) => {
     const failed = (error) => resolve({ error, code: null, signal: null, stdout: "", stderr: "" });
@@ -329,6 +330,22 @@ function runCapture(script, args, payload, directory) {
       // An argument spawn refuses (a NUL byte) throws before any child exists.
       failed(error);
     }
+  });
+}
+
+/** A script's run, or null once a script that failed to run, or exited other than 0 or 2, is
+ * reported. */
+function settledRun(script, args, payload, directory) {
+  return runCapture(script, args, payload, directory).then((run) => {
+    if (run.error !== undefined) {
+      reportHookFailure(script, run.error);
+      return null;
+    }
+    if ((run.code !== 0 && run.code !== 2) || run.signal !== null) {
+      reportHookFailure(script, exitDescription(run.code, run.signal));
+      return null;
+    }
+    return run;
   });
 }
 
@@ -362,24 +379,16 @@ function answerFrom(code, stdout, stderr) {
 
 /** A script that fails to run, or exits other than 0 or 2, is reported and answers nothing. */
 function answerOf(script, args, payload, directory) {
-  return runCapture(script, args, payload, directory).then(({ error, code, signal, stdout, stderr }) => {
-    if (error !== undefined) {
-      reportHookFailure(script, error);
-      return NO_ANSWER;
-    }
-    if ((code !== 0 && code !== 2) || signal !== null) {
-      reportHookFailure(script, exitDescription(code, signal));
-      return NO_ANSWER;
-    }
-    return answerFrom(code, stdout, stderr);
-  });
+  return settledRun(script, args, payload, directory).then((run) =>
+    run === null ? NO_ANSWER : answerFrom(run.code, run.stdout, run.stderr)
+  );
 }
 
 /** A Stop script's {"decision":"block","reason"} on stdout: the reason to keep working on. */
 function stopReasonOf(script, args, payload, directory) {
-  return runCapture(script, args, payload, directory).then(({ error, code, stdout }) => {
-    if (error !== undefined || code !== 0) return { reason: "", person: "" };
-    const output = stdoutJson(stdout);
+  return settledRun(script, args, payload, directory).then((run) => {
+    if (run === null || run.code !== 0) return { reason: "", person: "" };
+    const output = stdoutJson(run.stdout);
     const reason = output?.decision === "block" ? String(output.reason ?? "").trim() : "";
     return { reason, person: personOf(output) };
   });
@@ -440,8 +449,8 @@ function postToolUseCallsFor(call, directory) {
 /** The reason the first script that refuses gave, or null when none does. */
 async function refusalOf(calls) {
   for (const call of calls) {
-    const { code, stderr } = await runCapture(call.script, call.args, call.payload, call.payload.cwd);
-    if (code === 2) return stderr.trim();
+    const run = await settledRun(call.script, call.args, call.payload, call.payload.cwd);
+    if (run?.code === 2) return run.stderr.trim();
   }
   return null;
 }
@@ -522,13 +531,7 @@ const sessions = new Map();
 
 function runSessionStart(event, fallbackDirectory) {
   const named = event?.properties?.sessionID;
-  if (typeof named !== "string") return;
-  if (event.type === "session.deleted") {
-    sessions.delete(named);
-    continuedTurns.delete(named);
-    return;
-  }
-  if (sessions.has(named)) return;
+  if (typeof named !== "string" || sessions.has(named)) return;
   const directory = event.properties.info?.directory ?? fallbackDirectory;
   const answers = SESSION_START.map((hook) =>
     answerOf(hook.script, hook.args, { hook_event_name: "SessionStart", session_id: named, cwd: directory }, directory)
@@ -584,14 +587,14 @@ async function runStop(sessionId, directory, { client, method, show }) {
   return sends;
 }
 
-function bridgeHooks({ directory, client, followUp, endsTurn, show, track }) {
+function bridgeHooks({ directory, client, followUp, show, track }) {
   const folderOf = (sessionId) => sessionDirectory(sessionId, directory);
   return {
     event: async ({ event }) => {
       try {
         runSessionStart(event, directory);
         const sessionId = event?.properties?.sessionID;
-        if (typeof sessionId !== "string" || !endsTurn(event)) return;
+        if (typeof sessionId !== "string" || event.type !== "session.idle") return;
         const stopping = runStop(sessionId, folderOf(sessionId), { client, method: followUp, show });
         track?.(stopping.then((sends) => Promise.all(sends)));
         await stopping;
@@ -615,19 +618,8 @@ function bridgeHooks({ directory, client, followUp, endsTurn, show, track }) {
   };
 }
 
-// Sessions idle since they last reported themselves busy: a second idle of one turn is no turn end.
-const idleSessions = new Set();
-
-function endsTurn(event) {
-  const sessionId = event.properties.sessionID;
-  if (event.type === "session.status" && event.properties.status?.type === "busy") idleSessions.delete(sessionId);
-  if (event.type !== "session.idle" || idleSessions.has(sessionId)) return false;
-  idleSessions.add(sessionId);
-  return true;
-}
-
 const AiddContextKiloHooks = async ({ directory, client }) =>
-  bridgeHooks({ directory, client, followUp: "promptAsync", endsTurn });
+  bridgeHooks({ directory, client, followUp: "promptAsync" });
 
 export default { id: "aidd-context-hooks", server: AiddContextKiloHooks };
 
@@ -653,7 +645,8 @@ function exitDescription(code, signal) {
 }
 
 /** Runs one hook script under node from the plugin's scripts folder, in the payload's directory,
- * with its payload on stdin, and collects what it wrote. */
+ * with its payload on stdin, and collects what it wrote. Never process.execPath: a host's own path
+ * need not be a Node runtime, and OpenCode's names its standalone binary. */
 function runCapture(script, args, payload, directory) {
   return new Promise((resolve) => {
     const failed = (error) => resolve({ error, code: null, signal: null, stdout: "", stderr: "" });
@@ -681,6 +674,22 @@ function runCapture(script, args, payload, directory) {
       // An argument spawn refuses (a NUL byte) throws before any child exists.
       failed(error);
     }
+  });
+}
+
+/** A script's run, or null once a script that failed to run, or exited other than 0 or 2, is
+ * reported. */
+function settledRun(script, args, payload, directory) {
+  return runCapture(script, args, payload, directory).then((run) => {
+    if (run.error !== undefined) {
+      reportHookFailure(script, run.error);
+      return null;
+    }
+    if ((run.code !== 0 && run.code !== 2) || run.signal !== null) {
+      reportHookFailure(script, exitDescription(run.code, run.signal));
+      return null;
+    }
+    return run;
   });
 }
 
@@ -714,24 +723,16 @@ function answerFrom(code, stdout, stderr) {
 
 /** A script that fails to run, or exits other than 0 or 2, is reported and answers nothing. */
 function answerOf(script, args, payload, directory) {
-  return runCapture(script, args, payload, directory).then(({ error, code, signal, stdout, stderr }) => {
-    if (error !== undefined) {
-      reportHookFailure(script, error);
-      return NO_ANSWER;
-    }
-    if ((code !== 0 && code !== 2) || signal !== null) {
-      reportHookFailure(script, exitDescription(code, signal));
-      return NO_ANSWER;
-    }
-    return answerFrom(code, stdout, stderr);
-  });
+  return settledRun(script, args, payload, directory).then((run) =>
+    run === null ? NO_ANSWER : answerFrom(run.code, run.stdout, run.stderr)
+  );
 }
 
 /** A Stop script's {"decision":"block","reason"} on stdout: the reason to keep working on. */
 function stopReasonOf(script, args, payload, directory) {
-  return runCapture(script, args, payload, directory).then(({ error, code, stdout }) => {
-    if (error !== undefined || code !== 0) return { reason: "", person: "" };
-    const output = stdoutJson(stdout);
+  return settledRun(script, args, payload, directory).then((run) => {
+    if (run === null || run.code !== 0) return { reason: "", person: "" };
+    const output = stdoutJson(run.stdout);
     const reason = output?.decision === "block" ? String(output.reason ?? "").trim() : "";
     return { reason, person: personOf(output) };
   });
@@ -792,8 +793,8 @@ function postToolUseCallsFor(call, directory) {
 /** The reason the first script that refuses gave, or null when none does. */
 async function refusalOf(calls) {
   for (const call of calls) {
-    const { code, stderr } = await runCapture(call.script, call.args, call.payload, call.payload.cwd);
-    if (code === 2) return stderr.trim();
+    const run = await settledRun(call.script, call.args, call.payload, call.payload.cwd);
+    if (run?.code === 2) return run.stderr.trim();
   }
   return null;
 }
@@ -874,13 +875,7 @@ const sessions = new Map();
 
 function runSessionStart(event, fallbackDirectory) {
   const named = event?.properties?.sessionID;
-  if (typeof named !== "string") return;
-  if (event.type === "session.deleted") {
-    sessions.delete(named);
-    continuedTurns.delete(named);
-    return;
-  }
-  if (sessions.has(named)) return;
+  if (typeof named !== "string" || sessions.has(named)) return;
   const directory = event.properties.info?.directory ?? fallbackDirectory;
   const answers = SESSION_START.map((hook) =>
     answerOf(hook.script, hook.args, { hook_event_name: "SessionStart", session_id: named, cwd: directory }, directory)
@@ -936,14 +931,14 @@ async function runStop(sessionId, directory, { client, method, show }) {
   return sends;
 }
 
-function bridgeHooks({ directory, client, followUp, endsTurn, show, track }) {
+function bridgeHooks({ directory, client, followUp, show, track }) {
   const folderOf = (sessionId) => sessionDirectory(sessionId, directory);
   return {
     event: async ({ event }) => {
       try {
         runSessionStart(event, directory);
         const sessionId = event?.properties?.sessionID;
-        if (typeof sessionId !== "string" || !endsTurn(event)) return;
+        if (typeof sessionId !== "string" || event.type !== "session.idle") return;
         const stopping = runStop(sessionId, folderOf(sessionId), { client, method: followUp, show });
         track?.(stopping.then((sends) => Promise.all(sends)));
         await stopping;
@@ -967,19 +962,8 @@ function bridgeHooks({ directory, client, followUp, endsTurn, show, track }) {
   };
 }
 
-// Sessions idle since they last reported themselves busy: a second idle of one turn is no turn end.
-const idleSessions = new Set();
-
-function endsTurn(event) {
-  const sessionId = event.properties.sessionID;
-  if (event.type === "session.status" && event.properties.status?.type === "busy") idleSessions.delete(sessionId);
-  if (event.type !== "session.idle" || idleSessions.has(sessionId)) return false;
-  idleSessions.add(sessionId);
-  return true;
-}
-
 const AiddTelemetryKiloHooks = async ({ directory, client }) =>
-  bridgeHooks({ directory, client, followUp: "promptAsync", endsTurn });
+  bridgeHooks({ directory, client, followUp: "promptAsync" });
 
 export default { id: "aidd-telemetry-hooks", server: AiddTelemetryKiloHooks };
 

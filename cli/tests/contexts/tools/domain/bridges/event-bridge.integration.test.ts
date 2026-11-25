@@ -185,7 +185,7 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
     await emit(host.sessionStarted("s1", directory));
     const idle = { type: "session.idle", properties: { sessionID: "s1" } };
 
-    await emit(idle, ...host.nextTurn("s1"), idle);
+    await emit(idle, idle);
 
     expect(prompts).toMatchObject([
       { path: { id: "s1" }, body: { parts: [{ type: "text", text: "fix it" }] } },
@@ -226,10 +226,7 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
 
     // The host runs each queued follow-up as a turn of its own, handing every plugin its message.
     for (const sent of plugins.map((plugin) => plugin.prompts[0])) {
-      await turnOf(plugins, { sessionID: "shared" }, sent?.body.parts ?? [], [
-        ...host.nextTurn("shared"),
-        idle,
-      ]);
+      await turnOf(plugins, { sessionID: "shared" }, sent?.body.parts ?? [], [idle]);
     }
 
     expect(
@@ -328,6 +325,42 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
       [await of("fix.cjs"), await of("note.cjs"), await of("exit7.cjs")].map((c) => c.length)
     ).toEqual([0, 1, 1]);
   });
+
+  const FAILURES = [
+    { kind: "nonzero exit", error: "exited with code 7", input: (dir: string) => dir },
+    { kind: "spawn failure", error: "ENOENT", input: (dir: string) => join(dir, "absent") },
+  ];
+  const failedScript = (error: string) =>
+    expect.stringMatching(
+      new RegExp(`^\\[aidd\\] ${host.name} hook exit7\\.cjs failed: .*${error}`)
+    );
+
+  it.each(FAILURES)(
+    "reports a PreToolUse script's $kind, naming its host, and refuses nothing",
+    async ({ error, input }) => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+      const hooksJson = JSON.stringify({ hooks: { PreToolUse: [command("exit7.cjs")] } });
+      const { server } = await open(host, hooksJson, input);
+      const { call, output } = await beforeTool(host, "bash");
+
+      await expect(server["tool.execute.before"](call, output)).resolves.toBeUndefined();
+      expect(warn).toHaveBeenCalledWith(failedScript(error));
+    }
+  );
+
+  it.each(FAILURES)(
+    "reports a Stop script's $kind, naming its host, and sends no follow-up",
+    async ({ error, input }) => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+      const hooksJson = JSON.stringify({ hooks: { Stop: [command("exit7.cjs")] } });
+      const { emit, prompts } = await open(host, hooksJson, input);
+
+      await emit({ type: "session.idle", properties: { sessionID: "s1" } });
+
+      expect(prompts).toStrictEqual([]);
+      expect(warn).toHaveBeenCalledWith(failedScript(error));
+    }
+  );
 
   it("adds what a UserPromptSubmit script prints to the user's message, as a part of its own", async () => {
     const hooksJson = JSON.stringify({

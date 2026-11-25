@@ -75,8 +75,6 @@ export interface Host {
   readonly sessionStartId: string | null;
   /** The event that starts a session, on which the host fires SessionStart. */
   readonly sessionStarted: (id: string, directory: string) => unknown;
-  /** What a host needs between two idle events before the second is a new turn's. */
-  readonly nextTurn: (id: string) => unknown[];
 }
 
 export const HOSTS: readonly Host[] = [
@@ -89,7 +87,6 @@ export const HOSTS: readonly Host[] = [
       type: "session.created",
       properties: { sessionID: id, info: { id, directory } },
     }),
-    nextTurn: () => [],
   },
   {
     name: "Kilo",
@@ -100,9 +97,6 @@ export const HOSTS: readonly Host[] = [
       type: "session.created",
       properties: { sessionID: id, info: { directory } },
     }),
-    nextTurn: (id) => [
-      { type: "session.status", properties: { sessionID: id, status: { type: "busy" } } },
-    ],
   },
 ];
 
