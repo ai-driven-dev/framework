@@ -31,20 +31,6 @@ export function parseHooksJsonForBridge(rawHooksJson: string): BridgeHookTable {
   };
 }
 
-/** The generated modules' reading of a finished script: exit 2 puts the answer on stderr, exit 0
- * puts it in `additionalContext` on stdout, anything else says nothing. Written once here, so
- * both hosts' bridges tell the model the same thing. */
-const ANSWER_FROM_SOURCE = `function answerFrom(code, stdout, stderr) {
-  if (code === 2) return stderr.trim();
-  if (code !== 0) return "";
-  try {
-    const output = JSON.parse(stdout);
-    return String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim();
-  } catch {
-    return "";
-  }
-}`;
-
 /** A bridge with nothing to spawn is not a file worth writing. */
 export function replaysNothing(table: BridgeHookTable): boolean {
   return table.sessionStart.length + table.stop.length + table.postToolUse.length === 0;
@@ -74,96 +60,192 @@ function callTableDeclarations(table: BridgeHookTable): string {
   ].join("\n");
 }
 
-function padded(lines: readonly string[], indent: number): string {
-  return lines.map((line) => " ".repeat(indent) + line).join("\n");
+/** A PostToolUse answer joins the tool's own output. */
+// Written as a split literal to avoid biome's noTemplateCurlyInString warning.
+const APPEND_ANSWER_SOURCE = `if (answer) output.output = \`$${"{"}output.output ?? ""}\\n\\n$${"{"}answer}\`;`;
+
+/** What every generated module holds in common, written once so both hosts tell the model and
+ * the log the same things: spawning a script under node from the plugin's scripts folder, its
+ * failures, its answer (exit 2 puts it on stderr, exit 0 in `additionalContext` on stdout,
+ * anything else says nothing), a Stop script's block reason, the PostToolUse hooks a tool call
+ * matches, and the once-per-session SessionStart trigger.
+ *
+ * SessionStart runs on the first event that names a session, so the script knows its session.
+ * That event is `session.created` for a new session; a continued one is created no more, and its
+ * first event is another. A new session's first event names its folder under info; a continued
+ * one's names none. The set is module-level: the host creates the plugin again, and a fresh set
+ * would run it again. A matcher filters by tool name, exact or pipe-separated alternation,
+ * ignoring case, since the hosts name their tools in lowercase; absent, every tool matches. The
+ * hosts name the written file `filePath`; the scripts read Claude Code's `file_path`.
+ *
+ * Limit: `session.deleted` clears a session's entry through `properties.sessionID`, a shape no
+ * captured payload shows for either host; were it named otherwise, the entry would only stay in
+ * memory, session ids being unique. */
+function sharedRuntimeSource(label: string): string {
+  return `function reportHookFailure(script, error) {
+  console.warn("[aidd] ${label} hook " + script + " failed: " + String(error));
 }
 
-/** Spawns one hook script under node from the plugin's scripts folder, in the payload's directory. */
-function spawnHookSource(indent: number, stdio: string): string {
-  return padded(
-    [
-      'const child = spawn("node", [HOOKS_DIR + script, ...args], {',
-      "  cwd: directory,",
-      `  stdio: ${stdio},`,
-      "  timeout: 5000,",
-      "});",
-    ],
-    indent
-  );
+function reportFollowUpFailure(script, error) {
+  reportHookFailure(script, "follow-up not delivered: " + String(error));
 }
 
-/** Hands the payload to the script's stdin; a script that never reads it must not throw. */
-function feedStdinSource(indent: number): string {
-  return padded(
-    ['child.stdin.on("error", () => {});', "child.stdin.end(JSON.stringify(payload));"],
-    indent
-  );
+function exitDescription(code, signal) {
+  return "exited with code " + String(code) + (signal === null ? "" : " (" + signal + ")");
 }
 
-/** SessionStart runs once per session, on the first event that names it, so the script knows its
- * session. That event is `session.created` for a new session; a continued one is created no more,
- * and its first event is another. Module-level: the host creates the plugin again, and a fresh set
- * would run it again. */
-const SESSION_START_SOURCE = `function sessionStartCallsFor(sessionId, directory) {
-  return SESSION_START.map((hook) => ({
+// Fire and forget: a failed spawn (ENOENT, a killed timeout) or a script that never reads its
+// stdin reports once and never throws past this function.
+function runHook(script, args, payload, directory) {
+  const child = spawn("node", [HOOKS_DIR + script, ...args], {
+    cwd: directory,
+    stdio: ["pipe", "ignore", "ignore"],
+    timeout: 5000,
+  });
+  let reported = false;
+  const report = (error) => {
+    if (reported) return;
+    reported = true;
+    reportHookFailure(script, error);
+  };
+  child.on("error", report);
+  child.on("close", (code, signal) => {
+    if (code !== 0 || signal !== null) report(exitDescription(code, signal));
+  });
+  child.stdin.on("error", report);
+  child.stdin.end(JSON.stringify(payload));
+}
+
+/** Runs one hook script with its payload on stdin and collects what it wrote. */
+function runCapture(script, args, payload, directory) {
+  return new Promise((resolve) => {
+    let stdout = "";
+    let stderr = "";
+    const child = spawn("node", [HOOKS_DIR + script, ...args], {
+      cwd: directory,
+      stdio: ["pipe", "pipe", "pipe"],
+      timeout: 5000,
+    });
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk;
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk;
+    });
+    child.on("error", (error) => resolve({ error, code: null, signal: null, stdout: "", stderr: "" }));
+    child.on("close", (code, signal) => resolve({ code, signal, stdout, stderr }));
+    child.stdin.on("error", () => {});
+    child.stdin.end(JSON.stringify(payload));
+  });
+}
+
+function answerFrom(code, stdout, stderr) {
+  if (code === 2) return stderr.trim();
+  if (code !== 0) return "";
+  try {
+    const output = JSON.parse(stdout);
+    return String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim();
+  } catch {
+    return "";
+  }
+}
+
+// Awaited, unlike runHook: the script has something the model must read.
+function answerOf(script, args, payload, directory) {
+  return runCapture(script, args, payload, directory).then(({ error, code, signal, stdout, stderr }) => {
+    if (error !== undefined) {
+      reportHookFailure(script, error);
+      return "";
+    }
+    if ((code !== 0 && code !== 2) || signal !== null) {
+      reportHookFailure(script, exitDescription(code, signal));
+      return "";
+    }
+    return answerFrom(code, stdout, stderr);
+  });
+}
+
+/** A Stop script's {"decision":"block","reason"} on stdout: the reason to keep working on. */
+function stopReasonOf(script, args, payload, directory) {
+  return runCapture(script, args, payload, directory).then(({ error, code, stdout }) => {
+    if (error !== undefined || code !== 0) return "";
+    try {
+      const output = JSON.parse(stdout);
+      return output?.decision === "block" ? String(output.reason ?? "").trim() : "";
+    } catch {
+      return "";
+    }
+  });
+}
+
+/** Pure: a finished tool call -> every PostToolUse hook whose matcher allows its tool. */
+function postToolUseCallsFor(call, directory) {
+  const tool = String(call?.tool ?? "");
+  const args = call?.args;
+  const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;
+  return POST_TOOL_USE.filter(
+    (hook) => !hook.matcher || hook.matcher.split("|").some((name) => name.toLowerCase() === tool.toLowerCase())
+  ).map((hook) => ({
     script: hook.script,
     args: hook.args,
-    payload: { hook_event_name: "SessionStart", session_id: sessionId, cwd: directory },
+    payload: {
+      hook_event_name: "PostToolUse",
+      session_id: call?.sessionID ?? null,
+      cwd: directory,
+      tool_name: tool,
+      tool_input: toolInput,
+    },
   }));
 }
 
 const started = new Set();
 
-/** The first event naming a session -> its SessionStart calls; any later one -> \`[]\`. A new
- * session's first event names its folder under info; a continued one's names none. */
-function sessionStartOnce(event, fallbackDirectory) {
+function runSessionStart(event, fallbackDirectory) {
   const named = event?.properties?.sessionID;
-  if (typeof named !== "string") return [];
+  if (typeof named !== "string") return;
   if (event.type === "session.deleted") {
     started.delete(named);
-    return [];
+    return;
   }
-  if (started.has(named)) return [];
+  if (started.has(named)) return;
   started.add(named);
-  return sessionStartCallsFor(named, event.properties.info?.directory ?? fallbackDirectory);
+  const directory = event.properties.info?.directory ?? fallbackDirectory;
+  for (const hook of SESSION_START) {
+    runHook(hook.script, hook.args, { hook_event_name: "SessionStart", session_id: named, cwd: directory }, directory);
+  }
 }`;
+}
 
-/** The hosts name the written file `filePath`; the scripts read Claude Code's `file_path`. */
-const TOOL_INPUT_SOURCE =
-  'const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;';
-
-/** A Stop script's `{"decision":"block","reason"}`: the reason to keep working on, else nothing. */
-const STOP_REASON_SOURCE = 'output?.decision === "block" ? String(output.reason ?? "").trim() : ""';
-
-/** A PostToolUse answer joins the tool's own output. */
-// Written as a split literal to avoid biome's noTemplateCurlyInString warning.
-const APPEND_ANSWER_SOURCE = `if (answer) output.output = \`$${"{"}output.output ?? ""}\\n\\n$${"{"}answer}\`;`;
+/** Said once in every generated Stop handler. */
+const STOP_LIMIT_SOURCE =
+  "// Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.";
 
 /** What a host's module template composes its generated module from: the pieces every bridge
  * writes the same way. What the host writes itself is its event table, its export descriptor and
- * how it reports a failed script. */
+ * how its events reach the Stop and PostToolUse handlers. */
 export interface BridgeParts {
   readonly plugin: string;
   readonly identifier: string;
-  /** The `spawn` and `fileURLToPath` imports the spawning code below reads. */
+  /** The `spawn` and `fileURLToPath` imports the spawning code reads. */
   readonly nodeImports: string;
   readonly hooksDir: string;
   readonly callTables: string;
-  /** The generated `sessionStartOnce(event, fallbackDirectory)`, over the `SESSION_START` table. */
-  readonly sessionStart: string;
-  /** The generated `answerFrom`: exit 2 puts the answer on stderr, exit 0 in `additionalContext`. */
-  readonly answerFrom: string;
-  readonly toolInput: string;
-  readonly stopReason: string;
+  /** Every function the hosts share: `runHook`, `answerOf`, `stopReasonOf`, `postToolUseCallsFor`,
+   * `reportHookFailure`, `reportFollowUpFailure` and `runSessionStart(event, fallbackDirectory)`. */
+  readonly shared: string;
+  readonly stopLimit: string;
   readonly appendAnswer: string;
-  spawnHook(indent: number, stdio: string): string;
-  feedStdin(indent: number): string;
 }
 
 /** A plugin's raw hooks.json for one host, or `null` when no mapped event names anything
  * replayable: a bridge with nothing to spawn is not a file worth writing. */
 export function generateBridge<R>(
-  host: { readonly identifierSuffix: string; render(parts: BridgeParts): R },
+  host: {
+    readonly identifierSuffix: string;
+    /** How the host is named in what its modules log. */
+    readonly label: string;
+    render(parts: BridgeParts): R;
+  },
   rawHooksJson: string,
   plugin: string
 ): R | null {
@@ -175,13 +257,9 @@ export function generateBridge<R>(
     nodeImports: NODE_IMPORTS_SOURCE,
     hooksDir: hooksDirDeclaration(plugin),
     callTables: callTableDeclarations(table),
-    sessionStart: SESSION_START_SOURCE,
-    answerFrom: ANSWER_FROM_SOURCE,
-    toolInput: TOOL_INPUT_SOURCE,
-    stopReason: STOP_REASON_SOURCE,
+    shared: sharedRuntimeSource(host.label),
+    stopLimit: STOP_LIMIT_SOURCE,
     appendAnswer: APPEND_ANSWER_SOURCE,
-    spawnHook: spawnHookSource,
-    feedStdin: feedStdinSource,
   });
 }
 

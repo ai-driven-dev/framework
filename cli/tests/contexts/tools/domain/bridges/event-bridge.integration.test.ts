@@ -249,6 +249,22 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
     ).toEqual(["note.cjs", "fix.cjs"]);
   });
 
+  it("reports a PostToolUse script that exits abnormally, naming its host, and leaves the output alone", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const hooksJson = JSON.stringify({
+      hooks: { PostToolUse: [{ matcher: "Edit", ...command("exit7.cjs") }] },
+    });
+    const { tool } = await open(host, hooksJson);
+
+    expect(await tool("edit")).toBe("done");
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringMatching(
+        new RegExp(`^\\[aidd\\] ${host.name} hook exit7\\.cjs failed: exited with code 7`)
+      )
+    );
+  });
+
   it("lets a script that never reads its payload exit without breaking the host", async () => {
     const { tool } = await open(host);
     // A write to a script that has gone is an uncaught error in this process, which the runner
