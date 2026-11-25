@@ -22,6 +22,5 @@ Facts the writer cannot enforce:
 
 - An Antigravity agent holds only the tools its `tools` list names, and an unknown name may hang it. `aidd translate` writes agy's own names, mapped from the Claude ones in the Antigravity profile (`cli/src/composition/tool-profiles/antigravity.ts`): an agent declaring no `tools` gets every mapped tool, one declaring a Claude tool with no agy name loses it. `write-agent.cjs` passes the declared names through unmapped, so an Antigravity agent it writes should list agy names.
 - The Codex `workspace-write` sandbox denies writes under `.agents/`, so an Antigravity target fails when run from Codex.
-- A Kiro agent always gets tools `*`, so a declared `tools` list is reported as dropped while the grant widens to every tool.
 
 Sources: [Claude](https://code.claude.com/docs/en/sub-agents), [Cursor](https://cursor.com/docs/subagents), [Copilot](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference#custom-agent-frontmatter-fields), [Antigravity](https://antigravity.google/docs/subagents), [Codex](https://developers.openai.com/codex/subagents), [OpenCode V2](https://opencode.ai/v2/docs/agents), [Kilo](https://kilo.ai/docs/customize/custom-subagents), [Kiro](https://kiro.dev/docs/custom-agents/configuration-reference/), [Kimi](https://www.kimi.com/code/docs/en/kimi-code-cli/customization/agents).
