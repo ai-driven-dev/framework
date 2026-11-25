@@ -4,7 +4,8 @@
  * so each captured argument goes through the real bridge into a hook that speaks only the
  * neutral interface, with the adapter where the build puts it. Both hosts ship one adapter source
  * and one bridge body, so what the adapter reads is held once, on Kilo; only the host each adapter
- * names is held per host. What the bridge body does with an answer is event-bridge.integration's.
+ * names is held per host. What the bridge body does with an answer is event-bridge.integration's,
+ * but how SessionStart joins its answers, which needs the adapter's answer to show.
  */
 
 import { join } from "node:path";
