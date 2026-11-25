@@ -84,12 +84,14 @@ function reportConfiguredModels(
 
 function reportKeptModels(report: AgentModelsReport, unchanged: string): void {
   report.output.success(
-    `Models on each tool's saved provider, else its first, ${EVERY_PROJECT}${unchanged}:`
+    `Models on each tool's saved choice, else its first provider, ${EVERY_PROJECT}${unchanged}:`
   );
   for (const host of report.hosts) {
-    // Map.get may answer nothing; the use case sets every host's provider or throws.
     const provider = report.main.chosen.get(host);
-    if (provider === undefined) continue;
+    if (provider === undefined) {
+      report.output.info(`  ${host} on the IDE's model`);
+      continue;
+    }
     report.output.info(`  ${host} on ${provider}`);
     reportHostModels(report, host, provider);
   }

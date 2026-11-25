@@ -9,7 +9,8 @@ export interface RecordAgentProvidersRequest {
   readonly hosts: readonly AiToolId[];
   /** Absent, every host saves the choice of no provider. */
   readonly provider?: string;
-  /** Each host keeps the provider saved for it, or takes its tool's first where none is saved.
+  /** Each host keeps the provider saved for it, a host saved on no provider stays on the IDE's
+   * model, and a host never set takes its tool's first.
    * Wins over an absent `provider`, which would make every host forget its own. */
   readonly keepSaved?: boolean;
 }

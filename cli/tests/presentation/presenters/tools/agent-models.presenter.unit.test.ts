@@ -126,7 +126,7 @@ describe("reporting agent models", () => {
       });
 
       expect(output.lines).toEqual([
-        "Models on each tool's saved provider, else its first, for every project on this machine; main session unchanged:",
+        "Models on each tool's saved choice, else its first provider, for every project on this machine; main session unchanged:",
         `  ${OPENAI_TOOL} on openai`,
         `  ${OPENAI_TOOL} reviewer: gpt-6.1-sol (high)`,
         `  ${OPENAI_TOOL} explorer, executor, validator: gpt-6-luna (medium)`,
@@ -136,6 +136,18 @@ describe("reporting agent models", () => {
         "Agents installed later get these models too.",
         `Other projects follow at their next install; to update the agents they already have, run \`aidd setup --ide ${OPENAI_TOOL},${SECOND_SYNTHETIC_TOOL} --agents-only\` there.`,
       ]);
+    });
+
+    it("says a tool saved on no provider stays on the IDE's model", () => {
+      const output = reported({
+        agentsOnly: true,
+        keepSaved: true,
+        provider: undefined,
+        hosts: [OPENAI_TOOL, SECOND_SYNTHETIC_TOOL],
+        main: { ...NO_CHANGE, chosen: new Map([[OPENAI_TOOL, "openai"]]) },
+      });
+
+      expect(output.lines).toContain(`  ${SECOND_SYNTHETIC_TOOL} on the IDE's model`);
     });
 
     it("gives the agents back the IDE's model without a word about the main session", () => {
