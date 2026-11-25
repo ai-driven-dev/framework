@@ -7,7 +7,7 @@ Which hosts a project has installed.
 | Claude Code    | `.claude/` or `CLAUDE.md`         |
 | Cursor         | `.cursor/`                        |
 | OpenCode       | `.opencode/`, `opencode.json` or `opencode.jsonc` |
-| GitHub Copilot | `.github/copilot-instructions.md` or `.github/instructions/` |
+| GitHub Copilot | `.github/copilot-instructions.md` or `.github/{instructions,agents,skills,prompts}/` |
 | Codex CLI      | `.codex/`                         |
 | Kilo Code      | `.kilo/`, `kilo.json` or `kilo.jsonc` |
 | Kiro           | `.kiro/`                          |

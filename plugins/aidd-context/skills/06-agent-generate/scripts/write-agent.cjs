@@ -60,7 +60,7 @@ const HOSTS = {
   },
   antigravity: {
     path: (name) => `.agents/agents/${name}/agent.md`,
-    fields: (a) => ({ name: a.name, description: a.description, model: "inherit", tools: toolList(a.tools) }),
+    fields: (a) => ({ name: a.name, description: a.description, model: "inherit", tools: antigravityTools(a.tools) }),
     uses: ["tools"],
   },
   codex: {
@@ -181,6 +181,16 @@ function kimiTools(tools) {
   return [...new Set(named)];
 }
 
+// agy's own name for each Claude tool, as in the CLI's Antigravity profile. An agent holds only the tools it names, so none declared lists every mapped tool, and a tool with no agy name (an MCP tool included) is left out.
+const ANTIGRAVITY_TOOLS = new Map([
+  ["Read", "view_file"], ["Grep", "grep_search"], ["Edit", "replace_file_content"], ["Write", "write_file"], ["Bash", "run_command"],
+]);
+
+function antigravityTools(tools) {
+  const declared = toolList(tools) ?? [...ANTIGRAVITY_TOOLS.keys()];
+  return [...new Set(declared.flatMap((tool) => ANTIGRAVITY_TOOLS.get(tool) ?? []))];
+}
+
 function yamlScalar(value) {
   if (typeof value === "boolean") return String(value);
   const plain = PLAIN_SCALAR.test(value) && !value.endsWith(" ") && !YAML_KEYWORD.test(value);
@@ -294,4 +304,4 @@ function run() {
 
 if (require.main === module) run();
 
-module.exports = { TOOLS, KIMI_TOOLS };
+module.exports = { TOOLS, KIMI_TOOLS, ANTIGRAVITY_TOOLS };

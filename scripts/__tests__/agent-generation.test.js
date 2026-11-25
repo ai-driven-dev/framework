@@ -51,7 +51,7 @@ test("renders each host's native file from the CLI mapping", (t) => {
   assert.equal(read(".kiro/agents/code-reviewer.md"), `---\nname: code-reviewer\ndescription: ${desc}\ntools:\n  - "*"\n---\n\n${body}`);
   assert.equal(read(".kimi-code/agents/code-reviewer.md"), `---\nname: code-reviewer\ndescription: ${desc}\ntools:\n  - Read\n  - Grep\n---\n\n${body}`);
   assert.equal(read(".github/agents/code-reviewer.agent.md"), `---\nname: code-reviewer\ndescription: ${desc}\nmodel: sonnet\nreasoningEffort: high\ninclude-custom-instructions: true\n---\n\n${body}`);
-  assert.equal(read(".agents/agents/code-reviewer/agent.md"), `---\nname: code-reviewer\ndescription: ${desc}\nmodel: inherit\ntools:\n  - Read\n  - Grep\n---\n\n${body}`);
+  assert.equal(read(".agents/agents/code-reviewer/agent.md"), `---\nname: code-reviewer\ndescription: ${desc}\nmodel: inherit\ntools:\n  - view_file\n  - grep_search\n---\n\n${body}`);
   assert.equal(read(".codex/agents/code-reviewer.toml"), `name = "code-reviewer"\ndescription = "${desc}"\nmodel = "sonnet"\nmodel_reasoning_effort = "high"\ndeveloper_instructions = '''\n${body}'''\n`);
 });
 
@@ -114,6 +114,24 @@ test("the Kimi tool table equals the one the CLI's Kimi profile holds", () => {
   const pairs = [...block.matchAll(/\["([^"]+)", "([^"]+)"\]/g)].map(([, claude, kimi]) => [claude, kimi]);
   assert.ok(pairs.length > 0);
   assert.deepEqual([...require(path.join(skill, "scripts/write-agent.cjs")).KIMI_TOOLS], pairs);
+});
+
+test("the Antigravity tool table equals the one the CLI's Antigravity profile holds", () => {
+  const profile = fs.readFileSync(path.resolve(__dirname, "../../cli/src/composition/tool-profiles/antigravity.ts"), "utf8");
+  const blockMatch = profile.match(/const AGENT_TOOLS[^=]*= new Map\(\[([\s\S]*?)\]\);/);
+  assert.ok(blockMatch, "antigravity profile AGENT_TOOLS map not found");
+  const pairs = [...blockMatch[1].matchAll(/\["([^"]+)", "([^"]+)"\]/g)].map(([, claude, agy]) => [claude, agy]);
+  assert.ok(pairs.length > 0);
+  assert.deepEqual([...require(path.join(skill, "scripts/write-agent.cjs")).ANTIGRAVITY_TOOLS], pairs);
+});
+
+test("an Antigravity agent lists agy names, drops a tool with none, and lists every mapped tool when it declares none", (t) => {
+  const { run, read } = fixture(t);
+  const listed = () => read(".agents/agents/scout/agent.md").match(/tools:\n((?:  - .+\n)+)/)[1].trimEnd().split("\n").map((line) => line.slice(4));
+  assert.equal(run({ name: "scout", description: "Finds files. Use to locate code.", tools: "Read, Glob, Bash, mcp__x__y, Read", body: "x\n" }, "antigravity").status, 0);
+  assert.deepEqual(listed(), ["view_file", "run_command"]);
+  assert.equal(run({ name: "scout", description: "Finds files. Use to locate code.", body: "x\n" }, "antigravity", ["--force"]).status, 0);
+  assert.deepEqual(listed(), ["view_file", "grep_search", "replace_file_content", "write_file", "run_command"]);
 });
 
 test("a Kimi agent lists the tools the CLI's Kimi build lists for the same declaration", (t) => {
