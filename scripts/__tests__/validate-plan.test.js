@@ -124,6 +124,7 @@ describe("validate-plan", () => {
     ["an unknown section", "plan.md", (s) => `${s}\n## Extra\n`, /section "Extra" is not in the template/],
     ["sections out of order", "plan.md", (s) => s.replace("## Rules", "## Zzz").replace("## Impact", "## Rules").replace("## Zzz", "## Impact"), /out of order/],
     ["a table header renamed", "plan.md", (s) => s.replace("| Rule ", "| Law  "), /table header differs/],
+    ["a decision without its rule reference column", "plan.md", (s) => s.replace(/\| Decision .*\n\|.*\n/, "| Decision | Why |\n| --- | --- |\n"), /section "Decisions": table header differs/],
     ["a front matter key missing", "plan.md", (s) => s.replace(/objective:.*\n/, ""), /front matter key "objective" missing/],
     ["a front matter value changed", "phase-1.md", (s) => s.replace("status: pending", "status: done"), /"status" must be "pending"/],
     ["an empty objective", "plan.md", (s) => s.replace(/objective:.*\n/, 'objective: ""\n'), /"objective" empty/],
@@ -145,6 +146,11 @@ describe("validate-plan", () => {
 
   it("accepts an omitted optional section and a placeholder inside code", () => {
     const files = mutate("plan.md", (s) => s.replace(/## Rules[\s\S]*?(?=## Decisions)/, "").replace("Source: x", "Source: `{{kept}}`"));
+    assert.match(run(files).out, /^VALID$/);
+  });
+
+  it("accepts a plan with no decision, so no rule influence is invented", () => {
+    const files = mutate("plan.md", (s) => s.replace(/## Decisions[\s\S]*$/, ""));
     assert.match(run(files).out, /^VALID$/);
   });
 

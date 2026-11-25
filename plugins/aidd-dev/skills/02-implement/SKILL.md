@@ -24,5 +24,6 @@ Read an action's file, then do what it says.
 
 - Speak only to ask or to give the final reply; otherwise call tools.
 - Code only: the plan is never rewritten.
+- Rule influence is read from the plan's `## Decisions`, never inferred afterwards nor written as comments in source.
 - Push only when asked.
 - Do what a hook asks; never bypass one.
