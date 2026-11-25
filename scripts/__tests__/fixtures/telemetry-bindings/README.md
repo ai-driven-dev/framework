@@ -1,7 +1,7 @@
 # telemetry-bindings
 
-The contract between the `aidd` CLI, which writes task declarations, and the plugin hooks, which
-read them. Neither side may change a format or a rule below without changing this folder, and
+The contract between the `aidd` CLI, which writes and reads task declarations, and the plugin hooks,
+which read a branch's declaration and the consent. Neither side may change a format or a rule below without changing this folder, and
 both sides test against it: a CLI unit test and a hook test read the same files and must
 return the same answers as `expected.json`.
 
@@ -11,8 +11,8 @@ Everything here is synthetic. Session ids, paths and names are made up.
 
 | File | Holds |
 | --- | --- |
-| `sessions.jsonl` | one declaration per line, append-only: `{session_id, task, ticket, none, declared_at, by}` |
-| `carries.jsonl` | one carry per line: `{session_id, from, at}`, the new session taking the binding of `from` as it stood at `at` |
+| `sessions.jsonl` | one declaration per line, append-only: `{session_id, task, ticket, none, declared_at, by}`; read by the CLI only |
+| `carries.jsonl` | one carry per line: `{session_id, from, at}`, the new session taking the binding of `from` as it stood at `at`; written by earlier hooks, read by the CLI only |
 | `cases.json` | the inputs of every case, by section |
 | `expected.json` | the answer to every case, under the same section and case name |
 
@@ -24,10 +24,7 @@ answer, or an answer with no case, is an error.
 - `sessions.jsonl` lives in `<telemetry dir>/bindings/`, `carries.jsonl` next to it. A line that
   is not a JSON object with exactly these fields is skipped, never guessed at.
 - `task` is `null` when `none` is `true`. `ticket` is `null` when none was given. `declared_at` and
-  `at` are ISO 8601 UTC instants. `by` is `command` or `hook-intercept`.
-- The CLI marks a declaration made on a user's behalf by a hook with its hidden option
-  `--by hook-intercept`. A manual declaration is `command`. It is an option, not an environment
-  variable: an exported variable would silently relabel every manual declaration.
+  `at` are ISO 8601 UTC instants. `by` is `command`, or `hook-intercept` as earlier hooks wrote it.
 - A branch declaration is four git config keys, written with `--local`:
   `branch.<name>.aiddTask`, `branch.<name>.aiddTicket`, `branch.<name>.aiddDeclaredFor` (the
   branch name itself) and, last, `branch.<name>.aiddDeclaredAt`. A branch is declared only when
@@ -40,7 +37,7 @@ answer, or an answer with no case, is an error.
 
 ## Rules each case section pins
 
-- `binding`: is a session, at an instant, bound, and to what. Precedence: a declaration of the
+- `binding`: only the CLI test executes it. Is a session, at an instant, bound, and to what. Precedence: a declaration of the
   session effective at that instant (the latest `declared_at` not after it, the later line
   winning a tie), then a carry (resolved from the carried session's binding at the carry's
   own time, following chains, a cycle binding nothing), then the branch. A branch is read only
