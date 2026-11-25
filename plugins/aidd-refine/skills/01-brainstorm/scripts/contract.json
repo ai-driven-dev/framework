@@ -1,5 +1,4 @@
 {
-  "version": 1,
   "kind": "brainstorm",
   "unit": "file",
   "scope": ["aidd_docs/**/brainstorm.md"],

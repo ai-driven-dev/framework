@@ -1,6 +1,8 @@
 ---
 id: brand
 kind: brand
+status: proposed
+version: 1
 ---
 
 # Brand

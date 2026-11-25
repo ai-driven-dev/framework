@@ -22,12 +22,15 @@ export interface PluginWritten {
   /** The plugin's MCP declaration, plugin-root references resolved into the output, when a flat
    * build needs it for the tool's config. */
   readonly declaredMcp: string | null;
+  /** The glob listing the plugin's rules, when a flat build placed any, for the tool's config. */
+  readonly rulesGlob: string | null;
 }
 
 /** A plugin once written, as the close of the tree sees it. */
 export interface BuiltPlugin {
   readonly name: string;
   readonly declaredMcp?: string | null;
+  readonly rulesGlob?: string | null;
 }
 
 /** Where a build puts its output: prepare the directory, write each plugin, then close the tree. */

@@ -75,6 +75,49 @@ flowchart LR
 6. Write only what the target tool supports.
 7. Delegate agent work by responsibility, never by agent name.
 
+## Contracts
+
+A contract states the shape of the files a skill writes, so a script judges it, never a model. One engine, `scripts/check/engine/`, reads every contract; the skill carries a copy to validate its own output, the hook another to recheck it at turn end.
+
+| Key | Holds |
+| --- | --- |
+| `kind` | the rule ID prefix: `spec` gives `SPEC-01` |
+| `unit` | `file`, or `folder` judged as one artifact |
+| `marker` | the file that makes a folder an artifact, required for `folder` |
+| `scope` | where the artifacts live in a user's project; the hook judges only these |
+| `targets` | where they live in this repository; CI judges only these |
+| `shell` | `false` when an install writes the kind: a shell turn then judges only the files a command names |
+| `watch` | the paths whose change reruns every target in a scoped run |
+| `rules` | each rule by ID |
+
+| Rule key | Holds |
+| --- | --- |
+| `op` | the check, from the table below |
+| `in` | the files of the unit the rule judges; required for `folder`, every file by default |
+| `notIn` | the files it skips |
+| `fix` | the only text the agent reads: what to do, never why |
+| `why` | for the maintainer, never printed |
+
+| Op | Fails when |
+| --- | --- |
+| `template` | the file breaks its template; `optional` names the fields and sections it may omit, `values` a field's allowed values |
+| `pattern` | `regex` misses a `field`, a `line` or a prose line, or every one with `any` |
+| `forbidden` | `regex` matches one |
+| `max` | a value is over `max` chars, or the file over `max` lines |
+| `equals` | a field differs from `to`, the file's basename or its folder |
+| `sections` | a heading at `level` is not `allowed`, out of `order`, or a `required` one is missing |
+| `oneSentence` | a bullet in `sections` holds two sentences |
+| `flatList` | a list in `sections` nests |
+| `links` | a relative link resolves nowhere, or, with `inside`, outside the unit |
+| `json` | the file breaks `schema` |
+| `custom` | `scripts/custom/<check>.cjs` returns hits: a judgment no op states |
+
+- A shared op covers a check two contracts need; one contract's own judgment is `custom`.
+- A custom check gets the file's `lines`, `prose` and front matter, may call `shape` from `lib/ops.cjs`, and returns `{ line, offending, fix }` per hit.
+- A contract loads only when each template, custom check and schema it names exists, each `optional` name is in its template, and each `regex` compiles.
+- A test fails on a rule no fixture makes fire, and on a custom script no rule reaches.
+- A contract stays in the skill that writes the kind. Add one: copy `plugins/aidd-pm/skills/02-user-stories/scripts/`, then run `node scripts/check/engine/sync.cjs`.
+
 ## Hooks
 
 The contract for the framework's own hooks, not for a hook a user generates with `aidd-context:08-hook-generate`. `aidd-context`, `aidd-dev`, `aidd-pm` and `aidd-telemetry` follow it; `aidd-ui` adopts it in its own change.

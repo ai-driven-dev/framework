@@ -84,10 +84,13 @@ function continueTurn(text) {
   print({ decision: "continue", reason: text });
 }
 
-// `agy` takes no context from a SessionStart or a PostToolUse answer (an injection goes through
-// PostInvocation, which is not relayed), so only a Stop answers.
+/** A Stop answer continues the turn. A SessionStart answer is an injected system message, which
+ * `agy` hands the model before its first call. A PostToolUse answer is never carried: `agy` takes
+ * no context from it. */
 function answer({ text } = {}) {
-  if (current?.event === "Stop") continueTurn(text);
+  if (current?.event === "Stop") return continueTurn(text);
+  if (current?.event !== "SessionStart" || typeof text !== "string" || text === "") return;
+  print({ injectSteps: [{ systemMessage: { systemMessage: text } }] });
 }
 
 module.exports = { readEvent, answer, continueTurn };

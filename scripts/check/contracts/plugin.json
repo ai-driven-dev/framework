@@ -1,5 +1,4 @@
 {
-  "version": 1,
   "kind": "plugin",
   "unit": "file",
   "targets": "plugins/*/.claude-plugin/plugin.json",
