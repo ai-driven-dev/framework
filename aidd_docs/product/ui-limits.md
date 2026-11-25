@@ -2,7 +2,9 @@
 
 > For: maintainers and hook authors. What the aidd-ui engine and its hook do not cover. How to use the plugin: [plugin README](../../plugins/aidd-ui/README.md).
 
-- The frames of a set page are not sandboxed: a variant's render runs as written.
+- The showcase's frames are not sandboxed, but a journey's thumbnails: a render runs as written, with its page's access to the review and the verdicts it stores.
+- `showcase` does not run `validate`. A record whose id is not its file name, or is another record's, gets a wrong or shared page, and an id written as a list stops it with a stack trace. An id naming a folder makes it refuse. `validate` names all three (R4).
+- `bump` migrates no history table from before its Fingerprint column: such a table gets rows one cell longer than its header.
 - A set page is a file to open, with no server. Its feedback is copied and pasted in the chat, in any browser.
 - The hook command names `${CLAUDE_PLUGIN_ROOT}` unquoted, and the OpenCode and Kilo bridges replay only that form: a plugin path with spaces breaks it.
 - Cursor: the stop is proven on a payload, not in `-p`.

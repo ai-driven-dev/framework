@@ -22,6 +22,7 @@ The output of [prepare](01-prepare.md).
      - Keep: a candidate as it is.
      - Discard: out.
      - Revise: a lead whose comment says what to change.
+     - No verdict: not looked at, so ask before deciding.
      - Several kept: keep the one with fewer states.
      - Only revise: revise per the comments, then write the showcase again.
    - Keep the chosen variant per [engine](../references/engine.md).

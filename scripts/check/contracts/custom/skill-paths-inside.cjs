@@ -2,6 +2,7 @@
 // No path a skill's prose names in backticks climbs out of that skill. Anchor: marketplace.json.
 // A skill installs both flat and as a marketplace, under tool folders that differ, so only a path inside the skill holds in every copy.
 // Markdown links are SKILL-21's. Resolved from the file that names the path, as a relative link is.
+// Only a word starting with `../` is read: one wrapped in punctuation, starting with `./../`, or written from the repository root or `${CLAUDE_PLUGIN_ROOT}` is not.
 const fs = require("node:fs");
 const path = require("node:path");
 const { trackedFiles } = require("./no-local-paths.cjs");
