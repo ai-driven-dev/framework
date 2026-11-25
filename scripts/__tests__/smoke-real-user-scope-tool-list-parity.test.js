@@ -15,21 +15,30 @@ const ROOT = path.resolve(__dirname, "../..");
  * every `--scope user` phase into an unexpected exit 1.
  */
 
+// A script test cannot read the registration without building the CLI, so it takes the file
+// name of each profile as the registered id: file name = registered id.
+const PROFILES = path.join(ROOT, "cli/src/composition/tool-profiles");
+
+function profileFile(toolId) {
+  return path.join(PROFILES, `${toolId}.ts`);
+}
+
 function aiToolIds() {
-  const text = fs.readFileSync(path.join(ROOT, "cli/src/kernel/tool.ts"), "utf8");
-  const match = text.match(/export const AI_TOOL_IDS:[^=]*=\s*\[([^\]]*)\]/u);
-  assert.ok(match, "kernel/tool.ts no longer declares AI_TOOL_IDS the way this guard expects");
-  return match[1]
-    .split(",")
-    .map((id) => id.trim().replace(/^"|"$/gu, ""))
-    .filter(Boolean);
+  const ids = fs
+    .readdirSync(PROFILES)
+    .filter((name) => name.endsWith(".ts"))
+    .map((name) => name.slice(0, -".ts".length))
+    .filter((id) =>
+      /defineAiTool\(|satisfies AiToolSpec\b/u.test(fs.readFileSync(profileFile(id), "utf8"))
+    );
+  assert.ok(ids.length > 0, "no profile declares an AI tool; the guard reads nothing");
+  return ids;
 }
 
 function declaresUserScopeActivation(toolId) {
-  const profile = path.join(ROOT, "cli/src/contexts/tools/domain/profiles", toolId, "profile.ts");
-  const text = fs.readFileSync(profile, "utf8");
+  const text = fs.readFileSync(profileFile(toolId), "utf8");
   return (
-    /nativeActivation:\s*\{/u.test(text) ||
+    /NativeRegistrationSection\s*=\s*\{\s*activation:/u.test(text) ||
     /installScope:\s*"user"/u.test(text) ||
     /globalFiles:\s*\{/u.test(text)
   );
@@ -45,6 +54,7 @@ function scriptUserAiList() {
 describe("smoke-real.sh drives --scope user with the tools the profiles support", () => {
   it("names every AI tool whose profile declares machine-wide activation, and no other", () => {
     const supported = aiToolIds().filter(declaresUserScopeActivation);
+    assert.ok(supported.length > 0, "no profile declares machine-wide activation; the guard reads nothing");
     assert.deepEqual([...scriptUserAiList()].sort(), [...supported].sort());
   });
 });

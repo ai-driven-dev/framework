@@ -1,0 +1,53 @@
+import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
+import { CheckFileReferences } from "../../../src/contexts/installation/application/doctor/check-file-references.use-case.js";
+import { CheckMergeFiles } from "../../../src/contexts/installation/application/doctor/check-merge-files.use-case.js";
+import { CheckPluginDrift } from "../../../src/contexts/installation/application/doctor/check-plugin-drift.use-case.js";
+import { CheckProjectLayout } from "../../../src/contexts/installation/application/doctor/check-project-layout.use-case.js";
+import { CheckTrackedFiles } from "../../../src/contexts/installation/application/doctor/check-tracked-files.use-case.js";
+import { InspectInstallation } from "../../../src/contexts/installation/application/doctor/inspect-installation.use-case.js";
+import { DetectPluginDrift } from "../../../src/contexts/installation/application/shared/detect-plugin-drift.use-case.js";
+import { RunDoctor } from "../../../src/orchestration/doctor/run-doctor.use-case.js";
+import type { AiToolId } from "../../../src/shared/domain/tool.js";
+import { hostInspector } from "../../shared/testing/host-inspector.builder.js";
+import type { buildInstallationDeps } from "../../shared/testing/installation-deps.builder.js";
+import { checkRegistrationOver } from "./build-check-registration.builder.js";
+
+export function buildRunDoctor(
+  deps: Awaited<ReturnType<typeof buildInstallationDeps>>,
+  hostRegistries: ReadonlyMap<AiToolId, HostPluginRegistry> = new Map()
+): RunDoctor {
+  return new RunDoctor(
+    {
+      inspect: new InspectInstallation({
+        manifestRepo: deps.manifestRepo,
+        tracked: new CheckTrackedFiles(deps.manifestRepo, deps.fs),
+        merge: new CheckMergeFiles(deps.manifestRepo, deps.fs),
+        references: new CheckFileReferences(deps.manifestRepo, deps.fs),
+        plugin: new CheckPluginDrift(
+          deps.manifestRepo,
+          new DetectPluginDrift(deps.fs, deps.tools, () => "/home/dev")
+        ),
+      }),
+      layout: new CheckProjectLayout(deps.manifestRepo, deps.fs, deps.tools),
+      registration: checkRegistrationOver(
+        deps.manifestRepo,
+        deps.fs,
+        deps.marketplaceRegistry,
+        (binary) =>
+          [...deps.nativePluginActivators].some(
+            ([id, activator]) => id === binary && activator.isAvailable()
+          ),
+        hostInspector(deps.tools, {
+          fs: deps.fs,
+          pluginRegistries: hostRegistries,
+          marketplaceRegistries: new Map(),
+        }),
+        () => "/user-cache",
+        "1.0.0",
+        deps.tools
+      ),
+      authentication: { execute: async () => [] },
+    },
+    deps.tools
+  );
+}

@@ -20,10 +20,6 @@ const EXCLUDED_FILES = new Set([".gitkeep", "README.md"]);
 const EXIT_OK = 0;
 const EXIT_USAGE = 1;
 
-function toPosix(file) {
-  return file.split(path.sep).join("/");
-}
-
 /** `fallback` when the path does not exist; any other error throws. */
 function unlessMissing(read, fallback) {
   try {

@@ -1,0 +1,52 @@
+# CLI Architecture
+
+Context shape, layers and process contract: the `working-on-cli` skill's [`references/architecture.md`](../../../../.claude/skills/working-on-cli/references/architecture.md).
+
+## Dependencies
+
+Inter-context edges are exactly `ALLOWED` in `cli/tests/architecture/allowed-edges.ts`, held by `cli/tests/architecture/kind-imports.arch.test.ts`.
+
+```mermaid
+flowchart LR
+    Presentation --> Orchestration
+    Presentation --> Contexts
+    Composition --> Orchestration
+    Composition --> Contexts
+    Orchestration --> Contexts
+    subgraph Contexts
+        translate --> tools
+        installation --> tools
+        host-registration --> tools
+        distribution --> auth
+        update --> auth
+    end
+    Contexts --> Shared
+    Orchestration --> Shared
+    Presentation --> Shared
+    Composition --> Shared
+```
+
+## Decisions
+
+| Decision | Why |
+| --- | --- |
+| Another context is read through its `contract/` only | its `domain/`, `ports/` and `infrastructure/` stay private; Biome holds the `HELD_BY_BIOME` contexts |
+| A module is shared only with callers in two contexts | one caller means the code belongs to it; `cli/tests/architecture/earned-sharing.arch.test.ts` |
+| The host record's shape lives in `host-registration/domain/`; the manifest stores it opaque | only host registration knows what the record means |
+| Owned files are regenerated, co-owned files are merged | `MergeStrategy` in `cli/src/shared/domain/merge.ts` |
+| The manifest reads v9, and v8 only to split it once | no migration chain: [`decisions/manifest-reads-v9-and-splits-v8.md`](decisions/manifest-reads-v9-and-splits-v8.md) |
+| A build leaves `{{TOOLS}}` unresolved on copilot, an install resolves it to `.github/` | a build is location-independent; only an install knows the tool directory it writes into |
+| An install writes the plugin manifest the build synthesizes | `synthesizeManifest` is a per-tool member of the build contract, shared by most tools through `synthesizeSharedManifest`; Codex builds its own and the others declare none, so a manifest never names a component or a field the files do not match |
+| One hooks descriptor per tool, one merge engine, one host adapter per tool (OpenCode and Kilo share `host-bridge.cjs`) | adapters in `cli/assets/hooks-runtime/`; adding a tool: [`01-tool.md`](../../../../.claude/skills/working-on-cli/actions/01-tool.md) |
+
+## Machine claims lock
+
+- Machine claims change under an inter-process manifest lock covering load, mutation and save.
+- `plugin add` holds it while fetching, building and writing; a waiter fails after 30 seconds with a named busy-lock error.
+- The lock is never stolen for age alone, so contention cannot silently lose a claim.
+
+## Gotchas
+
+- `cli/tsup.config.ts` inlines configs at build time and copies schemas beside the binary.
+- The build empties its output; `AIDD_BUILD_OUT_DIR` accepts only `dist` or a folder under `.e2e-build/`.
+- `git` exports `GIT_*` into every child; strip them before reading a repository.

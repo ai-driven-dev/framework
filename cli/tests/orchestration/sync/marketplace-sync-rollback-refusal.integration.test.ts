@@ -1,0 +1,258 @@
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
+import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import { describeMessage } from "../../../src/presentation/errors/describe-message.presenter.js";
+import {
+  BUILT_CACHE_SUBDIR,
+  userBuiltMarketplaceDir,
+} from "../../../src/shared/domain/layout/aidd-layout.js";
+import type { Scope } from "../../../src/shared/domain/scope.js";
+import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.fake.js";
+import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.fake.js";
+import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
+import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
+import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
+import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
+import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
+import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
+import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
+import {
+  SYNTHETIC_TOOL,
+  syntheticNativeCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
+
+const tool = SYNTHETIC_TOOL;
+
+const PROJECT_ROOT = "/test-project";
+const REGISTRY_LOCATION = `/home/.${tool}/known_marketplaces.json`;
+const USER_CACHE_ROOT = "/user-cache";
+const MARKETPLACE_NAME = "probe-mkt";
+
+function sharedPath(version: string, name: string = MARKETPLACE_NAME): string {
+  return userBuiltMarketplaceDir({
+    userConfigDir: USER_CACHE_ROOT,
+    cliVersion: version,
+    marketplaceName: name,
+    target: tool,
+  });
+}
+
+async function sync(options: {
+  requestedVersion: string;
+  registeredPath?: string;
+  registeredVersion?: string;
+  scope?: Scope;
+  name?: string;
+  recreateFrameworkIfMissing?: boolean;
+  staleCacheFile?: string;
+}) {
+  const name = options.name ?? MARKETPLACE_NAME;
+  const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
+  const manifestRepo = new InMemoryManifestRepository();
+  const registry = new InMemoryMarketplaceRegistry();
+  const logger = new CapturingLogger();
+  const manifest = Manifest.create();
+  manifest.addTool(tool, "test", []);
+  const machine = Manifest.create();
+  machine.addTool(tool, "test", []);
+  const machineRecords = new Map([
+    [
+      tool,
+      {
+        binary: tool,
+        marketplaces: [
+          {
+            alias: name,
+            hostName: name,
+            ...(options.registeredPath === undefined
+              ? {}
+              : { provenance: { kind: "registry" as const, source: options.registeredPath } }),
+          },
+        ],
+        pluginRefs: [],
+        pluginClaims: [],
+      },
+    ],
+  ]);
+  await manifestRepo.save(manifest);
+  await registry.save(
+    PROJECT_ROOT,
+    Marketplace.create({
+      name,
+      source: { kind: "local", path: "/source" },
+      scope: options.scope ?? "user",
+      addedAt: "2026-01-01T00:00:00Z",
+    })
+  );
+  const builtDir = sharedPath(options.requestedVersion, name);
+  await fs.writeFile(
+    `${builtDir}/.plugin/marketplace.json`,
+    JSON.stringify({ name, version: options.requestedVersion, plugins: [] })
+  );
+  if (options.registeredPath !== undefined) {
+    await fs.writeFile(
+      `${options.registeredPath}/.plugin/marketplace.json`,
+      JSON.stringify({ name, version: options.registeredVersion, plugins: [] })
+    );
+  }
+  if (options.staleCacheFile !== undefined) await fs.writeFile(options.staleCacheFile, "stale");
+  const activator = new FakeHostActions({ available: true });
+  const hostReader = new FakeHostMarketplaceRegistry({
+    location: REGISTRY_LOCATION,
+    entries:
+      options.registeredPath === undefined ? new Map() : new Map([[name, options.registeredPath]]),
+  });
+  const useCase = marketplaceSync({
+    tools: syntheticNativeCatalog(tool),
+    fs,
+    manifestRepo,
+    marketplaceRegistry: registry,
+    logger,
+    activators: new Map([[tool, activator]]),
+    ensureBuilt: fakeEnsureBuiltMarketplace(() => builtDir),
+    hostMarketplaceRegistries: new Map([[tool, hostReader]]),
+    userCacheRoot: () => USER_CACHE_ROOT,
+    hostPluginRegistries: new Map([
+      [
+        tool,
+        new FakeHostPluginRegistry({
+          location: "/home/dev/.host/plugins/installed_plugins.json",
+          refs: new Map(),
+        }),
+      ],
+    ]),
+    userManifestRepo: new InMemoryManifestRepository(machine, undefined, machineRecords),
+    nativeSources: new Map([
+      [
+        tool,
+        new FakeHostMarketplaceSources(
+          activator,
+          "registry",
+          (path) => (path === builtDir ? name : undefined),
+          options.registeredPath === undefined
+            ? new Map()
+            : new Map([[name, { kind: "registry", source: options.registeredPath }]])
+        ),
+      ],
+    ]),
+  });
+  const result = await useCase.execute({
+    projectRoot: PROJECT_ROOT,
+    recreateFrameworkIfMissing: options.recreateFrameworkIfMissing,
+  });
+  return { result, activator, logger, manifestRepo, fs };
+}
+
+describe("the sync write path refuses to roll a host back to an older aidd-framework build", () => {
+  // The host already follows a newer build of the shared source than this run would request, so
+  // writing anyway would silently repoint it backward.
+  it("writes nothing and warns naming both versions and `aidd update`, when the host already follows a newer shared build", async () => {
+    const { result, activator, logger } = await sync({
+      requestedVersion: "1.0.0",
+      registeredPath: sharedPath("2.0.0"),
+      registeredVersion: "2.0.0",
+    });
+
+    expect(activator.addedMarketplaces).toEqual([]);
+    expect(result.errors).toEqual([]);
+    expect(
+      logger.warnMessages.some(
+        (m) => m.includes("2.0.0") && m.includes("1.0.0") && m.includes("aidd update")
+      )
+    ).toBe(true);
+    expect(result.warnings.some((m) => describeMessage(m).includes("aidd update"))).toBe(true);
+  });
+
+  // The migration itself: the host still points at this project's own pre-migration
+  // cache, and this run's build is the newer, shared source - it must proceed.
+  it("proceeds when the host still points at this project's own pre-migration cache", async () => {
+    const { result, activator } = await sync({
+      requestedVersion: "1.0.0",
+      registeredPath: `${PROJECT_ROOT}/.aidd/cache/built/${MARKETPLACE_NAME}/${tool}`,
+    });
+
+    expect(activator.addedMarketplaces).toEqual([sharedPath("1.0.0")]);
+    expect(result.errors).toEqual([]);
+  });
+
+  it("proceeds when the host already follows an older shared build - a legitimate update, not a rollback", async () => {
+    const { result, activator } = await sync({
+      requestedVersion: "2.0.0",
+      registeredPath: sharedPath("1.0.0"),
+      registeredVersion: "1.0.0",
+    });
+
+    expect(activator.addedMarketplaces).toEqual([sharedPath("2.0.0")]);
+    expect(result.errors).toEqual([]);
+  });
+
+  it("does nothing extra when the host already follows this exact shared version", async () => {
+    const { result, activator } = await sync({
+      requestedVersion: "1.0.0",
+      registeredPath: sharedPath("1.0.0"),
+      registeredVersion: "1.0.0",
+    });
+
+    expect(activator.addedMarketplaces).toEqual([]);
+    expect(result.errors).toEqual([]);
+    expect(result.warnings).toEqual([]);
+  });
+
+  it("warns with the whole message: the registry, both versions and the command that fixes it", async () => {
+    const { result, logger } = await sync({
+      requestedVersion: "1.0.0",
+      registeredPath: sharedPath("2.0.0"),
+      registeredVersion: "2.0.0",
+    });
+
+    const refusal = `${tool}'s marketplace registry (${REGISTRY_LOCATION}) already carries a newer aidd-framework build, 2.0.0, than this run's own 1.0.0 — not registering this run's build over it. Run \`aidd update\` to bring this project's CLI to at least the version the host already follows.`;
+    expect(result.warnings.map(describeMessage)).toStrictEqual([refusal]);
+    expect(logger.warnMessages).toStrictEqual([refusal]);
+  });
+
+  it("records the marketplace it left on the newer build as registered under the host's own name", async () => {
+    const { manifestRepo } = await sync({
+      requestedVersion: "1.0.0",
+      registeredPath: sharedPath("2.0.0"),
+      registeredVersion: "2.0.0",
+    });
+
+    expect(manifestRepo.records.get(tool)).toStrictEqual({
+      binary: tool,
+      marketplaces: [
+        {
+          alias: MARKETPLACE_NAME,
+          hostName: MARKETPLACE_NAME,
+          provenance: { kind: "registry", source: sharedPath("2.0.0") },
+        },
+      ],
+      pluginRefs: [],
+    });
+  });
+
+  it("still purges this project's own pre-migration cache after a refused rollback: the host is on a build, not on that cache", async () => {
+    const staleCacheFile = join(
+      PROJECT_ROOT,
+      BUILT_CACHE_SUBDIR,
+      FRAMEWORK_MARKETPLACE_NAME,
+      tool,
+      "agents",
+      "some-agent.md"
+    );
+    const { result, fs } = await sync({
+      name: FRAMEWORK_MARKETPLACE_NAME,
+      requestedVersion: "1.0.0",
+      registeredPath: sharedPath("2.0.0", FRAMEWORK_MARKETPLACE_NAME),
+      registeredVersion: "2.0.0",
+      recreateFrameworkIfMissing: true,
+      staleCacheFile,
+    });
+
+    expect(result.warnings).toHaveLength(1);
+    expect(result.errors).toStrictEqual([]);
+    expect(fs.has(staleCacheFile)).toBe(false);
+  });
+});

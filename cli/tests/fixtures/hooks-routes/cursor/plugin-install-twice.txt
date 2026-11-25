@@ -14,12 +14,12 @@ second install threw DuplicatePluginError: Plugin 'aidd-context' is already inst
         "timeout": 5
       },
       {
-        "command": "node ./.cursor/hooks/aidd-telemetry/session-start.cjs",
-        "timeout": 10
+        "command": "node ./.cursor/hooks/aidd-telemetry/task.cjs remind",
+        "timeout": 5
       },
       {
-        "command": "node ./.cursor/hooks/aidd-telemetry/catch-up.cjs",
-        "timeout": 120
+        "command": "node ./.cursor/hooks/aidd-telemetry/ledger.cjs ingest",
+        "timeout": 5
       }
     ],
     "postToolUse": [
@@ -33,18 +33,6 @@ second install threw DuplicatePluginError: Plugin 'aidd-context' is already inst
       {
         "command": "node ./.cursor/hooks/aidd-context/memory.cjs sync",
         "timeout": 5
-      }
-    ],
-    "sessionEnd": [
-      {
-        "command": "node ./.cursor/hooks/aidd-context/memory.cjs sync",
-        "timeout": 5
-      }
-    ],
-    "beforeSubmitPrompt": [
-      {
-        "command": "node ./.cursor/hooks/aidd-telemetry/prompt-gate.cjs",
-        "timeout": 30
       }
     ]
   }
@@ -288,13 +276,10 @@ script, identical to the plugin source
 ## project/.cursor/hooks/aidd-context/memory.cjs
 script, identical to the plugin source
 
-## project/.cursor/hooks/aidd-telemetry/catch-up.cjs
+## project/.cursor/hooks/aidd-telemetry/ledger.cjs
 script, identical to the plugin source
 
 ## project/.cursor/hooks/aidd-telemetry/lib/aidd.cjs
-script, identical to the plugin source
-
-## project/.cursor/hooks/aidd-telemetry/lib/binding.cjs
 script, identical to the plugin source
 
 ## project/.cursor/hooks/aidd-telemetry/lib/claude-only.cjs
@@ -309,22 +294,13 @@ script, identical to the plugin source
 ## project/.cursor/hooks/aidd-telemetry/lib/context.cjs
 script, identical to the plugin source
 
-## project/.cursor/hooks/aidd-telemetry/lib/declaration.cjs
-script, identical to the plugin source
-
 ## project/.cursor/hooks/aidd-telemetry/lib/git.cjs
 script, identical to the plugin source
 
-## project/.cursor/hooks/aidd-telemetry/lib/hook-io.cjs
-script, identical to the plugin source
+## project/.cursor/hooks/aidd-telemetry/lib/host.cjs
+script, identical to the host adapter host-cursor.cjs
 
 ## project/.cursor/hooks/aidd-telemetry/lib/jsonl.cjs
-script, identical to the plugin source
-
-## project/.cursor/hooks/aidd-telemetry/lib/lookup.cjs
-script, identical to the plugin source
-
-## project/.cursor/hooks/aidd-telemetry/lib/presence.cjs
 script, identical to the plugin source
 
 ## project/.cursor/hooks/aidd-telemetry/lib/telemetry-dir.cjs
@@ -333,10 +309,7 @@ script, identical to the plugin source
 ## project/.cursor/hooks/aidd-telemetry/lib/tool.cjs
 script, identical to the plugin source
 
-## project/.cursor/hooks/aidd-telemetry/prompt-gate.cjs
-script, identical to the plugin source
-
-## project/.cursor/hooks/aidd-telemetry/session-start.cjs
+## project/.cursor/hooks/aidd-telemetry/task.cjs
 script, identical to the plugin source
 
 ## project/.cursor/settings.json
@@ -370,11 +343,6 @@ project cursor aidd-context scope=user: 0 hook files
       "event": "stop",
       "command": "node ./.cursor/hooks/aidd-context/memory.cjs sync",
       "digest": "8854ed7708a15016cb1713219a3d1101"
-    },
-    {
-      "event": "sessionEnd",
-      "command": "node ./.cursor/hooks/aidd-context/memory.cjs sync",
-      "digest": "8854ed7708a15016cb1713219a3d1101"
     }
   ],
   "scripts": {}
@@ -385,18 +353,13 @@ project cursor aidd-telemetry scope=user: 0 hook files
   "entries": [
     {
       "event": "sessionStart",
-      "command": "node ./.cursor/hooks/aidd-telemetry/session-start.cjs",
-      "digest": "daac9d4ea10fff9226f4b1604070a0f5"
+      "command": "node ./.cursor/hooks/aidd-telemetry/task.cjs remind",
+      "digest": "f1c0a86807eb8cdaa3de9549d09bbe55"
     },
     {
       "event": "sessionStart",
-      "command": "node ./.cursor/hooks/aidd-telemetry/catch-up.cjs",
-      "digest": "0a4ab6089fa2ff8a93f649eceff1a720"
-    },
-    {
-      "event": "beforeSubmitPrompt",
-      "command": "node ./.cursor/hooks/aidd-telemetry/prompt-gate.cjs",
-      "digest": "9cd664ac5f179902b97cbfd28ab6bb51"
+      "command": "node ./.cursor/hooks/aidd-telemetry/ledger.cjs ingest",
+      "digest": "9ec011cee1ddcae2141c2c362da0bdb0"
     }
   ],
   "scripts": {}
@@ -425,11 +388,6 @@ machine cursor aidd-context scope=user: 0 hook files
       "event": "stop",
       "command": "node ./.cursor/hooks/aidd-context/memory.cjs sync",
       "digest": "8854ed7708a15016cb1713219a3d1101"
-    },
-    {
-      "event": "sessionEnd",
-      "command": "node ./.cursor/hooks/aidd-context/memory.cjs sync",
-      "digest": "8854ed7708a15016cb1713219a3d1101"
     }
   ],
   "scripts": {}
@@ -440,18 +398,13 @@ machine cursor aidd-telemetry scope=user: 0 hook files
   "entries": [
     {
       "event": "sessionStart",
-      "command": "node ./.cursor/hooks/aidd-telemetry/session-start.cjs",
-      "digest": "daac9d4ea10fff9226f4b1604070a0f5"
+      "command": "node ./.cursor/hooks/aidd-telemetry/task.cjs remind",
+      "digest": "f1c0a86807eb8cdaa3de9549d09bbe55"
     },
     {
       "event": "sessionStart",
-      "command": "node ./.cursor/hooks/aidd-telemetry/catch-up.cjs",
-      "digest": "0a4ab6089fa2ff8a93f649eceff1a720"
-    },
-    {
-      "event": "beforeSubmitPrompt",
-      "command": "node ./.cursor/hooks/aidd-telemetry/prompt-gate.cjs",
-      "digest": "9cd664ac5f179902b97cbfd28ab6bb51"
+      "command": "node ./.cursor/hooks/aidd-telemetry/ledger.cjs ingest",
+      "digest": "9ec011cee1ddcae2141c2c362da0bdb0"
     }
   ],
   "scripts": {}

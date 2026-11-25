@@ -1,0 +1,185 @@
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { createOutput } from "../../../../../src/composition/shared.js";
+import { placeFlatPlugin } from "../../../../../src/contexts/installation/application/materialize/place-flat-plugin.js";
+import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
+import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { fakeFlatDeps } from "../../testing/fake-build-sources.fake.js";
+import { pluginRemover } from "../../testing/plugin-remover.builder.js";
+
+const PROJECT_ROOT = "/test-project";
+const STUB_HOME = "/tmp/test-home";
+const PLUGIN_NAME = "aidd-context";
+const OPENCODE_JSON = join(PROJECT_ROOT, "opencode.json");
+
+const USER_SERVER = { type: "remote", url: "https://user.example.com/mcp", enabled: true };
+
+const MCP_CONTENT = JSON.stringify({
+  mcpServers: {
+    "plugin-tool": { command: "node", args: ["./server.js"] },
+    "remote-tool": { url: "https://example.com/mcp" },
+  },
+});
+
+function buildDist(): PluginDistribution {
+  return new PluginDistribution({
+    manifest: { name: parsePluginName(PLUGIN_NAME), version: "1.0.0" },
+    format: TOOL.claude,
+    files: [{ relativePath: ".mcp.json", content: MCP_CONTENT }],
+    components: {
+      commands: [],
+      agents: [],
+      rules: [],
+      skills: [],
+      hooks: [],
+      mcp: [{ relativePath: ".mcp.json", content: MCP_CONTENT }],
+    },
+  });
+}
+
+describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
+  it("removes only plugin-contributed servers; preserves user-added servers", async () => {
+    const existingJson = JSON.stringify({ mcp: { "user-server": USER_SERVER } }, null, 2);
+    const fs = new InMemoryFileAdapter({ [OPENCODE_JSON]: existingJson });
+    const adapter = fakeFlatDeps(fs, () => STUB_HOME);
+    const manifest = Manifest.create();
+    manifest.addTool(TOOL.opencode, "test", []);
+    const manifestRepo = new InMemoryManifestRepository(manifest);
+
+    await placeFlatPlugin(
+      {
+        dist: buildDist(),
+        tool: registeredTools().aiProfile(TOOL.opencode),
+        source: { kind: "local", path: "/plugin-source" },
+        projectRoot: PROJECT_ROOT,
+        manifest,
+        marketplace: undefined,
+      },
+      adapter
+    );
+    await manifestRepo.save(manifest);
+
+    const removeUseCase = pluginRemover({ fs, manifestRepo, logger: createOutput(false) });
+    await removeUseCase.execute({
+      pluginName: PLUGIN_NAME,
+      toolIds: [TOOL.opencode],
+      projectRoot: PROJECT_ROOT,
+    });
+
+    const parsed = JSON.parse(await fs.readFile(OPENCODE_JSON)) as {
+      mcp: Record<string, unknown>;
+    };
+    expect(parsed.mcp).not.toHaveProperty("plugin-tool");
+    expect(parsed.mcp).not.toHaveProperty("remote-tool");
+    expect(parsed.mcp["user-server"]).toEqual(USER_SERVER);
+  });
+
+  it("removes the plugin from the manifest after unmerge", async () => {
+    const fs = new InMemoryFileAdapter();
+    const adapter = fakeFlatDeps(fs, () => STUB_HOME);
+    const manifest = Manifest.create();
+    manifest.addTool(TOOL.opencode, "test", []);
+    const manifestRepo = new InMemoryManifestRepository(manifest);
+
+    await placeFlatPlugin(
+      {
+        dist: buildDist(),
+        tool: registeredTools().aiProfile(TOOL.opencode),
+        source: { kind: "local", path: "/plugin-source" },
+        projectRoot: PROJECT_ROOT,
+        manifest,
+        marketplace: undefined,
+      },
+      adapter
+    );
+    await manifestRepo.save(manifest);
+
+    const removeUseCase = pluginRemover({ fs, manifestRepo, logger: createOutput(false) });
+    await removeUseCase.execute({
+      pluginName: PLUGIN_NAME,
+      toolIds: [TOOL.opencode],
+      projectRoot: PROJECT_ROOT,
+    });
+
+    const loaded = await manifestRepo.load();
+    const plugins = loaded?.getRecordedPlugins(TOOL.opencode) ?? [];
+    expect(plugins.some((p) => p.plugin.name === PLUGIN_NAME)).toBe(false);
+  });
+
+  it("is safe to call when opencode.json does not exist (first install never completed)", async () => {
+    const fs = new InMemoryFileAdapter();
+    const adapter = fakeFlatDeps(fs, () => STUB_HOME);
+    const manifest = Manifest.create();
+    manifest.addTool(TOOL.opencode, "test", []);
+    const manifestRepo = new InMemoryManifestRepository(manifest);
+
+    await placeFlatPlugin(
+      {
+        dist: buildDist(),
+        tool: registeredTools().aiProfile(TOOL.opencode),
+        source: { kind: "local", path: "/plugin-source" },
+        projectRoot: PROJECT_ROOT,
+        manifest,
+        marketplace: undefined,
+      },
+      adapter
+    );
+    await fs.deleteFile(OPENCODE_JSON);
+    await manifestRepo.save(manifest);
+
+    const removeUseCase = pluginRemover({ fs, manifestRepo, logger: createOutput(false) });
+    await expect(
+      removeUseCase.execute({
+        pluginName: PLUGIN_NAME,
+        toolIds: [TOOL.opencode],
+        projectRoot: PROJECT_ROOT,
+      })
+    ).resolves.not.toThrow();
+  });
+
+  it("refuses reinstall when a previously contributed MCP server was user-edited", async () => {
+    const fs = new InMemoryFileAdapter();
+    const translator = fakeFlatDeps(fs, () => STUB_HOME);
+    const manifest = Manifest.create();
+    manifest.addTool(TOOL.opencode, "test", []);
+    await placeFlatPlugin(
+      {
+        dist: buildDist(),
+        tool: registeredTools().aiProfile(TOOL.opencode),
+        source: { kind: "local", path: "/plugin-source" },
+        projectRoot: PROJECT_ROOT,
+        manifest,
+        marketplace: undefined,
+      },
+      translator
+    );
+    const prior = manifest.getRecordedPlugins(TOOL.opencode)[0].provenance.mcpEntries;
+    const config = JSON.parse(fs.getFile(OPENCODE_JSON) ?? "null") as {
+      mcp: Record<string, unknown>;
+    };
+    const name = [...prior.keys()][0];
+    config.mcp[name] = USER_SERVER;
+    const edited = JSON.stringify(config);
+    fs.setFile(OPENCODE_JSON, edited);
+    manifest.removePlugin(TOOL.opencode, PLUGIN_NAME);
+    await expect(
+      placeFlatPlugin(
+        {
+          dist: buildDist(),
+          tool: registeredTools().aiProfile(TOOL.opencode),
+          source: { kind: "local", path: "/plugin-source" },
+          projectRoot: PROJECT_ROOT,
+          manifest,
+          marketplace: undefined,
+          previousMcpEntries: prior,
+        },
+        translator
+      )
+    ).rejects.toThrow(/edited.*MCP|MCP.*edited/);
+    expect(fs.getFile(OPENCODE_JSON)).toBe(edited);
+  });
+});

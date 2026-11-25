@@ -1,0 +1,7 @@
+language js
+
+// An empty catch, or one holding only comments, turns an unreadable file into an absent one.
+// A deliberate best effort carries `// biome-ignore lint/plugin: <reason>` on the line above its `try`.
+JsTryStatement(catch_clause=JsCatchClause(body=JsBlockStatement(statements=[]))) as $try where {
+  register_diagnostic(span=$try, message="an empty catch swallows the error: convert it into a typed one or let it travel, or write `biome-ignore lint/plugin: <reason>` above the try for a deliberate best effort", severity="error")
+}

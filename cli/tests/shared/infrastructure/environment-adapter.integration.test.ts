@@ -1,0 +1,17 @@
+import { afterEach, describe, expect, it } from "vitest";
+import { EnvironmentAdapter } from "../../../src/shared/infrastructure/environment-adapter.js";
+
+const VARIABLE = "AIDD_ENVIRONMENT_ADAPTER_PROBE";
+
+describe("reading the process environment", () => {
+  afterEach(() => {
+    delete process.env[VARIABLE];
+  });
+
+  it("reads a variable the process set after the adapter was constructed", () => {
+    const environment = new EnvironmentAdapter(process.env);
+    process.env[VARIABLE] = "later";
+
+    expect(environment.get(VARIABLE)).toBe("later");
+  });
+});

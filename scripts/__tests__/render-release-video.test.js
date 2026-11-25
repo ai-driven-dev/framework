@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
 
-const { buildHtml, measureRms, musicSegments, musicSections, sceneDuration, soundCues, posterArgs, soundTrack, thumbnailHtml, totalDuration } = require("../../.claude/skills/release-video/assets/render-release-video.cjs");
+const { buildHtml, musicSegments, musicSections, sceneDuration, soundCues, posterArgs, soundTrack, thumbnailHtml, totalDuration } = require("../../.claude/skills/release-video/assets/render-release-video.cjs");
 
 const window = (rows) => ({ label: "Claude Code · ~/acme-app", rows });
 

@@ -1,222 +1,42 @@
-import {
-  chmodSync,
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { git } from "../helpers/git-sandbox.js";
-import {
-  assertUnderTemporaryDirectory,
-  createTelemetrySandbox,
-  type TelemetrySandbox,
-} from "../helpers/telemetry-sandbox.js";
-import { runCli } from "./helpers.js";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { createTestEnv, runCli } from "../shared/testing/cli-sandbox.builder.js";
+import { initRepository, sandboxGitEnv } from "../shared/testing/git-sandbox.builder.js";
 
-const SESSION = "00000000-0000-4000-8000-0000000000cc";
-const DELEGATE = `#!/bin/sh
-# Installed by \`aidd telemetry on\`, removed by \`aidd telemetry off\`.
-session_id="\${CODEX_THREAD_ID:-\${CLAUDE_CODE_SESSION_ID:-}}"
-[ -n "$session_id" ] || exit 0
-git interpret-trailers --in-place --if-exists doNothing --trailer "AIDD-Session-Id=$session_id" "$1" || exit 0
-exit 0
-`;
+describe("telemetry lifecycle through the built binary", () => {
+  let test: Awaited<ReturnType<typeof createTestEnv>>;
+  const run = (...args: string[]) =>
+    runCli(["telemetry", ...args], test.projectDir, test.fakeHome, { env: { AIDD_TELEMETRY: "" } });
 
-let box: TelemetrySandbox;
-let repo: string;
+  beforeAll(async () => {
+    test = await createTestEnv("telemetry-lifecycle");
+    initRepository(test.projectDir, sandboxGitEnv(test.fakeHome));
+    const on = await run("on", "--yes", "--anonymous");
+    expect(on.exitCode, on.stderr).toBe(0);
+  });
+  afterAll(() => test.cleanup());
 
-beforeEach(() => {
-  box = createTelemetrySandbox();
-  repo = box.repository("widgets");
-});
-afterEach(() => {
-  rmSync(box.root, { recursive: true, force: true });
-});
+  it("status says the clone is measured", async () => {
+    const { exitCode, stdout } = await run("status");
 
-const cli = (args: string[], extra: Record<string, string> = {}) =>
-  runCli(["telemetry", ...args], repo, box.home, { env: box.env(extra) });
-const commit = () => {
-  git(
-    repo,
-    { ...box.gitEnv, CLAUDE_CODE_SESSION_ID: SESSION },
-    "commit",
-    "-q",
-    "--allow-empty",
-    "-m",
-    "work"
-  );
-  return git(repo, box.gitEnv, "log", "-1", "--format=%B");
-};
-
-function leaveV1(): void {
-  const hooks = join(repo, ".git", "hooks");
-  mkdirSync(hooks, { recursive: true });
-  writeFileSync(join(hooks, "aidd-session-trailer.sh"), DELEGATE);
-  chmodSync(join(hooks, "aidd-session-trailer.sh"), 0o755);
-  writeFileSync(
-    join(hooks, "prepare-commit-msg"),
-    `#!/bin/sh\nsh "${join(hooks, "aidd-session-trailer.sh")}" "$@"\n`
-  );
-  chmodSync(join(hooks, "prepare-commit-msg"), 0o755);
-  mkdirSync(join(repo, "aidd_docs", "runs"), { recursive: true });
-  writeFileSync(join(repo, "aidd_docs", "runs", "a.jsonl"), "{}\n");
-  writeFileSync(join(repo, ".gitignore"), "aidd_docs/runs/\n");
-  mkdirSync(join(repo, ".aidd"));
-  writeFileSync(join(repo, ".aidd", "config.json"), '{"telemetry":{"enabled":true}}');
-}
-
-describe("aidd telemetry on", () => {
-  it("leaves a repository that commits without a trailer, and prints what it removed", async () => {
-    leaveV1();
-    expect(commit()).toContain(`AIDD-Session-Id: ${SESSION}`);
-
-    const run = await cli(["on", "--yes", "--anonymous"]);
-
-    expect(run.exitCode).toBe(0);
-    expect(run.stdout).toContain("Measurement is on for this clone");
-    expect(run.stdout).toContain("never committed");
-    expect(run.stdout).toContain("Next: declare what you work on");
-    expect(run.stdout).toContain("Removed the commit hook line");
-    expect(run.stdout).toContain("Removed aidd_docs/runs/");
-    expect(run.stderr).toContain('"cleanupPeriodDays": 3650');
-    expect(git(repo, box.gitEnv, "config", "--local", "--get", "aidd.telemetry").trim()).toMatch(
-      /^2:[0-9a-f-]{36}$/u
-    );
-    expect(existsSync(join(repo, ".aidd", "config.json"))).toBe(false);
-    expect(run.stdout).toContain("Deleted .aidd/config.json");
-    expect(commit()).not.toContain("AIDD-Session-Id");
-    expect(existsSync(join(repo, "aidd_docs", "runs"))).toBe(false);
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain("This clone is measured since");
   });
 
-  it("asks nothing it cannot ask: without --yes and a terminal it changes nothing and exits 1", async () => {
-    leaveV1();
-    await expect(cli(["on"])).resolves.toMatchObject({ exitCode: 1 });
-    expect(readFileSync(join(repo, ".aidd", "config.json"), "utf8")).toBe(
-      '{"telemetry":{"enabled":true}}'
-    );
-    expect(() => git(repo, box.gitEnv, "config", "--local", "--get", "aidd.telemetry")).toThrow();
-    expect(existsSync(join(repo, ".git", "hooks", "aidd-session-trailer.sh"))).toBe(true);
-  });
-});
+  it("off stops measuring and keeps what was measured", async () => {
+    const { exitCode, stdout } = await run("off");
 
-describe("aidd telemetry on, choosing who is measured", () => {
-  const readConsent = () => git(repo, box.gitEnv, "config", "--local", "--get", "aidd.telemetry");
-  const identityFile = () => join(box.telemetry, "identity.json");
-
-  it("refuses --yes with no identity set and no choice, and writes nothing", async () => {
-    const run = await cli(["on", "--yes"]);
-    expect(run.exitCode).toBe(1);
-    expect(run.stderr).toContain("--anonymous");
-    expect(readConsent).toThrow();
-    expect(existsSync(identityFile())).toBe(false);
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain("Measurement is off for this clone.");
+    expect(existsSync(join(test.fakeHome, ".config", "aidd", "telemetry", "ledger"))).toBe(true);
   });
 
-  it("refuses --as with --anonymous, and an identifier it cannot keep, and writes nothing", async () => {
-    for (const args of [
-      ["--as", "Ada Example", "--anonymous"],
-      ["--as", "Ada\nExample"],
-    ]) {
-      expect((await cli(["on", "--yes", ...args])).exitCode).toBe(1);
-    }
-    expect(readConsent).toThrow();
-    expect(existsSync(identityFile())).toBe(false);
-  });
+  it("forget removes what was measured", async () => {
+    const { exitCode, stdout } = await run("forget", "--yes");
 
-  it("names the person given with --as, in on and in status, and keeps them on the next on", async () => {
-    const run = await cli(["on", "--yes", "--as", "Ada Example"]);
-    expect(run.exitCode).toBe(0);
-    expect(run.stdout).toContain('Measured as "Ada Example".');
-    expect(readFileSync(identityFile(), "utf8")).toBe('{"person_id":"Ada Example"}\n');
-    expect((await cli(["status"])).stdout).toContain('Measured as "Ada Example".');
-    expect((await cli(["on", "--yes"])).stdout).toContain('Measured as "Ada Example".');
-  });
-
-  it("refuses to stay anonymous while an identity is set, pointing to identity --off", async () => {
-    await cli(["identity", "Ada Example"]);
-    const run = await cli(["on", "--yes", "--anonymous"]);
-    expect(run.exitCode).toBe(1);
-    expect(run.stderr).toContain("aidd telemetry identity --off");
-    expect(readConsent).toThrow();
-  });
-
-  it("stays anonymous with --anonymous, stores no choice, and says how to be named", async () => {
-    const run = await cli(["on", "--yes", "--anonymous"]);
-    expect(run.exitCode).toBe(0);
-    expect(run.stdout).toContain("Measured anonymously");
-    expect(existsSync(identityFile())).toBe(false);
-    expect((await cli(["status"])).stdout).toContain("Measured anonymously.");
-  });
-
-  it("says, after on then off, that measurement was turned off and how to turn it back on", async () => {
-    const never = await cli(["status"]);
-    expect(never.exitCode).toBe(0);
-    expect(never.stdout).toContain("Not measured: this clone has not run `aidd telemetry on`.");
-    expect((await cli(["on", "--yes", "--anonymous"])).exitCode).toBe(0);
-    expect((await cli(["off"])).exitCode).toBe(0);
-    const status = await cli(["status"]);
-    expect(status.exitCode).toBe(0);
-    expect(status.stdout).toContain(
-      "Not measured: measurement was turned off in this clone. Run `aidd telemetry on` to measure it again."
-    );
-    expect(status.stdout).not.toContain("has not run");
-    const task = await cli(["task", "t1"]);
-    expect(task.exitCode).toBe(1);
-    expect(task.stderr).toContain("Measurement was turned off in this clone");
-    expect((await cli(["on", "--yes", "--anonymous"])).exitCode).toBe(0);
-    expect((await cli(["status"])).stdout).toContain("This clone is measured since");
-  });
-
-  it("turns on under AIDD_TELEMETRY=0 as before, when the choice is given", async () => {
-    const run = await cli(["on", "--yes", "--anonymous"], { AIDD_TELEMETRY: "0" });
-    expect(run.exitCode).toBe(0);
-    expect(readConsent).not.toThrow();
-  });
-});
-
-describe("aidd telemetry off", () => {
-  it("switches off by setting the git config value to off", async () => {
-    await cli(["on", "--yes", "--anonymous"]);
-    const run = await cli(["off"]);
-    expect(run.exitCode).toBe(0);
-    expect(run.stdout).toContain("Measurement is off");
-    expect(git(repo, box.gitEnv, "config", "--local", "--get", "aidd.telemetry").trim()).toBe(
-      "off"
-    );
-  });
-});
-
-describe("aidd telemetry forget", () => {
-  it("previews, then removes with --yes", async () => {
-    await cli(["on", "--yes", "--anonymous"]);
-    mkdirSync(join(box.telemetry, "ledger"), { recursive: true });
-    writeFileSync(join(box.telemetry, "ledger", "2026-10.jsonl"), "{}\n");
-    writeFileSync(join(box.telemetry, "identity.json"), "{}\n");
-    git(repo, box.gitEnv, "config", "--local", "branch.main.aiddTask", "x");
-    assertUnderTemporaryDirectory([box.telemetry, box.home, repo]);
-
-    const preview = await cli(["forget"]);
-    expect(preview.stdout).toContain("This would remove:");
-    expect(preview.stdout).toContain("Nothing was removed.");
-    expect(existsSync(join(box.telemetry, "identity.json"))).toBe(true);
-
-    const removed = await cli(["forget", "--yes"]);
-    expect(removed.exitCode).toBe(0);
-    expect(removed.stdout).toContain("Removed:");
-    expect(readdirSync(box.telemetry)).toEqual([]);
-  });
-
-  it("leaves no consent behind in a clone where `on` ran and no session ever did", async () => {
-    await cli(["on", "--yes", "--anonymous"]);
-    expect(git(repo, box.gitEnv, "config", "--local", "--get", "aidd.telemetry").trim()).toMatch(
-      /^2:[0-9a-f-]{36}$/u
-    );
-    const removed = await cli(["forget", "--yes"]);
-    expect(removed.exitCode).toBe(0);
-    expect(removed.stdout).toContain("the consent (aidd.telemetry)");
-    expect(() => git(repo, box.gitEnv, "config", "--local", "--get", "aidd.telemetry")).toThrow();
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain("Removed:");
+    expect(existsSync(join(test.fakeHome, ".config", "aidd", "telemetry", "ledger"))).toBe(false);
   });
 });

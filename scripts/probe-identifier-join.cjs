@@ -2,14 +2,14 @@
 /**
  * Re-checks, without spending quota, what the telemetry rests on in Claude Code: one session id,
  * the same in a hook's payload, in the hook's environment and on every transcript line, so a
- * declaration made in the session, a carry across `/clear` and a billed call meet on it.
+ * declaration made in the session and a billed call meet on it.
  *
  * It costs nothing because Claude Code mints the session id, fires `SessionStart` and opens the
  * transcript before it reaches the API: pointed at a dead address with a fake key and an empty
  * home, it does all three and then retries in vain until the probe stops it.
  *
- * The verdicts use the shipped predicates (`claude-only.cjs`, `presence.cjs`), so a change in the
- * tool is judged by what the hooks will actually do with it.
+ * The verdicts use the shipped predicate (`claude-only.cjs`), so a change in the tool is judged by
+ * what the hooks will actually do with it.
  *
  * Exit codes:
  *   0  the join holds
@@ -21,7 +21,6 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { isClaudePayload } = require("../plugins/aidd-telemetry/hooks/lib/claude-only.cjs");
-const { personIsPresent } = require("../plugins/aidd-telemetry/hooks/lib/presence.cjs");
 
 const TOOL_CHANGED = 1;
 const PROBE_BROKEN = 2;
@@ -30,16 +29,14 @@ const PROBE_BROKEN = 2;
  * against the dead address, so the timeout only bounds the run. */
 const RUN_TIMEOUT_MS = 90_000;
 
-/** Records the hook's stdin, the variables the telemetry reads and its parent pid. */
+/** Records the hook's stdin and the variable the telemetry reads. */
 const CAPTURE_HOOK = `const fs = require("node:fs");
 let raw = "";
 process.stdin.setEncoding("utf8");
 process.stdin.on("data", (chunk) => { raw += chunk; });
 process.stdin.on("end", () => {
-  const e = process.env;
-  const env = {};
-  for (const name of ["CLAUDE_CODE_SESSION_ID", "CLAUDE_PID", "CLAUDE_CODE_SESSION_ATTENDED", "CLAUDE_CODE_ENTRYPOINT"]) env[name] = e[name];
-  fs.writeFileSync(process.argv[2], JSON.stringify({ payload: JSON.parse(raw), env, ppid: process.ppid }));
+  const env = { CLAUDE_CODE_SESSION_ID: process.env.CLAUDE_CODE_SESSION_ID };
+  fs.writeFileSync(process.argv[2], JSON.stringify({ payload: JSON.parse(raw), env }));
 });
 `;
 
@@ -49,7 +46,7 @@ const changed = (message) => ({ code: TOOL_CHANGED, message });
  * `transcript` the parsed lines of the file the payload names (null when there is none). */
 function judge({ configDir, captured, transcript }) {
   if (captured === null) return changed("the SessionStart hook never fired before the API call");
-  const { payload, env, ppid } = captured;
+  const { payload, env } = captured;
   if (!isClaudePayload(payload, env)) {
     return changed(
       `the Claude-only guard refuses Claude's own payload: session_id ${payload.session_id}, ` +
@@ -65,18 +62,6 @@ function judge({ configDir, captured, transcript }) {
   const ids = transcript.map((line) => line.sessionId).filter((id) => id !== undefined);
   if (ids.length === 0 || ids.some((id) => id !== payload.session_id)) {
     return changed(`the transcript's sessionId values (${[...new Set(ids)].join(", ") || "none"}) are not ${payload.session_id}`);
-  }
-  // The hook names Claude's process by CLAUDE_PID, and by its parent pid only when it is gone.
-  if (!/^[1-9]\d*$/u.test(env.CLAUDE_PID ?? "")) {
-    return changed(
-      `CLAUDE_PID is ${env.CLAUDE_PID ?? "unset"}: a /clear carry now rests on the hook's parent pid, ${ppid}, being Claude's`
-    );
-  }
-  if (personIsPresent(env)) {
-    return changed(
-      `a headless run reads as a person present (CLAUDE_CODE_SESSION_ATTENDED ${env.CLAUDE_CODE_SESSION_ATTENDED}, ` +
-        `CLAUDE_CODE_ENTRYPOINT ${env.CLAUDE_CODE_ENTRYPOINT}): the prompt gate would block automation`
-    );
   }
   return { code: 0, message: `the join holds: ${payload.session_id}` };
 }

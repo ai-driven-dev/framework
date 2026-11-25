@@ -11,9 +11,12 @@ on:
   push:
     branches: [main, next]
   pull_request:
+  # A manual run is the weekly run, on demand.
+  workflow_dispatch:
   schedule:
     # Weekly, every mutant of every scope from scratch: the incremental files PRs restore
-    # only replay what a change touched, so drift through a dependency is caught here.
+    # only replay what a change touched, so drift through a dependency is caught here. Only
+    # telemetry and shared can fail it; every other scope reports its score.
     - cron: "0 3 * * 1"
 
 concurrency:
@@ -70,6 +73,10 @@ jobs:
               cli/*|kanban/*|scripts/__tests__/*|README.md)
                 relevant=true
                 ;;
+              # The memory `docs-do-not-lie.arch.test.ts` holds to the CLI's tree and commands.
+              aidd_docs/memory/internal/cli/*|aidd_docs/memory/project-brief.md)
+                relevant=true
+                ;;
               # The identifier-join probe and the token check, which judge the real tool by the hooks.
               scripts/probe-identifier-join.cjs|scripts/check-claude-tokens-end-to-end.cjs)
                 relevant=true
@@ -79,9 +86,18 @@ jobs:
               plugins/*/skills/*/scripts/*|plugins/*/hooks/*)
                 relevant=true
                 ;;
+              # The recipes the cli-build job validates against the built binary.
+              plugins/aidd-context/skills/12-cook/assets/recipes/*)
+                relevant=true
+                ;;
               # This file: a change to how the suite runs matches nothing else here, so the
               # workflow deciding whether the suite passes would land unverified.
               .github/workflows/cli-ci.yml)
+                relevant=true
+                ;;
+              # The local gates and the other workflows decide what a change must pass; the
+              # architecture and test jobs here are the ones that replay them.
+              lefthook.yml|.github/workflows/*)
                 relevant=true
                 ;;
             esac
@@ -203,8 +219,8 @@ jobs:
               changed="$(git diff --name-only "$BASE" "$HEAD")"
               all=false
             fi
-            legs="$(ALL="$all" CHANGED="$changed" node cli/scripts/mutation-scopes-to-run.mjs)"
-            sharded="$(ALL="$all" CHANGED="$changed" OUTPUT=sharded node cli/scripts/mutation-scopes-to-run.mjs)"
+            legs="$(printf '%s\n' "$changed" | ALL="$all" node cli/scripts/mutation-scopes-to-run.mjs)"
+            sharded="$(printf '%s\n' "$changed" | ALL="$all" OUTPUT=sharded node cli/scripts/mutation-scopes-to-run.mjs)"
           fi
           echo "mutation legs: $legs"
           echo "sharded scopes: $sharded"
@@ -330,6 +346,63 @@ jobs:
       # token and no network. `smoke:full` adds the remote-fetch section on demand.
       - run: cd cli && pnpm smoke
 
+  # Weekly and on demand only. Installs the newest host binary and replays the recorded host
+  # behaviour against it, in a throwaway HOME over local marketplaces: no model, no login, no
+  # secret. A red run means a host changed its word, so tests/fixtures/hosts needs a new recording:
+  # it opens or updates one issue per host.
+  host-contract:
+    name: cli / Host contract (${{ matrix.host }})
+    needs: [changes]
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      actions: read
+      contents: read
+      issues: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { host: claude, package: "@anthropic-ai/claude-code" }
+          - { host: codex, package: "@openai/codex" }
+          - { host: copilot, package: "@github/copilot" }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install pnpm
+        run: corepack enable
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      - name: Cache pnpm store
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.local/share/pnpm/store
+          key: pnpm-${{ runner.os }}-${{ hashFiles('cli/pnpm-lock.yaml') }}
+          restore-keys: pnpm-${{ runner.os }}-
+      - run: cd cli && pnpm install --frozen-lockfile
+      - name: Install the host binary
+        run: npm install -g ${{ matrix.package }}@latest
+      - name: The host answers as recorded
+        id: contract
+        run: cd cli && pnpm test:host-contract
+      # One issue per host, found by its title, so the three legs never open duplicates.
+      - name: Report a mismatch
+        if: failure() && steps.contract.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          TITLE: "Host contract mismatch: ${{ matrix.host }}"
+        run: |
+          body="The ${{ matrix.host }} binary no longer answers as tests/fixtures/hosts recorded it. Run: $RUN_URL"
+          number=$(gh issue list --repo "$REPO" --state open --search "\"$TITLE\" in:title" --json number,title --jq "map(select(.title == \"$TITLE\")) | .[0].number // empty")
+          if [ -n "$number" ]; then
+            gh issue comment "$number" --repo "$REPO" --body "$body"
+          else
+            gh issue create --repo "$REPO" --title "$TITLE" --body "$body"
+          fi
+
   cli-kilo-runtime:
     name: cli / Kilo runtime smoke
     needs: [changes]
@@ -354,7 +427,7 @@ jobs:
       # Inference uses a deterministic loopback endpoint; no provider account is needed.
       - name: Install Kilo Code CLI
         run: npm install -g @kilocode/cli@7.7.5
-      - run: cd cli && pnpm test:e2e:kilo
+      - run: cd cli && pnpm smoke:kilo
 
   cli-build:
     name: cli / Build & Bundle Budget
@@ -376,6 +449,11 @@ jobs:
           restore-keys: pnpm-${{ runner.os }}-
       - run: cd cli && pnpm install --frozen-lockfile
       - run: cd cli && pnpm build
+      - name: The embedded recipes validate against the built binary
+        run: AIDD_SKIP_UPDATE_CHECK=1 node cli/dist/cli.js framework validate-recipes --all --bundled plugins/aidd-context/skills/12-cook/assets/recipes
+      # Cursor only: no codex or copilot binary is on the runner, so the script skips them.
+      - name: A person's own registration survives setup and clean
+        run: cd cli && bash scripts/smoke-collision.sh
 
   cli-knip:
     name: cli / Knip (dead code)
@@ -397,6 +475,9 @@ jobs:
           restore-keys: pnpm-${{ runner.os }}-
       - run: cd cli && pnpm install --frozen-lockfile
       - run: cd cli && pnpm knip
+      # Tests count as entries above, so an export only a test reads passes. Without them, it shows.
+      - name: Exports and types no shipped code reads
+        run: cd cli && pnpm knip:production
 
   identifier-join:
     name: cli / Identifier join (Claude Code)
@@ -485,6 +566,7 @@ jobs:
           restore-keys: pnpm-${{ runner.os }}-
       - run: cd cli && pnpm install --frozen-lockfile
       - run: cd cli && pnpm jscpd
+      - run: cd cli && pnpm jscpd:profiles
 
   kanban-checks:
     name: kanban / Typecheck, Lint & Test
@@ -513,31 +595,43 @@ jobs:
     # Runs under bash (Git Bash, bundled on windows-latest) so every command is the one the
     # Linux jobs run, not a PowerShell rewrite of it. No pnpm store cache: the store path in
     # the Linux jobs' cache key is POSIX, not where a native Windows pnpm resolves its store.
-    name: cli / Windows
+    # One leg per part, in parallel, so no part sets the wall clock of the pull request. The
+    # architecture suite is not run here: it is static source analysis, the same on any OS,
+    # and the Linux job runs it.
+    name: cli / Windows (${{ matrix.part }})
     needs: [changes]
     if: needs.changes.outputs.relevant == 'true'
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [plugins, hooks, unit-contract, integration, install-e2e]
     defaults:
       run:
         shell: bash
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
       - name: Install pnpm
         run: corepack enable
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "22"
 
-      # Wrapped: a suite writing into this repository's own .git/hooks passes every assertion
-      # and destroys an install nothing can restore. The suite reads YAML through the root
-      # devDependencies, so the install has to precede it.
+      # The plugin suite reads YAML through the root devDependencies, so the install has to
+      # precede it.
       - run: pnpm install --frozen-lockfile
       - run: cd cli && pnpm install --frozen-lockfile
+      # Wrapped: a suite writing into this repository's own .git/hooks passes every assertion
+      # and destroys an install nothing can restore.
       - name: Plugin suite
+        if: matrix.part == 'plugins'
         run: node scripts/check-tests-leave-git-alone.js -- node --test 'scripts/__tests__/**/*.test.js'
 
       # The same commit hooks on Windows; dedicated jobs cover the three CLI checks.
       - name: Hooks - a commit's hooks pass on Windows
+        if: matrix.part == 'hooks'
         run: |
           echo "# lefthook subject" > "$RUNNER_TEMP/msg"
           status=0
@@ -551,6 +645,19 @@ jobs:
           fi
           exit $status
 
+      - name: cli unit
+        if: matrix.part == 'unit-contract'
+        run: cd cli && pnpm test:unit
+      - name: cli contract
+        if: matrix.part == 'unit-contract'
+        run: cd cli && pnpm test:contract
+      - name: cli integration
+        if: matrix.part == 'integration'
+        run: cd cli && pnpm test:integration
+      - name: cli tooling
+        if: matrix.part == 'unit-contract'
+        run: cd cli && pnpm test:tooling
+
       # A real global install, not `node dist/cli.js` by path: nothing else proves `aidd`
       # resolves on this platform's PATH. The recipe hook builds it first; this step
       # rebuilds and packages it for the global install.
@@ -559,6 +666,7 @@ jobs:
       # pnpm's configured shell, `cmd.exe` on Windows, where that script's `$(node -p ...)`
       # is not valid syntax. This block is bash by the job's `defaults.run.shell`.
       - name: Install the built CLI globally, the way a person actually would
+        if: matrix.part == 'install-e2e'
         run: |
           cd cli
           pnpm build
@@ -566,12 +674,11 @@ jobs:
           npm install -g ./dist/ai-driven-dev-cli-*.tgz --force
       # Failing `aidd --version` means the CLI could not be resolved on the PATH.
       - name: Chain - the installed CLI resolves
+        if: matrix.part == 'install-e2e'
         run: aidd --version
-      - run: cd cli && pnpm test:unit
-      - run: cd cli && pnpm test:integration
-      - run: cd cli && pnpm test:arch
-      # Every e2e but the one named below.
-      - name: cli e2e
+      # Every e2e and golden but the one named below.
+      - name: cli e2e and golden
+        if: matrix.part == 'install-e2e'
         # `--max-workers=2`, and only here. Vitest transforms modules on its own main thread
         # while every worker calls back into it, and that call has a fixed 60 s timeout no
         # configuration exposes: on this runner the default pool queued it past 60 s and
@@ -579,13 +686,13 @@ jobs:
         # of two caps the competing requests whatever the runner's core count.
         run: |
           cd cli
-          pnpm exec vitest run --project=e2e --max-workers=2 \
+          pnpm exec vitest run --project=e2e --project=golden --max-workers=2 \
             --exclude "tests/e2e/persona.e2e.test.ts"
         # persona.e2e.test.ts needs /usr/bin/expect, which windows-latest does not carry.
 
   macos:
     # The plugin suite on macOS: scripts and bundled hooks touch paths, line endings and shells,
-    # and only Linux and Windows ran it. The Windows job covers the rest of that platform.
+    # and only Linux and Windows ran it. The Windows jobs cover the rest of that platform.
     name: cli / macOS
     needs: [changes]
     if: needs.changes.outputs.relevant == 'true'
@@ -611,6 +718,8 @@ jobs:
     name: cli / Mutation (${{ matrix.scope }}${{ matrix.of > 1 && format(' {0}/{1}', matrix.shard, matrix.of) || '' }})
     needs: [changes]
     if: needs.changes.outputs.mutation_legs != '[]'
+    # A scope with no floor in mutation-scopes.json reports its score and never fails the run.
+    continue-on-error: ${{ !matrix.blocking }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
     strategy:
@@ -618,7 +727,7 @@ jobs:
       matrix:
         include: ${{ fromJSON(needs.changes.outputs.mutation_legs) }}
     env:
-      # `--` closes the name: `tools` must never restore `tools-codex`'s file.
+      # `--` closes the name: `shared` must never restore `shared-infrastructure`'s file.
       LEG: ${{ matrix.of > 1 && format('{0}-shard-{1}-of-{2}', matrix.scope, matrix.shard, matrix.of) || matrix.scope }}
       LEG_DIR: cli/reports/mutation/${{ matrix.of > 1 && format('{0}/shard-{1}-of-{2}', matrix.scope, matrix.shard, matrix.of) || matrix.scope }}
     steps:
@@ -643,7 +752,14 @@ jobs:
           path: ${{ env.LEG_DIR }}/incremental.json
           key: mutation--${{ env.LEG }}--${{ github.run_id }}
           restore-keys: mutation--${{ env.LEG }}--
-      - run: cd cli && node scripts/run-mutation.mjs "${{ matrix.scope }}" ${{ matrix.of > 1 && format('--shard {0}/{1}', matrix.shard, matrix.of) || '' }} ${{ github.event_name == 'schedule' && '--force' || '' }}
+      - name: Mutate the leg
+        run: |
+          set -o pipefail
+          cd cli && node scripts/run-mutation.mjs "${{ matrix.scope }}" ${{ matrix.of > 1 && format('--shard {0}/{1}', matrix.shard, matrix.of) || '' }} ${{ github.event_name != 'pull_request' && github.event_name != 'push' && '--force' || '' }} | tee "$RUNNER_TEMP/score.txt"
+      # Each run's score line lands in its job summary: the weekly runs are the score trend.
+      - name: Record the score in the job summary
+        if: always()
+        run: grep -hE '^(Report|Shard )' "$RUNNER_TEMP/score.txt" >> "$GITHUB_STEP_SUMMARY" || true
       - name: Save this leg's incremental file
         if: always()
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -666,22 +782,38 @@ jobs:
     needs: [changes, cli-mutation]
     # Always, so a crashed or cancelled shard is scored as missing instead of skipped.
     if: always() && needs.changes.outputs.mutation_sharded != '[]' && needs.changes.outputs.mutation_sharded != ''
+    continue-on-error: ${{ !matrix.blocking }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        scope: ${{ fromJSON(needs.changes.outputs.mutation_sharded) }}
+        include: ${{ fromJSON(needs.changes.outputs.mutation_sharded) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install pnpm
+        run: corepack enable
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "22"
+      - name: Cache pnpm store
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.local/share/pnpm/store
+          key: pnpm-${{ runner.os }}-${{ hashFiles('cli/pnpm-lock.yaml') }}
+          restore-keys: pnpm-${{ runner.os }}-
+      # The scoring cuts the scope by the same mutant weights as its shards, which the instrumenter counts.
+      - run: cd cli && pnpm install --frozen-lockfile
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: mutation-${{ matrix.scope }}-shard-*
           path: shards
       - name: Score the scope over every shard, against its floor
-        run: node cli/scripts/run-mutation.mjs "${{ matrix.scope }}" --aggregate "$GITHUB_WORKSPACE/shards"
+        run: |
+          set -o pipefail
+          node cli/scripts/run-mutation.mjs "${{ matrix.scope }}" --aggregate "$GITHUB_WORKSPACE/shards" | tee "$RUNNER_TEMP/score.txt"
+      - name: Record the score in the job summary
+        if: always()
+        run: grep -hE '^Report' "$RUNNER_TEMP/score.txt" >> "$GITHUB_STEP_SUMMARY" || true
 
   gate:
     name: cli / gate
@@ -705,6 +837,7 @@ jobs:
       - kanban-checks
       - windows
       - macos
+      - host-contract
     steps:
       - name: Fail unless changes decided cleanly and every gated job passed or was skipped
         run: |
@@ -728,7 +861,8 @@ jobs:
             "${{ needs.cli-mutation-score.result }}" \
             "${{ needs.kanban-checks.result }}" \
             "${{ needs.windows.result }}" \
-            "${{ needs.macos.result }}"; do
+            "${{ needs.macos.result }}" \
+            "${{ needs.host-contract.result }}"; do
             if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
               echo "::error::a required job did not pass (result: $result)"
               exit 1

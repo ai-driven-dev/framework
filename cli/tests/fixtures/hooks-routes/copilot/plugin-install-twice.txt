@@ -1,5 +1,10 @@
 second install threw DuplicatePluginError: Plugin 'aidd-context' is already installed.
 
+## project/.github/plugins/aidd-context/.plugin/plugin.json
+{
+  "hooks": "./hooks/hooks.json"
+}
+
 ## project/.github/plugins/aidd-context/hooks/artifacts.cjs
 script, identical to the plugin source
 
@@ -287,8 +292,10 @@ script, identical to the plugin source
 ## project/.github/plugins/aidd-context/hooks/memory.cjs
 script, identical to the plugin source
 
-## project/.github/plugins/aidd-telemetry/hooks/catch-up.cjs
-script, identical to the plugin source
+## project/.github/plugins/aidd-telemetry/.plugin/plugin.json
+{
+  "hooks": "./hooks/hooks.json"
+}
 
 ## project/.github/plugins/aidd-telemetry/hooks/hooks.json
 {
@@ -298,9 +305,9 @@ script, identical to the plugin source
         "hooks": [
           {
             "type": "command",
-            "command": "node ${PLUGIN_ROOT}/hooks/session-start.cjs",
-            "statusMessage": "AIDD Telemetry: carry Claude session task",
-            "timeout": 10
+            "command": "node ${PLUGIN_ROOT}/hooks/task.cjs remind",
+            "statusMessage": "AIDD Telemetry: remind the task",
+            "timeout": 5
           }
         ]
       },
@@ -308,22 +315,9 @@ script, identical to the plugin source
         "hooks": [
           {
             "type": "command",
-            "command": "node ${PLUGIN_ROOT}/hooks/catch-up.cjs",
-            "statusMessage": "AIDD Telemetry: update measurement ledger",
-            "async": true,
-            "timeout": 120
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ${PLUGIN_ROOT}/hooks/prompt-gate.cjs",
-            "statusMessage": "AIDD Telemetry: check task declaration",
-            "timeout": 30
+            "command": "node ${PLUGIN_ROOT}/hooks/ledger.cjs ingest",
+            "statusMessage": "AIDD Telemetry: update the measurement ledger",
+            "timeout": 5
           }
         ]
       }
@@ -332,10 +326,10 @@ script, identical to the plugin source
 }
 
 
-## project/.github/plugins/aidd-telemetry/hooks/lib/aidd.cjs
+## project/.github/plugins/aidd-telemetry/hooks/ledger.cjs
 script, identical to the plugin source
 
-## project/.github/plugins/aidd-telemetry/hooks/lib/binding.cjs
+## project/.github/plugins/aidd-telemetry/hooks/lib/aidd.cjs
 script, identical to the plugin source
 
 ## project/.github/plugins/aidd-telemetry/hooks/lib/claude-only.cjs
@@ -350,22 +344,13 @@ script, identical to the plugin source
 ## project/.github/plugins/aidd-telemetry/hooks/lib/context.cjs
 script, identical to the plugin source
 
-## project/.github/plugins/aidd-telemetry/hooks/lib/declaration.cjs
-script, identical to the plugin source
-
 ## project/.github/plugins/aidd-telemetry/hooks/lib/git.cjs
 script, identical to the plugin source
 
-## project/.github/plugins/aidd-telemetry/hooks/lib/hook-io.cjs
-script, identical to the plugin source
+## project/.github/plugins/aidd-telemetry/hooks/lib/host.cjs
+script, identical to the host adapter host-copilot.cjs
 
 ## project/.github/plugins/aidd-telemetry/hooks/lib/jsonl.cjs
-script, identical to the plugin source
-
-## project/.github/plugins/aidd-telemetry/hooks/lib/lookup.cjs
-script, identical to the plugin source
-
-## project/.github/plugins/aidd-telemetry/hooks/lib/presence.cjs
 script, identical to the plugin source
 
 ## project/.github/plugins/aidd-telemetry/hooks/lib/telemetry-dir.cjs
@@ -374,10 +359,7 @@ script, identical to the plugin source
 ## project/.github/plugins/aidd-telemetry/hooks/lib/tool.cjs
 script, identical to the plugin source
 
-## project/.github/plugins/aidd-telemetry/hooks/prompt-gate.cjs
-script, identical to the plugin source
-
-## project/.github/plugins/aidd-telemetry/hooks/session-start.cjs
+## project/.github/plugins/aidd-telemetry/hooks/task.cjs
 script, identical to the plugin source
 
 # recorded
@@ -403,25 +385,20 @@ project copilot aidd-context scope=project: 19 hook files
   .github/plugins/aidd-context/hooks/memory.cjs
   projectHooks null
   dependents []
-project copilot aidd-telemetry scope=project: 18 hook files
-  .github/plugins/aidd-telemetry/hooks/catch-up.cjs
+project copilot aidd-telemetry scope=project: 13 hook files
   .github/plugins/aidd-telemetry/hooks/hooks.json
+  .github/plugins/aidd-telemetry/hooks/ledger.cjs
   .github/plugins/aidd-telemetry/hooks/lib/aidd.cjs
-  .github/plugins/aidd-telemetry/hooks/lib/binding.cjs
   .github/plugins/aidd-telemetry/hooks/lib/claude-only.cjs
   .github/plugins/aidd-telemetry/hooks/lib/codex-session-file.cjs
   .github/plugins/aidd-telemetry/hooks/lib/consent.cjs
   .github/plugins/aidd-telemetry/hooks/lib/context.cjs
-  .github/plugins/aidd-telemetry/hooks/lib/declaration.cjs
   .github/plugins/aidd-telemetry/hooks/lib/git.cjs
-  .github/plugins/aidd-telemetry/hooks/lib/hook-io.cjs
+  .github/plugins/aidd-telemetry/hooks/lib/host.cjs
   .github/plugins/aidd-telemetry/hooks/lib/jsonl.cjs
-  .github/plugins/aidd-telemetry/hooks/lib/lookup.cjs
-  .github/plugins/aidd-telemetry/hooks/lib/presence.cjs
   .github/plugins/aidd-telemetry/hooks/lib/telemetry-dir.cjs
   .github/plugins/aidd-telemetry/hooks/lib/tool.cjs
-  .github/plugins/aidd-telemetry/hooks/prompt-gate.cjs
-  .github/plugins/aidd-telemetry/hooks/session-start.cjs
+  .github/plugins/aidd-telemetry/hooks/task.cjs
   projectHooks null
   dependents []
 project copilot nativeRegistrations pluginRefs null

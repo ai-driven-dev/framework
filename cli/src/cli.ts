@@ -1,106 +1,64 @@
 import { platform } from "node:os";
 import { Command } from "commander";
-import { registerAuthCommand } from "./presentation/commands/auth.js";
-import { registerCleanCommand } from "./presentation/commands/clean.js";
-import { registerDoctorCommand } from "./presentation/commands/doctor.js";
-import { registerFrameworkCommand } from "./presentation/commands/framework.js";
-import { registerMarketplaceCommand } from "./presentation/commands/marketplace.js";
-import { runMenuLoop } from "./presentation/commands/menu.js";
-import { registerPluginCommand } from "./presentation/commands/plugin.js";
-import { registerSetupCommand } from "./presentation/commands/setup.js";
-import { registerSyncCommand } from "./presentation/commands/sync.js";
-import { registerTelemetryCommand } from "./presentation/commands/telemetry.js";
-import { registerTranslateCommand } from "./presentation/commands/translate.js";
-import { registerUpdateCommand } from "./presentation/commands/update.js";
-import { CLIOutput } from "./presentation/output.js";
-import { CurrentVersionAdapter } from "./runtime/self-update/current-version-adapter.js";
-import { createDeps } from "./runtime/wiring/framework.js";
+import { containerFactory, createContainer } from "./composition/container.js";
+import { wireTelemetryRequests } from "./composition/contexts/telemetry.js";
+import { wireTools } from "./composition/contexts/tools.js";
+import { outputEndingWith } from "./composition/shared.js";
+import { outputOf } from "./presentation/controllers/menu/global-options.controller.js";
+import { inProcessCommand } from "./presentation/controllers/menu/in-process-command.controller.js";
+import { runMenuLoop } from "./presentation/controllers/menu/menu.controller.js";
+import { registerCommands } from "./presentation/controllers/menu/register-commands.controller.js";
+import { describeMessage } from "./presentation/errors/describe-message.presenter.js";
+import { failCommand, render } from "./presentation/errors/error-translator.presenter.js";
+import { registerUpdateNoticeHooks } from "./presentation/hooks/update-notice-hooks.js";
+import { installedNodes } from "./presentation/menu/menu-tree.presenter.js";
+import { resolveProjectRoot } from "./presentation/terminal/project-root.js";
+import { waitForEnter } from "./presentation/terminal/wait-for-enter.js";
 
 function formatVersion(version: string): string {
   return `aidd/${version} node/${process.versions.node} ${platform()}-${process.arch}`;
 }
 
-const currentVersion = new CurrentVersionAdapter().get();
+const tools = wireTools();
+/** The output a run writes to, worded by the catalogue; `end` is how the run stops. */
+const outputOfRun = (end: (code: number) => never) =>
+  outputEndingWith(end, render, describeMessage);
+const createOutput = outputOfRun((code) => process.exit(code));
 
-const program = new Command();
+// The composition edge: commands receive these factories and never import the wiring.
+const version = createContainer({ projectRoot: process.cwd(), verbose: false, tools }).shared
+  .currentVersion;
+const containerOf = containerFactory(tools);
+const telemetryRequests = wireTelemetryRequests();
 
-program
-  .name("aidd")
-  .description("Generate AI coding assistant configurations from the AIDD framework")
-  .version(formatVersion(currentVersion), "-V, --version", "Show version number")
-  .option("--verbose", "Show detailed diagnostic output", false);
-
-registerSetupCommand(program);
-registerFrameworkCommand(program);
-registerTranslateCommand(program);
-registerPluginCommand(program);
-registerMarketplaceCommand(program);
-registerAuthCommand(program);
-registerSyncCommand(program);
-registerUpdateCommand(program);
-registerDoctorCommand(program);
-registerCleanCommand(program);
-registerTelemetryCommand(program);
-
-// Commands already paying for network I/O, so the update-check refresh rides one of them.
-// `marketplace remove` is offline and `update` already resolves the latest version itself.
-const ONLINE_COMMAND_PATHS = new Set([
-  "marketplace refresh",
-  "marketplace check",
-  "marketplace list",
-  "marketplace add",
-  "sync",
-]);
-
-program.hook("preAction", async (_thisCommand, actionCommand) => {
-  if (process.env.AIDD_SKIP_UPDATE_CHECK === "1") return;
-  // A hook runs `telemetry ingest --quiet`; an update notice would break its silence.
-  if (resolveCommandPath(actionCommand).startsWith("telemetry")) return;
-  const opts = program.opts<{ verbose?: boolean }>();
-  const output = new CLIOutput(opts.verbose ?? false);
-  const deps = await createDeps(process.cwd(), { verbose: opts.verbose ?? false }, output).catch(
-    () => null
-  );
-  if (!deps) return;
-  // A bare verb with no subject means "the CLI itself" (Claude Code/Codex convention):
-  // `update` resolves the latest version on its own, so the generic check is redundant.
-  if (actionCommand.name() === "update") return;
-  await deps.checkUpdateUseCase.printFromCacheOnly().catch((err: unknown) => {
-    deps.logger.debug(
-      `CLI update check failed: ${err instanceof Error ? err.message : String(err)}`
-    );
+/** The binary's program: its options, its commands and its hooks, each run ending through `end`. */
+function registerProgram(program: Command, end: (code: number) => never): Command {
+  program
+    .name("aidd")
+    .description("Generate AI coding assistant configurations from the AIDD framework")
+    .version(formatVersion(version), "-V, --version", "Show version number")
+    .option("--verbose", "Show detailed diagnostic output", false);
+  registerCommands(program, {
+    tools,
+    containerOf,
+    telemetryRequests,
+    runCommand: runInMenu,
+    createOutput: outputOfRun(end),
   });
-});
-
-program.hook("postAction", async (_thisCommand, actionCommand) => {
-  // The refresh asks GitHub what the latest release is and caches the answer, so any
-  // run that performs it produces output depending on what has been published since.
-  // A test suite that captures output cannot afford that: every release would rewrite
-  // its expectations. Same switch shape as AIDD_SKIP_MARKETPLACE_REFRESH, same reason.
-  if (process.env.AIDD_SKIP_UPDATE_CHECK === "1") return;
-  if (!ONLINE_COMMAND_PATHS.has(resolveCommandPath(actionCommand))) return;
-  const opts = program.opts<{ verbose?: boolean }>();
-  const output = new CLIOutput(opts.verbose ?? false);
-  const deps = await createDeps(process.cwd(), { verbose: opts.verbose ?? false }, output).catch(
-    () => null
-  );
-  if (!deps) return;
-  await deps.checkUpdateUseCase.refresh().catch((err: unknown) => {
-    deps.logger.debug(
-      `CLI update refresh failed: ${err instanceof Error ? err.message : String(err)}`
-    );
-  });
-});
-
-function resolveCommandPath(actionCommand: Command): string {
-  const parts: string[] = [];
-  let current: Command | null = actionCommand;
-  while (current && current.name() !== "aidd") {
-    parts.unshift(current.name());
-    current = current.parent;
-  }
-  return parts.join(" ");
+  registerUpdateNoticeHooks(program, containerOf);
+  return program;
 }
+
+/** A command the menu runs: in this process, ending its run rather than the process. */
+const runInMenu = inProcessCommand(registerProgram);
+const terminal = { runner: { run: runInMenu }, pause: { untilEnter: waitForEnter } };
+const menuOfProject = (projectRoot: string) =>
+  createContainer({ projectRoot, verbose: false, tools, output: createOutput(false) }).menu(
+    terminal,
+    installedNodes(tools)
+  );
+
+const program = registerProgram(new Command(), (code) => process.exit(code));
 
 // A reader that stops reading (`aidd … | head -1`) closes stdout under the run: what is left to
 // print has nobody to read it, so the run goes on without it and exits on its own outcome.
@@ -111,7 +69,9 @@ process.stdout.on("error", (error: NodeJS.ErrnoException) => {
 const cliArgs = process.argv.slice(2);
 
 if (cliArgs.length === 0 && process.stdout.isTTY) {
-  runMenuLoop();
+  runMenuLoop(menuOfProject, resolveProjectRoot(), createOutput(false)).catch((error: unknown) =>
+    failCommand(outputOf(program), error)
+  );
 } else {
-  program.parse(process.argv);
+  program.parseAsync(process.argv).catch((error: unknown) => failCommand(outputOf(program), error));
 }

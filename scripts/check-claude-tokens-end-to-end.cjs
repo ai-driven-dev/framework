@@ -7,9 +7,9 @@
  * The fake API answers each call with known usage, so the expected totals come from the server,
  * never from the transcript the CLI reads.
  *
- * `--attended` runs Claude in a pseudo-terminal, as a person would: the first prompt must be
- * blocked and asked for a task, the declaration typed as a prompt must be answered by the hook,
- * and `/clear` must keep the task. POSIX only: it needs Python's `pty`.
+ * `--attended` runs Claude in a pseudo-terminal, as a person would: the session start must remind
+ * of a task, the first prompt must be billed unblocked, and `! aidd telemetry task` must declare
+ * it after the fact, the first call moving onto it. POSIX only: it needs Python's `pty`.
  *
  * Usage: node scripts/check-claude-tokens-end-to-end.cjs [--attended] [path/to/cli.js]
  *
@@ -170,7 +170,7 @@ function transcripts(configDir) {
     .join("\n");
 }
 
-/** Types into Claude as a person: what the gate blocks, the declaration it asks for, `/clear`.
+/** Types into Claude as a person: the first prompt, the declaration the reminder names, a second prompt.
  * Each step waits on what it causes on disk or at the API, never on how the screen renders. */
 async function attendedSession({ root, env, project, api, telemetryDir }) {
   const relay = path.join(root, "tty-relay.py");
@@ -183,12 +183,6 @@ async function attendedSession({ root, env, project, api, telemetryDir }) {
   let typedAt = 0;
   // Whitespace dropped: the terminal redraws by moving the cursor, not by printing spaces.
   const shown = (text) => screen.slice(typedAt).replace(/\s/gu, "").includes(text.replace(/\s/gu, ""));
-  /** A blocked prompt is put back in the input once the hook's message is shown: wait for it,
-   * then for the input to settle, so the next prompt is not typed onto the old one. */
-  const settle = async (what, text) => {
-    await waitFor(what, () => shown(text));
-    await sleep(1000);
-  };
   const type = async (text) => {
     typedAt = screen.length;
     child.stdin.write("\x15"); // clear whatever the input holds
@@ -198,25 +192,18 @@ async function attendedSession({ root, env, project, api, telemetryDir }) {
     child.stdin.write("\r");
   };
   const sessions = path.join(telemetryDir, "bindings", "sessions.jsonl");
-  const carries = path.join(telemetryDir, "bindings", "carries.jsonl");
   const billedInTranscript = (n) => transcripts(env.CLAUDE_CONFIG_DIR).includes(`"msg_fake_${n}"`);
   try {
     await waitFor("Claude to start", () => screen.includes("Claude Code"));
-    await sleep(2000);
-    await type("say OK");
-    await settle("the gate to ask for a task", "Telemetry: no task");
-    const billedBeforeDeclaring = api.billed.length;
-    await type("aidd telemetry task demo --ticket T-1");
-    await waitFor("the hook to answer the declaration", () => readText(sessions).includes("hook-intercept"));
-    await settle("the hook to confirm the declaration", "Send your prompt again");
+    await waitFor("the reminder of a task", () => shown("Telemetry: no task"));
     await type("say OK");
     await waitFor("the first call in a transcript", () => billedInTranscript(1));
-    await type("/clear");
-    await waitFor("the task to be carried across /clear", () => readText(carries).trim() !== "");
-    await sleep(1000);
+    const billedBeforeDeclaring = api.billed.length;
+    await type("! aidd telemetry task demo --ticket T-1");
+    await waitFor("the declaration", () => readText(sessions).trim() !== "");
     await type("say OK");
-    await waitFor("the call after /clear in a transcript", () => billedInTranscript(2));
-    return { billedBeforeDeclaring, sessions: readLines(sessions), carries: readLines(carries) };
+    await waitFor("the second call in a transcript", () => billedInTranscript(2));
+    return { billedBeforeDeclaring, sessions: readLines(sessions) };
   } catch (error) {
     const tail = screen.slice(-600);
     throw new Error(`${error.message}; the screen ended with: ${JSON.stringify(tail)}`);
@@ -225,16 +212,14 @@ async function attendedSession({ root, env, project, api, telemetryDir }) {
   }
 }
 
-/** The verdict on what a person's session left: asked before any call, answered by the hook,
- * and the declared session carried across `/clear`. */
-function judgeAttended({ billedBeforeDeclaring, sessions, carries }) {
+/** The verdict on what a person's session left: the first prompt billed unblocked, and the task
+ * declared by the command after it. */
+function judgeAttended({ billedBeforeDeclaring, sessions }) {
   const wrong = [];
-  if (billedBeforeDeclaring !== 0) wrong.push(`${billedBeforeDeclaring} calls reached the API before the task was declared`);
-  const declared = sessions.filter((line) => line.by === "hook-intercept" && line.task === "demo" && line.ticket === "T-1");
-  if (declared.length !== 1) wrong.push(`${declared.length} declarations of demo, T-1 answered by the hook`);
-  const carried = carries.filter((line) => line.from === declared[0]?.session_id && line.session_id !== line.from);
-  if (carried.length !== 1) wrong.push(`${carried.length} carries from the declared session across /clear`);
-  return wrong.length > 0 ? { code: WRONG, message: wrong.join("; ") } : { code: 0, message: "asked, answered by the hook, kept across /clear" };
+  if (billedBeforeDeclaring !== 1) wrong.push(`expected 1 call billed before the declaration, got ${billedBeforeDeclaring}`);
+  const declared = sessions.filter((line) => line.by === "command" && line.task === "demo" && line.ticket === "T-1");
+  if (declared.length !== 1) wrong.push(`${declared.length} declarations of demo, T-1 made by the command`);
+  return wrong.length > 0 ? { code: WRONG, message: wrong.join("; ") } : { code: 0, message: "reminded, first prompt unblocked, declared after it" };
 }
 
 /** What the report must say, from what the server billed alone. */
@@ -306,12 +291,12 @@ async function checkIn({ root, cli, api, log, attended }) {
   fs.mkdirSync(path.join(home, ".claude"), { recursive: true });
   fs.mkdirSync(path.join(project, ".claude"), { recursive: true });
   // Shaped like the shipped hooks.json, `node <script>`, with the plugin root spelled out.
-  const hook = (script) => ({
-    hooks: [{ type: "command", command: [process.execPath, path.join(HOOKS, script)].map((word) => JSON.stringify(word.replaceAll("\\", "/"))).join(" ") }],
+  const hook = (script, goal) => ({
+    hooks: [{ type: "command", command: [process.execPath, path.join(HOOKS, script), goal].map((word) => JSON.stringify(word.replaceAll("\\", "/"))).join(" ") }],
   });
   fs.writeFileSync(
     path.join(project, ".claude", "settings.local.json"),
-    `${JSON.stringify({ hooks: { SessionStart: [hook("session-start.cjs")], UserPromptSubmit: [hook("prompt-gate.cjs")] } })}\n`
+    `${JSON.stringify({ hooks: { SessionStart: [hook("task.cjs", "remind"), hook("ledger.cjs", "ingest")] } })}\n`
   );
   // What a person already answered once: onboarding done, this folder trusted, this key approved.
   const answered = {
@@ -321,7 +306,7 @@ async function checkIn({ root, cli, api, log, attended }) {
     projects: { [fs.realpathSync(project)]: { hasTrustDialogAccepted: true }, [project]: { hasTrustDialogAccepted: true } },
   };
   fs.writeFileSync(path.join(configDir, ".claude.json"), `${JSON.stringify(answered)}\n`);
-  // The gate runs `aidd` from PATH, so the CLI under test must be the one found there.
+  // The ingest runs `aidd` from PATH, so the CLI under test must be the one found there.
   const bin = path.join(root, "bin");
   fs.mkdirSync(bin);
   fs.writeFileSync(path.join(bin, "aidd"), `#!/bin/sh\nexec ${JSON.stringify(process.execPath)} ${JSON.stringify(cli)} "$@"\n`, { mode: 0o755 });
@@ -338,6 +323,7 @@ async function checkIn({ root, cli, api, log, attended }) {
     AIDD_USER_CONFIG_DIR: path.join(home, ".config", "aidd"),
     AIDD_TELEMETRY_DIR: telemetryDir,
     CLAUDE_CONFIG_DIR: configDir,
+    CLAUDE_CODE_ENABLE_PROMPT_SUGGESTION: "false",
     CODEX_HOME: path.join(home, ".codex"),
     GIT_CONFIG_NOSYSTEM: "1",
     ANTHROPIC_BASE_URL: api.url,

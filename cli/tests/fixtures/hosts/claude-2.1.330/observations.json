@@ -1,0 +1,131 @@
+{
+  "host": "claude",
+  "version": "2.1.330",
+  "steps": [
+    {
+      "id": "add-first-source",
+      "args": [
+        "plugin",
+        "marketplace",
+        "add",
+        "<markets>/a"
+      ],
+      "status": 0,
+      "stdout": "Adding marketplace…✔ Successfully added marketplace: mk-one (declared in user settings)\n",
+      "stderr": "",
+      "files": {
+        ".claude/plugins/known_marketplaces.json": "{\n  \"mk-one\": {\n    \"source\": {\n      \"source\": \"directory\",\n      \"path\": \"<markets>/a\"\n    },\n    \"installLocation\": \"<markets>/a\",\n    \"lastUpdated\": \"<timestamp>\"\n  }\n}"
+      }
+    },
+    {
+      "id": "add-second-source",
+      "args": [
+        "plugin",
+        "marketplace",
+        "add",
+        "<markets>/b"
+      ],
+      "status": 0,
+      "stdout": "Adding marketplace…✔ Successfully added marketplace: mk-one (declared in user settings)\n  Marketplace 'mk-one' was already added from dir:<markets>/a and now points at dir:<markets>/b.\n  Plugins already installed from it now update from the new source. To undo, add the previous source again.\n",
+      "stderr": "",
+      "files": {
+        ".claude/plugins/known_marketplaces.json": "{\n  \"mk-one\": {\n    \"source\": {\n      \"source\": \"directory\",\n      \"path\": \"<markets>/b\"\n    },\n    \"installLocation\": \"<markets>/b\",\n    \"lastUpdated\": \"<timestamp>\"\n  }\n}"
+      }
+    },
+    {
+      "id": "marketplace-list",
+      "args": [
+        "plugin",
+        "marketplace",
+        "list",
+        "--json"
+      ],
+      "status": 0,
+      "stdout": "[\n  {\n    \"name\": \"mk-one\",\n    \"source\": \"directory\",\n    \"path\": \"<markets>/b\",\n    \"installLocation\": \"<markets>/b\"\n  }\n]\n",
+      "stderr": "",
+      "files": {
+        ".claude/plugins/known_marketplaces.json": "{\n  \"mk-one\": {\n    \"source\": {\n      \"source\": \"directory\",\n      \"path\": \"<markets>/b\"\n    },\n    \"installLocation\": \"<markets>/b\",\n    \"lastUpdated\": \"<timestamp>\"\n  }\n}"
+      }
+    },
+    {
+      "id": "install-local-scope",
+      "args": [
+        "plugin",
+        "install",
+        "p@mk-one",
+        "--scope",
+        "local",
+        "--yes"
+      ],
+      "status": 0,
+      "stdout": "Installing plugin \"p@mk-one\"...✔ Successfully installed plugin: p@mk-one (scope: local)\n",
+      "stderr": "",
+      "files": {
+        ".claude/plugins/known_marketplaces.json": "{\n  \"mk-one\": {\n    \"source\": {\n      \"source\": \"directory\",\n      \"path\": \"<markets>/b\"\n    },\n    \"installLocation\": \"<markets>/b\",\n    \"lastUpdated\": \"<timestamp>\"\n  }\n}"
+      }
+    },
+    {
+      "id": "uninstall-user-scope",
+      "args": [
+        "plugin",
+        "uninstall",
+        "p@mk-one",
+        "--scope",
+        "user",
+        "--yes"
+      ],
+      "status": 1,
+      "stdout": "",
+      "stderr": "✘ Failed to uninstall plugin \"p@mk-one\": Plugin \"p@mk-one\" is installed in local scope, not user. Use --scope local to uninstall.\n",
+      "files": {
+        ".claude/plugins/known_marketplaces.json": "{\n  \"mk-one\": {\n    \"source\": {\n      \"source\": \"directory\",\n      \"path\": \"<markets>/b\"\n    },\n    \"installLocation\": \"<markets>/b\",\n    \"lastUpdated\": \"<timestamp>\"\n  }\n}"
+      }
+    },
+    {
+      "id": "plugin-list-after-refusal",
+      "args": [
+        "plugin",
+        "list",
+        "--json"
+      ],
+      "status": 0,
+      "stdout": "[\n  {\n    \"id\": \"p@mk-one\",\n    \"version\": \"1.0.0\",\n    \"scope\": \"local\",\n    \"enabled\": true,\n    \"installPath\": \"<home>/.claude/plugins/cache/mk-one/p/1.0.0\",\n    \"readFromFolder\": \"<markets>/b/plugins/p\",\n    \"folderVersion\": \"1.0.0\",\n    \"installedAt\": \"<timestamp>\",\n    \"lastUpdated\": \"<timestamp>\",\n    \"projectPath\": \"<proj>\",\n    \"projectEnabled\": false\n  }\n]\n",
+      "stderr": "",
+      "files": {
+        ".claude/plugins/known_marketplaces.json": "{\n  \"mk-one\": {\n    \"source\": {\n      \"source\": \"directory\",\n      \"path\": \"<markets>/b\"\n    },\n    \"installLocation\": \"<markets>/b\",\n    \"lastUpdated\": \"<timestamp>\"\n  }\n}"
+      }
+    },
+    {
+      "id": "uninstall-local-scope",
+      "args": [
+        "plugin",
+        "uninstall",
+        "p@mk-one",
+        "--scope",
+        "local",
+        "--yes"
+      ],
+      "status": 0,
+      "stdout": "✔ Successfully uninstalled plugin: p (scope: local)\n",
+      "stderr": "",
+      "files": {
+        ".claude/plugins/known_marketplaces.json": "{\n  \"mk-one\": {\n    \"source\": {\n      \"source\": \"directory\",\n      \"path\": \"<markets>/b\"\n    },\n    \"installLocation\": \"<markets>/b\",\n    \"lastUpdated\": \"<timestamp>\"\n  }\n}"
+      }
+    },
+    {
+      "id": "remove-marketplace",
+      "args": [
+        "plugin",
+        "marketplace",
+        "remove",
+        "mk-one"
+      ],
+      "status": 0,
+      "stdout": "✔ Successfully removed marketplace: mk-one\n",
+      "stderr": "",
+      "files": {
+        ".claude/plugins/known_marketplaces.json": "{}"
+      }
+    }
+  ]
+}

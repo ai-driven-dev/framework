@@ -1,6 +1,5 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
-const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 const catalogs = require("../../check/generators/catalogs.cjs");
 const { scratchRoot } = require("./helpers.js");

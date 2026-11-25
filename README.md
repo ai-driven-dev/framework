@@ -50,7 +50,9 @@ https://github.com/user-attachments/assets/92474f4c-053a-471d-9c62-16560b7a2a09
 <tr><td><b>OpenCode</b></td><td align="center">✅</td><td align="center">—</td><td align="center">✅</td></tr>
 <tr><td><b>Kilo Code</b></td><td align="center">✅</td><td align="center">—</td><td align="center">✅</td></tr>
 <tr><td><b>Codex</b></td><td align="center">✅</td><td align="center">✅</td><td align="center">✅</td></tr>
-<tr><td><b>Antigravity CLI</b></td><td align="center">✅</td><td align="center">—</td><td align="center">✅</td></tr></tbody>
+<tr><td><b>Antigravity CLI</b></td><td align="center">✅</td><td align="center">—</td><td align="center">✅</td></tr>
+<tr><td><b>Kiro</b></td><td align="center">✅</td><td align="center">—</td><td align="center">✅</td></tr>
+<tr><td><b>Kimi Code CLI</b></td><td align="center">✅</td><td align="center">—</td><td align="center">✅</td></tr></tbody>
 </table>
 
 <!--tools:end-->
@@ -193,7 +195,7 @@ UI design system, checked on every write
 <a href="plugins/aidd-telemetry/README.md">
 <img align="right" alt="beta" src="https://img.shields.io/badge/beta-bf8700?style=flat-square" />
 <h3>📈 aidd-telemetry</h3>
-2 skills · 2 hooks<br />
+2 skills · 1 hook<br />
 Token usage per task, opt-in
 </a>
 </td>

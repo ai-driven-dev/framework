@@ -1,0 +1,224 @@
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
+import type { ToolRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
+import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import type { Scope } from "../../../src/shared/domain/scope.js";
+import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
+import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
+import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
+import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
+import {
+  AssertingActivator,
+  atProject,
+  BINARY,
+  claudeRefOnHost,
+  knownHostSourceCleaner,
+  MARKETPLACE,
+  OrderRecordingActivator,
+  PROJECT_ROOT,
+  REF,
+  seedClaudeNativeRegistrations,
+  seedManifestWithNativeRegistrations,
+  seedMarketplaceRegistry,
+} from "../testing/clean-project.builder.js";
+import { HOST, hostCacheRoot, hostCatalog } from "../testing/synthetic-hosts.builder.js";
+
+const AT_PROJECT = atProject(hostCatalog());
+const CleanWithKnownHostSource = knownHostSourceCleaner(hostCatalog(), HOST);
+
+const homedir = (): string => "/home/dev";
+
+describe("clean: native registration undo order", () => {
+  describe("undoing a host's own native registration", () => {
+    describe("uninstalling at the scope a plugin was actually registered at", () => {
+      const CLAUDE_BINARY = HOST.claude;
+      const CLAUDE_MARKETPLACE = "aidd-framework";
+      const CLAUDE_REF = "aidd-context@aidd-framework";
+
+      function seedClaudeManifest(pluginScope: Scope): {
+        manifest: Manifest;
+        records: ToolRecords;
+      } {
+        const manifest = Manifest.create();
+        manifest.addTool(HOST.claude, "1.0.0", []);
+        manifest.addPlugin(
+          HOST.claude,
+          RecordedPlugin.fromMetadata({
+            name: "aidd-context",
+            version: "1.0.0",
+            source: { kind: "github", repo: "ai-driven-dev/framework" },
+            strict: true,
+            scope: pluginScope,
+            marketplace: CLAUDE_MARKETPLACE,
+          })
+        );
+        const records: ToolRecords = new Map();
+        records.set(HOST.claude, {
+          binary: CLAUDE_BINARY,
+          marketplaces: [
+            {
+              alias: CLAUDE_MARKETPLACE,
+              hostName: CLAUDE_MARKETPLACE,
+              provenance: { kind: "registry", source: "/some/built/path" },
+            },
+          ],
+          pluginRefs: [CLAUDE_REF],
+        });
+        return { manifest, records };
+      }
+
+      function seedClaudeMarketplaceRegistry(): InMemoryMarketplaceRegistry {
+        const registry = new InMemoryMarketplaceRegistry();
+        registry.seed(
+          PROJECT_ROOT,
+          Marketplace.create({
+            name: CLAUDE_MARKETPLACE,
+            source: { kind: "local", path: "/some/built/path" },
+            scope: "project",
+            addedAt: "2026-01-01T00:00:00.000Z",
+          })
+        );
+        return registry;
+      }
+
+      // A real `claude` binary registers at its own implicit default `"user"` whatever the
+      // manifest recorded, so a `"project"`-only uninstall left the plugin behind silently.
+      it("falls back to the other scope when the manifest's own scope does not match what was actually registered, with no host registry to ask", async () => {
+        const { manifest, records } = seedClaudeManifest("project");
+        const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
+        const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT, records);
+        const activator = new FakeHostActions({
+          available: true,
+          installedAtScope: new Map([[CLAUDE_REF, "user"]]),
+        });
+        const useCase = new CleanWithKnownHostSource(
+          fs,
+          manifestRepo,
+          new CapturingLogger(),
+          new UpdateGitignore(fs),
+          new Map([[CLAUDE_BINARY, activator]]),
+          seedClaudeMarketplaceRegistry()
+        );
+
+        await useCase.execute({ ...AT_PROJECT, force: true });
+
+        expect(activator.uninstalledPlugins).toEqual([CLAUDE_REF]);
+        expect(activator.uninstalledPluginScopes).toEqual(["project", "user"]);
+      });
+    });
+
+    it("warns and leaves the registration in place when the tool's CLI is not on PATH", async () => {
+      const { manifest, records } = seedManifestWithNativeRegistrations(HOST);
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
+      const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT, records);
+      const activator = new FakeHostActions({ available: false });
+      const logger = new CapturingLogger();
+      const useCase = new CleanWithKnownHostSource(
+        fs,
+        manifestRepo,
+        logger,
+        new UpdateGitignore(fs),
+        new Map([[BINARY, activator]]),
+        seedMarketplaceRegistry()
+      );
+
+      await useCase.execute({ ...AT_PROJECT, force: true });
+
+      expect(activator.uninstalledPlugins).toEqual([]);
+      expect(activator.removedMarketplaces).toEqual([]);
+      expect(logger.warnMessages).toHaveLength(1);
+      expect(logger.warnMessages[0]).toContain(`the ${HOST.codex} CLI is not on the PATH.`);
+    });
+
+    it("uninstalls the plugin ref before removing the marketplace, for the same tool", async () => {
+      const { manifest, records } = seedClaudeNativeRegistrations(HOST);
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
+      const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT, records);
+      const calls: string[] = [];
+      const activator = new OrderRecordingActivator(calls);
+      const useCase = new CleanWithKnownHostSource(
+        fs,
+        manifestRepo,
+        new CapturingLogger(),
+        new UpdateGitignore(fs),
+        new Map([[HOST.claude, activator]]),
+        seedMarketplaceRegistry(),
+        undefined,
+        new Map(),
+        undefined,
+        undefined,
+        claudeRefOnHost(HOST, "project")
+      );
+
+      await useCase.execute({ ...AT_PROJECT, force: true });
+
+      expect(calls).toEqual([`uninstall:${REF}`, `removeMarketplace:${MARKETPLACE}`]);
+    });
+
+    it("undoes the native registration before the built marketplace tree it points at is deleted", async () => {
+      const { manifest, records } = seedManifestWithNativeRegistrations(HOST);
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
+      const builtPath = join(
+        PROJECT_ROOT,
+        ".aidd",
+        "cache",
+        "built",
+        MARKETPLACE,
+        BINARY,
+        "x.json"
+      );
+      await fs.writeFile(builtPath, "{}");
+      const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT, records);
+      let builtTreeExistedAtRemoveMarketplace: boolean | null = null;
+      const activator = new AssertingActivator(async () => {
+        builtTreeExistedAtRemoveMarketplace = fs.has(builtPath);
+      });
+      const useCase = new CleanWithKnownHostSource(
+        fs,
+        manifestRepo,
+        new CapturingLogger(),
+        new UpdateGitignore(fs),
+        new Map([[BINARY, activator]]),
+        seedMarketplaceRegistry()
+      );
+
+      await useCase.execute({ ...AT_PROJECT, force: true });
+
+      expect(builtTreeExistedAtRemoveMarketplace).toBe(true);
+    });
+
+    it("names the native registration a dry-run preview will undo, without touching it", async () => {
+      const { manifest, records } = seedManifestWithNativeRegistrations(HOST);
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
+      const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT, records);
+      const activator = new FakeHostActions({ available: true });
+      const useCase = new CleanWithKnownHostSource(
+        fs,
+        manifestRepo,
+        new CapturingLogger(),
+        new UpdateGitignore(fs),
+        new Map([[BINARY, activator]]),
+        seedMarketplaceRegistry()
+      );
+
+      const result = await useCase.execute({ ...AT_PROJECT, force: false });
+
+      expect(result.dryRun).toBe(true);
+      expect(result.preview.nativeRegistrations).toEqual([
+        {
+          toolId: HOST.codex,
+          binary: BINARY,
+          marketplaceCount: 1,
+          pluginRefCount: 1,
+          cachePaths: [join(hostCacheRoot("codex", homedir()), MARKETPLACE)],
+        },
+      ]);
+      expect(activator.uninstalledPlugins).toEqual([]);
+      expect(activator.removedMarketplaces).toEqual([]);
+    });
+  });
+});
