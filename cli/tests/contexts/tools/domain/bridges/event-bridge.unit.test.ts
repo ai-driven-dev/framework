@@ -103,4 +103,10 @@ describe.each([
   it.each(["SessionStart", "Stop", "PostToolUse"])("writes a module for %s alone", (event) => {
     expect(generate(hooksOf(event, `node ${ROOT}/hooks/a.cjs`), "aidd-test")).not.toBeNull();
   });
+
+  it("ships no pointer to a repository file or a tracking tag", () => {
+    const text = generate(hooksOf("Stop", `node ${ROOT}/hooks/a.cjs`), "aidd-test") ?? "";
+
+    expect(text).not.toMatch(/\.(ts|md)\b|skipHooksJson|hooks-bridge|\bF\d+\b|hooks\/hooks\.json/);
+  });
 });

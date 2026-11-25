@@ -79,14 +79,15 @@ function captured(file, index, root) {
   return JSON.parse(text);
 }
 
+const BRIDGED_SESSION = "00000000-0000-4000-8000-000000000000";
 const SESSION_START = { claude: "claude-SessionStart.json", codex: "codex-SessionStart.json", copilot: "copilot-SessionStart.json", cursor: "cursor-sessionStart.json" };
 const STOP = { claude: "claude-Stop.json", codex: "codex-Stop.json", copilot: "copilot-Stop.json", cursor: "cursor-stop.json" };
 const PAYLOAD_HOSTS = Object.keys(SESSION_START);
 
 // OpenCode and Kilo send no stdin: their bridge runs the hook with a payload built from the
-// plugin's arguments (`opencode-hooks-bridge.model.ts`, read by the CLI's `hooks-runtime-bridges.integration.test.ts`).
+// plugin's arguments, naming the session the event came from (`opencode-hooks-bridge.model.ts`, read by the CLI's `hooks-runtime-bridges.integration.test.ts`).
 function sessionStartPayload(host, root) {
-  if (BRIDGED.has(host)) return { hook_event_name: "SessionStart", session_id: null, cwd: root };
+  if (BRIDGED.has(host)) return { hook_event_name: "SessionStart", session_id: BRIDGED_SESSION, cwd: root };
   return captured(SESSION_START[host], 0, root);
 }
 
