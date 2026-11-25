@@ -5,8 +5,8 @@
  * session.idle through its event hook; a SessionStart answer reaches the model through
  * experimental.chat.system.transform; PostToolUse runs from tool.execute.after, which waits
  * for the script and appends its exit-2 stderr to the tool's output for the model to read; an
- * answer the script marks required is also queued as the session's next prompt, which supersedes
- * what is left of the turn it interrupts.
+ * answer the script marks required is also queued as the session's next prompt. Probed on 7.7.5:
+ * the model took the queued prompt up and the rest of the turn still ran, in one assistant run.
  * Matchers ignore case, since Kilo names its tools in lowercase.
  */
 
@@ -114,9 +114,7 @@ const ${parts.identifier} = async ({ directory, client }) => {
           // Kilo 7.8.27's \`run\` waits for the queue to drain, so the follow-up lands there too; awaiting
           // it from \`dispose\` fails with an UnknownError. 7.7.5 lost it in \`run\`.
           if (reason) {
-            client.session
-              .promptAsync({ path: { id }, body: { parts: [{ type: "text", text: reason, metadata: BRIDGE_PROMPT }] } })
-              .catch((error) => reportHookFailure(hook.script, "follow-up not delivered: " + String(error)));
+${parts.sendPrompt(12, { client: "client", method: "promptAsync", session: "id", text: "reason", mark: "BRIDGE_PROMPT", failure: "follow-up not delivered: " })}
           }
         }
       }

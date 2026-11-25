@@ -163,8 +163,7 @@ const AiddTelemetryKiloHooks = async ({ directory, client }) => {
           // Kilo 7.8.27's `run` waits for the queue to drain, so the follow-up lands there too; awaiting
           // it from `dispose` fails with an UnknownError. 7.7.5 lost it in `run`.
           if (reason) {
-            client.session
-              .promptAsync({ path: { id }, body: { parts: [{ type: "text", text: reason, metadata: BRIDGE_PROMPT }] } })
+            client.session.promptAsync({ path: { id: id }, body: { parts: [{ type: "text", text: reason, metadata: BRIDGE_PROMPT }] } })
               .catch((error) => reportHookFailure(hook.script, "follow-up not delivered: " + String(error)));
           }
         }
@@ -203,7 +202,7 @@ const AiddTelemetryKiloHooks = async ({ directory, client }) => {
       for (const hook of POST_TOOL_USE.filter(hook => !hook.matcher || hook.matcher.split("|").some(name => name.toLowerCase() === tool.toLowerCase()))) {
         const { text: answer, required } = await answerOf(hook.script, hook.args, { hook_event_name: "PostToolUse", session_id: sessionId ?? null, cwd, tool_name: tool, tool_input: toolInput }, cwd);
         if (answer) output.output = `${output.output ?? ""}\n\n${answer}`;
-        if (answer && required) {
+        if (required) {
           client.session.promptAsync({ path: { id: sessionId }, body: { parts: [{ type: "text", text: answer, metadata: BRIDGE_PROMPT }] } })
             .catch((error) => reportHookFailure(hook.script, "finding not queued: " + String(error)));
         }

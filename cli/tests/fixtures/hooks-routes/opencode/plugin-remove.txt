@@ -280,10 +280,7 @@ export const AiddTelemetryHooks = async (input) => {
                 return undefined;
               }
               continued.add(sessionId);
-              return input.client.session.prompt({
-                path: { id: sessionId },
-                body: { parts: [{ type: "text", text: reason }] },
-              });
+              return input.client.session.prompt({ path: { id: sessionId }, body: { parts: [{ type: "text", text: reason }] } });
             })
             .catch((error) => reportHookFailure(call.script, "follow-up not delivered: " + String(error)));
           pending = Promise.all([pending, handling]).then(() => {});
@@ -298,7 +295,7 @@ export const AiddTelemetryHooks = async (input) => {
         for (const hook of postToolUseCallsFor(call, input.directory)) {
           const { text: answer, required } = await answerOf(hook.script, hook.args, hook.payload, input.directory);
           if (answer) output.output = `${output.output ?? ""}\n\n${answer}`;
-          if (answer && required) {
+          if (required) {
             input.client.session.promptAsync({ path: { id: call.sessionID }, body: { parts: [{ type: "text", text: answer }] } })
               .catch((error) => reportHookFailure(hook.script, "finding not queued: " + String(error)));
           }

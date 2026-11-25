@@ -17,9 +17,10 @@
  *   can append its exit-2 stderr to the tool's output, which is how a problem reaches the model.
  *   V2's adapter calls the same hook from a successful tool call, without that answer. An answer
  *   the script marks required is also queued as the session's next prompt through V1's
- *   `promptAsync`; V2's adapter has no such method, so a V2 host only gets the appended answer.
- *   The queued prompt supersedes what is left of the turn it interrupts: the model took it up
- *   and dropped the original request's last step.
+ *   `promptAsync`; V2's adapter has no such method: there, a required answer throws inside the loop, the
+ *   catch below swallows it, and the call's remaining PostToolUse hooks are skipped. Never observed:
+ *   V2 does not run on 1.19.3. On 1.19.3 the model took the queued prompt up and dropped the
+ *   original request's last step; whether it resumes that request was not probed.
  *
  * A `matcher` on a `PostToolUse` group filters by tool name, exact or pipe-separated
  * alternation, ignoring case: OpenCode names its tools in lowercase. Absent, every tool matches.
@@ -178,10 +179,7 @@ export const ${parts.identifier} = async (input) => {
                 return undefined;
               }
               continued.add(sessionId);
-              return input.client.session.prompt({
-                path: { id: sessionId },
-                body: { parts: [{ type: "text", text: reason }] },
-              });
+              return ${parts.sendPrompt(0, { client: "input.client", method: "prompt", session: "sessionId", text: "reason" })};
             })
             .catch((error) => reportHookFailure(call.script, "follow-up not delivered: " + String(error)));
           pending = Promise.all([pending, handling]).then(() => {});

@@ -11,6 +11,16 @@ import {
   bridgeHookCalls,
   type PluginHooksShape,
 } from "../hooks/plugin-hooks-shape.js";
+import {
+  APPEND_ANSWER_SOURCE,
+  feedStdinSource,
+  queueRequiredSource,
+  type SendPrompt,
+  STOP_REASON_SOURCE,
+  sendPromptSource,
+  spawnHookSource,
+  TOOL_INPUT_SOURCE,
+} from "./bridge-sources.js";
 
 export interface BridgeHookTable {
   readonly sessionStart: readonly BridgeHookCall[];
@@ -76,59 +86,6 @@ function callTableDeclarations(table: BridgeHookTable): string {
   ].join("\n");
 }
 
-function padded(lines: readonly string[], indent: number): string {
-  return lines.map((line) => " ".repeat(indent) + line).join("\n");
-}
-
-/** Spawns one hook script under node from the plugin's scripts folder, in the payload's directory. */
-function spawnHookSource(indent: number, stdio: string): string {
-  return padded(
-    [
-      'const child = spawn("node", [HOOKS_DIR + script, ...args], {',
-      "  cwd: directory,",
-      `  stdio: ${stdio},`,
-      "  timeout: 5000,",
-      "});",
-    ],
-    indent
-  );
-}
-
-/** Hands the payload to the script's stdin; a script that never reads it must not throw. */
-function feedStdinSource(indent: number): string {
-  return padded(
-    ['child.stdin.on("error", () => {});', "child.stdin.end(JSON.stringify(payload));"],
-    indent
-  );
-}
-
-/** The hosts name the written file `filePath`; the scripts read Claude Code's `file_path`. */
-const TOOL_INPUT_SOURCE =
-  'const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;';
-
-/** A Stop script's `{"decision":"block","reason"}`: the reason to keep working on, else nothing. */
-const STOP_REASON_SOURCE = 'output?.decision === "block" ? String(output.reason ?? "").trim() : ""';
-
-/** A PostToolUse answer joins the tool's own output. */
-// Written as a split literal to avoid biome's noTemplateCurlyInString warning.
-const APPEND_ANSWER_SOURCE = `if (answer) output.output = \`$${"{"}output.output ?? ""}\\n\\n$${"{"}answer}\`;`;
-
-/** A required PostToolUse answer queued as the session's next prompt, which the model takes up
- * after the current step. Not awaited, so the host's prompt call never holds the tool; a refusal
- * is reported, never thrown. `mark` is the host's metadata for a prompt the bridge sent itself. */
-function queueRequiredSource(
-  indent: number,
-  { client, session, mark }: { client: string; session: string; mark?: string }
-): string {
-  const meta = mark === undefined ? "" : `, metadata: ${mark}`;
-  const send = `{ path: { id: ${session} }, body: { parts: [{ type: "text", text: answer${meta} }] } }`;
-  const lines = ["if (answer && required) {", `  ${client}.session.promptAsync(${send})`];
-  lines.push(
-    '    .catch((error) => reportHookFailure(hook.script, "finding not queued: " + String(error)));'
-  );
-  return padded([...lines, "}"], indent);
-}
-
 /** What a host's module template composes its generated module from: the pieces every bridge
  * writes the same way. What the host writes itself is its event table, its export descriptor and
  * how it reports a failed script. */
@@ -146,6 +103,7 @@ export interface BridgeParts {
   readonly appendAnswer: string;
   spawnHook(indent: number, stdio: string): string;
   queueRequired(indent: number, target: { client: string; session: string; mark?: string }): string;
+  sendPrompt(indent: number, prompt: SendPrompt): string;
   feedStdin(indent: number): string;
 }
 
@@ -170,6 +128,7 @@ export function generateBridge<R>(
     appendAnswer: APPEND_ANSWER_SOURCE,
     spawnHook: spawnHookSource,
     queueRequired: queueRequiredSource,
+    sendPrompt: sendPromptSource,
     feedStdin: feedStdinSource,
   });
 }
