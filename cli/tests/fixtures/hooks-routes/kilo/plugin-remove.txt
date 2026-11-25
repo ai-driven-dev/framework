@@ -45,6 +45,7 @@ import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const HOOKS_DIR = fileURLToPath(new URL("../hooks/aidd-telemetry/", import.meta.url));
+
 const SESSION_START = [{"script":"task.cjs","args":["remind"]},{"script":"ledger.cjs","args":["ingest"]}];
 const POST_TOOL_USE = [];
 const STOP = [];

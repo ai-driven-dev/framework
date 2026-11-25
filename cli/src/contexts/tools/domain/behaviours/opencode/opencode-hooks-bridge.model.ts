@@ -37,11 +37,8 @@
  *   bridge onto the V2 plugin API is an open design question.
  */
 
-import {
-  type BridgeParts,
-  type GeneratedBridge,
-  generateBridge,
-} from "../../bridges/event-bridge.js";
+import { type BridgeParts, generateBridge } from "../../bridges/event-bridge.js";
+import type { GeneratedBridge } from "../../formats/hooks/flat-routes.js";
 
 // Every plugin this generator sees is already named "aidd-<something>", so an "Aidd" prefix
 // here would stutter rather than name anything the plugin's own PascalCased name does not.
@@ -53,13 +50,7 @@ const OPENCODE_HOST = {
   ): string => `${parts.header} OpenCode's plugin loader scans no "hooks" family,
 // so this file is the only trigger this plugin's declared hooks have on OpenCode.
 import { setupOpencodeEvents } from "../hooks/opencode-events.js";
-${parts.nodeImports}
-
-${parts.hooksDir}
-
-${parts.callTables}
-
-${parts.shared}
+${parts.body}
 
 /** The person's message goes to the TUI's toast. Never awaited: the call comes back only once the
  * server is up, and a toast the TUI cannot show is not worth holding a hook for. */
@@ -106,9 +97,6 @@ export default {
 
 /** A plugin's raw hooks.json + its name -> its generated OpenCode bridge module, and the events
  * it leaves out. */
-export function generateOpencodeHooksBridge(
-  rawHooksJson: string,
-  plugin: string
-): GeneratedBridge<string> {
+export function generateOpencodeHooksBridge(rawHooksJson: string, plugin: string): GeneratedBridge {
   return generateBridge(OPENCODE_HOST, rawHooksJson, plugin);
 }

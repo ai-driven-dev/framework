@@ -18,12 +18,15 @@ import {
 } from "./descriptor.js";
 import { hookScript, mergeTarget, withHookScript } from "./routes.js";
 
-/** A loader's bridge generator: the module it writes, and the events of the hooks it was handed
- * that it leaves out. */
-type BridgeGenerator = (
-  rawHooksJson: string,
-  plugin: string
-) => { readonly content: string | null; readonly unrelayed: readonly string[] };
+/** What a bridge makes of a plugin's raw hooks.json, read once: the module, `null` when no mapped
+ * event names anything replayable, and the events it names that no bridge replays. */
+export interface GeneratedBridge {
+  readonly content: string | null;
+  readonly unrelayed: readonly string[];
+}
+
+/** A loader's bridge generator: a plugin's raw hooks.json and its name, to its bridge. */
+type BridgeGenerator = (rawHooksJson: string, plugin: string) => GeneratedBridge;
 
 /** A flat build's hooks: each plugin's scripts in a folder of its own, its entries merged into
  * the route's shared file or written to a file of the plugin's own, under the tool its warnings

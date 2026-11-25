@@ -20,7 +20,7 @@ import {
 import { agentLinks } from "../rules/agent-markdown.js";
 import { agentShape, type ComponentPlan } from "../rules/component-pipeline.js";
 import { foldsFlatMcp } from "../rules/flat-mcp.js";
-import { type FlatHookPlans, flatHookPlans } from "../rules/hook-plans.js";
+import { flatHookPlans } from "../rules/hook-plans.js";
 import { relativeLinks } from "../rules/links.js";
 import { agentFiles, baseOf, namedByFolder } from "./build-shared.js";
 
@@ -107,7 +107,7 @@ export function flatAgentPlan(
   };
 }
 
-function flatHooks(canon: PluginDistribution, artifact: SupportedArtifact): FlatHookPlans {
+function flatHooks(canon: PluginDistribution, artifact: SupportedArtifact) {
   const bridge = artifact.skipHooksJson ? (artifact.hooksBridge ?? null) : null;
   const { plans, warnings } = flatHookPlans(canon, {
     place: (relativePath) => artifactPath(artifact, canon.manifest.name, relativePath),

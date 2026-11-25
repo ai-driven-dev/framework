@@ -120,7 +120,7 @@ function answerOf(script, args, payload, directory) {
 
 /** The `stopReasonOf` of a bridge: the reason a Stop script gave to keep working and its message
  * for the person, read through `settledRun`; and `stopCallsFor`, an idle session's Stop calls.
- * The host adds what it tracks itself, `stop_hook_active`, to each payload. */
+ * The shared turn end, `runStop`, adds `stop_hook_active` to each payload. */
 export const STOP_REASON_OF_SOURCE = `/** A Stop script's {"decision":"block","reason"} on stdout: the reason to keep working on. */
 function stopReasonOf(script, args, payload, directory) {
   return settledRun(script, args, payload, directory).then((run) => {
@@ -145,7 +145,8 @@ export const MATCHES_TOOL_SOURCE = `function matchesTool(tools, tool) {
   return !tools || tools.includes(tool.toLowerCase());
 }`;
 
-/** The hosts name the written file `filePath`; the scripts read Claude Code's `file_path`. */
+/** A tool call's arguments as a script reads them, written into `toolUseCallsFor`, whose comment
+ * says why. */
 export const TOOL_INPUT_SOURCE =
   'const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;';
 

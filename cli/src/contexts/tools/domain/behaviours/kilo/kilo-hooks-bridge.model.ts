@@ -26,22 +26,14 @@
  * `tui.toast.show` (source), but a plugin's toast rendering was not observed.
  */
 
-import {
-  type BridgeParts,
-  type GeneratedBridge,
-  generateBridge,
-} from "../../bridges/event-bridge.js";
+import { type BridgeParts, generateBridge } from "../../bridges/event-bridge.js";
+import type { GeneratedBridge } from "../../formats/hooks/flat-routes.js";
 
 const KILO_HOST = {
   identifierSuffix: "KiloHooks",
   label: "Kilo",
   render: (parts: BridgeParts): string => `${parts.header}
-${parts.nodeImports}
-
-${parts.hooksDir}
-${parts.callTables}
-
-${parts.shared}
+${parts.body}
 
 const ${parts.identifier} = async ({ directory, client }) =>
   bridgeHooks({ directory, client, followUp: "promptAsync" });
@@ -52,9 +44,6 @@ export default { id: ${parts.descriptorId}, server: ${parts.identifier} };
 
 /** A plugin's raw hooks.json + its name -> its generated Kilo bridge module, and the events it
  * leaves out. */
-export function generateKiloHooksBridge(
-  rawHooksJson: string,
-  plugin: string
-): GeneratedBridge<string> {
+export function generateKiloHooksBridge(rawHooksJson: string, plugin: string): GeneratedBridge {
   return generateBridge(KILO_HOST, rawHooksJson, plugin);
 }
