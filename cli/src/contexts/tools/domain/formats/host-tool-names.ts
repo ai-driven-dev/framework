@@ -12,31 +12,20 @@ export function hostToolNames(
   return [...new Set(names)];
 }
 
-const PLAIN_NAMES = /^[\w|]+$/u;
-
-/** The host's names for the tools a plugin's matcher selects. Claude reads a matcher of plain names
- * as a list split on `|`, and any other as a regular expression over a tool's name: the same
- * reading here, over the tools the host has a name for. A name is read whatever its case, as the
- * OpenCode and Kilo bridges read it. */
+/** The host's names for the tools a plugin's matcher selects. A matcher is a list of names split on
+ * `|`, each read whatever its case, as the bridges read one. Limit: no plugin ships a matcher that
+ * is anything else, so a regular expression is read as a list of names and selects nothing. */
 export function hostToolNamesMatching(
   matcher: string,
   renames: ReadonlyMap<string, string>
 ): string[] {
-  if (PLAIN_NAMES.test(matcher)) {
-    const known = new Map([...renames.keys()].map((tool) => [tool.toLowerCase(), tool]));
-    return hostToolNames(
-      matcher.split("|").map((name) => known.get(name.toLowerCase()) ?? name),
-      renames
-    );
-  }
-  const selects = new RegExp(matcher, "i");
+  const byLowerName = new Map([...renames].map(([tool, host]) => [tool.toLowerCase(), host]));
   return hostToolNames(
-    [...renames.keys()].filter((tool) => selects.test(tool)),
-    renames
+    matcher.split("|").map((name) => name.toLowerCase()),
+    byLowerName
   );
 }
 
-/** What a host's merge says of a matcher that selects none of the host's tools. */
-export function noToolMatchedWarning(event: string, matcher: string, label: string): string {
-  return `${event} matcher '${matcher}' names no ${label} tool, group skipped`;
-}
+/** What a host hears when a matcher of `event` names no tool it has. */
+export const matcherNamesNoToolWarning = (label: string, event: string, matcher: string): string =>
+  `${event} matcher '${matcher}' names no ${label} tool, group skipped`;

@@ -108,11 +108,12 @@ describe("kiro's hooks file", () => {
     expect(hooksOf(content).map(({ matcher }) => matcher)).toEqual([tag]);
   });
 
-  it("reads a matcher as Claude does: a regular expression, whatever the case of a name", () => {
+  it("reads a matcher as a list of names, whatever their case, each tag once", () => {
     for (const [matcher, tags] of [
-      ["Edit.*", ["write"]],
-      ["^(Write|Bash)$", ["write", "shell"]],
+      ["EDIT|write", ["write"]],
+      ["Write|BASH", ["write", "shell"]],
       ["bash", ["shell"]],
+      ["Edit.*", []],
     ] as const) {
       const shipped = JSON.stringify({
         hooks: {

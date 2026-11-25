@@ -13,7 +13,7 @@ import { genericFlatHooksScriptPath } from "../../../../../shared/domain/materia
 import { asPlainObject } from "../../../../../shared/domain/reading/plain-object.js";
 import type { ProjectHooksFormat } from "../../../contract/tool-vocabulary.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
-import { hostToolNamesMatching, noToolMatchedWarning } from "../../formats/host-tool-names.js";
+import { hostToolNamesMatching, matcherNamesNoToolWarning } from "../../formats/host-tool-names.js";
 import { pluginScriptDir, pluginScriptPath } from "../../hooks/hooks-merge.js";
 import {
   type BridgeHookCall,
@@ -120,7 +120,7 @@ function hooksOfCall(
   const selectors =
     call.matcher === undefined ? [undefined] : hostToolNamesMatching(call.matcher, toolNames);
   const warnings =
-    selectors.length === 0 ? [noToolMatchedWarning(trigger, call.matcher ?? "", "Kiro")] : [];
+    selectors.length === 0 ? [matcherNamesNoToolWarning("Kiro", trigger, call.matcher ?? "")] : [];
   const hooks = selectors.map((selector) => ({
     name: [plugin, trigger, call.script, selector].filter(Boolean).join("-"),
     trigger,
