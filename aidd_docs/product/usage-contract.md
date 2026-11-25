@@ -179,7 +179,7 @@ Directory: `AIDD_TELEMETRY_DIR`, else `AIDD_USER_CONFIG_DIR/telemetry`, else `XD
 | `ledger/consents.jsonl` | `on`, `off`, `ingest`, hooks (close only) | same, plus `forget` | consent intervals, see [Consent](#consent). Outlives the clone; removed with the ledger. Hooks parse it strictly, pinned by the shared fixture |
 | `ledger/.lock` | CLI | CLI | `{pid, created_at}`; dead process or older than ten minutes: cleared |
 | `bindings/.lock` | CLI | CLI | same format. Declarations and snapshots run under it; `task` never takes the ledger lock, which an ingest holds while reading transcripts |
-| `bindings/sessions.jsonl` | `task` | hooks, `report`, `task` | `{session_id, task, ticket, none, declared_at, by}`, `by` = `command`; `hook-intercept` written by earlier versions only, still read |
+| `bindings/sessions.jsonl` | `task` | `report`, `task` | `{session_id, task, ticket, none, declared_at, by}`, `by` = `command`; `hook-intercept` written by earlier versions only, still read |
 | `bindings/branches.jsonl` | `task`, `ingest`, `report` | `report`, `forget` | branch declaration at a moment, with when the branch took its name, from its reflog. Read as written, never rewritten |
 | `bindings/carries.jsonl` | earlier versions only | `report` | `{session_id, from, at}`, still read |
 | `bindings/processes.jsonl` | earlier versions only | none | `{pid, session_id, source, at}` |
@@ -224,11 +224,11 @@ A branch is declared only when the command declared it on that branch. Both read
 | `aiddTask` or `aiddTicket` without `aiddDeclaredAt` | no | set by hand, or a declaration cut short: `task` writes `aiddDeclaredAt` last |
 | any declaration key listed twice | no | left by `git branch -C` or `-M` onto a branch that had keys: the copied declaration and the branch's own are mixed |
 
-- **Rename** (`git branch -m A B`): B is undeclared (unless A's declaration is unstamped, see the limits), so the reminder names B at the next session start. One declaration on B covers B from when it took the name: the newest reflog entry renaming or copying a branch to B (git or libgit2), else B's oldest entry. Calls made while it was A keep A's task, and on a name used before, the earlier B keeps its own. git moves the keys the same way for a copy and a rename, so the stamp cannot tell them apart; the reflog could, but its entries expire and the declaration would change meaning with them: one question after a rename is the cost.
+- **Rename** (`git branch -m A B`): B is undeclared (unless A's declaration is unstamped, see the limits), so the reminder names B at the next session start. One declaration on B covers B from when it took the name: the newest reflog entry renaming or copying a branch to B (git or libgit2), else B's oldest entry. Calls made while it was A keep A's task, and on a name used before, the earlier B keeps its own. git moves the keys the same way for a copy and a rename, so the stamp cannot tell them apart; the reflog could, but its entries expire and the declaration would change meaning with them: one reminder after a rename is the cost.
 - **Copy** (`git branch -c A B`): B is undeclared until declared on B.
 - **Copy or rename onto an existing branch** (`-C`, `-M`): git keeps both sets of keys, so some are listed twice and the two declarations mix. A branch with any declaration key listed twice is undeclared; declaring again replaces every value.
 
-## Ask
+## Reminder
 
 `SessionStart` (`hooks/task.cjs remind`) shows the person one line, never the model, and never holds a prompt:
 
@@ -238,12 +238,11 @@ A branch is declared only when the command declared it on that branch. Both read
 | clone measured | consenting per [Consent](#consent), `AIDD_TELEMETRY` not `0` |
 | work undeclared | working branch, no declaration for the branch |
 
-Message: `Telemetry: no task on <branch>. aidd telemetry task <name> [--ticket <ref>] when you want.`
+Message: names the branch and the `aidd telemetry task` command.
 
 - Anything else prints nothing. A crash exits 0. `aidd` is not needed: the line only names the command.
 - Shown as the host's `systemMessage`, by Claude Code and Codex; a tool with no person-only channel shows nothing.
 - Declaring later loses nothing: it moves the branch's earlier calls onto its task ([Attribution](#attribution)).
-- `task` binds the session named by `AIDD_TELEMETRY_SESSION_ID`, else `CLAUDE_CODE_SESSION_ID` (`runtime/wiring/telemetry.ts`). A sub-agent's calls carry their root's session, so they take its declaration.
 
 ## Consent
 
@@ -292,7 +291,7 @@ stateDiagram-v2
 | `on` | under the ledger lock: fresh token, key `2:<token>` first, then open line (a key with no interval measures nothing; an interval its key does not name would be closed by the first hook). Key naming an open interval of this clone: no change. Otherwise closes this clone's stale open intervals at its time. Refuses a clone with no identity. Then, only once on, writes the person's identity when one was chosen |
 | `off` | under the same lock: close the clone's open token, then key `off`; key and interval change together, so an ingest never sees one without the other. Also closes the interval its key names at its path, whatever identity it reads there |
 | ingest | before judging any call, for every open interval, closes at observation time when the identity at its path changed or the live key is not `2:<that token>`. Nothing at the path: not closed (unmounted volume, folder moved and back); measured again when back. Unreadable config or `stat`: stays open, stores nothing |
-| hooks | after the tool guard, even headless: key not naming an open interval recorded for this clone's real path => append a close at hook time. Ends a manual `git config aidd.telemetry off` or `--unset` before the next prompt's calls. `AIDD_TELEMETRY=0`: does nothing |
+| hooks | after the tool guard, even headless: key not naming an open interval recorded for this clone's real path => append a close at hook time. `AIDD_TELEMETRY=0`: does nothing |
 | `forget --yes` | removes the log with the ledger; unsets the key in every recorded clone |
 
 **Consenting, for hooks and `task`.** All three: key is `2:<token>`; log holds an open interval with it; that interval's clone is this one, by common-dir real path and by `dev`, `ino`, `birthtimeMs`, normalised as the CLI does (inode as text, missing birth as `0`, any other kept even if equal to change time, no inode = no identity; fixture `cloneIdentity` and `hookConsent` cases). Not consenting: a hand-set key (`2`, made-up token), a `cp -R` copy, a copy moved onto a deleted original's path, a clone remade at a path, a moved clone. There: nothing reminded, nothing closed that is not this clone's; run `aidd telemetry on`.

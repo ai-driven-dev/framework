@@ -1,9 +1,9 @@
 # telemetry-bindings
 
-The contract between the `aidd` CLI, which writes and reads task declarations, and the plugin hooks,
-which read a branch's declaration and the consent. Neither side may change a format or a rule below without changing this folder, and
-both sides test against it: a CLI unit test and a hook test read the same files and must
-return the same answers as `expected.json`.
+The contract between the `aidd` CLI, which writes and reads task declarations, and the plugin
+hooks, which read a branch's declaration and the consent. Neither side may change a format or a
+rule below without changing this folder, and both sides test against it: a CLI unit test and a
+hook test read the same files and must return the same answers as `expected.json`.
 
 Everything here is synthetic. Session ids, paths and names are made up.
 

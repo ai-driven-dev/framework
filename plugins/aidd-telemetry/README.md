@@ -32,7 +32,7 @@ flowchart LR
 4. `aidd telemetry task <name> [--ticket <ref>]`, when reminded, or later
 5. `aidd telemetry report --axis task`
 
-Codex: trust the new hooks once, with `/hooks` in the TUI.
+Codex: trust the plugin's hooks once, with `/hooks` in the TUI.
 
 ## Commands
 

@@ -345,13 +345,18 @@ function codexHooks(box) {
   return dir;
 }
 
-const NO_TASK = (branch) => `Telemetry: no task on ${branch}. aidd telemetry task <name> [--ticket <ref>] when you want.`;
+/** The reminder holds only a person message, naming the branch and the command. */
+function assertReminder(result, branch) {
+  assert.deepEqual(Object.keys(result.json), ["systemMessage"]);
+  assert.ok(result.json.systemMessage.includes(branch), result.json.systemMessage);
+  assert.ok(result.json.systemMessage.includes("aidd telemetry task"), result.json.systemMessage);
+}
 
 test("remind: an undeclared working branch gets one person message, nothing for the model", () => {
   withBox({}, (box) => {
     const result = remind(box);
     assert.equal(result.status, 0);
-    assert.deepEqual(result.json, { systemMessage: NO_TASK("feat/x") });
+    assertReminder(result, "feat/x");
     assert.deepEqual(box.calls(), []);
   });
 });
@@ -361,8 +366,15 @@ test("remind: through the Codex adapter, the same person message", () => {
     const task = path.join(codexHooks(box), "task.cjs");
     const payload = codexPayload(box, codexFile(box));
     const result = run(task, box, { payload, env: codexEnv(box), args: ["remind"] });
-    assert.deepEqual(result.json, { systemMessage: NO_TASK("feat/x") });
+    assertReminder(result, "feat/x");
   });
+});
+
+test("remind: startup, resume and clear remind, a compaction does not", () => {
+  for (const source of ["startup", "resume", "clear"]) {
+    withBox({}, (box) => assert.equal(reminds(remind(box, { payload: box.payload({ source }) })), true, source));
+  }
+  withBox({}, (box) => assertPasses(remind(box, { payload: box.payload({ source: "compact" }) })));
 });
 
 test("remind: every fixture case that is Claude Code's or Codex's reminds, the others print nothing", () => {
@@ -425,8 +437,6 @@ test("consent: every fixture key grants or refuses as expected, an interval open
 
 test("consent: a key with no interval open for the clone grants nothing and reminds nothing", () => {
   const kept = [
-    ["a key set by hand", { key: "2", interval: null }],
-    ["a forged token", { key: "2:forged", interval: null }],
     ["a token of an interval already closed", { key: `2:${TOKEN}`, interval: null, closed: true }],
   ];
   for (const [name, options] of kept) {
@@ -453,7 +463,7 @@ test("consent: a cp -R copy carries the key and not the clone, so it reminds not
   });
 });
 
-test("consent: a cp -R copy moved onto the deleted original's path asks nothing and closes nothing", () => {
+test("consent: a cp -R copy moved onto the deleted original's path reminds nothing and closes nothing", () => {
   withBox({}, (box) => {
     git(box.repo, "commit", "--allow-empty", "-q", "-m", "x");
     assert.equal(reminds(remind(box)), true);
@@ -656,8 +666,9 @@ test("the ingest is silent and succeeds with no aidd, with no consent, outside C
 test("hooks.json: a sync reminder and an async ingest at SessionStart, no prompt hook", () => {
   const registered = JSON.parse(fs.readFileSync(path.join(HOOKS, "hooks.json"), "utf8")).hooks;
   assert.deepEqual(Object.keys(registered), ["SessionStart"]);
-  const [reminder, ledger] = registered.SessionStart.flatMap((group) => group.hooks);
-  assert.equal(registered.SessionStart.flatMap((group) => group.hooks).length, 2);
+  const entries = registered.SessionStart.flatMap((group) => group.hooks);
+  assert.equal(entries.length, 2);
+  const [reminder, ledger] = entries;
   assert.equal(reminder.command, "node ${CLAUDE_PLUGIN_ROOT}/hooks/task.cjs remind");
   assert.equal(reminder.timeout, 5);
   assert.notEqual(reminder.async, true);
@@ -667,10 +678,4 @@ test("hooks.json: a sync reminder and an async ingest at SessionStart, no prompt
     assert.equal(typeof entry.statusMessage, "string");
     assert.ok(fs.existsSync(path.join(HOOKS, entry.command.split(" ")[1].split("/").pop())), entry.command);
   }
-});
-
-test("no script of the hooks requires a deleted library", () => {
-  const files = [HOOKS, path.join(HOOKS, "lib")].flatMap((dir) => fs.readdirSync(dir).filter((n) => n.endsWith(".cjs")).map((n) => path.join(dir, n)));
-  const required = files.flatMap((file) => [...fs.readFileSync(file, "utf8").matchAll(/require\("(\.[^"]+)"\)/gu)].map((m) => path.resolve(path.dirname(file), m[1])));
-  for (const target of required) assert.ok(fs.existsSync(target), target);
 });

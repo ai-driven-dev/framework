@@ -1,4 +1,4 @@
-// Sync SessionStart: tells the person, once, that the working branch has no task. Never blocks, never reaches the model.
+// Sync SessionStart, except after a compaction: tells the person the working branch has no task. Never blocks, never reaches the model.
 const { guardedContext } = require("./lib/context.cjs");
 const { branchDeclaration, headOf } = require("./lib/git.cjs");
 const { answer, readEvent } = require("./lib/host.cjs");
@@ -11,12 +11,12 @@ function undeclaredBranch(cwd) {
 
 function remind() {
   const event = readEvent();
-  if (event?.event !== "SessionStart") return;
+  if (event?.event !== "SessionStart" || event.raw.source === "compact") return;
   const context = guardedContext(event.raw);
   if (context === null) return;
   const branch = undeclaredBranch(context.cwd);
   if (branch === null) return;
-  answer({ level: 1, person: `Telemetry: no task on ${branch}. aidd telemetry task <name> [--ticket <ref>] when you want.` });
+  answer({ level: 1, person: `Telemetry: no task on ${branch}. aidd telemetry task <name> [--ticket <ref>]` });
 }
 
 const COMMANDS = { remind };

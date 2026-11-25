@@ -100,7 +100,7 @@ describe("a person's session, judged from what it left", () => {
   });
 
   it("fails when the first prompt was held back from the API", () => {
-    assert.match(judgeAttended(attended({ billedBeforeDeclaring: 0 })).message, /0 calls billed before the declaration/u);
+    assert.match(judgeAttended(attended({ billedBeforeDeclaring: 0 })).message, /expected 1 call billed before the declaration, got 0/u);
   });
 
   it("fails when the declaration was not made by the command", () => {

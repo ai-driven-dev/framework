@@ -216,7 +216,7 @@ async function attendedSession({ root, env, project, api, telemetryDir }) {
  * declared by the command after it. */
 function judgeAttended({ billedBeforeDeclaring, sessions }) {
   const wrong = [];
-  if (billedBeforeDeclaring !== 1) wrong.push(`${billedBeforeDeclaring} calls billed before the declaration, not the first prompt's`);
+  if (billedBeforeDeclaring !== 1) wrong.push(`expected 1 call billed before the declaration, got ${billedBeforeDeclaring}`);
   const declared = sessions.filter((line) => line.by === "command" && line.task === "demo" && line.ticket === "T-1");
   if (declared.length !== 1) wrong.push(`${declared.length} declarations of demo, T-1 made by the command`);
   return wrong.length > 0 ? { code: WRONG, message: wrong.join("; ") } : { code: 0, message: "reminded, first prompt unblocked, declared after it" };

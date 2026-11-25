@@ -9,7 +9,8 @@ function ingest() {
   const event = readEvent();
   if (event?.event !== "SessionStart") return;
   const context = guardedContext(event.raw);
-  const aidd = context === null ? null : resolveAidd();
+  if (context === null) return;
+  const aidd = resolveAidd();
   if (aidd === null) return;
   runAidd(aidd, ["telemetry", "ingest", "--quiet"], { cwd: context.cwd, timeout: INGEST_TIMEOUT_MS });
 }
