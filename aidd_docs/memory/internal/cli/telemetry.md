@@ -32,7 +32,7 @@ flowchart LR
 - An envelope keeps its figures apart from its `run`: [envelope reference](../../../../plugins/aidd-telemetry/skills/01-usage/references/envelope.md#figures-and-run).
 - Only reading is tool-specific; everything after the usage record is written once.
 - Hooks and CLI meet only in files, pinned for both by `scripts/__tests__/fixtures/telemetry-bindings/`.
-- `plugins/aidd-telemetry/hooks/ledger.cjs` runs `aidd telemetry ingest --quiet` at session start.
+- Two `SessionStart` hooks: `task.cjs remind` prints one person-facing line when the branch has no task, and `ledger.cjs ingest` runs `aidd telemetry ingest --quiet` (both in `plugins/aidd-telemetry/hooks/`).
 - Another tool's calls are attributed by branch. `telemetry task` binds the session `CLAUDE_CODE_SESSION_ID` names. Codex names none to a command, so one run from a Codex started inside Claude Code binds the inherited parent session (limit in the usage contract).
 
 ## Where to look
@@ -49,9 +49,8 @@ flowchart LR
 | Why a moved Codex file is read from its start | `infrastructure/sources/codex/codex-usage-source-adapter.ts` |
 | The ledger on disk | `infrastructure/storage/ledger/usage-ledger-adapter.ts`, `application/ledger-upkeep.ts` |
 | What an ingest measured but could not store | `infrastructure/storage/ledger/left-out-adapter.ts` |
-| An old repository id joined to today's | `domain/ledger/repository-aliases.ts` |
 | Who the measurement names | `domain/identity/person-identity.ts`, `application/identity/`, `infrastructure/git/git-user-source-adapter.ts` |
-| What `forget` erases | `domain/switch/legacy-locations.ts`, `application/forget/` |
+| What `forget` erases | `application/forget/` |
 | Report axes and envelope | `domain/report/usage-report.ts`, `contract/report-envelope.ts` |
 | Report filters | `domain/report/report-filter.ts` |
 
