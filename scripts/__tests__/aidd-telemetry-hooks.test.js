@@ -58,6 +58,7 @@ if (process.env.FAKE_AIDD_LOG) {
 }
 if (process.env.FAKE_AIDD_NOISE) { process.stdout.write("noise\\n"); process.stderr.write("noise\\n"); }
 if (process.env.FAKE_AIDD_HOLD_MS) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, Number(process.env.FAKE_AIDD_HOLD_MS));
+if (process.env.FAKE_AIDD_DONE) fs.writeFileSync(process.env.FAKE_AIDD_DONE, "");
 `;
 
 /** A throwaway world: a home, a telemetry dir, a repository on feat/x that opted in, and a
@@ -116,7 +117,8 @@ function sandbox({ aidd = true, branch = "feat/x", consent = true } = {}) {
     fs.existsSync(box.log)
       ? fs.readFileSync(box.log, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l))
       : [];
-  box.dispose = () => fs.rmSync(root, { recursive: true, force: true });
+  // Windows refuses to remove a folder a detached child still runs in: retry while it exits.
+  box.dispose = () => fs.rmSync(root, { recursive: true, force: true, maxRetries: 50, retryDelay: 100 });
   return box;
 }
 
@@ -654,10 +656,12 @@ test("the ingest runs aidd once, silently, in the clone", async () => {
 test("the ingest returns before aidd ends, on every host", async () => {
   const box = sandbox();
   try {
+    const done = path.join(box.root, "aidd-done");
     const started = Date.now();
-    assertPasses(ingest(box, { env: box.env({ FAKE_AIDD_HOLD_MS: "4000" }) }));
+    assertPasses(ingest(box, { env: box.env({ FAKE_AIDD_HOLD_MS: "4000", FAKE_AIDD_DONE: done }) }));
     assert.ok(Date.now() - started < 3000, `the hook waited ${Date.now() - started} ms`);
     assert.equal((await callsOf(box)).length, 1);
+    while (!fs.existsSync(done) && Date.now() - started < 15_000) await new Promise((resolve) => setTimeout(resolve, 100));
   } finally {
     box.dispose();
   }
