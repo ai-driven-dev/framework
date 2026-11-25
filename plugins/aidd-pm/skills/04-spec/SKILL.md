@@ -1,18 +1,18 @@
 ---
 name: 04-spec
-description: Creates a feature's spec, the contract it is built to, or updates one, when the user brings a request, a document, review findings or answers.
-argument-hint: request | document | spec and findings
+description: Creates or updates a feature's spec, the contract it is built to, when the user brings a need or changes to an existing spec.
+argument-hint: need | spec and changes
 ---
 
 # Spec
 
 ```mermaid
 flowchart LR
-  source([request or document]) --> build["actions/01-build.md"]
-  build -->|"too vague"| asked((one question, no write))
+  source([need]) --> build["actions/01-build.md"]
+  build -->|"no outcome to name"| asked((one question, no write))
   build --> spec((spec.md, its gaps as questions))
-  spec -->|"answers"| refine
-  findings([spec and findings]) --> refine["actions/02-refine.md"]
+  spec -->|"changes"| refine
+  changes([spec and changes]) --> refine["actions/02-refine.md"]
   refine --> spec
   refine -->|"locked, or nothing to change"| unchanged((no write))
 ```
@@ -21,4 +21,4 @@ flowchart LR
 
 - Never explore the codebase.
 - End with at most three open gaps as questions, those that would change the target most.
-- Never rewrite a spec whose status is `locked`: only the person who approves it sets that status.
+- Never rewrite a spec whose status is `locked`, nor change or offer to change that status: only the person who approves it does.
