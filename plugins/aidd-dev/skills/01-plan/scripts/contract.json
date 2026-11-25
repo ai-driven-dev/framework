@@ -1,5 +1,4 @@
 {
-  "version": 1,
   "kind": "plan",
   "unit": "folder",
   "scope": ["aidd_docs/**"],

@@ -1,5 +1,4 @@
 {
-  "version": 1,
   "kind": "challenge",
   "unit": "file",
   "scope": ["aidd_docs/**/challenge.md"],

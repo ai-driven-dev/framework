@@ -4,10 +4,10 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { readText, frontmatter, proseLines } = require("./markdown.cjs");
-const { ops, OPTIONS, readSchema } = require("./ops.cjs");
+const { ops, OPTIONS, readSchema, parseTemplate } = require("./ops.cjs");
 
 const EXIT = { OK: 0, FINDINGS: 1, USAGE: 2 };
-const TOP_KEYS = ["version", "kind", "unit", "targets", "scope", "shell", "marker", "watch", "rules"];
+const TOP_KEYS = ["kind", "unit", "targets", "scope", "shell", "marker", "watch", "rules"];
 const RULE_KEYS = ["op", "in", "notIn", "why", "fix"];
 const EXCERPT_LIMIT = 40;
 
@@ -36,6 +36,15 @@ function globRegex(glob) {
 
 const asList = (value) => (Array.isArray(value) ? value : value === undefined ? [] : [value]);
 
+/** Every front matter key and heading name a template holds, at any level. */
+function templateNames(file) {
+  const model = parseTemplate(file);
+  const names = new Set(Object.keys(model.fm));
+  const add = (nodes) => nodes.forEach((s) => (names.add(s.name), add(s.children)));
+  add(model.sections);
+  return names;
+}
+
 /** The contract, checked against its own schema; a broken contract stops the run instead of silencing a rule. */
 function loadContract(file) {
   let contract;
@@ -52,7 +61,6 @@ function loadContract(file) {
   if (contract.watch !== undefined && !(Array.isArray(contract.watch) && contract.watch.every((g) => typeof g === "string"))) fail("watch must be an array of glob strings");
   if (contract.scope !== undefined && !(Array.isArray(contract.scope) && contract.scope.every((g) => typeof g === "string" && g !== "" && !g.startsWith("/") && !/^[A-Za-z]:/u.test(g) && !g.includes("\\") && !g.split("/").includes("..")))) fail("scope must be an array of relative slash globs without ..");
   if (contract.shell !== undefined && typeof contract.shell !== "boolean") fail("shell must be true or false");
-  if (contract.version !== 1) fail("version must be 1");
   if (typeof contract.kind !== "string") fail("kind is required");
   if (!["folder", "file"].includes(contract.unit)) fail("unit must be folder or file");
   if (contract.unit === "folder" && !contract.marker) fail("marker is required when unit is folder");
@@ -61,7 +69,7 @@ function loadContract(file) {
     if (!id.startsWith(prefix) || !/-\d{2}$/u.test(id)) fail(`rule id ${id} must look like ${prefix}NN`);
     if (!(rule.op in ops)) fail(`${id}: unknown op ${rule.op}`);
     for (const key of Object.keys(rule)) if (![...RULE_KEYS, ...OPTIONS[rule.op]].includes(key)) fail(`${id}: unknown key ${key} for op ${rule.op}`);
-    for (const key of rule.op === "custom" ? ["in", "why"] : ["in", "why", "fix"]) if (!rule[key]) fail(`${id}: ${key} is required`);
+    for (const key of [...(contract.unit === "folder" ? ["in"] : []), ...(rule.op === "custom" ? ["check"] : ["fix"]), ...(rule.op === "template" ? ["template"] : [])]) if (!rule[key]) fail(`${id}: ${key} is required`);
     if (rule.op === "max" && !["chars", "lines"].includes(rule.measure)) fail(`${id}: measure must be chars or lines`);
     if (rule.op === "json") {
       if (typeof rule.schema !== "string") fail(`${id}: schema is required`);
@@ -71,7 +79,17 @@ function loadContract(file) {
         fail(`${id}: ${error.message}`);
       }
     }
-    rule.match = asList(rule.in).map(globRegex);
+    const dir = path.dirname(file);
+    const exists = (ref) => fs.existsSync(path.resolve(dir, ref)) || fail(`${id}: ${ref} does not exist`);
+    if (rule.template) exists(rule.template);
+    if (rule.op === "custom") exists(`custom/${rule.check}.cjs`);
+    for (const name of rule.optional ?? []) if (!templateNames(path.resolve(dir, rule.template)).has(name)) fail(`${id}: optional ${name} is not in ${rule.template}`);
+    try {
+      if (rule.regex !== undefined) new RegExp(rule.regex, "u");
+    } catch (error) {
+      fail(`${id}: regex ${error.message}`);
+    }
+    rule.match = asList(rule.in ?? "**").map(globRegex);
     rule.skip = asList(rule.notIn).map(globRegex);
   }
   contract.dir = path.dirname(file);
@@ -149,4 +167,4 @@ function run(contractFile, targets) {
   }
 }
 
-module.exports = { run, check, loadContract, format, globRegex, ContractError, isUsage };
+module.exports = { run, check, loadContract, format, globRegex, ContractError, isUsage, TOP_KEYS, RULE_KEYS };
