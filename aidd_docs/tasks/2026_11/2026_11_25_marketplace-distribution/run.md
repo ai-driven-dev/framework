@@ -20,5 +20,6 @@
 
 | Task | Validation | Result |
 | --- | --- | --- |
+| 1.1 | Check the public tool branch and version refs after the review fixes. | `git ls-remote` resolves the four tool branches and their `v5.14.0` tags. |
 | 2.1 | Register the development catalog at project scope in a clean Claude Code profile and install a fixture checkout version of `aidd-context`. | Claude Code installed version 9.9.9 under `aidd-framework-dev` at project scope. The public and compatibility payloads still serve 2.11.0. |
 | 2.1 | Check the install guides and component READMEs against the hosted Claude Code selector. Run the framework content check and workflow YAML validation. | User-facing Claude Code instructions use `@aidd-marketplace`. The checkout instructions use `@aidd-framework-dev`. Both checks passed. |
