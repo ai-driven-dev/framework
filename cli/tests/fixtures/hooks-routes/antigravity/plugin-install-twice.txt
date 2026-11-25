@@ -45,7 +45,7 @@ second install threw DuplicatePluginError: Plugin 'aidd-context' is already inst
       {
         "type": "command",
         "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvbGVkZ2VyLmNqcyBpbmdlc3Q=",
-        "timeout": 120
+        "timeout": 5
       }
     ]
   }
@@ -364,7 +364,7 @@ project antigravity aidd-telemetry scope=project: 0 hook files
     {
       "event": "SessionStart",
       "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvbGVkZ2VyLmNqcyBpbmdlc3Q=",
-      "digest": "296800fb8a788f4c8babe6a8648112da"
+      "digest": "20c76cc282a30daaca8620b667b1e707"
     }
   ],
   "scripts": {}

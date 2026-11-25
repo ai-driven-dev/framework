@@ -41,8 +41,7 @@ hooks = true
             "type": "command",
             "command": "node ./.codex/hooks/aidd-telemetry/ledger.cjs ingest",
             "statusMessage": "AIDD Telemetry: update the measurement ledger",
-            "async": true,
-            "timeout": 120
+            "timeout": 5
           }
         ]
       }

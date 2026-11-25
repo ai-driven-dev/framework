@@ -307,8 +307,7 @@ script, identical to the plugin source
             "type": "command",
             "command": "node ./.claude/hooks/aidd-telemetry/ledger.cjs ingest",
             "statusMessage": "AIDD Telemetry: update the measurement ledger",
-            "async": true,
-            "timeout": 120
+            "timeout": 5
           }
         ]
       }

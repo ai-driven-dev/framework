@@ -40,7 +40,7 @@ machine cursor aidd-telemetry scope=user: 0 hook files
     {
       "event": "sessionStart",
       "command": "node ./.cursor/hooks/aidd-telemetry/ledger.cjs ingest",
-      "digest": "f259b93b1b3b90e586c48609e50f377b"
+      "digest": "9ec011cee1ddcae2141c2c362da0bdb0"
     }
   ],
   "scripts": {}

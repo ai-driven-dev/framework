@@ -283,7 +283,7 @@ script, identical to the plugin source
       {
         "type": "command",
         "command": "node ./.github/hooks/aidd-telemetry/ledger.cjs ingest",
-        "timeout": 120
+        "timeout": 5
       }
     ]
   }
