@@ -369,19 +369,6 @@ const SESSION_START = [{"script":"memory.cjs","args":["load"]},{"script":"artifa
 const STOP = [{"script":"memory.cjs","args":["sync"]}];
 const POST_TOOL_USE = [{"script":"artifacts.cjs","args":["mark"],"matcher":"Write|Edit|Bash|Shell|bash|PowerShell|apply_patch"}];
 
-/** Pure: `session.idle` -> every Stop hook's own {script, args, payload} - or `[]` for
- * any other event. Exposed as a property of the plugin, so the mapping can be asserted without
- * spawning anything. */
-function stopCallsFor(event, directory) {
-  if (event?.type !== "session.idle") return [];
-  const sessionId = event.properties?.sessionID;
-  return STOP.map((hook) => ({
-    script: hook.script,
-    args: hook.args,
-    payload: { hook_event_name: "Stop", session_id: sessionId ?? null, cwd: directory },
-  }));
-}
-
 // Awaited: the script has something the model must read.
 // Exit 2 puts it on stderr; exit 0 puts it in additionalContext on stdout.
 function answerFrom(code, stdout, stderr) {
@@ -413,6 +400,15 @@ function joinAnswers(answers) {
 
 function addToSystem(output, context) {
   if (context) output.system.push(context);
+}
+
+// Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
+function stopCallsFor(sessionId, directory) {
+  return STOP.map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: { hook_event_name: "Stop", session_id: sessionId, cwd: directory },
+  }));
 }
 
 function captureHook(script, args, payload, directory) {
@@ -451,10 +447,6 @@ function captureHook(script, args, payload, directory) {
 
 function reportHookFailure(script, error) {
   console.warn("[aidd] OpenCode hook " + script + " failed: " + String(error));
-}
-
-function reportDispatchFailure(error) {
-  console.warn("[aidd] OpenCode hook dispatch failed: " + String(error));
 }
 
 /** A Stop follow-up the host refused: reported like a failed script, never thrown into the host. */
@@ -528,9 +520,8 @@ export const AiddContextHooks = async (input) => {
       if (disposed) return;
       try {
         const directory = event?.properties?.directory ?? input.directory;
-        // Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
-        for (const call of stopCallsFor(event, directory)) {
-          const sessionId = call.payload.session_id;
+        const sessionId = event?.properties?.sessionID ?? null;
+        for (const call of event?.type === "session.idle" ? stopCallsFor(sessionId, directory) : []) {
           const payload = { ...call.payload, stop_hook_active: continued.has(sessionId) };
           const asking = stopReasonOf(call.script, call.args, payload, directory);
           // Pending before the script ends: dispose waits for a handling whose script still runs.
@@ -568,9 +559,6 @@ export const AiddContextHooks = async (input) => {
   };
 };
 
-AiddContextHooks.stopCallsFor = stopCallsFor;
-AiddContextHooks.postToolUseCallsFor = postToolUseCallsFor;
-
 export default {
   id: "aidd-context-hooks",
   server: AiddContextHooks,
@@ -593,19 +581,6 @@ const HOOKS_DIR = fileURLToPath(new URL("../hooks/aidd-telemetry/", import.meta.
 const SESSION_START = [{"script":"task.cjs","args":["remind"]},{"script":"ledger.cjs","args":["ingest"]}];
 const STOP = [];
 const POST_TOOL_USE = [];
-
-/** Pure: `session.idle` -> every Stop hook's own {script, args, payload} - or `[]` for
- * any other event. Exposed as a property of the plugin, so the mapping can be asserted without
- * spawning anything. */
-function stopCallsFor(event, directory) {
-  if (event?.type !== "session.idle") return [];
-  const sessionId = event.properties?.sessionID;
-  return STOP.map((hook) => ({
-    script: hook.script,
-    args: hook.args,
-    payload: { hook_event_name: "Stop", session_id: sessionId ?? null, cwd: directory },
-  }));
-}
 
 // Awaited: the script has something the model must read.
 // Exit 2 puts it on stderr; exit 0 puts it in additionalContext on stdout.
@@ -638,6 +613,15 @@ function joinAnswers(answers) {
 
 function addToSystem(output, context) {
   if (context) output.system.push(context);
+}
+
+// Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
+function stopCallsFor(sessionId, directory) {
+  return STOP.map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: { hook_event_name: "Stop", session_id: sessionId, cwd: directory },
+  }));
 }
 
 function captureHook(script, args, payload, directory) {
@@ -676,10 +660,6 @@ function captureHook(script, args, payload, directory) {
 
 function reportHookFailure(script, error) {
   console.warn("[aidd] OpenCode hook " + script + " failed: " + String(error));
-}
-
-function reportDispatchFailure(error) {
-  console.warn("[aidd] OpenCode hook dispatch failed: " + String(error));
 }
 
 /** A Stop follow-up the host refused: reported like a failed script, never thrown into the host. */
@@ -753,9 +733,8 @@ export const AiddTelemetryHooks = async (input) => {
       if (disposed) return;
       try {
         const directory = event?.properties?.directory ?? input.directory;
-        // Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
-        for (const call of stopCallsFor(event, directory)) {
-          const sessionId = call.payload.session_id;
+        const sessionId = event?.properties?.sessionID ?? null;
+        for (const call of event?.type === "session.idle" ? stopCallsFor(sessionId, directory) : []) {
           const payload = { ...call.payload, stop_hook_active: continued.has(sessionId) };
           const asking = stopReasonOf(call.script, call.args, payload, directory);
           // Pending before the script ends: dispose waits for a handling whose script still runs.
@@ -792,9 +771,6 @@ export const AiddTelemetryHooks = async (input) => {
     },
   };
 };
-
-AiddTelemetryHooks.stopCallsFor = stopCallsFor;
-AiddTelemetryHooks.postToolUseCallsFor = postToolUseCallsFor;
 
 export default {
   id: "aidd-telemetry-hooks",

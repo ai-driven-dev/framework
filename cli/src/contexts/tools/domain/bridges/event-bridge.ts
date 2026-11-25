@@ -2,7 +2,8 @@
  * What the generated event bridges of the loaders that read no hooks file (Kilo, OpenCode) share:
  * the three hook events a bridge replays, how a plugin's name becomes its module's identifier,
  * how a hook script is run and its answer read, how a SessionStart answer reaches the model,
- * and how a finished tool call becomes the PostToolUse hooks it triggers.
+ * how an idle session becomes the Stop hooks it triggers, and how a finished tool call becomes
+ * the PostToolUse hooks it triggers.
  */
 
 import type { FlatHooksLoaderEntry } from "../../../../shared/domain/materialization/flat-paths.js";
@@ -69,6 +70,18 @@ function joinAnswers(answers) {
 
 function addToSystem(output, context) {
   if (context) output.system.push(context);
+}`;
+
+/** An idle session -> every Stop hook's call, with its payload. The host adds what it tracks
+ * itself, `stop_hook_active`, to each payload. Written once here, so both hosts build the call
+ * the same way. */
+const STOP_CALLS_SOURCE = `// Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
+function stopCallsFor(sessionId, directory) {
+  return STOP.map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: { hook_event_name: "Stop", session_id: sessionId, cwd: directory },
+  }));
 }`;
 
 /** A bridge with nothing to spawn is not a file worth writing. */
@@ -143,18 +156,21 @@ const CAPTURE_HOOK_SOURCE = `function captureHook(script, args, payload, directo
 
 /** How a host's module runs a hook script: what a script answers, and the reason a Stop script
  * gives to keep working. Written once here, so both hosts read a script the same way; only
- * whether a failed script is reported differs. */
+ * whether a failed run is warned about differs. */
 function hookRunnersSource(host: BridgeHost): string {
-  const report = host.reportsFailures ? "reportHookFailure(script, run.failure);\n      " : "";
+  const report = host.warnsOnRunFailure ? "reportHookFailure(script, run.failure);\n      " : "";
+  const dispatch = host.warnsOnRunFailure
+    ? `
+
+function reportDispatchFailure(error) {
+  console.warn("[aidd] ${host.name} hook dispatch failed: " + String(error));
+}`
+    : "";
   return `${CAPTURE_HOOK_SOURCE}
 
 function reportHookFailure(script, error) {
   console.warn("[aidd] ${host.name} hook " + script + " failed: " + String(error));
-}
-
-function reportDispatchFailure(error) {
-  console.warn("[aidd] ${host.name} hook dispatch failed: " + String(error));
-}
+}${dispatch}
 
 /** A Stop follow-up the host refused: reported like a failed script, never thrown into the host. */
 function reportFollowUpFailure(script, error) {
@@ -211,11 +227,12 @@ const POST_TOOL_USE_CALLS_SOURCE = `function postToolUseCallsFor(call, directory
 // Written as a split literal to avoid biome's noTemplateCurlyInString warning.
 const APPEND_ANSWER_SOURCE = `if (answer) output.output = \`$${"{"}output.output ?? ""}\\n\\n$${"{"}answer}\`;`;
 
-/** What a host says about itself: the name its warnings carry, and whether a script that
- * failed is reported or left silent. */
+/** What a host says about itself: the name its warnings carry, and whether a script that fails
+ * to run, or an event its handler cannot dispatch, is warned about or left silent. A Stop
+ * follow-up the host refuses is warned about either way. */
 export interface BridgeHost {
   readonly name: string;
-  readonly reportsFailures: boolean;
+  readonly warnsOnRunFailure: boolean;
 }
 
 /** What a host's module template composes its generated module from: the pieces every bridge
@@ -229,10 +246,12 @@ export interface BridgeParts {
   readonly callTables: string;
   /** The generated `answerFrom`: exit 2 puts the answer on stderr, exit 0 in `additionalContext`. */
   readonly answerFrom: string;
-  /** The generated `answerOf`, `stopReasonOf`, `reportHookFailure`, `reportDispatchFailure` and `reportFollowUpFailure`, over one spawn of a script. */
+  /** The generated `answerOf`, `stopReasonOf`, `reportHookFailure`, `reportFollowUpFailure` and, where the host warns on a failed run, `reportDispatchFailure`, over one spawn of a script. */
   readonly hookRunners: string;
   /** The generated `sessionStartCallsFor`, `sessionContextOf`, `joinAnswers` and `addToSystem`: how a SessionStart answer reaches the model. */
   readonly sessionContext: string;
+  /** The generated `stopCallsFor`: an idle session to the hooks it triggers. */
+  readonly stopCalls: string;
   /** The generated `postToolUseCallsFor`: a finished tool call to the hooks it triggers. */
   readonly postToolUseCalls: string;
   readonly appendAnswer: string;
@@ -256,6 +275,7 @@ export function generateBridge<R>(
     answerFrom: ANSWER_FROM_SOURCE,
     hookRunners: hookRunnersSource(host),
     sessionContext: SESSION_CONTEXT_SOURCE,
+    stopCalls: STOP_CALLS_SOURCE,
     postToolUseCalls: POST_TOOL_USE_CALLS_SOURCE,
     appendAnswer: APPEND_ANSWER_SOURCE,
   });

@@ -321,6 +321,15 @@ function addToSystem(output, context) {
   if (context) output.system.push(context);
 }
 
+// Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
+function stopCallsFor(sessionId, directory) {
+  return STOP.map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: { hook_event_name: "Stop", session_id: sessionId, cwd: directory },
+  }));
+}
+
 function captureHook(script, args, payload, directory) {
   return new Promise((resolve) => {
     let stdout = "";
@@ -432,10 +441,9 @@ const AiddContextKiloHooks = async ({ directory, client }) => {
         session.idle = false;
       } else if (event?.type === "session.idle" && !session.idle) {
         session.idle = true;
-        // Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
-        for (const hook of STOP) {
-          const payload = { hook_event_name: "Stop", session_id: id, cwd: session.directory, stop_hook_active: session.continued };
-          const reason = await stopReasonOf(hook.script, hook.args, payload, session.directory);
+        for (const call of stopCallsFor(id, session.directory)) {
+          const payload = { ...call.payload, stop_hook_active: session.continued };
+          const reason = await stopReasonOf(call.script, call.args, payload, session.directory);
           session.continued = reason !== "";
           // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
           // Kilo 7.8.27's `run` waits for the queue to drain, so the follow-up lands there too; awaiting
@@ -443,7 +451,7 @@ const AiddContextKiloHooks = async ({ directory, client }) => {
           if (reason) {
             client.session
               .promptAsync({ path: { id }, body: { parts: [{ type: "text", text: reason, metadata: FOLLOW_UP }] } })
-              .catch((error) => reportFollowUpFailure(hook.script, error));
+              .catch((error) => reportFollowUpFailure(call.script, error));
           }
         }
       }
@@ -479,8 +487,6 @@ const AiddContextKiloHooks = async ({ directory, client }) => {
   },
   };
 };
-
-AiddContextKiloHooks.sessionStartCallsFor = sessionStartCallsFor;
 
 export default { id: "aidd-context-hooks", server: AiddContextKiloHooks };
 
@@ -525,6 +531,15 @@ function joinAnswers(answers) {
 
 function addToSystem(output, context) {
   if (context) output.system.push(context);
+}
+
+// Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
+function stopCallsFor(sessionId, directory) {
+  return STOP.map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: { hook_event_name: "Stop", session_id: sessionId, cwd: directory },
+  }));
 }
 
 function captureHook(script, args, payload, directory) {
@@ -638,10 +653,9 @@ const AiddTelemetryKiloHooks = async ({ directory, client }) => {
         session.idle = false;
       } else if (event?.type === "session.idle" && !session.idle) {
         session.idle = true;
-        // Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
-        for (const hook of STOP) {
-          const payload = { hook_event_name: "Stop", session_id: id, cwd: session.directory, stop_hook_active: session.continued };
-          const reason = await stopReasonOf(hook.script, hook.args, payload, session.directory);
+        for (const call of stopCallsFor(id, session.directory)) {
+          const payload = { ...call.payload, stop_hook_active: session.continued };
+          const reason = await stopReasonOf(call.script, call.args, payload, session.directory);
           session.continued = reason !== "";
           // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
           // Kilo 7.8.27's `run` waits for the queue to drain, so the follow-up lands there too; awaiting
@@ -649,7 +663,7 @@ const AiddTelemetryKiloHooks = async ({ directory, client }) => {
           if (reason) {
             client.session
               .promptAsync({ path: { id }, body: { parts: [{ type: "text", text: reason, metadata: FOLLOW_UP }] } })
-              .catch((error) => reportFollowUpFailure(hook.script, error));
+              .catch((error) => reportFollowUpFailure(call.script, error));
           }
         }
       }
@@ -685,8 +699,6 @@ const AiddTelemetryKiloHooks = async ({ directory, client }) => {
   },
   };
 };
-
-AiddTelemetryKiloHooks.sessionStartCallsFor = sessionStartCallsFor;
 
 export default { id: "aidd-telemetry-hooks", server: AiddTelemetryKiloHooks };
 

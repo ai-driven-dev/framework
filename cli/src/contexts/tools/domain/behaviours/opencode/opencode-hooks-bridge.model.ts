@@ -27,7 +27,7 @@ import { type BridgeParts, generateBridge } from "../../bridges/event-bridge.js"
 // here would stutter rather than name anything the plugin's own PascalCased name does not.
 const OPENCODE_HOST = {
   name: "OpenCode",
-  reportsFailures: false,
+  warnsOnRunFailure: false,
   identifierSuffix: "Hooks",
   render: (
     parts: BridgeParts
@@ -43,24 +43,13 @@ ${parts.hooksDir}
 
 ${parts.callTables}
 
-/** Pure: \`session.idle\` -> every Stop hook's own {script, args, payload} - or \`[]\` for
- * any other event. Exposed as a property of the plugin, so the mapping can be asserted without
- * spawning anything. */
-function stopCallsFor(event, directory) {
-  if (event?.type !== "session.idle") return [];
-  const sessionId = event.properties?.sessionID;
-  return STOP.map((hook) => ({
-    script: hook.script,
-    args: hook.args,
-    payload: { hook_event_name: "Stop", session_id: sessionId ?? null, cwd: directory },
-  }));
-}
-
 // Awaited: the script has something the model must read.
 // Exit 2 puts it on stderr; exit 0 puts it in additionalContext on stdout.
 ${parts.answerFrom}
 
 ${parts.sessionContext}
+
+${parts.stopCalls}
 
 ${parts.hookRunners}
 
@@ -91,9 +80,8 @@ export const ${parts.identifier} = async (input) => {
       if (disposed) return;
       try {
         const directory = event?.properties?.directory ?? input.directory;
-        // Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
-        for (const call of stopCallsFor(event, directory)) {
-          const sessionId = call.payload.session_id;
+        const sessionId = event?.properties?.sessionID ?? null;
+        for (const call of event?.type === "session.idle" ? stopCallsFor(sessionId, directory) : []) {
           const payload = { ...call.payload, stop_hook_active: continued.has(sessionId) };
           const asking = stopReasonOf(call.script, call.args, payload, directory);
           // Pending before the script ends: dispose waits for a handling whose script still runs.
@@ -130,9 +118,6 @@ export const ${parts.identifier} = async (input) => {
     },
   };
 };
-
-${parts.identifier}.stopCallsFor = stopCallsFor;
-${parts.identifier}.postToolUseCallsFor = postToolUseCallsFor;
 
 export default {
   id: ${JSON.stringify(`${parts.plugin}-hooks`)},
