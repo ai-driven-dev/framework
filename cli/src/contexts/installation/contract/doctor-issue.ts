@@ -1,6 +1,5 @@
+import type { IssueSeverity } from "../../../shared/domain/issue/issue-severity.js";
 import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
-
-export type IssueSeverity = "info" | "warning" | "error";
 
 /** What a person does about an issue: a sentence naming no command, or a code and its facts that
  * presentation words. */
@@ -10,8 +9,7 @@ export type DoctorFix =
   | {
       readonly code: "sync-force";
       readonly effect: "reinstall-files" | "revert-file" | "restore-keys" | "restore-value";
-    }
-  | { readonly code: "authenticate" };
+    };
 
 export interface DoctorIssue {
   severity: IssueSeverity;

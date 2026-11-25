@@ -9,8 +9,8 @@ import type { HostRegistrationFinding } from "./inspect-host-registration-result
 
 type Severity = RegistrationIssue["severity"];
 
-/** A marketplace the project no longer declares is stale, never a fault that blocks anything. */
-const UNDECLARED_MARKETPLACE_SEVERITY: Severity = "warning";
+/** A settings file that cannot be read, or whose declarations drifted from the project, is never a fault that blocks anything. */
+const SETTINGS_DECLARATION_SEVERITY: Severity = "warning";
 
 /** How serious a host registry finding is. An unanswered registry or an unrecorded marketplace is
  * information; a drift is a `warning`, never an `error`, since the project did not cause it and it
@@ -37,7 +37,7 @@ export function registrationIssueOf(finding: HostRegistrationFinding): Registrat
 /** A tool's settings file that exists but cannot be read as a settings object. */
 export function unparseableSettingsIssue(file: UnparseableSettings): RegistrationIssue {
   return {
-    severity: UNDECLARED_MARKETPLACE_SEVERITY,
+    severity: SETTINGS_DECLARATION_SEVERITY,
     message: `${file.tool}: ${file.file} cannot be parsed (${file.reason})`,
     fix: { code: "repair-settings-file", file: file.file },
   };
@@ -46,7 +46,7 @@ export function unparseableSettingsIssue(file: UnparseableSettings): Registratio
 /** A marketplace the project registers that a tool's settings file no longer declares. */
 export function undeclaredMarketplaceIssue(found: UndeclaredMarketplace): RegistrationIssue {
   return {
-    severity: UNDECLARED_MARKETPLACE_SEVERITY,
+    severity: SETTINGS_DECLARATION_SEVERITY,
     message: `${found.tool} no longer declares marketplace '${found.name}'`,
     fix: { code: "refresh-marketplace", file: found.file },
   };
@@ -55,7 +55,7 @@ export function undeclaredMarketplaceIssue(found: UndeclaredMarketplace): Regist
 /** A declaration left in a tool's settings file for a marketplace the project no longer registers. */
 export function staleDeclarationIssue(entry: UndeclaredMarketplace): RegistrationIssue {
   return {
-    severity: UNDECLARED_MARKETPLACE_SEVERITY,
+    severity: SETTINGS_DECLARATION_SEVERITY,
     message: `${entry.tool} still declares marketplace '${entry.name}', which this project no longer registers`,
     fix: { code: "remove-stale-declaration", name: entry.name, file: entry.file },
   };

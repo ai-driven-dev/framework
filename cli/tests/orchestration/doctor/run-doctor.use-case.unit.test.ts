@@ -28,7 +28,11 @@ async function reportOf(category?: "ai", severity: DoctorIssue["severity"] = "wa
           { severity, message: "registration", fix: { code: "sync-reregister" } as const },
         ],
       },
-      authentication: answering("authentication"),
+      authentication: {
+        execute: async () => [
+          { severity, message: "authentication", fix: { code: "authenticate" } as const },
+        ],
+      },
     },
     syntheticCatalog()
   ).execute({ projectRoot: PROJECT_ROOT, category });

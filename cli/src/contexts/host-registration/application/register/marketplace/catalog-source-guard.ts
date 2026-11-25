@@ -5,8 +5,11 @@ import {
   type MarketplaceCatalogIdentity,
   pluginSetDifference,
 } from "../../../domain/source/marketplace-source-conflict.js";
-import type { MarketplaceSourceDriftFound } from "../../../domain/source/marketplace-source-drift.js";
-import { isDriftFound, judgeDrift } from "../../../domain/source/marketplace-source-drift.js";
+import {
+  isDriftFound,
+  judgeDrift,
+  type MarketplaceSourceDriftFound,
+} from "../../../domain/source/marketplace-source-drift.js";
 import {
   marketplaceRegistryOf,
   type RegistrationRun,

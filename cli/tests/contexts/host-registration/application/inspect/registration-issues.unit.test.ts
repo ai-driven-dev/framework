@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import type { HostRegistrationFinding } from "../../../../../src/contexts/host-registration/application/inspect/inspect-host-registration-result.js";
 import {
   registrationIssueOf,
   staleDeclarationIssue,
@@ -15,44 +14,6 @@ const found = {
   requestedSource: "/requested",
   location: "/settings.json",
 };
-
-const gradedCases: [HostRegistrationFinding, string][] = [
-  [{ kind: "registry-unanswerable", tool, detail: "d" }, "info"],
-  [{ kind: "plugin-unrecorded", tool, plugin: "p" }, "info"],
-  [{ kind: "plugin-missing", tool, ref: "p@m", location: "/r" }, "error"],
-  [{ kind: "plugin-disabled", tool, ref: "p@m", location: "/r" }, "error"],
-  [{ kind: "source-conflict", tool, ...found, pluginDiff: "x" }, "error"],
-  [
-    {
-      kind: "source-drift",
-      tool,
-      found: {
-        ...found,
-        drift: { kind: "version-behind", registeredVersion: "2", requestedVersion: "1" },
-      },
-    },
-    "warning",
-  ],
-  [
-    {
-      kind: "source-drift",
-      tool,
-      found: {
-        ...found,
-        drift: { kind: "unmigrated-foreign-project-source", projectRoot: "/o" },
-      },
-    },
-    "warning",
-  ],
-  [
-    {
-      kind: "source-drift",
-      tool,
-      found: { ...found, drift: { kind: "unmigrated-project-source" } },
-    },
-    "warning",
-  ],
-];
 
 describe("registration issues", () => {
   it("words an unanswered registry as an info that carries the registry's own detail", () => {
@@ -144,11 +105,4 @@ describe("registration issues", () => {
       fix: { code: "remove-stale-declaration", name: "m", file: "f.json" },
     });
   });
-
-  it.each(gradedCases.map(([finding, severity]) => ({ kind: finding.kind, finding, severity })))(
-    "grades $kind as $severity",
-    ({ finding, severity }) => {
-      expect(registrationIssueOf(finding).severity).toBe(severity);
-    }
-  );
 });

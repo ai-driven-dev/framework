@@ -1,3 +1,4 @@
+import type { AuthenticationIssue } from "../../contexts/auth/contract/authentication-issue.js";
 import type { RegistrationIssue } from "../../contexts/host-registration/contract/registration-issue.js";
 import type {
   DoctorIssue,
@@ -6,7 +7,7 @@ import type {
 } from "../../contexts/installation/contract/doctor-issue.js";
 
 /** An issue of any doctor check. */
-export type ReportedIssue = DoctorIssue | RegistrationIssue;
+export type ReportedIssue = DoctorIssue | RegistrationIssue | AuthenticationIssue;
 
 /** What one doctor run found for one tool category. */
 export interface DoctorReport {

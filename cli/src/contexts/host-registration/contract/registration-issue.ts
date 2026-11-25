@@ -1,3 +1,5 @@
+import type { IssueSeverity } from "../../../shared/domain/issue/issue-severity.js";
+
 /** What a person does about a registration issue: a sentence naming no command, or a code and its
  * facts that presentation words. */
 export type RegistrationFix =
@@ -12,7 +14,7 @@ export type RegistrationFix =
 
 /** A host registration finding as the issue a person reads. */
 export interface RegistrationIssue {
-  readonly severity: "info" | "warning" | "error";
+  readonly severity: IssueSeverity;
   readonly message: string;
   readonly fix: string | RegistrationFix;
 }

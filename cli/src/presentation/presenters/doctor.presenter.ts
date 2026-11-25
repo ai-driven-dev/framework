@@ -1,8 +1,12 @@
+import type { AuthenticationFix } from "../../contexts/auth/contract/authentication-issue.js";
 import type { RegistrationFix } from "../../contexts/host-registration/contract/registration-issue.js";
 import type { DoctorFix } from "../../contexts/installation/contract/doctor-issue.js";
 import { render } from "../errors/error-translator.presenter.js";
 import type { Output } from "../terminal/output.model.js";
 import { printPluginDrift, printScopeReport } from "./setup/status.presenter.js";
+
+/** What a person does about a doctor issue, whichever context found it. */
+type IssueFix = string | DoctorFix | RegistrationFix | AuthenticationFix;
 
 type PluginIssue = { pluginName: string; toolId: string; issue: string; filePath?: string };
 
@@ -93,7 +97,7 @@ export function printScopeIssues(
   output: Output,
   label: string,
   report: {
-    issues: { severity: string; message: string; fix: string | DoctorFix | RegistrationFix }[];
+    issues: { severity: string; message: string; fix: IssueFix }[];
   } | null
 ): void {
   if (report === null || report.issues.length === 0) return;
@@ -131,7 +135,7 @@ const SYNC_FORCE_EFFECT = {
 } as const;
 
 /** The words of what a person does about a doctor issue. */
-export function describeDoctorFix(fix: string | DoctorFix | RegistrationFix): string {
+export function describeDoctorFix(fix: IssueFix): string {
   if (typeof fix === "string") return fix;
   switch (fix.code) {
     case "remove-or-track-directory":

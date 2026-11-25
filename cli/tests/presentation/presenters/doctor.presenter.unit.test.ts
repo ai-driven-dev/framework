@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { AuthenticationFix } from "../../../src/contexts/auth/contract/authentication-issue.js";
 import type { RegistrationFix } from "../../../src/contexts/host-registration/contract/registration-issue.js";
 import type { DoctorFix } from "../../../src/contexts/installation/contract/doctor-issue.js";
 import {
@@ -288,7 +289,7 @@ describe("printing the machine-wide tools", () => {
 });
 
 describe("the words of what a person does about a doctor issue", () => {
-  const cases: [string | DoctorFix | RegistrationFix, string][] = [
+  const cases: [string | DoctorFix | RegistrationFix | AuthenticationFix, string][] = [
     [
       { code: "remove-or-track-directory" },
       "Remove the directory manually, or run `aidd install <tool>` to track it.",

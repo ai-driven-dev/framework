@@ -5,7 +5,7 @@ One GitHub credential: kept, found, checked, removed, never used for a business 
 ## Ports
 
 - `CredentialRecordRepository`: the record of each level. `ExternalTokenSource`, `CliAuthProvider`: a provider's token and identity check (`gh`). `IdentityVerifier`: who a stored token belongs to.
-- `contract/`: `TokenProvider`, read by distribution, update and `src/orchestration/doctor/check-authentication.use-case.ts`; the credential types, read by presentation.
+- `contract/`: `TokenProvider`, read by distribution and update; `AuthenticationIssue`, the doctor issue `CheckAuthentication` returns, read by orchestration and presentation; the credential types, read by presentation.
 
 ## Suppliers
 
