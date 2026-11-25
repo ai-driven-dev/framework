@@ -4,9 +4,10 @@
  * run from the project on the SessionStart payload Kiro was seen sending. The home is a
  * temporary one, so a script installed there never answers for the project's.
  */
-import { spawnSync } from "node:child_process";
+import { type SpawnSyncReturns, spawnSync } from "node:child_process";
 import {
   cpSync,
+  existsSync,
   mkdirSync,
   mkdtempSync,
   readdirSync,
@@ -39,14 +40,16 @@ function filesUnder(dir: string): string[] {
 
 describe("the memory hook under Kiro", () => {
   let root: string;
+  const HOME = () => join(root, "home");
 
   function installScript(
+    base: string,
     format: NonNullable<ReturnType<typeof kiro.projectHooksDelivery>>["format"],
     source: string
   ): void {
     const pluginPath = `hooks/${relative(PLUGIN_HOOKS, source).split("\\").join("/")}`;
     if (pluginPath === "hooks/hooks.json") return;
-    const dest = join(root, format.scriptPath(PLUGIN, pluginPath));
+    const dest = join(base, format.scriptPath(PLUGIN, pluginPath));
     mkdirSync(dirname(dest), { recursive: true });
     writeFileSync(dest, plugins.hookScript(pluginPath, readFileSync(source, "utf8")));
   }
@@ -61,18 +64,19 @@ describe("the memory hook under Kiro", () => {
 
   afterEach(() => rmSync(root, { recursive: true, force: true }));
 
-  /** Installs the plugin's hooks as `plugin install` does, and returns its SessionStart command. */
-  function install(): string {
+  /** Installs the plugin's hooks under `base`, as `plugin install` does for a project, and returns
+   * its SessionStart command. */
+  function install(base = root): string {
     const format = kiro.projectHooksDelivery()?.format;
     if (format === undefined) throw new Error("kiro declares no project hooks format");
-    for (const source of filesUnder(PLUGIN_HOOKS)) installScript(format, source);
+    for (const source of filesUnder(PLUGIN_HOOKS)) installScript(base, format, source);
     const { content } = format.merge(
       null,
       readFileSync(join(PLUGIN_HOOKS, "hooks.json"), "utf8"),
       PLUGIN
     );
-    mkdirSync(join(root, ".kiro/hooks"), { recursive: true });
-    writeFileSync(join(root, ".kiro/hooks/aidd.json"), content);
+    mkdirSync(join(base, ".kiro/hooks"), { recursive: true });
+    writeFileSync(join(base, ".kiro/hooks/aidd.json"), content);
     const [first] = format
       .contributedEntries(content, PLUGIN)
       .filter(({ event }) => event === "SessionStart");
@@ -83,6 +87,18 @@ describe("the memory hook under Kiro", () => {
   /** The captured payload, its scrubbed project path pointed at this project. */
   function payload(): string {
     return JSON.stringify({ ...sample("kiro-SessionStart.json", 0).payload, cwd: root });
+  }
+
+  /** Runs the command as Kiro does, from the project, with the temporary home as the home. */
+  function runHook(command: string): SpawnSyncReturns<string> {
+    return spawnSync(command, {
+      shell: true,
+      cwd: root,
+      env: { ...process.env, HOME: HOME(), USERPROFILE: HOME() },
+      input: payload(),
+      encoding: "utf8",
+      timeout: 10000,
+    });
   }
 
   it("installs Kiro's own adapter as the hooks' host library", () => {
@@ -97,17 +113,42 @@ describe("the memory hook under Kiro", () => {
     const command = install();
     cpSync(join(root, "AGENTS.md"), join(root, "AGENTS.before.md"));
 
-    const run = spawnSync(command, {
-      shell: true,
-      cwd: root,
-      env: { ...process.env, HOME: join(root, "home"), USERPROFILE: join(root, "home") },
-      input: payload(),
-      encoding: "utf8",
-      timeout: 10000,
-    });
+    const run = runHook(command);
 
     expect([run.status, run.stdout, run.stderr]).toStrictEqual([0, "", ""]);
     expect(readFileSync(join(root, "AGENTS.before.md"), "utf8")).not.toContain(LINK);
     expect(readFileSync(join(root, "AGENTS.md"), "utf8").split("\n")).toContain(LINK);
+  });
+
+  it("refreshes the project's AGENTS.md from a home install, the project holding no .kiro", () => {
+    const command = install(HOME());
+
+    const run = runHook(command);
+
+    expect([run.status, run.stdout, run.stderr]).toStrictEqual([0, "", ""]);
+    expect(readFileSync(join(root, "AGENTS.md"), "utf8").split("\n")).toContain(LINK);
+  });
+
+  it("prefers the home copy, so a repository cannot have its own script run by a home install", () => {
+    const command = install(HOME());
+    install();
+    const script = /r='([^']+)'/.exec(command)?.[1];
+    if (script === undefined) throw new Error("the command names no script");
+    for (const [base, marker] of [
+      [HOME(), "ran-home"],
+      [root, "ran-project"],
+    ]) {
+      writeFileSync(
+        join(base ?? root, script),
+        `require("node:fs").writeFileSync(${JSON.stringify(join(root, marker))}, "");`
+      );
+    }
+
+    runHook(command);
+
+    expect([
+      existsSync(join(root, "ran-home")),
+      existsSync(join(root, "ran-project")),
+    ]).toStrictEqual([true, false]);
   });
 });

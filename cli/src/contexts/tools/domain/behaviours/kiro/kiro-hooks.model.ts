@@ -1,6 +1,11 @@
 /** Kiro's hooks file: a `version` and a flat `hooks` list of named hooks, each a trigger and a
  * command action (https://kiro.dev/docs/hooks/). No `HooksFileFormat` describes that list, so its
- * merge is Kiro's own. */
+ * merge is Kiro's own.
+ *
+ * Only a command of the form `node ${CLAUDE_PLUGIN_ROOT}/hooks/...` is delivered; any other is
+ * dropped, and no plugin ships one. Only `SessionStart` is delivered, so a script paired across
+ * events (aidd-context's artifacts start, mark and check) runs only its SessionStart half, which
+ * is harmless. */
 
 import type { ShippedHooks } from "../../../../../shared/domain/materialization/build-contract.js";
 import { genericFlatHooksScriptPath } from "../../../../../shared/domain/materialization/flat-paths.js";

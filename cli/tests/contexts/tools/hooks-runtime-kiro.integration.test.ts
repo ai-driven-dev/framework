@@ -34,13 +34,6 @@ describe("reading Kiro hook payloads", () => {
 });
 
 describe("answering through Kiro", () => {
-  it("prints the text bare, as the model's context", () => {
-    const { adapter } = read("kiro", sample("kiro-SessionStart.json", 1).payload);
-    adapter.answer({ level: 1, text: "The session token is ZEBRA-4417." });
-
-    expect(printed).toStrictEqual(["The session token is ZEBRA-4417.\n"]);
-  });
-
   it("matches what the captured run printed", () => {
     const run = sample("kiro-SessionStart.json", 1);
     const { adapter } = read("kiro", run.payload);
