@@ -19,7 +19,9 @@ type NamedHook = {
   [key: string]: (ProjectHookEntry | HandlerGroup)[] | boolean | undefined;
 };
 type NamedHooks = Record<string, NamedHook>;
-type SourceHooks = { hooks?: Record<string, { hooks?: ProjectHookEntry[] }[]> };
+type SourceHooks = {
+  hooks?: Record<string, { matcher?: string; hooks?: ProjectHookEntry[] }[]>;
+};
 
 /** What a host that keeps hooks as a named, wrapped command is declared by. `label` names the host
  * in an error. */
@@ -28,6 +30,8 @@ export interface WrappedCommandHooksTarget {
   readonly descriptor: {
     readonly flat: { readonly scriptsDir: string };
     readonly eventMap: Readonly<Record<string, string>>;
+    /** The host's name of each tool a plugin's matcher names, by the name the plugin gives it. */
+    readonly toolNames: ReadonlyMap<string, string>;
   };
 }
 
@@ -51,6 +55,16 @@ function toHandler(hook: ProjectHookEntry): ProjectHookEntry {
   };
 }
 
+/** The matcher in the host's tool names, or undefined when it names no tool the host has. A plugin
+ * with no matcher, an empty one or `*` asks for every tool. Names are taken literally, split on
+ * `|`: a regex matcher such as `Edit.*` names no mapped tool, so its group is skipped with a
+ * warning, where Claude would match. No shipped plugin writes one. */
+function hostMatcher(target: WrappedCommandHooksTarget, matcher: string | undefined) {
+  if (matcher === undefined || matcher === "" || matcher === "*") return "*";
+  const names = matcher.split("|").flatMap((name) => target.descriptor.toolNames.get(name) ?? []);
+  return names.length > 0 ? names.join("|") : undefined;
+}
+
 function convert(
   target: WrappedCommandHooksTarget,
   { json, plugin: pluginName, locate = (pluginPath) => pluginPath }: ShippedHooks
@@ -68,9 +82,22 @@ function convert(
       warnings.push(`unmapped event '${event}' skipped`);
       continue;
     }
-    const converted = groups.flatMap((group) => (group.hooks ?? []).map(toHandler));
-    // PostToolUse goes in `{ matcher, hooks: [handler] }`; the other events take bare handlers.
-    handlers[event] = event === "PostToolUse" ? [{ matcher: "*", hooks: converted }] : converted;
+    if (event !== "PostToolUse") {
+      handlers[event] = groups.flatMap((group) => (group.hooks ?? []).map(toHandler));
+      continue;
+    }
+    // PostToolUse goes in `{ matcher, hooks: [handler] }`, one group per group the plugin wrote.
+    const grouped = groups.flatMap((group) => {
+      const matcher = hostMatcher(target, group.matcher);
+      if (matcher === undefined) {
+        warnings.push(
+          `${event} matcher '${group.matcher}' names no ${target.label} tool, group skipped`
+        );
+        return [];
+      }
+      return [{ matcher, hooks: (group.hooks ?? []).map(toHandler) }];
+    });
+    if (grouped.length > 0) handlers[event] = grouped;
   }
   return { handlers, warnings };
 }

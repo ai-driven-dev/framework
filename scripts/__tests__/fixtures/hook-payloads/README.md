@@ -49,4 +49,4 @@ the hook's output between `<HOOK_INSTRUCTION>` tags, a JSON answer included as r
   that name was routed to another model by a local proxy. The arguments are the host's own tool
   schema; the model only filled them.
 
-Antigravity's `PostToolUse` (a `write_file` then a `run_command`) and `Stop` (`executionNum` 0, then 1 on the continued turn end), captured from a real `agy` run. Its payloads name their event in `hookEventName`.
+Antigravity's `PostToolUse` (a `write_file`, a `run_command`, then an `edit_file`) and `Stop` (`executionNum` 0, then 1 on the continued turn end), captured from real `agy` runs. Its payloads name their event in `hookEventName`. Its edit tool is `edit_file`, with `Path`, `Target` and `Replacement`.

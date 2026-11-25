@@ -11,7 +11,18 @@ import {
 
 const target: WrappedCommandHooksTarget = {
   label: "Host",
-  descriptor: { flat: { scriptsDir: ".h/hooks/" }, eventMap: { SessionStart: "SessionStart" } },
+  descriptor: {
+    flat: { scriptsDir: ".h/hooks/" },
+    eventMap: {
+      SessionStart: "SessionStart",
+      PostToolUse: "PostToolUse",
+    },
+    toolNames: new Map([
+      ["Write", "put"],
+      ["Edit", "patch"],
+      ["Bash", "sh"],
+    ]),
+  },
 };
 
 // The token a plugin writes for its own directory.
@@ -120,5 +131,57 @@ describe("wrapped command hooks", () => {
 
     expect(handlers).toHaveLength(1);
     expect(handlers[0]).not.toHaveProperty("timeout");
+  });
+
+  describe("a tool event's matcher", () => {
+    const grouped = (event: string, ...matchers: (string | undefined)[]) =>
+      JSON.stringify({
+        hooks: {
+          [event]: matchers.map((matcher) => ({
+            ...(matcher === undefined ? {} : { matcher }),
+            hooks: [{ type: "command", command: `run ${matcher}` }],
+          })),
+        },
+      });
+    const matchersOf = (json: string, event: string) =>
+      JSON.parse(merged(null, json).content).p[event].map(
+        (group: { matcher: string }) => group.matcher
+      );
+
+    it("renames the host's tools in a group and keeps one group per source group", () => {
+      expect(matchersOf(grouped("PostToolUse", "Write|Edit", "Bash"), "PostToolUse")).toEqual([
+        "put|patch",
+        "sh",
+      ]);
+    });
+
+    it("matches every tool for a group with no matcher, an empty one or a star", () => {
+      expect(matchersOf(grouped("PostToolUse", undefined, "", "*"), "PostToolUse")).toEqual([
+        "*",
+        "*",
+        "*",
+      ]);
+    });
+
+    it("drops a tool the host has no name for from a group that keeps others", () => {
+      expect(matchersOf(grouped("PostToolUse", "Write|Shell|Edit"), "PostToolUse")).toEqual([
+        "put|patch",
+      ]);
+    });
+
+    it("skips a group naming no tool the host has, with a warning naming it", () => {
+      const { content, warnings } = merged(null, grouped("PostToolUse", "Delete", "Bash"));
+
+      expect([JSON.parse(content).p.PostToolUse.length, warnings]).toEqual([
+        1,
+        ["PostToolUse matcher 'Delete' names no Host tool, group skipped"],
+      ]);
+    });
+
+    it("adds no event when every group of it is skipped", () => {
+      const { content } = merged(null, grouped("PostToolUse", "Delete"));
+
+      expect(JSON.parse(content)).toEqual({});
+    });
   });
 });
