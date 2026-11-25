@@ -12,7 +12,8 @@ import type { SessionBindingStore } from "../../../ports/bindings/session-bindin
 import { readTextIfPresent } from "../../reading/text-file.js";
 
 /** `sessions.jsonl` and `carries.jsonl` under the bindings directory: append-only, one line
- * each. A line that is not exactly one of them is skipped, never guessed at. */
+ * each. A line that is not exactly one of them is skipped, never guessed at. `carries.jsonl` is
+ * read from old data: no hook writes it anymore. */
 export class SessionBindingStoreAdapter implements SessionBindingStore {
   constructor(
     private readonly dir: string,

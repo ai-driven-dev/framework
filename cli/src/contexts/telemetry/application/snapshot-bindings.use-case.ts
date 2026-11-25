@@ -4,7 +4,6 @@ import {
   nextSnapshot,
   snapshotKey,
 } from "../domain/branch-binding.js";
-import type { LockWait } from "../domain/declaration/task-declaration.js";
 import type { BindingSnapshotStore } from "../ports/bindings/binding-snapshot-store.js";
 import type { BindingsLock } from "../ports/bindings/bindings-lock.js";
 import type { BranchBindingSource } from "../ports/branch-binding-source.js";
@@ -12,7 +11,6 @@ import type { BranchBindingSource } from "../ports/branch-binding-source.js";
 export interface SnapshotBindingsRequest {
   readonly repositoryId: string;
   readonly root: string;
-  readonly wait?: LockWait;
 }
 
 interface SnapshotBindingsDeps {
@@ -32,11 +30,10 @@ export class SnapshotBindings {
    * bindings lock, because a declaration and an ingest both take snapshots and a config read
    * before the lock could be older than a snapshot taken while waiting for it. A repository
    * declaring nothing is told so without taking the lock. */
-  async execute({ repositoryId, root, wait }: SnapshotBindingsRequest): Promise<number> {
+  async execute({ repositoryId, root }: SnapshotBindingsRequest): Promise<number> {
     if ((await this.deps.source.bindings(root)).length === 0) return 0;
-    return this.deps.lock.exclusively(
-      async () => this.append(repositoryId, root, await this.deps.source.bindings(root)),
-      wait
+    return this.deps.lock.exclusively(async () =>
+      this.append(repositoryId, root, await this.deps.source.bindings(root))
     );
   }
 

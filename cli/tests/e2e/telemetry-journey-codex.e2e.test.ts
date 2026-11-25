@@ -1,13 +1,13 @@
 import { spawnSync } from "node:child_process";
-import { appendFile, mkdir, writeFile } from "node:fs/promises";
+import { appendFile, copyFile, cp, mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { sandboxedEnv } from "../shared/testing/cli-sandbox.builder.js";
 import { parseJsonRecord } from "../shared/testing/json-value.builder.js";
+import { REPOSITORY_ROOT } from "../shared/testing/repository-root.builder.js";
 import {
   HOOKS,
   Journey,
-  lines,
   S_CODEX,
   S_CODEX_CHILD,
   S_CODEX_EXEC,
@@ -23,7 +23,7 @@ afterEach(async () => {
 });
 
 describe("the telemetry journey of a Codex session, on the built binary", () => {
-  it("asks a Codex TUI session, binds its declaration to that session, and attributes its calls and its sub-agent's", async () => {
+  it("reminds a Codex session, and attributes its calls and its sub-agent's to the branch's task", async () => {
     await j.optIn();
     const sessions = join(j.env.fakeHome, ".codex", "sessions", "2026", "10", "19");
     await mkdir(sessions, { recursive: true });
@@ -32,9 +32,17 @@ describe("the telemetry journey of a Codex session, on the built binary", () => 
       payload: Record<string, unknown>,
       at = "2026-10-19T10:00:00.000Z"
     ) => `${JSON.stringify({ timestamp: at, type, payload })}\n`;
-    // No `git` in either first line: the branch is declared too, and must not be what attributes.
+    // Codex names no session to a command, so the branch's declaration is what attributes: the
+    // branch a session started on is in its first line.
     const meta = (id: string, source: unknown, originator: string) =>
-      line("session_meta", { id, cwd: j.repo, cli_version: "0.163.0", source, originator });
+      line("session_meta", {
+        id,
+        cwd: j.repo,
+        cli_version: "0.163.0",
+        source,
+        originator,
+        git: { branch: "feat/x" },
+      });
     const rootFile = join(sessions, `rollout-2026-10-19T10-00-00-${S_CODEX}.jsonl`);
     const childFile = join(sessions, `rollout-2026-10-19T10-00-01-${S_CODEX_CHILD}.jsonl`);
     const execFile = join(sessions, `rollout-2026-10-19T10-00-02-${S_CODEX_EXEC}.jsonl`);
@@ -42,44 +50,38 @@ describe("the telemetry journey of a Codex session, on the built binary", () => 
     await writeFile(rootFile, meta(S_CODEX, "cli", "codex-tui") + turn);
     await writeFile(execFile, meta(S_CODEX_EXEC, "exec", "codex_exec") + turn);
 
-    // The hook as Codex runs it: none of Claude Code's variables, the session in the payload.
+    // The hook as Codex runs it: the plugin's hooks with Codex's adapter, none of Claude Code's
+    // variables, the session in the payload.
+    const hooks = join(j.env.tempDir, "codex-hooks");
+    await cp(HOOKS, hooks, { recursive: true });
+    await copyFile(
+      join(REPOSITORY_ROOT, "cli", "assets", "hooks-runtime", "host-codex.cjs"),
+      join(hooks, "lib", "host.cjs")
+    );
     const path = j.pathWithShim();
-    const codex = (session: string, file: string, permission: string, text: string) => {
-      const run = spawnSync(process.execPath, [join(HOOKS, "prompt-gate.cjs")], {
+    const remind = (session: string, file: string) => {
+      const run = spawnSync(process.execPath, [join(hooks, "task.cjs"), "remind"], {
         cwd: j.repo,
         input: JSON.stringify({
           session_id: session,
           transcript_path: file,
           cwd: j.repo,
-          hook_event_name: "UserPromptSubmit",
-          permission_mode: permission,
-          turn_id: "t",
-          prompt: text,
+          hook_event_name: "SessionStart",
+          source: "startup",
         }),
         encoding: "utf8",
         env: sandboxedEnv(j.env.fakeHome, { ...j.sandboxVariables(), PATH: path, Path: path }),
       });
       expect(run.status, run.stderr).toBe(0);
-      const json = run.stdout.trim() === "" ? null : parseJsonRecord(run.stdout);
-      return json;
+      return run.stdout.trim() === "" ? null : parseJsonRecord(run.stdout);
     };
 
-    expect(codex(S_CODEX, rootFile, "default", "build the checkout")).toMatchObject({
-      decision: "block",
-      reason: expect.stringContaining("Telemetry: no task on feat/x yet."),
-    });
-    // `codex exec` shows nobody the reason: never held.
-    expect(codex(S_CODEX_EXEC, execFile, "bypassPermissions", "run it")).toBeNull();
-    expect(
-      codex(S_CODEX, rootFile, "default", "aidd telemetry task codex-fix --ticket PROJ-7")
-    ).toEqual({
-      decision: "block",
-      reason: "Task codex-fix (ticket PROJ-7) declared. Send your prompt again.",
-    });
-    expect(await lines(join(j.telemetry, "bindings", "sessions.jsonl"))).toMatchObject([
-      { session_id: S_CODEX, task: "codex-fix", ticket: "PROJ-7", by: "hook-intercept" },
-    ]);
-    expect(codex(S_CODEX, rootFile, "default", "build the checkout")).toBeNull();
+    expect(String(remind(S_CODEX, rootFile)?.systemMessage)).toContain(
+      "Telemetry: no task on feat/x."
+    );
+    const declared = await j.aidd(["task", "codex-fix", "--ticket", "PROJ-7"]);
+    expect(declared.exitCode, declared.stderr).toBe(0);
+    expect(remind(S_CODEX, rootFile)).toBeNull();
 
     // Calls after the declaration, the sub-agent's in its own file under the root's session.
     const base = Date.now() + 60_000;

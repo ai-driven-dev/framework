@@ -34,7 +34,7 @@ export const OTHER = "git@github.com:acme/other.git";
 export const BEFORE = -50_000;
 export const HOUR = 3_600;
 export const SESSION = "00000000-0000-4000-8000-000000000001";
-export const GATE = join(REPOSITORY_ROOT, "plugins", "aidd-telemetry", "hooks", "prompt-gate.cjs");
+const HOOKS = join(REPOSITORY_ROOT, "plugins", "aidd-telemetry", "hooks");
 export const FAKE_AIDD = "process.exit(0);\n";
 
 /** A stand-in `aidd` the way the hook looks it up on `PATH`. Windows only tries `PATHEXT`
@@ -83,34 +83,42 @@ export class World {
     return dir;
   }
 
-  /** The real `prompt-gate.cjs`, as Claude Code would run it in `dir`, with a stand-in `aidd`
-   * that can answer `telemetry task`. `attended: false` is a headless session. Returns whether
-   * the prompt was blocked. It reads the clock of the machine, not the faked one. */
-  blocks(dir: string, attended = true): boolean {
+  /** One real SessionStart hook of the plugin, as Claude Code would run it in `dir`, with a
+   * stand-in `aidd` on `PATH`. It reads the clock of the machine, not the faked one. */
+  private runHook(dir: string, script: "task.cjs" | "ledger.cjs", command: string): string {
     const bin = join(this.sandbox.root, "bin");
     writeAiddStandIn(bin);
-    const env: NodeJS.ProcessEnv = {
-      PATH: `${bin}${delimiter}${process.env.PATH ?? ""}`,
-      HOME: this.sandbox.home,
-      USERPROFILE: this.sandbox.home,
-      AIDD_TELEMETRY_DIR: this.sandbox.telemetry,
-      CLAUDE_CODE_SESSION_ID: SESSION,
-      CLAUDE_CODE_ENTRYPOINT: "cli",
-    };
-    if (attended) env.CLAUDE_CODE_SESSION_ATTENDED = "1";
-    const run = spawnSync(process.execPath, [GATE], {
+    const run = spawnSync(process.execPath, [join(HOOKS, script), command], {
       cwd: dir,
-      env,
+      env: {
+        PATH: `${bin}${delimiter}${process.env.PATH ?? ""}`,
+        HOME: this.sandbox.home,
+        USERPROFILE: this.sandbox.home,
+        AIDD_TELEMETRY_DIR: this.sandbox.telemetry,
+        CLAUDE_CODE_SESSION_ID: SESSION,
+      },
       encoding: "utf8",
       input: JSON.stringify({
         session_id: SESSION,
         transcript_path: join(this.sandbox.claude, "projects", "-p", "x.jsonl"),
         cwd: dir,
-        prompt: "fix the cart",
-        hook_event_name: "UserPromptSubmit",
+        hook_event_name: "SessionStart",
+        source: "startup",
       }),
     });
-    return run.stdout.includes('"decision":"block"');
+    return run.stdout;
+  }
+
+  /** Whether `task.cjs remind` tells the person `dir` has no task: it does so only for a clone
+   * that is measured. */
+  reminds(dir: string): boolean {
+    return this.runHook(dir, "task.cjs", "remind").includes("Telemetry: no task on");
+  }
+
+  /** `ledger.cjs ingest`: prints nothing; what it does is end the consent of a clone whose key
+   * no longer names its interval. */
+  ingestHook(dir: string): void {
+    this.runHook(dir, "ledger.cjs", "ingest");
   }
 
   /** The consent key set by hand, as a person with git would. */

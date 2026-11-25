@@ -243,7 +243,6 @@ export function sandboxedEnv(
   // the test's explicit `env` is applied.
   delete base.CODEX_THREAD_ID;
   delete base.CLAUDE_CODE_SESSION_ID;
-  delete base.AIDD_TELEMETRY_SESSION_ID;
   // Claude Code reads its user settings under this directory when set, and `setup --provider`
   // writes the main session's model there: left in, a run would edit the runner's own settings.
   delete base.CLAUDE_CONFIG_DIR;

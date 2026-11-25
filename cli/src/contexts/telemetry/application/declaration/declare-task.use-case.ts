@@ -1,6 +1,8 @@
-import type { DeclarationRequest, DeclaredBy } from "../../contract/task-declaration.js";
-import type { TaskDeclaration } from "../../domain/declaration/task-declaration.js";
-import { declarationOf, lockWaitFor } from "../../domain/declaration/task-declaration.js";
+import type {
+  DeclarationRequest,
+  TaskDeclaration,
+} from "../../domain/declaration/task-declaration.js";
+import { declarationOf } from "../../domain/declaration/task-declaration.js";
 import type { BindingsLock } from "../../ports/bindings/bindings-lock.js";
 import type { SessionBindingStore } from "../../ports/bindings/session-binding-store.js";
 import type {
@@ -12,7 +14,6 @@ import type { DeclareOnBranch, DeclareOnBranchResult } from "./declare-on-branch
 export interface DeclareTaskRequest {
   readonly cwd: string;
   readonly request: DeclarationRequest;
-  readonly by: DeclaredBy;
 }
 
 export type DeclareTaskResult =
@@ -28,18 +29,17 @@ export type DeclareTaskResult =
 /** Appends a declaration to the running session's bindings. */
 export type BindSession = (sessionId: string, declaration: TaskDeclaration) => Promise<void>;
 
-/** The session line appended under the bindings lock, waiting as long as its declarer may. */
+/** The session line appended under the bindings lock. */
 export function sessionBindingOf(sessions: SessionBindingStore, lock: BindingsLock): BindSession {
   return (sessionId, declaration) =>
-    lock.exclusively(() => sessions.append(sessionId, declaration), lockWaitFor(declaration.by));
+    lock.exclusively(() => sessions.append(sessionId, declaration));
 }
 
 interface DeclareTaskDeps {
   readonly repositories: FindConsentedRepository;
   readonly bindSession: BindSession;
   readonly branches: DeclareOnBranch;
-  /** `AIDD_TELEMETRY_SESSION_ID`, else `CLAUDE_CODE_SESSION_ID`, read by the composition root;
-   * `null` outside a session. */
+  /** `CLAUDE_CODE_SESSION_ID`, read by the composition root; `null` outside a session. */
   readonly sessionId: string | null;
   readonly now: () => Date;
 }
@@ -54,7 +54,7 @@ export class DeclareTask {
   async execute(input: DeclareTaskRequest): Promise<DeclareTaskResult> {
     const repository = await this.deps.repositories.execute(input.cwd);
     if (repository.status === "refused") return repository;
-    const declaration = declarationOf(input.request, this.deps.now(), input.by);
+    const declaration = declarationOf(input.request, this.deps.now());
     const { sessionId } = this.deps;
     if (sessionId !== null) await this.deps.bindSession(sessionId, declaration);
     const branch = await this.deps.branches.execute({

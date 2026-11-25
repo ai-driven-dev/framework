@@ -265,8 +265,7 @@ async function report(
       d.session,
       declarationOf(
         d.task === null ? { kind: "none" } : { kind: "task", task: d.task, ticket: d.ticket },
-        new Date(`${d.day}T${String(d.hour).padStart(2, "0")}:00:00.000Z`),
-        "command"
+        new Date(`${d.day}T${String(d.hour).padStart(2, "0")}:00:00.000Z`)
       )
     );
   }

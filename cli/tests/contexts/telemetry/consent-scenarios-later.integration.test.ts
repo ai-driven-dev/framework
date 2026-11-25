@@ -104,7 +104,7 @@ const LATER_ROWS: readonly Row[] = [
   {
     n: "hand key",
     scenario:
-      "a key set by hand (2, or 2:token with no interval), and a cp -R copy of an opted-in clone: nothing stored, the real prompt-gate does not block; the opted-in original stores and blocks",
+      "a key set by hand (2, or 2:token with no interval), and a cp -R copy of an opted-in clone: nothing stored, the real reminder hook stays silent; the opted-in original stores and is reminded",
     expected: ["o1"],
     run: async (w) => {
       const hand = w.repository("hand", OTHER, "feat/y");
@@ -120,10 +120,10 @@ const LATER_ROWS: readonly Row[] = [
       w.call(copy, "cp1", HOUR + 100);
       w.call(original, "o1", HOUR + 100);
       await w.ingest(HOUR + 200);
-      expect(w.blocks(hand)).toBe(false);
-      expect(w.blocks(forged)).toBe(false);
-      expect(w.blocks(copy)).toBe(false);
-      expect(w.blocks(original)).toBe(true);
+      expect(w.reminds(hand)).toBe(false);
+      expect(w.reminds(forged)).toBe(false);
+      expect(w.reminds(copy)).toBe(false);
+      expect(w.reminds(original)).toBe(true);
     },
   },
   {
@@ -235,14 +235,14 @@ const LATER_ROWS: readonly Row[] = [
   {
     n: "copy at the path",
     scenario:
-      "cp -R of an opted-in clone moved onto the deleted original's path: nothing stored, the real prompt-gate neither blocks nor can be answered, and task does not push it to opt in",
+      "cp -R of an opted-in clone moved onto the deleted original's path: nothing stored, the real reminder hook stays silent, and task does not push it to opt in",
     expected: ["b1"],
     run: async (w) => {
       const a = w.repository("a", SHARED, "feat/z");
       const b = w.repository("b", OTHER, "feat/z");
       await w.on(a, HOUR);
       await w.on(b, HOUR);
-      expect(w.blocks(a)).toBe(true);
+      expect(w.reminds(a)).toBe(true);
       const copy = join(w.sandbox.root, "copy");
       cpSync(a, copy, { recursive: true });
       w.removeClone(a);
@@ -250,15 +250,14 @@ const LATER_ROWS: readonly Row[] = [
       w.call(a, "a1", HOUR + 100);
       w.call(b, "b1", HOUR + 100);
       // Before any ingest has seen the swap: the hook alone has to know it is another clone.
-      expect(w.blocks(a)).toBe(false);
-      expect(w.blocks(b)).toBe(true);
+      expect(w.reminds(a)).toBe(false);
+      expect(w.reminds(b)).toBe(true);
       await w.ingest(HOUR + 200);
-      expect(w.blocks(a)).toBe(false);
+      expect(w.reminds(a)).toBe(false);
       expect(
         await w.deps.declareTask.execute({
           cwd: a,
           request: { kind: "task", task: "t1", ticket: null },
-          by: "command",
         })
       ).toEqual({ status: "refused", reason: "no-consent" });
     },

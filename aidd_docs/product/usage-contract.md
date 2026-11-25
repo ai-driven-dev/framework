@@ -7,7 +7,7 @@ The code is the authority. A change to a format below changes this page in the s
 | Part | Owns |
 | --- | --- |
 | CLI, `cli/src/contexts/telemetry/` | reading, storing, attributing, reporting |
-| Plugin hooks, `plugins/aidd-telemetry/hooks/`, plain Node | asking for a task, answering it, recording session facts |
+| Plugin hooks, `plugins/aidd-telemetry/hooks/`, plain Node | reminding of a task, ingesting |
 
 Claude Code and Codex are measured, each from the files it writes itself. Reading is the only part written per tool: resolving, consent, storing, attribution and the report are written once for both.
 
@@ -15,7 +15,7 @@ Claude Code and Codex are measured, each from the files it writes itself. Readin
 flowchart LR
   T["Claude Code transcripts, Codex session files"] -->|"ingest"| L[("ledger")]
   C[("consent log + git key")] -->|"gates storing"| L
-  H["hooks"] -->|"session facts, carries"| B[("bindings")]
+  H["hooks"] -->|"ingest"| L
   H -->|"close lines"| C
   K["aidd telemetry task"] -->|"declarations"| B
   L --> R["report"]
@@ -179,10 +179,10 @@ Directory: `AIDD_TELEMETRY_DIR`, else `AIDD_USER_CONFIG_DIR/telemetry`, else `XD
 | `ledger/consents.jsonl` | `on`, `off`, `ingest`, hooks (close only) | same, plus `forget` | consent intervals, see [Consent](#consent). Outlives the clone; removed with the ledger. Hooks parse it strictly, pinned by the shared fixture |
 | `ledger/.lock` | CLI | CLI | `{pid, created_at}`; dead process or older than ten minutes: cleared |
 | `bindings/.lock` | CLI | CLI | same format. Declarations and snapshots run under it; `task` never takes the ledger lock, which an ingest holds while reading transcripts |
-| `bindings/sessions.jsonl` | `task` | hooks, `report`, `task` | `{session_id, task, ticket, none, declared_at, by}`, `by` = `command` \| `hook-intercept` |
+| `bindings/sessions.jsonl` | `task` | `report`, `task` | `{session_id, task, ticket, none, declared_at, by}`, `by` = `command`; `hook-intercept` written by earlier versions only, still read |
 | `bindings/branches.jsonl` | `task`, `ingest`, `report` | `report`, `forget` | branch declaration at a moment, with when the branch took its name, from its reflog. Read as written, never rewritten |
-| `bindings/carries.jsonl` | `SessionStart` hook | hooks, `report` | `{session_id, from, at}` |
-| `bindings/processes.jsonl` | `SessionStart` hook | `SessionStart` hook | `{pid, session_id, source, at}` |
+| `bindings/carries.jsonl` | earlier versions only | `report` | `{session_id, from, at}`, still read |
+| `bindings/processes.jsonl` | earlier versions only | none | `{pid, session_id, source, at}` |
 | `identity.json` | `identity`, `on` | `report`, `status`, `on` | `{"person_id": "<id>"}`, owner-only |
 | git config `--local` `branch.<name>.aiddTask`, `aiddTicket`, `aiddDeclaredFor`, `aiddDeclaredAt` | `task` | hooks, `task`, `report` via snapshots | branch declaration, `aiddDeclaredAt` written last, `aiddDeclaredFor` = `<name>`; see [Branch declaration](#branch-declaration) |
 | git config `--local` `aidd.telemetry` | `on`, `off`, `forget` | hooks, CLI | `2:<token>` or `off`. Half of consent: alone it grants nothing |
@@ -196,11 +196,13 @@ Task and ticket come only from `aidd telemetry task <name> [--ticket <ref>]` or 
 
 A declaration binds the running session (if `CLAUDE_CODE_SESSION_ID` is set) and, on a working branch, the branch. Never bound: the default branch (target of `origin/HEAD`, else `main` or `master`) and a detached `HEAD`.
 
+Limit: run from a Codex started inside Claude Code, the command binds the parent Claude session, because it reads the `CLAUDE_CODE_SESSION_ID` the Codex inherited. Codex's own session is then attributed by its branch only.
+
 ```mermaid
 flowchart TD
   A["call"] --> S{"session declaration in force?"}
   S -->|"yes"| T1["its task"]
-  S -->|"no"| C{"session carry?"}
+  S -->|"no"| C{"session carry, earlier versions?"}
   C -->|"yes"| T2["carried task"]
   C -->|"no"| B{"branch declaration?"}
   B -->|"yes"| T3["branch task, any call since branch creation"]
@@ -219,64 +221,30 @@ A branch is declared only when the command declared it on that branch. Both read
 | git config of the branch read | Declared? | Why |
 | --- | --- | --- |
 | `aiddDeclaredAt` set, `aiddDeclaredFor` = this branch | yes | written by `task` on this branch |
-| `aiddDeclaredAt` set, no `aiddDeclaredFor` | yes | written by cli-v5.5.0 or earlier, which did not stamp. Kept readable: reports and the gate do not change for data already written. Declaring again stamps it |
+| `aiddDeclaredAt` set, no `aiddDeclaredFor` | yes | written by cli-v5.5.0 or earlier, which did not stamp. Kept readable: reports do not change for data already written. Declaring again stamps it |
 | `aiddDeclaredAt` set, `aiddDeclaredFor` = another branch | no | carried by `git branch -c` (copy) or `git branch -m` (rename), which move every `branch.<name>.*` key |
 | `aiddTask` or `aiddTicket` without `aiddDeclaredAt` | no | set by hand, or a declaration cut short: `task` writes `aiddDeclaredAt` last |
 | any declaration key listed twice | no | left by `git branch -C` or `-M` onto a branch that had keys: the copied declaration and the branch's own are mixed |
 
-- **Rename** (`git branch -m A B`): B is undeclared (unless A's declaration is unstamped, see the limits), so the gate asks on B. One declaration on B covers B from when it took the name: the newest reflog entry renaming or copying a branch to B (git or libgit2), else B's oldest entry. Calls made while it was A keep A's task, and on a name used before, the earlier B keeps its own. git moves the keys the same way for a copy and a rename, so the stamp cannot tell them apart; the reflog could, but its entries expire and the declaration would change meaning with them: one question after a rename is the cost.
+- **Rename** (`git branch -m A B`): B is undeclared (unless A's declaration is unstamped, see the limits), so the reminder names B at the next session start. One declaration on B covers B from when it took the name: the newest reflog entry renaming or copying a branch to B (git or libgit2), else B's oldest entry. Calls made while it was A keep A's task, and on a name used before, the earlier B keeps its own. git moves the keys the same way for a copy and a rename, so the stamp cannot tell them apart; the reflog could, but its entries expire and the declaration would change meaning with them: one reminder after a rename is the cost.
 - **Copy** (`git branch -c A B`): B is undeclared until declared on B.
 - **Copy or rename onto an existing branch** (`-C`, `-M`): git keeps both sets of keys, so some are listed twice and the two declarations mix. A branch with any declaration key listed twice is undeclared; declaring again replaces every value.
 
-## Ask
+## Reminder
 
-`UserPromptSubmit` (`hooks/prompt-gate.cjs`) blocks a prompt before the model when all hold:
+`SessionStart` (`hooks/task.cjs remind`) shows the person one line, never the model, and never holds a prompt:
 
 | Condition | Test |
 | --- | --- |
 | a tool's own payload | Claude Code: `session_id` = `CLAUDE_CODE_SESSION_ID`, `transcript_path` under a `projects` directory and no Codex session file. Codex: `session_id` set, `transcript_path` a Codex session file (`…/sessions/YYYY/MM/DD/rollout-…`), whatever `CLAUDE_CODE_SESSION_ID` says, since a Codex started inside Claude Code inherits it (`hooks/lib/tool.cjs`, fixture `hookTool`) |
 | clone measured | consenting per [Consent](#consent), `AIDD_TELEMETRY` not `0` |
-| person present | Claude Code: `CLAUDE_CODE_SESSION_ATTENDED=1` and `CLAUDE_CODE_ENTRYPOINT` is `cli` or `claude-desktop` (surfaces seen showing a hook message; an IDE extension is not asked, VS Code seen showing none). Codex: see below |
-| work undeclared | working branch, no declaration for session or branch |
-| CLI usable | `aidd` on `PATH` and knows `telemetry task` |
+| work undeclared | working branch, no declaration for the branch |
 
-- Anything else passes. A crash exits 0: the hook never fails a prompt.
-- Codex shows a block's reason in the TUI only (`codex exec` prints none; the desktop app shows it too, observed, and the IDE extension is unobserved), and hands a hook nothing that names its surface. The session file's first line does. A person is present only when all hold, anything else (a field missing, another value, an unreadable file, a first line longer than the 1 MiB read) being nobody to answer:
-  - the first line of `transcript_path`, read up to 1 MiB, is a `session_meta` with `originator` `codex-tui`. Its `source` is `cli` on a bare config and `vscode` when plugins run the TUI through the app server, so `source` is not read, except that an object `source` (a sub-agent's own file) is refused. Codex writes it before it hands a hook the path; seen up to 48 KiB, base instructions included;
-  - the payload has no `agent_id`: a sub-agent's spawn message reaches the hook with its root's `session_id`, and nobody typed it;
-  - `permission_mode` is `default`: `codex exec` forces approvals off (`bypassPermissions`), and a TUI thread resumed by `codex exec` keeps its first line.
-- Re-checked on every prompt: each prompt on an undeclared working branch is blocked until the branch or the session is declared (`--none` included). A declared branch is never asked again, unless a copy or rename onto it changes its keys; switching to an undeclared one asks.
-- Why every prompt and not once: the gate exists so that no token of the work is spent before it has a task ([spec](../tasks/2026_10/2026_10_09_deterministic-tokens/spec.md), [target](../tasks/2026_10/2026_10_09_deterministic-tokens/context/target.md)). "Once per working branch" there meant answered once and remembered; letting the next prompt through would spend tokens unattributed.
+Message: names the branch and the `aidd telemetry task` command.
 
-Answering never blocks and never reaches the model:
-- `! aidd telemetry task ...` in the terminal fires no `UserPromptSubmit`.
-- `aidd telemetry task ...` typed as a prompt runs through the CLI with `--by hook-intercept`. Block reason: one line, what was declared, "Send your prompt again."
-- The session it binds: `AIDD_TELEMETRY_SESSION_ID`, else `CLAUDE_CODE_SESSION_ID`, read by the composition root (`runtime/wiring/telemetry.ts`). The Codex hook sets the first, to its payload's `session_id`, for the command it runs; nothing else does. A sub-agent's calls carry their root's session, so they take its declaration.
-- Claude Code hides the typed declaration from the transcript. Codex was never seen to accept that, so its block keeps the prompt shown; it is still never sent to the model.
-- Grammar: a name, `--ticket <ref>`, `--none`, nothing else. Outside it nothing runs.
-- A one-line prompt starting like a declaration, only words and quoted strings, no `?`, `!`, comma or final full stop (`aidd telemetry task fix cart`) is blocked with the grammar and quoting hint, kept visible. Any other prompt starting with those words is ordinary.
-
-## Carry
-
-`/clear` and `/branch` (source `fork`) start a new session in the same process; the payload names no predecessor. The `SessionStart` hook (`hooks/session-start.cjs`) records every Claude Code start. Codex gives a hook no process id, so for Codex it does nothing, not even the consent check: a Codex `/clear` or fork is a new session, asked again on an undeclared branch.
-
-```mermaid
-sequenceDiagram
-  participant P as Claude process
-  participant H as SessionStart hook
-  participant B as bindings
-  P->>H: start, source and session_id
-  H->>B: append pid, session_id, source, at
-  alt source clear or fork, previous session of pid newer than boot, and bound
-    H->>B: append carry session_id, from, at
-    H-->>P: Task kept after /clear
-  end
-```
-
-- pid: `CLAUDE_PID`, else the hook's parent. Boot guard because process ids are reused across boots; it is the boot time only, not the process start time.
-- Message: `Task <task> kept after /clear. Different work: aidd telemetry task <name> [--ticket <ref>]`.
-- `startup`, `resume`, `compact` carry nothing.
-- Provisional: the session's first declaration replaces it for the whole session, earlier calls included. An uncarried session is bound from its declaration on.
+- Anything else prints nothing. A crash exits 0. `aidd` is not needed: the line only names the command.
+- Shown as the host's `systemMessage`, by Claude Code and Codex; a tool with no person-only channel shows nothing.
+- Declaring later loses nothing: it moves the branch's earlier calls onto its task ([Attribution](#attribution)).
 
 ## Consent
 
@@ -298,7 +266,7 @@ stateDiagram-v2
 ```
 
 **Unreadable sources.**
-- A source that cannot be read (permission denied, I/O error, a directory standing where a transcript is expected) is contained at one transcript file, or at one directory subtree that cannot be listed (its transcripts are not found, the rest of the tree is). Every other source is read, judged and stored as usual and consent is judged as before. The unreadable one is named: `Source not read, retried by the next read: <path>: <error code>` on `ingest` and `report`, `run.unreadable_sources` in `--json`. It keeps its stored position, so a later successful read stores its calls once. `report` still reads the stored ledger. It is a warning, never a zero. The hook's catch-up stays silent, so `aidd telemetry ingest` or `report` is where it shows. A line that is not JSON is a different case: `unrecognised`, not unreadable.
+- A source that cannot be read (permission denied, I/O error, a directory standing where a transcript is expected) is contained at one transcript file, or at one directory subtree that cannot be listed (its transcripts are not found, the rest of the tree is). Every other source is read, judged and stored as usual and consent is judged as before. The unreadable one is named: `Source not read, retried by the next read: <path>: <error code>` on `ingest` and `report`, `run.unreadable_sources` in `--json`. It keeps its stored position, so a later successful read stores its calls once. `report` still reads the stored ledger. It is a warning, never a zero. The hook's ingest stays silent, so `aidd telemetry ingest` or `report` is where it shows. A line that is not JSON is a different case: `unrecognised`, not unreadable.
 
 **Clone identity.**
 - Its git common dir: `dev`, `ino`, `birthtimeMs` of `fs.stat` on its real path, plus the path. Recorded in `roots.json` when first seen alive.
@@ -325,19 +293,19 @@ stateDiagram-v2
 | `on` | under the ledger lock: fresh token, key `2:<token>` first, then open line (a key with no interval measures nothing; an interval its key does not name would be closed by the first hook). Key naming an open interval of this clone: no change. Otherwise closes this clone's stale open intervals at its time. Refuses a clone with no identity. Then, only once on, writes the person's identity when one was chosen |
 | `off` | under the same lock: close the clone's open token, then key `off`; key and interval change together, so an ingest never sees one without the other. Also closes the interval its key names at its path, whatever identity it reads there |
 | ingest | before judging any call, for every open interval, closes at observation time when the identity at its path changed or the live key is not `2:<that token>`. Nothing at the path: not closed (unmounted volume, folder moved and back); measured again when back. Unreadable config or `stat`: stays open, stores nothing |
-| hooks | after the tool guard, even headless (`session-start.cjs` excepted for Codex, where it does nothing): key not naming an open interval recorded for this clone's real path => append a close at hook time. Ends a manual `git config aidd.telemetry off` or `--unset` before the next prompt's calls. `AIDD_TELEMETRY=0`: does nothing |
+| hooks | after the tool guard, even headless: key not naming an open interval recorded for this clone's real path => append a close at hook time. `AIDD_TELEMETRY=0`: does nothing |
 | `forget --yes` | removes the log with the ledger; unsets the key in every recorded clone |
 
-**Consenting, for hooks and `task`.** All three: key is `2:<token>`; log holds an open interval with it; that interval's clone is this one, by common-dir real path and by `dev`, `ino`, `birthtimeMs`, normalised as the CLI does (inode as text, missing birth as `0`, any other kept even if equal to change time, no inode = no identity; fixture `cloneIdentity` and `hookConsent` cases). Not consenting: a hand-set key (`2`, made-up token), a `cp -R` copy, a copy moved onto a deleted original's path, a clone remade at a path, a moved clone. There: nothing asked, nothing blocked, nothing closed that is not this clone's; run `aidd telemetry on`.
+**Consenting, for hooks and `task`.** All three: key is `2:<token>`; log holds an open interval with it; that interval's clone is this one, by common-dir real path and by `dev`, `ino`, `birthtimeMs`, normalised as the CLI does (inode as text, missing birth as `0`, any other kept even if equal to change time, no inode = no identity; fixture `cloneIdentity` and `hookConsent` cases). Not consenting: a hand-set key (`2`, made-up token), a `cp -R` copy, a copy moved onto a deleted original's path, a clone remade at a path, a moved clone. There: nothing reminded, nothing closed that is not this clone's; run `aidd telemetry on`.
 
 **The key.**
-- `--local` writes the common config: shared by linked worktrees, never committed. A teammate who pulls is not measured, asked or blocked until their own `on`.
+- `--local` writes the common config: shared by linked worktrees, never committed. A teammate who pulls is not measured or reminded until their own `on`.
 - `.aidd/config.json` is never consent: not `telemetry: {enabled: true, version: 2}`, not the old bare `enabled: true`. Not read for consent.
 - Unreadable git config: `unreadable`, grants nothing, never rewritten.
-- A clone that never opted in: nothing stored, asked or blocked. Nothing is kept of its calls in `left-out.txt` either; `roots.json` may name its directory, as for any directory read.
+- A clone that never opted in: nothing stored or reminded. Nothing is kept of its calls in `left-out.txt` either; `roots.json` may name its directory, as for any directory read.
 - Key `off`, from `off` or by hand: `status` and `task` say measurement was turned off in this clone and that `aidd telemetry on` measures it again; a damaged log or an unidentified clone reads unreadable instead, since `on` would refuse. Any other key that grants nothing reads as never opted in. Ingest still counts its calls under `no-consent`.
 
-**`on` also:** records its clone for `forget`; warns when Claude Code's transcript retention is short; ends with the next step, declaring a task, which the hooks ask for in Claude Code and the Codex TUI. Does not reset offsets.
+**`on` also:** records its clone for `forget`; warns when Claude Code's transcript retention is short; ends with the next step, declaring a task, which the hooks remind of at session start. Does not reset offsets.
 
 **`forget --yes`** unsets `aidd.telemetry` and branch task keys in every clone in `roots.json` or `consents.jsonl` that still exists. Names only gone clones that had consented. A clone that never ran `on` is recorded only if a call from it was read after some clone opted in, so a hand-set key there may stay.
 
@@ -352,23 +320,19 @@ None observable by the CLI.
 
 | Case | Effect | Mitigation |
 | --- | --- | --- |
-| Key changed by hand, then no hook or ingest before next `on` | interval stays open until observed; calls before observation covered, after turning off included | any session start, prompt or ingest observes it |
+| Key changed by hand, then no hook or ingest before next `on` | interval stays open until observed; calls before observation covered, after turning off included | any session start or ingest observes it |
 | Machine clock | judged by transcript timestamp. Stamped inside an interval: covered whenever written; future-dated: covered by an open interval; outside: by stamp alone. File mtime more than a day behind its calls (set back, lagging network fs): not read. Copied transcripts: read only if written after first local `on`, stored only for a clone opted in here | - |
 | Worktree made and removed between two ingests | `never-seen-alive`, said only by the run that read it: a hook's run says nothing | for a `claude --worktree` session, the session start inside it sees it alive; none for a subagent's worktree |
 | A month file (`ledger/<YYYY-MM>.jsonl`) left by an unreleased build between #993 and #1031 | ignored: neither read nor reported | `aidd telemetry forget` removes the whole ledger |
 | No birth time | a clone reusing a deleted clone's path and inode is taken for it; of two at one directory, the later is told apart only from first seen | - |
-| Linux refuses `statx` (seccomp, kernel before 4.11) | birth = change time; identity moves on any git dir entry change, `on` included; clone stops being measured and asked | fails closed: `off` closes by key token at path |
-| Moved or renamed clone | new clone. Old interval open while path empty, closed when another directory appears; nothing stored or asked at new path until `on`. Back at same path, same identity: same clone, still measured | - |
+| Linux refuses `statx` (seccomp, kernel before 4.11) | birth = change time; identity moves on any git dir entry change, `on` included; clone stops being measured and reminded | fails closed: `off` closes by key token at path |
+| Moved or renamed clone | new clone. Old interval open while path empty, closed when another directory appears; nothing stored or reminded at new path until `on`. Back at same path, same identity: same clone, still measured | - |
 | Consent log edited by hand | outside the contract; can reopen a window `off` closed | tool says `forget --yes` |
 | Call read while git config, `.git` or git dir unreadable | `unreadable-consent`. A clone remembered there that consented at the time: the transcript read again by every ingest until its consent can be read, then stored. Otherwise: said only by that run | repair the clone, or `forget --yes`, or remove the clone; not `off` |
-| pid reused within one boot by a Claude process whose `startup` was never recorded (e.g. started before `on`) | can take the dead process's last session as predecessor, so `/clear` carries its task | announced, replaced by first declaration |
 | One transcript line longer than the longest string the runtime holds (512 MB) | every ingest fails when it reaches that line (inferred, not run). A transcript is otherwise read a block at a time: an ingest holds 1 MiB, up to about three copies of the longest line, and what the reading keeps (every record, every unrecognised line naming a directory), whatever the transcript's size | - |
 | Transcript rewritten in place, to the same size or larger, while an ingest reads it | not seen: a line may be spliced from the two versions and the offset saved inside the new one. Shrunk: that read counts nothing and the transcript is read again from where it stood. Replaced at its path: the read finishes the file it opened, and the next one reads the new file whole. Claude Code only appends; Codex is assumed to only append to a `.jsonl` | - |
-| Codex hooks not trusted | Codex runs a plugin's hooks only once a person trusted each one, with `/hooks` in the TUI. The desktop app offers no review of its own: it skips an untrusted hook silently, and runs it once trusted from the TUI, since trust is kept in `config.toml` (observed); until then nothing asks, and ingest runs only from Claude Code or a report. Trust covers a hook's entry in `hooks.json` (command, timeout, `async`), not its script: an update that changes an entry needs trusting again, a change to the script alone does not | `/hooks` in the Codex TUI |
-| Codex surfaces never asked | `codex exec`, the TUI in full-access mode (approval `never`), and the IDE extension and the desktop app on threads of their own (their `originator` is not `codex-tui`): their calls take a branch's declaration, or one made elsewhere for the session | declare the branch |
-| A TUI thread resumed in the desktop app or the IDE extension | held there unless approvals are off, inferred from the source: a resume writes no new `session_meta`, so line 1 still reads `codex-tui`. The desktop app shows a block's reason (observed on its own thread); the IDE extension was not observed | - |
-| A TUI thread resumed by `codex exec` with an auto-review approver (`--approve-for-me`, `approvals_reviewer = "auto_review"`) | not `bypassPermissions`, so its prompt would be held with nobody to see why. Not seen | - |
-| A Codex `/clear` or fork | a new session with no carried task: asked again on an undeclared branch | declare the branch |
+| Codex hooks not trusted | Codex runs a plugin's hooks only once a person trusted each one, with `/hooks` in the TUI. The desktop app offers no review of its own: it skips an untrusted hook silently, and runs it once trusted from the TUI, since trust is kept in `config.toml` (observed); until then nothing reminds, and ingest runs only from Claude Code or a report. Trust covers a hook's entry in `hooks.json` (command, timeout, `async`), not its script: an update that changes an entry needs trusting again, a change to the script alone does not | `/hooks` in the Codex TUI |
+| A declaration for the session only (default branch, detached `HEAD`), then `/clear` or a fork | the new session has no declaration, and nothing carries it | declare again |
 | Branch of a Codex call | the branch its session started on: a branch changed during the session is not seen | - |
 | A person who only uses Codex | measured when `aidd telemetry ingest` or `report` runs, which the plugin does at a Claude Code or a trusted Codex session start | run a report |
 | Codex cache writes | part of `input_tokens`, which `input` subtracts them from, as OpenAI's own formula does; billed only on GPT-5.6 and later. OpenAI has one write rate, so `cache_write_1h` is `null`. A cached read and write above `input_tokens` was never seen: its `input` would be below zero, which the ledger does not read as a record | - |
@@ -383,7 +347,7 @@ None observable by the CLI.
 | `AIDD_TELEMETRY=0` | stops hooks too; a key turned off meanwhile is observed at the next run without it | - |
 | Declaration keys edited by hand: every key including the stamp, `aiddTask` and `aiddDeclaredAt` alone (read as unstamped), or a stamp removed or emptied | the branch reads as declared: no reader can tell who wrote a git config key | - |
 | Copy or rename of an unstamped (cli-v5.5.0) declaration | the new name inherits it | declare on the new name, or on the original to stamp it before copying or renaming |
-| Calls on a name used before, after a copy, rename or recreation and before it is declared again | the earlier generation's declaration still answers in the report, while `status` and the gate say undeclared: a branch with no declaration takes no snapshot, so nothing marks the new generation. Only calls the gate did not hold (unattended runs, IDE extensions) can land there | declare right after reusing a name |
+| Calls on a name used before, after a copy, rename or recreation and before it is declared again | the earlier generation's declaration still answers in the report, while `status` and the reminder say undeclared: a branch with no declaration takes no snapshot, so nothing marks the new generation. | declare right after reusing a name |
 | Reflog entry of the rename or copy expired before B's first declaration | B's start is its oldest remaining entry; on a name used before, an older start can let the earlier B's declaration speak for later calls | declare soon after a rename or copy |
 | Branch snapshots recorded before stamping (a copied branch, a hand-set task with a `declared_at`) | keep attributing: attribution reads snapshots, `branches.jsonl` is append-only | - |
 | An ingest holding the ledger lock more than 10 minutes | another run clears the lock as stale while its holder still runs, and both write the ledger. An ingest was measured at 4.5 s for 250k records over 50 roots and 20.8 s for 1M over 200; one machine's whole history is about 267k usage lines | - |

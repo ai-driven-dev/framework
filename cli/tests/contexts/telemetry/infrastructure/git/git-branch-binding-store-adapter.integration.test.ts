@@ -30,7 +30,7 @@ afterEach(async () => {
 
 const at = new Date("2026-10-09T10:00:00.000Z");
 const task = (name: string, ticket: string | null = null) =>
-  declarationOf({ kind: "task", task: name, ticket }, at, "command");
+  declarationOf({ kind: "task", task: name, ticket }, at);
 const config = (key: string): string => git(repo, env, "config", "--local", "--get", key).trim();
 const absent = (key: string): boolean => {
   try {
@@ -100,7 +100,7 @@ describe("declaring on a branch", () => {
   it("declares again over a branch copied onto with -C, which leaves every key twice", async () => {
     await store.declare(repo, "feat/x", task("theirs", "PROJ-1"));
     git(repo, env, "branch", "feat/y");
-    await store.declare(repo, "feat/y", declarationOf({ kind: "none" }, at, "command"));
+    await store.declare(repo, "feat/y", declarationOf({ kind: "none" }, at));
     git(repo, env, "branch", "-C", "feat/x", "feat/y");
     // Both declarations are now mixed under feat/y: it is declared by neither.
     expect(
@@ -128,7 +128,7 @@ describe("declaring on a branch", () => {
 
   it("declares none as a declaration time with no task and no ticket", async () => {
     await store.declare(repo, "feat/x", task("first", "PROJ-12"));
-    await store.declare(repo, "feat/x", declarationOf({ kind: "none" }, at, "command"));
+    await store.declare(repo, "feat/x", declarationOf({ kind: "none" }, at));
     expect(absent("branch.feat/x.aiddTask")).toBe(true);
     expect(absent("branch.feat/x.aiddTicket")).toBe(true);
     expect(config("branch.feat/x.aiddDeclaredAt")).toBe("2026-10-09T10:00:00.000Z");
@@ -138,7 +138,7 @@ describe("declaring on a branch", () => {
   });
 
   it("declares none on a branch that never had a task", async () => {
-    await store.declare(repo, "feat/x", declarationOf({ kind: "none" }, at, "command"));
+    await store.declare(repo, "feat/x", declarationOf({ kind: "none" }, at));
     expect(config("branch.feat/x.aiddDeclaredAt")).toBe("2026-10-09T10:00:00.000Z");
   });
 
@@ -156,7 +156,7 @@ describe("declaring on a branch", () => {
   it("fails loudly in a directory that is not a repository, declaring or clearing", async () => {
     await expect(store.declare(base, "feat/x", task("t"))).rejects.toThrow(/git config/);
     await expect(
-      store.declare(base, "feat/x", declarationOf({ kind: "none" }, at, "command"))
+      store.declare(base, "feat/x", declarationOf({ kind: "none" }, at))
     ).rejects.toThrow(/git config/);
   });
 });

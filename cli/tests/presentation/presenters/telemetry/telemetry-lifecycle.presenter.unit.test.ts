@@ -39,7 +39,7 @@ describe("printing the result of turning measurement on", () => {
     );
     expect(output.lines[3]).toMatch(/^Next: declare what you work on with /u);
     expect(output.lines[3]).toContain("aidd telemetry task <name> [--ticket <ref>]");
-    expect(output.lines[3]).toContain("the aidd-telemetry plugin's hooks ask");
+    expect(output.lines[3]).toContain("the aidd-telemetry plugin reminds you at session start");
     expect(output.lines[3]).toContain("Codex TUI");
   });
 

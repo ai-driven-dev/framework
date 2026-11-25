@@ -39,8 +39,7 @@ async function twoSessions(s: ReturnType<typeof setup>) {
     SESSION_A,
     declarationOf(
       { kind: "task", task: "auth", ticket: "T-1" },
-      new Date("2026-09-30T00:00:00.000Z"),
-      "command"
+      new Date("2026-09-30T00:00:00.000Z")
     )
   );
 }

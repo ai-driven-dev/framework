@@ -7,8 +7,7 @@ import {
 } from "../../../../../src/contexts/telemetry/application/declaration/declare-task.use-case.js";
 import { FindConsentedRepository } from "../../../../../src/contexts/telemetry/application/find-consented-repository.use-case.js";
 import { SnapshotBindings } from "../../../../../src/contexts/telemetry/application/snapshot-bindings.use-case.js";
-import type { DeclarationRequest } from "../../../../../src/contexts/telemetry/contract/task-declaration.js";
-import { HOOK_LOCK_WAIT_MS } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
+import type { DeclarationRequest } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
 import type { LocatedDirectory } from "../../../../../src/contexts/telemetry/domain/resolution/located-directory.js";
 import { cloneOf, grantedBy } from "../../testing/clone.builder.js";
 import { FakeBindings } from "../../testing/fake-bindings.fake.js";
@@ -85,7 +84,7 @@ describe("declaring a task", () => {
         none: false,
       },
     ]);
-    const result = await useCase.execute({ cwd: CWD, request: TASK, by: "command" });
+    const result = await useCase.execute({ cwd: CWD, request: TASK });
     expect(result).toMatchObject({
       status: "declared",
       sessionId: "sess-1234567890",
@@ -117,47 +116,15 @@ describe("declaring a task", () => {
     expect(snapshotStore.appended).toHaveLength(1);
   });
 
-  it("waits for the bindings lock less than the hook does for its answer, when the hook declares", async () => {
-    const { useCase, lock, source } = setup();
-    source.bindingsByRoot.set(CWD, [
-      {
-        branch: "feat/x",
-        task: "checkout-fix",
-        ticket: "PROJ-12",
-        declared_at: "2026-10-09T10:00:00.000Z",
-        none: false,
-      },
-    ]);
-    await useCase.execute({ cwd: CWD, request: TASK, by: "hook-intercept" });
-    // twice: the session line, then the branch snapshot
-    expect(lock.waits).toEqual([HOOK_LOCK_WAIT_MS, HOOK_LOCK_WAIT_MS]);
-    expect(HOOK_LOCK_WAIT_MS * 2).toBeLessThan(20_000);
-  });
-
-  it("keeps the lock's own wait for a declaration made by hand", async () => {
-    const { useCase, lock, source } = setup();
-    source.bindingsByRoot.set(CWD, [
-      {
-        branch: "feat/x",
-        task: "checkout-fix",
-        ticket: "PROJ-12",
-        declared_at: "2026-10-09T10:00:00.000Z",
-        none: false,
-      },
-    ]);
-    await useCase.execute({ cwd: CWD, request: TASK, by: "command" });
-    expect(lock.waits).toEqual([undefined, undefined]);
-  });
-
-  it("carries the declarer into the stored line", async () => {
+  it("stores the declaration as made by the command", async () => {
     const { useCase, sessions } = setup();
-    await useCase.execute({ cwd: CWD, request: TASK, by: "hook-intercept" });
-    expect(sessions.lines[0]?.by).toBe("hook-intercept");
+    await useCase.execute({ cwd: CWD, request: TASK });
+    expect(sessions.lines[0]?.by).toBe("command");
   });
 
   it("declares none as none, with neither task nor ticket", async () => {
     const { useCase, sessions, branches } = setup();
-    await useCase.execute({ cwd: CWD, request: { kind: "none" }, by: "command" });
+    await useCase.execute({ cwd: CWD, request: { kind: "none" } });
     expect(sessions.lines[0]).toMatchObject({ task: null, ticket: null, none: true });
     expect(branches.declared[0]?.declaration).toMatchObject({
       task: null,
@@ -168,15 +135,15 @@ describe("declaring a task", () => {
 
   it("keeps both declarations of one session, each with its own time", async () => {
     const { useCase, sessions } = setup();
-    await useCase.execute({ cwd: CWD, request: TASK, by: "command" });
-    await useCase.execute({ cwd: CWD, request: { kind: "none" }, by: "command" });
+    await useCase.execute({ cwd: CWD, request: TASK });
+    await useCase.execute({ cwd: CWD, request: { kind: "none" } });
     expect(sessions.lines.map((line) => line.none)).toEqual([false, true]);
   });
 
   it("binds the session only, and says so, on the default branch", async () => {
     const { useCase, sessions, branches, events } = setup();
     branches.heads_ = { head: "refs/heads/main", originHead: "refs/remotes/origin/main" };
-    const result = await useCase.execute({ cwd: CWD, request: TASK, by: "command" });
+    const result = await useCase.execute({ cwd: CWD, request: TASK });
     expect(result).toMatchObject({
       status: "declared",
       branch: { status: "untouched", reason: "default-branch", branch: "main" },
@@ -189,7 +156,7 @@ describe("declaring a task", () => {
   it("binds the session only, and says so, on a detached head", async () => {
     const { useCase, branches } = setup();
     branches.heads_ = { head: null, originHead: null };
-    const result = await useCase.execute({ cwd: CWD, request: TASK, by: "command" });
+    const result = await useCase.execute({ cwd: CWD, request: TASK });
     expect(result).toMatchObject({
       branch: { status: "untouched", reason: "detached", branch: null },
     });
@@ -198,7 +165,7 @@ describe("declaring a task", () => {
 
   it("binds the branch only outside a session", async () => {
     const { useCase, sessions, branches } = setup({ sessionId: null });
-    const result = await useCase.execute({ cwd: CWD, request: TASK, by: "command" });
+    const result = await useCase.execute({ cwd: CWD, request: TASK });
     expect(result).toMatchObject({ sessionId: null, branch: { status: "bound" } });
     expect(sessions.lines).toEqual([]);
     expect(branches.declared).toHaveLength(1);
@@ -209,7 +176,7 @@ describe("refusing to declare", () => {
   it("refuses a project that has not opted in, and writes nothing", async () => {
     const { useCase, consents, sessions, branches, events } = setup();
     consents.values.set(CWD, "true");
-    expect(await useCase.execute({ cwd: CWD, request: TASK, by: "command" })).toEqual({
+    expect(await useCase.execute({ cwd: CWD, request: TASK })).toEqual({
       status: "refused",
       reason: "no-consent",
     });
@@ -221,7 +188,7 @@ describe("refusing to declare", () => {
   it("refuses a clone turned off as turned off, and writes nothing", async () => {
     const { useCase, consents, sessions, branches, events } = setup();
     consents.values.set(CWD, "off");
-    expect(await useCase.execute({ cwd: CWD, request: TASK, by: "command" })).toEqual({
+    expect(await useCase.execute({ cwd: CWD, request: TASK })).toEqual({
       status: "refused",
       reason: "turned-off",
     });
@@ -233,12 +200,12 @@ describe("refusing to declare", () => {
   it("refuses a clone with no consent, and one whose git config cannot be read, differently", async () => {
     const none = setup();
     none.consents.values.delete(CWD);
-    expect(await none.useCase.execute({ cwd: CWD, request: TASK, by: "command" })).toMatchObject({
+    expect(await none.useCase.execute({ cwd: CWD, request: TASK })).toMatchObject({
       reason: "no-consent",
     });
     const broken = setup();
     broken.consents.unreadable.add(CWD);
-    expect(await broken.useCase.execute({ cwd: CWD, request: TASK, by: "command" })).toMatchObject({
+    expect(await broken.useCase.execute({ cwd: CWD, request: TASK })).toMatchObject({
       reason: "unreadable-consent",
     });
   });
@@ -246,49 +213,47 @@ describe("refusing to declare", () => {
   it("refuses a key that names no interval open for the clone, and a damaged log", async () => {
     const forged = setup();
     forged.consents.values.set(CWD, "2:forged");
-    expect(await forged.useCase.execute({ cwd: CWD, request: TASK, by: "command" })).toMatchObject({
+    expect(await forged.useCase.execute({ cwd: CWD, request: TASK })).toMatchObject({
       reason: "no-consent",
     });
     const hand = setup();
     hand.consents.values.set(CWD, "2");
-    expect(await hand.useCase.execute({ cwd: CWD, request: TASK, by: "command" })).toMatchObject({
+    expect(await hand.useCase.execute({ cwd: CWD, request: TASK })).toMatchObject({
       reason: "no-consent",
     });
     const damaged = setup();
     damaged.history.damaged = true;
-    expect(await damaged.useCase.execute({ cwd: CWD, request: TASK, by: "command" })).toMatchObject(
-      {
-        reason: "unreadable-consent",
-      }
-    );
+    expect(await damaged.useCase.execute({ cwd: CWD, request: TASK })).toMatchObject({
+      reason: "unreadable-consent",
+    });
     const neverAsked = setup();
     neverAsked.consents.values.delete(CWD);
     neverAsked.history.damaged = true;
-    expect(
-      await neverAsked.useCase.execute({ cwd: CWD, request: TASK, by: "command" })
-    ).toMatchObject({ reason: "no-consent" });
+    expect(await neverAsked.useCase.execute({ cwd: CWD, request: TASK })).toMatchObject({
+      reason: "no-consent",
+    });
     const copied = setup();
     copied.locator.directories.set(CWD, { ...REPOSITORY, clone: cloneOf("/elsewhere/.git") });
-    expect(await copied.useCase.execute({ cwd: CWD, request: TASK, by: "command" })).toMatchObject({
+    expect(await copied.useCase.execute({ cwd: CWD, request: TASK })).toMatchObject({
       reason: "no-consent",
     });
     const unidentified = setup();
     unidentified.locator.directories.set(CWD, { ...REPOSITORY, clone: null });
-    expect(
-      await unidentified.useCase.execute({ cwd: CWD, request: TASK, by: "command" })
-    ).toMatchObject({ reason: "unreadable-consent" });
+    expect(await unidentified.useCase.execute({ cwd: CWD, request: TASK })).toMatchObject({
+      reason: "unreadable-consent",
+    });
   });
 
   it("asks a linked worktree's own root, which shares the main clone's git config", async () => {
     const { useCase, locator, consents } = setup();
     locator.directories.set(CWD, { ...REPOSITORY, root: CWD, mainRoot: "/work/main" });
-    await useCase.execute({ cwd: CWD, request: TASK, by: "command" });
+    await useCase.execute({ cwd: CWD, request: TASK });
     expect(consents.reads).toEqual([CWD]);
   });
 
   it("refuses under AIDD_TELEMETRY=0 before reading anything", async () => {
     const { useCase, locator, sessions } = setup({ refusedByEnvironment: true });
-    expect(await useCase.execute({ cwd: CWD, request: TASK, by: "command" })).toEqual({
+    expect(await useCase.execute({ cwd: CWD, request: TASK })).toEqual({
       status: "refused",
       reason: "environment",
     });
@@ -299,7 +264,7 @@ describe("refusing to declare", () => {
   it("refuses a directory git or the file system would not answer for as unreadable, not outside", async () => {
     const s = setup();
     s.locator.directories.set(CWD, { status: "unreadable" });
-    expect(await s.useCase.execute({ cwd: CWD, request: TASK, by: "command" })).toMatchObject({
+    expect(await s.useCase.execute({ cwd: CWD, request: TASK })).toMatchObject({
       reason: "unreadable-consent",
     });
     expect(s.sessions.lines).toEqual([]);
@@ -308,18 +273,14 @@ describe("refusing to declare", () => {
   it("refuses outside a repository, and in one nothing can name", async () => {
     const outside = setup();
     outside.locator.directories.set(CWD, { status: "outside-repository" });
-    expect(await outside.useCase.execute({ cwd: CWD, request: TASK, by: "command" })).toMatchObject(
-      {
-        reason: "outside-repository",
-      }
-    );
+    expect(await outside.useCase.execute({ cwd: CWD, request: TASK })).toMatchObject({
+      reason: "outside-repository",
+    });
     const unnamed = setup();
     unnamed.locator.directories.set(CWD, { ...REPOSITORY, remote: null, rootCommit: null });
-    expect(await unnamed.useCase.execute({ cwd: CWD, request: TASK, by: "command" })).toMatchObject(
-      {
-        reason: "unidentified-repository",
-      }
-    );
+    expect(await unnamed.useCase.execute({ cwd: CWD, request: TASK })).toMatchObject({
+      reason: "unidentified-repository",
+    });
     expect(unnamed.sessions.lines).toEqual([]);
   });
 });

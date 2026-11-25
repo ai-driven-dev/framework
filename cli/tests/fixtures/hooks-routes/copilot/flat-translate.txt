@@ -277,33 +277,23 @@ script, identical to the plugin source
     "SessionStart": [
       {
         "type": "command",
-        "command": "node ./.github/hooks/aidd-telemetry/session-start.cjs",
-        "timeout": 10
+        "command": "node ./.github/hooks/aidd-telemetry/task.cjs remind",
+        "timeout": 5
       },
       {
         "type": "command",
-        "command": "node ./.github/hooks/aidd-telemetry/catch-up.cjs",
+        "command": "node ./.github/hooks/aidd-telemetry/ledger.cjs ingest",
         "timeout": 120
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "type": "command",
-        "command": "node ./.github/hooks/aidd-telemetry/prompt-gate.cjs",
-        "timeout": 30
       }
     ]
   }
 }
 
 
-## out-flat/.github/hooks/aidd-telemetry/catch-up.cjs
+## out-flat/.github/hooks/aidd-telemetry/ledger.cjs
 script, identical to the plugin source
 
 ## out-flat/.github/hooks/aidd-telemetry/lib/aidd.cjs
-script, identical to the plugin source
-
-## out-flat/.github/hooks/aidd-telemetry/lib/binding.cjs
 script, identical to the plugin source
 
 ## out-flat/.github/hooks/aidd-telemetry/lib/claude-only.cjs
@@ -318,22 +308,13 @@ script, identical to the plugin source
 ## out-flat/.github/hooks/aidd-telemetry/lib/context.cjs
 script, identical to the plugin source
 
-## out-flat/.github/hooks/aidd-telemetry/lib/declaration.cjs
-script, identical to the plugin source
-
 ## out-flat/.github/hooks/aidd-telemetry/lib/git.cjs
 script, identical to the plugin source
 
-## out-flat/.github/hooks/aidd-telemetry/lib/hook-io.cjs
-script, identical to the plugin source
+## out-flat/.github/hooks/aidd-telemetry/lib/host.cjs
+script, identical to the host adapter host-copilot.cjs
 
 ## out-flat/.github/hooks/aidd-telemetry/lib/jsonl.cjs
-script, identical to the plugin source
-
-## out-flat/.github/hooks/aidd-telemetry/lib/lookup.cjs
-script, identical to the plugin source
-
-## out-flat/.github/hooks/aidd-telemetry/lib/presence.cjs
 script, identical to the plugin source
 
 ## out-flat/.github/hooks/aidd-telemetry/lib/telemetry-dir.cjs
@@ -342,8 +323,5 @@ script, identical to the plugin source
 ## out-flat/.github/hooks/aidd-telemetry/lib/tool.cjs
 script, identical to the plugin source
 
-## out-flat/.github/hooks/aidd-telemetry/prompt-gate.cjs
-script, identical to the plugin source
-
-## out-flat/.github/hooks/aidd-telemetry/session-start.cjs
+## out-flat/.github/hooks/aidd-telemetry/task.cjs
 script, identical to the plugin source

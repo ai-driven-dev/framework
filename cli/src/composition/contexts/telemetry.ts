@@ -104,10 +104,9 @@ export function telemetryDir(): string {
   return telemetryDirOf(process.env, homedir());
 }
 
-/** The session a declaration binds: the one a hook names (Codex sets no session variable), else
- * Claude Code's. An empty variable is no session. */
+/** The session a declaration binds: Claude Code's. An empty variable is no session. */
 export function declaringSessionOf(env: NodeJS.ProcessEnv): string | null {
-  return env.AIDD_TELEMETRY_SESSION_ID || env.CLAUDE_CODE_SESSION_ID || null;
+  return env.CLAUDE_CODE_SESSION_ID || null;
 }
 
 /** macOS and Windows file systems answer one directory to several spellings. */

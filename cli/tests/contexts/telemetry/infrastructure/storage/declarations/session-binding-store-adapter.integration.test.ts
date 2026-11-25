@@ -20,7 +20,7 @@ afterEach(async () => {
 });
 
 const declaration = (task: string, iso: string) =>
-  declarationOf({ kind: "task", task, ticket: null }, new Date(iso), "command");
+  declarationOf({ kind: "task", task, ticket: null }, new Date(iso));
 
 describe("the session declarations on disk", () => {
   it("append one line each and keep every one of them, in order", async () => {

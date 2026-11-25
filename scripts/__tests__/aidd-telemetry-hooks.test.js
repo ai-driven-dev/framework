@@ -7,37 +7,26 @@ const test = require("node:test");
 
 // The hooks are scripts, not modules: the CLI copies them into a user's project. Each one is
 // driven as a subprocess with a payload and a sandbox environment, which is what ships. The
-// pure rules (directory, consent, branch role, binding) are also asserted against the shared
+// pure rules (directory, consent, branch role, declaration) are also asserted against the shared
 // fixture the CLI reads, so the two languages cannot drift apart.
 const HOOKS = path.resolve(__dirname, "../../plugins/aidd-telemetry/hooks");
-const GATE = path.join(HOOKS, "prompt-gate.cjs");
-const START = path.join(HOOKS, "session-start.cjs");
-const CATCH_UP = path.join(HOOKS, "catch-up.cjs");
+const TASK = path.join(HOOKS, "task.cjs");
+const LEDGER = path.join(HOOKS, "ledger.cjs");
+const CODEX_HOST = path.resolve(__dirname, "../../cli/assets/hooks-runtime/host-codex.cjs");
 const FIXTURE = path.join(__dirname, "fixtures", "telemetry-bindings");
 const cases = JSON.parse(fs.readFileSync(path.join(FIXTURE, "cases.json"), "utf8"));
 const expected = JSON.parse(fs.readFileSync(path.join(FIXTURE, "expected.json"), "utf8"));
 
 const { telemetryDir } = require(path.join(HOOKS, "lib/telemetry-dir.cjs"));
 const { decideConsent, identityFromStat, parseConsentLog, tokenOfKey } = require(path.join(HOOKS, "lib/consent.cjs"));
-const { branchRoleOf, parseBranchConfig } = require(path.join(HOOKS, "lib/git.cjs"));
-const { lookup } = require(path.join(HOOKS, "lib/lookup.cjs"));
-const { parseDeclaration } = require(path.join(HOOKS, "lib/declaration.cjs"));
+const { branchDeclaration, branchRoleOf, parseBranchConfig } = require(path.join(HOOKS, "lib/git.cjs"));
 const { cmdLine } = require(path.join(HOOKS, "lib/aidd.cjs"));
 const { isClaudePayload } = require(path.join(HOOKS, "lib/claude-only.cjs"));
 const { hookTool } = require(path.join(HOOKS, "lib/tool.cjs"));
 
 const WINDOWS = process.platform === "win32";
-const SESSION_ONE_FOR_GATE = {
-  session_id: "00000000-0000-4000-8000-0000000000aa",
-  task: "t",
-  ticket: null,
-  none: false,
-  declared_at: "2026-01-01T00:00:00.000Z",
-  by: "command",
-};
 const SESSION = "00000000-0000-4000-8000-0000000000aa";
 const OTHER = "00000000-0000-4000-8000-0000000000bb";
-const THIRD = "00000000-0000-4000-8000-0000000000cc";
 
 // ---------------------------------------------------------------- sandbox
 
@@ -63,25 +52,11 @@ function git(cwd, ...args) {
 
 const FAKE_AIDD = `
 const fs = require("node:fs");
-const path = require("node:path");
 const argv = process.argv.slice(2);
 if (process.env.FAKE_AIDD_LOG) {
-  const session = process.env.AIDD_TELEMETRY_SESSION_ID ?? null;
-  fs.appendFileSync(process.env.FAKE_AIDD_LOG, JSON.stringify({ argv, cwd: process.cwd(), session }) + "\\n");
+  fs.appendFileSync(process.env.FAKE_AIDD_LOG, JSON.stringify({ argv, cwd: process.cwd() }) + "\\n");
 }
 if (process.env.FAKE_AIDD_NOISE) { process.stdout.write("noise\\n"); process.stderr.write("noise\\n"); }
-if (argv.includes("--help")) process.exit(process.env.FAKE_AIDD_NO_TASK ? 1 : 0);
-if (argv[0] === "telemetry" && argv[1] === "task") {
-  if (process.env.FAKE_AIDD_FAIL) { process.stderr.write("boom\\n"); process.exit(1); }
-  const name = argv[2] && !argv[2].startsWith("--") ? argv[2] : null;
-  const dir = path.join(process.env.AIDD_TELEMETRY_DIR, "bindings");
-  fs.mkdirSync(dir, { recursive: true });
-  fs.appendFileSync(path.join(dir, "sessions.jsonl"), JSON.stringify({
-    session_id: process.env.AIDD_TELEMETRY_SESSION_ID || process.env.CLAUDE_CODE_SESSION_ID, task: name, ticket: null, none: name === null,
-    declared_at: new Date().toISOString(), by: "hook-intercept",
-  }) + "\\n");
-  process.stdout.write("Declared " + (name ?? "none") + "\\n");
-}
 `;
 
 /** A throwaway world: a home, a telemetry dir, a repository on feat/x that opted in, and a
@@ -118,7 +93,6 @@ function sandbox({ aidd = true, branch = "feat/x", consent = true } = {}) {
       AIDD_TELEMETRY_DIR: box.tel,
       FAKE_AIDD_LOG: box.log,
       CLAUDE_CODE_SESSION_ID: SESSION,
-      CLAUDE_CODE_SESSION_ATTENDED: "1",
       CLAUDE_CODE_ENTRYPOINT: "cli",
       SystemRoot: process.env.SystemRoot,
       ComSpec: process.env.ComSpec,
@@ -133,22 +107,14 @@ function sandbox({ aidd = true, branch = "feat/x", consent = true } = {}) {
     session_id: SESSION,
     transcript_path: path.join(box.home, ".claude", "projects", "-repo", `${SESSION}.jsonl`),
     cwd: box.repo,
-    hook_event_name: "UserPromptSubmit",
-    prompt: "do the thing",
+    hook_event_name: "SessionStart",
+    source: "startup",
     ...extra,
   });
   box.calls = () =>
     fs.existsSync(box.log)
       ? fs.readFileSync(box.log, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l))
       : [];
-  box.bindings = (name) => {
-    const file = path.join(box.tel, "bindings", name);
-    return fs.existsSync(file) ? fs.readFileSync(file, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l)) : [];
-  };
-  box.write = (name, records) => {
-    fs.mkdirSync(path.join(box.tel, "bindings"), { recursive: true });
-    fs.writeFileSync(path.join(box.tel, "bindings", name), records.map((r) => `${JSON.stringify(r)}\n`).join(""));
-  };
   box.dispose = () => fs.rmSync(root, { recursive: true, force: true });
   return box;
 }
@@ -203,8 +169,8 @@ function withBox(options, body) {
   }
 }
 
-function run(hook, box, { payload, env, input } = {}) {
-  const result = spawnSync(process.execPath, [hook], {
+function run(hook, box, { payload, env, input, args = [] } = {}) {
+  const result = spawnSync(process.execPath, [hook, ...args], {
     cwd: box.repo,
     env: env ?? box.env(),
     input: input ?? JSON.stringify(payload ?? box.payload()),
@@ -219,8 +185,9 @@ function run(hook, box, { payload, env, input } = {}) {
   return { status: result.status, stdout: result.stdout, stderr: result.stderr, json };
 }
 
-const gate = (box, opts) => run(GATE, box, opts);
-const asks = (result) => result.json !== null && result.json.decision === "block";
+const remind = (box, opts) => run(TASK, box, { ...opts, args: ["remind"] });
+const ingest = (box, opts) => run(LEDGER, box, { ...opts, args: ["ingest"] });
+const reminds = (result) => result.json !== null && typeof result.json.systemMessage === "string";
 function assertPasses(result) {
   assert.equal(result.status, 0);
   assert.equal(result.stdout, "", `expected a silent pass, got: ${result.stdout}`);
@@ -297,51 +264,8 @@ test("a branch declaration read back from real git follows the fixture", () => {
       for (const [key, value] of entriesOf(c.keys)) {
         git(box.repo, "config", "--local", "--add", `branch.${c.branch}.${key}`, value);
       }
-      const found = lookup({ cwd: box.repo, sessionId: null, at: new Date(), dir: box.tel, env: process.env });
-      const want = expected.gitConfig[name] === "declared" ? "bound" : "unbound";
-      assert.equal(found.binding.state, want, name);
-    });
-  }
-});
-
-test("binding follows the fixture, through real git and the shared files", () => {
-  for (const [name, c] of Object.entries(cases.binding)) {
-    withBox({ aidd: false }, (box) => {
-      const head = c.head ?? "refs/heads/feat/x";
-      git(box.repo, "symbolic-ref", "HEAD", head);
-      if (c.head === null) {
-        git(box.repo, "commit", "--allow-empty", "-q", "-m", "x");
-        git(box.repo, "checkout", "-q", "--detach");
-      }
-      if (c.originHead) git(box.repo, "symbolic-ref", "refs/remotes/origin/HEAD", c.originHead);
-      if (c.gitConfig) {
-        const set = cases.gitConfig[c.gitConfig];
-        for (const [key, value] of entriesOf(set.keys)) {
-          // the declaration belongs to the branch HEAD is on
-          const branch = head.replace(/^refs\/heads\//u, "");
-          git(box.repo, "config", "--local", "--add", `branch.${c.head === null ? set.branch : branch}.${key}`, value);
-        }
-      }
-      fs.mkdirSync(path.join(box.tel, "bindings"), { recursive: true });
-      for (const file of ["sessions.jsonl", "carries.jsonl"]) {
-        fs.copyFileSync(path.join(FIXTURE, file), path.join(box.tel, "bindings", file));
-      }
-      const found = lookup({
-        cwd: box.repo,
-        sessionId: c.session_id,
-        at: new Date(c.at),
-        dir: box.tel,
-        env: process.env,
-      });
-      const want = expected.binding[name];
-      assert.equal(found.binding.state, want.state, name);
-      if (want.state === "bound") {
-        assert.deepEqual(
-          { source: found.binding.source, task: found.binding.task, ticket: found.binding.ticket, none: found.binding.none },
-          { source: want.source, task: want.task, ticket: want.ticket, none: want.none },
-          name
-        );
-      }
+      const declared = branchDeclaration(box.repo, c.branch, process.env) !== null;
+      assert.equal(declared, expected.gitConfig[name] === "declared", name);
     });
   }
 });
@@ -359,21 +283,6 @@ test("parseBranchConfig cuts the known suffix off a dotted branch name", () => {
 
 // ---------------------------------------------------------------- the guards, end to end
 
-test("the gate asks on an unbound working branch with a person present", () => {
-  withBox({}, (box) => {
-    const result = gate(box);
-    assert.equal(result.status, 0);
-    assert.equal(result.json.decision, "block");
-    const reason = result.json.reason;
-    // One line, one way: the prompt, since a terminal's `aidd` may not be the one the hook found.
-    assert.equal(
-      reason,
-      'Telemetry: no task on feat/x yet. Send "aidd telemetry task <name> [--ticket <ref>]", or "--none", as your next prompt.'
-    );
-    assert.equal(result.json.hookSpecificOutput, undefined, "the person's real prompt stays visible");
-  });
-});
-
 test("hook tool: every fixture case is Claude Code's, Codex's or neither, as expected", () => {
   for (const [name, c] of Object.entries(cases.hookTool)) {
     const env = c.env_session_id === null ? {} : { CLAUDE_CODE_SESSION_ID: c.env_session_id };
@@ -383,29 +292,6 @@ test("hook tool: every fixture case is Claude Code's, Codex's or neither, as exp
     // Claude Code's own guard is unchanged, and refuses every case that is not Claude Code's.
     assert.equal(isClaudePayload(payload, env), expected.hookTool[name] === "claude", name);
   }
-});
-
-test("hook tool: through the gate, a Claude Code case asks and a Codex one inheriting Claude's session id passes", () => {
-  for (const name of ["claude-posix-transcript", "codex-rollout-path-with-the-inherited-claude-id"]) {
-    const c = cases.hookTool[name];
-    withBox({}, (box) => {
-      const env = box.env();
-      env.CLAUDE_CODE_SESSION_ID = c.env_session_id;
-      const result = gate(box, { payload: box.payload({ session_id: c.payload_session_id, transcript_path: c.transcript_path }), env });
-      assert.equal(asks(result), expected.hookTool[name] === "claude", name);
-      if (expected.hookTool[name] !== "claude") assertPasses(result);
-    });
-  }
-});
-
-test("hook tool: a Copilot shaped payload passes and writes nothing", () => {
-  withBox({}, (box) => {
-    const copilot = { sessionId: SESSION, timestamp: 1, prompt: "x", cwd: box.repo };
-    assertPasses(gate(box, { payload: copilot }));
-    assertPasses(run(START, box, { payload: { ...copilot, hook_event_name: "SessionStart", source: "startup" } }));
-    assert.equal(fs.existsSync(path.join(box.tel, "bindings")), false);
-    assert.deepEqual(box.calls(), []);
-  });
 });
 
 // ---------------------------------------------------------------- Codex
@@ -434,8 +320,6 @@ function codexFile(box, text = `${sessionMeta()}\n`) {
 function codexEnv(box, extra = {}) {
   return box.env({
     CLAUDE_CODE_SESSION_ID: undefined,
-    CLAUDE_CODE_SESSION_ATTENDED: undefined,
-    CLAUDE_CODE_ENTRYPOINT: undefined,
     CODEX_HOME: path.join(box.home, ".codex"),
     ...extra,
   });
@@ -446,175 +330,98 @@ function codexPayload(box, transcript, extra = {}) {
     session_id: CODEX_SESSION,
     transcript_path: transcript,
     cwd: box.repo,
-    hook_event_name: "UserPromptSubmit",
+    hook_event_name: "SessionStart",
+    source: "startup",
     model: "m",
-    permission_mode: "default",
-    turn_id: "t",
-    prompt: "do the thing",
     ...extra,
   };
 }
 
-function codexGate(box, { text, payload = {}, env = {} } = {}) {
-  const file = codexFile(box, text);
-  return gate(box, { payload: codexPayload(box, file, payload), env: codexEnv(box, env) });
+/** The hooks folder with Codex's adapter as `lib/host.cjs`, as the CLI builds it for Codex. */
+function codexHooks(box) {
+  const dir = path.join(box.root, "codex-hooks");
+  fs.cpSync(HOOKS, dir, { recursive: true });
+  fs.copyFileSync(CODEX_HOST, path.join(dir, "lib", "host.cjs"));
+  return dir;
 }
 
-test("codex presence: a prompt is held when, and only when, every condition holds", () => {
-  const BOUND = 1024 * 1024;
-  const meta = (fields) => `${sessionMeta({ ...TUI, ...fields })}\n`;
-  const rows = [
-    ["the TUI", {}, true],
-    ["the TUI through the app server (source vscode)", { text: meta({ source: "vscode" }) }, true],
-    ["the TUI started inside Claude Code", { env: { CLAUDE_CODE_SESSION_ID: SESSION, CLAUDE_CODE_SESSION_ATTENDED: "1", CLAUDE_CODE_ENTRYPOINT: "cli" } }, true],
-    ["a first line well inside the bound", { text: `${sessionMeta(TUI, BOUND / 2)}\n` }, true],
-    ["codex exec", { text: meta({ source: "exec", originator: "codex_exec" }) }, false],
-    ["the IDE extension", { text: meta({ source: "vscode", originator: "codex_vscode" }) }, false],
-    ["the desktop app", { text: meta({ source: "vscode", originator: "Codex Desktop" }) }, false],
-    ["originator Claude Code", { text: meta({ originator: "Claude Code" }) }, false],
-    ["originator codex_exec with source cli", { text: meta({ originator: "codex_exec" }) }, false],
-    ["a sub-agent's file, its source an object", { text: meta({ source: { subagent: { thread_spawn: { parent_thread_id: SESSION, depth: 1 } } } }) }, false],
-    ["no source", { text: `${sessionMeta({ originator: "codex-tui" })}\n` }, true],
-    ["no originator", { text: `${sessionMeta({ source: "cli" })}\n` }, false],
-    ["codex_vscode from the app server", { text: meta({ source: "vscode", originator: "codex_vscode" }) }, false],
-    ["the desktop app's work originator", { text: meta({ source: "vscode", originator: "codex_work_desktop" }) }, false],
-    ["a sub-agent's spawn message", { payload: { agent_id: OTHER, agent_type: "default" } }, false],
-    ["full access (bypassPermissions)", { payload: { permission_mode: "bypassPermissions" } }, false],
-    ["no permission_mode", { payload: { permission_mode: undefined } }, false],
-    ["a permission_mode never seen", { payload: { permission_mode: "acceptEdits" } }, false],
-    ["no session file", { text: null }, false],
-    ["a first line past the bound", { text: `${sessionMeta(TUI, BOUND)}\n` }, false],
-    ["a first line that is not JSON", { text: "{torn\n" }, false],
-    ["a first line that is no session_meta", { text: `${JSON.stringify({ type: "turn_context", payload: TUI })}\n` }, false],
-    ["an empty file", { text: "" }, false],
-  ];
-  // Every row is judged before failing, so a mutation names all the rows it turns red.
-  const wrong = [];
-  for (const [name, row, want] of rows) {
-    withBox({}, (box) => {
-      const file = codexFile(box, row.text === undefined ? `${sessionMeta()}\n` : row.text);
-      if (row.text === "") fs.writeFileSync(file, "");
-      const payload = codexPayload(box, file, row.payload);
-      for (const key of Object.keys(payload)) if (payload[key] === undefined) delete payload[key];
-      const result = gate(box, { payload, env: codexEnv(box, row.env) });
-      if (asks(result) !== want) wrong.push(name);
-      else if (!want) assertPasses(result);
-    });
-  }
-  assert.deepEqual(wrong, []);
-});
+/** The reminder holds only a person message, naming the branch and the command. */
+function assertReminder(result, branch) {
+  assert.deepEqual(Object.keys(result.json), ["systemMessage"]);
+  assert.ok(result.json.systemMessage.includes(branch), result.json.systemMessage);
+  assert.ok(result.json.systemMessage.includes("aidd telemetry task"), result.json.systemMessage);
+}
 
-test("codex: the gate asks on an undeclared working branch and keeps the prompt visible", () => {
+test("remind: an undeclared working branch gets one person message, nothing for the model", () => {
   withBox({}, (box) => {
-    const result = codexGate(box);
-    assert.equal(
-      result.json.reason,
-      'Telemetry: no task on feat/x yet. Send "aidd telemetry task <name> [--ticket <ref>]", or "--none", as your next prompt.'
-    );
-    assert.deepEqual(Object.keys(result.json).sort(), ["decision", "reason"]);
-  });
-});
-
-test("codex: a typed declaration binds the payload's session, never an inherited Claude Code one", () => {
-  for (const inherited of [{}, { CLAUDE_CODE_SESSION_ID: SESSION, CLAUDE_CODE_SESSION_ATTENDED: "1", CLAUDE_CODE_ENTRYPOINT: "cli" }]) {
-    withBox({}, (box) => {
-      const result = codexGate(box, { payload: { prompt: "aidd telemetry task fix-cart --ticket PROJ-1" }, env: inherited });
-      // Codex was never seen to accept a hidden prompt: the block says the declaration was
-      // recorded, and nothing else.
-      assert.deepEqual(result.json, { decision: "block", reason: "Task fix-cart (ticket PROJ-1) declared. Send your prompt again." });
-      const declarations = box.calls().filter((c) => c.argv[1] === "task" && !c.argv.includes("--help"));
-      assert.deepEqual(declarations.map((c) => c.session), [CODEX_SESSION]);
-      assert.deepEqual(box.bindings("sessions.jsonl").map((d) => d.session_id), [CODEX_SESSION]);
-      // the next prompt passes: the session is bound
-      assertPasses(codexGate(box, { env: inherited }));
-    });
-  }
-});
-
-test("codex: a mistyped declaration is told so, naming Codex", () => {
-  withBox({}, (box) => {
-    const result = codexGate(box, { payload: { prompt: "aidd telemetry task fix --ticket" } });
-    assert.deepEqual(result.json, {
-      decision: "block",
-      reason: 'Not a declaration, nothing sent. Send "aidd telemetry task <name> [--ticket <ref>]" (quote a name with spaces), or "--none". To ask Codex instead, end with "?".',
-    });
-  });
-});
-
-test("codex: a declaration typed where nobody can see the answer is not run", () => {
-  withBox({}, (box) => {
-    const text = `${sessionMeta({ source: "exec", originator: "codex_exec" })}\n`;
-    assertPasses(codexGate(box, { text, payload: { prompt: "aidd telemetry task x" } }));
+    const result = remind(box);
+    assert.equal(result.status, 0);
+    assertReminder(result, "feat/x");
     assert.deepEqual(box.calls(), []);
   });
 });
 
-test("codex: session start does nothing, not even the consent check", () => {
+test("remind: through the Codex adapter, the same person message", () => {
   withBox({}, (box) => {
-    git(box.repo, "config", "--local", "aidd.telemetry", "off");
-    const payload = { ...codexPayload(box, codexFile(box)), hook_event_name: "SessionStart", source: "startup" };
-    delete payload.prompt;
-    assertPasses(run(START, box, { payload, env: codexEnv(box) }));
-    assert.equal(fs.existsSync(path.join(box.tel, "bindings")), false);
-    assert.equal(consentLines(box).length, 1, "the consent check would close the interval");
-    // the same payload through the gate does reach the consent check, which closes it
-    assertPasses(gate(box, { payload: codexPayload(box, codexFile(box)), env: codexEnv(box) }));
-    assert.equal(consentLines(box).length, 2);
+    const task = path.join(codexHooks(box), "task.cjs");
+    const payload = codexPayload(box, codexFile(box));
+    const result = run(task, box, { payload, env: codexEnv(box), args: ["remind"] });
+    assertReminder(result, "feat/x");
   });
 });
 
-test("codex: the catch-up ingests, silently, once", () => {
-  withBox({}, (box) => {
-    const payload = { ...codexPayload(box, codexFile(box, null)), hook_event_name: "SessionStart", source: "startup" };
-    assertPasses(run(CATCH_UP, box, { payload, env: codexEnv(box, { FAKE_AIDD_NOISE: "1" }) }));
-    assert.deepEqual(box.calls().map((c) => c.argv), [["telemetry", "ingest", "--quiet"]]);
-  });
+test("remind: startup, resume and clear remind, a compaction does not", () => {
+  for (const source of ["startup", "resume", "clear"]) {
+    withBox({}, (box) => assert.equal(reminds(remind(box, { payload: box.payload({ source }) })), true, source));
+  }
+  withBox({}, (box) => assertPasses(remind(box, { payload: box.payload({ source: "compact" }) })));
 });
 
-// The values each surface was seen to hand a hook (2026-10-12), and whether it shows a block's
-// reason: the terminal and the desktop app do; the VS Code extension sets no ATTENDED and shows
-// neither a reason nor a systemMessage, so a block there would eat the prompt silently.
-test("presence: only ATTENDED=1 from a surface seen to show a block asks", () => {
-  const absent = (name) => (env) => delete env[name];
-  const rows = [
-    ["attended and cli", (env) => env, true],
-    ["the desktop app", (env) => Object.assign(env, { CLAUDE_CODE_ENTRYPOINT: "claude-desktop" }), true],
-    [
-      "the VS Code extension",
-      (env) => {
-        delete env.CLAUDE_CODE_SESSION_ATTENDED;
-        env.CLAUDE_CODE_ENTRYPOINT = "claude-vscode";
-      },
-      false,
-    ],
-    ["attended, from a surface never seen", (env) => Object.assign(env, { CLAUDE_CODE_ENTRYPOINT: "claude-jetbrains" }), false],
-    ["unattended", (env) => Object.assign(env, { CLAUDE_CODE_SESSION_ATTENDED: "0" }), false],
-    ["sdk-cli", (env) => Object.assign(env, { CLAUDE_CODE_ENTRYPOINT: "sdk-cli" }), false],
-    ["sdk-ts", (env) => Object.assign(env, { CLAUDE_CODE_ENTRYPOINT: "sdk-ts" }), false],
-    ["attended variable absent", absent("CLAUDE_CODE_SESSION_ATTENDED"), false],
-    ["entrypoint absent", absent("CLAUDE_CODE_ENTRYPOINT"), false],
-    ["entrypoint empty", (env) => Object.assign(env, { CLAUDE_CODE_ENTRYPOINT: "" }), false],
-    ["attended is true, not 1", (env) => Object.assign(env, { CLAUDE_CODE_SESSION_ATTENDED: "true" }), false],
-  ];
-  // Every row is judged before failing, so a mutation names all the rows it turns red.
-  const wrong = [];
-  for (const [name, change, want] of rows) {
+test("remind: every fixture case that is Claude Code's or Codex's reminds, the others print nothing", () => {
+  for (const name of Object.keys(cases.hookTool)) {
+    const c = cases.hookTool[name];
     withBox({}, (box) => {
-      const env = box.env();
-      change(env);
-      const result = gate(box, { env });
-      if (asks(result) !== want) wrong.push(name);
-      else if (!want) assertPasses(result);
+      const env = box.env(c.env_session_id === null ? { CLAUDE_CODE_SESSION_ID: undefined } : { CLAUDE_CODE_SESSION_ID: c.env_session_id });
+      const payload = box.payload({ session_id: c.payload_session_id ?? undefined, transcript_path: c.transcript_path ?? undefined });
+      assert.equal(reminds(remind(box, { payload, env })), expected.hookTool[name] !== null, name);
     });
   }
-  assert.deepEqual(wrong, []);
 });
 
-test("presence: a typed declaration is not run for nobody", () => {
+test("remind: a Copilot shaped payload prints nothing and runs nothing", () => {
   withBox({}, (box) => {
-    const env = box.env({ CLAUDE_CODE_SESSION_ATTENDED: "0" });
-    assertPasses(gate(box, { payload: box.payload({ prompt: "aidd telemetry task x" }), env }));
+    const copilot = { sessionId: SESSION, timestamp: 1, cwd: box.repo, hook_event_name: "SessionStart", source: "startup" };
+    assertPasses(remind(box, { payload: copilot }));
+    assertPasses(ingest(box, { payload: copilot }));
     assert.deepEqual(box.calls(), []);
+  });
+});
+
+test("remind: an unknown event prints nothing", () => {
+  withBox({}, (box) => {
+    assertPasses(remind(box, { payload: box.payload({ hook_event_name: "UserPromptSubmit", prompt: "go" }) }));
+  });
+});
+
+test("remind: a declared branch, the default branch and a detached head print nothing", () => {
+  withBox({}, (box) => {
+    git(box.repo, "config", "--local", "branch.feat/x.aiddTask", "t");
+    git(box.repo, "config", "--local", "branch.feat/x.aiddDeclaredFor", "feat/x");
+    git(box.repo, "config", "--local", "branch.feat/x.aiddDeclaredAt", "2026-10-09T09:00:00.000Z");
+    assertPasses(remind(box));
+  });
+  withBox({ branch: "main" }, (box) => assertPasses(remind(box)));
+  withBox({}, (box) => {
+    git(box.repo, "commit", "--allow-empty", "-q", "-m", "x");
+    git(box.repo, "checkout", "-q", "--detach");
+    assertPasses(remind(box));
+  });
+});
+
+test("remind: a key set by hand does not declare a branch", () => {
+  withBox({}, (box) => {
+    git(box.repo, "config", "--local", "branch.feat/x.aiddTask", "by-hand");
+    assert.equal(reminds(remind(box)), true);
   });
 });
 
@@ -623,15 +430,13 @@ test("consent: every fixture key grants or refuses as expected, an interval open
     withBox({ consent: false }, (box) => {
       const named = c.value === null ? null : (/^2:(\S+)$/u.exec(c.value)?.[1] ?? null);
       writeConsent(box, { key: c.value, interval: named ?? "another-token" });
-      assert.equal(asks(gate(box)), expected.consent[name] === "granted", name);
+      assert.equal(reminds(remind(box)), expected.consent[name] === "granted", name);
     });
   }
 });
 
-test("consent: a key with no interval open for the clone grants nothing, asks nothing and blocks nothing", () => {
+test("consent: a key with no interval open for the clone grants nothing and reminds nothing", () => {
   const kept = [
-    ["a key set by hand", { key: "2", interval: null }],
-    ["a forged token", { key: "2:forged", interval: null }],
     ["a token of an interval already closed", { key: `2:${TOKEN}`, interval: null, closed: true }],
   ];
   for (const [name, options] of kept) {
@@ -641,61 +446,59 @@ test("consent: a key with no interval open for the clone grants nothing, asks no
         fs.mkdirSync(path.dirname(consentsFile(box)), { recursive: true });
         fs.appendFileSync(consentsFile(box), openLine(TOKEN, box.repo) + `${JSON.stringify({ token: TOKEN, close: "2026-01-02T00:00:00.000Z" })}\n`);
       }
-      assertPasses(gate(box));
-      assertPasses(gate(box, { payload: box.payload({ prompt: "aidd telemetry task x" }) }));
+      assertPasses(remind(box));
       assert.deepEqual(box.calls(), [], name);
     });
   }
 });
 
-test("consent: a cp -R copy carries the key and not the clone, so it asks nothing and closes nothing", () => {
+test("consent: a cp -R copy carries the key and not the clone, so it reminds nothing and closes nothing", () => {
   withBox({}, (box) => {
     git(box.repo, "commit", "--allow-empty", "-q", "-m", "x");
     const copy = path.join(box.root, "copy");
     fs.cpSync(box.repo, copy, { recursive: true });
-    assert.equal(asks(gate(box)), true);
-    assertPasses(gate(box, { payload: box.payload({ cwd: copy }) }));
+    assert.equal(reminds(remind(box)), true);
+    assertPasses(remind(box, { payload: box.payload({ cwd: copy }) }));
     assert.equal(consentLines(box).length, 1);
   });
 });
 
-test("consent: a cp -R copy moved onto the deleted original's path asks nothing and closes nothing", () => {
+test("consent: a cp -R copy moved onto the deleted original's path reminds nothing and closes nothing", () => {
   withBox({}, (box) => {
     git(box.repo, "commit", "--allow-empty", "-q", "-m", "x");
-    assert.equal(asks(gate(box)), true);
+    assert.equal(reminds(remind(box)), true);
     const copy = path.join(box.root, "copy");
     fs.cpSync(box.repo, copy, { recursive: true });
     fs.renameSync(box.repo, path.join(box.root, "original.removed"));
     fs.renameSync(copy, box.repo);
-    assertPasses(gate(box));
+    assertPasses(remind(box));
     assert.equal(consentLines(box).length, 1);
   });
 });
 
-test("consent: a clone moved away and back is the same clone, still asked", () => {
+test("consent: a clone moved away and back is the same clone, still reminded", () => {
   withBox({}, (box) => {
     git(box.repo, "commit", "--allow-empty", "-q", "-m", "x");
     const away = path.join(box.root, "away");
     fs.renameSync(box.repo, away);
     fs.renameSync(away, box.repo);
-    assert.equal(asks(gate(box)), true);
+    assert.equal(reminds(remind(box)), true);
   });
 });
 
-test("consent: a clone whose key was turned off by hand has its interval closed, now, even with nobody present", () => {
+test("consent: a clone whose key was turned off by hand has its interval closed, now", () => {
   for (const turnOff of [(box) => git(box.repo, "config", "--local", "aidd.telemetry", "off"), (box) => git(box.repo, "config", "--local", "--unset", "aidd.telemetry")]) {
     withBox({}, (box) => {
       turnOff(box);
       const before = Date.now();
-      const headless = box.env({ CLAUDE_CODE_SESSION_ATTENDED: "0" });
-      assertPasses(gate(box, { env: headless }));
+      assertPasses(remind(box));
       const lines = consentLines(box);
       assert.equal(lines.length, 2);
       assert.deepEqual(Object.keys(lines[1]), ["token", "close"]);
       assert.equal(lines[1].token, TOKEN);
       assert.ok(Date.parse(lines[1].close) >= before - 1000);
-      // already closed: another prompt, or another hook, writes nothing more
-      assertPasses(gate(box, { env: headless }));
+      // already closed: another session start, or another hook, writes nothing more
+      assertPasses(remind(box));
       assert.equal(consentLines(box).length, 2);
     });
   }
@@ -704,9 +507,9 @@ test("consent: a clone whose key was turned off by hand has its interval closed,
 test("consent: a torn last line leaves the clone measured, and a hook's close drops it instead of terminating it into damage", () => {
   withBox({}, (box) => {
     fs.appendFileSync(consentsFile(box), '{"token":"abc","clo');
-    assert.equal(asks(gate(box)), true);
+    assert.equal(reminds(remind(box)), true);
     git(box.repo, "config", "--local", "aidd.telemetry", "off");
-    assertPasses(gate(box, { env: box.env({ CLAUDE_CODE_SESSION_ATTENDED: "0" }) }));
+    assertPasses(remind(box));
     const text = fs.readFileSync(consentsFile(box), "utf8");
     assert.ok(text.endsWith("\n"));
     assert.deepEqual(consentLines(box).map((line) => Object.keys(line).pop()), ["open", "close"]);
@@ -714,15 +517,10 @@ test("consent: a torn last line leaves the clone measured, and a hook's close dr
   });
 });
 
-test("consent: the session start and the catch-up close it too", () => {
+test("consent: the ingest closes it too", () => {
   withBox({}, (box) => {
     git(box.repo, "config", "--local", "aidd.telemetry", "off");
-    assertPasses(start(box, SESSION, "startup"));
-    assert.equal(consentLines(box).length, 2);
-  });
-  withBox({}, (box) => {
-    git(box.repo, "config", "--local", "aidd.telemetry", "off");
-    assertPasses(catchUp(box));
+    assertPasses(ingest(box));
     assert.equal(consentLines(box).length, 2);
   });
 });
@@ -730,8 +528,8 @@ test("consent: the session start and the catch-up close it too", () => {
 test("consent: outside Claude, or refused by the environment, nothing is closed", () => {
   withBox({}, (box) => {
     git(box.repo, "config", "--local", "aidd.telemetry", "off");
-    assertPasses(gate(box, { payload: box.payload({ session_id: OTHER }) }));
-    assertPasses(gate(box, { env: box.env({ AIDD_TELEMETRY: "0" }) }));
+    assertPasses(remind(box, { payload: box.payload({ session_id: OTHER }) }));
+    assertPasses(remind(box, { env: box.env({ AIDD_TELEMETRY: "0" }) }));
     assert.equal(consentLines(box).length, 1);
   });
 });
@@ -740,16 +538,16 @@ test("consent: a damaged log grants nothing and is left as it is", () => {
   withBox({}, (box) => {
     fs.appendFileSync(consentsFile(box), "{not json\n");
     const before = fs.readFileSync(consentsFile(box), "utf8");
-    assertPasses(gate(box));
+    assertPasses(remind(box));
     git(box.repo, "config", "--local", "aidd.telemetry", "off");
-    assertPasses(gate(box));
+    assertPasses(remind(box));
     assert.equal(fs.readFileSync(consentsFile(box), "utf8"), before);
   });
 });
 
 test("consent: with no open interval anywhere, git is not even asked", () => {
   withBox({ consent: false }, (box) => {
-    assertPasses(gate(box, { env: { ...box.env(), PATH: "" } }));
+    assertPasses(remind(box, { env: { ...box.env(), PATH: "" } }));
   });
 });
 
@@ -757,29 +555,28 @@ test("consent: the clone is told by the real path git records, whatever case the
   withBox({}, (box) => {
     const upper = box.repo.toUpperCase();
     if (!fs.existsSync(upper)) return; // a case-sensitive file system: nothing to spell differently
-    assert.equal(asks(gate(box, { payload: box.payload({ cwd: upper }) })), true);
+    assert.equal(reminds(remind(box, { payload: box.payload({ cwd: upper }) })), true);
   });
 });
 
-test("consent: a linked worktree sees the main clone's consent, and a clone without it asks nothing", () => {
+test("consent: a linked worktree sees the main clone's consent, and a clone without it reminds nothing", () => {
   withBox({ consent: false }, (box) => {
     git(box.repo, "commit", "--allow-empty", "-q", "-m", "x");
     const linked = path.join(box.root, "linked");
     git(box.repo, "worktree", "add", "-q", "-b", "feat/y", linked);
-    assertPasses(gate(box, { payload: box.payload({ cwd: linked }) }));
+    assertPasses(remind(box, { payload: box.payload({ cwd: linked }) }));
     writeConsent(box);
-    assert.equal(asks(gate(box, { payload: box.payload({ cwd: linked }) })), true);
+    assert.equal(reminds(remind(box, { payload: box.payload({ cwd: linked }) })), true);
   });
 });
 
-test("consent: a committed .aidd/config.json is not consent, so nothing is asked of a teammate", () => {
+test("consent: a committed .aidd/config.json is not consent, so a teammate is reminded of nothing", () => {
   withBox({ consent: false }, (box) => {
     writeCommittedConfig(box.repo, '{"telemetry":{"enabled":true,"version":2}}');
-    assertPasses(gate(box));
-    assertPasses(gate(box, { payload: box.payload({ prompt: "aidd telemetry task x" }) }));
+    assertPasses(remind(box));
     assert.deepEqual(box.calls(), []);
     writeConsent(box);
-    assert.equal(asks(gate(box)), true);
+    assert.equal(reminds(remind(box)), true);
   });
 });
 
@@ -787,270 +584,30 @@ test("consent: found from a subdirectory of the repository", () => {
   withBox({}, (box) => {
     const sub = path.join(box.repo, "a", "b");
     fs.mkdirSync(sub, { recursive: true });
-    assert.equal(asks(gate(box, { payload: box.payload({ cwd: sub }) })), true);
+    assert.equal(reminds(remind(box, { payload: box.payload({ cwd: sub }) })), true);
   });
 });
 
 test("consent: AIDD_TELEMETRY=0 refuses before git is asked, and only exactly 0 refuses", () => {
   withBox({}, (box) => {
     // no git on PATH at all: a refusal by the environment must not need it
-    assertPasses(gate(box, { env: { ...box.env(cases.environmentRefusal["zero-refuses"]), PATH: "" } }));
+    assertPasses(remind(box, { env: { ...box.env(cases.environmentRefusal["zero-refuses"]), PATH: "" } }));
   });
   withBox({}, (box) => {
-    assert.equal(asks(gate(box, { env: box.env(cases.environmentRefusal["one-does-not"]) })), true);
-  });
-});
-
-test("the default branch and a detached head are never asked, and git is not needed to say so for a bound session", () => {
-  withBox({ branch: "main" }, (box) => assertPasses(gate(box)));
-  withBox({}, (box) => {
-    git(box.repo, "commit", "--allow-empty", "-q", "-m", "x");
-    git(box.repo, "checkout", "-q", "--detach");
-    assertPasses(gate(box));
-  });
-});
-
-test("a branch bound by the command passes, one the command did not declare is asked", () => {
-  withBox({}, (box) => {
-    git(box.repo, "config", "--local", "branch.feat/x.aiddTask", "t");
-    git(box.repo, "config", "--local", "branch.feat/x.aiddDeclaredFor", "feat/x");
-    git(box.repo, "config", "--local", "branch.feat/x.aiddDeclaredAt", "2026-10-09T09:00:00.000Z");
-    assertPasses(gate(box));
-  });
-  withBox({}, (box) => {
-    git(box.repo, "config", "--local", "branch.feat/x.aiddTask", "by-hand");
-    assert.equal(gate(box).json.decision, "block");
-  });
-});
-
-test("answer path: with aidd absent, or without telemetry task, an unbound branch is never blocked", () => {
-  withBox({ aidd: false }, (box) => {
-    assert.ok(!fs.existsSync(path.join(GIT_DIR_ON_PATH, WINDOWS ? "aidd.cmd" : "aidd")), "a real aidd is on the test PATH");
-    assertPasses(gate(box));
-  });
-  withBox({}, (box) => {
-    assertPasses(gate(box, { env: box.env({ FAKE_AIDD_NO_TASK: "1" }) }));
-    assert.deepEqual(box.calls().map((c) => c.argv), [["telemetry", "task", "--help"]]);
-  });
-});
-
-test("answer path: checked only when the gate would otherwise ask", () => {
-  withBox({ branch: "main" }, (box) => {
-    gate(box);
-    assert.deepEqual(box.calls(), []);
+    assert.equal(reminds(remind(box, { env: box.env(cases.environmentRefusal["one-does-not"]) })), true);
   });
 });
 
 test("a hook given malformed or empty stdin passes", () => {
   withBox({}, (box) => {
-    for (const hook of [GATE, START, CATCH_UP]) {
-      assertPasses(run(hook, box, { input: "{not json" }));
-      assertPasses(run(hook, box, { input: "" }));
-      assertPasses(run(hook, box, { input: "[1]" }));
+    for (const [hook, args] of [[TASK, ["remind"]], [LEDGER, ["ingest"]]]) {
+      assertPasses(run(hook, box, { input: "{not json", args }));
+      assertPasses(run(hook, box, { input: "", args }));
+      assertPasses(run(hook, box, { input: "[1]", args }));
     }
     // odd field types never crash the hook
-    assert.equal(gate(box, { payload: box.payload({ prompt: 42, cwd: 7 }) }).status, 0);
+    assert.equal(remind(box, { payload: box.payload({ cwd: 7 }) }).status, 0);
   });
-});
-
-// ---------------------------------------------------------------- intercepting a declaration
-
-test("a typed declaration reaches no model: the CLI stores it, the hook blocks with its output", () => {
-  withBox({}, (box) => {
-    const result = gate(box, { payload: box.payload({ prompt: "aidd telemetry task fix-cart --ticket PROJ-1" }) });
-    assert.equal(result.json.decision, "block");
-    assert.equal(result.json.reason, "Task fix-cart (ticket PROJ-1) declared. Send your prompt again.");
-    assert.equal(result.json.hookSpecificOutput.suppressOriginalPrompt, true);
-    assert.equal(result.json.hookSpecificOutput.hookEventName, "UserPromptSubmit");
-    const calls = box.calls();
-    assert.equal(calls.length, 1);
-    assert.deepEqual(calls[0].argv, ["telemetry", "task", "fix-cart", "--ticket", "PROJ-1", "--by", "hook-intercept"]);
-    assert.equal(fs.realpathSync(calls[0].cwd), box.repo);
-    assert.equal(calls[0].session, SESSION, "the hook names the payload's session, which the guard made Claude Code's own");
-    assert.equal(box.bindings("sessions.jsonl").length, 1);
-    // the next prompt passes
-    assertPasses(gate(box));
-  });
-});
-
-test("a stale AIDD_TELEMETRY_SESSION_ID exported by the user does not win over the session of the prompt", () => {
-  withBox({}, (box) => {
-    const env = box.env({ AIDD_TELEMETRY_SESSION_ID: OTHER });
-    gate(box, { payload: box.payload({ prompt: "aidd telemetry task fix-cart" }), env });
-    assert.deepEqual(box.bindings("sessions.jsonl").map((d) => d.session_id), [SESSION]);
-  });
-});
-
-test("a declaration is confirmed in one line, and the person resends the prompt", () => {
-  const rows = [
-    ["aidd telemetry task fix --ticket P-1", "Task fix (ticket P-1) declared. Send your prompt again."],
-    ["aidd telemetry task fix", "Task fix declared. Send your prompt again."],
-    ["aidd telemetry task --none", "No task declared for this work. Send your prompt again."],
-    [
-      "aidd telemetry task fix --ticket",
-      'Not a declaration, nothing sent. Send "aidd telemetry task <name> [--ticket <ref>]" (quote a name with spaces), or "--none". To ask Claude instead, end with "?".',
-    ],
-  ];
-  for (const [prompt, reason] of rows) {
-    withBox({}, (box) => {
-      assert.equal(gate(box, { payload: box.payload({ prompt }) }).json.reason, reason, prompt);
-    });
-  }
-});
-
-test("an intercepted declaration runs --none, a bare name, a quoted name and a ! prefix, and nothing without a name", () => {
-  const rows = [
-    ["aidd telemetry task --none", ["telemetry", "task", "--none", "--by", "hook-intercept"]],
-    ["! aidd telemetry task fix", ["telemetry", "task", "fix", "--by", "hook-intercept"]],
-    ["  !aidd   telemetry task   fix  ", ["telemetry", "task", "fix", "--by", "hook-intercept"]],
-    ['aidd telemetry task "cart fix" --ticket \'PROJ 1\'', WINDOWS ? "refused" : ["telemetry", "task", "cart fix", "--ticket", "PROJ 1", "--by", "hook-intercept"]],
-    // No name and no --none declares nothing: the usage is shown, the CLI is not run.
-    ["aidd telemetry task", "refused"],
-  ];
-  for (const [prompt, argv] of rows) {
-    withBox({}, (box) => {
-      const result = gate(box, { payload: box.payload({ prompt }) });
-      assert.equal(result.json.decision, "block", prompt);
-      if (argv === "refused") assert.equal(box.calls().length, 0);
-      else assert.deepEqual(box.calls().map((c) => c.argv), [argv], prompt);
-    });
-  }
-});
-
-test("injection: shell syntax in a typed declaration runs no second command", () => {
-  const poisons = [
-    "aidd telemetry task x; touch PWNED",
-    "aidd telemetry task x && touch PWNED",
-    "aidd telemetry task x | touch PWNED",
-    "aidd telemetry task x `touch PWNED`",
-    "aidd telemetry task x $(touch PWNED)",
-    "aidd telemetry task x\ntouch PWNED",
-    "aidd telemetry task x\r\ntouch PWNED",
-    "aidd telemetry task x > PWNED",
-    "aidd telemetry task x < PWNED",
-    "aidd telemetry task x & touch PWNED",
-    "aidd telemetry task x\\ y",
-    "aidd telemetry task x%PATH%",
-  ];
-  for (const prompt of poisons) {
-    // Not a declaration the hook can run, so it falls through to the ordinary gate: on the
-    // default branch that is a silent pass, and nothing at all is spawned.
-    withBox({ branch: "main" }, (box) => {
-      assertPasses(gate(box, { payload: box.payload({ prompt }) }));
-      assert.ok(!fs.existsSync(path.join(box.repo, "PWNED")), prompt);
-      assert.deepEqual(box.calls(), [], `${JSON.stringify(prompt)} spawned something`);
-    });
-    // On an unbound working branch it is the usual ask, which probes `aidd` and nothing else.
-    withBox({}, (box) => {
-      const result = gate(box, { payload: box.payload({ prompt }) });
-      assert.equal(result.json.decision, "block", prompt);
-      assert.match(result.json.reason, /Telemetry: no task on /u, prompt);
-      assert.ok(!fs.existsSync(path.join(box.repo, "PWNED")), prompt);
-      assert.deepEqual(box.calls().map((c) => c.argv), [["telemetry", "task", "--help"]], prompt);
-    });
-  }
-});
-
-test("a declaration mistyped is blocked with the grammar and the quoting hint, and runs nothing", () => {
-  const attempts = [
-    "aidd telemetry task fix cart",
-    "! aidd telemetry task fix cart",
-    "aidd telemetry task x --by command",
-    "aidd telemetry task x --help",
-    "aidd telemetry task --help",
-    "aidd telemetry task --ticket=PROJ-1 x",
-    "aidd telemetry task x --ticket",
-    "aidd telemetry task --none x",
-    "aidd telemetry task -x",
-    "aidd telemetry task-x",
-    'aidd telemetry task "x; touch PWNED"',
-    "aidd telemetry task 'x$(touch PWNED)'",
-  ];
-  for (const prompt of attempts) {
-    for (const branch of ["main", "feat/x"]) {
-      withBox({ branch }, (box) => {
-        const result = gate(box, { payload: box.payload({ prompt }) });
-        assert.equal(result.json.decision, "block", prompt);
-        assert.match(result.json.reason, /^Not a declaration, nothing sent\./u, prompt);
-        assert.match(result.json.reason, /aidd telemetry task <name> \[--ticket <ref>\]/u, prompt);
-        assert.match(result.json.reason, /quote a name with spaces/u, prompt);
-        assert.match(result.json.reason, /To ask Claude instead, end with "\?"\./u, prompt);
-        // not run, so the person's words stay visible to retype
-        assert.equal(result.json.hookSpecificOutput, undefined, prompt);
-        assert.ok(!fs.existsSync(path.join(box.repo, "PWNED")), prompt);
-        assert.deepEqual(box.calls(), [], `${JSON.stringify(prompt)} spawned something`);
-      });
-    }
-  }
-  withBox({}, (box) => {
-    box.write("sessions.jsonl", [{ ...SESSION_ONE_FOR_GATE }]);
-    const result = gate(box, { payload: box.payload({ prompt: "aidd telemetry task fix cart" }) });
-    assert.equal(result.json.decision, "block");
-    assert.deepEqual(box.calls(), []);
-  });
-});
-
-test("the way out the not understood message gives is the way out: a question mark makes it an ordinary prompt", () => {
-  withBox({ branch: "feat/x" }, (box) => {
-    const result = gate(box, { payload: box.payload({ prompt: "aidd telemetry task fix cart?" }) });
-    assert.doesNotMatch(result.json?.reason ?? "", /not understood/iu);
-    assert.deepEqual(box.calls().filter((c) => c.argv.includes("--by")), []);
-  });
-});
-
-test("a prompt that only starts like a declaration is an ordinary prompt, never refused as not understood", () => {
-  const talk = [
-    "aidd telemetry task is broken, can you debug why?",
-    "aidd telemetry task why is it broken?",
-    "aidd telemetry task fix it!",
-    "aidd telemetry task fix the cart.",
-    "aidd telemetry task x\nand a second line",
-  ];
-  for (const prompt of talk) {
-    withBox({ branch: "main" }, (box) => {
-      assertPasses(gate(box, { payload: box.payload({ prompt }) }));
-      assert.deepEqual(box.calls(), [], prompt);
-    });
-    withBox({}, (box) => {
-      box.write("sessions.jsonl", [{ ...SESSION_ONE_FOR_GATE }]);
-      assertPasses(gate(box, { payload: box.payload({ prompt }) }));
-    });
-    withBox({}, (box) => {
-      const result = gate(box, { payload: box.payload({ prompt }) });
-      assert.equal(result.json.decision, "block", prompt);
-      assert.match(result.json.reason, /Telemetry: no task on /u, prompt);
-      // the person's real words stay visible to retype: this prompt was not run
-      assert.equal(result.json.hookSpecificOutput, undefined, prompt);
-    });
-  }
-});
-
-test("a declaration that fails shows why, and one with no aidd says aidd is needed", () => {
-  withBox({}, (box) => {
-    const result = gate(box, {
-      payload: box.payload({ prompt: "aidd telemetry task x" }),
-      env: box.env({ FAKE_AIDD_FAIL: "1" }),
-    });
-    assert.equal(result.json.decision, "block");
-    assert.match(result.json.reason, /Declaration failed\. boom/u);
-  });
-  withBox({ aidd: false }, (box) => {
-    const result = gate(box, { payload: box.payload({ prompt: "aidd telemetry task x" }) });
-    assert.equal(result.json.decision, "block");
-    assert.match(result.json.reason, /aidd is needed/u);
-  });
-});
-
-test("parseDeclaration accepts only words, quoted strings, --ticket and --none", () => {
-  assert.deepEqual(parseDeclaration("aidd telemetry task a --ticket B-1"), [
-    "telemetry", "task", "a", "--ticket", "B-1", "--by", "hook-intercept",
-  ]);
-  assert.equal(parseDeclaration("aidd telemetry task a --none"), null);
-  assert.equal(parseDeclaration("aidd telemetry task --ticket B-1"), null);
-  assert.equal(parseDeclaration("aidd telemetry task a --ticket b --ticket c"), null);
-  assert.equal(parseDeclaration('aidd telemetry task "a"b'), null);
-  assert.equal(parseDeclaration('aidd telemetry task "-a"'), null);
-  assert.equal(parseDeclaration("do something else"), null);
 });
 
 test("the telemetry directory's home is the operating system's, as the CLI's, never the HOME variable", () => {
@@ -1074,188 +631,51 @@ test("cmd.exe /s command line: the whole line is wrapped in one more pair of quo
   assert.equal(cmdLine("C:\\bin\\aidd.cmd", []), '""C:\\bin\\aidd.cmd" "');
 });
 
-// ---------------------------------------------------------------- session facts and the clear carry
+// ---------------------------------------------------------------- the async ingest
 
-const SESSION_ONE = { session_id: SESSION, task: "checkout-fix", ticket: "PROJ-12", none: false, declared_at: "2026-01-01T00:00:00.000Z", by: "command" };
-
-function start(box, sessionId, source, env = {}) {
-  return run(START, box, {
-    payload: box.payload({ session_id: sessionId, hook_event_name: "SessionStart", source, transcript_path: path.join(box.home, ".claude", "projects", "-repo", `${sessionId}.jsonl`) }),
-    env: box.env({ CLAUDE_CODE_SESSION_ID: sessionId, CLAUDE_PID: "4242", ...env }),
-  });
-}
-
-test("every session start records its pid, session, source and time", () => {
+test("the ingest runs aidd once, silently", () => {
   withBox({}, (box) => {
-    assertPasses(start(box, SESSION, "startup"));
-    const [fact] = box.bindings("processes.jsonl");
-    assert.deepEqual(Object.keys(fact), ["pid", "session_id", "source", "at"]);
-    assert.equal(fact.pid, 4242);
-    assert.equal(fact.session_id, SESSION);
-    assert.equal(fact.source, "startup");
-    assert.ok(!Number.isNaN(Date.parse(fact.at)));
-  });
-});
-
-test("without CLAUDE_PID the hook's parent is the process", () => {
-  withBox({}, (box) => {
-    const env = box.env();
-    const result = run(START, box, {
-      payload: box.payload({ hook_event_name: "SessionStart", source: "startup" }),
-      env,
-    });
-    assertPasses(result);
-    assert.equal(box.bindings("processes.jsonl")[0].pid, process.pid);
-  });
-});
-
-test("a clear in the same process carries the previous session's task, and says so", () => {
-  withBox({}, (box) => {
-    box.write("sessions.jsonl", [SESSION_ONE]);
-    assertPasses(start(box, SESSION, "startup"));
-    const cleared = start(box, OTHER, "clear");
-    assert.equal(cleared.status, 0);
-    assert.deepEqual(Object.keys(cleared.json), ["systemMessage"]);
-    assert.match(cleared.json.systemMessage, /Task checkout-fix \(ticket PROJ-12\) kept after \/clear\. Different work: aidd telemetry task <name>/u);
-    const [carry] = box.bindings("carries.jsonl");
-    assert.deepEqual(Object.keys(carry), ["session_id", "from", "at"]);
-    assert.equal(carry.session_id, OTHER);
-    assert.equal(carry.from, SESSION);
-    // the next prompt of the new session reads as bound: carried, so not asked
-    assertPasses(gate(box, { payload: box.payload({ session_id: OTHER, transcript_path: path.join(box.home, ".claude", "projects", "-repo", `${OTHER}.jsonl`) }), env: box.env({ CLAUDE_CODE_SESSION_ID: OTHER }) }));
-  });
-});
-
-test("a clear chains: the carried session carries on", () => {
-  withBox({}, (box) => {
-    box.write("sessions.jsonl", [SESSION_ONE]);
-    start(box, SESSION, "startup");
-    start(box, OTHER, "clear");
-    const third = start(box, THIRD, "clear");
-    assert.match(third.json.systemMessage, /Task checkout-fix/u);
-    assert.deepEqual(box.bindings("carries.jsonl").map((c) => c.from), [SESSION, OTHER]);
-  });
-});
-
-test("a clear of a session declared as none says so", () => {
-  withBox({}, (box) => {
-    box.write("sessions.jsonl", [{ ...SESSION_ONE, task: null, ticket: null, none: true }]);
-    start(box, SESSION, "startup");
-    assert.match(start(box, OTHER, "clear").json.systemMessage, /No task kept after \/clear/u);
-  });
-});
-
-test("a clear carries nothing from another process, from an unbound session, or twice", () => {
-  withBox({}, (box) => {
-    box.write("sessions.jsonl", [SESSION_ONE]);
-    start(box, SESSION, "startup", { CLAUDE_PID: "1111" });
-    assertPasses(start(box, OTHER, "clear", { CLAUDE_PID: "2222" }));
-    assert.deepEqual(box.bindings("carries.jsonl"), []);
-  });
-  withBox({}, (box) => {
-    start(box, SESSION, "startup");
-    assertPasses(start(box, OTHER, "clear"));
-    assert.deepEqual(box.bindings("carries.jsonl"), []);
-  });
-  withBox({}, (box) => {
-    box.write("sessions.jsonl", [SESSION_ONE]);
-    start(box, SESSION, "startup");
-    start(box, OTHER, "clear");
-    assertPasses(start(box, OTHER, "clear"));
-    assert.equal(box.bindings("carries.jsonl").length, 1);
-  });
-});
-
-test("a pid recorded before this boot is not a predecessor", () => {
-  withBox({}, (box) => {
-    box.write("sessions.jsonl", [SESSION_ONE]);
-    box.write("processes.jsonl", [{ pid: 4242, session_id: SESSION, source: "startup", at: "2001-01-01T00:00:00.000Z" }]);
-    assertPasses(start(box, OTHER, "clear"));
-    assert.deepEqual(box.bindings("carries.jsonl"), []);
-  });
-});
-
-test("startup, resume and compact carry nothing, but a branch (fork) does", () => {
-  for (const source of ["startup", "resume", "compact"]) {
-    withBox({}, (box) => {
-      box.write("sessions.jsonl", [SESSION_ONE]);
-      start(box, SESSION, "startup");
-      assertPasses(start(box, OTHER, source));
-      assert.deepEqual(box.bindings("carries.jsonl"), [], source);
-      assert.equal(box.bindings("processes.jsonl").length, 2, source);
-    });
-  }
-  withBox({}, (box) => {
-    box.write("sessions.jsonl", [SESSION_ONE]);
-    start(box, SESSION, "startup");
-    const forked = start(box, OTHER, "fork");
-    assert.match(forked.json.systemMessage, /Task checkout-fix .* kept on the branched session/u);
-    assert.equal(box.bindings("carries.jsonl")[0].from, SESSION);
-  });
-});
-
-test("session start does nothing outside an opted-in project or when refused", () => {
-  withBox({ consent: false }, (box) => {
-    assertPasses(start(box, SESSION, "startup"));
-    assert.equal(fs.existsSync(path.join(box.tel, "bindings")), false);
-  });
-  withBox({}, (box) => {
-    assertPasses(start(box, SESSION, "startup", { AIDD_TELEMETRY: "0" }));
-    assert.equal(fs.existsSync(path.join(box.tel, "bindings")), false);
-  });
-});
-
-test("session start records facts even when nobody is present", () => {
-  withBox({}, (box) => {
-    assertPasses(start(box, SESSION, "startup", { CLAUDE_CODE_SESSION_ATTENDED: "0", CLAUDE_CODE_ENTRYPOINT: "sdk-cli" }));
-    assert.equal(box.bindings("processes.jsonl").length, 1);
-  });
-});
-
-// ---------------------------------------------------------------- the async catch-up
-
-function catchUp(box, env = {}) {
-  return run(CATCH_UP, box, {
-    payload: box.payload({ hook_event_name: "SessionStart", source: "startup" }),
-    env: box.env(env),
-  });
-}
-
-test("the catch-up ingests, silently, once", () => {
-  withBox({}, (box) => {
-    assertPasses(catchUp(box, { FAKE_AIDD_NOISE: "1" }));
+    assertPasses(ingest(box, { env: box.env({ FAKE_AIDD_NOISE: "1" }) }));
     assert.deepEqual(box.calls().map((c) => c.argv), [["telemetry", "ingest", "--quiet"]]);
   });
 });
 
-test("the catch-up is silent and succeeds with no aidd, with no consent, outside Claude", () => {
-  withBox({ aidd: false }, (box) => assertPasses(catchUp(box)));
+test("codex: the ingest runs aidd once, silently", () => {
+  withBox({}, (box) => {
+    const ledger = path.join(codexHooks(box), "ledger.cjs");
+    const payload = codexPayload(box, codexFile(box, null));
+    assertPasses(run(ledger, box, { payload, env: codexEnv(box, { FAKE_AIDD_NOISE: "1" }), args: ["ingest"] }));
+    assert.deepEqual(box.calls().map((c) => c.argv), [["telemetry", "ingest", "--quiet"]]);
+  });
+});
+
+test("the ingest is silent and succeeds with no aidd, with no consent, outside Claude", () => {
+  withBox({ aidd: false }, (box) => assertPasses(ingest(box)));
   withBox({ consent: false }, (box) => {
-    assertPasses(catchUp(box));
+    assertPasses(ingest(box));
     assert.deepEqual(box.calls(), []);
   });
   withBox({}, (box) => {
-    assertPasses(run(CATCH_UP, box, { payload: box.payload({ session_id: OTHER }) }));
+    assertPasses(ingest(box, { payload: box.payload({ session_id: OTHER }) }));
     assert.deepEqual(box.calls(), []);
   });
 });
 
 // ---------------------------------------------------------------- what is registered
 
-test("hooks.json registers the three hooks, the catch-up async, every script present", () => {
+test("hooks.json: a sync reminder and an async ingest at SessionStart, no prompt hook", () => {
   const registered = JSON.parse(fs.readFileSync(path.join(HOOKS, "hooks.json"), "utf8")).hooks;
-  const start = registered.SessionStart.flatMap((group) => group.hooks);
-  assert.equal(start.length, 2);
-  assert.ok(start[0].command.endsWith("/hooks/session-start.cjs"));
-  assert.notEqual(start[0].async, true, "the session facts must be written before the next hook");
-  assert.ok(start[1].command.endsWith("/hooks/catch-up.cjs"));
-  assert.equal(start[1].async, true);
-  const prompt = registered.UserPromptSubmit.flatMap((group) => group.hooks);
-  assert.equal(prompt.length, 1);
-  assert.ok(prompt[0].command.endsWith("/hooks/prompt-gate.cjs"));
-  assert.notEqual(prompt[0].async, true, "an async hook cannot block");
-  for (const entry of [...start, ...prompt]) {
-    assert.match(entry.command, /^node \$\{CLAUDE_PLUGIN_ROOT\}\/hooks\/[a-z-]+\.cjs$/u);
-    assert.ok(fs.existsSync(path.join(HOOKS, path.basename(entry.command))), entry.command);
+  assert.deepEqual(Object.keys(registered), ["SessionStart"]);
+  const entries = registered.SessionStart.flatMap((group) => group.hooks);
+  assert.equal(entries.length, 2);
+  const [reminder, ledger] = entries;
+  assert.equal(reminder.command, "node ${CLAUDE_PLUGIN_ROOT}/hooks/task.cjs remind");
+  assert.equal(reminder.timeout, 5);
+  assert.notEqual(reminder.async, true);
+  assert.equal(ledger.command, "node ${CLAUDE_PLUGIN_ROOT}/hooks/ledger.cjs ingest");
+  assert.equal(ledger.async, true);
+  for (const entry of [reminder, ledger]) {
+    assert.equal(typeof entry.statusMessage, "string");
+    assert.ok(fs.existsSync(path.join(HOOKS, entry.command.split(" ")[1].split("/").pop())), entry.command);
   }
 });

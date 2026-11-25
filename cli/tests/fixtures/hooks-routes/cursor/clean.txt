@@ -34,18 +34,13 @@ machine cursor aidd-telemetry scope=user: 0 hook files
   "entries": [
     {
       "event": "sessionStart",
-      "command": "node ./.cursor/hooks/aidd-telemetry/session-start.cjs",
-      "digest": "daac9d4ea10fff9226f4b1604070a0f5"
+      "command": "node ./.cursor/hooks/aidd-telemetry/task.cjs remind",
+      "digest": "f1c0a86807eb8cdaa3de9549d09bbe55"
     },
     {
       "event": "sessionStart",
-      "command": "node ./.cursor/hooks/aidd-telemetry/catch-up.cjs",
-      "digest": "0a4ab6089fa2ff8a93f649eceff1a720"
-    },
-    {
-      "event": "beforeSubmitPrompt",
-      "command": "node ./.cursor/hooks/aidd-telemetry/prompt-gate.cjs",
-      "digest": "9cd664ac5f179902b97cbfd28ab6bb51"
+      "command": "node ./.cursor/hooks/aidd-telemetry/ledger.cjs ingest",
+      "digest": "f259b93b1b3b90e586c48609e50f377b"
     }
   ],
   "scripts": {}

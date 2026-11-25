@@ -33,7 +33,7 @@ interface NeutralEvent {
 
 interface Adapter {
   readEvent(): NeutralEvent | undefined;
-  answer(answer: { level: 1 | 2; text: string }): void;
+  answer(answer: { level: 1 | 2; text?: string; person?: string }): void;
   continueTurn(text: string): void;
 }
 
