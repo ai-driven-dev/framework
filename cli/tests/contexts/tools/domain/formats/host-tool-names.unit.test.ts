@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   hostToolNames,
   hostToolNamesMatching,
+  matcherNamesNoToolWarning,
 } from "../../../../../src/contexts/tools/domain/formats/host-tool-names.js";
 
 const renames = new Map([
@@ -41,12 +42,15 @@ describe("a host's tool names for a plugin's matcher", () => {
     expect(hostToolNamesMatching("Edit|Write", tools)).toEqual(["edit_file", "write_file"]);
   });
 
-  it("selects each tool a regular expression matches, as Claude reads a matcher", () => {
-    expect(hostToolNamesMatching("Edit.*", tools)).toEqual(["edit_file"]);
-    expect(hostToolNamesMatching("^(Write|Bash)$", tools)).toEqual(["write_file", "run_command"]);
+  it("reads a name whatever its case, as the bridges read a matcher", () => {
+    expect(hostToolNamesMatching("bash|EDIT", tools)).toEqual(["run_command", "edit_file"]);
   });
+});
 
-  it("selects nothing for a regular expression no mapped tool matches", () => {
-    expect(hostToolNamesMatching("mcp__.*", tools)).toEqual([]);
+describe("the warning for a matcher naming no tool the host has", () => {
+  it("names the event, the matcher and the host", () => {
+    expect(matcherNamesNoToolWarning("Kiro", "PostToolUse", "Delete")).toBe(
+      "PostToolUse matcher 'Delete' names no Kiro tool, group skipped"
+    );
   });
 });

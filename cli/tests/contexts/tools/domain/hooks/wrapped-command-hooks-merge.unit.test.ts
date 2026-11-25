@@ -163,12 +163,8 @@ describe("wrapped command hooks", () => {
       ]);
     });
 
-    it("matches every tool for a group with no matcher, an empty one or a star", () => {
-      expect(matchersOf(grouped("PostToolUse", undefined, "", "*"), "PostToolUse")).toEqual([
-        "*",
-        "*",
-        "*",
-      ]);
+    it("matches every tool for a group with no matcher", () => {
+      expect(matchersOf(grouped("PostToolUse", undefined), "PostToolUse")).toEqual(["*"]);
     });
 
     it("drops a tool the host has no name for from a group that keeps others", () => {
@@ -181,18 +177,9 @@ describe("wrapped command hooks", () => {
       expect(matchersOf(grouped("PostToolUse", "Write|Write"), "PostToolUse")).toEqual(["put"]);
     });
 
-    it("reads a matcher that is a regular expression, as Claude does", () => {
-      expect(matchersOf(grouped("PostToolUse", "Edit.*", "^(Write|Bash)$"), "PostToolUse")).toEqual(
-        ["patch", "put|sh"]
-      );
-    });
-
-    it("skips a regular expression no host tool matches, with a warning naming it", () => {
-      const { content, warnings } = merged(null, grouped("PostToolUse", "mcp__.*"));
-
-      expect([JSON.parse(content), warnings]).toEqual([
-        {},
-        ["PostToolUse matcher 'mcp__.*' names no Host tool, group skipped"],
+    it("reads a tool name whatever its case", () => {
+      expect(matchersOf(grouped("PostToolUse", "write|EDIT"), "PostToolUse")).toEqual([
+        "put|patch",
       ]);
     });
 

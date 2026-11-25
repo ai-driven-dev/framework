@@ -4,7 +4,7 @@ import { rewritePluginRootInJson } from "../../../../shared/domain/materializati
 import type { ProjectHookEntry } from "../../contract/tool-vocabulary.js";
 import { toBase64 } from "../formats/base64.js";
 import { PLUGIN_HOOKS_SOURCE } from "../formats/hooks/descriptor.js";
-import { hostToolNamesMatching } from "../formats/host-tool-names.js";
+import { hostToolNamesMatching, matcherNamesNoToolWarning } from "../formats/host-tool-names.js";
 import type { PluginHookItem, PluginHooksShape } from "./plugin-hooks-shape.js";
 
 // The host runs a handler from its own directory under the project and requires JSON stdout even
@@ -58,10 +58,9 @@ function toHandler(hook: ProjectHookEntry): ProjectHookEntry {
 }
 
 /** The matcher in the host's tool names, or undefined when it selects no tool the host has. A plugin
- * with no matcher, an empty one or `*` asks for every tool. Any other is read as Claude reads it:
- * plain names split on `|`, else a regular expression over the plugin's tool names. */
+ * with no matcher asks for every tool. */
 function hostMatcher(target: WrappedCommandHooksTarget, matcher: string | undefined) {
-  if (matcher === undefined || matcher === "" || matcher === "*") return "*";
+  if (matcher === undefined) return "*";
   const names = hostToolNamesMatching(matcher, target.descriptor.toolNames);
   return names.length > 0 ? names.join("|") : undefined;
 }
@@ -93,9 +92,7 @@ function convert(
     const grouped = groups.flatMap((group) => {
       const matcher = hostMatcher(target, group.matcher);
       if (matcher === undefined) {
-        warnings.push(
-          `${event} matcher '${group.matcher}' names no ${target.label} tool, group skipped`
-        );
+        warnings.push(matcherNamesNoToolWarning(target.label, event, group.matcher ?? ""));
         return [];
       }
       return [{ matcher, hooks: (group.hooks ?? []).filter(runsCommand).map(toHandler) }];
