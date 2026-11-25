@@ -106,9 +106,14 @@ function hasPerson(person) {
   return typeof person === "string" && person !== "";
 }
 
+/** Hands the bridge `person` alone, to show to the person and not to the model. */
+function showPerson(person) {
+  if (hasPerson(person)) print({ systemMessage: person });
+}
+
 /** Asks the model to go on before the turn ends, with `text` as what it must do, and hands the
- * bridge `person` to show (OpenCode's bridge shows it, Kilo's ignores it). Asks once: a turn end that is already a continuation is never
- * continued again. */
+ * bridge `person` to show (OpenCode's bridge shows it, Kilo's ignores it). Asks once: a turn end
+ * that is already a continuation is never continued again. */
 function continueTurn(text, person) {
   if (typeof text !== "string" || text === "" || current?.stopActive === true) return;
   print({
@@ -123,10 +128,7 @@ function continueTurn(text, person) {
  * is handed to the bridge, at any event. */
 function answer({ text, person } = {}) {
   if (current === undefined) return;
-  if (typeof text !== "string" || text === "") {
-    if (hasPerson(person)) print({ systemMessage: person });
-    return;
-  }
+  if (typeof text !== "string" || text === "") return showPerson(person);
   if (current.event === "Stop") return continueTurn(text, person);
   print({ additionalContext: text });
 }

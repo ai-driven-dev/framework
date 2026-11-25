@@ -450,9 +450,8 @@ describe("OpenCode's person message, through its bridge", () => {
     const [init] = await captured<Record<string, unknown>>("opencode-server-init.json", ws.project);
     const { input, output } = await systemTransform("opencode", ws.project);
     const { plugin, toasts } = await start(ws, init);
-    await recorded(ws, 1);
-    // The script has run; give its answer time to reach the bridge before looking.
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    // Dispose waits for the SessionStart script's answer: nothing is left in flight to show it.
+    await plugin.dispose?.();
     expect(toasts).toStrictEqual([]);
 
     await plugin["experimental.chat.system.transform"](input, output);
@@ -476,7 +475,8 @@ describe("OpenCode's person message, through its bridge", () => {
     process.on("unhandledRejection", unhandled);
 
     await expect(plugin["tool.execute.after"](write.call, write.output)).resolves.toBeUndefined();
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    // An unhandled rejection is raised once the microtasks drain, before the next check phase.
+    await new Promise((resolve) => setImmediate(resolve));
     process.off("unhandledRejection", unhandled);
 
     expect(toasts).toHaveLength(1);

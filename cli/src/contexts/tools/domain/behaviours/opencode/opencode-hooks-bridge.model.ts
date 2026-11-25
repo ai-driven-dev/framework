@@ -181,7 +181,7 @@ export const ${parts.identifier} = async (input) => {
   return {
     dispose: async () => {
       disposed = true;
-      await pending;
+      await Promise.all([started, pending]);
     },
     "experimental.chat.system.transform": async (_input, output) => {
       const { context, person } = await started;
