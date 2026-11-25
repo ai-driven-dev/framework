@@ -83,39 +83,39 @@ A hook checks mechanical rules only; a rule that needs judgment belongs to the s
 
 ### Levels and moments
 
-A level is what a finding demands; a moment is when the artifact is final.
-
-| Level | Effect | Mechanism | Used when |
+| Level | Effect | Mechanism | When |
 | --- | --- | --- | --- |
-| 1. Inform | the model reads the finding and decides | `additionalContext` | the rule is certain but a deviation can be legitimate |
-| 2. Require | the model must fix before going on | `decision: "block"` with `reason` | the rule is certain, has no false positive on real data, and the fix is local |
-| 3. Refuse | the write does not happen | the host's deny, through `refuse(reason)` | the file on disk declares itself frozen, such as a spec whose status is `locked` |
+| 0. None | no hook | | the check needs judgment |
+| 1. Inform | the model reads the finding and decides | `additionalContext` | the rule is certain but a deviation can be legitimate, or it has a false positive on real data |
+| 2. Require | the model fixes before going on | `decision: "block"` with `reason` | the rule is certain, has no false positive on real data, and the fix is local |
+| 3. Refuse | the write does not happen | the host's deny, through `refuse(reason)` | the file on disk declares itself frozen, such as a spec whose status is `locked`; never judged on the written content, whose `Edit` fragment would block drafts |
 
 | Moment | Event | For |
 | --- | --- | --- |
-| Before the write | PreToolUse | refusing a write to a frozen file, judged on the file already on disk |
+| Session start | SessionStart | keeping a generated state true, silently |
+| Prompt sent | UserPromptSubmit | holding a prompt until the work has a declared task (`aidd-telemetry`) |
+| Before the write | PreToolUse | refusing a write to a frozen file |
 | After the write | PostToolUse | an artifact final in one write: a memory file, a frontmatter |
-| At the turn end | Stop, once per turn | an artifact final only after several writes; asks once to fix the errors on the lines the turn changed |
-
-SessionStart keeps a generated state true, silently. A refusal never judges the content being written: PreToolUse sees only an `Edit` fragment, and judging it would block drafts.
-
-Placing a gap: judgment needed, no hook; one write, after the write, several, at the turn end; any false positive on real data, level 1.
+| Turn end | Stop, once per turn | an artifact final after several writes; asks once to fix the errors on the lines the turn changed |
+| Session end | none | unused: nothing is left to fix |
 
 ### Rules
 
-1. **Owner scope.** A hook checks the paths its plugin owns and exits before reading anything else. `aidd-context` also owns the layout of `aidd_docs/`; `aidd-dev` and `aidd-pm` own the artifacts their skills' contracts name.
-2. **One neutral interface.** A hook reads and answers through `hooks/lib/host.cjs`, never a host's payload. `readEvent()` returns the event with its `files` (each with `written`, the text put in the file, and `replaced`, the text it replaced, either absent where the host gives none); `answer({ level, text, person })` informs or requires, `continueTurn(text, person)` asks once; `refuse(reason)` denies the tool call about to run, and does nothing on any other event or under an adapter that does not report that moment; the optional `person` text is shown to the person by hosts that can, and ignored elsewhere. A `files` entry may name a deleted file: tolerate `ENOENT`. `scripts/check/engine/sync.cjs` writes `hooks/lib/host.cjs` from `cli/assets/hooks-runtime/host-claude.cjs`. Shared rules live in `hooks/lib/common-rules.cjs`; copies are held identical by the `hook-rule-copies` check of `scripts/check/run.cjs`.
-3. **Findings only.** Report what this write or turn produced, never standing errors: every error on the whole lines of `written` not in `replaced`, counted as a multiset, one line each. When those lines are unknown (a shell write, an edit without `written`, a write that only removed lines), a file's errors are grouped under its name, or under `<folder>/*` across several files, and only inform. A whole-file write without `replaced` counts every line as written, informs only and is never required. Never a missing file; an error in another file is rule 7's. Warnings follow, capped at 10. Silent when clean. Format:
+| Rule | Says |
+| --- | --- |
+| Owner scope | A hook checks the paths its plugin owns and exits before reading anything else. `aidd-context` also owns the layout of `aidd_docs/`; `aidd-dev` and `aidd-pm` own the artifacts their skills' contracts name. |
+| One neutral interface | Read and answer through `hooks/lib/host.cjs`, never a host's payload. `readEvent()` gives the event and its `files` (`written`, `replaced`, absent where the host gives none; a deleted file is possible: tolerate `ENOENT`). `answer({ level, text, person })` informs or requires, `continueTurn(text, person)` asks once, `refuse(reason)` denies the tool call about to run and does nothing elsewhere. `person` is shown to the person where the host can. `scripts/check/engine/sync.cjs` writes `host.cjs` from `cli/assets/hooks-runtime/host-claude.cjs`; shared rules live in `hooks/lib/common-rules.cjs`, held identical by the `hook-rule-copies` check of `scripts/check/run.cjs`. |
+| Findings only | Report what this write or turn produced, never standing errors: errors on the lines of `written` not in `replaced`, as a multiset. Lines unknown (a shell write, an edit without `written`, a removal): group by file or `<folder>/*`, inform only. A whole-file write without `replaced` informs only. Never a missing file; an error in another file belongs to turn state. Warnings follow, capped at 10. Silent when clean. Format below. |
+| One entry per concern | `node ${CLAUDE_PLUGIN_ROOT}/hooks/<concern>.cjs <goal>`. `aidd-context`: `memory.cjs` with `load`, `sync`; `aidd-context`, `aidd-dev`, `aidd-pm`: `artifacts.cjs` with `start`, `mark`, `check`, generated from `scripts/check/engine/hook.cjs`. `aidd-context` has one Stop entry, `memory.cjs sync` carrying the `artifacts.cjs` findings: the OpenCode and Kilo bridges silence a second one. |
+| Node built-ins | CommonJS, no dependency. A child process (git included) or a network call only when no built-in can do the job: read-only, scoped, measured under the timeout on a large repository. |
+| Bounded | 5 s declared timeout. Exit 0 on garbage, empty stdin or an unknown event; an internal failure answers nothing. |
+| Turn state is the plugin's own | A plugin with a Stop check keeps its own per-session state, and may tell an error new in another file once per turn; the shared library holds none. `artifacts.cjs` keeps, in the system temp folder, a mark of the artifacts written this turn and a reference time finding shell writes by mtime; a `"shell": false` contract keeps only the files a command of the turn names. `aidd-context` keeps a bank snapshot and checks at Stop the memory lines written, lines lost from the bank, and sync, naming a context file it could not sync. |
+| Status message | Every handler carries a short `statusMessage` naming its plugin and action (`AIDD Context: sync project memory`); Codex shows it when asking for trust. |
 
-   ```
-   <plugin>: <n> errors, <m> warnings
-   <file>[:<line>] <rule> ["<excerpt>"] => <fix>
-   ```
-4. **One entry per concern.** `node ${CLAUDE_PLUGIN_ROOT}/hooks/<concern>.cjs <goal>`: one file per concern, its argument naming what the event asks (`aidd-context`: `load`, `sync`; `aidd-context`, `aidd-dev` and `aidd-pm`: `artifacts.cjs` with `start`, `mark`, `check`, generated from `scripts/check/engine/hook.cjs`). `aidd-context` has a single Stop entry: `memory.cjs sync` answers the turn end once, carrying the `artifacts.cjs` findings, because the OpenCode and Kilo bridges silence a second Stop entry.
-5. **Node built-ins; anything heavier is justified and measured.** CommonJS, `fs`, `path`, `os`, no dependency. A child process, git included, or a network call runs on every write or turn end it hooks: use one only when no built-in can do the job, keep it read-only and scoped to what the hook guards, and measure it under the hook's timeout on a large repository before it ships.
-6. **Bounded.** A 5 s declared timeout. Exit 0 on garbage, empty stdin or an unknown event; an internal failure answers nothing.
-7. **Turn state is the plugin's own.** A plugin with a Stop check keeps its own per-session state, and may tell an error new in another file once per turn; the shared library holds none. `artifacts.cjs` keeps, in the system temp folder, a per-session mark of the artifacts written this turn and a reference time that finds shell writes by mtime; a `"shell": false` contract (skill, agent, command) keeps only the files a command of the turn names, so an install stays silent. `aidd-context` keeps a per-session bank snapshot and checks at Stop: lint of the memory lines written this turn (the file-size warning for any file it changed), lines lost from the whole bank, sync, naming a context file it could not sync.
-8. **Status message.** Every handler carries a short `statusMessage` naming its plugin and action (`AIDD Context: sync project memory`); Codex shows it when asking for trust.
+```
+<plugin>: <n> errors, <m> warnings
+<file>[:<line>] <rule> ["<excerpt>"] => <fix>
+```
 
 ### What the CLI carries
 
