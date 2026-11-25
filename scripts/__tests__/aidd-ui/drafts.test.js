@@ -318,7 +318,7 @@ describe("aidd-ui drafts", () => {
       assert.equal(count(/<span class="chip">[^<]*<span class="key">kind<\/span>brand<\/span>/g), ROWS.length);
       assert.equal(count(/<p>#### Deep<\/p>/g), ROWS.length);
       assert.equal(count(/&lt;script&gt;alert\(1\)&lt;\/script&gt;/g), ROWS.length);
-      assert.doesNotMatch(canvas, /<pre|<script|<i>/);
+      for (const tag of ["<pre", "<script", "<i>"]) assert.ok(!canvas.includes(tag), `the canvas holds no ${tag}`);
     });
 
     it("keeps the feedback in a closed Show JSON disclosure and Copy a plain button", () => {
