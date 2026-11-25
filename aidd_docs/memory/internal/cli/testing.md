@@ -15,15 +15,11 @@ Levels, guards, review grid: [`actions/05-test.md`](../../../../.claude/skills/w
 
 Run from `cli/`.
 
-| Command | Runs |
-| --- | --- |
-| `pnpm test` | every project but `tooling`; never builds `dist/` |
-| `pnpm test:<project>` (`test:arch` for architecture) | one project |
-| `pnpm golden:update [name]` | rewrites stored goldens, or those under `cli/tests/golden/<name>*`; refused in CI |
-| `pnpm smoke` | the built binary over `cli/scripts/smoke-tools.sh`, hermetic |
-| `pnpm smoke:full`, `smoke:collision` | the same with the remote fetch; a seeded own install |
-| `pnpm test:host-contract` | recorded host behaviour replayed on installed hosts; weekly CI job |
-| `pnpm smoke:real` | real host registries: [`smoke-real.md`](smoke-real.md) |
+- `pnpm test` never builds `dist/`; `tooling` is not among its projects.
+- `pnpm golden:update [name]` rewrites stored goldens, or those under `cli/tests/golden/<name>*`; refused in CI.
+- `pnpm smoke` runs the built binary over `cli/scripts/smoke-tools.sh`, hermetic; `smoke:full` and `smoke:collision` add the remote fetch and a seeded own install.
+- `pnpm test:host-contract` replays recorded host behaviour on installed hosts; a weekly CI job.
+- `pnpm smoke:real` reaches real host registries: [`smoke-real.md`](smoke-real.md).
 
 ## Gates
 
@@ -31,7 +27,7 @@ Run from `cli/`.
 | --- | --- | --- |
 | pre-commit | `pnpm lint` (biome and `cli/biome-plugins/`), `pnpm typecheck`, `pnpm test:arch`, `node scripts/check-cli-type-honesty.mjs` from the root | `cli-lint`, `cli-typecheck`, `cli-architecture` |
 | pre-push | `pnpm knip`, `pnpm knip:production`, `pnpm jscpd`, `pnpm jscpd:profiles`, every project but `tooling` and `architecture` | `cli-knip`, `cli-jscpd`, `cli-build`, `cli-coverage` |
-| CI only | coverage thresholds, bundle budget, smoke, mutation | `cli-coverage`, `cli-build`, `cli-smoke`, `cli-mutation` |
+| CI only | the jobs of `cli-ci.yml` | `cli-coverage`, `cli-build`, `cli-smoke`, `cli-mutation` |
 
 - Every job fans into the required check `cli / gate` in `.github/workflows/cli-ci.yml`.
 
