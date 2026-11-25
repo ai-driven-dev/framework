@@ -68,13 +68,16 @@ describe("spec contract", () => {
     refusedOnlyBy(GOOD.replace("## Target", "## Swap").replace("## Done-when", "## Target").replace("## Swap", "## Done-when"), "SPEC-01");
   });
 
-  it("accepts a locked spec with no open question", () => {
-    const locked = GOOD.replace("status: draft", "status: locked").replace("- TBD: should the export include deleted items?", "None");
-    assert.deepEqual(check(locked), { code: 0, out: "", err: "" });
+  const closed = GOOD.replace("## Open Questions\n\n- TBD: should the export include deleted items?\n\n", "");
+
+  it("accepts a spec, draft or locked, that omits Open Questions when nothing is open", () => {
+    assert.deepEqual(check(closed), { code: 0, out: "", err: "" });
+    assert.deepEqual(check(closed.replace("status: draft", "status: locked")), { code: 0, out: "", err: "" });
   });
 
-  it("SPEC-02 refuses a locked spec with an open question", () => {
+  it("SPEC-02 refuses a locked spec that still holds an Open Questions section", () => {
     refusedOnlyBy(GOOD.replace("status: draft", "status: locked"), "SPEC-02");
+    refusedOnlyBy(GOOD.replace("status: draft", "status: locked").replace("- TBD: should the export include deleted items?", "None"), "SPEC-02");
   });
 
   it("SPEC-01 refuses a status missing or other than draft or locked", () => {

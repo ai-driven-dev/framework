@@ -16,7 +16,8 @@ The spec's path, and the findings: review findings or answers to its open questi
    - Half answered: narrow it.
    - Still open, or a finding that cannot be resolved: list it.
 5. Overwrite the spec, run [validate-spec.cjs](../scripts/validate-spec.cjs) on it, fix, repeat until it passes.
-6. Answer with its path and each change as `before -> after`.
+6. Answer with its path and each changed line, as `- old` then `+ new`.
+   - Another section breaking spec-content.md: name it, unchanged.
    - Nothing changed: say nothing was written.
 
 ## Output

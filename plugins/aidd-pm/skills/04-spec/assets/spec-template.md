@@ -2,7 +2,7 @@
 status: draft
 ---
 
-<!-- Fill each section per references/spec-content.md, drop Stakeholders and Context when empty, then strip this comment. -->
+<!-- Fill each section per references/spec-content.md, drop Open Questions, Stakeholders and Context when empty, then strip this comment. -->
 
 # {{Project / Feature Name}}
 
