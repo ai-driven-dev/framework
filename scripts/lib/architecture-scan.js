@@ -78,5 +78,6 @@ function scan(root, relativePaths) {
 module.exports = {
   describeFix,
   governedPaths,
+  markdownUnder,
   scan,
 };
