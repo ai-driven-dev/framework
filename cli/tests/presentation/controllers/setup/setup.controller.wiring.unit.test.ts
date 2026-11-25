@@ -219,6 +219,28 @@ describe("aidd setup - the agents' provider", () => {
     );
   });
 
+  it("refreshes the agents alone, and says the main session is unchanged, with --agents-only", async () => {
+    const lines = await run(
+      "--ide",
+      SECOND_SYNTHETIC_TOOL,
+      "--provider",
+      "openai",
+      "--agents-only"
+    );
+
+    expect(setAgentModel).toHaveBeenCalledWith({
+      projectRoot: PROJECT_ROOT,
+      hosts: [SECOND_SYNTHETIC_TOOL],
+      provider: "openai",
+      scope: "project",
+      agentsOnly: true,
+    });
+    expect(lines).toContain(
+      "Models on openai, for every project on this machine; main session unchanged:"
+    );
+    expect(lines).toContain(OTHER_PROJECTS(SECOND_SYNTHETIC_TOOL, "openai --agents-only"));
+  });
+
   it("changes nothing of the provider when the install fails", async () => {
     resolveSourceIfNeeded.mockRejectedValueOnce(new Error("network down"));
     vi.spyOn(process, "exit").mockImplementation((code) => {
@@ -248,6 +270,7 @@ describe("aidd setup - the agents' provider", () => {
       SYNTHETIC_IDE_TOOL,
     ],
     [["--ide", SYNTHETIC_IDE_TOOL, "--provider", "bogus"], 'Unknown provider "bogus"'],
+    [["--ide", SECOND_SYNTHETIC_TOOL, "--agents-only"], "--agents-only needs --provider"],
   ])("refuses %j before building or writing anything", async (args, message) => {
     vi.spyOn(process, "exit").mockImplementation((code) => {
       throw new ExitRequested(Number(code ?? 0));

@@ -16,6 +16,9 @@ export interface SetAgentModelsRequest {
   /** `"user"` also refreshes what `setup --global` installed; the provider and the main
    * session's model hold for the whole machine either way. */
   readonly scope: Scope;
+  /** Refreshes the agents alone: the main session's model and the record of what it replaced
+   * are left as they are. */
+  readonly agentsOnly?: boolean;
 }
 
 export interface SetAgentModelsResult extends MainSessionModelsResult {
@@ -34,7 +37,7 @@ export interface SetAgentModelsDeps {
  * The setter for agent models, run once the install has succeeded. Records the provider each
  * host's agents run on, which every later build of that host applies, re-installs this project's
  * plugins so they carry it, then points the host's main session at the provider's main-tier
- * model.
+ * model, unless the request is for the agents alone.
  */
 export class SetAgentModels {
   constructor(private readonly deps: SetAgentModelsDeps) {}
@@ -51,7 +54,9 @@ export class SetAgentModels {
     }
     return {
       reinstalled,
-      ...(await this.deps.mainSessions.execute({ hosts: options.hosts, chosen })),
+      ...(options.agentsOnly === true
+        ? { changed: [], skipped: [] }
+        : await this.deps.mainSessions.execute({ hosts: options.hosts, chosen })),
     };
   }
 }

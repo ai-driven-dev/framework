@@ -9,10 +9,12 @@ export interface AgentModelsReport {
   provider: string | undefined;
   hosts: readonly AiToolId[];
   main: Awaited<ReturnType<SetAgentModels["execute"]>>;
+  /** The run left the main session alone, so none is reported. */
+  agentsOnly?: boolean;
 }
 
 function reportHostModels(
-  { output, catalog, main }: AgentModelsReport,
+  { output, catalog, main, agentsOnly }: AgentModelsReport,
   host: AiToolId,
   provider: string
 ): void {
@@ -22,7 +24,7 @@ function reportHostModels(
   const written = main.changed.findLast((entry) => entry.host === host);
   const { model, effort } = models.mainModel(provider);
   const effortShown = effort === undefined ? "" : ` (${effort})`;
-  if (!skipped) {
+  if (!skipped && agentsOnly !== true) {
     output.info(
       written === undefined
         ? `  ${host} main session: not managed by aidd, still the IDE's choice`
@@ -38,6 +40,7 @@ function reportHostModels(
  * model was written, which plugins were updated, and what other projects still need. */
 export function reportAgentModels(report: AgentModelsReport): void {
   const { output, provider, hosts, main } = report;
+  const flag = report.agentsOnly === true ? " --agents-only" : "";
   if (provider === undefined) reportRestoredModels(report);
   else reportConfiguredModels(report, provider);
   for (const { host, path, reason } of main.skipped) {
@@ -49,17 +52,20 @@ export function reportAgentModels(report: AgentModelsReport): void {
       : "Agents installed later get these models too."
   );
   output.info(
-    `Other projects follow at their next install; to update the agents they already have, run \`aidd setup --ide ${hosts.join(",")} --provider ${provider ?? "none"}\` there.`
+    `Other projects follow at their next install; to update the agents they already have, run \`aidd setup --ide ${hosts.join(",")} --provider ${provider ?? "none"}${flag}\` there.`
   );
 }
 
-function reportRestoredModels({ output, hosts, main }: AgentModelsReport): void {
-  output.success(`${hosts.join(", ")}: the agents run on the IDE's model again.`);
+function reportRestoredModels({ output, hosts, main, agentsOnly }: AgentModelsReport): void {
+  const unchanged = agentsOnly === true ? "; main session unchanged" : "";
+  output.success(`${hosts.join(", ")}: the agents run on the IDE's model again${unchanged}.`);
+  if (agentsOnly === true) return;
   for (const { host, path } of main.changed)
     output.info(`  ${host} main session: restored in ${path}`);
 }
 
 function reportConfiguredModels(report: AgentModelsReport, provider: string): void {
-  report.output.success(`Models on ${provider}, for every project on this machine:`);
+  const unchanged = report.agentsOnly === true ? "; main session unchanged" : "";
+  report.output.success(`Models on ${provider}, for every project on this machine${unchanged}:`);
   for (const host of report.hosts) reportHostModels(report, host, provider);
 }

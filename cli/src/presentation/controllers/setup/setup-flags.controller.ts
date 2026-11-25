@@ -27,6 +27,7 @@ export interface SetupCmdOptions {
   scope?: string;
   global?: boolean;
   provider?: string;
+  agentsOnly?: boolean;
 }
 
 export function parseSourceFlag(
@@ -67,18 +68,6 @@ export function parsePluginsFlag(
     .map((s) => s.trim())
     .filter(Boolean);
   return { mode: "named", names };
-}
-
-/** `--provider` names a tool that runs the agents, through `--ide`. */
-export function requireAgentHosts(
-  provider: string | undefined,
-  request: { hosts: readonly string[]; runnable: readonly string[] }
-): void {
-  if (provider !== undefined && request.hosts.length === 0) {
-    throw new Error(
-      `--provider needs --ide with a tool that runs the framework's agents: ${request.runnable.join(", ")}.`
-    );
-  }
 }
 
 /** `--ide` takes every tool, AI assistants and editors alike; `--ai`, its former spelling,
@@ -147,9 +136,5 @@ export function declareSetupOptions(command: Command, catalog: ToolCatalog): Com
       "install for every project on this machine instead of into this project; see the " +
         "requirements below"
     )
-    .addOption(new Option("--scope <scope>", "Former spelling: user means --global").hideHelp())
-    .option(
-      "--provider <provider>",
-      `Run each tool's main session and agents on this provider's model for their role (${catalog.agentProviders().join(", ")}), or none for the IDE's model`
-    );
+    .addOption(new Option("--scope <scope>", "Former spelling: user means --global").hideHelp());
 }

@@ -17,7 +17,9 @@ const OPENAI_CATALOG = syntheticMixedCatalog([OPENAI_CONFIG]);
 
 const NO_CHANGE = { reinstalled: [], changed: [], skipped: [] };
 
-function reported(report: Pick<AgentModelsReport, "provider" | "hosts" | "main">): CapturingOutput {
+function reported(
+  report: Pick<AgentModelsReport, "provider" | "hosts" | "main"> & { agentsOnly?: boolean }
+): CapturingOutput {
   const output = new CapturingOutput(false);
   reportAgentModels({ output, catalog: OPENAI_CATALOG, ...report });
   return output;
@@ -84,5 +86,39 @@ describe("reporting agent models", () => {
       `${SECOND_SYNTHETIC_TOOL} main session left as it is in /new/settings.json: it holds no JSON object.`,
     ]);
     expect(output.at("warn")).toHaveLength(1);
+  });
+
+  describe("for the agents alone", () => {
+    it("says each agent's model and that the main session is unchanged, with the same flag to repeat it", () => {
+      const output = reported({
+        agentsOnly: true,
+        provider: "openai",
+        hosts: [OPENAI_TOOL],
+        main: { ...NO_CHANGE, reinstalled: ["aidd-orchestrator"] },
+      });
+
+      expect(output.lines).toEqual([
+        "Models on openai, for every project on this machine; main session unchanged:",
+        `  ${OPENAI_TOOL} reviewer: gpt-6.1-sol (high)`,
+        `  ${OPENAI_TOOL} explorer, executor, validator: gpt-6-luna (medium)`,
+        "Agents updated: aidd-orchestrator.",
+        `Other projects follow at their next install; to update the agents they already have, run \`aidd setup --ide ${OPENAI_TOOL} --provider openai --agents-only\` there.`,
+      ]);
+    });
+
+    it("gives the agents back the IDE's model without a word about the main session", () => {
+      const output = reported({
+        agentsOnly: true,
+        provider: undefined,
+        hosts: [SYNTHETIC_TOOL],
+        main: NO_CHANGE,
+      });
+
+      expect(output.lines).toEqual([
+        `${SYNTHETIC_TOOL}: the agents run on the IDE's model again; main session unchanged.`,
+        "Agents installed later get these models too.",
+        `Other projects follow at their next install; to update the agents they already have, run \`aidd setup --ide ${SYNTHETIC_TOOL} --provider none --agents-only\` there.`,
+      ]);
+    });
   });
 });

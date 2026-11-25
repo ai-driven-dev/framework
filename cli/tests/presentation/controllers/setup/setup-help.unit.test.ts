@@ -38,7 +38,7 @@ describe("aidd setup - the help surface", () => {
     );
   });
 
-  it("offers a source, one tool list, a plugin mode, a scope, a provider, and its switches", () => {
+  it("offers a source, one tool list, a plugin mode, a scope, a provider, an agents-only switch, and its switches", () => {
     const visible = setupCommand().options.filter((option) => !option.hidden);
     expect(visible.map((option) => [option.flags, option.description])).toEqual([
       ["--source <mode>", "Framework source: remote or local"],
@@ -59,6 +59,10 @@ describe("aidd setup - the help surface", () => {
       [
         "--provider <provider>",
         "Run each tool's main session and agents on this provider's model for their role (openai, anthropic, mistral), or none for the IDE's model",
+      ],
+      [
+        "--agents-only",
+        "Update the agents' models without changing the main session's settings (requires --provider)",
       ],
     ]);
     expect(
