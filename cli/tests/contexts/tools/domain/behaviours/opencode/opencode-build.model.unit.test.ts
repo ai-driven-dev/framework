@@ -157,7 +157,10 @@ describe("building OpenCode's flat contract", () => {
       skills: { kind: "fullTree", srcDir: "skills" },
       agents: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
       hooks: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
-      mcp: { supported: false, reason: "carried by the config artifact (opencode.json mcp)" },
+      mcp: {
+        supported: false,
+        reason: "carried by the config artifact (opencode.json mcp)",
+      },
     });
   });
 

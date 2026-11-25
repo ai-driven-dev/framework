@@ -2,7 +2,11 @@
 
 import { join } from "node:path";
 import { describe, it } from "vitest";
-import type { ArtifactContract } from "../../src/shared/domain/materialization/build-contract.js";
+import { foldsFlatMcp } from "../../src/contexts/translate/domain/rules/flat-mcp.js";
+import type {
+  ArtifactContract,
+  ToolBuildContract,
+} from "../../src/shared/domain/materialization/build-contract.js";
 import { pluginModeOf } from "../contexts/tools/testing/plugin-mode.builder.js";
 import { catalogOf, registeredAiConfig } from "../shared/testing/catalog-of.builder.js";
 import { REPOSITORY_ROOT } from "../shared/testing/repository-root.builder.js";
@@ -13,7 +17,7 @@ const SNAPSHOT_FILE = join(REPOSITORY_ROOT, "cli/tests/golden/snapshots/tool-sup
 const SURFACES = ["skills", "agents", "mcp", "hooks", "rules", "commands"] as const;
 type Surface = (typeof SURFACES)[number];
 
-/** `no` is a surface the build contract declares unsupported or does not name; `bridge` is a hooks surface a
+/** `no` is a surface neither the build contract nor the install profile carries; `bridge` is a hooks surface a
  * tool reaches through a generated event bridge instead of a hooks file of its own. */
 type Support = "yes" | "bridge" | "no";
 
@@ -24,11 +28,17 @@ interface ToolSupport {
   pluginMode: string | null;
   /** The tool's own CLI that `aidd` drives to register plugins, or null. */
   nativeCli: string | null;
-  /** What `aidd translate` emits, per output layout the tool supports. */
+  /** What a user gets per output layout the tool supports: build output, plus rules from the install profile. */
   builds: Record<string, Record<Surface, Support>>;
 }
 
-function supportOf(surface: Surface, contract: ArtifactContract | undefined): Support {
+/** What a user gets through `aidd` for one layout: a build file, the config artifact the build folds MCP
+ * into, or the rules section the install profile ships (rules are not part of what `translate` emits). */
+function supportOf(surface: Surface, build: ToolBuildContract, installsRules: boolean): Support {
+  if (surface === "rules" && installsRules) return "yes";
+  if (surface === "mcp" && foldsFlatMcp(build)) return "yes";
+  const declared: Partial<Record<string, ArtifactContract>> = build.artifacts;
+  const contract = declared[surface];
   if (!contract?.supported) return "no";
   if (surface === "hooks" && contract.skipHooksJson === true && contract.hooksBridge) {
     return "bridge";
@@ -46,9 +56,11 @@ function capture(): ToolSupport[] {
       for (const mode of ["marketplace", "flat"] as const) {
         const contract = tool.buildContract(mode);
         if (contract === null) continue;
-        const declared: Partial<Record<string, ArtifactContract>> = contract.artifacts;
         builds[mode] = Object.fromEntries(
-          SURFACES.map((surface) => [surface, supportOf(surface, declared[surface])])
+          SURFACES.map((surface) => [
+            surface,
+            supportOf(surface, contract, tool.installedRulesLocation() !== null),
+          ])
         ) as Record<Surface, Support>;
       }
       return {
