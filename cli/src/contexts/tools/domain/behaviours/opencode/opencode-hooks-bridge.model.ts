@@ -17,6 +17,11 @@
  *   can append its exit-2 stderr to the tool's output, which is how a problem reaches the model.
  *   V2's adapter calls the same hook from a successful tool call, without that answer.
  *
+ * What a script prints for the person (`systemMessage`, from `answer({ person })`) goes to the TUI's
+ * toast, at any of the three events, through the server plugin's own client. SessionStart's waits
+ * for the first turn: a toast shown while the server starts reaches a TUI not yet listening. V2's
+ * adapter has no such client, so a V2 host shows none.
+ *
  * A `matcher` on a `PostToolUse` group filters by tool name, exact or pipe-separated
  * alternation, ignoring case: OpenCode names its tools in lowercase. Absent, every tool matches.
  */
@@ -78,21 +83,33 @@ ${parts.feedStdin(4)}
   });
 }
 
+/** The message a script printed for the person: \`systemMessage\` on stdout at exit 0. */
+function personFrom(code, stdout) {
+  if (code !== 0) return "";
+  try {
+    return String(JSON.parse(stdout)?.systemMessage ?? "").trim();
+  } catch {
+    return "";
+  }
+}
+
 function answerOf(script, args, payload, directory) {
-  return runCapture(script, args, payload, directory).then(({ code, stdout, stderr }) =>
-    answerFrom(code, stdout, stderr)
-  );
+  return runCapture(script, args, payload, directory).then(({ code, stdout, stderr }) => ({
+    answer: answerFrom(code, stdout, stderr),
+    person: personFrom(code, stdout),
+  }));
 }
 
 /** A Stop script's {"decision":"block","reason"} on stdout: the reason to keep working on. */
 function stopReasonOf(script, args, payload, directory) {
   return runCapture(script, args, payload, directory).then(({ code, stdout }) => {
-    if (code !== 0) return "";
+    const person = personFrom(code, stdout);
+    if (code !== 0) return { reason: "", person };
     try {
       const output = JSON.parse(stdout);
-      return ${parts.stopReason};
+      return { reason: ${parts.stopReason}, person };
     } catch {
-      return "";
+      return { reason: "", person };
     }
   });
 }
@@ -145,16 +162,34 @@ export const ${parts.identifier} = async (input) => {
       )
     )
   )
-    .then((answers) => answers.filter(Boolean).join("\\n\\n"))
-    .catch(() => "");
+    .then((results) => ({
+      context: results.map(({ answer }) => answer).filter(Boolean).join("\\n\\n"),
+      person: results.map(({ person }) => person).filter(Boolean).join("\\n\\n"),
+    }))
+    .catch(() => ({ context: "", person: "" }));
+  // The person's message goes to the TUI's toast. Never awaited: the call comes back only once the
+  // server is up, and a toast the TUI cannot show is not worth holding a hook for.
+  const show = (person) => {
+    if (!person) return;
+    Promise.resolve()
+      .then(() => input.client.tui.showToast({ body: { message: person, variant: "warning" } }))
+      .catch(() => {});
+  };
+  // SessionStart's message waits for the first turn: a toast shown at server start reaches a TUI
+  // that is not yet listening, and is lost.
+  let startShown = false;
   return {
     dispose: async () => {
       disposed = true;
       await pending;
     },
     "experimental.chat.system.transform": async (_input, output) => {
-      const context = await started;
+      const { context, person } = await started;
       if (context) output.system.push(context);
+      if (!startShown) {
+        startShown = true;
+        show(person);
+      }
     },
     event: async ({ event }) => {
       if (disposed) return;
@@ -168,7 +203,8 @@ export const ${parts.identifier} = async (input) => {
           // Pending before the script ends: dispose waits for a handling whose script still runs.
           // The prompt is the session's next turn, and this handler must not hold it.
           const handling = asking
-            .then((reason) => {
+            .then(({ reason, person }) => {
+              show(person);
               if (!reason) {
                 continued.delete(sessionId);
                 return undefined;
@@ -190,7 +226,13 @@ export const ${parts.identifier} = async (input) => {
     "tool.execute.after": async (call, output) => {
       try {
         for (const hook of postToolUseCallsFor(call, input.directory)) {
-          const answer = await answerOf(hook.script, hook.args, hook.payload, input.directory);
+          const { answer, person } = await answerOf(
+            hook.script,
+            hook.args,
+            hook.payload,
+            input.directory
+          );
+          show(person);
           ${parts.appendAnswer}
         }
       } catch {

@@ -24,6 +24,8 @@ after the plugin hook or event that carried them: `tool.execute.after` is `{ cal
 `session.idle` and `session.created` are the bus events, `server-init` is the plugin's init input
 (the moment the bridge runs SessionStart). `hookAnswer` does not apply there. `experimental.chat.system.transform` is `{ input, output }` as the host passed them, `output.system` before the plugin adds to it.
 
+`opencode-tui.toast.show.json` is the one file not sent to a hook: it holds what a plugin asked OpenCode's client to show (`request`) and the bus event the server published for it (`event`), read from the server's event stream.
+
 ## Scrubbing
 
 Home and project paths are `/Users/user` and `/Users/user/project`, every session id is the one
