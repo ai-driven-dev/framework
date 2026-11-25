@@ -39,6 +39,8 @@ export const CORE: MessagesOf<SharedOwners> = {
   "version-mismatch": (error) =>
     `Plugin '${error.plugin}': requested version '${error.requested}' does not match catalog version '${error.actual}'.`,
   "auth-storage": (error) => error.detail,
+  "credential-record-unreadable": (error) =>
+    `Cannot read the credential record ${error.path} (${error.reason}). Delete the file, then run \`aidd auth login\`.`,
   "gh-cli": (error) => error.detail,
   "elevated-permission-update": (error) =>
     "Update failed: the global package directory is not writable (EPERM/EACCES).\n" +

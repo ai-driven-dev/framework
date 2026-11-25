@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { chmod, mkdir, open, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { whenAbsent } from "../domain/reading/json-file.js";
 import type { PrivateStorage } from "../ports/private-storage.js";
 
 const NEWLINE = 0x0a;
@@ -65,11 +66,7 @@ export class PrivateStorageAdapter implements PrivateStorage {
   }
 
   async read(path: string): Promise<string | undefined> {
-    try {
-      return await readFile(path, "utf-8");
-    } catch {
-      return undefined;
-    }
+    return whenAbsent(() => readFile(path, "utf-8"), undefined);
   }
 
   async append(path: string, content: string): Promise<void> {

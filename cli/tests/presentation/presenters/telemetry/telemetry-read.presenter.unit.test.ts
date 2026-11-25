@@ -27,6 +27,7 @@ const INGESTED: IngestUsageResult = {
   notStored: NOT_STORED,
   consentLogDamaged: false,
   oldestTranscriptAt: null,
+  unreadable: [],
 };
 describe("printing an ingest result", () => {
   it("says what was read, in the singular and the plural", () => {
@@ -106,6 +107,14 @@ describe("printing an ingest result", () => {
       "Not stored by this read: 1 call from a clone whose consent was closed; run `aidd telemetry on` in it to measure again.",
     ]);
     expect(lines.join("\n")).not.toContain("has not opted in");
+  });
+
+  it("warns once per unreadable source, naming it and saying it is read again", () => {
+    const output = new CapturingOutput(false);
+    printIngestResult(output, { ...INGESTED, unreadable: ["/t/a.jsonl: EACCES"] });
+    expect(output.at("warn")).toEqual([
+      "Source not read, retried by the next read: /t/a.jsonl: EACCES",
+    ]);
   });
 
   it("warns on every run while the consent log is damaged, and names forget as the way out", () => {

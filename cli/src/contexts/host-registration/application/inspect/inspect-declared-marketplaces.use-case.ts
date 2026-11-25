@@ -1,5 +1,7 @@
 import { join } from "node:path";
+import { errorMessage } from "../../../../shared/domain/describe-error.js";
 import { tryParseJson } from "../../../../shared/domain/reading/json-file.js";
+import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type {
   InspectDeclaredMarketplacesResult,
@@ -23,6 +25,10 @@ interface Declared {
   readonly names: ReadonlySet<string>;
   readonly sources: ReadonlyMap<string, string>;
 }
+
+type Inspected =
+  | { readonly kind: "declared"; readonly declared: Declared }
+  | { readonly kind: "unparseable"; readonly file: string; readonly reason: string };
 
 function missingFrom(
   declared: Declared,
@@ -66,28 +72,38 @@ export class InspectDeclaredMarketplaces {
   async execute(
     command: InspectDeclaredMarketplacesRequest
   ): Promise<InspectDeclaredMarketplacesResult> {
-    const declared = await this.declaredBy(command);
-    if (declared === undefined) return { findings: [], stale: [] };
+    const inspected = await this.inspected(command);
+    if (inspected === undefined) return { findings: [], stale: [], unparseable: [] };
+    if (inspected.kind === "unparseable") {
+      const { file, reason } = inspected;
+      return { findings: [], stale: [], unparseable: [{ tool: command.toolId, file, reason }] };
+    }
+    const { declared } = inspected;
     return {
       findings: missingFrom(declared, command.marketplaceNames, command.toolId),
       stale: staleIn(declared, command, this.platform),
+      unparseable: [],
     };
   }
 
-  private async declaredBy(
+  private async inspected(
     command: InspectDeclaredMarketplacesRequest
-  ): Promise<Declared | undefined> {
+  ): Promise<Inspected | undefined> {
     const profile = this.tools.profile(command.toolId);
     const settings = this.untrackedSettingsOf(profile);
     if (settings === undefined) return undefined;
     // A tool that writes its own registration cannot have written one while its binary was out
     // of reach: reporting the absence would report that an uninstalled tool is unconfigured.
     if (!this.canRegisterItself(profile)) return undefined;
-    const parsed = await this.parsedSettings(command.projectRoot, settings.file);
+    const read = await this.parsedSettings(command.projectRoot, settings.file);
+    if (!read.ok) return { kind: "unparseable", file: settings.file, reason: read.reason };
     return {
-      file: settings.file,
-      names: settings.registration.declaredMarketplaceNames(parsed),
-      sources: settings.registration.declaredMarketplaceSources(parsed),
+      kind: "declared",
+      declared: {
+        file: settings.file,
+        names: settings.registration.declaredMarketplaceNames(read.value),
+        sources: settings.registration.declaredMarketplaceSources(read.value),
+      },
     };
   }
 
@@ -102,10 +118,18 @@ export class InspectDeclaredMarketplaces {
     return registration === null || file === undefined ? undefined : { file, registration };
   }
 
-  private async parsedSettings(projectRoot: string, file: string): Promise<unknown> {
+  /** A file that is absent declares nothing; one that exists but is not a JSON object is no answer. */
+  private async parsedSettings(
+    projectRoot: string,
+    file: string
+  ): Promise<{ ok: true; value: unknown } | { ok: false; reason: string }> {
     const content = await this.fs.readFileIfReadable(join(projectRoot, file));
-    const parsed = content === undefined ? undefined : tryParseJson(content);
-    return parsed?.ok === true ? parsed.value : undefined;
+    if (content === undefined) return { ok: true, value: undefined };
+    const parsed = tryParseJson(content);
+    if (!parsed.ok) return { ok: false, reason: errorMessage(parsed.error) };
+    if (asPlainObject(parsed.value) === null)
+      return { ok: false, reason: "the root is not an object" };
+    return parsed;
   }
 
   private canRegisterItself(tool: SettingsDeclaringTool): boolean {

@@ -2,6 +2,7 @@ import { constants } from "node:fs";
 import { access, mkdir, readdir, readFile, realpath, rm, rmdir, stat } from "node:fs/promises";
 import { dirname, join, relative, sep } from "node:path";
 import { FileHash } from "../domain/file-hash.js";
+import { whenAbsent } from "../domain/reading/json-file.js";
 import type { FileReader } from "../ports/file-reader.js";
 import type { FileWriter } from "../ports/file-writer.js";
 import type { Logger } from "../ports/logger.js";
@@ -125,12 +126,8 @@ export class FileAdapter implements FileReader, FileWriter {
   }
 
   private async collectAbsolutePaths(dir: string, results: string[]): Promise<void> {
-    let entries: import("node:fs").Dirent[];
-    try {
-      entries = await readdir(dir, { withFileTypes: true });
-    } catch {
-      return;
-    }
+    const entries = await whenAbsent(() => readdir(dir, { withFileTypes: true }), undefined);
+    if (entries === undefined) return;
     for (const entry of entries) {
       const fullPath = join(dir, entry.name);
       if (entry.isSymbolicLink()) {

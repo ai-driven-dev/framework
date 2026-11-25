@@ -36,7 +36,10 @@ function decodedBy(source: UsageSource, decode: UsageSource["decode"]): UsageSou
 
 function reversed(source: UsageSource): UsageSource {
   return {
-    list: async () => [...(await source.list())].reverse(),
+    list: async () => {
+      const listing = await source.list();
+      return { ...listing, paths: [...listing.paths].reverse() };
+    },
     read: (request, each) => source.read(request, each),
     decode: (line, context) => source.decode(line, context),
   };

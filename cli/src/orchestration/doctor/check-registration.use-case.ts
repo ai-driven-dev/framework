@@ -64,6 +64,12 @@ export class CheckRegistration {
         toolId,
         marketplaceNames,
       });
+      for (const file of declared.unparseable)
+        issues.push({
+          severity: UNDECLARED_MARKETPLACE_SEVERITY,
+          message: `${file.tool}: ${file.file} cannot be parsed (${file.reason})`,
+          fix: { code: "repair-settings-file", file: file.file },
+        });
       for (const finding of declared.findings)
         issues.push({
           severity: UNDECLARED_MARKETPLACE_SEVERITY,

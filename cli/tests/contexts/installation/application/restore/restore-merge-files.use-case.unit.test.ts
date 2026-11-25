@@ -55,6 +55,41 @@ describe("restoring the merge files", () => {
     expect(result).toBeNull();
   });
 
+  it("refuses a merge file that cannot be parsed, naming it, and leaves it untouched", async () => {
+    const deps = await buildDeps();
+    const settingsPath = join(PROJECT_ROOT, "settings.json");
+    await deps.fs.writeFile(settingsPath, "{ not json");
+    const distContent = JSON.stringify({ a: "framework-a" });
+
+    await expect(
+      new RestoreMergeFiles(deps.fs, new RestoreDriftEntries(new OverwritePrompter())).execute({
+        mergeFiles: [
+          {
+            relativePath: "settings.json",
+            sectionKey: null,
+            entries: { a: FileHash.of(JSON.stringify("framework-a")) },
+          },
+        ],
+        distMap: new Map([
+          [
+            "settings.json",
+            new InstallationFile({
+              relativePath: "settings.json",
+              content: distContent,
+              hash: FileHash.of(distContent),
+              mergeStrategy: "framework-prime",
+            }),
+          ],
+        ]),
+        projectRoot: PROJECT_ROOT,
+        force: true,
+        interactive: false,
+        fileFilter: null,
+      })
+    ).rejects.toMatchObject({ code: "json-parse", path: settingsPath });
+    expect(await deps.fs.readFile(settingsPath)).toBe("{ not json");
+  });
+
   it("recreates a merge file deleted from disk, without prompting, even without force", async () => {
     const deps = await buildDeps();
     const prompter = new OverwritePrompter();

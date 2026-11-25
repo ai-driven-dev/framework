@@ -1,4 +1,4 @@
-import { chmod, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { chmod, mkdtemp, readFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -58,22 +58,6 @@ describe("storing a credential record in a file", () => {
         level: "project",
       });
       expect(JSON.parse(await readFile(userFile(), "utf-8"))).toMatchObject({ level: "user" });
-    });
-  });
-
-  describe("reading a file", () => {
-    it("reads a file that is not JSON as no record", async () => {
-      await records.save(STORED, "user");
-      await writeFile(userFile(), "not json");
-
-      expect(await records.read("user")).toBeNull();
-    });
-
-    it("reads a file the record parse refuses as no record", async () => {
-      await records.save(STORED, "user");
-      await writeFile(userFile(), JSON.stringify({ version: 1 }));
-
-      expect(await records.read("user")).toBeNull();
     });
   });
 

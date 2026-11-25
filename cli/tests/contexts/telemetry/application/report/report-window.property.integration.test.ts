@@ -196,6 +196,7 @@ const NOTHING_NEW: IngestUsageResult = {
   updated: 0,
   unrecognised: 0,
   skippedLedgerLines: 0,
+  unreadable: [],
   snapshots: 0,
   notStored: {
     "outside-repo": 0,
@@ -277,6 +278,7 @@ async function referenceOf(input: {
       notStored: NOTHING_NEW.notStored,
       consentLogDamaged: NOTHING_NEW.consentLogDamaged,
       oldestTranscriptAt: NOTHING_NEW.oldestTranscriptAt,
+      unreadable: NOTHING_NEW.unreadable,
       skippedLedgerLines: full.skippedLines,
     },
   });

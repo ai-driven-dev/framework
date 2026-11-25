@@ -25,6 +25,10 @@ export interface ReadUsageResult {
   readonly oldestTranscriptAt: string | null;
   /** The files not read because they were last written before `writtenFrom`. */
   readonly skipped: ReadonlySet<string>;
+  /** What could not be read, one sentence each naming the transcript or directory. Such a
+   * transcript keeps its position and is read again next time; none of it is stored, and none of
+   * it is counted as zero. */
+  readonly unreadable: readonly string[];
 }
 
 export interface ReadUsageRequest {
@@ -50,6 +54,7 @@ interface Gathered {
   readonly dropped: DroppedLine[];
   readonly fileOf: Map<UsageRecord, string>;
   readonly positions: Map<string, TranscriptPosition>;
+  readonly unreadable: string[];
   oldest: number | null;
 }
 
@@ -61,6 +66,7 @@ function emptyGathering(): Gathered {
     dropped: [],
     fileOf: new Map(),
     positions: new Map(),
+    unreadable: [],
     oldest: null,
   };
 }
@@ -72,6 +78,7 @@ function take(gathered: Gathered, path: string, file: FileReading): void {
     gathered.oldest = modifiedAt;
   }
   if (read.skipped) gathered.skipped.add(path);
+  if (read.unreadable !== undefined) gathered.unreadable.push(read.unreadable);
   // Changed under the read: what it handed over may be spliced from two versions, so none
   // of it counts and the file keeps its position, to be read again.
   if (read.position === null) return;
@@ -94,6 +101,7 @@ function readingOf(gathered: Gathered): ReadUsageResult {
     fileOf: gathered.fileOf,
     oldestTranscriptAt: oldest === null ? null : new Date(oldest).toISOString(),
     skipped: gathered.skipped,
+    unreadable: gathered.unreadable,
   };
 }
 
@@ -106,7 +114,9 @@ export class ReadUsage {
     writtenFrom = Number.NEGATIVE_INFINITY,
   }: ReadUsageRequest): Promise<ReadUsageResult> {
     const gathered = emptyGathering();
-    for (const path of await this.source.list()) {
+    const { paths, unreadable } = await this.source.list();
+    gathered.unreadable.push(...unreadable);
+    for (const path of paths) {
       const file = await this.readFile({ path, since: since.get(path) ?? null, writtenFrom });
       take(gathered, path, file);
     }

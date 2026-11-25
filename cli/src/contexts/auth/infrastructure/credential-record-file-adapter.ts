@@ -3,7 +3,7 @@ import { chmod, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { errorMessage } from "../../../shared/domain/describe-error.js";
 import { AIDD_DIR } from "../../../shared/domain/layout/aidd-layout.js";
-import { AuthStorageError } from "../contract/auth.error.js";
+import { AuthStorageError, CredentialRecordUnreadableError } from "../contract/auth.error.js";
 import type { AuthLevel, Credential } from "../contract/credential.js";
 import {
   type CredentialRecord,
@@ -23,13 +23,26 @@ export class CredentialRecordFileAdapter implements CredentialRecordRepository {
     private readonly clock: () => Date
   ) {}
 
+  /** A missing file is no record. One that cannot be read, parsed or accepted is refused with its
+   * path: answered as none, a logout would leave its token on disk and a private source would
+   * fail later as an authentication error. */
   async read(level: AuthLevel): Promise<CredentialRecord | null> {
+    const path = this.pathOf(level);
+    let content: string;
     try {
-      const content = await readFile(this.pathOf(level), "utf-8");
-      return parseCredentialRecord(JSON.parse(content));
-    } catch {
-      return null;
+      content = await readFile(path, "utf-8");
+    } catch (err) {
+      if (isMissing(err)) return null;
+      throw new CredentialRecordUnreadableError(path, errorMessage(err));
     }
+    let record: CredentialRecord | null;
+    try {
+      record = parseCredentialRecord(JSON.parse(content));
+    } catch (err) {
+      throw new CredentialRecordUnreadableError(path, errorMessage(err));
+    }
+    if (record === null) throw new CredentialRecordUnreadableError(path, "not a credential record");
+    return record;
   }
 
   async save(credential: Credential, level: AuthLevel): Promise<void> {
@@ -51,6 +64,10 @@ export class CredentialRecordFileAdapter implements CredentialRecordRepository {
     await writeFile(path, JSON.stringify(record, null, 2), { encoding: "utf-8", mode: 0o600 });
     await restrictToOwner(path);
   }
+}
+
+function isMissing(err: unknown): boolean {
+  return err instanceof Error && "code" in err && err.code === "ENOENT";
 }
 
 async function restrictToOwner(path: string): Promise<void> {

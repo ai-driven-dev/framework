@@ -115,3 +115,10 @@ export class UnprovenMcpServerDigestError extends AiddError {
     super();
   }
 }
+
+export class TomlParseError extends AiddError {
+  readonly code = "toml-parse";
+  constructor(readonly reason: string) {
+    super();
+  }
+}

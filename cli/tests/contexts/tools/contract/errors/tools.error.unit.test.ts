@@ -9,6 +9,7 @@ import {
   InvalidMcpServerConfigError,
   InvalidToolProfileError,
   McpServerEditedError,
+  TomlParseError,
   UnknownAiToolIdError,
   UnprovenMcpServerDigestError,
 } from "../../../../../src/contexts/tools/contract/errors/tools.error.js";
@@ -258,5 +259,16 @@ describe("when a plugin's category does not match", () => {
     expect(new CategoryMismatchError(["vscode"], "ai", ["claude", "cursor"]).code).toBe(
       "category-mismatch"
     );
+  });
+});
+
+describe("when TomlParseError is raised", () => {
+  it("carries its reason and stable code, and says nothing itself", () => {
+    const error = new TomlParseError("bad key");
+    expect({ reason: error.reason, code: error.code, message: error.message }).toStrictEqual({
+      reason: "bad key",
+      code: "toml-parse",
+      message: "",
+    });
   });
 });

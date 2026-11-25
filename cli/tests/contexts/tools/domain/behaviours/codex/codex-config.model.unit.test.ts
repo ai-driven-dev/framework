@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { TomlParseError } from "../../../../../../src/contexts/tools/contract/errors/tools.error.js";
 import { mergeCodexConfigToml } from "../../../../../../src/contexts/tools/domain/behaviours/codex/codex-config.model.js";
 import { SmolTomlCodec } from "../../../../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 
@@ -90,12 +91,10 @@ enabled = true
     expect(result).toContain(".agents/skills");
   });
 
-  it("starts over from a config it cannot parse rather than failing the install", () => {
-    expect(
+  it("refuses a config it cannot parse rather than starting over from empty", () => {
+    expect(() =>
       mergeCodexConfigToml(TOML)("not = [valid", '[mcp_servers.ctx]\ncommand = "node"\n')
-    ).toBe(
-      'project_doc_max_bytes = 262144\n\n[mcp_servers.ctx]\ncommand = "node"\n\n[features]\nhooks = true\n'
-    );
+    ).toThrow(TomlParseError);
   });
 
   it("adds only its defaults when the payload names no mcp server", () => {

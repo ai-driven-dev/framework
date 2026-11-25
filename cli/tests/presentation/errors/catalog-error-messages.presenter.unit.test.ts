@@ -60,11 +60,11 @@ const cases: [() => Error, string][] = [
   ],
   [
     () => new SharedMarketplaceRemovalError("aidd-framework", "project"),
-    'Invalid marketplace name: ""aidd-framework" is shared by every project on this machine and is not removed with `aidd marketplace remove` — it is removed with the framework itself, by `aidd clean`, once machine scope lands there.". Use lowercase alphanumeric characters and hyphens only.',
+    "Marketplace 'aidd-framework' is shared by every project on this machine and is not removed with `aidd marketplace remove` — it is removed with the framework itself, by `aidd clean`, once machine scope lands there.",
   ],
   [
     () => new SharedMarketplaceRemovalError("aidd-framework", "user"),
-    'Invalid marketplace name: ""aidd-framework" is shared by every project on this machine and is removed by `aidd clean --scope user`, not marketplace remove.". Use lowercase alphanumeric characters and hyphens only.',
+    "Marketplace 'aidd-framework' is shared by every project on this machine and is removed by `aidd clean --scope user`, not marketplace remove.",
   ],
   [
     () => new PluginNotInMarketplaceError("p"),

@@ -9,7 +9,11 @@ import {
   type TranscriptPosition,
   type TranscriptStat,
 } from "../../domain/transcript-position.js";
-import type { TranscriptRead, TranscriptRequest } from "../../ports/usage-source.js";
+import type {
+  TranscriptListing,
+  TranscriptRead,
+  TranscriptRequest,
+} from "../../ports/usage-source.js";
 import { modifiedAtIfPresent } from "../reading/text-file.js";
 
 const NEWLINE = 0x0a;
@@ -70,24 +74,43 @@ export async function eachLine(
   return splitter.consumed;
 }
 
-async function walk(dir: string, name: RegExp, found: string[]): Promise<void> {
-  const entries = await readdir(dir, { withFileTypes: true }).catch(absentIsNothing);
+/** Why `path` could not be read, to be shown by name: the error code when it has one. */
+function unreadableBecause(path: string, error: unknown): string {
+  if (isErrnoException(error) && error.code !== undefined) return `${path}: ${error.code}`;
+  return `${path}: ${error instanceof Error ? error.message : String(error)}`;
+}
+
+/** One directory unlisted is one subtree unread: the rest of the tree is still walked. */
+/** What a walk gathers: `TranscriptListing`, still being filled. */
+interface Found {
+  readonly paths: string[];
+  readonly unreadable: string[];
+}
+
+async function walk(dir: string, name: RegExp, found: Found): Promise<void> {
+  const entries = await readdir(dir, { withFileTypes: true }).catch((error: unknown) => {
+    if (!isErrnoException(error) || error.code !== "ENOENT") {
+      found.unreadable.push(unreadableBecause(dir, error));
+    }
+    return null;
+  });
   if (entries === null) return;
   for (const entry of entries) {
     const path = join(dir, entry.name);
     if (entry.isDirectory()) await walk(path, name, found);
-    else if (entry.isFile() && name.test(entry.name)) found.push(path);
+    else if (entry.isFile() && name.test(entry.name)) found.paths.push(path);
   }
 }
 
-/** Every file under the roots, at any depth, whose name matches. */
+/** Every file under the roots, at any depth, whose name matches, and each directory that could
+ * not be listed. */
 export async function listTranscripts(
   roots: readonly string[],
   name: RegExp
-): Promise<readonly string[]> {
-  const found: string[] = [];
+): Promise<TranscriptListing> {
+  const found: Found = { paths: [], unreadable: [] };
   for (const root of roots) await walk(root, name, found);
-  return found.sort();
+  return { paths: found.paths.sort(), unreadable: found.unreadable };
 }
 
 /** What reading a file's lines reports: `read` adds when the file was last written. */
@@ -98,8 +121,19 @@ export async function withModifiedAt(
   path: string,
   read: Promise<LinesRead>
 ): Promise<TranscriptRead> {
-  const result = await read;
-  return { ...result, modifiedAt: await modifiedAtIfPresent(path) };
+  try {
+    const result = await read;
+    return { ...result, modifiedAt: await modifiedAtIfPresent(path) };
+  } catch (error) {
+    // One file that cannot be read: left as it stood, with its lines dropped, to be read again.
+    return {
+      position: null,
+      restarted: false,
+      skipped: false,
+      modifiedAt: null,
+      unreadable: unreadableBecause(path, error),
+    };
+  }
 }
 
 /** How one tool's file is read once opened: where a skipped one ends, and its lines. */

@@ -59,6 +59,7 @@ export interface ReportEnvelope {
     readonly not_stored: Readonly<Record<NotStoredReason, number>>;
     readonly consent_log_damaged: boolean;
     readonly oldest_transcript_at: string | null;
+    readonly unreadable_sources: readonly string[];
     readonly skipped_ledger_lines: number;
   };
 }
@@ -100,6 +101,7 @@ export interface ReportedFigures {
     readonly notStored: Readonly<Record<NotStoredReason, number>>;
     readonly consentLogDamaged: boolean;
     readonly oldestTranscriptAt: string | null;
+    readonly unreadable: readonly string[];
     readonly skippedLedgerLines: number;
   };
 }
@@ -120,6 +122,7 @@ export function reportEnvelopeOf(result: ReportedFigures): ReportEnvelope {
       not_stored: run.notStored,
       consent_log_damaged: run.consentLogDamaged,
       oldest_transcript_at: run.oldestTranscriptAt,
+      unreadable_sources: run.unreadable,
       skipped_ledger_lines: run.skippedLedgerLines,
     },
   };

@@ -1,5 +1,5 @@
 import { FileHash } from "./file-hash.js";
-import { isErrnoException } from "./reading/json-file.js";
+import { isErrnoException, tryParseJson } from "./reading/json-file.js";
 import { stripJsonComments } from "./reading/jsonc.js";
 import { asPlainObject } from "./reading/plain-object.js";
 import { JsonParseError } from "./shared.error.js";
@@ -12,20 +12,34 @@ export interface MergeFileEntry {
   readonly entries: Readonly<Record<string, FileHash>>;
 }
 
+export type MergeEntriesRead =
+  | { readonly ok: true; readonly entries: Record<string, FileHash> }
+  | { readonly ok: false; readonly reason: string };
+
+/** An unreadable file is not an empty one: the reason comes back instead of an empty map. */
+export function readMergeEntries(jsonContent: string, sectionKey: string | null): MergeEntriesRead {
+  const parsed = tryParseJson(stripJsonComments(jsonContent));
+  if (!parsed.ok) {
+    return {
+      ok: false,
+      reason: parsed.error instanceof Error ? parsed.error.message : String(parsed.error),
+    };
+  }
+  const root = asPlainObject(parsed.value);
+  if (root === null) return { ok: true, entries: {} };
+  const container = asPlainObject(sectionKey === null ? root : root[sectionKey]);
+  return { ok: true, entries: container === null ? {} : hashJsonEntries(container) };
+}
+
+/** Throws `JsonParseError` naming `path` when the content is not JSON. */
 export function extractMergeEntries(
   jsonContent: string,
-  sectionKey: string | null
+  sectionKey: string | null,
+  path: string
 ): Record<string, FileHash> {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(stripJsonComments(jsonContent));
-  } catch {
-    return {};
-  }
-  const root = asPlainObject(parsed);
-  if (root === null) return {};
-  const container = asPlainObject(sectionKey === null ? root : root[sectionKey]);
-  return container === null ? {} : hashJsonEntries(container);
+  const read = readMergeEntries(jsonContent, sectionKey);
+  if (!read.ok) throw new JsonParseError(path, read.reason);
+  return read.entries;
 }
 
 export function hashJsonEntries(entries: Record<string, unknown>): Record<string, FileHash> {

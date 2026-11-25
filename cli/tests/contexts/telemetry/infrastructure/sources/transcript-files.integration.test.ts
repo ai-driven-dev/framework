@@ -40,10 +40,10 @@ describe("listing transcripts", () => {
     await writeFile(join(root, "z.jsonl"), "");
     await writeFile(join(root, "a", "b", "m.jsonl"), "");
     await writeFile(join(root, "a", "notes.txt"), "");
-    expect(await listTranscripts([root, join(root, "absent")], /\.jsonl$/)).toEqual([
-      join(root, "a", "b", "m.jsonl"),
-      join(root, "z.jsonl"),
-    ]);
+    expect(await listTranscripts([root, join(root, "absent")], /\.jsonl$/)).toEqual({
+      paths: [join(root, "a", "b", "m.jsonl"), join(root, "z.jsonl")],
+      unreadable: [],
+    });
   });
 });
 

@@ -50,7 +50,12 @@ export interface ReportCoverage {
 export interface ReportRun
   extends Pick<
     IngestUsageResult,
-    "filesRead" | "unrecognised" | "notStored" | "consentLogDamaged" | "oldestTranscriptAt"
+    | "filesRead"
+    | "unrecognised"
+    | "notStored"
+    | "consentLogDamaged"
+    | "oldestTranscriptAt"
+    | "unreadable"
   > {
   /** Lines of the partitions read that were not records, counted before the report settled
    * them: a bounded report reads its period and the day on each side. */
@@ -155,10 +160,12 @@ const runOf = ({
   notStored,
   consentLogDamaged,
   oldestTranscriptAt,
+  unreadable,
 }: IngestUsageResult) => ({
   filesRead,
   unrecognised,
   notStored,
   consentLogDamaged,
   oldestTranscriptAt,
+  unreadable,
 });

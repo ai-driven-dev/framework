@@ -27,6 +27,7 @@ const REPORTED: ReportUsageResult = {
     notStored: NOT_STORED,
     consentLogDamaged: false,
     oldestTranscriptAt: null,
+    unreadable: [],
     skippedLedgerLines: 0,
   },
 };

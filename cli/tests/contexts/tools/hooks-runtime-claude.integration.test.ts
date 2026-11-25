@@ -156,4 +156,35 @@ describe("Claude Code", () => {
 
     expect(printed).toStrictEqual([]);
   });
+
+  it("shows the person a message with no text, at SessionStart, in the host's warning field", () => {
+    const { adapter } = read("claude", sample("claude-SessionStart.json", 0).payload);
+    adapter.answer({ level: 1, person: "measuring is on" });
+
+    expect(output()).toStrictEqual({ systemMessage: "measuring is on" });
+  });
+
+  it("shows the person a message with no text, after a write too", () => {
+    const { adapter } = read("claude", sample("claude-PostToolUse.json", 0).payload);
+    adapter.answer({ level: 1, person: "measuring is on" });
+
+    expect(output()).toStrictEqual({ systemMessage: "measuring is on" });
+  });
+
+  it("prints nothing when neither text nor person is given", () => {
+    const { adapter } = read("claude", sample("claude-SessionStart.json", 0).payload);
+    adapter.answer({ level: 1, person: "" });
+    adapter.answer({ level: 1 });
+
+    expect(printed).toStrictEqual([]);
+  });
+
+  it("tells only the model when it has a text, whatever the person text beside it", () => {
+    const { adapter } = read("claude", sample("claude-SessionStart.json", 0).payload);
+    adapter.answer({ level: 1, text: "memory", person: "measuring is on" });
+
+    expect(output()).toStrictEqual({
+      hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: "memory" },
+    });
+  });
 });

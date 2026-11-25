@@ -31,6 +31,9 @@ export interface IngestUsageResult {
   /** When the oldest transcript still on disk was last written: how far back history can be
    * read. `null` when there is none, or nothing was read. */
   readonly oldestTranscriptAt: string | null;
+  /** Sources that could not be read, named; the others were read and stored all the same. Their
+   * transcripts keep their position, so they are read again by the next ingest. */
+  readonly unreadable: readonly string[];
 }
 
 /** How far a file's modification time may lag the clock that stamps calls: coarse kernel
@@ -87,6 +90,7 @@ export class IngestUsage {
         notStored: NOT_STORED,
         consentLogDamaged: false,
         oldestTranscriptAt: null,
+        unreadable: [],
       };
     }
     return this.deps.ledger.exclusively(() => this.ingest());
@@ -112,6 +116,7 @@ export class IngestUsage {
       notStored: kept.notStored,
       consentLogDamaged: kept.consentLogDamaged,
       oldestTranscriptAt: reading.oldestTranscriptAt,
+      unreadable: reading.unreadable,
     };
   }
 
@@ -172,6 +177,7 @@ export class IngestUsage {
       dropped: readings.flatMap((reading) => reading.dropped),
       oldestTranscriptAt: oldest[0] ?? null,
       skipped: new Set(readings.flatMap((reading) => [...reading.skipped])),
+      unreadable: readings.flatMap((reading) => reading.unreadable),
     };
   }
 }

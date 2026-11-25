@@ -297,6 +297,9 @@ stateDiagram-v2
   Closed --> Open: on, fresh token
 ```
 
+**Unreadable sources.**
+- A source that cannot be read (permission denied, I/O error, a directory standing where a transcript is expected) is contained at one transcript file, or at one directory subtree that cannot be listed (its transcripts are not found, the rest of the tree is). Every other source is read, judged and stored as usual and consent is judged as before. The unreadable one is named: `Source not read, retried by the next read: <path>: <error code>` on `ingest` and `report`, `run.unreadable_sources` in `--json`. It keeps its stored position, so a later successful read stores its calls once. `report` still reads the stored ledger. It is a warning, never a zero. The hook's catch-up stays silent, so `aidd telemetry ingest` or `report` is where it shows. A line that is not JSON is a different case: `unrecognised`, not unreadable.
+
 **Clone identity.**
 - Its git common dir: `dev`, `ino`, `birthtimeMs` of `fs.stat` on its real path, plus the path. Recorded in `roots.json` when first seen alive.
 - No identity (call `unreadable-consent`): `ino` `0` or missing, or any `stat` error other than not-found. One unreadable clone never aborts an ingest or report.

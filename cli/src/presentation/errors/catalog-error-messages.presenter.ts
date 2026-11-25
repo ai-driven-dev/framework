@@ -29,7 +29,7 @@ export const CATALOG: MessagesOf<CatalogOwners> = {
   "plugin-fetch": (error) =>
     `Failed to fetch plugin: ${error.detail}${error.advice ? ` ${CREDENTIAL_ADVICE[error.advice]}` : ""}`,
   "shared-marketplace-removal": (error) =>
-    `Invalid marketplace name: ""${error.marketplace}" ${SHARED_MARKETPLACE_REMOVAL[error.scope]}". Use lowercase alphanumeric characters and hyphens only.`,
+    `Marketplace '${error.marketplace}' ${SHARED_MARKETPLACE_REMOVAL[error.scope]}`,
   "plugin-not-in-marketplace": (error) =>
     `Plugin '${error.plugin}' was not found in any registered marketplace.`,
   "unreadable-marketplace-registry": (error) =>
@@ -60,6 +60,8 @@ export const CATALOG: MessagesOf<CatalogOwners> = {
     `MCP server "${error.serverName}" must have either a "command" or "url" field`,
   "mcp-server-edited": (error) =>
     `OpenCode MCP server '${error.serverName}' was edited after install; removal refused.`,
+  "toml-parse": (error) =>
+    `Cannot parse the existing TOML config: ${error.reason}; left untouched.`,
   "unproven-mcp-server-digest": (error) =>
     `OpenCode MCP server '${error.serverName}' has an unproven install digest; removal refused.`,
   "invalid-tool-profile": (error) =>

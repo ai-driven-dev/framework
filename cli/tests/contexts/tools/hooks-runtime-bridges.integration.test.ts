@@ -140,16 +140,17 @@ function afterStart(calls: readonly Recorded[]): readonly Recorded[] {
 type Handler = (...args: unknown[]) => Promise<void>;
 
 interface Plugin {
+  readonly dispose?: () => Promise<void>;
   readonly event: Handler;
   readonly "tool.execute.after": Handler;
 }
 
 /** Loads the bridge as the host does: its default descriptor's `server`. */
-async function start(ws: Workspace, input: Record<string, unknown>) {
+async function start(ws: Workspace, input: Record<string, unknown>, refusal?: Error) {
   const prompts: unknown[] = [];
   const send = (request: unknown) => {
     prompts.push(request);
-    return Promise.resolve();
+    return refusal === undefined ? Promise.resolve() : Promise.reject(refusal);
   };
   // Each host calls its own method: OpenCode `prompt`, Kilo `promptAsync`.
   const client = { session: ws.host === "opencode" ? { prompt: send } : { promptAsync: send } };
@@ -296,6 +297,20 @@ describe("OpenCode, through its bridge", () => {
     expect(prompts).toStrictEqual(CONTINUED);
   });
 
+  it("reports a follow-up the host refused, without throwing into it", async () => {
+    const ws = await workspace("opencode", opencodeBridge());
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const [, idle] = await captured("opencode-session.idle.json", ws.project);
+    const { plugin } = await start(ws, { directory: ws.project }, new Error("refused"));
+    await plugin.event({ event: idle });
+    await plugin.dispose?.();
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringMatching(/^\[aidd\] OpenCode hook .*record\.cjs failed: .*follow-up.*refused/)
+    );
+    warn.mockRestore();
+  });
+
   it("reads an idle session as Stop, continues it once, and reads the next one as a continuation", async () => {
     const ws = await workspace("opencode", opencodeBridge());
     const [, first, second] = await captured("opencode-session.idle.json", ws.project);
@@ -395,6 +410,20 @@ describe("Kilo, through its bridge", () => {
     await plugin.event({ event: idle });
 
     expect(prompts).toMatchObject(CONTINUED);
+  });
+
+  it("reports a follow-up the host refused, without throwing into it", async () => {
+    const ws = await workspace("kilo", kiloBridge());
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const [idle] = await captured("kilo-session.idle.json", ws.project);
+    const { plugin } = await start(ws, { directory: ws.project }, new Error("refused"));
+    await plugin.event({ event: idle });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringMatching(/^\[aidd\] Kilo hook .*record\.cjs failed: .*follow-up.*refused/)
+    );
+    warn.mockRestore();
   });
 
   // The bridge ends a turn at the next idle only after the session went busy again: that

@@ -1,15 +1,17 @@
+import { TomlParseError } from "../../../contract/errors/tools.error.js";
 import type { TomlCodec } from "../../formats/toml.js";
 
 type TomlRecord = Record<string, unknown>;
 
 const MIN_PROJECT_DOC_MAX_BYTES = 262144;
 
-function parseSafe(toml: TomlCodec, content: string): TomlRecord {
+/** A file that is not TOML is refused, never read as empty: the merge would overwrite it. */
+function parseToml(toml: TomlCodec, content: string): TomlRecord {
   if (!content.trim()) return {};
   try {
     return toml.parse(content);
-  } catch {
-    return {};
+  } catch (err) {
+    throw new TomlParseError(err instanceof Error ? err.message : String(err));
   }
 }
 
@@ -46,8 +48,8 @@ export function mergeCodexConfigToml(
   toml: TomlCodec
 ): (existing: string, aiddPayload: string) => string {
   return (existing, aiddPayload) => {
-    const result = parseSafe(toml, existing);
-    const payload = parseSafe(toml, aiddPayload);
+    const result = parseToml(toml, existing);
+    const payload = parseToml(toml, aiddPayload);
     mergeMcpServers(result, payload);
     ensureProjectDocMaxBytes(result, payload);
     ensureCodexHooks(result);
