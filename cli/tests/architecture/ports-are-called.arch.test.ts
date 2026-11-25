@@ -162,16 +162,17 @@ function uncalledCapabilityMethods(
           `([\\w$]+)(\\([^()]*\\))?\\??\\.${name}${isGetter ? "\\b(?!\\s*\\()" : "\\s*\\("}`,
           "g"
         );
-        const called = [...bodies].some(([caller, body]) =>
-          [...body.matchAll(use)].some((match) => {
+        const called = [...bodies].some(([caller, body]) => {
+          if (!body.includes(`.${name}`)) return false;
+          return [...body.matchAll(use)].some((match) => {
             const receiver = match[1] as string;
             if (caller === file && receiver === "this") return true;
             if (caller === file) return false;
             if (isStatic) return receiver === className;
             if (match[2] !== undefined) return /Capability$/.test(receiver);
             return namesCapability(receiver, key);
-          })
-        );
+          });
+        });
         if (!called) uncalled.push(`${file} :: ${className}.${name}`);
       }
     }
