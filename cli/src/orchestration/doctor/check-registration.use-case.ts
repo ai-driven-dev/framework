@@ -1,12 +1,16 @@
 import type { MarketplaceBuilds } from "../../contexts/distribution/contract/built-marketplaces.js";
 import type { InspectDeclaredMarketplaces } from "../../contexts/host-registration/application/inspect/inspect-declared-marketplaces.use-case.js";
 import type { InspectHostRegistration } from "../../contexts/host-registration/application/inspect/inspect-host-registration.use-case.js";
-import { UNDECLARED_MARKETPLACE_SEVERITY } from "../../contexts/host-registration/contract/finding-severity.model.js";
+import {
+  registrationIssueOf,
+  staleDeclarationIssue,
+  undeclaredMarketplaceIssue,
+  unparseableSettingsIssue,
+} from "../../contexts/host-registration/application/inspect/registration-issues.js";
 import type { InspectDeclaredMarketplacesResult } from "../../contexts/host-registration/contract/inspect-declared-marketplaces-result.js";
 import type { HostCandidate } from "../../contexts/host-registration/contract/inspect-host-registration-request.js";
-import type { DoctorIssue } from "../../contexts/installation/contract/doctor-issue.js";
+import type { RegistrationIssue } from "../../contexts/host-registration/contract/registration-issue.js";
 import type { RegisteredPluginsOfTool } from "../../contexts/installation/contract/registered-plugins.js";
-import { registrationIssueOf } from "./registration-issues.js";
 import type { ResolveRegisteredBuilds } from "./resolve-registered-builds.use-case.js";
 
 export interface CheckRegistrationRequest {
@@ -35,7 +39,7 @@ export interface CheckRegistrationDeps {
 export class CheckRegistration {
   constructor(private readonly deps: CheckRegistrationDeps) {}
 
-  async execute(command: CheckRegistrationRequest): Promise<DoctorIssue[]> {
+  async execute(command: CheckRegistrationRequest): Promise<RegistrationIssue[]> {
     const { registered, declaredNames, userCacheRoot, built } = await this.deps.resolve.execute({
       projectRoot: command.projectRoot,
       allowedIds: command.allowedIds,
@@ -56,32 +60,19 @@ export class CheckRegistration {
   private async undeclaredMarketplaces(
     command: CheckRegistrationRequest,
     declaredNames: ReadonlyMap<string, readonly string[]>
-  ): Promise<DoctorIssue[]> {
-    const issues: DoctorIssue[] = [];
+  ): Promise<RegistrationIssue[]> {
+    const issues: RegistrationIssue[] = [];
     for (const [toolId, marketplaceNames] of declaredNames) {
       const declared: InspectDeclaredMarketplacesResult = await this.deps.declared.execute({
         projectRoot: command.projectRoot,
         toolId,
         marketplaceNames,
       });
-      for (const file of declared.unparseable)
-        issues.push({
-          severity: UNDECLARED_MARKETPLACE_SEVERITY,
-          message: `${file.tool}: ${file.file} cannot be parsed (${file.reason})`,
-          fix: { code: "repair-settings-file", file: file.file },
-        });
-      for (const finding of declared.findings)
-        issues.push({
-          severity: UNDECLARED_MARKETPLACE_SEVERITY,
-          message: `${finding.tool} no longer declares marketplace '${finding.name}'`,
-          fix: { code: "refresh-marketplace", file: finding.file },
-        });
-      for (const entry of declared.stale)
-        issues.push({
-          severity: UNDECLARED_MARKETPLACE_SEVERITY,
-          message: `${entry.tool} still declares marketplace '${entry.name}', which this project no longer registers`,
-          fix: { code: "remove-stale-declaration", name: entry.name, file: entry.file },
-        });
+      issues.push(
+        ...declared.unparseable.map(unparseableSettingsIssue),
+        ...declared.findings.map(undeclaredMarketplaceIssue),
+        ...declared.stale.map(staleDeclarationIssue)
+      );
     }
     return issues;
   }
@@ -102,7 +93,7 @@ export class CheckRegistration {
     registered: readonly RegisteredPluginsOfTool[];
     built: MarketplaceBuilds["built"];
     userCacheRoot: string;
-  }): Promise<DoctorIssue[]> {
+  }): Promise<RegistrationIssue[]> {
     const hosts: HostCandidate[] = registered.map(({ toolId, expectedPlugins }) => ({
       tool: toolId,
       expectedPlugins,

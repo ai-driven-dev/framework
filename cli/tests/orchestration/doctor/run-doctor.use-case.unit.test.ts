@@ -7,7 +7,7 @@ const PROJECT_ROOT = "/test-project";
 
 const issueOf =
   (severity: DoctorIssue["severity"]) =>
-  (message: string): DoctorIssue => ({ severity, message, fix: { code: "sync-reregister" } });
+  (message: string): DoctorIssue => ({ severity, message, fix: { code: "restore-or-sync" } });
 
 async function reportOf(category?: "ai", severity: DoctorIssue["severity"] = "warning") {
   const issue = issueOf(severity);
@@ -23,7 +23,11 @@ async function reportOf(category?: "ai", severity: DoctorIssue["severity"] = "wa
     {
       inspect,
       layout: answering("layout"),
-      registration: answering("registration"),
+      registration: {
+        execute: async () => [
+          { severity, message: "registration", fix: { code: "sync-reregister" } as const },
+        ],
+      },
       authentication: answering("authentication"),
     },
     syntheticCatalog()

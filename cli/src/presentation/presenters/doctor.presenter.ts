@@ -1,3 +1,4 @@
+import type { RegistrationFix } from "../../contexts/host-registration/contract/registration-issue.js";
 import type { DoctorFix } from "../../contexts/installation/contract/doctor-issue.js";
 import { render } from "../errors/error-translator.presenter.js";
 import type { Output } from "../terminal/output.model.js";
@@ -92,7 +93,7 @@ export function printScopeIssues(
   output: Output,
   label: string,
   report: {
-    issues: { severity: string; message: string; fix: string | DoctorFix }[];
+    issues: { severity: string; message: string; fix: string | DoctorFix | RegistrationFix }[];
   } | null
 ): void {
   if (report === null || report.issues.length === 0) return;
@@ -130,7 +131,7 @@ const SYNC_FORCE_EFFECT = {
 } as const;
 
 /** The words of what a person does about a doctor issue. */
-export function describeDoctorFix(fix: string | DoctorFix): string {
+export function describeDoctorFix(fix: string | DoctorFix | RegistrationFix): string {
   if (typeof fix === "string") return fix;
   switch (fix.code) {
     case "remove-or-track-directory":
