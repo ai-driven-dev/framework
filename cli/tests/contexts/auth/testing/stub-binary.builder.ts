@@ -80,7 +80,8 @@ export async function aMachineWith(
         .map((line) => line.split("|")),
     dispose: async () => {
       vi.unstubAllEnvs();
-      await rm(dir, { recursive: true, force: true });
+      // Windows keeps the copied node locked for a moment after the process it ran exits.
+      await rm(dir, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 });
     },
   };
 }
