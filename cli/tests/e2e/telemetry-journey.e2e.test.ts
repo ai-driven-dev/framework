@@ -25,7 +25,7 @@ afterEach(async () => {
 });
 
 describe("the telemetry journey, on the built binary", () => {
-  it("opts in, reminds once, keeps the task across /clear, and attributes every axis to it", async () => {
+  it("opts in, reminds once, attributes the cleared session through its branch, and every axis to the task", async () => {
     await j.optIn();
     expect(git(j.repo, j.gitEnv, "config", "--local", "--get", "aidd.telemetry").trim()).toMatch(
       /^2:[0-9a-f-]{36}$/u

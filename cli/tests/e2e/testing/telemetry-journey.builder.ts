@@ -15,8 +15,8 @@ import { REPOSITORY_ROOT } from "../../shared/testing/repository-root.builder.js
 /**
  * The whole telemetry journey on the built binary, driven by the plugin's real hooks: a person
  * opts in, is reminded once at session start, declares the task with the command, clears, and a
- * headless run follows on the same branch. No AI tool binary is reachable: the only `aidd` on `PATH` is a shim to the
- * binary under test, and the transcripts are synthetic.
+ * headless run follows on the same branch. No AI tool binary is reachable: the only `aidd` on
+ * `PATH` is a shim to the binary under test, and the transcripts are synthetic.
  */
 
 export const HOOKS = join(REPOSITORY_ROOT, "plugins", "aidd-telemetry", "hooks");
