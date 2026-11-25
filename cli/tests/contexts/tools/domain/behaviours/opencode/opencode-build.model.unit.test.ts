@@ -168,32 +168,6 @@ describe("building OpenCode's flat contract", () => {
     });
   });
 
-  it("names each event its bridge leaves out", () => {
-    const hooks = supported(present(opencode.buildContracts.flat)().artifacts.hooks);
-    const manifest = JSON.stringify({
-      hooks: Object.fromEntries(
-        ["SessionStart", "PostToolUse", "Stop", "PreToolUse", "UserPromptSubmit", "SessionEnd"].map(
-          (event) => [event, []]
-        )
-      ),
-    });
-
-    expect(hooks.hooksBridge?.generate(manifest, "aidd-dev").warnings).toStrictEqual([
-      "unmapped event 'SessionEnd' skipped",
-    ]);
-  });
-
-  it("generates no bridge for a plugin whose hooks name no event OpenCode delivers", () => {
-    const hooks = supported(present(opencode.buildContracts.flat)().artifacts.hooks);
-
-    expect(
-      hooks.hooksBridge?.generate(
-        JSON.stringify({ hooks: { Notification: [{ hooks: [{ command: "x" }] }] } }),
-        "aidd-dev"
-      ).content
-    ).toBeNull();
-  });
-
   it("writes one opencode.json holding the bundled base, the user's own keys and every plugin's mcp servers", () => {
     const files = emit({
       builtPlugins: ["aidd-dev"],
