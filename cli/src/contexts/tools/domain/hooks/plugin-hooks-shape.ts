@@ -39,9 +39,19 @@ function bridgedCall(command: string | undefined): BridgeHookCall | null {
 const FILE_WRITE_TOOLS = new Set(["edit", "write"]);
 const PATCH_TOOL = "apply_patch";
 
+/** The lowercased tool names a plugin matcher lists. */
+export function matcherNames(matcher: string): readonly string[] {
+  return matcher.split("|").map((name) => name.toLowerCase());
+}
+
+/** Whether a lowercased tool name is one of Claude Code's file-write tools. */
+export function isFileWriteName(name: string): boolean {
+  return FILE_WRITE_TOOLS.has(name);
+}
+
 function bridgedMatcher(matcher: string): string {
-  const names = matcher.split("|").map((name) => name.toLowerCase());
-  const writes = names.some((name) => FILE_WRITE_TOOLS.has(name));
+  const names = matcherNames(matcher);
+  const writes = names.some(isFileWriteName);
   return writes && !names.includes(PATCH_TOOL) ? `${matcher}|${PATCH_TOOL}` : matcher;
 }
 

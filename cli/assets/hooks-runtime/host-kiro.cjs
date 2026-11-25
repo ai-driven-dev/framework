@@ -59,7 +59,8 @@ function readEvent() {
 }
 
 /** Asks the model to go on before the turn ends, with `text` as what it must do: a block decision
- * at Stop, which the model was seen answering on kiro-cli V3 (other Kiro surfaces unprobed). */
+ * at Stop, documented for the Agent Stop trigger (https://kiro.dev/docs/hooks/types/, CLI tab) and
+ * seen answered on kiro-cli V3 (other Kiro surfaces unprobed). */
 function continueTurn(text) {
   if (current?.event !== "Stop" || typeof text !== "string" || text === "") return;
   process.stdout.write(`${JSON.stringify({ decision: "block", reason: text })}\n`);

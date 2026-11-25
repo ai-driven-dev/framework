@@ -17,6 +17,8 @@ import { pluginScriptDir, pluginScriptPath } from "../../hooks/hooks-merge.js";
 import {
   type BridgeHookCall,
   bridgeHookCalls,
+  isFileWriteName,
+  matcherNames,
   type PluginMatcherGroup,
 } from "../../hooks/plugin-hooks-shape.js";
 
@@ -33,12 +35,12 @@ interface KiroHook {
   readonly timeout?: number;
 }
 
-/** The Kiro tag selecting what a Claude Code tool name (any case) names: the `write` tag was seen
- * matching `fs_write` and `str_replace`, the `shell` tag `execute_bash`. A name Kiro has no tool
- * for, such as `apply_patch`, selects nothing. */
+/** The Kiro tag selecting what a Claude Code tool name (lowercase) names, beyond the file-write
+ * tools the shared shape knows, which are `write`: the `write` tag was seen matching `fs_write`
+ * and `str_replace`, the `shell` tag `execute_bash`. `delete` and `powershell` rest on the vendor
+ * docs' tool families alone (https://kiro.dev/docs/hooks/types/), no capture. A name Kiro has no
+ * tool for, such as `apply_patch`, selects nothing. */
 const TOOL_TAGS: ReadonlyMap<string, string> = new Map([
-  ["write", "write"],
-  ["edit", "write"],
   ["delete", "write"],
   ["bash", "shell"],
   ["shell", "shell"],
@@ -46,7 +48,9 @@ const TOOL_TAGS: ReadonlyMap<string, string> = new Map([
 ]);
 
 function selectorsOf(matcher: string): readonly string[] {
-  const tags = matcher.split("|").flatMap((name) => TOOL_TAGS.get(name.toLowerCase()) ?? []);
+  const tags = matcherNames(matcher).flatMap((name) =>
+    isFileWriteName(name) ? "write" : (TOOL_TAGS.get(name) ?? [])
+  );
   return [...new Set(tags)];
 }
 
@@ -117,7 +121,7 @@ interface Built {
 }
 
 /** One hook per tag of the call's matcher, or one selecting every tool when it has none. Kiro keys
- * a hook by its place in the file, so a name only has to read well: each trigger and tag of a
+ * a hook by its place in the file (`<file>#hook-<index>`, seen on kiro-cli 3.6.0), so a name only has to read well: each trigger and tag of a
  * script gets its own. Ownership is matched by command, not name. */
 function hooksOfCall(
   { scriptsDir, plugin, trigger }: { scriptsDir: string; plugin: string; trigger: string },

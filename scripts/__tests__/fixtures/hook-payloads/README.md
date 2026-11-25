@@ -15,7 +15,8 @@ the event spelled as the host spells it. Read by the CLI converter tests and the
   a session token at SessionStart in the key the host's adapter prints, to learn whether the model
   reads it; `continue`, Cursor's `followup_message` once at the first `stop`.
 - `hookAnswer` is what the logging hook printed for that call, `null` when it printed nothing:
-  JSON on most hosts. Kiro's SessionStart sample holds the bare text, since Kiro hands that hook's output to the model as printed; its Stop sample holds the JSON block decision.
+  JSON on most hosts. Kiro's SessionStart sample holds the bare text, since Kiro hands that
+  hook's output to the model as printed; its Stop sample holds the JSON block decision.
 
 ## OpenCode and Kilo
 
@@ -40,8 +41,9 @@ string. Claude Code's `Edit` and its `PowerShell` tool, enabled by
 its `Delete`. OpenCode's and Kilo's `edit` and `apply_patch` arguments. Kiro's SessionStart, from
 its CLI on the V3 engine: the session id carries a `sess_` prefix, and the model was seen reading
 the hook's output between `<HOOK_INSTRUCTION>` tags, a JSON answer included as raw text. Kiro's
-PostToolUse (an `fs_write` creating a file, a `str_replace` edit, an `execute_bash` call and a `read_file`) and Stop, from `kiro-cli` 3.6.0 on the V3 engine, hooks
-declared in a project's `.kiro/hooks/*.json` under the triggers `PostToolUse` and `Stop`, run as
+PostToolUse (an `fs_write` creating a file, a `str_replace` edit, an `execute_bash` call and a
+`read_file`) and Stop, from `kiro-cli` 3.6.0 on the V3 engine, hooks declared in a project's
+`.kiro/hooks/*.json` under the triggers `PostToolUse` and `Stop`, run as
 `kiro-cli chat --v3 --no-interactive --trust-workspace --trust-tools=fs_write,fs_read,execute_bash
 --model qwen3-coder-next "<prompt>"`. Their stdin carries no `stop_hook_active`. After a Stop hook
 printed `{"decision": "block", "reason": ...}` the model answered the reason and Stop fired once

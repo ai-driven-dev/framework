@@ -85,6 +85,29 @@ describe("kiro's hooks file", () => {
     expect(warnings).toEqual([]);
   });
 
+  it.each([
+    ["Write", "write"],
+    ["Edit", "write"],
+    ["Delete", "write"],
+    ["Bash", "shell"],
+    ["Shell", "shell"],
+    ["PowerShell", "shell"],
+  ])("maps the matcher name %s to the %s tag on its own", (name, tag) => {
+    const shipped = JSON.stringify({
+      hooks: {
+        PostToolUse: [
+          {
+            matcher: name,
+            hooks: [{ type: "command", command: `node ${PLUGIN_ROOT_VAR}/hooks/a.cjs` }],
+          },
+        ],
+      },
+    });
+    const { content } = format.merge(null, shipped, "aidd-context");
+
+    expect(hooksOf(content).map(({ matcher }) => matcher)).toEqual([tag]);
+  });
+
   it("selects every tool when the plugin names none, and for events that take no matcher", () => {
     const command = `node ${PLUGIN_ROOT_VAR}/hooks/a.cjs`;
     const shipped = JSON.stringify({
