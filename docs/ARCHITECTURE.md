@@ -114,7 +114,8 @@ A contract states the shape of the files a skill writes, so a script judges it, 
 
 - A shared op covers a check two contracts need; one contract's own judgment is `custom`.
 - A custom check gets the file's `lines`, `prose` and front matter, may call `shape` from `lib/ops.cjs`, and returns `{ line, offending, fix }` per hit.
-- Each rule ships with a test that sees it fire.
+- A contract loads only when each template, custom check and schema it names exists, each `optional` name is in its template, and each `regex` compiles.
+- A test fails on a rule no fixture makes fire, and on a custom script no rule reaches.
 - A contract stays in the skill that writes the kind. Add one: copy `plugins/aidd-pm/skills/02-user-stories/scripts/`, then run `node scripts/check/engine/sync.cjs`.
 
 ## Hooks

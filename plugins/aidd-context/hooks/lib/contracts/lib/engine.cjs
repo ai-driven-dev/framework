@@ -4,7 +4,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { readText, frontmatter, proseLines } = require("./markdown.cjs");
-const { ops, OPTIONS, readSchema } = require("./ops.cjs");
+const { ops, OPTIONS, readSchema, parseTemplate } = require("./ops.cjs");
 
 const EXIT = { OK: 0, FINDINGS: 1, USAGE: 2 };
 const TOP_KEYS = ["kind", "unit", "targets", "scope", "shell", "marker", "watch", "rules"];
@@ -35,6 +35,15 @@ function globRegex(glob) {
 }
 
 const asList = (value) => (Array.isArray(value) ? value : value === undefined ? [] : [value]);
+
+/** Every front matter key and heading name a template holds, at any level. */
+function templateNames(file) {
+  const model = parseTemplate(file);
+  const names = new Set(Object.keys(model.fm));
+  const add = (nodes) => nodes.forEach((s) => (names.add(s.name), add(s.children)));
+  add(model.sections);
+  return names;
+}
 
 /** The contract, checked against its own schema; a broken contract stops the run instead of silencing a rule. */
 function loadContract(file) {
@@ -69,6 +78,16 @@ function loadContract(file) {
       } catch (error) {
         fail(`${id}: ${error.message}`);
       }
+    }
+    const dir = path.dirname(file);
+    const exists = (ref) => fs.existsSync(path.resolve(dir, ref)) || fail(`${id}: ${ref} does not exist`);
+    if (rule.template) exists(rule.template);
+    if (rule.op === "custom") exists(`custom/${rule.check}.cjs`);
+    for (const name of rule.optional ?? []) if (!templateNames(path.resolve(dir, rule.template)).has(name)) fail(`${id}: optional ${name} is not in ${rule.template}`);
+    try {
+      if (rule.regex !== undefined) new RegExp(rule.regex, "u");
+    } catch (error) {
+      fail(`${id}: regex ${error.message}`);
     }
     rule.match = asList(rule.in ?? "**").map(globRegex);
     rule.skip = asList(rule.notIn).map(globRegex);

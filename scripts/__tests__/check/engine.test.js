@@ -144,6 +144,27 @@ describe("engine", () => {
     assert.match(validate("unit").err, /DEMO-01: in is required/u);
   });
 
+  it("exits 2 on a template, custom check or schema that does not exist", () => {
+    write("a.md", "x\n");
+    contract({ "DEMO-01": { op: "template", in: "*.md", template: "none.md", fix: "f" } });
+    assert.match(validate("a.md").err, /DEMO-01: .*none\.md/u);
+    contract({ "DEMO-01": { op: "custom", in: "*.md", check: "none" } });
+    assert.match(validate("a.md").err, /DEMO-01: .*none\.cjs/u);
+    contract({ "DEMO-01": { op: "json", in: "*.md", schema: "none.json", fix: "f" } });
+    assert.equal(validate("a.md").status, 2);
+  });
+
+  it("exits 2 on an optional name the template does not hold, and on a regex that does not compile", () => {
+    write("a.md", "x\n");
+    write("t.md", "---\nstatus: draft\n---\n\n# T\n\n## Kept\n\n### Deep\n");
+    contract({ "DEMO-01": { op: "template", in: "*.md", template: "t.md", optional: ["status", "Kept", "Deep"], fix: "f" } });
+    assert.equal(validate("a.md").status, 1);
+    contract({ "DEMO-01": { op: "template", in: "*.md", template: "t.md", optional: ["Gone"], fix: "f" } });
+    assert.match(validate("a.md").err, /DEMO-01: optional Gone is not in t\.md/u);
+    contract({ "DEMO-01": { op: "forbidden", in: "*.md", regex: "(", fix: "f" } });
+    assert.match(validate("a.md").err, /DEMO-01: regex/u);
+  });
+
   it("exits 2 on a folder contract without a marker", () => {
     contract({ "DEMO-01": { op: "links", in: "**/*.md", why: "w", fix: "f" } }, { unit: "folder" });
     fs.mkdirSync(path.join(dir, "unit"));

@@ -363,4 +363,4 @@ function parseTemplate(file) {
   return templates.get(file);
 }
 
-module.exports = { ops, OPTIONS, shape, cells, LINK, schemaProblems, readSchema, validateJson };
+module.exports = { ops, OPTIONS, shape, cells, LINK, schemaProblems, readSchema, validateJson, parseTemplate };
