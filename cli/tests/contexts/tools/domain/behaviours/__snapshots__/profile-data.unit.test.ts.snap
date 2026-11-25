@@ -531,6 +531,63 @@ exports[`the data each registered profile declares > kilo 1`] = `
 }
 `;
 
+exports[`the data each registered profile declares > kiro 1`] = `
+{
+  "builds": [
+    "flat",
+  ],
+  "configFiles": {},
+  "directory": ".kiro/",
+  "displayName": "Kiro",
+  "distribution": {
+    "manifest": [],
+    "marketplace": [],
+  },
+  "frontmatter": {
+    "agents": {
+      "description": "Review code",
+      "name": "reviewer",
+      "tools": [
+        "*",
+      ],
+    },
+    "commands": null,
+    "rules": null,
+  },
+  "hooksRootToken": null,
+  "installs": {
+    "agents": {
+      ".gitkeep": ".kiro/agents/.gitkeep",
+      "helper.txt": ".kiro/agents/helper.txt",
+      "reviewer.kiro.md": ".kiro/agents/reviewer.md",
+      "reviewer.md": ".kiro/agents/reviewer.md",
+      "team/sub/reviewer.md": ".kiro/agents/reviewer.md",
+    },
+  },
+  "kind": "ai",
+  "plugins": {
+    "acceptsHooks": false,
+    "deliversHooksToProject": false,
+    "flatLayout": {
+      "namespacePrefix": "aidd-",
+      "rules": "nested",
+      "skillLayout": "single-level",
+    },
+    "kind": "flat",
+  },
+  "projectHooks": null,
+  "sections": [
+    "agents",
+    "skills",
+    "hooks",
+    "layout",
+  ],
+  "signalDir": null,
+  "toolId": "kiro",
+  "toolSuffix": ".kiro.md",
+}
+`;
+
 exports[`the data each registered profile declares > opencode 1`] = `
 {
   "builds": [

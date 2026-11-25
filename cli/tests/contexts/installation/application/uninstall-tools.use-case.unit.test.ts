@@ -382,7 +382,7 @@ describe("UninstallTools - refusals", () => {
       })
     ).rejects.toThrow(
       new InputRequiredError(
-        "At least one tool ID is required. Valid tools: claude, cursor, copilot, opencode, kilo, codex, antigravity, vscode"
+        "At least one tool ID is required. Valid tools: claude, cursor, copilot, opencode, kilo, codex, antigravity, kiro, vscode"
       )
     );
   });

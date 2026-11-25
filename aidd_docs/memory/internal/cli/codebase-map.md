@@ -137,6 +137,7 @@ src/
 │   │   │   │   ├── copilot/
 │   │   │   │   ├── cursor/
 │   │   │   │   ├── kilo/
+│   │   │   │   ├── kiro/
 │   │   │   │   └── opencode/
 │   │   │   ├── bridges/
 │   │   │   ├── formats/

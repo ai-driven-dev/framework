@@ -1,0 +1,11 @@
+no hook file
+
+# recorded
+project kiro aidd-context scope=project: 0 hook files
+  projectHooks null
+  dependents []
+project kiro aidd-telemetry scope=project: 0 hook files
+  projectHooks null
+  dependents []
+project kiro nativeRegistrations pluginRefs null
+machine: no manifest

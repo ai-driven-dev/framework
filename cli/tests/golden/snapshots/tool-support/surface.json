@@ -149,5 +149,22 @@
         "commands": "no"
       }
     }
+  },
+  {
+    "id": "kiro",
+    "name": "Kiro",
+    "directory": ".kiro/",
+    "pluginMode": "flat",
+    "nativeCli": null,
+    "builds": {
+      "flat": {
+        "skills": "yes",
+        "agents": "yes",
+        "mcp": "no",
+        "hooks": "no",
+        "rules": "no",
+        "commands": "no"
+      }
+    }
   }
 ]
