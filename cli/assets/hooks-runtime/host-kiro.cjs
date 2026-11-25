@@ -5,12 +5,16 @@
  * build puts one such adapter per tool at `hooks/lib/host.cjs`; the plugin tree ships Claude
  * Code's. Node built-ins only; anything unreadable is no event, and prints nothing.
  *
- * Only SessionStart is delivered to Kiro: it is the one event whose payload was captured, so a
- * payload naming any other event is read as no event.
+ * SessionStart, PostToolUse and Stop are delivered to Kiro: they are the events whose payload was
+ * captured, so a payload naming any other event is read as no event.
  */
 const fs = require("node:fs");
+const path = require("node:path");
 
 const HOST = "kiro";
+const EVENTS = new Set(["SessionStart", "PostToolUse", "Stop"]);
+/** The one write tool a capture shows: its input is `{ path, text }`. */
+const WRITES = new Set(["fs_write"]);
 
 /** The event `readEvent` last returned: an answer is printed only for one. */
 let current;
@@ -23,30 +27,45 @@ function readPayload() {
   }
 }
 
+function writtenFiles(tool, input, cwd) {
+  if (!WRITES.has(tool) || typeof input?.path !== "string") return [];
+  const file = { path: path.resolve(cwd, input.path) };
+  if (typeof input.text === "string") file.written = input.text;
+  return [file];
+}
+
 function readEvent() {
   current = undefined;
   const raw = readPayload();
-  if (raw === undefined || raw.hook_event_name !== "SessionStart") return undefined;
+  if (raw === undefined || !EVENTS.has(raw.hook_event_name)) return undefined;
+  const event = raw.hook_event_name;
+  const cwd = typeof raw.cwd === "string" && raw.cwd !== "" ? raw.cwd : process.cwd();
   current = {
     host: HOST,
-    event: "SessionStart",
-    files: [],
+    event,
+    files: event === "PostToolUse" ? writtenFiles(raw.tool_name, raw.tool_input, cwd) : [],
     stopActive: false,
     sessionId: typeof raw.session_id === "string" ? raw.session_id : null,
-    cwd: typeof raw.cwd === "string" && raw.cwd !== "" ? raw.cwd : process.cwd(),
+    cwd,
     raw,
   };
   return current;
 }
 
-/** A hook's standard output is added to the agent's context as printed
- * (https://kiro.dev/docs/hooks/types/), so the text goes out bare. */
-function answer({ text } = {}) {
-  if (current === undefined || typeof text !== "string" || text === "") return;
-  process.stdout.write(`${text}\n`);
+/** Asks the model to go on before the turn ends, with `text` as what it must do: a block decision
+ * at Stop, which the model was seen answering. */
+function continueTurn(text) {
+  if (current?.event !== "Stop" || typeof text !== "string" || text === "") return;
+  process.stdout.write(`${JSON.stringify({ decision: "block", reason: text })}\n`);
 }
 
-/** No turn end is delivered to Kiro, so there is nothing to continue. */
-function continueTurn() {}
+/** A SessionStart hook's standard output is added to the agent's context as printed
+ * (https://kiro.dev/docs/hooks/types/), so the text goes out bare. At Stop, any answer continues
+ * the turn. Output after a tool call was never seen reaching the model, so none is printed. */
+function answer({ text } = {}) {
+  if (current === undefined || typeof text !== "string" || text === "") return;
+  if (current.event === "Stop") return continueTurn(text);
+  if (current.event === "SessionStart") process.stdout.write(`${text}\n`);
+}
 
 module.exports = { readEvent, answer, continueTurn };

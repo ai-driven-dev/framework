@@ -39,7 +39,13 @@ string. Claude Code's `Edit` and its `PowerShell` tool, enabled by
 `CLAUDE_CODE_USE_POWERSHELL_TOOL=1`. Cursor's edit, sent as a `Write` carrying the whole file, and
 its `Delete`. OpenCode's and Kilo's `edit` and `apply_patch` arguments. Kiro's SessionStart, from
 its CLI on the V3 engine: the session id carries a `sess_` prefix, and the model was seen reading
-the hook's output between `<HOOK_INSTRUCTION>` tags, a JSON answer included as raw text.
+the hook's output between `<HOOK_INSTRUCTION>` tags, a JSON answer included as raw text. Kiro's
+PostToolUse (an `fs_write` creating a file) and Stop, from `kiro-cli` 3.6.0 on the V3 engine, hooks
+declared in a project's `.kiro/hooks/*.json` under the triggers `PostToolUse` and `Stop`, run as
+`kiro-cli chat --v3 --no-interactive --trust-workspace --trust-tools=fs_write,fs_read --model
+qwen3-coder-next "<prompt>"`. Their stdin carries no `stop_hook_active`. A Stop hook printing
+`{"decision": "block", "reason": ...}` once made the model act on the reason, and Stop then fired no
+second time; text printed by a PostToolUse hook was not read by the model in two runs.
 
 ## How the harder ones were reached
 

@@ -44,10 +44,10 @@ const KIRO_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(DIRECTORY, {
 const hooks = declareHooks(
   { toolId: "kiro", directory: DIRECTORY, adapter },
   {
-    // Only SessionStart has a captured payload (https://kiro.dev/docs/hooks/types/); every other
-    // event is dropped from the merge with a warning.
+    // Only SessionStart, PostToolUse and Stop have a captured payload (https://kiro.dev/docs/hooks/types/);
+    // every other event is dropped from the merge with a warning.
     undeclaredEvents: "skipped",
-    events: { SessionStart: "SessionStart" },
+    events: { SessionStart: "SessionStart", PostToolUse: "PostToolUse", Stop: "Stop" },
     // Kiro loads every `.kiro/hooks/*.json` of a project, and CLI V3 those of `~/.kiro/hooks/`
     // too (https://kiro.dev/docs/hooks/): every plugin's entries share one file of AIDD's own.
     flat: { scriptsDir: `${DIRECTORY}hooks/`, sharedFile: `${DIRECTORY}hooks/aidd.json` },

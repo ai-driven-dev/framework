@@ -28,6 +28,13 @@ const SHIPPED = JSON.stringify({
         hooks: [{ type: "command", command: `node ${PLUGIN_ROOT_VAR}/hooks/a.cjs` }],
       },
     ],
+    Stop: [{ hooks: [{ type: "command", command: `node ${PLUGIN_ROOT_VAR}/hooks/b.cjs` }] }],
+  },
+});
+
+const UNCAPTURED = JSON.stringify({
+  hooks: {
+    PreToolUse: [{ hooks: [{ type: "command", command: `node ${PLUGIN_ROOT_VAR}/hooks/c.cjs` }] }],
   },
 });
 
@@ -60,22 +67,29 @@ describe("kiro's hooks file", () => {
           timeout: 5,
           action: { type: "command" },
         },
+        { name: "aidd-context-a.cjs", trigger: "PostToolUse", action: { type: "command" } },
+        { name: "aidd-context-b.cjs", trigger: "Stop", action: { type: "command" } },
       ],
     });
   });
 
   it("drops an event with no captured payload and says so", () => {
-    const { content, warnings } = format.merge(null, SHIPPED, "aidd-context");
+    const { content, warnings } = format.merge(null, UNCAPTURED, "aidd-context");
 
-    expect(hooksOf(content).map((hook) => hook.trigger)).toEqual(["SessionStart"]);
-    expect(warnings).toEqual(["unmapped event 'PostToolUse' skipped"]);
+    expect(hooksOf(content)).toEqual([]);
+    expect(warnings).toEqual(["unmapped event 'PreToolUse' skipped"]);
   });
 
   it("keeps a hook the user declared, and changes nothing when merged twice", () => {
     const { content: first } = format.merge(USER_FILE, SHIPPED, "aidd-context");
     const { content: second } = format.merge(first, SHIPPED, "aidd-context");
 
-    expect(hooksOf(first).map((hook) => hook.name)).toEqual(["lint", "aidd-context-memory.cjs"]);
+    expect(hooksOf(first).map((hook) => hook.name)).toEqual([
+      "lint",
+      "aidd-context-memory.cjs",
+      "aidd-context-a.cjs",
+      "aidd-context-b.cjs",
+    ]);
     expect(second).toBe(first);
   });
 
@@ -83,7 +97,11 @@ describe("kiro's hooks file", () => {
     const { content } = format.merge(null, SHIPPED, "aidd-context");
     const left = format.unmerge(format.merge(content, SHIPPED, "other").content, "aidd-context");
 
-    expect(hooksOf(left).map((hook) => hook.name)).toEqual(["other-memory.cjs"]);
+    expect(hooksOf(left).map((hook) => hook.name)).toEqual([
+      "other-memory.cjs",
+      "other-a.cjs",
+      "other-b.cjs",
+    ]);
     expect(format.isEmpty(format.unmerge(content, "aidd-context"))).toBe(true);
   });
 
@@ -92,6 +110,8 @@ describe("kiro's hooks file", () => {
 
     expect(format.contributedEntries(content, "aidd-context")).toMatchObject([
       { event: "SessionStart", entry: { name: "aidd-context-memory.cjs", timeout: 5 } },
+      { event: "PostToolUse", entry: { name: "aidd-context-a.cjs" } },
+      { event: "Stop", entry: { name: "aidd-context-b.cjs" } },
     ]);
   });
 

@@ -1,0 +1,21 @@
+{
+  "host": "kiro",
+  "event": "PostToolUse",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "session_id": "sess_00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "PostToolUse",
+        "cwd": "/Users/user/project",
+        "tool_name": "fs_write",
+        "tool_input": {
+          "path": "/Users/user/project/hello.txt",
+          "text": "hi"
+        },
+        "tool_response": "Created the /Users/user/project/hello.txt file."
+      },
+      "hookAnswer": null
+    }
+  ]
+}

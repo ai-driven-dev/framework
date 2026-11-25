@@ -3,9 +3,9 @@
  * merge is Kiro's own.
  *
  * Only a command of the form `node ${CLAUDE_PLUGIN_ROOT}/hooks/...` is delivered; any other is
- * dropped, and no plugin ships one. Only `SessionStart` is delivered, so a script paired across
- * events (aidd-context's artifacts start, mark and check) runs only its SessionStart half, which
- * is harmless. */
+ * dropped, and no plugin ships one. Only `SessionStart`, `PostToolUse` and `Stop` are delivered,
+ * and a plugin's matcher is not carried over: Kiro's own tool selectors were never run, so a
+ * PostToolUse script runs after every tool and reads from its payload whether it wrote a file. */
 
 import type { ShippedHooks } from "../../../../../shared/domain/materialization/build-contract.js";
 import { genericFlatHooksScriptPath } from "../../../../../shared/domain/materialization/flat-paths.js";
