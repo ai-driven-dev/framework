@@ -3,228 +3,35 @@
  * parameters are held to the same behaviour by loading the module in Node under a fake host
  * that emits those events, with real hook scripts that record what reached them.
  */
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
-import { pathToFileURL } from "node:url";
-import { afterEach, describe, expect, it, onTestFinished, vi } from "vitest";
-import { generateKiloHooksBridge } from "../../../../../src/contexts/tools/domain/behaviours/kilo/kilo-hooks-bridge.model.js";
-import { generateOpencodeHooksBridge } from "../../../../../src/contexts/tools/domain/behaviours/opencode/opencode-hooks-bridge.model.js";
-import { asPlainObject } from "../../../../../src/shared/domain/reading/plain-object.js";
-import { REPOSITORY_ROOT } from "../../../../shared/testing/repository-root.builder.js";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  ALONGSIDE,
+  beforeTool,
+  captured,
+  cleanBridges,
+  command,
+  HOSTS,
+  open,
+  REFERENCE_HOOKS,
+  SESSION,
+} from "../../testing/event-bridge-host.builder.js";
 
-const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
-const command = (script: string, prefix = "node ") => ({
-  hooks: [{ type: "command", command: `${prefix}${ROOT}/hooks/${script}` }],
-});
-const REFERENCE_HOOKS = JSON.stringify({
-  hooks: {
-    SessionStart: [command("record.cjs --quiet")],
-    Stop: [command("stop.cjs")],
-    PostToolUse: [
-      { matcher: "Write|Edit", ...command("fix.cjs") },
-      { matcher: "Write|Edit", ...command("trap.cjs", "") },
-      { matcher: "Write|Edit", ...command("trap.cjs", "python ") },
-      { matcher: "Read", ...command("note.cjs") },
-      { matcher: "Deaf", ...command("deaf.cjs") },
-      command("any.cjs"),
-    ],
-  },
-});
+afterEach(cleanBridges);
 
-// Each script appends what it received to calls.jsonl, then behaves as its name says.
-const RECORDING = `const fs = require("node:fs"); const path = require("node:path"); let body = "";
-process.stdin.on("data", (chunk) => { body += chunk; });
-process.stdin.on("end", () => {
-  const payload = JSON.parse(body);
-  fs.appendFileSync(path.resolve(__dirname, "../../calls.jsonl"), JSON.stringify({ script: path.basename(__filename), args: process.argv.slice(2), payload }) + "\\n");`;
-const SCRIPTS: Record<string, string> = {
-  "record.cjs": "",
-  "trap.cjs": "",
-  "any.cjs": "",
-  "stop.cjs": `if (!payload.stop_hook_active) process.stdout.write(JSON.stringify({ decision: "block", reason: "fix it" }));`,
-  "fix.cjs": `process.stderr.write("fix it\\n"); process.exitCode = 2;`,
-  "exit7.cjs": "process.exitCode = 7;",
-  "note.cjs": `process.stdout.write(JSON.stringify({ hookSpecificOutput: { additionalContext: "noted" } }));`,
-};
-
-// A script that exits without ever reading its stdin.
-const DEAF = "process.exit(0);";
-// A script that never exits, and says who it is so the test can see it killed.
-const HANG = `require("node:fs").writeFileSync(require("node:path").resolve(__dirname, "../../hang.pid"), String(process.pid)); setInterval(() => {}, 1000);`;
-
-interface Server {
-  event: (input: { event: unknown }) => Promise<void>;
-  "tool.execute.after": (call: unknown, output: { output: string }) => Promise<void>;
-  "tool.execute.before": (call: unknown, output: unknown) => Promise<void>;
-  "chat.message"?: (input: unknown, output: { parts: unknown[] }) => Promise<void>;
-  dispose: () => Promise<void>;
-}
-interface Descriptor {
-  id: string;
-  server: (input: unknown) => Promise<Server>;
-  setup?: (ctx: string) => unknown;
-}
-
-interface Host {
-  readonly name: string;
-  readonly generate: (hooksJson: string, plugin: string) => string | null;
-  /** What the host loads of the descriptor, and what its SessionStart payload names. */
-  readonly descriptorKeys: readonly string[];
-  readonly sessionStartId: string | null;
-  /** The event that starts a session, on which the host fires SessionStart. */
-  readonly sessionStarted: (id: string, directory: string) => unknown;
-  /** What a host needs between two idle events before the second is a new turn's. */
-  readonly nextTurn: (id: string) => unknown[];
-}
-
-const HOSTS: readonly Host[] = [
-  {
-    name: "OpenCode",
-    generate: (hooksJson, plugin) => generateOpencodeHooksBridge(hooksJson, plugin).content,
-    descriptorKeys: ["id", "server", "setup"],
-    sessionStartId: "ses_one",
-    sessionStarted: (id, directory) => ({
-      type: "session.created",
-      properties: { sessionID: id, info: { id, directory } },
-    }),
-    nextTurn: () => [],
-  },
-  {
-    name: "Kilo",
-    generate: (hooksJson, plugin) => generateKiloHooksBridge(hooksJson, plugin).content,
-    descriptorKeys: ["id", "server"],
-    sessionStartId: "ses_one",
-    sessionStarted: (id, directory) => ({
-      type: "session.created",
-      properties: { sessionID: id, info: { directory } },
-    }),
-    nextTurn: (id) => [
-      { type: "session.status", properties: { sessionID: id, status: { type: "busy" } } },
-    ],
-  },
-];
-
-const created: string[] = [];
-afterEach(async () => {
-  vi.restoreAllMocks();
-  // A generated bridge's load-time hook may still be writing when the test ends: ENOTEMPTY, observed.
-  await Promise.all(
-    created
-      .splice(0)
-      .map((dir) => rm(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 }))
-  );
-});
-
-interface Prompt {
-  readonly path: { readonly id: string };
-  readonly body: { readonly parts: readonly unknown[] };
-}
-
-interface Call {
-  readonly script: string;
-  readonly args: readonly string[];
-  readonly payload: Record<string, unknown>;
-}
-
-async function open(
-  host: Host,
-  hooksJson = REFERENCE_HOOKS,
-  inputDirectory: (directory: string) => string = (directory) => directory
+/** A turn the host runs: every plugin is handed its message, then the events up to its end. */
+async function turnOf(
+  plugins: readonly Awaited<ReturnType<typeof open>>[],
+  input: { sessionID: string },
+  parts: readonly unknown[],
+  events: readonly unknown[]
 ) {
-  const directory = await mkdtemp(join(tmpdir(), "aidd-event-bridge-"));
-  created.push(directory);
-  await mkdir(join(directory, "hooks", "probe"), { recursive: true });
-  await mkdir(join(directory, "plugin"));
-  for (const [name, tail] of Object.entries(SCRIPTS)) {
-    await writeFile(join(directory, "hooks", "probe", name), `${RECORDING}\n${tail}\n});\n`);
+  for (const plugin of plugins) {
+    await plugin.server["chat.message"]?.(input, { parts: [...parts] });
+    await plugin.emit(...events);
   }
-  await writeFile(join(directory, "hooks", "probe", "deaf.cjs"), DEAF);
-  await writeFile(join(directory, "hooks", "probe", "hang.cjs"), HANG);
-  await writeFile(
-    join(directory, "hooks", "opencode-events.js"),
-    "export function setupOpencodeEvents(ctx, server) { return { ctx, server }; }\n"
-  );
-  const modulePath = join(directory, "plugin", "bridge.mjs");
-  await writeFile(modulePath, host.generate(hooksJson, "probe") ?? "");
-  const descriptor: Descriptor = (await import(pathToFileURL(modulePath).href)).default;
-  const prompts: Prompt[] = [];
-  const delivered: Prompt[] = [];
-  // Each host calls its own method: OpenCode `prompt`, delivered after a delay as a real turn is
-  // (only what it awaits has landed); Kilo `promptAsync`.
-  const client = {
-    session:
-      host.name === "OpenCode"
-        ? {
-            prompt: async (r: Prompt) => {
-              prompts.push(r);
-              await delay(100);
-              delivered.push(r);
-            },
-          }
-        : { promptAsync: async (r: Prompt) => void prompts.push(r) },
-  };
-  const server = await descriptor.server({ directory: inputDirectory(directory), client });
-  const emit = async (...events: unknown[]) => {
-    for (const event of events) if (event !== undefined) await server.event({ event });
-  };
-  const calls = async (): Promise<Call[]> =>
-    (await readFile(join(directory, "calls.jsonl"), "utf8").catch(() => ""))
-      .split("\n")
-      .filter(Boolean)
-      .map((line) => JSON.parse(line));
-  const of = async (script: string) => (await calls()).filter((c) => c.script === script);
-  const tool = async (name: string, args: unknown = {}) => {
-    const output = { output: "done" };
-    await server["tool.execute.after"]({ tool: name, sessionID: "ses_one", args }, output);
-    return output.output;
-  };
-  return { directory, descriptor, server, emit, calls, of, tool, prompts, delivered };
-}
-
-// A Stop script that exits 7 never answers: the module exists whatever event a case adds beside it.
-const ALONGSIDE = { Stop: [command("exit7.cjs")] };
-
-const PAYLOADS = join(REPOSITORY_ROOT, "scripts", "__tests__", "fixtures", "hook-payloads");
-const SESSION = "00000000-0000-4000-8000-000000000000";
-
-interface Captured {
-  readonly input: { readonly sessionID: string };
-  readonly output: {
-    readonly message: { readonly id: string };
-    readonly parts: { id: string; text: string }[];
-  };
-}
-
-/** The samples a host's capture file holds. */
-async function samplesOf(file: string) {
-  const parsed = asPlainObject(JSON.parse(await readFile(join(PAYLOADS, file), "utf8")));
-  return Array.isArray(parsed?.samples) ? parsed.samples : [];
-}
-
-/** A payload the host really sent, from its capture: the nth sample of its hook's file. */
-async function captured(host: Host, hook: string, run: string): Promise<Captured> {
-  const file = `${host.name.toLowerCase()}-${hook}.json`;
-  const samples = await samplesOf(file);
-  const found = samples.find((sample) => sample.run === run);
-  if (found === undefined) throw new Error(`${file} has no ${run} sample`);
-  return found.payload;
-}
-
-/** The captured write and shell calls of a host's `tool.execute.before`. */
-async function beforeTool(host: Host, tool: "write" | "bash") {
-  const file = `${host.name.toLowerCase()}-tool.execute.before.json`;
-  const samples = await samplesOf(file);
-  const found = samples.find((sample) => sample.payload.call.tool === tool);
-  if (found === undefined) throw new Error(`${file} has no ${tool} call`);
-  return structuredClone(found.payload);
-}
-
-function hostNamed(name: string): Host {
-  const host = HOSTS.find((candidate) => candidate.name === name);
-  if (host === undefined) throw new Error(`no host named ${name}`);
-  return host;
 }
 
 describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
@@ -344,6 +151,21 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
     }
   );
 
+  it("runs a session's Stop and tool hooks in the folder its first event names, not the host's", async () => {
+    const { directory, emit, tool, of } = await open(host, REFERENCE_HOOKS, (dir) =>
+      join(dir, "absent")
+    );
+    await emit(host.sessionStarted("ses_one", directory), {
+      type: "session.idle",
+      properties: { sessionID: "ses_one" },
+    });
+    await tool("write", { content: "x" });
+
+    expect(
+      [...(await of("stop.cjs")), ...(await of("fix.cjs"))].map((call) => call.payload.cwd)
+    ).toStrictEqual([directory, directory]);
+  });
+
   it("keeps a tool's arguments as they came when it names no written file", async () => {
     const { tool, of } = await open(host);
     await tool("write", { content: "x" });
@@ -391,6 +213,36 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
         false,
       ]);
     }
+  });
+
+  // Observed on Kilo 7.7.5 and 7.8.32: the host idles between the two follow-up turns, and each
+  // plugin's Stop script blocked again at the second, forever.
+  it("continues a turn once when two plugins each send a follow-up, never again at the second one's turn", async () => {
+    const plugins = [await open(host), await open(host)];
+    const idle = { type: "session.idle", properties: { sessionID: "shared" } };
+    for (const plugin of plugins)
+      await plugin.emit(host.sessionStarted("shared", plugin.directory));
+    for (const plugin of plugins) await plugin.emit(idle);
+
+    // The host runs each queued follow-up as a turn of its own, handing every plugin its message.
+    for (const sent of plugins.map((plugin) => plugin.prompts[0])) {
+      await turnOf(plugins, { sessionID: "shared" }, sent?.body.parts ?? [], [
+        ...host.nextTurn("shared"),
+        idle,
+      ]);
+    }
+
+    expect(
+      await Promise.all(
+        plugins.map(async (plugin) => [
+          plugin.prompts.length,
+          (await plugin.of("stop.cjs")).map((c) => c.payload.stop_hook_active),
+        ])
+      )
+    ).toStrictEqual([
+      [1, [false, true, true]],
+      [1, [false, true, true]],
+    ]);
   });
 
   it("marks the follow-up it sends, so the host's message hook does not read it as the user's", async () => {
@@ -602,188 +454,4 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
 
     expect(await of("stop.cjs")).toEqual([]);
   });
-});
-
-describe("the bridge generated with Kilo's parameters, held to the session each event names", () => {
-  const [, kilo] = HOSTS as [Host, Host];
-
-  it("runs a session's SessionStart and Stop once until it is busy again or deleted", async () => {
-    const { directory, emit, of } = await open(kilo);
-    const created = kilo.sessionStarted("ses_one", directory);
-    const idle = { type: "session.idle", properties: { sessionID: "ses_one" } };
-
-    await emit(created, created, idle, idle, ...kilo.nextTurn("ses_one"), idle);
-    await emit({ type: "session.deleted", properties: { sessionID: "ses_one" } }, created);
-
-    await vi.waitFor(async () => expect(await of("record.cjs")).toHaveLength(2), { timeout: 5000 });
-    await delay(100);
-    expect(await of("record.cjs")).toHaveLength(2);
-    expect(await of("stop.cjs")).toHaveLength(2);
-  });
-
-  it("treats a message the user sends as a new turn", async () => {
-    const { directory, emit, of, server } = await open(kilo);
-    await emit(kilo.sessionStarted("s1", directory));
-    const idle = { type: "session.idle", properties: { sessionID: "s1" } };
-    const typed = { parts: [{ type: "text", text: "hello" }] };
-
-    await emit(idle);
-    await server["chat.message"]?.({ sessionID: "s1" }, typed);
-    await emit(...kilo.nextTurn("s1"), idle);
-
-    expect((await of("stop.cjs")).map((c) => c.payload.stop_hook_active)).toStrictEqual([
-      false,
-      false,
-    ]);
-  });
-
-  it("keeps the continuation when a follow-up, its own or another plugin's, is the only message", async () => {
-    const first = await open(kilo);
-    const second = await open(kilo);
-    const idle = { type: "session.idle", properties: { sessionID: "s1" } };
-    await first.emit(kilo.sessionStarted("s1", first.directory), idle);
-    await second.emit(kilo.sessionStarted("s1", second.directory), idle);
-
-    // Kilo hands every plugin each message, whichever plugin sent it.
-    for (const { body } of [...first.prompts, ...second.prompts]) {
-      for (const { server } of [first, second]) {
-        await server["chat.message"]?.({ sessionID: "s1" }, { parts: [...body.parts] });
-      }
-    }
-    await first.emit(...kilo.nextTurn("s1"), idle);
-
-    expect((await first.of("stop.cjs")).map((c) => c.payload.stop_hook_active)).toStrictEqual([
-      false,
-      true,
-    ]);
-  });
-
-  it.each([
-    { kind: "nonzero exit", error: "exited with code 7", input: (dir: string) => dir },
-    { kind: "spawn failure", error: "ENOENT", input: (dir: string) => join(dir, "absent") },
-  ])(
-    "reports a SessionStart script's $kind without blocking the session",
-    async ({ error, input }) => {
-      const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-      const hooksJson = JSON.stringify({ hooks: { SessionStart: [command("exit7.cjs")] } });
-      const { emit } = await open(kilo, hooksJson, input);
-
-      await emit({ type: "session.created", properties: { sessionID: "failed" } });
-
-      await vi.waitFor(() => expect(warn).toHaveBeenCalledWith(expect.stringContaining(error)), {
-        timeout: 5000,
-        interval: 20,
-      });
-      await delay(100);
-      expect(warn).toHaveBeenCalledTimes(1);
-    }
-  );
-
-  it("reports an event it cannot read without blocking the session", async () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    const { server } = await open(kilo);
-
-    await server.event({
-      event: {
-        get properties() {
-          throw new Error("broken event");
-        },
-      },
-    });
-
-    expect(warn).toHaveBeenCalledTimes(1);
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining("broken event"));
-  });
-});
-
-describe("the bridge generated with OpenCode's parameters", () => {
-  it("hands its server to the loader's own setup, and fires no SessionStart before a session names itself", async () => {
-    const { descriptor, of } = await open(HOSTS[0] as Host);
-
-    expect(descriptor.setup?.("ctx")).toEqual({ ctx: "ctx", server: descriptor.server });
-    await delay(200);
-    expect(await of("record.cjs")).toStrictEqual([]);
-  });
-
-  it("runs a session's SessionStart once across the plugin being created again", async () => {
-    const opencode = hostNamed("OpenCode");
-    const { descriptor, directory, emit, of } = await open(opencode);
-    const client = { session: { prompt: async () => undefined } };
-    const again = await descriptor.server({ directory, client });
-    const created = opencode.sessionStarted("s1", directory);
-
-    await emit(created);
-    await again.event({ event: created });
-
-    await vi.waitFor(async () => expect(await of("record.cjs")).toHaveLength(1), { timeout: 5000 });
-    await delay(100);
-    expect(await of("record.cjs")).toHaveLength(1);
-  });
-
-  it("waits for the follow-up it sent when the host shuts the plugin down", async () => {
-    const { server, emit, delivered } = await open(hostNamed("OpenCode"));
-
-    await emit({ type: "session.idle", properties: { sessionID: "s1" } });
-    expect(delivered).toStrictEqual([]);
-    await server.dispose();
-
-    expect(delivered).toHaveLength(1);
-  });
-
-  it("waits for a Stop script still running when the host shuts the plugin down", async () => {
-    const { server, delivered } = await open(hostNamed("OpenCode"));
-
-    // Not awaited: dispose arrives while the Stop script still runs.
-    void server.event({ event: { type: "session.idle", properties: { sessionID: "s1" } } });
-    await server.dispose();
-
-    expect(delivered).toHaveLength(1);
-  });
-
-  it("ignores an idle session once the host has shut it down", async () => {
-    const { server, emit, of } = await open(hostNamed("OpenCode"));
-
-    await server.dispose();
-    await emit({ type: "session.idle", properties: { sessionID: "s1" } });
-
-    expect(await of("stop.cjs")).toStrictEqual([]);
-  });
-
-  it("keeps a session's continuation across the plugin being created again", async () => {
-    const { descriptor, directory, emit, of } = await open(hostNamed("OpenCode"));
-    const client = { session: { prompt: async () => undefined } };
-    const again = await descriptor.server({ directory, client });
-    const idle = { type: "session.idle", properties: { sessionID: "s1" } };
-
-    await emit(idle);
-    await again.event({ event: idle });
-
-    expect((await of("stop.cjs")).map((c) => c.payload.stop_hook_active)).toStrictEqual([
-      false,
-      true,
-    ]);
-  });
-
-  // Real time: a child process's timeout runs on the clock, so this case costs the bridge's 5 s.
-  it("stops a script that never exits and gives the tool's output back", async () => {
-    const hooksJson = JSON.stringify({
-      hooks: { PostToolUse: [{ matcher: "Hang", ...command("hang.cjs") }] },
-    });
-    const { directory, tool } = await open(HOSTS[0] as Host, hooksJson);
-
-    const answered = await Promise.race([tool("hang"), delay(8000, "still waiting")]);
-    const pid = Number(await readFile(join(directory, "hang.pid"), "utf8"));
-    // A failing run must not leave the hung script behind.
-    onTestFinished(() => {
-      try {
-        process.kill(pid, "SIGKILL");
-      } catch (error) {
-        // ESRCH: already gone, which is the passing case.
-        if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error;
-      }
-    });
-
-    expect(answered).toBe("done");
-    await vi.waitFor(() => expect(() => process.kill(pid, 0)).toThrow(), { timeout: 2000 });
-  }, 15_000);
 });

@@ -76,7 +76,6 @@ describe.each([
   it("builds the Stop calls once, in the shared builder", () => {
     expect(source.match(/hook_event_name: "Stop"/g)).toHaveLength(1);
     expect(source).toContain("function stopCallsFor(sessionId, directory) {");
-    expect(source.match(/Limit: one Stop hook per plugin/g)).toHaveLength(1);
   });
 
   it("declares no function it never calls", () => {

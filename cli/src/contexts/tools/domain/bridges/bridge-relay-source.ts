@@ -16,7 +16,7 @@ export const TOOL_USE_SOURCE = `${MATCHES_TOOL_SOURCE}
 function toolUseCallsFor(event, hooks, call, args, directory) {
   const tool = String(call?.tool ?? "");
   ${TOOL_INPUT_SOURCE}
-  return hooks.filter((hook) => matchesTool(hook.matcher, tool)).map((hook) => ({
+  return hooks.filter((hook) => matchesTool(hook.tools, tool)).map((hook) => ({
     script: hook.script,
     args: hook.args,
     payload: {
@@ -126,47 +126,128 @@ async function addPromptContext(input, output, directory) {
 
 /** SessionStart runs on the first event that names a session, so the script knows its session.
  * That event is `session.created` for a new session; a continued one is created no more, and its
- * first event is another. A new session's first event names its folder under info; a continued
- * one's names none. Every script's answer reaches the model in one block, added to the system
- * prompt of each of that session's turns, and their messages for the person are shown once, at
- * the first turn: shown while the host starts, they reach a TUI not yet listening. Not awaited by
- * the event: the session's first turn awaits it. The map is module-level: the host creates the plugin again, and a fresh map would run
- * the scripts again and lose their answer.
+ * first event is another. A new session's first event names its folder under info, which every
+ * later hook of the session runs in; a continued one's names none, and the host's folder stands.
+ * Every script's answer reaches the model in one block, added to the system prompt of each of that
+ * session's turns, and their messages for the person are shown once, at the first turn: shown
+ * while the host starts, they reach a TUI not yet listening. Not awaited by the event: the
+ * session's first turn awaits it. The map is module-level: the host creates the plugin again, and
+ * a fresh map would run the scripts again and lose their answer.
  *
+ * Limit: a SessionStart script that exits 2 has its stderr added to the system prompt, where
+ * Claude Code shows it to the person only.
  * Limit: `session.deleted` clears a session's entry through `properties.sessionID`, a shape no
  * captured payload shows for either host; were it named otherwise, the entry would only stay in
  * memory, session ids being unique. */
-export const SESSION_START_SOURCE = `const sessionContexts = new Map();
+export const SESSION_START_SOURCE = `const sessions = new Map();
 
 function runSessionStart(event, fallbackDirectory) {
   const named = event?.properties?.sessionID;
   if (typeof named !== "string") return;
   if (event.type === "session.deleted") {
-    sessionContexts.delete(named);
+    sessions.delete(named);
+    continuedTurns.delete(named);
     return;
   }
-  if (sessionContexts.has(named)) return;
+  if (sessions.has(named)) return;
   const directory = event.properties.info?.directory ?? fallbackDirectory;
   const answers = SESSION_START.map((hook) =>
     answerOf(hook.script, hook.args, { hook_event_name: "SessionStart", session_id: named, cwd: directory }, directory)
   );
   const joined = (texts) => texts.filter(Boolean).join("\\n\\n");
-  sessionContexts.set(
-    named,
-    Promise.all(answers).then((all) => ({
+  sessions.set(named, {
+    directory,
+    started: Promise.all(answers).then((all) => ({
       context: joined(all.map((answer) => answer.text)),
       person: joined(all.map((answer) => answer.person)),
-    }))
-  );
+    })),
+  });
+}
+
+/** The folder a session's hooks run in. */
+function sessionDirectory(sessionId, fallbackDirectory) {
+  return sessions.get(sessionId)?.directory ?? fallbackDirectory;
 }
 
 /** What SessionStart answered, added to the system prompt of the session's turn; its message for
  * the person handed to \`show\` once, where the host has one. */
 async function addSessionContext(input, output, show) {
-  const started = await sessionContexts.get(input?.sessionID);
+  const started = await sessions.get(input?.sessionID)?.started;
   if (started === undefined) return;
   if (started.context) output.system.push(started.context);
   const person = started.person;
   started.person = "";
   show?.(person);
+}`;
+
+/** A turn's end: every Stop script runs, each that blocks sends its reason as the session's next
+ * turn, and the Stops after it tell their scripts so through `stop_hook_active`, until a message
+ * that is no Stop follow-up (the person's, a queued finding) starts a fresh turn. The host hands
+ * every plugin every message, so a follow-up is told apart by its mark, whichever plugin sent it.
+ * A Stop never clears it: with two plugins that each sent a follow-up, the host idles between
+ * their two turns, and a Stop that cleared it made the second turn read as fresh and every script
+ * block again, forever (observed on Kilo 7.7.5 and 7.8.32).
+ *
+ * Limit: a host whose messages reach no message hook (the OpenCode V2 adapter) never clears it,
+ * so after a session's first follow-up its Stop scripts are always told the turn continues.
+ * Limit: several Stop hooks of one plugin that block each send a follow-up. */
+export const TURN_END_SOURCE = `const continuedTurns = new Set();
+
+function noteTurn(sessionId, parts) {
+  if (!isFollowUp(parts)) continuedTurns.delete(sessionId);
+}
+
+function isFollowUp(parts) {
+  return parts.some((part) => part?.metadata?.aidd === FOLLOW_UP.aidd);
+}
+
+/** Resolves once the scripts ran, with the follow-ups still in flight: the prompt is the session's
+ * next turn, and the turn end must not hold it. */
+async function runStop(sessionId, directory, { client, method, show }) {
+  const active = continuedTurns.has(sessionId);
+  const sends = [];
+  for (const call of stopCallsFor(sessionId, directory)) {
+    const payload = { ...call.payload, stop_hook_active: active };
+    const { reason, person } = await stopReasonOf(call.script, call.args, payload, directory);
+    show?.(person);
+    if (!reason) continue;
+    continuedTurns.add(sessionId);
+    sends.push(sendPrompt(client, method, sessionId, reason, FOLLOW_UP, call.script, "follow-up not delivered: "));
+  }
+  return sends;
+}`;
+
+/** The hooks every bridge hands its host, over the host's own client: what differs per host is the
+ * folder it starts in, the client call that sends a follow-up, which event ends a turn, where a
+ * message for the person goes and whether a turn end's follow-ups are tracked. Every hook reports
+ * a failure and never throws into the host, but a PreToolUse refusal, which is how the host stops
+ * the call. */
+export const BRIDGE_HOOKS_SOURCE = `function bridgeHooks({ directory, client, followUp, endsTurn, show, track }) {
+  const folderOf = (sessionId) => sessionDirectory(sessionId, directory);
+  return {
+    event: async ({ event }) => {
+      try {
+        runSessionStart(event, directory);
+        const sessionId = event?.properties?.sessionID;
+        if (typeof sessionId !== "string" || !endsTurn(event)) return;
+        const stopping = runStop(sessionId, folderOf(sessionId), { client, method: followUp, show });
+        track?.(stopping.then((sends) => Promise.all(sends)));
+        await stopping;
+      } catch (error) {
+        reportHookFailure("event", error);
+      }
+    },
+    "experimental.chat.system.transform": (input, output) => addSessionContext(input, output, show),
+    "chat.message": async (input, output) => {
+      try {
+        noteTurn(input?.sessionID, output?.parts ?? []);
+      } catch (error) {
+        reportHookFailure("event", error);
+      }
+      await addPromptContext(input, output, folderOf(input?.sessionID));
+    },
+    "tool.execute.before": (call, output) => refuseToolUse(call, output, folderOf(call?.sessionID)),
+    "tool.execute.after": (call, output) =>
+      addToolAnswers(call, output, folderOf(call?.sessionID), client, show),
+  };
 }`;

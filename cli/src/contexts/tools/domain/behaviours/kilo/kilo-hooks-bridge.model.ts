@@ -1,28 +1,30 @@
 /**
  * Kilo loads JavaScript modules from `.kilo/plugin/` and requires a default descriptor with
  * `{ id, server }`. Declarative hooks.json has no Kilo runtime, so this generator turns its
- * replayable commands into that native module. Kilo 7.7.5 delivers session.created and
- * session.idle through its event hook; a SessionStart answer reaches the model through
- * experimental.chat.system.transform; PostToolUse runs from tool.execute.after, which waits
- * for the script and appends its exit-2 stderr to the tool's output for the model to read; an
- * answer the script marks required is also queued as the session's next prompt. Probed on 7.7.5:
- * the model took the queued prompt up and the rest of the turn still ran, in one assistant run.
- * PreToolUse runs from tool.execute.before: a script that exits 2 refuses the call, its stderr the
- * reason the model reads, as a throw from that hook does on Kilo 7.7.5. UserPromptSubmit runs from
- * chat.message: a script's answer joins the user's message as a synthetic text part. A throw from
- * that hook stops the prompt, but its reason reaches neither the person nor the model (Kilo 7.8.32
- * answers a generic UnknownError), so no script refuses. Matchers ignore case, since Kilo names its
- * tools in lowercase. Limit: a script's message for the person (`systemMessage`) is not shown:
- * Kilo's TUI rendering a plugin's toast was not observed.
+ * replayable commands into that native module; what it does on each event is the shared bridge
+ * runtime's (`bridges/`), and this file holds only what Kilo does its own way.
  *
- * SessionStart runs on the first event naming a session, as on OpenCode, whose event shapes Kilo
- * shares. Limit: that a continued Kilo session's first event is not `session.created` was not
- * probed; the trigger holds either way, since it fires on whichever event comes first.
+ * Kilo shares OpenCode's event shapes and plugin hooks (7.7.5): SessionStart on the first event
+ * naming a session, its answer through `experimental.chat.system.transform`; Stop on
+ * `session.idle`; PostToolUse on `tool.execute.after`; PreToolUse on `tool.execute.before`, whose
+ * throw refuses the call; UserPromptSubmit on `chat.message`, whose throw stops the prompt with a
+ * generic UnknownError and no reason (7.8.32), so no script refuses. A required finding queued
+ * through `promptAsync` was taken up and the rest of the turn still ran, in one assistant run
+ * (7.7.5). A continued Kilo session's first event was not probed; the trigger holds either way.
  *
- * Provenance of the `kilo run` limit stated in the Stop handler: probed on 7.7.5 and 7.8.27, the
- * process exits at idle and the follow-up turn never runs, keyed on `session.idle` (both) and on
- * `session.drained` (7.8.27). One earlier measurement of 7.8.27 recorded the follow-up landing
- * when keyed on `session.drained`; it was not reproduced.
+ * Stop runs once per turn: an idle is skipped until the session reports itself busy again. The
+ * follow-up goes through `promptAsync`, which returns once queued.
+ *
+ * Limit: in `kilo run` the follow-up's turn never runs (7.7.5, 7.8.27, 7.8.32). `run` asks the
+ * server to drain the session once its prompt returns, and exits at `session.drained`; the drain
+ * waits only for prompts already queued, and the event hook that runs the Stop script is not
+ * awaited, so the follow-up, sent once the script ended, comes too late. Running the script
+ * synchronously inside the event hook made it land, 3 runs of 3 on 7.7.5 and 7.8.32, at the cost
+ * of blocking the whole Kilo process for up to the script's 5 s on every idle; that is not done
+ * here. Sending it from `dispose` fails: the drain closes before it.
+ *
+ * Limit: a script's message for the person is not shown. Kilo's TUI subscribes to
+ * `tui.toast.show` (source), but a plugin's toast rendering was not observed.
  */
 
 import {
@@ -42,64 +44,26 @@ ${parts.callTables}
 
 ${parts.shared}
 
-function isFollowUp(parts) {
-  return parts.some((part) => part?.metadata?.aidd === FOLLOW_UP.aidd);
+// Sessions idle since they last reported themselves busy: a second idle of one turn is no turn end.
+const idleSessions = new Set();
+
+function endsTurn(event) {
+  const sessionId = event.properties.sessionID;
+  if (event.type === "session.status" && event.properties.status?.type === "busy") idleSessions.delete(sessionId);
+  if (event.type !== "session.idle" || idleSessions.has(sessionId)) return false;
+  idleSessions.add(sessionId);
+  return true;
 }
 
-const ${parts.identifier} = async ({ directory, client }) => {
-  const sessions = new Map();
-  return {
-  event: async ({ event }) => {
-    try {
-      const properties = event?.properties;
-      const id = properties?.sessionID;
-      if (typeof id !== "string") return;
-      runSessionStart(event, directory);
-      if (event?.type === "session.deleted") { sessions.delete(id); return; }
-      if (!sessions.has(id)) {
-        sessions.set(id, { idle: false, continued: false, directory: properties?.info?.directory ?? directory });
-      }
-      const session = sessions.get(id);
-      if (event?.type === "session.status" && properties?.status?.type === "busy") {
-        session.idle = false;
-      } else if (event?.type === "session.idle" && !session.idle) {
-        session.idle = true;
-        for (const call of stopCallsFor(id, session.directory)) {
-          const payload = { ...call.payload, stop_hook_active: session.continued };
-          const { reason } = await stopReasonOf(call.script, call.args, payload, session.directory);
-          session.continued = reason !== "";
-          // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
-          // Open limit in \`kilo run\`: it exits at idle before this follow-up's turn runs, on 7.7.5 and 7.8.27
-          // keyed on \`session.idle\`, and on 7.8.27 keyed on \`session.drained\`.
-          if (reason) sendPrompt(client, "promptAsync", id, reason, FOLLOW_UP, call.script, "follow-up not delivered: ");
-        }
-      }
-    } catch (error) {
-      reportHookFailure("event", error);
-    }
-  },
-  // What SessionStart answered reaches the model through its session's system prompt, every turn.
-  "experimental.chat.system.transform": (input, output) => addSessionContext(input, output),
-  // A user's message starts a new turn. Kilo hands every plugin every message, so a follow-up,
-  // this bridge's or another plugin's, is recognised by its mark and is not one; a queued finding
-  // is.
-  "chat.message": async (input, output) => {
-    const session = sessions.get(input?.sessionID);
-    if (session && !isFollowUp(output?.parts ?? [])) session.continued = false;
-    await addPromptContext(input, output, session?.directory ?? directory);
-  },
-  "tool.execute.before": (call, output) =>
-    refuseToolUse(call, output, sessions.get(call?.sessionID)?.directory ?? directory),
-  "tool.execute.after": (call, output) =>
-    addToolAnswers(call, output, sessions.get(call?.sessionID)?.directory ?? directory, client),
-  };
-};
+const ${parts.identifier} = async ({ directory, client }) =>
+  bridgeHooks({ directory, client, followUp: "promptAsync", endsTurn });
 
 export default { id: "${parts.plugin}-hooks", server: ${parts.identifier} };
 `,
 };
 
-/** Generates Kilo's default descriptor; failed hooks report without blocking its session. */
+/** A plugin's raw hooks.json + its name -> its generated Kilo bridge module, and the events it
+ * leaves out. */
 export function generateKiloHooksBridge(
   rawHooksJson: string,
   plugin: string

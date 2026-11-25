@@ -259,6 +259,22 @@ describe("OpenCode's person message, through its bridge", () => {
     expect(prompts).toStrictEqual(CONTINUED);
   });
 
+  it("still continues the turn on the client the V2 adapter hands it, which has no TUI", async () => {
+    const ws = await workspace("opencode", opencodeBridge());
+    vi.stubEnv("AIDD_STOP", "person");
+    const [, idle] = await captured("opencode-session.idle.json", ws.project);
+    const { plugin, prompts } = await start(
+      ws,
+      { directory: ws.project },
+      undefined,
+      undefined,
+      true
+    );
+    await plugin.event({ event: idle });
+
+    expect(prompts).toStrictEqual(CONTINUED);
+  });
+
   it("shows it at a turn end that answers only the person, with no follow-up", async () => {
     const ws = await workspace("opencode", opencodeBridge());
     vi.stubEnv("AIDD_STOP", "person-only");

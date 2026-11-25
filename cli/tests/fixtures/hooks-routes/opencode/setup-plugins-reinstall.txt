@@ -364,7 +364,7 @@ import { fileURLToPath } from "node:url";
 const HOOKS_DIR = fileURLToPath(new URL("../hooks/aidd-context/", import.meta.url));
 
 const SESSION_START = [{"script":"memory.cjs","args":["load"]},{"script":"artifacts.cjs","args":["start"]}];
-const POST_TOOL_USE = [{"script":"artifacts.cjs","args":["mark"],"matcher":"Write|Edit|Bash|Shell|bash|PowerShell|apply_patch"}];
+const POST_TOOL_USE = [{"script":"artifacts.cjs","args":["mark"],"tools":["write","edit","bash","shell","bash","powershell","apply_patch"]}];
 const STOP = [{"script":"memory.cjs","args":["sync"]}];
 const PRE_TOOL_USE = [];
 const USER_PROMPT_SUBMIT = [];
@@ -462,7 +462,6 @@ function stopReasonOf(script, args, payload, directory) {
   });
 }
 
-// Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
 function stopCallsFor(sessionId, directory) {
   return STOP.map((hook) => ({
     script: hook.script,
@@ -479,13 +478,12 @@ function isBridgePrompt(parts) {
 }
 
 function sendPrompt(client, method, sessionId, text, mark, script, failure) {
-  return Promise.resolve()
-    .then(() => client.session[method]({ path: { id: sessionId }, body: { parts: [{ type: "text", text, metadata: mark }] } }))
+  return client.session[method]({ path: { id: sessionId }, body: { parts: [{ type: "text", text, metadata: mark }] } })
     .catch((error) => reportHookFailure(script, failure + String(error)));
 }
 
-function matchesTool(matcher, tool) {
-  return !matcher || matcher.split("|").some((name) => name.toLowerCase() === tool.toLowerCase());
+function matchesTool(tools, tool) {
+  return !tools || tools.includes(tool.toLowerCase());
 }
 
 /** Pure: a tool call -> every hook of one event whose matcher allows its tool. The host names the
@@ -493,7 +491,7 @@ function matchesTool(matcher, tool) {
 function toolUseCallsFor(event, hooks, call, args, directory) {
   const tool = String(call?.tool ?? "");
   const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;
-  return hooks.filter((hook) => matchesTool(hook.matcher, tool)).map((hook) => ({
+  return hooks.filter((hook) => matchesTool(hook.tools, tool)).map((hook) => ({
     script: hook.script,
     args: hook.args,
     payload: {
@@ -597,34 +595,40 @@ async function addPromptContext(input, output, directory) {
   }
 }
 
-const sessionContexts = new Map();
+const sessions = new Map();
 
 function runSessionStart(event, fallbackDirectory) {
   const named = event?.properties?.sessionID;
   if (typeof named !== "string") return;
   if (event.type === "session.deleted") {
-    sessionContexts.delete(named);
+    sessions.delete(named);
+    continuedTurns.delete(named);
     return;
   }
-  if (sessionContexts.has(named)) return;
+  if (sessions.has(named)) return;
   const directory = event.properties.info?.directory ?? fallbackDirectory;
   const answers = SESSION_START.map((hook) =>
     answerOf(hook.script, hook.args, { hook_event_name: "SessionStart", session_id: named, cwd: directory }, directory)
   );
   const joined = (texts) => texts.filter(Boolean).join("\n\n");
-  sessionContexts.set(
-    named,
-    Promise.all(answers).then((all) => ({
+  sessions.set(named, {
+    directory,
+    started: Promise.all(answers).then((all) => ({
       context: joined(all.map((answer) => answer.text)),
       person: joined(all.map((answer) => answer.person)),
-    }))
-  );
+    })),
+  });
+}
+
+/** The folder a session's hooks run in. */
+function sessionDirectory(sessionId, fallbackDirectory) {
+  return sessions.get(sessionId)?.directory ?? fallbackDirectory;
 }
 
 /** What SessionStart answered, added to the system prompt of the session's turn; its message for
  * the person handed to `show` once, where the host has one. */
 async function addSessionContext(input, output, show) {
-  const started = await sessionContexts.get(input?.sessionID);
+  const started = await sessions.get(input?.sessionID)?.started;
   if (started === undefined) return;
   if (started.context) output.system.push(started.context);
   const person = started.person;
@@ -632,61 +636,95 @@ async function addSessionContext(input, output, show) {
   show?.(person);
 }
 
-// Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
-// Module-level: the host creates the plugin again, and a fresh set would forget a continuation.
-const continued = new Set();
+const continuedTurns = new Set();
+
+function noteTurn(sessionId, parts) {
+  if (!isFollowUp(parts)) continuedTurns.delete(sessionId);
+}
+
+function isFollowUp(parts) {
+  return parts.some((part) => part?.metadata?.aidd === FOLLOW_UP.aidd);
+}
+
+/** Resolves once the scripts ran, with the follow-ups still in flight: the prompt is the session's
+ * next turn, and the turn end must not hold it. */
+async function runStop(sessionId, directory, { client, method, show }) {
+  const active = continuedTurns.has(sessionId);
+  const sends = [];
+  for (const call of stopCallsFor(sessionId, directory)) {
+    const payload = { ...call.payload, stop_hook_active: active };
+    const { reason, person } = await stopReasonOf(call.script, call.args, payload, directory);
+    show?.(person);
+    if (!reason) continue;
+    continuedTurns.add(sessionId);
+    sends.push(sendPrompt(client, method, sessionId, reason, FOLLOW_UP, call.script, "follow-up not delivered: "));
+  }
+  return sends;
+}
+
+function bridgeHooks({ directory, client, followUp, endsTurn, show, track }) {
+  const folderOf = (sessionId) => sessionDirectory(sessionId, directory);
+  return {
+    event: async ({ event }) => {
+      try {
+        runSessionStart(event, directory);
+        const sessionId = event?.properties?.sessionID;
+        if (typeof sessionId !== "string" || !endsTurn(event)) return;
+        const stopping = runStop(sessionId, folderOf(sessionId), { client, method: followUp, show });
+        track?.(stopping.then((sends) => Promise.all(sends)));
+        await stopping;
+      } catch (error) {
+        reportHookFailure("event", error);
+      }
+    },
+    "experimental.chat.system.transform": (input, output) => addSessionContext(input, output, show),
+    "chat.message": async (input, output) => {
+      try {
+        noteTurn(input?.sessionID, output?.parts ?? []);
+      } catch (error) {
+        reportHookFailure("event", error);
+      }
+      await addPromptContext(input, output, folderOf(input?.sessionID));
+    },
+    "tool.execute.before": (call, output) => refuseToolUse(call, output, folderOf(call?.sessionID)),
+    "tool.execute.after": (call, output) =>
+      addToolAnswers(call, output, folderOf(call?.sessionID), client, show),
+  };
+}
+
+/** The person's message goes to the TUI's toast. Never awaited: the call comes back only once the
+ * server is up, and a toast the TUI cannot show is not worth holding a hook for. */
+function showToast(client, person) {
+  if (!person) return;
+  Promise.resolve()
+    .then(() => client.tui.showToast({ body: { message: person, variant: "warning" } }))
+    .catch(() => {});
+}
 
 export const AiddContextHooks = async (input) => {
   // Stop handlings in flight: `opencode run` exits once the session is idle, so dispose waits.
   let pending = Promise.resolve();
   // OpenCode keeps delivering events to an instance it disposed once it has created the next one.
   let disposed = false;
-  // The person's message goes to the TUI's toast. Never awaited: the call comes back only once the
-  // server is up, and a toast the TUI cannot show is not worth holding a hook for.
-  const show = (person) => {
-    if (!person) return;
-    Promise.resolve()
-      .then(() => input.client.tui.showToast({ body: { message: person, variant: "warning" } }))
-      .catch(() => {});
-  };
+  const hooks = bridgeHooks({
+    directory: input.directory,
+    client: input.client,
+    followUp: "prompt",
+    endsTurn: (event) => event.type === "session.idle",
+    show: (person) => showToast(input.client, person),
+    track: (handling) => {
+      pending = Promise.all([pending, handling]).then(() => {});
+    },
+  });
   return {
+    ...hooks,
     dispose: async () => {
       disposed = true;
       await pending;
     },
-    event: async ({ event }) => {
-      if (disposed) return;
-      try {
-        runSessionStart(event, input.directory);
-        const directory = event?.properties?.directory ?? input.directory;
-        const sessionId = event?.properties?.sessionID ?? null;
-        for (const call of event?.type === "session.idle" ? stopCallsFor(sessionId, directory) : []) {
-          const payload = { ...call.payload, stop_hook_active: continued.has(sessionId) };
-          const asking = stopReasonOf(call.script, call.args, payload, directory);
-          // Pending before the script ends: dispose waits for a handling whose script still runs.
-          // The prompt is the session's next turn, and this handler must not hold it.
-          const handling = asking
-            .then(({ reason, person }) => {
-              show(person);
-              if (!reason) {
-                continued.delete(sessionId);
-                return undefined;
-              }
-              continued.add(sessionId);
-              return sendPrompt(input.client, "prompt", sessionId, reason, FOLLOW_UP, call.script, "follow-up not delivered: ");
-            });
-          pending = Promise.all([pending, handling]).then(() => {});
-          await asking;
-        }
-      } catch (error) {
-        reportHookFailure("event", error);
-      }
+    event: async (payload) => {
+      if (!disposed) await hooks.event(payload);
     },
-    "experimental.chat.system.transform": (call, output) => addSessionContext(call, output, show),
-    "tool.execute.before": (call, output) => refuseToolUse(call, output, input.directory),
-    "chat.message": (call, output) => addPromptContext(call, output, input.directory),
-    "tool.execute.after": (call, output) =>
-      addToolAnswers(call, output, input.directory, input.client, show),
   };
 };
 
@@ -807,7 +845,6 @@ function stopReasonOf(script, args, payload, directory) {
   });
 }
 
-// Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
 function stopCallsFor(sessionId, directory) {
   return STOP.map((hook) => ({
     script: hook.script,
@@ -824,13 +861,12 @@ function isBridgePrompt(parts) {
 }
 
 function sendPrompt(client, method, sessionId, text, mark, script, failure) {
-  return Promise.resolve()
-    .then(() => client.session[method]({ path: { id: sessionId }, body: { parts: [{ type: "text", text, metadata: mark }] } }))
+  return client.session[method]({ path: { id: sessionId }, body: { parts: [{ type: "text", text, metadata: mark }] } })
     .catch((error) => reportHookFailure(script, failure + String(error)));
 }
 
-function matchesTool(matcher, tool) {
-  return !matcher || matcher.split("|").some((name) => name.toLowerCase() === tool.toLowerCase());
+function matchesTool(tools, tool) {
+  return !tools || tools.includes(tool.toLowerCase());
 }
 
 /** Pure: a tool call -> every hook of one event whose matcher allows its tool. The host names the
@@ -838,7 +874,7 @@ function matchesTool(matcher, tool) {
 function toolUseCallsFor(event, hooks, call, args, directory) {
   const tool = String(call?.tool ?? "");
   const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;
-  return hooks.filter((hook) => matchesTool(hook.matcher, tool)).map((hook) => ({
+  return hooks.filter((hook) => matchesTool(hook.tools, tool)).map((hook) => ({
     script: hook.script,
     args: hook.args,
     payload: {
@@ -942,34 +978,40 @@ async function addPromptContext(input, output, directory) {
   }
 }
 
-const sessionContexts = new Map();
+const sessions = new Map();
 
 function runSessionStart(event, fallbackDirectory) {
   const named = event?.properties?.sessionID;
   if (typeof named !== "string") return;
   if (event.type === "session.deleted") {
-    sessionContexts.delete(named);
+    sessions.delete(named);
+    continuedTurns.delete(named);
     return;
   }
-  if (sessionContexts.has(named)) return;
+  if (sessions.has(named)) return;
   const directory = event.properties.info?.directory ?? fallbackDirectory;
   const answers = SESSION_START.map((hook) =>
     answerOf(hook.script, hook.args, { hook_event_name: "SessionStart", session_id: named, cwd: directory }, directory)
   );
   const joined = (texts) => texts.filter(Boolean).join("\n\n");
-  sessionContexts.set(
-    named,
-    Promise.all(answers).then((all) => ({
+  sessions.set(named, {
+    directory,
+    started: Promise.all(answers).then((all) => ({
       context: joined(all.map((answer) => answer.text)),
       person: joined(all.map((answer) => answer.person)),
-    }))
-  );
+    })),
+  });
+}
+
+/** The folder a session's hooks run in. */
+function sessionDirectory(sessionId, fallbackDirectory) {
+  return sessions.get(sessionId)?.directory ?? fallbackDirectory;
 }
 
 /** What SessionStart answered, added to the system prompt of the session's turn; its message for
  * the person handed to `show` once, where the host has one. */
 async function addSessionContext(input, output, show) {
-  const started = await sessionContexts.get(input?.sessionID);
+  const started = await sessions.get(input?.sessionID)?.started;
   if (started === undefined) return;
   if (started.context) output.system.push(started.context);
   const person = started.person;
@@ -977,61 +1019,95 @@ async function addSessionContext(input, output, show) {
   show?.(person);
 }
 
-// Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
-// Module-level: the host creates the plugin again, and a fresh set would forget a continuation.
-const continued = new Set();
+const continuedTurns = new Set();
+
+function noteTurn(sessionId, parts) {
+  if (!isFollowUp(parts)) continuedTurns.delete(sessionId);
+}
+
+function isFollowUp(parts) {
+  return parts.some((part) => part?.metadata?.aidd === FOLLOW_UP.aidd);
+}
+
+/** Resolves once the scripts ran, with the follow-ups still in flight: the prompt is the session's
+ * next turn, and the turn end must not hold it. */
+async function runStop(sessionId, directory, { client, method, show }) {
+  const active = continuedTurns.has(sessionId);
+  const sends = [];
+  for (const call of stopCallsFor(sessionId, directory)) {
+    const payload = { ...call.payload, stop_hook_active: active };
+    const { reason, person } = await stopReasonOf(call.script, call.args, payload, directory);
+    show?.(person);
+    if (!reason) continue;
+    continuedTurns.add(sessionId);
+    sends.push(sendPrompt(client, method, sessionId, reason, FOLLOW_UP, call.script, "follow-up not delivered: "));
+  }
+  return sends;
+}
+
+function bridgeHooks({ directory, client, followUp, endsTurn, show, track }) {
+  const folderOf = (sessionId) => sessionDirectory(sessionId, directory);
+  return {
+    event: async ({ event }) => {
+      try {
+        runSessionStart(event, directory);
+        const sessionId = event?.properties?.sessionID;
+        if (typeof sessionId !== "string" || !endsTurn(event)) return;
+        const stopping = runStop(sessionId, folderOf(sessionId), { client, method: followUp, show });
+        track?.(stopping.then((sends) => Promise.all(sends)));
+        await stopping;
+      } catch (error) {
+        reportHookFailure("event", error);
+      }
+    },
+    "experimental.chat.system.transform": (input, output) => addSessionContext(input, output, show),
+    "chat.message": async (input, output) => {
+      try {
+        noteTurn(input?.sessionID, output?.parts ?? []);
+      } catch (error) {
+        reportHookFailure("event", error);
+      }
+      await addPromptContext(input, output, folderOf(input?.sessionID));
+    },
+    "tool.execute.before": (call, output) => refuseToolUse(call, output, folderOf(call?.sessionID)),
+    "tool.execute.after": (call, output) =>
+      addToolAnswers(call, output, folderOf(call?.sessionID), client, show),
+  };
+}
+
+/** The person's message goes to the TUI's toast. Never awaited: the call comes back only once the
+ * server is up, and a toast the TUI cannot show is not worth holding a hook for. */
+function showToast(client, person) {
+  if (!person) return;
+  Promise.resolve()
+    .then(() => client.tui.showToast({ body: { message: person, variant: "warning" } }))
+    .catch(() => {});
+}
 
 export const AiddTelemetryHooks = async (input) => {
   // Stop handlings in flight: `opencode run` exits once the session is idle, so dispose waits.
   let pending = Promise.resolve();
   // OpenCode keeps delivering events to an instance it disposed once it has created the next one.
   let disposed = false;
-  // The person's message goes to the TUI's toast. Never awaited: the call comes back only once the
-  // server is up, and a toast the TUI cannot show is not worth holding a hook for.
-  const show = (person) => {
-    if (!person) return;
-    Promise.resolve()
-      .then(() => input.client.tui.showToast({ body: { message: person, variant: "warning" } }))
-      .catch(() => {});
-  };
+  const hooks = bridgeHooks({
+    directory: input.directory,
+    client: input.client,
+    followUp: "prompt",
+    endsTurn: (event) => event.type === "session.idle",
+    show: (person) => showToast(input.client, person),
+    track: (handling) => {
+      pending = Promise.all([pending, handling]).then(() => {});
+    },
+  });
   return {
+    ...hooks,
     dispose: async () => {
       disposed = true;
       await pending;
     },
-    event: async ({ event }) => {
-      if (disposed) return;
-      try {
-        runSessionStart(event, input.directory);
-        const directory = event?.properties?.directory ?? input.directory;
-        const sessionId = event?.properties?.sessionID ?? null;
-        for (const call of event?.type === "session.idle" ? stopCallsFor(sessionId, directory) : []) {
-          const payload = { ...call.payload, stop_hook_active: continued.has(sessionId) };
-          const asking = stopReasonOf(call.script, call.args, payload, directory);
-          // Pending before the script ends: dispose waits for a handling whose script still runs.
-          // The prompt is the session's next turn, and this handler must not hold it.
-          const handling = asking
-            .then(({ reason, person }) => {
-              show(person);
-              if (!reason) {
-                continued.delete(sessionId);
-                return undefined;
-              }
-              continued.add(sessionId);
-              return sendPrompt(input.client, "prompt", sessionId, reason, FOLLOW_UP, call.script, "follow-up not delivered: ");
-            });
-          pending = Promise.all([pending, handling]).then(() => {});
-          await asking;
-        }
-      } catch (error) {
-        reportHookFailure("event", error);
-      }
+    event: async (payload) => {
+      if (!disposed) await hooks.event(payload);
     },
-    "experimental.chat.system.transform": (call, output) => addSessionContext(call, output, show),
-    "tool.execute.before": (call, output) => refuseToolUse(call, output, input.directory),
-    "chat.message": (call, output) => addPromptContext(call, output, input.directory),
-    "tool.execute.after": (call, output) =>
-      addToolAnswers(call, output, input.directory, input.client, show),
   };
 };
 

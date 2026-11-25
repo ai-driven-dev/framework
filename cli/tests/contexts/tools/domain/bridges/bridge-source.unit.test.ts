@@ -93,15 +93,15 @@ describe("the source every generated bridge writes the same way", () => {
   });
 
   it("matches a tool name ignoring case, any tool when no matcher is given", () => {
-    const matchesTool = evaluated<(matcher: string | undefined, tool: string) => boolean>(
+    const matchesTool = evaluated<(tools: string[] | undefined, tool: string) => boolean>(
       MATCHES_TOOL_SOURCE,
       "matchesTool"
     );
 
     expect([
       matchesTool(undefined, "bash"),
-      matchesTool("Write|Edit", "edit"),
-      matchesTool("Write|Edit", "bash"),
+      matchesTool(["write", "edit"], "Edit"),
+      matchesTool(["write", "edit"], "bash"),
     ]).toEqual([true, true, false]);
   });
 

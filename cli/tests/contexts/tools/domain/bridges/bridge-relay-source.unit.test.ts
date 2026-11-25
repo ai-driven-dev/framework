@@ -3,6 +3,7 @@ import {
   TOOL_USE_SOURCE,
   userPromptSource,
 } from "../../../../../src/contexts/tools/domain/bridges/bridge-relay-source.js";
+import { SEND_PROMPT_SOURCE } from "../../../../../src/contexts/tools/domain/bridges/bridge-source.js";
 
 /** Evaluates a piece of generated module source with the names it reads, and hands back what it declares. */
 function evaluated<T>(source: string, declared: string, scope: Record<string, unknown>): T {
@@ -36,7 +37,7 @@ describe("the source of the events relayed around a tool", () => {
       "{ preToolUseCallsFor, postToolUseCallsFor, refusalOf, refuseToolUse, addToolAnswers }",
       {
         PRE_TOOL_USE: [{ script: "a.cjs", args: [] }],
-        POST_TOOL_USE: [{ script: "b.cjs", args: [], matcher: "write" }],
+        POST_TOOL_USE: [{ script: "b.cjs", args: [], tools: ["write"] }],
         runCapture: async () => {
           const next = done.shift();
           if (next === undefined) throw new Error("scripted failure");
@@ -135,8 +136,7 @@ describe("the source of the event that adds to the user's message", () => {
         return { text: next, person: "" };
       },
       reportHookFailure: (...args: unknown[]) => reported.push(args),
-      isBridgePrompt: (parts: { metadata?: { aidd?: unknown } }[]) =>
-        parts.some((part) => typeof part.metadata?.aidd === "string"),
+      isBridgePrompt: evaluated(SEND_PROMPT_SOURCE, "isBridgePrompt", {}),
     });
 
   it("gives each answer a part whose id names the first part, the plugin and the hook", async () => {

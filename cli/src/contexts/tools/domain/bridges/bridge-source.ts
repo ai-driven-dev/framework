@@ -120,7 +120,6 @@ function stopReasonOf(script, args, payload, directory) {
   });
 }
 
-// Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
 function stopCallsFor(sessionId, directory) {
   return STOP.map((hook) => ({
     script: hook.script,
@@ -129,10 +128,10 @@ function stopCallsFor(sessionId, directory) {
   }));
 }`;
 
-/** A matcher names tools exactly or pipe-separated, ignoring case: the hosts name theirs in
- * lowercase. Absent, every tool matches. */
-export const MATCHES_TOOL_SOURCE = `function matchesTool(matcher, tool) {
-  return !matcher || matcher.split("|").some((name) => name.toLowerCase() === tool.toLowerCase());
+/** A hook's `tools` are its matcher's names, split and lowercased when the module is written:
+ * the hosts name their tools in lowercase. Absent, every tool matches. */
+export const MATCHES_TOOL_SOURCE = `function matchesTool(tools, tool) {
+  return !tools || tools.includes(tool.toLowerCase());
 }`;
 
 /** The hosts name the written file `filePath`; the scripts read Claude Code's `file_path`. */
@@ -140,9 +139,9 @@ export const TOOL_INPUT_SOURCE =
   'const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;';
 
 /** How a bridge sends a prompt of its own as the session's next turn: a Stop follow-up or a queued
- * finding, each marked, so a message hook never reads it as the person's. \`method\` is the host's
- * call; a refusal, or a client without that call, is reported under \`failure\`, never thrown into
- * the host. One owner, so every prompt a bridge sends goes the same way. */
+ * finding, each marked, so a message hook never reads it as the person's. `method` is the host's
+ * call; a refusal is reported under `failure`, never thrown into the host. One owner, so every
+ * prompt a bridge sends goes the same way. */
 export const SEND_PROMPT_SOURCE = `const FOLLOW_UP = { aidd: "stop-follow-up" };
 const FINDING = { aidd: "finding" };
 
@@ -151,7 +150,6 @@ function isBridgePrompt(parts) {
 }
 
 function sendPrompt(client, method, sessionId, text, mark, script, failure) {
-  return Promise.resolve()
-    .then(() => client.session[method]({ path: { id: sessionId }, body: { parts: [{ type: "text", text, metadata: mark }] } }))
+  return client.session[method]({ path: { id: sessionId }, body: { parts: [{ type: "text", text, metadata: mark }] } })
     .catch((error) => reportHookFailure(script, failure + String(error)));
 }`;

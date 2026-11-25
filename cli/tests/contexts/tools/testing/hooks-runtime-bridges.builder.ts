@@ -173,7 +173,9 @@ export async function start(
   ws: Workspace,
   input: Record<string, unknown>,
   refusal?: Error,
-  toastRefusal?: Error
+  toastRefusal?: Error,
+  /** The client OpenCode's V2 adapter hands the bridge: a session `prompt`, nothing else. */
+  v2Client = false
 ) {
   const prompts: unknown[] = [];
   const toasts: unknown[] = [];
@@ -189,10 +191,13 @@ export async function start(
   };
   // A turn end continues through OpenCode's `prompt` or Kilo's `promptAsync`; a required finding
   // is queued through `promptAsync` on both, which never waits for the turn it interrupts.
-  const client = {
-    session: ws.host === "opencode" ? { prompt: send, promptAsync: send } : { promptAsync: send },
-    tui: { showToast },
-  };
+  const client = v2Client
+    ? { session: { prompt: send } }
+    : {
+        session:
+          ws.host === "opencode" ? { prompt: send, promptAsync: send } : { promptAsync: send },
+        tui: { showToast },
+      };
   const mod = (await import(
     pathToFileURL(join(ws.dir, "plugin", "aidd-sample-hooks.mjs")).href
   )) as { default?: { server?: (input: unknown) => Promise<Plugin> } };

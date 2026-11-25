@@ -2,45 +2,39 @@
  * Generates OpenCode's event bridge for one plugin's hooks.json. OpenCode's loader scans no
  * "hooks" family and this profile writes no hooks.json, so without this module a plugin's
  * declared hooks have no trigger on OpenCode at all. The generated file is a real OpenCode
- * plugin with V1/server and V2/setup entrypoints, spawning the scripts every host's hooks.json
- * already names over the stdin-JSON contract those scripts already read.
+ * plugin with V1/server and V2/setup entrypoints; what it does on each event is the shared
+ * bridge runtime's (`bridges/`), and this file holds only what OpenCode does its own way.
  *
- * Only five hook events are replayed:
+ * V1 (OpenCode 1.19.3) carries the five replayed events:
  *
- * - `SessionStart` runs once per session, on the first event that names it, so the script knows
- *   its session. What it answers reaches the model through V1's
- *   `experimental.chat.system.transform`, added to every turn's system prompt; that hook also
- *   runs for the session's title call, which V1 does not tell apart. That event is `session.created` for a new session; a continued one is created
- *   no more, and its first event is another. V1 delivers both; the V2 adapter's events are
- *   unverified, OpenCode 1.19.3 exposing none.
- *   Limit: the V2 adapter's created event names no session, so under V2 SessionStart runs at the
- *   first turn's idle terminal, not before it.
- *   Limit: a subagent's child session names itself too, so SessionStart may run once per child
- *   session; not probed.
- * - `Stop` maps to V1's `session.idle` or V2's execution terminal, once per turn.
- * - `PostToolUse` maps to V1's `tool.execute.after`, the one hook that waits for the script and
- *   can append its exit-2 stderr to the tool's output, which is how a problem reaches the model.
- *   V2's adapter calls the same hook from a successful tool call, without that answer. An answer
- *   the script marks required is also queued as the session's next prompt through V1's
- *   `promptAsync`. V2's adapter has no such method: there the queueing is reported as failed, and
- *   only the appended answer reaches the model. On 1.19.3 the model took the queued prompt up and
- *   dropped the original request's last step; whether it resumes that request was not probed.
- * - `PreToolUse` maps to V1's `tool.execute.before`: a script that exits 2 refuses the call, its
- *   stderr the reason the model reads, as a throw from that hook does on OpenCode 1.19.3. V2's
- *   adapter does not call it.
- * - `UserPromptSubmit` maps to V1's `chat.message`: a script's answer joins the user's message as
- *   a synthetic text part. A throw from that hook stops the prompt, but its reason reaches neither
- *   the person nor the model (OpenCode 1.19.3 answers a generic server error), so no script refuses.
+ * - `SessionStart` on the first event naming a session; its answer through
+ *   `experimental.chat.system.transform`, which also runs for the session's title call, not told
+ *   apart. A subagent's child session emits its own `session.created` and `session.idle`
+ *   (observed on 1.19.3), so SessionStart and Stop run for it too.
+ * - `Stop` on `session.idle`. The follow-up goes through `session.prompt`, which resolves once its
+ *   turn ran: `opencode run` exits once the session is idle, so `dispose` waits for it.
+ * - `PostToolUse` on `tool.execute.after`. A required finding is queued through `promptAsync`; on
+ *   1.19.3 the model took it up and dropped the original request's last step. Whether it resumes
+ *   that request was not probed.
+ * - `PreToolUse` on `tool.execute.before`: a throw from that hook refuses the call on 1.19.3.
+ * - `UserPromptSubmit` on `chat.message`. A throw from that hook stops the prompt, but its reason
+ *   reaches neither the person nor the model (1.19.3 answers a generic server error), so no script
+ *   refuses.
  *
- * What a script prints for the person (`systemMessage`, from `answer({ person })`) goes to the
- * TUI's toast, at SessionStart, Stop and PostToolUse, through the server plugin's own client.
- * SessionStart's waits for the session's first turn: a toast shown while the server starts
- * reaches a TUI not yet listening. `opencode run` has no TUI and shows none. V2's adapter has no
- * such client, so a V2 host shows none.
+ * What a script prints for the person goes to the TUI's toast through the server plugin's own
+ * client (`tui.showToast`, captured in `opencode-tui.toast.show.json`); the variant is the
+ * bridge's choice, which the host echoes. `opencode run` has no TUI and shows none.
  *
- * A `matcher` on a `PreToolUse` or `PostToolUse` group filters by tool name, exact or
- * pipe-separated alternation, ignoring case: OpenCode names its tools in lowercase. Absent, every
- * tool matches.
+ * Limits of the V2 entrypoint (`setup`, through `opencode-events.js`):
+ * - On 1.19.3 OpenCode calls both `server` and `setup`; `setup` sees no location in that early
+ *   context and does nothing.
+ * - OpenCode 2.4.1 (`@opencode/cli`) runs `setup` alone. It relays only the event stream and
+ *   `execute.after`: PreToolUse, UserPromptSubmit and the system-prompt hand-over never run; its
+ *   client has no toast, and no `promptAsync`, so a required finding is reported as the call's
+ *   PostToolUse failure and the call's later PostToolUse hooks are skipped; and the
+ *   `run` session's own `session.created` reaches no plugin, so its SessionStart runs on a later
+ *   event. Its tool input names the file `path`, which no `file_path` is derived from. Moving the
+ *   bridge onto the V2 plugin API is an open design question.
  */
 
 import {
@@ -69,61 +63,39 @@ ${parts.callTables}
 
 ${parts.shared}
 
-// Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
-// Module-level: the host creates the plugin again, and a fresh set would forget a continuation.
-const continued = new Set();
+/** The person's message goes to the TUI's toast. Never awaited: the call comes back only once the
+ * server is up, and a toast the TUI cannot show is not worth holding a hook for. */
+function showToast(client, person) {
+  if (!person) return;
+  Promise.resolve()
+    .then(() => client.tui.showToast({ body: { message: person, variant: "warning" } }))
+    .catch(() => {});
+}
 
 export const ${parts.identifier} = async (input) => {
   // Stop handlings in flight: \`opencode run\` exits once the session is idle, so dispose waits.
   let pending = Promise.resolve();
   // OpenCode keeps delivering events to an instance it disposed once it has created the next one.
   let disposed = false;
-  // The person's message goes to the TUI's toast. Never awaited: the call comes back only once the
-  // server is up, and a toast the TUI cannot show is not worth holding a hook for.
-  const show = (person) => {
-    if (!person) return;
-    Promise.resolve()
-      .then(() => input.client.tui.showToast({ body: { message: person, variant: "warning" } }))
-      .catch(() => {});
-  };
+  const hooks = bridgeHooks({
+    directory: input.directory,
+    client: input.client,
+    followUp: "prompt",
+    endsTurn: (event) => event.type === "session.idle",
+    show: (person) => showToast(input.client, person),
+    track: (handling) => {
+      pending = Promise.all([pending, handling]).then(() => {});
+    },
+  });
   return {
+    ...hooks,
     dispose: async () => {
       disposed = true;
       await pending;
     },
-    event: async ({ event }) => {
-      if (disposed) return;
-      try {
-        runSessionStart(event, input.directory);
-        const directory = event?.properties?.directory ?? input.directory;
-        const sessionId = event?.properties?.sessionID ?? null;
-        for (const call of event?.type === "session.idle" ? stopCallsFor(sessionId, directory) : []) {
-          const payload = { ...call.payload, stop_hook_active: continued.has(sessionId) };
-          const asking = stopReasonOf(call.script, call.args, payload, directory);
-          // Pending before the script ends: dispose waits for a handling whose script still runs.
-          // The prompt is the session's next turn, and this handler must not hold it.
-          const handling = asking
-            .then(({ reason, person }) => {
-              show(person);
-              if (!reason) {
-                continued.delete(sessionId);
-                return undefined;
-              }
-              continued.add(sessionId);
-              return sendPrompt(input.client, "prompt", sessionId, reason, FOLLOW_UP, call.script, "follow-up not delivered: ");
-            });
-          pending = Promise.all([pending, handling]).then(() => {});
-          await asking;
-        }
-      } catch (error) {
-        reportHookFailure("event", error);
-      }
+    event: async (payload) => {
+      if (!disposed) await hooks.event(payload);
     },
-    "experimental.chat.system.transform": (call, output) => addSessionContext(call, output, show),
-    "tool.execute.before": (call, output) => refuseToolUse(call, output, input.directory),
-    "chat.message": (call, output) => addPromptContext(call, output, input.directory),
-    "tool.execute.after": (call, output) =>
-      addToolAnswers(call, output, input.directory, input.client, show),
   };
 };
 
@@ -135,9 +107,8 @@ export default {
 `,
 };
 
-/** A plugin's raw hooks.json + its name -> the full text of its generated OpenCode bridge
- * module, or `null` when none of the five mapped events named anything replayable: a bridge
- * with nothing to spawn is not a file worth writing. */
+/** A plugin's raw hooks.json + its name -> its generated OpenCode bridge module, and the events
+ * it leaves out. */
 export function generateOpencodeHooksBridge(
   rawHooksJson: string,
   plugin: string

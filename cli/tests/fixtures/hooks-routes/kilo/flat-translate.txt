@@ -279,7 +279,7 @@ import { fileURLToPath } from "node:url";
 
 const HOOKS_DIR = fileURLToPath(new URL("../hooks/aidd-context/", import.meta.url));
 const SESSION_START = [{"script":"memory.cjs","args":["load"]},{"script":"artifacts.cjs","args":["start"]}];
-const POST_TOOL_USE = [{"script":"artifacts.cjs","args":["mark"],"matcher":"Write|Edit|Bash|Shell|bash|PowerShell|apply_patch"}];
+const POST_TOOL_USE = [{"script":"artifacts.cjs","args":["mark"],"tools":["write","edit","bash","shell","bash","powershell","apply_patch"]}];
 const STOP = [{"script":"memory.cjs","args":["sync"]}];
 const PRE_TOOL_USE = [];
 const USER_PROMPT_SUBMIT = [];
@@ -377,7 +377,6 @@ function stopReasonOf(script, args, payload, directory) {
   });
 }
 
-// Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
 function stopCallsFor(sessionId, directory) {
   return STOP.map((hook) => ({
     script: hook.script,
@@ -394,13 +393,12 @@ function isBridgePrompt(parts) {
 }
 
 function sendPrompt(client, method, sessionId, text, mark, script, failure) {
-  return Promise.resolve()
-    .then(() => client.session[method]({ path: { id: sessionId }, body: { parts: [{ type: "text", text, metadata: mark }] } }))
+  return client.session[method]({ path: { id: sessionId }, body: { parts: [{ type: "text", text, metadata: mark }] } })
     .catch((error) => reportHookFailure(script, failure + String(error)));
 }
 
-function matchesTool(matcher, tool) {
-  return !matcher || matcher.split("|").some((name) => name.toLowerCase() === tool.toLowerCase());
+function matchesTool(tools, tool) {
+  return !tools || tools.includes(tool.toLowerCase());
 }
 
 /** Pure: a tool call -> every hook of one event whose matcher allows its tool. The host names the
@@ -408,7 +406,7 @@ function matchesTool(matcher, tool) {
 function toolUseCallsFor(event, hooks, call, args, directory) {
   const tool = String(call?.tool ?? "");
   const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;
-  return hooks.filter((hook) => matchesTool(hook.matcher, tool)).map((hook) => ({
+  return hooks.filter((hook) => matchesTool(hook.tools, tool)).map((hook) => ({
     script: hook.script,
     args: hook.args,
     payload: {
@@ -512,34 +510,40 @@ async function addPromptContext(input, output, directory) {
   }
 }
 
-const sessionContexts = new Map();
+const sessions = new Map();
 
 function runSessionStart(event, fallbackDirectory) {
   const named = event?.properties?.sessionID;
   if (typeof named !== "string") return;
   if (event.type === "session.deleted") {
-    sessionContexts.delete(named);
+    sessions.delete(named);
+    continuedTurns.delete(named);
     return;
   }
-  if (sessionContexts.has(named)) return;
+  if (sessions.has(named)) return;
   const directory = event.properties.info?.directory ?? fallbackDirectory;
   const answers = SESSION_START.map((hook) =>
     answerOf(hook.script, hook.args, { hook_event_name: "SessionStart", session_id: named, cwd: directory }, directory)
   );
   const joined = (texts) => texts.filter(Boolean).join("\n\n");
-  sessionContexts.set(
-    named,
-    Promise.all(answers).then((all) => ({
+  sessions.set(named, {
+    directory,
+    started: Promise.all(answers).then((all) => ({
       context: joined(all.map((answer) => answer.text)),
       person: joined(all.map((answer) => answer.person)),
-    }))
-  );
+    })),
+  });
+}
+
+/** The folder a session's hooks run in. */
+function sessionDirectory(sessionId, fallbackDirectory) {
+  return sessions.get(sessionId)?.directory ?? fallbackDirectory;
 }
 
 /** What SessionStart answered, added to the system prompt of the session's turn; its message for
  * the person handed to `show` once, where the host has one. */
 async function addSessionContext(input, output, show) {
-  const started = await sessionContexts.get(input?.sessionID);
+  const started = await sessions.get(input?.sessionID)?.started;
   if (started === undefined) return;
   if (started.context) output.system.push(started.context);
   const person = started.person;
@@ -547,58 +551,75 @@ async function addSessionContext(input, output, show) {
   show?.(person);
 }
 
+const continuedTurns = new Set();
+
+function noteTurn(sessionId, parts) {
+  if (!isFollowUp(parts)) continuedTurns.delete(sessionId);
+}
+
 function isFollowUp(parts) {
   return parts.some((part) => part?.metadata?.aidd === FOLLOW_UP.aidd);
 }
 
-const AiddContextKiloHooks = async ({ directory, client }) => {
-  const sessions = new Map();
+/** Resolves once the scripts ran, with the follow-ups still in flight: the prompt is the session's
+ * next turn, and the turn end must not hold it. */
+async function runStop(sessionId, directory, { client, method, show }) {
+  const active = continuedTurns.has(sessionId);
+  const sends = [];
+  for (const call of stopCallsFor(sessionId, directory)) {
+    const payload = { ...call.payload, stop_hook_active: active };
+    const { reason, person } = await stopReasonOf(call.script, call.args, payload, directory);
+    show?.(person);
+    if (!reason) continue;
+    continuedTurns.add(sessionId);
+    sends.push(sendPrompt(client, method, sessionId, reason, FOLLOW_UP, call.script, "follow-up not delivered: "));
+  }
+  return sends;
+}
+
+function bridgeHooks({ directory, client, followUp, endsTurn, show, track }) {
+  const folderOf = (sessionId) => sessionDirectory(sessionId, directory);
   return {
-  event: async ({ event }) => {
-    try {
-      const properties = event?.properties;
-      const id = properties?.sessionID;
-      if (typeof id !== "string") return;
-      runSessionStart(event, directory);
-      if (event?.type === "session.deleted") { sessions.delete(id); return; }
-      if (!sessions.has(id)) {
-        sessions.set(id, { idle: false, continued: false, directory: properties?.info?.directory ?? directory });
+    event: async ({ event }) => {
+      try {
+        runSessionStart(event, directory);
+        const sessionId = event?.properties?.sessionID;
+        if (typeof sessionId !== "string" || !endsTurn(event)) return;
+        const stopping = runStop(sessionId, folderOf(sessionId), { client, method: followUp, show });
+        track?.(stopping.then((sends) => Promise.all(sends)));
+        await stopping;
+      } catch (error) {
+        reportHookFailure("event", error);
       }
-      const session = sessions.get(id);
-      if (event?.type === "session.status" && properties?.status?.type === "busy") {
-        session.idle = false;
-      } else if (event?.type === "session.idle" && !session.idle) {
-        session.idle = true;
-        for (const call of stopCallsFor(id, session.directory)) {
-          const payload = { ...call.payload, stop_hook_active: session.continued };
-          const { reason } = await stopReasonOf(call.script, call.args, payload, session.directory);
-          session.continued = reason !== "";
-          // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
-          // Open limit in `kilo run`: it exits at idle before this follow-up's turn runs, on 7.7.5 and 7.8.27
-          // keyed on `session.idle`, and on 7.8.27 keyed on `session.drained`.
-          if (reason) sendPrompt(client, "promptAsync", id, reason, FOLLOW_UP, call.script, "follow-up not delivered: ");
-        }
+    },
+    "experimental.chat.system.transform": (input, output) => addSessionContext(input, output, show),
+    "chat.message": async (input, output) => {
+      try {
+        noteTurn(input?.sessionID, output?.parts ?? []);
+      } catch (error) {
+        reportHookFailure("event", error);
       }
-    } catch (error) {
-      reportHookFailure("event", error);
-    }
-  },
-  // What SessionStart answered reaches the model through its session's system prompt, every turn.
-  "experimental.chat.system.transform": (input, output) => addSessionContext(input, output),
-  // A user's message starts a new turn. Kilo hands every plugin every message, so a follow-up,
-  // this bridge's or another plugin's, is recognised by its mark and is not one; a queued finding
-  // is.
-  "chat.message": async (input, output) => {
-    const session = sessions.get(input?.sessionID);
-    if (session && !isFollowUp(output?.parts ?? [])) session.continued = false;
-    await addPromptContext(input, output, session?.directory ?? directory);
-  },
-  "tool.execute.before": (call, output) =>
-    refuseToolUse(call, output, sessions.get(call?.sessionID)?.directory ?? directory),
-  "tool.execute.after": (call, output) =>
-    addToolAnswers(call, output, sessions.get(call?.sessionID)?.directory ?? directory, client),
+      await addPromptContext(input, output, folderOf(input?.sessionID));
+    },
+    "tool.execute.before": (call, output) => refuseToolUse(call, output, folderOf(call?.sessionID)),
+    "tool.execute.after": (call, output) =>
+      addToolAnswers(call, output, folderOf(call?.sessionID), client, show),
   };
-};
+}
+
+// Sessions idle since they last reported themselves busy: a second idle of one turn is no turn end.
+const idleSessions = new Set();
+
+function endsTurn(event) {
+  const sessionId = event.properties.sessionID;
+  if (event.type === "session.status" && event.properties.status?.type === "busy") idleSessions.delete(sessionId);
+  if (event.type !== "session.idle" || idleSessions.has(sessionId)) return false;
+  idleSessions.add(sessionId);
+  return true;
+}
+
+const AiddContextKiloHooks = async ({ directory, client }) =>
+  bridgeHooks({ directory, client, followUp: "promptAsync", endsTurn });
 
 export default { id: "aidd-context-hooks", server: AiddContextKiloHooks };
 
@@ -708,7 +729,6 @@ function stopReasonOf(script, args, payload, directory) {
   });
 }
 
-// Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
 function stopCallsFor(sessionId, directory) {
   return STOP.map((hook) => ({
     script: hook.script,
@@ -725,13 +745,12 @@ function isBridgePrompt(parts) {
 }
 
 function sendPrompt(client, method, sessionId, text, mark, script, failure) {
-  return Promise.resolve()
-    .then(() => client.session[method]({ path: { id: sessionId }, body: { parts: [{ type: "text", text, metadata: mark }] } }))
+  return client.session[method]({ path: { id: sessionId }, body: { parts: [{ type: "text", text, metadata: mark }] } })
     .catch((error) => reportHookFailure(script, failure + String(error)));
 }
 
-function matchesTool(matcher, tool) {
-  return !matcher || matcher.split("|").some((name) => name.toLowerCase() === tool.toLowerCase());
+function matchesTool(tools, tool) {
+  return !tools || tools.includes(tool.toLowerCase());
 }
 
 /** Pure: a tool call -> every hook of one event whose matcher allows its tool. The host names the
@@ -739,7 +758,7 @@ function matchesTool(matcher, tool) {
 function toolUseCallsFor(event, hooks, call, args, directory) {
   const tool = String(call?.tool ?? "");
   const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;
-  return hooks.filter((hook) => matchesTool(hook.matcher, tool)).map((hook) => ({
+  return hooks.filter((hook) => matchesTool(hook.tools, tool)).map((hook) => ({
     script: hook.script,
     args: hook.args,
     payload: {
@@ -843,34 +862,40 @@ async function addPromptContext(input, output, directory) {
   }
 }
 
-const sessionContexts = new Map();
+const sessions = new Map();
 
 function runSessionStart(event, fallbackDirectory) {
   const named = event?.properties?.sessionID;
   if (typeof named !== "string") return;
   if (event.type === "session.deleted") {
-    sessionContexts.delete(named);
+    sessions.delete(named);
+    continuedTurns.delete(named);
     return;
   }
-  if (sessionContexts.has(named)) return;
+  if (sessions.has(named)) return;
   const directory = event.properties.info?.directory ?? fallbackDirectory;
   const answers = SESSION_START.map((hook) =>
     answerOf(hook.script, hook.args, { hook_event_name: "SessionStart", session_id: named, cwd: directory }, directory)
   );
   const joined = (texts) => texts.filter(Boolean).join("\n\n");
-  sessionContexts.set(
-    named,
-    Promise.all(answers).then((all) => ({
+  sessions.set(named, {
+    directory,
+    started: Promise.all(answers).then((all) => ({
       context: joined(all.map((answer) => answer.text)),
       person: joined(all.map((answer) => answer.person)),
-    }))
-  );
+    })),
+  });
+}
+
+/** The folder a session's hooks run in. */
+function sessionDirectory(sessionId, fallbackDirectory) {
+  return sessions.get(sessionId)?.directory ?? fallbackDirectory;
 }
 
 /** What SessionStart answered, added to the system prompt of the session's turn; its message for
  * the person handed to `show` once, where the host has one. */
 async function addSessionContext(input, output, show) {
-  const started = await sessionContexts.get(input?.sessionID);
+  const started = await sessions.get(input?.sessionID)?.started;
   if (started === undefined) return;
   if (started.context) output.system.push(started.context);
   const person = started.person;
@@ -878,58 +903,75 @@ async function addSessionContext(input, output, show) {
   show?.(person);
 }
 
+const continuedTurns = new Set();
+
+function noteTurn(sessionId, parts) {
+  if (!isFollowUp(parts)) continuedTurns.delete(sessionId);
+}
+
 function isFollowUp(parts) {
   return parts.some((part) => part?.metadata?.aidd === FOLLOW_UP.aidd);
 }
 
-const AiddTelemetryKiloHooks = async ({ directory, client }) => {
-  const sessions = new Map();
+/** Resolves once the scripts ran, with the follow-ups still in flight: the prompt is the session's
+ * next turn, and the turn end must not hold it. */
+async function runStop(sessionId, directory, { client, method, show }) {
+  const active = continuedTurns.has(sessionId);
+  const sends = [];
+  for (const call of stopCallsFor(sessionId, directory)) {
+    const payload = { ...call.payload, stop_hook_active: active };
+    const { reason, person } = await stopReasonOf(call.script, call.args, payload, directory);
+    show?.(person);
+    if (!reason) continue;
+    continuedTurns.add(sessionId);
+    sends.push(sendPrompt(client, method, sessionId, reason, FOLLOW_UP, call.script, "follow-up not delivered: "));
+  }
+  return sends;
+}
+
+function bridgeHooks({ directory, client, followUp, endsTurn, show, track }) {
+  const folderOf = (sessionId) => sessionDirectory(sessionId, directory);
   return {
-  event: async ({ event }) => {
-    try {
-      const properties = event?.properties;
-      const id = properties?.sessionID;
-      if (typeof id !== "string") return;
-      runSessionStart(event, directory);
-      if (event?.type === "session.deleted") { sessions.delete(id); return; }
-      if (!sessions.has(id)) {
-        sessions.set(id, { idle: false, continued: false, directory: properties?.info?.directory ?? directory });
+    event: async ({ event }) => {
+      try {
+        runSessionStart(event, directory);
+        const sessionId = event?.properties?.sessionID;
+        if (typeof sessionId !== "string" || !endsTurn(event)) return;
+        const stopping = runStop(sessionId, folderOf(sessionId), { client, method: followUp, show });
+        track?.(stopping.then((sends) => Promise.all(sends)));
+        await stopping;
+      } catch (error) {
+        reportHookFailure("event", error);
       }
-      const session = sessions.get(id);
-      if (event?.type === "session.status" && properties?.status?.type === "busy") {
-        session.idle = false;
-      } else if (event?.type === "session.idle" && !session.idle) {
-        session.idle = true;
-        for (const call of stopCallsFor(id, session.directory)) {
-          const payload = { ...call.payload, stop_hook_active: session.continued };
-          const { reason } = await stopReasonOf(call.script, call.args, payload, session.directory);
-          session.continued = reason !== "";
-          // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
-          // Open limit in `kilo run`: it exits at idle before this follow-up's turn runs, on 7.7.5 and 7.8.27
-          // keyed on `session.idle`, and on 7.8.27 keyed on `session.drained`.
-          if (reason) sendPrompt(client, "promptAsync", id, reason, FOLLOW_UP, call.script, "follow-up not delivered: ");
-        }
+    },
+    "experimental.chat.system.transform": (input, output) => addSessionContext(input, output, show),
+    "chat.message": async (input, output) => {
+      try {
+        noteTurn(input?.sessionID, output?.parts ?? []);
+      } catch (error) {
+        reportHookFailure("event", error);
       }
-    } catch (error) {
-      reportHookFailure("event", error);
-    }
-  },
-  // What SessionStart answered reaches the model through its session's system prompt, every turn.
-  "experimental.chat.system.transform": (input, output) => addSessionContext(input, output),
-  // A user's message starts a new turn. Kilo hands every plugin every message, so a follow-up,
-  // this bridge's or another plugin's, is recognised by its mark and is not one; a queued finding
-  // is.
-  "chat.message": async (input, output) => {
-    const session = sessions.get(input?.sessionID);
-    if (session && !isFollowUp(output?.parts ?? [])) session.continued = false;
-    await addPromptContext(input, output, session?.directory ?? directory);
-  },
-  "tool.execute.before": (call, output) =>
-    refuseToolUse(call, output, sessions.get(call?.sessionID)?.directory ?? directory),
-  "tool.execute.after": (call, output) =>
-    addToolAnswers(call, output, sessions.get(call?.sessionID)?.directory ?? directory, client),
+      await addPromptContext(input, output, folderOf(input?.sessionID));
+    },
+    "tool.execute.before": (call, output) => refuseToolUse(call, output, folderOf(call?.sessionID)),
+    "tool.execute.after": (call, output) =>
+      addToolAnswers(call, output, folderOf(call?.sessionID), client, show),
   };
-};
+}
+
+// Sessions idle since they last reported themselves busy: a second idle of one turn is no turn end.
+const idleSessions = new Set();
+
+function endsTurn(event) {
+  const sessionId = event.properties.sessionID;
+  if (event.type === "session.status" && event.properties.status?.type === "busy") idleSessions.delete(sessionId);
+  if (event.type !== "session.idle" || idleSessions.has(sessionId)) return false;
+  idleSessions.add(sessionId);
+  return true;
+}
+
+const AiddTelemetryKiloHooks = async ({ directory, client }) =>
+  bridgeHooks({ directory, client, followUp: "promptAsync", endsTurn });
 
 export default { id: "aidd-telemetry-hooks", server: AiddTelemetryKiloHooks };
 

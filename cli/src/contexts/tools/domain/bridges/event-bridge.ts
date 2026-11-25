@@ -1,11 +1,14 @@
 /**
- * What the generated event bridges of the loaders that read no hooks file (Kilo, OpenCode) share:
- * the hook events a bridge replays and how a plugin's name becomes its module's identifier.
+ * The generated event bridges of the loaders that read no hooks file (Kilo, OpenCode): a plugin's
+ * hooks read once into the call tables and the events no bridge carries, the shared runtime every
+ * module is written with, how a plugin's name becomes its module's identifier, and the routes a
+ * bridged tool declares.
  */
 
 import type { FlatHooksLoaderEntry } from "../../../../shared/domain/materialization/flat-paths.js";
 import { declareHooks } from "../formats/hooks/declaration.js";
 import type { HookEventRoute, HooksDescriptor } from "../formats/hooks/descriptor.js";
+import { matcherNames } from "../hooks/plugin-hooks-shape.js";
 import {
   BRIDGE_EVENTS,
   type BridgeEvent,
@@ -13,7 +16,13 @@ import {
   parseHooksJsonForBridge,
   replaysNothing,
 } from "./bridge-hook-table.js";
-import { SESSION_START_SOURCE, TOOL_USE_SOURCE, userPromptSource } from "./bridge-relay-source.js";
+import {
+  BRIDGE_HOOKS_SOURCE,
+  SESSION_START_SOURCE,
+  TOOL_USE_SOURCE,
+  TURN_END_SOURCE,
+  userPromptSource,
+} from "./bridge-relay-source.js";
 import {
   ANSWER_OF_SOURCE,
   hooksDirDeclaration,
@@ -30,17 +39,22 @@ function bridgeIdentifier(plugin: string, suffix: string): string {
 }
 
 /** The call tables a generated module replays, one constant per replayed event: `SessionStart`
- * is `SESSION_START`. */
+ * is `SESSION_START`. A matcher is written as the tool names it lists, so the module only looks
+ * a tool up. */
 function callTableDeclarations(table: BridgeHookTable): string {
   return BRIDGE_EVENTS.map((event) => {
     const name = event.replace(/([a-z])([A-Z])/g, "$1_$2").toUpperCase();
-    return `const ${name} = ${JSON.stringify(table.calls[event])};`;
+    const calls = table.calls[event].map(({ matcher, ...call }) =>
+      matcher === undefined ? call : { ...call, tools: matcherNames(matcher) }
+    );
+    return `const ${name} = ${JSON.stringify(calls)};`;
   }).join("\n");
 }
 
 /** Every function the hosts' modules share, written once so both tell the model and the log the
- * same things: running a script and reading its answer or its Stop reason, the hooks around a
- * tool call, the user's message, and the once-per-session SessionStart trigger. */
+ * same things: running a script and reading its answer or its Stop reason, sending a prompt of
+ * the bridge's own, the hooks around a tool call, the user's message, the once-per-session
+ * SessionStart trigger, the turn end, and the hooks object a host hands its loader. */
 function sharedRuntimeSource(label: string, plugin: string): string {
   return [
     reportHookFailureSource(label),
@@ -51,12 +65,14 @@ function sharedRuntimeSource(label: string, plugin: string): string {
     TOOL_USE_SOURCE,
     userPromptSource(plugin),
     SESSION_START_SOURCE,
+    TURN_END_SOURCE,
+    BRIDGE_HOOKS_SOURCE,
   ].join("\n\n");
 }
 
 /** What a host's module template composes its generated module from: the pieces every bridge
- * writes the same way. What the host writes itself is its event table, its export descriptor and
- * how its events reach the shared handlers. */
+ * writes the same way. What the host writes itself is its factory, which hands `bridgeHooks` its
+ * folder, its follow-up call and its person channel, and its export descriptor. */
 export interface BridgeParts {
   readonly plugin: string;
   readonly identifier: string;
@@ -64,9 +80,8 @@ export interface BridgeParts {
   readonly nodeImports: string;
   readonly hooksDir: string;
   readonly callTables: string;
-  /** Every function the hosts share: `reportHookFailure`, `answerOf`, `stopReasonOf`,
-   * `stopCallsFor`, `sendPrompt`, `FOLLOW_UP`, `FINDING`, `isBridgePrompt`, `refuseToolUse`, `addToolAnswers`,
-   * `addPromptContext`, `runSessionStart(event, fallbackDirectory)` and `addSessionContext`. */
+  /** Every function the hosts share, `bridgeHooks({ directory, client, followUp, show, track })`
+   * the one a host's factory calls. */
   readonly shared: string;
 }
 
@@ -77,8 +92,7 @@ export interface GeneratedBridge<R> {
   readonly unrelayed: readonly string[];
 }
 
-/** A plugin's raw hooks.json for one host: a bridge with nothing to spawn is not a file worth
- * writing. */
+/** A plugin's raw hooks.json for one host, written with that host's template. */
 export function generateBridge<R>(
   host: {
     readonly identifierSuffix: string;
