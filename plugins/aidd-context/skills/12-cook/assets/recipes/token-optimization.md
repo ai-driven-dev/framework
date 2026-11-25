@@ -69,11 +69,11 @@ See [Claude Code status lines](https://code.claude.com/docs/en/statusline).
 
 #### 3) 📊 Analyze local history
 
-Use local logs when one session counter is insufficient.
+Use local logs when one session counter is insufficient. Package commands below, `ccusage` and `skills`, run through the project's package runner (for example `npx`, `pnpm dlx`, `bunx`), chosen from its lockfile.
 
 | Need | Tool | Command |
 | --- | --- | --- |
-| Aggregate supported coding agents | [`ccusage`](https://github.com/ccusage/ccusage) | `npx ccusage@latest` |
+| Aggregate supported coding agents | [`ccusage`](https://github.com/ccusage/ccusage) | `ccusage@latest` |
 | Inspect individual Claude Code prompts | [`prompt-analytics-for-claude-code`](https://github.com/romainfjgaspard/prompt-analytics-for-claude-code) | `uvx --from prompt-analytics-for-claude-code prompt-analytics summary` |
 
 Local logs can contain prompt text. Treat exports as sensitive.
@@ -193,8 +193,8 @@ claude plugin marketplace add JuliusBrussee/caveman
 claude plugin install caveman@caveman
 # Invoke: /caveman-compress CLAUDE.md
 
-# Codex
-npx skills add JuliusBrussee/caveman -a codex
+# Codex, through the project's package runner
+skills add JuliusBrussee/caveman -a codex
 # Invoke: $caveman-compress AGENTS.md
 ```
 
