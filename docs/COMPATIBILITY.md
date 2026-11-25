@@ -50,7 +50,7 @@ Sources: [Claude Code](https://code.claude.com/docs/en/hooks), [Codex](https://l
 - `agy` has no prompt-submitted event; a silent `PreToolUse` script answers `allow`, because `{}` denies.
 - A matcher is an anchored regular expression over `agy`'s tool names (`edit_file`, not `write_file`); the CLI reads it as a `|` list of names, so a regular-expression part selects nothing.
 - No `PostToolUse` answer shape reached the model.
-- A hook runs from `.agents/`; a user-level hooks file also runs alongside the project one.
+- A hook runs from `.agents/`; a user-level hooks file also running alongside the project one is unverified.
 
 ## Cursor limits
 
@@ -60,10 +60,12 @@ Sources: [Claude Code](https://code.claude.com/docs/en/hooks), [Codex](https://l
 
 ## OpenCode and Kilo limits
 
-- The bridge targets OpenCode V1; V2 runs only `setup`, so V2 relays no event.
 - `SessionStart` runs once per server with a null `session_id`; a child session runs its own `Stop`; `SessionEnd` is unverified.
 - A throw from a prompt hook stops the prompt, but the reason shows only as `UnknownError` or HTTP 500.
 - Kilo `run` can exit before a `Stop` follow-up lands.
+
+## Codex limits
+- A project hooks file is skipped in an untrusted project.
 
 ## Kiro limits
 
