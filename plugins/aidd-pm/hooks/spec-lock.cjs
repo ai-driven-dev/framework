@@ -2,6 +2,8 @@
 // Refuses a write to a spec whose file, as it stands on disk, declares `status: locked`: only the person who
 // approves a spec unlocks it, by hand. It reads the file already there, never the content being written.
 // Runs before a tool; under an adapter that does not report that moment, it does nothing. Node built-ins only.
+// A shell command is let through: what it writes is unknown before it runs, and refusing every command naming a
+// locked spec would refuse reading it too. Every rewrite observed went through a file tool.
 const fs = require("node:fs");
 const path = require("node:path");
 const host = require("./lib/host.cjs");
