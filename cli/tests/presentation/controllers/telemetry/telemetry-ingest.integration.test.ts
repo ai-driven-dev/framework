@@ -163,7 +163,7 @@ describe("ingesting the transcripts of an opted-in clone", () => {
     expect(JSON.parse(text.trim())).toMatchObject({ branch: "feat/a", task: "checkout-fix" });
   });
 
-  // Limit: this runs `ingest --quiet` in process, the command the catch-up hook starts, not the
+  // Limit: this runs `ingest --quiet` in process, the command the ingest hook starts, not the
   // hook. The hook alone is proven by scripts/__tests__/aidd-telemetry-hooks.test.js; no test
   // runs the hook against a built binary.
   it("keeps nothing of a clone that never opted in, and reports what it measured and could not store", async () => {
