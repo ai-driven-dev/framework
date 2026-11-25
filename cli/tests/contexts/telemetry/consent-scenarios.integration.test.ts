@@ -301,24 +301,25 @@ const ROWS: readonly Row[] = [
       await w.ingest(HOUR + 200);
     },
   },
-  ...(["off", null] as const).map(
-    (value): Row => ({
-      n: `h15 ${value === null ? "--unset" : "off"}`,
-      scenario:
-        "on, c1, a manual git config change, a headless hook prompt, c2, on, c3, one ingest",
-      expected: ["c1", "c3"],
-      run: async (w) => {
-        const a = w.repository("a", SHARED, "feat/x");
-        await w.on(a, -2 * HOUR);
-        w.call(a, "c1", -2 * HOUR + 100);
-        w.key(a, value);
-        expect(w.blocks(a, false)).toBe(false);
-        w.call(a, "c2", HOUR);
-        await w.on(a, 2 * HOUR);
-        w.call(a, "c3", 2 * HOUR + 100);
-        await w.ingest(3 * HOUR);
-      },
-    })
+  ...(["off", null] as const).flatMap((value) =>
+    (["reminds", "ingestHook"] as const).map(
+      (hook): Row => ({
+        n: `h15 ${hook} ${value === null ? "--unset" : "off"}`,
+        scenario: `on, c1, a manual git config change, a session start ${hook === "reminds" ? "reminder" : "ingest"} hook, c2, on, c3, one ingest`,
+        expected: ["c1", "c3"],
+        run: async (w) => {
+          const a = w.repository("a", SHARED, "feat/x");
+          await w.on(a, -2 * HOUR);
+          w.call(a, "c1", -2 * HOUR + 100);
+          w.key(a, value);
+          w[hook](a);
+          w.call(a, "c2", HOUR);
+          await w.on(a, 2 * HOUR);
+          w.call(a, "c3", 2 * HOUR + 100);
+          await w.ingest(3 * HOUR);
+        },
+      })
+    )
   ),
 ];
 
