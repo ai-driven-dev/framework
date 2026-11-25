@@ -45,6 +45,7 @@ function reading(
     unrecognised: [],
     oldestTranscriptAt: null,
     skipped: new Set(),
+    unreadable: [],
   };
 }
 

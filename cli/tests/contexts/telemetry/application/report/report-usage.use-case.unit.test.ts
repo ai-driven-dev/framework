@@ -22,6 +22,20 @@ describe("reporting usage", () => {
     expect(s.ledger.records).toHaveLength(1);
   });
 
+  it("still reports the stored ledger when a source cannot be read, and names it", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 10, "2026-10-07T10:00:00.000Z")]);
+    await s.report.execute({ axis: "total", period: ANY });
+    s.transcripts.files.set("/t/2.jsonl", [line("B", 10, "2026-10-07T10:00:00.000Z")]);
+    s.transcripts.unreadable.set("/t/2.jsonl", "/t/2.jsonl: EACCES");
+    const result = await s.report.execute({ axis: "total", period: ANY });
+    expect(result).toMatchObject({
+      status: "reported",
+      coverage: { records: 1 },
+      run: { unreadable: ["/t/2.jsonl: EACCES"] },
+    });
+  });
+
   it("writes nothing when the ledger is settled", async () => {
     const s = setup();
     s.transcripts.files.set("/t/1.jsonl", [line("A", 10, "2026-10-07T10:00:00.000Z")]);

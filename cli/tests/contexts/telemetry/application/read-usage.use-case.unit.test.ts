@@ -45,7 +45,7 @@ function readingOf(file: Transcript) {
 function source(files: Readonly<Record<string, Transcript>>) {
   const seen: (TranscriptPosition | null)[] = [];
   const subject: UsageSource = {
-    list: async () => Object.keys(files),
+    list: async () => ({ paths: Object.keys(files), unreadable: [] }),
     read: async ({ path, since }, each) => {
       const file = files[path];
       if (file === undefined) throw new Error(`no transcript ${path}`);

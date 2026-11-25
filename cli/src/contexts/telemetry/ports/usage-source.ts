@@ -25,6 +25,16 @@ export interface TranscriptRead {
   /** When the file was last written, in milliseconds, or `null` when it is gone: how far back
    * the tool still keeps its transcripts, since it deletes one by its last write. */
   readonly modifiedAt: number | null;
+  /** Why the file could not be read, with its path: the read failed, its lines are to be
+   * discarded and its position kept (`position` is `null`). Read again by the next ingest. */
+  readonly unreadable?: string;
+}
+
+/** The transcripts a tool keeps, and the places that could not be listed, each named with
+ * why: a directory the tool keeps transcripts in but this process cannot list. */
+export interface TranscriptListing {
+  readonly paths: readonly string[];
+  readonly unreadable: readonly string[];
 }
 
 /** What one transcript line says: the billed calls it holds, and the shapes it did not
@@ -43,7 +53,7 @@ export interface LineUsage {
  * of them says. */
 export interface UsageSource {
   /** Every transcript the tool keeps, set-asides and sub-agents included. */
-  list(): Promise<readonly string[]>;
+  list(): Promise<TranscriptListing>;
   /** Hands `each` every complete line after the position, in order, one at a time so a long
    * transcript is never held whole; an unterminated last line is left for next time. A tool
    * whose lines need what came before them may hand earlier lines too, as not `counted`: they

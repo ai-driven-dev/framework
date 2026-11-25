@@ -123,6 +123,7 @@ const run = fc.record({
   unrecognised: fc.nat(9),
   notStored: fc.tuple(...NOT_STORED_REASONS.map(() => fc.nat(9))),
   consentLogDamaged: fc.boolean(),
+  unreadable: fc.array(fc.constantFrom("/t/a.jsonl: EACCES", "/t/b.jsonl: EIO"), { maxLength: 2 }),
   oldestTranscriptAt: fc.option(
     fc.constantFrom("2026-09-01T10:00:00.000Z", "2026-09-30T23:30:00.000Z"),
     { nil: null }
@@ -217,6 +218,7 @@ function ingestResultOf(facts: Run): IngestUsageResult {
     updated: 0,
     unrecognised: facts.unrecognised,
     skippedLedgerLines: 0,
+    unreadable: facts.unreadable,
     snapshots: 0,
     notStored: {
       "outside-repo": facts.notStored[0],
@@ -324,6 +326,7 @@ function expectRunHoldsTheFacts(held: Held, envelope: { run: { skipped_ledger_li
     not_stored: ingestResultOf(facts).notStored,
     consent_log_damaged: facts.consentLogDamaged,
     oldest_transcript_at: facts.oldestTranscriptAt,
+    unreadable_sources: facts.unreadable,
     skipped_ledger_lines: envelope.run.skipped_ledger_lines,
   });
   expect(Object.keys(envelope).at(-1)).toBe("run");
@@ -366,6 +369,7 @@ describe("the figures of a report", () => {
       unrecognised: 0,
       notStored: [0, 0, 0, 0, 0, 0, 0],
       consentLogDamaged: false,
+      unreadable: [],
       oldestTranscriptAt: null,
     };
     const ledger = await ledgerWith([

@@ -42,14 +42,14 @@ export function describeUsageSourceContract(
 ): void {
   describeSubject(`when the usage source is ${subjectName}`, makeSubject, (subject) => {
     it("lists nothing while the tool keeps no transcript", async () => {
-      expect(await subject().source.list()).toEqual([]);
+      expect(await subject().source.list()).toEqual({ paths: [], unreadable: [] });
     });
 
     it("lists every transcript the tool keeps", async () => {
       const first = await subject().write(FIRST_SESSION, FIRST_LINES);
       const second = await subject().write(SECOND_SESSION, FIRST_LINES);
 
-      expect([...(await subject().source.list())].sort()).toEqual([first, second].sort());
+      expect([...(await subject().source.list()).paths].sort()).toEqual([first, second].sort());
     });
 
     it("hands over every line of a transcript read from the start, in order", async () => {

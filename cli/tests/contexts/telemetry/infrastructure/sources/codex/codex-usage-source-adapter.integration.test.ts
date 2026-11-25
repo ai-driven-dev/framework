@@ -61,7 +61,7 @@ describe("listing Codex session files", () => {
     ];
     for (const name of names) await writeFile(join(day, name), "");
     await writeFile(join(archived, "rollout-f.jsonl.zst"), "");
-    expect(await source().list()).toEqual(
+    expect((await source().list()).paths).toEqual(
       [
         join(day, "rollout-.jsonl"),
         join(day, "rollout-2026-10-07T10-00-00-aaaa.jsonl"),
@@ -73,7 +73,7 @@ describe("listing Codex session files", () => {
 
   it("lists nothing when no root exists", async () => {
     await rm(root, { recursive: true, force: true });
-    expect(await source().list()).toEqual([]);
+    expect((await source().list()).paths).toEqual([]);
   });
 
   it("says when a file was last written, plain or compressed", async () => {
@@ -282,7 +282,7 @@ describe.skipIf(NO_ZSTD)("reading a compressed Codex session file", () => {
 
 describe("a compressed stream that fails for another reason than its content", () => {
   it.each(["EZ_STREAM", "ZERO"])(
-    "fails the read on the code %s: it is no zlib code",
+    "leaves the file unread, naming the code %s: it is no zlib code",
     async (code) => {
       const path = join(archived, "rollout-a.jsonl.zst");
       await writeFile(path, "a\n");
@@ -296,7 +296,8 @@ describe("a compressed stream that fails for another reason than its content", (
         roots: [sessions, archived],
         decompress: failsWith,
       });
-      await expect(readLines(adapter, path, null)).rejects.toMatchObject({ code });
+      const { read } = await readLines(adapter, path, null);
+      expect(read).toMatchObject({ position: null, unreadable: `${path}: ${code}` });
     }
   );
 });
@@ -323,12 +324,13 @@ describe("decoding a Codex call line", () => {
 
 describe("a compressed file that cannot be opened", () => {
   it.skipIf(process.platform === "win32" || process.getuid?.() === 0)(
-    "fails the read: only a stream that does not decompress is named and passed over",
+    "leaves the file unread and names it: only a stream that does not decompress is passed over",
     async () => {
       const path = join(archived, "rollout-a.jsonl.zst");
       await writeFile(path, "");
       await chmod(path, 0o000);
-      await expect(readLines(source(), path, null)).rejects.toMatchObject({ code: "EACCES" });
+      const { read } = await readLines(source(), path, null);
+      expect(read).toMatchObject({ position: null, unreadable: `${path}: EACCES` });
     }
   );
 });
