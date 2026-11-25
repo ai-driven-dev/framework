@@ -5,6 +5,7 @@
 
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { SESSION } from "./testing/hook-payload-captures.builder.js";
 import {
   CONTINUED,
   captured,
@@ -15,7 +16,6 @@ import {
   patched,
   REQUIRED,
   recorded,
-  SESSION,
   start,
   systemTransform,
   toolCall,

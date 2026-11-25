@@ -4,8 +4,7 @@
  * neutral interface, with the adapter where the build puts it.
  */
 
-import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { vi } from "vitest";
@@ -14,12 +13,10 @@ import { opencode } from "../../../../src/composition/tool-profiles/opencode.js"
 import { generateKiloHooksBridge } from "../../../../src/contexts/tools/domain/behaviours/kilo/kilo-hooks-bridge.model.js";
 import { generateOpencodeHooksBridge } from "../../../../src/contexts/tools/domain/behaviours/opencode/opencode-hooks-bridge.model.js";
 import { present } from "../../../shared/testing/present.builder.js";
-import { REPOSITORY_ROOT } from "../../../shared/testing/repository-root.builder.js";
+import { ROOT } from "./event-bridge-host.builder.js";
+import { capturedSamples, SESSION } from "./hook-payload-captures.builder.js";
+import { madeFolder, removeMadeFolders } from "./made-folders.builder.js";
 
-export const PAYLOADS = join(REPOSITORY_ROOT, "scripts", "__tests__", "fixtures", "hook-payloads");
-export const SCRUBBED_PROJECT = "/Users/user/project";
-export const SESSION = "00000000-0000-4000-8000-000000000000";
-export const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
 export const RECORD = `node ${ROOT}/hooks/record.cjs`;
 
 export const HOOKS_JSON = JSON.stringify({
@@ -65,8 +62,6 @@ export interface Workspace {
   readonly host: "opencode" | "kilo";
 }
 
-const created: string[] = [];
-
 /** The adapter each build puts at `hooks/lib/host.cjs`. */
 export const ADAPTERS = {
   opencode: present(present(opencode.hooks).runtime).adapter,
@@ -77,27 +72,16 @@ export const ADAPTERS = {
 export async function cleanWorkspaces(): Promise<void> {
   vi.unstubAllEnvs();
   vi.restoreAllMocks();
-  // A SessionStart hook runs detached in `project/`; Windows refuses to remove a live process's cwd (EBUSY).
-  await Promise.all(
-    created
-      .splice(0)
-      .map((dir) => rm(dir, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 }))
-  );
+  await removeMadeFolders();
 }
 
 /** The captured arguments, the scrubbed project folder pointed at a real one. */
 export async function captured<T = unknown>(file: string, project: string): Promise<readonly T[]> {
-  // Replaced inside the JSON text, so the folder goes in JSON-escaped: a Windows path's backslashes.
-  const text = (await readFile(join(PAYLOADS, file), "utf8")).replaceAll(
-    SCRUBBED_PROJECT,
-    JSON.stringify(project).slice(1, -1)
-  );
-  return (JSON.parse(text) as { samples: { payload: T }[] }).samples.map((s) => s.payload);
+  return capturedSamples<T>(file, project).map((sample) => sample.payload);
 }
 
 export async function workspace(host: "opencode" | "kilo", bridge: string): Promise<Workspace> {
-  const dir = await realpath(await mkdtemp(join(tmpdir(), "aidd-hooks-runtime-bridge-")));
-  created.push(dir);
+  const dir = await madeFolder("aidd-hooks-runtime-bridge-");
   const project = join(dir, "project");
   const scripts = join(dir, "hooks", "aidd-sample");
   await mkdir(join(scripts, "lib"), { recursive: true });
@@ -217,7 +201,7 @@ export interface ToolCall {
 }
 
 export async function toolCall(host: "opencode" | "kilo", index: number, project: string) {
-  const calls = (await captured(`${host}-tool.execute.after.json`, project)) as ToolCall[];
+  const calls = await captured<ToolCall>(`${host}-tool.execute.after.json`, project);
   const found = calls[index];
   if (found === undefined) throw new Error(`no captured call ${index}`);
   return found;

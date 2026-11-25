@@ -16,8 +16,8 @@ import {
   HOSTS,
   open,
   REFERENCE_HOOKS,
-  SESSION,
 } from "../../testing/event-bridge-host.builder.js";
+import { SESSION } from "../../testing/hook-payload-captures.builder.js";
 
 afterEach(cleanBridges);
 

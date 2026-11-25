@@ -5,6 +5,7 @@
  * is derived from a captured payload.
  */
 import { afterEach, describe, expect, it } from "vitest";
+import { SESSION } from "./testing/hook-payload-captures.builder.js";
 import {
   CWD,
   NOTES,
@@ -12,7 +13,6 @@ import {
   printed,
   read,
   restoreHostIo,
-  SESSION,
   sample,
 } from "./testing/hooks-runtime-host.builder.js";
 

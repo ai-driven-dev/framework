@@ -3,16 +3,15 @@
  * drives it with that host's events, with real hook scripts that record what reached them.
  */
 
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
 import { vi } from "vitest";
 import { generateKiloHooksBridge } from "../../../../src/contexts/tools/domain/behaviours/kilo/kilo-hooks-bridge.model.js";
 import { generateOpencodeHooksBridge } from "../../../../src/contexts/tools/domain/behaviours/opencode/opencode-hooks-bridge.model.js";
-import { asPlainObject } from "../../../../src/shared/domain/reading/plain-object.js";
-import { REPOSITORY_ROOT } from "../../../shared/testing/repository-root.builder.js";
+import { capturedSample } from "./hook-payload-captures.builder.js";
+import { madeFolder, removeMadeFolders } from "./made-folders.builder.js";
 
 export const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
 export const command = (script: string, prefix = "node ") => ({
@@ -100,16 +99,10 @@ export const HOSTS: readonly Host[] = [
   },
 ];
 
-export const created: string[] = [];
 /** Clears what a test spied on and removes the folders it made. */
 export async function cleanBridges(): Promise<void> {
   vi.restoreAllMocks();
-  // A generated bridge's load-time hook may still be writing when the test ends: ENOTEMPTY, observed.
-  await Promise.all(
-    created
-      .splice(0)
-      .map((dir) => rm(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 }))
-  );
+  await removeMadeFolders();
 }
 
 export interface Prompt {
@@ -128,8 +121,7 @@ export async function open(
   hooksJson = REFERENCE_HOOKS,
   inputDirectory: (directory: string) => string = (directory) => directory
 ) {
-  const directory = await mkdtemp(join(tmpdir(), "aidd-event-bridge-"));
-  created.push(directory);
+  const directory = await madeFolder("aidd-event-bridge-");
   await mkdir(join(directory, "hooks", "probe"), { recursive: true });
   await mkdir(join(directory, "plugin"));
   for (const [name, tail] of Object.entries(SCRIPTS)) {
@@ -181,9 +173,6 @@ export async function open(
 // A Stop script that exits 7 never answers: the module exists whatever event a case adds beside it.
 export const ALONGSIDE = { Stop: [command("exit7.cjs")] };
 
-export const PAYLOADS = join(REPOSITORY_ROOT, "scripts", "__tests__", "fixtures", "hook-payloads");
-export const SESSION = "00000000-0000-4000-8000-000000000000";
-
 export interface Captured {
   readonly input: { readonly sessionID: string };
   readonly output: {
@@ -192,27 +181,25 @@ export interface Captured {
   };
 }
 
-/** The samples a host's capture file holds. */
-export async function samplesOf(file: string) {
-  const parsed = asPlainObject(JSON.parse(await readFile(join(PAYLOADS, file), "utf8")));
-  return Array.isArray(parsed?.samples) ? parsed.samples : [];
-}
-
-/** A payload the host really sent, from its capture: the nth sample of its hook's file. */
+/** A payload the host really sent, from its capture: the sample of its hook's file from `run`. */
 export async function captured(host: Host, hook: string, run: string): Promise<Captured> {
   const file = `${host.name.toLowerCase()}-${hook}.json`;
-  const samples = await samplesOf(file);
-  const found = samples.find((sample) => sample.run === run);
-  if (found === undefined) throw new Error(`${file} has no ${run} sample`);
-  return found.payload;
+  return capturedSample<Captured>(file, (sample) => sample.run === run, `${run} sample`).payload;
+}
+
+interface ToolAbout {
+  readonly call: { readonly tool: string };
+  readonly output: unknown;
 }
 
 /** The captured write and shell calls of a host's `tool.execute.before`. */
-export async function beforeTool(host: Host, tool: "write" | "bash") {
+export async function beforeTool(host: Host, tool: "write" | "bash"): Promise<ToolAbout> {
   const file = `${host.name.toLowerCase()}-tool.execute.before.json`;
-  const samples = await samplesOf(file);
-  const found = samples.find((sample) => sample.payload.call.tool === tool);
-  if (found === undefined) throw new Error(`${file} has no ${tool} call`);
+  const found = capturedSample<ToolAbout>(
+    file,
+    (s) => s.payload.call.tool === tool,
+    `${tool} call`
+  );
   return structuredClone(found.payload);
 }
 
