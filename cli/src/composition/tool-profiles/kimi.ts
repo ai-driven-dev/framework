@@ -1,5 +1,4 @@
 import { buildKimiFlatContract } from "../../contexts/tools/domain/behaviours/kimi/kimi-build.model.js";
-import { noHooksDelivery } from "../../contexts/tools/domain/formats/hooks/flat-routes.js";
 import { contract } from "../../contexts/tools/domain/profile/contract-builders.js";
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
 import { flatPlacement } from "../../contexts/tools/domain/sections/layout-section.js";
@@ -10,6 +9,7 @@ import {
 
 const DIRECTORY = ".kimi-code/";
 const TOOL_SUFFIX = ".kimi.md";
+/** Kimi's project MCP file: https://www.kimi.com/code/docs/en/kimi-code-cli/customization/mcp.html */
 const MCP_PATH = `${DIRECTORY}mcp.json`;
 
 /** Where a flat build puts Kimi's skills and agents. Skills are read from `.agents/skills/` (and
@@ -20,7 +20,7 @@ const MCP_PATH = `${DIRECTORY}mcp.json`;
 const KIMI_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(DIRECTORY, {
   skillsDir: ".agents/skills/",
   skills: "single-level",
-  agent: { folderFile: "agent.md" },
+  agent: { ext: ".md" },
 });
 
 /** Each Claude tool an agent may declare, by the name Kimi gives it in an agent's `tools`, from
@@ -38,6 +38,11 @@ const AGENT_TOOLS: ReadonlyMap<string, string> = new Map([
   ["Task", "Agent"],
   ["Agent", "Agent"],
   ["TodoWrite", "TodoList"],
+  ["AskUserQuestion", "AskUserQuestion"],
+  ["Skill", "Skill"],
+  ["ExitPlanMode", "ExitPlanMode"],
+  ["TaskOutput", "TaskOutput"],
+  ["TaskStop", "TaskStop"],
 ]);
 
 /** Kimi documents hooks only as `[[hooks]]` in the user-level `~/.kimi-code/config.toml`, with no
@@ -45,7 +50,7 @@ const AGENT_TOOLS: ReadonlyMap<string, string> = new Map([
 const USER_LEVEL_ONLY =
   "Kimi reads hooks only from the user-level config.toml, never from a project";
 
-const hooksDelivery = noHooksDelivery(USER_LEVEL_ONLY);
+const USER_LEVEL_DELIVERY = { kind: "none", reason: USER_LEVEL_ONLY } as const;
 
 export const kimi = defineAiTool({
   toolId: "kimi",
@@ -64,7 +69,7 @@ export const kimi = defineAiTool({
 
   capabilities: {
     skills: { agentsSkillsDirectory: true },
-    hooks: { delivery: hooksDelivery },
+    hooks: { delivery: USER_LEVEL_DELIVERY },
     layout: flatPlacement({ namespacePrefix: "aidd-", artifacts: KIMI_FLAT_LAYOUT }),
   },
 

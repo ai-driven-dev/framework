@@ -4744,7 +4744,7 @@
       ".agents/skills/aidd-async-dev-03-review/actions/skills/04-finalize.md": "bf01c103e3940fda6fd07092bd35f44993f24cdd25ec7ff5c52004b20a37cb17",
       ".agents/skills/aidd-async-dev-03-review/evals/scenarios.json": "562d462eedcb589487585a6840d3077a8cce760ea4ecd5e416a8a01b8472d995",
       ".agents/skills/aidd-async-dev-03-review/references/stop-conditions.md": "47280ec7ebb0bd2d25bb7bf7dd716f5ef41a0ad8163653fa139981b5283e7ba0",
-      ".kimi-code/agents/aidd-async-dev-async-orchestrator/agent.md": "5ca31d8117dcc4800265ab04093432090485fdda1de8a867b29c3d3e55d30e3d"
+      ".kimi-code/agents/aidd-async-dev-async-orchestrator.md": "5ca31d8117dcc4800265ab04093432090485fdda1de8a867b29c3d3e55d30e3d"
     },
     "componentPaths": [],
     "flatHookPaths": [],
@@ -4881,9 +4881,9 @@
       ".agents/skills/aidd-dev-08-for-sure/actions/01-init-tracking.md": "3ce6bb19135e5d31c4d2ad1c2151c1563886a611f2399b47624368268a79dcdf",
       ".agents/skills/aidd-dev-08-for-sure/actions/02-auto-accept.md": "235818118c772c0f499ea0668bfbc7bd00c2aae34e6bbd8b13b912fddfa79705",
       ".agents/skills/aidd-dev-08-for-sure/actions/03-autonomous-loop.md": "b19d4520ad716def3c2a4611c37725cba9af713cd4bcb668c237e874e1e43843",
-      ".kimi-code/agents/aidd-dev-implementer/agent.md": "ae86fb9aa52a65f76c200fde226e5f23e88d66aef16cf1606d204afa3b2fe292",
-      ".kimi-code/agents/aidd-dev-planner/agent.md": "1af575bcd00fbfcdb2dbc1759f5454f386dbe4d2a4632b522fef2409a3d0eeab",
-      ".kimi-code/agents/aidd-dev-reviewer/agent.md": "5e4b954a7636948ac910abc887c535dffbc9ab788e6e5aa290d6f6a09ddf8735"
+      ".kimi-code/agents/aidd-dev-implementer.md": "ae86fb9aa52a65f76c200fde226e5f23e88d66aef16cf1606d204afa3b2fe292",
+      ".kimi-code/agents/aidd-dev-planner.md": "1af575bcd00fbfcdb2dbc1759f5454f386dbe4d2a4632b522fef2409a3d0eeab",
+      ".kimi-code/agents/aidd-dev-reviewer.md": "5e4b954a7636948ac910abc887c535dffbc9ab788e6e5aa290d6f6a09ddf8735"
     },
     "componentPaths": [],
     "flatHookPaths": [],

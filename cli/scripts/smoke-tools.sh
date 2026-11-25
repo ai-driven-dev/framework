@@ -341,9 +341,12 @@ if true; then
       [[ ! -d "$BASE/.github" ]] \
         && ok "copilot declarative settings absent without native source proof" \
         || bad "copilot declarative settings written without native source proof"
-    elif [[ "$t" == antigravity || "$t" == kimi ]]; then
-      # Both read the shared `.agents/` skills root, not a directory named after themselves.
+    elif [[ "$t" == antigravity ]]; then
+      # Reads the shared `.agents/` skills root, not a directory named after itself.
       [[ -d "$BASE/.agents/skills" ]] && ok "$t dir present" || bad "$t dir missing after --ai all"
+    elif [[ "$t" == kimi ]]; then
+      # Its skills share `.agents/skills`; only Kimi writes `.kimi-code/agents`.
+      [[ -d "$BASE/.kimi-code/agents" ]] && ok "$t dir present" || bad "$t dir missing after --ai all"
     else
       [[ -d "$BASE/.${t}" ]] && ok "$t dir present" || bad "$t dir missing after --ai all"
     fi

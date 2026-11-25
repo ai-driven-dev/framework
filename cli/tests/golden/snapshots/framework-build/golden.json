@@ -2320,10 +2320,10 @@
     ".agents/skills/aidd-vcs-04-issue-create/assets/CONTRIBUTING.md": "1372c7512c02c26e21643ae523a98d7c90ff92c03633532a8c417b4ca8d9e75f",
     ".agents/skills/aidd-vcs-04-issue-create/assets/issue-template.md": "66b4ef6090208512205fce0bb16edbbcf0ffb19009eae76dc317d738c7a10cdc",
     ".agents/skills/aidd-vcs-04-issue-create/evals/scenarios.json": "d113c62aae4867e425737948c39c9f687f56c3d37234eca345a2f65f1a234c30",
-    ".kimi-code/agents/aidd-async-dev-async-orchestrator/agent.md": "5ca31d8117dcc4800265ab04093432090485fdda1de8a867b29c3d3e55d30e3d",
-    ".kimi-code/agents/aidd-dev-implementer/agent.md": "ae86fb9aa52a65f76c200fde226e5f23e88d66aef16cf1606d204afa3b2fe292",
-    ".kimi-code/agents/aidd-dev-planner/agent.md": "1af575bcd00fbfcdb2dbc1759f5454f386dbe4d2a4632b522fef2409a3d0eeab",
-    ".kimi-code/agents/aidd-dev-reviewer/agent.md": "5e4b954a7636948ac910abc887c535dffbc9ab788e6e5aa290d6f6a09ddf8735",
+    ".kimi-code/agents/aidd-async-dev-async-orchestrator.md": "5ca31d8117dcc4800265ab04093432090485fdda1de8a867b29c3d3e55d30e3d",
+    ".kimi-code/agents/aidd-dev-implementer.md": "ae86fb9aa52a65f76c200fde226e5f23e88d66aef16cf1606d204afa3b2fe292",
+    ".kimi-code/agents/aidd-dev-planner.md": "1af575bcd00fbfcdb2dbc1759f5454f386dbe4d2a4632b522fef2409a3d0eeab",
+    ".kimi-code/agents/aidd-dev-reviewer.md": "5e4b954a7636948ac910abc887c535dffbc9ab788e6e5aa290d6f6a09ddf8735",
     ".kimi-code/mcp.json": "1bbb467a5d737b5c65daf9fe8551c9ced50608a09f523d5d20baa9150f266f73"
   }
 }

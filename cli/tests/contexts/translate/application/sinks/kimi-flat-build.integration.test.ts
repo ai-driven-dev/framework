@@ -76,7 +76,7 @@ describe("a flat build for kimi", () => {
 
     const built = await files();
     expect(built).toContain(".agents/skills/aidd-test-commit/SKILL.md");
-    expect(built).toContain(".kimi-code/agents/aidd-test-code-reviewer/agent.md");
+    expect(built).toContain(".kimi-code/agents/aidd-test-code-reviewer.md");
     expect(built.filter((path) => path.startsWith(".agents/agents/"))).toEqual([]);
     expect(built.filter((path) => path.startsWith(".kimi-code/skills/"))).toEqual([]);
   });
@@ -85,7 +85,7 @@ describe("a flat build for kimi", () => {
     await buildKimi();
 
     const agent = await readFile(
-      join(out, ".kimi-code/agents/aidd-test-code-reviewer/agent.md"),
+      join(out, ".kimi-code/agents/aidd-test-code-reviewer.md"),
       "utf-8"
     );
     expect(frontmatterOf(agent)).toEqual({
@@ -97,7 +97,7 @@ describe("a flat build for kimi", () => {
   it("writes the kimi names of declared tools, keeps MCP globs and drops a name kimi lacks", async () => {
     await buildKimi();
 
-    const agent = await readFile(join(out, ".kimi-code/agents/aidd-test-tooled/agent.md"), "utf-8");
+    const agent = await readFile(join(out, ".kimi-code/agents/aidd-test-tooled.md"), "utf-8");
     const frontmatter = frontmatterOf(agent);
     expect(frontmatter.tools).toBe('["Read","FetchURL","Agent","mcp__github__*"]');
     expect(frontmatter.model).toBeUndefined();
