@@ -231,7 +231,7 @@ describe("the verdicts beside the state tabs", () => {
       own.closest = () => ({ dataset: { step: "screens" } });
       return own;
     };
-    const open = (memory = {}, { drawerHoldsIt = true, beside = [], itemData = {}, known, decisions = false, steps = false, order, extra = () => undefined } = {}) => {
+    const open = (memory = {}, { drawerHoldsIt = true, beside = [], itemData = {}, known, decisions = false, steps = false, order, extra = () => undefined, folder = "/one/aidd_docs/ui/showcase/" } = {}) => {
       const script = pagesOf()["index.html"].match(/<script>([\s\S]*)<\/script>/)[1];
       const tabs = [["default", "pending"], ["empty", "pending"]].map(([state, current]) => element({ tab: state, current }));
       const field = element();
@@ -257,7 +257,7 @@ describe("the verdicts beside the state tabs", () => {
       const keys = {};
       const document = { activeElement: null, createElement: () => element(), body: { dataset: {} }, addEventListener(type, listener) { keys[type] = listener; }, getElementById: (id) => by[id] ?? null, querySelectorAll: (selector) => (selector === "section.review[data-record]" ? [review] : selector === ".tally[data-template]" ? [tally] : extra(selector) ?? []), querySelector: () => null };
       const written = [];
-      const window = { addEventListener() {}, localStorage: { getItem: (key) => memory[key] ?? null, setItem: (key, value) => { memory[key] = value; }, removeItem: (key) => { delete memory[key]; } } };
+      const window = { addEventListener() {}, location: { pathname: `${folder}home.html` }, localStorage: { getItem: (key) => memory[key] ?? null, setItem: (key, value) => { memory[key] = value; }, removeItem: (key) => { delete memory[key]; } } };
       const navigator = { clipboard: { writeText: async (content) => { written.push(content); } } };
       const opened = [];
       let api;
@@ -406,11 +406,20 @@ describe("the verdicts beside the state tabs", () => {
     it("gives the verdict of the shown state under the key and the values the drawer keeps", () => {
       const page = open();
       page.votes[0].listeners.click();
-      assert.deepEqual(JSON.parse(page.memory["aidd-ui-review"]), { "home@1": { default: { verdict: "ok", comment: "" } } });
+      assert.deepEqual(JSON.parse(page.memory["aidd-ui-review:/one/aidd_docs/ui/showcase/"]), { "home@1": { default: { verdict: "ok", comment: "" } } });
       shown(page, 0);
       assert.equal(page.votes[0].attrs["aria-pressed"], "true");
       page.votes[0].listeners.click();
-      assert.equal(page.memory["aidd-ui-review"], undefined);
+      assert.equal(page.memory["aidd-ui-review:/one/aidd_docs/ui/showcase/"], undefined);
+    });
+
+    it("keeps a verdict to the showcase it was given in, as every page opened from disk shares one storage", () => {
+      const memory = {};
+      open(memory).votes[0].listeners.click();
+      const elsewhere = open(memory, { folder: "/two/aidd_docs/ui/showcase/" });
+      assert.equal(elsewhere.votes[0].attrs["aria-pressed"], "false");
+      const beside = open(memory);
+      assert.equal(beside.votes[0].attrs["aria-pressed"], "true");
     });
 
     it("asks the comment of a state to revise in place, the drawer left shut, and keeps what is typed", () => {
@@ -421,7 +430,7 @@ describe("the verdicts beside the state tabs", () => {
       assert.equal(page.by.review.hidden, true);
       page.field.value = "too tight";
       page.field.listeners.input();
-      assert.deepEqual(JSON.parse(page.memory["aidd-ui-review"])["home@1"].default, { verdict: "revise", comment: "too tight" });
+      assert.deepEqual(JSON.parse(page.memory["aidd-ui-review:/one/aidd_docs/ui/showcase/"])["home@1"].default, { verdict: "revise", comment: "too tight" });
     });
 
     it("shows in the drawer a verdict given beside the tabs, and the other way round", () => {
@@ -439,7 +448,7 @@ describe("the verdicts beside the state tabs", () => {
     });
 
     it("repaints the bar for the state a tab opens", () => {
-      const page = open({ "aidd-ui-review": JSON.stringify({ "home@1": { empty: { verdict: "ok", comment: "" } } }) });
+      const page = open({ "aidd-ui-review:/one/aidd_docs/ui/showcase/": JSON.stringify({ "home@1": { empty: { verdict: "ok", comment: "" } } }) });
       assert.equal(page.votes[0].attrs["aria-pressed"], "false");
       page.review.below['[role="tab"][aria-selected="true"]'] = [page.tabs[1]];
       page.api.marked("empty");
@@ -459,14 +468,14 @@ describe("the verdicts beside the state tabs", () => {
 
     it("copies and keeps a verdict given on another page for a record this page neither shows nor lists", async () => {
       const known = [{ record: "button", version: "1", step: "components", title: "Button", states: [{ state: "default", name: "default", settled: true }] }];
-      const page = open({ "aidd-ui-review": JSON.stringify({ "button@1": { default: { verdict: "ok", comment: "" } } }) }, { known });
+      const page = open({ "aidd-ui-review:/one/aidd_docs/ui/showcase/": JSON.stringify({ "button@1": { default: { verdict: "ok", comment: "" } } }) }, { known });
       page.votes[1].listeners.click();
       page.field.value = "wider";
       page.field.listeners.input();
       page.by.copy.listeners.click();
       await new Promise((resolve) => setImmediate(resolve));
       assert.deepEqual(JSON.parse(page.written[0].replace(/^```json\n|\n```\n$/g, "")).map((each) => [each.record, each.verdicts.map((one) => [one.state, one.verdict])]), [["home", [["default", "revise"]]], ["button", [["default", "ok"]]]]);
-      assert.deepEqual(Object.keys(JSON.parse(page.memory["aidd-ui-review"])).sort(), ["button@1", "home@1"]);
+      assert.deepEqual(Object.keys(JSON.parse(page.memory["aidd-ui-review:/one/aidd_docs/ui/showcase/"])).sort(), ["button@1", "home@1"]);
     });
 
     it("shows what the copy will hold, and no longer says nothing is left while a decision awaits its copy", () => {
@@ -512,7 +521,7 @@ describe("the verdicts beside the state tabs", () => {
       const revise = open();
       revise.votes[1].listeners.click();
       assert.deepEqual(revise.opened, [], "a revise waits for its comment");
-      const back = open({ "aidd-ui-review": JSON.stringify({ "home@1": { default: { verdict: "ok", comment: "" } } }) });
+      const back = open({ "aidd-ui-review:/one/aidd_docs/ui/showcase/": JSON.stringify({ "home@1": { default: { verdict: "ok", comment: "" } } }) });
       back.votes[0].listeners.click();
       assert.deepEqual(back.opened, []);
     });
@@ -567,9 +576,9 @@ describe("the verdicts beside the state tabs", () => {
       click();
       assert.equal(page.stepOk.textContent, "Confirm 2 states?");
       assert.equal(page.stepCancel.hidden, false);
-      assert.equal(page.memory["aidd-ui-review"], undefined, "nothing marked by the first click");
+      assert.equal(page.memory["aidd-ui-review:/one/aidd_docs/ui/showcase/"], undefined, "nothing marked by the first click");
       click();
-      assert.deepEqual(Object.keys(JSON.parse(page.memory["aidd-ui-review"])["home@1"]).sort(), ["default", "empty"]);
+      assert.deepEqual(Object.keys(JSON.parse(page.memory["aidd-ui-review:/one/aidd_docs/ui/showcase/"])["home@1"]).sort(), ["default", "empty"]);
       assert.equal(page.stepOk.textContent, "All OK");
       assert.equal(page.stepCancel.hidden, true);
     });
@@ -581,7 +590,7 @@ describe("the verdicts beside the state tabs", () => {
       page.stepCancel.listeners.click({ preventDefault() {} });
       assert.equal(page.stepOk.textContent, "All OK");
       assert.equal(page.stepCancel.hidden, true);
-      assert.equal(page.memory["aidd-ui-review"], undefined);
+      assert.equal(page.memory["aidd-ui-review:/one/aidd_docs/ui/showcase/"], undefined);
       page.by["open-review"].listeners.click();
       click();
       page.keys.keydown({ key: "Escape" });
@@ -589,7 +598,7 @@ describe("the verdicts beside the state tabs", () => {
       assert.equal(page.by.review.hidden, false, "the first Escape only cancels");
       page.keys.keydown({ key: "Escape" });
       assert.equal(page.by.review.hidden, true, "with nothing to cancel, Escape closes it");
-      assert.equal(page.memory["aidd-ui-review"], undefined);
+      assert.equal(page.memory["aidd-ui-review:/one/aidd_docs/ui/showcase/"], undefined);
     });
 
     it("gives the focus back to the step's all OK when the Cancel that held it is hidden, by a click or by Escape", () => {

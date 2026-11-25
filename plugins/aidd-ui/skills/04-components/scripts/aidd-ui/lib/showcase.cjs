@@ -887,7 +887,8 @@ ${decisionsOf.toString()}
 ${pickedOf.toString()}
 ${nextToReviewOf.toString()}
 ${nextOpenOf.toString()}
-const STORE = "aidd-ui-review";
+// Every page opened from disk shares one storage, so the key names this showcase's folder.
+const STORE = "aidd-ui-review:" + String((window.location || {}).pathname || "").replace(/[^/]*$/, "");
 const drawer = document.getElementById("review");
 const opener = document.getElementById("open-review");
 const copy = document.getElementById("copy");
