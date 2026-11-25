@@ -16,7 +16,7 @@ const CONFIG = `${OUT}/.kilo/kilo.jsonc`;
 
 const KILO_BASE = { $schema: "https://app.kilo.ai/config.json" };
 
-async function buildKilo(target: typeof TOOL.kilo | typeof TOOL.opencode = TOOL.kilo) {
+async function buildFlat(target: typeof TOOL.kilo | typeof TOOL.opencode = TOOL.kilo) {
   const fs = new InMemoryFileAdapter();
   await seedFromDirectory(fs, FIXTURE_DIR, { useAbsolutePaths: true });
   fs.setFile(`${OUT}/.keep`, "");
@@ -41,7 +41,7 @@ async function buildKilo(target: typeof TOOL.kilo | typeof TOOL.opencode = TOOL.
 
 describe("a flat build of the rules of a plugin for OpenCode", () => {
   it("writes the rule in its plugin's folder, as shipped, and does not warn it skipped it", async () => {
-    const { fs, logger } = await buildKilo(TOOL.opencode);
+    const { fs, logger } = await buildFlat(TOOL.opencode);
 
     expect(fs.getFile(`${OUT}/.opencode/rules/aidd-test/01-standards/naming.md`)).toContain(
       "paths:"
@@ -51,9 +51,9 @@ describe("a flat build of the rules of a plugin for OpenCode", () => {
 });
 
 describe("a flat build of the rules of a plugin", () => {
-  let kilo: Awaited<ReturnType<typeof buildKilo>>;
+  let kilo: Awaited<ReturnType<typeof buildFlat>>;
   beforeAll(async () => {
-    kilo = await buildKilo();
+    kilo = await buildFlat();
   });
 
   it("writes a path-scoped rule with its scope stated in the body", () => {
@@ -74,7 +74,7 @@ describe("a flat build of the rules of a plugin", () => {
   });
 
   it("still warns, for a tool that carries no rules, that it skipped them", async () => {
-    const { logger } = await buildKilo(TOOL.kimi);
+    const { logger } = await buildFlat(TOOL.kimi);
 
     expect(logger.warnMessages).toContain(
       "Skipping rules/ in plugin 'aidd-test' (out of scope for MVP1)."

@@ -44,8 +44,8 @@ export function mergeTypedMcp(
  *
  * The framework-owned keys come from `baseConfig`, the same bundled asset the install path
  * writes, and win over a stale existing copy; any other top-level key is preserved. `mcp` is
- * omitted entirely when neither side contributes one, and malformed `existing` content throws
- * rather than being silently discarded.
+ * omitted entirely when neither side contributes one, as is a `mergedKeys` list left empty, and
+ * malformed `existing` content throws rather than being silently discarded.
  */
 export function buildTypedMcpFlatConfig({
   baseConfig,
