@@ -51,7 +51,7 @@ describe("naming the hooks bridge file", () => {
     dir: "bridge/",
     generate: (raw) => (raw === "{}" ? null : `bridge of ${raw}`),
     tool: "host",
-    relays: [],
+    unrelayed: () => [],
   };
 
   it("names the bridge by plugin and carries what it generates", () => {
@@ -128,7 +128,7 @@ describe("telling whether a source ships its hooks bridge", () => {
     dir: "bridge/",
     generate: () => "generated",
     tool: "host",
-    relays: [],
+    unrelayed: () => [],
   };
 
   it("finds the file by its name in any folder below hooks", () => {
@@ -148,36 +148,29 @@ describe("telling what a hooks bridge leaves out", () => {
     dir: "bridge/",
     generate: () => "generated",
     tool: "host",
-    relays: ["SessionStart", "Stop"],
+    unrelayed: (raw) => (raw === "{}" ? [] : ["SessionEnd", "SubagentStop"]),
   };
-  const hooksOf = (...events: string[]) =>
-    JSON.stringify({ hooks: Object.fromEntries(events.map((event) => [event, []])) });
 
-  it("warns once for each event the plugin names and the bridge does not relay", () => {
+  it("warns once for each event the bridge reports it does not relay, under the tool", () => {
     expect(
-      flatHooksBridgeWarnings({
-        bridge,
-        rawHooksJson: hooksOf("Stop", "SessionEnd", "SubagentStop"),
-        sourceShipsItsOwn: false,
-      })
+      flatHooksBridgeWarnings({ bridge, rawHooksJson: "[1]", sourceShipsItsOwn: false })
     ).toEqual([
       "host: unmapped event 'SessionEnd' skipped",
       "host: unmapped event 'SubagentStop' skipped",
     ]);
   });
 
-  it("says nothing when every event is relayed, or when there is no hooks to read", () => {
-    const warn = (rawHooksJson: string) =>
-      flatHooksBridgeWarnings({ bridge, rawHooksJson, sourceShipsItsOwn: false });
-
-    expect([warn(hooksOf("Stop", "SessionStart")), warn("{}")]).toEqual([[], []]);
+  it("says nothing when the bridge relays every event", () => {
+    expect(
+      flatHooksBridgeWarnings({ bridge, rawHooksJson: "{}", sourceShipsItsOwn: false })
+    ).toEqual([]);
   });
 
   it("says nothing when the source ships the bridge itself", () => {
     expect(
       flatHooksBridgeWarnings({
         bridge,
-        rawHooksJson: hooksOf("SessionEnd"),
+        rawHooksJson: "[1]",
         sourceShipsItsOwn: true,
       })
     ).toEqual([]);

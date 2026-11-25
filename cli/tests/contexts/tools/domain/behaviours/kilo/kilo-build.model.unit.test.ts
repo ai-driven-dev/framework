@@ -51,12 +51,19 @@ describe("building Kilo's flat contract", () => {
     expect(hooks.hooksBridge?.dir).toBe(".kilo/plugin/");
   });
 
-  it("names itself and the five events its bridge relays, for the build's warning about the rest", () => {
+  it("names itself and the events its bridge leaves out, for the build's warning about them", () => {
     const hooks = supported(present(kilo.buildContracts.flat)().artifacts.hooks);
+    const manifest = JSON.stringify({
+      hooks: Object.fromEntries(
+        ["SessionStart", "PostToolUse", "Stop", "PreToolUse", "UserPromptSubmit", "SessionEnd"].map(
+          (event) => [event, []]
+        )
+      ),
+    });
 
-    expect([hooks.hooksBridge?.tool, hooks.hooksBridge?.relays]).toStrictEqual([
+    expect([hooks.hooksBridge?.tool, hooks.hooksBridge?.unrelayed(manifest)]).toStrictEqual([
       "kilo",
-      ["SessionStart", "PostToolUse", "Stop", "PreToolUse", "UserPromptSubmit"],
+      ["SessionEnd"],
     ]);
   });
 

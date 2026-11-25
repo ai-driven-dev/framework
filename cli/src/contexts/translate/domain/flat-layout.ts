@@ -8,8 +8,8 @@ import type {
   SupportedArtifact,
   ToolBuildContract,
 } from "../../../shared/domain/materialization/build-contract.js";
+import { unmappedEventWarning } from "../../../shared/domain/materialization/hooks-warnings.js";
 import { pluginRootFolders } from "../../../shared/domain/materialization/plugin-root-path-rewrite.js";
-import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import type { OutputFile } from "./output-file.js";
 
 /**
@@ -46,10 +46,9 @@ export function flatHooksBridgeWarnings({
   sourceShipsItsOwn: boolean;
 }): string[] {
   if (sourceShipsItsOwn) return [];
-  const hooks = asPlainObject(asPlainObject(JSON.parse(rawHooksJson))?.hooks) ?? {};
-  return Object.keys(hooks)
-    .filter((event) => !bridge.relays.includes(event))
-    .map((event) => `${bridge.tool}: unmapped event '${event}' skipped`);
+  return bridge
+    .unrelayed(rawHooksJson)
+    .map((event) => `${bridge.tool}: ${unmappedEventWarning(event)}`);
 }
 
 /** Whether a plugin's own hooks already carry the file a bridge would replace, in any folder. */

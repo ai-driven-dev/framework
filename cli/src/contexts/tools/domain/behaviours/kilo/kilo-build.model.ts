@@ -12,6 +12,7 @@ import type {
   FlatArtifactLayout,
   FlatHooksLoaderEntry,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
+import { unrelayedBridgeEvents } from "../../bridges/bridge-hook-table.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
 import { buildTypedMcpFlatConfig } from "../../formats/mcp/typed-mcp-merge.js";
@@ -70,7 +71,10 @@ export function buildKiloFlatContract(
         agentMarkdown,
       },
       mcp: { supported: false, reason: "carried by the config artifact, not a file of its own" },
-      hooks: flatHooksArtifact(hooks, { tool: "kilo", bridge: generateKiloHooksBridge }),
+      hooks: flatHooksArtifact(hooks, {
+        tool: "kilo",
+        bridge: { generate: generateKiloHooksBridge, unrelayed: unrelayedBridgeEvents },
+      }),
     },
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,

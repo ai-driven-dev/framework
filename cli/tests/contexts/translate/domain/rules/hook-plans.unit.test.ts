@@ -10,7 +10,7 @@ import {
 const MANIFEST = "hooks/hooks.json";
 
 function bridge(generate: FlatHooksBridge["generate"] = () => "bridge"): FlatHooksBridge {
-  return { dir: "flat/", skipIfSourceHas: "own.js", generate, tool: "stub", relays: [] };
+  return { dir: "flat/", skipIfSourceHas: "own.js", generate, tool: "stub", unrelayed: () => [] };
 }
 
 function flatHooks(

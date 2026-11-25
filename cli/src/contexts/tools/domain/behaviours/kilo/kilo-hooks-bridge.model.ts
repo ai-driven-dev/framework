@@ -43,46 +43,19 @@ ${parts.spawnHook(2, '["pipe", "ignore", "ignore"]')}
 // Exit 2 puts the answer on stderr; exit 0 puts it in additionalContext on stdout.
 ${parts.answerFrom}
 
-/** A Stop script's {"decision":"block","reason"} on stdout: the reason to keep working on. */
-function stopReasonOf(script, args, payload, directory) {
-  return new Promise((resolve) => {
-    let stdout = "";
-${parts.spawnHook(4, '["pipe", "pipe", "ignore"]')}
-    child.stdout.on("data", (chunk) => { stdout += chunk; });
-    child.on("error", () => resolve(""));
-    child.on("close", (code) => {
-      if (code !== 0) return resolve("");
-      try {
-        const output = JSON.parse(stdout);
-        resolve(${parts.stopReason});
-      } catch {
-        resolve("");
-      }
-    });
-${parts.feedStdin(4)}
-  });
-}
+${parts.runCapture}
 
+${parts.stopReasonOf}
+
+/** Awaited, unlike runHook: a script that fails to run, or exits other than 0 or 2, is reported
+ * and answers nothing. */
 function answerOf(script, args, payload, directory) {
-  return new Promise((resolve) => {
-    let stdout = "";
-    let stderr = "";
-${parts.spawnHook(4, '["pipe", "pipe", "pipe"]')}
-    const fail = (error) => {
-      reportHookFailure(script, error);
-      resolve("");
-    };
-    child.stdout.on("data", (chunk) => { stdout += chunk; });
-    child.stderr.on("data", (chunk) => { stderr += chunk; });
-    child.on("error", fail);
-    child.on("close", (code, signal) => {
-      if ((code !== 0 && code !== 2) || signal !== null) {
-        fail("exited with code " + String(code) + (signal === null ? "" : " (" + signal + ")"));
-        return;
-      }
-      resolve(answerFrom(code, stdout, stderr));
-    });
-${parts.feedStdin(4)}
+  return runCapture(script, args, payload, directory).then(({ code, stdout, stderr }) => {
+    if (code !== 0 && code !== 2) {
+      reportHookFailure(script, "exited with code " + String(code));
+      return "";
+    }
+    return answerFrom(code, stdout, stderr);
   });
 }
 
@@ -91,8 +64,6 @@ function reportHookFailure(script, error) {
 }
 
 ${parts.matchesTool}
-
-${parts.runCapture}
 
 ${parts.preToolUse}
 

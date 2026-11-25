@@ -7,10 +7,10 @@ import type { FlatHooksLoaderEntry } from "../../../../shared/domain/materializa
 import { declareHooks } from "../formats/hooks/declaration.js";
 import type { HookEventRoute, HooksDescriptor } from "../formats/hooks/descriptor.js";
 import {
-  type BridgeHookCall,
-  bridgeHookCalls,
-  type PluginHooksShape,
-} from "../hooks/plugin-hooks-shape.js";
+  type BridgeHookTable,
+  parseHooksJsonForBridge,
+  replaysNothing,
+} from "./bridge-hook-table.js";
 import { PRE_TOOL_USE_SOURCE, userPromptSource } from "./bridge-relay-source.js";
 import {
   ANSWER_FROM_SOURCE,
@@ -20,45 +20,10 @@ import {
   MATCHES_TOOL_SOURCE,
   NODE_IMPORTS_SOURCE,
   RUN_CAPTURE_SOURCE,
-  STOP_REASON_SOURCE,
+  STOP_REASON_OF_SOURCE,
   spawnHookSource,
   TOOL_INPUT_SOURCE,
 } from "./bridge-source.js";
-
-export interface BridgeHookTable {
-  readonly sessionStart: readonly BridgeHookCall[];
-  readonly stop: readonly BridgeHookCall[];
-  readonly postToolUse: readonly BridgeHookCall[];
-  readonly preToolUse: readonly BridgeHookCall[];
-  readonly userPromptSubmit: readonly BridgeHookCall[];
-}
-
-/** A plugin's raw hooks.json: still carrying `${CLAUDE_PLUGIN_ROOT}`, since a generated
- * bridge resolves its scripts from its own `import.meta.url` and the outDir-relative rewrite
- * every other flat target needs buys it nothing: reduced to the five mapped events. */
-export function parseHooksJsonForBridge(rawHooksJson: string): BridgeHookTable {
-  const parsed = JSON.parse(rawHooksJson) as PluginHooksShape;
-  const hooks = parsed.hooks ?? {};
-  return {
-    sessionStart: bridgeHookCalls(hooks.SessionStart),
-    stop: bridgeHookCalls(hooks.Stop),
-    postToolUse: bridgeHookCalls(hooks.PostToolUse),
-    preToolUse: bridgeHookCalls(hooks.PreToolUse),
-    userPromptSubmit: bridgeHookCalls(hooks.UserPromptSubmit),
-  };
-}
-
-/** A bridge with nothing to spawn is not a file worth writing. */
-export function replaysNothing(table: BridgeHookTable): boolean {
-  return (
-    table.sessionStart.length +
-      table.stop.length +
-      table.postToolUse.length +
-      table.preToolUse.length +
-      table.userPromptSubmit.length ===
-    0
-  );
-}
 
 /** A plugin's bridge identifier: its PascalCase name and the suffix the host gives its modules. */
 function bridgeIdentifier(plugin: string, suffix: string): string {
@@ -95,9 +60,11 @@ export interface BridgeParts {
   readonly runCapture: string;
   /** `preToolUseCallsFor` and `refusalOf`: the reason a PreToolUse script gave, if any refuses. */
   readonly preToolUse: string;
-  /** `FOLLOW_UP`, `isFollowUp` and `addPromptContext`, which reads the host's own `answerOf`. */
+  /** `FOLLOW_UP`, `isFollowUp`, `userPromptCallsFor` and `addPromptContext`, which reads the host's
+   * own `answerOf`. */
   readonly userPrompt: string;
-  readonly stopReason: string;
+  /** `stopReasonOf`: the reason a Stop script gave to keep working, which reads `runCapture`. */
+  readonly stopReasonOf: string;
   readonly appendAnswer: string;
   spawnHook(indent: number, stdio: string): string;
   feedStdin(indent: number): string;
@@ -124,7 +91,7 @@ export function generateBridge<R>(
     runCapture: RUN_CAPTURE_SOURCE,
     preToolUse: PRE_TOOL_USE_SOURCE,
     userPrompt: userPromptSource(plugin),
-    stopReason: STOP_REASON_SOURCE,
+    stopReasonOf: STOP_REASON_OF_SOURCE,
     appendAnswer: APPEND_ANSWER_SOURCE,
     spawnHook: spawnHookSource,
     feedStdin: feedStdinSource,

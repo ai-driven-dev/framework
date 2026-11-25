@@ -6,6 +6,7 @@
 
 import type { ShippedHooks } from "../../../../shared/domain/materialization/build-contract.js";
 import { genericFlatHooksScriptPath } from "../../../../shared/domain/materialization/flat-paths.js";
+import { unmappedEventWarning } from "../../../../shared/domain/materialization/hooks-warnings.js";
 import {
   escapeRegExp,
   rewritePluginRootInJson,
@@ -55,7 +56,7 @@ export function mergeHooks(
   for (const [event, groups] of Object.entries(rewritten)) {
     const toolEvent = target.eventMap === undefined ? event : target.eventMap[event];
     if (toolEvent === undefined) {
-      warnings.push(`unmapped event '${event}' skipped`);
+      warnings.push(unmappedEventWarning(event));
       continue;
     }
     hooks[toolEvent] = [...(hooks[toolEvent] ?? []), ...shapeEntries(groups, target.file)];

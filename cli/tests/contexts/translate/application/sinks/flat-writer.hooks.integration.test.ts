@@ -95,7 +95,8 @@ describe("the hooks a flat layout writes", () => {
             dir: ".stub/plugin/",
             skipIfSourceHas: "own-plugin.js",
             tool: "stub",
-            relays: ["Stop"],
+            unrelayed: (raw: string) =>
+              Object.keys(JSON.parse(raw).hooks ?? {}).filter((event) => event !== "Stop"),
           },
         }),
       },
@@ -119,7 +120,8 @@ describe("the hooks a flat layout writes", () => {
             dir: ".stub/plugin/",
             skipIfSourceHas: "own-plugin.js",
             tool: "stub",
-            relays: ["Stop"],
+            unrelayed: (raw: string) =>
+              Object.keys(JSON.parse(raw).hooks ?? {}).filter((event) => event !== "Stop"),
           },
         }),
       },
@@ -143,7 +145,8 @@ describe("the hooks a flat layout writes", () => {
             dir: ".stub/plugin/",
             skipIfSourceHas: "own-plugin.js",
             tool: "stub",
-            relays: ["Stop"],
+            unrelayed: (raw: string) =>
+              Object.keys(JSON.parse(raw).hooks ?? {}).filter((event) => event !== "Stop"),
           },
         }),
       },

@@ -17,6 +17,9 @@ import {
 } from "./descriptor.js";
 import { hookScript, mergeTarget, withHookScript } from "./routes.js";
 
+/** What a loader's bridge is read through: the module it generates and the events it leaves out. */
+type BridgeReader = Pick<FlatHooksBridge, "generate" | "unrelayed">;
+
 /** A flat build's hooks: each plugin's scripts in a folder of its own, its entries merged into
  * the route's shared file or written to a file of the plugin's own, under the tool its warnings
  * are reported for. */
@@ -33,12 +36,12 @@ export function flatHooksArtifact(
     readonly file?: never;
     readonly flat: FlatHooksRoute & { readonly loaderEntry: FlatHooksLoaderEntry };
   },
-  reader: { readonly tool: string; readonly bridge: FlatHooksBridge["generate"] }
+  reader: { readonly tool: string; readonly bridge: BridgeReader }
 ): ArtifactContract;
 export function flatHooksArtifact(
   descriptor: HooksRouting & { readonly flat: FlatHooksRoute },
   /** The tool the warnings are reported under, and the bridge a loader imports. */
-  reader: { readonly tool: string; readonly bridge?: FlatHooksBridge["generate"] },
+  reader: { readonly tool: string; readonly bridge?: BridgeReader },
   /** The tool's own merge, for a hooks file no `HooksFileFormat` describes. */
   ownMerge?: HooksFileMerge
 ): ArtifactContract {
@@ -57,7 +60,7 @@ export function flatHooksArtifact(
     script: hookScript(descriptor),
     ...(hooksFile === undefined ? {} : { hooksFile }),
     ...(loaderEntry !== undefined && bridge !== undefined
-      ? { skipHooksJson: true, hooksBridge: hooksBridge(loaderEntry, bridge, { descriptor, tool }) }
+      ? { skipHooksJson: true, hooksBridge: hooksBridge(loaderEntry, bridge, tool) }
       : {}),
   };
 }
@@ -92,15 +95,15 @@ export function hooksBridgePath(loaderEntry: FlatHooksLoaderEntry, plugin: strin
 
 function hooksBridge(
   loaderEntry: FlatHooksLoaderEntry,
-  generate: FlatHooksBridge["generate"],
-  { descriptor, tool }: { descriptor: HooksRouting; tool: string }
+  { generate, unrelayed }: BridgeReader,
+  tool: string
 ): FlatHooksBridge {
   return {
     generate,
+    unrelayed,
     dir: loaderEntry.dir,
     skipIfSourceHas: loaderEntry.baseName,
     tool,
-    relays: Object.keys(descriptor.eventMap ?? {}),
   };
 }
 

@@ -24,7 +24,8 @@ function translated(files: Record<string, string>) {
             dir: ".stub/plugin/",
             skipIfSourceHas: "own.js",
             tool: "stub",
-            relays: ["Stop"],
+            unrelayed: (raw: string) =>
+              Object.keys(JSON.parse(raw).hooks ?? {}).filter((event) => event !== "Stop"),
           },
         }),
       },

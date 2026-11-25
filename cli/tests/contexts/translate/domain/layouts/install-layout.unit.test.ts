@@ -159,7 +159,7 @@ describe("a flat target whose loader is triggered by a generated bridge", () => 
             dir: ".stub/plugin/",
             skipIfSourceHas: "own-plugin.js",
             tool: "stub",
-            relays: [],
+            unrelayed: () => [],
           },
         },
       },

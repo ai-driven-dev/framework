@@ -9,7 +9,7 @@
   "src/contexts/installation/infrastructure/agent-model-store-adapter.ts": 3,
   "src/contexts/tools/domain/behaviours/codex/codex-build.model.ts": 2,
   "src/contexts/tools/domain/behaviours/codex/codex-config.model.ts": 3,
-  "src/contexts/tools/domain/bridges/event-bridge.ts": 1,
+  "src/contexts/tools/domain/bridges/bridge-hook-table.ts": 1,
   "src/contexts/tools/domain/formats/base64.ts": 1,
   "src/contexts/tools/domain/formats/hooks/declaration.ts": 1,
   "src/contexts/tools/domain/formats/mcp/mcp-format.ts": 5,

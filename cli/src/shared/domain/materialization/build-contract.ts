@@ -24,9 +24,9 @@ export interface FlatHooksBridge {
   readonly skipIfSourceHas: string;
   /** The tool the bridge is generated for: it names the events the bridge leaves out. */
   readonly tool: string;
-  /** The events, as a plugin's hooks.json names them, that the bridge relays: any other one a
-   * plugin names reaches no hook. */
-  readonly relays: readonly string[];
+  /** Raw hooks.json content -> the events it names that the bridge does not relay: they reach no
+   * hook. */
+  readonly unrelayed: (rawHooksJson: string) => readonly string[];
 }
 
 /** How a plugin's artifact files are sourced: a sub-directory walked with an extension filter

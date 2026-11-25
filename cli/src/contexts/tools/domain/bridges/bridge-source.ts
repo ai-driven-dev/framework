@@ -61,6 +61,21 @@ export const TOOL_INPUT_SOURCE =
 export const STOP_REASON_SOURCE =
   'output?.decision === "block" ? String(output.reason ?? "").trim() : ""';
 
+/** The `stopReasonOf` of a bridge: the reason a Stop script gave to keep working, read through
+ * `runCapture`. */
+export const STOP_REASON_OF_SOURCE = `/** A Stop script's {"decision":"block","reason"} on stdout: the reason to keep working on. */
+function stopReasonOf(script, args, payload, directory) {
+  return runCapture(script, args, payload, directory).then(({ code, stdout }) => {
+    if (code !== 0) return "";
+    try {
+      const output = JSON.parse(stdout);
+      return ${STOP_REASON_SOURCE};
+    } catch {
+      return "";
+    }
+  });
+}`;
+
 /** A PostToolUse answer joins the tool's own output. */
 // Written as a split literal to avoid biome's noTemplateCurlyInString warning.
 export const APPEND_ANSWER_SOURCE = `if (answer) output.output = \`$${"{"}output.output ?? ""}\\n\\n$${"{"}answer}\`;`;
@@ -71,7 +86,8 @@ export const MATCHES_TOOL_SOURCE = `function matchesTool(matcher, tool) {
   return !matcher || matcher.split("|").some((name) => name.toLowerCase() === tool.toLowerCase());
 }`;
 
-/** Runs one hook script with its payload on stdin and collects what it wrote and how it exited. */
+/** The `runCapture` every awaited script of a bridge goes through: its exit code, stdout and
+ * stderr, never rejecting. */
 export const RUN_CAPTURE_SOURCE = `/** Runs one hook script with its payload on stdin and collects what it wrote. */
 function runCapture(script, args, payload, directory) {
   return new Promise((resolve) => {

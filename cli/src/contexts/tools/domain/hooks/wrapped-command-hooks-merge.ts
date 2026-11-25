@@ -1,5 +1,6 @@
 import type { ShippedHooks } from "../../../../shared/domain/materialization/build-contract.js";
 import { genericFlatHooksScriptPath } from "../../../../shared/domain/materialization/flat-paths.js";
+import { unmappedEventWarning } from "../../../../shared/domain/materialization/hooks-warnings.js";
 import { rewritePluginRootInJson } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import type { ProjectHookEntry } from "../../contract/tool-vocabulary.js";
 import { toBase64 } from "../formats/base64.js";
@@ -65,7 +66,7 @@ function convert(
   const warnings: string[] = [];
   for (const [event, groups] of Object.entries(rewritten.hooks ?? {})) {
     if (!Object.hasOwn(target.descriptor.eventMap, event)) {
-      warnings.push(`unmapped event '${event}' skipped`);
+      warnings.push(unmappedEventWarning(event));
       continue;
     }
     const converted = groups.flatMap((group) => (group.hooks ?? []).map(toHandler));

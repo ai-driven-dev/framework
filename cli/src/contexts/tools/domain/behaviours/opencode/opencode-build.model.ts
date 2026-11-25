@@ -13,6 +13,7 @@ import type {
   FlatArtifactLayout,
   FlatHooksLoaderEntry,
 } from "../../../../../shared/domain/materialization/flat-paths.js";
+import { unrelayedBridgeEvents } from "../../bridges/bridge-hook-table.js";
 import type {
   FlatHooksRoute,
   HooksDescriptor,
@@ -96,7 +97,10 @@ export function buildOpencodeFlatContract(
         agentMarkdown,
       },
       mcp: { supported: false, reason: "carried by the config artifact (opencode.json mcp)" },
-      hooks: flatHooksArtifact(hooks, { tool: "opencode", bridge: generateOpencodeHooksBridge }),
+      hooks: flatHooksArtifact(hooks, {
+        tool: "opencode",
+        bridge: { generate: generateOpencodeHooksBridge, unrelayed: unrelayedBridgeEvents },
+      }),
     },
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,

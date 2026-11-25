@@ -83,18 +83,7 @@ function answerOf(script, args, payload, directory) {
   );
 }
 
-/** A Stop script's {"decision":"block","reason"} on stdout: the reason to keep working on. */
-function stopReasonOf(script, args, payload, directory) {
-  return runCapture(script, args, payload, directory).then(({ code, stdout }) => {
-    if (code !== 0) return "";
-    try {
-      const output = JSON.parse(stdout);
-      return ${parts.stopReason};
-    } catch {
-      return "";
-    }
-  });
-}
+${parts.stopReasonOf}
 
 ${parts.matchesTool}
 
