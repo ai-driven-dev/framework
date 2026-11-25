@@ -23,6 +23,9 @@ export interface CapturedSample<T = Record<string, unknown>> {
   readonly run: string;
   readonly payload: T;
   readonly hookAnswer: Record<string, unknown> | null;
+  /** Present when the logging hook ended with a non-zero code, and what it wrote to stderr. */
+  readonly hookExit?: number;
+  readonly hookStderr?: string;
 }
 
 /** The samples a capture file holds. Given `project`, the scrubbed project folder names it. */

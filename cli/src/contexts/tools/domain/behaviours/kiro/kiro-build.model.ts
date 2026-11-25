@@ -9,9 +9,14 @@ import type { FlatArtifactLayout } from "../../../../../shared/domain/materializ
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
 import { type KiroHooks, mergeKiroHooks } from "./kiro-hooks.model.js";
 
+export interface KiroFlatPaths {
+  readonly layout: FlatArtifactLayout;
+  readonly mcpPath: string;
+}
+
 export function buildKiroFlatContract(
   hooks: KiroHooks,
-  layout: FlatArtifactLayout,
+  { layout, mcpPath }: KiroFlatPaths,
   agentMarkdown: AgentMarkdown
 ): ToolBuildContract {
   return {
@@ -31,7 +36,12 @@ export function buildKiroFlatContract(
         placement: agentsIn(layout),
         agentMarkdown,
       },
-      mcp: { supported: false, reason: "no plugin ships MCP servers to merge" },
+      mcp: {
+        supported: true,
+        source: { kind: "configFile", srcPath: ".mcp.json" },
+        placement: { kind: "file", at: mcpPath },
+        mcpServersKey: "mcpServers",
+      },
       hooks: flatHooksArtifact(hooks, { tool: "kiro" }, (existing, shipped) =>
         mergeKiroHooks(hooks, existing, shipped)
       ),

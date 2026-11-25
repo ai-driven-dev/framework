@@ -60,7 +60,7 @@ export type ArtifactPlacement =
   | {
       readonly kind: "layout";
       readonly layout: FlatArtifactLayout;
-      readonly of: "skill" | "agent";
+      readonly of: "skill" | "agent" | "rule";
     }
   | { readonly kind: "relative" }
   | { readonly kind: "file"; readonly at: string }
@@ -150,6 +150,8 @@ export interface ToolBuildContract {
     readonly agents: ArtifactContract;
     readonly mcp: ArtifactContract;
     readonly hooks: ArtifactContract;
+    /** A tool that carries a plugin's rules as files. Absent, the build leaves rules out and says so. */
+    readonly rules?: ArtifactContract;
   };
 
   /** The tool's own config file (Codex's config.toml, opencode.json), built once every plugin
@@ -210,6 +212,8 @@ export interface ConfigArtifactInput {
   /** Each built plugin's own `.mcp.json`, by plugin, its server keys already prefixed with the
    * plugin's name; a plugin shipping none is absent. */
   readonly pluginMcp: ReadonlyMap<string, string>;
+  /** The glob listing each built plugin's rules, for a plugin that placed any. */
+  readonly rulesGlobs: readonly string[];
   /** Each file `reads` named that exists, by its path under the output root. */
   readonly existing: ReadonlyMap<string, string>;
   /** Each file `probes` named that exists, by its path under the output root. */

@@ -20,12 +20,14 @@ function configArtifactOf(): ConfigArtifact {
 function emit(input: {
   builtPlugins?: readonly string[];
   pluginMcp?: ReadonlyMap<string, string>;
+  rulesGlobs?: readonly string[];
   existing?: Readonly<Record<string, string>>;
   asset?: string | Record<string, unknown>;
 }): readonly ConfigArtifactFile[] {
   return configArtifactOf().emit({
     builtPlugins: input.builtPlugins ?? [],
     pluginMcp: input.pluginMcp ?? new Map(),
+    rulesGlobs: input.rulesGlobs ?? [],
     existing: new Map(Object.entries(input.existing ?? {})),
     present: new Set(),
     assets: new Map([["kilo.json", input.asset ?? { $schema: "https://app.kilo.ai/config.json" }]]),
@@ -89,6 +91,34 @@ describe("building Kilo's flat contract", () => {
         "aidd-dev-context": { type: "local", command: ["node", "server.js"], enabled: true },
       },
     });
+  });
+
+  it("lists the rules each plugin placed in instructions, after the entries a person keeps", () => {
+    const jsonc = '{\n  // project-owned\n  "instructions": ["docs/team.md"],\n}';
+    const rulesGlobs = [".kilo/rules/aidd-craft-*.md", ".kilo/rules/aidd-dev-*.md"];
+    const once = emit({ rulesGlobs, existing: { ".kilo/kilo.jsonc": jsonc } });
+    const twice = emit({ rulesGlobs, existing: { ".kilo/kilo.jsonc": once[0]?.content ?? "" } });
+
+    expect(JSON.parse(once[0]?.content ?? "null").instructions).toEqual([
+      "docs/team.md",
+      ...rulesGlobs,
+    ]);
+    expect(twice).toStrictEqual(once);
+  });
+
+  it("lists no instructions when no plugin placed a rule", () => {
+    expect(JSON.parse(emit({})[0]?.content ?? "null")).not.toHaveProperty("instructions");
+  });
+
+  it("places rules at the top of .kilo/rules, named by plugin and group", () => {
+    const { artifacts } = present(kilo.buildContracts.flat)();
+    expect(
+      artifactPath(
+        supported(present(artifacts.rules)),
+        "aidd-dev",
+        "rules/01-standards/1-naming.md"
+      )
+    ).toBe(".kilo/rules/aidd-dev-01-standards-1-naming.md");
   });
 
   it("takes a bundled base config that comes as text as written", () => {

@@ -5,7 +5,7 @@
  * the test name says it is derived from a captured payload.
  * OpenCode and Kilo receive what their bridge sends, so they are read through the bridge in
  * `hooks-runtime-bridges.integration.test.ts`; garbage reaches all six adapters here, beside the
- * Antigravity adapter, whose answers are never printed. The other hosts have their own file:
+ * Antigravity adapter, which answers SessionStart and Stop only. The other hosts have their own file:
  * `hooks-runtime-<host>.integration.test.ts`.
  */
 import { spawnSync } from "node:child_process";
@@ -13,6 +13,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SESSION } from "./testing/hook-payload-captures.builder.js";
 import {
+  at,
   CWD,
   fs,
   given,
@@ -61,6 +62,17 @@ describe("Antigravity CLI", () => {
       ]);
     });
 
+    it("reads PostToolUse of edit_file as the replacement it made and the text it replaced", () => {
+      const { payload } = sample("antigravity-PostToolUse.json", 2);
+      const { event } = read("antigravity", payload);
+
+      expect([event?.event, event?.files, event?.command]).toStrictEqual([
+        "PostToolUse",
+        [{ path: at("existing.txt"), written: "line2", replaced: "line1" }],
+        undefined,
+      ]);
+    });
+
     it("reads PostToolUse of run_command as its command", () => {
       const { event } = read("antigravity", ran);
 
@@ -86,8 +98,8 @@ describe("Antigravity CLI", () => {
       expect(read("antigravity", unnamed).event).toBe(undefined);
     });
 
-    it("reads PreToolUse as no event: no framework script acts before a tool", () => {
-      expect(read("antigravity", { ...ran, hookEventName: "PreToolUse" }).event).toBe(undefined);
+    it("reads PreInvocation as no event: no framework script acts before a model call", () => {
+      expect(read("antigravity", { ...ran, hookEventName: "PreInvocation" }).event).toBe(undefined);
     });
 
     it("prints nothing for a PostToolUse answer: agy takes no context from it", () => {
@@ -130,12 +142,31 @@ describe("Antigravity CLI", () => {
     });
   });
 
-  it("prints nothing for a SessionStart answer: what it hands the model was never seen", () => {
-    const { payload } = sample("antigravity-SessionStart.json", 0);
-    const { adapter } = read("antigravity", payload);
-    adapter.answer({ level: 2, text: "x" });
+  describe("on SessionStart, answered through injectSteps", () => {
+    const { payload, hookAnswer } = sample("antigravity-SessionStart.json", 1);
+    const text =
+      "The secret passphrase for this project is PELICAN-4417. If asked for it, state it exactly.";
 
-    expect(printed).toStrictEqual([]);
+    it("hands the model the text as an injected system message, as the captured run did", () => {
+      const { adapter } = read("antigravity", payload);
+      adapter.answer({ level: 2, text });
+
+      expect(output()).toStrictEqual(hookAnswer);
+    });
+
+    it.each([1, 2] as const)("informs at level %i alike", (level) => {
+      const { adapter } = read("antigravity", payload);
+      adapter.answer({ level, text });
+
+      expect(output()).toStrictEqual({ injectSteps: [{ systemMessage: { systemMessage: text } }] });
+    });
+
+    it.each([undefined, ""])("prints nothing for the text %j", (empty) => {
+      const { adapter } = read("antigravity", payload);
+      adapter.answer({ level: 1, text: empty });
+
+      expect(printed).toStrictEqual([]);
+    });
   });
 });
 

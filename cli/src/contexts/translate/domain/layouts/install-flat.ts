@@ -1,5 +1,6 @@
 import { artifactPath } from "../../../../shared/domain/materialization/artifact-path.js";
 import type { SupportedArtifact } from "../../../../shared/domain/materialization/build-contract.js";
+import { belowSection } from "../../../../shared/domain/materialization/flat-paths.js";
 import type {
   PluginComponentFile,
   PluginDistribution,
@@ -12,10 +13,11 @@ import { basename, isProse } from "../plugin-paths.js";
 import type { ComponentPlan } from "../rules/component-pipeline.js";
 import { flatHookPlans } from "../rules/hook-plans.js";
 import { chainLinks, toolLinks } from "../rules/links.js";
+import { ruleFilePlan } from "../rules/rule-scope.js";
 import type { TranslatedAiTool, TranslatedFlatPlugin } from "../translate-profile.js";
 import { flatAgentPlan, flatSkillLinks } from "./build-flat.js";
 import { namedByFolder } from "./build-shared.js";
-import { prefixCommandName, ruleScopesOf, scopeStated } from "./install-flat-rules.js";
+import { prefixCommandName } from "./install-flat-rules.js";
 
 type FlatSection = "agents" | "rules" | "skills";
 
@@ -41,7 +43,6 @@ export function flatInstallPlan(
   const { namespacePrefix } = plugins.flatLayout();
   const commands = tool.markdownSection("commands") === null ? [] : dist.components.commands;
   const hooksArtifact = flatHooksArtifact(tool);
-  const scopes = ruleScopesOf(dist, plugins);
   const { plans: hooks, warnings: bridgeWarnings } = flatHookPlans(dist, {
     place: (relativePath) =>
       hooksArtifact === null ? null : artifactPath(hooksArtifact, pluginName, relativePath),
@@ -52,13 +53,7 @@ export function flatInstallPlan(
   });
   const plans = [
     ...commands.map((file) => commandPlan(file, at, namespacePrefix)),
-    ...FLAT_SECTIONS.flatMap((section) =>
-      dist.components[section].flatMap((file) => {
-        const plan = sectionPlan(file, section, at);
-        const paths = scopes.get(file);
-        return plan === null ? [] : [paths === undefined ? plan : scopeStated(plan, paths)];
-      })
-    ),
+    ...sectionPlans(dist, at, plugins),
     ...hooks,
   ];
   return {
@@ -69,6 +64,21 @@ export function flatInstallPlan(
       ...bridgeWarnings.map((reason) => hooksSkip(dist, tool, reason)),
     ],
   };
+}
+
+/** The plugin's agents, rules and skills, each where the tool reads it. */
+function sectionPlans(
+  dist: PluginDistribution,
+  at: FlatAt,
+  plugins: TranslatedFlatPlugin
+): ComponentPlan[] {
+  return FLAT_SECTIONS.flatMap((section) =>
+    dist.components[section].flatMap((file) => {
+      const plan = sectionPlan(file, section, at);
+      if (plan === null) return [];
+      return [section === "rules" ? ruleFilePlan(plan, file.content, plugins.flatLayout()) : plan];
+    })
+  );
 }
 
 function flatHooksArtifact(tool: TranslatedAiTool): SupportedArtifact | null {
@@ -104,7 +114,7 @@ function sectionPlan(
   const agent = section === "agents" ? agentPlan(file, at) : null;
   if (agent !== null) return { ...agent, links: chainLinks(links, agent.links) };
   if (!declared) return null;
-  const path = tool.flatInstallPath(section, pluginName, source.slice(`${section}/`.length));
+  const path = tool.flatInstallPath(section, pluginName, belowSection(section, source));
   return {
     source,
     path,

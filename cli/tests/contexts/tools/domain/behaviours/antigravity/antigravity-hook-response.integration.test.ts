@@ -18,11 +18,11 @@ describe("Antigravity hook response", () => {
 
   afterEach(() => rmSync(root, { recursive: true, force: true }));
 
-  function run(script: string, args = "", input = "") {
+  function run(script: string, args = "", input = "", event = "SessionStart") {
     writeFileSync(join(root, ".agents", "hooks", "fixture", "hook.cjs"), script);
     const hooks = JSON.stringify({
       hooks: {
-        SessionStart: [
+        [event]: [
           {
             hooks: [
               {
@@ -53,6 +53,13 @@ describe("Antigravity hook response", () => {
     expect(result.status).toBe(0);
     expect(result.stderr).toBe("");
     expect(result.stdout).toBe("{}");
+  });
+
+  it("lets the tool run when a script about to refuse a tool call succeeds silently", () => {
+    const result = run("", "", "", "PreToolUse");
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toBe('{"decision":"allow"}');
   });
 
   it("preserves existing JSON stdout byte for byte", () => {

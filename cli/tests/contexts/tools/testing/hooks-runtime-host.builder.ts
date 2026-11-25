@@ -4,6 +4,7 @@ import { expect, vi } from "vitest";
 import {
   type CapturedSample,
   capturedSample,
+  capturedSamples,
   SCRUBBED_PROJECT,
 } from "./hook-payload-captures.builder.js";
 
@@ -37,6 +38,11 @@ interface Adapter {
   readEvent(): NeutralEvent | undefined;
   answer(answer: { level: 1 | 2; text?: string; person?: string }): void;
   continueTurn(text: string): void;
+  refuse(reason: string): void;
+}
+
+export function samples(file: string): readonly CapturedSample[] {
+  return capturedSamples(file);
 }
 
 export function sample(file: string, index: number): CapturedSample {
@@ -52,11 +58,16 @@ export function load(host: string): Adapter {
 
 /** What the adapter printed since the last `restoreHostIo`. */
 export const printed: string[] = [];
+/** What it wrote to standard error over the same span. */
+export const printedErr: string[] = [];
+const exitCodeBefore = process.exitCode;
 
-/** Puts back the spied reads and writes, and forgets what was printed. */
+/** Puts back the spied reads and writes, the exit code, and forgets what was printed. */
 export function restoreHostIo(): void {
   vi.restoreAllMocks();
   printed.length = 0;
+  printedErr.length = 0;
+  process.exitCode = exitCodeBefore;
 }
 
 /** Hands the adapter `stdin` as the host would, and collects what it prints. */
@@ -68,6 +79,10 @@ export function given(stdin: string): void {
       : (original as (...args: unknown[]) => unknown)(file, ...rest)) as typeof fs.readFileSync);
   vi.spyOn(process.stdout, "write").mockImplementation((chunk: unknown) => {
     printed.push(String(chunk));
+    return true;
+  });
+  vi.spyOn(process.stderr, "write").mockImplementation((chunk: unknown) => {
+    printedErr.push(String(chunk));
     return true;
   });
 }

@@ -61,9 +61,9 @@ export class BuildNativeTree {
     const builtPlugins: BuildPluginResult[] = [];
     const written: BuiltPlugin[] = [];
     for (const entry of sourceMarketplace.plugins) {
-      const { result, declaredMcp } = await this.buildPlugin(target, entry);
+      const { result, declaredMcp, rulesGlob } = await this.buildPlugin(target, entry);
       builtPlugins.push(result);
-      written.push({ name: result.name, declaredMcp });
+      written.push({ name: result.name, declaredMcp, rulesGlob });
     }
     const extraFiles = await this.deps.sink.finish(target, sourceMarketplace, written);
     const totalFiles = builtPlugins.reduce((sum, p) => sum + p.filesWritten, 0) + extraFiles;
@@ -108,14 +108,22 @@ export class BuildNativeTree {
   private async buildPlugin(
     target: DiskTarget,
     entry: SourcePluginEntryRef
-  ): Promise<{ result: BuildPluginResult; declaredMcp: string | null }> {
+  ): Promise<{ result: BuildPluginResult; declaredMcp: string | null; rulesGlob: string | null }> {
     const pluginSrc = join(target.sourceDir, "plugins", entry.name);
     if (!(await this.deps.fs.fileExists(pluginSrc))) {
       throw new InvalidSourceMarketplaceError(`plugin '${entry.name}' not found at ${pluginSrc}`);
     }
-    const { files, declaredMcp } = await this.deps.sink.writePlugin(target, entry.name, pluginSrc);
+    const { files, declaredMcp, rulesGlob } = await this.deps.sink.writePlugin(
+      target,
+      entry.name,
+      pluginSrc
+    );
     const skippedSections = await this.warnOutOfScopeSections(entry.name, pluginSrc);
-    return { result: { name: entry.name, filesWritten: files, skippedSections }, declaredMcp };
+    return {
+      result: { name: entry.name, filesWritten: files, skippedSections },
+      declaredMcp,
+      rulesGlob,
+    };
   }
 
   private async warnOutOfScopeSections(
@@ -124,6 +132,7 @@ export class BuildNativeTree {
   ): Promise<readonly string[]> {
     const skipped: string[] = [];
     for (const section of OUT_OF_SCOPE_PLUGIN_SECTIONS) {
+      if (this.carries(section)) continue;
       if (await this.deps.fs.fileExists(join(pluginSrc, section))) {
         this.deps.logger.warn(
           `Skipping ${section}/ in plugin '${pluginName}' (out of scope for MVP1).`
@@ -132,5 +141,11 @@ export class BuildNativeTree {
       }
     }
     return skipped;
+  }
+
+  /** Whether the tool's build writes the section's files, so leaving it out is no skip. */
+  private carries(section: string): boolean {
+    const { contract, mode } = this.deps.layout;
+    return section === "rules" && mode === "flat" && contract.artifacts.rules?.supported === true;
   }
 }

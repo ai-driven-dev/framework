@@ -129,7 +129,7 @@ The contract for the framework's own hooks, not for a hook a user generates with
 | 0. Silent | the hook runs, nothing is sent | exit 0, no output | it only keeps a state true, such as the memory sync |
 | 1. Inform | the model reads the finding and decides | `additionalContext` | the rule is certain but a deviation can be legitimate, or it has a false positive on real data |
 | 2. Require | the model fixes before going on | `decision: "block"` with `reason` | the rule is certain, has no false positive on real data, and the fix is local |
-| 3. Refuse | the write does not happen | the host's deny, through `refuse(reason)` | the file on disk declares itself frozen, such as a spec whose status is `locked`; never judged on the written content, whose `Edit` fragment would block drafts. Inert on every host: no adapter reports the moment before a tool yet |
+| 3. Refuse | the write does not happen | the host's deny, through `refuse(reason)` | the file on disk declares itself frozen, such as a spec whose status is `locked`; never judged on the written content, whose `Edit` fragment would block drafts. Delivered on Claude Code, Codex, Copilot, Antigravity and Kiro; inert on the others |
 
 A check that needs judgment gets no hook: the skill's check and CI hold it.
 
@@ -159,7 +159,7 @@ A check that needs judgment gets no hook: the skill's check and CI hold it.
 
 | Call of `hooks/lib/host.cjs` | Does |
 | --- | --- |
-| `readEvent()` | gives the event and its `files`, each with `path`, `written` and `replaced`, the last two absent where the host gives none; a file may be deleted: tolerate `ENOENT` |
+| `readEvent()` | gives the event and its `files`, each with `path`, `written` and `replaced`, the last two absent where the host gives none, and before a tool every file carries its `path` only; a file may be deleted: tolerate `ENOENT` |
 | `answer({ level, text, person })` | informs or requires; with no `text`, shows only `person`, at any event |
 | `continueTurn(text, person)` | asks once at the turn end |
 | `refuse(reason)` | denies the tool call about to run; does nothing on any other event or adapter |
