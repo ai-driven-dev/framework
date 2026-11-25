@@ -5,6 +5,8 @@ import {
   flatArtifactLayout,
   flatHooksPathWithLoaderEntry,
   flatMcpKeyPrefix,
+  flatRulesPlacement,
+  flatSectionPath,
   flatSkillPath,
   genericFlatHooksFile,
   genericFlatHooksScriptPath,
@@ -102,6 +104,29 @@ describe("a rule at the top of a flat layout's rules folder", () => {
       rulesGlobOf(placement, [".kilo/rules/aidd-pm-01-a.md"]),
       rulesGlobOf(null, [".kilo/rules/aidd-dev-01-a.md"]),
     ]).toStrictEqual([placement.glob, null, null]);
+  });
+});
+
+describe("a rule at the top of a rules folder a layout names", () => {
+  const steering = flatArtifactLayout(".kiro/", {
+    skills: "single-level",
+    rules: "top-level",
+    rulesDir: ".kiro/steering/",
+    agent: { ext: ".md" },
+  });
+
+  it("lands there, named by its plugin and its group, and is owned by that plugin alone", () => {
+    expect([
+      flatSectionPath(steering, "rules", { plugin: "aidd-dev", name: "01-a/b.md" }),
+      ownsFlatArtifact(steering, ".kiro/steering/aidd-dev-01-a-b.md", "aidd-dev"),
+      ownsFlatArtifact(steering, ".kiro/steering/aidd-dev-01-a-b.md", "aidd-pm"),
+      flatRulesPlacement(steering, "aidd-dev")?.glob,
+    ]).toStrictEqual([
+      ".kiro/steering/aidd-dev-01-a-b.md",
+      true,
+      false,
+      ".kiro/steering/aidd-dev-*.md",
+    ]);
   });
 });
 

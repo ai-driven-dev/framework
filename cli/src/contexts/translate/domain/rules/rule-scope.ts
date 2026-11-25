@@ -1,4 +1,5 @@
 import { parseFrontmatter, reshapeFrontmatter } from "../../../../shared/domain/markdown.js";
+import type { RuleMarkdown } from "../../../../shared/domain/materialization/build-contract.js";
 import {
   type FlatArtifactLayout,
   statesRuleScope,
@@ -14,7 +15,8 @@ export function ruleScope(content: string): readonly unknown[] {
 }
 
 /** A rule's plan on every route that places it: for a tool that reads no frontmatter, the scope is
- * stated as the first line of the body; any other tool carries the rule as shipped.
+ * stated as the first line of the body; for one whose build contract writes rule frontmatter,
+ * that states it; any other tool carries the rule as shipped.
  *
  * Limit: the install route also rewrites a path a rule mentions to the tool's link syntax and the
  * build does not, so a rule carrying such a path is written with other bytes. No shipped rule
@@ -22,8 +24,11 @@ export function ruleScope(content: string): readonly unknown[] {
 export function ruleFilePlan(
   plan: ComponentPlan,
   content: string,
-  layout: Pick<FlatArtifactLayout, "rules">
+  { layout, markdown }: { layout: Pick<FlatArtifactLayout, "rules">; markdown?: RuleMarkdown }
 ): ComponentPlan {
+  if (markdown !== undefined && !statesRuleScope(layout)) {
+    return { ...plan, shape: (text) => reshapeFrontmatter(text, markdown) };
+  }
   return statesRuleScope(layout) ? scopeStated(plan, ruleScope(content)) : plan;
 }
 
