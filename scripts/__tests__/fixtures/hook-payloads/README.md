@@ -95,5 +95,6 @@ Limits:
 - OpenCode and Kilo tool arguments are filled by the model, so an optional key (a `bash` call's
   `description`) may drift with the model and not with the host.
 - A host's hook declaration is written here, in the form the host documents, and not installed with
-  the built CLI, which declares each hook as a plugin's own script; the tool matchers come from
-  these fixtures. The tool checks what a host sends, not what aidd declares.
+  the built CLI: a hook installed through it records the plugin script's arguments, not the host's
+  raw stdin the fixtures hold. The tool matchers come from these fixtures. The tool checks what a
+  host sends, not what aidd declares.
