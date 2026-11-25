@@ -1,8 +1,4 @@
-import { type Command, Option } from "commander";
-import {
-  DECLARED_BY,
-  type DeclaredBy,
-} from "../../../contexts/telemetry/contract/task-declaration.js";
+import type { Command } from "commander";
 import { printIngestResult } from "../../presenters/telemetry/telemetry-read.presenter.js";
 import {
   printDeclareResult,
@@ -30,19 +26,12 @@ function declareTaskOptions(task: Command): Command {
   return task
     .description("Declare the task the current work belongs to")
     .option("--ticket <ref>", "The ticket the task belongs to, kept as typed")
-    .option("--none", "Declare that this work has no task", false)
-    .addOption(
-      new Option("--by <by>", "Who declares (hooks only)")
-        .choices(DECLARED_BY)
-        .default("command")
-        .hideHelp()
-    );
+    .option("--none", "Declare that this work has no task", false);
 }
 
 interface TaskOptions {
   readonly ticket?: string;
   readonly none: boolean;
-  readonly by: DeclaredBy;
 }
 
 export function configureTask(
@@ -62,7 +51,6 @@ export function configureTask(
         const result = await container.telemetry.declareTask.execute({
           cwd: projectRoot,
           request,
-          by: cmdOptions.by,
         });
         printDeclareResult(output, result);
         if (result.status === "refused") output.exit(1);

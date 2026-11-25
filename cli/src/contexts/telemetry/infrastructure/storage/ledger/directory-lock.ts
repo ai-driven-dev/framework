@@ -12,9 +12,9 @@ interface DirectoryLockDeps {
 export class DirectoryLock {
   constructor(private readonly deps: DirectoryLockDeps) {}
 
-  async exclusively<T>(work: () => Promise<T>, waitMs?: number): Promise<T> {
+  async exclusively<T>(work: () => Promise<T>): Promise<T> {
     await this.deps.storage.ensureDirectory(this.deps.dir);
-    const release = await this.deps.lock.acquire(waitMs);
+    const release = await this.deps.lock.acquire();
     try {
       return await work();
     } finally {

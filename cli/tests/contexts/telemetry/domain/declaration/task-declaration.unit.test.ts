@@ -32,14 +32,12 @@ describe("a task request", () => {
 
 describe("a declaration", () => {
   it("is stamped with the moment and the declarer it was made by", () => {
-    expect(
-      declarationOf({ kind: "task", task: "t", ticket: "P-1" }, NOW, "hook-intercept")
-    ).toEqual({
+    expect(declarationOf({ kind: "task", task: "t", ticket: "P-1" }, NOW, "command")).toEqual({
       task: "t",
       ticket: "P-1",
       none: false,
       declared_at: "2026-10-09T10:00:00.000Z",
-      by: "hook-intercept",
+      by: "command",
     });
   });
 

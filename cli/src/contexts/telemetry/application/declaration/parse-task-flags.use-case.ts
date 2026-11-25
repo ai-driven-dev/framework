@@ -2,7 +2,7 @@ import {
   TaskDeclaredNoneWithNameError,
   TaskNameMissingError,
 } from "../../contract/errors/telemetry.error.js";
-import type { DeclarationRequest } from "../../contract/task-declaration.js";
+import type { DeclarationRequest } from "../../domain/declaration/task-declaration.js";
 import { requestOf } from "../../domain/declaration/task-declaration.js";
 
 export interface ParseTaskFlagsRequest {

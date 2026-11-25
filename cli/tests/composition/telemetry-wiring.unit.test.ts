@@ -20,7 +20,6 @@ describe("the session a declaration binds", () => {
     ["Claude Code's", { CLAUDE_CODE_SESSION_ID: "b" }, "b"],
     ["none, outside a session", {}, null],
     ["none, when Claude Code's is empty", { CLAUDE_CODE_SESSION_ID: "" }, null],
-    ["none, whatever AIDD_TELEMETRY_SESSION_ID holds", { AIDD_TELEMETRY_SESSION_ID: "a" }, null],
   ] as const)("is %s", (_name, env, expected) => {
     expect(declaringSessionOf(env)).toBe(expected);
   });

@@ -62,18 +62,13 @@ describe("aidd telemetry task", () => {
     expect(declare).toHaveBeenCalledWith({
       cwd: process.cwd(),
       request: { kind: "task", task: "checkout", ticket: "P-1" },
-      by: "command",
     });
   });
 
-  it("declares no task with --none, and marks a hook's declaration", async () => {
+  it("declares no task with --none", async () => {
     declare.mockResolvedValue(declared);
-    await run("task", "--none", "--by", "hook-intercept");
-    expect(declare).toHaveBeenCalledWith({
-      cwd: process.cwd(),
-      request: { kind: "none" },
-      by: "hook-intercept",
-    });
+    await run("task", "--none");
+    expect(declare).toHaveBeenCalledWith({ cwd: process.cwd(), request: { kind: "none" } });
   });
 
   const NONE_TAKES_NOTHING =
@@ -91,14 +86,6 @@ describe("aidd telemetry task", () => {
     expect(stderr()).toBe(message);
     expect(show).not.toHaveBeenCalled();
     expect(declare).not.toHaveBeenCalled();
-  });
-
-  it("refuses an unknown declarer, and does not list it in the help", async () => {
-    await expect(run("task", "t", "--by", "robot")).rejects.toMatchObject({ exitCode: 1 });
-    expect(declare).not.toHaveBeenCalled();
-    await expect(run("task", "--help")).rejects.toMatchObject({ exitCode: 0 });
-    expect(stdout()).not.toContain("--by");
-    expect(stdout()).toContain("--ticket");
   });
 
   it("exits 1 when the declaration is refused", async () => {

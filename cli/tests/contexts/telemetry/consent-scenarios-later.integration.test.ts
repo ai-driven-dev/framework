@@ -258,7 +258,6 @@ const LATER_ROWS: readonly Row[] = [
         await w.deps.declareTask.execute({
           cwd: a,
           request: { kind: "task", task: "t1", ticket: null },
-          by: "command",
         })
       ).toEqual({ status: "refused", reason: "no-consent" });
     },

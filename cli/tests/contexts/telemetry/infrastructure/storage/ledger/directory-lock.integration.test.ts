@@ -45,14 +45,4 @@ describe("a lock on a file in a private directory", () => {
       await expect(lockOf().exclusively(async () => 1)).rejects.toThrow(/locked by process/);
     });
   });
-
-  it("waits no longer than the wait it is given for", async () => {
-    const patient = directoryLockOver(dir, machinePrivateStorage(), {
-      waitMs: 60_000,
-      pollMs: 1,
-    });
-    await lockOf().exclusively(async () => {
-      await expect(patient.exclusively(async () => 1, 0)).rejects.toThrow(/locked by process/);
-    });
-  });
 });
