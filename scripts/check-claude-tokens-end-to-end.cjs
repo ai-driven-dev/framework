@@ -323,6 +323,7 @@ async function checkIn({ root, cli, api, log, attended }) {
     AIDD_USER_CONFIG_DIR: path.join(home, ".config", "aidd"),
     AIDD_TELEMETRY_DIR: telemetryDir,
     CLAUDE_CONFIG_DIR: configDir,
+    CLAUDE_CODE_ENABLE_PROMPT_SUGGESTION: "false",
     CODEX_HOME: path.join(home, ".codex"),
     GIT_CONFIG_NOSYSTEM: "1",
     ANTHROPIC_BASE_URL: api.url,
