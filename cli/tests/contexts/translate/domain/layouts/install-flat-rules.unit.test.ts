@@ -3,7 +3,7 @@ import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plug
 import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { translator } from "../../testing/engine-kit.builder.js";
-import { kilo, opencode } from "../../testing/registered-profiles.builder.js";
+import { copilot, kilo } from "../../testing/registered-profiles.builder.js";
 
 const SCOPED_AS_LIST =
   '---\ndescription: "TypeScript"\npaths:\n  - "**/*.ts"\n  - "**/*.tsx"\n---\n# TypeScript\n';
@@ -63,11 +63,11 @@ describe("a rule installed flat for a tool that reads no paths frontmatter", () 
     expect(written?.content).toBe("# Naming\n");
   });
 
-  it("leaves a tool that loads nested rules as it was", () => {
-    const result = translator.translateWithComponentPaths(distWithRules(), opencode);
+  it("leaves a tool that reads its own rule frontmatter as it was", () => {
+    const result = translator.translateWithComponentPaths(distWithRules(), copilot);
 
     expect(result.files.map((f) => f.relativePath)).toContain(
-      ".opencode/rules/aidd-craft/01-standards/2-ts.md"
+      ".github/plugins/aidd-craft/instructions/01-ts.instructions.md"
     );
     expect(result.skipped).toEqual([]);
   });
