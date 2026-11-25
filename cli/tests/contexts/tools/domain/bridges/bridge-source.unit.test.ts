@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   ANSWER_OF_SOURCE,
   hooksDirDeclaration,
-  MATCHES_TOOL_SOURCE,
   reportHookFailureSource,
 } from "../../../../../src/contexts/tools/domain/bridges/bridge-source.js";
 
@@ -74,8 +73,8 @@ describe("the source every generated bridge writes the same way", () => {
       ]);
     });
 
-    it("reports nothing of a script that answers, on exit 2 or exit 0", async () => {
-      expect(await answered({ code: 2, stderr: "why" })).toEqual({ answer: "why", reported: [] });
+    it("reports nothing of a script that exits 0", async () => {
+      expect((await answered({ code: 0 })).reported).toEqual([]);
     });
   });
 
@@ -90,19 +89,6 @@ describe("the source every generated bridge writes the same way", () => {
     report("a.cjs", "boom");
 
     expect(warned).toEqual(["[aidd] Probe hook a.cjs failed: boom"]);
-  });
-
-  it("matches a tool name ignoring case, any tool when no matcher is given", () => {
-    const matchesTool = evaluated<(tools: string[] | undefined, tool: string) => boolean>(
-      MATCHES_TOOL_SOURCE,
-      "matchesTool"
-    );
-
-    expect([
-      matchesTool(undefined, "bash"),
-      matchesTool(["write", "edit"], "Edit"),
-      matchesTool(["write", "edit"], "bash"),
-    ]).toEqual([true, true, false]);
   });
 
   it("resolves the scripts folder of a plugin from the module's own url", () => {

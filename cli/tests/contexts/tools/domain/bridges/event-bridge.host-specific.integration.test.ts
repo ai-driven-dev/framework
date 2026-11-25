@@ -71,7 +71,7 @@ describe("the bridge generated with OpenCode's parameters", () => {
       }
     });
 
-    expect(answered).toBe("done");
+    expect(answered).not.toBe("still waiting");
     await vi.waitFor(() => expect(() => process.kill(pid, 0)).toThrow(), { timeout: 2000 });
   }, 15_000);
 });

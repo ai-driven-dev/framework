@@ -23,7 +23,8 @@
  * here. Sending it from `dispose` fails: the drain closes before it.
  *
  * Limit: a script's message for the person is not shown. Kilo's TUI subscribes to
- * `tui.toast.show` (source), but a plugin's toast rendering was not observed.
+ * `tui.toast.show` (`packages/tui/src/app.tsx`, 7.7.5 and 7.8.32), but a plugin's toast rendering
+ * was not observed, so the bridge hands Kilo no person channel.
  */
 
 import { type BridgeParts, generateBridge } from "../../bridges/event-bridge.js";

@@ -15,7 +15,7 @@ the event spelled as the host spells it. Read by the CLI converter tests and the
   a session token at SessionStart in the key the host's adapter prints, to learn whether the model
   reads it; `continue`, Cursor's `followup_message` once at the first `stop`; `follow-up`,
   OpenCode's and Kilo's `chat.message` for a message a bridge sent itself at Stop, carrying the mark
-  that tells it from the user's own.
+  that tells it from the user's own; `person`, a message a plugin asked the host to show the person.
 - `hookAnswer` is what the logging hook printed for that call, `null` when it printed nothing:
   JSON on most hosts, the bare text on Kiro, which hands a hook's output to the model as printed.
 

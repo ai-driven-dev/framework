@@ -141,7 +141,7 @@ function exitDescription(code, signal) {
 
 /** Runs one hook script under node from the plugin's scripts folder, in the payload's directory,
  * with its payload on stdin, and collects what it wrote. Never process.execPath: a host's own path
- * need not be a Node runtime, and OpenCode's names its standalone binary. */
+ * need not be a Node runtime. */
 function runCapture(script, args, payload, directory) {
   return new Promise((resolve) => {
     const failed = (error) => resolve({ error, code: null, signal: null, stdout: "", stderr: "" });
@@ -231,14 +231,6 @@ function stopReasonOf(script, args, payload, directory) {
     const reason = output?.decision === "block" ? String(output.reason ?? "").trim() : "";
     return { reason, person: personOf(output) };
   });
-}
-
-function stopCallsFor(sessionId, directory) {
-  return STOP.map((hook) => ({
-    script: hook.script,
-    args: hook.args,
-    payload: { hook_event_name: "Stop", session_id: sessionId, cwd: directory },
-  }));
 }
 
 const FOLLOW_UP = { aidd: "stop-follow-up" };
@@ -403,6 +395,15 @@ async function addSessionContext(input, output, show) {
 
 const continuedTurns = new Set();
 
+/** An idle session's Stop calls; `runStop` adds `stop_hook_active` to each payload. */
+function stopCallsFor(sessionId, directory) {
+  return STOP.map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: { hook_event_name: "Stop", session_id: sessionId, cwd: directory },
+  }));
+}
+
 function noteTurn(sessionId, parts) {
   if (!isFollowUp(parts)) continuedTurns.delete(sessionId);
 }
@@ -443,12 +444,7 @@ function bridgeHooks({ directory, client, followUp, show, track }) {
     },
     "experimental.chat.system.transform": (input, output) => addSessionContext(input, output, show),
     "chat.message": async (input, output) => {
-      try {
-        noteTurn(input?.sessionID, output?.parts ?? []);
-      } catch (error) {
-        reportHookFailure("UserPromptSubmit", error);
-        return;
-      }
+      noteTurn(input?.sessionID, output?.parts ?? []);
       await addPromptContext(input, output, folderOf(input?.sessionID));
     },
     "tool.execute.before": (call, output) => refuseToolUse(call, output, folderOf(call?.sessionID)),

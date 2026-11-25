@@ -1,10 +1,20 @@
 /**
- * The module source of the events a bridge relays around the model's own acts: the session's
- * start, the tool calls before and after it, and the user's message. Written once, so a host's
- * template holds only the names its own events carry and where its directory comes from.
+ * The module source of every event a bridge relays: the session's start, the tool calls before
+ * and after it, the user's message and the turn's end, and `bridgeHooks`, the hooks object that
+ * wires them to the host's events. Written once, so a host's template holds only the names its
+ * own events carry and where its directory comes from.
  */
 
-import { MATCHES_TOOL_SOURCE, TOOL_INPUT_SOURCE } from "./bridge-source.js";
+/** A hook's `tools` are its matcher's names, split and lowercased when the module is written:
+ * the hosts name their tools in lowercase. Absent, every tool matches. */
+export const MATCHES_TOOL_SOURCE = `function matchesTool(tools, tool) {
+  return !tools || tools.includes(tool.toLowerCase());
+}`;
+
+/** A tool call's arguments as a script reads them, written into `toolUseCallsFor`, whose comment
+ * says why. */
+const TOOL_INPUT_SOURCE =
+  'const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;';
 
 /** The calls of a tool use, before and after it runs. A PreToolUse script refuses the call it is
  * told of by exiting 2: its stderr is the reason the model reads. A script that fails to run, or
@@ -187,6 +197,15 @@ async function addSessionContext(input, output, show) {
  * continues, and stay silent. */
 export const TURN_END_SOURCE = `const continuedTurns = new Set();
 
+/** An idle session's Stop calls; \`runStop\` adds \`stop_hook_active\` to each payload. */
+function stopCallsFor(sessionId, directory) {
+  return STOP.map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: { hook_event_name: "Stop", session_id: sessionId, cwd: directory },
+  }));
+}
+
 function noteTurn(sessionId, parts) {
   if (!isFollowUp(parts)) continuedTurns.delete(sessionId);
 }
@@ -237,12 +256,7 @@ export const BRIDGE_HOOKS_SOURCE = `function bridgeHooks({ directory, client, fo
     },
     "experimental.chat.system.transform": (input, output) => addSessionContext(input, output, show),
     "chat.message": async (input, output) => {
-      try {
-        noteTurn(input?.sessionID, output?.parts ?? []);
-      } catch (error) {
-        reportHookFailure("UserPromptSubmit", error);
-        return;
-      }
+      noteTurn(input?.sessionID, output?.parts ?? []);
       await addPromptContext(input, output, folderOf(input?.sessionID));
     },
     "tool.execute.before": (call, output) => refuseToolUse(call, output, folderOf(call?.sessionID)),

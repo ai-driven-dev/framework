@@ -29,7 +29,7 @@ function exitDescription(code, signal) {
  * stdout and stderr, and the error it failed to run with, never rejecting. */
 export const RUN_CAPTURE_SOURCE = `/** Runs one hook script under node from the plugin's scripts folder, in the payload's directory,
  * with its payload on stdin, and collects what it wrote. Never process.execPath: a host's own path
- * need not be a Node runtime, and OpenCode's names its standalone binary. */
+ * need not be a Node runtime. */
 function runCapture(script, args, payload, directory) {
   return new Promise((resolve) => {
     const failed = (error) => resolve({ error, code: null, signal: null, stdout: "", stderr: "" });
@@ -119,8 +119,7 @@ function answerOf(script, args, payload, directory) {
 }`;
 
 /** The `stopReasonOf` of a bridge: the reason a Stop script gave to keep working and its message
- * for the person, read through `settledRun`; and `stopCallsFor`, an idle session's Stop calls.
- * The shared turn end, `runStop`, adds `stop_hook_active` to each payload. */
+ * for the person, read through `settledRun`. */
 export const STOP_REASON_OF_SOURCE = `/** A Stop script's {"decision":"block","reason"} on stdout: the reason to keep working on. */
 function stopReasonOf(script, args, payload, directory) {
   return settledRun(script, args, payload, directory).then((run) => {
@@ -129,26 +128,7 @@ function stopReasonOf(script, args, payload, directory) {
     const reason = output?.decision === "block" ? String(output.reason ?? "").trim() : "";
     return { reason, person: personOf(output) };
   });
-}
-
-function stopCallsFor(sessionId, directory) {
-  return STOP.map((hook) => ({
-    script: hook.script,
-    args: hook.args,
-    payload: { hook_event_name: "Stop", session_id: sessionId, cwd: directory },
-  }));
 }`;
-
-/** A hook's `tools` are its matcher's names, split and lowercased when the module is written:
- * the hosts name their tools in lowercase. Absent, every tool matches. */
-export const MATCHES_TOOL_SOURCE = `function matchesTool(tools, tool) {
-  return !tools || tools.includes(tool.toLowerCase());
-}`;
-
-/** A tool call's arguments as a script reads them, written into `toolUseCallsFor`, whose comment
- * says why. */
-export const TOOL_INPUT_SOURCE =
-  'const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;';
 
 /** How a bridge sends a prompt of its own as the session's next turn: a Stop follow-up or a queued
  * finding, each marked, so a message hook never reads it as the person's. `method` is the host's

@@ -48,7 +48,7 @@ export const SCRIPTS: Record<string, string> = {
   "stop.cjs": `if (!payload.stop_hook_active) process.stdout.write(JSON.stringify({ decision: "block", reason: "fix it" }));`,
   "fix.cjs": `process.stderr.write("fix it\\n"); process.exitCode = 2;`,
   "exit7.cjs": "process.exitCode = 7;",
-  "note.cjs": `process.stdout.write(JSON.stringify({ hookSpecificOutput: { additionalContext: "noted" } }));`,
+  "note.cjs": `process.stdout.write(JSON.stringify({ additionalContext: "noted" }));`,
 };
 
 // A script that exits without ever reading its stdin.

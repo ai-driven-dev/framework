@@ -15,10 +15,11 @@ describe("naming a plugin in Pascal case", () => {
   });
 });
 
-describe.each([
-  ["OpenCode", generateOpencodeHooksBridge],
-  ["Kilo", generateKiloHooksBridge],
-])("the bridge generator of %s", (_host, generate) => {
+// What every host's generator writes the same way, held once through Kilo's, whose template adds
+// nothing to the shared body.
+describe("the shared bridge generator", () => {
+  const generate = generateKiloHooksBridge;
+
   it.each(["SessionStart", "Stop", "PostToolUse", "PreToolUse", "UserPromptSubmit"])(
     "writes a module for %s alone",
     (event) => {
@@ -39,19 +40,11 @@ describe.each([
     ]).toStrictEqual([["SessionEnd"], ["SubagentStop"]]);
   });
 
-  it("ships no pointer to a repository file or a tracking tag", () => {
-    const text = generate(hooksOf("Stop", `node ${ROOT}/hooks/a.cjs`), "aidd-test").content ?? "";
+  it("builds the Stop calls once, in the shared builder", () => {
+    const source = generate(hooksOf("Stop", `node ${ROOT}/hooks/a.cjs`), "aidd-test").content ?? "";
 
-    expect(text).not.toMatch(/\.(ts|md)\b|skipHooksJson|hooks-bridge|\bF\d+\b|hooks\/hooks\.json/);
-  });
-});
-
-describe.each(["opencode", "kilo"])("the events %s routes through its bridge", (toolId) => {
-  it("are the ones a bridge replays, no more and no fewer", () => {
-    const profile = REGISTERED_PROFILES.find((registered) => registered.toolId === toolId);
-    const events = profile?.kind === "ai" ? [...(profile.hooks?.events.keys() ?? [])] : [];
-
-    expect(events.sort()).toStrictEqual([...BRIDGE_EVENTS].sort());
+    expect(source.match(/hook_event_name: "Stop"/g)).toHaveLength(1);
+    expect(source).toContain("function stopCallsFor(sessionId, directory) {");
   });
 });
 
@@ -59,14 +52,14 @@ describe.each([
   ["OpenCode", generateOpencodeHooksBridge],
   ["Kilo", generateKiloHooksBridge],
 ])("the module generated for %s", (_host, generate) => {
-  const source = generate(hooksOf("Stop", `node ${ROOT}/hooks/a.cjs`), "aidd-test").content ?? "";
+  it("ships no pointer to a repository file or a tracking tag", () => {
+    const text = generate(hooksOf("Stop", `node ${ROOT}/hooks/a.cjs`), "aidd-test").content ?? "";
 
-  it("builds the Stop calls once, in the shared builder", () => {
-    expect(source.match(/hook_event_name: "Stop"/g)).toHaveLength(1);
-    expect(source).toContain("function stopCallsFor(sessionId, directory) {");
+    expect(text).not.toMatch(/\.(ts|md)\b|skipHooksJson|hooks-bridge|\bF\d+\b|hooks\/hooks\.json/);
   });
 
   it("declares no function it never calls", () => {
+    const source = generate(hooksOf("Stop", `node ${ROOT}/hooks/a.cjs`), "aidd-test").content ?? "";
     // An exposed property such as `Plugin.name = name;` is a reference nobody reads.
     const code = source
       .split("\n")
@@ -77,5 +70,14 @@ describe.each([
       .filter((name) => code.match(new RegExp(`\\b${name}\\b`, "g"))?.length === 1);
 
     expect(unused).toEqual([]);
+  });
+});
+
+describe.each(["opencode", "kilo"])("the events %s routes through its bridge", (toolId) => {
+  it("are the ones a bridge replays, no more and no fewer", () => {
+    const profile = REGISTERED_PROFILES.find((registered) => registered.toolId === toolId);
+    const events = profile?.kind === "ai" ? [...(profile.hooks?.events.keys() ?? [])] : [];
+
+    expect(events.sort()).toStrictEqual([...BRIDGE_EVENTS].sort());
   });
 });
