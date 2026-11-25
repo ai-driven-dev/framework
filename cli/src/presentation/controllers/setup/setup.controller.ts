@@ -38,17 +38,23 @@ interface SetupRun {
   cmdOptions: SetupCmdOptions;
 }
 
-type AgentModelsChoice = Pick<ReturnType<typeof agentModelsRequest>, "hosts" | "provider">;
+type AgentModelsChoice = Pick<ReturnType<typeof agentModelsRequest>, "hosts" | "provider"> & {
+  /** No provider named: each host keeps the one saved for it. */
+  keepSaved: boolean;
+};
 
-/** The agents' models the flags ask for, refused before anything is built or written. */
-function parseAgentModels(run: SetupRun, aiTools: readonly string[]): AgentModelsChoice {
+/** The agents' models the flags ask for, refused before anything is built or written;
+ * undefined when the flags ask for none. */
+function parseAgentModels(
+  run: SetupRun,
+  aiTools: readonly string[]
+): AgentModelsChoice | undefined {
   const { cmdOptions, catalog } = run;
+  const keepSaved = cmdOptions.provider === undefined;
+  if (keepSaved && cmdOptions.agentsOnly !== true) return undefined;
   const { runnable, ...agents } = agentModelsRequest(cmdOptions.provider, aiTools, catalog);
-  const asked = cmdOptions.provider === undefined ? "--agents-only" : "--provider";
-  if (cmdOptions.provider !== undefined || cmdOptions.agentsOnly === true) {
-    requireAgentHosts(asked, { hosts: agents.hosts, runnable });
-  }
-  return agents;
+  requireAgentHosts(keepSaved ? "--agents-only" : "--provider", { hosts: agents.hosts, runnable });
+  return { ...agents, keepSaved };
 }
 
 /** Once the install has succeeded: the provider and, unless asked otherwise, the main session's
@@ -60,15 +66,13 @@ async function setAgentModels(
 ): Promise<void> {
   const { output, projectRoot, catalog, cmdOptions } = run;
   const { agentsOnly } = cmdOptions;
-  const keepSaved = agentsOnly === true && cmdOptions.provider === undefined;
   const main = await container.agentModels.setAgentModels.execute({
     projectRoot,
     ...agents,
     scope: scope ?? "project",
     agentsOnly,
-    keepSaved,
   });
-  reportAgentModels({ output, catalog, ...agents, main, agentsOnly, keepSaved });
+  reportAgentModels({ output, catalog, ...agents, main, agentsOnly });
 }
 
 async function runSetupAction(run: SetupRun): Promise<void> {
@@ -87,9 +91,7 @@ async function runSetupAction(run: SetupRun): Promise<void> {
     printDetectedContext(output, result.context.describe());
   }
   printSetupOutcome(output, result, verbose);
-  if (cmdOptions.provider !== undefined || cmdOptions.agentsOnly === true) {
-    await setAgentModels(run, container, { agents, scope });
-  }
+  if (agents !== undefined) await setAgentModels(run, container, { agents, scope });
   if (interactive) printNextSteps(output, result.install.results.length > 0);
   reportNativeActivation(output, result.activation);
 }

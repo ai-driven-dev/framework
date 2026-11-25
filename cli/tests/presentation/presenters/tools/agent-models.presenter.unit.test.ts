@@ -147,7 +147,15 @@ describe("reporting agent models", () => {
         main: { ...NO_CHANGE, chosen: new Map([[OPENAI_TOOL, "openai"]]) },
       });
 
-      expect(output.lines).toContain(`  ${SECOND_SYNTHETIC_TOOL} on the IDE's model`);
+      expect(output.lines).toEqual([
+        "Models on each tool's saved choice, else its first provider, for every project on this machine; main session unchanged:",
+        `  ${OPENAI_TOOL} on openai`,
+        `  ${OPENAI_TOOL} reviewer: gpt-6.1-sol (high)`,
+        `  ${OPENAI_TOOL} explorer, executor, validator: gpt-6-luna (medium)`,
+        `  ${SECOND_SYNTHETIC_TOOL} on the IDE's model`,
+        "Agents installed later get these models too.",
+        `Other projects follow at their next install; to update the agents they already have, run \`aidd setup --ide ${OPENAI_TOOL},${SECOND_SYNTHETIC_TOOL} --agents-only\` there.`,
+      ]);
     });
 
     it("gives the agents back the IDE's model without a word about the main session", () => {
