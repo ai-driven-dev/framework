@@ -58,7 +58,6 @@ function codexFlatArtifacts(
     },
     mcp: {
       supported: false,
-      carriedByConfig: true,
       reason: "carried by the config artifact (config.toml mcp_servers)",
     },
     hooks: flatHooksArtifact(hooks, { tool: "codex" }),

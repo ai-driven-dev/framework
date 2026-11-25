@@ -62,7 +62,6 @@ describe("building Codex's flat contract", () => {
       hooks: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
       mcp: {
         supported: false,
-        carriedByConfig: true,
         reason: "carried by the config artifact (config.toml mcp_servers)",
       },
     });

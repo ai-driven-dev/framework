@@ -2,7 +2,11 @@
 
 import { join } from "node:path";
 import { describe, it } from "vitest";
-import type { ArtifactContract } from "../../src/shared/domain/materialization/build-contract.js";
+import { foldsFlatMcp } from "../../src/contexts/translate/domain/rules/flat-mcp.js";
+import type {
+  ArtifactContract,
+  ToolBuildContract,
+} from "../../src/shared/domain/materialization/build-contract.js";
 import { pluginModeOf } from "../contexts/tools/testing/plugin-mode.builder.js";
 import { catalogOf, registeredAiConfig } from "../shared/testing/catalog-of.builder.js";
 import { REPOSITORY_ROOT } from "../shared/testing/repository-root.builder.js";
@@ -24,18 +28,17 @@ interface ToolSupport {
   pluginMode: string | null;
   /** The tool's own CLI that `aidd` drives to register plugins, or null. */
   nativeCli: string | null;
-  /** What `aidd translate` emits, per output layout the tool supports. */
+  /** What a user gets per output layout the tool supports: build output, plus rules from the install profile. */
   builds: Record<string, Record<Surface, Support>>;
 }
 
-/** What a user gets: a build file, the tool's config artifact, or (rules) an install section. */
-function supportOf(
-  surface: Surface,
-  contract: ArtifactContract | undefined,
-  installsRules: boolean
-): Support {
+/** What a user gets through `aidd` for one layout: a build file, the config artifact the build folds MCP
+ * into, or the rules section the install profile ships (rules are not part of what `translate` emits). */
+function supportOf(surface: Surface, build: ToolBuildContract, installsRules: boolean): Support {
   if (surface === "rules" && installsRules) return "yes";
-  if (contract?.supported === false && contract.carriedByConfig === true) return "yes";
+  if (surface === "mcp" && foldsFlatMcp(build)) return "yes";
+  const declared: Partial<Record<string, ArtifactContract>> = build.artifacts;
+  const contract = declared[surface];
   if (!contract?.supported) return "no";
   if (surface === "hooks" && contract.skipHooksJson === true && contract.hooksBridge) {
     return "bridge";
@@ -53,11 +56,10 @@ function capture(): ToolSupport[] {
       for (const mode of ["marketplace", "flat"] as const) {
         const contract = tool.buildContract(mode);
         if (contract === null) continue;
-        const declared: Partial<Record<string, ArtifactContract>> = contract.artifacts;
         builds[mode] = Object.fromEntries(
           SURFACES.map((surface) => [
             surface,
-            supportOf(surface, declared[surface], tool.section("rules") !== null),
+            supportOf(surface, contract, tool.installedRulesLocation() !== null),
           ])
         ) as Record<Surface, Support>;
       }

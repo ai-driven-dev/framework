@@ -132,7 +132,6 @@ describe("building OpenCode's flat contract", () => {
       hooks: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
       mcp: {
         supported: false,
-        carriedByConfig: true,
         reason: "carried by the config artifact (opencode.json mcp)",
       },
     });
