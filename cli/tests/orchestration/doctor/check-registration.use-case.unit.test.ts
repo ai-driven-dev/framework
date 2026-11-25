@@ -178,8 +178,28 @@ describe("checking registrations", () => {
     expect(await issuesFor("{}")).toStrictEqual([UNDECLARED]);
   });
 
-  it("reports it, without throwing, when the file holds a JSON null", async () => {
-    await expect(issuesFor("null")).resolves.toStrictEqual([UNDECLARED]);
+  it("names the real cause once when the file is not valid JSON, not a missing declaration per marketplace", async () => {
+    expect(await issuesFor("{ not json")).toStrictEqual([
+      {
+        severity: "warning",
+        message: expect.stringMatching(
+          new RegExp(
+            `^${SYNTHETIC_NATIVE_TOOL}: \\.${SYNTHETIC_NATIVE_TOOL}/settings\\.local\\.json cannot be parsed \\(.+\\)$`
+          )
+        ),
+        fix: {
+          code: "repair-settings-file",
+          file: `.${SYNTHETIC_NATIVE_TOOL}/settings.local.json`,
+        },
+      },
+    ]);
+  });
+
+  it("names the real cause, without throwing, when the file holds a JSON null", async () => {
+    const issues = await issuesFor("null");
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0]?.message).toContain("the root is not an object");
   });
 
   // The registration is written by the tool itself, so it cannot exist while the tool does not:

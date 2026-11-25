@@ -153,6 +153,8 @@ export function describeDoctorFix(fix: string | DoctorFix): string {
       return `Run \`claude plugin marketplace remove ${fix.name}\`, then \`aidd sync\` to re-register it for this project — or rename this project's marketplace if it is meant to point elsewhere.`;
     case "refresh-marketplace":
       return `Run \`aidd marketplace refresh\` to write it back to ${fix.file}.`;
+    case "repair-settings-file":
+      return `Repair the JSON in ${fix.file} by hand, then run \`aidd marketplace refresh\`.`;
     case "remove-stale-declaration":
       return `Remove the \`${fix.name}\` entry from ${fix.file}, or run \`aidd marketplace refresh\` if the project registers it again.`;
   }

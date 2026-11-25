@@ -70,10 +70,39 @@ describe("inspecting the marketplaces a tool's machine-local settings declare", 
     expect(findings.map((finding) => finding.name)).toEqual([NAME, "second"]);
   });
 
-  it("reports the marketplace when the settings file is not valid JSON", async () => {
-    const { findings } = await inspect(inspector({ settings: "{ not json" }));
+  it("names the settings file as unparseable, with the reason, instead of reporting each marketplace missing", async () => {
+    const result = await inspect(inspector({ settings: "{ not json" }), [NAME, "second"]);
 
-    expect(findings).toHaveLength(1);
+    expect(result.findings).toEqual([]);
+    expect(result.stale).toEqual([]);
+    expect(result.unparseable).toEqual([
+      {
+        tool: TOOL.claude,
+        file: ".claude/settings.local.json",
+        reason: expect.stringMatching(/\S/),
+      },
+    ]);
+  });
+
+  it.each(["null", "[]", "5"])(
+    "names a settings file whose root is %s as unparseable",
+    async (root) => {
+      const { findings, unparseable } = await inspect(inspector({ settings: root }));
+
+      expect(findings).toEqual([]);
+      expect(unparseable).toEqual([
+        {
+          tool: TOOL.claude,
+          file: ".claude/settings.local.json",
+          reason: "the root is not an object",
+        },
+      ]);
+    }
+  );
+
+  it("names nothing unparseable when the settings file is valid, absent or silent", async () => {
+    for (const settings of [declaring(NAME), undefined, "{}"])
+      expect((await inspect(inspector({ settings }))).unparseable).toEqual([]);
   });
 
   it("reports nothing when the project registers no marketplace", async () => {
