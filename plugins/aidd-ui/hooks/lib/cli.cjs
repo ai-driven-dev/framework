@@ -6,6 +6,7 @@ const CHANGE_FLAG = "--change";
 const BREAKING_FLAG = "--breaking";
 const CREATED_FLAG = "--created";
 const REMOVED_FLAG = "--removed";
+const LANG_FLAG = "--lang";
 
 const VALIDATE_USAGE = "node aidd-ui.cjs validate [project-root]";
 const TOKENS_USAGE = "node aidd-ui.cjs tokens [project-root]";
@@ -14,8 +15,8 @@ const IMPACT_USAGE = `node aidd-ui.cjs impact <id or token>… [${ROOT_FLAG} <di
 const EXTRACT_USAGE = `node aidd-ui.cjs extract [${FORCE_FLAG}] [${ROOT_FLAG} <dir>]`;
 const BUMP_USAGE = `node aidd-ui.cjs bump ${TASK_FLAG} <aidd_docs/tasks/…> (${CHANGE_FLAG} "<text>" [${BREAKING_FLAG}] | ${CREATED_FLAG} | ${REMOVED_FLAG}) <token or id>… [${ROOT_FLAG} <dir>]`;
 const PUBLISH_USAGE = `node aidd-ui.cjs publish ([${BREAKING_FLAG}] | <id>…) [${ROOT_FLAG} <dir>]`;
-const COMPARE_USAGE = `node aidd-ui.cjs compare <set> [${ROOT_FLAG} <dir>]`;
 const KEEP_USAGE = `node aidd-ui.cjs keep <set> <variant> [${ROOT_FLAG} <dir>]`;
+const SHOWCASE_USAGE = `node aidd-ui.cjs showcase [${LANG_FLAG} <code>] [${ROOT_FLAG} <dir>]`;
 const HELP_USAGE = "node aidd-ui.cjs help [<command>]";
 
 module.exports = {
@@ -26,6 +27,7 @@ module.exports = {
   BREAKING_FLAG,
   CREATED_FLAG,
   REMOVED_FLAG,
+  LANG_FLAG,
   VALIDATE_USAGE,
   TOKENS_USAGE,
   HOOK_USAGE,
@@ -33,7 +35,7 @@ module.exports = {
   EXTRACT_USAGE,
   BUMP_USAGE,
   PUBLISH_USAGE,
-  COMPARE_USAGE,
   KEEP_USAGE,
+  SHOWCASE_USAGE,
   HELP_USAGE,
 };

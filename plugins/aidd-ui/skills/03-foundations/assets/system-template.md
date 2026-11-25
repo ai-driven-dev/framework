@@ -1,6 +1,8 @@
 ---
 id: system
 kind: system
+status: proposed
+version: 1
 format: 1
 platforms: [{{platforms}}]
 themes: [{{themes, the base first}}]
