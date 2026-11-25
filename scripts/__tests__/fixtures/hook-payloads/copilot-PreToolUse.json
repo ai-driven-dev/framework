@@ -1,0 +1,64 @@
+{
+  "host": "copilot",
+  "event": "PreToolUse",
+  "samples": [
+    {
+      "run": "deny",
+      "payload": {
+        "hook_event_name": "PreToolUse",
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "timestamp": "1970-01-01T00:00:00.000Z",
+        "cwd": "/Users/user/project",
+        "tool_use_id": "custom_call_be81a64f0d8f41858cdaea448656106a",
+        "tool_name": "Edit",
+        "tool_input": "*** Begin Patch\n*** Delete File: aidd_docs/tasks/2026_01/2026_01_02_export/spec.md\n*** End Patch\n"
+      },
+      "hookAnswer": {
+        "permissionDecision": "deny",
+        "permissionDecisionReason": "aidd_docs/tasks/2026_01/2026_01_02_export/spec.md is locked: only the person who approves it sets its status back to draft. Write nothing to it."
+      }
+    },
+    {
+      "run": "log",
+      "payload": {
+        "hook_event_name": "PreToolUse",
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "timestamp": "1970-01-01T00:00:00.000Z",
+        "cwd": "/Users/user/project",
+        "tool_use_id": "custom_call_e38d802e17be444099c730777b09e9c3",
+        "tool_name": "Edit",
+        "tool_input": "*** Begin Patch\n*** Add File: notes.md\n+hello\n*** End Patch\n"
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "log",
+      "payload": {
+        "hook_event_name": "PreToolUse",
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "timestamp": "1970-01-01T00:00:00.000Z",
+        "cwd": "/Users/user/project",
+        "tool_use_id": "custom_call_6dda44348cf34978a50763ec3aab0990",
+        "tool_name": "Edit",
+        "tool_input": "*** Begin Patch\n*** Update File: notes.md\n@@\n-hello\n+hi\n*** End Patch\n"
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "log",
+      "payload": {
+        "hook_event_name": "PreToolUse",
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "timestamp": "1970-01-01T00:00:00.000Z",
+        "cwd": "/Users/user/project",
+        "tool_use_id": "call_1eae4728b23d4d459f8d528b8edf34d9",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "echo done",
+          "description": "Run requested shell command"
+        }
+      },
+      "hookAnswer": null
+    }
+  ]
+}

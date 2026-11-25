@@ -13,10 +13,13 @@ the event spelled as the host spells it. Read by the CLI converter tests and the
 - `run` says what the hook answered: `log`, nothing; `level2`, `decision: "block"` once on the
   first file write and once at the first Stop, to learn whether the host delivers them; `answer`,
   a session token at SessionStart in the key the host's adapter prints, to learn whether the model
-  reads it; `continue`, Cursor's `followup_message` once at the first `stop`.
+  reads it; `deny`, a refusal of the write to a locked spec at PreToolUse; `allow`, Antigravity's
+  explicit allow of every other call; `continue`, Cursor's `followup_message` once at the first `stop`.
 - `hookAnswer` is what the logging hook printed for that call, `null` when it printed nothing:
   JSON on most hosts. Kiro's SessionStart sample holds the bare text, since Kiro hands that
   hook's output to the model as printed; its Stop sample holds the JSON block decision.
+  `hookExit` and `hookStderr` are present when the hook ended with a non-zero code, the way Kiro's
+  PreToolUse refusal is delivered.
 
 ## OpenCode and Kilo
 
@@ -34,7 +37,7 @@ timestamps and dated session-file names are fixed to the epoch. Nothing else is 
 ## Established
 
 SessionStart, Stop, and PostToolUse for a file write and a shell command on Claude Code, Codex,
-Copilot, OpenCode and Kilo; Cursor's `sessionStart`, `postToolUse` and `stop`. Codex's
+Copilot, OpenCode and Kilo; Cursor's `sessionStart`, `postToolUse` and `stop`. PreToolUse on Claude Code, Codex, Copilot, Antigravity and Kiro: a write to a locked spec refused, a file created, a file edited, a shell call, in each host's own session; Cursor's is not captured (no quota left). Codex's
 `transcript_path` carries a value. Copilot's file write arrives as `Edit` with a `*** Begin Patch`
 string. Claude Code's `Edit` and its `PowerShell` tool, enabled by
 `CLAUDE_CODE_USE_POWERSHELL_TOOL=1`. Cursor's edit, sent as a `Write` carrying the whole file, and

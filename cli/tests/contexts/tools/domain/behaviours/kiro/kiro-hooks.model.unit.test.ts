@@ -34,7 +34,20 @@ const SHIPPED = JSON.stringify({
 
 const UNCAPTURED = JSON.stringify({
   hooks: {
-    PreToolUse: [{ hooks: [{ type: "command", command: `node ${PLUGIN_ROOT_VAR}/hooks/c.cjs` }] }],
+    UserPromptSubmit: [
+      { hooks: [{ type: "command", command: `node ${PLUGIN_ROOT_VAR}/hooks/c.cjs` }] },
+    ],
+  },
+});
+
+const BEFORE_A_TOOL = JSON.stringify({
+  hooks: {
+    PreToolUse: [
+      {
+        matcher: "Write",
+        hooks: [{ type: "command", command: `node ${PLUGIN_ROOT_VAR}/hooks/c.cjs`, timeout: 5 }],
+      },
+    ],
   },
 });
 
@@ -198,7 +211,21 @@ describe("kiro's hooks file", () => {
     const { content, warnings } = format.merge(null, UNCAPTURED, "aidd-context");
 
     expect(hooksOf(content)).toEqual([]);
-    expect(warnings).toEqual(["unmapped event 'PreToolUse' skipped"]);
+    expect(warnings).toEqual(["unmapped event 'UserPromptSubmit' skipped"]);
+  });
+
+  it("delivers PreToolUse to every tool, the script telling a write apart by the files it reads", () => {
+    const { content, warnings } = format.merge(null, BEFORE_A_TOOL, "aidd-pm");
+
+    expect(hooksOf(content)).toEqual([
+      expect.objectContaining({
+        name: "aidd-pm-PreToolUse-c.cjs",
+        trigger: "PreToolUse",
+        timeout: 5,
+      }),
+    ]);
+    expect(hooksOf(content)[0]).not.toHaveProperty("matcher");
+    expect(warnings).toEqual([]);
   });
 
   it("keeps a hook the user declared, and changes nothing when merged twice", () => {

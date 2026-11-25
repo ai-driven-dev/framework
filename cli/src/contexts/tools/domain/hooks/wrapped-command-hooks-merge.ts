@@ -8,11 +8,15 @@ import { hostToolNamesMatching, matcherNamesNoToolWarning } from "../formats/hos
 import type { PluginHookItem, PluginHooksShape } from "./plugin-hooks-shape.js";
 
 // The host runs a handler from its own directory under the project and requires JSON stdout even
-// for a silent hook.
-const JSON_RESPONSE =
+// for a silent hook. Before a tool, `{}` is a deny: a silent script lets the tool run by saying so.
+// `silent` is a JS expression: the program sits inside a double-quoted shell argument.
+const jsonResponse = (silent: string) =>
   "const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});" +
   "let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});" +
-  "p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});";
+  `p.on('close',c=>{if(empty)process.stdout.write(${silent});process.exitCode=c??1});`;
+
+/** The events whose handlers are grouped under the tools they run for. */
+const TOOL_EVENTS: ReadonlySet<string> = new Set(["PreToolUse", "PostToolUse"]);
 
 type HandlerGroup = { matcher: string; hooks: ProjectHookEntry[] };
 const isGroup = (entry: ProjectHookEntry | HandlerGroup): entry is HandlerGroup => "hooks" in entry;
@@ -49,13 +53,13 @@ export function wrappedCommandHooksScriptPath(
 const runsCommand = (hook: PluginHookItem): hook is PluginHookItem & ProjectHookEntry =>
   typeof hook.command === "string";
 
-function toHandler(hook: ProjectHookEntry): ProjectHookEntry {
-  return {
+const toHandler =
+  (event: string) =>
+  (hook: ProjectHookEntry): ProjectHookEntry => ({
     type: "command",
-    command: `node -e "${JSON_RESPONSE}" ${toBase64(hook.command)}`,
+    command: `node -e "${jsonResponse(event === "PreToolUse" ? "JSON.stringify({decision:'allow'})" : "'{}'")}" ${toBase64(hook.command)}`,
     timeout: hook.timeout,
-  };
-}
+  });
 
 /** The matcher in the host's tool names, or undefined when it selects no tool the host has. A plugin
  * with no matcher asks for every tool. */
@@ -82,20 +86,20 @@ function convert(
       warnings.push(`unmapped event '${event}' skipped`);
       continue;
     }
-    if (event !== "PostToolUse") {
+    if (!TOOL_EVENTS.has(event)) {
       handlers[event] = groups.flatMap((group) =>
-        (group.hooks ?? []).filter(runsCommand).map(toHandler)
+        (group.hooks ?? []).filter(runsCommand).map(toHandler(event))
       );
       continue;
     }
-    // PostToolUse goes in `{ matcher, hooks: [handler] }`, one group per group the plugin wrote.
+    // A tool event goes in `{ matcher, hooks: [handler] }`, one group per group the plugin wrote.
     const grouped = groups.flatMap((group) => {
       const matcher = hostMatcher(target, group.matcher);
       if (matcher === undefined) {
         warnings.push(matcherNamesNoToolWarning(target.label, event, group.matcher ?? ""));
         return [];
       }
-      return [{ matcher, hooks: (group.hooks ?? []).filter(runsCommand).map(toHandler) }];
+      return [{ matcher, hooks: (group.hooks ?? []).filter(runsCommand).map(toHandler(event)) }];
     });
     if (grouped.length > 0) handlers[event] = grouped;
   }
