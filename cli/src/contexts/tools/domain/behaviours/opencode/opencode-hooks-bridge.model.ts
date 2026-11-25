@@ -5,7 +5,7 @@
  * plugin with V1/server and V2/setup entrypoints, spawning the scripts every host's hooks.json
  * already names over the stdin-JSON contract those scripts already read.
  *
- * Only three hook events are replayed:
+ * Only five hook events are replayed:
  *
  * - `SessionStart` runs once per session, on the first event that names it, so the script knows
  *   its session. That event is `session.created` for a new session; a continued one is created
@@ -21,12 +21,23 @@
  * - `PostToolUse` maps to V1's `tool.execute.after`, the one hook that waits for the script and
  *   can append its exit-2 stderr to the tool's output, which is how a problem reaches the model.
  *   V2's adapter calls the same hook from a successful tool call, without that answer.
+ * - `PreToolUse` maps to V1's `tool.execute.before`: a script that exits 2 refuses the call, its
+ *   stderr the reason the model reads, as a throw from that hook does on OpenCode 1.19.3. V2's
+ *   adapter does not call it.
+ * - `UserPromptSubmit` maps to V1's `chat.message`: a script's answer joins the user's message as
+ *   a synthetic text part. A throw from that hook stops the prompt, but its reason reaches neither
+ *   the person nor the model (OpenCode 1.19.3 answers a generic server error), so no script refuses.
  *
- * A `matcher` on a `PostToolUse` group filters by tool name, exact or pipe-separated
- * alternation, ignoring case: OpenCode names its tools in lowercase. Absent, every tool matches.
+ * A `matcher` on a `PreToolUse` or `PostToolUse` group filters by tool name, exact or
+ * pipe-separated alternation, ignoring case: OpenCode names its tools in lowercase. Absent, every
+ * tool matches.
  */
 
-import { type BridgeParts, generateBridge } from "../../bridges/event-bridge.js";
+import {
+  type BridgeParts,
+  type GeneratedBridge,
+  generateBridge,
+} from "../../bridges/event-bridge.js";
 
 // Every plugin this generator sees is already named "aidd-<something>", so an "Aidd" prefix
 // here would stutter rather than name anything the plugin's own PascalCased name does not.
@@ -95,7 +106,7 @@ export const ${parts.identifier} = async (input) => {
               continued.add(sessionId);
               return input.client.session.prompt({
                 path: { id: sessionId },
-                body: { parts: [{ type: "text", text: reason }] },
+                body: { parts: [{ type: "text", text: reason, metadata: FOLLOW_UP }] },
               });
             })
             .catch((error) => reportFollowUpFailure(call.script, error));
@@ -106,16 +117,9 @@ export const ${parts.identifier} = async (input) => {
         // Silent on purpose: a hook that breaks OpenCode's own event loop is worse than one that never ran.
       }
     },
-    "tool.execute.after": async (call, output) => {
-      try {
-        for (const hook of postToolUseCallsFor(call, input.directory)) {
-          const answer = await answerOf(hook.script, hook.args, hook.payload, input.directory);
-          ${parts.appendAnswer}
-        }
-      } catch {
-        // Silent on purpose - see above.
-      }
-    },
+    "tool.execute.before": (call, output) => refuseToolUse(call, output, input.directory),
+    "chat.message": (call, output) => addPromptContext(call, output, input.directory),
+    "tool.execute.after": (call, output) => addToolAnswers(call, output, input.directory),
   };
 };
 
@@ -128,8 +132,11 @@ export default {
 };
 
 /** A plugin's raw hooks.json + its name -> the full text of its generated OpenCode bridge
- * module, or `null` when none of the three mapped events named anything replayable: a bridge
+ * module, or `null` when none of the five mapped events named anything replayable: a bridge
  * with nothing to spawn is not a file worth writing. */
-export function generateOpencodeHooksBridge(rawHooksJson: string, plugin: string): string | null {
+export function generateOpencodeHooksBridge(
+  rawHooksJson: string,
+  plugin: string
+): GeneratedBridge<string> {
   return generateBridge(OPENCODE_HOST, rawHooksJson, plugin);
 }

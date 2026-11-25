@@ -51,6 +51,21 @@ describe("building Kilo's flat contract", () => {
     expect(hooks.hooksBridge?.dir).toBe(".kilo/plugin/");
   });
 
+  it("warns, under the tool, of each event its bridge leaves out", () => {
+    const hooks = supported(present(kilo.buildContracts.flat)().artifacts.hooks);
+    const manifest = JSON.stringify({
+      hooks: Object.fromEntries(
+        ["SessionStart", "PostToolUse", "Stop", "PreToolUse", "UserPromptSubmit", "SessionEnd"].map(
+          (event) => [event, []]
+        )
+      ),
+    });
+
+    expect(hooks.hooksBridge?.generate(manifest, "aidd-dev").warnings).toStrictEqual([
+      "kilo: unmapped event 'SessionEnd' skipped",
+    ]);
+  });
+
   it("drops the name from a flat agent: Kilo names it after its file", () => {
     const transform = builtAgent(present(kilo.buildContracts.flat)(), "flat");
     expect(transform?.("---\nname: x\ndescription: Reads\n---\nBody.\n", "aidd-dev", "x.md")).toBe(

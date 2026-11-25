@@ -42,7 +42,7 @@ export function flatInstallPlan(
   const commands = tool.markdownSection("commands") === null ? [] : dist.components.commands;
   const hooksArtifact = flatHooksArtifact(tool);
   const scopes = ruleScopesOf(dist, plugins);
-  const hooks = flatHookPlans(dist, {
+  const { plans: hooks, warnings: bridgeWarnings } = flatHookPlans(dist, {
     place: (relativePath) =>
       hooksArtifact === null ? null : artifactPath(hooksArtifact, pluginName, relativePath),
     script: (relativePath, content) => plugins.hookScript(relativePath, content),
@@ -64,7 +64,10 @@ export function flatInstallPlan(
   return {
     plans,
     flatHookPaths: new Set(hooks.map((plan) => plan.path)),
-    skipped: hooksSkips(dist, { tool, plugins }),
+    skipped: [
+      ...hooksSkips(dist, { tool, plugins }),
+      ...bridgeWarnings.map((reason) => hooksSkip(dist, tool, reason)),
+    ],
   };
 }
 
@@ -132,14 +135,17 @@ function agentPlan(file: PluginComponentFile, at: FlatAt): ComponentPlan | null 
 function hooksSkips(dist: PluginDistribution, { tool, plugins }: FlatTarget): ReadonlySkipList {
   if (dist.components.hooks.length === 0) return [];
   const acceptance = plugins.hooksAcceptance();
-  if (acceptance.accepts) return [];
+  return acceptance.accepts ? [] : [hooksSkip(dist, tool, acceptance.reason)];
+}
+
+function hooksSkip(dist: PluginDistribution, tool: TranslatedAiTool, reason: string) {
   const entry: PluginTranslationSkip = {
     pluginName: dist.manifest.name,
     component: "hooks",
     toolId: tool.toolId,
-    reason: acceptance.reason,
+    reason,
   };
-  return [entry];
+  return entry;
 }
 
 /** A skill's prose is read as its flat build reads it: links relative to where it lands. */

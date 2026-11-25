@@ -7,12 +7,12 @@ const STOP_HOOK = JSON.stringify({
 
 describe("generating Kilo's hooks bridge", () => {
   it("exports a descriptor named after the plugin, serving the plugin's own server", () => {
-    expect(generateKiloHooksBridge(STOP_HOOK, "aidd-test")).toContain(
+    expect(generateKiloHooksBridge(STOP_HOOK, "aidd-test").content).toContain(
       'export default { id: "aidd-test-hooks", server: AiddTestKiloHooks };'
     );
   });
 
   it("writes no module for a plugin with no replayable hook", () => {
-    expect(generateKiloHooksBridge("{}", "aidd-test")).toBeNull();
+    expect(generateKiloHooksBridge("{}", "aidd-test").content).toBeNull();
   });
 });

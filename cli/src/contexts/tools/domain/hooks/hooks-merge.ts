@@ -11,6 +11,7 @@ import {
   rewritePluginRootInJson,
 } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import { type Entry, type HooksFileFormat, shapeEntries } from "./hooks-entry-shape.js";
+import { unmappedEventWarning } from "./hooks-warnings.js";
 import type { PluginHooksShape } from "./plugin-hooks-shape.js";
 
 /** What the engine reads of a descriptor: the file's form and the events the tool fires. */
@@ -55,7 +56,7 @@ export function mergeHooks(
   for (const [event, groups] of Object.entries(rewritten)) {
     const toolEvent = target.eventMap === undefined ? event : target.eventMap[event];
     if (toolEvent === undefined) {
-      warnings.push(`unmapped event '${event}' skipped`);
+      warnings.push(unmappedEventWarning(event));
       continue;
     }
     hooks[toolEvent] = [...(hooks[toolEvent] ?? []), ...shapeEntries(groups, target.file)];

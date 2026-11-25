@@ -117,7 +117,7 @@ function buildLayoutPlan(
   layout: Extract<TranslateLayout, { kind: "build" }>
 ): LayoutPlan {
   const { contract, mode } = layout;
-  const plans = buildPlans(dist, contract, mode);
+  const { plans, warnings: bridgeWarnings } = buildPlans(dist, contract, mode);
   if (mode !== "flat") return { ...UNTRANSLATED, ...NOTHING_FOLDED, plans };
   const own = flatOwnHooksFile(dist, contract);
   return {
@@ -128,7 +128,7 @@ function buildLayoutPlan(
     installedMcp: null,
     projectHooks: NO_PROJECT_HOOKS,
     mcp: flatMcpOf(dist, layout),
-    warnings: own?.warnings ?? [],
+    warnings: [...(own?.warnings ?? []), ...bridgeWarnings],
   };
 }
 

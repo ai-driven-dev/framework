@@ -13,17 +13,21 @@ the event spelled as the host spells it. Read by the CLI converter tests and the
 - `run` says what the hook answered: `log`, nothing; `level2`, `decision: "block"` once on the
   first file write and once at the first Stop, to learn whether the host delivers them; `answer`,
   a session token at SessionStart in the key the host's adapter prints, to learn whether the model
-  reads it; `continue`, Cursor's `followup_message` once at the first `stop`.
+  reads it; `continue`, Cursor's `followup_message` once at the first `stop`; `follow-up`,
+  OpenCode's and Kilo's `chat.message` for a message a bridge sent itself at Stop, carrying the mark
+  that tells it from the user's own.
 - `hookAnswer` is what the logging hook printed for that call, `null` when it printed nothing:
   JSON on most hosts, the bare text on Kiro, which hands a hook's output to the model as printed.
 
 ## OpenCode and Kilo
 
 They send no stdin payload: a plugin receives arguments. The files hold those raw arguments, named
-after the plugin hook or event that carried them: `tool.execute.after` is `{ call, output }`,
-`session.idle`, `session.created` and `message.updated` are the bus events: `session.created` is the
-moment the bridge runs SessionStart for a new session, `message.updated` the first event of a
-continued one. `hookAnswer` does not apply there.
+after the plugin hook or event that carried them: `tool.execute.before` is `{ call, output }`, the
+call's arguments in `output.args`; `chat.message` is `{ input, output }`, the user's message in
+`output.parts`; `tool.execute.after` is `{ call, output }`; `session.idle`, `session.created` and
+`message.updated` are the bus events: `session.created` is the moment the bridge runs SessionStart
+for a new session, `message.updated` the first event of a continued one. `hookAnswer` does not
+apply there.
 
 ## Scrubbing
 

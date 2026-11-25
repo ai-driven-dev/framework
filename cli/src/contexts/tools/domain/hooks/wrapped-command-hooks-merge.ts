@@ -4,6 +4,7 @@ import { rewritePluginRootInJson } from "../../../../shared/domain/materializati
 import type { ProjectHookEntry } from "../../contract/tool-vocabulary.js";
 import { toBase64 } from "../formats/base64.js";
 import { PLUGIN_HOOKS_SOURCE } from "../formats/hooks/descriptor.js";
+import { unmappedEventWarning } from "./hooks-warnings.js";
 
 // The host runs a handler from its own directory under the project and requires JSON stdout even
 // for a silent hook.
@@ -65,7 +66,7 @@ function convert(
   const warnings: string[] = [];
   for (const [event, groups] of Object.entries(rewritten.hooks ?? {})) {
     if (!Object.hasOwn(target.descriptor.eventMap, event)) {
-      warnings.push(`unmapped event '${event}' skipped`);
+      warnings.push(unmappedEventWarning(event));
       continue;
     }
     const converted = groups.flatMap((group) => (group.hooks ?? []).map(toHandler));

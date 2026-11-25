@@ -128,13 +128,16 @@ import { fileURLToPath } from "node:url";
 const HOOKS_DIR = fileURLToPath(new URL("../hooks/aidd-telemetry/", import.meta.url));
 
 const SESSION_START = [{"script":"task.cjs","args":["remind"]},{"script":"ledger.cjs","args":["ingest"]}];
-const STOP = [];
 const POST_TOOL_USE = [];
+const STOP = [];
+const PRE_TOOL_USE = [];
+const USER_PROMPT_SUBMIT = [];
 
 function reportHookFailure(script, error) {
   console.warn("[aidd] OpenCode hook " + script + " failed: " + String(error));
 }
 
+/** A prompt the host refused to queue: reported like a failed script, never thrown into the host. */
 function reportFollowUpFailure(script, error) {
   reportHookFailure(script, "follow-up not delivered: " + String(error));
 }
@@ -143,8 +146,6 @@ function exitDescription(code, signal) {
   return "exited with code " + String(code) + (signal === null ? "" : " (" + signal + ")");
 }
 
-// Fire and forget: a failed spawn (ENOENT, a killed timeout) or a script that never reads its
-// stdin reports once and never throws past this function.
 function runHook(script, args, payload, directory) {
   const child = spawn("node", [HOOKS_DIR + script, ...args], {
     cwd: directory,
@@ -181,8 +182,10 @@ function runCapture(script, args, payload, directory) {
     child.stderr.on("data", (chunk) => {
       stderr += chunk;
     });
+    // A spawn that never launches emits both an error and a close: the first settles it.
     child.on("error", (error) => resolve({ error, code: null, signal: null, stdout: "", stderr: "" }));
     child.on("close", (code, signal) => resolve({ code, signal, stdout, stderr }));
+    // A script that never reads its stdin must not throw.
     child.stdin.on("error", () => {});
     child.stdin.end(JSON.stringify(payload));
   });
@@ -199,7 +202,8 @@ function answerFrom(code, stdout, stderr) {
   }
 }
 
-// Awaited, unlike runHook: the script has something the model must read.
+/** Awaited, unlike runHook: a script that fails to run, or exits other than 0 or 2, is reported
+ * and answers nothing. */
 function answerOf(script, args, payload, directory) {
   return runCapture(script, args, payload, directory).then(({ error, code, signal, stdout, stderr }) => {
     if (error !== undefined) {
@@ -227,24 +231,117 @@ function stopReasonOf(script, args, payload, directory) {
   });
 }
 
-/** Pure: a finished tool call -> every PostToolUse hook whose matcher allows its tool. */
-function postToolUseCallsFor(call, directory) {
+function matchesTool(matcher, tool) {
+  return !matcher || matcher.split("|").some((name) => name.toLowerCase() === tool.toLowerCase());
+}
+
+/** Pure: a tool call -> every hook of one event whose matcher allows its tool. The host names the
+ * written file `filePath`; the scripts read Claude Code's `file_path`. */
+function toolUseCallsFor(event, hooks, call, args, directory) {
   const tool = String(call?.tool ?? "");
-  const args = call?.args;
   const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;
-  return POST_TOOL_USE.filter(
-    (hook) => !hook.matcher || hook.matcher.split("|").some((name) => name.toLowerCase() === tool.toLowerCase())
-  ).map((hook) => ({
+  return hooks.filter((hook) => matchesTool(hook.matcher, tool)).map((hook) => ({
     script: hook.script,
     args: hook.args,
     payload: {
-      hook_event_name: "PostToolUse",
+      hook_event_name: event,
       session_id: call?.sessionID ?? null,
       cwd: directory,
       tool_name: tool,
       tool_input: toolInput,
     },
   }));
+}
+
+/** A call about to run: the host hands the arguments in the output, not in the call. */
+function preToolUseCallsFor(call, output, directory) {
+  return toolUseCallsFor("PreToolUse", PRE_TOOL_USE, call, output?.args, directory);
+}
+
+/** A call that ran. */
+function postToolUseCallsFor(call, directory) {
+  return toolUseCallsFor("PostToolUse", POST_TOOL_USE, call, call?.args, directory);
+}
+
+/** The reason the first script that refuses gave, or null when none does. */
+async function refusalOf(calls) {
+  for (const call of calls) {
+    const { code, stderr } = await runCapture(call.script, call.args, call.payload, call.payload.cwd);
+    if (code === 2) return stderr.trim();
+  }
+  return null;
+}
+
+/** The refusal is thrown out of the host's hook, the one way it stops the call. */
+async function refuseToolUse(call, output, directory) {
+  let refusal = null;
+  try {
+    refusal = await refusalOf(preToolUseCallsFor(call, output, directory));
+  } catch (error) {
+    reportHookFailure("PreToolUse", error);
+  }
+  if (refusal !== null) throw new Error(refusal);
+}
+
+/** Each PostToolUse answer is appended to the output the model reads, a failure reported. */
+async function addToolAnswers(call, output, directory) {
+  try {
+    for (const hook of postToolUseCallsFor(call, directory)) {
+      const answer = await answerOf(hook.script, hook.args, hook.payload, directory);
+      if (answer) output.output = (output.output ?? "") + "\n\n" + answer;
+    }
+  } catch (error) {
+    reportHookFailure("PostToolUse", error);
+  }
+}
+
+const FOLLOW_UP = { aidd: "stop-follow-up" };
+
+function isFollowUp(parts) {
+  return parts.some((part) => part?.metadata?.aidd === FOLLOW_UP.aidd);
+}
+
+/** Pure: the user's message -> every UserPromptSubmit hook's call, none for a follow-up. The text
+ * is the user's own: a part another hook added is not. */
+function userPromptCallsFor(input, output, directory) {
+  const parts = output?.parts ?? [];
+  if (isFollowUp(parts)) return [];
+  const prompt = parts
+    .filter((part) => part?.type === "text" && !part.synthetic)
+    .map((part) => part.text)
+    .join("\n");
+  return USER_PROMPT_SUBMIT.map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: {
+      hook_event_name: "UserPromptSubmit",
+      session_id: input?.sessionID ?? null,
+      cwd: directory,
+      prompt,
+    },
+  }));
+}
+
+/** Each answer becomes a synthetic text part after the user's, its id derived from the first
+ * part's, this plugin's name and the hook's place in its list, so no two parts share one. */
+async function addPromptContext(input, output, directory) {
+  try {
+    const calls = userPromptCallsFor(input, output, directory);
+    for (const [index, call] of calls.entries()) {
+      const answer = await answerOf(call.script, call.args, call.payload, directory);
+      if (!answer) continue;
+      output.parts.push({
+        id: output.parts[0].id + "-" + "aidd-telemetry" + "-" + index,
+        messageID: output.message?.id,
+        sessionID: input?.sessionID,
+        type: "text",
+        text: answer,
+        synthetic: true,
+      });
+    }
+  } catch (error) {
+    reportHookFailure("UserPromptSubmit", error);
+  }
 }
 
 const started = new Set();
@@ -311,7 +408,7 @@ export const AiddTelemetryHooks = async (input) => {
               continued.add(sessionId);
               return input.client.session.prompt({
                 path: { id: sessionId },
-                body: { parts: [{ type: "text", text: reason }] },
+                body: { parts: [{ type: "text", text: reason, metadata: FOLLOW_UP }] },
               });
             })
             .catch((error) => reportFollowUpFailure(call.script, error));
@@ -322,16 +419,9 @@ export const AiddTelemetryHooks = async (input) => {
         // Silent on purpose: a hook that breaks OpenCode's own event loop is worse than one that never ran.
       }
     },
-    "tool.execute.after": async (call, output) => {
-      try {
-        for (const hook of postToolUseCallsFor(call, input.directory)) {
-          const answer = await answerOf(hook.script, hook.args, hook.payload, input.directory);
-          if (answer) output.output = `${output.output ?? ""}\n\n${answer}`;
-        }
-      } catch {
-        // Silent on purpose - see above.
-      }
-    },
+    "tool.execute.before": (call, output) => refuseToolUse(call, output, input.directory),
+    "chat.message": (call, output) => addPromptContext(call, output, input.directory),
+    "tool.execute.after": (call, output) => addToolAnswers(call, output, input.directory),
   };
 };
 

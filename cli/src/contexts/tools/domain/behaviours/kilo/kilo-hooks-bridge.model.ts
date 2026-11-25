@@ -4,7 +4,12 @@
  * replayable commands into that native module. Kilo 7.7.5 delivers session.created and
  * session.idle through its event hook; PostToolUse runs from tool.execute.after, which waits
  * for the script and appends its exit-2 stderr to the tool's output for the model to read.
- * Matchers ignore case, since Kilo names its tools in lowercase.
+ * PreToolUse runs from tool.execute.before: a script that exits 2 refuses the call, its stderr the
+ * reason the model reads, as a throw from that hook does on Kilo 7.7.5. UserPromptSubmit runs from
+ * chat.message: a script's answer joins the user's message as a synthetic text part. A throw from
+ * that hook stops the prompt, but its reason reaches neither the person nor the model (Kilo 7.8.32
+ * answers a generic UnknownError), so no script refuses. Matchers ignore case, since Kilo names its
+ * tools in lowercase.
  *
  * SessionStart runs on the first event naming a session, as on OpenCode, whose event shapes Kilo
  * shares. Limit: that a continued Kilo session's first event is not `session.created` was not
@@ -16,7 +21,11 @@
  * when keyed on `session.drained`; it was not reproduced.
  */
 
-import { type BridgeParts, generateBridge } from "../../bridges/event-bridge.js";
+import {
+  type BridgeParts,
+  type GeneratedBridge,
+  generateBridge,
+} from "../../bridges/event-bridge.js";
 
 const KILO_HOST = {
   identifierSuffix: "KiloHooks",
@@ -28,8 +37,6 @@ ${parts.hooksDir}
 ${parts.callTables}
 
 ${parts.shared}
-
-const FOLLOW_UP = { aidd: "stop-follow-up" };
 
 const ${parts.identifier} = async ({ directory, client }) => {
   const sessions = new Map();
@@ -65,27 +72,20 @@ const ${parts.identifier} = async ({ directory, client }) => {
         }
       }
     } catch (error) {
-      console.warn("[aidd] Kilo hook dispatch failed: " + String(error));
+      reportHookFailure("event", error);
     }
   },
   // A user's message starts a new turn. Kilo hands every plugin every message, so a follow-up,
   // this bridge's or another plugin's, is recognised by its mark and is not one.
   "chat.message": async (input, output) => {
     const session = sessions.get(input?.sessionID);
-    if (!session) return;
-    if (!output?.parts?.some((part) => part?.metadata?.aidd === FOLLOW_UP.aidd)) session.continued = false;
+    if (session && !isFollowUp(output?.parts ?? [])) session.continued = false;
+    await addPromptContext(input, output, session?.directory ?? directory);
   },
-  "tool.execute.after": async (call, output) => {
-    try {
-      const cwd = sessions.get(call?.sessionID)?.directory ?? directory;
-      for (const hook of postToolUseCallsFor(call, cwd)) {
-        const answer = await answerOf(hook.script, hook.args, hook.payload, cwd);
-        ${parts.appendAnswer}
-      }
-    } catch (error) {
-      console.warn("[aidd] Kilo hook dispatch failed: " + String(error));
-    }
-  },
+  "tool.execute.before": (call, output) =>
+    refuseToolUse(call, output, sessions.get(call?.sessionID)?.directory ?? directory),
+  "tool.execute.after": (call, output) =>
+    addToolAnswers(call, output, sessions.get(call?.sessionID)?.directory ?? directory),
   };
 };
 
@@ -94,6 +94,9 @@ export default { id: "${parts.plugin}-hooks", server: ${parts.identifier} };
 };
 
 /** Generates Kilo's default descriptor; failed hooks report without blocking its session. */
-export function generateKiloHooksBridge(rawHooksJson: string, plugin: string): string | null {
+export function generateKiloHooksBridge(
+  rawHooksJson: string,
+  plugin: string
+): GeneratedBridge<string> {
   return generateBridge(KILO_HOST, rawHooksJson, plugin);
 }

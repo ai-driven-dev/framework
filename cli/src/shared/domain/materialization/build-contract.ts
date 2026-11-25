@@ -14,8 +14,12 @@ export interface BuildFileReader {
  */
 export interface FlatHooksBridge {
   /** Raw (unrewritten) hooks.json content + plugin name -> the generated bridge module's
-   * full text, or `null` when nothing in it named an event the bridge maps. */
-  readonly generate: (rawHooksJson: string, plugin: string) => string | null;
+   * full text, `null` when nothing in it named an event the bridge maps, and what the bridge
+   * leaves out of the hooks it was read from: read once, both told together. */
+  readonly generate: (
+    rawHooksJson: string,
+    plugin: string
+  ) => { readonly content: string | null; readonly warnings: readonly string[] };
   /** The directory, relative to the project root, the generated bridge module lands in, named
    * `<plugin>-hooks.js`. */
   readonly dir: string;

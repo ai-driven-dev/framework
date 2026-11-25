@@ -70,7 +70,7 @@ export function buildKiloFlatContract(
         agentMarkdown,
       },
       mcp: { supported: false, reason: "carried by the config artifact, not a file of its own" },
-      hooks: flatHooksArtifact(hooks, { bridge: generateKiloHooksBridge }),
+      hooks: flatHooksArtifact(hooks, { tool: "kilo", bridge: generateKiloHooksBridge }),
     },
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,
