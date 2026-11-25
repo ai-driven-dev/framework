@@ -8,6 +8,7 @@
 # whose CLI is absent is skipped, and the first run needs network.
 # Each host's agent provider is chosen in the setup loop below; a host without one keeps its
 # saved provider. --agents-only preserves the main session's settings.
+# Without a built CLI the published one is used, which may predate --agents-only: build first.
 #
 # Global rules: sync only the Agents section in the managed block, preserving personal
 # rules. First OpenCode sync keeps its Claude personal-rule fallback unless disabled. Kilo

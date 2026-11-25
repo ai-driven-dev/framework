@@ -65,6 +65,7 @@ The main session and the agents run on the IDE's model unless you pick a provide
 ```bash
 aidd setup --ide opencode --provider mistral   # main session and agents on Mistral models
 aidd setup --ide opencode --provider none      # back to the IDE's model
+aidd setup --global --ide codex,opencode --plugins all --provider openai   # every project
 aidd setup --global --ide codex,opencode --plugins all --provider openai --agents-only   # every project, main session untouched
 ```
 

@@ -111,7 +111,10 @@ describe("reporting agent models", () => {
         agentsOnly: true,
         provider: undefined,
         hosts: [SYNTHETIC_TOOL],
-        main: NO_CHANGE,
+        main: {
+          ...NO_CHANGE,
+          changed: [{ host: SYNTHETIC_TOOL, path: "/home/.config/synthetic/settings.json" }],
+        },
       });
 
       expect(output.lines).toEqual([
