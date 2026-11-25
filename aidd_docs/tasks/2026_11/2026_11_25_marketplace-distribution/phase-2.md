@@ -8,6 +8,9 @@ status: done
 
 ```txt
 .
+├── .claude/
+│   ├── marketplace.json ✅
+│   └── settings.json ✏️
 ├── .claude-plugin/
 │   └── marketplace.json ✏️
 ├── .github/
@@ -23,7 +26,11 @@ status: done
 ├── docs/
 │   ├── COMPATIBILITY.md ✏️
 │   ├── INSTALL.md ✏️
-│   └── MAINTAINERS.md ✏️
+│   ├── MAINTAINERS.md ✏️
+│   └── SUBAGENTS.md ✏️
+├── plugins/
+│   └── aidd-*/
+│       └── README.md ✏️
 └── scripts/
     └── publish-marketplace.cjs ✏️
 ```
@@ -47,6 +54,7 @@ status: done
 1. Point the historical catalog at the compatibility ref while preserving local generation and ZIP behavior.
 2. Document per-client URLs, supported modes, the transition, and real-client verification limits. Run `make check` and release workflow checks.
 3. Keep the CLI architecture guard within its existing timeout by skipping receiver scans for files that cannot contain the call.
+4. Register a separate project marketplace for framework development and update user-facing Claude Code install commands to select the published catalog.
 
 ## Test acceptance criteria
 

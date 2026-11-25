@@ -25,18 +25,18 @@
     ]
   },
   "enabledPlugins": {
-    "aidd-context@aidd-framework": true,
-    "aidd-dev@aidd-framework": true,
-    "aidd-vcs@aidd-framework": true,
-    "aidd-pm@aidd-framework": true,
-    "aidd-orchestrator@aidd-framework": true,
-    "aidd-refine@aidd-framework": true
+    "aidd-context@aidd-framework-dev": true,
+    "aidd-dev@aidd-framework-dev": true,
+    "aidd-vcs@aidd-framework-dev": true,
+    "aidd-pm@aidd-framework-dev": true,
+    "aidd-orchestrator@aidd-framework-dev": true,
+    "aidd-refine@aidd-framework-dev": true
   },
   "extraKnownMarketplaces": {
-    "aidd-framework": {
+    "aidd-framework-dev": {
       "source": {
-        "source": "directory",
-        "path": "."
+        "source": "file",
+        "path": "./.claude/marketplace.json"
       }
     }
   }

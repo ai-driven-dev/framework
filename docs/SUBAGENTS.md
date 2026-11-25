@@ -49,7 +49,7 @@ Only `/aidd-orchestrator:01-sdlc` names an agent, by its role (`validator`), so 
 
 ## 📦 Install
 
-Install the `aidd-orchestrator` plugin: `/plugin install aidd-orchestrator@aidd-framework` in Claude Code, or see the [quick start](../README.md#quick-start) for the other tools. The agents come with it, except as a Codex plugin (see [Limits](#-limits)); open a new session so the tool loads them.
+In Claude Code, [add the AIDD marketplace](INSTALL.md#marketplace) and run `/plugin install aidd-orchestrator@aidd-marketplace`. For other tools, see the [quick start](../README.md#quick-start). Open a new session to load the agents. See [Limits](#-limits) for Codex plugin support.
 
 For every project on the machine at once:
 

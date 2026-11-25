@@ -1,0 +1,17 @@
+{
+  "name": "aidd-framework-dev",
+  "owner": {
+    "name": "AI-Driven Dev"
+  },
+  "plugins": [
+    { "name": "aidd-context", "source": "./plugins/aidd-context" },
+    { "name": "aidd-dev", "source": "./plugins/aidd-dev" },
+    { "name": "aidd-vcs", "source": "./plugins/aidd-vcs" },
+    { "name": "aidd-pm", "source": "./plugins/aidd-pm" },
+    { "name": "aidd-orchestrator", "source": "./plugins/aidd-orchestrator" },
+    { "name": "aidd-refine", "source": "./plugins/aidd-refine" },
+    { "name": "aidd-ui", "source": "./plugins/aidd-ui" },
+    { "name": "aidd-telemetry", "source": "./plugins/aidd-telemetry" },
+    { "name": "aidd-qa", "source": "./plugins/aidd-qa" }
+  ]
+}

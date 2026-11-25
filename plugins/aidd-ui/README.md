@@ -7,7 +7,7 @@ UI and UX design.
 | | |
 | --- | --- |
 | Status | alpha |
-| Install | `/plugin install aidd-ui@aidd-framework` |
+| Install | [Add the Claude Code marketplace](../../docs/INSTALL.md#marketplace), then run `/plugin install aidd-ui@aidd-marketplace` |
 | Start with | `/aidd-ui:01-journeys` |
 | Skills, agents, hooks | [Catalog](../../docs/CATALOG.md#-aidd-ui) |
 

@@ -71,9 +71,9 @@ Release rules: [Release](../RELEASE.md#rules).
 ## Create a plugin
 
 1. Create `plugins/aidd-<name>/` ([layout](ARCHITECTURE.md#anatomy-of-a-plugin)).
-2. Add it to `.claude-plugin/marketplace.json`, with `strict: true` and `metadata: { "recommended": false }`. After the Claude Code transition, split the build roster from the legacy catalog before changing plugin membership so the legacy URL keeps serving its final entries.
+2. Add it to the build catalog with `strict: true` and `metadata: { "recommended": false }`. Also add a local entry in `.claude/marketplace.json`. After the Claude Code transition, split the build roster from the legacy catalog before changing plugin membership so the legacy URL keeps serving its final entries.
 3. Add it to `release-please-config.json` and `.release-please-manifest.json`.
-4. Try it with `make reload` or by translating your checkout to a local Claude Code marketplace and adding the translated directory.
+4. Try it with `make reload` or register `./.claude/marketplace.json` in Claude Code and install `aidd-<name>@aidd-framework-dev` in the project. The development catalog resolves plugins from this checkout.
 5. Run `pnpm exec lefthook run pre-commit`.
 6. Open a pull request titled `feat(aidd-<name>): ...`.
 
