@@ -411,13 +411,13 @@ test("a copied contract made invalid is one line naming it, exit 0", () => {
   const s = session("aidd-pm", "claude", { [STORY]: GOOD_STORY });
   const contract = path.join(hookFor("aidd-pm", "claude"), "lib/contracts/02-user-stories/scripts/contract.json");
   const original = fs.readFileSync(contract, "utf8");
-  fs.writeFileSync(contract, original.replace('"version": 1', '"version": 2'));
+  fs.writeFileSync(contract, original.replace('"unit": "file"', '"unit": "nope"'));
   try {
     s.start();
     s.wrote(STORY);
     const found = lines(s.stop());
     assert.equal(found.length, 1);
-    assert.match(found[0], /^02-user-stories: .*version must be 1/u);
+    assert.match(found[0], /^02-user-stories: .*unit must be folder or file/u);
   } finally {
     fs.writeFileSync(contract, original);
   }

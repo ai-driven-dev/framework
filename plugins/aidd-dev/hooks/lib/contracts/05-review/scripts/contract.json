@@ -1,5 +1,4 @@
 {
-  "version": 1,
   "kind": "review",
   "unit": "file",
   "scope": ["aidd_docs/**/review.md"],

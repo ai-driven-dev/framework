@@ -1,5 +1,4 @@
 {
-  "version": 1,
   "kind": "hooks",
   "unit": "file",
   "targets": "plugins/*/hooks/hooks.json",
