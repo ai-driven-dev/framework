@@ -37,6 +37,7 @@ const host = require("./lib/host.cjs");
 const event = host.readEvent();
 if (event !== undefined) {
   fs.appendFileSync(process.env.AIDD_RECORD, JSON.stringify(event) + "\\n");
+  if (event.event === "SessionStart" && process.env.AIDD_START === "answer") host.answer({ level: 1, text: "start note" });
   if (event.event === "PostToolUse") host.answer({ level: 2, text: "finding" });
   if (event.event === "Stop" && process.env.AIDD_STOP === "answer") host.answer({ level: 1, text: "go on" });
   else if (event.event === "Stop") host.continueTurn("go on");
@@ -70,6 +71,7 @@ const ADAPTERS = {
 
 afterEach(async () => {
   vi.unstubAllEnvs();
+  vi.restoreAllMocks();
   // A SessionStart hook runs detached in `project/`; Windows refuses to remove a live process's cwd (EBUSY).
   await Promise.all(
     created
@@ -79,13 +81,13 @@ afterEach(async () => {
 });
 
 /** The captured arguments, the scrubbed project folder pointed at a real one. */
-async function captured(file: string, project: string): Promise<readonly unknown[]> {
+async function captured<T = unknown>(file: string, project: string): Promise<readonly T[]> {
   // Replaced inside the JSON text, so the folder goes in JSON-escaped: a Windows path's backslashes.
   const text = (await readFile(join(PAYLOADS, file), "utf8")).replaceAll(
     SCRUBBED_PROJECT,
     JSON.stringify(project).slice(1, -1)
   );
-  return (JSON.parse(text) as { samples: { payload: unknown }[] }).samples.map((s) => s.payload);
+  return (JSON.parse(text) as { samples: { payload: T }[] }).samples.map((s) => s.payload);
 }
 
 async function workspace(host: "opencode" | "kilo", bridge: string): Promise<Workspace> {
@@ -97,6 +99,8 @@ async function workspace(host: "opencode" | "kilo", bridge: string): Promise<Wor
   await mkdir(join(dir, "plugin"));
   await mkdir(project);
   await writeFile(join(scripts, "record.cjs"), RECORDER);
+  await writeFile(join(scripts, "silent.cjs"), "");
+  await writeFile(join(scripts, "fail.cjs"), "process.exit(1);\n");
   await writeFile(join(scripts, "lib", "host.cjs"), ADAPTERS[host]);
   await writeFile(
     join(dir, "hooks", "opencode-events.js"),
@@ -137,6 +141,25 @@ interface Plugin {
   readonly dispose?: () => Promise<void>;
   readonly event: Handler;
   readonly "tool.execute.after": Handler;
+  readonly "experimental.chat.system.transform": Handler;
+}
+
+interface SystemTransform {
+  readonly input: { readonly sessionID: string };
+  readonly output: { system: string[] };
+}
+
+/** The system prompt the host handed the hook, as captured: what it holds before a plugin adds. */
+async function systemTransform(
+  host: "opencode" | "kilo",
+  project: string
+): Promise<SystemTransform> {
+  const [sample] = await captured<SystemTransform>(
+    `${host}-experimental.chat.system.transform.json`,
+    project
+  );
+  if (sample === undefined) throw new Error("no captured system prompt");
+  return sample;
 }
 
 /** Loads the bridge as the host does: its default descriptor's `server`. */
@@ -189,17 +212,90 @@ const CONTINUED = [
   },
 ];
 
-function opencodeBridge(): string {
-  const { content } = generateOpencodeHooksBridge(HOOKS_JSON, "aidd-sample");
+/** A hooks.json whose SessionStart runs these commands, in order. */
+function startingWith(...commands: string[]): string {
+  return JSON.stringify({
+    hooks: { SessionStart: [{ hooks: commands.map((command) => ({ type: "command", command })) }] },
+  });
+}
+
+const SILENT = `node ${ROOT}/hooks/silent.cjs`;
+const FAILING = `node ${ROOT}/hooks/fail.cjs`;
+// A NUL in an argument is refused by `spawn` itself, before any child exists.
+const UNSPAWNABLE = `node ${ROOT}/hooks/record.cjs \u0000`;
+
+function opencodeBridge(hooksJson = HOOKS_JSON): string {
+  const { content } = generateOpencodeHooksBridge(hooksJson, "aidd-sample");
   if (content === null) throw new Error("expected a bridge");
   return content;
 }
 
-function kiloBridge(): string {
-  const { content } = generateKiloHooksBridge(HOOKS_JSON, "aidd-sample");
+function kiloBridge(hooksJson = HOOKS_JSON): string {
+  const { content } = generateKiloHooksBridge(hooksJson, "aidd-sample");
   if (content === null) throw new Error("expected a bridge");
   return content;
 }
+
+/** What SessionStart hands the model on `host` once its hooks ran: the system prompt after the
+ * host's own entries, and what the plugin added to it. */
+async function startedWith(host: "opencode" | "kilo", hooksJson: string) {
+  const ws = await workspace(
+    host,
+    host === "kilo" ? kiloBridge(hooksJson) : opencodeBridge(hooksJson)
+  );
+  vi.stubEnv("AIDD_START", "answer");
+  const { input, output } = await systemTransform(host, ws.project);
+  const before = [...output.system];
+  const [created] = await captured(`${host}-session.created.json`, ws.project);
+  const { plugin } = await start(ws, { directory: ws.dir });
+  await plugin.event({ event: created });
+  await plugin["experimental.chat.system.transform"](input, output);
+  return { before, added: output.system.slice(before.length) };
+}
+
+describe.each(["opencode", "kilo"] as const)("SessionStart answers on %s", (host) => {
+  it("joins several answers into one entry, a blank line apart", async () => {
+    const { added } = await startedWith(host, startingWith(RECORD, RECORD));
+
+    expect(added).toStrictEqual(["start note\n\nstart note"]);
+  });
+
+  it("leaves a silent script out of the entry, with no separator left behind", async () => {
+    const { added } = await startedWith(host, startingWith(SILENT, RECORD));
+
+    expect(added).toStrictEqual(["start note"]);
+  });
+
+  it("adds nothing, and does not throw, when a script cannot be spawned", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const { added } = await startedWith(host, startingWith(UNSPAWNABLE, RECORD));
+
+    expect(added).toStrictEqual(["start note"]);
+  });
+
+  it("keeps the answer of the scripts that ran when another one fails", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const { added } = await startedWith(host, startingWith(FAILING, RECORD));
+
+    expect(added).toStrictEqual(["start note"]);
+  });
+});
+
+describe.each([
+  ["opencode", "OpenCode"],
+  ["kilo", "Kilo"],
+] as const)("a failed SessionStart script on %s", (host, label) => {
+  it("is reported once", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    await startedWith(host, startingWith(FAILING));
+
+    expect(warn.mock.calls.map(([line]) => String(line))).toStrictEqual([
+      expect.stringMatching(
+        new RegExp(`^\\[aidd\\] ${label} hook .*fail\\.cjs failed: exited with code 1$`)
+      ),
+    ]);
+  });
+});
 
 describe("OpenCode, through its bridge", () => {
   it("reads a created session as SessionStart, in the session's own folder", async () => {
@@ -232,6 +328,18 @@ describe("OpenCode, through its bridge", () => {
     ]);
     await new Promise((resolve) => setTimeout(resolve, 200));
     expect(await recorded(ws, 1)).toHaveLength(1);
+  });
+
+  it("adds nothing to the system prompt when SessionStart answers nothing", async () => {
+    const ws = await workspace("opencode", opencodeBridge());
+    const [created] = await captured("opencode-session.created.json", ws.project);
+    const { input, output } = await systemTransform("opencode", ws.project);
+    const before = [...output.system];
+    const { plugin } = await start(ws, { directory: ws.dir });
+    await plugin.event({ event: created });
+    await plugin["experimental.chat.system.transform"](input, output);
+
+    expect(output.system).toStrictEqual(before);
   });
 
   it("leaves OpenCode 1.19's early V2 setup context alone, which has no location", async () => {
@@ -322,7 +430,6 @@ describe("OpenCode, through its bridge", () => {
     expect(warn).toHaveBeenCalledWith(
       expect.stringMatching(/^\[aidd\] OpenCode hook .*record\.cjs failed: .*follow-up.*refused/)
     );
-    warn.mockRestore();
   });
 
   it("reads an idle session as Stop, continues it once, and reads the next one as a continuation", async () => {
@@ -386,6 +493,19 @@ describe("Kilo, through its bridge", () => {
       "SessionStart",
       "Stop",
     ]);
+  });
+
+  it("leaves another session's system prompt alone", async () => {
+    const ws = await workspace("kilo", kiloBridge());
+    vi.stubEnv("AIDD_START", "answer");
+    const [created] = await captured("kilo-session.created.json", ws.project);
+    const { input, output } = await systemTransform("kilo", ws.project);
+    const before = [...output.system];
+    const { plugin } = await start(ws, { directory: ws.dir });
+    await plugin.event({ event: created });
+    await plugin["experimental.chat.system.transform"]({ ...input, sessionID: "another" }, output);
+
+    expect(output.system).toStrictEqual(before);
   });
 
   it("reads a write as its file and content, and appends the answer to the tool's result", async () => {
@@ -466,7 +586,6 @@ describe("Kilo, through its bridge", () => {
     expect(warn).toHaveBeenCalledWith(
       expect.stringMatching(/^\[aidd\] Kilo hook .*record\.cjs failed: .*follow-up.*refused/)
     );
-    warn.mockRestore();
   });
 
   // The bridge ends a turn at the next idle only after the session went busy again: that

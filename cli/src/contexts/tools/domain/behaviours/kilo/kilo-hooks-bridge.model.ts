@@ -2,7 +2,8 @@
  * Kilo loads JavaScript modules from `.kilo/plugin/` and requires a default descriptor with
  * `{ id, server }`. Declarative hooks.json has no Kilo runtime, so this generator turns its
  * replayable commands into that native module. Kilo 7.7.5 delivers session.created and
- * session.idle through its event hook; PostToolUse runs from tool.execute.after, which waits
+ * session.idle through its event hook; a SessionStart answer reaches the model through
+ * experimental.chat.system.transform; PostToolUse runs from tool.execute.after, which waits
  * for the script and appends its exit-2 stderr to the tool's output for the model to read.
  * PreToolUse runs from tool.execute.before: a script that exits 2 refuses the call, its stderr the
  * reason the model reads, as a throw from that hook does on Kilo 7.7.5. UserPromptSubmit runs from
@@ -56,10 +57,9 @@ const ${parts.identifier} = async ({ directory, client }) => {
         session.idle = false;
       } else if (event?.type === "session.idle" && !session.idle) {
         session.idle = true;
-        ${parts.stopLimit}
-        for (const hook of STOP) {
-          const payload = { hook_event_name: "Stop", session_id: id, cwd: session.directory, stop_hook_active: session.continued };
-          const reason = await stopReasonOf(hook.script, hook.args, payload, session.directory);
+        for (const call of stopCallsFor(id, session.directory)) {
+          const payload = { ...call.payload, stop_hook_active: session.continued };
+          const reason = await stopReasonOf(call.script, call.args, payload, session.directory);
           session.continued = reason !== "";
           // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
           // Open limit in \`kilo run\`: it exits at idle before this follow-up's turn runs, on 7.7.5 and 7.8.27
@@ -67,7 +67,7 @@ const ${parts.identifier} = async ({ directory, client }) => {
           if (reason) {
             client.session
               .promptAsync({ path: { id }, body: { parts: [{ type: "text", text: reason, metadata: FOLLOW_UP }] } })
-              .catch((error) => reportFollowUpFailure(hook.script, error));
+              .catch((error) => reportFollowUpFailure(call.script, error));
           }
         }
       }
@@ -75,6 +75,8 @@ const ${parts.identifier} = async ({ directory, client }) => {
       reportHookFailure("event", error);
     }
   },
+  // What SessionStart answered reaches the model through its session's system prompt, every turn.
+  "experimental.chat.system.transform": (input, output) => addSessionContext(input, output),
   // A user's message starts a new turn. Kilo hands every plugin every message, so a follow-up,
   // this bridge's or another plugin's, is recognised by its mark and is not one.
   "chat.message": async (input, output) => {

@@ -8,15 +8,15 @@
  * Only five hook events are replayed:
  *
  * - `SessionStart` runs once per session, on the first event that names it, so the script knows
- *   its session. That event is `session.created` for a new session; a continued one is created
+ *   its session. What it answers reaches the model through V1's
+ *   `experimental.chat.system.transform`, added to every turn's system prompt; that hook also
+ *   runs for the session's title call, which V1 does not tell apart. That event is `session.created` for a new session; a continued one is created
  *   no more, and its first event is another. V1 delivers both; the V2 adapter's events are
  *   unverified, OpenCode 1.19.3 exposing none.
  *   Limit: the V2 adapter's created event names no session, so under V2 SessionStart runs at the
  *   first turn's idle terminal, not before it.
  *   Limit: a subagent's child session names itself too, so SessionStart may run once per child
  *   session; not probed.
- *   Limit: a synchronous throw while spawning SessionStart would skip that event's Stop; never
- *   observed, spawn reporting its failures asynchronously.
  * - `Stop` maps to V1's `session.idle` or V2's execution terminal, once per turn.
  * - `PostToolUse` maps to V1's `tool.execute.after`, the one hook that waits for the script and
  *   can append its exit-2 stderr to the tool's output, which is how a problem reaches the model.
@@ -59,18 +59,6 @@ ${parts.callTables}
 
 ${parts.shared}
 
-/** Pure: \`session.idle\` -> every Stop hook's own {script, args, payload} - or \`[]\` for
- * any other event. */
-function stopCallsFor(event, directory) {
-  if (event?.type !== "session.idle") return [];
-  const sessionId = event.properties?.sessionID;
-  return STOP.map((hook) => ({
-    script: hook.script,
-    args: hook.args,
-    payload: { hook_event_name: "Stop", session_id: sessionId ?? null, cwd: directory },
-  }));
-}
-
 // Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
 // Module-level: the host creates the plugin again, and a fresh set would forget a continuation.
 const continued = new Set();
@@ -90,9 +78,8 @@ export const ${parts.identifier} = async (input) => {
       try {
         runSessionStart(event, input.directory);
         const directory = event?.properties?.directory ?? input.directory;
-        ${parts.stopLimit}
-        for (const call of stopCallsFor(event, directory)) {
-          const sessionId = call.payload.session_id;
+        const sessionId = event?.properties?.sessionID ?? null;
+        for (const call of event?.type === "session.idle" ? stopCallsFor(sessionId, directory) : []) {
           const payload = { ...call.payload, stop_hook_active: continued.has(sessionId) };
           const asking = stopReasonOf(call.script, call.args, payload, directory);
           // Pending before the script ends: dispose waits for a handling whose script still runs.
@@ -113,10 +100,11 @@ export const ${parts.identifier} = async (input) => {
           pending = Promise.all([pending, handling]).then(() => {});
           await asking;
         }
-      } catch {
-        // Silent on purpose: a hook that breaks OpenCode's own event loop is worse than one that never ran.
+      } catch (error) {
+        reportHookFailure("event", error);
       }
     },
+    "experimental.chat.system.transform": (input, output) => addSessionContext(input, output),
     "tool.execute.before": (call, output) => refuseToolUse(call, output, input.directory),
     "chat.message": (call, output) => addPromptContext(call, output, input.directory),
     "tool.execute.after": (call, output) => addToolAnswers(call, output, input.directory),

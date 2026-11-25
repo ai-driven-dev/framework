@@ -66,3 +66,29 @@ describe.each(["opencode", "kilo"])("the events %s routes through its bridge", (
     expect(events.sort()).toStrictEqual([...BRIDGE_EVENTS].sort());
   });
 });
+
+describe.each([
+  ["OpenCode", generateOpencodeHooksBridge],
+  ["Kilo", generateKiloHooksBridge],
+])("the module generated for %s", (_host, generate) => {
+  const source = generate(hooksOf("Stop", `node ${ROOT}/hooks/a.cjs`), "aidd-test").content ?? "";
+
+  it("builds the Stop calls once, in the shared builder", () => {
+    expect(source.match(/hook_event_name: "Stop"/g)).toHaveLength(1);
+    expect(source).toContain("function stopCallsFor(sessionId, directory) {");
+    expect(source.match(/Limit: one Stop hook per plugin/g)).toHaveLength(1);
+  });
+
+  it("declares no function it never calls", () => {
+    // An exposed property such as `Plugin.name = name;` is a reference nobody reads.
+    const code = source
+      .split("\n")
+      .filter((line) => !/^\w+\.\w+ = \w+;$/.test(line))
+      .join("\n");
+    const unused = [...code.matchAll(/^(?:async )?function (?<name>\w+)\(/gm)]
+      .flatMap((match) => (match.groups?.name === undefined ? [] : [match.groups.name]))
+      .filter((name) => code.match(new RegExp(`\\b${name}\\b`, "g"))?.length === 1);
+
+    expect(unused).toEqual([]);
+  });
+});

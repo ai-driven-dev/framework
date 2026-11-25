@@ -19,7 +19,6 @@ import {
   hooksDirDeclaration,
   NODE_IMPORTS_SOURCE,
   RUN_CAPTURE_SOURCE,
-  RUN_HOOK_SOURCE,
   reportHookFailureSource,
   STOP_REASON_OF_SOURCE,
 } from "./bridge-source.js";
@@ -44,7 +43,6 @@ function callTableDeclarations(table: BridgeHookTable): string {
 function sharedRuntimeSource(label: string, plugin: string): string {
   return [
     reportHookFailureSource(label),
-    RUN_HOOK_SOURCE,
     RUN_CAPTURE_SOURCE,
     ANSWER_OF_SOURCE,
     STOP_REASON_OF_SOURCE,
@@ -53,10 +51,6 @@ function sharedRuntimeSource(label: string, plugin: string): string {
     SESSION_START_SOURCE,
   ].join("\n\n");
 }
-
-/** Said once in every generated Stop handler. */
-const STOP_LIMIT_SOURCE =
-  "// Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.";
 
 /** What a host's module template composes its generated module from: the pieces every bridge
  * writes the same way. What the host writes itself is its event table, its export descriptor and
@@ -68,11 +62,10 @@ export interface BridgeParts {
   readonly nodeImports: string;
   readonly hooksDir: string;
   readonly callTables: string;
-  /** Every function the hosts share: `reportHookFailure`, `reportFollowUpFailure`, `runHook`,
-   * `answerOf`, `stopReasonOf`, `refuseToolUse`, `addToolAnswers`, `FOLLOW_UP`, `isFollowUp`,
-   * `addPromptContext` and `runSessionStart(event, fallbackDirectory)`. */
+  /** Every function the hosts share: `reportHookFailure`, `reportFollowUpFailure`, `answerOf`,
+   * `stopReasonOf`, `stopCallsFor`, `refuseToolUse`, `addToolAnswers`, `FOLLOW_UP`, `isFollowUp`,
+   * `addPromptContext`, `runSessionStart(event, fallbackDirectory)` and `addSessionContext`. */
   readonly shared: string;
-  readonly stopLimit: string;
 }
 
 /** What a bridge makes of a plugin's raw hooks.json, read once: the module, `null` when no mapped
@@ -105,7 +98,6 @@ export function generateBridge<R>(
       hooksDir: hooksDirDeclaration(plugin),
       callTables: callTableDeclarations(table),
       shared: sharedRuntimeSource(host.label, plugin),
-      stopLimit: STOP_LIMIT_SOURCE,
     }),
   };
 }

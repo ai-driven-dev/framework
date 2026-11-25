@@ -24,16 +24,19 @@ the event spelled as the host spells it. Read by the CLI converter tests and the
 They send no stdin payload: a plugin receives arguments. The files hold those raw arguments, named
 after the plugin hook or event that carried them: `tool.execute.before` is `{ call, output }`, the
 call's arguments in `output.args`; `chat.message` is `{ input, output }`, the user's message in
-`output.parts`; `tool.execute.after` is `{ call, output }`; `session.idle`, `session.created` and
-`message.updated` are the bus events: `session.created` is the moment the bridge runs SessionStart
-for a new session, `message.updated` the first event of a continued one. `hookAnswer` does not
-apply there.
+`output.parts`; `tool.execute.after` is `{ call, output }`; `experimental.chat.system.transform` is
+`{ input, output }` as the host passed them, `output.system` before the plugin adds to it;
+`session.idle`, `session.created` and `message.updated` are the bus events: `session.created` is
+the moment the bridge runs SessionStart for a new session, `message.updated` the first event of a
+continued one. `hookAnswer` does not apply there.
 
 ## Scrubbing
 
 Home and project paths are `/Users/user` and `/Users/user/project`, every session id is the one
 fake id `00000000-0000-4000-8000-000000000000`, the account email is `user@example.com`, and
-timestamps and dated session-file names are fixed to the epoch. Nothing else is altered.
+timestamps and dated session-file names are fixed to the epoch. Nothing else is altered: a date
+inside a host's own prompt text or model catalogue (`experimental.chat.system.transform`) is kept
+verbatim.
 
 ## Established
 

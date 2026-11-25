@@ -30,62 +30,37 @@ function exitDescription(code, signal) {
 }`;
 }
 
-function padded(lines: readonly string[], indent: number): string {
-  return lines.map((line) => " ".repeat(indent) + line).join("\n");
-}
-
-/** Spawns one hook script under node from the plugin's scripts folder, in the payload's directory. */
-function spawnHookSource(indent: number, stdio: string): string {
-  return padded(
-    [
-      'const child = spawn("node", [HOOKS_DIR + script, ...args], {',
-      "  cwd: directory,",
-      `  stdio: ${stdio},`,
-      "  timeout: 5000,",
-      "});",
-    ],
-    indent
-  );
-}
-
-/** Fire and forget: a failed spawn (ENOENT, a killed timeout), a script that exits other than 0 or
- * a script that never reads its stdin reports once and never throws past this function. */
-export const RUN_HOOK_SOURCE = `function runHook(script, args, payload, directory) {
-${spawnHookSource(2, '["pipe", "ignore", "ignore"]')}
-  let reported = false;
-  const report = (error) => {
-    if (reported) return;
-    reported = true;
-    reportHookFailure(script, error);
-  };
-  child.on("error", report);
-  child.on("close", (code, signal) => {
-    if (code !== 0 || signal !== null) report(exitDescription(code, signal));
-  });
-  child.stdin.on("error", report);
-  child.stdin.end(JSON.stringify(payload));
-}`;
-
-/** The \`runCapture\` every awaited script of a bridge goes through: its exit code and signal, its
+/** The `runCapture` every awaited script of a bridge goes through: its exit code and signal, its
  * stdout and stderr, and the error it failed to run with, never rejecting. */
-export const RUN_CAPTURE_SOURCE = `/** Runs one hook script with its payload on stdin and collects what it wrote. */
+export const RUN_CAPTURE_SOURCE = `/** Runs one hook script under node from the plugin's scripts folder, in the payload's directory,
+ * with its payload on stdin, and collects what it wrote. */
 function runCapture(script, args, payload, directory) {
   return new Promise((resolve) => {
+    const failed = (error) => resolve({ error, code: null, signal: null, stdout: "", stderr: "" });
     let stdout = "";
     let stderr = "";
-${spawnHookSource(4, '["pipe", "pipe", "pipe"]')}
-    child.stdout.on("data", (chunk) => {
-      stdout += chunk;
-    });
-    child.stderr.on("data", (chunk) => {
-      stderr += chunk;
-    });
-    // A spawn that never launches emits both an error and a close: the first settles it.
-    child.on("error", (error) => resolve({ error, code: null, signal: null, stdout: "", stderr: "" }));
-    child.on("close", (code, signal) => resolve({ code, signal, stdout, stderr }));
-    // A script that never reads its stdin must not throw.
-    child.stdin.on("error", () => {});
-    child.stdin.end(JSON.stringify(payload));
+    try {
+      const child = spawn("node", [HOOKS_DIR + script, ...args], {
+        cwd: directory,
+        stdio: ["pipe", "pipe", "pipe"],
+        timeout: 5000,
+      });
+      child.stdout.on("data", (chunk) => {
+        stdout += chunk;
+      });
+      child.stderr.on("data", (chunk) => {
+        stderr += chunk;
+      });
+      // A spawn that never launches emits both an error and a close: the first settles it.
+      child.on("error", failed);
+      child.on("close", (code, signal) => resolve({ code, signal, stdout, stderr }));
+      // A script that never reads its stdin must not throw.
+      child.stdin.on("error", () => {});
+      child.stdin.end(JSON.stringify(payload));
+    } catch (error) {
+      // An argument spawn refuses (a NUL byte) throws before any child exists.
+      failed(error);
+    }
   });
 }`;
 
@@ -103,8 +78,7 @@ export const ANSWER_OF_SOURCE = `function answerFrom(code, stdout, stderr) {
   }
 }
 
-/** Awaited, unlike runHook: a script that fails to run, or exits other than 0 or 2, is reported
- * and answers nothing. */
+/** A script that fails to run, or exits other than 0 or 2, is reported and answers nothing. */
 function answerOf(script, args, payload, directory) {
   return runCapture(script, args, payload, directory).then(({ error, code, signal, stdout, stderr }) => {
     if (error !== undefined) {
@@ -119,8 +93,9 @@ function answerOf(script, args, payload, directory) {
   });
 }`;
 
-/** The \`stopReasonOf\` of a bridge: the reason a Stop script gave to keep working, read through
- * \`runCapture\`. */
+/** The `stopReasonOf` of a bridge: the reason a Stop script gave to keep working, read through
+ * `runCapture`; and `stopCallsFor`, an idle session's Stop calls. The host adds what it
+ * tracks itself, `stop_hook_active`, to each payload. */
 export const STOP_REASON_OF_SOURCE = `/** A Stop script's {"decision":"block","reason"} on stdout: the reason to keep working on. */
 function stopReasonOf(script, args, payload, directory) {
   return runCapture(script, args, payload, directory).then(({ error, code, stdout }) => {
@@ -132,6 +107,15 @@ function stopReasonOf(script, args, payload, directory) {
       return "";
     }
   });
+}
+
+// Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
+function stopCallsFor(sessionId, directory) {
+  return STOP.map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: { hook_event_name: "Stop", session_id: sessionId, cwd: directory },
+  }));
 }`;
 
 /** A matcher names tools exactly or pipe-separated, ignoring case: the hosts name theirs in

@@ -127,25 +127,33 @@ async function addPromptContext(input, output, directory) {
 /** SessionStart runs on the first event that names a session, so the script knows its session.
  * That event is `session.created` for a new session; a continued one is created no more, and its
  * first event is another. A new session's first event names its folder under info; a continued
- * one's names none. The set is module-level: the host creates the plugin again, and a fresh set
- * would run it again.
+ * one's names none. Every script's answer reaches the model in one block, added to the system
+ * prompt of each of that session's turns. Not awaited by the event: the session's first turn
+ * awaits it. The map is module-level: the host creates the plugin again, and a fresh map would run
+ * the scripts again and lose their answer.
  *
  * Limit: `session.deleted` clears a session's entry through `properties.sessionID`, a shape no
  * captured payload shows for either host; were it named otherwise, the entry would only stay in
  * memory, session ids being unique. */
-export const SESSION_START_SOURCE = `const started = new Set();
+export const SESSION_START_SOURCE = `const sessionContexts = new Map();
 
 function runSessionStart(event, fallbackDirectory) {
   const named = event?.properties?.sessionID;
   if (typeof named !== "string") return;
   if (event.type === "session.deleted") {
-    started.delete(named);
+    sessionContexts.delete(named);
     return;
   }
-  if (started.has(named)) return;
-  started.add(named);
+  if (sessionContexts.has(named)) return;
   const directory = event.properties.info?.directory ?? fallbackDirectory;
-  for (const hook of SESSION_START) {
-    runHook(hook.script, hook.args, { hook_event_name: "SessionStart", session_id: named, cwd: directory }, directory);
-  }
+  const answers = SESSION_START.map((hook) =>
+    answerOf(hook.script, hook.args, { hook_event_name: "SessionStart", session_id: named, cwd: directory }, directory)
+  );
+  sessionContexts.set(named, Promise.all(answers).then((texts) => texts.filter(Boolean).join("\\n\\n")));
+}
+
+/** What SessionStart answered, added to the system prompt of the session's turn. */
+async function addSessionContext(input, output) {
+  const context = await sessionContexts.get(input?.sessionID);
+  if (context) output.system.push(context);
 }`;

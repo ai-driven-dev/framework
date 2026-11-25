@@ -297,48 +297,35 @@ function exitDescription(code, signal) {
   return "exited with code " + String(code) + (signal === null ? "" : " (" + signal + ")");
 }
 
-function runHook(script, args, payload, directory) {
-  const child = spawn("node", [HOOKS_DIR + script, ...args], {
-    cwd: directory,
-    stdio: ["pipe", "ignore", "ignore"],
-    timeout: 5000,
-  });
-  let reported = false;
-  const report = (error) => {
-    if (reported) return;
-    reported = true;
-    reportHookFailure(script, error);
-  };
-  child.on("error", report);
-  child.on("close", (code, signal) => {
-    if (code !== 0 || signal !== null) report(exitDescription(code, signal));
-  });
-  child.stdin.on("error", report);
-  child.stdin.end(JSON.stringify(payload));
-}
-
-/** Runs one hook script with its payload on stdin and collects what it wrote. */
+/** Runs one hook script under node from the plugin's scripts folder, in the payload's directory,
+ * with its payload on stdin, and collects what it wrote. */
 function runCapture(script, args, payload, directory) {
   return new Promise((resolve) => {
+    const failed = (error) => resolve({ error, code: null, signal: null, stdout: "", stderr: "" });
     let stdout = "";
     let stderr = "";
-    const child = spawn("node", [HOOKS_DIR + script, ...args], {
-      cwd: directory,
-      stdio: ["pipe", "pipe", "pipe"],
-      timeout: 5000,
-    });
-    child.stdout.on("data", (chunk) => {
-      stdout += chunk;
-    });
-    child.stderr.on("data", (chunk) => {
-      stderr += chunk;
-    });
-    // A spawn that never launches emits both an error and a close: the first settles it.
-    child.on("error", (error) => resolve({ error, code: null, signal: null, stdout: "", stderr: "" }));
-    child.on("close", (code, signal) => resolve({ code, signal, stdout, stderr }));
-    // A script that never reads its stdin must not throw.
-    child.stdin.on("error", () => {});
-    child.stdin.end(JSON.stringify(payload));
+    try {
+      const child = spawn("node", [HOOKS_DIR + script, ...args], {
+        cwd: directory,
+        stdio: ["pipe", "pipe", "pipe"],
+        timeout: 5000,
+      });
+      child.stdout.on("data", (chunk) => {
+        stdout += chunk;
+      });
+      child.stderr.on("data", (chunk) => {
+        stderr += chunk;
+      });
+      // A spawn that never launches emits both an error and a close: the first settles it.
+      child.on("error", failed);
+      child.on("close", (code, signal) => resolve({ code, signal, stdout, stderr }));
+      // A script that never reads its stdin must not throw.
+      child.stdin.on("error", () => {});
+      child.stdin.end(JSON.stringify(payload));
+    } catch (error) {
+      // An argument spawn refuses (a NUL byte) throws before any child exists.
+      failed(error);
+    }
   });
 }
 
@@ -353,8 +340,7 @@ function answerFrom(code, stdout, stderr) {
   }
 }
 
-/** Awaited, unlike runHook: a script that fails to run, or exits other than 0 or 2, is reported
- * and answers nothing. */
+/** A script that fails to run, or exits other than 0 or 2, is reported and answers nothing. */
 function answerOf(script, args, payload, directory) {
   return runCapture(script, args, payload, directory).then(({ error, code, signal, stdout, stderr }) => {
     if (error !== undefined) {
@@ -380,6 +366,15 @@ function stopReasonOf(script, args, payload, directory) {
       return "";
     }
   });
+}
+
+// Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
+function stopCallsFor(sessionId, directory) {
+  return STOP.map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: { hook_event_name: "Stop", session_id: sessionId, cwd: directory },
+  }));
 }
 
 function matchesTool(matcher, tool) {
@@ -495,21 +490,27 @@ async function addPromptContext(input, output, directory) {
   }
 }
 
-const started = new Set();
+const sessionContexts = new Map();
 
 function runSessionStart(event, fallbackDirectory) {
   const named = event?.properties?.sessionID;
   if (typeof named !== "string") return;
   if (event.type === "session.deleted") {
-    started.delete(named);
+    sessionContexts.delete(named);
     return;
   }
-  if (started.has(named)) return;
-  started.add(named);
+  if (sessionContexts.has(named)) return;
   const directory = event.properties.info?.directory ?? fallbackDirectory;
-  for (const hook of SESSION_START) {
-    runHook(hook.script, hook.args, { hook_event_name: "SessionStart", session_id: named, cwd: directory }, directory);
-  }
+  const answers = SESSION_START.map((hook) =>
+    answerOf(hook.script, hook.args, { hook_event_name: "SessionStart", session_id: named, cwd: directory }, directory)
+  );
+  sessionContexts.set(named, Promise.all(answers).then((texts) => texts.filter(Boolean).join("\n\n")));
+}
+
+/** What SessionStart answered, added to the system prompt of the session's turn. */
+async function addSessionContext(input, output) {
+  const context = await sessionContexts.get(input?.sessionID);
+  if (context) output.system.push(context);
 }
 
 const AiddContextKiloHooks = async ({ directory, client }) => {
@@ -530,10 +531,9 @@ const AiddContextKiloHooks = async ({ directory, client }) => {
         session.idle = false;
       } else if (event?.type === "session.idle" && !session.idle) {
         session.idle = true;
-        // Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
-        for (const hook of STOP) {
-          const payload = { hook_event_name: "Stop", session_id: id, cwd: session.directory, stop_hook_active: session.continued };
-          const reason = await stopReasonOf(hook.script, hook.args, payload, session.directory);
+        for (const call of stopCallsFor(id, session.directory)) {
+          const payload = { ...call.payload, stop_hook_active: session.continued };
+          const reason = await stopReasonOf(call.script, call.args, payload, session.directory);
           session.continued = reason !== "";
           // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
           // Open limit in `kilo run`: it exits at idle before this follow-up's turn runs, on 7.7.5 and 7.8.27
@@ -541,7 +541,7 @@ const AiddContextKiloHooks = async ({ directory, client }) => {
           if (reason) {
             client.session
               .promptAsync({ path: { id }, body: { parts: [{ type: "text", text: reason, metadata: FOLLOW_UP }] } })
-              .catch((error) => reportFollowUpFailure(hook.script, error));
+              .catch((error) => reportFollowUpFailure(call.script, error));
           }
         }
       }
@@ -549,6 +549,8 @@ const AiddContextKiloHooks = async ({ directory, client }) => {
       reportHookFailure("event", error);
     }
   },
+  // What SessionStart answered reaches the model through its session's system prompt, every turn.
+  "experimental.chat.system.transform": (input, output) => addSessionContext(input, output),
   // A user's message starts a new turn. Kilo hands every plugin every message, so a follow-up,
   // this bridge's or another plugin's, is recognised by its mark and is not one.
   "chat.message": async (input, output) => {
@@ -591,48 +593,35 @@ function exitDescription(code, signal) {
   return "exited with code " + String(code) + (signal === null ? "" : " (" + signal + ")");
 }
 
-function runHook(script, args, payload, directory) {
-  const child = spawn("node", [HOOKS_DIR + script, ...args], {
-    cwd: directory,
-    stdio: ["pipe", "ignore", "ignore"],
-    timeout: 5000,
-  });
-  let reported = false;
-  const report = (error) => {
-    if (reported) return;
-    reported = true;
-    reportHookFailure(script, error);
-  };
-  child.on("error", report);
-  child.on("close", (code, signal) => {
-    if (code !== 0 || signal !== null) report(exitDescription(code, signal));
-  });
-  child.stdin.on("error", report);
-  child.stdin.end(JSON.stringify(payload));
-}
-
-/** Runs one hook script with its payload on stdin and collects what it wrote. */
+/** Runs one hook script under node from the plugin's scripts folder, in the payload's directory,
+ * with its payload on stdin, and collects what it wrote. */
 function runCapture(script, args, payload, directory) {
   return new Promise((resolve) => {
+    const failed = (error) => resolve({ error, code: null, signal: null, stdout: "", stderr: "" });
     let stdout = "";
     let stderr = "";
-    const child = spawn("node", [HOOKS_DIR + script, ...args], {
-      cwd: directory,
-      stdio: ["pipe", "pipe", "pipe"],
-      timeout: 5000,
-    });
-    child.stdout.on("data", (chunk) => {
-      stdout += chunk;
-    });
-    child.stderr.on("data", (chunk) => {
-      stderr += chunk;
-    });
-    // A spawn that never launches emits both an error and a close: the first settles it.
-    child.on("error", (error) => resolve({ error, code: null, signal: null, stdout: "", stderr: "" }));
-    child.on("close", (code, signal) => resolve({ code, signal, stdout, stderr }));
-    // A script that never reads its stdin must not throw.
-    child.stdin.on("error", () => {});
-    child.stdin.end(JSON.stringify(payload));
+    try {
+      const child = spawn("node", [HOOKS_DIR + script, ...args], {
+        cwd: directory,
+        stdio: ["pipe", "pipe", "pipe"],
+        timeout: 5000,
+      });
+      child.stdout.on("data", (chunk) => {
+        stdout += chunk;
+      });
+      child.stderr.on("data", (chunk) => {
+        stderr += chunk;
+      });
+      // A spawn that never launches emits both an error and a close: the first settles it.
+      child.on("error", failed);
+      child.on("close", (code, signal) => resolve({ code, signal, stdout, stderr }));
+      // A script that never reads its stdin must not throw.
+      child.stdin.on("error", () => {});
+      child.stdin.end(JSON.stringify(payload));
+    } catch (error) {
+      // An argument spawn refuses (a NUL byte) throws before any child exists.
+      failed(error);
+    }
   });
 }
 
@@ -647,8 +636,7 @@ function answerFrom(code, stdout, stderr) {
   }
 }
 
-/** Awaited, unlike runHook: a script that fails to run, or exits other than 0 or 2, is reported
- * and answers nothing. */
+/** A script that fails to run, or exits other than 0 or 2, is reported and answers nothing. */
 function answerOf(script, args, payload, directory) {
   return runCapture(script, args, payload, directory).then(({ error, code, signal, stdout, stderr }) => {
     if (error !== undefined) {
@@ -674,6 +662,15 @@ function stopReasonOf(script, args, payload, directory) {
       return "";
     }
   });
+}
+
+// Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
+function stopCallsFor(sessionId, directory) {
+  return STOP.map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: { hook_event_name: "Stop", session_id: sessionId, cwd: directory },
+  }));
 }
 
 function matchesTool(matcher, tool) {
@@ -789,21 +786,27 @@ async function addPromptContext(input, output, directory) {
   }
 }
 
-const started = new Set();
+const sessionContexts = new Map();
 
 function runSessionStart(event, fallbackDirectory) {
   const named = event?.properties?.sessionID;
   if (typeof named !== "string") return;
   if (event.type === "session.deleted") {
-    started.delete(named);
+    sessionContexts.delete(named);
     return;
   }
-  if (started.has(named)) return;
-  started.add(named);
+  if (sessionContexts.has(named)) return;
   const directory = event.properties.info?.directory ?? fallbackDirectory;
-  for (const hook of SESSION_START) {
-    runHook(hook.script, hook.args, { hook_event_name: "SessionStart", session_id: named, cwd: directory }, directory);
-  }
+  const answers = SESSION_START.map((hook) =>
+    answerOf(hook.script, hook.args, { hook_event_name: "SessionStart", session_id: named, cwd: directory }, directory)
+  );
+  sessionContexts.set(named, Promise.all(answers).then((texts) => texts.filter(Boolean).join("\n\n")));
+}
+
+/** What SessionStart answered, added to the system prompt of the session's turn. */
+async function addSessionContext(input, output) {
+  const context = await sessionContexts.get(input?.sessionID);
+  if (context) output.system.push(context);
 }
 
 const AiddTelemetryKiloHooks = async ({ directory, client }) => {
@@ -824,10 +827,9 @@ const AiddTelemetryKiloHooks = async ({ directory, client }) => {
         session.idle = false;
       } else if (event?.type === "session.idle" && !session.idle) {
         session.idle = true;
-        // Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
-        for (const hook of STOP) {
-          const payload = { hook_event_name: "Stop", session_id: id, cwd: session.directory, stop_hook_active: session.continued };
-          const reason = await stopReasonOf(hook.script, hook.args, payload, session.directory);
+        for (const call of stopCallsFor(id, session.directory)) {
+          const payload = { ...call.payload, stop_hook_active: session.continued };
+          const reason = await stopReasonOf(call.script, call.args, payload, session.directory);
           session.continued = reason !== "";
           // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
           // Open limit in `kilo run`: it exits at idle before this follow-up's turn runs, on 7.7.5 and 7.8.27
@@ -835,7 +837,7 @@ const AiddTelemetryKiloHooks = async ({ directory, client }) => {
           if (reason) {
             client.session
               .promptAsync({ path: { id }, body: { parts: [{ type: "text", text: reason, metadata: FOLLOW_UP }] } })
-              .catch((error) => reportFollowUpFailure(hook.script, error));
+              .catch((error) => reportFollowUpFailure(call.script, error));
           }
         }
       }
@@ -843,6 +845,8 @@ const AiddTelemetryKiloHooks = async ({ directory, client }) => {
       reportHookFailure("event", error);
     }
   },
+  // What SessionStart answered reaches the model through its session's system prompt, every turn.
+  "experimental.chat.system.transform": (input, output) => addSessionContext(input, output),
   // A user's message starts a new turn. Kilo hands every plugin every message, so a follow-up,
   // this bridge's or another plugin's, is recognised by its mark and is not one.
   "chat.message": async (input, output) => {
