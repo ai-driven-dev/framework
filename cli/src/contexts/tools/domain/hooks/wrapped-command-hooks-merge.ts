@@ -4,6 +4,8 @@ import { rewritePluginRootInJson } from "../../../../shared/domain/materializati
 import type { ProjectHookEntry } from "../../contract/tool-vocabulary.js";
 import { toBase64 } from "../formats/base64.js";
 import { PLUGIN_HOOKS_SOURCE } from "../formats/hooks/descriptor.js";
+import { hostToolNames } from "../formats/host-tool-names.js";
+import type { PluginHookItem, PluginHooksShape } from "./plugin-hooks-shape.js";
 
 // The host runs a handler from its own directory under the project and requires JSON stdout even
 // for a silent hook.
@@ -19,9 +21,6 @@ type NamedHook = {
   [key: string]: (ProjectHookEntry | HandlerGroup)[] | boolean | undefined;
 };
 type NamedHooks = Record<string, NamedHook>;
-type SourceHooks = {
-  hooks?: Record<string, { matcher?: string; hooks?: ProjectHookEntry[] }[]>;
-};
 
 /** What a host that keeps hooks as a named, wrapped command is declared by. `label` names the host
  * in an error. */
@@ -47,6 +46,9 @@ export function wrappedCommandHooksScriptPath(
   return genericFlatHooksScriptPath(target.descriptor.flat.scriptsDir, pluginName, rest);
 }
 
+const runsCommand = (hook: PluginHookItem): hook is PluginHookItem & ProjectHookEntry =>
+  typeof hook.command === "string";
+
 function toHandler(hook: ProjectHookEntry): ProjectHookEntry {
   return {
     type: "command",
@@ -61,7 +63,7 @@ function toHandler(hook: ProjectHookEntry): ProjectHookEntry {
  * warning, where Claude would match. No shipped plugin writes one. */
 function hostMatcher(target: WrappedCommandHooksTarget, matcher: string | undefined) {
   if (matcher === undefined || matcher === "" || matcher === "*") return "*";
-  const names = matcher.split("|").flatMap((name) => target.descriptor.toolNames.get(name) ?? []);
+  const names = hostToolNames(matcher.split("|"), target.descriptor.toolNames);
   return names.length > 0 ? names.join("|") : undefined;
 }
 
@@ -74,7 +76,7 @@ function convert(
     suffix.startsWith(`${PLUGIN_HOOKS_SOURCE.scriptDir}/`)
       ? `./${wrappedCommandHooksScriptPath(target, pluginName, suffix)}`
       : `./${locate(suffix)}`
-  ) as SourceHooks;
+  ) as PluginHooksShape;
   const handlers: Record<string, (ProjectHookEntry | HandlerGroup)[]> = {};
   const warnings: string[] = [];
   for (const [event, groups] of Object.entries(rewritten.hooks ?? {})) {
@@ -83,7 +85,9 @@ function convert(
       continue;
     }
     if (event !== "PostToolUse") {
-      handlers[event] = groups.flatMap((group) => (group.hooks ?? []).map(toHandler));
+      handlers[event] = groups.flatMap((group) =>
+        (group.hooks ?? []).filter(runsCommand).map(toHandler)
+      );
       continue;
     }
     // PostToolUse goes in `{ matcher, hooks: [handler] }`, one group per group the plugin wrote.
@@ -95,7 +99,7 @@ function convert(
         );
         return [];
       }
-      return [{ matcher, hooks: (group.hooks ?? []).map(toHandler) }];
+      return [{ matcher, hooks: (group.hooks ?? []).filter(runsCommand).map(toHandler) }];
     });
     if (grouped.length > 0) handlers[event] = grouped;
   }

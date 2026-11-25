@@ -133,6 +133,14 @@ describe("wrapped command hooks", () => {
     expect(handlers[0]).not.toHaveProperty("timeout");
   });
 
+  it("writes no handler for a hook that runs no command", () => {
+    const json = JSON.stringify({
+      hooks: { SessionStart: [{ hooks: [{ type: "prompt" }, { type: "command", command: "x" }] }] },
+    });
+
+    expect(JSON.parse(merged(null, json).content).p.SessionStart).toHaveLength(1);
+  });
+
   describe("a tool event's matcher", () => {
     const grouped = (event: string, ...matchers: (string | undefined)[]) =>
       JSON.stringify({
@@ -167,6 +175,10 @@ describe("wrapped command hooks", () => {
       expect(matchersOf(grouped("PostToolUse", "Write|Shell|Edit"), "PostToolUse")).toEqual([
         "put|patch",
       ]);
+    });
+
+    it("names a host tool once when the matcher repeats it", () => {
+      expect(matchersOf(grouped("PostToolUse", "Write|Write"), "PostToolUse")).toEqual(["put"]);
     });
 
     it("skips a group naming no tool the host has, with a warning naming it", () => {
