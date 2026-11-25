@@ -35,7 +35,7 @@ A matcher is a pattern on the tool's name, on tool events only, never on Copilot
 
 | Intent | Claude | Codex | Cursor | Copilot | Antigravity | OpenCode, Kilo |
 | --- | --- | --- | --- | --- | --- | --- |
-| inform the model | `additionalContext` | `additionalContext`, not at `Stop` | `additional_context` | `additionalContext` | - | - |
+| inform the model | `additionalContext` | `additionalContext`, not at `Stop` | `additional_context` | `additionalContext` | `injectSteps` systemMessage, not after a tool | - |
 | block before a tool runs | exit 2 or `deny` | exit 2 or `deny` | exit 2 or `permission: deny` | exit 2 | `decision: deny` | exit 2, reason on stderr |
 | ask before a tool runs | `ask` | - | - | `ask` | `decision: ask` | - |
 | require a fix after a write | `decision: block` | `decision: block` | - | - | - | - |

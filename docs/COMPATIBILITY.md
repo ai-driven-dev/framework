@@ -23,11 +23,11 @@ What each AI tool receives from the framework.
 | ✅ | Supported |
 | ❌ | Not supported |
 | Marketplace only | Supported when installed through the tool's marketplace, not as flat files |
-| Some events | Through a generated bridge, some events: see Hook events |
+| Some events | Through a generated bridge, only `SessionStart`, `Stop` and `PostToolUse` |
 
 ## Hook events
 
-What the CLI carries to each host, per event. This is the one table: other pages point here. The Hooks column is coarser; this table is exact.
+What the CLI carries to each host, per event. This is the one table: other pages point here. The Hooks column is coarser: a ✅ there does not mean every event, and for Cursor, Antigravity and Kiro it covers only the events marked yes here. This table is exact.
 
 | Host | SessionStart | UserPromptSubmit | PreToolUse | PostToolUse | Stop | SessionEnd | SubagentStop |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -37,7 +37,7 @@ What the CLI carries to each host, per event. This is the one table: other pages
 | Cursor | yes | yes | yes | yes | yes, not headless | no | yes |
 | OpenCode | yes, V1, † | no, † | no, † | yes, V1 | yes, V1 | no | no |
 | Kilo Code | yes | no, † | no, † | yes | yes | no | no |
-| Antigravity CLI | yes | no | no | yes, matcher renamed | yes | no | no |
+| Antigravity CLI | yes | no | no | yes | yes | no | no |
 | Kiro | yes | no | no | yes, matcher mapped to tags | yes | no | no |
 | Kimi Code CLI | no | no | no | no | no | no | no |
 
@@ -66,7 +66,7 @@ What an event can do differs per host and is the generator's table, [hosts.md](.
 - A hook reads its tool by `agy`'s own name. The edit tool is `edit_file`, not `write_file`, and a matcher is an anchored regular expression over the whole name (`write_.*` fired `write_file` only, `write_f` fired nothing). The CLI reads a plugin matcher as a case-blind list of names split on `|` and renames each, so a regular-expression part selects nothing.
 - `PreToolUse`: `{}` denies, `{"decision":"deny","reason":...}` denies with the reason, `{"decision":"block"}` answered `unsupported hook decision: block` in 2 runs, and the reason reaches the model on its next tool call. A script exiting non-zero with an allow answer failed closed in single runs.
 - `SessionStart` and `PreInvocation` answers shaped `{"injectSteps":[{"systemMessage":{"systemMessage":"<text>"}}]}` reached the model.
-- Whether a model acts on a message injected mid-loop depends on the model and the message: for a `PreInvocation` relay it did on `gpt-oss-120b-medium` 3 of 3, on `gemini-3.8-flash-low` 2 of 3 for a task-related message (0 of 5 for an off-task one), and on `claude-sonnet-4-6` 0 of 6; the same model acted on a deny reason read on its next tool call, 3 of 3. It is unverified on `gemini-4-hydrogen`, the default model, which probes leave out.
+- Whether a model acts on a message injected mid-loop depends on the model and the message: for a `PreInvocation` relay it did on `gpt-oss-120b-medium` 3 of 3, on `gemini-3.8-flash-low` 2 of 3 for a task-related message (0 of 5 for an off-task one), and on `claude-sonnet-4-6` 0 of 6 for a task-related message (0 of 3 for an off-task one); the same model acted on a deny reason read on its next tool call, 3 of 3. It is unverified on `gemini-4-hydrogen`, the default model, which probes leave out. The three models that acted are listed for removal on the vendor's [models page](https://antigravity.google/docs/models), leaving `gemini-4-hydrogen` as the only free one.
 - A hook command runs from the folder holding `hooks.json`, `.agents/`. The CLI writes only the project's `.agents/hooks.json`; `agy` also loads a user-level hooks file, listed as global by `/hooks`, and runs it alongside the project file.
 - A `Stop` answer is relayed once: a message raised on a continuation (`executionNum` above 0) is dropped. `continuationActive` stayed false in 5 log entries from two runs, unverified against the vendor's statement that it should be true.
 - Unverified: injecting a tool call from a hook (one attempt, one shape, failed with `unknown injected step type`). A mid-loop `PostInvocation` `force_continue` was delivered as a system step but acted on 0 of 3 on `gemini-3.8-flash-low`, no other model run. A multi-chunk edit still called `edit_file`, so `replace_file_content` was never seen in a hook.
@@ -98,7 +98,7 @@ What an event can do differs per host and is the generator's table, [hosts.md](.
 ## Kiro limits
 
 - Kiro receives plugin hooks for `SessionStart`, `PostToolUse` and `Stop`, merged into `.kiro/hooks/aidd.json` ([hook types](https://kiro.dev/docs/hooks/types/), [hooks file](https://kiro.dev/docs/hooks/)). Every other event is dropped with a build warning, because no payload for it was captured.
-- With both a home and a project install, each Kiro `SessionStart` hook is expected to run twice, because the vendor says [global and workspace hooks run alongside each other](https://kiro.dev/docs/hooks/); this case is unprobed, and both runs would resolve to the home copy of the script.
+- With both a home and a project install, each Kiro hook is expected to run twice, because the vendor says [global and workspace hooks run alongside each other](https://kiro.dev/docs/hooks/); this case is unprobed, and both runs would resolve to the home copy of the script.
 - Kiro documents no user-visible hook output field, only standard output added to the agent's context, so a hook's person-facing text is not delivered.
 - Probed on `kiro-cli` 3.6.0 (V3), two conclusive Free models (a third was inconclusive), one run per case. Text a `PostToolUse` command prints was not seen reaching the model in any shape tried (bare stdout, `additionalContext`, `decision: block`, exit 1 or 2 with stderr). One model (`qwen3-coder-next`) acted on a hook of type `agent`, in one run, so a channel may exist. A `PreToolUse` exit 2 was not tried. Kiro IDE 1.x is unprobed and its docs say hook stdout reaches the agent.
 - `Stop`: exit 0 with `{"decision":"block","reason":...}` starts another turn ([hook types](https://kiro.dev/docs/hooks/types/), CLI tab), and so does exit 1, even with no output, in one run, with Kiro's default instruction, so a crashing script continues the turn. The payload is only `session_id`, `hook_event_name` and `cwd`, so no field marking a continuation was seen on this version. `Stop` fired once per user prompt, never again on the continuation, in every run.
