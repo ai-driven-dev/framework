@@ -10,11 +10,11 @@ Run an autonomous loop until a success condition is verified. An interactive pre
 
 ## Actions
 
-| #   | Action                                                 | Phase                  | Role                                                                               |
-| --- | ------------------------------------------------------ | ---------------------- | ---------------------------------------------------------------------------------- |
-| 01  | [01-init-tracking.md](actions/01-init-tracking.md)     | interactive pre-flight | validate the goal, build the journey map, create the tracking file, spawn the loop |
-| 02  | [02-auto-accept.md](actions/02-auto-accept.md)         | autonomous             | decide and act as the user, stopping only on money or destructive actions          |
-| 03  | [03-autonomous-loop.md](actions/03-autonomous-loop.md) | autonomous             | spawn one worker per step, verify, retry, evaluate the success condition           |
+| #   | Action            | Phase                  | Role                                                                       |
+| --- | ----------------- | ---------------------- | -------------------------------------------------------------------------- |
+| 01  | `init-tracking`   | interactive pre-flight | validate the goal, build the journey map, create the tracking file, spawn the loop |
+| 02  | `auto-accept`     | autonomous             | decide and act as the user, stopping only on money or destructive actions  |
+| 03  | `autonomous-loop` | autonomous             | spawn one worker per step, verify, retry, evaluate the success condition   |
 
 Run `01` interactively; it spawns `03`, which runs unattended under the `02` auto-accept rules until the success condition passes.
 Before running an action, read its file in `actions/`, not only the table or assets.

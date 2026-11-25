@@ -4,11 +4,11 @@ A minimal skill with no sibling address and one action.
 
 ## Actions
 
-Run `01-step`.
+Run `step`.
 
 | Action | Does |
 | --- | --- |
-| 01-step | does the one thing |
+| step | does the one thing |
 
 ## Notes
 

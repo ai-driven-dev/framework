@@ -10,10 +10,10 @@ Find untested behavior and iterate tests until they pass, or drive a full user j
 
 ## Actions
 
-| #   | Action                                           | When to use                                                        |
-| --- | ------------------------------------------------ | ------------------------------------------------------------------ |
-| 01  | [01-test.md](actions/01-test.md)                 | Find untested behaviors and write or iterate tests until they pass |
-| 02  | [02-test-journey.md](actions/02-test-journey.md) | Validate a full user journey end-to-end in the browser             |
+| #   | Action         | When to use                                                     |
+| --- | -------------- | -------------------------------------------------------------- |
+| 01  | `test`         | Find untested behaviors and write or iterate tests until they pass |
+| 02  | `test-journey` | Validate a full user journey end-to-end in the browser         |
 
 Pick the one action matching the intent; never default to `01`. Triggers like "write tests" or "what's untested" route to `01`, "test the user journey" or "end-to-end" to `02`. Ask one question when the intent is ambiguous.
 Before running an action, read its file in `actions/`, not only the table or assets.

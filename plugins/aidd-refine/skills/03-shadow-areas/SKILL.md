@@ -10,11 +10,11 @@ Analytically scans a written artifact for gaps the author has not addressed. Unl
 
 ## Actions
 
-| #   | Action                                             | Role                                                                       | Input                                    |
-| --- | -------------------------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------- |
-| 01  | [01-detect.md](actions/01-detect.md)               | Parse input, extract gaps, classify category and severity, emit probes     | file path or inline text                 |
-| 02  | [02-render-report.md](actions/02-render-report.md) | Render markdown grouped by category and sorted by severity, write report   | gap list from detect                     |
-| 03  | [03-diff.md](actions/03-diff.md)                   | Load prior report, classify gaps as closed / still-open / newly-introduced | gap list from detect + prior report path |
+| #   | Action           | Role                                                                     | Input                                    |
+| --- | ---------------- | ------------------------------------------------------------------------ | ---------------------------------------- |
+| 01  | `detect`         | Parse input, extract gaps, classify category and severity, emit probes   | file path or inline text                 |
+| 02  | `render-report`  | Render markdown grouped by category and sorted by severity, write report | gap list from detect                     |
+| 03  | `diff`           | Load prior report, classify gaps as closed / still-open / newly-introduced | gap list from detect + prior report path |
 
 Dispatch by context: with no prior report run `detect` then `render-report`; with one, run `detect` then `diff`.
 Before running an action, read its file in `actions/`, not only the table or assets.

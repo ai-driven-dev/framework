@@ -10,11 +10,11 @@ Stage, message, commit. `01 → 02 → 03`.
 
 ## Actions
 
-| #   | Action                                 | Step                                             |
-| --- | -------------------------------------- | ------------------------------------------------ |
-| 01  | [01-collect.md](actions/01-collect.md) | Stage one concern                                |
-| 02  | [02-message.md](actions/02-message.md) | Write the conventional message                   |
-| 03  | [03-commit.md](actions/03-commit.md)   | Commit, safely retry scoped fixes, push if asked |
+| #   | Action    | Step                                           |
+| --- | --------- | ---------------------------------------------- |
+| 01  | `collect` | Stage one concern                              |
+| 02  | `message` | Write the conventional message                 |
+| 03  | `commit`  | Commit, safely retry scoped fixes, push if asked |
 
 Several concerns means several commits: repeat the chain, one concern at a time.
 Before running an action, read its file in `actions/`, not only the table or assets.

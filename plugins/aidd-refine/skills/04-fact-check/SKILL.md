@@ -10,11 +10,11 @@ Verifies the factual claims inside a target text and rewrites it grounded in evi
 
 ## Actions
 
-| #   | Action                                                 | Role                                                                          | Input                |
-| --- | ------------------------------------------------------ | ----------------------------------------------------------------------------- | -------------------- |
-| 01  | [01-identify-claims.md](actions/01-identify-claims.md) | Extract verifiable factual claims from the text, classify each, drop opinion  | target text          |
-| 02  | [02-verify.md](actions/02-verify.md)                   | Run the verification cascade per claim, produce a verdict and sources         | claim list from 01   |
-| 03  | [03-report.md](actions/03-report.md)                   | Rewrite the text with footnote citations, hedge unverified, surface conflicts | verdict list from 02 |
+| #   | Action            | Role                                                                          | Input                       |
+| --- | ----------------- | ----------------------------------------------------------------------------- | --------------------------- |
+| 01  | `identify-claims` | Extract verifiable factual claims from the text, classify each, drop opinion  | target text                 |
+| 02  | `verify`          | Run the verification cascade per claim, produce a verdict and sources         | claim list from 01          |
+| 03  | `report`          | Rewrite the text with footnote citations, hedge unverified, surface conflicts | verdict list from 02        |
 
 Run `01 → 02 → 03`; pass each `## Test` before the next.
 Before running an action, read its file in `actions/`, not only the table or assets.

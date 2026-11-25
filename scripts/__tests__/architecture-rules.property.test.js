@@ -35,6 +35,8 @@ const SEPARATORS = {
 
 /** How a row names the action it routes to. Each is a citation shape the engine accepts. */
 const CITATIONS = {
+  stem: (name) => stemOf(name),
+  backtickedStem: (name) => `${TICK}${stemOf(name)}${TICK}`,
   numberedName: (name) => name.replace(/\.md$/, ""),
   backtickedFile: (name) => `${TICK}${name}${TICK}`,
 };
@@ -182,8 +184,8 @@ test("every unsplit shape that drops one citation yields exactly that one violat
 test("the shape matrix is wide enough to be worth running", () => {
   // A generator that silently produces nothing passes every property above. Pin the count so a
   // matrix that collapses fails here rather than going quietly green.
-  // 3 headers x 3 separators x 2 citation shapes x 6 noises x 2 split positions.
-  assert.equal(shapes().length, 216);
+  // 3 headers x 3 separators x 4 citation shapes x 6 noises x 2 split positions.
+  assert.equal(shapes().length, 432);
 });
 
 /**

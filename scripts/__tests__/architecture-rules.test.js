@@ -142,7 +142,7 @@ test("a name in a column other than the action column does not cite that action"
     "",
     "| # | Action | Next |",
     "| --- | --- | --- |",
-    "| 01 | `01-first` | second |",
+    "| 01 | `first` | second |",
     "",
     "## Transversal rules",
     "",
@@ -194,7 +194,7 @@ test("a glossary table before the router does not blind the router's own column"
     "",
     "| # | Action | Role |",
     "| --- | --- | --- |",
-    "| 01 | `01-first` | Do it |",
+    "| 01 | `first` | Do it |",
     "",
     "## Transversal rules",
     "",
@@ -216,9 +216,9 @@ test("a blank line splitting the router table is refused once, at the rows it cu
     "",
     "| # | Action | Role |",
     "| --- | --- | --- |",
-    "| 01 | `01-first` | Do it |",
+    "| 01 | `first` | Do it |",
     "",
-    "| 02 | `02-second` | Then this |",
+    "| 02 | `second` | Then this |",
     "",
     "## Transversal rules",
     "",
@@ -294,7 +294,7 @@ test("a two-dash separator row still marks the header it follows", () => {
     "",
     "| # | Action | Does |",
     "| -- | --- | --- |",
-    "| 01 | 01-first | Do it |",
+    "| 01 | first | Do it |",
     "",
     "## Transversal rules",
     "",
@@ -316,7 +316,7 @@ test("a plural Actions header declares the action column too", () => {
     "",
     "| # | Actions | Role |",
     "| --- | --- | --- |",
-    "| 01 | `01-first` | Do it |",
+    "| 01 | `first` | Do it |",
     "",
     "## Transversal rules",
     "",
@@ -330,40 +330,28 @@ test("a plural Actions header declares the action column too", () => {
   assert.deepEqual(violations, []);
 });
 
-test("a short alias of a numbered action file is not a citation", () => {
+test("two action files sharing a stem are not both covered by one citation", () => {
   const content = [
-    "# Alias skill",
+    "# Shared stem skill",
     "",
     "## Actions",
     "",
-    "| # | Action | Step |",
+    "| # | Action | Role |",
     "| --- | --- | --- |",
-    "| 01 | `collect` | Stage one concern |",
+    "| 01 | `plan` | Do it |",
     "",
     "## Transversal rules",
     "",
     "- Nothing.",
   ].join("\n");
-  const violations = checkArchitecture("plugins/aidd-fixture-a/skills/01-alias/SKILL.md", content, ["01-collect.md"]);
-  assert.equal(violations.length, 1);
-  assert.match(violations[0].message, /never names action file "01-collect\.md"/);
-});
-
-test("a link to the real action file is a citation", () => {
-  const content = [
-    "# Link skill",
-    "",
-    "## Actions",
-    "",
-    "| # | Step |",
-    "| --- | --- |",
-    "| 01 | [01-collect.md](actions/01-collect.md) |",
-    "",
-    "## Transversal rules",
-    "",
-    "- Nothing.",
-  ].join("\n");
-  assert.deepEqual(checkArchitecture("plugins/aidd-fixture-a/skills/01-link/SKILL.md", content, ["01-collect.md"]), []);
+  const violations = checkArchitecture(
+    "plugins/aidd-fixture-a/skills/01-shared-stem/SKILL.md",
+    content,
+    ["01-plan.md", "04-plan.md"]
+  );
+  assert.equal(violations.length, 2);
+  assert.match(violations[0].message, /never names action file "01-plan\.md"/);
+  assert.match(violations[1].message, /never names action file "04-plan\.md"/);
 });
 
 test("two action files sharing a stem are each cited by their numbered name", () => {
@@ -397,7 +385,7 @@ test("a fenced example table inside the Actions section cites nothing", () => {
     "",
     "| # | Action | Role |",
     "| --- | --- | --- |",
-    "| 01 | `01-first` | Do it |",
+    "| 01 | `first` | Do it |",
     "",
     "An example of the shape a router takes:",
     "",
@@ -452,7 +440,7 @@ test("a fenced ## heading inside the Actions section does not end it early", () 
     "",
     "| # | Action | Role |",
     "| --- | --- | --- |",
-    "| 01 | `01-first` | Do it |",
+    "| 01 | `first` | Do it |",
     "",
     "## Transversal rules",
     "",
@@ -505,7 +493,7 @@ test("a fence nobody closed is not read as a fence at all", () => {
     "```md",
     "| # | Action | Role |",
     "| --- | --- | --- |",
-    "| 01 | `01-first` | Do it |",
+    "| 01 | `first` | Do it |",
   ].join("\n");
   const violations = checkArchitecture(
     "plugins/aidd-fixture-a/skills/01-unterminated/SKILL.md",

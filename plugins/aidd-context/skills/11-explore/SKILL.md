@@ -16,10 +16,10 @@ Surveys the current project across three axes so the user sees what is there and
 
 ## Actions
 
-| #   | Action                               | Role                                                            | Input             |
-| --- | ------------------------------------ | --------------------------------------------------------------- | ----------------- |
-| 01  | [01-survey.md](actions/01-survey.md) | Scan the three axes and present a compact map                   | project root      |
-| 02  | [02-drill.md](actions/02-drill.md)   | Descend one axis or all, level by level, match an intent if any | a scope or a goal |
+| #   | Action   | Role                                                              | Input             |
+| --- | -------- | ---------------------------------------------------------------- | ----------------- |
+| 01  | `survey` | Scan the three axes and present a compact map                     | project root      |
+| 02  | `drill`  | Descend one axis or all, level by level, match an intent if any   | a scope or a goal |
 
 Detect the project's AI tools first, from the signals in `references/ai-mapping.md`. Then route by what the user asked: no scope given runs `survey` for a compact map, a named axis or "all" runs `drill` straight away. Always propose the axes when the request is open, never assume one. Run each action's `## Test` before the next.
 Before running an action, read its file in `actions/`, not only the table or assets.

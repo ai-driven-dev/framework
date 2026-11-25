@@ -4,4 +4,4 @@
 
 | # | Action | Facet |
 | --- | --- | --- |
-| 02 | `02-assert-architecture` | Report where the code breaks the documented architecture |
+| 02 | `assert-architecture` | Report where the code breaks the documented architecture |

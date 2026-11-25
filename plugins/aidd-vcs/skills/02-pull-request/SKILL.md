@@ -10,11 +10,11 @@ Collect the change, draft the request, create it as a draft. `01 → 02 → 03`.
 
 ## Actions
 
-| #   | Action                                 | Step                                             |
-| --- | -------------------------------------- | ------------------------------------------------ |
-| 01  | [01-collect.md](actions/01-collect.md) | Resolve the base and gather the commits since it |
-| 02  | [02-draft.md](actions/02-draft.md)     | Write the title and body from the template       |
-| 03  | [03-create.md](actions/03-create.md)   | Open the draft request, label it, return the URL |
+| #   | Action    | Step                                                        |
+| --- | --------- | ----------------------------------------------------------- |
+| 01  | `collect` | Resolve the base and gather the commits since it             |
+| 02  | `draft`   | Write the title and body from the template                   |
+| 03  | `create`  | Open the draft request, label it, return the URL             |
 
 Before running an action, read its file in `actions/`, not only the table or assets.
 

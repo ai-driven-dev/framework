@@ -33,6 +33,10 @@ function stripBackticks(text) {
   return quoted ? quoted[1].trim() : trimmed;
 }
 
+function stemOf(fileName) {
+  return fileName.replace(/\.md$/i, "").replace(/^[0-9]+-/, "");
+}
+
 function violation(rule, filePath, line, plugin, message) {
   return { file: filePath, line, plugin, rule, message };
 }
@@ -216,9 +220,25 @@ function citationsIn(cited, blankedLines, rawLines) {
   ]);
 }
 
-/** The file name, with or without `.md`: the numbered name stays accepted on purpose, a bare stem such as `collect` is no file and never counts. */
-function isCited(actionFileName, citations) {
-  return citations.has(actionFileName.toLowerCase()) || citations.has(actionFileName.replace(/\.md$/i, "").toLowerCase());
+/** A stem two action files share cites neither: one row would otherwise cover both. */
+function ambiguousStems(actionFileNames) {
+  const seen = new Set();
+  const shared = new Set();
+  for (const name of actionFileNames) {
+    const stem = stemOf(name).toLowerCase();
+    if (seen.has(stem)) shared.add(stem);
+    seen.add(stem);
+  }
+  return shared;
+}
+
+function isCited(actionFileName, citations, sharedStems) {
+  const stem = stemOf(actionFileName).toLowerCase();
+  return (
+    citations.has(actionFileName.toLowerCase()) ||
+    citations.has(actionFileName.replace(/\.md$/i, "").toLowerCase()) ||
+    (!sharedStems.has(stem) && citations.has(stem))
+  );
 }
 
 function checkRouterCoherence(filePath, content, actionFileNames) {
@@ -251,9 +271,10 @@ function checkRouterCoherence(filePath, content, actionFileNames) {
   }
 
   const citations = citationsIn(cited, sectionLines, rawLines.slice(startIndex, endIndex));
+  const sharedStems = ambiguousStems(names);
 
   return names
-    .filter((name) => !isCited(name, citations))
+    .filter((name) => !isCited(name, citations, sharedStems))
     .map((name) =>
       violation(
         "router-coherence",
