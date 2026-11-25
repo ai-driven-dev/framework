@@ -3,14 +3,12 @@
  * drives it with that host's events, with real hook scripts that record what reached them.
  */
 
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
-import { pathToFileURL } from "node:url";
 import { vi } from "vitest";
-import { generateKiloHooksBridge } from "../../../../src/contexts/tools/domain/behaviours/kilo/kilo-hooks-bridge.model.js";
-import { generateOpencodeHooksBridge } from "../../../../src/contexts/tools/domain/behaviours/opencode/opencode-hooks-bridge.model.js";
-import { capturedSample } from "./hook-payload-captures.builder.js";
+import { type BridgedHost, descriptorOf, placeBridge, sessionOf } from "./bridged-hosts.builder.js";
+import { capturedSample, captureFile } from "./hook-payload-captures.builder.js";
 import { madeFolder, removeMadeFolders } from "./made-folders.builder.js";
 
 export const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
@@ -71,35 +69,15 @@ export interface Descriptor {
   setup?: (ctx: string) => unknown;
 }
 
-export interface Host {
-  readonly name: string;
-  readonly generate: (hooksJson: string, plugin: string) => string | null;
-  /** What the host loads of the descriptor. */
-  readonly descriptorKeys: readonly string[];
-}
-
-export const HOSTS: readonly Host[] = [
-  {
-    name: "OpenCode",
-    generate: (hooksJson, plugin) => generateOpencodeHooksBridge(hooksJson, plugin).content,
-    descriptorKeys: ["id", "server", "setup"],
-  },
-  {
-    name: "Kilo",
-    generate: (hooksJson, plugin) => generateKiloHooksBridge(hooksJson, plugin).content,
-    descriptorKeys: ["id", "server"],
-  },
-];
-
 interface SessionCreated {
   readonly properties: { readonly info: Record<string, unknown> };
 }
 
 /** The event that starts a session, on which the host fires SessionStart: the host's captured
  * `session.created`, naming session `id` in `directory`. */
-export function sessionStarted(host: Host, id: string, directory: string) {
+export function sessionStarted(host: BridgedHost, id: string, directory: string) {
   const { payload } = capturedSample<SessionCreated>(
-    `${host.name.toLowerCase()}-session.created.json`,
+    captureFile(host.id, "session.created"),
     () => true,
     "session.created"
   );
@@ -131,40 +109,37 @@ export interface Call {
 }
 
 export async function open(
-  host: Host,
+  host: BridgedHost,
   hooksJson = REFERENCE_HOOKS,
   inputDirectory: (directory: string) => string = (directory) => directory
 ) {
   const directory = await madeFolder("aidd-event-bridge-");
-  await mkdir(join(directory, "hooks", "probe"), { recursive: true });
-  await mkdir(join(directory, "plugin"));
-  for (const [name, tail] of Object.entries(SCRIPTS)) {
-    await writeFile(join(directory, "hooks", "probe", name), `${RECORDING}\n${tail}\n});\n`);
-  }
-  await writeFile(join(directory, "hooks", "probe", "deaf.cjs"), DEAF);
-  await writeFile(join(directory, "hooks", "probe", "hang.cjs"), HANG);
-  await writeFile(
-    join(directory, "hooks", "opencode-events.js"),
+  // A stand-in for the shipped events adapter, so a test sees what the descriptor hands it.
+  const { scripts, module } = await placeBridge(
+    directory,
+    "probe",
+    host.generate(hooksJson, "probe") ?? "",
     "export function setupOpencodeEvents(ctx, server) { return { ctx, server }; }\n"
   );
-  const modulePath = join(directory, "plugin", "bridge.mjs");
-  await writeFile(modulePath, host.generate(hooksJson, "probe") ?? "");
-  const descriptor: Descriptor = (await import(pathToFileURL(modulePath).href)).default;
+  for (const [name, tail] of Object.entries(SCRIPTS)) {
+    await writeFile(join(scripts, name), `${RECORDING}\n${tail}\n});\n`);
+  }
+  await writeFile(join(scripts, "deaf.cjs"), DEAF);
+  await writeFile(join(scripts, "hang.cjs"), HANG);
+  const descriptor = await descriptorOf<Descriptor>(module);
   const prompts: Prompt[] = [];
   const delivered: Prompt[] = [];
-  // Each host calls its own method: OpenCode `prompt`, delivered after a delay as a real turn is
-  // (only what it awaits has landed); Kilo `promptAsync`.
+  // `prompt` resolves once its turn is delivered, after a delay as a real turn is (only what the
+  // bridge awaits has landed); `promptAsync` once queued.
   const client = {
-    session:
-      host.name === "OpenCode"
-        ? {
-            prompt: async (r: Prompt) => {
-              prompts.push(r);
-              await delay(100);
-              delivered.push(r);
-            },
-          }
-        : { promptAsync: async (r: Prompt) => void prompts.push(r) },
+    session: sessionOf(host, {
+      prompt: async (r: Prompt) => {
+        prompts.push(r);
+        await delay(100);
+        delivered.push(r);
+      },
+      promptAsync: async (r: Prompt) => void prompts.push(r),
+    }),
   };
   const server = await descriptor.server({ directory: inputDirectory(directory), client });
   const emit = async (...events: unknown[]) => {
@@ -196,9 +171,12 @@ export interface Captured {
 }
 
 /** A payload the host really sent, from its capture: the sample of its hook's file from `run`. */
-export async function captured(host: Host, hook: string, run: string): Promise<Captured> {
-  const file = `${host.name.toLowerCase()}-${hook}.json`;
-  return capturedSample<Captured>(file, (sample) => sample.run === run, `${run} sample`).payload;
+export async function capturedRun(host: BridgedHost, hook: string, run: string): Promise<Captured> {
+  return capturedSample<Captured>(
+    captureFile(host.id, hook),
+    (sample) => sample.run === run,
+    `${run} sample`
+  ).payload;
 }
 
 interface ToolAbout {
@@ -207,18 +185,11 @@ interface ToolAbout {
 }
 
 /** The captured write and shell calls of a host's `tool.execute.before`. */
-export async function beforeTool(host: Host, tool: "write" | "bash"): Promise<ToolAbout> {
-  const file = `${host.name.toLowerCase()}-tool.execute.before.json`;
+export async function beforeTool(host: BridgedHost, tool: "write" | "bash"): Promise<ToolAbout> {
   const found = capturedSample<ToolAbout>(
-    file,
+    captureFile(host.id, "tool.execute.before"),
     (s) => s.payload.call.tool === tool,
     `${tool} call`
   );
   return structuredClone(found.payload);
-}
-
-export function hostNamed(name: string): Host {
-  const host = HOSTS.find((candidate) => candidate.name === name);
-  if (host === undefined) throw new Error(`no host named ${name}`);
-  return host;
 }

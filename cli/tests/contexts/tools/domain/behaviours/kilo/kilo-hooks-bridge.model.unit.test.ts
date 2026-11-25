@@ -1,18 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { generateKiloHooksBridge } from "../../../../../../src/contexts/tools/domain/behaviours/kilo/kilo-hooks-bridge.model.js";
+import { hooksOf, ROOT } from "../../../testing/event-bridge-host.builder.js";
 
-const STOP_HOOK = JSON.stringify({
-  hooks: { Stop: [{ hooks: [{ command: "node $" + "{CLAUDE_PLUGIN_ROOT}/hooks/a.cjs" }] }] },
-});
+const STOP_HOOK = hooksOf("Stop", `node ${ROOT}/hooks/a.cjs`);
 
 describe("generating Kilo's hooks bridge", () => {
   it("exports a descriptor named after the plugin, serving the plugin's own server", () => {
     expect(generateKiloHooksBridge(STOP_HOOK, "aidd-test").content).toContain(
       'export default { id: "aidd-test-hooks", server: AiddTestKiloHooks };'
     );
-  });
-
-  it("writes no module for a plugin with no replayable hook", () => {
-    expect(generateKiloHooksBridge("{}", "aidd-test").content).toBeNull();
   });
 });

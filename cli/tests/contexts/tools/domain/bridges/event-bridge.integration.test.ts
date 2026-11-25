@@ -7,13 +7,13 @@
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { BRIDGED_HOSTS } from "../../testing/bridged-hosts.builder.js";
 import {
   ALONGSIDE,
   beforeTool,
-  captured,
+  capturedRun,
   cleanBridges,
   command,
-  HOSTS,
   open,
   REFERENCE_HOOKS,
   sessionStarted,
@@ -35,7 +35,12 @@ async function turnOf(
   }
 }
 
-describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
+describe.each(BRIDGED_HOSTS)("the bridge generated with $label's parameters", (host) => {
+  const failedScript = (error: string) =>
+    expect.stringMatching(
+      new RegExp(`^\\[aidd\\] ${host.label} hook exit7\\.cjs failed: .*${error}`)
+    );
+
   it("loads as a descriptor naming the plugin's hooks", async () => {
     const { descriptor } = await open(host);
 
@@ -98,22 +103,6 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
     ).toEqual(["note.cjs", "fix.cjs"]);
   });
 
-  it("reports a PostToolUse script that exits abnormally, naming its host, and leaves the output alone", async () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    const hooksJson = JSON.stringify({
-      hooks: { PostToolUse: [{ matcher: "Edit", ...command("exit7.cjs") }] },
-    });
-    const { tool } = await open(host, hooksJson);
-
-    expect(await tool("edit")).toBe("done");
-    expect(warn).toHaveBeenCalledTimes(1);
-    expect(warn).toHaveBeenCalledWith(
-      expect.stringMatching(
-        new RegExp(`^\\[aidd\\] ${host.name} hook exit7\\.cjs failed: exited with code 7`)
-      )
-    );
-  });
-
   it("lets a script that never reads its payload exit without breaking the host", async () => {
     const { tool } = await open(host);
     // A write to a script that has gone is an uncaught error in this process, which the runner
@@ -138,7 +127,7 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
     { kind: "nonzero exit", error: "exited with code 7", input: (dir: string) => dir },
     { kind: "spawn failure", error: "ENOENT", input: (dir: string) => join(dir, "absent") },
   ])(
-    "reports an awaited script's $kind, and adds nothing to the tool's output",
+    "reports an awaited script's $kind, naming its host, and adds nothing to the tool's output",
     async ({ error, input }) => {
       const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
       const hooksJson = JSON.stringify({
@@ -148,7 +137,7 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
 
       expect(await tool("grind")).toBe("done");
 
-      expect(warn).toHaveBeenCalledWith(expect.stringMatching(new RegExp(`failed: .*${error}`)));
+      expect(warn).toHaveBeenCalledWith(failedScript(error));
     }
   );
 
@@ -179,22 +168,6 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
     await tool("edit");
 
     expect(await of("trap.cjs")).toEqual([]);
-  });
-
-  it("sends a Stop script's block reason as the next prompt, and tells the next Stop it is a continuation", async () => {
-    const { directory, emit, of, prompts } = await open(host);
-    await emit(sessionStarted(host, "s1", directory));
-    const idle = { type: "session.idle", properties: { sessionID: "s1" } };
-
-    await emit(idle, idle);
-
-    expect(prompts).toMatchObject([
-      { path: { id: "s1" }, body: { parts: [{ type: "text", text: "fix it" }] } },
-    ]);
-    expect((await of("stop.cjs")).map((c) => c.payload)).toEqual([
-      { hook_event_name: "Stop", session_id: "s1", cwd: directory, stop_hook_active: false },
-      { hook_event_name: "Stop", session_id: "s1", cwd: directory, stop_hook_active: true },
-    ]);
   });
 
   // What only this holds: two live plugins on one session each reach the model. Shared module state
@@ -259,18 +232,6 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
     ]).toStrictEqual([1, [false, true]]);
   });
 
-  it("marks the follow-up it sends, so the host's message hook does not read it as the user's", async () => {
-    const { directory, emit, prompts } = await open(host);
-    await emit(sessionStarted(host, "s1", directory), {
-      type: "session.idle",
-      properties: { sessionID: "s1" },
-    });
-
-    expect(prompts).toMatchObject([
-      { body: { parts: [{ metadata: { aidd: "stop-follow-up" } }] } },
-    ]);
-  });
-
   it("refuses a tool call when a PreToolUse script exits 2, with its stderr as the reason", async () => {
     const hooksJson = JSON.stringify({
       hooks: { ...ALONGSIDE, PreToolUse: [{ matcher: "Write|Edit", ...command("fix.cjs") }] },
@@ -327,48 +288,33 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
     ).toEqual([0, 1, 1]);
   });
 
-  const FAILURES = [
-    { kind: "nonzero exit", error: "exited with code 7", input: (dir: string) => dir },
-    { kind: "spawn failure", error: "ENOENT", input: (dir: string) => join(dir, "absent") },
-  ];
-  const failedScript = (error: string) =>
-    expect.stringMatching(
-      new RegExp(`^\\[aidd\\] ${host.name} hook exit7\\.cjs failed: .*${error}`)
-    );
+  // How a failed script is reported is held once, at a tool's output above; here, only what each
+  // event does once a script failed.
+  it("refuses nothing when a PreToolUse script fails", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const hooksJson = JSON.stringify({ hooks: { PreToolUse: [command("exit7.cjs")] } });
+    const { server } = await open(host, hooksJson);
+    const { call, output } = await beforeTool(host, "bash");
 
-  it.each(FAILURES)(
-    "reports a PreToolUse script's $kind, naming its host, and refuses nothing",
-    async ({ error, input }) => {
-      const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-      const hooksJson = JSON.stringify({ hooks: { PreToolUse: [command("exit7.cjs")] } });
-      const { server } = await open(host, hooksJson, input);
-      const { call, output } = await beforeTool(host, "bash");
+    await expect(server["tool.execute.before"](call, output)).resolves.toBeUndefined();
+  });
 
-      await expect(server["tool.execute.before"](call, output)).resolves.toBeUndefined();
-      expect(warn).toHaveBeenCalledWith(failedScript(error));
-    }
-  );
+  it("sends no follow-up when a Stop script fails", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const hooksJson = JSON.stringify({ hooks: { Stop: [command("exit7.cjs")] } });
+    const { emit, prompts } = await open(host, hooksJson);
 
-  it.each(FAILURES)(
-    "reports a Stop script's $kind, naming its host, and sends no follow-up",
-    async ({ error, input }) => {
-      const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-      const hooksJson = JSON.stringify({ hooks: { Stop: [command("exit7.cjs")] } });
-      const { emit, prompts } = await open(host, hooksJson, input);
+    await emit({ type: "session.idle", properties: { sessionID: "s1" } });
 
-      await emit({ type: "session.idle", properties: { sessionID: "s1" } });
-
-      expect(prompts).toStrictEqual([]);
-      expect(warn).toHaveBeenCalledWith(failedScript(error));
-    }
-  );
+    expect(prompts).toStrictEqual([]);
+  });
 
   it("adds what a UserPromptSubmit script prints to the user's message, as a part of its own", async () => {
     const hooksJson = JSON.stringify({
       hooks: { ...ALONGSIDE, UserPromptSubmit: [command("note.cjs")] },
     });
     const { directory, server, of } = await open(host, hooksJson);
-    const { input, output } = await captured(host, "chat.message", "log");
+    const { input, output } = await capturedRun(host, "chat.message", "log");
     const [prompt] = output.parts;
 
     await server["chat.message"]?.(input, output);
@@ -404,7 +350,7 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
       },
     });
     const { server } = await open(host, hooksJson);
-    const { input, output } = await captured(host, "chat.message", "log");
+    const { input, output } = await capturedRun(host, "chat.message", "log");
 
     await server["chat.message"]?.(input, output);
 
@@ -420,7 +366,7 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
       hooks: { ...ALONGSIDE, UserPromptSubmit: [command("note.cjs")] },
     });
     const { server, of } = await open(host, hooksJson);
-    const { input, output } = await captured(host, "chat.message", "log");
+    const { input, output } = await capturedRun(host, "chat.message", "log");
     const [prompt] = output.parts;
 
     await server["chat.message"]?.(input, output);
@@ -464,7 +410,7 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
       hooks: { ...ALONGSIDE, UserPromptSubmit: [command("fix.cjs")] },
     });
     const { server } = await open(host, hooksJson);
-    const { input, output } = await captured(host, "chat.message", "log");
+    const { input, output } = await capturedRun(host, "chat.message", "log");
 
     await server["chat.message"]?.(input, output);
 
@@ -476,7 +422,7 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
       hooks: { ...ALONGSIDE, UserPromptSubmit: [command("record.cjs")] },
     });
     const { server, of } = await open(host, hooksJson);
-    const { input, output } = await captured(host, "chat.message", "log");
+    const { input, output } = await capturedRun(host, "chat.message", "log");
 
     await server["chat.message"]?.(input, output);
 
@@ -488,7 +434,7 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
       hooks: { ...ALONGSIDE, UserPromptSubmit: [command("note.cjs")] },
     });
     const { server, of } = await open(host, hooksJson);
-    const { input, output } = await captured(host, "chat.message", "follow-up");
+    const { input, output } = await capturedRun(host, "chat.message", "follow-up");
 
     await server["chat.message"]?.(input, output);
 

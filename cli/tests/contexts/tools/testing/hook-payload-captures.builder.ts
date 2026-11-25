@@ -14,6 +14,11 @@ export const SCRUBBED_PROJECT = "/Users/user/project";
 /** The session every capture names, once scrubbed. */
 export const SESSION = "00000000-0000-4000-8000-000000000000";
 
+/** The capture file of what `host` sent its `hook`, the hook spelled as the host spells it. */
+export function captureFile(host: string, hook: string): string {
+  return `${host}-${hook}.json`;
+}
+
 export interface CapturedSample<T = Record<string, unknown>> {
   readonly run: string;
   readonly payload: T;

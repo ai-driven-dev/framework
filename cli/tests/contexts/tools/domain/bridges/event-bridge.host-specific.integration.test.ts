@@ -9,13 +9,14 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { afterEach, describe, expect, it, onTestFinished, vi } from "vitest";
-import { cleanBridges, command, hostNamed, open } from "../../testing/event-bridge-host.builder.js";
+import { bridgedHost } from "../../testing/bridged-hosts.builder.js";
+import { cleanBridges, command, open } from "../../testing/event-bridge-host.builder.js";
 
 afterEach(cleanBridges);
 
 describe("the bridge generated with OpenCode's parameters", () => {
   it("hands its server to the loader's own setup, and fires no SessionStart before a session names itself", async () => {
-    const { descriptor, of } = await open(hostNamed("OpenCode"));
+    const { descriptor, of } = await open(bridgedHost("opencode"));
 
     expect(descriptor.setup?.("ctx")).toEqual({ ctx: "ctx", server: descriptor.server });
     await delay(200);
@@ -23,7 +24,7 @@ describe("the bridge generated with OpenCode's parameters", () => {
   });
 
   it("waits for the follow-up it sent when the host shuts the plugin down", async () => {
-    const { server, emit, delivered } = await open(hostNamed("OpenCode"));
+    const { server, emit, delivered } = await open(bridgedHost("opencode"));
 
     await emit({ type: "session.idle", properties: { sessionID: "s1" } });
     expect(delivered).toStrictEqual([]);
@@ -33,7 +34,7 @@ describe("the bridge generated with OpenCode's parameters", () => {
   });
 
   it("waits for a Stop script still running when the host shuts the plugin down", async () => {
-    const { server, delivered } = await open(hostNamed("OpenCode"));
+    const { server, delivered } = await open(bridgedHost("opencode"));
 
     // Not awaited: dispose arrives while the Stop script still runs.
     void server.event({ event: { type: "session.idle", properties: { sessionID: "s1" } } });
@@ -43,7 +44,7 @@ describe("the bridge generated with OpenCode's parameters", () => {
   });
 
   it("ignores an idle session once the host has shut it down", async () => {
-    const { server, emit, of } = await open(hostNamed("OpenCode"));
+    const { server, emit, of } = await open(bridgedHost("opencode"));
 
     await server.dispose();
     await emit({ type: "session.idle", properties: { sessionID: "s1" } });
@@ -56,7 +57,7 @@ describe("the bridge generated with OpenCode's parameters", () => {
     const hooksJson = JSON.stringify({
       hooks: { PostToolUse: [{ matcher: "Hang", ...command("hang.cjs") }] },
     });
-    const { directory, tool } = await open(hostNamed("OpenCode"), hooksJson);
+    const { directory, tool } = await open(bridgedHost("opencode"), hooksJson);
 
     const answered = await Promise.race([tool("hang"), delay(8000, "still waiting")]);
     const pid = Number(await readFile(join(directory, "hang.pid"), "utf8"));

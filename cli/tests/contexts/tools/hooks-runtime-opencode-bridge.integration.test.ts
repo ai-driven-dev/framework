@@ -3,15 +3,13 @@
  * by the adapter, and shows what the hook prints for the person as a toast.
  */
 
-import { join } from "node:path";
-import { pathToFileURL } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SESSION } from "./testing/hook-payload-captures.builder.js";
 import {
+  bridgeOf,
   CONTINUED,
-  captured,
+  capturedPayloads,
   cleanWorkspaces,
-  opencodeBridge,
   recorded,
   start,
   systemTransform,
@@ -23,8 +21,8 @@ afterEach(cleanWorkspaces);
 
 describe("OpenCode, through its bridge", () => {
   it("reads the first event of a continued session, which was never created again, as SessionStart once", async () => {
-    const ws = await workspace("opencode", opencodeBridge());
-    const [first] = await captured("opencode-message.updated.json", ws.project);
+    const ws = await workspace("opencode", bridgeOf("opencode"));
+    const [first] = await capturedPayloads("opencode", "message.updated", ws.project);
     const { plugin } = await start(ws, { directory: ws.project });
     await plugin.event({ event: first });
     await plugin.event({ event: first });
@@ -37,8 +35,8 @@ describe("OpenCode, through its bridge", () => {
   });
 
   it("leaves OpenCode 1.19's early V2 setup context alone, which has no location", async () => {
-    const ws = await workspace("opencode", opencodeBridge());
-    const mod = await import(pathToFileURL(join(ws.dir, "plugin", "aidd-sample-hooks.mjs")).href);
+    const ws = await workspace("opencode", bridgeOf("opencode"));
+    const mod = await import(ws.module);
     const early = Object.fromEntries(
       "options agent aisdk catalog command integration plugin reference skill"
         .split(" ")
@@ -56,7 +54,7 @@ interface CapturedToast {
 
 /** The toast OpenCode accepted and published, as captured: what a plugin asked for, and what the bus carried. */
 async function capturedToast(project: string): Promise<CapturedToast> {
-  const [sample] = await captured<CapturedToast>("opencode-tui.toast.show.json", project);
+  const [sample] = await capturedPayloads<CapturedToast>("opencode", "tui.toast.show", project);
   if (sample === undefined) throw new Error("no captured toast");
   return sample;
 }
@@ -68,10 +66,10 @@ function asked(toast: CapturedToast, message: string) {
 
 describe("OpenCode's person message, through its bridge", () => {
   it("shows the person's message as a toast when a tool call's hook answers only the person", async () => {
-    const ws = await workspace("opencode", opencodeBridge());
+    const ws = await workspace("opencode", bridgeOf("opencode"));
     vi.stubEnv("AIDD_POST", "person");
     const toast = await capturedToast(ws.project);
-    const [write] = await captured<ToolCall>("opencode-tool.execute.after.json", ws.project);
+    const [write] = await capturedPayloads<ToolCall>("opencode", "tool.execute.after", ws.project);
     const { plugin, toasts } = await start(ws, { directory: ws.project });
     if (write === undefined) throw new Error("no captured write");
     await plugin["tool.execute.after"](write.call, write.output);
@@ -81,10 +79,10 @@ describe("OpenCode's person message, through its bridge", () => {
   });
 
   it("shows it at a turn end that continues, beside the follow-up", async () => {
-    const ws = await workspace("opencode", opencodeBridge());
+    const ws = await workspace("opencode", bridgeOf("opencode"));
     vi.stubEnv("AIDD_STOP", "person");
     const toast = await capturedToast(ws.project);
-    const [, idle] = await captured("opencode-session.idle.json", ws.project);
+    const [, idle] = await capturedPayloads("opencode", "session.idle", ws.project);
     const { plugin, prompts, toasts } = await start(ws, { directory: ws.project });
     await plugin.event({ event: idle });
 
@@ -93,9 +91,9 @@ describe("OpenCode's person message, through its bridge", () => {
   });
 
   it("still continues the turn on the client the V2 adapter hands it, which has no TUI", async () => {
-    const ws = await workspace("opencode", opencodeBridge());
+    const ws = await workspace("opencode", bridgeOf("opencode"));
     vi.stubEnv("AIDD_STOP", "person");
-    const [, idle] = await captured("opencode-session.idle.json", ws.project);
+    const [, idle] = await capturedPayloads("opencode", "session.idle", ws.project);
     const { plugin, prompts } = await start(
       ws,
       { directory: ws.project },
@@ -109,10 +107,10 @@ describe("OpenCode's person message, through its bridge", () => {
   });
 
   it("shows it at a turn end that answers only the person, with no follow-up", async () => {
-    const ws = await workspace("opencode", opencodeBridge());
+    const ws = await workspace("opencode", bridgeOf("opencode"));
     vi.stubEnv("AIDD_STOP", "person-only");
     const toast = await capturedToast(ws.project);
-    const [, idle] = await captured("opencode-session.idle.json", ws.project);
+    const [, idle] = await capturedPayloads("opencode", "session.idle", ws.project);
     const { plugin, prompts, toasts } = await start(ws, { directory: ws.project });
     await plugin.event({ event: idle });
 
@@ -121,10 +119,10 @@ describe("OpenCode's person message, through its bridge", () => {
   });
 
   it("holds SessionStart's message until the first turn, then shows it once", async () => {
-    const ws = await workspace("opencode", opencodeBridge());
+    const ws = await workspace("opencode", bridgeOf("opencode"));
     vi.stubEnv("AIDD_START", "person");
     const toast = await capturedToast(ws.project);
-    const [created] = await captured("opencode-session.created.json", ws.project);
+    const [created] = await capturedPayloads("opencode", "session.created", ws.project);
     const { input, output } = await systemTransform("opencode", ws.project);
     const { plugin, toasts } = await start(ws, { directory: ws.dir });
     await plugin.event({ event: created });
@@ -138,9 +136,9 @@ describe("OpenCode's person message, through its bridge", () => {
   });
 
   it("does not throw into the host when the toast is refused", async () => {
-    const ws = await workspace("opencode", opencodeBridge());
+    const ws = await workspace("opencode", bridgeOf("opencode"));
     vi.stubEnv("AIDD_POST", "person");
-    const [write] = await captured<ToolCall>("opencode-tool.execute.after.json", ws.project);
+    const [write] = await capturedPayloads<ToolCall>("opencode", "tool.execute.after", ws.project);
     const { plugin, toasts } = await start(
       ws,
       { directory: ws.project },

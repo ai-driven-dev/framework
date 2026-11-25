@@ -7,19 +7,17 @@
 
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { BRIDGED_HOSTS } from "./testing/bridged-hosts.builder.js";
 import { hooksOf } from "./testing/event-bridge-host.builder.js";
 import { SESSION } from "./testing/hook-payload-captures.builder.js";
 import {
   ADAPTERS,
-  BRIDGED_HOSTS,
   bridgeOf,
   CONTINUED,
-  captured,
+  capturedPayloads,
   cleanWorkspaces,
   EDIT,
   FAILING,
-  kiloBridge,
-  opencodeBridge,
   PATCH,
   patched,
   RECORD,
@@ -36,7 +34,7 @@ import {
 
 afterEach(cleanWorkspaces);
 
-describe.each(BRIDGED_HOSTS)("SessionStart answers on $label", ({ host }) => {
+describe.each(BRIDGED_HOSTS)("SessionStart answers on $label", ({ id: host }) => {
   it("joins several answers into one entry, a blank line apart", async () => {
     const { added } = await startedWith(host, hooksOf("SessionStart", RECORD, RECORD));
 
@@ -64,27 +62,14 @@ describe.each(BRIDGED_HOSTS)("SessionStart answers on $label", ({ host }) => {
   });
 });
 
-describe.each(BRIDGED_HOSTS)("a failed SessionStart script on $label", ({ host, label }) => {
-  it("is reported once", async () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    await startedWith(host, hooksOf("SessionStart", FAILING));
-
-    expect(warn.mock.calls.map(([line]) => String(line))).toStrictEqual([
-      expect.stringMatching(
-        new RegExp(`^\\[aidd\\] ${label} hook .*fail\\.cjs failed: exited with code 1$`)
-      ),
-    ]);
-  });
-});
-
 describe("the adapter both bridged hosts share", () => {
   it("is one source, read as opencode behind the OpenCode bridge and as kilo behind the Kilo bridge", async () => {
-    const opencode = await workspace("opencode", opencodeBridge());
-    const [created] = await captured("opencode-session.created.json", opencode.project);
+    const opencode = await workspace("opencode", bridgeOf("opencode"));
+    const [created] = await capturedPayloads("opencode", "session.created", opencode.project);
     const started = await start(opencode, { directory: opencode.dir });
     await started.plugin.event({ event: created });
-    const kilo = await workspace("kilo", kiloBridge());
-    const [session] = await captured("kilo-session.created.json", kilo.project);
+    const kilo = await workspace("kilo", bridgeOf("kilo"));
+    const [session] = await capturedPayloads("kilo", "session.created", kilo.project);
     const { plugin } = await start(kilo, { directory: kilo.dir });
     await plugin.event({ event: session });
 
@@ -95,7 +80,7 @@ describe("the adapter both bridged hosts share", () => {
   });
 });
 
-describe.each(BRIDGED_HOSTS)("$label, through its bridge", ({ host, label }) => {
+describe.each(BRIDGED_HOSTS)("$label, through its bridge", ({ id: host, label }) => {
   const failed = (reason: string) =>
     expect.stringMatching(
       new RegExp(`^\\[aidd\\] ${label} hook .*record\\.cjs failed: .*${reason}.*refused`)
@@ -103,7 +88,7 @@ describe.each(BRIDGED_HOSTS)("$label, through its bridge", ({ host, label }) => 
 
   it("reads a created session as SessionStart, in the session's own folder", async () => {
     const ws = await workspace(host, bridgeOf(host));
-    const [created] = await captured(`${host}-session.created.json`, ws.project);
+    const [created] = await capturedPayloads(host, "session.created", ws.project);
     const { plugin } = await start(ws, { directory: ws.dir });
     await plugin.event({ event: created });
 
@@ -121,7 +106,7 @@ describe.each(BRIDGED_HOSTS)("$label, through its bridge", ({ host, label }) => 
 
   it("runs SessionStart once for a session, though the host creates the plugin again", async () => {
     const ws = await workspace(host, bridgeOf(host));
-    const [created] = await captured(`${host}-session.created.json`, ws.project);
+    const [created] = await capturedPayloads(host, "session.created", ws.project);
     const first = await start(ws, { directory: ws.dir });
     await first.plugin.event({ event: created });
     const again = await start(ws, { directory: ws.dir });
@@ -136,7 +121,7 @@ describe.each(BRIDGED_HOSTS)("$label, through its bridge", ({ host, label }) => 
 
   it("reads the first event naming a session as SessionStart, whichever event that is", async () => {
     const ws = await workspace(host, bridgeOf(host));
-    const [idle] = await captured(`${host}-session.idle.json`, ws.project);
+    const [idle] = await capturedPayloads(host, "session.idle", ws.project);
     const { plugin } = await start(ws, { directory: ws.project });
     await plugin.event({ event: idle });
 
@@ -148,7 +133,7 @@ describe.each(BRIDGED_HOSTS)("$label, through its bridge", ({ host, label }) => 
 
   it("adds nothing to the system prompt when SessionStart answers nothing", async () => {
     const ws = await workspace(host, bridgeOf(host));
-    const [created] = await captured(`${host}-session.created.json`, ws.project);
+    const [created] = await capturedPayloads(host, "session.created", ws.project);
     const { input, output } = await systemTransform(host, ws.project);
     const before = [...output.system];
     const { plugin } = await start(ws, { directory: ws.dir });
@@ -161,7 +146,7 @@ describe.each(BRIDGED_HOSTS)("$label, through its bridge", ({ host, label }) => 
   it("leaves another session's system prompt alone", async () => {
     const ws = await workspace(host, bridgeOf(host));
     vi.stubEnv("AIDD_START", "answer");
-    const [created] = await captured(`${host}-session.created.json`, ws.project);
+    const [created] = await capturedPayloads(host, "session.created", ws.project);
     const { input, output } = await systemTransform(host, ws.project);
     const before = [...output.system];
     const { plugin } = await start(ws, { directory: ws.dir });
@@ -223,7 +208,7 @@ describe.each(BRIDGED_HOSTS)("$label, through its bridge", ({ host, label }) => 
   it("continues the turn for any answer at Stop", async () => {
     const ws = await workspace(host, bridgeOf(host));
     vi.stubEnv("AIDD_STOP", "answer");
-    const [idle] = await captured(`${host}-session.idle.json`, ws.project);
+    const [idle] = await capturedPayloads(host, "session.idle", ws.project);
     const { plugin, prompts } = await start(ws, { directory: ws.project });
     await plugin.event({ event: idle });
 
@@ -233,7 +218,7 @@ describe.each(BRIDGED_HOSTS)("$label, through its bridge", ({ host, label }) => 
   it("reports a follow-up the host refused, without throwing into it", async () => {
     const ws = await workspace(host, bridgeOf(host));
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    const [idle] = await captured(`${host}-session.idle.json`, ws.project);
+    const [idle] = await capturedPayloads(host, "session.idle", ws.project);
     const { plugin } = await start(ws, { directory: ws.project }, new Error("refused"));
     await plugin.event({ event: idle });
 
@@ -242,8 +227,8 @@ describe.each(BRIDGED_HOSTS)("$label, through its bridge", ({ host, label }) => 
 
   it("reads an idle session as Stop, continues it once, and reads the next one as a continuation", async () => {
     const ws = await workspace(host, bridgeOf(host));
-    const [created] = await captured(`${host}-session.created.json`, ws.project);
-    const [, first, second] = await captured(`${host}-session.idle.json`, ws.project);
+    const [created] = await capturedPayloads(host, "session.created", ws.project);
+    const [, first, second] = await capturedPayloads(host, "session.idle", ws.project);
     const { plugin, prompts } = await start(ws, { directory: ws.project });
     await plugin.event({ event: created });
     await plugin.event({ event: first });

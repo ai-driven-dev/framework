@@ -6,15 +6,19 @@
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { pathToFileURL } from "node:url";
 import { vi } from "vitest";
 import { kilo } from "../../../../src/composition/tool-profiles/kilo.js";
 import { opencode } from "../../../../src/composition/tool-profiles/opencode.js";
-import { generateKiloHooksBridge } from "../../../../src/contexts/tools/domain/behaviours/kilo/kilo-hooks-bridge.model.js";
-import { generateOpencodeHooksBridge } from "../../../../src/contexts/tools/domain/behaviours/opencode/opencode-hooks-bridge.model.js";
 import { present } from "../../../shared/testing/present.builder.js";
+import {
+  type BridgedHostId,
+  bridgedHost,
+  descriptorOf,
+  placeBridge,
+  sessionOf,
+} from "./bridged-hosts.builder.js";
 import { ROOT } from "./event-bridge-host.builder.js";
-import { capturedSamples, SESSION } from "./hook-payload-captures.builder.js";
+import { capturedSamples, captureFile, SESSION } from "./hook-payload-captures.builder.js";
 import { madeFolder, removeMadeFolders } from "./made-folders.builder.js";
 
 export const RECORD = `node ${ROOT}/hooks/record.cjs`;
@@ -59,7 +63,9 @@ export interface Workspace {
   readonly dir: string;
   readonly project: string;
   readonly record: string;
-  readonly host: "opencode" | "kilo";
+  readonly host: BridgedHostId;
+  /** The URL of the bridge module placed in `dir`. */
+  readonly module: string;
 }
 
 /** The adapter each build puts at `hooks/lib/host.cjs`. */
@@ -75,43 +81,29 @@ export async function cleanWorkspaces(): Promise<void> {
   await removeMadeFolders();
 }
 
-/** The captured arguments, the scrubbed project folder pointed at a real one. */
-export async function captured<T = unknown>(file: string, project: string): Promise<readonly T[]> {
-  return capturedSamples<T>(file, project).map((sample) => sample.payload);
+/** The arguments `host` handed its `hook`, as captured, the scrubbed project folder pointed at a
+ * real one. */
+export async function capturedPayloads<T = unknown>(
+  host: BridgedHostId,
+  hook: string,
+  project: string
+): Promise<readonly T[]> {
+  return capturedSamples<T>(captureFile(host, hook), project).map((sample) => sample.payload);
 }
 
-export async function workspace(host: "opencode" | "kilo", bridge: string): Promise<Workspace> {
+export async function workspace(host: BridgedHostId, bridge: string): Promise<Workspace> {
   const dir = await madeFolder("aidd-hooks-runtime-bridge-");
   const project = join(dir, "project");
-  const scripts = join(dir, "hooks", "aidd-sample");
-  await mkdir(join(scripts, "lib"), { recursive: true });
-  await mkdir(join(dir, "plugin"));
+  const { scripts, module } = await placeBridge(dir, "aidd-sample", bridge);
+  await mkdir(join(scripts, "lib"));
   await mkdir(project);
   await writeFile(join(scripts, "record.cjs"), RECORDER);
   await writeFile(join(scripts, "silent.cjs"), "");
   await writeFile(join(scripts, "fail.cjs"), "process.exit(1);\n");
   await writeFile(join(scripts, "lib", "host.cjs"), ADAPTERS[host]);
-  await writeFile(
-    join(dir, "hooks", "opencode-events.js"),
-    await readFile(
-      join(
-        import.meta.dirname,
-        "..",
-        "..",
-        "..",
-        "..",
-        "assets",
-        "configs",
-        "opencode",
-        "opencode-events.js.txt"
-      ),
-      "utf8"
-    )
-  );
-  await writeFile(join(dir, "plugin", "aidd-sample-hooks.mjs"), bridge);
   const record = join(dir, "record.jsonl");
   vi.stubEnv("AIDD_RECORD", record);
-  return { dir, project, record, host };
+  return { dir, project, record, host, module };
 }
 
 export async function recorded(ws: Workspace, count: number): Promise<readonly Recorded[]> {
@@ -141,11 +133,12 @@ export interface SystemTransform {
 
 /** The system prompt the host handed the hook, as captured: what it holds before a plugin adds. */
 export async function systemTransform(
-  host: "opencode" | "kilo",
+  host: BridgedHostId,
   project: string
 ): Promise<SystemTransform> {
-  const [sample] = await captured<SystemTransform>(
-    `${host}-experimental.chat.system.transform.json`,
+  const [sample] = await capturedPayloads<SystemTransform>(
+    host,
+    "experimental.chat.system.transform",
     project
   );
   if (sample === undefined) throw new Error("no captured system prompt");
@@ -173,21 +166,14 @@ export async function start(
     prompts.push(request);
     return refusal === undefined ? Promise.resolve() : Promise.reject(refusal);
   };
-  // A turn end continues through OpenCode's `prompt` or Kilo's `promptAsync`; a required finding
-  // is queued through `promptAsync` on both, which never waits for the turn it interrupts.
   const client = v2Client
     ? { session: { prompt: send } }
     : {
-        session:
-          ws.host === "opencode" ? { prompt: send, promptAsync: send } : { promptAsync: send },
+        session: sessionOf(bridgedHost(ws.host), { prompt: send, promptAsync: send }),
         tui: { showToast },
       };
-  const mod = (await import(
-    pathToFileURL(join(ws.dir, "plugin", "aidd-sample-hooks.mjs")).href
-  )) as { default?: { server?: (input: unknown) => Promise<Plugin> } };
-  const factory = mod.default?.server;
-  if (factory === undefined) throw new Error("the bridge exports no server");
-  const plugin = await factory({ ...input, client });
+  const { server } = await descriptorOf<{ server: (input: unknown) => Promise<Plugin> }>(ws.module);
+  const plugin = await server({ ...input, client });
   return { plugin, prompts, toasts };
 }
 
@@ -200,8 +186,8 @@ export interface ToolCall {
   readonly output: { output: string };
 }
 
-export async function toolCall(host: "opencode" | "kilo", index: number, project: string) {
-  const calls = await captured<ToolCall>(`${host}-tool.execute.after.json`, project);
+export async function toolCall(host: BridgedHostId, index: number, project: string) {
+  const calls = await capturedPayloads<ToolCall>(host, "tool.execute.after", project);
   const found = calls[index];
   if (found === undefined) throw new Error(`no captured call ${index}`);
   return found;
@@ -237,37 +223,21 @@ export const FAILING = `node ${ROOT}/hooks/fail.cjs`;
 // A NUL in an argument is refused by `spawn` itself, before any child exists.
 export const UNSPAWNABLE = `node ${ROOT}/hooks/record.cjs \u0000`;
 
-export function opencodeBridge(hooksJson = HOOKS_JSON): string {
-  const { content } = generateOpencodeHooksBridge(hooksJson, "aidd-sample");
-  if (content === null) throw new Error("expected a bridge");
-  return content;
-}
-
-export function kiloBridge(hooksJson = HOOKS_JSON): string {
-  const { content } = generateKiloHooksBridge(hooksJson, "aidd-sample");
-  if (content === null) throw new Error("expected a bridge");
-  return content;
-}
-
-/** Each bridged host: its id, and its name in what its bridge logs. */
-export const BRIDGED_HOSTS = [
-  { host: "opencode", label: "OpenCode" },
-  { host: "kilo", label: "Kilo" },
-] as const;
-
 /** The bridge generated for `host` from `hooksJson`. */
-export function bridgeOf(host: "opencode" | "kilo", hooksJson = HOOKS_JSON): string {
-  return host === "kilo" ? kiloBridge(hooksJson) : opencodeBridge(hooksJson);
+export function bridgeOf(host: BridgedHostId, hooksJson = HOOKS_JSON): string {
+  const content = bridgedHost(host).generate(hooksJson, "aidd-sample");
+  if (content === null) throw new Error("expected a bridge");
+  return content;
 }
 
 /** What SessionStart hands the model on `host` once its hooks ran: the system prompt after the
  * host's own entries, and what the plugin added to it. */
-export async function startedWith(host: "opencode" | "kilo", hooksJson: string) {
+export async function startedWith(host: BridgedHostId, hooksJson: string) {
   const ws = await workspace(host, bridgeOf(host, hooksJson));
   vi.stubEnv("AIDD_START", "answer");
   const { input, output } = await systemTransform(host, ws.project);
   const before = [...output.system];
-  const [created] = await captured(`${host}-session.created.json`, ws.project);
+  const [created] = await capturedPayloads(host, "session.created", ws.project);
   const { plugin } = await start(ws, { directory: ws.dir });
   await plugin.event({ event: created });
   await plugin["experimental.chat.system.transform"](input, output);

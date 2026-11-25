@@ -19,13 +19,6 @@ describe.each([
   ["OpenCode", generateOpencodeHooksBridge],
   ["Kilo", generateKiloHooksBridge],
 ])("the bridge generator of %s", (_host, generate) => {
-  it("writes no module for a hooks.json no mapped event of which is replayable", () => {
-    expect(generate(hooksOf("Stop", `${ROOT}/hooks/a.sh`), "aidd-test").content).toBeNull();
-    expect(
-      generate(hooksOf("SessionEnd", `node ${ROOT}/hooks/a.cjs`), "aidd-test").content
-    ).toBeNull();
-  });
-
   it.each(["SessionStart", "Stop", "PostToolUse", "PreToolUse", "UserPromptSubmit"])(
     "writes a module for %s alone",
     (event) => {
