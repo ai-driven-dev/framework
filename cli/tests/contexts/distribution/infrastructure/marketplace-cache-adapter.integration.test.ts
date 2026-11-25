@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -23,5 +23,14 @@ describe("clearing a marketplace cache", () => {
     await rm(join(projectRoot, MARKETPLACE_CACHE_SUBDIR), { recursive: true, force: true });
 
     await expect(new MarketplaceCacheAdapter(projectRoot).clear()).resolves.not.toThrow();
+  });
+
+  it("refuses a cache directory it cannot read instead of reading it as empty", async () => {
+    await rm(join(projectRoot, MARKETPLACE_CACHE_SUBDIR), { recursive: true, force: true });
+    await writeFile(join(projectRoot, MARKETPLACE_CACHE_SUBDIR), "not a directory");
+
+    await expect(new MarketplaceCacheAdapter(projectRoot).clear()).rejects.toMatchObject({
+      code: "ENOTDIR",
+    });
   });
 });
