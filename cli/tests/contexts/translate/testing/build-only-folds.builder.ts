@@ -42,6 +42,7 @@ const FLAT_FOLDS: Record<string, Record<string, string[]>> = {
     "flat config artifact": [".codex/config.toml"],
   },
   antigravity: { "flat hooks file": [".agents/hooks.json"] },
+  kimi: { "flat MCP file": [".kimi-code/mcp.json"] },
 };
 
 /** Every file a build of this cell writes through a fold, by fold. */

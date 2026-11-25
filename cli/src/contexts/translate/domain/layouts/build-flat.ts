@@ -40,7 +40,8 @@ export function buildFlatPlans(
 }
 
 /** The folders a plugin's hook and MCP commands name that the tool has no place for, copied whole
- * under the plugin's name: only those, never every extra folder. */
+ * under the plugin's name: only those, never every extra folder, nor a hooks manifest the tool
+ * cannot run. */
 function flatCommandFiles(canon: PluginDistribution, contract: ToolBuildContract): ComponentPlan[] {
   const { hooks } = contract.artifacts;
   const plugin = canon.manifest.name;
@@ -52,9 +53,8 @@ function flatCommandFiles(canon: PluginDistribution, contract: ToolBuildContract
     commands.flatMap((file) => flatCommandFolders(contract, file.content, plugin))
   );
   return canon.files
-    .filter(
-      ({ relativePath }) => folders.has(relativePath.split("/")[0]) && relativePath.includes("/")
-    )
+    .filter(({ relativePath: path }) => folders.has(path.split("/")[0]) && path.includes("/"))
+    .filter(({ relativePath }) => hooks.supported || relativePath !== PLUGIN_HOOKS_RELATIVE)
     .map(({ relativePath, content }) => ({
       source: relativePath,
       path: `${plugin}/${relativePath}`,

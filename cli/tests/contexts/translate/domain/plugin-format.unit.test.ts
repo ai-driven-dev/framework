@@ -83,6 +83,7 @@ describe("listing the supported build targets", () => {
       "kilo",
       "codex",
       "antigravity",
+      "kimi",
     ]);
   });
 });

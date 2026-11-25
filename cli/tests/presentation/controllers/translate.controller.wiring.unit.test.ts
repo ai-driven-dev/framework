@@ -198,7 +198,7 @@ describe("aidd translate - the help surface", () => {
     ).toEqual([
       [
         "--to <target>",
-        "Conversion target (claude, cursor, copilot, codex, opencode, kilo, antigravity)",
+        "Conversion target (claude, cursor, copilot, codex, opencode, kilo, antigravity, kimi)",
         undefined,
       ],
       ["--out <dir>", "Output directory (marketplace dist or project root)", undefined],
