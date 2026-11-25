@@ -3,9 +3,10 @@
  * merge is Kiro's own.
  *
  * Only a command of the form `node ${CLAUDE_PLUGIN_ROOT}/hooks/...` is delivered; any other is
- * dropped, and no plugin ships one. Only `SessionStart`, `PostToolUse` and `Stop` are delivered,
- * and a plugin's matcher is not carried over: Kiro's own tool selectors were never run, so a
- * PostToolUse script runs after every tool and reads from its payload whether it wrote a file. */
+ * dropped, and no plugin ships one. Only `SessionStart`, `PostToolUse` and `Stop` are delivered.
+ * A PostToolUse matcher names Claude Code's tools; Kiro selects by a tool's tag
+ * (https://kiro.dev/docs/hooks/types/), and a matcher with `|` is a regex there, never a selector,
+ * so each tag gets its own hook. Stop takes no matcher, and SessionStart none a plugin ships. */
 
 import type { ShippedHooks } from "../../../../../shared/domain/materialization/build-contract.js";
 import { genericFlatHooksScriptPath } from "../../../../../shared/domain/materialization/flat-paths.js";
@@ -16,7 +17,6 @@ import { pluginScriptDir, pluginScriptPath } from "../../hooks/hooks-merge.js";
 import {
   type BridgeHookCall,
   bridgeHookCalls,
-  type PluginHookItem,
   type PluginMatcherGroup,
 } from "../../hooks/plugin-hooks-shape.js";
 
@@ -29,7 +29,25 @@ interface KiroHook {
   readonly name: string;
   readonly trigger: string;
   readonly action: { readonly type: string; readonly command?: string };
+  readonly matcher?: string;
   readonly timeout?: number;
+}
+
+/** The Kiro tag selecting what a Claude Code tool name (any case) names: the `write` tag was seen
+ * matching `fs_write` and `str_replace`, the `shell` tag `execute_bash`. A name Kiro has no tool
+ * for, such as `apply_patch`, selects nothing. */
+const TOOL_TAGS: ReadonlyMap<string, string> = new Map([
+  ["write", "write"],
+  ["edit", "write"],
+  ["delete", "write"],
+  ["bash", "shell"],
+  ["shell", "shell"],
+  ["powershell", "shell"],
+]);
+
+function selectorsOf(matcher: string): readonly string[] {
+  const tags = matcher.split("|").flatMap((name) => TOOL_TAGS.get(name.toLowerCase()) ?? []);
+  return [...new Set(tags)];
 }
 
 const VERSION = "v1";
@@ -93,19 +111,48 @@ function runs(hooks: KiroHooks, hook: KiroHook, plugin: string): boolean {
   );
 }
 
-function toKiroHooks(
-  scriptsDir: string,
-  plugin: string,
-  { trigger, item }: { trigger: string; item: PluginHookItem }
-): KiroHook[] {
-  return bridgeHookCalls([{ hooks: [item] }]).map((call) => ({
-    // `name` is the hook's "identifier" (https://kiro.dev/docs/hooks/); whether Kiro requires it unique
-    // is unprobed, so each trigger of a script gets its own. Ownership is matched by command, not name.
-    name: `${plugin}-${trigger}-${call.script}`,
+interface Built {
+  readonly hooks: readonly KiroHook[];
+  readonly warnings: readonly string[];
+}
+
+/** One hook per tag of the call's matcher, or one selecting every tool when it has none. Kiro keys
+ * a hook by its place in the file, so a name only has to read well: each trigger and tag of a
+ * script gets its own. Ownership is matched by command, not name. */
+function hooksOfCall(
+  { scriptsDir, plugin, trigger }: { scriptsDir: string; plugin: string; trigger: string },
+  call: BridgeHookCall,
+  timeout: unknown
+): Built {
+  const selectors = call.matcher === undefined ? [undefined] : selectorsOf(call.matcher);
+  const warnings =
+    selectors.length === 0 ? [`matcher '${call.matcher}' names no kiro tool, hook skipped`] : [];
+  const hooks = selectors.map((selector) => ({
+    name: [plugin, trigger, call.script, selector].filter(Boolean).join("-"),
     trigger,
+    ...(selector === undefined ? {} : { matcher: selector }),
     action: { type: "command", command: launcher(scriptsDir, plugin, call) },
-    ...(typeof item.timeout === "number" ? { timeout: item.timeout } : {}),
+    ...(typeof timeout === "number" ? { timeout } : {}),
   }));
+  return { hooks, warnings };
+}
+
+function hooksOfEvent(
+  where: { scriptsDir: string; plugin: string; trigger: string },
+  groups: readonly PluginMatcherGroup[]
+): Built {
+  const built = groups.flatMap((group) =>
+    (group.hooks ?? []).flatMap((item) =>
+      // Only PostToolUse selects by tool: Stop takes no matcher, and none ships at SessionStart.
+      bridgeHookCalls([
+        { matcher: where.trigger === "PostToolUse" ? group.matcher : undefined, hooks: [item] },
+      ]).map((call) => hooksOfCall(where, call, item.timeout))
+    )
+  );
+  return {
+    hooks: built.flatMap((one) => one.hooks),
+    warnings: built.flatMap((one) => one.warnings),
+  };
 }
 
 export function mergeKiroHooks(
@@ -122,12 +169,12 @@ export function mergeKiroHooks(
       warnings.push(`unmapped event '${event}' skipped`);
       continue;
     }
-    const items = groups.flatMap((group) => group.hooks ?? []);
-    added.push(
-      ...items.flatMap((item) =>
-        toKiroHooks(hooks.flat.scriptsDir, shipped.plugin, { trigger, item })
-      )
+    const built = hooksOfEvent(
+      { scriptsDir: hooks.flat.scriptsDir, plugin: shipped.plugin, trigger },
+      groups
     );
+    added.push(...built.hooks);
+    warnings.push(...built.warnings);
   }
   return { content: serialize(existingJson, [...kept, ...added]), warnings };
 }
@@ -145,11 +192,12 @@ export function kiroHooksFormat(hooks: KiroHooks): ProjectHooksFormat {
     contributedEntries: (content, plugin) =>
       hooksOf(content)
         .filter((hook) => runs(hooks, hook, plugin))
-        .map(({ name, trigger, action, timeout }) => ({
+        .map(({ name, trigger, matcher, action, timeout }) => ({
           event: trigger,
           entry: {
             name,
             command: action.command ?? "",
+            ...(matcher === undefined ? {} : { matcher }),
             ...(timeout === undefined ? {} : { timeout }),
           },
         })),

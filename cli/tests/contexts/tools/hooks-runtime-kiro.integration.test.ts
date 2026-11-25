@@ -49,10 +49,32 @@ describe("reading Kiro hook payloads", () => {
     });
   });
 
-  it("lists no file for a tool that is not the write the capture shows", () => {
-    const { payload } = sample("kiro-PostToolUse.json", 0);
+  it("lists no file for the read a capture shows", () => {
+    const { payload } = sample("kiro-PostToolUse.json", 1);
 
-    expect(read("kiro", { ...payload, tool_name: "fs_read" }).event?.files).toStrictEqual([]);
+    expect(read("kiro", payload).event?.files).toStrictEqual([]);
+  });
+
+  it("lists the edited file of a captured edit, without text: only fragments came", () => {
+    const { payload } = sample("kiro-PostToolUse.json", 3);
+
+    expect(read("kiro", payload).event?.files).toStrictEqual([{ path: at("b.txt") }]);
+  });
+
+  it("carries the command of a captured shell call, and no file", () => {
+    const { payload } = sample("kiro-PostToolUse.json", 4);
+    const { event } = read("kiro", payload);
+
+    expect(event?.command).toBe("echo done");
+    expect(event?.files).toStrictEqual([]);
+  });
+
+  it("carries no command for a tool that is not the shell", () => {
+    const { payload } = sample("kiro-PostToolUse.json", 4);
+
+    expect(read("kiro", { ...payload, tool_name: "read_file" }).event).not.toHaveProperty(
+      "command"
+    );
   });
 
   it("lists no file for a write naming no path", () => {

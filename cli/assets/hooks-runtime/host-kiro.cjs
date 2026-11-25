@@ -13,8 +13,11 @@ const path = require("node:path");
 
 const HOST = "kiro";
 const EVENTS = new Set(["SessionStart", "PostToolUse", "Stop"]);
-/** The one write tool a capture shows: its input is `{ path, text }`. */
-const WRITES = new Set(["fs_write"]);
+/** The write tools a capture shows: `fs_write` takes `{ path, text }`, `str_replace` takes
+ * `{ path, oldStr, newStr, replace_all }`. */
+const WRITES = new Set(["fs_write", "str_replace"]);
+/** The shell tool a capture shows: its input is `{ command, description, cwd, ... }`. */
+const SHELLS = new Set(["execute_bash"]);
 
 /** The event `readEvent` last returned: an answer is printed only for one. */
 let current;
@@ -44,6 +47,9 @@ function readEvent() {
     host: HOST,
     event,
     files: writtenFiles(raw.tool_name, raw.tool_input, cwd),
+    ...(SHELLS.has(raw.tool_name) && typeof raw.tool_input?.command === "string"
+      ? { command: raw.tool_input.command }
+      : {}),
     stopActive: false, // kiro-cli V3 payloads carry no continuation marker
     sessionId: typeof raw.session_id === "string" ? raw.session_id : null,
     cwd,
