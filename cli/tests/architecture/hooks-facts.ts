@@ -15,6 +15,10 @@ const ABSENCE = /^(?:false\b|\{\s*supported:\s*false\b)/;
 // A hooks section naming the descriptor's builders by reference, never restating a fact.
 const HOOKS_SECTION_OF_REFERENCES = /^\{\s*(?:config:\s*[\w$.()]+|delivery:\s*[\w$.]+)\s*$/;
 
+// A tool that runs no plugin hook says so in its delivery, one line and nothing else on it.
+const NO_DELIVERY =
+  /^\s*hooks:\s*\{\s*delivery:\s*\{\s*kind:\s*"none",\s*reason:\s*[\w$.]+\s*\}\s*\},?\s*$/;
+
 const HOOKS_PATH = /^["'`][^"'`]*[/.{}"'`]hooks(?:\/|\.json)/;
 
 /** Each member of an interface in the descriptor's type file, true when its type is another of
@@ -70,7 +74,11 @@ const DECLARES_ABSENCE: ReadonlyArray<(name: string, value: string) => boolean> 
   (name, value) => name === "hooks" && HOOKS_SECTION_OF_REFERENCES.test(value),
 ];
 
-function keyFacts(line: string, keys: ReadonlyMap<string, boolean>): string[] {
+function keyFacts(
+  { line, raw }: { readonly line: string; readonly raw: string },
+  keys: ReadonlyMap<string, boolean>
+): string[] {
+  if (NO_DELIVERY.test(raw)) return [];
   return [...line.matchAll(KEY_VALUE)]
     .map((match) => ({ name: match[1] ?? "", value: (match[2] ?? "").trim(), index: match.index }))
     .filter(({ name, value, index }) => statesFact(name, value, index, keys))
@@ -109,7 +117,7 @@ export function hooksFacts(source: string, keys: ReadonlyMap<string, boolean>): 
     const constant = constantFact(index, lines, raw);
     return [
       ...(/\bnew HooksConfigPart\(/.test(line) ? ["HooksConfigPart"] : []),
-      ...keyFacts(line, keys),
+      ...keyFacts({ line, raw: at(raw, index) }, keys),
       ...(constant ? [constant] : []),
     ];
   });

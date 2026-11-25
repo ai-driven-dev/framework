@@ -50,8 +50,6 @@ const AGENT_TOOLS: ReadonlyMap<string, string> = new Map([
 const USER_LEVEL_ONLY =
   "Kimi reads hooks only from the user-level config.toml, never from a project";
 
-const USER_LEVEL_DELIVERY = { kind: "none", reason: USER_LEVEL_ONLY } as const;
-
 export const kimi = defineAiTool({
   toolId: "kimi",
   directory: DIRECTORY,
@@ -69,7 +67,7 @@ export const kimi = defineAiTool({
 
   capabilities: {
     skills: { agentsSkillsDirectory: true },
-    hooks: { delivery: USER_LEVEL_DELIVERY },
+    hooks: { delivery: { kind: "none", reason: USER_LEVEL_ONLY } },
     layout: flatPlacement({ namespacePrefix: "aidd-", artifacts: KIMI_FLAT_LAYOUT }),
   },
 

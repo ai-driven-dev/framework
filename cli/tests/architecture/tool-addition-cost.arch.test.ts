@@ -326,6 +326,9 @@ const PLANTED = [
   'const p = {\n  acceptsHooks: false,\n  hooksUnsupportedReason: "runs no plugin hooks",\n}; →',
   "const c = {\n  hooks: { supported: true },\n  acceptsHooks: true,\n}; → hooks acceptsHooks",
   "const c = {\n  hooks: { delivery: { kind: X } },\n}; → hooks",
+  'const c = {\n  hooks: { delivery: { kind: "none", reason: WHY } },\n}; →',
+  'const c = {\n  hooks: { delivery: { kind: "install", reason: WHY } },\n}; → hooks',
+  'const c = {\n  hooks: { delivery: { kind: "none", reason: WHY, pluginFile: "a.json" } },\n}; → hooks pluginFile',
   "const c = {\n  skills: { supported: true },\n  hooks: { supported: false },\n}; →",
   'type Shape = {\n  hooks: Array<string>;\n};\n// hooks: { not: code },\nconst BRIDGE = `\nconst HOOKS_DIR = "../hooks/";\n  hooks: [1],\n`; →',
 ];
