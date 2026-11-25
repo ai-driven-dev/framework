@@ -21,4 +21,4 @@ flowchart LR
 
 - Never explore the codebase.
 - End with at most three open gaps as questions, those that would change the target most.
-- Never rewrite a spec whose status is `locked`: only the person who approves it sets that status.
+- Never rewrite a spec whose status is `locked`, nor change or offer to change that status: only the person who approves it does.
