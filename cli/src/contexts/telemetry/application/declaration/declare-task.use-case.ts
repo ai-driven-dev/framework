@@ -38,8 +38,7 @@ interface DeclareTaskDeps {
   readonly repositories: FindConsentedRepository;
   readonly bindSession: BindSession;
   readonly branches: DeclareOnBranch;
-  /** `AIDD_TELEMETRY_SESSION_ID`, else `CLAUDE_CODE_SESSION_ID`, read by the composition root;
-   * `null` outside a session. */
+  /** `CLAUDE_CODE_SESSION_ID`, read by the composition root; `null` outside a session. */
   readonly sessionId: string | null;
   readonly now: () => Date;
 }
