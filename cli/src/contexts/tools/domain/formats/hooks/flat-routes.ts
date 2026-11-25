@@ -8,7 +8,11 @@ import type {
 import type { FlatHooksLoaderEntry } from "../../../../../shared/domain/materialization/flat-paths.js";
 import type { ProjectHooksFormat } from "../../../contract/tool-vocabulary.js";
 import { mergeHooks } from "../../hooks/hooks-merge.js";
-import type { BridgeDelivery, ProjectMergeDelivery } from "../../sections/hooks-section.js";
+import type {
+  BridgeDelivery,
+  NoDelivery,
+  ProjectMergeDelivery,
+} from "../../sections/hooks-section.js";
 import {
   type FlatHooksRoute,
   type HooksFileMerge,
@@ -100,6 +104,11 @@ function hooksBridge(
     dir: loaderEntry.dir,
     skipIfSourceHas: loaderEntry.baseName,
   };
+}
+
+/** A tool that runs no hook a plugin ships, and why. */
+export function noHooksDelivery(reason: string): NoDelivery {
+  return { kind: "none", reason };
 }
 
 /** A flat tool's hooks, as far as plugins go: a loader reads them from its own directory. */
