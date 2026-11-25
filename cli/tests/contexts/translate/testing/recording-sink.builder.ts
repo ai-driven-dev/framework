@@ -18,7 +18,7 @@ export class RecordingSink implements PluginTreeSink {
 
   async writePlugin(_target: DiskTarget, pluginName: string): Promise<PluginWritten> {
     this.calls.push(`write ${pluginName}`);
-    return { files: this.filesPerPlugin, declaredMcp: null };
+    return { files: this.filesPerPlugin, declaredMcp: null, rulesGlob: null };
   }
 
   async finish(
