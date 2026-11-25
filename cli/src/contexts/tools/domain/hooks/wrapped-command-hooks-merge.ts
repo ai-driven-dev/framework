@@ -4,6 +4,8 @@ import { rewritePluginRootInJson } from "../../../../shared/domain/materializati
 import type { ProjectHookEntry } from "../../contract/tool-vocabulary.js";
 import { toBase64 } from "../formats/base64.js";
 import { PLUGIN_HOOKS_SOURCE } from "../formats/hooks/descriptor.js";
+import { hostToolNamesMatching, matcherNamesNoToolWarning } from "../formats/host-tool-names.js";
+import type { PluginHookItem, PluginHooksShape } from "./plugin-hooks-shape.js";
 
 // The host runs a handler from its own directory under the project and requires JSON stdout even
 // for a silent hook.
@@ -19,7 +21,6 @@ type NamedHook = {
   [key: string]: (ProjectHookEntry | HandlerGroup)[] | boolean | undefined;
 };
 type NamedHooks = Record<string, NamedHook>;
-type SourceHooks = { hooks?: Record<string, { hooks?: ProjectHookEntry[] }[]> };
 
 /** What a host that keeps hooks as a named, wrapped command is declared by. `label` names the host
  * in an error. */
@@ -28,6 +29,8 @@ export interface WrappedCommandHooksTarget {
   readonly descriptor: {
     readonly flat: { readonly scriptsDir: string };
     readonly eventMap: Readonly<Record<string, string>>;
+    /** The host's name of each tool a plugin's matcher names, by the name the plugin gives it. */
+    readonly toolNames: ReadonlyMap<string, string>;
   };
 }
 
@@ -43,12 +46,23 @@ export function wrappedCommandHooksScriptPath(
   return genericFlatHooksScriptPath(target.descriptor.flat.scriptsDir, pluginName, rest);
 }
 
+const runsCommand = (hook: PluginHookItem): hook is PluginHookItem & ProjectHookEntry =>
+  typeof hook.command === "string";
+
 function toHandler(hook: ProjectHookEntry): ProjectHookEntry {
   return {
     type: "command",
     command: `node -e "${JSON_RESPONSE}" ${toBase64(hook.command)}`,
     timeout: hook.timeout,
   };
+}
+
+/** The matcher in the host's tool names, or undefined when it selects no tool the host has. A plugin
+ * with no matcher asks for every tool. */
+function hostMatcher(target: WrappedCommandHooksTarget, matcher: string | undefined) {
+  if (matcher === undefined) return "*";
+  const names = hostToolNamesMatching(matcher, target.descriptor.toolNames);
+  return names.length > 0 ? names.join("|") : undefined;
 }
 
 function convert(
@@ -60,7 +74,7 @@ function convert(
     suffix.startsWith(`${PLUGIN_HOOKS_SOURCE.scriptDir}/`)
       ? `./${wrappedCommandHooksScriptPath(target, pluginName, suffix)}`
       : `./${locate(suffix)}`
-  ) as SourceHooks;
+  ) as PluginHooksShape;
   const handlers: Record<string, (ProjectHookEntry | HandlerGroup)[]> = {};
   const warnings: string[] = [];
   for (const [event, groups] of Object.entries(rewritten.hooks ?? {})) {
@@ -68,9 +82,22 @@ function convert(
       warnings.push(`unmapped event '${event}' skipped`);
       continue;
     }
-    const converted = groups.flatMap((group) => (group.hooks ?? []).map(toHandler));
-    // PostToolUse goes in `{ matcher, hooks: [handler] }`; the other events take bare handlers.
-    handlers[event] = event === "PostToolUse" ? [{ matcher: "*", hooks: converted }] : converted;
+    if (event !== "PostToolUse") {
+      handlers[event] = groups.flatMap((group) =>
+        (group.hooks ?? []).filter(runsCommand).map(toHandler)
+      );
+      continue;
+    }
+    // PostToolUse goes in `{ matcher, hooks: [handler] }`, one group per group the plugin wrote.
+    const grouped = groups.flatMap((group) => {
+      const matcher = hostMatcher(target, group.matcher);
+      if (matcher === undefined) {
+        warnings.push(matcherNamesNoToolWarning(target.label, event, group.matcher ?? ""));
+        return [];
+      }
+      return [{ matcher, hooks: (group.hooks ?? []).filter(runsCommand).map(toHandler) }];
+    });
+    if (grouped.length > 0) handlers[event] = grouped;
   }
   return { handlers, warnings };
 }

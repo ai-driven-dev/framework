@@ -15,7 +15,8 @@ the event spelled as the host spells it. Read by the CLI converter tests and the
   a session token at SessionStart in the key the host's adapter prints, to learn whether the model
   reads it; `continue`, Cursor's `followup_message` once at the first `stop`.
 - `hookAnswer` is what the logging hook printed for that call, `null` when it printed nothing:
-  JSON on most hosts, the bare text on Kiro, which hands a hook's output to the model as printed.
+  JSON on most hosts. Kiro's SessionStart sample holds the bare text, since Kiro hands that
+  hook's output to the model as printed; its Stop sample holds the JSON block decision.
 
 ## OpenCode and Kilo
 
@@ -39,7 +40,15 @@ string. Claude Code's `Edit` and its `PowerShell` tool, enabled by
 `CLAUDE_CODE_USE_POWERSHELL_TOOL=1`. Cursor's edit, sent as a `Write` carrying the whole file, and
 its `Delete`. OpenCode's and Kilo's `edit` and `apply_patch` arguments. Kiro's SessionStart, from
 its CLI on the V3 engine: the session id carries a `sess_` prefix, and the model was seen reading
-the hook's output between `<HOOK_INSTRUCTION>` tags, a JSON answer included as raw text.
+the hook's output between `<HOOK_INSTRUCTION>` tags, a JSON answer included as raw text. Kiro's
+PostToolUse (an `fs_write` creating a file, a `str_replace` edit, an `execute_bash` call and a
+`read_file`) and Stop, from `kiro-cli` 3.6.0 on the V3 engine, hooks declared in a project's
+`.kiro/hooks/*.json` under the triggers `PostToolUse` and `Stop`, run as
+`kiro-cli chat --v3 --no-interactive --trust-workspace --trust-tools=fs_write,fs_read,execute_bash
+--model qwen3-coder-next "<prompt>"`. Their stdin carries no `stop_hook_active`. After a Stop hook
+printed `{"decision": "block", "reason": ...}` the model answered the reason and Stop fired once
+for that prompt, never again on the continuation turn. Output printed by a PostToolUse hook, in
+every shape tried, was not read by the model.
 
 ## How the harder ones were reached
 
@@ -49,4 +58,4 @@ the hook's output between `<HOOK_INSTRUCTION>` tags, a JSON answer included as r
   that name was routed to another model by a local proxy. The arguments are the host's own tool
   schema; the model only filled them.
 
-Antigravity's `PostToolUse` (a `write_file` then a `run_command`) and `Stop` (`executionNum` 0, then 1 on the continued turn end), captured from a real `agy` run. Its payloads name their event in `hookEventName`. Its `SessionStart` was answered with an `injectSteps` system message carrying a passphrase (`run: answer`), and the model repeated the passphrase, so the injection reaches it.
+Antigravity's `PostToolUse` (a `write_file`, a `run_command`, then an `edit_file`) and `Stop` (`executionNum` 0, then 1 on the continued turn end), captured from real `agy` runs. Its payloads name their event in `hookEventName`. Its edit tool is `edit_file`, with `Path`, `Target` and `Replacement`. Its `SessionStart` was answered with an `injectSteps` system message carrying a passphrase (`run: answer`), and the model repeated the passphrase, so the injection reaches it.

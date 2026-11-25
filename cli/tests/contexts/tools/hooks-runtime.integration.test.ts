@@ -12,6 +12,7 @@ import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  at,
   CWD,
   fs,
   given,
@@ -57,6 +58,17 @@ describe("Antigravity CLI", () => {
       expect([event?.event, event?.files, event?.command]).toStrictEqual([
         "PostToolUse",
         [{ path: NOTES, content: "hello", written: "hello" }],
+        undefined,
+      ]);
+    });
+
+    it("reads PostToolUse of edit_file as the replacement it made and the text it replaced", () => {
+      const { payload } = sample("antigravity-PostToolUse.json", 2);
+      const { event } = read("antigravity", payload);
+
+      expect([event?.event, event?.files, event?.command]).toStrictEqual([
+        "PostToolUse",
+        [{ path: at("existing.txt"), written: "line2", replaced: "line1" }],
         undefined,
       ]);
     });
