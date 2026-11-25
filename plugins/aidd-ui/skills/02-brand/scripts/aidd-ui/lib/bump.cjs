@@ -2,7 +2,7 @@
 // removal of a record, a publication of the system, and the validation of an element.
 const fs = require("node:fs");
 const path = require("node:path");
-const { list, table, cells, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
+const { list, cells, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
 const { placed, byId, isSystem, fm, verdictRows, stateVerdict, REVIEW_KIND, VERDICTS_SECTION, SYSTEM_ID, INTEGER_VERSION, STATUS_DEPRECATED, BREAKING, NOT_BREAKING, SEMVER, reviewStatesOf } = require("./model.cjs");
 const { Refusal, required, withoutTrailingSeparators, HISTORY_FILE, CODE_DEBT_FILE } = require("./project.cjs");
 const { usages } = require("./graph.cjs");

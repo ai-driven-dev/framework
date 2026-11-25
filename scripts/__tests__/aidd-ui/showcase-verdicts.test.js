@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, LIB, makeTmp, removeTmp, writeProject, put, record } = require("../fixtures/aidd-ui/project.js");
+const { scriptOf, literally, UI, LIB, makeTmp, removeTmp, writeProject, put, record } = require("../fixtures/aidd-ui/project.js");
 const { load } = require(path.join(LIB, "project.cjs"));
 const { showcaseOf, decisionsOf, copiedOf, entriesOf, nextToReviewOf, nextOpenOf, LABELS } = require(path.join(LIB, "showcase.cjs"));
 
@@ -49,7 +49,7 @@ describe("the verdicts beside the state tabs", () => {
   it("holds the decisions to copy in the drawer, hidden until there is one, with the tally's words for them", () => {
     for (const lang of ["en", "fr"]) {
       const html = pagesOf(lang)["_journey-onboarding.html"];
-      assert.match(html, new RegExp(`<section class="decisions" id="decisions" hidden data-copy="${LABELS[lang].toCopy.replace("{", "\\{").replace("}", "\\}")}" data-words="[^"]*"><h3>${LABELS[lang].decisions}</h3><ul></ul></section>`), lang);
+      assert.match(html, new RegExp(`<section class="decisions" id="decisions" hidden data-copy="${literally(LABELS[lang].toCopy)}" data-words="[^"]*"><h3>${LABELS[lang].decisions}</h3><ul></ul></section>`), lang);
     }
     const bare = { ...load(tmp), records: [] };
     assert.match(showcaseOf({ project: bare, tokens: null, captures: new Set(), lang: "fr" })["index.html"], new RegExp(`<p class="nothing">${LABELS.fr.nothing}</p>`));
@@ -232,7 +232,7 @@ describe("the verdicts beside the state tabs", () => {
       return own;
     };
     const open = (memory = {}, { drawerHoldsIt = true, beside = [], itemData = {}, known, decisions = false, steps = false, order, extra = () => undefined, folder = "/one/aidd_docs/ui/showcase/" } = {}) => {
-      const script = pagesOf()["index.html"].match(/<script>([\s\S]*)<\/script>/)[1];
+      const script = scriptOf(pagesOf()["index.html"]);
       const tabs = [["default", "pending"], ["empty", "pending"]].map(([state, current]) => element({ tab: state, current }));
       const field = element();
       const votes = ["ok", "revise"].map((verdict) => element({ verdict }));

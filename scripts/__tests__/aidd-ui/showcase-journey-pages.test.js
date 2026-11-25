@@ -27,7 +27,7 @@ const shared = () => {
 };
 const pagesOf = () => showcaseOf({ project: load(tmp), tokens: ":root { --accent: #123456; }\n", captures: new Set(), lang: "en", sets: [] });
 const titleOf = (html) => html.match(/<title>(.*?)<\/title>/)[1];
-const anchorsOf = (html) => [...html.matchAll(/<a\b[^>]*?href="([^"]+)"[^>]*>(.*?)<\/a>/gs)].map((match) => ({ href: match[1].split(/[#?]/)[0], text: match[2].replace(/<[^>]+>/g, "") }));
+const anchorsOf = (html) => [...html.matchAll(/<a\b[^>]*?href="([^"]+)"[^>]*>(.*?)<\/a>/gs)].map((match) => ({ href: match[1].split(/[#?]/)[0], text: match[2].split(/<[^>]*>/).join("") }));
 
 describe("aidd-ui showcase journey pages", () => {
   it("writes a journey and a wireframe sharing an id as two pages, each with its own title", () => {

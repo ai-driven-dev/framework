@@ -2,7 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, LIB, makeTmp, removeTmp, filesUnder, engine, validate, writeProject, put, edit, editTokens, record } = require("../fixtures/aidd-ui/project.js");
+const { scriptOf, withoutCode, literally, UI, LIB, makeTmp, removeTmp, filesUnder, engine, validate, writeProject, put, edit, editTokens, record } = require("../fixtures/aidd-ui/project.js");
 const { load } = require(path.join(LIB, "project.cjs"));
 const colour = require(path.join(LIB, "colour.cjs"));
 const { charteSectionsOf } = require(path.join(LIB, "charte-page.cjs"));
@@ -378,7 +378,6 @@ describe("aidd-ui showcase", () => {
   });
 
   describe("the height of a frame", () => {
-    const scriptOf = (html) => html.match(/<script>([\s\S]*)<\/script>/)[1];
 
     it("fits again when the content of a frame changes size and when the window resizes", () => {
       const script = scriptOf(pagesOf()["home.html"]);
@@ -616,7 +615,7 @@ describe("aidd-ui showcase", () => {
     });
 
     it("highlights the section being read: the script sets aria-current to location from an observer", () => {
-      const script = systemPage().match(/<script>([\s\S]*?)<\/script>/)[1];
+      const script = scriptOf(systemPage());
       assert.match(script, /new IntersectionObserver\(/);
       assert.match(script, /"aria-current", "location"/);
       assert.match(script, /rootMargin: "0px 0px -70% 0px"/);
@@ -1106,7 +1105,7 @@ describe("aidd-ui showcase", () => {
 
     it("carries a script that compiles on every page, holding the copy the review skill reads", () => {
       for (const [name, html] of Object.entries(pagesOf())) {
-        const script = html.match(/<script>([\s\S]*)<\/script>/)[1];
+        const script = scriptOf(html);
         assert.doesNotThrow(() => new Function(script), name);
         assert.ok(script.includes(copiedOf.toString()) && script.includes(keptOf.toString()), name);
       }
@@ -1119,7 +1118,6 @@ describe("aidd-ui showcase", () => {
   });
 
   describe("the review drawer", () => {
-    const scriptOf = (html) => html.match(/<script>([\s\S]*)<\/script>/)[1];
     const css = () => pagesOf()["home.html"];
 
     it("tells why the copy is disabled, in the language, in the note under it", () => {
@@ -1127,7 +1125,7 @@ describe("aidd-ui showcase", () => {
       assert.equal(LABELS.fr.copyHint, "Donnez un avis sur au moins un \u00e9tat.");
       for (const lang of ["en", "fr"]) {
         const html = pagesOf({ lang })["home.html"];
-        assert.match(drawerOf(html), new RegExp(`<button type="button" id="copy"[^>]* data-hint="${LABELS[lang].copyHint.replace("\u00e9", "\u00e9")}"`), lang);
+        assert.match(drawerOf(html), new RegExp(`<button type="button" id="copy"[^>]* data-hint="${literally(LABELS[lang].copyHint)}"`), lang);
         assert.match(drawerOf(html), /<p id="note" role="status">/);
         assert.match(scriptOf(html), /copy\.dataset\.hint/);
       }
@@ -1521,7 +1519,7 @@ describe("aidd-ui showcase", () => {
 
     describe("the script", () => {
       const run = (html, search) => {
-        const script = html.match(/<script>([\s\S]*)<\/script>/)[1];
+        const script = scriptOf(html);
         const bars = barsOf(html).map((bar) => ({ dataset: { journey: attributeOf(bar, "data-journey"), step: attributeOf(bar, "data-step") }, hidden: true }));
         const stub = { querySelectorAll: (selector) => (selector.includes("journey-bar") ? bars : []), getElementById: () => null, querySelector: () => null };
         const tail = script.slice(script.indexOf("const query = new URLSearchParams"));
@@ -1571,7 +1569,7 @@ describe("aidd-ui showcase", () => {
         });
       }
       for (const [lang, stale] of [["en", "Design system"], ["fr", "Charte graphique"]]) {
-        for (const [name, html] of Object.entries(pagesOf({ lang }))) assert.doesNotMatch(html.replace(/<style>[\s\S]*?<\/style>|<script[\s\S]*?<\/script>/g, ""), new RegExp(stale), `${lang} ${name} still says ${stale}`);
+        for (const [name, html] of Object.entries(pagesOf({ lang }))) assert.doesNotMatch(withoutCode(html), new RegExp(stale), `${lang} ${name} still says ${stale}`);
       }
       assert.match(read(`${UI}/brand.md`), /^# Brand$/m);
       assert.match(headerOf(pagesOf({ lang: "fr" })["button.html"]), /<h1>Button<\/h1>/);
@@ -1632,7 +1630,7 @@ describe("aidd-ui showcase", () => {
       for (const [lang, whole] of [["en", "Whole"], ["fr", "L'ensemble"]]) {
         const index = pagesOf({ lang })["index.html"];
         for (const id of ["brand", "system"]) {
-          assert.match(rowOf(index, id, "default"), new RegExp(`<a class="pick" href="${id}.html">${whole.replace("'", "(?:'|&#39;)")}</a>`), `${lang} ${id}`);
+          assert.match(rowOf(index, id, "default"), new RegExp(`<a class="pick" href="${id}.html">${literally(whole).replaceAll("'", "(?:'|&#39;)")}</a>`), `${lang} ${id}`);
         }
       }
       assert.match(rowOf(pagesOf({ lang: "fr" })["index.html"], "brand", "default"), /data-state="default"/);

@@ -167,8 +167,7 @@ describe("aidd-ui drafts", () => {
       keep("brand", "b");
       writeSet("button", { rows: ROWS.slice(0, 2), files: (name) => ({ "components/x.md": `md ${name}\n`, "preview.html": "<p>p</p>\n" }) });
       keep("button", "a");
-      assert.equal(read(CHOICES).split("\n").at(-2), "| button | a | b | Bold and direct for newcomers |");
-      assert.equal(read(CHOICES).split("\n").filter((line) => line.startsWith("| brand ")).length, 2);
+      assert.equal(read(CHOICES), `${CHOICES_HEADER}| brand | b | a | Calm and plain for analysts |\n| brand | b | c | Dense and quiet for experts |\n| button | a | b | Bold and direct for newcomers |\n`);
     });
 
     it("keeps the version of the record it replaces, never the variant's", () => {

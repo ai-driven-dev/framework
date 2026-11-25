@@ -1,7 +1,6 @@
 // The five steps of the method and the categories of the elements, decided from the records alone:
 // which step holds a record, which category an element shows under, and what of a record still
 // awaits review. Pure: the showcase draws from these, nothing here reads a file.
-const { list } = require("./markdown.cjs");
 const { fm, stateVerdict, reviewStatesOf } = require("./model.cjs");
 
 // Display order: what a journey strings together comes last.

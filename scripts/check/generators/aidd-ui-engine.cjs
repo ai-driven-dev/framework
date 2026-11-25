@@ -18,6 +18,16 @@ const filesUnder = (dir) =>
     : [];
 
 /** The engine files, relative to the hooks folder. */
+/** The file's bytes, or undefined when there is none. */
+function bytesOf(file) {
+  try {
+    return fs.readFileSync(file);
+  } catch (error) {
+    if (error.code === "ENOENT") return undefined;
+    throw error;
+  }
+}
+
 function sources(root) {
   const hooks = path.join(root, SOURCE);
   const lib = filesUnder(path.join(hooks, LIB)).map((file) => path.relative(hooks, file)).filter((file) => !file.startsWith(SKIPPED + path.sep));
@@ -38,7 +48,7 @@ module.exports = {
       for (const name of wanted) {
         const source = fs.readFileSync(path.join(root, SOURCE, name));
         const file = path.join(copy, name);
-        if (fs.existsSync(file) && fs.readFileSync(file).equals(source)) continue;
+        if (bytesOf(file)?.equals(source)) continue;
         found.push(rel(file));
         if (write) {
           fs.mkdirSync(path.dirname(file), { recursive: true });

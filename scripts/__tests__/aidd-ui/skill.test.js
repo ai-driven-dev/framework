@@ -172,7 +172,6 @@ describe("aidd-ui design system templates", () => {
 });
 
 describe("aidd-ui screens skill", () => {
-  const SCREENS = path.join(PLUGIN, "skills/05-screens");
   const colour = (hex) => ({ $value: { colorSpace: "srgb", components: [0, 0, 0], hex } });
   // The template's pairs and control size need tokens a project holds: a light and a dark surface, a control height.
   const withTokens = () => {

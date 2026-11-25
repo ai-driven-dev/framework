@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, LIB, makeTmp, removeTmp, writeProject } = require("../fixtures/aidd-ui/project.js");
+const { withoutCode, UI, LIB, makeTmp, removeTmp, writeProject } = require("../fixtures/aidd-ui/project.js");
 const { load } = require(path.join(LIB, "project.cjs"));
 const { showcaseOf, LABELS } = require(path.join(LIB, "showcase.cjs"));
 
@@ -30,7 +30,7 @@ const pagesOf = (lang) => showcaseOf({ project: load(tmp), problems: [PROBLEM], 
 
 /** What a person reads or hears on a page: its text and the attributes a screen reader speaks, outside scripts and styles. */
 function readOf(html) {
-  const body = html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, "");
+  const body = withoutCode(html);
   const texts = [...body.matchAll(/>([^<]+)</g)].map((match) => match[1].trim()).filter(Boolean);
   const spoken = [...body.matchAll(/\s(?:title|alt|aria-label|placeholder)="([^"]*)"/g)].map((match) => match[1]);
   return { texts, spoken, all: texts.concat(spoken) };

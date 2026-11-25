@@ -430,4 +430,17 @@ function fixLedger() {
   };
 }
 
-module.exports = { fixLedger, UI, HISTORY, PATHS, HOOKS, LIB, ENGINE, makeTmp, removeTmp, filesUnder, engine, engineIn, lines, validate, addHistory, writeProject, generateStylesheet, edit, editTokens, propose, put, record, history };
+/** The first inline script of a page, cut out by position: a tag pattern misreads HTML. */
+const scriptOf = (html) => {
+  const start = html.indexOf("<script>") + "<script>".length;
+  return html.slice(start, html.indexOf("</script>", start));
+};
+
+/** A page without its script and style blocks, cut out by position for the same reason. */
+const withoutCode = (html) =>
+  ["script", "style"].reduce((text, tag) => text.split(`</${tag}>`).map((part) => part.split(`<${tag}`)[0]).join(""), html);
+
+/** A pattern matching `text` as written. */
+const literally = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+module.exports = { scriptOf, withoutCode, literally, fixLedger, UI, HISTORY, PATHS, HOOKS, LIB, ENGINE, makeTmp, removeTmp, filesUnder, engine, engineIn, lines, validate, addHistory, writeProject, generateStylesheet, edit, editTokens, propose, put, record, history };

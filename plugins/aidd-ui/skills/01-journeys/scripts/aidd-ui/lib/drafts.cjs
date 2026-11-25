@@ -118,7 +118,22 @@ function withVersionOf(variantText, existingText) {
 function recordChoice(root, { id, rows }, kept) {
   const file = path.join(root, CHOICES_FILE);
   const rowsOf = rows.filter((row) => row[VARIANT_COLUMN] !== kept).map((row) => `| ${id} | ${kept} | ${row[VARIANT_COLUMN]} | ${row[INTENT_COLUMN]} |${LINE_BREAK}`);
-  fs.appendFileSync(file, `${fs.existsSync(file) ? "" : CHOICES_HEADER}${rowsOf.join("")}`);
+  const fd = fs.openSync(file, "a");
+  try {
+    fs.writeSync(fd, `${fs.fstatSync(fd).size ? "" : CHOICES_HEADER}${rowsOf.join("")}`);
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
+/** The file's text, or null when it does not exist. */
+function contentOf(file) {
+  try {
+    return fs.readFileSync(file, "utf8");
+  } catch (error) {
+    if (error.code === "ENOENT") return null;
+    throw error;
+  }
 }
 
 /** Copies the variant's folder into the design system, `preview.html` aside, records the variants set aside, then deletes the set. A record replaced keeps its version. */
@@ -134,7 +149,8 @@ function keep(root, id, variant) {
     .map((file) => {
       const target = path.join(root, UI_DIR, file);
       fs.mkdirSync(path.dirname(target), { recursive: true });
-      if (file.endsWith(".md") && fs.existsSync(target)) fs.writeFileSync(target, withVersionOf(fs.readFileSync(path.join(from, file), "utf8"), fs.readFileSync(target, "utf8")));
+      const replaced = file.endsWith(".md") ? contentOf(target) : null;
+      if (replaced !== null) fs.writeFileSync(target, withVersionOf(fs.readFileSync(path.join(from, file), "utf8"), replaced));
       else fs.copyFileSync(path.join(from, file), target);
       return `${UI_DIR}/${file}`;
     });

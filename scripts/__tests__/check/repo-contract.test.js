@@ -4,7 +4,6 @@ const os = require("node:os");
 const path = require("node:path");
 const { describe, it, before, after, afterEach } = require("node:test");
 const engine = require("../../check/engine/engine.cjs");
-const { findings } = require("./helpers.js");
 
 const ROOT = path.resolve(__dirname, "../../..");
 const CONTRACT = path.join(ROOT, "scripts/check/contracts/repo.json");

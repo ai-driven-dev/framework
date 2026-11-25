@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, LIB, makeTmp, removeTmp, writeProject } = require("../fixtures/aidd-ui/project.js");
+const { LIB, makeTmp, removeTmp, writeProject } = require("../fixtures/aidd-ui/project.js");
 const { load } = require(path.join(LIB, "project.cjs"));
 const { showcaseOf, THEME, LABELS } = require(path.join(LIB, "showcase.cjs"));
 

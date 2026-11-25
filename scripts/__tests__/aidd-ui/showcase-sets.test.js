@@ -2,7 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, LIB, makeTmp, removeTmp, engine, writeProject, put, record } = require("../fixtures/aidd-ui/project.js");
+const { scriptOf, UI, LIB, makeTmp, removeTmp, engine, writeProject, put, record } = require("../fixtures/aidd-ui/project.js");
 const { load } = require(path.join(LIB, "project.cjs"));
 const { showcaseOf, copiedOf, keptOf, entriesOf, blockedOf, remainingOf, pickedOf, LABELS } = require(path.join(LIB, "showcase.cjs"));
 
@@ -786,7 +786,7 @@ describe("aidd-ui showcase sets", () => {
       // The page as the script sees it: a drawer row per variant, a header per column, one copy button.
       const open = ({ past = false, progress = [] } = {}) => {
         const html = pagesOf([SET()])["_set-layout.html"];
-        const script = html.match(/<script>([\s\S]*)<\/script>/)[1];
+        const script = scriptOf(html);
         const rows = ["a", "b"].map((name) => {
           const field = element();
           const votes = ["keep", "revise", "discard"].map((verdict) => element({ verdict }));
@@ -927,7 +927,7 @@ describe("aidd-ui showcase sets", () => {
     it("says the group in French, and carries the pure functions of the copy in every script", () => {
       assert.match(groupOfSets(pagesOf([SET()], { lang: "fr" })["index.html"]), /<h3>Variantes<\/h3>/);
       for (const html of Object.values(pagesOf([SET()]))) {
-        const script = html.match(/<script>([\s\S]*)<\/script>/)[1];
+        const script = scriptOf(html);
         assert.doesNotThrow(() => new Function(script));
         for (const fn of [copiedOf, keptOf, entriesOf, blockedOf, remainingOf, pickedOf]) assert.ok(script.includes(fn.toString()), fn.name);
       }

@@ -6,7 +6,6 @@ const { UI, HISTORY, LIB, makeTmp, removeTmp, filesUnder, engine, validate, writ
 const { load } = require(path.join(LIB, "project.cjs"));
 const { byId, reviewStatesOf } = require(path.join(LIB, "model.cjs"));
 const { isReviewed } = require(path.join(LIB, "history.cjs"));
-const { list } = require(path.join(LIB, "markdown.cjs"));
 
 // The publish command is driven as a subprocess, as the skill calls it, after bump has raised
 // the versions, and judged by the engine's own validator.
